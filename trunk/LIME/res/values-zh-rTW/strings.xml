@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+/* 
+**
+** Copyright 2008, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License"); 
+** you may not use this file except in compliance with the License. 
+** You may obtain a copy of the License at 
+**
+**     http://www.apache.org/licenses/LICENSE-2.0 
+**
+** Unless required by applicable law or agreed to in writing, software 
+** distributed under the License is distributed on an "AS IS" BASIS, 
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+** See the License for the specific language governing permissions and 
+** limitations under the License.
+*/
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Title for Latin keyboard  -->
+    <string name="app_name">LIME</string>
+    <string name="ime_name">LIME</string>
+    <string name="ime_setting">LIME</string>
+
+    <!-- Symbols that are commonly considered word separators in this language -->
+    <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
+    <string name="word_symbol_separators">\u0020?\n{}&lt;&gt;_+|&quot;</string>
+    
+    <!-- Labels on soft keys -->
+    <string name="label_go_key">Go</string>
+    <string name="label_next_key">Next</string>
+    <string name="label_send_key">Send</string>
+    
+    <!-- LIME Setting -->
+    <string name="lime_setting_title">LIME 對應表管理</string>
+    <string name="lime_setting_operation_notice">請點選下方的按鈕由 SDCARD 選擇並載入輸入法對應表 (.lime), 執行這一個動作會清除先前已載入的記錄. \n匯入工作將於背景執行，進度會顯示於狀態列，依檔案大小可能會耗費數分鐘至數十分之久，請耐心等候. \n您可以在官方網站  http://android.toload.net/ 找到關於輸入法對應表建立方式及詳細操作使用說明.</string>
+    <string name="lime_setting_btn_load_local">載入 .LIME 對應表</string>
+    <string name="lime_setting_operation_info">系統資訊</string>
+    <string name="lime_setting_operation">操作</string>
+    <string name="lime_setting_reset_database">清除資料庫</string>
+    <string name="lime_setting_reset_dictionary">清除關聯字</string>
+    <string name="lime_setting_label_amount">記錄筆數 :</string>
+    <string name="lime_setting_label_dictionary_amount">關聯字筆數 :</string>
+    
+    <string name="lime_setting_backtup">備份關聯字</string>
+    <string name="lime_setting_backtup_db">備份</string>
+    <string name="lime_setting_restore_db">還原</string>
+    <string name="lime_setting_backup_message">備份至 /sdcard/limedb.txt</string>
+    <string name="lime_setting_backup_message_failed">無法備份至 /sdcard/limedb.txt, 請確認 /sdcard 可以存取!!</string>
+    <string name="lime_setting_restore_message">由 /sdcard/limedb.txt 還原備份資料</string>
+    <string name="lime_setting_restore_message_failed">無法還原 /sdcard/limedb.txt 檔案的資料, 請確認檔案是否存在</string>
+    
+    <string name="lime_setting_menu_about">關於 LIME</string>
+    <string name="lime_setting_menu_reset">重置資料庫</string>
+    <string name="lime_setting_menu_quit">離開</string>
+    
+    <string name="lime_setting_btn_close">CLOSE</string>
+    
+    <!-- LIME Setting About-->
+    <string name="lime_setting_menu_about_title">LIME 1.6.3v</string>
+    <string name="lime_setting_menu_about_message">Lightweight InputMethod Editor 程式，允許您匯入自定義的對應表並建立個人輸入法. </string>
+    <string name="lime_setting_menu_reset_message">資料庫已重置完成 !!</string>
+    <string name="lime_setting_menu_reset_dictionary_message">關聯字已重置完成 !!</string>
+    
+    <!-- LIME Loading -->
+    <string name="lime_setting_btn_load_local_notice">請選擇 .LIME 檔案</string>
+    <string name="lime_setting_loading">載入記錄</string>
+    <string name="lime_setting_loading_message">依據來源檔案大小的不同系統可能會需要一至數分鐘來完成這個動作，請勿關閉本視窗並耐心等候...</string>
+    <string name="lime_setting_select_root"> - back to /</string>
+    <string name="lime_setting_select_parent"> - back to ..</string>
+    
+    <string name="lime_setting_notification_loading">LIME 開始載入</string>
+    <string name="lime_setting_notification_finish">LIME 載入完成 !!</string>
+    <string name="lime_setting_notification_loading_start">載入 </string>
+    <string name="lime_setting_notification_loading_end">字</string>
+    
+      <!-- TAB -->
+    <string name="lime_setting_db">對應表管理</string>
+    <string name="lime_setting_preference">組態設定</string>
+    
+    <!-- Preference -->
+    <string name="keyboard">鍵盤</string>
+    <string name="mapping">對應表</string>
+    
+    <string name="vibrate_on_keypress">打字震動</string>
+    <string name="sound_on_keypress">打字音效</string>
+    <string name="display_number_keypads">顯示數字鍵盤</string>
+    <string name="display_number_keypads_summary">顯示數字按鈕於預設鍵盤上 </string>
+    <string name="candidate_switch">滑動選取</string>
+    <string name="candidate_switch_summary">滑動選取輸入法建議文字</string>
+    <string name="candidate_learning">文字選取喜好</string>
+    <string name="candidate_learning_summary">記憶文字輸入或選取喜好排序建議文字</string>
+    <string name="candidate_dictionary">啟動關聯字功能</string>
+    <string name="candidate_dictionary_summary">啟用並建立關聯字資料庫</string>
+    <string name="accept_number_index">啟動數字對應</string>
+    <string name="accept_number_index_summary">使用數字索引碼對應文字</string>
+    <string name="accept_symbol_index">啟動符號對應</string>
+    <string name="accept_symbol_index_summary">使用符號索引碼對應文字</string>
+    
+</resources>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/* 
+**
+** Copyright 2008, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License"); 
+** you may not use this file except in compliance with the License. 
+** You may obtain a copy of the License at 
+**
+**     http://www.apache.org/licenses/LICENSE-2.0 
+**
+** Unless required by applicable law or agreed to in writing, software 
+** distributed under the License is distributed on an "AS IS" BASIS, 
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+** See the License for the specific language governing permissions and 
+** limitations under the License.
+*/
+-->
+<PreferenceScreen
+        xmlns:android="http://schemas.android.com/apk/res/android"
+                android:key="lime_preference"
+                android:title="LIME Preference"
+                android:summary="LIME Preference Configuration">
+    <PreferenceCategory
+        xmlns:android="http://schemas.android.com/apk/res/android"
+                android:key="lime_keyboard"
+                android:title="@string/keyboard"
+                android:summary="">
+        <CheckBoxPreference
+                android:key="vibrate_on_keypress"
+                android:title="@string/vibrate_on_keypress" />
+        <CheckBoxPreference
+                android:key="sound_on_keypress"
+                android:title="@string/sound_on_keypress"/>
+        <CheckBoxPreference
+                android:key="display_number_keypads"
+                android:title="@string/display_number_keypads"
+                android:summary="@string/display_number_keypads_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        xmlns:android="http://schemas.android.com/apk/res/android"
+                android:key="lime_mapping"
+                android:title="@string/mapping"
+                android:summary="">
+        <CheckBoxPreference
+                android:key="candidate_switch"
+                android:title="@string/candidate_switch"
+                android:summary="@string/candidate_switch_summary" />
+        <CheckBoxPreference
+                android:key="candidate_learning"
+                android:title="@string/candidate_learning"
+                android:summary="@string/candidate_learning_summary" />
+        <CheckBoxPreference
+                android:key="candidate_dictionary"
+                android:title="@string/candidate_dictionary"
+                android:summary="@string/candidate_dictionary_summary" />
+        <CheckBoxPreference
+                android:key="accept_number_index"
+                android:title="@string/accept_number_index"
+                android:summary="@string/accept_number_index_summary" />
+        <CheckBoxPreference
+                android:key="accept_symbol_index"
+                android:title="@string/accept_symbol_index"
+                android:summary="@string/accept_symbol_index_summary" />
+    </PreferenceCategory>
+</PreferenceScreen>

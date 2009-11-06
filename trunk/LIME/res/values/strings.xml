@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/* 
+**
+** Copyright 2008, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License"); 
+** you may not use this file except in compliance with the License. 
+** You may obtain a copy of the License at 
+**
+**     http://www.apache.org/licenses/LICENSE-2.0 
+**
+** Unless required by applicable law or agreed to in writing, software 
+** distributed under the License is distributed on an "AS IS" BASIS, 
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+** See the License for the specific language governing permissions and 
+** limitations under the License.
+*/
+-->
+
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Title for Latin keyboard  -->
+    <string name="app_name">LIME</string>
+    <string name="ime_name">LIME</string>
+    <string name="ime_setting">LIME</string>
+
+    <!-- Symbols that are commonly considered word separators in this language -->
+    <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
+    <string name="word_symbol_separators">\u0020?\n{}&lt;&gt;_+|&quot;</string>
+    
+    <!-- Labels on soft keys -->
+    <string name="label_go_key">Go</string>
+    <string name="label_next_key">Next</string>
+    <string name="label_send_key">Send</string>
+    
+    <!-- LIME Setting -->
+    <string name="lime_setting_title">LIME Mapping DB</string>
+    <string name="lime_setting_operation_notice">Click button to select mapping file(.lime) from /SDCARD and load into database. This operation will reset database so all exists records will be deleted. \nTo found more information on preparing mapping file and complete user guide please visit official website http://android.toload.net/. </string>
+    <string name="lime_setting_btn_load_local">LOAD .LIME MAPPING</string>
+    <string name="lime_setting_operation_info">Information</string>
+    <string name="lime_setting_operation">Operation</string>
+    <string name="lime_setting_reset_database">RESET DATABASE</string>
+    <string name="lime_setting_reset_dictionary">RESET RELATED WORDS</string>
+    <string name="lime_setting_label_amount">Total Mapping Records :</string>
+    <string name="lime_setting_label_dictionary_amount">Total Related Records :</string>
+    
+    <string name="lime_setting_backtup">Backup Related Words</string>
+    <string name="lime_setting_backtup_db">Backup</string>
+    <string name="lime_setting_restore_db">Restore</string>
+    <string name="lime_setting_backup_message">Backup to /sdcard/limedb.txt</string>
+    <string name="lime_setting_backup_message_failed">Cannot backup to /sdcard/limedb.txt, please make sure /sdcard not read only!!</string>
+    <string name="lime_setting_restore_message">Restore from /sdcard/limedb.txt</string>
+    <string name="lime_setting_restore_message_failed">Cannot found /sdcard/limedb.txt to be restored, please make sure file exists!!</string>
+    
+    
+    <string name="lime_setting_menu_about">About LIME</string>
+    <string name="lime_setting_menu_quit">QUIT</string>
+    
+    <string name="lime_setting_btn_close">CLOSE</string>
+    
+    <!-- LIME Setting About-->
+    <string name="lime_setting_menu_about_title">LIME 1.6.3v</string>
+    <string name="lime_setting_menu_about_message">Lightweight InputMethod Editor is a tools which allow you to build customize InputMethod by simply import the code and word mapping.</string>
+    <string name="lime_setting_menu_reset_message">Database Reset Completed !!</string>
+    <string name="lime_setting_menu_reset_dictionary_message">Dictionary Reset Completed !!</string>
+    
+    <!-- LIME Loading -->
+    <string name="lime_setting_btn_load_local_notice">Please Select .LIME File</string>
+    <string name="lime_setting_loading">Loading Mapping</string>
+    <string name="lime_setting_loading_message">Please not close this window and be patient, depends on size of the file this action might take several minutes ...</string>
+    <string name="lime_setting_select_root"> - back to /</string>
+    <string name="lime_setting_select_parent"> - back to ..</string>
+    
+    <string name="lime_setting_notification_loading">LIME Loading Start</string>
+    <string name="lime_setting_notification_finish">LIME Loading Finished !!</string>
+    <string name="lime_setting_notification_loading_start">Mapping</string>
+    <string name="lime_setting_notification_loading_end">Loaded</string>
+      
+    <!-- TAB -->
+    <string name="lime_setting_db">Mapping DB</string>
+    <string name="lime_setting_preference">Preference</string>
+    
+    <!-- Preference -->
+    <string name="keyboard">Keyboard</string>
+    <string name="mapping">Mapping</string>
+    
+    <string name="vibrate_on_keypress">Vibrate on keypress</string>
+    <string name="sound_on_keypress">Sound on keypress</string>
+    <string name="display_number_keypads">Display number keypads</string>
+    <string name="display_number_keypads_summary">Display number keypads</string>
+    <string name="candidate_switch">Sliding select suggestion</string>
+    <string name="candidate_switch_summary">Enable suggestion words sliding selection</string>
+    <string name="candidate_learning">Auto learning</string>
+    <string name="candidate_learning_summary">Enable suggestion words auto learning</string>
+    <string name="candidate_dictionary">Enable related word</string>
+    <string name="candidate_dictionary_summary">Enable related word and auto learning</string>
+    <string name="accept_number_index">Activate number</string>
+    <string name="accept_number_index_summary">Allow input 0-9 as mapping code</string>
+    <string name="accept_symbol_index">Activate symbol</string>
+    <string name="accept_symbol_index_summary">Allow input punctuation as mapping code</string>
+    
+</resources>
