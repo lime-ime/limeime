@@ -22,6 +22,7 @@ import android.content.res.XmlResourceParser;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.Keyboard.Key;
 import android.inputmethodservice.Keyboard.Row;
+import android.util.Log;
 import android.view.inputmethod.EditorInfo;
 
 /**
@@ -49,6 +50,8 @@ public class LIMEKeyboard extends Keyboard {
         }
         return key;
     }
+    
+    
     
     /**
      * This looks at the ime options given by the current editor, to set the
@@ -102,5 +105,7 @@ public class LIMEKeyboard extends Keyboard {
             return super.isInside(x, codes[0] == KEYCODE_CANCEL ? y - 10 : y);
         }
     }
+    
+    
 
 }

@@ -36,6 +36,7 @@ import java.util.Iterator;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -47,8 +48,11 @@ import android.util.Log;
 public class LimeDB extends SQLiteOpenHelper {
 
 	private final static String DATABASE_NAME = "lime";
-	private final static int DATABASE_VERSION = 7;
+	private final static int DATABASE_VERSION = 15;
 	private final static String TABLE_NAME = "mapping";
+	private final static String TOTAL_RECORD = "total_record";
+	private final static String TOTAL_RELATED = "total_related";
+	private final static String MAPPING_VERSION = "mapping_version";
 
 	private final static int start = 65;
 	private final static int end = 90;
@@ -73,6 +77,8 @@ public class LimeDB extends SQLiteOpenHelper {
 
 	private boolean finish = false;
 	private int count = 0;
+	
+	private Context ctx;
 
 	public boolean isFinish() {
 		return finish;
@@ -88,6 +94,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 	public LimeDB(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
+		this.ctx = context;
 	}
 
 	/**
@@ -102,6 +109,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						+ " INTEGER primary key autoincrement, " + " "
 						+ FIELD_CODE + " text, " + FIELD_WORD + " text, "
 						+ FIELD_SCORE + " integer)");
+				db.execSQL("CREATE INDEX "+String.valueOf((char) i)+j+"INDEX ON " + String.valueOf((char) i) + j+ TABLE_NAME + "("+FIELD_CODE+")");
 			}
 		}
 		for (int j = 1; j <= 9; j++) {
@@ -109,11 +117,13 @@ public class LimeDB extends SQLiteOpenHelper {
 					+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE
 					+ " text, " + FIELD_WORD + " text, " + FIELD_SCORE
 					+ " integer)");
+			db.execSQL("CREATE INDEX  NUMBER"+j+"INDEX ON NUMBER" + j+ TABLE_NAME + "("+FIELD_CODE+")");
 		}
 		db.execSQL("CREATE TABLE SYMBOL" + TABLE_NAME + " (" + FIELD_id
 				+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE
 				+ " text, " + FIELD_WORD + " text, " + FIELD_SCORE
 				+ " integer)");
+		db.execSQL("CREATE INDEX SYMBOLINDEX ON SYMBOL" + TABLE_NAME + "("+FIELD_CODE+")");
 
 		for (int i = start; i <= end; i++) {
 
@@ -125,6 +135,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						+ " text, " + FIELD_DIC_pword + " text, "
 						+ FIELD_DIC_cword + " text, " + FIELD_DIC_score
 						+ " integer)");
+				db.execSQL("CREATE INDEX DICTIONARY"+String.valueOf((char) i)+j+"INDEX ON DICTIONARY" + String.valueOf((char) i)+j+ TABLE_NAME + "("+FIELD_DIC_pcode+","+FIELD_DIC_ccode+")");
 			}
 		}
 		db.execSQL("CREATE TABLE DICTIONARY" + TABLE_NAME + " (" + FIELD_DIC_id
@@ -132,8 +143,8 @@ public class LimeDB extends SQLiteOpenHelper {
 				+ FIELD_DIC_pcode + " text, " + FIELD_DIC_ccode + " text, "
 				+ FIELD_DIC_pword + " text, " + FIELD_DIC_cword + " text, "
 				+ FIELD_DIC_score + " integer)");
-		
-		
+		db.execSQL("CREATE INDEX DICTIONARYINDEX ON DICTIONARY" + TABLE_NAME + "("+FIELD_DIC_pcode+","+FIELD_DIC_ccode+")");
+
 	}
 
 	/**
@@ -143,27 +154,29 @@ public class LimeDB extends SQLiteOpenHelper {
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
 		for (int i = start; i <= end; i++) {
-			db.execSQL("DROP TABLE IF EXISTS " + String.valueOf((char) i)
-					+ TABLE_NAME);
-		}
-		for (int i = start; i <= end; i++) {
 			for (int j = 1; j <= 9; j++) {
 				db.execSQL("DROP TABLE IF EXISTS " + String.valueOf((char) i)
 						+ j + TABLE_NAME);
+				db.execSQL("DROP INDEX IF EXISTS "+String.valueOf((char) i)+j+"INDEX");
 			}
 		}
 		for (int j = 1; j <= 9; j++) {
 			db.execSQL("DROP TABLE IF EXISTS NUMBER" + j + TABLE_NAME);
+			db.execSQL("DROP INDEX IF EXISTS NUMBER"+j+"INDEX");
 		}
 		db.execSQL("DROP TABLE IF EXISTS SYMBOL" + TABLE_NAME);
+		db.execSQL("DROP INDEX IF EXISTS SYMBOLINDEX");
 
 		for (int i = start; i <= end; i++) {
 			for (int j = 1; j <= 9; j++) {
 				db.execSQL("DROP TABLE IF EXISTS DICTIONARY"
 						+ String.valueOf((char) i) + j + TABLE_NAME);
+				db.execSQL("DROP INDEX IF EXISTS DICTIONARY"+String.valueOf((char) i)+j+"INDEX");
 			}
 		}
 		db.execSQL("DROP TABLE IF EXISTS DICTIONARY" + TABLE_NAME);
+		db.execSQL("DROP INDEX IF EXISTS DICTIONARYINDEX");
+		
 		
 		onCreate(db);
 	}
@@ -198,13 +211,17 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		this.DELIMITER = "";
 		this.finish = false;
+		
+		SharedPreferences storeset = ctx.getSharedPreferences(TOTAL_RECORD, 0);
+		storeset.edit().putString(TOTAL_RECORD, String.valueOf(0)).commit();
+		
 	}
 
 	/**
 	 * Empty Dictionary table records
 	 */
 	public void deleteDictionaryAll() {
-
+	
 		SQLiteDatabase db = this.getWritableDatabase();
 
 		for (int i = start; i <= end; i++) {
@@ -215,8 +232,11 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 		db.delete("DICTIONARY" + TABLE_NAME, null, null);
 
-		
 		this.DELIMITER = "";
+
+		SharedPreferences storeset = ctx.getSharedPreferences(TOTAL_RELATED, 0);
+		storeset.edit().putString(TOTAL_RELATED, String.valueOf(0)).commit();
+		
 	}
 
 	public int getCount() {
@@ -279,12 +299,22 @@ public class LimeDB extends SQLiteOpenHelper {
 		return total;
 	}
 	
+	
 	/**
 	 * Insert mapping item into database
 	 * @param source
 	 */
 	public void insertList(ArrayList<String> source) {
 
+
+		SharedPreferences settings = ctx.getSharedPreferences(TOTAL_RECORD, 0);        
+		String recordString = settings.getString(TOTAL_RECORD, "");
+		
+		int total = 0;
+		try{
+			total = Integer.parseInt(recordString);
+		}catch(Exception e){}
+		
 		SQLiteDatabase db = this.getWritableDatabase();
 		this.identifyDelimiter(source);
 
@@ -297,10 +327,17 @@ public class LimeDB extends SQLiteOpenHelper {
 				if (code == null || code.trim().equals("")) {
 					continue;
 				}
+				
 				if (word == null || word.trim().equals("")) {
 					continue;
 				}
 
+				if (code.equalsIgnoreCase("@VERSION@")){
+					SharedPreferences version = ctx.getSharedPreferences(MAPPING_VERSION, 0);
+					version.edit().putString(MAPPING_VERSION, word.trim()).commit();
+					continue;
+				}
+				
 				ContentValues cv = new ContentValues();
 				cv.put(FIELD_WORD, word);
 				cv.put(FIELD_SCORE, 0);
@@ -310,27 +347,34 @@ public class LimeDB extends SQLiteOpenHelper {
 					cv.put(FIELD_CODE, code.toUpperCase());
 					if (firstCharacter.matches(".*?[^0-9]")) {
 						db.insert("SYMBOL" + TABLE_NAME, null, cv);
+						total++;
 					} else {
 						if (j < 9) {
 							db.insert("NUMBER" + j + TABLE_NAME, null, cv);
+							total++;
 						} else {
 							db.insert("NUMBER" + 9 + TABLE_NAME, null, cv);
+							total++;
 						}
 					}
 				} else {
 					cv.put(FIELD_CODE, code.toUpperCase());
 					if (j < 9) {
 						db.insert(firstCharacter + j + TABLE_NAME, null, cv);
+						total++;
 					} else {
 						db.insert(firstCharacter + 9 + TABLE_NAME, null, cv);
+						total++;
 					}
 				}
 				count++;
 
 			} catch (Exception e) {
-				Log.i("ART", "SOURCE LINE:" + e + " : " + unit);
 			}
 		}
+		
+		SharedPreferences storeset = ctx.getSharedPreferences(TOTAL_RECORD, 0);
+		storeset.edit().putString(TOTAL_RECORD, String.valueOf(total)).commit();
 		
 	}
 
@@ -342,12 +386,12 @@ public class LimeDB extends SQLiteOpenHelper {
 
 		SQLiteDatabase db = this.getReadableDatabase();
 
+		int total = 0;
 		for (Mapping unit : srclist) {
 
 			String code = unit.getPcode();
 			int j = code.length();
 
-			Log.i("ART","insert-1:"+code);
 			String firstCharacter = code.substring(0, 1).toUpperCase();
 
 			ContentValues cv = new ContentValues();
@@ -358,22 +402,22 @@ public class LimeDB extends SQLiteOpenHelper {
 			cv.put(FIELD_DIC_score, unit.getScore());
 
 			if (firstCharacter.matches(".*?[^A-Z]")) {
-				Log.i("ART","insert-2:"+code);
 				db.insert("DICTIONARY" + TABLE_NAME, null, cv);
 			} else {
 				if (j < 9) {
-					Log.i("ART","insert-3:"+code);
 					db.insert("DICTIONARY" + firstCharacter + j + TABLE_NAME,
 							null, cv);
 				} else {
-					Log.i("ART","insert-4:"+code);
 					db.insert("DICTIONARY" + firstCharacter + 9 + TABLE_NAME,
 							null, cv);
 				}
 			}
+			total++;
 		}
-		
 
+		SharedPreferences settings = ctx.getSharedPreferences(TOTAL_RELATED, 0);
+		settings.edit().putString(TOTAL_RELATED, String.valueOf(total)).commit();
+		
 	}
 
 	/**
@@ -382,6 +426,15 @@ public class LimeDB extends SQLiteOpenHelper {
 	 */
 	public void addDictionary(ArrayList<Mapping> srclist) {
 
+		SharedPreferences settings = ctx.getSharedPreferences(TOTAL_RELATED, 0);        
+		String dictionarString = settings.getString(TOTAL_RELATED, "");
+		
+		int total = 0;
+		
+		try{
+			total = Integer.parseInt(dictionarString);
+		}catch(Exception e){}
+		
 		boolean first = true;
 		Mapping preunit = null;
 
@@ -414,13 +467,16 @@ public class LimeDB extends SQLiteOpenHelper {
 
 					if (firstCharacter.matches(".*?[^A-Z]")) {
 						db.insert("DICTIONARY" + TABLE_NAME, null, cv);
+						total++;
 					} else {
 						if (j < 9) {
 							db.insert("DICTIONARY" + firstCharacter + j
 									+ TABLE_NAME, null, cv);
+							total++;
 						} else {
 							db.insert("DICTIONARY" + firstCharacter + 9
 									+ TABLE_NAME, null, cv);
+							total++;
 						}
 					}
 				}
@@ -428,7 +484,9 @@ public class LimeDB extends SQLiteOpenHelper {
 			preunit = unit;
 		}
 		
-
+		SharedPreferences storeset = ctx.getSharedPreferences(TOTAL_RELATED, 0);
+		storeset.edit().putString(TOTAL_RELATED, String.valueOf(total)).commit();
+		
 	}
 
 	/** 
@@ -446,7 +504,6 @@ public class LimeDB extends SQLiteOpenHelper {
 
 			String firstCharacter = keyword.substring(0, 1).toUpperCase();
 			Cursor cursor = null;
-			Cursor cursorPossible = null;
 
 			int j = keyword.length();
 
@@ -491,6 +548,11 @@ public class LimeDB extends SQLiteOpenHelper {
 					munit.setDictionary(true);
 					result.add(munit);
 				} while (cursor.moveToNext());
+			}
+
+			if(cursor != null){
+				cursor.deactivate(); 
+				cursor.close(); 
 			}
 		}
 		
@@ -583,11 +645,17 @@ public class LimeDB extends SQLiteOpenHelper {
 	 */
 	public void loadFile() {
 
+
+		SharedPreferences version = ctx.getSharedPreferences(MAPPING_VERSION, 0);
+		version.edit().putString(MAPPING_VERSION, "").commit();
+		
 		Thread thread = new Thread() {
 			public void run() {
 
+				boolean hasMappingVersion = false;
 				finish = false;
 				String line = "";
+				
 				try {
 					FileReader fr = new FileReader(filename);
 					BufferedReader buf = new BufferedReader(fr);
@@ -676,7 +744,6 @@ public class LimeDB extends SQLiteOpenHelper {
 
 			String firstCharacter = pcode.substring(0, 1).toUpperCase();
 			Cursor cursor = null;
-			Cursor cursorPossible = null;
 
 			int j = pcode.length();
 
@@ -703,8 +770,14 @@ public class LimeDB extends SQLiteOpenHelper {
 							+ ccode + "'", null, null, null, null, null);
 				}
 			}
-			if (cursor.getCount() > 0) {
-				return true;
+
+			if(cursor != null){
+				cursor.deactivate(); 
+				cursor.close(); 
+
+				if (cursor.getCount() > 0) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -841,6 +914,17 @@ public class LimeDB extends SQLiteOpenHelper {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+			
+
+			if(cursor != null){
+				cursor.deactivate(); 
+				cursor.close(); 
+			}
+
+			if(cursorPossible != null){
+				cursorPossible.deactivate(); 
+				cursorPossible.close(); 
+			}
 		}
 		
 		return result;
@@ -937,6 +1021,10 @@ public class LimeDB extends SQLiteOpenHelper {
 			e.printStackTrace();
 		}
 		
+		if(cursor != null){
+			cursor.deactivate(); 
+			cursor.close(); 
+		}
 
 		Iterator itr = temp.iterator();
 
@@ -972,7 +1060,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(targetFile.exists()){
 			
 			this.deleteDictionaryAll();
-			
+
+			int total = 0 ;
 			FileReader fis;
 			try {
 				fis = new FileReader(targetFile);
@@ -988,6 +1077,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						String word = line.split("\t")[3];
 						String score = line.split("\t")[4];
 						temp.add(new Mapping(pcode, pword, code, word, Integer.parseInt(score)));
+						total++;
 					}catch(Exception e){
 						e.printStackTrace();
 					}
@@ -997,6 +1087,9 @@ public class LimeDB extends SQLiteOpenHelper {
 			} catch (IOException e) {
 				e.printStackTrace();
 			} 
+
+			SharedPreferences settings = ctx.getSharedPreferences(TOTAL_RELATED, 0);
+			settings.edit().putString(TOTAL_RELATED, String.valueOf(total)).commit();
 		}
 		
 		this.batchAddDictionary(temp);

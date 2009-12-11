@@ -1,76 +1,150 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-/* 
-**
-** Copyright 2008, The Android Open Source Project
-**
-** Licensed under the Apache License, Version 2.0 (the "License"); 
-** you may not use this file except in compliance with the License. 
-** You may obtain a copy of the License at 
-**
-**     http://www.apache.org/licenses/LICENSE-2.0 
-**
-** Unless required by applicable law or agreed to in writing, software 
-** distributed under the License is distributed on an "AS IS" BASIS, 
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-** See the License for the specific language governing permissions and 
-** limitations under the License.
-*/
--->
-<ScrollView android:id="@+id/ScrollView01" android:layout_width="fill_parent" android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android"><TableLayout android:id="@+id/TableLayout01" android:layout_height="wrap_content" android:layout_width="fill_parent"><TableRow android:id="@+id/TableRow01" android:layout_width="wrap_content" android:layout_height="wrap_content">
+	<!--
+		/* ** ** Copyright 2008, The Android Open Source Project ** **
+		Licensed under the Apache License, Version 2.0 (the "License"); ** you
+		may not use this file except in compliance with the License. ** You
+		may obtain a copy of the License at ** **
+		http://www.apache.org/licenses/LICENSE-2.0 ** ** Unless required by
+		applicable law or agreed to in writing, software ** distributed under
+		the License is distributed on an "AS IS" BASIS, ** WITHOUT WARRANTIES
+		OR CONDITIONS OF ANY KIND, either express or implied. ** See the
+		License for the specific language governing permissions and **
+		limitations under the License. */
+	-->
+<ScrollView android:id="@+id/ScrollView01"
+	android:layout_width="fill_parent" android:layout_height="fill_parent"
+	xmlns:android="http://schemas.android.com/apk/res/android">
+	<TableLayout android:id="@+id/TableLayout01"
+		android:layout_height="wrap_content" android:layout_width="fill_parent">
+		<TableRow android:id="@+id/TableRow01" android:layout_width="wrap_content"
+			android:layout_height="wrap_content">
+
+			<LinearLayout android:id="@+id/LinearLayout02"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:keepScreenOn="true">
+
+				<ImageView android:id="@+id/ImageView01"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:src="@drawable/icon" android:layout_marginLeft="10px"
+					android:layout_marginRight="10px" android:layout_marginTop="10px"
+					android:layout_marginBottom="10px"></ImageView>
+				<TextView android:id="@+id/TextView01"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:paddingTop="20px" android:textSize="22px"
+					android:text="@string/lime_setting_title"></TextView>
+			</LinearLayout>
+		</TableRow>
+		<TableRow android:id="@+id/TableRow02" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:paddingLeft="10px"
+			android:layout_marginBottom="5px" android:layout_marginTop="5px">
+
+			<TextView android:id="@+id/TextView02" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:text="@string/lime_setting_operation_notice"
+				android:paddingRight="10px"></TextView>
+		</TableRow>
+		<TableRow android:id="@+id/TableRow03" android:layout_height="wrap_content"
+			android:paddingBottom="5px" android:paddingTop="5px"
+			android:layout_width="fill_parent" android:gravity="left"
+			android:paddingLeft="10px">
 
 
+			<LinearLayout android:id="@+id/LinearLayout01"
+				android:layout_height="wrap_content" android:layout_width="fill_parent"
+				android:gravity="left|center">
+				<Button android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:paddingLeft="10px"
+					android:paddingRight="10px" android:focusable="false"
+					android:text="@string/lime_setting_btn_load_local" android:id="@+id/btnLoadLocal"
+					android:width="200px"></Button>
+			</LinearLayout>
+		</TableRow>
+		<TableRow android:id="@+id/TableRow04" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:paddingLeft="10px"
+			android:layout_marginBottom="5px" android:layout_marginTop="5px">
+			<LinearLayout android:id="@+id/LinearLayout07"
+				android:layout_width="wrap_content" android:layout_height="wrap_content">
+				<TextView android:id="@+id/TextView08"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:paddingRight="10px" android:text="@string/lime_setting_operation_info"></TextView>
 
-<LinearLayout android:id="@+id/LinearLayout02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:keepScreenOn="true">
+			</LinearLayout>
+		</TableRow>
 
 
-<ImageView android:id="@+id/ImageView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/icon" android:layout_marginLeft="10px" android:layout_marginRight="10px" android:layout_marginTop="10px" android:layout_marginBottom="10px"></ImageView>
-<TextView android:id="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingTop="20px" android:textSize="22px" android:text="@string/lime_setting_title"></TextView>
-</LinearLayout>
-</TableRow>
-<TableRow android:id="@+id/TableRow02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingLeft="10px" android:layout_marginBottom="5px" android:layout_marginTop="5px">
+		<TableRow android:id="@+id/TableRow05" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:paddingLeft="10px">
+			<LinearLayout android:id="@+id/LinearLayout07"
+				android:layout_width="wrap_content" android:layout_height="wrap_content">
+				<TextView android:id="@+id/TextView08"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:paddingRight="10px" android:text="@string/lime_setting_label_amount"></TextView>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/txtInfoAmount"></TextView>
+			</LinearLayout>
+		</TableRow>
+		<TableRow android:id="@+id/TableRow06" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:paddingLeft="10px">
+			<LinearLayout android:id="@+id/LinearLayout07"
+				android:layout_width="wrap_content" android:layout_height="wrap_content">
+				<TextView android:id="@+id/TextView08"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:paddingRight="10px" android:text="@string/lime_setting_label_dictionary_amount"></TextView>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/txtInfoDictionaryAmount"></TextView>
+			</LinearLayout>
+		</TableRow>
+		<TableRow android:id="@+id/TableRow07" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:paddingLeft="10px"
+			android:layout_marginBottom="5px" android:layout_marginTop="15px">
+			<TextView android:id="@+id/TextView03" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:text="@string/lime_setting_operation"></TextView>
+		</TableRow>
 
-<TextView android:id="@+id/TextView02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_notice" android:paddingRight="10px"></TextView>
-</TableRow>
-<TableRow android:id="@+id/TableRow03" android:layout_height="wrap_content" android:paddingBottom="5px" android:paddingTop="5px" android:layout_width="fill_parent" android:gravity="left" android:paddingLeft="10px">
+		<TableRow android:id="@+id/TableRow08" android:layout_height="wrap_content"
+			android:paddingBottom="5px" android:paddingTop="5px"
+			android:layout_width="fill_parent" android:gravity="left"
+			android:paddingLeft="10px">
+			<LinearLayout android:id="@+id/LinearLayout01"
+				android:layout_height="wrap_content" android:layout_width="fill_parent"
+				android:gravity="left|center">
+				<Button android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:paddingLeft="10px"
+					android:paddingRight="10px" android:focusable="false" android:id="@+id/btnReset"
+					android:text="@string/lime_setting_reset_database" android:width="100px"></Button>
+				<Button android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:paddingLeft="10px"
+					android:paddingRight="10px" android:focusable="false"
+					android:id="@+id/btnResetDictionary" android:text="@string/lime_setting_reset_dictionary"
+					android:width="150px"></Button>
+			</LinearLayout>
+		</TableRow>
 
+		<TableRow android:id="@+id/TableRow09" android:layout_height="wrap_content"
+			android:paddingBottom="5px" android:paddingTop="5px"
+			android:layout_width="fill_parent" android:gravity="left"
+			android:paddingLeft="10px">
+			<TextView android:id="@+id/TextView03" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:text="@string/lime_setting_backtup"></TextView>
+		</TableRow>
 
-<LinearLayout android:id="@+id/LinearLayout01" android:layout_height="wrap_content" android:layout_width="fill_parent" android:gravity="left|center">
-<Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingLeft="10px" android:paddingRight="10px" android:focusable="false" android:text="@string/lime_setting_btn_load_local" android:id="@+id/btnLoadLocal" android:width="200px"></Button>
-</LinearLayout>
-</TableRow>
-<TableRow android:id="@+id/TableRow04" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingLeft="10px" android:layout_marginBottom="5px" android:layout_marginTop="5px">
-<TextView android:id="@+id/TextView03" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info"></TextView>
-</TableRow>
+		<TableRow android:id="@+id/TableRow10" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:paddingLeft="10px"
+			android:layout_marginBottom="5px" android:layout_marginTop="15px">
+			<LinearLayout android:id="@+id/LinearLayout01"
+				android:layout_height="wrap_content" android:layout_width="fill_parent"
+				android:gravity="left|center">
+				<Button android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:paddingLeft="10px"
+					android:paddingRight="10px" android:focusable="false"
+					android:width="100px" android:text="@string/lime_setting_backtup_db"
+					android:id="@+id/btnBackup"></Button>
+				<Button android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:paddingLeft="10px"
+					android:paddingRight="10px" android:focusable="false"
+					android:text="@string/lime_setting_restore_db" android:width="100px"
+					android:id="@+id/btnRestore"></Button>
+			</LinearLayout>
+		</TableRow>
 
-
-<TableRow android:id="@+id/TableRow05" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingLeft="10px"><LinearLayout android:id="@+id/LinearLayout07" android:layout_width="wrap_content" android:layout_height="wrap_content"><TextView android:id="@+id/TextView08" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingRight="10px" android:text="@string/lime_setting_label_amount"></TextView>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/txtInfoAmount"></TextView>
-</LinearLayout>
-</TableRow><TableRow android:id="@+id/TableRow06" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingLeft="10px"><LinearLayout android:id="@+id/LinearLayout07" android:layout_width="wrap_content" android:layout_height="wrap_content"><TextView android:id="@+id/TextView08" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingRight="10px" android:text="@string/lime_setting_label_dictionary_amount"></TextView>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/txtInfoDictionaryAmount"></TextView>
-</LinearLayout>
-</TableRow><TableRow android:id="@+id/TableRow07" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingLeft="10px" android:layout_marginBottom="5px" android:layout_marginTop="15px">
-<TextView android:id="@+id/TextView03" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation"></TextView>
-</TableRow>
-
-<TableRow android:id="@+id/TableRow08" android:layout_height="wrap_content" android:paddingBottom="5px" android:paddingTop="5px" android:layout_width="fill_parent" android:gravity="left" android:paddingLeft="10px">
-	<LinearLayout android:id="@+id/LinearLayout01" android:layout_height="wrap_content" android:layout_width="fill_parent" android:gravity="left|center">
-	<Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingLeft="10px" android:paddingRight="10px" android:focusable="false" android:id="@+id/btnReset" android:text="@string/lime_setting_reset_database" android:width="100px"></Button>
-	<Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingLeft="10px" android:paddingRight="10px" android:focusable="false" android:id="@+id/btnResetDictionary" android:text="@string/lime_setting_reset_dictionary" android:width="150px"></Button>
-	</LinearLayout>
-</TableRow>
-
-<TableRow android:id="@+id/TableRow09" android:layout_height="wrap_content" android:paddingBottom="5px" android:paddingTop="5px" android:layout_width="fill_parent" android:gravity="left" android:paddingLeft="10px">
-	<TextView android:id="@+id/TextView03" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_backtup"></TextView>
-</TableRow>
-
-<TableRow android:id="@+id/TableRow10" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingLeft="10px" android:layout_marginBottom="5px" android:layout_marginTop="15px">
-	<LinearLayout android:id="@+id/LinearLayout01" android:layout_height="wrap_content" android:layout_width="fill_parent" android:gravity="left|center">
-	<Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingLeft="10px" android:paddingRight="10px" android:focusable="false" android:width="100px" android:text="@string/lime_setting_backtup_db" android:id="@+id/btnBackup"></Button>
-	<Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingLeft="10px" android:paddingRight="10px" android:focusable="false" android:text="@string/lime_setting_restore_db" android:width="100px" android:id="@+id/btnRestore"></Button>
-	</LinearLayout>
-</TableRow>
-
-</TableLayout>
+	</TableLayout>
 </ScrollView>

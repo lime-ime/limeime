@@ -36,9 +36,10 @@
     
     <!-- LIME Setting -->
     <string name="lime_setting_title">LIME 對應表管理</string>
-    <string name="lime_setting_operation_notice">請點選下方的按鈕由 SDCARD 選擇並載入輸入法對應表 (.lime), 執行這一個動作會清除先前已載入的記錄. \n匯入工作將於背景執行，進度會顯示於狀態列，依檔案大小可能會耗費數分鐘至數十分之久，請耐心等候. \n您可以在官方網站  http://android.toload.net/ 找到關於輸入法對應表建立方式及詳細操作使用說明.</string>
+    <string name="lime_setting_operation_notice">LIME IME v1.7.3\n\n請點選下方的按鈕由 SDCARD 選擇並載入輸入法對應表 (.lime), 執行這一個動作會清除先前已載入的記錄. \n匯入工作將於背景執行，進度會顯示於狀態列，依檔案大小可能會耗費數分鐘至數十分之久，請耐心等候. \n您可以在官方網站  http://android.toload.net/ 找到關於輸入法對應表建立方式及詳細操作使用說明.</string>
     <string name="lime_setting_btn_load_local">載入 .LIME 對應表</string>
     <string name="lime_setting_operation_info">系統資訊</string>
+    <string name="lime_setting_mapping_version">對應表 :</string>
     <string name="lime_setting_operation">操作</string>
     <string name="lime_setting_reset_database">清除資料庫</string>
     <string name="lime_setting_reset_dictionary">清除關聯字</string>
@@ -60,7 +61,7 @@
     <string name="lime_setting_btn_close">CLOSE</string>
     
     <!-- LIME Setting About-->
-    <string name="lime_setting_menu_about_title">LIME 1.6.3v</string>
+    <string name="lime_setting_menu_about_title">LIME 1.7.3v</string>
     <string name="lime_setting_menu_about_message">Lightweight InputMethod Editor 程式，允許您匯入自定義的對應表並建立個人輸入法. </string>
     <string name="lime_setting_menu_reset_message">資料庫已重置完成 !!</string>
     <string name="lime_setting_menu_reset_dictionary_message">關聯字已重置完成 !!</string>
@@ -85,6 +86,7 @@
     <string name="keyboard">鍵盤</string>
     <string name="mapping">對應表</string>
     
+    <string name="keyboard_list">鍵盤選取</string>
     <string name="vibrate_on_keypress">打字震動</string>
     <string name="sound_on_keypress">打字音效</string>
     <string name="display_number_keypads">顯示數字鍵盤</string>
@@ -100,4 +102,21 @@
     <string name="accept_symbol_index">啟動符號對應</string>
     <string name="accept_symbol_index_summary">使用符號索引碼對應文字</string>
     
+    
+    <!-- Changjei Keyboard, Standard Keyboard-->
+    <string name="typing_mode_english">輸入模式 / 英文</string>
+    <string name="typing_mode_mixed">輸入模式 / 混合</string>
+    
+    <!-- Keyboard Selection List -->
+    <string-array name="keyboard">
+		<item>預設鍵盤</item>
+		<item>電話鍵盤</item>
+		<item>倉頡鍵盤</item>
+	</string-array>
+    <string-array name="keyboard_codes">
+		<item>lime</item>
+		<item>phone</item>
+		<item>cj</item>
+	</string-array>
+	
 </resources>

@@ -36,6 +36,7 @@ import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -69,6 +70,10 @@ import android.database.sqlite.SQLiteCursor;
  */
 public class LIMESetting extends Activity {
 
+	private final static String TOTAL_RECORD = "total_record";
+	private final static String TOTAL_RELATED = "total_related";
+	private final static String MAPPING_VERSION = "mapping_version";
+	
 	private ArrayList<File> filelist;
 
 	private Button btnLoadSd;
@@ -90,6 +95,7 @@ public class LIMESetting extends Activity {
 	private File mappingSrc;
 	private TextView txtAmount;
 	private TextView txtDictionaryAmount;
+	private TextView txtMappingVersion;
 	
 	private Thread thread = null;
 	private Resources res = null;
@@ -136,6 +142,10 @@ public class LIMESetting extends Activity {
 							}
 						}).show();
 
+				SharedPreferences settings = getSharedPreferences("TEST", 0);        
+				String xyvalue = settings.getString("test", "");
+				Log.i("ART","onClick Reset All:"+xyvalue);
+
 				// Update Information
 				updateInfomation();
 			}
@@ -157,6 +167,10 @@ public class LIMESetting extends Activity {
 							public void onClick(DialogInterface dlg, int sumthin) {
 							}
 						}).show();
+
+				SharedPreferences settings = getSharedPreferences("TEST", 0);        
+				String xyvalue = settings.getString("test", "");
+				Log.i("ART","onClick Reset Dictionary:"+xyvalue);
 
 				// Update Information
 				updateInfomation();
@@ -218,12 +232,40 @@ public class LIMESetting extends Activity {
 	 */
 	public void updateInfomation(){
 		try{
+			
+			int total = 0;
+			try{
+				SharedPreferences settings = ctx.getSharedPreferences(TOTAL_RECORD, 0);        
+				String recordString = settings.getString(TOTAL_RECORD, "");
+				
+				total = Integer.parseInt(recordString);
+			}catch(Exception e){}
+
+			int dictotal = 0;
+			try{
+				SharedPreferences settings = ctx.getSharedPreferences(TOTAL_RELATED, 0);        
+				String recordString = settings.getString(TOTAL_RELATED, "");
+				
+				dictotal = Integer.parseInt(recordString);
+			}catch(Exception e){}
+
+			String version = "";
+			try{
+				SharedPreferences settings = ctx.getSharedPreferences(MAPPING_VERSION, 0);        
+				version = settings.getString(MAPPING_VERSION, "");
+			}catch(Exception e){}
+			
 			limedb = new LimeDB(this);
 			txtAmount = (TextView)this.findViewById(R.id.txtInfoAmount);
-			txtAmount.setText(String.valueOf(limedb.countAll()));
+			if(version != null && !version.equals("")){
+				txtAmount.setText(String.valueOf(total) + " (" + version + ")");
+			}else{
+				txtAmount.setText(String.valueOf(total));
+			}
 	
 			txtDictionaryAmount = (TextView)this.findViewById(R.id.txtInfoDictionaryAmount);
-			txtDictionaryAmount.setText(String.valueOf(limedb.countDictionaryAll()));
+			txtDictionaryAmount.setText(String.valueOf(dictotal));
+			
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -375,7 +417,13 @@ public class LIMESetting extends Activity {
        		   	while(!limedb.isFinish()){
        		   		try {
 						this.sleep(10000);
-						total = limedb.getCount();
+
+						try{
+							SharedPreferences settings = ctx.getSharedPreferences(TOTAL_RECORD, 0);        
+							String recordString = settings.getString(TOTAL_RECORD, "");
+							
+							total = Integer.parseInt(recordString);
+						}catch(Exception e){}
 						
 		       			// Notification
 		       			Notification barMsg = new Notification(

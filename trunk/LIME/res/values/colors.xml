@@ -23,6 +23,7 @@
     <color name="candidate_recommended">#FFE35900</color>
     <color name="candidate_other">#FFE35900</color>
     <color name="candidate_background">#bbffffff</color>
+    <!-- <color name="candidate_background">#bbffffff</color>-->
     
     <!-- Preference -->
     <color name="preference_background">#bbffffff</color>

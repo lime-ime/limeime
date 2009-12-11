@@ -27,6 +27,12 @@
                 android:key="lime_keyboard"
                 android:title="@string/keyboard"
                 android:summary="">
+        <ListPreference
+				android:key="keyboard_list"
+				android:title="@string/keyboard_list"
+				android:entries="@array/keyboard"
+				android:entryValues="@array/keyboard_codes"
+				android:dialogTitle="@string/keyboard_list" />
         <CheckBoxPreference
                 android:key="vibrate_on_keypress"
                 android:title="@string/vibrate_on_keypress" />
@@ -38,6 +44,7 @@
                 android:title="@string/display_number_keypads"
                 android:summary="@string/display_number_keypads_summary" />
     </PreferenceCategory>
+    
     <PreferenceCategory
         xmlns:android="http://schemas.android.com/apk/res/android"
                 android:key="lime_mapping"

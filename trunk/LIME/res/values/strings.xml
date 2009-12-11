@@ -36,9 +36,10 @@
     
     <!-- LIME Setting -->
     <string name="lime_setting_title">LIME Mapping DB</string>
-    <string name="lime_setting_operation_notice">Click button to select mapping file(.lime) from /SDCARD and load into database. This operation will reset database so all exists records will be deleted. \nTo found more information on preparing mapping file and complete user guide please visit official website http://android.toload.net/. </string>
+    <string name="lime_setting_operation_notice">LIME IME v1.7.3\n\nClick button to select mapping file(.lime) from /SDCARD and load into database. This operation will reset database so all exists records will be deleted. \nTo found more information on preparing mapping file and complete user guide please visit official website http://android.toload.net/. </string>
     <string name="lime_setting_btn_load_local">LOAD .LIME MAPPING</string>
     <string name="lime_setting_operation_info">Information</string>
+    <string name="lime_setting_mapping_version">Version :</string>
     <string name="lime_setting_operation">Operation</string>
     <string name="lime_setting_reset_database">RESET DATABASE</string>
     <string name="lime_setting_reset_dictionary">RESET RELATED WORDS</string>
@@ -60,7 +61,7 @@
     <string name="lime_setting_btn_close">CLOSE</string>
     
     <!-- LIME Setting About-->
-    <string name="lime_setting_menu_about_title">LIME 1.6.3v</string>
+    <string name="lime_setting_menu_about_title">LIME 1.7.3v</string>
     <string name="lime_setting_menu_about_message">Lightweight InputMethod Editor is a tools which allow you to build customize InputMethod by simply import the code and word mapping.</string>
     <string name="lime_setting_menu_reset_message">Database Reset Completed !!</string>
     <string name="lime_setting_menu_reset_dictionary_message">Dictionary Reset Completed !!</string>
@@ -85,6 +86,7 @@
     <string name="keyboard">Keyboard</string>
     <string name="mapping">Mapping</string>
     
+    <string name="keyboard_list">Keyboard Selection</string>
     <string name="vibrate_on_keypress">Vibrate on keypress</string>
     <string name="sound_on_keypress">Sound on keypress</string>
     <string name="display_number_keypads">Display number keypads</string>
@@ -100,4 +102,21 @@
     <string name="accept_symbol_index">Activate symbol</string>
     <string name="accept_symbol_index_summary">Allow input punctuation as mapping code</string>
     
+    
+    <!-- Changjei Keyboard, Standard Keyboard-->
+    <string name="typing_mode_english">Typing Mode / English</string>
+    <string name="typing_mode_mixed">Typing Mode / Mixed</string>
+    
+    <!-- Keyboard Selection List -->
+    <string-array name="keyboard">
+		<item>Default</item>
+		<item>Phone</item>
+		<item>Changjei</item>
+	</string-array>
+    <string-array name="keyboard_codes">
+		<item>lime</item>
+		<item>phone</item>
+		<item>cj</item>
+	</string-array>
+
 </resources>
