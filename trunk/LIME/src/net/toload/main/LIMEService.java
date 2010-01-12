@@ -40,6 +40,9 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import android.app.Service;
@@ -56,6 +59,7 @@ public class LIMEService extends InputMethodService implements
 
 	static final boolean DEBUG = false;
 	static final String PREF = "LIMEXY";
+	private final static String RESET_STATUS = "reset_status";
 
 	static final boolean PROCESS_HARD_KEYS = true;
 
@@ -73,6 +77,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean mEnglishFlagShift;
 	private boolean onIM = false;
 	private boolean hasFirstMatched = false;
+	private boolean hasRightShiftPress = false;
 
 	private long mLastShiftTime;
 	private long mMetaState;
@@ -107,6 +112,8 @@ public class LIMEService extends InputMethodService implements
 	private final float FX_VOLUME = 1.0f;
 	private static final int KEYCODE_ENTER = 10;
 	private static final int KEYCODE_SPACE = ' ';
+	private static HashMap<String, ArrayList> cache = new HashMap();
+	private static HashMap<String, Date> cachetime = new HashMap();
 
 	private boolean hasVibration = false;
 	private boolean hasSound = false;
@@ -116,6 +123,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasAutoLearn = false;
 	private boolean hasAutoDictionary = false;
 	private boolean hasKeyPress = false;
+	private boolean hasSimiliar = false;
 
 	private String keyboardSelection;
 
@@ -155,8 +163,9 @@ public class LIMEService extends InputMethodService implements
 		hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
 		hasAutoLearn = sp.getBoolean("candidate_learning", false);
 		hasAutoDictionary = sp.getBoolean("candidate_dictionary", false);
+		hasSimiliar = sp.getBoolean("candidate_display", false);
 		keyboardSelection = sp.getString("keyboard_list", "lime");
-
+		
 		// initial Input List
 		inputlist = new ArrayList<Mapping>();
 		
@@ -360,8 +369,19 @@ public class LIMEService extends InputMethodService implements
 		hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
 		hasAutoLearn = sp.getBoolean("candidate_learning", false);
 		hasAutoDictionary = sp.getBoolean("candidate_dictionary", false);
+		hasSimiliar = sp.getBoolean("candidate_display", false);
 		
 		keyboardSelection = sp.getString("keyboard_list", "lime");
+		
+		// Check if has reset perform
+
+		SharedPreferences settings = this.getSharedPreferences(RESET_STATUS, 0);        
+		String resetstatus = settings.getString(RESET_STATUS, "");
+		if(resetstatus != null && resetstatus.equals("yes")){
+			cache = new HashMap();
+			cachetime = new HashMap();
+			settings.edit().putString(RESET_STATUS, "no").commit();
+		}
 
 	}
 
@@ -407,9 +427,16 @@ public class LIMEService extends InputMethodService implements
 			for (int i = 0; i < (completions != null ? completions.length : 0); i++) {
 				CompletionInfo ci = completions[i];
 				if (ci != null)
-					stringList.addAll(limedb.getSuggestions(ci.getText()
-							.toString()));
-				// (ci.getText().toString());
+					if(cache.get(ci.getText().toString()) != null || 
+							( (cachetime.get(ci.getText().toString()) != null) &&
+							  (isValidTime(cachetime.get(ci.getText().toString()))) )
+							){
+						stringList = cache.get(ci.getText().toString());
+					}else{
+						cachetime.put(ci.getText().toString(), new Date());
+						cache.put(ci.getText().toString(), limedb.getSuggestions(ci.getText().toString(), hasSimiliar));
+						stringList.addAll(cache.get(ci.getText().toString()));
+					}
 			}
 			setSuggestions(stringList, true, true);
 		}
@@ -421,19 +448,21 @@ public class LIMEService extends InputMethodService implements
 	 * option.
 	 */
 	private boolean translateKeyDown(int keyCode, KeyEvent event) {
-		mMetaState = MetaKeyKeyListener.handleKeyDown(mMetaState, keyCode,
-				event);
-		int c = event.getUnicodeChar(MetaKeyKeyListener
-				.getMetaState(mMetaState));
+		mMetaState = MetaKeyKeyListener.handleKeyDown(mMetaState, keyCode, event);
+		int c = event.getUnicodeChar(MetaKeyKeyListener.getMetaState(mMetaState));
 		mMetaState = MetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 		InputConnection ic = getCurrentInputConnection();
+
+		if(keyCode == 59){
+			c = -1;
+		}
 		if (c == 0 || ic == null) {
 			return false;
 		}
 
 		boolean dead = false;
 
-		if ((c & KeyCharacterMap.COMBINING_ACCENT) != 0) {
+		if (c != -1 && (c & KeyCharacterMap.COMBINING_ACCENT) != 0) {
 			dead = true;
 			c = c & KeyCharacterMap.COMBINING_ACCENT_MASK;
 		}
@@ -447,6 +476,14 @@ public class LIMEService extends InputMethodService implements
 				mComposing.setLength(mComposing.length() - 1);
 			}
 		}
+
+		if(!hasRightShiftPress && mHasShift && c >= 97 && c <=122){
+			c -= 32;
+		}else if(hasRightShiftPress && c >= 97 && c <=122){
+			c -= 32;
+			hasRightShiftPress = false;
+		}
+		
 		onKey(c, null);
 
 		return true;
@@ -481,17 +518,29 @@ public class LIMEService extends InputMethodService implements
 				onKey(Keyboard.KEYCODE_DELETE, null);
 				return true;
 			}
+
+			if (mCandidateView != null) {
+				mCandidateView.clear();
+			}
+			mComposing.setLength(0);
+			setCandidatesViewShown(false);
+			
 			break;
 
 		case KeyEvent.KEYCODE_ENTER:
 			// Let the underlying text editor always handle these.
 			return false;
-
+			
 		default:
+
 			// For all other keys, if we want to do transformations on
 			// text being entered with a hard keyboard, we need to process
 			// it and do the appropriate action.
 
+			if(keyCode == 60){
+				this.hasRightShiftPress = true;
+			}
+		
 			if (PROCESS_HARD_KEYS) {
 				if (keyCode == KeyEvent.KEYCODE_SPACE
 						&& (event.getMetaState() & KeyEvent.META_ALT_ON) != 0) {
@@ -512,13 +561,21 @@ public class LIMEService extends InputMethodService implements
 						// And we consume this event.
 						return true;
 					}
+
+					if (mCandidateView != null) {
+						mCandidateView.clear();
+					}
+					mComposing.setLength(0);
+					setCandidatesViewShown(false);
 				}
+
 				if (mPredictionOn && translateKeyDown(keyCode, event)) {
 					return true;
 				}
 			}
 		}
 
+		
 		return super.onKeyDown(keyCode, event);
 	}
 
@@ -548,18 +605,15 @@ public class LIMEService extends InputMethodService implements
 	 */
 	private void commitTyped(InputConnection inputConnection) {
 
-		if (mComposing.length() > 0
-				|| (firstMatched != null && firstMatched.isDictionary())) {
+		if (mComposing.length() > 0 || (firstMatched != null && firstMatched.isDictionary())) {
 
 			if (onIM) {
 				if (firstMatched != null && !firstMatched.getWord().equals("")) {
 					int firstMatchedLength = firstMatched.getWord().length();
-					if (firstMatched.getCode() == null
-							|| firstMatched.getCode().equals("")) {
+					if (firstMatched.getCode() == null || firstMatched.getCode().equals("")) {
 						firstMatchedLength = 1;
 					}
-					inputConnection.commitText(firstMatched.getWord(),
-							firstMatchedLength);
+					inputConnection.commitText(firstMatched.getWord(), firstMatchedLength);
 					if (hasAutoLearn) {
 						limedb.addScore(firstMatched);
 					}
@@ -568,7 +622,6 @@ public class LIMEService extends InputMethodService implements
 					tempMatched = firstMatched;
 					firstMatched = null;
 					hasFirstMatched = true;
-
 				} else if (firstMatched != null
 						&& firstMatched.getWord().equals("")) {
 					inputConnection.commitText(misMatched, misMatched.length());
@@ -587,7 +640,13 @@ public class LIMEService extends InputMethodService implements
 				inputlist.add(null);
 			}
 
-			updateCandidates();
+			if (mCandidateView != null) {
+				mCandidateView.clear();
+			}
+			mComposing.setLength(0);
+			
+			updateDictionaryView();
+			
 		}
 	}
 
@@ -596,11 +655,6 @@ public class LIMEService extends InputMethodService implements
 	 * editor state.
 	 */
 	private void updateShiftKeyState(EditorInfo attr) {
-		/**
-		 * if (attr != null && mInputView != null && (mLimeKeyboard ==
-		 * mInputView.getKeyboard() || mLimeNumberKeyboard ==
-		 * mInputView.getKeyboard()) ) {
-		 **/
 
 		if (attr != null && mInputView != null) {
 			int caps = 0;
@@ -673,9 +727,13 @@ public class LIMEService extends InputMethodService implements
 				} else if (keyCode == 32 && (!hasFirstMatched)) {
 					getCurrentInputConnection().commitText(
 							String.valueOf((char) keyCode), 1);
-				} else if (keyCode == 32 && this.mComposing.length() == 0) {
-					getCurrentInputConnection().commitText(
-							String.valueOf((char) keyCode), 1);
+				} else if (keyCode == 32 && this.mComposing.length() == 0 && this.tempMatched != null
+						&& !this.tempMatched.getCode().trim().equals("")) {
+					// Press Space Button + has matched keyword then do nothing
+				} else if (keyCode == 32 && this.mComposing.length() == 0 && this.tempMatched != null
+						&& this.tempMatched.getCode().trim().equals("")) {
+					// Press Space Button + no matched keyword consider as English append space at the end
+					getCurrentInputConnection().commitText(String.valueOf((char) keyCode), 1);
 				}
 				hasFirstMatched = false;
 			}
@@ -816,51 +874,69 @@ public class LIMEService extends InputMethodService implements
 	 * This will need to be filled in by however you are determining candidates.
 	 */
 	private void updateCandidates() {
-		if (!mCompletionOn) {
-			if (mComposing.length() > 0) {
-				ArrayList<Mapping> list = new ArrayList<Mapping>();
-				// list.add(mComposing.toString());
 
-				list.addAll(limedb.getSuggestions(mComposing.toString()));
+		if (mCandidateView != null) {
+			mCandidateView.clear();
+		}
+		
+		if (!mCompletionOn && mComposing.length() > 0) {
+			ArrayList<Mapping> list = new ArrayList<Mapping>();
 
+			if(cache.get(mComposing.toString()) != null || 
+					( (cachetime.get(mComposing.toString()) != null) &&
+					  (isValidTime(cachetime.get(mComposing.toString()))) )
+					){
+				list = cache.get(mComposing.toString());
+			}else{
+				cachetime.put(mComposing.toString(), new Date());
+				cache.put(mComposing.toString(), limedb.getSuggestions(mComposing.toString(), hasSimiliar));
+				list.addAll(cache.get(mComposing.toString()));
+			}
+			if(list.size() > 0){
 				setSuggestions(list, true, true);
-			} else {
+			}else{
+				setSuggestions(null, false, false);
+			}
+		}
+
+	}
+
+	/*
+	 * Update dictionary view
+	 */
+	private void updateDictionaryView() {
+		
+		// If there is no Temp Matched word exist then not to display dictionary view
+		try{
+			if(!tempMatched.getCode().equals("")){
+				
 				if (hasAutoDictionary) {
 					ArrayList<Mapping> list = new ArrayList<Mapping>();
 					if (tempMatched != null) {
-						list
-								.addAll(limedb.getDictionary(tempMatched
-										.getCode()));
-						tempMatched = null;
+						list.addAll(limedb.getDictionary(tempMatched.getCode()));
 					}
 					if (list.size() > 0) {
 						templist = (ArrayList) list;
 						setSuggestions(list, true, true);
 					} else {
+						tempMatched = null;
 						setSuggestions(null, false, false);
 					}
 				} else {
 					setSuggestions(null, false, false);
 				}
 			}
-		}
-
+		}catch(Exception e){}
+		
 	}
-
 	public void setSuggestions(List<Mapping> suggestions, boolean completions,
 			boolean typedWordValid) {
 
-		/**
-		 * if (suggestions != null && suggestions.size() > 0) {
-		 * setCandidatesViewShown(true); } else if (isExtractViewShown()) {
-		 * setCandidatesViewShown(true); }
-		 **/
-
-		if (suggestions != null && suggestions.size() > 0) {
+		if(suggestions != null && suggestions.size() > 0){
+			
 			setCandidatesViewShown(true);
-		}
-		if (mCandidateView != null) {
-			if (suggestions != null) {
+			
+			if (mCandidateView != null) {
 				templist = (ArrayList) suggestions;
 				try {
 					if (suggestions.size() == 1) {
@@ -873,9 +949,10 @@ public class LIMEService extends InputMethodService implements
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
+				mCandidateView.setSuggestions(suggestions, completions, typedWordValid);
 			}
-			mCandidateView.setSuggestions(suggestions, completions,
-					typedWordValid);
+		}else{
+			setCandidatesViewShown(false);
 		}
 
 	}
@@ -887,15 +964,23 @@ public class LIMEService extends InputMethodService implements
 			mComposing.delete(length - 1, length);
 			getCurrentInputConnection().setComposingText(mComposing, 1);
 			updateCandidates();
-		} else if (length > 0) {
+		} else if (length == 1) {
+			if (mCandidateView != null) {
+				mCandidateView.clear();
+			}
 			mComposing.setLength(0);
+			setCandidatesViewShown(false);
 			getCurrentInputConnection().commitText("", 0);
-			updateCandidates();
 		} else {
+			if (mCandidateView != null) {
+				mCandidateView.clear();
+			}
+			mComposing.setLength(0);
+			setCandidatesViewShown(false);
 			keyDownUp(KeyEvent.KEYCODE_DEL);
 		}
 		updateShiftKeyState(getCurrentInputEditorInfo());
-
+		
 	}
 
 	private void handleShift() {
@@ -1171,7 +1256,7 @@ public class LIMEService extends InputMethodService implements
 				if(keyDownCode == 40){
 					result = handleSelection(directionX, directionY, new String[]{"[",")","(","]"});
 				}else if(keyDownCode == 44){
-					result = handleSelection(directionX, directionY, new String[]{"?",".",",","\\"});
+					result = handleSelection(directionX, directionY, new String[]{"?",".",";","\\"});
 				}else if(keyDownCode == 48){
 					result = handleSelection(directionX, directionY, new String[]{"^","}","~","{"});
 				}else if(keyDownCode == 49){
@@ -1338,7 +1423,6 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void handleClose() {
-		//commitTyped(getCurrentInputConnection());
 		requestHideSelf(0);
 		mInputView.closing();
 	}
@@ -1379,15 +1463,17 @@ public class LIMEService extends InputMethodService implements
 				&& index < mCompletions.length) {
 			CompletionInfo ci = mCompletions[index];
 			getCurrentInputConnection().commitCompletion(ci);
-			if (mCandidateView != null) {
-				mCandidateView.clear();
-			}
 			updateShiftKeyState(getCurrentInputEditorInfo());
 		} else if (mComposing.length() > 0) {
 			commitTyped(getCurrentInputConnection());
+			this.firstMatched = null;
+			this.hasFirstMatched = false;
+			updateDictionaryView();
 		} else if (firstMatched != null && firstMatched.isDictionary()) {
 			commitTyped(getCurrentInputConnection());
+			updateDictionaryView();
 		}
+		
 	}
 
 	public void swipeRight() {
@@ -1484,6 +1570,20 @@ public class LIMEService extends InputMethodService implements
 		result = (int)keys[direction].hashCode();
 		
 		return result;
+	}
+	
+	public boolean isValidTime(Date target){
+		Calendar srcCal = Calendar.getInstance();
+		srcCal.setTime(new Date());
+		Calendar destCal = Calendar.getInstance();
+		destCal.setTime(target);
+		
+		if(srcCal.getTimeInMillis() - destCal.getTimeInMillis() < 1800000){
+			return true;
+		}else{
+			return false;
+		}
+		
 	}
 	
 	

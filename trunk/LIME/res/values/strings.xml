@@ -36,7 +36,7 @@
     
     <!-- LIME Setting -->
     <string name="lime_setting_title">LIME Mapping DB</string>
-    <string name="lime_setting_operation_notice">LIME IME v1.7.3\n\nClick button to select mapping file(.lime) from /SDCARD and load into database. This operation will reset database so all exists records will be deleted. \nTo found more information on preparing mapping file and complete user guide please visit official website http://android.toload.net/. </string>
+    <string name="lime_setting_operation_notice">LIME IME v1.7.4\n\nClick button to select mapping file(.lime) from /SDCARD and load into database. This operation will reset database so all exists records will be deleted. \nTo found more information on preparing mapping file and complete user guide please visit official website http://android.toload.net/. </string>
     <string name="lime_setting_btn_load_local">LOAD .LIME MAPPING</string>
     <string name="lime_setting_operation_info">Information</string>
     <string name="lime_setting_mapping_version">Version :</string>
@@ -93,6 +93,8 @@
     <string name="display_number_keypads_summary">Display number keypads</string>
     <string name="candidate_switch">Sliding select suggestion</string>
     <string name="candidate_switch_summary">Enable suggestion words sliding selection</string>
+    <string name="candidate_display">Display similar words</string>
+    <string name="candidate_display_summary">Base on input codes display similar words </string>
     <string name="candidate_learning">Auto learning</string>
     <string name="candidate_learning_summary">Enable suggestion words auto learning</string>
     <string name="candidate_dictionary">Enable related word</string>

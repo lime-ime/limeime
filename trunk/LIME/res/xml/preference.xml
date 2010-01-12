@@ -55,6 +55,10 @@
                 android:title="@string/candidate_switch"
                 android:summary="@string/candidate_switch_summary" />
         <CheckBoxPreference
+                android:key="candidate_display"
+                android:title="@string/candidate_display"
+                android:summary="@string/candidate_display_summary" />
+        <CheckBoxPreference
                 android:key="candidate_learning"
                 android:title="@string/candidate_learning"
                 android:summary="@string/candidate_learning_summary" />

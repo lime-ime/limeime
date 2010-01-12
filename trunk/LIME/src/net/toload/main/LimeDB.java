@@ -1,21 +1,3 @@
-
-/* 
-**
-** Copyright 2008, The Android Open Source Project
-**
-** Licensed under the Apache License, Version 2.0 (the "License"); 
-** you may not use this file except in compliance with the License. 
-** You may obtain a copy of the License at 
-**
-**     http://www.apache.org/licenses/LICENSE-2.0 
-**
-** Unless required by applicable law or agreed to in writing, software 
-** distributed under the License is distributed on an "AS IS" BASIS, 
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-** See the License for the specific language governing permissions and 
-** limitations under the License.
-*/
-
 package net.toload.main;
 
 import java.io.BufferedReader;
@@ -53,6 +35,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String TOTAL_RECORD = "total_record";
 	private final static String TOTAL_RELATED = "total_related";
 	private final static String MAPPING_VERSION = "mapping_version";
+	private final static String RESET_STATUS = "reset_status";
 
 	private final static int start = 65;
 	private final static int end = 90;
@@ -214,7 +197,9 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		SharedPreferences storeset = ctx.getSharedPreferences(TOTAL_RECORD, 0);
 		storeset.edit().putString(TOTAL_RECORD, String.valueOf(0)).commit();
-		
+
+		SharedPreferences resetstatus  = ctx.getSharedPreferences(RESET_STATUS, 0);
+		resetstatus.edit().putString(RESET_STATUS, "yes").commit();
 	}
 
 	/**
@@ -772,12 +757,14 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 
 			if(cursor != null){
+				if (cursor.getCount() > 0) {
+					cursor.deactivate(); 
+					cursor.close(); 
+					return true;
+				}
 				cursor.deactivate(); 
 				cursor.close(); 
 
-				if (cursor.getCount() > 0) {
-					return true;
-				}
 			}
 		}
 		return false;
@@ -788,7 +775,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @param keyword
 	 * @return
 	 */
-	public ArrayList<Mapping> getSuggestions(String keyword) {
+	public ArrayList<Mapping> getSuggestions(String keyword, boolean hasSimiliar) {
 
 		ArrayList<Mapping> result = new ArrayList<Mapping>();
 		SQLiteDatabase db = this.getReadableDatabase();
@@ -861,70 +848,72 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 
 			// Get Possible Matched
-			if (firstCharacter.matches(".*?[^A-Z]")) {
-				if (firstCharacter.matches(".*?[^0-9]")) {
-					cursorPossible = db.query("SYMBOL" + TABLE_NAME, null,
-							FIELD_CODE + " <> '" + keyword + "' AND "
-									+ FIELD_CODE + " LIKE '" + keyword + "%'",
-							null, null, null, FIELD_SCORE + " DESC", limit);
+			if(hasSimiliar){
+				if (firstCharacter.matches(".*?[^A-Z]")) {
+					if (firstCharacter.matches(".*?[^0-9]")) {
+						cursorPossible = db.query("SYMBOL" + TABLE_NAME, null,
+								FIELD_CODE + " <> '" + keyword + "' AND "
+										+ FIELD_CODE + " LIKE '" + keyword + "_'",
+										null, null, null, FIELD_SCORE + " DESC", limit);
+					} else {
+						if (j < 8) {
+							cursorPossible = db.query("NUMBER" + (j + 1)
+									+ TABLE_NAME, null, FIELD_CODE + " <> '"
+									+ keyword + "' AND " + FIELD_CODE + " LIKE '"
+									+ keyword + "_'", null, null, null, FIELD_SCORE
+									+ " DESC", limit);
+						} else {
+							cursorPossible = db.query("NUMBER" + 9 + TABLE_NAME,
+									null, FIELD_CODE + " <> '" + keyword + "' AND "
+											+ FIELD_CODE + " LIKE '" + keyword
+											+ "_'", null, null, null, FIELD_SCORE
+											+ " DESC", limit);
+						}
+					}
 				} else {
 					if (j < 8) {
-						cursorPossible = db.query("NUMBER" + (j + 1)
-								+ TABLE_NAME, null, FIELD_CODE + " <> '"
-								+ keyword + "' AND " + FIELD_CODE + " LIKE '"
-								+ keyword + "%'", null, null, null, FIELD_SCORE
+						cursorPossible = db.query(firstCharacter + (j + 1)
+								+ TABLE_NAME, null, FIELD_CODE + " LIKE '"
+								+ keyword + "_'", null, null, null, FIELD_SCORE
 								+ " DESC", limit);
 					} else {
-						cursorPossible = db.query("NUMBER" + 9 + TABLE_NAME,
-								null, FIELD_CODE + " <> '" + keyword + "' AND "
-										+ FIELD_CODE + " LIKE '" + keyword
-										+ "%'", null, null, null, FIELD_SCORE
-										+ " DESC", limit);
+						cursorPossible = db.query(firstCharacter + 9 + TABLE_NAME,
+								null, FIELD_CODE + " LIKE '" + keyword + "_'",
+								null, null, null, FIELD_SCORE + " DESC", limit);
 					}
 				}
-			} else {
-				if (j < 8) {
-					cursorPossible = db.query(firstCharacter + (j + 1)
-							+ TABLE_NAME, null, FIELD_CODE + " LIKE '"
-							+ keyword + "%'", null, null, null, FIELD_SCORE
-							+ " DESC", limit);
-				} else {
-					cursorPossible = db.query(firstCharacter + 9 + TABLE_NAME,
-							null, FIELD_CODE + " LIKE '" + keyword + "%'",
-							null, null, null, FIELD_SCORE + " DESC", limit);
+	
+				try {
+					if (cursorPossible.moveToFirst()) {
+						int wordColumn = cursorPossible.getColumnIndex(FIELD_WORD);
+						int codeColumn = cursorPossible.getColumnIndex(FIELD_CODE);
+						int scoreColumn = cursorPossible
+								.getColumnIndex(FIELD_SCORE);
+						int idColumn = cursorPossible.getColumnIndex(FIELD_id);
+						do {
+							Mapping munit = new Mapping();
+							munit.setId(cursorPossible.getString(idColumn));
+							munit.setCode(cursorPossible.getString(codeColumn));
+							munit.setWord(cursorPossible.getString(wordColumn));
+							munit.setScore(cursorPossible.getInt(scoreColumn));
+							result.add(munit);
+						} while (cursorPossible.moveToNext());
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-			}
 
-			try {
-				if (cursorPossible.moveToFirst()) {
-					int wordColumn = cursorPossible.getColumnIndex(FIELD_WORD);
-					int codeColumn = cursorPossible.getColumnIndex(FIELD_CODE);
-					int scoreColumn = cursorPossible
-							.getColumnIndex(FIELD_SCORE);
-					int idColumn = cursorPossible.getColumnIndex(FIELD_id);
-					do {
-						Mapping munit = new Mapping();
-						munit.setId(cursorPossible.getString(idColumn));
-						munit.setCode(cursorPossible.getString(codeColumn));
-						munit.setWord(cursorPossible.getString(wordColumn));
-						munit.setScore(cursorPossible.getInt(scoreColumn));
-						result.add(munit);
-					} while (cursorPossible.moveToNext());
+				if(cursorPossible != null){
+					cursorPossible.deactivate(); 
+					cursorPossible.close(); 
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
 			}
 			
-
 			if(cursor != null){
 				cursor.deactivate(); 
 				cursor.close(); 
 			}
 
-			if(cursorPossible != null){
-				cursorPossible.deactivate(); 
-				cursorPossible.close(); 
-			}
 		}
 		
 		return result;

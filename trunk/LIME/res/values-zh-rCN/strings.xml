@@ -36,7 +36,7 @@
     
     <!-- LIME Setting -->
     <string name="lime_setting_title">LIME 对应表管理</string>
-    <string name="lime_setting_operation_notice">LIME IME v1.7.3\n\n请点选下方的按钮由 SDCARD 选择并载入输入法对应表 (.lime), 执行这一个动作会清除先前已载入的记录. \n汇入工作将于背景执行，进度会显示于状态列，依档案大小可能会耗费数分钟至数十分之久，请耐心等候. \n您可以在官方网站  http://android.toload.net/ 找到关于输入法对应表建立方式及详细操作使用说明.</string>
+    <string name="lime_setting_operation_notice">LIME IME v1.7.4\n\n请点选下方的按钮由 SDCARD 选择并载入输入法对应表 (.lime), 执行这一个动作会清除先前已载入的记录. \n汇入工作将于背景执行，进度会显示于状态列，依档案大小可能会耗费数分钟至数十分之久，请耐心等候. \n您可以在官方网站  http://android.toload.net/ 找到关于输入法对应表建立方式及详细操作使用说明.</string>
     <string name="lime_setting_btn_load_local">载入 .LIME 对应表</string>
     <string name="lime_setting_operation_info">系统资讯</string>
     <string name="lime_setting_mapping_version">对应表 :</string>
@@ -93,6 +93,8 @@
     <string name="display_number_keypads_summary">显示数字按钮于预设键盘上 </string>
     <string name="candidate_switch">滑动选取</string>
     <string name="candidate_switch_summary">滑动选取输入法建议文字</string>
+    <string name="candidate_display">显示相近文字</string>
+    <string name="candidate_display_summary">显示最接近输入字根的文字</string>
     <string name="candidate_learning">文字选取喜好</string>
     <string name="candidate_learning_summary">记忆文字输入或选取喜好排序建议文字</string>
     <string name="candidate_dictionary">自动关联功能</string>
