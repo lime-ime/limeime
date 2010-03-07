@@ -140,6 +140,7 @@ public class LIMEService extends InputMethodService implements
 	private float keyUpX=0;
 	private float keyUpY=0;
 	
+	private int previousKeyCode = 0;
 	private final float moveLength = 15;
 	private ISearchService SearchSrv = null;
 	
@@ -524,97 +525,95 @@ public class LIMEService extends InputMethodService implements
 	 * first crack at them, and can either resume them or let them continue to
 	 * the app.
 	 */
+	
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		    
-		//Log.i("ART", "=>"+keyCode);
-		
-		switch (keyCode) {
-		case KeyEvent.KEYCODE_BACK:
-			// The InputMethodService already takes care of the back
-			// key for us, to dismiss the input method if it is shown.
-			// However, our keyboard could be showing a pop-up window
-			// that back should dismiss, so we first allow it to do that.
-			if (event.getRepeatCount() == 0 && mInputView != null) {
-				if (mInputView.handleBack()) {
-					return true;
-				}
-			}
-			break;
-
-		case KeyEvent.KEYCODE_DEL:
-			// Special handling of the delete key: if we currently are
-			// composing text for the user, we want to modify that instead
-			// of let the application to the delete itself.
-			if (mComposing.length() > 0) {
-				onKey(Keyboard.KEYCODE_DELETE, null);
-				return true;
-			}
-
-			if (mCandidateView != null) {
-				mCandidateView.clear();
-			}
-			mComposing.setLength(0);
-			setCandidatesViewShown(false);
-			
-			break;
-
-		case KeyEvent.KEYCODE_ENTER:
-			// Let the underlying text editor always handle these.
-			return false;
-
-		case KeyEvent.KEYCODE_ALT_LEFT:
-			// Let the underlying text editor always handle these.
-			return false;
-
-		case KeyEvent.KEYCODE_ALT_RIGHT:
-			// Let the underlying text editor always handle these.
-			return false;
-			
-		default:
-
-			// For all other keys, if we want to do transformations on
-			// text being entered with a hard keyboard, we need to process
-			// it and do the appropriate action.
-
-			if(keyCode == 60){
-				this.hasRightShiftPress = true;
-			}
-		
-			if (PROCESS_HARD_KEYS) {
-				if (keyCode == KeyEvent.KEYCODE_SPACE
-						&& (event.getMetaState() & KeyEvent.META_ALT_ON) != 0) {
-					// A silly example: in our input method, Alt+Space
-					// is a shortcut for 'android' in lower case.
-					InputConnection ic = getCurrentInputConnection();
-					if (ic != null) {
-						// First, tell the editor that it is no longer in the
-						// shift state, since we are consuming this.
-						ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
-						keyDownUp(KeyEvent.KEYCODE_A);
-						keyDownUp(KeyEvent.KEYCODE_N);
-						keyDownUp(KeyEvent.KEYCODE_D);
-						keyDownUp(KeyEvent.KEYCODE_R);
-						keyDownUp(KeyEvent.KEYCODE_O);
-						keyDownUp(KeyEvent.KEYCODE_I);
-						keyDownUp(KeyEvent.KEYCODE_D);
-						// And we consume this event.
+			switch (keyCode) {
+			case KeyEvent.KEYCODE_BACK:
+				// The InputMethodService already takes care of the back
+				// key for us, to dismiss the input method if it is shown.
+				// However, our keyboard could be showing a pop-up window
+				// that back should dismiss, so we first allow it to do that.
+				if (event.getRepeatCount() == 0 && mInputView != null) {
+					if (mInputView.handleBack()) {
 						return true;
 					}
-
-					if (mCandidateView != null) {
-						mCandidateView.clear();
-					}
-					mComposing.setLength(0);
-					setCandidatesViewShown(false);
 				}
-
-				if (mPredictionOn && translateKeyDown(keyCode, event)) {
+				break;
+	
+			case KeyEvent.KEYCODE_DEL:
+				// Special handling of the delete key: if we currently are
+				// composing text for the user, we want to modify that instead
+				// of let the application to the delete itself.
+				if (mComposing.length() > 0) {
+					onKey(Keyboard.KEYCODE_DELETE, null);
 					return true;
 				}
+	
+				if (mCandidateView != null) {
+					mCandidateView.clear();
+				}
+				mComposing.setLength(0);
+				setCandidatesViewShown(false);
+				
+				break;
+	
+			case KeyEvent.KEYCODE_ENTER:
+				// Let the underlying text editor always handle these.
+				return false;
+	
+			//case KeyEvent.KEYCODE_ALT_LEFT:
+				// Let the underlying text editor always handle these.
+				//break;
+	
+			//case KeyEvent.KEYCODE_ALT_RIGHT:
+				// Let the underlying text editor always handle these.
+				//break;
+				
+			default:
+	
+				// For all other keys, if we want to do transformations on
+				// text being entered with a hard keyboard, we need to process
+				// it and do the appropriate action.
+	
+				if(keyCode == 60){
+					this.hasRightShiftPress = true;
+				}
+			
+				if (PROCESS_HARD_KEYS) {
+					if (keyCode == KeyEvent.KEYCODE_SPACE
+							&& (event.getMetaState() & KeyEvent.META_ALT_ON) != 0) {
+						// A silly example: in our input method, Alt+Space
+						// is a shortcut for 'android' in lower case.
+						InputConnection ic = getCurrentInputConnection();
+						if (ic != null) {
+							// First, tell the editor that it is no longer in the
+							// shift state, since we are consuming this.
+							ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+							keyDownUp(KeyEvent.KEYCODE_A);
+							keyDownUp(KeyEvent.KEYCODE_N);
+							keyDownUp(KeyEvent.KEYCODE_D);
+							keyDownUp(KeyEvent.KEYCODE_R);
+							keyDownUp(KeyEvent.KEYCODE_O);
+							keyDownUp(KeyEvent.KEYCODE_I);
+							keyDownUp(KeyEvent.KEYCODE_D);
+							// And we consume this event.
+							return true;
+						}
+	
+						if (mCandidateView != null) {
+							mCandidateView.clear();
+						}
+						mComposing.setLength(0);
+						setCandidatesViewShown(false);
+					}
+	
+					if (mPredictionOn && translateKeyDown(keyCode, event)) {
+						return true;
+					}
+				}
 			}
-		}
-
 		
 		return super.onKeyDown(keyCode, event);
 	}

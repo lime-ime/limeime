@@ -17,7 +17,7 @@
     <string name="label_send_key">Send</string>
     
     <!-- LIME Setting -->
-    <string name="lime_setting_title">LIME 1.8.2.1v \n\n**由旧版本升级(1.7.x)请重新汇入字根档!!\n\n自定义输入法建立工具。透过 LIME 输入法字根对应档的汇入，您可以打造完全属于您个人的输入方式。关于对应档的建立方式您可以在官方网站找到更多相关的资讯.\nhttp://android.toload.net/</string>
+    <string name="lime_setting_title">LIME 1.8.2.2v \n\n**由旧版本升级(1.7.x)请重新汇入字根档!!\n\n自定义输入法建立工具。透过 LIME 输入法字根对应档的汇入，您可以打造完全属于您个人的输入方式。关于对应档的建立方式您可以在官方网站找到更多相关的资讯.\nhttp://android.toload.net/</string>
     <string name="lime_setting_operation_notice1">\n[载入对应表]\n您必需先汇入完整字根对应表才能开始输入文字，请选择适当的 .LIME 进行资料载入动作。\n</string>
     <string name="lime_setting_operation_info1">版本 : </string>
     <string name="lime_setting_operation_info2">总笔数 : </string>
