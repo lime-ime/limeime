@@ -58,6 +58,9 @@ import android.database.sqlite.SQLiteCursor;
 public class LIMESetting extends Activity {
 
 	private final static String TOTAL_RECORD = "total_record";
+	//----------add by Jeremy '10,3,12 ----------------------------------------
+	private final static String TOTAL_USERDICT_RECORD = "total_userdict_record";
+	//-------------------------------------------------------------------------
 	private final static String MAPPING_VERSION = "mapping_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
 	private final static String MAPPING_RESET = "mapping_reset";
@@ -153,7 +156,7 @@ public class LIMESetting extends Activity {
 		btnBackup.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				try {
-					Toast.makeText(v.getContext(), R.string.lime_setting_notification_userdic_backup, Toast.LENGTH_LONG).show();
+					Toast.makeText(v.getContext(), R.string.lime_setting_backup_message, Toast.LENGTH_LONG).show();
 					DBSrv.executeUserBackup();
 				} catch (RemoteException e) {
 					e.printStackTrace();
@@ -167,7 +170,7 @@ public class LIMESetting extends Activity {
 		btnRestore.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				try {
-					Toast.makeText(v.getContext(), R.string.lime_setting_notification_userdic_restore, Toast.LENGTH_LONG).show();
+					Toast.makeText(v.getContext(), R.string.lime_setting_restore_message, Toast.LENGTH_LONG).show();
 					DBSrv.restoreRelatedUserdic();
 				} catch (RemoteException e) {
 					e.printStackTrace();
@@ -206,10 +209,15 @@ public class LIMESetting extends Activity {
 				txtAmount.setText(total);
 			} catch (Exception e) {
 			}
-
-			int dictotal = 0;
+			//
+			String dictotal = null;
 			try {
-				dictotal = limedb.countUserdic();
+				// modified by Jeremy '10, 3,12
+				//dictotal = limedb.countUserdic();
+				SharedPreferences settings = ctx.getSharedPreferences(
+						TOTAL_USERDICT_RECORD, 0);
+				String recordString = settings.getString(TOTAL_USERDICT_RECORD, "0");
+				dictotal = recordString;
 			} catch (Exception e) {
 			}
 
@@ -230,7 +238,9 @@ public class LIMESetting extends Activity {
 
 			txtDictionaryAmount = (TextView) this
 					.findViewById(R.id.txtInfoDictionaryAmount);
-			txtDictionaryAmount.setText(String.valueOf(dictotal));
+			// modified by Jeremy '10, 3,12
+			//txtDictionaryAmount.setText(String.valueOf(dictotal));
+			txtDictionaryAmount.setText(dictotal);
 
 		} catch (Exception e) {
 			e.printStackTrace();

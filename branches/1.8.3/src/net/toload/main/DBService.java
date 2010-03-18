@@ -123,16 +123,54 @@ public class DBService extends Service {
 					+ "");
 			db.close();
 		}
-
+		
+		//
+		// Modified by Jeremy '10, 3,12
+		//
 		public void restoreRelatedUserdic() throws RemoteException {
 			if (db == null) {
 				db = new LimeDB(ctx);
 			}
 			db.deleteDictionaryAll();
-			db.restoreRelatedUserdic();
 			displayNotificationMessage(ctx
-					.getText(R.string.lime_setting_notification_userdic_restore)
+					.getText(R.string.lime_setting_restore_message)
 					+ "");
+			
+			Thread thread = new Thread() {
+				public void run() {
+					int total = 0;
+					
+					while (!db.isRelatedFinish()) {
+						try {
+							this.sleep(10000);
+							
+							if(db.getRelatedCount() != 0){
+								displayNotificationMessage(
+										ctx.getText(R.string.lime_setting_notification_loading_related) + " "
+										+ db.getRelatedCount() + " "
+										+ ctx.getText(R.string.lime_setting_notification_loading_end)
+										);
+							}
+							
+							
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+
+					// Finish task
+					if(db.isRelatedFinish()){
+						displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_userdic_restore)+ "");
+						//db.setCount(0);
+					}else{
+						displayNotificationMessage(ctx.getText(R.string.lime_setting_restore_message_failed)+ "");
+					}
+
+				}
+			};
+			thread.start();
+			
+			db.restoreRelatedUserdic();
 			db.close();
 		}
 
@@ -146,15 +184,51 @@ public class DBService extends Service {
 					+ "");
 			db.close();
 		}
-
+		//
+		// Modified by Jeremy '10, 3,12
+		//
 		public void executeUserBackup() throws RemoteException {
 			if (db == null) {
 				db = new LimeDB(ctx);
 			}
-			db.backupRelatedUserdic();
+			
 			displayNotificationMessage(ctx
-					.getText(R.string.lime_setting_notification_userdic_backup)
+					.getText(R.string.lime_setting_backup_message)
 					+ "");
+			Thread thread = new Thread() {
+				public void run() {
+					int total = 0;
+					
+					while (!db.isRelatedFinish()) {
+						try {
+							this.sleep(10000);
+							
+							if(db.getRelatedCount() != 0){
+								displayNotificationMessage(
+										ctx.getText(R.string.lime_setting_notification_loading_related) + " "
+										+ db.getRelatedCount() + " "
+										+ ctx.getText(R.string.lime_setting_notification_loading_end)
+										);
+							}
+							
+							
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+
+					// Finish task
+					if(db.isRelatedFinish()){
+						displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_userdic_backup)+ "");
+						//db.setCount(0);
+					}else{
+						displayNotificationMessage(ctx.getText(R.string.lime_setting_backup_message_failed)+ "");
+					}
+
+				}
+			};
+			thread.start();
+			db.backupRelatedUserdic();
 			db.close();
 		}
 	}
@@ -185,7 +259,9 @@ public class DBService extends Service {
 		if (db != null) {
 			db.close();
 			db = null;
+			
 		}
+		notificationMgr.cancelAll();
 		super.onDestroy();
 	}
 
@@ -201,6 +277,7 @@ public class DBService extends Service {
 
 	private void displayNotificationMessage(String message) {
 		Notification notification = new Notification(R.drawable.icon, message, System.currentTimeMillis());
+		notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,new Intent(this, LIMEMenu.class), 0);
 		notification.setLatestEventInfo(this, this .getText(R.string.ime_setting), message, contentIntent);
 		notificationMgr.notify(0, notification);

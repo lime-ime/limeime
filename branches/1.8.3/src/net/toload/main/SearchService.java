@@ -47,12 +47,15 @@ public class SearchService extends Service {
 		SearchServiceImpl(Context ctx) {
 			this.ctx = ctx;
 		}
-		
-		public List queryUserDic(String code) throws RemoteException {
+		//Modified by Jeremy '10,3 ,12 for more specific related word
+		//-----------------------------------------------------------
+		public List queryUserDic(String code, String word) throws RemoteException {
 			if(db == null){db = new LimeDB(ctx);}
-			List result = db.getDictionary(code);
+			List result = db.getDictionary(code, word);
 			return result;
 		}
+		//-----------------------------------------------------------
+
 
 		public List query(String code) throws RemoteException {
 
