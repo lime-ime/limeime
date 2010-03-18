@@ -305,6 +305,7 @@ public class LIMEService extends InputMethodService implements
 
 		// We are now going to initialize our state based on the type of
 		// text being edited.
+		
 		switch (attribute.inputType & EditorInfo.TYPE_MASK_CLASS) {
 		case EditorInfo.TYPE_CLASS_NUMBER:
 		case EditorInfo.TYPE_CLASS_DATETIME:
@@ -906,7 +907,7 @@ public class LIMEService extends InputMethodService implements
 		
 		// If there is no Temp Matched word exist then not to display dictionary view
 		try{
-			if( tempMatched != null && !tempMatched.getCode().equals("")){
+			if( tempMatched != null && tempMatched.getCode() != null && !tempMatched.getCode().equals("")){
 				
 				LinkedList<Mapping> list = new LinkedList<Mapping>();
 				if (tempMatched != null) {
