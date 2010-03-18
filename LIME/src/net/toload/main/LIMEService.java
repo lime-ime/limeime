@@ -80,6 +80,11 @@ public class LIMEService extends InputMethodService implements
 	private boolean mCompletionOn;
 	private boolean mCapsLock;
 	private boolean mHasShift;
+	//------------------------------------------------------------------------
+	// Add by Jeremy '10, 3,12
+	// new private variable mHasAlt for keeping state of alt. 
+	private boolean mHasAlt = false;
+	//------------------------------------------------------------------------
 	private boolean mEnglishOnly;
 	private boolean mEnglishFlagShift;
 	private boolean onIM = false;
@@ -516,6 +521,7 @@ public class LIMEService extends InputMethodService implements
 			hasRightShiftPress = false;
 		}
 		
+		
 		onKey(c, null);
 
 		return true;
@@ -547,6 +553,8 @@ public class LIMEService extends InputMethodService implements
 				// Special handling of the delete key: if we currently are
 				// composing text for the user, we want to modify that instead
 				// of let the application to the delete itself.
+				
+				
 				if (mComposing.length() > 0) {
 					onKey(Keyboard.KEYCODE_DELETE, null);
 					return true;
@@ -558,36 +566,41 @@ public class LIMEService extends InputMethodService implements
 				mComposing.setLength(0);
 				setCandidatesViewShown(false);
 				
+				//------------------------------------------------------------------------
+				// Modified by Jeremy '10, 3,12
+				// block milestone alt-del to delete whole line
+				// clear alt state before processed by super
+				InputConnection ic = getCurrentInputConnection();
+				mHasAlt = false;
+				if (ic != null) 
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+				//------------------------------------------------------------------------
 				break;
 	
 			case KeyEvent.KEYCODE_ENTER:
 				// Let the underlying text editor always handle these.
 				return false;
-	
-			//case KeyEvent.KEYCODE_ALT_LEFT:
-				// Let the underlying text editor always handle these.
-				//break;
-	
-			//case KeyEvent.KEYCODE_ALT_RIGHT:
-				// Let the underlying text editor always handle these.
-				//break;
+				
+			
+			 
 				
 			default:
 	
 				// For all other keys, if we want to do transformations on
 				// text being entered with a hard keyboard, we need to process
 				// it and do the appropriate action.
-	
+	    
 				if(keyCode == 60){
 					this.hasRightShiftPress = true;
 				}
 			
 				if (PROCESS_HARD_KEYS) {
 					if (keyCode == KeyEvent.KEYCODE_SPACE
-							&& (event.getMetaState() & KeyEvent.META_ALT_ON) != 0) {
+							&& (event.getMetaState()& KeyEvent.META_ALT_ON) != 0) {
 						// A silly example: in our input method, Alt+Space
 						// is a shortcut for 'android' in lower case.
-						InputConnection ic = getCurrentInputConnection();
+						//InputConnection 
+						ic = getCurrentInputConnection();
 						if (ic != null) {
 							// First, tell the editor that it is no longer in the
 							// shift state, since we are consuming this.
@@ -610,10 +623,13 @@ public class LIMEService extends InputMethodService implements
 						setCandidatesViewShown(false);
 					}
 	
+					
+				
 					if (mPredictionOn && translateKeyDown(keyCode, event)) {
 						return true;
 					}
 				}
+				
 			}
 		
 		return super.onKeyDown(keyCode, event);
@@ -627,16 +643,32 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
 		
+		switch (keyCode) {
+		//*/------------------------------------------------------------------------
+		// Modified by Jeremy '10, 3,12
+		// keep track of alt state with mHasAlt.
+		case KeyEvent.KEYCODE_ALT_LEFT:
+			// Let the underlying text editor always handle these.
+			mHasAlt = true;
+			break;
+
+		case KeyEvent.KEYCODE_ALT_RIGHT:
+			// Let the underlying text editor always handle these.
+			mHasAlt = true;
+			break;
+		}
+		//------------------------------------------------------------------------
+		//*/
 		// If we want to do transformations on text being entered with a hard
 		// keyboard, we need to process the up events to update the meta key
-		// state we are tracking.
+		//* state we are tracking.
 		if (PROCESS_HARD_KEYS) {
 			if (mPredictionOn) {
 				mMetaState = MetaKeyKeyListener.handleKeyUp(mMetaState,
 						keyCode, event);
 			}
 		}
-
+		
 		return super.onKeyUp(keyCode, event);
 	}
 
@@ -815,6 +847,7 @@ public class LIMEService extends InputMethodService implements
 			}
 		}
 		
+	
 		if (isWordSeparator(primaryCode)) {
 			if (mComposing.length() > 0) {
 				commitTyped(getCurrentInputConnection());
@@ -910,9 +943,14 @@ public class LIMEService extends InputMethodService implements
 			if( tempMatched != null && tempMatched.getCode() != null && !tempMatched.getCode().equals("")){
 				
 				LinkedList<Mapping> list = new LinkedList<Mapping>();
+				//Modified by Jeremy '10,3 ,12 for more specific related word
+				//-----------------------------------------------------------
 				if (tempMatched != null) {
-					list.addAll(SearchSrv.queryUserDic(tempMatched.getCode()));
+					list.addAll(SearchSrv.queryUserDic(tempMatched.getCode(),
+									tempMatched.getWord()));
 				}
+				//-----------------------------------------------------------
+
 				if (list.size() > 0) {
 					templist = (LinkedList) list;
 					setSuggestions(list, true, true);
@@ -1356,6 +1394,137 @@ public class LIMEService extends InputMethodService implements
 						primaryCode = Character.toUpperCase(primaryCode);
 					}
 				}
+				//------------------------------------------------------------------------
+				// Add by Jeremy '10, 3,12
+				// Process Alt combination key specific for moto milestone
+				InputConnection ic = getCurrentInputConnection();				
+				if( (primaryCode == 'Q' || primaryCode =='q')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '1';
+				}else if((primaryCode == 'W' || primaryCode =='w')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '2';
+				}else if((primaryCode == 'E' || primaryCode =='e')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '3';
+				}else if((primaryCode == 'R' || primaryCode =='r')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '4';
+				}else if((primaryCode == 'T' || primaryCode =='t')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '5';
+				}else if((primaryCode == 'Y' || primaryCode =='y')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '6';
+				}else if((primaryCode == 'U' || primaryCode =='u')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '7';
+				}else if((primaryCode == 'I' || primaryCode =='i')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '8';
+				}else if((primaryCode == 'O' || primaryCode =='o')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '9';
+				}else if((primaryCode == 'P' || primaryCode =='p')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent. META_ALT_ON);
+					primaryCode = '0';
+				}else if((primaryCode == 'A' || primaryCode =='a')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = 9; //TAB
+				}else if((primaryCode == 'S' || primaryCode =='s')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '!';
+				}else if((primaryCode == 'D' || primaryCode =='d')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '#';
+				}else if((primaryCode == 'F' || primaryCode =='f')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '$';
+				}else if((primaryCode == 'G' || primaryCode =='g')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '%';
+				}else if((primaryCode == 'H' || primaryCode =='h')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '=';
+				}else if((primaryCode == 'J' || primaryCode =='j')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '&';
+				}else if((primaryCode == 'K' || primaryCode =='k')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '*';
+				}else if((primaryCode == 'L' || primaryCode =='l')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '(';
+				}else if((primaryCode == '?' )&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = ')';
+				}else if((primaryCode == 'Z' || primaryCode =='z')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '<';
+				}else if((primaryCode == 'X' || primaryCode =='x')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '>';
+				}else if((primaryCode == 'C' || primaryCode =='c')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '_';
+				}else if((primaryCode == 'V' || primaryCode =='v')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '-';
+				}else if((primaryCode == 'B' || primaryCode =='b')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '+';
+				}else if((primaryCode == 'N' || primaryCode =='n')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '"';
+				}else if((primaryCode == 'M' || primaryCode =='m')&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '\'';
+				}else if( primaryCode ==','&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = ';';
+				}else if(primaryCode =='.'&& mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = ':';
+				}else if(primaryCode == '@' && mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '~';
+				}else if(primaryCode == '/' && mHasAlt){
+					mHasAlt = false;
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+					primaryCode = '^';
+				}
+				//------------------------------------------------------------------------
+				
 	
 				if (!hasSymbolMapping && !hasNumberMapping
 						&& isValidLetter(primaryCode) && onIM) {
