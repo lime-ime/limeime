@@ -45,6 +45,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static int DATABASE_RELATED_SIZE = 50;
 	private final static String TABLE_NAME = "mapping";
 	private final static String TOTAL_RECORD = "total_record";
+	//----------add by Jeremy '10,3,12 ----------------------------------------
+	private final static String TOTAL_USERDICT_RECORD = "total_userdict_record";
+	//-------------------------------------------------------------------------
 	private final static String MAPPING_FILE = "mapping_file";
 	private final static String MAPPING_VERSION = "mapping_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
@@ -181,6 +184,10 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * Empty Dictionary table records
 	 */
 	public void deleteDictionaryAll() {
+		//---------------add by Jeremy '10,3,12-----------------------------------
+		SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
+		sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(0)).commit();
+		//-------------------------------------------------------------------------
 		SQLiteDatabase db = this.getWritableDatabase();
 		db.delete("userdic", null, null);
 		db.close();
@@ -288,10 +295,15 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * 
 	 * @param srclist
 	 */
+	//---------------------------------------------------------------
+	//Removed by Jeremy '10, 3,12. Code moved to restoreRelatedUserdic 
+	/*
 	public void batchAddDictionary(List<Mapping> srclist) {
 
 		int total = 0;
 		SQLiteDatabase db = this.getWritableDatabase();
+		db.beginTransaction();
+		try{ 
 		for (Mapping unit : srclist) {
 
 			String code = unit.getPcode();
@@ -305,10 +317,18 @@ public class LimeDB extends SQLiteOpenHelper {
 
 			db.insert("userdic", null, cv);
 			total++;
+			}
+		}
+		}catch(Exception e){
+			e.printStackTrace();
+		}finally{
+			db.setTransactionSuccessful();
+			db.endTransaction();
 		}
 
 	}
-
+	*/
+	//----------------------------------------------------------------------------------------------------------------------------------
 	/**
 	 * Create dictionary database
 	 * 
@@ -495,24 +515,35 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @param keyword
 	 * @return
 	 */
-	public List<Mapping> getDictionary(String keyword) {
+	//Modified by Jeremy '10,3 ,12 for more specific related word
+	//-----------------------------------------------------------
+	public List<Mapping> getDictionary(String pcode, String pword) {
+	//-----------------------------------------------------------
 
 		List<Mapping> result = new LinkedList<Mapping>();
 
 		// Create Suggestions (Exactly Matched)
-		if (keyword != null && !keyword.trim().equals("")) {
+		if (pcode != null && !pcode.trim().equals("")) {
 
 			Cursor cursor = null;
 
 			try {
-				keyword = keyword.toUpperCase();
+				pcode = pcode.toUpperCase();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+			//Modified by Jeremy '10,3 ,12 for more specific related word
+			//-----------------------------------------------------------
+
 			SQLiteDatabase db = this.getReadableDatabase();
+			//cursor = db.query("userdic", null, FIELD_DIC_pcode + " = \""
+			//		+ keyword + "\"", null, null, null, FIELD_DIC_score
 			cursor = db.query("userdic", null, FIELD_DIC_pcode + " = \""
-					+ keyword + "\"", null, null, null, FIELD_DIC_score
+					+ pcode + "\" and " + FIELD_DIC_pword + " = \"" + pword + "\""
+					, null, null, null, FIELD_DIC_score
 					+ " DESC", null);
+			//-----------------------------------------------------------
+
 
 			if (cursor.moveToFirst()) {
 				int pcodeColumn = cursor.getColumnIndex(FIELD_DIC_pcode);
@@ -592,7 +623,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				boolean hasMappingVersion = false;
 				String line = "";
 				finish = false;
-				relatedfinish = false;
+				//relatedfinish = false;
 				count = 0;
 				relatedcount = 0;
 
@@ -919,19 +950,32 @@ public class LimeDB extends SQLiteOpenHelper {
 	/**
 	 * Backup dictionary items
 	 */
+	//
+	// Modified by Jeremy '10, 3,12
+	//
 	public void backupRelatedUserdic() {
+		
+		Thread thread = new Thread() {
+			public void run() {
 
 		File targetFile = new File("/sdcard/limedb.txt");
 		targetFile.deleteOnExit();
+		relatedfinish = false;
 
 		Cursor cursor = null;
 
-		ArrayList temp = new ArrayList();
-
+		//ArrayList temp = new ArrayList();
+		FileOutputStream fos;
+		
 		try {
 
-			SQLiteDatabase db = this.getWritableDatabase();
+			SQLiteDatabase db = getWritableDatabase();
 			cursor = db.rawQuery("SELECT * FROM userdic", null);
+			
+			OutputStream out = new FileOutputStream(targetFile, false);
+			Writer writer = new OutputStreamWriter(out, "UTF-8");
+			
+			
 			if (cursor.moveToFirst()) {
 				int idColumn = cursor.getColumnIndex(FIELD_id);
 				int pcodeColumn = cursor.getColumnIndex(FIELD_DIC_pcode);
@@ -940,66 +984,58 @@ public class LimeDB extends SQLiteOpenHelper {
 				int wordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
 				int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
 				do {
-					Mapping munit = new Mapping();
-					munit.setId(cursor.getString(idColumn));
-					munit.setPcode(cursor.getString(pcodeColumn));
-					munit.setPword(cursor.getString(pwordColumn));
-					munit.setCode(cursor.getString(codeColumn));
-					munit.setWord(cursor.getString(wordColumn));
-					munit.setScore(cursor.getInt(scoreColumn));
-					temp.add(munit);
+					String line = cursor.getString(pcodeColumn) + "\t" + cursor.getString(pwordColumn)
+					+ "\t" + cursor.getString(codeColumn) + "\t" +cursor.getString(wordColumn)
+					+ "\t" + cursor.getInt(scoreColumn) + "\r\n";
+					writer.write(new String(line.getBytes("UTF-8")));
 				} while (cursor.moveToNext());
 			}
 			db.close();
-
+			writer.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
+		
 		if (cursor != null) {
 			cursor.deactivate();
 			cursor.close();
 		}
-
-		if (temp.size() > 0) {
-			Iterator itr = temp.iterator();
-
-			FileOutputStream fos;
-			try {
-
-				OutputStream out = new FileOutputStream(targetFile, false);
-				Writer writer = new OutputStreamWriter(out, "UTF-8");
-				while (itr.hasNext()) {
-					Mapping unit = (Mapping) itr.next();
-					String line = unit.getPcode() + "\t" + unit.getPword()
-							+ "\t" + unit.getCode() + "\t" + unit.getWord()
-							+ "\t" + unit.getScore() + "\r\n";
-					writer.write(new String(line.getBytes("UTF-8")));
-				}
-				writer.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
+		relatedfinish = true;
 			}
-		}
+		};
+		thread.start();
 
 	}
 
 	/**
 	 * Restore from backup file
 	 */
+	//
+	// Modified by Jeremy '10, 3,12
+	//
 	public void restoreRelatedUserdic() {
+		Thread thread = new Thread() {
+			public void run() {
 
 		File targetFile = new File("/sdcard/limedb.txt");
+		
+		relatedfinish = false;
 
-		ArrayList temp = new ArrayList();
+		//ArrayList temp = new ArrayList();
 		if (targetFile.exists()) {
 
-			this.deleteDictionaryAll();
-
-			int total = 0;
+			deleteDictionaryAll();
+			
+			
+			//int total = 0;
+			relatedcount = 0;
 			FileReader fis;
+			SQLiteDatabase db = getWritableDatabase();
+			db.beginTransaction();
 			try {
 				fis = new FileReader(targetFile);
 				BufferedReader br = new BufferedReader(fis);
@@ -1007,28 +1043,52 @@ public class LimeDB extends SQLiteOpenHelper {
 				String line = "";
 
 				while ((line = br.readLine()) != null) {
-					try {
+					//try {
 						String pcode = line.split("\t")[0];
 						String pword = line.split("\t")[1];
 						String code = line.split("\t")[2];
 						String word = line.split("\t")[3];
 						String score = line.split("\t")[4];
-						temp.add(new Mapping(pcode, pword, code, word, Integer
-								.parseInt(score)));
-						total++;
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
+						//temp.add(new Mapping(pcode, pword, code, word, Integer
+						//		.parseInt(score)));
+						// insert into database
+						
+						ContentValues cv = new ContentValues();
+						cv.put(FIELD_DIC_pcode, pcode);
+						cv.put(FIELD_DIC_pword, pword);
+						cv.put(FIELD_DIC_ccode, code);
+						cv.put(FIELD_DIC_cword, word);
+						cv.put(FIELD_DIC_score, score);
+
+						db.insert("userdic", null, cv);
+
+						//total++;
+						relatedcount++;
+						if(relatedcount % 100 == 0){
+							SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
+											  sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(relatedcount) + " (loading...)").commit();
+						}
+				
 				}
-			} catch (FileNotFoundException e) {
+			//} catch (FileNotFoundException e) {
+			//	e.printStackTrace();
+			//} catch (IOException e) {
+			//	e.printStackTrace();
+			}catch(Exception e){
 				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
+			}finally{
+				db.setTransactionSuccessful();
+				db.endTransaction();
+			}
+			
+			// Update total_userdict_records
+			SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
+			sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(countUserdic())).commit();
+			relatedfinish = true;
 			}
 		}
+	};
+	thread.start();
 
-		this.batchAddDictionary(temp);
-	}
-	
-
+ }
 }
