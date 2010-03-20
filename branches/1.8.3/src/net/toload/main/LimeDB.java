@@ -34,6 +34,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * @author Art Hung
@@ -125,8 +126,8 @@ public class LimeDB extends SQLiteOpenHelper {
 				+ FIELD_DIC_pcode + " text, " + FIELD_DIC_ccode + " text, "
 				+ FIELD_DIC_pword + " text, " + FIELD_DIC_cword + " text, "
 				+ FIELD_DIC_score + " integer)");
-		db.execSQL("CREATE INDEX userdic_idx ON userdic (" + FIELD_DIC_pcode
-				+ ")");
+		db.execSQL("CREATE INDEX userdic_idx_pcode ON userdic (" + FIELD_DIC_pcode + ")");
+		db.execSQL("CREATE INDEX userdic_idx_pword ON userdic (" + FIELD_DIC_pword + ")");
 
 	}
 
@@ -360,10 +361,15 @@ public class LimeDB extends SQLiteOpenHelper {
 								try {
 									// Log.i("ART","unit 5->"+unit2);
 									ContentValues cv = new ContentValues();
-									cv.put(FIELD_DIC_pcode, unit.getCode());
+									//--------------------------------------------
+									// Modified by Jeremy '10,03,20 replace pccode, code with hashcode
+									//cv.put(FIELD_DIC_pcode, unit.getCode());
+									cv.put(FIELD_DIC_pcode, unit.getWord().hashCode());
 									cv.put(FIELD_DIC_pword, unit.getWord());
-									cv.put(FIELD_DIC_ccode, unit2.getCode());
+									//cv.put(FIELD_DIC_ccode, unit2.getCode());
+									cv.put(FIELD_DIC_ccode, unit2.getWord().hashCode());
 									cv.put(FIELD_DIC_cword, unit2.getWord());
+									//-------------------------------------------------------
 									cv.put(FIELD_DIC_score, 0);
 
 									db.insert("userdic", null, cv);
@@ -532,18 +538,24 @@ public class LimeDB extends SQLiteOpenHelper {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			//Modified by Jeremy '10,3 ,12 for more specific related word
+			//Modified by Jeremy '10,3 ,20 for more specific related word
+			// Replace pcode with hascode() for better perfoamnce and IM indepedent.
 			//-----------------------------------------------------------
 
 			SQLiteDatabase db = this.getReadableDatabase();
 			//cursor = db.query("userdic", null, FIELD_DIC_pcode + " = \""
 			//		+ keyword + "\"", null, null, null, FIELD_DIC_score
-			cursor = db.query("userdic", null, FIELD_DIC_pcode + " = \""
-					+ pcode + "\" and " + FIELD_DIC_pword + " = \"" + pword + "\""
+			
+			cursor = db.query("userdic", null,
+					FIELD_DIC_pcode + " = " + pword.hashCode() 
 					, null, null, null, FIELD_DIC_score
 					+ " DESC", null);
+			//Log.i("Query", FIELD_DIC_pword + " = \"" + pword +"\":" + new Date().toString());
+			
 			//-----------------------------------------------------------
 
+			 
+			
 
 			if (cursor.moveToFirst()) {
 				int pcodeColumn = cursor.getColumnIndex(FIELD_DIC_pcode);
@@ -1054,9 +1066,14 @@ public class LimeDB extends SQLiteOpenHelper {
 						// insert into database
 						
 						ContentValues cv = new ContentValues();
-						cv.put(FIELD_DIC_pcode, pcode);
+						//------------------------------------------------------------------
+						// Modified by Jeremy '10,03,20, replace pcode, code with hashcode.
+						//cv.put(FIELD_DIC_pcode, pcode);
+						cv.put(FIELD_DIC_pcode, pword.hashCode());
 						cv.put(FIELD_DIC_pword, pword);
-						cv.put(FIELD_DIC_ccode, code);
+						//cv.put(FIELD_DIC_ccode, code);
+						cv.put(FIELD_DIC_ccode, word.hashCode());
+						//------------------------------------------------------------------
 						cv.put(FIELD_DIC_cword, word);
 						cv.put(FIELD_DIC_score, score);
 
