@@ -692,6 +692,8 @@ public class LimeDB extends SQLiteOpenHelper {
 						FileReader fr = new FileReader(filename);
 						BufferedReader buf = new BufferedReader(fr);
 						boolean firstline = true;
+						//Add by jeremy '10,03,10 for .cin compatibility
+						boolean chardef = true;
 						int i = 0;
 						while ((line = buf.readLine()) != null) {
 							i++;
@@ -713,7 +715,25 @@ public class LimeDB extends SQLiteOpenHelper {
 								if (line.trim().equals("")) {continue;}
 								if (line.length() < 3) {continue;}
 							}
-							
+						
+							// 	Add by jeremy '10, 03 20 for .cin comptibility.
+							// .cin comment start with #
+							if(line.startsWith("#")) {continue;}
+							// 	Add by jeremy '10, 03 20 for .cin comptibility.
+							if(line.startsWith("%"))
+							{
+								if(line.trim().equalsIgnoreCase("%keyname begin")){
+									chardef = false;
+								}else if(line.trim().equalsIgnoreCase("%chardef begin")){
+									chardef = true;
+								}else if(line.trim().equalsIgnoreCase("%chardef end")){
+									chardef = false;
+																	
+								}
+								continue;
+							}
+							if(!chardef){continue;}	
+							//---------------------------------------------------------
 							String code = line.substring(0, line.indexOf(DELIMITER));
 							String word = line.substring(line.indexOf(DELIMITER) + 1);
 							if (code == null || code.trim().equals("")) {continue;}else{code = code.toUpperCase();}
@@ -721,6 +741,10 @@ public class LimeDB extends SQLiteOpenHelper {
 							if (code.equalsIgnoreCase("@VERSION@")){
 								continue;
 							}
+							
+							
+							// 	Add by jeremy '10, 03 20 for .cin comptibility.
+							
 							
 							String first = code.substring(0,1);
 							if(hm.get(first) != null){
@@ -753,6 +777,8 @@ public class LimeDB extends SQLiteOpenHelper {
 						FileReader fr = new FileReader(filename);
 						BufferedReader buf = new BufferedReader(fr);
 						boolean firstline = true;
+						// Add by jeremy '10,03,10 for .cin compatibility
+						boolean chardef = true;
 						//int countline = 0;
 						
 						
@@ -783,7 +809,27 @@ public class LimeDB extends SQLiteOpenHelper {
 								if (line.trim().equals("")) {continue;}
 								if (line.length() < 3) {continue;}
 							}
-	
+							
+							// 	Add by jeremy '10, 03 20 for .cin comptibility.
+							// .cin comment start with #
+							if(line.startsWith("#")) {continue;}
+							if(line.startsWith("%"))
+							{
+								if(line.trim().equalsIgnoreCase("%keyname begin")){
+									chardef = false;
+								}else if(line.trim().equalsIgnoreCase("%chardef begin")){
+									chardef = true;
+								}else if(line.trim().equalsIgnoreCase("%chardef end")){
+									chardef = false;
+								}else if(line.trim().startsWith("%cname")){
+									SharedPreferences version = ctx.getSharedPreferences(MAPPING_VERSION, 0);
+									version.edit().putString(MAPPING_VERSION, line.substring(6)).commit();									
+								}
+								continue;
+							}
+							if(!chardef){continue;}	
+							//---------------------------------------------------------
+							
 							String code = line.substring(0, line.indexOf(DELIMITER));
 							String word = line.substring(line.indexOf(DELIMITER) + 1);
 							if (code == null || code.trim().equals("")) {continue;}else{code = code.toUpperCase();}
@@ -793,6 +839,7 @@ public class LimeDB extends SQLiteOpenHelper {
 								version.edit().putString(MAPPING_VERSION, word.trim()).commit();
 								continue;
 							}
+							//Add by jeremy '10, 03 20 for .cin comptibility.
 
 							String first = code.substring(0,1);
 							

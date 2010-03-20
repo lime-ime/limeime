@@ -348,14 +348,19 @@ public class LIMESetting extends Activity {
 			File list[] = rootPath.listFiles();
 			for (File unit : list) {
 				if (unit.isDirectory()
-						|| (unit.isFile() && unit.getName().toLowerCase()
-								.endsWith(".lime"))) {
+						|| (unit.isFile() && unit.getName().toLowerCase().endsWith(".lime"))
+						//Add by Jeremy '10, 03, 20 for .cin compatibility
+						|| (unit.isFile() && unit.getName().toLowerCase().endsWith(".cin"))
+						) 
+				{
 					templist.add(unit);
 				}
 			}
 
 		} else if (check.exists() && check.isFile()
-				&& check.getName().toLowerCase().endsWith(".lime")) {
+				&& (check.getName().toLowerCase().endsWith(".lime")
+						//Add by Jeremy '10, 03, 20 for .cin compatibility
+					||check.getName().toLowerCase().endsWith(".cin") )) {
 
 			hasSelectFile = true;
 			loadMapping(check);
