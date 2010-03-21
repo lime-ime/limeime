@@ -35,6 +35,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+
 /**
  * @author Art Hung
  */
