@@ -17,7 +17,7 @@
     <string name="label_send_key">Send</string>
     
     <!-- LIME Setting -->
-    <string name="lime_setting_title">LIME 1.8.2.2v \n\n**Upgrade from 1.7.x or previous version please import LIME mapping file again.\n\nThis is a tools which can help you build custom input method by import a set of mapping table. you can get more info from the official website.\nhttp://android.toload.net/</string>
+    <string name="lime_setting_title">LIME 1.8.3v \n\n**Upgrade from 1.7.x or previous version please import LIME mapping file again.\n\nThis is a tools which can help you build custom input method by import a set of mapping table. you can get more info from the official website.\nhttp://android.toload.net/</string>
     <string name="lime_setting_operation_notice1">\n[Import Mapping Table]\nBefore you start use LIME IME, you would need to load valid .lime mapping to the database.\n</string>
     <string name="lime_setting_operation_info1">Version : </string>
     <string name="lime_setting_operation_info2">Total Record : </string>
@@ -87,7 +87,7 @@
     <string name="accept_symbol_index">Activate symbol</string>
     <string name="accept_symbol_index_summary">Allow punctuation as mapping code</string>
     <string name="switch_english_mode">Quick switch hotkey</string>
-    <string name="switch_english_mode_summary">[CRTL]+[SPACE] switch typing mode</string>
+    <string name="switch_english_mode_summary">[SHIFT]+[SPACE] switch typing mode</string>
     
     
     <!-- Changjei Keyboard, Standard Keyboard-->
