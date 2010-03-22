@@ -213,12 +213,10 @@ public class LIMESetting extends Activity {
 			try {
 				// modified by Jeremy '10, 3,12
 				//dictotal = limedb.countUserdic();
-				SharedPreferences settings = ctx.getSharedPreferences(
-						TOTAL_USERDICT_RECORD, 0);
+				SharedPreferences settings = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
 				String recordString = settings.getString(TOTAL_USERDICT_RECORD, "0");
 				dictotal = recordString;
-			} catch (Exception e) {
-			}
+			} catch (Exception e) {}
 
 			String version = "";
 			try {
@@ -347,14 +345,14 @@ public class LIMESetting extends Activity {
 			File list[] = rootPath.listFiles();
 			for (File unit : list) {
 				if (unit.isDirectory()
-						|| (unit.isFile() && unit.getName().toLowerCase()
-								.endsWith(".lime"))) {
+						|| (unit.isFile() && unit.getName().toLowerCase().endsWith(".lime"))
+						|| (unit.isFile() && unit.getName().toLowerCase().endsWith(".cin"))) {
 					templist.add(unit);
 				}
 			}
 
 		} else if (check.exists() && check.isFile()
-				&& check.getName().toLowerCase().endsWith(".lime")) {
+				&& ( check.getName().toLowerCase().endsWith(".lime") || check.getName().toLowerCase().endsWith(".cin"))  ) {
 
 			hasSelectFile = true;
 			loadMapping(check);

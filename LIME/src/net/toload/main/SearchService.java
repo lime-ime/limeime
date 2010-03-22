@@ -56,7 +56,6 @@ public class SearchService extends Service {
 		}
 		//-----------------------------------------------------------
 
-
 		public List query(String code) throws RemoteException {
 
 			if(mappingIdx == null){mappingIdx = new HashMap();}

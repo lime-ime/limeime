@@ -18,16 +18,16 @@
     
     <!-- LIME Setting -->
     <string name="lime_setting_title">LIME 1.8.3v \n\n**由舊版本升級(1.7.x)請重新匯入字根檔!!\n\n自定義輸入法建立工具。透過 LIME 輸入法字根對應檔的匯入，您可以打造完全屬於您個人的輸入方式。關於對應檔的建立方式您可以在官方網站找到更多相關的資訊.\nhttp://android.toload.net/</string>
-    <string name="lime_setting_operation_notice1">\n[載入對應表]\n您必需先匯入完整字根對應表才能開始輸入文字，請選擇適當的 .LIME 進行資料載入動作。\n</string>
+    <string name="lime_setting_operation_notice1">\n[載入對應表]\n您必需先匯入完整字根對應表才能開始輸入文字，請選擇適當的 .LIME 或 .CIN 進行資料載入動作。\n</string>
     <string name="lime_setting_operation_info1">版本 : </string>
-    <string name="lime_setting_operation_info2">總筆數 : </string>
+    <string name="lime_setting_operation_info2">總筆數 : </string> 
     <string name="lime_setting_operation_notice2">\n[清除資料庫]\n假如您想要重置資料庫請點選下方的按鈕。資料庫重置後可以讓您重頭開始匯入 LIME 字根檔。</string>
     <string name="lime_setting_operation_notice3">\n[關聯字備份/還原]\nLIME 程式會依使用者曾輸入過的文字自動建立關聯字資料庫。您可以使用下列的功能進行關聯字資料庫的備份及還原工作。\n</string>
     <string name="lime_setting_operation_info3">總筆數 : </string>
     <string name="lime_setting_operation_notice4">\n[清除關聯字]\n執行這一個功能可以讓系統重新建立關聯字資料庫.</string>
     
     <!-- Button Text -->
-    <string name="lime_setting_btn_load_local">載入 .LIME</string>
+    <string name="lime_setting_btn_load_local">載入字根檔</string>
     <string name="lime_setting_reset_database">清除資料庫</string>
     <string name="lime_setting_reset_dictionary">清除關聯字</string>
     <string name="lime_setting_backtup_db">資料備份</string>
@@ -41,7 +41,7 @@
     <string name="lime_setting_btn_close">關閉</string>
     
     <!-- LIME Loading -->
-    <string name="lime_setting_btn_load_local_notice">請選擇 .LIME 檔案</string>
+    <string name="lime_setting_btn_load_local_notice">請選擇 .LIME 或 .CIN 檔案</string>
     <string name="lime_setting_loading">載入對應檔</string>
     <string name="lime_setting_select_root"> - back to /</string>
     <string name="lime_setting_select_parent"> - back to ..</string>
@@ -58,8 +58,8 @@
     <string name="lime_setting_notification_userdic_reset">關聯字清除完成</string>
     <string name="lime_setting_notification_userdic_backup">關聯字備份完成</string>
     <string name="lime_setting_notification_userdic_restore">關聯字還原完成</string>
-    <string name="lime_setting_notification_db_loading">開始載入 .lime 內容</string>
-    <string name="lime_setting_notification_db_request">無對應字碼, 請先載入 .LIME 檔案</string>
+    <string name="lime_setting_notification_db_loading">開始載入字根檔內容</string>
+    <string name="lime_setting_notification_db_request">無對應字碼, 請先載入 .LIME 或 .CIN 檔案</string>
       
     <!-- TAB -->
     <string name="lime_setting_db">對應表管理</string>
