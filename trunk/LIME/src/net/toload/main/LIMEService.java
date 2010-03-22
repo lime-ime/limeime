@@ -193,6 +193,7 @@ public class LIMEService extends InputMethodService implements
 		hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
 		hasNumberMapping = sp.getBoolean("accept_number_index", false);
 		hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+		
 		keyboardSelection = sp.getString("keyboard_list", "lime");
 		
 		// initial Input List
