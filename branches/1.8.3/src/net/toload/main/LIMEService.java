@@ -193,6 +193,7 @@ public class LIMEService extends InputMethodService implements
 		hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
 		hasNumberMapping = sp.getBoolean("accept_number_index", false);
 		hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+		
 		keyboardSelection = sp.getString("keyboard_list", "lime");
 		
 		// initial Input List
@@ -310,6 +311,7 @@ public class LIMEService extends InputMethodService implements
 
 		// We are now going to initialize our state based on the type of
 		// text being edited.
+		
 		switch (attribute.inputType & EditorInfo.TYPE_MASK_CLASS) {
 		case EditorInfo.TYPE_CLASS_NUMBER:
 		case EditorInfo.TYPE_CLASS_DATETIME:
@@ -939,7 +941,7 @@ public class LIMEService extends InputMethodService implements
 		
 		// If there is no Temp Matched word exist then not to display dictionary view
 		try{
-			if( tempMatched != null && !tempMatched.getCode().equals("")){
+			if( tempMatched != null && tempMatched.getCode() != null && !tempMatched.getCode().equals("")){
 				
 				LinkedList<Mapping> list = new LinkedList<Mapping>();
 				//Modified by Jeremy '10,3 ,12 for more specific related word

@@ -293,51 +293,28 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 
 	/**
-	 * Batch add dictionary items into database
-	 * 
-	 * @param srclist
-	 */
-	//---------------------------------------------------------------
-	//Removed by Jeremy '10, 3,12. Code moved to restoreRelatedUserdic 
-	/*
-	public void batchAddDictionary(List<Mapping> srclist) {
-
-		int total = 0;
-		SQLiteDatabase db = this.getWritableDatabase();
-		db.beginTransaction();
-		try{ 
-		for (Mapping unit : srclist) {
-
-			String code = unit.getPcode();
-
-			ContentValues cv = new ContentValues();
-			cv.put(FIELD_DIC_pcode, unit.getPcode());
-			cv.put(FIELD_DIC_pword, unit.getPword());
-			cv.put(FIELD_DIC_ccode, unit.getCode());
-			cv.put(FIELD_DIC_cword, unit.getWord());
-			cv.put(FIELD_DIC_score, unit.getScore());
-
-			db.insert("userdic", null, cv);
-			total++;
-			}
-		}
-		}catch(Exception e){
-			e.printStackTrace();
-		}finally{
-			db.setTransactionSuccessful();
-			db.endTransaction();
-		}
-
-	}
-	*/
-	//----------------------------------------------------------------------------------------------------------------------------------
-	/**
 	 * Create dictionary database
 	 * 
 	 * @param srclist
 	 */
 	public void addDictionary(List<Mapping> srclist) {
 
+		int dictotal = 0;
+		try {
+			// modified by Jeremy '10, 3,12
+			//dictotal = limedb.countUserdic();
+			SharedPreferences settings = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
+			String recordString = settings.getString(TOTAL_USERDICT_RECORD, "0");
+			dictotal = Integer.parseInt(recordString);
+		} catch (Exception e) {}
+		
+		
+		// Check if build related word enable. 
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		if( !sp.getBoolean(CANDIDATE_SUGGESTION, false) ){
+			return;
+		}
+		
 		if (srclist != null && srclist.size() > 0) {
 
 			try {
@@ -345,12 +322,9 @@ public class LimeDB extends SQLiteOpenHelper {
 				for (int i = 0; i < srclist.size(); i++) {
 
 					Mapping unit = srclist.get(i);
-					// Log.i("ART","unit 1->"+unit);
 					Mapping unit2 = srclist.get((i + 1));
-					// Log.i("ART","unit 2->"+unit2);
-
+					
 					if (unit2 != null) {
-						// Log.i("ART","unit 3->"+unit2);
 						if (unit != null && unit.getCode().length() > 0
 								&& unit2 != null
 								&& unit2.getCode().length() > 0) {
@@ -374,6 +348,7 @@ public class LimeDB extends SQLiteOpenHelper {
 									cv.put(FIELD_DIC_score, 0);
 
 									db.insert("userdic", null, cv);
+									dictotal++;
 									// Log.i("ART","unit 6->"+unit2);
 								} catch (Exception e) {
 									e.printStackTrace();
@@ -384,10 +359,15 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
+			} finally {
+				SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
+				sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(dictotal)).commit();
 			}
 		}
 	}
 
+
+	
 	public List<Mapping> getMapping(String keyword) {
 
 		List<Mapping> result = new LinkedList<Mapping>();
@@ -555,8 +535,6 @@ public class LimeDB extends SQLiteOpenHelper {
 			
 			//-----------------------------------------------------------
 
-			 
-			
 
 			if (cursor.moveToFirst()) {
 				int pcodeColumn = cursor.getColumnIndex(FIELD_DIC_pcode);
@@ -634,33 +612,20 @@ public class LimeDB extends SQLiteOpenHelper {
 			public void run() {
 
 				boolean hasMappingVersion = false;
+				boolean isCinFormat= false;
 				String line = "";
 				finish = false;
 				//relatedfinish = false;
 				count = 0;
 				relatedcount = 0;
 
-				// Load previous import status
-				/**
-				SharedPreferences importlineset = ctx.getSharedPreferences(MAPPING_IMPORT_LINE, 0);
-				String importstatus = "";
-				try{
-					importstatus = importlineset.getString(MAPPING_IMPORT_LINE, "");
-					if(!importstatus.equals("")){
-						if(importstatus.startsWith("mapping")){
-							try{
-								count = Integer.parseInt(importstatus.split(" ")[1]);
-								//relatedcount = 0;
-							}catch(Exception e){}
-						}else{
-							deleteAll();
-						}
-					}
-				}catch(Exception e){}
-				**/
 				
-				//if(relatedcount == 0){
-					// Identify Delimiter
+				// Check if source file is .cin format
+				if(filename.getName().toLowerCase().endsWith(".cin")){
+					isCinFormat = true;
+				}
+				
+					// Base on first 100 line to identify the Delimiter
 					try {
 						
 						// Prepare Source File
@@ -669,7 +634,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						boolean firstline = true;
 						int i = 0;
 						List templist = new ArrayList();
-						while ((line = buf.readLine()) != null) {
+						while ((line = buf.readLine()) != null && isCinFormat == false) {
 							templist.add(line);
 							if(i >= 100){
 								break;
@@ -683,8 +648,6 @@ public class LimeDB extends SQLiteOpenHelper {
 						fr.close();
 					}catch(Exception e){}
 					
-
-					//Log.i("ART", "Prepare related list : " + new Date().toString());
 					// Prepare related word list
 					HashMap<String, TreeMap> hm = new HashMap<String, TreeMap>();
 					try {
@@ -693,11 +656,29 @@ public class LimeDB extends SQLiteOpenHelper {
 						FileReader fr = new FileReader(filename);
 						BufferedReader buf = new BufferedReader(fr);
 						boolean firstline = true;
-						//Add by jeremy '10,03,10 for .cin compatibility
-						boolean chardef = true;
+						boolean cinFormatStart = false;
 						int i = 0;
+
 						while ((line = buf.readLine()) != null) {
 							i++;
+					
+							/*
+							 * If source is cin format start from the tag %chardef begin until %chardef end
+							 */
+							if(isCinFormat){
+								
+								if(!cinFormatStart){
+									if(line != null && line.trim().toLowerCase().startsWith("%chardef begin")){
+										cinFormatStart = true;
+									}
+									continue;
+								}
+								
+								if(line != null && line.trim().toLowerCase().startsWith("%chardef end")){										
+									break;
+								}
+							}
+							
 							if(firstline){
 								byte srcstring[] = line.getBytes();
 								if(srcstring.length > 3){
@@ -716,36 +697,26 @@ public class LimeDB extends SQLiteOpenHelper {
 								if (line.trim().equals("")) {continue;}
 								if (line.length() < 3) {continue;}
 							}
-						
-							// 	Add by jeremy '10, 03 20 for .cin comptibility.
-							// .cin comment start with #
-							if(line.startsWith("#")) {continue;}
-							// 	Add by jeremy '10, 03 20 for .cin comptibility.
-							if(line.startsWith("%"))
-							{
-								if(line.trim().equalsIgnoreCase("%keyname begin")){
-									chardef = false;
-								}else if(line.trim().equalsIgnoreCase("%chardef begin")){
-									chardef = true;
-								}else if(line.trim().equalsIgnoreCase("%chardef end")){
-									chardef = false;
-																	
+							
+							String code = null, word = null;
+							if(isCinFormat){
+								if(line.indexOf("\t") != -1){
+									code = line.substring(0, line.indexOf("\t"));
+									word = line.substring(line.indexOf("\t") + 1);
+								}else if(line.indexOf(" ") != -1){
+									code = line.substring(0, line.indexOf(" "));
+									word = line.substring(line.indexOf(" ") + 1);
 								}
-								continue;
+							}else{
+								code = line.substring(0, line.indexOf(DELIMITER));
+								word = line.substring(line.indexOf(DELIMITER) + 1);
 							}
-							if(!chardef){continue;}	
-							//---------------------------------------------------------
-							String code = line.substring(0, line.indexOf(DELIMITER));
-							String word = line.substring(line.indexOf(DELIMITER) + 1);
+							
 							if (code == null || code.trim().equals("")) {continue;}else{code = code.toUpperCase();}
 
 							if (code.equalsIgnoreCase("@VERSION@")){
 								continue;
 							}
-							
-							
-							// 	Add by jeremy '10, 03 20 for .cin comptibility.
-							
 							
 							String first = code.substring(0,1);
 							if(hm.get(first) != null){
@@ -778,19 +749,27 @@ public class LimeDB extends SQLiteOpenHelper {
 						FileReader fr = new FileReader(filename);
 						BufferedReader buf = new BufferedReader(fr);
 						boolean firstline = true;
-						// Add by jeremy '10,03,10 for .cin compatibility
-						boolean chardef = true;
-						//int countline = 0;
-						
+						boolean cinFormatStart = false;						
 						
 						while ((line = buf.readLine()) != null) {
 							
-							//// Check loading status
-							//if(countline < count){
-							//	countline++;
-							//	continue;
-							//}
-							
+							/*
+							 * If source is cin format start from the tag %chardef begin until %chardef end
+							 */
+							if(isCinFormat){
+								
+								if(!cinFormatStart){
+									if(line != null && line.trim().toLowerCase().startsWith("%chardef begin")){
+										cinFormatStart = true;
+									}
+									continue;
+								}
+								
+								if(line != null && line.trim().toLowerCase().startsWith("%chardef end")){										
+									break;
+								}
+							}
+
 							// Check Format
 							if(firstline){
 								byte srcstring[] = line.getBytes();
@@ -810,42 +789,36 @@ public class LimeDB extends SQLiteOpenHelper {
 								if (line.trim().equals("")) {continue;}
 								if (line.length() < 3) {continue;}
 							}
-							
-							// 	Add by jeremy '10, 03 20 for .cin comptibility.
-							// .cin comment start with #
-							if(line.startsWith("#")) {continue;}
-							if(line.startsWith("%"))
-							{
-								if(line.trim().equalsIgnoreCase("%keyname begin")){
-									chardef = false;
-								}else if(line.trim().equalsIgnoreCase("%chardef begin")){
-									chardef = true;
-								}else if(line.trim().equalsIgnoreCase("%chardef end")){
-									chardef = false;
-								}else if(line.trim().startsWith("%cname")){
-									SharedPreferences version = ctx.getSharedPreferences(MAPPING_VERSION, 0);
-									version.edit().putString(MAPPING_VERSION, line.substring(6)).commit();									
-								}
-								continue;
-							}
-							if(!chardef){continue;}	
-							//---------------------------------------------------------
-							
-							String code = line.substring(0, line.indexOf(DELIMITER));
-							String word = line.substring(line.indexOf(DELIMITER) + 1);
-							if (code == null || code.trim().equals("")) {continue;}else{code = code.toUpperCase();}
-							if (word == null || word.trim().equals("")) {continue;}
-							if (code.equalsIgnoreCase("@VERSION@")){
-								SharedPreferences version = ctx.getSharedPreferences(MAPPING_VERSION, 0);
-								version.edit().putString(MAPPING_VERSION, word.trim()).commit();
-								continue;
-							}
-							//Add by jeremy '10, 03 20 for .cin comptibility.
+	
+							try{
 
-							String first = code.substring(0,1);
-							
-							insertWord(code, word, hm.get(first), 50);
-							//db.insert("mapping", null, cv);	
+								String code = null, word = null;
+								if(isCinFormat){
+									if(line.indexOf("\t") != -1){
+										code = line.substring(0, line.indexOf("\t"));
+										word = line.substring(line.indexOf("\t") + 1);
+									}else if(line.indexOf(" ") != -1){
+										code = line.substring(0, line.indexOf(" "));
+										word = line.substring(line.indexOf(" ") + 1);
+									}
+								}else{
+									code = line.substring(0, line.indexOf(DELIMITER));
+									word = line.substring(line.indexOf(DELIMITER) + 1);
+								}
+								if (code == null || code.trim().equals("")) {continue;}else{code = code.toUpperCase();}
+								if (word == null || word.trim().equals("")) {continue;}
+								if (code.equalsIgnoreCase("@VERSION@")){
+									SharedPreferences version = ctx.getSharedPreferences(MAPPING_VERSION, 0);
+									version.edit().putString(MAPPING_VERSION, word.trim()).commit();
+									continue;
+								}
+	
+								String first = code.substring(0,1);
+								
+								insertWord(code, word, hm.get(first), 50);
+							}catch(StringIndexOutOfBoundsException e){
+								Log.i("ART", line+":"+ e);
+							}
 							
 							count++;
 							//countline++;
@@ -980,14 +953,18 @@ public class LimeDB extends SQLiteOpenHelper {
 		if (pcode != null && !pcode.trim().equals("") && ccode != null
 				&& !ccode.trim().equals("")) {
 
+			/**
+			 * 
+						cv.put(FIELD_DIC_pcode, pword.hashCode());
+						cv.put(FIELD_DIC_pword, pword);
+						cv.put(FIELD_DIC_ccode, word.hashCode());
+			 */
 			try {
 				Cursor cursor = null;
 
 				SQLiteDatabase db = this.getReadableDatabase();
-				cursor = db.query("userdic", null, FIELD_DIC_pword + " = '"
-						+ pword + "' AND " + FIELD_DIC_cword + " = '" + cword
-						+ "' AND " + FIELD_DIC_pcode + " = '" + pcode
-						+ "' AND " + FIELD_DIC_ccode + " = '" + ccode + "'",
+				cursor = db.query("userdic", null, FIELD_DIC_pcode + " = '" + pword.hashCode()
+						+ "' AND " + FIELD_DIC_ccode + " = '" + cword.hashCode() + "'",
 						null, null, null, null, null);
 
 				if (cursor != null && cursor.getCount() > 0) {
@@ -1103,12 +1080,22 @@ public class LimeDB extends SQLiteOpenHelper {
 				String line = "";
 
 				while ((line = br.readLine()) != null) {
-					//try {
+					
+					line = line.trim();
+					
+					try {
+					
 						String pcode = line.split("\t")[0];
 						String pword = line.split("\t")[1];
 						String code = line.split("\t")[2];
 						String word = line.split("\t")[3];
-						String score = line.split("\t")[4];
+						String score = "0";
+						
+						try{
+							// To ignore incomplete import row
+							score = line.split("\t")[4];
+						}catch(ArrayIndexOutOfBoundsException e){}
+						
 						//temp.add(new Mapping(pcode, pword, code, word, Integer
 						//		.parseInt(score)));
 						// insert into database
@@ -1133,12 +1120,12 @@ public class LimeDB extends SQLiteOpenHelper {
 							SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
 											  sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(relatedcount) + " (loading...)").commit();
 						}
+					}catch(ArrayIndexOutOfBoundsException e){
+						//Error to parse the line
+					}
 				
 				}
-			//} catch (FileNotFoundException e) {
-			//	e.printStackTrace();
-			//} catch (IOException e) {
-			//	e.printStackTrace();
+
 			}catch(Exception e){
 				e.printStackTrace();
 			}finally{

@@ -5,7 +5,8 @@
     <!-- Title for Latin keyboard  -->
     <string name="app_name">LIME</string>
     <string name="ime_name">LIME</string>
-    <string name="ime_setting">LIME</string>
+    <string name="ime_setting">LIME Settings</string>
+    <string name="input_method">Input Method</string>
 
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
@@ -17,8 +18,8 @@
     <string name="label_send_key">Send</string>
     
     <!-- LIME Setting -->
-    <string name="lime_setting_title">LIME 1.8.2.2v \n\n**Upgrade from 1.7.x or previous version please import LIME mapping file again.\n\nThis is a tools which can help you build custom input method by import a set of mapping table. you can get more info from the official website.\nhttp://android.toload.net/</string>
-    <string name="lime_setting_operation_notice1">\n[Import Mapping Table]\nBefore you start use LIME IME, you would need to load valid .lime mapping to the database.\n</string>
+    <string name="lime_setting_title">LIME 1.8.3v \n\n**Upgrade from 1.7.x or previous version please import LIME mapping file again.\n\nThis is a tools which can help you build custom input method by import a set of mapping table. you can get more info from the official website.\nhttp://android.toload.net/</string>
+    <string name="lime_setting_operation_notice1">\n[Import Mapping Table]\nBefore you start use LIME IME, you would need to load valid .lime mapping or .cin to the database.\n</string>
     <string name="lime_setting_operation_info1">Version : </string>
     <string name="lime_setting_operation_info2">Total Record : </string>
     <string name="lime_setting_operation_notice2">\n[Reset Mapping Table]\nIf you would like to reset the database please click button below, this action allow you to clean import status and reload mapping file.</string>
@@ -27,7 +28,7 @@
     <string name="lime_setting_operation_notice4">\n[Reset Related Words]\Reset related words from the database and build new dataset.</string>
     
     <!-- Button Text -->
-    <string name="lime_setting_btn_load_local">LOAD .LIME</string>
+    <string name="lime_setting_btn_load_local">LOAD MAPPING</string>
     <string name="lime_setting_reset_database">RESET MAPPING</string>
     <string name="lime_setting_reset_dictionary">RESET RELATED WORDS</string>
     <string name="lime_setting_backtup_db">Backup</string>
@@ -57,9 +58,9 @@
     <string name="lime_setting_notification_mapping_reset">Mapping reset completed</string>
     <string name="lime_setting_notification_userdic_reset">Related words reset completed</string>
     <string name="lime_setting_notification_userdic_backup">Related words backup completed</string>
-    <string name="lime_setting_notification_userdic_restore">User Dictionary Restore</string>
-    <string name="lime_setting_notification_db_loading">Start loading .lime file</string>
-    <string name="lime_setting_notification_db_request">No Mapping Found!! Please Import .LIME</string>
+    <string name="lime_setting_notification_userdic_restore">User dictionary restored</string>
+    <string name="lime_setting_notification_db_loading">Start loading mapping file</string>
+    <string name="lime_setting_notification_db_request">No Mapping Found!! Please Import .LIME or .CIN</string>
       
     <!-- TAB -->
     <string name="lime_setting_db">Mapping DB</string>
@@ -87,7 +88,7 @@
     <string name="accept_symbol_index">Activate symbol</string>
     <string name="accept_symbol_index_summary">Allow punctuation as mapping code</string>
     <string name="switch_english_mode">Quick switch hotkey</string>
-    <string name="switch_english_mode_summary">[CRTL]+[SPACE] switch typing mode</string>
+    <string name="switch_english_mode_summary">[SHIFT]+[SPACE] switch typing mode</string>
     
     
     <!-- Changjei Keyboard, Standard Keyboard-->
