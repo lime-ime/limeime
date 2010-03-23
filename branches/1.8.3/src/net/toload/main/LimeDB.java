@@ -139,11 +139,12 @@ public class LimeDB extends SQLiteOpenHelper {
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
 		db.execSQL("DROP TABLE IF EXISTS custom");
-		db.execSQL("DROP TABLE IF EXISTS custom_idx");
+		db.execSQL("DROP INDEX IF EXISTS custom_idx");
 		db.execSQL("DROP TABLE IF EXISTS mapping");
-		db.execSQL("DROP TABLE IF EXISTS mapping_idx");
+		db.execSQL("DROP INDEX IF EXISTS mapping_idx");
 		db.execSQL("DROP TABLE IF EXISTS userdic");
-		db.execSQL("DROP TABLE IF EXISTS userdic_idx");
+		db.execSQL("DROP INDEX IF EXISTS userdic_idx_pcode");
+		db.execSQL("DROP INDEX IF EXISTS userdic_idx_pword");
 
 		onCreate(db);
 	}
@@ -191,7 +192,17 @@ public class LimeDB extends SQLiteOpenHelper {
 		sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(0)).commit();
 		//-------------------------------------------------------------------------
 		SQLiteDatabase db = this.getWritableDatabase();
-		db.delete("userdic", null, null);
+		//db.delete("userdic", null, null);
+		db.execSQL("DROP TABLE IF EXISTS userdic");
+		db.execSQL("DROP INDEX IF EXISTS userdic_idx_pcode");
+		db.execSQL("DROP INDEX IF EXISTS userdic_idx_pword");
+		db.execSQL("CREATE TABLE userdic(" + FIELD_DIC_id
+				+ " INTEGER primary key autoincrement, " + " "
+				+ FIELD_DIC_pcode + " text, " + FIELD_DIC_ccode + " text, "
+				+ FIELD_DIC_pword + " text, " + FIELD_DIC_cword + " text, "
+				+ FIELD_DIC_score + " integer)");
+		db.execSQL("CREATE INDEX userdic_idx_pcode ON userdic (" + FIELD_DIC_pcode + ")");
+		db.execSQL("CREATE INDEX userdic_idx_pword ON userdic (" + FIELD_DIC_pword + ")");
 		db.close();
 	}
 
@@ -528,7 +539,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			//		+ keyword + "\"", null, null, null, FIELD_DIC_score
 			
 			cursor = db.query("userdic", null,
-					FIELD_DIC_pcode + " = " + pword.hashCode() 
+					FIELD_DIC_pword + " = \"" + pword + "\"" 
 					, null, null, null, FIELD_DIC_score
 					+ " DESC", null);
 			//Log.i("Query", FIELD_DIC_pword + " = \"" + pword +"\":" + new Date().toString());
@@ -1131,6 +1142,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			}finally{
 				db.setTransactionSuccessful();
 				db.endTransaction();
+				
 			}
 			
 			// Update total_userdict_records

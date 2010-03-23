@@ -35,6 +35,8 @@ import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
@@ -48,9 +50,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import android.app.AlertDialog;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -863,7 +867,7 @@ public class LIMEService extends InputMethodService implements
 			handleClose();
 			return;
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_OPTIONS) {
-			// Show a menu or somethin'
+			handleOptions();
 		} else if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE && mInputView != null) {
 			switchKeyboard(primaryCode);
 		}  else if (primaryCode == -9 && mInputView != null) {
@@ -875,6 +879,131 @@ public class LIMEService extends InputMethodService implements
 		
 	}
 
+	private AlertDialog mOptionsDialog;
+	 // Contextual menu positions
+    private static final int POS_SETTINGS = 0;
+    private static final int POS_KEYBOARD = 1;
+    private static final int POS_METHOD = 2;
+    
+    private void handleOptions() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(true);
+        builder.setIcon(R.drawable.sym_keyboard_done);
+        builder.setNegativeButton(android.R.string.cancel, null);
+        builder.setTitle(getResources().getString(R.string.ime_name));
+        
+        CharSequence itemSettings = getString(R.string.ime_setting);
+        CharSequence itemKeyboadList = getString(R.string.keyboard_list);
+        CharSequence itemInputMethod = getString(R.string.input_method);
+        
+        builder.setItems(new CharSequence[] {
+                itemSettings, itemKeyboadList, itemInputMethod},
+                new DialogInterface.OnClickListener() {
+
+            public void onClick(DialogInterface di, int position) {
+                di.dismiss();
+                switch (position) {
+                    case POS_SETTINGS:
+                        launchSettings();
+                        break;
+                    case POS_KEYBOARD:
+                        //
+                    	showKeyboardPicker();
+                        break;
+                    case POS_METHOD:
+                        ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
+                            .showInputMethodPicker();
+                        break;
+                }
+            }
+        });
+        
+        mOptionsDialog = builder.create();
+        Window window = mOptionsDialog.getWindow();
+        WindowManager.LayoutParams lp = window.getAttributes();
+        lp.token = mInputView.getWindowToken();
+        lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+        window.setAttributes(lp);
+        window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+        mOptionsDialog.show();
+    }
+
+    private void launchSettings() {
+        handleClose();
+        Intent intent = new Intent();
+        intent.setClass(LIMEService.this, LIMEMenu.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+    }
+    
+    private void showKeyboardPicker(){
+    	AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(true);
+        builder.setIcon(R.drawable.sym_keyboard_done);
+        builder.setNegativeButton(android.R.string.cancel, null);
+        builder.setTitle(getResources().getString(R.string.keyboard_list));
+        
+        final CharSequence[] items = getResources().getStringArray(R.array.keyboard);
+        
+        int curKB=0;
+        
+        if (keyboardSelection.equals("lime")){
+			curKB=0;
+		} else if(keyboardSelection.equals("phone")){
+			curKB=1;
+		} else if(keyboardSelection.equals("cj")){
+			curKB=2;
+		} else if(keyboardSelection.equals("dayi")){
+			curKB=3;
+		} else if(keyboardSelection.equals("phonetic")){
+			curKB=4;
+		}
+		
+        
+        builder.setSingleChoiceItems(
+        		items, 
+        		curKB, 
+        		new DialogInterface.OnClickListener() {
+
+			public void onClick(DialogInterface di, int position) {
+                di.dismiss(); 
+                handlKeyboardSelection(position);      
+            }
+        });
+        
+        mOptionsDialog = builder.create();
+        Window window = mOptionsDialog.getWindow();
+        WindowManager.LayoutParams lp = window.getAttributes();
+        lp.token = mInputView.getWindowToken();
+        lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+        window.setAttributes(lp);
+        window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+        mOptionsDialog.show();
+        
+    }
+    
+    private void handlKeyboardSelection(int position){
+    	SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor spe = sp.edit();
+        
+        if (position == 0){
+        		keyboardSelection = "lime";
+		} else if(position == 1){
+			keyboardSelection = "phone";
+		} else if(position == 2){
+			keyboardSelection = "cj";
+		} else if(position == 3){
+			keyboardSelection = "dayi";
+		} else if(position == 4){
+			keyboardSelection = "phonetic";
+		}
+        
+        spe.putString("keyboard_list", keyboardSelection);
+        spe.commit();
+        initialKeyboard();
+    	
+    }
+    
 	public void onText(CharSequence text) {
 
 		InputConnection ic = getCurrentInputConnection();
