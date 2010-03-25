@@ -1225,6 +1225,8 @@ public class LIMEService extends InputMethodService implements
 			}
 		}
 	}
+	
+	
 	private void handleShift() {
 
 		if (mInputView == null) { return; }
