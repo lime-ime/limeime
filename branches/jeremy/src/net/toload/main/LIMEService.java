@@ -35,6 +35,8 @@ import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
@@ -48,9 +50,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import android.app.AlertDialog;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -84,6 +88,9 @@ public class LIMEService extends InputMethodService implements
 	// Add by Jeremy '10, 3,12
 	// new private variable mHasAlt for keeping state of alt. 
 	private boolean mHasAlt = false;
+	// '10, 3, 24 fix for continuous alt mode and alt-lock function.
+	private boolean mTrackAlt =false;
+	private boolean mAltLocked =false;
 	//------------------------------------------------------------------------
 	private boolean mEnglishOnly;
 	private boolean mEnglishFlagShift;
@@ -486,11 +493,19 @@ public class LIMEService extends InputMethodService implements
 	 * option.
 	 */
 	private boolean translateKeyDown(int keyCode, KeyEvent event) {
+		//Log.i("translateKeyDown","metastate before handle keydown:" + String.valueOf(mMetaState)
+		//	    + "MetaAltOn:"+ String.valueOf(mMetaState & MetaKeyKeyListener.META_ALT_ON) );
 		mMetaState = MetaKeyKeyListener.handleKeyDown(mMetaState, keyCode, event);
 		int c = event.getUnicodeChar(MetaKeyKeyListener.getMetaState(mMetaState));
+		//Log.i("translateKeyDown","metastate before adjust:" + String.valueOf(mMetaState)
+		//		+ "MetaAltOn:"+ String.valueOf(mMetaState & MetaKeyKeyListener.META_ALT_ON) );
 		mMetaState = MetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+		//Log.i("translateKeyDown","metastate after adjust:" + String.valueOf(mMetaState)
+		//		+ "MetaAltOn:"+ String.valueOf(mMetaState & MetaKeyKeyListener.META_ALT_ON) );
 		InputConnection ic = getCurrentInputConnection();
-
+		
+		
+		
 		if(keyCode == 59){
 			c = -1;
 		}
@@ -536,7 +551,11 @@ public class LIMEService extends InputMethodService implements
 	
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		    
+		
+		//Log.i("OnKeyDown", "keyCode:" + keyCode + "Meta_ALT_ON:"
+		//		+ String.valueOf(mMetaState & MetaKeyKeyListener.META_ALT_ON) );
+			
+		
 			switch (keyCode) {
 			case KeyEvent.KEYCODE_BACK:
 				// The InputMethodService already takes care of the back
@@ -549,7 +568,7 @@ public class LIMEService extends InputMethodService implements
 					}
 				}
 				break;
-	
+		
 			case KeyEvent.KEYCODE_DEL:
 				// Special handling of the delete key: if we currently are
 				// composing text for the user, we want to modify that instead
@@ -581,9 +600,13 @@ public class LIMEService extends InputMethodService implements
 			case KeyEvent.KEYCODE_ENTER:
 				// Let the underlying text editor always handle these.
 				return false;
-				
-			
-			 
+			case KeyEvent.KEYCODE_ALT_LEFT:
+				// Let the underlying text editor always handle these.
+				mTrackAlt = true;
+
+			case KeyEvent.KEYCODE_ALT_RIGHT:
+				// Let the underlying text editor always handle these.
+				mTrackAlt = true;
 				
 			default:
 	
@@ -643,20 +666,26 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
+		//Log.i("OnKeyUp", "keyCode:" + keyCode + "KeyEvent.Alt:"
+		//		+ String.valueOf(mMetaState & MetaKeyKeyListener.META_ALT_ON) );
 		
 		switch (keyCode) {
 		//*/------------------------------------------------------------------------
 		// Modified by Jeremy '10, 3,12
 		// keep track of alt state with mHasAlt.
+		// Modified '10, 3, 24 for bug fix and alc-lock implementation
 		case KeyEvent.KEYCODE_ALT_LEFT:
-			// Let the underlying text editor always handle these.
-			mHasAlt = true;
+			handleAlt();
 			break;
-
 		case KeyEvent.KEYCODE_ALT_RIGHT:
-			// Let the underlying text editor always handle these.
-			mHasAlt = true;
+			handleAlt();
 			break;
+		default:
+			if(mTrackAlt && !mAltLocked) {  // Clear mHasAlt if Metakey state if Alt not locked.
+				InputConnection ic = getCurrentInputConnection();	
+				ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+				mTrackAlt = false;
+			}
 		}
 		//------------------------------------------------------------------------
 		//*/
@@ -730,7 +759,6 @@ public class LIMEService extends InputMethodService implements
 				
 			}
 		}catch(Exception e){
-			//Toast.makeText(this, R.string.lime_setting_notification_db_request, Toast.LENGTH_LONG).show();
 			e.printStackTrace();
 		}
 	}
@@ -863,7 +891,7 @@ public class LIMEService extends InputMethodService implements
 			handleClose();
 			return;
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_OPTIONS) {
-			// Show a menu or somethin'
+			handleOptions();
 		} else if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE && mInputView != null) {
 			switchKeyboard(primaryCode);
 		}  else if (primaryCode == -9 && mInputView != null) {
@@ -875,6 +903,131 @@ public class LIMEService extends InputMethodService implements
 		
 	}
 
+	private AlertDialog mOptionsDialog;
+	 // Contextual menu positions
+    private static final int POS_SETTINGS = 0;
+    private static final int POS_KEYBOARD = 1;
+    private static final int POS_METHOD = 2;
+    
+    private void handleOptions() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(true);
+        builder.setIcon(R.drawable.sym_keyboard_done);
+        builder.setNegativeButton(android.R.string.cancel, null);
+        builder.setTitle(getResources().getString(R.string.ime_name));
+        
+        CharSequence itemSettings = getString(R.string.ime_setting);
+        CharSequence itemKeyboadList = getString(R.string.keyboard_list);
+        CharSequence itemInputMethod = getString(R.string.input_method);
+        
+        builder.setItems(new CharSequence[] {
+                itemSettings, itemKeyboadList, itemInputMethod},
+                new DialogInterface.OnClickListener() {
+
+            public void onClick(DialogInterface di, int position) {
+                di.dismiss();
+                switch (position) {
+                    case POS_SETTINGS:
+                        launchSettings();
+                        break;
+                    case POS_KEYBOARD:
+                        //
+                    	showKeyboardPicker();
+                        break;
+                    case POS_METHOD:
+                        ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
+                            .showInputMethodPicker();
+                        break;
+                }
+            }
+        });
+        
+        mOptionsDialog = builder.create();
+        Window window = mOptionsDialog.getWindow();
+        WindowManager.LayoutParams lp = window.getAttributes();
+        lp.token = mInputView.getWindowToken();
+        lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+        window.setAttributes(lp);
+        window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+        mOptionsDialog.show();
+    }
+
+    private void launchSettings() {
+        handleClose();
+        Intent intent = new Intent();
+        intent.setClass(LIMEService.this, LIMEMenu.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+    }
+    
+    private void showKeyboardPicker(){
+    	AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(true);
+        builder.setIcon(R.drawable.sym_keyboard_done);
+        builder.setNegativeButton(android.R.string.cancel, null);
+        builder.setTitle(getResources().getString(R.string.keyboard_list));
+        
+        final CharSequence[] items = getResources().getStringArray(R.array.keyboard);
+        
+        int curKB=0;
+        
+        if (keyboardSelection.equals("lime")){
+			curKB=0;
+		} else if(keyboardSelection.equals("phone")){
+			curKB=1;
+		} else if(keyboardSelection.equals("cj")){
+			curKB=2;
+		} else if(keyboardSelection.equals("dayi")){
+			curKB=3;
+		} else if(keyboardSelection.equals("phonetic")){
+			curKB=4;
+		}
+		
+        
+        builder.setSingleChoiceItems(
+        		items, 
+        		curKB, 
+        		new DialogInterface.OnClickListener() {
+
+			public void onClick(DialogInterface di, int position) {
+                di.dismiss(); 
+                handlKeyboardSelection(position);      
+            }
+        });
+        
+        mOptionsDialog = builder.create();
+        Window window = mOptionsDialog.getWindow();
+        WindowManager.LayoutParams lp = window.getAttributes();
+        lp.token = mInputView.getWindowToken();
+        lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+        window.setAttributes(lp);
+        window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+        mOptionsDialog.show();
+        
+    }
+    
+    private void handlKeyboardSelection(int position){
+    	SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor spe = sp.edit();
+        
+        if (position == 0){
+        		keyboardSelection = "lime";
+		} else if(position == 1){
+			keyboardSelection = "phone";
+		} else if(position == 2){
+			keyboardSelection = "cj";
+		} else if(position == 3){
+			keyboardSelection = "dayi";
+		} else if(position == 4){
+			keyboardSelection = "phonetic";
+		}
+        
+        spe.putString("keyboard_list", keyboardSelection);
+        spe.commit();
+        initialKeyboard();
+    	
+    }
+    
 	public void onText(CharSequence text) {
 
 		InputConnection ic = getCurrentInputConnection();
@@ -1054,7 +1207,24 @@ public class LIMEService extends InputMethodService implements
 			}
 		}
 	}
-	
+	//
+	// Modified '10, 3, 24 for bug fix and alc-lock implementation
+	private void handleAlt(){
+		if(mTrackAlt) { //alt pressed without combination with other key
+			if(!mHasAlt){	// Alt-ON
+				mHasAlt = true;
+				mAltLocked = false;
+			}else if(mHasAlt && mAltLocked){//Alt-off 
+				InputConnection ic = getCurrentInputConnection();	
+				ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+				mHasAlt = false;
+				mAltLocked = false;
+			}else if(mHasAlt && !mAltLocked){ //Alt-Locked
+				mHasAlt = true;
+				mAltLocked = true;
+			}
+		}
+	}
 	private void handleShift() {
 
 		if (mInputView == null) { return; }
@@ -1252,7 +1422,7 @@ public class LIMEService extends InputMethodService implements
 	 * @param keyCodes
 	 */
 	private void handleCharacter(int primaryCode, int[] keyCodes) {
-
+		
 		// If keyboard type = phone then check the user selection
 		if( keyboardSelection.equals("phone")){
 			try{      
@@ -1398,130 +1568,70 @@ public class LIMEService extends InputMethodService implements
 				//------------------------------------------------------------------------
 				// Add by Jeremy '10, 3,12
 				// Process Alt combination key specific for moto milestone
-				InputConnection ic = getCurrentInputConnection();				
+				// '10, 3, 24 alt-lock implementation (not clear if alt-locked)
+				InputConnection ic = getCurrentInputConnection();	
+				
 				if( (primaryCode == 'Q' || primaryCode =='q')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '1';
 				}else if((primaryCode == 'W' || primaryCode =='w')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '2';
 				}else if((primaryCode == 'E' || primaryCode =='e')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '3';
 				}else if((primaryCode == 'R' || primaryCode =='r')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '4';
 				}else if((primaryCode == 'T' || primaryCode =='t')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '5';
 				}else if((primaryCode == 'Y' || primaryCode =='y')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '6';
 				}else if((primaryCode == 'U' || primaryCode =='u')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '7';
 				}else if((primaryCode == 'I' || primaryCode =='i')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '8';
 				}else if((primaryCode == 'O' || primaryCode =='o')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '9';
 				}else if((primaryCode == 'P' || primaryCode =='p')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent. META_ALT_ON);
 					primaryCode = '0';
 				}else if((primaryCode == 'A' || primaryCode =='a')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = 9; //TAB
 				}else if((primaryCode == 'S' || primaryCode =='s')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '!';
 				}else if((primaryCode == 'D' || primaryCode =='d')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '#';
 				}else if((primaryCode == 'F' || primaryCode =='f')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '$';
 				}else if((primaryCode == 'G' || primaryCode =='g')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '%';
 				}else if((primaryCode == 'H' || primaryCode =='h')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '=';
 				}else if((primaryCode == 'J' || primaryCode =='j')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '&';
 				}else if((primaryCode == 'K' || primaryCode =='k')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '*';
 				}else if((primaryCode == 'L' || primaryCode =='l')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '(';
 				}else if((primaryCode == '?' )&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = ')';
 				}else if((primaryCode == 'Z' || primaryCode =='z')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '<';
 				}else if((primaryCode == 'X' || primaryCode =='x')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '>';
 				}else if((primaryCode == 'C' || primaryCode =='c')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '_';
 				}else if((primaryCode == 'V' || primaryCode =='v')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '-';
 				}else if((primaryCode == 'B' || primaryCode =='b')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '+';
 				}else if((primaryCode == 'N' || primaryCode =='n')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '"';
 				}else if((primaryCode == 'M' || primaryCode =='m')&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '\'';
 				}else if( primaryCode ==','&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = ';';
 				}else if(primaryCode =='.'&& mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = ':';
 				}else if(primaryCode == '@' && mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '~';
 				}else if(primaryCode == '/' && mHasAlt){
-					mHasAlt = false;
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 					primaryCode = '^';
 				}
 				//------------------------------------------------------------------------
