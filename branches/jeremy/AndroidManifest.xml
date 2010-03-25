@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+	package="net.toload.main" android:versionCode="63" android:versionName="1.8.3">
+	<uses-permission android:name="android.permission.WAKE_LOCK" />
+	<uses-permission android:name="android.permission.VIBRATE" />
+	<uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
+	<uses-permission android:name="android.permission.WRITE_USER_DICTIONARY" />
+	<uses-permission android:name="android.permission.WRITE_SETTINGS" />
+
+	<application android:icon="@drawable/icon" android:label="@string/ime_name">
+
+		<!-- LIME Services -->
+		<service android:name=".LIMEService" android:permission="android.permission.BIND_INPUT_METHOD">
+			<intent-filter>
+				<action android:name="android.view.InputMethod" />
+			</intent-filter>
+			<meta-data android:name="android.view.im" android:resource="@xml/method" />
+		</service>
+
+		<!-- LIME Services -->
+		<service android:name=".SearchService">
+			<intent-filter>
+				<action android:name="net.toload.main.ISearchService"></action>
+			</intent-filter>
+		</service>
+		<service android:name=".DBService">
+			<intent-filter>
+				<action android:name="net.toload.main.IDBService"></action>
+			</intent-filter>
+		</service>
+
+		<activity android:name=".LIMEMenu" android:label="@string/ime_setting">
+			<intent-filter>
+				<action android:name="android.intent.action.MAIN" />
+				<category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+		</activity>
+		<activity android:name=".LIMESetting" android:label="@string/ime_setting">
+		</activity>
+		<activity android:name=".LIMEPreference" android:label="@string/ime_setting">
+		</activity>
+
+	</application>
+	
+	<uses-sdk android:minSdkVersion="3" />
+
+</manifest> 
+

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Title for Latin keyboard  -->
+    <string name="app_name">LIME</string>
+    <string name="ime_name">LIME</string>
+    <string name="ime_setting">LIME</string>
+
+    <!-- Symbols that are commonly considered word separators in this language -->
+    <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
+    <string name="word_symbol_separators">\u0020?\n{}&lt;&gt;_+|&quot;</string>
+    
+    <!-- Labels on soft keys -->
+    <string name="label_go_key">Go</string>
+    <string name="label_next_key">Next</string>
+    <string name="label_send_key">Send</string>
+    
+    <!-- LIME Setting -->
+    <string name="lime_setting_title">LIME 1.8.3v \n\n**Upgrade from 1.7.x or previous version please import LIME mapping file again.\n\nThis is a tools which can help you build custom input method by import a set of mapping table. you can get more info from the official website.\nhttp://android.toload.net/</string>
+    <string name="lime_setting_operation_notice1">\n[Import Mapping Table]\nBefore you start use LIME IME, you would need to load valid .lime mapping or .cin to the database.\n</string>
+    <string name="lime_setting_operation_info1">Version : </string>
+    <string name="lime_setting_operation_info2">Total Record : </string>
+    <string name="lime_setting_operation_notice2">\n[Reset Mapping Table]\nIf you would like to reset the database please click button below, this action allow you to clean import status and reload mapping file.</string>
+    <string name="lime_setting_operation_notice3">\n[Related Words Management]\nLime program will build related words base on what you input to the system from other applications.\nYou can use the functions below to backup/restore related words.\n</string>
+    <string name="lime_setting_operation_info3">Total Record : </string>
+    <string name="lime_setting_operation_notice4">\n[Reset Related Words]\Reset related words from the database and build new dataset.</string>
+    
+    <!-- Button Text -->
+    <string name="lime_setting_btn_load_local">LOAD MAPPING</string>
+    <string name="lime_setting_reset_database">RESET MAPPING</string>
+    <string name="lime_setting_reset_dictionary">RESET RELATED WORDS</string>
+    <string name="lime_setting_backtup_db">Backup</string>
+    <string name="lime_setting_restore_db">Restore</string>
+    
+    <!-- Select File -->
+    <string name="lime_setting_backup_message">Backup to /sdcard/limedb.txt</string>
+    <string name="lime_setting_backup_message_failed">Cannot backup to /sdcard/limedb.txt, please make sure /sdcard not read only!!</string>
+    <string name="lime_setting_restore_message">Restore from /sdcard/limedb.txt</string>
+    <string name="lime_setting_restore_message_failed">Cannot found /sdcard/limedb.txt to be restored, please make sure file exists!!</string>
+    <string name="lime_setting_btn_close">Close</string>
+    
+    <!-- LIME Loading -->
+    <string name="lime_setting_btn_load_local_notice">Please Select .LIME File</string>
+    <string name="lime_setting_loading">Loading Mapping</string>
+    <string name="lime_setting_select_root"> - back to /</string>
+    <string name="lime_setting_select_parent"> - back to ..</string>
+    
+    <string name="lime_setting_notification_loading">Start Loading Mapping Table</string>
+    <string name="lime_setting_notification_failed">Mapping Import Failed !!</string>
+    <string name="lime_setting_notification_finish">Mapping Import Finished</string>
+    <string name="lime_setting_notification_loading_start">LIME</string>
+    <string name="lime_setting_notification_loading_end">Loaded</string>
+    <string name="lime_setting_notification_loading_build">Build</string>
+    <string name="lime_setting_notification_loading_import">Mapping</string>
+    <string name="lime_setting_notification_loading_related">Related Words</string>
+    <string name="lime_setting_notification_mapping_reset">Mapping reset completed</string>
+    <string name="lime_setting_notification_userdic_reset">Related words reset completed</string>
+    <string name="lime_setting_notification_userdic_backup">Related words backup completed</string>
+    <string name="lime_setting_notification_userdic_restore">User dictionary restored</string>
+    <string name="lime_setting_notification_db_loading">Start loading mapping file</string>
+    <string name="lime_setting_notification_db_request">No Mapping Found!! Please Import .LIME or .CIN</string>
+      
+    <!-- TAB -->
+    <string name="lime_setting_db">Mapping DB</string>
+    <string name="lime_setting_preference">Preference</string>
+    
+    <!-- Preference -->
+    <string name="keyboard">Keyboard</string>
+    <string name="Similiar">Similiar</string>
+    <string name="mapping">Mapping</string>
+    
+    <string name="keyboard_list">Keyboard Selection</string>
+    <string name="similiar_list">Suggestion display amount</string>
+    <string name="vibrate_on_keypress">Vibrate on keypress</string>
+    <string name="sound_on_keypress">Sound on keypress</string>
+    <string name="display_number_keypads">Display number keypads</string>
+    <string name="display_number_keypads_summary">Display number keypads</string>
+    <string name="candidate_switch">Sliding select suggestion</string>
+    <string name="candidate_switch_summary">Enable suggestion word sliding selection</string>
+    <string name="candidate_suggestion">Build related words</string>
+    <string name="candidate_suggestion_summary">Build related words base on text input</string>
+    <string name="learning_switch">Sort suggestion list</string>
+    <string name="learning_switch_summary">Sort suggestion list base on word selection</string>
+    <string name="accept_number_index">Activate number</string>
+    <string name="accept_number_index_summary">Allow input 0-9 as mapping code</string>
+    <string name="accept_symbol_index">Activate symbol</string>
+    <string name="accept_symbol_index_summary">Allow punctuation as mapping code</string>
+    <string name="switch_english_mode">Quick switch hotkey</string>
+    <string name="switch_english_mode_summary">[SHIFT]+[SPACE] switch typing mode</string>
+    
+    
+    <!-- Changjei Keyboard, Standard Keyboard-->
+    <string name="typing_mode_english">Typing Mode / English</string>
+    <string name="typing_mode_mixed">Typing Mode / Mixed</string>
+    
+    <!-- Other Messages -->
+    
+    
+    <!-- Keyboard Selection List -->
+    <string-array name="keyboard">
+		<item>Default</item>
+		<item>Phone</item>
+		<item>Changjei</item>
+		<item>Dayi</item>
+		<item>Phonetic</item>
+	</string-array>
+    <string-array name="keyboard_codes">
+		<item>lime</item>
+		<item>phone</item>
+		<item>cj</item>
+		<item>dayi</item>
+		<item>phonetic</item>
+	</string-array>
+    <string-array name="similiar_codes">
+		<item>10</item>
+		<item>20</item>
+		<item>30</item>
+		<item>40</item>
+		<item>50</item>
+	</string-array>
+
+</resources>
