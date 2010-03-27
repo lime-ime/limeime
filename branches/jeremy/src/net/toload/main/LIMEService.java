@@ -524,9 +524,11 @@ public class LIMEService extends InputMethodService implements
 		// Compact code by Jeremy '10, 3, 27
 		if(keyCode == 59){  //Translate shift as -1
 			c = -1;
-		}else if (c != -1 && (c & KeyCharacterMap.COMBINING_ACCENT) != 0) {
+		}
+		if (c != -1 && (c & KeyCharacterMap.COMBINING_ACCENT) != 0) {
 			c = c & KeyCharacterMap.COMBINING_ACCENT_MASK;
-		}else if (mComposing.length() > 0) {
+		}
+		if (mComposing.length() > 0) {
 			char accent = mComposing.charAt(mComposing.length() - 1);
 			int composed = KeyEvent.getDeadChar(accent, c);
 
@@ -534,9 +536,10 @@ public class LIMEService extends InputMethodService implements
 				c = composed;
 				mComposing.setLength(mComposing.length() - 1);
 			}
-		}else if( mHasShift && c >= 97 && c <=122){
-			c -= 32;
 		}
+		//if( mHasShift && c >= 97 && c <=122){
+		//	c -= 32;
+		//}
 		onKey(c, null);
 		return true;
 	}
@@ -914,7 +917,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			if( (mEnglishFlagShift == true || 
 					MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_SHIFT_ON)== 1)
 					&& primaryCode == 32 )	{
-				Log.i("OnKey", "shift-space...") ;
+				//Log.i("OnKey", "shift-space...") ;
 				mEnglishOnly = !mEnglishOnly;
 				if (mEnglishOnly) {
 					Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
@@ -943,8 +946,12 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		} else if (primaryCode == Keyboard.KEYCODE_CANCEL) {
 			handleClose();
 			return;
+		// Process long press on options and shift
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_OPTIONS) {
 			handleOptions();
+		} else if (primaryCode == LIMEKeyboardView.KEYCODE_SHIFT_LONGPRESS) {
+			 mCapsLock = !mCapsLock;
+             handleShift();
 		} else if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE && mInputView != null) {
 			switchKeyboard(primaryCode);
 		}  else if (primaryCode == -9 && mInputView != null) {
@@ -1636,7 +1643,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				// Removed '10, 3, 26 , no need with myMetaKeyKeylistner used.
 				// Add by Jeremy '10, 3,12
 				// Process Alt combination key specific for moto milestone
-				/*/ '10, 3, 24 alt-lock implementation (not clear if alt-locked)		
+				/*/ '10, 3, 24 alt-lock implementation (no clear if alt-locked)		
 				Boolean mHasAlt = MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_ALT_ON) > 0;
 				if( (primaryCode == 'Q' || primaryCode =='q')&& mHasAlt){
 					primaryCode = '1';

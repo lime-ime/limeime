@@ -34,6 +34,7 @@ import android.view.GestureDetector.OnGestureListener;
 public class LIMEKeyboardView extends KeyboardView {
 
 	static final int KEYCODE_OPTIONS = -100;
+	static final int KEYCODE_SHIFT_LONGPRESS = -101;
 	static final String PREF = "LIMEXY";
 
 	public LIMEKeyboardView(Context context, AttributeSet attrs) {
@@ -49,6 +50,10 @@ public class LIMEKeyboardView extends KeyboardView {
 		if (key.codes[0] == Keyboard.KEYCODE_CANCEL) {
 			getOnKeyboardActionListener().onKey(KEYCODE_OPTIONS, null);
 			return true;
+		} else if (key.codes[0] == Keyboard.KEYCODE_SHIFT) {
+            getOnKeyboardActionListener().onKey(KEYCODE_SHIFT_LONGPRESS, null);
+            invalidateAllKeys();
+            return true;
 		} else {
 			return super.onLongPress(key);
 		}
