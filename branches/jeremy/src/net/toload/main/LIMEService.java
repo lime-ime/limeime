@@ -618,7 +618,7 @@ public class LIMEService extends InputMethodService implements
 				
 				//Modified by Jeremy '10, 3, 27. 
 				if ( ( (mEnglishOnly && mPredictionOn)
-						|| !mEnglishOnly)
+						|| (!mEnglishOnly && onIM))
 						&& translateKeyDown(keyCode, event)) {
 					return true;
 				}
@@ -840,7 +840,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 
 	private boolean isValidSymbol(int code) {
 		String checkCode = String.valueOf((char) code);
-		if (checkCode.matches(".*?[^A-Z]") && checkCode.matches(".*?[^a-z]")
+		// code has to < 256, a ascii character
+		if ( code <256 && checkCode.matches(".*?[^A-Z]") && checkCode.matches(".*?[^a-z]")
 				&& checkCode.matches(".*?[^0-9]") && code != 32 ) {
 			return true;
 		} else {
@@ -927,19 +928,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			}
 				
 		}
-		
-		/*
-		// Alt-Space
-		if( MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_ALT_ON)== 1
-				&& primaryCode == 61185 ){
-			Log.i("OnKey", "Alt-space...") ;
-			//popupSymKeyboard();
-			return;
-			
-		
-		}
-		*/
-		
+	
 	
 		if (isWordSeparator(primaryCode)) {
 			if (mComposing.length() > 0) {
@@ -1497,6 +1486,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	 */
 	private void handleCharacter(int primaryCode, int[] keyCodes) {
 		
+		// Adjust metakeystate on printed key pressed.
 		mMetaState = MyMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 		
 		// If keyboard type = phone then check the user selection
@@ -1713,6 +1703,14 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				}
 				//------------------------------------------------------------------------
 				*/
+				if(DEBUG){
+					Log.i("HandleCharacter",
+							"isValidLetter:" +isValidLetter(primaryCode)
+							+" isValidDigit:" + isValidDigit(primaryCode)
+							+" isValideSymbo:" + isValidSymbol(primaryCode)
+							+" onIM:"+ onIM
+							);
+				}
 	
 				if (!hasSymbolMapping && !hasNumberMapping
 						&& isValidLetter(primaryCode) && onIM) {
