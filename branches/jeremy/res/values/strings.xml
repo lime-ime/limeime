@@ -5,7 +5,8 @@
     <!-- Title for Latin keyboard  -->
     <string name="app_name">LIME</string>
     <string name="ime_name">LIME</string>
-    <string name="ime_setting">LIME</string>
+    <string name="ime_setting">LIME Settings</string>
+    <string name="input_method">Input Method</string>
 
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
@@ -93,6 +94,9 @@
     <!-- Changjei Keyboard, Standard Keyboard-->
     <string name="typing_mode_english">Typing Mode / English</string>
     <string name="typing_mode_mixed">Typing Mode / Mixed</string>
+    
+    <!-- Popup keyboard char sequences-->
+    <string name="chinese_punctuation">「」！？、。，</string>
     
     <!-- Other Messages -->
     
