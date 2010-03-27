@@ -18,14 +18,9 @@
 package net.toload.main;
 
 
-import android.R.id;
-import android.gesture.GestureOverlayView;
-import android.gesture.GestureOverlayView.OnGestureListener;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
-import android.inputmethodservice.Keyboard.Key;
-import android.inputmethodservice.KeyboardView.OnKeyboardActionListener;
 import android.media.AudioManager;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -34,30 +29,21 @@ import android.preference.PreferenceManager;
 // MetaKeyKeyLister is buggy on locked metakey state
 //import android.text.method.MetaKeyKeyListener;
 import android.util.Log;
-import android.view.GestureDetector;
-import android.view.Gravity;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.View.MeasureSpec;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
-import android.view.LayoutInflater;
-import android.widget.PopupWindow;
 import android.widget.Toast;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 
 
@@ -79,7 +65,7 @@ import android.database.sqlite.SQLiteCursor;
 public class LIMEService extends InputMethodService implements
 		KeyboardView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = true; // false;
+	static final boolean DEBUG =  false;
 	static final String PREF = "LIMEXY";
 	
 	static final int KEYBOARD_SWITCH_CODE = -9;
@@ -100,7 +86,7 @@ public class LIMEService extends InputMethodService implements
 	//------------------------------------------------------------------------
 	// Add by Jeremy '10, 3,12
 	// new private variable mHasAlt for keeping state of alt.
-	// Modified '10, 3, 26.  Process metakeystate with MyMetaKeyKeyLister.
+	// Modified '10, 3, 26.  Process metakeystate with LIMEMetaKeyKeyLister.
 	//private boolean mHasAlt = false;
 	// '10, 3, 24 fix for continuous alt mode and alt-lock function.
 	//private boolean mTrackAlt =false;
@@ -494,7 +480,7 @@ public class LIMEService extends InputMethodService implements
 				CompletionInfo ci = completions[i];
 				if (ci != null)
 					try {
-						stringList.addAll(SearchSrv.query(ci.getText().toString()));
+						stringList.addAll(SearchSrv.query(ci.getText().toString(), keyboardSelection));
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
@@ -510,10 +496,10 @@ public class LIMEService extends InputMethodService implements
 	 */
 	private boolean translateKeyDown(int keyCode, KeyEvent event) {
 		// move to HandleCharacter '10, 3,26
-		//mMetaState = MyMetaKeyKeyListener.handleKeyDown(mMetaState, keyCode, event);
-		//mMetaState = MyMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+		//mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState, keyCode, event);
+		//mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 		
-		int c = event.getUnicodeChar(MyMetaKeyKeyListener.getMetaState(mMetaState));
+		int c = event.getUnicodeChar(LIMEMetaKeyKeyListener.getMetaState(mMetaState));
 
 		InputConnection ic = getCurrentInputConnection();
 
@@ -555,12 +541,12 @@ public class LIMEService extends InputMethodService implements
 		
 					
 			switch (keyCode) {
-			//Add by Jeremy '10,3,26, process metakey with MyMetaKeyKeyListner
+			//Add by Jeremy '10,3,26, process metakey with LIMEMetaKeyKeyListner
 			case KeyEvent.KEYCODE_SHIFT_LEFT:
 			case KeyEvent.KEYCODE_SHIFT_RIGHT:
 			case KeyEvent.KEYCODE_ALT_LEFT:
 			case KeyEvent.KEYCODE_ALT_RIGHT:
-				mMetaState = MyMetaKeyKeyListener.handleKeyDown(mMetaState,
+				mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState,
 						keyCode, event);
 				break;
 			case KeyEvent.KEYCODE_BACK:
@@ -593,7 +579,7 @@ public class LIMEService extends InputMethodService implements
 				setCandidatesViewShown(false);
 				
 				//------------------------------------------------------------------------
-				// Remove '10, 3, 26. Replaced with MyMetaKeyKeyLister
+				// Remove '10, 3, 26. Replaced with LIMEMetaKeyKeyLister
 				// Modified by Jeremy '10, 3,12
 				// block milestone alt-del to delete whole line
 				// clear alt state before processed by super
@@ -610,7 +596,7 @@ public class LIMEService extends InputMethodService implements
 			
 			case KeyEvent.KEYCODE_SPACE:
 				// Add by Jeremy '10, 3, 27. Send Alt-space to super for default popup SYM window. 
-				if ( MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_ALT_ON)>0 )
+				if ( LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON)>0 )
 					break; 
 				
 			default:
@@ -679,14 +665,14 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	InputConnection ic = getCurrentInputConnection();
 	if (ic != null) {
 		int clearStatesFlags = 0;
-        	if (MyMetaKeyKeyListener.getMetaState(mMetaState,
-        				MyMetaKeyKeyListener.META_ALT_ON) == 0)
+        	if (LIMEMetaKeyKeyListener.getMetaState(mMetaState,
+        				LIMEMetaKeyKeyListener.META_ALT_ON) == 0)
                         clearStatesFlags += KeyEvent.META_ALT_ON;
-        	if (MyMetaKeyKeyListener.getMetaState(mMetaState,
-        			MyMetaKeyKeyListener.META_SHIFT_ON) == 0)
+        	if (LIMEMetaKeyKeyListener.getMetaState(mMetaState,
+        			LIMEMetaKeyKeyListener.META_SHIFT_ON) == 0)
                     clearStatesFlags += KeyEvent.META_SHIFT_ON;
-        	if (MyMetaKeyKeyListener.getMetaState(mMetaState,
-        			MyMetaKeyKeyListener.META_SYM_ON) == 0)
+        	if (LIMEMetaKeyKeyListener.getMetaState(mMetaState,
+        			LIMEMetaKeyKeyListener.META_SYM_ON) == 0)
                     clearStatesFlags += KeyEvent.META_SYM_ON;
                     ic.clearMetaKeyStates(clearStatesFlags);
           }
@@ -710,13 +696,13 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		case KeyEvent.KEYCODE_SHIFT_RIGHT:
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
-			mMetaState = MyMetaKeyKeyListener.handleKeyUp(mMetaState,
+			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,
 					keyCode, event);
 			//handleAlt();
 			break;
 		default:
 			// Clear MetaKeyStates 
-			//if(MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_ALT_ON ) == 1) {  
+			//if(LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON ) == 1) {  
 			//	InputConnection ic = getCurrentInputConnection();	
 				//ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 				//mTrackAlt = false;
@@ -731,7 +717,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		//* state we are tracking.
 		//if (PROCESS_HARD_KEYS) {
 			//if (mPredictionOn) {
-			//	mMetaState = MyMetaKeyKeyListener.handleKeyUp(mMetaState,
+			//	mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,
 			//			keyCode, event);
 			//}
 			
@@ -739,9 +725,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		if(DEBUG){
 		Log.i("OnKeyUp", "keyCode:" + keyCode 
 				+ " KeyEvent.Alt_ON:"
-				+ String.valueOf(MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_ALT_ON)) 
+				+ String.valueOf(LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON)) 
 				+ " KeyEvent.Shift_ON:"
-				+ String.valueOf(MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_SHIFT_ON))
+				+ String.valueOf(LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_SHIFT_ON))
 				);
 	
 		}
@@ -915,7 +901,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		// Check if user input [Shift] + [Space] switch keyboard
 		if(hasQuickSwitch == true){
 			if( (mEnglishFlagShift == true || 
-					MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_SHIFT_ON)== 1)
+					LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_SHIFT_ON)== 1)
 					&& primaryCode == 32 )	{
 				//Log.i("OnKey", "shift-space...") ;
 				mEnglishOnly = !mEnglishOnly;
@@ -925,7 +911,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
 				}
 				// Reset Shift Status
-				mMetaState = MyMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+				mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 				mEnglishFlagShift = false;
 				return;
 			}
@@ -1141,7 +1127,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			LinkedList<Mapping> list = new LinkedList<Mapping>();
 			
 			try {
-				list.addAll(SearchSrv.query(mComposing.toString()));
+				list.addAll(SearchSrv.query(mComposing.toString());
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
@@ -1275,7 +1261,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			}
 		}
 	}
-	// Removed '10, 3, 26, replace with MyMetaKeyKeylistner
+	// Removed '10, 3, 26, replace with LIMEMetaKeyKeylistner
 	/*/ Modified '10, 3, 24 for bug fix and alt-lock implementation
 	private void handleAlt(){
 		if(mTrackAlt) { //alt pressed without combination with other key
@@ -1494,7 +1480,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	private void handleCharacter(int primaryCode, int[] keyCodes) {
 		
 		// Adjust metakeystate on printed key pressed.
-		mMetaState = MyMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+		mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 		
 		// If keyboard type = phone then check the user selection
 		if( keyboardSelection.equals("phone")){
@@ -1640,11 +1626,11 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					}
 				}
 				//------------------------------------------------------------------------
-				// Removed '10, 3, 26 , no need with myMetaKeyKeylistner used.
+				// Removed '10, 3, 26 , no need with LIMEMetaKeyKeylistner used.
 				// Add by Jeremy '10, 3,12
 				// Process Alt combination key specific for moto milestone
 				/*/ '10, 3, 24 alt-lock implementation (no clear if alt-locked)		
-				Boolean mHasAlt = MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_ALT_ON) > 0;
+				Boolean mHasAlt = LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON) > 0;
 				if( (primaryCode == 'Q' || primaryCode =='q')&& mHasAlt){
 					primaryCode = '1';
 				}else if((primaryCode == 'W' || primaryCode =='w')&& mHasAlt){
