@@ -17,30 +17,38 @@
 
 package net.toload.main;
 
+
+import android.R.id;
 import android.gesture.GestureOverlayView;
 import android.gesture.GestureOverlayView.OnGestureListener;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.inputmethodservice.Keyboard.Key;
+import android.inputmethodservice.KeyboardView.OnKeyboardActionListener;
 import android.media.AudioManager;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
-import android.text.method.MetaKeyKeyListener;
+// MetaKeyKeyLister is buggy on locked metakey state
+//import android.text.method.MetaKeyKeyListener;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.Gravity;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.View.MeasureSpec;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
+import android.view.LayoutInflater;
+import android.widget.PopupWindow;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -49,6 +57,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
+
+
 
 import android.app.AlertDialog;
 import android.app.Service;
@@ -67,12 +79,13 @@ import android.database.sqlite.SQLiteCursor;
 public class LIMEService extends InputMethodService implements
 		KeyboardView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = false;
+	static final boolean DEBUG = true; // false;
 	static final String PREF = "LIMEXY";
 	
 	static final int KEYBOARD_SWITCH_CODE = -9;
 
-	static final boolean PROCESS_HARD_KEYS = true;
+	// Removed by Jeremy '10, 3, 26. We process hard keys all the time
+	//static final boolean PROCESS_HARD_KEYS = true;
 
 	private KeyboardView mInputView;
 	private CandidateView mCandidateView;
@@ -86,17 +99,19 @@ public class LIMEService extends InputMethodService implements
 	private boolean mHasShift;
 	//------------------------------------------------------------------------
 	// Add by Jeremy '10, 3,12
-	// new private variable mHasAlt for keeping state of alt. 
-	private boolean mHasAlt = false;
+	// new private variable mHasAlt for keeping state of alt.
+	// Modified '10, 3, 26.  Process metakeystate with MyMetaKeyKeyLister.
+	//private boolean mHasAlt = false;
 	// '10, 3, 24 fix for continuous alt mode and alt-lock function.
-	private boolean mTrackAlt =false;
-	private boolean mAltLocked =false;
+	//private boolean mTrackAlt =false;
+	//private boolean mAltLocked =false;
 	//------------------------------------------------------------------------
 	private boolean mEnglishOnly;
 	private boolean mEnglishFlagShift;
 	private boolean onIM = false;
 	private boolean hasFirstMatched = false;
-	private boolean hasRightShiftPress = false;
+	// Removed by Jeremy '10, 3, 27.  
+	//private boolean hasRightShiftPress = false;
 
 	private long mLastShiftTime;
 	private long mMetaState;
@@ -220,6 +235,7 @@ public class LIMEService extends InputMethodService implements
 				return;
 			mLastDisplayWidth = displayWidth;
 		}
+		
 
 		mEnglishOnly = false;
 		mEnglishFlagShift = false;
@@ -248,7 +264,7 @@ public class LIMEService extends InputMethodService implements
 		mPhoneticKeyboard = new LIMEKeyboard(this, R.xml.lime_phonetic);
 		mPhoneticShiftKeyboard = new LIMEKeyboard(this,R.xml.lime_phonetic_shift);
 
-		// INitial Dayi Keyboard
+		// Initial Dayi Keyboard
 		mDayiKeyboard = new LIMEKeyboard(this, R.xml.lime_dayi);
 		mDayiShiftKeyboard = new LIMEKeyboard(this,R.xml.lime_dayi_shift);
 
@@ -493,34 +509,24 @@ public class LIMEService extends InputMethodService implements
 	 * option.
 	 */
 	private boolean translateKeyDown(int keyCode, KeyEvent event) {
-		//Log.i("translateKeyDown","metastate before handle keydown:" + String.valueOf(mMetaState)
-		//	    + "MetaAltOn:"+ String.valueOf(mMetaState & MetaKeyKeyListener.META_ALT_ON) );
-		mMetaState = MetaKeyKeyListener.handleKeyDown(mMetaState, keyCode, event);
-		int c = event.getUnicodeChar(MetaKeyKeyListener.getMetaState(mMetaState));
-		//Log.i("translateKeyDown","metastate before adjust:" + String.valueOf(mMetaState)
-		//		+ "MetaAltOn:"+ String.valueOf(mMetaState & MetaKeyKeyListener.META_ALT_ON) );
-		mMetaState = MetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
-		//Log.i("translateKeyDown","metastate after adjust:" + String.valueOf(mMetaState)
-		//		+ "MetaAltOn:"+ String.valueOf(mMetaState & MetaKeyKeyListener.META_ALT_ON) );
+		// move to HandleCharacter '10, 3,26
+		//mMetaState = MyMetaKeyKeyListener.handleKeyDown(mMetaState, keyCode, event);
+		//mMetaState = MyMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+		
+		int c = event.getUnicodeChar(MyMetaKeyKeyListener.getMetaState(mMetaState));
+
 		InputConnection ic = getCurrentInputConnection();
-		
-		
-		
-		if(keyCode == 59){
-			c = -1;
-		}
+
 		if (c == 0 || ic == null) {
 			return false;
 		}
-
-		boolean dead = false;
-
-		if (c != -1 && (c & KeyCharacterMap.COMBINING_ACCENT) != 0) {
-			dead = true;
+		
+		// Compact code by Jeremy '10, 3, 27
+		if(keyCode == 59){  //Translate shift as -1
+			c = -1;
+		}else if (c != -1 && (c & KeyCharacterMap.COMBINING_ACCENT) != 0) {
 			c = c & KeyCharacterMap.COMBINING_ACCENT_MASK;
-		}
-
-		if (mComposing.length() > 0) {
+		}else if (mComposing.length() > 0) {
 			char accent = mComposing.charAt(mComposing.length() - 1);
 			int composed = KeyEvent.getDeadChar(accent, c);
 
@@ -528,18 +534,10 @@ public class LIMEService extends InputMethodService implements
 				c = composed;
 				mComposing.setLength(mComposing.length() - 1);
 			}
-		}
-
-		if(!hasRightShiftPress && mHasShift && c >= 97 && c <=122){
+		}else if( mHasShift && c >= 97 && c <=122){
 			c -= 32;
-		}else if(hasRightShiftPress && c >= 97 && c <=122){
-			c -= 32;
-			hasRightShiftPress = false;
 		}
-		
-		
 		onKey(c, null);
-
 		return true;
 	}
 
@@ -552,11 +550,16 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		
-		//Log.i("OnKeyDown", "keyCode:" + keyCode + "Meta_ALT_ON:"
-		//		+ String.valueOf(mMetaState & MetaKeyKeyListener.META_ALT_ON) );
-			
-		
+					
 			switch (keyCode) {
+			//Add by Jeremy '10,3,26, process metakey with MyMetaKeyKeyListner
+			case KeyEvent.KEYCODE_SHIFT_LEFT:
+			case KeyEvent.KEYCODE_SHIFT_RIGHT:
+			case KeyEvent.KEYCODE_ALT_LEFT:
+			case KeyEvent.KEYCODE_ALT_RIGHT:
+				mMetaState = MyMetaKeyKeyListener.handleKeyDown(mMetaState,
+						keyCode, event);
+				break;
 			case KeyEvent.KEYCODE_BACK:
 				// The InputMethodService already takes care of the back
 				// key for us, to dismiss the input method if it is shown.
@@ -587,44 +590,53 @@ public class LIMEService extends InputMethodService implements
 				setCandidatesViewShown(false);
 				
 				//------------------------------------------------------------------------
+				// Remove '10, 3, 26. Replaced with MyMetaKeyKeyLister
 				// Modified by Jeremy '10, 3,12
 				// block milestone alt-del to delete whole line
 				// clear alt state before processed by super
-				InputConnection ic = getCurrentInputConnection();
-				mHasAlt = false;
-				if (ic != null) 
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+				//InputConnection ic = getCurrentInputConnection();
+				//mHasAlt = false;
+				//if (ic != null) 
+				//	ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 				//------------------------------------------------------------------------
 				break;
 	
 			case KeyEvent.KEYCODE_ENTER:
 				// Let the underlying text editor always handle these.
 				return false;
-			case KeyEvent.KEYCODE_ALT_LEFT:
-				// Let the underlying text editor always handle these.
-				mTrackAlt = true;
-
-			case KeyEvent.KEYCODE_ALT_RIGHT:
-				// Let the underlying text editor always handle these.
-				mTrackAlt = true;
+			
+			case KeyEvent.KEYCODE_SPACE:
+				// Add by Jeremy '10, 3, 27. Send Alt-space to super for default popup SYM window. 
+				if ( MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_ALT_ON)>0 )
+					break; 
 				
 			default:
 	
 				// For all other keys, if we want to do transformations on
 				// text being entered with a hard keyboard, we need to process
 				// it and do the appropriate action.
-	    
-				if(keyCode == 60){
-					this.hasRightShiftPress = true;
+				
+				//Modified by Jeremy '10, 3, 27. 
+				if ( ( (mEnglishOnly && mPredictionOn)
+						|| !mEnglishOnly)
+						&& translateKeyDown(keyCode, event)) {
+					return true;
 				}
-			
-				if (PROCESS_HARD_KEYS) {
+				
+				//Removed by jeremy '10,3,26 
+				//if(keyCode == KeyEvent.KEYCODE_SHIFT_RIGHT){
+					//this.hasRightShiftPress = true;
+				//}
+				
+				//Removed by jeremy '10,3,26.  Cancel PROCESS_HARD_KEYS mode. We always process physical keyboard. 
+				/*if (PROCESS_HARD_KEYS) {
 					if (keyCode == KeyEvent.KEYCODE_SPACE
-							&& (event.getMetaState()& KeyEvent.META_ALT_ON) != 0) {
+							&& (event.getMetaState()& KeyEvent.META_ALT_ON) != 0) {	
 						// A silly example: in our input method, Alt+Space
 						// is a shortcut for 'android' in lower case.
 						//InputConnection 
-						ic = getCurrentInputConnection();
+						
+						InputConnection ic = getCurrentInputConnection();
 						if (ic != null) {
 							// First, tell the editor that it is no longer in the
 							// shift state, since we are consuming this.
@@ -638,7 +650,11 @@ public class LIMEService extends InputMethodService implements
 							keyDownUp(KeyEvent.KEYCODE_D);
 							// And we consume this event.
 							return true;
+		
+								
 						}
+											
+						
 	
 						if (mCandidateView != null) {
 							mCandidateView.clear();
@@ -646,18 +662,33 @@ public class LIMEService extends InputMethodService implements
 						mComposing.setLength(0);
 						setCandidatesViewShown(false);
 					}
-	
-					
-				
-					if (mPredictionOn && translateKeyDown(keyCode, event)) {
-						return true;
-					}
+						
 				}
-				
+				*/
 			}
-		
+	
+	
 		return super.onKeyDown(keyCode, event);
 	}
+	
+	
+private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
+	InputConnection ic = getCurrentInputConnection();
+	if (ic != null) {
+		int clearStatesFlags = 0;
+        	if (MyMetaKeyKeyListener.getMetaState(mMetaState,
+        				MyMetaKeyKeyListener.META_ALT_ON) == 0)
+                        clearStatesFlags += KeyEvent.META_ALT_ON;
+        	if (MyMetaKeyKeyListener.getMetaState(mMetaState,
+        			MyMetaKeyKeyListener.META_SHIFT_ON) == 0)
+                    clearStatesFlags += KeyEvent.META_SHIFT_ON;
+        	if (MyMetaKeyKeyListener.getMetaState(mMetaState,
+        			MyMetaKeyKeyListener.META_SYM_ON) == 0)
+                    clearStatesFlags += KeyEvent.META_SYM_ON;
+                    ic.clearMetaKeyStates(clearStatesFlags);
+          }
+  }
+
 
 	/**
 	 * Use this to monitor key events being delivered to the application. We get
@@ -666,39 +697,51 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		//Log.i("OnKeyUp", "keyCode:" + keyCode + "KeyEvent.Alt:"
-		//		+ String.valueOf(mMetaState & MetaKeyKeyListener.META_ALT_ON) );
 		
 		switch (keyCode) {
 		//*/------------------------------------------------------------------------
 		// Modified by Jeremy '10, 3,12
 		// keep track of alt state with mHasAlt.
 		// Modified '10, 3, 24 for bug fix and alc-lock implementation
+		case KeyEvent.KEYCODE_SHIFT_LEFT:
+		case KeyEvent.KEYCODE_SHIFT_RIGHT:
 		case KeyEvent.KEYCODE_ALT_LEFT:
-			handleAlt();
-			break;
 		case KeyEvent.KEYCODE_ALT_RIGHT:
-			handleAlt();
+			mMetaState = MyMetaKeyKeyListener.handleKeyUp(mMetaState,
+					keyCode, event);
+			//handleAlt();
 			break;
 		default:
-			if(mTrackAlt && !mAltLocked) {  // Clear mHasAlt if Metakey state if Alt not locked.
-				InputConnection ic = getCurrentInputConnection();	
-				ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
-				mTrackAlt = false;
-			}
+			// Clear MetaKeyStates 
+			//if(MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_ALT_ON ) == 1) {  
+			//	InputConnection ic = getCurrentInputConnection();	
+				//ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+				//mTrackAlt = false;
+			//}
 		}
+		// Update metakeystate of IC maintained by MetaKeyKeyListerner
+		setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
 		//------------------------------------------------------------------------
 		//*/
 		// If we want to do transformations on text being entered with a hard
 		// keyboard, we need to process the up events to update the meta key
 		//* state we are tracking.
-		if (PROCESS_HARD_KEYS) {
-			if (mPredictionOn) {
-				mMetaState = MetaKeyKeyListener.handleKeyUp(mMetaState,
-						keyCode, event);
-			}
+		//if (PROCESS_HARD_KEYS) {
+			//if (mPredictionOn) {
+			//	mMetaState = MyMetaKeyKeyListener.handleKeyUp(mMetaState,
+			//			keyCode, event);
+			//}
+			
+		//}
+		if(DEBUG){
+		Log.i("OnKeyUp", "keyCode:" + keyCode 
+				+ " KeyEvent.Alt_ON:"
+				+ String.valueOf(MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_ALT_ON)) 
+				+ " KeyEvent.Shift_ON:"
+				+ String.valueOf(MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_SHIFT_ON))
+				);
+	
 		}
-		
 		return super.onKeyUp(keyCode, event);
 	}
 
@@ -856,25 +899,46 @@ public class LIMEService extends InputMethodService implements
 	// Implementation of KeyboardViewListener
 
 	public void onKey(int primaryCode, int[] keyCodes) {
-		
+		if(DEBUG){
+			Log.i("OnKey", "Entering Onkey(); primaryCode:" + primaryCode +" mEnglishFlagShift:" + mEnglishFlagShift);
+		}
 		// Handle English/Lime Keyboard switch
 		if(mEnglishFlagShift == false && (primaryCode == Keyboard.KEYCODE_SHIFT) ){
 			mEnglishFlagShift = true;
-		}else{
-			// Check if user input [Shift] + [Space] switch keyboard
-			if(hasQuickSwitch == true){
-				if(mEnglishFlagShift == true && primaryCode == 32){
-					mEnglishOnly = !mEnglishOnly;
-					if (mEnglishOnly) {
-						Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
-					} else {
-						Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
-					}
+			Log.i("OnKey", "mEnglishFlagShift:" + mEnglishFlagShift);
+		}
+	
+		// Check if user input [Shift] + [Space] switch keyboard
+		if(hasQuickSwitch == true){
+			if( (mEnglishFlagShift == true || 
+					MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_SHIFT_ON)== 1)
+					&& primaryCode == 32 )	{
+				Log.i("OnKey", "shift-space...") ;
+				mEnglishOnly = !mEnglishOnly;
+				if (mEnglishOnly) {
+					Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
+				} else {
+					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
 				}
 				// Reset Shift Status
+				mMetaState = MyMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 				mEnglishFlagShift = false;
+				return;
 			}
+				
 		}
+		
+		/*
+		// Alt-Space
+		if( MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_ALT_ON)== 1
+				&& primaryCode == 61185 ){
+			Log.i("OnKey", "Alt-space...") ;
+			//popupSymKeyboard();
+			return;
+			
+		
+		}
+		*/
 		
 	
 		if (isWordSeparator(primaryCode)) {
@@ -901,6 +965,8 @@ public class LIMEService extends InputMethodService implements
 		}
 		
 		
+		
+		
 	}
 
 	private AlertDialog mOptionsDialog;
@@ -909,6 +975,9 @@ public class LIMEService extends InputMethodService implements
     private static final int POS_KEYBOARD = 1;
     private static final int POS_METHOD = 2;
     
+    /**
+     * Add by Jeremy '10, 3, 24 for options menu in soft keyboard
+     */
     private void handleOptions() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(true);
@@ -931,7 +1000,6 @@ public class LIMEService extends InputMethodService implements
                         launchSettings();
                         break;
                     case POS_KEYBOARD:
-                        //
                     	showKeyboardPicker();
                         break;
                     case POS_METHOD:
@@ -960,6 +1028,10 @@ public class LIMEService extends InputMethodService implements
         startActivity(intent);
     }
     
+    
+    /**
+     * Add by Jeremy '10, 3, 24 for keyboard picker menu in options menu
+     */
     private void showKeyboardPicker(){
     	AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(true);
@@ -1207,8 +1279,8 @@ public class LIMEService extends InputMethodService implements
 			}
 		}
 	}
-	//
-	// Modified '10, 3, 24 for bug fix and alc-lock implementation
+	// Removed '10, 3, 26, replace with MyMetaKeyKeylistner
+	/*/ Modified '10, 3, 24 for bug fix and alt-lock implementation
 	private void handleAlt(){
 		if(mTrackAlt) { //alt pressed without combination with other key
 			if(!mHasAlt){	// Alt-ON
@@ -1216,7 +1288,7 @@ public class LIMEService extends InputMethodService implements
 				mAltLocked = false;
 			}else if(mHasAlt && mAltLocked){//Alt-off 
 				InputConnection ic = getCurrentInputConnection();	
-				ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+				//ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 				mHasAlt = false;
 				mAltLocked = false;
 			}else if(mHasAlt && !mAltLocked){ //Alt-Locked
@@ -1225,7 +1297,7 @@ public class LIMEService extends InputMethodService implements
 			}
 		}
 	}
-	
+	*/
 	
 	private void handleShift() {
 
@@ -1425,6 +1497,8 @@ public class LIMEService extends InputMethodService implements
 	 */
 	private void handleCharacter(int primaryCode, int[] keyCodes) {
 		
+		mMetaState = MyMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+		
 		// If keyboard type = phone then check the user selection
 		if( keyboardSelection.equals("phone")){
 			try{      
@@ -1562,17 +1636,18 @@ public class LIMEService extends InputMethodService implements
 			
 		}else{
 			if (!mEnglishOnly) {
+				
 				if (isInputViewShown()) {
 					if (mInputView.isShifted()) {
 						primaryCode = Character.toUpperCase(primaryCode);
 					}
 				}
 				//------------------------------------------------------------------------
+				// Removed '10, 3, 26 , no need with myMetaKeyKeylistner used.
 				// Add by Jeremy '10, 3,12
 				// Process Alt combination key specific for moto milestone
-				// '10, 3, 24 alt-lock implementation (not clear if alt-locked)
-				InputConnection ic = getCurrentInputConnection();	
-				
+				/*/ '10, 3, 24 alt-lock implementation (not clear if alt-locked)		
+				Boolean mHasAlt = MyMetaKeyKeyListener.getMetaState(mMetaState, MyMetaKeyKeyListener.META_ALT_ON) > 0;
 				if( (primaryCode == 'Q' || primaryCode =='q')&& mHasAlt){
 					primaryCode = '1';
 				}else if((primaryCode == 'W' || primaryCode =='w')&& mHasAlt){
@@ -1637,7 +1712,7 @@ public class LIMEService extends InputMethodService implements
 					primaryCode = '^';
 				}
 				//------------------------------------------------------------------------
-				
+				*/
 	
 				if (!hasSymbolMapping && !hasNumberMapping
 						&& isValidLetter(primaryCode) && onIM) {
@@ -1851,8 +1926,103 @@ public class LIMEService extends InputMethodService implements
 		}
 		
 	}
-	
-	
-	
 
+/* Experimental on popup keyboard
+	private PopupWindow mPopupKeyboard;
+    private View mMiniKeyboardContainer;
+    private KeyboardView mMiniKeyboard;
+    private boolean mMiniKeyboardOnScreen =false;
+    private int[] mWindowOffset;
+    private int mPopupLayout;
+
+
+	private boolean popupSymKeyboard() {
+       if (mMiniKeyboardContainer == null) {
+    	   LayoutInflater inflater = (LayoutInflater) mInputView.getContext().getSystemService(
+                        Context.LAYOUT_INFLATER_SERVICE);
+           mMiniKeyboardContainer = inflater.inflate(mPopupLayout, null);
+           mMiniKeyboard = (KeyboardView) mMiniKeyboardContainer.findViewById(
+                        android.R.id.keyboardView);
+           //View closeButton = mMiniKeyboardContainer.findViewById(
+           //             android.R.id.closeButton);
+           //if (closeButton != null) closeButton.setOnClickListener(mInputView);
+           mMiniKeyboard.setOnKeyboardActionListener(new OnKeyboardActionListener() {
+                    public void onKey(int primaryCode, int[] keyCodes) {
+                        this.onKey(primaryCode, keyCodes);
+                        dismissPopupKeyboard();
+                    }
+                    
+                    public void onText(CharSequence text) {
+                        this.onText(text);
+                        dismissPopupKeyboard();
+                    }
+                    
+                    public void swipeLeft() { }
+                    public void swipeRight() { }
+                    public void swipeUp() { }
+                    public void swipeDown() { }
+                    public void onPress(int primaryCode) {
+                        this.onPress(primaryCode);
+                    }
+                    public void onRelease(int primaryCode) {
+                        this.onRelease(primaryCode);
+                    }
+                });
+                //mInputView.setSuggest(mSuggest);
+                Keyboard keyboard;
+                //if (popupKey.popupCharacters != null) {
+                    keyboard = new Keyboard(mInputView.getContext(), R.xml.popup_template, 
+                            "12345", -1, mInputView.getPaddingLeft() + mInputView.getPaddingRight());
+                //} else {
+                    //keyboard = new Keyboard(mInputView.getContext(), R.xml.popup_template);
+                //}
+                mMiniKeyboard.setKeyboard(keyboard);
+                mMiniKeyboard.setPopupParent(mInputView);
+                mMiniKeyboardContainer.measure(
+                        MeasureSpec.makeMeasureSpec(mInputView.getWidth(), MeasureSpec.AT_MOST), 
+                        MeasureSpec.makeMeasureSpec(mInputView.getHeight(), MeasureSpec.AT_MOST));
+                
+                //mMiniKeyboardCache.put(popupKey, mMiniKeyboardContainer);
+            } else {
+                mMiniKeyboard = (KeyboardView) mMiniKeyboardContainer.findViewById(
+                        android.R.id.keyboardView);
+            }
+            if (mWindowOffset == null) {
+                mWindowOffset = new int[2];
+                mInputView.getLocationInWindow(mWindowOffset);
+            }
+            /*
+            mPopupX = popupKey.x + mPaddingLeft;
+            mPopupY = popupKey.y + mPaddingTop;
+            mPopupX = mPopupX + popupKey.width - mMiniKeyboardContainer.getMeasuredWidth();
+            mPopupY = mPopupY - mMiniKeyboardContainer.getMeasuredHeight();
+            final int x = mPopupX + mMiniKeyboardContainer.getPaddingRight() + mWindowOffset[0];
+            final int y = mPopupY + mMiniKeyboardContainer.getPaddingBottom() + mWindowOffset[1];
+            //*
+            final int x =  mMiniKeyboardContainer.getPaddingRight() + mWindowOffset[0];
+            final int y =  mMiniKeyboardContainer.getPaddingBottom() + mWindowOffset[1];
+            mMiniKeyboard.setPopupOffset(x < 0 ? 0 : x, y);
+            mMiniKeyboard.setShifted(mInputView.isShifted());
+            mPopupKeyboard.setContentView(mMiniKeyboardContainer);
+            mPopupKeyboard.setWidth(mMiniKeyboardContainer.getMeasuredWidth());
+            mPopupKeyboard.setHeight(mMiniKeyboardContainer.getMeasuredHeight());
+            mPopupKeyboard.showAtLocation(mInputView, Gravity.NO_GRAVITY, x, y);
+            mMiniKeyboardOnScreen = true;
+            //mMiniKeyboard.onTouchEvent(getTranslatedEvent(me));
+            mInputView.invalidateAllKeys();
+            return true;
+        //}
+        //return false;
+    }
+
+
+    private void dismissPopupKeyboard() {
+        if (mPopupKeyboard.isShowing()) {
+            mPopupKeyboard.dismiss();
+            mMiniKeyboardOnScreen = false;
+            mInputView.invalidateAllKeys();
+        }
+    }
+
+*/
 }

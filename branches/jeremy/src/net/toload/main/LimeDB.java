@@ -542,7 +542,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					FIELD_DIC_pword + " = \"" + pword + "\"" 
 					, null, null, null, FIELD_DIC_score
 					+ " DESC", null);
-			//Log.i("Query", FIELD_DIC_pword + " = \"" + pword +"\":" + new Date().toString());
+			//	
 			
 			//-----------------------------------------------------------
 
