@@ -17,7 +17,7 @@
 	android:verticalGap="0px" android:keyHeight="@dimen/key_height">
 
 	<Row>
-		<Key android:codes="43" android:keyLabel="+"
+		<Key android:codes="43" android:keyLabel="\@"
 			android:keyEdgeFlags="left" />
 		<Key android:codes="35" android:keyLabel="\#" />
 		<Key android:codes="36" android:keyLabel="$" />
