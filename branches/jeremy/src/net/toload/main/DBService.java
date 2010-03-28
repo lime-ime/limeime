@@ -16,16 +16,35 @@ import android.os.RemoteException;
 import android.util.Log;
 
 public class DBService extends Service {
-
+	
+	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String MAPPING_FILE_TEMP = "mapping_file_temp";
+	private final static String CJ_MAPPING_FILE_TEMP = "cj_mapping_file_temp";
+	private final static String DAYI_MAPPING_FILE_TEMP = "dayi_mapping_file_temp";
+	private final static String BPMF_MAPPING_FILE_TEMP = "bpmf_mapping_file_temp";
 	private final static String MAPPING_FILE = "mapping_file";
+	// Add by Jeremy '10, 3 ,27. Multi table extension.
+	private final static String CJ_MAPPING_FILE = "cj_mapping_file";
+	private final static String BPMF_MAPPING_FILE = "bpmf_mapping_file";
+	private final static String DAYI_MAPPING_FILE = "dayi_mapping_file";
 	private final static String TOTAL_RECORD = "total_record";
+	// Add by Jeremy '10, 3 ,27. Multi table extension.
+	private final static String CJ_TOTAL_RECORD = "cj_total_record";
+	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
+	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
 	private final static String MAPPING_VERSION = "mapping_version";
+	// Add by Jeremy '10, 3 ,27. Multi table extension.
+	private final static String CJ_MAPPING_VERSION = "cj_mapping_version";
+	private final static String BPMF_MAPPING_VERSION = "bmpf_mapping_version";
+	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
 
 	private NotificationManager notificationMgr;
 
 	private LimeDB db = null;
+	
+	// Monitoring thread.
+	private Thread thread = null;
 
 	public class DBServiceImpl extends IDBService.Stub {
 
@@ -35,7 +54,7 @@ public class DBService extends Service {
 			this.ctx = ctx;
 		}
 
-		public void loadMapping(String filename) throws RemoteException {
+		public void loadMapping(String filename, String tablename) throws RemoteException {
 
 			// Start Loading
 			if (db == null) {
@@ -43,29 +62,43 @@ public class DBService extends Service {
 			}
 
 			File sourcefile = new File(filename);
+		
+			//String sourcestatus = null;
+			//SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+			//String importstatus = importset.getString(MAPPING_LOADING, "no");
 
-			String secret = sourcefile.getName();
-
-			SharedPreferences sourceset = ctx.getSharedPreferences(MAPPING_FILE, 0);
-			String sourcestatus = sourceset.getString(MAPPING_FILE, "");
-
-			SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-			String importstatus = importset.getString(MAPPING_LOADING, "no");
-
-			db.deleteAll();
-			/**
+			db.deleteAll(tablename);
+			/*
 			if (importstatus.equals("no") && sourcestatus.equals("")) {
 				
 			}else if (importstatus.equals("no") && !sourcestatus.equals("") && !sourcestatus.equals(secret)) {
 				db.deleteAll();
 			}else if (importstatus.equals("yes")){
 				db.deleteAll();
-			}**/
-			
-			sourceset.edit().putString(MAPPING_FILE, secret).commit();
-
-			SharedPreferences sourcetempset = ctx.getSharedPreferences(MAPPING_FILE_TEMP, 0);
-			sourcetempset.edit().putString(MAPPING_FILE_TEMP, sourcefile.getName() ).commit();
+			}*/
+			String secret = sourcefile.getName();
+			SharedPreferences sourceset =null, sourcetempset= null;
+			if(tablename.equals("cj")){
+				sourceset = ctx.getSharedPreferences(CJ_MAPPING_FILE, 0);
+				sourceset.edit().putString(CJ_MAPPING_FILE, secret).commit();
+				sourcetempset = ctx.getSharedPreferences(CJ_MAPPING_FILE_TEMP, 0);
+				sourcetempset.edit().putString(CJ_MAPPING_FILE_TEMP, secret).commit();
+			}else if(tablename.equals("dayi")){
+				sourceset = ctx.getSharedPreferences(DAYI_MAPPING_FILE, 0);
+				sourceset.edit().putString(DAYI_MAPPING_FILE, secret).commit();
+				sourcetempset = ctx.getSharedPreferences(DAYI_MAPPING_FILE_TEMP, 0);
+				sourcetempset.edit().putString(DAYI_MAPPING_FILE_TEMP, secret).commit();
+			}else if(tablename.equals("phonetic")){
+				sourceset = ctx.getSharedPreferences(BPMF_MAPPING_FILE, 0);
+				sourceset.edit().putString(BPMF_MAPPING_FILE, secret).commit();
+				sourcetempset = ctx.getSharedPreferences(BPMF_MAPPING_FILE_TEMP, 0);
+				sourcetempset.edit().putString(BPMF_MAPPING_FILE_TEMP, secret).commit();
+			}else{
+				sourceset = ctx.getSharedPreferences(MAPPING_FILE, 0);
+				sourceset.edit().putString(MAPPING_FILE, secret).commit();
+				sourcetempset = ctx.getSharedPreferences(MAPPING_FILE_TEMP, 0);
+				sourcetempset.edit().putString(MAPPING_FILE_TEMP, secret).commit();
+			}
 			
 			
 			db.setFilename(sourcefile);
@@ -73,7 +106,12 @@ public class DBService extends Service {
 			displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading)+ "");
 
 			// Update Loading Status
-			Thread thread = new Thread() {
+			// Stop and clear the existing thread.
+			if(thread!=null){
+				thread.stop();
+				thread = null;
+			}
+			thread = new Thread() {
 				public void run() {
 					int total = 0;
 					//while (!db.isFinish() || !db.isRelatedFinish() ) {
@@ -109,15 +147,22 @@ public class DBService extends Service {
 			thread.start();
 
 			// Actually run the loading
-			db.loadFile();
+			db.loadFile(tablename);
 			db.close();
 		}
 
-		public void resetMapping() throws RemoteException {
+		public void resetMapping(String tablename) throws RemoteException {
+		
+			// Add by Jeremy '10, 3, 28
+			// stop thread here.
+			if(thread!=null) {	
+				thread.stop();
+				thread = null;
+			}
 			if (db == null) {
 				db = new LimeDB(ctx);
 			}
-			db.deleteAll();
+			db.deleteAll(tablename);
 			displayNotificationMessage(ctx
 					.getText(R.string.lime_setting_notification_mapping_reset)
 					+ "");
@@ -136,13 +181,19 @@ public class DBService extends Service {
 					.getText(R.string.lime_setting_restore_message)
 					+ "");
 			
-			Thread thread = new Thread() {
+			// Stop and clear the existing thread.
+			if(thread!=null){
+				thread.stop();
+				thread = null;
+			}
+			
+			thread = new Thread() {
 				public void run() {
 					int total = 0;
 					
 					while (!db.isRelatedFinish()) {
 						try {
-							this.sleep(10000);
+							Thread.sleep(10000);
 							
 							if(db.getRelatedCount() != 0){
 								displayNotificationMessage(
@@ -195,13 +246,18 @@ public class DBService extends Service {
 			displayNotificationMessage(ctx
 					.getText(R.string.lime_setting_backup_message)
 					+ "");
-			Thread thread = new Thread() {
+			// Stop and clear the existing thread.
+			if(thread!=null){
+				thread.stop();
+				thread = null;
+			}
+			thread = new Thread() {
 				public void run() {
 					int total = 0;
 					
 					while (!db.isRelatedFinish()) {
 						try {
-							this.sleep(10000);
+							Thread.sleep(10000);
 							
 							if(db.getRelatedCount() != 0){
 								displayNotificationMessage(
@@ -277,6 +333,7 @@ public class DBService extends Service {
 
 	private void displayNotificationMessage(String message) {
 		Notification notification = new Notification(R.drawable.icon, message, System.currentTimeMillis());
+		// FLAG_AUTO_CANCEL add by jeremy '10, 3 24
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,new Intent(this, LIMEMenu.class), 0);
 		notification.setLatestEventInfo(this, this .getText(R.string.ime_setting), message, contentIntent);

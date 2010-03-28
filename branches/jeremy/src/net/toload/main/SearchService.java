@@ -23,8 +23,15 @@ import android.util.Log;
 public class SearchService extends Service {
 
 	private final static String TOTAL_RECORD = "total_record";
+	// Add by Jeremy '10, 3 ,27. Multi table extension.
+	private final static String CJ_TOTAL_RECORD = "cj_total_record";
+	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
+	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
 	private final static String TOTAL_RELATED = "total_related";
 	private final static String MAPPING_VERSION = "mapping_version";
+	private final static String CJ_MAPPING_VERSION = "cj_mapping_version";
+	private final static String BPMF_MAPPING_VERSION = "bmpf_mapping_version";
+	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
 	private final static String CANDIDATE_SUGGESTION = "candidate_suggestion";
 	private final static String LEARNING_SWITCH = "learning_switch";
@@ -47,6 +54,18 @@ public class SearchService extends Service {
 		SearchServiceImpl(Context ctx) {
 			this.ctx = ctx;
 		}
+		
+		public String getTablename(){
+			if(db == null){db = new LimeDB(ctx);}
+			return db.getTablename();
+		}
+		
+		public void setTablename(String tablename){
+			if(db == null){db = new LimeDB(ctx);}
+			db.setTablename(tablename);
+			
+		}
+		
 		//Modified by Jeremy '10,3 ,12 for more specific related word
 		//-----------------------------------------------------------
 		public List queryUserDic(String code, String word) throws RemoteException {
@@ -57,7 +76,7 @@ public class SearchService extends Service {
 		//-----------------------------------------------------------
 
 		public List query(String code) throws RemoteException {
-
+			
 			if(mappingIdx == null){mappingIdx = new HashMap();}
 
 			SharedPreferences sp1 = ctx.getSharedPreferences(MAPPING_LOADING, 0);
@@ -65,8 +84,8 @@ public class SearchService extends Service {
 			//Log.i("ART","Loading Status : " + loadingstatus);
 
 			List<Mapping> result = new LinkedList();
-			
-			if(code != null && loadingstatus != null && loadingstatus.equalsIgnoreCase("yes")){
+			// Modified by Jeremy '10, 3, 28.  yes-> .. The database is loading (yes) and finished (no).
+			if(code != null && loadingstatus != null && loadingstatus.equalsIgnoreCase("no")){
 				if(recAmount == 0){
 					try{
 						recAmount = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(ctx).getString("similiar_list", "10"));				
@@ -298,6 +317,8 @@ public class SearchService extends Service {
 	
 	private void displayNotificationMessage(String message){
 		Notification notification = new Notification(R.drawable.icon, message, System.currentTimeMillis());
+		// FLAG_AUTO_CANCEL add by jeremy '10, 3 28
+		notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,new Intent(this, LIMEMenu.class), 0);
 			      	 notification.setLatestEventInfo(this, this.getText(R.string.ime_setting), message, contentIntent);
 			         notificationMgr.notify(0, notification);

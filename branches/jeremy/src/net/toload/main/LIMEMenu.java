@@ -71,7 +71,7 @@ public class LIMEMenu extends TabActivity {
         super.onCreate(savedInstanceState);
         
         final TabHost tabHost = getTabHost();
-
+        
         tabHost.addTab(tabHost.newTabSpec("tab1")
         		.setIndicator(this.getText(R.string.lime_setting_db))
                 .setContent(new Intent(this, LIMESetting.class)));

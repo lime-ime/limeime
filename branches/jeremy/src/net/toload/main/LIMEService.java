@@ -480,7 +480,7 @@ public class LIMEService extends InputMethodService implements
 				CompletionInfo ci = completions[i];
 				if (ci != null)
 					try {
-						stringList.addAll(SearchSrv.query(ci.getText().toString(), keyboardSelection));
+						stringList.addAll(SearchSrv.query(ci.getText().toString()));
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
@@ -1127,7 +1127,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			LinkedList<Mapping> list = new LinkedList<Mapping>();
 			
 			try {
-				list.addAll(SearchSrv.query(mComposing.toString());
+				list.addAll(SearchSrv.query(mComposing.toString()));
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
@@ -1470,6 +1470,17 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			mCurKeyboard = mPhoneKeyboard;
 		}
 
+		// Set db table name.	
+		try {
+			String tablename = new String(keyboardSelection);
+			if(tablename.equals("lime") || tablename.equals("phone") ){
+				tablename = "mapping";
+			}
+			SearchSrv.setTablename(tablename);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	/**
