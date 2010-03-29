@@ -46,7 +46,7 @@
         <Key android:codes="174" android:keyLabel="®"/>
         <Key android:codes="165" android:keyLabel="¥"/>
         <Key android:codes="95" android:keyLabel="_"/>
-        <Key android:codes="43" android:keyLabel="+"/>
+        <Key android:codes="43" android:keyLabel="="/>
         <Key android:codes="91" android:keyLabel="["/>
         <Key android:codes="93" android:keyLabel="]" android:keyEdgeFlags="right"/>
     </Row>

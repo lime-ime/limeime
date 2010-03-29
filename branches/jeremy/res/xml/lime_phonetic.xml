@@ -83,8 +83,7 @@
         <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime"  android:keyWidth="20%p" android:isRepeatable="true"/>
         <Key android:codes="46" 
         		android:iconPreview="@drawable/phonetic_dot_l"
-				android:popupKeyboard="@xml/popup_template"
-                android:popupCharacters="@string/chinese_punctuation"  
+				android:popupKeyboard="@xml/popup_c_punctuation"    
         		android:keyIcon="@drawable/phonetic_dot"/>
         <Key android:codes="47" android:iconPreview="@drawable/phonetic_slash_l" android:keyIcon="@drawable/phonetic_slash"/>
         <Key android:codes="-2" android:keyIcon="@drawable/number" android:iconPreview="@drawable/number_l"/>

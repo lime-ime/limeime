@@ -17,7 +17,7 @@
 	android:verticalGap="0px" android:keyHeight="@dimen/key_height">
 
 	<Row>
-		<Key android:codes="43" android:keyLabel="\@"
+		<Key android:codes="64" android:keyLabel="\@"
 			android:keyEdgeFlags="left" />
 		<Key android:codes="35" android:keyLabel="\#" />
 		<Key android:codes="36" android:keyLabel="$" />
@@ -26,8 +26,8 @@
 		<Key android:codes="42" android:keyLabel="*" />
 		<Key android:codes="33" android:keyLabel="!" />
 		<Key android:codes="47" android:keyLabel="/" />
-		<Key android:codes="91" android:keyLabel="[" />
-		<Key android:codes="93" android:keyLabel="]" android:keyEdgeFlags="right" />
+		<Key android:codes="40" android:keyLabel="(" />
+		<Key android:codes="41" android:keyLabel=")" android:keyEdgeFlags="right" />
 	</Row>
 
 	<Row>
@@ -75,13 +75,17 @@
 	<Row android:rowEdgeFlags="bottom">
 		<Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done"
 			android:keyWidth="15%p" android:keyEdgeFlags="left" />
-		<Key android:codes="-2" android:keyLabel="123" android:keyWidth="10%p" />
-
+		<Key android:codes="-9" 
+				android:keyIcon="@drawable/sw" 
+				android:keyWidth="10%p" 
+				android:iconPreview="@drawable/sw_l"/>
 		<Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime"
 			android:keyWidth="30%p" android:isRepeatable="true" />
 		<Key android:codes="60" android:keyLabel="&lt;" android:keyWidth="10%p" />
 		<Key android:codes="62" android:keyLabel="&gt;" android:keyWidth="10%p" />
-		<Key android:codes="63" android:keyLabel="\?" android:keyWidth="10%p" />
+		<Key android:codes="63" android:keyLabel="\?"
+								android:popupKeyboard="@xml/popup_punctuation"  
+								android:keyWidth="10%p" />
 		<Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return"
 			android:keyWidth="15%p" android:keyEdgeFlags="right" />
 	</Row>

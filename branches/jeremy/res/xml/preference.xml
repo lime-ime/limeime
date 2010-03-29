@@ -26,6 +26,39 @@
                 android:title="@string/display_number_keypads"
                 android:summary="@string/display_number_keypads_summary" />
     </PreferenceCategory>
+    <PreferenceCategory
+        		xmlns:android="http://schemas.android.com/apk/res/android"
+                android:summary="" android:key="lime_im" android:title="@string/im">
+    <ListPreference
+    			android:key="default_im_reverselookup"
+    			android:title="@string/default_reverse_lookup_list" 
+    			android:entries="@array/im_reverse_lookup" 
+    			android:entryValues="@array/im_reverse_lookup_codes" 
+    			android:dialogTitle="@string/im_reverse_lookup_list" 
+    			android:defaultValue="0"/>
+    <ListPreference
+    			android:key="cj_im_reverselookup"
+    			android:title="@string/cj_reverse_lookup_list" 
+    			android:entries="@array/im_reverse_lookup" 
+    			android:entryValues="@array/im_reverse_lookup_codes" 
+    			android:dialogTitle="@string/im_reverse_lookup_list" 
+    			android:defaultValue="0"/>
+    <ListPreference
+    			android:key="dayi_im_reverselookup"
+    			android:title="@string/dayi_reverse_lookup_list" 
+    			android:entries="@array/im_reverse_lookup" 
+    			android:entryValues="@array/im_reverse_lookup_codes" 
+    			android:dialogTitle="@string/im_reverse_lookup_list" 
+    			android:defaultValue="0"/>
+    <ListPreference
+    			android:key="bpmf_im_reverselookup"
+    			android:title="@string/bpmf_reverse_lookup_list" 
+    			android:entries="@array/im_reverse_lookup" 
+    			android:entryValues="@array/im_reverse_lookup_codes" 
+    			android:dialogTitle="@string/im_reverse_lookup_list" 
+    			android:defaultValue="0"/>
+   
+</PreferenceCategory>
     
     <PreferenceCategory
         xmlns:android="http://schemas.android.com/apk/res/android"

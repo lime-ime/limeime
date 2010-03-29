@@ -74,8 +74,7 @@
         <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime"  android:keyWidth="25%p" android:isRepeatable="true"/>
         <Key android:codes="46" 
         		android:keyLabel="." 
-				android:popupKeyboard="@xml/popup_template"
-                android:popupCharacters="@string/chinese_punctuation" 
+				android:popupKeyboard="@xml/popup_c_punctuation"  
         		android:keyWidth="10%p"/>
         <Key android:codes="-2" android:keyIcon="@drawable/number" android:iconPreview="@drawable/number_l"/>
         <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:keyWidth="15%p" android:keyEdgeFlags="right"/>
