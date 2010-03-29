@@ -65,7 +65,7 @@ import android.database.sqlite.SQLiteCursor;
 public class LIMEService extends InputMethodService implements
 		KeyboardView.OnKeyboardActionListener {
 
-	static final boolean DEBUG =  false;
+	static final boolean DEBUG =  true;
 	static final String PREF = "LIMEXY";
 	
 	static final int KEYBOARD_SWITCH_CODE = -9;
@@ -541,6 +541,25 @@ public class LIMEService extends InputMethodService implements
 		
 					
 			switch (keyCode) {
+			
+			// Add by Jeremy '10, 3, 29. DPAD selection on candidate view
+			//case KeyEvent.KEYCODE_DPAD_UP:
+			//case KeyEvent.KEYCODE_DPAD_DOWN:
+			case KeyEvent.KEYCODE_DPAD_RIGHT:
+				if (mCandidateView != null && mCandidateView.isShown()) {
+					mCandidateView.selectNext();
+					return true;
+				}
+			case KeyEvent.KEYCODE_DPAD_LEFT:
+				if (mCandidateView != null && mCandidateView.isShown()) {
+					mCandidateView.selectPrev();
+					return true;
+				}
+			case KeyEvent.KEYCODE_DPAD_CENTER:
+				if (mCandidateView != null && mCandidateView.isShown()) {
+					mCandidateView.takeSelectedSuggestion();
+					return true;
+				}
 			//Add by Jeremy '10,3,26, process metakey with LIMEMetaKeyKeyListner
 			case KeyEvent.KEYCODE_SHIFT_LEFT:
 			case KeyEvent.KEYCODE_SHIFT_RIGHT:
@@ -591,9 +610,10 @@ public class LIMEService extends InputMethodService implements
 				break;
 	
 			case KeyEvent.KEYCODE_ENTER:
-				// Let the underlying text editor always handle these.
+				// Let the underlying text editor always handle these, if return false from takeSelectedSuggestion().
+				// Process enter for candidate view selection in OnKeyUp() to block the real enter afterware.
 				return false;
-			
+	
 			case KeyEvent.KEYCODE_SPACE:
 				// Add by Jeremy '10, 3, 27. Send Alt-space to super for default popup SYM window. 
 				if ( LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON)>0 )
@@ -700,6 +720,13 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					keyCode, event);
 			//handleAlt();
 			break;
+		case KeyEvent.KEYCODE_ENTER:
+			if (mCandidateView != null && mCandidateView.isShown()) {
+			// Add by Jeremy '10, 3 ,29.  Pick selected selection if candidates shown.
+			// Does not block real enter after select the suggestion. !! need fix here!!
+			// Let the underlying text editor always handle these, if return false from takeSelectedSuggestion().
+				return mCandidateView.takeSelectedSuggestion();			
+			}		
 		default:
 			// Clear MetaKeyStates 
 			//if(LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON ) == 1) {  
@@ -936,8 +963,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_OPTIONS) {
 			handleOptions();
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_SHIFT_LONGPRESS) {
-			 mCapsLock = !mCapsLock;
-             handleShift();
+			// Remove by Jeremy '10, 3, 29. Buggy!! To work out this some day after.
+			 //mCapsLock = !mCapsLock;
+             //handleShift();
 		} else if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE && mInputView != null) {
 			switchKeyboard(primaryCode);
 		}  else if (primaryCode == -9 && mInputView != null) {

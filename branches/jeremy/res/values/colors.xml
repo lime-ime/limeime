@@ -19,9 +19,9 @@
 -->
 <resources>
     <color name="candidate_normal">#FF000000</color>
-    <color name="candidate_dictionary">#AAE35900</color>
+    <color name="candidate_dictionary">#FF101010</color>
     <color name="candidate_recommended">#FFE35900</color>
-    <color name="candidate_other">#FFE35900</color>
+    <color name="candidate_other">#FF101010</color>
     <color name="candidate_background">#bbffffff</color>
     <!-- <color name="candidate_background">#bbffffff</color>-->
     

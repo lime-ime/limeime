@@ -58,6 +58,10 @@ public class CandidateView extends View {
     private static final int MAX_SUGGESTIONS = 200;
     private static final int SCROLL_PIXELS = 20;
     
+    // Add by Jeremy '10, 3, 29.
+    // Suggestions size. Set to MAX_GUGGESTIONS if larger then it.
+    private int count =0 ;
+    
     private int[] mWordWidth = new int[MAX_SUGGESTIONS];
     private int[] mWordX = new int[MAX_SUGGESTIONS];
 
@@ -208,8 +212,8 @@ public class CandidateView extends View {
                 getBackground().getPadding(mBgPadding);
             }
         }
-        int x = 0;
-        final int count = mSuggestions.size(); 
+        
+        //final int count = mSuggestions.size(); 
         final int height = getHeight();
         final Rect bgPadding = mBgPadding;
         final Paint paint = mPaint;
@@ -219,32 +223,42 @@ public class CandidateView extends View {
         final boolean typedWordValid = mTypedWordValid;
         final int y = (int) (((height - mPaint.getTextSize()) / 2) - mPaint.ascent());
 
-        
+        // Modified by jeremy '10, 3, 29.  Update mselectedindex if touched and build wordX[i] and wordwidth[i]
+        int x = 0;
         for (int i = 0; i < count; i++) {
-            String suggestion = mSuggestions.get(i).getWord();
+        	String suggestion = mSuggestions.get(i).getWord();
             float textWidth = paint.measureText(suggestion);
             final int wordWidth = (int) textWidth + X_GAP * 2;
 
             mWordX[i] = x;
             mWordWidth[i] = wordWidth;
-            paint.setColor(mColorNormal);
-            if (touchX + scrollX >= x && touchX + scrollX < x + wordWidth && !scrolled) {
-                if (canvas != null) {
-                    canvas.translate(x, 0);
-                    mSelectionHighlight.setBounds(0, bgPadding.top, wordWidth, height);
-                    mSelectionHighlight.draw(canvas);
-                    canvas.translate(-x, 0);
-                }
-                mSelectedIndex = i;
-            }
 
+            if (touchX + scrollX >= x && touchX + scrollX < x + wordWidth && !scrolled) {
+                mSelectedIndex = i;}
+            x += wordWidth;
+        }
+        mTotalWidth = x;
+       
+ 
+        // Moved from above by jeremy '10 3, 29. Paint mselectedindex in highlight here
+        if (canvas != null && mSelectedIndex >=0) {
+            canvas.translate(mWordX[mSelectedIndex], 0);
+            mSelectionHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelectedIndex], height);
+            mSelectionHighlight.draw(canvas);
+            canvas.translate(-mWordX[mSelectedIndex], 0);
+        }
+        
+        // Paint all the suggestions and lines.
+        for (int i = 0; i < count; i++) {
+        	String suggestion = mSuggestions.get(i).getWord();
+            
             if (canvas != null) {
                 //if ((i == 1 && !typedWordValid) || (i == 0 && typedWordValid)) {
                 //    paint.setFakeBoldText(true);
                 //    paint.setColor(mColorRecommended);
                 
                 if(mSuggestions.get(i).isDictionary()){
-                    if(i == 0){
+                	if(i == 0){
                     	paint.setColor(mColorDictionary);
                     } else if (i != 0) {
                         paint.setColor(mColorDictionary);
@@ -256,19 +270,18 @@ public class CandidateView extends View {
                         paint.setColor(mColorOther);
                     }
                 }
-                canvas.drawText(suggestion, x + X_GAP, y, paint);
+                canvas.drawText(suggestion, mWordX[i] + X_GAP, y, paint);
                 paint.setColor(mColorOther); 
-                canvas.drawLine(x + wordWidth + 0.5f, bgPadding.top, 
-                        x + wordWidth + 0.5f, height + 1, paint);
+                canvas.drawLine(mWordX[i] + mWordWidth[i] + 0.5f, bgPadding.top, 
+                		mWordX[i] + mWordWidth[i] + 0.5f, height + 1, paint);
                 paint.setFakeBoldText(false);
             }
-            x += wordWidth;
+           
         }
-        mTotalWidth = x;
+       
         if (mTargetScrollX != getScrollX()) {
             scrollToTarget();
         }
-        
     }
     
     private void scrollToTarget() {
@@ -299,9 +312,23 @@ public class CandidateView extends View {
         
         if(mSuggestions != null && mSuggestions.size() > 0){
             setBackgroundColor(bgcolor);
+            // Add by Jeremy '10, 3, 29
+            count = mSuggestions.size(); 
+            if(count > MAX_SUGGESTIONS) count = MAX_SUGGESTIONS;
+            
+            if(mSuggestions.get(0).isDictionary()){
+            	// no default selection for related words
+            	mSelectedIndex = -1;
+            }else{
+            	// default selection on suggestions 1 (0 is typed English in mixed English mode)
+            	mSelectedIndex = 1;
+            }
         }else{
             setBackgroundColor(0);
         }
+        
+        
+        
         
         mTypedWordValid = typedWordValid;
         scrollTo(0, 0);
@@ -372,7 +399,7 @@ public class CandidateView extends View {
     
     public void scrollPrev() {
         int i = 0;
-        final int count = mSuggestions.size();
+        //final int count = mSuggestions.size();
         int firstItem = 0; // Actually just before the first item, if at the boundary
         while (i < count) {
             if (mWordX[i] < currentX
@@ -392,10 +419,11 @@ public class CandidateView extends View {
         updateScrollPosition(leftEdge);
     }
     
+    
     public void scrollNext() {
         int i = 0;
         int targetX = currentX;
-        final int count = mSuggestions.size();
+        //final int count = mSuggestions.size();
         int rightEdge = currentX + getWidth();
         while (i < count) {
             if (mWordX[i] <= rightEdge &&
@@ -419,12 +447,41 @@ public class CandidateView extends View {
         }
     }
     
+    //Add by Jeremy '10, 3, 29 for DPAD (physical keyboard) selection.
+    public void selectNext() {
+    	if (mSuggestions == null) return;
+    	if(mSelectedIndex < count-1){
+    		mSelectedIndex++;
+    		if(mWordX[mSelectedIndex] + mWordWidth[mSelectedIndex] > currentX + getWidth()) scrollNext();
+    	}
+    	invalidate();
+    }
+    
+    public void selectPrev() {
+    	if (mSuggestions == null) return;
+        if(mSelectedIndex > 0) {
+        	mSelectedIndex--;
+        	if(mWordX[mSelectedIndex] < currentX) scrollPrev();
+        }
+        invalidate();
+    }
+    public boolean takeSelectedSuggestion(){
+    	if (mSuggestions != null &&(mSelectedIndex >= 0) ) {
+    		mService.pickSuggestionManually(mSelectedIndex);
+    		return true;  // Selection picked
+        }else{
+        	return false;
+        }
+    	
+    }
+
     /**
      * For flick through from keyboard, call this method with the x coordinate of the flick 
      * gesture.
      * @param x
      */
     public void takeSuggestionAt(float x) {
+    	
         mTouchX = (int) x;
         // To detect candidate
         onDraw(null);
