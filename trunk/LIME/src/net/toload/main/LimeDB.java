@@ -386,7 +386,6 @@ public class LimeDB extends SQLiteOpenHelper {
 
 				SQLiteDatabase db = this.getReadableDatabase();
 
-
 				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 				boolean item = sp.getBoolean(LEARNING_SWITCH, false);
 				
