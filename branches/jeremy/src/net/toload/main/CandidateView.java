@@ -43,6 +43,8 @@ import net.toload.main.R.dimen;
  * @author Art Hung
  */
 public class CandidateView extends View {
+	
+	private static final boolean DEBUG = false;
 
     private static final int OUT_OF_BOUNDS = -1;
 
@@ -68,6 +70,8 @@ public class CandidateView extends View {
     private static final int X_GAP = 10;
     
     private static final List<Mapping> EMPTY_LIST = new LinkedList<Mapping>();
+
+	
 
     private int currentX;
     private int mColorNormal;
@@ -200,6 +204,9 @@ public class CandidateView extends View {
      */
     @Override
     protected void onDraw(Canvas canvas) {
+    	if(DEBUG){
+    		Log.i("Candidateview:OnDraw", "Suggestion count:" + count);
+    	}
         if (canvas != null) {
             super.onDraw(canvas);
         }
@@ -226,6 +233,9 @@ public class CandidateView extends View {
         // Modified by jeremy '10, 3, 29.  Update mselectedindex if touched and build wordX[i] and wordwidth[i]
         int x = 0;
         for (int i = 0; i < count; i++) {
+        	if(DEBUG){
+        		Log.i("Candidateview:OnDraw", "updaingting:" + i );
+        	}
         	String suggestion = mSuggestions.get(i).getWord();
             float textWidth = paint.measureText(suggestion);
             final int wordWidth = (int) textWidth + X_GAP * 2;
@@ -249,14 +259,19 @@ public class CandidateView extends View {
         }
         
         // Paint all the suggestions and lines.
-        for (int i = 0; i < count; i++) {
-        	String suggestion = mSuggestions.get(i).getWord();
+        if (canvas != null) {
+        	for (int i = 0; i < count; i++) {
+        		if(DEBUG){
+        			Log.i("Candidateview:OnDraw","i:" + i + "  Drawing:" + mSuggestions.get(i).getWord() );
+        		}
+        	
             
-            if (canvas != null) {
+            
                 //if ((i == 1 && !typedWordValid) || (i == 0 && typedWordValid)) {
                 //    paint.setFakeBoldText(true);
                 //    paint.setColor(mColorRecommended);
-                
+            	String suggestion = mSuggestions.get(i).getWord();
+            	
                 if(mSuggestions.get(i).isDictionary()){
                 	if(i == 0){
                     	paint.setColor(mColorDictionary);
@@ -310,6 +325,10 @@ public class CandidateView extends View {
             mSuggestions = new LinkedList<Mapping>(suggestions);
         }
         
+        if(DEBUG){
+        	Log.i("setSuggestions:","mSuggestions.size:" + mSuggestions.size());
+        }
+        
         if(mSuggestions != null && mSuggestions.size() > 0){
             setBackgroundColor(bgcolor);
             // Add by Jeremy '10, 3, 29
@@ -328,9 +347,6 @@ public class CandidateView extends View {
         }else{
             setBackgroundColor(0);
         }
-        
-        
-        
         
         mTypedWordValid = typedWordValid;
         scrollTo(0, 0);
@@ -468,6 +484,9 @@ public class CandidateView extends View {
         invalidate();
     }
     public boolean takeSelectedSuggestion(){
+    	if(DEBUG){
+    		Log.i("takeSeelctionSuggestion", "mSelectedIndex:" + mSelectedIndex);
+    	}
     	if (mSuggestions != null &&(mSelectedIndex >= 0) ) {
     		mService.pickSuggestionManually(mSelectedIndex);
     		return true;  // Selection picked

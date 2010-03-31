@@ -530,15 +530,16 @@ public class LIMEService extends InputMethodService implements
 		return true;
 	}
 
+	
+	private boolean waitingEnterUp = false;
 	/**
 	 * Use this to monitor key events being delivered to the application. We get
 	 * first crack at them, and can either resume them or let them continue to
 	 * the app.
 	 */
-	
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		
+			waitingEnterUp = false;
 					
 			switch (keyCode) {
 			
@@ -613,11 +614,21 @@ public class LIMEService extends InputMethodService implements
 			case KeyEvent.KEYCODE_ENTER:
 				// Let the underlying text editor always handle these, if return false from takeSelectedSuggestion().
 				// Process enter for candidate view selection in OnKeyUp() to block the real enter afterware.
-				return false;
+				//return false;
+				if (mCandidateView != null && mCandidateView.isShown()) {
+					// To block a real enter after suggestion selection.  We have to return true in OnKeyUp();
+					waitingEnterUp = true;
+					return mCandidateView.takeSelectedSuggestion();			
+				}
 	
 			case KeyEvent.KEYCODE_SPACE:
-				// Add by Jeremy '10, 3, 27. Send Alt-space to super for default popup SYM window. 
-				if ( LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON)>0 )
+				// Add by Jeremy '10, 3, 31. Select current suggestion with space. 
+				if (mCandidateView != null && mCandidateView.isShown()) {
+					waitingEnterUp = true;
+					return mCandidateView.takeSelectedSuggestion();			
+				}
+				// Add by Jeremy '10, 3, 27. Send Alt-space to super for default popup SYM window.
+				else if( LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON)>0 )
 					break; 
 				
 			default:
@@ -722,12 +733,13 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			//handleAlt();
 			break;
 		case KeyEvent.KEYCODE_ENTER:
-			if (mCandidateView != null && mCandidateView.isShown()) {
 			// Add by Jeremy '10, 3 ,29.  Pick selected selection if candidates shown.
 			// Does not block real enter after select the suggestion. !! need fix here!!
 			// Let the underlying text editor always handle these, if return false from takeSelectedSuggestion().
-				return mCandidateView.takeSelectedSuggestion();			
-			}		
+			//if (mCandidateView != null && mCandidateView.isShown()) {
+			//	return mCandidateView.takeSelectedSuggestion();			
+			//}		
+			if(waitingEnterUp) {return true;};
 		default:
 			// Clear MetaKeyStates 
 			//if(LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON ) == 1) {  

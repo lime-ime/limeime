@@ -42,7 +42,7 @@ import android.widget.Toast;
  */
 public class LimeDB extends SQLiteOpenHelper {
 
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
 	
 	private final static String DATABASE_NAME = "lime";
 	private final static int DATABASE_VERSION = 28;
@@ -442,7 +442,11 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @param srclist
 	 */
 	public void addDictionary(List<Mapping> srclist) {
-
+		
+		if(DEBUG){
+			Log.i("addDictionary:", "Etnering addDictionary");
+		}
+		
 		int dictotal = 0;
 		try {
 			// modified by Jeremy '10, 3,12
@@ -456,6 +460,9 @@ public class LimeDB extends SQLiteOpenHelper {
 		// Check if build related word enable. 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		if( !sp.getBoolean(CANDIDATE_SUGGESTION, false) ){
+			if(DEBUG){
+				Log.i("addDictionary:", "CANDIDATE_SUGGESTION:false returning...");
+			}
 			return;
 		}
 		
@@ -466,9 +473,12 @@ public class LimeDB extends SQLiteOpenHelper {
 				for (int i = 0; i < srclist.size(); i++) {
 
 					Mapping unit = srclist.get(i);
-					Mapping unit2 = srclist.get((i + 1));
-					
-					if (unit2 != null) {
+					// Out of bound exception here!!
+					//Mapping unit2 = srclist.get((i + 1));
+					//if (unit2 != null) {
+					if(i+1 <srclist.size()){
+						Mapping unit2 = srclist.get((i + 1));
+						
 						if (unit != null && unit.getCode().length() > 0
 								&& unit2 != null
 								&& unit2.getCode().length() > 0) {
@@ -511,6 +521,9 @@ public class LimeDB extends SQLiteOpenHelper {
 			} finally {
 				SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
 				sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(dictotal)).commit();
+				if(DEBUG){
+					Log.i("addDictionary:", "update userdict total records:" + dictotal);
+				}
 			}
 		}
 	}
@@ -548,7 +561,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					cursor = db.query(tablename, null, FIELD_CODE + " = \"" + keyword + "\"", null, null, null, null, null);
 				}
 				if(DEBUG){
-					Log.i("Query","tablename:"+tablename+"keyworad:"+keyword+"cursor.getCount:"+cursor.getCount());
+					Log.i("Query","tablename:"+tablename+"  keyworad:"+keyword+"  cursor.getCount:"+cursor.getCount());
 				}
 				
 				if (cursor.moveToFirst()) {
@@ -752,7 +765,9 @@ public class LimeDB extends SQLiteOpenHelper {
 					cv.put(FIELD_SCORE, score);
 
 					SQLiteDatabase db = this.getWritableDatabase();
-					db.update("mapping", cv, FIELD_id + " = " + id, null);
+					// Add by jeremy '10,3,31. Multi-table extension.
+					//db.update("mapping", cv, FIELD_id + " = " + id, null);
+					db.update(tablename, cv, FIELD_id + " = " + id, null);
 				}
 			}
 		} catch (Exception e) {
@@ -1193,8 +1208,10 @@ public class LimeDB extends SQLiteOpenHelper {
 				Cursor cursor = null;
 
 				SQLiteDatabase db = this.getReadableDatabase();
-				cursor = db.query("userdic", null, FIELD_DIC_pcode + " = '" + pword.hashCode()
-						+ "' AND " + FIELD_DIC_ccode + " = '" + cword.hashCode() + "'",
+				cursor = db.query("userdic", null,
+						// Modified '10, 3, 31 on check pwork and cword
+						FIELD_DIC_pword + " = '" + pword + "' AND " + 
+						FIELD_DIC_cword + " = '" + cword + "'",
 						null, null, null, null, null);
 
 				if (cursor != null && cursor.getCount() > 0) {
