@@ -481,15 +481,20 @@ public class LimeDB extends SQLiteOpenHelper {
 									// Log.i("ART","unit 5->"+unit2);
 									ContentValues cv = new ContentValues();
 									//--------------------------------------------
-									// Modified by Jeremy '10,03,20 replace pccode, code with hashcode
+									// Modified by Jeremy '10,03,20 replace pcode, code with hashcode
+									// '10, 3, 30. pcode and code no more used.
 									//cv.put(FIELD_DIC_pcode, unit.getCode());
-									cv.put(FIELD_DIC_pcode, unit.getWord().hashCode());
+									//cv.put(FIELD_DIC_pcode, unit.getWord().hashCode());
+									cv.put(FIELD_DIC_pcode, "-");
 									cv.put(FIELD_DIC_pword, unit.getWord());
 									//cv.put(FIELD_DIC_ccode, unit2.getCode());
-									cv.put(FIELD_DIC_ccode, unit2.getWord().hashCode());
+									//
+									cv.put(FIELD_DIC_ccode, "-");
 									cv.put(FIELD_DIC_cword, unit2.getWord());
 									//-------------------------------------------------------
-									cv.put(FIELD_DIC_score, 0);
+									// Modified by jeremy '10, 3, 29. score 0->1.  Built-in phrase has score at 0. 
+									// All userdict will have score >0 and build with score 1. 
+									cv.put(FIELD_DIC_score, 1);
 
 									db.insert("userdic", null, cv);
 									dictotal++;
@@ -726,8 +731,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		String id = srcunit.getId();
 		String code = srcunit.getCode();
 		String word = srcunit.getWord();
-		String pcode = srcunit.getPcode();
-		String pword = srcunit.getPword();
+		//String pcode = srcunit.getPcode();
+		//String pword = srcunit.getPword();
 
 		int score = srcunit.getScore();
 		try {
@@ -1216,6 +1221,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	// Modified by Jeremy '10, 3,12
 	//
 	public void backupRelatedUserdic() {
+		final File targetFile = new File("/sdcard/lime/limedb.txt");
+		
+		targetFile.deleteOnExit();
 		
 		if(thread!=null){
 			thread.stop();
@@ -1223,9 +1231,10 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 		thread = new Thread() {
 			public void run() {
+		
+		//Modified by Jeremy '10, 3, 30.  Use /sdcard/lime as user space storage space.
 
-		File targetFile = new File("/sdcard/limedb.txt");
-		targetFile.deleteOnExit();
+		
 		relatedfinish = false;
 
 		Cursor cursor = null;
@@ -1236,7 +1245,10 @@ public class LimeDB extends SQLiteOpenHelper {
 		try {
 
 			SQLiteDatabase db = getWritableDatabase();
-			cursor = db.rawQuery("SELECT * FROM userdic", null);
+			// Modified '10, 3, 30 by Jeremy. All userdict should >0.
+			cursor = db.rawQuery("SELECT * FROM userdic " 
+					+"where " + FIELD_DIC_score + ">0" 
+					, null);
 			
 			OutputStream out = new FileOutputStream(targetFile, false);
 			Writer writer = new OutputStreamWriter(out, "UTF-8");
@@ -1250,9 +1262,13 @@ public class LimeDB extends SQLiteOpenHelper {
 				int wordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
 				int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
 				do {
-					String line = cursor.getString(pcodeColumn) + "\t" + cursor.getString(pwordColumn)
-					+ "\t" + cursor.getString(codeColumn) + "\t" +cursor.getString(wordColumn)
-					+ "\t" + cursor.getInt(scoreColumn) + "\r\n";
+					//Modified by jeremy.  Skip pcode code here.
+					String line = 
+						//cursor.getString(pcodeColumn) + "\t" + 
+						cursor.getString(pwordColumn) + "\t" + 
+						//cursor.getString(codeColumn) + "\t" +
+						cursor.getString(wordColumn) + "\t" + 
+						cursor.getInt(scoreColumn) + "\r\n";
 					writer.write(new String(line.getBytes("UTF-8")));
 				} while (cursor.moveToNext());
 			}
@@ -1285,12 +1301,21 @@ public class LimeDB extends SQLiteOpenHelper {
 	// Modified by Jeremy '10, 3,12
 	//
 	public void restoreRelatedUserdic() {
-		Thread thread = new Thread() {
+		relatedfinish = false;
+		final File targetFile = new File("/sdcard/lime/limedb.txt");
+		
+			
+		if(thread!=null){
+				thread.stop();
+				thread = null;
+		}
+		
+		thread = new Thread() {
 			public void run() {
 
-		File targetFile = new File("/sdcard/limedb.txt");
 		
-		relatedfinish = false;
+		
+	
 
 		//ArrayList temp = new ArrayList();
 		if (targetFile.exists()) {
@@ -1314,7 +1339,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					line = line.trim();
 					
 					try {
-					
+						/*
 						String pcode = line.split("\t")[0];
 						String pword = line.split("\t")[1];
 						String code = line.split("\t")[2];
@@ -1325,7 +1350,33 @@ public class LimeDB extends SQLiteOpenHelper {
 							// To ignore incomplete import row
 							score = line.split("\t")[4];
 						}catch(ArrayIndexOutOfBoundsException e){}
-						
+						*/
+						//Modified by Jeremy '10, 3, 30.  
+						String [] temp=null;
+						String pcode=null, pword=null, code=null, word=null, score=null;
+						temp = line.split("\t");
+						if(DEBUG){
+							Log.i("restoreRelatedUserdic","colums:"+temp.length + 
+									" c1:" + temp[0] + 
+							        " c2:" + temp[1] +
+							        " c3:" + temp[1] );
+						}
+						if(temp.length == 5) { // old format, 5 columns
+							//pcode = temp[0];
+							pword = temp[1];
+							//code = temp[2];
+							word = temp[3];
+							score = temp[4];
+						}else if(temp.length == 3) { // new format , 3 colums
+							pword = temp[0];
+							word = temp[1];
+							score = temp[2];
+						}else {
+							continue; // incomplete row!!
+						}
+						//Userdict must have score >0
+						if(score.trim().equals("0")) {score = "1";}
+							
 						//temp.add(new Mapping(pcode, pword, code, word, Integer
 						//		.parseInt(score)));
 						// insert into database
@@ -1334,10 +1385,11 @@ public class LimeDB extends SQLiteOpenHelper {
 						//------------------------------------------------------------------
 						// Modified by Jeremy '10,03,20, replace pcode, code with hashcode.
 						//cv.put(FIELD_DIC_pcode, pcode);
-						cv.put(FIELD_DIC_pcode, pword.hashCode());
+						// '10, 3, 30.  pcode and ccode no more used.
+						cv.put(FIELD_DIC_pcode, "-");
 						cv.put(FIELD_DIC_pword, pword);
 						//cv.put(FIELD_DIC_ccode, code);
-						cv.put(FIELD_DIC_ccode, word.hashCode());
+						cv.put(FIELD_DIC_ccode, "-");
 						//------------------------------------------------------------------
 						cv.put(FIELD_DIC_cword, word);
 						cv.put(FIELD_DIC_score, score);

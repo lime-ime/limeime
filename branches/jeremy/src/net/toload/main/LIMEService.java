@@ -65,7 +65,7 @@ import android.database.sqlite.SQLiteCursor;
 public class LIMEService extends InputMethodService implements
 		KeyboardView.OnKeyboardActionListener {
 
-	static final boolean DEBUG =  true;
+	static final boolean DEBUG =  false;
 	static final String PREF = "LIMEXY";
 	
 	static final int KEYBOARD_SWITCH_CODE = -9;
@@ -543,6 +543,7 @@ public class LIMEService extends InputMethodService implements
 			switch (keyCode) {
 			
 			// Add by Jeremy '10, 3, 29. DPAD selection on candidate view
+			//  UP/Down to page up/down ??
 			//case KeyEvent.KEYCODE_DPAD_UP:
 			//case KeyEvent.KEYCODE_DPAD_DOWN:
 			case KeyEvent.KEYCODE_DPAD_RIGHT:

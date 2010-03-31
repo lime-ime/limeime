@@ -319,7 +319,9 @@ public class CandidateView extends View {
             if(mSuggestions.get(0).isDictionary()){
             	// no default selection for related words
             	mSelectedIndex = -1;
-            }else{
+            }else if(mSuggestions.size() == 1){
+            	mSelectedIndex = 0;
+            }else {
             	// default selection on suggestions 1 (0 is typed English in mixed English mode)
             	mSelectedIndex = 1;
             }

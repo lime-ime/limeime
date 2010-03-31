@@ -173,15 +173,36 @@ public class DBService extends Service {
 		// Modified by Jeremy '10, 3,12
 		//
 		public void restoreRelatedUserdic() throws RemoteException {
-			if (db == null) {
-				db = new LimeDB(ctx);
+			
+			
+			final File targetFile = new File("/sdcard/lime/limedb.txt");
+			final File targetDir = new File("/sdcard/lime");
+			
+			if (!targetDir.exists()) {
+				if(!targetDir.mkdirs()){
+					Log.i("restoreRelated", "dir creation failed.");
+					displayNotificationMessage(ctx.getText(R.string.lime_setting_restore_message_failed)+ "");
+					return;
+				}
 			}
-			db.deleteDictionaryAll();
+			if (!targetFile.exists()) {
+				Log.i("restoreRelated", "file not exist");
+				displayNotificationMessage(ctx.getText(R.string.lime_setting_restore_message_failed)+ "");
+				return;
+				};
+			
+			//Should do this at dbservice
+			//db.deleteDictionaryAll();
 			displayNotificationMessage(ctx
 					.getText(R.string.lime_setting_restore_message)
 					+ "");
 			
+			if (db == null) {
+				db = new LimeDB(ctx);
+				}
+			
 			// Stop and clear the existing thread.
+			
 			if(thread!=null){
 				thread.stop();
 				thread = null;
@@ -190,7 +211,7 @@ public class DBService extends Service {
 			thread = new Thread() {
 				public void run() {
 					int total = 0;
-					
+				
 					while (!db.isRelatedFinish()) {
 						try {
 							Thread.sleep(10000);
@@ -214,6 +235,7 @@ public class DBService extends Service {
 						displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_userdic_restore)+ "");
 						//db.setCount(0);
 					}else{
+						// we will never reach here!!
 						displayNotificationMessage(ctx.getText(R.string.lime_setting_restore_message_failed)+ "");
 					}
 
@@ -239,10 +261,23 @@ public class DBService extends Service {
 		// Modified by Jeremy '10, 3,12
 		//
 		public void executeUserBackup() throws RemoteException {
+			
+			// Add by Jeremy '10, 3, 30
+			final File targetDir = new File("/sdcard/lime");
+			if (!targetDir.exists()) {
+				Log.i("backupRelated", "dir not exist, creating..");
+				if(!targetDir.mkdirs()){
+					Log.i("backupRelated", "dir creation failed.");
+					displayNotificationMessage(ctx.getText(R.string.lime_setting_backup_message_failed)+ "");
+					return;
+				}
+			}
+			
 			if (db == null) {
 				db = new LimeDB(ctx);
 			}
 			
+			Log.i("backupRelated", "Creating thread.");
 			displayNotificationMessage(ctx
 					.getText(R.string.lime_setting_backup_message)
 					+ "");
@@ -251,9 +286,11 @@ public class DBService extends Service {
 				thread.stop();
 				thread = null;
 			}
+			Log.i("backupRelated", "monitoring thread started.");
 			thread = new Thread() {
 				public void run() {
 					int total = 0;
+					
 					
 					while (!db.isRelatedFinish()) {
 						try {

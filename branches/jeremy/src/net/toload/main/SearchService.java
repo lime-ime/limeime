@@ -80,7 +80,7 @@ public class SearchService extends Service {
 			if(mappingIdx == null){mappingIdx = new HashMap();}
 
 			SharedPreferences sp1 = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-			String loadingstatus = sp1.getString(MAPPING_LOADING, "no");
+			String loadingstatus = sp1.getString(MAPPING_LOADING, "");
 			//Log.i("ART","Loading Status : " + loadingstatus);
 
 			List<Mapping> result = new LinkedList();
