@@ -38,10 +38,10 @@
     <string name="lime_setting_restore_db">資料還原</string>
     
     <!-- Select File -->
-    <string name="lime_setting_backup_message">備份至 /sdcard/limedb.txt</string>
-    <string name="lime_setting_backup_message_failed">無法備份至 /sdcard/limedb.txt, 請確認 /sdcard 目錄是否可存取!!</string>
-    <string name="lime_setting_restore_message">由 /sdcard/limedb.txt 還原</string>
-    <string name="lime_setting_restore_message_failed">找不到 /sdcard/limedb.txt 檔案, 無法進行資料還原任務!!</string>
+    <string name="lime_setting_backup_message">備份至 /sdcard/lime/limedb.txt</string>
+    <string name="lime_setting_backup_message_failed">無法備份至 /sdcard/lime/limedb.txt, 請確認 /sdcard 目錄是否可存取!!</string>
+    <string name="lime_setting_restore_message">由 /sdcard/lime/limedb.txt 還原</string>
+    <string name="lime_setting_restore_message_failed">找不到 /sdcard/lime/limedb.txt 檔案, 無法進行資料還原任務!!</string>
     <string name="lime_setting_btn_close">關閉</string>
     
     <!-- LIME Loading -->
@@ -74,8 +74,16 @@
     <string name="keyboard">鍵盤</string>
     <string name="Similiar">關聯字</string>
     <string name="mapping">對應表</string>
-    
+       
     <string name="keyboard_list">鍵盤選取</string>
+    
+    <string name="im">輸入法</string>
+    <string name="im_reverse_lookup_list">反查選擇</string>
+    <string name="default_reverse_lookup_list">預設對應表反查</string>
+    <string name="cj_reverse_lookup_list">倉頡反查</string>
+    <string name="dayi_reverse_lookup_list">大易反查</string>
+    <string name="bpmf_reverse_lookup_list">注音反查</string>
+    
     <string name="table_list">對應表選取</string>
     <string name="similiar_list">建議字顯示數量</string>
     <string name="vibrate_on_keypress">打字震動</string>
@@ -101,7 +109,15 @@
     
     <!-- Other Messages -->
     
-    
+    <!-- IM Reverse Lookup List -->  
+    <string-array name="im_reverse_lookup">
+		<item>無</item>
+		<item>預設</item>
+		<item>倉頡</item>
+		<item>大易</item>
+		<item>注音</item>
+	</string-array>
+
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
 		<item>預設鍵盤</item>

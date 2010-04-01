@@ -75,6 +75,13 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String CANDIDATE_SUGGESTION = "candidate_suggestion";
 	private final static String LEARNING_SWITCH = "learning_switch";
 
+	//Add by Jeremy '10, 4, 1. For reverse lookup
+	private final static String CJ_R_LOOKUP = "cj_im_reverselookup";
+	private final static String DAYI_R_LOOKUP = "dayi_im_reverselookup";
+	private final static String BPMF_R_LOOKUP = "bpmf_im_reverselookup";
+	private final static String DEFAULT_R_LOOKUP = "default_im_reverselookup";
+	
+	
 	public final static String FIELD_id = "_id";
 	public final static String FIELD_CODE = "code";
 	public final static String FIELD_WORD = "word";
@@ -88,6 +95,12 @@ public class LimeDB extends SQLiteOpenHelper {
 	public final static String FIELD_DIC_cword = "cword";
 	public final static String FIELD_DIC_score = "score";
 	public final static String FIELD_DIC_is = "isDictionary";
+	
+	public final static String BPMF_KEY = "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-";
+	public final static String BPMF_CHAR = "ㄅㄆㄇㄈㄉㄊㄋㄌˇㄍㄎㄏˋㄐㄑㄒㄓㄗㄕㄖˊㄗㄘㄙ˙ㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ";
+	
+	public final static String CJ_KEY = "qwertyuiopasdfghjklzxcvbnm";
+	public final static String CJ_CHAR = "手田水口廿卜山戈人心日尸木火土竹十大中重難金女月弓一";
 
 	public String DELIMITER = "";
 	private String limit = "10";
@@ -495,11 +508,10 @@ public class LimeDB extends SQLiteOpenHelper {
 									// '10, 3, 30. pcode and code no more used.
 									//cv.put(FIELD_DIC_pcode, unit.getCode());
 									//cv.put(FIELD_DIC_pcode, unit.getWord().hashCode());
-									cv.put(FIELD_DIC_pcode, "-");
+									//cv.put(FIELD_DIC_pcode, "-");
 									cv.put(FIELD_DIC_pword, unit.getWord());
 									//cv.put(FIELD_DIC_ccode, unit2.getCode());
-									//
-									cv.put(FIELD_DIC_ccode, "-");
+									//cv.put(FIELD_DIC_ccode, "-");
 									cv.put(FIELD_DIC_cword, unit2.getWord());
 									//-------------------------------------------------------
 									// Modified by jeremy '10, 3, 29. score 0->1.  Built-in phrase has score at 0. 
@@ -527,8 +539,106 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 		}
 	}
+	
+	// Add by jeremy '10, 4, 1.  For reverse lookup
+	/**
+	 * Reverse lookup on keyword.
+	 * @param keyword
+	 * @return
+	 */
+	public String getRMapping(String keyword) {
+		
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		String Rtable = new String("none");
+		if(tablename.equals("cj")){	
+			Rtable = sp.getString(CJ_R_LOOKUP, "none");	
+		}else if(tablename.equals("dayi")){ 
+			Rtable = sp.getString(DAYI_R_LOOKUP, "none");
+		}else if(tablename.equals("phonetic")){
+			Rtable = sp.getString(BPMF_R_LOOKUP, "none");
+		}else {
+			Rtable = sp.getString(DEFAULT_R_LOOKUP, "none");
+		}
+		if(Rtable.equals("none")) { return null ;}
+		
+		String result = new String("");
+		try {
+			// Create Suggestions (Exactly Matched)
+			if (keyword != null && !keyword.trim().equals("")) {
+				Cursor cursor = null;
+				SQLiteDatabase db = this.getReadableDatabase();
+				cursor = db.query(Rtable, null, FIELD_WORD + " = \"" + keyword + "\"", null, null, null, null, null);
+				if(DEBUG){
+					Log.i("getRmapping","tablename:"+Rtable+"  keyworad:"+keyword+"  cursor.getCount:" + cursor.getCount());
+				}
+				
+				if (cursor.moveToFirst()) {
+					int codeColumn = cursor.getColumnIndex(FIELD_CODE);
+					int wordColumn = cursor.getColumnIndex(FIELD_WORD);
+					//int idColumn = cursor.getColumnIndex(FIELD_id);
+					result = cursor.getString(wordColumn)+ "=" + keyToChar(cursor.getString(codeColumn), Rtable);
+					if(DEBUG){
+						Log.i("getRmapping","Code:"+cursor.getString(codeColumn));
+					}
+					
+					while (cursor.moveToNext()){
+						result = result + "; " + keyToChar(cursor.getString(codeColumn), Rtable);
+						if(DEBUG){
+							Log.i("getRmapping","Code:"+cursor.getString(codeColumn));
+						}
+					}
+					
+				}
+				
 
+				if (cursor != null) {
+					cursor.deactivate();
+					cursor.close();
+				}
+			}
+		} catch (Exception e) {
+		}
+		
+		if(DEBUG){
+			Log.i("getRmapping","Result:" + result);
+		}
+		
+		return result;
+	}
+	
+	public String keyToChar(String code, String Rtable){
+		String result = new String("");
+		if(Rtable.equals("cj")){	
+			int i, j;
+			for(i=0;i<code.length();i++){
+				for(j=0;j < CJ_KEY.length() ; j++ ){
+					if(code.substring(i, i+1).toLowerCase().equals(CJ_KEY.substring(j, j+1))){
+						result=result+ CJ_CHAR.substring(j, j+1);
+						break;
+					}
+				}
+					
+			}
+		}else if(Rtable.equals("dayi")){ 
+			result = code;
+		}else if(Rtable.equals("phonetic")){
+			int i, j;
+			for(i=0;i<code.length();i++){
+				for(j=0;j < BPMF_KEY.length() ; j++ ){
+					if(code.substring(i, i+1).toLowerCase().equals(BPMF_KEY.substring(j, j+1))){
+						result=result+ BPMF_CHAR.substring(j, j+1);
+						break;
+					}
+				}
+					
+			}
+			
+		}else {
+			result = code;
 
+		}
+		return result;
+	}
 	
 	public List<Mapping> getMapping(String keyword) {
 		
@@ -680,15 +790,17 @@ public class LimeDB extends SQLiteOpenHelper {
 		List<Mapping> result = new LinkedList<Mapping>();
 
 		// Create Suggestions (Exactly Matched)
-		if (pcode != null && !pcode.trim().equals("")) {
+		// Modified by Jeremy '10, 4, 1.  pcode->pword
+		if (pword != null && !pword.trim().equals("")) {
 
 			Cursor cursor = null;
-
+			/*
 			try {
 				pcode = pcode.toUpperCase();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+			*/
 			//Modified by Jeremy '10,3 ,20 for more specific related word
 			// Replace pcode with hascode() for better perfoamnce and IM indepedent.
 			//-----------------------------------------------------------
@@ -701,24 +813,24 @@ public class LimeDB extends SQLiteOpenHelper {
 					FIELD_DIC_pword + " = \"" + pword + "\"" 
 					, null, null, null, FIELD_DIC_score
 					+ " DESC", null);
-			//	
 			
 			//-----------------------------------------------------------
 
 
 			if (cursor.moveToFirst()) {
-				int pcodeColumn = cursor.getColumnIndex(FIELD_DIC_pcode);
+				//int pcodeColumn = cursor.getColumnIndex(FIELD_DIC_pcode);
 				int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
-				int ccodeColumn = cursor.getColumnIndex(FIELD_DIC_ccode);
+				//int ccodeColumn = cursor.getColumnIndex(FIELD_DIC_ccode);
 				int cwordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
 				int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
 				int idColumn = cursor.getColumnIndex(FIELD_id);
 				do {
 					Mapping munit = new Mapping();
 					munit.setId(cursor.getString(idColumn));
-					munit.setPcode(cursor.getString(pcodeColumn));
+					//munit.setPcode(cursor.getString(pcodeColumn));
 					munit.setPword(cursor.getString(pwordColumn));
-					munit.setCode(cursor.getString(ccodeColumn));
+					//munit.setCode(cursor.getString(ccodeColumn));
+					munit.setCode("");
 					munit.setWord(cursor.getString(cwordColumn));
 					munit.setScore(cursor.getInt(scoreColumn));
 					munit.setDictionary(true);

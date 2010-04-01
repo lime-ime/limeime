@@ -74,7 +74,18 @@ public class SearchService extends Service {
 			return result;
 		}
 		//-----------------------------------------------------------
-
+		
+		
+		//Add by jeremy '10, 4,1
+		public void Rquery(String word) throws RemoteException {
+			if(db == null){db = new LimeDB(ctx);}
+			String result = db.getRMapping(word);
+			if(result!=null && !result.equals("")){
+				displayNotificationMessage(result);
+			}
+		
+		}
+		
 		public List query(String code) throws RemoteException {
 			
 			if(mappingIdx == null){mappingIdx = new HashMap();}

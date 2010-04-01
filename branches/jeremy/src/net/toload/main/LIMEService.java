@@ -801,6 +801,10 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 								e.printStackTrace();
 							}
 						userdiclist.add(firstMatched);
+						
+						// Add by Jeremy '10, 4,1 . Reverse Lookup
+						SearchSrv.Rquery(firstMatched.getWord());
+						
 						tempMatched = firstMatched;
 						firstMatched = null;
 						hasFirstMatched = true;
@@ -1189,7 +1193,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		
 		// If there is no Temp Matched word exist then not to display dictionary view
 		try{
-			if( tempMatched != null && tempMatched.getCode() != null && !tempMatched.getCode().equals("")){
+			// Modified by Jeremy '10, 4,1.  getCode -> getWord
+			//if( tempMatched != null && tempMatched.getCode() != null && !tempMatched.getCode().equals("")){
+			if( tempMatched != null && tempMatched.getWord() != null && !tempMatched.getWord().equals("")){
 				
 				LinkedList<Mapping> list = new LinkedList<Mapping>();
 				//Modified by Jeremy '10,3 ,12 for more specific related word

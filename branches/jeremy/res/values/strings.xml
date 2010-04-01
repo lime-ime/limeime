@@ -38,10 +38,10 @@
     <string name="lime_setting_restore_db">Restore</string>
     
     <!-- Select File -->
-    <string name="lime_setting_backup_message">Backup to /sdcard/limedb.txt</string>
-    <string name="lime_setting_backup_message_failed">Cannot backup to /sdcard/limedb.txt, please make sure /sdcard not read only!!</string>
-    <string name="lime_setting_restore_message">Restore from /sdcard/limedb.txt</string>
-    <string name="lime_setting_restore_message_failed">Cannot found /sdcard/limedb.txt to be restored, please make sure file exists!!</string>
+    <string name="lime_setting_backup_message">Backup to /sdcard/lime/limedb.txt</string>
+    <string name="lime_setting_backup_message_failed">Cannot backup to /sdcard/lime/limedb.txt, please make sure /sdcard not read only!!</string>
+    <string name="lime_setting_restore_message">Restore from /sdcard/lime/limedb.txt</string>
+    <string name="lime_setting_restore_message_failed">Cannot found /sdcard/lime/limedb.txt to be restored, please make sure file exists!!</string>
     <string name="lime_setting_btn_close">Close</string>
     
     <!-- LIME Loading -->
@@ -76,6 +76,14 @@
     <string name="mapping">Mapping</string>
     
     <string name="keyboard_list">Keyboard Selection</string>
+    
+    <string name="im">Input Method</string>
+    <string name="im_reverse_lookup_list">R-Lookup Selection</string>
+    <string name="default_reverse_lookup_list">R-Lookup in Default</string>
+    <string name="cj_reverse_lookup_list">R-Lookup in ChangJei</string>
+    <string name="dayi_reverse_lookup_list">R-Lookup in Dayi</string>
+    <string name="bpmf_reverse_lookup_list">R-Lookup in Phonetic</string>
+    
     <string name="table_list">Table Selection</string>
     <string name="similiar_list">Suggestion display amount</string>
     <string name="vibrate_on_keypress">Vibrate on keypress</string>
@@ -104,8 +112,22 @@
     <string name="chinese_punctuation">「」！？、。，</string>
     
     <!-- Other Messages -->
-    
-    
+  	
+    <!-- IM Reverse Lookup List -->  
+    <string-array name="im_reverse_lookup">
+		<item>none</item>
+		<item>Default</item>
+		<item>Changjei</item>
+		<item>Dayi</item>
+		<item>Phonetic</item>
+	</string-array>
+	<string-array name="im_reverse_lookup_codes">
+		<item>none</item>
+		<item>mapping</item>
+		<item>cj</item>
+		<item>dayi</item>
+		<item>phonetic</item>
+	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
 		<item>Default</item>

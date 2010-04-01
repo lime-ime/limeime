@@ -6,6 +6,7 @@ interface ISearchService
 		String getTablename();
 		void setTablename(String tablename);
 		List query(String code);
+		void Rquery(String word);
 		List queryUserDic(String code, String word);
 		void updateMapping(String id, String code, String word, String pcode, String pword, int score, boolean isDictionary);
 		void addDictionary(String id, String code, String word, String pcode, String pword, int score, boolean isDictionary);
