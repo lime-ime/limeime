@@ -35,28 +35,28 @@
     			android:entries="@array/im_reverse_lookup" 
     			android:entryValues="@array/im_reverse_lookup_codes" 
     			android:dialogTitle="@string/im_reverse_lookup_list" 
-    			android:defaultValue="0"/>
+    			android:defaultValue="none"/>
     <ListPreference
     			android:key="cj_im_reverselookup"
     			android:title="@string/cj_reverse_lookup_list" 
     			android:entries="@array/im_reverse_lookup" 
     			android:entryValues="@array/im_reverse_lookup_codes" 
     			android:dialogTitle="@string/im_reverse_lookup_list" 
-    			android:defaultValue="0"/>
+    			android:defaultValue="none"/>
     <ListPreference
     			android:key="dayi_im_reverselookup"
     			android:title="@string/dayi_reverse_lookup_list" 
     			android:entries="@array/im_reverse_lookup" 
     			android:entryValues="@array/im_reverse_lookup_codes" 
     			android:dialogTitle="@string/im_reverse_lookup_list" 
-    			android:defaultValue="0"/>
+    			android:defaultValue="none"/>
     <ListPreference
     			android:key="bpmf_im_reverselookup"
     			android:title="@string/bpmf_reverse_lookup_list" 
     			android:entries="@array/im_reverse_lookup" 
     			android:entryValues="@array/im_reverse_lookup_codes" 
     			android:dialogTitle="@string/im_reverse_lookup_list" 
-    			android:defaultValue="0"/>
+    			android:defaultValue="none"/>
    
 </PreferenceCategory>
     
