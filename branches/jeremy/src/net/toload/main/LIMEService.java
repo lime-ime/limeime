@@ -1123,6 +1123,14 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         
         spe.putString("keyboard_list", keyboardSelection);
         spe.commit();
+        
+        // cancel candidate view if it's shown
+        if (mCandidateView != null) {
+			mCandidateView.clear();
+		}
+		mComposing.setLength(0);
+		setCandidatesViewShown(false);
+        //
         initialKeyboard();
     	
     }

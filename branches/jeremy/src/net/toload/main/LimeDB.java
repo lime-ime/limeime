@@ -652,12 +652,14 @@ public class LimeDB extends SQLiteOpenHelper {
 			if (keyword != null && !keyword.trim().equals("")) {
 
 				Cursor cursor = null;
-
+				
+				/* done this in serchservice already
 				try {
 					keyword = keyword.toUpperCase();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
+				*/
 
 				SQLiteDatabase db = this.getReadableDatabase();
 
@@ -665,10 +667,12 @@ public class LimeDB extends SQLiteOpenHelper {
 				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 				boolean item = sp.getBoolean(LEARNING_SWITCH, false);
 				
+				
+				//Bug fix by Jeremy '10, 4, 2. code="code" will return all records, but code='code' is normal.
 				if(item){
-					cursor = db.query(tablename, null, FIELD_CODE + " = \"" + keyword + "\"", null, null, null, FIELD_SCORE + " DESC", null);
+					cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'", null, null, null, FIELD_SCORE + " DESC", null);
 				}else{
-					cursor = db.query(tablename, null, FIELD_CODE + " = \"" + keyword + "\"", null, null, null, null, null);
+					cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'", null, null, null, null, null);
 				}
 				if(DEBUG){
 					Log.i("Query","tablename:"+tablename+"  keyworad:"+keyword+"  cursor.getCount:"+cursor.getCount());
@@ -724,8 +728,8 @@ public class LimeDB extends SQLiteOpenHelper {
 				String klist[] = related.split("\t");
 				for (int i = 0; i < klist.length; i++) {
 					String item = klist[i];
-
-					where += " " + FIELD_CODE + " = \"" + item + "\" OR";
+					// Jeremy '10, 4, 2.  change " to '
+					where += " " + FIELD_CODE + " = '" + item + "' OR";
 					if (i == size) {
 						break;
 					}
@@ -1351,8 +1355,10 @@ public class LimeDB extends SQLiteOpenHelper {
 	//
 	public void backupRelatedUserdic() {
 		final File targetFile = new File("/sdcard/lime/limedb.txt");
-		
 		targetFile.deleteOnExit();
+		
+		SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+		sp.edit().putString(MAPPING_LOADING, "yes").commit();
 		
 		if(thread!=null){
 			thread.stop();
@@ -1361,64 +1367,65 @@ public class LimeDB extends SQLiteOpenHelper {
 		thread = new Thread() {
 			public void run() {
 		
-		//Modified by Jeremy '10, 3, 30.  Use /sdcard/lime as user space storage space.
+				//Modified by Jeremy '10, 3, 30.  Use /sdcard/lime as user space storage space.
 
 		
-		relatedfinish = false;
+				relatedfinish = false;
 
-		Cursor cursor = null;
+				Cursor cursor = null;
 
-		//ArrayList temp = new ArrayList();
-		FileOutputStream fos;
+				//ArrayList temp = new ArrayList();
+				FileOutputStream fos;
 		
-		try {
+				try {
 
-			SQLiteDatabase db = getWritableDatabase();
-			// Modified '10, 3, 30 by Jeremy. All userdict should >0.
-			cursor = db.rawQuery("SELECT * FROM userdic " 
-					+"where " + FIELD_DIC_score + ">0" 
-					, null);
+					SQLiteDatabase db = getWritableDatabase();
+					// Modified '10, 3, 30 by Jeremy. All userdict should >0.
+					cursor = db.rawQuery("SELECT * FROM userdic " 
+							+"where " + FIELD_DIC_score + ">0" 
+							, null);
 			
-			OutputStream out = new FileOutputStream(targetFile, false);
-			Writer writer = new OutputStreamWriter(out, "UTF-8");
-			
-			
-			if (cursor.moveToFirst()) {
-				int idColumn = cursor.getColumnIndex(FIELD_id);
-				int pcodeColumn = cursor.getColumnIndex(FIELD_DIC_pcode);
-				int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
-				int codeColumn = cursor.getColumnIndex(FIELD_DIC_ccode);
-				int wordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
-				int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
-				do {
-					//Modified by jeremy.  Skip pcode code here.
-					String line = 
-						//cursor.getString(pcodeColumn) + "\t" + 
-						cursor.getString(pwordColumn) + "\t" + 
-						//cursor.getString(codeColumn) + "\t" +
-						cursor.getString(wordColumn) + "\t" + 
-						cursor.getInt(scoreColumn) + "\r\n";
-					writer.write(new String(line.getBytes("UTF-8")));
-				} while (cursor.moveToNext());
-			}
-			db.close();
-			writer.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+					OutputStream out = new FileOutputStream(targetFile, false);
+					Writer writer = new OutputStreamWriter(out, "UTF-8");
+						
+					if (cursor.moveToFirst()) {
+						int idColumn = cursor.getColumnIndex(FIELD_id);
+						//int pcodeColumn = cursor.getColumnIndex(FIELD_DIC_pcode);
+						int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
+						//int codeColumn = cursor.getColumnIndex(FIELD_DIC_ccode);
+						int wordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
+						int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
+						do {
+							//	Modified by jeremy.  Skip pcode code here.
+							String line = 
+								//cursor.getString(pcodeColumn) + "\t" + 
+								cursor.getString(pwordColumn) + "\t" + 
+								//cursor.getString(codeColumn) + "\t" +
+								cursor.getString(wordColumn) + "\t" + 
+								cursor.getInt(scoreColumn) + "\r\n";
+								writer.write(new String(line.getBytes("UTF-8")));
+						} while (cursor.moveToNext());
+					}
+					db.close();
+					writer.close();
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 		
-		if (cursor != null) {
-			cursor.deactivate();
-			cursor.close();
-		}
-		relatedfinish = true;
-			}
-		};
-		thread.start();
+				if (cursor != null) {
+					cursor.deactivate();
+					cursor.close();
+				}
+				relatedfinish = true;
+				SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+				sp.edit().putString(MAPPING_LOADING, "no").commit();
+				}
+			};
+			thread.start();
 		
 
 	}
@@ -1432,7 +1439,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	public void restoreRelatedUserdic() {
 		relatedfinish = false;
 		final File targetFile = new File("/sdcard/lime/limedb.txt");
-		
+		SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+		sp.edit().putString(MAPPING_LOADING, "yes").commit();
 			
 		if(thread!=null){
 				thread.stop();
@@ -1515,10 +1523,10 @@ public class LimeDB extends SQLiteOpenHelper {
 						// Modified by Jeremy '10,03,20, replace pcode, code with hashcode.
 						//cv.put(FIELD_DIC_pcode, pcode);
 						// '10, 3, 30.  pcode and ccode no more used.
-						cv.put(FIELD_DIC_pcode, "-");
+						//cv.put(FIELD_DIC_pcode, "-");
 						cv.put(FIELD_DIC_pword, pword);
 						//cv.put(FIELD_DIC_ccode, code);
-						cv.put(FIELD_DIC_ccode, "-");
+						//cv.put(FIELD_DIC_ccode, "-");
 						//------------------------------------------------------------------
 						cv.put(FIELD_DIC_cword, word);
 						cv.put(FIELD_DIC_score, score);
@@ -1548,6 +1556,8 @@ public class LimeDB extends SQLiteOpenHelper {
 			// Update total_userdict_records
 			SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
 			sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(countUserdic())).commit();
+			SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+			sp.edit().putString(MAPPING_LOADING, "no").commit();
 			relatedfinish = true;
 			}
 		}

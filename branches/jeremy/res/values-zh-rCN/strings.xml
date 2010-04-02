@@ -24,9 +24,10 @@
     <string name="lime_setting_operation_info1_cj">仓颉对应表版本 : </string>
     <string name="lime_setting_operation_info1_dayi">大易对应表版本 : </string>
     <string name="lime_setting_operation_info1_bpmf">注音对应表版本 : </string>
+    <string name="lime_setting_operation_info1_related">预载关联字库版本 : </string>
     <string name="lime_setting_operation_info2">总笔数 : </string> 
     <string name="lime_setting_operation_notice2">\n[清除资料库]\n假如您想要重置资料库请点选下方的按钮。资料库重置后可以让您重头开始汇入 LIME 字根档。</string>
-    <string name="lime_setting_operation_notice3">\n[关联字备份/还原]\nLIME 程式会依使用者曾输入过的文字自动建立关联字资料库。您可以使用下列的功能进行关联字资料库的备份及还原工作。\n</string>
+    <string name="lime_setting_operation_notice3">\n[使用者关联字备份/还原]\nLIME 程式会依使用者曾输入过的文字自动建立关联字资料库。您可以使用下列的功能进行关联字资料库的备份及还原工作。\n</string>
     <string name="lime_setting_operation_info3">总笔数 : </string>
     <string name="lime_setting_operation_notice4">\n[清除关联字]\n执行这一个功能可以让系统重新建立关联字资料库.</string>
     
@@ -148,6 +149,7 @@
 		<item>仓颉</item>
 		<item>大易</item>
 		<item>注音</item>
+		<item>预载关联字库</item>
 	</string-array>
 
 </resources>

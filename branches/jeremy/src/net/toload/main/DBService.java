@@ -151,22 +151,29 @@ public class DBService extends Service {
 			db.close();
 		}
 
-		public void resetMapping(String tablename) throws RemoteException {
-		
-			// Add by Jeremy '10, 3, 28
-			// stop thread here.
-			if(thread!=null) {	
+		public void resetMapping(final String tablename) throws RemoteException {
+		// Jeremy '10, 4, 2. Creating a thread doing this to avoid blocing activity when dropping large table
+			if(thread!=null){
 				thread.stop();
 				thread = null;
 			}
-			if (db == null) {
-				db = new LimeDB(ctx);
-			}
-			db.deleteAll(tablename);
-			displayNotificationMessage(ctx
-					.getText(R.string.lime_setting_notification_mapping_reset)
-					+ "");
-			db.close();
+			thread = new Thread() {
+				public void run() {
+					// Add by Jeremy '10, 3, 28
+					// stop thread here.
+					
+					if (db == null) {
+						db = new LimeDB(ctx);
+					}
+						db.deleteAll(tablename);
+						displayNotificationMessage(ctx
+								.getText(R.string.lime_setting_notification_mapping_reset)
+								+ "");
+						db.close();
+					}
+				};
+			thread.start();
+			
 		}
 		
 		//

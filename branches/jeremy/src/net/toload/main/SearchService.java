@@ -38,7 +38,13 @@ public class SearchService extends Service {
 	
 	private LimeDB db = null;
 	private static HashMap<String, List> mappingIdx = null;
+	// Add by Jeremy '10, 4, 2 . Cache for multi-table extioen
+	private static HashMap<String, List> cj_mappingIdx = null;
+	private static HashMap<String, List> dayi_mappingIdx = null;
+	private static HashMap<String, List> bpmf_mappingIdx = null;
 	private static LinkedList diclist = null;
+	// Add by Jeremy '10, 4, 2 . Cache for multi-table extioen
+	private static String tablename = "";
 
 	private NotificationManager notificationMgr;
 	
@@ -55,14 +61,36 @@ public class SearchService extends Service {
 			this.ctx = ctx;
 		}
 		
-		public String getTablename(){
-			if(db == null){db = new LimeDB(ctx);}
-			return db.getTablename();
+		private HashMap<String, List> get_mappingIdx()
+		{
+			if(tablename.equals("cj"))
+			{
+				if(cj_mappingIdx == null){cj_mappingIdx = new HashMap();}
+				return cj_mappingIdx;
+			}else if(tablename.equals("dayi"))
+			{
+				if(dayi_mappingIdx == null){dayi_mappingIdx = new HashMap();}
+				return dayi_mappingIdx;
+			}else if(tablename.equals("phonetic"))
+			{
+				if(bpmf_mappingIdx == null){bpmf_mappingIdx = new HashMap();}
+				return bpmf_mappingIdx;
+			}else
+			{
+				if(mappingIdx == null){mappingIdx = new HashMap();}
+				return mappingIdx;
+			}
 		}
 		
-		public void setTablename(String tablename){
+		public String getTablename(){
 			if(db == null){db = new LimeDB(ctx);}
-			db.setTablename(tablename);
+			return tablename;
+		}
+		
+		public void setTablename(String table){
+			if(db == null){db = new LimeDB(ctx);}
+			tablename = table;
+			db.setTablename(table);
 			
 		}
 		
@@ -88,7 +116,7 @@ public class SearchService extends Service {
 		
 		public List query(String code) throws RemoteException {
 			
-			if(mappingIdx == null){mappingIdx = new HashMap();}
+			//if(mappingIdx == null){mappingIdx = new HashMap();}
 
 			SharedPreferences sp1 = ctx.getSharedPreferences(MAPPING_LOADING, 0);
 			String loadingstatus = sp1.getString(MAPPING_LOADING, "");
@@ -105,7 +133,7 @@ public class SearchService extends Service {
 					try{
 						int tempRecAmount = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(ctx).getString("similiar_list", "10"));	
 						if(tempRecAmount != recAmount){
-							mappingIdx.clear();
+							get_mappingIdx().clear();
 						}
 						recAmount = tempRecAmount;
 					}catch(Exception e){e.printStackTrace();}
@@ -122,7 +150,7 @@ public class SearchService extends Service {
 					precode = code;
 				}
 				
-				if(mappingIdx.get(code) == null){
+				if(get_mappingIdx().get(code) == null){
 		
 					//Log.i("ART", "Query from database:" + code);
 					// Start new search to database
@@ -130,28 +158,28 @@ public class SearchService extends Service {
 					
 					if(result.size() > 1){
 						// Has matched record then prepare suggestion list
-						if(result.size() > 1){
+						//if(result.size() > 1){
 							Mapping temp = result.get(1);
 							result.addAll(db.getSuggestion(temp.getRelated(), recAmount));
-						}
-						mappingIdx.put(code, result);
-						return mappingIdx.get(code);
+						//}
+							get_mappingIdx().put(code, result);
+						return get_mappingIdx().get(code);
 					}else{
 						// If there is no match result then load from cache / Check one layer only
 
 						if(code.length() > 1){
 							String tempcode = code.substring(0, (code.length() -1));
-							if(mappingIdx.get(tempcode) != null){
+							if(get_mappingIdx().get(tempcode) != null){
 								//Log.i("ART", "Query from cache level 1:" + code);
-								List temp = mappingIdx.get(tempcode);
+								List temp = get_mappingIdx().get(tempcode);
 								result.addAll(temp.subList(1, temp.size()));
 								return result;
 							}else{
 								if(tempcode.length() >1){
 									String tempcode2 = tempcode.substring(0, (tempcode.length() -1));
-									if(mappingIdx.get(tempcode2) != null){
+									if(get_mappingIdx().get(tempcode2) != null){
 										//Log.i("ART", "Query from cache level 2:" + code);
-										List temp = mappingIdx.get(tempcode2);
+										List temp = get_mappingIdx().get(tempcode2);
 										result.addAll(temp.subList(1, temp.size()));
 										return result;
 									}
@@ -163,7 +191,7 @@ public class SearchService extends Service {
 					
 				}else{
 					//Log.i("ART", "Query from cache original:" + code);
-					return mappingIdx.get(code);
+					return get_mappingIdx().get(code);
 				}
 			}
 			
@@ -184,25 +212,27 @@ public class SearchService extends Service {
 				
 			if(item){
 				//Log.i("ART", "Update mapping : " + code);
-				
+					
+					/* do this already in query
 					if(code != null){
 						code = code.toUpperCase();
 					}
+					*/
 					
 					Mapping temp = new Mapping();
 							      temp.setId(id);
 							      temp.setCode(code);
 							      temp.setWord(word);
-							      temp.setPcode(pcode);
+							      //temp.setPcode(pcode);
 							      temp.setPword(pword);
 							      temp.setScore(score);
 							      temp.setDictionary(isDictionary);
 				    if(db == null){db = new LimeDB(ctx);}
 						db.addScore(temp);
 	
-					if(mappingIdx.get(precode) != null){
+					if(get_mappingIdx().get(precode) != null){
 						//Log.i("ART", "Sorting cache in memory : " + precode + " for " + code);
-						List<Mapping> templist = mappingIdx.get(precode);
+						List<Mapping> templist = get_mappingIdx().get(precode);
 						List<Mapping> resultlist = new LinkedList();
 						for(Mapping unit : templist){
 							if(code.equalsIgnoreCase(unit.getCode()) &&
@@ -212,7 +242,7 @@ public class SearchService extends Service {
 							resultlist.add(unit);
 						}
 						templist = null;
-						mappingIdx.put(precode, sortArray(precode, resultlist));
+						get_mappingIdx().put(precode, sortArray(precode, resultlist));
 					}
 			}
 				
@@ -307,6 +337,9 @@ public class SearchService extends Service {
 	public void onDestroy() {
 		
 		mappingIdx = null;
+		cj_mappingIdx = null;
+		dayi_mappingIdx = null;
+		bpmf_mappingIdx = null;
 		
 		if(db != null){
 			db.close();

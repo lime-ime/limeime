@@ -41,37 +41,47 @@
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/txtInfoVersion"></TextView>
 </LinearLayout>
 </TableRow>
-<TableRow android:id="@+id/TableRow04" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout02" android:layout_width="wrap_content" android:layout_height="wrap_content"><TextView android:id="@+id/TextView04" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info2"></TextView>
+<TableRow android:id="@+id/TableRow04" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout02" android:layout_height="wrap_content" android:layout_width="fill_parent"><TextView android:id="@+id/TextView04" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info2"></TextView>
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/txtInfoAmount"></TextView>
 </LinearLayout>
 </TableRow>
 
-<TableRow android:id="@+id/TableRow13" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout01" android:layout_width="wrap_content" android:layout_height="wrap_content"><TextView android:id="@+id/TextView02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info1_cj"></TextView>
+<TableRow android:id="@+id/TableRow13" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout01" android:layout_height="wrap_content" android:layout_width="fill_parent"><TextView android:id="@+id/TextView02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info1_cj"></TextView>
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/cjtxtInfoVersion"></TextView>
 </LinearLayout>
 </TableRow>
-<TableRow android:id="@+id/TableRow14" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout02" android:layout_width="wrap_content" android:layout_height="wrap_content"><TextView android:id="@+id/TextView04" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info2"></TextView>
+<TableRow android:id="@+id/TableRow14" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout02" android:layout_height="wrap_content" android:layout_width="fill_parent"><TextView android:id="@+id/TextView04" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info2"></TextView>
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/cjtxtInfoAmount"></TextView>
 </LinearLayout>
 </TableRow>
 
-<TableRow android:id="@+id/TableRow15" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout01" android:layout_width="wrap_content" android:layout_height="wrap_content"><TextView android:id="@+id/TextView02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info1_dayi"></TextView>
+<TableRow android:id="@+id/TableRow15" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout01" android:layout_height="wrap_content" android:layout_width="fill_parent"><TextView android:id="@+id/TextView02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info1_dayi"></TextView>
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/dayitxtInfoVersion"></TextView>
 </LinearLayout>
 </TableRow>
-<TableRow android:id="@+id/TableRow16" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout02" android:layout_width="wrap_content" android:layout_height="wrap_content"><TextView android:id="@+id/TextView04" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info2"></TextView>
+<TableRow android:id="@+id/TableRow16" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout02" android:layout_height="wrap_content" android:layout_width="fill_parent"><TextView android:id="@+id/TextView04" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info2"></TextView>
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/dayitxtInfoAmount"></TextView>
 </LinearLayout>
 </TableRow>
 
-<TableRow android:id="@+id/TableRow17" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout01" android:layout_width="wrap_content" android:layout_height="wrap_content"><TextView android:id="@+id/TextView02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info1_bpmf"></TextView>
+<TableRow android:id="@+id/TableRow17" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout01" android:layout_height="wrap_content" android:layout_width="fill_parent"><TextView android:id="@+id/TextView02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info1_bpmf"></TextView>
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/bpmftxtInfoVersion"></TextView>
 </LinearLayout>
 </TableRow>
-<TableRow android:id="@+id/TableRow18" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout02" android:layout_width="wrap_content" android:layout_height="wrap_content"><TextView android:id="@+id/TextView04" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info2"></TextView>
+<TableRow android:id="@+id/TableRow18" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout02" android:layout_height="wrap_content" android:layout_width="fill_parent"><TextView android:id="@+id/TextView04" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info2"></TextView>
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/bpmftxtInfoAmount"></TextView>
 </LinearLayout>
 </TableRow>
+
+<TableRow android:id="@+id/TableRow19" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout01" android:layout_height="wrap_content" android:layout_width="fill_parent"><TextView android:id="@+id/TextView02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info1_related"></TextView>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/relatedtxtInfoVersion"></TextView>
+</LinearLayout>
+</TableRow>
+<TableRow android:id="@+id/TableRow20" android:layout_width="wrap_content" android:layout_height="wrap_content"><LinearLayout android:id="@+id/LinearLayout02" android:layout_height="wrap_content" android:layout_width="fill_parent"><TextView android:id="@+id/TextView04" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lime_setting_operation_info2"></TextView>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/relatedtxtInfoAmount"></TextView>
+</LinearLayout>
+</TableRow>
+
 
 
 <TableRow android:id="@+id/TableRow05" android:layout_width="wrap_content" android:layout_height="wrap_content">

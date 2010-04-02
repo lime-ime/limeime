@@ -65,6 +65,7 @@ public class LIMESetting extends Activity {
 	private final static String CJ_TOTAL_RECORD = "cj_total_record";
 	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
 	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
+	private final static String RELATED_TOTAL_RECORD = "related_total_record";
 	//----------add by Jeremy '10,3,12 ----------------------------------------
 	private final static String TOTAL_USERDICT_RECORD = "total_userdict_record";
 	//-------------------------------------------------------------------------
@@ -73,6 +74,7 @@ public class LIMESetting extends Activity {
 	private final static String CJ_MAPPING_VERSION = "cj_mapping_version";
 	private final static String BPMF_MAPPING_VERSION = "bmpf_mapping_version";
 	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
+	private final static String RELATED_MAPPING_VERSION = "related_mapping_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
 	private final static String MAPPING_RESET = "mapping_reset";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
@@ -80,6 +82,7 @@ public class LIMESetting extends Activity {
 	private final static String DAYI_MAPPING_FILE_TEMP = "dayi_mapping_file_temp";
 	private final static String BPMF_MAPPING_FILE_TEMP = "bpmf_mapping_file_temp";
 	private final static String MAPPING_FILE_TEMP = "mapping_file_temp";
+	private final static String RELATED_FILE_TEMP = "related_file_temp";
 
 	private ArrayList<File> filelist;
 
@@ -108,6 +111,8 @@ public class LIMESetting extends Activity {
 	private TextView dayitxtAmount;
 	private TextView bpmftxtVersion;
 	private TextView bpmftxtAmount;
+	private TextView relatedtxtVersion;
+	private TextView relatedtxtAmount;
 	private TextView txtDictionaryAmount;
 	private TextView txtMappingVersion;
 
@@ -320,6 +325,10 @@ public class LIMESetting extends Activity {
 				String dayitotal = dayisettings.getString(DAYI_TOTAL_RECORD, "");
 				SharedPreferences bpmfsettings = ctx.getSharedPreferences(BPMF_TOTAL_RECORD, 0);
 				String bpmftotal = bpmfsettings.getString(BPMF_TOTAL_RECORD, "");
+				SharedPreferences relatedsettings = ctx.getSharedPreferences(RELATED_TOTAL_RECORD, 0);
+				String relatedtotal = relatedsettings.getString(RELATED_TOTAL_RECORD, "");
+				
+				
 				txtAmount = (TextView) this.findViewById(R.id.txtInfoAmount);
 				txtAmount.setText(total);
 				cjtxtAmount = (TextView) this.findViewById(R.id.cjtxtInfoAmount);
@@ -328,6 +337,8 @@ public class LIMESetting extends Activity {
 				dayitxtAmount.setText(dayitotal);
 				bpmftxtAmount = (TextView) this.findViewById(R.id.bpmftxtInfoAmount);
 				bpmftxtAmount.setText(bpmftotal);
+				relatedtxtAmount = (TextView) this.findViewById(R.id.relatedtxtInfoAmount);
+				relatedtxtAmount.setText(relatedtotal);
 	
 				
 			} catch (Exception e) {
@@ -342,7 +353,11 @@ public class LIMESetting extends Activity {
 				dictotal = recordString;
 			} catch (Exception e) {}
 
-			String version = "", cjversion="", dayiversion="", bpmfversion="";
+			String version = new String(""); 
+			String cjversion=new String("");
+			String dayiversion=new String("");
+			String bpmfversion=new String("");
+			String relatedversion=new String("");
 			try {
 				SharedPreferences settings = ctx.getSharedPreferences( MAPPING_VERSION, 0);
 				version = settings.getString(MAPPING_VERSION, "");
@@ -379,6 +394,15 @@ public class LIMESetting extends Activity {
 				}
 				bpmftxtVersion = (TextView) this.findViewById(R.id.bpmftxtInfoVersion);
 				bpmftxtVersion.setText(bpmfversion);
+				
+				SharedPreferences relatedsettings = ctx.getSharedPreferences( RELATED_MAPPING_VERSION, 0);
+				relatedversion = relatedsettings.getString(RELATED_MAPPING_VERSION, "");
+				if(relatedversion == null || relatedversion.equals("")){
+					SharedPreferences mappingtempset = ctx.getSharedPreferences(RELATED_FILE_TEMP, 0);
+					relatedversion = mappingtempset.getString(RELATED_FILE_TEMP, "");
+				}
+				relatedtxtVersion = (TextView) this.findViewById(R.id.relatedtxtInfoVersion);
+				relatedtxtVersion.setText(relatedversion);
 			} catch (Exception e) {e.printStackTrace();}
 
 			limedb = new LimeDB(this);
@@ -391,7 +415,7 @@ public class LIMESetting extends Activity {
 			txtDictionaryAmount.setText(dictotal);
 			
 			this.findViewById(R.id.SettingsView).invalidate();
-
+		
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -561,6 +585,9 @@ public class LIMESetting extends Activity {
 	 */
 	@Override
 	protected void onPause() {
+		if(thread != null){
+			thread.suspend();
+		}
 		super.onPause();
 		uiCallback.sendEmptyMessage(0);
 	}
@@ -573,7 +600,8 @@ public class LIMESetting extends Activity {
 	@Override
 	protected void onRestart() {
 		// TODO Auto-generated method stub
-		super.onRestart();
+		if(thread != null){super.onRestart();}
+		thread.resume();
 	}
 	
 	private final int COMMAND_LOAD_TABLE = 0;
@@ -613,15 +641,26 @@ public class LIMESetting extends Activity {
                 case 3:
                 	tablename = "phonetic";
                 	break;
+                case 4:
+                	tablename = "related";
+                	break;
                 } 
                 switch(command){
                 case COMMAND_LOAD_TABLE:
-                	selectLimeFile(localRoot, tablename);
-                	backgroundUpdate();
+                	if(tablename.equals("related")){
+                		
+                	}else{
+                		selectLimeFile(localRoot, tablename);
+                		backgroundUpdate();
+                	}
                 	break;
                 case COMMAND_RESET_TABLE:
-                	resetMapping(tablename);
-                	backgroundUpdate();
+                	if(tablename.equals("related")){
+                		
+                	}else{
+                		resetMapping(tablename);
+                		backgroundUpdate();
+                	}
                 	break;
                 }
             }
