@@ -1819,6 +1819,14 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	}
 
 	private void handleClose() {
+		
+		// cancel candidate view if it's shown
+        if (mCandidateView != null) {
+			mCandidateView.clear();
+		}
+		mComposing.setLength(0);
+		setCandidatesViewShown(false);
+		
 		requestHideSelf(0);
 		mInputView.closing();
 	}

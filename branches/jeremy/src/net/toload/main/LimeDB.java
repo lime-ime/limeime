@@ -45,13 +45,14 @@ public class LimeDB extends SQLiteOpenHelper {
 	private static boolean DEBUG = false;
 	
 	private final static String DATABASE_NAME = "lime";
-	private final static int DATABASE_VERSION = 32;
+	private final static int DATABASE_VERSION = 35;
 	private final static int DATABASE_RELATED_SIZE = 50;
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_TOTAL_RECORD = "cj_total_record";
 	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
 	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
+	private final static String RELATED_TOTAL_RECORD = "related_total_record";
 	//----------add by Jeremy '10,3,12 ----------------------------------------
 	private final static String TOTAL_USERDICT_RECORD = "total_userdict_record";
 	//-------------------------------------------------------------------------
@@ -60,16 +61,19 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String CJ_MAPPING_FILE = "cj_mapping_file";
 	private final static String BPMF_MAPPING_FILE = "bpmf_mapping_file";
 	private final static String DAYI_MAPPING_FILE = "dayi_mapping_file";
-	private final static String MAPPING_VERSION = "mapping_version";
+	private final static String RELATED_MAPPING_FILE = "dayi_mapping_file";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String MAPPING_FILE_TEMP = "mapping_file_temp";
 	private final static String CJ_MAPPING_FILE_TEMP = "cj_mapping_file_temp";
 	private final static String DAYI_MAPPING_FILE_TEMP = "dayi_mapping_file_temp";
 	private final static String BPMF_MAPPING_FILE_TEMP = "bpmf_mapping_file_temp";
+	private final static String RELATED_MAPPING_FILE_TEMP = "related_mapping_file_temp";
+	private final static String MAPPING_VERSION = "mapping_version";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_MAPPING_VERSION = "cj_mapping_version";
 	private final static String BPMF_MAPPING_VERSION = "bmpf_mapping_version";
 	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
+	private final static String RELATED_MAPPING_VERSION = "related_mapping_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
 	private final static String MAPPING_IMPORT_LINE = "mapping_import_line";
 	private final static String CANDIDATE_SUGGESTION = "candidate_suggestion";
@@ -247,7 +251,13 @@ public class LimeDB extends SQLiteOpenHelper {
 		*/
 		db.execSQL("DROP INDEX IF EXISTS mapping_idx");
 		db.execSQL("DROP INDEX IF EXISTS userdic_idx");
-		db.execSQL("CREATE TABLE IF NOT EXISTS related AS SELECT "
+		db.execSQL("CREATE TABLE IF NOT EXISTS userdic(" + FIELD_DIC_id
+				+ " INTEGER primary key autoincrement, " + " "
+				+ FIELD_DIC_pcode + " text, " + FIELD_DIC_ccode + " text, "
+				+ FIELD_DIC_cword + " text, " + FIELD_DIC_pword + " text, "
+				+ FIELD_DIC_score + " integer)");
+		db.execSQL("DROP TABLE IF EXISTS related");
+		db.execSQL("CREATE TABLE related AS SELECT "
 				+ FIELD_DIC_id + ", " + FIELD_DIC_pword + ", " + FIELD_DIC_cword + ", " + FIELD_DIC_score 
 				+ " FROM userdic"
 				);
@@ -342,7 +352,27 @@ public class LimeDB extends SQLiteOpenHelper {
 	/**
 	 * Empty Dictionary table records
 	 */
-	public void deleteDictionaryAll() {
+	public void deleteRelatedAll() {
+
+		SharedPreferences sp1 = ctx.getSharedPreferences(RELATED_TOTAL_RECORD, 0);
+		sp1.edit().putString(RELATED_TOTAL_RECORD, String.valueOf(0)).commit();
+		SharedPreferences sp2 = ctx.getSharedPreferences(RELATED_MAPPING_VERSION, 0);
+		sp2.edit().putString(RELATED_MAPPING_VERSION, "").commit();
+		SharedPreferences sp3 = ctx.getSharedPreferences(RELATED_MAPPING_FILE, 0);
+		sp3.edit().putString(RELATED_MAPPING_FILE, "").commit();
+		SharedPreferences sp4 = ctx.getSharedPreferences(RELATED_MAPPING_FILE_TEMP, 0);
+		sp4.edit().putString(RELATED_MAPPING_FILE_TEMP, "").commit();
+		
+		SQLiteDatabase db = this.getWritableDatabase();
+		
+		db.delete("related", FIELD_DIC_score + " = 0", null);
+		db.close();
+	}
+	
+	/**
+	 * Empty Related table records
+	 */
+	public void  deleteDictionaryAll() { 
 		//---------------add by Jeremy '10,3,12-----------------------------------
 		SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
 		sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(0)).commit();
@@ -365,6 +395,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		db.close();
 	}
 
+	
 	public int getRelatedCount() {
 		return relatedcount;
 	}
@@ -389,7 +420,20 @@ public class LimeDB extends SQLiteOpenHelper {
 			SQLiteDatabase db = this.getReadableDatabase();
 			total += db.rawQuery("SELECT * FROM " + table, null).getCount();
 			db.close();
-			Log.i("countMappint", "Table," + table +": " + total);
+			Log.i("countMapping", "Table," + table +": " + total);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return total;
+	}
+	public int countRelated() {
+
+		int total = 0;
+		try {
+			SQLiteDatabase db = this.getReadableDatabase();
+			total += db.rawQuery("SELECT * FROM related where " + FIELD_DIC_score + " = 0" , null).getCount();
+			db.close();
+			Log.i("countRelated", "Total related records: " + total);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -406,7 +450,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		int total = 0;
 		try {
 			SQLiteDatabase db = this.getReadableDatabase();
-			total += db.rawQuery("SELECT * FROM userdic where " + FIELD_DIC_score + " >1" , null).getCount();
+			total += db.rawQuery("SELECT * FROM related where " + FIELD_DIC_score + " > 0" , null).getCount();
 			db.close();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -922,6 +966,106 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 	}
 
+	private HashMap<String, TreeMap> buildRelatedCodeTable(boolean isCinFormat){
+		// Prepare related word list
+		HashMap<String, TreeMap> hm = new HashMap<String, TreeMap>();
+		String line = "";
+		try {
+			
+			// Prepare Source File
+			FileReader fr = new FileReader(filename);
+			BufferedReader buf = new BufferedReader(fr);
+			boolean firstline = true;
+			boolean cinFormatStart = false;
+			int i = 0;
+
+			while ((line = buf.readLine()) != null) {
+				i++;
+		
+				/*
+				 * If source is cin format start from the tag %chardef begin until %chardef end
+				 */
+				if(isCinFormat){
+					// Modified by Jeremy '10, 3, 28. Some .cin have double space between $chardef and begin or end
+					if(!cinFormatStart){
+						if(line != null  
+								&&line.trim().toLowerCase().startsWith("%chardef")
+								&&line.trim().toLowerCase().endsWith("begin")){
+							cinFormatStart = true;
+						}
+						continue;
+					}
+					
+					if(line != null 
+							&& line.trim().toLowerCase().startsWith("%chardef")
+							&&line.trim().toLowerCase().endsWith("end")){										
+						break;
+					}
+				}
+				
+				if(firstline){
+					byte srcstring[] = line.getBytes();
+					if(srcstring.length > 3){
+						if(srcstring[0] == -17 && srcstring[1] == -69 && srcstring[2] == -65){
+							byte tempstring[] = new byte[srcstring.length -3];
+							int a=0;
+							for(int j = 3 ; j < srcstring.length ; j++){
+								tempstring[j-3] = srcstring[j];
+							}
+							line = new String(tempstring);
+						}
+					}
+					firstline = false;
+				}else{
+					if (line == null) {continue;}
+					if (line.trim().equals("")) {continue;}
+					if (line.length() < 3) {continue;}
+				}
+				
+				String code = null, word = null;
+				// Modified by Jeremy '10, 3, 28. We don't need word here.
+				if(isCinFormat){
+					if(line.indexOf("\t") != -1){
+						code = line.substring(0, line.indexOf("\t"));
+						//word = line.substring(line.indexOf("\t") + 1);
+					}else if(line.indexOf(" ") != -1){
+						code = line.trim().substring(0, line.indexOf(" "));
+						//word = line.trim().substring(line.indexOf(" ")+1);
+					}
+				}else{
+					code = line.substring(0, line.indexOf(DELIMITER));
+					//word = line.substring(line.indexOf(DELIMITER) + 1);
+				}
+				// Modified by Jeremy '10, 3, 28.  Trim spaces.
+				if (code == null || code.trim().equals("")) {continue;}else{code = code.toUpperCase();}
+
+				if (code.equalsIgnoreCase("@VERSION@")){
+					continue;
+				}
+				
+				String first = code.substring(0,1);
+				
+				if(hm.get(first) != null){
+					TreeMap tm = hm.get(first);
+							tm.put(code, word);
+					hm.put(first, tm);
+				}else{
+					TreeMap tm = new TreeMap();
+							tm.put(code, word);
+					hm.put(first, tm);
+				}
+				
+				/**
+				if(i % 1000 == 0){
+					//Log.i("ART", "code : " + i + " " + new Date().toString());
+				}**/
+			}
+			buf.close();
+			fr.close();
+		
+		}catch(Exception e){}
+		return hm;
+	}
 	/**
 	 * Load source file and add records into database
 	 */
@@ -974,102 +1118,11 @@ public class LimeDB extends SQLiteOpenHelper {
 						fr.close();
 					}catch(Exception e){}
 					
-					// Prepare related word list
-					HashMap<String, TreeMap> hm = new HashMap<String, TreeMap>();
-					try {
-						
-						// Prepare Source File
-						FileReader fr = new FileReader(filename);
-						BufferedReader buf = new BufferedReader(fr);
-						boolean firstline = true;
-						boolean cinFormatStart = false;
-						int i = 0;
-
-						while ((line = buf.readLine()) != null) {
-							i++;
-					
-							/*
-							 * If source is cin format start from the tag %chardef begin until %chardef end
-							 */
-							if(isCinFormat){
-								// Modified by Jeremy '10, 3, 28. Some .cin have double space between $chardef and begin or end
-								if(!cinFormatStart){
-									if(line != null  
-											&&line.trim().toLowerCase().startsWith("%chardef")
-											&&line.trim().toLowerCase().endsWith("begin")){
-										cinFormatStart = true;
-									}
-									continue;
-								}
-								
-								if(line != null 
-										&& line.trim().toLowerCase().startsWith("%chardef")
-										&&line.trim().toLowerCase().endsWith("end")){										
-									break;
-								}
-							}
-							
-							if(firstline){
-								byte srcstring[] = line.getBytes();
-								if(srcstring.length > 3){
-									if(srcstring[0] == -17 && srcstring[1] == -69 && srcstring[2] == -65){
-										byte tempstring[] = new byte[srcstring.length -3];
-										int a=0;
-										for(int j = 3 ; j < srcstring.length ; j++){
-											tempstring[j-3] = srcstring[j];
-										}
-										line = new String(tempstring);
-									}
-								}
-								firstline = false;
-							}else{
-								if (line == null) {continue;}
-								if (line.trim().equals("")) {continue;}
-								if (line.length() < 3) {continue;}
-							}
-							
-							String code = null, word = null;
-							// Modified by Jeremy '10, 3, 28. We don't need word here.
-							if(isCinFormat){
-								if(line.indexOf("\t") != -1){
-									code = line.substring(0, line.indexOf("\t"));
-									//word = line.substring(line.indexOf("\t") + 1);
-								}else if(line.indexOf(" ") != -1){
-									code = line.trim().substring(0, line.indexOf(" "));
-									//word = line.trim().substring(line.indexOf(" ")+1);
-								}
-							}else{
-								code = line.substring(0, line.indexOf(DELIMITER));
-								//word = line.substring(line.indexOf(DELIMITER) + 1);
-							}
-							// Modified by Jeremy '10, 3, 28.  Trim spaces.
-							if (code == null || code.trim().equals("")) {continue;}else{code = code.toUpperCase();}
-
-							if (code.equalsIgnoreCase("@VERSION@")){
-								continue;
-							}
-							
-							String first = code.substring(0,1);
-							
-							if(hm.get(first) != null){
-								TreeMap tm = hm.get(first);
-										tm.put(code, word);
-								hm.put(first, tm);
-							}else{
-								TreeMap tm = new TreeMap();
-										tm.put(code, word);
-								hm.put(first, tm);
-							}
-							
-							/**
-							if(i % 1000 == 0){
-								//Log.i("ART", "code : " + i + " " + new Date().toString());
-							}**/
-						}
-						buf.close();
-						fr.close();
-					}catch(Exception e){}
-					
+					// Build HashMap of related codes table
+					HashMap<String, TreeMap> hm = null;
+					if(!table.equals("related")){ // We don't need the related code table in related table.
+						hm = buildRelatedCodeTable(isCinFormat);
+					}
 
 					// Import into database
 					//Log.i("ART", "Import start : " + new Date().toString());
@@ -1163,18 +1216,28 @@ public class LimeDB extends SQLiteOpenHelper {
 									}else if(table.equals("phonetic")){
 										version = ctx.getSharedPreferences(BPMF_MAPPING_VERSION, 0);
 										version.edit().putString(BPMF_MAPPING_VERSION, word.trim()).commit();
+									}else if(table.equals("related")){
+										version = ctx.getSharedPreferences(RELATED_MAPPING_VERSION, 0);
+										version.edit().putString(RELATED_MAPPING_VERSION, word.trim()).commit();
 									}else {
 										version = ctx.getSharedPreferences(MAPPING_VERSION, 0);
 										version.edit().putString(MAPPING_VERSION, word.trim()).commit();									
 									}
-									
-									
+																		
 									continue;
 								}
 	
 								String first = code.substring(0,1);
-				
-								insertWord(table, code, word, hm.get(first), 50);
+								
+								if(!table.equals("related")){
+									// Regular table
+									insertWord(table, code, word, hm.get(first), 50);
+								}else{
+									// Related table.
+									insertDictionary(code, word, 0);
+								}
+								
+								
 							}catch(StringIndexOutOfBoundsException e){
 								Log.i("ART", line+":"+ e);
 							}
@@ -1193,6 +1256,9 @@ public class LimeDB extends SQLiteOpenHelper {
 								}else if(table.equals("phonetic")){
 									sp = ctx.getSharedPreferences(BPMF_TOTAL_RECORD, 0);
 									sp.edit().putString(BPMF_TOTAL_RECORD, String.valueOf(count) + " (loading...)").commit();
+								}else if(table.equals("related")){
+									sp = ctx.getSharedPreferences(RELATED_TOTAL_RECORD, 0);
+									sp.edit().putString(RELATED_TOTAL_RECORD, String.valueOf(count) + " (loading...)").commit();
 								}else {
 									sp = ctx.getSharedPreferences(TOTAL_RECORD, 0);
 									sp.edit().putString(TOTAL_RECORD, String.valueOf(count) + " (loading...)").commit();
@@ -1230,6 +1296,11 @@ public class LimeDB extends SQLiteOpenHelper {
 						sp1.edit().putString(BPMF_TOTAL_RECORD, String.valueOf(countMapping(table))).commit();
 						sp2 = ctx.getSharedPreferences(BPMF_MAPPING_FILE_TEMP, 0);
 						sp2.edit().putString(BPMF_MAPPING_FILE_TEMP, "").commit();
+					}else if(table.equals("related")){
+						sp1 = ctx.getSharedPreferences(RELATED_TOTAL_RECORD, 0);
+						sp1.edit().putString(RELATED_TOTAL_RECORD, String.valueOf(countRelated())).commit();
+						sp2 = ctx.getSharedPreferences(RELATED_MAPPING_FILE_TEMP, 0);
+						sp2.edit().putString(RELATED_MAPPING_FILE_TEMP, "").commit();
 					}else {
 						sp1 = ctx.getSharedPreferences(TOTAL_RECORD, 0);
 						sp1.edit().putString(TOTAL_RECORD, String.valueOf(countMapping(table))).commit();
@@ -1370,8 +1441,8 @@ public class LimeDB extends SQLiteOpenHelper {
 				SQLiteDatabase db = this.getReadableDatabase();
 				cursor = db.query("related", null,
 						// Modified '10, 3, 31 on check pwork and cword
-						FIELD_DIC_pword + " = '" + pword + "' AND " + 
-						FIELD_DIC_cword + " = '" + cword + "'",
+						FIELD_DIC_pword + " = '" + pword + "'" 
+						+" AND " +	FIELD_DIC_cword + " = '" + cword + "'",
 						null, null, null, null, null);
 
 				if (cursor != null && cursor.getCount() > 0) {
@@ -1425,8 +1496,8 @@ public class LimeDB extends SQLiteOpenHelper {
 
 					SQLiteDatabase db = getWritableDatabase();
 					// Modified '10, 3, 30 by Jeremy. All userdict should >0.
-					cursor = db.rawQuery("SELECT * FROM userdic " 
-							+"where " + FIELD_DIC_score + ">0" 
+					cursor = db.rawQuery("SELECT * FROM related " 
+							+"where " + FIELD_DIC_score + "> 0" 
 							, null);
 			
 					OutputStream out = new FileOutputStream(targetFile, false);
@@ -1534,7 +1605,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						*/
 						//Modified by Jeremy '10, 3, 30.  
 						String [] temp=null;
-						String pcode=null, pword=null, code=null, word=null, score=null;
+						String pcode=null, pword=null, code=null, cword=null, score=null;
 						temp = line.split("\t");
 						if(DEBUG){
 							Log.i("restoreRelatedUserdic","colums:"+temp.length + 
@@ -1546,11 +1617,11 @@ public class LimeDB extends SQLiteOpenHelper {
 							//pcode = temp[0];
 							pword = temp[1];
 							//code = temp[2];
-							word = temp[3];
+							cword = temp[3];
 							score = temp[4];
 						}else if(temp.length == 3) { // new format , 3 colums
 							pword = temp[0];
-							word = temp[1];
+							cword = temp[1];
 							score = temp[2];
 						}else {
 							continue; // incomplete row!!
@@ -1572,10 +1643,18 @@ public class LimeDB extends SQLiteOpenHelper {
 						//cv.put(FIELD_DIC_ccode, code);
 						//cv.put(FIELD_DIC_ccode, "-");
 						//------------------------------------------------------------------
-						cv.put(FIELD_DIC_cword, word);
+						cv.put(FIELD_DIC_cword, cword);
 						cv.put(FIELD_DIC_score, score);
-
-						db.insert("related", null, cv);
+						
+						//
+						if(isExists(pword, cword)){
+							db.update("related", cv,
+									FIELD_DIC_pword + " = '" + pword + "'" 
+									+" AND " +	FIELD_DIC_cword + " = '" + cword + "'"
+									, null);
+						}else{
+							db.insert("related", null, cv);
+						}
 
 						//total++;
 						relatedcount++;

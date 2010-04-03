@@ -25,6 +25,7 @@ import android.content.SharedPreferences;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -95,7 +96,7 @@ public class LIMESetting extends Activity {
 
 	private AlertDialog ad;
 
-	private String localRoot = "/sdcard";
+	private String localRoot = "/sdcard/lime";
 	private boolean hasSelectFile;
 
 	private static LimeDB limedb;
@@ -143,6 +144,9 @@ public class LIMESetting extends Activity {
 		
 		// Add by Jeremy '10, 3, 27. reset loading status.
 		ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
+		
+		// Get sdcard path from enviroment
+		localRoot = Environment.getExternalStorageDirectory().getAbsolutePath() +"/lime" ;
 
 		
 		// Handle Load Mapping
@@ -314,6 +318,9 @@ public class LIMESetting extends Activity {
 	 */
 	public void updateInfomation() {
 		
+
+		
+		
 		try {
 
 			try {
@@ -414,7 +421,11 @@ public class LIMESetting extends Activity {
 			//txtDictionaryAmount.setText(String.valueOf(dictotal));
 			txtDictionaryAmount.setText(dictotal);
 			
+			
+
+			//this.findViewById(R.id.SettingsView).forceLayout();
 			this.findViewById(R.id.SettingsView).invalidate();
+		
 		
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -647,20 +658,13 @@ public class LIMESetting extends Activity {
                 } 
                 switch(command){
                 case COMMAND_LOAD_TABLE:
-                	if(tablename.equals("related")){
-                		
-                	}else{
-                		selectLimeFile(localRoot, tablename);
-                		backgroundUpdate();
-                	}
+                	selectLimeFile(localRoot, tablename);
+                	//backgroundUpdate();
                 	break;
                 case COMMAND_RESET_TABLE:
-                	if(tablename.equals("related")){
-                		
-                	}else{
-                		resetMapping(tablename);
-                		backgroundUpdate();
-                	}
+                	resetMapping(tablename);
+                	//backgroundUpdate();
+                
                 	break;
                 }
             }
