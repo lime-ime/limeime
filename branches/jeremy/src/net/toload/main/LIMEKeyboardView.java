@@ -52,7 +52,8 @@ public class LIMEKeyboardView extends KeyboardView {
 			return true;
 		} else if (key.codes[0] == Keyboard.KEYCODE_SHIFT) {
             getOnKeyboardActionListener().onKey(KEYCODE_SHIFT_LONGPRESS, null);
-            invalidateAllKeys();
+            // This require API 4 > 1.5
+            //invalidateAllKeys();
             return true;
 		} else {
 			return super.onLongPress(key);

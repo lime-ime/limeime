@@ -154,15 +154,15 @@ public class SearchService extends Service {
 		
 					//Log.i("ART", "Query from database:" + code);
 					// Start new search to database
-					result.addAll(db.getMapping(code));
+					result.addAll(db.getMapping(code, recAmount));
 					
 					if(result.size() > 1){
 						// Has matched record then prepare suggestion list
-						//if(result.size() > 1){
-							Mapping temp = result.get(1);
-							result.addAll(db.getSuggestion(temp.getRelated(), recAmount));
-						//}
-							get_mappingIdx().put(code, result);
+						// '10, 4, 3. Try to use nested select instead of using the related column
+						//Mapping temp = result.get(1);
+						//result.addAll(db.getSuggestion(temp.getRelated(), recAmount));
+						
+						get_mappingIdx().put(code, result);
 						return get_mappingIdx().get(code);
 					}else{
 						// If there is no match result then load from cache / Check one layer only
