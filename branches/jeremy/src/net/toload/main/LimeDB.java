@@ -45,7 +45,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private static boolean DEBUG = false;
 	
 	private final static String DATABASE_NAME = "lime";
-	private final static int DATABASE_VERSION = 35;
+	private final static int DATABASE_VERSION = 36;
 	private final static int DATABASE_RELATED_SIZE = 50;
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
@@ -222,8 +222,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_code ON phonetic (" + FIELD_CODE + ")");
 		db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_word ON phonetic (" + FIELD_CODE + ")");
 	
-		db.execSQL("CREATE TABLE IF NOT EXISTS related(" + FIELD_DIC_id
-				+ " INTEGER primary key autoincrement, " + " "
+		db.execSQL("CREATE TABLE IF NOT EXISTS related(" 
+				+ FIELD_DIC_id 	+ " INTEGER primary key autoincrement, " 
 				//+ FIELD_DIC_pcode + " text, " + FIELD_DIC_ccode + " text, "
 				+ FIELD_DIC_cword + " text, " + FIELD_DIC_pword + " text, "
 				+ FIELD_DIC_score + " integer)");
@@ -265,8 +265,14 @@ public class LimeDB extends SQLiteOpenHelper {
 				+ FIELD_DIC_cword + " text, " + FIELD_DIC_pword + " text, "
 				+ FIELD_DIC_score + " integer)");
 		db.execSQL("DROP TABLE IF EXISTS related");
-		db.execSQL("CREATE TABLE related AS SELECT "
-				+ FIELD_DIC_id + ", " + FIELD_DIC_pword + ", " + FIELD_DIC_cword + ", " + FIELD_DIC_score 
+		db.execSQL("CREATE TABLE related(" 
+				+ FIELD_DIC_id 	+ " INTEGER primary key autoincrement, " 
+				+ FIELD_DIC_cword + " text, " + FIELD_DIC_pword + " text, "
+				+ FIELD_DIC_score + " integer)");
+		db.execSQL("INSERT INTO related ("
+				+ FIELD_DIC_pword + ", " + FIELD_DIC_cword + ", " + FIELD_DIC_score + ")"
+				+ " SELECT "
+				+ FIELD_DIC_pword + ", " + FIELD_DIC_cword + ", " + FIELD_DIC_score 
 				+ " FROM userdic"
 				);
 		db.execSQL("CREATE INDEX IF NOT EXISTS related_idx_pword ON related (" + FIELD_DIC_pword + ")");
@@ -740,6 +746,13 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		List<String> result = new ArrayList<String>();
 		result.add(code);
+		try{
+			ContentValues cv = new ContentValues();
+			cv.put(FIELD_CODE, code);
+			db.insert("queryCodeList", null, cv);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
 		
 		int i, j, k;
 		for(i=0;i<code.length();i++){
@@ -1010,11 +1023,11 @@ public class LimeDB extends SQLiteOpenHelper {
 		String code = srcunit.getCode();
 		String word = srcunit.getWord();
 		//String pcode = srcunit.getPcode();
-		//String pword = srcunit.getPword();
+		String pword = srcunit.getPword();
 
 		int score = srcunit.getScore();
 		try {
-			if (code != null && word != null && !code.trim().equals("")
+			if (word != null  
 					&& !word.trim().equals("")) {
 
 				score++;
@@ -1024,7 +1037,10 @@ public class LimeDB extends SQLiteOpenHelper {
 					cv.put(FIELD_SCORE, score);
 
 					SQLiteDatabase db = this.getWritableDatabase();
-					db.update("related", cv, FIELD_id + " = " + id, null);
+					db.update("related", cv, 
+							FIELD_DIC_pword + " = " + word
+							+FIELD_DIC_cword + " = " + pword
+							, null);
 				} else {
 					ContentValues cv = new ContentValues();
 					cv.put(FIELD_SCORE, score);
