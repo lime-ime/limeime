@@ -78,6 +78,9 @@
     
     <string name="keyboard_list">Keyboard Selection</string>
     
+    <string name="three_rows_remapping">3 Rows Keybaord Remapping</string>
+    <string name="three_rows_remapping_summary">Mapping 1234567890; to qwertyuiop.</string>
+    
     <string name="im">Input Method</string>
     <string name="im_reverse_lookup_list">R-Lookup Selection</string>
     <string name="default_reverse_lookup_list">R-Lookup in Default</string>

@@ -78,6 +78,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String MAPPING_IMPORT_LINE = "mapping_import_line";
 	private final static String CANDIDATE_SUGGESTION = "candidate_suggestion";
 	private final static String LEARNING_SWITCH = "learning_switch";
+	private final static String THREE_ROW_REMAP = "three_rows_remapping";
 
 	//Add by Jeremy '10, 4, 1. For reverse lookup
 	private final static String CJ_R_LOOKUP = "cj_im_reverselookup";
@@ -100,11 +101,18 @@ public class LimeDB extends SQLiteOpenHelper {
 	public final static String FIELD_DIC_score = "score";
 	public final static String FIELD_DIC_is = "isDictionary";
 	
-	public final static String BPMF_KEY = "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-";
+	// for keyToChar
+	public final static String BPMF_KEY = "1QAZ2WSX3EDC4RFV5TGB6YHN7UJM8IK,9OL.0P;/-";
 	public final static String BPMF_CHAR = "ㄅㄆㄇㄈㄉㄊㄋㄌˇㄍㄎㄏˋㄐㄑㄒㄓㄗㄕㄖˊㄗㄘㄙ˙ㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ";
 	
-	public final static String CJ_KEY = "qwertyuiopasdfghjklzxcvbnm";
+	public final static String CJ_KEY = "QWERTYUIOPASDFGHJKLZXCVBNM";
 	public final static String CJ_CHAR = "手田水口廿卜山戈人心日尸木火土竹十大中重難金女月弓一";
+	
+	// 3 rows remap
+	
+	public final static String THREE_ROW_KEY_REMAP = "1234567890;";
+	public final static String THREE_ROW_KEY = "QWERTYUIOP,";
+	
 
 	public String DELIMITER = "";
 	private String limit = "10";
@@ -669,7 +677,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			int i, j;
 			for(i=0;i<code.length();i++){
 				for(j=0;j < CJ_KEY.length() ; j++ ){
-					if(code.substring(i, i+1).toLowerCase().equals(CJ_KEY.substring(j, j+1))){
+					if(code.substring(i, i+1).equals(CJ_KEY.substring(j, j+1))){
 						result=result+ CJ_CHAR.substring(j, j+1);
 						break;
 					}
@@ -696,7 +704,43 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 		return result;
 	}
-
+	
+	private List<String> threeRowRemap(String code){
+		List<String> result = new ArrayList<String>();
+		result.add(code);
+		
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		boolean remap = sp.getBoolean(THREE_ROW_REMAP, false);
+		
+		if(code.length() > 5 || !remap) //Perfomance issue! Suppose all IM has code length <= 5. 
+			return result;  
+		
+		if(DEBUG){
+			Log.i("threeRowRemap", "code:" + code);
+		}
+		int i, j, k;
+		for(i=0;i<code.length();i++){
+			for(j=0;j< THREE_ROW_KEY.length(); j++){
+				int size=0;
+				if(code.substring(i,i+1).equals(THREE_ROW_KEY.substring(j, j+1)))
+					size = result.size();
+					for(k=0; k < size ;k++){
+						String replacement = new String (
+								result.get(k).substring(0, i) 
+								+ THREE_ROW_KEY_REMAP.substring(j, j+1)
+								+ result.get(k).substring(i+1));
+						result.add(replacement);				
+						if(DEBUG){
+							Log.i("threeRowRemap", "add remap:" + replacement);
+						}
+					}
+			}
+			
+		}
+		
+		return result;
+		
+	}
 	
 	public List<Mapping> getMapping(String keyword, int relatedCodeLimit ) {
 		
@@ -721,18 +765,23 @@ public class LimeDB extends SQLiteOpenHelper {
 
 				SQLiteDatabase db = this.getReadableDatabase();
 
-
 				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 				boolean item = sp.getBoolean(LEARNING_SWITCH, false);
+
 				
 				
 				//Bug fix by Jeremy '10, 4, 2. code="code" will return all records, but code='code' is normal.
-				// '10, 4, 3. Try to replace the related colums with 
+				// '10, 4, 3. Try to replace the related colums with nested select
+				
+				List<String> remap = threeRowRemap(keyword);
+				int i;
+				for(i=0;i<remap.size();i++)
+				{
 				if(item){
 					//cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'", null, null, null, FIELD_SCORE + " DESC", null);
 					String sql = new String("SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " in " 
 					+"(SELECT " + FIELD_CODE + " FROM " + tablename  
-					+" WHERE "  + FIELD_CODE + " LIKE '" + keyword + "%' LIMIT " + relatedCodeLimit +" )"
+					+" WHERE "  + FIELD_CODE + " LIKE '" + remap.get(i) + "%' LIMIT " + relatedCodeLimit +" )"
 					+" ORDER BY " +  FIELD_SCORE + " DESC");
 					cursor = db.rawQuery(sql ,null);
 					if(DEBUG){
@@ -742,7 +791,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					//cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'", null, null, null, null, null);
 					String sql = new String("SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " IN " 
 							+"(SELECT " + FIELD_CODE + " FROM " + tablename  
-							+" WHERE "  + FIELD_CODE + " LIKE '" + keyword + "%' LIMIT " + relatedCodeLimit +" )"
+							+" WHERE "  + FIELD_CODE + " LIKE '" + remap.get(i) + "%' LIMIT " + relatedCodeLimit +" )"
 							);
 							cursor = db.rawQuery(sql ,null);
 							if(DEBUG){
@@ -774,6 +823,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				if (cursor != null) {
 					cursor.deactivate();
 					cursor.close();
+				}
 				}
 			}
 		} catch (Exception e) {

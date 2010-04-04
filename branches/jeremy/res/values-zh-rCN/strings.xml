@@ -78,6 +78,9 @@
     
     <string name="keyboard_list">键盘选取</string>
     
+    <string name="three_rows_remapping">3排键盘重对应</string>
+    <string name="three_rows_remapping_summary">对应 1234567890;至 qwertyuiop.</string>
+    
     <string name="im">输入法</string>
     <string name="im_reverse_lookup_list">反查选择</string>
     <string name="default_reverse_lookup_list">预设对应表反查</string>

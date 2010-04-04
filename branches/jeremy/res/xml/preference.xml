@@ -15,6 +15,10 @@
 				android:entries="@array/keyboard"
 				android:entryValues="@array/keyboard_codes"
 				android:dialogTitle="@string/keyboard_list" />
+         <CheckBoxPreference
+                android:key="three_rows_remapping"
+                android:title="@string/three_rows_remapping" 
+                android:summary="@string/three_rows_remapping_summary" />
         <CheckBoxPreference
                 android:key="vibrate_on_keypress"
                 android:title="@string/vibrate_on_keypress" />

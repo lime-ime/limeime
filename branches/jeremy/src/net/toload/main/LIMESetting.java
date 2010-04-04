@@ -3,8 +3,10 @@ package net.toload.main;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -95,8 +97,9 @@ public class LIMESetting extends Activity {
 	private Button btnRestore;
 
 	private AlertDialog ad;
-
-	private String localRoot = "/sdcard/lime";
+	
+	private String SDPath = "";
+	private String localRoot = "";
 	private boolean hasSelectFile;
 
 	private static LimeDB limedb;
@@ -146,7 +149,14 @@ public class LIMESetting extends Activity {
 		ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
 		
 		// Get sdcard path from enviroment
-		localRoot = Environment.getExternalStorageDirectory().getAbsolutePath() +"/lime" ;
+		SDPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+		localRoot = SDPath +"/lime" ;
+		
+		// Copy raw .cin file into /sdcard/lime/
+		copyRAWFile(getResources().openRawResource(R.raw.bpmf), localRoot + "/bpmf.cin" );
+		copyRAWFile(getResources().openRawResource(R.raw.cj), localRoot + "/cj.cin" );
+		copyRAWFile(getResources().openRawResource(R.raw.dayi3), localRoot + "/dayi3.cin" );
+		copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/" );
 
 		
 		// Handle Load Mapping
@@ -596,9 +606,7 @@ public class LIMESetting extends Activity {
 	 */
 	@Override
 	protected void onPause() {
-		if(thread != null){
-			thread.suspend();
-		}
+		if(thread != null){thread.suspend();}
 		super.onPause();
 		uiCallback.sendEmptyMessage(0);
 	}
@@ -611,8 +619,8 @@ public class LIMESetting extends Activity {
 	@Override
 	protected void onRestart() {
 		// TODO Auto-generated method stub
-		if(thread != null){super.onRestart();}
-		thread.resume();
+		if(thread != null){thread.resume();}
+		super.onRestart();
 	}
 	
 	private final int COMMAND_LOAD_TABLE = 0;
@@ -674,5 +682,28 @@ public class LIMESetting extends Activity {
         mTableDialog.show();
         
     }
+    
+    public void copyRAWFile(InputStream	inStream, String newPath){   
+    	try{
+    		int	bytesum = 0, byteread = 0 ;
+    		File newfile = new File(newPath);
+    			//if(oldfile.exists() && !newfile.exists()) {
+    		if( !newfile.exists()) {
+    				//InputStream	inStream = new FileInputStream(oldfile);
+    				FileOutputStream fs = new FileOutputStream(newfile);   
+                    byte[] buffer  = new byte[102400]; //100k buffer   
+                      	while((byteread = inStream.read(buffer))!=-1){   
+                        	   bytesum     +=     byteread;       
+                               System.out.println(bytesum);   
+                               fs.write(buffer,     0,     byteread);   
+                      	}   
+                      	inStream.close();   
+                	}   
+        	}   
+    	catch(Exception e){      
+    		e.printStackTrace();   
+           }   
+     }    
+ 
 
 }

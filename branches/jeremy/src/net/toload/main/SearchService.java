@@ -164,7 +164,9 @@ public class SearchService extends Service {
 						
 						get_mappingIdx().put(code, result);
 						return get_mappingIdx().get(code);
-					}else{
+					}
+					/*  Remove by Jeremy '10, 4 , 4. Replaced by nested select in getmapping
+					else{
 						// If there is no match result then load from cache / Check one layer only
 
 						if(code.length() > 1){
@@ -188,7 +190,7 @@ public class SearchService extends Service {
 						}
 						
 					}
-					
+					*/
 				}else{
 					//Log.i("ART", "Query from cache original:" + code);
 					return get_mappingIdx().get(code);
