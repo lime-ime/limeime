@@ -45,7 +45,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private static boolean DEBUG = false;
 	
 	private final static String DATABASE_NAME = "lime";
-	private final static int DATABASE_VERSION = 36;
+	private final static int DATABASE_VERSION = 38;
 	private final static int DATABASE_RELATED_SIZE = 50;
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
@@ -272,7 +272,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		db.execSQL("INSERT INTO related ("
 				+ FIELD_DIC_pword + ", " + FIELD_DIC_cword + ", " + FIELD_DIC_score + ")"
 				+ " SELECT "
-				+ FIELD_DIC_pword + ", " + FIELD_DIC_cword + ", " + FIELD_DIC_score 
+				+ FIELD_DIC_pword + ", " + FIELD_DIC_cword + ", " + FIELD_DIC_score + "+1"
 				+ " FROM userdic"
 				);
 		db.execSQL("CREATE INDEX IF NOT EXISTS related_idx_pword ON related (" + FIELD_DIC_pword + ")");
@@ -1037,10 +1037,17 @@ public class LimeDB extends SQLiteOpenHelper {
 					cv.put(FIELD_SCORE, score);
 
 					SQLiteDatabase db = this.getWritableDatabase();
-					db.update("related", cv, 
-							FIELD_DIC_pword + " = " + word
-							+FIELD_DIC_cword + " = " + pword
+					db.update("related", cv, FIELD_id + " = " + id
+							//FIELD_DIC_pword + " = " + word
+							//+FIELD_DIC_cword + " = " + pword
 							, null);
+					if(score == 1){ // Update userdic total ++
+						SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
+						String recordString = sp1.getString(TOTAL_USERDICT_RECORD, "0");
+						int dictotal = Integer.parseInt(recordString);
+						dictotal++;
+						sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(dictotal)).commit();
+					}
 				} else {
 					ContentValues cv = new ContentValues();
 					cv.put(FIELD_SCORE, score);

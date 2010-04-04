@@ -289,7 +289,7 @@ public class SearchService extends Service {
 			    diclist.addLast(temp);
 		}
 
-		public void updateDictionary() throws RemoteException {
+	public void updateDictionary() throws RemoteException {
 			if(db == null){db = new LimeDB(ctx);}
 			if(diclist.size() > 1){
 				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);

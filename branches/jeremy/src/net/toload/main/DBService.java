@@ -176,7 +176,7 @@ public class DBService extends Service {
 					if (db == null) {
 						db = new LimeDB(ctx);
 					}
-						if(tablename.equals("realted")){
+						if(tablename.equals("related")){
 							db.deleteRelatedAll();
 						}else{
 							db.deleteAll(tablename);
