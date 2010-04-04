@@ -705,19 +705,42 @@ public class LimeDB extends SQLiteOpenHelper {
 		return result;
 	}
 	
-	private List<String> threeRowRemap(String code){
-		List<String> result = new ArrayList<String>();
-		result.add(code);
+	private void buildQueryCodeList(String code, int relatedCodeLimit){
 		
+		SQLiteDatabase db = this.getWritableDatabase();
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		boolean remap = sp.getBoolean(THREE_ROW_REMAP, false);
 		
-		if(code.length() > 5 || !remap) //Perfomance issue! Suppose all IM has code length <= 5. 
-			return result;  
-		
+		try {
+			db.execSQL("DROP TABLE IF EXISTS queryCodeList");
+			db.execSQL("CREATE TEMP TABLE queryCodeList (" + FIELD_CODE + ")");
+			//db.delete("queryCodeList", null, null);
+			if(code.length() > 5 || !remap) {//Perfomance issue! Suppose all IM has code length <= 5.
+				String sql = new String(
+						"INSERT INTO queryCodeList (" + FIELD_CODE + ") "
+						+"SELECT DISTINCT " + FIELD_CODE + " FROM " + tablename  
+						+" WHERE "  + FIELD_CODE + " LIKE '" + code + "%' LIMIT " + relatedCodeLimit
+						);	
+				db.execSQL(sql);
+				
+				if(DEBUG){
+					Log.i("buildQueryCodeList", "SQL statement:" + sql);
+				}
+				
+				return;
+				
+			}
+			//db.execSQL("CREATE TEMP TABLE queryCodeList (" + FIELD_CODE + ")");
+		}catch(Exception e){
+			e.printStackTrace();
+		}
 		if(DEBUG){
 			Log.i("threeRowRemap", "code:" + code);
 		}
+		
+		List<String> result = new ArrayList<String>();
+		result.add(code);
+		
 		int i, j, k;
 		for(i=0;i<code.length();i++){
 			for(j=0;j< THREE_ROW_KEY.length(); j++){
@@ -729,7 +752,14 @@ public class LimeDB extends SQLiteOpenHelper {
 								result.get(k).substring(0, i) 
 								+ THREE_ROW_KEY_REMAP.substring(j, j+1)
 								+ result.get(k).substring(i+1));
-						result.add(replacement);				
+						result.add(replacement);
+						try{
+							ContentValues cv = new ContentValues();
+							cv.put(FIELD_CODE, replacement);
+							db.insert("queryCodeList", null, cv);
+						}catch(Exception e){
+							e.printStackTrace();
+						}
 						if(DEBUG){
 							Log.i("threeRowRemap", "add remap:" + replacement);
 						}
@@ -737,8 +767,27 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 			
 		}
-		
-		return result;
+		for(i=0;i<result.size();i++){
+			try{
+				
+				String sql = new String(
+						"INSERT INTO queryCodeList (" + FIELD_CODE + ") "
+						+"SELECT DISTINCT " + FIELD_CODE + " FROM " + tablename  
+						+" WHERE "  + FIELD_CODE + " LIKE '" + result.get(i) + "%'"
+						+" AND "  + FIELD_CODE + " <> '" + result.get(i) +"'"
+						+ " LIMIT " + relatedCodeLimit);
+				db.execSQL(sql);
+				if(DEBUG){
+					Log.i("buildQueryCodeList", "SQL statement:" + sql);
+				}
+				
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+			
+		}
+		result = null;
+		return;
 		
 	}
 	
@@ -748,60 +797,35 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		
 		List<Mapping> result = new LinkedList<Mapping>();
+		if (keyword != null && !keyword.trim().equals("")) {
 
-		try {
-			// Create Suggestions (Exactly Matched)
-			if (keyword != null && !keyword.trim().equals("")) {
+			Cursor cursor = null;
 
-				Cursor cursor = null;
-				
-				/* done this in serchservice already
-				try {
-					keyword = keyword.toUpperCase();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				*/
-
-				SQLiteDatabase db = this.getReadableDatabase();
-
-				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-				boolean item = sp.getBoolean(LEARNING_SWITCH, false);
-
-				
-				
-				//Bug fix by Jeremy '10, 4, 2. code="code" will return all records, but code='code' is normal.
-				// '10, 4, 3. Try to replace the related colums with nested select
-				
-				List<String> remap = threeRowRemap(keyword);
-				int i;
-				for(i=0;i<remap.size();i++)
-				{
+			SQLiteDatabase db = this.getReadableDatabase();
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+			boolean item = sp.getBoolean(LEARNING_SWITCH, false);
+			
+			buildQueryCodeList(keyword, relatedCodeLimit);
+			try {
+				String sql = null;
 				if(item){
-					//cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'", null, null, null, FIELD_SCORE + " DESC", null);
-					String sql = new String("SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " in " 
-					+"(SELECT " + FIELD_CODE + " FROM " + tablename  
-					+" WHERE "  + FIELD_CODE + " LIKE '" + remap.get(i) + "%' LIMIT " + relatedCodeLimit +" )"
-					+" ORDER BY " +  FIELD_SCORE + " DESC");
-					cursor = db.rawQuery(sql ,null);
-					if(DEBUG){
-						Log.i("Query","SQL statement:"+ sql);
-					}
+					sql = new String(  
+							"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " in (SELECT " 
+							+ FIELD_CODE + " FROM queryCodeList) ORDER BY " 
+							+ FIELD_SCORE + " DESC");	
 				}else{
-					//cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'", null, null, null, null, null);
-					String sql = new String("SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " IN " 
-							+"(SELECT " + FIELD_CODE + " FROM " + tablename  
-							+" WHERE "  + FIELD_CODE + " LIKE '" + remap.get(i) + "%' LIMIT " + relatedCodeLimit +" )"
-							);
-							cursor = db.rawQuery(sql ,null);
-							if(DEBUG){
-								Log.i("Query","SQL statement:"+ sql);
-							}
+					sql = new String( 
+							"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " IN (SELECT " 
+							+ FIELD_CODE + " FROM queryCodeList)");  
 				}
+				if(DEBUG){
+					Log.i("Query","SQL statement:"+ sql);
+				}
+				
+				cursor = db.rawQuery(sql ,null);
 				if(DEBUG){
 					Log.i("Query","tablename:"+tablename+"  keyworad:"+keyword+"  cursor.getCount:"+cursor.getCount());
 				}
-				
 				if (cursor.moveToFirst()) {
 					int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 					int wordColumn = cursor.getColumnIndex(FIELD_WORD);
@@ -824,11 +848,11 @@ public class LimeDB extends SQLiteOpenHelper {
 					cursor.deactivate();
 					cursor.close();
 				}
-				}
+			}catch(Exception e){
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
+				
 		}
-
 		return result;
 	}
 

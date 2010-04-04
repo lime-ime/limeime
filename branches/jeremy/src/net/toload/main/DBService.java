@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
@@ -195,9 +196,9 @@ public class DBService extends Service {
 		//
 		public void restoreRelatedUserdic() throws RemoteException {
 			
-			
-			final File targetFile = new File("/sdcard/lime/limedb.txt");
-			final File targetDir = new File("/sdcard/lime");
+			final File targetDir = new File(
+					Environment.getExternalStorageDirectory().getAbsolutePath()+"/lime");
+			final File targetFile = new File(targetDir + "/limedb.txt");
 			
 			if (!targetDir.exists()) {
 				if(!targetDir.mkdirs()){
@@ -294,7 +295,8 @@ public class DBService extends Service {
 		public void executeUserBackup() throws RemoteException {
 			
 			// Add by Jeremy '10, 3, 30
-			final File targetDir = new File("/sdcard/lime");
+			final File targetDir = new File(
+					Environment.getExternalStorageDirectory().getAbsolutePath() +"/lime");
 			if (!targetDir.exists()) {
 				Log.i("backupRelated", "dir not exist, creating..");
 				if(!targetDir.mkdirs()){

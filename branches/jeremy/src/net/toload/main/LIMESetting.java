@@ -61,7 +61,7 @@ import android.database.sqlite.SQLiteCursor;
  */
 public class LIMESetting extends Activity {
 	
-	private final static boolean DEBUG = true;
+	private final static boolean DEBUG = false;
 
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
@@ -98,8 +98,7 @@ public class LIMESetting extends Activity {
 
 	private AlertDialog ad;
 	
-	private String SDPath = "";
-	private String localRoot = "";
+	private String localRoot = null;
 	private boolean hasSelectFile;
 
 	private static LimeDB limedb;
@@ -149,14 +148,18 @@ public class LIMESetting extends Activity {
 		ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
 		
 		// Get sdcard path from enviroment
-		SDPath = Environment.getExternalStorageDirectory().getAbsolutePath();
-		localRoot = SDPath +"/lime" ;
+		localRoot = Environment.getExternalStorageDirectory().getAbsolutePath() +"/lime" ;
+		
+		File targetDir = new File(localRoot);
+		if(!targetDir.exists()){
+			targetDir.mkdirs();
+		}
 		
 		// Copy raw .cin file into /sdcard/lime/
 		copyRAWFile(getResources().openRawResource(R.raw.bpmf), localRoot + "/bpmf.cin" );
 		copyRAWFile(getResources().openRawResource(R.raw.cj), localRoot + "/cj.cin" );
 		copyRAWFile(getResources().openRawResource(R.raw.dayi3), localRoot + "/dayi3.cin" );
-		copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/" );
+		copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/assoc.lime" );
 
 		
 		// Handle Load Mapping
