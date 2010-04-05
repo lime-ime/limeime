@@ -237,7 +237,7 @@ public class SearchService extends Service {
 						List<Mapping> templist = get_mappingIdx().get(precode);
 						List<Mapping> resultlist = new LinkedList();
 						for(Mapping unit : templist){
-							if(code.equalsIgnoreCase(unit.getCode()) &&
+							if(//code.equalsIgnoreCase(unit.getCode()) &&  // Modified by Jeremy '10, 4, 4. May not equal in 3row remap
 									word.equals(unit.getWord())){
 								unit.setScore(unit.getScore() + 1);
 							}
@@ -252,18 +252,19 @@ public class SearchService extends Service {
 		
 		public List<Mapping> sortArray(String precode, List<Mapping> src) {
 			
+			// Modified by jeremy '10, 4, 5. Buf fix for 3row remap. code may not equal to precode.
 				if(src != null && src.size() > 1){
 					for (int i = 1; i < (src.size() - 1); i++) {
 						for (int j = i + 1; j < src.size(); j++) {
 							if (src.get(j).getScore() > src.get(i).getScore()) {
 								Mapping dummy = src.get(i);
-								if(dummy.getCode().equals(precode) && src.get(j).getCode().equals(precode)){
+								//if(dummy.getCode().equals(precode) && src.get(j).getCode().equals(precode)){
 									src.set(i, src.get(j));
 									src.set(j, dummy);
-								}else if(!dummy.getCode().equals(precode) && !src.get(j).getCode().equals(precode)){
-									src.set(i, src.get(j));
-									src.set(j, dummy);
-								}
+								//}else if(!dummy.getCode().equals(precode) && !src.get(j).getCode().equals(precode)){
+								//	src.set(i, src.get(j));
+								//	src.set(j, dummy);
+								//}
 							}
 						}
 					}

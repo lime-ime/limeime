@@ -110,8 +110,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 	// 3 rows remap
 	
-	public final static String THREE_ROW_KEY_REMAP = "1234567890;";
-	public final static String THREE_ROW_KEY = "QWERTYUIOP,";
+	public final static String THREE_ROW_KEY_REMAP = "1234567890;-";
+	public final static String THREE_ROW_KEY = "QWERTYUIOP,V";
 	
 
 	public String DELIMITER = "";
@@ -716,17 +716,24 @@ public class LimeDB extends SQLiteOpenHelper {
 		SQLiteDatabase db = this.getWritableDatabase();
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		boolean remap = sp.getBoolean(THREE_ROW_REMAP, false);
+		String sql =null;
+		int similarCodeDepth = 3;
 		
 		try {
 			db.execSQL("DROP TABLE IF EXISTS queryCodeList");
 			db.execSQL("CREATE TEMP TABLE queryCodeList (" + FIELD_CODE + ")");
 			//db.delete("queryCodeList", null, null);
-			if(code.length() > 5 || !remap) {//Perfomance issue! Suppose all IM has code length <= 5.
-				String sql = new String(
-						"INSERT INTO queryCodeList (" + FIELD_CODE + ") "
-						+"SELECT DISTINCT " + FIELD_CODE + " FROM " + tablename  
-						+" WHERE "  + FIELD_CODE + " LIKE '" + code + "%' LIMIT " + relatedCodeLimit
-						);	
+			if(!remap) {//Perfomance issue! Suppose all IM has code length <= 5.
+				if(code.length() > similarCodeDepth){
+					sql = "INSERT INTO queryCodeList (" + FIELD_CODE + ") "
+					+"SELECT DISTINCT " + FIELD_CODE + " FROM " + tablename  
+					+" WHERE "  + FIELD_CODE + " = '" + code + "'";
+				}else{
+					sql = "INSERT INTO queryCodeList (" + FIELD_CODE + ") "
+					+"SELECT DISTINCT " + FIELD_CODE + " FROM " + tablename  
+					+" WHERE "  + FIELD_CODE + " LIKE '" + code + "%' LIMIT " + relatedCodeLimit;
+				}
+				
 				db.execSQL(sql);
 				
 				if(DEBUG){
@@ -741,15 +748,27 @@ public class LimeDB extends SQLiteOpenHelper {
 			e.printStackTrace();
 		}
 		if(DEBUG){
-			Log.i("threeRowRemap", "code:" + code);
+			Log.i("buildQueryCodeList", "code:" + code);
 		}
 		
 		List<String> result = new ArrayList<String>();
 		result.add(code);
 		try{
-			ContentValues cv = new ContentValues();
-			cv.put(FIELD_CODE, code);
-			db.insert("queryCodeList", null, cv);
+			if(code.length() > similarCodeDepth){
+				sql = "INSERT INTO queryCodeList (" + FIELD_CODE + ") "
+					+"SELECT DISTINCT " + FIELD_CODE + " FROM " + tablename  
+					+" WHERE "  + FIELD_CODE + " = '" + code + "'";				
+			}else{
+				sql = "INSERT INTO queryCodeList (" + FIELD_CODE + ") "
+					+"SELECT DISTINCT " + FIELD_CODE + " FROM " + tablename  
+					+" WHERE "  + FIELD_CODE + " LIKE '" + code + "%'"
+					+ " LIMIT " + relatedCodeLimit;	
+			}
+				
+			db.execSQL(sql);
+			if(DEBUG){
+				Log.i("buildQueryCodeList", "SQL statement:" + sql);
+			}
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -767,19 +786,28 @@ public class LimeDB extends SQLiteOpenHelper {
 								+ result.get(k).substring(i+1));
 						result.add(replacement);
 						try{
-							ContentValues cv = new ContentValues();
-							cv.put(FIELD_CODE, replacement);
-							db.insert("queryCodeList", null, cv);
+							if(code.length() > similarCodeDepth){
+								sql = "INSERT INTO queryCodeList (" + FIELD_CODE + ") "
+									+"SELECT DISTINCT " + FIELD_CODE + " FROM " + tablename  
+									+" WHERE "  + FIELD_CODE + " = '" + replacement + "'";			
+							}else{
+								sql = "INSERT INTO queryCodeList (" + FIELD_CODE + ") "
+									+"SELECT DISTINCT " + FIELD_CODE + " FROM " + tablename  
+									+" WHERE "  + FIELD_CODE + " LIKE '" + replacement + "%'"
+									+ " LIMIT " + relatedCodeLimit;
+							}
+							db.execSQL(sql);
 						}catch(Exception e){
 							e.printStackTrace();
 						}
 						if(DEBUG){
-							Log.i("threeRowRemap", "add remap:" + replacement);
+							Log.i("buildQueryCodeList", "add remap:" + replacement);
 						}
 					}
 			}
 			
 		}
+		/*
 		for(i=0;i<result.size();i++){
 			try{
 				
@@ -799,11 +827,136 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 			
 		}
+		*/
 		result = null;
 		return;
 		
 	}
-	
+private void prepareQuery(String code, int relatedCodeLimit){
+		
+		SQLiteDatabase db = this.getWritableDatabase();
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		boolean remap = sp.getBoolean(THREE_ROW_REMAP, false);
+		
+		try {
+			db.execSQL("DROP TABLE IF EXISTS prepare");
+			db.execSQL("CREATE TEMP TABLE prepare" +
+					"( localid INTEGER primary key autoincrement, "
+					+ FIELD_id + " integer, " 
+					+ FIELD_CODE + " text, " + FIELD_WORD + " text, " 
+					+ FIELD_SCORE + " integer)"
+					);
+			//db.delete("queryCodeList", null, null);
+			if(code.length() > 5 || !remap) {//Perfomance issue! Suppose all IM has code length <= 5.
+				String sql = new String(
+						"INSERT INTO prepare (" 
+						+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE +")"
+						+" SELECT "  
+						+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE 
+						+" FROM " + tablename  
+						+" WHERE "  + FIELD_CODE + " IN "
+						+"(SELECT " + FIELD_CODE + " FROM " + tablename 
+						+" WHERE " + FIELD_CODE + " LIKE '" + code + "%' LIMIT " + relatedCodeLimit + ")"
+						);	
+				db.execSQL(sql);
+				
+				if(DEBUG){
+					Log.i("prepareQuery", "SQL statement:" + sql);
+				}
+				
+				return;
+				
+			}
+			//db.execSQL("CREATE TEMP TABLE queryCodeList (" + FIELD_CODE + ")");
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		if(DEBUG){
+			Log.i("prepareQuery", "code:" + code);
+		}
+		
+		List<String> result = new ArrayList<String>();
+		result.add(code);
+		try{
+			String sql = new String(
+					"INSERT INTO prepare (" 
+					+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE +")"
+					+" SELECT "  
+					+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE 
+					+" FROM " + tablename  
+					+" WHERE "  + FIELD_CODE + " = '" + code + "'"
+					);	
+			db.execSQL(sql);
+			if(DEBUG){
+				Log.i("prepareQuery", "SQL statement:" + sql);
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		int i, j, k;
+		for(i=0;i<code.length();i++){
+			for(j=0;j< THREE_ROW_KEY.length(); j++){
+				int size=0;
+				if(code.substring(i,i+1).equals(THREE_ROW_KEY.substring(j, j+1)))
+					size = result.size();
+					for(k=0; k < size ;k++){
+						String replacement = new String (
+								result.get(k).substring(0, i) 
+								+ THREE_ROW_KEY_REMAP.substring(j, j+1)
+								+ result.get(k).substring(i+1));
+						result.add(replacement);
+						try{
+							String sql = new String(
+									"INSERT INTO prepare (" 
+									+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE +")"
+									+" SELECT "  
+									+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE 
+									+" FROM " + tablename  
+									+" WHERE "  + FIELD_CODE + " = '" + replacement + "'"
+									);
+							if(DEBUG){
+								Log.i("buildQueryCodeList", "SQL statement:" + sql);
+							}
+						}catch(Exception e){
+							e.printStackTrace();
+						}
+						if(DEBUG){
+							Log.i("threeRowRemap", "add remap:" + replacement);
+						}
+					}
+			}
+			
+		}
+		for(i=0;i<result.size();i++){
+			try{
+				
+				String sql = new String(
+						"INSERT INTO prepare (" 
+						+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE +")"
+						+" SELECT "  
+						+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE 
+						+" FROM " + tablename  
+						+" WHERE "  + FIELD_CODE + " IN "
+						+"(SELECT " + FIELD_CODE + " FROM " + tablename 
+						+" WHERE " + FIELD_CODE + " LIKE '" + result.get(i)
+						+"%' AND " + FIELD_CODE + " <> '" + result.get(i)
+						+ "' LIMIT " + relatedCodeLimit + ")"
+						);	
+				db.execSQL(sql);
+				if(DEBUG){
+					Log.i("buildQueryCodeList", "SQL statement:" + sql);
+				}
+				
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+			
+		}
+		result = null;
+		return;
+		
+	}
 	public List<Mapping> getMapping(String keyword, int relatedCodeLimit ) {
 		
 		// Add by Jeremy '10, 3, 27. Extension on multi table query.
@@ -813,44 +966,54 @@ public class LimeDB extends SQLiteOpenHelper {
 		if (keyword != null && !keyword.trim().equals("")) {
 
 			Cursor cursor = null;
-
+			String sql = null;
+			
 			SQLiteDatabase db = this.getReadableDatabase();
 			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 			boolean item = sp.getBoolean(LEARNING_SWITCH, false);
-			
-			buildQueryCodeList(keyword, relatedCodeLimit);
 			try {
-				String sql = null;
+				if(false){
+				prepareQuery(keyword, relatedCodeLimit);
+				
+				if(item){
+					sql = new String(  
+							"SELECT * FROM prepare ORDER BY " 
+							+ FIELD_SCORE + " DESC, localid");	
+				}else{
+					sql = new String( 
+							"SELECT * FROM prepare ORDER BY localid");
+				}	
+				}else{
+				buildQueryCodeList(keyword, relatedCodeLimit);
 				if(item){
 					sql = new String(  
 							"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " in (SELECT " 
 							+ FIELD_CODE + " FROM queryCodeList) ORDER BY " 
-							+ FIELD_SCORE + " DESC");	
+							+ FIELD_SCORE + " DESC, LENGTH( " + FIELD_CODE + ")");	
 				}else{
 					sql = new String( 
 							"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " IN (SELECT " 
-							+ FIELD_CODE + " FROM queryCodeList)");  
+							+ FIELD_CODE + " FROM queryCodeList) ORDER BY LENGTH( " + FIELD_CODE + ")," );  
 				}
-				if(DEBUG){
-					Log.i("Query","SQL statement:"+ sql);
 				}
-				
 				cursor = db.rawQuery(sql ,null);
 				if(DEBUG){
+					Log.i("Query","SQL statement:"+ sql);
 					Log.i("Query","tablename:"+tablename+"  keyworad:"+keyword+"  cursor.getCount:"+cursor.getCount());
 				}
+			
 				if (cursor.moveToFirst()) {
 					int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 					int wordColumn = cursor.getColumnIndex(FIELD_WORD);
 					int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
-					int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
+					//int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
 					int idColumn = cursor.getColumnIndex(FIELD_id);
 					do {
 						Mapping munit = new Mapping();
 						munit.setId(cursor.getString(idColumn));
 						munit.setCode(cursor.getString(codeColumn));
 						munit.setWord(cursor.getString(wordColumn));
-						munit.setRelated(cursor.getString(relatedColumn));
+						//munit.setRelated(cursor.getString(relatedColumn));
 						munit.setScore(cursor.getInt(scoreColumn));
 						munit.setDictionary(false);
 						result.add(munit);
@@ -1216,10 +1379,13 @@ public class LimeDB extends SQLiteOpenHelper {
 					}catch(Exception e){}
 					
 					// Build HashMap of related codes table
+					/*
 					HashMap<String, TreeMap> hm = null;
+					
 					if(!table.equals("related")){ // We don't need the related code table in related table.
 						hm = buildRelatedCodeTable(isCinFormat);
 					}
+					*/
 
 					// Import into database
 					//Log.i("ART", "Import start : " + new Date().toString());
@@ -1328,7 +1494,8 @@ public class LimeDB extends SQLiteOpenHelper {
 								
 								if(!table.equals("related")){
 									// Regular table
-									insertWord(table, code, word, hm.get(first), 50);
+									insertWord(table, code, word);
+											//, hm.get(first), 50);
 								}else{
 									// Related table.
 									insertDictionary(code, word, 0);
@@ -1432,9 +1599,11 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 	}
 	
-	public void insertWord(String table, String code, String word, TreeMap<String, String> srclist, int size){
+	public void insertWord(String table, String code, String word ){
+			//, TreeMap<String, String> srclist, int size){
 
-		String related = "";
+		//String related = "";
+		/*
 		if(srclist != null){
 			Set set = srclist.tailMap(code).entrySet();
 			Iterator i = set.iterator();
@@ -1457,23 +1626,18 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 		}
 		
-
+		*/
 		SQLiteDatabase db = getWritableDatabase();
 		try{
 			ContentValues cv = new ContentValues();
 						  cv.put(FIELD_CODE, code);
 						  cv.put(FIELD_WORD, word);
-						  cv.put(FIELD_RELATED, related);
+						  cv.put(FIELD_RELATED, "");//related);
 						  cv.put(FIELD_SCORE, 0);
-			//db.beginTransaction();
-			//db.setTransactionSuccessful();
-			//db.insert("mapping", null, cv);
 			db.insert(table, null, cv);
 			//Log.i("ART", "Insert -> " + code + " : " + related + " - "+ new Date().toString());
 		}catch(Exception e){
 			e.printStackTrace();
-		}finally{
-			//db.setTransactionSuccessful();
 		}
 		
 	}

@@ -24,7 +24,7 @@
     <string name="lime_setting_operation_info1_cj">Changjei Table Version : </string>
     <string name="lime_setting_operation_info1_dayi">Dayi Table Version : </string>
     <string name="lime_setting_operation_info1_bpmf">Phonetic Table Version : </string>
-    <string name="lime_setting_operation_info1_related">Preload related works database Version : </string>
+    <string name="lime_setting_operation_info1_related">Preload related words database Version : </string>
     <string name="lime_setting_operation_info2">Total Record : </string>
     <string name="lime_setting_operation_notice2">\n[Reset Mapping Table]\nIf you would like to reset the database please click button below, this action allow you to clean import status and reload mapping file.</string>
     <string name="lime_setting_operation_notice3">\n[Learned related Words Management]\nLime program will build related words base on what you input to the system from other applications.\nYou can use the functions below to backup/restore related words.\n</string>
@@ -79,7 +79,7 @@
     <string name="keyboard_list">Keyboard Selection</string>
     
     <string name="three_rows_remapping">3 Rows Keybaord Remapping</string>
-    <string name="three_rows_remapping_summary">Mapping 1234567890; to qwertyuiop.</string>
+    <string name="three_rows_remapping_summary">Mapping 1234567890-; to qwertyuiopv.</string>
     
     <string name="im">Input Method</string>
     <string name="im_reverse_lookup_list">R-Lookup Selection</string>
