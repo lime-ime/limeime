@@ -43,9 +43,10 @@ import android.widget.Toast;
 public class LimeDB extends SQLiteOpenHelper {
 
 	private static boolean DEBUG = false;
+	private static boolean CACHED = false;
 	
 	private final static String DATABASE_NAME = "lime";
-	private final static int DATABASE_VERSION = 51;
+	private final static int DATABASE_VERSION = 52;
 	private final static int DATABASE_RELATED_SIZE = 50;
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
@@ -167,14 +168,16 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 		this.tablename = tablename;
 		
-		SQLiteDatabase db = this.getWritableDatabase();
-		try {
-			db.execSQL("DROP TABLE IF EXISTS memory");
-			db.execSQL("CREATE TEMP TABLE memory AS SELECT * FROM " + this.tablename );
-			this.tablename = "memory";
+		if(CACHED){
+			SQLiteDatabase db = this.getWritableDatabase();
+			try {
+				db.execSQL("DROP TABLE IF EXISTS memory");
+				db.execSQL("CREATE TEMP TABLE memory AS SELECT * FROM " + this.tablename );
+				//this.tablename = "memory";
 	
-		}catch(Exception e){
-			e.printStackTrace();
+			}catch(Exception e){
+				e.printStackTrace();
+			}
 		}
 		
 		if(DEBUG){
@@ -748,7 +751,12 @@ public class LimeDB extends SQLiteOpenHelper {
 		String sql =null;
 		int similarCodeDepth = 3;
 		
+		
 		try {
+			String tablename = this.tablename;
+			if (CACHED) {
+				tablename = new String("memory"); // local tablename set to cached memory table
+			}
 			db.execSQL("DROP TABLE IF EXISTS queryCodeList");
 			db.execSQL("CREATE TEMP TABLE queryCodeList (" + FIELD_CODE + ")");
 			//db.delete("queryCodeList", null, null);
@@ -1014,7 +1022,14 @@ private void prepareQuery(String code, int relatedCodeLimit){
 				}	
 				}else{
 				*/
+				
+				String tablename = this.tablename;
+				if (CACHED) {
+					tablename = new String("memory"); // local tablename set to cached memory table
+				}
+				
 				buildQueryCodeList(keyword, relatedCodeLimit);
+				
 				if(item){
 					sql = new String(  
 							"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " in (SELECT " 
@@ -1571,12 +1586,17 @@ private void prepareQuery(String code, int relatedCodeLimit){
 					}finally{
 						db.setTransactionSuccessful();
 						db.endTransaction();
-						// Sorting the table
-						db.execSQL("ALTER TABLE " + table + " RENAME TO " + table + "_old");
-						db.execSQL("CREATE TABLE " + table + " AS" +
-								" SELECT * from "+ table + 
-								"_old ORDER BY LENGTH(" + FIELD_CODE +"), " + FIELD_CODE );
-						db.execSQL("DROP TABLE " + table + "_old");
+						// Sorting the table if it's not related table
+						if(!table.equals("related")){
+							db.execSQL("ALTER TABLE " + table + " RENAME TO " + table + "_old");
+							db.execSQL("CREATE TABLE " + table + " AS" +
+									" SELECT * from "+ table + 
+									"_old ORDER BY LENGTH(" + FIELD_CODE +"), " + FIELD_CODE );
+							db.execSQL("DROP TABLE " + table + "_old");
+						}else
+						{
+							setTablename(tablename);
+						}
 					}
 					
 	
