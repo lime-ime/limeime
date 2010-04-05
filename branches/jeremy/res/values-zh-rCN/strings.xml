@@ -6,8 +6,8 @@
     <string name="app_name">LIME</string>
     <string name="ime_name">LIME</string>
     <string name="ime_setting">LIME设定</string>
-	<string name="input_method">输入方式</string>
-	
+    <string name="input_method">输入方式</string>
+
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
     <string name="word_symbol_separators">\u0020?\n{}&lt;&gt;_+|&quot;</string>
@@ -24,6 +24,7 @@
     <string name="lime_setting_operation_info1_cj">仓颉对应表版本 : </string>
     <string name="lime_setting_operation_info1_dayi">大易对应表版本 : </string>
     <string name="lime_setting_operation_info1_bpmf">注音对应表版本 : </string>
+    <string name="lime_setting_operation_info1_ez">轻松对应表版本 : </string>
     <string name="lime_setting_operation_info1_related">预载关联字库版本 : </string>
     <string name="lime_setting_operation_info2">总笔数 : </string> 
     <string name="lime_setting_operation_notice2">\n[清除资料库]\n假如您想要重置资料库请点选下方的按钮。资料库重置后可以让您重头开始汇入 LIME 字根档。</string>
@@ -63,7 +64,7 @@
     <string name="lime_setting_notification_userdic_reset">关联字清除完成</string>
     <string name="lime_setting_notification_userdic_backup">关联字备份完成</string>
     <string name="lime_setting_notification_userdic_restore">关联字还原完成</string>
-    <string name="lime_setting_notification_db_loading">开始载入字根檔内容</string>
+    <string name="lime_setting_notification_db_loading">开始载入字根档内容</string>
     <string name="lime_setting_notification_db_request">无对应字码, 请先载入 .LIME 或 .CIN 档案</string>
     <string name="lime_setting_notification_db_busy">资料库工作中, 请稍后再试</string>
       
@@ -75,7 +76,7 @@
     <string name="keyboard">键盘</string>
     <string name="Similiar">关联字</string>
     <string name="mapping">对应表</string>
-    
+       
     <string name="keyboard_list">键盘选取</string>
     
     <string name="three_rows_remapping">3排键盘重对应</string>
@@ -87,6 +88,7 @@
     <string name="cj_reverse_lookup_list">仓颉反查</string>
     <string name="dayi_reverse_lookup_list">大易反查</string>
     <string name="bpmf_reverse_lookup_list">注音反查</string>
+    <string name="ez_reverse_lookup_list">轻松反查</string>
     
     <string name="table_list">对应表选取</string>
     <string name="similiar_list">建议字显示数量</string>
@@ -120,9 +122,9 @@
 		<item>仓颉</item>
 		<item>大易</item>
 		<item>注音</item>
+		<item>轻松</item>
 	</string-array>
 
-    
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
 		<item>预设键盘</item>
@@ -130,6 +132,7 @@
 		<item>仓颉键盘</item>
 		<item>大易键盘</item>
 		<item>注音键盘</item>
+		<item>轻松键盘</item>
 	</string-array>
     <string-array name="keyboard_codes">
 		<item>lime</item>
@@ -137,6 +140,7 @@
 		<item>cj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
+		<item>ez</item>
 	</string-array>
     <string-array name="similiar_codes">
 		<item>10</item>
@@ -152,7 +156,8 @@
 		<item>仓颉</item>
 		<item>大易</item>
 		<item>注音</item>
+		<item>轻松</item>
 		<item>预载关联字库</item>
 	</string-array>
-
+	
 </resources>

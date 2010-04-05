@@ -68,6 +68,7 @@ public class LIMESetting extends Activity {
 	private final static String CJ_TOTAL_RECORD = "cj_total_record";
 	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
 	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
+	private final static String EZ_TOTAL_RECORD = "ez_total_record";
 	private final static String RELATED_TOTAL_RECORD = "related_total_record";
 	//----------add by Jeremy '10,3,12 ----------------------------------------
 	private final static String TOTAL_USERDICT_RECORD = "total_userdict_record";
@@ -77,12 +78,14 @@ public class LIMESetting extends Activity {
 	private final static String CJ_MAPPING_VERSION = "cj_mapping_version";
 	private final static String BPMF_MAPPING_VERSION = "bmpf_mapping_version";
 	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
+	private final static String EZ_MAPPING_VERSION = "ez_mapping_version";
 	private final static String RELATED_MAPPING_VERSION = "related_mapping_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
 	private final static String MAPPING_RESET = "mapping_reset";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_MAPPING_FILE_TEMP = "cj_mapping_file_temp";
 	private final static String DAYI_MAPPING_FILE_TEMP = "dayi_mapping_file_temp";
+	private final static String EZ_MAPPING_FILE_TEMP = "ez_mapping_file_temp";
 	private final static String BPMF_MAPPING_FILE_TEMP = "bpmf_mapping_file_temp";
 	private final static String MAPPING_FILE_TEMP = "mapping_file_temp";
 	private final static String RELATED_FILE_TEMP = "related_file_temp";
@@ -114,6 +117,8 @@ public class LIMESetting extends Activity {
 	private TextView dayitxtAmount;
 	private TextView bpmftxtVersion;
 	private TextView bpmftxtAmount;
+	private TextView eztxtVersion;
+	private TextView eztxtAmount;
 	private TextView relatedtxtVersion;
 	private TextView relatedtxtAmount;
 	private TextView txtDictionaryAmount;
@@ -331,9 +336,6 @@ public class LIMESetting extends Activity {
 	 */
 	public void updateInfomation() {
 		
-
-		
-		
 		try {
 
 			try {
@@ -345,6 +347,8 @@ public class LIMESetting extends Activity {
 				String dayitotal = dayisettings.getString(DAYI_TOTAL_RECORD, "");
 				SharedPreferences bpmfsettings = ctx.getSharedPreferences(BPMF_TOTAL_RECORD, 0);
 				String bpmftotal = bpmfsettings.getString(BPMF_TOTAL_RECORD, "");
+				SharedPreferences ezsettings = ctx.getSharedPreferences(EZ_TOTAL_RECORD, 0);
+				String eztotal = ezsettings.getString(EZ_TOTAL_RECORD, "");
 				SharedPreferences relatedsettings = ctx.getSharedPreferences(RELATED_TOTAL_RECORD, 0);
 				String relatedtotal = relatedsettings.getString(RELATED_TOTAL_RECORD, "");
 				
@@ -357,6 +361,8 @@ public class LIMESetting extends Activity {
 				dayitxtAmount.setText(dayitotal);
 				bpmftxtAmount = (TextView) this.findViewById(R.id.bpmftxtInfoAmount);
 				bpmftxtAmount.setText(bpmftotal);
+				eztxtAmount = (TextView) this.findViewById(R.id.eztxtInfoAmount);
+				eztxtAmount.setText(eztotal);
 				relatedtxtAmount = (TextView) this.findViewById(R.id.relatedtxtInfoAmount);
 				relatedtxtAmount.setText(relatedtotal);
 	
@@ -377,6 +383,7 @@ public class LIMESetting extends Activity {
 			String cjversion=new String("");
 			String dayiversion=new String("");
 			String bpmfversion=new String("");
+			String ezversion=new String("");
 			String relatedversion=new String("");
 			try {
 				SharedPreferences settings = ctx.getSharedPreferences( MAPPING_VERSION, 0);
@@ -414,6 +421,15 @@ public class LIMESetting extends Activity {
 				}
 				bpmftxtVersion = (TextView) this.findViewById(R.id.bpmftxtInfoVersion);
 				bpmftxtVersion.setText(bpmfversion);
+				
+				SharedPreferences ezsettings = ctx.getSharedPreferences( EZ_MAPPING_VERSION, 0);
+				ezversion = ezsettings.getString(EZ_MAPPING_VERSION, "");
+				if(ezversion == null || ezversion.equals("")){
+					SharedPreferences mappingtempset = ctx.getSharedPreferences(EZ_MAPPING_FILE_TEMP, 0);
+					ezversion = mappingtempset.getString(EZ_MAPPING_FILE_TEMP, "");
+				}
+				eztxtVersion = (TextView) this.findViewById(R.id.eztxtInfoVersion);
+				eztxtVersion.setText(ezversion);
 				
 				SharedPreferences relatedsettings = ctx.getSharedPreferences( RELATED_MAPPING_VERSION, 0);
 				relatedversion = relatedsettings.getString(RELATED_MAPPING_VERSION, "");
@@ -664,6 +680,9 @@ public class LIMESetting extends Activity {
                 	tablename = "phonetic";
                 	break;
                 case 4:
+                	tablename = "ez";
+                	break;
+                case 5:
                 	tablename = "related";
                 	break;
                 } 

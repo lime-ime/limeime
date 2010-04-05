@@ -32,6 +32,7 @@ public class SearchService extends Service {
 	private final static String CJ_MAPPING_VERSION = "cj_mapping_version";
 	private final static String BPMF_MAPPING_VERSION = "bmpf_mapping_version";
 	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
+	private final static String EZ_MAPPING_VERSION = "ez_mapping_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
 	private final static String CANDIDATE_SUGGESTION = "candidate_suggestion";
 	private final static String LEARNING_SWITCH = "learning_switch";
@@ -42,6 +43,7 @@ public class SearchService extends Service {
 	private static HashMap<String, List> cj_mappingIdx = null;
 	private static HashMap<String, List> dayi_mappingIdx = null;
 	private static HashMap<String, List> bpmf_mappingIdx = null;
+	private static HashMap<String, List> ez_mappingIdx = null;
 	private static LinkedList diclist = null;
 	// Add by Jeremy '10, 4, 2 . Cache for multi-table extioen
 	private static String tablename = "";
@@ -75,6 +77,10 @@ public class SearchService extends Service {
 			{
 				if(bpmf_mappingIdx == null){bpmf_mappingIdx = new HashMap();}
 				return bpmf_mappingIdx;
+			}else if(tablename.equals("ez"))
+			{
+				if(ez_mappingIdx == null){ez_mappingIdx = new HashMap();}
+				return ez_mappingIdx;
 			}else
 			{
 				if(mappingIdx == null){mappingIdx = new HashMap();}
@@ -343,6 +349,7 @@ public class SearchService extends Service {
 		cj_mappingIdx = null;
 		dayi_mappingIdx = null;
 		bpmf_mappingIdx = null;
+		ez_mappingIdx = null;
 		
 		if(db != null){
 			db.close();

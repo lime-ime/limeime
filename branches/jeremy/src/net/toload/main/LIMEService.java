@@ -117,6 +117,8 @@ public class LIMEService extends InputMethodService implements
 	private LIMEKeyboard mPhoneticShiftKeyboard;
 	private LIMEKeyboard mDayiKeyboard;
 	private LIMEKeyboard mDayiShiftKeyboard;
+	private LIMEKeyboard mEZKeyboard;
+	private LIMEKeyboard mEZShiftKeyboard;
 	private LIMEKeyboard mPhoneKeyboard;
 
 	private LIMEKeyboard mCurKeyboard;
@@ -253,6 +255,10 @@ public class LIMEService extends InputMethodService implements
 		// Initial Dayi Keyboard
 		mDayiKeyboard = new LIMEKeyboard(this, R.xml.lime_dayi);
 		mDayiShiftKeyboard = new LIMEKeyboard(this,R.xml.lime_dayi_shift);
+
+		// Initial Dayi Keyboard
+		mEZKeyboard = new LIMEKeyboard(this, R.xml.lime_ez);
+		mEZShiftKeyboard = new LIMEKeyboard(this,R.xml.lime_ez_shift);
 
 	}
 
@@ -1080,9 +1086,10 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			curKB=3;
 		} else if(keyboardSelection.equals("phonetic")){
 			curKB=4;
+		} else if(keyboardSelection.equals("ez")){
+			curKB=5;
 		}
 		
-        
         builder.setSingleChoiceItems(
         		items, 
         		curKB, 
@@ -1119,6 +1126,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			keyboardSelection = "dayi";
 		} else if(position == 4){
 			keyboardSelection = "phonetic";
+		} else if(position == 5){
+			keyboardSelection = "ez";
 		}
         
         spe.putString("keyboard_list", keyboardSelection);
@@ -1308,6 +1317,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				}else if(current == mDayiShiftKeyboard){
 					mDayiKeyboard.setShifted(false);
 					mInputView.setKeyboard(mDayiKeyboard);
+				}else if(current == mEZShiftKeyboard){
+					mEZKeyboard.setShifted(false);
+					mInputView.setKeyboard(mEZKeyboard);
 				}else if(current == mPhoneKeyboard){
 					mInputView.setShifted(false);
 				}else if(current == mKeyboard){
@@ -1382,6 +1394,12 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}else if(current == mPhoneticShiftKeyboard){
 			mPhoneticKeyboard.setShifted(false);
 			mInputView.setKeyboard(mPhoneticKeyboard);
+		}else if(current == mEZKeyboard){
+			mEZShiftKeyboard.setShifted(true);
+			mInputView.setKeyboard(mEZShiftKeyboard);
+		}else if(current == mEZShiftKeyboard){
+			mEZKeyboard.setShifted(false);
+			mInputView.setKeyboard(mEZKeyboard);
 		}else if(current == mDayiKeyboard){
 			mDayiShiftKeyboard.setShifted(true);
 			mInputView.setKeyboard(mDayiShiftKeyboard);
@@ -1427,6 +1445,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					current = mPhoneticKeyboard;
 				} else if(keyboardSelection.equals("dayi")){
 					current = mDayiKeyboard;
+				} else if(keyboardSelection.equals("ez")){
+					current = mEZKeyboard;
 				} else if(keyboardSelection.equals("phone")){
 					current = mPhoneKeyboard;
 				}
@@ -1441,6 +1461,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				current == mCJShiftKeyboard ||
 				current == mPhoneticKeyboard ||
 				current == mPhoneticShiftKeyboard ||
+				current == mEZKeyboard ||
+				current == mEZShiftKeyboard ||
 				current == mDayiKeyboard ||
 				current == mDayiShiftKeyboard ||
 				current == mPhoneKeyboard){
@@ -1470,6 +1492,10 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
 				} else if(keyboardSelection.equals("phonetic")){
 					current = mPhoneticKeyboard;
+					onIM = true;
+					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
+				} else if(keyboardSelection.equals("ez")){
+					current = mEZKeyboard;
 					onIM = true;
 					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
 				} else if(keyboardSelection.equals("dayi")){
@@ -1519,6 +1545,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		} else if (keyboardSelection.equals("phonetic")) {
 			mInputView.setKeyboard(mPhoneticKeyboard);
 			mCurKeyboard = mPhoneticKeyboard;
+		} else if (keyboardSelection.equals("ez")) {
+			mInputView.setKeyboard(mEZKeyboard);
+			mCurKeyboard = mEZKeyboard;
 		} else if (keyboardSelection.equals("dayi")) {
 			mInputView.setKeyboard(mDayiKeyboard);
 			mCurKeyboard = mDayiKeyboard;

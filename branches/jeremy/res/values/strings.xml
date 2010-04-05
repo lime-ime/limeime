@@ -24,6 +24,7 @@
     <string name="lime_setting_operation_info1_cj">Changjei Table Version : </string>
     <string name="lime_setting_operation_info1_dayi">Dayi Table Version : </string>
     <string name="lime_setting_operation_info1_bpmf">Phonetic Table Version : </string>
+    <string name="lime_setting_operation_info1_ez">Eazy Table Version : </string>
     <string name="lime_setting_operation_info1_related">Preload related words database Version : </string>
     <string name="lime_setting_operation_info2">Total Record : </string>
     <string name="lime_setting_operation_notice2">\n[Reset Mapping Table]\nIf you would like to reset the database please click button below, this action allow you to clean import status and reload mapping file.</string>
@@ -87,6 +88,7 @@
     <string name="cj_reverse_lookup_list">R-Lookup in ChangJei</string>
     <string name="dayi_reverse_lookup_list">R-Lookup in Dayi</string>
     <string name="bpmf_reverse_lookup_list">R-Lookup in Phonetic</string>
+    <string name="ez_reverse_lookup_list">R-Lookup in Eazy</string>
     
     <string name="table_list">Table Selection</string>
     <string name="similiar_list">Suggestion display amount</string>
@@ -119,11 +121,12 @@
   	
     <!-- IM Reverse Lookup List -->  
     <string-array name="im_reverse_lookup">
-		<item>none</item>
+		<item>None</item>
 		<item>Default</item>
 		<item>Changjei</item>
 		<item>Dayi</item>
 		<item>Phonetic</item>
+		<item>Eazy</item>
 	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
@@ -131,6 +134,7 @@
 		<item>cj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
+		<item>ez</item>
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
@@ -139,6 +143,7 @@
 		<item>Changjei</item>
 		<item>Dayi</item>
 		<item>Phonetic</item>
+		<item>Eazy</item>
 	</string-array>
     <string-array name="keyboard_codes">
 		<item>lime</item>
@@ -146,6 +151,7 @@
 		<item>cj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
+		<item>ez</item>
 	</string-array>
     <string-array name="similiar_codes">
 		<item>10</item>
@@ -161,6 +167,7 @@
 		<item>Changjei</item>
 		<item>Dayi</item>
 		<item>Phonetic</item>
+		<item>Eazy</item>
 		<item>Preload related words</item>
 	</string-array>
 	

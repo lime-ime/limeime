@@ -24,6 +24,7 @@
     <string name="lime_setting_operation_info1_cj">倉頡對應表版本 : </string>
     <string name="lime_setting_operation_info1_dayi">大易對應表版本 : </string>
     <string name="lime_setting_operation_info1_bpmf">注音對應表版本 : </string>
+    <string name="lime_setting_operation_info1_ez">輕鬆對應表版本 : </string>
     <string name="lime_setting_operation_info1_related">預載關聯字庫版本 : </string>
     <string name="lime_setting_operation_info2">總筆數 : </string> 
     <string name="lime_setting_operation_notice2">\n[清除資料庫]\n假如您想要重置資料庫請點選下方的按鈕。資料庫重置後可以讓您重頭開始匯入 LIME 字根檔。</string>
@@ -87,6 +88,7 @@
     <string name="cj_reverse_lookup_list">倉頡反查</string>
     <string name="dayi_reverse_lookup_list">大易反查</string>
     <string name="bpmf_reverse_lookup_list">注音反查</string>
+    <string name="ez_reverse_lookup_list">輕鬆反查</string>
     
     <string name="table_list">對應表選取</string>
     <string name="similiar_list">建議字顯示數量</string>
@@ -120,6 +122,7 @@
 		<item>倉頡</item>
 		<item>大易</item>
 		<item>注音</item>
+		<item>輕鬆</item>
 	</string-array>
 
     <!-- Keyboard Selection List -->
@@ -129,6 +132,7 @@
 		<item>倉頡鍵盤</item>
 		<item>大易鍵盤</item>
 		<item>注音鍵盤</item>
+		<item>輕鬆鍵盤</item>
 	</string-array>
     <string-array name="keyboard_codes">
 		<item>lime</item>
@@ -136,6 +140,7 @@
 		<item>cj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
+		<item>ez</item>
 	</string-array>
     <string-array name="similiar_codes">
 		<item>10</item>
@@ -151,9 +156,8 @@
 		<item>倉頡</item>
 		<item>大易</item>
 		<item>注音</item>
+		<item>輕鬆</item>
 		<item>預載關聯字庫</item>
 	</string-array>
 	
-	
-
 </resources>

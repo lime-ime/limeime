@@ -26,17 +26,17 @@
     >
 
     <Row>
-        <Key android:codes="49" android:iconPreview="@drawable/phonetic_1_l" android:keyIcon="@drawable/phonetic_1" android:keyEdgeFlags="left"/>
-        <Key android:codes="50" android:iconPreview="@drawable/phonetic_2_l" android:keyIcon="@drawable/phonetic_2" />
-        <Key android:codes="51" android:iconPreview="@drawable/phonetic_3_l" android:keyIcon="@drawable/phonetic_3" />
-        <Key android:codes="52" android:iconPreview="@drawable/phonetic_4_l" android:keyIcon="@drawable/phonetic_4" />
-        <Key android:codes="53" android:iconPreview="@drawable/phonetic_5_l" android:keyIcon="@drawable/phonetic_5" />
-        <Key android:codes="54" android:iconPreview="@drawable/phonetic_6_l" android:keyIcon="@drawable/phonetic_6" />
-        <Key android:codes="55" android:iconPreview="@drawable/phonetic_7_l" android:keyIcon="@drawable/phonetic_7" />
-        <Key android:codes="56" android:iconPreview="@drawable/phonetic_8_l" android:keyIcon="@drawable/phonetic_8" />
-        <Key android:codes="57" android:iconPreview="@drawable/phonetic_9_l" android:keyIcon="@drawable/phonetic_9" />
-        <Key android:codes="48" android:iconPreview="@drawable/phonetic_0_l" android:keyIcon="@drawable/phonetic_0"  android:keyEdgeFlags="right"/>
-     </Row>
+        <Key android:codes="64" android:keyLabel="\@" android:keyEdgeFlags="left"/>
+        <Key android:codes="35" android:keyLabel="\#"/>
+        <Key android:codes="36" android:keyLabel="$"/>
+        <Key android:codes="37" android:keyLabel="%"/>
+        <Key android:codes="38" android:keyLabel="&amp;"/>
+        <Key android:codes="42" android:keyLabel="*"/>
+        <Key android:codes="33" android:keyLabel="!"/>
+        <Key android:codes="47" android:keyLabel="/"/>
+        <Key android:codes="40" android:keyLabel="("/>
+        <Key android:codes="41" android:keyLabel=")" android:keyEdgeFlags="right"/>
+    </Row>
     
      <Row>
         <Key android:codes="81" android:iconPreview="@drawable/phonetic_q_u_l" android:keyIcon="@drawable/phonetic_q_u" android:keyEdgeFlags="left"/>

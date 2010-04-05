@@ -22,6 +22,7 @@ public class DBService extends Service {
 	private final static String MAPPING_FILE_TEMP = "mapping_file_temp";
 	private final static String CJ_MAPPING_FILE_TEMP = "cj_mapping_file_temp";
 	private final static String DAYI_MAPPING_FILE_TEMP = "dayi_mapping_file_temp";
+	private final static String EZ_MAPPING_FILE_TEMP = "ez_mapping_file_temp";
 	private final static String BPMF_MAPPING_FILE_TEMP = "bpmf_mapping_file_temp";
 	private final static String RELATED_MAPPING_FILE_TEMP = "related_mapping_file_temp";
 	private final static String MAPPING_FILE = "mapping_file";
@@ -29,17 +30,20 @@ public class DBService extends Service {
 	private final static String CJ_MAPPING_FILE = "cj_mapping_file";
 	private final static String BPMF_MAPPING_FILE = "bpmf_mapping_file";
 	private final static String DAYI_MAPPING_FILE = "dayi_mapping_file";
+	private final static String EZ_MAPPING_FILE = "ez_mapping_file";
 	private final static String RELATED_MAPPING_FILE = "related_mapping_file";
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_TOTAL_RECORD = "cj_total_record";
 	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
 	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
+	private final static String EZ_TOTAL_RECORD = "ez_total_record";
 	private final static String MAPPING_VERSION = "mapping_version";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_MAPPING_VERSION = "cj_mapping_version";
 	private final static String BPMF_MAPPING_VERSION = "bmpf_mapping_version";
 	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
+	private final static String EZ_MAPPING_VERSION = "ez_mapping_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
 
 	private NotificationManager notificationMgr;
@@ -99,6 +103,11 @@ public class DBService extends Service {
 				sourceset.edit().putString(BPMF_MAPPING_FILE, secret).commit();
 				sourcetempset = ctx.getSharedPreferences(BPMF_MAPPING_FILE_TEMP, 0);
 				sourcetempset.edit().putString(BPMF_MAPPING_FILE_TEMP, secret).commit();
+			}else if(tablename.equals("ez")){
+				sourceset = ctx.getSharedPreferences(EZ_MAPPING_FILE, 0);
+				sourceset.edit().putString(EZ_MAPPING_FILE, secret).commit();
+				sourcetempset = ctx.getSharedPreferences(EZ_MAPPING_FILE_TEMP, 0);
+				sourcetempset.edit().putString(EZ_MAPPING_FILE_TEMP, secret).commit();
 			}else if(tablename.equals("related")){
 				sourceset = ctx.getSharedPreferences(RELATED_MAPPING_FILE, 0);
 				sourceset.edit().putString(RELATED_MAPPING_FILE, secret).commit();
