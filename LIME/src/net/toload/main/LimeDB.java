@@ -43,15 +43,17 @@ import android.widget.Toast;
 public class LimeDB extends SQLiteOpenHelper {
 
 	private static boolean DEBUG = false;
+	private static boolean CACHED = false;
 	
 	private final static String DATABASE_NAME = "lime";
-	private final static int DATABASE_VERSION = 51;
+	private final static int DATABASE_VERSION = 52;
 	private final static int DATABASE_RELATED_SIZE = 50;
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_TOTAL_RECORD = "cj_total_record";
 	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
 	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
+	private final static String EZ_TOTAL_RECORD = "ez_total_record";
 	private final static String RELATED_TOTAL_RECORD = "related_total_record";
 	//----------add by Jeremy '10,3,12 ----------------------------------------
 	private final static String TOTAL_USERDICT_RECORD = "total_userdict_record";
@@ -61,18 +63,21 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String CJ_MAPPING_FILE = "cj_mapping_file";
 	private final static String BPMF_MAPPING_FILE = "bpmf_mapping_file";
 	private final static String DAYI_MAPPING_FILE = "dayi_mapping_file";
+	private final static String EZ_MAPPING_FILE = "ez_mapping_file";
 	private final static String RELATED_MAPPING_FILE = "dayi_mapping_file";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String MAPPING_FILE_TEMP = "mapping_file_temp";
 	private final static String CJ_MAPPING_FILE_TEMP = "cj_mapping_file_temp";
 	private final static String DAYI_MAPPING_FILE_TEMP = "dayi_mapping_file_temp";
 	private final static String BPMF_MAPPING_FILE_TEMP = "bpmf_mapping_file_temp";
+	private final static String EZ_MAPPING_FILE_TEMP = "ez_mapping_file_temp";
 	private final static String RELATED_MAPPING_FILE_TEMP = "related_mapping_file_temp";
 	private final static String MAPPING_VERSION = "mapping_version";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_MAPPING_VERSION = "cj_mapping_version";
 	private final static String BPMF_MAPPING_VERSION = "bmpf_mapping_version";
 	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
+	private final static String EZ_MAPPING_VERSION = "ez_mapping_version";
 	private final static String RELATED_MAPPING_VERSION = "related_mapping_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
 	private final static String MAPPING_IMPORT_LINE = "mapping_import_line";
@@ -84,6 +89,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String CJ_R_LOOKUP = "cj_im_reverselookup";
 	private final static String DAYI_R_LOOKUP = "dayi_im_reverselookup";
 	private final static String BPMF_R_LOOKUP = "bpmf_im_reverselookup";
+	private final static String EZ_R_LOOKUP = "ez_im_reverselookup";
 	private final static String DEFAULT_R_LOOKUP = "default_im_reverselookup";
 	
 	
@@ -164,17 +170,24 @@ public class LimeDB extends SQLiteOpenHelper {
 			if(sp3.getString(DAYI_TOTAL_RECORD, "0").equals("0")){
 				this.tablename = "mapping";
 			}
+		}else if(tablename.equals("ez")){
+			SharedPreferences sp4 = ctx.getSharedPreferences(EZ_TOTAL_RECORD, 0);
+			if(sp4.getString(EZ_TOTAL_RECORD, "0").equals("0")){
+				this.tablename = "mapping";
+			}
 		}
 		this.tablename = tablename;
 		
-		SQLiteDatabase db = this.getWritableDatabase();
-		try {
-			db.execSQL("DROP TABLE IF EXISTS memory");
-			db.execSQL("CREATE TEMP TABLE memory AS SELECT * FROM " + this.tablename );
-			this.tablename = "memory";
+		if(CACHED){
+			SQLiteDatabase db = this.getWritableDatabase();
+			try {
+				db.execSQL("DROP TABLE IF EXISTS memory");
+				db.execSQL("CREATE TEMP TABLE memory AS SELECT * FROM " + this.tablename );
+				//this.tablename = "memory";
 	
-		}catch(Exception e){
-			e.printStackTrace();
+			}catch(Exception e){
+				e.printStackTrace();
+			}
 		}
 		
 		if(DEBUG){
@@ -232,6 +245,13 @@ public class LimeDB extends SQLiteOpenHelper {
 				+ " text, " + FIELD_SCORE + " integer)");
 		db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_code ON phonetic (" + FIELD_CODE + ")");
 		db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_word ON phonetic (" + FIELD_CODE + ")");
+	
+		db.execSQL("CREATE TABLE IF NOT EXISTS ez (" + FIELD_id
+				+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE
+				+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
+				+ " text, " + FIELD_SCORE + " integer)");
+		db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_code ON phonetic (" + FIELD_CODE + ")");
+		db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_word ON phonetic (" + FIELD_CODE + ")");
 	
 		db.execSQL("CREATE TABLE IF NOT EXISTS related(" 
 				+ FIELD_DIC_id 	+ " INTEGER primary key autoincrement, " 
@@ -312,6 +332,10 @@ public class LimeDB extends SQLiteOpenHelper {
 		db.execSQL("ALTER TABLE phonetic RENAME TO phonetic_old");
 		db.execSQL("CREATE TABLE phonetic as SELECT * from phonetic_old ORDER BY LENGTH(" + FIELD_CODE +")");
 		db.execSQL("DROP TABLE phonetic_old");
+		
+		db.execSQL("ALTER TABLE ez RENAME TO ez_old");
+		db.execSQL("CREATE TABLE ez as SELECT * from ez_old ORDER BY LENGTH(" + FIELD_CODE +")");
+		db.execSQL("DROP TABLE ez_old");
 	}
 
 	/**
@@ -369,6 +393,15 @@ public class LimeDB extends SQLiteOpenHelper {
 			sp3.edit().putString(BPMF_MAPPING_FILE, "").commit();
 			sp4 = ctx.getSharedPreferences(BPMF_MAPPING_FILE_TEMP, 0);
 			sp4.edit().putString(BPMF_MAPPING_FILE_TEMP, "").commit();
+		}else if(table.equals("ez")){
+			sp1 = ctx.getSharedPreferences(EZ_TOTAL_RECORD, 0);
+			sp1.edit().putString(EZ_TOTAL_RECORD, String.valueOf(0)).commit();
+			sp2 = ctx.getSharedPreferences(EZ_MAPPING_VERSION, 0);
+			sp2.edit().putString(EZ_MAPPING_VERSION, "").commit();
+			sp3 = ctx.getSharedPreferences(EZ_MAPPING_FILE, 0);
+			sp3.edit().putString(EZ_MAPPING_FILE, "").commit();
+			sp4 = ctx.getSharedPreferences(EZ_MAPPING_FILE_TEMP, 0);
+			sp4.edit().putString(EZ_MAPPING_FILE_TEMP, "").commit();
 		}else {
 			sp1 = ctx.getSharedPreferences(TOTAL_RECORD, 0);
 			sp1.edit().putString(TOTAL_RECORD, String.valueOf(0)).commit();
@@ -656,6 +689,8 @@ public class LimeDB extends SQLiteOpenHelper {
 			Rtable = sp.getString(DAYI_R_LOOKUP, "none");
 		}else if(tablename.equals("phonetic")){
 			Rtable = sp.getString(BPMF_R_LOOKUP, "none");
+		}else if(tablename.equals("ez")){
+			Rtable = sp.getString(EZ_R_LOOKUP, "none");
 		}else {
 			Rtable = sp.getString(DEFAULT_R_LOOKUP, "none");
 		}
@@ -721,6 +756,8 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 		}else if(Rtable.equals("dayi")){ 
 			result = code;
+		}else if(Rtable.equals("ez")){ 
+			result = code;
 		}else if(Rtable.equals("phonetic")){
 			int i, j;
 			for(i=0;i<code.length();i++){
@@ -748,7 +785,12 @@ public class LimeDB extends SQLiteOpenHelper {
 		String sql =null;
 		int similarCodeDepth = 3;
 		
+		
 		try {
+			String tablename = this.tablename;
+			if (CACHED) {
+				tablename = new String("memory"); // local tablename set to cached memory table
+			}
 			db.execSQL("DROP TABLE IF EXISTS queryCodeList");
 			db.execSQL("CREATE TEMP TABLE queryCodeList (" + FIELD_CODE + ")");
 			//db.delete("queryCodeList", null, null);
@@ -1014,7 +1056,14 @@ private void prepareQuery(String code, int relatedCodeLimit){
 				}	
 				}else{
 				*/
+				
+				String tablename = this.tablename;
+				if (CACHED) {
+					tablename = new String("memory"); // local tablename set to cached memory table
+				}
+				
 				buildQueryCodeList(keyword, relatedCodeLimit);
+				
 				if(item){
 					sql = new String(  
 							"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " in (SELECT " 
@@ -1511,6 +1560,9 @@ private void prepareQuery(String code, int relatedCodeLimit){
 									}else if(table.equals("phonetic")){
 										version = ctx.getSharedPreferences(BPMF_MAPPING_VERSION, 0);
 										version.edit().putString(BPMF_MAPPING_VERSION, word.trim()).commit();
+									}else if(table.equals("ez")){
+										version = ctx.getSharedPreferences(EZ_MAPPING_VERSION, 0);
+										version.edit().putString(EZ_MAPPING_VERSION, word.trim()).commit();
 									}else if(table.equals("related")){
 										version = ctx.getSharedPreferences(RELATED_MAPPING_VERSION, 0);
 										version.edit().putString(RELATED_MAPPING_VERSION, word.trim()).commit();
@@ -1552,6 +1604,9 @@ private void prepareQuery(String code, int relatedCodeLimit){
 								}else if(table.equals("phonetic")){
 									sp = ctx.getSharedPreferences(BPMF_TOTAL_RECORD, 0);
 									sp.edit().putString(BPMF_TOTAL_RECORD, String.valueOf(count) + " (loading...)").commit();
+								}else if(table.equals("ez")){
+									sp = ctx.getSharedPreferences(EZ_TOTAL_RECORD, 0);
+									sp.edit().putString(EZ_TOTAL_RECORD, String.valueOf(count) + " (loading...)").commit();
 								}else if(table.equals("related")){
 									sp = ctx.getSharedPreferences(RELATED_TOTAL_RECORD, 0);
 									sp.edit().putString(RELATED_TOTAL_RECORD, String.valueOf(count) + " (loading...)").commit();
@@ -1571,12 +1626,17 @@ private void prepareQuery(String code, int relatedCodeLimit){
 					}finally{
 						db.setTransactionSuccessful();
 						db.endTransaction();
-						// Sorting the table
-						db.execSQL("ALTER TABLE " + table + " RENAME TO " + table + "_old");
-						db.execSQL("CREATE TABLE " + table + " AS" +
-								" SELECT * from "+ table + 
-								"_old ORDER BY LENGTH(" + FIELD_CODE +"), " + FIELD_CODE );
-						db.execSQL("DROP TABLE " + table + "_old");
+						// Sorting the table if it's not related table
+						if(!table.equals("related")){
+							db.execSQL("ALTER TABLE " + table + " RENAME TO " + table + "_old");
+							db.execSQL("CREATE TABLE " + table + " AS" +
+									" SELECT * from "+ table + 
+									"_old ORDER BY LENGTH(" + FIELD_CODE +"), " + FIELD_CODE );
+							db.execSQL("DROP TABLE " + table + "_old");
+						}else
+						{
+							setTablename(tablename);
+						}
 					}
 					
 	
@@ -1598,6 +1658,11 @@ private void prepareQuery(String code, int relatedCodeLimit){
 						sp1.edit().putString(BPMF_TOTAL_RECORD, String.valueOf(countMapping(table))).commit();
 						sp2 = ctx.getSharedPreferences(BPMF_MAPPING_FILE_TEMP, 0);
 						sp2.edit().putString(BPMF_MAPPING_FILE_TEMP, "").commit();
+					}else if(table.equals("ez")){
+						sp1 = ctx.getSharedPreferences(EZ_TOTAL_RECORD, 0);
+						sp1.edit().putString(EZ_TOTAL_RECORD, String.valueOf(countMapping(table))).commit();
+						sp2 = ctx.getSharedPreferences(EZ_MAPPING_FILE_TEMP, 0);
+						sp2.edit().putString(EZ_MAPPING_FILE_TEMP, "").commit();
 					}else if(table.equals("related")){
 						sp1 = ctx.getSharedPreferences(RELATED_TOTAL_RECORD, 0);
 						sp1.edit().putString(RELATED_TOTAL_RECORD, String.valueOf(countRelated())).commit();
