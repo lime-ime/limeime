@@ -696,7 +696,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			int i, j;
 			for(i=0;i<code.length();i++){
 				for(j=0;j < BPMF_KEY.length() ; j++ ){
-					if(code.substring(i, i+1).toLowerCase().equals(BPMF_KEY.substring(j, j+1))){
+					if(code.substring(i, i+1).equals(BPMF_KEY.substring(j, j+1))){
 						result=result+ BPMF_CHAR.substring(j, j+1);
 						break;
 					}
