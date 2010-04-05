@@ -1264,6 +1264,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			getCurrentInputConnection().setComposingText(mComposing, 1);
 			updateCandidates();
 		} else if (length == 1) {
+			// '10, 4, 5 Jeremy. Bug fix on delete last key in buffer.
+			getCurrentInputConnection().setComposingText("",0);
 			if (mCandidateView != null) {
 				mCandidateView.clear();
 			}

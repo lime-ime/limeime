@@ -45,7 +45,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private static boolean DEBUG = false;
 	
 	private final static String DATABASE_NAME = "lime";
-	private final static int DATABASE_VERSION = 38;
+	private final static int DATABASE_VERSION = 51;
 	private final static int DATABASE_RELATED_SIZE = 50;
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
@@ -148,7 +148,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 	public void setTablename(String tablename){
 		
-		this.tablename = tablename;
+		
 		if(tablename.equals("cj")){
 			SharedPreferences sp1 = ctx.getSharedPreferences(CJ_TOTAL_RECORD, 0);
 			if(sp1.getString(CJ_TOTAL_RECORD, "0").equals("0")){
@@ -164,6 +164,17 @@ public class LimeDB extends SQLiteOpenHelper {
 			if(sp3.getString(DAYI_TOTAL_RECORD, "0").equals("0")){
 				this.tablename = "mapping";
 			}
+		}
+		this.tablename = tablename;
+		
+		SQLiteDatabase db = this.getWritableDatabase();
+		try {
+			db.execSQL("DROP TABLE IF EXISTS memory");
+			db.execSQL("CREATE TEMP TABLE memory AS SELECT * FROM " + this.tablename );
+			this.tablename = "memory";
+	
+		}catch(Exception e){
+			e.printStackTrace();
 		}
 		
 		if(DEBUG){
@@ -257,6 +268,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		db.execSQL("DROP INDEX IF EXISTS userdic_idx_pcode");
 		db.execSQL("DROP INDEX IF EXISTS userdic_idx_pword");
 		*/
+		
+		
 		db.execSQL("DROP INDEX IF EXISTS mapping_idx");
 		db.execSQL("DROP INDEX IF EXISTS userdic_idx");
 		db.execSQL("CREATE TABLE IF NOT EXISTS userdic(" + FIELD_DIC_id
@@ -283,6 +296,22 @@ public class LimeDB extends SQLiteOpenHelper {
 		db.execSQL("DROP INDEX IF EXISTS userdic_idx_pword");
 
 		onCreate(db);
+		
+		db.execSQL("ALTER TABLE mapping RENAME TO mapping_old");
+		db.execSQL("CREATE TABLE mapping as SELECT * from mapping_old ORDER BY LENGTH(" + FIELD_CODE +")");
+		db.execSQL("DROP TABLE mapping_old");
+		
+		db.execSQL("ALTER TABLE cj RENAME TO cj_old");
+		db.execSQL("CREATE TABLE cj as SELECT * from cj_old ORDER BY LENGTH(" + FIELD_CODE +")");
+		db.execSQL("DROP TABLE cj_old");
+		
+		db.execSQL("ALTER TABLE dayi RENAME TO dayi_old");
+		db.execSQL("CREATE TABLE dayi as SELECT * from dayi_old ORDER BY LENGTH(" + FIELD_CODE +")");
+		db.execSQL("DROP TABLE dayi_old");
+		
+		db.execSQL("ALTER TABLE phonetic RENAME TO phonetic_old");
+		db.execSQL("CREATE TABLE phonetic as SELECT * from phonetic_old ORDER BY LENGTH(" + FIELD_CODE +")");
+		db.execSQL("DROP TABLE phonetic_old");
 	}
 
 	/**
@@ -971,8 +1000,8 @@ private void prepareQuery(String code, int relatedCodeLimit){
 			SQLiteDatabase db = this.getReadableDatabase();
 			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 			boolean item = sp.getBoolean(LEARNING_SWITCH, false);
-			try {
-				if(false){
+			try {	
+				/*if(false){
 				prepareQuery(keyword, relatedCodeLimit);
 				
 				if(item){
@@ -984,18 +1013,21 @@ private void prepareQuery(String code, int relatedCodeLimit){
 							"SELECT * FROM prepare ORDER BY localid");
 				}	
 				}else{
+				*/
 				buildQueryCodeList(keyword, relatedCodeLimit);
 				if(item){
 					sql = new String(  
 							"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " in (SELECT " 
 							+ FIELD_CODE + " FROM queryCodeList) ORDER BY " 
-							+ FIELD_SCORE + " DESC, LENGTH( " + FIELD_CODE + ")");	
+							+ FIELD_SCORE + " DESC");
+									// + " , LENGTH( " + FIELD_CODE + ")");	
 				}else{
 					sql = new String( 
 							"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " IN (SELECT " 
-							+ FIELD_CODE + " FROM queryCodeList) ORDER BY LENGTH( " + FIELD_CODE + ")," );  
+							+ FIELD_CODE + " FROM queryCodeList)");
+							//+" ORDER BY LENGTH( " + FIELD_CODE + ")," );  
 				}
-				}
+				//}
 				cursor = db.rawQuery(sql ,null);
 				if(DEBUG){
 					Log.i("Query","SQL statement:"+ sql);
@@ -1379,7 +1411,7 @@ private void prepareQuery(String code, int relatedCodeLimit){
 					}catch(Exception e){}
 					
 					// Build HashMap of related codes table
-					/*
+					/*  We do not need this with nested select.
 					HashMap<String, TreeMap> hm = null;
 					
 					if(!table.equals("related")){ // We don't need the related code table in related table.
@@ -1539,6 +1571,12 @@ private void prepareQuery(String code, int relatedCodeLimit){
 					}finally{
 						db.setTransactionSuccessful();
 						db.endTransaction();
+						// Sorting the table
+						db.execSQL("ALTER TABLE " + table + " RENAME TO " + table + "_old");
+						db.execSQL("CREATE TABLE " + table + " AS" +
+								" SELECT * from "+ table + 
+								"_old ORDER BY LENGTH(" + FIELD_CODE +"), " + FIELD_CODE );
+						db.execSQL("DROP TABLE " + table + "_old");
 					}
 					
 	
