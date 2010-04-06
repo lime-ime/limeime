@@ -250,8 +250,8 @@ public class LimeDB extends SQLiteOpenHelper {
 				+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE
 				+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
 				+ " text, " + FIELD_SCORE + " integer)");
-		db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_code ON phonetic (" + FIELD_CODE + ")");
-		db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_word ON phonetic (" + FIELD_CODE + ")");
+		db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_code ON ez (" + FIELD_CODE + ")");
+		db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_word ON ez (" + FIELD_CODE + ")");
 	
 		db.execSQL("CREATE TABLE IF NOT EXISTS related(" 
 				+ FIELD_DIC_id 	+ " INTEGER primary key autoincrement, " 

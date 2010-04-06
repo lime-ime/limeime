@@ -98,29 +98,6 @@
 			</LinearLayout>
 		</TableRow>
 
-		<TableRow android:id="@+id/TableRow15" android:layout_width="wrap_content"
-			android:layout_height="wrap_content">
-			<LinearLayout android:id="@+id/LinearLayout01"
-				android:layout_height="wrap_content" android:layout_width="fill_parent">
-				<TextView android:id="@+id/TextView02"
-					android:layout_width="wrap_content" android:layout_height="wrap_content"
-					android:text="@string/lime_setting_operation_info1_ez"></TextView>
-				<TextView android:layout_width="wrap_content"
-					android:layout_height="wrap_content" android:id="@+id/eztxtInfoVersion"></TextView>
-			</LinearLayout>
-		</TableRow>
-		<TableRow android:id="@+id/TableRow16" android:layout_width="wrap_content"
-			android:layout_height="wrap_content">
-			<LinearLayout android:id="@+id/LinearLayout02"
-				android:layout_height="wrap_content" android:layout_width="fill_parent">
-				<TextView android:id="@+id/TextView04"
-					android:layout_width="wrap_content" android:layout_height="wrap_content"
-					android:text="@string/lime_setting_operation_info2"></TextView>
-				<TextView android:layout_width="wrap_content"
-					android:layout_height="wrap_content" android:id="@+id/eztxtInfoAmount"></TextView>
-			</LinearLayout>
-		</TableRow>
-
 		
 		<TableRow android:id="@+id/TableRow21" android:layout_width="wrap_content"
 			android:layout_height="wrap_content">
@@ -142,6 +119,29 @@
 					android:text="@string/lime_setting_operation_info2"></TextView>
 				<TextView android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:id="@+id/bpmftxtInfoAmount"></TextView>
+			</LinearLayout>
+		</TableRow>
+
+		<TableRow android:id="@+id/TableRow15" android:layout_width="wrap_content"
+			android:layout_height="wrap_content">
+			<LinearLayout android:id="@+id/LinearLayout01"
+				android:layout_height="wrap_content" android:layout_width="fill_parent">
+				<TextView android:id="@+id/TextView02"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="@string/lime_setting_operation_info1_ez"></TextView>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/eztxtInfoVersion"></TextView>
+			</LinearLayout>
+		</TableRow>
+		<TableRow android:id="@+id/TableRow16" android:layout_width="wrap_content"
+			android:layout_height="wrap_content">
+			<LinearLayout android:id="@+id/LinearLayout02"
+				android:layout_height="wrap_content" android:layout_width="fill_parent">
+				<TextView android:id="@+id/TextView04"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="@string/lime_setting_operation_info2"></TextView>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/eztxtInfoAmount"></TextView>
 			</LinearLayout>
 		</TableRow>
 

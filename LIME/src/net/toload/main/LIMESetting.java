@@ -164,6 +164,8 @@ public class LIMESetting extends Activity {
 		copyRAWFile(getResources().openRawResource(R.raw.bpmf), localRoot + "/bpmf.cin" );
 		copyRAWFile(getResources().openRawResource(R.raw.cj), localRoot + "/cj.cin" );
 		copyRAWFile(getResources().openRawResource(R.raw.dayi3), localRoot + "/dayi3.cin" );
+		copyRAWFile(getResources().openRawResource(R.raw.ez), localRoot + "/ez.lime" );
+		copyRAWFile(getResources().openRawResource(R.raw.scj6), localRoot + "/scj6.lime" );
 		copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/assoc.lime" );
 
 		
@@ -203,7 +205,7 @@ public class LIMESetting extends Activity {
 					return;
 				}
 				showTablePicker(COMMAND_RESET_TABLE);
-				updateInfomation();
+				updateInformation();
 			}
 		});
 
@@ -223,7 +225,7 @@ public class LIMESetting extends Activity {
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
-				updateInfomation();
+				updateInformation();
 			}
 		});
 
@@ -243,7 +245,8 @@ public class LIMESetting extends Activity {
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
-				backgroundUpdate();
+				updateInformation();
+				//backgroundUpdate();
 			}
 		});
 		
@@ -268,7 +271,7 @@ public class LIMESetting extends Activity {
 		});
 		
 		// Update Information
-		updateInfomation();
+		updateInformation();
 
 	}
 
@@ -305,7 +308,7 @@ public class LIMESetting extends Activity {
 						if(DEBUG){
 							Log.i("Settings:backgrounUpdate", "dbbusy:"+dbbusy);
 						}
-						updateInfomation();
+						updateInformation();
 						if(ctx.getSharedPreferences(MAPPING_LOADING, 0)
 								.getString(MAPPING_LOADING, "").equals("no")){
 							dbbusy = false;
@@ -317,7 +320,7 @@ public class LIMESetting extends Activity {
 					if(DEBUG){
 						Log.i("Settings:backgrounUpdate", "dbbusy:"+dbbusy);
 					}
-					updateInfomation();
+					updateInformation();
 					if(ctx.getSharedPreferences(MAPPING_LOADING, 0)
 							.getString(MAPPING_LOADING, "").equals("no")){
 						dbbusy = false;
@@ -334,7 +337,7 @@ public class LIMESetting extends Activity {
 	/**
 	 * Update LIME setting panel display
 	 */
-	public void updateInfomation() {
+	public void updateInformation() {
 		
 		try {
 
@@ -604,7 +607,7 @@ public class LIMESetting extends Activity {
 	private Handler uiCallback = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
-			updateInfomation();
+			updateInformation();
 			if (myDialog != null) {
 				myDialog.dismiss();
 			}
