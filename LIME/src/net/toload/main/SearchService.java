@@ -21,7 +21,9 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class SearchService extends Service {
-
+	
+	private static boolean SQLSELECT = false;
+	
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_TOTAL_RECORD = "cj_total_record";
@@ -165,13 +167,14 @@ public class SearchService extends Service {
 					if(result.size() > 1){
 						// Has matched record then prepare suggestion list
 						// '10, 4, 3. Try to use nested select instead of using the related column
-						//Mapping temp = result.get(1);
-						//result.addAll(db.getSuggestion(temp.getRelated(), recAmount));
+						if(!SQLSELECT){
+							Mapping temp = result.get(1);
+							result.addAll(db.getSuggestion(temp.getRelated(), recAmount));
+						}
 						
 						get_mappingIdx().put(code, result);
 						return get_mappingIdx().get(code);
 					}
-					/*  Remove by Jeremy '10, 4 , 4. Replaced by nested select in getmapping
 					else{
 						// If there is no match result then load from cache / Check one layer only
 
@@ -196,7 +199,7 @@ public class SearchService extends Service {
 						}
 						
 					}
-					*/
+					//*/
 				}else{
 					//Log.i("ART", "Query from cache original:" + code);
 					return get_mappingIdx().get(code);
