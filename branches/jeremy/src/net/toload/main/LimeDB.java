@@ -44,7 +44,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 	private static boolean DEBUG = false;
 	private static boolean CACHED = false;
-	private static boolean SQLSELECT = false;
+	private static boolean SQLSELECT = true;
 	
 	private final static String DATABASE_NAME = "lime";
 	private final static int DATABASE_VERSION = 58;
@@ -925,130 +925,19 @@ public class LimeDB extends SQLiteOpenHelper {
 		return;
 		
 	}
-private void prepareQuery(String code, int relatedCodeLimit, boolean remap3row, boolean sort){
-		
-		SQLiteDatabase db = this.getWritableDatabase();
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		boolean remap = sp.getBoolean(THREE_ROW_REMAP, false);
-		
-		try {
-			db.execSQL("DROP TABLE IF EXISTS prepare");
-			//if(sort){
-			//	db.execSQL("CREATE TEMP TABLE prepare AS SELECT * FROM " + tablename +
-			//			" WHERE " + FIELD_CODE + " = '" + code +
-			//			"' OR " + FIELD_CODE3R + " = '" + code + "' ORDER BY " + FIELD_SCORE + " DESC");
-			//}else{
-				db.execSQL("CREATE TEMP TABLE prepare AS SELECT * FROM " + tablename +
-						" WHERE " + FIELD_CODE + " = '" + code +
-						"' OR " + FIELD_CODE3R + " = '" + code + "'");
-			//}
-			
-					
+private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int relatedCodeLimit){
 	
-			
-			if(!(code.length() > 3) || !remap3row){//Perfomance issue! Suppose all IM has code length <= 3.
-				String sql = new String(
-						"INSERT INTO prepare SELECT " + FIELD_CODE + " FROM " + tablename 
-						+" WHERE " + FIELD_CODE + " LIKE '" + code + "%' LIMIT " + relatedCodeLimit + ")"
-						);	
-				db.execSQL(sql);
-				
-				if(DEBUG){
-					Log.i("prepareQuery", "SQL statement:" + sql);
-				}
-				
-				return;
-				
-			}
-			//db.execSQL("CREATE TEMP TABLE queryCodeList (" + FIELD_CODE + ")");
-		}catch(Exception e){
-			e.printStackTrace();
-		}
-		if(DEBUG){
-			Log.i("prepareQuery", "code:" + code);
-		}
+		db.execSQL("DROP TABLE IF EXISTS prepare");
+		db.execSQL("CREATE TEMP TABLE prepare AS SELECT * FROM " + tablename +" WHERE " + FIELD_CODE + " = '" + code 
+					+ "' OR " + FIELD_CODE3R + " = '" + code + "'");
+		db.execSQL("INSERT INTO prepare SELECT * FROM " + tablename 
+				+ " WHERE " + FIELD_CODE + " >'"  + code + "' AND "+ FIELD_CODE +" <'" + nextCode 
+				+ "' LIMIT " + relatedCodeLimit );
 		
-		List<String> result = new ArrayList<String>();
-		result.add(code);
-		try{
-			String sql = new String(
-					"INSERT INTO prepare (" 
-					+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE +")"
-					+" SELECT "  
-					+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE 
-					+" FROM " + tablename  
-					+" WHERE "  + FIELD_CODE + " = '" + code + "'"
-					);	
-			db.execSQL(sql);
-			if(DEBUG){
-				Log.i("prepareQuery", "SQL statement:" + sql);
-			}
-		}catch(Exception e){
-			e.printStackTrace();
-		}
-		
-		int i, j, k;
-		for(i=0;i<code.length();i++){
-			for(j=0;j< THREE_ROW_KEY.length(); j++){
-				int size=0;
-				if(code.substring(i,i+1).equals(THREE_ROW_KEY.substring(j, j+1)))
-					size = result.size();
-					for(k=0; k < size ;k++){
-						String replacement = new String (
-								result.get(k).substring(0, i) 
-								+ THREE_ROW_KEY_REMAP.substring(j, j+1)
-								+ result.get(k).substring(i+1));
-						result.add(replacement);
-						try{
-							String sql = new String(
-									"INSERT INTO prepare (" 
-									+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE +")"
-									+" SELECT "  
-									+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE 
-									+" FROM " + tablename  
-									+" WHERE "  + FIELD_CODE + " = '" + replacement + "'"
-									);
-							if(DEBUG){
-								Log.i("buildQueryCodeList", "SQL statement:" + sql);
-							}
-						}catch(Exception e){
-							e.printStackTrace();
-						}
-						if(DEBUG){
-							Log.i("threeRowRemap", "add remap:" + replacement);
-						}
-					}
-			}
-			
-		}
-		for(i=0;i<result.size();i++){
-			try{
+		db.execSQL("INSERT INTO prepare SELECT * FROM " + tablename 
+				+ " WHERE " + FIELD_CODE3R + " >'"  + code + "' AND "+ FIELD_CODE3R +" <'" + nextCode 
+				+ "' LIMIT " + relatedCodeLimit );
 				
-				String sql = new String(
-						"INSERT INTO prepare (" 
-						+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE +")"
-						+" SELECT "  
-						+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE 
-						+" FROM " + tablename  
-						+" WHERE "  + FIELD_CODE + " IN "
-						+"(SELECT " + FIELD_CODE + " FROM " + tablename 
-						+" WHERE " + FIELD_CODE + " LIKE '" + result.get(i)
-						+"%' AND " + FIELD_CODE + " <> '" + result.get(i)
-						+ "' LIMIT " + relatedCodeLimit + ")"
-						);	
-				db.execSQL(sql);
-				if(DEBUG){
-					Log.i("buildQueryCodeList", "SQL statement:" + sql);
-				}
-				
-			}catch(Exception e){
-				e.printStackTrace();
-			}
-			
-		}
-		result = null;
-		return;
-		
 	}
 	public List<Mapping> getMapping(String keyword, int relatedCodeLimit ) {
 		
@@ -1076,33 +965,29 @@ private void prepareQuery(String code, int relatedCodeLimit, boolean remap3row, 
 					String nextCode = new String( keyword.substring(0, keyword.length()-1)
 						+Character.toString((char) (keyword.charAt(keyword.length()-1)+1)));
 					
-					if(sort){
-						if(remap3row){
+					
+					if(!remap3row){				
+						if(sort){				
 							sql = new String(  
-									"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE3R + " >='" 
-									+ keyword + "' AND "+ FIELD_CODE3R +" <'" + nextCode + "' ORDER BY " 
-									+ FIELD_SCORE + " DESC");
-									
+									"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " >='" 
+									+ keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' ORDER BY " 
+									+ FIELD_SCORE + " DESC LIMIT " + relatedCodeLimit );
 						}
 						else{
 							sql = new String(
 									"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " >='" 
-									+ keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' ORDER BY " 
-									+ FIELD_SCORE + " DESC");
-									
+									+ keyword + "' AND "+ FIELD_CODE +" <'" + nextCode
+									+ "' LIMIT " + relatedCodeLimit );	
 						}
 					}else
 					{
-						if(remap3row){
-							sql = new String(
-									"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE3R + " >='" 
-									+ keyword + "' AND "+ FIELD_CODE3R +" <'" + nextCode + "'");
+						prepareQuery(db,keyword, nextCode, relatedCodeLimit);
+						if(sort){
+							sql = new String("SELECT * FROM prepare ORDER BY " + FIELD_SCORE);
+						}else{
+							sql = new String("SELECT * FROM prepare ");
 						}
-						else{
-							sql = new String(  
-									"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " >='" 
-									+ keyword + "' AND "+ FIELD_CODE +" <'" + nextCode );
-						}
+						
 					}
 					if(DEBUG)
 						Log.i("Query","SQL statement:"+ sql);
@@ -1128,24 +1013,25 @@ private void prepareQuery(String code, int relatedCodeLimit, boolean remap3row, 
 					*/
 					
 				}else	{	   
-                    if(sort){  // Ordinary without 3row keyboard remapping
-                    	if(remap3row){
-                    		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'"
-                    			+" OR " + FIELD_CODE3R + " = '" + keyword + "'" 
-                    			,null, null, null, FIELD_SCORE + " DESC", null);
-                    	}else{
+                    if(remap3row){  // Ordinary without 3row keyboard remapping
+                    	if(sort){
                     		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'" 
                         			,null, null, null, FIELD_SCORE + " DESC", null);
+                    	}else{
+                    		cursor = db.query(tablename, null, FIELD_CODE + " = \"" + keyword + "\"", 
+                            		null, null, null, null, null);
                     	}
                     	
                     }else{
-                    	if(remap3row){
+                    	if(sort){
                     		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'"
-                    			+" OR " + FIELD_CODE3R + " = '" + keyword + "'" 
-                    			,null, null, null, null, null);
+                        			+" OR " + FIELD_CODE3R + " = '" + keyword + "'" 
+                        			,null, null, null, FIELD_SCORE + " DESC", null);
                     	}else{
-                    		cursor = db.query(tablename, null, FIELD_CODE + " = \"" + keyword + "\"", 
-                        		null, null, null, null, null);
+                    		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'"
+                        			+" OR " + FIELD_CODE3R + " = '" + keyword + "'" 
+                        			,null, null, null, null, null);
+                    		
                     	}
                     }
 
