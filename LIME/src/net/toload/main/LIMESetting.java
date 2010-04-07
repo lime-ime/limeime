@@ -39,15 +39,18 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
@@ -124,6 +127,7 @@ public class LIMESetting extends Activity {
 	private TextView txtDictionaryAmount;
 	private TextView txtMappingVersion;
 
+	private ScrollView scrollSetting;
 	private Thread thread = null;
 	private Resources res = null;
 	private Context ctx = null;
@@ -138,6 +142,14 @@ public class LIMESetting extends Activity {
 		
 		this.setContentView(R.layout.setting);
 		
+		scrollSetting = (ScrollView) this.findViewById(R.id.SettingsView);
+		scrollSetting.setOnTouchListener(new OnTouchListener(){
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				updateInformation();
+				return false;
+			}
+		});
 		
 		if (res == null) {
 			res = this.getResources();
@@ -371,6 +383,7 @@ public class LIMESetting extends Activity {
 	
 				
 			} catch (Exception e) {
+				e.printStackTrace();
 			}
 			//
 			String dictotal = null;
@@ -728,7 +741,9 @@ public class LIMESetting extends Activity {
     	catch(Exception e){      
     		e.printStackTrace();   
            }   
-     }    
+     }
+
+ 
  
 
 }
