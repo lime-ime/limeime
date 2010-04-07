@@ -278,7 +278,7 @@ public class LIMESetting extends Activity {
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
-				backgroundUpdate();
+				//backgroundUpdate();
 			}
 		});
 		
