@@ -39,15 +39,18 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
@@ -124,6 +127,7 @@ public class LIMESetting extends Activity {
 	private TextView txtDictionaryAmount;
 	private TextView txtMappingVersion;
 
+	private ScrollView scrollSetting;
 	private Thread thread = null;
 	private Resources res = null;
 	private Context ctx = null;
@@ -138,6 +142,14 @@ public class LIMESetting extends Activity {
 		
 		this.setContentView(R.layout.setting);
 		
+		scrollSetting = (ScrollView) this.findViewById(R.id.SettingsView);
+		scrollSetting.setOnTouchListener(new OnTouchListener(){
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				updateInformation();
+				return false;
+			}
+		});
 		
 		if (res == null) {
 			res = this.getResources();
@@ -164,6 +176,8 @@ public class LIMESetting extends Activity {
 		copyRAWFile(getResources().openRawResource(R.raw.bpmf), localRoot + "/bpmf.cin" );
 		copyRAWFile(getResources().openRawResource(R.raw.cj), localRoot + "/cj.cin" );
 		copyRAWFile(getResources().openRawResource(R.raw.dayi3), localRoot + "/dayi3.cin" );
+		copyRAWFile(getResources().openRawResource(R.raw.ez), localRoot + "/ez.lime" );
+		copyRAWFile(getResources().openRawResource(R.raw.scj6), localRoot + "/scj6.lime" );
 		copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/assoc.lime" );
 
 		
@@ -203,7 +217,7 @@ public class LIMESetting extends Activity {
 					return;
 				}
 				showTablePicker(COMMAND_RESET_TABLE);
-				updateInfomation();
+				updateInformation();
 			}
 		});
 
@@ -223,7 +237,7 @@ public class LIMESetting extends Activity {
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
-				updateInfomation();
+				updateInformation();
 			}
 		});
 
@@ -243,7 +257,8 @@ public class LIMESetting extends Activity {
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
-				backgroundUpdate();
+				updateInformation();
+				//backgroundUpdate();
 			}
 		});
 		
@@ -268,7 +283,7 @@ public class LIMESetting extends Activity {
 		});
 		
 		// Update Information
-		updateInfomation();
+		updateInformation();
 
 	}
 
@@ -305,7 +320,7 @@ public class LIMESetting extends Activity {
 						if(DEBUG){
 							Log.i("Settings:backgrounUpdate", "dbbusy:"+dbbusy);
 						}
-						updateInfomation();
+						updateInformation();
 						if(ctx.getSharedPreferences(MAPPING_LOADING, 0)
 								.getString(MAPPING_LOADING, "").equals("no")){
 							dbbusy = false;
@@ -317,7 +332,7 @@ public class LIMESetting extends Activity {
 					if(DEBUG){
 						Log.i("Settings:backgrounUpdate", "dbbusy:"+dbbusy);
 					}
-					updateInfomation();
+					updateInformation();
 					if(ctx.getSharedPreferences(MAPPING_LOADING, 0)
 							.getString(MAPPING_LOADING, "").equals("no")){
 						dbbusy = false;
@@ -334,7 +349,7 @@ public class LIMESetting extends Activity {
 	/**
 	 * Update LIME setting panel display
 	 */
-	public void updateInfomation() {
+	public void updateInformation() {
 		
 		try {
 
@@ -368,6 +383,7 @@ public class LIMESetting extends Activity {
 	
 				
 			} catch (Exception e) {
+				e.printStackTrace();
 			}
 			//
 			String dictotal = null;
@@ -604,7 +620,7 @@ public class LIMESetting extends Activity {
 	private Handler uiCallback = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
-			updateInfomation();
+			updateInformation();
 			if (myDialog != null) {
 				myDialog.dismiss();
 			}
@@ -725,7 +741,9 @@ public class LIMESetting extends Activity {
     	catch(Exception e){      
     		e.printStackTrace();   
            }   
-     }    
+     }
+
+ 
  
 
 }
