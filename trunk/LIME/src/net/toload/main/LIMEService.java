@@ -155,6 +155,9 @@ public class LIMEService extends InputMethodService implements
 	private float keyUpX=0;
 	private float keyUpY=0;
 	
+	// To keep key press time
+	private long keyPressTime = 0;
+	
 	private int previousKeyCode = 0;
 	private final float moveLength = 15;
 	private ISearchService SearchSrv = null;
@@ -997,9 +1000,6 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			handleCharacter(primaryCode, keyCodes);
 		}
 		
-		
-		
-		
 	}
 
 	private AlertDialog mOptionsDialog;
@@ -1576,6 +1576,25 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	 */
 	private void handleCharacter(int primaryCode, int[] keyCodes) {
 		
+		// Caculate key press time to handle Eazy IM keys mapping
+		// 1,2,3,4,5,6 map to -(45) =(43) [(91) ](93) ,(44) \(92)
+		if(keyPressTime != 0 && (System.currentTimeMillis() - keyPressTime > 700) 
+				&& mInputView.getKeyboard() != null && mInputView.getKeyboard() == this.mEZKeyboard){
+			if(primaryCode == 49){
+				primaryCode = 45;
+			}else if(primaryCode == 50){
+				primaryCode = 61;
+			}else if(primaryCode == 51){
+				primaryCode = 91;
+			}else if(primaryCode == 52){
+				primaryCode = 93;
+			}else if(primaryCode == 53){
+				primaryCode = 44;
+			}else if(primaryCode == 54){
+				primaryCode = 92;
+			}
+		}
+		
 		// Adjust metakeystate on printed key pressed.
 		mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 		
@@ -1935,6 +1954,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	 * First method to call after key press
 	 */
 	public void onPress(int primaryCode) {
+		
+		// Record key press time (press down)
+		keyPressTime = System.currentTimeMillis();
 		
 		if (hasVibration) {
 			mVibrator.vibrate(40);
