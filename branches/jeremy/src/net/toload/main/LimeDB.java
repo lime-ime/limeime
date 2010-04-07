@@ -44,10 +44,10 @@ public class LimeDB extends SQLiteOpenHelper {
 
 	private static boolean DEBUG = false;
 	private static boolean CACHED = false;
-	private static boolean SQLSELECT = true;
+	private static boolean SQLSELECT = false;
 	
 	private final static String DATABASE_NAME = "lime";
-	private final static int DATABASE_VERSION = 58;
+	private final static int DATABASE_VERSION = 59;
 	private final static int DATABASE_RELATED_SIZE = 50;
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
@@ -362,8 +362,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 
 		SQLiteDatabase db = this.getWritableDatabase();
-		//db.delete(table, null, null);
-		
+		db.delete(table, null, null);
+		/*
 		db.execSQL("DROP TABLE IF EXISTS " + table);
 		db.execSQL("DROP INDEX IF EXISTS " + table + "_idx_code");
 		db.execSQL("DROP INDEX IF EXISTS " + table + "_idx_code3r");
@@ -376,7 +376,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		db.execSQL("CREATE INDEX " + table + "_idx_code ON " + table + " (" + FIELD_CODE + ")");
 		db.execSQL("CREATE INDEX " + table + "_idx_code3r ON " + table + " (" + FIELD_CODE3R + ")");
 		db.execSQL("CREATE INDEX " + table + "_idx_word ON " + table + " (" + FIELD_WORD + ")");
-		
+		*/
+	
 		db.close();
 		
 		SharedPreferences sp1=null, sp2=null, sp3=null, sp4=null;
