@@ -1594,6 +1594,9 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 									" SELECT * from "+ table + 
 									"_old ORDER BY "+ FIELD_CODE );
 							db.execSQL("DROP TABLE " + table + "_old");
+							db.execSQL("CREATE INDEX " + table + "_idx_code ON " + table + " (" + FIELD_CODE + ")");
+							db.execSQL("CREATE INDEX " + table + "_idx_code3r ON " + table + " (" + FIELD_CODE3R + ")");
+							db.execSQL("CREATE INDEX " + table + "_idx_word ON " + table + " (" + FIELD_WORD + ")");
 						}
 						if(CACHED){
 							setTablename(tablename);
