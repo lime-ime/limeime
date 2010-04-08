@@ -205,7 +205,7 @@ public class CandidateView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
     	if(DEBUG){
-    		Log.i("Candidateview:OnDraw", "Suggestion count:" + count);
+    		Log.i("Candidateview:OnDraw", "Suggestion count:" + count+" mSuggestions.size:" + mSuggestions.size());
     	}
         if (canvas != null) {
             super.onDraw(canvas);
@@ -360,6 +360,8 @@ public class CandidateView extends View {
     public void clear() {
     	currentX = 0;
         mSuggestions = EMPTY_LIST;
+        // Jeremy '10, 4, 8
+        count =0;
         mTouchX = OUT_OF_BOUNDS;
         mSelectedIndex = -1;
         invalidate();

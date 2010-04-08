@@ -312,7 +312,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 		onCreate(db);  // Make sure all table exist
 		
-		db.execSQL("ALTER TABLE mapping ADD COLUMN " + FIELD_CODE3R);
+		db.execSQL("ALTER TABLE mapping ADD COLUMN " + FIELD_CODE3R + " text DEFAULT '0'");
 		db.execSQL("ALTER TABLE mapping RENAME TO mapping_old");
 		//db.execSQL("ALTER TABLE cj RENAME TO cj_old");	
 		//db.execSQL("ALTER TABLE dayi RENAME TO dayi_old");
@@ -321,9 +321,9 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		//onCreate(db);  // Recreate table with added column
 		
-		db.execSQL("CREATE TABLE mapping AS " +
-				"SELECT * FROM mapping_old ORDER BY " + FIELD_CODE + ", LENGTH(" + FIELD_CODE +")" );
-		db.execSQL("DROP TABLE mapping_old");
+		//db.execSQL("CREATE TABLE mapping AS " +
+		//		"SELECT * FROM mapping_old ORDER BY " + FIELD_CODE + ", LENGTH(" + FIELD_CODE +")" );
+		//db.execSQL("DROP TABLE mapping_old");
 		
 		/*
 		db.execSQL("CREATE TABLE cj AS " +
