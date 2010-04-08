@@ -22,7 +22,7 @@ import android.util.Log;
 
 public class SearchService extends Service {
 	
-	private static boolean SQLSELECT = false;
+	private static boolean SQLSELECT = true;
 	
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
