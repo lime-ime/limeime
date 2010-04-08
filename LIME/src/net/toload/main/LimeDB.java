@@ -44,10 +44,10 @@ public class LimeDB extends SQLiteOpenHelper {
 
 	private static boolean DEBUG = false;
 	private static boolean CACHED = false;
-	private static boolean SQLSELECT = false;
+	private static boolean SQLSELECT = true;
 	
 	private final static String DATABASE_NAME = "lime";
-	private final static int DATABASE_VERSION = 58;
+	private final static int DATABASE_VERSION = 59;
 	private final static int DATABASE_RELATED_SIZE = 50;
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
@@ -227,7 +227,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
 				+ " text, " + FIELD_SCORE + " integer)");
 		db.execSQL("CREATE INDEX IF NOT EXISTS mapping_idx_code ON mapping (" + FIELD_CODE + ")");
-		db.execSQL("CREATE INDEX IF NOT EXISTS mapping_idx_code3r ON mapping (" + FIELD_CODE3R + ")");
+		//db.execSQL("CREATE INDEX IF NOT EXISTS mapping_idx_code3r ON mapping (" + FIELD_CODE3R + ")");
 		db.execSQL("CREATE INDEX IF NOT EXISTS mapping_idx_word ON mapping (" + FIELD_CODE + ")");
 		//db.execSQL("CREATE VIEW IF NOT EXISTS mapping_code3r AS SELECT * FROM mapping ORDER BY " + FIELD_CODE3R );
 		
@@ -236,7 +236,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
 				+ " text, " + FIELD_SCORE + " integer)");
 		db.execSQL("CREATE INDEX IF NOT EXISTS cj_idx_code ON cj (" + FIELD_CODE + ")");
-		db.execSQL("CREATE INDEX IF NOT EXISTS cj_idx_code3r ON cj (" + FIELD_CODE3R + ")");
+		//db.execSQL("CREATE INDEX IF NOT EXISTS cj_idx_code3r ON cj (" + FIELD_CODE3R + ")");
 		db.execSQL("CREATE INDEX IF NOT EXISTS cj_idx_word ON cj (" + FIELD_WORD + ")");
 		//db.execSQL("CREATE VIEW IF NOT EXISTS cj_code3r AS SELECT * FROM cj ORDER BY " + FIELD_CODE3R );
 		
@@ -245,7 +245,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
 				+ " text, " + FIELD_SCORE + " integer)");
 		db.execSQL("CREATE INDEX IF NOT EXISTS dayi_idx_code ON dayi (" + FIELD_CODE + ")");
-		db.execSQL("CREATE INDEX IF NOT EXISTS dayi_idx_code3r ON dayi (" + FIELD_CODE3R + ")");
+		//db.execSQL("CREATE INDEX IF NOT EXISTS dayi_idx_code3r ON dayi (" + FIELD_CODE3R + ")");
 		db.execSQL("CREATE INDEX IF NOT EXISTS dayi_idx_word ON dayi (" + FIELD_WORD + ")");
 		//db.execSQL("CREATE VIEW IF NOT EXISTS dayi_code3r AS SELECT * FROM dayi ORDER BY " + FIELD_CODE3R );
 
@@ -254,7 +254,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
 				+ " text, " + FIELD_SCORE + " integer)");
 		db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_code ON phonetic (" + FIELD_CODE + ")");
-		db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_code3r ON phonetic (" + FIELD_CODE3R + ")");
+		//db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_code3r ON phonetic (" + FIELD_CODE3R + ")");
 		db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_word ON phonetic (" + FIELD_CODE + ")");
 		//db.execSQL("CREATE VIEW IF NOT EXISTS phonetic_code3r AS SELECT * FROM phonetic ORDER BY " + FIELD_CODE3R );
 	
@@ -263,7 +263,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
 				+ " text, " + FIELD_SCORE + " integer)");
 		db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_code ON ez (" + FIELD_CODE + ")");
-		db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_code3r ON ez (" + FIELD_CODE3R + ")");
+		//db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_code3r ON ez (" + FIELD_CODE3R + ")");
 		db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_word ON ez (" + FIELD_CODE + ")");
 		//db.execSQL("CREATE VIEW IF NOT EXISTS ez_code3r AS SELECT * FROM ez ORDER BY " + FIELD_CODE3R );
 	
@@ -362,8 +362,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 
 		SQLiteDatabase db = this.getWritableDatabase();
-		//db.delete(table, null, null);
-		
+		db.delete(table, null, null);
+		/*
 		db.execSQL("DROP TABLE IF EXISTS " + table);
 		db.execSQL("DROP INDEX IF EXISTS " + table + "_idx_code");
 		db.execSQL("DROP INDEX IF EXISTS " + table + "_idx_code3r");
@@ -376,7 +376,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		db.execSQL("CREATE INDEX " + table + "_idx_code ON " + table + " (" + FIELD_CODE + ")");
 		db.execSQL("CREATE INDEX " + table + "_idx_code3r ON " + table + " (" + FIELD_CODE3R + ")");
 		db.execSQL("CREATE INDEX " + table + "_idx_word ON " + table + " (" + FIELD_WORD + ")");
-		
+		*/
+	
 		db.close();
 		
 		SharedPreferences sp1=null, sp2=null, sp3=null, sp4=null;
@@ -509,7 +510,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		int total = 0;
 		try {
 			SQLiteDatabase db = this.getReadableDatabase();
-			total += db.rawQuery("SELECT * FROM " + table, null).getCount();
+			total += db.rawQuery("SELECT * FROM " + table + " WHERE " + FIELD_CODE3R + " = '0'"
+					, null).getCount();
 			db.close();
 			Log.i("countMapping", "Table," + table +": " + total);
 		} catch (Exception e) {
@@ -713,11 +715,13 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		String result = new String("");
 		try {
-			// Create Suggestions (Exactly Matched)
+			
 			if (keyword != null && !keyword.trim().equals("")) {
 				Cursor cursor = null;
 				SQLiteDatabase db = this.getReadableDatabase();
-				cursor = db.query(Rtable, null, FIELD_WORD + " = \"" + keyword + "\"", null, null, null, null, null);
+				cursor = db.query(Rtable, null, FIELD_WORD + " = '" + keyword + "' AND "
+						+ FIELD_CODE3R + " = '0' "
+						, null, null, null, null, null);
 				if(DEBUG){
 					Log.i("getRmapping","tablename:"+Rtable+"  keyworad:"+keyword+"  cursor.getCount:" + cursor.getCount());
 				}
@@ -925,130 +929,19 @@ public class LimeDB extends SQLiteOpenHelper {
 		return;
 		
 	}
-private void prepareQuery(String code, int relatedCodeLimit, boolean remap3row, boolean sort){
-		
-		SQLiteDatabase db = this.getWritableDatabase();
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		boolean remap = sp.getBoolean(THREE_ROW_REMAP, false);
-		
-		try {
-			db.execSQL("DROP TABLE IF EXISTS prepare");
-			//if(sort){
-			//	db.execSQL("CREATE TEMP TABLE prepare AS SELECT * FROM " + tablename +
-			//			" WHERE " + FIELD_CODE + " = '" + code +
-			//			"' OR " + FIELD_CODE3R + " = '" + code + "' ORDER BY " + FIELD_SCORE + " DESC");
-			//}else{
-				db.execSQL("CREATE TEMP TABLE prepare AS SELECT * FROM " + tablename +
-						" WHERE " + FIELD_CODE + " = '" + code +
-						"' OR " + FIELD_CODE3R + " = '" + code + "'");
-			//}
-			
-					
+private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int relatedCodeLimit){
 	
-			
-			if(!(code.length() > 3) || !remap3row){//Perfomance issue! Suppose all IM has code length <= 3.
-				String sql = new String(
-						"INSERT INTO prepare SELECT " + FIELD_CODE + " FROM " + tablename 
-						+" WHERE " + FIELD_CODE + " LIKE '" + code + "%' LIMIT " + relatedCodeLimit + ")"
-						);	
-				db.execSQL(sql);
-				
-				if(DEBUG){
-					Log.i("prepareQuery", "SQL statement:" + sql);
-				}
-				
-				return;
-				
-			}
-			//db.execSQL("CREATE TEMP TABLE queryCodeList (" + FIELD_CODE + ")");
-		}catch(Exception e){
-			e.printStackTrace();
-		}
-		if(DEBUG){
-			Log.i("prepareQuery", "code:" + code);
-		}
+		db.execSQL("DROP TABLE IF EXISTS prepare");
+		db.execSQL("CREATE TEMP TABLE prepare AS SELECT * FROM " + tablename +" WHERE " + FIELD_CODE + " = '" + code 
+					+ "' OR " + FIELD_CODE3R + " = '" + code + "'");
+		db.execSQL("INSERT INTO prepare SELECT * FROM " + tablename 
+				+ " WHERE " + FIELD_CODE + " >'"  + code + "' AND "+ FIELD_CODE +" <'" + nextCode 
+				+ "' LIMIT " + relatedCodeLimit );
 		
-		List<String> result = new ArrayList<String>();
-		result.add(code);
-		try{
-			String sql = new String(
-					"INSERT INTO prepare (" 
-					+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE +")"
-					+" SELECT "  
-					+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE 
-					+" FROM " + tablename  
-					+" WHERE "  + FIELD_CODE + " = '" + code + "'"
-					);	
-			db.execSQL(sql);
-			if(DEBUG){
-				Log.i("prepareQuery", "SQL statement:" + sql);
-			}
-		}catch(Exception e){
-			e.printStackTrace();
-		}
-		
-		int i, j, k;
-		for(i=0;i<code.length();i++){
-			for(j=0;j< THREE_ROW_KEY.length(); j++){
-				int size=0;
-				if(code.substring(i,i+1).equals(THREE_ROW_KEY.substring(j, j+1)))
-					size = result.size();
-					for(k=0; k < size ;k++){
-						String replacement = new String (
-								result.get(k).substring(0, i) 
-								+ THREE_ROW_KEY_REMAP.substring(j, j+1)
-								+ result.get(k).substring(i+1));
-						result.add(replacement);
-						try{
-							String sql = new String(
-									"INSERT INTO prepare (" 
-									+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE +")"
-									+" SELECT "  
-									+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE 
-									+" FROM " + tablename  
-									+" WHERE "  + FIELD_CODE + " = '" + replacement + "'"
-									);
-							if(DEBUG){
-								Log.i("buildQueryCodeList", "SQL statement:" + sql);
-							}
-						}catch(Exception e){
-							e.printStackTrace();
-						}
-						if(DEBUG){
-							Log.i("threeRowRemap", "add remap:" + replacement);
-						}
-					}
-			}
-			
-		}
-		for(i=0;i<result.size();i++){
-			try{
+		db.execSQL("INSERT INTO prepare SELECT * FROM " + tablename 
+				+ " WHERE " + FIELD_CODE3R + " >'"  + code + "' AND "+ FIELD_CODE3R +" <'" + nextCode 
+				+ "' LIMIT " + relatedCodeLimit );
 				
-				String sql = new String(
-						"INSERT INTO prepare (" 
-						+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE +")"
-						+" SELECT "  
-						+ FIELD_id + "," + FIELD_CODE + "," + FIELD_WORD +  "," + FIELD_SCORE 
-						+" FROM " + tablename  
-						+" WHERE "  + FIELD_CODE + " IN "
-						+"(SELECT " + FIELD_CODE + " FROM " + tablename 
-						+" WHERE " + FIELD_CODE + " LIKE '" + result.get(i)
-						+"%' AND " + FIELD_CODE + " <> '" + result.get(i)
-						+ "' LIMIT " + relatedCodeLimit + ")"
-						);	
-				db.execSQL(sql);
-				if(DEBUG){
-					Log.i("buildQueryCodeList", "SQL statement:" + sql);
-				}
-				
-			}catch(Exception e){
-				e.printStackTrace();
-			}
-			
-		}
-		result = null;
-		return;
-		
 	}
 	public List<Mapping> getMapping(String keyword, int relatedCodeLimit ) {
 		
@@ -1076,33 +969,51 @@ private void prepareQuery(String code, int relatedCodeLimit, boolean remap3row, 
 					String nextCode = new String( keyword.substring(0, keyword.length()-1)
 						+Character.toString((char) (keyword.charAt(keyword.length()-1)+1)));
 					
-					if(sort){
-						if(remap3row){
+					
+					if(!remap3row){				
+						if(sort){				
 							sql = new String(  
-									"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE3R + " >='" 
-									+ keyword + "' AND "+ FIELD_CODE3R +" <'" + nextCode + "' ORDER BY " 
-									+ FIELD_SCORE + " DESC");
-									
+									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
+									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
+									" WHERE " + FIELD_CODE3R + " = '0' " + " AND " + 
+									 FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + 
+									"' ORDER BY " + FIELD_SCORE + " DESC LIMIT " + relatedCodeLimit );
 						}
 						else{
 							sql = new String(
-									"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " >='" 
-									+ keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' ORDER BY " 
-									+ FIELD_SCORE + " DESC");
-									
+									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
+									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
+									" WHERE " + FIELD_CODE3R + " = '0' " + " AND "  
+									+ FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode
+									+ "' LIMIT " + relatedCodeLimit );	
 						}
 					}else
 					{
-						if(remap3row){
-							sql = new String(
-									"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE3R + " >='" 
-									+ keyword + "' AND "+ FIELD_CODE3R +" <'" + nextCode + "'");
+						if(sort){				
+							sql = new String(  
+									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
+									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
+									" WHERE " + 
+									 FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + 
+									"' ORDER BY " + FIELD_SCORE + " DESC LIMIT " + relatedCodeLimit );
 						}
 						else{
-							sql = new String(  
-									"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " >='" 
-									+ keyword + "' AND "+ FIELD_CODE +" <'" + nextCode );
+							sql = new String(
+									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
+									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
+									" WHERE " 
+									+ FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode
+									+ "' LIMIT " + relatedCodeLimit );
 						}
+						/*
+						prepareQuery(db,keyword, nextCode, relatedCodeLimit);
+						if(sort){
+							sql = new String("SELECT * FROM prepare ORDER BY " + FIELD_SCORE);
+						}else{
+							sql = new String("SELECT * FROM prepare ");
+						}
+						*/
+						
 					}
 					if(DEBUG)
 						Log.i("Query","SQL statement:"+ sql);
@@ -1128,24 +1039,25 @@ private void prepareQuery(String code, int relatedCodeLimit, boolean remap3row, 
 					*/
 					
 				}else	{	   
-                    if(sort){  // Ordinary without 3row keyboard remapping
-                    	if(remap3row){
-                    		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'"
-                    			+" OR " + FIELD_CODE3R + " = '" + keyword + "'" 
-                    			,null, null, null, FIELD_SCORE + " DESC", null);
-                    	}else{
+                    if(remap3row){  // Ordinary without 3row keyboard remapping
+                    	if(sort){
                     		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'" 
                         			,null, null, null, FIELD_SCORE + " DESC", null);
+                    	}else{
+                    		cursor = db.query(tablename, null, FIELD_CODE + " = \"" + keyword + "\"", 
+                            		null, null, null, null, null);
                     	}
                     	
                     }else{
-                    	if(remap3row){
+                    	if(sort){
                     		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'"
-                    			+" OR " + FIELD_CODE3R + " = '" + keyword + "'" 
-                    			,null, null, null, null, null);
+                        			+" OR " + FIELD_CODE3R + " = '" + keyword + "'" 
+                        			,null, null, null, FIELD_SCORE + " DESC", null);
                     	}else{
-                    		cursor = db.query(tablename, null, FIELD_CODE + " = \"" + keyword + "\"", 
-                        		null, null, null, null, null);
+                    		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'"
+                        			+" OR " + FIELD_CODE3R + " = '" + keyword + "'" 
+                        			,null, null, null, null, null);
+                    		
                     	}
                     }
 
@@ -1165,9 +1077,7 @@ private void prepareQuery(String code, int relatedCodeLimit, boolean remap3row, 
 						munit.setId(cursor.getString(idColumn));
 						munit.setCode(cursor.getString(codeColumn));
 						munit.setWord(cursor.getString(wordColumn));
-						if(SQLSELECT) 
-							munit.setRelated("");
-						else 	
+						if(!SQLSELECT)	
 							munit.setRelated(cursor.getString(relatedColumn));
 						munit.setScore(cursor.getInt(scoreColumn));
 						munit.setDictionary(false);
@@ -1534,11 +1444,11 @@ private void prepareQuery(String code, int relatedCodeLimit, boolean remap3row, 
 					}catch(Exception e){}
 					
 					// Build HashMap of related codes table
-		
 					HashMap<String, TreeMap> hm = null;
-					
-					if(!table.equals("related")){ // We don't need the related code table in related table.
-						hm = buildRelatedCodeTable(isCinFormat);
+					if(!SQLSELECT) {
+						if(!table.equals("related")){ // We don't need the related code table in related table.
+							hm = buildRelatedCodeTable(isCinFormat);
+						}
 					}
 					
 
@@ -1547,6 +1457,7 @@ private void prepareQuery(String code, int relatedCodeLimit, boolean remap3row, 
 
 					SQLiteDatabase db = getWritableDatabase();
 						           db.beginTransaction();
+						         
 					try {
 						// Prepare Source File
 						FileReader fr = new FileReader(filename);
@@ -1651,8 +1562,12 @@ private void prepareQuery(String code, int relatedCodeLimit, boolean remap3row, 
 									
 								if(!table.equals("related")){
 									// Regular table
-									String first = code.substring(0,1);
-									insertWord(table, code, word, hm.get(first), 50);
+									if(SQLSELECT){
+										insertWord(table, code, word);
+									}else {
+										String first = code.substring(0,1);
+										insertWord(table, code, word, hm.get(first), 50);
+									}
 								}else{
 									// Related table.
 									insertDictionary(code, word, 0);
@@ -1700,13 +1615,27 @@ private void prepareQuery(String code, int relatedCodeLimit, boolean remap3row, 
 						db.setTransactionSuccessful();
 						db.endTransaction();
 						// Sorting the table if it's not related table
-						if(!table.equals("related")){
+						if(!table.equals("related")){				
 							db.execSQL("DROP TABLE IF EXISTS " + table + "_old");
 							db.execSQL("ALTER TABLE " + table + " RENAME TO " + table + "_old");
-							db.execSQL("CREATE TABLE " + table + " AS" +
-									" SELECT * from "+ table + 
-									"_old ORDER BY "+ FIELD_CODE );
+							db.execSQL("CREATE TABLE " + table + " (" + 
+									FIELD_id + " INTEGER primary key autoincrement, " + 
+									FIELD_CODE + " text, " + FIELD_CODE3R + " text, "+ 
+									FIELD_WORD + " text, " + FIELD_RELATED + " text, " + 
+									FIELD_SCORE + " integer)");
+				
+							db.execSQL("INSERT INTO " + table + " (" +
+									FIELD_CODE + ", " + FIELD_CODE3R + ", " + FIELD_WORD + ", " +
+									FIELD_RELATED + ", " + FIELD_SCORE + ") " +
+									" SELECT " +
+									FIELD_CODE + ", " + FIELD_CODE3R + ", " + FIELD_WORD + ", " +
+									FIELD_RELATED + ", " + FIELD_SCORE +
+									" FROM "+ table + "_old ORDER BY "+ FIELD_CODE );
 							db.execSQL("DROP TABLE " + table + "_old");
+							db.execSQL("CREATE INDEX " + table + "_idx_code ON " + table + " (" + FIELD_CODE + ")");
+							db.execSQL("CREATE INDEX " + table + "_idx_word ON " + table + " (" + FIELD_WORD + ")");
+							
+							
 						}
 						if(CACHED){
 							setTablename(tablename);
@@ -1775,51 +1704,84 @@ private void prepareQuery(String code, int relatedCodeLimit, boolean remap3row, 
 		}
 		
 	}
-	
-	public void insertWord(String table, String code, String word 
-			, TreeMap<String, String> srclist, int size){
-
-		String related = "";
-		
-		if(srclist != null){
-			Set set = srclist.tailMap(code).entrySet();
-			Iterator i = set.iterator();
-			int wordcount = 0;
-			boolean hasLoad = false;
-			while(i.hasNext()){
-				
-				Map.Entry me = (Map.Entry)i.next();
-				String key = String.valueOf(me.getKey());
-				if(!key.equals(code) && key.startsWith(code)){
-					related += key + "\t";
-				}else if(!key.equals(code) && !key.startsWith(code)){
-					break;
-				}
-				
-				wordcount++;
-				if(wordcount > size ){
-					break;
-				}
-			}
-		}
-		
-		
-		
+	public void insertWord(String table, String code, String word){
 		// '10 4, 6. Jeremy. 3row remapping code.
+		String related = "";
 		String code3r = code;
-		int i;
-		for(i=0;i<THREE_ROW_KEY.length();i++){
+		for(int i=0;i<THREE_ROW_KEY.length();i++){
 			code3r = code3r.replace(THREE_ROW_KEY_REMAP.substring(i,i+1), THREE_ROW_KEY.substring(i,i+1));
 		}
+		
 		SQLiteDatabase db = getWritableDatabase();
 		try{
+			if(code3r.equals(code)){
+				ContentValues cv = new ContentValues();
+						  cv.put(FIELD_CODE, code);
+						  cv.put(FIELD_CODE3R, "0");
+						  cv.put(FIELD_WORD, word);
+						  //cv.put(FIELD_RELATED, "");
+						  cv.put(FIELD_SCORE, 0);
+						  db.insert(table, null, cv);
+			}else{
+				ContentValues cv = new ContentValues();
+					cv.put(FIELD_CODE, code);
+					cv.put(FIELD_CODE3R, "0");
+					cv.put(FIELD_WORD, word);
+					//cv.put(FIELD_RELATED, "");
+					cv.put(FIELD_SCORE, 0);
+					db.insert(table, null, cv);
+
+					// code3r record
+					cv.put(FIELD_CODE, code3r);
+					cv.put(FIELD_CODE3R, "1");
+					db.insert(table, null, cv);
+			}
+		
+			//Log.i("ART", "Insert -> " + code + " : " + related + " - "+ new Date().toString());
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	
+	}
+			
+	public void insertWord(String table, String code, String word 
+			, TreeMap<String, String> srclist, int size){
+		
+		String related = "";
+		if(srclist != null){
+				Set set = srclist.tailMap(code).entrySet();
+				Iterator i = set.iterator();
+				int wordcount = 0;
+				boolean hasLoad = false;
+				while(i.hasNext()){
+				
+					Map.Entry me = (Map.Entry)i.next();
+					String key = String.valueOf(me.getKey());
+					if(!key.equals(code) && key.startsWith(code)){
+						related += key + "\t";
+					}else if(!key.equals(code) && !key.startsWith(code)){
+						break;
+					}
+				
+					wordcount++;
+					if(wordcount > size ){
+						break;
+					}
+				}
+			}
+
+		
+		SQLiteDatabase db = getWritableDatabase();
+		try{
+			
 			ContentValues cv = new ContentValues();
 						  cv.put(FIELD_CODE, code);
-						  cv.put(FIELD_CODE3R, code3r);
+						  cv.put(FIELD_CODE3R, "0");
 						  cv.put(FIELD_WORD, word);
 						  cv.put(FIELD_RELATED, related);
 						  cv.put(FIELD_SCORE, 0);
-			db.insert(table, null, cv);
+						  db.insert(table, null, cv);
+		
 			//Log.i("ART", "Insert -> " + code + " : " + related + " - "+ new Date().toString());
 		}catch(Exception e){
 			e.printStackTrace();
