@@ -98,6 +98,8 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasFirstMatched = false;
 	// Removed by Jeremy '10, 3, 27.  
 	//private boolean hasRightShiftPress = false;
+	
+	private boolean keydown = false;
 
 	private long mLastShiftTime;
 	private long mMetaState;
@@ -548,6 +550,14 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		
+			// 	Record key press time (key down, for physical keys)
+			if(!keydown ){
+				keyPressTime = System.currentTimeMillis();
+				keydown =true;
+			}
+			
+			
 			waitingEnterUp = false;
 					
 			switch (keyCode) {
@@ -639,6 +649,9 @@ public class LIMEService extends InputMethodService implements
 				// Add by Jeremy '10, 3, 27. Send Alt-space to super for default popup SYM window.
 				else if( LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON)>0 )
 					break; 
+			case KeyEvent.KEYCODE_AT:
+				// do nothing until OnKeyUp 
+				return true;
 				
 			default:
 	
@@ -728,6 +741,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
 		
+		keydown = false;
+		
 		switch (keyCode) {
 		//*/------------------------------------------------------------------------
 		// Modified by Jeremy '10, 3,12
@@ -749,6 +764,22 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			//	return mCandidateView.takeSelectedSuggestion();			
 			//}		
 			if(waitingEnterUp) {return true;};
+		case KeyEvent.KEYCODE_AT:
+			// Long press physical @ key to swtich chn/eng
+			long elapsedTime = System.currentTimeMillis() - keyPressTime;
+			//Log.i("onKeyUp","@ keyup keyPressTime:"+ keyPressTime + "CurrentTime:" +System.currentTimeMillis()
+			//		+ " elapsedtime:" +elapsedTime);
+			if(keyPressTime != 0 && elapsedTime > 700){
+				switchChiEng();
+				return true;
+			}else{
+				if ( ( (mEnglishOnly && mPredictionOn)
+					|| (!mEnglishOnly && onIM))
+					&& translateKeyDown(keyCode, event)) {
+				return true;
+				}
+			}
+			
 		default:
 			// Clear MetaKeyStates 
 			//if(LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON ) == 1) {  
@@ -939,6 +970,22 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}
 	}
 
+	private void switchChiEng() {
+		mEnglishOnly = !mEnglishOnly;
+		   // cancel candidate view if it's shown
+        if (mCandidateView != null) {
+			mCandidateView.clear();
+		}
+		mComposing.setLength(0);
+		setCandidatesViewShown(false);
+		if (mEnglishOnly) {
+			Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
+		} else {
+			Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
+		}
+		
+		
+	}
 	// Implementation of KeyboardViewListener
 
 	public void onKey(int primaryCode, int[] keyCodes) {
@@ -957,15 +1004,11 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_SHIFT_ON)== 1)
 					&& primaryCode == 32 )	{
 				//Log.i("OnKey", "shift-space...") ;
-				mEnglishOnly = !mEnglishOnly;
-				if (mEnglishOnly) {
-					Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
-				} else {
-					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
-				}
+				
+				switchChiEng();
 				// Reset Shift Status
-				mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 				mEnglishFlagShift = false;
+				mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 				return;
 			}
 				
@@ -1575,7 +1618,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	 * @param keyCodes
 	 */
 	private void handleCharacter(int primaryCode, int[] keyCodes) {
-
+		
 		// Caculate key press time to handle Eazy IM keys mapping
 		// 1,2,3,4,5,6 map to -(45) =(43) [(91) ](93) ,(44) \(92)
 		if(keyPressTime != 0 && (System.currentTimeMillis() - keyPressTime > 700) 
@@ -2143,5 +2186,4 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
     }
 
 */
-	
 }
