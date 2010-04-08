@@ -715,11 +715,13 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		String result = new String("");
 		try {
-			// Create Suggestions (Exactly Matched)
+			
 			if (keyword != null && !keyword.trim().equals("")) {
 				Cursor cursor = null;
 				SQLiteDatabase db = this.getReadableDatabase();
-				cursor = db.query(Rtable, null, FIELD_WORD + " = \"" + keyword + "\"", null, null, null, null, null);
+				cursor = db.query(Rtable, null, FIELD_WORD + " = '" + keyword + "' AND "
+						+ FIELD_CODE3R + " = '0' "
+						, null, null, null, null, null);
 				if(DEBUG){
 					Log.i("getRmapping","tablename:"+Rtable+"  keyworad:"+keyword+"  cursor.getCount:" + cursor.getCount());
 				}
