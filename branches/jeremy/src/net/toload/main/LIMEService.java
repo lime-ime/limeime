@@ -643,11 +643,14 @@ public class LIMEService extends InputMethodService implements
 			case KeyEvent.KEYCODE_SPACE:
 				// Add by Jeremy '10, 3, 31. Select current suggestion with space. 
 				if (mCandidateView != null && mCandidateView.isShown()) {
-					waitingEnterUp = true;
-					return mCandidateView.takeSelectedSuggestion();			
+					if(mCandidateView.takeSelectedSuggestion()){ return true;}// Commit selected suggestion succeed.
+					else{ // dismiss the candidate view in the related word selection mode.
+						setCandidatesViewShown(false);
+						break;
+					}
 				}
 				// Add by Jeremy '10, 3, 27. Send Alt-space to super for default popup SYM window.
-				else if( LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON)>0 )
+				else //if( LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON)>0 )
 					break; 
 			case KeyEvent.KEYCODE_AT:
 				// do nothing until OnKeyUp 
@@ -995,7 +998,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		// Handle English/Lime Keyboard switch
 		if(mEnglishFlagShift == false && (primaryCode == Keyboard.KEYCODE_SHIFT) ){
 			mEnglishFlagShift = true;
-			Log.i("OnKey", "mEnglishFlagShift:" + mEnglishFlagShift);
+			if(DEBUG){ Log.i("OnKey", "mEnglishFlagShift:" + mEnglishFlagShift);}
 		}
 	
 		// Check if user input [Shift] + [Space] switch keyboard
