@@ -1575,7 +1575,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	 * @param keyCodes
 	 */
 	private void handleCharacter(int primaryCode, int[] keyCodes) {
-		
+
 		// Caculate key press time to handle Eazy IM keys mapping
 		// 1,2,3,4,5,6 map to -(45) =(43) [(91) ](93) ,(44) \(92)
 		if(keyPressTime != 0 && (System.currentTimeMillis() - keyPressTime > 700) 
@@ -2143,4 +2143,5 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
     }
 
 */
+	
 }
