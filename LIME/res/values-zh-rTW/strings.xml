@@ -27,7 +27,7 @@
     <string name="lime_setting_operation_info1_ez">輕鬆對應表版本 (ez.lime): </string>
     <string name="lime_setting_operation_info1_related">預載關聯字庫版本 (assoc.lime): </string>
     <string name="lime_setting_operation_info2">總筆數 : </string> 
-    <string name="lime_setting_operation_notice2">\n[清除資料庫]\n假如您想要重置資料庫請點選下方的按鈕。資料庫重置後可以讓您重頭開始匯入 LIME 字根檔。</string>
+    <string name="lime_setting_operation_notice2">\n[清除資料庫]\n假如您想要重置資料庫請點選下方的按鈕。資料庫重置後可以讓您重頭開始匯入 LIME 字根檔。如果字根匯入動作未完成或中斷，請利用本功能清除未完成匯入的輸入法資料庫。</string>
     <string name="lime_setting_operation_notice3">\n[使用者關聯字備份/還原]\nLIME 程式會依使用者曾輸入過的文字自動建立關聯字資料庫。您可以使用下列的功能進行關聯字資料庫的備份及還原工作。\n</string>
     <string name="lime_setting_operation_info3">總筆數 : </string>
     <string name="lime_setting_operation_notice4">\n[清除關聯字]\n執行這一個功能可以讓系統重新建立關聯字資料庫.</string>
