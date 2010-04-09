@@ -1,3 +1,23 @@
+/*    
+**    Copyright 2010, The LimeIME Open Source Project
+** 
+**    Project Url: http://code.google.com/p/limeime/
+**                 http://android.toload.net/
+**
+**    This program is free software: you can redistribute it and/or modify
+**    it under the terms of the GNU General Public License as published by
+**    the Free Software Foundation, either version 3 of the License, or
+**    (at your option) any later version.
+
+**    This program is distributed in the hope that it will be useful,
+**    but WITHOUT ANY WARRANTY; without even the implied warranty of
+**    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**    GNU General Public License for more details.
+
+**    You should have received a copy of the GNU General Public License
+**    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package net.toload.main;
 
 import java.io.BufferedReader;
@@ -216,65 +236,70 @@ public class LimeDB extends SQLiteOpenHelper {
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 
-		db.execSQL("CREATE TABLE IF NOT EXISTS custom (" + FIELD_id
-				+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
-				+ " text, " + FIELD_WORD + " text, " + FIELD_SCORE
-				+ " integer)");
-		db.execSQL("CREATE INDEX IF NOT EXISTS custom_idx ON custom (" + FIELD_CODE + ")");		
-
-		db.execSQL("CREATE TABLE IF NOT EXISTS mapping (" + FIELD_id
-				+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
-				+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
-				+ " text, " + FIELD_SCORE + " integer)");
-		db.execSQL("CREATE INDEX IF NOT EXISTS mapping_idx_code ON mapping (" + FIELD_CODE + ")");
-		//db.execSQL("CREATE INDEX IF NOT EXISTS mapping_idx_code3r ON mapping (" + FIELD_CODE3R + ")");
-		db.execSQL("CREATE INDEX IF NOT EXISTS mapping_idx_word ON mapping (" + FIELD_CODE + ")");
-		//db.execSQL("CREATE VIEW IF NOT EXISTS mapping_code3r AS SELECT * FROM mapping ORDER BY " + FIELD_CODE3R );
-		
-		db.execSQL("CREATE TABLE IF NOT EXISTS cj (" + FIELD_id
-				+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
-				+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
-				+ " text, " + FIELD_SCORE + " integer)");
-		db.execSQL("CREATE INDEX IF NOT EXISTS cj_idx_code ON cj (" + FIELD_CODE + ")");
-		//db.execSQL("CREATE INDEX IF NOT EXISTS cj_idx_code3r ON cj (" + FIELD_CODE3R + ")");
-		db.execSQL("CREATE INDEX IF NOT EXISTS cj_idx_word ON cj (" + FIELD_WORD + ")");
-		//db.execSQL("CREATE VIEW IF NOT EXISTS cj_code3r AS SELECT * FROM cj ORDER BY " + FIELD_CODE3R );
-		
-		db.execSQL("CREATE TABLE IF NOT EXISTS dayi (" + FIELD_id
-				+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
-				+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
-				+ " text, " + FIELD_SCORE + " integer)");
-		db.execSQL("CREATE INDEX IF NOT EXISTS dayi_idx_code ON dayi (" + FIELD_CODE + ")");
-		//db.execSQL("CREATE INDEX IF NOT EXISTS dayi_idx_code3r ON dayi (" + FIELD_CODE3R + ")");
-		db.execSQL("CREATE INDEX IF NOT EXISTS dayi_idx_word ON dayi (" + FIELD_WORD + ")");
-		//db.execSQL("CREATE VIEW IF NOT EXISTS dayi_code3r AS SELECT * FROM dayi ORDER BY " + FIELD_CODE3R );
-
-		db.execSQL("CREATE TABLE IF NOT EXISTS phonetic (" + FIELD_id
-				+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
-				+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
-				+ " text, " + FIELD_SCORE + " integer)");
-		db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_code ON phonetic (" + FIELD_CODE + ")");
-		//db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_code3r ON phonetic (" + FIELD_CODE3R + ")");
-		db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_word ON phonetic (" + FIELD_CODE + ")");
-		//db.execSQL("CREATE VIEW IF NOT EXISTS phonetic_code3r AS SELECT * FROM phonetic ORDER BY " + FIELD_CODE3R );
+		// ignore error when create tables
+		try{
+			db.execSQL("CREATE TABLE IF NOT EXISTS custom (" + FIELD_id
+					+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
+					+ " text, " + FIELD_WORD + " text, " + FIELD_SCORE
+					+ " integer)");
+			db.execSQL("CREATE INDEX IF NOT EXISTS custom_idx ON custom (" + FIELD_CODE + ")");		
 	
-		db.execSQL("CREATE TABLE IF NOT EXISTS ez (" + FIELD_id
-				+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
-				+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
-				+ " text, " + FIELD_SCORE + " integer)");
-		db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_code ON ez (" + FIELD_CODE + ")");
-		//db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_code3r ON ez (" + FIELD_CODE3R + ")");
-		db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_word ON ez (" + FIELD_CODE + ")");
-		//db.execSQL("CREATE VIEW IF NOT EXISTS ez_code3r AS SELECT * FROM ez ORDER BY " + FIELD_CODE3R );
+			db.execSQL("CREATE TABLE IF NOT EXISTS mapping (" + FIELD_id
+					+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
+					+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
+					+ " text, " + FIELD_SCORE + " integer)");
+			db.execSQL("CREATE INDEX IF NOT EXISTS mapping_idx_code ON mapping (" + FIELD_CODE + ")");
+			//db.execSQL("CREATE INDEX IF NOT EXISTS mapping_idx_code3r ON mapping (" + FIELD_CODE3R + ")");
+			db.execSQL("CREATE INDEX IF NOT EXISTS mapping_idx_word ON mapping (" + FIELD_CODE + ")");
+			//db.execSQL("CREATE VIEW IF NOT EXISTS mapping_code3r AS SELECT * FROM mapping ORDER BY " + FIELD_CODE3R );
+			
+			db.execSQL("CREATE TABLE IF NOT EXISTS cj (" + FIELD_id
+					+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
+					+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
+					+ " text, " + FIELD_SCORE + " integer)");
+			db.execSQL("CREATE INDEX IF NOT EXISTS cj_idx_code ON cj (" + FIELD_CODE + ")");
+			//db.execSQL("CREATE INDEX IF NOT EXISTS cj_idx_code3r ON cj (" + FIELD_CODE3R + ")");
+			db.execSQL("CREATE INDEX IF NOT EXISTS cj_idx_word ON cj (" + FIELD_WORD + ")");
+			//db.execSQL("CREATE VIEW IF NOT EXISTS cj_code3r AS SELECT * FROM cj ORDER BY " + FIELD_CODE3R );
+			
+			db.execSQL("CREATE TABLE IF NOT EXISTS dayi (" + FIELD_id
+					+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
+					+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
+					+ " text, " + FIELD_SCORE + " integer)");
+			db.execSQL("CREATE INDEX IF NOT EXISTS dayi_idx_code ON dayi (" + FIELD_CODE + ")");
+			//db.execSQL("CREATE INDEX IF NOT EXISTS dayi_idx_code3r ON dayi (" + FIELD_CODE3R + ")");
+			db.execSQL("CREATE INDEX IF NOT EXISTS dayi_idx_word ON dayi (" + FIELD_WORD + ")");
+			//db.execSQL("CREATE VIEW IF NOT EXISTS dayi_code3r AS SELECT * FROM dayi ORDER BY " + FIELD_CODE3R );
 	
-		db.execSQL("CREATE TABLE IF NOT EXISTS related(" 
-				+ FIELD_DIC_id 	+ " INTEGER primary key autoincrement, " 
-				//+ FIELD_DIC_pcode + " text, " + FIELD_DIC_ccode + " text, "
-				+ FIELD_DIC_cword + " text, " + FIELD_DIC_pword + " text, "
-				+ FIELD_DIC_score + " integer)");
-		db.execSQL("CREATE INDEX IF NOT EXISTS related_idx_pword ON related (" + FIELD_DIC_pword + ")");
-		//db.execSQL("CREATE INDEX IF NOT EXISTS related_idx_cword ON related (" + FIELD_DIC_cword + ")");
+			db.execSQL("CREATE TABLE IF NOT EXISTS phonetic (" + FIELD_id
+					+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
+					+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
+					+ " text, " + FIELD_SCORE + " integer)");
+			db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_code ON phonetic (" + FIELD_CODE + ")");
+			//db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_code3r ON phonetic (" + FIELD_CODE3R + ")");
+			db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_word ON phonetic (" + FIELD_CODE + ")");
+			//db.execSQL("CREATE VIEW IF NOT EXISTS phonetic_code3r AS SELECT * FROM phonetic ORDER BY " + FIELD_CODE3R );
+		
+			db.execSQL("CREATE TABLE IF NOT EXISTS ez (" + FIELD_id
+					+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
+					+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
+					+ " text, " + FIELD_SCORE + " integer)");
+			db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_code ON ez (" + FIELD_CODE + ")");
+			//db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_code3r ON ez (" + FIELD_CODE3R + ")");
+			db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_word ON ez (" + FIELD_CODE + ")");
+			//db.execSQL("CREATE VIEW IF NOT EXISTS ez_code3r AS SELECT * FROM ez ORDER BY " + FIELD_CODE3R );
+		
+			db.execSQL("CREATE TABLE IF NOT EXISTS related(" 
+					+ FIELD_DIC_id 	+ " INTEGER primary key autoincrement, " 
+					//+ FIELD_DIC_pcode + " text, " + FIELD_DIC_ccode + " text, "
+					+ FIELD_DIC_cword + " text, " + FIELD_DIC_pword + " text, "
+					+ FIELD_DIC_score + " integer)");
+			db.execSQL("CREATE INDEX IF NOT EXISTS related_idx_pword ON related (" + FIELD_DIC_pword + ")");
+			//db.execSQL("CREATE INDEX IF NOT EXISTS related_idx_cword ON related (" + FIELD_DIC_cword + ")");
 
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -285,7 +310,11 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		try{
 		
-		db.execSQL("DROP INDEX IF EXISTS mapping_idx");
+		//db.execSQL("DROP INDEX IF EXISTS mapping_idx");
+
+		// Backup old mapping
+		db.execSQL("ALTER TABLE mapping RENAME TO mapping_old");
+		
 		db.execSQL("DROP INDEX IF EXISTS userdic_idx");
 		db.execSQL("CREATE TABLE IF NOT EXISTS userdic(" + FIELD_DIC_id
 				+ " INTEGER primary key autoincrement, " + " "
@@ -312,8 +341,15 @@ public class LimeDB extends SQLiteOpenHelper {
 
 		onCreate(db);  // Make sure all table exist
 		
-		db.execSQL("ALTER TABLE mapping ADD COLUMN " + FIELD_CODE3R + " text DEFAULT '0'");
-		db.execSQL("ALTER TABLE mapping RENAME TO mapping_old");
+		// Rebuild mapping table from backup
+		db.execSQL("INSERT INTO mapping ("
+				+ FIELD_CODE + ", " + FIELD_CODE3R + ", " + FIELD_WORD + ", "+ FIELD_SCORE +")"
+				+ " SELECT "
+				+ FIELD_CODE +", "+ "'0'" + ", " + FIELD_WORD + ", " + FIELD_SCORE
+				+ " FROM mapping_old"
+				);
+
+		//db.execSQL("ALTER TABLE mapping ADD COLUMN " + FIELD_CODE3R + " text DEFAULT '0'");
 		//db.execSQL("ALTER TABLE cj RENAME TO cj_old");	
 		//db.execSQL("ALTER TABLE dayi RENAME TO dayi_old");
 		//db.execSQL("ALTER TABLE phonetic RENAME TO phonetic_old");
@@ -1962,6 +1998,7 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 	public void restoreRelatedUserdic() {
 		relatedfinish = false;
 		final File targetFile = new File("/sdcard/lime/limedb.txt");
+		final File alternativeFile = new File("/sdcard/limedb.txt");
 		SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
 		sp.edit().putString(MAPPING_LOADING, "yes").commit();
 			
@@ -1972,13 +2009,11 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 		
 		thread = new Thread() {
 			public void run() {
-
-		
-		
 	
 
+		// Use alternative file if cannot found from default path
 		//ArrayList temp = new ArrayList();
-		if (targetFile.exists()) {
+		if (targetFile.exists() || alternativeFile.exists()) {
 
 			deleteDictionaryAll();
 			
@@ -1989,7 +2024,13 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 			SQLiteDatabase db = getWritableDatabase();
 			db.beginTransaction();
 			try {
-				fis = new FileReader(targetFile);
+
+				if(!targetFile.exists()){
+					fis = new FileReader(targetFile);
+				}else{
+					fis = new FileReader(alternativeFile);
+				}
+				
 				BufferedReader br = new BufferedReader(fis);
 
 				String line = "";
