@@ -27,7 +27,7 @@
     <string name="lime_setting_operation_info1_ez">Eazy Table Version (ez.lime): </string>
     <string name="lime_setting_operation_info1_related">Preload related words database Version (assoc.lime): </string>
     <string name="lime_setting_operation_info2">Total Record : </string>
-    <string name="lime_setting_operation_notice2">\n[Reset Mapping Table]\nIf you would like to reset the database please click button below, this action allow you to clean import status and reload mapping file.</string>
+    <string name="lime_setting_operation_notice2">\n[Reset Mapping Table]\nIf you would like to reset the database please click button below, this action allow you to clean import status and reload mapping file. If previous import action stop or failed unexpectedly you would need to reset uncompleted table.</string>
     <string name="lime_setting_operation_notice3">\n[Learned related Words Management]\nLime program will build related words base on what you input to the system from other applications.\nYou can use the functions below to backup/restore related words.\n</string>
     <string name="lime_setting_operation_info3">Total Record : </string>
     <string name="lime_setting_operation_notice4">\n[Reset Related Words]\Reset related words from the database and build new dataset.</string>

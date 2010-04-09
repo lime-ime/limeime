@@ -13,7 +13,7 @@
 	-->
 <ScrollView android:id="@+id/SettingsView"
 	android:layout_width="fill_parent" android:layout_height="fill_parent"
-	xmlns:android="http://schemas.android.com/apk/res/android">
+	xmlns:android="http://schemas.android.com/apk/res/android" android:screenOrientation="portrait">
 	<TableLayout android:id="@+id/TableLayout01"
 		android:layout_height="wrap_content" android:layout_width="fill_parent"
 		android:paddingBottom="10px">
