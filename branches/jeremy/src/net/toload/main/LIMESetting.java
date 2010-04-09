@@ -1,3 +1,23 @@
+/*    
+**    Copyright 2010, The LimeIME Open Source Project
+** 
+**    Project Url: http://code.google.com/p/limeime/
+**                 http://android.toload.net/
+**
+**    This program is free software: you can redistribute it and/or modify
+**    it under the terms of the GNU General Public License as published by
+**    the Free Software Foundation, either version 3 of the License, or
+**    (at your option) any later version.
+
+**    This program is distributed in the hope that it will be useful,
+**    but WITHOUT ANY WARRANTY; without even the implied warranty of
+**    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**    GNU General Public License for more details.
+
+**    You should have received a copy of the GNU General Public License
+**    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package net.toload.main;
 
 import java.io.BufferedReader;
@@ -142,15 +162,6 @@ public class LIMESetting extends Activity {
 		
 		this.setContentView(R.layout.setting);
 		
-		scrollSetting = (ScrollView) this.findViewById(R.id.SettingsView);
-		scrollSetting.setOnTouchListener(new OnTouchListener(){
-			@Override
-			public boolean onTouch(View v, MotionEvent event) {
-				updateInformation();
-				return false;
-			}
-		});
-		
 		if (res == null) {
 			res = this.getResources();
 		}
@@ -162,7 +173,7 @@ public class LIMESetting extends Activity {
 		getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
 		
 		// Add by Jeremy '10, 3, 27. reset loading status.
-		ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
+		// ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
 		
 		// Get sdcard path from enviroment
 		localRoot = Environment.getExternalStorageDirectory().getAbsolutePath() +"/lime" ;
@@ -179,111 +190,14 @@ public class LIMESetting extends Activity {
 		copyRAWFile(getResources().openRawResource(R.raw.ez), localRoot + "/ez.lime" );
 		copyRAWFile(getResources().openRawResource(R.raw.scj6), localRoot + "/scj6.lime" );
 		copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/assoc.lime" );
-
 		
-		// Handle Load Mapping
-		btnLoadLocal = (Button) this.findViewById(R.id.btnLoadLocal);
-		btnLoadLocal.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				 // return if db is busy.
-				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
-					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
-					return;
-				}
-				hasSelectFile = false;
-				showTablePicker(COMMAND_LOAD_TABLE);
-				
-				//selectLimeFile(localRoot);
-			}
-		});
-
-		// Handle Reset Mapping
-		btnReset = (Button) this.findViewById(R.id.btnReset);
-		btnReset.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				/* Move to resetMapping()
-				try {
-				Toast.makeText(v.getContext(), R.string.lime_setting_notification_mapping_reset, Toast.LENGTH_LONG).show();	
-				DBSrv.resetMapping();
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-				*/
-				 // return if db is busy.
-				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
-					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
-					return;
-				}
-				showTablePicker(COMMAND_RESET_TABLE);
-				updateInformation();
-			}
-		});
-
-		// Handle Reset Dictionary
-		btnResetDictionary = (Button) this.findViewById(R.id.btnResetDictionary);
-		btnResetDictionary.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				// return if db is busy.
-				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
-					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
-					return;
-				}
-				try {
-					Toast.makeText(v.getContext(), R.string.lime_setting_notification_userdic_reset, Toast.LENGTH_LONG).show();
-					DBSrv.resetUserBackup();
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-				updateInformation();
-			}
-		});
-
-		// Backup Related Database
-		btnBackup = (Button) this.findViewById(R.id.btnBackup);
-		btnBackup.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				 // return if db is busy.
-				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
-					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
-					return;
-				}
-				try {
-					Toast.makeText(v.getContext(), R.string.lime_setting_backup_message, Toast.LENGTH_LONG).show();
-					DBSrv.executeUserBackup();
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-				updateInformation();
-				//backgroundUpdate();
-			}
-		});
-		
-		// Restore Related Database
-		btnRestore = (Button) this.findViewById(R.id.btnRestore);
-		btnRestore.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				 // return if db is busy.
-				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
-					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
-					return;
-				}
-				try {
-					Toast.makeText(v.getContext(), R.string.lime_setting_restore_message, Toast.LENGTH_LONG).show();
-					DBSrv.restoreRelatedUserdic();
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-				//backgroundUpdate();
-			}
-		});
-		
-		// Update Information
-		updateInformation();
+		 // return if db is busy.
+		SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+		if( (importset.getString(MAPPING_LOADING, "null")).equals("null")){
+			// Reset Mapping Database
+			ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
+			return;
+		}
 
 	}
 
@@ -742,6 +656,132 @@ public class LIMESetting extends Activity {
     		e.printStackTrace();   
            }   
      }
+
+	/* (non-Javadoc)
+	 * @see android.app.Activity#onStart()
+	 */
+	@Override
+	protected void onStart() {
+
+		scrollSetting = (ScrollView) this.findViewById(R.id.SettingsView);
+		scrollSetting.setOnTouchListener(new OnTouchListener(){
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				updateInformation();
+				return false;
+			}
+		});
+		
+		// Handle Load Mapping
+		btnLoadLocal = (Button) this.findViewById(R.id.btnLoadLocal);
+		btnLoadLocal.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				 // return if db is busy.
+				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
+					return;
+				}
+				hasSelectFile = false;
+				showTablePicker(COMMAND_LOAD_TABLE);
+				//selectLimeFile(localRoot);
+			}
+		});
+
+		// Handle Reset Mapping
+		btnReset = (Button) this.findViewById(R.id.btnReset);
+		btnReset.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				/* Move to resetMapping()
+				try {
+				Toast.makeText(v.getContext(), R.string.lime_setting_notification_mapping_reset, Toast.LENGTH_LONG).show();	
+				DBSrv.resetMapping();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+				*/
+
+				// Reset Mapping Database
+				ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
+				
+				 // return if db is busy.
+				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
+					return;
+				}
+				showTablePicker(COMMAND_RESET_TABLE);
+				updateInformation();
+			}
+		});
+
+		// Handle Reset Dictionary
+		btnResetDictionary = (Button) this.findViewById(R.id.btnResetDictionary);
+		btnResetDictionary.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				// return if db is busy.
+				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
+					return;
+				}
+				try {
+					Toast.makeText(v.getContext(), R.string.lime_setting_notification_userdic_reset, Toast.LENGTH_LONG).show();
+					DBSrv.resetUserBackup();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+				updateInformation();
+			}
+		});
+
+		// Backup Related Database
+		btnBackup = (Button) this.findViewById(R.id.btnBackup);
+		btnBackup.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				 // return if db is busy.
+				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
+					return;
+				}
+				try {
+					Toast.makeText(v.getContext(), R.string.lime_setting_backup_message, Toast.LENGTH_LONG).show();
+					DBSrv.executeUserBackup();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+				updateInformation();
+				//backgroundUpdate();
+			}
+		});
+		
+		// Restore Related Database
+		btnRestore = (Button) this.findViewById(R.id.btnRestore);
+		btnRestore.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				 // return if db is busy.
+
+				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
+					return;
+				}
+				try {
+					Toast.makeText(v.getContext(), R.string.lime_setting_restore_message, Toast.LENGTH_LONG).show();
+					DBSrv.restoreRelatedUserdic();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+				//backgroundUpdate();
+			}
+		});
+		
+		// Update Information
+		updateInformation();
+		
+		super.onStart();
+	}
 
  
  
