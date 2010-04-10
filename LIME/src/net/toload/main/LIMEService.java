@@ -163,6 +163,9 @@ public class LIMEService extends InputMethodService implements
 	// To keep key press time
 	private long keyPressTime = 0;
 	
+	//Keep keydown event
+	KeyEvent mKeydownEvent = null;
+	
 	private int previousKeyCode = 0;
 	private final float moveLength = 15;
 	private ISearchService SearchSrv = null;
@@ -553,7 +556,8 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		
+			
+			mKeydownEvent = new KeyEvent(event);
 			// 	Record key press time (key down, for physical keys)
 			if(!keydown ){
 				keyPressTime = System.currentTimeMillis();
@@ -656,7 +660,10 @@ public class LIMEService extends InputMethodService implements
 				else //if( LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON)>0 )
 					break; 
 			case KeyEvent.KEYCODE_AT:
-				// do nothing until OnKeyUp 
+				// do nothing until OnKeyUp
+				//if(keyPressTime != 0 && System.currentTimeMillis() - keyPressTime > 700){
+				//	switchChiEng();
+				//}
 				return true;
 				
 			default:
@@ -746,8 +753,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	 */
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		
 		keydown = false;
+		
 		
 		switch (keyCode) {
 		//*/------------------------------------------------------------------------
@@ -772,20 +779,17 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			if(waitingEnterUp) {return true;};
 		case KeyEvent.KEYCODE_AT:
 			// Long press physical @ key to swtich chn/eng
-			long elapsedTime = System.currentTimeMillis() - keyPressTime;
-			//Log.i("onKeyUp","@ keyup keyPressTime:"+ keyPressTime + "CurrentTime:" +System.currentTimeMillis()
-			//		+ " elapsedtime:" +elapsedTime);
-			if(keyPressTime != 0 && elapsedTime > 700){
+	
+			if( keyPressTime != 0 && System.currentTimeMillis() - keyPressTime > 700){
 				switchChiEng();
 				return true;
-			}else{
-				if ( ( (mEnglishOnly && mPredictionOn)
-					|| (!mEnglishOnly && onIM))
+			}else if( ( (mEnglishOnly && mPredictionOn)	|| (!mEnglishOnly && onIM))
 					&& translateKeyDown(keyCode, event)) {
 				return true;
-				}
+			}else{
+				super.onKeyDown(keyCode, mKeydownEvent);
 			}
-			
+		
 		default:
 			// Clear MetaKeyStates 
 			//if(LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON ) == 1) {  
