@@ -18,11 +18,11 @@
     <string name="label_send_key">Send</string>
     
     <!-- LIME Setting -->
-    <string name="lime_setting_title">LIME 2.0v \n\n**Upgrade from 1.7.x or you would like to use [3 Rows Keybaord Remapping] feature please import IM mapping file again. \n\nThis is a tools which can help you build custom input method by import a set of IM mapping into database. you can get more info from the official website.\nhttp://android.toload.net/</string>
+    <string name="lime_setting_title">LIME 2.0.1v \n\n**Upgrade from 1.7.x or you would like to use [3 Rows Keybaord Remapping] feature please import IM mapping file again. \n\nThis is a tools which can help you build custom input method by import a set of IM mapping into database. Regarding how to use LIME and where to get mapping file please visit official website.\nhttp://android.toload.net/</string>
     <string name="lime_setting_operation_notice1">\n[Import Mapping Table]\nBefore you start using LIME IME, you would need to load valid .lime or .cin into the database.\n\nStart from version 2.0 LIME preloaded mapping files, related files will be transfer to your sdcard/lime/ folder after program installed.\n</string>
     <string name="lime_setting_operation_info1">Default Table Version : </string>
     <string name="lime_setting_operation_info1_cj">Changjei Table Version (cj.cin): </string>
-    <string name="lime_setting_operation_info1_dayi">Dayi Table Version (dayi3.cin): </string>
+    <string name="lime_setting_operation_info1_dayi">Dayi Table Version : </string>
     <string name="lime_setting_operation_info1_bpmf">Phonetic Table Version (bpmf.cin): </string>
     <string name="lime_setting_operation_info1_ez">Eazy Table Version (ez.lime): </string>
     <string name="lime_setting_operation_info1_related">Preload related words database Version (assoc.lime): </string>
@@ -107,7 +107,7 @@
     <string name="accept_symbol_index">Activate symbol</string>
     <string name="accept_symbol_index_summary">Allow punctuation as mapping code</string>
     <string name="switch_english_mode">Quick switch hotkey</string>
-    <string name="switch_english_mode_summary">[SHIFT]+[SPACE] switch typing mode</string>
+    <string name="switch_english_mode_summary">[SHIFT]+[SPACE] switch typing mode [Physical Keyboard]</string>
     
     
     <!-- Changjei Keyboard, Standard Keyboard-->

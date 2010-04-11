@@ -151,6 +151,10 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasSymbolMapping = false;
 	private boolean hasKeyPress = false;
 	private boolean hasQuickSwitch = false;
+	
+	// Hard Keyboad Shift + Space Status
+	private boolean hasShiftPress = false;
+	private boolean hasSpacePress = false;
 
 	private String keyboardSelection;
 
@@ -753,8 +757,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	 */
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		keydown = false;
 		
+		keydown = false;
 		
 		switch (keyCode) {
 		//*/------------------------------------------------------------------------
@@ -762,7 +766,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		// keep track of alt state with mHasAlt.
 		// Modified '10, 3, 24 for bug fix and alc-lock implementation
 		case KeyEvent.KEYCODE_SHIFT_LEFT:
+			hasShiftPress = true;
 		case KeyEvent.KEYCODE_SHIFT_RIGHT:
+			hasShiftPress = true;
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,
@@ -790,7 +796,29 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				super.onKeyDown(keyCode, mKeydownEvent);
 			}
 		
+			break;
+		case KeyEvent.KEYCODE_SPACE:
+			hasSpacePress = true;
+			
+			// If user enable Quick Switch Mode control then check if has Shift+Space combination
+			if(hasQuickSwitch){
+				if(hasSpacePress && hasShiftPress){
+					this.switchChiEng();
+					hasShiftPress = false;
+					hasSpacePress = false;
+				}else{
+					// If no shift press then reset
+					hasShiftPress = false;
+					hasSpacePress = false;
+				}
+			}
+			
 		default:
+
+			// Reset flags 
+			hasShiftPress = false;
+			hasSpacePress = false;
+			
 			// Clear MetaKeyStates 
 			//if(LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON ) == 1) {  
 			//	InputConnection ic = getCurrentInputConnection();	
@@ -835,10 +863,24 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				if (onIM) {
 					if (firstMatched != null && firstMatched.getWord() != null && !firstMatched.getWord().equals("")) {
 						int firstMatchedLength = firstMatched.getWord().length();
+						
 						if (firstMatched.getCode() == null || firstMatched.getCode().equals("")) {
 							firstMatchedLength = 1;
 						}
-						inputConnection.commitText(firstMatched.getWord(), firstMatchedLength);
+						
+						String wordToCommit = firstMatched.getWord();
+						
+						if(firstMatched != null && firstMatched.getCode() != null && firstMatched.getWord() != null){
+							if(firstMatched.getCode().toLowerCase().equals(firstMatched.getWord().toLowerCase())){
+								firstMatchedLength = 1;
+								
+								// if end with code then append " " space
+								wordToCommit += " ";
+							}
+						}
+						
+						//Log.i("ART","Length:"+ firstMatchedLength);
+						inputConnection.commitText(wordToCommit, firstMatchedLength);
 							try {
 								SearchSrv.updateMapping(firstMatched.getId(), 
 										firstMatched.getCode(), 
@@ -981,20 +1023,18 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	}
 
 	private void switchChiEng() {
-		mEnglishOnly = !mEnglishOnly;
-		   // cancel candidate view if it's shown
-        if (mCandidateView != null) {
-			mCandidateView.clear();
-		}
-		mComposing.setLength(0);
-		setCandidatesViewShown(false);
-		if (mEnglishOnly) {
-			Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
-		} else {
-			Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
-		}
-		
-		
+			mEnglishOnly = !mEnglishOnly;
+			   // cancel candidate view if it's shown
+	        if (mCandidateView != null) {
+				mCandidateView.clear();
+			}
+			mComposing.setLength(0);
+			setCandidatesViewShown(false);
+			if (mEnglishOnly) {
+				Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
+			} else {
+				Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
+			}
 	}
 	// Implementation of KeyboardViewListener
 
@@ -1008,22 +1048,34 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			if(DEBUG){ Log.i("OnKey", "mEnglishFlagShift:" + mEnglishFlagShift);}
 		}
 	
+		/**
 		// Check if user input [Shift] + [Space] switch keyboard
-		if(hasQuickSwitch == true){
-			if( (mEnglishFlagShift == true || 
-					LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_SHIFT_ON)== 1)
-					&& primaryCode == 32 )	{
-				//Log.i("OnKey", "shift-space...") ;
+		if(hasQuickSwitch){
+
+			if(primaryCode == -1){ hasShiftPress = true; }
+			
+			if(primaryCode == 32 && hasShiftPress){
 				
-				switchChiEng();
-				// Reset Shift Status
-				mEnglishFlagShift = false;
-				mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
-				return;
+				//if( (mEnglishFlagShift == true || 
+				//		LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_SHIFT_ON)== 1)
+				//		&& primaryCode == 32 )	{
+					//Log.i("OnKey", "shift-space...") ;
+					
+					switchChiEng();
+					
+					// Reset Shift Status
+					mEnglishFlagShift = false;
+					hasShiftPress = false;
+					mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+					return;
+				//}
+			}else if(primaryCode != -1){
+				hasShiftPress = false;
 			}
 				
 		}
-	
+		**/
+		
 	
 		if (isWordSeparator(primaryCode)) {
 			if (mComposing.length() > 0) {
@@ -1119,6 +1171,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
      * Add by Jeremy '10, 3, 24 for keyboard picker menu in options menu
      */
     private void showKeyboardPicker(){
+    	
     	AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(true);
         builder.setIcon(R.drawable.sym_keyboard_done);
@@ -1131,16 +1184,48 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         
         if (keyboardSelection.equals("lime")){
 			curKB=0;
+
+			// Base on preference setting
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+			hasNumberMapping = sp.getBoolean("accept_number_index", false);
+			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+			
 		} else if(keyboardSelection.equals("phone")){
 			curKB=1;
+			
+			// Enable Number and Symbol Mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
+			
 		} else if(keyboardSelection.equals("cj")){
 			curKB=2;
+
+			// Base on preference setting
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+			hasNumberMapping = sp.getBoolean("accept_number_index", false);
+			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+			
 		} else if(keyboardSelection.equals("dayi")){
 			curKB=3;
+			
+			// Enable Number and Symbol Mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
+			
 		} else if(keyboardSelection.equals("phonetic")){
 			curKB=4;
+			
+			// Enable Number and Symbol Mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
+			
 		} else if(keyboardSelection.equals("ez")){
 			curKB=5;
+			
+			// Enable Number and Symbol Mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
+			
 		}
 		
         builder.setSingleChoiceItems(
@@ -1349,6 +1434,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 
 	private void updateShift(int primaryCode) {
 
+		
 		if (mInputView == null) { return; }
 
 		// Check Shift Status	
@@ -1507,7 +1593,6 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			}
 		}else if(primaryCode == KEYBOARD_SWITCH_CODE){
 
-
 			if( current == mCJNumberKeyboard ||
 				current == mCJNumberShiftKeyboard ||
 				current == mCJKeyboard ||
@@ -1598,15 +1683,31 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		} else if (keyboardSelection.equals("phonetic")) {
 			mInputView.setKeyboard(mPhoneticKeyboard);
 			mCurKeyboard = mPhoneticKeyboard;
+			
+			// Should use number and symbol mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
 		} else if (keyboardSelection.equals("ez")) {
 			mInputView.setKeyboard(mEZKeyboard);
 			mCurKeyboard = mEZKeyboard;
+			
+			// Should use number and symbol mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
 		} else if (keyboardSelection.equals("dayi")) {
 			mInputView.setKeyboard(mDayiKeyboard);
 			mCurKeyboard = mDayiKeyboard;
+			
+			// Should use number and symbol mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
 		} else if (keyboardSelection.equals("phone")) {
 			mInputView.setKeyboard(mPhoneKeyboard);
 			mCurKeyboard = mPhoneKeyboard;
+			
+			// Should use number and symbol mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
 		}
 
 		// Set db table name.	

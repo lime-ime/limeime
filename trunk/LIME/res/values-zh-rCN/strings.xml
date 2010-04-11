@@ -18,11 +18,11 @@
     <string name="label_send_key">Send</string>
     
     <!-- LIME Setting -->
-    <string name="lime_setting_title">LIME 2.0v \n\n**由 1.7.x 升级或者您欲使用新版本上的[3排键盘重对应]请重新汇入字根档。\n\n自定义输入法建立工具。透过 LIME 输入法字根对应档的汇入，您可以打造完全属于您个人的输入方式。关于对应档的建立方式您可以在官方网站找到更多相关的资讯.\nhttp://android.toload.net/</string>
+    <string name="lime_setting_title">LIME 2.0.1v \n\n**由 1.7.x 升级或者您欲使用新版本上的[3排键盘重对应]请重新汇入字根档。\n\n自定义输入法建立工具。透过 LIME 输入法字根对应档的汇入，您可以打造完全属于您个人的输入方式。您可以在官方网站找到更多 关于 "如何使用 LIME 输入法?" 或 "那里可以下载字根档?" 等相关资讯.\nhttp://android.toload.net/</string>
     <string name="lime_setting_operation_notice1">\n[载入对应表]\n您必需先汇入完整字根对应表才能开始输入文字，请选择适当的 .LIME 或 .CIN 进行资料载入动作。\n\n由 LIME 2.0 版本开始预先提供多种输入法的字根档，字根档会自动拷贝至 sdcard/lime/ 目录下，您也可以依据个人的喜好利用适当的工具进行内容的调整.\n</string>
     <string name="lime_setting_operation_info1">预设对应表版本 : </string>
     <string name="lime_setting_operation_info1_cj">仓颉对应表版本(cj.cin) : </string>
-    <string name="lime_setting_operation_info1_dayi">大易对应表版本 (dayi3.cin): </string>
+    <string name="lime_setting_operation_info1_dayi">大易对应表版本 : </string>
     <string name="lime_setting_operation_info1_bpmf">注音对应表版本 (bpmf.cin): </string>
     <string name="lime_setting_operation_info1_ez">轻松对应表版本 (ez.lime): </string>
     <string name="lime_setting_operation_info1_related">预载关联字库版本 (assoc.lime): </string>
@@ -107,7 +107,7 @@
     <string name="accept_symbol_index">启动符号对应</string>
     <string name="accept_symbol_index_summary">允许使用符号为输入法字根</string>
     <string name="switch_english_mode">快速切换输入模式</string>
-    <string name="switch_english_mode_summary">[SHIFT]+[SPACE] 键切换输入模式</string>
+    <string name="switch_english_mode_summary">[SHIFT]+[SPACE] 键切换输入模式 (实体键盘)</string>
     
     <!-- Changjei Keyboard, Standard Keyboard-->
     <string name="typing_mode_english">切换输入模式 / 英文</string>
