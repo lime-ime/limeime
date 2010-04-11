@@ -45,6 +45,7 @@ public class SearchService extends Service {
 	private static boolean SQLSELECT = true;
 	
 	private final static String TOTAL_RECORD = "total_record";
+	
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_TOTAL_RECORD = "cj_total_record";
 	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";

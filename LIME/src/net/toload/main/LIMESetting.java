@@ -186,7 +186,7 @@ public class LIMESetting extends Activity {
 		// Copy raw .cin file into /sdcard/lime/
 		copyRAWFile(getResources().openRawResource(R.raw.bpmf), localRoot + "/bpmf.cin" );
 		copyRAWFile(getResources().openRawResource(R.raw.cj), localRoot + "/cj.cin" );
-		copyRAWFile(getResources().openRawResource(R.raw.dayi3), localRoot + "/dayi3.cin" );
+		//copyRAWFile(getResources().openRawResource(R.raw.dayi3), localRoot + "/dayi3.cin" );
 		copyRAWFile(getResources().openRawResource(R.raw.ez), localRoot + "/ez.lime" );
 		copyRAWFile(getResources().openRawResource(R.raw.scj6), localRoot + "/scj6.lime" );
 		copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/assoc.lime" );
@@ -703,6 +703,7 @@ public class LIMESetting extends Activity {
 
 				// Reset Mapping Database
 				ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
+
 				
 				 // return if db is busy.
 				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
