@@ -1620,6 +1620,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					}else{
 						Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
 					}
+					SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+					hasNumberMapping = sp.getBoolean("accept_number_index", false);
+					hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
 				} else if(keyboardSelection.equals("cj")){
 					if (hasNumberKeypads) {
 						current = mCJNumberKeyboard;
@@ -1627,22 +1630,33 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 						current = mCJKeyboard;
 					}
 					onIM = true;
+					SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+					hasNumberMapping = sp.getBoolean("accept_number_index", false);
+					hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
 					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
 				} else if(keyboardSelection.equals("phonetic")){
 					current = mPhoneticKeyboard;
 					onIM = true;
+					hasNumberMapping = true;
+					hasSymbolMapping = true;
 					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
 				} else if(keyboardSelection.equals("ez")){
 					current = mEZKeyboard;
 					onIM = true;
+					hasNumberMapping = true;
+					hasSymbolMapping = true;
 					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
 				} else if(keyboardSelection.equals("dayi")){
 					current = mDayiKeyboard;
 					onIM = true;
+					hasNumberMapping = true;
+					hasSymbolMapping = true;
 					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
 				} else if(keyboardSelection.equals("phone")){
 					current = mPhoneKeyboard;
 					onIM = true;
+					hasNumberMapping = true;
+					hasSymbolMapping = true;
 					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
 				}
 			}
