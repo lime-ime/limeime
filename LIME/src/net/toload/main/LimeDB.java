@@ -1013,15 +1013,17 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
 									" WHERE " + FIELD_CODE3R + " = '0' " + " AND " + 
 									 FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + 
-									"' ORDER BY " + FIELD_SCORE + " DESC LIMIT " + relatedCodeLimit );
+									"' GROUP BY " +  FIELD_WORD + 
+									" ORDER BY " + FIELD_CODE + ", " + FIELD_SCORE + " DESC LIMIT " + relatedCodeLimit );
 						}
 						else{
 							sql = new String(
 									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
 									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
 									" WHERE " + FIELD_CODE3R + " = '0' " + " AND "  
-									+ FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode
-									+ "' LIMIT " + relatedCodeLimit );	
+									+ FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode +
+									"' GROUP BY "  +  FIELD_WORD + " ORDER BY " + FIELD_CODE +
+									" LIMIT " + relatedCodeLimit );	
 						}
 					}else
 					{
@@ -1031,15 +1033,17 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
 									" WHERE " + 
 									 FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + 
-									"' ORDER BY " + FIELD_SCORE + " DESC LIMIT " + relatedCodeLimit );
+									"' GROUP BY " +  FIELD_WORD + 
+									" ORDER BY " + FIELD_CODE + ", " + FIELD_SCORE + " DESC LIMIT " + relatedCodeLimit );
 						}
 						else{
 							sql = new String(
 									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
 									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
 									" WHERE " 
-									+ FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode
-									+ "' LIMIT " + relatedCodeLimit );
+									+ FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode +
+									"' GROUP BY "  +  FIELD_WORD + " ORDER BY " + FIELD_CODE +
+									" LIMIT " + relatedCodeLimit );
 						}
 						/*
 						prepareQuery(db,keyword, nextCode, relatedCodeLimit);
