@@ -156,6 +156,9 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasShiftPress = false;
 	private boolean hasSpacePress = false;
 
+	// Hard Keyboad Shift + Space Status
+	private boolean hasAltPress = false;
+	
 	private String keyboardSelection;
 
 	private int keyDownCode = 0;
@@ -570,7 +573,25 @@ public class LIMEService extends InputMethodService implements
 			
 			
 			waitingEnterUp = false;
-					
+			
+			// Check if user press ALT+@ keys combination then display keyboard picker window
+			try{
+				if(keyCode == KeyEvent.KEYCODE_ALT_LEFT || keyCode == KeyEvent.KEYCODE_ALT_RIGHT){
+					 hasAltPress = true;
+				}else if(keyCode == KeyEvent.KEYCODE_AT){
+					if(hasAltPress){
+						this.showKeyboardPicker();
+						hasAltPress = false;
+					}else{
+						hasAltPress = false;
+					}
+				}else if(keyCode != KeyEvent.KEYCODE_AT){
+					 hasAltPress = false;
+				}
+			
+			// Ignore error
+			}catch(Exception e){}
+			
 			switch (keyCode) {
 			
 			// Add by Jeremy '10, 3, 29. DPAD selection on candidate view
@@ -774,6 +795,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,
 					keyCode, event);
 			//handleAlt();
+			
 			break;
 		case KeyEvent.KEYCODE_ENTER:
 			// Add by Jeremy '10, 3 ,29.  Pick selected selection if candidates shown.
@@ -783,6 +805,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			//	return mCandidateView.takeSelectedSuggestion();			
 			//}		
 			if(waitingEnterUp) {return true;};
+			// Jeremy '10, 4, 12 bug fix on repeated enter.
+			break;
 		case KeyEvent.KEYCODE_AT:
 			// Long press physical @ key to swtich chn/eng
 	
@@ -875,7 +899,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 								firstMatchedLength = 1;
 								
 								// if end with code then append " " space
-								wordToCommit += " ";
+								// wordToCommit += " ";
 							}
 						}
 						
@@ -1248,6 +1272,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
         mOptionsDialog.show();
         
+        
     }
     
     private void handlKeyboardSelection(int position){
@@ -1277,8 +1302,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}
 		mComposing.setLength(0);
 		setCandidatesViewShown(false);
-        //
-        initialKeyboard();
+        
+	        initialKeyboard();
     	
     }
     
@@ -1574,20 +1599,35 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					}else{
 						current = mKeyboard;
 					}
+
+					SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+					hasNumberMapping = sp.getBoolean("accept_number_index", false);
+					hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
 				} else if(keyboardSelection.equals("cj")){
 					if (hasNumberKeypads) {
 						current = mCJNumberKeyboard;
 					}else{
 						current = mCJKeyboard;
 					}
+					SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+					hasNumberMapping = sp.getBoolean("accept_number_index", false);
+					hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
 				} else if(keyboardSelection.equals("phonetic")){
 					current = mPhoneticKeyboard;
+					hasNumberMapping = true;
+					hasSymbolMapping = true;
 				} else if(keyboardSelection.equals("dayi")){
 					current = mDayiKeyboard;
+					hasNumberMapping = true;
+					hasSymbolMapping = true;
 				} else if(keyboardSelection.equals("ez")){
 					current = mEZKeyboard;
+					hasNumberMapping = true;
+					hasSymbolMapping = true;
 				} else if(keyboardSelection.equals("phone")){
 					current = mPhoneKeyboard;
+					hasNumberMapping = true;
+					hasSymbolMapping = true;
 				}
 				onIM = true;
 			}
@@ -1607,6 +1647,11 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				current = mKeyboard;
 				Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
 				onIM = false;
+
+				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+				hasNumberMapping = sp.getBoolean("accept_number_index", false);
+				hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+				
 			} else {
 				if (keyboardSelection.equals("lime")){
 					if (hasNumberKeypads) {
@@ -1686,6 +1731,11 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				mInputView.setKeyboard(mKeyboard);
 				mCurKeyboard = mKeyboard;
 			}
+
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+			hasNumberMapping = sp.getBoolean("accept_number_index", false);
+			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+			
 		} else if (keyboardSelection.equals("cj")) {
 			if (hasNumberKeypads) {
 				mInputView.setKeyboard(mCJNumberKeyboard);
@@ -1694,6 +1744,10 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				mInputView.setKeyboard(mCJKeyboard);
 				mCurKeyboard = mCJKeyboard;
 			}
+
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+			hasNumberMapping = sp.getBoolean("accept_number_index", false);
+			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
 		} else if (keyboardSelection.equals("phonetic")) {
 			mInputView.setKeyboard(mPhoneticKeyboard);
 			mCurKeyboard = mPhoneticKeyboard;
