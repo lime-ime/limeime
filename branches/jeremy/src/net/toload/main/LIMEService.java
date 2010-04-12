@@ -774,6 +774,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,
 					keyCode, event);
 			//handleAlt();
+			
 			break;
 		case KeyEvent.KEYCODE_ENTER:
 			// Add by Jeremy '10, 3 ,29.  Pick selected selection if candidates shown.
@@ -783,6 +784,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			//	return mCandidateView.takeSelectedSuggestion();			
 			//}		
 			if(waitingEnterUp) {return true;};
+			// Jeremy '10, 4, 12 bug fix on repeated enter.
+			break;
 		case KeyEvent.KEYCODE_AT:
 			// Long press physical @ key to swtich chn/eng
 	
