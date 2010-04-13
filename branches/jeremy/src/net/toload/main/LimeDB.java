@@ -52,6 +52,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -2001,8 +2002,10 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 	//
 	public void restoreRelatedUserdic() {
 		relatedfinish = false;
-		final File targetFile = new File("/sdcard/lime/limedb.txt");
-		final File alternativeFile = new File("/sdcard/limedb.txt");
+		final File sdDir = new File(
+				Environment.getExternalStorageDirectory().getAbsolutePath());
+		final File targetFile = new File(sdDir + "/lime/limedb.txt");	
+		final File alternativeFile = new File(sdDir +"/limedb.txt");
 		SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
 		sp.edit().putString(MAPPING_LOADING, "yes").commit();
 			
@@ -2028,8 +2031,8 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 			SQLiteDatabase db = getWritableDatabase();
 			db.beginTransaction();
 			try {
-
-				if(!targetFile.exists()){
+				// Remove "!" by Jeremy '10, 4, 13
+				if(targetFile.exists()){
 					fis = new FileReader(targetFile);
 				}else{
 					fis = new FileReader(alternativeFile);

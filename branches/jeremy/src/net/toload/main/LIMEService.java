@@ -43,6 +43,7 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
@@ -160,6 +161,8 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasAltPress = false;
 	
 	private String keyboardSelection;
+	private List<String> keyboardList;
+	private List<String> keyboardListCodes;
 
 	private int keyDownCode = 0;
 	private float keyDownX = 0;
@@ -224,8 +227,14 @@ public class LIMEService extends InputMethodService implements
 		
 		keyboardSelection = sp.getString("keyboard_list", "lime");
 		
+	
 		// initial Input List
 		userdiclist = new LinkedList<Mapping>();
+		
+		// initial keyboard list
+		keyboardList = new ArrayList<String>();
+		keyboardListCodes = new ArrayList<String>();
+		buildActiveKeyboardList();
 		
 	}
 
@@ -656,10 +665,9 @@ public class LIMEService extends InputMethodService implements
 				// Modified by Jeremy '10, 3,12
 				// block milestone alt-del to delete whole line
 				// clear alt state before processed by super
-				//InputConnection ic = getCurrentInputConnection();
-				//mHasAlt = false;
-				//if (ic != null) 
-				//	ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+				InputConnection ic = getCurrentInputConnection();
+				if (ic != null) 
+					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 				//------------------------------------------------------------------------
 				break;
 	
@@ -810,9 +818,11 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			// Jeremy '10, 4, 12 bug fix on repeated enter.
 			break;
 		case KeyEvent.KEYCODE_AT:
-			// alt-@ to show keyboardpicker
+			// alt-@ switch to next active keyboard.
 			if( LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON)>0 ){
-				showKeyboardPicker();
+				nextActiveKeyboard();
+				mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+				setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
 				return true;
 			// Long press physical @ key to swtich chn/eng
 			}else if( keyPressTime != 0 && System.currentTimeMillis() - keyPressTime > 700){
@@ -1194,12 +1204,63 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
     }
+    private void nextActiveKeyboard(){
+    	
+    	buildActiveKeyboardList();
+    	int i;
+    	CharSequence keyboardname = "";
+    	for(i=0;i<keyboardListCodes.size();i++){
+        	if(keyboardSelection.equals(keyboardListCodes.get(i))){ 
+        		if(i==keyboardListCodes.size()-1){
+        			keyboardSelection = keyboardListCodes.get(0);
+        			keyboardname = keyboardList.get(0);
+        		}else{
+        			keyboardSelection = keyboardListCodes.get(i+1);
+        			keyboardname = keyboardList.get(i+1);
+        		}     		
+        		break;
+        	}
+        }
+    	  // cancel candidate view if it's shown
+        if (mCandidateView != null) {
+			mCandidateView.clear();
+		}
+		mComposing.setLength(0);
+		setCandidatesViewShown(false);
+		
+    	initialKeyboard();
+    	Toast.makeText(this, keyboardname , Toast.LENGTH_SHORT).show();
+    }
     
     
+    private void buildActiveKeyboardList(){
+    	CharSequence[] items = getResources().getStringArray(R.array.keyboard);
+    	CharSequence[] codes = getResources().getStringArray(R.array.keyboard_codes);
+    	SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+    	String keybaord_state_string = sp.getString("keyboard_state", "0;1;2;3;4;5");
+    	String[] s = keybaord_state_string.toString().split(";");
+
+    	keyboardList.clear();
+    	keyboardListCodes.clear();
+    	
+		for (int i = 0; i < s.length; i++) {
+			int index = Integer.parseInt(s[i]);
+			
+			if (index < items.length) {
+				keyboardList.add(items[index].toString());
+				keyboardListCodes.add(codes[index].toString());
+			} else {
+				break;
+			}
+		}
+    	
+    }
     /**
      * Add by Jeremy '10, 3, 24 for keyboard picker menu in options menu
      */
     private void showKeyboardPicker(){
+    	
+    	buildActiveKeyboardList();
     	
     	AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(true);
@@ -1207,55 +1268,17 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         builder.setNegativeButton(android.R.string.cancel, null);
         builder.setTitle(getResources().getString(R.string.keyboard_list));
         
-        final CharSequence[] items = getResources().getStringArray(R.array.keyboard);
-        
+        CharSequence[] items  = new CharSequence[keyboardList.size()];//= getResources().getStringArray(R.array.keyboard);
         int curKB=0;
+        for(int i=0;i<keyboardList.size();i++){
+        	items[i]=keyboardList.get(i);
+        	if(keyboardSelection.equals(keyboardListCodes.get(i))) 
+        		curKB = i;
+        }
         
-        if (keyboardSelection.equals("lime")){
-			curKB=0;
-
-			// Base on preference setting
-			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-			hasNumberMapping = sp.getBoolean("accept_number_index", false);
-			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
-			
-		} else if(keyboardSelection.equals("phone")){
-			curKB=1;
-			
-			// Enable Number and Symbol Mapping
-			hasNumberMapping = true;
-			hasSymbolMapping = true;
-			
-		} else if(keyboardSelection.equals("cj")){
-			curKB=2;
-
-			// Base on preference setting
-			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-			hasNumberMapping = sp.getBoolean("accept_number_index", false);
-			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
-			
-		} else if(keyboardSelection.equals("dayi")){
-			curKB=3;
-			
-			// Enable Number and Symbol Mapping
-			hasNumberMapping = true;
-			hasSymbolMapping = true;
-			
-		} else if(keyboardSelection.equals("phonetic")){
-			curKB=4;
-			
-			// Enable Number and Symbol Mapping
-			hasNumberMapping = true;
-			hasSymbolMapping = true;
-			
-		} else if(keyboardSelection.equals("ez")){
-			curKB=5;
-			
-			// Enable Number and Symbol Mapping
-			hasNumberMapping = true;
-			hasSymbolMapping = true;
-			
-		}
+        
+        
+        
 		
         builder.setSingleChoiceItems(
         		items, 
@@ -1278,8 +1301,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         	lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
         	window.setAttributes(lp);
         	window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
-        	mOptionsDialog.show();
+        	
         }
+        mOptionsDialog.show();
         
         
     }
@@ -1287,7 +1311,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
     private void handlKeyboardSelection(int position){
     	SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor spe = sp.edit();
-        
+        /*
         if (position == 0){
         		keyboardSelection = "lime";
 		} else if(position == 1){
@@ -1301,6 +1325,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		} else if(position == 5){
 			keyboardSelection = "ez";
 		}
+        */
+        keyboardSelection = keyboardListCodes.get(position);
         
         spe.putString("keyboard_list", keyboardSelection);
         spe.commit();
@@ -1312,7 +1338,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		mComposing.setLength(0);
 		setCandidatesViewShown(false);
         
-	        initialKeyboard();
+	    initialKeyboard();
     	
     }
     
@@ -1726,6 +1752,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	}
 
 	private void initialKeyboard() {
+		
+		buildActiveKeyboardList();
 
 		if (mInputView == null) {
 			mInputView = (KeyboardView) getLayoutInflater().inflate(R.layout.input, null);

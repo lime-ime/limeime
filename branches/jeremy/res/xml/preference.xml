@@ -32,11 +32,12 @@
                 android:key="lime_keyboard"
                 android:title="@string/keyboard"
                 android:summary="">
-        <ListPreference
-				android:key="keyboard_list"
+        <net.toload.main.MultiListPreference
+				android:key="keyboard_state"
 				android:title="@string/keyboard_list"
 				android:entries="@array/keyboard"
-				android:entryValues="@array/keyboard_codes"
+				android:entryValues="@array/keyboard_defaultstate"
+				android:defaultValue="0;1;2;3;4;5"
 				android:dialogTitle="@string/keyboard_list" />
          <CheckBoxPreference
                 android:key="three_rows_remapping"
