@@ -145,6 +145,14 @@
 		<item>Phonetic</item>
 		<item>Eazy</item>
 	</string-array>
+	<string-array name="keyboard_defaultstate">
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+	</string-array>
     <string-array name="keyboard_codes">
 		<item>lime</item>
 		<item>phone</item>
