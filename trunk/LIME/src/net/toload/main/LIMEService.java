@@ -1255,6 +1255,20 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				break;
 			}
 		}
+		
+		//check if the selected keybaord is in active keybaord list.
+		boolean matched = false;
+		for( int i=0; i<keyboardListCodes.size(); i++){
+			if(keyboardSelection.equals(keyboardListCodes.get(i))){
+				matched = true;
+				break;
+			}
+		}
+		if(!matched){
+			// if the selected keyboard is not in the active keyboard list.
+			// set the keyboard to the first active keyboard
+			keyboardSelection = keyboardListCodes.get(0);
+		}
     	
     }
     /**
