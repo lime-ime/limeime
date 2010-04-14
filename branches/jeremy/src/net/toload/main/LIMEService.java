@@ -665,9 +665,11 @@ public class LIMEService extends InputMethodService implements
 				// Modified by Jeremy '10, 3,12
 				// block milestone alt-del to delete whole line
 				// clear alt state before processed by super
-				InputConnection ic = getCurrentInputConnection();
-				if (ic != null) 
-					ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+				//InputConnection ic = getCurrentInputConnection();
+				//if (ic != null){ 
+					//ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
+				mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+				setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
 				//------------------------------------------------------------------------
 				break;
 	
