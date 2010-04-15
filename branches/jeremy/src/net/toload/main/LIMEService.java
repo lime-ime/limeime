@@ -283,7 +283,7 @@ public class LIMEService extends InputMethodService implements
 		mDayiKeyboard = new LIMEKeyboard(this, R.xml.lime_dayi);
 		mDayiShiftKeyboard = new LIMEKeyboard(this,R.xml.lime_dayi_shift);
 
-		// Initial Dayi Keyboard
+		// Initial ez Keyboard
 		mEZKeyboard = new LIMEKeyboard(this, R.xml.lime_ez);
 		mEZShiftKeyboard = new LIMEKeyboard(this,R.xml.lime_ez_shift);
 
@@ -426,31 +426,32 @@ public class LIMEService extends InputMethodService implements
 		onIM = false;
 
 		// Add Custom related words
-		if(userdiclist.size() > 1){
-			
-			for(Mapping dicunit : userdiclist){
-				if(dicunit.getId() == null){continue;}
-				try {
-					SearchSrv.addDictionary(dicunit.getId(), 
-											dicunit.getCode(), 
-											dicunit.getWord(), 
-											dicunit.getPcode(), 
-											dicunit.getPword(), 
-											dicunit.getScore(), 
-											dicunit.isDictionary());
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-			}
+		if(userdiclist.size() > 1) {	updateUserDict();}
+		
+		this.setSuggestions(null, false, false);
+	}
+	
+	private void updateUserDict(){
+		for(Mapping dicunit : userdiclist){
+			if(dicunit.getId() == null){continue;}
 			try {
-				SearchSrv.updateDictionary();
+				SearchSrv.addDictionary(dicunit.getId(), 
+										dicunit.getCode(), 
+										dicunit.getWord(), 
+//										dicunit.getPcode(), 
+										dicunit.getPword(), 
+										dicunit.getScore(), 
+										dicunit.isDictionary());
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
-			userdiclist.clear();
 		}
-		
-		this.setSuggestions(null, false, false);
+		try {
+			SearchSrv.updateDictionary();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+		userdiclist.clear();
 	}
 
 	@Override
@@ -513,7 +514,7 @@ public class LIMEService extends InputMethodService implements
 				CompletionInfo ci = completions[i];
 				if (ci != null)
 					try {
-						stringList.addAll(SearchSrv.query(ci.getText().toString()));
+						stringList.addAll(SearchSrv.query(ci.getText().toString(), hasKeyPress));
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
@@ -572,6 +573,8 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
+			
+			hasKeyPress = false;
 			
 			mKeydownEvent = new KeyEvent(event);
 			// 	Record key press time (key down, for physical keys)
@@ -926,7 +929,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 								SearchSrv.updateMapping(firstMatched.getId(), 
 										firstMatched.getCode(), 
 										firstMatched.getWord(), 
-										firstMatched.getPcode(), 
+//										firstMatched.getPcode(), 
 										firstMatched.getPword(), 
 										firstMatched.getScore(), 
 										firstMatched.isDictionary());
@@ -934,7 +937,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 								e.printStackTrace();
 							}
 						userdiclist.add(firstMatched);
-						
+						// Update userdict for auto-learning feature
+						//if(userdiclist.size() > 1) {	updateUserDict();}
 						// Add by Jeremy '10, 4,1 . Reverse Lookup
 						SearchSrv.Rquery(firstMatched.getWord());
 						
@@ -1373,7 +1377,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					SearchSrv.updateMapping(firstMatched.getId(), 
 							firstMatched.getCode(), 
 							firstMatched.getWord(), 
-							firstMatched.getPcode(), 
+							//firstMatched.getPcode(), 
 							firstMatched.getPword(), 
 							firstMatched.getScore(), 
 							firstMatched.isDictionary());
@@ -1403,7 +1407,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			LinkedList<Mapping> list = new LinkedList<Mapping>();
 			
 			try {
-				list.addAll(SearchSrv.query(mComposing.toString()));
+				list.addAll(SearchSrv.query(mComposing.toString(), hasKeyPress));
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}

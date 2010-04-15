@@ -27,8 +27,8 @@ public class Mapping {
 
 	private String id;
 	private String code;
+	//private String pcode;
 	private String word;
-	private String pcode;
 	private String pword;
 	private String related;
 	private boolean isDictionary;
@@ -60,8 +60,7 @@ public class Mapping {
 		this.setScore(s);
 	}
 
-	Mapping(String pc, String pw, String c, String w, int s){
-		this.setPcode(pc);
+	Mapping(String pw, String c, String w, int s){
 		this.setPword(pw);
 		this.setCode(c);
 		this.setWord(w);
@@ -71,13 +70,13 @@ public class Mapping {
 	
 	/**
 	 * @return the pcode
-	 */
+	 *
 	public String getPcode() {
 		return pcode;
 	}
 	/**
 	 * @param pcode the pcode to set
-	 */
+	 *
 	public void setPcode(String pcode) {
 		this.pcode = pcode;
 	}
