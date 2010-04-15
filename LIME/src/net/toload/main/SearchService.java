@@ -288,13 +288,12 @@ public class SearchService extends Service {
 						for (int j = i + 1; j < src.size(); j++) {
 							if (src.get(j).getScore() > src.get(i).getScore()) {
 								Mapping dummy = src.get(i);
-								//if(dummy.getCode().equals(precode) && src.get(j).getCode().equals(precode)){
+								// Only proceed sorting when there is no exact matched. 
+								// Mapping Object code=precord should always be the first item to display.
+								if(!dummy.getCode().equals(precode) && !src.get(j).getCode().equals(precode)){
 									src.set(i, src.get(j));
 									src.set(j, dummy);
-								//}else if(!dummy.getCode().equals(precode) && !src.get(j).getCode().equals(precode)){
-								//	src.set(i, src.get(j));
-								//	src.set(j, dummy);
-								//}
+								}
 							}
 						}
 					}
