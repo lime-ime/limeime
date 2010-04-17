@@ -685,8 +685,8 @@ public class LimeDB extends SQLiteOpenHelper {
 								&& unit2.getCode().length() > 0) {
 
 							// Log.i("ART","unit 4->"+unit2);
-							if (!this.isExists(unit.getWord(),unit2.getWord())) {
-
+							Mapping munit = this.isExists(unit.getWord(),unit2.getWord()); 
+							if (munit == null) {
 								try {
 									// Log.i("ART","unit 5->"+unit2);
 									ContentValues cv = new ContentValues();
@@ -711,8 +711,11 @@ public class LimeDB extends SQLiteOpenHelper {
 								} catch (Exception e) {
 									e.printStackTrace();
 								}
+							}else{//the item exist in preload related database. 
+								  // do addscore here.
+									addScore(munit);
+								}
 							}
-						}
 					}
 				}
 			} catch (Exception e) {
@@ -980,7 +983,7 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 				+ "' LIMIT " + relatedCodeLimit );
 				
 	}
-	public List<Mapping> getMapping(String keyword, int relatedCodeLimit ) {
+	public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean softkeyboard ) {
 		
 		// Add by Jeremy '10, 3, 27. Extension on multi table query.
 		
@@ -1007,7 +1010,7 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 						+Character.toString((char) (keyword.charAt(keyword.length()-1)+1)));
 					
 					
-					if(!remap3row){				
+					if(!remap3row || softkeyboard){				
 						if(sort){				
 							sql = new String(  
 									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
@@ -1015,7 +1018,8 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 									" WHERE " + FIELD_CODE3R + " = '0' " + " AND " + 
 									 FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + 
 									"' GROUP BY " +  FIELD_WORD + 
-									" ORDER BY " + FIELD_CODE + ", " + FIELD_SCORE + " DESC LIMIT " + relatedCodeLimit );
+									" ORDER BY " + FIELD_CODE + ", " +	FIELD_SCORE + " DESC, " + 
+									FIELD_id +" LIMIT " + relatedCodeLimit );
 						}
 						else{
 							sql = new String(
@@ -1024,7 +1028,7 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 									" WHERE " + FIELD_CODE3R + " = '0' " + " AND "  
 									+ FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode +
 									"' GROUP BY "  +  FIELD_WORD + " ORDER BY " + FIELD_CODE +
-									" LIMIT " + relatedCodeLimit );	
+									", " + FIELD_id +" LIMIT " + relatedCodeLimit );	
 						}
 					}else
 					{
@@ -1035,7 +1039,8 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 									" WHERE " + 
 									 FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + 
 									"' GROUP BY " +  FIELD_WORD + 
-									" ORDER BY " + FIELD_CODE + ", " + FIELD_SCORE + " DESC LIMIT " + relatedCodeLimit );
+									" ORDER BY " + FIELD_CODE + ", " + FIELD_SCORE + " DESC, " +
+									FIELD_id + " LIMIT " + relatedCodeLimit );
 						}
 						else{
 							sql = new String(
@@ -1044,7 +1049,7 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 									" WHERE " 
 									+ FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode +
 									"' GROUP BY "  +  FIELD_WORD + " ORDER BY " + FIELD_CODE +
-									" LIMIT " + relatedCodeLimit );
+									", " + FIELD_id + " LIMIT " + relatedCodeLimit );
 						}
 						/*
 						prepareQuery(db,keyword, nextCode, relatedCodeLimit);
@@ -1306,9 +1311,9 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 					cv.put(FIELD_SCORE, score);
 
 					SQLiteDatabase db = this.getWritableDatabase();
-					db.update("related", cv, FIELD_id + " = " + id
-							//FIELD_DIC_pword + " = " + word
-							//+FIELD_DIC_cword + " = " + pword
+					db.update("related", cv, //FIELD_id + " = " + id
+							FIELD_DIC_pword + " = " + word
+							+FIELD_DIC_cword + " = " + pword
 							, null);
 					if(score == 1){ // Update userdic total ++
 						SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
@@ -1872,18 +1877,13 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 	 * @param cword
 	 * @return
 	 */
-	public boolean isExists(String pword, String cword) {
-
+	public Mapping isExists(String pword, String cword) {
+		
+		Mapping munit =null;
 		// Create Suggestions (Exactly Matched)
 		if (pword != null && !pword.trim().equals("") && cword != null
 				&& !cword.trim().equals("")) {
 
-			/**
-			 * 
-						cv.put(FIELD_DIC_pcode, pword.hashCode());
-						cv.put(FIELD_DIC_pword, pword);
-						cv.put(FIELD_DIC_ccode, word.hashCode());
-			 */
 			try {
 				Cursor cursor = null;
 
@@ -1894,21 +1894,30 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 						+" AND " +	FIELD_DIC_cword + " = '" + cword + "'",
 						null, null, null, null, null);
 
-				if (cursor != null && cursor.getCount() > 0) {
+				//if (cursor != null && cursor.getCount() > 0) {
+				if (cursor.moveToFirst()) {
+					int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
+					int cwordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
+					int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
+					int idColumn = cursor.getColumnIndex(FIELD_id);
+					
+					munit = new Mapping();
+						munit.setId(cursor.getString(idColumn));
+						munit.setPword(cursor.getString(pwordColumn));
+						munit.setWord(cursor.getString(cwordColumn));
+						munit.setScore(cursor.getInt(scoreColumn));
+						munit.setDictionary(true);
+					
+				} 
+				if (cursor != null) {
 					cursor.deactivate();
 					cursor.close();
-					return true;
-				} else {
-					if (cursor != null) {
-						cursor.deactivate();
-						cursor.close();
-					}
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		return false;
+		return munit;
 	}
 
 	/**
@@ -2103,7 +2112,7 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 						cv.put(FIELD_DIC_score, score);
 						
 						//
-						if(isExists(pword, cword)){
+						if(isExists(pword, cword)!=null){
 							db.update("related", cv,
 									FIELD_DIC_pword + " = '" + pword + "'" 
 									+" AND " +	FIELD_DIC_cword + " = '" + cword + "'"

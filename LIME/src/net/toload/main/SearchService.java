@@ -76,6 +76,7 @@ public class SearchService extends Service {
 	private static SearchServiceImpl obj = null;
 	private static boolean hasLoading = false;
 	private static int recAmount = 0;
+	private static boolean softkeypressed;
 
 	public class SearchServiceImpl extends ISearchService.Stub {
 
@@ -143,7 +144,7 @@ public class SearchService extends Service {
 		
 		}
 		
-		public List query(String code) throws RemoteException {
+		public List query(String code, boolean softkeyboard) throws RemoteException {
 			
 			//if(mappingIdx == null){mappingIdx = new HashMap();}
 
@@ -154,6 +155,11 @@ public class SearchService extends Service {
 			List<Mapping> result = new LinkedList();
 			// Modified by Jeremy '10, 3, 28.  yes-> .. The database is loading (yes) and finished (no).
 			if(code != null && loadingstatus != null && loadingstatus.equalsIgnoreCase("no")){
+				// clear mappingidx when user switching between softkeyboard and hard keyboard.
+				if(softkeypressed != softkeyboard){
+					get_mappingIdx().clear();
+					softkeypressed = softkeyboard;
+				}
 				if(recAmount == 0){
 					try{
 						recAmount = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(ctx).getString("similiar_list", "10"));				
@@ -183,7 +189,7 @@ public class SearchService extends Service {
 		
 					//Log.i("ART", "Query from database:" + code);
 					// Start new search to database
-					result.addAll(db.getMapping(code, recAmount));
+					result.addAll(db.getMapping(code, recAmount, softkeyboard));
 					
 					if(result.size() > 1){
 						// Has matched record then prepare suggestion list
@@ -236,7 +242,7 @@ public class SearchService extends Service {
 		}
 
 		public void updateMapping(String id, String code, String word,
-				String pcode, String pword, int score, boolean isDictionary)
+				 String pword, int score, boolean isDictionary)
 				throws RemoteException {
 			
 			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -303,7 +309,7 @@ public class SearchService extends Service {
 		}
 
 		public void addDictionary(String id, String code, String word,
-				String pcode, String pword, int score, boolean isDictionary)
+				String pword, int score, boolean isDictionary)
 				throws RemoteException {
 				if(diclist == null){diclist = new LinkedList();}
 				
@@ -311,7 +317,7 @@ public class SearchService extends Service {
 			      temp.setId(id);
 			      temp.setCode(code);
 			      temp.setWord(word);
-			      temp.setPcode(pcode);
+	//		      temp.setPcode(pcode);
 			      temp.setPword(pword);
 			      temp.setScore(score);
 			      temp.setDictionary(isDictionary);

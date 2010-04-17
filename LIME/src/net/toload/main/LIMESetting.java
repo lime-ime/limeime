@@ -184,22 +184,12 @@ public class LIMESetting extends Activity {
 		}
 		
 		// Copy raw .cin file into /sdcard/lime/
-		// with _simplified simplfieid chinese encoding
-		// with _ts_mixed traditional/simplified mixed version
 		copyRAWFile(getResources().openRawResource(R.raw.bpmf), localRoot + "/bpmf.cin" );
-		//copyRAWFile(getResources().openRawResource(R.raw.bpmf), localRoot + "/bpmf_simplified.cin" );
-		//copyRAWFile(getResources().openRawResource(R.raw.bpmf), localRoot + "/bpmf_ts_mixed.cin" );
 		copyRAWFile(getResources().openRawResource(R.raw.cj), localRoot + "/cj.cin" );
-		//copyRAWFile(getResources().openRawResource(R.raw.cj), localRoot + "/cj_simplified.cin" );
-		//copyRAWFile(getResources().openRawResource(R.raw.cj), localRoot + "/cj_ts_mixed.cin" );
+		//copyRAWFile(getResources().openRawResource(R.raw.dayi3), localRoot + "/dayi3.cin" );
 		copyRAWFile(getResources().openRawResource(R.raw.ez), localRoot + "/ez.lime" );
-		//copyRAWFile(getResources().openRawResource(R.raw.ez), localRoot + "/ez_simplified.lime" );
-		//copyRAWFile(getResources().openRawResource(R.raw.ez), localRoot + "/ez_ts_mixed.lime" );
 		copyRAWFile(getResources().openRawResource(R.raw.scj6), localRoot + "/scj6.lime" );
-		//copyRAWFile(getResources().openRawResource(R.raw.scj6), localRoot + "/scj6_simplified.lime" );
 		copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/assoc.lime" );
-		//copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/assoc_simplified.lime" );
-		//copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/assoc_ts_mixed.lime" );
 		
 		 // return if db is busy.
 		SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
