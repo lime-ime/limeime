@@ -60,7 +60,11 @@ public class SearchService extends Service {
 	private final static String CANDIDATE_SUGGESTION = "candidate_suggestion";
 	private final static String LEARNING_SWITCH = "learning_switch";
 	
+	private final static String HanConvertOption = "han_convert_option";
+
+	
 	private LimeDB db = null;
+	private LimeHanConverter hanConverter = null;
 	private static HashMap<String, List> mappingIdx = null;
 	// Add by Jeremy '10, 4, 2 . Cache for multi-table extioen
 	private static HashMap<String, List> cj_mappingIdx = null;
@@ -74,7 +78,7 @@ public class SearchService extends Service {
 	private NotificationManager notificationMgr;
 	
 	private static SearchServiceImpl obj = null;
-	private static boolean hasLoading = false;
+
 	private static int recAmount = 0;
 	private static boolean softkeypressed;
 
@@ -85,6 +89,15 @@ public class SearchService extends Service {
 
 		SearchServiceImpl(Context ctx) {
 			this.ctx = ctx;
+		}
+		
+		public String hanConvert(String input){
+			if(hanConverter == null){hanConverter = new LimeHanConverter(ctx);}
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+			Integer hanConvertOption = Integer.parseInt(sp.getString(HanConvertOption, "0"));
+			
+			return hanConverter.convert(input, hanConvertOption);
+			
 		}
 		
 		private HashMap<String, List> get_mappingIdx()

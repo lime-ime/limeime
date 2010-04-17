@@ -11,5 +11,5 @@ interface ISearchService
 		void updateMapping(String id, String code, String word, String pword, int score, boolean isDictionary);
 		void addDictionary(String id, String code, String word, String pword, int score, boolean isDictionary);
 		void updateDictionary();
-		
+		String hanConvert(String input);
 }

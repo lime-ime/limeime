@@ -18,7 +18,7 @@
     <string name="label_send_key">Send</string>
     
     <!-- LIME Setting -->
-    <string name="lime_setting_title">LIME 2.0.1v \n\n**由 1.7.x 升級或者您欲使用新版本上的[3排鍵盤重對應]請重新匯入字根檔。\n\n自定義輸入法建立工具。透過 LIME 輸入法字根對應檔的匯入，您可以打造完全屬於您個人的輸入方式。您可以在官方網站找到更多 關於 "如何使用 LIME 輸入法?" 或 "那裏可以下載字根檔?" 等相關資訊.\nhttp://android.toload.net/</string>
+    <string name="lime_setting_title">LIME 2.0.2v \n\n**由 1.7.x 升級或者您欲使用新版本上的[3排鍵盤重對應]請重新匯入字根檔。\n\n自定義輸入法建立工具。透過 LIME 輸入法字根對應檔的匯入，您可以打造完全屬於您個人的輸入方式。您可以在官方網站找到更多 關於 "如何使用 LIME 輸入法?" 或 "那裏可以下載字根檔?" 等相關資訊.\nhttp://android.toload.net/</string>
     <string name="lime_setting_operation_notice1">\n[載入對應表]\n您必需先匯入完整字根對應表才能開始輸入文字，請選擇適當的 .LIME 或 .CIN 進行資料載入動作。\n\n由 LIME 2.0 版本開始預先提供多種輸入法的字根檔，字根檔會自動拷貝至 sdcard/lime/ 目錄下，您也可以依據個人的喜好利用適當的工具進行內容的調整.\n</string>
     <string name="lime_setting_operation_info1">預設對應表版本 : </string>
     <string name="lime_setting_operation_info1_cj">倉頡對應表版本(cj.cin) : </string>
@@ -89,6 +89,7 @@
     <string name="dayi_reverse_lookup_list">大易反查</string>
     <string name="bpmf_reverse_lookup_list">注音反查</string>
     <string name="ez_reverse_lookup_list">輕鬆反查</string>
+    <string name="han_convert_option_list">簡繁轉換</string>
     
     <string name="table_list">對應表選取</string>
     <string name="similiar_list">建議字顯示數量</string>
@@ -124,7 +125,20 @@
 		<item>注音</item>
 		<item>輕鬆</item>
 	</string-array>
-
+	
+	<!-- Han Converter Options -->
+    <string-array name="han_convert_options">
+		<item>無</item>
+		<item>打繁出簡</item>
+		<item>打簡出繁</item>
+	</string-array>
+	
+    <string-array name="han_convert_options_values">
+		<item>0</item>
+		<item>1</item>
+		<item>2</item>
+	</string-array>
+    
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
 		<item>預設鍵盤</item>

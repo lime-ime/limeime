@@ -173,7 +173,7 @@ public class LIMESetting extends Activity {
 		getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
 		
 		// Add by Jeremy '10, 3, 27. reset loading status.
-		// ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
+		 ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
 		
 		// Get sdcard path from enviroment
 		localRoot = Environment.getExternalStorageDirectory().getAbsolutePath() +"/lime" ;
@@ -190,6 +190,8 @@ public class LIMESetting extends Activity {
 		copyRAWFile(getResources().openRawResource(R.raw.ez), localRoot + "/ez.lime" );
 		copyRAWFile(getResources().openRawResource(R.raw.scj6), localRoot + "/scj6.lime" );
 		copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/assoc.lime" );
+		copyRAWFile(getResources().openRawResource(R.raw.hanconvert), 
+				"/data/data/net.toload.main/databases/hanconvert.db" );
 		
 		 // return if db is busy.
 		SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
@@ -216,7 +218,7 @@ public class LIMESetting extends Activity {
 		public void onServiceDisconnected(ComponentName name) {}
 
 	};
-	
+
 	
 	private void backgroundUpdate(){
 		if(thread != null){

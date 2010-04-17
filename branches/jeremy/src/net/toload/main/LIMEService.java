@@ -924,7 +924,12 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 						}
 						
 						//Log.i("ART","Length:"+ firstMatchedLength);
-						inputConnection.commitText(wordToCommit, firstMatchedLength);
+						// Do hanConvert before commit
+						// '10, 4, 17 Jeremy
+						inputConnection.commitText(
+								SearchSrv.hanConvert(wordToCommit)
+								, firstMatchedLength);
+						
 							try {
 								SearchSrv.updateMapping(firstMatched.getId(), 
 										firstMatched.getCode(), 

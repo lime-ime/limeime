@@ -58,6 +58,13 @@
         		xmlns:android="http://schemas.android.com/apk/res/android"
                 android:summary="" android:key="lime_im" android:title="@string/im">
     <ListPreference
+    			android:key="han_convert_option"
+    			android:title="@string/han_convert_option_list" 
+    			android:entries="@array/han_convert_options" 
+    			android:entryValues="@array/han_convert_options_values" 
+    			android:dialogTitle="@string/han_convert_option_list" 
+    			android:defaultValue="0"/>
+    <ListPreference
     			android:key="default_im_reverselookup"
     			android:title="@string/default_reverse_lookup_list" 
     			android:entries="@array/im_reverse_lookup" 
