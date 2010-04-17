@@ -89,7 +89,7 @@
     <string name="dayi_reverse_lookup_list">R-Lookup in Dayi</string>
     <string name="bpmf_reverse_lookup_list">R-Lookup in Phonetic</string>
     <string name="ez_reverse_lookup_list">R-Lookup in Eazy</string>
-    <string name="han_convert_option_list">Chinese Character Conversion</string>
+    <string name="han_convert_option_list">Chinese Characters Conversion</string>
     
     
     <string name="table_list">Table Selection</string>
@@ -127,6 +127,12 @@
 		<item>none</item>
 		<item>Traditional to Simplified</item>
 		<item>Simplified to Traditional</item>
+	</string-array>
+	
+	<string-array name="han_convert_options_values">
+		<item>0e</item>
+		<item>1</item>
+		<item>2</item>
 	</string-array>
 	
     <!-- IM Reverse Lookup List -->  
