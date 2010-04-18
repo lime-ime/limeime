@@ -175,11 +175,11 @@ public class SearchService extends Service {
 				}
 				if(recAmount == 0){
 					try{
-						recAmount = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(ctx).getString("similiar_list", "10"));				
+						recAmount = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(ctx).getString("similiar_list", "150"));				
 					}catch(Exception e){e.printStackTrace();}
 				}else{
 					try{
-						int tempRecAmount = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(ctx).getString("similiar_list", "10"));	
+						int tempRecAmount = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(ctx).getString("similiar_list", "150"));	
 						if(tempRecAmount != recAmount){
 							get_mappingIdx().clear();
 						}

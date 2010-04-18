@@ -105,7 +105,8 @@
 				android:title="@string/similiar_list"
 				android:entries="@array/similiar_codes"
 				android:entryValues="@array/similiar_codes"
-				android:dialogTitle="@string/similiar_list" />
+				android:dialogTitle="@string/similiar_list" 
+				android:defaultValue="150"/>
         <CheckBoxPreference
                 android:key="candidate_switch"
                 android:title="@string/candidate_switch"

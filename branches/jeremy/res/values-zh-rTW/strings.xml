@@ -148,21 +148,8 @@
 		<item>注音鍵盤</item>
 		<item>輕鬆鍵盤</item>
 	</string-array>
-    <string-array name="keyboard_codes">
-		<item>lime</item>
-		<item>phone</item>
-		<item>cj</item>
-		<item>dayi</item>
-		<item>phonetic</item>
-		<item>ez</item>
-	</string-array>
-    <string-array name="similiar_codes">
-		<item>10</item>
-		<item>20</item>
-		<item>30</item>
-		<item>40</item>
-		<item>50</item>
-	</string-array>
+
+   
 	
 	<!-- Table Selection list -->
 	<string-array name="table">

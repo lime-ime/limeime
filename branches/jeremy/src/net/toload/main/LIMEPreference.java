@@ -20,17 +20,30 @@
 
 package net.toload.main;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 
 /**
  * @author Art Hung
  */
 public class LIMEPreference extends PreferenceActivity
 {
+	private Context ctx = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //--------------------
+        //Jeremy '10, 4, 18 .  
+        if (ctx == null) {
+			ctx = this.getApplicationContext();
+		}
+        int tempRecAmount = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(ctx).getString("similiar_list", "150"));	
+        if(tempRecAmount < 30){
+        	PreferenceManager.getDefaultSharedPreferences(ctx).edit().putString("similiar_list", "150").commit();
+        }
+        //-----------------------
         addPreferencesFromResource(R.xml.preference);
     }
 }
