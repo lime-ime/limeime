@@ -35,6 +35,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -1016,19 +1017,19 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
 									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
 									" WHERE " + FIELD_CODE3R + " = '0' " + " AND " + 
-									 FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + 
-									"' GROUP BY " +  FIELD_WORD + 
-									" ORDER BY " + FIELD_CODE + ", " +	FIELD_SCORE + " DESC, " + 
-									FIELD_id +" LIMIT " + relatedCodeLimit );
+									 FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' " +
+									//"' GROUP BY " +  FIELD_WORD + 
+									" ORDER BY " + FIELD_CODE + ", " +	FIELD_SCORE + " DESC " + 
+									" LIMIT " + relatedCodeLimit );
 						}
 						else{
 							sql = new String(
 									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
 									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
 									" WHERE " + FIELD_CODE3R + " = '0' " + " AND "  
-									+ FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode +
-									"' GROUP BY "  +  FIELD_WORD + " ORDER BY " + FIELD_CODE +
-									", " + FIELD_id +" LIMIT " + relatedCodeLimit );	
+									+ FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' " +
+									//"' GROUP BY "  +  FIELD_WORD + 
+									" ORDER BY " + FIELD_CODE +	" LIMIT " + relatedCodeLimit );	
 						}
 					}else
 					{
@@ -1037,19 +1038,19 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
 									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
 									" WHERE " + 
-									 FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + 
-									"' GROUP BY " +  FIELD_WORD + 
-									" ORDER BY " + FIELD_CODE + ", " + FIELD_SCORE + " DESC, " +
-									FIELD_id + " LIMIT " + relatedCodeLimit );
+									 FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' " + 
+									//" GROUP BY " +  FIELD_WORD + 
+									" ORDER BY " + FIELD_CODE + ", " + FIELD_SCORE + " DESC " +
+									" LIMIT " + relatedCodeLimit );
 						}
 						else{
 							sql = new String(
 									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
 									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
 									" WHERE " 
-									+ FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode +
-									"' GROUP BY "  +  FIELD_WORD + " ORDER BY " + FIELD_CODE +
-									", " + FIELD_id + " LIMIT " + relatedCodeLimit );
+									+ FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' " +
+									//"' GROUP BY "  +  FIELD_WORD + 
+									" ORDER BY " + FIELD_CODE +	" LIMIT " + relatedCodeLimit );
 						}
 						/*
 						prepareQuery(db,keyword, nextCode, relatedCodeLimit);
@@ -1065,25 +1066,6 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 						Log.i("Query","SQL statement:"+ sql);
 					
 					cursor = db.rawQuery(sql ,null);
-					/*
-					buildQueryCodeList(keyword, relatedCodeLimit, remap3row);
-				
-					if(sort){
-					sql = new String(  
-							"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " in (SELECT " 
-							+ FIELD_CODE + " FROM queryCodeList) ORDER BY " 
-							+ FIELD_SCORE + " DESC");	
-					}else{
-						sql = new String( 
-								"SELECT * FROM " + tablename + " WHERE " + FIELD_CODE + " IN (SELECT " 
-								+ FIELD_CODE + " FROM queryCodeList)");  
-					}
-					if(DEBUG){
-						Log.i("Query","SQL statement:"+ sql);
-	
-					}
-					*/
-					
 				}else	{	   
                     if(remap3row){  // Ordinary without 3row keyboard remapping
                     	if(sort){
@@ -1118,17 +1100,23 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 					int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
 					int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
 					int idColumn = cursor.getColumnIndex(FIELD_id);
+					HashSet <String> wordlist = new HashSet<String>();
 					do {
 						Mapping munit = new Mapping();
-						munit.setId(cursor.getString(idColumn));
-						munit.setCode(cursor.getString(codeColumn));
 						munit.setWord(cursor.getString(wordColumn));
-						if(!SQLSELECT)	
-							munit.setRelated(cursor.getString(relatedColumn));
-						munit.setScore(cursor.getInt(scoreColumn));
-						munit.setDictionary(false);
-						result.add(munit);
+						if(!wordlist.contains(munit.getWord())){
+							wordlist.add(munit.getWord());
+							munit.setId(cursor.getString(idColumn));
+							munit.setCode(cursor.getString(codeColumn));
+							if(!SQLSELECT)	
+								munit.setRelated(cursor.getString(relatedColumn));
+							munit.setScore(cursor.getInt(scoreColumn));
+							munit.setDictionary(false);
+							wordlist.add(munit.getWord());
+							result.add(munit);
+						}
 					} while (cursor.moveToNext());
+					wordlist = null;
 				}
 
 				if (cursor != null) {
