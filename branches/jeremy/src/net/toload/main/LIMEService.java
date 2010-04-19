@@ -21,26 +21,36 @@
 package net.toload.main;
 
 
+import android.graphics.Paint;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.media.AudioManager;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.RemoteException;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 // MetaKeyKeyLister is buggy on locked metakey state
 //import android.text.method.MetaKeyKeyListener;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.View.MeasureSpec;
+import android.view.ViewGroup.LayoutParams;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.FrameLayout;
+import android.widget.PopupWindow;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -48,8 +58,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-
-
 
 
 import android.app.AlertDialog;
@@ -180,6 +188,12 @@ public class LIMEService extends InputMethodService implements
 	private final float moveLength = 15;
 	private ISearchService SearchSrv = null;
 	
+	//Composing view
+	private TextView mComposingTextView;
+	private PopupWindow mComposingTextPopup;
+	private Paint mPaint;
+	private int mDescent;
+	
 	/*
 	 * Construct SerConn 
 	 */
@@ -195,6 +209,10 @@ public class LIMEService extends InputMethodService implements
 		}
 		public void onServiceDisconnected(ComponentName name) {}
 	};
+	
+	
+	
+	
 	
 	/**
 	 * Main initialization of the input method component. Be sure to call to
@@ -305,18 +323,85 @@ public class LIMEService extends InputMethodService implements
 		onIM = true;
 		return mInputView;
 	}
-
-	/**
-	 * Called by the framework when your view for showing candidates needs to be
-	 * generated, like {@link #onCreateInputView}.
-	 */
+    private static final int MSG_REMOVE_COMPOSING = 1;
+    private static final int X_GAP = 10;
+    
+	Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_REMOVE_COMPOSING:
+                	mComposingTextView.setVisibility(mComposingTextView.GONE);
+                    break;
+               
+            }
+            
+        }
+    };
+	
 	@Override
 	public View onCreateCandidatesView() {
 		mCandidateView = new CandidateView(this);
 		mCandidateView.setService(this);
+		// Composing buffer textView
+		LayoutInflater inflate = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+	        mComposingTextPopup = new PopupWindow(this);
+	        mComposingTextView = (TextView) inflate.inflate(R.layout.composingtext, null);
+	        mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+	        mComposingTextPopup.setContentView(mComposingTextView);
+	        mComposingTextPopup.setBackgroundDrawable(null);
+	        mPaint = new Paint();
+	        mPaint.setColor(getResources().getColor(R.color.candidate_normal));
+	        mPaint.setAntiAlias(true);
+	        mPaint.setTextSize(mComposingTextView.getTextSize());
+	        mPaint.setStrokeWidth(0);
+	        mDescent = (int) mPaint.descent();
+	        
 		return mCandidateView;
 	}
 
+	 private void showComposing(String composingText) {
+		 	
+	        if(mComposingTextView==null ||mComposingTextPopup==null) return;
+	        // If index changed or changing text
+	        if (composingText == null) {
+	             hideComposing();
+	            } else {
+	                
+	                mComposingTextView.setText(composingText);
+	                mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
+	                        MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+	                int wordWidth = (int) (mPaint.measureText(composingText, 0, composingText.length()));
+	                final int popupWidth = wordWidth
+	                        + mComposingTextView.getPaddingLeft() + mComposingTextView.getPaddingRight();
+	                final int popupHeight = mComposingTextView.getMeasuredHeight();
+	                //mPreviewText.setVisibility(INVISIBLE);
+	                
+	                int mPopupCompoingY = - (popupHeight * 4/5);
+	                mHandler.removeMessages(MSG_REMOVE_COMPOSING);
+	                int [] offsetInWindow = new int[2];
+	                mComposingTextView.getLocationInWindow(offsetInWindow);
+	                if (mComposingTextPopup.isShowing()) {
+	                	mComposingTextPopup.update(0, mPopupCompoingY + offsetInWindow[1], 
+	                            popupWidth, popupHeight);
+	                } else {
+	                	mComposingTextPopup.setWidth(popupWidth);
+	                	mComposingTextPopup.setHeight(popupHeight);
+	                	mComposingTextPopup.showAtLocation(mCandidateView, Gravity.NO_GRAVITY, 0, 
+	                			mPopupCompoingY + offsetInWindow[1]);
+	                }
+	                mComposingTextView.setVisibility(mComposingTextView.VISIBLE);
+	            }
+	        
+	    }
+	 
+	 private void hideComposing() {
+	      if(mComposingTextPopup!=null && mComposingTextView!=null){  
+	        if (mComposingTextPopup.isShowing()) {
+	            mHandler.sendMessage(mHandler.obtainMessage(MSG_REMOVE_COMPOSING));
+	        }
+	      }
+	 }
 	/**
 	 * This is the main point where we do our initialization of the input method
 	 * to begin operating on an application. At this point we have been bound to
@@ -340,6 +425,7 @@ public class LIMEService extends InputMethodService implements
 		// the underlying state of the text editor could have changed in any
 		// way.
 		mComposing.setLength(0);
+		hideComposing();
 		updateCandidates();
 
 		if (!restarting) {
@@ -420,6 +506,7 @@ public class LIMEService extends InputMethodService implements
 
 		// Clear current composing text and candidates.
 		mComposing.setLength(0);
+		hideComposing();
 		updateCandidates();
 
 		setCandidatesViewShown(false);
@@ -661,6 +748,7 @@ public class LIMEService extends InputMethodService implements
 					mCandidateView.clear();
 				}
 				mComposing.setLength(0);
+				hideComposing();
 				setCandidatesViewShown(false);
 				
 				//------------------------------------------------------------------------
@@ -972,7 +1060,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					mCandidateView.clear();
 				}
 				mComposing.setLength(0);
-				
+				hideComposing();
 				updateDictionaryView();
 				
 			}
@@ -1079,6 +1167,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				mCandidateView.clear();
 			}
 			mComposing.setLength(0);
+			hideComposing();
 			setCandidatesViewShown(false);
 			if (mEnglishOnly) {
 				Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
@@ -1237,6 +1326,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			mCandidateView.clear();
 		}
 		mComposing.setLength(0);
+		hideComposing();
 		setCandidatesViewShown(false);
 		
     	initialKeyboard();
@@ -1361,6 +1451,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			mCandidateView.clear();
 		}
 		mComposing.setLength(0);
+		hideComposing();
 		setCandidatesViewShown(false);
         
 	    initialKeyboard();
@@ -1396,7 +1487,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		//updateShiftKeyState(getCurrentInputEditorInfo());
 
 	}
-
+	
 	/**
 	 * Update the list of available candidates from the current composing text.
 	 * This will need to be filled in by however you are determining candidates.
@@ -1412,7 +1503,11 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			LinkedList<Mapping> list = new LinkedList<Mapping>();
 			
 			try {
-				list.addAll(SearchSrv.query(mComposing.toString(), hasKeyPress));
+				String keyString = mComposing.toString();
+				list.addAll(SearchSrv.query(keyString, hasKeyPress));
+				String charString = SearchSrv.keyToChar(keyString.toUpperCase());
+				
+				if(!charString.equals(keyString)) showComposing(charString);
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
@@ -1422,8 +1517,10 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			}else{
 				setSuggestions(null, false, false);
 			}
+			
+			
 		}
-
+		
 	}
 
 	/*
@@ -1502,6 +1599,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				mCandidateView.clear();
 			}
 			mComposing.setLength(0);
+			hideComposing();
 			setCandidatesViewShown(false);
 			getCurrentInputConnection().commitText("", 0);
 		} else {
@@ -1509,6 +1607,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				mCandidateView.clear();
 			}
 			mComposing.setLength(0);
+			hideComposing();
 			setCandidatesViewShown(false);
 			keyDownUp(KeyEvent.KEYCODE_DEL);
 		}
@@ -2159,6 +2258,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			mCandidateView.clear();
 		}
 		mComposing.setLength(0);
+		hideComposing();
 		setCandidatesViewShown(false);
 		
 		requestHideSelf(0);

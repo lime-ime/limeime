@@ -349,8 +349,13 @@ public class SearchService extends Service {
 			}
 			diclist.clear();
 		}
+	public String keyToChar(String code){
+		if(db == null){db = new LimeDB(ctx);}
+		return db.keyToChar(code, tablename);
+	}
 
 	}
+	
 
 	@Override
 	public IBinder onBind(Intent arg0) {
