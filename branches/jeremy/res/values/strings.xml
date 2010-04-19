@@ -130,7 +130,7 @@
 	</string-array>
 	
 	<string-array name="han_convert_options_values">
-		<item>0e</item>
+		<item>0</item>
 		<item>1</item>
 		<item>2</item>
 	</string-array>
