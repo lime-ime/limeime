@@ -984,152 +984,218 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 				+ "' LIMIT " + relatedCodeLimit );
 				
 	}
-	public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean softkeyboard ) {
-		
-		// Add by Jeremy '10, 3, 27. Extension on multi table query.
-		
-		
-		List<Mapping> result = new LinkedList<Mapping>();
-		if (keyword != null && !keyword.trim().equals("")) {
+public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean softkeyboard ) {
+	
+	// Add by Jeremy '10, 3, 27. Extension on multi table query.
+	
+	
+	List<Mapping> result = new LinkedList<Mapping>();
+	HashSet <String> wordlist = new HashSet<String>();
+	
+	if (keyword != null && !keyword.trim().equals("")) {
 
-			Cursor cursor = null;
-			String sql = null;
+		Cursor cursor = null;
+		String sql = null;
+		
+		SQLiteDatabase db = this.getReadableDatabase();
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		boolean sort = sp.getBoolean(LEARNING_SWITCH, false);
+		boolean remap3row = sp.getBoolean(THREE_ROW_REMAP, false);
+		try {	
 			
-			SQLiteDatabase db = this.getReadableDatabase();
-			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-			boolean sort = sp.getBoolean(LEARNING_SWITCH, false);
-			boolean remap3row = sp.getBoolean(THREE_ROW_REMAP, false);
-			try {	
-				
-				
-				String tablename = this.tablename;
-				if (CACHED) {
-					tablename = new String("memory"); // local tablename set to cached memory table
-				}
-				if(SQLSELECT){
-					String nextCode = new String( keyword.substring(0, keyword.length()-1)
-						+Character.toString((char) (keyword.charAt(keyword.length()-1)+1)));
-					
-					
-					if(!remap3row || softkeyboard){				
-						if(sort){				
-							sql = new String(  
-									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
-									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
-									" WHERE " + FIELD_CODE3R + " = '0' " + " AND " + 
-									 FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' " +
-									//"' GROUP BY " +  FIELD_WORD + 
-									" ORDER BY " + FIELD_CODE + ", " +	FIELD_SCORE + " DESC " + 
-									" LIMIT " + relatedCodeLimit );
-						}
-						else{
-							sql = new String(
-									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
-									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
-									" WHERE " + FIELD_CODE3R + " = '0' " + " AND "  
-									+ FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' " +
-									//"' GROUP BY "  +  FIELD_WORD + 
-									" ORDER BY " + FIELD_CODE +	" LIMIT " + relatedCodeLimit );	
-						}
-					}else
-					{
-						if(sort){				
-							sql = new String(  
-									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
-									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
-									" WHERE " + 
-									 FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' " + 
-									//" GROUP BY " +  FIELD_WORD + 
-									" ORDER BY " + FIELD_CODE + ", " + FIELD_SCORE + " DESC " +
-									" LIMIT " + relatedCodeLimit );
-						}
-						else{
-							sql = new String(
-									"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
-									", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
-									" WHERE " 
-									+ FIELD_CODE + " >='" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' " +
-									//"' GROUP BY "  +  FIELD_WORD + 
-									" ORDER BY " + FIELD_CODE +	" LIMIT " + relatedCodeLimit );
-						}
-						/*
-						prepareQuery(db,keyword, nextCode, relatedCodeLimit);
-						if(sort){
-							sql = new String("SELECT * FROM prepare ORDER BY " + FIELD_SCORE);
-						}else{
-							sql = new String("SELECT * FROM prepare ");
-						}
-						*/
-						
-					}
-					if(DEBUG)
-						Log.i("Query","SQL statement:"+ sql);
-					
-					cursor = db.rawQuery(sql ,null);
-				}else	{	   
-                    if(remap3row){  // Ordinary without 3row keyboard remapping
-                    	if(sort){
-                    		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'" 
-                        			,null, null, null, FIELD_SCORE + " DESC", null);
-                    	}else{
-                    		cursor = db.query(tablename, null, FIELD_CODE + " = \"" + keyword + "\"", 
-                            		null, null, null, null, null);
-                    	}
-                    	
-                    }else{
-                    	if(sort){
-                    		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'"
-                        			+" OR " + FIELD_CODE3R + " = '" + keyword + "'" 
-                        			,null, null, null, FIELD_SCORE + " DESC", null);
-                    	}else{
-                    		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'"
-                        			+" OR " + FIELD_CODE3R + " = '" + keyword + "'" 
-                        			,null, null, null, null, null);
-                    		
-                    	}
-                    }
-
-				}
-				if(DEBUG){
-					Log.i("Query","tablename:"+tablename+"  keyworad:"+keyword+"  cursor.getCount:"+cursor.getCount());
-				}
 			
-				if (cursor.moveToFirst()) {
-					int codeColumn = cursor.getColumnIndex(FIELD_CODE);
-					int wordColumn = cursor.getColumnIndex(FIELD_WORD);
-					int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
-					int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
-					int idColumn = cursor.getColumnIndex(FIELD_id);
-					HashSet <String> wordlist = new HashSet<String>();
-					do {
-						Mapping munit = new Mapping();
-						munit.setWord(cursor.getString(wordColumn));
-						if(!wordlist.contains(munit.getWord())){
-							wordlist.add(munit.getWord());
-							munit.setId(cursor.getString(idColumn));
-							munit.setCode(cursor.getString(codeColumn));
-							if(!SQLSELECT)	
-								munit.setRelated(cursor.getString(relatedColumn));
-							munit.setScore(cursor.getInt(scoreColumn));
-							munit.setDictionary(false);
-							wordlist.add(munit.getWord());
-							result.add(munit);
-						}
-					} while (cursor.moveToNext());
-					wordlist = null;
-				}
-
-				if (cursor != null) {
-					cursor.deactivate();
-					cursor.close();
-				}
-			}catch(Exception e){
-				e.printStackTrace();
+			String tablename = this.tablename;
+			if (CACHED) {
+				tablename = new String("memory"); // local tablename set to cached memory table
 			}
+			if(SQLSELECT){
 				
+				// First stage query for exactly matched results with no limit
+				if(!remap3row || softkeyboard){				
+					if(sort){				
+						sql = new String(  
+								"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
+								", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
+								" WHERE " + FIELD_CODE3R + " = '0' " + " AND " + 
+								 FIELD_CODE + " ='" + keyword + "' " + 
+								" ORDER BY " + FIELD_CODE + ", " +	FIELD_SCORE + " DESC " ); 
+								
+					}
+					else{
+						sql = new String(
+								"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
+								", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
+								" WHERE " + FIELD_CODE3R + " = '0' " + " AND "  
+								+ FIELD_CODE + " ='" + keyword + "' " +
+								" ORDER BY " + FIELD_CODE );
+					}
+				}else
+				{
+					if(sort){				
+						sql = new String(  
+								"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
+								", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
+								" WHERE " + 
+								 FIELD_CODE + " ='" + keyword + "' " +  
+								" ORDER BY " + FIELD_CODE + ", " + FIELD_SCORE + " DESC ");
+								
+					}
+					else{
+						sql = new String(
+								"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
+								", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
+								" WHERE " 
+								+ FIELD_CODE + " ='" + keyword + "' " +
+								" ORDER BY " + FIELD_CODE );
+					}
+					
+				}
+				if(DEBUG)
+					Log.i("Query","SQL statement:"+ sql);
+				
+				cursor = db.rawQuery(sql ,null);
+				result = buildQueryResult(result, cursor, wordlist);
+				
+				
+				// Second stage query for similar codes
+				String nextCode = new String( keyword.substring(0, keyword.length()-1)
+						+Character.toString((char) (keyword.charAt(keyword.length()-1)+1)));
+				
+				if(!remap3row || softkeyboard){				
+					if(sort){				
+						sql = new String(  
+								"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
+								", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
+								" WHERE " + FIELD_CODE3R + " = '0' " + " AND " + 
+								 FIELD_CODE + " >'" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' " + 
+								" ORDER BY " + FIELD_CODE + ", " +	FIELD_SCORE + " DESC " + 
+								" LIMIT " + relatedCodeLimit );
+					}
+					else{
+						sql = new String(
+								"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
+								", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
+								" WHERE " + FIELD_CODE3R + " = '0' " + " AND "  
+								+ FIELD_CODE + " >'" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' " +
+								" ORDER BY " + FIELD_CODE +	" LIMIT " + relatedCodeLimit );	
+					}
+				}else
+				{
+					if(sort){				
+						sql = new String(  
+								"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
+								", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
+								" WHERE " + 
+								 FIELD_CODE + " >'" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' " +  
+								" ORDER BY " + FIELD_CODE + ", " + FIELD_SCORE + " DESC " +
+								" LIMIT " + relatedCodeLimit );
+					}
+					else{
+						sql = new String(
+								"SELECT " + FIELD_id + ", " + FIELD_CODE+ ", " + FIELD_CODE3R +
+								", " + FIELD_WORD + ", " + FIELD_SCORE + " FROM " + tablename + 
+								" WHERE " 
+								+ FIELD_CODE + " >'" + keyword + "' AND "+ FIELD_CODE +" <'" + nextCode + "' " +
+								" ORDER BY " + FIELD_CODE +	" LIMIT " + relatedCodeLimit );
+					}
+					
+				}
+				if(DEBUG)
+					Log.i("Query","SQL statement:"+ sql);
+				
+				cursor = db.rawQuery(sql ,null);
+				result = buildQueryResult(result, cursor, wordlist);
+			}else	{	   
+                if(remap3row){  // Ordinary without 3row keyboard remapping
+                	if(sort){
+                		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'" 
+                    			,null, null, null, FIELD_SCORE + " DESC", null);
+                	}else{
+                		cursor = db.query(tablename, null, FIELD_CODE + " = \"" + keyword + "\"", 
+                        		null, null, null, null, null);
+                	}
+                	
+                }else{
+                	if(sort){
+                		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'"
+                    			+" OR " + FIELD_CODE3R + " = '" + keyword + "'" 
+                    			,null, null, null, FIELD_SCORE + " DESC", null);
+                	}else{
+                		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'"
+                    			+" OR " + FIELD_CODE3R + " = '" + keyword + "'" 
+                    			,null, null, null, null, null);
+                		
+                	}
+                }
+                
+                result = buildQueryResult(result, cursor, wordlist);
+
+			}
+			if(DEBUG){
+				Log.i("Query","tablename:"+tablename+"  keyworad:"+keyword+"  cursor.getCount:"+cursor.getCount());
+			}
+		
+			
+
+			if (cursor != null) {
+				cursor.deactivate();
+				cursor.close();
+			}
+		}catch(Exception e){
+			e.printStackTrace();
 		}
-		return result;
+			
 	}
+	return result;
+}
+
+private  List<Mapping> buildQueryResult(List <Mapping> result, Cursor cursor, HashSet <String> wordlist){
+	if (cursor.moveToFirst()) {
+		int codeColumn = cursor.getColumnIndex(FIELD_CODE);
+		int wordColumn = cursor.getColumnIndex(FIELD_WORD);
+		int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
+		int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
+		int idColumn = cursor.getColumnIndex(FIELD_id);
+		// 	Use a hashset to stripe repeated words
+		//HashSet <String> wordlist = new HashSet<String>();
+		do {
+			Mapping munit = new Mapping();
+			munit.setWord(cursor.getString(wordColumn));
+			if(!wordlist.contains(munit.getWord())){
+				wordlist.add(munit.getWord());
+				munit.setId(cursor.getString(idColumn));
+				munit.setCode(cursor.getString(codeColumn));
+				if(!SQLSELECT)	
+					munit.setRelated(cursor.getString(relatedColumn));
+				munit.setScore(cursor.getInt(scoreColumn));
+				munit.setDictionary(false);
+				wordlist.add(munit.getWord());
+				result.add(munit);
+			}
+		} while (cursor.moveToNext());
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		//wordlist = null;
+}
+return result;
+}
 
 	public List<Mapping> getSuggestion(String related, int size) {
 

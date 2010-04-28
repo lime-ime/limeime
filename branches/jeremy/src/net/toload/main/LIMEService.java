@@ -188,11 +188,7 @@ public class LIMEService extends InputMethodService implements
 	private final float moveLength = 15;
 	private ISearchService SearchSrv = null;
 	
-	//Composing view
-	private TextView mComposingTextView;
-	private PopupWindow mComposingTextPopup;
-	private Paint mPaint;
-	private int mDescent;
+	
 	
 	/*
 	 * Construct SerConn 
@@ -240,8 +236,8 @@ public class LIMEService extends InputMethodService implements
 		hasVibration = sp.getBoolean("vibrate_on_keypress", false);
 		hasSound = sp.getBoolean("sound_on_keypress", false);
 		hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
-		hasNumberMapping = sp.getBoolean("accept_number_index", false);
-		hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+		//hasNumberMapping = sp.getBoolean("accept_number_index", false);
+		//hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
 		
 		keyboardSelection = sp.getString("keyboard_list", "lime");
 		
@@ -323,85 +319,18 @@ public class LIMEService extends InputMethodService implements
 		onIM = true;
 		return mInputView;
 	}
-    private static final int MSG_REMOVE_COMPOSING = 1;
-    private static final int X_GAP = 10;
     
-	Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MSG_REMOVE_COMPOSING:
-                	mComposingTextView.setVisibility(mComposingTextView.GONE);
-                    break;
-               
-            }
-            
-        }
-    };
 	
 	@Override
 	public View onCreateCandidatesView() {
 		mCandidateView = new CandidateView(this);
 		mCandidateView.setService(this);
-		// Composing buffer textView
-		LayoutInflater inflate = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-	        mComposingTextPopup = new PopupWindow(this);
-	        mComposingTextView = (TextView) inflate.inflate(R.layout.composingtext, null);
-	        mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-	        mComposingTextPopup.setContentView(mComposingTextView);
-	        mComposingTextPopup.setBackgroundDrawable(null);
-	        mPaint = new Paint();
-	        mPaint.setColor(getResources().getColor(R.color.candidate_normal));
-	        mPaint.setAntiAlias(true);
-	        mPaint.setTextSize(mComposingTextView.getTextSize());
-	        mPaint.setStrokeWidth(0);
-	        mDescent = (int) mPaint.descent();
+		
 	        
 		return mCandidateView;
 	}
 
-	 private void showComposing(String composingText) {
-		 	
-	        if(mComposingTextView==null ||mComposingTextPopup==null) return;
-	        // If index changed or changing text
-	        if (composingText == null) {
-	             hideComposing();
-	            } else {
-	                
-	                mComposingTextView.setText(composingText);
-	                mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
-	                        MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-	                int wordWidth = (int) (mPaint.measureText(composingText, 0, composingText.length()));
-	                final int popupWidth = wordWidth
-	                        + mComposingTextView.getPaddingLeft() + mComposingTextView.getPaddingRight();
-	                final int popupHeight = mComposingTextView.getMeasuredHeight();
-	                //mPreviewText.setVisibility(INVISIBLE);
-	                
-	                int mPopupCompoingY = - (popupHeight * 4/5);
-	                mHandler.removeMessages(MSG_REMOVE_COMPOSING);
-	                int [] offsetInWindow = new int[2];
-	                mComposingTextView.getLocationInWindow(offsetInWindow);
-	                if (mComposingTextPopup.isShowing()) {
-	                	mComposingTextPopup.update(0, mPopupCompoingY + offsetInWindow[1], 
-	                            popupWidth, popupHeight);
-	                } else {
-	                	mComposingTextPopup.setWidth(popupWidth);
-	                	mComposingTextPopup.setHeight(popupHeight);
-	                	mComposingTextPopup.showAtLocation(mCandidateView, Gravity.NO_GRAVITY, 0, 
-	                			mPopupCompoingY + offsetInWindow[1]);
-	                }
-	                mComposingTextView.setVisibility(mComposingTextView.VISIBLE);
-	            }
-	        
-	    }
 	 
-	 private void hideComposing() {
-	      if(mComposingTextPopup!=null && mComposingTextView!=null){  
-	        if (mComposingTextPopup.isShowing()) {
-	            mHandler.sendMessage(mHandler.obtainMessage(MSG_REMOVE_COMPOSING));
-	        }
-	      }
-	 }
 	/**
 	 * This is the main point where we do our initialization of the input method
 	 * to begin operating on an application. At this point we have been bound to
@@ -418,14 +347,14 @@ public class LIMEService extends InputMethodService implements
 		templist = new LinkedList<Mapping>();
 		firstMatched = new Mapping();
 		tempMatched = new Mapping();
-
+		
+		//mCandidateView.hideComposing();
 		setCandidatesViewShown(false);
 
 		// Reset our state. We want to do this even if restarting, because
 		// the underlying state of the text editor could have changed in any
 		// way.
 		mComposing.setLength(0);
-		hideComposing();
 		updateCandidates();
 
 		if (!restarting) {
@@ -506,7 +435,6 @@ public class LIMEService extends InputMethodService implements
 
 		// Clear current composing text and candidates.
 		mComposing.setLength(0);
-		hideComposing();
 		updateCandidates();
 
 		setCandidatesViewShown(false);
@@ -552,8 +480,8 @@ public class LIMEService extends InputMethodService implements
 		hasVibration = sp.getBoolean("vibrate_on_keypress", false);
 		hasSound = sp.getBoolean("sound_on_keypress", false);
 		hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
-		hasNumberMapping = sp.getBoolean("accept_number_index", false);
-		hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+		//hasNumberMapping = sp.getBoolean("accept_number_index", false);
+		//hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
 		keyboardSelection = sp.getString("keyboard_list", "lime");
 
 		hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
@@ -746,9 +674,9 @@ public class LIMEService extends InputMethodService implements
 	
 				if (mCandidateView != null) {
 					mCandidateView.clear();
+					//mCandidateView.hideComposing();
 				}
-				mComposing.setLength(0);
-				hideComposing();
+				mComposing.setLength(0);				
 				setCandidatesViewShown(false);
 				
 				//------------------------------------------------------------------------
@@ -1058,9 +986,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	
 				if (mCandidateView != null) {
 					mCandidateView.clear();
+					//mCandidateView.hideComposing();
 				}
 				mComposing.setLength(0);
-				hideComposing();
 				updateDictionaryView();
 				
 			}
@@ -1165,9 +1093,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			   // cancel candidate view if it's shown
 	        if (mCandidateView != null) {
 				mCandidateView.clear();
+				//mCandidateView.hideComposing();
 			}
 			mComposing.setLength(0);
-			hideComposing();
 			setCandidatesViewShown(false);
 			if (mEnglishOnly) {
 				Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
@@ -1324,11 +1252,10 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
     	  // cancel candidate view if it's shown
         if (mCandidateView != null) {
 			mCandidateView.clear();
+			//mCandidateView.hideComposing();
 		}
 		mComposing.setLength(0);
-		hideComposing();
-		setCandidatesViewShown(false);
-		
+		setCandidatesViewShown(false);		
     	initialKeyboard();
     	Toast.makeText(this, keyboardname , Toast.LENGTH_SHORT).show();
     }
@@ -1449,9 +1376,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         // cancel candidate view if it's shown
         if (mCandidateView != null) {
 			mCandidateView.clear();
+			//mCandidateView.hideComposing();
 		}
 		mComposing.setLength(0);
-		hideComposing();
 		setCandidatesViewShown(false);
         
 	    initialKeyboard();
@@ -1496,6 +1423,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 
 		if (mCandidateView != null) {
 			mCandidateView.clear();
+			//mCandidateView.hideComposing();
 		}
 		
 		if (!mCompletionOn && mComposing.length() > 0) {
@@ -1503,21 +1431,26 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			LinkedList<Mapping> list = new LinkedList<Mapping>();
 			
 			try {
-				String keyString = mComposing.toString();
-				list.addAll(SearchSrv.query(keyString, hasKeyPress));
-				String charString = SearchSrv.keyToChar(keyString.toUpperCase());
+				String keyString = mComposing.toString().toUpperCase(), charString="";
 				
-				if(!charString.equals(keyString)) showComposing(charString);
+				list.addAll(SearchSrv.query(keyString, hasKeyPress));
+	
+				if(list.size() > 0){
+					setSuggestions(list, true, true);
+				}else{
+					setSuggestions(null, false, false);
+				}
+				// Show composing window if keyToChar got different string.
+				if(keyString!=null && !keyString.equals(""))
+					charString = SearchSrv.keyToChar(keyString);
+				if (mCandidateView != null && !charString.equals(keyString)&&!charString.equals(""))
+					{mCandidateView.setComposingText(charString);}
+				else
+					{mCandidateView.setComposingText("");}
+	
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
-			
-			if(list.size() > 0){
-				setSuggestions(list, true, true);
-			}else{
-				setSuggestions(null, false, false);
-			}
-			
 			
 		}
 		
@@ -1559,7 +1492,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	}
 	public void setSuggestions(List<Mapping> suggestions, boolean completions,
 			boolean typedWordValid) {
-
+		
+		
 		if(suggestions != null && suggestions.size() > 0){
 			
 			setCandidatesViewShown(true);
@@ -1580,7 +1514,11 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				mCandidateView.setSuggestions(suggestions, completions, typedWordValid);
 			}
 		}else{
-			setCandidatesViewShown(false);
+			if (mCandidateView != null) {
+				setCandidatesViewShown(false);
+				mCandidateView.hideComposing();
+			}
+			
 		}
 
 	}
@@ -1597,17 +1535,17 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			getCurrentInputConnection().setComposingText("",0);
 			if (mCandidateView != null) {
 				mCandidateView.clear();
+				//mCandidateView.hideComposing();
 			}
 			mComposing.setLength(0);
-			hideComposing();
 			setCandidatesViewShown(false);
 			getCurrentInputConnection().commitText("", 0);
 		} else {
 			if (mCandidateView != null) {
 				mCandidateView.clear();
+				//mCandidateView.hideComposing();
 			}
 			mComposing.setLength(0);
-			hideComposing();
 			setCandidatesViewShown(false);
 			keyDownUp(KeyEvent.KEYCODE_DEL);
 		}
@@ -2256,9 +2194,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		// cancel candidate view if it's shown
         if (mCandidateView != null) {
 			mCandidateView.clear();
+			//mCandidateView.hideComposing();
 		}
 		mComposing.setLength(0);
-		hideComposing();
 		setCandidatesViewShown(false);
 		
 		requestHideSelf(0);

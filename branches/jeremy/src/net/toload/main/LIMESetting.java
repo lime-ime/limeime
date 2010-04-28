@@ -184,12 +184,12 @@ public class LIMESetting extends Activity {
 		}
 		
 		// Copy raw .cin file into /sdcard/lime/
-		copyRAWFile(getResources().openRawResource(R.raw.bpmf), localRoot + "/bpmf.cin" );
-		copyRAWFile(getResources().openRawResource(R.raw.cj), localRoot + "/cj.cin" );
+		//copyRAWFile(getResources().openRawResource(R.raw.bpmf), localRoot + "/bpmf.cin" );
+		//copyRAWFile(getResources().openRawResource(R.raw.cj), localRoot + "/cj.cin" );
 		//copyRAWFile(getResources().openRawResource(R.raw.dayi3), localRoot + "/dayi3.cin" );
-		copyRAWFile(getResources().openRawResource(R.raw.ez), localRoot + "/ez.lime" );
-		copyRAWFile(getResources().openRawResource(R.raw.scj6), localRoot + "/scj6.lime" );
-		copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/assoc.lime" );
+		//copyRAWFile(getResources().openRawResource(R.raw.ez), localRoot + "/ez.lime" );
+		//copyRAWFile(getResources().openRawResource(R.raw.scj6), localRoot + "/scj6.lime" );
+		//copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/assoc.lime" );
 		copyRAWFile(getResources().openRawResource(R.raw.hanconvert), 
 				"/data/data/net.toload.main/databases/hanconvert.db" );
 		

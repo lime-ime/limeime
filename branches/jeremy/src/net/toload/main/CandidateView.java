@@ -27,11 +27,19 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.MeasureSpec;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.PopupWindow;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -65,6 +73,11 @@ public class CandidateView extends View {
     // Add by Jeremy '10, 3, 29.
     // Suggestions size. Set to MAX_GUGGESTIONS if larger then it.
     private int count =0 ;
+    //Composing view
+	private TextView mComposingTextView;
+	private PopupWindow mComposingTextPopup;
+	private int mDescent;
+	private String mComposingText = "";
     
     private int[] mWordWidth = new int[MAX_SUGGESTIONS];
     private int[] mWordX = new int[MAX_SUGGESTIONS];
@@ -121,11 +134,25 @@ public class CandidateView extends View {
         mColorOther = r.getColor(R.color.candidate_other);
         mVerticalPadding = r.getDimensionPixelSize(R.dimen.candidate_vertical_padding);
         
+        
+     // Composing buffer textView
+		LayoutInflater inflate 
+			= (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+	        mComposingTextPopup = new PopupWindow(context);
+	        mComposingTextView = (TextView) inflate.inflate(R.layout.composingtext, null);
+	        mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+	        mComposingTextPopup.setContentView(mComposingTextView);
+	        mComposingTextPopup.setBackgroundDrawable(null);
+
+	       
+        
         mPaint = new Paint();
         mPaint.setColor(mColorNormal);
         mPaint.setAntiAlias(true);
         mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_height));
         mPaint.setStrokeWidth(0);
+        
+        mDescent = (int) mPaint.descent();
 
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         
@@ -168,6 +195,71 @@ public class CandidateView extends View {
         setWillNotDraw(false);
         setHorizontalScrollBarEnabled(false);
         setVerticalScrollBarEnabled(false);
+    }
+    /*
+    private static final int MSG_REMOVE_COMPOSING = 1;   
+	Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_REMOVE_COMPOSING:
+                	mComposingTextView.setVisibility(GONE);
+                    break;
+               
+            }
+            
+        }
+    };
+    */
+    public void setComposingText(String composingText){
+    	mComposingText = composingText;
+    	mComposingTextView.setText(mComposingText);
+    	
+    }
+    public String getComposingText(String ComposingText){
+		return mComposingText;
+ 	
+    }
+    public void showComposing() {
+	 	
+        if (mComposingText.equals("")) {
+             hideComposing();
+            } else {
+                
+                mComposingTextView.setText(mComposingText);
+                mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
+                        MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+                int wordWidth = (int) (mPaint.measureText(mComposingText, 0, mComposingText.length()));
+                final int popupWidth = wordWidth
+                        + mComposingTextView.getPaddingLeft() + mComposingTextView.getPaddingRight();
+                final int popupHeight = mComposingTextView.getMeasuredHeight();
+                //mPreviewText.setVisibility(INVISIBLE);
+                
+                int mPopupCompoingY = - (popupHeight * 4/5);
+                //mHandler.removeMessages(MSG_REMOVE_COMPOSING);
+                int [] offsetInWindow = new int[2];
+                mComposingTextView.getLocationInWindow(offsetInWindow);
+                if (mComposingTextPopup.isShowing()) {
+                	mComposingTextPopup.update(0, mPopupCompoingY + offsetInWindow[1], 
+                            popupWidth, popupHeight);
+                } else {
+                	mComposingTextPopup.setWidth(popupWidth);
+                	mComposingTextPopup.setHeight(popupHeight);
+                	mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, 0, 
+                			mPopupCompoingY + offsetInWindow[1]);
+                }
+                mComposingTextView.setVisibility(VISIBLE);
+            }
+        
+    }
+ 
+    public void hideComposing() {
+      if(mComposingTextPopup!=null && mComposingTextView!=null){  
+        if (mComposingTextPopup.isShowing()) {
+            //mHandler.sendMessage(mHandler.obtainMessage(MSG_REMOVE_COMPOSING));
+        	mComposingTextView.setVisibility(GONE);
+        }
+      }
     }
     
     /**
@@ -299,6 +391,8 @@ public class CandidateView extends View {
         if (mTargetScrollX != getScrollX()) {
             scrollToTarget();
         }
+        
+        showComposing();
     }
     
     private void scrollToTarget() {
@@ -366,6 +460,7 @@ public class CandidateView extends View {
         count =0;
         mTouchX = OUT_OF_BOUNDS;
         mSelectedIndex = -1;
+        hideComposing();
         invalidate();
     }
     

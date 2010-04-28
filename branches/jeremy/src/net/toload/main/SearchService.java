@@ -194,7 +194,8 @@ public class SearchService extends Service {
 						    temp.setCode(code);
 						    temp.setWord(code);
 				    result.add(temp);
-					code = code.toUpperCase();
+				    // Do this in updatecandidates already
+					//code = code.toUpperCase();
 					precode = code;
 				}
 				
