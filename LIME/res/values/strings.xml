@@ -18,7 +18,7 @@
     <string name="label_send_key">Send</string>
     
     <!-- LIME Setting -->
-    <string name="lime_setting_title">LIME 2.0.2v \n\n**Upgrade from 1.7.x or you would like to use [3 Rows Keybaord Remapping] feature please import IM mapping file again. \n\nThis is a tools which can help you build custom input method by import a set of IM mapping into database. Regarding how to use LIME and where to get mapping file please visit official website.\nhttp://android.toload.net/</string>
+    <string name="lime_setting_title">LIME 2.0.3v \n\n**Upgrade from 1.7.x or you would like to use [3 Rows Keybaord Remapping] feature please import IM mapping file again. \n\nThis is a tools which can help you build custom input method by import a set of IM mapping into database. Regarding how to use LIME and where to get mapping file please visit official website.\nhttp://android.toload.net/</string>
     <string name="lime_setting_operation_notice1">\n[Import Mapping Table]\nBefore you start using LIME IME, you would need to load valid .lime or .cin into the database.\n\nStart from version 2.0 LIME preloaded mapping files, related files will be transfer to your sdcard/lime/ folder after program installed.\n</string>
     <string name="lime_setting_operation_info1">Default Table Version : </string>
     <string name="lime_setting_operation_info1_cj">Changjei Table Version (cj.cin): </string>
