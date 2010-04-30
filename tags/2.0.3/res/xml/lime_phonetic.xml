@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+/*    
+**    Copyright 2010, The LimeIME Open Source Project
+** 
+**    Project Url: http://code.google.com/p/limeime/
+**                 http://android.toload.net/
+**
+**    This program is free software: you can redistribute it and/or modify
+**    it under the terms of the GNU General Public License as published by
+**    the Free Software Foundation, either version 3 of the License, or
+**    (at your option) any later version.
+
+**    This program is distributed in the hope that it will be useful,
+**    but WITHOUT ANY WARRANTY; without even the implied warranty of
+**    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**    GNU General Public License for more details.
+
+**    You should have received a copy of the GNU General Public License
+**    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:keyWidth="10%p"
+    android:horizontalGap="0px"
+    android:verticalGap="0px"
+    android:keyHeight="@dimen/key_height"
+    >
+
+    <Row>
+        <Key android:codes="49" android:iconPreview="@drawable/phonetic_1_l" android:keyIcon="@drawable/phonetic_1" android:keyEdgeFlags="left"/>
+        <Key android:codes="50" android:iconPreview="@drawable/phonetic_2_l" android:keyIcon="@drawable/phonetic_2" />
+        <Key android:codes="51" android:iconPreview="@drawable/phonetic_3_l" android:keyIcon="@drawable/phonetic_3" />
+        <Key android:codes="52" android:iconPreview="@drawable/phonetic_4_l" android:keyIcon="@drawable/phonetic_4" />
+        <Key android:codes="53" android:iconPreview="@drawable/phonetic_5_l" android:keyIcon="@drawable/phonetic_5" />
+        <Key android:codes="54" android:iconPreview="@drawable/phonetic_6_l" android:keyIcon="@drawable/phonetic_6" />
+        <Key android:codes="55" android:iconPreview="@drawable/phonetic_7_l" android:keyIcon="@drawable/phonetic_7" />
+        <Key android:codes="56" android:iconPreview="@drawable/phonetic_8_l" android:keyIcon="@drawable/phonetic_8" />
+        <Key android:codes="57" android:iconPreview="@drawable/phonetic_9_l" android:keyIcon="@drawable/phonetic_9" />
+        <Key android:codes="48" android:iconPreview="@drawable/phonetic_0_l" android:keyIcon="@drawable/phonetic_0"  android:keyEdgeFlags="right"/>
+    </Row>
+    
+     <Row>
+        <Key android:codes="113" android:iconPreview="@drawable/phonetic_q_s_l" android:keyIcon="@drawable/phonetic_q_s" android:keyEdgeFlags="left"/>
+        <Key android:codes="119" android:iconPreview="@drawable/phonetic_w_s_l" android:keyIcon="@drawable/phonetic_w_s"/>
+        <Key android:codes="101" android:iconPreview="@drawable/phonetic_e_s_l" android:keyIcon="@drawable/phonetic_e_s"/>
+        <Key android:codes="114" android:iconPreview="@drawable/phonetic_r_s_l" android:keyIcon="@drawable/phonetic_r_s"/>
+        <Key android:codes="116" android:iconPreview="@drawable/phonetic_t_s_l" android:keyIcon="@drawable/phonetic_t_s"/>
+        <Key android:codes="121" android:iconPreview="@drawable/phonetic_y_s_l" android:keyIcon="@drawable/phonetic_y_s"/>
+        <Key android:codes="117" android:iconPreview="@drawable/phonetic_u_s_l" android:keyIcon="@drawable/phonetic_u_s"/>
+        <Key android:codes="105" android:iconPreview="@drawable/phonetic_i_s_l" android:keyIcon="@drawable/phonetic_i_s"/>
+        <Key android:codes="111" android:iconPreview="@drawable/phonetic_o_s_l" android:keyIcon="@drawable/phonetic_o_s"/>
+        <Key android:codes="112" android:iconPreview="@drawable/phonetic_p_s_l" android:keyIcon="@drawable/phonetic_p_s" android:keyEdgeFlags="right"/>
+    </Row>
+    
+    <Row>
+        <Key android:codes="97" android:iconPreview="@drawable/phonetic_a_s_l" android:keyIcon="@drawable/phonetic_a_s" android:keyEdgeFlags="left"/>
+        <Key android:codes="115" android:iconPreview="@drawable/phonetic_s_s_l" android:keyIcon="@drawable/phonetic_s_s"/>
+        <Key android:codes="100" android:iconPreview="@drawable/phonetic_d_s_l" android:keyIcon="@drawable/phonetic_d_s"/>
+        <Key android:codes="102" android:iconPreview="@drawable/phonetic_f_s_l" android:keyIcon="@drawable/phonetic_f_s"/>
+        <Key android:codes="103" android:iconPreview="@drawable/phonetic_g_s_l" android:keyIcon="@drawable/phonetic_g_s"/>
+        <Key android:codes="104" android:iconPreview="@drawable/phonetic_h_s_l" android:keyIcon="@drawable/phonetic_h_s"/>
+        <Key android:codes="106" android:iconPreview="@drawable/phonetic_j_s_l" android:keyIcon="@drawable/phonetic_j_s"/>
+        <Key android:codes="107" android:iconPreview="@drawable/phonetic_k_u_l" android:keyIcon="@drawable/phonetic_k_u"/>
+        <Key android:codes="108" android:iconPreview="@drawable/phonetic_l_u_l" android:keyIcon="@drawable/phonetic_l_u"/>
+        <Key android:codes="45" android:iconPreview="@drawable/phonetic_dash_l" android:keyIcon="@drawable/phonetic_dash" android:keyEdgeFlags="right"/>
+    </Row>
+    
+    <Row>
+        <Key android:codes="-1" android:iconPreview="@drawable/shift_l" android:keyIcon="@drawable/shift" android:isSticky="true" android:keyEdgeFlags="left"/>
+        <Key android:codes="122" android:iconPreview="@drawable/phonetic_z_s_l" android:keyIcon="@drawable/phonetic_z_s"/>
+        <Key android:codes="120" android:iconPreview="@drawable/phonetic_x_s_l" android:keyIcon="@drawable/phonetic_x_s"/>
+        <Key android:codes="99" android:iconPreview="@drawable/phonetic_c_s_l" android:keyIcon="@drawable/phonetic_c_s"/>
+        <Key android:codes="118" android:iconPreview="@drawable/phonetic_v_s_l" android:keyIcon="@drawable/phonetic_v_s"/>
+        <Key android:codes="98" android:iconPreview="@drawable/phonetic_b_s_l" android:keyIcon="@drawable/phonetic_b_s"/>
+        <Key android:codes="110" android:iconPreview="@drawable/phonetic_n_s_l" android:keyIcon="@drawable/phonetic_n_s"/>
+        <Key android:codes="109" android:iconPreview="@drawable/phonetic_m_s_l" android:keyIcon="@drawable/phonetic_m_s"/>
+        <Key android:codes="59" android:iconPreview="@drawable/phonetic_semicolon_l" android:keyIcon="@drawable/phonetic_semicolon"/>
+        <Key android:codes="-5" android:iconPreview="@drawable/del_l" android:keyIcon="@drawable/del" android:keyEdgeFlags="right" android:isRepeatable="true"/>
+    </Row>
+    
+    <Row android:rowEdgeFlags="bottom">
+        <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
+        <Key android:codes="-9" android:keyIcon="@drawable/sw" android:keyWidth="15%p" android:iconPreview="@drawable/sw_l"/>
+        <Key android:codes="44" android:iconPreview="@drawable/phonetic_comma_l" android:keyIcon="@drawable/phonetic_comma"/>
+        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime"  android:keyWidth="20%p" android:isRepeatable="true"/>
+        <Key android:codes="46" 
+        		android:iconPreview="@drawable/phonetic_dot_l"
+				android:popupKeyboard="@xml/popup_c_punctuation"    
+        		android:keyIcon="@drawable/phonetic_dot"/>
+        <Key android:codes="47" android:iconPreview="@drawable/phonetic_slash_l" android:keyIcon="@drawable/phonetic_slash"/>
+        <Key android:codes="-2" android:keyIcon="@drawable/number" android:iconPreview="@drawable/number_l"/>
+        <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:keyWidth="10%p" android:keyEdgeFlags="right"/>
+    </Row>
+    
+</Keyboard>
+    
