@@ -840,7 +840,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			break;
 		case KeyEvent.KEYCODE_AT:
 			// alt-@ switch to next active keyboard.
-			if( LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON)>0 ){
+			if( LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_SHIFT_ON)>0 ){
 				nextActiveKeyboard();
 				mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 				setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
@@ -1431,7 +1431,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			LinkedList<Mapping> list = new LinkedList<Mapping>();
 			
 			try {
-				String keyString = mComposing.toString().toUpperCase(), charString="";
+				String keyString = mComposing.toString(), charString="";
 				
 				list.addAll(SearchSrv.query(keyString, hasKeyPress));
 	
@@ -1443,7 +1443,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				// Show composing window if keyToChar got different string.
 				if(keyString!=null && !keyString.equals(""))
 					charString = SearchSrv.keyToChar(keyString);
-				if (mCandidateView != null && !charString.equals(keyString)&&!charString.equals(""))
+				if (mCandidateView != null && !charString.toUpperCase().equals(keyString.toUpperCase())&&!charString.equals(""))
 					{mCandidateView.setComposingText(charString);}
 				else
 					{mCandidateView.setComposingText("");}

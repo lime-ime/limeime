@@ -195,7 +195,7 @@ public class SearchService extends Service {
 						    temp.setWord(code);
 				    result.add(temp);
 				    // Do this in updatecandidates already
-					//code = code.toUpperCase();
+					code = code.toUpperCase();
 					precode = code;
 				}
 				
@@ -281,8 +281,8 @@ public class SearchService extends Service {
 							      temp.setDictionary(isDictionary);
 				    if(db == null){db = new LimeDB(ctx);}
 						db.addScore(temp);
-	
-					if(get_mappingIdx().get(precode) != null){
+					// Only do this if isDitionary is false
+					if(!isDictionary && get_mappingIdx().get(precode) != null){
 						//Log.i("ART", "Sorting cache in memory : " + precode + " for " + code);
 						List<Mapping> templist = get_mappingIdx().get(precode);
 						List<Mapping> resultlist = new LinkedList();

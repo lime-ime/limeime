@@ -39,10 +39,7 @@ public class LIMEPreference extends PreferenceActivity
         if (ctx == null) {
 			ctx = this.getApplicationContext();
 		}
-        int tempRecAmount = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(ctx).getString("similiar_list", "150"));	
-        if(tempRecAmount < 30){
-        	PreferenceManager.getDefaultSharedPreferences(ctx).edit().putString("similiar_list", "150").commit();
-        }
+        
         //-----------------------
         addPreferencesFromResource(R.xml.preference);
     }

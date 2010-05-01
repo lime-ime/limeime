@@ -1365,9 +1365,9 @@ return result;
 					cv.put(FIELD_SCORE, score);
 
 					SQLiteDatabase db = this.getWritableDatabase();
-					db.update("related", cv, //FIELD_id + " = " + id
-							FIELD_DIC_pword + " = " + word
-							+FIELD_DIC_cword + " = " + pword
+					db.update("related", cv, FIELD_id + " = " + id
+							//FIELD_DIC_pword + " = " + word
+							//+FIELD_DIC_cword + " = " + pword
 							, null);
 					if(score == 1){ // Update userdic total ++
 						SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
