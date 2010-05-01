@@ -1442,7 +1442,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				}
 				// Show composing window if keyToChar got different string.
 				if(keyString!=null && !keyString.equals(""))
-					charString = SearchSrv.keyToChar(keyString);
+					charString = SearchSrv.keyToChar(keyString.toUpperCase());
 				if (mCandidateView != null && !charString.toUpperCase().equals(keyString.toUpperCase())&&!charString.equals(""))
 					{mCandidateView.setComposingText(charString);}
 				else
