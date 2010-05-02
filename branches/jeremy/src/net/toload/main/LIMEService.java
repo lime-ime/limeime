@@ -118,6 +118,7 @@ public class LIMEService extends InputMethodService implements
 
 	private int mLastDisplayWidth;
 
+	//private LIMEKeyboard mEnglishKeyboard;
 	private LIMEKeyboard mSymbolsKeyboard;
 	private LIMEKeyboard mSymbolsShiftedKeyboard;
 	private LIMEKeyboard mKeyboard;
@@ -271,6 +272,9 @@ public class LIMEService extends InputMethodService implements
 
 		// Lime Standard Keyboard
 		mKeyboard = new LIMEKeyboard(this, R.xml.lime);
+		
+		// Lime Standard Keyboard
+		//mEnglishKeyboard = new LIMEKeyboard(this, R.xml.lime_english);
 
 		// Symbol/Number Keyboard
 		mNumberKeyboard = new LIMEKeyboard(this, R.xml.lime_number);
@@ -950,7 +954,6 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 								SearchSrv.updateMapping(firstMatched.getId(), 
 										firstMatched.getCode(), 
 										firstMatched.getWord(), 
-//										firstMatched.getPcode(), 
 										firstMatched.getPword(), 
 										firstMatched.getScore(), 
 										firstMatched.isDictionary());
@@ -1353,21 +1356,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
     private void handlKeyboardSelection(int position){
     	SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor spe = sp.edit();
-        /*
-        if (position == 0){
-        		keyboardSelection = "lime";
-		} else if(position == 1){
-			keyboardSelection = "phone";
-		} else if(position == 2){
-			keyboardSelection = "cj";
-		} else if(position == 3){
-			keyboardSelection = "dayi";
-		} else if(position == 4){
-			keyboardSelection = "phonetic";
-		} else if(position == 5){
-			keyboardSelection = "ez";
-		}
-        */
+
         keyboardSelection = keyboardListCodes.get(position);
         
         spe.putString("keyboard_list", keyboardSelection);
@@ -1741,6 +1730,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				current == mDayiKeyboard ||
 				current == mDayiShiftKeyboard ||
 				current == mPhoneKeyboard){
+				
 				current = mKeyboard;
 				Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
 				onIM = false;
@@ -2056,82 +2046,13 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			
 		}else{
 			if (!mEnglishOnly) {
-				
+				// Shift keyboard already sent uppercase characters
+				/*
 				if (isInputViewShown()) {
 					if (mInputView.isShifted()) {
 						primaryCode = Character.toUpperCase(primaryCode);
 					}
 				}
-				//------------------------------------------------------------------------
-				// Removed '10, 3, 26 , no need with LIMEMetaKeyKeylistner used.
-				// Add by Jeremy '10, 3,12
-				// Process Alt combination key specific for moto milestone
-				/*/ '10, 3, 24 alt-lock implementation (no clear if alt-locked)		
-				Boolean mHasAlt = LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON) > 0;
-				if( (primaryCode == 'Q' || primaryCode =='q')&& mHasAlt){
-					primaryCode = '1';
-				}else if((primaryCode == 'W' || primaryCode =='w')&& mHasAlt){
-					primaryCode = '2';
-				}else if((primaryCode == 'E' || primaryCode =='e')&& mHasAlt){
-					primaryCode = '3';
-				}else if((primaryCode == 'R' || primaryCode =='r')&& mHasAlt){
-					primaryCode = '4';
-				}else if((primaryCode == 'T' || primaryCode =='t')&& mHasAlt){
-					primaryCode = '5';
-				}else if((primaryCode == 'Y' || primaryCode =='y')&& mHasAlt){
-					primaryCode = '6';
-				}else if((primaryCode == 'U' || primaryCode =='u')&& mHasAlt){
-					primaryCode = '7';
-				}else if((primaryCode == 'I' || primaryCode =='i')&& mHasAlt){
-					primaryCode = '8';
-				}else if((primaryCode == 'O' || primaryCode =='o')&& mHasAlt){
-					primaryCode = '9';
-				}else if((primaryCode == 'P' || primaryCode =='p')&& mHasAlt){
-					primaryCode = '0';
-				}else if((primaryCode == 'A' || primaryCode =='a')&& mHasAlt){
-					primaryCode = 9; //TAB
-				}else if((primaryCode == 'S' || primaryCode =='s')&& mHasAlt){
-					primaryCode = '!';
-				}else if((primaryCode == 'D' || primaryCode =='d')&& mHasAlt){
-					primaryCode = '#';
-				}else if((primaryCode == 'F' || primaryCode =='f')&& mHasAlt){
-					primaryCode = '$';
-				}else if((primaryCode == 'G' || primaryCode =='g')&& mHasAlt){
-					primaryCode = '%';
-				}else if((primaryCode == 'H' || primaryCode =='h')&& mHasAlt){
-					primaryCode = '=';
-				}else if((primaryCode == 'J' || primaryCode =='j')&& mHasAlt){
-					primaryCode = '&';
-				}else if((primaryCode == 'K' || primaryCode =='k')&& mHasAlt){
-					primaryCode = '*';
-				}else if((primaryCode == 'L' || primaryCode =='l')&& mHasAlt){
-					primaryCode = '(';
-				}else if((primaryCode == '?' )&& mHasAlt){
-					primaryCode = ')';
-				}else if((primaryCode == 'Z' || primaryCode =='z')&& mHasAlt){
-					primaryCode = '<';
-				}else if((primaryCode == 'X' || primaryCode =='x')&& mHasAlt){
-					primaryCode = '>';
-				}else if((primaryCode == 'C' || primaryCode =='c')&& mHasAlt){
-					primaryCode = '_';
-				}else if((primaryCode == 'V' || primaryCode =='v')&& mHasAlt){
-					primaryCode = '-';
-				}else if((primaryCode == 'B' || primaryCode =='b')&& mHasAlt){
-					primaryCode = '+';
-				}else if((primaryCode == 'N' || primaryCode =='n')&& mHasAlt){
-					primaryCode = '"';
-				}else if((primaryCode == 'M' || primaryCode =='m')&& mHasAlt){
-					primaryCode = '\'';
-				}else if( primaryCode ==','&& mHasAlt){
-					primaryCode = ';';
-				}else if(primaryCode =='.'&& mHasAlt){
-					primaryCode = ':';
-				}else if(primaryCode == '@' && mHasAlt){
-					primaryCode = '~';
-				}else if(primaryCode == '/' && mHasAlt){
-					primaryCode = '^';
-				}
-				//------------------------------------------------------------------------
 				*/
 				if(DEBUG){
 					Log.i("HandleCharacter",

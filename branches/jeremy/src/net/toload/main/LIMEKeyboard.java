@@ -20,9 +20,11 @@
 
 package net.toload.main;
 
+
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
+import android.graphics.drawable.Drawable;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.Keyboard.Key;
 import android.inputmethodservice.Keyboard.Row;
@@ -34,17 +36,43 @@ import android.view.inputmethod.EditorInfo;
  */
 public class LIMEKeyboard extends Keyboard {
 
-    private Key mEnterKey;
+	 private Drawable mShiftLockIcon;
+	    private Drawable mShiftLockPreviewIcon;
+	    private Drawable mOldShiftIcon;
+	    private Drawable mOldShiftPreviewIcon;
+	    private Key mShiftKey;
+	    private Key mEnterKey;
+	    
+	    private static final int SHIFT_OFF = 0;
+	    private static final int SHIFT_ON = 1;
+	    private static final int SHIFT_LOCKED = 2;
+	    
+	    private int mShiftState = SHIFT_OFF;
+
+	    static int sSpacebarVerticalCorrection;
+
     
     public LIMEKeyboard(Context context, int xmlLayoutResId) {
-        super(context, xmlLayoutResId);
+    	this(context, xmlLayoutResId, 0);
     }
 
     public LIMEKeyboard(Context context, int layoutTemplateResId, 
             CharSequence characters, int columns, int horizontalPadding) {
         super(context, layoutTemplateResId, characters, columns, horizontalPadding);
     }
-
+    
+    public LIMEKeyboard(Context context, int xmlLayoutResId, int mode) {
+        super(context, xmlLayoutResId, mode);
+        Resources res = context.getResources();
+        mShiftLockIcon = res.getDrawable(R.drawable.sym_keyboard_shift_locked);
+        mShiftLockPreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_shift_locked);
+        mShiftLockPreviewIcon.setBounds(0, 0, 
+                mShiftLockPreviewIcon.getIntrinsicWidth(),
+                mShiftLockPreviewIcon.getIntrinsicHeight());
+        sSpacebarVerticalCorrection = res.getDimensionPixelOffset(
+                R.dimen.spacebar_vertical_correction);
+    }
+    
     @Override
     protected Key createKeyFromXml(Resources res, Row parent, int x, int y, 
             XmlResourceParser parser) {
@@ -55,58 +83,164 @@ public class LIMEKeyboard extends Keyboard {
         return key;
     }
     
-    
-    
-    /**
-     * This looks at the ime options given by the current editor, to set the
-     * appropriate label on the keyboard's enter key (if it has one).
-     */
-    void setImeOptions(Resources res, int options) {
-        if (mEnterKey == null) {
-            return;
+    void enableShiftLock() {
+        int index = getShiftKeyIndex();
+        if (index >= 0) {
+            mShiftKey = getKeys().get(index);
+            if (mShiftKey instanceof LatinKey) {
+                ((LatinKey)mShiftKey).enableShiftLock();
+            }
+            mOldShiftIcon = mShiftKey.icon;
+            mOldShiftPreviewIcon = mShiftKey.iconPreview;
         }
-        
-        switch (options&(EditorInfo.IME_MASK_ACTION|EditorInfo.IME_FLAG_NO_ENTER_ACTION)) {
-            case EditorInfo.IME_ACTION_GO:
-                mEnterKey.iconPreview = null;
-                mEnterKey.icon = null;
-                mEnterKey.label = res.getText(R.string.label_go_key);
-                break;
-            case EditorInfo.IME_ACTION_NEXT:
-                mEnterKey.iconPreview = null;
-                mEnterKey.icon = null;
-                mEnterKey.label = res.getText(R.string.label_next_key);
-                break;
-            case EditorInfo.IME_ACTION_SEARCH:
-                mEnterKey.icon = res.getDrawable(
-                        R.drawable.sym_keyboard_search);
-                mEnterKey.label = null;
-                break;
-            case EditorInfo.IME_ACTION_SEND:
-                mEnterKey.iconPreview = null;
-                mEnterKey.icon = null;
-                mEnterKey.label = res.getText(R.string.label_send_key);
-                break;
-            default:
-                mEnterKey.icon = res.getDrawable(
-                        R.drawable.sym_keyboard_return);
-                mEnterKey.label = null;
-                break;
+    }
+
+    void setShiftLocked(boolean shiftLocked) {
+        if (mShiftKey != null) {
+            if (shiftLocked) {
+                mShiftKey.on = true;
+                mShiftKey.icon = mShiftLockIcon;
+                mShiftState = SHIFT_LOCKED;
+            } else {
+                mShiftKey.on = false;
+                mShiftKey.icon = mShiftLockIcon;
+                mShiftState = SHIFT_ON;
+            }
+        }
+    }
+
+    boolean isShiftLocked() {
+        return mShiftState == SHIFT_LOCKED;
+    }
+    
+    @Override
+    public boolean setShifted(boolean shiftState) {
+        boolean shiftChanged = false;
+        if (mShiftKey != null) {
+            if (shiftState == false) {
+                shiftChanged = mShiftState != SHIFT_OFF;
+                mShiftState = SHIFT_OFF;
+                mShiftKey.on = false;
+                mShiftKey.icon = mOldShiftIcon;
+            } else {
+                if (mShiftState == SHIFT_OFF) {
+                    shiftChanged = mShiftState == SHIFT_OFF;
+                    mShiftState = SHIFT_ON;
+                    mShiftKey.icon = mShiftLockIcon;
+                }
+            }
+        } else {
+            return super.setShifted(shiftState);
+        }
+        return shiftChanged;
+    }
+    
+    @Override
+    public boolean isShifted() {
+        if (mShiftKey != null) {
+            return mShiftState != SHIFT_OFF;
+        } else {
+            return super.isShifted();
+        }
+    }
+    
+    
+    
+    void setImeOptions(Resources res, int options) {
+        if (mEnterKey != null) {
+            // Reset some of the rarely used attributes.
+            mEnterKey.popupCharacters = null;
+            mEnterKey.popupResId = 0;
+            mEnterKey.text = null;
+            switch (options&(EditorInfo.IME_MASK_ACTION|EditorInfo.IME_FLAG_NO_ENTER_ACTION)) {
+                case EditorInfo.IME_ACTION_GO:
+                    mEnterKey.iconPreview = null;
+                    mEnterKey.icon = null;
+                    mEnterKey.label = res.getText(R.string.label_go_key);
+                    break;
+                case EditorInfo.IME_ACTION_NEXT:
+                    mEnterKey.iconPreview = null;
+                    mEnterKey.icon = null;
+                    mEnterKey.label = res.getText(R.string.label_next_key);
+                    break;
+                case EditorInfo.IME_ACTION_DONE:
+                    mEnterKey.iconPreview = null;
+                    mEnterKey.icon = null;
+                    mEnterKey.label = res.getText(R.string.label_done_key);
+                    break;
+                case EditorInfo.IME_ACTION_SEARCH:
+                    mEnterKey.iconPreview = res.getDrawable(
+                            R.drawable.sym_keyboard_feedback_search);
+                    mEnterKey.icon = res.getDrawable(
+                            R.drawable.sym_keyboard_search);
+                    mEnterKey.label = null;
+                    break;
+                case EditorInfo.IME_ACTION_SEND:
+                    mEnterKey.iconPreview = null;
+                    mEnterKey.icon = null;
+                    mEnterKey.label = res.getText(R.string.label_send_key);
+                    break;
+                default:
+                	/*
+                    if (mode == KeyboardSwitcher.MODE_IM) {
+                        mEnterKey.icon = null;
+                        mEnterKey.iconPreview = null;
+                        mEnterKey.label = ":-)";
+                        mEnterKey.text = ":-) ";
+                        mEnterKey.popupResId = R.xml.popup_smileys;
+                    } else {
+                    */
+                        mEnterKey.iconPreview = res.getDrawable(
+                                R.drawable.sym_keyboard_feedback_return);
+                        mEnterKey.icon = res.getDrawable(
+                                R.drawable.sym_keyboard_return);
+                        mEnterKey.label = null;
+                    //}
+                    break;
+            }
+            // Set the initial size of the preview icon
+            if (mEnterKey.iconPreview != null) {
+                mEnterKey.iconPreview.setBounds(0, 0, 
+                        mEnterKey.iconPreview.getIntrinsicWidth(),
+                        mEnterKey.iconPreview.getIntrinsicHeight());
+            }
         }
     }
     static class LatinKey extends Keyboard.Key {
+       
+    	private boolean mShiftLockEnabled;
         
         public LatinKey(Resources res, Keyboard.Row parent, int x, int y, XmlResourceParser parser) {
             super(res, parent, x, y, parser);
         }
         
+        @Override
+        public void onReleased(boolean inside) {
+            if (!mShiftLockEnabled) {
+                super.onReleased(inside);
+            } else {
+                pressed = !pressed;
+            }
+        }
+
+        void enableShiftLock() {
+            mShiftLockEnabled = true;
+        }
         /**
          * Overriding this method so that we can reduce the target area for the key that
          * closes the keyboard. 
          */
         @Override
         public boolean isInside(int x, int y) {
-            return super.isInside(x, codes[0] == KEYCODE_CANCEL ? y - 10 : y);
+        	 final int code = codes[0];
+             if (code == KEYCODE_SHIFT ||
+                     code == KEYCODE_DELETE) {
+                 y -= height / 10;
+                 if (code == KEYCODE_SHIFT) x += width / 6;
+                 if (code == KEYCODE_DELETE) x -= width / 6;
+             }
+              if (code == KEYCODE_CANCEL) y  -= 10;
+            return super.isInside(x,  y);
         }
     }
     
