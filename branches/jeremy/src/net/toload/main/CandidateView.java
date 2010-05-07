@@ -30,6 +30,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
@@ -106,6 +107,8 @@ public class CandidateView extends View {
     private int bgcolor = 0;
     
     private GestureDetector mGestureDetector;
+    
+    private Context ctx;
 
     /**
      * Construct a CandidateView for showing suggested words for completion.
@@ -115,7 +118,7 @@ public class CandidateView extends View {
     public CandidateView(Context context) {
         
     	super(context);
-        
+    	
         mSelectionHighlight = context.getResources().getDrawable(
                 android.R.drawable.list_selector_background);
         mSelectionHighlight.setState(new int[] {
@@ -196,7 +199,7 @@ public class CandidateView extends View {
         setHorizontalScrollBarEnabled(false);
         setVerticalScrollBarEnabled(false);
     }
-    /*
+    
     private static final int MSG_REMOVE_COMPOSING = 1;   
 	Handler mHandler = new Handler() {
         @Override
@@ -210,10 +213,12 @@ public class CandidateView extends View {
             
         }
     };
-    */
+    
     public void setComposingText(String composingText){
     	mComposingText = composingText;
     	mComposingTextView.setText(mComposingText);
+    	showComposing();
+    	
     	
     }
     public String getComposingText(String ComposingText){
@@ -221,11 +226,12 @@ public class CandidateView extends View {
  	
     }
     public void showComposing() {
-	 	
+    	Log.i("candidateview","showcomposing()");
         if (mComposingText.equals("")) {
-             hideComposing();
+             //hideComposing();
             } else {
-                
+            	
+            	mComposingTextPopup.setContentView(mComposingTextView);
                 mComposingTextView.setText(mComposingText);
                 mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
                         MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
@@ -239,7 +245,7 @@ public class CandidateView extends View {
                 //mHandler.removeMessages(MSG_REMOVE_COMPOSING);
                 int [] offsetInWindow = new int[2];
                 mComposingTextView.getLocationInWindow(offsetInWindow);
-                if (mComposingTextPopup.isShowing()) {
+                if (mComposingTextPopup.isShowing()) {              	
                 	mComposingTextPopup.update(0, mPopupCompoingY + offsetInWindow[1], 
                             popupWidth, popupHeight);
                 } else {
@@ -249,18 +255,27 @@ public class CandidateView extends View {
                 			mPopupCompoingY + offsetInWindow[1]);
                 }
                 mComposingTextView.setVisibility(VISIBLE);
+
+
             }
         
     }
- 
+
+    
     public void hideComposing() {
-      if(mComposingTextPopup!=null && mComposingTextView!=null){  
+    	Log.i("candidateview","hidecomposing()");
+  
+      if(mComposingTextPopup!=null ){  
         if (mComposingTextPopup.isShowing()) {
-            //mHandler.sendMessage(mHandler.obtainMessage(MSG_REMOVE_COMPOSING));
-        	mComposingTextView.setVisibility(GONE);
+            //mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_REMOVE_COMPOSING), 60);
+        	mComposingTextView.setVisibility(INVISIBLE);
+        	//mComposingTextPopup.update(800,0,-1,-1);
         }
       }
     }
+    
+    
+
     
     /**
      * A connection back to the service to communicate with the text field
@@ -392,7 +407,7 @@ public class CandidateView extends View {
             scrollToTarget();
         }
         
-        showComposing();
+        //showComposing();
     }
     
     private void scrollToTarget() {
@@ -460,7 +475,8 @@ public class CandidateView extends View {
         count =0;
         mTouchX = OUT_OF_BOUNDS;
         mSelectedIndex = -1;
-        hideComposing();
+        //hideComposing();
+        setComposingText("");
         invalidate();
     }
     
@@ -614,5 +630,11 @@ public class CandidateView extends View {
     private void removeHighlight() {
         mTouchX = OUT_OF_BOUNDS;
         invalidate();
+    }
+    
+    @Override
+    public void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        hideComposing();
     }
 }

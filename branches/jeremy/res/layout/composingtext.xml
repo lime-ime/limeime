@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:textSize="18sp"
     android:textColor="?android:attr/textColorPrimaryInverse"
-    android:minWidth="18dip"
+    android:minWidth="0dip"
     android:gravity="bottom"
     android:background="@drawable/composing_popup_background"
     />

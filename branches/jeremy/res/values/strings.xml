@@ -121,7 +121,62 @@
     
     <!-- Other Messages -->
   	
-  	
+  	<!-- Indicates that a word has been added to the dictionary -->
+    <string name="added_word"><xliff:g id="word">%s</xliff:g> : Saved</string>
+    <!-- Accented forms of "a" -->
+    <string name="alternates_for_a">àáâãäåæ</string>
+    <!-- Accented forms of "e" -->
+    <string name="alternates_for_e">èéêë</string>
+    <!-- Accented forms of "i" -->
+    <string name="alternates_for_i">ìíîï</string>
+    <!-- Accented forms of "o" -->
+    <string name="alternates_for_o">òóôõöœø</string>
+    <!-- Accented forms of "u" -->
+    <string name="alternates_for_u">ùúûü</string>
+    <!-- Letters associated with "s" -->
+    <string name="alternates_for_s">§ß</string>
+    <!-- Accented forms of "n" -->
+    <string name="alternates_for_n">ñ</string>
+    <!-- Accented forms of "c" -->
+    <string name="alternates_for_c">ç</string>
+    <!-- Accented forms of "y" -->
+    <string name="alternates_for_y">ýÿ</string>
+    <!-- Symbols that are commonly considered word separators in this language -->
+    <!-- Symbols that are sentence separators, for purposes of making it hug the last sentence. -->
+    <string name="sentence_separators">.,;:!?</string>
+    <!-- Accented characters related to "d" -->
+    <string name="alternates_for_d"></string>
+    <!-- Accented characters related to "r" -->
+    <string name="alternates_for_r"></string>
+    <!-- Accented characters related to "t" -->
+    <string name="alternates_for_t"></string>
+    <!-- Accented characters related to "z" -->
+    <string name="alternates_for_z"></string>
+    <!-- Accented characters related to "l" -->
+    <string name="alternates_for_l"></string>
+    <!-- Accented characters related to "g" -->
+    <string name="alternates_for_g"></string>
+    
+    <!-- Label for soft enter key when it performs DONE action.  Must be short to fit on key! -->
+    <string name="label_done_key">Done</string>
+    <!-- Label for "switch to symbols" key.  Must be short to fit on key! -->
+    <string name="label_symbol_key">\?123</string>
+    <!-- Label for "switch to numeric" key.  Must be short to fit on key! -->
+    <string name="label_alpha_key">ABC</string>
+    <!-- Label for ALT modifier key.  Must be short to fit on key! -->
+    <string name="label_alt_key">ALT</string>
+    
+     <!-- popular web domains for the locale - most popular, displayed on the keyboard -->
+    <string name="popular_domain_0">".com"</string>
+    <!-- popular web domains for the locale - item 1, displayed in the popup -->
+    <string name="popular_domain_1">".net"</string>
+    <!-- popular web domains for the locale - item 2, displayed in the popup -->
+    <string name="popular_domain_2">".org"</string>
+    <!-- popular web domains for the locale - item 3, displayed in the popup -->
+    <string name="popular_domain_3">".gov"</string>
+    <!-- popular web domains for the locale - item 4, displayed in the popup -->
+    <string name="popular_domain_4">".edu"</string>
+    
 	<!-- Han Converter Options -->
     <string-array name="han_convert_options">
 		<item>none</item>

@@ -110,14 +110,17 @@
         <CheckBoxPreference
                 android:key="candidate_switch"
                 android:title="@string/candidate_switch"
+                android:defaultValue="true"
                 android:summary="@string/candidate_switch_summary" />
         <CheckBoxPreference
                 android:key="candidate_suggestion"
                 android:title="@string/candidate_suggestion"
+                android:defaultValue="true"
                 android:summary="@string/candidate_suggestion_summary" />
         <CheckBoxPreference
                 android:key="learning_switch"
                 android:title="@string/learning_switch"
+                android:defaultValue="true"
                 android:summary="@string/learning_switch_summary" />
         <CheckBoxPreference
                 android:key="accept_number_index"

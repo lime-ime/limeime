@@ -477,8 +477,12 @@ public class LIMEService extends InputMethodService implements
 	public void onStartInputView(EditorInfo attribute, boolean restarting) {
 		super.onStartInputView(attribute, restarting);
 		// Apply the selected keyboard to the input view.
-		mInputView.setKeyboard(mCurKeyboard);
-		mInputView.closing();
+		//mInputView.setKeyboard(mCurKeyboard);
+		//mInputView.closing();
+		mEnglishOnly = false;
+		onIM = true;
+		initialKeyboard();
+		setCandidatesViewShown(false);
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 		hasVibration = sp.getBoolean("vibrate_on_keypress", false);
@@ -487,7 +491,6 @@ public class LIMEService extends InputMethodService implements
 		//hasNumberMapping = sp.getBoolean("accept_number_index", false);
 		//hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
 		keyboardSelection = sp.getString("keyboard_list", "lime");
-
 		hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
 	}
 
@@ -1091,23 +1094,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}
 	}
 
-	private void switchChiEng() {
-			mEnglishOnly = !mEnglishOnly;
-			   // cancel candidate view if it's shown
-	        if (mCandidateView != null) {
-				mCandidateView.clear();
-				//mCandidateView.hideComposing();
-			}
-			mComposing.setLength(0);
-			setCandidatesViewShown(false);
-			if (mEnglishOnly) {
-				Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
-			} else {
-				Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
-			}
-	}
-	// Implementation of KeyboardViewListener
-
+	
+	
 	public void onKey(int primaryCode, int[] keyCodes) {
 		if(DEBUG){
 			Log.i("OnKey", "Entering Onkey(); primaryCode:" + primaryCode +" mEnglishFlagShift:" + mEnglishFlagShift);
@@ -1505,7 +1493,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}else{
 			if (mCandidateView != null) {
 				setCandidatesViewShown(false);
-				mCandidateView.hideComposing();
+				//mCandidateView.hideComposing();
 			}
 			
 		}
@@ -1540,6 +1528,14 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}
 		//updateShiftKeyState(getCurrentInputEditorInfo());
 		
+	}
+	
+	public void setCandidatesViewShown(boolean shown){
+		super.setCandidatesViewShown(shown);
+		if (mCandidateView != null) {
+			if(shown) mCandidateView.showComposing();
+			else mCandidateView.hideComposing();
+		}
 	}
 
 
@@ -1670,139 +1666,49 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	}
 
 	private void switchKeyboard(int primaryCode) {
-
-		Keyboard current = mInputView.getKeyboard();
-		
 		if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE) {
-			// Switch Keyboard between Symbol and Lime
-			if(current != mSymbolsKeyboard && current != mSymbolsShiftedKeyboard) {
-				current = mSymbolsKeyboard;
-				onIM = false;
-			} else{
-				if (keyboardSelection.equals("lime")){
-					if (hasNumberKeypads) {
-						current = mNumberKeyboard;
-					}else{
-						current = mKeyboard;
-					}
-
-					SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-					hasNumberMapping = sp.getBoolean("accept_number_index", false);
-					hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
-				} else if(keyboardSelection.equals("cj")){
-					if (hasNumberKeypads) {
-						current = mCJNumberKeyboard;
-					}else{
-						current = mCJKeyboard;
-					}
-					SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-					hasNumberMapping = sp.getBoolean("accept_number_index", false);
-					hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
-				} else if(keyboardSelection.equals("phonetic")){
-					current = mPhoneticKeyboard;
-					hasNumberMapping = true;
-					hasSymbolMapping = true;
-				} else if(keyboardSelection.equals("dayi")){
-					current = mDayiKeyboard;
-					hasNumberMapping = true;
-					hasSymbolMapping = true;
-				} else if(keyboardSelection.equals("ez")){
-					current = mEZKeyboard;
-					hasNumberMapping = true;
-					hasSymbolMapping = true;
-				} else if(keyboardSelection.equals("phone")){
-					current = mPhoneKeyboard;
-					hasNumberMapping = true;
-					hasSymbolMapping = true;
-				}
-				onIM = true;
-			}
+			switchSymKeyboard();
 		}else if(primaryCode == KEYBOARD_SWITCH_CODE){
-
-			if( current == mCJNumberKeyboard ||
-				current == mCJNumberShiftKeyboard ||
-				current == mCJKeyboard ||
-				current == mCJShiftKeyboard ||
-				current == mPhoneticKeyboard ||
-				current == mPhoneticShiftKeyboard ||
-				current == mEZKeyboard ||
-				current == mEZShiftKeyboard ||
-				current == mDayiKeyboard ||
-				current == mDayiShiftKeyboard ||
-				current == mPhoneKeyboard){
-				
-				current = mKeyboard;
-				Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
-				onIM = false;
-
-				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-				hasNumberMapping = sp.getBoolean("accept_number_index", false);
-				hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
-				
-			} else {
-				if (keyboardSelection.equals("lime")){
-					if (hasNumberKeypads) {
-						current = mNumberKeyboard;
-					}else{
-						current = mKeyboard;
-					}
-					onIM = !onIM;
-					if(onIM){
-						Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
-					}else{
-						Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
-					}
-					SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-					hasNumberMapping = sp.getBoolean("accept_number_index", false);
-					hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
-				} else if(keyboardSelection.equals("cj")){
-					if (hasNumberKeypads) {
-						current = mCJNumberKeyboard;
-					}else{
-						current = mCJKeyboard;
-					}
-					onIM = true;
-					SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-					hasNumberMapping = sp.getBoolean("accept_number_index", false);
-					hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
-					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
-				} else if(keyboardSelection.equals("phonetic")){
-					current = mPhoneticKeyboard;
-					onIM = true;
-					hasNumberMapping = true;
-					hasSymbolMapping = true;
-					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
-				} else if(keyboardSelection.equals("ez")){
-					current = mEZKeyboard;
-					onIM = true;
-					hasNumberMapping = true;
-					hasSymbolMapping = true;
-					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
-				} else if(keyboardSelection.equals("dayi")){
-					current = mDayiKeyboard;
-					onIM = true;
-					hasNumberMapping = true;
-					hasSymbolMapping = true;
-					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
-				} else if(keyboardSelection.equals("phone")){
-					current = mPhoneKeyboard;
-					onIM = true;
-					hasNumberMapping = true;
-					hasSymbolMapping = true;
-					Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
-				}
-			}
+			switchChiEng();
 		}
 		
-		// Reset Shift Status
-		mCapsLock = false;
-		mHasShift = false;
-
-		current.setShifted(false);
-		mInputView.setKeyboard(current);
 		
 	}
-
+	private void switchSymKeyboard(){
+		// Switch Keyboard between Symbol and Lime
+		Keyboard current = mInputView.getKeyboard();
+		if(current != mSymbolsKeyboard && current != mSymbolsShiftedKeyboard) {
+			mInputView.setKeyboard(mSymbolsKeyboard);
+			mCurKeyboard = mSymbolsKeyboard;
+			onIM = false;
+		} else{			
+			initialKeyboard();
+			onIM = true;
+		}
+	}
+	
+	private void switchChiEng() {
+		//mEnglishOnly = !mEnglishOnly;
+		   // cancel candidate view if it's shown
+        if (mCandidateView != null) {
+			mCandidateView.clear();
+			//mCandidateView.hideComposing();
+		}
+		mComposing.setLength(0);
+		setCandidatesViewShown(false);
+		if (mEnglishOnly) {
+			mEnglishOnly = false;
+			onIM = true;
+			Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();	
+			initialKeyboard();
+		} else {
+			mEnglishOnly = true;
+			onIM = false;
+			mInputView.setKeyboard(mKeyboard);
+			mCurKeyboard = mKeyboard;
+			Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
+		}
+}
 	private void initialKeyboard() {
 		
 		buildActiveKeyboardList();
@@ -1866,7 +1772,10 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			hasNumberMapping = true;
 			hasSymbolMapping = true;
 		}
-
+		// Reset Shift Status
+		mCapsLock = false;
+		mHasShift = false;
+		mCurKeyboard.setShifted(false);
 		// Set db table name.	
 		try {
 			String tablename = new String(keyboardSelection);
@@ -2040,6 +1949,11 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 							mComposing + String.valueOf((char) primaryCode), 1);
 				}
 			} else {
+				if (isInputViewShown()) {
+					if (mInputView.isShifted()) {
+						primaryCode = Character.toUpperCase(primaryCode);
+					}
+				}
 				getCurrentInputConnection().commitText(
 						String.valueOf((char) primaryCode), 1);
 			}
@@ -2103,6 +2017,11 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 							mComposing + String.valueOf((char) primaryCode), 1);
 				}
 			} else {
+				if (isInputViewShown()) {
+					if (mInputView.isShifted()) {
+						primaryCode = Character.toUpperCase(primaryCode);
+					}
+				}
 				getCurrentInputConnection().commitText(
 						String.valueOf((char) primaryCode), 1);
 			}
@@ -2115,10 +2034,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		// cancel candidate view if it's shown
         if (mCandidateView != null) {
 			mCandidateView.clear();
-			//mCandidateView.hideComposing();
 		}
 		mComposing.setLength(0);
-		setCandidatesViewShown(false);
+		//setCandidatesViewShown(false);
 		
 		requestHideSelf(0);
 		mInputView.closing();
