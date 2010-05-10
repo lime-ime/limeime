@@ -305,7 +305,7 @@ public class LIMEService extends InputMethodService implements
 	 @Override
 	    public void onConfigurationChanged(Configuration conf) {
 	        if (!TextUtils.equals(conf.locale.toString(), mLocale)) {
-	            initSuggest(conf.locale.toString());
+	            //initSuggest(conf.locale.toString());
 	        }
 	        // If orientation changed while predicting, commit the change
 	        if (conf.orientation != mOrientation) {
@@ -1773,6 +1773,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	}
 	private void switchSymKeyboard(){
 		// Switch Keyboard between Symbol and Lime
+		if(mCapsLock) toggleCapsLock();
 		mKeyboardSwitcher.toggleSymbols();
 
 	}
@@ -1784,6 +1785,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			mCandidateView.clear();
 			
 		}
+        if(mCapsLock) toggleCapsLock();
 		mComposing.setLength(0);
 		setCandidatesViewShown(false);
 		mKeyboardSwitcher.toggleChinese();
@@ -1853,7 +1855,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			hasNumberMapping = true;
 			hasSymbolMapping = true;
 		} else if (keyboardSelection.equals("phone")) {
-			mMode = mKeyboardSwitcher.MODE_PHONE;
+			mMode = mKeyboardSwitcher.MODE_TEXT_PHONE;
 			// Should use number and symbol mapping
 			hasNumberMapping = true;
 			hasSymbolMapping = true;
@@ -2152,7 +2154,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         mCapsLock = !mCapsLock;
         if (mKeyboardSwitcher.isAlphabetMode()) {
             ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(mCapsLock);
-        }else if(mKeyboardSwitcher.isChinese()) {
+        }else if(mKeyboardSwitcher.isChinese()||mKeyboardSwitcher.isSymbols()) {
         	handleShift();
             ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(mCapsLock);
         }

@@ -29,6 +29,7 @@ public class LIMEKeyboardSwitcher {
     public static final int MODE_TEXT_PHONETIC = 14;
     public static final int MODE_TEXT_DAYI = 15;
     public static final int MODE_TEXT_EZ = 16;
+    public static final int MODE_TEXT_PHONE = 17;
     public static final int MODE_SYMBOLS = 2;
     public static final int MODE_PHONE = 3;
     public static final int MODE_URL = 4;
@@ -130,7 +131,7 @@ public class LIMEKeyboardSwitcher {
         mSymbolsModeState = SYMBOLS_MODE_STATE_NONE;
         mPreferSymbols = mode == MODE_SYMBOLS;
         mIsChinese = (mode == MODE_TEXT_DEFAULT || mode == MODE_TEXT_PHONETIC ||mode == MODE_TEXT_DAYI
-        		||mode == MODE_TEXT_EZ ||mode == MODE_TEXT_CJ);
+        		||mode == MODE_TEXT_EZ ||mode == MODE_TEXT_CJ || mode == MODE_TEXT_PHONE);
         if(mIsChinese) mChnMode = mode;
         else mMode = mode;
         if(mIsChinese){
@@ -179,8 +180,8 @@ public class LIMEKeyboardSwitcher {
 
     private KeyboardId getKeyboardId(int mode, int imeOptions, boolean isSymbols, boolean isShifted) {
         if (isSymbols) {
-        	if(isShifted) return new KeyboardId(R.xml.symbols);
-        	else return new KeyboardId(R.xml.symbols_shift);
+        	if(isShifted) return new KeyboardId(R.xml.symbols_shift, 0, true );
+        	else return new KeyboardId(R.xml.symbols);
         }
 
         switch (mode) {
@@ -200,6 +201,8 @@ public class LIMEKeyboardSwitcher {
             case MODE_TEXT_EZ:
                 if(isShifted) return new KeyboardId(R.xml.lime_ez_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_ez);
+            case MODE_TEXT_PHONE:
+                return new KeyboardId(R.xml.phone, 0, false);
             case MODE_SYMBOLS:
             	if(isShifted) return new KeyboardId(R.xml.symbols_shift, 0, true);
             	else return new KeyboardId(R.xml.symbols);
