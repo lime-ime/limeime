@@ -189,19 +189,19 @@ public class LIMEKeyboardSwitcher {
             case MODE_TEXT_DEFAULT:
                 return new KeyboardId(R.xml.lime);
             case MODE_TEXT_DEFAULT_NUMBER:
-                if(isShifted) return new KeyboardId(R.xml.lime_number_shift );    
+                if(isShifted) return new KeyboardId(R.xml.lime_number_shift, 0, true );    
                 else return new KeyboardId(R.xml.lime_number);
             case MODE_TEXT_CJ:
-                if(isShifted) return new KeyboardId(R.xml.lime_cj_shift);    
+                if(isShifted) return new KeyboardId(R.xml.lime_cj_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_cj);
             case MODE_TEXT_DAYI:
-                if(isShifted) return new KeyboardId(R.xml.lime_dayi_shift);    
+                if(isShifted) return new KeyboardId(R.xml.lime_dayi_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_dayi);
             case MODE_TEXT_EZ:
-                if(isShifted) return new KeyboardId(R.xml.lime_ez_shift);    
+                if(isShifted) return new KeyboardId(R.xml.lime_ez_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_ez);
             case MODE_SYMBOLS:
-            	if(isShifted) return new KeyboardId(R.xml.symbols_shift);
+            	if(isShifted) return new KeyboardId(R.xml.symbols_shift, 0, true);
             	else return new KeyboardId(R.xml.symbols);
             case MODE_PHONE:
                 return new KeyboardId(R.xml.phone);

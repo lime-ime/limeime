@@ -20,8 +20,6 @@
 
 package net.toload.main;
 
-
-import android.graphics.Paint;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
@@ -29,7 +27,6 @@ import android.media.AudioManager;
 import android.os.Debug;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.os.RemoteException;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
@@ -38,22 +35,16 @@ import android.preference.PreferenceManager;
 import android.text.AutoText;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.View.MeasureSpec;
-import android.view.ViewGroup.LayoutParams;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.FrameLayout;
-import android.widget.PopupWindow;
-import android.widget.TextView;
+
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -71,8 +62,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteCursor;
+
 
 /**
  * @author Art Hung
@@ -112,6 +102,7 @@ public class LIMEService extends InputMethodService implements
 	//------------------------------------------------------------------------
 	private boolean mEnglishOnly;
 	private boolean mEnglishFlagShift;
+
 	private boolean onIM = false;
 	private boolean hasFirstMatched = false;
 	// Removed by Jeremy '10, 3, 27.  
@@ -121,6 +112,8 @@ public class LIMEService extends InputMethodService implements
 
 	private long mLastShiftTime;
 	private long mMetaState;
+	
+	private int mImeOptions;
 
 	private int mLastDisplayWidth;
 	
@@ -156,26 +149,7 @@ public class LIMEService extends InputMethodService implements
     // A word that is frequently typed and get's promoted to the user dictionary, uses this
     // frequency.
     static final int FREQUENCY_FOR_AUTO_ADD = 250;
-	/*/private LIMEKeyboard mEnglishKeyboard;
-	private LIMEKeyboard mSymbolsKeyboard;
-	private LIMEKeyboard mSymbolsShiftedKeyboard;
-	private LIMEKeyboard mKeyboard;
-	private LIMEKeyboard mNumberKeyboard;
-	private LIMEKeyboard mNumberShiftKeyboard;
-	private LIMEKeyboard mCJKeyboard;
-	private LIMEKeyboard mCJShiftKeyboard;
-	private LIMEKeyboard mCJNumberKeyboard;
-	private LIMEKeyboard mCJNumberShiftKeyboard;
-	private LIMEKeyboard mPhoneticKeyboard;
-	private LIMEKeyboard mPhoneticShiftKeyboard;
-	private LIMEKeyboard mDayiKeyboard;
-	private LIMEKeyboard mDayiShiftKeyboard;
-	private LIMEKeyboard mEZKeyboard;
-	private LIMEKeyboard mEZShiftKeyboard;
-	private LIMEKeyboard mPhoneKeyboard;
 
-	private LIMEKeyboard mCurKeyboard;
-	*/
 	private Mapping firstMatched;
 	private Mapping tempMatched;
 
@@ -532,6 +506,7 @@ public class LIMEService extends InputMethodService implements
 
 	   TextEntryState.newSession(this);
 	   loadSettings();
+	   mImeOptions = attribute.imeOptions;
 	   initialKeyboard();
 	   boolean disableAutoCorrect = false;
 	   mPredictionOn = false;
@@ -556,8 +531,6 @@ public class LIMEService extends InputMethodService implements
 	                break;
 	            case EditorInfo.TYPE_CLASS_TEXT:
 	        		
-	                
-	                
 	                // Make sure that passwords are not displayed in candidate view
 	                int variation = attribute.inputType &  EditorInfo.TYPE_MASK_VARIATION;
 	                if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD ||
@@ -583,7 +556,7 @@ public class LIMEService extends InputMethodService implements
 	                    mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_URL,
 	                            attribute.imeOptions);
 	                } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
-	                    //mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM, attribute.imeOptions);
+	                    mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM, attribute.imeOptions);
 	                } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
 	                    mPredictionOn = false;
 	                } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
@@ -634,11 +607,7 @@ public class LIMEService extends InputMethodService implements
 	        }
 	        mPredictionOn = mPredictionOn && mCorrectionMode > 0;
 	     
-		// Apply the selected keyboard to the input view.
-		//mInputView.setKeyboard(mCurKeyboard);
-		//mInputView.closing();
 
-	
 		setCandidatesViewShown(false);
 
 		
@@ -1336,6 +1305,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
              } else {
                  toggleCapsLock();
              }
+			 
 		} else if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE && mInputView != null) {
 			switchKeyboard(primaryCode);
 		}  else if (primaryCode == -9 && mInputView != null) {
@@ -1780,9 +1750,6 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	private void handleShift() {
 
 		if (mInputView == null) { return; }
-
-		// Check Shift Status
-		checkToggleCapsLock();
 		
 		if (mKeyboardSwitcher.isAlphabetMode()) {
             // Alphabet keyboard
@@ -1891,7 +1858,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			hasNumberMapping = true;
 			hasSymbolMapping = true;
 		}
-		mKeyboardSwitcher.setKeyboardMode(mMode, 0);
+		mKeyboardSwitcher.setKeyboardMode(mMode, mImeOptions);
 		// Reset Shift Status
 		//mCapsLock = false;
 		//mHasShift = false;
@@ -2178,11 +2145,15 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		if (mInputView.getKeyboard().isShifted()) {
             toggleCapsLock();
         }
+		
     }
     
     private void toggleCapsLock() {
         mCapsLock = !mCapsLock;
-        if (mKeyboardSwitcher.isAlphabetMode()||mKeyboardSwitcher.isChinese()) {
+        if (mKeyboardSwitcher.isAlphabetMode()) {
+            ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(mCapsLock);
+        }else if(mKeyboardSwitcher.isChinese()) {
+        	handleShift();
             ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(mCapsLock);
         }
     }
