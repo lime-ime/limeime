@@ -76,7 +76,7 @@ public class LIMEKeyboard extends Keyboard {
     @Override
     protected Key createKeyFromXml(Resources res, Row parent, int x, int y, 
             XmlResourceParser parser) {
-        Key key = new LatinKey(res, parent, x, y, parser);
+        Key key = new LIMEKey(res, parent, x, y, parser);
         if (key.codes[0] == 10) {
             mEnterKey = key;
         }
@@ -87,8 +87,8 @@ public class LIMEKeyboard extends Keyboard {
         int index = getShiftKeyIndex();
         if (index >= 0) {
             mShiftKey = getKeys().get(index);
-            if (mShiftKey instanceof LatinKey) {
-                ((LatinKey)mShiftKey).enableShiftLock();
+            if (mShiftKey instanceof LIMEKey) {
+                ((LIMEKey)mShiftKey).enableShiftLock();
             }
             mOldShiftIcon = mShiftKey.icon;
             mOldShiftPreviewIcon = mShiftKey.iconPreview;
@@ -144,9 +144,11 @@ public class LIMEKeyboard extends Keyboard {
         }
     }
     
-    
-    
     void setImeOptions(Resources res, int options) {
+    	setImeOptions(res, LIMEKeyboardSwitcher.MODE_TEXT, options);
+    }
+    
+    void setImeOptions(Resources res, int mode, int options) {
         if (mEnterKey != null) {
             // Reset some of the rarely used attributes.
             mEnterKey.popupCharacters = null;
@@ -181,21 +183,21 @@ public class LIMEKeyboard extends Keyboard {
                     mEnterKey.label = res.getText(R.string.label_send_key);
                     break;
                 default:
-                	/*
-                    if (mode == KeyboardSwitcher.MODE_IM) {
+                	
+                    if (mode == LIMEKeyboardSwitcher.MODE_IM) {
                         mEnterKey.icon = null;
                         mEnterKey.iconPreview = null;
                         mEnterKey.label = ":-)";
                         mEnterKey.text = ":-) ";
                         mEnterKey.popupResId = R.xml.popup_smileys;
                     } else {
-                    */
+                    
                         mEnterKey.iconPreview = res.getDrawable(
                                 R.drawable.sym_keyboard_feedback_return);
                         mEnterKey.icon = res.getDrawable(
                                 R.drawable.sym_keyboard_return);
                         mEnterKey.label = null;
-                    //}
+                    }
                     break;
             }
             // Set the initial size of the preview icon
@@ -206,12 +208,16 @@ public class LIMEKeyboard extends Keyboard {
             }
         }
     }
-    static class LatinKey extends Keyboard.Key {
+    static class LIMEKey extends Keyboard.Key {
        
     	private boolean mShiftLockEnabled;
         
-        public LatinKey(Resources res, Keyboard.Row parent, int x, int y, XmlResourceParser parser) {
+        public LIMEKey(Resources res, Keyboard.Row parent, int x, int y, XmlResourceParser parser) {
             super(res, parent, x, y, parser);
+            if (popupCharacters != null && popupCharacters.length() == 0) {
+                // If there is a keyboard with no keys specified in popupCharacters
+                popupResId = 0;
+            }
         }
         
         @Override

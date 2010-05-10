@@ -78,7 +78,7 @@
         <Key android:codes="78" android:iconPreview="@drawable/phonetic_n_u_l" android:keyIcon="@drawable/phonetic_n_u"/>
         <Key android:codes="77" android:iconPreview="@drawable/phonetic_m_u_l" android:keyIcon="@drawable/phonetic_m_u"/>
         <Key android:codes="59" android:iconPreview="@drawable/phonetic_semicolon_l" android:keyIcon="@drawable/phonetic_semicolon"/>
-        <Key android:codes="-5" android:iconPreview="@drawable/del_l" android:keyIcon="@drawable/del" android:keyEdgeFlags="right" android:isRepeatable="true"/>
+        <Key android:codes="-5" android:iconPreview="@drawable/sym_keyboard_feedback_delete" android:keyIcon="@drawable/sym_keyboard_delete" android:keyEdgeFlags="right" android:isRepeatable="true"/>
     </Row>
 
     <Row android:rowEdgeFlags="bottom">

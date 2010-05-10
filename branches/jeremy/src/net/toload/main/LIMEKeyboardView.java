@@ -40,6 +40,8 @@ public class LIMEKeyboardView extends KeyboardView {
 	static final int KEYCODE_OPTIONS = -100;
 	static final int KEYCODE_SHIFT_LONGPRESS = -101;
 	static final String PREF = "LIMEXY";
+	
+    private Keyboard mPhoneKeyboard;
 
 	public LIMEKeyboardView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -84,6 +86,10 @@ public class LIMEKeyboardView extends KeyboardView {
 		}
 		return super.onTouchEvent(me);
 	}
-
+	
+	
+	  public void setPhoneKeyboard(Keyboard phoneKeyboard) {
+	        mPhoneKeyboard = phoneKeyboard;
+	    }
 
 }
