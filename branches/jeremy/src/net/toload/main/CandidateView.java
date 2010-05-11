@@ -268,8 +268,7 @@ public class CandidateView extends View {
       if(mComposingTextPopup!=null ){  
         if (mComposingTextPopup.isShowing()) {
             //mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_REMOVE_COMPOSING), 60);
-        	mComposingTextView.setVisibility(INVISIBLE);
-        	//mComposingTextPopup.update(800,0,-1,-1);
+        	  mComposingTextPopup.dismiss();
         }
       }
     }

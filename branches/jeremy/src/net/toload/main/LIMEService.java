@@ -2175,7 +2175,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	}
 
 	public void pickSuggestionManually(int index) {
-
+		setCandidatesViewShown(false);
 		if (templist != null) {
 			firstMatched = templist.get(index);
 		}
