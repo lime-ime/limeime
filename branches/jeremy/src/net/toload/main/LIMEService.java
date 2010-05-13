@@ -112,7 +112,8 @@ public class LIMEService extends InputMethodService implements
 
 	private long mLastShiftTime;
 	private long mMetaState;
-	
+    private boolean mJustAccepted;
+    private CharSequence mJustRevertedSeparator;
 	private int mImeOptions;
 
 	private int mLastDisplayWidth;
@@ -304,8 +305,11 @@ public class LIMEService extends InputMethodService implements
 	
 	 @Override
 	    public void onConfigurationChanged(Configuration conf) {
+		 
+		 	if(DEBUG) Log.i("LIMEService:", "OnConfigurationChanged()");
+		 	
 	        if (!TextUtils.equals(conf.locale.toString(), mLocale)) {
-	            //initSuggest(conf.locale.toString());
+	           // initSuggest(conf.locale.toString());
 	        }
 	        // If orientation changed while predicting, commit the change
 	        if (conf.orientation != mOrientation) {
@@ -317,6 +321,7 @@ public class LIMEService extends InputMethodService implements
 	        }
 	        mKeyboardSwitcher.makeKeyboards(true);
 	        super.onConfigurationChanged(conf);
+	        
 	 }
 	 
 	/**
@@ -497,7 +502,7 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public void onStartInputView(EditorInfo attribute, boolean restarting) {
 		super.onStartInputView(attribute, restarting);
-        
+		if(DEBUG) Log.i("LIMEService", "onStartInputView");
 		if (mInputView == null) {
 	            return;
 	   }
@@ -513,6 +518,7 @@ public class LIMEService extends InputMethodService implements
 	   mCompletionOn = false;
 	   mCompletions = null;
 	   mCapsLock = false;
+	   mHasShift = false;
 	   mEnglishOnly = false;
 	   onIM = true;
 	   switch (attribute.inputType&EditorInfo.TYPE_MASK_CLASS) {
@@ -579,13 +585,12 @@ public class LIMEService extends InputMethodService implements
 	                }
 	                if ((attribute.inputType&EditorInfo.TYPE_TEXT_FLAG_AUTO_COMPLETE) != 0) {
 	                    mPredictionOn = false;
-	                    mCompletionOn = true && isFullscreenMode();
+	                    //mCompletionOn = true && isFullscreenMode();
 	                }
 	                //updateShiftKeyState(attribute);
 	                break;
 	            default:
-	                mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT,
-	                        attribute.imeOptions);
+	                //mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT, attribute.imeOptions);
 	                updateShiftKeyState(attribute);
 	        }
 	        mInputView.closing();
@@ -593,7 +598,7 @@ public class LIMEService extends InputMethodService implements
 	        mPredicting = false;
 	        mDeleteCount = 0;
 	       
-
+	        /*
 	        // Override auto correct
 	        if (disableAutoCorrect) {
 	            mAutoCorrectOn = false;
@@ -606,9 +611,9 @@ public class LIMEService extends InputMethodService implements
 	            mSuggest.setCorrectionMode(mCorrectionMode);
 	        }
 	        mPredictionOn = mPredictionOn && mCorrectionMode > 0;
-	     
-
-		setCandidatesViewShown(false);
+	     	*/
+	        updateShiftKeyState(getCurrentInputEditorInfo());
+	        setCandidatesViewShown(false);
 
 		
 	}
@@ -665,6 +670,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public void onDisplayCompletions(CompletionInfo[] completions) {
+		if(DEBUG) Log.i("LIMEService:", "onDisplayCompletions()");
 		if (mCompletionOn) {
 			mCompletions = completions;
 			if (completions == null) {
@@ -711,6 +717,7 @@ public class LIMEService extends InputMethodService implements
 		if (c != -1 && (c & KeyCharacterMap.COMBINING_ACCENT) != 0) {
 			c = c & KeyCharacterMap.COMBINING_ACCENT_MASK;
 		}
+		/*
 		if (mComposing.length() > 0) {
 			char accent = mComposing.charAt(mComposing.length() - 1);
 			int composed = KeyEvent.getDeadChar(accent, c);
@@ -719,7 +726,7 @@ public class LIMEService extends InputMethodService implements
 				c = composed;
 				mComposing.setLength(mComposing.length() - 1);
 			}
-		}
+		}*/
 		//if( mHasShift && c >= 97 && c <=122){
 		//	c -= 32;
 		//}
@@ -847,7 +854,7 @@ public class LIMEService extends InputMethodService implements
 				if (mCandidateView != null && mCandidateView.isShown()) {
 					// To block a real enter after suggestion selection.  We have to return true in OnKeyUp();
 					waitingEnterUp = true;
-					return mCandidateView.takeSelectedSuggestion();			
+					return mCandidateView.takeSelectedSuggestion();
 				}
 	
 			case KeyEvent.KEYCODE_SPACE:
@@ -877,54 +884,12 @@ public class LIMEService extends InputMethodService implements
 				// it and do the appropriate action.
 				
 				//Modified by Jeremy '10, 3, 27. 
-				if ( ( (mEnglishOnly && mPredictionOn)
-						|| (!mEnglishOnly && onIM))
-						&& translateKeyDown(keyCode, event)) {
+				if ( ( (mEnglishOnly && mPredictionOn)|| (!mEnglishOnly && onIM))
+						&& translateKeyDown(keyCode, event))				{
 					return true;
 				}
 				
-				//Removed by jeremy '10,3,26 
-				//if(keyCode == KeyEvent.KEYCODE_SHIFT_RIGHT){
-					//this.hasRightShiftPress = true;
-				//}
 				
-				//Removed by jeremy '10,3,26.  Cancel PROCESS_HARD_KEYS mode. We always process physical keyboard. 
-				/*if (PROCESS_HARD_KEYS) {
-					if (keyCode == KeyEvent.KEYCODE_SPACE
-							&& (event.getMetaState()& KeyEvent.META_ALT_ON) != 0) {	
-						// A silly example: in our input method, Alt+Space
-						// is a shortcut for 'android' in lower case.
-						//InputConnection 
-						
-						InputConnection ic = getCurrentInputConnection();
-						if (ic != null) {
-							// First, tell the editor that it is no longer in the
-							// shift state, since we are consuming this.
-							ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
-							keyDownUp(KeyEvent.KEYCODE_A);
-							keyDownUp(KeyEvent.KEYCODE_N);
-							keyDownUp(KeyEvent.KEYCODE_D);
-							keyDownUp(KeyEvent.KEYCODE_R);
-							keyDownUp(KeyEvent.KEYCODE_O);
-							keyDownUp(KeyEvent.KEYCODE_I);
-							keyDownUp(KeyEvent.KEYCODE_D);
-							// And we consume this event.
-							return true;
-		
-								
-						}
-											
-						
-	
-						if (mCandidateView != null) {
-							mCandidateView.clear();
-						}
-						mComposing.setLength(0);
-						setCandidatesViewShown(false);
-					}
-						
-				}
-				*/
 			}
 	
 	
@@ -1064,7 +1029,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	 * Helper function to commit any text being composed in to the editor.
 	 */
 	private void commitTyped(InputConnection inputConnection) {
-
+		if(DEBUG) Log.i("LIMEService:", "CommittedTyped()");
 		try{
 			if (mComposing.length() > 0 || (firstMatched != null && firstMatched.isDictionary())) {
 	
@@ -1087,11 +1052,12 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 							}
 						}
 						
-						//Log.i("ART","Length:"+ firstMatchedLength);
+						
+						if(DEBUG) Log.i("LIMEService","CommitedTyped Length:"+ firstMatchedLength);
 						// Do hanConvert before commit
 						// '10, 4, 17 Jeremy
-						inputConnection.commitText(
-								SearchSrv.hanConvert(wordToCommit)
+						//inputConnection.setComposingText("", 1);
+						inputConnection.commitText(SearchSrv.hanConvert(wordToCommit)
 								, firstMatchedLength);
 						
 							try {
@@ -1253,45 +1219,10 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			mEnglishFlagShift = true;
 			if(DEBUG){ Log.i("OnKey", "mEnglishFlagShift:" + mEnglishFlagShift);}
 		}
-	
-		/**
-		// Check if user input [Shift] + [Space] switch keyboard
-		if(hasQuickSwitch){
-
-			if(primaryCode == -1){ hasShiftPress = true; }
-			
-			if(primaryCode == 32 && hasShiftPress){
-				
-				//if( (mEnglishFlagShift == true || 
-				//		LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_SHIFT_ON)== 1)
-				//		&& primaryCode == 32 )	{
-					//Log.i("OnKey", "shift-space...") ;
-					
-					switchChiEng();
-					
-					// Reset Shift Status
-					mEnglishFlagShift = false;
-					hasShiftPress = false;
-					mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
-					return;
-				//}
-			}else if(primaryCode != -1){
-				hasShiftPress = false;
-			}
-				
-		}
-		**/
-		
-	
-		if (isWordSeparator(primaryCode)) {
-			if (mComposing.length() > 0) {
-				commitTyped(getCurrentInputConnection());
-			}
-			sendKey(primaryCode);
-			//updateShiftKeyState(getCurrentInputEditorInfo());
-		} else if (primaryCode == Keyboard.KEYCODE_DELETE) {
+		if (primaryCode == Keyboard.KEYCODE_DELETE) {
 			handleBackspace();
 		} else if (primaryCode == Keyboard.KEYCODE_SHIFT) {
+			if(DEBUG){ Log.i("OnKey", "KEYCODE_SHIFT");}
 			handleShift();
 		} else if (primaryCode == Keyboard.KEYCODE_CANCEL) {
 			handleClose();
@@ -1300,6 +1231,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_OPTIONS) {
 			handleOptions();
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_SHIFT_LONGPRESS) {
+			if(DEBUG){ Log.i("OnKey", "KEYCODE_SHIFT_LONGPRESS");}
 			 if (mCapsLock) {
                  handleShift();
              } else {
@@ -1311,7 +1243,16 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}  else if (primaryCode == -9 && mInputView != null) {
 			switchKeyboard(primaryCode);
 		} else {
-			handleCharacter(primaryCode, keyCodes);
+			//if (isWordSeparator(primaryCode)) {
+				//if (mComposing.length() > 0) {
+				//	commitTyped(getCurrentInputConnection());
+				//}
+				//sendKey(primaryCode);
+				//updateShiftKeyState(getCurrentInputEditorInfo());
+			//}
+			//else{
+				handleCharacter(primaryCode, keyCodes);
+			//}
 		}
 		
 	}
@@ -1514,33 +1455,39 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
     }
     
 	public void onText(CharSequence text) {
-
+		if(DEBUG) Log.i("LIMEService:", "OnText()");
 		InputConnection ic = getCurrentInputConnection();
 		if (ic == null)
 			return;
 		ic.beginBatchEdit();
-		if (mComposing.length() > 0) {
-			commitTyped(ic);
-		}
-		if (firstMatched != null) {
-			ic.commitText(this.firstMatched.getWord(), 0);
-				try {
-					SearchSrv.updateMapping(firstMatched.getId(), 
+		
+        if (mPredicting) {
+            commitTyped(ic);
+            mJustRevertedSeparator = null;
+        } else if (onIM){
+       
+        	if (mComposing.length() > 0) {
+        		commitTyped(ic);
+        	}
+        	if (firstMatched != null) {
+        		ic.commitText(this.firstMatched.getWord(), 0);
+					try {
+						SearchSrv.updateMapping(firstMatched.getId(), 
 							firstMatched.getCode(), 
 							firstMatched.getWord(), 
 							//firstMatched.getPcode(), 
 							firstMatched.getPword(), 
 							firstMatched.getScore(), 
 							firstMatched.isDictionary());
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-		} else {
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+        	}
+        } else {
 			ic.commitText(text, 0);
-		}
-		ic.endBatchEdit();
-		//updateShiftKeyState(getCurrentInputEditorInfo());
-
+        }
+        ic.endBatchEdit();
+        updateShiftKeyState(getCurrentInputEditorInfo());
 	}
 	
 	/**
@@ -1689,63 +1636,6 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}
 	}
 
-	/*
-	private void updateShift(int primaryCode) {
-
-		
-		if (mInputView == null) { return; }
-
-		// Check Shift Status	
-		if(primaryCode != this.KEYBOARD_SWITCH_CODE || primaryCode != Keyboard.KEYCODE_MODE_CHANGE){
-			if(mCapsLock != true && mHasShift){
-				Keyboard current = mInputView.getKeyboard();
-				if(current == mSymbolsShiftedKeyboard){
-					mSymbolsKeyboard.setShifted(false);
-					mInputView.setKeyboard(mSymbolsKeyboard);
-				}else if(current == mCJShiftKeyboard){
-					mCJKeyboard.setShifted(false);
-					mInputView.setKeyboard(mCJKeyboard);
-				}else if(current == mCJNumberShiftKeyboard){
-					mCJNumberKeyboard.setShifted(false);
-					mInputView.setKeyboard(mCJNumberKeyboard);
-				}else if(current == mPhoneticShiftKeyboard){
-					mPhoneticKeyboard.setShifted(false);
-					mInputView.setKeyboard(mPhoneticKeyboard);
-				}else if(current == mDayiShiftKeyboard){
-					mDayiKeyboard.setShifted(false);
-					mInputView.setKeyboard(mDayiKeyboard);
-				}else if(current == mEZShiftKeyboard){
-					mEZKeyboard.setShifted(false);
-					mInputView.setKeyboard(mEZKeyboard);
-				}else if(current == mPhoneKeyboard){
-					mInputView.setShifted(false);
-				}else if(current == mKeyboard){
-					mInputView.setShifted(false);
-				}
-				mHasShift = false;
-				mCapsLock = false;
-			}
-		}
-	}
-	/* Removed '10, 3, 26, replace with LIMEMetaKeyKeylistner
-	/* Modified '10, 3, 24 for bug fix and alt-lock implementation
-	private void handleAlt(){
-		if(mTrackAlt) { //alt pressed without combination with other key
-			if(!mHasAlt){	// Alt-ON
-				mHasAlt = true;
-				mAltLocked = false;
-			}else if(mHasAlt && mAltLocked){//Alt-off 
-				InputConnection ic = getCurrentInputConnection();	
-				//ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
-				mHasAlt = false;
-				mAltLocked = false;
-			}else if(mHasAlt && !mAltLocked){ //Alt-Locked
-				mHasAlt = true;
-				mAltLocked = true;
-			}
-		}
-	}
-	*/
 	
 	private void handleShift() {
 
@@ -1757,23 +1647,45 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
             mInputView.setShifted(mCapsLock || !mInputView.isShifted());
             mHasShift = mCapsLock || !mInputView.isShifted();
         } else {
-            mKeyboardSwitcher.toggleShift();
-            mHasShift = mKeyboardSwitcher.isShifted();
+        	if(mCapsLock){
+        		 toggleCapsLock();
+        		 mHasShift = false;
+        	}else if(mHasShift){
+        		toggleCapsLock();
+       		 	mHasShift = true;
+        	}else{
+        		mKeyboardSwitcher.toggleShift();
+        		mHasShift = mKeyboardSwitcher.isShifted();
+        		
+        	}
         }
 	}
 
 	private void switchKeyboard(int primaryCode) {
+		
+		if(mCapsLock) toggleCapsLock();
+		
+		 if (mCandidateView != null) {
+				mCandidateView.clear();
+		 }
+		mComposing.setLength(0);
+		setCandidatesViewShown(false);
+		
+		
+		
 		if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE) {
 			switchSymKeyboard();
 		}else if(primaryCode == KEYBOARD_SWITCH_CODE){
 			switchChiEng();
 		}
-		 
+		
+		mHasShift = false;
+		updateShiftKeyState(getCurrentInputEditorInfo());
 		
 	}
 	private void switchSymKeyboard(){
 		// Switch Keyboard between Symbol and Lime
-		if(mCapsLock) toggleCapsLock();
+		
 		mKeyboardSwitcher.toggleSymbols();
 
 	}
@@ -1781,24 +1693,25 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	private void switchChiEng() {
 		//mEnglishOnly = !mEnglishOnly;
 		   // cancel candidate view if it's shown
-        if (mCandidateView != null) {
-			mCandidateView.clear();
+       
 			
-		}
-        if(mCapsLock) toggleCapsLock();
-		mComposing.setLength(0);
-		setCandidatesViewShown(false);
+		
+        //if(mCapsLock) toggleCapsLock();
+        
+		
 		mKeyboardSwitcher.toggleChinese();
 		mEnglishOnly = !mKeyboardSwitcher.isChinese();
+		
+
 		if (mEnglishOnly) {
 			onIM = false;	
 			Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();	
-			updateShiftKeyState(getCurrentInputEditorInfo());
+			
 		} else {
 			onIM = true;
-			Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
-			
+			Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();		
 		}
+		
 }
 	private void initialKeyboard() {
 		
@@ -2133,17 +2046,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	}
 
 	private void checkToggleCapsLock() {
-		/*
-		long now = System.currentTimeMillis();
-
-		if (mLastShiftTime + 800 > now) {
-			mCapsLock = !mCapsLock;
-			mLastShiftTime = 0;
-		} else {
-			mLastShiftTime = now;
-		}
-		mHasShift = !mHasShift;
-		*/
+		
 		if (mInputView.getKeyboard().isShifted()) {
             toggleCapsLock();
         }
@@ -2154,9 +2057,19 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         mCapsLock = !mCapsLock;
         if (mKeyboardSwitcher.isAlphabetMode()) {
             ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(mCapsLock);
-        }else if(mKeyboardSwitcher.isChinese()||mKeyboardSwitcher.isSymbols()) {
-        	handleShift();
-            ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(mCapsLock);
+        }else  {
+        	if(mCapsLock){
+        		if(DEBUG){ Log.i("toggleCapsLock", "mCapsLock:true");}
+        		if(!mKeyboardSwitcher.isShifted())	mKeyboardSwitcher.toggleShift();
+        		((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(true);
+        	}
+        	else{
+        		if(DEBUG){ Log.i("toggleCapsLock", "mCapsLock:false");}
+        		((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(false);
+        		if(mKeyboardSwitcher.isShifted()) mKeyboardSwitcher.toggleShift();
+        		//((LIMEKeyboard) mInputView.getKeyboard()).setShifted(false);
+        		
+        	}
         }
     }
 
@@ -2175,16 +2088,20 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	}
 
 	public void pickSuggestionManually(int index) {
-		setCandidatesViewShown(false);
+		if(DEBUG) Log.i("LIMEService:", "pickSuggestionManually()");
+		
 		if (templist != null) {
 			firstMatched = templist.get(index);
 		}
+		
 		if (mCompletionOn && mCompletions != null && index >= 0
 				&& index < mCompletions.length) {
 			CompletionInfo ci = mCompletions[index];
 			getCurrentInputConnection().commitCompletion(ci);
+			if(DEBUG) Log.i("LIMEService:", "pickSuggestionManually():mCompletionOn:"+mCompletionOn);
 			//updateShiftKeyState(getCurrentInputEditorInfo());
-		} else if (mComposing.length() > 0) {
+		} else  
+		if (mComposing.length() > 0) {
 			commitTyped(getCurrentInputConnection());
 			this.firstMatched = null;
 			this.hasFirstMatched = false;
@@ -2193,6 +2110,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			commitTyped(getCurrentInputConnection());
 			updateDictionaryView();
 		}
+		//setCandidatesViewShown(false);
 		
 	}
 	

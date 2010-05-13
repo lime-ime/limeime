@@ -21,7 +21,7 @@ public class Suggest implements Dictionary.WordCallback {
     public static final int CORRECTION_BASIC = 1;
     public static final int CORRECTION_FULL = 2;
 
-    private Dictionary mMainDict;
+    //private Dictionary mMainDict;
 
     private Dictionary mUserDictionary;
 
@@ -45,7 +45,7 @@ public class Suggest implements Dictionary.WordCallback {
 
     public Suggest(Context context, int dictionaryResId) {
         mContext = context;
-        mMainDict = new BinaryDictionary(context, dictionaryResId);
+        //mMainDict = new BinaryDictionary(context, dictionaryResId);
         for (int i = 0; i < mPrefMaxSuggestions; i++) {
             StringBuilder sb = new StringBuilder(32);
             mStringPool.add(sb);
@@ -163,7 +163,7 @@ public class Suggest implements Dictionary.WordCallback {
                     mHaveCorrection = true;
                 }
             }
-            mMainDict.getWords(wordComposer, this);
+            //mMainDict.getWords(wordComposer, this);
             if (mCorrectionMode == CORRECTION_FULL && mSuggestions.size() > 0) {
                 mHaveCorrection = true;
             }
@@ -297,8 +297,8 @@ public class Suggest implements Dictionary.WordCallback {
         if (word == null || word.length() == 0) {
             return false;
         }
-        return (mCorrectionMode == CORRECTION_FULL && mMainDict.isValidWord(word)) 
-                || (mCorrectionMode > CORRECTION_NONE && 
+        return //(mCorrectionMode == CORRECTION_FULL )//&& mMainDict.isValidWord(word))|| 
+        (mCorrectionMode > CORRECTION_NONE && 
                     ((mUserDictionary != null && mUserDictionary.isValidWord(word)))
                      || (mAutoDictionary != null && mAutoDictionary.isValidWord(word))
                      || (mContactsDictionary != null && mContactsDictionary.isValidWord(word)));

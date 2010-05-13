@@ -226,7 +226,7 @@ public class CandidateView extends View {
  	
     }
     public void showComposing() {
-    	Log.i("candidateview","showcomposing()");
+    	if(DEBUG) Log.i("candidateview","showcomposing()");
         if (mComposingText.equals("")) {
              //hideComposing();
             } else {
@@ -263,7 +263,7 @@ public class CandidateView extends View {
 
     
     public void hideComposing() {
-    	Log.i("candidateview","hidecomposing()");
+    	if(DEBUG) Log.i("candidateview","hidecomposing()");
   
       if(mComposingTextPopup!=null ){  
         if (mComposingTextPopup.isShowing()) {

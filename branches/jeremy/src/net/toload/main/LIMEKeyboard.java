@@ -117,10 +117,11 @@ public class LIMEKeyboard extends Keyboard {
     public boolean setShifted(boolean shiftState) {
         boolean shiftChanged = false;
         if (mShiftKey != null) {
+        	mShiftKey.on = false;
             if (shiftState == false) {
                 shiftChanged = mShiftState != SHIFT_OFF;
                 mShiftState = SHIFT_OFF;
-                mShiftKey.on = false;
+                //mShiftKey.on = false;
                 mShiftKey.icon = mOldShiftIcon;
             } else {
                 if (mShiftState == SHIFT_OFF) {

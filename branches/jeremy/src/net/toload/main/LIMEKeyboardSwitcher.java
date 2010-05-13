@@ -161,7 +161,7 @@ public class LIMEKeyboardSwitcher {
         mCurrentId = id;
         mInputView.setKeyboard(keyboard);
         keyboard.setShifted(mIsShifted);
-        keyboard.setShiftLocked(keyboard.isShiftLocked());
+        if(isAlphabetMode()) keyboard.setShiftLocked(keyboard.isShiftLocked());
         keyboard.setImeOptions(mContext.getResources(), mMode, imeOptions);
 
     }
@@ -195,6 +195,9 @@ public class LIMEKeyboardSwitcher {
             case MODE_TEXT_CJ:
                 if(isShifted) return new KeyboardId(R.xml.lime_cj_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_cj);
+            case MODE_TEXT_CJ_NUMBER:
+                if(isShifted) return new KeyboardId(R.xml.lime_cj_number_shift, 0, true);    
+                else return new KeyboardId(R.xml.lime_cj_number);
             case MODE_TEXT_DAYI:
                 if(isShifted) return new KeyboardId(R.xml.lime_dayi_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_dayi);
@@ -258,8 +261,9 @@ public class LIMEKeyboardSwitcher {
     	mIsShifted= !mIsShifted;
     	if(mIsChinese)
     		setKeyboardMode(mChnMode, mImeOptions, mIsSymbols, mIsShifted);
-    	else
+    	else{
     		setKeyboardMode(mMode, mImeOptions, mIsSymbols, mIsShifted);
+    	}
 
     }
     
@@ -274,6 +278,7 @@ public class LIMEKeyboardSwitcher {
     
     void toggleSymbols() {
     	mIsSymbols = !mIsSymbols;
+    	mIsShifted = false;
     	if(mIsChinese)
     		setKeyboardMode(mChnMode, mImeOptions, mIsSymbols, mIsShifted);
     	else

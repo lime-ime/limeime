@@ -26,10 +26,11 @@ public class BinaryDictionary extends Dictionary {
 
     static {
         try {
-            System.loadLibrary("jni_latinime");
+            //System.loadLibrary("jni_latinime");
         } catch (UnsatisfiedLinkError ule) {
             Log.e("BinaryDictionary", "Could not load native library jni_latinime");
         }
+        
     }
 
     /**
@@ -39,7 +40,7 @@ public class BinaryDictionary extends Dictionary {
      */
     public BinaryDictionary(Context context, int resId) {
         if (resId != 0) {
-            loadDictionary(context, resId);
+            //loadDictionary(context, resId);
         }
     }
 
@@ -54,12 +55,13 @@ public class BinaryDictionary extends Dictionary {
     private final void loadDictionary(Context context, int resId) {
         AssetManager am = context.getResources().getAssets();
         String assetName = context.getResources().getString(resId);
-        mNativeDict = openNative(am, assetName, TYPED_LETTER_MULTIPLIER, FULL_WORD_FREQ_MULTIPLIER);
+       // mNativeDict = openNative(am, assetName, TYPED_LETTER_MULTIPLIER, FULL_WORD_FREQ_MULTIPLIER);
     }
 
     @Override
     public void getWords(final WordComposer codes, final WordCallback callback) {
         final int codesSize = codes.size();
+        /*
         // Wont deal with really long words.
         if (codesSize > MAX_WORD_LENGTH - 1) return;
         
@@ -100,19 +102,20 @@ public class BinaryDictionary extends Dictionary {
             if (len > 0) {
                 callback.addWord(mOutputChars, start, len, mFrequencies[j]);
             }
-        }
+        }*/
     }
 
     @Override
     public boolean isValidWord(CharSequence word) {
         if (word == null) return false;
         char[] chars = word.toString().toCharArray();
-        return isValidWordNative(mNativeDict, chars, chars.length);
+        //return isValidWordNative(mNativeDict, chars, chars.length);
+        return true;
     }
 
     public synchronized void close() {
         if (mNativeDict != 0) {
-            closeNative(mNativeDict);
+            //closeNative(mNativeDict);
             mNativeDict = 0;
         }
     }
