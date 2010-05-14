@@ -270,7 +270,7 @@ public class LIMEService extends InputMethodService implements
 	
 	 private void initSuggest(String locale) {
 	        mLocale = locale;
-	        mSuggest = new Suggest(this, R.raw.main);
+	        //mSuggest = new Suggest(this, R.raw.main);
 	        mSuggest.setCorrectionMode(mCorrectionMode);
 	        mUserDictionary = new UserDictionary(this);
 	        mContactsDictionary = new ContactsDictionary(this);
@@ -1691,13 +1691,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	}
 	
 	private void switchChiEng() {
-		//mEnglishOnly = !mEnglishOnly;
-		   // cancel candidate view if it's shown
-       
-			
 		
-        //if(mCapsLock) toggleCapsLock();
-        
 		
 		mKeyboardSwitcher.toggleChinese();
 		mEnglishOnly = !mKeyboardSwitcher.isChinese();
@@ -2060,14 +2054,18 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         }else  {
         	if(mCapsLock){
         		if(DEBUG){ Log.i("toggleCapsLock", "mCapsLock:true");}
-        		if(!mKeyboardSwitcher.isShifted())	mKeyboardSwitcher.toggleShift();
-        		((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(true);
+        		if(!mKeyboardSwitcher.isShifted())	
+        					mKeyboardSwitcher.toggleShift();
+        		if(mKeyboardSwitcher.isShifted())
+        					((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(true);
         	}
         	else{
         		if(DEBUG){ Log.i("toggleCapsLock", "mCapsLock:false");}
-        		((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(false);
-        		if(mKeyboardSwitcher.isShifted()) mKeyboardSwitcher.toggleShift();
-        		//((LIMEKeyboard) mInputView.getKeyboard()).setShifted(false);
+        		if(mKeyboardSwitcher.isShifted()){
+        			((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(false);
+        			mKeyboardSwitcher.toggleShift();
+        			//((LIMEKeyboard) mInputView.getKeyboard()).setShifted(false);
+        		}
         		
         	}
         }
