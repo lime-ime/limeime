@@ -1217,11 +1217,14 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 							String.valueOf((char) keyCode), 1);
 				} else if (keyCode == 32 && this.mComposing.length() == 0 && this.tempMatched != null
 						&& !this.tempMatched.getCode().trim().equals("")) {
-					// Press Space Button + has matched keyword then do nothing
+					
+					// If user press space to input the word then system should close the composing view
+					mCandidateView.hideComposing();
 				} else if (keyCode == 32 && this.mComposing.length() == 0 && this.tempMatched != null
 						&& this.tempMatched.getCode().trim().equals("")) {
 					// Press Space Button + no matched keyword consider as English append space at the end
 					getCurrentInputConnection().commitText(String.valueOf((char) keyCode), 1);
+
 				}
 				hasFirstMatched = false;
 			}
@@ -2375,6 +2378,10 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         }
     }
 	public void pickSuggestionManually(int index) {
+		
+		// After pick word from the list system have to close the composing view
+		mCandidateView.hideComposing();
+		
 		if(DEBUG) Log.i("LIMEService:", "pickSuggestionManually()");
 		if (templist != null) {
 			firstMatched = templist.get(index);
