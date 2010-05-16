@@ -331,7 +331,6 @@ public class SearchService extends Service {
 			      temp.setId(id);
 			      temp.setCode(code);
 			      temp.setWord(word);
-	//		      temp.setPcode(pcode);
 			      temp.setPword(pword);
 			      temp.setScore(score);
 			      temp.setDictionary(isDictionary);
