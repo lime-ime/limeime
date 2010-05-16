@@ -27,6 +27,7 @@ import android.media.AudioManager;
 import android.os.Debug;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.RemoteException;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
@@ -52,7 +53,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-
 import android.app.AlertDialog;
 import android.app.Service;
 import android.content.ComponentName;
@@ -84,6 +84,7 @@ public class LIMEService extends InputMethodService implements
 	private CompletionInfo[] mCompletions;
 
 	private StringBuilder mComposing = new StringBuilder();
+    private WordComposer mWord = new WordComposer();
 
 	private boolean mPredictionOn;
 	private boolean mCompletionOn;
@@ -102,6 +103,9 @@ public class LIMEService extends InputMethodService implements
 	//------------------------------------------------------------------------
 	private boolean mEnglishOnly;
 	private boolean mEnglishFlagShift;
+	
+	private static final int MSG_UPDATE_SUGGESTIONS = 0;
+    private static final int MSG_UPDATE_SHIFT_STATE = 1;
 
 	private boolean onIM = false;
 	private boolean hasFirstMatched = false;
@@ -116,7 +120,6 @@ public class LIMEService extends InputMethodService implements
     private CharSequence mJustRevertedSeparator;
 	private int mImeOptions;
 
-	private int mLastDisplayWidth;
 	
     LIMEKeyboardSwitcher mKeyboardSwitcher;
     
@@ -202,7 +205,19 @@ public class LIMEService extends InputMethodService implements
 	private final float moveLength = 15;
 	private ISearchService SearchSrv = null;
 	
-	
+	 Handler mHandler = new Handler() {
+	        @Override
+	        public void handleMessage(Message msg) {
+	            switch (msg.what) {
+	                case MSG_UPDATE_SUGGESTIONS:
+	                    updateSuggestions();
+	                    break;
+	                case MSG_UPDATE_SHIFT_STATE:
+	                    updateShiftKeyState(getCurrentInputEditorInfo());
+	                    break;
+	            }
+	        }
+	    };
 	
 	/*
 	 * Construct SerConn 
@@ -233,6 +248,9 @@ public class LIMEService extends InputMethodService implements
 
 		super.onCreate();
 		
+		final Configuration conf = getResources().getConfiguration();
+        initSuggest(conf.locale.toString());
+        
         mKeyboardSwitcher = new LIMEKeyboardSwitcher(this);
 		
 		// Initial and Create Database
@@ -270,7 +288,7 @@ public class LIMEService extends InputMethodService implements
 	
 	 private void initSuggest(String locale) {
 	        mLocale = locale;
-	        //mSuggest = new Suggest(this, R.raw.main);
+	        mSuggest = new Suggest(this, 0);
 	        mSuggest.setCorrectionMode(mCorrectionMode);
 	        mUserDictionary = new UserDictionary(this);
 	        mContactsDictionary = new ContactsDictionary(this);
@@ -309,7 +327,7 @@ public class LIMEService extends InputMethodService implements
 		 	if(DEBUG) Log.i("LIMEService:", "OnConfigurationChanged()");
 		 	
 	        if (!TextUtils.equals(conf.locale.toString(), mLocale)) {
-	           // initSuggest(conf.locale.toString());
+	            initSuggest(conf.locale.toString());
 	        }
 	        // If orientation changed while predicting, commit the change
 	        if (conf.orientation != mOrientation) {
@@ -465,14 +483,15 @@ public class LIMEService extends InputMethodService implements
 
 		// Clear current composing text and candidates.
 		mComposing.setLength(0);
-		updateCandidates();
+		if(onIM) {
+			//updateCandidates();
+			// Add Custom related words
+			if(userdiclist.size() > 1) {	updateUserDict();}
+			onIM = false;
+		}
 
 		setCandidatesViewShown(false);
-		onIM = false;
-
-		// Add Custom related words
-		if(userdiclist.size() > 1) {	updateUserDict();}
-		
+			
 		this.setSuggestions(null, false, false);
 	}
 	
@@ -483,7 +502,6 @@ public class LIMEService extends InputMethodService implements
 				SearchSrv.addDictionary(dicunit.getId(), 
 										dicunit.getCode(), 
 										dicunit.getWord(), 
-//										dicunit.getPcode(), 
 										dicunit.getPword(), 
 										dicunit.getScore(), 
 										dicunit.isDictionary());
@@ -536,7 +554,7 @@ public class LIMEService extends InputMethodService implements
 	                        attribute.imeOptions);
 	                break;
 	            case EditorInfo.TYPE_CLASS_TEXT:
-	        		
+	                mPredictionOn = true;
 	                // Make sure that passwords are not displayed in candidate view
 	                int variation = attribute.inputType &  EditorInfo.TYPE_MASK_VARIATION;
 	                if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD ||
@@ -662,6 +680,11 @@ public class LIMEService extends InputMethodService implements
 		}
 	}
 
+	
+    private boolean isCandidateStripVisible() {
+        return isPredictionOn() && mShowSuggestions;
+    }
+    
 	/**
 	 * This tells us about completions that the editor has determined based on
 	 * the current text in it. We want to use this in fullscreen mode to show
@@ -672,13 +695,13 @@ public class LIMEService extends InputMethodService implements
 	public void onDisplayCompletions(CompletionInfo[] completions) {
 		if(DEBUG) Log.i("LIMEService:", "onDisplayCompletions()");
 		if (mCompletionOn) {
-			mCompletions = completions;
-			if (completions == null) {
-				setSuggestions(null, false, false);
-				return;
-			}
-
-			LinkedList<Mapping> stringList = new LinkedList<Mapping>();
+            mCompletions = completions;
+            if (completions == null) {
+                setSuggestions(null, false, false);
+                return;
+            }
+            
+            LinkedList<Mapping> stringList = new LinkedList<Mapping>();
 			for (int i = 0; i < (completions != null ? completions.length : 0); i++) {
 				CompletionInfo ci = completions[i];
 				if (ci != null)
@@ -689,7 +712,8 @@ public class LIMEService extends InputMethodService implements
 					}
 			}
 			setSuggestions(stringList, true, true);
-		}
+        }
+		
 	}
 
 	/**
@@ -1046,9 +1070,6 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 						if(firstMatched != null && firstMatched.getCode() != null && firstMatched.getWord() != null){
 							if(firstMatched.getCode().toLowerCase().equals(firstMatched.getWord().toLowerCase())){
 								firstMatchedLength = 1;
-								
-								// if end with code then append " " space
-								// wordToCommit += " ";
 							}
 						}
 						
@@ -1242,18 +1263,19 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			switchKeyboard(primaryCode);
 		}  else if (primaryCode == -9 && mInputView != null) {
 			switchKeyboard(primaryCode);
-		} else {
-			//if (isWordSeparator(primaryCode)) {
-				//if (mComposing.length() > 0) {
-				//	commitTyped(getCurrentInputConnection());
-				//}
-				//sendKey(primaryCode);
-				//updateShiftKeyState(getCurrentInputEditorInfo());
-			//}
-			//else{
-				handleCharacter(primaryCode, keyCodes);
-			//}
+		} else if (onIM && (primaryCode == 32 || primaryCode ==10) ) {
+			if (mComposing.length() > 0) {
+				commitTyped(getCurrentInputConnection());
+			}
+			sendKey(primaryCode);
+			updateShiftKeyState(getCurrentInputEditorInfo());
+		} else if (mEnglishOnly && isWordSeparator(primaryCode)) {
+            handleSeparator(primaryCode);
+		} else{
+			handleCharacter(primaryCode, keyCodes);
 		}
+		// Cancel the just reverted state
+        mJustRevertedSeparator = null;
 		
 	}
 
@@ -1490,6 +1512,42 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         updateShiftKeyState(getCurrentInputEditorInfo());
 	}
 	
+	 private void updateSuggestions() {
+	        // Check if we have a suggestion engine attached.
+	        if (mSuggest == null || !isPredictionOn()) {
+	            return;
+	        }
+	        
+	        if (!mPredicting) {
+	            setSuggestions(null, false, false);
+	            return;
+	        }
+	        List<Mapping> stringList = mSuggest.getSuggestions(mInputView, mWord, false);
+	        boolean correctionAvailable = mSuggest.hasMinimalCorrection();
+	        //|| mCorrectionMode == mSuggest.CORRECTION_FULL;
+	        CharSequence typedWord = mWord.getTypedWord();
+	        // If we're in basic correct
+	        boolean typedWordValid = mSuggest.isValidWord(typedWord) ||
+	                (preferCapitalization() && mSuggest.isValidWord(typedWord.toString().toLowerCase()));
+	        if (mCorrectionMode == Suggest.CORRECTION_FULL) {
+	            correctionAvailable |= typedWordValid;
+	        }
+	        // Don't auto-correct words with multiple capital letter
+	        correctionAvailable &= !mWord.isMostlyCaps();
+
+	        setSuggestions(stringList, false, typedWordValid);//, correctionAvailable); 
+	        if (stringList.size() > 0) {
+	            if (correctionAvailable && !typedWordValid && stringList.size() > 1) {
+	                mBestWord = stringList.get(1).getWord();
+	            } else {
+	                mBestWord = typedWord;
+	            }
+	        } else {
+	            mBestWord = null;
+	        }
+	        setCandidatesViewShown(isCandidateStripVisible() || mCompletionOn);
+	    }
+	
 	/**
 	 * Update the list of available candidates from the current composing text.
 	 * This will need to be filled in by however you are determining candidates.
@@ -1601,32 +1659,99 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	private void handleBackspace() {
 
 		final int length = mComposing.length();
-		if (length > 1) {
-			mComposing.delete(length - 1, length);
-			getCurrentInputConnection().setComposingText(mComposing, 1);
-			updateCandidates();
-		} else if (length == 1) {
-			// '10, 4, 5 Jeremy. Bug fix on delete last key in buffer.
-			getCurrentInputConnection().setComposingText("",0);
-			if (mCandidateView != null) {
+		boolean deleteChar = false;
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) return;
+        if (mEnglishOnly){
+        	if(mPredicting) {  
+        		if (length > 0) {
+        			mComposing.delete(length - 1, length);
+        			mWord.deleteLast();
+        			ic.setComposingText(mComposing, 1);
+        		}
+        		if (mComposing.length() == 0) {
+                    mPredicting = false;
+                	}
+                postUpdateSuggestions();
+            } else {
+                ic.deleteSurroundingText(1, 0);
+            }
+        	TextEntryState.backspace();
+            if (TextEntryState.getState() == TextEntryState.STATE_UNDO_COMMIT) {
+                revertLastWord(deleteChar);
+                return;
+            } 
+            mJustRevertedSeparator = null;
+       
+        } else if (onIM) {
+        	if (length > 1) {
+        		mComposing.delete(length - 1, length);
+        		getCurrentInputConnection().setComposingText(mComposing, 1);
+        		updateCandidates();
+        	} else if (length == 1) {
+        		// '10, 4, 5 Jeremy. Bug fix on delete last key in buffer.
+        		getCurrentInputConnection().setComposingText("",0);
+        		if (mCandidateView != null) {
+        			mCandidateView.clear();
+				//mCandidateView.hideComposing();
+        		}
+        		mComposing.setLength(0);
+        		setCandidatesViewShown(false);
+        		getCurrentInputConnection().commitText("", 0);
+        	} else {
+        		if (mCandidateView != null) {
 				mCandidateView.clear();
 				//mCandidateView.hideComposing();
-			}
-			mComposing.setLength(0);
-			setCandidatesViewShown(false);
-			getCurrentInputConnection().commitText("", 0);
-		} else {
-			if (mCandidateView != null) {
-				mCandidateView.clear();
-				//mCandidateView.hideComposing();
-			}
-			mComposing.setLength(0);
-			setCandidatesViewShown(false);
-			keyDownUp(KeyEvent.KEYCODE_DEL);
-		}
+        		}
+        		mComposing.setLength(0);
+        		setCandidatesViewShown(false);
+        		//keyDownUp(KeyEvent.KEYCODE_DEL);
+        		deleteChar = true;
+        	}
+        } else {
+            deleteChar = true;
+        }
+        	
+        if (deleteChar) {
+            sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL);
+            if (mDeleteCount > DELETE_ACCELERATE_AT) {
+                sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL);
+            }
+        }
+     
+       
 		//updateShiftKeyState(getCurrentInputEditorInfo());
 		
 	}
+	
+	public void revertLastWord(boolean deleteChar) {
+        final int length = mComposing.length();
+        if (!mPredicting && length > 0) {
+            final InputConnection ic = getCurrentInputConnection();
+            mPredicting = true;
+            ic.beginBatchEdit();
+            mJustRevertedSeparator = ic.getTextBeforeCursor(1, 0);
+            if (deleteChar) ic.deleteSurroundingText(1, 0);
+            int toDelete = mCommittedLength;
+            CharSequence toTheLeft = ic.getTextBeforeCursor(mCommittedLength, 0);
+            if (toTheLeft != null && toTheLeft.length() > 0 
+                    && isWordSeparator(toTheLeft.charAt(0))) {
+                toDelete--;
+            }
+            ic.deleteSurroundingText(toDelete, 0);
+            ic.setComposingText(mComposing, 1);
+            TextEntryState.backspace();
+            ic.endBatchEdit();
+            postUpdateSuggestions();
+        } else {
+            sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL);
+            mJustRevertedSeparator = null;
+        }
+    }
+	private void postUpdateSuggestions() {
+        mHandler.removeMessages(MSG_UPDATE_SUGGESTIONS);
+        mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_UPDATE_SUGGESTIONS), 100);
+    }
 	
 	public void setCandidatesViewShown(boolean shown){
 		super.setCandidatesViewShown(shown);
@@ -1784,13 +1909,31 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			e.printStackTrace();
 		}
 	}
-
+	
+	 private boolean isCursorTouchingWord() {
+	        InputConnection ic = getCurrentInputConnection();
+	        if (ic == null) return false;
+	        CharSequence toLeft = ic.getTextBeforeCursor(1, 0);
+	        CharSequence toRight = ic.getTextAfterCursor(1, 0);
+	        if (!TextUtils.isEmpty(toLeft)
+	                && !isWordSeparator(toLeft.charAt(0))) {
+	            return true;
+	        }
+	        if (!TextUtils.isEmpty(toRight) 
+	                && !isWordSeparator(toRight.charAt(0))) {
+	            return true;
+	        }
+	        return false;
+	}
+	    
 	/**
 	 * This method construct candidate view and add key code to composing object
 	 * @param primaryCode
 	 * @param keyCodes
 	 */
 	private void handleCharacter(int primaryCode, int[] keyCodes) {
+		
+        
 		
 		// Caculate key press time to handle Eazy IM keys mapping
 		// 1,2,3,4,5,6 map to -(45) =(43) [(91) ](93) ,(44) \(92)
@@ -2012,14 +2155,41 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					getCurrentInputConnection().commitText(
 							mComposing + String.valueOf((char) primaryCode), 1);
 				}
-			} else {
+			} else { // English 
+				if (Character.isLetter(primaryCode) && isPredictionOn() && !isCursorTouchingWord()) {
+		            if (!mPredicting) {
+		                mPredicting = true;
+		                mComposing.setLength(0);
+		                mWord.reset();
+		            }
+		        }
+				
 				if (isInputViewShown()) {
 					if (mInputView.isShifted()) {
-						primaryCode = Character.toUpperCase(primaryCode);
-					}
+			            if (keyCodes == null || keyCodes[0] < Character.MIN_CODE_POINT
+			                    || keyCodes[0] > Character.MAX_CODE_POINT) {
+			                return;
+			            }
+			            primaryCode = new String(keyCodes, 0, 1).toUpperCase().charAt(0);
+			        }
 				}
-				getCurrentInputConnection().commitText(
-						String.valueOf((char) primaryCode), 1);
+				if (mPredicting) {
+		            if (mInputView.isShifted() && mComposing.length() == 0) {
+		                mWord.setCapitalized(true);
+		            }
+		            mComposing.append((char) primaryCode);
+		            mWord.add(primaryCode, keyCodes);
+		            InputConnection ic = getCurrentInputConnection();
+		            if (ic != null) {
+		                ic.setComposingText(mComposing, 1);
+		            }
+		            postUpdateSuggestions();
+		        } else {
+		            sendKeyChar((char)primaryCode);
+		        }
+				//getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
+
+		        TextEntryState.typedCharacter((char) primaryCode, isWordSeparator(primaryCode));
 			}
 		}
 		//updateShift(primaryCode);
@@ -2070,35 +2240,171 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         	}
         }
     }
+    
+    protected String getWordSeparators() {
+        return mWordSeparators;
+    }
 
 	public boolean isWordSeparator(int code) {
-		// String checkCode = String.valueOf((char)code);
-		//if (code == 32 || code == 39 || code == 10) {
-		if (code == 32 || code == 10) {
-			return true;
-		} else {
-			return false;
-		}
+		String separators = getWordSeparators();
+        return separators.contains(String.valueOf((char)code));
 	}
-
+	
+	public boolean isSentenceSeparator(int code) {
+	        return mSentenceSeparators.contains(String.valueOf((char)code));
+	}
+	
 	public void pickDefaultCandidate() {
-		pickSuggestionManually(0);
+		// Complete any pending candidate query first
+        if (mHandler.hasMessages(MSG_UPDATE_SUGGESTIONS)) {
+            mHandler.removeMessages(MSG_UPDATE_SUGGESTIONS);
+            updateSuggestions();
+        }
+        if(mEnglishOnly) {
+        	if (mBestWord != null) {
+        		TextEntryState.acceptedDefault(mWord.getTypedWord(), mBestWord);
+        		mJustAccepted = true;
+        		pickSuggestion(mBestWord);
+        	}
+        }else
+        	pickSuggestionManually(0);
 	}
+	
+    public boolean preferCapitalization() {
+        return mWord.isCapitalized();
+    }
+    
+	private void pickSuggestion(CharSequence suggestion) {
+        if (mCapsLock) {
+            suggestion = suggestion.toString().toUpperCase();
+        } else if (preferCapitalization() 
+                || (mKeyboardSwitcher.isAlphabetMode() && mInputView.isShifted())) {
+            suggestion = suggestion.toString().toUpperCase().charAt(0)
+                    + suggestion.subSequence(1, suggestion.length()).toString();
+        }
+        InputConnection ic = getCurrentInputConnection();
+        if (ic != null) {
+            ic.commitText(suggestion, 1);
+        }
+        // Add the word to the auto dictionary if it's not a known word
+        if (mAutoDictionary.isValidWord(suggestion) || !mSuggest.isValidWord(suggestion)) {
+            mAutoDictionary.addWord(suggestion.toString(), FREQUENCY_FOR_PICKED);
+        }
+        mPredicting = false;
+        mCommittedLength = suggestion.length();
+        if (mCandidateView != null) {
+            mCandidateView.setSuggestions(null, false, false);
+        }
+        updateShiftKeyState(getCurrentInputEditorInfo());
+    }
+	
+	private void handleSeparator(int primaryCode) {
+        boolean pickedDefault = false;
+        // Handle separator
+        InputConnection ic = getCurrentInputConnection();
+        if (ic != null) {
+            ic.beginBatchEdit();
+        }
+        if (mPredicting) {
+            // In certain languages where single quote is a separator, it's better
+            // not to auto correct, but accept the typed word. For instance, 
+            // in Italian dov' should not be expanded to dove' because the elision
+            // requires the last vowel to be removed.
+            if (mAutoCorrectOn && primaryCode != '\'' && 
+                    (mJustRevertedSeparator == null 
+                            || mJustRevertedSeparator.length() == 0 
+                            || mJustRevertedSeparator.charAt(0) != primaryCode)) {
+                pickDefaultCandidate();
+                pickedDefault = true;
+            } else {
+                commitTyped(ic);
+            }
+        }
+        sendKeyChar((char)primaryCode);
+        TextEntryState.typedCharacter((char) primaryCode, true);
+        if (TextEntryState.getState() == TextEntryState.STATE_PUNCTUATION_AFTER_ACCEPTED 
+                && primaryCode != KEYCODE_ENTER) {
+            swapPunctuationAndSpace();
+        } else if (isPredictionOn() && primaryCode == ' ') { 
+        //else if (TextEntryState.STATE_SPACE_AFTER_ACCEPTED) {
+            doubleSpace();
+        }
+        if (pickedDefault && mBestWord != null) {
+            TextEntryState.acceptedDefault(mWord.getTypedWord(), mBestWord);
+        }
+        updateShiftKeyState(getCurrentInputEditorInfo());
+        if (ic != null) {
+            ic.endBatchEdit();
+        }
+    }
+	
 
+    private boolean isPredictionOn() {
+        boolean predictionOn = mPredictionOn;
+        //if (isFullscreenMode()) predictionOn &= mPredictionLandscape;
+        return predictionOn;
+    }
+	private void swapPunctuationAndSpace() {
+        final InputConnection ic = getCurrentInputConnection();
+        if (ic == null) return;
+        CharSequence lastTwo = ic.getTextBeforeCursor(2, 0);
+        if (lastTwo != null && lastTwo.length() == 2
+                && lastTwo.charAt(0) == KEYCODE_SPACE && isSentenceSeparator(lastTwo.charAt(1))) {
+            ic.beginBatchEdit();
+            ic.deleteSurroundingText(2, 0);
+            ic.commitText(lastTwo.charAt(1) + " ", 1);
+            ic.endBatchEdit();
+            updateShiftKeyState(getCurrentInputEditorInfo());
+        }
+    }
+	
+	private void doubleSpace() {
+        //if (!mAutoPunctuate) return;
+        if (mCorrectionMode == Suggest.CORRECTION_NONE) return;
+        final InputConnection ic = getCurrentInputConnection();
+        if (ic == null) return;
+        CharSequence lastThree = ic.getTextBeforeCursor(3, 0);
+        if (lastThree != null && lastThree.length() == 3
+                && Character.isLetterOrDigit(lastThree.charAt(0))
+                && lastThree.charAt(1) == KEYCODE_SPACE && lastThree.charAt(2) == KEYCODE_SPACE) {
+            ic.beginBatchEdit();
+            ic.deleteSurroundingText(2, 0);
+            ic.commitText(". ", 1);
+            ic.endBatchEdit();
+            updateShiftKeyState(getCurrentInputEditorInfo());
+        }
+    }
 	public void pickSuggestionManually(int index) {
 		if(DEBUG) Log.i("LIMEService:", "pickSuggestionManually()");
-		
 		if (templist != null) {
 			firstMatched = templist.get(index);
 		}
-		
-		if (mCompletionOn && mCompletions != null && index >= 0
-				&& index < mCompletions.length) {
-			CompletionInfo ci = mCompletions[index];
-			getCurrentInputConnection().commitCompletion(ci);
-			if(DEBUG) Log.i("LIMEService:", "pickSuggestionManually():mCompletionOn:"+mCompletionOn);
-			//updateShiftKeyState(getCurrentInputEditorInfo());
-		} else  
+		if(mEnglishOnly){
+			if (mCompletionOn && mCompletions != null && index >= 0
+					&& index < mCompletions.length) {
+				CompletionInfo ci = mCompletions[index];
+				InputConnection ic = getCurrentInputConnection();
+				if (ic != null) {
+					ic.commitCompletion(ci);
+				}
+				mCommittedLength = firstMatched.getWord().length();
+				if (mCandidateView != null) {
+					mCandidateView.clear();
+				}
+				updateShiftKeyState(getCurrentInputEditorInfo());
+				return;
+			}
+			pickSuggestion(firstMatched.getWord());
+			TextEntryState.acceptedSuggestion(mComposing.toString(), firstMatched.getWord());
+			// Follow it with a space
+			if (mAutoSpace) {
+				sendSpace();
+			}
+			// Fool the state watcher so that a subsequent backspace will not do a revert
+			TextEntryState.typedCharacter((char) KEYCODE_SPACE, true);
+		 
+		}else {
+			
 		if (mComposing.length() > 0) {
 			commitTyped(getCurrentInputConnection());
 			this.firstMatched = null;
@@ -2108,8 +2414,15 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			commitTyped(getCurrentInputConnection());
 			updateDictionaryView();
 		}
+		}
 		//setCandidatesViewShown(false);
 		
+	}
+	
+	private void sendSpace() {
+	        sendKeyChar((char)KEYCODE_SPACE);
+	        updateShiftKeyState(getCurrentInputEditorInfo());
+	        //onKey(KEY_SPACE[0], KEY_SPACE);
 	}
 	
 	void promoteToUserDictionary(String word, int frequency) {

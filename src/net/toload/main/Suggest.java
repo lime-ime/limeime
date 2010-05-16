@@ -8,6 +8,7 @@ import android.view.View;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -31,8 +32,8 @@ public class Suggest implements Dictionary.WordCallback {
 
     private int mPrefMaxSuggestions = 12;
 
-    private int[] mPriorities = new int[mPrefMaxSuggestions];
-    private ArrayList<CharSequence> mSuggestions = new ArrayList<CharSequence>();
+    //private int[] mPriorities = new int[mPrefMaxSuggestions];
+    private List<Mapping> mSuggestions = new LinkedList<Mapping>();
     private boolean mIncludeTypedWordIfValid;
     private ArrayList<CharSequence> mStringPool = new ArrayList<CharSequence>();
     private Context mContext;
@@ -90,7 +91,7 @@ public class Suggest implements Dictionary.WordCallback {
             throw new IllegalArgumentException("maxSuggestions must be between 1 and 100");
         }
         mPrefMaxSuggestions = maxSuggestions;
-        mPriorities = new int[mPrefMaxSuggestions];
+        //mPriorities = new int[mPrefMaxSuggestions];
         collectGarbage();
         while (mStringPool.size() < mPrefMaxSuggestions) {
             StringBuilder sb = new StringBuilder(32);
@@ -134,11 +135,11 @@ public class Suggest implements Dictionary.WordCallback {
      * probability. 
      * @return list of suggestions.
      */
-    public List<CharSequence> getSuggestions(View view, WordComposer wordComposer, 
+    public List<Mapping> getSuggestions(View view, WordComposer wordComposer, 
             boolean includeTypedWordIfValid) {
         mHaveCorrection = false;
         collectGarbage();
-        Arrays.fill(mPriorities, 0);
+        //Arrays.fill(mPriorities, 0);
         mIncludeTypedWordIfValid = includeTypedWordIfValid;
         
         // Save a lowercase version of the original word
@@ -169,12 +170,15 @@ public class Suggest implements Dictionary.WordCallback {
             }
         }
         if (mOriginalWord != null) {
-            mSuggestions.add(0, mOriginalWord.toString());
+        	Mapping temp = new Mapping();
+		    temp.setWord(mOriginalWord.toString());
+		    temp.setScore(0);
+            mSuggestions.add(0,temp);
         }
         
         // Check if the first suggestion has a minimum number of characters in common
         if (mCorrectionMode == CORRECTION_FULL && mSuggestions.size() > 1) {
-            if (!haveSufficientCommonality(mLowerOriginalWord, mSuggestions.get(1))) {
+            if (!haveSufficientCommonality(mLowerOriginalWord, mSuggestions.get(1).getWord())) {
                 mHaveCorrection = false;
             }
         }
@@ -190,14 +194,17 @@ public class Suggest implements Dictionary.WordCallback {
             // Is there an AutoText correction?
             boolean canAdd = autoText != null;
             // Is that correction already the current prediction (or original word)?
-            canAdd &= !TextUtils.equals(autoText, mSuggestions.get(i));
+            canAdd &= !TextUtils.equals(autoText, mSuggestions.get(i).getWord());
             // Is that correction already the next predicted word?
             if (canAdd && i + 1 < mSuggestions.size() && mCorrectionMode != CORRECTION_BASIC) {
-                canAdd &= !TextUtils.equals(autoText, mSuggestions.get(i + 1));
+                canAdd &= !TextUtils.equals(autoText, mSuggestions.get(i + 1).getWord());
             }
             if (canAdd) {
                 mHaveCorrection = true;
-                mSuggestions.add(i + 1, autoText);
+                Mapping temp = new Mapping();
+    		    temp.setWord(autoText.toString());
+    		    temp.setScore(0);
+                mSuggestions.add(i+1, temp);
                 i++;
             }
             i++;
@@ -208,15 +215,15 @@ public class Suggest implements Dictionary.WordCallback {
     }
 
     private void removeDupes() {
-        final ArrayList<CharSequence> suggestions = mSuggestions;
+        final List<Mapping> suggestions = mSuggestions;
         if (suggestions.size() < 2) return;
         int i = 1;
         // Don't cache suggestions.size(), since we may be removing items
         while (i < suggestions.size()) {
-            final CharSequence cur = suggestions.get(i);
+            final CharSequence cur = suggestions.get(i).getWord();
             // Compare each candidate with each previous candidate
             for (int j = 0; j < i; j++) {
-                CharSequence previous = suggestions.get(j);
+                CharSequence previous = suggestions.get(j).getWord();
                 if (TextUtils.equals(cur, previous)) {
                     removeFromSuggestions(i);
                     i--;
@@ -228,9 +235,11 @@ public class Suggest implements Dictionary.WordCallback {
     }
 
     private void removeFromSuggestions(int index) {
-        CharSequence garbage = mSuggestions.remove(index);
-        if (garbage != null && garbage instanceof StringBuilder) {
-            mStringPool.add(garbage);
+        Mapping garbage = mSuggestions.remove(index);
+        if (garbage != null ) {
+        	StringBuilder sbg = new StringBuilder(32);
+        	sbg.append(garbage.getWord());
+            mStringPool.add(sbg);
         }
     }
 
@@ -254,18 +263,20 @@ public class Suggest implements Dictionary.WordCallback {
 
     public boolean addWord(final char[] word, final int offset, final int length, final int freq) {
         int pos = 0;
-        final int[] priorities = mPriorities;
+        //final int[] priorities = mPriorities;
         final int prefMaxSuggestions = mPrefMaxSuggestions;
         // Check if it's the same word, only caps are different
         if (compareCaseInsensitive(mLowerOriginalWord, word, offset, length)) {
             pos = 0;
         } else {
             // Check the last one's priority and bail
-            if (priorities[prefMaxSuggestions - 1] >= freq) return true;
-            while (pos < prefMaxSuggestions) {
-                if (priorities[pos] < freq
-                        || (priorities[pos] == freq && length < mSuggestions
-                                .get(pos).length())) {
+        	if(mSuggestions.size() == prefMaxSuggestions){
+            	if (mSuggestions.get(prefMaxSuggestions - 1).getScore() >= freq) return true;
+        	}
+            while (pos < mSuggestions.size()) {
+                if (mSuggestions.get(pos).getScore() < freq
+                        || mSuggestions.get(pos).getScore() == freq 
+                        && length < mSuggestions.get(pos).getWord().length()) {
                     break;
                 }
                 pos++;
@@ -275,19 +286,26 @@ public class Suggest implements Dictionary.WordCallback {
         if (pos >= prefMaxSuggestions) {
             return true;
         }
-        System.arraycopy(priorities, pos, priorities, pos + 1,
-                prefMaxSuggestions - pos - 1);
-        priorities[pos] = freq;
+        //System.arraycopy(priorities, pos, priorities, pos + 1, prefMaxSuggestions - pos - 1);
+        //priorities[pos] = freq;
         int poolSize = mStringPool.size();
         StringBuilder sb = poolSize > 0 ? (StringBuilder) mStringPool.remove(poolSize - 1) 
                 : new StringBuilder(32);
         sb.setLength(0);
         sb.append(word, offset, length);
-        mSuggestions.add(pos, sb);
+        
+        Mapping temp = new Mapping();
+	    temp.setWord(sb.toString());
+	    temp.setScore(freq);
+        mSuggestions.add(pos,temp);
         if (mSuggestions.size() > prefMaxSuggestions) {
-            CharSequence garbage = mSuggestions.remove(prefMaxSuggestions);
-            if (garbage instanceof StringBuilder) {
-                mStringPool.add(garbage);
+            Mapping garbage = mSuggestions.remove(prefMaxSuggestions);
+            
+            if (garbage!=null) {
+            	StringBuilder sbg = new StringBuilder(32);
+            	sbg.append(garbage.getWord());
+                mStringPool.add(sbg);
+                
             }
         }
         return true;
@@ -308,9 +326,11 @@ public class Suggest implements Dictionary.WordCallback {
         int poolSize = mStringPool.size();
         int garbageSize = mSuggestions.size();
         while (poolSize < mPrefMaxSuggestions && garbageSize > 0) {
-            CharSequence garbage = mSuggestions.get(garbageSize - 1);
-            if (garbage != null && garbage instanceof StringBuilder) {
-                mStringPool.add(garbage);
+            Mapping garbage = mSuggestions.get(garbageSize - 1);
+            if (garbage != null ) {
+            	StringBuilder sb = new StringBuilder(32);
+            	sb.append(garbage.getWord());
+                mStringPool.add(sb);
                 poolSize++;
             }
             garbageSize--;
