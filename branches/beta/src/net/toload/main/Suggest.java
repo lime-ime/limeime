@@ -22,7 +22,7 @@ public class Suggest implements Dictionary.WordCallback {
     public static final int CORRECTION_BASIC = 1;
     public static final int CORRECTION_FULL = 2;
 
-    //private Dictionary mMainDict;
+    private Dictionary mMainDict;
 
     private Dictionary mUserDictionary;
 
@@ -32,7 +32,7 @@ public class Suggest implements Dictionary.WordCallback {
 
     private int mPrefMaxSuggestions = 12;
 
-    //private int[] mPriorities = new int[mPrefMaxSuggestions];
+   
     private List<Mapping> mSuggestions = new LinkedList<Mapping>();
     private boolean mIncludeTypedWordIfValid;
     private ArrayList<CharSequence> mStringPool = new ArrayList<CharSequence>();
@@ -44,9 +44,9 @@ public class Suggest implements Dictionary.WordCallback {
     private int mCorrectionMode = CORRECTION_BASIC;
 
 
-    public Suggest(Context context, int dictionaryResId) {
+    public Suggest(Context context, ISearchService SearchSrv) {
         mContext = context;
-        //mMainDict = new BinaryDictionary(context, dictionaryResId);
+        mMainDict = new MainDictionary(context, SearchSrv);
         for (int i = 0; i < mPrefMaxSuggestions; i++) {
             StringBuilder sb = new StringBuilder(32);
             mStringPool.add(sb);
@@ -164,7 +164,7 @@ public class Suggest implements Dictionary.WordCallback {
                     mHaveCorrection = true;
                 }
             }
-            //mMainDict.getWords(wordComposer, this);
+            mMainDict.getWords(wordComposer, this);
             if (mCorrectionMode == CORRECTION_FULL && mSuggestions.size() > 0) {
                 mHaveCorrection = true;
             }
@@ -315,7 +315,7 @@ public class Suggest implements Dictionary.WordCallback {
         if (word == null || word.length() == 0) {
             return false;
         }
-        return //(mCorrectionMode == CORRECTION_FULL )//&& mMainDict.isValidWord(word))|| 
+        return ((mCorrectionMode == CORRECTION_FULL )&& mMainDict.isValidWord(word))|| 
         (mCorrectionMode > CORRECTION_NONE && 
                     ((mUserDictionary != null && mUserDictionary.isValidWord(word)))
                      || (mAutoDictionary != null && mAutoDictionary.isValidWord(word))
