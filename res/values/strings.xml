@@ -21,11 +21,12 @@
     <string name="lime_setting_title">LIME 2.1 \n\n**Upgrade from 1.7.x or you would like to use [3 Rows Keybaord Remapping] feature please import IM mapping file again. \n\nThis is a tools which can help you build custom input method by import a set of IM mapping into database. Regarding how to use LIME and where to get mapping file please visit official website.\nhttp://android.toload.net/</string>
     <string name="lime_setting_operation_notice1">\n[Import Mapping Table]\nBefore you start using LIME IME, you would need to load valid .lime or .cin into the database.\n\nStart from version 2.0 LIME preloaded mapping files, related files will be transfer to your sdcard/lime/ folder after program installed.\n</string>
     <string name="lime_setting_operation_info1">Default Table Version : </string>
-    <string name="lime_setting_operation_info1_cj">Changjei Table Version (cj.cin): </string>
+    <string name="lime_setting_operation_info1_cj">Changjei Table Version: </string>
     <string name="lime_setting_operation_info1_dayi">Dayi Table Version : </string>
-    <string name="lime_setting_operation_info1_bpmf">Phonetic Table Version (bpmf.cin): </string>
-    <string name="lime_setting_operation_info1_ez">Eazy Table Version (ez.lime): </string>
-    <string name="lime_setting_operation_info1_related">Preload related words database Version (assoc.lime): </string>
+    <string name="lime_setting_operation_info1_bpmf">Phonetic Table Version: </string>
+    <string name="lime_setting_operation_info1_ez">Eazy Table Version: </string>
+    <string name="lime_setting_operation_info1_related">Preload related words database Version: </string>
+    <string name="lime_setting_operation_info1_dictionary">Dictionary for English Keyboard Version: </string>
     <string name="lime_setting_operation_info2">Total Record : </string>
     <string name="lime_setting_operation_notice2">\n[Reset Mapping Table]\nIf you would like to reset the database please click button below, this action allow you to clean import status and reload mapping file. If previous import action stop or failed unexpectedly you would need to reset uncompleted table.</string>
     <string name="lime_setting_operation_notice3">\n[Learned related Words Management]\nLime program will build related words base on what you input to the system from other applications.\nYou can use the functions below to backup/restore related words.\n</string>
@@ -248,6 +249,7 @@
 		<item>Phonetic</item>
 		<item>Eazy</item>
 		<item>Preload related words</item>
+		<item>Dictionary for English keyboard</item>
 	</string-array>
 	
 </resources>

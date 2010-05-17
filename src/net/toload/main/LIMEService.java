@@ -159,7 +159,7 @@ public class LIMEService extends InputMethodService implements
 
 	private String mWordSeparators;
 	private String misMatched;
-	private LimeDB limedb;
+
 
 	private LinkedList<Mapping> templist;
 	private LinkedList<Mapping> userdiclist;
@@ -182,8 +182,6 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasShiftPress = false;
 	private boolean hasSpacePress = false;
 
-	// Hard Keyboad Shift + Space Status
-	private boolean hasAltPress = false;
 	
 	private String keyboardSelection;
 	private List<String> keyboardList;
@@ -201,7 +199,6 @@ public class LIMEService extends InputMethodService implements
 	//Keep keydown event
 	KeyEvent mKeydownEvent = null;
 	
-	private int previousKeyCode = 0;
 	private final float moveLength = 15;
 	private ISearchService SearchSrv = null;
 	
@@ -248,8 +245,7 @@ public class LIMEService extends InputMethodService implements
 
 		super.onCreate();
 		
-		final Configuration conf = getResources().getConfiguration();
-        initSuggest(conf.locale.toString());
+		
         
         mKeyboardSwitcher = new LIMEKeyboardSwitcher(this);
 		
@@ -261,6 +257,9 @@ public class LIMEService extends InputMethodService implements
 		if(SearchSrv == null){
 			this.bindService(new Intent(ISearchService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
 		}
+		
+		final Configuration conf = getResources().getConfiguration();
+		initSuggest(conf.locale.toString());
 		
 		mVibrator = (Vibrator) getApplication().getSystemService(
 				Service.VIBRATOR_SERVICE);
@@ -288,7 +287,7 @@ public class LIMEService extends InputMethodService implements
 	
 	 private void initSuggest(String locale) {
 	        mLocale = locale;
-	        mSuggest = new Suggest(this, 0);
+	        mSuggest = new Suggest(this, SearchSrv);
 	        mSuggest.setCorrectionMode(mCorrectionMode);
 	        mUserDictionary = new UserDictionary(this);
 	        mContactsDictionary = new ContactsDictionary(this);
@@ -499,7 +498,7 @@ public class LIMEService extends InputMethodService implements
 		for(Mapping dicunit : userdiclist){
 			if(dicunit.getId() == null){continue;}
 			try {
-				SearchSrv.addDictionary(dicunit.getId(), 
+				SearchSrv.addUserDict(dicunit.getId(), 
 										dicunit.getCode(), 
 										dicunit.getWord(), 
 										dicunit.getPword(), 
@@ -510,7 +509,7 @@ public class LIMEService extends InputMethodService implements
 			}
 		}
 		try {
-			SearchSrv.updateDictionary();
+			SearchSrv.updateUserDict();
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
@@ -1095,7 +1094,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 						// Update userdict for auto-learning feature
 						//if(userdiclist.size() > 1) {	updateUserDict();}
 						// Add by Jeremy '10, 4,1 . Reverse Lookup
-						SearchSrv.Rquery(firstMatched.getWord());
+						SearchSrv.rQuery(firstMatched.getWord());
 						
 						tempMatched = firstMatched;
 						firstMatched = null;
@@ -1153,6 +1152,10 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	        }
 	        
 	    }
+	 
+	public boolean isEnglishOnlyMode(){
+		return mEnglishOnly;
+	}
 
 	private boolean isValidLetter(int code) {
 		if (Character.isLetter(code)) {
@@ -1217,14 +1220,12 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 							String.valueOf((char) keyCode), 1);
 				} else if (keyCode == 32 && this.mComposing.length() == 0 && this.tempMatched != null
 						&& !this.tempMatched.getCode().trim().equals("")) {
-					
 					// If user press space to input the word then system should close the composing view
 					mCandidateView.hideComposing();
 				} else if (keyCode == 32 && this.mComposing.length() == 0 && this.tempMatched != null
 						&& this.tempMatched.getCode().trim().equals("")) {
 					// Press Space Button + no matched keyword consider as English append space at the end
 					getCurrentInputConnection().commitText(String.valueOf((char) keyCode), 1);
-
 				}
 				hasFirstMatched = false;
 			}
@@ -2378,11 +2379,10 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         }
     }
 	public void pickSuggestionManually(int index) {
-		
+		if(DEBUG) Log.i("LIMEService:", "pickSuggestionManually()");
 		// After pick word from the list system have to close the composing view
 		mCandidateView.hideComposing();
 		
-		if(DEBUG) Log.i("LIMEService:", "pickSuggestionManually()");
 		if (templist != null) {
 			firstMatched = templist.get(index);
 		}

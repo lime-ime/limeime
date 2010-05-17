@@ -65,11 +65,12 @@ import android.widget.Toast;
 public class LimeDB extends SQLiteOpenHelper {
 
 	private static boolean DEBUG = false;
+	private static boolean EXPORTDB = true;
 	private static boolean CACHED = false;
 	private static boolean SQLSELECT = true;
 	
 	private final static String DATABASE_NAME = "lime";
-	private final static int DATABASE_VERSION = 59;
+	private final static int DATABASE_VERSION = 60;
 	private final static int DATABASE_RELATED_SIZE = 50;
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
@@ -78,6 +79,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
 	private final static String EZ_TOTAL_RECORD = "ez_total_record";
 	private final static String RELATED_TOTAL_RECORD = "related_total_record";
+	private final static String DICTIONARY_TOTAL_RECORD = "dictionary_total_record";
 	//----------add by Jeremy '10,3,12 ----------------------------------------
 	private final static String TOTAL_USERDICT_RECORD = "total_userdict_record";
 	//-------------------------------------------------------------------------
@@ -88,6 +90,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String DAYI_MAPPING_FILE = "dayi_mapping_file";
 	private final static String EZ_MAPPING_FILE = "ez_mapping_file";
 	private final static String RELATED_MAPPING_FILE = "dayi_mapping_file";
+	private final static String DICTIONARY_FILE = "dictionary_file";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String MAPPING_FILE_TEMP = "mapping_file_temp";
 	private final static String CJ_MAPPING_FILE_TEMP = "cj_mapping_file_temp";
@@ -95,6 +98,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String BPMF_MAPPING_FILE_TEMP = "bpmf_mapping_file_temp";
 	private final static String EZ_MAPPING_FILE_TEMP = "ez_mapping_file_temp";
 	private final static String RELATED_MAPPING_FILE_TEMP = "related_mapping_file_temp";
+	private final static String DICTIONARY_FILE_TEMP = "dictionary_file_temp";
 	private final static String MAPPING_VERSION = "mapping_version";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_MAPPING_VERSION = "cj_mapping_version";
@@ -102,6 +106,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
 	private final static String EZ_MAPPING_VERSION = "ez_mapping_version";
 	private final static String RELATED_MAPPING_VERSION = "related_mapping_version";
+	private final static String DICTIONARY_VERSION = "dictionary_version";
+	//
 	private final static String MAPPING_LOADING = "mapping_loading";
 	private final static String MAPPING_IMPORT_LINE = "mapping_import_line";
 	private final static String CANDIDATE_SUGGESTION = "candidate_suggestion";
@@ -297,7 +303,13 @@ public class LimeDB extends SQLiteOpenHelper {
 					+ FIELD_DIC_cword + " text, " + FIELD_DIC_pword + " text, "
 					+ FIELD_DIC_score + " integer)");
 			db.execSQL("CREATE INDEX IF NOT EXISTS related_idx_pword ON related (" + FIELD_DIC_pword + ")");
-			//db.execSQL("CREATE INDEX IF NOT EXISTS related_idx_cword ON related (" + FIELD_DIC_cword + ")");
+			db.execSQL("CREATE TABLE IF NOT EXISTS dictionary(" 
+					+ FIELD_id 	+ " INTEGER primary key autoincrement, " 
+					+ FIELD_WORD + " text, " //+ FIELD_DIC_pword + " text, "
+					+ FIELD_SCORE + " integer)");
+			db.execSQL("CREATE INDEX IF NOT EXISTS dictionary_idx_word ON related (" + FIELD_DIC_pword + ")");
+			
+			
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -312,77 +324,9 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		try{
 		
-		//db.execSQL("DROP INDEX IF EXISTS mapping_idx");
-
-		// Backup old mapping
-		db.execSQL("ALTER TABLE mapping RENAME TO mapping_old");
+			onCreate(db);  // Make sure all table exist
 		
-		db.execSQL("DROP INDEX IF EXISTS userdic_idx");
-		db.execSQL("CREATE TABLE IF NOT EXISTS userdic(" + FIELD_DIC_id
-				+ " INTEGER primary key autoincrement, " + " "
-				+ FIELD_DIC_pcode + " text, " + FIELD_DIC_ccode + " text, "
-				+ FIELD_DIC_cword + " text, " + FIELD_DIC_pword + " text, "
-				+ FIELD_DIC_score + " integer)");
-		//db.execSQL("DROP TABLE IF EXISTS related");
-		db.execSQL("CREATE TABLE IF NOT EXISTS related(" 
-				+ FIELD_DIC_id 	+ " INTEGER primary key autoincrement, " 
-				+ FIELD_DIC_cword + " text, " + FIELD_DIC_pword + " text, "
-				+ FIELD_DIC_score + " integer)");
-		db.execSQL("INSERT INTO related ("
-				+ FIELD_DIC_pword + ", " + FIELD_DIC_cword + ", " + FIELD_DIC_score + ")"
-				+ " SELECT "
-				+ FIELD_DIC_pword + ", " + FIELD_DIC_cword + ", " + FIELD_DIC_score + "+1"
-				+ " FROM userdic"
-				);
-		db.execSQL("CREATE INDEX IF NOT EXISTS related_idx_pword ON related (" + FIELD_DIC_pword + ")");
-		// Drop old userdic table
-		db.execSQL("DROP TABLE IF EXISTS userdic");
-		db.execSQL("DROP INDEX IF EXISTS userdic_idx");
-		db.execSQL("DROP INDEX IF EXISTS userdic_idx_pcode");
-		db.execSQL("DROP INDEX IF EXISTS userdic_idx_pword");
-
-		onCreate(db);  // Make sure all table exist
-		
-		// Rebuild mapping table from backup
-		db.execSQL("INSERT INTO mapping ("
-				+ FIELD_CODE + ", " + FIELD_CODE3R + ", " + FIELD_WORD + ", "+ FIELD_SCORE +")"
-				+ " SELECT "
-				+ FIELD_CODE +", "+ "'0'" + ", " + FIELD_WORD + ", " + FIELD_SCORE
-				+ " FROM mapping_old"
-				);
-
-		//db.execSQL("ALTER TABLE mapping ADD COLUMN " + FIELD_CODE3R + " text DEFAULT '0'");
-		//db.execSQL("ALTER TABLE cj RENAME TO cj_old");	
-		//db.execSQL("ALTER TABLE dayi RENAME TO dayi_old");
-		//db.execSQL("ALTER TABLE phonetic RENAME TO phonetic_old");
-		//db.execSQL("ALTER TABLE ez RENAME TO ez_old");
-		
-		//onCreate(db);  // Recreate table with added column
-		
-		//db.execSQL("CREATE TABLE mapping AS " +
-		//		"SELECT * FROM mapping_old ORDER BY " + FIELD_CODE + ", LENGTH(" + FIELD_CODE +")" );
-		//db.execSQL("DROP TABLE mapping_old");
-		
-		/*
-		db.execSQL("CREATE TABLE cj AS " +
-				"SELECT * FROM cj_old ORDER BY " + FIELD_CODE + ", LENGTH(" + FIELD_CODE +")" );
-		db.execSQL("DROP TABLE cj_old");
-		
-		db.execSQL("CREATE TABLE dayi AS " +
-				"SELECT * FROM dayi_old ORDER BY " + FIELD_CODE + ", LENGTH(" + FIELD_CODE +")" );
-		db.execSQL("DROP TABLE dayi_old");
-		
-
-		db.execSQL("CREATE TABLE phonetic AS " +
-				"SELECT * FROM phonetic_old ORDER BY " + FIELD_CODE + ", LENGTH(" + FIELD_CODE +")" );
-		db.execSQL("DROP TABLE phonetic_old");
-		
-		
-		db.execSQL("CREATE TABLE ez AS " +
-				"SELECT * FROM ez_old ORDER BY " + FIELD_CODE + ", LENGTH(" + FIELD_CODE +")" );
-		db.execSQL("DROP TABLE ez_old");
-		*/
-		} catch (Exception e) {
+			} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
@@ -401,21 +345,6 @@ public class LimeDB extends SQLiteOpenHelper {
 
 		SQLiteDatabase db = this.getWritableDatabase();
 		db.delete(table, null, null);
-		/*
-		db.execSQL("DROP TABLE IF EXISTS " + table);
-		db.execSQL("DROP INDEX IF EXISTS " + table + "_idx_code");
-		db.execSQL("DROP INDEX IF EXISTS " + table + "_idx_code3r");
-		db.execSQL("DROP INDEX IF EXISTS " + table + "_idx_word");
-		db.execSQL("CREATE TABLE " + table + " (" + FIELD_id
-				+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE
-				+ " text, " + FIELD_CODE3R + " text, "+ FIELD_WORD 
-				+ " text, " + FIELD_RELATED
-				+ " text, " + FIELD_SCORE + " integer)");
-		db.execSQL("CREATE INDEX " + table + "_idx_code ON " + table + " (" + FIELD_CODE + ")");
-		db.execSQL("CREATE INDEX " + table + "_idx_code3r ON " + table + " (" + FIELD_CODE3R + ")");
-		db.execSQL("CREATE INDEX " + table + "_idx_word ON " + table + " (" + FIELD_WORD + ")");
-		*/
-	
 		db.close();
 		
 		SharedPreferences sp1=null, sp2=null, sp3=null, sp4=null;
@@ -456,6 +385,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			sp3.edit().putString(EZ_MAPPING_FILE, "").commit();
 			sp4 = ctx.getSharedPreferences(EZ_MAPPING_FILE_TEMP, 0);
 			sp4.edit().putString(EZ_MAPPING_FILE_TEMP, "").commit();
+			
 		}else {
 			sp1 = ctx.getSharedPreferences(TOTAL_RECORD, 0);
 			sp1.edit().putString(TOTAL_RECORD, String.valueOf(0)).commit();
@@ -467,8 +397,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			sp4.edit().putString(MAPPING_FILE_TEMP, "").commit();
 		}
 		
-		//SharedPreferences sp5 = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-		//sp4.edit().putString(MAPPING_LOADING, "no").commit();
+		
 		SharedPreferences sp5 = ctx.getSharedPreferences(MAPPING_IMPORT_LINE, 0);
 		sp5.edit().putString(MAPPING_IMPORT_LINE, "").commit();
 
@@ -499,28 +428,31 @@ public class LimeDB extends SQLiteOpenHelper {
 		db.close();
 	}
 	
+	public void deleteDictionaryAll() {
+		SharedPreferences sp1 = ctx.getSharedPreferences(DICTIONARY_TOTAL_RECORD, 0);
+		sp1.edit().putString(DICTIONARY_TOTAL_RECORD, String.valueOf(0)).commit();
+		SharedPreferences sp2 = ctx.getSharedPreferences(DICTIONARY_VERSION, 0);
+		sp2.edit().putString(DICTIONARY_VERSION, "").commit();
+		SharedPreferences sp3 = ctx.getSharedPreferences(DICTIONARY_FILE, 0);
+		sp3.edit().putString(DICTIONARY_FILE, "").commit();
+		SharedPreferences sp4 = ctx.getSharedPreferences(DICTIONARY_FILE_TEMP, 0);
+		sp4.edit().putString(DICTIONARY_FILE_TEMP, "").commit();
+		
+		SQLiteDatabase db = this.getWritableDatabase();
+		
+		db.delete("dictionary", null , null);
+		db.close();
+	}
 	/**
 	 * Empty Related table records
 	 */
-	public void  deleteDictionaryAll() { 
+	public void  deleteUserDictAll() { 
 		//---------------add by Jeremy '10,3,12-----------------------------------
 		SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
 		sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(0)).commit();
 		//-------------------------------------------------------------------------
 		SQLiteDatabase db = this.getWritableDatabase();
-		//db.delete("userdic", null, null);
-		/*
-		db.execSQL("DROP TABLE IF EXISTS userdic");
-		db.execSQL("DROP INDEX IF EXISTS userdic_idx_pcode");
-		db.execSQL("DROP INDEX IF EXISTS userdic_idx_pword");
-		db.execSQL("CREATE TABLE userdic(" + FIELD_DIC_id
-				+ " INTEGER primary key autoincrement, " + " "
-				+ FIELD_DIC_pcode + " text, " + FIELD_DIC_ccode + " text, "
-				+ FIELD_DIC_pword + " text, " + FIELD_DIC_cword + " text, "
-				+ FIELD_DIC_score + " integer)");
-		db.execSQL("CREATE INDEX userdic_idx_pcode ON userdic (" + FIELD_DIC_pcode + ")");
-		db.execSQL("CREATE INDEX userdic_idx_pword ON userdic (" + FIELD_DIC_pword + ")");
-		*/
+		
 		db.delete("related", FIELD_DIC_score + " >0", null);
 		db.close();
 	}
@@ -588,7 +520,18 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 		return total;
 	}
-
+	
+	public int countDictionary() {
+		int total = 0;
+		try {
+			SQLiteDatabase db = this.getReadableDatabase();
+			total += db.rawQuery("SELECT * FROM dictionary" , null).getCount();
+			db.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return total;
+	}
 	/**
 	 * Insert mapping item into database
 	 * 
@@ -643,7 +586,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * 
 	 * @param srclist
 	 */
-	public void addDictionary(List<Mapping> srclist) {
+	public void addUserDict(List<Mapping> srclist) {
 		
 		if(DEBUG){
 			Log.i("addDictionary:", "Etnering addDictionary");
@@ -1149,53 +1092,34 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 	return result;
 }
 
-private  List<Mapping> buildQueryResult(List <Mapping> result, Cursor cursor, HashSet <String> wordlist){
-	if (cursor.moveToFirst()) {
-		int codeColumn = cursor.getColumnIndex(FIELD_CODE);
-		int wordColumn = cursor.getColumnIndex(FIELD_WORD);
-		int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
-		int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
-		int idColumn = cursor.getColumnIndex(FIELD_id);
-		// 	Use a hashset to stripe repeated words
-		//HashSet <String> wordlist = new HashSet<String>();
-		do {
-			Mapping munit = new Mapping();
-			munit.setWord(cursor.getString(wordColumn));
-			if(!wordlist.contains(munit.getWord())){
-				wordlist.add(munit.getWord());
-				munit.setId(cursor.getString(idColumn));
-				munit.setCode(cursor.getString(codeColumn));
-				if(!SQLSELECT)	
-					munit.setRelated(cursor.getString(relatedColumn));
-				munit.setScore(cursor.getInt(scoreColumn));
-				munit.setDictionary(false);
-				wordlist.add(munit.getWord());
-				result.add(munit);
-			}
-		} while (cursor.moveToNext());
+	private  List<Mapping> buildQueryResult(List <Mapping> result, Cursor cursor, HashSet <String> wordlist){
+		if (cursor.moveToFirst()) {
+			int codeColumn = cursor.getColumnIndex(FIELD_CODE);
+			int wordColumn = cursor.getColumnIndex(FIELD_WORD);
+			int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
+			int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
+			int idColumn = cursor.getColumnIndex(FIELD_id);
+			// 	Use a hashset to stripe repeated words
+		//	HashSet <String> wordlist = new HashSet<String>();
+			do {	
+				Mapping munit = new Mapping();
+				munit.setWord(cursor.getString(wordColumn));
+				if(!wordlist.contains(munit.getWord())){
+					wordlist.add(munit.getWord());
+					munit.setId(cursor.getString(idColumn));
+					munit.setCode(cursor.getString(codeColumn));
+					if(!SQLSELECT)	
+						munit.setRelated(cursor.getString(relatedColumn));
+						munit.setScore(cursor.getInt(scoreColumn));
+						munit.setDictionary(false);
+						wordlist.add(munit.getWord());
+						result.add(munit);
+				}
+			} while (cursor.moveToNext());
 		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		//wordlist = null;
-}
-return result;
-}
+		}
+		return result;
+	}
 
 	public List<Mapping> getSuggestion(String related, int size) {
 
@@ -1269,7 +1193,18 @@ return result;
 		}
 		return result;
 	}
-
+	/**
+	 * 
+	 * @return Cursor for 
+	 */
+	public Cursor getDictionaryAll(){
+		Cursor cursor = null;
+		SQLiteDatabase db = this.getReadableDatabase();
+		
+		cursor = db.query("dictionary", null, null 
+				, null, null, null, null, null);
+		return cursor;
+	}
 	/**
 	 * Get dictionary database contents
 	 * 
@@ -1278,7 +1213,7 @@ return result;
 	 */
 	//Modified by Jeremy '10,3 ,12 for more specific related word
 	//-----------------------------------------------------------
-	public List<Mapping> getDictionary(String pcode, String pword) {
+	public List<Mapping> queryUserDict(String pcode, String pword) {
 	//-----------------------------------------------------------
 
 		List<Mapping> result = new LinkedList<Mapping>();
@@ -1288,20 +1223,8 @@ return result;
 		if (pword != null && !pword.trim().equals("")) {
 
 			Cursor cursor = null;
-			/*
-			try {
-				pcode = pcode.toUpperCase();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			*/
-			//Modified by Jeremy '10,3 ,20 for more specific related word
-			// Replace pcode with hascode() for better perfoamnce and IM indepedent.
-			//-----------------------------------------------------------
-
+			
 			SQLiteDatabase db = this.getReadableDatabase();
-			//cursor = db.query("userdic", null, FIELD_DIC_pcode + " = \""
-			//		+ keyword + "\"", null, null, null, FIELD_DIC_score
 			
 			cursor = db.query("related", null,
 					FIELD_DIC_pword + " = \"" + pword + "\"" 
@@ -1312,18 +1235,15 @@ return result;
 
 
 			if (cursor.moveToFirst()) {
-				//int pcodeColumn = cursor.getColumnIndex(FIELD_DIC_pcode);
+				
 				int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
-				//int ccodeColumn = cursor.getColumnIndex(FIELD_DIC_ccode);
 				int cwordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
 				int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
 				int idColumn = cursor.getColumnIndex(FIELD_id);
 				do {
 					Mapping munit = new Mapping();
 					munit.setId(cursor.getString(idColumn));
-					//munit.setPcode(cursor.getString(pcodeColumn));
 					munit.setPword(cursor.getString(pwordColumn));
-					//munit.setCode(cursor.getString(ccodeColumn));
 					munit.setCode("");
 					munit.setWord(cursor.getString(cwordColumn));
 					munit.setScore(cursor.getInt(scoreColumn));
@@ -1350,7 +1270,6 @@ return result;
 		String id = srcunit.getId();
 		String code = srcunit.getCode();
 		String word = srcunit.getWord();
-		//String pcode = srcunit.getPcode();
 		String pword = srcunit.getPword();
 
 		int score = srcunit.getScore();
@@ -1546,7 +1465,8 @@ return result;
 					// Build HashMap of related codes table
 					HashMap<String, TreeMap> hm = null;
 					if(!SQLSELECT) {
-						if(!table.equals("related")){ // We don't need the related code table in related table.
+						// We don't need the related code table in related table.
+						if(!(table.equals("related")||table.equals("dictionary"))){ 
 							hm = buildRelatedCodeTable(isCinFormat);
 						}
 					}
@@ -1628,7 +1548,7 @@ return result;
 									code = line.substring(0, line.indexOf(DELIMITER));
 									word = line.substring(line.indexOf(DELIMITER) + 1);
 								}
-								if (code == null || code.trim().equals("")) {continue;}else{code = code.toUpperCase();}
+								if (code == null || code.trim().equals("")) {continue;}else{code = code.trim();}
 								// Add by Jeremy '10, 3 , 28. Trim spaces.
 								if (word == null || word.trim().equals("")) {continue;}else{word = word.trim();}
 								// Add by Jeremy '10, 3 , 27
@@ -1651,7 +1571,10 @@ return result;
 									}else if(table.equals("related")){
 										version = ctx.getSharedPreferences(RELATED_MAPPING_VERSION, 0);
 										version.edit().putString(RELATED_MAPPING_VERSION, word.trim()).commit();
-									}else {
+									}else if(table.equals("dictionary")){
+										version = ctx.getSharedPreferences(DICTIONARY_VERSION, 0);
+										version.edit().putString(DICTIONARY_VERSION, word.trim()).commit();
+									}else{
 										version = ctx.getSharedPreferences(MAPPING_VERSION, 0);
 										version.edit().putString(MAPPING_VERSION, word.trim()).commit();									
 									}
@@ -1660,17 +1583,20 @@ return result;
 								}
 	
 									
-								if(!table.equals("related")){
+								if(table.equals("related")){
+									// Related table.
+									insertUserDict(code, word, 0);
+								}else if(table.equals("dictionary")){
+									// English dictionary file.  Code column as word, and word column as frequency.
+									insertDictionary(code,Integer.parseInt(word));
+								}else{
 									// Regular table
 									if(SQLSELECT){
-										insertWord(table, code, word);
+										insertWord(table, code.toUpperCase(), word);
 									}else {
 										String first = code.substring(0,1);
-										insertWord(table, code, word, hm.get(first), 50);
+										insertWord(table, code.toUpperCase(), word, hm.get(first), 50);
 									}
-								}else{
-									// Related table.
-									insertDictionary(code, word, 0);
 								}
 								
 								
@@ -1698,6 +1624,9 @@ return result;
 								}else if(table.equals("related")){
 									sp = ctx.getSharedPreferences(RELATED_TOTAL_RECORD, 0);
 									sp.edit().putString(RELATED_TOTAL_RECORD, String.valueOf(count) + " (loading...)").commit();
+								}else if(table.equals("dictionary")){
+									sp = ctx.getSharedPreferences(DICTIONARY_TOTAL_RECORD, 0);
+									sp.edit().putString(DICTIONARY_TOTAL_RECORD, String.valueOf(count) + " (loading...)").commit();
 								}else {
 									sp = ctx.getSharedPreferences(TOTAL_RECORD, 0);
 									sp.edit().putString(TOTAL_RECORD, String.valueOf(count) + " (loading...)").commit();
@@ -1714,8 +1643,8 @@ return result;
 					}finally{
 						db.setTransactionSuccessful();
 						db.endTransaction();
-						// Sorting the table if it's not related table
-						if(!table.equals("related")){				
+						// Sorting the table if it's not related or dictionary table
+						if(!(table.equals("related")||table.equals("dictionary"))){				
 							db.execSQL("DROP TABLE IF EXISTS " + table + "_old");
 							db.execSQL("ALTER TABLE " + table + " RENAME TO " + table + "_old");
 							db.execSQL("CREATE TABLE " + table + " (" + 
@@ -1771,6 +1700,11 @@ return result;
 						sp1.edit().putString(RELATED_TOTAL_RECORD, String.valueOf(countRelated())).commit();
 						sp2 = ctx.getSharedPreferences(RELATED_MAPPING_FILE_TEMP, 0);
 						sp2.edit().putString(RELATED_MAPPING_FILE_TEMP, "").commit();
+					}else if(table.equals("dictionary")){
+						sp1 = ctx.getSharedPreferences(DICTIONARY_TOTAL_RECORD, 0);
+						sp1.edit().putString(DICTIONARY_TOTAL_RECORD, String.valueOf(countDictionary())).commit();
+						sp2 = ctx.getSharedPreferences(DICTIONARY_FILE_TEMP, 0);
+						sp2.edit().putString(DICTIONARY_FILE_TEMP, "").commit();
 					}else {
 						sp1 = ctx.getSharedPreferences(TOTAL_RECORD, 0);
 						sp1.edit().putString(TOTAL_RECORD, String.valueOf(countMapping(table))).commit();
@@ -1789,7 +1723,7 @@ return result;
 		thread.start();
 	}
 	
-	public void insertDictionary(String pword, String cword, int score){
+	public void insertUserDict(String pword, String cword, int score){
 		SQLiteDatabase db = getWritableDatabase();
 		try{
 			ContentValues cv = new ContentValues();
@@ -1804,6 +1738,21 @@ return result;
 		}
 		
 	}
+	
+	public void insertDictionary(String word, int score){
+		SQLiteDatabase db = getWritableDatabase();
+		try{
+			ContentValues cv = new ContentValues();
+						  cv.put(FIELD_WORD, word);
+						  cv.put(FIELD_SCORE, score);		
+			db.insert("dictionary", null, cv);
+			
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		
+	}
+	
 	public void insertWord(String table, String code, String word){
 		// '10 4, 6. Jeremy. 3row remapping code.
 		String related = "";
@@ -2047,6 +1996,41 @@ return result;
 					cursor.deactivate();
 					cursor.close();
 				}
+				// Export lime db in splited files smaller than 1MB
+				if(EXPORTDB){
+					String baseDBFilename ="/sdcard/lime/lime";
+					int nFile = 1;
+					File dbFile = new File(baseDBFilename + nFile);
+					
+					try{
+			    		int	bytesum = 0, byteread = 0 ;
+			    		FileInputStream inStream = new FileInputStream(
+			    				new File("/data/data/net.toload.main/databases/lime"));
+			    		FileOutputStream fs = new FileOutputStream(dbFile);   
+			            byte[] buffer  = new byte[102400]; //100k buffer
+			            
+			            while((byteread = inStream.read(buffer))!=-1){
+			            	if(bytesum>=1024000){
+			            	   fs.close();
+			            	   nFile++;
+			            	   dbFile = new File(baseDBFilename + nFile);
+			            	   fs = new FileOutputStream(dbFile);
+			            	   bytesum =0;
+			            	}
+			               	bytesum += byteread;       
+			                //System.out.println(bytesum);
+			                fs.write(buffer, 0, byteread);   
+			            }   
+			            inStream.close();
+			            fs.close();
+			        	}   
+			    	catch(Exception e){      
+			    		e.printStackTrace();   
+			           }   
+					
+					
+				}
+				
 				relatedfinish = true;
 				SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
 				sp.edit().putString(MAPPING_LOADING, "no").commit();
@@ -2085,7 +2069,7 @@ return result;
 		//ArrayList temp = new ArrayList();
 		if (targetFile.exists() || alternativeFile.exists()) {
 
-			deleteDictionaryAll();
+			deleteUserDictAll();
 			
 			
 			//int total = 0;

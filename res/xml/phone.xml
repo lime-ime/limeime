@@ -38,7 +38,7 @@
     </Row>
     
     <Row>
-        <Key android:codes="-9" android:keyLabel="[EN]" android:keyEdgeFlags="left"/>
+        <Key android:codes="-9" android:keyIcon="@drawable/sw" android:iconPreview="@drawable/sw_l" android:keyEdgeFlags="left"/>
         <Key android:codes="52" android:iconPreview="@drawable/phone_4_l" android:keyIcon="@drawable/phone_4"/>
         <Key android:codes="53" android:iconPreview="@drawable/phone_5_l" android:keyIcon="@drawable/phone_5"/>
         <Key android:codes="54" android:iconPreview="@drawable/phone_6_l" android:keyIcon="@drawable/phone_6"/>

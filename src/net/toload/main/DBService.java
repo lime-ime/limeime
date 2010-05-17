@@ -21,6 +21,7 @@
 package net.toload.main;
 
 import java.io.File;
+import java.io.FileOutputStream;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -53,17 +54,20 @@ public class DBService extends Service {
 	private final static String EZ_MAPPING_FILE = "ez_mapping_file";
 	private final static String RELATED_MAPPING_FILE = "related_mapping_file";
 	private final static String TOTAL_RECORD = "total_record";
+	
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_TOTAL_RECORD = "cj_total_record";
 	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
 	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
 	private final static String EZ_TOTAL_RECORD = "ez_total_record";
 	private final static String MAPPING_VERSION = "mapping_version";
+	private final static String RELATED_TOTAL_RECORD = "related_total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_MAPPING_VERSION = "cj_mapping_version";
 	private final static String BPMF_MAPPING_VERSION = "bmpf_mapping_version";
 	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
 	private final static String EZ_MAPPING_VERSION = "ez_mapping_version";
+	private final static String RELATED_MAPPING_VERSION = "related_mapping_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
 
 	private NotificationManager notificationMgr;
@@ -79,13 +83,20 @@ public class DBService extends Service {
 
 		DBServiceImpl(Context ctx) {
 			this.ctx = ctx;
+			loadLimeDB();
 		}
-
+		
+		private void loadLimeDB()
+		{	
+			FileUtilities fu = new FileUtilities();
+			fu.copyPreLoadLimeDB(ctx);			
+			db = new LimeDB(ctx);
+		}
 		public void loadMapping(String filename, String tablename) throws RemoteException {
 
 			// Start Loading
 			if (db == null) {
-				db = new LimeDB(ctx);
+				loadLimeDB();
 			}
 
 			File sourcefile = new File(filename);
@@ -203,7 +214,7 @@ public class DBService extends Service {
 					// stop thread here.
 					
 					if (db == null) {
-						db = new LimeDB(ctx);
+						loadLimeDB();
 					}
 						if(tablename.equals("related")){
 							db.deleteRelatedAll();
@@ -249,7 +260,7 @@ public class DBService extends Service {
 					+ "");
 			
 			if (db == null) {
-				db = new LimeDB(ctx);
+				loadLimeDB();
 				}
 			
 			// Stop and clear the existing thread.
@@ -307,9 +318,9 @@ public class DBService extends Service {
 				public void run() {
 					
 					if (db == null) {
-						db = new LimeDB(ctx);
+						loadLimeDB();
 					}
-					db.deleteDictionaryAll();
+					db.deleteUserDictAll();
 					displayNotificationMessage(ctx
 							.getText(R.string.lime_setting_notification_userdic_reset)
 							+ "");
@@ -336,7 +347,7 @@ public class DBService extends Service {
 			}
 			
 			if (db == null) {
-				db = new LimeDB(ctx);
+				loadLimeDB();
 			}
 			
 			Log.i("backupRelated", "Creating thread.");
@@ -438,5 +449,5 @@ public class DBService extends Service {
 		notification.setLatestEventInfo(this, this .getText(R.string.ime_setting), message, contentIntent);
 		notificationMgr.notify(0, notification);
 	}
-
+	
 }

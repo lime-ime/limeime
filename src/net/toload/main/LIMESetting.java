@@ -93,6 +93,7 @@ public class LIMESetting extends Activity {
 	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
 	private final static String EZ_TOTAL_RECORD = "ez_total_record";
 	private final static String RELATED_TOTAL_RECORD = "related_total_record";
+	private final static String DICTIONARY_TOTAL_RECORD = "dictionary_total_record";
 	//----------add by Jeremy '10,3,12 ----------------------------------------
 	private final static String TOTAL_USERDICT_RECORD = "total_userdict_record";
 	//-------------------------------------------------------------------------
@@ -103,6 +104,9 @@ public class LIMESetting extends Activity {
 	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
 	private final static String EZ_MAPPING_VERSION = "ez_mapping_version";
 	private final static String RELATED_MAPPING_VERSION = "related_mapping_version";
+	private final static String DICTIONARY_VERSION = "dictionary_version";
+	
+	//
 	private final static String MAPPING_LOADING = "mapping_loading";
 	private final static String MAPPING_RESET = "mapping_reset";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
@@ -112,6 +116,7 @@ public class LIMESetting extends Activity {
 	private final static String BPMF_MAPPING_FILE_TEMP = "bpmf_mapping_file_temp";
 	private final static String MAPPING_FILE_TEMP = "mapping_file_temp";
 	private final static String RELATED_FILE_TEMP = "related_file_temp";
+	private final static String DICTIONARY_FILE_TEMP = "dictionary_file_temp";
 
 	private ArrayList<File> filelist;
 
@@ -144,6 +149,9 @@ public class LIMESetting extends Activity {
 	private TextView eztxtAmount;
 	private TextView relatedtxtVersion;
 	private TextView relatedtxtAmount;
+	private TextView dictionarytxtVersion;
+	private TextView dictionarytxtAmount;
+	
 	private TextView txtDictionaryAmount;
 	private TextView txtMappingVersion;
 
@@ -190,8 +198,8 @@ public class LIMESetting extends Activity {
 		//copyRAWFile(getResources().openRawResource(R.raw.ez), localRoot + "/ez.lime" );
 		//copyRAWFile(getResources().openRawResource(R.raw.scj6), localRoot + "/scj6.lime" );
 		//copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/assoc.lime" );
-		copyRAWFile(getResources().openRawResource(R.raw.hanconvert), 
-				"/data/data/net.toload.main/databases/hanconvert.db" );
+		//copyRAWFile(getResources().openRawResource(R.raw.hanconvert), 
+		//		"/data/data/net.toload.main/databases/hanconvert.db" );
 		
 		 // return if db is busy.
 		SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
@@ -282,6 +290,8 @@ public class LIMESetting extends Activity {
 				String eztotal = ezsettings.getString(EZ_TOTAL_RECORD, "");
 				SharedPreferences relatedsettings = ctx.getSharedPreferences(RELATED_TOTAL_RECORD, 0);
 				String relatedtotal = relatedsettings.getString(RELATED_TOTAL_RECORD, "");
+				SharedPreferences dictionarysettings = ctx.getSharedPreferences(DICTIONARY_TOTAL_RECORD, 0);
+				String dictionarytotal = dictionarysettings.getString(DICTIONARY_TOTAL_RECORD, "");
 				
 				
 				txtAmount = (TextView) this.findViewById(R.id.txtInfoAmount);
@@ -296,6 +306,8 @@ public class LIMESetting extends Activity {
 				eztxtAmount.setText(eztotal);
 				relatedtxtAmount = (TextView) this.findViewById(R.id.relatedtxtInfoAmount);
 				relatedtxtAmount.setText(relatedtotal);
+				dictionarytxtAmount = (TextView) this.findViewById(R.id.dictionarytxtInfoAmount);
+				dictionarytxtAmount.setText(dictionarytotal);
 	
 				
 			} catch (Exception e) {
@@ -317,6 +329,7 @@ public class LIMESetting extends Activity {
 			String bpmfversion=new String("");
 			String ezversion=new String("");
 			String relatedversion=new String("");
+			String dictionaryversion=new String("");
 			try {
 				SharedPreferences settings = ctx.getSharedPreferences( MAPPING_VERSION, 0);
 				version = settings.getString(MAPPING_VERSION, "");
@@ -371,6 +384,15 @@ public class LIMESetting extends Activity {
 				}
 				relatedtxtVersion = (TextView) this.findViewById(R.id.relatedtxtInfoVersion);
 				relatedtxtVersion.setText(relatedversion);
+				
+				SharedPreferences dictionarysettings = ctx.getSharedPreferences( DICTIONARY_VERSION, 0);
+				dictionaryversion = dictionarysettings.getString(DICTIONARY_VERSION, "");
+				if(dictionaryversion == null || dictionaryversion.equals("")){
+					SharedPreferences mappingtempset = ctx.getSharedPreferences(DICTIONARY_FILE_TEMP, 0);
+					dictionaryversion = mappingtempset.getString(DICTIONARY_FILE_TEMP, "");
+				}
+				dictionarytxtVersion = (TextView) this.findViewById(R.id.dictionarytxtInfoVersion);
+				dictionarytxtVersion.setText(dictionaryversion);
 			} catch (Exception e) {e.printStackTrace();}
 
 			limedb = new LimeDB(this);
@@ -616,6 +638,8 @@ public class LIMESetting extends Activity {
                 	break;
                 case 5:
                 	tablename = "related";
+                case 6:
+                	tablename = "dictionary";
                 	break;
                 } 
                 switch(command){

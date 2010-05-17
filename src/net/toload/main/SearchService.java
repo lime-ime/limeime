@@ -20,6 +20,9 @@
 
 package net.toload.main;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -35,6 +38,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
@@ -51,11 +55,13 @@ public class SearchService extends Service {
 	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
 	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
 	private final static String TOTAL_RELATED = "total_related";
+	private final static String RELATED_TOTAL_RECORD = "related_total_record";
 	private final static String MAPPING_VERSION = "mapping_version";
 	private final static String CJ_MAPPING_VERSION = "cj_mapping_version";
 	private final static String BPMF_MAPPING_VERSION = "bmpf_mapping_version";
 	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
 	private final static String EZ_MAPPING_VERSION = "ez_mapping_version";
+	private final static String RELATED_MAPPING_VERSION = "related_mapping_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
 	private final static String CANDIDATE_SUGGESTION = "candidate_suggestion";
 	private final static String LEARNING_SWITCH = "learning_switch";
@@ -92,7 +98,15 @@ public class SearchService extends Service {
 		}
 		
 		public String hanConvert(String input){
-			if(hanConverter == null){hanConverter = new LimeHanConverter(ctx);}
+			if(hanConverter == null){
+				FileUtilities fu = new FileUtilities();
+				File hanDBFile = fu.isFileNotExist("/data/data/net.toload.main/databases/hanconvert.db");
+				if(hanDBFile!=null){
+					fu.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvert), hanDBFile);
+					
+				}
+				hanConverter = new LimeHanConverter(ctx);
+				}
 			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 			Integer hanConvertOption = Integer.parseInt(sp.getString(HanConvertOption, "0"));
 			
@@ -126,30 +140,41 @@ public class SearchService extends Service {
 		}
 		
 		public String getTablename(){
-			if(db == null){db = new LimeDB(ctx);}
+			if(db == null){loadLimeDB();}
 			return tablename;
 		}
 		
 		public void setTablename(String table){
-			if(db == null){db = new LimeDB(ctx);}
+			if(db == null){loadLimeDB();}
 			tablename = table;
 			db.setTablename(table);
 			
 		}
 		
+		private void loadLimeDB()
+		{	
+			FileUtilities fu = new FileUtilities();
+			fu.copyPreLoadLimeDB(ctx);			
+			db = new LimeDB(ctx);
+		}
+		
 		//Modified by Jeremy '10,3 ,12 for more specific related word
 		//-----------------------------------------------------------
 		public List queryUserDic(String code, String word) throws RemoteException {
-			if(db == null){db = new LimeDB(ctx);}
-			List result = db.getDictionary(code, word);
+			if(db == null){loadLimeDB();}
+			List result = db.queryUserDict(code, word);
 			return result;
 		}
 		//-----------------------------------------------------------
 		
-		
+		public Cursor getDictionaryAll(){
+			if(db == null){loadLimeDB();}
+			return db.getDictionaryAll();
+			
+		}
 		//Add by jeremy '10, 4,1
-		public void Rquery(String word) throws RemoteException {
-			if(db == null){db = new LimeDB(ctx);}
+		public void rQuery(String word) throws RemoteException {
+			if(db == null){loadLimeDB();}
 			String result = db.getRMapping(word);
 			if(result!=null && !result.equals("")){
 				displayNotificationMessage(result);
@@ -187,7 +212,7 @@ public class SearchService extends Service {
 					}catch(Exception e){e.printStackTrace();}
 				}
 	
-				if(db == null){db = new LimeDB(ctx);}
+				if(db == null){loadLimeDB();}
 	
 				if (code != null) {
 					Mapping temp = new Mapping();
@@ -252,6 +277,7 @@ public class SearchService extends Service {
 		}
 
 		public void initial() throws RemoteException {
+			//loadLimeDB();
 				
 		}
 
@@ -279,7 +305,7 @@ public class SearchService extends Service {
 							      temp.setPword(pword);
 							      temp.setScore(score);
 							      temp.setDictionary(isDictionary);
-				    if(db == null){db = new LimeDB(ctx);}
+				    if(db == null){loadLimeDB();}
 						db.addScore(temp);
 					// Only do this if isDitionary is false
 					if(!isDictionary && get_mappingIdx().get(precode) != null){
@@ -322,7 +348,7 @@ public class SearchService extends Service {
 			return src;
 		}
 
-		public void addDictionary(String id, String code, String word,
+		public void addUserDict(String id, String code, String word,
 				String pword, int score, boolean isDictionary)
 				throws RemoteException {
 				if(diclist == null){diclist = new LinkedList();}
@@ -338,22 +364,23 @@ public class SearchService extends Service {
 			    diclist.addLast(temp);
 		}
 
-	public void updateDictionary() throws RemoteException {
-			if(db == null){db = new LimeDB(ctx);}
+	public void updateUserDict() throws RemoteException {
+			if(db == null){loadLimeDB();}
 			if(diclist.size() > 1){
 				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 				boolean item = sp.getBoolean(CANDIDATE_SUGGESTION, false);
 				if(item){
-					db.addDictionary(diclist);
+					db.addUserDict(diclist);
 				}
 			}
 			diclist.clear();
 		}
 	public String keyToChar(String code){
-		if(db == null){db = new LimeDB(ctx);}
+		if(db == null){loadLimeDB();}
 		return db.keyToChar(code, tablename);
 	}
 
+	
 	}
 	
 
@@ -424,5 +451,6 @@ public class SearchService extends Service {
 			      	 notification.setLatestEventInfo(this, this.getText(R.string.ime_setting), message, contentIntent);
 			         notificationMgr.notify(0, notification);
 	}
-
+	
+	
 }
