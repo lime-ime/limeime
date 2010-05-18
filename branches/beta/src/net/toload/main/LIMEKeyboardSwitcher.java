@@ -70,7 +70,7 @@ public class LIMEKeyboardSwitcher {
     
     private boolean mIsShifted;
     private boolean mIsSymbols;
-    private boolean mIsChinese;
+    private boolean mIsChinese=true;
     private boolean mIsAlphabet;
     private boolean mPreferSymbols;
     private int mSymbolsModeState = SYMBOLS_MODE_STATE_NONE;
@@ -149,23 +149,28 @@ public class LIMEKeyboardSwitcher {
     }
 
     void setKeyboardMode(int mode, int imeOptions, boolean isSymbols, boolean isShift) {
+    	
+    	if(mInputView == null) return;
         
         mImeOptions = imeOptions;
         mIsSymbols = isSymbols;
         mIsShifted = isShift;
-        mInputView.setPreviewEnabled(true);
+        //mInputView.setPreviewEnabled(true);
         KeyboardId id = getKeyboardId(mode, imeOptions, isSymbols, mIsShifted);
         LIMEKeyboard keyboard = getKeyboard(id);
 
         if (mode == MODE_PHONE) {
             mInputView.setPhoneKeyboard(keyboard);
-            mInputView.setPreviewEnabled(true);
+            //mInputView.setPreviewEnabled(true);
         }
 
         mCurrentId = id;
         mInputView.setKeyboard(keyboard);
         keyboard.setShifted(mIsShifted);
-        if(isAlphabetMode()) keyboard.setShiftLocked(keyboard.isShiftLocked());
+        if(isAlphabetMode()||(isChinese()&& mChnMode == MODE_TEXT_DEFAULT)){ 
+        	keyboard.setShiftLocked(keyboard.isShiftLocked());
+        	mInputView.setKeyboard(mInputView.getKeyboard()); //instead of invalidateAllKeys();
+        }
         keyboard.setImeOptions(mContext.getResources(), mMode, imeOptions);
 
     }
@@ -192,7 +197,7 @@ public class LIMEKeyboardSwitcher {
             case MODE_TEXT:
                 return new KeyboardId(R.xml.lime_english, KEYBOARDMODE_NORMAL, true);
             case MODE_TEXT_DEFAULT:
-                return new KeyboardId(R.xml.lime);
+                return new KeyboardId(R.xml.lime, 0, true);
             case MODE_TEXT_DEFAULT_NUMBER:
                 if(isShifted) return new KeyboardId(R.xml.lime_number_shift, 0, true );    
                 else return new KeyboardId(R.xml.lime_number);

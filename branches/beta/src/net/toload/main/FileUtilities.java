@@ -62,6 +62,11 @@ public class FileUtilities {
 	     }
 	public void copyPreLoadLimeDB(Context ctx){
 		
+		File dbDir = new File("/data/data/net.toload.main/databases");
+		if(!dbDir.exists()){
+			dbDir.mkdirs();
+		}
+		
 		File LimeDBFile = isFileNotExist("/data/data/net.toload.main/databases/lime" );
 		if(LimeDBFile!=null){
 			try {
@@ -70,6 +75,7 @@ public class FileUtilities {
 				copyRAWFile(ctx.getResources().openRawResource(R.raw.lime2),fs);
 				copyRAWFile(ctx.getResources().openRawResource(R.raw.lime3),fs);
 				copyRAWFile(ctx.getResources().openRawResource(R.raw.lime4),fs);
+				copyRAWFile(ctx.getResources().openRawResource(R.raw.lime5),fs);
 				fs.close();
 			}
 			catch(Exception e){      

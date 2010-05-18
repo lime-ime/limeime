@@ -379,90 +379,12 @@ public class LIMEService extends InputMethodService implements
 	 * to begin operating on an application. At this point we have been bound to
 	 * the client, and are now receiving all of the detailed information about
 	 * the target of our edits.
-	 *
+	 */
 	@Override
 	public void onStartInput(EditorInfo attribute, boolean restarting) {
 		super.onStartInput(attribute, restarting);
 		
-	    mKeyboardSwitcher.makeKeyboards(false);
-		
-	    TextEntryState.newSession(this);
-	    
-	    initialKeyboard();
-		
-		userdiclist = new LinkedList<Mapping>();
-		templist = new LinkedList<Mapping>();
-		firstMatched = new Mapping();
-		tempMatched = new Mapping();
-		
-		//mCandidateView.hideComposing();
-		setCandidatesViewShown(false);
-
-		// Reset our state. We want to do this even if restarting, because
-		// the underlying state of the text editor could have changed in any
-		// way.
-		mComposing.setLength(0);
-		updateCandidates();
-
-		if (!restarting) {
-			// Clear shift states.
-			mMetaState = 0;
-		}
-
-		mPredictionOn = false;
-		mCompletionOn = false;
-		mCompletions = null;
-
-		// We are now going to initialize our state based on the type of
-		// text being edited.
-		
-		switch (attribute.inputType & EditorInfo.TYPE_MASK_CLASS) {
-		case EditorInfo.TYPE_CLASS_NUMBER:
-		case EditorInfo.TYPE_CLASS_DATETIME:
-		case EditorInfo.TYPE_CLASS_PHONE:
-			mCurKeyboard = mSymbolsKeyboard;
-			onIM = false;
-			break;
-		case EditorInfo.TYPE_CLASS_TEXT:
-			//initialKeyboard();
-			mPredictionOn = true;
-			onIM = true;
-
-			// We now look for a few special variations of text that will
-			// modify our behavior.
-			int variation = attribute.inputType & EditorInfo.TYPE_MASK_VARIATION;
-			if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD
-					|| variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
-				// Do not display predictions / what the user is typing
-				// when they are entering a password.
-				mPredictionOn = false;
-			}
-
-			if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
-					|| variation == EditorInfo.TYPE_TEXT_VARIATION_URI
-					|| variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
-				// Our predictions are not useful for e-mail addresses
-				// or URIs.
-				mPredictionOn = false;
-			}
-
-			// We also want to look at the current state of the editor
-			// to decide whether our alphabetic keyboard should start out
-			// shifted.
-			//updateShiftKeyState(attribute);
-			break;
-
-		default:
-			// For all unknown input types, default to the alphabetic
-			// keyboard with no special features.
-			//initialKeyboard();
-			onIM = true;
-			//updateShiftKeyState(attribute);
-		}
-
-		// Update the label on the enter key, depending on what the application
-		// says it will do.
-		mCurKeyboard.setImeOptions(getResources(), attribute.imeOptions);
+	    initOnStartInput(attribute, restarting);
 	}
 
 	/**
@@ -523,119 +445,144 @@ public class LIMEService extends InputMethodService implements
 		if (mInputView == null) {
 	            return;
 	   }
+		
+		initOnStartInput(attribute, restarting);
 
-	   mKeyboardSwitcher.makeKeyboards(false);
-
-	   TextEntryState.newSession(this);
-	   loadSettings();
-	   mImeOptions = attribute.imeOptions;
-	   initialKeyboard();
-	   boolean disableAutoCorrect = false;
-	   mPredictionOn = false;
-	   mCompletionOn = false;
-	   mCompletions = null;
-	   mCapsLock = false;
-	   mHasShift = false;
-	   mEnglishOnly = false;
-	   onIM = true;
-	   switch (attribute.inputType&EditorInfo.TYPE_MASK_CLASS) {
-	            case EditorInfo.TYPE_CLASS_NUMBER:
-	            case EditorInfo.TYPE_CLASS_DATETIME:
-	            	mEnglishOnly = true;
-	        		onIM = false;
-	                mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_SYMBOLS,
-	                        attribute.imeOptions);
-	                break;
-	            case EditorInfo.TYPE_CLASS_PHONE:
-	            	mEnglishOnly = true;
-	        		onIM = false;
-	                mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_PHONE,
-	                        attribute.imeOptions);
-	                break;
-	            case EditorInfo.TYPE_CLASS_TEXT:
-	                mPredictionOn = true;
-	                // Make sure that passwords are not displayed in candidate view
-	                int variation = attribute.inputType &  EditorInfo.TYPE_MASK_VARIATION;
-	                if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD ||
-	                        variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ) {
-	                    mPredictionOn = false;
-	                }
-	                if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
-	                        || variation == EditorInfo.TYPE_TEXT_VARIATION_PERSON_NAME) {
-	                    mAutoSpace = false;
-	                } else {
-	                    mAutoSpace = true;
-	                }
-	                if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS) {
-	                	mEnglishOnly = true;
-		        		onIM = false;
-	                    mPredictionOn = false;
-	                    mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_EMAIL,
-	                            attribute.imeOptions);
-	                } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_URI) {
-	                    mPredictionOn = false;
-	                    mEnglishOnly = true;
-		        		onIM = false;
-	                    mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_URL,
-	                            attribute.imeOptions);
-	                } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
-	                    mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM, attribute.imeOptions);
-	                } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
-	                    mPredictionOn = false;
-	                } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
-	                    // If it's a browser edit field and auto correct is not ON explicitly, then
-	                    // disable auto correction, but keep suggestions on.
-	                    if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0) {
-	                        disableAutoCorrect = true;
-	                    }
-	                }
-
-	                // If NO_SUGGESTIONS is set, don't do prediction.
-	                if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0) {
-	                    mPredictionOn = false;
-	                    disableAutoCorrect = true;
-	                }
-	                // If it's not multiline and the autoCorrect flag is not set, then don't correct
-	                if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0 &&
-	                        (attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) == 0) {
-	                    disableAutoCorrect = true;
-	                }
-	                if ((attribute.inputType&EditorInfo.TYPE_TEXT_FLAG_AUTO_COMPLETE) != 0) {
-	                    mPredictionOn = false;
-	                    //mCompletionOn = true && isFullscreenMode();
-	                }
-	                //updateShiftKeyState(attribute);
-	                break;
-	            default:
-	                //mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT, attribute.imeOptions);
-	                updateShiftKeyState(attribute);
-	        }
-	        mInputView.closing();
-	        mComposing.setLength(0);
-	        mPredicting = false;
-	        mDeleteCount = 0;
-	       
-	        /*
-	        // Override auto correct
-	        if (disableAutoCorrect) {
-	            mAutoCorrectOn = false;
-	            if (mCorrectionMode == Suggest.CORRECTION_FULL) {
-	                mCorrectionMode = Suggest.CORRECTION_BASIC;
-	            }
-	        }
-	        mInputView.setProximityCorrectionEnabled(true);
-	        if (mSuggest != null) {
-	            mSuggest.setCorrectionMode(mCorrectionMode);
-	        }
-	        mPredictionOn = mPredictionOn && mCorrectionMode > 0;
-	     	*/
-	        updateShiftKeyState(getCurrentInputEditorInfo());
-	        setCandidatesViewShown(false);
-
+	   
 		
 	}
-	
-	 private void loadSettings() {
+	private void initOnStartInput(EditorInfo attribute, boolean restarting){
+		mKeyboardSwitcher.makeKeyboards(false);
+
+		TextEntryState.newSession(this);
+		   
+		userdiclist = new LinkedList<Mapping>();
+		templist = new LinkedList<Mapping>();
+		firstMatched = new Mapping();
+		tempMatched = new Mapping();
+			
+			
+		setCandidatesViewShown(false);
+
+		// Reset our state. We want to do this even if restarting, because
+		// the underlying state of the text editor could have changed in any
+		// way.
+		mComposing.setLength(0);
+		updateCandidates();
+
+		if (!restarting) {
+			// Clear shift states.
+			mMetaState = 0;
+		}
+
+			
+		loadSettings();
+		mImeOptions = attribute.imeOptions;
+		initialKeyboard();
+		boolean disableAutoCorrect = false;
+		mPredictionOn = false;
+		mCompletionOn = false;
+		mCompletions = null;
+		mCapsLock = false;
+		mHasShift = false;
+		mEnglishOnly = false;
+		onIM = true;
+		switch (attribute.inputType&EditorInfo.TYPE_MASK_CLASS) {
+		  	case EditorInfo.TYPE_CLASS_NUMBER:
+		    case EditorInfo.TYPE_CLASS_DATETIME:
+		    	mEnglishOnly = true;
+		        onIM = false;
+		        mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_SYMBOLS,
+		        attribute.imeOptions);
+		        break;
+		    case EditorInfo.TYPE_CLASS_PHONE:
+		       	mEnglishOnly = true;
+		    	onIM = false;
+		        mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_PHONE,
+		        attribute.imeOptions);
+		    break;
+		    case EditorInfo.TYPE_CLASS_TEXT:
+		        mPredictionOn = true;
+		       // Make sure that passwords are not displayed in candidate view
+		        int variation = attribute.inputType &  EditorInfo.TYPE_MASK_VARIATION;
+		        if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD ||
+		        		variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ) {
+		        	mPredictionOn = false;
+		        }
+		        if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+		        		|| variation == EditorInfo.TYPE_TEXT_VARIATION_PERSON_NAME) {
+		        	mAutoSpace = false;
+		        } else {
+		            mAutoSpace = true;
+		        }
+		        if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS) {
+		           	mEnglishOnly = true;
+			    	onIM = false;
+		            mPredictionOn = false;
+		            mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_EMAIL,
+		            attribute.imeOptions);
+		        } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_URI) {
+		            mPredictionOn = false;
+		            mEnglishOnly = true;
+		            onIM = false;
+		            mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_URL,
+		            attribute.imeOptions);
+		        } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
+		         //mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM, attribute.imeOptions);
+		        } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
+		        	mPredictionOn = false;
+		        } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
+		         // If it's a browser edit field and auto correct is not ON explicitly, then
+		         // disable auto correction, but keep suggestions on.
+		        	if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0) {
+		        		disableAutoCorrect = true;
+	        		}
+		        }
+
+		        // If NO_SUGGESTIONS is set, don't do prediction.
+		        if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0) {
+		            mPredictionOn = false;
+		            disableAutoCorrect = true;
+		        }
+		        // If it's not multiline and the autoCorrect flag is not set, then don't correct
+		        if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0 &&
+		        	(attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) == 0) {
+		        	disableAutoCorrect = true;
+		        }
+		        if ((attribute.inputType&EditorInfo.TYPE_TEXT_FLAG_AUTO_COMPLETE) != 0) {
+		        	mPredictionOn = false;
+		        	//mCompletionOn = true && isFullscreenMode();
+		        }
+		        	//updateShiftKeyState(attribute);
+		  break;
+		  default:
+		        //mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT, attribute.imeOptions);
+		        updateShiftKeyState(attribute);
+		}
+		  mInputView.closing();
+		  mComposing.setLength(0);
+		  mPredicting = false;
+		  mDeleteCount = 0;
+		       
+		   /*
+		 // Override auto correct
+		 if (disableAutoCorrect) {
+		     mAutoCorrectOn = false;
+		 if (mCorrectionMode == Suggest.CORRECTION_FULL) {
+		     mCorrectionMode = Suggest.CORRECTION_BASIC;
+		 	}
+		 }
+		 mInputView.setProximityCorrectionEnabled(true);
+		 if (mSuggest != null) {
+		     mSuggest.setCorrectionMode(mCorrectionMode);
+		 }
+		 mPredictionOn = mPredictionOn && mCorrectionMode > 0;
+		 */
+		 updateShiftKeyState(getCurrentInputEditorInfo());
+		 setCandidatesViewShown(false);
+
+	}
+	private void loadSettings() {
 	        // Get the settings preferences
 	        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 	        hasVibration = sp.getBoolean("vibrate_on_keypress", false);
@@ -644,17 +591,21 @@ public class LIMEService extends InputMethodService implements
 			keyboardSelection = sp.getString("keyboard_list", "lime");
 			hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
 	        mAutoCap = true; //sp.getBoolean(PREF_AUTO_CAP, true);
-	        mQuickFixes = true;// sp.getBoolean(PREF_QUICK_FIXES, true);
+	        mQuickFixes = false;// sp.getBoolean(PREF_QUICK_FIXES, true);
 	        // If there is no auto text data, then quickfix is forced to "on", so that the other options
 	        // will continue to work
-	        if (AutoText.getSize(mInputView) < 1) mQuickFixes = true;
+	        if(mInputView !=null) 
+	        	{if (AutoText.getSize(mInputView) < 1) mQuickFixes = true;}
+	       
+	        
 	        mShowSuggestions = true & mQuickFixes;//sp.getBoolean(PREF_SHOW_SUGGESTIONS, true) & mQuickFixes;
 	        boolean autoComplete = true;// sp.getBoolean(PREF_AUTO_COMPLETE,
 	        //        getResources().getBoolean(R.bool.enable_autocorrect)) & mShowSuggestions;
 	        mAutoCorrectOn = mSuggest != null && (autoComplete || mQuickFixes);
 	        mCorrectionMode = autoComplete
-	                ? Suggest.CORRECTION_FULL
-	                : (mQuickFixes ? Suggest.CORRECTION_BASIC : Suggest.CORRECTION_NONE);
+	               ? Suggest.CORRECTION_FULL
+	               : (mQuickFixes ? Suggest.CORRECTION_BASIC : Suggest.CORRECTION_NONE);
+	        
 	    }
 
 	/**
@@ -721,9 +672,6 @@ public class LIMEService extends InputMethodService implements
 	 * option.
 	 */
 	private boolean translateKeyDown(int keyCode, KeyEvent event) {
-		// move to HandleCharacter '10, 3,26
-		//mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState, keyCode, event);
-		//mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 		
 		int c = event.getUnicodeChar(LIMEMetaKeyKeyListener.getMetaState(mMetaState));
 
@@ -753,7 +701,8 @@ public class LIMEService extends InputMethodService implements
 		//if( mHasShift && c >= 97 && c <=122){
 		//	c -= 32;
 		//}
-		onKey(c, null);
+		int keycode [] ={c};
+		onKey(c, keycode);
 		return true;
 	}
 
@@ -1015,27 +964,11 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			hasShiftPress = false;
 			hasSpacePress = false;
 			
-			// Clear MetaKeyStates 
-			//if(LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON ) == 1) {  
-			//	InputConnection ic = getCurrentInputConnection();	
-				//ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
-				//mTrackAlt = false;
-			//}
+			
 		}
 		// Update metakeystate of IC maintained by MetaKeyKeyListerner
 		setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
-		//------------------------------------------------------------------------
-		//*/
-		// If we want to do transformations on text being entered with a hard
-		// keyboard, we need to process the up events to update the meta key
-		//* state we are tracking.
-		//if (PROCESS_HARD_KEYS) {
-			//if (mPredictionOn) {
-			//	mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,
-			//			keyCode, event);
-			//}
-			
-		//}
+		
 		if(DEBUG){
 		Log.i("OnKeyUp", "keyCode:" + keyCode 
 				+ " KeyEvent.Alt_ON:"
@@ -1770,7 +1703,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 
 		if (mInputView == null) { return; }
 		
-		if (mKeyboardSwitcher.isAlphabetMode()) {
+		if (mKeyboardSwitcher.isAlphabetMode()||(keyboardSelection.equals("lime")&&mKeyboardSwitcher.isChinese())) {
             // Alphabet keyboard
             checkToggleCapsLock();
             mInputView.setShifted(mCapsLock || !mInputView.isShifted());
@@ -1792,9 +1725,11 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 
 	private void switchKeyboard(int primaryCode) {
 		
+		if(mInputView==null) return;
+		
 		if(mCapsLock) toggleCapsLock();
 		
-		 if (mCandidateView != null) {
+		if (mCandidateView != null) {
 				mCandidateView.clear();
 		 }
 		mComposing.setLength(0);
@@ -1896,11 +1831,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			hasNumberMapping = true;
 			hasSymbolMapping = true;
 		}
+	
 		mKeyboardSwitcher.setKeyboardMode(mMode, mImeOptions);
-		// Reset Shift Status
-		//mCapsLock = false;
-		//mHasShift = false;
-		//mCurKeyboard.setShifted(false);
+
 		// Set db table name.	
 		try {
 			String tablename = new String(keyboardSelection);
@@ -2223,7 +2156,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
     
     private void toggleCapsLock() {
         mCapsLock = !mCapsLock;
-        if (mKeyboardSwitcher.isAlphabetMode()) {
+        if (mKeyboardSwitcher.isAlphabetMode()||(keyboardSelection.equals("lime")&&mKeyboardSwitcher.isChinese())) {
             ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(mCapsLock);
         }else  {
         	if(mCapsLock){
