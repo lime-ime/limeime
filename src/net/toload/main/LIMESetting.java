@@ -186,6 +186,7 @@ public class LIMESetting extends Activity {
 		// Get sdcard path from enviroment
 		localRoot = Environment.getExternalStorageDirectory().getAbsolutePath() +"/lime" ;
 		
+		
 		File targetDir = new File(localRoot);
 		if(!targetDir.exists()){
 			targetDir.mkdirs();
@@ -200,6 +201,8 @@ public class LIMESetting extends Activity {
 		//copyRAWFile(getResources().openRawResource(R.raw.assoc), localRoot + "/assoc.lime" );
 		//copyRAWFile(getResources().openRawResource(R.raw.hanconvert), 
 		//		"/data/data/net.toload.main/databases/hanconvert.db" );
+		//FileUtilities fu = new FileUtilities();
+		//fu.copyPreLoadLimeDB(ctx);			
 		
 		 // return if db is busy.
 		SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
@@ -638,6 +641,7 @@ public class LIMESetting extends Activity {
                 	break;
                 case 5:
                 	tablename = "related";
+                	break;
                 case 6:
                 	tablename = "dictionary";
                 	break;

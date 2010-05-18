@@ -46,6 +46,7 @@ public class DBService extends Service {
 	private final static String EZ_MAPPING_FILE_TEMP = "ez_mapping_file_temp";
 	private final static String BPMF_MAPPING_FILE_TEMP = "bpmf_mapping_file_temp";
 	private final static String RELATED_MAPPING_FILE_TEMP = "related_mapping_file_temp";
+	private final static String DICTIONARY_FILE_TEMP = "dictionary_file_temp";
 	private final static String MAPPING_FILE = "mapping_file";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_MAPPING_FILE = "cj_mapping_file";
@@ -53,8 +54,9 @@ public class DBService extends Service {
 	private final static String DAYI_MAPPING_FILE = "dayi_mapping_file";
 	private final static String EZ_MAPPING_FILE = "ez_mapping_file";
 	private final static String RELATED_MAPPING_FILE = "related_mapping_file";
+	private final static String DICTIONARY_FILE = "dictionary_file";
+	//
 	private final static String TOTAL_RECORD = "total_record";
-	
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_TOTAL_RECORD = "cj_total_record";
 	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
@@ -68,6 +70,7 @@ public class DBService extends Service {
 	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
 	private final static String EZ_MAPPING_VERSION = "ez_mapping_version";
 	private final static String RELATED_MAPPING_VERSION = "related_mapping_version";
+	private final static String DICTIONARY_VERSION = "dictionary_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
 
 	private NotificationManager notificationMgr;
@@ -86,7 +89,7 @@ public class DBService extends Service {
 			loadLimeDB();
 		}
 		
-		private void loadLimeDB()
+		public void loadLimeDB()
 		{	
 			FileUtilities fu = new FileUtilities();
 			fu.copyPreLoadLimeDB(ctx);			
@@ -106,6 +109,8 @@ public class DBService extends Service {
 			//String importstatus = importset.getString(MAPPING_LOADING, "no");
 			if(tablename.equals("related")){
 				db.deleteRelatedAll();
+			}else if(tablename.equals("dictionary")) {
+				db.deleteDictionaryAll();
 			}else{
 				db.deleteAll(tablename);
 			}
@@ -144,6 +149,11 @@ public class DBService extends Service {
 				sourceset.edit().putString(RELATED_MAPPING_FILE, secret).commit();
 				sourcetempset = ctx.getSharedPreferences(RELATED_MAPPING_FILE_TEMP, 0);
 				sourcetempset.edit().putString(RELATED_MAPPING_FILE_TEMP, secret).commit();
+			}else if(tablename.equals("dictionary")){
+				sourceset = ctx.getSharedPreferences(DICTIONARY_FILE, 0);
+				sourceset.edit().putString(DICTIONARY_FILE, secret).commit();
+				sourcetempset = ctx.getSharedPreferences(DICTIONARY_FILE_TEMP, 0);
+				sourcetempset.edit().putString(DICTIONARY_FILE_TEMP, secret).commit();
 			}else{
 				sourceset = ctx.getSharedPreferences(MAPPING_FILE, 0);
 				sourceset.edit().putString(MAPPING_FILE, secret).commit();
@@ -218,6 +228,8 @@ public class DBService extends Service {
 					}
 						if(tablename.equals("related")){
 							db.deleteRelatedAll();
+						}else if(tablename.equals("dictionary")) {
+							db.deleteDictionaryAll();
 						}else{
 							db.deleteAll(tablename);
 						}
