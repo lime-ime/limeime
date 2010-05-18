@@ -36,10 +36,12 @@ import android.view.GestureDetector.OnGestureListener;
  * @author Art Hung
  */
 public class LIMEKeyboardView extends KeyboardView {
-
+	static final boolean DEBUG = false;
 	static final int KEYCODE_OPTIONS = -100;
 	static final int KEYCODE_SHIFT_LONGPRESS = -101;
 	static final String PREF = "LIMEXY";
+	
+	private boolean mLongPressProcessed;
 	
     private Keyboard mPhoneKeyboard;
 
@@ -58,9 +60,9 @@ public class LIMEKeyboardView extends KeyboardView {
 			return true;
 		} else if (key.codes[0] == Keyboard.KEYCODE_SHIFT) {
             getOnKeyboardActionListener().onKey(KEYCODE_SHIFT_LONGPRESS, null);
+            mLongPressProcessed = true;
             // invalidateAllKeys require API 4 (> 1.5). Use setkeyboard(getKeyboard()) instead, which will also invalidateAllKeys.
             //invalidateAllKeys();
-            setKeyboard(getKeyboard());
             return true;
 		} else {
 			return super.onLongPress(key);
@@ -80,11 +82,18 @@ public class LIMEKeyboardView extends KeyboardView {
 		
 		// Store Touch Position to Preference for data exchange between activity
 		if(me.getAction() == MotionEvent.ACTION_DOWN){
+			mLongPressProcessed = false;
 			SharedPreferences sp1 = this.getContext().getSharedPreferences(PREF, 0);
-							  sp1.edit().putString("xy", String.valueOf(me.getX())+","+String.valueOf(me.getY())).commit();
+			sp1.edit().putString("xy", String.valueOf(me.getX())+","+String.valueOf(me.getY())).commit();
+			if(DEBUG) Log.i("LIMEKeyboardView", "ACTION_DOWN");				  
 		}else if(me.getAction() == MotionEvent.ACTION_UP){
 			SharedPreferences sp1 = this.getContext().getSharedPreferences(PREF, 0);
-							  sp1.edit().putString("xy", String.valueOf(me.getX())+","+String.valueOf(me.getY())).commit();
+			sp1.edit().putString("xy", String.valueOf(me.getX())+","+String.valueOf(me.getY())).commit();
+			if(mLongPressProcessed) return true;
+			if(DEBUG) Log.i("LIMEKeyboardView", "ACTION_UP");		
+		}else if(me.getAction() == MotionEvent.ACTION_MOVE){
+			if(mLongPressProcessed) return true;
+			if(DEBUG) Log.i("LIMEKeyboardView", "ACTION_MOVE");
 		}
 		return super.onTouchEvent(me);
 	}

@@ -106,6 +106,7 @@ public class LIMEService extends InputMethodService implements
 	
 	private static final int MSG_UPDATE_SUGGESTIONS = 0;
     private static final int MSG_UPDATE_SHIFT_STATE = 1;
+    private static final int MSG_SHIFT_LONGPRESSED = 2;
 
 	private boolean onIM = false;
 	private boolean hasFirstMatched = false;
@@ -212,6 +213,13 @@ public class LIMEService extends InputMethodService implements
 	                case MSG_UPDATE_SHIFT_STATE:
 	                    updateShiftKeyState(getCurrentInputEditorInfo());
 	                    break;
+	                case MSG_SHIFT_LONGPRESSED:
+	                	if (mCapsLock) {
+	                		handleShift();
+	                	} else {
+	                		toggleCapsLock();
+	                	}
+	                break;
 	            }
 	        }
 	    };
@@ -528,7 +536,8 @@ public class LIMEService extends InputMethodService implements
 		            mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_URL,
 		            attribute.imeOptions);
 		        } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
-		         //mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM, attribute.imeOptions);
+		        	mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM, attribute.imeOptions);
+		        	initialKeyboard();
 		        } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
 		        	mPredictionOn = false;
 		        } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
@@ -557,7 +566,7 @@ public class LIMEService extends InputMethodService implements
 		  break;
 		  default:
 		        //mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT, attribute.imeOptions);
-		        updateShiftKeyState(attribute);
+		        //updateShiftKeyState(attribute);
 		}
 		  mInputView.closing();
 		  mComposing.setLength(0);
@@ -1190,11 +1199,15 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			handleOptions();
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_SHIFT_LONGPRESS) {
 			if(DEBUG){ Log.i("OnKey", "KEYCODE_SHIFT_LONGPRESS");}
-			 if (mCapsLock) {
-                 handleShift();
-             } else {
-                 toggleCapsLock();
-             }
+			
+			//postShiftLongPressed();
+			mInputView.closing();
+			if (mCapsLock){
+                handleShift();
+            } else {
+                toggleCapsLock();
+            }
+            
 			 
 		} else if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE && mInputView != null) {
 			switchKeyboard(primaryCode);
@@ -1690,6 +1703,11 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_UPDATE_SUGGESTIONS), 100);
     }
 	
+	private void postShiftLongPressed() {
+        mHandler.removeMessages(MSG_SHIFT_LONGPRESSED);
+        mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_SHIFT_LONGPRESSED), 100);
+    }
+	
 	public void setCandidatesViewShown(boolean shown){
 		super.setCandidatesViewShown(shown);
 		if (mCandidateView != null) {
@@ -2148,7 +2166,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 
 	private void checkToggleCapsLock() {
 		
-		if (mInputView.getKeyboard().isShifted()) {
+		if (mInputView.isShifted()) {
             toggleCapsLock();
         }
 		
@@ -2158,6 +2176,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         mCapsLock = !mCapsLock;
         if (mKeyboardSwitcher.isAlphabetMode()||(keyboardSelection.equals("lime")&&mKeyboardSwitcher.isChinese())) {
             ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(mCapsLock);
+            mInputView.setKeyboard(mInputView.getKeyboard());//instead of invalidateAllKeys();
         }else  {
         	if(mCapsLock){
         		if(DEBUG){ Log.i("toggleCapsLock", "mCapsLock:true");}
@@ -2171,7 +2190,6 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         		if(mKeyboardSwitcher.isShifted()){
         			((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(false);
         			mKeyboardSwitcher.toggleShift();
-        			//((LIMEKeyboard) mInputView.getKeyboard()).setShifted(false);
         		}
         		
         	}
