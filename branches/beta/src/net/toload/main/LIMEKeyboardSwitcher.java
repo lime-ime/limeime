@@ -71,7 +71,7 @@ public class LIMEKeyboardSwitcher {
     private boolean mIsShifted;
     private boolean mIsSymbols;
     private boolean mIsChinese=true;
-    private boolean mIsAlphabet;
+    private boolean mIsAlphabet=false;
     private boolean mPreferSymbols;
     private int mSymbolsModeState = SYMBOLS_MODE_STATE_NONE;
 
@@ -166,11 +166,12 @@ public class LIMEKeyboardSwitcher {
 
         mCurrentId = id;
         mInputView.setKeyboard(keyboard);
+        
+         
+        keyboard.setShiftLocked(keyboard.isShiftLocked());
         keyboard.setShifted(mIsShifted);
-        if(isAlphabetMode()||(isChinese()&& mChnMode == MODE_TEXT_DEFAULT)){ 
-        	keyboard.setShiftLocked(keyboard.isShiftLocked());
-        	mInputView.setKeyboard(mInputView.getKeyboard()); //instead of invalidateAllKeys();
-        }
+        mInputView.setKeyboard(mInputView.getKeyboard()); //instead of invalidateAllKeys();
+        
         keyboard.setImeOptions(mContext.getResources(), mMode, imeOptions);
 
     }

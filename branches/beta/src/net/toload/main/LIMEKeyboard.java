@@ -36,20 +36,22 @@ import android.view.inputmethod.EditorInfo;
  */
 public class LIMEKeyboard extends Keyboard {
 
-	 private Drawable mShiftLockIcon;
-	    private Drawable mShiftLockPreviewIcon;
-	    private Drawable mOldShiftIcon;
-	    private Drawable mOldShiftPreviewIcon;
-	    private Key mShiftKey;
-	    private Key mEnterKey;
-	    
-	    private static final int SHIFT_OFF = 0;
-	    private static final int SHIFT_ON = 1;
-	    private static final int SHIFT_LOCKED = 2;
-	    
-	    private int mShiftState = SHIFT_OFF;
+	static final boolean DEBUG = false;
 
-	    static int sSpacebarVerticalCorrection;
+	private Drawable mShiftLockIcon;
+    private Drawable mShiftLockPreviewIcon;
+    private Drawable mOldShiftIcon;
+    private Drawable mOldShiftPreviewIcon;
+    private Key mShiftKey;
+    private Key mEnterKey;
+	    
+    private static final int SHIFT_OFF = 0;
+    private static final int SHIFT_ON = 1;
+    private static final int SHIFT_LOCKED = 2;
+    
+    private int mShiftState = SHIFT_OFF;
+
+    static int sSpacebarVerticalCorrection;
 
     
     public LIMEKeyboard(Context context, int xmlLayoutResId) {
@@ -96,6 +98,7 @@ public class LIMEKeyboard extends Keyboard {
     }
 
     void setShiftLocked(boolean shiftLocked) {
+    	if(DEBUG) {Log.i("LIMEKeyboard", "setShiftLocked: "+ shiftLocked);};
         if (mShiftKey != null) {
             if (shiftLocked) {
                 mShiftKey.on = true;
@@ -115,13 +118,13 @@ public class LIMEKeyboard extends Keyboard {
     
     @Override
     public boolean setShifted(boolean shiftState) {
+    	if(DEBUG) {Log.i("LIMEKeyboard", "setShifted: "+ shiftState);};
         boolean shiftChanged = false;
         if (mShiftKey != null) {
-        	mShiftKey.on = false;
             if (shiftState == false) {
                 shiftChanged = mShiftState != SHIFT_OFF;
                 mShiftState = SHIFT_OFF;
-                //mShiftKey.on = false;
+                mShiftKey.on = false;
                 mShiftKey.icon = mOldShiftIcon;
             } else {
                 if (mShiftState == SHIFT_OFF) {
