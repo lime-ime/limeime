@@ -496,7 +496,7 @@ public class LIMEService extends InputMethodService implements
 	
 	private void updateUserDict(){
 		for(Mapping dicunit : userdiclist){
-			if(dicunit.getId() == null){continue;}
+			if(dicunit == null || dicunit.getId() == null){continue;}
 			try {
 				SearchSrv.addUserDict(dicunit.getId(), 
 										dicunit.getCode(), 
