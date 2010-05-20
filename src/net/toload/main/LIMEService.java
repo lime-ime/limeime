@@ -29,6 +29,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 // MetaKeyKeyLister is buggy on locked metakey state
@@ -53,6 +54,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+
 import android.app.AlertDialog;
 import android.app.Service;
 import android.content.ComponentName;
@@ -193,6 +195,8 @@ public class LIMEService extends InputMethodService implements
 	private float keyDownY = 0;
 	private float keyUpX=0;
 	private float keyUpY=0;
+	
+	private long mLastKeyTime;
 	
 	// To keep key press time
 	private long keyPressTime = 0;
@@ -1181,6 +1185,12 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		if(DEBUG){
 			Log.i("OnKey", "Entering Onkey(); primaryCode:" + primaryCode +" mEnglishFlagShift:" + mEnglishFlagShift);
 		}
+		long when = SystemClock.uptimeMillis();
+        if (primaryCode != Keyboard.KEYCODE_DELETE || 
+                when > mLastKeyTime + QUICK_PRESS) {
+            mDeleteCount = 0;
+        }
+        mLastKeyTime = when;
 		// Handle English/Lime Keyboard switch
 		if(mEnglishFlagShift == false && (primaryCode == Keyboard.KEYCODE_SHIFT) ){
 			mEnglishFlagShift = true;
@@ -1188,6 +1198,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}
 		if (primaryCode == Keyboard.KEYCODE_DELETE) {
 			handleBackspace();
+			mDeleteCount++;
 		} else if (primaryCode == Keyboard.KEYCODE_SHIFT) {
 			if(DEBUG){ Log.i("OnKey", "KEYCODE_SHIFT");}
 			handleShift();
@@ -2159,6 +2170,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}
 		mComposing.setLength(0);
 		//setCandidatesViewShown(false);
+		TextEntryState.endSession();
 		
 		requestHideSelf(0);
 		mInputView.closing();

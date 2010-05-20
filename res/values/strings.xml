@@ -161,7 +161,7 @@
     <!-- Label for soft enter key when it performs DONE action.  Must be short to fit on key! -->
     <string name="label_done_key">Done</string>
     <!-- Label for "switch to symbols" key.  Must be short to fit on key! -->
-    <string name="label_symbol_key">!\@#</string>
+    <string name="label_symbol_key">123</string>
     <!-- Label for "switch to numeric" key.  Must be short to fit on key! -->
     <string name="label_alpha_key">ABC</string>
     <!-- Label for ALT modifier key.  Must be short to fit on key! -->
@@ -169,14 +169,11 @@
     
      <!-- popular web domains for the locale - most popular, displayed on the keyboard -->
     <string name="popular_domain_0">".com"</string>
-    <!-- popular web domains for the locale - item 1, displayed in the popup -->
     <string name="popular_domain_1">".net"</string>
-    <!-- popular web domains for the locale - item 2, displayed in the popup -->
-    <string name="popular_domain_2">".org"</string>
-    <!-- popular web domains for the locale - item 3, displayed in the popup -->
-    <string name="popular_domain_3">".gov"</string>
-    <!-- popular web domains for the locale - item 4, displayed in the popup -->
-    <string name="popular_domain_4">".edu"</string>
+    <string name="popular_domain_2">".tw"</string>
+    <string name="popular_domain_3">".org"</string>
+    <string name="popular_domain_4">".gov"</string>
+    <string name="popular_domain_5">".edu"</string>
     
 	<!-- Han Converter Options -->
     <string-array name="han_convert_options">

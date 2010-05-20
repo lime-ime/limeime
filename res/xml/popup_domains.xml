@@ -33,6 +33,8 @@
         <Key android:keyLabel="@string/popular_domain_3"
             android:keyOutputText="@string/popular_domain_3"/>
         <Key android:keyLabel="@string/popular_domain_4"
-            android:keyOutputText="@string/popular_domain_4" android:keyEdgeFlags="right" />
+            android:keyOutputText="@string/popular_domain_4"/>
+        <Key android:keyLabel="@string/popular_domain_5"
+            android:keyOutputText="@string/popular_domain_5" android:keyEdgeFlags="right" />
     </Row>
 </Keyboard>
