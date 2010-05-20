@@ -260,7 +260,7 @@ public class LIMEKeyboardSwitcher {
     }
 
     boolean isAlphabetMode() {
-    	return mIsAlphabet;
+    	return mIsAlphabet&&!mIsSymbols;
     	
     	/*KeyboardId current = mCurrentId;
         return current.mMode == KEYBOARDMODE_NORMAL
