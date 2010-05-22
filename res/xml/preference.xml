@@ -39,20 +39,67 @@
 				android:entryValues="@array/keyboard_defaultstate"
 				android:defaultValue="0;1;2;3;4;5"
 				android:dialogTitle="@string/keyboard_list" />
-         <CheckBoxPreference
+		<CheckBoxPreference
+                android:key="default_in_english"
+                android:title="@string/default_in_english" 
+                android:summary="@string/default_in_english_summary"
+            	android:defaultValue="false" 
+                />
+        <CheckBoxPreference
                 android:key="three_rows_remapping"
                 android:title="@string/three_rows_remapping" 
+                android:defaultValue="false" 
                 android:summary="@string/three_rows_remapping_summary" />
         <CheckBoxPreference
                 android:key="vibrate_on_keypress"
+                android:defaultValue="false" 
                 android:title="@string/vibrate_on_keypress" />
         <CheckBoxPreference
                 android:key="sound_on_keypress"
+                android:defaultValue="false" 
                 android:title="@string/sound_on_keypress"/>
         <CheckBoxPreference
                 android:key="display_number_keypads"
+                android:defaultValue="false" 
                 android:title="@string/display_number_keypads"
                 android:summary="@string/display_number_keypads_summary" />
+    </PreferenceCategory>
+    
+    <PreferenceCategory
+            android:title="@string/prediction_category"
+            android:key="prediction_settings">
+        <CheckBoxPreference
+            android:key="auto_cap"
+            android:title="@string/auto_cap"
+            android:persistent="true"
+            android:defaultValue="true"
+            />
+
+        <CheckBoxPreference
+            android:key="quick_fixes"
+            android:title="@string/quick_fixes"
+            android:summary="@string/quick_fixes_summary"
+            android:persistent="true"
+            android:defaultValue="true"
+            />
+
+        <CheckBoxPreference
+            android:key="show_suggestions"
+            android:title="@string/show_suggestions"
+            android:summary="@string/show_suggestions_summary"
+            android:persistent="true"
+            android:defaultValue="true"
+            />
+
+        <CheckBoxPreference
+            android:key="auto_complete"
+            android:title="@string/auto_complete"
+            android:summary="@string/auto_complete_summary"
+            android:persistent="true" 
+            android:defaultValue="true"
+            android:dependency="show_suggestions"
+            />
+            
     </PreferenceCategory>
     <PreferenceCategory
         		xmlns:android="http://schemas.android.com/apk/res/android"

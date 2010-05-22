@@ -80,8 +80,21 @@
        
     <string name="keyboard_list">键盘选取</string>
     
+     <string name="default_in_english">预设英文输入</string>
+    <string name="default_in_english_summary">起始输入于英文模式</string>
+    
     <string name="three_rows_remapping">3排键盘重对应</string>
     <string name="three_rows_remapping_summary">对应 1234567890-;至 qwertyuiopv.</string>
+    
+    <string name="prediction_category">英文模式字词建议</string>
+    <string name="auto_cap">自动大写</string> 
+    <string name="auto_cap_summary">句首字母大写</string>
+    <string name="quick_fixes">快速纠正</string>
+    <string name="quick_fixes_summary">纠正常见的输入错误</string>
+    <string name="show_suggestions">显示建议</string>
+    <string name="show_suggestions_summary">打字时显示建议字词</string>
+    <string name="auto_complete">自自动填写</string>
+    <string name="auto_complete_summary">按空格键和标点符号时自动插入突出显示的字词</string>
     
     <string name="im">输入法</string>
     <string name="im_reverse_lookup_list">反查选择</string>
