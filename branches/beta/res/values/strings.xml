@@ -80,8 +80,22 @@
     
     <string name="keyboard_list">Keyboard Selection</string>
     
+    
+    <string name="default_in_english">Staring in English mode</string>
+    <string name="default_in_english_summary">Starting input in English keyboard.</string>
+    
     <string name="three_rows_remapping">3 Rows Keybaord Remapping</string>
     <string name="three_rows_remapping_summary">Mapping 1234567890-; to qwertyuiopv.</string>
+    
+    <string name="prediction_category">English word suggestion settings</string>
+    <string name="auto_cap">Auto-capitalization</string> 
+    <string name="auto_cap_summary">Capitalize the start of a sentence</string>
+    <string name="quick_fixes">Quick fixes</string>
+    <string name="quick_fixes_summary">Corrects commonly typed mistakes</string>
+    <string name="show_suggestions">Show suggestions</string>
+    <string name="show_suggestions_summary">Display suggested words while typing</string>
+    <string name="auto_complete">Auto-complete</string>
+    <string name="auto_complete_summary">Spacebar and punctuation automatically insert highlighted word</string>
     
     <string name="im">Input Method</string>
     <string name="im_reverse_lookup_list">R-Lookup Selection</string>

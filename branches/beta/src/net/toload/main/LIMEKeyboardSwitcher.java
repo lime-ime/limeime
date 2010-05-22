@@ -260,7 +260,7 @@ public class LIMEKeyboardSwitcher {
     }
 
     boolean isAlphabetMode() {
-    	return mIsAlphabet&&!mIsSymbols;
+    	return mIsAlphabet;
     	
     	/*KeyboardId current = mCurrentId;
         return current.mMode == KEYBOARDMODE_NORMAL
@@ -281,12 +281,11 @@ public class LIMEKeyboardSwitcher {
     }
     
     void toggleChinese() {
-    	//mIsChinese = !mIsChinese;
-    	//mIsShifted = false;
+    	
     	if(!mIsChinese)
-    		setKeyboardMode(mChnMode, mImeOptions);//, mIsSymbols, mIsShifted);
+    		setKeyboardMode(mChnMode, mImeOptions);
     	else
-    		setKeyboardMode(mEngMode, mImeOptions);//, mIsSymbols, mIsShifted);
+    		setKeyboardMode(mEngMode, mImeOptions);
     }
     
     void toggleSymbols() {

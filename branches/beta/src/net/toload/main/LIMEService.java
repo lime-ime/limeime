@@ -20,6 +20,7 @@
 
 package net.toload.main;
 
+
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
@@ -93,6 +94,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean mCapsLock;
 	private boolean mAutoCap;
 	private boolean mQuickFixes;
+	private boolean mDefaultEnglish=false;
 	private boolean mHasShift;
 	//------------------------------------------------------------------------
 	// Add by Jeremy '10, 3,12
@@ -181,6 +183,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasKeyPress = false;
 	private boolean hasQuickSwitch = false;
 	
+	
 	// Hard Keyboad Shift + Space Status
 	private boolean hasShiftPress = false;
 	private boolean hasSpacePress = false;
@@ -256,12 +259,8 @@ public class LIMEService extends InputMethodService implements
 	public void onCreate() {
 
 		super.onCreate();
-		
-		
-        
-        mKeyboardSwitcher = new LIMEKeyboardSwitcher(this);
-		
-		// Initial and Create Database
+	    mKeyboardSwitcher = new LIMEKeyboardSwitcher(this);
+
 		mEnglishOnly = false;
 		mEnglishFlagShift = false;
 
@@ -270,21 +269,14 @@ public class LIMEService extends InputMethodService implements
 			this.bindService(new Intent(ISearchService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
 		}
 		
+		// load preference settings
+		loadSettings();
 		final Configuration conf = getResources().getConfiguration();
 		initSuggest(conf.locale.toString());
 		
 		mVibrator = (Vibrator) getApplication().getSystemService(
 				Service.VIBRATOR_SERVICE);
 		mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-		hasVibration = sp.getBoolean("vibrate_on_keypress", false);
-		hasSound = sp.getBoolean("sound_on_keypress", false);
-		hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
-		//hasNumberMapping = sp.getBoolean("accept_number_index", false);
-		//hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
-		
-		keyboardSelection = sp.getString("keyboard_list", "lime");
 		
 	
 		// initial Input List
@@ -365,9 +357,9 @@ public class LIMEService extends InputMethodService implements
 		mKeyboardSwitcher.setInputView(mInputView);
         mKeyboardSwitcher.makeKeyboards(true);
         mInputView.setOnKeyboardActionListener(this);
-        mKeyboardSwitcher.setKeyboardMode(LIMEKeyboardSwitcher.MODE_TEXT_DEFAULT, 0);
+        mKeyboardSwitcher.setKeyboardMode(LIMEKeyboardSwitcher.MODE_TEXT, 0);
 		
-		initialKeyboard();
+		if(!mDefaultEnglish) setChnKeyboardMode();
 
 		onIM = true;
 		return mInputView;
@@ -416,6 +408,7 @@ public class LIMEService extends InputMethodService implements
 
 		// Clear current composing text and candidates.
 		mComposing.setLength(0);
+        mWord.reset();
 		if(onIM) {
 			//updateCandidates();
 			// Add Custom related words
@@ -464,10 +457,22 @@ public class LIMEService extends InputMethodService implements
 		
 	}
 	private void initOnStartInput(EditorInfo attribute, boolean restarting){
-		mKeyboardSwitcher.makeKeyboards(false);
+		
 
 		TextEntryState.newSession(this);
-		   
+		
+		if (mInputView == null) {
+			mInputView = (LIMEKeyboardView) getLayoutInflater().inflate(R.layout.input, null);
+			mInputView.setOnKeyboardActionListener(this);
+		}
+		
+		if (mKeyboardSwitcher == null) {
+            mKeyboardSwitcher = new LIMEKeyboardSwitcher(this);
+            mKeyboardSwitcher.setInputView(mInputView);
+        }
+		  
+		mKeyboardSwitcher.makeKeyboards(false);
+		
 		userdiclist = new LinkedList<Mapping>();
 		templist = new LinkedList<Mapping>();
 		firstMatched = new Mapping();
@@ -480,6 +485,7 @@ public class LIMEService extends InputMethodService implements
 		// the underlying state of the text editor could have changed in any
 		// way.
 		mComposing.setLength(0);
+        mWord.reset();
 		updateCandidates();
 
 		if (!restarting) {
@@ -489,8 +495,11 @@ public class LIMEService extends InputMethodService implements
 
 			
 		loadSettings();
+		
+		buildActiveKeyboardList();
+
 		mImeOptions = attribute.imeOptions;
-		initialKeyboard();
+		//initialKeyboard();
 		boolean disableAutoCorrect = false;
 		mPredictionOn = false;
 		mCompletionOn = false;
@@ -504,21 +513,29 @@ public class LIMEService extends InputMethodService implements
 		    case EditorInfo.TYPE_CLASS_DATETIME:
 		    	mEnglishOnly = true;
 		        onIM = false;
-		        mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_SYMBOLS,
-		        attribute.imeOptions);
+		        mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_SYMBOLS, attribute.imeOptions);
 		        break;
 		    case EditorInfo.TYPE_CLASS_PHONE:
 		       	mEnglishOnly = true;
 		    	onIM = false;
-		        mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_PHONE,
-		        attribute.imeOptions);
+		        mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_PHONE, attribute.imeOptions);
 		    break;
 		    case EditorInfo.TYPE_CLASS_TEXT:
-		        mPredictionOn = true;
+		        if(mDefaultEnglish){
+		        	mPredictionOn = true;
+		        	mEnglishOnly = true;
+			        onIM = false;
+		        	mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT,attribute.imeOptions);
+		        }
+		        else{ 
+		        	setChnKeyboardMode();
+		        }
+		        
 		       // Make sure that passwords are not displayed in candidate view
 		        int variation = attribute.inputType &  EditorInfo.TYPE_MASK_VARIATION;
 		        if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD ||
 		        		variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ) {
+		        	mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT,attribute.imeOptions);
 		        	mPredictionOn = false;
 		        }
 		        if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
@@ -531,17 +548,23 @@ public class LIMEService extends InputMethodService implements
 		           	mEnglishOnly = true;
 			    	onIM = false;
 		            mPredictionOn = false;
-		            mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_EMAIL,
-		            attribute.imeOptions);
+		            mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_EMAIL, attribute.imeOptions);
 		        } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_URI) {
 		            mPredictionOn = false;
 		            mEnglishOnly = true;
 		            onIM = false;
-		            mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_URL,
-		            attribute.imeOptions);
+		            mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_URL, attribute.imeOptions);
 		        } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
+		        	/* Cancel the short message mode 
 		        	mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM, attribute.imeOptions);
-		        	initialKeyboard();
+		        	if(mDefaultEnglish){
+		        		mPredictionOn = false;
+		        		mEnglishOnly = true;
+		        		onIM = false;
+		        	}else{
+		        		setChnKeyboardMode();
+		        	}
+		        	*/
 		        } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
 		        	mPredictionOn = false;
 		        } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
@@ -564,33 +587,34 @@ public class LIMEService extends InputMethodService implements
 		        }
 		        if ((attribute.inputType&EditorInfo.TYPE_TEXT_FLAG_AUTO_COMPLETE) != 0) {
 		        	mPredictionOn = false;
-		        	//mCompletionOn = true && isFullscreenMode();
+		        	mCompletionOn = true && isFullscreenMode();
 		        }
-		        	//updateShiftKeyState(attribute);
-		  break;
+		        updateShiftKeyState(attribute);
+		        break;
 		  default:
-		        //mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT, attribute.imeOptions);
-		        //updateShiftKeyState(attribute);
+		        mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT, attribute.imeOptions);
+		        if(!mDefaultEnglish) setChnKeyboardMode();
 		}
-		  mInputView.closing();
-		  mComposing.setLength(0);
-		  mPredicting = false;
-		  mDeleteCount = 0;
+		mInputView.closing();
+		mComposing.setLength(0);
+        mWord.reset();
+		mPredicting = false;
+		mDeleteCount = 0;
 		       
-		   /*
-		 // Override auto correct
-		 if (disableAutoCorrect) {
-		     mAutoCorrectOn = false;
-		 if (mCorrectionMode == Suggest.CORRECTION_FULL) {
-		     mCorrectionMode = Suggest.CORRECTION_BASIC;
-		 	}
-		 }
+		
+		// Override auto correct
+	     if (disableAutoCorrect) {
+	    	 mAutoCorrectOn = false;
+	         if (mCorrectionMode == Suggest.CORRECTION_FULL) {
+	        	 mCorrectionMode = Suggest.CORRECTION_BASIC;
+	         }
+	     }
 		 mInputView.setProximityCorrectionEnabled(true);
 		 if (mSuggest != null) {
 		     mSuggest.setCorrectionMode(mCorrectionMode);
 		 }
 		 mPredictionOn = mPredictionOn && mCorrectionMode > 0;
-		 */
+		 
 		 updateShiftKeyState(getCurrentInputEditorInfo());
 		 setCandidatesViewShown(false);
 
@@ -603,17 +627,17 @@ public class LIMEService extends InputMethodService implements
 			hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
 			keyboardSelection = sp.getString("keyboard_list", "lime");
 			hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
-	        mAutoCap = true; //sp.getBoolean(PREF_AUTO_CAP, true);
-	        mQuickFixes = false;// sp.getBoolean(PREF_QUICK_FIXES, true);
+	        mAutoCap = sp.getBoolean("auto_cap", true);
+	        mQuickFixes = sp.getBoolean("quick_fixes", true);
+	        mDefaultEnglish = sp.getBoolean("default_in_english", false);
 	        // If there is no auto text data, then quickfix is forced to "on", so that the other options
 	        // will continue to work
 	        if(mInputView !=null) 
 	        	{if (AutoText.getSize(mInputView) < 1) mQuickFixes = true;}
 	       
 	        
-	        mShowSuggestions = true & mQuickFixes;//sp.getBoolean(PREF_SHOW_SUGGESTIONS, true) & mQuickFixes;
-	        boolean autoComplete = true;// sp.getBoolean(PREF_AUTO_COMPLETE,
-	        //        getResources().getBoolean(R.bool.enable_autocorrect)) & mShowSuggestions;
+	        mShowSuggestions = sp.getBoolean("show_suggestions", true) & mQuickFixes;
+	        boolean autoComplete = sp.getBoolean("auto_complete", mShowSuggestions);
 	        mAutoCorrectOn = mSuggest != null && (autoComplete || mQuickFixes);
 	        mCorrectionMode = autoComplete
 	               ? Suggest.CORRECTION_FULL
@@ -635,6 +659,7 @@ public class LIMEService extends InputMethodService implements
 		// clear whatever candidate text we have.
 		if (mComposing.length() > 0 && (newSelStart != candidatesEnd || newSelEnd != candidatesEnd)) {
 			mComposing.setLength(0);
+            mWord.reset();
 			updateCandidates();
 			InputConnection ic = getCurrentInputConnection();
 			if (ic != null) {
@@ -711,9 +736,7 @@ public class LIMEService extends InputMethodService implements
 				mComposing.setLength(mComposing.length() - 1);
 			}
 		}*/
-		//if( mHasShift && c >= 97 && c <=122){
-		//	c -= 32;
-		//}
+		
 		int keycode [] ={c};
 		onKey(c, keycode);
 		return true;
@@ -816,7 +839,8 @@ public class LIMEService extends InputMethodService implements
 					mCandidateView.clear();
 					//mCandidateView.hideComposing();
 				}
-				mComposing.setLength(0);				
+				mComposing.setLength(0);
+	            mWord.reset();
 				setCandidatesViewShown(false);
 				
 				//------------------------------------------------------------------------
@@ -947,7 +971,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			}else if( keyPressTime != 0 && System.currentTimeMillis() - keyPressTime > 700){
 				switchChiEng();
 				return true;
-			}else if( ( (mEnglishOnly && mPredictionOn)	|| (!mEnglishOnly && onIM))
+			//}else if( ( (mEnglishOnly && mPredictionOn)	|| (!mEnglishOnly && onIM))
+			}else if( ( mEnglishOnly 	|| (!mEnglishOnly && onIM))
 					&& translateKeyDown(keyCode, event)) {
 				return true;
 			}else{
@@ -1068,6 +1093,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					//mCandidateView.hideComposing();
 				}
 				mComposing.setLength(0);
+	            mWord.reset();
 				updateDictionaryView();
 				
 			}
@@ -1321,8 +1347,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			//mCandidateView.hideComposing();
 		}
 		mComposing.setLength(0);
+        mWord.reset();
 		setCandidatesViewShown(false);		
-    	initialKeyboard();
+		setChnKeyboardMode();
     	Toast.makeText(this, keyboardname , Toast.LENGTH_SHORT).show();
     }
     
@@ -1431,9 +1458,10 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			//mCandidateView.hideComposing();
 		}
 		mComposing.setLength(0);
+        mWord.reset();
 		setCandidatesViewShown(false);
         
-	    initialKeyboard();
+		setChnKeyboardMode();
     	
     }
     
@@ -1483,7 +1511,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	            setSuggestions(null, false, false);
 	            return;
 	        }
-	        List<Mapping> stringList = mSuggest.getSuggestions(mInputView, mWord, false);
+	        List<Mapping> suggestions = mSuggest.getSuggestions(mInputView, mWord, false);
 	        boolean correctionAvailable = mSuggest.hasMinimalCorrection();
 	        //|| mCorrectionMode == mSuggest.CORRECTION_FULL;
 	        CharSequence typedWord = mWord.getTypedWord();
@@ -1495,11 +1523,13 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	        }
 	        // Don't auto-correct words with multiple capital letter
 	        correctionAvailable &= !mWord.isMostlyCaps();
-
-	        setSuggestions(stringList, false, typedWordValid);//, correctionAvailable); 
-	        if (stringList.size() > 0) {
-	            if (correctionAvailable && !typedWordValid && stringList.size() > 1) {
-	                mBestWord = stringList.get(1).getWord();
+	        
+	        //if(suggestions != null && suggestions.size() > 0) {setCandidatesViewShown(true);}	
+			
+	        setSuggestions(suggestions, false, typedWordValid, correctionAvailable); 
+	        if (suggestions.size() > 0) {
+	            if (correctionAvailable && !typedWordValid && suggestions.size() > 1) {
+	                mBestWord = suggestions.get(1).getWord();
 	            } else {
 	                mBestWord = typedWord;
 	            }
@@ -1584,8 +1614,14 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}
 		
 	}
+	
 	public void setSuggestions(List<Mapping> suggestions, boolean completions,
 			boolean typedWordValid) {
+		setSuggestions(suggestions, completions, typedWordValid, false);
+	}
+	
+	public void setSuggestions(List<Mapping> suggestions, boolean completions,
+			boolean typedWordValid, boolean haveMinimalSuggestion) {
 		
 		
 		if(suggestions != null && suggestions.size() > 0){
@@ -1605,7 +1641,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				mCandidateView.setSuggestions(suggestions, completions, typedWordValid);
+				mCandidateView.setSuggestions(suggestions, completions, typedWordValid, haveMinimalSuggestion);
 			}
 		}else{
 			if (mCandidateView != null) {
@@ -1657,6 +1693,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				//mCandidateView.hideComposing();
         		}
         		mComposing.setLength(0);
+                mWord.reset();
         		setCandidatesViewShown(false);
         		getCurrentInputConnection().commitText("", 0);
         	} else {
@@ -1665,6 +1702,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				//mCandidateView.hideComposing();
         		}
         		mComposing.setLength(0);
+                mWord.reset();
         		setCandidatesViewShown(false);
         		//keyDownUp(KeyEvent.KEYCODE_DEL);
         		deleteChar = true;
@@ -1732,7 +1770,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 
 		if (mInputView == null) { return; }
 		
-		if (mKeyboardSwitcher.isAlphabetMode()||(keyboardSelection.equals("lime")&&mKeyboardSwitcher.isChinese())) {
+		if ((mKeyboardSwitcher.isAlphabetMode()&&mKeyboardSwitcher.isSymbols())
+				||(keyboardSelection.equals("lime")&&mKeyboardSwitcher.isChinese())) {
             // Alphabet keyboard
             checkToggleCapsLock();
             mInputView.setShifted(mCapsLock || !mInputView.isShifted());
@@ -1758,17 +1797,19 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		
 		if(mCapsLock) toggleCapsLock();
 		
-		if (mCandidateView != null) {
-				mCandidateView.clear();
-		 }
-		mComposing.setLength(0);
-		setCandidatesViewShown(false);
 		
 		
 		
 		if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE) {
 			switchSymKeyboard();
 		}else if(primaryCode == KEYBOARD_SWITCH_CODE){
+			if (mCandidateView != null) {
+				mCandidateView.clear();
+			}
+			mComposing.setLength(0);
+            mWord.reset();
+			setCandidatesViewShown(false);
+		
 			switchChiEng();
 		}
 		
@@ -1800,19 +1841,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}
 		
 }
-	private void initialKeyboard() {
+	private void setChnKeyboardMode() {
 		
-		buildActiveKeyboardList();
-
-		if (mInputView == null) {
-			mInputView = (LIMEKeyboardView) getLayoutInflater().inflate(R.layout.input, null);
-			mInputView.setOnKeyboardActionListener(this);
-		}
 		
-		if (mKeyboardSwitcher == null) {
-            mKeyboardSwitcher = new LIMEKeyboardSwitcher(this);
-            mKeyboardSwitcher.setInputView(mInputView);
-        }
 		
 		int mMode = mKeyboardSwitcher.MODE_TEXT_DEFAULT;
 		if (keyboardSelection.equals("lime")) {
@@ -2169,6 +2200,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			mCandidateView.clear();
 		}
 		mComposing.setLength(0);
+        mWord.reset();
 		//setCandidatesViewShown(false);
 		TextEntryState.endSession();
 		
@@ -2186,7 +2218,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
     
     private void toggleCapsLock() {
         mCapsLock = !mCapsLock;
-        if (mKeyboardSwitcher.isAlphabetMode()||(keyboardSelection.equals("lime")&&mKeyboardSwitcher.isChinese())) {
+        if ((mKeyboardSwitcher.isAlphabetMode()&&mKeyboardSwitcher.isSymbols())
+        		||(keyboardSelection.equals("lime")&&mKeyboardSwitcher.isChinese())) {
             ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(mCapsLock);
             mInputView.setKeyboard(mInputView.getKeyboard());//instead of invalidateAllKeys();
         }else  {
@@ -2260,7 +2293,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         mPredicting = false;
         mCommittedLength = suggestion.length();
         if (mCandidateView != null) {
-            mCandidateView.setSuggestions(null, false, false);
+            setSuggestions(null, false, false);
         }
         updateShiftKeyState(getCurrentInputEditorInfo());
     }
@@ -2349,6 +2382,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		if (templist != null) {
 			firstMatched = templist.get(index);
 		}
+		
 		if(mEnglishOnly){
 			if (mCompletionOn && mCompletions != null && index >= 0
 					&& index < mCompletions.length) {
@@ -2374,16 +2408,17 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			TextEntryState.typedCharacter((char) KEYCODE_SPACE, true);
 		 
 		}else {
+
 			
-		if (mComposing.length() > 0) {
-			commitTyped(getCurrentInputConnection());
-			this.firstMatched = null;
-			this.hasFirstMatched = false;
-			updateDictionaryView();
-		} else if (firstMatched != null && firstMatched.isDictionary()) {
-			commitTyped(getCurrentInputConnection());
-			updateDictionaryView();
-		}
+			if (mComposing.length() > 0) {
+				commitTyped(getCurrentInputConnection());
+				this.firstMatched = null;
+				this.hasFirstMatched = false;
+				updateDictionaryView();
+			} else if (firstMatched != null && firstMatched.isDictionary()) {
+				commitTyped(getCurrentInputConnection());
+				updateDictionaryView();
+			}
 		}
 		//setCandidatesViewShown(false);
 		

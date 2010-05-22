@@ -65,6 +65,7 @@ public class CandidateView extends View {
     private int mTouchX = OUT_OF_BOUNDS;
     private Drawable mSelectionHighlight;
     private boolean mTypedWordValid;
+    private boolean mHaveMinimalSuggestion;
     
     private Rect mBgPadding;
 
@@ -109,6 +110,7 @@ public class CandidateView extends View {
     private GestureDetector mGestureDetector;
     
     private Context ctx;
+    private Resources res;
 
     /**
      * Construct a CandidateView for showing suggested words for completion.
@@ -128,14 +130,14 @@ public class CandidateView extends View {
                 android.R.attr.state_pressed
         });
 
-        Resources r = context.getResources();
-        bgcolor = r.getColor(R.color.candidate_background);
+        res = context.getResources();
+        bgcolor = res.getColor(R.color.candidate_background);
         
-        mColorNormal = r.getColor(R.color.candidate_normal);
-        mColorDictionary = r.getColor(R.color.candidate_dictionary);
-        mColorRecommended = r.getColor(R.color.candidate_recommended);
-        mColorOther = r.getColor(R.color.candidate_other);
-        mVerticalPadding = r.getDimensionPixelSize(R.dimen.candidate_vertical_padding);
+        mColorNormal = res.getColor(R.color.candidate_normal);
+        mColorDictionary = res.getColor(R.color.candidate_dictionary);
+        mColorRecommended = res.getColor(R.color.candidate_recommended);
+        mColorOther = res.getColor(R.color.candidate_other);
+        mVerticalPadding = res.getDimensionPixelSize(R.dimen.candidate_vertical_padding);
         
         
      // Composing buffer textView
@@ -152,7 +154,7 @@ public class CandidateView extends View {
         mPaint = new Paint();
         mPaint.setColor(mColorNormal);
         mPaint.setAntiAlias(true);
-        mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_height));
+        mPaint.setTextSize(res.getDimensionPixelSize(R.dimen.candidate_font_height));
         mPaint.setStrokeWidth(0);
         
         mDescent = (int) mPaint.descent();
@@ -297,9 +299,13 @@ public class CandidateView extends View {
         // not have a divider below)
         Rect padding = new Rect();
         mSelectionHighlight.getPadding(padding);
-        //final int desiredHeight = ((int)mPaint.getTextSize()) + mVerticalPadding
-                //+ padding.top + padding.bottom;
-        final int desiredHeight = ((int)mPaint.getTextSize());
+        final int desiredHeight;
+        if(mService.isEnglishOnlyMode()){
+        	desiredHeight = ((int)mPaint.getTextSize()) + mVerticalPadding
+                + padding.top + padding.bottom;
+        }else{
+        	desiredHeight = ((int)mPaint.getTextSize());
+        }
         
         // Maximum possible width and desired height
         setMeasuredDimension(measuredWidth,
@@ -337,7 +343,11 @@ public class CandidateView extends View {
         final boolean scrolled = mScrolled;
         final boolean typedWordValid = mTypedWordValid;
         final int y = (int) (((height - mPaint.getTextSize()) / 2) - mPaint.ascent());
-
+        
+        if(mService.isEnglishOnlyMode())
+        	{ mPaint.setTextSize(res.getDimensionPixelSize(R.dimen.candidate_eng_font_height));}
+        else
+        	{mPaint.setTextSize(res.getDimensionPixelSize(R.dimen.candidate_font_height));}
         // Modified by jeremy '10, 3, 29.  Update mselectedindex if touched and build wordX[i] and wordwidth[i]
         int x = 0;
         for (int i = 0; i < count; i++) {
@@ -429,7 +439,12 @@ public class CandidateView extends View {
     }
     
     public void setSuggestions(List<Mapping> suggestions, boolean completions,
-            boolean typedWordValid) {
+            boolean typedWordValid, boolean haveMinimalSuggestion) {
+    	mHaveMinimalSuggestion = haveMinimalSuggestion;
+ //   	setSuggestions(suggestions, completions, typedWordValid);
+ //   }
+    
+ //   public void setSuggestions(List<Mapping> suggestions, boolean completions, boolean typedWordValid) {
         clear();
         if (suggestions != null) {
             mSuggestions = new LinkedList<Mapping>(suggestions);
@@ -448,9 +463,12 @@ public class CandidateView extends View {
             if(mSuggestions.get(0).isDictionary()){
             	// no default selection for related words
             	mSelectedIndex = -1;
-            }else if(mSuggestions.size() == 1 || mService.isEnglishOnlyMode()){
+            }else if(mSuggestions.size() == 1 ){
             	mSelectedIndex = 0;
-            }else {
+            }else if(mService.isEnglishOnlyMode() && !(mHaveMinimalSuggestion && !typedWordValid) ) {
+            	// when mHaveMinimalSuggestion && !typedWordValid, the first candidate is best suggestion
+            	mSelectedIndex = 0;
+            }else{
             	// default selection on suggestions 1 (0 is typed English in mixed English mode)
             	mSelectedIndex = 1;
             }
