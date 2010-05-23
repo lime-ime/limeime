@@ -634,7 +634,7 @@ public class LIMEService extends InputMethodService implements
 	        // Get the settings preferences
 	        //SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 	        hasVibration = mLIMEPref.getVibrateOnKeyPressed(); //sp.getBoolean("vibrate_on_keypress", false);
-			hasSound = mLIMEPref.getSortSuggestions();// sp.getBoolean("sound_on_keypress", false);
+			hasSound = mLIMEPref.getSoundOnKeyPressed();// sp.getBoolean("sound_on_keypress", false);
 			hasNumberKeypads = mLIMEPref.getShowNumberKeypard();// sp.getBoolean("display_number_keypads", false);
 			keyboardSelection = mLIMEPref.getKeyboardSelection();//  sp.getString("keyboard_list", "lime");
 			hasQuickSwitch = mLIMEPref.getSwitchEnglishModeHotKey();// sp.getBoolean("switch_english_mode", false);

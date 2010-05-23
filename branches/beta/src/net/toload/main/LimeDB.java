@@ -510,7 +510,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		//---------------add by Jeremy '10,3,12-----------------------------------
 		//SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
 		//sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(0)).commit();
-		mLIMEPref.setTotalUserdictRecords(0);
+		mLIMEPref.setTotalUserdictRecords("0");
 		//-------------------------------------------------------------------------
 		SQLiteDatabase db = this.getWritableDatabase();
 		
@@ -668,7 +668,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			//SharedPreferences settings = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
 			//String recordString = settings.getString(TOTAL_USERDICT_RECORD, "0");
 			//dictotal = Integer.parseInt(recordString);
-			dictotal = mLIMEPref.getTotalUserdictRecords();
+			dictotal = Integer.parseInt( mLIMEPref.getTotalUserdictRecords());
 		} catch (Exception e) {}
 		
 		
@@ -733,7 +733,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			} finally {
 				//SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
 				//sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(dictotal)).commit();
-				mLIMEPref.setTotalUserdictRecords(dictotal);
+				mLIMEPref.setTotalUserdictRecords(String.valueOf(dictotal));
 				if(DEBUG){
 					Log.i("addDictionary:", "update userdict total records:" + dictotal);
 				}
@@ -1366,10 +1366,10 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 						//SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
 						//String recordString = sp1.getString(TOTAL_USERDICT_RECORD, "0");
 						//int dictotal = Integer.parseInt(recordString);
-						int dictotal = mLIMEPref.getTotalUserdictRecords();
+						int dictotal = Integer.parseInt(mLIMEPref.getTotalUserdictRecords());
 						dictotal++;
 						//sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(dictotal)).commit();
-						mLIMEPref.setTotalUserdictRecords(dictotal);
+						mLIMEPref.setTotalUserdictRecords(String.valueOf(dictotal));
 					}
 				} else {
 					ContentValues cv = new ContentValues();
@@ -2173,8 +2173,6 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 		if (targetFile.exists() || alternativeFile.exists()) {
 
 			deleteUserDictAll();
-			
-			
 			//int total = 0;
 			relatedcount = 0;
 			FileReader fis;
@@ -2245,7 +2243,7 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 						if(relatedcount % 100 == 0){
 							//SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
 							//				  sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(relatedcount) + " (loading...)").commit();
-							mLIMEPref.setTableTotalRecords("related", String.valueOf(relatedcount) + " (loading...)");
+							mLIMEPref.setTotalUserdictRecords(String.valueOf(relatedcount) + " (loading...)");
 						}
 					}catch(ArrayIndexOutOfBoundsException e){
 						//Error to parse the line
@@ -2262,7 +2260,7 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 			}
 			
 			// Update total_userdict_records
-			mLIMEPref.setTotalUserdictRecords(countUserdic());
+			mLIMEPref.setTotalUserdictRecords(String.valueOf(countUserdic()));
 			mLIMEPref.setMappingLoading(false);
 			/*
 			SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
