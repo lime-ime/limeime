@@ -30,6 +30,7 @@ public class LIMEKeyboardSwitcher {
     public static final int MODE_TEXT_DAYI = 15;
     public static final int MODE_TEXT_EZ = 16;
     public static final int MODE_TEXT_PHONE = 17;
+    public static final int MODE_TEXT_ARRAY = 18;
     public static final int MODE_SYMBOLS = 2;
     public static final int MODE_PHONE = 3;
     public static final int MODE_URL = 4;
@@ -133,8 +134,9 @@ public class LIMEKeyboardSwitcher {
         mSymbolsModeState = SYMBOLS_MODE_STATE_NONE;
         mPreferSymbols = mode == MODE_SYMBOLS;
         mIsChinese = (mode == MODE_TEXT_DEFAULT || mode == MODE_TEXT_PHONETIC ||mode == MODE_TEXT_DAYI
-        		||mode == MODE_TEXT_EZ ||mode == MODE_TEXT_CJ || mode == MODE_TEXT_PHONE);
-        mIsAlphabet = ( mode == MODE_TEXT || mode== MODE_URL || mode == MODE_EMAIL || mode == MODE_IM );
+        		||mode == MODE_TEXT_ARRAY ||mode == MODE_TEXT_EZ ||mode == MODE_TEXT_CJ || mode == MODE_TEXT_PHONE);
+        mIsAlphabet = ( mode == MODE_TEXT || mode== MODE_URL 
+        		|| mode == MODE_EMAIL || mode == MODE_IM || mode == MODE_PHONE );
         if(mIsChinese) mChnMode = mode;
         if(mIsAlphabet) mEngMode = mode;
         
@@ -211,6 +213,9 @@ public class LIMEKeyboardSwitcher {
             case MODE_TEXT_DAYI:
                 if(isShifted) return new KeyboardId(R.xml.lime_dayi_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_dayi);
+            case MODE_TEXT_ARRAY:
+                if(isShifted) return new KeyboardId(R.xml.lime_array_shift, 0, true);    
+                else return new KeyboardId(R.xml.lime_array);  
             case MODE_TEXT_PHONETIC:
                 if(isShifted) return new KeyboardId(R.xml.lime_phonetic_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_phonetic);
@@ -261,13 +266,6 @@ public class LIMEKeyboardSwitcher {
 
     boolean isAlphabetMode() {
     	return mIsAlphabet;
-    	
-    	/*KeyboardId current = mCurrentId;
-        return current.mMode == KEYBOARDMODE_NORMAL
-            || current.mMode == KEYBOARDMODE_URL
-            || current.mMode == KEYBOARDMODE_EMAIL
-            || current.mMode == KEYBOARDMODE_IM;
-        */
     }
 
     void toggleShift() {

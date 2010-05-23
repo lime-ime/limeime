@@ -38,7 +38,7 @@ import android.os.RemoteException;
 import android.util.Log;
 
 public class DBService extends Service {
-	
+	/*
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String MAPPING_FILE_TEMP = "mapping_file_temp";
 	private final static String CJ_MAPPING_FILE_TEMP = "cj_mapping_file_temp";
@@ -72,10 +72,11 @@ public class DBService extends Service {
 	private final static String RELATED_MAPPING_VERSION = "related_mapping_version";
 	private final static String DICTIONARY_VERSION = "dictionary_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
-
+	*/
 	private NotificationManager notificationMgr;
 
 	private LimeDB db = null;
+	private LIMEPreferenceManager mLIMEPref = null;
 	
 	// Monitoring thread.
 	private Thread thread = null;
@@ -86,7 +87,9 @@ public class DBService extends Service {
 
 		DBServiceImpl(Context ctx) {
 			this.ctx = ctx;
+			mLIMEPref = new LIMEPreferenceManager(ctx);
 			loadLimeDB();
+			
 		}
 		
 		public void loadLimeDB()
@@ -123,6 +126,9 @@ public class DBService extends Service {
 				db.deleteAll();
 			}*/
 			String secret = sourcefile.getName();
+			mLIMEPref.setTableMappingFilename(tablename, secret);
+			mLIMEPref.setTableTempMappingFilename(tablename, secret);
+			/*
 			SharedPreferences sourceset =null, sourcetempset= null;
 			if(tablename.equals("cj")){
 				sourceset = ctx.getSharedPreferences(CJ_MAPPING_FILE, 0);
@@ -160,7 +166,7 @@ public class DBService extends Service {
 				sourcetempset = ctx.getSharedPreferences(MAPPING_FILE_TEMP, 0);
 				sourcetempset.edit().putString(MAPPING_FILE_TEMP, secret).commit();
 			}
-			
+			*/
 			
 			db.setFilename(sourcefile);
 
