@@ -32,7 +32,6 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.Vibrator;
-import android.preference.PreferenceManager;
 // MetaKeyKeyLister is buggy on locked metakey state
 //import android.text.method.MetaKeyKeyListener;
 import android.text.AutoText;
@@ -89,6 +88,8 @@ public class LIMEService extends InputMethodService implements
 	private StringBuilder mComposing = new StringBuilder();
     private WordComposer mWord = new WordComposer();
 
+    
+    private LIMEPreferenceManager mLIMEPref;
 	private boolean mPredictionOn;
 	private boolean mCompletionOn;
 	private boolean mCapsLock;
@@ -215,18 +216,17 @@ public class LIMEService extends InputMethodService implements
 	        public void handleMessage(Message msg) {
 	            switch (msg.what) {
 	                case MSG_UPDATE_SUGGESTIONS:
-	                    updateSuggestions();
+	                	if(mEnglishOnly){
+	                		updateSuggestions();
+	                	}
+	                	else{
+	                		updateCandidates();
+	                	}
 	                    break;
 	                case MSG_UPDATE_SHIFT_STATE:
 	                    updateShiftKeyState(getCurrentInputEditorInfo());
 	                    break;
-	                case MSG_SHIFT_LONGPRESSED:
-	                	if (mCapsLock) {
-	                		handleShift();
-	                	} else {
-	                		toggleCapsLock();
-	                	}
-	                break;
+	                
 	            }
 	        }
 	    };
@@ -263,6 +263,8 @@ public class LIMEService extends InputMethodService implements
 
 		mEnglishOnly = false;
 		mEnglishFlagShift = false;
+		
+		mLIMEPref = new LIMEPreferenceManager(this);
 
 		// Startup Service
 		if(SearchSrv == null){
@@ -486,7 +488,7 @@ public class LIMEService extends InputMethodService implements
 		// way.
 		mComposing.setLength(0);
         mWord.reset();
-		updateCandidates();
+        postUpdateSuggestions();
 
 		if (!restarting) {
 			// Clear shift states.
@@ -501,7 +503,7 @@ public class LIMEService extends InputMethodService implements
 		mImeOptions = attribute.imeOptions;
 		//initialKeyboard();
 		boolean disableAutoCorrect = false;
-		mPredictionOn = false;
+		mPredictionOn = true;
 		mCompletionOn = false;
 		mCompletions = null;
 		mCapsLock = false;
@@ -614,30 +616,39 @@ public class LIMEService extends InputMethodService implements
 		     mSuggest.setCorrectionMode(mCorrectionMode);
 		 }
 		 mPredictionOn = mPredictionOn && mCorrectionMode > 0;
+		
 		 
 		 updateShiftKeyState(getCurrentInputEditorInfo());
 		 setCandidatesViewShown(false);
+		 
+		 if(DEBUG){
+			 Log.i("LIMEService","initOnStartInput(): mPredictionOn:"
+					 + mPredictionOn 
+					 +"; mCorrection: " + mCorrectionMode 
+					 +"; disableAutoCorrect: " + disableAutoCorrect
+					 );
+		 }
 
 	}
 	private void loadSettings() {
 	        // Get the settings preferences
-	        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-	        hasVibration = sp.getBoolean("vibrate_on_keypress", false);
-			hasSound = sp.getBoolean("sound_on_keypress", false);
-			hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
-			keyboardSelection = sp.getString("keyboard_list", "lime");
-			hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
-	        mAutoCap = sp.getBoolean("auto_cap", true);
-	        mQuickFixes = sp.getBoolean("quick_fixes", true);
-	        mDefaultEnglish = sp.getBoolean("default_in_english", false);
+	        //SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+	        hasVibration = mLIMEPref.getVibrateOnKeyPressed(); //sp.getBoolean("vibrate_on_keypress", false);
+			hasSound = mLIMEPref.getSortSuggestions();// sp.getBoolean("sound_on_keypress", false);
+			hasNumberKeypads = mLIMEPref.getShowNumberKeypard();// sp.getBoolean("display_number_keypads", false);
+			keyboardSelection = mLIMEPref.getKeyboardSelection();//  sp.getString("keyboard_list", "lime");
+			hasQuickSwitch = mLIMEPref.getSwitchEnglishModeHotKey();// sp.getBoolean("switch_english_mode", false);
+	        mAutoCap = mLIMEPref.getAutoCaptalization();// sp.getBoolean("auto_cap", true);
+	        mQuickFixes = mLIMEPref.getQuickFixes();// sp.getBoolean("quick_fixes", true);
+	        mDefaultEnglish = mLIMEPref.getDefaultInEnglish(); //sp.getBoolean("default_in_english", false);
 	        // If there is no auto text data, then quickfix is forced to "on", so that the other options
 	        // will continue to work
 	        if(mInputView !=null) 
 	        	{if (AutoText.getSize(mInputView) < 1) mQuickFixes = true;}
 	       
 	        
-	        mShowSuggestions = sp.getBoolean("show_suggestions", true) & mQuickFixes;
-	        boolean autoComplete = sp.getBoolean("auto_complete", mShowSuggestions);
+	        mShowSuggestions = mLIMEPref.getShowEnlishgSuggestions();// sp.getBoolean("show_suggestions", true) & mQuickFixes;
+	        boolean autoComplete = mLIMEPref.getAutoComplete();// sp.getBoolean("auto_complete", mShowSuggestions);
 	        mAutoCorrectOn = mSuggest != null && (autoComplete || mQuickFixes);
 	        mCorrectionMode = autoComplete
 	               ? Suggest.CORRECTION_FULL
@@ -660,7 +671,7 @@ public class LIMEService extends InputMethodService implements
 		if (mComposing.length() > 0 && (newSelStart != candidatesEnd || newSelEnd != candidatesEnd)) {
 			mComposing.setLength(0);
             mWord.reset();
-			updateCandidates();
+            postUpdateSuggestions();
 			InputConnection ic = getCurrentInputConnection();
 			if (ic != null) {
 				ic.finishComposingText();
@@ -1108,7 +1119,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	 */
 	 public void updateShiftKeyState(EditorInfo attr) {
 	        InputConnection ic = getCurrentInputConnection();
-	        if (attr != null && mInputView != null && mKeyboardSwitcher.isAlphabetMode()
+	        if (attr != null && mInputView != null 
+	        		&& (mKeyboardSwitcher.isAlphabetMode() && !mKeyboardSwitcher.isSymbols())
 	                && ic != null) {
 	            int caps = 0;
 	            EditorInfo ei = getCurrentInputEditorInfo();
@@ -1357,8 +1369,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
     private void buildActiveKeyboardList(){
     	CharSequence[] items = getResources().getStringArray(R.array.keyboard);
     	CharSequence[] codes = getResources().getStringArray(R.array.keyboard_codes);
-    	SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-    	String keybaord_state_string = sp.getString("keyboard_state", "0;1;2;3;4;5");
+    	//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+    	//String keybaord_state_string = sp.getString("keyboard_state", "0;1;2;3;4;5;6");
+    	String keybaord_state_string = mLIMEPref.getSelectedKeyboardState();
     	String[] s = keybaord_state_string.toString().split(";");
 
     	keyboardList.clear();
@@ -1444,13 +1457,14 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
     }
     
     private void handlKeyboardSelection(int position){
-    	SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor spe = sp.edit();
+    	//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        //SharedPreferences.Editor spe = sp.edit();
 
         keyboardSelection = keyboardListCodes.get(position);
         
-        spe.putString("keyboard_list", keyboardSelection);
-        spe.commit();
+        //spe.putString("keyboard_list", keyboardSelection);
+        //spe.commit();
+        mLIMEPref.setKeyboardSelection(keyboardSelection);
         
         // cancel candidate view if it's shown
         if (mCandidateView != null) {
@@ -1684,7 +1698,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         	if (length > 1) {
         		mComposing.delete(length - 1, length);
         		getCurrentInputConnection().setComposingText(mComposing, 1);
-        		updateCandidates();
+        		postUpdateSuggestions();
         	} else if (length == 1) {
         		// '10, 4, 5 Jeremy. Bug fix on delete last key in buffer.
         		getCurrentInputConnection().setComposingText("",0);
@@ -1770,7 +1784,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 
 		if (mInputView == null) { return; }
 		
-		if ((mKeyboardSwitcher.isAlphabetMode()&&mKeyboardSwitcher.isSymbols())
+		if ((mKeyboardSwitcher.isAlphabetMode()&&!mKeyboardSwitcher.isSymbols())
 				||(keyboardSelection.equals("lime")&&mKeyboardSwitcher.isChinese())) {
             // Alphabet keyboard
             checkToggleCapsLock();
@@ -1796,11 +1810,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		if(mInputView==null) return;
 		
 		if(mCapsLock) toggleCapsLock();
-		
-		
-		
-		
-		if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE) {
+			if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE) {
 			switchSymKeyboard();
 		}else if(primaryCode == KEYBOARD_SWITCH_CODE){
 			if (mCandidateView != null) {
@@ -1809,7 +1819,6 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			mComposing.setLength(0);
             mWord.reset();
 			setCandidatesViewShown(false);
-		
 			switchChiEng();
 		}
 		
@@ -1843,8 +1852,6 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 }
 	private void setChnKeyboardMode() {
 		
-		
-		
 		int mMode = mKeyboardSwitcher.MODE_TEXT_DEFAULT;
 		if (keyboardSelection.equals("lime")) {
 			if (hasNumberKeypads) {
@@ -1852,10 +1859,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			} else {
 				mMode = mKeyboardSwitcher.MODE_TEXT_DEFAULT;
 			}
-
-			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-			hasNumberMapping = sp.getBoolean("accept_number_index", false);
-			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+			hasNumberMapping = mLIMEPref.getAllowNumberMapping();
+			hasSymbolMapping = mLIMEPref.getAllowSymoblMapping();
 			
 		} else if (keyboardSelection.equals("cj")) {
 			if (hasNumberKeypads) {
@@ -1863,25 +1868,25 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			}else{
 				mMode = mKeyboardSwitcher.MODE_TEXT_CJ;
 			}
-
-			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-			hasNumberMapping = sp.getBoolean("accept_number_index", false);
-			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+			hasNumberMapping = mLIMEPref.getAllowNumberMapping();
+			hasSymbolMapping = mLIMEPref.getAllowSymoblMapping();
 		} else if (keyboardSelection.equals("phonetic")) {
 			mMode = mKeyboardSwitcher.MODE_TEXT_PHONETIC;
-			
 			// Should use number and symbol mapping
 			hasNumberMapping = true;
 			hasSymbolMapping = true;
 		} else if (keyboardSelection.equals("ez")) {
 			mMode = mKeyboardSwitcher.MODE_TEXT_EZ;
-			
 			// Should use number and symbol mapping
 			hasNumberMapping = true;
 			hasSymbolMapping = true;
 		} else if (keyboardSelection.equals("dayi")) {
 			mMode = mKeyboardSwitcher.MODE_TEXT_DAYI;
-			
+			// Should use number and symbol mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
+		} else if (keyboardSelection.equals("array")) {
+			mMode = mKeyboardSwitcher.MODE_TEXT_ARRAY;
 			// Should use number and symbol mapping
 			hasNumberMapping = true;
 			hasSymbolMapping = true;
@@ -1893,7 +1898,6 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}
 	
 		mKeyboardSwitcher.setKeyboardMode(mMode, mImeOptions);
-
 		// Set db table name.	
 		try {
 			String tablename = new String(keyboardSelection);
@@ -1930,6 +1934,12 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	 */
 	private void handleCharacter(int primaryCode, int[] keyCodes) {
 		
+		if(DEBUG){
+			Log.i("LIMEService", "Entering handleCharacter(); primaryCode:" + primaryCode 
+					+ " ;mEnglishOnly: " + mEnglishOnly
+					+ " ;mPredictionOn: "+ isPredictionOn()
+					);
+		}
         
 		
 		// Caculate key press time to handle Eazy IM keys mapping
@@ -2050,7 +2060,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					mComposing.append((char) primaryCode);
 					getCurrentInputConnection().setComposingText(mComposing, 1);
 					//updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
+					postUpdateSuggestions();
 					misMatched = mComposing.toString();
 				} else if (!hasSymbolMapping
 						&& hasNumberMapping
@@ -2059,7 +2069,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					mComposing.append((char) primaryCode);
 					getCurrentInputConnection().setComposingText(mComposing, 1);
 					//updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
+					postUpdateSuggestions();
 					misMatched = mComposing.toString();
 				} else if (hasSymbolMapping
 						&& !hasNumberMapping
@@ -2068,7 +2078,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					mComposing.append((char) primaryCode);
 					getCurrentInputConnection().setComposingText(mComposing, 1);
 					//updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
+					postUpdateSuggestions();
 					misMatched = mComposing.toString();
 				} else if (hasSymbolMapping
 						&& hasNumberMapping
@@ -2078,7 +2088,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					mComposing.append((char) primaryCode);
 					getCurrentInputConnection().setComposingText(mComposing, 1);
 					//updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
+					postUpdateSuggestions();
 					misMatched = mComposing.toString();
 				} else {
 					getCurrentInputConnection().commitText(
@@ -2118,7 +2128,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					mComposing.append((char) primaryCode);
 					getCurrentInputConnection().setComposingText(mComposing, 1);
 					//updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
+					postUpdateSuggestions();
 					misMatched = mComposing.toString();
 				} else if (!hasSymbolMapping
 						&& hasNumberMapping
@@ -2127,7 +2137,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					mComposing.append((char) primaryCode);
 					getCurrentInputConnection().setComposingText(mComposing, 1);
 					//updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
+					postUpdateSuggestions();
 					misMatched = mComposing.toString();
 				} else if (hasSymbolMapping
 						&& !hasNumberMapping
@@ -2136,7 +2146,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					mComposing.append((char) primaryCode);
 					getCurrentInputConnection().setComposingText(mComposing, 1);
 					//updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
+					postUpdateSuggestions();
 					misMatched = mComposing.toString();
 				} else if (hasSymbolMapping
 						&& hasNumberMapping
@@ -2146,7 +2156,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					mComposing.append((char) primaryCode);
 					getCurrentInputConnection().setComposingText(mComposing, 1);
 					//updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
+					postUpdateSuggestions();
 					misMatched = mComposing.toString();
 				} else {
 					getCurrentInputConnection().commitText(
@@ -2184,8 +2194,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		        } else {
 		            sendKeyChar((char)primaryCode);
 		        }
-				//getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
-
+				
 		        TextEntryState.typedCharacter((char) primaryCode, isWordSeparator(primaryCode));
 			}
 		}
@@ -2218,7 +2227,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
     
     private void toggleCapsLock() {
         mCapsLock = !mCapsLock;
-        if ((mKeyboardSwitcher.isAlphabetMode()&&mKeyboardSwitcher.isSymbols())
+        if ((mKeyboardSwitcher.isAlphabetMode()&&!mKeyboardSwitcher.isSymbols())
         		||(keyboardSelection.equals("lime")&&mKeyboardSwitcher.isChinese())) {
             ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(mCapsLock);
             mInputView.setKeyboard(mInputView.getKeyboard());//instead of invalidateAllKeys();
@@ -2278,7 +2287,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         if (mCapsLock) {
             suggestion = suggestion.toString().toUpperCase();
         } else if (preferCapitalization() 
-                || (mKeyboardSwitcher.isAlphabetMode() && mInputView.isShifted())) {
+                || ( (mKeyboardSwitcher.isAlphabetMode() && !mKeyboardSwitcher.isSymbols()) 
+                		&& mInputView.isShifted())) {
             suggestion = suggestion.toString().toUpperCase().charAt(0)
                     + suggestion.subSequence(1, suggestion.length()).toString();
         }

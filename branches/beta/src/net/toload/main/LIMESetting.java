@@ -85,7 +85,8 @@ import android.database.sqlite.SQLiteCursor;
 public class LIMESetting extends Activity {
 	
 	private final static boolean DEBUG = false;
-
+	
+	/*
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_TOTAL_RECORD = "cj_total_record";
@@ -117,6 +118,9 @@ public class LIMESetting extends Activity {
 	private final static String MAPPING_FILE_TEMP = "mapping_file_temp";
 	private final static String RELATED_FILE_TEMP = "related_file_temp";
 	private final static String DICTIONARY_FILE_TEMP = "dictionary_file_temp";
+	*/
+	
+	private LIMEPreferenceManager mLIMEPref;
 
 	private ArrayList<File> filelist;
 
@@ -147,6 +151,8 @@ public class LIMESetting extends Activity {
 	private TextView bpmftxtAmount;
 	private TextView eztxtVersion;
 	private TextView eztxtAmount;
+	private TextView arraytxtVersion;
+	private TextView arraytxtAmount;	
 	private TextView relatedtxtVersion;
 	private TextView relatedtxtAmount;
 	private TextView dictionarytxtVersion;
@@ -180,8 +186,12 @@ public class LIMESetting extends Activity {
 		// Startup Service
 		getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
 		
+		// new LIMEDBPreference object
+		mLIMEPref = new LIMEPreferenceManager(ctx);
+		
 		// Add by Jeremy '10, 3, 27. reset loading status.
-		 ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
+		//ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
+		mLIMEPref.setMappingLoading(false);
 		
 		// Get sdcard path from enviroment
 		localRoot = Environment.getExternalStorageDirectory().getAbsolutePath() +"/lime" ;
@@ -205,12 +215,13 @@ public class LIMESetting extends Activity {
 		//fu.copyPreLoadLimeDB(ctx);			
 		
 		 // return if db is busy.
-		SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-		if( (importset.getString(MAPPING_LOADING, "null")).equals("null")){
+		//SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+		//if( (importset.getString(MAPPING_LOADING, "null")).equals("null")){
+		//if(!mLIMEPref.getMappingLoading()){
 			// Reset Mapping Database
-			ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
-			return;
-		}
+		//	ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
+		//	return;
+		//}
 
 	}
 
@@ -248,10 +259,9 @@ public class LIMESetting extends Activity {
 							Log.i("Settings:backgrounUpdate", "dbbusy:"+dbbusy);
 						}
 						updateInformation();
-						if(ctx.getSharedPreferences(MAPPING_LOADING, 0)
-								.getString(MAPPING_LOADING, "").equals("no")){
-							dbbusy = false;
-						}
+						//if(ctx.getSharedPreferences(MAPPING_LOADING, 0).getString(MAPPING_LOADING, "").equals("no")){
+						dbbusy = !mLIMEPref.getMappingLoading();
+						
 					} catch (InterruptedException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -260,10 +270,8 @@ public class LIMESetting extends Activity {
 						Log.i("Settings:backgrounUpdate", "dbbusy:"+dbbusy);
 					}
 					updateInformation();
-					if(ctx.getSharedPreferences(MAPPING_LOADING, 0)
-							.getString(MAPPING_LOADING, "").equals("no")){
-						dbbusy = false;
-					}
+					//if(ctx.getSharedPreferences(MAPPING_LOADING, 0).getString(MAPPING_LOADING, "").equals("no")){
+					dbbusy = !mLIMEPref.getMappingLoading();
 				}
 				
 				if(DEBUG){
@@ -280,7 +288,8 @@ public class LIMESetting extends Activity {
 		
 		try {
 
-			try {
+			
+				/*
 				SharedPreferences settings = ctx.getSharedPreferences(TOTAL_RECORD, 0);
 				String total = settings.getString(TOTAL_RECORD, "");
 				SharedPreferences cjsettings = ctx.getSharedPreferences(CJ_TOTAL_RECORD, 0);
@@ -295,35 +304,75 @@ public class LIMESetting extends Activity {
 				String relatedtotal = relatedsettings.getString(RELATED_TOTAL_RECORD, "");
 				SharedPreferences dictionarysettings = ctx.getSharedPreferences(DICTIONARY_TOTAL_RECORD, 0);
 				String dictionarytotal = dictionarysettings.getString(DICTIONARY_TOTAL_RECORD, "");
+				*/
+				
+			limedb = new LimeDB(this);
+				
+
+								
+			txtAmount = (TextView) this.findViewById(R.id.txtInfoAmount);
+			txtAmount.setText(mLIMEPref.getTableTotalRecords("mapping"));
+			txtVersion = (TextView) this.findViewById(R.id.txtInfoVersion);
+			txtVersion.setText(mLIMEPref.getTableVersion("mapping"));
+				
+			cjtxtAmount = (TextView) this.findViewById(R.id.cjtxtInfoAmount);
+			cjtxtAmount.setText(mLIMEPref.getTableTotalRecords("cj"));
+			cjtxtVersion = (TextView) this.findViewById(R.id.cjtxtInfoVersion);
+			cjtxtVersion.setText(mLIMEPref.getTableVersion("cj"));
+			
+				
+			dayitxtAmount = (TextView) this.findViewById(R.id.dayitxtInfoAmount);
+			dayitxtAmount.setText(mLIMEPref.getTableTotalRecords("dayi"));
+			dayitxtVersion = (TextView) this.findViewById(R.id.dayitxtInfoVersion);
+			dayitxtVersion.setText(mLIMEPref.getTableVersion("dayi"));
+			
+			
+			bpmftxtAmount = (TextView) this.findViewById(R.id.bpmftxtInfoAmount);
+			bpmftxtAmount.setText(mLIMEPref.getTableTotalRecords("bpmf"));
+			bpmftxtVersion = (TextView) this.findViewById(R.id.bpmftxtInfoVersion);
+			bpmftxtVersion.setText(mLIMEPref.getTableVersion("bpmf"));
+			
+				
+			eztxtAmount = (TextView) this.findViewById(R.id.eztxtInfoAmount);
+			eztxtAmount.setText(mLIMEPref.getTableTotalRecords("ez"));
+			eztxtVersion = (TextView) this.findViewById(R.id.eztxtInfoVersion);
+			eztxtVersion.setText(mLIMEPref.getTableVersion("ez"));
+				
+			arraytxtAmount = (TextView) this.findViewById(R.id.arraytxtInfoAmount);
+			arraytxtAmount.setText(mLIMEPref.getTableTotalRecords("array"));
+			arraytxtVersion = (TextView) this.findViewById(R.id.arraytxtInfoVersion);
+			arraytxtVersion.setText(mLIMEPref.getTableVersion("array"));
+					
+			
+			
+			relatedtxtAmount = (TextView) this.findViewById(R.id.relatedtxtInfoAmount);
+			relatedtxtAmount.setText(mLIMEPref.getTableTotalRecords("related"));
+			relatedtxtVersion = (TextView) this.findViewById(R.id.relatedtxtInfoVersion);
+			relatedtxtVersion.setText(mLIMEPref.getTableVersion("related"));
 				
 				
-				txtAmount = (TextView) this.findViewById(R.id.txtInfoAmount);
-				txtAmount.setText(total);
-				cjtxtAmount = (TextView) this.findViewById(R.id.cjtxtInfoAmount);
-				cjtxtAmount.setText(cjtotal);
-				dayitxtAmount = (TextView) this.findViewById(R.id.dayitxtInfoAmount);
-				dayitxtAmount.setText(dayitotal);
-				bpmftxtAmount = (TextView) this.findViewById(R.id.bpmftxtInfoAmount);
-				bpmftxtAmount.setText(bpmftotal);
-				eztxtAmount = (TextView) this.findViewById(R.id.eztxtInfoAmount);
-				eztxtAmount.setText(eztotal);
-				relatedtxtAmount = (TextView) this.findViewById(R.id.relatedtxtInfoAmount);
-				relatedtxtAmount.setText(relatedtotal);
-				dictionarytxtAmount = (TextView) this.findViewById(R.id.dictionarytxtInfoAmount);
-				dictionarytxtAmount.setText(dictionarytotal);
-	
+			dictionarytxtAmount = (TextView) this.findViewById(R.id.dictionarytxtInfoAmount);
+			dictionarytxtAmount.setText(mLIMEPref.getTableTotalRecords("dictionary"));
+			dictionarytxtVersion = (TextView) this.findViewById(R.id.dictionarytxtInfoVersion);
+			dictionarytxtVersion.setText(mLIMEPref.getTableVersion("dictionary"));
 				
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			//
+			txtDictionaryAmount = (TextView) this.findViewById(R.id.txtInfoDictionaryAmount);
+			txtDictionaryAmount.setText(String.valueOf(mLIMEPref.getTotalUserdictRecords()));
+		
+		
+				//this.findViewById(R.id.SettingsView).forceLayout();
+			this.findViewById(R.id.SettingsView).invalidate();
+
+				
+			
+			/*
 			String dictotal = null;
 			try {
 				// modified by Jeremy '10, 3,12
 				//dictotal = limedb.countUserdic();
-				SharedPreferences settings = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
-				String recordString = settings.getString(TOTAL_USERDICT_RECORD, "0");
-				dictotal = recordString;
+				//SharedPreferences settings = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
+				//String recordString = settings.getString(TOTAL_USERDICT_RECORD, "0");
+				//dictotal = recordString;
 			} catch (Exception e) {}
 
 			String version = new String(""); 
@@ -397,20 +446,9 @@ public class LIMESetting extends Activity {
 				dictionarytxtVersion = (TextView) this.findViewById(R.id.dictionarytxtInfoVersion);
 				dictionarytxtVersion.setText(dictionaryversion);
 			} catch (Exception e) {e.printStackTrace();}
+			*/
 
-			limedb = new LimeDB(this);
 			
-
-			txtDictionaryAmount = (TextView) this
-					.findViewById(R.id.txtInfoDictionaryAmount);
-			// modified by Jeremy '10, 3,12
-			//txtDictionaryAmount.setText(String.valueOf(dictotal));
-			txtDictionaryAmount.setText(dictotal);
-			
-			
-
-			//this.findViewById(R.id.SettingsView).forceLayout();
-			this.findViewById(R.id.SettingsView).invalidate();
 		
 		
 		} catch (Exception e) {
@@ -623,6 +661,11 @@ public class LIMESetting extends Activity {
             	
                 String tablename = new String("mapping");
                 
+                CharSequence[] codes = ctx.getResources().getStringArray(R.array.table_codes);	
+        		
+        		tablename = codes[position].toString();
+        		
+                /*
                 switch(position){
                 case 0:
             		tablename = "mapping";
@@ -646,6 +689,7 @@ public class LIMESetting extends Activity {
                 	tablename = "dictionary";
                 	break;
                 } 
+                */
                 switch(command){
                 case COMMAND_LOAD_TABLE:
                 	selectLimeFile(localRoot, tablename);
@@ -707,8 +751,9 @@ public class LIMESetting extends Activity {
 		btnLoadLocal.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				 // return if db is busy.
-				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+				//SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+				//if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+				if(mLIMEPref.getMappingLoading()){
 					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
 					return;
 				}
@@ -722,22 +767,15 @@ public class LIMESetting extends Activity {
 		btnReset = (Button) this.findViewById(R.id.btnReset);
 		btnReset.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				/* Move to resetMapping()
-				try {
-				Toast.makeText(v.getContext(), R.string.lime_setting_notification_mapping_reset, Toast.LENGTH_LONG).show();	
-				DBSrv.resetMapping();
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-				*/
-
 				// Reset Mapping Database
-				ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
+				//ctx.getSharedPreferences(MAPPING_LOADING, 0).edit().putString(MAPPING_LOADING, "no").commit();
+				//mLIMEPref.setMappingLoading(false);
 
 				
 				 // return if db is busy.
-				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+				//SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+				//if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+				if(mLIMEPref.getMappingLoading()){
 					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
 					return;
 				}
@@ -751,8 +789,9 @@ public class LIMESetting extends Activity {
 		btnResetDictionary.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				// return if db is busy.
-				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+				//SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+				//if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+				if(mLIMEPref.getMappingLoading()){
 					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
 					return;
 				}
@@ -771,8 +810,9 @@ public class LIMESetting extends Activity {
 		btnBackup.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				 // return if db is busy.
-				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+				//SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+				//if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+				if(mLIMEPref.getMappingLoading()){
 					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
 					return;
 				}
@@ -793,8 +833,9 @@ public class LIMESetting extends Activity {
 			public void onClick(View v) {
 				 // return if db is busy.
 
-				SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-				if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+				//SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+				//if( (importset.getString(MAPPING_LOADING, "no")).equals("yes")){
+				if(mLIMEPref.getMappingLoading()){
 					Toast.makeText(v.getContext(), R.string.lime_setting_notification_db_busy, Toast.LENGTH_LONG).show();
 					return;
 				}

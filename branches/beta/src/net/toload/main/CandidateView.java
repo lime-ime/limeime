@@ -80,6 +80,8 @@ public class CandidateView extends View {
 	private PopupWindow mComposingTextPopup;
 	private int mDescent;
 	private String mComposingText = "";
+	
+	private LIMEPreferenceManager mLIMEPref;
     
     private int[] mWordWidth = new int[MAX_SUGGESTIONS];
     private int[] mWordX = new int[MAX_SUGGESTIONS];
@@ -121,6 +123,8 @@ public class CandidateView extends View {
         
     	super(context);
     	
+    	mLIMEPref = new LIMEPreferenceManager(context);
+    	
         mSelectionHighlight = context.getResources().getDrawable(
                 android.R.drawable.list_selector_background);
         mSelectionHighlight.setState(new int[] {
@@ -159,7 +163,7 @@ public class CandidateView extends View {
         
         mDescent = (int) mPaint.descent();
 
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        //final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         
         mGestureDetector = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
             @Override
@@ -175,7 +179,8 @@ public class CandidateView extends View {
                     sx -= distanceX;
                 }
 
-        		if(sp.getBoolean("candidate_switch", false)){
+        		//if(sp.getBoolean("candidate_switch", false)){
+                if(mLIMEPref.getSelectDefaultOnSliding()){
         			hasSlide = true;
                     mTargetScrollX = sx;
                     scrollTo(sx, getScrollY());

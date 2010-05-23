@@ -70,14 +70,16 @@ public class LimeDB extends SQLiteOpenHelper {
 	private static boolean SQLSELECT = true;
 	
 	private final static String DATABASE_NAME = "lime";
-	private final static int DATABASE_VERSION = 60;
+	private final static int DATABASE_VERSION = 66;
 	private final static int DATABASE_RELATED_SIZE = 50;
+	/*
 	private final static String TOTAL_RECORD = "total_record";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
 	private final static String CJ_TOTAL_RECORD = "cj_total_record";
 	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
 	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
 	private final static String EZ_TOTAL_RECORD = "ez_total_record";
+	private final static String ARRAY_TOTAL_RECORD = "array_total_record";
 	private final static String RELATED_TOTAL_RECORD = "related_total_record";
 	private final static String DICTIONARY_TOTAL_RECORD = "dictionary_total_record";
 	//----------add by Jeremy '10,3,12 ----------------------------------------
@@ -89,6 +91,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String BPMF_MAPPING_FILE = "bpmf_mapping_file";
 	private final static String DAYI_MAPPING_FILE = "dayi_mapping_file";
 	private final static String EZ_MAPPING_FILE = "ez_mapping_file";
+	private final static String ARRAY_MAPPING_FILE = "array_mapping_file";
 	private final static String RELATED_MAPPING_FILE = "dayi_mapping_file";
 	private final static String DICTIONARY_FILE = "dictionary_file";
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
@@ -97,6 +100,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String DAYI_MAPPING_FILE_TEMP = "dayi_mapping_file_temp";
 	private final static String BPMF_MAPPING_FILE_TEMP = "bpmf_mapping_file_temp";
 	private final static String EZ_MAPPING_FILE_TEMP = "ez_mapping_file_temp";
+	private final static String ARRAY_MAPPING_FILE_TEMP = "array_mapping_file_temp";
 	private final static String RELATED_MAPPING_FILE_TEMP = "related_mapping_file_temp";
 	private final static String DICTIONARY_FILE_TEMP = "dictionary_file_temp";
 	private final static String MAPPING_VERSION = "mapping_version";
@@ -105,11 +109,14 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String BPMF_MAPPING_VERSION = "bmpf_mapping_version";
 	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
 	private final static String EZ_MAPPING_VERSION = "ez_mapping_version";
+	private final static String ARRAY_MAPPING_VERSION = "array_mapping_version";
 	private final static String RELATED_MAPPING_VERSION = "related_mapping_version";
 	private final static String DICTIONARY_VERSION = "dictionary_version";
 	//
 	private final static String MAPPING_LOADING = "mapping_loading";
 	private final static String MAPPING_IMPORT_LINE = "mapping_import_line";
+	*/
+	/*
 	private final static String CANDIDATE_SUGGESTION = "candidate_suggestion";
 	private final static String LEARNING_SWITCH = "learning_switch";
 	private final static String THREE_ROW_REMAP = "three_rows_remapping";
@@ -119,8 +126,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String DAYI_R_LOOKUP = "dayi_im_reverselookup";
 	private final static String BPMF_R_LOOKUP = "bpmf_im_reverselookup";
 	private final static String EZ_R_LOOKUP = "ez_im_reverselookup";
+	private final static String ARRAY_R_LOOKUP = "array_im_reverselookup";
 	private final static String DEFAULT_R_LOOKUP = "default_im_reverselookup";
-	
+	*/
 	
 	public final static String FIELD_id = "_id";
 	public final static String FIELD_CODE = "code";
@@ -156,6 +164,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	private File filename = null;
 	private String tablename = "";
 	private String tablename_in_memory = "";
+	
+	private LIMEPreferenceManager mLIMEPref;
 
 	private int count = 0;
 	private int relatedcount = 0;
@@ -185,7 +195,20 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 	public void setTablename(String tablename){
 		
+
 		
+		CharSequence[] codes = ctx.getResources().getStringArray(R.array.table_codes);
+
+		for( int i=0; i< codes.length; i++){
+			if(tablename.equals(codes[i].toString()) 
+					&& mLIMEPref.getTableTotalRecords(codes[i].toString()).equals("0")){
+				this.tablename = "mapping";
+			}
+		}
+		
+		this.tablename = tablename;
+		
+		/*
 		if(tablename.equals("cj")){
 			SharedPreferences sp1 = ctx.getSharedPreferences(CJ_TOTAL_RECORD, 0);
 			if(sp1.getString(CJ_TOTAL_RECORD, "0").equals("0")){
@@ -206,8 +229,15 @@ public class LimeDB extends SQLiteOpenHelper {
 			if(sp4.getString(EZ_TOTAL_RECORD, "0").equals("0")){
 				this.tablename = "mapping";
 			}
+		}else if(tablename.equals("array")){
+			SharedPreferences sp4 = ctx.getSharedPreferences(ARRAY_TOTAL_RECORD, 0);
+			if(sp4.getString(ARRAY_TOTAL_RECORD, "0").equals("0")){
+				this.tablename = "mapping";
+			}
 		}
-		this.tablename = tablename;
+		*/
+		
+		
 		
 		if(CACHED){
 			SQLiteDatabase db = this.getWritableDatabase();
@@ -236,6 +266,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	public LimeDB(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 		this.ctx = context;
+		mLIMEPref = new LIMEPreferenceManager(ctx);
 	}
 
 	/**
@@ -257,49 +288,46 @@ public class LimeDB extends SQLiteOpenHelper {
 					+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
 					+ " text, " + FIELD_SCORE + " integer)");
 			db.execSQL("CREATE INDEX IF NOT EXISTS mapping_idx_code ON mapping (" + FIELD_CODE + ")");
-			//db.execSQL("CREATE INDEX IF NOT EXISTS mapping_idx_code3r ON mapping (" + FIELD_CODE3R + ")");
 			db.execSQL("CREATE INDEX IF NOT EXISTS mapping_idx_word ON mapping (" + FIELD_CODE + ")");
-			//db.execSQL("CREATE VIEW IF NOT EXISTS mapping_code3r AS SELECT * FROM mapping ORDER BY " + FIELD_CODE3R );
 			
 			db.execSQL("CREATE TABLE IF NOT EXISTS cj (" + FIELD_id
 					+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
 					+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
 					+ " text, " + FIELD_SCORE + " integer)");
 			db.execSQL("CREATE INDEX IF NOT EXISTS cj_idx_code ON cj (" + FIELD_CODE + ")");
-			//db.execSQL("CREATE INDEX IF NOT EXISTS cj_idx_code3r ON cj (" + FIELD_CODE3R + ")");
 			db.execSQL("CREATE INDEX IF NOT EXISTS cj_idx_word ON cj (" + FIELD_WORD + ")");
-			//db.execSQL("CREATE VIEW IF NOT EXISTS cj_code3r AS SELECT * FROM cj ORDER BY " + FIELD_CODE3R );
 			
 			db.execSQL("CREATE TABLE IF NOT EXISTS dayi (" + FIELD_id
 					+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
 					+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
 					+ " text, " + FIELD_SCORE + " integer)");
 			db.execSQL("CREATE INDEX IF NOT EXISTS dayi_idx_code ON dayi (" + FIELD_CODE + ")");
-			//db.execSQL("CREATE INDEX IF NOT EXISTS dayi_idx_code3r ON dayi (" + FIELD_CODE3R + ")");
 			db.execSQL("CREATE INDEX IF NOT EXISTS dayi_idx_word ON dayi (" + FIELD_WORD + ")");
-			//db.execSQL("CREATE VIEW IF NOT EXISTS dayi_code3r AS SELECT * FROM dayi ORDER BY " + FIELD_CODE3R );
 	
 			db.execSQL("CREATE TABLE IF NOT EXISTS phonetic (" + FIELD_id
 					+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
 					+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
 					+ " text, " + FIELD_SCORE + " integer)");
 			db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_code ON phonetic (" + FIELD_CODE + ")");
-			//db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_code3r ON phonetic (" + FIELD_CODE3R + ")");
 			db.execSQL("CREATE INDEX IF NOT EXISTS phonetic_idx_word ON phonetic (" + FIELD_CODE + ")");
-			//db.execSQL("CREATE VIEW IF NOT EXISTS phonetic_code3r AS SELECT * FROM phonetic ORDER BY " + FIELD_CODE3R );
 		
 			db.execSQL("CREATE TABLE IF NOT EXISTS ez (" + FIELD_id
 					+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
 					+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
 					+ " text, " + FIELD_SCORE + " integer)");
 			db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_code ON ez (" + FIELD_CODE + ")");
-			//db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_code3r ON ez (" + FIELD_CODE3R + ")");
 			db.execSQL("CREATE INDEX IF NOT EXISTS ez_idx_word ON ez (" + FIELD_CODE + ")");
-			//db.execSQL("CREATE VIEW IF NOT EXISTS ez_code3r AS SELECT * FROM ez ORDER BY " + FIELD_CODE3R );
+			
+			db.execSQL("CREATE TABLE IF NOT EXISTS array (" + FIELD_id
+					+ " INTEGER primary key autoincrement, " + " " + FIELD_CODE + " text, " + FIELD_CODE3R
+					+ " text, " + FIELD_WORD + " text, " + FIELD_RELATED
+					+ " text, " + FIELD_SCORE + " integer)");
+			db.execSQL("CREATE INDEX IF NOT EXISTS array_idx_code ON array (" + FIELD_CODE + ")");
+			db.execSQL("CREATE INDEX IF NOT EXISTS array_idx_word ON array (" + FIELD_CODE + ")");
+			
 		
 			db.execSQL("CREATE TABLE IF NOT EXISTS related(" 
 					+ FIELD_DIC_id 	+ " INTEGER primary key autoincrement, " 
-					//+ FIELD_DIC_pcode + " text, " + FIELD_DIC_ccode + " text, "
 					+ FIELD_DIC_cword + " text, " + FIELD_DIC_pword + " text, "
 					+ FIELD_DIC_score + " integer)");
 			db.execSQL("CREATE INDEX IF NOT EXISTS related_idx_pword ON related (" + FIELD_DIC_pword + ")");
@@ -347,6 +375,14 @@ public class LimeDB extends SQLiteOpenHelper {
 		db.delete(table, null, null);
 		db.close();
 		
+		mLIMEPref.setTableTotalRecords(table, String.valueOf(0));
+		mLIMEPref.setTableMappingFilename(table, "");
+		mLIMEPref.setTableTempMappingFilename(table, "");
+		mLIMEPref.setTableVersion(table.toString(), "");
+		
+		
+		mLIMEPref.setMappingFileImportLines(0);
+		/*
 		SharedPreferences sp1=null, sp2=null, sp3=null, sp4=null;
 		
 		if(table.equals("cj")){
@@ -385,6 +421,15 @@ public class LimeDB extends SQLiteOpenHelper {
 			sp3.edit().putString(EZ_MAPPING_FILE, "").commit();
 			sp4 = ctx.getSharedPreferences(EZ_MAPPING_FILE_TEMP, 0);
 			sp4.edit().putString(EZ_MAPPING_FILE_TEMP, "").commit();
+		}else if(table.equals("array")){
+			sp1 = ctx.getSharedPreferences(ARRAY_TOTAL_RECORD, 0);
+			sp1.edit().putString(ARRAY_TOTAL_RECORD, String.valueOf(0)).commit();
+			sp2 = ctx.getSharedPreferences(ARRAY_MAPPING_VERSION, 0);
+			sp2.edit().putString(ARRAY_MAPPING_VERSION, "").commit();
+			sp3 = ctx.getSharedPreferences(ARRAY_MAPPING_FILE, 0);
+			sp3.edit().putString(ARRAY_MAPPING_FILE, "").commit();
+			sp4 = ctx.getSharedPreferences(EZ_MAPPING_FILE_TEMP, 0);
+			sp4.edit().putString(ARRAY_MAPPING_FILE_TEMP, "").commit();
 			
 		}else {
 			sp1 = ctx.getSharedPreferences(TOTAL_RECORD, 0);
@@ -400,7 +445,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		SharedPreferences sp5 = ctx.getSharedPreferences(MAPPING_IMPORT_LINE, 0);
 		sp5.edit().putString(MAPPING_IMPORT_LINE, "").commit();
-
+		 */
 						  
 		count = 0;
 		relatedcount = 0;
@@ -412,7 +457,14 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * Empty Dictionary table records
 	 */
 	public void deleteRelatedAll() {
-
+		
+			
+		mLIMEPref.setTableTotalRecords("related".toString(), String.valueOf(0));
+		mLIMEPref.setTableMappingFilename("related".toString(), "");
+		mLIMEPref.setTableTempMappingFilename("related".toString(), "");
+		mLIMEPref.setTableVersion("related".toString(), "");
+		
+		/*
 		SharedPreferences sp1 = ctx.getSharedPreferences(RELATED_TOTAL_RECORD, 0);
 		sp1.edit().putString(RELATED_TOTAL_RECORD, String.valueOf(0)).commit();
 		SharedPreferences sp2 = ctx.getSharedPreferences(RELATED_MAPPING_VERSION, 0);
@@ -421,7 +473,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		sp3.edit().putString(RELATED_MAPPING_FILE, "").commit();
 		SharedPreferences sp4 = ctx.getSharedPreferences(RELATED_MAPPING_FILE_TEMP, 0);
 		sp4.edit().putString(RELATED_MAPPING_FILE_TEMP, "").commit();
-		
+		*/
 		SQLiteDatabase db = this.getWritableDatabase();
 		
 		db.delete("related", FIELD_DIC_score + " = 0", null);
@@ -429,6 +481,14 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 	
 	public void deleteDictionaryAll() {
+		
+		
+		mLIMEPref.setTableTotalRecords("dictionary".toString(), String.valueOf(0));
+		mLIMEPref.setTableMappingFilename("dictionary".toString(), "");
+		mLIMEPref.setTableTempMappingFilename("dictionary".toString(), "");
+		mLIMEPref.setTableVersion("dictionary".toString(), "");
+		
+		/*
 		SharedPreferences sp1 = ctx.getSharedPreferences(DICTIONARY_TOTAL_RECORD, 0);
 		sp1.edit().putString(DICTIONARY_TOTAL_RECORD, String.valueOf(0)).commit();
 		SharedPreferences sp2 = ctx.getSharedPreferences(DICTIONARY_VERSION, 0);
@@ -437,7 +497,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		sp3.edit().putString(DICTIONARY_FILE, "").commit();
 		SharedPreferences sp4 = ctx.getSharedPreferences(DICTIONARY_FILE_TEMP, 0);
 		sp4.edit().putString(DICTIONARY_FILE_TEMP, "").commit();
-		
+		*/
 		SQLiteDatabase db = this.getWritableDatabase();
 		
 		db.delete("dictionary", null , null);
@@ -448,8 +508,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	 */
 	public void  deleteUserDictAll() { 
 		//---------------add by Jeremy '10,3,12-----------------------------------
-		SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
-		sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(0)).commit();
+		//SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
+		//sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(0)).commit();
+		mLIMEPref.setTotalUserdictRecords(0);
 		//-------------------------------------------------------------------------
 		SQLiteDatabase db = this.getWritableDatabase();
 		
@@ -478,6 +539,12 @@ public class LimeDB extends SQLiteOpenHelper {
 	public int countMapping(String table) {
 
 		int total = 0;
+		if(table.equals("related")){
+			return countRelated();
+		}else if (table.equals("dictionary")){
+			return countDictionary();
+		}
+		
 		try {
 			SQLiteDatabase db = this.getReadableDatabase();
 			total += db.rawQuery("SELECT * FROM " + table + " WHERE " + FIELD_CODE3R + " = '0'"
@@ -540,7 +607,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	public void insertList(ArrayList<String> source) {
 
 		this.identifyDelimiter(source);
-
+		
+		
 		SQLiteDatabase db = this.getWritableDatabase();
 		for (String unit : source) {
 
@@ -557,10 +625,10 @@ public class LimeDB extends SQLiteOpenHelper {
 					continue;
 				}
 				if (code.equalsIgnoreCase("@VERSION@")) {
-					SharedPreferences version = ctx.getSharedPreferences(
-							MAPPING_VERSION, 0);
-					version.edit().putString(MAPPING_VERSION, word.trim())
-							.commit();
+					
+					//SharedPreferences version = ctx.getSharedPreferences(MAPPING_VERSION, 0);
+					//version.edit().putString(MAPPING_VERSION, word.trim()).commit();
+					mLIMEPref.setTableVersion("lime", word.trim());
 					continue;
 				}
 
@@ -576,8 +644,9 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 		}
 		// Update Total Record
-		SharedPreferences storeset = ctx.getSharedPreferences(TOTAL_RECORD, 0);
-		storeset.edit().putString(TOTAL_RECORD, String.valueOf(count)).commit();
+		//SharedPreferences storeset = ctx.getSharedPreferences(TOTAL_RECORD, 0);
+		//storeset.edit().putString(TOTAL_RECORD, String.valueOf(count)).commit();
+		mLIMEPref.setTableTotalRecords("lime", String.valueOf(count));
 
 	}
 
@@ -596,15 +665,17 @@ public class LimeDB extends SQLiteOpenHelper {
 		try {
 			// modified by Jeremy '10, 3,12
 			//dictotal = limedb.countUserdic();
-			SharedPreferences settings = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
-			String recordString = settings.getString(TOTAL_USERDICT_RECORD, "0");
-			dictotal = Integer.parseInt(recordString);
+			//SharedPreferences settings = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
+			//String recordString = settings.getString(TOTAL_USERDICT_RECORD, "0");
+			//dictotal = Integer.parseInt(recordString);
+			dictotal = mLIMEPref.getTotalUserdictRecords();
 		} catch (Exception e) {}
 		
 		
 		// Check if build related word enable. 
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		if( !sp.getBoolean(CANDIDATE_SUGGESTION, false) ){
+		//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		//if( !sp.getBoolean(CANDIDATE_SUGGESTION, false) ){
+		if(!mLIMEPref.getLearnRelatedWord()) {
 			if(DEBUG){
 				Log.i("addDictionary:", "CANDIDATE_SUGGESTION:false returning...");
 			}
@@ -637,12 +708,7 @@ public class LimeDB extends SQLiteOpenHelper {
 									//--------------------------------------------
 									// Modified by Jeremy '10,03,20 replace pcode, code with hashcode
 									// '10, 3, 30. pcode and code no more used.
-									//cv.put(FIELD_DIC_pcode, unit.getCode());
-									//cv.put(FIELD_DIC_pcode, unit.getWord().hashCode());
-									//cv.put(FIELD_DIC_pcode, "-");
 									cv.put(FIELD_DIC_pword, unit.getWord());
-									//cv.put(FIELD_DIC_ccode, unit2.getCode());
-									//cv.put(FIELD_DIC_ccode, "-");
 									cv.put(FIELD_DIC_cword, unit2.getWord());
 									//-------------------------------------------------------
 									// Modified by jeremy '10, 3, 29. score 0->1.  Built-in phrase has score at 0. 
@@ -665,8 +731,9 @@ public class LimeDB extends SQLiteOpenHelper {
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {
-				SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
-				sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(dictotal)).commit();
+				//SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
+				//sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(dictotal)).commit();
+				mLIMEPref.setTotalUserdictRecords(dictotal);
 				if(DEBUG){
 					Log.i("addDictionary:", "update userdict total records:" + dictotal);
 				}
@@ -682,6 +749,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 */
 	public String getRMapping(String keyword) {
 		
+		/*
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		String Rtable = new String("none");
 		if(tablename.equals("cj")){	
@@ -692,9 +760,15 @@ public class LimeDB extends SQLiteOpenHelper {
 			Rtable = sp.getString(BPMF_R_LOOKUP, "none");
 		}else if(tablename.equals("ez")){
 			Rtable = sp.getString(EZ_R_LOOKUP, "none");
+		}else if(tablename.equals("array")){
+			Rtable = sp.getString(ARRAY_R_LOOKUP, "none");
+		
 		}else {
 			Rtable = sp.getString(DEFAULT_R_LOOKUP, "none");
 		}
+		*/
+		String Rtable = mLIMEPref.getRerverseLookupTable(tablename);
+		
 		if(Rtable.equals("none")) { return null ;}
 		
 		String result = new String("");
@@ -941,9 +1015,9 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 		String sql = null;
 		
 		SQLiteDatabase db = this.getReadableDatabase();
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		boolean sort = sp.getBoolean(LEARNING_SWITCH, false);
-		boolean remap3row = sp.getBoolean(THREE_ROW_REMAP, false);
+		//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		boolean sort = mLIMEPref.getSortSuggestions();// sp.getBoolean(LEARNING_SWITCH, false);
+		boolean remap3row = mLIMEPref.getThreerowRemapping();// sp.getBoolean(THREE_ROW_REMAP, false);
 		try {	
 			
 			
@@ -1124,9 +1198,9 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 	public List<Mapping> getSuggestion(String related, int size) {
 
 		List<Mapping> result = new LinkedList<Mapping>();
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		boolean remap3row = sp.getBoolean(THREE_ROW_REMAP, false);
-		boolean item = sp.getBoolean(LEARNING_SWITCH, false);
+		//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		boolean remap3row = mLIMEPref.getThreerowRemapping();// sp.getBoolean(THREE_ROW_REMAP, false);
+		boolean item = mLIMEPref.getSortSuggestions();// sp.getBoolean(LEARNING_SWITCH, false);
 		
 		try {
 			// Create Suggestions (Exactly Matched)
@@ -1289,11 +1363,13 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 							//+FIELD_DIC_cword + " = " + pword
 							, null);
 					if(score == 1){ // Update userdic total ++
-						SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
-						String recordString = sp1.getString(TOTAL_USERDICT_RECORD, "0");
-						int dictotal = Integer.parseInt(recordString);
+						//SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
+						//String recordString = sp1.getString(TOTAL_USERDICT_RECORD, "0");
+						//int dictotal = Integer.parseInt(recordString);
+						int dictotal = mLIMEPref.getTotalUserdictRecords();
 						dictotal++;
-						sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(dictotal)).commit();
+						//sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(dictotal)).commit();
+						mLIMEPref.setTotalUserdictRecords(dictotal);
 					}
 				} else {
 					ContentValues cv = new ContentValues();
@@ -1419,14 +1495,17 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 			thread.stop();
 			thread = null;
 		}
-		SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-		sp.edit().putString(MAPPING_LOADING, "yes").commit();
+		//SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+		//sp.edit().putString(MAPPING_LOADING, "yes").commit();
+		mLIMEPref.setMappingLoading(true);
 		
 		thread = new Thread() {
 			public void run() {
 
 				boolean hasMappingVersion = false;
 				boolean isCinFormat= false;
+				
+				
 				String line = "";
 				finish = false;
 				//relatedfinish = false;
@@ -1554,7 +1633,10 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 								// Add by Jeremy '10, 3 , 27
 								// use %cname as mapping_version of .cin
 								if (code.equalsIgnoreCase("@VERSION@")||code.equalsIgnoreCase("%cname")){
+									
+								mLIMEPref.setTableVersion(table, word.trim());
 								// Add by Jeremy '10,3, 28 for multi-table extension	
+									/*
 									SharedPreferences version = null;
 									if(table.equals("cj")){
 										version = ctx.getSharedPreferences(CJ_MAPPING_VERSION, 0);
@@ -1578,6 +1660,7 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 										version = ctx.getSharedPreferences(MAPPING_VERSION, 0);
 										version.edit().putString(MAPPING_VERSION, word.trim()).commit();									
 									}
+									*/
 																		
 									continue;
 								}
@@ -1607,7 +1690,11 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 							count++;
 							//countline++;
 							if(count % 100 == 0){
+								
 								// Jeremy '10, 3, 28 multi-table extenstion
+								mLIMEPref.setTableTotalRecords(table, String.valueOf(count) + " (loading...)");
+								
+								/*
 								SharedPreferences sp = null; 
 								if(table.equals("cj")){
 									sp = ctx.getSharedPreferences(CJ_TOTAL_RECORD, 0);
@@ -1631,6 +1718,7 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 									sp = ctx.getSharedPreferences(TOTAL_RECORD, 0);
 									sp.edit().putString(TOTAL_RECORD, String.valueOf(count) + " (loading...)").commit();
 								}
+								*/
 							}
 							
 						}
@@ -1674,6 +1762,9 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 	
 					// Update Total Record
 					// Modified by Jeremy '10,3, 28 for multi-table extension
+					mLIMEPref.setTableTotalRecords(table, String.valueOf(count) );
+					
+					/*
 					SharedPreferences sp1 = null, sp2 = null; 
 					if(table.equals("cj")){
 						sp1 = ctx.getSharedPreferences(CJ_TOTAL_RECORD, 0);
@@ -1711,11 +1802,18 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 						sp2 = ctx.getSharedPreferences(MAPPING_FILE_TEMP, 0);
 						sp2.edit().putString(MAPPING_FILE_TEMP, "").commit();
 					}
+					
 					SharedPreferences sp3 = ctx.getSharedPreferences(MAPPING_LOADING, 0);
 									  sp3.edit().putString(MAPPING_LOADING, "no").commit();
 		            SharedPreferences sp4 = ctx.getSharedPreferences(MAPPING_IMPORT_LINE, 0);
 						  			  sp4.edit().putString(MAPPING_IMPORT_LINE, "").commit();
-									  finish = true;
+					*/
+					mLIMEPref.setMappingLoading(false);
+					mLIMEPref.setMappingFileImportLines(0);
+					finish = true;
+					
+					
+					
 									
 			}
 			
@@ -1930,11 +2028,14 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 	// Modified by Jeremy '10, 3,12
 	//
 	public void backupRelatedUserdic() {
-		final File targetFile = new File("/sdcard/lime/limedb.txt");
+		//final File targetFile = new File("/sdcard/lime/limedb.txt");
+		final File targetFile = new File(
+				Environment.getExternalStorageDirectory().getAbsolutePath() +"/lime/limedb.txt") ;
 		targetFile.deleteOnExit();
 		
-		SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-		sp.edit().putString(MAPPING_LOADING, "yes").commit();
+		//SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+		//sp.edit().putString(MAPPING_LOADING, "yes").commit();
+		mLIMEPref.setMappingLoading(true);
 		
 		if(thread!=null){
 			thread.stop();
@@ -2032,8 +2133,9 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 				}
 				
 				relatedfinish = true;
-				SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-				sp.edit().putString(MAPPING_LOADING, "no").commit();
+				//SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+				//sp.edit().putString(MAPPING_LOADING, "no").commit();
+				mLIMEPref.setMappingLoading(false);
 				}
 			};
 			thread.start();
@@ -2053,8 +2155,9 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 				Environment.getExternalStorageDirectory().getAbsolutePath());
 		final File targetFile = new File(sdDir + "/lime/limedb.txt");	
 		final File alternativeFile = new File(sdDir +"/limedb.txt");
-		SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-		sp.edit().putString(MAPPING_LOADING, "yes").commit();
+		//SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
+		//sp.edit().putString(MAPPING_LOADING, "yes").commit();
+		mLIMEPref.setMappingLoading(true);
 			
 		if(thread!=null){
 				thread.stop();
@@ -2094,18 +2197,7 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 					line = line.trim();
 					
 					try {
-						/*
-						String pcode = line.split("\t")[0];
-						String pword = line.split("\t")[1];
-						String code = line.split("\t")[2];
-						String word = line.split("\t")[3];
-						String score = "0";
 						
-						try{
-							// To ignore incomplete import row
-							score = line.split("\t")[4];
-						}catch(ArrayIndexOutOfBoundsException e){}
-						*/
 						//Modified by Jeremy '10, 3, 30.  
 						String [] temp=null;
 						String pcode=null, pword=null, code=null, cword=null, score=null;
@@ -2117,9 +2209,7 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 							        " c3:" + temp[1] );
 						}
 						if(temp.length == 5) { // old format, 5 columns
-							//pcode = temp[0];
 							pword = temp[1];
-							//code = temp[2];
 							cword = temp[3];
 							score = temp[4];
 						}else if(temp.length == 3) { // new format , 3 colums
@@ -2131,21 +2221,12 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 						}
 						//Userdict must have score >0
 						if(score.trim().equals("0")) {score = "1";}
-							
-						//temp.add(new Mapping(pcode, pword, code, word, Integer
-						//		.parseInt(score)));
-						// insert into database
-						
+												
 						ContentValues cv = new ContentValues();
 						//------------------------------------------------------------------
 						// Modified by Jeremy '10,03,20, replace pcode, code with hashcode.
-						//cv.put(FIELD_DIC_pcode, pcode);
-						// '10, 3, 30.  pcode and ccode no more used.
-						//cv.put(FIELD_DIC_pcode, "-");
+						
 						cv.put(FIELD_DIC_pword, pword);
-						//cv.put(FIELD_DIC_ccode, code);
-						//cv.put(FIELD_DIC_ccode, "-");
-						//------------------------------------------------------------------
 						cv.put(FIELD_DIC_cword, cword);
 						cv.put(FIELD_DIC_score, score);
 						
@@ -2162,8 +2243,9 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 						//total++;
 						relatedcount++;
 						if(relatedcount % 100 == 0){
-							SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
-											  sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(relatedcount) + " (loading...)").commit();
+							//SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
+							//				  sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(relatedcount) + " (loading...)").commit();
+							mLIMEPref.setTableTotalRecords("related", String.valueOf(relatedcount) + " (loading...)");
 						}
 					}catch(ArrayIndexOutOfBoundsException e){
 						//Error to parse the line
@@ -2180,10 +2262,14 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 			}
 			
 			// Update total_userdict_records
+			mLIMEPref.setTotalUserdictRecords(countUserdic());
+			mLIMEPref.setMappingLoading(false);
+			/*
 			SharedPreferences sp1 = ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
 			sp1.edit().putString(TOTAL_USERDICT_RECORD, String.valueOf(countUserdic())).commit();
 			SharedPreferences sp = ctx.getSharedPreferences(MAPPING_LOADING, 0);
 			sp.edit().putString(MAPPING_LOADING, "no").commit();
+			*/
 			relatedfinish = true;
 			}
 		}
@@ -2192,3 +2278,4 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 
  }
 }
+

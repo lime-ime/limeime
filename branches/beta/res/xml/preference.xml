@@ -37,7 +37,7 @@
 				android:title="@string/keyboard_list"
 				android:entries="@array/keyboard"
 				android:entryValues="@array/keyboard_defaultstate"
-				android:defaultValue="0;1;2;3;4;5"
+				android:defaultValue="0;1;2;3;4;5;6"
 				android:dialogTitle="@string/keyboard_list" />
 		<CheckBoxPreference
                 android:key="default_in_english"
@@ -45,11 +45,7 @@
                 android:summary="@string/default_in_english_summary"
             	android:defaultValue="false" 
                 />
-        <CheckBoxPreference
-                android:key="three_rows_remapping"
-                android:title="@string/three_rows_remapping" 
-                android:defaultValue="false" 
-                android:summary="@string/three_rows_remapping_summary" />
+       
         <CheckBoxPreference
                 android:key="vibrate_on_keypress"
                 android:defaultValue="false" 
@@ -104,6 +100,11 @@
     <PreferenceCategory
         		xmlns:android="http://schemas.android.com/apk/res/android"
                 android:summary="" android:key="lime_im" android:title="@string/im">
+     <CheckBoxPreference
+                android:key="three_rows_remapping"
+                android:title="@string/three_rows_remapping" 
+                android:defaultValue="false" 
+                android:summary="@string/three_rows_remapping_summary" />
     <ListPreference
     			android:key="han_convert_option"
     			android:title="@string/han_convert_option_list" 
@@ -112,7 +113,7 @@
     			android:dialogTitle="@string/han_convert_option_list" 
     			android:defaultValue="0"/>
     <ListPreference
-    			android:key="default_im_reverselookup"
+    			android:key="mapping_im_reverselookup"
     			android:title="@string/default_reverse_lookup_list" 
     			android:entries="@array/im_reverse_lookup" 
     			android:entryValues="@array/im_reverse_lookup_codes" 
@@ -139,6 +140,20 @@
     			android:entryValues="@array/im_reverse_lookup_codes" 
     			android:dialogTitle="@string/im_reverse_lookup_list" 
     			android:defaultValue="none"/>
+    <ListPreference
+    			android:key="ez_im_reverselookup"
+    			android:title="@string/ez_reverse_lookup_list" 
+    			android:entries="@array/im_reverse_lookup" 
+    			android:entryValues="@array/im_reverse_lookup_codes" 
+    			android:dialogTitle="@string/im_reverse_lookup_list" 
+    			android:defaultValue="none"/>
+   	<ListPreference
+    			android:key="array_im_reverselookup"
+    			android:title="@string/array_reverse_lookup_list" 
+    			android:entries="@array/im_reverse_lookup" 
+    			android:entryValues="@array/im_reverse_lookup_codes" 
+    			android:dialogTitle="@string/im_reverse_lookup_list" 
+    			android:defaultValue="none"/>
    
 </PreferenceCategory>
     
@@ -153,7 +168,7 @@
 				android:entries="@array/similiar_codes"
 				android:entryValues="@array/similiar_codes"
 				android:dialogTitle="@string/similiar_list" 
-				android:defaultValue="150"/>
+				android:defaultValue="20"/>
         <CheckBoxPreference
                 android:key="candidate_switch"
                 android:title="@string/candidate_switch"

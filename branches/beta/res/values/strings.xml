@@ -25,6 +25,7 @@
     <string name="lime_setting_operation_info1_dayi">Dayi Table Version : </string>
     <string name="lime_setting_operation_info1_bpmf">Phonetic Table Version: </string>
     <string name="lime_setting_operation_info1_ez">Eazy Table Version: </string>
+    <string name="lime_setting_operation_info1_array">Array Table Version: </string>
     <string name="lime_setting_operation_info1_related">Preload related words database Version: </string>
     <string name="lime_setting_operation_info1_dictionary">Dictionary for English Keyboard Version: </string>
     <string name="lime_setting_operation_info2">Total Record : </string>
@@ -104,6 +105,8 @@
     <string name="dayi_reverse_lookup_list">R-Lookup in Dayi</string>
     <string name="bpmf_reverse_lookup_list">R-Lookup in Phonetic</string>
     <string name="ez_reverse_lookup_list">R-Lookup in Eazy</string>
+    <string name="array_reverse_lookup_list">R-Lookup in Array</string>
+    
     <string name="han_convert_option_list">Chinese Characters Conversion</string>
     
     
@@ -115,13 +118,13 @@
     <string name="display_number_keypads_summary">Display number keypads</string>
     <string name="candidate_switch">Sliding select suggestion</string>
     <string name="candidate_switch_summary">Enable suggestion word sliding selection</string>
-    <string name="candidate_suggestion">Build related words</string>
-    <string name="candidate_suggestion_summary">Build related words base on text input</string>
+    <string name="candidate_suggestion">Auto-build related words</string>
+    <string name="candidate_suggestion_summary">Learn related words base on text input</string>
     <string name="learning_switch">Sort suggestion list</string>
-    <string name="learning_switch_summary">Sort suggestion list base on word selection</string>
-    <string name="accept_number_index">Activate number</string>
+    <string name="learning_switch_summary">Sort suggestion list base on learned frequency</string>
+    <string name="accept_number_index">Mapping on numbers</string>
     <string name="accept_number_index_summary">Allow input 0-9 as mapping code</string>
-    <string name="accept_symbol_index">Activate symbol</string>
+    <string name="accept_symbol_index">Mapping on symbols</string>
     <string name="accept_symbol_index_summary">Allow punctuation as mapping code</string>
     <string name="switch_english_mode">Quick switch hotkey</string>
     <string name="switch_english_mode_summary">[SHIFT]+[SPACE] switch typing mode [Physical Keyboard]</string>
@@ -210,6 +213,7 @@
 		<item>Dayi</item>
 		<item>Phonetic</item>
 		<item>Eazy</item>
+		<item>Array</item>
 	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
@@ -218,6 +222,7 @@
 		<item>dayi</item>
 		<item>phonetic</item>
 		<item>ez</item>
+		<item>array</item>
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
@@ -227,8 +232,10 @@
 		<item>Dayi</item>
 		<item>Phonetic</item>
 		<item>Eazy</item>
+		<item>Array</item>
 	</string-array>
 	<string-array name="keyboard_defaultstate">
+		<item>true</item>
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
@@ -243,7 +250,20 @@
 		<item>dayi</item>
 		<item>phonetic</item>
 		<item>ez</item>
+		<item>array</item>
 	</string-array>
+	<string-array name="table_codes">
+		<item>mapping</item>
+		<item>cj</item>
+		<item>dayi</item>
+		<item>phonetic</item>
+		<item>ez</item>
+		<item>array</item>
+		<item>related</item>
+		<item>dictionary</item>
+	</string-array>
+    
+	
     <string-array name="similiar_codes">
 		<item>10</item>
 		<item>20</item>
@@ -259,6 +279,7 @@
 		<item>Dayi</item>
 		<item>Phonetic</item>
 		<item>Eazy</item>
+		<item>Array</item>
 		<item>Preload related words</item>
 		<item>Dictionary for English keyboard</item>
 	</string-array>

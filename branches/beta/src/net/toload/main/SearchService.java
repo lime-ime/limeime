@@ -48,9 +48,11 @@ public class SearchService extends Service {
 	
 	private static boolean SQLSELECT = true;
 	
-	private final static String TOTAL_RECORD = "total_record";
+	
 	
 	// Add by Jeremy '10, 3 ,27. Multi table extension.
+	/*
+	private final static String TOTAL_RECORD = "total_record";
 	private final static String CJ_TOTAL_RECORD = "cj_total_record";
 	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
 	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
@@ -62,11 +64,14 @@ public class SearchService extends Service {
 	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
 	private final static String EZ_MAPPING_VERSION = "ez_mapping_version";
 	private final static String RELATED_MAPPING_VERSION = "related_mapping_version";
-	private final static String MAPPING_LOADING = "mapping_loading";
-	private final static String CANDIDATE_SUGGESTION = "candidate_suggestion";
-	private final static String LEARNING_SWITCH = "learning_switch";
 	
-	private final static String HanConvertOption = "han_convert_option";
+	*/
+	//private final static String MAPPING_LOADING = "mapping_loading";
+	//private final static String CANDIDATE_SUGGESTION = "candidate_suggestion";
+	//private final static String LEARNING_SWITCH = "learning_switch";
+	
+	
+	//private final static String HanConvertOption = "han_convert_option";
 
 	
 	private LimeDB db = null;
@@ -83,10 +88,13 @@ public class SearchService extends Service {
 
 	private NotificationManager notificationMgr;
 	
+	private LIMEPreferenceManager mLIMEPref;
+	
 	private static SearchServiceImpl obj = null;
 
 	private static int recAmount = 0;
 	private static boolean softkeypressed;
+
 
 	public class SearchServiceImpl extends ISearchService.Stub {
 
@@ -94,7 +102,9 @@ public class SearchService extends Service {
 		Context ctx = null;
 
 		SearchServiceImpl(Context ctx) {
-			this.ctx = ctx;
+			this.ctx = ctx;	
+			mLIMEPref = new LIMEPreferenceManager(ctx);
+			
 		}
 		
 		public String hanConvert(String input){
@@ -107,8 +117,8 @@ public class SearchService extends Service {
 				}
 				hanConverter = new LimeHanConverter(ctx);
 				}
-			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-			Integer hanConvertOption = Integer.parseInt(sp.getString(HanConvertOption, "0"));
+			//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+			Integer hanConvertOption = mLIMEPref.getHanCovertOption(); //Integer.parseInt(sp.getString(HanConvertOption, "0"));
 			
 			return hanConverter.convert(input, hanConvertOption);
 			
@@ -184,20 +194,18 @@ public class SearchService extends Service {
 		
 		public List query(String code, boolean softkeyboard) throws RemoteException {
 			
-			//if(mappingIdx == null){mappingIdx = new HashMap();}
-
-			SharedPreferences sp1 = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-			String loadingstatus = sp1.getString(MAPPING_LOADING, "");
-			//Log.i("ART","Loading Status : " + loadingstatus);
-
+			if(db == null){loadLimeDB();}
+			
 			List<Mapping> result = new LinkedList();
 			// Modified by Jeremy '10, 3, 28.  yes-> .. The database is loading (yes) and finished (no).
-			if(code != null && loadingstatus != null && loadingstatus.equalsIgnoreCase("no")){
+			//if(code != null && loadingstatus != null && loadingstatus.equalsIgnoreCase("no")){
+			if(code!=null && !mLIMEPref.getMappingLoading() ) {
 				// clear mappingidx when user switching between softkeyboard and hard keyboard.
 				if(softkeypressed != softkeyboard){
 					get_mappingIdx().clear();
 					softkeypressed = softkeyboard;
 				}
+				/*
 				if(recAmount == 0){
 					try{
 						recAmount = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(ctx).getString("similiar_list", "150"));				
@@ -211,8 +219,9 @@ public class SearchService extends Service {
 						recAmount = tempRecAmount;
 					}catch(Exception e){e.printStackTrace();}
 				}
-	
-				if(db == null){loadLimeDB();}
+				*/
+				recAmount = mLIMEPref.getSimilarCodeCandidates();
+			
 	
 				if (code != null) {
 					Mapping temp = new Mapping();
@@ -285,23 +294,15 @@ public class SearchService extends Service {
 				 String pword, int score, boolean isDictionary)
 				throws RemoteException {
 			
-			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-			boolean item = sp.getBoolean(LEARNING_SWITCH, false);
+			//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+			//boolean item = sp.getBoolean(LEARNING_SWITCH, false);
 				
-			if(item){
+			if(mLIMEPref.getSortSuggestions()){
 				//Log.i("ART", "Update mapping : " + code);
-					
-					/* do this already in query
-					if(code != null){
-						code = code.toUpperCase();
-					}
-					*/
-					
-					Mapping temp = new Mapping();
+						Mapping temp = new Mapping();
 							      temp.setId(id);
 							      temp.setCode(code);
 							      temp.setWord(word);
-							      //temp.setPcode(pcode);
 							      temp.setPword(pword);
 							      temp.setScore(score);
 							      temp.setDictionary(isDictionary);
@@ -367,9 +368,9 @@ public class SearchService extends Service {
 	public void updateUserDict() throws RemoteException {
 			if(db == null){loadLimeDB();}
 			if(diclist.size() > 1){
-				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-				boolean item = sp.getBoolean(CANDIDATE_SUGGESTION, false);
-				if(item){
+				//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+				//boolean item = sp.getBoolean(CANDIDATE_SUGGESTION, false);
+				if(mLIMEPref.getLearnRelatedWord()){
 					db.addUserDict(diclist);
 				}
 			}

@@ -9,22 +9,7 @@ import android.content.SharedPreferences;
 
 public class FileUtilities {
 	
-	private final static String CJ_TOTAL_RECORD = "cj_total_record";
-	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
-	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
-	private final static String TOTAL_RELATED = "total_related";
-	private final static String RELATED_TOTAL_RECORD = "related_total_record";
-	private final static String DICTIONARY_TOTAL_RECORD = "dictionary_total_record";
-	private final static String MAPPING_VERSION = "mapping_version";
-	private final static String CJ_MAPPING_VERSION = "cj_mapping_version";
-	private final static String BPMF_MAPPING_VERSION = "bmpf_mapping_version";
-	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
-	private final static String EZ_MAPPING_VERSION = "ez_mapping_version";
-	private final static String DICTIONARY_VERSION = "dictionary_version";
-	private final static String RELATED_MAPPING_VERSION = "related_mapping_version";
-	private final static String MAPPING_LOADING = "mapping_loading";
-	private final static String CANDIDATE_SUGGESTION = "candidate_suggestion";
-	private final static String LEARNING_SWITCH = "learning_switch";
+	
 	
 	public File isFileNotExist(String filepath){
 		
@@ -81,19 +66,16 @@ public class FileUtilities {
 			catch(Exception e){      
 	    		e.printStackTrace();   
 	        }   
-			SharedPreferences version = null, count = null;
-			version = ctx.getSharedPreferences(BPMF_MAPPING_VERSION, 0);
-			version.edit().putString(BPMF_MAPPING_VERSION, "¹w¸üª`­µ").commit();
-			count = ctx.getSharedPreferences(BPMF_TOTAL_RECORD, 0);
-			count.edit().putString(BPMF_TOTAL_RECORD, "14149").commit();
-			version = ctx.getSharedPreferences(RELATED_MAPPING_VERSION, 0);
-			version.edit().putString(RELATED_MAPPING_VERSION, "»Å­µµü®w§R´îª©").commit();
-			count = ctx.getSharedPreferences(RELATED_TOTAL_RECORD, 0);
-			count.edit().putString(RELATED_TOTAL_RECORD, "44624").commit();
-			version = ctx.getSharedPreferences(DICTIONARY_VERSION, 0);
-			version.edit().putString(DICTIONARY_VERSION, "wordfrequency.info(core)").commit();
-			count = ctx.getSharedPreferences(DICTIONARY_TOTAL_RECORD, 0);
-			count.edit().putString(DICTIONARY_TOTAL_RECORD, "5000").commit();
+			
+			//
+			LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(ctx);
+			mLIMEPref.setTableTotalRecords("phonetic", "14149");
+			mLIMEPref.setTableTotalRecords("related", "44624");
+			mLIMEPref.setTableTotalRecords("dictionary", "5000");
+			mLIMEPref.setTableVersion("phonetic", "¹w¸üª`­µ");
+			mLIMEPref.setTableVersion("related", "»Å­µµü®w§R´îª©");
+			mLIMEPref.setTableVersion("dictionary", "wordfrequency.info(core)");
+			
 		}
 	}
 

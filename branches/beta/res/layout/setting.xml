@@ -142,6 +142,29 @@
 					android:layout_height="wrap_content" android:id="@+id/bpmftxtInfoAmount"></TextView>
 			</LinearLayout>
 		</TableRow>
+		
+		<TableRow android:id="@+id/TableRow24" android:layout_width="wrap_content"
+			android:layout_height="wrap_content">
+			<LinearLayout android:id="@+id/LinearLayout01"
+				android:layout_height="wrap_content" android:layout_width="fill_parent">
+				<TextView android:id="@+id/TextView02"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="@string/lime_setting_operation_info1_array"></TextView>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/arraytxtInfoVersion"></TextView>
+			</LinearLayout>
+		</TableRow>
+		<TableRow android:id="@+id/TableRow25" android:layout_width="wrap_content"
+			android:layout_height="wrap_content">
+			<LinearLayout android:id="@+id/LinearLayout02"
+				android:layout_height="wrap_content" android:layout_width="fill_parent">
+				<TextView android:id="@+id/TextView04"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="@string/lime_setting_operation_info2"></TextView>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/arraytxtInfoAmount"></TextView>
+			</LinearLayout>
+		</TableRow>
 
 		<TableRow android:id="@+id/TableRow19" android:layout_width="wrap_content"
 			android:layout_height="wrap_content">
@@ -188,6 +211,9 @@
 					android:layout_height="wrap_content" android:id="@+id/dictionarytxtInfoAmount"></TextView>
 			</LinearLayout>
 		</TableRow>
+		
+		
+		
 
 
 

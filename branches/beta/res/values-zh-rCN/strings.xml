@@ -25,6 +25,7 @@
     <string name="lime_setting_operation_info1_dayi">大易对应表版本: </string>
     <string name="lime_setting_operation_info1_bpmf">注音对应表版本: </string>
     <string name="lime_setting_operation_info1_ez">轻松对应表版本: </string>
+    <string name="lime_setting_operation_info1_array">行列对应表版本: </string>
     <string name="lime_setting_operation_info1_related">预载关联字库版本: </string>
     <string name="lime_setting_operation_info1_dictionary">英文键盘字库版本: </string>
     <string name="lime_setting_operation_info2">总笔数 : </string> 
@@ -103,6 +104,8 @@
     <string name="dayi_reverse_lookup_list">大易反查</string>
     <string name="bpmf_reverse_lookup_list">注音反查</string>
     <string name="ez_reverse_lookup_list">轻松反查</string>
+    <string name="array_reverse_lookup_list">行列反查</string>
+    
     <string name="han_convert_option_list">简繁转换</string>
     
     <string name="table_list">对应表选取</string>
@@ -145,6 +148,7 @@
 		<item>大易</item>
 		<item>注音</item>
 		<item>轻松</item>
+		<item>行列</item>
 	</string-array>
 
     <!-- Keyboard Selection List -->
@@ -155,6 +159,7 @@
 		<item>大易键盘</item>
 		<item>注音键盘</item>
 		<item>轻松键盘</item>
+		<item>行列键盘</item>
 	</string-array>
 
 	
@@ -165,6 +170,7 @@
 		<item>大易</item>
 		<item>注音</item>
 		<item>轻松</item>
+		<item>行列</item>
 		<item>预载关联字库</item>
 		<item>英文键盘字库</item>
 	</string-array>
