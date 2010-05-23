@@ -120,7 +120,7 @@ public class LIMEService extends InputMethodService implements
 	
 	private boolean keydown = false;
 
-	private long mLastShiftTime;
+	//private long mLastShiftTime;
 	private long mMetaState;
     private boolean mJustAccepted;
     private CharSequence mJustRevertedSeparator;
@@ -672,11 +672,18 @@ public class LIMEService extends InputMethodService implements
 			mComposing.setLength(0);
             mWord.reset();
             postUpdateSuggestions();
+            if(mPredicting)  {TextEntryState.reset();}
 			InputConnection ic = getCurrentInputConnection();
 			if (ic != null) {
 				ic.finishComposingText();
 			}
-		}
+		
+        } else if (!mPredicting && !mJustAccepted
+                && TextEntryState.getState() == TextEntryState.STATE_ACCEPTED_DEFAULT) {
+            TextEntryState.reset();
+        }
+        mJustAccepted = false;
+        updateShiftKeyState(getCurrentInputEditorInfo());
 	}
 
 	
