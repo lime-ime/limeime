@@ -83,24 +83,24 @@ public class LIMEPreferenceManager {
 	}
 	
 	
-	public int getTotalUserdictRecords(){
+	public String getTotalUserdictRecords(){
 
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		int records = Integer.parseInt( sp.getString("total_userdict_record", "0"));
-		if(records ==0 ){
+		String records = sp.getString("total_userdict_record", "0");
+		if(records.equals("0") ){
 			SharedPreferences ssp = ctx.getSharedPreferences("total_userdict_record", 0);
-			records = Integer.parseInt( ssp.getString("total_userdict_record", "0"));
-			if(records!=0) setTotalUserdictRecords(records);
+			records = ssp.getString("total_userdict_record", "0");
+			if(records.equals("0")) setTotalUserdictRecords(String.valueOf(records));
 		}
 		return records;
 			
 	}
-	public void setTotalUserdictRecords(int records){
+	public void setTotalUserdictRecords(String records){
 
 		//SharedPreferences sp = ctx.getSharedPreferences("total_userdict_record", 0);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString("total_userdict_record", String.valueOf(records)).commit();	
+		sp.edit().putString("total_userdict_record", records).commit();	
 	}
 	
 	public boolean getMappingLoading(){
