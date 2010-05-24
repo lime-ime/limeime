@@ -2114,13 +2114,13 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}else{
 			if (!mEnglishOnly) {
 				// Shift keyboard already sent uppercase characters
-				/*
-				if (isInputViewShown()) {
+				
+				if (isInputViewShown()&&keyboardSelection.equals("lime")) {
 					if (mInputView.isShifted()) {
 						primaryCode = Character.toUpperCase(primaryCode);
 					}
 				}
-				*/
+				
 				if(DEBUG){
 					Log.i("HandleCharacter",
 							"isValidLetter:" +isValidLetter(primaryCode)

@@ -273,9 +273,7 @@ public class DBService extends Service {
 			
 			//Should do this at dbservice
 			//db.deleteDictionaryAll();
-			displayNotificationMessage(ctx
-					.getText(R.string.lime_setting_restore_message)
-					+ "");
+			displayNotificationMessage(ctx.getText(R.string.lime_setting_restore_message)+ "");
 			
 			if (db == null) {
 				loadLimeDB();

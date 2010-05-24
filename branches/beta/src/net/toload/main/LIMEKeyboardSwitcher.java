@@ -135,7 +135,7 @@ public class LIMEKeyboardSwitcher {
         mPreferSymbols = mode == MODE_SYMBOLS;
         mIsChinese = (mode == MODE_TEXT_DEFAULT ||mode == MODE_TEXT_DEFAULT_NUMBER 
         		|| mode == MODE_TEXT_PHONETIC ||mode == MODE_TEXT_DAYI ||mode == MODE_TEXT_ARRAY 
-        		||mode == MODE_TEXT_EZ ||mode == MODE_TEXT_CJ || mode == MODE_TEXT_PHONE);
+        		||mode == MODE_TEXT_EZ ||mode == MODE_TEXT_CJ ||mode == MODE_TEXT_CJ_NUMBER || mode == MODE_TEXT_PHONE);
         mIsAlphabet = ( mode == MODE_TEXT || mode== MODE_URL 
         		|| mode == MODE_EMAIL || mode == MODE_IM || mode == MODE_PHONE );
         if(mIsChinese) mChnMode = mode;
