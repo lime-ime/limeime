@@ -186,8 +186,8 @@ public class LIMEService extends InputMethodService implements
 	
 	
 	// Hard Keyboad Shift + Space Status
-	private boolean hasShiftPress = false;
-	private boolean hasSpacePress = false;
+	//private boolean hasShiftPress = false;
+	//private boolean hasSpacePress = false;
 
 	
 	private String keyboardSelection;
@@ -958,14 +958,13 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		// keep track of alt state with mHasAlt.
 		// Modified '10, 3, 24 for bug fix and alc-lock implementation
 		case KeyEvent.KEYCODE_SHIFT_LEFT:
-			hasShiftPress = true;
+			//hasShiftPress = true;
 		case KeyEvent.KEYCODE_SHIFT_RIGHT:
-			hasShiftPress = true;
+			//hasShiftPress = true;
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,
 					keyCode, event);
-			//handleAlt();
 			
 			break;
 		case KeyEvent.KEYCODE_ENTER:
@@ -999,26 +998,27 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		
 			break;
 		case KeyEvent.KEYCODE_SPACE:
-			hasSpacePress = true;
+			//hasSpacePress = true;
 			
 			// If user enable Quick Switch Mode control then check if has Shift+Space combination
 			if(hasQuickSwitch){
-				if(hasSpacePress && hasShiftPress){
+				//if(hasSpacePress && hasShiftPress){
+				if( LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_SHIFT_ON)>0 ){
 					this.switchChiEng();
-					hasShiftPress = false;
-					hasSpacePress = false;
-				}else{
+					//hasShiftPress = false;
+					//hasSpacePress = false;
+				}//else{
 					// If no shift press then reset
-					hasShiftPress = false;
-					hasSpacePress = false;
-				}
+					//hasShiftPress = false;
+					//hasSpacePress = false;
+				//}
 			}
 			
 		default:
 
 			// Reset flags 
-			hasShiftPress = false;
-			hasSpacePress = false;
+			//hasShiftPress = false;
+			//hasSpacePress = false;
 			
 			
 		}
@@ -1792,7 +1792,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		if (mInputView == null) { return; }
 		
 		if ((mKeyboardSwitcher.isAlphabetMode()&&!mKeyboardSwitcher.isSymbols())
-				||(keyboardSelection.equals("lime")&&mKeyboardSwitcher.isChinese())) {
+				||(keyboardSelection.equals("lime") && !hasNumberKeypads &&mKeyboardSwitcher.isChinese())) {
             // Alphabet keyboard
             checkToggleCapsLock();
             mInputView.setShifted(mCapsLock || !mInputView.isShifted());
@@ -2235,7 +2235,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
     private void toggleCapsLock() {
         mCapsLock = !mCapsLock;
         if ((mKeyboardSwitcher.isAlphabetMode()&&!mKeyboardSwitcher.isSymbols())
-        		||(keyboardSelection.equals("lime")&&mKeyboardSwitcher.isChinese())) {
+        		||(keyboardSelection.equals("lime") && !hasNumberKeypads && mKeyboardSwitcher.isChinese())) {
             ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(mCapsLock);
             mInputView.setKeyboard(mInputView.getKeyboard());//instead of invalidateAllKeys();
         }else  {
