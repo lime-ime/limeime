@@ -70,11 +70,11 @@ public class FileUtilities {
 			//
 			LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(ctx);
 			mLIMEPref.setTableTotalRecords("phonetic", "14149");
-			mLIMEPref.setTableTotalRecords("related", "44624");
-			mLIMEPref.setTableTotalRecords("dictionary", "5000");
+			mLIMEPref.setTableTotalRecords("related", "66943");
+			mLIMEPref.setTableTotalRecords("dictionary", "20000");
 			mLIMEPref.setTableVersion("phonetic", "¹w¸üª`­µ");
 			mLIMEPref.setTableVersion("related", "»Å­µµü®w§R´îª©");
-			mLIMEPref.setTableVersion("dictionary", "wordfrequency.info(core)");
+			mLIMEPref.setTableVersion("dictionary", "Wikitionary TV/Movies");
 			
 		}
 	}

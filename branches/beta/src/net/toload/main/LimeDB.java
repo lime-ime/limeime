@@ -1632,7 +1632,8 @@ public List<Mapping> getMapping(String keyword, int relatedCodeLimit, boolean so
 								if (word == null || word.trim().equals("")) {continue;}else{word = word.trim();}
 								// Add by Jeremy '10, 3 , 27
 								// use %cname as mapping_version of .cin
-								if (code.equalsIgnoreCase("@VERSION@")||code.equalsIgnoreCase("%cname")){
+								// Jeremy '10, 5, 30.  use contains to avoid UNICODE BOM
+								if (code.toUpperCase().contains("@VERSION@")||code.toLowerCase().contains("%cname")){
 									
 								mLIMEPref.setTableVersion(table, word.trim());
 								// Add by Jeremy '10,3, 28 for multi-table extension	

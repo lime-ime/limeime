@@ -137,7 +137,11 @@ public class LIMEPreferenceManager {
 		//if(table.equals("mapping")) table = "default";
 		//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getString(table + "_im_reverselookup", "none");
+		if(table.equals("phonetic")){
+			return sp.getString("bpmf_im_reverselookup", "none");
+		}else{
+			return sp.getString(table + "_im_reverselookup", "none");
+		}
 	}
 	
 	
