@@ -1167,8 +1167,13 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	private boolean isValidSymbol(int code) {
 		String checkCode = String.valueOf((char) code);
 		// code has to < 256, a ascii character
-		if ( code <256 && checkCode.matches(".*?[^A-Z]") && checkCode.matches(".*?[^a-z]")
-				&& checkCode.matches(".*?[^0-9]") && code != 32 ) {
+		//if ( code < 256 && code > 0x20 && checkCode.matches(".*?[^A-Z]") && checkCode.matches(".*?[^a-z]")
+		//		&& checkCode.matches(".*?[^0-9]") ) {
+		if( (code > 0x21 && code < 0x30 )  //!"#$%&'()*+`0./
+			|| (code > 0x39 && code < 0x41 ) // :'<=>?@
+			|| (code > 0x5A && code < 0x61 ) // [\]^_'
+			|| (code > 0x7A && code < 0x7F ) // {|}~
+				){
 			return true;
 		} else {
 			return false;
@@ -1973,148 +1978,11 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		
 		// If keyboard type = phone then check the user selection
 		if( keyboardSelection.equals("phone")){
-			try{      
-				SharedPreferences sp1 = getSharedPreferences(PREF, 0);
-				String xyvalue = sp1.getString("xy", "");
-				this.keyUpX = Float.parseFloat(xyvalue.split(",")[0]);
-				this.keyUpY = Float.parseFloat(xyvalue.split(",")[1]);
-			}catch(Exception e){
-				e.printStackTrace();
-			}
-			
-			float directionX = keyDownX - keyUpX;
-			float directionY = keyDownY - keyUpY;
-
-			int result = 0;
-			// Only when keyboard type equal "Phone"
-			if( (keyDownX - keyUpX) > moveLength || 
-				(keyUpX - keyDownX) > moveLength ||
-				(keyDownY - keyUpY) > moveLength || 
-				(keyUpY - keyDownY) > moveLength ){
-				
-				if(keyDownCode == 40){
-					result = handleSelection(directionX, directionY, new String[]{"[",")","(","]"});
-				}else if(keyDownCode == 44){
-					result = handleSelection(directionX, directionY, new String[]{"?",".",";","\\"});
-				}else if(keyDownCode == 48){
-					result = handleSelection(directionX, directionY, new String[]{"^","}","~","{"});
-				}else if(keyDownCode == 49){
-					result = handleSelection(directionX, directionY, new String[]{"!","1","@","#"});
-				}else if(keyDownCode == 50){
-					if(mHasShift){
-						result = handleSelection(directionX, directionY, new String[]{"B","2","A","C"});
-					}else{
-						result = handleSelection(directionX, directionY, new String[]{"b","2","a","c"});
-					}
-				}else if(keyDownCode == 51){
-					if(mHasShift){
-						result = handleSelection(directionX, directionY, new String[]{"E","3","D","F"});
-					}else{
-						result = handleSelection(directionX, directionY, new String[]{"e","3","d","f"});
-					}
-				}else if(keyDownCode == 52){
-					if(mHasShift){
-						result = handleSelection(directionX, directionY, new String[]{"H","4","G","I"});
-					}else{
-						result = handleSelection(directionX, directionY, new String[]{"h","4","g","i"});
-					}
-				}else if(keyDownCode == 53){
-					if(mHasShift){
-						result = handleSelection(directionX, directionY, new String[]{"K","5","J","L"});
-					}else{
-						result = handleSelection(directionX, directionY, new String[]{"k","5","j","l"});
-					}
-				}else if(keyDownCode == 54){
-					if(mHasShift){
-						result = handleSelection(directionX, directionY, new String[]{"N","6","M","O"});
-					}else{
-						result = handleSelection(directionX, directionY, new String[]{"n","6","m","o"});
-					}
-				}else if(keyDownCode == 55){
-					if(mHasShift){
-						result = handleSelection(directionX, directionY, new String[]{"Q","S","P","R"});
-					}else{
-						result = handleSelection(directionX, directionY, new String[]{"q","s","p","r"});
-					}
-				}else if(keyDownCode == 56){
-					if(mHasShift){
-						result = handleSelection(directionX, directionY, new String[]{"U","8","T","V"});
-					}else{
-						result = handleSelection(directionX, directionY, new String[]{"u","8","t","v"});
-					}
-				}else if(keyDownCode == 57){
-					if(mHasShift){
-						result = handleSelection(directionX, directionY, new String[]{"X","Z","W","Y"});
-					}else{
-						result = handleSelection(directionX, directionY, new String[]{"x","z","w","y"});
-					}
-				}else if(keyDownCode == 61){
-					result = handleSelection(directionX, directionY, new String[]{"-","/","+","*"});
-				}
-				primaryCode = result;
-			}
-			
-
-			if (!mEnglishOnly) {
-				if (isInputViewShown()) {
-					if (mInputView.isShifted()) {
-						primaryCode = Character.toUpperCase(primaryCode);
-					}
-				}
-	
-				if (!hasSymbolMapping && !hasNumberMapping
-						&& isValidLetter(primaryCode) && onIM) {
-					mComposing.append((char) primaryCode);
-					getCurrentInputConnection().setComposingText(mComposing, 1);
-					//updateShiftKeyState(getCurrentInputEditorInfo());
-					postUpdateSuggestions();
-					misMatched = mComposing.toString();
-				} else if (!hasSymbolMapping
-						&& hasNumberMapping
-						&& (isValidLetter(primaryCode) || isValidDigit(primaryCode))
-						&& onIM) {
-					mComposing.append((char) primaryCode);
-					getCurrentInputConnection().setComposingText(mComposing, 1);
-					//updateShiftKeyState(getCurrentInputEditorInfo());
-					postUpdateSuggestions();
-					misMatched = mComposing.toString();
-				} else if (hasSymbolMapping
-						&& !hasNumberMapping
-						&& (isValidLetter(primaryCode) || isValidSymbol(primaryCode))
-						&& onIM) {
-					mComposing.append((char) primaryCode);
-					getCurrentInputConnection().setComposingText(mComposing, 1);
-					//updateShiftKeyState(getCurrentInputEditorInfo());
-					postUpdateSuggestions();
-					misMatched = mComposing.toString();
-				} else if (hasSymbolMapping
-						&& hasNumberMapping
-						&& (isValidSymbol(primaryCode)
-								|| isValidLetter(primaryCode) || isValidDigit(primaryCode))
-						&& onIM) {
-					mComposing.append((char) primaryCode);
-					getCurrentInputConnection().setComposingText(mComposing, 1);
-					//updateShiftKeyState(getCurrentInputEditorInfo());
-					postUpdateSuggestions();
-					misMatched = mComposing.toString();
-				} else {
-					getCurrentInputConnection().commitText(
-							mComposing + String.valueOf((char) primaryCode), 1);
-				}
-			} else {
-				if (isInputViewShown()) {
-					if (mInputView.isShifted()) {
-						primaryCode = Character.toUpperCase(primaryCode);
-					}
-				}
-				getCurrentInputConnection().commitText(
-						String.valueOf((char) primaryCode), 1);
-			}
+			handleChacacterPhoneMode(primaryCode, keyCodes);
 			
 		}else{
 			if (!mEnglishOnly) {
 				// Shift keyboard already sent uppercase characters
-				
 				if (isInputViewShown()&&keyboardSelection.equals("lime")) {
 					if (mInputView.isShifted()) {
 						primaryCode = Character.toUpperCase(primaryCode);
@@ -2208,7 +2076,147 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		//updateShift(primaryCode);
 		updateShiftKeyState(getCurrentInputEditorInfo());
 	}
+	
+	private void handleChacacterPhoneMode(int primaryCode, int[] keyCodes) {
+		try{      
+			SharedPreferences sp1 = getSharedPreferences(PREF, 0);
+			String xyvalue = sp1.getString("xy", "");
+			this.keyUpX = Float.parseFloat(xyvalue.split(",")[0]);
+			this.keyUpY = Float.parseFloat(xyvalue.split(",")[1]);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		float directionX = keyDownX - keyUpX;
+		float directionY = keyDownY - keyUpY;
 
+		int result = 0;
+		// Only when keyboard type equal "Phone"
+		if( (keyDownX - keyUpX) > moveLength || 
+			(keyUpX - keyDownX) > moveLength ||
+			(keyDownY - keyUpY) > moveLength || 
+			(keyUpY - keyDownY) > moveLength ){
+			
+			if(keyDownCode == 40){
+				result = handleSelection(directionX, directionY, new String[]{"[",")","(","]"});
+			}else if(keyDownCode == 44){
+				result = handleSelection(directionX, directionY, new String[]{"?",".",";","\\"});
+			}else if(keyDownCode == 48){
+				result = handleSelection(directionX, directionY, new String[]{"^","}","~","{"});
+			}else if(keyDownCode == 49){
+				result = handleSelection(directionX, directionY, new String[]{"!","1","@","#"});
+			}else if(keyDownCode == 50){
+				if(mHasShift){
+					result = handleSelection(directionX, directionY, new String[]{"B","2","A","C"});
+				}else{
+					result = handleSelection(directionX, directionY, new String[]{"b","2","a","c"});
+				}
+			}else if(keyDownCode == 51){
+				if(mHasShift){
+					result = handleSelection(directionX, directionY, new String[]{"E","3","D","F"});
+				}else{
+					result = handleSelection(directionX, directionY, new String[]{"e","3","d","f"});
+				}
+			}else if(keyDownCode == 52){
+				if(mHasShift){
+					result = handleSelection(directionX, directionY, new String[]{"H","4","G","I"});
+				}else{
+					result = handleSelection(directionX, directionY, new String[]{"h","4","g","i"});
+				}
+			}else if(keyDownCode == 53){
+				if(mHasShift){
+					result = handleSelection(directionX, directionY, new String[]{"K","5","J","L"});
+				}else{
+					result = handleSelection(directionX, directionY, new String[]{"k","5","j","l"});
+				}
+			}else if(keyDownCode == 54){
+				if(mHasShift){
+					result = handleSelection(directionX, directionY, new String[]{"N","6","M","O"});
+				}else{
+					result = handleSelection(directionX, directionY, new String[]{"n","6","m","o"});
+				}
+			}else if(keyDownCode == 55){
+				if(mHasShift){
+					result = handleSelection(directionX, directionY, new String[]{"Q","S","P","R"});
+				}else{
+					result = handleSelection(directionX, directionY, new String[]{"q","s","p","r"});
+				}
+			}else if(keyDownCode == 56){
+				if(mHasShift){
+					result = handleSelection(directionX, directionY, new String[]{"U","8","T","V"});
+				}else{
+					result = handleSelection(directionX, directionY, new String[]{"u","8","t","v"});
+				}
+			}else if(keyDownCode == 57){
+				if(mHasShift){
+					result = handleSelection(directionX, directionY, new String[]{"X","Z","W","Y"});
+				}else{
+					result = handleSelection(directionX, directionY, new String[]{"x","z","w","y"});
+				}
+			}else if(keyDownCode == 61){
+				result = handleSelection(directionX, directionY, new String[]{"-","/","+","*"});
+			}
+			primaryCode = result;
+		}
+		
+
+		if (!mEnglishOnly) {
+			if (isInputViewShown()) {
+				if (mInputView.isShifted()) {
+					primaryCode = Character.toUpperCase(primaryCode);
+				}
+			}
+
+			if (!hasSymbolMapping && !hasNumberMapping
+					&& isValidLetter(primaryCode) && onIM) {
+				mComposing.append((char) primaryCode);
+				getCurrentInputConnection().setComposingText(mComposing, 1);
+				//updateShiftKeyState(getCurrentInputEditorInfo());
+				postUpdateSuggestions();
+				misMatched = mComposing.toString();
+			} else if (!hasSymbolMapping
+					&& hasNumberMapping
+					&& (isValidLetter(primaryCode) || isValidDigit(primaryCode))
+					&& onIM) {
+				mComposing.append((char) primaryCode);
+				getCurrentInputConnection().setComposingText(mComposing, 1);
+				//updateShiftKeyState(getCurrentInputEditorInfo());
+				postUpdateSuggestions();
+				misMatched = mComposing.toString();
+			} else if (hasSymbolMapping
+					&& !hasNumberMapping
+					&& (isValidLetter(primaryCode) || isValidSymbol(primaryCode))
+					&& onIM) {
+				mComposing.append((char) primaryCode);
+				getCurrentInputConnection().setComposingText(mComposing, 1);
+				//updateShiftKeyState(getCurrentInputEditorInfo());
+				postUpdateSuggestions();
+				misMatched = mComposing.toString();
+			} else if (hasSymbolMapping
+					&& hasNumberMapping
+					&& (isValidSymbol(primaryCode)
+							|| isValidLetter(primaryCode) || isValidDigit(primaryCode))
+					&& onIM) {
+				mComposing.append((char) primaryCode);
+				getCurrentInputConnection().setComposingText(mComposing, 1);
+				//updateShiftKeyState(getCurrentInputEditorInfo());
+				postUpdateSuggestions();
+				misMatched = mComposing.toString();
+			} else {
+				getCurrentInputConnection().commitText(
+						mComposing + String.valueOf((char) primaryCode), 1);
+			}
+		} else {
+			if (isInputViewShown()) {
+				if (mInputView.isShifted()) {
+					primaryCode = Character.toUpperCase(primaryCode);
+				}
+			}
+			getCurrentInputConnection().commitText(
+					String.valueOf((char) primaryCode), 1);
+		}
+	}
+	
 	private void handleClose() {
 		
 		// cancel candidate view if it's shown
