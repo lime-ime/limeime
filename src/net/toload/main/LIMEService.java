@@ -537,8 +537,10 @@ public class LIMEService extends InputMethodService implements
 		        int variation = attribute.inputType &  EditorInfo.TYPE_MASK_VARIATION;
 		        if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD ||
 		        		variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ) {
-		        	mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT,attribute.imeOptions);
+		        	mEnglishOnly = true;
+			        onIM = false;
 		        	mPredictionOn = false;
+		        	mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT,attribute.imeOptions);
 		        }
 		        if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
 		        		|| variation == EditorInfo.TYPE_TEXT_VARIATION_PERSON_NAME) {
@@ -700,25 +702,34 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public void onDisplayCompletions(CompletionInfo[] completions) {
 		if(DEBUG) Log.i("LIMEService:", "onDisplayCompletions()");
-		if (mCompletionOn) {
+		if (mEnglishOnly && mCompletionOn) {
             mCompletions = completions;
             if (completions == null) {
                 setSuggestions(null, false, false);
                 return;
             }
             
-            LinkedList<Mapping> stringList = new LinkedList<Mapping>();
+            LinkedList<Mapping> mappingList = new LinkedList<Mapping>();
+
 			for (int i = 0; i < (completions != null ? completions.length : 0); i++) {
 				CompletionInfo ci = completions[i];
-				if (ci != null)
+				if (ci != null){
+					Mapping cv = new Mapping();
+					cv.setWord(ci.getText().toString());
+					cv.setDictionary(true);
+					mappingList.add(cv);
+					/*
 					try {
 						stringList.addAll(SearchSrv.query(ci.getText().toString(), hasKeyPress));
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
+					*/
+				}
 			}
-			setSuggestions(stringList, true, true);
-        }
+			setSuggestions(mappingList, true, true);
+        
+		}
 		
 	}
 
@@ -1576,8 +1587,8 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			//mCandidateView.hideComposing();
 		}
 		
-		if (!mCompletionOn && mComposing.length() > 0) {
-			
+		//if (!mCompletionOn && mComposing.length() > 0) {
+		if (mComposing.length() > 0) {	
 			LinkedList<Mapping> list = new LinkedList<Mapping>();
 			
 			try {
