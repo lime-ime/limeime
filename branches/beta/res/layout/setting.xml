@@ -281,7 +281,8 @@
 				<Button android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:id="@+id/btnResetDictionary"
 					android:text="@string/lime_setting_reset_dictionary"></Button>
-			</LinearLayout>
+			<Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/download" android:text="Download"></Button>
+</LinearLayout>
 		</TableRow>
 	</TableLayout>
 

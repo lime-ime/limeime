@@ -202,6 +202,18 @@ public class LIMESetting extends Activity {
 			targetDir.mkdirs();
 		}
 		
+		Button btnDownload = (Button) this.findViewById(R.id.download);
+		btnDownload.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				try {
+					DBSrv.downloadEmptyDatabase();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		
 		// Copy raw .cin file into /sdcard/lime/
 		//copyRAWFile(getResources().openRawResource(R.raw.bpmf), localRoot + "/bpmf.cin" );
 		//copyRAWFile(getResources().openRawResource(R.raw.cj), localRoot + "/cj.cin" );
@@ -558,6 +570,7 @@ public class LIMESetting extends Activity {
 			File list[] = rootPath.listFiles();
 			for (File unit : list) {
 				if (unit.isDirectory()
+						|| (true)
 						|| (unit.isFile() && unit.getName().toLowerCase().endsWith(".lime"))
 						|| (unit.isFile() && unit.getName().toLowerCase().endsWith(".cin"))) {
 					templist.add(unit);
@@ -565,7 +578,7 @@ public class LIMESetting extends Activity {
 			}
 
 		} else if (check.exists() && check.isFile()
-				&& ( check.getName().toLowerCase().endsWith(".lime") || check.getName().toLowerCase().endsWith(".cin"))  ) {
+				&& (  true || check.getName().toLowerCase().endsWith(".lime") || check.getName().toLowerCase().endsWith(".cin"))  ) {
 
 			hasSelectFile = true;
 			

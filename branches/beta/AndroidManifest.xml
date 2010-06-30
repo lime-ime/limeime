@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="net.toload.main" 
-	android:versionName="2.1b" 
-	android:versionCode="100" 
+	android:versionName="3.0" 
+	android:versionCode="101" 
 	android:installLocation="auto"
 	>
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -11,6 +11,9 @@
 	<uses-permission android:name="android.permission.WRITE_USER_DICTIONARY" />
 	<uses-permission android:name="android.permission.WRITE_SETTINGS" />
 	<uses-permission android:name="android.permission.READ_CONTACTS"/>  
+	<uses-permission android:name="android.permission.INTERNET"/>  
+	<uses-permission android:name="android.permission.INSTALL_PACKAGES"/>  
+	<uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>  
 	
 
 	<application android:icon="@drawable/icon" android:label="@string/ime_name">

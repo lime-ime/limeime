@@ -215,8 +215,8 @@ public class LIMEKeyboardSwitcher {
                 if(isShifted) return new KeyboardId(R.xml.lime_dayi_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_dayi);
             case MODE_TEXT_ARRAY:
-                if(isShifted) return new KeyboardId(R.xml.lime_array_shift, 0, true);    
-                else return new KeyboardId(R.xml.lime_array);  
+                /*if(isShifted) return new KeyboardId(R.xml.lime_array_shift, 0, true);    
+                else return new KeyboardId(R.xml.lime_array);*/  
             case MODE_TEXT_PHONETIC:
                 if(isShifted) return new KeyboardId(R.xml.lime_phonetic_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_phonetic);

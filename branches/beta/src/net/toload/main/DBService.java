@@ -20,8 +20,17 @@
 
 package net.toload.main;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.zip.*;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -73,6 +82,16 @@ public class DBService extends Service {
 	private final static String DICTIONARY_VERSION = "dictionary_version";
 	private final static String MAPPING_LOADING = "mapping_loading";
 	*/
+	
+	private final String db_empty_url = "http://limeime.googlecode.com/svn/branches/database/empty.zip";
+	private final String db_preloaded_url = "http://limeime.googlecode.com/svn/branches/database/lime.zip";
+
+	private final String target_folder = "/sdcard/lime";
+	private final String target_lime_file = "lime.zip";
+	private final String target_empty_file = "empty.zip";
+	private final String target_decompress_folder = "/data/data/net.toload.main/databases";
+	private final String target_decompress_file = "lime.db";
+	
 	private NotificationManager notificationMgr;
 
 	private LimeDB db = null;
@@ -413,6 +432,115 @@ public class DBService extends Service {
 			db.backupRelatedUserdic();
 			db.close();
 		}
+
+		@Override
+		public void downloadEmptyDatabase() throws RemoteException {
+			File downloadedFile = this.downloadRemoteFile(db_empty_url, target_folder, target_empty_file);
+			if(decompressFile(downloadedFile, target_decompress_folder, target_decompress_file)){
+				downloadedFile.deleteOnExit();
+			}
+		}
+
+		@Override
+		public void downloadPreloadedDatabase() throws RemoteException {
+			File downloadedFile = this.downloadRemoteFile(db_preloaded_url, target_folder, target_empty_file);
+			if(decompressFile(downloadedFile, target_decompress_folder, target_decompress_file)){
+				downloadedFile.deleteOnExit();
+			}
+		}
+		
+		/*
+		 * Download Remote File
+		 */
+		public File downloadRemoteFile(String url, String folder, String filename){
+			
+			try {
+				
+				URL downloadUrl = new URL(url);
+				URLConnection conn = downloadUrl.openConnection();
+				conn.connect();
+				
+				InputStream is = conn.getInputStream();
+				
+				if(is == null){
+					throw new RuntimeException("stream is null");
+				}
+				
+				File downloadFolder = new File(folder);
+				if(!downloadFolder.exists()){
+					downloadFolder.mkdirs();
+				}
+				
+				File downloadedFile = new File(downloadFolder.getAbsolutePath() + File.separator + filename);
+					 downloadedFile.deleteOnExit();
+				
+				FileOutputStream fos = new FileOutputStream(downloadedFile);
+				byte buf[] = new byte[128];
+				do{
+					int numread = is.read(buf);
+					if(numread <=0){break;}
+					fos.write(buf, 0, numread);
+				}while(true);
+				
+				try{
+					is.close();
+				}catch(Exception e){
+					e.printStackTrace();
+				}
+				return downloadedFile;
+				
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (IOException e){
+				e.printStackTrace();
+			}
+			return null;
+			
+		}
+		
+		/*
+		 * Decompress retrieved file to target folder
+		 */
+		public boolean decompressFile(File sourceFile, String targetFolder, String targetFile){
+
+			try {   
+				
+				File targetFolderObj = new File(targetFolder);
+				if(!targetFolderObj.exists()){
+					targetFolderObj.mkdirs();
+				}
+				
+				FileInputStream fis = new FileInputStream(sourceFile); 
+				ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fis));
+				ZipEntry entry; 
+				while ((entry = zis.getNextEntry()) != null) {
+					
+					int size; 
+					byte[] buffer = new byte[2048]; 
+					
+					File OutputFile = new File(targetFolderObj.getAbsolutePath() + File.separator + targetFile);
+						 OutputFile.deleteOnExit();
+						 
+					FileOutputStream fos = new FileOutputStream(OutputFile); 
+					BufferedOutputStream bos = new BufferedOutputStream(fos, buffer.length); 
+					while ((size = zis.read(buffer, 0, buffer.length)) != -1) { 
+						bos.write(buffer, 0, size); 
+					} 
+					bos.flush(); 
+					bos.close(); 
+					
+					Log.i("ART","Output File:"+OutputFile.getAbsolutePath() + " / " + OutputFile.length());
+					
+				} 
+				zis.close(); 
+				fis.close(); 
+				return true;
+			} catch (IOException e) { 
+				e.printStackTrace(); 
+			}
+			return false;
+		}
+		
 	}
 
 	@Override
