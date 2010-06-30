@@ -46,7 +46,7 @@ public class FileUtilities {
 	           }   
 	     }
 	public void copyPreLoadLimeDB(Context ctx){
-		
+		/*
 		File dbDir = new File("/data/data/net.toload.main/databases");
 		if(!dbDir.exists()){
 			dbDir.mkdirs();
@@ -76,7 +76,7 @@ public class FileUtilities {
 			mLIMEPref.setTableVersion("related", "»Å­µµü®w§R´îª©");
 			mLIMEPref.setTableVersion("dictionary", "Wikitionary TV/Movies");
 			
-		}
+		}*/
 	}
 
 }

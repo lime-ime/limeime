@@ -350,7 +350,8 @@ public class CandidateView extends View {
         final int y = (int) (((height - mPaint.getTextSize()) / 2) - mPaint.ascent());
         
         if(mService.isEnglishOnlyMode())
-        	{ mPaint.setTextSize(res.getDimensionPixelSize(R.dimen.candidate_eng_font_height));}
+        	{ mPaint.setTextSize(res.getDimensionPixelSize(R.dimen.candidate_font_height));}
+    	    //{ mPaint.setTextSize(res.getDimensionPixelSize(R.dimen.candidate_eng_font_height));}
         else
         	{mPaint.setTextSize(res.getDimensionPixelSize(R.dimen.candidate_font_height));}
         // Modified by jeremy '10, 3, 29.  Update mselectedindex if touched and build wordX[i] and wordwidth[i]

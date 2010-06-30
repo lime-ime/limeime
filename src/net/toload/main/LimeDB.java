@@ -58,6 +58,12 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
+/*
+ * 
+http://limeime.googlecode.com/svn/branches/database/empty.zip
+http://limeime.googlecode.com/svn/branches/database/lime.zip
+ *
+ */
 
 /**
  * @author Art Hung
