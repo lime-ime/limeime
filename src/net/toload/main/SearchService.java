@@ -163,8 +163,8 @@ public class SearchService extends Service {
 		
 		private void loadLimeDB()
 		{	
-			FileUtilities fu = new FileUtilities();
-			fu.copyPreLoadLimeDB(ctx);			
+/*			FileUtilities fu = new FileUtilities();
+			fu.copyPreLoadLimeDB(ctx);	*/		
 			db = new LimeDB(ctx);
 		}
 		

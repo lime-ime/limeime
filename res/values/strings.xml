@@ -284,4 +284,22 @@
 		<item>Dictionary for English keyboard</item>
 	</string-array>
 	
+	<!-- Version 3 String Set -->
+    <string name="l3.message.initial_required">Please initialize the LIME database.</string>
+    
+    <string name="l3.tab.initial">Initial DB</string>
+    <string name="l3.initial.btn.load_empty_db">Empty Database</string>
+    <string name="l3.initial.btn.load_preload_db">Preload Database</string>
+    <string name="l3.initial.btn.reset_db">Reset Database</string>
+    
+    <string name="l3.tab.manage">Manage IM</string>
+    <string name="l3.manage.default">Custom</string>
+    <string name="l3.manage.phonetic">Phonetic</string>
+    <string name="l3.manage.cj">Changjei</string>
+    <string name="l3.manage.scj">SChangjei</string>
+    <string name="l3.manage.dayi">Dayi</string>
+    <string name="l3.manage.eazy">Eazy</string>
+    
+    <string name="l3.tab.preference">Preference</string>
+	
 </resources>

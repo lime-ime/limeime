@@ -83,14 +83,10 @@ public class DBService extends Service {
 	private final static String MAPPING_LOADING = "mapping_loading";
 	*/
 	
-	private final String db_empty_url = "http://limeime.googlecode.com/svn/branches/database/empty.zip";
-	private final String db_preloaded_url = "http://limeime.googlecode.com/svn/branches/database/lime.zip";
-
 	private final String target_folder = "/sdcard/lime";
 	private final String target_lime_file = "lime.zip";
 	private final String target_empty_file = "empty.zip";
 	private final String target_decompress_folder = "/data/data/net.toload.main/databases";
-	private final String target_decompress_file = "lime.db";
 	
 	private NotificationManager notificationMgr;
 
@@ -113,10 +109,11 @@ public class DBService extends Service {
 		
 		public void loadLimeDB()
 		{	
-			FileUtilities fu = new FileUtilities();
-			fu.copyPreLoadLimeDB(ctx);			
+			//fu = new FileUtilities();
+			//fu.copyPreLoadLimeDB(ctx);			
 			db = new LimeDB(ctx);
 		}
+		
 		public void loadMapping(String filename, String tablename) throws RemoteException {
 
 			// Start Loading
@@ -129,13 +126,13 @@ public class DBService extends Service {
 			//String sourcestatus = null;
 			//SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
 			//String importstatus = importset.getString(MAPPING_LOADING, "no");
-			if(tablename.equals("related")){
+			/*if(tablename.equals("related")){
 				db.deleteRelatedAll();
 			}else if(tablename.equals("dictionary")) {
 				db.deleteDictionaryAll();
 			}else{
 				db.deleteAll(tablename);
-			}
+			}*/
 			/*
 			if (importstatus.equals("no") && sourcestatus.equals("")) {
 				
@@ -144,9 +141,9 @@ public class DBService extends Service {
 			}else if (importstatus.equals("yes")){
 				db.deleteAll();
 			}*/
-			String secret = sourcefile.getName();
+			/*String secret = sourcefile.getName();
 			mLIMEPref.setTableMappingFilename(tablename, secret);
-			mLIMEPref.setTableTempMappingFilename(tablename, secret);
+			mLIMEPref.setTableTempMappingFilename(tablename, secret);*/
 			/*
 			SharedPreferences sourceset =null, sourcetempset= null;
 			if(tablename.equals("cj")){
@@ -189,11 +186,11 @@ public class DBService extends Service {
 			
 			db.setFilename(sourcefile);
 
-			displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading)+ "");
+			//displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading)+ "");
 
 			// Update Loading Status
 			// Stop and clear the existing thread.
-			if(thread!=null){
+			/*if(thread!=null){
 				thread.stop();
 				thread = null;
 			}
@@ -230,7 +227,7 @@ public class DBService extends Service {
 
 				}
 			};
-			thread.start();
+			thread.start();*/
 
 			// Actually run the loading
 			db.loadFile(tablename);
@@ -432,21 +429,36 @@ public class DBService extends Service {
 			db.backupRelatedUserdic();
 			db.close();
 		}
-
+		
+		File downloadedFile = null;
+		
 		@Override
-		public void downloadEmptyDatabase() throws RemoteException {
-			File downloadedFile = this.downloadRemoteFile(db_empty_url, target_folder, target_empty_file);
-			if(decompressFile(downloadedFile, target_decompress_folder, target_decompress_file)){
-				downloadedFile.deleteOnExit();
-			}
+		public void resetDownloadDatabase() throws RemoteException {
+			File delTargetFile1 = new File(target_decompress_folder + File.separator + LIME.DATABASE_NAME);
+			File delTargetFile2 = new File(target_folder + File.separator + target_empty_file);
+			File delTargetFile3 = new File(target_folder + File.separator + target_lime_file);
+			if(delTargetFile1.exists()){delTargetFile1.delete();}
+			if(delTargetFile2.exists()){delTargetFile2.delete();}
+			if(delTargetFile3.exists()){delTargetFile3.delete();}			
 		}
-
+		 
 		@Override
 		public void downloadPreloadedDatabase() throws RemoteException {
-			File downloadedFile = this.downloadRemoteFile(db_preloaded_url, target_folder, target_empty_file);
-			if(decompressFile(downloadedFile, target_decompress_folder, target_decompress_file)){
-				downloadedFile.deleteOnExit();
-			}
+			Thread threadTask = new Thread() {
+				public void run() {
+					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PRELOADED, target_folder, target_lime_file);
+					if(decompressFile(downloadedFile, target_decompress_folder, LIME.DATABASE_NAME)){
+						Thread threadTask = new Thread() {
+							public void run() {
+								downloadedFile.delete();
+							}
+						};
+						threadTask.start();
+					}
+					getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
+				}
+			};
+			threadTask.start();
 		}
 		
 		/*
@@ -472,7 +484,7 @@ public class DBService extends Service {
 				}
 				
 				File downloadedFile = new File(downloadFolder.getAbsolutePath() + File.separator + filename);
-					 downloadedFile.deleteOnExit();
+					 downloadedFile.delete();
 				
 				FileOutputStream fos = new FileOutputStream(downloadedFile);
 				byte buf[] = new byte[128];
@@ -519,7 +531,7 @@ public class DBService extends Service {
 					byte[] buffer = new byte[2048]; 
 					
 					File OutputFile = new File(targetFolderObj.getAbsolutePath() + File.separator + targetFile);
-						 OutputFile.deleteOnExit();
+						 OutputFile.delete();
 						 
 					FileOutputStream fos = new FileOutputStream(OutputFile); 
 					BufferedOutputStream bos = new BufferedOutputStream(fos, buffer.length); 

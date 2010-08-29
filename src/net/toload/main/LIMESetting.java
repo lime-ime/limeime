@@ -202,17 +202,6 @@ public class LIMESetting extends Activity {
 			targetDir.mkdirs();
 		}
 		
-		Button btnDownload = (Button) this.findViewById(R.id.download);
-		btnDownload.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				try {
-					DBSrv.downloadEmptyDatabase();
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-		
 		
 		// Copy raw .cin file into /sdcard/lime/
 		//copyRAWFile(getResources().openRawResource(R.raw.bpmf), localRoot + "/bpmf.cin" );
