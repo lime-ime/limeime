@@ -274,7 +274,7 @@ public class LIMEService extends InputMethodService implements
 		// load preference settings
 		loadSettings();
 		final Configuration conf = getResources().getConfiguration();
-		initSuggest(conf.locale.toString());
+		//initSuggest(conf.locale.toString());
 		
 		mVibrator = (Vibrator) getApplication().getSystemService(
 				Service.VIBRATOR_SERVICE);

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent" android:layout_height="fill_parent" android:gravity="center">
+  
+	<ScrollView android:id="@+id/ScrollView01"
+		android:layout_height="wrap_content" android:layout_width="fill_parent"
+		android:padding="5px">
+  
+  
+<TableLayout android:id="@+id/TableLayout01" android:layout_gravity="center" android:gravity="center" android:layout_height="wrap_content" android:layout_width="wrap_content"><TableRow android:id="@+id/TableRow01" android:padding="10px"><Button android:layout_width="fill_parent" android:layout_height="fill_parent" android:padding="20px" android:text="@string/l3.initial.btn.load_preload_db" android:id="@+id/btnInitPreloadDB"></Button></TableRow>
+<TableRow android:id="@+id/TableRow02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:padding="10px" android:gravity="center"><Button android:layout_width="fill_parent" android:layout_height="fill_parent" android:padding="20px" android:id="@+id/btnResetDB" android:text="@string/l3.initial.btn.reset_db"></Button></TableRow>
+</TableLayout>
+</ScrollView>
+
+</LinearLayout>

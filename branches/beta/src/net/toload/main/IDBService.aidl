@@ -7,7 +7,7 @@ interface IDBService
 	void executeUserBackup();
 	void restoreRelatedUserdic();
 	void resetUserBackup();
-	void downloadEmptyDatabase();
+	void resetDownloadDatabase();
 	void downloadPreloadedDatabase();
 	
 	 

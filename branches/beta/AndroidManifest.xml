@@ -44,7 +44,14 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
+		
 		<activity android:name=".LIMESetting" android:label="@string/ime_setting">
+		</activity>
+		<activity android:name=".LIMEInitial" android:label="@string/ime_setting">
+		</activity>
+		<activity android:name=".LIMEIMSetting" android:label="@string/ime_setting">
+		</activity>
+		<activity android:name=".LIMEMappingSetting" android:label="@string/ime_setting">
 		</activity>
 		<activity android:name=".LIMEPreference" android:label="@string/ime_setting">
 		</activity>

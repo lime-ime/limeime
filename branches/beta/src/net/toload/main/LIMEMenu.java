@@ -39,6 +39,7 @@ import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -73,14 +74,30 @@ public class LIMEMenu extends TabActivity {
         super.onCreate(savedInstanceState);
         
         final TabHost tabHost = getTabHost();
-        
-        tabHost.addTab(tabHost.newTabSpec("tab1")
-        		.setIndicator(this.getText(R.string.lime_setting_db))
-                .setContent(new Intent(this, LIMESetting.class)));
 
+        int tabno = 0;
+
+		SharedPreferences sp = getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0);
+		if(sp.getString(LIME.DATABASE_DOWNLOAD_STATUS, "false").equals("false")){
+			tabno = 2;
+		}
+		
+        tabHost.addTab(tabHost.newTabSpec("tab1")
+        		.setIndicator(this.getText(R.string.l3_tab_manage))
+                .setContent(new Intent(this, LIMEIMSetting.class)));
+        
         tabHost.addTab(tabHost.newTabSpec("tab2")
-        		.setIndicator(this.getText(R.string.lime_setting_preference))
-                .setContent(new Intent(this, LIMEPreference.class)));
+        		.setIndicator(this.getText(R.string.l3_tab_preference))
+        		.setContent(new Intent(this, LIMEPreference.class)));
+
+        tabHost.addTab(tabHost.newTabSpec("tab3")
+        		.setIndicator(this.getText(R.string.l3_tab_initial))
+                .setContent(new Intent(this, LIMEInitial.class)));
+
+        if(tabno != 0){
+            tabHost.setCurrentTab(tabno);
+        }
+        
     }
 	
 }
