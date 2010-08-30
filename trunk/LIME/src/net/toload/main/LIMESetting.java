@@ -665,7 +665,7 @@ public class LIMESetting extends Activity {
 
 		scrollSetting = (ScrollView) this.findViewById(R.id.SettingsView);
 		scrollSetting.setOnTouchListener(new OnTouchListener(){
-			@Override
+			
 			public boolean onTouch(View v, MotionEvent event) {
 				updateInformation();
 				return false;

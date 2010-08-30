@@ -279,7 +279,6 @@ public class MultiListPreference extends DialogPreference {
 					// make a "convenience" pointer, cause I'm lazy
 					private final MultiListPreference that = MultiListPreference.this;
 
-					@Override
 					public void onClick(DialogInterface dialog, int which, boolean isChecked) {
 						Log.d(TAG, "listItem_" + which + ".onClick(): " + isChecked);
 
