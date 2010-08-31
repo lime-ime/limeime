@@ -69,12 +69,10 @@ import android.content.res.Configuration;
 /**
  * @author Art Hung
  */
-public class LIMEService extends InputMethodService implements
-		KeyboardView.OnKeyboardActionListener {
+public class LIMEService extends InputMethodService implements KeyboardView.OnKeyboardActionListener {
 
 	static final boolean DEBUG =  false;
 	static final String PREF = "LIMEXY";
-	
 	
 	static final int KEYBOARD_SWITCH_CODE = -9;
 
@@ -1925,7 +1923,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		try {
 			String tablename = new String(keyboardSelection);
 			if(tablename.equals("lime") || tablename.equals("phone") ){
-				tablename = "mapping";
+				tablename = "custom";
 			}
 			SearchSrv.setTablename(tablename);
 		} catch (RemoteException e) {

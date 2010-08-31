@@ -1028,7 +1028,16 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 			
 			try {	
 				
-				if(remap3row){  // Ordinary without 3row keyboard remapping
+
+            	if(sort){
+            		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'" 
+                			,null, null, null, FIELD_SCORE + " DESC", null);
+            	}else{
+            		cursor = db.query(tablename, null, FIELD_CODE + " = \"" + keyword + "\"", 
+                    		null, null, null, null, null);
+            	}
+				
+				/*if(remap3row){  // Ordinary without 3row keyboard remapping
 	            	if(sort){
 	            		cursor = db.query(tablename, null, FIELD_CODE + " = '" + keyword + "'" 
 	                			,null, null, null, FIELD_SCORE + " DESC", null);
@@ -1047,7 +1056,7 @@ private void prepareQuery(SQLiteDatabase db, String code, String nextCode, int r
 	                			+" OR " + FIELD_CODE3R + " = '" + keyword + "'" 
 	                			,null, null, null, null, null);
 	            	}
-	            }
+	            }*/
 	            
 	            result = buildQueryResult(cursor);
             

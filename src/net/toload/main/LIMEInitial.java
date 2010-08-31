@@ -91,6 +91,8 @@ public class LIMEInitial extends Activity {
 	private IDBService DBSrv = null;
 	Button btnInitPreloadDB = null;
 	Button btnResetDB = null;
+	Button btnBackupDB = null;
+	Button btnRestoreDB = null;
 	
 	boolean hasReset = false;
 	
@@ -155,6 +157,40 @@ public class LIMEInitial extends Activity {
 			}
 		});
 		
+		
+		btnBackupDB.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				try {
+					File srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+					if(srcFile.exists() && srcFile.length() > 1024){
+						Toast.makeText(v.getContext(), "Backup LIME Database", Toast.LENGTH_LONG).show();
+						DBSrv.backupDatabase();
+					}else{
+						Toast.makeText(v.getContext(), "You don have database to be backup.", Toast.LENGTH_LONG).show();
+					}
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		btnRestoreDB.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				try {
+					File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
+					if(srcFile.exists() && srcFile.length() > 1024){
+						Toast.makeText(v.getContext(), "Restore LIME Database", Toast.LENGTH_LONG).show();
+						DBSrv.restoreDatabase();
+					}else{
+						Toast.makeText(v.getContext(), "You don't have backup to be restore.", Toast.LENGTH_LONG).show();
+					}
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		
 
 	}
 
@@ -168,7 +204,6 @@ public class LIMEInitial extends Activity {
 		initialButton();
 	}
 	
-
 
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onStart()
@@ -185,7 +220,9 @@ public class LIMEInitial extends Activity {
 		// Check if button 
 		if(btnResetDB == null){
 			btnResetDB = (Button) findViewById(R.id.btnResetDB);
-			btnInitPreloadDB = (Button) findViewById(R.id.btnInitPreloadDB);		
+			btnInitPreloadDB = (Button) findViewById(R.id.btnInitPreloadDB);	
+			btnBackupDB = (Button) findViewById(R.id.btnBackupDB);
+			btnRestoreDB = (Button) findViewById(R.id.btnRestoreDB);	
 		}
 		
 		SharedPreferences sp = getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0);

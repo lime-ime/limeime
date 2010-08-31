@@ -784,7 +784,7 @@ public class LIMESetting extends Activity {
 				showTablePicker(COMMAND_RESET_TABLE);
 				updateInformation();
 			}
-		});
+		});/*
 
 		// Handle Reset Dictionary
 		btnResetDictionary = (Button) this.findViewById(R.id.btnResetDictionary);
@@ -805,8 +805,8 @@ public class LIMESetting extends Activity {
 				}
 				updateInformation();
 			}
-		});
-
+		});*/
+/*
 		// Backup Related Database
 		btnBackup = (Button) this.findViewById(R.id.btnBackup);
 		btnBackup.setOnClickListener(new OnClickListener() {
@@ -827,8 +827,8 @@ public class LIMESetting extends Activity {
 				updateInformation();
 				//backgroundUpdate();
 			}
-		});
-		
+		});*/
+		/*
 		// Restore Related Database
 		btnRestore = (Button) this.findViewById(R.id.btnRestore);
 		btnRestore.setOnClickListener(new OnClickListener() {
@@ -849,7 +849,7 @@ public class LIMESetting extends Activity {
 				}
 				//backgroundUpdate();
 			}
-		});
+		});*/
 		
 		// Update Information
 		updateInformation();
