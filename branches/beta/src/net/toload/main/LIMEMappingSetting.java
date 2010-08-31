@@ -97,8 +97,6 @@ public class LIMEMappingSetting extends Activity {
 		Button btnEnableIM = null;
 		Button btnLoadMapping = null;
 		Button btnResetMapping = null;
-		Button btnBackupMapping = null;
-		Button btnRestoreMapping = null;
 		
 		private String imtype = null;
 		
@@ -161,20 +159,6 @@ public class LIMEMappingSetting extends Activity {
 				}
 			});
 
-			
-			btnBackupMapping.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					finish();
-				}
-			});
-
-			
-			btnRestoreMapping.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					finish();
-				}
-			});
-			
 		}
 		
 		/* (non-Javadoc)
@@ -205,8 +189,6 @@ public class LIMEMappingSetting extends Activity {
 			btnEnableIM =  (Button) findViewById(R.id.btnEnableIM);
 			btnLoadMapping =  (Button) findViewById(R.id.btnLoadMapping);
 			btnResetMapping =  (Button) findViewById(R.id.btnResetMapping);
-			btnBackupMapping =  (Button) findViewById(R.id.btnBackupMapping);
-			btnRestoreMapping =  (Button) findViewById(R.id.btnRestoreMapping);
 			
 			boolean hasIMLoaded = false;
 			if(imtype != null){
@@ -248,8 +230,6 @@ public class LIMEMappingSetting extends Activity {
 			}
 			
 			if(!hasIMLoaded){
-				btnBackupMapping.setEnabled(false);
-				btnRestoreMapping.setEnabled(false);
 				btnEnableIM.setEnabled(false);
 				btnDisableIM.setEnabled(false);
 				btnResetMapping.setEnabled(false);

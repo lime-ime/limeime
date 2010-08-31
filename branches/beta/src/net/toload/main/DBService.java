@@ -47,46 +47,6 @@ import android.os.RemoteException;
 import android.util.Log;
 
 public class DBService extends Service {
-	/*
-	// Add by Jeremy '10, 3 ,27. Multi table extension.
-	private final static String MAPPING_FILE_TEMP = "mapping_file_temp";
-	private final static String CJ_MAPPING_FILE_TEMP = "cj_mapping_file_temp";
-	private final static String DAYI_MAPPING_FILE_TEMP = "dayi_mapping_file_temp";
-	private final static String EZ_MAPPING_FILE_TEMP = "ez_mapping_file_temp";
-	private final static String BPMF_MAPPING_FILE_TEMP = "bpmf_mapping_file_temp";
-	private final static String RELATED_MAPPING_FILE_TEMP = "related_mapping_file_temp";
-	private final static String DICTIONARY_FILE_TEMP = "dictionary_file_temp";
-	private final static String MAPPING_FILE = "mapping_file";
-	// Add by Jeremy '10, 3 ,27. Multi table extension.
-	private final static String CJ_MAPPING_FILE = "cj_mapping_file";
-	private final static String BPMF_MAPPING_FILE = "bpmf_mapping_file";
-	private final static String DAYI_MAPPING_FILE = "dayi_mapping_file";
-	private final static String EZ_MAPPING_FILE = "ez_mapping_file";
-	private final static String RELATED_MAPPING_FILE = "related_mapping_file";
-	private final static String DICTIONARY_FILE = "dictionary_file";
-	//
-	private final static String TOTAL_RECORD = "total_record";
-	// Add by Jeremy '10, 3 ,27. Multi table extension.
-	private final static String CJ_TOTAL_RECORD = "cj_total_record";
-	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
-	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
-	private final static String EZ_TOTAL_RECORD = "ez_total_record";
-	private final static String MAPPING_VERSION = "mapping_version";
-	private final static String RELATED_TOTAL_RECORD = "related_total_record";
-	// Add by Jeremy '10, 3 ,27. Multi table extension.
-	private final static String CJ_MAPPING_VERSION = "cj_mapping_version";
-	private final static String BPMF_MAPPING_VERSION = "bmpf_mapping_version";
-	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
-	private final static String EZ_MAPPING_VERSION = "ez_mapping_version";
-	private final static String RELATED_MAPPING_VERSION = "related_mapping_version";
-	private final static String DICTIONARY_VERSION = "dictionary_version";
-	private final static String MAPPING_LOADING = "mapping_loading";
-	*/
-	
-	private final String target_folder = "/sdcard/lime";
-	private final String target_lime_file = "lime.zip";
-	private final String target_empty_file = "empty.zip";
-	private final String target_decompress_folder = "/data/data/net.toload.main/databases";
 	
 	private NotificationManager notificationMgr;
 
@@ -104,341 +64,35 @@ public class DBService extends Service {
 			this.ctx = ctx;
 			mLIMEPref = new LIMEPreferenceManager(ctx);
 			loadLimeDB();
-			
 		}
 		
-		public void loadLimeDB()
-		{	
-			//fu = new FileUtilities();
-			//fu.copyPreLoadLimeDB(ctx);			
-			db = new LimeDB(ctx);
-		}
+		public void loadLimeDB(){	db = new LimeDB(ctx); }
 		
 		public void loadMapping(String filename, String tablename) throws RemoteException {
 
-			// Start Loading
-			if (db == null) {
-				loadLimeDB();
-			}
-
 			File sourcefile = new File(filename);
-		
-			//String sourcestatus = null;
-			//SharedPreferences importset = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-			//String importstatus = importset.getString(MAPPING_LOADING, "no");
-			/*if(tablename.equals("related")){
-				db.deleteRelatedAll();
-			}else if(tablename.equals("dictionary")) {
-				db.deleteDictionaryAll();
-			}else{
-				db.deleteAll(tablename);
-			}*/
-			/*
-			if (importstatus.equals("no") && sourcestatus.equals("")) {
-				
-			}else if (importstatus.equals("no") && !sourcestatus.equals("") && !sourcestatus.equals(secret)) {
-				db.deleteAll();
-			}else if (importstatus.equals("yes")){
-				db.deleteAll();
-			}*/
-			/*String secret = sourcefile.getName();
-			mLIMEPref.setTableMappingFilename(tablename, secret);
-			mLIMEPref.setTableTempMappingFilename(tablename, secret);*/
-			/*
-			SharedPreferences sourceset =null, sourcetempset= null;
-			if(tablename.equals("cj")){
-				sourceset = ctx.getSharedPreferences(CJ_MAPPING_FILE, 0);
-				sourceset.edit().putString(CJ_MAPPING_FILE, secret).commit();
-				sourcetempset = ctx.getSharedPreferences(CJ_MAPPING_FILE_TEMP, 0);
-				sourcetempset.edit().putString(CJ_MAPPING_FILE_TEMP, secret).commit();
-			}else if(tablename.equals("dayi")){
-				sourceset = ctx.getSharedPreferences(DAYI_MAPPING_FILE, 0);
-				sourceset.edit().putString(DAYI_MAPPING_FILE, secret).commit();
-				sourcetempset = ctx.getSharedPreferences(DAYI_MAPPING_FILE_TEMP, 0);
-				sourcetempset.edit().putString(DAYI_MAPPING_FILE_TEMP, secret).commit();
-			}else if(tablename.equals("phonetic")){
-				sourceset = ctx.getSharedPreferences(BPMF_MAPPING_FILE, 0);
-				sourceset.edit().putString(BPMF_MAPPING_FILE, secret).commit();
-				sourcetempset = ctx.getSharedPreferences(BPMF_MAPPING_FILE_TEMP, 0);
-				sourcetempset.edit().putString(BPMF_MAPPING_FILE_TEMP, secret).commit();
-			}else if(tablename.equals("ez")){
-				sourceset = ctx.getSharedPreferences(EZ_MAPPING_FILE, 0);
-				sourceset.edit().putString(EZ_MAPPING_FILE, secret).commit();
-				sourcetempset = ctx.getSharedPreferences(EZ_MAPPING_FILE_TEMP, 0);
-				sourcetempset.edit().putString(EZ_MAPPING_FILE_TEMP, secret).commit();
-			}else if(tablename.equals("related")){
-				sourceset = ctx.getSharedPreferences(RELATED_MAPPING_FILE, 0);
-				sourceset.edit().putString(RELATED_MAPPING_FILE, secret).commit();
-				sourcetempset = ctx.getSharedPreferences(RELATED_MAPPING_FILE_TEMP, 0);
-				sourcetempset.edit().putString(RELATED_MAPPING_FILE_TEMP, secret).commit();
-			}else if(tablename.equals("dictionary")){
-				sourceset = ctx.getSharedPreferences(DICTIONARY_FILE, 0);
-				sourceset.edit().putString(DICTIONARY_FILE, secret).commit();
-				sourcetempset = ctx.getSharedPreferences(DICTIONARY_FILE_TEMP, 0);
-				sourcetempset.edit().putString(DICTIONARY_FILE_TEMP, secret).commit();
-			}else{
-				sourceset = ctx.getSharedPreferences(MAPPING_FILE, 0);
-				sourceset.edit().putString(MAPPING_FILE, secret).commit();
-				sourcetempset = ctx.getSharedPreferences(MAPPING_FILE_TEMP, 0);
-				sourcetempset.edit().putString(MAPPING_FILE_TEMP, secret).commit();
-			}
-			*/
 			
+			// Start Loading
+			if (db == null) {loadLimeDB();}
+
 			db.setFilename(sourcefile);
-
-			//displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading)+ "");
-
-			// Update Loading Status
-			// Stop and clear the existing thread.
-			/*if(thread!=null){
-				thread.stop();
-				thread = null;
-			}
-			thread = new Thread() {
-				public void run() {
-					int total = 0;
-					//while (!db.isFinish() || !db.isRelatedFinish() ) {
-					while (!db.isFinish()) {
-						try {
-							this.sleep(10000);
-							
-							if(db.getCount() != 0){
-								displayNotificationMessage(
-										ctx.getText(R.string.lime_setting_notification_loading_build) + " "
-										+ ctx.getText(R.string.lime_setting_notification_loading_import) + " "
-										+ db.getCount() + " "
-										+ ctx.getText(R.string.lime_setting_notification_loading_end)
-										);
-							}
-							
-							
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-
-					// Finish task
-					if(db.isFinish()){
-						displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_finish)+ "");
-						db.setCount(0);
-					}else{
-						displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_failed)+ "");
-					}
-
-				}
-			};
-			thread.start();*/
-
-			// Actually run the loading
 			db.loadFile(tablename);
 			db.close();
 		}
 
 		public void resetMapping(final String tablename) throws RemoteException {
-		// Jeremy '10, 4, 2. Creating a thread doing this to avoid blocing activity when dropping large table
-			if(thread!=null){
-				thread.stop();
-				thread = null;
-			}
-			thread = new Thread() {
-				public void run() {
-					// Add by Jeremy '10, 3, 28
-					// stop thread here.
-					
-					if (db == null) {
-						loadLimeDB();
-					}
-						if(tablename.equals("related")){
-							db.deleteRelatedAll();
-						}else if(tablename.equals("dictionary")) {
-							db.deleteDictionaryAll();
-						}else{
-							db.deleteAll(tablename);
-						}
-						displayNotificationMessage(ctx
-								.getText(R.string.lime_setting_notification_mapping_reset)
-								+ "");
-						db.close();
-					}
-				};
-			thread.start();
-			
+			if (db == null) {loadLimeDB();}
+			db.deleteAll(tablename);
 		}
 		
-		//
-		// Modified by Jeremy '10, 3,12
-		//
-		public void restoreRelatedUserdic() throws RemoteException {
-			
-			final File targetDir = new File(
-					Environment.getExternalStorageDirectory().getAbsolutePath()+"/lime");
-			final File targetFile = new File(targetDir + "/limedb.txt");
-			
-			if (!targetDir.exists()) {
-				if(!targetDir.mkdirs()){
-					Log.i("restoreRelated", "dir creation failed.");
-					displayNotificationMessage(ctx.getText(R.string.lime_setting_restore_message_failed)+ "");
-					return;
-				}
-			}
-			if (!targetFile.exists()) {
-				Log.i("restoreRelated", "file not exist");
-				displayNotificationMessage(ctx.getText(R.string.lime_setting_restore_message_failed)+ "");
-				return;
-				};
-			
-			//Should do this at dbservice
-			//db.deleteDictionaryAll();
-			displayNotificationMessage(ctx.getText(R.string.lime_setting_restore_message)+ "");
-			
-			if (db == null) {
-				loadLimeDB();
-				}
-			
-			// Stop and clear the existing thread.
-			
-			if(thread!=null){
-				thread.stop();
-				thread = null;
-			}
-			
-			thread = new Thread() {
-				public void run() {
-					int total = 0;
-				
-					while (!db.isRelatedFinish()) {
-						try {
-							Thread.sleep(10000);
-							
-							if(db.getRelatedCount() != 0){
-								displayNotificationMessage(
-										ctx.getText(R.string.lime_setting_notification_loading_related) + " "
-										+ db.getRelatedCount() + " "
-										+ ctx.getText(R.string.lime_setting_notification_loading_end)
-										);
-							}
-							
-							
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-
-					// Finish task
-					if(db.isRelatedFinish()){
-						displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_userdic_restore)+ "");
-						//db.setCount(0);
-					}else{
-						// we will never reach here!!
-						displayNotificationMessage(ctx.getText(R.string.lime_setting_restore_message_failed)+ "");
-					}
-
-				}
-			};
-			thread.start();
-			
-			db.restoreRelatedUserdic();
-			db.close();
-		}
-
-		public void resetUserBackup() throws RemoteException {
-			if(thread!=null){
-				thread.stop();
-				thread = null;
-			}
-			thread = new Thread() {
-				public void run() {
-					
-					if (db == null) {
-						loadLimeDB();
-					}
-					db.deleteUserDictAll();
-					displayNotificationMessage(ctx
-							.getText(R.string.lime_setting_notification_userdic_reset)
-							+ "");
-					db.close();
-				}
-			};
-		thread.start();
-		}
-		//
-		// Modified by Jeremy '10, 3,12
-		//
-		public void executeUserBackup() throws RemoteException {
-			
-			// Add by Jeremy '10, 3, 30
-			final File targetDir = new File(
-					Environment.getExternalStorageDirectory().getAbsolutePath() +"/lime");
-			if (!targetDir.exists()) {
-				Log.i("backupRelated", "dir not exist, creating..");
-				if(!targetDir.mkdirs()){
-					Log.i("backupRelated", "dir creation failed.");
-					displayNotificationMessage(ctx.getText(R.string.lime_setting_backup_message_failed)+ "");
-					return;
-				}
-			}
-			
-			if (db == null) {
-				loadLimeDB();
-			}
-			
-			Log.i("backupRelated", "Creating thread.");
-			displayNotificationMessage(ctx
-					.getText(R.string.lime_setting_backup_message)
-					+ "");
-			// Stop and clear the existing thread.
-			if(thread!=null){
-				thread.stop();
-				thread = null;
-			}
-			Log.i("backupRelated", "monitoring thread started.");
-			thread = new Thread() {
-				public void run() {
-					int total = 0;
-					
-					
-					while (!db.isRelatedFinish()) {
-						try {
-							Thread.sleep(10000);
-							
-							if(db.getRelatedCount() != 0){
-								displayNotificationMessage(
-										ctx.getText(R.string.lime_setting_notification_loading_related) + " "
-										+ db.getRelatedCount() + " "
-										+ ctx.getText(R.string.lime_setting_notification_loading_end)
-										);
-							}
-							
-							
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-
-					// Finish task
-					if(db.isRelatedFinish()){
-						displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_userdic_backup)+ "");
-						//db.setCount(0);
-					}else{
-						displayNotificationMessage(ctx.getText(R.string.lime_setting_backup_message_failed)+ "");
-					}
-
-				}
-			};
-			thread.start();
-			db.backupRelatedUserdic();
-			db.close();
-		}
 		
 		File downloadedFile = null;
 		
 		@Override
 		public void resetDownloadDatabase() throws RemoteException {
-			File delTargetFile1 = new File(target_decompress_folder + File.separator + LIME.DATABASE_NAME);
-			File delTargetFile2 = new File(target_folder + File.separator + target_empty_file);
-			File delTargetFile3 = new File(target_folder + File.separator + target_lime_file);
+			File delTargetFile1 = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+			File delTargetFile3 = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_SOURCE_FILENAME);
 			if(delTargetFile1.exists()){delTargetFile1.delete();}
-			if(delTargetFile2.exists()){delTargetFile2.delete();}
 			if(delTargetFile3.exists()){delTargetFile3.delete();}			
 		}
 		 
@@ -446,8 +100,8 @@ public class DBService extends Service {
 		public void downloadPreloadedDatabase() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {
-					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PRELOADED, target_folder, target_lime_file);
-					if(decompressFile(downloadedFile, target_decompress_folder, LIME.DATABASE_NAME)){
+					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PRELOADED, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
+					if(decompressFile(downloadedFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME)){
 						Thread threadTask = new Thread() {
 							public void run() {
 								downloadedFile.delete();
@@ -541,7 +195,7 @@ public class DBService extends Service {
 					bos.flush(); 
 					bos.close(); 
 					
-					Log.i("ART","Output File:"+OutputFile.getAbsolutePath() + " / " + OutputFile.length());
+					Log.i("ART","uncompress Output File:"+OutputFile.getAbsolutePath() + " / " + OutputFile.length());
 					
 				} 
 				zis.close(); 
@@ -551,6 +205,54 @@ public class DBService extends Service {
 				e.printStackTrace(); 
 			}
 			return false;
+		}
+		
+		public void compressFile(File sourceFile, String targetFolder, String targetFile){
+			try{
+				final int BUFFER = 2048;
+					  
+				File targetFolderObj = new File(targetFolder);
+				if(!targetFolderObj.exists()){
+					targetFolderObj.mkdirs();
+				}
+				
+	
+				File OutputFile = new File(targetFolderObj.getAbsolutePath() + File.separator + targetFile);
+					 OutputFile.delete();
+					 
+				FileOutputStream dest = new FileOutputStream(OutputFile);
+				ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
+					         
+				byte data[] = new byte[BUFFER];
+				
+				FileInputStream fi = new  FileInputStream(sourceFile);
+				BufferedInputStream origin = new BufferedInputStream(fi, BUFFER);
+					ZipEntry entry = new ZipEntry(sourceFile.getAbsolutePath());
+							out.putNextEntry(entry);
+							int count;
+							while((count = origin.read(data, 0, BUFFER)) != -1) {
+								 	out.write(data, 0, count);
+						    }
+					origin.close();
+				out.close();
+				
+				Log.i("ART","compress Output File:"+OutputFile.getAbsolutePath() + " / " + OutputFile.length());
+				
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		public void backupDatabase() throws RemoteException {
+			File srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+			compressFile(srcFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_BACKUP_NAME);
+		}
+
+		@Override
+		public void restoreDatabase() throws RemoteException {
+			File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
+			decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME);
 		}
 		
 	}
@@ -586,12 +288,12 @@ public class DBService extends Service {
 		notificationMgr.cancelAll();
 		super.onDestroy();
 	}
-
-	/*
+/*
+	
 	 * (non-Javadoc)
 	 * 
 	 * @see android.app.Service#onStart(android.content.Intent, int)
-	 */
+	 
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
@@ -605,5 +307,5 @@ public class DBService extends Service {
 		notification.setLatestEventInfo(this, this .getText(R.string.ime_setting), message, contentIntent);
 		notificationMgr.notify(0, notification);
 	}
-	
+	*/
 }
