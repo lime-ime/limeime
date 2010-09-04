@@ -84,13 +84,17 @@ import android.database.sqlite.SQLiteCursor;
  */
 public class LIMEIMSetting extends Activity {
 	
-
 	Button btnSetupCustom = null;
 	Button btnSetupPhonetic = null;
 	Button btnSetupCJ = null;
 	Button btnSetupSCJ= null;
 	Button btnSetupDayi = null;
 	Button btnSetupEz = null;
+	Button btnSetupArray = null;
+	
+	String table = "";
+	
+	LIMEPreferenceManager mLIMEPref;
 	
 	/** Called when the activity is first created. */
 	@Override
@@ -101,6 +105,9 @@ public class LIMEIMSetting extends Activity {
 
 		// Initial Buttons
 		initialButton();
+		
+		mLIMEPref = new LIMEPreferenceManager(this.getApplicationContext());
+		
 
 		btnSetupCustom.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -164,6 +171,16 @@ public class LIMEIMSetting extends Activity {
 		});
 		
 
+		btnSetupArray.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				Intent intent = new Intent();
+				intent.setClass(v.getContext(), LIMEMappingSetting.class);
+				   Bundle bundle = new Bundle();
+				   		  bundle.putString("keyboard", "array");
+				   intent.putExtras(bundle);
+				startActivity(intent);
+			}
+		});
 
 		btnSetupEz.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -196,8 +213,7 @@ public class LIMEIMSetting extends Activity {
 		initialButton();
 	}
 	
-	
-	
+
 	private void initialButton(){
 
 		// Check if button 
@@ -208,6 +224,7 @@ public class LIMEIMSetting extends Activity {
 			btnSetupSCJ = (Button) findViewById(R.id.btnSetupSCJ);
 			btnSetupDayi = (Button) findViewById(R.id.btnSetupDayi);
 			btnSetupEz = (Button) findViewById(R.id.btnSetupEz);		
+			btnSetupArray = (Button) findViewById(R.id.btnSetupArray);	
 		}
 		
 		SharedPreferences sp = getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0);
@@ -218,13 +235,15 @@ public class LIMEIMSetting extends Activity {
 			btnSetupSCJ.setEnabled(false);
 			btnSetupDayi.setEnabled(false);
 			btnSetupEz.setEnabled(false);
+			btnSetupArray.setEnabled(false);
 		}else{
 			btnSetupCustom.setEnabled(true);
 			btnSetupPhonetic.setEnabled(true);
 			btnSetupCJ.setEnabled(true);
 			btnSetupSCJ.setEnabled(true);
 			btnSetupDayi.setEnabled(true);
-			btnSetupEz.setEnabled(true);		
+			btnSetupEz.setEnabled(true);	
+			btnSetupArray.setEnabled(true);
 		}
 		
 	}

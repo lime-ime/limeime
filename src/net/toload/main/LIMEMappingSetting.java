@@ -93,12 +93,18 @@ public class LIMEMappingSetting extends Activity {
 		private IDBService DBSrv = null;
 
 		Button btnBackToPreviousPage = null;
-		Button btnDisableIM = null;
-		Button btnEnableIM = null;
 		Button btnLoadMapping = null;
 		Button btnResetMapping = null;
+		TextView labSource = null;
+		TextView labVersion = null;
+		TextView labTotalAmount = null;
+		TextView labImportDate = null;
+		TextView labMappingSettingTitle = null;
+		private ScrollView scrollSetting;
 		
 		private String imtype = null;
+		
+		LIMEPreferenceManager mLIMEPref;
 		
 		/** Called when the activity is first created. */
 		@Override
@@ -111,6 +117,8 @@ public class LIMEMappingSetting extends Activity {
 			// Startup Service
 			getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
 			
+
+			mLIMEPref = new LIMEPreferenceManager(this.getApplicationContext());
 			
 	        try{
 		        Bundle bundle = this.getIntent().getExtras();
@@ -123,22 +131,16 @@ public class LIMEMappingSetting extends Activity {
 
 			// Initial Buttons
 			initialButton();
+
+			scrollSetting.setOnTouchListener(new OnTouchListener(){
+				@Override
+				public boolean onTouch(View v, MotionEvent event) {
+					updateLabelInfo();
+					return false;
+				}
+			});
 			
 			btnBackToPreviousPage.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					finish();
-				}
-			});
-
-			
-			btnDisableIM.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					finish();
-				}
-			});
-
-			
-			btnEnableIM.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					finish();
 				}
@@ -148,6 +150,7 @@ public class LIMEMappingSetting extends Activity {
 			btnLoadMapping.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					hasSelectFile = false;
+					resetLabelInfo();
                 	selectLimeFile(LIME.IM_LOAD_LIME_ROOT_DIRECTORY, imtype);
 				}
 			});
@@ -155,7 +158,32 @@ public class LIMEMappingSetting extends Activity {
 			
 			btnResetMapping.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
-					finish();
+					
+					AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+     				builder.setMessage("Would you like to reset this table?");
+     				builder.setCancelable(false);
+     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+     					public void onClick(DialogInterface dialog, int id) {
+		    					initialButton();
+		    					try {
+		    						resetLabelInfo();
+		    						updateLabelInfo();
+		    						DBSrv.resetMapping(imtype);
+		    					} catch (RemoteException e) {
+		    						e.printStackTrace();
+		    					}
+		    	        	}
+		    	     });
+        
+		    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+		    	    	public void onClick(DialogInterface dialog, int id) {
+		    	        	}
+		    	     });   
+        
+					AlertDialog alert = builder.create();
+								alert.show();
+								
+					
 				}
 			});
 
@@ -171,7 +199,6 @@ public class LIMEMappingSetting extends Activity {
 		}
 		
 
-
 		/* (non-Javadoc)
 		 * @see android.app.Activity#onStart()
 		 */
@@ -185,10 +212,16 @@ public class LIMEMappingSetting extends Activity {
 		private void initialButton(){
 
 			btnBackToPreviousPage = (Button) findViewById(R.id.btnBackToPreviousPage);
-			btnDisableIM =  (Button) findViewById(R.id.btnDisableIM);
-			btnEnableIM =  (Button) findViewById(R.id.btnEnableIM);
 			btnLoadMapping =  (Button) findViewById(R.id.btnLoadMapping);
 			btnResetMapping =  (Button) findViewById(R.id.btnResetMapping);
+
+			labSource = (TextView) findViewById(R.id.labSource);	
+			labVersion = (TextView) findViewById(R.id.labVersion);	
+			labTotalAmount = (TextView) findViewById(R.id.labTotalAmount);	
+			labImportDate = (TextView) findViewById(R.id.labImportDate);
+			labMappingSettingTitle = (TextView) findViewById(R.id.labMappingSettingTitle);
+			
+			scrollSetting = (ScrollView) this.findViewById(R.id.IMSettingScrollView);
 			
 			boolean hasIMLoaded = false;
 			if(imtype != null){
@@ -223,6 +256,11 @@ public class LIMEMappingSetting extends Activity {
 					if(sp.getString(LIME.IM_CUSTOM_STATUS, "false").equals("false")){
 						hasIMLoaded = true;
 					}
+				}else if(imtype.equals("array")){
+					SharedPreferences sp = getSharedPreferences(LIME.IM_CUSTOM_STATUS, 0);
+					if(sp.getString(LIME.IM_CUSTOM_STATUS, "false").equals("false")){
+						hasIMLoaded = true;
+					}
 				}
 				
 			}else{
@@ -230,11 +268,29 @@ public class LIMEMappingSetting extends Activity {
 			}
 			
 			if(!hasIMLoaded){
-				btnEnableIM.setEnabled(false);
-				btnDisableIM.setEnabled(false);
 				btnResetMapping.setEnabled(false);
 			}
+			updateLabelInfo();
 			
+		}
+
+		public void resetLabelInfo(){
+			mLIMEPref.setParameter(imtype+LIME.IM_MAPPING_FILENAME,"");
+			mLIMEPref.setParameter(imtype+LIME.IM_MAPPING_VERSION,"");
+			mLIMEPref.setParameter(imtype+LIME.IM_MAPPING_TOTAL,0);
+			mLIMEPref.setParameter(imtype+LIME.IM_MAPPING_DATE,"");
+		}
+		
+		public void updateLabelInfo(){
+			try{
+				labSource.setText(mLIMEPref.getParameterString(imtype+LIME.IM_MAPPING_FILENAME));
+				labVersion.setText(mLIMEPref.getParameterString(imtype+LIME.IM_MAPPING_VERSION));
+				labTotalAmount.setText(String.valueOf(mLIMEPref.getParameterInt(imtype+LIME.IM_MAPPING_TOTAL)));
+				labImportDate.setText(mLIMEPref.getParameterString(imtype+LIME.IM_MAPPING_DATE));
+				labMappingSettingTitle.setText(imtype.toUpperCase() + " Mapping Setting" );
+			}catch(Exception e){
+				e.printStackTrace();
+			}
 		}
 
 		private ServiceConnection serConn = new ServiceConnection() {

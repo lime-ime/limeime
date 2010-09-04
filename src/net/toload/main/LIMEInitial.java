@@ -95,6 +95,7 @@ public class LIMEInitial extends Activity {
 	Button btnRestoreDB = null;
 	
 	boolean hasReset = false;
+	LIMEPreferenceManager mLIMEPref;
 	
 	/** Called when the activity is first created. */
 	@Override
@@ -105,15 +106,24 @@ public class LIMEInitial extends Activity {
 
 		// Startup Service
 		getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
-
+		mLIMEPref = new LIMEPreferenceManager(this.getApplicationContext());
+		
 		// Initial Buttons
 		initialButton();
 
 		btnResetDB.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				
-				btnResetDB.setEnabled(false);
+				// Reset Table Information
+				resetLabelInfo("custom");
+				resetLabelInfo("cj");
+				resetLabelInfo("scj");
+				resetLabelInfo("array");
+				resetLabelInfo("dayi");
+				resetLabelInfo("ez");
+				resetLabelInfo("phonetic");
 				
+				btnResetDB.setEnabled(false);
 				
 				AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
 		    	     				builder.setMessage("Would you like to reset database?");
@@ -212,6 +222,13 @@ public class LIMEInitial extends Activity {
 	protected void onResume() {
 		super.onStart();
 		initialButton();
+	}
+
+	public void resetLabelInfo(String imtype){
+		mLIMEPref.setParameter(imtype+LIME.IM_MAPPING_FILENAME,"");
+		mLIMEPref.setParameter(imtype+LIME.IM_MAPPING_VERSION,"");
+		mLIMEPref.setParameter(imtype+LIME.IM_MAPPING_TOTAL,0);
+		mLIMEPref.setParameter(imtype+LIME.IM_MAPPING_DATE,"");
 	}
 	
 	
