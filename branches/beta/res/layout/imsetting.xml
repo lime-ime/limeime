@@ -39,6 +39,9 @@
 						<Button android:layout_width="fill_parent"
 							android:layout_height="fill_parent" android:padding="20px"
 							android:id="@+id/btnSetupEz" android:text="@string/l3.manage.eazy"></Button>
+					</TableRow><TableRow android:id="@+id/TableRow02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:padding="10px" android:gravity="center">
+						<Button android:layout_width="fill_parent" android:layout_height="fill_parent" android:padding="20px" android:id="@+id/btnSetupArray" android:text="Array"></Button><Button android:layout_width="fill_parent" android:layout_height="fill_parent" android:padding="20px" android:id="@+id/btnEmptyNoUse" android:enabled="false"></Button>
+						
 					</TableRow>
 				</TableLayout>
 	</ScrollView>

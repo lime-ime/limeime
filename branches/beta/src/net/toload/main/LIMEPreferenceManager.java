@@ -1,6 +1,9 @@
 package net.toload.main;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
@@ -120,22 +123,15 @@ public class LIMEPreferenceManager {
 	}
 	
 	public int getMappingFileImportLines(){
-
-		//SharedPreferences sp = ctx.getSharedPreferences("mapping_import_line", 0);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return Integer.parseInt( sp.getString( "mapping_import_line", "0"));
 	}
 	public void setMappingFileImportLines(int lines){
-		
-		//SharedPreferences sp = ctx.getSharedPreferences( "mapping_import_line", 0);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		sp.edit().putString( "mapping_import_line", String.valueOf(lines)).commit();	
 	}
 	
 	public String getRerverseLookupTable(String table){
-		
-		//if(table.equals("mapping")) table = "default";
-		//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		if(table.equals("phonetic")){
 			return sp.getString("bpmf_im_reverselookup", "none");
@@ -272,7 +268,46 @@ public class LIMEPreferenceManager {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("switch_english_mode", false);
 	}
+	
+	/*
+	 * INT Parameter SET/GET
+	 */
+	public void setParameter(String label, int value){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		sp.edit().putInt(label, value).commit();	
+	}
+	public int getParameterInt(String label){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		try{
+			return sp.getInt(label, 0);
+		}catch(Exception e){
+			return 0;
+		}
+	}
+	
+	/*
+	 * String Parameter SET/GET
+	 */
+	public void setParameter(String label, String value){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		sp.edit().putString(label, value).commit();	
+	}
+	public String getParameterString(String label){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getString(label, "");
+	}
 
+	/*
+	 * Boolean Parameter SET/GET
+	 */
+	public void setParameter(String label, boolean value){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		sp.edit().putBoolean(label, value).commit();	
+	}
+	public boolean getParameterBoolean(String label){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean(label, false);
+	}
 	
 	private String preProcessTableName(String table){
 		if(table.endsWith("_")|| table.equals("")){ 
@@ -285,6 +320,5 @@ public class LIMEPreferenceManager {
 			return table+"_";
 		}
 	}
-		
 	
 }

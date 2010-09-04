@@ -7,28 +7,25 @@
 	android:scrollbars="vertical" android:isScrollContainer="true">
 
 	
-<ScrollView android:id="@+id/ScrollView01" android:layout_height="wrap_content" android:layout_width="fill_parent" android:padding="5px"><LinearLayout android:id="@+id/LinearLayout04" android:layout_height="wrap_content" android:orientation="vertical" android:layout_width="match_parent"><LinearLayout android:id="@+id/LinearLayout02" android:layout_height="wrap_content" android:paddingBottom="15px" android:paddingTop="10px" android:layout_width="fill_parent">
+<ScrollView android:layout_height="wrap_content" android:layout_width="fill_parent" android:padding="5px" android:id="@+id/IMSettingScrollView"><LinearLayout android:id="@+id/LinearLayout04" android:layout_height="wrap_content" android:orientation="vertical" android:layout_width="match_parent"><LinearLayout android:id="@+id/LinearLayout02" android:layout_height="wrap_content" android:paddingBottom="15px" android:paddingTop="10px" android:layout_width="fill_parent">
 			<Button android:layout_height="wrap_content" android:text="Back to previous page" android:layout_width="fill_parent" android:id="@+id/btnBackToPreviousPage"></Button>
 
 
 
+		</LinearLayout><LinearLayout android:id="@+id/LinearLayout03" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingBottom="20px">
+			<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/labMappingSettingTitle"></TextView>
 		</LinearLayout><LinearLayout android:id="@+id/LinearLayout03" android:layout_width="wrap_content" android:layout_height="wrap_content">
-			<TextView android:id="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="How are you fine thank you ~"></TextView>
-		</LinearLayout><LinearLayout android:id="@+id/LinearLayout02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingBottom="15px" android:paddingTop="10px">
-			<Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DISABLE" android:id="@+id/btnDisableIM"></Button>
-			<Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ENABLE" android:id="@+id/btnEnableIM"></Button>
+			<TextView android:id="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Source:" android:paddingRight="10px"></TextView>
+			<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/labSource"></TextView>
 		</LinearLayout><LinearLayout android:id="@+id/LinearLayout03" android:layout_width="wrap_content" android:layout_height="wrap_content">
-			<TextView android:id="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Source:"></TextView>
-			<TextView android:text="@+id/TextView02" android:id="@+id/TextView02" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+			<TextView android:id="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Version: " android:paddingRight="10px"></TextView>
+			<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/labVersion"></TextView>
 		</LinearLayout><LinearLayout android:id="@+id/LinearLayout03" android:layout_width="wrap_content" android:layout_height="wrap_content">
-			<TextView android:id="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Version: "></TextView>
-			<TextView android:text="@+id/TextView02" android:id="@+id/TextView02" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+			<TextView android:id="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Total Amount:" android:paddingRight="10px"></TextView>
+			<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/labTotalAmount"></TextView>
 		</LinearLayout><LinearLayout android:id="@+id/LinearLayout03" android:layout_width="wrap_content" android:layout_height="wrap_content">
-			<TextView android:id="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Total Amount:"></TextView>
-			<TextView android:text="@+id/TextView02" android:id="@+id/TextView02" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
-		</LinearLayout><LinearLayout android:id="@+id/LinearLayout03" android:layout_width="wrap_content" android:layout_height="wrap_content">
-			<TextView android:id="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Import Date:"></TextView>
-			<TextView android:text="@+id/TextView02" android:id="@+id/TextView02" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+			<TextView android:id="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Import Date:" android:paddingRight="10px"></TextView>
+			<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/labImportDate"></TextView>
 		</LinearLayout><LinearLayout android:id="@+id/LinearLayout02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingBottom="15px" android:paddingTop="10px">
 			<Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/btnLoadMapping" android:text="LOAD"></Button><Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/btnResetMapping" android:text="RESET"></Button>
 

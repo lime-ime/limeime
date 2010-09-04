@@ -70,6 +70,7 @@ public class DBService extends Service {
 		
 		public void loadMapping(String filename, String tablename) throws RemoteException {
 
+			
 			File sourcefile = new File(filename);
 			
 			// Start Loading
@@ -98,8 +99,10 @@ public class DBService extends Service {
 		 
 		@Override
 		public void downloadPreloadedDatabase() throws RemoteException {
+			if (db == null) {loadLimeDB();}
 			Thread threadTask = new Thread() {
 				public void run() {
+					displayNotificationMessage("Download preloaded database, this action will take few minutes please wait.");
 					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PRELOADED, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
 					if(decompressFile(downloadedFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME)){
 						Thread threadTask = new Thread() {
@@ -109,7 +112,27 @@ public class DBService extends Service {
 						};
 						threadTask.start();
 					}
+					displayNotificationMessage("Initialize database.");
+					initialMappingInfo("custom");
+					initialMappingInfo("cj");
+					initialMappingInfo("scj");
+					initialMappingInfo("array");
+					initialMappingInfo("ez");
+					initialMappingInfo("phonetic");
+					initialMappingInfo("dayi");
 					getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
+					displayNotificationMessage("Preloaded database was loaded.");
+				}
+				
+				public void initialMappingInfo(String table){
+					int size = db.countMapping(table);
+					if(size > 0){
+						mLIMEPref.setParameter(table + LIME.IM_MAPPING_FILENAME, LIME.DATABASE_SOURCE_FILENAME);
+						mLIMEPref.setParameter(table + LIME.IM_MAPPING_VERSION, "Preloaded");
+						mLIMEPref.setParameter(table + LIME.IM_MAPPING_TOTAL, size);
+					}else{
+						mLIMEPref.setParameter(table + LIME.IM_MAPPING_TOTAL, 0);
+					}
 				}
 			};
 			threadTask.start();
@@ -121,7 +144,8 @@ public class DBService extends Service {
 		public File downloadRemoteFile(String url, String folder, String filename){
 			
 			try {
-				
+
+				displayNotificationMessage("Convert database file.");
 				URL downloadUrl = new URL(url);
 				URLConnection conn = downloadUrl.openConnection();
 				conn.connect();
@@ -253,6 +277,7 @@ public class DBService extends Service {
 		public void restoreDatabase() throws RemoteException {
 			File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
 			decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME);
+			getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
 		}
 		
 	}
@@ -288,16 +313,6 @@ public class DBService extends Service {
 		notificationMgr.cancelAll();
 		super.onDestroy();
 	}
-/*
-	
-	 * (non-Javadoc)
-	 * 
-	 * @see android.app.Service#onStart(android.content.Intent, int)
-	 
-	@Override
-	public void onStart(Intent intent, int startId) {
-		super.onStart(intent, startId);
-	}
 
 	private void displayNotificationMessage(String message) {
 		Notification notification = new Notification(R.drawable.icon, message, System.currentTimeMillis());
@@ -307,5 +322,5 @@ public class DBService extends Service {
 		notification.setLatestEventInfo(this, this .getText(R.string.ime_setting), message, contentIntent);
 		notificationMgr.notify(0, notification);
 	}
-	*/
+	
 }
