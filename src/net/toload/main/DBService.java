@@ -71,12 +71,12 @@ public class DBService extends Service {
 		
 		public void loadMapping(String filename, String tablename) throws RemoteException {
 
-			
 				File sourcefile = new File(filename);
 				
 				// Start Loading
 				if (db == null) {loadLimeDB();}
 	
+				db.setFinish(false);
 				db.setFilename(sourcefile);
 	
 				displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading)+ "");
