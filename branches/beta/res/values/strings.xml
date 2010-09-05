@@ -267,6 +267,7 @@
     <string name="l3_manage_scj">SChangjei</string>
     <string name="l3_manage_dayi">Dayi</string>
     <string name="l3_manage_eazy">Eazy</string>
+    <string name="l3_manage_array">Array</string>
     
     <string name="l3_tab_preference">Preference</string>
 	
@@ -282,6 +283,15 @@
     <string name="l3_initial_backup_error">You don&quot;t have database need to be backup.</string>
     <string name="l3_initial_restore_database">Restore Database</string>
     <string name="l3_initial_restore_error">You don&quot;t have a backup can be restore.</string>
+    
+    <string name="l3_im_setting_back">Back To Previous Page</string>
+    <string name="l3_im_setting_title">Mapping Setting</string>
+    <string name="l3_im_setting_source">Source: </string>
+    <string name="l3_im_setting_version">Version: </string>
+    <string name="l3_im_setting_total_amount">Total Amount: </string>
+    <string name="l3_im_setting_import_date">Import Status: </string>
+    <string name="l3_im_setting_button_load">LOAD .LIME</string>
+    <string name="l3_im_setting_button_reset">RESET TABLE</string>
     
     
 </resources>

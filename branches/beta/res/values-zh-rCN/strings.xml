@@ -18,6 +18,9 @@
     <string name="label_send_key">传送</string>
     <string name="label_close_key">关闭</string>
     
+    
+    
+    
     <!-- LIME Loading -->
     <string name="lime_setting_btn_load_local_notice">请选择 .LIME 或 .CIN 档案</string>
     <string name="lime_setting_loading">载入对应档</string>
@@ -279,5 +282,15 @@
     <string name="l3_initial_backup_error">资料库不存在，无法进行备份.</string>
     <string name="l3_initial_restore_database">还原资料库</string>
     <string name="l3_initial_restore_error">备份档案不存在，无法进行还原.</string>
+    
+    <string name="l3_im_setting_back">回到上一页</string>
+    <string name="l3_im_setting_title">对应表设定</string>
+    <string name="l3_im_setting_source">来源: </string>
+    <string name="l3_im_setting_version">版本: </string>
+    <string name="l3_im_setting_total_amount">字数: </string>
+    <string name="l3_im_setting_import_date">状态: </string>
+    <string name="l3_im_setting_button_load">汇入字根档</string>
+    <string name="l3_im_setting_button_reset">移除字根档</string>
+    
     
 </resources>
