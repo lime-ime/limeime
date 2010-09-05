@@ -1621,6 +1621,16 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 			hasNumberMapping = sp.getBoolean("accept_number_index", false);
 			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+		}  else if (keyboardSelection.equals("scj")) {
+			if (hasNumberKeypads) {
+				mMode = mKeyboardSwitcher.MODE_TEXT_SCJ_NUMBER;
+			}else{
+				mMode = mKeyboardSwitcher.MODE_TEXT_SCJ;
+			}
+
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+			hasNumberMapping = sp.getBoolean("accept_number_index", false);
+			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
 		} else if (keyboardSelection.equals("phonetic")) {
 			mMode = mKeyboardSwitcher.MODE_TEXT_PHONETIC;
 			

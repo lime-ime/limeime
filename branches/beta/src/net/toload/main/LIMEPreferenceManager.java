@@ -140,8 +140,6 @@ public class LIMEPreferenceManager {
 		}
 	}
 	
-	
-	
 	public boolean getLearnRelatedWord(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);

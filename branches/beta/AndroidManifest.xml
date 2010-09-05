@@ -43,11 +43,11 @@
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
-		</activity>
+		</activity><!--
 		
 		<activity android:name=".LIMESetting" android:label="@string/ime_setting">
 		</activity>
-		<activity android:name=".LIMEInitial" android:label="@string/ime_setting">
+		--><activity android:name=".LIMEInitial" android:label="@string/ime_setting">
 		</activity>
 		<activity android:name=".LIMEIMSetting" android:label="@string/ime_setting">
 		</activity>

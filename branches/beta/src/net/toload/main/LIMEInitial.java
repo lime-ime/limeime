@@ -126,7 +126,7 @@ public class LIMEInitial extends Activity {
 				btnResetDB.setEnabled(false);
 				
 				AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-		    	     				builder.setMessage("Would you like to reset database?");
+		    	     				builder.setMessage(getText(R.string.l3_message_database_reset_confirm));
 		    	     				builder.setCancelable(false);
 		    	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 		    	     					public void onClick(DialogInterface dialog, int id) {
@@ -162,7 +162,7 @@ public class LIMEInitial extends Activity {
 			public void onClick(View v) {
 				try {
 					initialButton();
-					Toast.makeText(v.getContext(), "Download Preloaded Database", Toast.LENGTH_LONG).show();
+					Toast.makeText(v.getContext(), getText(R.string.l3_initial_download_database), Toast.LENGTH_LONG).show();
 					DBSrv.downloadPreloadedDatabase();
 
 					// Reset for SearchSrv
@@ -180,10 +180,10 @@ public class LIMEInitial extends Activity {
 				try {
 					File srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
 					if(srcFile.exists() && srcFile.length() > 1024){
-						Toast.makeText(v.getContext(), "Backup LIME Database", Toast.LENGTH_LONG).show();
+						Toast.makeText(v.getContext(), getText(R.string.l3_initial_backup_database), Toast.LENGTH_LONG).show();
 						DBSrv.backupDatabase();
 					}else{
-						Toast.makeText(v.getContext(), "You don have database to be backup.", Toast.LENGTH_LONG).show();
+						Toast.makeText(v.getContext(), getText(R.string.l3_initial_backup_error), Toast.LENGTH_LONG).show();
 					}
 				} catch (RemoteException e) {
 					e.printStackTrace();
@@ -196,13 +196,13 @@ public class LIMEInitial extends Activity {
 				try {
 					File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
 					if(srcFile.exists() && srcFile.length() > 1024){
-						Toast.makeText(v.getContext(), "Restore LIME Database", Toast.LENGTH_LONG).show();
+						Toast.makeText(v.getContext(), getText(R.string.l3_initial_restore_database), Toast.LENGTH_LONG).show();
 						DBSrv.restoreDatabase();
 						
 						// Reset for SearchSrv
 						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 					}else{
-						Toast.makeText(v.getContext(), "You don't have backup to be restore.", Toast.LENGTH_LONG).show();
+						Toast.makeText(v.getContext(), getText(R.string.l3_initial_restore_error), Toast.LENGTH_LONG).show();
 					}
 				} catch (RemoteException e) {
 					e.printStackTrace();
@@ -263,10 +263,10 @@ public class LIMEInitial extends Activity {
 	private ServiceConnection serConn = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			if(DBSrv == null){
-				Log.i("ART","Start up db service");
+				//Log.i("ART","Start up db service");
 				DBSrv = IDBService.Stub.asInterface(service);
 			}else{
-				Log.i("ART","Stop up db service");
+				//Log.i("ART","Stop up db service");
 			}
 		}
 		public void onServiceDisconnected(ComponentName name) {}

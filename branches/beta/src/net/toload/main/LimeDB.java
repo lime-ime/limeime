@@ -175,10 +175,11 @@ public class LimeDB extends SQLiteOpenHelper {
 	 */
 	public void deleteAll(String table) {
 		SQLiteDatabase db = this.getWritableDatabase();
-		db.beginTransaction();
 		db.execSQL("DELETE FROM " + table);
-		db.setTransactionSuccessful();
-		db.endTransaction();
+		finish = false;
+		if(thread != null){
+			thread.interrupt();
+		}
 	}
 
 	/**
@@ -215,6 +216,10 @@ public class LimeDB extends SQLiteOpenHelper {
 			e.printStackTrace();
 		}
 		return 0;
+	}
+	
+	public int getCount(){
+		return count;
 	}
 
 	/**
@@ -312,7 +317,6 @@ public class LimeDB extends SQLiteOpenHelper {
 			SQLiteDatabase db = this.getWritableDatabase();
 			
 			try {
-				db.beginTransaction();
 				for (int i = 0; i < srclist.size(); i++) {
 
 					Mapping unit = srclist.get(i);
@@ -343,7 +347,7 @@ public class LimeDB extends SQLiteOpenHelper {
 										  ContentValues cv = new ContentValues();
 							  				cv.put(FIELD_SCORE, munit.getScore()+1);
 										    db.update("related", cv, FIELD_id + " = " + munit.getId(), null);
-										    Log.i("ART","Add Score for Dictionary : " + munit.getId() + munit.getCode() + munit.getScore());
+										    //Log.i("ART","Add Score for Dictionary : " + munit.getId() + munit.getCode() + munit.getScore());
 									}
 								}
 							}
@@ -352,8 +356,6 @@ public class LimeDB extends SQLiteOpenHelper {
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {
-				db.setTransactionSuccessful();
-				db.endTransaction();
 				SharedPreferences sp1 = ctx.getSharedPreferences(LIME.TOTAL_USERDICT_RECORD, 0);
 				sp1.edit().putString(LIME.TOTAL_USERDICT_RECORD, String.valueOf(dictotal)).commit();
 				if(DEBUG){
@@ -379,21 +381,15 @@ public class LimeDB extends SQLiteOpenHelper {
 					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
 	
 					SQLiteDatabase db = this.getWritableDatabase();
-					db.beginTransaction();
 					db.update("related", cv, FIELD_id + " = " + srcunit.getId(), null);
-					db.setTransactionSuccessful();
-					db.endTransaction();
 				}else{
 					ContentValues cv = new ContentValues();
 					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
 	
 					SQLiteDatabase db = this.getWritableDatabase();
-					db.beginTransaction();
 					db.update(tablename, cv, FIELD_id + " = " + srcunit.getId(), null);
-					db.setTransactionSuccessful();
-					db.endTransaction();
 				}
-				Log.i("ART","Add Score for : " + srcunit.isDictionary() + " / " + srcunit.getId() + srcunit.getCode() + srcunit.getScore());
+				//Log.i("ART","Add Score for : " + srcunit.isDictionary() + " / " + srcunit.getId() + srcunit.getCode() + srcunit.getScore());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -505,17 +501,17 @@ public class LimeDB extends SQLiteOpenHelper {
 	/*
 	 * Retrieve matched records
 	 */
-	public List<Mapping> getMapping(String keyword) {
+	public List<Mapping> getMapping(String code) {
 
-		Log.i("ART","Run MAPPING : " + keyword);
+		//Log.i("ART","Run MAPPING : " + code);
 		// Add by Jeremy '10, 3, 27. Extension on multi table query.
 
 		List<Mapping> result = new LinkedList<Mapping>();
 		HashSet<String> wordlist = new HashSet<String>();
 
-		if (keyword != null && !keyword.trim().equals("")) {
+		if (code != null && !code.trim().equals("")) {
 
-			keyword = keyword.toLowerCase();
+			code = code.toLowerCase();
 			Cursor cursor = null;
 			String sql = null;
 
@@ -526,11 +522,11 @@ public class LimeDB extends SQLiteOpenHelper {
 						
 			boolean iscode3r = false;
 
-			String code3r = keyword;
+			String code3r = code;
 			for (int i = 0; i < LIME.THREE_ROW_KEY.length(); i++) {
 				code3r = code3r.replace(LIME.THREE_ROW_KEY.substring(i, i + 1), LIME.THREE_ROW_KEY_REMAP.substring(i, i + 1));
 			}
-			if(!code3r.equalsIgnoreCase(keyword)){
+			if(!code3r.equalsIgnoreCase(code)){
 				iscode3r = true;
 			}
 
@@ -539,21 +535,21 @@ public class LimeDB extends SQLiteOpenHelper {
 				// When Code3r mode is enable
 				if(remap3row && iscode3r){
 					if(sort){
-						cursor = db.query(tablename, null, FIELD_CODE + " = \"" + keyword + "\" OR " + FIELD_CODE +" = \""+code3r+"\""
+						cursor = db.query(tablename, null, FIELD_CODE + " = \"" + code + "\" OR " + FIELD_CODE +" = \""+code3r+"\""
 								, null, null, null, FIELD_SCORE +" DESC", null);
 					}else{
-						cursor = db.query(tablename, null, FIELD_CODE + " = \"" + keyword + "\"" + "\" OR " + FIELD_CODE +" = \""+code3r+"\""
+						cursor = db.query(tablename, null, FIELD_CODE + " = \"" + code + "\"" + "\" OR " + FIELD_CODE +" = \""+code3r+"\""
 								, null, null, null, null, null);
 					}
 				}else{
 					// When Code3r mode is disable
 					if(sort){
 						cursor = db.query(tablename, null, FIELD_CODE + " = \""
-								+ keyword + "\"", null, null, null, FIELD_SCORE +" DESC",
+								+ code + "\"", null, null, null, FIELD_SCORE +" DESC",
 								null);
 					}else{
 						cursor = db.query(tablename, null, FIELD_CODE + " = \""
-								+ keyword + "\"", null, null, null, null, null);
+								+ code + "\"", null, null, null, null, null);
 					}
 				}
 
@@ -599,7 +595,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			} while (cursor.moveToNext());
 
 			int ssize = mLIMEPref.getSimilarCodeCandidates();
-			if (relatedlist.indexOf("|") != -1) {
+			if (relatedlist != null && relatedlist.indexOf("|") != -1) {
 				String templist[] = relatedlist.split("\\|");
 				int scount = 0;
 				for (String unit : templist) {
@@ -690,6 +686,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		// Reset Database Table
 		deleteAll(table);
+		finish = false;
 
 		thread = new Thread() {
 
@@ -746,6 +743,11 @@ public class LimeDB extends SQLiteOpenHelper {
 					BufferedReader buf = new BufferedReader(fr);
 					boolean firstline = true;
 					boolean cinFormatStart = false;
+					
+
+					mLIMEPref.setParameter(table
+							+ LIME.IM_MAPPING_TOTAL, count);
+					mLIMEPref.setParameter(table + LIME.IM_MAPPING_DATE, "Preparing..., this task might take few minutes please be patient.");
 
 					while ((line = buf.readLine()) != null) {
 
@@ -871,7 +873,7 @@ public class LimeDB extends SQLiteOpenHelper {
 							resultlist.add(getInsertItem(code, word));
 
 						} catch (StringIndexOutOfBoundsException e) {
-							Log.i("ART", line + ":" + e);
+							//Log.i("ART", line + ":" + e);
 						}
 					}
 
@@ -887,13 +889,10 @@ public class LimeDB extends SQLiteOpenHelper {
 							db.insert(table, null, unit);
 
 							count++;
-							if (count % 500 == 0) {
+							if (count % 100 == 0) {
 								mLIMEPref.setParameter(table
 										+ LIME.IM_MAPPING_TOTAL, count);
 								mLIMEPref.setParameter(table + LIME.IM_MAPPING_DATE, "Loading..., Press screen to update status.");
-
-								Log.i("ART", "Insert -> " + count
-										+ new Date().toString());
 							}
 						}
 					}

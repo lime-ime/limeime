@@ -84,9 +84,7 @@
             android:title="@string/auto_complete"
             android:summary="@string/auto_complete_summary"
             android:persistent="true" 
-            android:defaultValue="true"
-            android:dependency="show_suggestions"
-            />
+            android:defaultValue="true"/>
             
     </PreferenceCategory>
     <PreferenceCategory
@@ -114,6 +112,13 @@
     <ListPreference
     			android:key="cj_im_reverselookup"
     			android:title="@string/cj_reverse_lookup_list" 
+    			android:entries="@array/im_reverse_lookup" 
+    			android:entryValues="@array/im_reverse_lookup_codes" 
+    			android:dialogTitle="@string/im_reverse_lookup_list" 
+    			android:defaultValue="none"/>
+    <ListPreference
+    			android:key="scj_im_reverselookup"
+    			android:title="@string/scj_reverse_lookup_list" 
     			android:entries="@array/im_reverse_lookup" 
     			android:entryValues="@array/im_reverse_lookup_codes" 
     			android:dialogTitle="@string/im_reverse_lookup_list" 

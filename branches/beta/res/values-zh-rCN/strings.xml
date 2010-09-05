@@ -5,7 +5,7 @@
     <!-- Title for Latin keyboard  -->
     <string name="app_name">LIME</string>
     <string name="ime_name">LIME</string>
-    <string name="ime_setting">LIME设定</string>
+    <string name="ime_setting">LIME 设定</string>
     <string name="input_method">输入方式</string>
 
     <!-- Symbols that are commonly considered word separators in this language -->
@@ -15,38 +15,8 @@
     <!-- Labels on soft keys -->
     <string name="label_go_key">Go</string>
     <string name="label_next_key">Next</string>
-    <string name="label_send_key">Send</string>
-    
-    <!-- LIME Setting -->
-    <string name="lime_setting_title">LIME 2.1 \n\n**由 1.7.x 升级或者您欲使用新版本上的[3排键盘重对应]请重新汇入字根档。\n\n自定义输入法建立工具。透过 LIME 输入法字根对应档的汇入，您可以打造完全属于您个人的输入方式。您可以在官方网站找到更多 关于 "如何使用 LIME 输入法?" 或 "那里可以下载字根档?" 等相关资讯.\nhttp://android.toload.net/</string>
-    <string name="lime_setting_operation_notice1">\n[载入对应表]\n您必需先汇入完整字根对应表才能开始输入文字，请选择适当的 .LIME 或 .CIN 进行资料载入动作。\n\n由 LIME 2.0 版本开始预先提供多种输入法的字根档，字根档会自动拷贝至 sdcard/lime/ 目录下，您也可以依据个人的喜好利用适当的工具进行内容的调整.\n</string>
-    <string name="lime_setting_operation_info1">预设对应表版本 : </string>
-    <string name="lime_setting_operation_info1_cj">仓颉对应表版本: </string>
-    <string name="lime_setting_operation_info1_dayi">大易对应表版本: </string>
-    <string name="lime_setting_operation_info1_bpmf">注音对应表版本: </string>
-    <string name="lime_setting_operation_info1_ez">轻松对应表版本: </string>
-    <string name="lime_setting_operation_info1_array">行列对应表版本: </string>
-    <string name="lime_setting_operation_info1_related">预载关联字库版本: </string>
-    <string name="lime_setting_operation_info1_dictionary">英文键盘字库版本: </string>
-    <string name="lime_setting_operation_info2">总笔数 : </string> 
-    <string name="lime_setting_operation_notice2">\n[清除资料库]\n假如您想要重置资料库请点选下方的按钮。资料库重置后可以让您重头开始汇入 LIME 字根档。如果字根汇入动作未完成或中断，请利用本功能清除未完成汇入的输入法资料库。</string>
-    <string name="lime_setting_operation_notice3">\n[使用者关联字备份/还原]\nLIME 程式会依使用者曾输入过的文字自动建立关联字资料库。您可以使用下列的功能进行关联字资料库的备份及还原工作。\n</string>
-    <string name="lime_setting_operation_info3">总笔数 : </string>
-    <string name="lime_setting_operation_notice4">\n[清除关联字]\n执行这一个功能可以让系统重新建立关联字资料库.</string>
-    
-    <!-- Button Text -->
-    <string name="lime_setting_btn_load_local">载入字根档</string>
-    <string name="lime_setting_reset_database">清除资料库</string>
-    <string name="lime_setting_reset_dictionary">清除关联字</string>
-    <string name="lime_setting_backtup_db">资料备份</string>
-    <string name="lime_setting_restore_db">资料还原</string>
-    
-    <!-- Select File -->
-    <string name="lime_setting_backup_message">备份至 /sdcard/lime/limedb.txt</string>
-    <string name="lime_setting_backup_message_failed">无法备份至 /sdcard/lime/limedb.txt, 请确认 /sdcard 目录是否可存取!!</string>
-    <string name="lime_setting_restore_message">由 /sdcard/lime/limedb.txt 还原</string>
-    <string name="lime_setting_restore_message_failed">找不到 /sdcard/lime/limedb.txt 档案, 无法进行资料还原任务!!</string>
-    <string name="lime_setting_btn_close">关闭</string>
+    <string name="label_send_key">传送</string>
+    <string name="label_close_key">关闭</string>
     
     <!-- LIME Loading -->
     <string name="lime_setting_btn_load_local_notice">请选择 .LIME 或 .CIN 档案</string>
@@ -61,14 +31,6 @@
     <string name="lime_setting_notification_loading_end">已载入</string>
     <string name="lime_setting_notification_loading_build">建立</string>
     <string name="lime_setting_notification_loading_import">字根</string>
-    <string name="lime_setting_notification_loading_related">关联字 </string>
-    <string name="lime_setting_notification_mapping_reset">对应表清除完成</string>
-    <string name="lime_setting_notification_userdic_reset">关联字清除完成</string>
-    <string name="lime_setting_notification_userdic_backup">关联字备份完成</string>
-    <string name="lime_setting_notification_userdic_restore">关联字还原完成</string>
-    <string name="lime_setting_notification_db_loading">开始载入字根档内容</string>
-    <string name="lime_setting_notification_db_request">无对应字码, 请先载入 .LIME 或 .CIN 档案</string>
-    <string name="lime_setting_notification_db_busy">资料库工作中, 请稍后再试</string>
       
     <!-- TAB -->
     <string name="lime_setting_db">对应表管理</string>
@@ -81,32 +43,33 @@
        
     <string name="keyboard_list">键盘选取</string>
     
-     <string name="default_in_english">预设英文输入</string>
-    <string name="default_in_english_summary">起始输入于英文模式</string>
+    
+    <string name="default_in_english">先使用英文模式</string>
+    <string name="default_in_english_summary">输入法开启后先使用英文输入模式.</string>
     
     <string name="three_rows_remapping">3排键盘重对应</string>
     <string name="three_rows_remapping_summary">对应 1234567890-;至 qwertyuiopv.</string>
     
-    <string name="prediction_category">英文模式字词建议</string>
-    <string name="auto_cap">自动大写</string> 
-    <string name="auto_cap_summary">句首字母大写</string>
-    <string name="quick_fixes">快速纠正</string>
-    <string name="quick_fixes_summary">纠正常见的输入错误</string>
-    <string name="show_suggestions">显示建议</string>
-    <string name="show_suggestions_summary">打字时显示建议字词</string>
-    <string name="auto_complete">自自动填写</string>
-    <string name="auto_complete_summary">按空格键和标点符号时自动插入突出显示的字词</string>
+    <string name="prediction_category">英文关联字设定</string>
+    <string name="auto_cap">首字自动大写</string> 
+    <string name="auto_cap_summary">英文段落输入首字自动大写</string>
+    <string name="quick_fixes">启用快速修正</string>
+    <string name="quick_fixes_summary">快速修正一般拼字错误</string>
+    <string name="auto_complete">启用自动完成</string>
+    <string name="auto_complete_summary">输入时选取“空白”及“符号”自动输入反白文字.</string>
     
     <string name="im">输入法</string>
-    <string name="im_reverse_lookup_list">反查选择</string>
-    <string name="default_reverse_lookup_list">预设对应表反查</string>
-    <string name="cj_reverse_lookup_list">仓颉反查</string>
-    <string name="dayi_reverse_lookup_list">大易反查</string>
-    <string name="bpmf_reverse_lookup_list">注音反查</string>
-    <string name="ez_reverse_lookup_list">轻松反查</string>
-    <string name="array_reverse_lookup_list">行列反查</string>
+    <string name="im_reverse_lookup_list">输入法字根反查</string>
+    <string name="default_reverse_lookup_list">自定义字根反查</string>
+    <string name="cj_reverse_lookup_list">仓颉字根反查</string>
+    <string name="scj_reverse_lookup_list">快仓字根反查</string>
+    <string name="dayi_reverse_lookup_list">大易字根反查</string>
+    <string name="bpmf_reverse_lookup_list">注音字根反查</string>
+    <string name="ez_reverse_lookup_list">轻松字根反查</string>
+    <string name="array_reverse_lookup_list">行列字根反查</string>
     
-    <string name="han_convert_option_list">简繁转换</string>
+    <string name="han_convert_option_list">中文简/繁体字码转换</string>
+    
     
     <string name="table_list">对应表选取</string>
     <string name="similiar_list">建议字显示数量</string>
@@ -131,48 +94,190 @@
     <string name="typing_mode_english">切换输入模式 / 英文</string>
     <string name="typing_mode_mixed">切换输入模式 / 混合</string>
     
-    <!-- Other Messages -->
+    <!-- Popup keyboard char sequences-->
+    <string name="chinese_punctuation">“”！？、。，</string>
     
-    <!-- Han Converter Options -->
+    <!-- Other Messages -->
+  	
+  	<!-- Indicates that a word has been added to the dictionary -->
+    <string name="added_word"><xliff:g id="word">%s</xliff:g> : Saved</string>
+    <!-- Accented forms of "a" -->
+    <string name="alternates_for_a">aaaaaaa</string>
+    <!-- Accented forms of "e" -->
+    <string name="alternates_for_e">eeee</string>
+    <!-- Accented forms of "i" -->
+    <string name="alternates_for_i">iiii</string>
+    <!-- Accented forms of "o" -->
+    <string name="alternates_for_o">oooooœo</string>
+    <!-- Accented forms of "u" -->
+    <string name="alternates_for_u">uuuu</string>
+    <!-- Letters associated with "s" -->
+    <string name="alternates_for_s">§s</string>
+    <!-- Accented forms of "n" -->
+    <string name="alternates_for_n">n</string>
+    <!-- Accented forms of "c" -->
+    <string name="alternates_for_c">c</string>
+    <!-- Accented forms of "y" -->
+    <string name="alternates_for_y">yy</string>
+    <!-- Symbols that are commonly considered word separators in this language -->
+    <!-- Symbols that are sentence separators, for purposes of making it hug the last sentence. -->
+    <string name="sentence_separators">.,;:!?</string>
+    <!-- Accented characters related to "d" -->
+    <string name="alternates_for_d"></string>
+    <!-- Accented characters related to "r" -->
+    <string name="alternates_for_r"></string>
+    <!-- Accented characters related to "t" -->
+    <string name="alternates_for_t"></string>
+    <!-- Accented characters related to "z" -->
+    <string name="alternates_for_z"></string>
+    <!-- Accented characters related to "l" -->
+    <string name="alternates_for_l"></string>
+    <!-- Accented characters related to "g" -->
+    <string name="alternates_for_g"></string>
+    
+    <!-- Label for soft enter key when it performs DONE action.  Must be short to fit on key! -->
+    <string name="label_done_key">Done</string>
+    <!-- Label for "switch to symbols" key.  Must be short to fit on key! -->
+    <string name="label_symbol_key">123</string>
+    <!-- Label for "switch to numeric" key.  Must be short to fit on key! -->
+    <string name="label_alpha_key">ABC</string>
+    <!-- Label for ALT modifier key.  Must be short to fit on key! -->
+    <string name="label_alt_key">ALT</string>
+    
+     <!-- popular web domains for the locale - most popular, displayed on the keyboard -->
+    <string name="popular_domain_0">".com"</string>
+    <string name="popular_domain_1">".net"</string>
+    <string name="popular_domain_2">".tw"</string>
+    <string name="popular_domain_3">".org"</string>
+    <string name="popular_domain_4">".gov"</string>
+    <string name="popular_domain_5">".edu"</string>
+    
+	<!-- Han Converter Options -->
     <string-array name="han_convert_options">
 		<item>无</item>
-		<item>打繁出简</item>
-		<item>打简出繁</item>
+		<item>繁转简</item>
+		<item>简转繁</item>
 	</string-array>
-    
+	
+	<string-array name="han_convert_options_values">
+		<item>0</item>
+		<item>1</item>
+		<item>2</item>
+	</string-array>
+	
     <!-- IM Reverse Lookup List -->  
     <string-array name="im_reverse_lookup">
 		<item>无</item>
 		<item>预设</item>
 		<item>仓颉</item>
+		<item>快仓</item>
 		<item>大易</item>
 		<item>注音</item>
 		<item>轻松</item>
 		<item>行列</item>
 	</string-array>
-
+	<string-array name="im_reverse_lookup_codes">
+		<item>none</item>
+		<item>custom</item>
+		<item>cj</item>
+		<item>scj</item>
+		<item>dayi</item>
+		<item>phonetic</item>
+		<item>ez</item>
+		<item>array</item>
+	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
 		<item>预设键盘</item>
-		<item>电话键盘</item>
 		<item>仓颉键盘</item>
+		<item>快仓键盘</item>
 		<item>大易键盘</item>
 		<item>注音键盘</item>
 		<item>轻松键盘</item>
 		<item>行列键盘</item>
 	</string-array>
-
+	<string-array name="keyboard_defaultstate">
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+	</string-array>
+    <string-array name="keyboard_codes">
+		<item>lime</item>
+		<item>phone</item>
+		<item>cj</item>
+		<item>scj</item>
+		<item>dayi</item>
+		<item>phonetic</item>
+		<item>ez</item>
+		<item>array</item>
+	</string-array>
+	<string-array name="table_codes">
+		<item>custom</item>
+		<item>cj</item>
+		<item>scj</item>
+		<item>dayi</item>
+		<item>phonetic</item>
+		<item>ez</item>
+		<item>array</item>
+		<item>related</item>
+		<item>dictionary</item>
+	</string-array>
+    
+    <string-array name="similiar_codes">
+		<item>10</item>
+		<item>20</item>
+		<item>30</item>
+		<item>40</item>
+		<item>50</item>
+	</string-array>
 	
 	<!-- Table Selection list -->
 	<string-array name="table">
 		<item>预设/电话</item>
 		<item>仓颉</item>
+		<item>快仓</item>
 		<item>大易</item>
 		<item>注音</item>
 		<item>轻松</item>
 		<item>行列</item>
-		<item>预载关联字库</item>
-		<item>英文键盘字库</item>
+		<item>预载关联字</item>
+		<item>英文字典</item>
 	</string-array>
 	
+	<!-- Version 3 String Set -->
+    <string name="l3_message_initial_required">请初始化 LIME 资料库_</string>
+    
+    <string name="l3_tab_initial">初始资料库</string>
+    <string name="l3_initial_btn_load_empty_db">空白资料库</string>
+    <string name="l3_initial_btn_load_preload_db">预载资料库</string>
+    <string name="l3_initial_btn_reset_db">重置资料库</string>
+    
+    <string name="l3_tab_manage">输入法管理</string>
+    <string name="l3_manage_default">预设</string>
+    <string name="l3_manage_phonetic">注音</string>
+    <string name="l3_manage_cj">仓颉</string>
+    <string name="l3_manage_scj">快仓</string>
+    <string name="l3_manage_dayi">大易</string>
+    <string name="l3_manage_eazy">轻松</string>
+    <string name="l3_manage_array">行列</string>
+    
+    <string name="l3_tab_preference">喜好设定</string>
+    
+	<string name="l3_dbservice_download_start">正在取得预载资料库, 这一个动作会持续一至数分钟，请您耐心等候.</string>
+    <string name="l3_dbservice_download_initial">正在初始化资料库.</string>
+    <string name="l3_dbservice_download_loaded">预载资料库已成功载入.</string>
+    <string name="l3_dbservice_download_convert">输入法进行转换中.</string>
+    
+    <string name="l3_message_database_reset_confirm">您是否要移除资料库?</string>
+    <string name="l3_message_table_reset_confirm">您是否要清除所有记录?</string>
+    <string name="l3_initial_download_database">下载资料库</string>
+    <string name="l3_initial_backup_database">备份资料库</string>
+    <string name="l3_initial_backup_error">资料库不存在，无法进行备份.</string>
+    <string name="l3_initial_restore_database">还原资料库</string>
+    <string name="l3_initial_restore_error">备份档案不存在，无法进行还原.</string>
+    
 </resources>

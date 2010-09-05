@@ -59,6 +59,7 @@ public class DBService extends Service {
 	public class DBServiceImpl extends IDBService.Stub {
 
 		Context ctx = null;
+		private Thread thread = null;
 
 		DBServiceImpl(Context ctx) {
 			this.ctx = ctx;
@@ -70,18 +71,63 @@ public class DBService extends Service {
 		
 		public void loadMapping(String filename, String tablename) throws RemoteException {
 
+			if(!db.isFinish()){
 			
-			File sourcefile = new File(filename);
-			
-			// Start Loading
-			if (db == null) {loadLimeDB();}
-
-			db.setFilename(sourcefile);
-			db.loadFile(tablename);
-			db.close();
-			
-			// Reset for SearchSrv
-			mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+				File sourcefile = new File(filename);
+				
+				// Start Loading
+				if (db == null) {loadLimeDB();}
+	
+				db.setFilename(sourcefile);
+	
+				displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading)+ "");
+	
+				// Update Loading Status
+				// Stop and clear the existing thread.
+				if(thread!=null){
+					thread.stop();
+					thread = null;
+				}
+				thread = new Thread() {
+					public void run() {
+						int total = 0;
+						//while (!db.isFinish() || !db.isRelatedFinish() ) {
+						while (!db.isFinish()) {
+							try {
+								this.sleep(10000);
+								
+								if(db.getCount() != 0){
+									displayNotificationMessage(
+											ctx.getText(R.string.lime_setting_notification_loading_build) + " "
+											+ ctx.getText(R.string.lime_setting_notification_loading_import) + " "
+											+ db.getCount() + " "
+											+ ctx.getText(R.string.lime_setting_notification_loading_end)
+											);
+								}
+								
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+	
+						// Finish task
+						if(db.isFinish()){
+							displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_finish)+ "");
+						}else{
+							displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_failed)+ "");
+						}
+	
+					}
+				};
+				thread.start();
+	
+				// Actually run the loading
+				db.loadFile(tablename);
+				db.close();
+				
+				// Reset for SearchSrv
+				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+			}
 		}
 
 		public void resetMapping(final String tablename) throws RemoteException {
@@ -108,7 +154,7 @@ public class DBService extends Service {
 			if (db == null) {loadLimeDB();}
 			Thread threadTask = new Thread() {
 				public void run() {
-					displayNotificationMessage("Download preloaded database, this action will take few minutes please wait.");
+					displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start)+ "");
 					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PRELOADED, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
 					if(decompressFile(downloadedFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME)){
 						Thread threadTask = new Thread() {
@@ -118,7 +164,7 @@ public class DBService extends Service {
 						};
 						threadTask.start();
 					}
-					displayNotificationMessage("Initialize database.");
+					displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_initial)+ "");
 					initialMappingInfo("custom");
 					initialMappingInfo("cj");
 					initialMappingInfo("scj");
@@ -127,7 +173,7 @@ public class DBService extends Service {
 					initialMappingInfo("phonetic");
 					initialMappingInfo("dayi");
 					getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
-					displayNotificationMessage("Preloaded database was loaded.");
+					displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "");
 				}
 				
 				public void initialMappingInfo(String table){
@@ -151,7 +197,7 @@ public class DBService extends Service {
 			
 			try {
 
-				displayNotificationMessage("Convert database file.");
+				displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_convert)+ "");
 				URL downloadUrl = new URL(url);
 				URLConnection conn = downloadUrl.openConnection();
 				conn.connect();
@@ -225,7 +271,7 @@ public class DBService extends Service {
 					bos.flush(); 
 					bos.close(); 
 					
-					Log.i("ART","uncompress Output File:"+OutputFile.getAbsolutePath() + " / " + OutputFile.length());
+					//Log.i("ART","uncompress Output File:"+OutputFile.getAbsolutePath() + " / " + OutputFile.length());
 					
 				} 
 				zis.close(); 
@@ -266,7 +312,7 @@ public class DBService extends Service {
 					origin.close();
 				out.close();
 				
-				Log.i("ART","compress Output File:"+OutputFile.getAbsolutePath() + " / " + OutputFile.length());
+				//Log.i("ART","compress Output File:"+OutputFile.getAbsolutePath() + " / " + OutputFile.length());
 				
 			} catch(Exception e) {
 				e.printStackTrace();
@@ -300,7 +346,6 @@ public class DBService extends Service {
 	 */
 	@Override
 	public void onCreate() {
-		notificationMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		super.onCreate();
 	}
 
@@ -326,6 +371,9 @@ public class DBService extends Service {
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,new Intent(this, LIMEMenu.class), 0);
 		notification.setLatestEventInfo(this, this .getText(R.string.ime_setting), message, contentIntent);
+		if(notificationMgr == null){
+			notificationMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		}
 		notificationMgr.notify(0, notification);
 	}
 	
