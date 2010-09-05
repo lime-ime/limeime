@@ -142,7 +142,7 @@ public class SearchService extends Service {
 			
 			if(db == null){loadLimeDB();}
 			
-			Log.i("ART","Run SearchSrv query:"+ code);
+			//Log.i("ART","Run SearchSrv query:"+ code);
 			// Check if system need to reset cache
 			
 			if(mLIMEPref.getParameterBoolean(LIME.SEARCHSRV_RESET_CACHE)){
@@ -171,12 +171,12 @@ public class SearchService extends Service {
 					precode = code;
 				}
 				
-				if(cache.get(code) != null){
+				if(cache.get(db.getTablename()+code) != null){
 					// load from cache
-					result.addAll(cache.get(code));
+					result.addAll(cache.get(db.getTablename()+code));
 				}else{
 					// Start new search to database
-					Log.i("ART","SIZE*:" + db.getMapping(code).size());
+					//Log.i("ART","SIZE*:" + db.getMapping(code).size());
 					List templist = db.getMapping(code);
 					if(templist.size() > 0){
 						result.addAll(templist);
@@ -189,7 +189,7 @@ public class SearchService extends Service {
 						// code length cannot exceed 4 characters. (if it too long then consider it as English
 						if(code.length() < 5){
 							result.addAll(preresultlist);
-							cache.put(code, preresultlist);
+							cache.put(db.getTablename()+code, preresultlist);
 							Log.i("ART","Load from cache : " + code + " / " + preresultlist);
 						}
 					}

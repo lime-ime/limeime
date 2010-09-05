@@ -192,6 +192,7 @@
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
 		<item>預設鍵盤</item>
+		<item>電話鍵盤</item>
 		<item>倉頡鍵盤</item>
 		<item>快倉鍵盤</item>
 		<item>大易鍵盤</item>
