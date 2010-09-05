@@ -192,6 +192,7 @@
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
 		<item>预设键盘</item>
+		<item>电话键盘</item>
 		<item>仓颉键盘</item>
 		<item>快仓键盘</item>
 		<item>大易键盘</item>

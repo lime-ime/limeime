@@ -140,6 +140,10 @@ public class LimeDB extends SQLiteOpenHelper {
 					+ this.tablename);
 		}
 	}
+	
+	public String getTablename(){
+		return this.tablename;
+	}
 
 	/*
 	 * Initialize LIME database, Context and LIMEPreferenceManager
