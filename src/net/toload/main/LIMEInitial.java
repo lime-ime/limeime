@@ -151,6 +151,9 @@ public class LIMEInitial extends Activity {
 		    				alert.show();
 		    	    
 				btnResetDB.setEnabled(true);
+				
+				// Reset for SearchSrv
+				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 			}
 		});
 		
@@ -161,6 +164,10 @@ public class LIMEInitial extends Activity {
 					initialButton();
 					Toast.makeText(v.getContext(), "Download Preloaded Database", Toast.LENGTH_LONG).show();
 					DBSrv.downloadPreloadedDatabase();
+
+					// Reset for SearchSrv
+					mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+					
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
@@ -191,6 +198,9 @@ public class LIMEInitial extends Activity {
 					if(srcFile.exists() && srcFile.length() > 1024){
 						Toast.makeText(v.getContext(), "Restore LIME Database", Toast.LENGTH_LONG).show();
 						DBSrv.restoreDatabase();
+						
+						// Reset for SearchSrv
+						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 					}else{
 						Toast.makeText(v.getContext(), "You don't have backup to be restore.", Toast.LENGTH_LONG).show();
 					}

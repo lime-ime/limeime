@@ -216,19 +216,11 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("quick_fixes", true);
 	}
 	
-	public boolean getShowEnlishgSuggestions(){
-		
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean("show_suggestions", true);
-	}
-	
-	
 	public boolean getAutoComplete(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("auto_complete", true);
 	}
-	
 	
 	
 	public Integer getHanCovertOption(){
@@ -238,9 +230,7 @@ public class LIMEPreferenceManager {
 	}
 	
 	
-	
 	public Integer getSimilarCodeCandidates(){
-		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return Integer.parseInt(sp.getString("similiar_list", "20"));
 	}

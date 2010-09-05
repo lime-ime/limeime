@@ -79,11 +79,17 @@ public class DBService extends Service {
 			db.setFilename(sourcefile);
 			db.loadFile(tablename);
 			db.close();
+			
+			// Reset for SearchSrv
+			mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 		}
 
 		public void resetMapping(final String tablename) throws RemoteException {
 			if (db == null) {loadLimeDB();}
 			db.deleteAll(tablename);
+			
+			// Reset for SearchSrv
+			mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 		}
 		
 		

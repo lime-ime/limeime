@@ -63,7 +63,7 @@ import android.widget.Toast;
  */
 public class LimeDB extends SQLiteOpenHelper {
 
-	private static boolean DEBUG = false;
+	private static boolean DEBUG = true;
 
 	private final static int DATABASE_VERSION = 66;
 	private final static int DATABASE_RELATED_SIZE = 50;
@@ -90,10 +90,6 @@ public class LimeDB extends SQLiteOpenHelper {
 	public final static String CJ_KEY = "QWERTYUIOPASDFGHJKLZXCVBNM";
 	public final static String CJ_CHAR = "手田水口廿卜山戈人心日尸木火土竹十大中重難金女月弓一";
 
-	// 3 rows remap
-
-	public final static String THREE_ROW_KEY_REMAP = "1234567890;-";
-	public final static String THREE_ROW_KEY = "QWERTYUIOP,V";
 
 	public String DELIMITER = "";
 
@@ -101,6 +97,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private String tablename = "custom";
 
 	private int count = 0;
+	private int ncount = 0;
 	private boolean finish = false;
 	private boolean relatedfinish = false;
 
@@ -282,6 +279,128 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 	}
 
+	/**
+	 * Create dictionary database
+	 * 
+	 * @param srclist
+	 */
+	public void addDictionary(List<Mapping> srclist) {
+		
+		if(DEBUG){
+			Log.i("addDictionary:", "Etnering addDictionary");
+		}
+		
+		int dictotal = 0;
+		try {
+			SharedPreferences settings = ctx.getSharedPreferences(LIME.TOTAL_USERDICT_RECORD, 0);
+			String recordString = settings.getString(LIME.TOTAL_USERDICT_RECORD, "0");
+			dictotal = Integer.parseInt(recordString);
+		} catch (Exception e) {}
+		
+		
+		// Check if build related word enable. 
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		if( !sp.getBoolean(LIME.CANDIDATE_SUGGESTION, false) ){
+			if(DEBUG){
+				Log.i("addDictionary:", "CANDIDATE_SUGGESTION:false returning...");
+			}
+			return;
+		}
+		
+		if (srclist != null && srclist.size() > 0) {
+
+			SQLiteDatabase db = this.getWritableDatabase();
+			
+			try {
+				db.beginTransaction();
+				for (int i = 0; i < srclist.size(); i++) {
+
+					Mapping unit = srclist.get(i);
+					
+					if(i+1 <srclist.size()){
+						Mapping unit2 = srclist.get((i + 1));
+						
+						if (unit != null 
+							&& unit.getWord() != null && !unit.getWord().equals("")
+							&& unit2 != null
+							&& unit2.getWord() != null && !unit2.getWord().equals("")) {
+
+							Mapping munit = this.isExists(unit.getWord(),unit2.getWord());
+							if (munit == null) {
+								try {
+									ContentValues cv = new ContentValues();
+									cv.put(FIELD_DIC_pword, unit.getWord());
+									cv.put(FIELD_DIC_cword, unit2.getWord());
+									cv.put(FIELD_DIC_score, 1);
+									db.insert("related", null, cv);
+									dictotal++;
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}else{//the item exist in preload related database. 
+								  // do addscore here. (Score > 0)
+									if(munit.getScore() > 0){
+										  ContentValues cv = new ContentValues();
+							  				cv.put(FIELD_SCORE, munit.getScore()+1);
+										    db.update("related", cv, FIELD_id + " = " + munit.getId(), null);
+										    Log.i("ART","Add Score for Dictionary : " + munit.getId() + munit.getCode() + munit.getScore());
+									}
+								}
+							}
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			} finally {
+				db.setTransactionSuccessful();
+				db.endTransaction();
+				SharedPreferences sp1 = ctx.getSharedPreferences(LIME.TOTAL_USERDICT_RECORD, 0);
+				sp1.edit().putString(LIME.TOTAL_USERDICT_RECORD, String.valueOf(dictotal)).commit();
+				if(DEBUG){
+					Log.i("addDictionary:", "update userdict total records:" + dictotal);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Add score to the mapping item
+	 * 
+	 * @param srcunit
+	 */
+	public void addScore(Mapping srcunit) {
+		try {
+			if (srcunit != null && srcunit.getId() != null &&
+					srcunit.getWord() != null  &&
+					!srcunit.getWord().trim().equals("") ) {
+
+				if(srcunit.isDictionary()){
+					ContentValues cv = new ContentValues();
+					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
+	
+					SQLiteDatabase db = this.getWritableDatabase();
+					db.beginTransaction();
+					db.update("related", cv, FIELD_id + " = " + srcunit.getId(), null);
+					db.setTransactionSuccessful();
+					db.endTransaction();
+				}else{
+					ContentValues cv = new ContentValues();
+					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
+	
+					SQLiteDatabase db = this.getWritableDatabase();
+					db.beginTransaction();
+					db.update(tablename, cv, FIELD_id + " = " + srcunit.getId(), null);
+					db.setTransactionSuccessful();
+					db.endTransaction();
+				}
+				Log.i("ART","Add Score for : " + srcunit.isDictionary() + " / " + srcunit.getId() + srcunit.getCode() + srcunit.getScore());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
 	// Add by jeremy '10, 4, 1. For reverse lookup
 	/**
 	 * Reverse lookup on keyword.
@@ -303,8 +422,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			if (keyword != null && !keyword.trim().equals("")) {
 				Cursor cursor = null;
 				SQLiteDatabase db = this.getReadableDatabase();
-				cursor = db.query(Rtable, null, FIELD_WORD + " = '" + keyword
-						+ "' AND " + FIELD_CODE3R + " = '0' ", null, null,
+				cursor = db.query(Rtable, null, FIELD_WORD + " = '" + keyword +"'", null, null,
 						null, null, null);
 				if (DEBUG) {
 					Log.i("getRmapping", "tablename:" + Rtable + "  keyworad:"
@@ -380,7 +498,6 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 		} else {
 			result = code;
-
 		}
 		return result;
 	}
@@ -398,21 +515,47 @@ public class LimeDB extends SQLiteOpenHelper {
 
 		if (keyword != null && !keyword.trim().equals("")) {
 
+			keyword = keyword.toLowerCase();
 			Cursor cursor = null;
 			String sql = null;
 
 			SQLiteDatabase db = this.getReadableDatabase();
 
-			boolean sort = mLIMEPref.getSortSuggestions();// sp.getBoolean(LEARNING_SWITCH,
-															// false);
+			boolean sort = mLIMEPref.getSortSuggestions();// sp.getBoolean(LEARNING_SWITCH, // false);
 			boolean remap3row = mLIMEPref.getThreerowRemapping();// sp.getBoolean(THREE_ROW_REMAP,
-																	// false);
+						
+			boolean iscode3r = false;
+
+			String code3r = keyword;
+			for (int i = 0; i < LIME.THREE_ROW_KEY.length(); i++) {
+				code3r = code3r.replace(LIME.THREE_ROW_KEY.substring(i, i + 1), LIME.THREE_ROW_KEY_REMAP.substring(i, i + 1));
+			}
+			if(!code3r.equalsIgnoreCase(keyword)){
+				iscode3r = true;
+			}
 
 			try {
 
-				cursor = db.query(tablename, null, FIELD_CODE + " = \""
-						+ keyword.toLowerCase() + "\"", null, null, null, null,
-						null);
+				// When Code3r mode is enable
+				if(remap3row && iscode3r){
+					if(sort){
+						cursor = db.query(tablename, null, FIELD_CODE + " = \"" + keyword + "\" OR " + FIELD_CODE +" = \""+code3r+"\""
+								, null, null, null, FIELD_SCORE +" DESC", null);
+					}else{
+						cursor = db.query(tablename, null, FIELD_CODE + " = \"" + keyword + "\"" + "\" OR " + FIELD_CODE +" = \""+code3r+"\""
+								, null, null, null, null, null);
+					}
+				}else{
+					// When Code3r mode is disable
+					if(sort){
+						cursor = db.query(tablename, null, FIELD_CODE + " = \""
+								+ keyword + "\"", null, null, null, FIELD_SCORE +" DESC",
+								null);
+					}else{
+						cursor = db.query(tablename, null, FIELD_CODE + " = \""
+								+ keyword + "\"", null, null, null, null, null);
+					}
+				}
 
 				result = buildQueryResult(cursor);
 
@@ -455,14 +598,18 @@ public class LimeDB extends SQLiteOpenHelper {
 				result.add(munit);
 			} while (cursor.moveToNext());
 
+			int ssize = mLIMEPref.getSimilarCodeCandidates();
 			if (relatedlist.indexOf("|") != -1) {
 				String templist[] = relatedlist.split("\\|");
+				int scount = 0;
 				for (String unit : templist) {
+					if(ssize != 0 && scount > ssize){break;}
 					Mapping munit = new Mapping();
 					munit.setWord(unit);
 					munit.setScore(0);
 					munit.setCode("@RELATED@");
 					result.add(munit);
+					scount++;
 				}
 			}
 		}
@@ -488,9 +635,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @param keyword
 	 * @return
 	 */
-	public List<Mapping> queryUserDict(String pcode, String pword) {
-
-		Log.i("ART","Run UserDict : " + pcode + " " + pword);
+	public List<Mapping> queryUserDict(String pword) {
 		
 		List<Mapping> result = new LinkedList<Mapping>();
 
@@ -501,7 +646,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			SQLiteDatabase db = this.getReadableDatabase();
 
 			cursor = db.query("related", null, FIELD_DIC_pword + " = \""
-					+ pword + "\"", null, null, null, null, null);
+					+ pword + "\"", null, null, null, FIELD_SCORE + " DESC", null);
 
 			if (cursor.moveToFirst()) {
 
@@ -558,6 +703,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				finish = false;
 				// relatedfinish = false;
 				count = 0;
+				ncount = 0;
 
 				// Check if source file is .cin format
 				if (filename.getName().toLowerCase().endsWith(".cin")) {
@@ -762,7 +908,6 @@ public class LimeDB extends SQLiteOpenHelper {
 							.setParameter(table + LIME.IM_MAPPING_TOTAL, count);
 					mLIMEPref.setParameter(table + LIME.IM_MAPPING_DATE, new Date().toLocaleString());
 					
-
 				}
 				finish = true;
 			}
@@ -770,75 +915,19 @@ public class LimeDB extends SQLiteOpenHelper {
 		};
 		thread.start();
 	}
-
+	
 	public ContentValues getInsertItem(String code, String word) {
-		// '10 4, 6. Jeremy. 3row remapping code.
-		String code3r = code;
-		for (int i = 0; i < THREE_ROW_KEY.length(); i++) {
-			code3r = code3r.replace(THREE_ROW_KEY_REMAP.substring(i, i + 1),
-					THREE_ROW_KEY.substring(i, i + 1));
-		}
-
 		try {
-			if (code3r.equals(code)) {
 				ContentValues cv = new ContentValues();
 				cv.put(FIELD_CODE, code);
 				cv.put(FIELD_CODE3R, "0");
 				cv.put(FIELD_WORD, word);
 				cv.put(FIELD_SCORE, 0);
 				return cv;
-			} else {
-				ContentValues cv = new ContentValues();
-				cv.put(FIELD_CODE, code);
-				cv.put(FIELD_CODE3R, "0");
-				cv.put(FIELD_WORD, word);
-				cv.put(FIELD_SCORE, 0);
-
-				// code3r record
-				cv.put(FIELD_CODE, code3r);
-				cv.put(FIELD_CODE3R, "1");
-				return cv;
-			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
-	}
-
-	public void insertWord(SQLiteDatabase db, String table, String code,
-			String word) {
-		// '10 4, 6. Jeremy. 3row remapping code.
-		String code3r = code;
-		for (int i = 0; i < THREE_ROW_KEY.length(); i++) {
-			code3r = code3r.replace(THREE_ROW_KEY_REMAP.substring(i, i + 1),
-					THREE_ROW_KEY.substring(i, i + 1));
-		}
-
-		try {
-			if (code3r.equals(code)) {
-				ContentValues cv = new ContentValues();
-				cv.put(FIELD_CODE, code);
-				cv.put(FIELD_CODE3R, "0");
-				cv.put(FIELD_WORD, word);
-				cv.put(FIELD_SCORE, 0);
-				db.insert(table, null, cv);
-			} else {
-				ContentValues cv = new ContentValues();
-				cv.put(FIELD_CODE, code);
-				cv.put(FIELD_CODE3R, "0");
-				cv.put(FIELD_WORD, word);
-				cv.put(FIELD_SCORE, 0);
-				db.insert(table, null, cv);
-
-				// code3r record
-				cv.put(FIELD_CODE, code3r);
-				cv.put(FIELD_CODE3R, "1");
-				db.insert(table, null, cv);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
 	}
 
 	/**
@@ -883,8 +972,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @param cword
 	 * @return
 	 */
-	public boolean isExists(String pword, String cword) {
+	public Mapping isExists(String pword, String cword) {
 
+		Mapping munit =null;
 		if (pword != null && !pword.trim().equals("") && cword != null
 				&& !cword.trim().equals("")) {
 
@@ -894,15 +984,29 @@ public class LimeDB extends SQLiteOpenHelper {
 				cursor = db.query("related", null, FIELD_DIC_pword + " = '"
 						+ pword + "'" + " AND " + FIELD_DIC_cword + " = '"
 						+ cword + "'", null, null, null, null, null);
-
+				
+				if (cursor.moveToFirst()) {
+					int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
+					int cwordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
+					int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
+					int idColumn = cursor.getColumnIndex(FIELD_id);
+					
+					munit = new Mapping();
+						munit.setId(cursor.getString(idColumn));
+						munit.setPword(cursor.getString(pwordColumn));
+						munit.setWord(cursor.getString(cwordColumn));
+						munit.setScore(cursor.getInt(scoreColumn));
+						munit.setDictionary(true);
+					
+				} 
 				if (cursor != null && cursor.getCount() > 0) {
-					return true;
+					return munit;
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		return false;
+		return null;
 	}
 
 }
