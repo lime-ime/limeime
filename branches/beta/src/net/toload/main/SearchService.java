@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.toload.main.SearchService.SearchServiceImpl;
 
@@ -60,7 +61,10 @@ public class SearchService extends Service {
 
 	private static int recAmount = 0;
 	private static boolean softkeypressed;
-
+	
+	private static List preresultlist = null;
+	
+	private static ConcurrentHashMap<String, List> cache = null;
 
 	public class SearchServiceImpl extends ISearchService.Stub {
 
@@ -111,9 +115,9 @@ public class SearchService extends Service {
 		
 		//Modified by Jeremy '10,3 ,12 for more specific related word
 		//-----------------------------------------------------------
-		public List queryUserDic(String code, String word) throws RemoteException {
+		public List queryUserDic(String word) throws RemoteException {
 			if(db == null){loadLimeDB();}
-			List result = db.queryUserDict(code, word);
+			List result = db.queryUserDict(word);
 			return result;
 		}
 		//-----------------------------------------------------------
@@ -138,6 +142,13 @@ public class SearchService extends Service {
 			
 			if(db == null){loadLimeDB();}
 			
+			// Check if system need to reset cache
+			
+			if(mLIMEPref.getParameterBoolean(LIME.SEARCHSRV_RESET_CACHE)){
+				cache = new ConcurrentHashMap(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+			}
+			
 			List<Mapping> result = new LinkedList();
 			// Modified by Jeremy '10, 3, 28.  yes-> .. The database is loading (yes) and finished (no).
 			//if(code != null && loadingstatus != null && loadingstatus.equalsIgnoreCase("no")){
@@ -146,7 +157,7 @@ public class SearchService extends Service {
 				if(softkeypressed != softkeyboard){
 					softkeypressed = softkeyboard;
 				}
-				recAmount = mLIMEPref.getSimilarCodeCandidates();
+				//recAmount = mLIMEPref.getSimilarCodeCandidates();
 			
 	
 				if (code != null) {
@@ -155,20 +166,42 @@ public class SearchService extends Service {
 						    temp.setWord(code);
 				    result.add(temp);
 				    // Do this in updatecandidates already
-					code = code.toUpperCase();
+					code = code.toLowerCase();
 					precode = code;
 				}
 				
-		
-				// Start new search to database
-				result.addAll(db.getMapping(code));
+				if(cache.get(code) != null){
+					// load from cache
+					result.addAll(cache.get(code));
+				}else{
+					// Start new search to database
+					Log.i("ART","SIZE*:" + db.getMapping(code).size());
+					List templist = db.getMapping(code);
+					if(db.getMapping(code).size() > 0){
+						result.addAll(templist);
+						if(code.length() > 1){
+							preresultlist = templist;
+							Log.i("ART","Store to cache : " + code + " / " + preresultlist);
+						}
+					}else{
+						// If cannot found matched records then load from cache but it limit to the size of code. 
+						// code length cannot exceed 4 characters. (if it too long then consider it as English
+						if(code.length() < 5){
+							result.addAll(preresultlist);
+							cache.put(code, preresultlist);
+							Log.i("ART","Load from cache : " + code + " / " + preresultlist);
+						}
+					}
+				}
 				
 			}
 			
 			return result;
 		}
 
-		public void initial() throws RemoteException {}
+		public void initial() throws RemoteException {
+			cache = new ConcurrentHashMap(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+		}
 
 		public List<Mapping> sortArray(String precode, List<Mapping> src) {
 			
@@ -206,9 +239,12 @@ public class SearchService extends Service {
 		}
 
 		public void updateUserDict() throws RemoteException {
-			if(db == null){loadLimeDB();}
+			if(db == null){db = new LimeDB(ctx);}
 			if(diclist.size() > 1){
-				if(mLIMEPref.getLearnRelatedWord()){
+				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+				boolean item = sp.getBoolean(LIME.CANDIDATE_SUGGESTION, false);
+				if(item){
+					db.addDictionary(diclist);
 				}
 			}
 			diclist.clear();
@@ -223,7 +259,23 @@ public class SearchService extends Service {
 		public void updateMapping(String id, String code, String word,
 				String pword, int score, boolean isDictionary)
 				throws RemoteException {
-			// TODO Auto-generated method stub
+				
+				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+				boolean item = sp.getBoolean(LIME.LEARNING_SWITCH, false);
+					
+				if(item){
+						
+						Mapping temp = new Mapping();
+								      temp.setId(id);
+								      temp.setCode(code);
+								      temp.setWord(word);
+								      temp.setPword(pword);
+								      temp.setScore(score);
+								      temp.setDictionary(isDictionary);
+	
+					if(db == null){db = new LimeDB(ctx);}
+					db.addScore(temp);
+				}
 			
 		}
 	}

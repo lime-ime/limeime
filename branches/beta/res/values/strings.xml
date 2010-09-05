@@ -93,8 +93,6 @@
     <string name="auto_cap_summary">Capitalize the start of a sentence</string>
     <string name="quick_fixes">Quick fixes</string>
     <string name="quick_fixes_summary">Corrects commonly typed mistakes</string>
-    <string name="show_suggestions">Show suggestions</string>
-    <string name="show_suggestions_summary">Display suggested words while typing</string>
     <string name="auto_complete">Auto-complete</string>
     <string name="auto_complete_summary">Spacebar and punctuation automatically insert highlighted word</string>
     

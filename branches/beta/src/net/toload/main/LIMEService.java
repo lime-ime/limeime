@@ -340,7 +340,9 @@ public class LIMEService extends InputMethodService implements
 		onIM = false;
 
 		// Add Custom related words
-		//if(userdiclist.size() > 1) {updateUserDict();}
+		if(userdiclist.size() > 1) {
+			Log.i("ART","Process userdict update ");
+			updateUserDict();}
 		
 		this.setSuggestions(null, false, false);
 	}
@@ -956,6 +958,31 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			e.printStackTrace();
 		}
 	}
+	
+	private void updateUserDict(){
+		for(Mapping dicunit : userdiclist){
+			if(dicunit == null){continue;}
+			if(dicunit.getId() == null){continue;}
+			if(dicunit.getCode() == null){continue;}
+			try {
+				SearchSrv.addUserDict(dicunit.getId(), 
+										dicunit.getCode(), 
+										dicunit.getWord(),
+										dicunit.getPword(), 
+										dicunit.getScore(), 
+										dicunit.isDictionary());
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		}
+		try {
+			SearchSrv.updateUserDict();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+		userdiclist.clear();
+	}
+	
 
 	/**
 	 * Helper to update the shift state of our keyboard based on the initial
@@ -1321,8 +1348,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					try {
 						SearchSrv.updateMapping(firstMatched.getId(), 
 							firstMatched.getCode(), 
-							firstMatched.getWord(), 
-							//firstMatched.getPcode(), 
+							firstMatched.getWord(),
 							firstMatched.getPword(), 
 							firstMatched.getScore(), 
 							firstMatched.isDictionary());
@@ -1393,8 +1419,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				//Modified by Jeremy '10,3 ,12 for more specific related word
 				//-----------------------------------------------------------
 				if (tempMatched != null) {
-					list.addAll(SearchSrv.queryUserDic(tempMatched.getCode(),
-									tempMatched.getWord()));
+					list.addAll(SearchSrv.queryUserDic(tempMatched.getWord()));
 				}
 				//-----------------------------------------------------------
 
