@@ -112,6 +112,10 @@ public class LimeDB extends SQLiteOpenHelper {
 		return this.finish;
 	}
 
+	public void setFinish(boolean value) {
+		this.finish = value;
+	}
+	
 	/*
 	 * For DBService to set the filename to be load to database
 	 */
