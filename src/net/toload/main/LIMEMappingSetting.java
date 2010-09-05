@@ -160,7 +160,7 @@ public class LIMEMappingSetting extends Activity {
 				public void onClick(View v) {
 					
 					AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-     				builder.setMessage("Would you like to reset this table?");
+     				builder.setMessage(getText(R.string.l3_message_table_reset_confirm));
      				builder.setCancelable(false);
      				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
      					public void onClick(DialogInterface dialog, int id) {
@@ -296,10 +296,10 @@ public class LIMEMappingSetting extends Activity {
 		private ServiceConnection serConn = new ServiceConnection() {
 			public void onServiceConnected(ComponentName name, IBinder service) {
 				if(DBSrv == null){
-					Log.i("ART","Start up db service");
+					//Log.i("ART","Start up db service");
 					DBSrv = IDBService.Stub.asInterface(service);
 				}else{
-					Log.i("ART","Stop up db service");
+					//Log.i("ART","Stop up db service");
 				}
 			}
 			public void onServiceDisconnected(ComponentName name) {}
@@ -364,7 +364,7 @@ public class LIMEMappingSetting extends Activity {
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
 				builder.setTitle(R.string.lime_setting_btn_load_local_notice);
 				builder.setView(view);
-				builder.setNeutralButton(R.string.lime_setting_btn_close,
+				builder.setNeutralButton(R.string.label_close_key,
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dlg, int sumthin) {
 
@@ -417,7 +417,7 @@ public class LIMEMappingSetting extends Activity {
 
 			} else if (check.exists() && check.isFile()
 					&& (  true || check.getName().toLowerCase().endsWith(".lime") || check.getName().toLowerCase().endsWith(".cin"))  ) {
-				Log.i("ART","run load mapping method : " + imtype);
+				//Log.i("ART","run load mapping method : " + imtype);
 				hasSelectFile = true;
 				loadMapping(check);
 			}

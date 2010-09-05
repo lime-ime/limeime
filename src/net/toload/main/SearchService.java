@@ -142,6 +142,7 @@ public class SearchService extends Service {
 			
 			if(db == null){loadLimeDB();}
 			
+			Log.i("ART","Run SearchSrv query:"+ code);
 			// Check if system need to reset cache
 			
 			if(mLIMEPref.getParameterBoolean(LIME.SEARCHSRV_RESET_CACHE)){
@@ -177,7 +178,7 @@ public class SearchService extends Service {
 					// Start new search to database
 					Log.i("ART","SIZE*:" + db.getMapping(code).size());
 					List templist = db.getMapping(code);
-					if(db.getMapping(code).size() > 0){
+					if(templist.size() > 0){
 						result.addAll(templist);
 						if(code.length() > 1){
 							preresultlist = templist;

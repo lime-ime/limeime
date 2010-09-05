@@ -31,6 +31,8 @@ public class LIMEKeyboardSwitcher {
     public static final int MODE_TEXT_EZ = 16;
     public static final int MODE_TEXT_PHONE = 17;
     public static final int MODE_TEXT_ARRAY = 18;
+    public static final int MODE_TEXT_SCJ = 19;
+    public static final int MODE_TEXT_SCJ_NUMBER = 20;
     public static final int MODE_SYMBOLS = 2;
     public static final int MODE_PHONE = 3;
     public static final int MODE_URL = 4;
@@ -49,7 +51,6 @@ public class LIMEKeyboardSwitcher {
     
     public static final int IM_KEYBOARD = 0;
     
-   
 
     private static final int SYMBOLS_MODE_STATE_NONE = 0;
     private static final int SYMBOLS_MODE_STATE_BEGIN = 1;
@@ -57,8 +58,6 @@ public class LIMEKeyboardSwitcher {
 
     LIMEKeyboardView mInputView;
     LIMEService mContext;
-    
-    
 
     private KeyboardId mCurrentId;
     private Map<KeyboardId, LIMEKeyboard> mKeyboards;
@@ -135,7 +134,7 @@ public class LIMEKeyboardSwitcher {
         mPreferSymbols = mode == MODE_SYMBOLS;
         mIsChinese = (mode == MODE_TEXT_DEFAULT ||mode == MODE_TEXT_DEFAULT_NUMBER 
         		|| mode == MODE_TEXT_PHONETIC ||mode == MODE_TEXT_DAYI ||mode == MODE_TEXT_ARRAY 
-        		||mode == MODE_TEXT_EZ ||mode == MODE_TEXT_CJ ||mode == MODE_TEXT_CJ_NUMBER || mode == MODE_TEXT_PHONE);
+        		||mode == MODE_TEXT_EZ ||mode == MODE_TEXT_SCJ ||mode == MODE_TEXT_SCJ_NUMBER ||mode == MODE_TEXT_CJ ||mode == MODE_TEXT_CJ_NUMBER || mode == MODE_TEXT_PHONE);
         mIsAlphabet = ( mode == MODE_TEXT || mode== MODE_URL 
         		|| mode == MODE_EMAIL || mode == MODE_IM || mode == MODE_PHONE );
         if(mIsChinese) mChnMode = mode;
@@ -209,6 +208,12 @@ public class LIMEKeyboardSwitcher {
                 if(isShifted) return new KeyboardId(R.xml.lime_cj_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_cj);
             case MODE_TEXT_CJ_NUMBER:
+                if(isShifted) return new KeyboardId(R.xml.lime_cj_number_shift, 0, true);    
+                else return new KeyboardId(R.xml.lime_cj_number);
+            case MODE_TEXT_SCJ:
+                if(isShifted) return new KeyboardId(R.xml.lime_cj_shift, 0, true);    
+                else return new KeyboardId(R.xml.lime_cj);
+            case MODE_TEXT_SCJ_NUMBER:
                 if(isShifted) return new KeyboardId(R.xml.lime_cj_number_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_cj_number);
             case MODE_TEXT_DAYI:
