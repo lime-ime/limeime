@@ -23,10 +23,10 @@
 				android:layout_height="wrap_content" android:padding="10px"
 				android:gravity="center">
 				<Button android:layout_width="wrap_content"
-					android:layout_height="wrap_content" android:text="Backup Database"
+					android:layout_height="wrap_content" android:text="@string/l3_initial_backup_database"
 					android:id="@+id/btnBackupDB"></Button>
 				<Button android:layout_width="wrap_content"
-					android:layout_height="wrap_content" android:text="Restore Database"
+					android:layout_height="wrap_content" android:text="@string/l3_initial_restore_database"
 					android:id="@+id/btnRestoreDB"></Button>
 			</TableRow>
 		</TableLayout>
