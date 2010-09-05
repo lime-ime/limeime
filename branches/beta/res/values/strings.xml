@@ -278,9 +278,9 @@
     <string name="l3_message_database_reset_confirm">Would you like to reset this database?</string>
     <string name="l3_message_table_reset_confirm">Would you like to remove all records?</string>
     <string name="l3_initial_download_database">Download Preloaded Database</string>
-    <string name="l3_initial_backup_database">Backup LIME Database</string>
+    <string name="l3_initial_backup_database">Backup Database</string>
     <string name="l3_initial_backup_error">You don&quot;t have database need to be backup.</string>
-    <string name="l3_initial_restore_database">Restore LIME Database</string>
+    <string name="l3_initial_restore_database">Restore Database</string>
     <string name="l3_initial_restore_error">You don&quot;t have a backup can be restore.</string>
     
     
