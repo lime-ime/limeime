@@ -71,7 +71,6 @@ public class DBService extends Service {
 		
 		public void loadMapping(String filename, String tablename) throws RemoteException {
 
-			if(!db.isFinish()){
 			
 				File sourcefile = new File(filename);
 				
@@ -127,7 +126,6 @@ public class DBService extends Service {
 				
 				// Reset for SearchSrv
 				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
-			}
 		}
 
 		public void resetMapping(final String tablename) throws RemoteException {
