@@ -287,7 +287,23 @@ public class LIMEMappingSetting extends Activity {
 				labVersion.setText(mLIMEPref.getParameterString(imtype+LIME.IM_MAPPING_VERSION));
 				labTotalAmount.setText(String.valueOf(mLIMEPref.getParameterInt(imtype+LIME.IM_MAPPING_TOTAL)));
 				labImportDate.setText(mLIMEPref.getParameterString(imtype+LIME.IM_MAPPING_DATE));
-				labMappingSettingTitle.setText(imtype.toUpperCase() + " Mapping Setting" );
+				
+				if(imtype.equalsIgnoreCase("cj")){
+					labMappingSettingTitle.setText(getText(R.string.l3_manage_cj) +" "+ getText(R.string.l3_im_setting_title) );
+				}else if(imtype.equalsIgnoreCase("scj")){
+					labMappingSettingTitle.setText(getText(R.string.l3_manage_scj) +" "+ getText(R.string.l3_im_setting_title) );
+				}else if(imtype.equalsIgnoreCase("eazy")){
+					labMappingSettingTitle.setText(getText(R.string.l3_manage_eazy) +" "+ getText(R.string.l3_im_setting_title) );
+				}else if(imtype.equalsIgnoreCase("array")){
+					labMappingSettingTitle.setText(getText(R.string.l3_manage_array) +" "+ getText(R.string.l3_im_setting_title) );
+				}else if(imtype.equalsIgnoreCase("dayi")){
+					labMappingSettingTitle.setText(getText(R.string.l3_manage_dayi) +" "+ getText(R.string.l3_im_setting_title) );
+				}else if(imtype.equalsIgnoreCase("custom")){
+					labMappingSettingTitle.setText(getText(R.string.l3_manage_default) +" "+ getText(R.string.l3_im_setting_title) );
+				}else if(imtype.equalsIgnoreCase("phonetic")){
+					labMappingSettingTitle.setText(getText(R.string.l3_manage_phonetic) +" "+ getText(R.string.l3_im_setting_title) );
+				}
+				
 			}catch(Exception e){
 				e.printStackTrace();
 			}

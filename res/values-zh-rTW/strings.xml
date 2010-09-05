@@ -283,4 +283,14 @@
     <string name="l3_initial_restore_database">還原資料庫</string>
     <string name="l3_initial_restore_error">備份檔案不存在，無法進行還原.</string>
     
+    <string name="l3_im_setting_back">回到上一頁</string>
+    <string name="l3_im_setting_title">對應表設定</string>
+    <string name="l3_im_setting_source">來源: </string>
+    <string name="l3_im_setting_version">版本: </string>
+    <string name="l3_im_setting_total_amount">字數: </string>
+    <string name="l3_im_setting_import_date">狀態: </string>
+    <string name="l3_im_setting_button_load">匯入字根檔</string>
+    <string name="l3_im_setting_button_reset">移除字根檔</string>
+    
+    
 </resources>
