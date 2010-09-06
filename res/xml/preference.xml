@@ -39,14 +39,14 @@
 				android:entryValues="@array/keyboard_defaultstate"
 				android:defaultValue="0;1;2;3;4;5;6"
 				android:dialogTitle="@string/keyboard_list" />
-		<CheckBoxPreference
+		<!--<CheckBoxPreference
                 android:key="default_in_english"
                 android:title="@string/default_in_english" 
                 android:summary="@string/default_in_english_summary"
             	android:defaultValue="false" 
                 />
        
-        <CheckBoxPreference
+        --><CheckBoxPreference
                 android:key="vibrate_on_keypress"
                 android:defaultValue="false" 
                 android:title="@string/vibrate_on_keypress" />
@@ -61,7 +61,7 @@
                 android:summary="@string/display_number_keypads_summary" />
     </PreferenceCategory>
     
-    <PreferenceCategory
+    <!--<PreferenceCategory
             android:title="@string/prediction_category"
             android:key="prediction_settings">
         <CheckBoxPreference
@@ -87,6 +87,8 @@
             android:defaultValue="true"/>
             
     </PreferenceCategory>
+    -->
+    
     <PreferenceCategory
         		xmlns:android="http://schemas.android.com/apk/res/android"
                 android:summary="" android:key="lime_im" android:title="@string/im">
@@ -103,7 +105,7 @@
     			android:dialogTitle="@string/han_convert_option_list" 
     			android:defaultValue="0"/>
     <ListPreference
-    			android:key="mapping_im_reverselookup"
+    			android:key="custom_im_reverselookup"
     			android:title="@string/default_reverse_lookup_list" 
     			android:entries="@array/im_reverse_lookup" 
     			android:entryValues="@array/im_reverse_lookup_codes" 
@@ -194,5 +196,6 @@
                 android:title="@string/switch_english_mode"
                 android:summary="@string/switch_english_mode_summary" />
     </PreferenceCategory>
+    
 </PreferenceScreen>
 

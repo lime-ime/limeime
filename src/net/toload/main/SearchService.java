@@ -182,15 +182,14 @@ public class SearchService extends Service {
 						result.addAll(templist);
 						if(code.length() > 1){
 							preresultlist = templist;
-							Log.i("ART","Store to cache : " + code + " / " + preresultlist);
 						}
+						cache.put(db.getTablename()+code, templist);
 					}else{
 						// If cannot found matched records then load from cache but it limit to the size of code. 
 						// code length cannot exceed 4 characters. (if it too long then consider it as English
 						if(code.length() < 5){
 							result.addAll(preresultlist);
 							cache.put(db.getTablename()+code, preresultlist);
-							Log.i("ART","Load from cache : " + code + " / " + preresultlist);
 						}
 					}
 				}
