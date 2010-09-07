@@ -218,7 +218,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			SQLiteDatabase db = this.getReadableDatabase();
 			int total = db.rawQuery("SELECT * FROM " + table, null).getCount();
 			db.close();
-			Log.i("countMapping", "Table," + table + ": " + total);
+			//Log.i("countMapping", "Table," + table + ": " + total);
 			return total;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -414,6 +414,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 */
 	public String getRMapping(String keyword) {
 
+		//Log.i("ART", "run get rmapping:"+ keyword);
 		String Rtable = mLIMEPref.getRerverseLookupTable(tablename);
 
 		if (Rtable.equals("none")) {
@@ -511,6 +512,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 */
 	public List<Mapping> getMapping(String code) {
 
+		//Log.i("ART", "run get (Mapping):"+ code);
 		//Log.i("ART","Run MAPPING : " + code);
 		// Add by Jeremy '10, 3, 27. Extension on multi table query.
 

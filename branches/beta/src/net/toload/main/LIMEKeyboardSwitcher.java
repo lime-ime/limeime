@@ -19,6 +19,8 @@ package net.toload.main;
 import java.util.HashMap;
 import java.util.Map;
 
+import android.util.Log;
+
 public class LIMEKeyboardSwitcher {
 
     public static final int MODE_TEXT = 1;
@@ -168,6 +170,8 @@ public class LIMEKeyboardSwitcher {
 
         mCurrentId = id;
         mInputView.setKeyboard(keyboard);
+        
+        Log.i("ART", "MODE:"+ mode);
         
          
         keyboard.setShiftLocked(keyboard.isShiftLocked());
