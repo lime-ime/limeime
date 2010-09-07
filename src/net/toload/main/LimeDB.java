@@ -605,17 +605,21 @@ public class LimeDB extends SQLiteOpenHelper {
 			} while (cursor.moveToNext());
 
 			int ssize = mLIMEPref.getSimilarCodeCandidates();
+			HashMap dedupHm = new HashMap();
 			if (relatedlist != null && relatedlist.indexOf("|") != -1) {
 				String templist[] = relatedlist.split("\\|");
 				int scount = 0;
 				for (String unit : templist) {
 					if(ssize != 0 && scount > ssize){break;}
-					Mapping munit = new Mapping();
-					munit.setWord(unit);
-					munit.setScore(0);
-					munit.setCode("@RELATED@");
-					result.add(munit);
-					scount++;
+					if(dedupHm.get(unit) == null){
+						Mapping munit = new Mapping();
+						munit.setWord(unit);
+						munit.setScore(0);
+						munit.setCode("@RELATED@");
+						result.add(munit);
+						dedupHm.put(unit, unit);
+						scount++;
+					}
 				}
 			}
 		}

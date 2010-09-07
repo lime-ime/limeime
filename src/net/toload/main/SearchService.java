@@ -63,12 +63,12 @@ public class SearchService extends Service {
 	private static boolean softkeypressed;
 	
 	private static List preresultlist = null;
+	private static String precode = null;
 	
 	private static ConcurrentHashMap<String, List> cache = null;
 
 	public class SearchServiceImpl extends ISearchService.Stub {
 
-		String precode = "";
 		Context ctx = null;
 
 		SearchServiceImpl(Context ctx) {
@@ -160,7 +160,7 @@ public class SearchService extends Service {
 				}
 				//recAmount = mLIMEPref.getSimilarCodeCandidates();
 			
-	
+				
 				if (code != null) {
 					Mapping temp = new Mapping();
 						    temp.setCode(code);
@@ -168,29 +168,40 @@ public class SearchService extends Service {
 				    result.add(temp);
 				    // Do this in updatecandidates already
 					code = code.toLowerCase();
-					precode = code;
 				}
 				
-				if(cache.get(db.getTablename()+code) != null){
-					// load from cache
-					result.addAll(cache.get(db.getTablename()+code));
+				// Clean preresultlist if code different from precode
+				if((precode == null || !code.startsWith(precode)) && preresultlist != null){
+					preresultlist.clear();
+				}
+				
+				precode = code;
+				
+			    List cacheTemp = cache.get(db.getTablename()+code);
+				if(cacheTemp != null){
+					result.addAll(cacheTemp);
 				}else{
-					// Start new search to database
-					//Log.i("ART","SIZE*:" + db.getMapping(code).size());
-					List templist = db.getMapping(code);
-					if(templist.size() > 0){
-						result.addAll(templist);
-						if(code.length() > 1){
-							preresultlist = templist;
-						}
-						cache.put(db.getTablename()+code, templist);
+					if(code.length() > 3 && 
+							cache.get(db.getTablename()+code.subSequence(0, code.length()-1)) == null &&
+							cache.get(db.getTablename()+code.subSequence(0, code.length()-2)) == null &&
+							cache.get(db.getTablename()+code.subSequence(0, code.length()-3)) == null
+					){
+						Log.i("ART","N-RUN->"+code);
 					}else{
-						// If cannot found matched records then load from cache but it limit to the size of code. 
-						// code length cannot exceed 4 characters. (if it too long then consider it as English
-						if(code.length() < 5){
-							if(preresultlist != null){
-								result.addAll(preresultlist);
-								cache.put(db.getTablename()+code, preresultlist);
+						List templist = db.getMapping(code);
+						Log.i("ART","Y-RUN->"+code);
+						if(templist.size() > 0){
+							result.addAll(templist);
+							if(code.length() > 1){
+								preresultlist = templist;
+							}
+							cache.put(db.getTablename()+code, templist);
+						}else{
+							if(code.length() < 4){
+								if(preresultlist != null){
+									result.addAll(preresultlist);
+									cache.put(db.getTablename()+code, preresultlist);
+								}
 							}
 						}
 					}
@@ -205,7 +216,7 @@ public class SearchService extends Service {
 			cache = new ConcurrentHashMap(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 		}
 
-		public List<Mapping> sortArray(String precode, List<Mapping> src) {
+		/*public List<Mapping> sortArray(String precode, List<Mapping> src) {
 			
 			// Modified by jeremy '10, 4, 5. Buf fix for 3row remap. code may not equal to precode.
 				if(src != null && src.size() > 1){
@@ -221,9 +232,8 @@ public class SearchService extends Service {
 						}
 					}
 				}
-			
 			return src;
-		}
+		}*/
 
 		public void addUserDict(String id, String code, String word,
 				String pword, int score, boolean isDictionary)
