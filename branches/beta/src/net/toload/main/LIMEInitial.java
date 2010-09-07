@@ -162,7 +162,7 @@ public class LIMEInitial extends Activity {
 			public void onClick(View v) {
 				try {
 					initialButton();
-					Toast.makeText(v.getContext(), getText(R.string.l3_initial_download_database), Toast.LENGTH_LONG).show();
+					Toast.makeText(v.getContext(), getText(R.string.l3_initial_download_database), Toast.LENGTH_SHORT).show();
 					DBSrv.downloadPreloadedDatabase();
 
 					// Reset for SearchSrv
@@ -180,10 +180,10 @@ public class LIMEInitial extends Activity {
 				try {
 					File srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
 					if(srcFile.exists() && srcFile.length() > 1024){
-						Toast.makeText(v.getContext(), getText(R.string.l3_initial_backup_database), Toast.LENGTH_LONG).show();
+						Toast.makeText(v.getContext(), getText(R.string.l3_initial_backup_database), Toast.LENGTH_SHORT).show();
 						DBSrv.backupDatabase();
 					}else{
-						Toast.makeText(v.getContext(), getText(R.string.l3_initial_backup_error), Toast.LENGTH_LONG).show();
+						Toast.makeText(v.getContext(), getText(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT).show();
 					}
 				} catch (RemoteException e) {
 					e.printStackTrace();
@@ -196,13 +196,13 @@ public class LIMEInitial extends Activity {
 				try {
 					File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
 					if(srcFile.exists() && srcFile.length() > 1024){
-						Toast.makeText(v.getContext(), getText(R.string.l3_initial_restore_database), Toast.LENGTH_LONG).show();
+						Toast.makeText(v.getContext(), getText(R.string.l3_initial_restore_database), Toast.LENGTH_SHORT).show();
 						DBSrv.restoreDatabase();
 						
 						// Reset for SearchSrv
 						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 					}else{
-						Toast.makeText(v.getContext(), getText(R.string.l3_initial_restore_error), Toast.LENGTH_LONG).show();
+						Toast.makeText(v.getContext(), getText(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT).show();
 					}
 				} catch (RemoteException e) {
 					e.printStackTrace();

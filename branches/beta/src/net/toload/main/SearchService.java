@@ -181,15 +181,17 @@ public class SearchService extends Service {
 				if(cacheTemp != null){
 					result.addAll(cacheTemp);
 				}else{
+					
+					// If code > 3 and previous code did not have any matched then system would consider it as english
 					if(code.length() > 3 && 
 							cache.get(db.getTablename()+code.subSequence(0, code.length()-1)) == null &&
 							cache.get(db.getTablename()+code.subSequence(0, code.length()-2)) == null &&
 							cache.get(db.getTablename()+code.subSequence(0, code.length()-3)) == null
 					){
-						Log.i("ART","N-RUN->"+code);
+						//Log.i("ART","N-RUN->"+code);
 					}else{
 						List templist = db.getMapping(code);
-						Log.i("ART","Y-RUN->"+code);
+						//Log.i("ART","Y-RUN->"+code);
 						if(templist.size() > 0){
 							result.addAll(templist);
 							if(code.length() > 1){
