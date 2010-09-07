@@ -195,6 +195,7 @@
                 android:key="switch_english_mode"
                 android:title="@string/switch_english_mode"
                 android:summary="@string/switch_english_mode_summary" />
+    
     </PreferenceCategory>
     
 </PreferenceScreen>

@@ -93,6 +93,9 @@ public class LIMEService extends InputMethodService implements
 	private boolean onIM = false;
 	private boolean hasFirstMatched = false;
 	
+	// if getMapping result has record then set to 'true'
+	private boolean hasMappingList = false;
+	
 	private boolean keydown = false;
 
 	private long mMetaState;
@@ -219,7 +222,7 @@ public class LIMEService extends InputMethodService implements
 		hasVibration = sp.getBoolean("vibrate_on_keypress", false);
 		hasSound = sp.getBoolean("sound_on_keypress", false);
 		hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
-		keyboardSelection = sp.getString("keyboard_list", "lime");
+		keyboardSelection = sp.getString("keyboard_list", "custom");
 		
 		// initial Input List
 		userdiclist = new LinkedList<Mapping>();
@@ -297,6 +300,8 @@ public class LIMEService extends InputMethodService implements
 		mKeyboardSwitcher.setInputView(mInputView);
         mKeyboardSwitcher.makeKeyboards(true);
         mInputView.setOnKeyboardActionListener(this);
+        
+        Log.i("ART", "onCreateInputView:" + LIMEKeyboardSwitcher.MODE_TEXT_DEFAULT);
         mKeyboardSwitcher.setKeyboardMode(LIMEKeyboardSwitcher.MODE_TEXT_DEFAULT, 0);
 		
 		initialKeyboard();
@@ -345,6 +350,7 @@ public class LIMEService extends InputMethodService implements
 			updateUserDict();}
 		
 		this.setSuggestions(null, false, false);
+		
 	}
 	
 
@@ -361,7 +367,7 @@ public class LIMEService extends InputMethodService implements
 	   TextEntryState.newSession(this);
 	   loadSettings();
 	   mImeOptions = attribute.imeOptions;
-	   initialKeyboard();
+	   //initialKeyboard();
 	   boolean disableAutoCorrect = false;
 	   mPredictionOn = false;
 	   mCompletionOn = false;
@@ -411,7 +417,8 @@ public class LIMEService extends InputMethodService implements
 	                    mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_URL,
 	                            attribute.imeOptions);
 	                } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
-	                    mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM, attribute.imeOptions);
+	                    //mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM, attribute.imeOptions);
+	                    mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection), attribute.imeOptions);
 	                } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
 	                    mPredictionOn = false;
 	                } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
@@ -473,7 +480,7 @@ public class LIMEService extends InputMethodService implements
 	        hasVibration = sp.getBoolean("vibrate_on_keypress", false);
 			hasSound = sp.getBoolean("sound_on_keypress", false);
 			hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
-			keyboardSelection = sp.getString("keyboard_list", "lime");
+			keyboardSelection = sp.getString("keyboard_list", "custom");
 			hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
 	        mAutoCap = true; //sp.getBoolean(PREF_AUTO_CAP, true);
 	        mQuickFixes = true;// sp.getBoolean(PREF_QUICK_FIXES, true);
@@ -1185,7 +1192,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
     private void launchSettings() {
         handleClose();
         Intent intent = new Intent();
-        intent.setClass(LIMEService.this, LIMEMenu.class);
+        intent.setClass(LIMEService.this, LIMEPreference.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
     }
@@ -1418,7 +1425,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				LinkedList<Mapping> list = new LinkedList<Mapping>();
 				//Modified by Jeremy '10,3 ,12 for more specific related word
 				//-----------------------------------------------------------
-				if (tempMatched != null) {
+				if (tempMatched != null && hasMappingList) {
 					list.addAll(SearchSrv.queryUserDic(tempMatched.getWord()));
 				}
 				//-----------------------------------------------------------
@@ -1441,9 +1448,12 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			boolean typedWordValid) {
 		
 		
-		if(suggestions != null && suggestions.size() > 0){
+		
+		if(suggestions != null && suggestions.size() > 1){
 			
 			setCandidatesViewShown(true);
+			
+			hasMappingList = true;
 			
 			if (mCandidateView != null) {
 				templist = (LinkedList) suggestions;
@@ -1461,9 +1471,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 				mCandidateView.setSuggestions(suggestions, completions, typedWordValid);
 			}
 		}else{
+			hasMappingList = false;
 			if (mCandidateView != null) {
 				setCandidatesViewShown(false);
-				//mCandidateView.hideComposing();
 			}
 			
 		}
@@ -1585,6 +1595,68 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		}
 		
 }
+	
+	private int getKeyboardMode(String code){
+		
+		int mMode = mKeyboardSwitcher.MODE_TEXT_DEFAULT;
+		if (code.equals("custom")) {
+			if (hasNumberKeypads) {
+				mMode = mKeyboardSwitcher.MODE_TEXT_DEFAULT_NUMBER;
+			} else {
+				mMode = mKeyboardSwitcher.MODE_TEXT_DEFAULT;
+			}
+
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+			hasNumberMapping = sp.getBoolean("accept_number_index", false);
+			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+			
+		} else if (code.equals("cj")) {
+			if (hasNumberKeypads) {
+				mMode = mKeyboardSwitcher.MODE_TEXT_CJ_NUMBER;
+			}else{
+				mMode = mKeyboardSwitcher.MODE_TEXT_CJ;
+			}
+
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+			hasNumberMapping = sp.getBoolean("accept_number_index", false);
+			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+		}  else if (code.equals("scj")) {
+			if (hasNumberKeypads) {
+				mMode = mKeyboardSwitcher.MODE_TEXT_SCJ_NUMBER;
+			}else{
+				mMode = mKeyboardSwitcher.MODE_TEXT_SCJ;
+			}
+
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+			hasNumberMapping = sp.getBoolean("accept_number_index", false);
+			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+		} else if (code.equals("phonetic")) {
+			mMode = mKeyboardSwitcher.MODE_TEXT_PHONETIC;
+			
+			// Should use number and symbol mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
+		} else if (code.equals("ez")) {
+			mMode = mKeyboardSwitcher.MODE_TEXT_EZ;
+			
+			// Should use number and symbol mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
+		} else if (code.equals("dayi")) {
+			mMode = mKeyboardSwitcher.MODE_TEXT_DAYI;
+			
+			// Should use number and symbol mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
+		} else if (code.equals("phone")) {
+			mMode = mKeyboardSwitcher.MODE_TEXT_PHONE;
+			// Should use number and symbol mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
+		}
+		
+		return mMode;
+	}
 	private void initialKeyboard() {
 		
 		buildActiveKeyboardList();
@@ -1600,7 +1672,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         }
 		
 		int mMode = mKeyboardSwitcher.MODE_TEXT_DEFAULT;
-		if (keyboardSelection.equals("lime")) {
+		if (keyboardSelection.equals("custom")) {
 			if (hasNumberKeypads) {
 				mMode = mKeyboardSwitcher.MODE_TEXT_DEFAULT_NUMBER;
 			} else {
@@ -1663,7 +1735,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		// Set db table name.	
 		try {
 			String tablename = new String(keyboardSelection);
-			if(tablename.equals("lime") || tablename.equals("phone") ){
+			if(tablename.equals("custom") || tablename.equals("phone") ){
 				tablename = "custom";
 			}
 			SearchSrv.setTablename(tablename);
