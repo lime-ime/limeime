@@ -1154,7 +1154,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
         builder.setNegativeButton(android.R.string.cancel, null);
         builder.setTitle(getResources().getString(R.string.ime_name));
         
-        CharSequence itemSettings = getString(R.string.ime_setting);
+        CharSequence itemSettings = getString(R.string.lime_setting_preference);
         CharSequence itemKeyboadList = getString(R.string.keyboard_list);
         CharSequence itemInputMethod = getString(R.string.input_method);
         
