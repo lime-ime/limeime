@@ -1229,7 +1229,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
     	CharSequence[] items = getResources().getStringArray(R.array.keyboard);
     	CharSequence[] codes = getResources().getStringArray(R.array.keyboard_codes);
     	SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-    	String keybaord_state_string = sp.getString("keyboard_state", "0;1;2;3;4;5");
+    	String keybaord_state_string = sp.getString("keyboard_state", "0;1;2;3;4;5;6;7");
     	String[] s = keybaord_state_string.toString().split(";");
 
     	keyboardList.clear();

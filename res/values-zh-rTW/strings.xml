@@ -19,8 +19,6 @@
     <string name="label_close_key">關閉</string>
     
     
-    
-    
     <!-- LIME Loading -->
     <string name="lime_setting_btn_load_local_notice">請選擇 .LIME 或 .CIN 檔案</string>
     <string name="lime_setting_loading">載入對應檔</string>

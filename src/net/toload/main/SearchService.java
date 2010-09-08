@@ -178,8 +178,9 @@ public class SearchService extends Service {
 				precode = code;
 				
 			    List cacheTemp = cache.get(db.getTablename()+code);
-				if(cacheTemp != null){
+				if(cacheTemp != null && cacheTemp.size() > 0){
 					result.addAll(cacheTemp);
+					Log.i("ART","CHECK TEMP SIZE->"+cacheTemp.size());
 				}else{
 					
 					// If code > 3 and previous code did not have any matched then system would consider it as english
@@ -188,10 +189,10 @@ public class SearchService extends Service {
 							cache.get(db.getTablename()+code.subSequence(0, code.length()-2)) == null &&
 							cache.get(db.getTablename()+code.subSequence(0, code.length()-3)) == null
 					){
-						//Log.i("ART","N-RUN->"+code);
+						Log.i("ART","N-RUN->"+code);
 					}else{
 						List templist = db.getMapping(code);
-						//Log.i("ART","Y-RUN->"+code);
+						Log.i("ART","Y-RUN->"+code + " " +templist.size());
 						if(templist.size() > 0){
 							result.addAll(templist);
 							if(code.length() > 1){
