@@ -208,6 +208,7 @@
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
+		<item>true</item>
 	</string-array>
     <string-array name="keyboard_codes">
 		<item>custom</item>

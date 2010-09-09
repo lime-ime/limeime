@@ -195,7 +195,7 @@ public class SearchService extends Service {
 						Log.i("ART","Y-RUN->"+code + " " +templist.size());
 						if(templist.size() > 0){
 							result.addAll(templist);
-							if(code.length() > 1){
+							if(code.length() >= 1){
 								preresultlist = templist;
 							}
 							cache.put(db.getTablename()+code, templist);
