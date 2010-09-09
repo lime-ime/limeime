@@ -539,6 +539,9 @@ public class LimeDB extends SQLiteOpenHelper {
 			if(!code3r.equalsIgnoreCase(code)){
 				iscode3r = true;
 			}
+			
+			Log.i("ART","==>remap3row:"+remap3row);
+			Log.i("ART","==>code3r:"+code3r + " / "+ iscode3r + " from code:"+code);
 
 			try {
 
@@ -547,9 +550,11 @@ public class LimeDB extends SQLiteOpenHelper {
 					if(sort){
 						cursor = db.query(tablename, null, FIELD_CODE + " = \"" + code + "\" OR " + FIELD_CODE +" = \""+code3r+"\""
 								, null, null, null, FIELD_SCORE +" DESC", null);
+						Log.i("ART","run code3r a:"+tablename + " ->count:" + cursor.getCount());
 					}else{
 						cursor = db.query(tablename, null, FIELD_CODE + " = \"" + code + "\"" + "\" OR " + FIELD_CODE +" = \""+code3r+"\""
 								, null, null, null, null, null);
+						Log.i("ART","run code3r b:"+tablename + " ->count:" + cursor.getCount());
 					}
 				}else{
 					// When Code3r mode is disable
