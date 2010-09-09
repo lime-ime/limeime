@@ -90,7 +90,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean mEnglishOnly;
 	private boolean mEnglishFlagShift;
 
-	private boolean onIM = false;
+	private boolean onIM = true;
 	private boolean hasFirstMatched = false;
 	
 	// if getMapping result has record then set to 'true'
@@ -306,6 +306,7 @@ public class LIMEService extends InputMethodService implements
 		
 		initialKeyboard();
 
+		Log.i("ART","onIM1");
 		onIM = true;
 		return mInputView;
 	}
@@ -342,7 +343,9 @@ public class LIMEService extends InputMethodService implements
 		updateCandidates();
 
 		setCandidatesViewShown(false);
-		onIM = false;
+
+		Log.i("ART","onIM2");
+		//onIM = false;
 
 		// Add Custom related words
 		if(userdiclist.size() > 1) {
@@ -375,18 +378,23 @@ public class LIMEService extends InputMethodService implements
 	   mCapsLock = false;
 	   mHasShift = false;
 	   mEnglishOnly = false;
+
+		Log.i("ART","onIM3");
 	   onIM = true;
 	   switch (attribute.inputType&EditorInfo.TYPE_MASK_CLASS) {
 	            case EditorInfo.TYPE_CLASS_NUMBER:
 	            case EditorInfo.TYPE_CLASS_DATETIME:
 	            	mEnglishOnly = true;
 	        		onIM = false;
+	        		Log.i("ART","onIM4");
 	                mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_SYMBOLS,
 	                        attribute.imeOptions);
 	                break;
 	            case EditorInfo.TYPE_CLASS_PHONE:
 	            	mEnglishOnly = true;
-	        		onIM = false;
+
+	        		Log.i("ART","onIM5");
+	            	onIM = false;
 	                mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_PHONE,
 	                        attribute.imeOptions);
 	                break;
@@ -406,14 +414,18 @@ public class LIMEService extends InputMethodService implements
 	                }
 	                if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS) {
 	                	mEnglishOnly = true;
-		        		onIM = false;
+
+	            		Log.i("ART","onIM6");
+	            		onIM = false;
 	                    mPredictionOn = false;
 	                    mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_EMAIL,
 	                            attribute.imeOptions);
 	                } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_URI) {
 	                    mPredictionOn = false;
 	                    mEnglishOnly = true;
-		        		onIM = false;
+
+	            		Log.i("ART","onIM7");
+	            		onIM = false;
 	                    mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_URL,
 	                            attribute.imeOptions);
 	                } else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
@@ -471,6 +483,7 @@ public class LIMEService extends InputMethodService implements
 	        updateShiftKeyState(getCurrentInputEditorInfo());
 	        setCandidatesViewShown(false);
 
+	        Log.i("ART","onStartInputView:"+onIM);
 		
 	}
 	
@@ -592,7 +605,9 @@ public class LIMEService extends InputMethodService implements
 
 	
 	private boolean waitingEnterUp = false;
-	/**
+	
+	/** 
+	 * Physical KeyBoard Event Handler
 	 * Use this to monitor key events being delivered to the application. We get
 	 * first crack at them, and can either resume them or let them continue to
 	 * the app.
@@ -600,6 +615,7 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 			
+		Log.i("ART","Physical key:"+keyCode);
 			hasKeyPress = false;
 			
 			mKeydownEvent = new KeyEvent(event);
@@ -638,16 +654,19 @@ public class LIMEService extends InputMethodService implements
 			//case KeyEvent.KEYCODE_DPAD_UP:
 			//case KeyEvent.KEYCODE_DPAD_DOWN:
 			case KeyEvent.KEYCODE_DPAD_RIGHT:
+				Log.i("ART","select:"+1);
 				if (mCandidateView != null && mCandidateView.isShown()) {
 					mCandidateView.selectNext();
 					return true;
 				}
 			case KeyEvent.KEYCODE_DPAD_LEFT:
+				Log.i("ART","select:"+2);
 				if (mCandidateView != null && mCandidateView.isShown()) {
 					mCandidateView.selectPrev();
 					return true;
 				}
 			case KeyEvent.KEYCODE_DPAD_CENTER:
+				Log.i("ART","select:"+3);
 				if (mCandidateView != null && mCandidateView.isShown()) {
 					mCandidateView.takeSelectedSuggestion();
 					return true;
@@ -657,10 +676,12 @@ public class LIMEService extends InputMethodService implements
 			case KeyEvent.KEYCODE_SHIFT_RIGHT:
 			case KeyEvent.KEYCODE_ALT_LEFT:
 			case KeyEvent.KEYCODE_ALT_RIGHT:
+				Log.i("ART","select:"+4);
 				mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState,
 						keyCode, event);
 				break;
 			case KeyEvent.KEYCODE_BACK:
+				Log.i("ART","select:"+5);
 				// The InputMethodService already takes care of the back
 				// key for us, to dismiss the input method if it is shown.
 				// However, our keyboard could be showing a pop-up window
@@ -676,7 +697,8 @@ public class LIMEService extends InputMethodService implements
 				// Special handling of the delete key: if we currently are
 				// composing text for the user, we want to modify that instead
 				// of let the application to the delete itself.
-				
+
+				Log.i("ART","select:"+6);
 				
 				if (mComposing.length() > 0) {
 					onKey(Keyboard.KEYCODE_DELETE, null);
@@ -704,6 +726,7 @@ public class LIMEService extends InputMethodService implements
 				break;
 	
 			case KeyEvent.KEYCODE_ENTER:
+				Log.i("ART","select:"+7);
 				// Let the underlying text editor always handle these, if return false from takeSelectedSuggestion().
 				// Process enter for candidate view selection in OnKeyUp() to block the real enter afterware.
 				//return false;
@@ -714,6 +737,7 @@ public class LIMEService extends InputMethodService implements
 				}
 	
 			case KeyEvent.KEYCODE_SPACE:
+				Log.i("ART","select:"+8);
 				// Add by Jeremy '10, 3, 31. Select current suggestion with space. 
 				if (mCandidateView != null && mCandidateView.isShown()) {
 					if(mCandidateView.takeSelectedSuggestion()){ return true;}// Commit selected suggestion succeed.
@@ -726,6 +750,7 @@ public class LIMEService extends InputMethodService implements
 				else //if( LIMEMetaKeyKeyListener.getMetaState(mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON)>0 )
 					break; 
 			case KeyEvent.KEYCODE_AT:
+				Log.i("ART","select:"+9);
 				// do nothing until OnKeyUp
 				//if(keyPressTime != 0 && System.currentTimeMillis() - keyPressTime > 700){
 				//	switchChiEng();
@@ -734,16 +759,22 @@ public class LIMEService extends InputMethodService implements
 				return true;
 				
 			default:
+				Log.i("ART","select:"+10);
 	
 				// For all other keys, if we want to do transformations on
 				// text being entered with a hard keyboard, we need to process
 				// it and do the appropriate action.
 				
 				//Modified by Jeremy '10, 3, 27. 
+				Log.i("ART","mEnglishOnly:"+mEnglishOnly);
+				Log.i("ART","mPredictionOn:"+mPredictionOn);
+				Log.i("ART","onIM:"+onIM);
 				if ( ( (mEnglishOnly && mPredictionOn)|| (!mEnglishOnly && onIM))
 						&& translateKeyDown(keyCode, event))				{
+					Log.i("ART","select:A"+10);
 					return true;
 				}
+				Log.i("ART","select:B"+10);
 				
 				
 			}
@@ -1586,10 +1617,14 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		
 
 		if (mEnglishOnly) {
+
+			Log.i("ART","onIM9");
 			onIM = false;	
 			Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();	
 			
 		} else {
+
+			Log.i("ART","onIM10");
 			onIM = true;
 			Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();		
 		}
