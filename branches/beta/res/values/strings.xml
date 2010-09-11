@@ -65,10 +65,10 @@
     <string name="scj_reverse_lookup_list">R-Lookup in SChangJei</string>
     <string name="dayi_reverse_lookup_list">R-Lookup in Dayi</string>
     <string name="bpmf_reverse_lookup_list">R-Lookup in Phonetic</string>
-    <string name="ez_reverse_lookup_list">R-Lookup in Eazy</string>
+    <string name="ez_reverse_lookup_list">R-Lookup in Eazy</string><!--
     <string name="array_reverse_lookup_list">R-Lookup in Array</string>
     
-    <string name="han_convert_option_list">Chinese Characters Conversion</string>
+    --><string name="han_convert_option_list">Chinese Characters Conversion</string>
     
     
     <string name="table_list">Table Selection</string>
@@ -174,9 +174,9 @@
 		<item>SChangjei</item>
 		<item>Dayi</item>
 		<item>Phonetic</item>
-		<item>Eazy</item>
+		<item>Eazy</item><!--
 		<item>Array</item>
-	</string-array>
+	--></string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
 		<item>custom</item>
@@ -184,9 +184,9 @@
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item>
+		<item>ez</item><!--
 		<item>array</item>
-	</string-array>
+	--></string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
 		<item>Default</item>
@@ -195,9 +195,9 @@
 		<item>SChangjei</item>
 		<item>Dayi</item>
 		<item>Phonetic</item>
-		<item>Eazy</item>
+		<item>Eazy</item><!--
 		<item>Array</item>
-	</string-array>
+	--></string-array>
 	<string-array name="keyboard_defaultstate">
 		<item>true</item>
 		<item>true</item>
@@ -205,9 +205,9 @@
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
+		<item>true</item><!--
 		<item>true</item>
-		<item>true</item>
-	</string-array>
+	--></string-array>
     <string-array name="keyboard_codes">
 		<item>custom</item>
 		<item>phone</item>
@@ -215,18 +215,18 @@
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item>
+		<item>ez</item><!--
 		<item>array</item>
-	</string-array>
+	--></string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
 		<item>cj</item>
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item>
+		<item>ez</item><!--
 		<item>array</item>
-		<item>related</item>
+		--><item>related</item>
 		<item>dictionary</item>
 	</string-array>
     
@@ -246,9 +246,9 @@
 		<item>SChangjei</item>
 		<item>Dayi</item>
 		<item>Phonetic</item>
-		<item>Eazy</item>
+		<item>Eazy</item><!--
 		<item>Array</item>
-		<item>Preload related words</item>
+		--><item>Preload related words</item>
 		<item>Dictionary for English keyboard</item>
 	</string-array>
 	
@@ -268,10 +268,10 @@
     <string name="l3_manage_cj">Changjei</string>
     <string name="l3_manage_scj">SChangjei</string>
     <string name="l3_manage_dayi">Dayi</string>
-    <string name="l3_manage_eazy">Eazy</string>
+    <string name="l3_manage_eazy">Eazy</string><!--
     <string name="l3_manage_array">Array</string>
     
-    <string name="l3_tab_preference">Preference</string>
+    --><string name="l3_tab_preference">Preference</string>
 	
     <string name="l3_dbservice_download_start">Download preloaded database, this action will take few minutes please wait.</string>
     <string name="l3_dbservice_download_initial">Initialize database.</string>

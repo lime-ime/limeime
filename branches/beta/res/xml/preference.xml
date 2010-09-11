@@ -145,7 +145,7 @@
     			android:entries="@array/im_reverse_lookup" 
     			android:entryValues="@array/im_reverse_lookup_codes" 
     			android:dialogTitle="@string/im_reverse_lookup_list" 
-    			android:defaultValue="none"/>
+    			android:defaultValue="none"/><!--
    	<ListPreference
     			android:key="array_im_reverselookup"
     			android:title="@string/array_reverse_lookup_list" 
@@ -154,7 +154,7 @@
     			android:dialogTitle="@string/im_reverse_lookup_list" 
     			android:defaultValue="none"/>
    
-</PreferenceCategory>
+--></PreferenceCategory>
     
     <PreferenceCategory
         xmlns:android="http://schemas.android.com/apk/res/android"

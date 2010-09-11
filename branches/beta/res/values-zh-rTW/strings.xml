@@ -67,9 +67,9 @@
     <string name="dayi_reverse_lookup_list">大易字根反查</string>
     <string name="bpmf_reverse_lookup_list">注音字根反查</string>
     <string name="ez_reverse_lookup_list">輕鬆字根反查</string>
-    <string name="array_reverse_lookup_list">行列字根反查</string>
+    <!--<string name="array_reverse_lookup_list">行列字根反查</string>
     
-    <string name="han_convert_option_list">中文簡/繁體字碼轉換</string>
+    --><string name="han_convert_option_list">中文簡/繁體字碼轉換</string>
     
     
     <string name="table_list">對應表選取</string>
@@ -175,8 +175,8 @@
 		<item>大易</item>
 		<item>注音</item>
 		<item>輕鬆</item>
-		<item>行列</item>
-	</string-array>
+		<!--<item>行列</item>
+	--></string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
 		<item>custom</item>
@@ -184,9 +184,9 @@
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item>
+		<item>ez</item><!--
 		<item>array</item>
-	</string-array>
+	--></string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
 		<item>預設鍵盤</item>
@@ -195,9 +195,9 @@
 		<item>快倉鍵盤</item>
 		<item>大易鍵盤</item>
 		<item>注音鍵盤</item>
-		<item>輕鬆鍵盤</item>
+		<item>輕鬆鍵盤</item><!--
 		<item>行列鍵盤</item>
-	</string-array>
+	--></string-array>
 	<string-array name="keyboard_defaultstate">
 		<item>true</item>
 		<item>true</item>
@@ -205,9 +205,9 @@
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
+		<item>true</item><!--
 		<item>true</item>
-		<item>true</item>
-	</string-array>
+	--></string-array>
     <string-array name="keyboard_codes">
 		<item>custom</item>
 		<item>phone</item>
@@ -215,18 +215,18 @@
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item>
+		<item>ez</item><!--
 		<item>array</item>
-	</string-array>
+	--></string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
 		<item>cj</item>
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item>
+		<item>ez</item><!--
 		<item>array</item>
-		<item>related</item>
+		--><item>related</item>
 		<item>dictionary</item>
 	</string-array>
     
@@ -245,9 +245,9 @@
 		<item>快倉</item>
 		<item>大易</item>
 		<item>注音</item>
-		<item>輕鬆</item>
+		<item>輕鬆</item><!--
 		<item>行列</item>
-		<item>預載關聯字</item>
+		--><item>預載關聯字</item>
 		<item>英文字典</item>
 	</string-array>
 	
@@ -267,10 +267,10 @@
     <string name="l3_manage_cj">倉頡</string>
     <string name="l3_manage_scj">快倉</string>
     <string name="l3_manage_dayi">大易</string>
-    <string name="l3_manage_eazy">輕鬆</string>
+    <string name="l3_manage_eazy">輕鬆</string><!--
     <string name="l3_manage_array">行列</string>
     
-    <string name="l3_tab_preference">喜好設定</string>
+    --><string name="l3_tab_preference">喜好設定</string>
     
 	<string name="l3_dbservice_download_start">正在取得預載資料庫, 這一個動作會持續一至數分鐘，請您耐心等候.</string>
     <string name="l3_dbservice_download_initial">正在初始化資料庫.</string>

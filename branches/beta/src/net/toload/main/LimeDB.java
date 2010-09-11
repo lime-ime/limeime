@@ -102,6 +102,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private boolean relatedfinish = false;
 
 	private LIMEPreferenceManager mLIMEPref;
+	private Map code3rMap = new HashMap();
 
 	private Context ctx;
 
@@ -127,17 +128,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * For LIMEService to setup tablename for further word mapping query
 	 */
 	public void setTablename(String tablename) {
-
-		CharSequence[] codes = ctx.getResources().getStringArray(
-				R.array.table_codes);
-
-		for (int i = 0; i < codes.length; i++) {
-			if (tablename.equals(codes[i].toString())
-					&& mLIMEPref.getTableTotalRecords(codes[i].toString())
-							.equals("0")) {
-				this.tablename = "custom";
-			}
-		}
+		mLIMEPref = new LIMEPreferenceManager(ctx.getApplicationContext());
 		this.tablename = tablename;
 		if (DEBUG) {
 			Log.i("setTablename", "tablename:" + tablename + " this.tablename:"
@@ -155,7 +146,12 @@ public class LimeDB extends SQLiteOpenHelper {
 	public LimeDB(Context context) {
 		super(context, LIME.DATABASE_NAME, null, DATABASE_VERSION);
 		this.ctx = context;
-		mLIMEPref = new LIMEPreferenceManager(ctx);
+		for(int i=0; i< LIME.THREE_ROW_KEY.length(); i++){
+			String key = LIME.THREE_ROW_KEY.substring(i,i+1);
+			String value = LIME.THREE_ROW_KEY_REMAP.substring(i,i+1);
+			code3rMap.put(key, value);
+			code3rMap.put(value, value);
+		}
 	}
 
 	/**
@@ -547,6 +543,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 			if(!code3r.equalsIgnoreCase(code)){
 				iscode3r = true;
+				code3r = expendCode3r(code);
 			}
 			
 			// Process the escape characters of query
@@ -565,11 +562,11 @@ public class LimeDB extends SQLiteOpenHelper {
 				// When Code3r mode is enable
 				if(remap3row && iscode3r){
 					if(sort){
-						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' OR " + FIELD_CODE +" = '"+code3r+"'"
+						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' OR " + code3r
 								, null, null, null, FIELD_SCORE +" DESC", null);
 						//Log.i("ART","run code3r a:"+tablename + " ->count:" + cursor.getCount());
 					}else{
-						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "'" + "' OR " + FIELD_CODE +" = '"+code3r+"'"
+						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "'" + "' OR " + code3r
 								, null, null, null, null, null);
 						//Log.i("ART","run code3r b:"+tablename + " ->count:" + cursor.getCount());
 					}
@@ -595,6 +592,46 @@ public class LimeDB extends SQLiteOpenHelper {
 				e.printStackTrace();
 			}
 		}
+		return result;
+	}
+	
+	private String expendCode3r(String code){
+		//code3r = code3r.replace(LIME.THREE_ROW_KEY.substring(i, i + 1), LIME.THREE_ROW_KEY_REMAP.substring(i, i + 1));
+
+		String result = "";
+		if(code.length() == 1){
+			result = FIELD_CODE + "= '"+code3rMap+"'";
+		}else if(code.length() == 2){
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+"' OR ";
+			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+"' OR ";
+			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+"'";
+		}else if(code.length() == 3){
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code.substring(2,3)+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code3rMap.get(code.substring(2,3))+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code3rMap.get(code.substring(2,3))+"' OR ";
+			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+code3rMap.get(code.substring(2,3))+"' OR ";
+			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+code.substring(2,3)+"' OR ";
+			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+code3rMap.get(code.substring(2,3))+"' OR ";
+			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+code.substring(2,3)+"' ";
+		}else if(code.length() == 4){
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code.substring(2,3)+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code.substring(2,3)+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code3rMap.get(code.substring(2,3))+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code.substring(2,3)+code3rMap.get(code.substring(3,4))+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code3rMap.get(code.substring(2,3))+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code3rMap.get(code.substring(2,3))+code3rMap.get(code.substring(3,4))+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code.substring(2,3)+code3rMap.get(code.substring(3,4))+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code3rMap.get(code.substring(2,3))+code3rMap.get(code.substring(3,4))+"' OR ";
+			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+code.substring(2,3)+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+code.substring(2,3)+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+code3rMap.get(code.substring(2,3))+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+code.substring(2,3)+code3rMap.get(code.substring(3,4))+"' OR ";
+			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+code3rMap.get(code.substring(2,3))+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+code3rMap.get(code.substring(2,3))+code3rMap.get(code.substring(3,4))+"' OR ";
+			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+code.substring(2,3)+code3rMap.get(code.substring(3,4))+"' OR ";
+			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+code3rMap.get(code.substring(2,3))+code3rMap.get(code.substring(3,4))+"' ";
+		}
+		
 		return result;
 	}
 

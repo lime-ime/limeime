@@ -31,8 +31,8 @@ public class LIMEKeyboardSwitcher {
     public static final int MODE_TEXT_PHONETIC = 14;
     public static final int MODE_TEXT_DAYI = 15;
     public static final int MODE_TEXT_EZ = 16;
-    public static final int MODE_TEXT_PHONE = 17;
-    public static final int MODE_TEXT_ARRAY = 18;
+    public static final int MODE_TEXT_PHONE = 17;/*
+    public static final int MODE_TEXT_ARRAY = 18;*/
     public static final int MODE_TEXT_SCJ = 19;
     public static final int MODE_TEXT_SCJ_NUMBER = 20;
     public static final int MODE_SYMBOLS = 2;
@@ -131,11 +131,32 @@ public class LIMEKeyboardSwitcher {
         }
     }
 
-    void setKeyboardMode(int mode, int imeOptions) {
+   /* void setKeyboardMode(int mode, int imeOptions) {
         mSymbolsModeState = SYMBOLS_MODE_STATE_NONE;
         mPreferSymbols = mode == MODE_SYMBOLS;
         mIsChinese = (mode == MODE_TEXT_DEFAULT ||mode == MODE_TEXT_DEFAULT_NUMBER 
         		|| mode == MODE_TEXT_PHONETIC ||mode == MODE_TEXT_DAYI ||mode == MODE_TEXT_ARRAY 
+        		||mode == MODE_TEXT_EZ ||mode == MODE_TEXT_SCJ ||mode == MODE_TEXT_SCJ_NUMBER ||mode == MODE_TEXT_CJ ||mode == MODE_TEXT_CJ_NUMBER || mode == MODE_TEXT_PHONE);
+        mIsAlphabet = ( mode == MODE_TEXT || mode== MODE_URL 
+        		|| mode == MODE_EMAIL || mode == MODE_IM || mode == MODE_PHONE );
+        if(mIsChinese) mChnMode = mode;
+        if(mIsAlphabet) mEngMode = mode;
+        
+        if(mIsChinese){
+        	setKeyboardMode(mode == MODE_SYMBOLS ? mChnMode : mode, imeOptions,
+                mPreferSymbols, false);
+        	}
+        else{
+        	setKeyboardMode(mode == MODE_SYMBOLS ? mEngMode : mode, imeOptions,
+                    mPreferSymbols, false);
+        }
+    }*/
+    
+    void setKeyboardMode(int mode, int imeOptions) {
+        mSymbolsModeState = SYMBOLS_MODE_STATE_NONE;
+        mPreferSymbols = mode == MODE_SYMBOLS;
+        mIsChinese = (mode == MODE_TEXT_DEFAULT ||mode == MODE_TEXT_DEFAULT_NUMBER 
+        		|| mode == MODE_TEXT_PHONETIC ||mode == MODE_TEXT_DAYI 
         		||mode == MODE_TEXT_EZ ||mode == MODE_TEXT_SCJ ||mode == MODE_TEXT_SCJ_NUMBER ||mode == MODE_TEXT_CJ ||mode == MODE_TEXT_CJ_NUMBER || mode == MODE_TEXT_PHONE);
         mIsAlphabet = ( mode == MODE_TEXT || mode== MODE_URL 
         		|| mode == MODE_EMAIL || mode == MODE_IM || mode == MODE_PHONE );
@@ -223,7 +244,7 @@ public class LIMEKeyboardSwitcher {
             case MODE_TEXT_DAYI:
                 if(isShifted) return new KeyboardId(R.xml.lime_dayi_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_dayi);
-            case MODE_TEXT_ARRAY:
+           /* case MODE_TEXT_ARRAY:*/
                 /*if(isShifted) return new KeyboardId(R.xml.lime_array_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_array);*/  
             case MODE_TEXT_PHONETIC:
