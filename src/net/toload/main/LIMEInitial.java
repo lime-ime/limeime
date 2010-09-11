@@ -48,6 +48,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.res.Resources;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -96,6 +97,7 @@ public class LIMEInitial extends Activity {
 	
 	boolean hasReset = false;
 	LIMEPreferenceManager mLIMEPref;
+	ConnectivityManager connManager = null;
 	
 	/** Called when the activity is first created. */
 	@Override
@@ -108,6 +110,11 @@ public class LIMEInitial extends Activity {
 		getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
 		mLIMEPref = new LIMEPreferenceManager(this.getApplicationContext());
 		
+
+
+        connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE); 
+        
+        
 		// Initial Buttons
 		initialButton();
 
@@ -160,16 +167,21 @@ public class LIMEInitial extends Activity {
 
 		btnInitPreloadDB.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				try {
-					initialButton();
-					Toast.makeText(v.getContext(), getText(R.string.l3_initial_download_database), Toast.LENGTH_SHORT).show();
-					DBSrv.downloadPreloadedDatabase();
 
-					// Reset for SearchSrv
-					mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
-					
-				} catch (RemoteException e) {
-					e.printStackTrace();
+		        if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
+		        	try {
+						btnInitPreloadDB.setEnabled(false);
+						Toast.makeText(v.getContext(), getText(R.string.l3_initial_download_database), Toast.LENGTH_SHORT).show();
+						DBSrv.downloadPreloadedDatabase();
+
+						// Reset for SearchSrv
+						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+						
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+		        }else{
+		        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
 				}
 			}
 		});
