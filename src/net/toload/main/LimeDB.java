@@ -128,7 +128,6 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * For LIMEService to setup tablename for further word mapping query
 	 */
 	public void setTablename(String tablename) {
-		mLIMEPref = new LIMEPreferenceManager(ctx.getApplicationContext());
 		this.tablename = tablename;
 		if (DEBUG) {
 			Log.i("setTablename", "tablename:" + tablename + " this.tablename:"
@@ -152,6 +151,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			code3rMap.put(key, value);
 			code3rMap.put(value, value);
 		}
+		mLIMEPref = new LIMEPreferenceManager(ctx.getApplicationContext());
 	}
 
 	/**
