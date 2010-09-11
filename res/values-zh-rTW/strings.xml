@@ -255,6 +255,7 @@
     <string name="l3_message_initial_required">請初始化 LIME 資料庫_</string>
     
     <string name="l3_tab_initial">初始資料庫</string>
+    <string name="l3_tab_initial_message">請點選 [預載資料庫]鍵下載 LIME 資料庫或點選 [還原資料庫] 鍵由備份檔案中還原</string>
     <string name="l3_initial_btn_load_empty_db">空白資料庫</string>
     <string name="l3_initial_btn_load_preload_db">預載資料庫</string>
     <string name="l3_initial_btn_reset_db">重置資料庫</string>

@@ -277,12 +277,13 @@ public class LIMEInitial extends Activity {
 			btnResetDB = (Button) findViewById(R.id.btnResetDB);
 			btnInitPreloadDB = (Button) findViewById(R.id.btnInitPreloadDB);	
 			btnBackupDB = (Button) findViewById(R.id.btnBackupDB);
-			btnRestoreDB = (Button) findViewById(R.id.btnRestoreDB);	
+			btnRestoreDB = (Button) findViewById(R.id.btnRestoreDB);
 		}
 		
 		SharedPreferences sp = getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0);
 		if(sp.getString(LIME.DATABASE_DOWNLOAD_STATUS, "false").equals("false")){
 			btnInitPreloadDB.setEnabled(true);
+			Toast.makeText(this, getText(R.string.l3_tab_initial_message), Toast.LENGTH_SHORT).show();
 		}else{
 			btnInitPreloadDB.setEnabled(false);
 		}
