@@ -95,15 +95,13 @@ public class SearchService extends Service {
 		}
 		
 		public String getTablename(){
-			if(db == null){loadLimeDB();}
 			return tablename;
 		}
 		
 		public void setTablename(String table){
 			if(db == null){loadLimeDB();}
-			tablename = table;
 			db.setTablename(table);
-			
+			tablename = table;
 		}
 		
 		private void loadLimeDB()

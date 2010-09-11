@@ -1411,6 +1411,9 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 	 */
 	private void updateCandidates() {
 
+		//Log.i("ART", "Update Candidate mCompletionOn:"+ mCompletionOn);
+		//Log.i("ART", "Update Candidate mComposing:"+ mComposing);
+		//Log.i("ART", "Update Candidate mComposing:"+ mComposing.length());
 		if (mCandidateView != null) {
 			mCandidateView.clear();
 			//mCandidateView.hideComposing();
@@ -1431,8 +1434,12 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					setSuggestions(null, false, false);
 				}
 				// Show composing window if keyToChar got different string.
-				if(keyString!=null && !keyString.equals("")){
-					charString = SearchSrv.keyToChar(keyString.toUpperCase());
+				if(keyString!=null && !keyString.equals("")){/*
+					if(SearchSrv.getTablename() == null || SearchSrv.getTablename().trim().equals("")){
+						SearchSrv.setTablename(keyboardSelection);
+						mCandidateView = new CandidateView(this);
+					}*/
+					charString = SearchSrv.keyToChar(keyString.toLowerCase());
 					if (mCandidateView != null && !charString.toUpperCase().equals(keyString.toUpperCase())&&!charString.equals("")){
 						if(charString != null && !charString.trim().equals("")){
 							mCandidateView.setComposingText(charString);
@@ -1629,14 +1636,10 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		
 
 		if (mEnglishOnly) {
-
-			//Log.i("ART","onIM9");
 			onIM = false;	
 			Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();	
 			
 		} else {
-
-			//Log.i("ART","onIM10");
 			onIM = true;
 			Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();		
 		}
@@ -1791,6 +1794,7 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 			e.printStackTrace();
 		}
 	}
+
 
 	/**
 	 * This method construct candidate view and add key code to composing object

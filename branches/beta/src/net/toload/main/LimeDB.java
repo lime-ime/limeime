@@ -84,10 +84,10 @@ public class LimeDB extends SQLiteOpenHelper {
 	public final static String FIELD_DIC_is = "isDictionary";
 
 	// for keyToChar
-	public final static String BPMF_KEY = "1QAZ2WSX3EDC4RFV5TGB6YHN7UJM8IK,9OL.0P;/-";
+	public final static String BPMF_KEY = "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-";
 	public final static String BPMF_CHAR = "ㄅㄆㄇㄈㄉㄊㄋㄌˇㄍㄎㄏˋㄐㄑㄒㄓㄔㄕㄖˊㄗㄘㄙ˙ㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ";
 
-	public final static String CJ_KEY = "QWERTYUIOPASDFGHJKLZXCVBNM";
+	public final static String CJ_KEY = "qwertyuiopasdfghjklzxcvbnm";
 	public final static String CJ_CHAR = "手田水口廿卜山戈人心日尸木火土竹十大中重難金女月弓一";
 
 
