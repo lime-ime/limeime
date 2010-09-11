@@ -110,8 +110,6 @@ public class LIMEInitial extends Activity {
 		getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
 		mLIMEPref = new LIMEPreferenceManager(this.getApplicationContext());
 		
-
-
         connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE); 
         
         
