@@ -858,6 +858,10 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 		
 			break;
 		case KeyEvent.KEYCODE_SPACE:
+
+	        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+			hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
+			
 			hasSpacePress = true;
 			
 			// If user enable Quick Switch Mode control then check if has Shift+Space combination

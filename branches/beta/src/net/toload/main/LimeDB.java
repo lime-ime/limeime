@@ -185,6 +185,9 @@ public class LimeDB extends SQLiteOpenHelper {
 		SQLiteDatabase db = this.getWritableDatabase();
 		db.execSQL("DELETE FROM " + table);
 		finish = false;
+		resetImInfo(table);
+		mLIMEPref.setParameter("im_loading", false);
+		mLIMEPref.setParameter("im_loading_table", "");
 		if(thread != null){
 			thread.interrupt();
 		}
@@ -194,12 +197,6 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * Empty Related table records
 	 */
 	public void deleteUserDictAll() {
-		// ---------------add by Jeremy
-		// '10,3,12-----------------------------------
-		// SharedPreferences sp1 =
-		// ctx.getSharedPreferences(TOTAL_USERDICT_RECORD, 0);
-		// sp1.edit().putString(TOTAL_USERDICT_RECORD,
-		// String.valueOf(0)).commit();
 		mLIMEPref.setTotalUserdictRecords("0");
 		// -------------------------------------------------------------------------
 		SQLiteDatabase db = this.getWritableDatabase();
@@ -540,6 +537,14 @@ public class LimeDB extends SQLiteOpenHelper {
 				iscode3r = true;
 			}
 			
+			// Process the escape characters of query
+			if(code != null){
+				code = code.replaceAll("'", "\'");
+			}
+			if(code3r != null){
+				code3r = code3r.replaceAll("'", "\'");
+			}
+			
 			Log.i("ART","==>remap3row:"+remap3row);
 			Log.i("ART","==>code3r:"+code3r + " / "+ iscode3r + " from code:"+code);
 
@@ -548,23 +553,23 @@ public class LimeDB extends SQLiteOpenHelper {
 				// When Code3r mode is enable
 				if(remap3row && iscode3r){
 					if(sort){
-						cursor = db.query(tablename, null, FIELD_CODE + " = \"" + code + "\" OR " + FIELD_CODE +" = \""+code3r+"\""
+						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' OR " + FIELD_CODE +" = '"+code3r+"'"
 								, null, null, null, FIELD_SCORE +" DESC", null);
 						Log.i("ART","run code3r a:"+tablename + " ->count:" + cursor.getCount());
 					}else{
-						cursor = db.query(tablename, null, FIELD_CODE + " = \"" + code + "\"" + "\" OR " + FIELD_CODE +" = \""+code3r+"\""
+						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "'" + "' OR " + FIELD_CODE +" = '"+code3r+"'"
 								, null, null, null, null, null);
 						Log.i("ART","run code3r b:"+tablename + " ->count:" + cursor.getCount());
 					}
 				}else{
 					// When Code3r mode is disable
 					if(sort){
-						cursor = db.query(tablename, null, FIELD_CODE + " = \""
-								+ code + "\"", null, null, null, FIELD_SCORE +" DESC",
+						cursor = db.query(tablename, null, FIELD_CODE + " = '"
+								+ code + "'", null, null, null, FIELD_SCORE +" DESC",
 								null);
 					}else{
-						cursor = db.query(tablename, null, FIELD_CODE + " = \""
-								+ code + "\"", null, null, null, null, null);
+						cursor = db.query(tablename, null, FIELD_CODE + " = '"
+								+ code + "'", null, null, null, null, null);
 					}
 				}
 
@@ -660,8 +665,8 @@ public class LimeDB extends SQLiteOpenHelper {
 
 			SQLiteDatabase db = this.getReadableDatabase();
 
-			cursor = db.query("related", null, FIELD_DIC_pword + " = \""
-					+ pword + "\"", null, null, null, FIELD_SCORE + " DESC", null);
+			cursor = db.query("related", null, FIELD_DIC_pword + " = '"
+					+ pword + "'", null, null, null, FIELD_SCORE + " DESC", null);
 
 			if (cursor.moveToFirst()) {
 
@@ -700,8 +705,6 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 
 		// Loading Information
-		mLIMEPref.setParameter(table + LIME.IM_MAPPING_FILENAME, filename
-				.getName());
 		
 		// Reset Database Table
 		deleteAll(table);
@@ -715,6 +718,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				boolean isCinFormat = false;
 				ArrayList<ContentValues> resultlist = new ArrayList();
 
+				String imname = "";
 				String line = "";
 				finish = false;
 				// relatedfinish = false;
@@ -763,11 +767,6 @@ public class LimeDB extends SQLiteOpenHelper {
 					boolean firstline = true;
 					boolean cinFormatStart = false;
 					
-
-					mLIMEPref.setParameter(table
-							+ LIME.IM_MAPPING_TOTAL, count);
-					mLIMEPref.setParameter(table + LIME.IM_MAPPING_DATE, "Preparing..., this task might take few minutes please be patient.");
-
 					while ((line = buf.readLine()) != null) {
 
 						/*
@@ -860,10 +859,10 @@ public class LimeDB extends SQLiteOpenHelper {
 								word = word.trim();
 							}
 							if (code.toLowerCase().contains("@version@")) {
-								mLIMEPref.setParameter(table
-										+ LIME.IM_MAPPING_VERSION, word.trim());
+								imname = word.trim();
 								continue;
 							} else if (code.toLowerCase().contains("%cname")) {
+								imname = word.trim();
 								continue;
 							} else {
 								code = code.toLowerCase();
@@ -891,9 +890,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 							resultlist.add(getInsertItem(code, word));
 
-						} catch (StringIndexOutOfBoundsException e) {
-							//Log.i("ART", line + ":" + e);
-						}
+						} catch (StringIndexOutOfBoundsException e) {}
 					}
 
 					buf.close();
@@ -908,24 +905,23 @@ public class LimeDB extends SQLiteOpenHelper {
 							db.insert(table, null, unit);
 
 							count++;
-							if (count % 100 == 0) {
-								mLIMEPref.setParameter(table
-										+ LIME.IM_MAPPING_TOTAL, count);
-								mLIMEPref.setParameter(table + LIME.IM_MAPPING_DATE, "Loading..., Press screen to update status.");
-							}
+							if (count % 500 == 0) {}
 						}
 					}
 
 				} catch (Exception e) {
+					setImInfo(table, "amount", "0");
+					setImInfo(table, "source", "Failed!!!");
 					e.printStackTrace();
-					mLIMEPref.setParameter(table + LIME.IM_MAPPING_TOTAL, 0);
 				} finally {
 					db.setTransactionSuccessful();
 					db.endTransaction();
-					mLIMEPref
-							.setParameter(table + LIME.IM_MAPPING_TOTAL, count);
-					mLIMEPref.setParameter(table + LIME.IM_MAPPING_DATE, new Date().toLocaleString());
-					
+					mLIMEPref.setParameter("im_loading", false);
+					mLIMEPref.setParameter("im_loading_table", "");
+					setImInfo(table, "source", filename.getName());
+					setImInfo(table, "name", imname);
+					setImInfo(table, "amount", String.valueOf(count));
+					setImInfo(table, "import", new Date().toLocaleString());
 				}
 				finish = true;
 			}
@@ -1025,6 +1021,61 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 		}
 		return null;
+	}
+	
+
+	/**
+	 * @param srcunit
+	 */
+	public void resetImInfo(String im) {
+		String removeString = "DELETE FROM im WHERE code='"+im+"'";
+		SQLiteDatabase db = this.getWritableDatabase();
+			           db.execSQL(removeString);
+	}
+	
+	/**
+	 * @param srcunit
+	 */
+	public String getImInfo(String im, String field) {
+		try{
+			String value = "";
+			String selectString = "SELECT * FROM im WHERE code='"+im+"' AND title='"+field+"'";
+			SQLiteDatabase db = this.getReadableDatabase();
+	
+			Cursor cursor = db.rawQuery(selectString ,null);
+			if (cursor.moveToFirst()) {
+				int descCol = cursor.getColumnIndex("desc");
+				return cursor.getString(descCol);
+			}
+		}catch(Exception e){}
+		return "";
+	}
+	
+	/**
+	 * @param srcunit
+	 */
+	public void removeImInfo(String im, String field) {
+		String removeString = "DELETE FROM im WHERE code='"+im+"' AND title='"+field+"'";
+		SQLiteDatabase db = this.getWritableDatabase();
+			           db.execSQL(removeString);
+	}
+	
+
+	/**
+	 * @param srcunit
+	 */
+	public void setImInfo(String im, String field, String value) {
+
+		ContentValues cv = new ContentValues();
+					  cv.put("code", im);
+					  cv.put("title", field);
+					  cv.put("desc", value);
+		
+					  removeImInfo(im, field);
+					  
+		SQLiteDatabase db = this.getWritableDatabase();
+			           db.insert("im",null, cv);
+		
 	}
 
 }

@@ -129,6 +129,11 @@ public class LIMEMappingSetting extends Activity {
 	        	e.printStackTrace();
 	        }
 
+	        String im_loading_table = mLIMEPref.getParameterString("im_loading_table");
+	        if(im_loading_table != null && im_loading_table.length() > 0){
+	        	imtype = im_loading_table;
+	        }
+	        
 			// Initial Buttons
 			initialButton();
 
@@ -150,7 +155,6 @@ public class LIMEMappingSetting extends Activity {
 			btnLoadMapping.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					hasSelectFile = false;
-					resetLabelInfo();
                 	selectLimeFile(LIME.IM_LOAD_LIME_ROOT_DIRECTORY, imtype);
 				}
 			});
@@ -186,6 +190,7 @@ public class LIMEMappingSetting extends Activity {
 					
 				}
 			});
+			
 
 		}
 		
@@ -223,103 +228,67 @@ public class LIMEMappingSetting extends Activity {
 			
 			scrollSetting = (ScrollView) this.findViewById(R.id.IMSettingScrollView);
 			
-			boolean hasIMLoaded = false;
-			if(imtype != null){
-				if(imtype.equals("cj")){
-					SharedPreferences sp = getSharedPreferences(LIME.IM_CJ_STATUS, 0);
-					if(sp.getString(LIME.IM_CJ_STATUS, "false").equals("false")){
-						hasIMLoaded = true;
-					}
-					
-				}else if(imtype.equals("scj")){
-					SharedPreferences sp = getSharedPreferences(LIME.IM_SCJ_STATUS, 0);
-					if(sp.getString(LIME.IM_SCJ_STATUS, "false").equals("false")){
-						hasIMLoaded = true;
-					}
-				}else if(imtype.equals("phonetic")){
-					SharedPreferences sp = getSharedPreferences(LIME.IM_PHONETIC_STATUS, 0);
-					if(sp.getString(LIME.IM_PHONETIC_STATUS, "false").equals("false")){
-						hasIMLoaded = true;
-					}
-				}else if(imtype.equals("ez")){
-					SharedPreferences sp = getSharedPreferences(LIME.IM_EZ_STATUS, 0);
-					if(sp.getString(LIME.IM_EZ_STATUS, "false").equals("false")){
-						hasIMLoaded = true;
-					}
-				}else if(imtype.equals("dayi")){
-					SharedPreferences sp = getSharedPreferences(LIME.IM_DAYI_STATUS, 0);
-					if(sp.getString(LIME.IM_DAYI_STATUS, "false").equals("false")){
-						hasIMLoaded = true;
-					}
-				}else if(imtype.equals("custom")){
-					SharedPreferences sp = getSharedPreferences(LIME.IM_CUSTOM_STATUS, 0);
-					if(sp.getString(LIME.IM_CUSTOM_STATUS, "false").equals("false")){
-						hasIMLoaded = true;
-					}
-				}else if(imtype.equals("array")){
-					SharedPreferences sp = getSharedPreferences(LIME.IM_CUSTOM_STATUS, 0);
-					if(sp.getString(LIME.IM_CUSTOM_STATUS, "false").equals("false")){
-						hasIMLoaded = true;
-					}
-				}
-				
-			}else{
+			if(mLIMEPref.getParameterBoolean("im_loading") == true){
 				btnLoadMapping.setEnabled(false);
 			}
-			
-			if(!hasIMLoaded){
-				btnResetMapping.setEnabled(false);
-			}
-			updateLabelInfo();
 			
 		}
 
 		public void resetLabelInfo(){
-			mLIMEPref.setParameter(imtype+LIME.IM_MAPPING_FILENAME,"");
-			mLIMEPref.setParameter(imtype+LIME.IM_MAPPING_VERSION,"");
-			mLIMEPref.setParameter(imtype+LIME.IM_MAPPING_TOTAL,0);
-			mLIMEPref.setParameter(imtype+LIME.IM_MAPPING_DATE,"");
+				labSource.setText("");
+				labVersion.setText("");
+				labTotalAmount.setText("");
+				labImportDate.setText("");
 		}
 		
 		public void updateLabelInfo(){
-			try{
-				labSource.setText(mLIMEPref.getParameterString(imtype+LIME.IM_MAPPING_FILENAME));
-				labVersion.setText(mLIMEPref.getParameterString(imtype+LIME.IM_MAPPING_VERSION));
-				labTotalAmount.setText(String.valueOf(mLIMEPref.getParameterInt(imtype+LIME.IM_MAPPING_TOTAL)));
-				labImportDate.setText(mLIMEPref.getParameterString(imtype+LIME.IM_MAPPING_DATE));
-				
-				if(imtype.equalsIgnoreCase("cj")){
-					labMappingSettingTitle.setText(getText(R.string.l3_manage_cj) +" "+ getText(R.string.l3_im_setting_title) );
-				}else if(imtype.equalsIgnoreCase("scj")){
-					labMappingSettingTitle.setText(getText(R.string.l3_manage_scj) +" "+ getText(R.string.l3_im_setting_title) );
-				}else if(imtype.equalsIgnoreCase("ez")){
-					labMappingSettingTitle.setText(getText(R.string.l3_manage_eazy) +" "+ getText(R.string.l3_im_setting_title) );
-				}else if(imtype.equalsIgnoreCase("array")){
-					labMappingSettingTitle.setText(getText(R.string.l3_manage_array) +" "+ getText(R.string.l3_im_setting_title) );
-				}else if(imtype.equalsIgnoreCase("dayi")){
-					labMappingSettingTitle.setText(getText(R.string.l3_manage_dayi) +" "+ getText(R.string.l3_im_setting_title) );
-				}else if(imtype.equalsIgnoreCase("custom")){
-					labMappingSettingTitle.setText(getText(R.string.l3_manage_default) +" "+ getText(R.string.l3_im_setting_title) );
-				}else if(imtype.equalsIgnoreCase("phonetic")){
-					labMappingSettingTitle.setText(getText(R.string.l3_manage_phonetic) +" "+ getText(R.string.l3_im_setting_title) );
+			
+			if(mLIMEPref.getParameterBoolean("im_loading") == true){
+				labSource.setText("Loading...");
+				labVersion.setText("Loading...");
+				labTotalAmount.setText("Loading...");
+				labImportDate.setText("Loading...");
+			}else{
+				try{
+					labSource.setText(DBSrv.getImInfo(imtype, "source"));
+					labVersion.setText(DBSrv.getImInfo(imtype, "name"));
+					labTotalAmount.setText(DBSrv.getImInfo(imtype, "amount"));
+					labImportDate.setText(DBSrv.getImInfo(imtype, "import"));
+					
+				}catch(Exception e){
+					e.printStackTrace();
 				}
-				
-			}catch(Exception e){
-				e.printStackTrace();
 			}
+			
+			if(imtype.equalsIgnoreCase("cj")){
+				labMappingSettingTitle.setText(getText(R.string.l3_manage_cj) +" "+ getText(R.string.l3_im_setting_title) );
+			}else if(imtype.equalsIgnoreCase("scj")){
+				labMappingSettingTitle.setText(getText(R.string.l3_manage_scj) +" "+ getText(R.string.l3_im_setting_title) );
+			}else if(imtype.equalsIgnoreCase("ez")){
+				labMappingSettingTitle.setText(getText(R.string.l3_manage_eazy) +" "+ getText(R.string.l3_im_setting_title) );
+			}else if(imtype.equalsIgnoreCase("array")){
+				labMappingSettingTitle.setText(getText(R.string.l3_manage_array) +" "+ getText(R.string.l3_im_setting_title) );
+			}else if(imtype.equalsIgnoreCase("dayi")){
+				labMappingSettingTitle.setText(getText(R.string.l3_manage_dayi) +" "+ getText(R.string.l3_im_setting_title) );
+			}else if(imtype.equalsIgnoreCase("custom")){
+				labMappingSettingTitle.setText(getText(R.string.l3_manage_default) +" "+ getText(R.string.l3_im_setting_title) );
+			}else if(imtype.equalsIgnoreCase("phonetic")){
+				labMappingSettingTitle.setText(getText(R.string.l3_manage_phonetic) +" "+ getText(R.string.l3_im_setting_title) );
+			}
+			
 		}
 
 		private ServiceConnection serConn = new ServiceConnection() {
 			public void onServiceConnected(ComponentName name, IBinder service) {
+				//Log.i("ART","DB Service connected!");
 				if(DBSrv == null){
-					//Log.i("ART","Start up db service");
 					DBSrv = IDBService.Stub.asInterface(service);
-				}else{
-					//Log.i("ART","Stop up db service");
+					updateLabelInfo();
 				}
 			}
-			public void onServiceDisconnected(ComponentName name) {}
-
+			public void onServiceDisconnected(ComponentName name) {
+				//Log.i("ART","DB Service disconnected!");
+			}
 		};
 		
 		/**
@@ -383,7 +352,6 @@ public class LIMEMappingSetting extends Activity {
 				builder.setNeutralButton(R.string.label_close_key,
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dlg, int sumthin) {
-
 							}
 						});
 
@@ -436,6 +404,9 @@ public class LIMEMappingSetting extends Activity {
 				//Log.i("ART","run load mapping method : " + imtype);
 				hasSelectFile = true;
 				loadMapping(check);
+				resetLabelInfo();
+				mLIMEPref.setParameter("im_loading", true);
+				mLIMEPref.setParameter("im_loading_table", imtype);
 			}
 			return templist;
 		}
