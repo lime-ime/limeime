@@ -600,7 +600,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 		String result = "";
 		if(code.length() == 1){
-			result = FIELD_CODE + "= '"+code3rMap+"'";
+			result = FIELD_CODE + "= '"+code3rMap.get(code)+"'";
 		}else if(code.length() == 2){
 			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+"' OR ";
 			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+"' OR ";
