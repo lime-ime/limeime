@@ -483,6 +483,18 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 
 			}
+		}else if (Rtable.equals("scj")) {
+			int i, j;
+			for (i = 0; i < code.length(); i++) {
+				for (j = 0; j < CJ_KEY.length(); j++) {
+					if (code.substring(i, i + 1).equals(
+							CJ_KEY.substring(j, j + 1))) {
+						result = result + CJ_CHAR.substring(j, j + 1);
+						break;
+					}
+				}
+
+			}
 		} else if (Rtable.equals("dayi")) {
 			result = code;
 		} else if (Rtable.equals("ez")) {
@@ -545,8 +557,8 @@ public class LimeDB extends SQLiteOpenHelper {
 				code3r = code3r.replaceAll("'", "\'");
 			}
 			
-			Log.i("ART","==>remap3row:"+remap3row);
-			Log.i("ART","==>code3r:"+code3r + " / "+ iscode3r + " from code:"+code);
+			//Log.i("ART","==>remap3row:"+remap3row);
+			//Log.i("ART","==>code3r:"+code3r + " / "+ iscode3r + " from code:"+code);
 
 			try {
 
@@ -555,11 +567,11 @@ public class LimeDB extends SQLiteOpenHelper {
 					if(sort){
 						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' OR " + FIELD_CODE +" = '"+code3r+"'"
 								, null, null, null, FIELD_SCORE +" DESC", null);
-						Log.i("ART","run code3r a:"+tablename + " ->count:" + cursor.getCount());
+						//Log.i("ART","run code3r a:"+tablename + " ->count:" + cursor.getCount());
 					}else{
 						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "'" + "' OR " + FIELD_CODE +" = '"+code3r+"'"
 								, null, null, null, null, null);
-						Log.i("ART","run code3r b:"+tablename + " ->count:" + cursor.getCount());
+						//Log.i("ART","run code3r b:"+tablename + " ->count:" + cursor.getCount());
 					}
 				}else{
 					// When Code3r mode is disable

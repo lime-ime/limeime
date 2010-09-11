@@ -6,7 +6,7 @@
     <string name="app_name">LIME</string>
     <string name="ime_name">LIME</string>
     <string name="ime_setting">LIME 設定</string>
-    <string name="input_method">輸入方式</string>
+    <string name="input_method">系統輸入法切換</string>
 
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
@@ -42,7 +42,7 @@
     <string name="Similiar">關聯字</string>
     <string name="mapping">對應表</string>
        
-    <string name="keyboard_list">鍵盤選取</string>
+    <string name="keyboard_list">LIME輸入法切換</string>
     
     
     <string name="default_in_english">先使用英文模式</string>
@@ -279,9 +279,16 @@
     <string name="l3_message_table_reset_confirm">您是否要清除所有記錄?</string>
     <string name="l3_initial_download_database">下載資料庫</string>
     <string name="l3_initial_backup_database">備份資料庫</string>
+    <string name="l3_initial_backup_start">開始備份資料庫</string>
+    <string name="l3_initial_backup_end">資料庫備份完成</string>
+    <string name="l3_initial_backup_confirm">您是否要備份資料庫?</string>
     <string name="l3_initial_backup_error">資料庫不存在，無法進行備份.</string>
     <string name="l3_initial_restore_database">還原資料庫</string>
     <string name="l3_initial_restore_error">備份檔案不存在，無法進行還原.</string>
+    <string name="l3_initial_restore_confirm">您是否要還原資料庫?</string>
+    <string name="l3_initial_restore_start">開始還原資料庫</string>
+    <string name="l3_initial_restore_end">資料庫還原完成</string>
+    
     
     <string name="l3_im_setting_back">回到上一頁</string>
     <string name="l3_im_setting_title">對應表設定</string>

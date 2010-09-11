@@ -6,7 +6,7 @@
     <string name="app_name">LIME</string>
     <string name="ime_name">LIME</string>
     <string name="ime_setting">LIME 设定</string>
-    <string name="input_method">输入方式</string>
+    <string name="input_method">系统输入法切换</string>
 
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
@@ -17,8 +17,6 @@
     <string name="label_next_key">Next</string>
     <string name="label_send_key">传送</string>
     <string name="label_close_key">关闭</string>
-    
-    
     
     
     <!-- LIME Loading -->
@@ -44,7 +42,7 @@
     <string name="Similiar">关联字</string>
     <string name="mapping">对应表</string>
        
-    <string name="keyboard_list">键盘选取</string>
+    <string name="keyboard_list">LIME输入法切换</string>
     
     
     <string name="default_in_english">先使用英文模式</string>
@@ -281,9 +279,16 @@
     <string name="l3_message_table_reset_confirm">您是否要清除所有记录?</string>
     <string name="l3_initial_download_database">下载资料库</string>
     <string name="l3_initial_backup_database">备份资料库</string>
-    <string name="l3_initial_backup_error">资料库不存在，无法进行备份.</string>
-    <string name="l3_initial_restore_database">还原资料库</string>
+    <string name="l3_initial_backup_start">开始备份资料库</string>
+    <string name="l3_initial_backup_end">数据库备份完成</string>
+    <string name="l3_initial_backup_confirm">您是否要备份数据库?</string>
+    <string name="l3_initial_backup_error">数据库不存在，无法进行备份.</string>
+    <string name="l3_initial_restore_database">还原数据库</string>
     <string name="l3_initial_restore_error">备份档案不存在，无法进行还原.</string>
+    <string name="l3_initial_restore_confirm">您是否要还原数据库?</string>
+    <string name="l3_initial_restore_start">开始还原数据库</string>
+    <string name="l3_initial_restore_end">数据库还原完成</string>
+    
     
     <string name="l3_im_setting_back">回到上一页</string>
     <string name="l3_im_setting_title">对应表设定</string>

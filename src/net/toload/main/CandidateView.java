@@ -215,11 +215,13 @@ public class CandidateView extends View {
     };
     
     public void setComposingText(String composingText){
-    	mComposingText = composingText;
-    	mComposingTextView.setText(mComposingText);
-    	showComposing();
-    	
-    	
+    	if(composingText != null && !composingText.trim().equals("")){
+        	mComposingText = composingText;
+        	mComposingTextView.setText(mComposingText);
+        	showComposing();
+    	}else{
+    		mComposingTextView.setVisibility(mComposingTextView.INVISIBLE);
+    	}
     }
     public String getComposingText(String ComposingText){
 		return mComposingText;
