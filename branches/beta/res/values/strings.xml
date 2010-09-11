@@ -256,6 +256,7 @@
     <string name="l3_message_initial_required">Please initialize the LIME database.</string>
     
     <string name="l3_tab_initial">Initial DB</string>
+    <string name="l3_tab_initial_message">Please click [Preload Database] to download lime database or restore from previous backup by [Restore Database] function.</string>
     <string name="l3_initial_btn_load_empty_db">Empty Database</string>
     <string name="l3_initial_btn_load_preload_db">Preload Database</string>
     <string name="l3_initial_btn_reset_db">Reset Database</string>
