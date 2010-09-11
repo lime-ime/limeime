@@ -89,8 +89,8 @@ public class LIMEIMSetting extends Activity {
 	Button btnSetupCJ = null;
 	Button btnSetupSCJ= null;
 	Button btnSetupDayi = null;
-	Button btnSetupEz = null;
-	Button btnSetupArray = null;
+	Button btnSetupEz = null;/*
+	Button btnSetupArray = null;*/
 	
 	String table = "";
 	
@@ -169,7 +169,7 @@ public class LIMEIMSetting extends Activity {
 				startActivity(intent);
 			}
 		});
-		
+		/*
 
 		btnSetupArray.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -180,7 +180,7 @@ public class LIMEIMSetting extends Activity {
 				   intent.putExtras(bundle);
 				startActivity(intent);
 			}
-		});
+		});*/
 
 		btnSetupEz.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -223,8 +223,8 @@ public class LIMEIMSetting extends Activity {
 			btnSetupCJ = (Button) findViewById(R.id.btnSetupCJ);
 			btnSetupSCJ = (Button) findViewById(R.id.btnSetupSCJ);
 			btnSetupDayi = (Button) findViewById(R.id.btnSetupDayi);
-			btnSetupEz = (Button) findViewById(R.id.btnSetupEz);		
-			btnSetupArray = (Button) findViewById(R.id.btnSetupArray);	
+			btnSetupEz = (Button) findViewById(R.id.btnSetupEz);		/*
+			btnSetupArray = (Button) findViewById(R.id.btnSetupArray);	*/
 		}
 		
 		SharedPreferences sp = getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0);
@@ -234,16 +234,16 @@ public class LIMEIMSetting extends Activity {
 			btnSetupCJ.setEnabled(false);
 			btnSetupSCJ.setEnabled(false);
 			btnSetupDayi.setEnabled(false);
-			btnSetupEz.setEnabled(false);
-			btnSetupArray.setEnabled(false);
+			btnSetupEz.setEnabled(false);/*
+			btnSetupArray.setEnabled(false);*/
 		}else{
 			btnSetupCustom.setEnabled(true);
 			btnSetupPhonetic.setEnabled(true);
 			btnSetupCJ.setEnabled(true);
 			btnSetupSCJ.setEnabled(true);
 			btnSetupDayi.setEnabled(true);
-			btnSetupEz.setEnabled(true);	
-			btnSetupArray.setEnabled(true);
+			btnSetupEz.setEnabled(true);	/*
+			btnSetupArray.setEnabled(true);*/
 		}
 		
 	}

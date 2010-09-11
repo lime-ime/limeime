@@ -67,7 +67,7 @@
     <string name="dayi_reverse_lookup_list">大易字根反查</string>
     <string name="bpmf_reverse_lookup_list">注音字根反查</string>
     <string name="ez_reverse_lookup_list">轻松字根反查</string>
-    <string name="array_reverse_lookup_list">行列字根反查</string>
+    <!-- <string name="array_reverse_lookup_list">行列字根反查</string> -->
     
     <string name="han_convert_option_list">中文简/繁体字码转换</string>
     
@@ -175,7 +175,7 @@
 		<item>大易</item>
 		<item>注音</item>
 		<item>轻松</item>
-		<item>行列</item>
+		<!-- <item>行列</item> -->
 	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
@@ -185,7 +185,7 @@
 		<item>dayi</item>
 		<item>phonetic</item>
 		<item>ez</item>
-		<item>array</item>
+		<!-- <item>array</item> -->
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
@@ -196,7 +196,7 @@
 		<item>大易键盘</item>
 		<item>注音键盘</item>
 		<item>轻松键盘</item>
-		<item>行列键盘</item>
+		<!-- <item>行列键盘</item> -->
 	</string-array>
 	<string-array name="keyboard_defaultstate">
 		<item>true</item>
@@ -206,7 +206,7 @@
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
-		<item>true</item>
+		<!-- <item>true</item> -->
 	</string-array>
     <string-array name="keyboard_codes">
 		<item>custom</item>
@@ -216,7 +216,7 @@
 		<item>dayi</item>
 		<item>phonetic</item>
 		<item>ez</item>
-		<item>array</item>
+		<!-- <item>array</item> -->
 	</string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
@@ -225,7 +225,7 @@
 		<item>dayi</item>
 		<item>phonetic</item>
 		<item>ez</item>
-		<item>array</item>
+		<!-- <item>array</item> -->
 		<item>related</item>
 		<item>dictionary</item>
 	</string-array>
@@ -246,7 +246,7 @@
 		<item>大易</item>
 		<item>注音</item>
 		<item>轻松</item>
-		<item>行列</item>
+		<!-- <item>行列</item> -->
 		<item>预载关联字</item>
 		<item>英文字典</item>
 	</string-array>
@@ -268,7 +268,7 @@
     <string name="l3_manage_scj">快仓</string>
     <string name="l3_manage_dayi">大易</string>
     <string name="l3_manage_eazy">轻松</string>
-    <string name="l3_manage_array">行列</string>
+    <!-- <string name="l3_manage_array">行列</string>  -->
     
     <string name="l3_tab_preference">喜好设定</string>
     

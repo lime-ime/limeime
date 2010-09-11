@@ -266,9 +266,9 @@ public class LIMEMappingSetting extends Activity {
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_scj) +" "+ getText(R.string.l3_im_setting_title) );
 			}else if(imtype.equalsIgnoreCase("ez")){
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_eazy) +" "+ getText(R.string.l3_im_setting_title) );
-			}else if(imtype.equalsIgnoreCase("array")){
+			}/*else if(imtype.equalsIgnoreCase("array")){
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_array) +" "+ getText(R.string.l3_im_setting_title) );
-			}else if(imtype.equalsIgnoreCase("dayi")){
+			}*/else if(imtype.equalsIgnoreCase("dayi")){
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_dayi) +" "+ getText(R.string.l3_im_setting_title) );
 			}else if(imtype.equalsIgnoreCase("custom")){
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_default) +" "+ getText(R.string.l3_im_setting_title) );
