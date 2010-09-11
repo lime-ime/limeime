@@ -71,6 +71,7 @@ public class DBService extends Service {
 		
 		public void loadMapping(String filename, String tablename) throws RemoteException {
 
+			
 				File sourcefile = new File(filename);
 				
 				// Start Loading
@@ -162,28 +163,10 @@ public class DBService extends Service {
 						};
 						threadTask.start();
 					}
-					displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_initial)+ "");
-					initialMappingInfo("custom");
-					initialMappingInfo("cj");
-					initialMappingInfo("scj");
-					initialMappingInfo("array");
-					initialMappingInfo("ez");
-					initialMappingInfo("phonetic");
-					initialMappingInfo("dayi");
 					getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
 					displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "");
 				}
 				
-				public void initialMappingInfo(String table){
-					int size = db.countMapping(table);
-					if(size > 0){
-						mLIMEPref.setParameter(table + LIME.IM_MAPPING_FILENAME, LIME.DATABASE_SOURCE_FILENAME);
-						mLIMEPref.setParameter(table + LIME.IM_MAPPING_VERSION, "Preloaded");
-						mLIMEPref.setParameter(table + LIME.IM_MAPPING_TOTAL, size);
-					}else{
-						mLIMEPref.setParameter(table + LIME.IM_MAPPING_TOTAL, 0);
-					}
-				}
 			};
 			threadTask.start();
 		}
@@ -328,6 +311,35 @@ public class DBService extends Service {
 			File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
 			decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME);
 			getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
+		}
+
+		@Override
+		public String getImInfo(String im, String field) throws RemoteException {
+			if (db == null) {loadLimeDB();}
+			return db.getImInfo(im, field);
+		}
+
+		@Override
+		public void removeImInfo(String im, String field)
+				throws RemoteException {
+			if (db == null) {loadLimeDB();}
+			db.removeImInfo(im, field);
+			
+		}
+
+		@Override
+		public void resetImInfo(String im) throws RemoteException {
+			if (db == null) {loadLimeDB();}
+			db.resetImInfo(im);
+			
+		}
+
+		@Override
+		public void setImInfo(String im, String field, String value)
+				throws RemoteException {
+			if (db == null) {loadLimeDB();}
+			db.setImInfo(im, field, value);
+			
 		}
 		
 	}
