@@ -1431,16 +1431,19 @@ private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
 					setSuggestions(null, false, false);
 				}
 				// Show composing window if keyToChar got different string.
-				if(keyString!=null && !keyString.equals(""))
+				if(keyString!=null && !keyString.equals("")){
 					charString = SearchSrv.keyToChar(keyString.toUpperCase());
-				if (mCandidateView != null && !charString.toUpperCase().equals(keyString.toUpperCase())&&!charString.equals(""))
-					{mCandidateView.setComposingText(charString);}
-				else
+					if (mCandidateView != null && !charString.toUpperCase().equals(keyString.toUpperCase())&&!charString.equals("")){
+						if(charString != null && !charString.trim().equals("")){
+							mCandidateView.setComposingText(charString);
+						}
+					}
+				}else
 					{
 						if(mCandidateView == null){
 							mCandidateView = new CandidateView(this);
 						}
-						mCandidateView.setComposingText("");
+						mCandidateView.clear();
 					}
 	
 			} catch (RemoteException e) {

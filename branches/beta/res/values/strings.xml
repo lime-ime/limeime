@@ -6,7 +6,7 @@
     <string name="app_name">LIME</string>
     <string name="ime_name">LIME</string>
     <string name="ime_setting">LIME Settings</string>
-    <string name="input_method">Input Method</string>
+    <string name="input_method">System Input Method</string>
 
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
@@ -42,8 +42,7 @@
     <string name="Similiar">Similiar</string>
     <string name="mapping">Mapping</string>
     
-    <string name="keyboard_list">Keyboard Selection</string>
-    
+    <string name="keyboard_list">LIME Input Method</string>
     
     <string name="default_in_english">Staring in English mode</string>
     <string name="default_in_english_summary">Starting input in English keyboard.</string>
@@ -281,9 +280,15 @@
     <string name="l3_message_table_reset_confirm">Would you like to remove all records?</string>
     <string name="l3_initial_download_database">Download Preloaded Database</string>
     <string name="l3_initial_backup_database">Backup Database</string>
+    <string name="l3_initial_backup_start">Start backup lime database</string>
+    <string name="l3_initial_backup_end">Backup Finished!</string> 
+    <string name="l3_initial_backup_confirm">Would like to backup database?</string>
     <string name="l3_initial_backup_error">You don&quot;t have database need to be backup.</string>
     <string name="l3_initial_restore_database">Restore Database</string>
     <string name="l3_initial_restore_error">You don&quot;t have a backup can be restore.</string>
+    <string name="l3_initial_restore_start">Start restore lime database</string>
+    <string name="l3_initial_restore_end">Restore Finished!</string>
+    <string name="l3_initial_restore_confirm">Would you like to restore database from backup?</string>
     
     <string name="l3_im_setting_back">Back To Previous Page</string>
     <string name="l3_im_setting_title">Mapping Setting</string>

@@ -177,36 +177,64 @@ public class LIMEInitial extends Activity {
 		
 		btnBackupDB.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				try {
+		    			
 					File srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
 					if(srcFile.exists() && srcFile.length() > 1024){
-						Toast.makeText(v.getContext(), getText(R.string.l3_initial_backup_database), Toast.LENGTH_SHORT).show();
-						DBSrv.backupDatabase();
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_initial_backup_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+			    					try {
+										DBSrv.backupDatabase();
+									} catch (RemoteException e) {
+										e.printStackTrace();
+									}
+			    	        	}
+			    	     });
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     }); 
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
 					}else{
 						Toast.makeText(v.getContext(), getText(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT).show();
 					}
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
 			}
 		});
 		
 		btnRestoreDB.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				try {
 					File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
 					if(srcFile.exists() && srcFile.length() > 1024){
-						Toast.makeText(v.getContext(), getText(R.string.l3_initial_restore_database), Toast.LENGTH_SHORT).show();
-						DBSrv.restoreDatabase();
 						
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_initial_restore_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+			    					try {
+			    						DBSrv.restoreDatabase();
+									} catch (RemoteException e) {
+										e.printStackTrace();
+									}
+			    	        	}
+			    	     });
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     }); 
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+							
 						// Reset for SearchSrv
 						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 					}else{
 						Toast.makeText(v.getContext(), getText(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT).show();
 					}
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
 			}
 		});
 		

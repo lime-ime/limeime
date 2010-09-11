@@ -302,15 +302,19 @@ public class DBService extends Service {
 
 		@Override
 		public void backupDatabase() throws RemoteException {
+			displayNotificationMessage(ctx.getText(R.string.l3_initial_backup_start)+ "");
 			File srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
 			compressFile(srcFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_BACKUP_NAME);
+			displayNotificationMessage(ctx.getText(R.string.l3_initial_backup_end)+ "");
 		}
 
 		@Override
 		public void restoreDatabase() throws RemoteException {
+			displayNotificationMessage(ctx.getText(R.string.l3_initial_restore_start)+ "");
 			File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
 			decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME);
 			getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
+			displayNotificationMessage(ctx.getText(R.string.l3_initial_restore_end)+ ""); 
 		}
 
 		@Override
