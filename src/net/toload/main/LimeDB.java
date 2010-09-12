@@ -291,7 +291,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @param srclist
 	 */
 	public void addDictionary(List<Mapping> srclist) {
-		
+
+		Log.i("addDictionary:", "Etnering addDictionary:"+srclist);
 		if(DEBUG){
 			Log.i("addDictionary:", "Etnering addDictionary");
 		}

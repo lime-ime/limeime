@@ -226,9 +226,9 @@ public class LIMEIMSetting extends Activity {
 			btnSetupEz = (Button) findViewById(R.id.btnSetupEz);		/*
 			btnSetupArray = (Button) findViewById(R.id.btnSetupArray);	*/
 		}
-		
-		SharedPreferences sp = getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0);
-		if(sp.getString(LIME.DATABASE_DOWNLOAD_STATUS, "false").equals("false")){
+
+		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+		if(!checkDbFile.exists()){
 			btnSetupCustom.setEnabled(false);
 			btnSetupPhonetic.setEnabled(false);
 			btnSetupCJ.setEnabled(false);

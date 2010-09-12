@@ -77,8 +77,8 @@ public class LIMEMenu extends TabActivity {
 
         int tabno = 0;
 
-		SharedPreferences sp = getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0);
-		if(sp.getString(LIME.DATABASE_DOWNLOAD_STATUS, "false").equals("false")){
+		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+		if(!checkDbFile.exists()){
 			tabno = 2;
 		}
 		

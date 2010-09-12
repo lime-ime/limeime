@@ -135,11 +135,13 @@ public class LIMEInitial extends Activity {
 		    	     				builder.setCancelable(false);
 		    	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 		    	     					public void onClick(DialogInterface dialog, int id) {
-						    					getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "false").commit();
 						    					initialButton();
 							    				try {
-							    					mLIMEPref.setParameter(LIME.DOWNLOAD_START,false);
 							    					DBSrv.resetDownloadDatabase();
+							    					btnInitPreloadDB.setEnabled(true);
+							    					btnResetDB.setEnabled(true);
+						    						mLIMEPref.setParameter("im_loading", false);
+						    						mLIMEPref.setParameter("im_loading_table", "");
 							    				} catch (RemoteException e) {
 							    					e.printStackTrace();
 							    				}
@@ -156,7 +158,6 @@ public class LIMEInitial extends Activity {
 				AlertDialog alert = builder.create();
 		    				alert.show();
 		    	    
-				btnResetDB.setEnabled(true);
 				
 				// Reset for SearchSrv
 				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
@@ -169,13 +170,11 @@ public class LIMEInitial extends Activity {
 
 		        if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
 		        	try {
-						mLIMEPref.setParameter(LIME.DOWNLOAD_START,true);
 						btnInitPreloadDB.setEnabled(false);
 						Toast.makeText(v.getContext(), getText(R.string.l3_initial_download_database), Toast.LENGTH_SHORT).show();
 						DBSrv.downloadPreloadedDatabase();
 
 						// Reset for SearchSrv
-						mLIMEPref.setParameter(LIME.DOWNLOAD_START,false);
 						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 						
 					} catch (RemoteException e) {
@@ -244,18 +243,14 @@ public class LIMEInitial extends Activity {
 									alert.show();
 							
 						// Reset for SearchSrv
-									mLIMEPref.setParameter(LIME.DOWNLOAD_START,false);
 						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 					}else{
 						Toast.makeText(v.getContext(), getText(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT).show();
 					}
 			}
 		});
-		
-		
 
 	}
-
 	
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onStart()
@@ -293,9 +288,9 @@ public class LIMEInitial extends Activity {
 			btnBackupDB = (Button) findViewById(R.id.btnBackupDB);
 			btnRestoreDB = (Button) findViewById(R.id.btnRestoreDB);
 		}
-		
-		SharedPreferences sp = getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0);
-		if(sp.getString(LIME.DATABASE_DOWNLOAD_STATUS, "false").equals("false") || mLIMEPref.getParameterBoolean(LIME.DOWNLOAD_START) ){
+
+		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+		if(!checkDbFile.exists()){
 			btnInitPreloadDB.setEnabled(true);
 			Toast.makeText(this, getText(R.string.l3_tab_initial_message), Toast.LENGTH_SHORT).show();
 		}else{
