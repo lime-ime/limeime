@@ -515,7 +515,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	/*
 	 * Retrieve matched records
 	 */
-	public List<Mapping> getMapping(String code) {
+	public List<Mapping> getMapping(String code, boolean softwareKeyboard) {
 
 		//Log.i("ART", "run get (Mapping):"+ code);
 		//Log.i("ART","Run MAPPING : " + code);
@@ -538,20 +538,22 @@ public class LimeDB extends SQLiteOpenHelper {
 			boolean iscode3r = false;
 
 			String code3r = code;
-			for (int i = 0; i < LIME.THREE_ROW_KEY.length(); i++) {
-				code3r = code3r.replace(LIME.THREE_ROW_KEY.substring(i, i + 1), LIME.THREE_ROW_KEY_REMAP.substring(i, i + 1));
-			}
-			if(!code3r.equalsIgnoreCase(code)){
-				iscode3r = true;
-				code3r = expendCode3r(code);
+			if(!softwareKeyboard){
+				for (int i = 0; i < LIME.THREE_ROW_KEY.length(); i++) {
+					code3r = code3r.replace(LIME.THREE_ROW_KEY.substring(i, i + 1), LIME.THREE_ROW_KEY_REMAP.substring(i, i + 1));
+				}
+				if(!code3r.equalsIgnoreCase(code)){
+					iscode3r = true;
+					code3r = expendCode3r(code);
+				}
+				if(code3r != null){
+					code3r = code3r.replaceAll("'", "\'");
+				}
 			}
 			
 			// Process the escape characters of query
 			if(code != null){
 				code = code.replaceAll("'", "\'");
-			}
-			if(code3r != null){
-				code3r = code3r.replaceAll("'", "\'");
 			}
 			
 			//Log.i("ART","==>remap3row:"+remap3row);
@@ -560,13 +562,13 @@ public class LimeDB extends SQLiteOpenHelper {
 			try {
 
 				// When Code3r mode is enable
-				if(remap3row && iscode3r){
+				if(remap3row && iscode3r && !softwareKeyboard){
 					if(sort){
-						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' OR " + code3r
+						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' " + code3r
 								, null, null, null, FIELD_SCORE +" DESC", null);
 						//Log.i("ART","run code3r a:"+tablename + " ->count:" + cursor.getCount());
 					}else{
-						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "'" + "' OR " + code3r
+						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' " + code3r
 								, null, null, null, null, null);
 						//Log.i("ART","run code3r b:"+tablename + " ->count:" + cursor.getCount());
 					}
@@ -602,11 +604,11 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(code.length() == 1){
 			result = FIELD_CODE + "= '"+code3rMap.get(code)+"'";
 		}else if(code.length() == 2){
-			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+"' OR ";
+			result += " OR " + FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+"' OR ";
 			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+"' OR ";
 			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+"'";
 		}else if(code.length() == 3){
-			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code.substring(2,3)+"' OR ";
+			result += " OR " + FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code.substring(2,3)+"' OR ";
 			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code3rMap.get(code.substring(2,3))+"' OR ";
 			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code3rMap.get(code.substring(2,3))+"' OR ";
 			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+code3rMap.get(code.substring(2,3))+"' OR ";
@@ -614,7 +616,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+code3rMap.get(code.substring(2,3))+"' OR ";
 			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+code.substring(2,3)+"' ";
 		}else if(code.length() == 4){
-			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code.substring(2,3)+code.substring(3,4)+"' OR ";
+			result += " OR " + FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code.substring(2,3)+code.substring(3,4)+"' OR ";
 			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code.substring(2,3)+code.substring(3,4)+"' OR ";
 			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code3rMap.get(code.substring(2,3))+code.substring(3,4)+"' OR ";
 			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code.substring(2,3)+code3rMap.get(code.substring(3,4))+"' OR ";
