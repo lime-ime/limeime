@@ -4,7 +4,7 @@
  **    Project Url: http://code.google.com/p/limeime/
  **                 http://android.toload.net/
  **
- **    This program is free software: you can redistribute it and/or modify
+ **    This program is free software: you can redistribute it and/or modifyf
  **    it under the terms of the GNU General Public License as published by
  **    the Free Software Foundation, either version 3 of the License, or
  **    (at your option) any later version.
@@ -108,7 +108,7 @@ public class LIMEService extends InputMethodService implements
 	private UserDictionary mUserDictionary;
 	private ContactsDictionary mContactsDictionary;
 	private ExpandableDictionary mAutoDictionary;
-	
+
 	private boolean mAutoSpace;
 	private boolean mAutoCorrectOn;
 	private boolean mShowSuggestions;
@@ -510,7 +510,7 @@ public class LIMEService extends InputMethodService implements
 		if (AutoText.getSize(mInputView) < 1)
 			mQuickFixes = true;
 		mShowSuggestions = true & mQuickFixes;// sp.getBoolean(PREF_SHOW_SUGGESTIONS,
-												// true) & mQuickFixes;
+		// true) & mQuickFixes;
 		boolean autoComplete = true;// sp.getBoolean(PREF_AUTO_COMPLETE,
 		// getResources().getBoolean(R.bool.enable_autocorrect)) &
 		// mShowSuggestions;
@@ -603,17 +603,6 @@ public class LIMEService extends InputMethodService implements
 		if (c != -1 && (c & KeyCharacterMap.COMBINING_ACCENT) != 0) {
 			c = c & KeyCharacterMap.COMBINING_ACCENT_MASK;
 		}
-		/*
-		 * if (mComposing.length() > 0) { char accent =
-		 * mComposing.charAt(mComposing.length() - 1); int composed =
-		 * KeyEvent.getDeadChar(accent, c);
-		 * 
-		 * if (composed != 0) { c = composed;
-		 * mComposing.setLength(mComposing.length() - 1); } }
-		 */
-		// if( mHasShift && c >= 97 && c <=122){
-		// c -= 32;
-		// }
 		onKey(c, null);
 		return true;
 	}
@@ -630,7 +619,7 @@ public class LIMEService extends InputMethodService implements
 
 		// Log.i("ART","Physical key:"+keyCode);
 		hasKeyPress = false;
-		
+
 		mKeydownEvent = new KeyEvent(event);
 		// Record key press time (key down, for physical keys)
 		if (!keydown) {
@@ -752,7 +741,7 @@ public class LIMEService extends InputMethodService implements
 					return true;
 				}// Commit selected suggestion succeed.
 				else { // dismiss the candidate view in the related word
-						// selection mode.
+					// selection mode.
 					setCandidatesViewShown(false);
 					break;
 				}
@@ -1169,6 +1158,9 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	public void onKey(int primaryCode, int[] keyCodes) {
+		//Log.i("ART", "Entering Onkey(); primaryCode:" + primaryCode
+			//	+ " mEnglishFlagShift:" + mEnglishFlagShift);
+
 		if (DEBUG) {
 			Log.i("OnKey", "Entering Onkey(); primaryCode:" + primaryCode
 					+ " mEnglishFlagShift:" + mEnglishFlagShift);
@@ -1209,6 +1201,8 @@ public class LIMEService extends InputMethodService implements
 			switchKeyboard(primaryCode);
 		} else if (primaryCode == -9 && mInputView != null) {
 			switchKeyboard(primaryCode);
+		} else if (primaryCode == KEYCODE_ENTER) {
+			getCurrentInputConnection().sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, 66));
 		} else {
 			// if (isWordSeparator(primaryCode)) {
 			// if (mComposing.length() > 0) {
@@ -1364,7 +1358,7 @@ public class LIMEService extends InputMethodService implements
 		builder.setTitle(getResources().getString(R.string.keyboard_list));
 
 		CharSequence[] items = new CharSequence[keyboardList.size()];// =
-																		// getResources().getStringArray(R.array.keyboard);
+		// getResources().getStringArray(R.array.keyboard);
 		int curKB = 0;
 		for (int i = 0; i < keyboardList.size(); i++) {
 			items[i] = keyboardList.get(i);
@@ -2203,10 +2197,12 @@ public class LIMEService extends InputMethodService implements
 			commitTyped(getCurrentInputConnection());
 			this.firstMatched = null;
 			this.hasFirstMatched = false;
+			templist.clear();
 			updateDictionaryView();
 		} else if (firstMatched != null && firstMatched.isDictionary()) {
 			commitTyped(getCurrentInputConnection());
 			updateDictionaryView();
+			templist.clear();
 		}
 		// setCandidatesViewShown(false);
 
