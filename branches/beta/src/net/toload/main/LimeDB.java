@@ -1095,7 +1095,8 @@ public class LimeDB extends SQLiteOpenHelper {
 			SQLiteDatabase db = this.getReadableDatabase();
 	
 			Cursor cursor = db.rawQuery(selectString ,null);
-			if (cursor.moveToFirst()) {
+			if (cursor.getCount() > 0) {
+				cursor.moveToFirst();
 				int descCol = cursor.getColumnIndex("desc");
 				return cursor.getString(descCol);
 			}

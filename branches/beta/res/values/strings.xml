@@ -276,11 +276,12 @@
     <string name="l3_dbservice_download_start">Download preloaded database, this action will take few minutes please wait.</string>
     <string name="l3_dbservice_download_initial">Initialize database.</string>
     <string name="l3_dbservice_download_loaded">Preloaded database was loaded.</string>
-    <string name="l3_dbservice_download_convert">Convert database file.</string>
+    <string name="l3_dbservice_download_convert">Start convert database file...</string>
     
     <string name="l3_message_database_reset_confirm">Would you like to reset this database?</string>
     <string name="l3_message_table_reset_confirm">Would you like to remove all records?</string>
     <string name="l3_initial_download_database">Download Preloaded Database</string>
+    <string name="l3_initial_download_failed">Database convert failed, please reset database and try again.</string>
     <string name="l3_initial_backup_database">Backup Database</string>
     <string name="l3_initial_backup_start">Start backup lime database</string>
     <string name="l3_initial_backup_end">Backup Finished!</string> 
