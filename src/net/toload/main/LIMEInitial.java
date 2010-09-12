@@ -142,6 +142,7 @@ public class LIMEInitial extends Activity {
 							    					btnResetDB.setEnabled(true);
 						    						mLIMEPref.setParameter("im_loading", false);
 						    						mLIMEPref.setParameter("im_loading_table", "");
+						    						mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
 							    				} catch (RemoteException e) {
 							    					e.printStackTrace();
 							    				}
@@ -171,6 +172,7 @@ public class LIMEInitial extends Activity {
 		        if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
 		        	try {
 						btnInitPreloadDB.setEnabled(false);
+						mLIMEPref.setParameter(LIME.DOWNLOAD_START, true);
 						Toast.makeText(v.getContext(), getText(R.string.l3_initial_download_database), Toast.LENGTH_SHORT).show();
 						DBSrv.downloadPreloadedDatabase();
 
@@ -178,6 +180,7 @@ public class LIMEInitial extends Activity {
 						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 						
 					} catch (RemoteException e) {
+						mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
 						e.printStackTrace();
 					}
 		        }else{
@@ -290,7 +293,7 @@ public class LIMEInitial extends Activity {
 		}
 
 		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
-		if(!checkDbFile.exists()){
+		if(!checkDbFile.exists() && !mLIMEPref.getParameterBoolean(LIME.DOWNLOAD_START)){
 			btnInitPreloadDB.setEnabled(true);
 			Toast.makeText(this, getText(R.string.l3_tab_initial_message), Toast.LENGTH_SHORT).show();
 		}else{
