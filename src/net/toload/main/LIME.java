@@ -4,6 +4,7 @@ public class LIME {
 	
 	protected static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime.zip";
 	protected static final String IM_LOAD_LIME_ROOT_DIRECTORY = "/sdcard/lime/";
+	protected static final String DOWNLOAD_START = "download_start";
 	protected static final String DATABASE_DOWNLOAD_STATUS = "database_download_status";
 	protected static final String DATABASE_NAME = "lime.db";
 	protected static final String DATABASE_SOURCE_FILENAME = "lime.zip";

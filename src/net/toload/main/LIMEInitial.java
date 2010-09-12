@@ -138,6 +138,7 @@ public class LIMEInitial extends Activity {
 						    					getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "false").commit();
 						    					initialButton();
 							    				try {
+							    					mLIMEPref.setParameter(LIME.DOWNLOAD_START,false);
 							    					DBSrv.resetDownloadDatabase();
 							    				} catch (RemoteException e) {
 							    					e.printStackTrace();
@@ -168,11 +169,13 @@ public class LIMEInitial extends Activity {
 
 		        if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
 		        	try {
+						mLIMEPref.setParameter(LIME.DOWNLOAD_START,true);
 						btnInitPreloadDB.setEnabled(false);
 						Toast.makeText(v.getContext(), getText(R.string.l3_initial_download_database), Toast.LENGTH_SHORT).show();
 						DBSrv.downloadPreloadedDatabase();
 
 						// Reset for SearchSrv
+						mLIMEPref.setParameter(LIME.DOWNLOAD_START,false);
 						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 						
 					} catch (RemoteException e) {
@@ -241,6 +244,7 @@ public class LIMEInitial extends Activity {
 									alert.show();
 							
 						// Reset for SearchSrv
+									mLIMEPref.setParameter(LIME.DOWNLOAD_START,false);
 						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 					}else{
 						Toast.makeText(v.getContext(), getText(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT).show();
@@ -291,7 +295,7 @@ public class LIMEInitial extends Activity {
 		}
 		
 		SharedPreferences sp = getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0);
-		if(sp.getString(LIME.DATABASE_DOWNLOAD_STATUS, "false").equals("false")){
+		if(sp.getString(LIME.DATABASE_DOWNLOAD_STATUS, "false").equals("false") || mLIMEPref.getParameterBoolean(LIME.DOWNLOAD_START) ){
 			btnInitPreloadDB.setEnabled(true);
 			Toast.makeText(this, getText(R.string.l3_tab_initial_message), Toast.LENGTH_SHORT).show();
 		}else{
