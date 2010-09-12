@@ -79,7 +79,7 @@ public class DBService extends Service {
 	
 				db.setFinish(false);
 				db.setFilename(sourcefile);
-	
+				
 				displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading)+ "");
 	
 				// Update Loading Status
@@ -210,13 +210,16 @@ public class DBService extends Service {
 				try{
 					is.close();
 				}catch(Exception e){
+					displayNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "");
 					e.printStackTrace();
 				}
 				return downloadedFile;
 				
 			} catch (MalformedURLException e) {
+				displayNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "");
 				e.printStackTrace();
 			} catch (IOException e){
+				displayNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "");
 				e.printStackTrace();
 			}
 			return null;
@@ -261,6 +264,7 @@ public class DBService extends Service {
 				fis.close(); 
 				return true;
 			} catch (IOException e) { 
+				displayNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "");
 				e.printStackTrace(); 
 			}
 			return false;

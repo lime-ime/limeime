@@ -154,7 +154,7 @@ public class SearchService extends Service {
 			List<Mapping> result = new LinkedList();
 			// Modified by Jeremy '10, 3, 28.  yes-> .. The database is loading (yes) and finished (no).
 			//if(code != null && loadingstatus != null && loadingstatus.equalsIgnoreCase("no")){
-			if(code!=null && !mLIMEPref.getMappingLoading() ) {
+			if(code!=null) {
 				// clear mappingidx when user switching between softkeyboard and hard keyboard.
 				if(softkeypressed != softkeyboard){
 					softkeypressed = softkeyboard;
@@ -172,19 +172,21 @@ public class SearchService extends Service {
 				}
 				
 				// Clean preresultlist if code different from precode
-				if((precode == null && preresultlist!= null) || ( precode != null && code != null && !code.startsWith(precode) && !precode.startsWith(code) && preresultlist != null)){
+				if( preresultlist != null && precode != null && code != null && !code.startsWith(precode) && !precode.startsWith(code)){
 					preresultlist.clear();
 				}
 				
 				precode = code;
 				
 			    List cacheTemp = cache.get(db.getTablename()+code);
+			    
 				if(cacheTemp != null){
 					result.addAll(cacheTemp);
+					preresultlist = cacheTemp;
 				}else{
 					
 					// If code > 3 and previous code did not have any matched then system would consider it as english
-					if(code.length() > 3 && 
+					if(code.length() > 4 && 
 							cache.get(db.getTablename()+code.subSequence(0, code.length()-1)) == null &&
 							cache.get(db.getTablename()+code.subSequence(0, code.length()-2)) == null &&
 							cache.get(db.getTablename()+code.subSequence(0, code.length()-3)) == null
@@ -192,17 +194,17 @@ public class SearchService extends Service {
 						//Log.i("ART","N-RUN->"+code);
 					}else{
 						List templist = db.getMapping(code, softkeyboard);
-						Log.i("ART","templist:"+templist.size());
+						//Log.i("ART","templist:"+templist.size());
 						if(templist.size() > 0){
 							result.addAll(templist);
 							preresultlist = templist;
 							cache.put(db.getTablename()+code, templist);
-							Log.i("ART","YES:" + preresultlist);
+							//Log.i("ART","YES:" + preresultlist);
 						}else{
 							if(code.length() < 5){
 								if(preresultlist != null){
 									result.addAll(preresultlist);
-									Log.i("ART","NO:" + preresultlist);
+									//Log.i("ART","NO:" + preresultlist);
 								}
 							}
 						}

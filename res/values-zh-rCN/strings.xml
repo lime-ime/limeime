@@ -280,6 +280,7 @@
     <string name="l3_message_database_reset_confirm">您是否要移除资料库?</string>
     <string name="l3_message_table_reset_confirm">您是否要清除所有记录?</string>
     <string name="l3_initial_download_database">下载资料库</string>
+    <string name="l3_initial_download_failed">资料转换错误, 请重置资料库再重新下载!</string>
     <string name="l3_initial_backup_database">备份资料库</string>
     <string name="l3_initial_backup_start">开始备份资料库</string>
     <string name="l3_initial_backup_end">数据库备份完成</string>
