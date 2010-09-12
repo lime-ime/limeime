@@ -151,6 +151,7 @@ public class DBService extends Service {
 		@Override
 		public void downloadPreloadedDatabase() throws RemoteException {
 			if (db == null) {loadLimeDB();}
+			resetDownloadDatabase();
 			Thread threadTask = new Thread() {
 				public void run() {
 					displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start)+ "");
