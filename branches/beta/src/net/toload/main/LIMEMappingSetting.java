@@ -173,6 +173,8 @@ public class LIMEMappingSetting extends Activity {
 		    						resetLabelInfo();
 		    						updateLabelInfo();
 		    						DBSrv.resetMapping(imtype);
+		    						mLIMEPref.setParameter("im_loading", false);
+		    						mLIMEPref.setParameter("im_loading_table", "");
 		    					} catch (RemoteException e) {
 		    						e.printStackTrace();
 		    					}

@@ -172,16 +172,15 @@ public class SearchService extends Service {
 				}
 				
 				// Clean preresultlist if code different from precode
-				if((precode == null || !code.startsWith(precode)) && preresultlist != null){
+				if((precode == null && preresultlist!= null) || ( precode != null && code != null && !code.startsWith(precode) && !precode.startsWith(code) && preresultlist != null)){
 					preresultlist.clear();
 				}
 				
 				precode = code;
 				
 			    List cacheTemp = cache.get(db.getTablename()+code);
-				if(cacheTemp != null && cacheTemp.size() > 0){
+				if(cacheTemp != null){
 					result.addAll(cacheTemp);
-					//Log.i("ART","CHECK TEMP SIZE->"+cacheTemp.size());
 				}else{
 					
 					// If code > 3 and previous code did not have any matched then system would consider it as english
@@ -193,18 +192,17 @@ public class SearchService extends Service {
 						//Log.i("ART","N-RUN->"+code);
 					}else{
 						List templist = db.getMapping(code, softkeyboard);
-						//Log.i("ART","Y-RUN->"+code + " " +templist.size());
+						Log.i("ART","templist:"+templist.size());
 						if(templist.size() > 0){
 							result.addAll(templist);
-							if(code.length() >= 1){
-								preresultlist = templist;
-							}
+							preresultlist = templist;
 							cache.put(db.getTablename()+code, templist);
+							Log.i("ART","YES:" + preresultlist);
 						}else{
-							if(code.length() < 4){
+							if(code.length() < 5){
 								if(preresultlist != null){
 									result.addAll(preresultlist);
-									cache.put(db.getTablename()+code, preresultlist);
+									Log.i("ART","NO:" + preresultlist);
 								}
 							}
 						}
@@ -258,12 +256,7 @@ public class SearchService extends Service {
 				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 				boolean item = sp.getBoolean(LIME.CANDIDATE_SUGGESTION, false);
 				if(item){
-					Thread updateUserDictThread = new Thread() {
-						public void run() {
-							db.addDictionary(diclist);
-						}
-					};
-					updateUserDictThread.start();
+					db.addDictionary(diclist);
 				}
 			}
 			diclist.clear();
@@ -292,12 +285,7 @@ public class SearchService extends Service {
 			updateMappingTemp.setDictionary(isDictionary);
 		      
 			if(item){
-				Thread updateMappingThread = new Thread() {
-					public void run() {
-					      db.addScore(updateMappingTemp);
-					}
-				};
-				updateMappingThread.start();
+			      db.addScore(updateMappingTemp);
 			}		
 			
 		}

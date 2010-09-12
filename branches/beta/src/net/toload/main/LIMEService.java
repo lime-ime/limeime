@@ -79,6 +79,7 @@ public class LIMEService extends InputMethodService implements
 
 	private StringBuilder mComposing = new StringBuilder();
 
+	private boolean isModeURL = false;
 	private boolean mPredictionOn;
 	private boolean mCompletionOn;
 	private boolean mCapsLock;
@@ -383,6 +384,7 @@ public class LIMEService extends InputMethodService implements
 		mCapsLock = false;
 		mHasShift = false;
 		mEnglishOnly = false;
+		isModeURL = false;
 
 		// Log.i("ART","onIM3");
 		onIM = true;
@@ -432,8 +434,8 @@ public class LIMEService extends InputMethodService implements
 
 				// Log.i("ART","onIM7");
 				onIM = false;
-				mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_URL,
-						attribute.imeOptions);
+				isModeURL = true;
+				mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_URL, attribute.imeOptions);
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
 				// mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM,
 				// attribute.imeOptions);
@@ -1159,7 +1161,7 @@ public class LIMEService extends InputMethodService implements
 
 	public void onKey(int primaryCode, int[] keyCodes) {
 		//Log.i("ART", "Entering Onkey(); primaryCode:" + primaryCode
-			//	+ " mEnglishFlagShift:" + mEnglishFlagShift);
+		//		+ " mEnglishFlagShift:" + mEnglishFlagShift);
 
 		if (DEBUG) {
 			Log.i("OnKey", "Entering Onkey(); primaryCode:" + primaryCode
@@ -1202,7 +1204,11 @@ public class LIMEService extends InputMethodService implements
 		} else if (primaryCode == -9 && mInputView != null) {
 			switchKeyboard(primaryCode);
 		} else if (primaryCode == KEYCODE_ENTER) {
-			getCurrentInputConnection().sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, 66));
+			if(isModeURL){
+				getCurrentInputConnection().sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, 66));
+			}else{
+				handleCharacter(primaryCode, keyCodes);
+			}
 		} else {
 			// if (isWordSeparator(primaryCode)) {
 			// if (mComposing.length() > 0) {
