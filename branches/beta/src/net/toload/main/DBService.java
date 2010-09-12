@@ -159,6 +159,7 @@ public class DBService extends Service {
 						Thread threadTask = new Thread() {
 							public void run() {
 								downloadedFile.delete();
+								mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
 							}
 						};
 						threadTask.start();
