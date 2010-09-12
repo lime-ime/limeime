@@ -56,6 +56,9 @@ public class SearchService extends Service {
 	private NotificationManager notificationMgr;
 	
 	private LIMEPreferenceManager mLIMEPref;
+
+	// Temp Mapping Object For updateMapping method.
+	Mapping updateMappingTemp = null;
 	
 	private static SearchServiceImpl obj = null;
 
@@ -189,7 +192,7 @@ public class SearchService extends Service {
 					){
 						//Log.i("ART","N-RUN->"+code);
 					}else{
-						List templist = db.getMapping(code);
+						List templist = db.getMapping(code, softkeyboard);
 						//Log.i("ART","Y-RUN->"+code + " " +templist.size());
 						if(templist.size() > 0){
 							result.addAll(templist);
@@ -207,9 +210,7 @@ public class SearchService extends Service {
 						}
 					}
 				}
-				
 			}
-			
 			return result;
 		}
 
@@ -253,11 +254,16 @@ public class SearchService extends Service {
 
 		public void updateUserDict() throws RemoteException {
 			if(db == null){db = new LimeDB(ctx);}
-			if(diclist.size() > 1){
+			if(diclist != null && diclist.size() > 1){
 				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 				boolean item = sp.getBoolean(LIME.CANDIDATE_SUGGESTION, false);
 				if(item){
-					db.addDictionary(diclist);
+					Thread updateUserDictThread = new Thread() {
+						public void run() {
+							db.addDictionary(diclist);
+						}
+					};
+					updateUserDictThread.start();
 				}
 			}
 			diclist.clear();
@@ -272,23 +278,27 @@ public class SearchService extends Service {
 		public void updateMapping(String id, String code, String word,
 				String pword, int score, boolean isDictionary)
 				throws RemoteException {
-				
-				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-				boolean item = sp.getBoolean(LIME.LEARNING_SWITCH, false);
-					
-				if(item){
-						
-						Mapping temp = new Mapping();
-								      temp.setId(id);
-								      temp.setCode(code);
-								      temp.setWord(word);
-								      temp.setPword(pword);
-								      temp.setScore(score);
-								      temp.setDictionary(isDictionary);
-	
-					if(db == null){db = new LimeDB(ctx);}
-					db.addScore(temp);
-				}
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+			boolean item = sp.getBoolean(LIME.LEARNING_SWITCH, false);
+
+			if(db == null){db = new LimeDB(ctx);}
+			
+			updateMappingTemp = new Mapping();
+			updateMappingTemp.setId(id);
+			updateMappingTemp.setCode(code);
+			updateMappingTemp.setWord(word);
+			updateMappingTemp.setPword(pword);
+			updateMappingTemp.setScore(score);
+			updateMappingTemp.setDictionary(isDictionary);
+		      
+			if(item){
+				Thread updateMappingThread = new Thread() {
+					public void run() {
+					      db.addScore(updateMappingTemp);
+					}
+				};
+				updateMappingThread.start();
+			}		
 			
 		}
 	}
