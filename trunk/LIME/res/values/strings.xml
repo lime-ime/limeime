@@ -28,6 +28,7 @@
     <string name="lime_setting_notification_loading">Start Loading Mapping Table</string>
     <string name="lime_setting_notification_failed">Mapping Import Failed !!</string>
     <string name="lime_setting_notification_finish">Mapping Import Finished</string>
+    <string name="lime_setting_notification_related">Start Building Related Words</string>
     <string name="lime_setting_notification_loading_start">LIME</string>
     <string name="lime_setting_notification_loading_end">Loaded</string>
     <string name="lime_setting_notification_loading_build">Build</string>

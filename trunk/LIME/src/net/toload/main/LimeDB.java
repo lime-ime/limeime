@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.Map.Entry;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -818,6 +819,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					BufferedReader buf = new BufferedReader(fr);
 					boolean firstline = true;
 					boolean cinFormatStart = false;
+					String precode = "";
 					
 					while ((line = buf.readLine()) != null) {
 
@@ -919,28 +921,27 @@ public class LimeDB extends SQLiteOpenHelper {
 							} else {
 								code = code.toLowerCase();
 							}
-
-							// Check and build Related Words List
+							
 							if (code.length() > 1) {
 								for (int k = 1; k < code.length(); k++) {
-									String rootkey = code.substring(0, code
-											.length()
+									String rootkey = code.substring(0, code.length()
 											- k);
 									if (hm.get(rootkey) != null) {
 										String tempvalue = hm.get(rootkey);
 										if (hm.get(rootkey) != null
-												&& hm.get(rootkey)
-														.indexOf(word) == -1) {
-											hm.put(rootkey, tempvalue + "|"
-													+ word);
+												&& hm.get(rootkey).indexOf(word) == -1) {
+											if(hm.get(rootkey).split("\\|").length < 50){
+												hm.put(rootkey, tempvalue + "|" + word);
+											}
 										}
 									} else {
 										hm.put(rootkey, word);
 									}
 								}
 							}
-
-							resultlist.add(getInsertItem(code, word));
+							
+							count++;
+							db.insert(table, null, getInsertItem(code, word));
 
 						} catch (StringIndexOutOfBoundsException e) {}
 					}
@@ -948,20 +949,31 @@ public class LimeDB extends SQLiteOpenHelper {
 					buf.close();
 					fr.close();
 
-					for (ContentValues unit : resultlist) {
-						if (unit != null) {
-							String tempcode = (String) unit.get(FIELD_CODE);
-							if (hm.get(tempcode) != null) {
-								unit.put(FIELD_RELATED, hm.get(tempcode));
-							}
-							db.insert(table, null, unit);
-
-							count++;
-							if (count % 500 == 0) {}
-						}
-					}
 
 				} catch (Exception e) {
+					setImInfo(table, "amount", "0");
+					setImInfo(table, "source", "Failed!!!");
+					e.printStackTrace();
+				} finally {
+					db.setTransactionSuccessful();
+					db.endTransaction();
+				}
+
+				db = getWritableDatabase();
+				db.beginTransaction();
+				try{
+					for(Entry<String, String> entry: hm.entrySet())
+			        {
+						try{
+							ContentValues cv = new ContentValues();
+										  cv.put(FIELD_RELATED, entry.getValue());
+							String code = entry.getKey().replaceAll("'", "\\'");
+							db.update(table, cv, FIELD_CODE +"='"+code+"'", null);
+						}catch(Exception e2){
+							e2.printStackTrace();
+						}
+			        }
+				}catch (Exception e){
 					setImInfo(table, "amount", "0");
 					setImInfo(table, "source", "Failed!!!");
 					e.printStackTrace();
@@ -975,6 +987,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					setImInfo(table, "amount", String.valueOf(count));
 					setImInfo(table, "import", new Date().toLocaleString());
 				}
+				
 				finish = true;
 			}
 
