@@ -28,6 +28,7 @@
     <string name="lime_setting_notification_loading">準備資料匯入</string>
     <string name="lime_setting_notification_failed">記錄匯入失敗</string>
     <string name="lime_setting_notification_finish">記錄匯入成功</string>
+    <string name="lime_setting_notification_related">開始建立關聯字</string>
     <string name="lime_setting_notification_loading_start">LIME</string>
     <string name="lime_setting_notification_loading_end">已載入</string>
     <string name="lime_setting_notification_loading_build">建立</string>
