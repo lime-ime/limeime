@@ -2106,8 +2106,15 @@ public class LIMEService extends InputMethodService implements
 					updateCandidates();
 					misMatched = mComposing.toString();
 				} else {
-					getCurrentInputConnection().commitText(
-							mComposing + String.valueOf((char) primaryCode), 1);
+					if(!mEnglishOnly || !onIM){
+						if(!mCandidateView.takeSelectedSuggestion()){
+							getCurrentInputConnection().commitText(
+									mComposing + String.valueOf((char) primaryCode), 1);
+						}
+					}else{
+						getCurrentInputConnection().commitText(
+								mComposing + String.valueOf((char) primaryCode), 1);
+					}
 				}
 			} else {
 				if (isInputViewShown()) {
@@ -2187,7 +2194,7 @@ public class LIMEService extends InputMethodService implements
 		if (DEBUG)
 			Log.i("LIMEService:", "pickSuggestionManually()");
 
-		if (templist != null) {
+		if (templist != null && templist.size() > 0) {
 			firstMatched = templist.get(index);
 		}
 
