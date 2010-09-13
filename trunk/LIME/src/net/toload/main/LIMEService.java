@@ -1476,7 +1476,7 @@ public class LIMEService extends InputMethodService implements
 
 				list.addAll(SearchSrv.query(keyString, hasKeyPress));
 
-				Log.i("ART", "->" + list.size());
+				//Log.i("ART", "->" + list.size());
 				if (list.size() > 0) {
 					setSuggestions(list, true, true);
 				} else {

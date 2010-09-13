@@ -172,18 +172,12 @@ public class SearchService extends Service {
 					code = code.toLowerCase();
 				}
 				
-				// Clean preresultlist if code different from precode
-				if( preresultlist != null && precode != null && code != null && !code.startsWith(precode) && !precode.startsWith(code)){
-					preresultlist.clear();
-				}
-				
 				precode = code;
 				
 			    List cacheTemp = cache.get(db.getTablename()+code);
 			    
 				if(cacheTemp != null){
 					result.addAll(cacheTemp);
-					preresultlist = cacheTemp;
 				}else{
 					
 					// If code > 3 and previous code did not have any matched then system would consider it as english
@@ -198,14 +192,14 @@ public class SearchService extends Service {
 						//Log.i("ART","templist:"+templist.size());
 						if(templist.size() > 0){
 							result.addAll(templist);
-							preresultlist = templist;
 							cache.put(db.getTablename()+code, templist);
-							//Log.i("ART","YES:" + preresultlist);
 						}else{
 							if(code.length() < 5){
-								if(preresultlist != null){
-									result.addAll(preresultlist);
-									//Log.i("ART","NO:" + preresultlist);
+								for(int j = 0 ; j < (code.length()-1) ; j++){
+									cacheTemp = cache.get(db.getTablename()+code.substring(0, code.length() - j));
+									if(cacheTemp != null){
+										result.addAll(cacheTemp);
+									}
 								}
 							}
 						}
