@@ -50,6 +50,7 @@ public class SearchService extends Service {
 	private LimeDB db = null;
 	private LimeHanConverter hanConverter = null;
 	private static LinkedList diclist = null;
+	private static List scorelist = null;
 	
 	private static String tablename = "";
 
@@ -257,11 +258,20 @@ public class SearchService extends Service {
 			if(diclist != null && diclist.size() > 1){
 				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 				boolean item = sp.getBoolean(LIME.CANDIDATE_SUGGESTION, false);
-				if(item){
+				if(item && diclist != null){
 					db.addDictionary(diclist);
+					diclist.clear();
 				}
+
+				boolean item2 = sp.getBoolean(LIME.LEARNING_SWITCH, false);
+
+				if(item2 && scorelist != null){
+					for(int i=0 ; i < scorelist.size(); i++){
+						db.addScore((Mapping)scorelist.get(i));
+					}
+					scorelist.clear();
+				}	
 			}
-			diclist.clear();
 		}
 		
 		public String keyToChar(String code){
@@ -276,6 +286,7 @@ public class SearchService extends Service {
 			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 			boolean item = sp.getBoolean(LIME.LEARNING_SWITCH, false);
 
+			if(scorelist == null){scorelist = new ArrayList();}
 			if(db == null){db = new LimeDB(ctx);}
 			
 			updateMappingTemp = new Mapping();
@@ -287,7 +298,7 @@ public class SearchService extends Service {
 			updateMappingTemp.setDictionary(isDictionary);
 		      
 			if(item){
-			      db.addScore(updateMappingTemp);
+				scorelist.add(updateMappingTemp);
 			}		
 			
 		}
