@@ -376,7 +376,8 @@ public class LIMEService extends InputMethodService implements
 		TextEntryState.newSession(this);
 		loadSettings();
 		mImeOptions = attribute.imeOptions;
-		// initialKeyboard();
+		
+		initialKeyboard();
 		boolean disableAutoCorrect = false;
 		mPredictionOn = false;
 		mCompletionOn = false;
@@ -785,11 +786,11 @@ public class LIMEService extends InputMethodService implements
 
 		}
 
-		Log.i("ART", "Super onKeyDown:"+keyCode + " / " + event.getAction());
+		/*Log.i("ART", "Super onKeyDown:"+keyCode + " / " + event.getAction());
 		Log.i("ART", "Super onKeyDown:"+keyCode + " / " + event);
 		Log.i("ART", "Super onKeyDown UP:"+keyCode + " / " + KeyEvent.ACTION_UP);
 		Log.i("ART", "Super onKeyDown DOWN:"+keyCode + " / " + KeyEvent.ACTION_DOWN);
-		Log.i("ART", "Super onKeyDown MULTIPLE:"+keyCode + " / " + KeyEvent.ACTION_MULTIPLE);
+		Log.i("ART", "Super onKeyDown MULTIPLE:"+keyCode + " / " + KeyEvent.ACTION_MULTIPLE);*/
 		return super.onKeyDown(keyCode, event);
 	}
 

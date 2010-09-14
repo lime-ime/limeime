@@ -539,7 +539,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						
 			// Process the escape characters of query
 			if(code != null){
-				code = code.replaceAll("'", "\'");
+				code = code.replaceAll("'", "''");
 			}
 			
 			try {
@@ -602,13 +602,13 @@ public class LimeDB extends SQLiteOpenHelper {
 					code3r = expendCode3r(code);
 				}
 				if(code3r != null){
-					code3r = code3r.replaceAll("'", "\'");
+					code3r = code3r.replaceAll("'", "''");
 				}
 			}
 			
 			// Process the escape characters of query
 			if(code != null){
-				code = code.replaceAll("'", "\'");
+				code = code.replaceAll("'", "''");
 			}
 			
 			//Log.i("ART","==>remap3row:"+remap3row);
@@ -1024,10 +1024,10 @@ public class LimeDB extends SQLiteOpenHelper {
 						try{
 							ContentValues cv = new ContentValues();
 										  cv.put(FIELD_RELATED, entry.getValue());
-							String code = entry.getKey().replaceAll("'", "\\'");
+							String code = entry.getKey().replaceAll("'", "''");
 							db.update(table, cv, FIELD_CODE +"='"+code+"'", null);
 						}catch(Exception e2){
-							e2.printStackTrace();
+							// Just ignore all problem statement
 						}
 			        }
 				}catch (Exception e){
