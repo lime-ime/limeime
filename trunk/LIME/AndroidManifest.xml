@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="net.toload.main" 
 	android:versionName="3.0.4" 
-	android:versionCode="112" 
+	android:versionCode="114" 
 	android:installLocation="auto">
 	
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
