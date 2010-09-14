@@ -598,9 +598,6 @@ public class LimeDB extends SQLiteOpenHelper {
 					iscode3r = true;
 					code3r = expendCode3r(code);
 				}
-				if(code3r != null){
-					code3r = code3r.replaceAll("'", "''");
-				}
 			}
 			
 			// Process the escape characters of query
@@ -618,21 +615,18 @@ public class LimeDB extends SQLiteOpenHelper {
 					if(sort){
 						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' " + code3r
 								, null, null, null, FIELD_SCORE +" DESC", null);
-						//Log.i("ART","run code3r a:"+tablename + " ->count:" + cursor.getCount());
+						//Log.i("ART","SORT -> run code3r a:"+tablename + " ->count:" + cursor.getCount() + " " + FIELD_CODE + " = '" + code + "' " + code3r);
 					}else{
 						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' " + code3r
 								, null, null, null, null, null);
-						//Log.i("ART","run code3r b:"+tablename + " ->count:" + cursor.getCount());
+						//Log.i("ART","NO SORT -> run code3r a:"+tablename + " ->count:" + cursor.getCount() + " " + FIELD_CODE + " = '" + code + "' " + code3r);
 					}
 				}else{
 					// When Code3r mode is disable
 					if(sort){
-						cursor = db.query(tablename, null, FIELD_CODE + " = '"
-								+ code + "'", null, null, null, FIELD_SCORE +" DESC",
-								null);
+						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "'", null, null, null, FIELD_SCORE +" DESC", null);
 					}else{
-						cursor = db.query(tablename, null, FIELD_CODE + " = '"
-								+ code + "'", null, null, null, null, null);
+						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "'", null, null, null, null, null);
 					}
 				}
 
