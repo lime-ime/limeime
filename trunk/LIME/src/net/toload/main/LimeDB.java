@@ -664,6 +664,10 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 				munit.setScore(cursor.getInt(scoreColumn));
 				munit.setDictionary(false);
+				
+				if(munit.getWord() == null || munit.getWord().trim().equals("")){
+					continue;
+				}
 				result.add(munit);
 			} while (cursor.moveToNext());
 
