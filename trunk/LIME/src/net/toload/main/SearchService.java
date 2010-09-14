@@ -171,6 +171,9 @@ public class SearchService extends Service {
 				    result.add(temp);
 				    // Do this in updatecandidates already
 					code = code.toLowerCase();
+					if(code.length() == 1){
+						preresultlist = new LinkedList();
+					}
 				}
 				
 				
