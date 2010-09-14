@@ -353,7 +353,7 @@ public class LIMEService extends InputMethodService implements
 		// onIM = false;
 
 		// Add Custom related words
-		if (userdiclist.size() > 1) {
+		if (userdiclist.size() > 0) {
 			// Log.i("ART","Process userdict update ");
 			updateUserDict();
 		}
@@ -729,7 +729,7 @@ public class LIMEService extends InputMethodService implements
 			// Process enter for candidate view selection in OnKeyUp() to block
 			// the real enter afterware.
 			// return false;
-			Log.i("ART", "physical keyboard:"+ keyCode);
+			//Log.i("ART", "physical keyboard:"+ keyCode);
 			if (mCandidateView != null && mCandidateView.isShown()) {
 				// To block a real enter after suggestion selection. We have to
 				// return true in OnKeyUp();
@@ -1171,7 +1171,7 @@ public class LIMEService extends InputMethodService implements
 		Log.i("ART", "Entering Onkey(); primaryCode:" + primaryCode
 				+ " mEnglishFlagShift:" + mEnglishFlagShift);*/
 
-		Log.i("ART", "software:"+primaryCode);
+		//Log.i("ART", "software:"+primaryCode);
 		if (DEBUG) {
 			Log.i("OnKey", "Entering Onkey(); primaryCode:" + primaryCode
 					+ " mEnglishFlagShift:" + mEnglishFlagShift);
@@ -2116,8 +2116,8 @@ public class LIMEService extends InputMethodService implements
 						misMatched = mComposing.toString();
 					}else{
 						if(!mCandidateView.takeSelectedSuggestion()){
-							getCurrentInputConnection().setComposingText("\n", 0);
-							//getCurrentInputConnection().commitText(mComposing + String.valueOf((char) primaryCode), 1);
+							//getCurrentInputConnection().setComposingText("\n", 0);
+							getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
 						}
 					}
 					
@@ -2388,28 +2388,6 @@ public class LIMEService extends InputMethodService implements
 						FREQUENCY_FOR_AUTO_ADD);
 			}
 		}
-	}
-
-	/* (non-Javadoc)
-	 * @see android.inputmethodservice.InputMethodService#onUnbindInput()
-	 */
-	@Override
-	public void onUnbindInput() {
-		if(templist != null){templist.clear();}
-		if(userdiclist != null){userdiclist.clear();}
-		this.setSuggestions(null, false, false);
-		super.onUnbindInput();
-	}
-
-	/* (non-Javadoc)
-	 * @see android.inputmethodservice.InputMethodService#onWindowHidden()
-	 */
-	@Override
-	public void onWindowHidden() {
-		if(templist != null){templist.clear();}
-		if(userdiclist != null){userdiclist.clear();}
-		this.setSuggestions(null, false, false);
-		super.onWindowHidden();
 	}
 	
 }
