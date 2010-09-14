@@ -728,6 +728,7 @@ public class LIMEService extends InputMethodService implements
 			// Process enter for candidate view selection in OnKeyUp() to block
 			// the real enter afterware.
 			// return false;
+			Log.i("ART", "physical keyboard:"+ keyCode);
 			if (mCandidateView != null && mCandidateView.isShown()) {
 				// To block a real enter after suggestion selection. We have to
 				// return true in OnKeyUp();
@@ -784,6 +785,11 @@ public class LIMEService extends InputMethodService implements
 
 		}
 
+		Log.i("ART", "Super onKeyDown:"+keyCode + " / " + event.getAction());
+		Log.i("ART", "Super onKeyDown:"+keyCode + " / " + event);
+		Log.i("ART", "Super onKeyDown UP:"+keyCode + " / " + KeyEvent.ACTION_UP);
+		Log.i("ART", "Super onKeyDown DOWN:"+keyCode + " / " + KeyEvent.ACTION_DOWN);
+		Log.i("ART", "Super onKeyDown MULTIPLE:"+keyCode + " / " + KeyEvent.ACTION_MULTIPLE);
 		return super.onKeyDown(keyCode, event);
 	}
 
@@ -840,6 +846,7 @@ public class LIMEService extends InputMethodService implements
 			// if (mCandidateView != null && mCandidateView.isShown()) {
 			// return mCandidateView.takeSelectedSuggestion();
 			// }
+			//Log.i("ART", "physical keyboard onkeyup:"+ keyCode);
 			if (waitingEnterUp) {
 				return true;
 			}
@@ -1159,10 +1166,11 @@ public class LIMEService extends InputMethodService implements
 		}
 	}
 
-	public void onKey(int primaryCode, int[] keyCodes) {
-		//Log.i("ART", "Entering Onkey(); primaryCode:" + primaryCode
-		//		+ " mEnglishFlagShift:" + mEnglishFlagShift);
+	public void onKey(int primaryCode, int[] keyCodes) {/*
+		Log.i("ART", "Entering Onkey(); primaryCode:" + primaryCode
+				+ " mEnglishFlagShift:" + mEnglishFlagShift);*/
 
+		Log.i("ART", "software:"+primaryCode);
 		if (DEBUG) {
 			Log.i("OnKey", "Entering Onkey(); primaryCode:" + primaryCode
 					+ " mEnglishFlagShift:" + mEnglishFlagShift);
@@ -2100,11 +2108,17 @@ public class LIMEService extends InputMethodService implements
 						&& (isValidSymbol(primaryCode)
 								|| isValidLetter(primaryCode) || isValidDigit(primaryCode))
 						&& onIM) {
-					mComposing.append((char) primaryCode);
-					getCurrentInputConnection().setComposingText(mComposing, 1);
-					// updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
-					misMatched = mComposing.toString();
+					if(primaryCode != 10){
+						mComposing.append((char) primaryCode);
+						getCurrentInputConnection().setComposingText(mComposing, 1);
+						updateCandidates();
+						misMatched = mComposing.toString();
+					}else{
+						if(!mCandidateView.takeSelectedSuggestion()){
+							//getCurrentInputConnection().commitText(mComposing + String.valueOf((char) primaryCode), 1);
+						}
+					}
+					
 				} else {
 					if(!mEnglishOnly || !onIM){
 						if(!mCandidateView.takeSelectedSuggestion()){
@@ -2373,4 +2387,27 @@ public class LIMEService extends InputMethodService implements
 			}
 		}
 	}
+
+	/* (non-Javadoc)
+	 * @see android.inputmethodservice.InputMethodService#onUnbindInput()
+	 */
+	@Override
+	public void onUnbindInput() {
+		if(templist != null){templist.clear();}
+		if(userdiclist != null){userdiclist.clear();}
+		this.setSuggestions(null, false, false);
+		super.onUnbindInput();
+	}
+
+	/* (non-Javadoc)
+	 * @see android.inputmethodservice.InputMethodService#onWindowHidden()
+	 */
+	@Override
+	public void onWindowHidden() {
+		if(templist != null){templist.clear();}
+		if(userdiclist != null){userdiclist.clear();}
+		this.setSuggestions(null, false, false);
+		super.onWindowHidden();
+	}
+	
 }

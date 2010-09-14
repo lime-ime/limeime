@@ -181,7 +181,7 @@ public class SearchService extends Service {
 				}else{
 					
 					// If code > 3 and previous code did not have any matched then system would consider it as english
-					if(code.length() > 4 && 
+					if(code.length() > 6 && 
 							cache.get(db.getTablename()+code.subSequence(0, code.length()-1)) == null &&
 							cache.get(db.getTablename()+code.subSequence(0, code.length()-2)) == null &&
 							cache.get(db.getTablename()+code.subSequence(0, code.length()-3)) == null
@@ -194,7 +194,7 @@ public class SearchService extends Service {
 							result.addAll(templist);
 							cache.put(db.getTablename()+code, templist);
 						}else{
-							if(code.length() < 5){
+							if(code.length() < 7){
 								for(int j = 0 ; j < (code.length()-1) ; j++){
 									cacheTemp = cache.get(db.getTablename()+code.substring(0, code.length() - j));
 									if(cacheTemp != null){
@@ -306,6 +306,7 @@ public class SearchService extends Service {
 		return obj;
 	}
 
+	
 	
 	/*
 	 * (non-Javadoc)
