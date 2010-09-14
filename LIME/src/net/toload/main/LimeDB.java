@@ -517,6 +517,59 @@ public class LimeDB extends SQLiteOpenHelper {
 	/*
 	 * Retrieve matched records
 	 */
+	public List<Mapping> getMappingSimiliar(String code) {
+
+		//Log.i("ART", "run get (Mapping):"+ code);
+		//Log.i("ART","Run MAPPING : " + code);
+		// Add by Jeremy '10, 3, 27. Extension on multi table query.
+
+		List<Mapping> result = new LinkedList<Mapping>();
+		HashSet<String> wordlist = new HashSet<String>();
+
+		if (code != null && !code.trim().equals("")) {
+
+			code = code.toLowerCase();
+			Cursor cursor = null;
+			String sql = null;
+
+			SQLiteDatabase db = this.getReadableDatabase();
+
+			int ssize = mLIMEPref.getSimilarCodeCandidates();
+			boolean sort = mLIMEPref.getSortSuggestions();// sp.getBoolean(LEARNING_SWITCH, // false);
+						
+			// Process the escape characters of query
+			if(code != null){
+				code = code.replaceAll("'", "\'");
+			}
+			
+			try {
+
+				
+					// When Code3r mode is disable
+					if(sort){
+						cursor = db.query(tablename, null, FIELD_CODE + " LIKE '"
+								+ code + "%' ", null, null, null, FIELD_SCORE +" DESC LIMIT " + ssize, null);
+					}else{
+						cursor = db.query(tablename, null, FIELD_CODE + " LIKE '"
+								+ code + "%' LIMIT " + ssize, null, null, null, null, null);
+					}
+
+				result = buildQueryResult(cursor);
+
+				if (cursor != null) {
+					cursor.deactivate();
+					cursor.close();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return result;
+	}
+	
+	/*
+	 * Retrieve matched records
+	 */
 	public List<Mapping> getMapping(String code, boolean softwareKeyboard) {
 
 		//Log.i("ART", "run get (Mapping):"+ code);
@@ -604,7 +657,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 		String result = "";
 		if(code.length() == 1){
-			result = FIELD_CODE + "= '"+code3rMap.get(code)+"'";
+			result = " OR " + FIELD_CODE + "= '"+code3rMap.get(code)+"'";
 		}else if(code.length() == 2){
 			result += " OR " + FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+"' OR ";
 			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+"' OR ";

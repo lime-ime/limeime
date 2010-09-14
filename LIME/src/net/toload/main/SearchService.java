@@ -188,19 +188,38 @@ public class SearchService extends Service {
 					){
 						//Log.i("ART","N-RUN->"+code);
 					}else{
+						
 						List templist = db.getMapping(code, softkeyboard);
 						//Log.i("ART","templist:"+templist.size());
 						if(templist.size() > 0){
 							result.addAll(templist);
 							cache.put(db.getTablename()+code, templist);
 						}else{
+							boolean similiarCheck = true;
 							if(code.length() < 7){
-								for(int j = 0 ; j < (code.length()-1) ; j++){
+								/*for(int j = 0 ; j < (code.length()-1) ; j++){
 									cacheTemp = cache.get(db.getTablename()+code.substring(0, code.length() - j));
 									if(cacheTemp != null){
 										result.addAll(cacheTemp);
+										similiarCheck = false;
+										break;										
 									}
 								}
+								
+								if(similiarCheck){
+									templist = db.getMappingSimiliar(code);
+									if(templist.size() > 0){
+										result.addAll(templist);
+										cache.put(db.getTablename()+code, templist);
+									}
+								}*/
+								
+								templist = db.getMappingSimiliar(code);
+								if(templist.size() > 0){
+									result.addAll(templist);
+									cache.put(db.getTablename()+code, templist);
+								}
+								
 							}
 						}
 					}
