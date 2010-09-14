@@ -152,6 +152,7 @@ public class SearchService extends Service {
 				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 			}
 			
+			if(preresultlist == null){preresultlist = new LinkedList();}
 			List<Mapping> result = new LinkedList();
 			// Modified by Jeremy '10, 3, 28.  yes-> .. The database is loading (yes) and finished (no).
 			//if(code != null && loadingstatus != null && loadingstatus.equalsIgnoreCase("no")){
@@ -172,12 +173,12 @@ public class SearchService extends Service {
 					code = code.toLowerCase();
 				}
 				
-				precode = code;
 				
 			    List cacheTemp = cache.get(db.getTablename()+code);
 			    
 				if(cacheTemp != null){
 					result.addAll(cacheTemp);
+					preresultlist = cacheTemp;
 				}else{
 					
 					// If code > 3 and previous code did not have any matched then system would consider it as english
@@ -188,38 +189,26 @@ public class SearchService extends Service {
 					){
 						//Log.i("ART","N-RUN->"+code);
 					}else{
-						
+
 						List templist = db.getMapping(code, softkeyboard);
 						//Log.i("ART","templist:"+templist.size());
 						if(templist.size() > 0){
 							result.addAll(templist);
+							preresultlist = templist;
 							cache.put(db.getTablename()+code, templist);
 						}else{
 							boolean similiarCheck = true;
 							if(code.length() < 7){
-								/*for(int j = 0 ; j < (code.length()-1) ; j++){
-									cacheTemp = cache.get(db.getTablename()+code.substring(0, code.length() - j));
-									if(cacheTemp != null){
-										result.addAll(cacheTemp);
-										similiarCheck = false;
-										break;										
-									}
-								}
-								
-								if(similiarCheck){
+								boolean remap3row = mLIMEPref.getThreerowRemapping();
+								if(!remap3row){
 									templist = db.getMappingSimiliar(code);
 									if(templist.size() > 0){
 										result.addAll(templist);
 										cache.put(db.getTablename()+code, templist);
 									}
-								}*/
-								
-								templist = db.getMappingSimiliar(code);
-								if(templist.size() > 0){
-									result.addAll(templist);
-									cache.put(db.getTablename()+code, templist);
+								}else{
+									result.addAll(preresultlist);
 								}
-								
 							}
 						}
 					}
@@ -254,6 +243,9 @@ public class SearchService extends Service {
 		public void addUserDict(String id, String code, String word,
 				String pword, int score, boolean isDictionary)
 				throws RemoteException {
+
+				Log.i("ART","addUserDict:"+diclist);
+			
 				if(diclist == null){diclist = new LinkedList();}
 				
 				Mapping temp = new Mapping();
@@ -267,11 +259,14 @@ public class SearchService extends Service {
 		}
 
 		public void updateUserDict() throws RemoteException {
+			//Log.i("ART","updateUserDict:"+diclist);
+			
 			if(db == null){db = new LimeDB(ctx);}
 			if(diclist != null && diclist.size() > 1){
 				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 				boolean item = sp.getBoolean(LIME.CANDIDATE_SUGGESTION, false);
 				if(item && diclist != null){
+					//Log.i("ART","updateUserDict:"+item);
 					db.addDictionary(diclist);
 					diclist.clear();
 				}
@@ -280,6 +275,7 @@ public class SearchService extends Service {
 
 				if(item2 && scorelist != null){
 					for(int i=0 ; i < scorelist.size(); i++){
+						//Log.i("ART","updateUserDict addScore:"+((Mapping)scorelist.get(i)).getCode() + " " + ((Mapping)scorelist.get(i)).getId());
 						db.addScore((Mapping)scorelist.get(i));
 					}
 					scorelist.clear();
@@ -296,6 +292,7 @@ public class SearchService extends Service {
 		public void updateMapping(String id, String code, String word,
 				String pword, int score, boolean isDictionary)
 				throws RemoteException {
+			//Log.i("ART","updateMapping:"+scorelist);
 			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 			boolean item = sp.getBoolean(LIME.LEARNING_SWITCH, false);
 
@@ -311,6 +308,7 @@ public class SearchService extends Service {
 			updateMappingTemp.setDictionary(isDictionary);
 		      
 			if(item){
+				//Log.i("ART","updateMapping:"+updateMappingTemp);
 				scorelist.add(updateMappingTemp);
 			}		
 			

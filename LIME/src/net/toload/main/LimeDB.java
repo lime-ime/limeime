@@ -315,6 +315,8 @@ public class LimeDB extends SQLiteOpenHelper {
 			return;
 		}
 		
+		Log.i("ART", "srclist.size():" + srclist.size());
+		
 		if (srclist != null && srclist.size() > 0) {
 
 			SQLiteDatabase db = this.getWritableDatabase();
@@ -332,7 +334,9 @@ public class LimeDB extends SQLiteOpenHelper {
 							&& unit2 != null
 							&& unit2.getWord() != null && !unit2.getWord().equals("")) {
 
+							Log.i("ART", "WORD + WORD2:" + unit.getWord() + " - " + unit2.getWord());
 							Mapping munit = this.isExists(unit.getWord(),unit2.getWord());
+							Log.i("ART", "munit:" + munit.getWord() + " - " + munit.getPword());
 							if (munit == null) {
 								try {
 									ContentValues cv = new ContentValues();
@@ -345,13 +349,11 @@ public class LimeDB extends SQLiteOpenHelper {
 									e.printStackTrace();
 								}
 							}else{//the item exist in preload related database. 
-								  // do addscore here. (Score > 0)
-									if(munit.getScore() > 0){
-										  ContentValues cv = new ContentValues();
-							  				cv.put(FIELD_SCORE, munit.getScore()+1);
-										    db.update("related", cv, FIELD_id + " = " + munit.getId(), null);
-										    //Log.i("ART","Add Score for Dictionary : " + munit.getId() + munit.getCode() + munit.getScore());
-									}
+									ContentValues cv = new ContentValues();
+							  					  cv.put(FIELD_SCORE, munit.getScore()+1);
+							  		db.update("related", cv, FIELD_id + " = " + munit.getId(), null);
+									//Log.i("ART","Add Score for Dictionary : " + munit.getId() + munit.getCode() + munit.getScore());
+									
 								}
 							}
 					}
@@ -378,6 +380,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			if (srcunit != null && srcunit.getId() != null &&
 					srcunit.getWord() != null  &&
 					!srcunit.getWord().trim().equals("") ) {
+				//Log.i("ART","LimeDB addScore:"+srcunit.getCode());
 
 				if(srcunit.isDictionary()){
 					ContentValues cv = new ContentValues();
@@ -519,10 +522,6 @@ public class LimeDB extends SQLiteOpenHelper {
 	 */
 	public List<Mapping> getMappingSimiliar(String code) {
 
-		//Log.i("ART", "run get (Mapping):"+ code);
-		//Log.i("ART","Run MAPPING : " + code);
-		// Add by Jeremy '10, 3, 27. Extension on multi table query.
-
 		List<Mapping> result = new LinkedList<Mapping>();
 		HashSet<String> wordlist = new HashSet<String>();
 
@@ -535,7 +534,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			SQLiteDatabase db = this.getReadableDatabase();
 
 			int ssize = mLIMEPref.getSimilarCodeCandidates();
-			boolean sort = mLIMEPref.getSortSuggestions();// sp.getBoolean(LEARNING_SWITCH, // false);
+			boolean sort = mLIMEPref.getSortSuggestions();
 						
 			// Process the escape characters of query
 			if(code != null){
@@ -543,16 +542,14 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 			
 			try {
-
-				
-					// When Code3r mode is disable
-					if(sort){
-						cursor = db.query(tablename, null, FIELD_CODE + " LIKE '"
-								+ code + "%' ", null, null, null, FIELD_SCORE +" DESC LIMIT " + ssize, null);
-					}else{
-						cursor = db.query(tablename, null, FIELD_CODE + " LIKE '"
-								+ code + "%' LIMIT " + ssize, null, null, null, null, null);
-					}
+				// When Code3r mode is disable
+				if(sort){
+					cursor = db.query(tablename, null, FIELD_CODE + " LIKE '"
+							+ code + "%' ", null, null, null, FIELD_SCORE +" DESC LIMIT " + ssize, null);
+				}else{
+					cursor = db.query(tablename, null, FIELD_CODE + " LIKE '"
+							+ code + "%' LIMIT " + ssize, null, null, null, null, null);
+				}
 
 				result = buildQueryResult(cursor);
 
@@ -587,8 +584,8 @@ public class LimeDB extends SQLiteOpenHelper {
 
 			SQLiteDatabase db = this.getReadableDatabase();
 
-			boolean sort = mLIMEPref.getSortSuggestions();// sp.getBoolean(LEARNING_SWITCH, // false);
-			boolean remap3row = mLIMEPref.getThreerowRemapping();// sp.getBoolean(THREE_ROW_REMAP,
+			boolean sort = mLIMEPref.getSortSuggestions();
+			boolean remap3row = mLIMEPref.getThreerowRemapping();
 						
 			boolean iscode3r = false;
 
