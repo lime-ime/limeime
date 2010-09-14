@@ -21,9 +21,12 @@
 package net.toload.main;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.view.Menu;
 
 /**
  * @author Art Hung
@@ -43,4 +46,20 @@ public class LIMEPreference extends PreferenceActivity
         //-----------------------
         addPreferencesFromResource(R.xml.preference);
     }
+    
+
+	@Override
+    public boolean onCreateOptionsMenu(Menu menu){
+    	int idGroup = 0;
+    	int orderMenuItem1 = Menu.NONE;
+    	
+    	try {
+			PackageInfo pinfo = this.getPackageManager().getPackageInfo(this.getPackageName(), 0);
+	    	menu.add(idGroup, Menu.FIRST, orderMenuItem1, "LIME v" + pinfo.versionName + " - " + pinfo.versionCode);
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
+    	return super.onCreateOptionsMenu(menu);
+    }
+	
 }
