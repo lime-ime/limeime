@@ -2116,6 +2116,7 @@ public class LIMEService extends InputMethodService implements
 						misMatched = mComposing.toString();
 					}else{
 						if(!mCandidateView.takeSelectedSuggestion()){
+							getCurrentInputConnection().setComposingText("\n", 0);
 							//getCurrentInputConnection().commitText(mComposing + String.valueOf((char) primaryCode), 1);
 						}
 					}

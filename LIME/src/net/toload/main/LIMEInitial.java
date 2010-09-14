@@ -47,6 +47,8 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.DialogInterface.OnCancelListener;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
@@ -313,6 +315,21 @@ public class LIMEInitial extends Activity {
 		public void onServiceDisconnected(ComponentName name) {}
 
 	};
+	
+
+	@Override
+    public boolean onCreateOptionsMenu(Menu menu){
+    	int idGroup = 0;
+    	int orderMenuItem1 = Menu.NONE;
+    	
+    	try {
+			PackageInfo pinfo = this.getPackageManager().getPackageInfo(this.getPackageName(), 0);
+	    	menu.add(idGroup, Menu.FIRST, orderMenuItem1, "LIME v" + pinfo.versionName + " - " + pinfo.versionCode);
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
+    	return super.onCreateOptionsMenu(menu);
+    }
 	
 
 }
