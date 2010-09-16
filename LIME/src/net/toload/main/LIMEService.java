@@ -872,6 +872,7 @@ public class LIMEService extends InputMethodService implements
 					&& translateKeyDown(keyCode, event)) {
 				return true;
 			} else {
+				translateKeyDown(keyCode, event);
 				super.onKeyDown(keyCode, mKeydownEvent);
 			}
 
@@ -1650,6 +1651,9 @@ public class LIMEService extends InputMethodService implements
 			checkToggleCapsLock();
 			mInputView.setShifted(mCapsLock || !mInputView.isShifted());
 			mHasShift = mCapsLock || !mInputView.isShifted();
+			if(mHasShift){
+				mKeyboardSwitcher.toggleShift();
+			}
 		} else {
 			if (mCapsLock) {
 				toggleCapsLock();
