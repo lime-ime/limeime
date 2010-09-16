@@ -80,6 +80,7 @@ public class LIMEService extends InputMethodService implements
 	private StringBuilder mComposing = new StringBuilder();
 
 	private boolean isModeURL = false;
+	private boolean isModePassword = false;
 	private boolean mPredictionOn;
 	private boolean mCompletionOn;
 	private boolean mCapsLock;
@@ -386,6 +387,7 @@ public class LIMEService extends InputMethodService implements
 		mHasShift = false;
 		mEnglishOnly = false;
 		isModeURL = false;
+		isModePassword = false;
 
 		// Log.i("ART","onIM3");
 		onIM = true;
@@ -414,6 +416,7 @@ public class LIMEService extends InputMethodService implements
 			if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD
 					|| variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
 				mPredictionOn = false;
+				isModePassword = true;
 			}
 			if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
 					|| variation == EditorInfo.TYPE_TEXT_VARIATION_PERSON_NAME) {
@@ -2121,7 +2124,9 @@ public class LIMEService extends InputMethodService implements
 					}else{
 						if(!mCandidateView.takeSelectedSuggestion()){
 							//getCurrentInputConnection().setComposingText("\n", 0);
-							getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
+							if(!isModePassword && !isModeURL){
+								getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
+							}
 						}
 					}
 					

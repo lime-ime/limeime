@@ -25,6 +25,7 @@
     <color name="candidate_background">#bbffffff</color>
     <!-- <color name="candidate_background">#bbffffff</color>-->
     
+    <color name="candidate_dictionary_background">#BB9AFE2E</color>
     <!-- Preference -->
     <color name="preference_background">#bbffffff</color>
     <color name="preference_text">#ffffffff</color>

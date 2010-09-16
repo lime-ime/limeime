@@ -256,6 +256,12 @@ public class CandidateView extends View {
                 	mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, 0, 
                 			mPopupCompoingY + offsetInWindow[1]);
                 }
+                
+               /* mComposingTextPopup.setWidth(popupWidth);
+            	mComposingTextPopup.setHeight(popupHeight);
+            	mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, 0, 
+            			mPopupCompoingY + offsetInWindow[1]);
+                mComposingTextView.setVisibility(VISIBLE);*/
                 mComposingTextView.setVisibility(VISIBLE);
 
 

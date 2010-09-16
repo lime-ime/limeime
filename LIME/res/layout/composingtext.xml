@@ -6,6 +6,4 @@
     android:textSize="18sp"
     android:textColor="?android:attr/textColorPrimaryInverse"
     android:minWidth="0dip"
-    android:gravity="bottom"
-    android:background="@drawable/composing_popup_background"
-    />
+    android:gravity="center_vertical" android:background="@color/candidate_dictionary_background"/>
