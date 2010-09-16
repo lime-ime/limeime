@@ -47,11 +47,13 @@ import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceActivity;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -97,6 +99,13 @@ public class LIMEMenu extends TabActivity {
         if(tabno != 0){
             tabHost.setCurrentTab(tabno);
         }
+        
+       /* WindowManager manager = (WindowManager) this.getSystemService(Context.WINDOW_SERVICE);
+        Display display = manager.getDefaultDisplay();
+        
+        Log.i("ART",  display.getWidth() + " * "+ display.getHeight());*/
+        // 09-16 15:53:47.042: INFO/ART(257): 320 * 480 OK
+
         
     }
 	
