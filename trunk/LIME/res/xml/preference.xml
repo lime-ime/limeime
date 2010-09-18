@@ -39,14 +39,14 @@
 				android:entryValues="@array/keyboard_defaultstate"
 				android:defaultValue="0;1;2;3;4;5;6;7"
 				android:dialogTitle="@string/keyboard_list" />
-		<!--<CheckBoxPreference
+		<CheckBoxPreference
                 android:key="default_in_english"
                 android:title="@string/default_in_english" 
                 android:summary="@string/default_in_english_summary"
             	android:defaultValue="false" 
                 />
        
-        --><CheckBoxPreference
+        <CheckBoxPreference
                 android:key="vibrate_on_keypress"
                 android:defaultValue="false" 
                 android:title="@string/vibrate_on_keypress" />

@@ -275,8 +275,9 @@
     --><string name="l3_tab_preference">Preference</string>
 	
     <string name="l3_dbservice_download_start">Download preloaded database, this action will take few minutes please wait.</string>
+    <string name="l3_dbservice_download_start_empty">Download empty database, this action will take few minutes please wait.</string>
     <string name="l3_dbservice_download_initial">Initialize database.</string>
-    <string name="l3_dbservice_download_loaded">Preloaded database was loaded.</string>
+    <string name="l3_dbservice_download_loaded">Database was loaded.</string>
     <string name="l3_dbservice_download_convert">Start convert database file...</string>
     
     <string name="l3_message_database_reset_confirm">Would you like to reset this database?</string>

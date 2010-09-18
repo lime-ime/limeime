@@ -192,8 +192,6 @@ public class LIMEKeyboardSwitcher {
         mCurrentId = id;
         mInputView.setKeyboard(keyboard);
         
-        //Log.i("ART", "MODE:"+ mode);
-        
          
         keyboard.setShiftLocked(keyboard.isShiftLocked());
         keyboard.setShifted(mIsShifted);

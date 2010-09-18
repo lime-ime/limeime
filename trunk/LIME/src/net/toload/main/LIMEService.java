@@ -81,6 +81,7 @@ public class LIMEService extends InputMethodService implements
 
 	private boolean isModeURL = false;
 	private boolean isModePassword = false;
+	private boolean isEnterNext = false;
 	private boolean mPredictionOn;
 	private boolean mCompletionOn;
 	private boolean mCapsLock;
@@ -89,6 +90,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean mHasShift;
 	private boolean mEnglishOnly;
 	private boolean mEnglishFlagShift;
+	private boolean mEnglishIMStart;
 
 	private boolean onIM = true;
 	private boolean hasFirstMatched = false;
@@ -225,6 +227,7 @@ public class LIMEService extends InputMethodService implements
 				.getDefaultSharedPreferences(this);
 		hasVibration = sp.getBoolean("vibrate_on_keypress", false);
 		hasSound = sp.getBoolean("sound_on_keypress", false);
+		mEnglishIMStart = sp.getBoolean("default_in_english", false);
 		hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
 		keyboardSelection = sp.getString("keyboard_list", "custom");
 
@@ -372,10 +375,18 @@ public class LIMEService extends InputMethodService implements
 			return;
 		}
 
+		if(mEnglishIMStart){
+			onIM = false;
+			mEnglishOnly = true;
+		}else{
+			onIM = true;
+		}
+ 
 		mKeyboardSwitcher.makeKeyboards(false);
 
 		TextEntryState.newSession(this);
 		loadSettings();
+		//mImeOptions = attribute.imeOptions;
 		mImeOptions = attribute.imeOptions;
 		
 		initialKeyboard();
@@ -388,17 +399,15 @@ public class LIMEService extends InputMethodService implements
 		mEnglishOnly = false;
 		isModeURL = false;
 		isModePassword = false;
+		isEnterNext = false;
 
-		// Log.i("ART","onIM3");
-		onIM = true;
 		switch (attribute.inputType & EditorInfo.TYPE_MASK_CLASS) {
 		case EditorInfo.TYPE_CLASS_NUMBER:
 		case EditorInfo.TYPE_CLASS_DATETIME:
 			mEnglishOnly = true;
 			onIM = false;
 			// Log.i("ART","onIM4");
-			mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_SYMBOLS,
-					attribute.imeOptions);
+			mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_SYMBOLS, attribute.imeOptions);
 			break;
 		case EditorInfo.TYPE_CLASS_PHONE:
 			mEnglishOnly = true;
@@ -449,11 +458,15 @@ public class LIMEService extends InputMethodService implements
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
 				mPredictionOn = false;
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
-				// If it's a browser edit field and auto correct is not ON
-				// explicitly, then
-				// disable auto correction, but keep suggestions on.
 				if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0) {
 					disableAutoCorrect = true;
+				}
+				if((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) != 0 ||
+						(attribute.inputType & EditorInfo.TYPE_CLASS_TEXT) == 0) {
+					mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection),EditorInfo.IME_ACTION_NONE);
+				}else{
+					mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection),EditorInfo.IME_ACTION_NEXT);
+					isEnterNext = true;
 				}
 			}
 
@@ -505,6 +518,7 @@ public class LIMEService extends InputMethodService implements
 				.getDefaultSharedPreferences(this);
 		hasVibration = sp.getBoolean("vibrate_on_keypress", false);
 		hasSound = sp.getBoolean("sound_on_keypress", false);
+		mEnglishIMStart = sp.getBoolean("default_in_english", false);
 		hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
 		keyboardSelection = sp.getString("keyboard_list", "custom");
 		hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
@@ -623,7 +637,7 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 
-		// Log.i("ART","Physical key:"+keyCode);
+		 Log.i("ART","Physical key:"+keyCode);
 		hasKeyPress = false;
 
 		mKeydownEvent = new KeyEvent(event);
@@ -741,34 +755,29 @@ public class LIMEService extends InputMethodService implements
 			}
 
 		case KeyEvent.KEYCODE_SPACE:
-			// Log.i("ART","select:"+8);
-			// Add by Jeremy '10, 3, 31. Select current suggestion with space.
-			if (mCandidateView != null && mCandidateView.isShown()) {
-				if (mCandidateView.takeSelectedSuggestion()) {
+			
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+			hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
+
+			hasSpacePress = true;
+
+			if (hasQuickSwitch && hasSpacePress && hasShiftPress) {
 					return true;
-				}// Commit selected suggestion succeed.
-				else { // dismiss the candidate view in the related word
-					// selection mode.
-					setCandidatesViewShown(false);
+			}else{
+				if (mCandidateView != null && mCandidateView.isShown()) {
+					if (mCandidateView.takeSelectedSuggestion()) {
+						return true;
+					}else {
+						setCandidatesViewShown(false);
+						break;
+					}
+				}else{
 					break;
 				}
 			}
-			// Add by Jeremy '10, 3, 27. Send Alt-space to super for default
-			// popup SYM window.
-			else
-				// if( LIMEMetaKeyKeyListener.getMetaState(mMetaState,
-				// LIMEMetaKeyKeyListener.META_ALT_ON)>0 )
-				break;
+			
 		case KeyEvent.KEYCODE_AT:
-			// Log.i("ART","select:"+9);
-			// do nothing until OnKeyUp
-			// if(keyPressTime != 0 && System.currentTimeMillis() - keyPressTime
-			// > 700){
-			// switchChiEng();
-			// }
-
 			return true;
-
 		default:
 			// Log.i("ART","select:"+10);
 
@@ -895,6 +904,7 @@ public class LIMEService extends InputMethodService implements
 					this.switchChiEng();
 					hasShiftPress = false;
 					hasSpacePress = false;
+					return true;
 				} else {
 					// If no shift press then reset
 					hasShiftPress = false;
@@ -904,17 +914,9 @@ public class LIMEService extends InputMethodService implements
 
 		default:
 
-			// Reset flags
 			hasShiftPress = false;
 			hasSpacePress = false;
 
-			// Clear MetaKeyStates
-			// if(LIMEMetaKeyKeyListener.getMetaState(mMetaState,
-			// LIMEMetaKeyKeyListener.META_ALT_ON ) == 1) {
-			// InputConnection ic = getCurrentInputConnection();
-			// ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
-			// mTrackAlt = false;
-			// }
 		}
 		// Update metakeystate of IC maintained by MetaKeyKeyListerner
 		setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
@@ -1863,7 +1865,8 @@ public class LIMEService extends InputMethodService implements
 			hasNumberMapping = true;
 			hasSymbolMapping = true;
 		}
-		mKeyboardSwitcher.setKeyboardMode(mMode, mImeOptions);
+		//mKeyboardSwitcher.setKeyboardMode(mMode, 0);
+		//mKeyboardSwitcher.setKeyboardMode(mMode, mImeOptions);
 		// Reset Shift Status
 		// mCapsLock = false;
 		// mHasShift = false;
@@ -2116,14 +2119,17 @@ public class LIMEService extends InputMethodService implements
 						&& (isValidSymbol(primaryCode)
 								|| isValidLetter(primaryCode) || isValidDigit(primaryCode))
 						&& onIM) {
-					if(primaryCode != 10){
+					if(primaryCode != 10 && primaryCode != -99){
 						mComposing.append((char) primaryCode);
 						getCurrentInputConnection().setComposingText(mComposing, 1);
 						updateCandidates();
 						misMatched = mComposing.toString();
+					}else if(primaryCode == -99 || isEnterNext){
+						//super.onKeyDown(20,new KeyEvent(KeyEvent.ACTION_UP, 20));
+						getCurrentInputConnection().sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, 20));
+						isEnterNext = false;
 					}else{
 						if(!mCandidateView.takeSelectedSuggestion()){
-							//getCurrentInputConnection().setComposingText("\n", 0);
 							if(!isModePassword && !isModeURL){
 								getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
 							}
@@ -2147,8 +2153,22 @@ public class LIMEService extends InputMethodService implements
 						primaryCode = Character.toUpperCase(primaryCode);
 					}
 				}
-				getCurrentInputConnection().commitText(
-						String.valueOf((char) primaryCode), 1);
+				if(primaryCode != 10 && primaryCode != -99){
+					mComposing.append((char) primaryCode);
+					getCurrentInputConnection().setComposingText(mComposing, 1);
+					updateCandidates();
+					misMatched = mComposing.toString();
+				}else if(primaryCode == -99 || isEnterNext){
+					//super.onKeyDown(20,new KeyEvent(KeyEvent.ACTION_UP, 20));
+					getCurrentInputConnection().sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, 20));
+					isEnterNext = false;
+				}else{
+					if(!mCandidateView.takeSelectedSuggestion()){
+						if(!isModePassword && !isModeURL){
+							getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
+						}
+					}
+				}
 			}
 		}
 		// updateShift(primaryCode);
