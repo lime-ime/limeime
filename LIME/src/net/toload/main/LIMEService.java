@@ -392,12 +392,7 @@ public class LIMEService extends InputMethodService implements
 		isModeURL = false;
 		isModePassword = false;
 		
-		if(mEnglishIMStart){
-			onIM = false;
-			mEnglishOnly = true;
-		}else{
-			onIM = true;
-		}
+		onIM = true;
 		
 		switch (attribute.inputType & EditorInfo.TYPE_MASK_CLASS) {
 		case EditorInfo.TYPE_CLASS_NUMBER:
@@ -417,70 +412,78 @@ public class LIMEService extends InputMethodService implements
 			break;
 		case EditorInfo.TYPE_CLASS_TEXT:
 
-			// Make sure that passwords are not displayed in candidate view
-			int variation = attribute.inputType
-					& EditorInfo.TYPE_MASK_VARIATION;
-			if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD
-					|| variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
-				mPredictionOn = false;
-				isModePassword = true;
-			}
-			if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
-					|| variation == EditorInfo.TYPE_TEXT_VARIATION_PERSON_NAME) {
-				mAutoSpace = false;
-			} else {
-				mAutoSpace = true;
-			}
-			if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS) {
-				mEnglishOnly = true;
-
-				// Log.i("ART","onIM6");
-				onIM = false;
-				mPredictionOn = false;
-				mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_EMAIL,
-						attribute.imeOptions);
-			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_URI) {
+			if(mEnglishIMStart){
 				mPredictionOn = false;
 				mEnglishOnly = true;
 				onIM = false;
 				isModeURL = true;
-				mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_URL, attribute.imeOptions);
-			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
-				// mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM,
-				// attribute.imeOptions);
-				mKeyboardSwitcher.setKeyboardMode(
-						getKeyboardMode(keyboardSelection),
-						attribute.imeOptions);
-			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
-				mPredictionOn = false;
-			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
-				if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0) {
+				mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM, attribute.imeOptions);
+			}else{
+				// Make sure that passwords are not displayed in candidate view
+				int variation = attribute.inputType
+						& EditorInfo.TYPE_MASK_VARIATION;
+				if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD
+						|| variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
+					mPredictionOn = false;
+					isModePassword = true;
+				}
+				if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+						|| variation == EditorInfo.TYPE_TEXT_VARIATION_PERSON_NAME) {
+					mAutoSpace = false;
+				} else {
+					mAutoSpace = true;
+				}
+				if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS) {
+					mEnglishOnly = true;
+	
+					// Log.i("ART","onIM6");
+					onIM = false;
+					mPredictionOn = false;
+					mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_EMAIL,
+							attribute.imeOptions);
+				} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_URI) {
+					mPredictionOn = false;
+					mEnglishOnly = true;
+					onIM = false;
+					isModeURL = true;
+					mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_URL, attribute.imeOptions);
+				} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
+					// mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM,
+					// attribute.imeOptions);
+					mKeyboardSwitcher.setKeyboardMode(
+							getKeyboardMode(keyboardSelection),
+							attribute.imeOptions);
+				} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
+					mPredictionOn = false;
+				} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
+					if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0) {
+						disableAutoCorrect = true;
+					}
+					if((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) != 0 ||
+							(attribute.inputType & EditorInfo.TYPE_CLASS_TEXT) == 0) {
+						mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection),EditorInfo.IME_ACTION_NONE);
+					}else{
+						mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection),EditorInfo.IME_ACTION_NEXT);
+					}
+				}
+	
+				// If NO_SUGGESTIONS is set, don't do prediction.
+				if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0) {
+					mPredictionOn = false;
 					disableAutoCorrect = true;
 				}
-				if((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) != 0 ||
-						(attribute.inputType & EditorInfo.TYPE_CLASS_TEXT) == 0) {
-					mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection),EditorInfo.IME_ACTION_NONE);
-				}else{
-					mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection),EditorInfo.IME_ACTION_NEXT);
+				// If it's not multiline and the autoCorrect flag is not set, then
+				// don't correct
+				if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0
+						&& (attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) == 0) {
+					disableAutoCorrect = true;
 				}
+				if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_COMPLETE) != 0) {
+					mPredictionOn = false;
+					// mCompletionOn = true && isFullscreenMode();
+				}
+				// updateShiftKeyState(attribute);
 			}
-
-			// If NO_SUGGESTIONS is set, don't do prediction.
-			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0) {
-				mPredictionOn = false;
-				disableAutoCorrect = true;
-			}
-			// If it's not multiline and the autoCorrect flag is not set, then
-			// don't correct
-			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0
-					&& (attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) == 0) {
-				disableAutoCorrect = true;
-			}
-			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_COMPLETE) != 0) {
-				mPredictionOn = false;
-				// mCompletionOn = true && isFullscreenMode();
-			}
-			// updateShiftKeyState(attribute);
 			break;
 		default:
 			// mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT,
@@ -685,8 +688,7 @@ public class LIMEService extends InputMethodService implements
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
 			// Log.i("ART","select:"+4);
-			mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState,
-					keyCode, event);
+			mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState, keyCode, event);
 			break;
 		case KeyEvent.KEYCODE_BACK:
 			// Log.i("ART","select:"+5);
