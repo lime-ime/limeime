@@ -1864,7 +1864,7 @@ public class LIMEService extends InputMethodService implements
 			hasSymbolMapping = true;
 		}
 		//mKeyboardSwitcher.setKeyboardMode(mMode, 0);
-		//mKeyboardSwitcher.setKeyboardMode(mMode, 0);
+		mKeyboardSwitcher.setKeyboardMode(mMode, this.mImeOptions);
 		// Reset Shift Status
 		// mCapsLock = false;
 		// mHasShift = false;
@@ -1890,275 +1890,285 @@ public class LIMEService extends InputMethodService implements
 	 */
 	private void handleCharacter(int primaryCode, int[] keyCodes) {
 
-		// Caculate key press time to handle Eazy IM keys mapping
-		// 1,2,3,4,5,6 map to -(45) =(43) [(91) ](93) ,(44) \(92)
-		if (keyPressTime != 0
-				&& (System.currentTimeMillis() - keyPressTime > 700)
-				&& mKeyboardSwitcher.getKeyboardMode() == mKeyboardSwitcher.MODE_TEXT_EZ) {
-			if (primaryCode == 49) {
-				primaryCode = 45;
-			} else if (primaryCode == 50) {
-				primaryCode = 61;
-			} else if (primaryCode == 51) {
-				primaryCode = 91;
-			} else if (primaryCode == 52) {
-				primaryCode = 93;
-			} else if (primaryCode == 53) {
-				primaryCode = 44;
-			} else if (primaryCode == 54) {
-				primaryCode = 92;
+		//Log.i("ART","handleCharacter :" + primaryCode);
+		
+		// Use the code -99 to represent the Action Move Downward
+		if(primaryCode == -99 || isEnterNext){
+			getCurrentInputConnection().sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, 20));
+			isEnterNext = false;
+		}else{
+		
+			// Caculate key press time to handle Eazy IM keys mapping
+			// 1,2,3,4,5,6 map to -(45) =(43) [(91) ](93) ,(44) \(92)
+			if (keyPressTime != 0
+					&& (System.currentTimeMillis() - keyPressTime > 700)
+					&& mKeyboardSwitcher.getKeyboardMode() == mKeyboardSwitcher.MODE_TEXT_EZ) {
+				if (primaryCode == 49) {
+					primaryCode = 45;
+				} else if (primaryCode == 50) {
+					primaryCode = 61;
+				} else if (primaryCode == 51) {
+					primaryCode = 91;
+				} else if (primaryCode == 52) {
+					primaryCode = 93;
+				} else if (primaryCode == 53) {
+					primaryCode = 44;
+				} else if (primaryCode == 54) {
+					primaryCode = 92;
+				}
 			}
-		}
-
-		// Adjust metakeystate on printed key pressed.
-		mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
-
-		// If keyboard type = phone then check the user selection
-		if (keyboardSelection.equals("phone")) {
-			try {
-				SharedPreferences sp1 = getSharedPreferences(PREF, 0);
-				String xyvalue = sp1.getString("xy", "");
-				this.keyUpX = Float.parseFloat(xyvalue.split(",")[0]);
-				this.keyUpY = Float.parseFloat(xyvalue.split(",")[1]);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			float directionX = keyDownX - keyUpX;
-			float directionY = keyDownY - keyUpY;
-
-			int result = 0;
-			// Only when keyboard type equal "Phone"
-			if ((keyDownX - keyUpX) > moveLength
-					|| (keyUpX - keyDownX) > moveLength
-					|| (keyDownY - keyUpY) > moveLength
-					|| (keyUpY - keyDownY) > moveLength) {
-
-				if (keyDownCode == 40) {
-					result = handleSelection(directionX, directionY,
-							new String[] { "[", ")", "(", "]" });
-				} else if (keyDownCode == 44) {
-					result = handleSelection(directionX, directionY,
-							new String[] { "?", ".", ";", "\\" });
-				} else if (keyDownCode == 48) {
-					result = handleSelection(directionX, directionY,
-							new String[] { "^", "}", "~", "{" });
-				} else if (keyDownCode == 49) {
-					result = handleSelection(directionX, directionY,
-							new String[] { "!", "1", "@", "#" });
-				} else if (keyDownCode == 50) {
-					if (mHasShift) {
-						result = handleSelection(directionX, directionY,
-								new String[] { "B", "2", "A", "C" });
-					} else {
-						result = handleSelection(directionX, directionY,
-								new String[] { "b", "2", "a", "c" });
-					}
-				} else if (keyDownCode == 51) {
-					if (mHasShift) {
-						result = handleSelection(directionX, directionY,
-								new String[] { "E", "3", "D", "F" });
-					} else {
-						result = handleSelection(directionX, directionY,
-								new String[] { "e", "3", "d", "f" });
-					}
-				} else if (keyDownCode == 52) {
-					if (mHasShift) {
-						result = handleSelection(directionX, directionY,
-								new String[] { "H", "4", "G", "I" });
-					} else {
-						result = handleSelection(directionX, directionY,
-								new String[] { "h", "4", "g", "i" });
-					}
-				} else if (keyDownCode == 53) {
-					if (mHasShift) {
-						result = handleSelection(directionX, directionY,
-								new String[] { "K", "5", "J", "L" });
-					} else {
-						result = handleSelection(directionX, directionY,
-								new String[] { "k", "5", "j", "l" });
-					}
-				} else if (keyDownCode == 54) {
-					if (mHasShift) {
-						result = handleSelection(directionX, directionY,
-								new String[] { "N", "6", "M", "O" });
-					} else {
-						result = handleSelection(directionX, directionY,
-								new String[] { "n", "6", "m", "o" });
-					}
-				} else if (keyDownCode == 55) {
-					if (mHasShift) {
-						result = handleSelection(directionX, directionY,
-								new String[] { "Q", "S", "P", "R" });
-					} else {
-						result = handleSelection(directionX, directionY,
-								new String[] { "q", "s", "p", "r" });
-					}
-				} else if (keyDownCode == 56) {
-					if (mHasShift) {
-						result = handleSelection(directionX, directionY,
-								new String[] { "U", "8", "T", "V" });
-					} else {
-						result = handleSelection(directionX, directionY,
-								new String[] { "u", "8", "t", "v" });
-					}
-				} else if (keyDownCode == 57) {
-					if (mHasShift) {
-						result = handleSelection(directionX, directionY,
-								new String[] { "X", "Z", "W", "Y" });
-					} else {
-						result = handleSelection(directionX, directionY,
-								new String[] { "x", "z", "w", "y" });
-					}
-				} else if (keyDownCode == 61) {
-					result = handleSelection(directionX, directionY,
-							new String[] { "-", "/", "+", "*" });
+	
+			// Adjust metakeystate on printed key pressed.
+			mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+	
+			// If keyboard type = phone then check the user selection
+			if (keyboardSelection.equals("phone")) {
+				
+				// User use Phone Keyboard
+				try {
+					SharedPreferences sp1 = getSharedPreferences(PREF, 0);
+					String xyvalue = sp1.getString("xy", "");
+					this.keyUpX = Float.parseFloat(xyvalue.split(",")[0]);
+					this.keyUpY = Float.parseFloat(xyvalue.split(",")[1]);
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-				primaryCode = result;
-			}
-
-			if (!mEnglishOnly) {
-				if (isInputViewShown()) {
-					if (mInputView.isShifted()) {
-						primaryCode = Character.toUpperCase(primaryCode);
+	
+				float directionX = keyDownX - keyUpX;
+				float directionY = keyDownY - keyUpY;
+	
+				int result = 0;
+				// Only when keyboard type equal "Phone"
+				if ((keyDownX - keyUpX) > moveLength
+						|| (keyUpX - keyDownX) > moveLength
+						|| (keyDownY - keyUpY) > moveLength
+						|| (keyUpY - keyDownY) > moveLength) {
+	
+					if (keyDownCode == 40) {
+						result = handleSelection(directionX, directionY,
+								new String[] { "[", ")", "(", "]" });
+					} else if (keyDownCode == 44) {
+						result = handleSelection(directionX, directionY,
+								new String[] { "?", ".", ";", "\\" });
+					} else if (keyDownCode == 48) {
+						result = handleSelection(directionX, directionY,
+								new String[] { "^", "}", "~", "{" });
+					} else if (keyDownCode == 49) {
+						result = handleSelection(directionX, directionY,
+								new String[] { "!", "1", "@", "#" });
+					} else if (keyDownCode == 50) {
+						if (mHasShift) {
+							result = handleSelection(directionX, directionY,
+									new String[] { "B", "2", "A", "C" });
+						} else {
+							result = handleSelection(directionX, directionY,
+									new String[] { "b", "2", "a", "c" });
+						}
+					} else if (keyDownCode == 51) {
+						if (mHasShift) {
+							result = handleSelection(directionX, directionY,
+									new String[] { "E", "3", "D", "F" });
+						} else {
+							result = handleSelection(directionX, directionY,
+									new String[] { "e", "3", "d", "f" });
+						}
+					} else if (keyDownCode == 52) {
+						if (mHasShift) {
+							result = handleSelection(directionX, directionY,
+									new String[] { "H", "4", "G", "I" });
+						} else {
+							result = handleSelection(directionX, directionY,
+									new String[] { "h", "4", "g", "i" });
+						}
+					} else if (keyDownCode == 53) {
+						if (mHasShift) {
+							result = handleSelection(directionX, directionY,
+									new String[] { "K", "5", "J", "L" });
+						} else {
+							result = handleSelection(directionX, directionY,
+									new String[] { "k", "5", "j", "l" });
+						}
+					} else if (keyDownCode == 54) {
+						if (mHasShift) {
+							result = handleSelection(directionX, directionY,
+									new String[] { "N", "6", "M", "O" });
+						} else {
+							result = handleSelection(directionX, directionY,
+									new String[] { "n", "6", "m", "o" });
+						}
+					} else if (keyDownCode == 55) {
+						if (mHasShift) {
+							result = handleSelection(directionX, directionY,
+									new String[] { "Q", "S", "P", "R" });
+						} else {
+							result = handleSelection(directionX, directionY,
+									new String[] { "q", "s", "p", "r" });
+						}
+					} else if (keyDownCode == 56) {
+						if (mHasShift) {
+							result = handleSelection(directionX, directionY,
+									new String[] { "U", "8", "T", "V" });
+						} else {
+							result = handleSelection(directionX, directionY,
+									new String[] { "u", "8", "t", "v" });
+						}
+					} else if (keyDownCode == 57) {
+						if (mHasShift) {
+							result = handleSelection(directionX, directionY,
+									new String[] { "X", "Z", "W", "Y" });
+						} else {
+							result = handleSelection(directionX, directionY,
+									new String[] { "x", "z", "w", "y" });
+						}
+					} else if (keyDownCode == 61) {
+						result = handleSelection(directionX, directionY,
+								new String[] { "-", "/", "+", "*" });
 					}
+					primaryCode = result;
 				}
-
-				if (!hasSymbolMapping && !hasNumberMapping
-						&& isValidLetter(primaryCode) && onIM) {
-					mComposing.append((char) primaryCode);
-					getCurrentInputConnection().setComposingText(mComposing, 1);
-					// updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
-					misMatched = mComposing.toString();
-				} else if (!hasSymbolMapping
-						&& hasNumberMapping
-						&& (isValidLetter(primaryCode) || isValidDigit(primaryCode))
-						&& onIM) {
-					mComposing.append((char) primaryCode);
-					getCurrentInputConnection().setComposingText(mComposing, 1);
-					// updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
-					misMatched = mComposing.toString();
-				} else if (hasSymbolMapping
-						&& !hasNumberMapping
-						&& (isValidLetter(primaryCode) || isValidSymbol(primaryCode))
-						&& onIM) {
-					mComposing.append((char) primaryCode);
-					getCurrentInputConnection().setComposingText(mComposing, 1);
-					// updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
-					misMatched = mComposing.toString();
-				} else if (hasSymbolMapping
-						&& hasNumberMapping
-						&& (isValidSymbol(primaryCode)
-								|| isValidLetter(primaryCode) || isValidDigit(primaryCode))
-						&& onIM) {
-					mComposing.append((char) primaryCode);
-					getCurrentInputConnection().setComposingText(mComposing, 1);
-					// updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
-					misMatched = mComposing.toString();
-				} else {
-					getCurrentInputConnection().commitText(
-							mComposing + String.valueOf((char) primaryCode), 1);
-				}
-			} else {
-				if (isInputViewShown()) {
-					if (mInputView.isShifted()) {
-						primaryCode = Character.toUpperCase(primaryCode);
+	
+				if (!mEnglishOnly) {
+					if (isInputViewShown()) {
+						if (mInputView.isShifted()) {
+							primaryCode = Character.toUpperCase(primaryCode);
+						}
 					}
-				}
-				getCurrentInputConnection().commitText(
-						String.valueOf((char) primaryCode), 1);
-			}
-
-		} else {
-			if (!mEnglishOnly) {
-				// Shift keyboard already sent uppercase characters
-				/*
-				 * if (isInputViewShown()) { if (mInputView.isShifted()) {
-				 * primaryCode = Character.toUpperCase(primaryCode); } }
-				 */
-				if (DEBUG) {
-					Log.i("HandleCharacter", "isValidLetter:"
-							+ isValidLetter(primaryCode) + " isValidDigit:"
-							+ isValidDigit(primaryCode) + " isValideSymbo:"
-							+ isValidSymbol(primaryCode) + " onIM:" + onIM);
-				}
-
-				if (!hasSymbolMapping && !hasNumberMapping
-						&& isValidLetter(primaryCode) && onIM) {
-					mComposing.append((char) primaryCode);
-					getCurrentInputConnection().setComposingText(mComposing, 1);
-					// updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
-					misMatched = mComposing.toString();
-				} else if (!hasSymbolMapping
-						&& hasNumberMapping
-						&& (isValidLetter(primaryCode) || isValidDigit(primaryCode))
-						&& onIM) {
-					mComposing.append((char) primaryCode);
-					getCurrentInputConnection().setComposingText(mComposing, 1);
-					// updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
-					misMatched = mComposing.toString();
-				} else if (hasSymbolMapping
-						&& !hasNumberMapping
-						&& (isValidLetter(primaryCode) || isValidSymbol(primaryCode))
-						&& onIM) {
-					mComposing.append((char) primaryCode);
-					getCurrentInputConnection().setComposingText(mComposing, 1);
-					// updateShiftKeyState(getCurrentInputEditorInfo());
-					updateCandidates();
-					misMatched = mComposing.toString();
-				} else if (hasSymbolMapping
-						&& hasNumberMapping
-						&& (isValidSymbol(primaryCode)
-								|| isValidLetter(primaryCode) || isValidDigit(primaryCode))
-						&& onIM) {
-					if(primaryCode != 10 && primaryCode != -99){
+	
+					if (!hasSymbolMapping && !hasNumberMapping
+							&& isValidLetter(primaryCode) && onIM) {
 						mComposing.append((char) primaryCode);
 						getCurrentInputConnection().setComposingText(mComposing, 1);
+						// updateShiftKeyState(getCurrentInputEditorInfo());
 						updateCandidates();
 						misMatched = mComposing.toString();
-					}else if(primaryCode == -99 || isEnterNext){
-						//super.onKeyDown(20,new KeyEvent(KeyEvent.ACTION_UP, 20));
-						getCurrentInputConnection().sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, 20));
-						isEnterNext = false;
-					}else{
-						if(!mCandidateView.takeSelectedSuggestion()){
-							if(!isModePassword && !isModeURL){
-								getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
-							}
-						}
-					}
-					
-				} else {
-					if(!mEnglishOnly || !onIM){
-						if(!mCandidateView.takeSelectedSuggestion()){
-							getCurrentInputConnection().commitText(
-									mComposing + String.valueOf((char) primaryCode), 1);
-						}
-					}else{
+					} else if (!hasSymbolMapping
+							&& hasNumberMapping
+							&& (isValidLetter(primaryCode) || isValidDigit(primaryCode))
+							&& onIM) {
+						mComposing.append((char) primaryCode);
+						getCurrentInputConnection().setComposingText(mComposing, 1);
+						// updateShiftKeyState(getCurrentInputEditorInfo());
+						updateCandidates();
+						misMatched = mComposing.toString();
+					} else if (hasSymbolMapping
+							&& !hasNumberMapping
+							&& (isValidLetter(primaryCode) || isValidSymbol(primaryCode))
+							&& onIM) {
+						mComposing.append((char) primaryCode);
+						getCurrentInputConnection().setComposingText(mComposing, 1);
+						// updateShiftKeyState(getCurrentInputEditorInfo());
+						updateCandidates();
+						misMatched = mComposing.toString();
+					} else if (hasSymbolMapping
+							&& hasNumberMapping
+							&& (isValidSymbol(primaryCode)
+									|| isValidLetter(primaryCode) || isValidDigit(primaryCode))
+							&& onIM) {
+						mComposing.append((char) primaryCode);
+						getCurrentInputConnection().setComposingText(mComposing, 1);
+						// updateShiftKeyState(getCurrentInputEditorInfo());
+						updateCandidates();
+						misMatched = mComposing.toString();
+					} else {
 						getCurrentInputConnection().commitText(
 								mComposing + String.valueOf((char) primaryCode), 1);
 					}
-				}
-			} else {
-				if (isInputViewShown()) {
-					if (mInputView.isShifted()) {
-						primaryCode = Character.toUpperCase(primaryCode);
+				} else {
+					if (isInputViewShown()) {
+						if (mInputView.isShifted()) {
+							primaryCode = Character.toUpperCase(primaryCode);
+						}
 					}
+					getCurrentInputConnection().commitText(
+							String.valueOf((char) primaryCode), 1);
 				}
-				if(primaryCode != 10 && primaryCode != -99 && !isEnterNext){
+	
+			} else {
+				// If user not user PHONE Keyboard then use this one
+				if (!mEnglishOnly) {
+					// Shift keyboard already sent uppercase characters
+					/*
+					 * if (isInputViewShown()) { if (mInputView.isShifted()) {
+					 * primaryCode = Character.toUpperCase(primaryCode); } }
+					 */
+					if (DEBUG) {
+						Log.i("HandleCharacter", "isValidLetter:"
+								+ isValidLetter(primaryCode) + " isValidDigit:"
+								+ isValidDigit(primaryCode) + " isValideSymbo:"
+								+ isValidSymbol(primaryCode) + " onIM:" + onIM);
+					}
+	
+					if (!hasSymbolMapping && !hasNumberMapping
+							&& isValidLetter(primaryCode) && onIM) {
+						mComposing.append((char) primaryCode);
+						getCurrentInputConnection().setComposingText(mComposing, 1);
+						// updateShiftKeyState(getCurrentInputEditorInfo());
+						updateCandidates();
+						misMatched = mComposing.toString();
+					} else if (!hasSymbolMapping
+							&& hasNumberMapping
+							&& (isValidLetter(primaryCode) || isValidDigit(primaryCode))
+							&& onIM) {
+						mComposing.append((char) primaryCode);
+						getCurrentInputConnection().setComposingText(mComposing, 1);
+						// updateShiftKeyState(getCurrentInputEditorInfo());
+						updateCandidates();
+						misMatched = mComposing.toString();
+					} else if (hasSymbolMapping
+							&& !hasNumberMapping
+							&& (isValidLetter(primaryCode) || isValidSymbol(primaryCode))
+							&& onIM) {
+						mComposing.append((char) primaryCode);
+						getCurrentInputConnection().setComposingText(mComposing, 1);
+						// updateShiftKeyState(getCurrentInputEditorInfo());
+						updateCandidates();
+						misMatched = mComposing.toString();
+					} else if (hasSymbolMapping
+							&& hasNumberMapping
+							&& (isValidSymbol(primaryCode)
+									|| isValidLetter(primaryCode) || isValidDigit(primaryCode))
+							&& onIM) {
+						if(primaryCode != 10){
+							mComposing.append((char) primaryCode);
+							getCurrentInputConnection().setComposingText(mComposing, 1);
+							updateCandidates();
+							misMatched = mComposing.toString();
+						}else{
+							if(!mCandidateView.takeSelectedSuggestion()){
+								if(!isModePassword && !isModeURL){
+									getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
+								}
+							}
+						}
+						
+					} else {
+						if(!mEnglishOnly || !onIM){
+							if(!mCandidateView.takeSelectedSuggestion()){
+								getCurrentInputConnection().commitText(
+										mComposing + String.valueOf((char) primaryCode), 1);
+							}
+						}else{
+							getCurrentInputConnection().commitText(
+									mComposing + String.valueOf((char) primaryCode), 1);
+						}
+					}
+				} else {
+					if (isInputViewShown()) {
+						if (mInputView.isShifted()) {
+							primaryCode = Character.toUpperCase(primaryCode);
+						}
+					}/*
+					if(primaryCode != 10 && primaryCode != -99 && !isEnterNext){
+						getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
+					}else{
+						getCurrentInputConnection().sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, 20));
+						isEnterNext = false;
+					}*/
 					getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
-				}else{
-					getCurrentInputConnection().sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, 20));
-					isEnterNext = false;
 				}
 			}
 		}
+		
 		// updateShift(primaryCode);
 		updateShiftKeyState(getCurrentInputEditorInfo());
 	}

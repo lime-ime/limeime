@@ -169,6 +169,11 @@
 				android:dialogTitle="@string/similiar_list" 
 				android:defaultValue="20"/>
         <CheckBoxPreference
+                android:key="similiar_enable"
+                android:title="@string/similiar_enable_switch"
+                android:defaultValue="true"
+                android:summary="@string/similiar_enable_switch_summary" />
+        <CheckBoxPreference
                 android:key="candidate_switch"
                 android:title="@string/candidate_switch"
                 android:defaultValue="true"

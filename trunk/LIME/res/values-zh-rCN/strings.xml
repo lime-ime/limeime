@@ -79,6 +79,8 @@
     <string name="sound_on_keypress">打字音效</string>
     <string name="display_number_keypads">显示数字键盘</string>
     <string name="display_number_keypads_summary">显示数字按钮于预设键盘上</string>
+    <string name="similiar_enable_switch">启用关联字典</string>
+    <string name="similiar_enable_switch_summary">启用关联字典功能</string>
     <string name="candidate_switch">滑动选取</string>
     <string name="candidate_switch_summary">滑动选取输入法建议文字</string>
     <string name="candidate_suggestion">启动自建关联字</string>
@@ -232,6 +234,7 @@
 	</string-array>
     
     <string-array name="similiar_codes">
+		<item>0</item>
 		<item>10</item>
 		<item>20</item>
 		<item>30</item>

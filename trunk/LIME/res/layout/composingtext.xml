@@ -6,4 +6,4 @@
     android:textSize="18sp"
     android:textColor="?android:attr/textColorPrimaryInverse"
     android:minWidth="0dip"
-    android:gravity="center_vertical" android:background="@color/candidate_dictionary_background"/>
+    android:gravity="top" android:background="@color/candidate_dictionary_background"/>
