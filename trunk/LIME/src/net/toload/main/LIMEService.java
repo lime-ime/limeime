@@ -1867,7 +1867,7 @@ public class LIMEService extends InputMethodService implements
 			hasSymbolMapping = true;
 		}
 		//mKeyboardSwitcher.setKeyboardMode(mMode, 0);
-		//mKeyboardSwitcher.setKeyboardMode(mMode, mImeOptions);
+		mKeyboardSwitcher.setKeyboardMode(mMode, mImeOptions);
 		// Reset Shift Status
 		// mCapsLock = false;
 		// mHasShift = false;
