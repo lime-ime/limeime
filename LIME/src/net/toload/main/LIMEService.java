@@ -81,7 +81,6 @@ public class LIMEService extends InputMethodService implements
 
 	private boolean isModeURL = false;
 	private boolean isModePassword = false;
-	private boolean isEnterNext = false;
 	private boolean mPredictionOn;
 	private boolean mCompletionOn;
 	private boolean mCapsLock;
@@ -392,8 +391,7 @@ public class LIMEService extends InputMethodService implements
 		mEnglishOnly = false;
 		isModeURL = false;
 		isModePassword = false;
-		isEnterNext = false;
-
+		
 		if(mEnglishIMStart){
 			onIM = false;
 			mEnglishOnly = true;
@@ -464,7 +462,6 @@ public class LIMEService extends InputMethodService implements
 					mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection),EditorInfo.IME_ACTION_NONE);
 				}else{
 					mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection),EditorInfo.IME_ACTION_NEXT);
-					isEnterNext = true;
 				}
 			}
 
@@ -1890,12 +1887,11 @@ public class LIMEService extends InputMethodService implements
 	 */
 	private void handleCharacter(int primaryCode, int[] keyCodes) {
 
-		//Log.i("ART","handleCharacter :" + primaryCode);
+		Log.i("ART","handleCharacter :" + primaryCode);
 		
 		// Use the code -99 to represent the Action Move Downward
-		if(primaryCode == -99 || isEnterNext){
+		if(primaryCode == -99){
 			getCurrentInputConnection().sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, 20));
-			isEnterNext = false;
 		}else{
 		
 			// Caculate key press time to handle Eazy IM keys mapping
@@ -2084,6 +2080,7 @@ public class LIMEService extends InputMethodService implements
 				}
 	
 			} else {
+				// *** NOT PHONE KEYBOARD***
 				// If user not user PHONE Keyboard then use this one
 				if (!mEnglishOnly) {
 					// Shift keyboard already sent uppercase characters
