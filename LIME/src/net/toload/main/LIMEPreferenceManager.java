@@ -152,7 +152,11 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("learning_switch", true);
 	}
 	
-	
+
+	public boolean getSimiliarEnable(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("similiar_enable", true);
+	}
 	
 	public boolean getSelectDefaultOnSliding(){
 		

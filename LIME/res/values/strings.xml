@@ -45,7 +45,7 @@
     
     <string name="keyboard_list">LIME Input Method</string>
     
-    <string name="default_in_english">Staring in English mode</string>
+    <string name="default_in_english">Starting in English mode</string>
     <string name="default_in_english_summary">Starting input in English keyboard.</string>
     
     <string name="three_rows_remapping">3 Rows Keybaord Remapping</string>
@@ -80,6 +80,8 @@
     <string name="display_number_keypads_summary">Display number keypads</string>
     <string name="candidate_switch">Sliding select suggestion</string>
     <string name="candidate_switch_summary">Enable suggestion word sliding selection</string>
+    <string name="similiar_enable_switch">Enable related words dictionary</string>
+    <string name="similiar_enable_switch_summary">Enable related words dictionary</string>
     <string name="candidate_suggestion">Auto-build related words</string>
     <string name="candidate_suggestion_summary">Learn related words base on text input</string>
     <string name="learning_switch">Sort suggestion list</string>
@@ -233,6 +235,7 @@
     
 	
     <string-array name="similiar_codes">
+		<item>0</item>
 		<item>10</item>
 		<item>20</item>
 		<item>30</item>

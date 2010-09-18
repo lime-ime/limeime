@@ -523,42 +523,45 @@ public class LimeDB extends SQLiteOpenHelper {
 	public List<Mapping> getMappingSimiliar(String code) {
 
 		List<Mapping> result = new LinkedList<Mapping>();
-		HashSet<String> wordlist = new HashSet<String>();
-
-		if (code != null && !code.trim().equals("")) {
-
-			code = code.toLowerCase();
-			Cursor cursor = null;
-			String sql = null;
-
-			SQLiteDatabase db = this.getReadableDatabase();
-
-			int ssize = mLIMEPref.getSimilarCodeCandidates();
-			boolean sort = mLIMEPref.getSortSuggestions();
-						
-			// Process the escape characters of query
-			if(code != null){
-				code = code.replaceAll("'", "''");
-			}
-			
-			try {
-				// When Code3r mode is disable
-				if(sort){
-					cursor = db.query(tablename, null, FIELD_CODE + " LIKE '"
-							+ code + "%' ", null, null, null, FIELD_SCORE +" DESC LIMIT " + ssize, null);
-				}else{
-					cursor = db.query(tablename, null, FIELD_CODE + " LIKE '"
-							+ code + "%' LIMIT " + ssize, null, null, null, null, null);
+		
+		if(mLIMEPref.getSimilarCodeCandidates() > 0){
+			HashSet<String> wordlist = new HashSet<String>();
+	
+			if (code != null && !code.trim().equals("")) {
+	
+				code = code.toLowerCase();
+				Cursor cursor = null;
+				String sql = null;
+	
+				SQLiteDatabase db = this.getReadableDatabase();
+	
+				int ssize = mLIMEPref.getSimilarCodeCandidates();
+				boolean sort = mLIMEPref.getSortSuggestions();
+							
+				// Process the escape characters of query
+				if(code != null){
+					code = code.replaceAll("'", "''");
 				}
-
-				result = buildQueryResult(cursor);
-
-				if (cursor != null) {
-					cursor.deactivate();
-					cursor.close();
+				
+				try {
+					// When Code3r mode is disable
+					if(sort){
+						cursor = db.query(tablename, null, FIELD_CODE + " LIKE '"
+								+ code + "%' ", null, null, null, FIELD_SCORE +" DESC LIMIT " + ssize, null);
+					}else{
+						cursor = db.query(tablename, null, FIELD_CODE + " LIKE '"
+								+ code + "%' LIMIT " + ssize, null, null, null, null, null);
+					}
+	
+					result = buildQueryResult(cursor);
+	
+					if (cursor != null) {
+						cursor.deactivate();
+						cursor.close();
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
 			}
 		}
 		return result;
@@ -697,6 +700,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
 			int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
 			int idColumn = cursor.getColumnIndex(FIELD_id);
+			HashMap duplicateCheck = new HashMap();
 			do {
 				Mapping munit = new Mapping();
 				munit.setWord(cursor.getString(wordColumn));
@@ -712,23 +716,25 @@ public class LimeDB extends SQLiteOpenHelper {
 				if(munit.getWord() == null || munit.getWord().trim().equals("")){
 					continue;
 				}
-				result.add(munit);
+				if(duplicateCheck.get(munit.getWord()) == null){
+					result.add(munit);
+					duplicateCheck.put(munit.getWord(), munit.getWord());
+				}
 			} while (cursor.moveToNext());
 
 			int ssize = mLIMEPref.getSimilarCodeCandidates();
-			HashMap dedupHm = new HashMap();
-			if (relatedlist != null && relatedlist.indexOf("|") != -1) {
+			if (ssize > 0 && relatedlist != null && relatedlist.indexOf("|") != -1) {
 				String templist[] = relatedlist.split("\\|");
 				int scount = 0;
 				for (String unit : templist) {
 					if(ssize != 0 && scount > ssize){break;}
-					if(dedupHm.get(unit) == null){
+					if(duplicateCheck.get(unit) == null){
 						Mapping munit = new Mapping();
 						munit.setWord(unit);
 						munit.setScore(0);
 						munit.setCode("@RELATED@");
 						result.add(munit);
-						dedupHm.put(unit, unit);
+						duplicateCheck.put(unit, unit);
 						scount++;
 					}
 				}
@@ -760,36 +766,40 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		List<Mapping> result = new LinkedList<Mapping>();
 
-		if (pword != null && !pword.trim().equals("")) {
 
-			Cursor cursor = null;
-
-			SQLiteDatabase db = this.getReadableDatabase();
-
-			cursor = db.query("related", null, FIELD_DIC_pword + " = '"
-					+ pword + "'", null, null, null, FIELD_SCORE + " DESC", null);
-
-			if (cursor.moveToFirst()) {
-
-				int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
-				int cwordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
-				int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
-				int idColumn = cursor.getColumnIndex(FIELD_id);
-				do {
-					Mapping munit = new Mapping();
-					munit.setId(cursor.getString(idColumn));
-					munit.setPword(cursor.getString(pwordColumn));
-					munit.setCode("");
-					munit.setWord(cursor.getString(cwordColumn));
-					munit.setScore(cursor.getInt(scoreColumn));
-					munit.setDictionary(true);
-					result.add(munit);
-				} while (cursor.moveToNext());
-			}
-
-			if (cursor != null) {
-				cursor.deactivate();
-				cursor.close();
+		if(mLIMEPref.getSimiliarEnable()){
+			
+			if (pword != null && !pword.trim().equals("")) {
+	
+				Cursor cursor = null;
+	
+				SQLiteDatabase db = this.getReadableDatabase();
+	
+				cursor = db.query("related", null, FIELD_DIC_pword + " = '"
+						+ pword + "'", null, null, null, FIELD_SCORE + " DESC", null);
+	
+				if (cursor.moveToFirst()) {
+	
+					int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
+					int cwordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
+					int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
+					int idColumn = cursor.getColumnIndex(FIELD_id);
+					do {
+						Mapping munit = new Mapping();
+						munit.setId(cursor.getString(idColumn));
+						munit.setPword(cursor.getString(pwordColumn));
+						munit.setCode("");
+						munit.setWord(cursor.getString(cwordColumn));
+						munit.setScore(cursor.getInt(scoreColumn));
+						munit.setDictionary(true);
+						result.add(munit);
+					} while (cursor.moveToNext());
+				}
+	
+				if (cursor != null) {
+					cursor.deactivate();
+					cursor.close();
+				}
 			}
 		}
 		return result;
