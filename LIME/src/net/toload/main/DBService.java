@@ -144,10 +144,37 @@ public class DBService extends Service {
 		public void resetDownloadDatabase() throws RemoteException {
 			File delTargetFile1 = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
 			File delTargetFile3 = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_SOURCE_FILENAME);
+			File delTargetFile2 = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_SOURCE_FILENAME_EMPTY);
 			if(delTargetFile1.exists()){delTargetFile1.delete();}
-			if(delTargetFile3.exists()){delTargetFile3.delete();}			
+			if(delTargetFile3.exists()){delTargetFile3.delete();}	
+			if(delTargetFile2.exists()){delTargetFile2.delete();}			
 		}
 		 
+		@Override
+		public void downloadEmptyDatabase() throws RemoteException {
+			if (db == null) {loadLimeDB();}
+			resetDownloadDatabase();
+			Thread threadTask = new Thread() {
+				public void run() {
+					displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start_empty)+ "");
+					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_EMPTY, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME_EMPTY);
+					if(decompressFile(downloadedFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME)){
+						Thread threadTask = new Thread() {
+							public void run() {
+								downloadedFile.delete();
+								mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
+							}
+						};
+						threadTask.start();
+					}
+					getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
+					displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "");
+				}
+				
+			};
+			threadTask.start();
+		}
+		
 		@Override
 		public void downloadPreloadedDatabase() throws RemoteException {
 			if (db == null) {loadLimeDB();}
@@ -350,6 +377,13 @@ public class DBService extends Service {
 			if (db == null) {loadLimeDB();}
 			db.setImInfo(im, field, value);
 			
+		}
+
+		@Override
+		public void closeDatabse() throws RemoteException {
+			if (db != null) {
+				db.close();
+			}
 		}
 		
 	}

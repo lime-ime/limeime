@@ -17,7 +17,10 @@
 					android:text="@string/l3_initial_btn_load_preload_db" android:id="@+id/btnInitPreloadDB"></Button>
 				<Button android:layout_width="fill_parent"
 					android:layout_height="fill_parent" android:padding="20px"
-					android:id="@+id/btnResetDB" android:text="@string/l3_initial_btn_reset_db"></Button>
+					android:text="@string/l3_initial_btn_load_empty_db" android:id="@+id/btnInitEmptyDB"></Button>
+			</TableRow><TableRow android:id="@+id/TableRow01" android:padding="10px">
+				<Button android:layout_width="fill_parent" android:layout_height="fill_parent" android:padding="20px" android:id="@+id/btnResetDB" android:text="@string/l3_initial_btn_reset_db"></Button>
+				<Button android:layout_width="fill_parent" android:layout_height="fill_parent" android:padding="20px" android:enabled="false"></Button>
 			</TableRow>
 			<TableRow android:id="@+id/TableRow02" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:padding="10px"

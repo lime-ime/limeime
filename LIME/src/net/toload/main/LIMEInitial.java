@@ -93,6 +93,7 @@ public class LIMEInitial extends Activity {
 
 	private IDBService DBSrv = null;
 	Button btnInitPreloadDB = null;
+	Button btnInitEmptyDB = null;
 	Button btnResetDB = null;
 	Button btnBackupDB = null;
 	Button btnRestoreDB = null;
@@ -139,8 +140,10 @@ public class LIMEInitial extends Activity {
 		    	     					public void onClick(DialogInterface dialog, int id) {
 						    					initialButton();
 							    				try {
+							    					DBSrv.closeDatabse();
 							    					DBSrv.resetDownloadDatabase();
 							    					btnInitPreloadDB.setEnabled(true);
+							    					btnInitEmptyDB.setEnabled(true);
 							    					btnResetDB.setEnabled(true);
 						    						mLIMEPref.setParameter("im_loading", false);
 						    						mLIMEPref.setParameter("im_loading_table", "");
@@ -154,6 +157,7 @@ public class LIMEInitial extends Activity {
 		    	        
 						    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
 						    	    	public void onClick(DialogInterface dialog, int id) {
+					    						btnResetDB.setEnabled(true);
 						    	        		hasReset = false;
 						    	        	}
 						    	     });   
@@ -173,6 +177,8 @@ public class LIMEInitial extends Activity {
 
 		        if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
 		        	try {
+    					DBSrv.closeDatabse();
+		        		btnInitEmptyDB.setEnabled(false);
 						btnInitPreloadDB.setEnabled(false);
 						mLIMEPref.setParameter(LIME.DOWNLOAD_START, true);
 						Toast.makeText(v.getContext(), getText(R.string.l3_initial_download_database), Toast.LENGTH_SHORT).show();
@@ -191,6 +197,30 @@ public class LIMEInitial extends Activity {
 			}
 		});
 		
+		btnInitEmptyDB.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+
+		        if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
+		        	try {
+    					DBSrv.closeDatabse();
+		        		btnInitEmptyDB.setEnabled(false);
+						btnInitPreloadDB.setEnabled(false);
+						mLIMEPref.setParameter(LIME.DOWNLOAD_START, true);
+						Toast.makeText(v.getContext(), getText(R.string.l3_initial_download_database), Toast.LENGTH_SHORT).show();
+						DBSrv.downloadEmptyDatabase();
+
+						// Reset for SearchSrv
+						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+						
+					} catch (RemoteException e) {
+						mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
+						e.printStackTrace();
+					}
+		        }else{
+		        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
 		
 		btnBackupDB.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -203,6 +233,7 @@ public class LIMEInitial extends Activity {
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
 			    					try {
+				    					DBSrv.closeDatabse();
 										DBSrv.backupDatabase();
 									} catch (RemoteException e) {
 										e.printStackTrace();
@@ -233,6 +264,7 @@ public class LIMEInitial extends Activity {
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
 			    					try {
+				    					DBSrv.closeDatabse();
 			    						DBSrv.restoreDatabase();
 									} catch (RemoteException e) {
 										e.printStackTrace();
@@ -290,6 +322,7 @@ public class LIMEInitial extends Activity {
 		if(btnResetDB == null){
 			btnResetDB = (Button) findViewById(R.id.btnResetDB);
 			btnInitPreloadDB = (Button) findViewById(R.id.btnInitPreloadDB);	
+			btnInitEmptyDB = (Button) findViewById(R.id.btnInitEmptyDB);	
 			btnBackupDB = (Button) findViewById(R.id.btnBackupDB);
 			btnRestoreDB = (Button) findViewById(R.id.btnRestoreDB);
 		}
@@ -297,9 +330,11 @@ public class LIMEInitial extends Activity {
 		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
 		if(!checkDbFile.exists() && !mLIMEPref.getParameterBoolean(LIME.DOWNLOAD_START)){
 			btnInitPreloadDB.setEnabled(true);
+			btnInitEmptyDB.setEnabled(true);
 			Toast.makeText(this, getText(R.string.l3_tab_initial_message), Toast.LENGTH_SHORT).show();
 		}else{
 			btnInitPreloadDB.setEnabled(false);
+			btnInitEmptyDB.setEnabled(false);
 		}
 	}
 
