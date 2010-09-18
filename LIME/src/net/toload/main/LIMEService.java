@@ -375,7 +375,6 @@ public class LIMEService extends InputMethodService implements
 			return;
 		}
 
- 
 		mKeyboardSwitcher.makeKeyboards(false);
 
 		TextEntryState.newSession(this);
@@ -445,8 +444,6 @@ public class LIMEService extends InputMethodService implements
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_URI) {
 				mPredictionOn = false;
 				mEnglishOnly = true;
-
-				// Log.i("ART","onIM7");
 				onIM = false;
 				isModeURL = true;
 				mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_URL, attribute.imeOptions);
@@ -2154,21 +2151,11 @@ public class LIMEService extends InputMethodService implements
 						primaryCode = Character.toUpperCase(primaryCode);
 					}
 				}
-				if(primaryCode != 10 && primaryCode != -99){
-					mComposing.append((char) primaryCode);
-					getCurrentInputConnection().setComposingText(mComposing, 1);
-					updateCandidates();
-					misMatched = mComposing.toString();
-				}else if(primaryCode == -99 || isEnterNext){
-					//super.onKeyDown(20,new KeyEvent(KeyEvent.ACTION_UP, 20));
+				if(primaryCode != 10 && primaryCode != -99 && !isEnterNext){
+					getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
+				}else{
 					getCurrentInputConnection().sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, 20));
 					isEnterNext = false;
-				}else{
-					if(!mCandidateView.takeSelectedSuggestion()){
-						if(!isModePassword && !isModeURL){
-							getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
-						}
-					}
 				}
 			}
 		}
