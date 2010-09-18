@@ -375,12 +375,6 @@ public class LIMEService extends InputMethodService implements
 			return;
 		}
 
-		if(mEnglishIMStart){
-			onIM = false;
-			mEnglishOnly = true;
-		}else{
-			onIM = true;
-		}
  
 		mKeyboardSwitcher.makeKeyboards(false);
 
@@ -401,6 +395,13 @@ public class LIMEService extends InputMethodService implements
 		isModePassword = false;
 		isEnterNext = false;
 
+		if(mEnglishIMStart){
+			onIM = false;
+			mEnglishOnly = true;
+		}else{
+			onIM = true;
+		}
+		
 		switch (attribute.inputType & EditorInfo.TYPE_MASK_CLASS) {
 		case EditorInfo.TYPE_CLASS_NUMBER:
 		case EditorInfo.TYPE_CLASS_DATETIME:
