@@ -412,7 +412,6 @@ public class LIMEService extends InputMethodService implements
 			break;
 		case EditorInfo.TYPE_CLASS_TEXT:
 
-			
 				// Make sure that passwords are not displayed in candidate view
 				int variation = attribute.inputType
 						& EditorInfo.TYPE_MASK_VARIATION;
@@ -477,12 +476,6 @@ public class LIMEService extends InputMethodService implements
 					// mCompletionOn = true && isFullscreenMode();
 				}
 				
-
-				if(mEnglishIMStart){
-					mKeyboardSwitcher.toggleChinese();
-					onIM = false;
-					mEnglishOnly = true;
-				}
 				// updateShiftKeyState(attribute);
 			break;
 		default:
@@ -506,6 +499,10 @@ public class LIMEService extends InputMethodService implements
 		updateShiftKeyState(getCurrentInputEditorInfo());
 		setCandidatesViewShown(false);
 
+		if(mEnglishIMStart && !isModeURL){
+			switchChiEngNoToast();
+		}
+		
 		// Log.i("ART","onStartInputView:"+onIM);
 
 	}
@@ -1699,7 +1696,23 @@ public class LIMEService extends InputMethodService implements
 		mKeyboardSwitcher.toggleSymbols();
 
 	}
+	private void switchChiEngNoToast() {
+		// mEnglishOnly = !mEnglishOnly;
+		// cancel candidate view if it's shown
 
+		// if(mCapsLock) toggleCapsLock();
+
+		mKeyboardSwitcher.toggleChinese();
+		mEnglishOnly = !mKeyboardSwitcher.isChinese();
+
+		if (mEnglishOnly) {
+			onIM = false;
+
+		} else {
+			onIM = true;
+		}
+
+	}
 	private void switchChiEng() {
 		// mEnglishOnly = !mEnglishOnly;
 		// cancel candidate view if it's shown
