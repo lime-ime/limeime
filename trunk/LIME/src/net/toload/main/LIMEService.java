@@ -412,13 +412,7 @@ public class LIMEService extends InputMethodService implements
 			break;
 		case EditorInfo.TYPE_CLASS_TEXT:
 
-			if(mEnglishIMStart){
-				mPredictionOn = false;
-				mEnglishOnly = true;
-				onIM = false;
-				isModeURL = true;
-				mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM, attribute.imeOptions);
-			}else{
+			
 				// Make sure that passwords are not displayed in candidate view
 				int variation = attribute.inputType
 						& EditorInfo.TYPE_MASK_VARIATION;
@@ -459,12 +453,12 @@ public class LIMEService extends InputMethodService implements
 					if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0) {
 						disableAutoCorrect = true;
 					}
-					if((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) != 0 ||
-							(attribute.inputType & EditorInfo.TYPE_CLASS_TEXT) == 0) {
-						mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection),EditorInfo.IME_ACTION_NONE);
-					}else{
-						mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection),EditorInfo.IME_ACTION_NEXT);
-					}
+						if((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) != 0 ||
+								(attribute.inputType & EditorInfo.TYPE_CLASS_TEXT) == 0) {
+							mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection),EditorInfo.IME_ACTION_NONE);
+						}else{
+							mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection),EditorInfo.IME_ACTION_NEXT);
+						}
 				}
 	
 				// If NO_SUGGESTIONS is set, don't do prediction.
@@ -482,8 +476,13 @@ public class LIMEService extends InputMethodService implements
 					mPredictionOn = false;
 					// mCompletionOn = true && isFullscreenMode();
 				}
+				
+
+				if(mEnglishIMStart){
+					mKeyboardSwitcher.toggleChinese();
+					onIM = false;
+				}
 				// updateShiftKeyState(attribute);
-			}
 			break;
 		default:
 			// mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT,

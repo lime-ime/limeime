@@ -62,15 +62,15 @@
     
     <string name="im">输入法</string>
     <string name="im_reverse_lookup_list">输入法字根反查</string>
-    <string name="default_reverse_lookup_list">自定义字根反查</string>
+    <string name="default_reverse_lookup_list">自建字根反查</string>
     <string name="cj_reverse_lookup_list">仓颉字根反查</string>
     <string name="scj_reverse_lookup_list">快仓字根反查</string>
     <string name="dayi_reverse_lookup_list">大易字根反查</string>
     <string name="bpmf_reverse_lookup_list">注音字根反查</string>
     <string name="ez_reverse_lookup_list">轻松字根反查</string>
-    <!-- <string name="array_reverse_lookup_list">行列字根反查</string> -->
+    <!--<string name="array_reverse_lookup_list">行列字根反查</string>
     
-    <string name="han_convert_option_list">中文简/繁体字码转换</string>
+    --><string name="han_convert_option_list">中文简/繁体字码转换</string>
     
     
     <string name="table_list">对应表选取</string>
@@ -78,7 +78,7 @@
     <string name="vibrate_on_keypress">打字震动</string>
     <string name="sound_on_keypress">打字音效</string>
     <string name="display_number_keypads">显示数字键盘</string>
-    <string name="display_number_keypads_summary">显示数字按钮于预设键盘上</string>
+    <string name="display_number_keypads_summary">显示数字按钮于键盘上</string>
     <string name="similiar_enable_switch">启用关联字典</string>
     <string name="similiar_enable_switch_summary">启用关联字典功能</string>
     <string name="candidate_switch">滑动选取</string>
@@ -172,14 +172,14 @@
     <!-- IM Reverse Lookup List -->  
     <string-array name="im_reverse_lookup">
 		<item>无</item>
-		<item>预设</item>
+		<item>自建</item>
 		<item>仓颉</item>
 		<item>快仓</item>
 		<item>大易</item>
 		<item>注音</item>
 		<item>轻松</item>
-		<!-- <item>行列</item> -->
-	</string-array>
+		<!--<item>行列</item>
+	--></string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
 		<item>custom</item>
@@ -187,20 +187,20 @@
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item>
-		<!-- <item>array</item> -->
-	</string-array>
+		<item>ez</item><!--
+		<item>array</item>
+	--></string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
-		<item>预设键盘</item>
+		<item>自建键盘</item>
 		<item>电话键盘</item>
 		<item>仓颉键盘</item>
 		<item>快仓键盘</item>
 		<item>大易键盘</item>
 		<item>注音键盘</item>
-		<item>轻松键盘</item>
-		<!-- <item>行列键盘</item> -->
-	</string-array>
+		<item>轻松键盘</item><!--
+		<item>行列键盘</item>
+	--></string-array>
 	<string-array name="keyboard_defaultstate">
 		<item>true</item>
 		<item>true</item>
@@ -208,9 +208,9 @@
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
+		<item>true</item><!--
 		<item>true</item>
-		<!-- <item>true</item> -->
-	</string-array>
+	--></string-array>
     <string-array name="keyboard_codes">
 		<item>custom</item>
 		<item>phone</item>
@@ -218,18 +218,18 @@
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item>
-		<!-- <item>array</item> -->
-	</string-array>
+		<item>ez</item><!--
+		<item>array</item>
+	--></string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
 		<item>cj</item>
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item>
-		<!-- <item>array</item> -->
-		<item>related</item>
+		<item>ez</item><!--
+		<item>array</item>
+		--><item>related</item>
 		<item>dictionary</item>
 	</string-array>
     
@@ -244,21 +244,21 @@
 	
 	<!-- Table Selection list -->
 	<string-array name="table">
-		<item>预设/电话</item>
+		<item>自建/电话</item>
 		<item>仓颉</item>
 		<item>快仓</item>
 		<item>大易</item>
 		<item>注音</item>
-		<item>轻松</item>
-		<!-- <item>行列</item> -->
-		<item>预载关联字</item>
+		<item>轻松</item><!--
+		<item>行列</item>
+		--><item>预载关联字</item>
 		<item>英文字典</item>
 	</string-array>
 	
 	<!-- Version 3 String Set -->
-    <string name="l3_message_initial_required">请初始化 LIME 资料库_</string>
+    <string name="l3_message_initial_required">请初始化 LIME 数据库_</string>
     
-    <string name="l3_tab_initial">初始资料库</string>
+    <string name="l3_tab_initial">初始数据库</string>
     <string name="l3_tab_initial_error">下载失败，请确认装置已连上网路.</string>
     <string name="l3_tab_initial_message">请点选 [预载数据库] OR [空白数据库] 键下载 LIME 数据库或点选 [还原数据库] 键由备份档案中还原</string>
     <string name="l3_initial_btn_load_empty_db">空白数据库</string>
@@ -266,21 +266,21 @@
     <string name="l3_initial_btn_reset_db">重置数据库</string>
     
     <string name="l3_tab_manage">输入法管理</string>
-    <string name="l3_manage_default">预设</string>
+    <string name="l3_manage_default">自建</string>
     <string name="l3_manage_phonetic">注音</string>
     <string name="l3_manage_cj">仓颉</string>
     <string name="l3_manage_scj">快仓</string>
     <string name="l3_manage_dayi">大易</string>
-    <string name="l3_manage_eazy">轻松</string>
-    <!-- <string name="l3_manage_array">行列</string>  -->
+    <string name="l3_manage_eazy">轻松</string><!--
+    <string name="l3_manage_array">行列</string>
     
-    <string name="l3_tab_preference">喜好设定</string>
+    --><string name="l3_tab_preference">喜好设定</string>
     
 	<string name="l3_dbservice_download_start">正在取得预载数据库, 这一个动作会持续一至数分钟，请您耐心等候.</string>
-	<string name="l3_dbservice_download_start_empty">正在取得白空数据库, 这一个动作会持续一至数分钟，请您耐心等候.</string>
+	<string name="l3_dbservice_download_start_empty">正在取得空白数据库, 这一个动作会持续一至数分钟，请您耐心等候.</string>
     <string name="l3_dbservice_download_initial">正在初始化数据库.</string>
-    <string name="l3_dbservice_download_loaded">数据库已成功载入.</string>
-    <string name="l3_dbservice_download_convert">输入法进行转换中.</string>
+    <string name="l3_dbservice_download_loaded">预载数据库已成功载入.</string>
+    <string name="l3_dbservice_download_convert">输入法进行转换中...</string>
     
     <string name="l3_message_database_reset_confirm">您是否要移除数据库?</string>
     <string name="l3_message_table_reset_confirm">您是否要清除所有记录?</string>

@@ -61,7 +61,7 @@
     
     <string name="im">Input Method</string>
     <string name="im_reverse_lookup_list">R-Lookup Selection</string>
-    <string name="default_reverse_lookup_list">R-Lookup in Default</string>
+    <string name="default_reverse_lookup_list">R-Lookup in Custom</string>
     <string name="cj_reverse_lookup_list">R-Lookup in ChangJei</string>
     <string name="scj_reverse_lookup_list">R-Lookup in SChangJei</string>
     <string name="dayi_reverse_lookup_list">R-Lookup in Dayi</string>
@@ -172,7 +172,7 @@
     <!-- IM Reverse Lookup List -->  
     <string-array name="im_reverse_lookup">
 		<item>None</item>
-		<item>Default</item>
+		<item>Custom</item>
 		<item>Changjei</item>
 		<item>SChangjei</item>
 		<item>Dayi</item>
@@ -192,7 +192,7 @@
 	--></string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
-		<item>Default</item>
+		<item>Custom</item>
 		<item>Phone</item>
 		<item>Changjei</item>
 		<item>SChangjei</item>
@@ -245,7 +245,7 @@
 	
 	<!-- Table Selection list -->
 	<string-array name="table">
-		<item>Default/Phone</item>
+		<item>Custom/Phone</item>
 		<item>Changjei</item>
 		<item>SChangjei</item>
 		<item>Dayi</item>
