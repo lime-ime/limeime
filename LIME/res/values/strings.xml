@@ -192,7 +192,7 @@
 	--></string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
-		<item>Custom</item>
+		<item>Default</item>
 		<item>Phone</item>
 		<item>Changjei</item>
 		<item>SChangjei</item>

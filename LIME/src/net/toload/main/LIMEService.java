@@ -481,6 +481,7 @@ public class LIMEService extends InputMethodService implements
 				if(mEnglishIMStart){
 					mKeyboardSwitcher.toggleChinese();
 					onIM = false;
+					mEnglishOnly = true;
 				}
 				// updateShiftKeyState(attribute);
 			break;
@@ -1888,7 +1889,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	private void handleCharacter(int primaryCode, int[] keyCodes) {
 
-		Log.i("ART","handleCharacter :" + primaryCode);
+		//Log.i("ART","handleCharacter :" + primaryCode);
 		
 		// Use the code -99 to represent the Action Move Downward
 		if(primaryCode == -99){
