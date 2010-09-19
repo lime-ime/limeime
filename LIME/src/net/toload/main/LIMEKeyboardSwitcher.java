@@ -303,6 +303,7 @@ public class LIMEKeyboardSwitcher {
     		setKeyboardMode(mChnMode, mImeOptions, mIsSymbols, mIsShifted);
     	else{
     		setKeyboardMode(mEngMode, mImeOptions, mIsSymbols, mIsShifted);
+    		
     	}
 
     }
