@@ -315,7 +315,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			return;
 		}
 		
-		Log.i("ART", "srclist.size():" + srclist.size());
+		//Log.i("ART", "srclist.size():" + srclist.size());
 		
 		if (srclist != null && srclist.size() > 0) {
 
@@ -325,18 +325,20 @@ public class LimeDB extends SQLiteOpenHelper {
 				for (int i = 0; i < srclist.size(); i++) {
 
 					Mapping unit = srclist.get(i);
-					
+				    if(unit == null){continue;}
+				    
 					if(i+1 <srclist.size()){
 						Mapping unit2 = srclist.get((i + 1));
+					    if(unit2 == null){continue;}
 						
 						if (unit != null 
 							&& unit.getWord() != null && !unit.getWord().equals("")
 							&& unit2 != null
 							&& unit2.getWord() != null && !unit2.getWord().equals("")) {
 
-							Log.i("ART", "WORD + WORD2:" + unit.getWord() + " - " + unit2.getWord());
+							//Log.i("ART", "WORD + WORD2:" + unit.getWord() + " - " + unit2.getWord());
 							Mapping munit = this.isExists(unit.getWord(),unit2.getWord());
-							Log.i("ART", "munit:" + munit.getWord() + " - " + munit.getPword());
+							//Log.i("ART", "munit:" + munit.getWord() + " - " + munit.getPword());
 							if (munit == null) {
 								try {
 									ContentValues cv = new ContentValues();
@@ -395,7 +397,6 @@ public class LimeDB extends SQLiteOpenHelper {
 					SQLiteDatabase db = this.getWritableDatabase();
 					db.update(tablename, cv, FIELD_id + " = " + srcunit.getId(), null);
 				}
-				//Log.i("ART","Add Score for : " + srcunit.isDictionary() + " / " + srcunit.getId() + srcunit.getCode() + srcunit.getScore());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
