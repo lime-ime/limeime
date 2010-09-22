@@ -2270,7 +2270,6 @@ public class LIMEService extends InputMethodService implements
 		} else if (firstMatched != null && firstMatched.isDictionary()) {
 			commitTyped(getCurrentInputConnection());
 			updateDictionaryView();
-			templist.clear();
 		}
 		// setCandidatesViewShown(false);
 
