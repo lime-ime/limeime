@@ -37,26 +37,66 @@
 				android:title="@string/keyboard_list"
 				android:entries="@array/keyboard"
 				android:entryValues="@array/keyboard_defaultstate"
-				android:defaultValue="0;1;2;3;4;5"
+				android:defaultValue="0;1;2;3;4;5;6;7"
 				android:dialogTitle="@string/keyboard_list" />
-         <CheckBoxPreference
-                android:key="three_rows_remapping"
-                android:title="@string/three_rows_remapping" 
-                android:summary="@string/three_rows_remapping_summary" />
+		<CheckBoxPreference
+                android:key="default_in_english"
+                android:title="@string/default_in_english" 
+                android:summary="@string/default_in_english_summary"
+            	android:defaultValue="false" 
+                />
+       
         <CheckBoxPreference
                 android:key="vibrate_on_keypress"
+                android:defaultValue="false" 
                 android:title="@string/vibrate_on_keypress" />
         <CheckBoxPreference
                 android:key="sound_on_keypress"
+                android:defaultValue="false" 
                 android:title="@string/sound_on_keypress"/>
         <CheckBoxPreference
                 android:key="display_number_keypads"
+                android:defaultValue="false" 
                 android:title="@string/display_number_keypads"
                 android:summary="@string/display_number_keypads_summary" />
     </PreferenceCategory>
+    
+    <!--<PreferenceCategory
+            android:title="@string/prediction_category"
+            android:key="prediction_settings">
+        <CheckBoxPreference
+            android:key="auto_cap"
+            android:title="@string/auto_cap"
+            android:persistent="true"
+            android:defaultValue="true"
+            />
+
+        <CheckBoxPreference
+            android:key="quick_fixes"
+            android:title="@string/quick_fixes"
+            android:summary="@string/quick_fixes_summary"
+            android:persistent="true"
+            android:defaultValue="true"
+            />
+
+        <CheckBoxPreference
+            android:key="auto_complete"
+            android:title="@string/auto_complete"
+            android:summary="@string/auto_complete_summary"
+            android:persistent="true" 
+            android:defaultValue="true"/>
+            
+    </PreferenceCategory>
+    -->
+    
     <PreferenceCategory
         		xmlns:android="http://schemas.android.com/apk/res/android"
                 android:summary="" android:key="lime_im" android:title="@string/im">
+     <CheckBoxPreference
+                android:key="three_rows_remapping"
+                android:title="@string/three_rows_remapping" 
+                android:defaultValue="false" 
+                android:summary="@string/three_rows_remapping_summary" />
     <ListPreference
     			android:key="han_convert_option"
     			android:title="@string/han_convert_option_list" 
@@ -65,7 +105,7 @@
     			android:dialogTitle="@string/han_convert_option_list" 
     			android:defaultValue="0"/>
     <ListPreference
-    			android:key="default_im_reverselookup"
+    			android:key="custom_im_reverselookup"
     			android:title="@string/default_reverse_lookup_list" 
     			android:entries="@array/im_reverse_lookup" 
     			android:entryValues="@array/im_reverse_lookup_codes" 
@@ -74,6 +114,13 @@
     <ListPreference
     			android:key="cj_im_reverselookup"
     			android:title="@string/cj_reverse_lookup_list" 
+    			android:entries="@array/im_reverse_lookup" 
+    			android:entryValues="@array/im_reverse_lookup_codes" 
+    			android:dialogTitle="@string/im_reverse_lookup_list" 
+    			android:defaultValue="none"/>
+    <ListPreference
+    			android:key="scj_im_reverselookup"
+    			android:title="@string/scj_reverse_lookup_list" 
     			android:entries="@array/im_reverse_lookup" 
     			android:entryValues="@array/im_reverse_lookup_codes" 
     			android:dialogTitle="@string/im_reverse_lookup_list" 
@@ -92,8 +139,22 @@
     			android:entryValues="@array/im_reverse_lookup_codes" 
     			android:dialogTitle="@string/im_reverse_lookup_list" 
     			android:defaultValue="none"/>
+    <ListPreference
+    			android:key="ez_im_reverselookup"
+    			android:title="@string/ez_reverse_lookup_list" 
+    			android:entries="@array/im_reverse_lookup" 
+    			android:entryValues="@array/im_reverse_lookup_codes" 
+    			android:dialogTitle="@string/im_reverse_lookup_list" 
+    			android:defaultValue="none"/><!--
+   	<ListPreference
+    			android:key="array_im_reverselookup"
+    			android:title="@string/array_reverse_lookup_list" 
+    			android:entries="@array/im_reverse_lookup" 
+    			android:entryValues="@array/im_reverse_lookup_codes" 
+    			android:dialogTitle="@string/im_reverse_lookup_list" 
+    			android:defaultValue="none"/>
    
-</PreferenceCategory>
+--></PreferenceCategory>
     
     <PreferenceCategory
         xmlns:android="http://schemas.android.com/apk/res/android"
@@ -106,7 +167,12 @@
 				android:entries="@array/similiar_codes"
 				android:entryValues="@array/similiar_codes"
 				android:dialogTitle="@string/similiar_list" 
-				android:defaultValue="150"/>
+				android:defaultValue="20"/>
+        <CheckBoxPreference
+                android:key="similiar_enable"
+                android:title="@string/similiar_enable_switch"
+                android:defaultValue="true"
+                android:summary="@string/similiar_enable_switch_summary" />
         <CheckBoxPreference
                 android:key="candidate_switch"
                 android:title="@string/candidate_switch"
@@ -134,6 +200,8 @@
                 android:key="switch_english_mode"
                 android:title="@string/switch_english_mode"
                 android:summary="@string/switch_english_mode_summary" />
+    
     </PreferenceCategory>
+    
 </PreferenceScreen>
 

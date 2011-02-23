@@ -39,6 +39,7 @@ import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -46,11 +47,13 @@ import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceActivity;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -73,14 +76,37 @@ public class LIMEMenu extends TabActivity {
         super.onCreate(savedInstanceState);
         
         final TabHost tabHost = getTabHost();
-        
-        tabHost.addTab(tabHost.newTabSpec("tab1")
-        		.setIndicator(this.getText(R.string.lime_setting_db))
-                .setContent(new Intent(this, LIMESetting.class)));
 
+        int tabno = 0;
+
+		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+		if(!checkDbFile.exists()){
+			tabno = 2;
+		}
+		
+        tabHost.addTab(tabHost.newTabSpec("tab1")
+        		.setIndicator(this.getText(R.string.l3_tab_manage))
+                .setContent(new Intent(this, LIMEIMSetting.class)));
+        
         tabHost.addTab(tabHost.newTabSpec("tab2")
-        		.setIndicator(this.getText(R.string.lime_setting_preference))
-                .setContent(new Intent(this, LIMEPreference.class)));
+        		.setIndicator(this.getText(R.string.l3_tab_preference))
+        		.setContent(new Intent(this, LIMEPreference.class)));
+
+        tabHost.addTab(tabHost.newTabSpec("tab3")
+        		.setIndicator(this.getText(R.string.l3_tab_initial))
+                .setContent(new Intent(this, LIMEInitial.class)));
+
+        if(tabno != 0){
+            tabHost.setCurrentTab(tabno);
+        }
+        
+       /* WindowManager manager = (WindowManager) this.getSystemService(Context.WINDOW_SERVICE);
+        Display display = manager.getDefaultDisplay();
+        
+        Log.i("ART",  display.getWidth() + " * "+ display.getHeight());*/
+        // 09-16 15:53:47.042: INFO/ART(257): 320 * 480 OK
+
+        
     }
 	
 }

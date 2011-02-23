@@ -215,11 +215,13 @@ public class CandidateView extends View {
     };
     
     public void setComposingText(String composingText){
-    	mComposingText = composingText;
-    	mComposingTextView.setText(mComposingText);
-    	showComposing();
-    	
-    	
+    	if(composingText != null && !composingText.trim().equals("")){
+        	mComposingText = composingText;
+        	mComposingTextView.setText(mComposingText);
+        	showComposing();
+    	}else{
+    		mComposingTextView.setVisibility(mComposingTextView.INVISIBLE);
+    	}
     }
     public String getComposingText(String ComposingText){
 		return mComposingText;
@@ -254,6 +256,12 @@ public class CandidateView extends View {
                 	mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, 0, 
                 			mPopupCompoingY + offsetInWindow[1]);
                 }
+                
+               /* mComposingTextPopup.setWidth(popupWidth);
+            	mComposingTextPopup.setHeight(popupHeight);
+            	mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, 0, 
+            			mPopupCompoingY + offsetInWindow[1]);
+                mComposingTextView.setVisibility(VISIBLE);*/
                 mComposingTextView.setVisibility(VISIBLE);
 
 
@@ -433,38 +441,40 @@ public class CandidateView extends View {
         clear();
         if (suggestions != null) {
             mSuggestions = new LinkedList<Mapping>(suggestions);
-        }
-        
-        if(DEBUG){
-        	Log.i("setSuggestions:","mSuggestions.size:" + mSuggestions.size());
-        }
-        
-        if(mSuggestions != null && mSuggestions.size() > 0){
-            setBackgroundColor(bgcolor);
-            // Add by Jeremy '10, 3, 29
-            count = mSuggestions.size(); 
-            if(count > MAX_SUGGESTIONS) count = MAX_SUGGESTIONS;
-            
-            if(mSuggestions.get(0).isDictionary()){
-            	// no default selection for related words
-            	mSelectedIndex = -1;
-            }else if(mSuggestions.size() == 1){
-            	mSelectedIndex = 0;
-            }else {
-            	// default selection on suggestions 1 (0 is typed English in mixed English mode)
-            	mSelectedIndex = 1;
-            }
+	       
+	        if(DEBUG){
+	        	Log.i("setSuggestions:","mSuggestions.size:" + mSuggestions.size());
+	        }
+	        
+	        if(mSuggestions != null && mSuggestions.size() > 0){
+	            setBackgroundColor(bgcolor);
+	            // Add by Jeremy '10, 3, 29
+	            count = mSuggestions.size(); 
+	            if(count > MAX_SUGGESTIONS) count = MAX_SUGGESTIONS;
+	            
+	            if(mSuggestions.get(0).isDictionary()){
+	            	// no default selection for related words
+	            	mSelectedIndex = -1;
+	            }else if(mSuggestions.size() == 1){
+	            	mSelectedIndex = 0;
+	            }else {
+	            	// default selection on suggestions 1 (0 is typed English in mixed English mode)
+	            	mSelectedIndex = 1;
+	            }
+	        }else{
+	            setBackgroundColor(0);
+	        }
+	        
+	        mTypedWordValid = typedWordValid;
+	        scrollTo(0, 0);
+	        mTargetScrollX = 0;
+	        // Compute the total width
+	        onDraw(null);
+	        invalidate();
+	        requestLayout();
         }else{
-            setBackgroundColor(0);
+        	mSuggestions = new LinkedList<Mapping>();
         }
-        
-        mTypedWordValid = typedWordValid;
-        scrollTo(0, 0);
-        mTargetScrollX = 0;
-        // Compute the total width
-        onDraw(null);
-        invalidate();
-        requestLayout();
     }
 
     public void clear() {

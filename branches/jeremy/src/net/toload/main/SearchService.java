@@ -20,11 +20,15 @@
 
 package net.toload.main;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.toload.main.SearchService.SearchServiceImpl;
 
@@ -35,121 +39,100 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class SearchService extends Service {
-	
-	private static boolean SQLSELECT = true;
-	
-	private final static String TOTAL_RECORD = "total_record";
-	
-	// Add by Jeremy '10, 3 ,27. Multi table extension.
-	private final static String CJ_TOTAL_RECORD = "cj_total_record";
-	private final static String BPMF_TOTAL_RECORD = "bpmf_total_record";
-	private final static String DAYI_TOTAL_RECORD = "dayi_total_record";
-	private final static String TOTAL_RELATED = "total_related";
-	private final static String MAPPING_VERSION = "mapping_version";
-	private final static String CJ_MAPPING_VERSION = "cj_mapping_version";
-	private final static String BPMF_MAPPING_VERSION = "bmpf_mapping_version";
-	private final static String DAYI_MAPPING_VERSION = "dayi_mapping_version";
-	private final static String EZ_MAPPING_VERSION = "ez_mapping_version";
-	private final static String MAPPING_LOADING = "mapping_loading";
-	private final static String CANDIDATE_SUGGESTION = "candidate_suggestion";
-	private final static String LEARNING_SWITCH = "learning_switch";
-	
-	private final static String HanConvertOption = "han_convert_option";
 
-	
 	private LimeDB db = null;
 	private LimeHanConverter hanConverter = null;
-	private static HashMap<String, List> mappingIdx = null;
-	// Add by Jeremy '10, 4, 2 . Cache for multi-table extioen
-	private static HashMap<String, List> cj_mappingIdx = null;
-	private static HashMap<String, List> dayi_mappingIdx = null;
-	private static HashMap<String, List> bpmf_mappingIdx = null;
-	private static HashMap<String, List> ez_mappingIdx = null;
 	private static LinkedList diclist = null;
-	// Add by Jeremy '10, 4, 2 . Cache for multi-table extioen
+	private static List scorelist = null;
+	
 	private static String tablename = "";
 
 	private NotificationManager notificationMgr;
+	
+	private LIMEPreferenceManager mLIMEPref;
+
+	// Temp Mapping Object For updateMapping method.
+	Mapping updateMappingTemp = null;
 	
 	private static SearchServiceImpl obj = null;
 
 	private static int recAmount = 0;
 	private static boolean softkeypressed;
+	
+	private static List preresultlist = null;
+	private static String precode = null;
+	
+	private static ConcurrentHashMap<String, List> cache = null;
 
 	public class SearchServiceImpl extends ISearchService.Stub {
 
-		String precode = "";
 		Context ctx = null;
 
 		SearchServiceImpl(Context ctx) {
-			this.ctx = ctx;
+			this.ctx = ctx;	
+			mLIMEPref = new LIMEPreferenceManager(ctx);
+			
 		}
 		
 		public String hanConvert(String input){
-			if(hanConverter == null){hanConverter = new LimeHanConverter(ctx);}
-			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-			Integer hanConvertOption = Integer.parseInt(sp.getString(HanConvertOption, "0"));
+			if(hanConverter == null){
+				FileUtilities fu = new FileUtilities();
+				File hanDBFile = fu.isFileNotExist("/data/data/net.toload.main/databases/hanconvert.db");
+				if(hanDBFile!=null){
+					fu.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvert), hanDBFile);
+					
+				}
+				hanConverter = new LimeHanConverter(ctx);
+				}
+			//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+			Integer hanConvertOption = mLIMEPref.getHanCovertOption(); //Integer.parseInt(sp.getString(HanConvertOption, "0"));
 			
 			return hanConverter.convert(input, hanConvertOption);
 			
 		}
 		
-		private HashMap<String, List> get_mappingIdx()
-		{
-			if(tablename.equals("cj"))
-			{
-				if(cj_mappingIdx == null){cj_mappingIdx = new HashMap();}
-				return cj_mappingIdx;
-			}else if(tablename.equals("dayi"))
-			{
-				if(dayi_mappingIdx == null){dayi_mappingIdx = new HashMap();}
-				return dayi_mappingIdx;
-			}else if(tablename.equals("phonetic"))
-			{
-				if(bpmf_mappingIdx == null){bpmf_mappingIdx = new HashMap();}
-				return bpmf_mappingIdx;
-			}else if(tablename.equals("ez"))
-			{
-				if(ez_mappingIdx == null){ez_mappingIdx = new HashMap();}
-				return ez_mappingIdx;
-			}else
-			{
-				if(mappingIdx == null){mappingIdx = new HashMap();}
-				return mappingIdx;
-			}
-		}
-		
 		public String getTablename(){
-			if(db == null){db = new LimeDB(ctx);}
 			return tablename;
 		}
 		
 		public void setTablename(String table){
-			if(db == null){db = new LimeDB(ctx);}
-			tablename = table;
+			if(db == null){loadLimeDB();}
 			db.setTablename(table);
-			
+			tablename = table;
+		}
+		
+		private void loadLimeDB()
+		{	
+/*			FileUtilities fu = new FileUtilities();
+			fu.copyPreLoadLimeDB(ctx);	*/		
+			db = new LimeDB(ctx);
 		}
 		
 		//Modified by Jeremy '10,3 ,12 for more specific related word
 		//-----------------------------------------------------------
-		public List queryUserDic(String code, String word) throws RemoteException {
-			if(db == null){db = new LimeDB(ctx);}
-			List result = db.getDictionary(code, word);
+		public List queryUserDic(String word) throws RemoteException {
+			if(db == null){loadLimeDB();}
+			List result = db.queryUserDict(word);
 			return result;
 		}
 		//-----------------------------------------------------------
 		
+		public Cursor getDictionaryAll(){
+			if(db == null){loadLimeDB();}
+			return db.getDictionaryAll();
+			
+		}
 		
 		//Add by jeremy '10, 4,1
-		public void Rquery(String word) throws RemoteException {
-			if(db == null){db = new LimeDB(ctx);}
+		public void rQuery(String word) throws RemoteException {
+			if(db == null){loadLimeDB();}
 			String result = db.getRMapping(word);
 			if(result!=null && !result.equals("")){
 				displayNotificationMessage(result);
@@ -159,148 +142,89 @@ public class SearchService extends Service {
 		
 		public List query(String code, boolean softkeyboard) throws RemoteException {
 			
-			//if(mappingIdx == null){mappingIdx = new HashMap();}
-
-			SharedPreferences sp1 = ctx.getSharedPreferences(MAPPING_LOADING, 0);
-			String loadingstatus = sp1.getString(MAPPING_LOADING, "");
-			//Log.i("ART","Loading Status : " + loadingstatus);
-
+			if(db == null){loadLimeDB();}
+			
+			//Log.i("ART","Run SearchSrv query:"+ code);
+			// Check if system need to reset cache
+			
+			if(mLIMEPref.getParameterBoolean(LIME.SEARCHSRV_RESET_CACHE)){
+				cache = new ConcurrentHashMap(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+			}
+			
+			if(preresultlist == null){preresultlist = new LinkedList();}
 			List<Mapping> result = new LinkedList();
 			// Modified by Jeremy '10, 3, 28.  yes-> .. The database is loading (yes) and finished (no).
-			if(code != null && loadingstatus != null && loadingstatus.equalsIgnoreCase("no")){
+			//if(code != null && loadingstatus != null && loadingstatus.equalsIgnoreCase("no")){
+			if(code!=null) {
 				// clear mappingidx when user switching between softkeyboard and hard keyboard.
 				if(softkeypressed != softkeyboard){
-					get_mappingIdx().clear();
 					softkeypressed = softkeyboard;
 				}
-				if(recAmount == 0){
-					try{
-						recAmount = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(ctx).getString("similiar_list", "150"));				
-					}catch(Exception e){e.printStackTrace();}
-				}else{
-					try{
-						int tempRecAmount = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(ctx).getString("similiar_list", "150"));	
-						if(tempRecAmount != recAmount){
-							get_mappingIdx().clear();
-						}
-						recAmount = tempRecAmount;
-					}catch(Exception e){e.printStackTrace();}
-				}
-	
-				if(db == null){db = new LimeDB(ctx);}
-	
+				//recAmount = mLIMEPref.getSimilarCodeCandidates();
+			
+				
 				if (code != null) {
 					Mapping temp = new Mapping();
 						    temp.setCode(code);
 						    temp.setWord(code);
 				    result.add(temp);
 				    // Do this in updatecandidates already
-					code = code.toUpperCase();
-					precode = code;
+					code = code.toLowerCase();
+					if(code.length() == 1){
+						preresultlist = new LinkedList();
+					}
 				}
 				
-				if(get_mappingIdx().get(code) == null){
-		
-					//Log.i("ART", "Query from database:" + code);
-					// Start new search to database
-					result.addAll(db.getMapping(code, recAmount, softkeyboard));
+				
+			    List cacheTemp = cache.get(db.getTablename()+code);
+			    
+				if(cacheTemp != null){
+					result.addAll(cacheTemp);
+					preresultlist = cacheTemp;
+				}else{
 					
-					if(result.size() > 1){
-						// Has matched record then prepare suggestion list
-						// '10, 4, 3. Try to use nested select instead of using the related column
-						if(!SQLSELECT){
-							Mapping temp = result.get(1);
-							result.addAll(db.getSuggestion(temp.getRelated(), recAmount));
-						}
-						
-						get_mappingIdx().put(code, result);
-						return get_mappingIdx().get(code);
-					}
-					else{
-						// If there is no match result then load from cache / Check one layer only
+					// If code > 3 and previous code did not have any matched then system would consider it as english
+					if(code.length() > 6 && 
+							cache.get(db.getTablename()+code.subSequence(0, code.length()-1)) == null &&
+							cache.get(db.getTablename()+code.subSequence(0, code.length()-2)) == null &&
+							cache.get(db.getTablename()+code.subSequence(0, code.length()-3)) == null
+					){
+						//Log.i("ART","N-RUN->"+code);
+					}else{
 
-						if(code.length() > 1){
-							String tempcode = code.substring(0, (code.length() -1));
-							if(get_mappingIdx().get(tempcode) != null){
-								//Log.i("ART", "Query from cache level 1:" + code);
-								List temp = get_mappingIdx().get(tempcode);
-								result.addAll(temp.subList(1, temp.size()));
-								return result;
-							}else{
-								if(tempcode.length() >1){
-									String tempcode2 = tempcode.substring(0, (tempcode.length() -1));
-									if(get_mappingIdx().get(tempcode2) != null){
-										//Log.i("ART", "Query from cache level 2:" + code);
-										List temp = get_mappingIdx().get(tempcode2);
-										result.addAll(temp.subList(1, temp.size()));
-										return result;
+						List templist = db.getMapping(code, softkeyboard);
+						//Log.i("ART","templist:"+templist.size());
+						if(templist.size() > 0){
+							result.addAll(templist);
+							preresultlist = templist;
+							cache.put(db.getTablename()+code, templist);
+						}else{
+							boolean similiarCheck = true;
+							if(code.length() < 7){
+								boolean remap3row = mLIMEPref.getThreerowRemapping();
+								if(!remap3row){
+									templist = db.getMappingSimiliar(code);
+									if(templist.size() > 0){
+										result.addAll(templist);
+										cache.put(db.getTablename()+code, templist);
 									}
+								}else{
+									result.addAll(preresultlist);
 								}
 							}
 						}
-						
 					}
-					//*/
-				}else{
-					//Log.i("ART", "Query from cache original:" + code);
-					return get_mappingIdx().get(code);
 				}
 			}
-			
-			// if code == null then return empty list
 			return result;
 		}
 
 		public void initial() throws RemoteException {
-				
+			cache = new ConcurrentHashMap(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 		}
 
-		public void updateMapping(String id, String code, String word,
-				 String pword, int score, boolean isDictionary)
-				throws RemoteException {
-			
-			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-			boolean item = sp.getBoolean(LEARNING_SWITCH, false);
-				
-			if(item){
-				//Log.i("ART", "Update mapping : " + code);
-					
-					/* do this already in query
-					if(code != null){
-						code = code.toUpperCase();
-					}
-					*/
-					
-					Mapping temp = new Mapping();
-							      temp.setId(id);
-							      temp.setCode(code);
-							      temp.setWord(word);
-							      //temp.setPcode(pcode);
-							      temp.setPword(pword);
-							      temp.setScore(score);
-							      temp.setDictionary(isDictionary);
-				    if(db == null){db = new LimeDB(ctx);}
-						db.addScore(temp);
-					// Only do this if isDitionary is false
-					if(!isDictionary && get_mappingIdx().get(precode) != null){
-						//Log.i("ART", "Sorting cache in memory : " + precode + " for " + code);
-						List<Mapping> templist = get_mappingIdx().get(precode);
-						List<Mapping> resultlist = new LinkedList();
-						for(Mapping unit : templist){
-							if(//code.equalsIgnoreCase(unit.getCode()) &&  // Modified by Jeremy '10, 4, 4. May not equal in 3row remap
-									word.equals(unit.getWord())){
-								unit.setScore(unit.getScore() + 1);
-							}
-							resultlist.add(unit);
-						}
-						templist = null;
-						get_mappingIdx().put(precode, sortArray(precode, resultlist));
-					}
-			}
-				
-		}
-		
-		public List<Mapping> sortArray(String precode, List<Mapping> src) {
+		/*public List<Mapping> sortArray(String precode, List<Mapping> src) {
 			
 			// Modified by jeremy '10, 4, 5. Buf fix for 3row remap. code may not equal to precode.
 				if(src != null && src.size() > 1){
@@ -308,8 +232,6 @@ public class SearchService extends Service {
 						for (int j = i + 1; j < src.size(); j++) {
 							if (src.get(j).getScore() > src.get(i).getScore()) {
 								Mapping dummy = src.get(i);
-								// Only proceed sorting when there is no exact matched. 
-								// Mapping Object code=precord should always be the first item to display.
 								if(!dummy.getCode().equals(precode) && !src.get(j).getCode().equals(precode)){
 									src.set(i, src.get(j));
 									src.set(j, dummy);
@@ -318,45 +240,83 @@ public class SearchService extends Service {
 						}
 					}
 				}
-			
 			return src;
-		}
+		}*/
 
-		public void addDictionary(String id, String code, String word,
+		public void addUserDict(String id, String code, String word,
 				String pword, int score, boolean isDictionary)
 				throws RemoteException {
+
+				Log.i("ART","addUserDict:"+diclist);
+			
 				if(diclist == null){diclist = new LinkedList();}
 				
 				Mapping temp = new Mapping();
 			      temp.setId(id);
 			      temp.setCode(code);
 			      temp.setWord(word);
-	//		      temp.setPcode(pcode);
 			      temp.setPword(pword);
 			      temp.setScore(score);
 			      temp.setDictionary(isDictionary);
-			      
 			    diclist.addLast(temp);
 		}
 
-	public void updateDictionary() throws RemoteException {
+		public void updateUserDict() throws RemoteException {
+			//Log.i("ART","updateUserDict:"+diclist);
+			
 			if(db == null){db = new LimeDB(ctx);}
-			if(diclist.size() > 1){
+			if(diclist != null && diclist.size() > 1){
 				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-				boolean item = sp.getBoolean(CANDIDATE_SUGGESTION, false);
-				if(item){
+				boolean item = sp.getBoolean(LIME.CANDIDATE_SUGGESTION, false);
+				if(item && diclist != null){
+					//Log.i("ART","updateUserDict:"+item);
 					db.addDictionary(diclist);
+					diclist.clear();
 				}
-			}
-			diclist.clear();
-		}
-	public String keyToChar(String code){
-		if(db == null){db = new LimeDB(ctx);}
-		return db.keyToChar(code, tablename);
-	}
 
+				boolean item2 = sp.getBoolean(LIME.LEARNING_SWITCH, false);
+
+				if(item2 && scorelist != null){
+					for(int i=0 ; i < scorelist.size(); i++){
+						//Log.i("ART","updateUserDict addScore:"+((Mapping)scorelist.get(i)).getCode() + " " + ((Mapping)scorelist.get(i)).getId());
+						db.addScore((Mapping)scorelist.get(i));
+					}
+					scorelist.clear();
+				}	
+			}
+		}
+		
+		public String keyToChar(String code){
+			if(db == null){loadLimeDB();}
+			return db.keyToChar(code, tablename);
+		}
+
+		@Override
+		public void updateMapping(String id, String code, String word,
+				String pword, int score, boolean isDictionary)
+				throws RemoteException {
+			//Log.i("ART","updateMapping:"+scorelist);
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+			boolean item = sp.getBoolean(LIME.LEARNING_SWITCH, false);
+
+			if(scorelist == null){scorelist = new ArrayList();}
+			if(db == null){db = new LimeDB(ctx);}
+			
+			updateMappingTemp = new Mapping();
+			updateMappingTemp.setId(id);
+			updateMappingTemp.setCode(code);
+			updateMappingTemp.setWord(word);
+			updateMappingTemp.setPword(pword);
+			updateMappingTemp.setScore(score);
+			updateMappingTemp.setDictionary(isDictionary);
+		      
+			if(item){
+				//Log.i("ART","updateMapping:"+updateMappingTemp);
+				scorelist.add(updateMappingTemp);
+			}		
+			
+		}
 	}
-	
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -366,13 +326,7 @@ public class SearchService extends Service {
 		return obj;
 	}
 
-	/**
-	 * Sort array
-	 * @param src
-	 * @return
-	 */
-
-
+	
 	
 	/*
 	 * (non-Javadoc)
@@ -392,16 +346,8 @@ public class SearchService extends Service {
 	 */
 	@Override
 	public void onDestroy() {
-		
-		mappingIdx = null;
-		cj_mappingIdx = null;
-		dayi_mappingIdx = null;
-		bpmf_mappingIdx = null;
-		ez_mappingIdx = null;
-		
 		if(db != null){
 			db.close();
-			db = null;
 		}
 		super.onDestroy();
 	}
@@ -413,17 +359,16 @@ public class SearchService extends Service {
 	 */
 	@Override
 	public void onStart(Intent intent, int startId) {
-		//Log.i("ART", "Search Service Start");
 		super.onStart(intent, startId);
 	}
 	
 	private void displayNotificationMessage(String message){
 		Notification notification = new Notification(R.drawable.icon, message, System.currentTimeMillis());
-		// FLAG_AUTO_CANCEL add by jeremy '10, 3 28
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,new Intent(this, LIMEMenu.class), 0);
 			      	 notification.setLatestEventInfo(this, this.getText(R.string.ime_setting), message, contentIntent);
 			         notificationMgr.notify(0, notification);
 	}
-
+	
+	
 }

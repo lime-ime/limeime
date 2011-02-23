@@ -19,6 +19,8 @@ package net.toload.main;
 import java.util.HashMap;
 import java.util.Map;
 
+import android.util.Log;
+
 public class LIMEKeyboardSwitcher {
 
     public static final int MODE_TEXT = 1;
@@ -29,7 +31,10 @@ public class LIMEKeyboardSwitcher {
     public static final int MODE_TEXT_PHONETIC = 14;
     public static final int MODE_TEXT_DAYI = 15;
     public static final int MODE_TEXT_EZ = 16;
-    public static final int MODE_TEXT_PHONE = 17;
+    public static final int MODE_TEXT_PHONE = 17;/*
+    public static final int MODE_TEXT_ARRAY = 18;*/
+    public static final int MODE_TEXT_SCJ = 19;
+    public static final int MODE_TEXT_SCJ_NUMBER = 20;
     public static final int MODE_SYMBOLS = 2;
     public static final int MODE_PHONE = 3;
     public static final int MODE_URL = 4;
@@ -48,7 +53,6 @@ public class LIMEKeyboardSwitcher {
     
     public static final int IM_KEYBOARD = 0;
     
-   
 
     private static final int SYMBOLS_MODE_STATE_NONE = 0;
     private static final int SYMBOLS_MODE_STATE_BEGIN = 1;
@@ -56,20 +60,20 @@ public class LIMEKeyboardSwitcher {
 
     LIMEKeyboardView mInputView;
     LIMEService mContext;
-    
-    
 
     private KeyboardId mCurrentId;
     private Map<KeyboardId, LIMEKeyboard> mKeyboards;
     
-    private int mMode = MODE_TEXT;
+    private int mMode = KEYBOARDMODE_NORMAL;
     private int mChnMode = MODE_TEXT_DEFAULT;
+    private int mEngMode = MODE_TEXT;
     private int mImeOptions;
     private int mTextMode = MODE_TEXT_QWERTY;
     
     private boolean mIsShifted;
     private boolean mIsSymbols;
-    private boolean mIsChinese;
+    private boolean mIsChinese=true;
+    private boolean mIsAlphabet=false;
     private boolean mPreferSymbols;
     private int mSymbolsModeState = SYMBOLS_MODE_STATE_NONE;
 
@@ -127,41 +131,72 @@ public class LIMEKeyboardSwitcher {
         }
     }
 
-    void setKeyboardMode(int mode, int imeOptions) {
+   /* void setKeyboardMode(int mode, int imeOptions) {
         mSymbolsModeState = SYMBOLS_MODE_STATE_NONE;
         mPreferSymbols = mode == MODE_SYMBOLS;
-        mIsChinese = (mode == MODE_TEXT_DEFAULT || mode == MODE_TEXT_PHONETIC ||mode == MODE_TEXT_DAYI
-        		||mode == MODE_TEXT_EZ ||mode == MODE_TEXT_CJ || mode == MODE_TEXT_PHONE);
+        mIsChinese = (mode == MODE_TEXT_DEFAULT ||mode == MODE_TEXT_DEFAULT_NUMBER 
+        		|| mode == MODE_TEXT_PHONETIC ||mode == MODE_TEXT_DAYI ||mode == MODE_TEXT_ARRAY 
+        		||mode == MODE_TEXT_EZ ||mode == MODE_TEXT_SCJ ||mode == MODE_TEXT_SCJ_NUMBER ||mode == MODE_TEXT_CJ ||mode == MODE_TEXT_CJ_NUMBER || mode == MODE_TEXT_PHONE);
+        mIsAlphabet = ( mode == MODE_TEXT || mode== MODE_URL 
+        		|| mode == MODE_EMAIL || mode == MODE_IM || mode == MODE_PHONE );
         if(mIsChinese) mChnMode = mode;
-        else mMode = mode;
+        if(mIsAlphabet) mEngMode = mode;
+        
         if(mIsChinese){
         	setKeyboardMode(mode == MODE_SYMBOLS ? mChnMode : mode, imeOptions,
                 mPreferSymbols, false);
         	}
         else{
-        	setKeyboardMode(mode == MODE_SYMBOLS ? mMode : mode, imeOptions,
+        	setKeyboardMode(mode == MODE_SYMBOLS ? mEngMode : mode, imeOptions,
+                    mPreferSymbols, false);
+        }
+    }*/
+    
+    void setKeyboardMode(int mode, int imeOptions) {
+        mSymbolsModeState = SYMBOLS_MODE_STATE_NONE;
+        mPreferSymbols = mode == MODE_SYMBOLS;
+        mIsChinese = (mode == MODE_TEXT_DEFAULT ||mode == MODE_TEXT_DEFAULT_NUMBER 
+        		|| mode == MODE_TEXT_PHONETIC ||mode == MODE_TEXT_DAYI 
+        		||mode == MODE_TEXT_EZ ||mode == MODE_TEXT_SCJ ||mode == MODE_TEXT_SCJ_NUMBER ||mode == MODE_TEXT_CJ ||mode == MODE_TEXT_CJ_NUMBER || mode == MODE_TEXT_PHONE);
+        mIsAlphabet = ( mode == MODE_TEXT || mode== MODE_URL 
+        		|| mode == MODE_EMAIL || mode == MODE_IM || mode == MODE_PHONE );
+        if(mIsChinese) mChnMode = mode;
+        if(mIsAlphabet) mEngMode = mode;
+        
+        if(mIsChinese){
+        	setKeyboardMode(mode == MODE_SYMBOLS ? mChnMode : mode, imeOptions,
+                mPreferSymbols, false);
+        	}
+        else{
+        	setKeyboardMode(mode == MODE_SYMBOLS ? mEngMode : mode, imeOptions,
                     mPreferSymbols, false);
         }
     }
 
     void setKeyboardMode(int mode, int imeOptions, boolean isSymbols, boolean isShift) {
+    	
+    	if(mInputView == null) return;
         
         mImeOptions = imeOptions;
         mIsSymbols = isSymbols;
         mIsShifted = isShift;
-        mInputView.setPreviewEnabled(true);
+        //mInputView.setPreviewEnabled(true);
         KeyboardId id = getKeyboardId(mode, imeOptions, isSymbols, mIsShifted);
         LIMEKeyboard keyboard = getKeyboard(id);
 
         if (mode == MODE_PHONE) {
             mInputView.setPhoneKeyboard(keyboard);
-            mInputView.setPreviewEnabled(true);
+            //mInputView.setPreviewEnabled(true);
         }
 
         mCurrentId = id;
         mInputView.setKeyboard(keyboard);
+        
+         
+        keyboard.setShiftLocked(keyboard.isShiftLocked());
         keyboard.setShifted(mIsShifted);
-        if(isAlphabetMode()) keyboard.setShiftLocked(keyboard.isShiftLocked());
+        mInputView.setKeyboard(mInputView.getKeyboard()); //instead of invalidateAllKeys();
+        
         keyboard.setImeOptions(mContext.getResources(), mMode, imeOptions);
 
     }
@@ -188,7 +223,7 @@ public class LIMEKeyboardSwitcher {
             case MODE_TEXT:
                 return new KeyboardId(R.xml.lime_english, KEYBOARDMODE_NORMAL, true);
             case MODE_TEXT_DEFAULT:
-                return new KeyboardId(R.xml.lime);
+                return new KeyboardId(R.xml.lime, 0, true);
             case MODE_TEXT_DEFAULT_NUMBER:
                 if(isShifted) return new KeyboardId(R.xml.lime_number_shift, 0, true );    
                 else return new KeyboardId(R.xml.lime_number);
@@ -198,9 +233,18 @@ public class LIMEKeyboardSwitcher {
             case MODE_TEXT_CJ_NUMBER:
                 if(isShifted) return new KeyboardId(R.xml.lime_cj_number_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_cj_number);
+            case MODE_TEXT_SCJ:
+                if(isShifted) return new KeyboardId(R.xml.lime_cj_shift, 0, true);    
+                else return new KeyboardId(R.xml.lime_cj);
+            case MODE_TEXT_SCJ_NUMBER:
+                if(isShifted) return new KeyboardId(R.xml.lime_cj_number_shift, 0, true);    
+                else return new KeyboardId(R.xml.lime_cj_number);
             case MODE_TEXT_DAYI:
                 if(isShifted) return new KeyboardId(R.xml.lime_dayi_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_dayi);
+           /* case MODE_TEXT_ARRAY:*/
+                /*if(isShifted) return new KeyboardId(R.xml.lime_array_shift, 0, true);    
+                else return new KeyboardId(R.xml.lime_array);*/  
             case MODE_TEXT_PHONETIC:
                 if(isShifted) return new KeyboardId(R.xml.lime_phonetic_shift, 0, true);    
                 else return new KeyboardId(R.xml.lime_phonetic);
@@ -250,11 +294,7 @@ public class LIMEKeyboardSwitcher {
     }
 
     boolean isAlphabetMode() {
-        KeyboardId current = mCurrentId;
-        return current.mMode == KEYBOARDMODE_NORMAL
-            || current.mMode == KEYBOARDMODE_URL
-            || current.mMode == KEYBOARDMODE_EMAIL
-            || current.mMode == KEYBOARDMODE_IM;
+    	return mIsAlphabet;
     }
 
     void toggleShift() {
@@ -262,18 +302,17 @@ public class LIMEKeyboardSwitcher {
     	if(mIsChinese)
     		setKeyboardMode(mChnMode, mImeOptions, mIsSymbols, mIsShifted);
     	else{
-    		setKeyboardMode(mMode, mImeOptions, mIsSymbols, mIsShifted);
+    		setKeyboardMode(mEngMode, mImeOptions, mIsSymbols, mIsShifted);
     	}
 
     }
     
     void toggleChinese() {
-    	mIsChinese = !mIsChinese;
-    	mIsShifted = false;
-    	if(mIsChinese)
-    		setKeyboardMode(mChnMode, mImeOptions, mIsSymbols, mIsShifted);
+    	
+    	if(!mIsChinese)
+    		setKeyboardMode(mChnMode, mImeOptions);
     	else
-    		setKeyboardMode(mMode, mImeOptions, mIsSymbols, mIsShifted);
+    		setKeyboardMode(mEngMode, mImeOptions);
     }
     
     void toggleSymbols() {
@@ -282,7 +321,7 @@ public class LIMEKeyboardSwitcher {
     	if(mIsChinese)
     		setKeyboardMode(mChnMode, mImeOptions, mIsSymbols, mIsShifted);
     	else
-    		setKeyboardMode(mMode, mImeOptions, mIsSymbols, mIsShifted);
+    		setKeyboardMode(mEngMode, mImeOptions, mIsSymbols, mIsShifted);
         if (mIsSymbols && !mPreferSymbols) {
             mSymbolsModeState = SYMBOLS_MODE_STATE_BEGIN;
         } else {

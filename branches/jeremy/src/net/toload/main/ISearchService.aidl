@@ -6,11 +6,12 @@ interface ISearchService
 		String getTablename();
 		void setTablename(String tablename);
 		List query(String code, boolean softkeyboard);
-		void Rquery(String word);
-		List queryUserDic(String code, String word);
+		void rQuery(String word);
+		List queryUserDic(String word);
 		void updateMapping(String id, String code, String word, String pword, int score, boolean isDictionary);
-		void addDictionary(String id, String code, String word, String pword, int score, boolean isDictionary);
-		void updateDictionary();
+		void addUserDict(String id, String code, String word, String pword, int score, boolean isDictionary);
+		void updateUserDict();
 		String hanConvert(String input);
 		String keyToChar(String code);
+
 }
