@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="fill_parent"
+	android:gravity="center">
+
+
+	<ScrollView android:id="@+id/ScrollView01"
+		android:layout_height="wrap_content" android:layout_width="fill_parent"
+		android:padding="5px">
+
+		<TableLayout android:id="@+id/TableLayout01"
+			android:gravity="center" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+			<TableRow android:id="@+id/TableRow02" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:padding="10px"
+				android:gravity="center">
+				<Button android:layout_width="fill_parent"
+					android:layout_height="fill_parent" android:padding="20px"
+					android:id="@+id/btnSetupCustom" android:text="@string/l3_manage_default"></Button>
+				<Button android:layout_width="fill_parent"
+					android:layout_height="fill_parent" android:padding="20px"
+					android:id="@+id/btnSetupPhonetic" android:text="@string/l3_manage_phonetic"></Button>
+			</TableRow>
+			<TableRow android:id="@+id/TableRow01" android:padding="10px"
+				android:gravity="center">
+				<Button android:layout_width="fill_parent"
+					android:layout_height="fill_parent" android:padding="20px"
+					android:id="@+id/btnSetupCJ" android:text="@string/l3_manage_cj"></Button>
+				<Button android:layout_width="fill_parent"
+					android:layout_height="fill_parent" android:padding="20px"
+					android:id="@+id/btnSetupSCJ" android:text="@string/l3_manage_scj"></Button>
+			</TableRow>
+			<TableRow android:id="@+id/TableRow02" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:padding="10px"
+				android:gravity="center">
+				<Button android:layout_width="fill_parent"
+					android:layout_height="fill_parent" android:padding="20px"
+					android:id="@+id/btnSetupDayi" android:text="@string/l3_manage_dayi"></Button>
+				<Button android:layout_width="fill_parent"
+					android:layout_height="fill_parent" android:padding="20px"
+					android:id="@+id/btnSetupEz" android:text="@string/l3_manage_eazy"></Button>
+			</TableRow>
+			<TableRow android:id="@+id/TableRow02" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:padding="10px"
+				android:gravity="center"><!--
+				<Button android:layout_width="fill_parent"
+					android:layout_height="fill_parent" android:padding="20px"
+					android:id="@+id/btnSetupArray" android:text="@string/l3_manage_array"></Button>
+				--><Button android:layout_width="fill_parent"
+					android:layout_height="fill_parent" android:padding="20px"
+					android:id="@+id/btnEmptyNoUse2" android:enabled="false"></Button>
+				<Button android:layout_width="fill_parent"
+					android:layout_height="fill_parent" android:padding="20px"
+					android:id="@+id/btnEmptyNoUse" android:enabled="false"></Button>
+
+			</TableRow>
+		</TableLayout>
+	</ScrollView>
+
+</LinearLayout>
