@@ -197,7 +197,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		mLIMEPref.setTotalUserdictRecords("0");
 		// -------------------------------------------------------------------------
 		SQLiteDatabase db = this.getWritableDatabase();
-		db.delete("related", FIELD_DIC_score + " >0", null);
+		db.delete("related", FIELD_DIC_score + " > 0", null);
 		db.close();
 	}
 
@@ -1201,6 +1201,93 @@ public class LimeDB extends SQLiteOpenHelper {
 		SQLiteDatabase db = this.getWritableDatabase();
 			           db.insert("im",null, cv);
 		
+	}
+
+	public List<ImObj> getImList() {
+		List result = new LinkedList();
+		try {
+			SQLiteDatabase db = this.getReadableDatabase();
+			Cursor cursor = db.query("im", null, null, null, null, null, "code ASC", null);
+			if (cursor.moveToFirst()) {
+				do{
+					String title = cursor.getString(cursor.getColumnIndex("title"));
+					if(title.equals("keyboard")){
+						ImObj kobj = new ImObj();
+							  kobj.setCode(cursor.getString(cursor.getColumnIndex("code")));
+							  kobj.setKeyboard(cursor.getString(cursor.getColumnIndex("keyboard")));
+							  result.add(kobj);
+					}
+				} while (cursor.moveToNext());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	public List<KeyboardObj> getKeyboardList() {
+		List result = new LinkedList();
+		try {
+			SQLiteDatabase db = this.getReadableDatabase();
+			Cursor cursor = db.query("keyboard", null, null, null, null, null, "name ASC", null);
+			if (cursor.moveToFirst()) {
+				do{
+					KeyboardObj kobj = new KeyboardObj();
+								kobj.setCode(cursor.getString(cursor.getColumnIndex("code")));
+								kobj.setName(cursor.getString(cursor.getColumnIndex("name")));
+								kobj.setDescription(cursor.getString(cursor.getColumnIndex("desc")));
+								kobj.setType(cursor.getString(cursor.getColumnIndex("type")));
+								kobj.setImage(cursor.getString(cursor.getColumnIndex("image")));
+								kobj.setImkb(cursor.getString(cursor.getColumnIndex("imkb")));
+								kobj.setImshiftkb(cursor.getString(cursor.getColumnIndex("imshiftkb")));
+								kobj.setEngkb(cursor.getString(cursor.getColumnIndex("engkb")));
+								kobj.setEngshiftkb(cursor.getString(cursor.getColumnIndex("engshiftkb")));
+								kobj.setSymbolkb(cursor.getString(cursor.getColumnIndex("symbolkb")));
+								kobj.setSymbolshiftkb(cursor.getString(cursor.getColumnIndex("symbolshiftkb")));
+								kobj.setDefaultkb(cursor.getString(cursor.getColumnIndex("defaultkb")));
+								kobj.setDefaultshiftkb(cursor.getString(cursor.getColumnIndex("defaultshiftkb")));
+								kobj.setExtendedkb(cursor.getString(cursor.getColumnIndex("extendedkb")));
+								kobj.setExtendedshiftkb(cursor.getString(cursor.getColumnIndex("extendedshiftkb")));
+					result.add(kobj);
+				} while (cursor.moveToNext());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	public void setKeyboardInfo(String im, String value,
+			String keyboard) {
+
+		ContentValues cv = new ContentValues();
+					  cv.put("code", im);
+					  cv.put("title", "keyboard");
+					  cv.put("desc", value);
+					  cv.put("keyboard", keyboard);
+		
+					  removeImInfo(im, "keyboard");
+					  
+		SQLiteDatabase db = this.getWritableDatabase();
+			           db.insert("im",null, cv);
+			           
+		
+	}
+
+	public String getKeyboardCode(String im) {
+		try{
+			String value = "";
+			String selectString = "SELECT * FROM im WHERE code='"+im+"' AND title='keyboard'";
+			SQLiteDatabase db = this.getReadableDatabase();
+	
+			Cursor cursor = db.rawQuery(selectString ,null);
+			if (cursor.getCount() > 0) {
+				cursor.moveToFirst();
+				int descCol = cursor.getColumnIndex("keyboard");
+				return cursor.getString(descCol);
+			}
+		}catch(Exception e){}
+		return "";
 	}
 
 }

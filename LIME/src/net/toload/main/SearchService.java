@@ -201,7 +201,12 @@ public class SearchService extends Service {
 							cache.put(db.getTablename()+code, templist);
 						}else{
 							boolean similiarCheck = true;
-							if(code.length() < 7){
+							
+							// if code length < 7 and cannot found related words then
+							// use previous matching results.
+							if(code.length() < 7){								
+								result.addAll(preresultlist);
+								/**
 								boolean remap3row = mLIMEPref.getThreerowRemapping();
 								if(!remap3row){
 									templist = db.getMappingSimiliar(code);
@@ -211,7 +216,8 @@ public class SearchService extends Service {
 									}
 								}else{
 									result.addAll(preresultlist);
-								}
+								}**/
+								
 							}
 						}
 					}
@@ -315,6 +321,20 @@ public class SearchService extends Service {
 				scorelist.add(updateMappingTemp);
 			}		
 			
+		}
+
+		@Override
+		public List getKeyboardList() throws RemoteException {
+			if(db == null){db = new LimeDB(ctx);}
+			List<KeyboardObj> result = db.getKeyboardList();
+			return result;
+		}
+
+		@Override
+		public List getImList() throws RemoteException {
+			if(db == null){db = new LimeDB(ctx);}
+			List<ImObj> result = db.getImList();
+			return result;
 		}
 	}
 

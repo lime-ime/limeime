@@ -127,6 +127,7 @@ public class LIMEInitial extends Activity {
 				resetLabelInfo("cj");
 				resetLabelInfo("scj");
 				resetLabelInfo("array");
+				resetLabelInfo("array10");
 				resetLabelInfo("dayi");
 				resetLabelInfo("ez");
 				resetLabelInfo("phonetic");

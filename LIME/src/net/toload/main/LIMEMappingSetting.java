@@ -53,6 +53,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -95,16 +96,22 @@ public class LIMEMappingSetting extends Activity {
 		Button btnBackToPreviousPage = null;
 		Button btnLoadMapping = null;
 		Button btnResetMapping = null;
+		Button btnSelectKeyboard = null;
+		
 		TextView labSource = null;
 		TextView labVersion = null;
 		TextView labTotalAmount = null;
 		TextView labImportDate = null;
 		TextView labMappingSettingTitle = null;
+		TextView labKeyboard = null;
 		private ScrollView scrollSetting;
 		
 		private String imtype = null;
+		List<KeyboardObj> kblist = null;
 		
 		LIMEPreferenceManager mLIMEPref;
+		
+		private AlertDialog mOptionsDialog;
 		
 		/** Called when the activity is first created. */
 		@Override
@@ -142,6 +149,12 @@ public class LIMEMappingSetting extends Activity {
 				public boolean onTouch(View v, MotionEvent event) {
 					updateLabelInfo();
 					return false;
+				}
+			});
+			
+			btnSelectKeyboard.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					showKeyboardPicker();
 				}
 			});
 			
@@ -222,12 +235,14 @@ public class LIMEMappingSetting extends Activity {
 			btnBackToPreviousPage = (Button) findViewById(R.id.btnBackToPreviousPage);
 			btnLoadMapping =  (Button) findViewById(R.id.btnLoadMapping);
 			btnResetMapping =  (Button) findViewById(R.id.btnResetMapping);
+			btnSelectKeyboard = (Button) findViewById(R.id.btnSelectKeyboard);
 
 			labSource = (TextView) findViewById(R.id.labSource);	
 			labVersion = (TextView) findViewById(R.id.labVersion);	
 			labTotalAmount = (TextView) findViewById(R.id.labTotalAmount);	
 			labImportDate = (TextView) findViewById(R.id.labImportDate);
 			labMappingSettingTitle = (TextView) findViewById(R.id.labMappingSettingTitle);
+			labKeyboard = (TextView) findViewById(R.id.labKeyboard);
 			
 			scrollSetting = (ScrollView) this.findViewById(R.id.IMSettingScrollView);
 			
@@ -242,6 +257,7 @@ public class LIMEMappingSetting extends Activity {
 				labVersion.setText("");
 				labTotalAmount.setText("");
 				labImportDate.setText("");
+				labKeyboard.setText("");
 		}
 		
 		public void updateLabelInfo(){
@@ -257,7 +273,6 @@ public class LIMEMappingSetting extends Activity {
 					labVersion.setText(DBSrv.getImInfo(imtype, "name"));
 					labTotalAmount.setText(DBSrv.getImInfo(imtype, "amount"));
 					labImportDate.setText(DBSrv.getImInfo(imtype, "import"));
-					
 				}catch(Exception e){
 					e.printStackTrace();
 				}
@@ -269,14 +284,23 @@ public class LIMEMappingSetting extends Activity {
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_scj) +" "+ getText(R.string.l3_im_setting_title) );
 			}else if(imtype.equalsIgnoreCase("ez")){
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_eazy) +" "+ getText(R.string.l3_im_setting_title) );
-			}/*else if(imtype.equalsIgnoreCase("array")){
+			}else if(imtype.equalsIgnoreCase("array")){
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_array) +" "+ getText(R.string.l3_im_setting_title) );
-			}*/else if(imtype.equalsIgnoreCase("dayi")){
+			}else if(imtype.equalsIgnoreCase("array10")){
+				labMappingSettingTitle.setText(getText(R.string.l3_manage_array10) +" "+ getText(R.string.l3_im_setting_title) );
+			}else if(imtype.equalsIgnoreCase("dayi")){
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_dayi) +" "+ getText(R.string.l3_im_setting_title) );
 			}else if(imtype.equalsIgnoreCase("custom")){
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_default) +" "+ getText(R.string.l3_im_setting_title) );
 			}else if(imtype.equalsIgnoreCase("phonetic")){
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_phonetic) +" "+ getText(R.string.l3_im_setting_title) );
+			}
+			
+			// Display Keyboard Selection
+			try {
+				labKeyboard.setText(DBSrv.getImInfo(imtype, "keyboard"));
+			} catch (RemoteException e) {
+				e.printStackTrace();
 			}
 			
 		}
@@ -425,6 +449,69 @@ public class LIMEMappingSetting extends Activity {
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
+		}
+		
+		/*
+		 * Show keyboard picker
+		 */
+		private void showKeyboardPicker() {
+
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setCancelable(true);
+			builder.setIcon(R.drawable.sym_keyboard_done);
+			builder.setNegativeButton(android.R.string.cancel, null);
+			builder.setTitle(getResources().getString(R.string.keyboard_list));
+
+			try {
+				kblist = DBSrv.getKeyboardList();
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+			
+			if(kblist != null){
+				String curSelectKb = "";
+				int curSelectKbPosition = 0;
+				
+				try {
+					curSelectKb = DBSrv.getKeyboardCode(imtype);
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+				
+				CharSequence[] items = new CharSequence[kblist.size()];
+				for (int i = 0; i < kblist.size(); i++) {
+					items[i] = kblist.get(i).getDescription();
+					
+					// Check if keyboard has been set, then record the position of item.
+					if(kblist.get(i).getCode() != null &&
+							curSelectKb != null && kblist.get(i).getCode().equals(curSelectKb)){
+						curSelectKbPosition = i;
+					}
+				}
+				
+				builder.setSingleChoiceItems(items, curSelectKbPosition,
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface di, int position) {
+							di.dismiss();
+							handlKeyboardSelection(position);
+						}
+				});
+	
+				mOptionsDialog = builder.create();
+				Window window = mOptionsDialog.getWindow();
+				mOptionsDialog.show();
+			}
+		}
+		
+		private void handlKeyboardSelection(int position) {
+			KeyboardObj kobj = kblist.get(position);
+			try {
+				DBSrv.setKeyboardInfo(imtype, kobj.getDescription(), kobj.getCode());
+				labKeyboard.setText(DBSrv.getImInfo(imtype, "keyboard"));
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+			
 		}
 
 }
