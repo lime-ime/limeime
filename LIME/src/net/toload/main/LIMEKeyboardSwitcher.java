@@ -116,6 +116,12 @@ public class LIMEKeyboardSwitcher {
         mInputView = inputView;
     }
     
+    void clearKeyboards(){
+    	if(mKeyboards != null){
+        	mKeyboards.clear();
+    	}
+    }
+    
     void makeKeyboards(boolean forceCreate) {
         if (forceCreate) mKeyboards.clear();
         // Configuration change is coming after the keyboard gets recreated. So don't rely on that.

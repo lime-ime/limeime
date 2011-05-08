@@ -1412,6 +1412,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		try {
 			mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
 			mKeyboardSwitcher.setImList(SearchSrv.getImList());
+			mKeyboardSwitcher.clearKeyboards();
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
