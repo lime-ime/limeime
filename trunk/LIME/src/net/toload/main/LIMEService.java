@@ -1722,7 +1722,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 	}
 
-	private int getKeyboardMode(String code) {
+	/*private int getKeyboardMode(String code) {
 
 		int mMode = mKeyboardSwitcher.MODE_TEXT_DEFAULT;
 		if (code.equals("custom")) {
@@ -1779,7 +1779,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		}
 
 		return mMode;
-	}
+	}*/
 	
 	private void initialViewAndSwitcher(){
 
@@ -1822,8 +1822,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		}else{
 			if(keyboardSelection.equals("phonetic") || 
 					keyboardSelection.equals("ez") || 
-					keyboardSelection.equals("dayi") || 
-					keyboardSelection.equals("phone") ||
+					keyboardSelection.equals("dayi") ||
 					keyboardSelection.equals("array") ||
 					keyboardSelection.equals("array10") ){
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, mKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
@@ -1978,8 +1977,8 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 	
 			// If keyboard type = phone then check the user selection
-			if (keyboardSelection.equals("phone")) {
-				
+			//if (mKeyboardSwitcher.getImKeyboard(keyboardSelection).equals("phone")) {
+				/*
 				// User use Phone Keyboard
 				try {
 					SharedPreferences sp1 = getSharedPreferences(PREF, 0);
@@ -2137,9 +2136,9 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 					}
 					getCurrentInputConnection().commitText(
 							String.valueOf((char) primaryCode), 1);
-				}
+				}*/
 	
-			} else {
+			//} else {
 				// *** NOT PHONE KEYBOARD***
 				// If user not user PHONE Keyboard then use this one
 				if (!mEnglishOnly) {
@@ -2223,7 +2222,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 					}*/
 					getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
 				}
-			}
+			//}
 		}
 		
 		// updateShift(primaryCode);
@@ -2333,9 +2332,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 	}
 
 	public void swipeLeft() {
-		if (!keyboardSelection.equals("phone")) {
 			handleBackspace();
-		}
 	}
 
 	public void swipeDown() {
@@ -2373,14 +2370,15 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		}
 
 		try {
-			if (keyboardSelection.equals("phone")) {
+
+			/*if (!mKeyboardSwitcher.getImKeyboard(keyboardSelection).equals("phone")) {
 				keyDownCode = primaryCode;
 
 				SharedPreferences sp1 = getSharedPreferences(PREF, 0);
 				String xyvalue = sp1.getString("xy", "");
 				this.keyDownX = Float.parseFloat(xyvalue.split(",")[0]);
 				this.keyDownY = Float.parseFloat(xyvalue.split(",")[1]);
-			}
+			}*/
 
 			hasKeyPress = true;
 		} catch (Exception e) {

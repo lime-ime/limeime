@@ -104,6 +104,13 @@ public class LIMEKeyboardSwitcher {
     		kbHm.put(o.getCode(), o);
     	}    	
     }
+
+    String getImKeyboard(String code){
+    	if(imHm != null && imHm.get(code) != null){
+    		return imHm.get(code);
+    	}
+    	return "";
+    }
     
     void setImList(List<ImObj> list){
     	imHm = new HashMap();
