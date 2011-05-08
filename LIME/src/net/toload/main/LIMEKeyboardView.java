@@ -39,7 +39,7 @@ public class LIMEKeyboardView extends KeyboardView {
 	static final boolean DEBUG = false;
 	static final int KEYCODE_OPTIONS = -100;
 	static final int KEYCODE_SHIFT_LONGPRESS = -101;
-	static final String PREF = "LIMEXY";
+	//static final String PREF = "LIMEXY";
 	
 	private boolean mLongPressProcessed;
 	
@@ -79,7 +79,7 @@ public class LIMEKeyboardView extends KeyboardView {
 	 */
 	@Override
 	public boolean onTouchEvent(MotionEvent me) {
-		
+		/*
 		// Store Touch Position to Preference for data exchange between activity
 		if(me.getAction() == MotionEvent.ACTION_DOWN){
 			mLongPressProcessed = false;
@@ -94,7 +94,7 @@ public class LIMEKeyboardView extends KeyboardView {
 		}else if(me.getAction() == MotionEvent.ACTION_MOVE){
 			if(mLongPressProcessed) return true;
 			if(DEBUG) Log.i("LIMEKeyboardView", "ACTION_MOVE");
-		}
+		}*/
 		return super.onTouchEvent(me);
 	}
 	
