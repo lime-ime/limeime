@@ -267,15 +267,15 @@ public class LIMEKeyboardSwitcher {
 	            case MODE_PHONE:
 
 	            	Log.i("ART","KBMODE ->: phone");
-	                kid = new KeyboardId(getKeyboardXMLID("phone"));
+	                kid = new KeyboardId(getKeyboardXMLID("phone_number"));
 	                break;
 	            case MODE_URL:
 	            	Log.i("ART","KBMODE ->: url");
-	            	kid = new KeyboardId(getKeyboardXMLID("lime_english"), KEYBOARDMODE_URL, true);
+	            	kid = new KeyboardId(getKeyboardXMLID("lime_url"), KEYBOARDMODE_URL, true);
 	                break;
 	            case MODE_EMAIL:
 	            	Log.i("ART","KBMODE ->: email");
-	            	kid = new KeyboardId(getKeyboardXMLID("lime_english"), KEYBOARDMODE_EMAIL, true);
+	            	kid = new KeyboardId(getKeyboardXMLID("lime_email"), KEYBOARDMODE_EMAIL, true);
 	                break;
 	            default:
 	            	if(isIm && !isSymbol){

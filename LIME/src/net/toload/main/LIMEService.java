@@ -465,7 +465,6 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			// attribute.imeOptions);
 			updateShiftKeyState(attribute);
 		}
-		mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0, EditorInfo.IME_ACTION_NEXT, true, false, false);
 		
 		mInputView.closing();
 		mComposing.setLength(0);
@@ -1809,6 +1808,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 	private void initialKeyboard() {
 
+		Log.i("ART", "Run Initial Keyboard");
 		buildActiveKeyboardList();
 		initialViewAndSwitcher();
 		
