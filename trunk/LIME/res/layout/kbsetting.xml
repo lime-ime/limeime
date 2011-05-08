@@ -17,9 +17,6 @@
 				android:paddingTop="10px" android:layout_width="fill_parent">
 				<Button android:layout_height="wrap_content" android:text="@string/l3_im_setting_back"
 					android:layout_width="fill_parent" android:id="@+id/btnBackToPreviousPage"></Button>
-
-
-
 			</LinearLayout>
 			<LinearLayout android:id="@+id/LinearLayout03"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -68,10 +65,33 @@
 				<Button android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:id="@+id/btnResetMapping"
 					android:text="@string/l3_im_setting_button_reset"></Button>
-
-
-
 			</LinearLayout>
+			
+			<!-- Setup Keyboard -->
+			<LinearLayout android:id="@+id/LinearLayout05"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:paddingBottom="20px" android:paddingTop="20px">
+				<TextView android:id="@+id/TextView01"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="@string/l3_im_setting_select_keyboard" android:paddingRight="10px"></TextView>
+			</LinearLayout>
+			<LinearLayout android:id="@+id/LinearLayout06"
+				android:layout_width="wrap_content" android:layout_height="wrap_content">
+				<TextView android:id="@+id/TextView01"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="@string/l3_im_setting_keyboard" android:paddingRight="10px"></TextView>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/labKeyboard"></TextView>
+			</LinearLayout>
+
+			<LinearLayout android:id="@+id/LinearLayout07"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:paddingBottom="15px" android:paddingTop="10px">
+				<Button android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/btnSelectKeyboard"
+					android:text="@string/l3_im_setting_button_select"></Button>
+			</LinearLayout>
+			
 		</LinearLayout>
 	</ScrollView>
 </LinearLayout>

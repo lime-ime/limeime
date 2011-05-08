@@ -30,6 +30,8 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.zip.*;
 
 import android.app.Notification;
@@ -208,6 +210,9 @@ public class DBService extends Service {
 			try {
 
 				displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_convert)+ "");
+				
+
+				Log.i("ART", "URL->"+url);
 				URL downloadUrl = new URL(url);
 				URLConnection conn = downloadUrl.openConnection();
 				conn.connect();
@@ -384,6 +389,26 @@ public class DBService extends Service {
 			if (db != null) {
 				db.close();
 			}
+		}
+
+		@Override
+		public List<KeyboardObj> getKeyboardList() throws RemoteException {
+			List<KeyboardObj> result = db.getKeyboardList();
+			return result;
+		}
+
+		@Override
+		public void setKeyboardInfo(String im, String value,
+				String keyboard) throws RemoteException {
+			if (db == null) {loadLimeDB();}
+			db.setKeyboardInfo(im, value, keyboard);
+		}
+
+		@Override
+		public String getKeyboardCode(String im)
+				throws RemoteException {
+			if (db == null) {loadLimeDB();}
+			return db.getKeyboardCode(im);
 		}
 		
 	}

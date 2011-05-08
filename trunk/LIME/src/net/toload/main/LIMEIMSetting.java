@@ -91,8 +91,9 @@ public class LIMEIMSetting extends Activity {
 	Button btnSetupCJ = null;
 	Button btnSetupSCJ= null;
 	Button btnSetupDayi = null;
-	Button btnSetupEz = null;/*
-	Button btnSetupArray = null;*/
+	Button btnSetupEz = null;
+	Button btnSetupArray = null;
+	Button btnSetupArray10 = null;
 	
 	String table = "";
 	
@@ -171,7 +172,6 @@ public class LIMEIMSetting extends Activity {
 				startActivity(intent);
 			}
 		});
-		/*
 
 		btnSetupArray.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -182,7 +182,18 @@ public class LIMEIMSetting extends Activity {
 				   intent.putExtras(bundle);
 				startActivity(intent);
 			}
-		});*/
+		});
+
+		btnSetupArray10.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				Intent intent = new Intent();
+				intent.setClass(v.getContext(), LIMEMappingSetting.class);
+				   Bundle bundle = new Bundle();
+				   		  bundle.putString("keyboard", "array10");
+				   intent.putExtras(bundle);
+				startActivity(intent);
+			}
+		});
 
 		btnSetupEz.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -225,8 +236,9 @@ public class LIMEIMSetting extends Activity {
 			btnSetupCJ = (Button) findViewById(R.id.btnSetupCJ);
 			btnSetupSCJ = (Button) findViewById(R.id.btnSetupSCJ);
 			btnSetupDayi = (Button) findViewById(R.id.btnSetupDayi);
-			btnSetupEz = (Button) findViewById(R.id.btnSetupEz);		/*
-			btnSetupArray = (Button) findViewById(R.id.btnSetupArray);	*/
+			btnSetupEz = (Button) findViewById(R.id.btnSetupEz);		
+			btnSetupArray = (Button) findViewById(R.id.btnSetupArray);
+			btnSetupArray10 = (Button) findViewById(R.id.btnSetupArray10);	
 		}
 
 		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
@@ -236,16 +248,18 @@ public class LIMEIMSetting extends Activity {
 			btnSetupCJ.setEnabled(false);
 			btnSetupSCJ.setEnabled(false);
 			btnSetupDayi.setEnabled(false);
-			btnSetupEz.setEnabled(false);/*
-			btnSetupArray.setEnabled(false);*/
+			btnSetupEz.setEnabled(false);
+			btnSetupArray.setEnabled(false);
+			btnSetupArray10.setEnabled(false);
 		}else{
 			btnSetupCustom.setEnabled(true);
 			btnSetupPhonetic.setEnabled(true);
 			btnSetupCJ.setEnabled(true);
 			btnSetupSCJ.setEnabled(true);
 			btnSetupDayi.setEnabled(true);
-			btnSetupEz.setEnabled(true);	/*
-			btnSetupArray.setEnabled(true);*/
+			btnSetupEz.setEnabled(true);	
+			btnSetupArray.setEnabled(true);
+			btnSetupArray10.setEnabled(true);
 		}
 		
 	}

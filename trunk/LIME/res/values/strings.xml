@@ -66,10 +66,11 @@
     <string name="scj_reverse_lookup_list">R-Lookup in SChangJei</string>
     <string name="dayi_reverse_lookup_list">R-Lookup in Dayi</string>
     <string name="bpmf_reverse_lookup_list">R-Lookup in Phonetic</string>
-    <string name="ez_reverse_lookup_list">R-Lookup in Eazy</string><!--
+    <string name="ez_reverse_lookup_list">R-Lookup in Eazy</string>
     <string name="array_reverse_lookup_list">R-Lookup in Array</string>
+    <string name="array10_reverse_lookup_list">R-Lookup in Array10</string>
     
-    --><string name="han_convert_option_list">Chinese Characters Conversion</string>
+    <string name="han_convert_option_list">Chinese Characters Conversion</string>
     
     
     <string name="table_list">Table Selection</string>
@@ -177,9 +178,10 @@
 		<item>SChangjei</item>
 		<item>Dayi</item>
 		<item>Phonetic</item>
-		<item>Eazy</item><!--
+		<item>Eazy</item>
 		<item>Array</item>
-	--></string-array>
+		<item>Array10</item>
+	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
 		<item>custom</item>
@@ -187,20 +189,21 @@
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item><!--
+		<item>ez</item>
 		<item>array</item>
-	--></string-array>
+		<item>array10</item>
+	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
-		<item>Default</item>
-		<item>Phone</item>
+		<item>Lime</item>
 		<item>Changjei</item>
 		<item>SChangjei</item>
 		<item>Dayi</item>
 		<item>Phonetic</item>
-		<item>Eazy</item><!--
+		<item>Eazy</item>
 		<item>Array</item>
-	--></string-array>
+		<item>Array10</item>
+	</string-array>
 	<string-array name="keyboard_defaultstate">
 		<item>true</item>
 		<item>true</item>
@@ -208,28 +211,29 @@
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
-		<item>true</item><!--
 		<item>true</item>
-	--></string-array>
+		<item>true</item>
+	</string-array>
     <string-array name="keyboard_codes">
 		<item>custom</item>
-		<item>phone</item>
 		<item>cj</item>
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item><!--
+		<item>ez</item>
 		<item>array</item>
-	--></string-array>
+		<item>array10</item>
+	</string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
 		<item>cj</item>
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item><!--
+		<item>ez</item>
 		<item>array</item>
-		--><item>related</item>
+		<item>array10</item>
+		<item>related</item>
 		<item>dictionary</item>
 	</string-array>
     
@@ -250,9 +254,10 @@
 		<item>SChangjei</item>
 		<item>Dayi</item>
 		<item>Phonetic</item>
-		<item>Eazy</item><!--
+		<item>Eazy</item>
 		<item>Array</item>
-		--><item>Preload related words</item>
+		<item>Array10</item>
+		<item>Preload related words</item>
 		<item>Dictionary for English keyboard</item>
 	</string-array>
 	
@@ -272,10 +277,11 @@
     <string name="l3_manage_cj">Changjei</string>
     <string name="l3_manage_scj">SChangjei</string>
     <string name="l3_manage_dayi">Dayi</string>
-    <string name="l3_manage_eazy">Eazy</string><!--
+    <string name="l3_manage_eazy">Eazy</string>
     <string name="l3_manage_array">Array</string>
+    <string name="l3_manage_array10">Array10</string>
     
-    --><string name="l3_tab_preference">Preference</string>
+    <string name="l3_tab_preference">Preference</string>
 	
     <string name="l3_dbservice_download_start">Download preloaded database, this action will take few minutes please wait.</string>
     <string name="l3_dbservice_download_start_empty">Download empty database, this action will take few minutes please wait.</string>
@@ -298,14 +304,17 @@
     <string name="l3_initial_restore_end">Restore Finished!</string>
     <string name="l3_initial_restore_confirm">Would you like to restore database from backup?</string>
     
+    <string name="l3_im_setting_select_keyboard">Please choice keyboard display</string>
     <string name="l3_im_setting_back">Back To Previous Page</string>
     <string name="l3_im_setting_title">Mapping Setting</string>
     <string name="l3_im_setting_source">Source: </string>
+    <string name="l3_im_setting_keyboard">Keyboard: </string>
     <string name="l3_im_setting_version">Version: </string>
     <string name="l3_im_setting_total_amount">Total Amount: </string>
     <string name="l3_im_setting_import_date">Import Status: </string>
     <string name="l3_im_setting_button_load">LOAD .LIME</string>
     <string name="l3_im_setting_button_reset">RESET TABLE</string>
+    <string name="l3_im_setting_button_select">SELECT KEYBOARD</string>
     
     
 </resources>

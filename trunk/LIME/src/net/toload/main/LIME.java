@@ -2,8 +2,8 @@ package net.toload.main;
 
 public class LIME {
 	
-	protected static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime.zip";
-	protected static final String IM_DOWNLOAD_TARGET_EMPTY = "http://limeime.googlecode.com/svn/branches/database/empty.zip";
+	protected static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime1104.zip";
+	protected static final String IM_DOWNLOAD_TARGET_EMPTY = "http://limeime.googlecode.com/svn/branches/database/empty1104.zip";
 	protected static final String IM_LOAD_LIME_ROOT_DIRECTORY = "/sdcard/lime/";
 	protected static final String DOWNLOAD_START = "download_start";
 	protected static final String DATABASE_DOWNLOAD_STATUS = "database_download_status";

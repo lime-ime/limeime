@@ -68,9 +68,10 @@
     <string name="dayi_reverse_lookup_list">大易字根反查</string>
     <string name="bpmf_reverse_lookup_list">注音字根反查</string>
     <string name="ez_reverse_lookup_list">輕鬆字根反查</string>
-    <!--<string name="array_reverse_lookup_list">行列字根反查</string>
+    <string name="array_reverse_lookup_list">行列字根反查</string>
+    <string name="array10_reverse_lookup_list">行列10字根反查</string>
     
-    --><string name="han_convert_option_list">中文簡/繁體字碼轉換</string>
+    <string name="han_convert_option_list">中文簡/繁體字碼轉換</string>
     
     
     <string name="table_list">對應表選取</string>
@@ -178,8 +179,9 @@
 		<item>大易</item>
 		<item>注音</item>
 		<item>輕鬆</item>
-		<!--<item>行列</item>
-	--></string-array>
+		<item>行列</item>
+		<item>行列10</item>
+	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
 		<item>custom</item>
@@ -187,20 +189,21 @@
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item><!--
+		<item>ez</item>
 		<item>array</item>
-	--></string-array>
+		<item>array10</item>
+	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
-		<item>預設鍵盤</item>
-		<item>電話鍵盤</item>
-		<item>倉頡鍵盤</item>
-		<item>快倉鍵盤</item>
-		<item>大易鍵盤</item>
-		<item>注音鍵盤</item>
-		<item>輕鬆鍵盤</item><!--
-		<item>行列鍵盤</item>
-	--></string-array>
+		<item>LIME輸入法</item>
+		<item>倉頡輸入法</item>
+		<item>快倉輸入法</item>
+		<item>大易輸入法</item>
+		<item>注音輸入法</item>
+		<item>輕鬆輸入法</item>
+		<item>行列輸入法</item>
+		<item>行列10輸入法</item>
+	</string-array>
 	<string-array name="keyboard_defaultstate">
 		<item>true</item>
 		<item>true</item>
@@ -208,28 +211,29 @@
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
-		<item>true</item><!--
 		<item>true</item>
-	--></string-array>
+		<item>true</item>
+	</string-array>
     <string-array name="keyboard_codes">
 		<item>custom</item>
-		<item>phone</item>
 		<item>cj</item>
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item><!--
+		<item>ez</item>
 		<item>array</item>
-	--></string-array>
+		<item>array10</item>
+	</string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
 		<item>cj</item>
 		<item>scj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
-		<item>ez</item><!--
+		<item>ez</item>
 		<item>array</item>
-		--><item>related</item>
+		<item>array10</item>
+		<item>related</item>
 		<item>dictionary</item>
 	</string-array>
     
@@ -249,9 +253,10 @@
 		<item>快倉</item>
 		<item>大易</item>
 		<item>注音</item>
-		<item>輕鬆</item><!--
+		<item>輕鬆</item>
 		<item>行列</item>
-		--><item>預載關聯字</item>
+		<item>行列10</item>
+		<item>預載關聯字</item>
 		<item>英文字典</item>
 	</string-array>
 	
@@ -271,10 +276,11 @@
     <string name="l3_manage_cj">倉頡</string>
     <string name="l3_manage_scj">快倉</string>
     <string name="l3_manage_dayi">大易</string>
-    <string name="l3_manage_eazy">輕鬆</string><!--
+    <string name="l3_manage_eazy">輕鬆</string>
     <string name="l3_manage_array">行列</string>
+    <string name="l3_manage_array10">行列10</string>
     
-    --><string name="l3_tab_preference">喜好設定</string>
+    <string name="l3_tab_preference">喜好設定</string>
     
 	<string name="l3_dbservice_download_start">正在取得預載資料庫, 這一個動作會持續一至數分鐘，請您耐心等候.</string>
 	<string name="l3_dbservice_download_start_empty">正在取得空白資料庫, 這一個動作會持續一至數分鐘，請您耐心等候.</string>
@@ -298,14 +304,17 @@
     <string name="l3_initial_restore_end">資料庫還原完成</string>
     
     
+    <string name="l3_im_setting_select_keyboard">請選擇輸入法鍵盤顯示</string>
     <string name="l3_im_setting_back">回到上一頁</string>
     <string name="l3_im_setting_title">對應表設定</string>
     <string name="l3_im_setting_source">來源: </string>
+    <string name="l3_im_setting_keyboard">鍵盤: </string>
     <string name="l3_im_setting_version">版本: </string>
     <string name="l3_im_setting_total_amount">字數: </string>
     <string name="l3_im_setting_import_date">狀態: </string>
     <string name="l3_im_setting_button_load">匯入字根檔</string>
     <string name="l3_im_setting_button_reset">移除字根檔</string>
+    <string name="l3_im_setting_button_select">選擇鍵盤對應</string>
     
     
 </resources>

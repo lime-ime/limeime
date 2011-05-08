@@ -13,5 +13,7 @@ interface ISearchService
 		void updateUserDict();
 		String hanConvert(String input);
 		String keyToChar(String code);
+		List getKeyboardList();
+		List getImList();
 
 }

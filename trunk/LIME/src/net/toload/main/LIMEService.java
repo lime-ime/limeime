@@ -65,8 +65,7 @@ import android.content.res.Configuration;
 /**
  * @author Art Hung
  */
-public class LIMEService extends InputMethodService implements
-		KeyboardView.OnKeyboardActionListener {
+public class LIMEService extends InputMethodService implements KeyboardView.OnKeyboardActionListener {
 
 	static final boolean DEBUG = false;
 	static final String PREF = "LIMEXY";
@@ -144,7 +143,7 @@ public class LIMEService extends InputMethodService implements
 
 	private boolean hasVibration = false;
 	private boolean hasSound = false;
-	private boolean hasNumberKeypads = false;
+	//private boolean hasNumberKeypads = false;
 	private boolean hasNumberMapping = false;
 	private boolean hasSymbolMapping = false;
 	private boolean hasKeyPress = false;
@@ -208,7 +207,6 @@ public class LIMEService extends InputMethodService implements
 
 		super.onCreate();
 
-		mKeyboardSwitcher = new LIMEKeyboardSwitcher(this);
 		mEnglishOnly = false;
 		mEnglishFlagShift = false;
 
@@ -227,7 +225,7 @@ public class LIMEService extends InputMethodService implements
 		hasVibration = sp.getBoolean("vibrate_on_keypress", false);
 		hasSound = sp.getBoolean("sound_on_keypress", false);
 		mEnglishIMStart = sp.getBoolean("default_in_english", false);
-		hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
+		//hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
 		keyboardSelection = sp.getString("keyboard_list", "custom");
 
 		// initial Input List
@@ -265,9 +263,8 @@ public class LIMEService extends InputMethodService implements
 		mEnglishOnly = false;
 		mEnglishFlagShift = false;
 
-		if (mKeyboardSwitcher == null) {
-			mKeyboardSwitcher = new LIMEKeyboardSwitcher(this);
-		}
+		initialViewAndSwitcher();
+		
 		mKeyboardSwitcher.makeKeyboards(true);
 		super.onInitializeInterface();
 
@@ -275,7 +272,7 @@ public class LIMEService extends InputMethodService implements
 
 	@Override
 	public void onConfigurationChanged(Configuration conf) {
-
+		
 		if (DEBUG)
 			Log.i("LIMEService:", "OnConfigurationChanged()");
 
@@ -287,9 +284,7 @@ public class LIMEService extends InputMethodService implements
 			commitTyped(getCurrentInputConnection());
 			mOrientation = conf.orientation;
 		}
-		if (mKeyboardSwitcher == null) {
-			mKeyboardSwitcher = new LIMEKeyboardSwitcher(this);
-		}
+		initialViewAndSwitcher();
 		mKeyboardSwitcher.makeKeyboards(true);
 		super.onConfigurationChanged(conf);
 
@@ -303,20 +298,18 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public View onCreateInputView() {
-		mInputView = (LIMEKeyboardView) getLayoutInflater().inflate(
-				R.layout.input, null);
+		
+		mInputView = (LIMEKeyboardView) getLayoutInflater().inflate( R.layout.input, null);
 		mKeyboardSwitcher.setInputView(mInputView);
 		mKeyboardSwitcher.makeKeyboards(true);
 		mInputView.setOnKeyboardActionListener(this);
-
-		// Log.i("ART", "onCreateInputView:" +
-		// LIMEKeyboardSwitcher.MODE_TEXT_DEFAULT);
-		mKeyboardSwitcher.setKeyboardMode(
-				LIMEKeyboardSwitcher.MODE_TEXT_DEFAULT, 0);
+		 
+		mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0, EditorInfo.IME_ACTION_NEXT, true, false, false);
+		
+		//mKeyboardSwitcher.setKeyboardMode( LIMEKeyboardSwitcher.MODE_TEXT_DEFAULT, 0);
 
 		initialKeyboard();
 
-		// Log.i("ART","onIM1");
 		onIM = true;
 		return mInputView;
 	}
@@ -399,16 +392,12 @@ public class LIMEService extends InputMethodService implements
 		case EditorInfo.TYPE_CLASS_DATETIME:
 			mEnglishOnly = true;
 			onIM = false;
-			// Log.i("ART","onIM4");
-			mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_SYMBOLS, attribute.imeOptions);
+			mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0, mImeOptions, false, false, false);
 			break;
 		case EditorInfo.TYPE_CLASS_PHONE:
 			mEnglishOnly = true;
-
-			// Log.i("ART","onIM5");
 			onIM = false;
-			mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_PHONE,
-					attribute.imeOptions);
+			mKeyboardSwitcher.setKeyboardMode(keyboardSelection, mKeyboardSwitcher.MODE_PHONE, mImeOptions, false, false, false);
 			break;
 		case EditorInfo.TYPE_CLASS_TEXT:
 
@@ -428,24 +417,17 @@ public class LIMEService extends InputMethodService implements
 				}
 				if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS) {
 					mEnglishOnly = true;
-	
-					// Log.i("ART","onIM6");
 					onIM = false;
 					mPredictionOn = false;
-					mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_EMAIL,
-							attribute.imeOptions);
+					mKeyboardSwitcher.setKeyboardMode(keyboardSelection, mKeyboardSwitcher.MODE_EMAIL, mImeOptions, false, false, false);
 				} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_URI) {
 					mPredictionOn = false;
 					mEnglishOnly = true;
 					onIM = false;
 					isModeURL = true;
-					mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_URL, attribute.imeOptions);
+					mKeyboardSwitcher.setKeyboardMode(keyboardSelection, mKeyboardSwitcher.MODE_URL, mImeOptions, false, false, false);
 				} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
-					// mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_IM,
-					// attribute.imeOptions);
-					mKeyboardSwitcher.setKeyboardMode(
-							getKeyboardMode(keyboardSelection),
-							attribute.imeOptions);
+					mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0, mImeOptions, true, false, false);
 				} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
 					mPredictionOn = false;
 				} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
@@ -454,9 +436,9 @@ public class LIMEService extends InputMethodService implements
 					}
 						if((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) != 0 ||
 								(attribute.inputType & EditorInfo.TYPE_CLASS_TEXT) == 0) {
-							mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection),EditorInfo.IME_ACTION_NONE);
+							mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0, EditorInfo.IME_ACTION_NONE, true, false, false);
 						}else{
-							mKeyboardSwitcher.setKeyboardMode(getKeyboardMode(keyboardSelection),EditorInfo.IME_ACTION_NEXT);
+							mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0, EditorInfo.IME_ACTION_NEXT, true, false, false);
 						}
 				}
 	
@@ -483,6 +465,8 @@ public class LIMEService extends InputMethodService implements
 			// attribute.imeOptions);
 			updateShiftKeyState(attribute);
 		}
+		mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0, EditorInfo.IME_ACTION_NEXT, true, false, false);
+		
 		mInputView.closing();
 		mComposing.setLength(0);
 		mPredicting = false;
@@ -502,7 +486,7 @@ public class LIMEService extends InputMethodService implements
 		if(mEnglishIMStart && !isModeURL){
 			switchChiEngNoToast();
 		}
-		
+		 	
 		// Log.i("ART","onStartInputView:"+onIM);
 
 	}
@@ -514,7 +498,7 @@ public class LIMEService extends InputMethodService implements
 		hasVibration = sp.getBoolean("vibrate_on_keypress", false);
 		hasSound = sp.getBoolean("sound_on_keypress", false);
 		mEnglishIMStart = sp.getBoolean("default_in_english", false);
-		hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
+		//hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
 		keyboardSelection = sp.getString("keyboard_list", "custom");
 		hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
 		mAutoCap = true; // sp.getBoolean(PREF_AUTO_CAP, true);
@@ -1321,12 +1305,11 @@ public class LIMEService extends InputMethodService implements
 
 	private void buildActiveKeyboardList() {
 		CharSequence[] items = getResources().getStringArray(R.array.keyboard);
-		CharSequence[] codes = getResources().getStringArray(
-				R.array.keyboard_codes);
+		CharSequence[] codes = getResources().getStringArray(R.array.keyboard_codes);
 		SharedPreferences sp = PreferenceManager
 				.getDefaultSharedPreferences(this);
 		String keybaord_state_string = sp.getString("keyboard_state",
-				"0;1;2;3;4;5;6;7");
+				"0;1;2;3;4;5;6;7;8");
 		String[] s = keybaord_state_string.toString().split(";");
 
 		keyboardList.clear();
@@ -1707,12 +1690,12 @@ public class LIMEService extends InputMethodService implements
 
 		if (mEnglishOnly) {
 			onIM = false;
-
 		} else {
 			onIM = true;
 		}
 
 	}
+	
 	private void switchChiEng() {
 		// mEnglishOnly = !mEnglishOnly;
 		// cancel candidate view if it's shown
@@ -1724,14 +1707,10 @@ public class LIMEService extends InputMethodService implements
 
 		if (mEnglishOnly) {
 			onIM = false;
-			Toast.makeText(this, R.string.typing_mode_english,
-					Toast.LENGTH_SHORT).show();
-
+			Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
 		} else {
 			onIM = true;
-			Toast
-					.makeText(this, R.string.typing_mode_mixed,
-							Toast.LENGTH_SHORT).show();
+			Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
 		}
 
 	}
@@ -1740,35 +1719,17 @@ public class LIMEService extends InputMethodService implements
 
 		int mMode = mKeyboardSwitcher.MODE_TEXT_DEFAULT;
 		if (code.equals("custom")) {
-			if (hasNumberKeypads) {
-				mMode = mKeyboardSwitcher.MODE_TEXT_DEFAULT_NUMBER;
-			} else {
-				mMode = mKeyboardSwitcher.MODE_TEXT_DEFAULT;
-			}
-
 			SharedPreferences sp = PreferenceManager
 					.getDefaultSharedPreferences(this);
 			hasNumberMapping = sp.getBoolean("accept_number_index", false);
 			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
 
 		} else if (code.equals("cj")) {
-			if (hasNumberKeypads) {
-				mMode = mKeyboardSwitcher.MODE_TEXT_CJ_NUMBER;
-			} else {
-				mMode = mKeyboardSwitcher.MODE_TEXT_CJ;
-			}
-
 			SharedPreferences sp = PreferenceManager
 					.getDefaultSharedPreferences(this);
 			hasNumberMapping = sp.getBoolean("accept_number_index", false);
 			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
 		} else if (code.equals("scj")) {
-			if (hasNumberKeypads) {
-				mMode = mKeyboardSwitcher.MODE_TEXT_SCJ_NUMBER;
-			} else {
-				mMode = mKeyboardSwitcher.MODE_TEXT_SCJ;
-			}
-
 			SharedPreferences sp = PreferenceManager
 					.getDefaultSharedPreferences(this);
 			hasNumberMapping = sp.getBoolean("accept_number_index", false);
@@ -1785,7 +1746,19 @@ public class LIMEService extends InputMethodService implements
 			// Should use number and symbol mapping
 			hasNumberMapping = true;
 			hasSymbolMapping = true;
-		} else if (code.equals("dayi")) {
+		} else if (code.equals("array")) {
+			mMode = mKeyboardSwitcher.MODE_TEXT_ARRAY;
+
+			// Should use number and symbol mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
+		}  else if (code.equals("array10")) {
+			mMode = mKeyboardSwitcher.MODE_TEXT_ARRAY10;
+
+			// Should use number and symbol mapping
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
+		}  else if (code.equals("dayi")) {
 			mMode = mKeyboardSwitcher.MODE_TEXT_DAYI;
 
 			// Should use number and symbol mapping
@@ -1800,8 +1773,72 @@ public class LIMEService extends InputMethodService implements
 
 		return mMode;
 	}
+	
+	private void initialViewAndSwitcher(){
+
+		//Check if mInputView == null;
+		if (mInputView == null) {
+			mInputView = (LIMEKeyboardView) getLayoutInflater().inflate(R.layout.input, null);
+			mInputView.setOnKeyboardActionListener(this);
+		}
+
+		// Checkif mKeyboardSwitcher == null
+		if (mKeyboardSwitcher == null) {
+			mKeyboardSwitcher = new LIMEKeyboardSwitcher(this);
+			mKeyboardSwitcher.setInputView(mInputView);
+		}
+		
+		if(mKeyboardSwitcher.getKeyboardSize() == 0 && SearchSrv != null){
+			try {
+				mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
+				mKeyboardSwitcher.setImList(SearchSrv.getImList());
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
 
 	private void initialKeyboard() {
+
+		buildActiveKeyboardList();
+		initialViewAndSwitcher();
+		
+		int mMode = mKeyboardSwitcher.MODE_TEXT_DEFAULT;
+		
+		if(keyboardSelection.equals("custom") || keyboardSelection.equals("cj") || keyboardSelection.equals("scj")){
+			mKeyboardSwitcher.setKeyboardMode(keyboardSelection, mKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+			hasNumberMapping = sp.getBoolean("accept_number_index", false);
+			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+		}else{
+			if(keyboardSelection.equals("phonetic") || 
+					keyboardSelection.equals("ez") || 
+					keyboardSelection.equals("dayi") || 
+					keyboardSelection.equals("phone") ||
+					keyboardSelection.equals("array") ||
+					keyboardSelection.equals("array10") ){
+				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, mKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
+				hasNumberMapping = true;
+				hasSymbolMapping = true;
+			}else{
+				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, mKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
+			}
+		}
+		
+		try {
+			String tablename = new String(keyboardSelection);
+			if (tablename.equals("custom") || tablename.equals("phone")) {
+				tablename = "custom";
+			}
+			SearchSrv.setTablename(tablename);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	/*private void initialKeyboard() {
 
 		buildActiveKeyboardList();
 
@@ -1892,7 +1929,7 @@ public class LIMEService extends InputMethodService implements
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
+	}*/
 
 	/**
 	 * This method construct candidate view and add key code to composing object
