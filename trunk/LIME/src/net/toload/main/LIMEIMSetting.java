@@ -241,8 +241,9 @@ public class LIMEIMSetting extends Activity {
 			btnSetupArray10 = (Button) findViewById(R.id.btnSetupArray10);	
 		}
 
+		File checkSdFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
-		if(!checkDbFile.exists()){
+		if(!checkSdFile.exists() && !checkDbFile.exists()){
 			btnSetupCustom.setEnabled(false);
 			btnSetupPhonetic.setEnabled(false);
 			btnSetupCJ.setEnabled(false);

@@ -144,10 +144,16 @@ public class DBService extends Service {
 		
 		@Override
 		public void resetDownloadDatabase() throws RemoteException {
-			File delTargetFile1 = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+			
+			String dbtarget = mLIMEPref.getParameterString("dbtarget");
+			if(dbtarget.equals("device")){
+				File delTargetFile1 = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+				File delTargetFile2 = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
+				if(delTargetFile1.exists()){delTargetFile1.delete();}			
+				if(delTargetFile2.exists()){delTargetFile2.delete();}			
+			}
 			File delTargetFile3 = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_SOURCE_FILENAME);
 			File delTargetFile2 = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_SOURCE_FILENAME_EMPTY);
-			if(delTargetFile1.exists()){delTargetFile1.delete();}
 			if(delTargetFile3.exists()){delTargetFile3.delete();}	
 			if(delTargetFile2.exists()){delTargetFile2.delete();}			
 		}
@@ -160,7 +166,14 @@ public class DBService extends Service {
 				public void run() {
 					displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start_empty)+ "");
 					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_EMPTY, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME_EMPTY);
-					if(decompressFile(downloadedFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME)){
+					String dbtarget = mLIMEPref.getParameterString("dbtarget");
+					String folder = "";
+					if(dbtarget.equals("device")){
+						folder = LIME.DATABASE_DECOMPRESS_FOLDER;
+					}else{
+						folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
+					}
+					if(decompressFile(downloadedFile, folder, LIME.DATABASE_NAME)){
 						Thread threadTask = new Thread() {
 							public void run() {
 								downloadedFile.delete();
@@ -185,7 +198,14 @@ public class DBService extends Service {
 				public void run() {
 					displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start)+ "");
 					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PRELOADED, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
-					if(decompressFile(downloadedFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME)){
+					String dbtarget = mLIMEPref.getParameterString("dbtarget");
+					String folder = "";
+					if(dbtarget.equals("device")){
+						folder = LIME.DATABASE_DECOMPRESS_FOLDER;
+					}else{
+						folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
+					}
+					if(decompressFile(downloadedFile, folder, LIME.DATABASE_NAME)){
 						Thread threadTask = new Thread() {
 							public void run() {
 								downloadedFile.delete();
@@ -341,7 +361,14 @@ public class DBService extends Service {
 		@Override
 		public void backupDatabase() throws RemoteException {
 			displayNotificationMessage(ctx.getText(R.string.l3_initial_backup_start)+ "");
-			File srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+
+			File srcFile = null;
+			String dbtarget = mLIMEPref.getParameterString("dbtarget");
+			if(dbtarget.equals("device")){
+				srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+			}else{
+				srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
+			}			
 			compressFile(srcFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_BACKUP_NAME);
 			displayNotificationMessage(ctx.getText(R.string.l3_initial_backup_end)+ "");
 		}
@@ -350,7 +377,13 @@ public class DBService extends Service {
 		public void restoreDatabase() throws RemoteException {
 			displayNotificationMessage(ctx.getText(R.string.l3_initial_restore_start)+ "");
 			File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
-			decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME);
+
+			String dbtarget = mLIMEPref.getParameterString("dbtarget");
+			if(dbtarget.equals("device")){
+				decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME);
+			}else{
+				decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME);
+			}			
 			getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
 			displayNotificationMessage(ctx.getText(R.string.l3_initial_restore_end)+ ""); 
 		}

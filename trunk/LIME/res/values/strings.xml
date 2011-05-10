@@ -37,6 +37,7 @@
     <!-- TAB -->
     <string name="lime_setting_db">Mapping DB</string>
     <string name="lime_setting_preference">Preference</string>
+    <string name="lime_setting_bluetooth">Bluetooth</string>
     
     <!-- Preference -->
     <string name="keyboard">Keyboard</string>
@@ -60,6 +61,8 @@
     <string name="auto_complete_summary">Spacebar and punctuation automatically insert highlighted word</string>
     
     <string name="im">Input Method</string>
+    <string name="enable_english_dictionary">Enable english dictionary</string>
+    <string name="enable_english_dictionary_summary">Show suggestion words when using English Mode</string>
     <string name="im_reverse_lookup_list">R-Lookup Selection</string>
     <string name="default_reverse_lookup_list">R-Lookup in Custom</string>
     <string name="cj_reverse_lookup_list">R-Lookup in ChangJei</string>
@@ -270,6 +273,10 @@
     <string name="l3_initial_btn_load_empty_db">Empty Database</string>
     <string name="l3_initial_btn_load_preload_db">Preload Database</string>
     <string name="l3_initial_btn_reset_db">Reset Database</string>
+    <string name="l3_initial_btn_store_to_sdcard">Would you like to store Database on sdcard? this might result in performance issue for some devices.</string>
+    <string name="l3_initial_btn_store_to_device">Would you like to store Database on device?</string>
+    <string name="l3_initial_btn_store_device">DEVICE</string>
+    <string name="l3_initial_btn_store_sdcard">SDCARD</string>
     
     <string name="l3_tab_manage">Manage IM</string>
     <string name="l3_manage_default">Custom</string>

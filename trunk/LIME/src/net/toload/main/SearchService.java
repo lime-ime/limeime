@@ -184,8 +184,8 @@ public class SearchService extends Service {
 					preresultlist = cacheTemp;
 				}else{
 					
-					// If code > 3 and previous code did not have any matched then system would consider it as english
-					if(code.length() > 6 && 
+					// If code > 5 and previous code did not have any matched then system would consider it as english
+					if(code.length() > 5 &&
 							cache.get(db.getTablename()+code.subSequence(0, code.length()-1)) == null &&
 							cache.get(db.getTablename()+code.subSequence(0, code.length()-2)) == null &&
 							cache.get(db.getTablename()+code.subSequence(0, code.length()-3)) == null
@@ -202,9 +202,9 @@ public class SearchService extends Service {
 						}else{
 							boolean similiarCheck = true;
 							
-							// if code length < 7 and cannot found related words then
+							// if code length < 6 and cannot found related words then
 							// use previous matching results.
-							if(code.length() < 7){								
+							if(code.length() < 6){								
 								result.addAll(preresultlist);
 								/**
 								boolean remap3row = mLIMEPref.getThreerowRemapping();

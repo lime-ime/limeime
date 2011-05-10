@@ -25,10 +25,12 @@ import net.toload.main.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -97,6 +99,8 @@ public class LIMEInitial extends Activity {
 	Button btnResetDB = null;
 	Button btnBackupDB = null;
 	Button btnRestoreDB = null;
+	Button btnStoreDevice = null;
+	Button btnStoreSdcard = null;
 	
 	boolean hasReset = false;
 	LIMEPreferenceManager mLIMEPref;
@@ -149,6 +153,12 @@ public class LIMEInitial extends Activity {
 						    						mLIMEPref.setParameter("im_loading", false);
 						    						mLIMEPref.setParameter("im_loading_table", "");
 						    						mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
+						    						mLIMEPref.setParameter("dbtarget","device");
+						    						btnStoreDevice.setEnabled(false);
+						    						btnStoreSdcard.setEnabled(true);
+
+						    						btnStoreDevice.setText(getText(R.string.l3_initial_btn_store_device));
+						    						btnStoreSdcard.setText(getText(R.string.l3_initial_btn_store_sdcard));
 							    				} catch (RemoteException e) {
 							    					e.printStackTrace();
 							    				}
@@ -181,6 +191,16 @@ public class LIMEInitial extends Activity {
     					DBSrv.closeDatabse();
 		        		btnInitEmptyDB.setEnabled(false);
 						btnInitPreloadDB.setEnabled(false);
+						btnStoreDevice.setEnabled(false);
+						btnStoreSdcard.setEnabled(false);
+
+						String dbtarget = mLIMEPref.getParameterString("dbtarget");
+						if(dbtarget.equals("device")){
+							btnStoreSdcard.setText("");
+						}else if(dbtarget.equals("sdcard")){
+							btnStoreDevice.setText("");
+						}
+						
 						mLIMEPref.setParameter(LIME.DOWNLOAD_START, true);
 						Toast.makeText(v.getContext(), getText(R.string.l3_initial_download_database), Toast.LENGTH_SHORT).show();
 						DBSrv.downloadPreloadedDatabase();
@@ -206,6 +226,15 @@ public class LIMEInitial extends Activity {
     					DBSrv.closeDatabse();
 		        		btnInitEmptyDB.setEnabled(false);
 						btnInitPreloadDB.setEnabled(false);
+						btnStoreDevice.setEnabled(false);
+						btnStoreSdcard.setEnabled(false);
+
+						String dbtarget = mLIMEPref.getParameterString("dbtarget");
+						if(dbtarget.equals("device")){
+							btnStoreSdcard.setText("");
+						}else if(dbtarget.equals("sdcard")){
+							btnStoreDevice.setText("");
+						}
 						mLIMEPref.setParameter(LIME.DOWNLOAD_START, true);
 						Toast.makeText(v.getContext(), getText(R.string.l3_initial_download_database), Toast.LENGTH_SHORT).show();
 						DBSrv.downloadEmptyDatabase();
@@ -227,7 +256,8 @@ public class LIMEInitial extends Activity {
 			public void onClick(View v) {
 		    			
 					File srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
-					if(srcFile.exists() && srcFile.length() > 1024){
+					File srcFile2 = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
+					if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
 						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
 	     				builder.setMessage(getText(R.string.l3_initial_backup_confirm));
 	     				builder.setCancelable(false);
@@ -257,7 +287,8 @@ public class LIMEInitial extends Activity {
 		btnRestoreDB.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 					File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
-					if(srcFile.exists() && srcFile.length() > 1024){
+					File srcFile2 = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
+					if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
 						
 						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
 	     				builder.setMessage(getText(R.string.l3_initial_restore_confirm));
@@ -265,6 +296,13 @@ public class LIMEInitial extends Activity {
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
 			    					try {
+
+			    						String dbtarget = mLIMEPref.getParameterString("dbtarget");
+			    						if(dbtarget.equals("device")){
+			    							btnStoreSdcard.setText("");
+			    						}else if(dbtarget.equals("sdcard")){
+			    							btnStoreDevice.setText("");
+			    						}
 				    					DBSrv.closeDatabse();
 			    						DBSrv.restoreDatabase();
 									} catch (RemoteException e) {
@@ -285,6 +323,53 @@ public class LIMEInitial extends Activity {
 					}else{
 						Toast.makeText(v.getContext(), getText(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT).show();
 					}
+			}
+		});
+		
+		btnStoreDevice.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+ 				builder.setMessage(getText(R.string.l3_initial_btn_store_to_device));
+ 				builder.setCancelable(false);
+ 				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+ 					public void onClick(DialogInterface dialog, int id) {
+	 						mLIMEPref.setParameter("dbtarget","device");
+	 						btnStoreDevice.setEnabled(false);
+	 						btnStoreSdcard.setEnabled(true);
+	    	        	}
+	    	     });
+	    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+	    	    	public void onClick(DialogInterface dialog, int id) {
+	    	        	}
+	    	     }); 
+    
+				AlertDialog alert = builder.create();
+							alert.show();
+				
+			} 
+		});
+		
+		btnStoreSdcard.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				
+				AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+ 				builder.setMessage(getText(R.string.l3_initial_btn_store_to_sdcard));
+ 				builder.setCancelable(false);
+ 				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+ 					public void onClick(DialogInterface dialog, int id) {
+	 						mLIMEPref.setParameter("dbtarget","sdcard");
+	 						btnStoreDevice.setEnabled(true);
+	 						btnStoreSdcard.setEnabled(false);
+	    	        	}
+	    	     });
+	    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+	    	    	public void onClick(DialogInterface dialog, int id) {
+	    	        	}
+	    	     }); 
+    
+				AlertDialog alert = builder.create();
+							alert.show();
+							
 			}
 		});
 
@@ -326,17 +411,45 @@ public class LIMEInitial extends Activity {
 			btnInitEmptyDB = (Button) findViewById(R.id.btnInitEmptyDB);	
 			btnBackupDB = (Button) findViewById(R.id.btnBackupDB);
 			btnRestoreDB = (Button) findViewById(R.id.btnRestoreDB);
+			btnStoreDevice = (Button) findViewById(R.id.btnStoreDevice);
+			btnStoreSdcard = (Button) findViewById(R.id.btnStoreSdcard);
+		}
+		
+		String dbtarget = mLIMEPref.getParameterString("dbtarget");
+		if(dbtarget.equals("")){
+			dbtarget = "device";
+			mLIMEPref.setParameter("dbtarget","device");
 		}
 
+		File checkSdFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
-		if(!checkDbFile.exists() && !mLIMEPref.getParameterBoolean(LIME.DOWNLOAD_START)){
+		if(!checkSdFile.exists() && !checkDbFile.exists() && !mLIMEPref.getParameterBoolean(LIME.DOWNLOAD_START)){
+			
 			btnInitPreloadDB.setEnabled(true);
 			btnInitEmptyDB.setEnabled(true);
 			Toast.makeText(this, getText(R.string.l3_tab_initial_message), Toast.LENGTH_SHORT).show();
+			
+			if(dbtarget.equals("device")){
+				btnStoreDevice.setEnabled(false);
+				btnStoreSdcard.setEnabled(true);
+			}else if(dbtarget.equals("sdcard")){
+				btnStoreDevice.setEnabled(true);
+				btnStoreSdcard.setEnabled(false);
+			}
+				
 		}else{
+			if(dbtarget.equals("device")){
+				btnStoreSdcard.setText("");
+			}else if(dbtarget.equals("sdcard")){
+				btnStoreDevice.setText("");
+			}
+			btnStoreDevice.setEnabled(false);
+			btnStoreSdcard.setEnabled(false);
 			btnInitPreloadDB.setEnabled(false);
 			btnInitEmptyDB.setEnabled(false);
 		}
+		
+		
 	}
 
 	private ServiceConnection serConn = new ServiceConnection() {
@@ -344,8 +457,6 @@ public class LIMEInitial extends Activity {
 			if(DBSrv == null){
 				//Log.i("ART","Start up db service");
 				DBSrv = IDBService.Stub.asInterface(service);
-			}else{
-				//Log.i("ART","Stop up db service");
 			}
 		}
 		public void onServiceDisconnected(ComponentName name) {}
@@ -367,5 +478,4 @@ public class LIMEInitial extends Activity {
     	return super.onCreateOptionsMenu(menu);
     }
 	
-
 }
