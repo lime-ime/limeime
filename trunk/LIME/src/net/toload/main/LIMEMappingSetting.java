@@ -92,6 +92,7 @@ public class LIMEMappingSetting extends Activity {
 		private boolean hasSelectFile;
 		
 		private IDBService DBSrv = null;
+		private ISearchService SearchSrv = null;
 
 		Button btnBackToPreviousPage = null;
 		Button btnLoadMapping = null;
@@ -123,6 +124,7 @@ public class LIMEMappingSetting extends Activity {
 
 			// Startup Service
 			getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
+			getApplicationContext().bindService(new Intent(ISearchService.class.getName()), serConn2, Context.BIND_AUTO_CREATE);
 			
 
 			mLIMEPref = new LIMEPreferenceManager(this.getApplicationContext());
@@ -315,6 +317,23 @@ public class LIMEMappingSetting extends Activity {
 			}
 			public void onServiceDisconnected(ComponentName name) {
 				//Log.i("ART","DB Service disconnected!");
+			}
+		};
+
+		/*
+		 * Construct SerConn
+		 */
+		private ServiceConnection serConn2 = new ServiceConnection() {
+			public void onServiceConnected(ComponentName name, IBinder service) {
+				SearchSrv = ISearchService.Stub.asInterface(service);
+				try {
+					SearchSrv.clear();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+			}
+
+			public void onServiceDisconnected(ComponentName name) {
 			}
 		};
 		

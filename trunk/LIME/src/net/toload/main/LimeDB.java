@@ -907,7 +907,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				// Create Related Words
 				Map<String, String> hm = new HashMap();
 
-				SQLiteDatabase db = getWritableDatabase();
+				SQLiteDatabase db = getSqliteDb(false);
 				db.beginTransaction();
 
 				try {
@@ -1056,7 +1056,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					db.endTransaction();
 				}
 
-				db = getWritableDatabase();
+				db = getSqliteDb(false);
 				db.beginTransaction();
 				try{
 					for(Entry<String, String> entry: hm.entrySet())
@@ -1193,6 +1193,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		String removeString = "DELETE FROM im WHERE code='"+im+"'";
 		SQLiteDatabase db = this.getSqliteDb(false);
 			           db.execSQL(removeString);
+					   db.close();
 	}
 	
 	/**
@@ -1210,6 +1211,8 @@ public class LimeDB extends SQLiteOpenHelper {
 				int descCol = cursor.getColumnIndex("desc");
 				return cursor.getString(descCol);
 			}
+			
+			db.close();
 		}catch(Exception e){}
 		return "";
 	}
@@ -1221,6 +1224,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		String removeString = "DELETE FROM im WHERE code='"+im+"' AND title='"+field+"'";
 		SQLiteDatabase db = this.getSqliteDb(false);
 			           db.execSQL(removeString);
+					   db.close();
 	}
 	
 
@@ -1238,7 +1242,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					  
 		SQLiteDatabase db = this.getSqliteDb(false);
 			           db.insert("im",null, cv);
-		
+					   db.close();
 	}
 
 	public List<ImObj> getImList() {
