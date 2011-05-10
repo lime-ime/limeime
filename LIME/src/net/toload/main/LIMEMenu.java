@@ -79,8 +79,9 @@ public class LIMEMenu extends TabActivity {
 
         int tabno = 0;
 
+		File checkSdFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
-		if(!checkDbFile.exists()){
+		if(!checkSdFile.exists() && !checkDbFile.exists()){
 			tabno = 2;
 		}
 		

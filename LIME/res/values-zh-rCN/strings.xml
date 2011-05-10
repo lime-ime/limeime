@@ -37,6 +37,7 @@
     <!-- TAB -->
     <string name="lime_setting_db">对应表管理</string>
     <string name="lime_setting_preference">喜好设定</string>
+    <string name="lime_setting_bluetooth">蓝牙键盘</string>
     
     <!-- Preference -->
     <string name="keyboard">键盘</string>
@@ -61,6 +62,8 @@
     <string name="auto_complete_summary">输入时选取“空白”及“符号”自动输入反白文字.</string>
     
     <string name="im">输入法</string>
+    <string name="enable_english_dictionary">启用英文字典</string>
+    <string name="enable_english_dictionary_summary">当使用 English 输入模式时，显示英文建议字</string>
     <string name="im_reverse_lookup_list">输入法字根反查</string>
     <string name="default_reverse_lookup_list">自建字根反查</string>
     <string name="cj_reverse_lookup_list">仓颉字根反查</string>
@@ -269,6 +272,10 @@
     <string name="l3_initial_btn_load_empty_db">空白数据库</string>
     <string name="l3_initial_btn_load_preload_db">预载数据库</string>
     <string name="l3_initial_btn_reset_db">重置数据库</string>
+    <string name="l3_initial_btn_store_to_sdcard">请问您要变更数据库的储存位置至 SDCARD 吗? 在部份机种上可能会产生效能不佳的问题。</string>
+    <string name="l3_initial_btn_store_to_device">请问您要变更数据库的储存位置至装置吗? </string>
+    <string name="l3_initial_btn_store_device">装置空间</string>
+    <string name="l3_initial_btn_store_sdcard">SDCARD</string>
     
     <string name="l3_tab_manage">输入法管理</string>
     <string name="l3_manage_default">自建</string>

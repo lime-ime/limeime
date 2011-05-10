@@ -36,7 +36,9 @@
       
     <!-- TAB -->
     <string name="lime_setting_db">對應表管理</string>
-    <string name="lime_setting_preference">喜好設定</string>
+    <string name="lime_setting_preference">喜好設定</string>   
+    <string name="lime_setting_bluetooth">藍牙鍵盤</string>
+    
     
     <!-- Preference -->
     <string name="keyboard">鍵盤</string>
@@ -44,7 +46,6 @@
     <string name="mapping">對應表</string>
        
     <string name="keyboard_list">LIME輸入法切換</string>
-    
     
     <string name="default_in_english">先使用英文模式</string>
     <string name="default_in_english_summary">輸入法開啟後先使用英文輸入模式.</string>
@@ -61,6 +62,8 @@
     <string name="auto_complete_summary">輸入時選取「空白」及「符號」自動輸入反白文字.</string>
     
     <string name="im">輸入法</string>
+    <string name="enable_english_dictionary">啟用英文字典</string>
+    <string name="enable_english_dictionary_summary">當使用 English 輸入模式時，顯示英文建議字</string>
     <string name="im_reverse_lookup_list">輸入法字根反查</string>
     <string name="default_reverse_lookup_list">自建字根反查</string>
     <string name="cj_reverse_lookup_list">倉頡字根反查</string>
@@ -269,6 +272,10 @@
     <string name="l3_initial_btn_load_empty_db">空白資料庫</string>
     <string name="l3_initial_btn_load_preload_db">預載資料庫</string>
     <string name="l3_initial_btn_reset_db">重置資料庫</string>
+    <string name="l3_initial_btn_store_to_sdcard">請問您要變更資料庫的儲存位置至 SDCARD 嗎? 在部份機種上可能會產生效能不佳的問題。</string>
+    <string name="l3_initial_btn_store_to_device">請問您要變更資料庫的儲存位置至裝置嗎? </string>
+     <string name="l3_initial_btn_store_device">裝置空間</string>
+    <string name="l3_initial_btn_store_sdcard">SDCARD</string>
     
     <string name="l3_tab_manage">輸入法管理</string>
     <string name="l3_manage_default">自建</string>

@@ -144,6 +144,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * Initialize LIME database, Context and LIMEPreferenceManager
 	 */
 	public LimeDB(Context context) {
+		
 		super(context, LIME.DATABASE_NAME, null, DATABASE_VERSION);
 		this.ctx = context;
 		for(int i=0; i< LIME.THREE_ROW_KEY.length(); i++){
@@ -152,7 +153,16 @@ public class LimeDB extends SQLiteOpenHelper {
 			code3rMap.put(key, value);
 			code3rMap.put(value, value);
 		}
+		
 		mLIMEPref = new LIMEPreferenceManager(ctx.getApplicationContext());
+	/*	String dbtarget = mLIMEPref.getParameterString("dbtarget");
+		if(dbtarget.equals("device")){
+			super(context, LIME.DATABASE_NAME, null, DATABASE_VERSION);
+		}else{
+			super(context, LIME.DATABASE_NAME, null, DATABASE_VERSION);
+		}*/
+
+
 	}
 
 	/**
@@ -174,12 +184,40 @@ public class LimeDB extends SQLiteOpenHelper {
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		// Start from 3.0v no need to create internal database
 	}
+	
+	public SQLiteDatabase getSqliteDb(boolean readonly){
+		try{
+			SQLiteDatabase db = null;
+			String dbtarget = mLIMEPref.getParameterString("dbtarget");
+			if(dbtarget.equals("sdcard")){
+				String sdcarddb = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
+
+				Log.i("ART", "Load on sdcard : " + new File(sdcarddb).exists()+ sdcarddb);
+				if(readonly){
+					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READONLY);
+				}else{
+					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READWRITE);
+				}
+			}else{
+				Log.i("ART", "Load on device : ");
+				if(readonly){
+					db = this.getReadableDatabase();
+				}else{
+					db = this.getWritableDatabase();
+				}
+			}
+			return db;
+		}catch(Exception e){e.printStackTrace();}
+			 
+		return null;
+
+	}
 
 	/**
 	 * Base on given table name to remove records
 	 */
 	public void deleteAll(String table) {
-		SQLiteDatabase db = this.getWritableDatabase();
+		SQLiteDatabase db = this.getSqliteDb(false);
 		db.execSQL("DELETE FROM " + table);
 		finish = false;
 		resetImInfo(table);
@@ -196,7 +234,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	public void deleteUserDictAll() {
 		mLIMEPref.setTotalUserdictRecords("0");
 		// -------------------------------------------------------------------------
-		SQLiteDatabase db = this.getWritableDatabase();
+		SQLiteDatabase db = this.getSqliteDb(false);
 		db.delete("related", FIELD_DIC_score + " > 0", null);
 		db.close();
 	}
@@ -209,7 +247,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	public int countMapping(String table) {
 
 		try {
-			SQLiteDatabase db = this.getReadableDatabase();
+			SQLiteDatabase db = this.getSqliteDb(true);
 			int total = db.rawQuery("SELECT * FROM " + table, null).getCount();
 			db.close();
 			//Log.i("countMapping", "Table," + table + ": " + total);
@@ -233,7 +271,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 		int total = 0;
 		try {
-			SQLiteDatabase db = this.getReadableDatabase();
+			SQLiteDatabase db = this.getSqliteDb(true);
 			total += db.rawQuery(
 					"SELECT * FROM related where " + FIELD_DIC_score + " > 0",
 					null).getCount();
@@ -253,7 +291,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 		this.identifyDelimiter(source);
 
-		SQLiteDatabase db = this.getWritableDatabase();
+		SQLiteDatabase db = this.getSqliteDb(false);
 		for (String unit : source) {
 
 			try {
@@ -319,7 +357,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		if (srclist != null && srclist.size() > 0) {
 
-			SQLiteDatabase db = this.getWritableDatabase();
+			SQLiteDatabase db = this.getSqliteDb(false);
 			
 			try {
 				for (int i = 0; i < srclist.size(); i++) {
@@ -388,13 +426,13 @@ public class LimeDB extends SQLiteOpenHelper {
 					ContentValues cv = new ContentValues();
 					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
 	
-					SQLiteDatabase db = this.getWritableDatabase();
+					SQLiteDatabase db = this.getSqliteDb(false);
 					db.update("related", cv, FIELD_id + " = " + srcunit.getId(), null);
 				}else{
 					ContentValues cv = new ContentValues();
 					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
 	
-					SQLiteDatabase db = this.getWritableDatabase();
+					SQLiteDatabase db = this.getSqliteDb(false);
 					db.update(tablename, cv, FIELD_id + " = " + srcunit.getId(), null);
 				}
 			}
@@ -425,7 +463,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 			if (keyword != null && !keyword.trim().equals("")) {
 				Cursor cursor = null;
-				SQLiteDatabase db = this.getReadableDatabase();
+				SQLiteDatabase db = this.getSqliteDb(true);
 				cursor = db.query(Rtable, null, FIELD_WORD + " = '" + keyword +"'", null, null,
 						null, null, null);
 				if (DEBUG) {
@@ -534,7 +572,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				Cursor cursor = null;
 				String sql = null;
 	
-				SQLiteDatabase db = this.getReadableDatabase();
+				SQLiteDatabase db = this.getSqliteDb(true);
 	
 				int ssize = mLIMEPref.getSimilarCodeCandidates();
 				boolean sort = mLIMEPref.getSortSuggestions();
@@ -586,7 +624,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			Cursor cursor = null;
 			String sql = null;
 
-			SQLiteDatabase db = this.getReadableDatabase();
+			SQLiteDatabase db = this.getSqliteDb(true);
 
 			boolean sort = mLIMEPref.getSortSuggestions();
 			boolean remap3row = mLIMEPref.getThreerowRemapping();
@@ -750,7 +788,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 */
 	public Cursor getDictionaryAll() {
 		Cursor cursor = null;
-		SQLiteDatabase db = this.getReadableDatabase();
+		SQLiteDatabase db = this.getSqliteDb(true);
 
 		cursor = db.query("dictionary", null, null, null, null, null, null,
 				null);
@@ -774,7 +812,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 				Cursor cursor = null;
 	
-				SQLiteDatabase db = this.getReadableDatabase();
+				SQLiteDatabase db = this.getSqliteDb(true);
 	
 				cursor = db.query("related", null, FIELD_DIC_pword + " = '"
 						+ pword + "'", null, null, null, FIELD_SCORE + " DESC", null);
@@ -1118,7 +1156,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 			try {
 				Cursor cursor = null;
-				SQLiteDatabase db = this.getReadableDatabase();
+				SQLiteDatabase db = this.getSqliteDb(true);
 				cursor = db.query("related", null, FIELD_DIC_pword + " = '"
 						+ pword + "'" + " AND " + FIELD_DIC_cword + " = '"
 						+ cword + "'", null, null, null, null, null);
@@ -1153,7 +1191,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 */
 	public void resetImInfo(String im) {
 		String removeString = "DELETE FROM im WHERE code='"+im+"'";
-		SQLiteDatabase db = this.getWritableDatabase();
+		SQLiteDatabase db = this.getSqliteDb(false);
 			           db.execSQL(removeString);
 	}
 	
@@ -1164,7 +1202,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		try{
 			String value = "";
 			String selectString = "SELECT * FROM im WHERE code='"+im+"' AND title='"+field+"'";
-			SQLiteDatabase db = this.getReadableDatabase();
+			SQLiteDatabase db = this.getSqliteDb(true);
 	
 			Cursor cursor = db.rawQuery(selectString ,null);
 			if (cursor.getCount() > 0) {
@@ -1181,7 +1219,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 */
 	public void removeImInfo(String im, String field) {
 		String removeString = "DELETE FROM im WHERE code='"+im+"' AND title='"+field+"'";
-		SQLiteDatabase db = this.getWritableDatabase();
+		SQLiteDatabase db = this.getSqliteDb(false);
 			           db.execSQL(removeString);
 	}
 	
@@ -1198,7 +1236,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 					  removeImInfo(im, field);
 					  
-		SQLiteDatabase db = this.getWritableDatabase();
+		SQLiteDatabase db = this.getSqliteDb(false);
 			           db.insert("im",null, cv);
 		
 	}
@@ -1206,7 +1244,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	public List<ImObj> getImList() {
 		List result = new LinkedList();
 		try {
-			SQLiteDatabase db = this.getReadableDatabase();
+			SQLiteDatabase db = this.getSqliteDb(true);
 			Cursor cursor = db.query("im", null, null, null, null, null, "code ASC", null);
 			if (cursor.moveToFirst()) {
 				do{
@@ -1228,7 +1266,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	public List<KeyboardObj> getKeyboardList() {
 		List result = new LinkedList();
 		try {
-			SQLiteDatabase db = this.getReadableDatabase();
+			SQLiteDatabase db = this.getSqliteDb(true);
 			Cursor cursor = db.query("keyboard", null, null, null, null, null, "name ASC", null);
 			if (cursor.moveToFirst()) {
 				do{
@@ -1268,7 +1306,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 					  removeImInfo(im, "keyboard");
 					  
-		SQLiteDatabase db = this.getWritableDatabase();
+		SQLiteDatabase db = this.getSqliteDb(false);
 			           db.insert("im",null, cv);
 			           
 		
@@ -1278,7 +1316,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		try{
 			String value = "";
 			String selectString = "SELECT * FROM im WHERE code='"+im+"' AND title='keyboard'";
-			SQLiteDatabase db = this.getReadableDatabase();
+			SQLiteDatabase db = this.getSqliteDb(true);
 	
 			Cursor cursor = db.rawQuery(selectString ,null);
 			if (cursor.getCount() > 0) {
