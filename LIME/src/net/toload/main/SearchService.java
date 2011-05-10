@@ -336,6 +336,20 @@ public class SearchService extends Service {
 			List<ImObj> result = db.getImList();
 			return result;
 		}
+
+		@Override
+		public void clear() throws RemoteException {
+			// TODO Auto-generated method stub
+			if(diclist != null){
+				diclist.clear();
+			}
+			if(scorelist != null){
+				scorelist.clear();
+			}
+			if(cache != null){
+				cache.clear();
+			}
+		}
 	}
 
 	@Override

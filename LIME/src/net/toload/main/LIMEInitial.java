@@ -303,6 +303,8 @@ public class LIMEInitial extends Activity {
 			    						}else if(dbtarget.equals("sdcard")){
 			    							btnStoreDevice.setText("");
 			    						}
+		    							btnStoreSdcard.setEnabled(false);
+		    							btnStoreDevice.setEnabled(false);
 				    					DBSrv.closeDatabse();
 			    						DBSrv.restoreDatabase();
 									} catch (RemoteException e) {

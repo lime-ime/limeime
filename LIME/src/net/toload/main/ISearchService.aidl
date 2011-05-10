@@ -15,5 +15,6 @@ interface ISearchService
 		String keyToChar(String code);
 		List getKeyboardList();
 		List getImList();
+		void clear();
 
 }
