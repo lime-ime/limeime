@@ -70,6 +70,7 @@ public class SearchService extends Service {
 	private static String precode = null;
 	
 	private static ConcurrentHashMap<String, List> cache = null;
+	private static ConcurrentHashMap<String, List> engcache = null;
 
 	public class SearchServiceImpl extends ISearchService.Stub {
 
@@ -149,6 +150,7 @@ public class SearchService extends Service {
 			
 			if(mLIMEPref.getParameterBoolean(LIME.SEARCHSRV_RESET_CACHE)){
 				cache = new ConcurrentHashMap(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+				engcache = new ConcurrentHashMap(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 			}
 			
@@ -228,6 +230,7 @@ public class SearchService extends Service {
 
 		public void initial() throws RemoteException {
 			cache = new ConcurrentHashMap(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+			engcache = new ConcurrentHashMap(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 		}
 
 		/*public List<Mapping> sortArray(String precode, List<Mapping> src) {
@@ -339,7 +342,6 @@ public class SearchService extends Service {
 
 		@Override
 		public void clear() throws RemoteException {
-			// TODO Auto-generated method stub
 			if(diclist != null){
 				diclist.clear();
 			}
@@ -348,7 +350,33 @@ public class SearchService extends Service {
 			}
 			if(cache != null){
 				cache.clear();
+				engcache.clear();
 			}
+		}
+
+		@Override
+		public List queryDictionary(String word) throws RemoteException {
+
+			List<Mapping> result = new LinkedList<Mapping>();
+		    List cacheTemp = engcache.get(word);
+		    
+			if(cacheTemp != null){
+				result.addAll(cacheTemp);
+			}else{
+				if(db == null){loadLimeDB();}
+				List<String> tempResult = db.queryDictionary(word);
+				for(String u: tempResult){
+					Mapping temp = new Mapping();
+				      temp.setWord(u);
+				      temp.setDictionary(true);
+				      result.add(temp);
+				}
+				if(result.size() > 0){
+					engcache.put(word, result);
+				}
+			}
+			return result;
+			
 		}
 	}
 

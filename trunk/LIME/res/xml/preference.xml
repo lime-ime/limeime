@@ -176,6 +176,11 @@
                 android:defaultValue="true"
                 android:summary="@string/similiar_enable_switch_summary" />
         <CheckBoxPreference
+                android:key="english_dictionary_enable"
+                android:title="@string/enable_english_dictionary"
+                android:defaultValue="true"
+                android:summary="@string/enable_english_dictionary_summary" />
+        <CheckBoxPreference
                 android:key="candidate_switch"
                 android:title="@string/candidate_switch"
                 android:defaultValue="true"

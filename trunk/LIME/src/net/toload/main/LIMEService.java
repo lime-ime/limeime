@@ -126,6 +126,9 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 	private Mapping firstMatched;
 	private Mapping tempMatched;
+	
+	private StringBuffer tempEnglishWord;
+	private List<Mapping> tempEnglishList;
 
 	private String mWordSeparators;
 	private String misMatched;
@@ -180,6 +183,8 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 	// Weight added to a user picking a new word from the suggestion strip
 	static final int FREQUENCY_FOR_PICKED = 3;
+	
+	private LIMEPreferenceManager mLIMEPref;
 
 	/*
 	 * Construct SerConn
@@ -212,8 +217,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 		// Startup Service
 		if (SearchSrv == null) {
-			this.bindService(new Intent(ISearchService.class.getName()),
-					serConn, Context.BIND_AUTO_CREATE);
+			this.bindService(new Intent(ISearchService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
 		}
 
 		mVibrator = (Vibrator) getApplication().getSystemService(
@@ -235,6 +239,9 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		keyboardList = new ArrayList<String>();
 		keyboardListCodes = new ArrayList<String>();
 		buildActiveKeyboardList();
+		
+		// Construct Preference Access Tool
+		mLIMEPref = new LIMEPreferenceManager(this);
 
 	}
 
@@ -384,6 +391,9 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		mEnglishOnly = false;
 		isModeURL = false;
 		isModePassword = false;
+
+		tempEnglishWord = new StringBuffer();
+		tempEnglishList = new LinkedList<Mapping>();
 		
 		onIM = true;
 		
@@ -714,6 +724,12 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 					.adjustMetaAfterKeypress(mMetaState);
 			setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
 			// ------------------------------------------------------------------------
+			
+			if(tempEnglishWord != null && tempEnglishWord.length() > 0){
+				tempEnglishWord.deleteCharAt(tempEnglishWord.length()-1);
+				updateEnglishDictionaryView();
+			} 
+			
 			break;
 
 		case KeyEvent.KEYCODE_ENTER:
@@ -741,17 +757,34 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			if (hasQuickSwitch && hasSpacePress && hasShiftPress) {
 					return true;
 			}else{
-				if (mCandidateView != null && mCandidateView.isShown()) {
-					if (mCandidateView.takeSelectedSuggestion()) {
-						return true;
-					}else {
-						setCandidatesViewShown(false);
+				if(!mLIMEPref.getEnglishEnable()){
+					if (mCandidateView != null && mCandidateView.isShown()) {
+						if (mCandidateView.takeSelectedSuggestion()) {
+							return true;
+						}else {
+							setCandidatesViewShown(false);
+							break;
+						}
+					}else{
 						break;
 					}
 				}else{
+					if(tempEnglishList != null && tempEnglishList.size() > 1 && tempEnglishWord != null && tempEnglishWord.length() > 0){
+						this.pickSuggestionManually(1);
+						tempEnglishWord.delete(0, tempEnglishWord.length());
+						tempEnglishList.clear();
+						return true;
+					}else if(tempEnglishList != null && tempEnglishList.size() == 1){
+						tempEnglishWord.delete(0, tempEnglishWord.length());
+						tempEnglishList.clear(); 
+						
+					}
+					this.updateEnglishDictionaryView();
+					
 					break;
 				}
 			}
+			
 			
 		case KeyEvent.KEYCODE_AT:
 			return true;
@@ -780,7 +813,28 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		Log.i("ART", "Super onKeyDown UP:"+keyCode + " / " + KeyEvent.ACTION_UP);
 		Log.i("ART", "Super onKeyDown DOWN:"+keyCode + " / " + KeyEvent.ACTION_DOWN);
 		Log.i("ART", "Super onKeyDown MULTIPLE:"+keyCode + " / " + KeyEvent.ACTION_MULTIPLE);*/
-		return super.onKeyDown(keyCode, event);
+		/*
+		 * Handle when user input English characters
+		 */
+		Log.i("ART","English Only Physical Keyboard :" + (char)event.getUnicodeChar(LIMEMetaKeyKeyListener.getMetaState(mMetaState)) );
+		
+		int primaryKey = event.getUnicodeChar(LIMEMetaKeyKeyListener.getMetaState(mMetaState));
+		char t = (char)primaryKey;
+		//Log.i("ART","Test Physical Key:"+Character.isLetter(t));
+/*
+		if(!Character.isLetter(t)){
+			tempEnglishList.clear();
+			tempEnglishWord.delete(0, tempEnglishWord.length());
+			this.updateEnglishDictionaryView();
+		}
+		*/
+		if(mLIMEPref.getEnglishEnable() && Character.isLetter(t)){
+				this.tempEnglishWord.append(t); 
+				this.updateEnglishDictionaryView();
+				return super.onKeyDown(keyCode, event); 
+		}else{
+			return super.onKeyDown(keyCode, event);
+		}
 	}
 
 	private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
@@ -873,7 +927,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
 
 			hasSpacePress = true;
-
+			
 			// If user enable Quick Switch Mode control then check if has
 			// Shift+Space combination
 			if (hasQuickSwitch) {
@@ -966,7 +1020,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 						// inputConnection.setComposingText("", 1);
 						inputConnection.commitText(SearchSrv
 								.hanConvert(wordToCommit), firstMatchedLength);
-
+						
 						try {
 							SearchSrv.updateMapping(firstMatched.getId(),
 									firstMatched.getCode(), firstMatched
@@ -1520,12 +1574,76 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 	}
 
 	/*
+	 * Update English dictionary view
+	 */
+	@SuppressWarnings("unchecked")
+	private void updateEnglishDictionaryView() {
+
+		if(mLIMEPref.getEnglishEnable()){
+			try {
+
+				InputConnection ic = getCurrentInputConnection(); 
+				boolean after = false;
+				boolean before = false;
+				try{
+					char c = ic.getTextAfterCursor(1, 1).charAt(0);
+					after = false;
+				}catch(StringIndexOutOfBoundsException e){
+					after = true;
+				}
+
+				boolean matchedtemp = false;
+				
+				if(tempEnglishWord.length() > 0){
+					try{
+						if(tempEnglishWord.toString().equalsIgnoreCase(ic.getTextBeforeCursor(tempEnglishWord.toString().length(), 1).toString())){
+							matchedtemp = true;
+						}
+					}catch(StringIndexOutOfBoundsException e){}
+				}
+				
+				if(after || matchedtemp){
+					tempEnglishList.clear();
+
+					Mapping temp = new Mapping();
+				      	    temp.setWord(tempEnglishWord.toString());
+				            temp.setDictionary(true);
+
+					Mapping empty = new Mapping();
+							empty.setWord("");
+							empty.setDictionary(true);
+						            
+					LinkedList<Mapping> list = new LinkedList<Mapping>();
+					List<Mapping> templist = SearchSrv.queryDictionary(tempEnglishWord.toString());
+					
+					if (templist.size() > 0) {
+					    list.add(temp);
+					    list.addAll(templist);
+						setSuggestions(list, true, true);
+					}else{
+					    list.add(empty);
+						setSuggestions(list, false, false);
+					}
+				    tempEnglishList.addAll(list);
+				}else{
+					tempEnglishList.clear();
+					tempEnglishWord.delete(0, tempEnglishWord.length());
+				}
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/*
 	 * Update dictionary view
 	 */
 	private void updateDictionaryView() {
 
+		// Also use this to control whether need to display the english suggestions words.
+		
 		// If there is no Temp Matched word exist then not to display dictionary
-		// view
 		try {
 			// Modified by Jeremy '10, 4,1. getCode -> getWord
 			// if( tempMatched != null && tempMatched.getCode() != null &&
@@ -1549,11 +1667,9 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 					setSuggestions(null, false, false);
 				}
 			}
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	public void setSuggestions(List<Mapping> suggestions, boolean completions,
@@ -1611,9 +1727,21 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 				mCandidateView.clear();
 				// mCandidateView.hideComposing();
 			}
-			mComposing.setLength(0);
-			setCandidatesViewShown(false);
-			keyDownUp(KeyEvent.KEYCODE_DEL);
+			try{
+				if(mLIMEPref.getEnglishEnable()){
+					if(tempEnglishWord != null && tempEnglishWord.length() > 0){
+						tempEnglishWord.deleteCharAt(tempEnglishWord.length()-1);
+						updateEnglishDictionaryView();
+					} 
+					keyDownUp(KeyEvent.KEYCODE_DEL);
+				}else{
+					mComposing.setLength(0);
+					setCandidatesViewShown(false);
+					keyDownUp(KeyEvent.KEYCODE_DEL);
+				}
+			}catch(Exception e){
+				Log.i("ART","->"+e);
+			}
 		}
 		// updateShiftKeyState(getCurrentInputEditorInfo());
 
@@ -2209,11 +2337,29 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 						}
 					}
 				} else {
+					/*
+					 * Handle when user input English Characters
+					 */
+					Log.i("ART","English Only Software Keyboard :"+String.valueOf((char) primaryCode));
+
 					if (isInputViewShown()) {
 						if (mInputView.isShifted()) {
 							primaryCode = Character.toUpperCase(primaryCode);
 						}
-					}/*
+					}
+
+					if(mLIMEPref.getEnglishEnable()){
+						if(Character.isLetter((char)primaryCode)){
+							this.tempEnglishWord.append((char)primaryCode);
+							this.updateEnglishDictionaryView();
+						}else{
+							tempEnglishWord.delete(0, tempEnglishWord.length());
+							tempEnglishList.clear();
+							this.updateEnglishDictionaryView();
+						}
+					}
+
+					/*
 					if(primaryCode != 10 && primaryCode != -99 && !isEnterNext){
 						getCurrentInputConnection().commitText(String.valueOf((char) primaryCode), 1);
 					}else{
@@ -2293,29 +2439,46 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		if (DEBUG)
 			Log.i("LIMEService:", "pickSuggestionManually()");
 
+		Log.i("ART","Pick up word at index : " + index);
+		
 		if (templist != null && templist.size() > 0) {
 			firstMatched = templist.get(index);
 		}
 
 		if (mCompletionOn && mCompletions != null && index >= 0
-				&& index < mCompletions.length) {
+				&& index < mCompletions.length && !mEnglishOnly) {
 			CompletionInfo ci = mCompletions[index];
 			getCurrentInputConnection().commitCompletion(ci);
-			if (DEBUG)
-				Log.i("LIMEService:", "pickSuggestionManually():mCompletionOn:"
-						+ mCompletionOn);
+			if (DEBUG) 
+				Log.i("LIMEService:", "pickSuggestionManually():mCompletionOn:" + mCompletionOn);
 			// updateShiftKeyState(getCurrentInputEditorInfo());
-		} else if (mComposing.length() > 0) {
+		} else if (mComposing.length() > 0 && !mEnglishOnly) {
+			Log.i("ART","When user pick suggested word which is not from dictionary");
 			commitTyped(getCurrentInputConnection());
 			this.firstMatched = null;
 			this.hasFirstMatched = false;
 			templist.clear();
 			updateDictionaryView();
-		} else if (firstMatched != null && firstMatched.isDictionary()) {
+		} else if (firstMatched != null && firstMatched.isDictionary() && !mEnglishOnly) {
+			Log.i("ART","When user pick suggested word which is from dictionary");
 			commitTyped(getCurrentInputConnection());
 			updateDictionaryView();
+		}else{
+			if(mLIMEPref.getEnglishEnable() && tempEnglishList != null && tempEnglishList.size() > 0 ){
+				if(index > 0){
+					getCurrentInputConnection().commitText(this.tempEnglishList.get(index).getWord().substring(tempEnglishWord.length()) + " ", this.tempEnglishList.get(index).getWord().length()+1);	
+				}
+				tempEnglishWord.delete(0, tempEnglishWord.length());
+				tempEnglishList.clear(); 
+				
+				Mapping temp = new Mapping();
+	      	    temp.setWord("");
+	            temp.setDictionary(true);
+			    List list = new LinkedList();
+			    	 list.add(temp);
+				setSuggestions(list, false, false);
+			}
 		}
-		// setCandidatesViewShown(false);
 
 	}
 

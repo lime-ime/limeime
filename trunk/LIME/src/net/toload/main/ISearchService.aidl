@@ -16,5 +16,6 @@ interface ISearchService
 		List getKeyboardList();
 		List getImList();
 		void clear();
+		List queryDictionary(String word);
 
 }

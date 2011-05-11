@@ -141,9 +141,13 @@ public class LIMEPreferenceManager {
 	}
 	
 	public boolean getLearnRelatedWord(){
-		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("candidate_suggestion", true);
+	}
+	
+	public boolean getEnglishEnable(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("english_dictionary_enable", true);
 	}
 	
 	public boolean getSortSuggestions(){
