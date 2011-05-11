@@ -192,14 +192,12 @@ public class LimeDB extends SQLiteOpenHelper {
 			if(dbtarget.equals("sdcard")){
 				String sdcarddb = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
 
-				Log.i("ART", "Load on sdcard : " + new File(sdcarddb).exists()+ sdcarddb);
 				if(readonly){
 					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READONLY);
 				}else{
 					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READWRITE);
 				}
 			}else{
-				Log.i("ART", "Load on device : ");
 				if(readonly){
 					db = this.getReadableDatabase();
 				}else{
@@ -790,8 +788,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		Cursor cursor = null;
 		SQLiteDatabase db = this.getSqliteDb(true);
 
-		cursor = db.query("dictionary", null, null, null, null, null, null,
-				null);
+		cursor = db.query("dictionary", null, null, null, null, null, null, null);
 		return cursor;
 	}
 
@@ -1083,6 +1080,12 @@ public class LimeDB extends SQLiteOpenHelper {
 					setImInfo(table, "name", imname);
 					setImInfo(table, "amount", String.valueOf(count));
 					setImInfo(table, "import", new Date().toLocaleString());
+					
+					// If there is no keyboard assigned for current input method then use default keyboard layout
+					String keyboard = getImInfo(table, "keyboard");
+					if(keyboard == null || keyboard.equals("")){
+						setImInfo(table, "keyboard", "lime");
+					}
 				}
 				
 				finish = true;
@@ -1330,6 +1333,31 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 		}catch(Exception e){}
 		return "";
+	}
+
+	public List queryDictionary(String word) {
+		List result = new ArrayList();
+		try{
+			String value = "";
+			int ssize = mLIMEPref.getSimilarCodeCandidates();
+			String selectString = "SELECT word FROM dictionary WHERE word MATCH '"+word+"*' LIMIT "+ssize+";";
+			SQLiteDatabase db = this.getSqliteDb(true);
+	
+			Cursor cursor = db.rawQuery(selectString ,null);
+			if (cursor.getCount() > 0) {
+				cursor.moveToFirst();
+				do{
+					String w = cursor.getString(cursor.getColumnIndex("word"));
+					if(w != null && !w.equals("")){
+						result.add(w);
+					}
+				} while (cursor.moveToNext());
+			}
+			
+			db.close();
+		}catch(Exception e){}
+		
+		return result;
 	}
 
 }

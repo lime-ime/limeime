@@ -61,8 +61,8 @@
     <string name="auto_complete_summary">Spacebar and punctuation automatically insert highlighted word</string>
     
     <string name="im">Input Method</string>
-    <string name="enable_english_dictionary">Enable english dictionary</string>
-    <string name="enable_english_dictionary_summary">Show suggestion words when using English Mode</string>
+    <string name="enable_english_dictionary">Enable English dictionary</string>
+    <string name="enable_english_dictionary_summary">Enable English words dictionary</string>
     <string name="im_reverse_lookup_list">R-Lookup Selection</string>
     <string name="default_reverse_lookup_list">R-Lookup in Custom</string>
     <string name="cj_reverse_lookup_list">R-Lookup in ChangJei</string>
