@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_height="match_parent" android:orientation="vertical" android:layout_width="match_parent">
+    <ScrollView android:id="@+id/scrollView1" android:layout_width="match_parent" android:layout_height="match_parent">
+        <LinearLayout android:id="@+id/linearLayout1" android:layout_width="fill_parent" android:layout_height="fill_parent" android:orientation="horizontal" android:layout_gravity="fill">
+            <TableLayout android:id="@+id/tableLayout1" android:layout_height="fill_parent" android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px">
+                <TableRow android:layout_height="wrap_content" android:id="@+id/tableRow1" android:layout_width="match_parent" android:layout_weight="1">
+                    <Button android:layout_width="wrap_content" android:id="@+id/button1" android:text="Button" android:layout_weight="1" android:layout_height="wrap_content"></Button>
+                    <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/button2" android:text="Button" android:layout_weight="1"></Button>
+                </TableRow>
+                <TableRow android:id="@+id/tableRow2" android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_weight="1">
+                    <Button android:layout_width="wrap_content" android:id="@+id/button4" android:text="Button" android:layout_height="wrap_content" android:layout_weight="1"></Button>
+                    <Button android:layout_width="wrap_content" android:id="@+id/button3" android:text="Button" android:layout_weight="1" android:layout_height="wrap_content"></Button>
+                </TableRow>
+                <TableRow android:layout_height="match_parent" android:id="@+id/tableRow3" android:layout_width="wrap_content" android:layout_margin="5px">
+                    <ListView android:id="@+id/listView1" android:layout_height="fill_parent" android:layout_width="fill_parent"></ListView>
+                </TableRow>
+            </TableLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
