@@ -31,8 +31,10 @@ import android.os.RemoteException;
 import android.os.Vibrator;
 import android.preference.PreferenceManager; // MetaKeyKeyLister is buggy on locked metakey state
 //import android.text.method.MetaKeyKeyListener;
+import android.text.InputType;
 import android.text.AutoText;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
@@ -67,7 +69,7 @@ import android.content.res.Configuration;
  */
 public class LIMEService extends InputMethodService implements KeyboardView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = true;
+	static final boolean DEBUG = false;
 	static final String PREF = "LIMEXY";
 
 	static final int KEYBOARD_SWITCH_CODE = -9;
@@ -86,6 +88,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 	private boolean mAutoCap;
 	private boolean mQuickFixes;
 	private boolean mHasShift;
+
 	private boolean mEnglishOnly;
 	private boolean mEnglishFlagShift;
 	private boolean mEnglishIMStart;
@@ -154,6 +157,8 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 	// Hard Keyboad Shift + Space Status
 	private boolean hasShiftPress = false;
+	private boolean hasCtrlPress = false; // Jeremy '11,5,13
+
 	private boolean hasSpacePress = false;
 
 	// Hard Keyboad Shift + Space Status
@@ -276,7 +281,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		super.onInitializeInterface();
 
 	}
-
+	
 	@Override
 	public void onConfigurationChanged(Configuration conf) {
 		
@@ -330,7 +335,23 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 		return mCandidateView;
 	}
-
+	
+	// Jeremy '11,5,13
+	//Override original extractingUI setting for larger screen (width >240).
+	public void onUpdateExtractingVisibility(EditorInfo ei) {
+		 	
+		 if(DEBUG) { Log.i("onUpdateExtractingVisibilitythis" , "MaxWidth:"+
+				 this.getMaxWidth());}
+	        if ( this.getMaxWidth() >240 ||
+	        		ei.inputType == InputType.TYPE_NULL ||
+	                (ei.imeOptions&EditorInfo.IME_FLAG_NO_EXTRACT_UI) != 0) {
+	            // No reason to show extract UI!
+	            setExtractViewShown(false);
+	            return;
+	        }
+	        	
+	        setExtractViewShown(true);
+	    }
 	/**
 	 * This is called when the user is done editing a field. We can use this to
 	 * reset our state.
@@ -704,6 +725,9 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			// Log.i("ART","select:"+4);
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState, keyCode, event);
 			break;
+		case KeyEvent.KEYCODE_CTRL_LEFT:
+		case KeyEvent.KEYCODE_CTRL_RIGHT:
+			hasCtrlPress =true;
 		case KeyEvent.KEYCODE_BACK:
 			// Log.i("ART","select:"+5);
 			// The InputMethodService already takes care of the back
@@ -918,8 +942,6 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			hasShiftPress = true;
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
-		case KeyEvent.KEYCODE_CTRL_LEFT:
-		case KeyEvent.KEYCODE_CTRL_RIGHT:
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,
 					keyCode, event);
 			// handleAlt();
@@ -976,8 +998,9 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			
 			// If user enable Quick Switch Mode control then check if has
 			// Shift+Space combination
-			if (hasQuickSwitch) {
-				if (hasSpacePress && hasShiftPress) {
+			
+			if ( (hasQuickSwitch && hasSpacePress && hasShiftPress) 
+					|| hasCtrlPress ) {	
 					this.switchChiEng();
 					hasShiftPress = false;
 					hasSpacePress = false;
@@ -986,11 +1009,11 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 					// If no shift press then reset
 					hasShiftPress = false;
 					hasSpacePress = false;
-				}
+				
 			}
 
 		default:
-
+			hasCtrlPress =false;
 			hasShiftPress = false;
 			hasSpacePress = false;
 
