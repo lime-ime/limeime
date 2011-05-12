@@ -55,7 +55,7 @@ import net.toload.main.R.dimen;
  */
 public class CandidateView extends View {
 	
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 
     private static final int OUT_OF_BOUNDS = -1;
 
@@ -609,7 +609,7 @@ public class CandidateView extends View {
     }
     public boolean takeSelectedSuggestion(){
     	if(DEBUG){
-    		Log.i("takeSeelctionSuggestion", "mSelectedIndex:" + mSelectedIndex);
+    		Log.i("candidateview:takeSeelctionSuggestion", "mSelectedIndex:" + mSelectedIndex);
     	}
     	if (mSuggestions != null &&(mSelectedIndex >= 0) ) {
     		mService.pickSuggestionManually(mSelectedIndex);

@@ -58,7 +58,7 @@
 
 	</application>
 
-	<uses-sdk android:minSdkVersion="3" />
+	<uses-sdk android:minSdkVersion="11" />
 	<supports-screens 
 		android:largeScreens="true"
 		android:normalScreens="true" 

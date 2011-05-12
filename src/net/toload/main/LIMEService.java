@@ -67,7 +67,7 @@ import android.content.res.Configuration;
  */
 public class LIMEService extends InputMethodService implements KeyboardView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = false;
+	static final boolean DEBUG = true;
 	static final String PREF = "LIMEXY";
 
 	static final int KEYBOARD_SWITCH_CODE = -9;
@@ -365,8 +365,32 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 	}
 
+	/**
+	 * This is the main point where we do our initialization of the input method
+	 * to begin operating on an application. At this point we have been bound to
+	 * the client, and are now receiving all of the detailed information about
+	 * the target of our edits.
+	 */
+	@Override
+	public void onStartInput(EditorInfo attribute, boolean restarting) {
+		super.onStartInput(attribute, restarting);
+		
+	    initOnStartInput(attribute, restarting);
+	}
 	@Override
 	public void onStartInputView(EditorInfo attribute, boolean restarting) {
+		super.onStartInputView(attribute, restarting);
+		if (DEBUG)
+			Log.i("LIMEService", "onStartInputView");
+		if (mInputView == null) {
+			return;
+		}
+		initOnStartInput(attribute, restarting);
+
+	   
+		
+	}
+	private void initOnStartInput(EditorInfo attribute, boolean restarting){
 		super.onStartInputView(attribute, restarting);
 		if (DEBUG)
 			Log.i("LIMEService", "onStartInputView");
@@ -753,12 +777,27 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
 
 			hasSpacePress = true;
+			if (DEBUG) {
+				Log.i("OnKeyDown", "keyCode:space:"
+						+ " hasQuickSwitch:"
+						+ hasQuickSwitch
+						+ " hasSpacePress:"
+						+ hasSpacePress
+						+ " hasShiftPress:"
+						+ hasShiftPress
+						+ " mLIMEPref.getEnglishEnable():"
+						+ mLIMEPref.getEnglishEnable()
+						+ " mCandidateView.isShown():"
+						+ mCandidateView.isShown()
+						);
+			}
 
 			if (hasQuickSwitch && hasSpacePress && hasShiftPress) {
 					return true;
 			}else{
-				if(!mLIMEPref.getEnglishEnable()){
+				if(!mLIMEPref.getEnglishEnable() || !mEnglishOnly ){ //add !mEnglishOnly by Jeremy '11,5,12
 					if (mCandidateView != null && mCandidateView.isShown()) {
+						
 						if (mCandidateView.takeSelectedSuggestion()) {
 							return true;
 						}else {
@@ -766,15 +805,19 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 							break;
 						}
 					}else{
+						
 						break;
 					}
 				}else{
+					
 					if(tempEnglishList != null && tempEnglishList.size() > 1 && tempEnglishWord != null && tempEnglishWord.length() > 0){
-						this.pickSuggestionManually(1);
+						
+						this.pickSuggestionManually(0); // Jeremy '11,5,12 testing (1)->(0)
 						tempEnglishWord.delete(0, tempEnglishWord.length());
 						tempEnglishList.clear();
 						return true;
 					}else if(tempEnglishList != null && tempEnglishList.size() == 1){
+						
 						tempEnglishWord.delete(0, tempEnglishWord.length());
 						tempEnglishList.clear(); 
 						
@@ -868,13 +911,15 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		// */------------------------------------------------------------------------
 		// Modified by Jeremy '10, 3,12
 		// keep track of alt state with mHasAlt.
-		// Modified '10, 3, 24 for bug fix and alc-lock implementation
+		// Modified '10, 3, 24 for bug fix and alt-lock implementation
 		case KeyEvent.KEYCODE_SHIFT_LEFT:
 			hasShiftPress = true;
 		case KeyEvent.KEYCODE_SHIFT_RIGHT:
 			hasShiftPress = true;
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
+		case KeyEvent.KEYCODE_CTRL_LEFT:
+		case KeyEvent.KEYCODE_CTRL_RIGHT:
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,
 					keyCode, event);
 			// handleAlt();
@@ -921,6 +966,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 			break;
 		case KeyEvent.KEYCODE_SPACE:
+			
 
 			SharedPreferences sp = PreferenceManager
 					.getDefaultSharedPreferences(this);
@@ -951,18 +997,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		}
 		// Update metakeystate of IC maintained by MetaKeyKeyListerner
 		setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
-		// ------------------------------------------------------------------------
-		// */
-		// If we want to do transformations on text being entered with a hard
-		// keyboard, we need to process the up events to update the meta key
-		// * state we are tracking.
-		// if (PROCESS_HARD_KEYS) {
-		// if (mPredictionOn) {
-		// mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,
-		// keyCode, event);
-		// }
-
-		// }
+		
 		if (DEBUG) {
 			Log.i("OnKeyUp", "keyCode:"
 					+ keyCode
@@ -2437,9 +2472,8 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 	public void pickSuggestionManually(int index) {
 		if (DEBUG)
-			Log.i("LIMEService:", "pickSuggestionManually()");
-
-		Log.i("ART","Pick up word at index : " + index);
+			Log.i("LIMEService:", "pickSuggestionManually():" +
+					"Pick up word at index : " + index);
 		
 		if (templist != null && templist.size() > 0) {
 			firstMatched = templist.get(index);
