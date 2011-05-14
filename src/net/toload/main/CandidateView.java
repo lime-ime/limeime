@@ -55,7 +55,7 @@ import net.toload.main.R.dimen;
  */
 public class CandidateView extends View {
 	
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
     private static final int OUT_OF_BOUNDS = -1;
 

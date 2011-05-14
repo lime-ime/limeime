@@ -311,7 +311,7 @@
     <string name="l3_initial_restore_end">Restore Finished!</string>
     <string name="l3_initial_restore_confirm">Would you like to restore database from backup?</string>
     
-    <string name="l3_im_setting_select_keyboard">Please choice keyboard display</string>
+    <string name="l3_im_setting_select_keyboard">Please choose keyboard display</string>
     <string name="l3_im_setting_back">Back To Previous Page</string>
     <string name="l3_im_setting_title">Mapping Setting</string>
     <string name="l3_im_setting_source">Source: </string>
