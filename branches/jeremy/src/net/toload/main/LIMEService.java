@@ -159,7 +159,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 	private boolean hasShiftPress = false;
 	private boolean hasCtrlPress = false; // Jeremy '11,5,13
 
-	private boolean hasSpacePress = false;
+	//private boolean hasSpacePress = false;
 
 	// Hard Keyboad Shift + Space Status
 	private boolean hasAltPress = false;
@@ -188,6 +188,11 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 	// Weight added to a user picking a new word from the suggestion strip
 	static final int FREQUENCY_FOR_PICKED = 3;
+	
+	// Replace Keycode.KEYCODE_CTRL_LEFT/RIGHT on android 3.x 
+	// for backward compatibility of 2.x
+	private final int MY_KEYCODE_CTRL_LEFT =113;
+	private final int MY_KEYCODE_CTRL_RIGHT =114;
 	
 	private LIMEPreferenceManager mLIMEPref;
 
@@ -336,29 +341,28 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		return mCandidateView;
 	}
 	
-	// Jeremy '11,5,13
-	//Override original extractingUI setting for larger screen (width >240).
-	public void onUpdateExtractingVisibility(EditorInfo ei) {
-		 	
-		 if(DEBUG) { Log.i("onUpdateExtractingVisibilitythis" , "MaxWidth:"+
-				 this.getMaxWidth());}
-	        if ( this.getMaxWidth() >240 ||
-	        		ei.inputType == InputType.TYPE_NULL ||
-	                (ei.imeOptions&EditorInfo.IME_FLAG_NO_EXTRACT_UI) != 0) {
-	            // No reason to show extract UI!
-	            setExtractViewShown(false);
-	            return;
-	        }
-	        	
-	        setExtractViewShown(true);
+	
+	// Jeremy '11,5,14
+	//Override fullscreen editing mode settings for larger screen (width > 480).
+	
+	
+	 @Override
+	    public boolean onEvaluateFullscreenMode(){
+		 if(this.getMaxWidth()>480)
+			 return false; 
+		 else
+			 return 
+			 	getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
 	    }
+
+	
 	/**
 	 * This is called when the user is done editing a field. We can use this to
 	 * reset our state.
 	 */
 	@Override
 	public void onFinishInput() {
-
+		if(DEBUG) { Log.i("LimeService","onFinishInput()");}
 		super.onFinishInput();
 
 		// initialKeyboard();
@@ -670,7 +674,11 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 
-		 Log.i("ART","Physical key:"+keyCode);
+		if (DEBUG) {
+			Log.i("OnKeyDown", "keyCode:"+ keyCode
+					+ ";hasCtrlPress:"
+					+ hasCtrlPress
+					);}
 		hasKeyPress = false;
 
 		mKeydownEvent = new KeyEvent(event);
@@ -704,30 +712,37 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 				mCandidateView.selectNext();
 				return true;
 			}
+			break;
 		case KeyEvent.KEYCODE_DPAD_LEFT:
 			// Log.i("ART","select:"+2);
 			if (mCandidateView != null && mCandidateView.isShown()) {
 				mCandidateView.selectPrev();
 				return true;
 			}
+			break;
 		case KeyEvent.KEYCODE_DPAD_CENTER:
 			// Log.i("ART","select:"+3);
 			if (mCandidateView != null && mCandidateView.isShown()) {
 				mCandidateView.takeSelectedSuggestion();
 				return true;
 			}
+			break;
 			// Add by Jeremy '10,3,26, process metakey with
 			// LIMEMetaKeyKeyListner
 		case KeyEvent.KEYCODE_SHIFT_LEFT:
 		case KeyEvent.KEYCODE_SHIFT_RIGHT:
+			hasShiftPress=true;
+			mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState, keyCode, event);
+			break;
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
 			// Log.i("ART","select:"+4);
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState, keyCode, event);
 			break;
-		case KeyEvent.KEYCODE_CTRL_LEFT:
-		case KeyEvent.KEYCODE_CTRL_RIGHT:
+		case MY_KEYCODE_CTRL_LEFT:
+		case MY_KEYCODE_CTRL_RIGHT:
 			hasCtrlPress =true;
+			break;
 		case KeyEvent.KEYCODE_BACK:
 			// Log.i("ART","select:"+5);
 			// The InputMethodService already takes care of the back
@@ -785,7 +800,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			// Let the underlying text editor always handle these, if return
 			// false from takeSelectedSuggestion().
 			// Process enter for candidate view selection in OnKeyUp() to block
-			// the real enter afterware.
+			// the real enter afterward.
 			// return false;
 			//Log.i("ART", "physical keyboard:"+ keyCode);
 			if (mCandidateView != null && mCandidateView.isShown()) {
@@ -800,28 +815,11 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 			hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
 
-			hasSpacePress = true;
-			if (DEBUG) {
-				Log.i("OnKeyDown", "keyCode:space:"
-						+ " hasQuickSwitch:"
-						+ hasQuickSwitch
-						+ " hasSpacePress:"
-						+ hasSpacePress
-						+ " hasShiftPress:"
-						+ hasShiftPress
-						+ " mLIMEPref.getEnglishEnable():"
-						+ mLIMEPref.getEnglishEnable()
-						+ " mCandidateView.isShown():"
-						+ mCandidateView.isShown()
-						);
-			}
-
-			if (hasQuickSwitch && hasSpacePress && hasShiftPress) {
+			if( (hasQuickSwitch  && hasShiftPress)|| hasCtrlPress ) {
 					return true;
 			}else{
 				if(!mLIMEPref.getEnglishEnable() || !mEnglishOnly ){ //add !mEnglishOnly by Jeremy '11,5,12
-					if (mCandidateView != null && mCandidateView.isShown()) {
-						
+					if (mCandidateView != null && mCandidateView.isShown()) {					
 						if (mCandidateView.takeSelectedSuggestion()) {
 							return true;
 						}else {
@@ -847,7 +845,6 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 						
 					}
 					this.updateEnglishDictionaryView();
-					
 					break;
 				}
 			}
@@ -928,7 +925,21 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 	 */
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
+		if (DEBUG) {
+			Log.i("OnKeyUp", "keyCode:"
+					+ keyCode
+					+ ";hasCtrlPress:"
+					+ hasCtrlPress
+	/*				+ " KeyEvent.Alt_ON:"
+					+ String.valueOf(LIMEMetaKeyKeyListener.getMetaState(
+							mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON))
+					+ " KeyEvent.Shift_ON:"
+					+ String.valueOf(LIMEMetaKeyKeyListener.getMetaState(
+							mMetaState, LIMEMetaKeyKeyListener.META_SHIFT_ON))
+	*/
+							);
 
+		}
 		keydown = false;
 
 		switch (keyCode) {
@@ -937,15 +948,22 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		// keep track of alt state with mHasAlt.
 		// Modified '10, 3, 24 for bug fix and alt-lock implementation
 		case KeyEvent.KEYCODE_SHIFT_LEFT:
-			hasShiftPress = true;
 		case KeyEvent.KEYCODE_SHIFT_RIGHT:
-			hasShiftPress = true;
+			hasShiftPress = false;
+			if(hasCtrlPress)  //'11,5,14 Jeremy ctrl-shift switch to next available keyboard
+			{
+				nextActiveKeyboard(); 
+				return true;
+			}
+			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,	keyCode, event);
+			break;
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
-			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,
-					keyCode, event);
-			// handleAlt();
-
+			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,	keyCode, event);
+			break;
+		case MY_KEYCODE_CTRL_LEFT:
+		case MY_KEYCODE_CTRL_RIGHT:
+			hasCtrlPress = false;
 			break;
 		case KeyEvent.KEYCODE_ENTER:
 			// Add by Jeremy '10, 3 ,29. Pick selected selection if candidates
@@ -988,50 +1006,25 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 			break;
 		case KeyEvent.KEYCODE_SPACE:
-			
-
 			SharedPreferences sp = PreferenceManager
 					.getDefaultSharedPreferences(this);
 			hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
 
-			hasSpacePress = true;
-			
 			// If user enable Quick Switch Mode control then check if has
 			// Shift+Space combination
 			
-			if ( (hasQuickSwitch && hasSpacePress && hasShiftPress) 
-					|| hasCtrlPress ) {	
-					this.switchChiEng();
-					hasShiftPress = false;
-					hasSpacePress = false;
-					return true;
-				} else {
-					// If no shift press then reset
-					hasShiftPress = false;
-					hasSpacePress = false;
-				
+			if ( (hasQuickSwitch && hasShiftPress)|| hasCtrlPress ) { //'11,5,13 Jeremy added Ctrl-space switch chi/eng	
+					this.switchChiEng();		
+					return true;	
 			}
 
 		default:
-			hasCtrlPress =false;
-			hasShiftPress = false;
-			hasSpacePress = false;
 
 		}
 		// Update metakeystate of IC maintained by MetaKeyKeyListerner
 		setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
 		
-		if (DEBUG) {
-			Log.i("OnKeyUp", "keyCode:"
-					+ keyCode
-					+ " KeyEvent.Alt_ON:"
-					+ String.valueOf(LIMEMetaKeyKeyListener.getMetaState(
-							mMetaState, LIMEMetaKeyKeyListener.META_ALT_ON))
-					+ " KeyEvent.Shift_ON:"
-					+ String.valueOf(LIMEMetaKeyKeyListener.getMetaState(
-							mMetaState, LIMEMetaKeyKeyListener.META_SHIFT_ON)));
-
-		}
+		
 		return super.onKeyUp(keyCode, event);
 	}
 
@@ -1092,6 +1085,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 						userdiclist.add(firstMatched);
 						// Update userdict for auto-learning feature
 						// if(userdiclist.size() > 1) { updateUserDict();}
+						
 						// Add by Jeremy '10, 4,1 . Reverse Lookup
 						SearchSrv.rQuery(firstMatched.getWord());
 
@@ -1262,11 +1256,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		}
 	}
 
-	public void onKey(int primaryCode, int[] keyCodes) {/*
-		Log.i("ART", "Entering Onkey(); primaryCode:" + primaryCode
-				+ " mEnglishFlagShift:" + mEnglishFlagShift);*/
-
-		//Log.i("ART", "software:"+primaryCode);
+	public void onKey(int primaryCode, int[] keyCodes) {
 		if (DEBUG) {
 			Log.i("OnKey", "Entering Onkey(); primaryCode:" + primaryCode
 					+ " mEnglishFlagShift:" + mEnglishFlagShift);
@@ -1628,7 +1618,8 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			}
 
 		}
-
+		else 
+			setSuggestions(null, false, false);
 	}
 
 	/*
@@ -1680,7 +1671,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 						setSuggestions(list, true, true);
 					}else{
 					    list.add(empty);
-						setSuggestions(list, false, false);
+						setSuggestions(null, false, false);
 					}
 				    tempEnglishList.addAll(list);
 				}else{
@@ -2353,7 +2344,6 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 							&& onIM) {
 						mComposing.append((char) primaryCode);
 						getCurrentInputConnection().setComposingText(mComposing, 1);
-						// updateShiftKeyState(getCurrentInputEditorInfo());
 						updateCandidates();
 						misMatched = mComposing.toString();
 					} else if (hasSymbolMapping
@@ -2362,7 +2352,6 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 							&& onIM) {
 						mComposing.append((char) primaryCode);
 						getCurrentInputConnection().setComposingText(mComposing, 1);
-						// updateShiftKeyState(getCurrentInputEditorInfo());
 						updateCandidates();
 						misMatched = mComposing.toString();
 					} else if (hasSymbolMapping
@@ -2503,21 +2492,21 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		}
 
 		if (mCompletionOn && mCompletions != null && index >= 0
-				&& index < mCompletions.length && !mEnglishOnly) {
+				&& index < mCompletions.length && mEnglishOnly) {
 			CompletionInfo ci = mCompletions[index];
 			getCurrentInputConnection().commitCompletion(ci);
 			if (DEBUG) 
 				Log.i("LIMEService:", "pickSuggestionManually():mCompletionOn:" + mCompletionOn);
-			// updateShiftKeyState(getCurrentInputEditorInfo());
+			
 		} else if (mComposing.length() > 0 && !mEnglishOnly) {
-			Log.i("ART","When user pick suggested word which is not from dictionary");
+			//Log.i("ART","When user pick suggested word which is not from dictionary");
 			commitTyped(getCurrentInputConnection());
 			this.firstMatched = null;
 			this.hasFirstMatched = false;
 			templist.clear();
 			updateDictionaryView();
 		} else if (firstMatched != null && firstMatched.isDictionary() && !mEnglishOnly) {
-			Log.i("ART","When user pick suggested word which is from dictionary");
+			//Log.i("ART","When user pick suggested word which is from dictionary");
 			commitTyped(getCurrentInputConnection());
 			updateDictionaryView();
 		}else{
@@ -2531,9 +2520,9 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 				Mapping temp = new Mapping();
 	      	    temp.setWord("");
 	            temp.setDictionary(true);
-			    List list = new LinkedList();
-			    	 list.add(temp);
-				setSuggestions(list, false, false);
+			    //List list = new LinkedList();
+			    //	 list.add(temp);   // Jeremy '11,5,14.  setSuggestion null to off candidateview
+				setSuggestions(null, false, false);
 			}
 		}
 
