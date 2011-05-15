@@ -18,6 +18,7 @@
  **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 package net.toload.main;
 
 import android.inputmethodservice.InputMethodService;
@@ -1297,12 +1298,17 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			switchKeyboard(primaryCode);
 		} else if (primaryCode == -9 && mInputView != null) {
 			switchKeyboard(primaryCode);
-		} else if (primaryCode == KEYCODE_ENTER) {
-			if(isModeURL){
-				getCurrentInputConnection().sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, 66));
-			}else{
-				handleCharacter(primaryCode, keyCodes);
+			//Jeremy '11,5,15 Fixed softkeybaord enter key behavior
+		} else if (primaryCode == 32 || primaryCode ==KEYCODE_ENTER ) {
+			if (primaryCode == KEYCODE_ENTER && isModeURL) 
+					getCurrentInputConnection().sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, 66));
+			else { 
+			if (onIM && (mComposing.length() > 0)) 
+				commitTyped(getCurrentInputConnection());
+			sendKey(primaryCode);
+			
 			}
+				
 		} else {
 			// if (isWordSeparator(primaryCode)) {
 			// if (mComposing.length() > 0) {
@@ -1315,6 +1321,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			handleCharacter(primaryCode, keyCodes);
 			// }
 		}
+		
 
 	}
 
