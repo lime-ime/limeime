@@ -70,6 +70,7 @@ import android.view.View.OnTouchListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -106,6 +107,9 @@ public class LIMEMappingSetting extends Activity {
 		TextView labMappingSettingTitle = null;
 		TextView labKeyboard = null;
 		private ScrollView scrollSetting;
+		
+		LinearLayout extendLayout = null;
+		Button extendButton = null;
 		
 		private String imtype = null;
 		List<KeyboardObj> kblist = null;
@@ -145,6 +149,33 @@ public class LIMEMappingSetting extends Activity {
 	        
 			// Initial Buttons
 			initialButton();
+			
+			// Setup Extended Button
+
+			extendLayout = (LinearLayout) findViewById(R.id.extendLayout);
+			if(imtype != null && imtype.equals("dayi")){
+				Button extendButton = new Button(this);
+				extendButton.setText(getResources().getString(R.string.l3_im_download_from_ov));
+				extendLayout.addView(extendButton);
+
+				extendButton.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						try {
+							hasSelectFile = true;
+							resetLabelInfo();
+    						DBSrv.resetMapping("dayi");
+							DBSrv.downloadDayiOvCin();
+							mLIMEPref.setParameter("im_loading", true);
+							mLIMEPref.setParameter("im_loading_table", imtype);
+						} catch (RemoteException e) {
+							e.printStackTrace();
+						}
+					}
+				});
+				
+			}else{
+				extendLayout.removeView(extendButton);
+			}
 
 			scrollSetting.setOnTouchListener(new OnTouchListener(){
 				@Override

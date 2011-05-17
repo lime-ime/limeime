@@ -5,6 +5,7 @@ interface IDBService
 	void loadMapping(String filename, String tablename);
 	void resetMapping(String tablename);
 	void resetDownloadDatabase();
+	void downloadDayiOvCin();
 	void downloadPreloadedDatabase();
 	void downloadEmptyDatabase();
 	void backupDatabase();

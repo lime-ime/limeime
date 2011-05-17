@@ -609,7 +609,7 @@ public class CandidateView extends View {
     }
     public boolean takeSelectedSuggestion(){
     	if(DEBUG){
-    		Log.i("takeSeelctionSuggestion", "mSelectedIndex:" + mSelectedIndex);
+    		Log.i("candidateview:takeSeelctionSuggestion", "mSelectedIndex:" + mSelectedIndex);
     	}
     	if (mSuggestions != null &&(mSelectedIndex >= 0) ) {
     		mService.pickSuggestionManually(mSelectedIndex);

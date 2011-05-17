@@ -323,5 +323,10 @@
     <string name="l3_im_setting_button_reset">RESET TABLE</string>
     <string name="l3_im_setting_button_select">SELECT KEYBOARD</string>
     
+    <string name="l3_im_download_from_ov">Download/Install OpenVanilla DAYI</string>
+    <string name="l3_im_download_from_ov_start">Start download OpenVanilla DAYI</string>
+    <string name="l3_im_download_from_ov_install">Start Install OpenVanilla DAYI</string>
+    
+    <string name="l3_tab_bluetooth">Bluetooth</string>
     
 </resources>
