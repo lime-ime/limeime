@@ -443,6 +443,27 @@ public class DBService extends Service {
 			if (db == null) {loadLimeDB();}
 			return db.getKeyboardCode(im);
 		}
+
+		@Override
+		public void downloadDayiOvCin() throws RemoteException {
+
+			Thread threadTask = new Thread() {
+				public void run() {
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_ov_start)+ "");
+					downloadedFile = downloadRemoteFile(LIME.DAYI_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_DAYI);
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_ov_install)+ "");
+					try {
+						loadMapping(downloadedFile.getAbsolutePath(), "dayi");
+					} catch (RemoteException e) {
+						e.printStackTrace();
+						displayNotificationMessage("Download failed, please check your internet connection.");
+					}
+				}
+				
+			};
+			threadTask.start();
+			
+		}
 		
 	}
 

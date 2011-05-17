@@ -323,5 +323,10 @@
     <string name="l3_im_setting_button_reset">移除字根档</string>
     <string name="l3_im_setting_button_select">选择键盘对应</string>
     
+    <string name="l3_im_download_from_ov">下载并安装  OpenVanilla 大易字根</string>
+    <string name="l3_im_download_from_ov_start">开始下载 OpenVanilla 大易字根</string>
+    <string name="l3_im_download_from_ov_install">开始安装 OpenVanilla 大易字根</string>
+    
+    <string name="l3_tab_bluetooth">蓝牙设定</string>
     
 </resources>
