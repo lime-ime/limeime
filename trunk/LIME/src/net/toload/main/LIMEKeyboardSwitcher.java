@@ -249,15 +249,15 @@ public class LIMEKeyboardSwitcher {
     
     void setKeyboardMode(String code, int mode, int imeOptions, boolean isIm, boolean isSymbol, boolean isShift) {
 
-    	Log.i("ART","KBMODE code:"+code);
+    	/*Log.i("ART","KBMODE code:"+code);
     	Log.i("ART","KBMODE mode:"+mode);
     	Log.i("ART","KBMODE imOphtions:"+imeOptions);
     	Log.i("ART","KBMODE isIM:"+isIm);
     	Log.i("ART","KBMODE isSymbol:"+isSymbol);
-    	Log.i("ART","KBMODE isShift:"+isShift);
+    	Log.i("ART","KBMODE isShift:"+isShift);*/
     	imtype = code;
     	
-    	String imcode = imHm.get(code);
+    	String imcode = imHm.get(code); 
     	
     	if(imcode == null || imcode.equals("") || imcode.equals("custom")){
     		imcode = "lime";
