@@ -133,6 +133,8 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 	
 	private StringBuffer tempEnglishWord;
 	private List<Mapping> tempEnglishList;
+	
+	private boolean isPressPhysicalKeyboard;
 
 	private String mWordSeparators;
 	private String misMatched;
@@ -681,6 +683,9 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 					+ hasCtrlPress
 					);}
 		hasKeyPress = false;
+		
+		// For system to identify the source of character (Software KB/ Physical KB)
+		isPressPhysicalKeyboard = true;
 
 		mKeydownEvent = new KeyEvent(event);
 		// Record key press time (key down, for physical keys)
@@ -764,11 +769,26 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 			// Log.i("ART","select:"+6);
 
-			if (mComposing.length() > 0) {
-				onKey(Keyboard.KEYCODE_DELETE, null);
-				return true;
+			// ------------------------------------------------------------------------
+			/*if(mLIMEPref.getEnglishEnable()){
+				if(tempEnglishWord != null && tempEnglishWord.length() > 0){
+					tempEnglishWord.deleteCharAt(tempEnglishWord.length()-1);
+					updateEnglishDictionaryView();
+				}
+		 	}*/
+			
+			if(mLIMEPref.getEnglishEnable()){
+				if (mComposing.length() > 0 || tempEnglishWord.length() > 0) {
+					onKey(Keyboard.KEYCODE_DELETE, null);
+					return true;
+				}
+			}else{
+				if (mComposing.length() > 0) {
+					onKey(Keyboard.KEYCODE_DELETE, null);
+					return true;
+				}
 			}
-
+			
 			if (mCandidateView != null) {
 				mCandidateView.clear();
 				// mCandidateView.hideComposing();
@@ -787,12 +807,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			mMetaState = LIMEMetaKeyKeyListener
 					.adjustMetaAfterKeypress(mMetaState);
 			setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
-			// ------------------------------------------------------------------------
 			
-			if(tempEnglishWord != null && tempEnglishWord.length() > 0){
-				tempEnglishWord.deleteCharAt(tempEnglishWord.length()-1);
-				updateEnglishDictionaryView();
-			} 
 			
 			break;
 
@@ -834,17 +849,15 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 				}else{
 					
 					if(tempEnglishList != null && tempEnglishList.size() > 1 && tempEnglishWord != null && tempEnglishWord.length() > 0){
-						
 						this.pickSuggestionManually(0); // Jeremy '11,5,12 testing (1)->(0)
-						tempEnglishWord.delete(0, tempEnglishWord.length());
-						tempEnglishList.clear();
+						resetTempEnglishWord();
 						return true;
-					}else if(tempEnglishList != null && tempEnglishList.size() == 1){
-						
-						tempEnglishWord.delete(0, tempEnglishWord.length());
-						tempEnglishList.clear(); 
-						
 					}
+					
+					/*else if(tempEnglishList != null && tempEnglishList.size() == 1){
+						resetTempEnglishWord();
+						
+					}*/
 					this.updateEnglishDictionaryView();
 					break;
 				}
@@ -885,8 +898,9 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		
 		int primaryKey = event.getUnicodeChar(LIMEMetaKeyKeyListener.getMetaState(mMetaState));
 		char t = (char)primaryKey;
+		
 		//Log.i("ART","Test Physical Key:"+Character.isLetter(t));
-/*
+		/*
 		if(!Character.isLetter(t)){
 			tempEnglishList.clear();
 			tempEnglishWord.delete(0, tempEnglishWord.length());
@@ -898,8 +912,26 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 				this.updateEnglishDictionaryView();
 				return super.onKeyDown(keyCode, event); 
 		}else{
+			// Chcek if input character not valid English Character then reset temp english string
+			resetTempEnglishWord();
+			resetCandidateBar();
 			return super.onKeyDown(keyCode, event);
 		}
+	}
+	
+	private void resetCandidateBar(){
+		Mapping empty = new Mapping();
+				empty.setWord("");
+				empty.setDictionary(true);
+				
+		LinkedList<Mapping> list = new LinkedList<Mapping>();
+		    				list.add(empty);
+		setSuggestions(null, false, false);
+	}
+	
+	private void resetTempEnglishWord(){
+		tempEnglishWord.delete(0, tempEnglishWord.length());
+		tempEnglishList.clear();
 	}
 
 	private void setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState() {
@@ -1262,6 +1294,18 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			Log.i("OnKey", "Entering Onkey(); primaryCode:" + primaryCode
 					+ " mEnglishFlagShift:" + mEnglishFlagShift);
 		}
+		
+		// To identify the source of character (Software keyboard or physical keyboard)
+		if(mLIMEPref.getEnglishEnable() && primaryCode != Keyboard.KEYCODE_DELETE){
+			isPressPhysicalKeyboard = false;
+			
+			// Chcek if input character not valid English Character then reset temp english string
+			if(!Character.isLetter(primaryCode)){
+				resetTempEnglishWord();
+				resetCandidateBar();
+			}
+		}
+		
 		// Handle English/Lime Keyboard switch
 		if (mEnglishFlagShift == false
 				&& (primaryCode == Keyboard.KEYCODE_SHIFT)) {
@@ -1310,6 +1354,14 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			}
 				
 		} else {
+
+			/*if(mLIMEPref.getEnglishEnable()){
+				if(!Character.isLetter(primaryCode)){
+					resetTempEnglishWord();
+					this.updateEnglishDictionaryView();
+				}
+			}*/
+			
 			// if (isWordSeparator(primaryCode)) {
 			// if (mComposing.length() > 0) {
 			// commitTyped(getCurrentInputConnection());
@@ -1636,54 +1688,70 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 	private void updateEnglishDictionaryView() {
 
 		if(mLIMEPref.getEnglishEnable()){
+			
 			try {
 
-				InputConnection ic = getCurrentInputConnection(); 
-				boolean after = false;
-				boolean before = false;
-				try{
-					char c = ic.getTextAfterCursor(1, 1).charAt(0);
-					after = false;
-				}catch(StringIndexOutOfBoundsException e){
-					after = true;
-				}
-
-				boolean matchedtemp = false;
+				LinkedList<Mapping> list = new LinkedList<Mapping>();
 				
-				if(tempEnglishWord.length() > 0){
-					try{
-						if(tempEnglishWord.toString().equalsIgnoreCase(ic.getTextBeforeCursor(tempEnglishWord.toString().length(), 1).toString())){
-							matchedtemp = true;
-						}
-					}catch(StringIndexOutOfBoundsException e){}
-				}
-				
-				if(after || matchedtemp){
-					tempEnglishList.clear();
-
-					Mapping temp = new Mapping();
-				      	    temp.setWord(tempEnglishWord.toString());
-				            temp.setDictionary(true);
-
-					Mapping empty = new Mapping();
-							empty.setWord("");
-							empty.setDictionary(true);
-						            
-					LinkedList<Mapping> list = new LinkedList<Mapping>();
-					List<Mapping> templist = SearchSrv.queryDictionary(tempEnglishWord.toString());
-					
-					if (templist.size() > 0) {
-					    list.add(temp);
-					    list.addAll(templist);
-						setSuggestions(list, true, true);
-					}else{
-					    list.add(empty);
-						setSuggestions(null, false, false);
-					}
-				    tempEnglishList.addAll(list);
+				Mapping empty = new Mapping();
+						empty.setWord("");
+						empty.setDictionary(true);
+						
+						
+				Log.i("ART","CACHE STRING -> " + tempEnglishWord.toString());
+				if(tempEnglishWord == null || tempEnglishWord.length() == 0){
+				    list.add(empty);
+					setSuggestions(list, false, false);
 				}else{
-					tempEnglishList.clear();
-					tempEnglishWord.delete(0, tempEnglishWord.length());
+					InputConnection ic = getCurrentInputConnection(); 
+					boolean after = false;
+					try{
+						char c = ic.getTextAfterCursor(1, 1).charAt(0);
+						if(!Character.isLetterOrDigit(c)){
+							after = true;
+						}
+					}catch(StringIndexOutOfBoundsException e){
+						after = true;
+					}
+	
+					boolean matchedtemp = false;
+					
+					if(tempEnglishWord.length() > 0){
+						try{
+							if(tempEnglishWord.toString().equalsIgnoreCase(ic.getTextBeforeCursor(tempEnglishWord.toString().length(), 1).toString())){
+								matchedtemp = true;
+							}
+						}catch(StringIndexOutOfBoundsException e){}
+					}
+	
+					Log.i("ART","English Pre After:" + after);
+					Log.i("ART","English Pre matchedtemp:" + matchedtemp);
+					Log.i("ART","English Pre tempEnglishWord:" + tempEnglishWord);
+					
+					if(after || matchedtemp){
+						
+						tempEnglishList.clear();
+	
+						Mapping temp = new Mapping();
+					      	    temp.setWord(tempEnglishWord.toString());
+					            temp.setDictionary(true);
+							            
+						List<Mapping> templist = SearchSrv.queryDictionary(tempEnglishWord.toString());
+						
+						if (templist.size() > 0) {
+						    list.add(temp);
+						    list.addAll(templist);
+							setSuggestions(list, true, true);
+						    tempEnglishList.addAll(list);
+						}else{
+						    list.add(empty);
+							setSuggestions(list, false, false);
+							/*if(!matchedtemp){
+								resetTempEnglishWord();
+							}*/
+						}
+					}
+				
 				}
 				
 			} catch (Exception e) {
@@ -2406,11 +2474,11 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 						if(Character.isLetter((char)primaryCode)){
 							this.tempEnglishWord.append((char)primaryCode);
 							this.updateEnglishDictionaryView();
-						}else{
-							tempEnglishWord.delete(0, tempEnglishWord.length());
-							tempEnglishList.clear();
-							this.updateEnglishDictionaryView();
 						}
+						/*else{
+							resetTempEnglishWord();
+							this.updateEnglishDictionaryView();
+						}*/
 					}
 
 					/*
@@ -2519,10 +2587,15 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		}else{
 			if(mLIMEPref.getEnglishEnable() && tempEnglishList != null && tempEnglishList.size() > 0 ){
 				if(index > 0){
-					getCurrentInputConnection().commitText(this.tempEnglishList.get(index).getWord().substring(tempEnglishWord.length()) + " ", this.tempEnglishList.get(index).getWord().length()+1);	
+					getCurrentInputConnection().commitText(this.tempEnglishList.get(index).getWord().substring(tempEnglishWord.length()) + " ", 0);	
+					//getCurrentInputConnection().commitText(this.tempEnglishList.get(index).getWord().substring(tempEnglishWord.length()) + " ", this.tempEnglishList.get(index).getWord().length()+1);	
+				}else if(index == 0){					
+					// Only when using physical keyboard and press "Space" will append "Space" at the end of string.
+					if(isPressPhysicalKeyboard){
+						getCurrentInputConnection().commitText(" ", 0);	
+					}
 				}
-				tempEnglishWord.delete(0, tempEnglishWord.length());
-				tempEnglishList.clear(); 
+				resetTempEnglishWord();
 				
 				Mapping temp = new Mapping();
 	      	    temp.setWord("");
