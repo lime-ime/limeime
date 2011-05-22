@@ -1340,7 +1340,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		try{
 			String value = "";
 			int ssize = mLIMEPref.getSimilarCodeCandidates();
-			String selectString = "SELECT word FROM dictionary WHERE word MATCH '"+word+"*' LIMIT "+ssize+";";
+			String selectString = "SELECT word FROM dictionary WHERE word MATCH '"+word+"*' ORDER BY word ASC LIMIT "+ssize+";";
 			SQLiteDatabase db = this.getSqliteDb(true);
 	
 			Cursor cursor = db.rawQuery(selectString ,null);

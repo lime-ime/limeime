@@ -402,9 +402,9 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 	@Override
 	public void onStartInput(EditorInfo attribute, boolean restarting) {
 		super.onStartInput(attribute, restarting);
-		
 	    initOnStartInput(attribute, restarting);
 	}
+	
 	@Override
 	public void onStartInputView(EditorInfo attribute, boolean restarting) {
 		super.onStartInputView(attribute, restarting);
@@ -1460,7 +1460,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		mComposing.setLength(0);
 		setCandidatesViewShown(false);
 		initialKeyboard();
-		Toast.makeText(this, keyboardname, Toast.LENGTH_SHORT).show();
+		Toast.makeText(this, keyboardname, Toast.LENGTH_SHORT/2).show();
 	}
 
 	private void buildActiveKeyboardList() {
@@ -1966,10 +1966,10 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 		if (mEnglishOnly) {
 			onIM = false;
-			Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT).show();
+			Toast.makeText(this, R.string.typing_mode_english, Toast.LENGTH_SHORT/2).show();
 		} else {
 			onIM = true;
-			Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT).show();
+			Toast.makeText(this, R.string.typing_mode_mixed, Toast.LENGTH_SHORT/2).show();
 		}
 
 	}
