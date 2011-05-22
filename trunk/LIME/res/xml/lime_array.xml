@@ -29,68 +29,68 @@
     >
 
     <Row>
-        <Key android:codes="49" android:iconPreview="@drawable/ez_1_l" android:keyIcon="@drawable/ez_1" android:keyEdgeFlags="left"/>
-        <Key android:codes="50" android:iconPreview="@drawable/ez_2_l" android:keyIcon="@drawable/ez_2" />
-        <Key android:codes="51" android:iconPreview="@drawable/ez_3_l" android:keyIcon="@drawable/ez_3" />
-        <Key android:codes="52" android:iconPreview="@drawable/ez_4_l" android:keyIcon="@drawable/ez_4" />
-        <Key android:codes="53" android:iconPreview="@drawable/ez_5_l" android:keyIcon="@drawable/ez_5" />
-        <Key android:codes="54" android:iconPreview="@drawable/ez_6_l" android:keyIcon="@drawable/ez_6" />
-        <Key android:codes="55" android:iconPreview="@drawable/ez_7_l" android:keyIcon="@drawable/ez_7" />
-        <Key android:codes="56" android:iconPreview="@drawable/ez_8_l" android:keyIcon="@drawable/ez_8" />
-        <Key android:codes="57" android:iconPreview="@drawable/ez_9_l" android:keyIcon="@drawable/ez_9" />
-        <Key android:codes="48" android:iconPreview="@drawable/ez_0_l" android:keyIcon="@drawable/ez_0"  android:keyEdgeFlags="right"/>
-    </Row>
-    
-     <Row>
-        <Key android:codes="113" android:iconPreview="@drawable/ez_q_s_l" android:keyIcon="@drawable/ez_q_s" android:keyEdgeFlags="left"/>
-        <Key android:codes="119" android:iconPreview="@drawable/ez_w_s_l" android:keyIcon="@drawable/ez_w_s"/>
-        <Key android:codes="101" android:iconPreview="@drawable/ez_e_s_l" android:keyIcon="@drawable/ez_e_s"/>
-        <Key android:codes="114" android:iconPreview="@drawable/ez_r_s_l" android:keyIcon="@drawable/ez_r_s"/>
-        <Key android:codes="116" android:iconPreview="@drawable/ez_t_s_l" android:keyIcon="@drawable/ez_t_s"/>
-        <Key android:codes="121" android:iconPreview="@drawable/ez_y_s_l" android:keyIcon="@drawable/ez_y_s"/>
-        <Key android:codes="117" android:iconPreview="@drawable/ez_u_s_l" android:keyIcon="@drawable/ez_u_s"/>
-        <Key android:codes="105" android:iconPreview="@drawable/ez_i_s_l" android:keyIcon="@drawable/ez_i_s"/>
-        <Key android:codes="111" android:iconPreview="@drawable/ez_o_s_l" android:keyIcon="@drawable/ez_o_s"/>
-        <Key android:codes="112" android:iconPreview="@drawable/ez_p_s_l" android:keyIcon="@drawable/ez_p_s" android:keyEdgeFlags="right"/>
+        <Key android:codes="49" android:keyLabel="1" android:keyEdgeFlags="left"/>
+        <Key android:codes="50" android:keyLabel="2"/>
+        <Key android:codes="51" android:keyLabel="3"/>
+        <Key android:codes="52" android:keyLabel="4"/>
+        <Key android:codes="53" android:keyLabel="5"/>
+        <Key android:codes="54" android:keyLabel="6"/>
+        <Key android:codes="55" android:keyLabel="7"/>
+        <Key android:codes="56" android:keyLabel="8"/>
+        <Key android:codes="57" android:keyLabel="9"/>
+        <Key android:codes="48" android:keyLabel="0" android:keyEdgeFlags="right"/>
     </Row>
     
     <Row>
-        <Key android:codes="97" android:iconPreview="@drawable/ez_a_s_l" android:keyIcon="@drawable/ez_a_s" android:keyEdgeFlags="left"/>
-        <Key android:codes="115" android:iconPreview="@drawable/ez_s_s_l" android:keyIcon="@drawable/ez_s_s"/>
-        <Key android:codes="100" android:iconPreview="@drawable/ez_d_s_l" android:keyIcon="@drawable/ez_d_s"/>
-        <Key android:codes="102" android:iconPreview="@drawable/ez_f_s_l" android:keyIcon="@drawable/ez_f_s"/>
-        <Key android:codes="103" android:iconPreview="@drawable/ez_g_s_l" android:keyIcon="@drawable/ez_g_s"/>
-        <Key android:codes="104" android:iconPreview="@drawable/ez_h_s_l" android:keyIcon="@drawable/ez_h_s"/>
-        <Key android:codes="106" android:iconPreview="@drawable/ez_j_s_l" android:keyIcon="@drawable/ez_j_s"/>
-        <Key android:codes="107" android:iconPreview="@drawable/ez_k_u_l" android:keyIcon="@drawable/ez_k_u"/>
-        <Key android:codes="108" android:iconPreview="@drawable/ez_l_u_l" android:keyIcon="@drawable/ez_l_u"/>
-        <Key android:codes="45" android:iconPreview="@drawable/ez_semicolon_l" android:keyIcon="@drawable/ez_semicolon" android:keyEdgeFlags="right"/>
+        <Key android:codes="113" android:keyLabel="1^" android:keyEdgeFlags="left"/>
+        <Key android:codes="119" android:keyLabel="2^"/>
+        <Key android:codes="101" android:keyLabel="3^"/>
+        <Key android:codes="114" android:keyLabel="4^"/>
+        <Key android:codes="116" android:keyLabel="5^"/>
+        <Key android:codes="121" android:keyLabel="6^"/>
+        <Key android:codes="117" android:keyLabel="7^"/>
+        <Key android:codes="105" android:keyLabel="8^"/>
+        <Key android:codes="111" android:keyLabel="9^"/>
+        <Key android:codes="112" android:keyLabel="0^" android:keyEdgeFlags="right"/>
     </Row>
     
     <Row>
-        <Key android:codes="-1" android:iconPreview="@drawable/shift_l" android:keyWidth="15%p" android:keyIcon="@drawable/shift" android:isSticky="true" android:keyEdgeFlags="left"/>
-        <Key android:codes="122" android:iconPreview="@drawable/ez_z_s_l" android:keyIcon="@drawable/ez_z_s"/>
-        <Key android:codes="120" android:iconPreview="@drawable/ez_x_s_l" android:keyIcon="@drawable/ez_x_s"/>
-        <Key android:codes="99" android:iconPreview="@drawable/ez_c_s_l" android:keyIcon="@drawable/ez_c_s"/>
-        <Key android:codes="118" android:iconPreview="@drawable/ez_v_s_l" android:keyIcon="@drawable/ez_v_s"/>
-        <Key android:codes="98" android:iconPreview="@drawable/ez_b_s_l" android:keyIcon="@drawable/ez_b_s"/>
-        <Key android:codes="110" android:iconPreview="@drawable/ez_n_s_l" android:keyIcon="@drawable/ez_n_s"/>
-        <Key android:codes="109" android:iconPreview="@drawable/ez_m_s_l" android:keyIcon="@drawable/ez_m_s"/>
-        <Key android:codes="-5" android:iconPreview="@drawable/del_l" android:keyWidth="15%p" android:keyIcon="@drawable/del" android:keyEdgeFlags="right" android:isRepeatable="true"/>
+        <Key android:codes="97" android:keyLabel="1-" android:keyEdgeFlags="left"/>
+        <Key android:codes="115" android:keyLabel="2-"/>
+        <Key android:codes="100" android:keyLabel="3-"/>
+        <Key android:codes="102" android:keyLabel="4-"/>
+        <Key android:codes="103" android:keyLabel="5-"/>
+        <Key android:codes="104" android:keyLabel="6-"/>
+        <Key android:codes="106" android:keyLabel="7-"/>
+        <Key android:codes="107" android:keyLabel="8-"/>
+        <Key android:codes="108" android:keyLabel="9-"/>
+        <Key android:codes="59" android:keyLabel="0-" android:keyEdgeFlags="right"/>
     </Row>
     
+    <Row>
+        <Key android:codes="122" android:keyLabel="1v" android:keyEdgeFlags="left"/>
+        <Key android:codes="120" android:keyLabel="2v"/>
+        <Key android:codes="99" android:keyLabel="3v"/>
+        <Key android:codes="118" android:keyLabel="4v"/>
+        <Key android:codes="98" android:keyLabel="5v"/>
+        <Key android:codes="110" android:keyLabel="6v"/>
+        <Key android:codes="109" android:keyLabel="7v"/>
+        <Key android:codes="44" android:keyLabel="8v"/>
+        <Key android:codes="46" android:keyLabel="9v"/>
+        <Key android:codes="47" android:keyLabel="0v" android:keyEdgeFlags="right"/>
+    </Row>
+
+
     <Row android:rowEdgeFlags="bottom">
-        <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
+        <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:keyWidth="15%p" android:keyEdgeFlags="left"/>   
+        <Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift"
+                android:keyWidth="15%p" android:isModifier="true"
+                android:isSticky="true"/>             
         <Key android:codes="-9" android:keyIcon="@drawable/sw" android:keyWidth="15%p" android:iconPreview="@drawable/sw_l"/>
-        <Key android:codes="44" android:iconPreview="@drawable/ez_comma_l" android:keyIcon="@drawable/ez_comma"/>
-        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime"  android:keyWidth="20%p" android:isRepeatable="true"/>
-        <Key android:codes="46" 
-        		android:iconPreview="@drawable/ez_dot_l"
-				android:popupKeyboard="@xml/popup_c_punctuation"    
-        		android:keyIcon="@drawable/ez_dot"/>
-        <Key android:codes="47" android:iconPreview="@drawable/ez_slash_l" android:keyIcon="@drawable/ez_slash"/>
-        <Key android:codes="-2" android:keyIcon="@drawable/number" android:iconPreview="@drawable/number_l"/>
-        <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:keyWidth="10%p" android:keyEdgeFlags="right"/>
+        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime"  android:keyWidth="25%p" android:isRepeatable="true"/>
+        <Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" 
+                android:keyWidth="15%p" android:isRepeatable="true"/>
+        <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:keyWidth="15%p" android:keyEdgeFlags="right"/>
     </Row>
     
 </Keyboard>
