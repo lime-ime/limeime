@@ -96,10 +96,10 @@ public class LIMEMenu extends TabActivity {
         tabHost.addTab(tabHost.newTabSpec("tab3")
         		.setIndicator(this.getText(R.string.l3_tab_initial))
                 .setContent(new Intent(this, LIMEInitial.class)));
-        
+        /*
         tabHost.addTab(tabHost.newTabSpec("tab4")
         		.setIndicator(this.getText(R.string.l3_tab_bluetooth))
-                .setContent(new Intent(this, LIMEBluetooth.class)));
+                .setContent(new Intent(this, LIMEBluetooth.class)));*/
 
         if(tabno != 0){
             tabHost.setCurrentTab(tabno);
