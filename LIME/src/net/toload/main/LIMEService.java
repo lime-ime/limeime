@@ -351,11 +351,11 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 	
 	 @Override
 	    public boolean onEvaluateFullscreenMode(){
-		 if(this.getMaxWidth()>480)
-			 return false; 
+		 if((getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) 
+			 &&!(this.getMaxWidth()>480))
+			 return true; 
 		 else
-			 return 
-			 	getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+			 return false;
 	    }
 
 	
@@ -1300,7 +1300,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			isPressPhysicalKeyboard = false;
 			
 			// Chcek if input character not valid English Character then reset temp english string
-			if(!Character.isLetter(primaryCode)){
+			if(!Character.isLetter(primaryCode)&& mEnglishOnly){
 				resetTempEnglishWord();
 				resetCandidateBar();
 			}
