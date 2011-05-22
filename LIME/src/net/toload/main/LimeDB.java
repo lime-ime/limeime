@@ -1101,10 +1101,16 @@ public class LimeDB extends SQLiteOpenHelper {
 					setImInfo(table, "import", new Date().toLocaleString());
 					
 					// If there is no keyboard assigned for current input method then use default keyboard layout
-					String keyboard = getImInfo(table, "keyboard");
-					if(keyboard == null || keyboard.equals("")){
-						setImInfo(table, "keyboard", "lime");
-					}
+					//String keyboard = getImInfo(table, "keyboard");
+					//if(keyboard == null || keyboard.equals("")){
+					//setImInfo(table, "keyboard", "lime");
+					// '11,5,23 by Jeremy: Preset keyboard info. by tablename
+					KeyboardObj kobj = getKeyboardObj(table);
+					if( kobj == null){					
+						kobj = getKeyboardObj("lime");
+					 }
+					setKeyboardInfo(table, kobj.getDescription(), kobj.getCode());
+					
 				}
 				
 				finish = true;
@@ -1289,6 +1295,37 @@ public class LimeDB extends SQLiteOpenHelper {
 			Log.i("ART","Cannot get IM List : " + e );
 		}
 		return result;
+	}
+	
+	public KeyboardObj getKeyboardObj(String keyboard){
+		if(keyboard == null || keyboard.equals(""))
+			return null;
+		KeyboardObj kobj=null;
+		try {
+			SQLiteDatabase db = this.getSqliteDb(true);
+			Cursor cursor = db.query("keyboard", null, FIELD_CODE +" = '"+keyboard+"'", null, null, null, null, null);
+			if (cursor.moveToFirst()) {
+				kobj = new KeyboardObj();
+				kobj.setCode(cursor.getString(cursor.getColumnIndex("code")));
+				kobj.setName(cursor.getString(cursor.getColumnIndex("name")));
+				kobj.setDescription(cursor.getString(cursor.getColumnIndex("desc")));
+				kobj.setType(cursor.getString(cursor.getColumnIndex("type")));
+				kobj.setImage(cursor.getString(cursor.getColumnIndex("image")));
+				kobj.setImkb(cursor.getString(cursor.getColumnIndex("imkb")));
+				kobj.setImshiftkb(cursor.getString(cursor.getColumnIndex("imshiftkb")));
+				kobj.setEngkb(cursor.getString(cursor.getColumnIndex("engkb")));
+				kobj.setEngshiftkb(cursor.getString(cursor.getColumnIndex("engshiftkb")));
+				kobj.setSymbolkb(cursor.getString(cursor.getColumnIndex("symbolkb")));
+				kobj.setSymbolshiftkb(cursor.getString(cursor.getColumnIndex("symbolshiftkb")));
+				kobj.setDefaultkb(cursor.getString(cursor.getColumnIndex("defaultkb")));
+				kobj.setDefaultshiftkb(cursor.getString(cursor.getColumnIndex("defaultshiftkb")));
+				kobj.setExtendedkb(cursor.getString(cursor.getColumnIndex("extendedkb")));
+				kobj.setExtendedshiftkb(cursor.getString(cursor.getColumnIndex("extendedshiftkb")));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return kobj;
 	}
 
 	public List<KeyboardObj> getKeyboardList() {
