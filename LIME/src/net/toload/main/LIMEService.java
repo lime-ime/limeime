@@ -207,6 +207,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			SearchSrv = ISearchService.Stub.asInterface(service);
 			try {
 				SearchSrv.initial();
+				initialViewAndSwitcher();
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
@@ -401,23 +402,14 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 	 */
 	@Override
 	public void onStartInput(EditorInfo attribute, boolean restarting) {
-		super.onStartInput(attribute, restarting);
 	    initOnStartInput(attribute, restarting);
 	}
 	
 	@Override
 	public void onStartInputView(EditorInfo attribute, boolean restarting) {
-		super.onStartInputView(attribute, restarting);
-		if (DEBUG)
-			Log.i("LIMEService", "onStartInputView");
-		if (mInputView == null) {
-			return;
-		}
 		initOnStartInput(attribute, restarting);
-
-	   
-		
 	}
+	
 	private void initOnStartInput(EditorInfo attribute, boolean restarting){
 		super.onStartInputView(attribute, restarting);
 		if (DEBUG)
@@ -425,6 +417,8 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		if (mInputView == null) {
 			return;
 		}
+		
+		initialViewAndSwitcher();
 
 		mKeyboardSwitcher.makeKeyboards(false);
 
