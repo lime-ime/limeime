@@ -189,6 +189,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		try{
 			SQLiteDatabase db = null;
 			String dbtarget = mLIMEPref.getParameterString("dbtarget");
+			Log.i("ART", "Load Database Target : " + dbtarget);
 			if(dbtarget.equals("sdcard")){
 				String sdcarddb = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
 
@@ -198,12 +199,18 @@ public class LimeDB extends SQLiteOpenHelper {
 					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READWRITE);
 				}
 			}else{
+				String devicedb = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
+				
 				if(readonly){
-					db = this.getReadableDatabase();
+					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READONLY);
+					//db = this.getReadableDatabase();
 				}else{
-					db = this.getWritableDatabase();
+					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READWRITE);
+					//db = this.getWritableDatabase();
 				}
 			}
+			Log.i("ART", "Load Database Result : " + db);
+			
 			return db;
 		}catch(Exception e){e.printStackTrace();}
 			 
@@ -224,6 +231,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(thread != null){
 			thread.interrupt();
 		}
+		db.close();
 	}
 
 	/**
@@ -320,6 +328,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				e.printStackTrace();
 			}
 		}
+		db.close();
 	}
 
 	/**
@@ -405,6 +414,8 @@ public class LimeDB extends SQLiteOpenHelper {
 					Log.i("addDictionary:", "update userdict total records:" + dictotal);
 				}
 			}
+			
+			db.close();
 		}
 	}
 	
@@ -426,12 +437,14 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 					SQLiteDatabase db = this.getSqliteDb(false);
 					db.update("related", cv, FIELD_id + " = " + srcunit.getId(), null);
+					db.close();
 				}else{
 					ContentValues cv = new ContentValues();
 					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
 	
 					SQLiteDatabase db = this.getSqliteDb(false);
 					db.update(tablename, cv, FIELD_id + " = " + srcunit.getId(), null);
+					db.close();
 				}
 			}
 		} catch (Exception e) {
@@ -496,6 +509,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					cursor.deactivate();
 					cursor.close();
 				}
+				db.close();
 			}
 		} catch (Exception e) {
 		}
@@ -599,6 +613,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
+				db.close();
 			}
 		}
 		return result;
@@ -679,6 +694,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+			db.close();
 		}
 		return result;
 	}
@@ -836,6 +852,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					cursor.deactivate();
 					cursor.close();
 				}
+				db.close();
 			}
 		}
 		return result;
@@ -1051,6 +1068,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				} finally {
 					db.setTransactionSuccessful();
 					db.endTransaction();
+					db.close();
 				}
 
 				db = getSqliteDb(false);
@@ -1074,6 +1092,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				} finally {
 					db.setTransactionSuccessful();
 					db.endTransaction();
+					db.close();
 					mLIMEPref.setParameter("im_loading", false);
 					mLIMEPref.setParameter("im_loading_table", "");
 					setImInfo(table, "source", filename.getName());
@@ -1181,6 +1200,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				if (cursor != null && cursor.getCount() > 0) {
 					return munit;
 				}
+				db.close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -1264,8 +1284,9 @@ public class LimeDB extends SQLiteOpenHelper {
 					}
 				} while (cursor.moveToNext());
 			}
+			db.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.i("ART","Cannot get IM List : " + e );
 		}
 		return result;
 	}
@@ -1296,6 +1317,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					result.add(kobj);
 				} while (cursor.moveToNext());
 			}
+			db.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1315,6 +1337,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					  
 		SQLiteDatabase db = this.getSqliteDb(false);
 			           db.insert("im",null, cv);
+			           db.close();
 			           
 		
 	}
@@ -1331,6 +1354,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				int descCol = cursor.getColumnIndex("keyboard");
 				return cursor.getString(descCol);
 			}
+			db.close();
 		}catch(Exception e){}
 		return "";
 	}
