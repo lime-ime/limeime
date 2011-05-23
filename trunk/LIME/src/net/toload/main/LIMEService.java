@@ -352,11 +352,11 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 	
 	 @Override
 	    public boolean onEvaluateFullscreenMode(){
-		 if((getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) 
-			 &&!(this.getMaxWidth()>480))
-			 return true; 
+		 if(this.getMaxWidth()>480)
+			 return false; 
 		 else
-			 return false;
+			 return 
+			 	getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
 	    }
 
 	
@@ -801,6 +801,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			mMetaState = LIMEMetaKeyKeyListener
 					.adjustMetaAfterKeypress(mMetaState);
 			setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
+			// ------------------------------------------------------------------------
 			
 			
 			break;
