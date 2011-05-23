@@ -29,6 +29,18 @@
     android:keyHeight="@dimen/key_height"
     >
 
+    <Row>
+        <Key android:codes="64" android:keyLabel="\@" android:keyEdgeFlags="left"/>
+        <Key android:codes="35" android:keyLabel="\#"/>
+        <Key android:codes="36" android:keyLabel="$"/>
+        <Key android:codes="37" android:keyLabel="%"/>
+        <Key android:codes="38" android:keyLabel="&amp;"/>
+        <Key android:codes="42" android:keyLabel="*"/>
+        <Key android:codes="33" android:keyLabel="!"/>
+        <Key android:codes="47" android:keyLabel="/"/>
+        <Key android:codes="40" android:keyLabel="("/>
+        <Key android:codes="41" android:keyLabel=")" android:keyEdgeFlags="right"/>
+    </Row>
     
     <Row>
         <Key android:codes="81" android:keyLabel="1^" android:keyEdgeFlags="left"/>
