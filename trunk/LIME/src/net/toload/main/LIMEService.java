@@ -231,7 +231,11 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 
 		// Startup Service
 		if (SearchSrv == null) {
-			this.bindService(new Intent(ISearchService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
+			try{
+				this.bindService(new Intent(ISearchService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
+			}catch(Exception e){
+				Log.i("ART","Failed to connect Search Service");
+			}
 		}
 
 		mVibrator = (Vibrator) getApplication().getSystemService(
