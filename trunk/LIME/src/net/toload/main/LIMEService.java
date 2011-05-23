@@ -2096,6 +2096,11 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 				hasSymbolMapping = true;
 			}else if(keyboardSelection.equals("array10")){
 				hasNumberMapping = true;
+				hasSymbolMapping = false;
+				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, mKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
+			}else if(keyboardSelection.equals("array")){
+				hasNumberMapping = false;
+				hasSymbolMapping = true;
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, mKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
 			}else{
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, mKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);

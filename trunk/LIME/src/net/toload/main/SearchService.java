@@ -185,44 +185,14 @@ public class SearchService extends Service {
 					result.addAll(cacheTemp);
 					preresultlist = cacheTemp;
 				}else{
-					
-					// If code > 5 and previous code did not have any matched then system would consider it as english
-					if(code.length() > 5 &&
-							cache.get(db.getTablename()+code.subSequence(0, code.length()-1)) == null &&
-							cache.get(db.getTablename()+code.subSequence(0, code.length()-2)) == null &&
-							cache.get(db.getTablename()+code.subSequence(0, code.length()-3)) == null
-					){
-						//Log.i("ART","N-RUN->"+code);
+					List templist = db.getMapping(code, softkeyboard);
+					if(templist.size() > 0){
+						result.addAll(templist);
+						preresultlist = templist;
+						cache.put(db.getTablename()+code, templist);
 					}else{
-
-						List templist = db.getMapping(code, softkeyboard);
-						//Log.i("ART","templist:"+templist.size());
-						if(templist.size() > 0){
-							result.addAll(templist);
-							preresultlist = templist;
-							cache.put(db.getTablename()+code, templist);
-						}else{
-							boolean similiarCheck = true;
-							
-							// if code length < 6 and cannot found related words then
-							// use previous matching results.				
-							result.addAll(preresultlist);
-							/*if(code.length() < 6){								
-								result.addAll(preresultlist);
-								*//**
-								boolean remap3row = mLIMEPref.getThreerowRemapping();
-								if(!remap3row){
-									templist = db.getMappingSimiliar(code);
-									if(templist.size() > 0){
-										result.addAll(templist);
-										cache.put(db.getTablename()+code, templist);
-									}
-								}else{
-									result.addAll(preresultlist);
-								}**//*
-								
-							}*/
-						}
+						boolean similiarCheck = true;
+						result.addAll(preresultlist);
 					}
 				}
 			}
