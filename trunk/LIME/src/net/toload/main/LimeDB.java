@@ -212,7 +212,9 @@ public class LimeDB extends SQLiteOpenHelper {
 			Log.i("ART", "Load Database Result : " + db);
 			
 			return db;
-		}catch(Exception e){e.printStackTrace();}
+		}catch(Exception e){
+			Log.i("ART", "Database retrieve error :" + e);
+		}
 			 
 		return null;
 
