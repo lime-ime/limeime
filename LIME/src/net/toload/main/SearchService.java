@@ -205,10 +205,11 @@ public class SearchService extends Service {
 							boolean similiarCheck = true;
 							
 							// if code length < 6 and cannot found related words then
-							// use previous matching results.
-							if(code.length() < 6){								
+							// use previous matching results.				
+							result.addAll(preresultlist);
+							/*if(code.length() < 6){								
 								result.addAll(preresultlist);
-								/**
+								*//**
 								boolean remap3row = mLIMEPref.getThreerowRemapping();
 								if(!remap3row){
 									templist = db.getMappingSimiliar(code);
@@ -218,9 +219,9 @@ public class SearchService extends Service {
 									}
 								}else{
 									result.addAll(preresultlist);
-								}**/
+								}**//*
 								
-							}
+							}*/
 						}
 					}
 				}

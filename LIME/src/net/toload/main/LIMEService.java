@@ -402,16 +402,18 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 	 */
 	@Override
 	public void onStartInput(EditorInfo attribute, boolean restarting) {
+		super.onStartInputView(attribute, restarting);
 	    initOnStartInput(attribute, restarting);
 	}
 	
 	@Override
 	public void onStartInputView(EditorInfo attribute, boolean restarting) {
+		super.onStartInputView(attribute, restarting);
 		initOnStartInput(attribute, restarting);
 	}
 	
 	private void initOnStartInput(EditorInfo attribute, boolean restarting){
-		super.onStartInputView(attribute, restarting);
+		//super.onStartInputView(attribute, restarting);
 		if (DEBUG)
 			Log.i("LIMEService", "onStartInputView");
 		if (mInputView == null) {
@@ -662,6 +664,9 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 	}
 
 	private boolean waitingEnterUp = false;
+	
+	private boolean hasEscPressStep1 = false;
+	private boolean hasEscPressStep2 = false;
 
 	/**
 	 * Physical KeyBoard Event Handler Use this to monitor key events being
@@ -677,6 +682,8 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 					+ hasCtrlPress
 					);}
 		hasKeyPress = false;
+		
+		Log.i("ART","Physical Keyboard ->"+ keyCode);
 		
 		// For system to identify the source of character (Software KB/ Physical KB)
 		isPressPhysicalKeyboard = true;
@@ -821,6 +828,14 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 				return mCandidateView.takeSelectedSuggestion();
 			}
 
+		case 111:
+			if (mComposing != null && mComposing.length() > 0) {
+				mCandidateView.clear();
+				mComposing.setLength(0);
+				getCurrentInputConnection().commitText("",0);
+				return true;
+			}
+			break;
 		case KeyEvent.KEYCODE_SPACE:
 			
 			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
@@ -1752,7 +1767,7 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 				}
 				
 			} catch (Exception e) {
-				e.printStackTrace();
+				Log.i("ART","Error to update English predication");
 			}
 		}
 	}
@@ -2071,12 +2086,13 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 		}else{
 			if(keyboardSelection.equals("phonetic") || 
 					keyboardSelection.equals("ez") || 
-					keyboardSelection.equals("dayi") ||
-					keyboardSelection.equals("array") ||
-					keyboardSelection.equals("array10") ){
+					keyboardSelection.equals("dayi")){
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, mKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
 				hasNumberMapping = true;
 				hasSymbolMapping = true;
+			}else if(keyboardSelection.equals("array10")){
+				hasNumberMapping = true;
+				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, mKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
 			}else{
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, mKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
 			}
