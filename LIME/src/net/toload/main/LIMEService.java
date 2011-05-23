@@ -860,6 +860,8 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			
 		case KeyEvent.KEYCODE_AT:
 			return true;
+		case KeyEvent.KEYCODE_TAB: // Jeremy '11,5,23: Force bypassing tab processing to super
+			break;
 		default:
 			// Log.i("ART","select:"+10);
 
