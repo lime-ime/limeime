@@ -2781,5 +2781,19 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			}
 		}
 	}
+
+	@Override
+	public void onDestroy() {
+		// TODO Auto-generated method stub
+		super.onDestroy();
+
+		if (SearchSrv != null) {
+			try{
+				this.unbindService(serConn);
+			}catch(Exception e){
+				Log.i("ART","Failed to connect Search Service");
+			}
+		}
+	}
 	
 }
