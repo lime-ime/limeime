@@ -1713,11 +1713,11 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 						empty.setWord("");
 						empty.setDictionary(true);
 						
-						
-				Log.i("ART","CACHE STRING -> " + tempEnglishWord.toString());
+				if(DEBUG)
+						Log.i("ART","CACHE STRING -> " + tempEnglishWord.toString());
 				if(tempEnglishWord == null || tempEnglishWord.length() == 0){
-				    list.add(empty);
-					setSuggestions(list, false, false);
+				    //list.add(empty);
+					setSuggestions(null, false, false);
 				}else{
 					InputConnection ic = getCurrentInputConnection(); 
 					boolean after = false;
@@ -1739,11 +1739,11 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 							}
 						}catch(StringIndexOutOfBoundsException e){}
 					}
-	
-					Log.i("ART","English Pre After:" + after);
-					Log.i("ART","English Pre matchedtemp:" + matchedtemp);
-					Log.i("ART","English Pre tempEnglishWord:" + tempEnglishWord);
-					
+					if(DEBUG) {
+						Log.i("ART","English Pre After:" + after);
+						Log.i("ART","English Pre matchedtemp:" + matchedtemp);
+						Log.i("ART","English Pre tempEnglishWord:" + tempEnglishWord);
+					}
 					if(after || matchedtemp){
 						
 						tempEnglishList.clear();
@@ -1760,8 +1760,8 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 							setSuggestions(list, true, true);
 						    tempEnglishList.addAll(list);
 						}else{
-						    list.add(empty);
-							setSuggestions(list, false, false);
+						    //list.add(empty);
+							setSuggestions(null, false, false);
 							/*if(!matchedtemp){
 								resetTempEnglishWord();
 							}*/
@@ -2778,20 +2778,6 @@ public class LIMEService extends InputMethodService implements KeyboardView.OnKe
 			if (freq > PROMOTION_THRESHOLD) {
 				LIMEService.this.promoteToUserDictionary(word,
 						FREQUENCY_FOR_AUTO_ADD);
-			}
-		}
-	}
-
-	@Override
-	public void onDestroy() {
-		// TODO Auto-generated method stub
-		super.onDestroy();
-
-		if (SearchSrv != null) {
-			try{
-				this.unbindService(serConn);
-			}catch(Exception e){
-				Log.i("ART","Failed to connect Search Service");
 			}
 		}
 	}
