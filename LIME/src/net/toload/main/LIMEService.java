@@ -1780,8 +1780,8 @@ public class LIMEService extends InputMethodService implements
 
 				Log.i("ART", "CACHE STRING -> " + tempEnglishWord.toString());
 				if (tempEnglishWord == null || tempEnglishWord.length() == 0) {
-					list.add(empty);
-					setSuggestions(list, false, false);
+					//list.add(empty);
+					setSuggestions(null, false, false);
 				} else {
 					InputConnection ic = getCurrentInputConnection();
 					boolean after = false;
@@ -1810,11 +1810,6 @@ public class LIMEService extends InputMethodService implements
 						}
 					}
 
-					Log.i("ART", "English Pre After:" + after);
-					Log.i("ART", "English Pre matchedtemp:" + matchedtemp);
-					Log.i("ART", "English Pre tempEnglishWord:"
-							+ tempEnglishWord);
-
 					if (after || matchedtemp) {
 
 						tempEnglishList.clear();
@@ -1832,11 +1827,7 @@ public class LIMEService extends InputMethodService implements
 							setSuggestions(list, true, true);
 							tempEnglishList.addAll(list);
 						} else {
-							list.add(empty);
-							setSuggestions(list, false, false);
-							/*
-							 * if(!matchedtemp){ resetTempEnglishWord(); }
-							 */
+							setSuggestions(null, false, false);
 						}
 					}
 
