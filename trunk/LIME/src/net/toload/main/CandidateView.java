@@ -83,7 +83,7 @@ public class CandidateView extends View {
     private int[] mWordWidth = new int[MAX_SUGGESTIONS];
     private int[] mWordX = new int[MAX_SUGGESTIONS];
 
-    private static final int X_GAP = 10;
+    private static final int X_GAP = 12;
     
     private static final List<Mapping> EMPTY_LIST = new LinkedList<Mapping>();
 
@@ -94,8 +94,10 @@ public class CandidateView extends View {
     private int mColorDictionary;
     private int mColorRecommended;
     private int mColorOther;
+    private int mColorNumber;
     private int mVerticalPadding;
     private Paint mPaint;
+    private Paint nPaint;
     private boolean mScrolled;
     private int mTargetScrollX;
     
@@ -135,6 +137,7 @@ public class CandidateView extends View {
         mColorDictionary = r.getColor(R.color.candidate_dictionary);
         mColorRecommended = r.getColor(R.color.candidate_recommended);
         mColorOther = r.getColor(R.color.candidate_other);
+        mColorNumber = r.getColor(R.color.candidate_number);
         mVerticalPadding = r.getDimensionPixelSize(R.dimen.candidate_vertical_padding);
         
         
@@ -154,6 +157,12 @@ public class CandidateView extends View {
         mPaint.setAntiAlias(true);
         mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_height));
         mPaint.setStrokeWidth(0);
+        
+        nPaint = new Paint();
+        nPaint.setColor(mColorNumber);
+        nPaint.setAntiAlias(true);
+        nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_height));
+        nPaint.setStyle(Paint.Style.FILL_AND_STROKE);
         
         mDescent = (int) mPaint.descent();
 
@@ -200,7 +209,8 @@ public class CandidateView extends View {
         setVerticalScrollBarEnabled(false);
     }
     
-    private static final int MSG_REMOVE_COMPOSING = 1;   
+
+	private static final int MSG_REMOVE_COMPOSING = 1;   
 	Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -340,6 +350,7 @@ public class CandidateView extends View {
         final int height = getHeight();
         final Rect bgPadding = mBgPadding;
         final Paint paint = mPaint;
+        final Paint npaint = nPaint;
         final int touchX = mTouchX;
         final int scrollX = getScrollX();
         final boolean scrolled = mScrolled;
@@ -376,17 +387,17 @@ public class CandidateView extends View {
         
         // Paint all the suggestions and lines.
         if (canvas != null) {
+        	
         	for (int i = 0; i < count; i++) {
         		if(DEBUG){
         			Log.i("Candidateview:OnDraw","i:" + i + "  Drawing:" + mSuggestions.get(i).getWord() );
         		}
         	
-            
-            
                 //if ((i == 1 && !typedWordValid) || (i == 0 && typedWordValid)) {
                 //    paint.setFakeBoldText(true);
                 //    paint.setColor(mColorRecommended);
             	String suggestion = mSuggestions.get(i).getWord();
+            	int count = i+1;
             	
                 if(mSuggestions.get(i).isDictionary()){
                 	if(i == 0){
@@ -402,6 +413,14 @@ public class CandidateView extends View {
                     }
                 }
                 canvas.drawText(suggestion, mWordX[i] + X_GAP, y, paint);
+                if(count <= 10){
+                	if(count == 10){
+                	    canvas.drawText(String.valueOf(0), mWordX[i] + mWordWidth[i] - 10f, height - 23f, npaint);                        		
+                    }else{
+                	    canvas.drawText(String.valueOf(count), mWordX[i] + mWordWidth[i] - 10f,  height - 23f, npaint);                        		
+                	}
+                 }
+                
                 paint.setColor(mColorOther); 
                 canvas.drawLine(mWordX[i] + mWordWidth[i] + 0.5f, bgPadding.top, 
                 		mWordX[i] + mWordWidth[i] + 0.5f, height + 1, paint);
