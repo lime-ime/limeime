@@ -185,15 +185,22 @@ public class SearchService extends Service {
 					result.addAll(cacheTemp);
 					preresultlist = cacheTemp;
 				}else{
+
 					List templist = db.getMapping(code, softkeyboard);
 					if(templist.size() > 0){
 						result.addAll(templist);
 						preresultlist = templist;
 						cache.put(db.getTablename()+code, templist);
 					}else{
-						boolean similiarCheck = true;
-						result.addAll(preresultlist);
+						if(code.length() > 3 &&  
+								cache.get(db.getTablename()+code.subSequence(0, code.length()-1)) != null && 
+								cache.get(db.getTablename()+code.subSequence(0, code.length()-2)) != null 
+						){ 
+							boolean similiarCheck = true;
+							result.addAll(preresultlist);
+						}
 					}
+					
 				}
 			}
 			return result;
