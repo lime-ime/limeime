@@ -94,6 +94,8 @@ public class LIMEService extends InputMethodService implements
 	private boolean mEnglishOnly;
 	private boolean mEnglishFlagShift;
 	private boolean mEnglishIMStart;
+	
+	private boolean mPredictionOnPhysicalKeyboard = false;
 
 	private boolean onIM = true;
 	private boolean hasFirstMatched = false;
@@ -193,12 +195,15 @@ public class LIMEService extends InputMethodService implements
 	// Weight added to a user picking a new word from the suggestion strip
 	static final int FREQUENCY_FOR_PICKED = 3;
 
-	// Replace Keycode.KEYCODE_CTRL_LEFT/RIGHT on android 3.x
+	// Replace Keycode.KEYCODE_CTRL_LEFT/RIGHT, ESC on android 3.x
 	// for backward compatibility of 2.x
+	private final int MY_KEYCODE_CTRL_ESC = 111;
 	private final int MY_KEYCODE_CTRL_LEFT = 113;
 	private final int MY_KEYCODE_CTRL_RIGHT = 114;
 
 	private LIMEPreferenceManager mLIMEPref;
+	
+	
 
 	/*
 	 * Construct SerConn
@@ -855,7 +860,7 @@ public class LIMEService extends InputMethodService implements
 				return mCandidateView.takeSelectedSuggestion();
 			}
 
-		case 111:
+		case MY_KEYCODE_CTRL_ESC:
 			if (mComposing != null && mComposing.length() > 0) {
 				mCandidateView.clear();
 				mComposing.setLength(0);
@@ -890,13 +895,12 @@ public class LIMEService extends InputMethodService implements
 					}
 				} else {
 
-					if (tempEnglishList != null && tempEnglishList.size() > 1
-							&& tempEnglishWord != null
-							&& tempEnglishWord.length() > 0) {
-						this.pickSuggestionManually(0); // Jeremy '11,5,12
-														// testing (1)->(0)
+					//if (tempEnglishList != null && tempEnglishList.size() > 1	&& tempEnglishWord != null && tempEnglishWord.length() > 0) {
+					if(mLIMEPref.getEnglishEnable()){
+						//this.pickSuggestionManually(0); // Jeremy '11,5,24
 						resetTempEnglishWord();
-						return true;
+						this.updateEnglishDictionaryView();
+						//return true;
 					}
 
 					/*
@@ -917,8 +921,8 @@ public class LIMEService extends InputMethodService implements
 			break;
 		default:
 			if(!hasCtrlPress){
-				if (((mEnglishOnly && mPredictionOn) || (!mEnglishOnly && onIM))
-						&& translateKeyDown(keyCode, event)) {
+				if ( //((mEnglishOnly && mPredictionOn) || (!mEnglishOnly && onIM))&& 
+					translateKeyDown(keyCode, event)) {
 					// Log.i("ART","select:A"+10);
 					return true;
 				}
@@ -968,7 +972,7 @@ public class LIMEService extends InputMethodService implements
 		 * if(!Character.isLetter(t)){ tempEnglishList.clear();
 		 * tempEnglishWord.delete(0, tempEnglishWord.length());
 		 * this.updateEnglishDictionaryView(); }
-		 */
+		 *
 		if (mLIMEPref.getEnglishEnable() && Character.isLetter(t)) {
 			this.tempEnglishWord.append(t);
 			this.updateEnglishDictionaryView();
@@ -982,9 +986,9 @@ public class LIMEService extends InputMethodService implements
 				resetTempEnglishWord();
 				resetCandidateBar();
 			}
-			
+			*/
 			return super.onKeyDown(keyCode, event);
-		}
+		//}
 	}
 
 	private void resetCandidateBar() {
@@ -1944,7 +1948,9 @@ public class LIMEService extends InputMethodService implements
 				// mCandidateView.hideComposing();
 			}
 			try {
-				if (mLIMEPref.getEnglishEnable()) {
+				if (mLIMEPref.getEnglishEnable()
+					&& ( !isPressPhysicalKeyboard || mPredictionOnPhysicalKeyboard)
+					) {
 					if (tempEnglishWord != null && tempEnglishWord.length() > 0) {
 						tempEnglishWord
 								.deleteCharAt(tempEnglishWord.length() - 1);
@@ -2490,15 +2496,18 @@ public class LIMEService extends InputMethodService implements
 					}
 				}
 
-				if (mLIMEPref.getEnglishEnable()) {
+				if (mLIMEPref.getEnglishEnable()
+						&& ( !isPressPhysicalKeyboard || mPredictionOnPhysicalKeyboard)
+					) {
 					if (Character.isLetter((char) primaryCode)) {
 						this.tempEnglishWord.append((char) primaryCode);
 						this.updateEnglishDictionaryView();
 					}
-					/*
-					 * else{ resetTempEnglishWord();
-					 * this.updateEnglishDictionaryView(); }
-					 */
+					else{ 
+						resetTempEnglishWord();
+						this.updateEnglishDictionaryView(); 
+					  }
+					
 				}
 
 				/*
@@ -2615,7 +2624,7 @@ public class LIMEService extends InputMethodService implements
 		} else {
 			if (mLIMEPref.getEnglishEnable() && tempEnglishList != null
 					&& tempEnglishList.size() > 0) {
-				if (index > 0) {
+				//if (index > 0) {
 					getCurrentInputConnection().commitText(
 							this.tempEnglishList.get(index).getWord()
 									.substring(tempEnglishWord.length())
@@ -2623,13 +2632,13 @@ public class LIMEService extends InputMethodService implements
 					// getCurrentInputConnection().commitText(this.tempEnglishList.get(index).getWord().substring(tempEnglishWord.length())
 					// + " ",
 					// this.tempEnglishList.get(index).getWord().length()+1);
-				} else if (index == 0) {
+				/*} else if (index == 0) {
 					// Only when using physical keyboard and press "Space" will
 					// append "Space" at the end of string.
 					if (isPressPhysicalKeyboard) {
 						getCurrentInputConnection().commitText(" ", 0);
 					}
-				}
+				}*/
 				resetTempEnglishWord();
 
 				Mapping temp = new Mapping();
