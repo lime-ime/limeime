@@ -1949,7 +1949,7 @@ public class LIMEService extends InputMethodService implements
 			}
 			try {
 				if (mLIMEPref.getEnglishEnable()
-					&& ( !isPressPhysicalKeyboard || mPredictionOnPhysicalKeyboard)
+					&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishEnablePhysicalKeyboard() )//mPredictionOnPhysicalKeyboard)
 					) {
 					if (tempEnglishWord != null && tempEnglishWord.length() > 0) {
 						tempEnglishWord
@@ -2497,7 +2497,7 @@ public class LIMEService extends InputMethodService implements
 				}
 
 				if (mLIMEPref.getEnglishEnable()
-						&& ( !isPressPhysicalKeyboard || mPredictionOnPhysicalKeyboard)
+						&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishEnablePhysicalKeyboard())// mPredictionOnPhysicalKeyboard)
 					) {
 					if (Character.isLetter((char) primaryCode)) {
 						this.tempEnglishWord.append((char) primaryCode);

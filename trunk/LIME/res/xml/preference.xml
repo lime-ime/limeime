@@ -181,6 +181,11 @@
                 android:defaultValue="true"
                 android:summary="@string/enable_english_dictionary_summary" />
         <CheckBoxPreference
+                android:key="english_dictionary_physical_keyboard"
+                android:title="@string/enable_english_dictionary_physical_keyboard"
+                android:defaultValue="false"
+                android:summary="@string/enable_english_dictionary_physical_keyboard_summary" android:dependency="english_dictionary_enable"/>
+        <CheckBoxPreference
                 android:key="candidate_switch"
                 android:title="@string/candidate_switch"
                 android:defaultValue="true"

@@ -63,7 +63,9 @@
     
     <string name="im">輸入法</string>
     <string name="enable_english_dictionary">啟用英文字典</string>
-    <string name="enable_english_dictionary_summary">當使用 English 輸入模式時，顯示英文建議字</string>
+    <string name="enable_english_dictionary_summary">當使用 英文 輸入模式時，顯示英文建議字</string>
+    <string name="enable_english_dictionary_physical_keyboard">實體鍵盤啟用英文字典</string>
+    <string name="enable_english_dictionary_physical_keyboard_summary">實體鍵盤使用英文輸入模式時，顯示英文建議字</string>
     <string name="im_reverse_lookup_list">輸入法字根反查</string>
     <string name="default_reverse_lookup_list">自建字根反查</string>
     <string name="cj_reverse_lookup_list">倉頡字根反查</string>
