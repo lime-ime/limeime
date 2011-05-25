@@ -65,6 +65,7 @@ public class CandidateView extends View {
     private int mTouchX = OUT_OF_BOUNDS;
     private Drawable mSelectionHighlight;
     private boolean mTypedWordValid;
+    private boolean mShowNumber; //Jeremy '11,5,25 for showing physical keyboard number or not.
     
     private Rect mBgPadding;
 
@@ -83,7 +84,7 @@ public class CandidateView extends View {
     private int[] mWordWidth = new int[MAX_SUGGESTIONS];
     private int[] mWordX = new int[MAX_SUGGESTIONS];
 
-    private static final int X_GAP = 12;
+    private static int X_GAP = 12;
     
     private static final List<Mapping> EMPTY_LIST = new LinkedList<Mapping>();
 
@@ -413,13 +414,15 @@ public class CandidateView extends View {
                     }
                 }
                 canvas.drawText(suggestion, mWordX[i] + X_GAP, y, paint);
-                if(count <= 10){
-                	if(count == 10){
-                	    canvas.drawText(String.valueOf(0), mWordX[i] + mWordWidth[i] - 10f, height - 23f, npaint);                        		
-                    }else{
-                	    canvas.drawText(String.valueOf(count), mWordX[i] + mWordWidth[i] - 10f,  height - 23f, npaint);                        		
+                if(mShowNumber){
+                	if(count <= 10){
+                		if(count == 10){
+                			canvas.drawText(String.valueOf(0), mWordX[i] + mWordWidth[i] - 10f, height - 23f, npaint);                        		
+                		}else{
+                			canvas.drawText(String.valueOf(count), mWordX[i] + mWordWidth[i] - 10f,  height - 23f, npaint);                        		
+                		}
                 	}
-                 }
+                }
                 
                 paint.setColor(mColorOther); 
                 canvas.drawLine(mWordX[i] + mWordWidth[i] + 0.5f, bgPadding.top, 
@@ -455,9 +458,13 @@ public class CandidateView extends View {
         invalidate();
     }
     
-    public void setSuggestions(List<Mapping> suggestions, boolean completions,
-            boolean typedWordValid) {
+    public void setSuggestions(List<Mapping> suggestions, boolean showNumber, boolean typedWordValid) {
         clear();
+        if(showNumber)
+        	X_GAP = 12;
+        else 
+        	X_GAP = 10;
+        mShowNumber = showNumber;
         if (suggestions != null) {
             mSuggestions = new LinkedList<Mapping>(suggestions);
 	       

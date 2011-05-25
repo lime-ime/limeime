@@ -1374,11 +1374,10 @@ public class LIMEService extends InputMethodService implements
 					+ " mEnglishFlagShift:" + mEnglishFlagShift);
 		}
 
-		// To identify the source of character (Software keyboard or physical
-		// keyboard)
+		
 		if (mLIMEPref.getEnglishEnable()
 				&& primaryCode != Keyboard.KEYCODE_DELETE) {
-			isPressPhysicalKeyboard = false;
+			
 
 			// Chcek if input character not valid English Character then reset
 			// temp english string
@@ -1720,7 +1719,7 @@ public class LIMEService extends InputMethodService implements
 
 				// Log.i("ART", "->" + list.size());
 				if (list.size() > 0) {
-					setSuggestions(list, true, true);
+					setSuggestions(list, isPressPhysicalKeyboard, true);
 				} else {
 					setSuggestions(null, false, false);
 				}
@@ -1824,7 +1823,7 @@ public class LIMEService extends InputMethodService implements
 						if (templist.size() > 0) {
 							list.add(temp);
 							list.addAll(templist);
-							setSuggestions(list, true, true);
+							setSuggestions(list, isPressPhysicalKeyboard, true);
 							tempEnglishList.addAll(list);
 						} else {
 							setSuggestions(null, false, false);
@@ -1865,7 +1864,7 @@ public class LIMEService extends InputMethodService implements
 
 				if (list.size() > 0) {
 					templist = (LinkedList) list;
-					setSuggestions(list, true, true);
+					setSuggestions(list, isPressPhysicalKeyboard, true);
 				} else {
 					tempMatched = null;
 					setSuggestions(null, false, false);
@@ -2662,6 +2661,9 @@ public class LIMEService extends InputMethodService implements
 
 		// Record key press time (press down)
 		keyPressTime = System.currentTimeMillis();
+		// To identify the source of character (Software keyboard or physical
+		// keyboard)
+		isPressPhysicalKeyboard = false;
 
 		if (hasVibration) {
 			mVibrator.vibrate(40);
