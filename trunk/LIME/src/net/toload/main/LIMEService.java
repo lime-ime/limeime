@@ -1532,6 +1532,11 @@ public class LIMEService extends InputMethodService implements
 				break;
 			}
 		}
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+		SharedPreferences.Editor spe = sp.edit();
+
+		spe.putString("keyboard_list", keyboardSelection);
+		spe.commit();
 		// cancel candidate view if it's shown
 		if (mCandidateView != null) {
 			mCandidateView.clear();
@@ -1541,6 +1546,14 @@ public class LIMEService extends InputMethodService implements
 		setCandidatesViewShown(false);
 		initialKeyboard();
 		Toast.makeText(this, keyboardname, Toast.LENGTH_SHORT / 2).show();
+		try {
+			mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
+			mKeyboardSwitcher.setImList(SearchSrv.getImList());
+			mKeyboardSwitcher.clearKeyboards();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	private void buildActiveKeyboardList() {
