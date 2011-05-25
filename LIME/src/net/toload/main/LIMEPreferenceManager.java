@@ -150,6 +150,11 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("english_dictionary_enable", true);
 	}
 	
+	public boolean getEnglishEnablePhysicalKeyboard(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("english_dictionary_physical_keyboard", false);
+	}
+	
 	public boolean getSortSuggestions(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);

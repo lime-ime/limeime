@@ -63,7 +63,9 @@
     
     <string name="im">输入法</string>
     <string name="enable_english_dictionary">启用英文字典</string>
-    <string name="enable_english_dictionary_summary">当使用 English 输入模式时，显示英文建议字</string>
+    <string name="enable_english_dictionary_summary">当使用 英文 输入模式时，显示英文建议字</string>
+    <string name="enable_english_dictionary_physical_keyboard">实体键盘启用英文字典</string>
+    <string name="enable_english_dictionary_physical_keyboard_summary">实体键盘使用英文输入模式时，显示英文建议字</string>
     <string name="im_reverse_lookup_list">输入法字根反查</string>
     <string name="default_reverse_lookup_list">自建字根反查</string>
     <string name="cj_reverse_lookup_list">仓颉字根反查</string>
