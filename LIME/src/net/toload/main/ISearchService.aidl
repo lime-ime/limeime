@@ -17,5 +17,7 @@ interface ISearchService
 		List getImList();
 		void clear();
 		List queryDictionary(String word);
+		void setSelectedText(String text);
+		String getSelectedText();
 
 }

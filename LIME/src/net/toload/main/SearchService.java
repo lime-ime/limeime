@@ -51,7 +51,8 @@ public class SearchService extends Service {
 	private LimeHanConverter hanConverter = null;
 	private static LinkedList diclist = null;
 	private static List scorelist = null;
-	
+
+	private static StringBuffer selectedText = new StringBuffer();
 	private static String tablename = "";
 
 	private NotificationManager notificationMgr;
@@ -80,6 +81,19 @@ public class SearchService extends Service {
 			this.ctx = ctx;	
 			mLIMEPref = new LIMEPreferenceManager(ctx);
 			
+		}
+		
+		public void setSelectedText(String text){
+			selectedText = new StringBuffer();
+			selectedText.append(text);
+		}
+		
+		public String getSelectedText(){
+			if(selectedText != null){
+				return selectedText.toString().trim();
+			}else{
+				return "";
+			}
 		}
 		
 		public String hanConvert(String input){
