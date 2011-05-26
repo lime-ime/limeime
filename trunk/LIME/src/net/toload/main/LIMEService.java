@@ -117,6 +117,7 @@ public class LIMEService extends InputMethodService implements
 	private UserDictionary mUserDictionary;
 	private ContactsDictionary mContactsDictionary;
 	private ExpandableDictionary mAutoDictionary;
+	
 
 	private boolean mAutoSpace;
 	private boolean mAutoCorrectOn;
@@ -956,8 +957,13 @@ public class LIMEService extends InputMethodService implements
 
 		int primaryKey = event.getUnicodeChar(LIMEMetaKeyKeyListener.getMetaState(mMetaState));
 		char t = (char) primaryKey;
+		
+		String selected = null;
+		try{
+			selected = (String)getCurrentInputConnection().getSelectedText(0);
+		}catch(NullPointerException e){}
 
-		if(hasCtrlPress && templist != null && templist.size() > 0){
+		if(hasCtrlPress && templist != null && templist.size() > 0 && mCandidateView != null && mCandidateView.isShown()){
 			
 			switch(keyCode){
 				case 8: this.pickSuggestionManually(0);break;
@@ -971,8 +977,53 @@ public class LIMEService extends InputMethodService implements
 				case 16: this.pickSuggestionManually(8);break;
 				case 7: this.pickSuggestionManually(9);break;
 			}
+		}else if( mLIMEPref.getPhysicalKeyboardEnable() 
+					&& hasCtrlPress && !Character.isLetter(t) 
+					&& (mComposing == null || mComposing.length() == 0 
+					&& ( mCandidateView == null || !mCandidateView.isShown()) ) ){
+			// 27.May.2011 Art : when user click Ctrl + Symbol or number then send Chinese Symobl Characters
+			String s = ChineseSymbol.getSymbol(t);
+			if(s != null){
+				getCurrentInputConnection().commitText(s, 0);
+				return true;
+			}
+		}else if(selected != null){
+			// 27.May.2011 Art : Handle CTRL + C to copy selected text
+			if( hasCtrlPress && t == 'c'
+				&& (mComposing == null || mComposing.length() == 0 
+				&& ( mCandidateView == null || !mCandidateView.isShown()) ) ){
+				try {
+					SearchSrv.setSelectedText(String.valueOf(selected));
+					return true;
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
 			
+			}else if( hasCtrlPress && t == 'v'
+					&& (mComposing == null || mComposing.length() == 0 
+					&& ( mCandidateView == null || !mCandidateView.isShown()) ) ){
+					// 27.May.2011 Art : Handle CTRL + V to paste selected text
+					try {
+						getCurrentInputConnection().commitText(SearchSrv.getSelectedText(), 0);
+						return true;
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+			}
+		}else if(selected == null){
+			if( hasCtrlPress && t == 'c'
+				&& (mComposing == null || mComposing.length() == 0 
+				&& ( mCandidateView == null || !mCandidateView.isShown()) ) ){
+				// 27.May.2011 Art : Handle CTRL + C to reset selected text
+				try {
+					SearchSrv.setSelectedText("");
+					return true;
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+			}
 		}
+		
 		
 		// Log.i("ART","Test Physical Key:"+Character.isLetter(t));
 		/*
@@ -995,7 +1046,6 @@ public class LIMEService extends InputMethodService implements
 			}
 			*/
 			return super.onKeyDown(keyCode, event);
-		//}
 	}
 
 	private void resetCandidateBar() {
@@ -2448,6 +2498,17 @@ public class LIMEService extends InputMethodService implements
 						&& !hasNumberMapping
 						&& (isValidLetter(primaryCode) || isValidSymbol(primaryCode))
 						&& onIM) {
+					mComposing.append((char) primaryCode);
+					getCurrentInputConnection().setComposingText(mComposing, 1);
+					updateCandidates();
+					misMatched = mComposing.toString();
+				} else if (hasSymbolMapping && !hasNumberMapping && keyboardSelection.equals("array")
+						&& mComposing != null && mComposing.length() >= 1
+						&& getCurrentInputConnection().getTextBeforeCursor(1, 1).charAt(0) == 'w'
+						&& Character.isDigit((char)primaryCode)
+						&& onIM) {
+					// 27.May.2011 Art : This is the method to check user input type
+					// if first previous character is w and second char is number then enable im mode.
 					mComposing.append((char) primaryCode);
 					getCurrentInputConnection().setComposingText(mComposing, 1);
 					updateCandidates();
