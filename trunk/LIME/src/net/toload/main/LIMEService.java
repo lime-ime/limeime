@@ -389,8 +389,6 @@ public class LIMEService extends InputMethodService implements
 		}
 		super.onFinishInput();
 
-		// initialKeyboard();
-
 		if (mInputView != null) {
 			mInputView.closing();
 		}
@@ -407,6 +405,15 @@ public class LIMEService extends InputMethodService implements
 		}
 
 		this.setSuggestions(null, false, false);
+		//Log.i("ART", "onFinishInput()");
+		
+		// -> 26.May.2011 by Art : Update keyboard list when user click the keyboard.
+		try {
+			mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
+			mKeyboardSwitcher.setImList(SearchSrv.getImList());			
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -435,7 +442,7 @@ public class LIMEService extends InputMethodService implements
 		if (mInputView == null) {
 			return;
 		}
-		
+
 		// Reset templist
 		this.firstMatched = null;
 		this.hasFirstMatched = false;
@@ -1553,7 +1560,7 @@ public class LIMEService extends InputMethodService implements
 		try {
 			mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
 			mKeyboardSwitcher.setImList(SearchSrv.getImList());
-			mKeyboardSwitcher.clearKeyboards();
+			//mKeyboardSwitcher.clearKeyboards();
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
@@ -1670,7 +1677,7 @@ public class LIMEService extends InputMethodService implements
 		try {
 			mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
 			mKeyboardSwitcher.setImList(SearchSrv.getImList());
-			mKeyboardSwitcher.clearKeyboards();
+			//mKeyboardSwitcher.clearKeyboards();
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}

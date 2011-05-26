@@ -224,10 +224,6 @@ public class LIMEKeyboardSwitcher {
 
     private LIMEKeyboard getKeyboard(KeyboardId id) {
 
-    	Log.i("ART","getKeyboard mContext:"+mContext);
-    	Log.i("ART","getKeyboard id:"+id);
-    	Log.i("ART","getKeyboard mKeyboards:"+mKeyboards);
-    	
 	    if(id != null){
 	        if (!mKeyboards.containsKey(id)) {
 	        	LIMEKeyboard keyboard = new LIMEKeyboard(
@@ -273,41 +269,41 @@ public class LIMEKeyboardSwitcher {
     		switch (mode) {
 	            case MODE_PHONE:
 
-	            	Log.i("ART","KBMODE ->: phone");
+	            	//Log.i("ART","KBMODE ->: phone");
 	                kid = new KeyboardId(getKeyboardXMLID("phone_number"));
 	                break;
 	            case MODE_URL:
-	            	Log.i("ART","KBMODE ->: url");
+	            	//Log.i("ART","KBMODE ->: url");
 	            	kid = new KeyboardId(getKeyboardXMLID("lime_url"), KEYBOARDMODE_URL, true);
 	                break;
 	            case MODE_EMAIL:
-	            	Log.i("ART","KBMODE ->: email");
+	            	//Log.i("ART","KBMODE ->: email");
 	            	kid = new KeyboardId(getKeyboardXMLID("lime_email"), KEYBOARDMODE_EMAIL, true);
 	                break;
 	            default:
 	            	if(isIm && !isSymbol){
 	            		if(isShift){
-	    	            	Log.i("ART","KBMODE ->: " + kobj.getImshiftkb());
+	    	            	//Log.i("ART","KBMODE ->: " + kobj.getImshiftkb());
 	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getImshiftkb()), 0, true );
 	            		}else{
-	    	            	Log.i("ART","KBMODE ->: " + kobj.getImkb());
+	    	            	//Log.i("ART","KBMODE ->: " + kobj.getImkb());
 	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getImkb()), 0, true );
 	            		}
 		                mIsChinese = true;
 	            	}else if(isSymbol){
 	            		if(isShift){
-	    	            	Log.i("ART","KBMODE ->: " + kobj.getExtendedshiftkb());
+	    	            	//Log.i("ART","KBMODE ->: " + kobj.getExtendedshiftkb());
 	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getSymbolshiftkb()), 0, true );
 	            		}else{
-	    	            	Log.i("ART","KBMODE ->: " + kobj.getExtendedkb());
+	    	            	//Log.i("ART","KBMODE ->: " + kobj.getExtendedkb());
 	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getSymbolkb()), 0, true );
 	            		}
 	            	}else if(!isIm && !isSymbol){
 	            		if(isShift){
-	    	            	Log.i("ART","KBMODE ->: " + kobj.getEngshiftkb());
+	    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngshiftkb());
 	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getEngshiftkb()), 0, true );
 	            		}else{
-	    	            	Log.i("ART","KBMODE ->: " + kobj.getEngkb());
+	    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngkb());
 	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getEngkb()), 0, true );
 	            		}
 	            	}
