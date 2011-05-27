@@ -236,8 +236,9 @@ public class LIMEService extends InputMethodService implements
 
 		//Log.i("ART","On Create");
 		super.onCreate();
-		
-        mKeyboardSwitcher = new LIMEKeyboardSwitcher(this); 
+
+		initialViewAndSwitcher();
+        //mKeyboardSwitcher = new LIMEKeyboardSwitcher(this); 
 		mEnglishOnly = false;
 		mEnglishFlagShift = false;
 
@@ -365,7 +366,6 @@ public class LIMEService extends InputMethodService implements
 			Log.i("ART", "****ON onCreateCandidatesView");
 		
 		mKeyboardSwitcher.makeKeyboards(true);
-
 		mCandidateView = new CandidateView(this);
 		mCandidateView.setService(this);
 		return mCandidateView;
