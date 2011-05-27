@@ -189,7 +189,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		try{
 			SQLiteDatabase db = null;
 			String dbtarget = mLIMEPref.getParameterString("dbtarget");
-			Log.i("ART", "Load Database Target : " + dbtarget);
+			//Log.i("ART", "Load Database Target : " + dbtarget);
 			if(dbtarget.equals("sdcard")){
 				String sdcarddb = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
 
@@ -209,7 +209,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					//db = this.getWritableDatabase();
 				}
 			}
-			Log.i("ART", "Load Database Result : " + db);
+			//Log.i("ART", "Load Database Result : " + db);
 			
 			return db;
 		}catch(Exception e){e.printStackTrace();}

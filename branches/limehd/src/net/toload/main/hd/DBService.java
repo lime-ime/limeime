@@ -198,11 +198,11 @@ public class DBService extends Service {
 			if (db == null) {loadLimeDB();}
 			resetDownloadDatabase();
 			Thread threadTask = new Thread() {
-				public void run() {
+				public void run() { 
 					displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start)+ "");
 					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PRELOADED, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
 					String dbtarget = mLIMEPref.getParameterString("dbtarget");
-					String folder = "";
+					String folder = ""; 
 					if(dbtarget.equals("device")){
 						folder = LIME.DATABASE_DECOMPRESS_FOLDER;
 					}else{
@@ -247,12 +247,14 @@ public class DBService extends Service {
 				}
 				
 				File downloadFolder = new File(folder);
-				if(!downloadFolder.exists()){
-					downloadFolder.mkdirs();
-				}
+				downloadFolder.mkdirs();
+				
+				Log.i("ART","downloadFolder Folder status :"+ downloadFolder.exists());
 				
 				File downloadedFile = new File(downloadFolder.getAbsolutePath() + File.separator + filename);
+				if(downloadedFile.exists()){
 					 downloadedFile.delete();
+				}
 				
 				FileOutputStream fos = new FileOutputStream(downloadedFile);
 				byte buf[] = new byte[128];

@@ -3,9 +3,9 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
     <!-- Title for Latin keyboard  -->
-    <string name="app_name">LIME HD</string>
-    <string name="ime_name">LIME HD</string>
-    <string name="ime_setting">LIME HD Settings</string>
+    <string name="app_name">LIMEHD</string>
+    <string name="ime_name">LIMEHD</string>
+    <string name="ime_setting">LIMEHD Settings</string>
     <string name="input_method">System Input Method</string>
 
     <!-- Symbols that are commonly considered word separators in this language -->

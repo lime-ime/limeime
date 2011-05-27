@@ -5,7 +5,7 @@ public class LIME {
 	protected static final String DAYI_DOWNLOAD_URL = "http://openvanilla.googlecode.com/svn/trunk/Modules/SharedData/dayi3.cin";
 	protected static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime1104.zip";
 	protected static final String IM_DOWNLOAD_TARGET_EMPTY = "http://limeime.googlecode.com/svn/branches/database/empty1104.zip";
-	protected static final String IM_LOAD_LIME_ROOT_DIRECTORY = "/sdcard/lime/";
+	protected static final String IM_LOAD_LIME_ROOT_DIRECTORY = "/sdcard/limehd/";
 	protected static final String DOWNLOAD_START = "download_start";
 	protected static final String DATABASE_DOWNLOAD_STATUS = "database_download_status";
 	protected static final String DATABASE_NAME = "lime.db";
@@ -13,7 +13,7 @@ public class LIME {
 	protected static final String DATABASE_SOURCE_FILENAME = "lime.zip";
 	protected static final String DATABASE_SOURCE_FILENAME_EMPTY = "empty.zip";
 	protected static final String DATABASE_DECOMPRESS_FOLDER = "/data/data/net.toload.main.hd/databases";
-	protected static final String DATABASE_DECOMPRESS_FOLDER_SDCARD = "/sdcard/lime/databases";
+	protected static final String DATABASE_DECOMPRESS_FOLDER_SDCARD = "/sdcard/limehd/databases";
 	protected static final String DATABASE_BACKUP_NAME = "backup.zip";
 	protected static final String IM_CJ_STATUS = "im_cj_status";
 	protected static final String IM_SCJ_STATUS = "im_scj_status";

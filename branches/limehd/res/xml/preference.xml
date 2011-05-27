@@ -32,7 +32,7 @@
                 android:key="lime_keyboard"
                 android:title="@string/keyboard"
                 android:summary="">
-        <net.toload.main.MultiListPreference
+        <net.toload.main.hd.MultiListPreference
 				android:key="keyboard_state"
 				android:title="@string/keyboard_list"
 				android:entries="@array/keyboard"
