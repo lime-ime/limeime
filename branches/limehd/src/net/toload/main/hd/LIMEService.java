@@ -952,10 +952,10 @@ public class LIMEService extends InputMethodService implements
 		/*
 		 * Handle when user input English characters
 		 */
-		Log.i("ART",
+		/*Log.i("ART",
 				"English Only Physical Keyboard :"
 						+ (char) event.getUnicodeChar(LIMEMetaKeyKeyListener
-								.getMetaState(mMetaState)));
+								.getMetaState(mMetaState)));*/
 
 		int primaryKey = event.getUnicodeChar(LIMEMetaKeyKeyListener.getMetaState(mMetaState));
 		char t = (char) primaryKey;

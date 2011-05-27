@@ -51,13 +51,8 @@ public class LIMEPreference extends PreferenceActivity
         
         //-----------------------
 
-		File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
-		File srcFile2 = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
-		if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
 			addPreferencesFromResource(R.xml.preference);
-		}else{
-			addPreferencesFromResource(R.layout.error);
-		}
+	
     }
     
 

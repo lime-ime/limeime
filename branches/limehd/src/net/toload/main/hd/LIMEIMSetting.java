@@ -108,10 +108,6 @@ public class LIMEIMSetting extends Activity {
 		super.onCreate(icicle);
 		
 
-		File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
-		File srcFile2 = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
-		if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
-			
 			this.setContentView(R.layout.imsetting);
 	
 			// Initial Buttons
@@ -214,9 +210,6 @@ public class LIMEIMSetting extends Activity {
 				}
 			});
 		
-		}else{
-			this.setContentView(R.layout.error);
-		}
 		
 	}
 
