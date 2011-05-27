@@ -106,107 +106,118 @@ public class LIMEIMSetting extends Activity {
 	public void onCreate(Bundle icicle) {
 		
 		super.onCreate(icicle);
-		this.setContentView(R.layout.imsetting);
-
-		// Initial Buttons
-		initialButton();
-		
-		mLIMEPref = new LIMEPreferenceManager(this.getApplicationContext());
 		
 
-		btnSetupCustom.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				Intent intent = new Intent();
-				intent.setClass(v.getContext(), LIMEMappingSetting.class);
-				   Bundle bundle = new Bundle();
-				   		  bundle.putString("keyboard", "custom");
-				   intent.putExtras(bundle);
-				startActivity(intent);
-			}
-		});
-
-
-		btnSetupPhonetic.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				Intent intent = new Intent();
-				intent.setClass(v.getContext(), LIMEMappingSetting.class);
-				   Bundle bundle = new Bundle();
-				   		  bundle.putString("keyboard", "phonetic");
-				   intent.putExtras(bundle);
-				startActivity(intent);
-			}
-		});
-
-
-		btnSetupCJ.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				Intent intent = new Intent();
-				intent.setClass(v.getContext(), LIMEMappingSetting.class);
-				   Bundle bundle = new Bundle();
-				   		  bundle.putString("keyboard", "cj");
-				   intent.putExtras(bundle);
-				startActivity(intent);
-			}
-		});
+		File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
+		File srcFile2 = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
+		if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
+			
+			this.setContentView(R.layout.imsetting);
+	
+			// Initial Buttons
+			initialButton();
+			
+			mLIMEPref = new LIMEPreferenceManager(this.getApplicationContext());
+			
+	
+			btnSetupCustom.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					Intent intent = new Intent();
+					intent.setClass(v.getContext(), LIMEMappingSetting.class);
+					   Bundle bundle = new Bundle();
+					   		  bundle.putString("keyboard", "custom");
+					   intent.putExtras(bundle);
+					startActivity(intent);
+				}
+			});
+	
+	
+			btnSetupPhonetic.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					Intent intent = new Intent();
+					intent.setClass(v.getContext(), LIMEMappingSetting.class);
+					   Bundle bundle = new Bundle();
+					   		  bundle.putString("keyboard", "phonetic");
+					   intent.putExtras(bundle);
+					startActivity(intent);
+				}
+			});
+	
+	
+			btnSetupCJ.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					Intent intent = new Intent();
+					intent.setClass(v.getContext(), LIMEMappingSetting.class);
+					   Bundle bundle = new Bundle();
+					   		  bundle.putString("keyboard", "cj");
+					   intent.putExtras(bundle);
+					startActivity(intent);
+				}
+			});
+			
+	
+	
+			btnSetupSCJ.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					Intent intent = new Intent();
+					intent.setClass(v.getContext(), LIMEMappingSetting.class);
+					   Bundle bundle = new Bundle();
+					   		  bundle.putString("keyboard", "scj");
+					   intent.putExtras(bundle);
+					startActivity(intent);
+				}
+			});
+			
+	
+	
+			btnSetupDayi.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					Intent intent = new Intent();
+					intent.setClass(v.getContext(), LIMEMappingSetting.class);
+					   Bundle bundle = new Bundle();
+					   		  bundle.putString("keyboard", "dayi");
+					   intent.putExtras(bundle);
+					startActivity(intent);
+				}
+			});
+	
+			btnSetupArray.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					Intent intent = new Intent();
+					intent.setClass(v.getContext(), LIMEMappingSetting.class);
+					   Bundle bundle = new Bundle();
+					   		  bundle.putString("keyboard", "array");
+					   intent.putExtras(bundle);
+					startActivity(intent);
+				}
+			});
+	
+			btnSetupArray10.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					Intent intent = new Intent();
+					intent.setClass(v.getContext(), LIMEMappingSetting.class);
+					   Bundle bundle = new Bundle();
+					   		  bundle.putString("keyboard", "array10");
+					   intent.putExtras(bundle);
+					startActivity(intent);
+				}
+			});
+	
+			btnSetupEz.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					Intent intent = new Intent();
+					intent.setClass(v.getContext(), LIMEMappingSetting.class);
+					   Bundle bundle = new Bundle();
+					   		  bundle.putString("keyboard", "ez");
+					   intent.putExtras(bundle);
+					startActivity(intent);
+				}
+			});
 		
-
-
-		btnSetupSCJ.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				Intent intent = new Intent();
-				intent.setClass(v.getContext(), LIMEMappingSetting.class);
-				   Bundle bundle = new Bundle();
-				   		  bundle.putString("keyboard", "scj");
-				   intent.putExtras(bundle);
-				startActivity(intent);
-			}
-		});
+		}else{
+			this.setContentView(R.layout.error);
+		}
 		
-
-
-		btnSetupDayi.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				Intent intent = new Intent();
-				intent.setClass(v.getContext(), LIMEMappingSetting.class);
-				   Bundle bundle = new Bundle();
-				   		  bundle.putString("keyboard", "dayi");
-				   intent.putExtras(bundle);
-				startActivity(intent);
-			}
-		});
-
-		btnSetupArray.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				Intent intent = new Intent();
-				intent.setClass(v.getContext(), LIMEMappingSetting.class);
-				   Bundle bundle = new Bundle();
-				   		  bundle.putString("keyboard", "array");
-				   intent.putExtras(bundle);
-				startActivity(intent);
-			}
-		});
-
-		btnSetupArray10.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				Intent intent = new Intent();
-				intent.setClass(v.getContext(), LIMEMappingSetting.class);
-				   Bundle bundle = new Bundle();
-				   		  bundle.putString("keyboard", "array10");
-				   intent.putExtras(bundle);
-				startActivity(intent);
-			}
-		});
-
-		btnSetupEz.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				Intent intent = new Intent();
-				intent.setClass(v.getContext(), LIMEMappingSetting.class);
-				   Bundle bundle = new Bundle();
-				   		  bundle.putString("keyboard", "ez");
-				   intent.putExtras(bundle);
-				startActivity(intent);
-			}
-		});
 	}
 
 	/* (non-Javadoc)
@@ -271,14 +282,41 @@ public class LIMEIMSetting extends Activity {
     public boolean onCreateOptionsMenu(Menu menu){
     	int idGroup = 0;
     	int orderMenuItem1 = Menu.NONE;
+    	int orderMenuItem2 = Menu.NONE+1;
     	
     	try {
 			PackageInfo pinfo = this.getPackageManager().getPackageInfo(this.getPackageName(), 0);
 	    	menu.add(idGroup, Menu.FIRST, orderMenuItem1, "LIME v" + pinfo.versionName + " - " + pinfo.versionCode);
+	    	menu.add(idGroup, Menu.FIRST+1, orderMenuItem2, R.string.experienced_device);
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
     	return super.onCreateOptionsMenu(menu);
+    }
+	
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+
+		boolean hasSwitch = false;
+		try{
+	    	switch(item.getItemId()){
+		    	case (Menu.FIRST+1):
+		    		String message = "ÂÅªÞÁä½L´ú¸Õ¤ä´©\n";
+			 			   message += "ZIPPY BT-540 ÂÅªÞ¤@¹ï¤»Áä½L - http://www.zippy.com (Sam Lin/sam_lin@hotmail.com)";
+			 			   
+		    		new AlertDialog.Builder(this)
+				    	.setTitle(R.string.experienced_device)
+				    	.setMessage(message)
+				    	.setNeutralButton("Close", new DialogInterface.OnClickListener() {
+				    	public void onClick(DialogInterface dlg, int sumthin) {
+				    	}
+				    	}).show();
+		    		break;
+	    	}
+    	}catch(Exception e){
+    		e.printStackTrace();
+    	}
+		return super.onOptionsItemSelected(item);
     }
 	
 }

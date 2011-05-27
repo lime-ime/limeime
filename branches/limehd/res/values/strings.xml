@@ -7,6 +7,7 @@
     <string name="ime_name">LIMEHD</string>
     <string name="ime_setting">LIMEHD Settings</string>
     <string name="input_method">System Input Method</string>
+    <string name="experienced_device">Experienced Device</string>
 
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
@@ -61,7 +62,7 @@
     <string name="auto_complete_summary">Spacebar and punctuation automatically insert highlighted word</string>
     
     <string name="im">Input Method</string>
-    <string name="enable_english_dictionary">Enable English Enable English prediction</string>
+    <string name="enable_english_dictionary">Enable English prediction</string>
     <string name="enable_english_dictionary_summary">Enable English prediction with English dictionary</string>
     <string name="enable_english_dictionary_physical_keyboard">Enable English prediction on physical keyboard</string>
     <string name="enable_english_dictionary_physical_keyboard_summary">Enable English prediction with English dictionary  on physical keyboard</string>

@@ -7,6 +7,7 @@
     <string name="ime_name">LIMEHD</string>
     <string name="ime_setting">LIMEHD 设定</string>
     <string name="input_method">系统输入法切换</string>
+    <string name="experienced_device">开发测试装置</string>
 
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>

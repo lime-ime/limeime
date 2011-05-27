@@ -20,8 +20,6 @@
 
 package net.toload.main.hd;
 
-import net.toload.main.hd.IDBService;
-import net.toload.main.hd.R;
 import net.toload.main.hd.*;
 
 import java.io.BufferedReader;
@@ -468,18 +466,45 @@ public class LIMEInitial extends Activity {
 	};
 	
 
+
 	@Override
     public boolean onCreateOptionsMenu(Menu menu){
     	int idGroup = 0;
     	int orderMenuItem1 = Menu.NONE;
+    	int orderMenuItem2 = Menu.NONE+1;
     	
     	try {
 			PackageInfo pinfo = this.getPackageManager().getPackageInfo(this.getPackageName(), 0);
 	    	menu.add(idGroup, Menu.FIRST, orderMenuItem1, "LIME v" + pinfo.versionName + " - " + pinfo.versionCode);
+	    	menu.add(idGroup, Menu.FIRST+1, orderMenuItem2, R.string.experienced_device);
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
     	return super.onCreateOptionsMenu(menu);
     }
 	
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+
+		boolean hasSwitch = false;
+		try{
+	    	switch(item.getItemId()){
+		    	case (Menu.FIRST+1):
+		    		String message = "ÂÅªÞÁä½L´ú¸Õ¤ä´©\n";
+		   		   		   message += "ZIPPY BT-540 ÂÅªÞ¤@¹ï¤»Áä½L - http://www.zippy.com (Sam Lin/sam_lin@hotmail.com)";
+	
+		    		new AlertDialog.Builder(this)
+				    	.setTitle(R.string.experienced_device)
+				    	.setMessage(message)
+				    	.setNeutralButton("Close", new DialogInterface.OnClickListener() {
+				    	public void onClick(DialogInterface dlg, int sumthin) {
+				    	}
+				    	}).show();
+		    		break;
+	    	}
+    	}catch(Exception e){
+    		e.printStackTrace();
+    	}
+		return super.onOptionsItemSelected(item);
+    }
 }

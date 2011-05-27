@@ -232,7 +232,7 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public void onCreate() {
 
-		Log.i("ART","On Create");
+		//Log.i("ART","On Create");
 		super.onCreate();
 		
         mKeyboardSwitcher = new LIMEKeyboardSwitcher(this); 
@@ -334,8 +334,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public View onCreateInputView() {
-		Log.i("ART","On onCreateInputView");
-
+		
 		if (DEBUG)
 			Log.i("ART", "****ON onCreateInputView");
 		mInputView = (LIMEKeyboardView) getLayoutInflater().inflate(
@@ -359,8 +358,7 @@ public class LIMEService extends InputMethodService implements
 
 	@Override
 	public View onCreateCandidatesView() {
-		Log.i("ART","On onCreateCandidatesView");
-
+		
 		if (DEBUG)
 			Log.i("ART", "****ON onCreateCandidatesView");
 		
@@ -377,7 +375,6 @@ public class LIMEService extends InputMethodService implements
 
 	@Override
 	public boolean onEvaluateFullscreenMode() {
-		Log.i("ART","On onEvaluateFullscreenMode");
 		if (this.getMaxWidth() > 480)
 			return false;
 		else
@@ -390,7 +387,6 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public void onFinishInput() {
-		Log.i("ART","On onFinishInput");
 		if (DEBUG) {
 			Log.i("LimeService", "onFinishInput()");
 		}
@@ -412,7 +408,6 @@ public class LIMEService extends InputMethodService implements
 		}
 
 		this.setSuggestions(null, false, false);
-		//Log.i("ART", "onFinishInput()");
 		
 		// -> 26.May.2011 by Art : Update keyboard list when user click the keyboard.
 		try {
@@ -435,14 +430,12 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public void onStartInput(EditorInfo attribute, boolean restarting) {
-		Log.i("ART","On onStartInput");
 		super.onStartInputView(attribute, restarting);
 		initOnStartInput(attribute, restarting);
 	}
 
 	@Override
 	public void onStartInputView(EditorInfo attribute, boolean restarting) {
-		Log.i("ART","On onStartInputView 2");
 		super.onStartInputView(attribute, restarting);
 		initOnStartInput(attribute, restarting);
 	}
@@ -594,8 +587,6 @@ public class LIMEService extends InputMethodService implements
 			switchChiEngNoToast();
 		}
 
-		// Log.i("ART","onStartInputView:"+onIM);
-
 	}
 
 	private void loadSettings() {
@@ -633,7 +624,6 @@ public class LIMEService extends InputMethodService implements
 	public void onUpdateSelection(int oldSelStart, int oldSelEnd,
 			int newSelStart, int newSelEnd, int candidatesStart,
 			int candidatesEnd) {
-		Log.i("ART","On onUpdateSelection 2");
 		super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd,
 				candidatesStart, candidatesEnd);
 
@@ -658,7 +648,6 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public void onDisplayCompletions(CompletionInfo[] completions) {
-		Log.i("ART","On onDisplayCompletions 2");
 		if (DEBUG)
 			Log.i("LIMEService:", "onDisplayCompletions()");
 		if (mCompletionOn) {
@@ -734,7 +723,7 @@ public class LIMEService extends InputMethodService implements
 		}
 		hasKeyPress = false;
 
-		Log.i("ART", "Physical Keyboard ->" + keyCode);
+		//Log.i("ART", "Physical Keyboard ->" + keyCode);
 
 		// For system to identify the source of character (Software KB/ Physical
 		// KB)
@@ -1876,7 +1865,7 @@ public class LIMEService extends InputMethodService implements
 				empty.setWord("");
 				empty.setDictionary(true);
 
-				Log.i("ART", "CACHE STRING -> " + tempEnglishWord.toString());
+				//Log.i("ART", "CACHE STRING -> " + tempEnglishWord.toString());
 				if (tempEnglishWord == null || tempEnglishWord.length() == 0) {
 					//list.add(empty);
 					setSuggestions(null, false, false);
@@ -2229,7 +2218,7 @@ public class LIMEService extends InputMethodService implements
 
 	private void initialKeyboard() {
 
-		Log.i("ART", "Run Initial Keyboard");
+		//Log.i("ART", "Run Initial Keyboard");
 		buildActiveKeyboardList();
 		initialViewAndSwitcher();
 
@@ -2579,9 +2568,9 @@ public class LIMEService extends InputMethodService implements
 				/*
 				 * Handle when user input English Characters
 				 */
-				Log.i("ART",
+				/*Log.i("ART",
 						"English Only Software Keyboard :"
-								+ String.valueOf((char) primaryCode));
+								+ String.valueOf((char) primaryCode));*/
 
 				if (isInputViewShown()) {
 					if (mInputView.isShifted()) {

@@ -235,7 +235,7 @@ public class DBService extends Service {
 				displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_convert)+ "");
 				
 
-				Log.i("ART", "URL->"+url);
+				//Log.i("ART", "URL->"+url);
 				URL downloadUrl = new URL(url);
 				URLConnection conn = downloadUrl.openConnection();
 				conn.connect();
@@ -249,7 +249,7 @@ public class DBService extends Service {
 				File downloadFolder = new File(folder);
 				downloadFolder.mkdirs();
 				
-				Log.i("ART","downloadFolder Folder status :"+ downloadFolder.exists());
+				//Log.i("ART","downloadFolder Folder status :"+ downloadFolder.exists());
 				
 				File downloadedFile = new File(downloadFolder.getAbsolutePath() + File.separator + filename);
 				if(downloadedFile.exists()){

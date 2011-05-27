@@ -32,7 +32,7 @@
                 android:key="lime_keyboard"
                 android:title="@string/keyboard"
                 android:summary="">
-        <net.toload.main.hd.MultiListPreference
+        <net.toload.main.hd.MultiListPreference 
 				android:key="keyboard_state"
 				android:title="@string/keyboard_list"
 				android:entries="@array/keyboard"
@@ -55,34 +55,6 @@
                 android:defaultValue="false" 
                 android:title="@string/sound_on_keypress"/>
     </PreferenceCategory>
-    
-    <!--<PreferenceCategory
-            android:title="@string/prediction_category"
-            android:key="prediction_settings">
-        <CheckBoxPreference
-            android:key="auto_cap"
-            android:title="@string/auto_cap"
-            android:persistent="true"
-            android:defaultValue="true"
-            />
-
-        <CheckBoxPreference
-            android:key="quick_fixes"
-            android:title="@string/quick_fixes"
-            android:summary="@string/quick_fixes_summary"
-            android:persistent="true"
-            android:defaultValue="true"
-            />
-
-        <CheckBoxPreference
-            android:key="auto_complete"
-            android:title="@string/auto_complete"
-            android:summary="@string/auto_complete_summary"
-            android:persistent="true" 
-            android:defaultValue="true"/>
-            
-    </PreferenceCategory>
-    -->
     
     <PreferenceCategory
         		xmlns:android="http://schemas.android.com/apk/res/android"
@@ -156,7 +128,7 @@
     			android:dialogTitle="@string/im_reverse_lookup_list" 
     			android:defaultValue="none"/>
    
-</PreferenceCategory>
+	</PreferenceCategory>
     
     <PreferenceCategory
         xmlns:android="http://schemas.android.com/apk/res/android"
@@ -212,7 +184,6 @@
                 android:key="switch_english_mode"
                 android:title="@string/switch_english_mode"
                 android:summary="@string/switch_english_mode_summary" />
-    
     </PreferenceCategory>
     
 </PreferenceScreen>
