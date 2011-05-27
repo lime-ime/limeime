@@ -1791,8 +1791,7 @@ public class LIMEService extends InputMethodService implements
 
 				list.addAll(SearchSrv.query(keyString, hasKeyPress));
 
-				// This is to disable the candidate view when there is no suggestions words.
-				if (list.size() > 1) {
+				if (list.size() > 0) {
 					setSuggestions(list, isPressPhysicalKeyboard, true);
 				} else {
 					setSuggestions(null, false, false);
