@@ -24,6 +24,13 @@
 				<TextView android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:id="@+id/labMappingSettingTitle"></TextView>
 			</LinearLayout>
+			
+
+			<LinearLayout android:id="@+id/extendLayout"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:paddingBottom="15px" android:paddingTop="10px">
+			</LinearLayout>
+			
 			<LinearLayout android:id="@+id/LinearLayout03"
 				android:layout_width="wrap_content" android:layout_height="wrap_content">
 				<TextView android:id="@+id/TextView01"
@@ -90,11 +97,6 @@
 				<Button android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:id="@+id/btnSelectKeyboard"
 					android:text="@string/l3_im_setting_button_select"></Button>
-			</LinearLayout>
-
-			<LinearLayout android:id="@+id/extendLayout"
-				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:paddingBottom="15px" android:paddingTop="10px">
 			</LinearLayout>
 			
 		</LinearLayout>

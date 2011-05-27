@@ -600,7 +600,7 @@ public class LIMEBluetooth extends Activity {
 				if (secure) {                    
 					tmp = mBluetoothAdapter.listenUsingRfcommWithServiceRecord(NAME_SECURE,MY_UUID_SECURE);                
 				} else {
-					tmp = mBluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(NAME_INSECURE, MY_UUID_INSECURE);
+					//tmp = mBluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(NAME_INSECURE, MY_UUID_INSECURE);
 				}          
 				Log.i("ART", "AcceptThread Secure Type : " + secure);     
 			} catch (IOException e) { 
@@ -704,7 +704,7 @@ public class LIMEBluetooth extends Activity {
 					tmp = device.createRfcommSocketToServiceRecord(MY_UUID_SECURE);
 					Log.i("ART", "secure mmSocket" + MY_UUID_SECURE);               
 				} else {            
-					tmp = device.createInsecureRfcommSocketToServiceRecord(MY_UUID_INSECURE);  
+					//tmp = device.createInsecureRfcommSocketToServiceRecord(MY_UUID_INSECURE);  
 					Log.i("ART", "insecure mmSocket" + MY_UUID_INSECURE);           
 				}
 				Log.i("ART", "tmp -> " + tmp);               

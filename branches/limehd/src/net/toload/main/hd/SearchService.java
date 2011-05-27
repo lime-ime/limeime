@@ -99,7 +99,7 @@ public class SearchService extends Service {
 		public String hanConvert(String input){
 			if(hanConverter == null){
 				FileUtilities fu = new FileUtilities();
-				File hanDBFile = fu.isFileNotExist("/data/data/net.toload.main/databases/hanconvert.db");
+				File hanDBFile = fu.isFileNotExist("/data/data/net.toload.main.hd/databases/hanconvert.db");
 				if(hanDBFile!=null){
 					fu.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvert), hanDBFile);
 					
@@ -369,6 +369,17 @@ public class SearchService extends Service {
 			}
 			return result;
 			
+		}
+
+		@Override
+		public void close() throws RemoteException {
+			if(db != null){
+				try{
+					db.close();
+				}catch(Exception e){
+					Log.i("ART","Database Close error : "+e);
+				}
+			}
 		}
 	}
 

@@ -24,6 +24,7 @@ import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.Debug;
 import android.os.Handler;
 import android.os.IBinder;
@@ -54,6 +55,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.lang.reflect.Method;
 
 import android.app.AlertDialog;
 import android.app.Service;
@@ -142,7 +144,6 @@ public class LIMEService extends InputMethodService implements
 
 	private String mWordSeparators;
 	private String misMatched;
-	private LimeDB limedb;
 
 	private LinkedList<Mapping> templist;
 	private LinkedList<Mapping> userdiclist;
@@ -231,6 +232,7 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public void onCreate() {
 
+		Log.i("ART","On Create");
 		super.onCreate();
 		
         mKeyboardSwitcher = new LIMEKeyboardSwitcher(this); 
@@ -332,6 +334,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public View onCreateInputView() {
+		Log.i("ART","On onCreateInputView");
 
 		if (DEBUG)
 			Log.i("ART", "****ON onCreateInputView");
@@ -356,6 +359,7 @@ public class LIMEService extends InputMethodService implements
 
 	@Override
 	public View onCreateCandidatesView() {
+		Log.i("ART","On onCreateCandidatesView");
 
 		if (DEBUG)
 			Log.i("ART", "****ON onCreateCandidatesView");
@@ -373,6 +377,7 @@ public class LIMEService extends InputMethodService implements
 
 	@Override
 	public boolean onEvaluateFullscreenMode() {
+		Log.i("ART","On onEvaluateFullscreenMode");
 		if (this.getMaxWidth() > 480)
 			return false;
 		else
@@ -385,6 +390,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public void onFinishInput() {
+		Log.i("ART","On onFinishInput");
 		if (DEBUG) {
 			Log.i("LimeService", "onFinishInput()");
 		}
@@ -415,7 +421,10 @@ public class LIMEService extends InputMethodService implements
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-
+		
+		try{
+			SearchSrv.close();
+		}catch(Exception e){}
 	}
 
 	/**
@@ -426,12 +435,14 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public void onStartInput(EditorInfo attribute, boolean restarting) {
+		Log.i("ART","On onStartInput");
 		super.onStartInputView(attribute, restarting);
 		initOnStartInput(attribute, restarting);
 	}
 
 	@Override
 	public void onStartInputView(EditorInfo attribute, boolean restarting) {
+		Log.i("ART","On onStartInputView 2");
 		super.onStartInputView(attribute, restarting);
 		initOnStartInput(attribute, restarting);
 	}
@@ -622,6 +633,7 @@ public class LIMEService extends InputMethodService implements
 	public void onUpdateSelection(int oldSelStart, int oldSelEnd,
 			int newSelStart, int newSelEnd, int candidatesStart,
 			int candidatesEnd) {
+		Log.i("ART","On onUpdateSelection 2");
 		super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd,
 				candidatesStart, candidatesEnd);
 
@@ -646,6 +658,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public void onDisplayCompletions(CompletionInfo[] completions) {
+		Log.i("ART","On onDisplayCompletions 2");
 		if (DEBUG)
 			Log.i("LIMEService:", "onDisplayCompletions()");
 		if (mCompletionOn) {
@@ -960,8 +973,21 @@ public class LIMEService extends InputMethodService implements
 		
 		String selected = null;
 		try{
-			selected = (String)getCurrentInputConnection().getSelectedText(0);
-		}catch(NullPointerException e){}
+			// Using Java Reflection to dynamic load class and invoke method
+			if(Integer.parseInt(android.os.Build.VERSION.SDK) >= 10){
+				Class[] parTypes = new Class[1];
+				        parTypes[0] = Integer.class;
+				Object[] argList = new Object[1];
+				         argList[0] = 0;
+
+				java.lang.reflect.Method method = getCurrentInputConnection().getClass().getMethod("getSelectedText", parTypes);
+				selected = (String)method.invoke(argList);
+			}
+		}catch(java.lang.NoSuchMethodError e){
+			//Log.i("ERROR", "Get selected error:"+ e);
+		}catch(Exception e){
+			//Log.i("ERROR", "Get selected exception:"+ e);
+		}
 
 		if(hasCtrlPress && templist != null && templist.size() > 0 && mCandidateView != null && mCandidateView.isShown()){
 			

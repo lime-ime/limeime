@@ -19,5 +19,6 @@ interface ISearchService
 		List queryDictionary(String word);
 		void setSelectedText(String text);
 		String getSelectedText();
+		void close();
 
 }

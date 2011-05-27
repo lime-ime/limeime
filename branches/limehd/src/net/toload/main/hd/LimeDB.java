@@ -177,7 +177,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * Update Database Schema
 	 * 
 	 * @see
-	 * android.database.sqlite.SQLiteOpenHelper#onUpgrade(android.database.sqlite
+	 * android.database.sqlite.SQLit eOpenHelper#onUpgrade(android.database.sqlite
 	 * .SQLiteDatabase, int, int)
 	 */
 	@Override
