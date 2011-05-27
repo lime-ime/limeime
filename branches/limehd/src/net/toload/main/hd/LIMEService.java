@@ -166,6 +166,8 @@ public class LIMEService extends InputMethodService implements
 	// Hard Keyboad Shift + Space Status
 	private boolean hasShiftPress = false;
 	private boolean hasCtrlPress = false; // Jeremy '11,5,13
+	
+	private boolean hasSymbolEntered = false; //Jeremy '11,5,24 
 
 	// private boolean hasSpacePress = false;
 
@@ -502,6 +504,8 @@ public class LIMEService extends InputMethodService implements
 					|| variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
 				mPredictionOn = false;
 				isModePassword = true;
+				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,
+						mImeOptions, true, false, false);
 			}
 			if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
 					|| variation == EditorInfo.TYPE_TEXT_VARIATION_PERSON_NAME) {
@@ -722,6 +726,7 @@ public class LIMEService extends InputMethodService implements
 					+ hasCtrlPress);
 		}
 		hasKeyPress = false;
+		hasSymbolEntered = false;
 
 		//Log.i("ART", "Physical Keyboard ->" + keyCode);
 
@@ -933,7 +938,7 @@ public class LIMEService extends InputMethodService implements
 			if(!hasCtrlPress){
 				if ( //((mEnglishOnly && mPredictionOn) || (!mEnglishOnly && onIM))&& 
 					translateKeyDown(keyCode, event)) {
-					// Log.i("ART","select:A"+10);
+					// Log.i("Onkeydown","tranlatekeydown:true");
 					return true;
 				}
 			}
@@ -956,7 +961,7 @@ public class LIMEService extends InputMethodService implements
 				"English Only Physical Keyboard :"
 						+ (char) event.getUnicodeChar(LIMEMetaKeyKeyListener
 								.getMetaState(mMetaState)));*/
-
+		 
 		int primaryKey = event.getUnicodeChar(LIMEMetaKeyKeyListener.getMetaState(mMetaState));
 		char t = (char) primaryKey;
 		
@@ -978,29 +983,32 @@ public class LIMEService extends InputMethodService implements
 			//Log.i("ERROR", "Get selected exception:"+ e);
 		}
 
-		if(hasCtrlPress && templist != null && templist.size() > 0 && mCandidateView != null && mCandidateView.isShown()){
+		if(hasCtrlPress ) {
 			
+		 if (templist != null && templist.size() > 0 && mCandidateView != null && mCandidateView.isShown()){	
 			switch(keyCode){
-				case 8: this.pickSuggestionManually(0);break;
-				case 9: this.pickSuggestionManually(1);break;
-				case 10: this.pickSuggestionManually(2);break;
-				case 11: this.pickSuggestionManually(3);break;
-				case 12: this.pickSuggestionManually(4);break;
-				case 13: this.pickSuggestionManually(5);break;
-				case 14: this.pickSuggestionManually(6);break;
-				case 15: this.pickSuggestionManually(7);break;
-				case 16: this.pickSuggestionManually(8);break;
-				case 7: this.pickSuggestionManually(9);break;
+				case 8: this.pickSuggestionManually(0);return true;
+				case 9: this.pickSuggestionManually(1);return true;
+				case 10: this.pickSuggestionManually(2);return true;
+				case 11: this.pickSuggestionManually(3);return true;
+				case 12: this.pickSuggestionManually(4);return true;
+				case 13: this.pickSuggestionManually(5);return true;
+				case 14: this.pickSuggestionManually(6);return true;
+				case 15: this.pickSuggestionManually(7);return true;
+				case 16: this.pickSuggestionManually(8);return true;
+				case 7: this.pickSuggestionManually(9);return true;
 			}
-		}else if( mLIMEPref.getPhysicalKeyboardEnable() 
-					&& hasCtrlPress && !Character.isLetter(t) 
-					&& (mComposing == null || mComposing.length() == 0 
-					&& ( mCandidateView == null || !mCandidateView.isShown()) ) ){
+		   }	//else 
+		 if((mComposing == null || mComposing.length() == 0) ) 			
+			{
 			// 27.May.2011 Art : when user click Ctrl + Symbol or number then send Chinese Symobl Characters
 			String s = ChineseSymbol.getSymbol(t);
 			if(s != null){
+				if(mCandidateView != null && mCandidateView.isShown()) setSuggestions(null, false, false);;
 				getCurrentInputConnection().commitText(s, 0);
+				hasSymbolEntered = true;
 				return true;
+			}
 			}
 		}else if(selected != null){
 			// 27.May.2011 Art : Handle CTRL + C to copy selected text
@@ -1064,13 +1072,13 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void resetCandidateBar() {
-		Mapping empty = new Mapping();
-		empty.setWord("");
-		empty.setDictionary(true);
+		//Mapping empty = new Mapping();
+		//empty.setWord("");
+		//empty.setDictionary(true);
 
 		if(!hasCtrlPress){
-			LinkedList<Mapping> list = new LinkedList<Mapping>();
-			list.add(empty);
+			//LinkedList<Mapping> list = new LinkedList<Mapping>();
+			//list.add(empty);
 			setSuggestions(null, false, false);
 		}
 	}
@@ -1127,14 +1135,12 @@ public class LIMEService extends InputMethodService implements
 		case KeyEvent.KEYCODE_SHIFT_LEFT:
 		case KeyEvent.KEYCODE_SHIFT_RIGHT:
 			hasShiftPress = false;
-			if (hasCtrlPress) // '11,5,14 Jeremy ctrl-shift switch to next
-								// available keyboard
-			{
+			
+			if (hasCtrlPress && !hasSymbolEntered){ // '11,5,14 Jeremy ctrl-shift switch to next available keyboard; '11,5,24 blocking switching if full-shape symbol entered 
 				nextActiveKeyboard();
 				return true;
 			}
-			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,
-					keyCode, event);
+			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,	keyCode, event);
 			break;
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
@@ -2019,7 +2025,7 @@ public class LIMEService extends InputMethodService implements
 				// mCandidateView.hideComposing();
 			}
 			try {
-				if (mLIMEPref.getEnglishEnable()
+				if (mLIMEPref.getEnglishEnable()&& mPredictionOn
 					&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishEnablePhysicalKeyboard() )//mPredictionOnPhysicalKeyboard)
 					) {
 					if (tempEnglishWord != null && tempEnglishWord.length() > 0) {
@@ -2578,7 +2584,7 @@ public class LIMEService extends InputMethodService implements
 					}
 				}
 
-				if (mLIMEPref.getEnglishEnable()
+				if (mLIMEPref.getEnglishEnable() && mPredictionOn
 						&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishEnablePhysicalKeyboard())// mPredictionOnPhysicalKeyboard)
 					) {
 					if (Character.isLetter((char) primaryCode)) {
