@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+	
+<!--
+/*    
+**    Copyright 2010, The LimeIME Open Source Project
+** 
+**    Project Url: http://code.google.com/p/limeime/
+**                 http://android.toload.net/
+**
+**    This program is free software: you can redistribute it and/or modify
+**    it under the terms of the GNU General Public License as published by
+**    the Free Software Foundation, either version 3 of the License, or
+**    (at your option) any later version.
+
+**    This program is distributed in the hope that it will be useful,
+**    but WITHOUT ANY WARRANTY; without even the implied warranty of
+**    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**    GNU General Public License for more details.
+
+**    You should have received a copy of the GNU General Public License
+**    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+	android:keyWidth="10%p" android:horizontalGap="0px"
+	android:verticalGap="0px" android:keyHeight="@dimen/key_height">
+
+	<Row>
+		<Key android:codes="64" android:keyLabel="\@"
+			android:keyEdgeFlags="left" />
+		<Key android:codes="35" android:keyLabel="\#" />
+		<Key android:codes="36" android:keyLabel="$" />
+		<Key android:codes="37" android:keyLabel="%" />
+		<Key android:codes="38" android:keyLabel="&amp;" />
+		<Key android:codes="42" android:keyLabel="*" />
+		<Key android:codes="33" android:keyLabel="!" />
+		<Key android:codes="47" android:keyLabel="/" />
+		<Key android:codes="40" android:keyLabel="(" />
+		<Key android:codes="41" android:keyLabel=")" android:keyEdgeFlags="right" />
+	</Row>
+
+	<Row>
+		<Key android:codes="81" android:iconPreview="@drawable/dayi_q_u_l" android:keyIcon="@drawable/dayi_q_u" android:keyEdgeFlags="left" />
+		<Key android:codes="87" android:iconPreview="@drawable/dayi_w_u_l" android:keyIcon="@drawable/dayi_w_u" />
+		<Key android:codes="69" android:iconPreview="@drawable/dayi_e_u_l" android:keyIcon="@drawable/dayi_e_u" />
+		<Key android:codes="82" android:iconPreview="@drawable/dayi_r_u_l" android:keyIcon="@drawable/dayi_r_u" />
+		<Key android:codes="84" android:iconPreview="@drawable/dayi_t_u_l" android:keyIcon="@drawable/dayi_t_u" />
+		<Key android:codes="89" android:iconPreview="@drawable/dayi_y_u_l" android:keyIcon="@drawable/dayi_y_u" />
+		<Key android:codes="85" android:iconPreview="@drawable/dayi_u_u_l" android:keyIcon="@drawable/dayi_u_u" />
+		<Key android:codes="73" android:iconPreview="@drawable/dayi_i_u_l" android:keyIcon="@drawable/dayi_i_u" />
+		<Key android:codes="79" android:iconPreview="@drawable/dayi_o_u_l" android:keyIcon="@drawable/dayi_o_u" />
+		<Key android:codes="80" android:iconPreview="@drawable/dayi_p_u_l" android:keyIcon="@drawable/dayi_p_u" android:keyEdgeFlags="right" />
+	</Row>
+
+	<Row>
+		<Key android:codes="65" android:iconPreview="@drawable/dayi_a_u_l" android:keyIcon="@drawable/dayi_a_u" android:keyEdgeFlags="left" />
+		<Key android:codes="83" android:iconPreview="@drawable/dayi_s_u_l" android:keyIcon="@drawable/dayi_s_u" />
+		<Key android:codes="68" android:iconPreview="@drawable/dayi_d_u_l" android:keyIcon="@drawable/dayi_d_u" />
+		<Key android:codes="70" android:iconPreview="@drawable/dayi_f_u_l" android:keyIcon="@drawable/dayi_f_u" />
+		<Key android:codes="71" android:iconPreview="@drawable/dayi_g_u_l" android:keyIcon="@drawable/dayi_g_u" />
+		<Key android:codes="72" android:iconPreview="@drawable/dayi_h_u_l" android:keyIcon="@drawable/dayi_g_u" />
+		<Key android:codes="74" android:iconPreview="@drawable/dayi_j_u_l" android:keyIcon="@drawable/dayi_j_u" />
+		<Key android:codes="75" android:iconPreview="@drawable/dayi_k_u_l" android:keyIcon="@drawable/dayi_k_u" />
+		<Key android:codes="76" android:iconPreview="@drawable/dayi_l_u_l" android:keyIcon="@drawable/dayi_l_u" />
+		<Key android:codes="58" android:keyLabel=":" android:keyEdgeFlags="right" />
+	</Row>
+
+	<Row>
+		<Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift"
+			android:keyWidth="15%p" android:isModifier="true" android:isSticky="true"
+			android:keyEdgeFlags="left" />
+		<Key android:codes="90" android:iconPreview="@drawable/dayi_z_u_l" android:keyIcon="@drawable/dayi_z_u" />
+		<Key android:codes="88" android:iconPreview="@drawable/dayi_x_u_l" android:keyIcon="@drawable/dayi_x_u" />
+		<Key android:codes="67" android:iconPreview="@drawable/dayi_c_u_l" android:keyIcon="@drawable/dayi_c_u" />
+		<Key android:codes="86" android:iconPreview="@drawable/dayi_v_u_l" android:keyIcon="@drawable/dayi_v_u" />
+		<Key android:codes="66" android:iconPreview="@drawable/dayi_b_u_l" android:keyIcon="@drawable/dayi_b_u" />
+		<Key android:codes="78" android:iconPreview="@drawable/dayi_n_u_l" android:keyIcon="@drawable/dayi_n_u" />
+		<Key android:codes="77" android:iconPreview="@drawable/dayi_m_u_l" android:keyIcon="@drawable/dayi_m_u" />
+		<Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete"
+			android:keyWidth="15%p" android:keyEdgeFlags="right"
+			android:isRepeatable="true" />
+	</Row>
+
+	<Row android:rowEdgeFlags="bottom">
+		<Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done"
+			android:keyWidth="15%p" android:keyEdgeFlags="left" />
+		<Key android:codes="-9" 
+				android:keyIcon="@drawable/sw" 
+				android:keyWidth="10%p" 
+				android:iconPreview="@drawable/sw_l"/>
+		<Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime"
+			android:keyWidth="30%p" android:isRepeatable="true" />
+		<Key android:codes="60" android:keyLabel="&lt;" android:keyWidth="10%p" />
+		<Key android:codes="62" android:keyLabel="&gt;" android:keyWidth="10%p" />
+		<Key android:codes="63" android:keyLabel="\?"
+								android:popupKeyboard="@xml/popup_punctuation"  
+								android:keyWidth="10%p" />
+		<Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return"
+			android:keyWidth="15%p" android:keyEdgeFlags="right" />
+	</Row>
+
+</Keyboard>
+    
