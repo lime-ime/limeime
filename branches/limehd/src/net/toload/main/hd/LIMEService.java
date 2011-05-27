@@ -504,8 +504,10 @@ public class LIMEService extends InputMethodService implements
 					|| variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
 				mPredictionOn = false;
 				isModePassword = true;
+				mEnglishOnly = true;
+				onIM = false;
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,
-						mImeOptions, true, false, false);
+						mImeOptions, false, false, false);
 			}
 			if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
 					|| variation == EditorInfo.TYPE_TEXT_VARIATION_PERSON_NAME) {
