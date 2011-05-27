@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Title for Latin keyboard  -->
+    <string name="app_name">LIME HD</string>
+    <string name="ime_name">LIME HD</string>
+    <string name="ime_setting">LIME HD Settings</string>
+    <string name="input_method">System Input Method</string>
+
+    <!-- Symbols that are commonly considered word separators in this language -->
+    <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
+    <string name="word_symbol_separators">\u0020?\n{}&lt;&gt;_+|&quot;</string>
+    
+    <!-- Labels on soft keys -->
+    <string name="label_go_key">Go</string>
+    <string name="label_next_key">Next</string>
+    <string name="label_send_key">Send</string>
+    <string name="label_close_key">Close</string>
+    
+    
+    <!-- LIME Loading -->
+    <string name="lime_setting_btn_load_local_notice">Select .LIME or .CIN File</string>
+    <string name="lime_setting_loading">Loading Mapping</string>
+    <string name="lime_setting_select_root"> - back to /</string>
+    <string name="lime_setting_select_parent"> - back to ..</string>
+    
+    <string name="lime_setting_notification_loading">Start Loading Mapping Table</string>
+    <string name="lime_setting_notification_failed">Mapping Import Failed !!</string>
+    <string name="lime_setting_notification_finish">Mapping Import Finished</string>
+    <string name="lime_setting_notification_related">Start Building Related Words</string>
+    <string name="lime_setting_notification_loading_start">LIME</string>
+    <string name="lime_setting_notification_loading_end">Loaded</string>
+    <string name="lime_setting_notification_loading_build">Build</string>
+    <string name="lime_setting_notification_loading_import">Mapping</string>
+      
+    <!-- TAB -->
+    <string name="lime_setting_db">Mapping DB</string>
+    <string name="lime_setting_preference">Preference</string>
+    <string name="lime_setting_bluetooth">Bluetooth</string>
+    
+    <!-- Preference -->
+    <string name="keyboard">Keyboard</string>
+    <string name="Similiar">Similiar</string>
+    <string name="mapping">Mapping</string>
+    
+    <string name="keyboard_list">LIME Input Method</string>
+    
+    <string name="default_in_english">Starting in English mode</string>
+    <string name="default_in_english_summary">Starting input in English keyboard.</string>
+    
+    <string name="three_rows_remapping">3 Rows Keybaord Remapping</string>
+    <string name="three_rows_remapping_summary">Mapping 1234567890-; to qwertyuiopv.</string>
+    
+    <string name="prediction_category">English word suggestion settings</string>
+    <string name="auto_cap">Auto-capitalization</string> 
+    <string name="auto_cap_summary">Capitalize the start of a sentence</string>
+    <string name="quick_fixes">Quick fixes</string>
+    <string name="quick_fixes_summary">Corrects commonly typed mistakes</string>
+    <string name="auto_complete">Auto-complete</string>
+    <string name="auto_complete_summary">Spacebar and punctuation automatically insert highlighted word</string>
+    
+    <string name="im">Input Method</string>
+    <string name="enable_english_dictionary">Enable English Enable English prediction</string>
+    <string name="enable_english_dictionary_summary">Enable English prediction with English dictionary</string>
+    <string name="enable_english_dictionary_physical_keyboard">Enable English prediction on physical keyboard</string>
+    <string name="enable_english_dictionary_physical_keyboard_summary">Enable English prediction with English dictionary  on physical keyboard</string>
+    <string name="im_reverse_lookup_list">R-Lookup Selection</string>
+    <string name="default_reverse_lookup_list">R-Lookup in Custom</string>
+    <string name="cj_reverse_lookup_list">R-Lookup in ChangJei</string>
+    <string name="scj_reverse_lookup_list">R-Lookup in SChangJei</string>
+    <string name="dayi_reverse_lookup_list">R-Lookup in Dayi</string>
+    <string name="bpmf_reverse_lookup_list">R-Lookup in Phonetic</string>
+    <string name="ez_reverse_lookup_list">R-Lookup in Eazy</string>
+    <string name="array_reverse_lookup_list">R-Lookup in Array</string>
+    <string name="array10_reverse_lookup_list">R-Lookup in Array10</string>
+    
+    <string name="han_convert_option_list">Chinese Characters Conversion</string>
+    
+    
+    <string name="table_list">Table Selection</string>
+    <string name="similiar_list">Suggestion display amount</string>
+    <string name="vibrate_on_keypress">Vibrate on keypress</string>
+    <string name="sound_on_keypress">Sound on keypress</string>
+    <string name="display_number_keypads">Display number keypads</string>
+    <string name="display_number_keypads_summary">Display number keypads</string>
+    <string name="candidate_switch">Sliding select suggestion</string>
+    <string name="candidate_switch_summary">Enable suggestion word sliding selection</string>
+    <string name="similiar_enable_switch">Enable related words dictionary</string>
+    <string name="similiar_enable_switch_summary">Enable related words dictionary</string>
+    <string name="candidate_suggestion">Auto-build related words</string>
+    <string name="candidate_suggestion_summary">Learn related words base on text input</string>
+    <string name="learning_switch">Sort suggestion list</string>
+    <string name="learning_switch_summary">Sort suggestion list base on learned frequency</string>
+    <string name="accept_number_index">Mapping on numbers</string>
+    <string name="accept_number_index_summary">Allow input 0-9 as mapping code</string>
+    <string name="accept_symbol_index">Mapping on symbols</string>
+    <string name="accept_symbol_index_summary">Allow punctuation as mapping code</string>
+    <string name="switch_english_mode">Quick switch hotkey</string>
+    <string name="switch_english_mode_summary">[SHIFT]+[SPACE] switch typing mode [Physical Keyboard]</string>
+    
+    
+    <!-- Changjei Keyboard, Standard Keyboard-->
+    <string name="typing_mode_english">Typing Mode / English</string>
+    <string name="typing_mode_mixed">Typing Mode / Mixed</string>
+    
+    <!-- Popup keyboard char sequences-->
+    <string name="chinese_punctuation">「」！？、。，</string>
+    
+    <!-- Other Messages -->
+  	
+  	<!-- Indicates that a word has been added to the dictionary -->
+    <string name="added_word"><xliff:g id="word">%s</xliff:g> : Saved</string>
+    <!-- Accented forms of "a" -->
+    <string name="alternates_for_a">àáâãäåæ</string>
+    <!-- Accented forms of "e" -->
+    <string name="alternates_for_e">èéêë</string>
+    <!-- Accented forms of "i" -->
+    <string name="alternates_for_i">ìíîï</string>
+    <!-- Accented forms of "o" -->
+    <string name="alternates_for_o">òóôõöœø</string>
+    <!-- Accented forms of "u" -->
+    <string name="alternates_for_u">ùúûü</string>
+    <!-- Letters associated with "s" -->
+    <string name="alternates_for_s">§ß</string>
+    <!-- Accented forms of "n" -->
+    <string name="alternates_for_n">ñ</string>
+    <!-- Accented forms of "c" -->
+    <string name="alternates_for_c">ç</string>
+    <!-- Accented forms of "y" -->
+    <string name="alternates_for_y">ýÿ</string>
+    <!-- Symbols that are commonly considered word separators in this language -->
+    <!-- Symbols that are sentence separators, for purposes of making it hug the last sentence. -->
+    <string name="sentence_separators">.,;:!?</string>
+    <!-- Accented characters related to "d" -->
+    <string name="alternates_for_d"></string>
+    <!-- Accented characters related to "r" -->
+    <string name="alternates_for_r"></string>
+    <!-- Accented characters related to "t" -->
+    <string name="alternates_for_t"></string>
+    <!-- Accented characters related to "z" -->
+    <string name="alternates_for_z"></string>
+    <!-- Accented characters related to "l" -->
+    <string name="alternates_for_l"></string>
+    <!-- Accented characters related to "g" -->
+    <string name="alternates_for_g"></string>
+    
+    <!-- Label for soft enter key when it performs DONE action.  Must be short to fit on key! -->
+    <string name="label_done_key">Done</string>
+    <!-- Label for "switch to symbols" key.  Must be short to fit on key! -->
+    <string name="label_symbol_key">123</string>
+    <!-- Label for "switch to numeric" key.  Must be short to fit on key! -->
+    <string name="label_alpha_key">ABC</string>
+    <!-- Label for ALT modifier key.  Must be short to fit on key! -->
+    <string name="label_alt_key">ALT</string>
+    
+     <!-- popular web domains for the locale - most popular, displayed on the keyboard -->
+    <string name="popular_domain_0">".com"</string>
+    <string name="popular_domain_1">".net"</string>
+    <string name="popular_domain_2">".tw"</string>
+    <string name="popular_domain_3">".org"</string>
+    <string name="popular_domain_4">".gov"</string>
+    <string name="popular_domain_5">".edu"</string>
+    
+	<!-- Han Converter Options -->
+    <string-array name="han_convert_options">
+		<item>none</item>
+		<item>Traditional to Simplified</item>
+		<item>Simplified to Traditional</item>
+	</string-array>
+	
+	<string-array name="han_convert_options_values">
+		<item>0</item>
+		<item>1</item>
+		<item>2</item>
+	</string-array>
+	
+    <!-- IM Reverse Lookup List -->  
+    <string-array name="im_reverse_lookup">
+		<item>None</item>
+		<item>Custom</item>
+		<item>Changjei</item>
+		<item>SChangjei</item>
+		<item>Dayi</item>
+		<item>Phonetic</item>
+		<item>Eazy</item>
+		<item>Array</item>
+		<item>Array10</item>
+	</string-array>
+	<string-array name="im_reverse_lookup_codes">
+		<item>none</item>
+		<item>custom</item>
+		<item>cj</item>
+		<item>scj</item>
+		<item>dayi</item>
+		<item>phonetic</item>
+		<item>ez</item>
+		<item>array</item>
+		<item>array10</item>
+	</string-array>
+    <!-- Keyboard Selection List -->
+    <string-array name="keyboard">
+		<item>Lime</item>
+		<item>Changjei</item>
+		<item>SChangjei</item>
+		<item>Dayi</item>
+		<item>Phonetic</item>
+		<item>Eazy</item>
+		<item>Array</item>
+		<item>Array10</item>
+	</string-array>
+	<string-array name="keyboard_defaultstate">
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
+	</string-array>
+    <string-array name="keyboard_codes">
+		<item>custom</item>
+		<item>cj</item>
+		<item>scj</item>
+		<item>dayi</item>
+		<item>phonetic</item>
+		<item>ez</item>
+		<item>array</item>
+		<item>array10</item>
+	</string-array>
+	<string-array name="table_codes">
+		<item>custom</item>
+		<item>cj</item>
+		<item>scj</item>
+		<item>dayi</item>
+		<item>phonetic</item>
+		<item>ez</item>
+		<item>array</item>
+		<item>array10</item>
+		<item>related</item>
+		<item>dictionary</item>
+	</string-array>
+    
+	
+    <string-array name="similiar_codes">
+		<item>0</item>
+		<item>10</item>
+		<item>20</item>
+		<item>30</item>
+		<item>40</item>
+		<item>50</item>
+	</string-array>
+	
+	<!-- Table Selection list -->
+	<string-array name="table">
+		<item>Custom/Phone</item>
+		<item>Changjei</item>
+		<item>SChangjei</item>
+		<item>Dayi</item>
+		<item>Phonetic</item>
+		<item>Eazy</item>
+		<item>Array</item>
+		<item>Array10</item>
+		<item>Preload related words</item>
+		<item>Dictionary for English keyboard</item>
+	</string-array>
+	
+	<!-- Version 3 String Set -->
+    <string name="l3_message_initial_required">Please initialize the LIME database.</string>
+    
+    <string name="l3_tab_initial">Initial DB</string>
+    <string name="l3_tab_initial_error">Internet connection not available.</string>
+    <string name="l3_tab_initial_message">Please click [Preload/Empty Database] to download lime database or restore from previous backup by [Restore Database] function.</string>
+    <string name="l3_initial_btn_load_empty_db">Empty Database</string>
+    <string name="l3_initial_btn_load_preload_db">Preload Database</string>
+    <string name="l3_initial_btn_reset_db">Reset Database</string>
+    <string name="l3_initial_btn_store_to_sdcard">Would you like to store Database on sdcard? this might result in performance issue for some devices.</string>
+    <string name="l3_initial_btn_store_to_device">Would you like to store Database on device?</string>
+    <string name="l3_initial_btn_store_device">DEVICE</string>
+    <string name="l3_initial_btn_store_sdcard">SDCARD</string>
+    
+    <string name="l3_tab_manage">Manage IM</string>
+    <string name="l3_manage_default">Custom</string>
+    <string name="l3_manage_phonetic">Phonetic</string>
+    <string name="l3_manage_cj">Changjei</string>
+    <string name="l3_manage_scj">SChangjei</string>
+    <string name="l3_manage_dayi">Dayi</string>
+    <string name="l3_manage_eazy">Eazy</string>
+    <string name="l3_manage_array">Array</string>
+    <string name="l3_manage_array10">Array10</string>
+    
+    <string name="l3_tab_preference">Preference</string>
+	
+    <string name="l3_dbservice_download_start">Download preloaded database, this action will take few minutes please wait.</string>
+    <string name="l3_dbservice_download_start_empty">Download empty database, this action will take few minutes please wait.</string>
+    <string name="l3_dbservice_download_initial">Initialize database.</string>
+    <string name="l3_dbservice_download_loaded">Database was loaded.</string>
+    <string name="l3_dbservice_download_convert">Start convert database file...</string>
+    
+    <string name="l3_message_database_reset_confirm">Would you like to reset this database?</string>
+    <string name="l3_message_table_reset_confirm">Would you like to remove all records?</string>
+    <string name="l3_initial_download_database">Download Preloaded Database</string>
+    <string name="l3_initial_download_failed">Database convert failed, please reset database and try again.</string>
+    <string name="l3_initial_backup_database">Backup Database</string>
+    <string name="l3_initial_backup_start">Start backup lime database</string>
+    <string name="l3_initial_backup_end">Backup Finished!</string> 
+    <string name="l3_initial_backup_confirm">Would like to backup database?</string>
+    <string name="l3_initial_backup_error">You don&quot;t have database need to be backup.</string>
+    <string name="l3_initial_restore_database">Restore Database</string>
+    <string name="l3_initial_restore_error">You don&quot;t have a backup can be restore.</string>
+    <string name="l3_initial_restore_start">Start restore lime database</string>
+    <string name="l3_initial_restore_end">Restore Finished!</string>
+    <string name="l3_initial_restore_confirm">Would you like to restore database from backup?</string>
+    
+    <string name="l3_im_setting_select_keyboard">Please choice keyboard display</string>
+    <string name="l3_im_setting_back">Back To Previous Page</string>
+    <string name="l3_im_setting_title">Mapping Setting</string>
+    <string name="l3_im_setting_source">Source: </string>
+    <string name="l3_im_setting_keyboard">Keyboard: </string>
+    <string name="l3_im_setting_version">Version: </string>
+    <string name="l3_im_setting_total_amount">Total Amount: </string>
+    <string name="l3_im_setting_import_date">Import Status: </string>
+    <string name="l3_im_setting_button_load">LOAD .LIME</string>
+    <string name="l3_im_setting_button_reset">RESET TABLE</string>
+    <string name="l3_im_setting_button_select">SELECT KEYBOARD</string>
+    
+    <string name="l3_im_download_from_ov">Download/Install OpenVanilla DAYI</string>
+    <string name="l3_im_download_from_ov_start">Start download OpenVanilla DAYI</string>
+    <string name="l3_im_download_from_ov_install">Start Install OpenVanilla DAYI</string>
+    
+    <string name="l3_tab_bluetooth">Bluetooth</string>
+    
+</resources>
