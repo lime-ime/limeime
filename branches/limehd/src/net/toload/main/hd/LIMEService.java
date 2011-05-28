@@ -1799,8 +1799,12 @@ public class LIMEService extends InputMethodService implements
 
 		// Log.i("ART", "Update Candidate mCompletionOn:"+ mCompletionOn);
 		// Log.i("ART", "Update Candidate mComposing:"+ mComposing);
-		// Log.i("ART", "Update Candidate mComposing:"+ mComposing.length());
-		if (mCandidateView != null) {
+		if(DEBUG) Log.i("updateCandidate", "Update Candidate mComposing:"+ mComposing.length());
+		boolean firstCreated = false;
+		if (mCandidateView == null) {
+			firstCreated = true;
+		}
+		else{
 			mCandidateView.clear();
 			// mCandidateView.hideComposing();
 		}
@@ -1816,17 +1820,18 @@ public class LIMEService extends InputMethodService implements
 
 				if (list.size() > 0) {
 					setSuggestions(list, isPressPhysicalKeyboard, true);
+					if(DEBUG) Log.i("updateCandidaate", "list.size:"+list.size());
 				} else {
 					setSuggestions(null, false, false);
 				}
-
+				
 				// Show composing window if keyToChar got different string.
 				if (SearchSrv.getTablename() != null
 						&& (SearchSrv.getTablename().equals("phonetic")
 								|| SearchSrv.getTablename().equals("cj") || SearchSrv
 								.getTablename().equals("scj"))) {
-					if (keyString != null && !keyString.equals("")) {
-
+					if (!firstCreated && keyString != null && !keyString.equals("")) {
+						
 						if (keyString.length() < 7) {
 							charString = SearchSrv.keyToChar(keyString
 									.toLowerCase());
@@ -1840,15 +1845,8 @@ public class LIMEService extends InputMethodService implements
 								}
 							}
 						}
-
-					} else {
-						if (mCandidateView == null) {
-							mCandidateView = new CandidateView(this);
-						}
-						mCandidateView.clear();
 					}
 				}
-
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
@@ -1971,11 +1969,11 @@ public class LIMEService extends InputMethodService implements
 		}
 	}
 
-	public void setSuggestions(List<Mapping> suggestions, boolean completions,
+	public void setSuggestions(List<Mapping> suggestions, boolean showNumber,
 			boolean typedWordValid) {
 
 		if (suggestions != null && suggestions.size() > 0) {
-
+			if(DEBUG) Log.i("setSuggestion", "suggestions.size"+ suggestions.size());
 			setCandidatesViewShown(true);
 
 			hasMappingList = true;
@@ -1993,10 +1991,11 @@ public class LIMEService extends InputMethodService implements
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				mCandidateView.setSuggestions(suggestions, completions,
+				mCandidateView.setSuggestions(suggestions, showNumber,
 						typedWordValid);
 			}
 		} else {
+			if(DEBUG) Log.i("setSuggestion", "list=null");
 			hasMappingList = false;
 			if (mCandidateView != null) {
 				setCandidatesViewShown(false);

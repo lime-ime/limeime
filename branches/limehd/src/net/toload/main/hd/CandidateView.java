@@ -254,18 +254,18 @@ public class CandidateView extends View {
                 final int popupHeight = mComposingTextView.getMeasuredHeight();
                 //mPreviewText.setVisibility(INVISIBLE);
                 
-                int mPopupCompoingY = - (popupHeight * 4/5);
+                int mPopupComposingY = - (popupHeight * 4/5);
                 //mHandler.removeMessages(MSG_REMOVE_COMPOSING);
                 int [] offsetInWindow = new int[2];
                 mComposingTextView.getLocationInWindow(offsetInWindow);
                 if (mComposingTextPopup.isShowing()) {              	
-                	mComposingTextPopup.update(0, mPopupCompoingY + offsetInWindow[1], 
+                	mComposingTextPopup.update(0, mPopupComposingY + offsetInWindow[1], 
                             popupWidth, popupHeight);
                 } else {
                 	mComposingTextPopup.setWidth(popupWidth);
                 	mComposingTextPopup.setHeight(popupHeight);
                 	mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, 0, 
-                			mPopupCompoingY + offsetInWindow[1]);
+                			mPopupComposingY + offsetInWindow[1]);
                 }
                 
                /* mComposingTextPopup.setWidth(popupWidth);
@@ -468,9 +468,9 @@ public class CandidateView extends View {
         if (suggestions != null) {
             mSuggestions = new LinkedList<Mapping>(suggestions);
 	       
-	        if(DEBUG){
+	        if(DEBUG)
 	        	Log.i("setSuggestions:","mSuggestions.size:" + mSuggestions.size());
-	        }
+	       
 	        
 	        if(mSuggestions != null && mSuggestions.size() > 0){
 	            setBackgroundColor(bgcolor);
@@ -488,6 +488,8 @@ public class CandidateView extends View {
 	            	mSelectedIndex = 1;
 	            }
 	        }else{
+	        	 if(DEBUG)
+	 	        	Log.i("setSuggestions:","mSuggestions=null");
 	            setBackgroundColor(0);
 	        }
 	        
@@ -504,6 +506,7 @@ public class CandidateView extends View {
     }
 
     public void clear() {
+    	if(DEBUG) Log.i("Canddateview","cliear()");
     	currentX = 0;
         mSuggestions = EMPTY_LIST;
         // Jeremy '10, 4, 8
