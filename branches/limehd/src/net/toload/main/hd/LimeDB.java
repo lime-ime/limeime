@@ -64,7 +64,7 @@ import android.widget.Toast;
  */
 public class LimeDB extends SQLiteOpenHelper {
 
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
 
 	private final static int DATABASE_VERSION = 66;
 	private final static int DATABASE_RELATED_SIZE = 50;
@@ -103,7 +103,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private boolean relatedfinish = false;
 
 	private LIMEPreferenceManager mLIMEPref;
-	private Map code3rMap = new HashMap();
+	private Map<String, String> code3rMap = new HashMap<String, String>();
 
 	private Context ctx;
 
@@ -636,8 +636,6 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 				code = code.toLowerCase();
 				Cursor cursor = null;
-				String sql = null;
-	
 				SQLiteDatabase db = this.getSqliteDb(true);
 	
 				boolean sort = mLIMEPref.getSortSuggestions();
@@ -747,8 +745,10 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * Process search results
 	 */
 	private List<Mapping> buildQueryResult(Cursor cursor) {
-
-		List<Mapping> result = new ArrayList();
+		
+		if(DEBUG)
+			Log.i("LimDB", "buildQueryResult");
+		List<Mapping> result = new ArrayList<Mapping>();
 		if (cursor.moveToFirst()) {
 
 			String relatedlist = null;
@@ -757,7 +757,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
 			int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
 			int idColumn = cursor.getColumnIndex(FIELD_id);
-			HashMap duplicateCheck = new HashMap();
+			HashMap<String, String> duplicateCheck = new HashMap<String, String>();
 			do {
 				Mapping munit = new Mapping();
 				munit.setWord(cursor.getString(wordColumn));
@@ -770,9 +770,9 @@ public class LimeDB extends SQLiteOpenHelper {
 				munit.setScore(cursor.getInt(scoreColumn));
 				munit.setDictionary(false);
 				
-				if(munit.getWord() == null || munit.getWord().trim().equals("")){
+				if(munit.getWord() == null || munit.getWord().trim().equals(""))
 					continue;
-				}
+				
 				if(duplicateCheck.get(munit.getWord()) == null){
 					result.add(munit);
 					duplicateCheck.put(munit.getWord(), munit.getWord());
@@ -884,7 +884,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 				boolean hasMappingVersion = false;
 				boolean isCinFormat = false;
-				ArrayList<ContentValues> resultlist = new ArrayList();
+				ArrayList<ContentValues> resultlist = new ArrayList<ContentValues>();
 
 				String imname = "";
 				String line = "";
@@ -907,7 +907,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					BufferedReader buf = new BufferedReader(fr);
 					boolean firstline = true;
 					int i = 0;
-					List templist = new ArrayList();
+					List<String> templist = new ArrayList<String>();
 					while ((line = buf.readLine()) != null
 							&& isCinFormat == false) {
 						templist.add(line);
@@ -925,7 +925,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 
 				// Create Related Words
-				Map<String, String> hm = new HashMap();
+				Map<String, String> hm = new HashMap<String, String>();
 
 				SQLiteDatabase db = getSqliteDb(false);
 				db.beginTransaction();
@@ -1051,8 +1051,7 @@ public class LimeDB extends SQLiteOpenHelper {
 							
 							if (code.length() > 1) {
 								for (int k = 1; k < code.length(); k++) {
-									String rootkey = code.substring(0, code.length()
-											- k);
+									String rootkey = code.substring(0, code.length() - k);
 									if (hm.get(rootkey) != null) {
 										String tempvalue = hm.get(rootkey);
 										if (hm.get(rootkey) != null
@@ -1096,9 +1095,18 @@ public class LimeDB extends SQLiteOpenHelper {
 							ContentValues cv = new ContentValues();
 										  cv.put(FIELD_RELATED, entry.getValue());
 							String code = entry.getKey().replaceAll("'", "''");
-							db.update(table, cv, FIELD_CODE +"='"+code+"'", null);
+										  cv.put(FIELD_CODE, code);
+							Cursor cursor = db.query(table, null, FIELD_CODE +"='"+code+"'", null, null, null, null, null);
+							
+							if (cursor.moveToFirst()) 
+								db.update(table, cv, FIELD_CODE +"='"+code+"'", null);
+							else
+								db.insert(table, null, cv);
+							//db.insertWithOnConflict(table, null, cv, FIELD_CODE +"='"+code+"'", conflictAlgorithm)
+							//Log.i("loadfile","create related field. code ="+entry.getKey()+" related = " + entry.getValue());
 						}catch(Exception e2){
 							// Just ignore all problem statement
+							Log.i("loadfile","create related field error on code ="+entry.getKey()+" related = " + entry.getValue());
 						}
 			        }
 				}catch (Exception e){
@@ -1293,7 +1301,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 
 	public List<ImObj> getImList() {
-		List result = new LinkedList();
+		List<ImObj> result = new LinkedList<ImObj>();
 		try {
 			SQLiteDatabase db = this.getSqliteDb(true);
 			Cursor cursor = db.query("im", null, null, null, null, null, "code ASC", null);
@@ -1347,7 +1355,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 
 	public List<KeyboardObj> getKeyboardList() {
-		List result = new LinkedList();
+		List<KeyboardObj> result = new LinkedList<KeyboardObj>();
 		try {
 			SQLiteDatabase db = this.getSqliteDb(true);
 			Cursor cursor = db.query("keyboard", null, null, null, null, null, "name ASC", null);
@@ -1414,8 +1422,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		return "";
 	}
 
-	public List queryDictionary(String word) {
-		List result = new ArrayList();
+	public List<String> queryDictionary(String word) {
+		List<String> result = new ArrayList<String>();
 		try{
 			String value = "";
 			int ssize = mLIMEPref.getSimilarCodeCandidates();

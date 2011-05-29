@@ -49,8 +49,8 @@ public class SearchService extends Service {
 
 	private LimeDB db = null;
 	private LimeHanConverter hanConverter = null;
-	private static LinkedList diclist = null;
-	private static List scorelist = null;
+	private static LinkedList<Mapping> diclist = null;
+	private static List<Mapping> scorelist = null;
 
 	private static StringBuffer selectedText = new StringBuffer();
 	private static String tablename = "";
@@ -67,11 +67,11 @@ public class SearchService extends Service {
 	private static int recAmount = 0;
 	private static boolean softkeypressed;
 	
-	private static List preresultlist = null;
+	private static List<Mapping> preresultlist = null;
 	private static String precode = null;
 	
-	private static ConcurrentHashMap<String, List> cache = null;
-	private static ConcurrentHashMap<String, List> engcache = null;
+	private static ConcurrentHashMap<String,List<Mapping>> cache = null;
+	private static ConcurrentHashMap<String, List<Mapping>> engcache = null;
 
 	public class SearchServiceImpl extends ISearchService.Stub {
 
@@ -132,9 +132,9 @@ public class SearchService extends Service {
 		
 		//Modified by Jeremy '10,3 ,12 for more specific related word
 		//-----------------------------------------------------------
-		public List queryUserDic(String word) throws RemoteException {
+		public List<?> queryUserDic(String word) throws RemoteException {
 			if(db == null){loadLimeDB();}
-			List result = db.queryUserDict(word);
+			List<?> result = db.queryUserDict(word);
 			return result;
 		}
 		//-----------------------------------------------------------
@@ -155,7 +155,7 @@ public class SearchService extends Service {
 		
 		}
 		
-		public List query(String code, boolean softkeyboard) throws RemoteException {
+		public List<Mapping> query(String code, boolean softkeyboard) throws RemoteException {
 			
 			if(db == null){loadLimeDB();}
 			
@@ -163,13 +163,13 @@ public class SearchService extends Service {
 			// Check if system need to reset cache
 			
 			if(mLIMEPref.getParameterBoolean(LIME.SEARCHSRV_RESET_CACHE)){
-				cache = new ConcurrentHashMap(LIME.SEARCHSRV_RESET_CACHE_SIZE);
-				engcache = new ConcurrentHashMap(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+				cache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+				engcache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 			}
 			
-			if(preresultlist == null){preresultlist = new LinkedList();}
-			List<Mapping> result = new LinkedList();
+			if(preresultlist == null){preresultlist = new LinkedList<Mapping>();}
+			List<Mapping> result = new LinkedList<Mapping>();
 			// Modified by Jeremy '10, 3, 28.  yes-> .. The database is loading (yes) and finished (no).
 			//if(code != null && loadingstatus != null && loadingstatus.equalsIgnoreCase("no")){
 			if(code!=null) {
@@ -188,19 +188,19 @@ public class SearchService extends Service {
 				    // Do this in updatecandidates already
 					code = code.toLowerCase();
 					if(code.length() == 1){
-						preresultlist = new LinkedList();
+						preresultlist = new LinkedList<Mapping>();
 					}
 				}
 				
 				
-			    List cacheTemp = cache.get(db.getTablename()+code);
+			    List<Mapping> cacheTemp = cache.get(db.getTablename()+code);
 			    
 				if(cacheTemp != null){
 					result.addAll(cacheTemp);
 					preresultlist = cacheTemp;
 				}else{
 
-					List templist = db.getMapping(code, softkeyboard);
+					List<Mapping> templist = db.getMapping(code, softkeyboard);
 					if(templist.size() > 0){
 						result.addAll(templist);
 						preresultlist = templist;
@@ -221,8 +221,8 @@ public class SearchService extends Service {
 		}
 
 		public void initial() throws RemoteException {
-			cache = new ConcurrentHashMap(LIME.SEARCHSRV_RESET_CACHE_SIZE);
-			engcache = new ConcurrentHashMap(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+			cache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+			engcache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 		}
 
 		/*public List<Mapping> sortArray(String precode, List<Mapping> src) {
@@ -250,7 +250,7 @@ public class SearchService extends Service {
 
 				Log.i("ART","addUserDict:"+diclist);
 			
-				if(diclist == null){diclist = new LinkedList();}
+				if(diclist == null){diclist = new LinkedList<Mapping>();}
 				
 				Mapping temp = new Mapping();
 			      temp.setId(id);
@@ -300,7 +300,7 @@ public class SearchService extends Service {
 			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 			boolean item = sp.getBoolean(LIME.LEARNING_SWITCH, false);
 
-			if(scorelist == null){scorelist = new ArrayList();}
+			if(scorelist == null){scorelist = new ArrayList<Mapping>();}
 			if(db == null){db = new LimeDB(ctx);}
 			
 			updateMappingTemp = new Mapping();
@@ -319,14 +319,14 @@ public class SearchService extends Service {
 		}
 
 		@Override
-		public List getKeyboardList() throws RemoteException {
+		public List<KeyboardObj> getKeyboardList() throws RemoteException {
 			if(db == null){db = new LimeDB(ctx);}
 			List<KeyboardObj> result = db.getKeyboardList();
 			return result;
 		}
 
 		@Override
-		public List getImList() throws RemoteException {
+		public List<ImObj> getImList() throws RemoteException {
 			if(db == null){db = new LimeDB(ctx);}
 			List<ImObj> result = db.getImList();
 			return result;
@@ -347,10 +347,10 @@ public class SearchService extends Service {
 		}
 
 		@Override
-		public List queryDictionary(String word) throws RemoteException {
+		public List<Mapping> queryDictionary(String word) throws RemoteException {
 
 			List<Mapping> result = new LinkedList<Mapping>();
-		    List cacheTemp = engcache.get(word);
+		    List<Mapping> cacheTemp = engcache.get(word);
 		    
 			if(cacheTemp != null){
 				result.addAll(cacheTemp);

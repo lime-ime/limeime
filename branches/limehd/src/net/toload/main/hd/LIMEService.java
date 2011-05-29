@@ -168,6 +168,9 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasCtrlPress = false; // Jeremy '11,5,13
 	private boolean hasMenuPress = false; // Jeremy '11,5,29
 	private boolean hasMenuProcessed = false; // Jeremy '11,5,29
+	private boolean hasSearchPress = false; // Jeremy '11,5,29
+	private boolean hasSearchProcessed = false; // Jeremy '11,5,29
+	
 	
 	private boolean hasSymbolEntered = false; //Jeremy '11,5,24 
 
@@ -758,6 +761,11 @@ public class LIMEService extends InputMethodService implements
 		 * // Ignore error }catch(Exception e){}
 		 */
 		switch (keyCode) {
+		// Jeremy '11,5,29 Bypass search and menu combination keys.
+		case KeyEvent.KEYCODE_SEARCH:
+			hasSearchProcessed = false;
+			hasSearchPress = true;
+			break;
 		case KeyEvent.KEYCODE_MENU:
 			hasMenuProcessed = false;
 			hasMenuPress = true;
@@ -943,6 +951,7 @@ public class LIMEService extends InputMethodService implements
 			break;
 		default:
 			if(hasMenuPress) hasMenuProcessed = true;
+			if(hasSearchPress) hasSearchProcessed = true;
 			if(!(hasCtrlPress||hasMenuPress)){
 				if ( //((mEnglishOnly && mPredictionOn) || (!mEnglishOnly && onIM))&& 
 					translateKeyDown(keyCode, event)) {
@@ -1140,6 +1149,11 @@ public class LIMEService extends InputMethodService implements
 		keydown = false;
 
 		switch (keyCode) {
+		//Jeremy '11,5,29 Bypass search and menu keys.
+		case KeyEvent.KEYCODE_SEARCH:
+			hasSearchPress = false;
+			if(hasSearchProcessed) return true;
+			break;
 		case KeyEvent.KEYCODE_MENU:
 			hasMenuPress = false;
 			if(hasMenuProcessed) return true;
@@ -1151,13 +1165,13 @@ public class LIMEService extends InputMethodService implements
 		case KeyEvent.KEYCODE_SHIFT_LEFT:
 		case KeyEvent.KEYCODE_SHIFT_RIGHT:
 			hasShiftPress = false;
-			
+			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,	keyCode, event);
 			if ( (hasMenuPress || hasCtrlPress) && !hasSymbolEntered){ // '11,5,14 Jeremy ctrl-shift switch to next available keyboard; '11,5,24 blocking switching if full-shape symbol entered 
 				nextActiveKeyboard();
 				if(hasMenuPress) hasMenuProcessed = true;
 				return true;
 			}
-			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,	keyCode, event);
+			
 			break;
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
