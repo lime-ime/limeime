@@ -1012,7 +1012,10 @@ public class LIMEService extends InputMethodService implements
 				return true;
 			}
 			}
-		}else if(selected != null){
+		}
+		//Jeremy '11,5,29 has !hasControlPress to prevent tranlatekeydown is enough for super to process control combination keys.
+		/*
+		else if(selected != null){
 			// 27.May.2011 Art : Handle CTRL + C to copy selected text
 			if( hasCtrlPress && t == 'c'
 				&& (mComposing == null || mComposing.length() == 0 
