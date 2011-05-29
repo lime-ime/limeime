@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout android:id="@+id/LinearLayout01"
+	android:layout_width="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android"
+	android:alwaysDrawnWithCache="false" android:orientation="vertical"
+	android:scrollbars="vertical"
+	android:isScrollContainer="true" android:layout_height="fill_parent">
+
+
+	<ScrollView android:layout_width="fill_parent" android:padding="5px"
+		android:id="@+id/IMSettingScrollView" android:layout_height="fill_parent">
+		<LinearLayout android:id="@+id/LinearLayout04"
+			android:orientation="vertical"
+			android:layout_width="match_parent" android:layout_height="fill_parent">
+			<LinearLayout android:id="@+id/LinearLayout02"
+				android:layout_height="wrap_content" android:paddingBottom="15px"
+				android:paddingTop="10px" android:layout_width="fill_parent">
+				<Button android:layout_height="wrap_content" android:text="@string/l3_im_setting_back"
+					android:layout_width="fill_parent" android:id="@+id/btnBackToPreviousPage"></Button>
+			</LinearLayout>
+			<LinearLayout android:id="@+id/LinearLayout03"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:paddingBottom="20px">
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/labMappingSettingTitle"></TextView>
+			</LinearLayout>
+			
+
+			<LinearLayout android:id="@+id/extendLayout"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:paddingBottom="15px" android:paddingTop="10px">
+			</LinearLayout>
+			
+			<LinearLayout android:id="@+id/LinearLayout03"
+				android:layout_width="wrap_content" android:layout_height="wrap_content">
+				<TextView android:id="@+id/TextView01"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="@string/l3_im_setting_source" android:paddingRight="10px"></TextView>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/labSource"></TextView>
+			</LinearLayout>
+			<LinearLayout android:id="@+id/LinearLayout03"
+				android:layout_width="wrap_content" android:layout_height="wrap_content">
+				<TextView android:id="@+id/TextView01"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="@string/l3_im_setting_version" android:paddingRight="10px"></TextView>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/labVersion"></TextView>
+			</LinearLayout>
+			<LinearLayout android:id="@+id/LinearLayout03"
+				android:layout_width="wrap_content" android:layout_height="wrap_content">
+				<TextView android:id="@+id/TextView01"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="@string/l3_im_setting_total_amount" android:paddingRight="10px"></TextView>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/labTotalAmount"></TextView>
+			</LinearLayout>
+			<LinearLayout android:id="@+id/LinearLayout03"
+				android:layout_width="wrap_content" android:layout_height="wrap_content">
+				<TextView android:id="@+id/TextView01"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="@string/l3_im_setting_import_date" android:paddingRight="10px"></TextView>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/labImportDate"></TextView>
+			</LinearLayout>
+			<LinearLayout android:id="@+id/LinearLayout02"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:paddingBottom="15px" android:paddingTop="10px">
+				<Button android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/btnLoadMapping"
+					android:text="@string/l3_im_setting_button_load"></Button>
+				<Button android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/btnResetMapping"
+					android:text="@string/l3_im_setting_button_reset"></Button>
+			</LinearLayout>
+			
+			<!-- Setup Keyboard -->
+			<LinearLayout android:id="@+id/LinearLayout05"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:paddingBottom="20px" android:paddingTop="20px">
+				<TextView android:id="@+id/TextView01"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="@string/l3_im_setting_select_keyboard" android:paddingRight="10px"></TextView>
+			</LinearLayout>
+			<LinearLayout android:id="@+id/LinearLayout06"
+				android:layout_width="wrap_content" android:layout_height="wrap_content">
+				<TextView android:id="@+id/TextView01"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="@string/l3_im_setting_keyboard" android:paddingRight="10px"></TextView>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/labKeyboard"></TextView>
+			</LinearLayout>
+
+			<LinearLayout android:id="@+id/LinearLayout07"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:paddingBottom="15px" android:paddingTop="10px">
+				<Button android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/btnSelectKeyboard"
+					android:text="@string/l3_im_setting_button_select"></Button>
+			</LinearLayout>
+			
+		</LinearLayout>
+	</ScrollView>
+</LinearLayout>
