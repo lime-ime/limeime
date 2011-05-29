@@ -888,6 +888,8 @@ public class LimeDB extends SQLiteOpenHelper {
 
 				String imname = "";
 				String line = "";
+				String endkey ="";
+				String selkey ="";
 				finish = false;
 				// relatedfinish = false;
 				count = 0;
@@ -956,8 +958,10 @@ public class LimeDB extends SQLiteOpenHelper {
 								}
 								// Add by Jeremy '10, 3 , 27
 								// use %cname as mapping_version of .cin
-								if (!line.trim().toLowerCase().startsWith(
-										"%cname")) {
+								if (!(  line.trim().toLowerCase().startsWith("%cname")
+									  ||line.trim().toLowerCase().startsWith("%selkey")
+									  ||line.trim().toLowerCase().startsWith("%endkey")
+										)) {
 									continue;
 								}
 							}
@@ -1033,6 +1037,14 @@ public class LimeDB extends SQLiteOpenHelper {
 							} else if (code.toLowerCase().contains("%cname")) {
 								imname = word.trim();
 								continue;
+							} else if (code.toLowerCase().contains("%selkey")) {
+								selkey = word.trim();
+								//Log.i("LimeDB:Loadfile","selkey:"+selkey);
+								continue;
+							} else if (code.toLowerCase().contains("%endkey")) {
+								endkey = word.trim();
+								//Log.i("LimeDB:Loadfile","endkey:"+endkey);
+								continue;	
 							} else {
 								code = code.toLowerCase();
 							}
@@ -1103,6 +1115,8 @@ public class LimeDB extends SQLiteOpenHelper {
 					setImInfo(table, "name", imname);
 					setImInfo(table, "amount", String.valueOf(count));
 					setImInfo(table, "import", new Date().toLocaleString());
+					setImInfo(table, "selkey", selkey);
+					setImInfo(table, "endkey", endkey);
 					
 					// If there is no keyboard assigned for current input method then use default keyboard layout
 					//String keyboard = getImInfo(table, "keyboard");
