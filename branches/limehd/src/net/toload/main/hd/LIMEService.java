@@ -166,6 +166,8 @@ public class LIMEService extends InputMethodService implements
 	// Hard Keyboad Shift + Space Status
 	private boolean hasShiftPress = false;
 	private boolean hasCtrlPress = false; // Jeremy '11,5,13
+	private boolean hasMenuPress = false; // Jeremy '11,5,29
+	private boolean hasMenuProcessed = false; // Jeremy '11,5,29
 	
 	private boolean hasSymbolEntered = false; //Jeremy '11,5,24 
 
@@ -756,7 +758,10 @@ public class LIMEService extends InputMethodService implements
 		 * // Ignore error }catch(Exception e){}
 		 */
 		switch (keyCode) {
-
+		case KeyEvent.KEYCODE_MENU:
+			hasMenuProcessed = false;
+			hasMenuPress = true;
+			break;
 		// Add by Jeremy '10, 3, 29. DPAD selection on candidate view
 		// UP/Down to page up/down ??
 		// case KeyEvent.KEYCODE_DPAD_UP:
@@ -891,7 +896,7 @@ public class LIMEService extends InputMethodService implements
 					.getDefaultSharedPreferences(this);
 			hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
 
-			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress) {
+			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress) {
 				return true;
 			} else {
 				if (!mLIMEPref.getEnglishEnable() || !mEnglishOnly) { // add
@@ -937,7 +942,8 @@ public class LIMEService extends InputMethodService implements
 									// processing to super
 			break;
 		default:
-			if(!hasCtrlPress){
+			if(hasMenuPress) hasMenuProcessed = true;
+			if(!(hasCtrlPress||hasMenuPress)){
 				if ( //((mEnglishOnly && mPredictionOn) || (!mEnglishOnly && onIM))&& 
 					translateKeyDown(keyCode, event)) {
 					// Log.i("Onkeydown","tranlatekeydown:true");
@@ -1133,6 +1139,10 @@ public class LIMEService extends InputMethodService implements
 		keydown = false;
 
 		switch (keyCode) {
+		case KeyEvent.KEYCODE_MENU:
+			hasMenuPress = false;
+			if(hasMenuProcessed) return true;
+			break;
 		// */------------------------------------------------------------------------
 		// Modified by Jeremy '10, 3,12
 		// keep track of alt state with mHasAlt.
@@ -1141,8 +1151,9 @@ public class LIMEService extends InputMethodService implements
 		case KeyEvent.KEYCODE_SHIFT_RIGHT:
 			hasShiftPress = false;
 			
-			if (hasCtrlPress && !hasSymbolEntered){ // '11,5,14 Jeremy ctrl-shift switch to next available keyboard; '11,5,24 blocking switching if full-shape symbol entered 
+			if ( (hasMenuPress || hasCtrlPress) && !hasSymbolEntered){ // '11,5,14 Jeremy ctrl-shift switch to next available keyboard; '11,5,24 blocking switching if full-shape symbol entered 
 				nextActiveKeyboard();
+				if(hasMenuPress) hasMenuProcessed = true;
 				return true;
 			}
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,	keyCode, event);
@@ -1204,13 +1215,14 @@ public class LIMEService extends InputMethodService implements
 			// If user enable Quick Switch Mode control then check if has
 			// Shift+Space combination
 
-			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress) { // '11,5,13
+			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress) { // '11,5,13
 																		// Jeremy
 																		// added
 																		// Ctrl-space
 																		// switch
 																		// chi/eng
 				this.switchChiEng();
+				if(hasMenuPress) hasMenuProcessed = true;
 				return true;
 			}
 
