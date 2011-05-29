@@ -468,7 +468,7 @@ public class LIMEService extends InputMethodService implements
 
 		initialKeyboard();
 		boolean disableAutoCorrect = false;
-		mPredictionOn = false;
+		mPredictionOn = true;
 		mCompletionOn = false;
 		mCompletions = null;
 		mCapsLock = false;
@@ -536,7 +536,7 @@ public class LIMEService extends InputMethodService implements
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,
 						mImeOptions, true, false, false);
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
-				mPredictionOn = false;
+				//mPredictionOn = false;
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
 				if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0) {
 					disableAutoCorrect = true;
