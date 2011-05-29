@@ -8,6 +8,9 @@
     <string name="ime_setting">LIMEHD 设定</string>
     <string name="input_method">系统输入法切换</string>
     <string name="experienced_device">开发测试装置</string>
+    <string name="license">版权说明</string>
+    <string name="license_detail">LIME 是一个输入法框架程式，旨在提供 Android 装置中文输入法程式。\n组织或个人由网路自行下载之输入法字根及字典档案若有版权上的争议，请自行向原作者取得授权，本程式不负担其所产生的任何法律及版权上的责任。\n完整资讯请参考 LIME Project 网站上的版权说明  http://code.google.com/p/limeime/。</string>
+
 
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
@@ -331,5 +334,8 @@
     <string name="l3_im_download_from_ov_install">开始安装 OpenVanilla 大易字根</string>
     
     <string name="l3_tab_bluetooth">蓝牙设定</string>
+    
+    <!-- AD Message -->
+    <string name="ad_zippy">蓝芽键盘测试支援\nZIPPY BT-540 蓝芽一对六键盘 - http://www.zippy.com (Sam Lin/sam_lin@hotmail.com)</string>
     
 </resources>

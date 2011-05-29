@@ -8,6 +8,8 @@
     <string name="ime_setting">LIMEHD Settings</string>
     <string name="input_method">System Input Method</string>
     <string name="experienced_device">Experienced Device</string>
+    <string name="license">License Agreement</string>
+    <string name="license_detail">LIME is an open framework inputmethod for Chinese Characters.\nIts objective is to provide Android user a flexible and convenience tools for the text input. We do not support and responsible for any illeage use of this application or its content.\nPlease  refer to http://code.google.com/p/limeime/ for the complete license information.</string>
 
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
@@ -331,5 +333,8 @@
     <string name="l3_im_download_from_ov_install">Start Install OpenVanilla DAYI</string>
     
     <string name="l3_tab_bluetooth">Bluetooth</string>
+    
+    <!-- AD Message -->
+    <string name="ad_zippy">Bluetooth keyboard experienced device\nZIPPY BT-540 Switch Instantaneously Multi-pairing Bluetooth Keyboard - http://www.zippy.com (Sam Lin/sam_lin@hotmail.com)</string>
     
 </resources>
