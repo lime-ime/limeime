@@ -973,7 +973,8 @@ public class LIMEService extends InputMethodService implements
 		int primaryKey = event.getUnicodeChar(LIMEMetaKeyKeyListener.getMetaState(mMetaState));
 		char t = (char) primaryKey;
 		
-		String selected = null;
+		// 29.May.2011 Art, Due to we hand the CTRL+? to super class so no need to implement this method
+		/*String selected = null;
 		try{
 			// Using Java Reflection to dynamic load class and invoke method
 			if(Integer.parseInt(android.os.Build.VERSION.SDK) >= 10){
@@ -989,7 +990,7 @@ public class LIMEService extends InputMethodService implements
 			//Log.i("ERROR", "Get selected error:"+ e);
 		}catch(Exception e){
 			//Log.i("ERROR", "Get selected exception:"+ e);
-		}
+		}*/
 
 		if(hasCtrlPress ) {
 			

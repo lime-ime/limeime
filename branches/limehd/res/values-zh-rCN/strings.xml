@@ -8,7 +8,7 @@
     <string name="ime_setting">LIMEHD 设定</string>
     <string name="input_method">系统输入法切换</string>
     <string name="experienced_device">开发测试装置</string>
-    <string name="license">版权说明</string>
+    <string name="license">版权声明</string>
     <string name="license_detail">LIME 是一个输入法框架程式，旨在提供 Android 装置中文输入法程式。\n组织或个人由网路自行下载之输入法字根及字典档案若有版权上的争议，请自行向原作者取得授权，本程式不负担其所产生的任何法律及版权上的责任。\n完整资讯请参考 LIME Project 网站上的版权说明  http://code.google.com/p/limeime/。</string>
 
 
