@@ -325,7 +325,13 @@ public class LIMEService extends InputMethodService implements
 		}
 		// If orientation changed while predicting, commit the change
 		if (conf.orientation != mOrientation) {
-			commitTyped(getCurrentInputConnection());
+			//commitTyped(getCurrentInputConnection());
+			//Jeremy '11,5,31 clear the composing instead of commitTyped
+			if (mComposing != null && mComposing.length() > 0) {
+				mCandidateView.clear();
+				mComposing.setLength(0);
+				getCurrentInputConnection().commitText("", 0);
+			}
 			mOrientation = conf.orientation;
 		}
 		initialViewAndSwitcher();
@@ -1467,7 +1473,9 @@ public class LIMEService extends InputMethodService implements
 				} else if (keyCode == 32 && this.mComposing.length() == 0
 						&& this.tempMatched != null
 						&& !this.tempMatched.getCode().trim().equals("")) {
-					// Press Space Button + has matched keyword then do nothing
+					// Press Space Button + has matched keyword then do nothing but pump related candidates
+					//Jeremy '11,5,31 commitTyped does not pump related candidates now do here. 
+					updateDictionaryView();
 				} else if (keyCode == 32 && this.mComposing.length() == 0
 						&& this.tempMatched != null
 						&& this.tempMatched.getCode().trim().equals("")) {
@@ -1544,7 +1552,7 @@ public class LIMEService extends InputMethodService implements
 						new KeyEvent(KeyEvent.ACTION_UP, 66));
 			else {
 				if (onIM && (mComposing.length() > 0))
-					commitTyped(getCurrentInputConnection());
+					commitTyped(getCurrentInputConnection());	
 				sendKey(primaryCode);
 
 			}
