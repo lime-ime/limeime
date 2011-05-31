@@ -413,6 +413,7 @@ public class LIMEMappingSetting extends Activity {
 					R.layout.filerow, showlist);
 			final String table = new String(tablename);
 			ListView listview = (ListView) view.findViewById(R.id.list);
+			
 			listview.setAdapter(adapterlist);
 			listview.setOnItemClickListener(new OnItemClickListener() {
 				public void onItemClick(AdapterView<?> arg0, View vi, int position,
@@ -473,7 +474,6 @@ public class LIMEMappingSetting extends Activity {
 				File list[] = rootPath.listFiles();
 				for (File unit : list) {
 					if (unit.isDirectory()
-							|| (true)
 							|| (unit.isFile() && unit.getName().toLowerCase().endsWith(".lime"))
 							|| (unit.isFile() && unit.getName().toLowerCase().endsWith(".cin"))) {
 						templist.add(unit);

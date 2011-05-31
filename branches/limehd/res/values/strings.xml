@@ -3,13 +3,13 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
     <!-- Title for Latin keyboard  -->
-    <string name="app_name">LIMEHD</string>
-    <string name="ime_name">LIMEHD</string>
-    <string name="ime_setting">LIMEHD Settings</string>
+    <string name="app_name">LIME-HD</string>
+    <string name="ime_name">LIME-HD</string>
+    <string name="ime_setting">LIME-HD Settings</string>
     <string name="input_method">System Input Method</string>
     <string name="experienced_device">Experienced Device</string>
     <string name="license">License Agreement</string>
-    <string name="license_detail">LIME is an open framework inputmethod for Chinese Characters.\nIts objective is to provide Android user a flexible and convenience tools for the text input. We do not support and responsible for any illeage use of this application or its content.\nPlease  refer to http://code.google.com/p/limeime/ for the complete license information.</string>
+    <string name="license_detail">LIME-HD is an open framework inputmethod for Chinese Characters.\nIts objective is to provide Android user a flexible and convenience tools for the text input. We do not support and responsible for any illeage use of this application or its content.\nPlease  refer to http://code.google.com/p/limeime/ for the complete license information.</string>
 
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
