@@ -1446,7 +1446,7 @@ public class LIMEService extends InputMethodService implements
 
 	/**
 	 * Helper to send a character to the editor as raw key events.
-	 */
+	 *
 	private void sendKey(int keyCode) {
 
 		switch (keyCode) {
@@ -1487,7 +1487,7 @@ public class LIMEService extends InputMethodService implements
 			break;
 		}
 	}
-
+*/
 	public void onKey(int primaryCode, int[] keyCodes) {
 		if (DEBUG) {
 			Log.i("OnKey", "Entering Onkey(); primaryCode:" + primaryCode
