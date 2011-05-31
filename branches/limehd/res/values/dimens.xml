@@ -18,6 +18,7 @@
 */
 -->
 <resources>
+    <dimen name="max_height_for_fullscreen">1.4in</dimen>
     <dimen name="phone_key_height">48dip</dimen>
     <dimen name="key_height">54dip</dimen>
     <dimen name="key_height_2">40dip</dimen>

@@ -153,7 +153,7 @@ public class LIMEService extends InputMethodService implements
 
 	private final float FX_VOLUME = 1.0f;
 	static final int KEYCODE_ENTER = 10;
-	static final int KEYCODE_SPACE = ' ';
+	static final int KEYCODE_SPACE = 32;
 
 	private boolean hasVibration = false;
 	private boolean hasSound = false;
@@ -382,16 +382,21 @@ public class LIMEService extends InputMethodService implements
 		return mCandidateView;
 	}
 
-	// Jeremy '11,5,14
-	// Override fullscreen editing mode settings for larger screen (width >
-	// 480).
+	// Jeremy '11,5,31
+	// Override fullscreen editing mode settings for larger screen  (<1.4in)
 
 	@Override
 	public boolean onEvaluateFullscreenMode() {
-		if (this.getMaxWidth() > 480)
+		DisplayMetrics dm = getResources().getDisplayMetrics();
+		float displayHeight = dm.heightPixels;
+		// If the display is more than X inches high, don't go to fullscreen mode
+		float max = getResources().getDimension(R.dimen.max_height_for_fullscreen); //1.4in here
+		if(DEBUG) Log.i("onEvaluateFullScreenMode", "DisplayHeight:"+displayHeight+" limit:" + max );
+		if (displayHeight > max) {
 			return false;
-		else
-			return getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+		} else {
+			return super.onEvaluateFullscreenMode();
+		}
 	}
 
 	/**
@@ -889,12 +894,24 @@ public class LIMEService extends InputMethodService implements
 			// the real enter afterward.
 			// return false;
 			// Log.i("ART", "physical keyboard:"+ keyCode);
-			if (mCandidateView != null && mCandidateView.isShown()) {
+			if(onIM){
+				if (mCandidateView != null && mCandidateView.isShown()) {
 				// To block a real enter after suggestion selection. We have to
 				// return true in OnKeyUp();
-				waitingEnterUp = true;
-				return mCandidateView.takeSelectedSuggestion();
+					waitingEnterUp = true;
+					if( mCandidateView.takeSelectedSuggestion()){
+						return true;
+					}else{
+						setCandidatesViewShown(false);
+						break;
+					}
+				}
+			}else{
+				if(mLIMEPref.getEnglishEnable())
+					resetTempEnglishWord();
+				this.updateEnglishDictionaryView();
 			}
+			break;
 
 		case MY_KEYCODE_CTRL_ESC:
 			if (mComposing != null && mComposing.length() > 0) {
@@ -913,11 +930,7 @@ public class LIMEService extends InputMethodService implements
 			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress) {
 				return true;
 			} else {
-				if (!mLIMEPref.getEnglishEnable() || !mEnglishOnly) { // add
-																		// !mEnglishOnly
-																		// by
-																		// Jeremy
-																		// '11,5,12
+				if (onIM) { // Changed to onIM by Jeremy '11,5,31
 					if (mCandidateView != null && mCandidateView.isShown()) {
 						if (mCandidateView.takeSelectedSuggestion()) {
 							return true;
@@ -925,29 +938,15 @@ public class LIMEService extends InputMethodService implements
 							setCandidatesViewShown(false);
 							break;
 						}
-					} else {
-
-						break;
-					}
+					} 
 				} else {
-
 					//if (tempEnglishList != null && tempEnglishList.size() > 1	&& tempEnglishWord != null && tempEnglishWord.length() > 0) {
 					if(mLIMEPref.getEnglishEnable()){
-						//this.pickSuggestionManually(0); // Jeremy '11,5,24
 						resetTempEnglishWord();
-						this.updateEnglishDictionaryView();
-						//return true;
 					}
-
-					/*
-					 * else if(tempEnglishList != null && tempEnglishList.size()
-					 * == 1){ resetTempEnglishWord();
-					 * 
-					 * }
-					 */
 					this.updateEnglishDictionaryView();
-					break;
 				}
+				break;
 			}
 
 		case KeyEvent.KEYCODE_AT:
@@ -1202,7 +1201,6 @@ public class LIMEService extends InputMethodService implements
 			if (waitingEnterUp) {
 				return true;
 			}
-			;
 			// Jeremy '10, 4, 12 bug fix on repeated enter.
 			break;
 		case KeyEvent.KEYCODE_AT:
@@ -1495,7 +1493,7 @@ public class LIMEService extends InputMethodService implements
 			Log.i("OnKey", "Entering Onkey(); primaryCode:" + primaryCode
 					+ " mEnglishFlagShift:" + mEnglishFlagShift);
 		}
-
+		
 		
 		if (mLIMEPref.getEnglishEnable()
 				&& primaryCode != Keyboard.KEYCODE_DELETE) {
@@ -1545,38 +1543,30 @@ public class LIMEService extends InputMethodService implements
 			switchKeyboard(primaryCode);
 		} else if (primaryCode == -9 && mInputView != null) {
 			switchKeyboard(primaryCode);
-			// Jeremy '11,5,15 Fixed softkeybaord enter key behavior
-		} else if (primaryCode == 32 || primaryCode == KEYCODE_ENTER) {
-			if (primaryCode == KEYCODE_ENTER && isModeURL)
-				getCurrentInputConnection().sendKeyEvent(
-						new KeyEvent(KeyEvent.ACTION_UP, 66));
-			else {
-				if (onIM && (mComposing.length() > 0))
-					commitTyped(getCurrentInputConnection());	
-				sendKey(primaryCode);
-
+			// Jeremy '11,5,31 Rewrite softkeybaord enter/space and english sepeartor processing.
+		} else if (onIM && ( primaryCode== KEYCODE_SPACE || primaryCode == KEYCODE_ENTER)){
+			if ( mCandidateView != null && mCandidateView.isShown()){ 
+				if(!mCandidateView.takeSelectedSuggestion()){
+					setCandidatesViewShown(false);
+					sendKeyChar((char)primaryCode);
+				}
+			}else{
+				 sendKeyChar((char)primaryCode);
 			}
-
-		} else {
-
-			/*
-			 * if(mLIMEPref.getEnglishEnable()){
-			 * if(!Character.isLetter(primaryCode)){ resetTempEnglishWord();
-			 * this.updateEnglishDictionaryView(); } }
-			 */
-
-			// if (isWordSeparator(primaryCode)) {
-			// if (mComposing.length() > 0) {
-			// commitTyped(getCurrentInputConnection());
-			// }
-			// sendKey(primaryCode);
-			// updateShiftKeyState(getCurrentInputEditorInfo());
-			// }
-			// else{
+		} else if (mEnglishOnly && isWordSeparator(primaryCode)) {
+            handleSeparator(primaryCode); 
+            
+		} else 
 			handleCharacter(primaryCode, keyCodes);
-			// }
-		}
+	}
 
+	private void handleSeparator(int primaryCode) {
+		if(mLIMEPref.getEnglishEnable()){
+			resetTempEnglishWord();
+		}
+		this.updateEnglishDictionaryView();
+		sendKeyChar((char)primaryCode);
+		
 	}
 
 	private AlertDialog mOptionsDialog;
@@ -2701,13 +2691,16 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	public boolean isWordSeparator(int code) {
+		//Jeremy '11,5,31
+		String separators =  getResources().getString(R.string.word_separators);
+        return separators.contains(String.valueOf((char)code));
 		// String checkCode = String.valueOf((char)code);
-		// if (code == 32 || code == 39 || code == 10) {
+		/*/ if (code == 32 || code == 39 || code == 10) {
 		if (code == 32 || code == 10) {
 			return true;
 		} else {
 			return false;
-		}
+		}*/
 	}
 
 	public void pickDefaultCandidate() {
