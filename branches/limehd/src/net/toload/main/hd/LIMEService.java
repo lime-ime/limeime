@@ -501,15 +501,13 @@ public class LIMEService extends InputMethodService implements
 		case EditorInfo.TYPE_CLASS_DATETIME:
 			mEnglishOnly = true;
 			onIM = false;
-			mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,
-					mImeOptions, false, false, false);
+			mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,	mImeOptions, false, false, false);
 			break;
 		case EditorInfo.TYPE_CLASS_PHONE:
 			mEnglishOnly = true;
 			onIM = false;
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-					mKeyboardSwitcher.MODE_PHONE, mImeOptions, false, false,
-					false);
+					mKeyboardSwitcher.MODE_PHONE, mImeOptions, false, false, false);
 			break;
 		case EditorInfo.TYPE_CLASS_TEXT:
 
@@ -522,8 +520,7 @@ public class LIMEService extends InputMethodService implements
 				isModePassword = true;
 				mEnglishOnly = true;
 				onIM = false;
-				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,
-						mImeOptions, false, false, false);
+				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,	mImeOptions, false, false, false);
 			}
 			if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
 					|| variation == EditorInfo.TYPE_TEXT_VARIATION_PERSON_NAME) {
@@ -536,16 +533,14 @@ public class LIMEService extends InputMethodService implements
 				onIM = false;
 				mPredictionOn = false;
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						mKeyboardSwitcher.MODE_EMAIL, mImeOptions, false,
-						false, false);
+						mKeyboardSwitcher.MODE_EMAIL, mImeOptions, false, false, false);
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_URI) {
 				mPredictionOn = false;
 				mEnglishOnly = true;
 				onIM = false;
 				isModeURL = true;
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						mKeyboardSwitcher.MODE_URL, mImeOptions, false, false,
-						false);
+						mKeyboardSwitcher.MODE_URL, mImeOptions, false, false, false);
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,
 						mImeOptions, true, false, false);
@@ -555,6 +550,7 @@ public class LIMEService extends InputMethodService implements
 				if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0) {
 					disableAutoCorrect = true;
 				}
+				/*
 				if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) != 0
 						|| (attribute.inputType & EditorInfo.TYPE_CLASS_TEXT) == 0) {
 					mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,
@@ -563,7 +559,14 @@ public class LIMEService extends InputMethodService implements
 					mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,
 							EditorInfo.IME_ACTION_NEXT, true, false, false);
 				}
-			}
+				*/
+			} else if(mEnglishIMStart){
+		        	mPredictionOn = true;
+		        	mEnglishOnly = true;
+			        onIM = false;
+			        mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,	mImeOptions, false, false, false);
+			} else
+			    mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,	mImeOptions, true, false, false);
 
 			// If NO_SUGGESTIONS is set, don't do prediction.
 			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0) {
@@ -1544,14 +1547,16 @@ public class LIMEService extends InputMethodService implements
 		} else if (primaryCode == -9 && mInputView != null) {
 			switchKeyboard(primaryCode);
 			// Jeremy '11,5,31 Rewrite softkeybaord enter/space and english sepeartor processing.
-		} else if (onIM && ( primaryCode== KEYCODE_SPACE || primaryCode == KEYCODE_ENTER)){
+		} else if (onIM && ( primaryCode== KEYCODE_SPACE || primaryCode == KEYCODE_ENTER) || primaryCode == -99){
+			int codeToSend = primaryCode;
+			if(primaryCode ==-99 ) codeToSend = KEYCODE_ENTER;
 			if ( mCandidateView != null && mCandidateView.isShown()){ 
 				if(!mCandidateView.takeSelectedSuggestion()){
 					setCandidatesViewShown(false);
-					sendKeyChar((char)primaryCode);
+					sendKeyChar((char)codeToSend);
 				}
 			}else{
-				 sendKeyChar((char)primaryCode);
+				 sendKeyChar((char)codeToSend);
 			}
 		} else if (mEnglishOnly && isWordSeparator(primaryCode)) {
             handleSeparator(primaryCode); 
@@ -2379,13 +2384,15 @@ public class LIMEService extends InputMethodService implements
 	 */
 	private void handleCharacter(int primaryCode, int[] keyCodes) {
 
-		// Log.i("ART","handleCharacter :" + primaryCode);
+		if(DEBUG)
+			Log.i("handleCharacter","primaryCode:" + primaryCode + "; keyCodes[0]:"+keyCodes[0]);
 
+		//Jeremy '11,6,1 process -99 in onKey()
 		// Use the code -99 to represent the Action Move Downward
-		if (primaryCode == -99) {
-			getCurrentInputConnection().sendKeyEvent(
-					new KeyEvent(KeyEvent.ACTION_DOWN, 20));
-		} else {
+		//if (primaryCode == -99) {
+			//getCurrentInputConnection().sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, 20));
+			
+		//} else {
 
 			// Caculate key press time to handle Eazy IM keys mapping
 			// 1,2,3,4,5,6 map to -(45) =(43) [(91) ](93) ,(44) \(92)
@@ -2588,8 +2595,7 @@ public class LIMEService extends InputMethodService implements
 							getCurrentInputConnection()
 									.commitText(
 											mComposing
-													+ String.valueOf((char) primaryCode),
-											1);
+													+ String.valueOf((char) primaryCode),1);
 						}
 					} else {
 						getCurrentInputConnection()
@@ -2638,7 +2644,7 @@ public class LIMEService extends InputMethodService implements
 						String.valueOf((char) primaryCode), 1);
 			}
 			// }
-		}
+		//}
 
 		// updateShift(primaryCode);
 		updateShiftKeyState(getCurrentInputEditorInfo());
