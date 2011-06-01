@@ -3,8 +3,10 @@ package net.toload.main.hd;
 public class LIME {
 	
 	protected static final String DAYI_DOWNLOAD_URL = "http://openvanilla.googlecode.com/svn/trunk/Modules/SharedData/dayi3.cin";
-	protected static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime1104.zip";
-	protected static final String IM_DOWNLOAD_TARGET_EMPTY = "http://limeime.googlecode.com/svn/branches/database/empty1104.zip";
+	protected static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Flime1104.zip";
+	protected static final String IM_DOWNLOAD_TARGET_EMPTY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fempty1104.zip";
+	//protected static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime1104.zip";
+	//protected static final String IM_DOWNLOAD_TARGET_EMPTY = "http://limeime.googlecode.com/svn/branches/database/empty1104.zip";
 	protected static final String IM_LOAD_LIME_ROOT_DIRECTORY = "/sdcard/limehd/";
 	protected static final String DOWNLOAD_START = "download_start";
 	protected static final String DATABASE_DOWNLOAD_STATUS = "database_download_status";
