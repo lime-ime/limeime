@@ -780,7 +780,8 @@ public class LimeDB extends SQLiteOpenHelper {
 			} while (cursor.moveToNext());
 
 			int ssize = mLIMEPref.getSimilarCodeCandidates();
-			if (ssize > 0 && relatedlist != null && relatedlist.indexOf("|") != -1) {
+			//Jeremy '11,6,1 The related field may have only one word and thus no "|" inside
+			if (ssize > 0 && relatedlist != null ){//&& relatedlist.indexOf("|") != -1) { 
 				String templist[] = relatedlist.split("\\|");
 				int scount = 0;
 				for (String unit : templist) {
@@ -1050,6 +1051,12 @@ public class LimeDB extends SQLiteOpenHelper {
 							}
 							
 							if (code.length() > 1) {
+								//Jeremy '11,6,1  put the exact match word in the first word of related field
+								if (hm.get(code) != null && hm.get(code).startsWith("|"))
+									hm.put(code, word+hm.get(code));
+								else
+									hm.put(code,word);	
+								//
 								for (int k = 1; k < code.length(); k++) {
 									String rootkey = code.substring(0, code.length() - k);
 									if (hm.get(rootkey) != null) {
@@ -1061,7 +1068,7 @@ public class LimeDB extends SQLiteOpenHelper {
 											}
 										}
 									} else {
-										hm.put(rootkey, word);
+										hm.put(rootkey, "|"+word);
 									}
 								}
 							}
@@ -1091,19 +1098,32 @@ public class LimeDB extends SQLiteOpenHelper {
 				try{
 					for(Entry<String, String> entry: hm.entrySet())
 			        {
+						if(!entry.getValue().contains("|"))  // does not have related words; only has exact mappings
+							continue;
 						try{
 							ContentValues cv = new ContentValues();
-										  cv.put(FIELD_RELATED, entry.getValue());
 							String code = entry.getKey().replaceAll("'", "''");
-										  cv.put(FIELD_CODE, code);
-							Cursor cursor = db.query(table, null, FIELD_CODE +"='"+code+"'", null, null, null, null, null);
-							
-							if (cursor.moveToFirst()) 
-								db.update(table, cv, FIELD_CODE +"='"+code+"'", null);
-							else
+							String tempValue = entry.getValue();
+							String newValue = "";							
+							//The related field starts with "|" mean no exact code coreesponding and has to insert new one.
+							if (entry.getValue().startsWith("|")){
+								cv.put(FIELD_CODE, code);
+								newValue = tempValue.substring(1, tempValue.length());
+								cv.put(FIELD_RELATED, newValue);
 								db.insert(table, null, cv);
-							//db.insertWithOnConflict(table, null, cv, FIELD_CODE +"='"+code+"'", conflictAlgorithm)
-							//Log.i("loadfile","create related field. code ="+entry.getKey()+" related = " + entry.getValue());
+							}
+							else{
+							//The first word is the exact code corresponding word and has to be trimmed from related field
+								newValue = tempValue.substring(tempValue.indexOf("|")+1
+										, tempValue.length());
+								cv.put(FIELD_RELATED, newValue);
+								db.update(table, cv, FIELD_CODE +"='"+code+"'", null);
+							}
+							if(DEBUG)
+								Log.i("loadfile",
+										"create related field. code ="+entry.getKey()+" related = " + entry.getValue()+" trimmedRelated:" + newValue);
+							
+							
 						}catch(Exception e2){
 							// Just ignore all problem statement
 							Log.i("loadfile","create related field error on code ="+entry.getKey()+" related = " + entry.getValue());
