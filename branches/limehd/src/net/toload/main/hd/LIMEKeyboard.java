@@ -162,15 +162,14 @@ public class LIMEKeyboard extends Keyboard {
             switch (options&(EditorInfo.IME_MASK_ACTION|EditorInfo.IME_FLAG_NO_ENTER_ACTION)) {
                 case EditorInfo.IME_ACTION_GO:
                     mEnterKey.iconPreview = null;
-                    mEnterKey.icon = res.getDrawable(R.drawable.sym_keyboard_return);
-                    //mEnterKey.label = res.getText(R.string.label_go_key);
-                    //mEnterKey.label = res.getText(R.drawable.sym_keyboard_return);
+                    //mEnterKey.icon = res.getDrawable(R.drawable.sym_keyboard_return);
+                    mEnterKey.label = res.getText(R.string.label_go_key);
                     break;
                 case EditorInfo.IME_ACTION_NEXT:
                     mEnterKey.iconPreview = null;
                     mEnterKey.icon = null;
-                    int c[] = {-99};
-                    mEnterKey.codes = c;
+                    //int c[] = {-99};
+                    //mEnterKey.codes = c;
                     mEnterKey.label = res.getText(R.string.label_next_key);
                     break;
                 case EditorInfo.IME_ACTION_DONE:

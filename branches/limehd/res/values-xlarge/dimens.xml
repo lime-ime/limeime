@@ -18,10 +18,13 @@
 */
 -->
 <resources>
+
     <dimen name="phone_key_height">80dip</dimen>
     <dimen name="key_height">84dip</dimen>
-    <dimen name="key_height_2">40dip</dimen>
+    <dimen name="key_height_2">84dip</dimen>
     <dimen name="spacebar_vertical_correction">4dip</dimen>
-    <dimen name="candidate_font_height">32sp</dimen>
-    <dimen name="candidate_vertical_padding">6sp</dimen>
+    <dimen name="candidate_font_height">42sp</dimen>
+    <dimen name="candidate_number_font_height">21sp</dimen>
+    <dimen name="candidate_vertical_padding">8sp</dimen>
+    <dimen name="keyboard_bottom_padding">0.06in</dimen>
 </resources>

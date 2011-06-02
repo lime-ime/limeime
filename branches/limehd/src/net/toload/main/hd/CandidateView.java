@@ -461,7 +461,7 @@ public class CandidateView extends View {
     public void setSuggestions(List<Mapping> suggestions, boolean showNumber, boolean typedWordValid) {
         clear();
         if(showNumber)
-        	X_GAP = 12;
+        	X_GAP = 13;
         else 
         	X_GAP = 10;
         mShowNumber = showNumber;

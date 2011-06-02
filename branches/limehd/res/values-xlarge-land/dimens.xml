@@ -21,6 +21,7 @@
 <resources>
 	<dimen name="phone_key_height">72dip</dimen>
     <dimen name="key_height">76dip</dimen>
-    <dimen name="candidate_font_height">38sp</dimen>
+    <dimen name="candidate_font_height">42sp</dimen>
+    <dimen name="candidate_number_font_height">20sp</dimen>
     <dimen name="candidate_vertical_padding">6sp</dimen>
 </resources>

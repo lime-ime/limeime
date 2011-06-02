@@ -1547,16 +1547,16 @@ public class LIMEService extends InputMethodService implements
 		} else if (primaryCode == -9 && mInputView != null) {
 			switchKeyboard(primaryCode);
 			// Jeremy '11,5,31 Rewrite softkeybaord enter/space and english sepeartor processing.
-		} else if (onIM && ( primaryCode== KEYCODE_SPACE || primaryCode == KEYCODE_ENTER) || primaryCode == -99){
-			int codeToSend = primaryCode;
-			if(primaryCode ==-99 ) codeToSend = KEYCODE_ENTER;
+		} else if (onIM && ( primaryCode== KEYCODE_SPACE || primaryCode == KEYCODE_ENTER) ){// || primaryCode == -99){
+			//int codeToSend = primaryCode;
+			//if(primaryCode ==-99 ) codeToSend = KEYCODE_ENTER;
 			if ( mCandidateView != null && mCandidateView.isShown()){ 
 				if(!mCandidateView.takeSelectedSuggestion()){
 					setCandidatesViewShown(false);
-					sendKeyChar((char)codeToSend);
+					sendKeyChar((char)primaryCode);
 				}
 			}else{
-				 sendKeyChar((char)codeToSend);
+				 sendKeyChar((char)primaryCode);
 			}
 		} else if (mEnglishOnly && isWordSeparator(primaryCode)) {
             handleSeparator(primaryCode); 
