@@ -255,6 +255,11 @@ public class LIMEKeyboardSwitcher {
     	Log.i("ART","KBMODE isShift:"+isShift);*/
     	imtype = code;
     	
+    	// Jeremy '11,6,2.  Has to preserve these options for toggle keyboard controls.
+    	mImeOptions = imeOptions;
+    	mIsSymbols = isSymbol;
+    	mIsShifted = isShift;
+    	
     	String imcode = imHm.get(code); 
     	
     	if(imcode == null || imcode.equals("") || imcode.equals("custom")){
