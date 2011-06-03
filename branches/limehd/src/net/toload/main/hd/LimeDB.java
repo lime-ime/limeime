@@ -85,11 +85,16 @@ public class LimeDB extends SQLiteOpenHelper {
 	public final static String FIELD_DIC_is = "isDictionary";
 
 	// for keyToChar
+	public final static String ARRAY_KEY = "qazwsxedcrfvtgbyhnujmik,ol.p;/";
+	public final static String ARRAY_CHAR =
+		"1^|1-|1v|2^|2-|2v|3^|3-|3v|4^|4-|4v|5^|5-|5v|6^|6-|6v|7^|7-|7v|8^|8-|8v|9^|9-|9v|0^|0-|0v|";
 	public final static String BPMF_KEY = "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-";
-	public final static String BPMF_CHAR = "ㄅㄆㄇㄈㄉㄊㄋㄌˇㄍㄎㄏˋㄐㄑㄒㄓㄔㄕㄖˊㄗㄘㄙ˙ㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ";
+	public final static String BPMF_CHAR = 
+		"ㄅ|ㄆ|ㄇ|ㄈ|ㄉ|ㄊ|ㄋ|ㄌ|ˇ|ㄍ|ㄎ|ㄏ|ˋ|ㄐ|ㄑ|ㄒ|ㄓ|ㄔ|ㄕ|ㄖ|ˊ|ㄗ|ㄘ|ㄙ|˙|ㄧ|ㄨ|ㄩ|ㄚ|ㄛ|ㄜ|ㄝ|ㄞ|ㄟ|ㄠ|ㄡ|ㄢ|ㄣ|ㄤ|ㄥ|ㄦ";
 
 	public final static String CJ_KEY = "qwertyuiopasdfghjklzxcvbnm";
-	public final static String CJ_CHAR = "手田水口廿卜山戈人心日尸木火土竹十大中重難金女月弓一";
+	public final static String CJ_CHAR = "手|田|水|口|廿|卜|山|戈|人|心|日|尸|木|火|土|竹|十|大|中|重|難|金|女|月|弓|一";
+	private HashMap<String, HashMap<String,String>> keysDefMap = new HashMap<String, HashMap<String,String>>();
 
 
 	public String DELIMITER = "";
@@ -522,6 +527,39 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 
 	public String keyToChar(String code, String Rtable) {
+		if(keysDefMap.get(Rtable)==null){
+			String keyString="", charString="";
+			if(Rtable.equals("cj")||Rtable.equals("scj")){
+				keyString = CJ_KEY;
+				charString = CJ_CHAR;
+			}else if(Rtable.equals("phonetic")) {
+				keyString = BPMF_KEY;
+				charString = BPMF_CHAR;
+			}else if(Rtable.equals("array")) {
+				keyString = ARRAY_KEY;
+				charString = ARRAY_CHAR;
+			}
+			HashMap<String,String> keyMap = new HashMap<String,String>();
+			String charlist[] = charString.split("\\|");
+			for (int i = 0; i < keyString.length(); i++) {
+				keyMap.put(keyString.substring(i, i + 1), charlist[i]);			
+			}
+			keysDefMap.put(Rtable, keyMap);
+			
+		}
+		
+		if(keysDefMap.get(Rtable)==null)
+			return code;
+		else{
+			String result = new String("");
+			HashMap <String,String> keyMap = keysDefMap.get(Rtable);
+			for (int i = 0; i < code.length(); i++) {
+				result = result + keyMap.get(code.substring(i, i + 1));
+			}
+			return result;
+		}
+		
+		/*
 		String result = new String("");
 		if (Rtable.equals("cj")) {
 			int i, j;
@@ -566,6 +604,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			result = code;
 		}
 		return result;
+		*/
 	}
 
 	/*

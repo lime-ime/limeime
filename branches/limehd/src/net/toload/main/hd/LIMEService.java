@@ -869,10 +869,10 @@ public class LIMEService extends InputMethodService implements
 
 			if (mCandidateView != null) {
 				mCandidateView.clear();
-				// mCandidateView.hideComposing();
+				updateCandidates();
 			}
 			mComposing.setLength(0);
-			setCandidatesViewShown(false);
+			//setCandidatesViewShown(false);
 
 			// ------------------------------------------------------------------------
 			// Remove '10, 3, 26. Replaced with LIMEMetaKeyKeyLister
@@ -1348,7 +1348,8 @@ public class LIMEService extends InputMethodService implements
 
 				if (mCandidateView != null) {
 					mCandidateView.clear();
-					// mCandidateView.hideComposing();
+					updateCandidates();
+					
 				}
 				mComposing.setLength(0);
 				// updateDictionaryView();
@@ -1657,10 +1658,10 @@ public class LIMEService extends InputMethodService implements
 		// cancel candidate view if it's shown
 		if (mCandidateView != null) {
 			mCandidateView.clear();
-			// mCandidateView.hideComposing();
+			updateCandidates();
 		}
 		mComposing.setLength(0);
-		setCandidatesViewShown(false);
+		//setCandidatesViewShown(false);
 		initialKeyboard();
 		Toast.makeText(this, keyboardname, Toast.LENGTH_SHORT / 2).show();
 		try {
@@ -1773,7 +1774,7 @@ public class LIMEService extends InputMethodService implements
 		// cancel candidate view if it's shown
 		if (mCandidateView != null) {
 			mCandidateView.clear();
-			// mCandidateView.hideComposing();
+			updateCandidates();
 		}
 		mComposing.setLength(0);
 		setCandidatesViewShown(false);
@@ -1839,7 +1840,6 @@ public class LIMEService extends InputMethodService implements
 		}
 		else{
 			mCandidateView.clear();
-			// mCandidateView.hideComposing();
 		}
 
 		if (!mCompletionOn && mComposing.length() > 0) {
@@ -1861,8 +1861,10 @@ public class LIMEService extends InputMethodService implements
 				// Show composing window if keyToChar got different string.
 				if (SearchSrv.getTablename() != null
 						&& (SearchSrv.getTablename().equals("phonetic")
-								|| SearchSrv.getTablename().equals("cj") || SearchSrv
-								.getTablename().equals("scj"))) {
+								|| SearchSrv.getTablename().equals("cj")
+								|| SearchSrv.getTablename().equals("scj")
+								|| SearchSrv.getTablename().equals("array")
+						)) {
 					if (!firstCreated && keyString != null && !keyString.equals("")) {
 						
 						if (keyString.length() < 7) {
@@ -2048,7 +2050,7 @@ public class LIMEService extends InputMethodService implements
 			getCurrentInputConnection().setComposingText("", 0);
 			if (mCandidateView != null) {
 				mCandidateView.clear();
-				// mCandidateView.hideComposing();
+				updateCandidates();
 			}
 			mComposing.setLength(0);
 			setCandidatesViewShown(false);
@@ -2056,7 +2058,7 @@ public class LIMEService extends InputMethodService implements
 		} else {
 			if (mCandidateView != null) {
 				mCandidateView.clear();
-				// mCandidateView.hideComposing();
+				updateCandidates();
 			}
 			try {
 				if (mLIMEPref.getEnglishEnable()&& mPredictionOn
@@ -2127,9 +2129,10 @@ public class LIMEService extends InputMethodService implements
 
 		if (mCandidateView != null) {
 			mCandidateView.clear();
+			updateCandidates();
 		}
 		mComposing.setLength(0);
-		setCandidatesViewShown(false);
+		
 
 		if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE) {
 			switchSymKeyboard();
@@ -2655,6 +2658,7 @@ public class LIMEService extends InputMethodService implements
 		// cancel candidate view if it's shown
 		if (mCandidateView != null) {
 			mCandidateView.clear();
+			updateCandidates();
 		}
 		mComposing.setLength(0);
 		// setCandidatesViewShown(false);
