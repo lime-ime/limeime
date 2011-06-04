@@ -85,6 +85,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	public final static String FIELD_DIC_is = "isDictionary";
 
 	// for keyToChar
+	public final static String DAYI_KEY = "1234567890qwertyuiopasdfghjkl;zxcvbnm,./";
+	public final static String DAYI_CHAR =
+		"言|牛|目|四|王|門|田|米|足|金|石|山|一|工|糸|火|艸|木|口|耳|人|革|日|土|手|鳥|月|立|女|虫|心|水|鹿|禾|馬|魚|雨|力|舟|竹";
 	public final static String ARRAY_KEY = "qazwsxedcrfvtgbyhnujmik,ol.p;/";
 	public final static String ARRAY_CHAR =
 		"1^|1-|1v|2^|2-|2v|3^|3-|3v|4^|4-|4v|5^|5-|5v|6^|6-|6v|7^|7-|7v|8^|8-|8v|9^|9-|9v|0^|0-|0v|";
@@ -525,7 +528,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 		return result;
 	}
-
+//Rewrite by Jeremy 11,6,4.  Supoort for array and dayi now.
 	public String keyToChar(String code, String Rtable) {
 		if(keysDefMap.get(Rtable)==null){
 			String keyString="", charString="";
@@ -538,6 +541,10 @@ public class LimeDB extends SQLiteOpenHelper {
 			}else if(Rtable.equals("array")) {
 				keyString = ARRAY_KEY;
 				charString = ARRAY_CHAR;
+			}else
+				 if(Rtable.equals("dayi")) {
+						keyString = DAYI_KEY;
+						charString = DAYI_CHAR;
 			}
 			HashMap<String,String> keyMap = new HashMap<String,String>();
 			String charlist[] = charString.split("\\|");
@@ -554,57 +561,13 @@ public class LimeDB extends SQLiteOpenHelper {
 			String result = new String("");
 			HashMap <String,String> keyMap = keysDefMap.get(Rtable);
 			for (int i = 0; i < code.length(); i++) {
-				result = result + keyMap.get(code.substring(i, i + 1));
+				String c = keyMap.get(code.substring(i, i + 1));
+				if(c!=null) result = result + c;
 			}
 			return result;
 		}
 		
-		/*
-		String result = new String("");
-		if (Rtable.equals("cj")) {
-			int i, j;
-			for (i = 0; i < code.length(); i++) {
-				for (j = 0; j < CJ_KEY.length(); j++) {
-					if (code.substring(i, i + 1).equals(
-							CJ_KEY.substring(j, j + 1))) {
-						result = result + CJ_CHAR.substring(j, j + 1);
-						break;
-					}
-				}
-
-			}
-		}else if (Rtable.equals("scj")) {
-			int i, j;
-			for (i = 0; i < code.length(); i++) {
-				for (j = 0; j < CJ_KEY.length(); j++) {
-					if (code.substring(i, i + 1).equals(
-							CJ_KEY.substring(j, j + 1))) {
-						result = result + CJ_CHAR.substring(j, j + 1);
-						break;
-					}
-				}
-
-			}
-		} else if (Rtable.equals("dayi")) {
-			result = code;
-		} else if (Rtable.equals("ez")) {
-			result = code;
-		} else if (Rtable.equals("phonetic")) {
-			int i, j;
-			for (i = 0; i < code.length(); i++) {
-				for (j = 0; j < BPMF_KEY.length(); j++) {
-					if (code.substring(i, i + 1).equals(
-							BPMF_KEY.substring(j, j + 1))) {
-						result = result + BPMF_CHAR.substring(j, j + 1);
-						break;
-					}
-				}
-			}
-		} else {
-			result = code;
-		}
-		return result;
-		*/
+		
 	}
 
 	/*

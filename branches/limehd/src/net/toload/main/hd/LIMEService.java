@@ -1858,28 +1858,18 @@ public class LIMEService extends InputMethodService implements
 					setSuggestions(null, false, false);
 				}
 				
-				// Show composing window if keyToChar got different string.
-				if (SearchSrv.getTablename() != null
-						&& (SearchSrv.getTablename().equals("phonetic")
-								|| SearchSrv.getTablename().equals("cj")
-								|| SearchSrv.getTablename().equals("scj")
-								|| SearchSrv.getTablename().equals("array")
-						)) {
-					if (!firstCreated && keyString != null && !keyString.equals("")) {
+				// Show composing window if keyToChar got different string. Revised by Jeremy '11,6,4
+				if (SearchSrv.getTablename() != null ) {
 						
-						if (keyString.length() < 7) {
-							charString = SearchSrv.keyToChar(keyString
-									.toLowerCase());
-							if (mCandidateView != null
-									&& !charString.toUpperCase().equals(
-											keyString.toUpperCase())
-									&& !charString.equals("")) {
-								if (charString != null
-										&& !charString.trim().equals("")) {
-									mCandidateView.setComposingText(charString);
-								}
+					if (!firstCreated && keyString != null && !keyString.equals("")&& keyString.length() < 7) {					
+							charString = SearchSrv.keyToChar(keyString.toLowerCase());
+							if (mCandidateView != null 
+									&& !charString.toUpperCase().equals(keyString.toUpperCase())
+									&& !charString.equals("")
+									&& !charString.trim().equals("")
+									) {
+								mCandidateView.setComposingText(charString);	
 							}
-						}
 					}
 				}
 			} catch (RemoteException e) {
