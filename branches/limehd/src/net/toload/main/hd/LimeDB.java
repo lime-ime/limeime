@@ -532,18 +532,25 @@ public class LimeDB extends SQLiteOpenHelper {
 	public String keyToKeyname(String code, String Rtable) {
 		if(keysDefMap.get(Rtable)==null|| keysDefMap.get(Rtable).size()==0){
 			String keyString="", keynameString="";
-			if(Rtable.equals("cj")||Rtable.equals("scj")){
-				keyString = CJ_KEY;
-				keynameString = CJ_CHAR;
-			}else if(Rtable.equals("phonetic")) {
-				keyString = BPMF_KEY;
-				keynameString = BPMF_CHAR;
-			}else if(Rtable.equals("array")) {
-				keyString = ARRAY_KEY;
-				keynameString = ARRAY_CHAR;
-			}else if(Rtable.equals("dayi")) {
-				keyString = DAYI_KEY;
-				keynameString = DAYI_CHAR;
+			//Jeremy 11,6,4 Load keys and keynames from im table.
+			keyString = getImInfo(Rtable,"imkeys");
+			keynameString = getImInfo(Rtable,"imkeynames");
+			if(DEBUG) Log.i("limedb:keyToKeyname()","keyString:"+keyString + " keynameString:" +keynameString);
+			
+			if(keyString.equals("")||keynameString.equals("")){
+				if(Rtable.equals("cj")||Rtable.equals("scj")){
+					keyString = CJ_KEY;
+					keynameString = CJ_CHAR;
+				}else if(Rtable.equals("phonetic")) {
+					keyString = BPMF_KEY;
+					keynameString = BPMF_CHAR;
+				}else if(Rtable.equals("array")) {
+					keyString = ARRAY_KEY;
+					keynameString = ARRAY_CHAR;
+				}else if(Rtable.equals("dayi")) {
+					keyString = DAYI_KEY;
+					keynameString = DAYI_CHAR;
+				}
 			}
 			HashMap<String,String> keyMap = new HashMap<String,String>();
 			String charlist[] = keynameString.split("\\|");
