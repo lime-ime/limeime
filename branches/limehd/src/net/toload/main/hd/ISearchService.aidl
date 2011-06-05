@@ -12,7 +12,7 @@ interface ISearchService
 		void addUserDict(String id, String code, String word, String pword, int score, boolean isDictionary);
 		void updateUserDict();
 		String hanConvert(String input);
-		String keyToChar(String code);
+		String keyToKeyname(String code);
 		List getKeyboardList();
 		List getImList();
 		void clear();

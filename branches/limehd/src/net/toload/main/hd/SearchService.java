@@ -287,9 +287,9 @@ public class SearchService extends Service {
 			}
 		}
 		
-		public String keyToChar(String code){
+		public String keyToKeyname(String code){
 			if(db == null){loadLimeDB();}
-			return db.keyToChar(code, tablename);
+			return db.keyToKeyname(code, tablename);
 		}
 
 		@Override

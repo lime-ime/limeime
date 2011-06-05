@@ -240,10 +240,7 @@ public class CandidateView extends View {
     }
     public void showComposing() {
     	if(DEBUG) Log.i("candidateview","showcomposing()");
-        if (mComposingText.equals("")) {
-             //hideComposing();
-            } else {
-            	
+        if (!mComposingText.equals("")) {	
             	mComposingTextPopup.setContentView(mComposingTextView);
                 mComposingTextView.setText(mComposingText);
                 mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
@@ -254,7 +251,7 @@ public class CandidateView extends View {
                 final int popupHeight = mComposingTextView.getMeasuredHeight();
                 //mPreviewText.setVisibility(INVISIBLE);
                 
-                int mPopupComposingY = - (popupHeight * 4/5);
+                int mPopupComposingY = - popupHeight;
                 //mHandler.removeMessages(MSG_REMOVE_COMPOSING);
                 int [] offsetInWindow = new int[2];
                 mComposingTextView.getLocationInWindow(offsetInWindow);

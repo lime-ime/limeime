@@ -495,7 +495,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 					int wordColumn = cursor.getColumnIndex(FIELD_WORD);
 					result = cursor.getString(wordColumn) + "="
-							+ keyToChar(cursor.getString(codeColumn), Rtable);
+							+ keyToKeyname(cursor.getString(codeColumn), Rtable);
 					if (DEBUG) {
 						Log.i("getRmapping", "Code:"
 								+ cursor.getString(codeColumn));
@@ -504,7 +504,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					while (cursor.moveToNext()) {
 						result = result
 								+ "; "
-								+ keyToChar(cursor.getString(codeColumn),
+								+ keyToKeyname(cursor.getString(codeColumn),
 										Rtable);
 						if (DEBUG) {
 							Log.i("getRmapping", "Code:"
@@ -529,25 +529,24 @@ public class LimeDB extends SQLiteOpenHelper {
 		return result;
 	}
 //Rewrite by Jeremy 11,6,4.  Supoort for array and dayi now.
-	public String keyToChar(String code, String Rtable) {
-		if(keysDefMap.get(Rtable)==null){
-			String keyString="", charString="";
+	public String keyToKeyname(String code, String Rtable) {
+		if(keysDefMap.get(Rtable)==null|| keysDefMap.get(Rtable).size()==0){
+			String keyString="", keynameString="";
 			if(Rtable.equals("cj")||Rtable.equals("scj")){
 				keyString = CJ_KEY;
-				charString = CJ_CHAR;
+				keynameString = CJ_CHAR;
 			}else if(Rtable.equals("phonetic")) {
 				keyString = BPMF_KEY;
-				charString = BPMF_CHAR;
+				keynameString = BPMF_CHAR;
 			}else if(Rtable.equals("array")) {
 				keyString = ARRAY_KEY;
-				charString = ARRAY_CHAR;
-			}else
-				 if(Rtable.equals("dayi")) {
-						keyString = DAYI_KEY;
-						charString = DAYI_CHAR;
+				keynameString = ARRAY_CHAR;
+			}else if(Rtable.equals("dayi")) {
+				keyString = DAYI_KEY;
+				keynameString = DAYI_CHAR;
 			}
 			HashMap<String,String> keyMap = new HashMap<String,String>();
-			String charlist[] = charString.split("\\|");
+			String charlist[] = keynameString.split("\\|");
 			for (int i = 0; i < keyString.length(); i++) {
 				keyMap.put(keyString.substring(i, i + 1), charlist[i]);			
 			}
@@ -555,8 +554,10 @@ public class LimeDB extends SQLiteOpenHelper {
 			
 		}
 		
-		if(keysDefMap.get(Rtable)==null)
+		if(keysDefMap.get(Rtable)==null || keysDefMap.get(Rtable).size()==0){
+			if(DEBUG) Log.i("limedb:keyToKeyname()","nokeysDefMap found!!");
 			return code;
+		}
 		else{
 			String result = new String("");
 			HashMap <String,String> keyMap = keysDefMap.get(Rtable);
@@ -564,6 +565,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				String c = keyMap.get(code.substring(i, i + 1));
 				if(c!=null) result = result + c;
 			}
+			if(DEBUG) Log.i("limedb:keyToKeyname()","returning:" + result);
 			return result;
 		}
 		
@@ -885,14 +887,17 @@ public class LimeDB extends SQLiteOpenHelper {
 
 			public void run() {
 
-				boolean hasMappingVersion = false;
+				//boolean hasMappingVersion = false;
 				boolean isCinFormat = false;
-				ArrayList<ContentValues> resultlist = new ArrayList<ContentValues>();
+				//ArrayList<ContentValues> resultlist = new ArrayList<ContentValues>();
 
 				String imname = "";
 				String line = "";
 				String endkey ="";
 				String selkey ="";
+				String spacestyle = "";
+				String imkeys = "";
+				String imkeynames = "";
 				finish = false;
 				// relatedfinish = false;
 				count = 0;
@@ -938,8 +943,9 @@ public class LimeDB extends SQLiteOpenHelper {
 					FileReader fr = new FileReader(filename);
 					BufferedReader buf = new BufferedReader(fr);
 					boolean firstline = true;
-					boolean cinFormatStart = false;
-					String precode = "";
+					boolean inChardefBlock = false;
+					boolean inKeynameBlock = false;
+					//String precode = "";
 					
 					while ((line = buf.readLine()) != null) {
 
@@ -948,31 +954,44 @@ public class LimeDB extends SQLiteOpenHelper {
 						 * begin until %chardef end
 						 */
 						if (isCinFormat) {
-							if (!cinFormatStart) {
+							if (!(inChardefBlock || inKeynameBlock)) {
 								// Modified by Jeremy '10, 3, 28. Some .cin have
 								// double space between $chardef and begin or
 								// end
 								if (line != null
-										&& line.trim().toLowerCase()
-												.startsWith("%chardef")
-										&& line.trim().toLowerCase().endsWith(
-												"begin")) {
-									cinFormatStart = true;
+										&& line.trim().toLowerCase().startsWith("%chardef")
+										&& line.trim().toLowerCase().endsWith("begin")
+										) {
+									inChardefBlock = true;
+								}
+								if (line != null
+										&& line.trim().toLowerCase().startsWith("%keyname")
+										&& line.trim().toLowerCase().endsWith("begin")
+										) {
+									inKeynameBlock = true;
 								}
 								// Add by Jeremy '10, 3 , 27
 								// use %cname as mapping_version of .cin
+								// Jeremy '11,6,5 add selkey, endkey and spacestyle support
 								if (!(  line.trim().toLowerCase().startsWith("%cname")
 									  ||line.trim().toLowerCase().startsWith("%selkey")
 									  ||line.trim().toLowerCase().startsWith("%endkey")
+									  ||line.trim().toLowerCase().startsWith("%spacestyle")
 										)) {
 									continue;
 								}
 							}
 							if (line != null
-									&& line.trim().toLowerCase().startsWith(
-											"%chardef")
-									&& line.trim().toLowerCase()
-											.endsWith("end")) {
+									&& line.trim().toLowerCase().startsWith("%keyname")
+									&& line.trim().toLowerCase().endsWith("end")
+								) {
+								inKeynameBlock = false;
+								continue;
+							}
+							if (line != null
+									&& line.trim().toLowerCase().startsWith("%chardef")
+									&& line.trim().toLowerCase().endsWith("end")
+								) {
 								break;
 							}
 						}
@@ -984,7 +1003,7 @@ public class LimeDB extends SQLiteOpenHelper {
 								if (srcstring[0] == -17 && srcstring[1] == -69
 										&& srcstring[2] == -65) {
 									byte tempstring[] = new byte[srcstring.length - 3];
-									int a = 0;
+									//int a = 0;
 									for (int j = 3; j < srcstring.length; j++) {
 										tempstring[j - 3] = srcstring[j];
 									}
@@ -992,16 +1011,8 @@ public class LimeDB extends SQLiteOpenHelper {
 								}
 							}
 							firstline = false;
-						} else {
-							if (line == null) {
+						} else 	if (line == null || line.trim().equals("") || line.length() < 3) {
 								continue;
-							}
-							if (line.trim().equals("")) {
-								continue;
-							}
-							if (line.length() < 3) {
-								continue;
-							}
 						}
 
 						try {
@@ -1047,36 +1058,51 @@ public class LimeDB extends SQLiteOpenHelper {
 							} else if (code.toLowerCase().contains("%endkey")) {
 								endkey = word.trim();
 								//Log.i("LimeDB:Loadfile","endkey:"+endkey);
+							} else if (code.toLowerCase().contains("%spacestyle")) {
+								spacestyle = word.trim();
+							
 								continue;	
 							} else {
 								code = code.toLowerCase();
 							}
-							
-							if (code.length() > 1) {
+							if(inKeynameBlock) {  //Jeremy '11,6,5 preserve keyname blocks here.
+								imkeys = imkeys + code.toLowerCase().trim();
+								String c = word.trim();
+								if(!c.equals("")){
+									if(imkeynames.equals(""))
+										imkeynames = c;
+									else
+										imkeynames = imkeynames + "|"+c; 
+								}
+																
+							}
+							else {
+								if (code.length() > 1) {
 								//Jeremy '11,6,1  put the exact match word in the first word of related field
-								if (hm.get(code) != null && hm.get(code).startsWith("|"))
-									hm.put(code, word+hm.get(code));
-								else
-									hm.put(code,word);	
+									if (hm.get(code) != null && hm.get(code).startsWith("|"))
+										hm.put(code, word+hm.get(code));
+									else
+										hm.put(code,word);	
 								//
-								for (int k = 1; k < code.length(); k++) {
-									String rootkey = code.substring(0, code.length() - k);
-									if (hm.get(rootkey) != null) {
-										String tempvalue = hm.get(rootkey);
-										if (hm.get(rootkey) != null
-												&& hm.get(rootkey).indexOf(word) == -1) {
-											if(hm.get(rootkey).split("\\|").length < 50){
-												hm.put(rootkey, tempvalue + "|" + word);
+									for (int k = 1; k < code.length(); k++) {
+										String rootkey = code.substring(0, code.length() - k);
+										if (hm.get(rootkey) != null) {
+											String tempvalue = hm.get(rootkey);
+											if (hm.get(rootkey) != null
+													&& hm.get(rootkey).indexOf(word) == -1) {
+												if(hm.get(rootkey).split("\\|").length < 50){
+													hm.put(rootkey, tempvalue + "|" + word);
+												}
 											}
+										} else {
+											hm.put(rootkey, "|"+word);
 										}
-									} else {
-										hm.put(rootkey, "|"+word);
 									}
 								}
-							}
 							
-							count++;
-							db.insert(table, null, getInsertItem(code, word));
+								count++;
+								db.insert(table, null, getInsertItem(code, word));
+							}
 
 						} catch (StringIndexOutOfBoundsException e) {}
 					}
@@ -1145,8 +1171,12 @@ public class LimeDB extends SQLiteOpenHelper {
 					setImInfo(table, "name", imname);
 					setImInfo(table, "amount", String.valueOf(count));
 					setImInfo(table, "import", new Date().toLocaleString());
-					setImInfo(table, "selkey", selkey);
-					setImInfo(table, "endkey", endkey);
+					if (!selkey.equals("")) setImInfo(table, "selkey", selkey);
+					if (!endkey.equals("")) setImInfo(table, "endkey", endkey);
+					if (!spacestyle.equals("")) setImInfo(table, "spacestyle", spacestyle);
+					if (!imkeys.equals("")) setImInfo(table, "imkeys", imkeys);
+					if (!imkeynames.equals("")) setImInfo(table, "imkeynames", imkeynames);
+					if(DEBUG) Log.i("limedb:loadfile()","imkeys:" +imkeys + " imkeynames:"+imkeynames);
 					
 					// If there is no keyboard assigned for current input method then use default keyboard layout
 					//String keyboard = getImInfo(table, "keyboard");

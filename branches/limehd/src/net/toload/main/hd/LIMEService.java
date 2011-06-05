@@ -1862,7 +1862,7 @@ public class LIMEService extends InputMethodService implements
 				if (SearchSrv.getTablename() != null ) {
 						
 					if (!firstCreated && keyString != null && !keyString.equals("")&& keyString.length() < 7) {					
-							charString = SearchSrv.keyToChar(keyString.toLowerCase());
+							charString = SearchSrv.keyToKeyname(keyString.toLowerCase());
 							if (mCandidateView != null 
 									&& !charString.toUpperCase().equals(keyString.toUpperCase())
 									&& !charString.equals("")
