@@ -1348,8 +1348,6 @@ public class LIMEService extends InputMethodService implements
 
 				if (mCandidateView != null) {
 					mCandidateView.clear();
-					updateCandidates();
-					
 				}
 				mComposing.setLength(0);
 				// updateDictionaryView();
@@ -2729,15 +2727,14 @@ public class LIMEService extends InputMethodService implements
 				Log.i("LIMEService:", "pickSuggestionManually():mCompletionOn:"
 						+ mCompletionOn);
 
-		} else if (mComposing.length() > 0 && !mEnglishOnly) {
+		} else if (mComposing.length() > 0 && onIM) {
 			// Log.i("ART","When user pick suggested word which is not from dictionary");
 			commitTyped(getCurrentInputConnection());
 			this.firstMatched = null;
 			this.hasFirstMatched = false;
 			templist.clear();
 			updateDictionaryView();
-		} else if (firstMatched != null && firstMatched.isDictionary()
-				&& !mEnglishOnly) {
+		} else if (firstMatched != null && firstMatched.isDictionary()&& onIM) {
 			// Log.i("ART","When user pick suggested word which is from dictionary");
 			commitTyped(getCurrentInputConnection());
 			updateDictionaryView();
