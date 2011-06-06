@@ -183,11 +183,11 @@ public class LIMEService extends InputMethodService implements
 	private List<String> keyboardList;
 	private List<String> keyboardListCodes;
 
-	private int keyDownCode = 0;
-	private float keyDownX = 0;
-	private float keyDownY = 0;
-	private float keyUpX = 0;
-	private float keyUpY = 0;
+	//private int keyDownCode = 0;
+	//private float keyDownX = 0;
+	//private float keyDownY = 0;
+	//private float keyUpX = 0;
+	//private float keyUpY = 0;
 
 	// To keep key press time
 	private long keyPressTime = 0;
@@ -195,8 +195,8 @@ public class LIMEService extends InputMethodService implements
 	// Keep keydown event
 	KeyEvent mKeydownEvent = null;
 
-	private int previousKeyCode = 0;
-	private final float moveLength = 15;
+	//private int previousKeyCode = 0;
+	//private final float moveLength = 15;
 	private ISearchService SearchSrv = null;
 
 	static final int FREQUENCY_FOR_AUTO_ADD = 250;
@@ -209,6 +209,8 @@ public class LIMEService extends InputMethodService implements
 	private final int MY_KEYCODE_CTRL_ESC = 111;
 	private final int MY_KEYCODE_CTRL_LEFT = 113;
 	private final int MY_KEYCODE_CTRL_RIGHT = 114;
+	
+	private final String relatedSelkey = "!@#$%^&*()";
 
 	private LIMEPreferenceManager mLIMEPref;
 	
@@ -1845,7 +1847,7 @@ public class LIMEService extends InputMethodService implements
 			LinkedList<Mapping> list = new LinkedList<Mapping>();
 
 			try {
-				String keyString = mComposing.toString(), charString = "";
+				String keyString = mComposing.toString(), keynameString = "";
 
 				list.addAll(SearchSrv.query(keyString, hasKeyPress));
 
@@ -1856,17 +1858,17 @@ public class LIMEService extends InputMethodService implements
 					setSuggestions(null, false, false);
 				}
 				
-				// Show composing window if keyToChar got different string. Revised by Jeremy '11,6,4
+				// Show composing window if keyToKeyname got different string. Revised by Jeremy '11,6,4
 				if (SearchSrv.getTablename() != null ) {
 						
 					if (!firstCreated && keyString != null && !keyString.equals("")&& keyString.length() < 7) {					
-							charString = SearchSrv.keyToKeyname(keyString.toLowerCase());
+						keynameString = SearchSrv.keyToKeyname(keyString.toLowerCase());
 							if (mCandidateView != null 
-									&& !charString.toUpperCase().equals(keyString.toUpperCase())
-									&& !charString.equals("")
-									&& !charString.trim().equals("")
+									&& !keynameString.toUpperCase().equals(keyString.toUpperCase())
+									&& !keynameString.equals("")
+									&& !keynameString.trim().equals("")
 									) {
-								mCandidateView.setComposingText(charString);	
+								mCandidateView.setComposingText(keynameString);	
 							}
 					}
 				}
@@ -2367,6 +2369,30 @@ public class LIMEService extends InputMethodService implements
 	 * Auto-generated catch block e.printStackTrace(); } }
 	 */
 
+	private boolean handleSelkey(int primaryCode, int[] keyCodes){
+		int i = -1;
+		if (mComposing.length() > 0 && onIM) {
+			// IM candidates view
+			try {
+				i = SearchSrv.isSelkey((char) primaryCode);
+				if(i>=0) i = i+2; // candidated[0] is english keys, candidate[1] is selected with space
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+	
+		} else if (firstMatched != null && firstMatched.isDictionary()&& onIM) {
+			// related candidates view
+			i = relatedSelkey.indexOf(primaryCode);
+		}
+		if(i<0 || i >= templist.size()){
+				return false;
+		}
+		else{
+			pickSuggestionManually(i);
+			return true;
+		}
+		
+	}
 	/**
 	 * This method construct candidate view and add key code to composing object
 	 * 
@@ -2525,7 +2551,13 @@ public class LIMEService extends InputMethodService implements
 							+ isValidDigit(primaryCode) + " isValideSymbo:"
 							+ isValidSymbol(primaryCode) + " onIM:" + onIM);
 				}
-
+				//Jeremy '11,6,6 processing physical keyboard selkeys.
+				if (mCandidateView != null && mCandidateView.isShown()) {
+					if(handleSelkey(primaryCode, keyCodes))
+						return;
+				}
+				
+				
 				if (!hasSymbolMapping && !hasNumberMapping
 						&& isValidLetter(primaryCode) && onIM) {
 					mComposing.append((char) primaryCode);

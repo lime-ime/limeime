@@ -20,5 +20,9 @@ interface ISearchService
 		void setSelectedText(String text);
 		String getSelectedText();
 		void close();
+		int	isSelkey(char c);
+		boolean isEndkey(char c);
+		boolean isImKeys(char c);
+		String getSelkey();
 
 }

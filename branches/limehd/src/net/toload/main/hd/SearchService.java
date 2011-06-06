@@ -64,11 +64,16 @@ public class SearchService extends Service {
 	
 	private static SearchServiceImpl obj = null;
 
-	private static int recAmount = 0;
+	//private static int recAmount = 0;
 	private static boolean softkeypressed;
 	
 	private static List<Mapping> preresultlist = null;
-	private static String precode = null;
+	//private static String precode = null;
+	
+	//Jeremy '11,6,6
+	private HashMap<String,String> imKeysMap = new HashMap<String,String>();
+	private HashMap<String,String> selKeyMap = new HashMap<String,String>();
+	private HashMap<String,String> endKeyMap = new HashMap<String,String>();
 	
 	private static ConcurrentHashMap<String,List<Mapping>> cache = null;
 	private static ConcurrentHashMap<String, List<Mapping>> engcache = null;
@@ -122,6 +127,7 @@ public class SearchService extends Service {
 			db.setTablename(table);
 			tablename = table;
 		}
+		
 		
 		private void loadLimeDB()
 		{	
@@ -380,6 +386,61 @@ public class SearchService extends Service {
 					Log.i("ART","Database Close error : "+e);
 				}
 			}
+		}
+
+		@Override
+		public boolean isImKeys(char c) throws RemoteException {
+			if(imKeysMap.get(tablename)==null || imKeysMap.size()==0){
+				if(db == null){db = new LimeDB(ctx);}
+				imKeysMap.put(tablename, db.getImInfo(tablename, "imkeys"));				
+			}
+			String imkeys = imKeysMap.get(tablename);
+			if(!(imkeys==null || imkeys.equals(""))){
+				return (imkeys.indexOf(c)>=0);
+			}
+			return false;
+		}
+
+		@Override
+		public int isSelkey(char c) throws RemoteException {
+			String selkey = "";
+			if(selKeyMap.get(tablename)==null || selKeyMap.size()==0){
+				if(db == null){db = new LimeDB(ctx);}
+				selkey = db.getImInfo(tablename, "selkey");
+				if(selkey.equals("")) selkey = "'[]-\\^&*()";
+				selKeyMap.put(tablename, selkey);
+			}
+			selkey = selKeyMap.get(tablename);
+			if(!(selkey==null || selkey.equals(""))){
+				return selkey.indexOf(c);
+			}
+			return -1;
+		}
+
+		@Override
+		public boolean isEndkey(char c) throws RemoteException {
+			if(endKeyMap.get(tablename)==null || endKeyMap.size()==0){
+				if(db == null){db = new LimeDB(ctx);}
+				endKeyMap.put(tablename, db.getImInfo(tablename, "endkey"));
+				
+			}
+			String endkey = endKeyMap.get(tablename);
+			if(!(endkey==null || endkey.equals(""))){
+				return (endkey.indexOf(c)>=0);
+			}
+			return false;
+		}
+
+		@Override
+		public String getSelkey() throws RemoteException {
+			String selkey = "";
+			if(selKeyMap.get(tablename)==null || selKeyMap.size()==0){
+				if(db == null){db = new LimeDB(ctx);}
+				selkey = db.getImInfo(tablename, "selkey");
+				if(selkey.equals("")) selkey = "'[]-\\^&*()";
+				selKeyMap.put(tablename, selkey);
+			}
+			return selKeyMap.get(tablename);
 		}
 	}
 
