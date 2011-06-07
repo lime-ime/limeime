@@ -400,7 +400,7 @@ public class SearchService extends Service {
 			}
 			return false;
 		}
-
+/*
 		@Override
 		public int isSelkey(char c) throws RemoteException {
 			String selkey = "";
@@ -430,14 +430,14 @@ public class SearchService extends Service {
 			}
 			return false;
 		}
-
+*/
 		@Override
 		public String getSelkey() throws RemoteException {
 			String selkey = "";
 			if(selKeyMap.get(tablename)==null || selKeyMap.size()==0){
 				if(db == null){db = new LimeDB(ctx);}
 				selkey = db.getImInfo(tablename, "selkey");
-				if(selkey.equals("")) selkey = "'[]-\\^&*()";
+				if(selkey==null) selkey = "";
 				selKeyMap.put(tablename, selkey);
 			}
 			return selKeyMap.get(tablename);

@@ -2368,18 +2368,33 @@ public class LIMEService extends InputMethodService implements
 	 * SearchSrv.setTablename(tablename); } catch (RemoteException e) { // TODO
 	 * Auto-generated catch block e.printStackTrace(); } }
 	 */
+	
+	public int isSelkey(char c)  {
+		String selkey="";
+		try {
+			selkey = SearchSrv.getSelkey();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if(selkey.equals("")){
+			if(hasNumberMapping){
+				selkey = "'[]-\\^&*()";
+			}else
+				selkey = "1234567890";
+		}
+		
+		return selkey.indexOf(c);
+		
+	}
 
 	private boolean handleSelkey(int primaryCode, int[] keyCodes){
 		int i = -1;
 		if (mComposing.length() > 0 && onIM) {
 			// IM candidates view
-			try {
-				i = SearchSrv.isSelkey((char) primaryCode);
-				if(i>=0) i = i+2; // candidated[0] is english keys, candidate[1] is selected with space
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
-	
+			i = isSelkey((char) primaryCode);
+			if(i>=0) i = i+1; // candidated[0] is english keys (mixed mode)
+			
 		} else if (firstMatched != null && firstMatched.isDictionary()&& onIM) {
 			// related candidates view
 			i = relatedSelkey.indexOf(primaryCode);
