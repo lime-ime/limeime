@@ -27,4 +27,6 @@
     <dimen name="candidate_number_font_height">21sp</dimen>
     <dimen name="candidate_vertical_padding">8sp</dimen>
     <dimen name="keyboard_bottom_padding">0.06in</dimen>
+    <dimen name="key_text_size">36dip</dimen>
+    <dimen name="label_text_size">36dip</dimen>
 </resources>
