@@ -101,6 +101,7 @@ public class CandidateView extends View {
     private Paint nPaint;
     private boolean mScrolled;
     private int mTargetScrollX;
+    private String mDisplaySelkey = "1234567890";
     
     private int mTotalWidth;
     
@@ -111,7 +112,8 @@ public class CandidateView extends View {
     
     private GestureDetector mGestureDetector;
     
-    private Context ctx;
+ 
+   // private Context ctx;
 
     /**
      * Construct a CandidateView for showing suggested words for completion.
@@ -231,7 +233,7 @@ public class CandidateView extends View {
         	mComposingTextView.setText(mComposingText);
         	showComposing();
     	}else{
-    		mComposingTextView.setVisibility(mComposingTextView.INVISIBLE);
+    		mComposingTextView.setVisibility(View.INVISIBLE);
     	}
     }
     public String getComposingText(String ComposingText){
@@ -352,7 +354,7 @@ public class CandidateView extends View {
         final int touchX = mTouchX;
         final int scrollX = getScrollX();
         final boolean scrolled = mScrolled;
-        final boolean typedWordValid = mTypedWordValid;
+        //final boolean typedWordValid = mTypedWordValid;
         final int y = (int) (((height - mPaint.getTextSize()) / 2) - mPaint.ascent());
 
         // Modified by jeremy '10, 3, 29.  Update mselectedindex if touched and build wordX[i] and wordwidth[i]
@@ -413,11 +415,14 @@ public class CandidateView extends View {
                 canvas.drawText(suggestion, mWordX[i] + X_GAP, y, paint);
                 if(mShowNumber){
                 	if(count <= 10){
+                		canvas.drawText(mDisplaySelkey.substring(count-1, count), mWordX[i] + mWordWidth[i] - 10f,  height - 23f, npaint);
+                		/*
                 		if(count == 10){
                 			canvas.drawText(String.valueOf(0), mWordX[i] + mWordWidth[i] - 10f, height - 23f, npaint);                        		
                 		}else{
                 			canvas.drawText(String.valueOf(count), mWordX[i] + mWordWidth[i] - 10f,  height - 23f, npaint);                        		
                 		}
+                		*/
                 	}
                 }
                 
@@ -454,7 +459,11 @@ public class CandidateView extends View {
         scrollTo(sx, getScrollY());
         invalidate();
     }
-    
+    public void setSuggestions(List<Mapping> suggestions, boolean showNumber, boolean typedWordValid, String displaySelkey) {
+    	mDisplaySelkey = displaySelkey;
+    	setSuggestions(suggestions, showNumber, typedWordValid);
+    	
+    }
     public void setSuggestions(List<Mapping> suggestions, boolean showNumber, boolean typedWordValid) {
         clear();
         if(showNumber)
