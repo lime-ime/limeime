@@ -219,26 +219,6 @@ this.close();
 reply.writeNoException();
 return true;
 }
-case TRANSACTION_isSelkey:
-{
-data.enforceInterface(DESCRIPTOR);
-char _arg0;
-_arg0 = (char)data.readInt();
-int _result = this.isSelkey(_arg0);
-reply.writeNoException();
-reply.writeInt(_result);
-return true;
-}
-case TRANSACTION_isEndkey:
-{
-data.enforceInterface(DESCRIPTOR);
-char _arg0;
-_arg0 = (char)data.readInt();
-boolean _result = this.isEndkey(_arg0);
-reply.writeNoException();
-reply.writeInt(((_result)?(1):(0)));
-return true;
-}
 case TRANSACTION_isImKeys:
 {
 data.enforceInterface(DESCRIPTOR);
@@ -580,42 +560,6 @@ _reply.recycle();
 _data.recycle();
 }
 }
-public int isSelkey(char c) throws android.os.RemoteException
-{
-android.os.Parcel _data = android.os.Parcel.obtain();
-android.os.Parcel _reply = android.os.Parcel.obtain();
-int _result;
-try {
-_data.writeInterfaceToken(DESCRIPTOR);
-_data.writeInt(((int)c));
-mRemote.transact(Stub.TRANSACTION_isSelkey, _data, _reply, 0);
-_reply.readException();
-_result = _reply.readInt();
-}
-finally {
-_reply.recycle();
-_data.recycle();
-}
-return _result;
-}
-public boolean isEndkey(char c) throws android.os.RemoteException
-{
-android.os.Parcel _data = android.os.Parcel.obtain();
-android.os.Parcel _reply = android.os.Parcel.obtain();
-boolean _result;
-try {
-_data.writeInterfaceToken(DESCRIPTOR);
-_data.writeInt(((int)c));
-mRemote.transact(Stub.TRANSACTION_isEndkey, _data, _reply, 0);
-_reply.readException();
-_result = (0!=_reply.readInt());
-}
-finally {
-_reply.recycle();
-_data.recycle();
-}
-return _result;
-}
 public boolean isImKeys(char c) throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
@@ -670,10 +614,8 @@ static final int TRANSACTION_queryDictionary = (android.os.IBinder.FIRST_CALL_TR
 static final int TRANSACTION_setSelectedText = (android.os.IBinder.FIRST_CALL_TRANSACTION + 15);
 static final int TRANSACTION_getSelectedText = (android.os.IBinder.FIRST_CALL_TRANSACTION + 16);
 static final int TRANSACTION_close = (android.os.IBinder.FIRST_CALL_TRANSACTION + 17);
-static final int TRANSACTION_isSelkey = (android.os.IBinder.FIRST_CALL_TRANSACTION + 18);
-static final int TRANSACTION_isEndkey = (android.os.IBinder.FIRST_CALL_TRANSACTION + 19);
-static final int TRANSACTION_isImKeys = (android.os.IBinder.FIRST_CALL_TRANSACTION + 20);
-static final int TRANSACTION_getSelkey = (android.os.IBinder.FIRST_CALL_TRANSACTION + 21);
+static final int TRANSACTION_isImKeys = (android.os.IBinder.FIRST_CALL_TRANSACTION + 18);
+static final int TRANSACTION_getSelkey = (android.os.IBinder.FIRST_CALL_TRANSACTION + 19);
 }
 public void initial() throws android.os.RemoteException;
 public java.lang.String getTablename() throws android.os.RemoteException;
@@ -693,8 +635,6 @@ public java.util.List queryDictionary(java.lang.String word) throws android.os.R
 public void setSelectedText(java.lang.String text) throws android.os.RemoteException;
 public java.lang.String getSelectedText() throws android.os.RemoteException;
 public void close() throws android.os.RemoteException;
-public int isSelkey(char c) throws android.os.RemoteException;
-public boolean isEndkey(char c) throws android.os.RemoteException;
 public boolean isImKeys(char c) throws android.os.RemoteException;
 public java.lang.String getSelkey() throws android.os.RemoteException;
 }

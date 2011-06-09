@@ -58,7 +58,7 @@
 		<Key android:codes="68" android:iconPreview="@drawable/dayi_d_u_l" android:keyIcon="@drawable/dayi_d_u" />
 		<Key android:codes="70" android:iconPreview="@drawable/dayi_f_u_l" android:keyIcon="@drawable/dayi_f_u" />
 		<Key android:codes="71" android:iconPreview="@drawable/dayi_g_u_l" android:keyIcon="@drawable/dayi_g_u" />
-		<Key android:codes="72" android:iconPreview="@drawable/dayi_h_u_l" android:keyIcon="@drawable/dayi_g_u" />
+		<Key android:codes="72" android:iconPreview="@drawable/dayi_h_u_l" android:keyIcon="@drawable/dayi_h_u" />
 		<Key android:codes="74" android:iconPreview="@drawable/dayi_j_u_l" android:keyIcon="@drawable/dayi_j_u" />
 		<Key android:codes="75" android:iconPreview="@drawable/dayi_k_u_l" android:keyIcon="@drawable/dayi_k_u" />
 		<Key android:codes="76" android:iconPreview="@drawable/dayi_l_u_l" android:keyIcon="@drawable/dayi_l_u" />

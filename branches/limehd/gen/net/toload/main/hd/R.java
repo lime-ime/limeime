@@ -60,7 +60,9 @@ public final class R {
         public static final int candidate_vertical_padding=0x7f070007;
         public static final int key_height=0x7f070002;
         public static final int key_height_2=0x7f070003;
+        public static final int key_text_size=0x7f070009;
         public static final int keyboard_bottom_padding=0x7f070008;
+        public static final int label_text_size=0x7f07000a;
         public static final int max_height_for_fullscreen=0x7f070000;
         public static final int phone_key_height=0x7f070001;
         public static final int spacebar_vertical_correction=0x7f070004;
