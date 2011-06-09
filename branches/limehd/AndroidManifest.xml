@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="net.toload.main.hd" android:installLocation="auto"
-	android:versionName="3.2.2" android:versionCode="168">
+	package="net.toload.main.hd" android:versionName="3.2.2" android:versionCode="169" android:installLocation="internalOnly">
 
 	<uses-permission android:name="android.permission.VIBRATE" />
 	<uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
@@ -18,7 +17,7 @@
 	<uses-permission android:name="android.permission.BLUETOOTH" />
 	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" /> -->
 
-	<application android:icon="@drawable/icon" android:label="@string/ime_name">
+	<application android:icon="@drawable/icon" android:label="@string/ime_name" android:enabled="false">
 
 		<!-- LIME Services -->
 		<service android:name=".LIMEService" android:permission="android.permission.BIND_INPUT_METHOD">
