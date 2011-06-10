@@ -1507,8 +1507,8 @@ public class LIMEService extends InputMethodService implements
 			// temp english string
 			if (!Character.isLetter(primaryCode) && mEnglishOnly) {
 				
-				//Jeremy '11,6,10
-				if (mCandidateView != null && mCandidateView.isShown()) {
+				//Jeremy '11,6,10. Select english sugestion with shift+123457890
+				if (isPressPhysicalKeyboard &&(mCandidateView != null && mCandidateView.isShown()) ){
 					if(handleSelkey(primaryCode, keyCodes))		{
 						return;
 					}
@@ -1860,7 +1860,8 @@ public class LIMEService extends InputMethodService implements
 				list.addAll(SearchSrv.query(keyString, hasKeyPress));
 
 				if (list.size() > 0) {
-					setSuggestions(list, isPressPhysicalKeyboard, true, getSelkey() );//"'[]-\\^&*()");
+					String selkey=SearchSrv.getSelkey();
+					setSuggestions(list, isPressPhysicalKeyboard, true, selkey);
 					if(DEBUG) Log.i("updateCandidaate", "list.size:"+list.size());
 				} else {
 					setSuggestions(null, false, false);
@@ -2340,7 +2341,8 @@ public class LIMEService extends InputMethodService implements
 			if (tablename.equals("custom") || tablename.equals("phone")) {
 				tablename = "custom";
 			}
-			SearchSrv.setTablename(tablename);
+			//Jeremy '11,6,10 pass hasnumbermapping and hassymbolmapping to searchservice for selkey validation.
+			SearchSrv.setTablename(tablename, hasNumberMapping, hasSymbolMapping);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -2410,49 +2412,18 @@ public class LIMEService extends InputMethodService implements
 	 * Auto-generated catch block e.printStackTrace(); } }
 	 */
 	
-	private String getSelkey(){
-		String selkey="";
-		try {
-			selkey = SearchSrv.getSelkey();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		if(selkey.equals("")){
-			if(hasNumberMapping){
-				selkey = "'[]-\\^&*()";
-			}else
-				selkey = "1234567890";
-		}
-		return selkey;
-	}
-	
-	private int isSelkey(char c)  {
-		
-		String selkey=getSelkey();
-		/*try {
-			selkey = SearchSrv.getSelkey();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		if(selkey.equals("")){
-			if(hasNumberMapping){
-				selkey = "'[]-\\^&*()";
-			}else
-				selkey = "1234567890";
-		}
-		*/
-		return selkey.indexOf(c);
-		
-	}
 
 	private boolean handleSelkey(int primaryCode, int[] keyCodes){
 		if(DEBUG) Log.i("LIMEService:handleSelkey()","primarycode:"+primaryCode);
 		int i = -1;
 		if (mComposing.length() > 0 && onIM) {
 			// IM candidates view
-			i = isSelkey((char) primaryCode);
+			try {
+				i = SearchSrv.isSelkey((char) primaryCode);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			//if(i>=0) i = i+1; // candidated[0] is english keys (mixed mode)
 			
 		} else if(mEnglishOnly || (firstMatched != null && firstMatched.isDictionary()&& onIM)) {
@@ -2505,7 +2476,7 @@ public class LIMEService extends InputMethodService implements
 		
 		//Jeremy '11,6,6 processing physical keyboard selkeys.
 		//Move here '11,6,9 to have lower priority than hasnumbermapping
-		if (mCandidateView != null && mCandidateView.isShown()) {
+		if (isPressPhysicalKeyboard && (mCandidateView != null && mCandidateView.isShown())) {
 			if(handleSelkey(primaryCode, keyCodes))		{
 				updateShiftKeyState(getCurrentInputEditorInfo());
 				return;

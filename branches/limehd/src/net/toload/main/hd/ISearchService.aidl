@@ -4,7 +4,7 @@ interface ISearchService
 {
 		void initial();
 		String getTablename();
-		void setTablename(String tablename);
+		void setTablename(String tablename, boolean numberMapping, boolean symbolMapping);
 		List query(String code, boolean softkeyboard);
 		void rQuery(String word);
 		List queryUserDic(String word);
@@ -22,5 +22,6 @@ interface ISearchService
 		void close();
 		boolean isImKeys(char c);
 		String getSelkey();
+		int isSelkey(char c);
 
 }

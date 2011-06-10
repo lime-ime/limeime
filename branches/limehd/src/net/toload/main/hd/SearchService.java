@@ -66,6 +66,9 @@ public class SearchService extends Service {
 
 	//private static int recAmount = 0;
 	private static boolean softkeypressed;
+	//Jeremy '11,6,10
+	private static boolean hasNumberMapping;
+	private static boolean hasSymbolMapping;
 	
 	private static List<Mapping> preresultlist = null;
 	//private static String precode = null;
@@ -122,10 +125,12 @@ public class SearchService extends Service {
 			return tablename;
 		}
 		
-		public void setTablename(String table){
+		public void setTablename(String table, boolean numberMapping, boolean symbolMapping){
 			if(db == null){loadLimeDB();}
 			db.setTablename(table);
 			tablename = table;
+			hasNumberMapping = numberMapping;
+			hasSymbolMapping = symbolMapping;
 		}
 		
 		
@@ -437,10 +442,34 @@ public class SearchService extends Service {
 			if(selKeyMap.get(tablename)==null || selKeyMap.size()==0){
 				if(db == null){db = new LimeDB(ctx);}
 				selkey = db.getImInfo(tablename, "selkey");
-				if(selkey==null) selkey = "";
+				
+				boolean validSelkey = true;
+				if(selkey!=null && selkey.length()==10){
+					if(hasNumberMapping){
+						for(int i=0; i<10; i++){
+							if(Character.isDigit(selkey.charAt(i)))
+								validSelkey = false;
+						}						
+					}
+				}else
+					validSelkey = false;
+				
+				if(!validSelkey){
+					if(hasNumberMapping){
+						selkey = "'[]-\\^&*()";
+					}else
+						selkey = "1234567890";
+				}
 				selKeyMap.put(tablename, selkey);
 			}
 			return selKeyMap.get(tablename);
+		}
+
+		@Override
+		public int isSelkey(char c) throws RemoteException {
+			
+			return getSelkey().indexOf(c);
+			
 		}
 	}
 

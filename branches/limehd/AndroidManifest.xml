@@ -17,7 +17,7 @@
 	<uses-permission android:name="android.permission.BLUETOOTH" />
 	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" /> -->
 
-	<application android:icon="@drawable/icon" android:label="@string/ime_name" android:enabled="false">
+	<application android:icon="@drawable/icon" android:label="@string/ime_name">
 
 		<!-- LIME Services -->
 		<service android:name=".LIMEService" android:permission="android.permission.BIND_INPUT_METHOD">
