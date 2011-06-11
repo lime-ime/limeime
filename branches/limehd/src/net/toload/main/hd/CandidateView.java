@@ -418,7 +418,7 @@ public class CandidateView extends View {
                 if(mShowNumber){
                 	if(count <= 10){
                 		//Jeremy '11,6,11 Drawing text using relative font dimensions.
-                		canvas.drawText(mDisplaySelkey.substring(count-1, count), mWordX[i] + mWordWidth[i] *4/5 ,  height /2, npaint);
+                		canvas.drawText(mDisplaySelkey.substring(count-1, count), mWordX[i] + mWordWidth[i] - height * 0.3f ,  height * 0.4f, npaint);
                 	}
                 }
                 
