@@ -1307,6 +1307,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					
 				} 
 				if (cursor != null && cursor.getCount() > 0) {
+					db.close();
 					return munit;
 				}
 				db.close();
@@ -1341,7 +1342,9 @@ public class LimeDB extends SQLiteOpenHelper {
 			if (cursor.getCount() > 0) {
 				cursor.moveToFirst();
 				int descCol = cursor.getColumnIndex("desc");
-				return cursor.getString(descCol);
+				String iminfo = cursor.getString(descCol);
+				db.close();
+				return iminfo;
 			}
 			
 			db.close();
@@ -1425,6 +1428,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				kobj.setExtendedkb(cursor.getString(cursor.getColumnIndex("extendedkb")));
 				kobj.setExtendedshiftkb(cursor.getString(cursor.getColumnIndex("extendedshiftkb")));
 			}
+			db.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1492,7 +1496,9 @@ public class LimeDB extends SQLiteOpenHelper {
 			if (cursor.getCount() > 0) {
 				cursor.moveToFirst();
 				int descCol = cursor.getColumnIndex("keyboard");
-				return cursor.getString(descCol);
+				String keyboardCode = cursor.getString(descCol);
+				db.close();
+				return keyboardCode;
 			}
 			db.close();
 		}catch(Exception e){}
