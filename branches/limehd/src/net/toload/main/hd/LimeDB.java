@@ -599,7 +599,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 				int ssize = mLIMEPref.getSimilarCodeCandidates();
 				boolean sort = mLIMEPref.getSortSuggestions();
-							
+				
 				// Process the escape characters of query
 				if(code != null){
 					code = code.replaceAll("'", "''");
@@ -633,7 +633,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	/*
 	 * Retrieve matched records
 	 */
-	public List<Mapping> getMapping(String code, boolean softwareKeyboard) {
+	public List<Mapping> getMapping(String code, boolean softKeyboard) {
 
 		//Log.i("ART", "run get (Mapping):"+ code);
 		//Log.i("ART","Run MAPPING : " + code);
@@ -648,20 +648,27 @@ public class LimeDB extends SQLiteOpenHelper {
 				code = code.toLowerCase();
 				Cursor cursor = null;
 				SQLiteDatabase db = this.getSqliteDb(true);
-	
-				boolean sort = mLIMEPref.getSortSuggestions();
+			
+				//Jeremy '11,6,11 seperated suggestions sorting option for physical keyboard
+				boolean sort = true;
+				if(softKeyboard) sort = mLIMEPref.getSortSuggestions();
+				else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
+				
+				Log.i("LIMEDB;getmapping()","sort:"+ sort +" soft:" + mLIMEPref.getSortSuggestions()+" physical:"+mLIMEPref.getSortSuggestions());
+				
+			
 				boolean remap3row = mLIMEPref.getThreerowRemapping();
 							
 				boolean iscode3r = false;
 	
 				String code3r = code;
-				if(!softwareKeyboard){
+				if(!softKeyboard){
 					for (int i = 0; i < LIME.THREE_ROW_KEY.length(); i++) {
 						code3r = code3r.replace(LIME.THREE_ROW_KEY.substring(i, i + 1), LIME.THREE_ROW_KEY_REMAP.substring(i, i + 1));
 					}
 					if(!code3r.equalsIgnoreCase(code)){
 						iscode3r = true;
-						code3r = expendCode3r(code);
+						code3r = expandCode3r(code);
 					}
 				}
 				
@@ -676,7 +683,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				try {
 	
 					// When Code3r mode is enable
-					if(remap3row && iscode3r && !softwareKeyboard){
+					if(remap3row && iscode3r && !softKeyboard){
 						if(sort){
 							cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' " + code3r
 									, null, null, null, FIELD_SCORE +" DESC", null);
@@ -712,7 +719,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		return result;
 	}
 	
-	private String expendCode3r(String code){
+	private String expandCode3r(String code){
 		//code3r = code3r.replace(LIME.THREE_ROW_KEY.substring(i, i + 1), LIME.THREE_ROW_KEY_REMAP.substring(i, i + 1));
 
 		String result = "";

@@ -184,9 +184,11 @@ public class SearchService extends Service {
 			// Modified by Jeremy '10, 3, 28.  yes-> .. The database is loading (yes) and finished (no).
 			//if(code != null && loadingstatus != null && loadingstatus.equalsIgnoreCase("no")){
 			if(code!=null) {
-				// clear mappingidx when user switching between softkeyboard and hard keyboard.
+				// clear mappingidx when user switching between softkeyboard and hard keyboard. Jeremy '11,6,11
 				if(softkeypressed != softkeyboard){
 					softkeypressed = softkeyboard;
+					cache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+					engcache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 				}
 				//recAmount = mLIMEPref.getSimilarCodeCandidates();
 			
@@ -285,10 +287,12 @@ public class SearchService extends Service {
 					db.addDictionary(diclist);
 					diclist.clear();
 				}
+				
+				//Jeremy '11,6,11, always learn scores, but sorted according preference options
+				//boolean item2 = sp.getBoolean(LIME.LEARNING_SWITCH, false);
 
-				boolean item2 = sp.getBoolean(LIME.LEARNING_SWITCH, false);
-
-				if(item2 && scorelist != null){
+				//if(item2 && scorelist != null){
+				if(scorelist != null){
 					for(int i=0 ; i < scorelist.size(); i++){
 						//Log.i("ART","updateUserDict addScore:"+((Mapping)scorelist.get(i)).getCode() + " " + ((Mapping)scorelist.get(i)).getId());
 						db.addScore((Mapping)scorelist.get(i));
@@ -308,8 +312,8 @@ public class SearchService extends Service {
 				String pword, int score, boolean isDictionary)
 				throws RemoteException {
 			//Log.i("ART","updateMapping:"+scorelist);
-			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-			boolean item = sp.getBoolean(LIME.LEARNING_SWITCH, false);
+			//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+			//boolean item = sp.getBoolean(LIME.LEARNING_SWITCH, false);
 
 			if(scorelist == null){scorelist = new ArrayList<Mapping>();}
 			if(db == null){db = new LimeDB(ctx);}
@@ -322,10 +326,11 @@ public class SearchService extends Service {
 			updateMappingTemp.setScore(score);
 			updateMappingTemp.setDictionary(isDictionary);
 		      
-			if(item){
+			// Jeremy '11,6,11. Always update score and sort according to preferences.
+			//if(item){
 				//Log.i("ART","updateMapping:"+updateMappingTemp);
-				scorelist.add(updateMappingTemp);
-			}		
+			scorelist.add(updateMappingTemp);
+			//}		
 			
 		}
 

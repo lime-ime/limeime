@@ -96,7 +96,9 @@
     <string name="candidate_suggestion">啟動自建關聯字</string>
     <string name="candidate_suggestion_summary">依輸入文字自動建立關聯字</string>
     <string name="learning_switch">啟動選取排序</string>
-    <string name="learning_switch_summary">依選取次數排序文字清單</string>
+    <string name="learning_switch_summary">依選取次數排序選字清單</string>
+    <string name="physical_keyboard_sort">啟動實體鍵盤選取排序</string>
+    <string name="physical_keyboard_sort_summary">使用實體鍵鍵時依選取次數排序選字清單</string>
     <string name="accept_number_index">啟動數字對應</string>
     <string name="accept_number_index_summary">允許使用數字為輸入法字根</string>
     <string name="accept_symbol_index">啟動符號對應</string>

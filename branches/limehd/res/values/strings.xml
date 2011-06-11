@@ -96,6 +96,8 @@
     <string name="candidate_suggestion_summary">Learn related words base on text input</string>
     <string name="learning_switch">Sort suggestion list</string>
     <string name="learning_switch_summary">Sort suggestion list base on learned frequency</string>
+    <string name="physical_keyboard_sort">Sort suggestion list using physical keyboard</string>
+    <string name="physical_keyboard_sort_summary">Sort suggestion list base on learned frequency, when using physical keyboard</string>
     <string name="accept_number_index">Mapping on numbers</string>
     <string name="accept_number_index_summary">Allow input 0-9 as mapping code</string>
     <string name="accept_symbol_index">Mapping on symbols</string>

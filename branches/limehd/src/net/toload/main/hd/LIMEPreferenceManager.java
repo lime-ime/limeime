@@ -166,6 +166,11 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("learning_switch", true);
 	}
 	
+	public boolean getPhysicalKeyboardSortSuggestions(){
+		
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("physical_keyboard_sort", true);
+	}
 
 	public boolean getSimiliarEnable(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);

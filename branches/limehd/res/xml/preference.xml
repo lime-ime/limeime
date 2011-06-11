@@ -180,6 +180,11 @@
                 android:defaultValue="true"
                 android:summary="@string/learning_switch_summary" />
         <CheckBoxPreference
+                android:key="physical_keyboard_sort"
+                android:title="@string/physical_keyboard_sort"
+                android:defaultValue="true"
+                android:summary="@string/physical_keyboard_sort_summary" />
+        <CheckBoxPreference
                 android:key="accept_number_index"
                 android:title="@string/accept_number_index"
                 android:summary="@string/accept_number_index_summary" />

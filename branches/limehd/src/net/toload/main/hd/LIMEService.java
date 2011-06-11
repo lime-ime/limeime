@@ -694,7 +694,7 @@ public class LIMEService extends InputMethodService implements
 				if (ci != null)
 					try {
 						stringList.addAll(SearchSrv.query(ci.getText()
-								.toString(), hasKeyPress));
+								.toString(), !isPressPhysicalKeyboard));
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
@@ -1862,7 +1862,7 @@ public class LIMEService extends InputMethodService implements
 			try {
 				String keyString = mComposing.toString(), keynameString = "";
 
-				list.addAll(SearchSrv.query(keyString, hasKeyPress));
+				list.addAll(SearchSrv.query(keyString, !isPressPhysicalKeyboard));
 
 				if (list.size() > 0) {
 					String selkey=SearchSrv.getSelkey();
