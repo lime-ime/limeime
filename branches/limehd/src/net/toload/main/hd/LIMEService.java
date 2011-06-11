@@ -160,7 +160,7 @@ public class LIMEService extends InputMethodService implements
 	// private boolean hasNumberKeypads = false;
 	private boolean hasNumberMapping = false;
 	private boolean hasSymbolMapping = false;
-	private boolean hasKeyPress = false;
+	//private boolean hasKeyPress = false;
 	private boolean hasQuickSwitch = false;
 
 	// Hard Keyboad Shift + Space Status
@@ -752,7 +752,7 @@ public class LIMEService extends InputMethodService implements
 			Log.i("OnKeyDown", "keyCode:" + keyCode + ";hasCtrlPress:"
 					+ hasCtrlPress);
 		}
-		hasKeyPress = false;
+		//hasKeyPress = false;
 		hasSymbolEntered = false;
 
 		//Log.i("ART", "Physical Keyboard ->" + keyCode);
@@ -2710,7 +2710,7 @@ public class LIMEService extends InputMethodService implements
 			 * Float.parseFloat(xyvalue.split(",")[1]); }
 			 */
 
-			hasKeyPress = true;
+			//hasKeyPress = true;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

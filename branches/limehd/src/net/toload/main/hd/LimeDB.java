@@ -654,7 +654,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				if(softKeyboard) sort = mLIMEPref.getSortSuggestions();
 				else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
 				
-				Log.i("LIMEDB;getmapping()","sort:"+ sort +" soft:" + mLIMEPref.getSortSuggestions()+" physical:"+mLIMEPref.getSortSuggestions());
+				//Log.i("LIMEDB;getmapping()","sort:"+ sort +" soft:" + mLIMEPref.getSortSuggestions()+" physical:"+mLIMEPref.getSortSuggestions());
 				
 			
 				boolean remap3row = mLIMEPref.getThreerowRemapping();
@@ -769,21 +769,27 @@ public class LimeDB extends SQLiteOpenHelper {
 		List<Mapping> result = new ArrayList<Mapping>();
 		if (cursor.moveToFirst()) {
 
-			String relatedlist = null;
+			//String relatedlist = null;
 			int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 			int wordColumn = cursor.getColumnIndex(FIELD_WORD);
 			int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
 			int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
 			int idColumn = cursor.getColumnIndex(FIELD_id);
 			HashMap<String, String> duplicateCheck = new HashMap<String, String>();
+			HashMap<String, String> relatedMap = new HashMap<String, String>();
 			do {
+				String code = cursor.getString(codeColumn);
+				String relatedlist = cursor.getString(relatedColumn);
 				Mapping munit = new Mapping();
 				munit.setWord(cursor.getString(wordColumn));
 				munit.setId(cursor.getString(idColumn));
-				munit.setCode(cursor.getString(codeColumn));
-				if (relatedlist == null
-						&& cursor.getString(relatedColumn) != null) {
-					relatedlist = cursor.getString(relatedColumn);
+				munit.setCode(code);
+				//if (relatedlist == null
+				//		&& cursor.getString(relatedColumn) != null) {
+				//relatedlist = cursor.getString(relatedColumn);
+				//}
+				if(relatedMap.get(code) == null){
+					relatedMap.put(code, relatedlist);
 				}
 				munit.setScore(cursor.getInt(scoreColumn));
 				munit.setDictionary(false);
@@ -799,19 +805,24 @@ public class LimeDB extends SQLiteOpenHelper {
 
 			int ssize = mLIMEPref.getSimilarCodeCandidates();
 			//Jeremy '11,6,1 The related field may have only one word and thus no "|" inside
-			if (ssize > 0 && relatedlist != null ){//&& relatedlist.indexOf("|") != -1) { 
-				String templist[] = relatedlist.split("\\|");
-				int scount = 0;
-				for (String unit : templist) {
-					if(ssize != 0 && scount > ssize){break;}
-					if(duplicateCheck.get(unit) == null){
-						Mapping munit = new Mapping();
-						munit.setWord(unit);
-						munit.setScore(0);
-						munit.setCode("@RELATED@");
-						result.add(munit);
-						duplicateCheck.put(unit, unit);
-						scount++;
+			//Jeremy '11,6,11 allow multiple relatedlist from different codes.
+			int scount = 0;
+			for(Entry<String, String> entry: relatedMap.entrySet()){
+				String relatedlist = entry.getValue();
+				if (ssize > 0 && relatedlist != null && scount <= ssize){ 
+					String templist[] = relatedlist.split("\\|");
+				
+					for (String unit : templist) {
+						if(ssize != 0 && scount > ssize){break;}
+						if(duplicateCheck.get(unit) == null){
+							Mapping munit = new Mapping();
+							munit.setWord(unit);
+							munit.setScore(0);
+							munit.setCode(entry.getKey());
+							result.add(munit);
+							duplicateCheck.put(unit, unit);
+							scount++;
+						}
 					}
 				}
 			}
