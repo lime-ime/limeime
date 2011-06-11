@@ -177,7 +177,7 @@ public class LIMEService extends InputMethodService implements
 	// private boolean hasSpacePress = false;
 
 	// Hard Keyboad Shift + Space Status
-	private boolean hasAltPress = false;
+	//private boolean hasAltPress = false;
 
 	private String keyboardSelection;
 	private List<String> keyboardList;
@@ -1861,6 +1861,12 @@ public class LIMEService extends InputMethodService implements
 
 				if (list.size() > 0) {
 					String selkey=SearchSrv.getSelkey();
+					int selkeyOption = mLIMEPref.getSelkeyOption();
+					if(selkeyOption ==1) 	selkey = " " + selkey.substring(0,9);
+					else if (selkeyOption ==2) 	selkey = "  " + selkey.substring(0,8);
+					
+					if(DEBUG) Log.i("LIMEService:updateCandidates()","display selkey:" + selkey);
+					
 					setSuggestions(list, isPressPhysicalKeyboard, true, selkey);
 					if(DEBUG) Log.i("updateCandidaate", "list.size:"+list.size());
 				} else {
@@ -2349,68 +2355,7 @@ public class LIMEService extends InputMethodService implements
 		}
 	}
 
-	/*
-	 * private void initialKeyboard() {
-	 * 
-	 * buildActiveKeyboardList();
-	 * 
-	 * if (mInputView == null) { mInputView = (LIMEKeyboardView)
-	 * getLayoutInflater().inflate( R.layout.input, null);
-	 * mInputView.setOnKeyboardActionListener(this); }
-	 * 
-	 * if (mKeyboardSwitcher == null) { mKeyboardSwitcher = new
-	 * LIMEKeyboardSwitcher(this); mKeyboardSwitcher.setInputView(mInputView); }
-	 * 
-	 * int mMode = mKeyboardSwitcher.MODE_TEXT_DEFAULT; if
-	 * (keyboardSelection.equals("custom")) { if (hasNumberKeypads) { mMode =
-	 * mKeyboardSwitcher.MODE_TEXT_DEFAULT_NUMBER; } else { mMode =
-	 * mKeyboardSwitcher.MODE_TEXT_DEFAULT; }
-	 * 
-	 * SharedPreferences sp = PreferenceManager
-	 * .getDefaultSharedPreferences(this); hasNumberMapping =
-	 * sp.getBoolean("accept_number_index", false); hasSymbolMapping =
-	 * sp.getBoolean("accept_symbol_index", false);
-	 * 
-	 * } else if (keyboardSelection.equals("cj")) { if (hasNumberKeypads) {
-	 * mMode = mKeyboardSwitcher.MODE_TEXT_CJ_NUMBER; } else { mMode =
-	 * mKeyboardSwitcher.MODE_TEXT_CJ; }
-	 * 
-	 * SharedPreferences sp = PreferenceManager
-	 * .getDefaultSharedPreferences(this); hasNumberMapping =
-	 * sp.getBoolean("accept_number_index", false); hasSymbolMapping =
-	 * sp.getBoolean("accept_symbol_index", false); } else if
-	 * (keyboardSelection.equals("scj")) { if (hasNumberKeypads) { mMode =
-	 * mKeyboardSwitcher.MODE_TEXT_SCJ_NUMBER; } else { mMode =
-	 * mKeyboardSwitcher.MODE_TEXT_SCJ; }
-	 * 
-	 * SharedPreferences sp = PreferenceManager
-	 * .getDefaultSharedPreferences(this); hasNumberMapping =
-	 * sp.getBoolean("accept_number_index", false); hasSymbolMapping =
-	 * sp.getBoolean("accept_symbol_index", false); } else if
-	 * (keyboardSelection.equals("phonetic")) { mMode =
-	 * mKeyboardSwitcher.MODE_TEXT_PHONETIC;
-	 * 
-	 * // Should use number and symbol mapping hasNumberMapping = true;
-	 * hasSymbolMapping = true; } else if (keyboardSelection.equals("ez")) {
-	 * mMode = mKeyboardSwitcher.MODE_TEXT_EZ;
-	 * 
-	 * // Should use number and symbol mapping hasNumberMapping = true;
-	 * hasSymbolMapping = true; } else if (keyboardSelection.equals("dayi")) {
-	 * mMode = mKeyboardSwitcher.MODE_TEXT_DAYI;
-	 * 
-	 * // Should use number and symbol mapping hasNumberMapping = true;
-	 * hasSymbolMapping = true; } else if (keyboardSelection.equals("phone")) {
-	 * mMode = mKeyboardSwitcher.MODE_TEXT_PHONE; // Should use number and
-	 * symbol mapping hasNumberMapping = true; hasSymbolMapping = true; }
-	 * //mKeyboardSwitcher.setKeyboardMode(mMode, 0);
-	 * mKeyboardSwitcher.setKeyboardMode(mMode, this.mImeOptions); // Reset
-	 * Shift Status // mCapsLock = false; // mHasShift = false; //
-	 * mCurKeyboard.setShifted(false); // Set db table name. try { String
-	 * tablename = new String(keyboardSelection); if (tablename.equals("custom")
-	 * || tablename.equals("phone")) { tablename = "custom"; }
-	 * SearchSrv.setTablename(tablename); } catch (RemoteException e) { // TODO
-	 * Auto-generated catch block e.printStackTrace(); } }
-	 */
+	
 	
 
 	private boolean handleSelkey(int primaryCode, int[] keyCodes){
@@ -2421,10 +2366,10 @@ public class LIMEService extends InputMethodService implements
 			try {
 				i = SearchSrv.isSelkey((char) primaryCode);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
+
 				e.printStackTrace();
 			}
-			//if(i>=0) i = i+1; // candidated[0] is english keys (mixed mode)
+			if(i>=0) i = i + mLIMEPref.getSelkeyOption();
 			
 		} else if(mEnglishOnly || (firstMatched != null && firstMatched.isDictionary()&& onIM)) {
 			// related candidates view

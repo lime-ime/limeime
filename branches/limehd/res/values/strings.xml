@@ -79,6 +79,7 @@
     <string name="array10_reverse_lookup_list">R-Lookup in Array10</string>
     
     <string name="han_convert_option_list">Chinese Characters Conversion</string>
+    <string name="selkey_option_list">Candidate bar options</string>
     
     
     <string name="table_list">Table Selection</string>
@@ -177,6 +178,21 @@
 		<item>1</item>
 		<item>2</item>
 	</string-array>
+	
+	<!-- IM Selkey Options List -->
+	<string-array name="selkey_options">
+		<item>Select the mixed mode English word with the first key</item>
+		<item>Select the first Chinese candidate with the first key</item>
+		<item>Select the second Chinese candidate with the first key</item>
+	</string-array>
+	<string-array name="selkey_options_values">
+		<item>0</item>
+		<item>1</item>
+		<item>2</item>
+	</string-array>
+	
+	
+	
 	
     <!-- IM Reverse Lookup List -->  
     <string-array name="im_reverse_lookup">

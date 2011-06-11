@@ -400,12 +400,14 @@ public class CandidateView extends View {
             	int count = i+1;
             	
                 if(mSuggestions.get(i).isDictionary()){
+                	npaint.setColor(mColorRecommended);
                 	if(i == 0){
                     	paint.setColor(mColorDictionary);
                     } else if (i != 0) {
                         paint.setColor(mColorDictionary);
                     }
                 }else{
+                	npaint.setColor(mColorOther);
                     if(i == 0){
                     	paint.setColor(mColorRecommended);
                     } else if (i != 0) {
@@ -415,14 +417,8 @@ public class CandidateView extends View {
                 canvas.drawText(suggestion, mWordX[i] + X_GAP, y, paint);
                 if(mShowNumber){
                 	if(count <= 10){
-                		canvas.drawText(mDisplaySelkey.substring(count-1, count), mWordX[i] + mWordWidth[i] - 10f,  height - 23f, npaint);
-                		/*
-                		if(count == 10){
-                			canvas.drawText(String.valueOf(0), mWordX[i] + mWordWidth[i] - 10f, height - 23f, npaint);                        		
-                		}else{
-                			canvas.drawText(String.valueOf(count), mWordX[i] + mWordWidth[i] - 10f,  height - 23f, npaint);                        		
-                		}
-                		*/
+                		//Jeremy '11,6,11 Drawing text using relative font dimensions.
+                		canvas.drawText(mDisplaySelkey.substring(count-1, count), mWordX[i] + mWordWidth[i] *4/5 ,  height /2, npaint);
                 	}
                 }
                 

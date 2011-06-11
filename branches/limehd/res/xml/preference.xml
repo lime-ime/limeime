@@ -59,7 +59,14 @@
     <PreferenceCategory
         		xmlns:android="http://schemas.android.com/apk/res/android"
                 android:summary="" android:key="lime_im" android:title="@string/im">
-     <CheckBoxPreference
+    <ListPreference
+    			android:key="selkey_option"
+    			android:title="@string/selkey_option_list" 
+    			android:entries="@array/selkey_options" 
+    			android:entryValues="@array/selkey_options_values" 
+    			android:dialogTitle="@string/selkey_option_list" 
+    			android:defaultValue="0"/>  
+    <CheckBoxPreference
                 android:key="three_rows_remapping"
                 android:title="@string/three_rows_remapping" 
                 android:defaultValue="false" 
@@ -70,7 +77,7 @@
     			android:entries="@array/han_convert_options" 
     			android:entryValues="@array/han_convert_options_values" 
     			android:dialogTitle="@string/han_convert_option_list" 
-    			android:defaultValue="0"/>
+    			android:defaultValue="0"/> 
     <ListPreference
     			android:key="custom_im_reverselookup"
     			android:title="@string/default_reverse_lookup_list" 

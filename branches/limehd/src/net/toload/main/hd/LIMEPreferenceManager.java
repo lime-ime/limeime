@@ -245,6 +245,11 @@ public class LIMEPreferenceManager {
 		return Integer.parseInt(sp.getString("han_convert_option", "0"));
 	}
 	
+	public Integer getSelkeyOption(){
+		
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return Integer.parseInt(sp.getString("selkey_option", "0"));
+	}
 	
 	public Integer getSimilarCodeCandidates(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);

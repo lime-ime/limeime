@@ -80,6 +80,7 @@
     <string name="array10_reverse_lookup_list">行列10字根反查</string>
     
     <string name="han_convert_option_list">中文簡/繁體字碼轉換</string>
+    <string name="selkey_option_list">選字鍵選項</string>
     
     
     <string name="table_list">對應表選取</string>
@@ -176,6 +177,13 @@
 		<item>0</item>
 		<item>1</item>
 		<item>2</item>
+	</string-array>
+	
+	<!-- IM Selkey Options List -->
+	<string-array name="selkey_options">
+		<item>第一選字鍵選混打模式英文</item>
+		<item>第一選字鍵選第一順位中文字</item>
+		<item>第一選字鍵選第二順位中文字</item>
 	</string-array>
 	
     <!-- IM Reverse Lookup List -->  
