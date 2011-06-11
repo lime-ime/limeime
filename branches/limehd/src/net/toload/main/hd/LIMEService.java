@@ -329,8 +329,12 @@ public class LIMEService extends InputMethodService implements
 		if (conf.orientation != mOrientation) {
 			//commitTyped(getCurrentInputConnection());
 			//Jeremy '11,5,31 clear the composing instead of commitTyped
-			if (mComposing != null && mComposing.length() > 0) {
+			
+			if (mCandidateView != null ) {
 				mCandidateView.clear();
+				setCandidatesViewShown(false);
+			}
+			if (mComposing != null && mComposing.length() > 0) {
 				mComposing.setLength(0);
 				getCurrentInputConnection().commitText("", 0);
 			}
@@ -936,6 +940,7 @@ public class LIMEService extends InputMethodService implements
 				return true;
 			} else {
 				if (onIM) { // Changed to onIM by Jeremy '11,5,31
+					
 					if (mCandidateView != null && mCandidateView.isShown()) {
 						if (mCandidateView.takeSelectedSuggestion()) {
 							return true;
@@ -2208,11 +2213,15 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void switchChiEng() {
-		// mEnglishOnly = !mEnglishOnly;
-		// cancel candidate view if it's shown
-
-		// if(mCapsLock) toggleCapsLock();
-
+		
+		if (mCandidateView != null ) {
+			mCandidateView.clear();
+			setCandidatesViewShown(false);
+		}
+		if( mComposing != null && mComposing.length() > 0 ){
+			mComposing.setLength(0);
+			getCurrentInputConnection().commitText("", 0);
+		}
 		mKeyboardSwitcher.toggleChinese();
 		mEnglishOnly = !mKeyboardSwitcher.isChinese();
 
