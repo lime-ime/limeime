@@ -445,11 +445,11 @@ public class SearchService extends Service {
 				
 				boolean validSelkey = true;
 				if(selkey!=null && selkey.length()==10){
-					if(hasNumberMapping){
-						for(int i=0; i<10; i++){
-							if(Character.isDigit(selkey.charAt(i)))
+					for(int i=0; i<10; i++){
+						if(Character.isLetter(selkey.charAt(i)) ||
+							(hasNumberMapping && Character.isDigit(selkey.charAt(i))))
 								validSelkey = false;
-						}						
+												
 					}
 				}else
 					validSelkey = false;
