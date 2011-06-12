@@ -295,6 +295,13 @@ public class SearchService extends Service {
 				for(int i=0 ; i < scorelist.size(); i++){
 					//Log.i("ART","updateUserDict addScore:"+((Mapping)scorelist.get(i)).getCode() + " " + ((Mapping)scorelist.get(i)).getId());
 					db.addScore((Mapping)scorelist.get(i));
+					
+					//Jeremy '11,6,13 Words in relatedlist is selected for null id, the relatedlist will later be updated.
+					if(scorelist.get(i).getId()==null){ // Force to delete the cached item.
+						cache.remove(db.getTablename()+scorelist.get(i).getCode());
+					}
+					
+						
 				}
 				scorelist.clear();
 			}	
@@ -313,7 +320,7 @@ public class SearchService extends Service {
 			//Log.i("ART","updateMapping:"+scorelist);
 			//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 			//boolean item = sp.getBoolean(LIME.LEARNING_SWITCH, false);
-
+			 
 			if(scorelist == null){scorelist = new ArrayList<Mapping>();}
 			if(db == null){db = new LimeDB(ctx);}
 			
@@ -329,7 +336,8 @@ public class SearchService extends Service {
 			//if(item){
 			//Log.i("ART","updateMapping:"+updateMappingTemp.getCode());
 			scorelist.add(updateMappingTemp);
-			//}		
+			//}
+			
 			
 		}
 
