@@ -411,6 +411,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public void onFinishInput() {
+		
 		if (DEBUG) {
 			Log.i("LimeService", "onFinishInput()");
 		}
@@ -507,7 +508,7 @@ public class LIMEService extends InputMethodService implements
 		case EditorInfo.TYPE_CLASS_DATETIME:
 			mEnglishOnly = true;
 			onIM = false;
-			mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,	mImeOptions, false, false, false);
+			mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,	mImeOptions, false, true, false);
 			break;
 		case EditorInfo.TYPE_CLASS_PHONE:
 			mEnglishOnly = true;
