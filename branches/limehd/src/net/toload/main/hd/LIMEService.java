@@ -455,12 +455,14 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public void onStartInput(EditorInfo attribute, boolean restarting) {
+		if(DEBUG) Log.i("LIMEService","onStartInput()");
 		super.onStartInputView(attribute, restarting);
 		initOnStartInput(attribute, restarting);
 	}
 
 	@Override
 	public void onStartInputView(EditorInfo attribute, boolean restarting) {
+		if(DEBUG) Log.i("LIMEService","onStartInputView()");
 		super.onStartInputView(attribute, restarting);
 		initOnStartInput(attribute, restarting);
 	}
@@ -468,7 +470,7 @@ public class LIMEService extends InputMethodService implements
 	private void initOnStartInput(EditorInfo attribute, boolean restarting) {
 		// super.onStartInputView(attribute, restarting);
 		if (DEBUG)
-			Log.i("LIMEService", "onStartInputView");
+			Log.i("LIMEService", "initOnStartInput");
 		if (mInputView == null) {
 			return;
 		}
@@ -2197,6 +2199,7 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void switchChiEngNoToast() {
+		if(DEBUG) Log.i("LIMEService","switchChiEngNoToast()");
 		// mEnglishOnly = !mEnglishOnly;
 		// cancel candidate view if it's shown
 
@@ -2309,7 +2312,8 @@ public class LIMEService extends InputMethodService implements
 
 	private void initialKeyboard() {
 
-		//Log.i("ART", "Run Initial Keyboard");
+		if(DEBUG) Log.i("LIMEService", "initialKeyboard()");
+		
 		buildActiveKeyboardList();
 		initialViewAndSwitcher();
 

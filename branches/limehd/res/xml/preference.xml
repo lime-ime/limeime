@@ -45,7 +45,12 @@
                 android:summary="@string/default_in_english_summary"
             	android:defaultValue="false" 
                 />
-       
+       <CheckBoxPreference
+                android:key="number_row_in_english"
+                android:title="@string/number_row_in_english" 
+                android:summary="@string/number_row_in_english_summary"
+            	android:defaultValue="false" 
+                />
         <CheckBoxPreference
                 android:key="vibrate_on_keypress"
                 android:defaultValue="false" 

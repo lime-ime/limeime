@@ -203,6 +203,12 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("default_in_english", false);
 	}
 	
+	public boolean getShowNumberRowInEnglish(){
+		
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("number_row_in_english", false);
+	}
+	
 	public String getSelectedKeyboardState(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getString("keyboard_state", "0;1;2;3;4;5;6");

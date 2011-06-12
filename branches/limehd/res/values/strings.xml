@@ -50,7 +50,9 @@
     <string name="keyboard_list">LIME Input Method</string>
     
     <string name="default_in_english">Starting in English mode</string>
-    <string name="default_in_english_summary">Starting input in English keyboard.</string>
+    <string name="default_in_english_summary">Starting input in English mode.</string>
+    <string name="number_row_in_english">Show number row in English mode</string>
+    <string name="number_row_in_english_summary">Show number row in English keyboards (5 rows keyboard).</string>
     
     <string name="three_rows_remapping">3 Rows Keybaord Remapping</string>
     <string name="three_rows_remapping_summary">Mapping 1234567890-; to qwertyuiopv.</string>

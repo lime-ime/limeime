@@ -52,6 +52,8 @@
     
     <string name="default_in_english">先使用英文模式</string>
     <string name="default_in_english_summary">輸入法開啟後先使用英文輸入模式.</string>
+    <string name="number_row_in_english">數字列英文鍵盤</string>
+    <string name="number_row_in_english_summary">在英文鍵盤顯示數字列(5列鍵盤)</string>
     
     <string name="three_rows_remapping">3排鍵盤重對應</string>
     <string name="three_rows_remapping_summary">對應 1234567890-;至 qwertyuiopv.</string>

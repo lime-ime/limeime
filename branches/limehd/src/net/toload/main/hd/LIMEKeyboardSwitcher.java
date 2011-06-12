@@ -25,7 +25,9 @@ import net.toload.main.hd.R;
 import android.util.Log;
 
 public class LIMEKeyboardSwitcher {
-
+	
+	static final boolean DEBUG = false;
+	
     public static final int MODE_TEXT = 1;
     public static final int MODE_TEXT_DEFAULT = 10;
     public static final int MODE_TEXT_DEFAULT_NUMBER = 11;
@@ -74,6 +76,8 @@ public class LIMEKeyboardSwitcher {
     private int mImeOptions;
     private int mTextMode = MODE_TEXT_QWERTY;
     
+    private LIMEPreferenceManager mLIMEPref;
+    
     private boolean mIsShifted;
     private boolean mIsSymbols;
     private boolean mIsChinese=true;
@@ -90,6 +94,7 @@ public class LIMEKeyboardSwitcher {
 
     LIMEKeyboardSwitcher(LIMEService context) {
         mContext = context;
+        mLIMEPref = new LIMEPreferenceManager(context);
         mKeyboards = new HashMap<KeyboardId, LIMEKeyboard>();
     }
     
@@ -101,7 +106,7 @@ public class LIMEKeyboardSwitcher {
     }
     
     void setKeyboardList(List<KeyboardObj> list){
-    	kbHm = new HashMap();
+    	kbHm = new HashMap<String, KeyboardObj>();
     	for(KeyboardObj o : list){
     		kbHm.put(o.getCode(), o);
     	}    	
@@ -115,7 +120,7 @@ public class LIMEKeyboardSwitcher {
     }
     
     void setImList(List<ImObj> list){
-    	imHm = new HashMap();
+    	imHm = new HashMap<String, String>();
     	for(ImObj o : list){
     		imHm.put(o.getCode(), o.getKeyboard());
     	}    	
@@ -246,19 +251,21 @@ public class LIMEKeyboardSwitcher {
     }
     
     void setKeyboardMode(String code, int mode, int imeOptions, boolean isIm, boolean isSymbol, boolean isShift) {
-
-    	/*Log.i("ART","KBMODE code:"+code);
-    	Log.i("ART","KBMODE mode:"+mode);
-    	Log.i("ART","KBMODE imOphtions:"+imeOptions);
-    	Log.i("ART","KBMODE isIM:"+isIm);
-    	Log.i("ART","KBMODE isSymbol:"+isSymbol);
-    	Log.i("ART","KBMODE isShift:"+isShift);*/
+    	if(DEBUG){
+    		Log.i("ART","KBMODE code:"+code);
+    		Log.i("ART","KBMODE mode:"+mode);
+    		Log.i("ART","KBMODE imOphtions:"+imeOptions);
+    		Log.i("ART","KBMODE isIM:"+isIm);
+    		Log.i("ART","KBMODE isSymbol:"+isSymbol);
+    		Log.i("ART","KBMODE isShift:"+isShift);
+    	}
     	imtype = code;
     	
     	// Jeremy '11,6,2.  Has to preserve these options for toggle keyboard controls.
     	mImeOptions = imeOptions;
     	mIsSymbols = isSymbol;
     	mIsShifted = isShift;
+    	mMode = mode;
     	
     	String imcode = imHm.get(code); 
     	
@@ -275,17 +282,36 @@ public class LIMEKeyboardSwitcher {
             
     		switch (mode) {
 	            case MODE_PHONE:
-
 	            	//Log.i("ART","KBMODE ->: phone");
 	                kid = new KeyboardId(getKeyboardXMLID("phone_number"));
 	                break;
 	            case MODE_URL:
 	            	//Log.i("ART","KBMODE ->: url");
-	            	kid = new KeyboardId(getKeyboardXMLID("lime_url"), KEYBOARDMODE_URL, true);
+	            	if(mLIMEPref.getShowNumberRowInEnglish()){
+	            		if(isShift)
+	            			kid = new KeyboardId(getKeyboardXMLID("lime_english_number_shift"), KEYBOARDMODE_URL, true);
+	            		else
+	            			kid = new KeyboardId(getKeyboardXMLID("lime_english_number"), KEYBOARDMODE_URL, true);
+	            	}else{
+	            		if(isShift)
+	            			kid = new KeyboardId(getKeyboardXMLID("lime_english_shift"), KEYBOARDMODE_URL, true);
+	            		else
+	            			kid = new KeyboardId(getKeyboardXMLID("lime_english"), KEYBOARDMODE_URL, true);
+	            	}	
 	                break;
 	            case MODE_EMAIL:
 	            	//Log.i("ART","KBMODE ->: email");
-	            	kid = new KeyboardId(getKeyboardXMLID("lime_email"), KEYBOARDMODE_EMAIL, true);
+	            	if(mLIMEPref.getShowNumberRowInEnglish()){
+	            		if(isShift)
+	            			kid = new KeyboardId(getKeyboardXMLID("lime_english_number_shift"), KEYBOARDMODE_EMAIL, true);
+	            		else
+	            			kid = new KeyboardId(getKeyboardXMLID("lime_english_number"), KEYBOARDMODE_EMAIL, true);
+	            	}else{
+	            		if(isShift)
+	            			kid = new KeyboardId(getKeyboardXMLID("lime_english_shift"), KEYBOARDMODE_EMAIL, true);
+	            		else
+	            			kid = new KeyboardId(getKeyboardXMLID("lime_english"), KEYBOARDMODE_EMAIL, true); 
+	            	}
 	                break;
 	            default:
 	            	if(isIm && !isSymbol){
@@ -308,10 +334,14 @@ public class LIMEKeyboardSwitcher {
 	            	}else if(!isIm && !isSymbol){
 	            		if(isShift){
 	    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngshiftkb());
-	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getEngshiftkb()), 0, true );
+	                    	kid = new KeyboardId(
+	                    			getKeyboardXMLID(kobj.getEngshiftkb(mLIMEPref.getShowNumberRowInEnglish())), 
+	                    			KEYBOARDMODE_NORMAL, true );
 	            		}else{
 	    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngkb());
-	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getEngkb()), 0, true );
+	                    	kid = new KeyboardId(
+	                    			getKeyboardXMLID(kobj.getEngkb(mLIMEPref.getShowNumberRowInEnglish())), 
+	                    			KEYBOARDMODE_NORMAL, true );
 	            		}
 	            	}
 	            	
@@ -453,11 +483,12 @@ public class LIMEKeyboardSwitcher {
     }
 
     void toggleShift() {
+    	if(DEBUG) Log.i("LIMEKeyboardSwicher:toggeleshift()","KBMODE mode:"+mMode);
     	mIsShifted= !mIsShifted;
     	if(mIsChinese)
         	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);
     	else{
-        	this.setKeyboardMode(imtype, 0, mImeOptions, false, mIsSymbols, mIsShifted);
+        	this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
     	}
 
     }
@@ -467,7 +498,7 @@ public class LIMEKeyboardSwitcher {
 	   	if(mIsChinese)
 	    	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);
 		else{
-	    	this.setKeyboardMode(imtype, 0, mImeOptions, false, mIsSymbols, mIsShifted);
+	    	this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
 		}
     }
     
@@ -477,7 +508,7 @@ public class LIMEKeyboardSwitcher {
     	if(mIsChinese)
         	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);
     	else
-        	this.setKeyboardMode(imtype, 0, mImeOptions, false, mIsSymbols, mIsShifted);
+        	this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
         if (mIsSymbols && !mPreferSymbols) {
             mSymbolsModeState = SYMBOLS_MODE_STATE_BEGIN;
         } else {

@@ -63,11 +63,19 @@ public class KeyboardObj {
 	public String getEngkb() {
 		return engkb;
 	}
+	public String getEngkb(boolean showNumberRow) {
+		if(showNumberRow) return "lime_english_number";
+		else return "lime_english";
+	}
 	public void setEngkb(String engkb) {
 		this.engkb = engkb;
 	}
 	public String getEngshiftkb() {
 		return engshiftkb;
+	}
+	public String getEngshiftkb(boolean showNumberRow) {
+		if(showNumberRow) return "lime_english_number_shift";
+		else return "lime_english_shift";
 	}
 	public void setEngshiftkb(String engshiftkb) {
 		this.engshiftkb = engshiftkb;
