@@ -261,7 +261,7 @@ public class SearchService extends Service {
 				String pword, int score, boolean isDictionary)
 				throws RemoteException {
 
-				Log.i("ART","addUserDict:"+diclist);
+				
 			
 				if(diclist == null){diclist = new LinkedList<Mapping>();}
 				
@@ -273,6 +273,8 @@ public class SearchService extends Service {
 			      temp.setScore(score);
 			      temp.setDictionary(isDictionary);
 			    diclist.addLast(temp);
+			    
+			    //Log.i("ART","addUserDict:" + temp.getCode());
 		}
 
 		public void updateUserDict() throws RemoteException {
@@ -284,7 +286,7 @@ public class SearchService extends Service {
 				boolean item = sp.getBoolean(LIME.CANDIDATE_SUGGESTION, false);
 				if(item && diclist != null){
 					//Log.i("ART","updateUserDict:"+item);
-					db.addDictionary(diclist);
+					db.addUserDict(diclist);
 					diclist.clear();
 				}
 				
@@ -328,7 +330,7 @@ public class SearchService extends Service {
 		      
 			// Jeremy '11,6,11. Always update score and sort according to preferences.
 			//if(item){
-				//Log.i("ART","updateMapping:"+updateMappingTemp);
+			//Log.i("ART","updateMapping:"+updateMappingTemp.getCode());
 			scorelist.add(updateMappingTemp);
 			//}		
 			
