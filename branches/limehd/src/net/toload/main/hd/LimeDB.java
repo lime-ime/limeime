@@ -388,6 +388,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			Log.i("addDictionary:", "Etnering addDictionary");
 		}
 		
+		
 		if (srclist != null && srclist.size() > 0) {
 
 			for (int i = 0; i < srclist.size(); i++) {
@@ -436,7 +437,8 @@ public class LimeDB extends SQLiteOpenHelper {
 					//int idColumn = cursor.getColumnIndex(FIELD_id);
 					//String code = cursor.getString(codeColumn);
 					String relatedlist = cursor.getString(relatedColumn);
-					if(DEBUG) Log.i("LIMEDB:addScore()","the original relatedlist:" + relatedlist);
+					if(DEBUG) 
+						Log.i("LIMEDB:addScore()","the original relatedlist:" + relatedlist);
 					String templist[] = relatedlist.split("\\|");
 					LinkedList <Mapping> scorelist = new LinkedList<Mapping>();
 					for (String unit : templist) {
@@ -453,13 +455,17 @@ public class LimeDB extends SQLiteOpenHelper {
 							mu.setScore(munit.getScore());
 							if(scorelist.isEmpty()) scorelist.add(mu);
 							else{
+								boolean added = false;
 								for(int i=0;i<scorelist.size();i++){
 									if(munit.getScore() >= scorelist.get(i).getScore()){
 										scorelist.add(i, mu);
 										//Log.i("LIMEDB:addScore()","score is not 0, added in location "+i+"; with score:" +munit.getScore() );
+										added = true;
 										break;
 									}
 								}
+								if(!added) scorelist.addLast(mu);
+								
 							}			
 						}
 					}
@@ -475,7 +481,8 @@ public class LimeDB extends SQLiteOpenHelper {
 						cv.put(FIELD_RELATED, newRelatedlist);
 						db.update(tablename, cv, FIELD_CODE + " = '" + code + "'", null);
 					}
-					if(DEBUG) Log.i("LIMEDB:addScore()","the new relatedlist:" + newRelatedlist);	
+					if(DEBUG) 
+						Log.i("LIMEDB:addScore()","the new relatedlist:" + newRelatedlist);	
 				}
 				
 				db.close();

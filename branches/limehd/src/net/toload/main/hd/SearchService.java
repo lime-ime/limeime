@@ -281,27 +281,24 @@ public class SearchService extends Service {
 			//Log.i("ART","updateUserDict:"+diclist);
 			
 			if(db == null){db = new LimeDB(ctx);}
-			if(diclist != null && diclist.size() > 1){
-				SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-				boolean item = sp.getBoolean(LIME.CANDIDATE_SUGGESTION, false);
-				if(item && diclist != null){
-					//Log.i("ART","updateUserDict:"+item);
-					db.addUserDict(diclist);
-					diclist.clear();
-				}
+			//Jeremy '11,6,12 do adduserdict and add score if diclist.size > 0 and only adduserdict if diclist.size >1
+			if(diclist != null && mLIMEPref.getLearnRelatedWord() && diclist.size() > 1){
+				db.addUserDict(diclist);
+				diclist.clear();
+			}
 				
 				//Jeremy '11,6,11, always learn scores, but sorted according preference options
 				//boolean item2 = sp.getBoolean(LIME.LEARNING_SWITCH, false);
 
 				//if(item2 && scorelist != null){
-				if(scorelist != null){
-					for(int i=0 ; i < scorelist.size(); i++){
-						//Log.i("ART","updateUserDict addScore:"+((Mapping)scorelist.get(i)).getCode() + " " + ((Mapping)scorelist.get(i)).getId());
-						db.addScore((Mapping)scorelist.get(i));
-					}
-					scorelist.clear();
-				}	
-			}
+			if(scorelist != null){
+				for(int i=0 ; i < scorelist.size(); i++){
+					//Log.i("ART","updateUserDict addScore:"+((Mapping)scorelist.get(i)).getCode() + " " + ((Mapping)scorelist.get(i)).getId());
+					db.addScore((Mapping)scorelist.get(i));
+				}
+				scorelist.clear();
+			}	
+			
 		}
 		
 		public String keyToKeyname(String code){
