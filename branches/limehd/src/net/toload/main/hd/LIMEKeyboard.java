@@ -195,7 +195,7 @@ public class LIMEKeyboard extends Keyboard {
                         mEnterKey.icon = null;
                         mEnterKey.iconPreview = null;
                         mEnterKey.label = ":-)";
-                        mEnterKey.text = ":-) ";
+                        //mEnterKey.text = ":-) ";
                         mEnterKey.popupResId = R.xml.popup_smileys;
                     } else {
                     

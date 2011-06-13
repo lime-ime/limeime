@@ -551,8 +551,7 @@ public class LIMEService extends InputMethodService implements
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 						LIMEKeyboardSwitcher.MODE_URL, mImeOptions, false, false, false);
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
-				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,
-						mImeOptions, true, false, false);
+				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
 				//mPredictionOn = false;
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
@@ -2323,7 +2322,7 @@ public class LIMEService extends InputMethodService implements
 				|| keyboardSelection.equals("cj")
 				|| keyboardSelection.equals("scj")) {
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-					LIMEKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
+					0, mImeOptions, true, false, false);
 			SharedPreferences sp = PreferenceManager
 					.getDefaultSharedPreferences(this);
 			hasNumberMapping = sp.getBoolean("accept_number_index", false);
@@ -2333,7 +2332,7 @@ public class LIMEService extends InputMethodService implements
 					|| keyboardSelection.equals("ez")
 					|| keyboardSelection.equals("dayi")) {
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						LIMEKeyboardSwitcher.MODE_IM, mImeOptions, true, false,
+						0, mImeOptions, true, false,
 						false);
 				hasNumberMapping = true;
 				hasSymbolMapping = true;
@@ -2341,17 +2340,17 @@ public class LIMEService extends InputMethodService implements
 				hasNumberMapping = true;
 				hasSymbolMapping = false;
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						LIMEKeyboardSwitcher.MODE_IM, mImeOptions, true, false,
+						0, mImeOptions, true, false,
 						false);
 			} else if (keyboardSelection.equals("array")) {
 				hasNumberMapping = false;
 				hasSymbolMapping = true;
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						LIMEKeyboardSwitcher.MODE_IM, mImeOptions, true, false,
+						0, mImeOptions, true, false,
 						false);
 			} else {
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						LIMEKeyboardSwitcher.MODE_IM, mImeOptions, true, false,
+						0, mImeOptions, true, false,
 						false);
 			}
 		}
