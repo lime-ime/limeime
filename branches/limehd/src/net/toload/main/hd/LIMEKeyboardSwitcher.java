@@ -28,7 +28,7 @@ public class LIMEKeyboardSwitcher {
 	
 	static final boolean DEBUG = false;
 	
-    public static final int MODE_TEXT = 1;
+    
     /*
     public static final int MODE_TEXT_DEFAULT = 10;
     public static final int MODE_TEXT_DEFAULT_NUMBER = 11;
@@ -43,6 +43,7 @@ public class LIMEKeyboardSwitcher {
     public static final int MODE_TEXT_SCJ_NUMBER = 20;
     public static final int MODE_TEXT_ARRAY10 = 21;
     */
+	public static final int MODE_TEXT = 1;
     public static final int MODE_SYMBOLS = 2;
     public static final int MODE_PHONE = 3;
     public static final int MODE_URL = 4;
@@ -176,6 +177,7 @@ public class LIMEKeyboardSwitcher {
             return other.mXml == this.mXml && other.mMode == this.mMode;
         }
 
+        
         public int hashCode() {
             return (mXml + 1) * (mMode + 1) * (mEnableShiftLock ? 2 : 1);
         }
@@ -324,17 +326,16 @@ public class LIMEKeyboardSwitcher {
 	            	}
 	                break;
 	            default:
-	            	if(isIm){
+	            	if(isIm){  // Chinese IM keyboards
 	            		if(isShift){
 	    	            	//Log.i("ART","KBMODE ->: " + kobj.getImshiftkb());
-	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getImshiftkb()), 0, true );
+	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getImshiftkb()), KEYBOARDMODE_NORMAL, true );
 	            		}else{
 	    	            	//Log.i("ART","KBMODE ->: " + kobj.getImkb());
-	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getImkb()), 0, true );
+	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getImkb()), KEYBOARDMODE_NORMAL, true );
 	            		}
 		                mIsChinese = true;
-	            	//}else 
-	            	}else {//if(!isIm){
+	            	}else {//if(!isIm){  //English normal keyboard
 	            		if(isShift){
 	    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngshiftkb());
 	                    	kid = new KeyboardId(

@@ -363,7 +363,7 @@ public class LIMEService extends InputMethodService implements
 		mKeyboardSwitcher.makeKeyboards(true);
 		mInputView.setOnKeyboardActionListener(this);
 
-		mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,
+		mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,
 				EditorInfo.IME_ACTION_NEXT, true, false, false);
 
 		// mKeyboardSwitcher.setKeyboardMode(
@@ -510,7 +510,7 @@ public class LIMEService extends InputMethodService implements
 		case EditorInfo.TYPE_CLASS_DATETIME:
 			mEnglishOnly = true;
 			onIM = false;
-			mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,	mImeOptions, false, true, false);
+			mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	mImeOptions, false, true, false);
 			break;
 		case EditorInfo.TYPE_CLASS_PHONE:
 			mEnglishOnly = true;
@@ -529,7 +529,8 @@ public class LIMEService extends InputMethodService implements
 				isModePassword = true;
 				mEnglishOnly = true;
 				onIM = false;
-				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,	mImeOptions, false, false, false);
+				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,
+									mImeOptions, false, false, false);
 			}
 			if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
 					|| variation == EditorInfo.TYPE_TEXT_VARIATION_PERSON_NAME) {
@@ -572,9 +573,9 @@ public class LIMEService extends InputMethodService implements
 		        	mPredictionOn = true;
 		        	mEnglishOnly = true;
 			        onIM = false;
-			        mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,	mImeOptions, false, false, false);
+			        mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	mImeOptions, false, false, false);
 			} else
-			    mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,	mImeOptions, true, false, false);
+			    mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	mImeOptions, true, false, false);
 
 			// If NO_SUGGESTIONS is set, don't do prediction.
 			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0) {
@@ -2322,7 +2323,7 @@ public class LIMEService extends InputMethodService implements
 				|| keyboardSelection.equals("cj")
 				|| keyboardSelection.equals("scj")) {
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-					0, mImeOptions, true, false, false);
+					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
 			SharedPreferences sp = PreferenceManager
 					.getDefaultSharedPreferences(this);
 			hasNumberMapping = sp.getBoolean("accept_number_index", false);
@@ -2332,7 +2333,7 @@ public class LIMEService extends InputMethodService implements
 					|| keyboardSelection.equals("ez")
 					|| keyboardSelection.equals("dayi")) {
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						0, mImeOptions, true, false,
+						LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false,
 						false);
 				hasNumberMapping = true;
 				hasSymbolMapping = true;
@@ -2340,17 +2341,17 @@ public class LIMEService extends InputMethodService implements
 				hasNumberMapping = true;
 				hasSymbolMapping = false;
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						0, mImeOptions, true, false,
+						LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false,
 						false);
 			} else if (keyboardSelection.equals("array")) {
 				hasNumberMapping = false;
 				hasSymbolMapping = true;
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						0, mImeOptions, true, false,
+						LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false,
 						false);
 			} else {
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						0, mImeOptions, true, false,
+						LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false,
 						false);
 			}
 		}
@@ -2402,8 +2403,9 @@ public class LIMEService extends InputMethodService implements
 	 * 
 	 * @param primaryCode
 	 * @param keyCodes
+	 * @throws RemoteException 
 	 */
-	private void handleCharacter(int primaryCode, int[] keyCodes) {
+	private void handleCharacter(int primaryCode, int[] keyCodes)  {
 		//Jeremy '11,6,9 Cleaned code!!
 		if(DEBUG)
 			Log.i("handleCharacter","primaryCode:" + primaryCode + "; keyCodes[0]:"+keyCodes[0]);
@@ -2413,9 +2415,16 @@ public class LIMEService extends InputMethodService implements
 		
 		// Caculate key press time to handle Eazy IM keys mapping
 		// 1,2,3,4,5,6 map to -(45) =(43) [(91) ](93) ,(44) \(92)
-		/*if (keyPressTime != 0
+		String tablename="";
+		try {
+			tablename = SearchSrv.getTablename();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (keyPressTime != 0
 				&& (System.currentTimeMillis() - keyPressTime > 700)
-				&& mKeyboardSwitcher.getKeyboardMode() == LIMEKeyboardSwitcher.MODE_TEXT_EZ) {
+				&& tablename.equals("ez")){// mKeyboardSwitcher.getKeyboardMode() == LIMEKeyboardSwitcher.MODE_TEXT_EZ) {
 			if (primaryCode == 49) {
 				primaryCode = 45;
 			} else if (primaryCode == 50) {
@@ -2429,7 +2438,7 @@ public class LIMEService extends InputMethodService implements
 			} else if (primaryCode == 54) {
 				primaryCode = 92;
 			}
-		}*/
+		}
 
 		
 		//Jeremy '11,6,6 processing physical keyboard selkeys.
