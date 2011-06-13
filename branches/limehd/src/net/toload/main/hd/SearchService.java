@@ -278,7 +278,7 @@ public class SearchService extends Service {
 		}
 
 		public void updateUserDict() throws RemoteException {
-			//Log.i("ART","updateUserDict:"+diclist);
+			//Log.i("SearchService:","updateUserDict:"+diclist);
 			
 			if(db == null){db = new LimeDB(ctx);}
 			//Jeremy '11,6,12 do adduserdict and add score if diclist.size > 0 and only adduserdict if diclist.size >1
@@ -298,7 +298,9 @@ public class SearchService extends Service {
 					
 					//Jeremy '11,6,13 Words in relatedlist is selected for null id, the relatedlist will later be updated.
 					if(scorelist.get(i).getId()==null){ // Force to delete the cached item.
-						cache.remove(db.getTablename()+scorelist.get(i).getCode());
+						String code = scorelist.get(i).getCode().toLowerCase();
+						//Log.i("SearchService:updateUserdict()","force to delete cached item, code = " + code);
+						cache.remove(db.getTablename()+code);
 					}
 					
 						
