@@ -70,7 +70,7 @@ public class LIMEKeyboardSwitcher {
     private KeyboardId mCurrentId;
     private Map<KeyboardId, LIMEKeyboard> mKeyboards;
     
-    private int mMode = KEYBOARDMODE_NORMAL;
+    private int mMode = MODE_TEXT;//KEYBOARDMODE_NORMAL;
     private int mChnMode = MODE_TEXT_DEFAULT;
     private int mEngMode = MODE_TEXT;
     private int mImeOptions;
@@ -265,7 +265,7 @@ public class LIMEKeyboardSwitcher {
     	mImeOptions = imeOptions;
     	mIsSymbols = isSymbol;
     	mIsShifted = isShift;
-    	mMode = mode;
+    	if(mode!=0) mMode = mode;
     	
     	String imcode = imHm.get(code); 
     	
@@ -279,8 +279,16 @@ public class LIMEKeyboardSwitcher {
     	if(kobj != null){
 
             mIsChinese = false;
-            
-    		switch (mode) {
+            if(isSymbol){
+        		if(isShift){
+	            	//Log.i("ART","KBMODE ->: " + kobj.getExtendedshiftkb());
+                	kid = new KeyboardId(getKeyboardXMLID(kobj.getSymbolshiftkb()), 0, true );
+        		}else{
+	            	//Log.i("ART","KBMODE ->: " + kobj.getExtendedkb());
+                	kid = new KeyboardId(getKeyboardXMLID(kobj.getSymbolkb()), 0, true );
+        		}
+            }else{
+            	switch (mode) {
 	            case MODE_PHONE:
 	            	//Log.i("ART","KBMODE ->: phone");
 	                kid = new KeyboardId(getKeyboardXMLID("phone_number"));
@@ -314,7 +322,7 @@ public class LIMEKeyboardSwitcher {
 	            	}
 	                break;
 	            default:
-	            	if(isIm && !isSymbol){
+	            	if(isIm){
 	            		if(isShift){
 	    	            	//Log.i("ART","KBMODE ->: " + kobj.getImshiftkb());
 	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getImshiftkb()), 0, true );
@@ -323,15 +331,8 @@ public class LIMEKeyboardSwitcher {
 	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getImkb()), 0, true );
 	            		}
 		                mIsChinese = true;
-	            	}else if(isSymbol){
-	            		if(isShift){
-	    	            	//Log.i("ART","KBMODE ->: " + kobj.getExtendedshiftkb());
-	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getSymbolshiftkb()), 0, true );
-	            		}else{
-	    	            	//Log.i("ART","KBMODE ->: " + kobj.getExtendedkb());
-	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getSymbolkb()), 0, true );
-	            		}
-	            	}else if(!isIm && !isSymbol){
+	            	//}else 
+	            	}else {//if(!isIm){
 	            		if(isShift){
 	    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngshiftkb());
 	                    	kid = new KeyboardId(
@@ -345,7 +346,8 @@ public class LIMEKeyboardSwitcher {
 	            		}
 	            	}
 	            	
-    		}
+            	}
+            }
     		
 	    	if(mInputView == null) return;
 	        
