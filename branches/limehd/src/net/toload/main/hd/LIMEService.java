@@ -2316,7 +2316,7 @@ public class LIMEService extends InputMethodService implements
 		buildActiveKeyboardList();
 		initialViewAndSwitcher();
 
-		int mMode = LIMEKeyboardSwitcher.MODE_TEXT_DEFAULT;
+		//int mMode = LIMEKeyboardSwitcher.MODE_TEXT_DEFAULT;
 
 		if (keyboardSelection.equals("custom")
 				|| keyboardSelection.equals("cj")
@@ -2413,7 +2413,7 @@ public class LIMEService extends InputMethodService implements
 		
 		// Caculate key press time to handle Eazy IM keys mapping
 		// 1,2,3,4,5,6 map to -(45) =(43) [(91) ](93) ,(44) \(92)
-		if (keyPressTime != 0
+		/*if (keyPressTime != 0
 				&& (System.currentTimeMillis() - keyPressTime > 700)
 				&& mKeyboardSwitcher.getKeyboardMode() == LIMEKeyboardSwitcher.MODE_TEXT_EZ) {
 			if (primaryCode == 49) {
@@ -2429,7 +2429,7 @@ public class LIMEService extends InputMethodService implements
 			} else if (primaryCode == 54) {
 				primaryCode = 92;
 			}
-		}
+		}*/
 
 		
 		//Jeremy '11,6,6 processing physical keyboard selkeys.
