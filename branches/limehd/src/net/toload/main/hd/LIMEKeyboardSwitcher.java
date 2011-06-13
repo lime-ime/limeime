@@ -94,6 +94,10 @@ public class LIMEKeyboardSwitcher {
     private HashMap<String, KeyboardObj> kbHm;
     private HashMap<String, String> imHm;
 
+    private int mImeMode;
+    private int mImeOption;
+    
+    
     LIMEKeyboardSwitcher(LIMEService context) {
         mContext = context;
         mLIMEPref = new LIMEPreferenceManager(context);
@@ -362,11 +366,13 @@ public class LIMEKeyboardSwitcher {
 	        keyboard.setShiftLocked(keyboard.isShiftLocked());
 	        keyboard.setShifted(mIsShifted);
 	        mInputView.setKeyboard(mInputView.getKeyboard()); //instead of invalidateAllKeys();
-	        
+
+	        /* Art: 13/June/2011 : to remember mode and option */
+	        mImeMode = mMode;
+	        mImeOption = imeOptions;
 	        keyboard.setImeOptions(mContext.getResources(), mMode, imeOptions);
     	}
     }
- 
 
    /* private KeyboardId getKeyboardId(int mode, int imeOptions, boolean isSymbols, boolean isShifted) {
     	
@@ -488,30 +494,36 @@ public class LIMEKeyboardSwitcher {
     void toggleShift() {
     	if(DEBUG) Log.i("LIMEKeyboardSwicher:toggeleshift()","KBMODE mode:"+mMode);
     	mIsShifted= !mIsShifted;
-    	if(mIsChinese)
-        	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);
-    	else{
-        	this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
+    	if(mIsChinese){
+        	this.setKeyboardMode(imtype, mImeMode, mImeOption, true, mIsSymbols, mIsShifted);
+    		//this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);
+    	}else{
+        	this.setKeyboardMode(imtype, mImeMode, mImeOption, false, mIsSymbols, mIsShifted);
+        	//this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
     	}
-
     }
     
    void toggleChinese() {
 	   mIsChinese = !mIsChinese;
-	   	if(mIsChinese)
-	    	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);
-		else{
-	    	this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
+	   	if(mIsChinese){
+	    	this.setKeyboardMode(imtype, mImeMode, mImeOption, true, mIsSymbols, mIsShifted);
+	   		//this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);
+	   	}else{
+	    	this.setKeyboardMode(imtype, mImeMode, mImeOption, false, mIsSymbols, mIsShifted);
+	    	//this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
 		}
     }
     
     void toggleSymbols() {
     	mIsSymbols = !mIsSymbols;
     	mIsShifted = false;
-    	if(mIsChinese)
-        	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);
-    	else
-        	this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
+    	if(mIsChinese){
+        	this.setKeyboardMode(imtype, mImeMode, mImeOption, true, mIsSymbols, mIsShifted);
+        	//this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);
+    	}else{
+        	this.setKeyboardMode(imtype, mImeMode, mImeOption, false, mIsSymbols, mIsShifted);
+        	//this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
+    	}
         if (mIsSymbols && !mPreferSymbols) {
             mSymbolsModeState = SYMBOLS_MODE_STATE_BEGIN;
         } else {
