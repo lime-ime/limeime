@@ -29,6 +29,7 @@ public class LIMEKeyboardSwitcher {
 	static final boolean DEBUG = false;
 	
     public static final int MODE_TEXT = 1;
+    /*
     public static final int MODE_TEXT_DEFAULT = 10;
     public static final int MODE_TEXT_DEFAULT_NUMBER = 11;
     public static final int MODE_TEXT_CJ = 12;
@@ -41,6 +42,7 @@ public class LIMEKeyboardSwitcher {
     public static final int MODE_TEXT_SCJ = 19;
     public static final int MODE_TEXT_SCJ_NUMBER = 20;
     public static final int MODE_TEXT_ARRAY10 = 21;
+    */
     public static final int MODE_SYMBOLS = 2;
     public static final int MODE_PHONE = 3;
     public static final int MODE_URL = 4;
@@ -67,12 +69,12 @@ public class LIMEKeyboardSwitcher {
     LIMEKeyboardView mInputView;
     LIMEService mContext;
 
-    private KeyboardId mCurrentId;
+    //private KeyboardId mCurrentId;
     private Map<KeyboardId, LIMEKeyboard> mKeyboards;
     
-    private int mMode = MODE_TEXT;//KEYBOARDMODE_NORMAL;
-    private int mChnMode = MODE_TEXT_DEFAULT;
-    private int mEngMode = MODE_TEXT;
+    private int mMode = KEYBOARDMODE_NORMAL;
+    //private int mChnMode = MODE_TEXT_DEFAULT;
+    //private int mEngMode = MODE_TEXT;
     private int mImeOptions;
     private int mTextMode = MODE_TEXT_QWERTY;
     
@@ -354,10 +356,9 @@ public class LIMEKeyboardSwitcher {
 	        
 	        LIMEKeyboard keyboard = getKeyboard(kid);
 	
-	        mCurrentId = kid;
+	       // mCurrentId = kid;
 	        mInputView.setKeyboard(keyboard);
-	        
-	         
+	              
 	        keyboard.setShiftLocked(keyboard.isShiftLocked());
 	        keyboard.setShifted(mIsShifted);
 	        mInputView.setKeyboard(mInputView.getKeyboard()); //instead of invalidateAllKeys();
