@@ -62,7 +62,11 @@ case TRANSACTION_setTablename:
 data.enforceInterface(DESCRIPTOR);
 java.lang.String _arg0;
 _arg0 = data.readString();
-this.setTablename(_arg0);
+boolean _arg1;
+_arg1 = (0!=data.readInt());
+boolean _arg2;
+_arg2 = (0!=data.readInt());
+this.setTablename(_arg0, _arg1, _arg2);
 reply.writeNoException();
 return true;
 }
@@ -237,6 +241,16 @@ reply.writeNoException();
 reply.writeString(_result);
 return true;
 }
+case TRANSACTION_isSelkey:
+{
+data.enforceInterface(DESCRIPTOR);
+char _arg0;
+_arg0 = (char)data.readInt();
+int _result = this.isSelkey(_arg0);
+reply.writeNoException();
+reply.writeInt(_result);
+return true;
+}
 }
 return super.onTransact(code, data, reply, flags);
 }
@@ -286,13 +300,15 @@ _data.recycle();
 }
 return _result;
 }
-public void setTablename(java.lang.String tablename) throws android.os.RemoteException
+public void setTablename(java.lang.String tablename, boolean numberMapping, boolean symbolMapping) throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
 android.os.Parcel _reply = android.os.Parcel.obtain();
 try {
 _data.writeInterfaceToken(DESCRIPTOR);
 _data.writeString(tablename);
+_data.writeInt(((numberMapping)?(1):(0)));
+_data.writeInt(((symbolMapping)?(1):(0)));
 mRemote.transact(Stub.TRANSACTION_setTablename, _data, _reply, 0);
 _reply.readException();
 }
@@ -595,6 +611,24 @@ _data.recycle();
 }
 return _result;
 }
+public int isSelkey(char c) throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+int _result;
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+_data.writeInt(((int)c));
+mRemote.transact(Stub.TRANSACTION_isSelkey, _data, _reply, 0);
+_reply.readException();
+_result = _reply.readInt();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+return _result;
+}
 }
 static final int TRANSACTION_initial = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
 static final int TRANSACTION_getTablename = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
@@ -616,10 +650,11 @@ static final int TRANSACTION_getSelectedText = (android.os.IBinder.FIRST_CALL_TR
 static final int TRANSACTION_close = (android.os.IBinder.FIRST_CALL_TRANSACTION + 17);
 static final int TRANSACTION_isImKeys = (android.os.IBinder.FIRST_CALL_TRANSACTION + 18);
 static final int TRANSACTION_getSelkey = (android.os.IBinder.FIRST_CALL_TRANSACTION + 19);
+static final int TRANSACTION_isSelkey = (android.os.IBinder.FIRST_CALL_TRANSACTION + 20);
 }
 public void initial() throws android.os.RemoteException;
 public java.lang.String getTablename() throws android.os.RemoteException;
-public void setTablename(java.lang.String tablename) throws android.os.RemoteException;
+public void setTablename(java.lang.String tablename, boolean numberMapping, boolean symbolMapping) throws android.os.RemoteException;
 public java.util.List query(java.lang.String code, boolean softkeyboard) throws android.os.RemoteException;
 public void rQuery(java.lang.String word) throws android.os.RemoteException;
 public java.util.List queryUserDic(java.lang.String word) throws android.os.RemoteException;
@@ -637,4 +672,5 @@ public java.lang.String getSelectedText() throws android.os.RemoteException;
 public void close() throws android.os.RemoteException;
 public boolean isImKeys(char c) throws android.os.RemoteException;
 public java.lang.String getSelkey() throws android.os.RemoteException;
+public int isSelkey(char c) throws android.os.RemoteException;
 }

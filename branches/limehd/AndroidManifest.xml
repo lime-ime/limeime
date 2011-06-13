@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="net.toload.main.hd" android:versionName="3.2.2" android:versionCode="169" android:installLocation="internalOnly">
+	package="net.toload.main.hd" android:versionName="3.2.2" android:versionCode="172" android:installLocation="internalOnly">
 
 	<uses-permission android:name="android.permission.VIBRATE" />
 	<uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
@@ -67,7 +67,7 @@
 
 	</application>
 
-	<uses-sdk android:minSdkVersion="7" />
+	<uses-sdk android:minSdkVersion="8" />
 	<supports-screens 
 		android:largeScreens="true"
 		android:normalScreens="true" 
