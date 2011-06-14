@@ -258,18 +258,19 @@ public class LIMEService extends InputMethodService implements
 				Log.i("ART", "Failed to connect Search Service");
 			}
 		}
+		// Construct Preference Access Tool
+		mLIMEPref = new LIMEPreferenceManager(this);
 
-		mVibrator = (Vibrator) getApplication().getSystemService(
-				Service.VIBRATOR_SERVICE);
+		mVibrator = (Vibrator) getApplication().getSystemService(Service.VIBRATOR_SERVICE);
 		mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
-		SharedPreferences sp = PreferenceManager
-				.getDefaultSharedPreferences(this);
-		hasVibration = sp.getBoolean("vibrate_on_keypress", false);
-		hasSound = sp.getBoolean("sound_on_keypress", false);
-		mEnglishIMStart = sp.getBoolean("default_in_english", false);
+		//SharedPreferences sp = PreferenceManager
+		//		.getDefaultSharedPreferences(this);
+		hasVibration = mLIMEPref.getVibrateOnKeyPressed();//sp.getBoolean("vibrate_on_keypress", false);
+		hasSound = mLIMEPref.getSoundOnKeyPressed();//sp.getBoolean("sound_on_keypress", false);
+		mEnglishIMStart = mLIMEPref.getDefaultInEnglish(); //sp.getBoolean("default_in_english", false);
 		// hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
-		keyboardSelection = sp.getString("keyboard_list", "custom");
+		keyboardSelection = mLIMEPref.getKeyboardSelection();// sp.getString("keyboard_list", "custom");
 
 		// initial Input List
 		userdiclist = new LinkedList<Mapping>();
@@ -279,8 +280,7 @@ public class LIMEService extends InputMethodService implements
 		keyboardListCodes = new ArrayList<String>();
 		buildActiveKeyboardList();
 
-		// Construct Preference Access Tool
-		mLIMEPref = new LIMEPreferenceManager(this);
+		
 
 	}
 
@@ -538,6 +538,28 @@ public class LIMEService extends InputMethodService implements
 			} else {
 				mAutoSpace = true;
 			}
+			if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
+				mPredictionOn = false;
+			}
+			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0) {
+				disableAutoCorrect = true;
+			}
+			// If NO_SUGGESTIONS is set, don't do prediction.
+			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0) {
+				mPredictionOn = false;
+				disableAutoCorrect = true;
+			}
+			// If it's not multiline and the autoCorrect flag is not set, then
+			// don't correct
+			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0
+					&& (attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) == 0) {
+				disableAutoCorrect = true;
+			}
+			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_COMPLETE) != 0) {
+				mPredictionOn = false;
+				// mCompletionOn = true && isFullscreenMode();
+			}
+			
 			if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS) {
 				mEnglishOnly = true;
 				onIM = false;
@@ -553,12 +575,9 @@ public class LIMEService extends InputMethodService implements
 						LIMEKeyboardSwitcher.MODE_URL, mImeOptions, false, false, false);
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
-			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
-				//mPredictionOn = false;
-			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
-				if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0) {
-					disableAutoCorrect = true;
-				}
+			
+			//} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
+				
 				/*
 				if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) != 0
 						|| (attribute.inputType & EditorInfo.TYPE_CLASS_TEXT) == 0) {
@@ -569,28 +588,17 @@ public class LIMEService extends InputMethodService implements
 							EditorInfo.IME_ACTION_NEXT, true, false, false);
 				}
 				*/
-			} else if(mEnglishIMStart){
+			} else { 
+				if(mEnglishIMStart){
 		        	mPredictionOn = true;
 		        	mEnglishOnly = true;
 			        onIM = false;
-			        mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	mImeOptions, false, false, false);
-			} else
-			    mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	mImeOptions, true, false, false);
-
-			// If NO_SUGGESTIONS is set, don't do prediction.
-			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0) {
-				mPredictionOn = false;
-				disableAutoCorrect = true;
-			}
-			// If it's not multiline and the autoCorrect flag is not set, then
-			// don't correct
-			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0
-					&& (attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) == 0) {
-				disableAutoCorrect = true;
-			}
-			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_COMPLETE) != 0) {
-				mPredictionOn = false;
-				// mCompletionOn = true && isFullscreenMode();
+			        mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	
+			        		mImeOptions, false, false, false);
+				} else{
+					mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	
+			    		mImeOptions, true, false, false);
+				}
 			}
 
 			// updateShiftKeyState(attribute);
@@ -617,22 +625,22 @@ public class LIMEService extends InputMethodService implements
 		updateShiftKeyState(getCurrentInputEditorInfo());
 		setCandidatesViewShown(false);
 
-		if (mEnglishIMStart && !isModeURL) {
-			switchChiEngNoToast();
-		}
+		//if (mEnglishIMStart && !isModeURL) {
+		//	switchChiEngNoToast();
+		//}
 
 	}
 
 	private void loadSettings() {
 		// Get the settings preferences
-		SharedPreferences sp = PreferenceManager
-				.getDefaultSharedPreferences(this);
-		hasVibration = sp.getBoolean("vibrate_on_keypress", false);
-		hasSound = sp.getBoolean("sound_on_keypress", false);
-		mEnglishIMStart = sp.getBoolean("default_in_english", false);
+		//SharedPreferences sp = PreferenceManager
+		//		.getDefaultSharedPreferences(this);
+		hasVibration = mLIMEPref.getVibrateOnKeyPressed(); //sp.getBoolean("vibrate_on_keypress", false);
+		hasSound = mLIMEPref.getSoundOnKeyPressed();//sp.getBoolean("sound_on_keypress", false);
+		mEnglishIMStart = mLIMEPref.getDefaultInEnglish();//sp.getBoolean("default_in_english", false);
 		// hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
-		keyboardSelection = sp.getString("keyboard_list", "custom");
-		hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
+		keyboardSelection = mLIMEPref.getKeyboardSelection();//sp.getString("keyboard_list", "custom");
+		hasQuickSwitch = mLIMEPref.getSwitchEnglishModeHotKey();//sp.getBoolean("switch_english_mode", false);
 		mAutoCap = true; // sp.getBoolean(PREF_AUTO_CAP, true);
 		mQuickFixes = true;// sp.getBoolean(PREF_QUICK_FIXES, true);
 		// If there is no auto text data, then quickfix is forced to "on", so
