@@ -41,7 +41,7 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 	private static boolean DEBUG = false;
 	
 	private final static String DATABASE_NAME = "hanconvert.db";
-	private final static int DATABASE_VERSION = 01;
+	private final static int DATABASE_VERSION = 59;
 
 
 	private static final String FIELD_CODE = "code";
@@ -88,7 +88,7 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 	
 	public String convert(String input, Integer hanConvertOption){
 		String output = new String(input);
-		
+		//Log.i("LimeHanConverter.convert()","hanConvertOption:"+hanConvertOption);
 		if(input!=null && !input.equals("") && hanConvertOption != 0){
 			String tablename = new String("");
 			Cursor cursor = null;
