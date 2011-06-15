@@ -57,6 +57,8 @@
     <string name="three_rows_remapping">3排键盘重对应</string>
     <string name="three_rows_remapping_summary">对应 1234567890-;至 qwertyuiopv.</string>
     
+    <string name="physical_keyboard">实验键盘选项</string>
+    
     <string name="prediction_category">英文关联字设定</string>
     <string name="auto_cap">首字自动大写</string> 
     <string name="auto_cap_summary">英文段落输入首字自动大写</string>
@@ -265,6 +267,13 @@
 		<item>30</item>
 		<item>40</item>
 		<item>50</item>
+	</string-array>
+	
+	<!-- Physical keyboard options List -->
+	<string-array name="physical_keyboard_options">
+		<item>一般键盘</item>
+		<item>Milestone/Milestone 2</item>
+		<item>Desire Z</item>
 	</string-array>
 	
 	<!-- Table Selection list -->

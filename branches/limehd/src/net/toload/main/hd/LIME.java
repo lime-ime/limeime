@@ -35,6 +35,8 @@ public class LIME {
 
 	protected final static String THREE_ROW_KEY_REMAP = "1234567890;-";
 	protected final static String THREE_ROW_KEY = "qwertyuiop,v";
+	protected final static String DESIREZ_THREE_ROW_KEY_REMAP = "1234567890;/";
+	protected final static String DESIREZ_THREE_ROW_KEY = "qwertyuiop,l";
 
 	protected final static String SEARCHSRV_RESET_CACHE = "searchsrv_reset_cache";
 	protected final static int SEARCHSRV_RESET_CACHE_SIZE = 500;

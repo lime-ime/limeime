@@ -58,6 +58,8 @@
     <string name="three_rows_remapping">3排鍵盤重對應</string>
     <string name="three_rows_remapping_summary">對應 1234567890-;至 qwertyuiopv.</string>
     
+    <string name="physical_keyboard">實體鍵盤選項</string>
+    
     <string name="prediction_category">英文關聯字設定</string>
     <string name="auto_cap">首字自動大寫</string> 
     <string name="auto_cap_summary">英文段落輸入首字自動大寫</string>
@@ -188,6 +190,13 @@
 		<item>第一選字鍵選混打模式英文</item>
 		<item>第一選字鍵選第一順位中文字</item>
 		<item>第一選字鍵選第二順位中文字</item>
+	</string-array>
+	
+	<!-- Physical keyboard options List -->
+	<string-array name="physical_keyboard_options">
+		<item>一般鍵盤</item>
+		<item>Milestone/Milestone 2</item>
+		<item>Desire Z</item>
 	</string-array>
 	
     <!-- IM Reverse Lookup List -->  

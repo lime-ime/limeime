@@ -94,6 +94,18 @@ public class LimeDB extends SQLiteOpenHelper {
 	public final static String BPMF_KEY = "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-";
 	public final static String BPMF_CHAR = 
 		"ㄅ|ㄆ|ㄇ|ㄈ|ㄉ|ㄊ|ㄋ|ㄌ|ˇ|ㄍ|ㄎ|ㄏ|ˋ|ㄐ|ㄑ|ㄒ|ㄓ|ㄔ|ㄕ|ㄖ|ˊ|ㄗ|ㄘ|ㄙ|˙|ㄧ|ㄨ|ㄩ|ㄚ|ㄛ|ㄜ|ㄝ|ㄞ|ㄟ|ㄠ|ㄡ|ㄢ|ㄣ|ㄤ|ㄥ|ㄦ";
+	public final static String DESIREZ_BPMF_KEY =       "@qazwsxedcrfvtgbyhnujmik?olp";
+	public final static String DESIREZ_BPMF_KEY_REMAP = "1qaz2wsedc5tg6yh4uj8ik9ol0;-";
+	public final static String DESIREZ_BPMF_DUALKEY = 		"xrfvb3n7m,.p/";
+	public final static String DESIREZ_BPMF_DUALKEY_REMAP = "xedcv5b6xm?ol";
+	public final static String DESIREZ_BPMF_CHAR = 
+		"ㄅ|ㄆ|ㄇ|ㄈ|ㄉ|ㄊ|(ㄋ/ㄌ)|(ㄍ/ㄐ)|(ㄎ/ㄑ)|(ㄏ/ㄒ)|ㄓ|ㄔ|ㄕ|ㄖ|(ˊ/ˇ)|ㄗ|(ㄘㄙ)|(ˋ˙)" +
+		"|ㄧ|(ㄨㄩ)|ㄚ|ㄛ|(ㄜㄝ)|ㄞ|ㄟ|(ㄠㄡ)|(ㄢㄣ)|(ㄤㄥ)|ㄦ";
+	public final static String MILESTONE_BPMF_KEY = "qazwsxedcrfvtgbyhnujmik,ol.p/";
+	public final static String MILESTONE_BPMF_CHAR = 
+		"(ㄅ/ㄆ)|ㄇ|ㄈ|(ㄉ/ㄊ)|ㄋ|ㄌ|(ㄍ/ˇ)|ㄎ|ㄏ|(ㄐ/ˋ)|ㄑ|ㄒ|(ㄓ/ㄔ)|ㄕ|ㄖ|(ㄗ/ˊ)|ㄘ|ㄙ|(ㄧ/˙)" +
+		"|ㄨ|ㄩ|(ㄚ/ㄛ)|ㄜ|ㄝ|(ㄞ/ㄟ)|ㄠ|ㄡ|(ㄢ/ㄣ)|ㄥ|(ㄦ/ㄤ)";
+	
 
 	public final static String CJ_KEY = "qwertyuiopasdfghjklzxcvbnm";
 	public final static String CJ_CHAR = "手|田|水|口|廿|卜|山|戈|人|心|日|尸|木|火|土|竹|十|大|中|重|難|金|女|月|弓|一";
@@ -589,6 +601,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			//Jeremy 11,6,4 Load keys and keynames from im table.
 			keyString = getImInfo(Rtable,"imkeys");
 			keynameString = getImInfo(Rtable,"imkeynames");
+			String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 			if(DEBUG) Log.i("limedb:keyToKeyname()","keyString:"+keyString + " keynameString:" +keynameString);
 			
 			if(keyString.equals("")||keynameString.equals("")){
@@ -596,8 +609,18 @@ public class LimeDB extends SQLiteOpenHelper {
 					keyString = CJ_KEY;
 					keynameString = CJ_CHAR;
 				}else if(Rtable.equals("phonetic")) {
-					keyString = BPMF_KEY;
-					keynameString = BPMF_CHAR;
+					if(tablename.equals("phonetic")){ // only do this on composing mapping popup
+						if(keyboardtype.equals("milestone")){
+							keyString = MILESTONE_BPMF_KEY;
+							keynameString = MILESTONE_BPMF_CHAR;
+						}else if(keyboardtype.equals("desireZ")){
+							keyString = DESIREZ_BPMF_KEY;
+							keynameString = DESIREZ_BPMF_CHAR;
+						}
+					}else{ // this is for reverse lookup.
+						keyString = BPMF_KEY;
+						keynameString = BPMF_CHAR;
+					}
 				}else if(Rtable.equals("array")) {
 					keyString = ARRAY_KEY;
 					keynameString = ARRAY_CHAR;
@@ -694,67 +717,37 @@ public class LimeDB extends SQLiteOpenHelper {
 		// Add by Jeremy '10, 3, 27. Extension on multi table query.
 
 		List<Mapping> result = new LinkedList<Mapping>();
-		HashSet<String> wordlist = new HashSet<String>();
+
+		//Two-steps qeury code pre-processing. Jeremy '11,6,15
+		// Step.1 Code re-mapping.  
+		code = preProcessingRemappingCode(code, softKeyboard);
+		// Step.2 Build extra query conditions. (e.g. 3row remap)
+		String extraConditions = preProcessingForExtraQueryConditions(code, softKeyboard);
+		
+		//Jeremy '11,6,11 seperated suggestions sorting option for physical keyboard
+		boolean sort = true;
+		if(softKeyboard) sort = mLIMEPref.getSortSuggestions();
+		else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
+		
+		if(DEBUG) Log.i("LIMEDB;getmapping()","sort:"+ sort +" soft:" + 
+						mLIMEPref.getSortSuggestions()+" physical:"+mLIMEPref.getSortSuggestions());
 
 		try{
-			if (code != null && !code.trim().equals("")) {
-	
-				code = code.toLowerCase();
+			if (!code.equals("")) {
 				Cursor cursor = null;
 				SQLiteDatabase db = this.getSqliteDb(true);
-			
-				//Jeremy '11,6,11 seperated suggestions sorting option for physical keyboard
-				boolean sort = true;
-				if(softKeyboard) sort = mLIMEPref.getSortSuggestions();
-				else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
-				
-				//Log.i("LIMEDB;getmapping()","sort:"+ sort +" soft:" + mLIMEPref.getSortSuggestions()+" physical:"+mLIMEPref.getSortSuggestions());
-				
-			
-				boolean remap3row = mLIMEPref.getThreerowRemapping();
-							
-				boolean iscode3r = false;
-	
-				String code3r = code;
-				if(!softKeyboard){
-					for (int i = 0; i < LIME.THREE_ROW_KEY.length(); i++) {
-						code3r = code3r.replace(LIME.THREE_ROW_KEY.substring(i, i + 1), LIME.THREE_ROW_KEY_REMAP.substring(i, i + 1));
-					}
-					if(!code3r.equalsIgnoreCase(code)){
-						iscode3r = true;
-						code3r = expandCode3r(code);
-					}
-				}
-				
-				// Process the escape characters of query
-				if(code != null){
-					code = code.replaceAll("'", "''");
-				}
-				
-				//Log.i("ART","==>remap3row:"+remap3row);
-				//Log.i("ART","==>code3r:"+code3r + " / "+ iscode3r + " from code:"+code);
-	
 				try {
-	
-					// When Code3r mode is enable
-					if(remap3row && iscode3r && !softKeyboard){
-						if(sort){
-							cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' " + code3r
-									, null, null, null, FIELD_SCORE +" DESC", null);
-							//Log.i("ART","SORT -> run code3r a:"+tablename + " ->count:" + cursor.getCount() + " " + FIELD_CODE + " = '" + code + "' " + code3r);
-						}else{
-							cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' " + code3r
-									, null, null, null, null, null);
-							//Log.i("ART","NO SORT -> run code3r a:"+tablename + " ->count:" + cursor.getCount() + " " + FIELD_CODE + " = '" + code + "' " + code3r);
-						}
+					// Jeremy '11,6,15 Using query with proprocessed code and extra query conditions.
+					if(sort){
+						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' " + extraConditions
+								, null, null, null, FIELD_SCORE +" DESC", null);
+						//Log.i("ART","SORT -> run code3r a:"+tablename + " ->count:" + cursor.getCount() + " " + FIELD_CODE + " = '" + code + "' " + code3r);
 					}else{
-						// When Code3r mode is disable
-						if(sort){
-							cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "'", null, null, null, FIELD_SCORE +" DESC", null);
-						}else{
-							cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "'", null, null, null, null, null);
-						}
+						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' " + extraConditions
+								, null, null, null, null, null);
+						//Log.i("ART","NO SORT -> run code3r a:"+tablename + " ->count:" + cursor.getCount() + " " + FIELD_CODE + " = '" + code + "' " + code3r);
 					}
+					
 	
 					result = buildQueryResult(cursor);
 	
@@ -771,6 +764,49 @@ public class LimeDB extends SQLiteOpenHelper {
 			e.printStackTrace();
 		}
 		return result;
+	}
+	
+	private String preProcessingRemappingCode(String code, boolean softKeyboard){
+
+		if(code != null){
+			if(tablename.equals("phonetic")){
+			//Desire Z phonetic keybaord
+			
+			//Eten 40 keys keyboard
+			
+			//Eten 26 keys keyboard
+			}
+			//Process the escape characters of query
+			code = code.replaceAll("'", "''");
+			
+			return code;
+		}else
+			return "";
+	}
+	
+	private String preProcessingForExtraQueryConditions(String code, boolean softKeyboard){
+		
+		if(!softKeyboard){
+			String keyboard = mLIMEPref.getPhysicalKeyboardType();
+			String code3r =code;
+			String threeRowKey = "";
+			String threeRwoKeyRemap = "";
+			if(keyboard.equals("milestone") ){
+				threeRowKey = LIME.THREE_ROW_KEY;
+				threeRwoKeyRemap = LIME.THREE_ROW_KEY_REMAP;
+			}else if(keyboard.equals("desireZ") && !softKeyboard && !tablename.equals("phonetic")){
+				//only do 3row remapping on tables other than phnetic 
+				threeRowKey = LIME.DESIREZ_THREE_ROW_KEY;
+				threeRwoKeyRemap = LIME.DESIREZ_THREE_ROW_KEY_REMAP;
+			}
+			for (int i = 0; i < threeRowKey.length(); i++) {
+				code3r = code3r.replace(threeRowKey.substring(i, i + 1), threeRwoKeyRemap.substring(i, i + 1));
+			}
+			if(!code3r.equalsIgnoreCase(code)){
+				return expandCode3r(code);
+			}
+		}
+		return "";
 	}
 	
 	private String expandCode3r(String code){

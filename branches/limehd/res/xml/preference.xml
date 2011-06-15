@@ -71,11 +71,19 @@
     			android:entryValues="@array/selkey_options_values" 
     			android:dialogTitle="@string/selkey_option_list" 
     			android:defaultValue="0"/>  
-    <CheckBoxPreference
+    <!-- CheckBoxPreference
                 android:key="three_rows_remapping"
                 android:title="@string/three_rows_remapping" 
                 android:defaultValue="false" 
-                android:summary="@string/three_rows_remapping_summary" />
+                android:summary="@string/three_rows_remapping_summary" /-->
+     
+    <ListPreference
+    			android:key="physical_keyboard_type"
+    			android:title="@string/physical_keyboard" 
+    			android:entries="@array/physical_keyboard_options" 
+    			android:entryValues="@array/physical_keyboard_options_values" 
+    			android:dialogTitle="@string/physical_keyboard" 
+    			android:defaultValue="normal_keyboard"/>
     <ListPreference
     			android:key="han_convert_option"
     			android:title="@string/han_convert_option_list" 

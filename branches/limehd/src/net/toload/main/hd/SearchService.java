@@ -193,18 +193,15 @@ public class SearchService extends Service {
 				//recAmount = mLIMEPref.getSimilarCodeCandidates();
 			
 				
-				if (code != null) {
-					Mapping temp = new Mapping();
-						    temp.setCode(code);
-						    temp.setWord(code);
-				    result.add(temp);
-				    // Do this in updatecandidates already
-					code = code.toLowerCase();
-					if(code.length() == 1){
-						preresultlist = new LinkedList<Mapping>();
-					}
-				}
+				Mapping temp = new Mapping();
+				temp.setWord(code);
+				code = code.trim().toLowerCase();
+				temp.setCode(code);
+				result.add(temp);
 				
+				if(code.length() == 1){
+					preresultlist = new LinkedList<Mapping>();
+				}
 				
 			    List<Mapping> cacheTemp = cache.get(db.getTablename()+code);
 			    
@@ -223,7 +220,6 @@ public class SearchService extends Service {
 								cache.get(db.getTablename()+code.subSequence(0, code.length()-1)) != null && 
 								cache.get(db.getTablename()+code.subSequence(0, code.length()-2)) != null 
 						){ 
-							boolean similiarCheck = true;
 							result.addAll(preresultlist);
 						}
 					}

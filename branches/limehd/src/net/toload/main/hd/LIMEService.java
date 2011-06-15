@@ -1247,6 +1247,13 @@ public class LIMEService extends InputMethodService implements
 			}
 
 			break;
+		case KeyEvent.KEYCODE_SYM:  // for Desize Z??
+			if (keyPressTime != 0 && System.currentTimeMillis() - keyPressTime > 700) {
+				switchChiEng();
+				return true;
+			}
+			break;
+			
 		case KeyEvent.KEYCODE_SPACE:
 			SharedPreferences sp = PreferenceManager
 					.getDefaultSharedPreferences(this);

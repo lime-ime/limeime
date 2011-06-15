@@ -54,6 +54,8 @@
     <string name="number_row_in_english">Show number row in English mode</string>
     <string name="number_row_in_english_summary">Show number row in English keyboards (5 rows keyboard).</string>
     
+    <string name="physical_keyboard">Physical keyboard selection</string>
+    
     <string name="three_rows_remapping">3 Rows Keybaord Remapping</string>
     <string name="three_rows_remapping_summary">Mapping 1234567890-; to qwertyuiopv.</string>
     
@@ -193,6 +195,18 @@
 		<item>0</item>
 		<item>1</item>
 		<item>2</item>
+	</string-array>
+	
+	<!-- Physical keyboard options List -->
+	<string-array name="physical_keyboard_options">
+		<item>Normal keyboard</item>
+		<item>Milestone/Milestone 2</item>
+		<item>Desire Z</item>
+	</string-array>
+	<string-array name="physical_keyboard_options_values">
+		<item>normal_keyboard</item>
+		<item>milestone</item>
+		<item>desireZ</item>
 	</string-array>
 	
 	

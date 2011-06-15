@@ -231,6 +231,12 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("three_rows_remapping", false);
 	}
 	
+	public String getPhysicalKeyboardType(){
+		
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getString("physical_keyboard_type", "normal_keyboard");
+	}
+	
 	public boolean getAutoCaptalization(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
