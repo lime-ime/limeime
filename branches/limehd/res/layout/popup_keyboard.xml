@@ -17,15 +17,33 @@
 ** limitations under the License.
 */
 -->
-<net.toload.main.hd.LIMEKeyboardView
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/keyboard"
+<LinearLayout
+		xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		android:background="@drawable/keyboard_popup_panel_background"
+		>
+		
+	<android.inputmethodservice.KeyboardView
+	android:background="@android:color/transparent"
+		android:id="@android:id/keyboardView"
         android:layout_alignParentBottom="true"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/keyboard_background"
         android:keyBackground="@drawable/btn_keyboard_key"
         android:keyTextSize = "@dimen/key_text_size"
         android:labelTextSize = "@dimen/label_text_size"
         android:popupLayout="@layout/popup_keyboard"
         />
+
+<ImageButton android:id="@android:id/closeButton"
+		android:background="@android:color/transparent"
+		android:src="@drawable/btn_close"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="center"
+		android:layout_marginLeft="8dp"
+		android:clickable="true"
+		/>
+</LinearLayout>
