@@ -121,6 +121,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	private int ncount = 0;
 	private boolean finish = false;
 	private boolean relatedfinish = false;
+	//Jeremy '11,6,16 keep the soft/physical keyboard flag from getmapping()
+	private boolean isPhysicalKeyboardPressed = false;
 
 	private LIMEPreferenceManager mLIMEPref;
 	private Map<String, String> code3rMap = new HashMap<String, String>();
@@ -596,7 +598,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 //Rewrite by Jeremy 11,6,4.  Supoort for array and dayi now.
 	public String keyToKeyname(String code, String Rtable) {
-		if(keysDefMap.get(Rtable)==null|| keysDefMap.get(Rtable).size()==0){
+		if(keysDefMap.get(Rtable+String.valueOf(isPhysicalKeyboardPressed))==null
+				|| keysDefMap.get(Rtable+String.valueOf(isPhysicalKeyboardPressed)).size()==0){
 			String keyString="", keynameString="";
 			//Jeremy 11,6,4 Load keys and keynames from im table.
 			keyString = getImInfo(Rtable,"imkeys");
@@ -609,7 +612,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					keyString = CJ_KEY;
 					keynameString = CJ_CHAR;
 				}else if(Rtable.equals("phonetic")) {
-					if(tablename.equals("phonetic")){ // only do this on composing mapping popup
+					if(isPhysicalKeyboardPressed){ // only do this on composing mapping popup
 						if(keyboardtype.equals("milestone")){
 							keyString = MILESTONE_BPMF_KEY;
 							keynameString = MILESTONE_BPMF_CHAR;
@@ -617,7 +620,7 @@ public class LimeDB extends SQLiteOpenHelper {
 							keyString = DESIREZ_BPMF_KEY;
 							keynameString = DESIREZ_BPMF_CHAR;
 						}
-					}else{ // this is for reverse lookup.
+					}else{ 
 						keyString = BPMF_KEY;
 						keynameString = BPMF_CHAR;
 					}
@@ -634,17 +637,18 @@ public class LimeDB extends SQLiteOpenHelper {
 			for (int i = 0; i < keyString.length(); i++) {
 				keyMap.put(keyString.substring(i, i + 1), charlist[i]);			
 			}
-			keysDefMap.put(Rtable, keyMap);
+			keysDefMap.put(Rtable+String.valueOf(isPhysicalKeyboardPressed), keyMap);
 			
 		}
 		
-		if(keysDefMap.get(Rtable)==null || keysDefMap.get(Rtable).size()==0){
+		if(keysDefMap.get(Rtable+String.valueOf(isPhysicalKeyboardPressed))==null 
+				|| keysDefMap.get(Rtable+String.valueOf(isPhysicalKeyboardPressed)).size()==0){
 			if(DEBUG) Log.i("limedb:keyToKeyname()","nokeysDefMap found!!");
 			return code;
 		}
 		else{
 			String result = new String("");
-			HashMap <String,String> keyMap = keysDefMap.get(Rtable);
+			HashMap <String,String> keyMap = keysDefMap.get(Rtable+String.valueOf(isPhysicalKeyboardPressed));
 			for (int i = 0; i < code.length(); i++) {
 				String c = keyMap.get(code.substring(i, i + 1));
 				if(c!=null) result = result + c;
@@ -712,18 +716,17 @@ public class LimeDB extends SQLiteOpenHelper {
 	 */
 	public List<Mapping> getMapping(String code, boolean softKeyboard) {
 
-		//Log.i("ART", "run get (Mapping):"+ code);
-		//Log.i("ART","Run MAPPING : " + code);
 		// Add by Jeremy '10, 3, 27. Extension on multi table query.
 
 		List<Mapping> result = new LinkedList<Mapping>();
+		
+		isPhysicalKeyboardPressed = !softKeyboard;
 
 		//Two-steps qeury code pre-processing. Jeremy '11,6,15
 		// Step.1 Code re-mapping.  
 		code = preProcessingRemappingCode(code, softKeyboard);
 		// Step.2 Build extra query conditions. (e.g. 3row remap)
 		String extraConditions = preProcessingForExtraQueryConditions(code, softKeyboard);
-		
 		//Jeremy '11,6,11 seperated suggestions sorting option for physical keyboard
 		boolean sort = true;
 		if(softKeyboard) sort = mLIMEPref.getSortSuggestions();
