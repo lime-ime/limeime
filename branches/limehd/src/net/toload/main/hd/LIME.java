@@ -33,10 +33,8 @@ public class LIME {
 	protected static final String TOTAL_USERDICT_RECORD = "total_userdict_record";
 	protected static final String LEARNING_SWITCH = "learning_switch";
 
-	protected final static String THREE_ROW_KEY_REMAP = "1234567890;-";
-	protected final static String THREE_ROW_KEY = "qwertyuiop,v";
-	protected final static String DESIREZ_THREE_ROW_KEY_REMAP = "1234567890;/";
-	protected final static String DESIREZ_THREE_ROW_KEY = "qwertyuiop,l";
+	
+
 
 	protected final static String SEARCHSRV_RESET_CACHE = "searchsrv_reset_cache";
 	protected final static int SEARCHSRV_RESET_CACHE_SIZE = 500;
