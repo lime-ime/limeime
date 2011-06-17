@@ -94,29 +94,64 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String BPMF_KEY = "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-";
 	private final static String BPMF_CHAR = 
 		"ㄅ|ㄆ|ㄇ|ㄈ|ㄉ|ㄊ|ㄋ|ㄌ|ˇ|ㄍ|ㄎ|ㄏ|ˋ|ㄐ|ㄑ|ㄒ|ㄓ|ㄔ|ㄕ|ㄖ|ˊ|ㄗ|ㄘ|ㄙ|˙|ㄧ|ㄨ|ㄩ|ㄚ|ㄛ|ㄜ|ㄝ|ㄞ|ㄟ|ㄠ|ㄡ|ㄢ|ㄣ|ㄤ|ㄥ|ㄦ";
-	private final static String DESIREZ_KEY =            "@qazwsxedcrfvtgbyhnujmik?olp,.";
-	private final static String DESIREZ_BPMF_KEY_REMAP = "1qaz2wsedc5tg6yh4uj8ik9ol0;-,.";
+	private final static String ETEN26_KEY =            	"qazwsxedcrfvtgbyhnujmik?olp";
+	private final static String ETEN26_KEY_REMAP_INITIAL = 	"y8lhnju2vkzewr1tcsmba9d?ixq";
+	private final static String ETEN26_KEY_REMAP_FINAL =   	"o8l,nju7vk6e;r1t-pm3094?i/.";
+	private final static String ETEN26_CHAR_INITIAL = 	
+		"ㄗ|ㄚ|ㄠ|ㄘ|ㄙ|ㄨ|ㄧ|ㄉ|(ㄕ/ㄒ)|ㄜ|ㄈ|(ㄍ/ㄑ)|ㄊ|(ㄐ|ㄓ)|ㄅ|ㄔ|ㄏ|ㄋ|ㄩ|ㄖ|ㄇ|ㄞ|ㄎ|?|ㄛ|ㄌ|ㄆ";
+	private final static String ETEN26_CHAR_FINAL = 	
+		"ㄟ|ㄚ|ㄠ|ㄝ|ㄙ|ㄨ|ㄧ|˙|(ㄕ/ㄒ)|ㄜ|ˊ|(ㄍ/ㄑ)|ㄤ|(ㄐ|ㄓ)|ㄅ|ㄔ|ㄦ|ㄣ|ㄩ|ˇ|ㄢ|ㄞ|ˋ|?|ㄛ|ㄥ|ㄡ";
+	
+	
+	private final static String DESIREZ_KEY =            			"@qazwsxedcrfvtgbyhnujmik?olp,.";
+	private final static String DESIREZ_BPMF_KEY_REMAP = 			"1qaz2wsedc5tg6yh4uj8ik9ol0;-,.";
+	private final static String DESIREZ_ETEN26_KEY_REMAP_INITIAL = 	"@y8lhnju2vkzewr1tcsmba9d?ixq,.";
+	private final static String DESIREZ_ETEN26_KEY_REMAP_FINAL =   	"@o8l,nju7vk6e;r1t-pm3094?i/.,.";
 	private final static String DESIREZ_BPMF_DUALKEY_REMAP = 	"xrfvb3n7m,.p/";
 	private final static String DESIREZ_BPMF_DUALKEY = 			"sedcg6h4jkl0;";
-	private final static String DESIREZ_DUALKEY_REMAP = 		"1234567890;/";
-	private final static String DESIREZ_DUALKEY = 				"qwertyuiop,l";
+	private final static String DESIREZ_DUALKEY_REMAP = 		"1234567890;/='";
+	private final static String DESIREZ_DUALKEY = 				"qwertyuiop,lnm";
 	
 	private final static String DESIREZ_BPMF_CHAR = 
 		"ㄅ|ㄆ|ㄇ|ㄈ|ㄉ|ㄊ|(ㄋ/ㄌ)|(ㄍ/ㄐ)|(ㄎ/ㄑ)|(ㄏ/ㄒ)|ㄓ|ㄔ|(ㄕ/ㄖ)|(ˊ/ˇ)|ㄗ|(ㄘ/ㄙ)|(ˋ/˙)" +
 		"|ㄧ|(ㄨ/ㄩ)|ㄚ|ㄛ|(ㄜ/ㄝ)|ㄞ|ㄟ|(ㄠ/ㄡ)|(ㄢ/ㄣ)|(ㄤ/ㄥ)|ㄦ|,|.";
+	private final static String DESIREZ_ETEN26_CHAR_INITIAL = 	
+		"@|ㄗ|ㄚ|ㄠ|ㄘ|ㄙ|ㄨ|ㄧ|ㄉ|(ㄕ/ㄒ)|ㄜ|ㄈ|(ㄍ/ㄑ)|ㄊ|(ㄐ|ㄓ)|ㄅ|ㄔ|ㄏ|ㄋ|ㄩ|ㄖ|ㄇ|ㄞ|ㄎ|?|ㄛ|ㄌ|ㄆ|,|.";
+	private final static String DESIREZ_ETEN26_CHAR_FINAL = 	
+		"@|ㄟ|ㄚ|ㄠ|ㄝ|ㄙ|ㄨ|ㄧ|˙|(ㄕ/ㄒ)|ㄜ|ˊ|(ㄍ/ㄑ)|ㄤ|(ㄐ|ㄓ)|ㄅ|ㄔ|ㄦ|ㄣ|ㄩ|ˇ|ㄢ|ㄞ|ˋ|?|ㄛ|ㄥ|ㄡ|,|.";
 	private final static String DESIREZ_DAYI_CHAR =
 		"@|(言/石)|人|心|(牛/山)|革|水|(目/一)|日|鹿|(四/工)|土|禾|(王/糸)|手|馬|(門/火)|鳥|魚|(田/艸)|月|雨|"
 		+"(米/木)|立|?|(足/口)|(女/竹)|(金/耳)|(力/虫)|舟";
 	
-	private final static String MILESTONE_KEY = "qazwsxedcrfvtgbyhnujmik,ol.p/";
-	private final static String MILESTONE_DUALKEY_REMAP = 	"1234567890;-";
-	private final static String MILESTONE_DUALKEY = 		"qwertyuiop,v";
+	private final static String ETEN26_DUALKEY_REMAP = 	"o,gf;5p0-/.";
+	private final static String ETEN26_DUALKEY = 		"yhvewrsacxq";
+	
+
+	private final static String MILESTONE_DUALKEY_REMAP = 	"1234567890;-'=";
+	private final static String MILESTONE_DUALKEY = 		"qwertyuiop,?mh"; //Map - to ? (ㄦ in BPMF)
+	private final static String MILESTONE_KEY = 						"qazwsxedcrfvtgbyhnujmik,ol.p/?";
+	private final static String MILESTONE_ETEN26_KEY_REMAP_INITIAL = 	"y8lhnju2vkzewr1tcsmba9d,ix.q/?";
+	private final static String MILESTONE_ETEN26_KEY_REMAP_FINAL =   	"o8l,nju7vk6e;r1t-pm3094,i/../?";
 	private final static String MILESTONE_BPMF_CHAR = 
 		"(ㄅ/ㄆ)|ㄇ|ㄈ|(ㄉ/ㄊ)|ㄋ|ㄌ|(ㄍ/ˇ)|ㄎ|ㄏ|(ㄐ/ˋ)|ㄑ|ㄒ|(ㄓ/ㄔ)|ㄕ|ㄖ|(ㄗ/ˊ)|ㄘ|ㄙ|(ㄧ/˙)" +
-		"|ㄨ|ㄩ|(ㄚ/ㄛ)|ㄜ|ㄝ|(ㄞ/ㄟ)|ㄠ|ㄡ|(ㄢ/ㄣ)|ㄥ|(ㄦ/ㄤ)";
+		"|ㄨ|ㄩ|(ㄚ/ㄛ)|ㄜ|(ㄝ/ㄤ)|(ㄞ/ㄟ)|ㄠ|ㄡ|(ㄢ/ㄣ)|ㄥ|ㄦ";
+	private final static String MILESTONE_ETEN26_CHAR_INITIAL = 	
+		"ㄗ|ㄚ|ㄠ|ㄘ|ㄙ|ㄨ|ㄧ|ㄉ|(ㄕ/ㄒ)|ㄜ|ㄈ|(ㄍ/ㄑ)|ㄊ|(ㄐ|ㄓ)|ㄅ|ㄔ|ㄏ|ㄋ|ㄩ|ㄖ|ㄇ|ㄞ|ㄎ|,|ㄛ|ㄌ|.|ㄆ|,|/|?";
+	private final static String MILESTONE_ETEN26_CHAR_FINAL = 	
+		"ㄟ|ㄚ|ㄠ|ㄝ|ㄙ|ㄨ|ㄧ|˙|(ㄕ/ㄒ)|ㄜ|ˊ|(ㄍ/ㄑ)|ㄤ|(ㄐ|ㄓ)|ㄅ|ㄔ|ㄦ|ㄣ|ㄩ|ˇ|ㄢ|ㄞ|ˋ|,|ㄛ|ㄥ|.|ㄡ|,|/|?";
 	private final static String MILESTONE_DAYI_CHAR = 
 		"(言/石)|人|心|(牛/山)|革|水|(目/一)|日|鹿|(四/工)|土|禾|(王/糸)|手|馬|(門/火)|鳥|魚|(田/艸)|月|雨|"
-		+"(米/木)|立|(力/虫)|(足/口)|女|舟|(金/耳)|竹";
+		+"(米/木)|立|(力/虫)|(足/口)|女|舟|(金/耳)|竹|?";
+	
+	private final static String MILESTONE3_KEY = "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p/";
+	private final static String MILESTONE3_DUALKEY_REMAP = 	";-'=";
+	private final static String MILESTONE3_DUALKEY = 		",/`@";  // mapping ' and = to ` key
+	private final static String MILESTONE3_BPMF_CHAR = 
+		"ㄅ|ㄆ|ㄇ|ㄈ|ㄉ|ㄊ|ㄋ|ㄌ|ˇ|ㄍ|ㄎ|ㄏ|ˋ|ㄐ|ㄑ|ㄒ|ㄓ|ㄔ|ㄕ|ㄖ|ˊ|ㄗ|ㄘ|ㄙ|˙|" +
+		"ㄧ|ㄨ|ㄩ|ㄚ|ㄛ|ㄜ|(ㄝ/ㄤ)|ㄞ|ㄟ|ㄠ|ㄡ|ㄢ|ㄣ|(ㄥ/ㄦ)";
+	private final static String MILESTONE3_DAYI_CHAR = 
+		"言|石|人|心|牛|山|革|水|目|一|日|鹿|四|工|土|禾|王|糸|手|馬|門|火|鳥|魚|田|" +
+		"艸|月|雨|米|木|立|(力/虫)|足|口|女|舟|金|耳|竹";
 	
 
 	private final static String CJ_KEY = "qwertyuiopasdfghjklzxcvbnm";
@@ -608,32 +643,45 @@ public class LimeDB extends SQLiteOpenHelper {
 //Rewrite by Jeremy 11,6,4.  Supoort for array and dayi now.
 	public String keyToKeyname(String code, String Rtable) {
 		String keytable = Rtable;
+		String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 		if(isPhysicalKeyboardPressed){
-			keytable = Rtable + mLIMEPref.getPhysicalKeyboardType();
+			keytable = Rtable + keyboardtype ;
 		}		
 		
 		if(keysDefMap.get(keytable)==null
 				|| keysDefMap.get(keytable).size()==0){
-			String keyString="", keynameString="";
+			String keyString="", keynameString="", finalKeynameString = null;
 			//Jeremy 11,6,4 Load keys and keynames from im table.
-			keyString = getImInfo(Rtable,"imkeys");
-			keynameString = getImInfo(Rtable,"imkeynames");
-			String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
+			//keyString = getImInfo(Rtable,"imkeys");
+			//keynameString = getImInfo(Rtable,"imkeynames");
+			String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
 			if(DEBUG) Log.i("limedb:keyToKeyname()","keyString:"+keyString + " keynameString:" +keynameString);
 			
-			if(keyString.equals("")||keynameString.equals("")){
+			if(Rtable.equals("phonetic")|| !keyboardtype.equals("normal_keyboard")
+					||keyString.equals("")||keynameString.equals("")){
 				if(Rtable.equals("cj")||Rtable.equals("scj")){
 					keyString = CJ_KEY;
 					keynameString = CJ_CHAR;
-				}else if(Rtable.equals("phonetic")) {
-					if(isPhysicalKeyboardPressed){ // only do this on composing mapping popup
-						if(keyboardtype.equals("milestone")){
+				}else if(Rtable.equals("phonetic") ) { // only do this on composing mapping popup
+					if(tablename.equals("phonetic") ){  // only do this on composing mapping popup
+						if(phonetickeyboardtype.equals("eten26")){
+							keyString = ETEN26_KEY;
+							keynameString = ETEN26_KEY_REMAP_INITIAL;
+							finalKeynameString = ETEN26_KEY_REMAP_FINAL;
+						}else if(keyboardtype.equals("milestone") && isPhysicalKeyboardPressed){
 							keyString = MILESTONE_KEY;
 							keynameString = MILESTONE_BPMF_CHAR;
-						}else if(keyboardtype.equals("desireZ")){
+						}else if(keyboardtype.equals("milestone3") && isPhysicalKeyboardPressed){
+								keyString = MILESTONE3_KEY;
+								keynameString = MILESTONE3_BPMF_CHAR;
+						}else if(keyboardtype.equals("desireZ") && isPhysicalKeyboardPressed){
 							keyString = DESIREZ_KEY;
 							keynameString = DESIREZ_BPMF_CHAR;
+						}else{
+							keyString = BPMF_KEY;
+							keynameString = BPMF_CHAR;
 						}
+							
 					}else{ 
 						keyString = BPMF_KEY;
 						keynameString = BPMF_CHAR;
@@ -646,9 +694,15 @@ public class LimeDB extends SQLiteOpenHelper {
 						if(keyboardtype.equals("milestone")){
 							keyString = MILESTONE_KEY;
 							keynameString = MILESTONE_DAYI_CHAR;
+						}else if(keyboardtype.equals("milestone3")){
+								keyString = MILESTONE3_KEY;
+								keynameString = MILESTONE3_DAYI_CHAR;
 						}else if(keyboardtype.equals("desireZ")){
 							keyString = DESIREZ_KEY;
 							keynameString = DESIREZ_DAYI_CHAR;
+						}else{
+							keyString = DAYI_KEY;
+							keynameString = DAYI_CHAR;
 						}
 					}else{
 						keyString = DAYI_KEY;
@@ -657,11 +711,20 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}
 			HashMap<String,String> keyMap = new HashMap<String,String>();
+			HashMap<String,String> finalKeyMap = new HashMap<String,String>();
 			String charlist[] = keynameString.split("\\|");
+			String finalCharlist[] = null;
+			if(finalKeynameString != null)
+				finalCharlist = finalKeynameString.split("\\|");
+				
 			for (int i = 0; i < keyString.length(); i++) {
-				keyMap.put(keyString.substring(i, i + 1), charlist[i]);			
+				keyMap.put(keyString.substring(i, i + 1), charlist[i]);
+				if(finalKeynameString != null)
+					finalKeyMap.put(keyString.substring(i, i + 1), finalCharlist[i]);
 			}
 			keysDefMap.put(keytable, keyMap);
+			if(finalKeynameString != null)
+				keysDefMap.put("final_"+keytable, keyMap);
 			
 		}
 		
@@ -673,10 +736,27 @@ public class LimeDB extends SQLiteOpenHelper {
 		else{
 			String result = new String("");
 			HashMap <String,String> keyMap = keysDefMap.get(keytable);
-			for (int i = 0; i < code.length(); i++) {
-				String c = keyMap.get(code.substring(i, i + 1));
-				if(c!=null) result = result + c;
+			HashMap<String,String> finalKeyMap = keysDefMap.get("final_"+keytable);
+			if(finalKeyMap == null){
+				for (int i = 0; i < code.length(); i++) {
+					String c = keyMap.get(code.substring(i, i + 1));
+					if(c!=null) result = result + c;
+				}
+			}else{
+				if(code.length()==1){
+					result = finalKeyMap.get(code);
+				}else{
+					for (int i = 0; i < code.length(); i++) {
+						String c = "";
+						if(i==0)
+							c = keyMap.get(code.substring(i, i + 1));
+						else
+							c = finalKeyMap.get(code.substring(i, i + 1));
+						if(c!=null) result = result + c;
+					}
+				}
 			}
+				
 			if(DEBUG) Log.i("limedb:keyToKeyname()","returning:" + result);
 			return result;
 		}
@@ -796,42 +876,44 @@ public class LimeDB extends SQLiteOpenHelper {
 	private String preProcessingRemappingCode(String code){
 		if(DEBUG) Log.i("LIMEDB.preProcessingRemappingCode()", "code="+code);
 		if(code != null){
+			String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
+			String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
 			String newcode = code;
-			if(isPhysicalKeyboardPressed){
-				if(tablename.equals("phonetic") && mLIMEPref.getPhysicalKeyboardType().equals("desireZ")){
-					String remaptable = tablename + mLIMEPref.getPhysicalKeyboardType();
-					//Desire Z phonetic keybaord
-					
-					if(keysReMap.get(remaptable)==null
-								|| keysReMap.get(remaptable).size()==0){
-						HashMap<String,String> reMap = new HashMap<String,String>();
-						for (int i = 0; i < DESIREZ_KEY.length(); i++) {
-							reMap.put(DESIREZ_KEY.substring(i, i + 1), 
-									DESIREZ_BPMF_KEY_REMAP.substring(i, i + 1));			
-						}
-						keysReMap.put(remaptable, reMap);
-					}
-					
-					
-					if(keysReMap.get(remaptable)==null 
-							|| keysReMap.get(remaptable).size()==0){
-						return code;
-					}
-					else{
-						HashMap<String,String> reMap = keysReMap.get(remaptable);
-						newcode = "";
-						for (int i = 0; i < code.length(); i++) {
-							String c = reMap.get(code.substring(i, i + 1));
-							if(c!=null) newcode = newcode + c;
-						}
-						if(DEBUG) Log.i("LIMEDB.preProcessingRemappingCode()", "newcode="+newcode);
-				
-					}
-				
-				}
-				//Eten 40 keys keyboard
 			
-				//Eten 26 keys keyboard
+			if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("eten26")){
+				
+			}else if(isPhysicalKeyboardPressed 
+					&& tablename.equals("phonetic") && keyboardtype.equals("desireZ")){
+				
+				String remaptable = tablename + keyboardtype;
+				//Desire Z phonetic keybaord
+					
+				if(keysReMap.get(remaptable)==null
+							|| keysReMap.get(remaptable).size()==0){
+					HashMap<String,String> reMap = new HashMap<String,String>();
+					for (int i = 0; i < DESIREZ_KEY.length(); i++) {
+						reMap.put(DESIREZ_KEY.substring(i, i + 1), 
+								DESIREZ_BPMF_KEY_REMAP.substring(i, i + 1));			
+					}
+					keysReMap.put(remaptable, reMap);
+				}
+					
+					
+				if(keysReMap.get(remaptable)==null 
+						|| keysReMap.get(remaptable).size()==0){
+					return code;
+				}
+				else{
+					HashMap<String,String> reMap = keysReMap.get(remaptable);
+					newcode = "";
+					for (int i = 0; i < code.length(); i++) {
+						String c = reMap.get(code.substring(i, i + 1));
+						if(c!=null) newcode = newcode + c;
+					}
+					if(DEBUG) Log.i("LIMEDB.preProcessingRemappingCode()", "newcode="+newcode);
+			
+				}
+			
 			}
 			//Process the escape characters of query
 			newcode = newcode.replaceAll("'", "''");
@@ -857,13 +939,16 @@ public class LimeDB extends SQLiteOpenHelper {
 				if(keyboardtype.equals("milestone") && isPhysicalKeyboardPressed ){
 					threeRowKey = MILESTONE_DUALKEY;
 					threeRowKeyRemap = MILESTONE_DUALKEY_REMAP;
+				}else if(keyboardtype.equals("milestone3") && isPhysicalKeyboardPressed ){
+						threeRowKey = MILESTONE3_DUALKEY;
+						threeRowKeyRemap = MILESTONE3_DUALKEY_REMAP;
 				}else if(keyboardtype.equals("desireZ") && isPhysicalKeyboardPressed ) 
 					if(tablename.equals("phonetic")){
 				 		threeRowKey = DESIREZ_BPMF_DUALKEY;
 						threeRowKeyRemap = DESIREZ_BPMF_DUALKEY_REMAP;
 					}else{
-						threeRowKeyRemap = DESIREZ_DUALKEY;
-						threeRowKey = DESIREZ_DUALKEY_REMAP;
+						threeRowKey = DESIREZ_DUALKEY;
+						threeRowKeyRemap = DESIREZ_DUALKEY_REMAP;
 					}
 				HashMap<String,String> reMap = new HashMap<String,String>();
 				if(DEBUG)

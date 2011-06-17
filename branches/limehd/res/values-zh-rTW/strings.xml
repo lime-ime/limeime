@@ -59,6 +59,7 @@
     <string name="three_rows_remapping_summary">對應 1234567890-;至 qwertyuiopv.</string>
     
     <string name="physical_keyboard">實體鍵盤選項</string>
+    <string name="phonetic_keyboard">注音鍵盤選項</string>
     
     <string name="prediction_category">英文關聯字設定</string>
     <string name="auto_cap">首字自動大寫</string> 
@@ -197,6 +198,13 @@
 		<item>一般鍵盤</item>
 		<item>Milestone/Milestone 2</item>
 		<item>Desire Z</item>
+		<item>Milestone 3</item>
+	</string-array>
+	
+	<string-array name="phonetic_keyboard_type">
+		<item>標準</item>
+		<item>倚天 (41鍵)</item>
+		<item>倚天26鍵</item>
 	</string-array>
 	
     <!-- IM Reverse Lookup List -->  

@@ -237,6 +237,12 @@ public class LIMEPreferenceManager {
 		return sp.getString("physical_keyboard_type", "normal_keyboard");
 	}
 	
+	public String getPhoneticKeyboardType(){
+		
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getString("phonetic_keyboard_type", "standard");
+	}
+	
 	public boolean getAutoCaptalization(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);

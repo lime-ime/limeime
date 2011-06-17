@@ -76,7 +76,14 @@
                 android:title="@string/three_rows_remapping" 
                 android:defaultValue="false" 
                 android:summary="@string/three_rows_remapping_summary" /-->
-     
+    <ListPreference
+    			android:key="phonetic_keyboard_type"
+    			android:title="@string/phonetic_keyboard" 
+    			android:entries="@array/phonetic_keyboard_type" 
+    			android:entryValues="@array/phonetic_keyboard_type_values" 
+    			android:dialogTitle="@string/phonetic_keyboard" 
+    			android:defaultValue="standard"/>
+    			
     <ListPreference
     			android:key="physical_keyboard_type"
     			android:title="@string/physical_keyboard" 

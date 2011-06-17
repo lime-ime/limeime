@@ -70,6 +70,7 @@ public class SearchService extends Service {
 	private static boolean hasNumberMapping;
 	private static boolean hasSymbolMapping;
 	
+	
 	private static List<Mapping> preresultlist = null;
 	//private static String precode = null;
 	
@@ -202,8 +203,12 @@ public class SearchService extends Service {
 				if(code.length() == 1){
 					preresultlist = new LinkedList<Mapping>();
 				}
+				//Jeremy '11,6,17 Seperate physical keyboard cache with keybaordtype
+				String cacheKey="";
+				if(softkeyboard)	cacheKey = db.getTablename()+code;
+				else 				cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()+code;
 				
-			    List<Mapping> cacheTemp = cache.get(db.getTablename()+code);
+			    List<Mapping> cacheTemp = cache.get(cacheKey);
 			    
 				if(cacheTemp != null){
 					result.addAll(cacheTemp);
@@ -214,11 +219,11 @@ public class SearchService extends Service {
 					if(templist.size() > 0){
 						result.addAll(templist);
 						preresultlist = templist;
-						cache.put(db.getTablename()+code, templist);
+						cache.put(cacheKey, templist);
 					}else{
 						if(code.length() > 3 &&  
-								cache.get(db.getTablename()+code.subSequence(0, code.length()-1)) != null && 
-								cache.get(db.getTablename()+code.subSequence(0, code.length()-2)) != null 
+								cache.get(cacheKey.subSequence(0, code.length()-1)) != null && 
+								cache.get(cacheKey.subSequence(0, code.length()-2)) != null 
 						){ 
 							result.addAll(preresultlist);
 						}
@@ -296,7 +301,13 @@ public class SearchService extends Service {
 					if(scorelist.get(i).getId()==null){ // Force to delete the cached item.
 						String code = scorelist.get(i).getCode().toLowerCase();
 						//Log.i("SearchService:updateUserdict()","force to delete cached item, code = " + code);
-						cache.remove(db.getTablename()+code);
+						//Jeremy '11,6,17
+						String cacheKey;
+						if(softkeypressed)
+							cacheKey = db.getTablename()+code;
+						else 
+							cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()+code;
+						cache.remove(cacheKey);
 					}
 					
 						
