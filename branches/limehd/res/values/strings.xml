@@ -206,7 +206,7 @@
 		<item>Milestone 3</item>
 	</string-array>
 	<string-array name="physical_keyboard_options_values">
-		<item>Standard_keyboard</item>
+		<item>normal_keyboard</item>
 		<item>milestone</item>
 		<item>desireZ</item>
 		<item>milestone3</item>
