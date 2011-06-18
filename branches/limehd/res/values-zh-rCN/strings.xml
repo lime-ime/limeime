@@ -273,8 +273,9 @@
 	<!-- Physical keyboard options List -->
 	<string-array name="physical_keyboard_options">
 		<item>一般键盘</item>
-		<item>Milestone/Milestone 2</item>
 		<item>Desire Z</item>
+		<item>Milestone</item>
+		<item>Milestone 2</item>
 		<item>Milestone 3</item>
 	</string-array>
 	
