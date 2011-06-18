@@ -1840,6 +1840,23 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 		return kobj;
 	}
+	
+	public String getKeyboardInfo(String keyboardCode, String field) {
+		String info=null;
+		try {
+			SQLiteDatabase db = this.getSqliteDb(true);
+			Cursor cursor = db.query("keyboard", null, FIELD_CODE +" = '"+keyboardCode+"'"
+					, null, null, null, null, null);
+			if (cursor.moveToFirst()) {
+				info = cursor.getString(cursor.getColumnIndex(field));
+			}
+			db.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return info;
+	
+	}
 
 	public List<KeyboardObj> getKeyboardList() {
 		List<KeyboardObj> result = new LinkedList<KeyboardObj>();

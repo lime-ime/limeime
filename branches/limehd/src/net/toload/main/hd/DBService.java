@@ -398,7 +398,13 @@ public class DBService extends Service {
 			if (db == null) {loadLimeDB();}
 			return db.getImInfo(im, field);
 		}
-
+		
+		@Override
+		public String getKeyboardInfo(String keyboardCode, String field) throws RemoteException {
+			if (db == null) {loadLimeDB();}
+			return db.getKeyboardInfo(keyboardCode, field);
+		}
+		
 		@Override
 		public void removeImInfo(String im, String field)
 				throws RemoteException {

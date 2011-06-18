@@ -359,9 +359,10 @@ public class LIMEService extends InputMethodService implements
 		mKeyboardSwitcher.setInputView(mInputView);
 		mKeyboardSwitcher.makeKeyboards(true);
 		mInputView.setOnKeyboardActionListener(this);
+		
 
-		mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,
-				EditorInfo.IME_ACTION_NEXT, true, false, false);
+		//mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,
+		//		EditorInfo.IME_ACTION_NEXT, true, false, false);
 
 		// mKeyboardSwitcher.setKeyboardMode(
 		// LIMEKeyboardSwitcher.MODE_TEXT_DEFAULT, 0);
@@ -467,6 +468,7 @@ public class LIMEService extends InputMethodService implements
 		initOnStartInput(attribute, restarting);
 	}
 
+	@SuppressWarnings("unchecked")
 	private void initOnStartInput(EditorInfo attribute, boolean restarting) {
 	
 		if (DEBUG)
@@ -474,7 +476,14 @@ public class LIMEService extends InputMethodService implements
 		if (mInputView == null) {
 			return;
 		}
-
+		// Reset the IM softkeyboard settings. Jeremy '11,6,19
+		try {
+			//mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
+			mKeyboardSwitcher.setImList(SearchSrv.getImList());
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+		
 		// Reset templist
 		this.firstMatched = null;
 		//this.hasFirstMatched = false;

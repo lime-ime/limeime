@@ -18,5 +18,6 @@ interface IDBService
 	String getImInfo(String im, String field);
 	String getKeyboardCode(String im);
 	List getKeyboardList();
+	String getKeyboardInfo(String keyboardCode, String field);
 	
 }
