@@ -30,25 +30,21 @@ import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
-import android.util.AttributeSet;
+
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.MeasureSpec;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import net.toload.main.hd.R;
-import net.toload.main.hd.R.color;
-import net.toload.main.hd.R.dimen;
 
 /**
  * @author Art Hung
@@ -64,7 +60,7 @@ public class CandidateView extends View {
     private int mSelectedIndex;
     private int mTouchX = OUT_OF_BOUNDS;
     private Drawable mSelectionHighlight;
-    private boolean mTypedWordValid;
+    //private boolean mTypedWordValid;
     private boolean mShowNumber; //Jeremy '11,5,25 for showing physical keyboard number or not.
     
     private Rect mBgPadding;
@@ -78,7 +74,7 @@ public class CandidateView extends View {
     //Composing view
 	private TextView mComposingTextView;
 	private PopupWindow mComposingTextPopup;
-	private int mDescent;
+	//private int mDescent;
 	private String mComposingText = "";
     
     private int[] mWordWidth = new int[MAX_SUGGESTIONS];
@@ -96,7 +92,7 @@ public class CandidateView extends View {
     private int mColorRecommended;
     private int mColorOther;
     private int mColorNumber;
-    private int mVerticalPadding;
+    //private int mVerticalPadding;
     private Paint mPaint;
     private Paint nPaint;
     private boolean mScrolled;
@@ -141,7 +137,7 @@ public class CandidateView extends View {
         mColorRecommended = r.getColor(R.color.candidate_recommended);
         mColorOther = r.getColor(R.color.candidate_other);
         mColorNumber = r.getColor(R.color.candidate_number);
-        mVerticalPadding = r.getDimensionPixelSize(R.dimen.candidate_vertical_padding);
+        //mVerticalPadding = r.getDimensionPixelSize(R.dimen.candidate_vertical_padding);
         
         
      // Composing buffer textView
@@ -167,7 +163,7 @@ public class CandidateView extends View {
         nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_height));
         nPaint.setStyle(Paint.Style.FILL_AND_STROKE);
         
-        mDescent = (int) mPaint.descent();
+        //mDescent = (int) mPaint.descent();
 
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         
@@ -231,10 +227,12 @@ public class CandidateView extends View {
     	if(composingText != null && !composingText.trim().equals("")){
         	mComposingText = composingText;
         	mComposingTextView.setText(mComposingText);
-        	showComposing();
     	}else{
-    		mComposingTextView.setVisibility(View.INVISIBLE);
+    		mComposingText = "";
+    		hideComposing();
     	}
+    	
+    	 if(DEBUG) Log.i("Canddateview:setComposingText()","mComposingText:"+mComposingText);
     }
     public String getComposingText(String ComposingText){
 		return mComposingText;
@@ -435,7 +433,7 @@ public class CandidateView extends View {
             scrollToTarget();
         }
         
-        //showComposing();
+        showComposing();
     }
     
     private void scrollToTarget() {
@@ -496,7 +494,7 @@ public class CandidateView extends View {
 	            setBackgroundColor(0);
 	        }
 	        
-	        mTypedWordValid = typedWordValid;
+	        //mTypedWordValid = typedWordValid;
 	        scrollTo(0, 0);
 	        mTargetScrollX = 0;
 	        // Compute the total width
@@ -519,6 +517,7 @@ public class CandidateView extends View {
         //hideComposing();
         setComposingText("");
         invalidate();
+       
     }
     
     @Override
@@ -613,7 +612,6 @@ public class CandidateView extends View {
     
     private void updateScrollPosition(int targetX) {
         if (targetX != mTouchX) {
-            // TODO: Animate
         	mTargetScrollX = targetX;
             requestLayout();
             invalidate();

@@ -24,17 +24,12 @@ import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.media.AudioManager;
-import android.os.Build;
-import android.os.Debug;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
-import android.text.InputType;
-import android.text.AutoText;
+//import android.text.AutoText;
 import android.text.TextUtils;
-import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyCharacterMap;
@@ -47,7 +42,6 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -55,7 +49,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.lang.reflect.Method;
 
 import android.app.AlertDialog;
 import android.app.Service;
@@ -84,23 +77,23 @@ public class LIMEService extends InputMethodService implements
 
 	private StringBuilder mComposing = new StringBuilder();
 
-	private boolean isModeURL = false;
-	private boolean isModePassword = false;
+	//private boolean isModeURL = false;
+	//private boolean isModePassword = false;
 	private boolean mPredictionOn;
 	private boolean mCompletionOn;
 	private boolean mCapsLock;
 	private boolean mAutoCap;
-	private boolean mQuickFixes;
+	//private boolean mQuickFixes;
 	private boolean mHasShift;
 
 	private boolean mEnglishOnly;
 	private boolean mEnglishFlagShift;
 	private boolean mEnglishIMStart;
 	
-	private boolean mPredictionOnPhysicalKeyboard = false;
+	//private boolean mPredictionOnPhysicalKeyboard = false;
 
 	private boolean onIM = true;
-	private boolean hasFirstMatched = false;
+	//private boolean hasFirstMatched = false;
 
 	// if getMapping result has record then set to 'true'
 	private boolean hasMappingList = false;
@@ -108,31 +101,29 @@ public class LIMEService extends InputMethodService implements
 	private boolean keydown = false;
 
 	private long mMetaState;
-	private boolean mJustAccepted;
-	private CharSequence mJustRevertedSeparator;
+	//private boolean mJustAccepted;
+	//private CharSequence mJustRevertedSeparator;
 	private int mImeOptions;
-
-	private int mLastDisplayWidth;
 
 	LIMEKeyboardSwitcher mKeyboardSwitcher;
 
 	private UserDictionary mUserDictionary;
-	private ContactsDictionary mContactsDictionary;
-	private ExpandableDictionary mAutoDictionary;
+	//private ContactsDictionary mContactsDictionary;
+	//private ExpandableDictionary mAutoDictionary;
 	
 
-	private boolean mAutoSpace;
-	private boolean mAutoCorrectOn;
-	private boolean mShowSuggestions;
-	private int mCorrectionMode;
+	//private boolean mAutoSpace;
+	//private boolean mAutoCorrectOn;
+	//private boolean mShowSuggestions;
+	//private int mCorrectionMode;
 	private int mOrientation;
 	private boolean mPredicting;
 	private String mLocale;
-	private int mDeleteCount;
+	//private int mDeleteCount;
 
-	private Suggest mSuggest;
+	//private Suggest mSuggest;
 
-	private String mSentenceSeparators;
+	//private String mSentenceSeparators;
 
 	private Mapping firstMatched;
 	private Mapping tempMatched;
@@ -142,7 +133,7 @@ public class LIMEService extends InputMethodService implements
 
 	private boolean isPressPhysicalKeyboard;
 
-	private String mWordSeparators;
+	//private String mWordSeparators;
 	private String misMatched;
 
 	private LinkedList<Mapping> templist;
@@ -167,7 +158,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasShiftPress = false;
 	private boolean hasShiftProcessed = false; // Jeremy '11,6.18
 	private boolean hasCtrlPress = false; // Jeremy '11,5,13
-	private boolean hasCtrlProcessed = false; // Jeremy '11,6.18
+	//private boolean hasCtrlProcessed = false; // Jeremy '11,6.18
 	private boolean hasMenuPress = false; // Jeremy '11,5,29
 	private boolean hasMenuProcessed = false; // Jeremy '11,5,29
 	private boolean hasSearchPress = false; // Jeremy '11,5,29
@@ -177,7 +168,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasSpaceProcessed = false;
 	
 	
-	private boolean hasSymbolEntered = false; //Jeremy '11,5,24 
+	//private boolean hasSymbolEntered = false; //Jeremy '11,5,24 
 
 	// private boolean hasSpacePress = false;
 
@@ -289,6 +280,7 @@ public class LIMEService extends InputMethodService implements
 
 	}
 
+	/*
 	private void initSuggest(String locale) {
 		mLocale = locale;
 		// mSuggest = new Suggest(this, R.raw.main);
@@ -303,7 +295,7 @@ public class LIMEService extends InputMethodService implements
 		mSentenceSeparators = getResources().getString(
 				R.string.sentence_separators);
 	}
-
+	*/
 	/**
 	 * This is the point where you can do all of your UI initialization. It is
 	 * called after creation and any configuration change.
@@ -414,6 +406,7 @@ public class LIMEService extends InputMethodService implements
 	 * This is called when the user is done editing a field. We can use this to
 	 * reset our state.
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void onFinishInput() {
 		
@@ -484,7 +477,7 @@ public class LIMEService extends InputMethodService implements
 
 		// Reset templist
 		this.firstMatched = null;
-		this.hasFirstMatched = false;
+		//this.hasFirstMatched = false;
 		if(templist != null){
 			templist.clear();
 		}
@@ -497,15 +490,15 @@ public class LIMEService extends InputMethodService implements
 		mImeOptions = attribute.imeOptions;
 
 		initialKeyboard();
-		boolean disableAutoCorrect = false;
+		//boolean disableAutoCorrect = false;
 		mPredictionOn = true;
 		mCompletionOn = false;
 		mCompletions = null;
 		mCapsLock = false;
 		mHasShift = false;
 		mEnglishOnly = false;
-		isModeURL = false;
-		isModePassword = false;
+		//isModeURL = false;
+		//isModePassword = false;
 
 		tempEnglishWord = new StringBuffer();
 		tempEnglishList = new LinkedList<Mapping>();
@@ -533,7 +526,7 @@ public class LIMEService extends InputMethodService implements
 			if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD
 					|| variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
 				mPredictionOn = false;
-				isModePassword = true;
+				//isModePassword = true;
 				mEnglishOnly = true;
 				onIM = false;
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,
@@ -541,26 +534,26 @@ public class LIMEService extends InputMethodService implements
 			}
 			if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
 					|| variation == EditorInfo.TYPE_TEXT_VARIATION_PERSON_NAME) {
-				mAutoSpace = false;
+				//mAutoSpace = false;
 			} else {
-				mAutoSpace = true;
+				//mAutoSpace = true;
 			}
 			if (variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
 				mPredictionOn = false;
 			}
 			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0) {
-				disableAutoCorrect = true;
+				//disableAutoCorrect = true;
 			}
 			// If NO_SUGGESTIONS is set, don't do prediction.
 			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0) {
 				mPredictionOn = false;
-				disableAutoCorrect = true;
+				//disableAutoCorrect = true;
 			}
 			// If it's not multiline and the autoCorrect flag is not set, then
 			// don't correct
 			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_CORRECT) == 0
 					&& (attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) == 0) {
-				disableAutoCorrect = true;
+				//disableAutoCorrect = true;
 			}
 			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_COMPLETE) != 0) {
 				mPredictionOn = false;
@@ -577,24 +570,12 @@ public class LIMEService extends InputMethodService implements
 				mPredictionOn = false;
 				mEnglishOnly = true;
 				onIM = false;
-				isModeURL = true;
+				//isModeURL = true;
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 						LIMEKeyboardSwitcher.MODE_URL, mImeOptions, false, false, false);
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
 			
-			//} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT) {
-				
-				/*
-				if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) != 0
-						|| (attribute.inputType & EditorInfo.TYPE_CLASS_TEXT) == 0) {
-					mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,
-							EditorInfo.IME_ACTION_NONE, true, false, false);
-				} else {
-					mKeyboardSwitcher.setKeyboardMode(keyboardSelection, 0,
-							EditorInfo.IME_ACTION_NEXT, true, false, false);
-				}
-				*/
 			} else { 
 				if(mEnglishIMStart){
 		        	mPredictionOn = true;
@@ -619,7 +600,7 @@ public class LIMEService extends InputMethodService implements
 		mInputView.closing();
 		mComposing.setLength(0);
 		mPredicting = false;
-		mDeleteCount = 0;
+		//mDeleteCount = 0;
 
 		/*
 		 * // Override auto correct if (disableAutoCorrect) { mAutoCorrectOn =
@@ -649,21 +630,21 @@ public class LIMEService extends InputMethodService implements
 		keyboardSelection = mLIMEPref.getKeyboardSelection();//sp.getString("keyboard_list", "custom");
 		hasQuickSwitch = mLIMEPref.getSwitchEnglishModeHotKey();//sp.getBoolean("switch_english_mode", false);
 		mAutoCap = true; // sp.getBoolean(PREF_AUTO_CAP, true);
-		mQuickFixes = true;// sp.getBoolean(PREF_QUICK_FIXES, true);
+		//mQuickFixes = true;
 		// If there is no auto text data, then quickfix is forced to "on", so
 		// that the other options
 		// will continue to work
-		if (AutoText.getSize(mInputView) < 1)
-			mQuickFixes = true;
-		mShowSuggestions = true & mQuickFixes;// sp.getBoolean(PREF_SHOW_SUGGESTIONS,
+		//if (AutoText.getSize(mInputView) < 1)
+			//mQuickFixes = true;
+		//mShowSuggestions = true & mQuickFixes;// sp.getBoolean(PREF_SHOW_SUGGESTIONS,
 		// true) & mQuickFixes;
-		boolean autoComplete = true;// sp.getBoolean(PREF_AUTO_COMPLETE,
+		//boolean autoComplete = true;// sp.getBoolean(PREF_AUTO_COMPLETE,
 		// getResources().getBoolean(R.bool.enable_autocorrect)) &
 		// mShowSuggestions;
-		mAutoCorrectOn = mSuggest != null && (autoComplete || mQuickFixes);
-		mCorrectionMode = autoComplete ? Suggest.CORRECTION_FULL
-				: (mQuickFixes ? Suggest.CORRECTION_BASIC
-						: Suggest.CORRECTION_NONE);
+		//mAutoCorrectOn = mSuggest != null && (autoComplete || mQuickFixes);
+		//mCorrectionMode = autoComplete ? Suggest.CORRECTION_FULL
+		//		: (mQuickFixes ? Suggest.CORRECTION_BASIC
+		//				: Suggest.CORRECTION_NONE);
 	}
 
 	/**
@@ -695,6 +676,7 @@ public class LIMEService extends InputMethodService implements
 	 * the completions ourself, since the editor can not be seen in that
 	 * situation.
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void onDisplayCompletions(CompletionInfo[] completions) {
 		if (DEBUG)
@@ -772,7 +754,7 @@ public class LIMEService extends InputMethodService implements
 					+ hasCtrlPress);
 		}
 		//hasKeyPress = false;
-		hasSymbolEntered = false;
+		//hasSymbolEntered = false;
 
 		//Log.i("ART", "Physical Keyboard ->" + keyCode);
 
@@ -945,9 +927,11 @@ public class LIMEService extends InputMethodService implements
 					}
 				}
 			}else{
-				if(mLIMEPref.getEnglishEnable())
+				if (mLIMEPref.getEnglishEnable() && mPredictionOn
+						&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishEnablePhysicalKeyboard())){
 					resetTempEnglishWord();
-				this.updateEnglishDictionaryView();
+					this.updateEnglishDictionaryView();
+				}
 			}
 			break;
 
@@ -972,8 +956,8 @@ public class LIMEService extends InputMethodService implements
 			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress) { 
 				this.switchChiEng();
 				if(hasMenuPress)  hasMenuProcessed = true;
-				if(hasCtrlPress)  hasCtrlProcessed = true;
-				if(hasShiftPress) hasShiftProcessed = true;
+				//if(hasCtrlPress)  hasCtrlProcessed = true;
+				//if(hasShiftPress) hasShiftProcessed = true;
 				hasSpaceProcessed =true;
 				return true;
 			} else {
@@ -1076,7 +1060,7 @@ public class LIMEService extends InputMethodService implements
 			if(s != null){
 				if(mCandidateView != null && mCandidateView.isShown()) setSuggestions(null, false, false);;
 				getCurrentInputConnection().commitText(s, 0);
-				hasSymbolEntered = true;
+				//hasSymbolEntered = true;
 				return true;
 			}
 			}
@@ -1358,25 +1342,25 @@ public class LIMEService extends InputMethodService implements
 
 						tempMatched = firstMatched;
 						firstMatched = null;
-						hasFirstMatched = true;
+						//hasFirstMatched = true;
 					} else if (firstMatched != null
 							&& firstMatched.getWord() != null
 							&& firstMatched.getWord().equals("")) {
 						inputConnection.commitText(misMatched,
 								misMatched.length());
 						firstMatched = null;
-						hasFirstMatched = false;
+						//hasFirstMatched = false;
 
 						userdiclist.add(null);
 					} else {
 						inputConnection.commitText(mComposing,
 								mComposing.length());
-						hasFirstMatched = false;
+						//hasFirstMatched = false;
 						userdiclist.add(null);
 					}
 				} else {
 					inputConnection.commitText(mComposing, mComposing.length());
-					hasFirstMatched = false;
+					//hasFirstMatched = false;
 					userdiclist.add(null);
 				}
 
@@ -1607,7 +1591,8 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void handleSeparator(int primaryCode) {
-		if(mLIMEPref.getEnglishEnable()){
+		if (mLIMEPref.getEnglishEnable() && mPredictionOn
+				&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishEnablePhysicalKeyboard())){
 			resetTempEnglishWord();
 		}
 		this.updateEnglishDictionaryView();
@@ -1673,6 +1658,7 @@ public class LIMEService extends InputMethodService implements
 		startActivity(intent);
 	}
 
+	@SuppressWarnings("unchecked")
 	private void nextActiveKeyboard() {
 
 		buildActiveKeyboardList();
@@ -1801,6 +1787,7 @@ public class LIMEService extends InputMethodService implements
 
 	}
 
+	@SuppressWarnings("unchecked")
 	private void handlKeyboardSelection(int position) {
 		SharedPreferences sp = PreferenceManager
 				.getDefaultSharedPreferences(this);
@@ -1841,7 +1828,7 @@ public class LIMEService extends InputMethodService implements
 
 		if (mPredicting) {
 			commitTyped(ic);
-			mJustRevertedSeparator = null;
+			//mJustRevertedSeparator = null;
 		} else if (onIM) {
 
 			if (mComposing.length() > 0) {
@@ -1869,18 +1856,13 @@ public class LIMEService extends InputMethodService implements
 	 * Update the list of available candidates from the current composing text.
 	 * This will need to be filled in by however you are determining candidates.
 	 */
+	@SuppressWarnings("unchecked")
 	private void updateCandidates() {
 
 		// Log.i("ART", "Update Candidate mCompletionOn:"+ mCompletionOn);
 		// Log.i("ART", "Update Candidate mComposing:"+ mComposing);
 		if(DEBUG) Log.i("updateCandidate", "Update Candidate mComposing:"+ mComposing.length());
-		boolean firstCreated = false;
-		if (mCandidateView == null) {
-			firstCreated = true;
-		}
-		else{
-			mCandidateView.clear();
-		}
+		if (mCandidateView != null) 			mCandidateView.clear();
 
 		if (!mCompletionOn && mComposing.length() > 0) {
 
@@ -1916,7 +1898,7 @@ public class LIMEService extends InputMethodService implements
 				// Show composing window if keyToKeyname got different string. Revised by Jeremy '11,6,4
 				if (SearchSrv.getTablename() != null ) {
 						
-					if (!firstCreated && keyString != null && !keyString.equals("")&& keyString.length() < 7) {					
+					if (keyString != null && !keyString.equals("")&& keyString.length() < 7) {					
 						keynameString = SearchSrv.keyToKeyname(keyString.toLowerCase());
 							if (mCandidateView != null 
 									&& !keynameString.toUpperCase().equals(keyString.toUpperCase())
@@ -2016,6 +1998,7 @@ public class LIMEService extends InputMethodService implements
 	/*
 	 * Update dictionary view
 	 */
+	@SuppressWarnings("unchecked")
 	private void updateDictionaryView() {
 
 		// Also use this to control whether need to display the english
@@ -2165,12 +2148,10 @@ public class LIMEService extends InputMethodService implements
 
 	public void setCandidatesViewShown(boolean shown) {
 		super.setCandidatesViewShown(shown);
-		if (mCandidateView != null) {
-			if (shown)
-				mCandidateView.showComposing();
-			else
-				mCandidateView.hideComposing();
+		if (mCandidateView != null)  {
+			mCandidateView.clear();;
 		}
+			
 	}
 
 	private void handleShift() {
@@ -2231,7 +2212,7 @@ public class LIMEService extends InputMethodService implements
 		mKeyboardSwitcher.toggleSymbols();
 
 	}
-
+/*
 	private void switchChiEngNoToast() {
 		if(DEBUG) Log.i("LIMEService","switchChiEngNoToast()");
 		// mEnglishOnly = !mEnglishOnly;
@@ -2249,7 +2230,7 @@ public class LIMEService extends InputMethodService implements
 		}
 
 	}
-
+*/
 	private void switchChiEng() {
 		
 		if (mCandidateView != null ) {
@@ -2318,6 +2299,7 @@ public class LIMEService extends InputMethodService implements
 	 * return mMode; }
 	 */
 
+	@SuppressWarnings("unchecked")
 	private void initialViewAndSwitcher() {
 
 		// Check if mInputView == null;
@@ -2398,7 +2380,6 @@ public class LIMEService extends InputMethodService implements
 			//Jeremy '11,6,10 pass hasnumbermapping and hassymbolmapping to searchservice for selkey validation.
 			SearchSrv.setTablename(tablename, hasNumberMapping, hasSymbolMapping);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -2561,7 +2542,7 @@ public class LIMEService extends InputMethodService implements
 			}
 
 			if (mLIMEPref.getEnglishEnable() && mPredictionOn
-					&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishEnablePhysicalKeyboard())// mPredictionOnPhysicalKeyboard)
+					&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishEnablePhysicalKeyboard())
 				) {
 				if (Character.isLetter((char) primaryCode)) {
 					this.tempEnglishWord.append((char) primaryCode);
@@ -2670,7 +2651,7 @@ public class LIMEService extends InputMethodService implements
 			// Log.i("ART","When user pick suggested word which is not from dictionary");
 			commitTyped(getCurrentInputConnection());
 			this.firstMatched = null;
-			this.hasFirstMatched = false;
+			//this.hasFirstMatched = false;
 			if(templist!=null) templist.clear();
 			updateDictionaryView();
 		} else if (firstMatched != null && firstMatched.isDictionary()&& onIM) {
