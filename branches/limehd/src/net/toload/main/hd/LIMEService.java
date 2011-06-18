@@ -710,7 +710,8 @@ public class LIMEService extends InputMethodService implements
 						e.printStackTrace();
 					}
 			}
-			setSuggestions(stringList, true, true, "1234567890");
+			setSuggestions(stringList, isPressPhysicalKeyboard && mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
+					, true, "1234567890");
 		}
 	}
 
@@ -1885,12 +1886,13 @@ public class LIMEService extends InputMethodService implements
 				if (list.size() > 0) {
 					String selkey=SearchSrv.getSelkey();
 					int selkeyOption = mLIMEPref.getSelkeyOption();
-					if(selkeyOption ==1) 	selkey = " " + selkey.substring(0,9);
-					else if (selkeyOption ==2) 	selkey = "  " + selkey.substring(0,8);
+					if(selkeyOption ==1) 	selkey = "`" +selkey;
+					else if (selkeyOption ==2) 	selkey = "` " +selkey;
 					
 					if(DEBUG) Log.i("LIMEService:updateCandidates()","display selkey:" + selkey);
 					
-					setSuggestions(list, isPressPhysicalKeyboard, true, selkey);
+					setSuggestions(list, isPressPhysicalKeyboard && mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
+							, true, selkey);
 					if(DEBUG) Log.i("updateCandidaate", "list.size:"+list.size());
 				} else {
 					setSuggestions(null, false, false);
@@ -1980,7 +1982,8 @@ public class LIMEService extends InputMethodService implements
 						if (templist.size() > 0) {
 							list.add(temp);
 							list.addAll(templist);
-							setSuggestions(list, isPressPhysicalKeyboard, true, "1234567890");
+							setSuggestions(list, isPressPhysicalKeyboard && mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
+									, true, "1234567890");
 							tempEnglishList.addAll(list);
 						} else {
 							setSuggestions(null, false, false);
@@ -2021,7 +2024,8 @@ public class LIMEService extends InputMethodService implements
 
 				if (list.size() > 0) {
 					//templist = (LinkedList<Mapping>) list;
-					setSuggestions(list, isPressPhysicalKeyboard, true, "1234567890");
+					setSuggestions(list, isPressPhysicalKeyboard && mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
+							, true, "1234567890");
 				} else {
 					tempMatched = null;
 					setSuggestions(null, false, false);
@@ -2392,18 +2396,24 @@ public class LIMEService extends InputMethodService implements
 		int i = -1;
 		if (mComposing.length() > 0 && onIM) {
 			// IM candidates view
-			try {
-				i = SearchSrv.isSelkey((char) primaryCode);
-			} catch (RemoteException e) {
+			if(mLIMEPref.getSelkeyOption()>0 && primaryCode == 96) // "`"
+				i=0 ;
+			else{
+				try {
+					i = SearchSrv.isSelkey((char) primaryCode);
+				} catch (RemoteException e) {
 
-				e.printStackTrace();
+					e.printStackTrace();
+				}
+				if(i>=0) i = i + mLIMEPref.getSelkeyOption();
 			}
-			if(i>=0) i = i + mLIMEPref.getSelkeyOption();
 			
 		} else if(mEnglishOnly || (firstMatched != null && firstMatched.isDictionary()&& onIM)) {
 			// related candidates view
 			i = relatedSelkey.indexOf(primaryCode);
 		} 
+		
+		
 		if(i<0 || i >= templist.size()){
 				return false;
 		}

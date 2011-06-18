@@ -878,6 +878,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(code != null){
 			String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 			String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
+			String keys = "", keysRemap="", finalKeysRemap = null;
 			String newcode = code;
 			
 			if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("eten26")){

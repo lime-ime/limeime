@@ -417,7 +417,7 @@ public class CandidateView extends View {
                 canvas.drawText(suggestion, mWordX[i] + X_GAP, y, paint);
                 if(mShowNumber){
                 	//Jeremy '11,6,17 changed from <=10 to mDisplaySekley length. The length maybe 11 or 12 if shifted with space.
-                	if(count < mDisplaySelkey.length()){
+                	if(count <= mDisplaySelkey.length()){
                 		//Jeremy '11,6,11 Drawing text using relative font dimensions.
                 		canvas.drawText(mDisplaySelkey.substring(count-1, count), mWordX[i] + mWordWidth[i] - height * 0.3f ,  height * 0.4f, npaint);
                 	}
