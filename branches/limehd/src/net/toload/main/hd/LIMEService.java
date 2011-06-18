@@ -165,11 +165,16 @@ public class LIMEService extends InputMethodService implements
 
 	// Hard Keyboad Shift + Space Status
 	private boolean hasShiftPress = false;
+	private boolean hasShiftProcessed = false; // Jeremy '11,6.18
 	private boolean hasCtrlPress = false; // Jeremy '11,5,13
+	private boolean hasCtrlProcessed = false; // Jeremy '11,6.18
 	private boolean hasMenuPress = false; // Jeremy '11,5,29
 	private boolean hasMenuProcessed = false; // Jeremy '11,5,29
 	private boolean hasSearchPress = false; // Jeremy '11,5,29
 	private boolean hasSearchProcessed = false; // Jeremy '11,5,29
+	
+	private boolean hasEnterProcessed = false; // Jeremy '11,6.18
+	private boolean hasSpaceProcessed = false;
 	
 	
 	private boolean hasSymbolEntered = false; //Jeremy '11,5,24 
@@ -747,7 +752,7 @@ public class LIMEService extends InputMethodService implements
 		return true;
 	}
 
-	private boolean waitingEnterUp = false;
+	
 
 	//private boolean hasEscPressStep1 = false;
 	//private boolean hasEscPressStep2 = false;
@@ -780,7 +785,8 @@ public class LIMEService extends InputMethodService implements
 			keydown = true;
 		}
 
-		waitingEnterUp = false;
+		hasEnterProcessed = false;
+		hasSpaceProcessed = false;
 		/*
 		 * // Check if user press ALT+@ keys combination then display keyboard
 		 * picker window try{ if(keyCode == KeyEvent.KEYCODE_ALT_LEFT || keyCode
@@ -834,6 +840,15 @@ public class LIMEService extends InputMethodService implements
 			hasShiftPress = true;
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState,
 					keyCode, event);
+			// '11,5,14 Jeremy ctrl-shift switch to next available keyboard; 
+			// '111,6,18 Jeremy moved from on_KEYUP
+			if ( (hasMenuPress || hasCtrlPress) ){  
+				nextActiveKeyboard();
+				hasShiftProcessed = true;
+				if(hasMenuPress) hasMenuProcessed = true;
+				return true;
+			}
+			
 			break;
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
@@ -919,7 +934,7 @@ public class LIMEService extends InputMethodService implements
 				if (mCandidateView != null && mCandidateView.isShown()) {
 				// To block a real enter after suggestion selection. We have to
 				// return true in OnKeyUp();
-					waitingEnterUp = true;
+					hasEnterProcessed = true;
 					if( mCandidateView.takeSelectedSuggestion()){
 						return true;
 					}else{
@@ -944,11 +959,20 @@ public class LIMEService extends InputMethodService implements
 			break;
 		case KeyEvent.KEYCODE_SPACE:
 
-			SharedPreferences sp = PreferenceManager
-					.getDefaultSharedPreferences(this);
-			hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
+		
+			hasQuickSwitch = mLIMEPref.getSwitchEnglishModeHotKey();
 
-			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress) {
+			// If user enable Quick Switch Mode control then check if has
+			// 	Shift+Space combination
+			// '11,5,13 Jeremy added Ctrl-space switch chi/eng
+			// '11,6,18 Jeremy moved from on_KEY_UP
+
+			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress) { 
+				this.switchChiEng();
+				if(hasMenuPress)  hasMenuProcessed = true;
+				if(hasCtrlPress)  hasCtrlProcessed = true;
+				if(hasShiftPress) hasShiftProcessed = true;
+				hasSpaceProcessed =true;
 				return true;
 			} else {
 				if (onIM) { // Changed to onIM by Jeremy '11,5,31
@@ -980,8 +1004,7 @@ public class LIMEService extends InputMethodService implements
 			if(hasMenuPress) hasMenuProcessed = true;
 			if(hasSearchPress) hasSearchProcessed = true;
 			if(!(hasCtrlPress||hasMenuPress)){
-				if ( //((mEnglishOnly && mPredictionOn) || (!mEnglishOnly && onIM))&& 
-					translateKeyDown(keyCode, event)) {
+				if (translateKeyDown(keyCode, event)) {
 					// Log.i("Onkeydown","tranlatekeydown:true");
 					return true;
 				}
@@ -1193,11 +1216,9 @@ public class LIMEService extends InputMethodService implements
 		case KeyEvent.KEYCODE_SHIFT_RIGHT:
 			hasShiftPress = false;
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,	keyCode, event);
-			if ( (hasMenuPress || hasCtrlPress) && !hasSymbolEntered){ // '11,5,14 Jeremy ctrl-shift switch to next available keyboard; '11,5,24 blocking switching if full-shape symbol entered 
-				nextActiveKeyboard();
-				if(hasMenuPress) hasMenuProcessed = true;
+			//'11,6,18 Jeremy move ctrl-shift processing to on_KEYUP
+			if(hasShiftProcessed)
 				return true;
-			}
 			
 			break;
 		case KeyEvent.KEYCODE_ALT_LEFT:
@@ -1220,7 +1241,7 @@ public class LIMEService extends InputMethodService implements
 			// return mCandidateView.takeSelectedSuggestion();
 			// }
 			// Log.i("ART", "physical keyboard onkeyup:"+ keyCode);
-			if (waitingEnterUp) {
+			if (hasEnterProcessed) {
 				return true;
 			}
 			// Jeremy '10, 4, 12 bug fix on repeated enter.
@@ -1256,24 +1277,9 @@ public class LIMEService extends InputMethodService implements
 			break;
 			
 		case KeyEvent.KEYCODE_SPACE:
-			SharedPreferences sp = PreferenceManager
-					.getDefaultSharedPreferences(this);
-			hasQuickSwitch = sp.getBoolean("switch_english_mode", false);
-
-			// If user enable Quick Switch Mode control then check if has
-			// Shift+Space combination
-
-			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress) { // '11,5,13
-																		// Jeremy
-																		// added
-																		// Ctrl-space
-																		// switch
-																		// chi/eng
-				this.switchChiEng();
-				if(hasMenuPress) hasMenuProcessed = true;
+			//Jeremy move the chi/eng swithcing to on_KEY_UP '11,6,18
+			if(hasSpaceProcessed)
 				return true;
-			}
-
 		default:
 
 		}

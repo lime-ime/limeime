@@ -1203,6 +1203,9 @@ public class LimeDB extends SQLiteOpenHelper {
 							//munit.setPword(relatedlist);
 							munit.setScore(0);
 							munit.setCode(entry.getKey());
+							//Jeremy '11,6,18 skip if word is empty
+							if(munit.getWord() == null || munit.getWord().trim().equals(""))
+								continue;
 							result.add(munit);
 							duplicateCheck.put(unit, unit);
 							scount++;
