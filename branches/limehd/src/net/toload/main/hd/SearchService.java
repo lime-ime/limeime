@@ -21,16 +21,13 @@
 package net.toload.main.hd;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.toload.main.hd.SearchService.SearchServiceImpl;
+//import net.toload.main.hd.SearchService.SearchServiceImpl;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -38,11 +35,9 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class SearchService extends Service {
@@ -77,7 +72,7 @@ public class SearchService extends Service {
 	//Jeremy '11,6,6
 	private HashMap<String,String> imKeysMap = new HashMap<String,String>();
 	private HashMap<String,String> selKeyMap = new HashMap<String,String>();
-	private HashMap<String,String> endKeyMap = new HashMap<String,String>();
+	//private HashMap<String,String> endKeyMap = new HashMap<String,String>();
 	
 	private static ConcurrentHashMap<String,List<Mapping>> cache = null;
 	private static ConcurrentHashMap<String, List<Mapping>> engcache = null;
