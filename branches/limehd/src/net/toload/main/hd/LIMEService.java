@@ -460,20 +460,22 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public void onStartInput(EditorInfo attribute, boolean restarting) {
-		if(DEBUG) Log.i("LIMEService","onStartInput()");
+		if(DEBUG) 
+			Log.i("LIMEService","onStartInput()");
 		super.onStartInputView(attribute, restarting);
 		initOnStartInput(attribute, restarting);
 	}
 
 	@Override
 	public void onStartInputView(EditorInfo attribute, boolean restarting) {
-		if(DEBUG) Log.i("LIMEService","onStartInputView()");
+		if(DEBUG) 
+			Log.i("LIMEService","onStartInputView()");
 		super.onStartInputView(attribute, restarting);
 		initOnStartInput(attribute, restarting);
 	}
 
 	private void initOnStartInput(EditorInfo attribute, boolean restarting) {
-		// super.onStartInputView(attribute, restarting);
+	
 		if (DEBUG)
 			Log.i("LIMEService", "initOnStartInput");
 		if (mInputView == null) {
@@ -1893,7 +1895,7 @@ public class LIMEService extends InputMethodService implements
 					String selkey=SearchSrv.getSelkey();
 					String mixedModeSelkey = "`";
 					if(SearchSrv.getTablename().equals("phonetic")&& isPressPhysicalKeyboard 
-							&& !mLIMEPref.getPhoneticKeyboardType().equals("standard") ){
+							&& mLIMEPref.getPhoneticKeyboardType().equals("eten") ){
 						mixedModeSelkey = "";
 					}
 						
@@ -2344,7 +2346,8 @@ public class LIMEService extends InputMethodService implements
 
 	private void initialKeyboard() {
 
-		if(DEBUG) Log.i("LIMEService", "initialKeyboard()");
+		if(DEBUG) 
+			Log.i("LIMEService", "initialKeyboard()");
 		
 		buildActiveKeyboardList();
 		initialViewAndSwitcher();
@@ -2356,18 +2359,17 @@ public class LIMEService extends InputMethodService implements
 				|| keyboardSelection.equals("scj")) {
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
-			SharedPreferences sp = PreferenceManager
-					.getDefaultSharedPreferences(this);
-			hasNumberMapping = sp.getBoolean("accept_number_index", false);
-			hasSymbolMapping = sp.getBoolean("accept_symbol_index", false);
+			
+			hasNumberMapping = mLIMEPref.getAllowNumberMapping();
+			hasSymbolMapping = mLIMEPref.getAllowSymoblMapping();
 		} else {
 			if (keyboardSelection.equals("phonetic")
 					|| keyboardSelection.equals("ez")
 					|| keyboardSelection.equals("dayi")) {
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false,
-						false);
-				hasNumberMapping = true;
+						LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+				//Jeremy '11,6,18 ETEN 26 has no number mapping
+				hasNumberMapping = !mLIMEPref.getPhoneticKeyboardType().equals("eten26"); //true;
 				hasSymbolMapping = true;
 			} else if (keyboardSelection.equals("array10")) {
 				hasNumberMapping = true;

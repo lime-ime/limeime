@@ -656,7 +656,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 //Rewrite by Jeremy 11,6,4.  Supoort for array and dayi now.
 	public String keyToKeyname(String code, String Rtable) {
-		
+		if(DEBUG)
+			Log.i("limedb:keyToKeyname()","code:" + code);
 		String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 		String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
 		String keytable = Rtable;
@@ -770,11 +771,10 @@ public class LimeDB extends SQLiteOpenHelper {
 				|| keysDefMap.get(keytable).size()==0){
 			if(DEBUG) Log.i("limedb:keyToKeyname()","nokeysDefMap found!!");
 			return code;
-		}
-		else{
+		}else{
 			String result = new String("");
 			HashMap <String,String> keyMap = keysDefMap.get(keytable);
-			HashMap<String,String> finalKeyMap = keysDefMap.get("final_"+keytable);
+			HashMap <String,String> finalKeyMap = keysDefMap.get("final_"+keytable);
 			
 			if(finalKeyMap == null){
 				for (int i = 0; i < code.length(); i++) {
@@ -783,10 +783,13 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}else{
 				if(code.length()==1){
-					if(code.equals("q") || code.equals("w")) // Dual mapped INITIALS have words mapped for £¨ and £©. 
-						result = keyMap.get(code);
-					else
-						result = finalKeyMap.get(code);
+					String c = "";
+					if(code.equals("q") || code.equals("w")){ // Dual mapped INITIALS have words mapped for £¨ and £©. 
+						c = keyMap.get(code);
+					}else{
+						c = finalKeyMap.get(code);
+					}
+					if(c!=null) result = c;
 				}else{
 					for (int i = 0; i < code.length(); i++) {
 						String c = "";
@@ -799,8 +802,12 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}
 				
-			if(DEBUG) Log.i("limedb:keyToKeyname()","returning:" + result);
-			return result;
+			if(DEBUG) 
+				Log.i("limedb:keyToKeyname()","returning:" + result);
+			if(result.equals(""))
+				return code;
+			else
+				return result;
 		}
 		
 		
