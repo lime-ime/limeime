@@ -95,6 +95,7 @@ public class CandidateView extends View {
     //private int mVerticalPadding;
     private Paint mPaint;
     private Paint nPaint;
+    private Paint cPaint;
     private boolean mScrolled;
     private int mTargetScrollX;
     private String mDisplaySelkey = "1234567890";
@@ -162,6 +163,12 @@ public class CandidateView extends View {
         nPaint.setAntiAlias(true);
         nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_height));
         nPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        
+        cPaint = new Paint();
+        cPaint.setColor(mColorNormal);
+        cPaint.setAntiAlias(true);
+        cPaint.setTextSize(r.getDimensionPixelSize(R.dimen.composing_text_size));
+        cPaint.setStrokeWidth(0);
         
         //mDescent = (int) mPaint.descent();
 
@@ -245,8 +252,9 @@ public class CandidateView extends View {
                 mComposingTextView.setText(mComposingText);
                 mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
                         MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-                int wordWidth = (int) (mPaint.measureText(mComposingText, 0, mComposingText.length()));
-                final int popupWidth = wordWidth
+                int wordWidth = (int) (cPaint.measureText(mComposingText, 0, mComposingText.length()));
+                	
+                final int popupWidth =  wordWidth
                         + mComposingTextView.getPaddingLeft() + mComposingTextView.getPaddingRight();
                 final int popupHeight = mComposingTextView.getMeasuredHeight();
                 //mPreviewText.setVisibility(INVISIBLE);
@@ -264,12 +272,6 @@ public class CandidateView extends View {
                 	mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, 0, 
                 			mPopupComposingY + offsetInWindow[1]);
                 }
-                
-               /* mComposingTextPopup.setWidth(popupWidth);
-            	mComposingTextPopup.setHeight(popupHeight);
-            	mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, 0, 
-            			mPopupCompoingY + offsetInWindow[1]);
-                mComposingTextView.setVisibility(VISIBLE);*/
                 mComposingTextView.setVisibility(VISIBLE);
 
 
@@ -417,7 +419,8 @@ public class CandidateView extends View {
                 	//Jeremy '11,6,17 changed from <=10 to mDisplaySekley length. The length maybe 11 or 12 if shifted with space.
                 	if(count <= mDisplaySelkey.length()){
                 		//Jeremy '11,6,11 Drawing text using relative font dimensions.
-                		canvas.drawText(mDisplaySelkey.substring(count-1, count), mWordX[i] + mWordWidth[i] - height * 0.3f ,  height * 0.4f, npaint);
+                		canvas.drawText(mDisplaySelkey.substring(count-1, count), 
+                				mWordX[i] + mWordWidth[i] - height * 0.3f ,  height * 0.4f, npaint);
                 	}
                 }
                 
