@@ -1885,9 +1885,16 @@ public class LIMEService extends InputMethodService implements
 
 				if (list.size() > 0) {
 					String selkey=SearchSrv.getSelkey();
+					String mixedModeSelkey = "`";
+					if(SearchSrv.getTablename().equals("phonetic")&& isPressPhysicalKeyboard 
+							&& !mLIMEPref.getPhoneticKeyboardType().equals("standard") ){
+						mixedModeSelkey = "";
+					}
+						
+					
 					int selkeyOption = mLIMEPref.getSelkeyOption();
-					if(selkeyOption ==1) 	selkey = "`" +selkey;
-					else if (selkeyOption ==2) 	selkey = "` " +selkey;
+					if(selkeyOption ==1) 	selkey = mixedModeSelkey +selkey;
+					else if (selkeyOption ==2) 	selkey = mixedModeSelkey + " " +selkey;
 					
 					if(DEBUG) Log.i("LIMEService:updateCandidates()","display selkey:" + selkey);
 					
