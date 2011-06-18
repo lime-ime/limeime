@@ -635,19 +635,23 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 //Rewrite by Jeremy 11,6,4.  Supoort for array and dayi now.
 	public String keyToKeyname(String code, String Rtable) {
-		if(DEBUG)
-			Log.i("limedb:keyToKeyname()","code:" + code);
+		//if(DEBUG)
+			Log.i("limedb:keyToKeyname()","code:" + code + 
+					" Rtable:"+Rtable + " tablename:" + tablename);
 		String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 		String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
 		String keytable = Rtable;
 		if(isPhysicalKeyboardPressed){
-			if(Rtable.equals("phonetic"))
+			if(Rtable.equals("phonetic") && tablename.equals("phonetic") )
 				keytable = Rtable + keyboardtype + phonetickeyboardtype;
 			else
 				keytable = Rtable + keyboardtype;
-		}else if(Rtable.equals("phonetic")){
+		}else if(Rtable.equals("phonetic") && tablename.equals("phonetic") ){
 				keytable = Rtable + phonetickeyboardtype;
 		}
+		//if(DEBUG)
+		Log.i("limedb:keyToKeyname()","code:" + code + 
+				" Rtable:"+Rtable + " tablename:" + tablename + " keytable:"+keytable);
 		
 		if(keysDefMap.get(keytable)==null
 				|| keysDefMap.get(keytable).size()==0){

@@ -104,5 +104,12 @@ public class LIMEPreference extends PreferenceActivity
     	}
 		return super.onOptionsItemSelected(item);
     }
+
+
+	@Override
+	public void onContentChanged() {
+		// TODO Auto-generated method stub
+		super.onContentChanged();
+	}
 	
 }
