@@ -478,7 +478,6 @@ public class LIMEService extends InputMethodService implements
 		}
 		// Reset the IM softkeyboard settings. Jeremy '11,6,19
 		try {
-			//mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
 			mKeyboardSwitcher.setImList(SearchSrv.getImList());
 		} catch (RemoteException e) {
 			e.printStackTrace();
@@ -1881,13 +1880,16 @@ public class LIMEService extends InputMethodService implements
 				String keyString = mComposing.toString(), keynameString = "";
 
 				list.addAll(SearchSrv.query(keyString, !isPressPhysicalKeyboard));
-
+				
+				//Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
 				if (list.size() > 0) {
 					String selkey=SearchSrv.getSelkey();
+					String tablename = SearchSrv.getTablename();
 					String mixedModeSelkey = "`";
-					if(SearchSrv.getTablename().equals("phonetic")&& isPressPhysicalKeyboard 
-							&& mLIMEPref.getPhoneticKeyboardType().equals("eten") ){
-						mixedModeSelkey = "";
+					if(tablename.equals("ez")|| tablename.equals("custom") ||
+						(tablename.equals("phonetic")&& isPressPhysicalKeyboard 
+							&& mLIMEPref.getPhoneticKeyboardType().equals("eten")) ){
+						mixedModeSelkey = " ";
 					}
 						
 					
