@@ -219,11 +219,13 @@
 		<item>Standard</item>
 		<item>ETEN 41keys</item>
 		<item>ETEN 26keys</item>
+		<item>Hsu</item>
 	</string-array>
 	<string-array name="phonetic_keyboard_type_values">
 		<item>standard</item>
 		<item>eten</item>
 		<item>eten26</item>
+		<item>hsu</item>
 	</string-array>
 	
 	

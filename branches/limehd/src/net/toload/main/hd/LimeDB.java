@@ -107,15 +107,24 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 	private final static String ETEN26_KEY =            	"qazwsxedcrfvtgbyhnujmikolp";
 	private final static String ETEN26_KEY_REMAP_INITIAL = 	"y8lhnju2vkzewr1tcsmba9dixq";
-	private final static String ETEN26_KEY_REMAP_FINAL =   	"y8lhnju7vk6e;r1t-pm3094i/.";
+	private final static String ETEN26_KEY_REMAP_FINAL =   	"y8lhnju7vk6e;r1tcpm3094i/.";
+	private final static String ETEN26_DUALKEY_REMAP = 	"o,gf;5p0-/.-";
+	private final static String ETEN26_DUALKEY = 		"yhvewrsacxqc";
 	private final static String ETEN26_CHAR_INITIAL = 	
-		"£¨|£«|£±|£©|£ª|£¹|£¸|£x|(£¦/££)|£­|£w|(£|/£¢)|£y|(£¡/£¤)|£t|£¥|£~|£z|£º|£§|£v|£¯|£}|£¬|£{|£u";
+		"£¨|£«|£±|£©|£ª|£¹|£¸|£x|(£¦/££)|£­|£w|(£|/£¢)|£y|(£¡/£¤)|£t|£¥|(£~/£·)|£z|£º|£§|£v|£¯|£}|£¬|£{|£u";
 	private final static String ETEN26_CHAR_FINAL = 	
-		"£°|£«|£±|£®|£ª|£¹|£¸|£»|(£¦/££)|£­|£½|(£|/£¢)|£µ|(£¡/£¤)|£t|£¥|£·|£´|£º|£¾|£³|£¯|£¿|£¬|£¶|£²";
+		"£°|£«|£±|£®|£ª|£¹|£¸|£»|(£¦/££)|£­|£½|(£|/£¢)|£µ|(£¡/£¤)|£t|£¥|(£~/£·)|£´|£º|£¾|£³|£¯|£¿|£¬|£¶|£²";
 	
-	private final static String ETEN26_DUALKEY_REMAP = 	"o,gf;5p0-/.";
-	private final static String ETEN26_DUALKEY = 		"yhvewrsacxq";
 	
+	private final static String HSU_KEY =            		"azwsxedcrfvtgbyhnujmikolp";
+	private final static String HSU_KEY_REMAP_INITIAL = 	"hylnju2vbzfwe18csmra9d.xq"; 
+	private final static String HSU_KEY_REMAP_FINAL =   	"oylnj,6vb3fwk18ipm409;./q";  
+	private final static String HSU_DUALKEY_REMAP =		 	"gt5--";
+	private final static String HSU_DUALKEY = 				"vfrx/";
+	private final static String HSU_CHAR_INITIAL = 	
+		"£©|£¨|£±|£ª|£¹|£¸|£x|(£¦/££)|£§|£w|(£¥/£¢)|£y|£||£t|£«|£~|£z|£º|(£¡/£¤)|£u|£¯|£}|£²|(£{/£·)|£u";
+	private final static String HSU_CHAR_FINAL = 	
+		"£°|£¨|£±|£»|£¹|£®|£½|(£¦/££)|£§|£¾|(£¥/£¢)|£y|£­|£t|£«|£¬|£´|£º|£¿|£³|£¯|£µ|£²|(£¶/£·)|£u";
 	
 	private final static String DESIREZ_KEY =            			"@qazwsxedcrfvtgbyhnujmik?olp,.";
 	private final static String DESIREZ_BPMF_KEY_REMAP = 			"1qaz2wsedc5tg6yh4uj8ik9ol0;-,.";
@@ -162,7 +171,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 	private HashMap<String, HashMap<String,String>> keysDefMap = new HashMap<String, HashMap<String,String>>();
 	private HashMap<String, HashMap<String,String>> keysReMap = new HashMap<String, HashMap<String,String>>();
-	private HashMap<String, HashMap<String,String>> keys3rMap = new HashMap<String, HashMap<String,String>>();
+	private HashMap<String, HashMap<String,String>> keysDualMap = new HashMap<String, HashMap<String,String>>();
 
 
 	public String DELIMITER = "";
@@ -178,7 +187,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private boolean isPhysicalKeyboardPressed = false;
 
 	private LIMEPreferenceManager mLIMEPref;
-	//private Map<String, String> code3rMap = new HashMap<String, String>();
+	//private Map<String, String> codeDualMap = new HashMap<String, String>();
 
 	private Context ctx;
 
@@ -298,7 +307,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				cv.put("disable", "false");
 			
 				db.insert("keyboard",null, cv);
-				
+		
 				db.setVersion(68);
 			}
 			
@@ -716,6 +725,10 @@ public class LimeDB extends SQLiteOpenHelper {
 							keyString = ETEN26_KEY;
 							keynameString = ETEN26_CHAR_INITIAL;
 							finalKeynameString = ETEN26_CHAR_FINAL;
+						}else if(phonetickeyboardtype.equals("hsu")){
+							keyString = HSU_KEY;
+							keynameString = HSU_CHAR_INITIAL;
+							finalKeynameString = HSU_CHAR_FINAL;
 						}else if((keyboardtype.equals("milestone")||keyboardtype.equals("milestone2")) 
 								&& isPhysicalKeyboardPressed){
 							keyString = MILESTONE_KEY;
@@ -800,9 +813,21 @@ public class LimeDB extends SQLiteOpenHelper {
 					if(c!=null) result = result + c;
 				}
 			}else{
+				
 				if(code.length()==1){
+						
 					String c = "";
-					if(code.equals("q") || code.equals("w")){ // Dual mapped INITIALS have words mapped for £¨ and £©. 
+					if(phonetickeyboardtype.equals("eten26") &&
+							(code.equals("q") || code.equals("w") 
+							|| code.equals("d")|| code.equals("f") 
+							|| code.equals("j") || code.equals("k"))){ 
+						// Dual mapped INITIALS have words mapped for £¨ and £©. for ETEN26
+						c = keyMap.get(code);
+					}else if (phonetickeyboardtype.equals("hsu") &&
+						(code.equals("a") || code.equals("e") ||
+						code.equals("d") || code.equals("f") ||code.equals("j"))){
+						// Dual mapped INITIALS have words mapped for a and e   
+						// and no mapped word on finals d,f,j  for HSU
 						c = keyMap.get(code);
 					}else{
 						c = finalKeyMap.get(code);
@@ -817,9 +842,9 @@ public class LimeDB extends SQLiteOpenHelper {
 							c = keyMap.get(code.substring(i, i + 1));
 						if(c!=null) result = result + c.trim();
 					}
+				
 				}
 			}
-				
 			if(DEBUG) 
 				Log.i("limedb:keyToKeyname()","returning:" + result);
 			if(result.equals(""))
@@ -964,6 +989,10 @@ public class LimeDB extends SQLiteOpenHelper {
 					keyString = ETEN26_KEY;
 					keyRemapString = ETEN26_KEY_REMAP_INITIAL;
 					finalKeyRemapString = ETEN26_KEY_REMAP_FINAL;
+				}else if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("hsu")){
+					keyString = HSU_KEY;
+					keyRemapString = HSU_KEY_REMAP_INITIAL;
+					finalKeyRemapString = HSU_KEY_REMAP_FINAL;
 				}if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("eten")){
 					keyString = ETEN_KEY;
 					/*
@@ -1009,24 +1038,51 @@ public class LimeDB extends SQLiteOpenHelper {
 				HashMap<String,String> finalReMap =  keysReMap.get("final_"+remaptable);
 				
 				newcode = "";
-				for (int i = 0; i < code.length(); i++) {
-					String c = null;
-					if(finalReMap == null){
+				String c = null;
+				
+				if(finalReMap == null){
+					for (int i = 0; i < code.length(); i++) {
 						c = reMap.get(code.substring(i, i + 1));
-					}else {
-						if(i>0)
-							c = finalReMap.get(code.substring(i, i + 1));
-						else
-							c = reMap.get(code.substring(i, i + 1));
+						if(c!=null) newcode = newcode + c;
 					}
+				
+				}else {
+				
+					if(code.length() == 1){
 					
-					if(c!=null) newcode = newcode + c;
+						
+							if(phonetickeyboardtype.equals("eten26") &&
+									(code.equals("q") || code.equals("w") 
+									|| code.equals("d")|| code.equals("f") 
+									|| code.equals("j") || code.equals("k"))){ 
+							// Dual mapped INITIALS have words mapped for £¨ and £©. for ETEN26
+							c = reMap.get(code);
+						}else if (phonetickeyboardtype.equals("hsu") &&
+									(code.equals("a") || code.equals("e") ||
+									code.equals("d") || code.equals("f") ||code.equals("j"))){
+							// Dual mapped INITIALS have words mapped for a and e   
+							// and no mapped word on finals d,f,j  for HSU
+							c = reMap.get(code);
+						}else{
+							c = finalReMap.get(code);
+						}
+						if(c!=null) newcode = c;
+						else newcode = code;
+						
+					}else {			
+						for (int i = 0; i < code.length(); i++) {
+							if(i>0)
+								c = finalReMap.get(code.substring(i, i + 1));
+							else
+								c = reMap.get(code.substring(i, i + 1));
+							
+							if(c!=null) newcode = newcode + c;
+						}
 				
 				}
 				if(DEBUG) Log.i("LIMEDB.preProcessingRemappingCode()", "newcode="+newcode);
+				}
 			}
-			
-			
 			//Process the escape characters of query
 			newcode = newcode.replaceAll("'", "''");
 			
@@ -1042,7 +1098,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(code != null ){
 			String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 			String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
-			String code3r =code;
+			String dualcode =code;
 			String dualKey = "";
 			String dualKeyRemap = "";
 			String remaptable = tablename;
@@ -1056,11 +1112,14 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 			
 			
-			if(keys3rMap.get(remaptable)==null
-					|| keys3rMap.get(remaptable).size()==0){
+			if(keysDualMap.get(remaptable)==null
+					|| keysDualMap.get(remaptable).size()==0){
 				if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("eten26")){
 					dualKey = ETEN26_DUALKEY;
 					dualKeyRemap = ETEN26_DUALKEY_REMAP;	
+				}else if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("hsu")){
+						dualKey = HSU_DUALKEY;
+						dualKeyRemap = HSU_DUALKEY_REMAP;
 				}else if(keyboardtype.equals("milestone") && isPhysicalKeyboardPressed ){
 					if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("eten")){
 						dualKey = MILESTONE_ETEN_DUALKEY;
@@ -1110,68 +1169,68 @@ public class LimeDB extends SQLiteOpenHelper {
 					reMap.put(key, value);
 					reMap.put(value, value);
 				}
-				keys3rMap.put(remaptable, reMap);
+				keysDualMap.put(remaptable, reMap);
 			}
 			
-			if(keys3rMap.get(remaptable)==null
-					|| keys3rMap.get(remaptable).size()==0){
+			if(keysDualMap.get(remaptable)==null
+					|| keysDualMap.get(remaptable).size()==0){
 				return "";
 			}else{
 				
-				HashMap<String,String> reMap = keys3rMap.get(remaptable);
-				code3r = "";
+				HashMap<String,String> reMap = keysDualMap.get(remaptable);
+				dualcode = "";
 				for (int i = 0; i < code.length(); i++) {
 					String c = reMap.get(code.substring(i, i + 1));
-					if(c!=null) code3r = code3r + c;
+					if(c!=null) dualcode = dualcode + c;
 				}
 				if(DEBUG)
-					Log.i("LIMEDB.preProcessingForExtraQueryConditions()", "code3r="+code3r);
+					Log.i("LIMEDB.preProcessingForExtraQueryConditions()", "dualcode="+dualcode);
 				
 				
 			}
-			if(!code3r.equalsIgnoreCase(code)){
-				return expandCode3r(code, remaptable);
+			if(!dualcode.equalsIgnoreCase(code)){
+				return expandDualCode(code, remaptable);
 			}
 		}
 		return "";
 	}
 	
-	private String expandCode3r(String code, String keytablename){
+	private String expandDualCode(String code, String keytablename){
 		
-		HashMap<String,String> code3rMap = keys3rMap.get(keytablename);
+		HashMap<String,String> codeDualMap = keysDualMap.get(keytablename);
 
 		String result = "";
 		if(code.length() == 1){
-			result = " OR " + FIELD_CODE + "= '"+code3rMap.get(code)+"'";
+			result = " OR " + FIELD_CODE + "= '"+codeDualMap.get(code)+"'";
 		}else if(code.length() == 2){
-			result += " OR " + FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+"' OR ";
-			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+"' OR ";
-			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+"'";
+			result += " OR " + FIELD_CODE + "= '"+code.substring(0,1)+codeDualMap.get(code.substring(1,2))+"' OR ";
+			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+code.substring(1,2)+"' OR ";
+			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+codeDualMap.get(code.substring(1,2))+"'";
 		}else if(code.length() == 3){
-			result += " OR " + FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code.substring(2,3)+"' OR ";
-			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code3rMap.get(code.substring(2,3))+"' OR ";
-			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code3rMap.get(code.substring(2,3))+"' OR ";
-			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+code3rMap.get(code.substring(2,3))+"' OR ";
-			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+code.substring(2,3)+"' OR ";
-			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+code3rMap.get(code.substring(2,3))+"' OR ";
-			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+code.substring(2,3)+"' ";
+			result += " OR " + FIELD_CODE + "= '"+code.substring(0,1)+codeDualMap.get(code.substring(1,2))+code.substring(2,3)+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+codeDualMap.get(code.substring(2,3))+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+codeDualMap.get(code.substring(1,2))+codeDualMap.get(code.substring(2,3))+"' OR ";
+			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+codeDualMap.get(code.substring(1,2))+codeDualMap.get(code.substring(2,3))+"' OR ";
+			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+code.substring(1,2)+code.substring(2,3)+"' OR ";
+			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+code.substring(1,2)+codeDualMap.get(code.substring(2,3))+"' OR ";
+			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+codeDualMap.get(code.substring(1,2))+code.substring(2,3)+"' ";
 		}else if(code.length() == 4){
 			result += " OR " + FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code.substring(2,3)+code.substring(3,4)+"' OR ";
-			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code.substring(2,3)+code.substring(3,4)+"' OR ";
-			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code3rMap.get(code.substring(2,3))+code.substring(3,4)+"' OR ";
-			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code.substring(2,3)+code3rMap.get(code.substring(3,4))+"' OR ";
-			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code3rMap.get(code.substring(2,3))+code.substring(3,4)+"' OR ";
-			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code3rMap.get(code.substring(2,3))+code3rMap.get(code.substring(3,4))+"' OR ";
-			result += FIELD_CODE + "= '"+code.substring(0,1)+code3rMap.get(code.substring(1,2))+code.substring(2,3)+code3rMap.get(code.substring(3,4))+"' OR ";
-			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code3rMap.get(code.substring(2,3))+code3rMap.get(code.substring(3,4))+"' OR ";
-			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+code.substring(2,3)+code.substring(3,4)+"' OR ";
-			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+code.substring(2,3)+code.substring(3,4)+"' OR ";
-			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+code3rMap.get(code.substring(2,3))+code.substring(3,4)+"' OR ";
-			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+code.substring(2,3)+code3rMap.get(code.substring(3,4))+"' OR ";
-			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+code3rMap.get(code.substring(2,3))+code.substring(3,4)+"' OR ";
-			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+code3rMap.get(code.substring(2,3))+code3rMap.get(code.substring(3,4))+"' OR ";
-			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code3rMap.get(code.substring(1,2))+code.substring(2,3)+code3rMap.get(code.substring(3,4))+"' OR ";
-			result += FIELD_CODE + "= '"+code3rMap.get(code.substring(0,1))+code.substring(1,2)+code3rMap.get(code.substring(2,3))+code3rMap.get(code.substring(3,4))+"' ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+codeDualMap.get(code.substring(1,2))+code.substring(2,3)+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+codeDualMap.get(code.substring(2,3))+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+code.substring(2,3)+codeDualMap.get(code.substring(3,4))+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+codeDualMap.get(code.substring(1,2))+codeDualMap.get(code.substring(2,3))+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+codeDualMap.get(code.substring(1,2))+codeDualMap.get(code.substring(2,3))+codeDualMap.get(code.substring(3,4))+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+codeDualMap.get(code.substring(1,2))+code.substring(2,3)+codeDualMap.get(code.substring(3,4))+"' OR ";
+			result += FIELD_CODE + "= '"+code.substring(0,1)+code.substring(1,2)+codeDualMap.get(code.substring(2,3))+codeDualMap.get(code.substring(3,4))+"' OR ";
+			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+code.substring(1,2)+code.substring(2,3)+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+codeDualMap.get(code.substring(1,2))+code.substring(2,3)+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+code.substring(1,2)+codeDualMap.get(code.substring(2,3))+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+code.substring(1,2)+code.substring(2,3)+codeDualMap.get(code.substring(3,4))+"' OR ";
+			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+codeDualMap.get(code.substring(1,2))+codeDualMap.get(code.substring(2,3))+code.substring(3,4)+"' OR ";
+			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+codeDualMap.get(code.substring(1,2))+codeDualMap.get(code.substring(2,3))+codeDualMap.get(code.substring(3,4))+"' OR ";
+			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+codeDualMap.get(code.substring(1,2))+code.substring(2,3)+codeDualMap.get(code.substring(3,4))+"' OR ";
+			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+code.substring(1,2)+codeDualMap.get(code.substring(2,3))+codeDualMap.get(code.substring(3,4))+"' ";
 		}
 		
 		
