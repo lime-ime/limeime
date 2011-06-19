@@ -63,7 +63,7 @@ public class SearchService extends Service {
 	private static boolean softkeypressed;
 	//Jeremy '11,6,10
 	private static boolean hasNumberMapping;
-	private static boolean hasSymbolMapping;
+	//private static boolean hasSymbolMapping;
 	
 	
 	private static List<Mapping> preresultlist = null;
@@ -126,7 +126,7 @@ public class SearchService extends Service {
 			db.setTablename(table);
 			tablename = table;
 			hasNumberMapping = numberMapping;
-			hasSymbolMapping = symbolMapping;
+			//hasSymbolMapping = symbolMapping;
 		}
 		
 		
@@ -455,7 +455,11 @@ public class SearchService extends Service {
 		@Override
 		public String getSelkey() throws RemoteException {
 			String selkey = "";
-			if(selKeyMap.get(tablename)==null || selKeyMap.size()==0){
+			String table = tablename;
+			if(tablename.equals("phonetic")){
+				table = tablename + mLIMEPref.getPhoneticKeyboardType();
+			}
+			if(selKeyMap.get(table)==null || selKeyMap.size()==0){
 				if(db == null){db = new LimeDB(ctx);}
 				selkey = db.getImInfo(tablename, "selkey");
 				
@@ -476,9 +480,9 @@ public class SearchService extends Service {
 					}else
 						selkey = "1234567890";
 				}
-				selKeyMap.put(tablename, selkey);
+				selKeyMap.put(table, selkey);
 			}
-			return selKeyMap.get(tablename);
+			return selKeyMap.get(table);
 		}
 
 		@Override

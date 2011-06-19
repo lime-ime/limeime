@@ -1884,10 +1884,9 @@ public class LIMEService extends InputMethodService implements
 				//Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
 				if (list.size() > 0) {
 					String selkey=SearchSrv.getSelkey();
-					String tablename = SearchSrv.getTablename();
 					String mixedModeSelkey = "`";
-					if(tablename.equals("ez")|| tablename.equals("custom") ||
-						(tablename.equals("phonetic")&& isPressPhysicalKeyboard 
+					if(keyboardSelection.equals("ez")|| keyboardSelection.equals("custom") ||
+						(keyboardSelection.equals("phonetic")&& isPressPhysicalKeyboard 
 							&& mLIMEPref.getPhoneticKeyboardType().equals("eten")) ){
 						mixedModeSelkey = " ";
 					}
@@ -2345,42 +2344,41 @@ public class LIMEService extends InputMethodService implements
 		buildActiveKeyboardList();
 		initialViewAndSwitcher();
 
-		//int mMode = LIMEKeyboardSwitcher.MODE_TEXT_DEFAULT;
-
-		if (keyboardSelection.equals("custom")
-				|| keyboardSelection.equals("cj")
-				|| keyboardSelection.equals("scj")) {
+		if (keyboardSelection.equals("custom")) {
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
 			
 			hasNumberMapping = mLIMEPref.getAllowNumberMapping();
 			hasSymbolMapping = mLIMEPref.getAllowSymoblMapping();
-		} else {
-			if (keyboardSelection.equals("phonetic")
-					|| keyboardSelection.equals("ez")
-					|| keyboardSelection.equals("dayi")) {
-				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
-				//Jeremy '11,6,18 ETEN 26 has no number mapping
-				hasNumberMapping = !mLIMEPref.getPhoneticKeyboardType().equals("eten26"); //true;
-				hasSymbolMapping = true;
-			} else if (keyboardSelection.equals("array10")) {
-				hasNumberMapping = true;
-				hasSymbolMapping = false;
-				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false,
-						false);
-			} else if (keyboardSelection.equals("array")) {
-				hasNumberMapping = false;
-				hasSymbolMapping = true;
-				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false,
-						false);
-			} else {
-				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
-						LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false,
-						false);
-			}
+		}else if(keyboardSelection.equals("cj")|| keyboardSelection.equals("scj")){
+			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
+					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+			hasNumberMapping = false;
+			hasSymbolMapping = false;
+		}else if (keyboardSelection.equals("phonetic")){
+			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
+					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+			//Jeremy '11,6,18 ETEN 26 has no number mapping
+			hasNumberMapping = !mLIMEPref.getPhoneticKeyboardType().equals("eten26"); 
+			hasSymbolMapping = true;
+		}else if(keyboardSelection.equals("ez")|| keyboardSelection.equals("dayi")) {
+			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
+			LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
+		}else if (keyboardSelection.equals("array10")) {
+			hasNumberMapping = true;
+			hasSymbolMapping = false;
+			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
+				LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+		}else if (keyboardSelection.equals("array")) {
+			hasNumberMapping = false;
+			hasSymbolMapping = true;
+			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
+					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+		}else {
+			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
+					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
 		}
 
 		try {
@@ -2389,6 +2387,9 @@ public class LIMEService extends InputMethodService implements
 				tablename = "custom";
 			}
 			//Jeremy '11,6,10 pass hasnumbermapping and hassymbolmapping to searchservice for selkey validation.
+			if(DEBUG)
+				Log.i("LIMEService:initialkeyboard()","current IM:" + 
+							keyboardSelection+" hasnumbermapping:" +hasNumberMapping);
 			SearchSrv.setTablename(tablename, hasNumberMapping, hasSymbolMapping);
 		} catch (RemoteException e) {
 			e.printStackTrace();
