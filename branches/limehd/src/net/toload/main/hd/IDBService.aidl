@@ -13,7 +13,7 @@ interface IDBService
 	void resetImInfo(String im);
 	void removeImInfo(String im, String field);
 	void setImInfo(String im, String field, String value);
-	void setKeyboardInfo(String im, String value,String keyboard);
+	void setIMKeyboard(String im, String value,String keyboard);
 	void closeDatabse();
 	String getImInfo(String im, String field);
 	String getKeyboardCode(String im);

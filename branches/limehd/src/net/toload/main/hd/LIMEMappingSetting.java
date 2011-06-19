@@ -20,15 +20,8 @@
 
 package net.toload.main.hd;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import net.toload.main.hd.IDBService;
@@ -37,38 +30,17 @@ import net.toload.main.hd.R;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.ProgressDialog;
-import android.app.AlertDialog.Builder;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.content.DialogInterface.OnCancelListener;
-import android.content.res.Resources;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.os.RemoteException;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceManager;
-import android.util.Log;
-import android.view.ContextMenu;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.AdapterView;
@@ -78,10 +50,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteCursor;
 
 /**
  * 
@@ -480,8 +449,8 @@ public class LIMEMappingSetting extends Activity {
 					}
 				}
 
-			} else if (check.exists() && check.isFile()
-					&& (  true || check.getName().toLowerCase().endsWith(".lime") || check.getName().toLowerCase().endsWith(".cin"))  ) {
+			} else { //if (check.exists() && check.isFile()
+					//&& (  true || check.getName().toLowerCase().endsWith(".lime") || check.getName().toLowerCase().endsWith(".cin"))  ) {
 				//Log.i("ART","run load mapping method : " + imtype);
 				hasSelectFile = true;
 				loadMapping(check);
@@ -508,6 +477,7 @@ public class LIMEMappingSetting extends Activity {
 		/*
 		 * Show keyboard picker
 		 */
+		@SuppressWarnings("unchecked")
 		private void showKeyboardPicker() {
 
 			AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -552,7 +522,7 @@ public class LIMEMappingSetting extends Activity {
 				});
 	
 				mOptionsDialog = builder.create();
-				Window window = mOptionsDialog.getWindow();
+				//Window window = mOptionsDialog.getWindow();
 				mOptionsDialog.show();
 			}
 		}
@@ -560,7 +530,7 @@ public class LIMEMappingSetting extends Activity {
 		private void handlKeyboardSelection(int position) {
 			KeyboardObj kobj = kblist.get(position);
 			try {
-				DBSrv.setKeyboardInfo(imtype, kobj.getDescription(), kobj.getCode());
+				DBSrv.setIMKeyboard(imtype, kobj.getDescription(), kobj.getCode());
 				labKeyboard.setText(DBSrv.getImInfo(imtype, "keyboard"));
 			} catch (RemoteException e) {
 				e.printStackTrace();

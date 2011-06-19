@@ -167,18 +167,18 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 					Log.i("LIMEPreference:OnChanged()", "PhoneticIMInfo.kyeboard:" + 
 							DBSrv.getImInfo("phonetic", "keyboard"));	
 				if(selectedPhoneticKeyboardType.equals("standard")){
-					DBSrv.setKeyboardInfo("phonetic",  
+					DBSrv.setIMKeyboard("phonetic",  
 							DBSrv.getKeyboardInfo("phonetic", "desc"), "phonetic");
 				}else if(selectedPhoneticKeyboardType.equals("eten")){
-					DBSrv.setKeyboardInfo("phonetic", 
-							DBSrv.getKeyboardInfo("dayi", "desc"), "dayi");
+					DBSrv.setIMKeyboard("phonetic", 
+							DBSrv.getKeyboardInfo("dayi", "desc"), "limenumsym");
 				}else if(selectedPhoneticKeyboardType.equals("eten26")){
 					if(PreferenceManager.getDefaultSharedPreferences(ctx).
 							getBoolean("number_row_in_english", false)){
-						DBSrv.setKeyboardInfo("phonetic", 
+						DBSrv.setIMKeyboard("phonetic", 
 								DBSrv.getKeyboardInfo("limenum", "desc"), "limenum");
 					}else{
-						DBSrv.setKeyboardInfo("phonetic", 
+						DBSrv.setIMKeyboard("phonetic", 
 								DBSrv.getKeyboardInfo("lime", "desc"), "lime");
 					}
 				}

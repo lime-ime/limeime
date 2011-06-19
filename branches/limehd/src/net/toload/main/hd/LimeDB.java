@@ -45,7 +45,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 	private static boolean DEBUG = false;
 
-	private final static int DATABASE_VERSION = 66;
+	private final static int DATABASE_VERSION = 68; //66 -> 68 for new lime_number_symbol keybaord designed for ETEN
 	//private final static int DATABASE_RELATED_SIZE = 50;
 
 	public final static String FIELD_id = "_id";
@@ -252,6 +252,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		// Start from 3.0v no need to create internal database
+		
 	}
 	
 	public SQLiteDatabase getSqliteDb(boolean readonly){
@@ -278,7 +279,26 @@ public class LimeDB extends SQLiteOpenHelper {
 					//db = this.getWritableDatabase();
 				}
 			}
-			//Log.i("ART", "Load Database Result : " + db);
+			Log.i("LIMEDB:getSqliteDb()", "database version:" + db.getVersion());
+			// Insert the new lime_number_symbol keyboard record
+			if(!readonly && db.getVersion() < 68){
+				ContentValues 	cv = new ContentValues();
+								cv.put("code", "limenumsym");
+								cv.put("name", "LIMENUMSYM");
+								cv.put("desc", "LIME+¼Æ¦r²Å¸¹Áä½L");
+								cv.put("type", "phone");
+								cv.put("image", "lime_number_symbol_keyboard_priview");
+								cv.put("imkb", "lime_number_symbol");
+								cv.put("imshiftkb", "lime_number_symbol_shift");
+						  		cv.put("engkb", "lime_english_number");
+						  		cv.put("engshiftkb", "lime_english_shift");
+						  		cv.put("symbolkb", "symbol");
+						  		cv.put("symbolshiftkb", "symbol_shift");
+						  		cv.put("disable", "false");
+			
+				db.insert("keyboard",null, cv);
+				db.setVersion(68);
+			}
 			
 			return db;
 		}catch(Exception e){e.printStackTrace();}
@@ -1614,7 +1634,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					if( kobj == null){					
 						kobj = getKeyboardObj("lime");
 					 }
-					setKeyboardInfo(table, kobj.getDescription(), kobj.getCode());
+					setIMKeyboard(table, kobj.getDescription(), kobj.getCode());
 					
 				}
 				
@@ -1864,7 +1884,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	public List<KeyboardObj> getKeyboardList() {
 		List<KeyboardObj> result = new LinkedList<KeyboardObj>();
 		try {
-			SQLiteDatabase db = this.getSqliteDb(true);
+			SQLiteDatabase db = this.getSqliteDb(false);
 			Cursor cursor = db.query("keyboard", null, null, null, null, null, "name ASC", null);
 			if (cursor.moveToFirst()) {
 				do{
@@ -1894,7 +1914,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		return result;
 	}
 
-	public void setKeyboardInfo(String im, String value,
+	public void setIMKeyboard(String im, String value,
 			String keyboard) {
 
 		ContentValues cv = new ContentValues();

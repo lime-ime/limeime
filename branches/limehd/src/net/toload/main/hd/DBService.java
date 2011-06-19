@@ -30,7 +30,6 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.*;
 
@@ -41,15 +40,10 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.os.Environment;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.util.Log;
 
 public class DBService extends Service {
 	
@@ -59,7 +53,7 @@ public class DBService extends Service {
 	private LIMEPreferenceManager mLIMEPref = null;
 	
 	// Monitoring thread.
-	private Thread thread = null;
+//	private Thread thread = null;
 
 	public class DBServiceImpl extends IDBService.Stub {
 
@@ -94,8 +88,9 @@ public class DBService extends Service {
 					thread = null;
 				}
 				thread = new Thread() {
+					@SuppressWarnings("static-access")
 					public void run() {
-						int total = 0;
+						//int total = 0;
 						//while (!db.isFinish() || !db.isRelatedFinish() ) {
 						while (!db.isFinish()) {
 							try {
@@ -297,8 +292,8 @@ public class DBService extends Service {
 				
 				FileInputStream fis = new FileInputStream(sourceFile); 
 				ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fis));
-				ZipEntry entry; 
-				while ((entry = zis.getNextEntry()) != null) {
+				//ZipEntry entry; 
+				while (( zis.getNextEntry()) != null) {
 					
 					int size; 
 					byte[] buffer = new byte[2048]; 
@@ -442,10 +437,10 @@ public class DBService extends Service {
 		}
 
 		@Override
-		public void setKeyboardInfo(String im, String value,
+		public void setIMKeyboard(String im, String value,
 				String keyboard) throws RemoteException {
 			if (db == null) {loadLimeDB();}
-			db.setKeyboardInfo(im, value, keyboard);
+			db.setIMKeyboard(im, value, keyboard);
 		}
 
 		@Override
