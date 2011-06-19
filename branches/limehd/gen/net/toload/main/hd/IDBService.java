@@ -137,7 +137,7 @@ this.setImInfo(_arg0, _arg1, _arg2);
 reply.writeNoException();
 return true;
 }
-case TRANSACTION_setKeyboardInfo:
+case TRANSACTION_setIMKeyboard:
 {
 data.enforceInterface(DESCRIPTOR);
 java.lang.String _arg0;
@@ -146,7 +146,7 @@ java.lang.String _arg1;
 _arg1 = data.readString();
 java.lang.String _arg2;
 _arg2 = data.readString();
-this.setKeyboardInfo(_arg0, _arg1, _arg2);
+this.setIMKeyboard(_arg0, _arg1, _arg2);
 reply.writeNoException();
 return true;
 }
@@ -380,7 +380,7 @@ _reply.recycle();
 _data.recycle();
 }
 }
-public void setKeyboardInfo(java.lang.String im, java.lang.String value, java.lang.String keyboard) throws android.os.RemoteException
+public void setIMKeyboard(java.lang.String im, java.lang.String value, java.lang.String keyboard) throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
 android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -389,7 +389,7 @@ _data.writeInterfaceToken(DESCRIPTOR);
 _data.writeString(im);
 _data.writeString(value);
 _data.writeString(keyboard);
-mRemote.transact(Stub.TRANSACTION_setKeyboardInfo, _data, _reply, 0);
+mRemote.transact(Stub.TRANSACTION_setIMKeyboard, _data, _reply, 0);
 _reply.readException();
 }
 finally {
@@ -497,7 +497,7 @@ static final int TRANSACTION_restoreDatabase = (android.os.IBinder.FIRST_CALL_TR
 static final int TRANSACTION_resetImInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 8);
 static final int TRANSACTION_removeImInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 9);
 static final int TRANSACTION_setImInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 10);
-static final int TRANSACTION_setKeyboardInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 11);
+static final int TRANSACTION_setIMKeyboard = (android.os.IBinder.FIRST_CALL_TRANSACTION + 11);
 static final int TRANSACTION_closeDatabse = (android.os.IBinder.FIRST_CALL_TRANSACTION + 12);
 static final int TRANSACTION_getImInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 13);
 static final int TRANSACTION_getKeyboardCode = (android.os.IBinder.FIRST_CALL_TRANSACTION + 14);
@@ -515,7 +515,7 @@ public void restoreDatabase() throws android.os.RemoteException;
 public void resetImInfo(java.lang.String im) throws android.os.RemoteException;
 public void removeImInfo(java.lang.String im, java.lang.String field) throws android.os.RemoteException;
 public void setImInfo(java.lang.String im, java.lang.String field, java.lang.String value) throws android.os.RemoteException;
-public void setKeyboardInfo(java.lang.String im, java.lang.String value, java.lang.String keyboard) throws android.os.RemoteException;
+public void setIMKeyboard(java.lang.String im, java.lang.String value, java.lang.String keyboard) throws android.os.RemoteException;
 public void closeDatabse() throws android.os.RemoteException;
 public java.lang.String getImInfo(java.lang.String im, java.lang.String field) throws android.os.RemoteException;
 public java.lang.String getKeyboardCode(java.lang.String im) throws android.os.RemoteException;

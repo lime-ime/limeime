@@ -293,8 +293,8 @@ public class LimeDB extends SQLiteOpenHelper {
 				cv.put("imshiftkb", "lime_number_symbol_shift");
 				cv.put("engkb", "lime_english_number");
 				cv.put("engshiftkb", "lime_english_shift");
-				cv.put("symbolkb", "symbol");
-				cv.put("symbolshiftkb", "symbol_shift");
+				cv.put("symbolkb", "symbols");
+				cv.put("symbolshiftkb", "symbols_shift");
 				cv.put("disable", "false");
 			
 				db.insert("keyboard",null, cv);
