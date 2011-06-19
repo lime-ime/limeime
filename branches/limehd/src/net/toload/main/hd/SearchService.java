@@ -41,7 +41,8 @@ import android.os.RemoteException;
 import android.util.Log;
 
 public class SearchService extends Service {
-
+	
+	private final boolean DEBUG = false;
 	private LimeDB db = null;
 	private LimeHanConverter hanConverter = null;
 	private static LinkedList<Mapping> diclist = null;
@@ -63,7 +64,7 @@ public class SearchService extends Service {
 	private static boolean softkeypressed;
 	//Jeremy '11,6,10
 	private static boolean hasNumberMapping;
-	//private static boolean hasSymbolMapping;
+	private static boolean hasSymbolMapping;
 	
 	
 	private static List<Mapping> preresultlist = null;
@@ -126,7 +127,7 @@ public class SearchService extends Service {
 			db.setTablename(table);
 			tablename = table;
 			hasNumberMapping = numberMapping;
-			//hasSymbolMapping = symbolMapping;
+			hasSymbolMapping = symbolMapping;
 		}
 		
 		
@@ -473,6 +474,8 @@ public class SearchService extends Service {
 */
 		@Override
 		public String getSelkey() throws RemoteException {
+			if(DEBUG) 
+				Log.i("SearchService:getSelkey()","hasNumber:" + hasNumberMapping + "hasSymbol:" + hasSymbolMapping);
 			String selkey = "";
 			String table = tablename;
 			if(tablename.equals("phonetic")){
@@ -481,7 +484,8 @@ public class SearchService extends Service {
 			if(selKeyMap.get(table)==null || selKeyMap.size()==0){
 				if(db == null){db = new LimeDB(ctx);}
 				selkey = db.getImInfo(tablename, "selkey");
-				
+				if(DEBUG)
+					Log.i("SearchService:getSelkey()","selkey from db:"+selkey);
 				boolean validSelkey = true;
 				if(selkey!=null && selkey.length()==10){
 					for(int i=0; i<10; i++){
@@ -492,13 +496,23 @@ public class SearchService extends Service {
 					}
 				}else
 					validSelkey = false;
-				
-				if(!validSelkey){
-					if(hasNumberMapping){
+				//Jeremy '11,6,19 Rewrote for IM has symbol mapping like ETEN
+				if(!validSelkey || tablename.equals("phonetic")){
+					if(hasNumberMapping && hasSymbolMapping){ 
+						if(tablename.equals("dayi")
+							||(tablename.equals("phonetic")&&mLIMEPref.getPhoneticKeyboardType().equals("standard"))){
+							selkey = "'[]-\\^&*()";
+						}else{
+							selkey = "!@#$%^&*()";
+						}
+					}else if (hasNumberMapping) {
 						selkey = "'[]-\\^&*()";
-					}else
+					}else{
 						selkey = "1234567890";
+					}
 				}
+				if(DEBUG)
+					Log.i("SearchService:getSelkey()","selkey:"+selkey);
 				selKeyMap.put(table, selkey);
 			}
 			return selKeyMap.get(table);

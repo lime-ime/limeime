@@ -43,7 +43,7 @@ import android.util.Log;
  */
 public class LimeDB extends SQLiteOpenHelper {
 
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
 
 	private final static int DATABASE_VERSION = 68; //66 -> 68 for new lime_number_symbol keybaord designed for ETEN
 	//private final static int DATABASE_RELATED_SIZE = 50;
@@ -305,8 +305,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				cv.put("symbolkb", "symbols");
 				cv.put("symbolshiftkb", "symbols_shift");
 				cv.put("disable", "false");
-			
-				db.insert("keyboard",null, cv);
+		
 		
 				db.setVersion(68);
 			}

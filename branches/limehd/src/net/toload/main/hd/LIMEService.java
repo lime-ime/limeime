@@ -1885,9 +1885,9 @@ public class LIMEService extends InputMethodService implements
 				if (list.size() > 0) {
 					String selkey=SearchSrv.getSelkey();
 					String mixedModeSelkey = "`";
-					if(keyboardSelection.equals("ez")|| keyboardSelection.equals("custom") ||
-						(keyboardSelection.equals("phonetic")&& isPressPhysicalKeyboard 
-							&& mLIMEPref.getPhoneticKeyboardType().equals("eten")) ){
+					if(hasSymbolMapping && !keyboardSelection.equals("dayi") 
+							&& ! (keyboardSelection.equals("phonetic") 
+									&& mLIMEPref.getPhoneticKeyboardType().equals("standard")) 	){
 						mixedModeSelkey = " ";
 					}
 						
@@ -1989,7 +1989,8 @@ public class LIMEService extends InputMethodService implements
 						if (templist.size() > 0) {
 							list.add(temp);
 							list.addAll(templist);
-							setSuggestions(list, isPressPhysicalKeyboard && mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
+							setSuggestions(list, isPressPhysicalKeyboard 
+									&& mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
 									, true, "1234567890");
 							tempEnglishList.addAll(list);
 						} else {
