@@ -43,7 +43,7 @@ import android.util.Log;
  */
 public class LimeDB extends SQLiteOpenHelper {
 
-	private static boolean DEBUG = false;
+	private static boolean DEBUG = true;
 
 	private final static int DATABASE_VERSION = 68; //66 -> 68 for new lime_number_symbol keybaord designed for ETEN
 	//private final static int DATABASE_RELATED_SIZE = 50;
@@ -108,8 +108,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String ETEN26_KEY =            	"qazwsxedcrfvtgbyhnujmikolp";
 	private final static String ETEN26_KEY_REMAP_INITIAL = 	"y8lhnju2vkzewr1tcsmba9dixq";
 	private final static String ETEN26_KEY_REMAP_FINAL =   	"y8lhnju7vk6e;r1tcpm3094i/.";
-	private final static String ETEN26_DUALKEY_REMAP = 	"o,gf;5p0-/.-";
-	private final static String ETEN26_DUALKEY = 		"yhvewrsacxqc";
+	private final static String ETEN26_DUALKEY_REMAP = 		"o,gfw5pa-wq-s";
+	private final static String ETEN26_DUALKEY = 			"yhve;rs0c/.cp";
 	private final static String ETEN26_CHAR_INITIAL = 	
 		"£¨|£«|£±|£©|£ª|£¹|£¸|£x|(£¦/££)|£­|£w|(£|/£¢)|£y|(£¡/£¤)|£t|£¥|(£~/£·)|£z|£º|£§|£v|£¯|£}|£¬|£{|£u";
 	private final static String ETEN26_CHAR_FINAL = 	
@@ -119,8 +119,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String HSU_KEY =            		"azwsxedcrfvtgbyhnujmikolp";
 	private final static String HSU_KEY_REMAP_INITIAL = 	"hylnju2vbzfwe18csmra9d.xq"; 
 	private final static String HSU_KEY_REMAP_FINAL =   	"oylnj,6vb3fwk18ipm409;./q";  
-	private final static String HSU_DUALKEY_REMAP =		 	"gt5--";
-	private final static String HSU_DUALKEY = 				"vfrx/";
+	private final static String HSU_DUALKEY_REMAP =		 	"gt5--sadce,o";
+	private final static String HSU_DUALKEY = 				"vfrx/p0;ikuh";
 	private final static String HSU_CHAR_INITIAL = 	
 		"£©|£¨|£±|£ª|£¹|£¸|£x|(£¦/££)|£§|£w|(£¥/£¢)|£y|£||£t|£«|£~|£z|£º|(£¡/£¤)|£u|£¯|£}|£²|(£{/£·)|£u";
 	private final static String HSU_CHAR_FINAL = 	
@@ -1049,8 +1049,6 @@ public class LimeDB extends SQLiteOpenHelper {
 				}else {
 				
 					if(code.length() == 1){
-					
-						
 							if(phonetickeyboardtype.equals("eten26") &&
 									(code.equals("q") || code.equals("w") 
 									|| code.equals("d")|| code.equals("f") 
