@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: D:\\PROJECT\\Android\\Development\\Workspace\\LIMEHD\\src\\net\\toload\\main\\hd\\IDBService.aidl
+ * Original file: C:\\DataCenter\\Project\\Android\\Development\\Workspace\\LIMEHD\\src\\net\\toload\\main\\hd\\IDBService.aidl
  */
 package net.toload.main.hd;
 public interface IDBService extends android.os.IInterface
@@ -185,6 +185,18 @@ data.enforceInterface(DESCRIPTOR);
 java.util.List _result = this.getKeyboardList();
 reply.writeNoException();
 reply.writeList(_result);
+return true;
+}
+case TRANSACTION_getKeyboardInfo:
+{
+data.enforceInterface(DESCRIPTOR);
+java.lang.String _arg0;
+_arg0 = data.readString();
+java.lang.String _arg1;
+_arg1 = data.readString();
+java.lang.String _result = this.getKeyboardInfo(_arg0, _arg1);
+reply.writeNoException();
+reply.writeString(_result);
 return true;
 }
 }
@@ -454,6 +466,25 @@ _data.recycle();
 }
 return _result;
 }
+public java.lang.String getKeyboardInfo(java.lang.String keyboardCode, java.lang.String field) throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+java.lang.String _result;
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+_data.writeString(keyboardCode);
+_data.writeString(field);
+mRemote.transact(Stub.TRANSACTION_getKeyboardInfo, _data, _reply, 0);
+_reply.readException();
+_result = _reply.readString();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+return _result;
+}
 }
 static final int TRANSACTION_loadMapping = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
 static final int TRANSACTION_resetMapping = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
@@ -471,6 +502,7 @@ static final int TRANSACTION_closeDatabse = (android.os.IBinder.FIRST_CALL_TRANS
 static final int TRANSACTION_getImInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 13);
 static final int TRANSACTION_getKeyboardCode = (android.os.IBinder.FIRST_CALL_TRANSACTION + 14);
 static final int TRANSACTION_getKeyboardList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 15);
+static final int TRANSACTION_getKeyboardInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 16);
 }
 public void loadMapping(java.lang.String filename, java.lang.String tablename) throws android.os.RemoteException;
 public void resetMapping(java.lang.String tablename) throws android.os.RemoteException;
@@ -488,4 +520,5 @@ public void closeDatabse() throws android.os.RemoteException;
 public java.lang.String getImInfo(java.lang.String im, java.lang.String field) throws android.os.RemoteException;
 public java.lang.String getKeyboardCode(java.lang.String im) throws android.os.RemoteException;
 public java.util.List getKeyboardList() throws android.os.RemoteException;
+public java.lang.String getKeyboardInfo(java.lang.String keyboardCode, java.lang.String field) throws android.os.RemoteException;
 }

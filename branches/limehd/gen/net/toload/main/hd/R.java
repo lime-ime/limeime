@@ -74,6 +74,7 @@ public final class R {
         public static final int candidate_font_height=0x7f070005;
         public static final int candidate_number_font_height=0x7f070006;
         public static final int candidate_vertical_padding=0x7f070007;
+        public static final int composing_text_size=0x7f07000b;
         public static final int key_height=0x7f070002;
         public static final int key_height_2=0x7f070003;
         public static final int key_text_size=0x7f070009;
