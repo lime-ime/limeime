@@ -168,7 +168,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasSpaceProcessed = false;
 	
 	
-	//private boolean hasSymbolEntered = false; //Jeremy '11,5,24 
+	private boolean hasSymbolEntered = false; //Jeremy '11,5,24 
 
 	// private boolean hasSpacePress = false;
 
@@ -762,7 +762,7 @@ public class LIMEService extends InputMethodService implements
 					+ hasCtrlPress);
 		}
 		//hasKeyPress = false;
-		//hasSymbolEntered = false;
+		hasSymbolEntered = false;
 
 		//Log.i("ART", "Physical Keyboard ->" + keyCode);
 
@@ -832,15 +832,6 @@ public class LIMEService extends InputMethodService implements
 			hasShiftPress = true;
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState,
 					keyCode, event);
-			// '11,5,14 Jeremy ctrl-shift switch to next available keyboard; 
-			// '111,6,18 Jeremy moved from on_KEYUP
-			if ( (hasMenuPress || hasCtrlPress) ){  
-				nextActiveKeyboard();
-				hasShiftProcessed = true;
-				if(hasMenuPress) hasMenuProcessed = true;
-				return true;
-			}
-			
 			break;
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
@@ -1068,7 +1059,7 @@ public class LIMEService extends InputMethodService implements
 			if(s != null){
 				if(mCandidateView != null && mCandidateView.isShown()) setSuggestions(null, false, false);;
 				getCurrentInputConnection().commitText(s, 0);
-				//hasSymbolEntered = true;
+				hasSymbolEntered = true;
 				return true;
 			}
 			}
@@ -1210,9 +1201,13 @@ public class LIMEService extends InputMethodService implements
 		case KeyEvent.KEYCODE_SHIFT_RIGHT:
 			hasShiftPress = false;
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,	keyCode, event);
-			//'11,6,18 Jeremy move ctrl-shift processing to on_KEYUP
-			if(hasShiftProcessed)
+			// '11,5,14 Jeremy ctrl-shift switch to next available keyboard; 
+			// '11,5,24 blocking switching if full-shape symbol 
+			if (!hasSymbolEntered && (hasMenuPress || hasCtrlPress) ){  
+				nextActiveKeyboard();
+				if(hasMenuPress) hasMenuProcessed = true;
 				return true;
+			}
 			
 			break;
 		case KeyEvent.KEYCODE_ALT_LEFT:
