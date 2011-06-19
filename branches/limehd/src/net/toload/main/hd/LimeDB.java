@@ -118,7 +118,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 	private final static String HSU_KEY =            		"azwsxedcrfvtgbyhnujmikolp";
 	private final static String HSU_KEY_REMAP_INITIAL = 	"hylnju2vbzfwe18csmra9d.xq"; 
-	private final static String HSU_KEY_REMAP_FINAL =   	"oylnj,6vb3fwk18ipm409;./q";  
+	private final static String HSU_KEY_REMAP_FINAL =   	"oylnju6vb3fwk18ipm409;./q";  
 	private final static String HSU_DUALKEY_REMAP =		 	"gt5--sadce,o";
 	private final static String HSU_DUALKEY = 				"vfrx/p0;ikuh";
 	private final static String HSU_CHAR_INITIAL = 	
@@ -288,7 +288,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					//db = this.getWritableDatabase();
 				}
 			}
-			if(DEBUG) 
+			/*if(DEBUG) 
 				Log.i("LIMEDB:getSqliteDb()", "database version:" + db.getVersion());
 			// Insert the new lime_number_symbol keyboard record
 			if(!readonly && db.getVersion() < 68){
@@ -305,10 +305,11 @@ public class LimeDB extends SQLiteOpenHelper {
 				cv.put("symbolkb", "symbols");
 				cv.put("symbolshiftkb", "symbols_shift");
 				cv.put("disable", "false");
-		
-		
+
+				db.insert("keybaord", null, cv);
+				
 				db.setVersion(68);
-			}
+			}*/
 			
 			return db;
 		}catch(Exception e){e.printStackTrace();}
@@ -835,10 +836,15 @@ public class LimeDB extends SQLiteOpenHelper {
 				}else{
 					for (int i = 0; i < code.length(); i++) {
 						String c = "";
-						if(i>0)
-							c = finalKeyMap.get(code.substring(i, i + 1));
-						else
+						if(i>0){
+							if(phonetickeyboardtype.equals("hsu") && tablename.equals("phonetic") && 
+								code.substring(i, i + 1).equals("e")&& i != code.length()-1)
+								c = keyMap.get(code.substring(i, i + 1));
+							else
+								c = finalKeyMap.get(code.substring(i, i + 1));
+						}else{
 							c = keyMap.get(code.substring(i, i + 1));
+						}
 						if(c!=null) result = result + c.trim();
 					}
 				
@@ -1940,6 +1946,33 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 
 	public List<KeyboardObj> getKeyboardList() {
+		
+		String kbversion = mLIMEPref.getParameterString("kbversion");
+		if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 330){
+			
+			KeyboardObj tobj = getKeyboardObj("limenumsym");
+			if(tobj == null){
+				SQLiteDatabase db2 = this.getSqliteDb(false);
+				
+				ContentValues 	cv = new ContentValues();
+				cv.put("code", "limenumsym");
+				cv.put("name", "LIMENUMSYM");
+				cv.put("desc", "LIME+¼Æ¦r²Å¸¹Áä½L");
+				cv.put("type", "phone");
+				cv.put("image", "lime_number_symbol_keyboard_priview");
+				cv.put("imkb", "lime_number_symbol");
+				cv.put("imshiftkb", "lime_number_symbol_shift");
+				cv.put("engkb", "lime_english_number");
+				cv.put("engshiftkb", "lime_english_shift");
+				cv.put("symbolkb", "symbols");
+				cv.put("symbolshiftkb", "symbols_shift");
+				cv.put("disable", "false");
+				db2.insert("keyboard" ,null , cv);
+				
+			}
+			mLIMEPref.setParameter("kbversion","330");
+		}
+		
 		List<KeyboardObj> result = new LinkedList<KeyboardObj>();
 		try {
 			SQLiteDatabase db = this.getSqliteDb(false);
