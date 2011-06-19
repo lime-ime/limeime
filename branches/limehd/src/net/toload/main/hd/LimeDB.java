@@ -26,6 +26,7 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -122,9 +123,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String HSU_DUALKEY_REMAP =		 	"gt5--sadce,o";
 	private final static String HSU_DUALKEY = 				"vfrx/p0;ikuh";
 	private final static String HSU_CHAR_INITIAL = 	
-		"£©|£¨|£±|£ª|£¹|£¸|£x|(£¦/££)|£§|£w|(£¥/£¢)|£y|£||£t|£«|£~|£z|£º|(£¡/£¤)|£v|£¯|£}|£²|(£{/£·)|£u";
+		"£©|£¨|£±|£ª|£¹|(£¸/£®)|£x|(£¦/££)|£§|£w|(£¥/£¢)|£y|£||£t|£«|£~|£z|£º|(£¡/£¤)|£v|£¯|£}|£²|(£{/£·)|£u";
 	private final static String HSU_CHAR_FINAL = 	
-		"£°|£¨|£±|£»|£¹|£®|£½|(£¦/££)|£§|£¾|(£¥/£¢)|£y|£­|£t|£«|£¬|£´|£º|£¿|£³|£¯|£µ|£²|(£¶/£·)|£u";
+		"£°|£¨|£±|£»|£¹|(£¸/£®)|£½|(£¦/££)|£§|£¾|(£¥/£¢)|£y|£­|£t|£«|£¬|£´|£º|£¿|£³|£¯|£µ|£²|(£¶/£·)|£u";
 	
 	private final static String DESIREZ_KEY =            			"@qazwsxedcrfvtgbyhnujmik?olp,.";
 	private final static String DESIREZ_BPMF_KEY_REMAP = 			"1qaz2wsedc5tg6yh4uj8ik9ol0;-,.";
@@ -837,10 +838,6 @@ public class LimeDB extends SQLiteOpenHelper {
 					for (int i = 0; i < code.length(); i++) {
 						String c = "";
 						if(i>0){
-							if(phonetickeyboardtype.equals("hsu") && tablename.equals("phonetic") && 
-								code.substring(i, i + 1).equals("e")&& i != code.length()-1)
-								c = keyMap.get(code.substring(i, i + 1));
-							else
 								c = finalKeyMap.get(code.substring(i, i + 1));
 						}else{
 							c = keyMap.get(code.substring(i, i + 1));
@@ -1198,13 +1195,90 @@ public class LimeDB extends SQLiteOpenHelper {
 		return "";
 	}
 	
+	private HashSet<String> buildDualCodeList(String code, String keytablename){
+		HashMap<String,String> codeDualMap = keysDualMap.get(keytablename);
+		if(codeDualMap == null || codeDualMap.size()==0)
+			return null;
+		else{
+			HashSet<String> dualCodeList = new HashSet<String>();
+			dualCodeList.add(code);
+			do{
+				int currentListSize = dualCodeList.size();
+				boolean codeInserted = false;
+				HashSet<String> tempSet = new HashSet<String>(dualCodeList);
+				for(String currentCode : tempSet) {
+					//String currentCode = dualCodeList.get(i);
+					if(DEBUG) Log.i("LIMEDB:buildDualCodeList()","currentSize:"+ currentListSize + " curretnCode:" + currentCode);
+					for(int j=0; j< currentCode.length(); j++){
+						String c = currentCode.substring(j, j+1);
+						
+						if(codeDualMap.get(c)!=null){
+							//Log.i("LIMEDB:buildDualCodeList()","dualCode found:"+ c + " -> " + codeDualMap.get(c));
+							String newCode = "";
+							String n = codeDualMap.get(c);
+							if(currentCode.length() == 1) newCode = n;
+							else{
+								if(j==0) 
+									newCode = n + currentCode.substring(1,currentCode.length());
+								else if(j==currentCode.length()) 
+									newCode = currentCode.substring(0, currentCode.length()-1) + n;
+								else
+									newCode = currentCode.substring(0,j) + n 
+											+ currentCode.substring(j+1, currentCode.length());
+							}
+							
+							if(dualCodeList.add(newCode)){
+								codeInserted = true;
+								if(DEBUG) Log.i("LIMEDB:buildDualCodeList()","code added:"+ newCode);
+							}
+							
+						}
+					}
+				}
+				if(!codeInserted) break;
+			
+			}while(true);
+			if(dualCodeList.size()==1)
+				return null;
+			else{
+				dualCodeList.remove(code);
+				return dualCodeList;
+				
+			}
+			
+			
+
+		}
+		
+		
+	}
+	
 	private String expandDualCode(String code, String keytablename){
 		
+		HashSet <String> dualCodeList = buildDualCodeList(code, keytablename);
+		String result="";
+		if(dualCodeList != null) {
+			for(String dualcode : dualCodeList){
+				result = result + " OR "+  FIELD_CODE + "= '"+ dualcode +"'"; 
+			}
+		}
+		Log.i("LIMEDB:expandDualCode()", "result:" + result);
+		return result;
+		
+		/*
+		
+		
+		
 		HashMap<String,String> codeDualMap = keysDualMap.get(keytablename);
+		
+		
+		
 
-		String result = "";
+		result = "";
+		String c = null;
 		if(code.length() == 1){
-			result = " OR " + FIELD_CODE + "= '"+codeDualMap.get(code)+"'";
+			if((c = codeDualMap.get(code)) !=null)
+				result = " OR " + FIELD_CODE + "= '"+c+"'";
 		}else if(code.length() == 2){
 			result += " OR " + FIELD_CODE + "= '"+code.substring(0,1)+codeDualMap.get(code.substring(1,2))+"' OR ";
 			result += FIELD_CODE + "= '"+codeDualMap.get(code.substring(0,1))+code.substring(1,2)+"' OR ";
@@ -1237,7 +1311,10 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 		
 		
+		Log.i("LIMEDB:expandDualCode()", "result:" + result); 
+		
 		return result;
+		*/
 	}
 
 	/*
