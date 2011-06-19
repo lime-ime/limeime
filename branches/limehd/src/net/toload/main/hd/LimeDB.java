@@ -1952,22 +1952,29 @@ public class LimeDB extends SQLiteOpenHelper {
 			
 			KeyboardObj tobj = getKeyboardObj("limenumsym");
 			if(tobj == null){
-				SQLiteDatabase db2 = this.getSqliteDb(false);
+				try{
+					SQLiteDatabase db = this.getSqliteDb(false);
 				
-				ContentValues 	cv = new ContentValues();
-				cv.put("code", "limenumsym");
-				cv.put("name", "LIMENUMSYM");
-				cv.put("desc", "LIME+计才腹龄絃");
-				cv.put("type", "phone");
-				cv.put("image", "lime_number_symbol_keyboard_priview");
-				cv.put("imkb", "lime_number_symbol");
-				cv.put("imshiftkb", "lime_number_symbol_shift");
-				cv.put("engkb", "lime_english_number");
-				cv.put("engshiftkb", "lime_english_shift");
-				cv.put("symbolkb", "symbols");
-				cv.put("symbolshiftkb", "symbols_shift");
-				cv.put("disable", "false");
-				db2.insert("keyboard" ,null , cv);
+					ContentValues 	cv = new ContentValues();
+					cv.put("code", "limenumsym");
+					cv.put("name", "LIMENUMSYM");
+					cv.put("desc", "LIME+计才腹龄絃");
+					cv.put("type", "phone");
+					cv.put("image", "lime_number_symbol_keyboard_priview");
+					cv.put("imkb", "lime_number_symbol");
+					cv.put("imshiftkb", "lime_number_symbol_shift");
+					cv.put("engkb", "lime_english_number");
+					cv.put("engshiftkb", "lime_english_shift");
+					cv.put("symbolkb", "symbols");
+					cv.put("symbolshiftkb", "symbols_shift");
+					cv.put("disable", "false");
+					db.insert("keyboard" ,null , cv);
+					
+					db.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				
 				
 			}
 			mLIMEPref.setParameter("kbversion","330");
