@@ -45,7 +45,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 	private static boolean DEBUG = false;
 
-	private final static int DATABASE_VERSION = 68; //66 -> 68 for new lime_number_symbol keybaord designed for ETEN
+	private final static int DATABASE_VERSION = 66; 
 	//private final static int DATABASE_RELATED_SIZE = 50;
 
 	public final static String FIELD_id = "_id";
@@ -122,7 +122,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String HSU_DUALKEY_REMAP =		 	"gt5--sadce,o";
 	private final static String HSU_DUALKEY = 				"vfrx/p0;ikuh";
 	private final static String HSU_CHAR_INITIAL = 	
-		"£©|£¨|£±|£ª|£¹|£¸|£x|(£¦/££)|£§|£w|(£¥/£¢)|£y|£||£t|£«|£~|£z|£º|(£¡/£¤)|£u|£¯|£}|£²|(£{/£·)|£u";
+		"£©|£¨|£±|£ª|£¹|£¸|£x|(£¦/££)|£§|£w|(£¥/£¢)|£y|£||£t|£«|£~|£z|£º|(£¡/£¤)|£v|£¯|£}|£²|(£{/£·)|£u";
 	private final static String HSU_CHAR_FINAL = 	
 		"£°|£¨|£±|£»|£¹|£®|£½|(£¦/££)|£§|£¾|(£¥/£¢)|£y|£­|£t|£«|£¬|£´|£º|£¿|£³|£¯|£µ|£²|(£¶/£·)|£u";
 	
