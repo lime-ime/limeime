@@ -31,7 +31,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -173,7 +172,10 @@ public class LimeDB extends SQLiteOpenHelper {
 	private HashMap<String, HashMap<String,String>> keysDefMap = new HashMap<String, HashMap<String,String>>();
 	private HashMap<String, HashMap<String,String>> keysReMap = new HashMap<String, HashMap<String,String>>();
 	private HashMap<String, HashMap<String,String>> keysDualMap = new HashMap<String, HashMap<String,String>>();
-
+	
+	private String lastCode = "";
+	private String lastValidDualCodeList = "";
+	
 
 	public String DELIMITER = "";
 
@@ -618,9 +620,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	public String getRMapping(String keyword) {
 
 		//Log.i("ART", "run get rmapping:"+ keyword);
-		String Rtable = mLIMEPref.getRerverseLookupTable(tablename);
+		String table = mLIMEPref.getRerverseLookupTable(tablename);
 
-		if (Rtable.equals("none")) {
+		if (table.equals("none")) {
 			return null;
 		}
 
@@ -630,10 +632,10 @@ public class LimeDB extends SQLiteOpenHelper {
 			if (keyword != null && !keyword.trim().equals("")) {
 				Cursor cursor = null;
 				SQLiteDatabase db = this.getSqliteDb(true);
-				cursor = db.query(Rtable, null, FIELD_WORD + " = '" + keyword +"'", null, null,
+				cursor = db.query(table, null, FIELD_WORD + " = '" + keyword +"'", null, null,
 						null, null, null);
 				if (DEBUG) {
-					Log.i("getRmapping", "tablename:" + Rtable + "  keyworad:"
+					Log.i("getRmapping", "tablename:" + table + "  keyworad:"
 							+ keyword + "  cursor.getCount:"
 							+ cursor.getCount());
 				}
@@ -642,7 +644,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 					int wordColumn = cursor.getColumnIndex(FIELD_WORD);
 					result = cursor.getString(wordColumn) + "="
-							+ keyToKeyname(cursor.getString(codeColumn), Rtable);
+							+ keyToKeyname(cursor.getString(codeColumn), table);
 					if (DEBUG) {
 						Log.i("getRmapping", "Code:"
 								+ cursor.getString(codeColumn));
@@ -652,7 +654,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						result = result
 								+ "; "
 								+ keyToKeyname(cursor.getString(codeColumn),
-										Rtable);
+										table);
 						if (DEBUG) {
 							Log.i("getRmapping", "Code:"
 									+ cursor.getString(codeColumn));
@@ -675,41 +677,70 @@ public class LimeDB extends SQLiteOpenHelper {
 
 		return result;
 	}
-//Rewrite by Jeremy 11,6,4.  Supoort for array and dayi now.
-	public String keyToKeyname(String code, String Rtable) {
+//Rewrite by Jeremy 11,6,4.  Supporting array and dayi now.
+	public String keyToKeyname(String code, String table) {
 		if(DEBUG)
 			Log.i("limedb:keyToKeyname()","code:" + code + 
-					" Rtable:"+Rtable + " tablename:" + tablename);
+					" table:"+table + " tablename:" + tablename);
 		String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 		String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
-		String keytable = Rtable;
+		String keytable = table;
 		if(isPhysicalKeyboardPressed){
-			if(Rtable.equals("phonetic") && tablename.equals("phonetic") )
-				keytable = Rtable + keyboardtype + phonetickeyboardtype;
+			if(table.equals(tablename) ) {// doing composing popup
+				if(table.equals("phonetic"))
+					keytable = table + keyboardtype + phonetickeyboardtype;
+				else
+					keytable = table + keyboardtype;
+			}		
 			else
-				keytable = Rtable + keyboardtype;
-		}else if(Rtable.equals("phonetic") && tablename.equals("phonetic") ){
-				keytable = Rtable + phonetickeyboardtype;
+				keytable = table;
+		}else if(table.equals(tablename) && tablename.equals("phonetic") ){
+				keytable = table + phonetickeyboardtype;
 		}
+		
+		
+		if(tablename.equals(table) ){// building composing text and has dual mapped codes		
+			String dualCodeList = lastValidDualCodeList;
+			if(!code.equals(lastCode)){
+				// unsynchronized cache. do the preprocessing again.
+				preProcessingForExtraQueryConditions(preProcessingRemappingCode(code));
+			}
+			
+			if(dualCodeList!=null ){
+				if(DEBUG) Log.i("limedb:keyToKeyname()","dualCodelist:" + dualCodeList + 
+						" table:"+table + " tablename:" + tablename);
+				code = dualCodeList;
+				if(tablename.equals("phonetic")){
+					keytable = "phonetic";
+					keyboardtype = "normal_keyboard";
+					phonetickeyboardtype = "standard";
+				}if(tablename.equals("dayi")){
+					keytable = "dayi";
+					keyboardtype = "normal_keyboard";
+				}
+				
+			}
+		}
+		
 		if(DEBUG)
-		Log.i("limedb:keyToKeyname()","code:" + code + 
-				" Rtable:"+Rtable + " tablename:" + tablename + " keytable:"+keytable);
+			Log.i("limedb:keyToKeyname()","code:" + code + 
+				" table:"+table + " tablename:" + tablename + " keytable:"+keytable);
 		
 		if(keysDefMap.get(keytable)==null
 				|| keysDefMap.get(keytable).size()==0){
 			String keyString="", keynameString="", finalKeynameString = null;
 			//Jeremy 11,6,4 Load keys and keynames from im table.
-			//keyString = getImInfo(Rtable,"imkeys");
-			//keynameString = getImInfo(Rtable,"imkeynames");
+			//keyString = getImInfo(table,"imkeys");
+			//keynameString = getImInfo(table,"imkeynames");
 			
 			
-			if(Rtable.equals("phonetic")|| !keyboardtype.equals("normal_keyboard")
+			if(table.equals("phonetic")|| !keyboardtype.equals("normal_keyboard")
 					||keyString.equals("")||keynameString.equals("")){
-				if(Rtable.equals("cj")||Rtable.equals("scj")){
+				if(table.equals("cj")||table.equals("scj")){
 					keyString = CJ_KEY;
 					keynameString = CJ_CHAR;
-				}else if(Rtable.equals("phonetic") ) { 
-					if(tablename.equals("phonetic") ){  // only do this on composing mapping popup
+				}else if(table.equals("phonetic") ) { 
+					if(tablename.equals("phonetic") ){  // table = tablename, building composing text popup
 						if(phonetickeyboardtype.equals("eten")){
 							keyString = ETEN_KEY;
 							if(keyboardtype.equals("milestone") && isPhysicalKeyboardPressed)
@@ -749,11 +780,11 @@ public class LimeDB extends SQLiteOpenHelper {
 						keyString = BPMF_KEY;
 						keynameString = BPMF_CHAR;
 					}
-				}else if(Rtable.equals("array")) {
+				}else if(table.equals("array")) {
 					keyString = ARRAY_KEY;
 					keynameString = ARRAY_CHAR;
-				}else if(Rtable.equals("dayi")) {
-					if(isPhysicalKeyboardPressed){ // only do this on composing mapping popup
+				}else if(table.equals("dayi")) {
+					if(isPhysicalKeyboardPressed&&tablename.equals("dayi")){ // only do this on composing mapping popup
 						if(keyboardtype.equals("milestone")||keyboardtype.equals("milestone2")){
 							keyString = MILESTONE_KEY;
 							keynameString = MILESTONE_DAYI_CHAR;
@@ -793,20 +824,27 @@ public class LimeDB extends SQLiteOpenHelper {
 				if(finalKeyMap != null && finalCharlist!=null)
 					finalKeyMap.put(keyString.substring(i, i + 1), finalCharlist[i]);
 			}
+			keyMap.put("|", "|"); //put the seperator for multi-code display
 			keysDefMap.put(keytable, keyMap);
 			if(finalKeyMap != null)
 				keysDefMap.put("final_"+keytable, finalKeyMap);
 			
 		}
 		
+		
+		
+		// Starting doing key to keyname conversion ------------------------------------
 		if(keysDefMap.get(keytable)==null 
 				|| keysDefMap.get(keytable).size()==0){
 			if(DEBUG) Log.i("limedb:keyToKeyname()","nokeysDefMap found!!");
+			return code;
+		}else if(tablename.equals("phonetic") && tablename.equals(table) && code.length()>4 ){ // phonetic never has code length >4
 			return code;
 		}else{
 			String result = new String("");
 			HashMap <String,String> keyMap = keysDefMap.get(keytable);
 			HashMap <String,String> finalKeyMap = keysDefMap.get("final_"+keytable);
+			// do the real conversion
 			
 			if(finalKeyMap == null){
 				for (int i = 0; i < code.length(); i++) {
@@ -915,7 +953,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	public List<Mapping> getMapping(String code, boolean softKeyboard) {
 
 		// Add by Jeremy '10, 3, 27. Extension on multi table query.
-
+		lastCode = code;
+		lastValidDualCodeList = null; // reset the lastValidDualCodeList
 		List<Mapping> result = new LinkedList<Mapping>();
 		
 		isPhysicalKeyboardPressed = !softKeyboard;
@@ -1197,11 +1236,14 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 	private HashSet<String> buildDualCodeList(String code, String keytablename){
 		HashMap<String,String> codeDualMap = keysDualMap.get(keytablename);
+		
 		if(codeDualMap == null || codeDualMap.size()==0)
 			return null;
 		else{
+			
 			HashSet<String> dualCodeList = new HashSet<String>();
 			dualCodeList.add(code);
+			
 			do{
 				int currentListSize = dualCodeList.size();
 				boolean codeInserted = false;
@@ -1228,8 +1270,9 @@ public class LimeDB extends SQLiteOpenHelper {
 							}
 							
 							if(dualCodeList.add(newCode)){
+								if(DEBUG) 
+									Log.i("LIMEDB:buildDualCodeList()","code added:"+ newCode);
 								codeInserted = true;
-								if(DEBUG) Log.i("LIMEDB:buildDualCodeList()","code added:"+ newCode);
 							}
 							
 						}
@@ -1238,16 +1281,12 @@ public class LimeDB extends SQLiteOpenHelper {
 				if(!codeInserted) break;
 			
 			}while(true);
+			
 			if(dualCodeList.size()==1)
 				return null;
-			else{
-				dualCodeList.remove(code);
+			else
 				return dualCodeList;
-				
-			}
 			
-			
-
 		}
 		
 		
@@ -1257,12 +1296,37 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		HashSet <String> dualCodeList = buildDualCodeList(code, keytablename);
 		String result="";
+		String validDualCodeList = "";
+		SQLiteDatabase db = this.getSqliteDb(false);
+		String[] col = {"DISTINCT " + FIELD_CODE};
+		
 		if(dualCodeList != null) {
 			for(String dualcode : dualCodeList){
-				result = result + " OR "+  FIELD_CODE + "= '"+ dualcode +"'"; 
+				
+				try{
+					Cursor cursor = db.query(tablename, col, 
+							FIELD_CODE + " = '" + dualcode + "'", 
+								null, null, null, null, null);
+					if(cursor.moveToFirst()){ //fist entry exist, the code is valid.
+						if(validDualCodeList.equals("")) validDualCodeList = dualcode;
+						else validDualCodeList = validDualCodeList + "|" + dualcode;
+						
+						if(!dualcode.equals(code))
+							result = result + " OR "+  FIELD_CODE + "= '"+ dualcode +"'";
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				 
 			}
+			db.close();
+			if(validDualCodeList.equals(""))
+				lastValidDualCodeList = null;
+			else
+				lastValidDualCodeList = validDualCodeList;
 		}
-		Log.i("LIMEDB:expandDualCode()", "result:" + result);
+		if(DEBUG)
+			Log.i("LIMEDB:expandDualCode()", "result:" + result + " validDualCodeList:" + validDualCodeList);
 		return result;
 		
 		/*

@@ -61,7 +61,7 @@ public class SearchService extends Service {
 	private static SearchServiceImpl obj = null;
 
 	//private static int recAmount = 0;
-	private static boolean softkeypressed;
+	private static boolean isPhysicalKeyboardPressed; // Sync to LIMEService and LIMEDB
 	//Jeremy '11,6,10
 	private static boolean hasNumberMapping;
 	private static boolean hasSymbolMapping;
@@ -77,6 +77,7 @@ public class SearchService extends Service {
 	
 	private static ConcurrentHashMap<String,List<Mapping>> cache = null;
 	private static ConcurrentHashMap<String, List<Mapping>> engcache = null;
+	private static ConcurrentHashMap<String, String> keynamecache = null;
 
 	public class SearchServiceImpl extends ISearchService.Stub {
 
@@ -173,6 +174,7 @@ public class SearchService extends Service {
 			if(mLIMEPref.getParameterBoolean(LIME.SEARCHSRV_RESET_CACHE)){
 				cache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 				engcache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+				keynamecache = new ConcurrentHashMap<String, String>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 			}
 			
@@ -182,13 +184,10 @@ public class SearchService extends Service {
 			//if(code != null && loadingstatus != null && loadingstatus.equalsIgnoreCase("no")){
 			if(code!=null) {
 				// clear mappingidx when user switching between softkeyboard and hard keyboard. Jeremy '11,6,11
-				if(softkeypressed != softkeyboard){
-					softkeypressed = softkeyboard;
-					cache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
-					engcache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
-				}
-				//recAmount = mLIMEPref.getSimilarCodeCandidates();
-			
+				if(isPhysicalKeyboardPressed == softkeyboard)
+					isPhysicalKeyboardPressed = !softkeyboard;
+					
+				
 				
 				Mapping temp = new Mapping();
 				temp.setWord(code);
@@ -201,18 +200,18 @@ public class SearchService extends Service {
 				}
 				//Jeremy '11,6,17 Seperate physical keyboard cache with keybaordtype
 				String cacheKey="";
-				if(softkeyboard){	
-					if(tablename.equals("phonetic"))
-						cacheKey = db.getTablename()+ mLIMEPref.getPhoneticKeyboardType()+code;
-					else
-						cacheKey = db.getTablename()+code;
-				}else{
+				if(isPhysicalKeyboardPressed){	
 					if(tablename.equals("phonetic")){
 						cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()
 									+ mLIMEPref.getPhoneticKeyboardType()+code;
 					}else{
 						cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()+code;
 					}
+				}else{
+					if(tablename.equals("phonetic"))
+						cacheKey = db.getTablename()+ mLIMEPref.getPhoneticKeyboardType()+code;
+					else
+						cacheKey = db.getTablename()+code;
 				}
 				
 			    List<Mapping> cacheTemp = cache.get(cacheKey);
@@ -222,7 +221,7 @@ public class SearchService extends Service {
 					preresultlist = cacheTemp;
 				}else{
 
-					List<Mapping> templist = db.getMapping(code, softkeyboard);
+					List<Mapping> templist = db.getMapping(code, !isPhysicalKeyboardPressed);
 					if(templist.size() > 0){
 						result.addAll(templist);
 						preresultlist = templist;
@@ -244,6 +243,7 @@ public class SearchService extends Service {
 		public void initial() throws RemoteException {
 			cache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 			engcache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+			keynamecache = new ConcurrentHashMap<String, String>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 		}
 
 		/*public List<Mapping> sortArray(String precode, List<Mapping> src) {
@@ -309,18 +309,19 @@ public class SearchService extends Service {
 						String code = scorelist.get(i).getCode().toLowerCase();
 						//Log.i("SearchService:updateUserdict()","force to delete cached item, code = " + code);
 						String cacheKey="";
-						if(softkeypressed){	
-							if(tablename.equals("phonetic"))
-								cacheKey = db.getTablename()+ mLIMEPref.getPhoneticKeyboardType()+code;
-							else
-								cacheKey = db.getTablename()+code;
-						}else{
+						if(isPhysicalKeyboardPressed){	
 							if(tablename.equals("phonetic")){
 								cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()
 											+ mLIMEPref.getPhoneticKeyboardType()+code;
 							}else{
 								cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()+code;
 							}
+							
+						}else{
+							if(tablename.equals("phonetic"))
+								cacheKey = db.getTablename()+ mLIMEPref.getPhoneticKeyboardType()+code;
+							else
+								cacheKey = db.getTablename()+code;
 						}
 						cache.remove(cacheKey);
 					}
@@ -333,8 +334,31 @@ public class SearchService extends Service {
 		}
 		
 		public String keyToKeyname(String code){
-			if(db == null){loadLimeDB();}
-			return db.keyToKeyname(code, tablename);
+			//Jeremy '11,6,21 Build cache according using cachekey
+			String cacheKey="";
+			if(isPhysicalKeyboardPressed){
+				if(tablename.equals("phonetic")){
+					cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()
+								+ mLIMEPref.getPhoneticKeyboardType()+code;
+				}else{
+					cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()+code;
+				}
+				
+			}else{
+				if(tablename.equals("phonetic"))
+					cacheKey = db.getTablename()+ mLIMEPref.getPhoneticKeyboardType()+code;
+				else
+					cacheKey = db.getTablename()+code;
+			}
+			
+			String result = keynamecache.get(cacheKey);
+			if(result == null){
+				if(db == null){loadLimeDB();}
+				result = db.keyToKeyname(code, tablename);
+				keynamecache.put(cacheKey, result);
+			}
+			return result;
+			
 		}
 
 		@Override
@@ -389,7 +413,12 @@ public class SearchService extends Service {
 			}
 			if(cache != null){
 				cache.clear();
+			}
+			if(engcache != null){
 				engcache.clear();
+			}
+			if(keynamecache != null){
+				keynamecache.clear();
 			}
 		}
 
