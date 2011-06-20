@@ -15,7 +15,7 @@
 	<Button android:layout_height="wrap_content" android:id="@+id/btnSetupSCJ" android:text="@string/l3_manage_scj" android:padding="5px" android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px"></Button>
                 
                 </TableRow>
-                <TableRow android:layout_height="match_parent" android:id="@+id/tableRow2" android:layout_width="wrap_content">
+                <TableRow android:layout_height="fill_parent" android:id="@+id/tableRow2" android:layout_width="wrap_content">
                     <Button android:id="@+id/btnSetupDayi" android:text="@string/l3_manage_dayi" android:padding="5px" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_weight="1" android:layout_margin="5px"></Button>
                     <Button android:id="@+id/btnSetupEz" android:text="@string/l3_manage_eazy" android:padding="5px" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_weight="1" android:layout_margin="5px"></Button>
                 </TableRow>
