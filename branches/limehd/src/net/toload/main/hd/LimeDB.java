@@ -682,24 +682,26 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(DEBUG)
 			Log.i("limedb:keyToKeyname()","code:" + code + 
 					" table:"+table + " tablename:" + tablename);
+			
+		if(composingText && tablename.equals("phonetic") && code.length()>4 ) // phonetic never has code length >4
+			return code;
+		
 		String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 		String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
 		String keytable = table;
 		if(isPhysicalKeyboardPressed){
-			if(composingText ) {// doing composing popup
-				if(table.equals("phonetic"))
-					keytable = table + keyboardtype + phonetickeyboardtype;
-				else
-					keytable = table + keyboardtype;
+			if(composingText && table.equals("phonetic")) {// doing composing popup
+				keytable = table + keyboardtype + phonetickeyboardtype;
 			}		
 			else
-				keytable = table;
+				keytable = table + keyboardtype;
 		}else if(composingText && tablename.equals("phonetic") ){
 				keytable = table + phonetickeyboardtype;
 		}
+		if(DEBUG)
+			Log.i("limedb:keyToKeyname()","keytable:" + keytable); 
 		
-		
-		if(composingText ){// building composing text and has dual mapped codes		
+		if(composingText){// building composing text and has dual mapped codes		
 			String dualCodeList = lastValidDualCodeList;
 			if(!code.equals(lastCode)){
 				// unsynchronized cache. do the preprocessing again.
@@ -707,7 +709,8 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 			
 			if(dualCodeList!=null ){
-				if(DEBUG) Log.i("limedb:keyToKeyname()","dualCodelist:" + dualCodeList + 
+				if(DEBUG) 
+					Log.i("limedb:keyToKeyname()","dualCodelist:" + dualCodeList + 
 						" table:"+table + " tablename:" + tablename);
 				code = dualCodeList;
 				if(tablename.equals("phonetic")){
@@ -734,13 +737,13 @@ public class LimeDB extends SQLiteOpenHelper {
 			//keynameString = getImInfo(table,"imkeynames");
 			
 			
-			if(table.equals("phonetic")|| !keyboardtype.equals("normal_keyboard")
-					||keyString.equals("")||keynameString.equals("")){
+			if(table.equals("phonetic")|| !keyboardtype.equals("normal_keyboard") ||
+					keyString.equals("")||keynameString.equals("")){
 				if(table.equals("cj")||table.equals("scj")){
 					keyString = CJ_KEY;
 					keynameString = CJ_CHAR;
 				}else if(table.equals("phonetic") ) { 
-					if(composingText ){  // building composing text popup
+					if(composingText){  // building composing text popup
 						if(phonetickeyboardtype.equals("eten")){
 							keyString = ETEN_KEY;
 							if(keyboardtype.equals("milestone") && isPhysicalKeyboardPressed)
@@ -806,6 +809,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 			if(DEBUG) 
 				Log.i("limedb:keyToKeyname()", "keyboardtype:" +keyboardtype + " phonetickeyboardtype:" + phonetickeyboardtype + 
+					" composing?:" + composingText +
 					" keyString:"+keyString + " keynameString:" +keynameString + " finalkeynameString:" + finalKeynameString);
 			
 			HashMap<String,String> keyMap = new HashMap<String,String>();
@@ -838,10 +842,9 @@ public class LimeDB extends SQLiteOpenHelper {
 				|| keysDefMap.get(keytable).size()==0){
 			if(DEBUG) Log.i("limedb:keyToKeyname()","nokeysDefMap found!!");
 			return code;
-		}else if(composingText && tablename.equals("phonetic") && code.length()>4 ){ // phonetic never has code length >4
-			return code;
+		
 		}else{
-			String result = new String("");
+			String result = "";
 			HashMap <String,String> keyMap = keysDefMap.get(keytable);
 			HashMap <String,String> finalKeyMap = keysDefMap.get("final_"+keytable);
 			// do the real conversion
@@ -887,10 +890,12 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 			if(DEBUG) 
 				Log.i("limedb:keyToKeyname()","returning:" + result);
-			if(result.equals(""))
+			
+			if(result.equals("")){
 				return code;
-			else
+			}else{
 				return result;
+			}
 		}
 		
 		
@@ -1034,7 +1039,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					keyString = HSU_KEY;
 					keyRemapString = HSU_KEY_REMAP_INITIAL;
 					finalKeyRemapString = HSU_KEY_REMAP_FINAL;
-				}if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("eten")){
+				}else if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("eten")){
 					keyString = ETEN_KEY;
 					/*
 					if((keyboardtype.equals("milestone")||keyboardtype.equals("milestone2")) 
@@ -1053,20 +1058,21 @@ public class LimeDB extends SQLiteOpenHelper {
 					keyString = DESIREZ_KEY;
 					keyRemapString = DESIREZ_BPMF_KEY_REMAP;
 				}
-				
-				HashMap<String,String> reMap = new HashMap<String,String>();
-				HashMap<String,String> finalReMap = null;
-				if( finalKeyRemapString!=null)
+				if(!keyString.equals("")){
+					HashMap<String,String> reMap = new HashMap<String,String>();
+					HashMap<String,String> finalReMap = null;
+					if( finalKeyRemapString!=null)
 					finalReMap = new HashMap<String,String>();
 				
-				for (int i = 0; i < keyString.length(); i++) {
-					reMap.put(keyString.substring(i, i + 1), keyRemapString.substring(i, i + 1));
+					for (int i = 0; i < keyString.length(); i++) {
+						reMap.put(keyString.substring(i, i + 1), keyRemapString.substring(i, i + 1));
+						if(finalReMap!=null)
+							finalReMap.put(keyString.substring(i, i + 1), finalKeyRemapString.substring(i, i + 1));
+					}
+					keysReMap.put(remaptable, reMap);
 					if(finalReMap!=null)
-						finalReMap.put(keyString.substring(i, i + 1), finalKeyRemapString.substring(i, i + 1));
+						keysReMap.put("final_"+remaptable, finalReMap);
 				}
-				keysReMap.put(remaptable, reMap);
-				if(finalReMap!=null)
-					keysReMap.put("final_"+remaptable, finalReMap);
 			}
 					
 					
