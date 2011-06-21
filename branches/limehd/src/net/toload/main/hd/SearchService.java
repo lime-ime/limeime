@@ -354,7 +354,7 @@ public class SearchService extends Service {
 			String result = keynamecache.get(cacheKey);
 			if(result == null){
 				if(db == null){loadLimeDB();}
-				result = db.keyToKeyname(code, tablename);
+				result = db.keyToKeyname(code, tablename, true);
 				keynamecache.put(cacheKey, result);
 			}
 			return result;

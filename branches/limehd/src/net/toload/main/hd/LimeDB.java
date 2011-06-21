@@ -644,7 +644,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 					int wordColumn = cursor.getColumnIndex(FIELD_WORD);
 					result = cursor.getString(wordColumn) + "="
-							+ keyToKeyname(cursor.getString(codeColumn), table);
+							+ keyToKeyname(cursor.getString(codeColumn), table, false);
 					if (DEBUG) {
 						Log.i("getRmapping", "Code:"
 								+ cursor.getString(codeColumn));
@@ -654,7 +654,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						result = result
 								+ "; "
 								+ keyToKeyname(cursor.getString(codeColumn),
-										table);
+										table, false);
 						if (DEBUG) {
 							Log.i("getRmapping", "Code:"
 									+ cursor.getString(codeColumn));
@@ -678,7 +678,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		return result;
 	}
 //Rewrite by Jeremy 11,6,4.  Supporting array and dayi now.
-	public String keyToKeyname(String code, String table) {
+	public String keyToKeyname(String code, String table, Boolean composingText) {
 		if(DEBUG)
 			Log.i("limedb:keyToKeyname()","code:" + code + 
 					" table:"+table + " tablename:" + tablename);
@@ -686,7 +686,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
 		String keytable = table;
 		if(isPhysicalKeyboardPressed){
-			if(table.equals(tablename) ) {// doing composing popup
+			if(composingText ) {// doing composing popup
 				if(table.equals("phonetic"))
 					keytable = table + keyboardtype + phonetickeyboardtype;
 				else
@@ -694,12 +694,12 @@ public class LimeDB extends SQLiteOpenHelper {
 			}		
 			else
 				keytable = table;
-		}else if(table.equals(tablename) && tablename.equals("phonetic") ){
+		}else if(composingText && tablename.equals("phonetic") ){
 				keytable = table + phonetickeyboardtype;
 		}
 		
 		
-		if(tablename.equals(table) ){// building composing text and has dual mapped codes		
+		if(composingText ){// building composing text and has dual mapped codes		
 			String dualCodeList = lastValidDualCodeList;
 			if(!code.equals(lastCode)){
 				// unsynchronized cache. do the preprocessing again.
@@ -740,7 +740,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					keyString = CJ_KEY;
 					keynameString = CJ_CHAR;
 				}else if(table.equals("phonetic") ) { 
-					if(tablename.equals("phonetic") ){  // table = tablename, building composing text popup
+					if(composingText ){  // building composing text popup
 						if(phonetickeyboardtype.equals("eten")){
 							keyString = ETEN_KEY;
 							if(keyboardtype.equals("milestone") && isPhysicalKeyboardPressed)
@@ -784,7 +784,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					keyString = ARRAY_KEY;
 					keynameString = ARRAY_CHAR;
 				}else if(table.equals("dayi")) {
-					if(isPhysicalKeyboardPressed&&tablename.equals("dayi")){ // only do this on composing mapping popup
+					if(isPhysicalKeyboardPressed&&composingText){ // only do this on composing mapping popup
 						if(keyboardtype.equals("milestone")||keyboardtype.equals("milestone2")){
 							keyString = MILESTONE_KEY;
 							keynameString = MILESTONE_DAYI_CHAR;
@@ -838,7 +838,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				|| keysDefMap.get(keytable).size()==0){
 			if(DEBUG) Log.i("limedb:keyToKeyname()","nokeysDefMap found!!");
 			return code;
-		}else if(tablename.equals("phonetic") && tablename.equals(table) && code.length()>4 ){ // phonetic never has code length >4
+		}else if(composingText && tablename.equals("phonetic") && code.length()>4 ){ // phonetic never has code length >4
 			return code;
 		}else{
 			String result = new String("");
