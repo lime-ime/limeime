@@ -141,8 +141,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		"@|(言/石)|人|心|(牛/山)|革|水|(目/一)|日|鹿|(四/工)|土|禾|(王/糸)|手|馬|(門/火)|鳥|魚|(田/艸)|月|雨|"
 		+"(米/木)|立|?|(足/口)|(女/竹)|(金/耳)|(力/虫)|舟";
 	
-	private final static String MILESTONE_DUALKEY_REMAP = 	"1234567890;'=";
-	private final static String MILESTONE_DUALKEY = 		"qwertyuiop,mh"; 
+	private final static String MILESTONE_DUALKEY_REMAP = 	"1234567890;'=-";
+	private final static String MILESTONE_DUALKEY = 		"qwertyuiop,mhv"; 
 	private final static String MILESTONE_KEY = "qazwsxedcrfvtgbyhnujmik,ol.p/?";
 	private final static String MILESTONE_BPMF_CHAR = 
 		"(ㄅ/ㄆ)|ㄇ|ㄈ|(ㄉ/ㄊ)|ㄋ|ㄌ|(ㄍ/ˇ)|ㄎ|ㄏ|(ㄐ/ˋ)|ㄑ|ㄒ|(ㄓ/ㄔ)|ㄕ|ㄖ|(ㄗ/ˊ)|ㄘ|ㄙ|(ㄧ/˙)" +
@@ -151,8 +151,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		"(言/石)|人|心|(牛/山)|革|水|(目/一)|日|鹿|(四/工)|土|禾|(王/糸)|手|馬|(門/火)|鳥|魚|(田/艸)|月|雨|"
 		+"(米/木)|立|(力/虫)|(足/口)|女|舟|(金/耳)|竹|?";
 	
-	private final static String MILESTONE2_DUALKEY_REMAP = 	"1234567890;'=";
-	private final static String MILESTONE2_DUALKEY = 		"qwertyuiop,mg";
+	private final static String MILESTONE2_DUALKEY_REMAP = 	"1234567890;'=-";
+	private final static String MILESTONE2_DUALKEY = 		"qwertyuiop,mgv";
 	
 	
 	private final static String MILESTONE3_KEY = "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p/";
