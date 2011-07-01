@@ -2355,9 +2355,10 @@ public class LIMEService extends InputMethodService implements
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
 			//Jeremy '11,6,18 ETEN 26 has no number mapping
-			hasNumberMapping = !(mLIMEPref.getPhoneticKeyboardType().equals("eten26")
-					||mLIMEPref.getPhoneticKeyboardType().equals("hsu")); 
-			hasSymbolMapping = true;
+			boolean standardPhonetic = !(mLIMEPref.getPhoneticKeyboardType().equals("eten26")
+					||mLIMEPref.getPhoneticKeyboardType().equals("hsu"));
+			hasNumberMapping = standardPhonetic; 
+			hasSymbolMapping = standardPhonetic;
 		}else if(keyboardSelection.equals("ez")|| keyboardSelection.equals("dayi")) {
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 			LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
