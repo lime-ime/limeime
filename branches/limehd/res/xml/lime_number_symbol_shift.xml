@@ -75,7 +75,7 @@
 		<Key android:codes="66" android:keyLabel="B" />
 		<Key android:codes="78" android:keyLabel="N" />
 		<Key android:codes="77" android:keyLabel="M" />
-		<Key android:codes="34" android:keyLabel="&quot;" />
+		<Key android:codes="34" android:keyLabel="&quot;"/>
 		<Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete"
 			 android:keyEdgeFlags="right"	android:isRepeatable="true" />
 	</Row>
