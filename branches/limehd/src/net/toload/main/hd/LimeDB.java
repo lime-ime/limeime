@@ -681,21 +681,27 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 //Rewrite by Jeremy 11,6,4.  Supporting array and dayi now.
 	public String keyToKeyname(String code, String table, Boolean composingText) {
-		if(DEBUG)
-			Log.i("limedb:keyToKeyname()","code:" + code + 
-					" table:"+table + " tablename:" + tablename);
-			
+		
 		if(composingText && tablename.equals("phonetic") && code.length()>4 ) // phonetic never has code length >4
 			return code;
 		
 		String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 		String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
 		String keytable = table;
+		
+		if(DEBUG) {
+			Log.i("limedb:keyToKeyname()","code:" + code + 
+				" table:"+table + " tablename:" + tablename +
+				" isPhysicalKeybaordPressed:" + isPhysicalKeyboardPressed +
+				" keyboardtype: " + keyboardtype +
+				" composingText:" + composingText		);
+		}
+		
+		
 		if(isPhysicalKeyboardPressed){
 			if(composingText && table.equals("phonetic")) {// doing composing popup
 				keytable = table + keyboardtype + phonetickeyboardtype;
-			}		
-			else
+			} else if(composingText)
 				keytable = table + keyboardtype;
 		}else if(composingText && tablename.equals("phonetic") ){
 				keytable = table + phonetickeyboardtype;
@@ -735,11 +741,11 @@ public class LimeDB extends SQLiteOpenHelper {
 				|| keysDefMap.get(keytable).size()==0){
 			String keyString="", keynameString="", finalKeynameString = null;
 			//Jeremy 11,6,4 Load keys and keynames from im table.
-			//keyString = getImInfo(table,"imkeys");
-			//keynameString = getImInfo(table,"imkeynames");
+			keyString = getImInfo(table,"imkeys");
+			keynameString = getImInfo(table,"imkeynames");
 			
 			
-			if(table.equals("phonetic")|| !keyboardtype.equals("normal_keyboard") ||
+			if(table.equals("phonetic")|| table.equals("dayi") ||
 					keyString.equals("")||keynameString.equals("")){
 				if(table.equals("cj")||table.equals("scj")){
 					keyString = CJ_KEY;
