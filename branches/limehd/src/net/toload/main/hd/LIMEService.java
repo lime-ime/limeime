@@ -156,7 +156,7 @@ public class LIMEService extends InputMethodService implements
 
 	// Hard Keyboad Shift + Space Status
 	private boolean hasShiftPress = false;
-	private boolean hasShiftProcessed = false; // Jeremy '11,6.18
+	//private boolean hasShiftProcessed = false; // Jeremy '11,6.18
 	private boolean hasCtrlPress = false; // Jeremy '11,5,13
 	//private boolean hasCtrlProcessed = false; // Jeremy '11,6.18
 	private boolean hasMenuPress = false; // Jeremy '11,5,29
@@ -369,7 +369,6 @@ public class LIMEService extends InputMethodService implements
 
 		initialKeyboard();
 
-		onIM = true;
 		return mInputView;
 
 	}
@@ -2339,6 +2338,9 @@ public class LIMEService extends InputMethodService implements
 		
 		buildActiveKeyboardList();
 		initialViewAndSwitcher();
+		
+		onIM = true;
+		mEnglishOnly = false;
 
 		if (keyboardSelection.equals("custom")) {
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
@@ -2490,11 +2492,10 @@ public class LIMEService extends InputMethodService implements
 						+ isValidDigit(primaryCode) + " isValideSymbo:"
 						+ isValidSymbol(primaryCode) + " onIM:" + onIM);
 			}
-			if (!hasSymbolMapping && !hasNumberMapping
+			if (!hasSymbolMapping && !hasNumberMapping	
 					&& isValidLetter(primaryCode) && onIM) {
 				mComposing.append((char) primaryCode);
 				getCurrentInputConnection().setComposingText(mComposing, 1);
-				// updateShiftKeyState(getCurrentInputEditorInfo());
 				updateCandidates();
 				misMatched = mComposing.toString();
 			} else if (!hasSymbolMapping
