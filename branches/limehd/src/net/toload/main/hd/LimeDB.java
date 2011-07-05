@@ -105,26 +105,26 @@ public class LimeDB extends SQLiteOpenHelper {
 		"£·|£©|£«|£t|££|£x|£¸|£w|£¡|£~|£¯|£§|£}|£{|(£v/£©)|£z|£¬|£u|£°|£­|£ª|(£y/£·)|£º|£||£®|£¹|£²|£±" +
 		"|£»|£½|£¾|£¿|£¢|£³|£´|£µ|(£|/£¶)|£·|£¨|£©|(£¤/£¨)|£¥|£¦|£¶";
 	
-	private final static String ETEN26_KEY =            	"qazwsxedcrfvtgbyhnujmikolp";
-	private final static String ETEN26_KEY_REMAP_INITIAL = 	"y8lhnju2vkzewr1tcsmba9dixq";
-	private final static String ETEN26_KEY_REMAP_FINAL =   	"y8lhnju7vk6ewr1tcsm3a94ixq";
+	private final static String ETEN26_KEY =            	"qazwsxedcrfvtgbyhnujmikolp,.";
+	private final static String ETEN26_KEY_REMAP_INITIAL = 	"y8lhnju2vkzewr1tcsmba9dixq``";
+	private final static String ETEN26_KEY_REMAP_FINAL =   	"y8lhnju7vk6ewr1tcsm3a94ixq``";
 	private final static String ETEN26_DUALKEY_REMAP = 		"o,gf;5p-s0/.p";
 	private final static String ETEN26_DUALKEY = 			"yhvewrscpaxqs";
 	private final static String ETEN26_CHAR_INITIAL = 	
-		"(£¨/£°)|£«|£±|(£©/£®)|£ª|£¹|£¸|£x|(£¦/££)|£­|£w|(£|/£¢)|(£y/£µ)|(£¡/£¤)|£t|£¥|(£~/£·)|(£z/£´)|£º|£§|(£v/£³)|£¯|£}|£¬|(£{/£¶)|(£u/£²)";
+		"(£¨/£°)|£«|£±|(£©/£®)|£ª|£¹|£¸|£x|(£¦/££)|£­|£w|(£|/£¢)|(£y/£µ)|(£¡/£¤)|£t|£¥|(£~/£·)|(£z/£´)|£º|£§|(£v/£³)|£¯|£}|£¬|(£{/£¶)|(£u/£²)|¡A|¡C";
 	private final static String ETEN26_CHAR_FINAL = 	
-		"(£¨/£°)|£«|£±|(£©/£®)|£ª|£¹|£¸|£»|(£¦/££)|£­|£½|(£|/£¢)|(£y/£µ)|(£¡/£¤)|£t|£¥|(£~/£·)|(£z/£´)|£º|£¾|(£v/£³)|£¯|£¿|£¬|(£{/£¶)|(£u/£²)";
+		"(£¨/£°)|£«|£±|(£©/£®)|£ª|£¹|£¸|£»|(£¦/££)|£­|£½|(£|/£¢)|(£y/£µ)|(£¡/£¤)|£t|£¥|(£~/£·)|(£z/£´)|£º|£¾|(£v/£³)|£¯|£¿|£¬|(£{/£¶)|(£u/£²)|¡A|¡C";
 	
 	
-	private final static String HSU_KEY =            		"azwsxedcrfvtgbyhnujmikolp";
-	private final static String HSU_KEY_REMAP_INITIAL = 	"hylnju2vbzfwe18csmra9d.xq"; 
-	private final static String HSU_KEY_REMAP_FINAL =   	"hylnju6vb3fwe18csm4a9d./q";  
+	private final static String HSU_KEY =            		"azwsxedcrfvtgbyhnujmikolpq,.";
+	private final static String HSU_KEY_REMAP_INITIAL = 	"hylnju2vbzfwe18csmra9d.xq```"; 
+	private final static String HSU_KEY_REMAP_FINAL =   	"hylnju6vb3fwe18csm4a9d./q```";  
 	private final static String HSU_DUALKEY_REMAP =		 	"gt5--,okip0;/";
 	private final static String HSU_DUALKEY = 				"vfrx/uhecsadx";
 	private final static String HSU_CHAR_INITIAL = 	
-		"(£©/£°)|£¨|£±|£ª|£¹|(£¸/£®)|£x|(£¦/££)|£§|£w|(£¥/£¢)|£y|(£|/£­)|£t|£«|(£~/£¬)|(£z/£´)|£º|(£¡/£¤)|(£v/£³)|£¯|(£}/£µ)|£²|(£{/£·)|£u";
+		"(£©/£°)|£¨|£±|£ª|£¹|(£¸/£®)|£x|(£¦/££)|£§|£w|(£¥/£¢)|£y|(£|/£­)|£t|£«|(£~/£¬)|(£z/£´)|£º|(£¡/£¤)|(£v/£³)|£¯|(£}/£µ)|£²|(£{/£·)|£u|q|¡A|¡C";
 	private final static String HSU_CHAR_FINAL = 	
-		"(£©/£°)|£¨|£±|£»|£¹|(£¸/£®)|£½|(£¦/££)|£§|£¾|(£¥/£¢)|£y|(£|/£­)|£t|£«|(£~/£¬)|(£z/£´)|£º|£¿|(£v/£³)|£¯|(£}/£µ)|£²|(£¶/£·)|£u";
+		"(£©/£°)|£¨|£±|£»|£¹|(£¸/£®)|£½|(£¦/££)|£§|£¾|(£¥/£¢)|£y|(£|/£­)|£t|£«|(£~/£¬)|(£z/£´)|£º|£¿|(£v/£³)|£¯|(£}/£µ)|£²|(£¶/£·)|£u|q|¡A|¡C";
 	
 	private final static String DESIREZ_KEY =            			"@qazwsxedcrfvtgbyhnujmik?olp,.";
 	private final static String DESIREZ_BPMF_KEY_REMAP = 			"1qaz2wsedc5tg6yh4uj8ik9ol0;-,.";

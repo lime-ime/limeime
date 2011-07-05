@@ -1872,6 +1872,8 @@ public class LIMEService extends InputMethodService implements
 
 			try {
 				String keyString = mComposing.toString(), keynameString = "";
+				
+				
 
 				list.addAll(SearchSrv.query(keyString, !isPressPhysicalKeyboard));
 				
@@ -2492,7 +2494,12 @@ public class LIMEService extends InputMethodService implements
 						+ isValidDigit(primaryCode) + " isValideSymbo:"
 						+ isValidSymbol(primaryCode) + " onIM:" + onIM);
 			}
-			if (!hasSymbolMapping && !hasNumberMapping	
+			if(mComposing.length()==0 && (primaryCode==','||primaryCode=='.') &&onIM ){ // Chinese , and . processing
+				mComposing.append((char) primaryCode);
+				getCurrentInputConnection().setComposingText(mComposing, 1);
+				updateCandidates();
+				misMatched = mComposing.toString();
+			}else if (!hasSymbolMapping && !hasNumberMapping	
 					&& isValidLetter(primaryCode) && onIM) {
 				mComposing.append((char) primaryCode);
 				getCurrentInputConnection().setComposingText(mComposing, 1);

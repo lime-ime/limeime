@@ -197,6 +197,19 @@ public class SearchService extends Service {
 				
 				if(code.length() == 1){
 					preresultlist = new LinkedList<Mapping>();
+					// processing full shaped , and .
+					if(code.equals(",")){
+						temp = new Mapping();
+						temp.setCode(code);
+						temp.setWord("¡A");
+						result.add(temp);
+					}
+					if(code.equals(".")){
+						temp = new Mapping();
+						temp.setCode(code);
+						temp.setWord("¡C");
+						result.add(temp);
+					}
 				}
 				//Jeremy '11,6,17 Seperate physical keyboard cache with keybaordtype
 				String cacheKey="";
