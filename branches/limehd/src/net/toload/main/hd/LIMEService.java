@@ -530,15 +530,7 @@ public class LIMEService extends InputMethodService implements
 			// Make sure that passwords are not displayed in candidate view
 			int variation = attribute.inputType
 					& EditorInfo.TYPE_MASK_VARIATION;
-			if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD
-					|| variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
-				mPredictionOn = false;
-				//isModePassword = true;
-				mEnglishOnly = true;
-				onIM = false;
-				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,
-									mImeOptions, false, false, false);
-			}
+			
 			if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
 					|| variation == EditorInfo.TYPE_TEXT_VARIATION_PERSON_NAME) {
 				//mAutoSpace = false;
@@ -566,8 +558,15 @@ public class LIMEService extends InputMethodService implements
 				mPredictionOn = false;
 				// mCompletionOn = true && isFullscreenMode();
 			}
-			
-			if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS) {
+			if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD
+					|| variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
+				mPredictionOn = false;
+				//isModePassword = true;
+				mEnglishOnly = true;
+				onIM = false;
+				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,
+									mImeOptions, false, false, false);
+			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS) {
 				mEnglishOnly = true;
 				onIM = false;
 				mPredictionOn = false;
@@ -1872,11 +1871,7 @@ public class LIMEService extends InputMethodService implements
 
 			try {
 				String keyString = mComposing.toString(), keynameString = "";
-				
-				
-
-				list.addAll(SearchSrv.query(keyString, !isPressPhysicalKeyboard));
-				
+				list.addAll(SearchSrv.query(keyString, !isPressPhysicalKeyboard));				
 				//Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
 				if (list.size() > 0) {
 					String selkey=SearchSrv.getSelkey();
