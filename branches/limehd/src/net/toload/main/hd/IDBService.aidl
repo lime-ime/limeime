@@ -5,7 +5,13 @@ interface IDBService
 	void loadMapping(String filename, String tablename);
 	void resetMapping(String tablename);
 	void resetDownloadDatabase();
-	void downloadDayiOvCin();
+	void downloadDayi();
+	void downloadPhonetic();
+	void downloadCj();
+	void downloadScj();
+	void downloadArray();
+	void downloadArray10();
+	void downloadEz();
 	void downloadPreloadedDatabase();
 	void downloadEmptyDatabase();
 	void backupDatabase();

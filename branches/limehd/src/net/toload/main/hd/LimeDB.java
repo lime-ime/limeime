@@ -1836,15 +1836,25 @@ public class LimeDB extends SQLiteOpenHelper {
 					db.close();
 					mLIMEPref.setParameter("im_loading", false);
 					mLIMEPref.setParameter("im_loading_table", "");
+					
 					setImInfo(table, "source", filename.getName());
 					setImInfo(table, "name", imname);
 					setImInfo(table, "amount", String.valueOf(count));
 					setImInfo(table, "import", new Date().toLocaleString());
-					if (!selkey.equals("")) setImInfo(table, "selkey", selkey);
-					if (!endkey.equals("")) setImInfo(table, "endkey", endkey);
-					if (!spacestyle.equals("")) setImInfo(table, "spacestyle", spacestyle);
-					if (!imkeys.equals("")) setImInfo(table, "imkeys", imkeys);
-					if (!imkeynames.equals("")) setImInfo(table, "imkeynames", imkeynames);
+
+					// If user download from LIME Default IM SET then fill in related information
+					if(filename.getName().equals("phonetic.lime")){
+						setImInfo("phonetic", "selkey", "123456789");
+						setImInfo("phonetic", "endkey", "3467'[]\\=<>?:\"{}|~!@#$%^&*()_+");
+						setImInfo("phonetic", "imkeys", ",-./0123456789;abcdefghijklmnopqrstuvwxyz'[]\\=<>?:\"{}|~!@#$%^&*()_+");
+						setImInfo("phonetic", "imkeynames", "£®|£·|£²|£¶|£³|£t|£x|£¾|£¿|£¤|£½|£»|£«|£¯|£µ|£v|£§|£~|£}|£||£¢|£¦|£©|£¬|£¹|£­|£±|£º|£ª|£°|£´|£u|£¡|£z|£¥|£¸|££|£y|£{|£¨|£w|¡B|¡u|¡v|¢@|¡×|¡A|¡C|¡H|¡G|¡F|¡y|¡z|¢x|¡ã|¡I|¢I|¡­|¢C|¢H|¡s|¡®|¡¯|¡]|¡^|¡Ð|¡Ï");
+					}else{
+						if (!selkey.equals("")) setImInfo(table, "selkey", selkey);
+						if (!endkey.equals("")) setImInfo(table, "endkey", endkey);
+						if (!spacestyle.equals("")) setImInfo(table, "spacestyle", spacestyle);
+						if (!imkeys.equals("")) setImInfo(table, "imkeys", imkeys);
+						if (!imkeynames.equals("")) setImInfo(table, "imkeynames", imkeynames);
+					}
 					if(DEBUG) Log.i("limedb:loadfile()","imkeys:" +imkeys + " imkeynames:"+imkeynames);
 					
 					// If there is no keyboard assigned for current input method then use default keyboard layout

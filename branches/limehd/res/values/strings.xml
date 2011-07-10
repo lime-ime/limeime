@@ -380,9 +380,33 @@
     <string name="l3_im_setting_button_reset">RESET TABLE</string>
     <string name="l3_im_setting_button_select">SELECT KEYBOARD</string>
     
-    <string name="l3_im_download_from_ov">Download/Install OpenVanilla DAYI</string>
-    <string name="l3_im_download_from_ov_start">Start download OpenVanilla DAYI</string>
-    <string name="l3_im_download_from_ov_install">Start Install OpenVanilla DAYI</string>
+    <string name="l3_im_download_from_dayi">Download/Install OpenVanilla DAYI</string>
+    <string name="l3_im_download_from_dayi_start">Start download OpenVanilla DAYI</string>
+    <string name="l3_im_download_from_dayi_install">Start Install OpenVanilla DAYI</string>
+    
+    <string name="l3_im_download_from_phonetic">Download/Install OpenVanilla Phonetic</string>
+    <string name="l3_im_download_from_phonetic_start">Start download OpenVanilla Phonetic</string>
+    <string name="l3_im_download_from_phonetic_install">Start Install OpenVanilla Phonetic</string>
+    
+    <string name="l3_im_download_from_cj">Download/Install CJ</string>
+    <string name="l3_im_download_from_cj_start">Start download CJ</string>
+    <string name="l3_im_download_from_cj_install">Start Install CJ</string>
+    
+    <string name="l3_im_download_from_scj">Download/Install SCJ</string>
+    <string name="l3_im_download_from_scj_start">Start download SCJ</string>
+    <string name="l3_im_download_from_scj_install">Start Install SCJ</string>
+    
+    <string name="l3_im_download_from_array">Download/Install Kinfe Array</string>
+    <string name="l3_im_download_from_array_start">Start download Kinfe Array</string>
+    <string name="l3_im_download_from_array_install">Start Install Kinfe Array</string>
+    
+    <string name="l3_im_download_from_array10">Download/Install Kinfe Array10</string>
+    <string name="l3_im_download_from_array10_start">Start download Kinfe Array10</string>
+    <string name="l3_im_download_from_array10_install">Start Install Kinfe Array10</string>
+    
+    <string name="l3_im_download_from_ez">Download/Install Eazy</string>
+    <string name="l3_im_download_from_ez_start">Start download Eazy</string>
+    <string name="l3_im_download_from_ez_install">Start Install Eazy</string>
     
     <string name="l3_tab_bluetooth">Bluetooth</string>
     

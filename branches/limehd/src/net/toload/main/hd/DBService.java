@@ -451,13 +451,12 @@ public class DBService extends Service {
 		}
 
 		@Override
-		public void downloadDayiOvCin() throws RemoteException {
-
+		public void downloadDayi() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {
-					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_ov_start)+ "");
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_dayi_start)+ "");
 					downloadedFile = downloadRemoteFile(LIME.DAYI_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_DAYI);
-					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_ov_install)+ "");
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_dayi_install)+ "");
 					try {
 						loadMapping(downloadedFile.getAbsolutePath(), "dayi");
 					} catch (RemoteException e) {
@@ -465,10 +464,116 @@ public class DBService extends Service {
 						displayNotificationMessage("Download failed, please check your internet connection.");
 					}
 				}
-				
 			};
 			threadTask.start();
-			
+		}
+
+		@Override
+		public void downloadPhonetic() throws RemoteException {
+			Thread threadTask = new Thread() {
+				public void run() {
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_start)+ "");
+					downloadedFile = downloadRemoteFile(LIME.PHONETIC_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETIC);
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_install)+ "");
+					try {
+						loadMapping(downloadedFile.getAbsolutePath(), "phonetic");
+					} catch (RemoteException e) {
+						e.printStackTrace();
+						displayNotificationMessage("Download failed, please check your internet connection.");
+					}
+				}
+			};
+			threadTask.start();
+		}
+
+		@Override
+		public void downloadCj() throws RemoteException {
+			Thread threadTask = new Thread() {
+				public void run() {
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj_start)+ "");
+					downloadedFile = downloadRemoteFile(LIME.CJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ);
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj_install)+ "");
+					try {
+						loadMapping(downloadedFile.getAbsolutePath(), "cj");
+					} catch (RemoteException e) {
+						e.printStackTrace();
+						displayNotificationMessage("Download failed, please check your internet connection.");
+					}
+				}
+			};
+			threadTask.start();
+		}
+
+		@Override
+		public void downloadScj() throws RemoteException {
+			Thread threadTask = new Thread() {
+				public void run() {
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_scj_start)+ "");
+					downloadedFile = downloadRemoteFile(LIME.SCJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_SCJ);
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_scj_install)+ "");
+					try {
+						loadMapping(downloadedFile.getAbsolutePath(), "scj");
+					} catch (RemoteException e) {
+						e.printStackTrace();
+						displayNotificationMessage("Download failed, please check your internet connection.");
+					}
+				}
+			};
+			threadTask.start();
+		}
+
+		@Override
+		public void downloadEz() throws RemoteException {
+			Thread threadTask = new Thread() {
+				public void run() {
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_ez_start)+ "");
+					downloadedFile = downloadRemoteFile(LIME.EZ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_EZ);
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_ez_install)+ "");
+					try {
+						loadMapping(downloadedFile.getAbsolutePath(), "ez");
+					} catch (RemoteException e) {
+						e.printStackTrace();
+						displayNotificationMessage("Download failed, please check your internet connection.");
+					}
+				}
+			};
+			threadTask.start();
+		}
+
+		@Override
+		public void downloadArray() throws RemoteException {
+			Thread threadTask = new Thread() {
+				public void run() {
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_array_start)+ "");
+					downloadedFile = downloadRemoteFile(LIME.ARRAY_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ARRAY);
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_array_install)+ "");
+					try {
+						loadMapping(downloadedFile.getAbsolutePath(), "array");
+					} catch (RemoteException e) {
+						e.printStackTrace();
+						displayNotificationMessage("Download failed, please check your internet connection.");
+					}
+				}
+			};
+			threadTask.start();
+		}
+
+		@Override
+		public void downloadArray10() throws RemoteException {
+			Thread threadTask = new Thread() {
+				public void run() {
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_array10_start)+ "");
+					downloadedFile = downloadRemoteFile(LIME.ARRAY_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ARRAY);
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_array10_install)+ "");
+					try {
+						loadMapping(downloadedFile.getAbsolutePath(), "array10");
+					} catch (RemoteException e) {
+						e.printStackTrace();
+						displayNotificationMessage("Download failed, please check your internet connection.");
+					}
+				}
+			};
+			threadTask.start();
 		}
 		
 	}

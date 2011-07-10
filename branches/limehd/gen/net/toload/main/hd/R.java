@@ -886,7 +886,7 @@ public final class R {
  AD Message 
  AD Message 
          */
-        public static final int ad_zippy=0x7f0800aa;
+        public static final int ad_zippy=0x7f0800bc;
         /**  Other Messages 
  Indicates that a word has been added to the dictionary 
  Other Messages 
@@ -1021,9 +1021,27 @@ public final class R {
         public static final int l3_dbservice_download_loaded=0x7f08008b;
         public static final int l3_dbservice_download_start=0x7f080088;
         public static final int l3_dbservice_download_start_empty=0x7f080089;
-        public static final int l3_im_download_from_ov=0x7f0800a6;
-        public static final int l3_im_download_from_ov_install=0x7f0800a8;
-        public static final int l3_im_download_from_ov_start=0x7f0800a7;
+        public static final int l3_im_download_from_array=0x7f0800b2;
+        public static final int l3_im_download_from_array10=0x7f0800b5;
+        public static final int l3_im_download_from_array10_install=0x7f0800b7;
+        public static final int l3_im_download_from_array10_start=0x7f0800b6;
+        public static final int l3_im_download_from_array_install=0x7f0800b4;
+        public static final int l3_im_download_from_array_start=0x7f0800b3;
+        public static final int l3_im_download_from_cj=0x7f0800ac;
+        public static final int l3_im_download_from_cj_install=0x7f0800ae;
+        public static final int l3_im_download_from_cj_start=0x7f0800ad;
+        public static final int l3_im_download_from_dayi=0x7f0800a6;
+        public static final int l3_im_download_from_dayi_install=0x7f0800a8;
+        public static final int l3_im_download_from_dayi_start=0x7f0800a7;
+        public static final int l3_im_download_from_ez=0x7f0800b8;
+        public static final int l3_im_download_from_ez_install=0x7f0800ba;
+        public static final int l3_im_download_from_ez_start=0x7f0800b9;
+        public static final int l3_im_download_from_phonetic=0x7f0800a9;
+        public static final int l3_im_download_from_phonetic_install=0x7f0800ab;
+        public static final int l3_im_download_from_phonetic_start=0x7f0800aa;
+        public static final int l3_im_download_from_scj=0x7f0800af;
+        public static final int l3_im_download_from_scj_install=0x7f0800b1;
+        public static final int l3_im_download_from_scj_start=0x7f0800b0;
         public static final int l3_im_setting_back=0x7f08009c;
         public static final int l3_im_setting_button_load=0x7f0800a3;
         public static final int l3_im_setting_button_reset=0x7f0800a4;
@@ -1069,7 +1087,7 @@ public final class R {
          */
         public static final int l3_message_initial_required=0x7f080073;
         public static final int l3_message_table_reset_confirm=0x7f08008e;
-        public static final int l3_tab_bluetooth=0x7f0800a9;
+        public static final int l3_tab_bluetooth=0x7f0800bb;
         public static final int l3_tab_initial=0x7f080074;
         public static final int l3_tab_initial_error=0x7f080075;
         public static final int l3_tab_initial_message=0x7f080076;
@@ -1134,7 +1152,7 @@ public final class R {
         public static final int number_row_in_english=0x7f080022;
         public static final int number_row_in_english_summary=0x7f080023;
         public static final int phonetic_keyboard=0x7f080025;
-        public static final int phyonetic_keyboard=0x7f0800ab;
+        public static final int phyonetic_keyboard=0x7f0800bd;
         public static final int physical_keyboard=0x7f080024;
         public static final int physical_keyboard_sort=0x7f08004d;
         public static final int physical_keyboard_sort_summary=0x7f08004e;

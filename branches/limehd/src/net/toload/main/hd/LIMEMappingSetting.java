@@ -22,6 +22,9 @@ package net.toload.main.hd;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import net.toload.main.hd.IDBService;
@@ -128,7 +131,7 @@ public class LIMEMappingSetting extends Activity {
 			extendLayout = (LinearLayout) findViewById(R.id.extendLayout);
 			if(imtype != null && imtype.equals("dayi")){
 				Button extendButton = new Button(this);
-				extendButton.setText(getResources().getString(R.string.l3_im_download_from_ov));
+				extendButton.setText(getResources().getString(R.string.l3_im_download_from_dayi));
 				extendLayout.addView(extendButton);
 
 				extendButton.setOnClickListener(new OnClickListener() {
@@ -137,7 +140,143 @@ public class LIMEMappingSetting extends Activity {
 							hasSelectFile = true;
 							resetLabelInfo();
     						DBSrv.resetMapping("dayi");
-							DBSrv.downloadDayiOvCin();
+							DBSrv.downloadDayi();
+							mLIMEPref.setParameter("im_loading", true);
+							mLIMEPref.setParameter("im_loading_table", imtype);
+						} catch (RemoteException e) {
+							e.printStackTrace();
+						}
+					}
+				});
+				
+			}else if(imtype != null && imtype.equals("phonetic")){
+				Button extendButton = new Button(this);
+				extendButton.setText(getResources().getString(R.string.l3_im_download_from_phonetic));
+				extendLayout.addView(extendButton);
+
+				extendButton.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						try {
+							hasSelectFile = true;
+							resetLabelInfo();
+    						DBSrv.resetMapping("phonetic");
+							DBSrv.downloadPhonetic();
+
+							mLIMEPref.setParameter("im_loading", true);
+							mLIMEPref.setParameter("im_loading_table", imtype);
+						} catch (RemoteException e) {
+							e.printStackTrace();
+						}
+					}
+				});
+				
+			}else if(imtype != null && imtype.equals("cj")){
+				Button extendButton = new Button(this);
+				extendButton.setText(getResources().getString(R.string.l3_im_download_from_cj));
+				extendLayout.addView(extendButton);
+
+				extendButton.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						try {
+							hasSelectFile = true;
+							resetLabelInfo();
+    						DBSrv.resetMapping("cj");
+							DBSrv.downloadCj();
+
+							DBSrv.setImInfo("cj", "keyboard", "倉頡輸入法鍵盤");
+							
+							mLIMEPref.setParameter("im_loading", true);
+							mLIMEPref.setParameter("im_loading_table", imtype);
+						} catch (RemoteException e) {
+							e.printStackTrace();
+						}
+					}
+				});
+				
+			}else if(imtype != null && imtype.equals("scj")){
+				Button extendButton = new Button(this);
+				extendButton.setText(getResources().getString(R.string.l3_im_download_from_scj));
+				extendLayout.addView(extendButton);
+
+				extendButton.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						try {
+							hasSelectFile = true;
+							resetLabelInfo();
+    						DBSrv.resetMapping("scj");
+							DBSrv.downloadScj();
+
+							DBSrv.setImInfo("scj", "keyboard", "倉頡輸入法鍵盤");
+							
+							mLIMEPref.setParameter("im_loading", true);
+							mLIMEPref.setParameter("im_loading_table", imtype);
+						} catch (RemoteException e) {
+							e.printStackTrace();
+						}
+					}
+				});
+				
+			}else if(imtype != null && imtype.equals("ez")){
+				Button extendButton = new Button(this);
+				extendButton.setText(getResources().getString(R.string.l3_im_download_from_ez));
+				extendLayout.addView(extendButton);
+
+				extendButton.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						try {
+							hasSelectFile = true;
+							resetLabelInfo();
+    						DBSrv.resetMapping("ez");
+							DBSrv.downloadEz();
+
+							DBSrv.setImInfo("ez", "keyboard", "輕鬆輸入法鍵盤");
+							
+							mLIMEPref.setParameter("im_loading", true);
+							mLIMEPref.setParameter("im_loading_table", imtype);
+						} catch (RemoteException e) {
+							e.printStackTrace();
+						}
+					}
+				});
+				
+			}else if(imtype != null && imtype.equals("array")){
+				Button extendButton = new Button(this);
+				extendButton.setText(getResources().getString(R.string.l3_im_download_from_array));
+				extendLayout.addView(extendButton);
+
+				extendButton.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						try {
+							hasSelectFile = true;
+							resetLabelInfo();
+    						DBSrv.resetMapping("array");
+							DBSrv.downloadArray();
+
+							DBSrv.setImInfo("array", "keyboard", "行列輸入法鍵盤");
+							
+							mLIMEPref.setParameter("im_loading", true);
+							mLIMEPref.setParameter("im_loading_table", imtype);
+						} catch (RemoteException e) {
+							e.printStackTrace();
+						}
+					}
+				});
+				
+			}else if(imtype != null && imtype.equals("array10")){
+				Button extendButton = new Button(this);
+				extendButton.setText(getResources().getString(R.string.l3_im_download_from_array10));
+				extendLayout.addView(extendButton);
+
+				extendButton.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						try {
+							hasSelectFile = true;
+							resetLabelInfo();
+    						DBSrv.resetMapping("array10");
+							DBSrv.downloadArray10();
+
+							DBSrv.setImInfo("array10", "keyboard", "電話數字鍵盤");
+							
 							mLIMEPref.setParameter("im_loading", true);
 							mLIMEPref.setParameter("im_loading_table", imtype);
 						} catch (RemoteException e) {
@@ -441,6 +580,23 @@ public class LIMEMappingSetting extends Activity {
 
 				File rootPath = new File(path);
 				File list[] = rootPath.listFiles();
+
+				Arrays.sort(list, new Comparator() {
+		            public int compare(Object a, Object b) {
+		                File filea = (File)a;
+		                File fileb = (File)b;
+		                //--- Sort directories before files, 
+		                //    otherwise alphabetical ignoring case.
+		                if (filea.isDirectory() && !fileb.isDirectory()) {
+		                    return -1;
+		                } else if (!filea.isDirectory() && fileb.isDirectory()) {
+		                    return 1;
+		                } else {
+		                    return filea.getName().compareToIgnoreCase(fileb.getName());
+		                }
+		            }
+		        });
+				
 				for (File unit : list) {
 					if (unit.isDirectory()
 							|| (unit.isFile() && unit.getName().toLowerCase().endsWith(".lime"))
@@ -448,6 +604,8 @@ public class LIMEMappingSetting extends Activity {
 						templist.add(unit);
 					}
 				}
+				
+
 
 			} else { //if (check.exists() && check.isFile()
 					//&& (  true || check.getName().toLowerCase().endsWith(".lime") || check.getName().toLowerCase().endsWith(".cin"))  ) {

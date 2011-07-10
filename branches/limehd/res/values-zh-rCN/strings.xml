@@ -360,9 +360,33 @@
     <string name="l3_im_setting_button_reset">移除字根档</string>
     <string name="l3_im_setting_button_select">选择键盘对应</string>
     
-    <string name="l3_im_download_from_ov">下载并安装  OpenVanilla 大易字根</string>
-    <string name="l3_im_download_from_ov_start">开始下载 OpenVanilla 大易字根</string>
-    <string name="l3_im_download_from_ov_install">开始安装 OpenVanilla 大易字根</string>
+    <string name="l3_im_download_from_dayi">下载并安装  OpenVanilla 大易字根</string>
+    <string name="l3_im_download_from_dayi_start">开始下载 OpenVanilla 大易字根</string>
+    <string name="l3_im_download_from_dayi_install">开始安装 OpenVanilla 大易字根</string>
+    
+    <string name="l3_im_download_from_phonetic">下载并安装 OpenVanilla 注音字根</string>
+    <string name="l3_im_download_from_phonetic_start">开始下载 OpenVanilla 注音字根</string>
+    <string name="l3_im_download_from_phonetic_install">开始安装 OpenVanilla 注音字根</string>
+    
+    <string name="l3_im_download_from_cj">下载并安装仓颉字根</string>
+    <string name="l3_im_download_from_cj_start">开始下载仓颉字根</string>
+    <string name="l3_im_download_from_cj_install">开始安装仓颉字根</string>
+    
+    <string name="l3_im_download_from_scj">下载并安装快仓字根</string>
+    <string name="l3_im_download_from_scj_start">开始下载快仓字根</string>
+    <string name="l3_im_download_from_scj_install">开始安装快仓字根</string>
+    
+    <string name="l3_im_download_from_array">下载并安装老刀行列字根</string>
+    <string name="l3_im_download_from_array_start">开始下载老刀行列字根</string>
+    <string name="l3_im_download_from_array_install">开始安装老刀行列字根</string>
+    
+    <string name="l3_im_download_from_array10">下载并安装老刀行列10字根</string>
+    <string name="l3_im_download_from_array10_start">开始下载老刀行列10字根</string>
+    <string name="l3_im_download_from_array10_install">开始安装老刀行列10字根</string>
+    
+    <string name="l3_im_download_from_ez">下载并安装轻松字根</string>
+    <string name="l3_im_download_from_ez_start">开始下载轻松字根</string>
+    <string name="l3_im_download_from_ez_install">开始安装轻松字根</string>
     
     <string name="l3_tab_bluetooth">蓝牙设定</string>
     

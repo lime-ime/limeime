@@ -69,10 +69,52 @@ this.resetDownloadDatabase();
 reply.writeNoException();
 return true;
 }
-case TRANSACTION_downloadDayiOvCin:
+case TRANSACTION_downloadDayi:
 {
 data.enforceInterface(DESCRIPTOR);
-this.downloadDayiOvCin();
+this.downloadDayi();
+reply.writeNoException();
+return true;
+}
+case TRANSACTION_downloadPhonetic:
+{
+data.enforceInterface(DESCRIPTOR);
+this.downloadPhonetic();
+reply.writeNoException();
+return true;
+}
+case TRANSACTION_downloadCj:
+{
+data.enforceInterface(DESCRIPTOR);
+this.downloadCj();
+reply.writeNoException();
+return true;
+}
+case TRANSACTION_downloadScj:
+{
+data.enforceInterface(DESCRIPTOR);
+this.downloadScj();
+reply.writeNoException();
+return true;
+}
+case TRANSACTION_downloadArray:
+{
+data.enforceInterface(DESCRIPTOR);
+this.downloadArray();
+reply.writeNoException();
+return true;
+}
+case TRANSACTION_downloadArray10:
+{
+data.enforceInterface(DESCRIPTOR);
+this.downloadArray10();
+reply.writeNoException();
+return true;
+}
+case TRANSACTION_downloadEz:
+{
+data.enforceInterface(DESCRIPTOR);
+this.downloadEz();
 reply.writeNoException();
 return true;
 }
@@ -262,13 +304,97 @@ _reply.recycle();
 _data.recycle();
 }
 }
-public void downloadDayiOvCin() throws android.os.RemoteException
+public void downloadDayi() throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
 android.os.Parcel _reply = android.os.Parcel.obtain();
 try {
 _data.writeInterfaceToken(DESCRIPTOR);
-mRemote.transact(Stub.TRANSACTION_downloadDayiOvCin, _data, _reply, 0);
+mRemote.transact(Stub.TRANSACTION_downloadDayi, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
+public void downloadPhonetic() throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+mRemote.transact(Stub.TRANSACTION_downloadPhonetic, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
+public void downloadCj() throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+mRemote.transact(Stub.TRANSACTION_downloadCj, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
+public void downloadScj() throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+mRemote.transact(Stub.TRANSACTION_downloadScj, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
+public void downloadArray() throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+mRemote.transact(Stub.TRANSACTION_downloadArray, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
+public void downloadArray10() throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+mRemote.transact(Stub.TRANSACTION_downloadArray10, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
+public void downloadEz() throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+mRemote.transact(Stub.TRANSACTION_downloadEz, _data, _reply, 0);
 _reply.readException();
 }
 finally {
@@ -489,25 +615,37 @@ return _result;
 static final int TRANSACTION_loadMapping = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
 static final int TRANSACTION_resetMapping = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
 static final int TRANSACTION_resetDownloadDatabase = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
-static final int TRANSACTION_downloadDayiOvCin = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
-static final int TRANSACTION_downloadPreloadedDatabase = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
-static final int TRANSACTION_downloadEmptyDatabase = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
-static final int TRANSACTION_backupDatabase = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
-static final int TRANSACTION_restoreDatabase = (android.os.IBinder.FIRST_CALL_TRANSACTION + 7);
-static final int TRANSACTION_resetImInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 8);
-static final int TRANSACTION_removeImInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 9);
-static final int TRANSACTION_setImInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 10);
-static final int TRANSACTION_setIMKeyboard = (android.os.IBinder.FIRST_CALL_TRANSACTION + 11);
-static final int TRANSACTION_closeDatabse = (android.os.IBinder.FIRST_CALL_TRANSACTION + 12);
-static final int TRANSACTION_getImInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 13);
-static final int TRANSACTION_getKeyboardCode = (android.os.IBinder.FIRST_CALL_TRANSACTION + 14);
-static final int TRANSACTION_getKeyboardList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 15);
-static final int TRANSACTION_getKeyboardInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 16);
+static final int TRANSACTION_downloadDayi = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
+static final int TRANSACTION_downloadPhonetic = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
+static final int TRANSACTION_downloadCj = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
+static final int TRANSACTION_downloadScj = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
+static final int TRANSACTION_downloadArray = (android.os.IBinder.FIRST_CALL_TRANSACTION + 7);
+static final int TRANSACTION_downloadArray10 = (android.os.IBinder.FIRST_CALL_TRANSACTION + 8);
+static final int TRANSACTION_downloadEz = (android.os.IBinder.FIRST_CALL_TRANSACTION + 9);
+static final int TRANSACTION_downloadPreloadedDatabase = (android.os.IBinder.FIRST_CALL_TRANSACTION + 10);
+static final int TRANSACTION_downloadEmptyDatabase = (android.os.IBinder.FIRST_CALL_TRANSACTION + 11);
+static final int TRANSACTION_backupDatabase = (android.os.IBinder.FIRST_CALL_TRANSACTION + 12);
+static final int TRANSACTION_restoreDatabase = (android.os.IBinder.FIRST_CALL_TRANSACTION + 13);
+static final int TRANSACTION_resetImInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 14);
+static final int TRANSACTION_removeImInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 15);
+static final int TRANSACTION_setImInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 16);
+static final int TRANSACTION_setIMKeyboard = (android.os.IBinder.FIRST_CALL_TRANSACTION + 17);
+static final int TRANSACTION_closeDatabse = (android.os.IBinder.FIRST_CALL_TRANSACTION + 18);
+static final int TRANSACTION_getImInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 19);
+static final int TRANSACTION_getKeyboardCode = (android.os.IBinder.FIRST_CALL_TRANSACTION + 20);
+static final int TRANSACTION_getKeyboardList = (android.os.IBinder.FIRST_CALL_TRANSACTION + 21);
+static final int TRANSACTION_getKeyboardInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 22);
 }
 public void loadMapping(java.lang.String filename, java.lang.String tablename) throws android.os.RemoteException;
 public void resetMapping(java.lang.String tablename) throws android.os.RemoteException;
 public void resetDownloadDatabase() throws android.os.RemoteException;
-public void downloadDayiOvCin() throws android.os.RemoteException;
+public void downloadDayi() throws android.os.RemoteException;
+public void downloadPhonetic() throws android.os.RemoteException;
+public void downloadCj() throws android.os.RemoteException;
+public void downloadScj() throws android.os.RemoteException;
+public void downloadArray() throws android.os.RemoteException;
+public void downloadArray10() throws android.os.RemoteException;
+public void downloadEz() throws android.os.RemoteException;
 public void downloadPreloadedDatabase() throws android.os.RemoteException;
 public void downloadEmptyDatabase() throws android.os.RemoteException;
 public void backupDatabase() throws android.os.RemoteException;
