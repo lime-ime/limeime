@@ -106,8 +106,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		"|£»|£½|£¾|£¿|£¢|£³|£´|£µ|(£|/£¶)|£·|£¨|£©|(£¤/£¨)|£¥|£¦|£¶";
 	
 	private final static String ETEN26_KEY =            	"qazwsxedcrfvtgbyhnujmikolp,.";
-	private final static String ETEN26_KEY_REMAP_INITIAL = 	"y8lhnju2vkzewr1tcsmba9dixq``";
-	private final static String ETEN26_KEY_REMAP_FINAL =   	"y8lhnju7vk6ewr1tcsm3a94ixq``";
+	private final static String ETEN26_KEY_REMAP_INITIAL = 	"y8lhnju2vkzewr1tcsmba9dixq<>";
+	private final static String ETEN26_KEY_REMAP_FINAL =   	"y8lhnju7vk6ewr1tcsm3a94ixq<>";
 	private final static String ETEN26_DUALKEY_REMAP = 		"o,gf;5p-s0/.p";
 	private final static String ETEN26_DUALKEY = 			"yhvewrscpaxqs";
 	private final static String ETEN26_CHAR_INITIAL = 	
@@ -117,8 +117,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 	
 	private final static String HSU_KEY =            		"azwsxedcrfvtgbyhnujmikolpq,.";
-	private final static String HSU_KEY_REMAP_INITIAL = 	"hylnju2vbzfwe18csmra9d.xq```"; 
-	private final static String HSU_KEY_REMAP_FINAL =   	"hylnju6vb3fwe18csm4a9d./q```";  
+	private final static String HSU_KEY_REMAP_INITIAL = 	"hylnju2vbzfwe18csmra9d.xq`<>"; 
+	private final static String HSU_KEY_REMAP_FINAL =   	"hylnju6vb3fwe18csm4a9d./q`<>";  
 	private final static String HSU_DUALKEY_REMAP =		 	"gt5--,okip0;/";
 	private final static String HSU_DUALKEY = 				"vfrx/uhecsadx";
 	private final static String HSU_CHAR_INITIAL = 	
@@ -945,7 +945,7 @@ public class LimeDB extends SQLiteOpenHelper {
 								+ code + "%' LIMIT " + ssize, null, null, null, null, null);
 					}
 	
-					result = buildQueryResult(cursor);
+					result = buildQueryResult(code, cursor);
 	
 					if (cursor != null) {
 						cursor.deactivate();
@@ -1002,7 +1002,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					}
 					
 	
-					result = buildQueryResult(cursor);
+					result = buildQueryResult(code, cursor);
 	
 					if (cursor != null) {
 						cursor.deactivate();
@@ -1401,10 +1401,10 @@ public class LimeDB extends SQLiteOpenHelper {
 	/*
 	 * Process search results
 	 */
-	private List<Mapping> buildQueryResult(Cursor cursor) {
+	private List<Mapping> buildQueryResult(String query_code, Cursor cursor) {
 		
-		if(DEBUG)
-			Log.i("LimDB", "buildQueryResult");
+		//if(DEBUG)
+			Log.i("LimDB.buildQueryResult()"," quiery_code:" + query_code);
 		List<Mapping> result = new ArrayList<Mapping>();
 		if (cursor.moveToFirst()) {
 
@@ -1441,6 +1441,21 @@ public class LimeDB extends SQLiteOpenHelper {
 					duplicateCheck.put(munit.getWord(), munit.getWord());
 				}
 			} while (cursor.moveToNext());
+			if(query_code.length() == 1){
+				// processing full shaped , and .
+				if( (query_code.equals(",")||query_code.equals("<")) && duplicateCheck.get("¡A")==null ){
+					Mapping temp = new Mapping();
+					temp.setCode(query_code);
+					temp.setWord("¡A");
+					result.add(temp);
+				}
+				if( (query_code.equals(".")||query_code.equals(">")) && duplicateCheck.get("¡C")==null ){
+					Mapping temp = new Mapping();
+					temp.setCode(query_code);
+					temp.setWord("¡C");
+					result.add(temp);
+				}
+			}
 
 			int ssize = mLIMEPref.getSimilarCodeCandidates();
 			//Jeremy '11,6,1 The related field may have only one word and thus no "|" inside
