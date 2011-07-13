@@ -21,6 +21,8 @@
 package net.toload.main.hd;
 
 //import java.io.File;
+import java.util.List;
+
 import net.toload.main.hd.R;
 import android.app.AlertDialog;
 import android.content.ComponentName;
@@ -51,7 +53,26 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 	private final boolean DEBUG = false;
 	private Context ctx = null;
 	private IDBService DBSrv = null;
+	/*
+	@Override
+	public void onBuildHeaders(List<Header> target) {
 	
+        if (ctx == null) {
+			ctx = this.getApplicationContext();
+		}
+		loadHeadersFromResource(R.xml.preferencehc, target);
+		
+		if (DBSrv == null) {
+			try {
+				ctx.bindService(new Intent(IDBService.class.getName()),
+						serConn, Context.BIND_AUTO_CREATE);
+			} catch (Exception e) {
+				Log.i("ART", "Failed to connect Search Service");
+			}
+		}
+	
+	}
+	*/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,7 +85,7 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
         //-----------------------
 
 		addPreferencesFromResource(R.xml.preference);
-		
+       
 		
 		// Startup Search Service
 		if (DBSrv == null) {
@@ -78,7 +99,7 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 	
     }
     
-
+    /* move to LIMEMENU
 	@Override
     public boolean onCreateOptionsMenu(Menu menu){
     	int idGroup = 0;
@@ -127,7 +148,7 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
     	}
 		return super.onOptionsItemSelected(item);
     }
-    
+    */
     
     @Override
     protected void onResume() {
@@ -191,6 +212,7 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 			
 		}
 	}
+	
 	
 	private ServiceConnection serConn = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {

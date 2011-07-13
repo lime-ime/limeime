@@ -67,7 +67,7 @@
 
 	</application>
 
-	<uses-sdk android:minSdkVersion="7" />
+	<uses-sdk android:minSdkVersion="7" android:targetSdkVersion="11"/>
 	<supports-screens 
 		android:largeScreens="true"
 		android:normalScreens="true" 

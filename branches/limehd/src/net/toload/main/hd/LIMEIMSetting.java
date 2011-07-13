@@ -270,7 +270,7 @@ public class LIMEIMSetting extends Activity {
 		}
 		
 	}
-
+	/* move to LIMEMENU
 	@Override
     public boolean onCreateOptionsMenu(Menu menu){
     	int idGroup = 0;
@@ -319,5 +319,6 @@ public class LIMEIMSetting extends Activity {
     	}
 		return super.onOptionsItemSelected(item);
     }
+    */
 	
 }

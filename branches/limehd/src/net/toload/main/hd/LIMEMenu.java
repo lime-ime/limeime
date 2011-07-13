@@ -20,53 +20,19 @@
 
 package net.toload.main.hd;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import net.toload.main.hd.R;
 
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.ProgressDialog;
 import android.app.TabActivity;
-import android.app.AlertDialog.Builder;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.DialogInterface.OnCancelListener;
-import android.content.res.Resources;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.preference.PreferenceActivity;
-import android.util.Log;
-import android.view.Display;
-import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.WindowManager;
-import android.view.View.OnClickListener;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ListView;
 import android.widget.TabHost;
-import android.widget.TextView;
-import android.widget.AdapterView.OnItemClickListener;
-
-import android.database.Cursor;
-import android.database.sqlite.SQLiteCursor;
 
 /**
  * @author Art Hung
@@ -114,6 +80,54 @@ public class LIMEMenu extends TabActivity {
         // 09-16 15:53:47.042: INFO/ART(257): 320 * 480 OK
 
         
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu){
+    	int idGroup = 0;
+    	int orderMenuItem1 = Menu.NONE;
+    	int orderMenuItem2 = Menu.NONE+1;
+    	int orderMenuItem3 = Menu.NONE+2;
+    	
+    	try {
+			PackageInfo pinfo = this.getPackageManager().getPackageInfo(this.getPackageName(), 0);
+	    	menu.add(idGroup, Menu.FIRST, orderMenuItem1, "LIME v" + pinfo.versionName + " - " + pinfo.versionCode);
+	    	menu.add(idGroup, Menu.FIRST+1, orderMenuItem2, R.string.experienced_device);
+	    	menu.add(idGroup, Menu.FIRST+2, orderMenuItem3, R.string.license);
+			} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
+    	return super.onCreateOptionsMenu(menu);
+    }
+	
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+
+		//boolean hasSwitch = false;
+		try{
+	    	switch(item.getItemId()){
+		    	case (Menu.FIRST+1):
+		    		new AlertDialog.Builder(this)
+				    	.setTitle(R.string.experienced_device)
+				    	.setMessage(R.string.ad_zippy)
+				    	.setNeutralButton("Close", new DialogInterface.OnClickListener() {
+				    	public void onClick(DialogInterface dlg, int sumthin) {
+				    	}
+				    	}).show();
+		    		break;
+		    	case (Menu.FIRST+2):
+		    		new AlertDialog.Builder(this)
+				    	.setTitle(R.string.license)
+				    	.setMessage(R.string.license_detail)
+				    	.setNeutralButton("Close", new DialogInterface.OnClickListener() {
+				    	public void onClick(DialogInterface dlg, int sumthin) {
+				    	}
+				    	}).show();
+		    		break;
+	    	}
+    	}catch(Exception e){
+    		e.printStackTrace();
+    	}
+		return super.onOptionsItemSelected(item);
     }
 	
 }
