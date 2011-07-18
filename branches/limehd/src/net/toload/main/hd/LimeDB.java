@@ -681,9 +681,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 //Rewrite by Jeremy 11,6,4.  Supporting array and dayi now.
 	public String keyToKeyname(String code, String table, Boolean composingText) {
-		
-		if(composingText && tablename.equals("phonetic") && code.length()>4 ) // phonetic never has code length >4
-			return code;
+		//QP and LD may >4.
+		//if(composingText && tablename.equals("phonetic") && code.length()>4 ) // phonetic never has code length >4 
+		//	return code;
 		
 		String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 		String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();

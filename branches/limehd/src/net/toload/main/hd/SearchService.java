@@ -216,6 +216,8 @@ public class SearchService extends Service {
 				
 			    List<Mapping> cacheTemp = cache.get(cacheKey);
 			    
+			    Log.i("SearchService:query()","cachekey:" + cacheKey ); 
+			    
 				if(cacheTemp != null){
 					result.addAll(cacheTemp);
 					preresultlist = cacheTemp;
@@ -228,8 +230,8 @@ public class SearchService extends Service {
 						cache.put(cacheKey, templist);
 					}else{
 						if(code.length() > 3 &&  
-								cache.get(cacheKey.subSequence(0, code.length()-1)) != null && 
-								cache.get(cacheKey.subSequence(0, code.length()-2)) != null 
+								cache.get(cacheKey.subSequence(0, cacheKey.length()-1)) != null && 
+								cache.get(cacheKey.subSequence(0, cacheKey.length()-2)) != null 
 						){ 
 							result.addAll(preresultlist);
 						}
