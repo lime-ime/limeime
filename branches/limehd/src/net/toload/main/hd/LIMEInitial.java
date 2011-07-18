@@ -78,7 +78,6 @@ public class LIMEInitial extends Activity {
 		
         connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE); 
         
-        
 		// Initial Buttons
 		initialButton();
 
@@ -102,7 +101,7 @@ public class LIMEInitial extends Activity {
 		    	     				builder.setCancelable(false);
 		    	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 		    	     					public void onClick(DialogInterface dialog, int id) {
-						    					initialButton();
+						    					initialButton();						    					
 							    				try {
 							    					DBSrv.closeDatabse();
 							    					DBSrv.resetDownloadDatabase();

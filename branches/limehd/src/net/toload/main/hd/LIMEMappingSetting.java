@@ -38,6 +38,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -53,6 +54,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 
 /**
@@ -91,6 +93,7 @@ public class LIMEMappingSetting extends Activity {
 		List<KeyboardObj> kblist = null;
 		
 		LIMEPreferenceManager mLIMEPref;
+		ConnectivityManager connManager = null;
 		
 		private AlertDialog mOptionsDialog;
 		
@@ -106,6 +109,7 @@ public class LIMEMappingSetting extends Activity {
 			getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
 			getApplicationContext().bindService(new Intent(ISearchService.class.getName()), serConn2, Context.BIND_AUTO_CREATE);
 			
+	        connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE); 
 
 			mLIMEPref = new LIMEPreferenceManager(this.getApplicationContext());
 			
@@ -136,15 +140,19 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						try {
-							hasSelectFile = true;
-							resetLabelInfo();
-    						DBSrv.resetMapping("dayi");
-							DBSrv.downloadDayi();
-							mLIMEPref.setParameter("im_loading", true);
-							mLIMEPref.setParameter("im_loading_table", imtype);
-						} catch (RemoteException e) {
-							e.printStackTrace();
+						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+							try {
+								hasSelectFile = true;
+								resetLabelInfo();
+	    						DBSrv.resetMapping("dayi");
+								DBSrv.downloadDayi();
+								mLIMEPref.setParameter("im_loading", true);
+								mLIMEPref.setParameter("im_loading_table", imtype);
+							} catch (RemoteException e) {
+								e.printStackTrace();
+							}
+				        }else{
+				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
 						}
 					}
 				});
@@ -156,17 +164,22 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						try {
-							hasSelectFile = true;
-							resetLabelInfo();
-    						DBSrv.resetMapping("phonetic");
-							DBSrv.downloadPhonetic();
-
-							mLIMEPref.setParameter("im_loading", true);
-							mLIMEPref.setParameter("im_loading_table", imtype);
-						} catch (RemoteException e) {
-							e.printStackTrace();
+						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+							try {
+								hasSelectFile = true;
+								resetLabelInfo();
+	    						DBSrv.resetMapping("phonetic");
+								DBSrv.downloadPhonetic();
+	
+								mLIMEPref.setParameter("im_loading", true);
+								mLIMEPref.setParameter("im_loading_table", imtype);
+							} catch (RemoteException e) {
+								e.printStackTrace();
+							}
+				        }else{
+				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
 						}
+
 					}
 				});
 				
@@ -177,19 +190,24 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						try {
-							hasSelectFile = true;
-							resetLabelInfo();
-    						DBSrv.resetMapping("cj");
-							DBSrv.downloadCj();
-
-							DBSrv.setImInfo("cj", "keyboard", "倉頡輸入法鍵盤");
-							
-							mLIMEPref.setParameter("im_loading", true);
-							mLIMEPref.setParameter("im_loading_table", imtype);
-						} catch (RemoteException e) {
-							e.printStackTrace();
+						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+							try {
+								hasSelectFile = true;
+								resetLabelInfo();
+	    						DBSrv.resetMapping("cj");
+								DBSrv.downloadCj();
+	
+								DBSrv.setImInfo("cj", "keyboard", "倉頡輸入法鍵盤");
+								
+								mLIMEPref.setParameter("im_loading", true);
+								mLIMEPref.setParameter("im_loading_table", imtype);
+							} catch (RemoteException e) {
+								e.printStackTrace();
+							}
+				        }else{
+				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
 						}
+
 					}
 				});
 				
@@ -200,19 +218,24 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						try {
-							hasSelectFile = true;
-							resetLabelInfo();
-    						DBSrv.resetMapping("scj");
-							DBSrv.downloadScj();
-
-							DBSrv.setImInfo("scj", "keyboard", "倉頡輸入法鍵盤");
-							
-							mLIMEPref.setParameter("im_loading", true);
-							mLIMEPref.setParameter("im_loading_table", imtype);
-						} catch (RemoteException e) {
-							e.printStackTrace();
+						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+							try {
+								hasSelectFile = true;
+								resetLabelInfo();
+	    						DBSrv.resetMapping("scj");
+								DBSrv.downloadScj();
+	
+								DBSrv.setImInfo("scj", "keyboard", "倉頡輸入法鍵盤");
+								
+								mLIMEPref.setParameter("im_loading", true);
+								mLIMEPref.setParameter("im_loading_table", imtype);
+							} catch (RemoteException e) {
+								e.printStackTrace();
+							}
+				        }else{
+				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
 						}
+
 					}
 				});
 				
@@ -223,19 +246,24 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						try {
-							hasSelectFile = true;
-							resetLabelInfo();
-    						DBSrv.resetMapping("ez");
-							DBSrv.downloadEz();
-
-							DBSrv.setImInfo("ez", "keyboard", "輕鬆輸入法鍵盤");
-							
-							mLIMEPref.setParameter("im_loading", true);
-							mLIMEPref.setParameter("im_loading_table", imtype);
-						} catch (RemoteException e) {
-							e.printStackTrace();
+						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+							try {
+								hasSelectFile = true;
+								resetLabelInfo();
+	    						DBSrv.resetMapping("ez");
+								DBSrv.downloadEz();
+	
+								DBSrv.setImInfo("ez", "keyboard", "輕鬆輸入法鍵盤");
+								
+								mLIMEPref.setParameter("im_loading", true);
+								mLIMEPref.setParameter("im_loading_table", imtype);
+							} catch (RemoteException e) {
+								e.printStackTrace();
+							}
+				        }else{
+				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
 						}
+
 					}
 				});
 				
@@ -246,19 +274,24 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
+						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 						try {
-							hasSelectFile = true;
-							resetLabelInfo();
-    						DBSrv.resetMapping("array");
-							DBSrv.downloadArray();
-
-							DBSrv.setImInfo("array", "keyboard", "行列輸入法鍵盤");
-							
-							mLIMEPref.setParameter("im_loading", true);
-							mLIMEPref.setParameter("im_loading_table", imtype);
-						} catch (RemoteException e) {
-							e.printStackTrace();
+								hasSelectFile = true;
+								resetLabelInfo();
+	    						DBSrv.resetMapping("array");
+								DBSrv.downloadArray();
+	
+								DBSrv.setImInfo("array", "keyboard", "行列輸入法鍵盤");
+								
+								mLIMEPref.setParameter("im_loading", true);
+								mLIMEPref.setParameter("im_loading_table", imtype);
+							} catch (RemoteException e) {
+								e.printStackTrace();
+							}
+				        }else{
+				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
 						}
+
 					}
 				});
 				
@@ -269,19 +302,24 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						try {
-							hasSelectFile = true;
-							resetLabelInfo();
-    						DBSrv.resetMapping("array10");
-							DBSrv.downloadArray10();
-
-							DBSrv.setImInfo("array10", "keyboard", "電話數字鍵盤");
-							
-							mLIMEPref.setParameter("im_loading", true);
-							mLIMEPref.setParameter("im_loading_table", imtype);
-						} catch (RemoteException e) {
-							e.printStackTrace();
+						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+							try {
+								hasSelectFile = true;
+								resetLabelInfo();
+	    						DBSrv.resetMapping("array10");
+								DBSrv.downloadArray10();
+	
+								DBSrv.setImInfo("array10", "keyboard", "電話數字鍵盤");
+								
+								mLIMEPref.setParameter("im_loading", true);
+								mLIMEPref.setParameter("im_loading_table", imtype);
+							} catch (RemoteException e) {
+								e.printStackTrace();
+							}
+				        }else{
+				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
 						}
+
 					}
 				});
 				
