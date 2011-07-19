@@ -92,10 +92,13 @@ public class LIMEIMSetting extends Activity {
 	Button btnSetupPhonetic = null;
 	Button btnSetupCJ = null;
 	Button btnSetupSCJ= null;
+	Button btnSetupCJ5= null;
+	Button btnSetupECJ= null;
 	Button btnSetupDayi = null;
 	Button btnSetupEz = null;
 	Button btnSetupArray = null;
 	Button btnSetupArray10 = null;
+	Button btnSetupWb = null;
 	
 	String table = "";
 	
@@ -151,14 +154,47 @@ public class LIMEIMSetting extends Activity {
 				}
 			});
 			
-	
-	
+
+			
 			btnSetupSCJ.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					Intent intent = new Intent();
 					intent.setClass(v.getContext(), LIMEMappingSetting.class);
 					   Bundle bundle = new Bundle();
 					   		  bundle.putString("keyboard", "scj");
+					   intent.putExtras(bundle);
+					startActivity(intent);
+				}
+			});
+	
+			btnSetupCJ5.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					Intent intent = new Intent();
+					intent.setClass(v.getContext(), LIMEMappingSetting.class);
+					   Bundle bundle = new Bundle();
+					   		  bundle.putString("keyboard", "cj5");
+					   intent.putExtras(bundle);
+					startActivity(intent);
+				}
+			});
+	
+			btnSetupECJ.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					Intent intent = new Intent();
+					intent.setClass(v.getContext(), LIMEMappingSetting.class);
+					   Bundle bundle = new Bundle();
+					   		  bundle.putString("keyboard", "ecj");
+					   intent.putExtras(bundle);
+					startActivity(intent);
+				}
+			});
+	
+			btnSetupWb.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					Intent intent = new Intent();
+					intent.setClass(v.getContext(), LIMEMappingSetting.class);
+					   Bundle bundle = new Bundle();
+					   		  bundle.putString("keyboard", "wb");
 					   intent.putExtras(bundle);
 					startActivity(intent);
 				}
@@ -241,10 +277,13 @@ public class LIMEIMSetting extends Activity {
 			btnSetupPhonetic = (Button) findViewById(R.id.btnSetupPhonetic);
 			btnSetupCJ = (Button) findViewById(R.id.btnSetupCJ);
 			btnSetupSCJ = (Button) findViewById(R.id.btnSetupSCJ);
+			btnSetupCJ5 = (Button) findViewById(R.id.btnSetupCJ5);
+			btnSetupECJ = (Button) findViewById(R.id.btnSetupECJ);
 			btnSetupDayi = (Button) findViewById(R.id.btnSetupDayi);
 			btnSetupEz = (Button) findViewById(R.id.btnSetupEz);		
 			btnSetupArray = (Button) findViewById(R.id.btnSetupArray);
-			btnSetupArray10 = (Button) findViewById(R.id.btnSetupArray10);	
+			btnSetupArray10 = (Button) findViewById(R.id.btnSetupArray10);
+			btnSetupWb = (Button) findViewById(R.id.btnSetupWb);		
 		}
 
 		File checkSdFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
@@ -254,19 +293,25 @@ public class LIMEIMSetting extends Activity {
 			btnSetupPhonetic.setEnabled(false);
 			btnSetupCJ.setEnabled(false);
 			btnSetupSCJ.setEnabled(false);
+			btnSetupCJ5.setEnabled(false);
+			btnSetupECJ.setEnabled(false);
 			btnSetupDayi.setEnabled(false);
 			btnSetupEz.setEnabled(false);
 			btnSetupArray.setEnabled(false);
 			btnSetupArray10.setEnabled(false);
+			btnSetupWb.setEnabled(false);
 		}else{
 			btnSetupCustom.setEnabled(true);
 			btnSetupPhonetic.setEnabled(true);
 			btnSetupCJ.setEnabled(true);
 			btnSetupSCJ.setEnabled(true);
+			btnSetupCJ5.setEnabled(true);
+			btnSetupECJ.setEnabled(true);
 			btnSetupDayi.setEnabled(true);
 			btnSetupEz.setEnabled(true);	
 			btnSetupArray.setEnabled(true);
 			btnSetupArray10.setEnabled(true);
+			btnSetupWb.setEnabled(true);
 		}
 		
 	}

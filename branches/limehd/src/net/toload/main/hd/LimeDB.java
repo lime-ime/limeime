@@ -269,7 +269,128 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 	}
 	
+	public void updateDBVersion(){
+		
+			String kbversion = mLIMEPref.getParameterString("kbversion");
+			// Upgrade DB version below 330
+			if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 330){
+
+				SQLiteDatabase db = null;
+				String dbtarget = mLIMEPref.getParameterString("dbtarget");
+				String dblocation = "";
+				if(dbtarget.equals("sdcard")){
+					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
+				}else{
+					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
+				}
+				db = SQLiteDatabase.openDatabase(dblocation, null, SQLiteDatabase.OPEN_READWRITE);
+				
+				int count = db.query("keyboard", null, FIELD_CODE +" = 'limenumsym'", null, null, null, null, null).getCount();
+				
+				if(count == 0){
+					try{
+					
+						ContentValues 	cv = new ContentValues();
+						cv.put("code", "limenumsym");
+						cv.put("name", "LIMENUMSYM");
+						cv.put("desc", "LIME+數字符號鍵盤");
+						cv.put("type", "phone");
+						cv.put("image", "lime_number_symbol_keyboard_priview");
+						cv.put("imkb", "lime_number_symbol");
+						cv.put("imshiftkb", "lime_number_symbol_shift");
+						cv.put("engkb", "lime_english_number");
+						cv.put("engshiftkb", "lime_english_shift");
+						cv.put("symbolkb", "symbols");
+						cv.put("symbolshiftkb", "symbols_shift");
+						cv.put("disable", "false");
+						db.insert("keyboard" ,null , cv);
+
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				db.close();
+				mLIMEPref.setParameter("kbversion","330");
+			}
+	
+			// Upgrade DB version below 332
+			if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 332){
+
+				SQLiteDatabase db = null;
+				String dbtarget = mLIMEPref.getParameterString("dbtarget");
+				String dblocation = "";
+				if(dbtarget.equals("sdcard")){
+					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
+				}else{
+					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
+				}
+				db = SQLiteDatabase.openDatabase(dblocation, null, SQLiteDatabase.OPEN_READWRITE);
+				
+				boolean hasNewTable = false;
+				try{
+					int count = db.query("cj5", null, null, null, null, null, null, null).getCount();
+					 hasNewTable = true;
+				}catch(Exception e){}
+				
+				if(!hasNewTable){
+					try{
+
+						db.execSQL("CREATE TABLE cj5 (" + FIELD_id + " INTEGER primary key autoincrement, " + " "
+								+ FIELD_CODE + " text, " + FIELD_CODE3R + " text, " + FIELD_WORD + " text, " + FIELD_RELATED + " text, " + FIELD_SCORE + " integer)");
+	
+						db.execSQL("CREATE TABLE ecj (" + FIELD_id + " INTEGER primary key autoincrement, " + " "
+								+ FIELD_CODE + " text, " + FIELD_CODE3R + " text, " + FIELD_WORD + " text, " + FIELD_RELATED + " text, " + FIELD_SCORE + " integer)");
+	
+						db.execSQL("CREATE TABLE wb (" + FIELD_id + " INTEGER primary key autoincrement, " + " "
+								+ FIELD_CODE + " text, " + FIELD_CODE3R + " text, " + FIELD_WORD + " text, " + FIELD_RELATED + " text, " + FIELD_SCORE + " integer)");
+
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				db.close();
+				mLIMEPref.setParameter("kbversion","332");
+			}
+			
+			
+			// Upgrade DB version below 333
+			/*if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 333){
+				
+				KeyboardObj tobj = getKeyboardObj("limenumsym");
+				if(tobj == null){
+					try{
+						
+						ContentValues 	cv = new ContentValues();
+						cv.put("code", "wb");
+						cv.put("name", "五筆");
+						cv.put("desc", "五筆輸入法鍵盤");
+						cv.put("type", "phone");
+						cv.put("image", "wb_keyboard_preview");
+						cv.put("imkb", "lime_wb");
+						cv.put("imshiftkb", "lime_wb_shift");
+						cv.put("engkb", "lime_english_number");
+						cv.put("engshiftkb", "lime_english_shift");
+						cv.put("symbolkb", "symbols");
+						cv.put("symbolshiftkb", "symbols_shift");
+						cv.put("disable", "false");
+						db.insert("keyboard" ,null , cv);
+						
+						db.close();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				mLIMEPref.setParameter("kbversion","333");
+			}*/
+		
+	}
+	
+	
 	public SQLiteDatabase getSqliteDb(boolean readonly){
+		
+		// Execute database schema update process
+		updateDBVersion();
+		
 		try{
 			SQLiteDatabase db = null;
 			String dbtarget = mLIMEPref.getParameterString("dbtarget");
@@ -747,7 +868,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			
 			if(table.equals("phonetic")|| table.equals("dayi") ||
 					keyString.equals("")||keynameString.equals("")){
-				if(table.equals("cj")||table.equals("scj")){
+				if(table.equals("cj")||table.equals("scj")||table.equals("cj5")||table.equals("ecj")){
 					keyString = CJ_KEY;
 					keynameString = CJ_CHAR;
 				}else if(table.equals("phonetic") ) { 
@@ -1878,9 +1999,15 @@ public class LimeDB extends SQLiteOpenHelper {
 					//setImInfo(table, "keyboard", "lime");
 					// '11,5,23 by Jeremy: Preset keyboard info. by tablename
 					KeyboardObj kobj = getKeyboardObj(table);
-					if( kobj == null){					
+					if( table.equals("cj5")){					
+						kobj = getKeyboardObj("cj");
+					}else if( table.equals("ecj")){				
+						kobj = getKeyboardObj("cj");
+					}else if( table.equals("wb")){					
+						kobj = getKeyboardObj("cj");
+					}else if( kobj == null){					
 						kobj = getKeyboardObj("lime");
-					 }
+					}
 					setIMKeyboard(table, kobj.getDescription(), kobj.getCode());
 					
 				}
@@ -2130,38 +2257,6 @@ public class LimeDB extends SQLiteOpenHelper {
 
 	public List<KeyboardObj> getKeyboardList() {
 		
-		String kbversion = mLIMEPref.getParameterString("kbversion");
-		if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 330){
-			
-			KeyboardObj tobj = getKeyboardObj("limenumsym");
-			if(tobj == null){
-				try{
-					SQLiteDatabase db = this.getSqliteDb(false);
-				
-					ContentValues 	cv = new ContentValues();
-					cv.put("code", "limenumsym");
-					cv.put("name", "LIMENUMSYM");
-					cv.put("desc", "LIME+數字符號鍵盤");
-					cv.put("type", "phone");
-					cv.put("image", "lime_number_symbol_keyboard_priview");
-					cv.put("imkb", "lime_number_symbol");
-					cv.put("imshiftkb", "lime_number_symbol_shift");
-					cv.put("engkb", "lime_english_number");
-					cv.put("engshiftkb", "lime_english_shift");
-					cv.put("symbolkb", "symbols");
-					cv.put("symbolshiftkb", "symbols_shift");
-					cv.put("disable", "false");
-					db.insert("keyboard" ,null , cv);
-					
-					db.close();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				
-				
-			}
-			mLIMEPref.setParameter("kbversion","330");
-		}
 		
 		List<KeyboardObj> result = new LinkedList<KeyboardObj>();
 		try {

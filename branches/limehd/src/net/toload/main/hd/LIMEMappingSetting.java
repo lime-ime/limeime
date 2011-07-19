@@ -239,6 +239,62 @@ public class LIMEMappingSetting extends Activity {
 					}
 				});
 				
+			}else if(imtype != null && imtype.equals("cj5")){
+				Button extendButton = new Button(this);
+				extendButton.setText(getResources().getString(R.string.l3_im_download_from_cj5));
+				extendLayout.addView(extendButton);
+
+				extendButton.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+							try {
+								hasSelectFile = true;
+								resetLabelInfo();
+	    						DBSrv.resetMapping("cj5");
+								DBSrv.downloadScj();
+	
+								DBSrv.setImInfo("cj5", "keyboard", "­Ü¾e¿é¤JªkÁä½L");
+								
+								mLIMEPref.setParameter("im_loading", true);
+								mLIMEPref.setParameter("im_loading_table", imtype);
+							} catch (RemoteException e) {
+								e.printStackTrace();
+							}
+				        }else{
+				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+						}
+
+					}
+				});
+				
+			}else if(imtype != null && imtype.equals("ecj")){
+				Button extendButton = new Button(this);
+				extendButton.setText(getResources().getString(R.string.l3_im_download_from_ecj));
+				extendLayout.addView(extendButton);
+
+				extendButton.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+							try {
+								hasSelectFile = true;
+								resetLabelInfo();
+	    						DBSrv.resetMapping("ecj");
+								DBSrv.downloadScj();
+	
+								DBSrv.setImInfo("ecj", "keyboard", "­Ü¾e¿é¤JªkÁä½L");
+								
+								mLIMEPref.setParameter("im_loading", true);
+								mLIMEPref.setParameter("im_loading_table", imtype);
+							} catch (RemoteException e) {
+								e.printStackTrace();
+							}
+				        }else{
+				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+						}
+
+					}
+				});
+				
 			}else if(imtype != null && imtype.equals("ez")){
 				Button extendButton = new Button(this);
 				extendButton.setText(getResources().getString(R.string.l3_im_download_from_ez));
@@ -310,6 +366,34 @@ public class LIMEMappingSetting extends Activity {
 								DBSrv.downloadArray10();
 	
 								DBSrv.setImInfo("array10", "keyboard", "¹q¸Ü¼Æ¦rÁä½L");
+								
+								mLIMEPref.setParameter("im_loading", true);
+								mLIMEPref.setParameter("im_loading_table", imtype);
+							} catch (RemoteException e) {
+								e.printStackTrace();
+							}
+				        }else{
+				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+						}
+
+					}
+				});
+				
+			}else if(imtype != null && imtype.equals("wb")){
+				Button extendButton = new Button(this);
+				extendButton.setText(getResources().getString(R.string.l3_im_download_from_wb));
+				extendLayout.addView(extendButton);
+
+				extendButton.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+							try {
+								hasSelectFile = true;
+								resetLabelInfo();
+	    						DBSrv.resetMapping("wb");
+								DBSrv.downloadArray10();
+	
+								DBSrv.setImInfo("wb", "keyboard", "­Ü¾e¿é¤JªkÁä½L");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -477,6 +561,12 @@ public class LIMEMappingSetting extends Activity {
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_default) +" "+ getText(R.string.l3_im_setting_title) );
 			}else if(imtype.equalsIgnoreCase("phonetic")){
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_phonetic) +" "+ getText(R.string.l3_im_setting_title) );
+			}else if(imtype.equalsIgnoreCase("cj5")){
+				labMappingSettingTitle.setText(getText(R.string.l3_manage_cj5) +" "+ getText(R.string.l3_im_setting_title) );
+			}else if(imtype.equalsIgnoreCase("ecj")){
+				labMappingSettingTitle.setText(getText(R.string.l3_manage_ecj) +" "+ getText(R.string.l3_im_setting_title) );
+			}else if(imtype.equalsIgnoreCase("wb")){
+				labMappingSettingTitle.setText(getText(R.string.l3_manage_wb) +" "+ getText(R.string.l3_im_setting_title) );
 			}
 			
 			// Display Keyboard Selection

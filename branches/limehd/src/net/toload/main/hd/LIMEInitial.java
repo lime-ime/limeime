@@ -88,11 +88,14 @@ public class LIMEInitial extends Activity {
 				resetLabelInfo("custom");
 				resetLabelInfo("cj");
 				resetLabelInfo("scj");
+				resetLabelInfo("cj5");
+				resetLabelInfo("ecj");
 				resetLabelInfo("array");
 				resetLabelInfo("array10");
 				resetLabelInfo("dayi");
 				resetLabelInfo("ez");
 				resetLabelInfo("phonetic");
+				resetLabelInfo("wb");
 				
 				btnResetDB.setEnabled(false);
 				

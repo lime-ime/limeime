@@ -58,9 +58,7 @@
         <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:keyEdgeFlags="left"/>
         <Key android:codes="44" android:keyLabel=","/>
         <Key android:codes="48" android:keyLabel="0"/>
-        <Key android:codes="35" 
-        		android:keyLabel="\#" 
-				android:popupKeyboard="@xml/popup_c_punctuation" />
+        <Key android:codes="46" android:keyLabel="." android:popupKeyboard="@xml/popup_c_punctuation" />
         <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return"  android:keyEdgeFlags="right"/>
     </Row>
     

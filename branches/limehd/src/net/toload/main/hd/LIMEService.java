@@ -1708,7 +1708,7 @@ public class LIMEService extends InputMethodService implements
 		SharedPreferences sp = PreferenceManager
 				.getDefaultSharedPreferences(this);
 		String keybaord_state_string = sp.getString("keyboard_state",
-				"0;1;2;3;4;5;6;7;8");
+				"0;1;2;3;4;5;6;7;8;9;10;11");
 		String[] s = keybaord_state_string.toString().split(";");
 
 		keyboardList.clear();
@@ -2345,7 +2345,7 @@ public class LIMEService extends InputMethodService implements
 			
 			hasNumberMapping = mLIMEPref.getAllowNumberMapping();
 			hasSymbolMapping = mLIMEPref.getAllowSymoblMapping();
-		}else if(keyboardSelection.equals("cj")|| keyboardSelection.equals("scj")){
+		}else if(keyboardSelection.equals("cj")|| keyboardSelection.equals("scj") || keyboardSelection.equals("cj5") || keyboardSelection.equals("ecj") ){
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
 			hasNumberMapping = false;
@@ -2369,6 +2369,11 @@ public class LIMEService extends InputMethodService implements
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 				LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
 		}else if (keyboardSelection.equals("array")) {
+			hasNumberMapping = false;
+			hasSymbolMapping = true;
+			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
+					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+		}else if (keyboardSelection.equals("wb")) {
 			hasNumberMapping = false;
 			hasSymbolMapping = true;
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,

@@ -487,6 +487,60 @@ public class DBService extends Service {
 		}
 
 		@Override
+		public void downloadCj5() throws RemoteException {
+			Thread threadTask = new Thread() {
+				public void run() {
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj5_start)+ "");
+					downloadedFile = downloadRemoteFile(LIME.CJ5_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ5);
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj5_install)+ "");
+					try {
+						loadMapping(downloadedFile.getAbsolutePath(), "cj5");
+					} catch (RemoteException e) {
+						e.printStackTrace();
+						displayNotificationMessage("Download failed, please check your internet connection.");
+					}
+				}
+			};
+			threadTask.start();
+		}
+
+		@Override
+		public void downloadEcj() throws RemoteException {
+			Thread threadTask = new Thread() {
+				public void run() {
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_ecj_start)+ "");
+					downloadedFile = downloadRemoteFile(LIME.ECJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ECJ);
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_ecj_install)+ "");
+					try {
+						loadMapping(downloadedFile.getAbsolutePath(), "ecj");
+					} catch (RemoteException e) {
+						e.printStackTrace();
+						displayNotificationMessage("Download failed, please check your internet connection.");
+					}
+				}
+			};
+			threadTask.start();
+		}
+
+		@Override
+		public void downloadWb() throws RemoteException {
+			Thread threadTask = new Thread() {
+				public void run() {
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_wb_start)+ "");
+					downloadedFile = downloadRemoteFile(LIME.WB_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_WB);
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_wb_install)+ "");
+					try {
+						loadMapping(downloadedFile.getAbsolutePath(), "wb");
+					} catch (RemoteException e) {
+						e.printStackTrace();
+						displayNotificationMessage("Download failed, please check your internet connection.");
+					}
+				}
+			};
+			threadTask.start();
+		}
+
+		@Override
 		public void downloadCj() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {

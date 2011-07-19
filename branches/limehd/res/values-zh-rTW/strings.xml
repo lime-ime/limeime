@@ -83,6 +83,9 @@
     <string name="ez_reverse_lookup_list">輕鬆字根反查</string>
     <string name="array_reverse_lookup_list">行列字根反查</string>
     <string name="array10_reverse_lookup_list">行列10字根反查</string>
+    <string name="cj5_reverse_lookup_list">倉頡五字根反查</string>
+    <string name="ecj_reverse_lookup_list">速成字根反查</string>
+    <string name="wb_reverse_lookup_list">五筆字根反查</string>
     
     <string name="han_convert_option_list">中文簡/繁體字碼轉換</string>
     <string name="selkey_option_list">選字鍵選項</string>
@@ -215,35 +218,47 @@
 		<item>自建</item>
 		<item>倉頡</item>
 		<item>快倉</item>
+		<item>倉頡五</item>
+		<item>速成</item>
 		<item>大易</item>
 		<item>注音</item>
 		<item>輕鬆</item>
 		<item>行列</item>
 		<item>行列10</item>
+		<item>五筆</item>
 	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
 		<item>custom</item>
 		<item>cj</item>
 		<item>scj</item>
+		<item>cj5</item>
+		<item>ecj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
+		<item>wb</item>
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
 		<item>LIME輸入法</item>
 		<item>倉頡輸入法</item>
 		<item>快倉輸入法</item>
+		<item>倉頡五輸入法</item>
+		<item>速成輸入法</item>
 		<item>大易輸入法</item>
 		<item>注音輸入法</item>
 		<item>輕鬆輸入法</item>
 		<item>行列輸入法</item>
 		<item>行列10輸入法</item>
+		<item>五筆輸入法</item>
 	</string-array>
 	<string-array name="keyboard_defaultstate">
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
@@ -257,21 +272,27 @@
 		<item>custom</item>
 		<item>cj</item>
 		<item>scj</item>
+		<item>cj5</item>
+		<item>ecj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
+		<item>wb</item>
 	</string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
 		<item>cj</item>
 		<item>scj</item>
+		<item>cj5</item>
+		<item>ecj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
+		<item>wb</item>
 		<item>related</item>
 		<item>dictionary</item>
 	</string-array>
@@ -290,11 +311,14 @@
 		<item>自建/電話</item>
 		<item>倉頡</item>
 		<item>快倉</item>
+		<item>倉頡五</item>
+		<item>速成</item>
 		<item>大易</item>
 		<item>注音</item>
 		<item>輕鬆</item>
 		<item>行列</item>
 		<item>行列10</item>
+		<item>五筆</item>
 		<item>預載關聯字</item>
 		<item>英文字典</item>
 	</string-array>
@@ -317,11 +341,14 @@
     <string name="l3_manage_default">自建</string>
     <string name="l3_manage_phonetic">注音</string>
     <string name="l3_manage_cj">倉頡</string>
+    <string name="l3_manage_cj5">倉頡五</string>
+    <string name="l3_manage_ecj">速成</string>
     <string name="l3_manage_scj">快倉</string>
     <string name="l3_manage_dayi">大易</string>
     <string name="l3_manage_eazy">輕鬆</string>
     <string name="l3_manage_array">行列</string>
     <string name="l3_manage_array10">行列10</string>
+    <string name="l3_manage_wb">五筆</string>
     
     <string name="l3_tab_preference">喜好設定</string>
     
@@ -371,6 +398,14 @@
     <string name="l3_im_download_from_cj_start">開始下載倉頡字根</string>
     <string name="l3_im_download_from_cj_install">開始安裝倉頡字根</string>
     
+    <string name="l3_im_download_from_cj5">下載並安裝倉頡五字根</string>
+    <string name="l3_im_download_from_cj5_start">開始下載倉頡五字根</string>
+    <string name="l3_im_download_from_cj5_install">開始安裝倉頡五字根</string>
+    
+    <string name="l3_im_download_from_ecj">下載並安裝速成字根</string>
+    <string name="l3_im_download_from_ecj_start">開始下載速成字根</string>
+    <string name="l3_im_download_from_ecj_install">開始安裝速成字根</string>
+    
     <string name="l3_im_download_from_scj">下載並安裝快倉字根</string>
     <string name="l3_im_download_from_scj_start">開始下載快倉字根</string>
     <string name="l3_im_download_from_scj_install">開始安裝快倉字根</string>
@@ -387,7 +422,13 @@
     <string name="l3_im_download_from_ez_start">開始下載輕鬆字根</string>
     <string name="l3_im_download_from_ez_install">開始安裝輕鬆字根</string>
     
+    <string name="l3_im_download_from_wb">下載並安裝五筆字根</string>
+    <string name="l3_im_download_from_wb_start">開始下載五筆字根</string>
+    <string name="l3_im_download_from_wb_install">開始安裝五筆字根</string>
+    
     <string name="l3_tab_bluetooth">藍牙設定</string>
+    
+    <string name="l3_im_notice">為了節省記憶體使用空間，我們強烈建議您清空不常使用的輸入法字根，或使用空白資料庫來載入個別輸入法字根檔。</string>
     
     <!-- AD Message -->
     <string name="ad_zippy">藍芽鍵盤測試支援\nZIPPY BT-540 藍芽一對六鍵盤 - http://www.zippy.com (Sam Lin/sam_lin@hotmail.com)</string>

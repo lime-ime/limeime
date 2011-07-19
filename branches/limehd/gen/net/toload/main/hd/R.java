@@ -797,38 +797,41 @@ public final class R {
         public static final int z_u_l=0x7f0202c5;
     }
     public static final class id {
-        public static final int IMSettingScrollView=0x7f0a0027;
+        public static final int IMSettingScrollView=0x7f0a002d;
         public static final int LinearLayout01=0x7f0a000c;
-        public static final int LinearLayout02=0x7f0a0029;
-        public static final int LinearLayout03=0x7f0a002b;
-        public static final int LinearLayout04=0x7f0a0028;
-        public static final int LinearLayout05=0x7f0a0034;
-        public static final int LinearLayout06=0x7f0a0035;
-        public static final int LinearLayout07=0x7f0a0037;
+        public static final int LinearLayout02=0x7f0a002f;
+        public static final int LinearLayout03=0x7f0a0031;
+        public static final int LinearLayout04=0x7f0a002e;
+        public static final int LinearLayout05=0x7f0a003a;
+        public static final int LinearLayout06=0x7f0a003b;
+        public static final int LinearLayout07=0x7f0a003d;
         public static final int TextView01=0x7f0a000b;
         public static final int btStatus=0x7f0a0000;
-        public static final int btnBackToPreviousPage=0x7f0a002a;
-        public static final int btnBackupDB=0x7f0a0024;
+        public static final int btnBackToPreviousPage=0x7f0a0030;
+        public static final int btnBackupDB=0x7f0a002a;
         public static final int btnConnectDevice=0x7f0a0005;
         public static final int btnDiscoveryBT=0x7f0a0003;
-        public static final int btnInitEmptyDB=0x7f0a0022;
-        public static final int btnInitPreloadDB=0x7f0a0021;
+        public static final int btnInitEmptyDB=0x7f0a0028;
+        public static final int btnInitPreloadDB=0x7f0a0027;
         public static final int btnInitialDevice=0x7f0a0004;
-        public static final int btnLoadMapping=0x7f0a0032;
-        public static final int btnResetDB=0x7f0a0023;
-        public static final int btnResetMapping=0x7f0a0033;
-        public static final int btnRestoreDB=0x7f0a0025;
-        public static final int btnSelectKeyboard=0x7f0a0038;
-        public static final int btnSetupArray=0x7f0a001c;
-        public static final int btnSetupArray10=0x7f0a001d;
-        public static final int btnSetupCJ=0x7f0a0016;
-        public static final int btnSetupCustom=0x7f0a0013;
-        public static final int btnSetupDayi=0x7f0a0019;
-        public static final int btnSetupEz=0x7f0a001a;
-        public static final int btnSetupPhonetic=0x7f0a0014;
-        public static final int btnSetupSCJ=0x7f0a0017;
-        public static final int btnStoreDevice=0x7f0a001f;
-        public static final int btnStoreSdcard=0x7f0a0020;
+        public static final int btnLoadMapping=0x7f0a0038;
+        public static final int btnResetDB=0x7f0a0029;
+        public static final int btnResetMapping=0x7f0a0039;
+        public static final int btnRestoreDB=0x7f0a002b;
+        public static final int btnSelectKeyboard=0x7f0a003e;
+        public static final int btnSetupArray=0x7f0a0021;
+        public static final int btnSetupArray10=0x7f0a0022;
+        public static final int btnSetupCJ=0x7f0a0018;
+        public static final int btnSetupCJ5=0x7f0a001b;
+        public static final int btnSetupCustom=0x7f0a0015;
+        public static final int btnSetupDayi=0x7f0a001e;
+        public static final int btnSetupECJ=0x7f0a001c;
+        public static final int btnSetupEz=0x7f0a001f;
+        public static final int btnSetupPhonetic=0x7f0a0016;
+        public static final int btnSetupSCJ=0x7f0a0019;
+        public static final int btnSetupWb=0x7f0a0024;
+        public static final int btnStoreDevice=0x7f0a0025;
+        public static final int btnStoreSdcard=0x7f0a0026;
         public static final int candidate_left=0x7f0a0007;
         public static final int candidate_left_parent=0x7f0a0006;
         public static final int candidate_right=0x7f0a000a;
@@ -836,27 +839,30 @@ public final class R {
         public static final int candidates=0x7f0a0008;
         public static final int edtDeviceMac=0x7f0a0002;
         public static final int edtDeviceName=0x7f0a0001;
-        public static final int extendLayout=0x7f0a002d;
-        public static final int keyboard=0x7f0a0026;
-        public static final int labImportDate=0x7f0a0031;
-        public static final int labKeyboard=0x7f0a0036;
-        public static final int labMappingSettingTitle=0x7f0a002c;
-        public static final int labSource=0x7f0a002e;
-        public static final int labTotalAmount=0x7f0a0030;
-        public static final int labVersion=0x7f0a002f;
+        public static final int extendLayout=0x7f0a0033;
+        public static final int keyboard=0x7f0a002c;
+        public static final int labImportDate=0x7f0a0037;
+        public static final int labKeyboard=0x7f0a003c;
+        public static final int labMappingSettingTitle=0x7f0a0032;
+        public static final int labSource=0x7f0a0034;
+        public static final int labTotalAmount=0x7f0a0036;
+        public static final int labVersion=0x7f0a0035;
         public static final int linearLayout1=0x7f0a0010;
+        public static final int linearLayout2=0x7f0a0011;
         public static final int list=0x7f0a000d;
-        public static final int mode_email=0x7f0a003b;
-        public static final int mode_im=0x7f0a003c;
-        public static final int mode_normal=0x7f0a0039;
-        public static final int mode_url=0x7f0a003a;
+        public static final int mode_email=0x7f0a0041;
+        public static final int mode_im=0x7f0a0042;
+        public static final int mode_normal=0x7f0a003f;
+        public static final int mode_url=0x7f0a0040;
         public static final int scrollView1=0x7f0a000f;
-        public static final int tableLayout1=0x7f0a0011;
-        public static final int tableRow1=0x7f0a0015;
-        public static final int tableRow2=0x7f0a0018;
-        public static final int tableRow3=0x7f0a0012;
-        public static final int tableRow4=0x7f0a001b;
-        public static final int tableRow6=0x7f0a001e;
+        public static final int tableLayout1=0x7f0a0013;
+        public static final int tableRow1=0x7f0a0017;
+        public static final int tableRow2=0x7f0a001d;
+        public static final int tableRow3=0x7f0a0014;
+        public static final int tableRow4=0x7f0a0020;
+        public static final int tableRow5=0x7f0a001a;
+        public static final int tableRow6=0x7f0a0023;
+        public static final int textView1=0x7f0a0012;
         public static final int txtFilerow=0x7f0a000e;
     }
     public static final class layout {
@@ -878,15 +884,15 @@ public final class R {
     }
     public static final class string {
         public static final int Similiar=0x7f08001d;
-        public static final int accept_number_index=0x7f08004f;
-        public static final int accept_number_index_summary=0x7f080050;
-        public static final int accept_symbol_index=0x7f080051;
-        public static final int accept_symbol_index_summary=0x7f080052;
+        public static final int accept_number_index=0x7f080052;
+        public static final int accept_number_index_summary=0x7f080053;
+        public static final int accept_symbol_index=0x7f080054;
+        public static final int accept_symbol_index_summary=0x7f080055;
         /**  AD Message 
  AD Message 
  AD Message 
          */
-        public static final int ad_zippy=0x7f0800bc;
+        public static final int ad_zippy=0x7f0800cc;
         /**  Other Messages 
  Indicates that a word has been added to the dictionary 
  Other Messages 
@@ -894,82 +900,82 @@ public final class R {
  Other Messages 
  Indicates that a word has been added to the dictionary 
          */
-        public static final int added_word=0x7f080058;
+        public static final int added_word=0x7f08005b;
         /**  Accented forms of "a" 
  Accented forms of "a" 
  Accented forms of "a" 
          */
-        public static final int alternates_for_a=0x7f080059;
+        public static final int alternates_for_a=0x7f08005c;
         /**  Accented forms of "c" 
  Accented forms of "c" 
  Accented forms of "c" 
          */
-        public static final int alternates_for_c=0x7f080060;
+        public static final int alternates_for_c=0x7f080063;
         /**  Accented characters related to "d" 
  Accented characters related to "d" 
  Accented characters related to "d" 
          */
-        public static final int alternates_for_d=0x7f080063;
+        public static final int alternates_for_d=0x7f080066;
         /**  Accented forms of "e" 
  Accented forms of "e" 
  Accented forms of "e" 
          */
-        public static final int alternates_for_e=0x7f08005a;
+        public static final int alternates_for_e=0x7f08005d;
         /**  Accented characters related to "g" 
  Accented characters related to "g" 
  Accented characters related to "g" 
          */
-        public static final int alternates_for_g=0x7f080068;
+        public static final int alternates_for_g=0x7f08006b;
         /**  Accented forms of "i" 
  Accented forms of "i" 
  Accented forms of "i" 
          */
-        public static final int alternates_for_i=0x7f08005b;
+        public static final int alternates_for_i=0x7f08005e;
         /**  Accented characters related to "l" 
  Accented characters related to "l" 
  Accented characters related to "l" 
          */
-        public static final int alternates_for_l=0x7f080067;
+        public static final int alternates_for_l=0x7f08006a;
         /**  Accented forms of "n" 
  Accented forms of "n" 
  Accented forms of "n" 
          */
-        public static final int alternates_for_n=0x7f08005f;
+        public static final int alternates_for_n=0x7f080062;
         /**  Accented forms of "o" 
  Accented forms of "o" 
  Accented forms of "o" 
          */
-        public static final int alternates_for_o=0x7f08005c;
+        public static final int alternates_for_o=0x7f08005f;
         /**  Accented characters related to "r" 
  Accented characters related to "r" 
  Accented characters related to "r" 
          */
-        public static final int alternates_for_r=0x7f080064;
+        public static final int alternates_for_r=0x7f080067;
         /**  Letters associated with "s" 
  Letters associated with "s" 
  Letters associated with "s" 
          */
-        public static final int alternates_for_s=0x7f08005e;
+        public static final int alternates_for_s=0x7f080061;
         /**  Accented characters related to "t" 
  Accented characters related to "t" 
  Accented characters related to "t" 
          */
-        public static final int alternates_for_t=0x7f080065;
+        public static final int alternates_for_t=0x7f080068;
         /**  Accented forms of "u" 
  Accented forms of "u" 
  Accented forms of "u" 
          */
-        public static final int alternates_for_u=0x7f08005d;
+        public static final int alternates_for_u=0x7f080060;
         /**  Accented forms of "y" 
  Accented forms of "y" 
  Accented forms of "y" 
          */
-        public static final int alternates_for_y=0x7f080061;
+        public static final int alternates_for_y=0x7f080064;
         /**  Accented characters related to "z" 
  Accented characters related to "z" 
  Accented characters related to "z" 
          */
-        public static final int alternates_for_z=0x7f080066;
+        public static final int alternates_for_z=0x7f080069;
         /**  Title for Latin keyboard  
  Title for Latin keyboard  
  Title for Latin keyboard  
@@ -982,29 +988,31 @@ public final class R {
         public static final int auto_complete=0x7f08002d;
         public static final int auto_complete_summary=0x7f08002e;
         public static final int bpmf_reverse_lookup_list=0x7f080039;
-        public static final int candidate_suggestion=0x7f080049;
-        public static final int candidate_suggestion_summary=0x7f08004a;
-        public static final int candidate_switch=0x7f080045;
-        public static final int candidate_switch_summary=0x7f080046;
+        public static final int candidate_suggestion=0x7f08004c;
+        public static final int candidate_suggestion_summary=0x7f08004d;
+        public static final int candidate_switch=0x7f080048;
+        public static final int candidate_switch_summary=0x7f080049;
         /**  Popup keyboard char sequences
  Popup keyboard char sequences
  Popup keyboard char sequences
          */
-        public static final int chinese_punctuation=0x7f080057;
+        public static final int chinese_punctuation=0x7f08005a;
+        public static final int cj5_reverse_lookup_list=0x7f08003d;
         public static final int cj_reverse_lookup_list=0x7f080036;
         public static final int dayi_reverse_lookup_list=0x7f080038;
         public static final int default_in_english=0x7f080020;
         public static final int default_in_english_summary=0x7f080021;
         public static final int default_reverse_lookup_list=0x7f080035;
-        public static final int display_number_keypads=0x7f080043;
-        public static final int display_number_keypads_summary=0x7f080044;
+        public static final int display_number_keypads=0x7f080046;
+        public static final int display_number_keypads_summary=0x7f080047;
+        public static final int ecj_reverse_lookup_list=0x7f08003e;
         public static final int enable_english_dictionary=0x7f080030;
         public static final int enable_english_dictionary_physical_keyboard=0x7f080032;
         public static final int enable_english_dictionary_physical_keyboard_summary=0x7f080033;
         public static final int enable_english_dictionary_summary=0x7f080031;
         public static final int experienced_device=0x7f080004;
         public static final int ez_reverse_lookup_list=0x7f08003a;
-        public static final int han_convert_option_list=0x7f08003d;
+        public static final int han_convert_option_list=0x7f080040;
         public static final int im=0x7f08002f;
         public static final int im_reverse_lookup_list=0x7f080034;
         public static final int ime_name=0x7f080001;
@@ -1016,99 +1024,112 @@ public final class R {
          */
         public static final int keyboard=0x7f08001c;
         public static final int keyboard_list=0x7f08001f;
-        public static final int l3_dbservice_download_convert=0x7f08008c;
-        public static final int l3_dbservice_download_initial=0x7f08008a;
-        public static final int l3_dbservice_download_loaded=0x7f08008b;
-        public static final int l3_dbservice_download_start=0x7f080088;
-        public static final int l3_dbservice_download_start_empty=0x7f080089;
-        public static final int l3_im_download_from_array=0x7f0800b2;
-        public static final int l3_im_download_from_array10=0x7f0800b5;
-        public static final int l3_im_download_from_array10_install=0x7f0800b7;
-        public static final int l3_im_download_from_array10_start=0x7f0800b6;
-        public static final int l3_im_download_from_array_install=0x7f0800b4;
-        public static final int l3_im_download_from_array_start=0x7f0800b3;
-        public static final int l3_im_download_from_cj=0x7f0800ac;
-        public static final int l3_im_download_from_cj_install=0x7f0800ae;
-        public static final int l3_im_download_from_cj_start=0x7f0800ad;
-        public static final int l3_im_download_from_dayi=0x7f0800a6;
-        public static final int l3_im_download_from_dayi_install=0x7f0800a8;
-        public static final int l3_im_download_from_dayi_start=0x7f0800a7;
-        public static final int l3_im_download_from_ez=0x7f0800b8;
-        public static final int l3_im_download_from_ez_install=0x7f0800ba;
-        public static final int l3_im_download_from_ez_start=0x7f0800b9;
-        public static final int l3_im_download_from_phonetic=0x7f0800a9;
-        public static final int l3_im_download_from_phonetic_install=0x7f0800ab;
-        public static final int l3_im_download_from_phonetic_start=0x7f0800aa;
-        public static final int l3_im_download_from_scj=0x7f0800af;
-        public static final int l3_im_download_from_scj_install=0x7f0800b1;
-        public static final int l3_im_download_from_scj_start=0x7f0800b0;
-        public static final int l3_im_setting_back=0x7f08009c;
-        public static final int l3_im_setting_button_load=0x7f0800a3;
-        public static final int l3_im_setting_button_reset=0x7f0800a4;
-        public static final int l3_im_setting_button_select=0x7f0800a5;
-        public static final int l3_im_setting_import_date=0x7f0800a2;
-        public static final int l3_im_setting_keyboard=0x7f08009f;
-        public static final int l3_im_setting_select_keyboard=0x7f08009b;
-        public static final int l3_im_setting_source=0x7f08009e;
-        public static final int l3_im_setting_title=0x7f08009d;
-        public static final int l3_im_setting_total_amount=0x7f0800a1;
-        public static final int l3_im_setting_version=0x7f0800a0;
-        public static final int l3_initial_backup_confirm=0x7f080094;
-        public static final int l3_initial_backup_database=0x7f080091;
-        public static final int l3_initial_backup_end=0x7f080093;
-        public static final int l3_initial_backup_error=0x7f080095;
-        public static final int l3_initial_backup_start=0x7f080092;
-        public static final int l3_initial_btn_load_empty_db=0x7f080077;
-        public static final int l3_initial_btn_load_preload_db=0x7f080078;
-        public static final int l3_initial_btn_reset_db=0x7f080079;
-        public static final int l3_initial_btn_store_device=0x7f08007c;
-        public static final int l3_initial_btn_store_sdcard=0x7f08007d;
-        public static final int l3_initial_btn_store_to_device=0x7f08007b;
-        public static final int l3_initial_btn_store_to_sdcard=0x7f08007a;
-        public static final int l3_initial_download_database=0x7f08008f;
-        public static final int l3_initial_download_failed=0x7f080090;
-        public static final int l3_initial_restore_confirm=0x7f08009a;
-        public static final int l3_initial_restore_database=0x7f080096;
-        public static final int l3_initial_restore_end=0x7f080099;
-        public static final int l3_initial_restore_error=0x7f080097;
-        public static final int l3_initial_restore_start=0x7f080098;
-        public static final int l3_manage_array=0x7f080085;
-        public static final int l3_manage_array10=0x7f080086;
-        public static final int l3_manage_cj=0x7f080081;
-        public static final int l3_manage_dayi=0x7f080083;
-        public static final int l3_manage_default=0x7f08007f;
-        public static final int l3_manage_eazy=0x7f080084;
-        public static final int l3_manage_phonetic=0x7f080080;
-        public static final int l3_manage_scj=0x7f080082;
-        public static final int l3_message_database_reset_confirm=0x7f08008d;
+        public static final int l3_dbservice_download_convert=0x7f080092;
+        public static final int l3_dbservice_download_initial=0x7f080090;
+        public static final int l3_dbservice_download_loaded=0x7f080091;
+        public static final int l3_dbservice_download_start=0x7f08008e;
+        public static final int l3_dbservice_download_start_empty=0x7f08008f;
+        public static final int l3_im_download_from_array=0x7f0800be;
+        public static final int l3_im_download_from_array10=0x7f0800c1;
+        public static final int l3_im_download_from_array10_install=0x7f0800c3;
+        public static final int l3_im_download_from_array10_start=0x7f0800c2;
+        public static final int l3_im_download_from_array_install=0x7f0800c0;
+        public static final int l3_im_download_from_array_start=0x7f0800bf;
+        public static final int l3_im_download_from_cj=0x7f0800b2;
+        public static final int l3_im_download_from_cj5=0x7f0800b8;
+        public static final int l3_im_download_from_cj5_install=0x7f0800ba;
+        public static final int l3_im_download_from_cj5_start=0x7f0800b9;
+        public static final int l3_im_download_from_cj_install=0x7f0800b4;
+        public static final int l3_im_download_from_cj_start=0x7f0800b3;
+        public static final int l3_im_download_from_dayi=0x7f0800ac;
+        public static final int l3_im_download_from_dayi_install=0x7f0800ae;
+        public static final int l3_im_download_from_dayi_start=0x7f0800ad;
+        public static final int l3_im_download_from_ecj=0x7f0800bb;
+        public static final int l3_im_download_from_ecj_install=0x7f0800bd;
+        public static final int l3_im_download_from_ecj_start=0x7f0800bc;
+        public static final int l3_im_download_from_ez=0x7f0800c4;
+        public static final int l3_im_download_from_ez_install=0x7f0800c6;
+        public static final int l3_im_download_from_ez_start=0x7f0800c5;
+        public static final int l3_im_download_from_phonetic=0x7f0800af;
+        public static final int l3_im_download_from_phonetic_install=0x7f0800b1;
+        public static final int l3_im_download_from_phonetic_start=0x7f0800b0;
+        public static final int l3_im_download_from_scj=0x7f0800b5;
+        public static final int l3_im_download_from_scj_install=0x7f0800b7;
+        public static final int l3_im_download_from_scj_start=0x7f0800b6;
+        public static final int l3_im_download_from_wb=0x7f0800c7;
+        public static final int l3_im_download_from_wb_install=0x7f0800c9;
+        public static final int l3_im_download_from_wb_start=0x7f0800c8;
+        public static final int l3_im_notice=0x7f0800cb;
+        public static final int l3_im_setting_back=0x7f0800a2;
+        public static final int l3_im_setting_button_load=0x7f0800a9;
+        public static final int l3_im_setting_button_reset=0x7f0800aa;
+        public static final int l3_im_setting_button_select=0x7f0800ab;
+        public static final int l3_im_setting_import_date=0x7f0800a8;
+        public static final int l3_im_setting_keyboard=0x7f0800a5;
+        public static final int l3_im_setting_select_keyboard=0x7f0800a1;
+        public static final int l3_im_setting_source=0x7f0800a4;
+        public static final int l3_im_setting_title=0x7f0800a3;
+        public static final int l3_im_setting_total_amount=0x7f0800a7;
+        public static final int l3_im_setting_version=0x7f0800a6;
+        public static final int l3_initial_backup_confirm=0x7f08009a;
+        public static final int l3_initial_backup_database=0x7f080097;
+        public static final int l3_initial_backup_end=0x7f080099;
+        public static final int l3_initial_backup_error=0x7f08009b;
+        public static final int l3_initial_backup_start=0x7f080098;
+        public static final int l3_initial_btn_load_empty_db=0x7f08007a;
+        public static final int l3_initial_btn_load_preload_db=0x7f08007b;
+        public static final int l3_initial_btn_reset_db=0x7f08007c;
+        public static final int l3_initial_btn_store_device=0x7f08007f;
+        public static final int l3_initial_btn_store_sdcard=0x7f080080;
+        public static final int l3_initial_btn_store_to_device=0x7f08007e;
+        public static final int l3_initial_btn_store_to_sdcard=0x7f08007d;
+        public static final int l3_initial_download_database=0x7f080095;
+        public static final int l3_initial_download_failed=0x7f080096;
+        public static final int l3_initial_restore_confirm=0x7f0800a0;
+        public static final int l3_initial_restore_database=0x7f08009c;
+        public static final int l3_initial_restore_end=0x7f08009f;
+        public static final int l3_initial_restore_error=0x7f08009d;
+        public static final int l3_initial_restore_start=0x7f08009e;
+        public static final int l3_manage_array=0x7f08008a;
+        public static final int l3_manage_array10=0x7f08008b;
+        public static final int l3_manage_cj=0x7f080084;
+        public static final int l3_manage_cj5=0x7f080086;
+        public static final int l3_manage_dayi=0x7f080088;
+        public static final int l3_manage_default=0x7f080082;
+        public static final int l3_manage_eazy=0x7f080089;
+        public static final int l3_manage_ecj=0x7f080087;
+        public static final int l3_manage_phonetic=0x7f080083;
+        public static final int l3_manage_scj=0x7f080085;
+        public static final int l3_manage_wb=0x7f08008c;
+        public static final int l3_message_database_reset_confirm=0x7f080093;
         /**  Version 3 String Set 
  Version 3 String Set 
  Version 3 String Set 
          */
-        public static final int l3_message_initial_required=0x7f080073;
-        public static final int l3_message_table_reset_confirm=0x7f08008e;
-        public static final int l3_tab_bluetooth=0x7f0800bb;
-        public static final int l3_tab_initial=0x7f080074;
-        public static final int l3_tab_initial_error=0x7f080075;
-        public static final int l3_tab_initial_message=0x7f080076;
-        public static final int l3_tab_manage=0x7f08007e;
-        public static final int l3_tab_preference=0x7f080087;
+        public static final int l3_message_initial_required=0x7f080076;
+        public static final int l3_message_table_reset_confirm=0x7f080094;
+        public static final int l3_tab_bluetooth=0x7f0800ca;
+        public static final int l3_tab_initial=0x7f080077;
+        public static final int l3_tab_initial_error=0x7f080078;
+        public static final int l3_tab_initial_message=0x7f080079;
+        public static final int l3_tab_manage=0x7f080081;
+        public static final int l3_tab_preference=0x7f08008d;
         /**  Label for "switch to numeric" key.  Must be short to fit on key! 
  Label for "switch to numeric" key.  Must be short to fit on key! 
  Label for "switch to numeric" key.  Must be short to fit on key! 
          */
-        public static final int label_alpha_key=0x7f08006b;
+        public static final int label_alpha_key=0x7f08006e;
         /**  Label for ALT modifier key.  Must be short to fit on key! 
  Label for ALT modifier key.  Must be short to fit on key! 
  Label for ALT modifier key.  Must be short to fit on key! 
          */
-        public static final int label_alt_key=0x7f08006c;
+        public static final int label_alt_key=0x7f08006f;
         public static final int label_close_key=0x7f08000c;
         /**  Label for soft enter key when it performs DONE action.  Must be short to fit on key! 
  Label for soft enter key when it performs DONE action.  Must be short to fit on key! 
  Label for soft enter key when it performs DONE action.  Must be short to fit on key! 
          */
-        public static final int label_done_key=0x7f080069;
+        public static final int label_done_key=0x7f08006c;
         /**  Labels on soft keys 
  Labels on soft keys 
  Labels on soft keys 
@@ -1120,9 +1141,9 @@ public final class R {
  Label for "switch to symbols" key.  Must be short to fit on key! 
  Label for "switch to symbols" key.  Must be short to fit on key! 
          */
-        public static final int label_symbol_key=0x7f08006a;
-        public static final int learning_switch=0x7f08004b;
-        public static final int learning_switch_summary=0x7f08004c;
+        public static final int label_symbol_key=0x7f08006d;
+        public static final int learning_switch=0x7f08004e;
+        public static final int learning_switch_summary=0x7f08004f;
         public static final int license=0x7f080005;
         public static final int license_detail=0x7f080006;
         public static final int lime_setting_bluetooth=0x7f08001b;
@@ -1152,25 +1173,24 @@ public final class R {
         public static final int number_row_in_english=0x7f080022;
         public static final int number_row_in_english_summary=0x7f080023;
         public static final int phonetic_keyboard=0x7f080025;
-        public static final int phyonetic_keyboard=0x7f0800bd;
         public static final int physical_keyboard=0x7f080024;
-        public static final int physical_keyboard_sort=0x7f08004d;
-        public static final int physical_keyboard_sort_summary=0x7f08004e;
+        public static final int physical_keyboard_sort=0x7f080050;
+        public static final int physical_keyboard_sort_summary=0x7f080051;
         /**  popular web domains for the locale - most popular, displayed on the keyboard 
  popular web domains for the locale - most popular, displayed on the keyboard 
  popular web domains for the locale - most popular, displayed on the keyboard 
          */
-        public static final int popular_domain_0=0x7f08006d;
-        public static final int popular_domain_1=0x7f08006e;
-        public static final int popular_domain_2=0x7f08006f;
-        public static final int popular_domain_3=0x7f080070;
-        public static final int popular_domain_4=0x7f080071;
-        public static final int popular_domain_5=0x7f080072;
+        public static final int popular_domain_0=0x7f080070;
+        public static final int popular_domain_1=0x7f080071;
+        public static final int popular_domain_2=0x7f080072;
+        public static final int popular_domain_3=0x7f080073;
+        public static final int popular_domain_4=0x7f080074;
+        public static final int popular_domain_5=0x7f080075;
         public static final int prediction_category=0x7f080028;
         public static final int quick_fixes=0x7f08002b;
         public static final int quick_fixes_summary=0x7f08002c;
         public static final int scj_reverse_lookup_list=0x7f080037;
-        public static final int selkey_option_list=0x7f08003e;
+        public static final int selkey_option_list=0x7f080041;
         /**  Symbols that are commonly considered word separators in this language 
  Symbols that are sentence separators, for purposes of making it hug the last sentence. 
  Symbols that are commonly considered word separators in this language 
@@ -1178,23 +1198,24 @@ public final class R {
  Symbols that are commonly considered word separators in this language 
  Symbols that are sentence separators, for purposes of making it hug the last sentence. 
          */
-        public static final int sentence_separators=0x7f080062;
-        public static final int similiar_enable_switch=0x7f080047;
-        public static final int similiar_enable_switch_summary=0x7f080048;
-        public static final int similiar_list=0x7f080040;
-        public static final int sound_on_keypress=0x7f080042;
-        public static final int switch_english_mode=0x7f080053;
-        public static final int switch_english_mode_summary=0x7f080054;
-        public static final int table_list=0x7f08003f;
+        public static final int sentence_separators=0x7f080065;
+        public static final int similiar_enable_switch=0x7f08004a;
+        public static final int similiar_enable_switch_summary=0x7f08004b;
+        public static final int similiar_list=0x7f080043;
+        public static final int sound_on_keypress=0x7f080045;
+        public static final int switch_english_mode=0x7f080056;
+        public static final int switch_english_mode_summary=0x7f080057;
+        public static final int table_list=0x7f080042;
         public static final int three_rows_remapping=0x7f080026;
         public static final int three_rows_remapping_summary=0x7f080027;
         /**  Changjei Keyboard, Standard Keyboard
  Changjei Keyboard, Standard Keyboard
  Changjei Keyboard, Standard Keyboard
          */
-        public static final int typing_mode_english=0x7f080055;
-        public static final int typing_mode_mixed=0x7f080056;
-        public static final int vibrate_on_keypress=0x7f080041;
+        public static final int typing_mode_english=0x7f080058;
+        public static final int typing_mode_mixed=0x7f080059;
+        public static final int vibrate_on_keypress=0x7f080044;
+        public static final int wb_reverse_lookup_list=0x7f08003f;
         /**  Symbols that are commonly considered word separators in this language 
  Symbols that are commonly considered word separators in this language 
  Symbols that are commonly considered word separators in this language 
@@ -1232,18 +1253,20 @@ public final class R {
         public static final int lime_phonetic_shift=0x7f04001a;
         public static final int lime_shift=0x7f04001b;
         public static final int lime_url=0x7f04001c;
-        public static final int method=0x7f04001d;
-        public static final int phone=0x7f04001e;
-        public static final int phone_number=0x7f04001f;
-        public static final int phone_shift=0x7f040020;
-        public static final int phone_simple=0x7f040021;
-        public static final int popup_c_punctuation=0x7f040022;
-        public static final int popup_domains=0x7f040023;
-        public static final int popup_punctuation=0x7f040024;
-        public static final int popup_smileys=0x7f040025;
-        public static final int popup_template=0x7f040026;
-        public static final int preference=0x7f040027;
-        public static final int symbols=0x7f040028;
-        public static final int symbols_shift=0x7f040029;
+        public static final int lime_wb=0x7f04001d;
+        public static final int lime_wb_shift=0x7f04001e;
+        public static final int method=0x7f04001f;
+        public static final int phone=0x7f040020;
+        public static final int phone_number=0x7f040021;
+        public static final int phone_shift=0x7f040022;
+        public static final int phone_simple=0x7f040023;
+        public static final int popup_c_punctuation=0x7f040024;
+        public static final int popup_domains=0x7f040025;
+        public static final int popup_punctuation=0x7f040026;
+        public static final int popup_smileys=0x7f040027;
+        public static final int popup_template=0x7f040028;
+        public static final int preference=0x7f040029;
+        public static final int symbols=0x7f04002a;
+        public static final int symbols_shift=0x7f04002b;
     }
 }

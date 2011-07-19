@@ -9,8 +9,11 @@ public class LIME {
 	protected static final String ARRAY10_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Farray10.zip";
 	protected static final String EZ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fez.zip";
 	protected static final String PHONETIC_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphonetic.zip";
-	protected static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Flime1104.zip";
-	protected static final String IM_DOWNLOAD_TARGET_EMPTY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fempty1104.zip";
+	protected static final String CJ5_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fcj5.zip";
+	protected static final String ECJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fecj.zip";
+	protected static final String WB_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fwb.zip";
+	protected static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Flime1107.zip";
+	protected static final String IM_DOWNLOAD_TARGET_EMPTY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fempty1107.zip";
 	//protected static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime1104.zip";
 	//protected static final String IM_DOWNLOAD_TARGET_EMPTY = "http://limeime.googlecode.com/svn/branches/database/empty1104.zip";
 	protected static final String IM_LOAD_LIME_ROOT_DIRECTORY = "/sdcard/limehd/";
@@ -20,9 +23,12 @@ public class LIME {
 	protected static final String DATABASE_SOURCE_DAYI = "dayi.cin";
 	protected static final String DATABASE_SOURCE_PHONETIC = "phonetic.lime";
 	protected static final String DATABASE_SOURCE_CJ = "cj.lime";
+	protected static final String DATABASE_SOURCE_CJ5 = "cj5.lime";
+	protected static final String DATABASE_SOURCE_ECJ = "ecj.lime";
 	protected static final String DATABASE_SOURCE_SCJ = "scj.lime";
 	protected static final String DATABASE_SOURCE_ARRAY = "array.lime";
 	protected static final String DATABASE_SOURCE_ARRAY10 = "array10.lime";
+	protected static final String DATABASE_SOURCE_WB = "wb.lime";
 	protected static final String DATABASE_SOURCE_EZ = "ez.lime";
 	protected static final String DATABASE_SOURCE_FILENAME = "lime.zip";
 	protected static final String DATABASE_SOURCE_FILENAME_EMPTY = "empty.zip";

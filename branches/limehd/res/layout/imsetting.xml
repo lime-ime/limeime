@@ -4,7 +4,10 @@
 	android:layout_width="fill_parent" android:layout_height="fill_parent"
 	android:orientation="vertical">
     <ScrollView android:id="@+id/scrollView1" android:layout_height="fill_parent" android:layout_width="fill_parent">
-        <LinearLayout android:id="@+id/linearLayout1" android:layout_height="fill_parent" android:layout_width="fill_parent" android:layout_margin="10px" android:layout_gravity="center_vertical">
+        <LinearLayout android:id="@+id/linearLayout1" android:layout_margin="10px" android:layout_gravity="center_vertical" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent">
+            <LinearLayout android:id="@+id/linearLayout2" android:layout_height="fill_parent" android:layout_width="fill_parent" android:gravity="center" android:layout_marginTop="10dip" android:layout_marginBottom="10dip" android:paddingTop="5dip" android:paddingBottom="5dip" android:layout_marginLeft="10dip" android:layout_marginRight="10dip">
+                <TextView android:id="@+id/textView1" android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/l3_im_notice" android:textSize="8pt"></TextView>
+            </LinearLayout>
             <TableLayout android:id="@+id/tableLayout1" android:layout_height="fill_parent" android:layout_width="fill_parent">
                 <TableRow android:id="@+id/tableRow3" android:layout_height="wrap_content" android:layout_width="fill_parent">
                     <Button android:layout_width="fill_parent" android:id="@+id/btnSetupCustom" android:text="@string/l3_manage_default" android:padding="5px" android:layout_height="wrap_content" android:layout_weight="1" android:layout_margin="5px"></Button>
@@ -14,6 +17,10 @@
 					<Button android:layout_height="wrap_content" android:id="@+id/btnSetupCJ" android:text="@string/l3_manage_cj" android:padding="5px" android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px"></Button>
 					<Button android:layout_height="wrap_content" android:id="@+id/btnSetupSCJ" android:text="@string/l3_manage_scj" android:padding="5px" android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px"></Button>
                 </TableRow>
+                <TableRow android:id="@+id/tableRow5" android:layout_height="wrap_content" android:layout_width="fill_parent">
+					<Button android:layout_height="wrap_content" android:id="@+id/btnSetupCJ5" android:text="@string/l3_manage_cj5" android:padding="5px" android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px"></Button>
+					<Button android:layout_height="wrap_content" android:id="@+id/btnSetupECJ" android:text="@string/l3_manage_ecj" android:padding="5px" android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px"></Button>
+                </TableRow>
                 <TableRow android:layout_height="fill_parent" android:id="@+id/tableRow2" android:layout_width="wrap_content">
                     <Button android:id="@+id/btnSetupDayi" android:text="@string/l3_manage_dayi" android:padding="5px" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_weight="1" android:layout_margin="5px"></Button>
                     <Button android:id="@+id/btnSetupEz" android:text="@string/l3_manage_eazy" android:padding="5px" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_weight="1" android:layout_margin="5px"></Button>
@@ -21,6 +28,10 @@
                 <TableRow android:id="@+id/tableRow4" android:layout_width="wrap_content" android:layout_height="wrap_content">
                     <Button android:layout_width="fill_parent" android:id="@+id/btnSetupArray" android:text="@string/l3_manage_array" android:padding="5px" android:layout_height="wrap_content" android:layout_weight="1" android:layout_margin="5px"></Button>
                     <Button android:layout_width="fill_parent" android:id="@+id/btnSetupArray10" android:text="@string/l3_manage_array10" android:padding="5px" android:layout_height="wrap_content" android:layout_weight="1" android:layout_margin="5px"></Button>
+                </TableRow>
+                <TableRow android:id="@+id/tableRow6" android:layout_width="wrap_content" android:layout_height="wrap_content">
+                    <Button android:layout_width="fill_parent" android:id="@+id/btnSetupWb" android:text="@string/l3_manage_wb" android:padding="5px" android:layout_height="wrap_content" android:layout_weight="1" android:layout_margin="5px"></Button>
+                    <Button android:layout_width="fill_parent" android:padding="5px" android:layout_height="wrap_content" android:layout_weight="1" android:layout_margin="5px"></Button>
                 </TableRow>
             </TableLayout>
         </LinearLayout>

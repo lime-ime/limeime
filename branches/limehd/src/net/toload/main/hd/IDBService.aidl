@@ -9,8 +9,11 @@ interface IDBService
 	void downloadPhonetic();
 	void downloadCj();
 	void downloadScj();
+	void downloadCj5();
+	void downloadEcj();
 	void downloadArray();
 	void downloadArray10();
+	void downloadWb();
 	void downloadEz();
 	void downloadPreloadedDatabase();
 	void downloadEmptyDatabase();

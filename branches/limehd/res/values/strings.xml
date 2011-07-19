@@ -82,6 +82,9 @@
     <string name="ez_reverse_lookup_list">R-Lookup in Eazy</string>
     <string name="array_reverse_lookup_list">R-Lookup in Array</string>
     <string name="array10_reverse_lookup_list">R-Lookup in Array10</string>
+    <string name="cj5_reverse_lookup_list">R-Lookup in ChangJei5</string>
+    <string name="ecj_reverse_lookup_list">R-Lookup in EazyChangJei</string>
+    <string name="wb_reverse_lookup_list">R-Lookup in Wubi</string>
     
     <string name="han_convert_option_list">Chinese Characters Conversion</string>
     <string name="selkey_option_list">Candidate bar options</string>
@@ -236,35 +239,47 @@
 		<item>Custom</item>
 		<item>Changjei</item>
 		<item>SChangjei</item>
+		<item>Changjei5</item>
+		<item>EazyChangjei</item>
 		<item>Dayi</item>
 		<item>Phonetic</item>
 		<item>Eazy</item>
 		<item>Array</item>
 		<item>Array10</item>
+		<item>Wubi</item>
 	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
 		<item>custom</item>
 		<item>cj</item>
 		<item>scj</item>
+		<item>cj5</item>
+		<item>ecj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
+		<item>wubi</item>
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
 		<item>Lime</item>
 		<item>Changjei</item>
 		<item>SChangjei</item>
+		<item>Changjei5</item>
+		<item>EazyChangjei</item>
 		<item>Dayi</item>
 		<item>Phonetic</item>
 		<item>Eazy</item>
 		<item>Array</item>
 		<item>Array10</item>
+		<item>Wubi</item>
 	</string-array>
 	<string-array name="keyboard_defaultstate">
+		<item>true</item>
+		<item>true</item>
+		<item>true</item>
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
@@ -278,21 +293,27 @@
 		<item>custom</item>
 		<item>cj</item>
 		<item>scj</item>
+		<item>cj5</item>
+		<item>ecj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
+		<item>wb</item>
 	</string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
 		<item>cj</item>
 		<item>scj</item>
+		<item>cj5</item>
+		<item>ecj</item>
 		<item>dayi</item>
 		<item>phonetic</item>
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
+		<item>wb</item>
 		<item>related</item>
 		<item>dictionary</item>
 	</string-array>
@@ -312,11 +333,14 @@
 		<item>Custom/Phone</item>
 		<item>Changjei</item>
 		<item>SChangjei</item>
+		<item>Changjei5</item>
+		<item>EazyChangjei</item>
 		<item>Dayi</item>
 		<item>Phonetic</item>
 		<item>Eazy</item>
 		<item>Array</item>
 		<item>Array10</item>
+		<item>Wubi</item>
 		<item>Preload related words</item>
 		<item>Dictionary for English keyboard</item>
 	</string-array>
@@ -340,10 +364,13 @@
     <string name="l3_manage_phonetic">Phonetic</string>
     <string name="l3_manage_cj">Changjei</string>
     <string name="l3_manage_scj">SChangjei</string>
+    <string name="l3_manage_cj5">Changjei5</string>
+    <string name="l3_manage_ecj">EazyChangjei</string>
     <string name="l3_manage_dayi">Dayi</string>
     <string name="l3_manage_eazy">Eazy</string>
     <string name="l3_manage_array">Array</string>
     <string name="l3_manage_array10">Array10</string>
+    <string name="l3_manage_wb">Wubi</string>
     
     <string name="l3_tab_preference">Preference</string>
 	
@@ -396,6 +423,14 @@
     <string name="l3_im_download_from_scj_start">Start download SCJ</string>
     <string name="l3_im_download_from_scj_install">Start Install SCJ</string>
     
+    <string name="l3_im_download_from_cj5">Download/Install CJ5</string>
+    <string name="l3_im_download_from_cj5_start">Start download CJ5</string>
+    <string name="l3_im_download_from_cj5_install">Start Install CJ5</string>
+    
+    <string name="l3_im_download_from_ecj">Download/Install ECJ</string>
+    <string name="l3_im_download_from_ecj_start">Start download ECJ</string>
+    <string name="l3_im_download_from_ecj_install">Start Install ECJ</string>
+    
     <string name="l3_im_download_from_array">Download/Install Kinfe Array</string>
     <string name="l3_im_download_from_array_start">Start download Kinfe Array</string>
     <string name="l3_im_download_from_array_install">Start Install Kinfe Array</string>
@@ -408,7 +443,12 @@
     <string name="l3_im_download_from_ez_start">Start download Eazy</string>
     <string name="l3_im_download_from_ez_install">Start Install Eazy</string>
     
+    <string name="l3_im_download_from_wb">Download/Install Wubi</string>
+    <string name="l3_im_download_from_wb_start">Start download Wubi</string>
+    <string name="l3_im_download_from_wb_install">Start Install Wubi</string>
+    
     <string name="l3_tab_bluetooth">Bluetooth</string>
+    <string name="l3_im_notice">We are strongly recommended to remove the IM mapping which you are not using to incrase the device memory space.</string>
     
     <!-- AD Message -->
     <string name="ad_zippy">Bluetooth keyboard experienced device\nZIPPY BT-540 Switch Instantaneously Multi-pairing Bluetooth Keyboard - http://www.zippy.com (Sam Lin/sam_lin@hotmail.com)</string>
