@@ -120,6 +120,20 @@
     			android:dialogTitle="@string/im_reverse_lookup_list" 
     			android:defaultValue="none"/>
     <ListPreference
+    			android:key="cj5_im_reverselookup"
+    			android:title="@string/cj5_reverse_lookup_list" 
+    			android:entries="@array/im_reverse_lookup" 
+    			android:entryValues="@array/im_reverse_lookup_codes" 
+    			android:dialogTitle="@string/im_reverse_lookup_list" 
+    			android:defaultValue="none"/>
+    <ListPreference
+    			android:key="ecj_im_reverselookup"
+    			android:title="@string/ecj_reverse_lookup_list" 
+    			android:entries="@array/im_reverse_lookup" 
+    			android:entryValues="@array/im_reverse_lookup_codes" 
+    			android:dialogTitle="@string/im_reverse_lookup_list" 
+    			android:defaultValue="none"/>
+    <ListPreference
     			android:key="dayi_im_reverselookup"
     			android:title="@string/dayi_reverse_lookup_list" 
     			android:entries="@array/im_reverse_lookup" 
@@ -150,6 +164,14 @@
    	<ListPreference
     			android:key="array10_im_reverselookup"
     			android:title="@string/array10_reverse_lookup_list" 
+    			android:entries="@array/im_reverse_lookup" 
+    			android:entryValues="@array/im_reverse_lookup_codes" 
+    			android:dialogTitle="@string/im_reverse_lookup_list" 
+    			android:defaultValue="none"/>
+    			
+   	<ListPreference
+    			android:key="wb_im_reverselookup"
+    			android:title="@string/wb_reverse_lookup_list" 
     			android:entries="@array/im_reverse_lookup" 
     			android:entryValues="@array/im_reverse_lookup_codes" 
     			android:dialogTitle="@string/im_reverse_lookup_list" 
