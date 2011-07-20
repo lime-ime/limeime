@@ -317,7 +317,7 @@ public class DBService extends Service {
 				zis.close(); 
 				fis.close(); 
 				return true;
-			} catch (IOException e) { 
+			} catch (Exception e) { 
 				displayNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "");
 				e.printStackTrace(); 
 			}

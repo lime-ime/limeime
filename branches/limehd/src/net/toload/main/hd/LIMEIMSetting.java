@@ -299,7 +299,7 @@ public class LIMEIMSetting extends Activity {
 			btnSetupEz.setEnabled(false);
 			btnSetupArray.setEnabled(false);
 			btnSetupArray10.setEnabled(false);
-			btnSetupWb.setEnabled(false);
+			/*btnSetupWb.setEnabled(false);*/
 		}else{
 			btnSetupCustom.setEnabled(true);
 			btnSetupPhonetic.setEnabled(true);
@@ -311,7 +311,7 @@ public class LIMEIMSetting extends Activity {
 			btnSetupEz.setEnabled(true);	
 			btnSetupArray.setEnabled(true);
 			btnSetupArray10.setEnabled(true);
-			btnSetupWb.setEnabled(true);
+			/*btnSetupWb.setEnabled(true);*/
 		}
 		
 	}

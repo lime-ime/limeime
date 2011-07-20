@@ -66,13 +66,13 @@ public class LimeDB extends SQLiteOpenHelper {
 	// for keyToChar
 	private final static String DAYI_KEY = "1234567890qwertyuiopasdfghjkl;zxcvbnm,./";
 	private final static String DAYI_CHAR =
-		"®•|§˚|•ÿ|•||§˝|™˘|•–|¶Ã|®¨|™˜|•€|§s|§@|§u|¶Õ|§ı| J|§Ï|§f|¶’|§H|≠≤|§È|§g|§‚|≥æ|§Î|•ﬂ|§k|¶‰|§ﬂ|§Ù|≥¿|•›|∞®|≥Ω|´B|§O|¶‡|¶À";
+		"Ë®Ä|Áâõ|ÁõÆ|Âõõ|Áéã|ÈñÄ|Áî∞|Á±≥|Ë∂≥|Èáë|Áü≥|Â±±|‰∏Ä|Â∑•|Á≥∏|ÁÅ´|Ëâ∏|Êú®|Âè£|ËÄ≥|‰∫∫|Èù©|Êó•|Âúü|Êâã|È≥•|Êúà|Á´ã|Â•≥|Ëô´|ÂøÉ|Ê∞¥|Èπø|Á¶æ|È¶¨|È≠ö|Èõ®|Âäõ|Ëàü|Á´π";
 	private final static String ARRAY_KEY = "qazwsxedcrfvtgbyhnujmik,ol.p;/";
 	private final static String ARRAY_CHAR =
 		"1^|1-|1v|2^|2-|2v|3^|3-|3v|4^|4-|4v|5^|5-|5v|6^|6-|6v|7^|7-|7v|8^|8-|8v|9^|9-|9v|0^|0-|0v|";
 	private final static String BPMF_KEY = "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-";
 	private final static String BPMF_CHAR = 
-		"£t|£u|£v|£w|£x|£y|£z|£{|£æ|£||£}|£~|£ø|£°|£¢|££|£§|£•|£¶|£ß|£Ω|£®|£©|£™|£ª|£∏|£π|£∫|£´|£¨|£≠|£Æ|£Ø|£∞|£±|£≤|£≥|£¥|£µ|£∂|£∑";
+		"„ÑÖ|„ÑÜ|„Ñá|„Ñà|„Ñâ|„Ñä|„Ñã|„Ñå|Àá|„Ñç|„Ñé|„Ñè|Àã|„Ñê|„Ñë|„Ñí|„Ñì|„Ñî|„Ñï|„Ññ|Àä|„Ñó|„Ñò|„Ñô|Àô|„Ñß|„Ñ®|„Ñ©|„Ñö|„Ñõ|„Ñú|„Ñù|„Ñû|„Ñü|„Ñ†|„Ñ°|„Ñ¢|„Ñ£|„Ñ§|„Ñ•|„Ñ¶";
 	private final static String ETEN_KEY = 		 			"@`abcdefghijklmnopqrstuvwxyz12347890-=;',./?";
 	private final static String ETEN_KEY_REMAP = 			"@`81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-y/5tg?";
 	//private final static String DESIREZ_ETEN_KEY_REMAP = 	"-`81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg/";
@@ -87,23 +87,23 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String MILESTONE3_ETEN_DUALKEY 	= 		"5aew"; // ",mvt"
 	private final static String MILESTONE3_ETEN_DUALKEY_REMAP = 	"th/-";
 	private final static String ETEN_CHAR= 
-		"@|`|£´|£t|££|£x|£∏|£w|£°|£~|£Ø|£ß|£}|£{|£v|£z|£¨|£u|£∞|£≠|£™|£y|£∫|£||£Æ|£π|£≤|£±" +
-		"|£ª|£Ω|£æ|£ø|£¢|£≥|£¥|£µ|£∂|£∑|£®|£©|£§|£•|£¶|?";
+		"@|`|„Ñö|„ÑÖ|„Ñí|„Ñâ|„Ñß|„Ñà|„Ñê|„Ñè|„Ñû|„Ññ|„Ñé|„Ñå|„Ñá|„Ñã|„Ñõ|„ÑÜ|„Ñü|„Ñú|„Ñô|„Ñä|„Ñ©|„Ñç|„Ñù|„Ñ®|„Ñ°|„Ñ†" +
+		"|Àô|Àä|Àá|Àã|„Ñë|„Ñ¢|„Ñ£|„Ñ§|„Ñ•|„Ñ¶|„Ñó|„Ñò|„Ñì|„Ñî|„Ñï|?";
 	private final static String DESIREZ_ETEN_CHAR= 
-		"@|`|£´|£t|££|£x|(£∏/£æ)|£w|£°|£~|(£Ø/£≥)|£ß|£}|(£{/£¶)|(£v/£©)|(£z/£∑)|(£¨/£¥)|(£u/£µ)|(£∞/£ª)" +
-		"|(£≠/£ø)|£™|£y|(£∫/£¢)|(£|/£∂)|(£Æ/£Ω)|£π|£≤|£±" +
-		"|£ª|£Ω|£æ|£ø|£¢|£≥|£¥|£µ|£∂|£∑|£®|£©|(£§/£®)|£•|£¶|?";
+		"@|`|„Ñö|„ÑÖ|„Ñí|„Ñâ|(„Ñß/Àá)|„Ñà|„Ñê|„Ñè|(„Ñû/„Ñ¢)|„Ññ|„Ñé|(„Ñå/„Ñï)|(„Ñá/„Ñò)|(„Ñã/„Ñ¶)|(„Ñõ/„Ñ£)|(„ÑÜ/„Ñ§)|(„Ñü/Àô)" +
+		"|(„Ñú/Àã)|„Ñô|„Ñä|(„Ñ©/„Ñë)|(„Ñç/„Ñ•)|(„Ñù/Àä)|„Ñ®|„Ñ°|„Ñ†" +
+		"|Àô|Àä|Àá|Àã|„Ñë|„Ñ¢|„Ñ£|„Ñ§|„Ñ•|„Ñ¶|„Ñó|„Ñò|(„Ñì/„Ñó)|„Ñî|„Ñï|?";
 	private final static String MILESTONE_ETEN_CHAR= 
-		"£∑|`|£´|£t|££|£x|(£∏/£æ)|£w|£°|(£~/£∑)|(£Ø/£≥)|£ß|£}|£{|(£v/£©)|£z|(£¨/£¥)|(£u/£µ)|(£∞/£ª)" +
-		"|(£≠/£ø)|£™|£y|(£∫/£¢)|(£|/£∂)|(£Æ/£Ω)|£π|£≤|£±" +
-		"|£ª|£Ω|£æ|£ø|£¢|£≥|£¥|£µ|£∂|£∑|£®|£©|(£§/£®)|£•|£¶|£∂";
+		"„Ñ¶|`|„Ñö|„ÑÖ|„Ñí|„Ñâ|(„Ñß/Àá)|„Ñà|„Ñê|(„Ñè/„Ñ¶)|(„Ñû/„Ñ¢)|„Ññ|„Ñé|„Ñå|(„Ñá/„Ñò)|„Ñã|(„Ñõ/„Ñ£)|(„ÑÜ/„Ñ§)|(„Ñü/Àô)" +
+		"|(„Ñú/Àã)|„Ñô|„Ñä|(„Ñ©/„Ñë)|(„Ñç/„Ñ•)|(„Ñù/Àä)|„Ñ®|„Ñ°|„Ñ†" +
+		"|Àô|Àä|Àá|Àã|„Ñë|„Ñ¢|„Ñ£|„Ñ§|„Ñ•|„Ñ¶|„Ñó|„Ñò|(„Ñì/„Ñó)|„Ñî|„Ñï|„Ñ•";
 	private final static String MILESTONE2_ETEN_CHAR= 
-		"£∑|`|£´|£t|££|£x|(£∏/£æ)|£w|(£°/£∑)|£~|(£Ø/£≥)|£ß|£}|£{|(£v/£©)|£z|(£¨/£¥)|(£u/£µ)|(£∞/£ª)" +
-		"|(£≠/£ø)|£™|£y|(£∫/£¢)|(£|/£∂)|(£Æ/£Ω)|£π|£≤|£±" +
-		"|£ª|£Ω|£æ|£ø|£¢|£≥|£¥|£µ|£∂|£∑|£®|£©|(£§/£®)|£•|£¶|£∂";
+		"„Ñ¶|`|„Ñö|„ÑÖ|„Ñí|„Ñâ|(„Ñß/Àá)|„Ñà|(„Ñê/„Ñ¶)|„Ñè|(„Ñû/„Ñ¢)|„Ññ|„Ñé|„Ñå|(„Ñá/„Ñò)|„Ñã|(„Ñõ/„Ñ£)|(„ÑÜ/„Ñ§)|(„Ñü/Àô)" +
+		"|(„Ñú/Àã)|„Ñô|„Ñä|(„Ñ©/„Ñë)|(„Ñç/„Ñ•)|(„Ñù/Àä)|„Ñ®|„Ñ°|„Ñ†" +
+		"|Àô|Àä|Àá|Àã|„Ñë|„Ñ¢|„Ñ£|„Ñ§|„Ñ•|„Ñ¶|„Ñó|„Ñò|(„Ñì/„Ñó)|„Ñî|„Ñï|„Ñ•";
 	private final static String MILESTONE3_ETEN_CHAR= 
-		"£∑|£©|£´|£t|££|£x|£∏|£w|£°|£~|£Ø|£ß|£}|£{|(£v/£©)|£z|£¨|£u|£∞|£≠|£™|(£y/£∑)|£∫|£||£Æ|£π|£≤|£±" +
-		"|£ª|£Ω|£æ|£ø|£¢|£≥|£¥|£µ|(£|/£∂)|£∑|£®|£©|(£§/£®)|£•|£¶|£∂";
+		"„Ñ¶|„Ñò|„Ñö|„ÑÖ|„Ñí|„Ñâ|„Ñß|„Ñà|„Ñê|„Ñè|„Ñû|„Ññ|„Ñé|„Ñå|(„Ñá/„Ñò)|„Ñã|„Ñõ|„ÑÜ|„Ñü|„Ñú|„Ñô|(„Ñä/„Ñ¶)|„Ñ©|„Ñç|„Ñù|„Ñ®|„Ñ°|„Ñ†" +
+		"|Àô|Àä|Àá|Àã|„Ñë|„Ñ¢|„Ñ£|„Ñ§|(„Ñç/„Ñ•)|„Ñ¶|„Ñó|„Ñò|(„Ñì/„Ñó)|„Ñî|„Ñï|„Ñ•";
 	
 	private final static String ETEN26_KEY =            	"qazwsxedcrfvtgbyhnujmikolp,.";
 	private final static String ETEN26_KEY_REMAP_INITIAL = 	"y8lhnju2vkzewr1tcsmba9dixq<>";
@@ -111,9 +111,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String ETEN26_DUALKEY_REMAP = 		"o,gf;5p-s0/.p";
 	private final static String ETEN26_DUALKEY = 			"yhvewrscpaxqs";
 	private final static String ETEN26_CHAR_INITIAL = 	
-		"(£®/£∞)|£´|£±|(£©/£Æ)|£™|£π|£∏|£x|(£¶/££)|£≠|£w|(£|/£¢)|(£y/£µ)|(£°/£§)|£t|£•|(£~/£∑)|(£z/£¥)|£∫|£ß|(£v/£≥)|£Ø|£}|£¨|(£{/£∂)|(£u/£≤)|°A|°C";
+		"(„Ñó/„Ñü)|„Ñö|„Ñ†|(„Ñò/„Ñù)|„Ñô|„Ñ®|„Ñß|„Ñâ|(„Ñï/„Ñí)|„Ñú|„Ñà|(„Ñç/„Ñë)|(„Ñä/„Ñ§)|(„Ñê/„Ñì)|„ÑÖ|„Ñî|(„Ñè/„Ñ¶)|(„Ñã/„Ñ£)|„Ñ©|„Ññ|(„Ñá/„Ñ¢)|„Ñû|„Ñé|„Ñõ|(„Ñå/„Ñ•)|(„ÑÜ/„Ñ°)|Ôºå|„ÄÇ";
 	private final static String ETEN26_CHAR_FINAL = 	
-		"(£®/£∞)|£´|£±|(£©/£Æ)|£™|£π|£∏|£ª|(£¶/££)|£≠|£Ω|(£|/£¢)|(£y/£µ)|(£°/£§)|£t|£•|(£~/£∑)|(£z/£¥)|£∫|£æ|(£v/£≥)|£Ø|£ø|£¨|(£{/£∂)|(£u/£≤)|°A|°C";
+		"(„Ñó/„Ñü)|„Ñö|„Ñ†|(„Ñò/„Ñù)|„Ñô|„Ñ®|„Ñß|Àô|(„Ñï/„Ñí)|„Ñú|Àä|(„Ñç/„Ñë)|(„Ñä/„Ñ§)|(„Ñê/„Ñì)|„ÑÖ|„Ñî|(„Ñè/„Ñ¶)|(„Ñã/„Ñ£)|„Ñ©|Àá|(„Ñá/„Ñ¢)|„Ñû|Àã|„Ñõ|(„Ñå/„Ñ•)|(„ÑÜ/„Ñ°)|Ôºå|„ÄÇ";
 	
 	
 	private final static String HSU_KEY =            		"azwsxedcrfvtgbyhnujmikolpq,.";
@@ -122,9 +122,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String HSU_DUALKEY_REMAP =		 	"gt5--,okip0;/";
 	private final static String HSU_DUALKEY = 				"vfrx/uhecsadx";
 	private final static String HSU_CHAR_INITIAL = 	
-		"(£©/£∞)|£®|£±|£™|£π|(£∏/£Æ)|£x|(£¶/££)|£ß|£w|(£•/£¢)|£y|(£|/£≠)|£t|£´|(£~/£¨)|(£z/£¥)|£∫|(£°/£§)|(£v/£≥)|£Ø|(£}/£µ)|£≤|(£{/£∑)|£u|q|°A|°C";
+		"(„Ñò/„Ñü)|„Ñó|„Ñ†|„Ñô|„Ñ®|(„Ñß/„Ñù)|„Ñâ|(„Ñï/„Ñí)|„Ññ|„Ñà|(„Ñî/„Ñë)|„Ñä|(„Ñç/„Ñú)|„ÑÖ|„Ñö|(„Ñè/„Ñõ)|(„Ñã/„Ñ£)|„Ñ©|(„Ñê/„Ñì)|(„Ñá/„Ñ¢)|„Ñû|(„Ñé/„Ñ§)|„Ñ°|(„Ñå/„Ñ¶)|„ÑÜ|q|Ôºå|„ÄÇ";
 	private final static String HSU_CHAR_FINAL = 	
-		"(£©/£∞)|£®|£±|£ª|£π|(£∏/£Æ)|£Ω|(£¶/££)|£ß|£æ|(£•/£¢)|£y|(£|/£≠)|£t|£´|(£~/£¨)|(£z/£¥)|£∫|£ø|(£v/£≥)|£Ø|(£}/£µ)|£≤|(£∂/£∑)|£u|q|°A|°C";
+		"(„Ñò/„Ñü)|„Ñó|„Ñ†|Àô|„Ñ®|(„Ñß/„Ñù)|Àä|(„Ñï/„Ñí)|„Ññ|Àá|(„Ñî/„Ñë)|„Ñä|(„Ñç/„Ñú)|„ÑÖ|„Ñö|(„Ñè/„Ñõ)|(„Ñã/„Ñ£)|„Ñ©|Àã|(„Ñá/„Ñ¢)|„Ñû|(„Ñé/„Ñ§)|„Ñ°|(„Ñ•/„Ñ¶)|„ÑÜ|q|Ôºå|„ÄÇ";
 	
 	private final static String DESIREZ_KEY =            			"@qazwsxedcrfvtgbyhnujmik?olp,.";
 	private final static String DESIREZ_BPMF_KEY_REMAP = 			"1qaz2wsedc5tg6yh4uj8ik9ol0;-,.";
@@ -133,23 +133,23 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String DESIREZ_DUALKEY_REMAP = 		"1234567890;-/='";
 	private final static String DESIREZ_DUALKEY = 				"qwertyuiop,vlnm";
 	private final static String DESIREZ_BPMF_CHAR = 
-		"£t|£u|£v|£w|£x|£y|(£z/£{)|(£|/£°)|(£}/£¢)|(£~/££)|£§|£•|(£¶/£ß)|(£Ω/£æ)|£®|(£©/£™)|(£ø/£ª)" +
-		"|£∏|(£π/£∫)|£´|£¨|(£≠/£Æ)|£Ø|£∞|(£±/£≤)|(£≥/£¥)|(£µ/£∂)|£∑|,|.";
+		"„ÑÖ|„ÑÜ|„Ñá|„Ñà|„Ñâ|„Ñä|(„Ñã/„Ñå)|(„Ñç/„Ñê)|(„Ñé/„Ñë)|(„Ñè/„Ñí)|„Ñì|„Ñî|(„Ñï/„Ññ)|(Àä/Àá)|„Ñó|(„Ñò/„Ñô)|(Àã/Àô)" +
+		"|„Ñß|(„Ñ®/„Ñ©)|„Ñö|„Ñõ|(„Ñú/„Ñù)|„Ñû|„Ñü|(„Ñ†/„Ñ°)|(„Ñ¢/„Ñ£)|(„Ñ§/„Ñ•)|„Ñ¶|,|.";
 	
 	
 	private final static String DESIREZ_DAYI_CHAR =
-		"@|(®•/•€)|§H|§ﬂ|(§˚/§s)|≠≤|§Ù|(•ÿ/§@)|§È|≥¿|(•|/§u)|§g|•›|(§˝/¶Õ)|§‚|∞®|(™˘/§ı)|≥æ|≥Ω|(•–/ J)|§Î|´B|"
-		+"(¶Ã/§Ï)|•ﬂ|?|(®¨/§f)|(§k/¶À)|(™˜/¶’)|(§O/¶‰)|¶‡";
+		"@|(Ë®Ä/Áü≥)|‰∫∫|ÂøÉ|(Áâõ/Â±±)|Èù©|Ê∞¥|(ÁõÆ/‰∏Ä)|Êó•|Èπø|(Âõõ/Â∑•)|Âúü|Á¶æ|(Áéã/Á≥∏)|Êâã|È¶¨|(ÈñÄ/ÁÅ´)|È≥•|È≠ö|(Áî∞/Ëâ∏)|Êúà|Èõ®|"
+		+"(Á±≥/Êú®)|Á´ã|?|(Ë∂≥/Âè£)|(Â•≥/Á´π)|(Èáë/ËÄ≥)|(Âäõ/Ëô´)|Ëàü";
 	
 	private final static String MILESTONE_DUALKEY_REMAP = 	"1234567890;'=-";
 	private final static String MILESTONE_DUALKEY = 		"qwertyuiop,mhv"; 
 	private final static String MILESTONE_KEY = "qazwsxedcrfvtgbyhnujmik,ol.p/?";
 	private final static String MILESTONE_BPMF_CHAR = 
-		"(£t/£u)|£v|£w|(£x/£y)|£z|£{|(£|/£æ)|£}|£~|(£°/£ø)|£¢|££|(£§/£•)|£¶|£ß|(£®/£Ω)|£©|£™|(£∏/£ª)" +
-		"|£π|£∫|(£´/£¨)|£≠|(£Æ/£µ)|(£Ø/£∞)|£±|£≤|(£≥/£¥)|£∂|£∑";
+		"(„ÑÖ/„ÑÜ)|„Ñá|„Ñà|(„Ñâ/„Ñä)|„Ñã|„Ñå|(„Ñç/Àá)|„Ñé|„Ñè|(„Ñê/Àã)|„Ñë|„Ñí|(„Ñì/„Ñî)|„Ñï|„Ññ|(„Ñó/Àä)|„Ñò|„Ñô|(„Ñß/Àô)" +
+		"|„Ñ®|„Ñ©|(„Ñö/„Ñõ)|„Ñú|(„Ñù/„Ñ§)|(„Ñû/„Ñü)|„Ñ†|„Ñ°|(„Ñ¢/„Ñ£)|„Ñ•|„Ñ¶";
 	private final static String MILESTONE_DAYI_CHAR = 
-		"(®•/•€)|§H|§ﬂ|(§˚/§s)|≠≤|§Ù|(•ÿ/§@)|§È|≥¿|(•|/§u)|§g|•›|(§˝/¶Õ)|§‚|∞®|(™˘/§ı)|≥æ|≥Ω|(•–/ J)|§Î|´B|"
-		+"(¶Ã/§Ï)|•ﬂ|(§O/¶‰)|(®¨/§f)|§k|¶‡|(™˜/¶’)|¶À|?";
+		"(Ë®Ä/Áü≥)|‰∫∫|ÂøÉ|(Áâõ/Â±±)|Èù©|Ê∞¥|(ÁõÆ/‰∏Ä)|Êó•|Èπø|(Âõõ/Â∑•)|Âúü|Á¶æ|(Áéã/Á≥∏)|Êâã|È¶¨|(ÈñÄ/ÁÅ´)|È≥•|È≠ö|(Áî∞/Ëâ∏)|Êúà|Èõ®|"
+		+"(Á±≥/Êú®)|Á´ã|(Âäõ/Ëô´)|(Ë∂≥/Âè£)|Â•≥|Ëàü|(Èáë/ËÄ≥)|Á´π|?";
 	
 	private final static String MILESTONE2_DUALKEY_REMAP = 	"1234567890;'=-";
 	private final static String MILESTONE2_DUALKEY = 		"qwertyuiop,mgv";
@@ -161,15 +161,15 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String MILESTONE3_BPMF_DUALKEY_REMAP = ";/";
 	private final static String MILESTONE3_BPMF_DUALKEY = 		"l.";
 	private final static String MILESTONE3_BPMF_CHAR = 
-		"£t|£u|£v|£w|£x|£y|£z|£{|£æ|£||£}|£~|£ø|£°|£¢|££|£§|£•|£¶|£ß|£Ω|£®|£©|£™|£ª|" +
-		"£∏|£π|£∫|£´|£¨|£≠|£Æ|£Ø|£∞|(£±/£µ)|(£≤/£∂)|£≥|£¥|£∂";
+		"„ÑÖ|„ÑÜ|„Ñá|„Ñà|„Ñâ|„Ñä|„Ñã|„Ñå|Àá|„Ñç|„Ñé|„Ñè|Àã|„Ñê|„Ñë|„Ñí|„Ñì|„Ñî|„Ñï|„Ññ|Àä|„Ñó|„Ñò|„Ñô|Àô|" +
+		"„Ñß|„Ñ®|„Ñ©|„Ñö|„Ñõ|„Ñú|„Ñù|„Ñû|„Ñü|(„Ñ†/„Ñ§)|(„Ñ°/„Ñ•)|„Ñ¢|„Ñ£|„Ñ•";
 	private final static String MILESTONE3_DAYI_CHAR = 
-		"®•|•€|§H|§ﬂ|§˚|§s|≠≤|§Ù|•ÿ|§@|§È|≥¿|•||§u|§g|•›|§˝|¶Õ|§‚|∞®|™˘|§ı|≥æ|≥Ω|•–|" +
-		" J|§Î|´B|¶Ã|§Ï|•ﬂ|(§O/¶‰)|®¨|§f|§k|¶‡|™˜|¶’|¶À";
+		"Ë®Ä|Áü≥|‰∫∫|ÂøÉ|Áâõ|Â±±|Èù©|Ê∞¥|ÁõÆ|‰∏Ä|Êó•|Èπø|Âõõ|Â∑•|Âúü|Á¶æ|Áéã|Á≥∏|Êâã|È¶¨|ÈñÄ|ÁÅ´|È≥•|È≠ö|Áî∞|" +
+		"Ëâ∏|Êúà|Èõ®|Á±≥|Êú®|Á´ã|(Âäõ/Ëô´)|Ë∂≥|Âè£|Â•≥|Ëàü|Èáë|ËÄ≥|Á´π";
 	
 
 	private final static String CJ_KEY = "qwertyuiopasdfghjklzxcvbnm";
-	private final static String CJ_CHAR = "§‚|•–|§Ù|§f|§‹|§R|§s|§‡|§H|§ﬂ|§È|§r|§Ï|§ı|§g|¶À|§Q|§j|§§|≠´|√¯|™˜|§k|§Î|§}|§@";
+	private final static String CJ_CHAR = "Êâã|Áî∞|Ê∞¥|Âè£|Âªø|Âçú|Â±±|Êàà|‰∫∫|ÂøÉ|Êó•|Â∞∏|Êú®|ÁÅ´|Âúü|Á´π|ÂçÅ|Â§ß|‰∏≠|Èáç|Èõ£|Èáë|Â•≥|Êúà|Âºì|‰∏Ä";
 	
 	private HashMap<String, HashMap<String,String>> keysDefMap = new HashMap<String, HashMap<String,String>>();
 	private HashMap<String, HashMap<String,String>> keysReMap = new HashMap<String, HashMap<String,String>>();
@@ -293,7 +293,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						ContentValues 	cv = new ContentValues();
 						cv.put("code", "limenumsym");
 						cv.put("name", "LIMENUMSYM");
-						cv.put("desc", "LIME+º∆¶r≤≈∏π¡‰ΩL");
+						cv.put("desc", "LIME+Êï∏Â≠óÁ¨¶ËôüÈçµÁõ§");
 						cv.put("type", "phone");
 						cv.put("image", "lime_number_symbol_keyboard_priview");
 						cv.put("imkb", "lime_number_symbol");
@@ -380,8 +380,8 @@ public class LimeDB extends SQLiteOpenHelper {
 						
 						ContentValues 	cv = new ContentValues();
 						cv.put("code", "wb");
-						cv.put("name", "§≠µß");
-						cv.put("desc", "§≠µßøÈ§J™k¡‰ΩL");
+						cv.put("name", "‰∫îÁ≠Ü");
+						cv.put("desc", "‰∫îÁ≠ÜËº∏ÂÖ•Ê≥ïÈçµÁõ§");
 						cv.put("type", "phone");
 						cv.put("image", "wb_keyboard_preview");
 						cv.put("imkb", "lime_wb");
@@ -439,7 +439,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				ContentValues 	cv = new ContentValues();
 				cv.put("code", "limenumsym");
 				cv.put("name", "LIMENUMSYM");
-				cv.put("desc", "LIME+º∆¶r≤≈∏π¡‰ΩL");
+				cv.put("desc", "LIME+Êï∏Â≠óÁ¨¶ËôüÈçµÁõ§");
 				cv.put("type", "phone");
 				cv.put("image", "lime_number_symbol_keyboard_priview");
 				cv.put("imkb", "lime_number_symbol");
@@ -1017,7 +1017,7 @@ public class LimeDB extends SQLiteOpenHelper {
 							(code.equals("q") || code.equals("w") 
 							|| code.equals("d")|| code.equals("f") 
 							|| code.equals("j") || code.equals("k"))){ 
-						// Dual mapped INITIALS have words mapped for £® and £©. for ETEN26
+						// Dual mapped INITIALS have words mapped for „Ñó and „Ñò. for ETEN26
 						c = keyMap.get(code);
 					}else if (phonetickeyboardtype.equals("hsu") &&
 						(code.equals("a") || code.equals("e") ||
@@ -1254,7 +1254,7 @@ public class LimeDB extends SQLiteOpenHelper {
 									(code.equals("q") || code.equals("w") 
 									|| code.equals("d")|| code.equals("f") 
 									|| code.equals("j") || code.equals("k"))){ 
-							// Dual mapped INITIALS have words mapped for £® and £©. for ETEN26
+							// Dual mapped INITIALS have words mapped for „Ñó and „Ñò. for ETEN26
 							c = reMap.get(code);
 						}else if (phonetickeyboardtype.equals("hsu") &&
 									(code.equals("a") || code.equals("e") ||
@@ -1589,16 +1589,16 @@ public class LimeDB extends SQLiteOpenHelper {
 			} while (cursor.moveToNext());
 			if(query_code.length() == 1){
 				// processing full shaped , and .
-				if( (query_code.equals(",")||query_code.equals("<")) && duplicateCheck.get("°A")==null ){
+				if( (query_code.equals(",")||query_code.equals("<")) && duplicateCheck.get("Ôºå")==null ){
 					Mapping temp = new Mapping();
 					temp.setCode(query_code);
-					temp.setWord("°A");
+					temp.setWord("Ôºå");
 					result.add(temp);
 				}
-				if( (query_code.equals(".")||query_code.equals(">")) && duplicateCheck.get("°C")==null ){
+				if( (query_code.equals(".")||query_code.equals(">")) && duplicateCheck.get("„ÄÇ")==null ){
 					Mapping temp = new Mapping();
 					temp.setCode(query_code);
-					temp.setWord("°C");
+					temp.setWord("„ÄÇ");
 					result.add(temp);
 				}
 			}
@@ -2008,7 +2008,11 @@ public class LimeDB extends SQLiteOpenHelper {
 						setImInfo("phonetic", "selkey", "123456789");
 						setImInfo("phonetic", "endkey", "3467'[]\\=<>?:\"{}|~!@#$%^&*()_+");
 						setImInfo("phonetic", "imkeys", ",-./0123456789;abcdefghijklmnopqrstuvwxyz'[]\\=<>?:\"{}|~!@#$%^&*()_+");
-						setImInfo("phonetic", "imkeynames", "£Æ|£∑|£≤|£∂|£≥|£t|£x|£æ|£ø|£§|£Ω|£ª|£´|£Ø|£µ|£v|£ß|£~|£}|£||£¢|£¶|£©|£¨|£π|£≠|£±|£∫|£™|£∞|£¥|£u|£°|£z|£•|£∏|££|£y|£{|£®|£w|°B|°u|°v|¢@|°◊|°A|°C|°H|°G|°F|°y|°z|¢x|°„|°I|¢I|°≠|¢C|¢H|°s|°Æ|°Ø|°]|°^|°–|°œ");
+						setImInfo("phonetic", "imkeynames", "„Ñù|„Ñ¶|„Ñ°|„Ñ•|„Ñ¢|„ÑÖ|„Ñâ|Àá|Àã|„Ñì|Àä|Àô|„Ñö|„Ñû|„Ñ§|„Ñá|„Ññ|„Ñè|„Ñé|„Ñç|„Ñë|„Ñï|„Ñò|„Ñõ|„Ñ®|„Ñú|„Ñ†|„Ñ©|„Ñô|„Ñü|„Ñ£|„ÑÜ|„Ñê|„Ñã|„Ñî|„Ñß|„Ñí|„Ñä|„Ñå|„Ñó|„Ñà|„ÄÅ|„Äå|„Äç|Ôºº|Ôºù|Ôºå|„ÄÇ|Ôºü|Ôºö|Ôºõ|„Äé|„Äè|‚îÇ|ÔΩû|ÔºÅ|Ôº†|ÔºÉ|ÔºÑ|ÔºÖ|Ô∏ø|ÔºÜ|Ôºä|Ôºà|Ôºâ|Ôºç|Ôºã");
+					}if(filename.getName().equals("array.lime")){
+						setImInfo("array", "selkey", "1234567890");
+						setImInfo("array", "imkeys", "abcdefghijklmnopqrstuvwxyz./;,?*#1#2#3#4#5#6#7#8#9#0");
+						setImInfo("array", "imkeynames", "1-|5‚á£|3‚á£|3-|3‚á°|4-|5-|6-|8‚á°|7-|8-|9-|7‚á£|6‚á£|9‚á°|0‚á°|1‚á°|4‚á°|2-|5‚á°|7‚á°|4‚á£|2‚á°|2‚á£|6‚á°|1‚á£|9‚á£|0‚á£|0-|8‚á£|Ôºü|Ôºä|1|2|3|4|5|6|7|8|9|0");
 					}else{
 						if (!selkey.equals("")) setImInfo(table, "selkey", selkey);
 						if (!endkey.equals("")) setImInfo(table, "endkey", endkey);
@@ -2030,6 +2034,8 @@ public class LimeDB extends SQLiteOpenHelper {
 						kobj = getKeyboardObj("cj");
 					}else if( table.equals("array")){					
 						kobj = getKeyboardObj("arraynum");
+					}else if( table.equals("array10")){					
+						kobj = getKeyboardObj("phonenum");
 					}else if( table.equals("wb")){					
 						kobj = getKeyboardObj("cj");
 					}else if( kobj == null){					
