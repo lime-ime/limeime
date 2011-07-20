@@ -189,7 +189,7 @@ public class LIMEIMSetting extends Activity {
 				}
 			});
 	
-			btnSetupWb.setOnClickListener(new OnClickListener() {
+			/*btnSetupWb.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					Intent intent = new Intent();
 					intent.setClass(v.getContext(), LIMEMappingSetting.class);
@@ -198,7 +198,7 @@ public class LIMEIMSetting extends Activity {
 					   intent.putExtras(bundle);
 					startActivity(intent);
 				}
-			});
+			});*/
 			
 	
 	

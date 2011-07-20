@@ -209,7 +209,7 @@ public class LIMEPreferenceManager {
 	
 	public String getSelectedKeyboardState(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getString("keyboard_state", "0;1;2;3;4;5;6");
+		return sp.getString("keyboard_state", "0;1;2;3;4;5;6;7;8;9;10;11");
 	}
 	
 	public String getKeyboardSelection(){

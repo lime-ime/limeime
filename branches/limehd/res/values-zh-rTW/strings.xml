@@ -225,7 +225,7 @@
 		<item>輕鬆</item>
 		<item>行列</item>
 		<item>行列10</item>
-		<item>五筆</item>
+		<!-- <item>五筆</item> -->
 	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
@@ -239,7 +239,7 @@
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
-		<item>wb</item>
+		<!-- <item>wb</item> -->
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
@@ -253,7 +253,7 @@
 		<item>輕鬆輸入法</item>
 		<item>行列輸入法</item>
 		<item>行列10輸入法</item>
-		<item>五筆輸入法</item>
+		<!-- <item>五筆輸入法</item> -->
 	</string-array>
 	<string-array name="keyboard_defaultstate">
 		<item>true</item>
@@ -266,7 +266,7 @@
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
-		<item>true</item>
+		<!-- <item>true</item> -->
 	</string-array>
     <string-array name="keyboard_codes">
 		<item>custom</item>
@@ -279,7 +279,7 @@
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
-		<item>wb</item>
+		<!-- <item>wb</item> -->
 	</string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
@@ -292,7 +292,7 @@
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
-		<item>wb</item>
+		<!-- <item>wb</item> -->
 		<item>related</item>
 		<item>dictionary</item>
 	</string-array>
@@ -318,7 +318,7 @@
 		<item>輕鬆</item>
 		<item>行列</item>
 		<item>行列10</item>
-		<item>五筆</item>
+		<!-- <item>五筆</item> -->
 		<item>預載關聯字</item>
 		<item>英文字典</item>
 	</string-array>

@@ -84,7 +84,7 @@ public class LIMEMappingSetting extends Activity {
 		TextView labImportDate = null;
 		TextView labMappingSettingTitle = null;
 		TextView labKeyboard = null;
-		private ScrollView scrollSetting;
+		private LinearLayout kbLinearLayout;
 		
 		LinearLayout extendLayout = null;
 		Button extendButton = null;
@@ -140,6 +140,8 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
+						startLoadingWindow();
+						
 						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 							try {
 								hasSelectFile = true;
@@ -148,6 +150,8 @@ public class LIMEMappingSetting extends Activity {
 								DBSrv.downloadDayi();
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
+
+								
 							} catch (RemoteException e) {
 								e.printStackTrace();
 							}
@@ -164,6 +168,8 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
+						startLoadingWindow();
+						
 						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 							try {
 								hasSelectFile = true;
@@ -190,6 +196,8 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
+						startLoadingWindow();
+						
 						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 							try {
 								hasSelectFile = true;
@@ -218,6 +226,8 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
+						startLoadingWindow();
+						
 						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 							try {
 								hasSelectFile = true;
@@ -246,6 +256,8 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
+						startLoadingWindow();
+						
 						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 							try {
 								hasSelectFile = true;
@@ -274,6 +286,8 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
+						startLoadingWindow();
+						
 						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 							try {
 								hasSelectFile = true;
@@ -302,6 +316,8 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
+						startLoadingWindow();
+						
 						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 							try {
 								hasSelectFile = true;
@@ -330,6 +346,8 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
+						startLoadingWindow();
+						
 						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 						try {
 								hasSelectFile = true;
@@ -358,6 +376,8 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
+						startLoadingWindow();
+						
 						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 							try {
 								hasSelectFile = true;
@@ -386,12 +406,14 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
+						startLoadingWindow();
+						
 						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 							try {
 								hasSelectFile = true;
 								resetLabelInfo();
 	    						DBSrv.resetMapping("wb");
-								DBSrv.downloadArray10();
+								DBSrv.downloadWb();
 	
 								DBSrv.setImInfo("wb", "keyboard", "­Ü¾e¿é¤JªkÁä½L");
 								
@@ -410,14 +432,6 @@ public class LIMEMappingSetting extends Activity {
 			}else{
 				extendLayout.removeView(extendButton);
 			}
-
-			scrollSetting.setOnTouchListener(new OnTouchListener(){
-				@Override
-				public boolean onTouch(View v, MotionEvent event) {
-					updateLabelInfo();
-					return false;
-				}
-			});
 			
 			btnSelectKeyboard.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
@@ -430,7 +444,6 @@ public class LIMEMappingSetting extends Activity {
 					finish();
 				}
 			});
-
 			
 			btnLoadMapping.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
@@ -439,6 +452,13 @@ public class LIMEMappingSetting extends Activity {
 				}
 			});
 
+			kbLinearLayout.setOnTouchListener(new OnTouchListener(){
+				@Override
+				public boolean onTouch(View v, MotionEvent event) {
+					updateLabelInfo();
+					return false;
+				}
+			});
 			
 			btnResetMapping.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
@@ -511,7 +531,7 @@ public class LIMEMappingSetting extends Activity {
 			labMappingSettingTitle = (TextView) findViewById(R.id.labMappingSettingTitle);
 			labKeyboard = (TextView) findViewById(R.id.labKeyboard);
 			
-			scrollSetting = (ScrollView) this.findViewById(R.id.IMSettingScrollView);
+			kbLinearLayout = (LinearLayout) this.findViewById(R.id.kbLinearLayout);
 			
 			if(mLIMEPref.getParameterBoolean("im_loading") == true){
 				btnLoadMapping.setEnabled(false);
@@ -754,6 +774,8 @@ public class LIMEMappingSetting extends Activity {
 		 */
 		public void loadMapping(File unit) {
 			try {
+				startLoadingWindow();
+				
 				DBSrv.loadMapping(unit.getAbsolutePath(), imtype);
 			} catch (RemoteException e) {
 				e.printStackTrace();
@@ -824,4 +846,10 @@ public class LIMEMappingSetting extends Activity {
 			
 		}
 
+		private void startLoadingWindow(){
+			Intent i = new Intent(this, LIMEMappingLoading.class);
+			startActivity(i);
+		}
+		
+		
 }

@@ -116,6 +116,7 @@ public class DBService extends Service {
 						}else{
 							displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_failed)+ "");
 						}
+						mLIMEPref.setParameter("db_finish", true);
 	
 					}
 				};
@@ -160,6 +161,7 @@ public class DBService extends Service {
 		public void downloadEmptyDatabase() throws RemoteException {
 			if (db == null) {loadLimeDB();}
 			resetDownloadDatabase();
+			
 			Thread threadTask = new Thread() {
 				public void run() {
 					displayNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start_empty)+ "");
@@ -617,7 +619,7 @@ public class DBService extends Service {
 			Thread threadTask = new Thread() {
 				public void run() {
 					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_array10_start)+ "");
-					downloadedFile = downloadRemoteFile(LIME.ARRAY_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ARRAY);
+					downloadedFile = downloadRemoteFile(LIME.ARRAY10_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ARRAY10);
 					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_array10_install)+ "");
 					try {
 						loadMapping(downloadedFile.getAbsolutePath(), "array10");

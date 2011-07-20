@@ -344,6 +344,24 @@ public class LimeDB extends SQLiteOpenHelper {
 						db.execSQL("CREATE TABLE wb (" + FIELD_id + " INTEGER primary key autoincrement, " + " "
 								+ FIELD_CODE + " text, " + FIELD_CODE3R + " text, " + FIELD_WORD + " text, " + FIELD_RELATED + " text, " + FIELD_SCORE + " integer)");
 
+						// To modify the user keyboard selection
+						String keybaord_state_string = mLIMEPref.getSelectedKeyboardState();
+						
+						if(!keybaord_state_string.equals("0;1;2;3;4;5;6;7;8;9;10;11")){
+							String ks[] = keybaord_state_string.split(";");
+							String update_value = "";
+							for(String u: ks){
+								try{
+									int i = Integer.parseInt(u);
+									if(i < 3){
+										update_value += i+";";
+									}else{
+										update_value += (i+2)+";";
+									}
+								}catch(Exception e){}
+							}
+							mLIMEPref.setParameter("keyboard_state", update_value);
+						}
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -860,11 +878,14 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		if(keysDefMap.get(keytable)==null
 				|| keysDefMap.get(keytable).size()==0){
+			
 			String keyString="", keynameString="", finalKeynameString = null;
 			//Jeremy 11,6,4 Load keys and keynames from im table.
 			keyString = getImInfo(table,"imkeys");
 			keynameString = getImInfo(table,"imkeynames");
 			
+			Log.i("ART",keyString);
+			Log.i("ART",keynameString);
 			
 			if(table.equals("phonetic")|| table.equals("dayi") ||
 					keyString.equals("")||keynameString.equals("")){
@@ -952,11 +973,15 @@ public class LimeDB extends SQLiteOpenHelper {
 			if(finalKeyMap != null)
 				finalCharlist = finalKeynameString.split("\\|");
 				
-			for (int i = 0; i < keyString.length(); i++) {
-				keyMap.put(keyString.substring(i, i + 1), charlist[i]);
-				if(finalKeyMap != null && finalCharlist!=null)
-					finalKeyMap.put(keyString.substring(i, i + 1), finalCharlist[i]);
-			}
+			// Ignore the exception of key name mapping.
+			try{
+				for (int i = 0; i < keyString.length(); i++) {
+					keyMap.put(keyString.substring(i, i + 1), charlist[i]);
+					if(finalKeyMap != null && finalCharlist!=null)
+						finalKeyMap.put(keyString.substring(i, i + 1), finalCharlist[i]);
+				}
+			}catch(Exception e){}
+			
 			keyMap.put("|", "|"); //put the seperator for multi-code display
 			keysDefMap.put(keytable, keyMap);
 			if(finalKeyMap != null)
@@ -2003,6 +2028,8 @@ public class LimeDB extends SQLiteOpenHelper {
 						kobj = getKeyboardObj("cj");
 					}else if( table.equals("ecj")){				
 						kobj = getKeyboardObj("cj");
+					}else if( table.equals("array")){					
+						kobj = getKeyboardObj("arraynum");
 					}else if( table.equals("wb")){					
 						kobj = getKeyboardObj("cj");
 					}else if( kobj == null){					

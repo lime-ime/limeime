@@ -27,6 +27,7 @@
     <string name="lime_setting_loading">Loading Mapping</string>
     <string name="lime_setting_select_root"> - back to /</string>
     <string name="lime_setting_select_parent"> - back to ..</string>
+    <string name="lime_loading">Loading ...</string>
     
     <string name="lime_setting_notification_loading">Start Loading Mapping Table</string>
     <string name="lime_setting_notification_failed">Mapping Import Failed !!</string>
@@ -246,7 +247,7 @@
 		<item>Eazy</item>
 		<item>Array</item>
 		<item>Array10</item>
-		<item>Wubi</item>
+		<!-- <item>Wubi</item> -->
 	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
@@ -260,7 +261,7 @@
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
-		<item>wubi</item>
+		<!-- <item>wubi</item> -->
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
@@ -274,7 +275,7 @@
 		<item>Eazy</item>
 		<item>Array</item>
 		<item>Array10</item>
-		<item>Wubi</item>
+		<!-- <item>Wubi</item> -->
 	</string-array>
 	<string-array name="keyboard_defaultstate">
 		<item>true</item>
@@ -286,7 +287,7 @@
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
-		<item>true</item>
+		<!-- <item>true</item> -->
 		<item>true</item>
 	</string-array>
     <string-array name="keyboard_codes">
@@ -300,7 +301,7 @@
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
-		<item>wb</item>
+		<!-- <item>wb</item> -->
 	</string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
@@ -313,7 +314,7 @@
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
-		<item>wb</item>
+		<!-- <item>wb</item> -->
 		<item>related</item>
 		<item>dictionary</item>
 	</string-array>
@@ -340,7 +341,7 @@
 		<item>Eazy</item>
 		<item>Array</item>
 		<item>Array10</item>
-		<item>Wubi</item>
+		<!-- <item>Wubi</item> -->
 		<item>Preload related words</item>
 		<item>Dictionary for English keyboard</item>
 	</string-array>
