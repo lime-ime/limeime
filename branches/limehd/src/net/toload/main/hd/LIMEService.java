@@ -662,18 +662,21 @@ public class LIMEService extends InputMethodService implements
 			int candidatesEnd) {
 		super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd,
 				candidatesStart, candidatesEnd);
+		
+		if(DEBUG) 
+			Log.i("LIMEService", "onUpdateSelection()");
 
 		// If the current selection in the text view changes, we should
 		// clear whatever candidate text we have.
-		if (mComposing.length() > 0
-				&& (newSelStart != candidatesEnd || newSelEnd != candidatesEnd)) {
-			mComposing.setLength(0);
-			updateCandidates();
-			InputConnection ic = getCurrentInputConnection();
-			if (ic != null) {
-				ic.finishComposingText();
-			}
-		}
+//		if (mComposing.length() > 0
+//				&& (newSelStart != candidatesEnd || newSelEnd != candidatesEnd)) {
+//			mComposing.setLength(0);
+//			updateCandidates();
+//			InputConnection ic = getCurrentInputConnection();
+//			if (ic != null) {
+//				ic.finishComposingText();
+//			}
+//		}
 	}
 
 	/**
@@ -1340,6 +1343,13 @@ public class LIMEService extends InputMethodService implements
 
 						// Add by Jeremy '10, 4,1 . Reverse Lookup
 						SearchSrv.rQuery(firstMatched.getWord());
+						if(mComposing.length() > firstMatched.getCode().length()){
+							mComposing= mComposing.delete(0, firstMatched.getCode().length());
+							//Log.i("LIMEService:commitedtext()"," new mcomposing:" +mComposing);
+							inputConnection.setComposingText(mComposing, 1);
+							updateCandidates();
+							return;
+						} 
 
 						tempMatched = firstMatched;
 						firstMatched = null;
@@ -1368,8 +1378,12 @@ public class LIMEService extends InputMethodService implements
 				if (mCandidateView != null) {
 					mCandidateView.clear();
 				}
-				mComposing.setLength(0);
-				// updateDictionaryView();
+				if(mComposing.length()>0){					
+					mComposing.setLength(0);
+					if(templist!=null) templist.clear();
+				}
+				if(onIM)
+					updateDictionaryView();
 
 			}
 		} catch (Exception e) {
@@ -1661,7 +1675,7 @@ public class LIMEService extends InputMethodService implements
 
 	@SuppressWarnings("unchecked")
 	private void nextActiveKeyboard() {
-
+		if(DEBUG) Log.i("LIMEService:nextActiveKeyboard()", "entering...");
 		buildActiveKeyboardList();
 		int i;
 		CharSequence keyboardname = "";
@@ -1891,7 +1905,7 @@ public class LIMEService extends InputMethodService implements
 					
 					setSuggestions(list, isPressPhysicalKeyboard && mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
 							, true, selkey);
-					if(DEBUG) Log.i("updateCandidaate", "list.size:"+list.size());
+					if(DEBUG) Log.i("updateCandidate", "list.size:"+list.size());
 				} else {
 					setSuggestions(null, false, false);
 				}
@@ -2104,7 +2118,7 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void handleBackspace() {
-
+		if(DEBUG) Log.i("LIMEService:handleBackspace()", "entering...");
 		final int length = mComposing.length();
 		if (length > 1) {
 			mComposing.delete(length - 1, length);
@@ -2186,7 +2200,7 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void switchKeyboard(int primaryCode) {
-
+		if(DEBUG) Log.i("LIMEService:switchKeyboard()", "entering...");
 		if (mCapsLock)
 			toggleCapsLock();
 
@@ -2581,7 +2595,7 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void handleClose() {
-
+		if(DEBUG) Log.i("LIMEService:handleBackspace()", "entering...");
 		// cancel candidate view if it's shown
 		if (mCandidateView != null) {
 			mCandidateView.clear();
@@ -2665,17 +2679,17 @@ public class LIMEService extends InputMethodService implements
 			if (DEBUG)
 				Log.i("LIMEService:", "pickSuggestionManually():mCompletionOn:" + mCompletionOn);
 
-		} else if (mComposing.length() > 0 && onIM) {
+		} else if ((mComposing.length() > 0 ||firstMatched != null && firstMatched.isDictionary()) && onIM) {
 			// Log.i("ART","When user pick suggested word which is not from dictionary");
 			commitTyped(getCurrentInputConnection());
-			this.firstMatched = null;
-			//this.hasFirstMatched = false;
-			if(templist!=null) templist.clear();
-			updateDictionaryView();
-		} else if (firstMatched != null && firstMatched.isDictionary()&& onIM) {
-			// Log.i("ART","When user pick suggested word which is from dictionary");
-			commitTyped(getCurrentInputConnection());
-			updateDictionaryView();
+//			this.firstMatched = null;
+//			//this.hasFirstMatched = false;
+//			if(templist!=null) templist.clear();
+//			updateDictionaryView();
+//		} else if (firstMatched != null && firstMatched.isDictionary()&& onIM) {
+//			// Log.i("ART","When user pick suggested word which is from dictionary");
+//			commitTyped(getCurrentInputConnection());
+//			updateDictionaryView();
 		} else if (mLIMEPref.getEnglishEnable() && tempEnglishList != null
 					&& tempEnglishList.size() > 0) {
 				

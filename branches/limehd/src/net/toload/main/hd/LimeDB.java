@@ -1635,7 +1635,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}
 		}
-		//if(DEBUG)
+		if(DEBUG)
 		Log.i("LimDB.buildQueryResult()"," quiery_code:" + query_code + " result.size=" + result.size()
 				+ " relatedlist.size=" + relatedresult.size());
 		return resultPair;

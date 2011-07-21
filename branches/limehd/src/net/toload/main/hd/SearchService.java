@@ -203,7 +203,7 @@ public class SearchService extends Service {
 				
 				// 11'7,22 rewritten for 連打 
 				for(int i =0; i<size; i++) {
-					Log.i("SearchService:query()","i="+i+" code="+code);
+					//Log.i("SearchService:query()","i="+i+" code="+code);
 					String cacheKey="";
 					
 					//Jeremy '11,6,17 Seperate physical keyboard cache with keybaordtype
@@ -223,7 +223,7 @@ public class SearchService extends Service {
 
 					Pair<List<Mapping>,List<Mapping>> cacheTemp = cache.get(cacheKey);
 
-					Log.i("SearchService:query()","cachekey:" + cacheKey ); 
+					//Log.i("SearchService:query()","cachekey:" + cacheKey ); 
 
 					if(cacheTemp != null){
 						List<Mapping> resultlist = cacheTemp.first;
