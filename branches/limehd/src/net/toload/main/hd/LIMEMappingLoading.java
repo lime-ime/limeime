@@ -42,6 +42,7 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -101,5 +102,7 @@ public class LIMEMappingLoading extends Activity {
 		};
 		thread.start();
 	}
+
+	
 		
 }

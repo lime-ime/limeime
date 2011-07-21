@@ -4,9 +4,9 @@
 	android:layout_width="fill_parent" android:layout_height="fill_parent"
 	android:orientation="vertical">
     <ScrollView android:id="@+id/scrollView1" android:layout_height="fill_parent" android:layout_width="fill_parent">
-        <LinearLayout android:id="@+id/linearLayout1" android:layout_margin="10px" android:layout_gravity="center_vertical" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent">
+        <LinearLayout android:id="@+id/linearLayout1" android:layout_margin="10px" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_gravity="fill_vertical">
             <LinearLayout android:id="@+id/linearLayout2" android:layout_height="fill_parent" android:layout_width="fill_parent" android:gravity="center" android:layout_marginTop="10dip" android:layout_marginBottom="10dip" android:paddingTop="5dip" android:paddingBottom="5dip" android:layout_marginLeft="10dip" android:layout_marginRight="10dip">
-                <TextView android:id="@+id/textView1" android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/l3_im_notice" android:textSize="8pt"></TextView>
+                <TextView android:id="@+id/textView1" android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/l3_im_notice" android:textSize="@dimen/label_text_size"></TextView>
             </LinearLayout>
             <TableLayout android:id="@+id/tableLayout1" android:layout_height="fill_parent" android:layout_width="fill_parent">
                 <TableRow android:id="@+id/tableRow3" android:layout_height="wrap_content" android:layout_width="fill_parent">

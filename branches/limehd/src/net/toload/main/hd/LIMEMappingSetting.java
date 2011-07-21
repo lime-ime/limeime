@@ -122,6 +122,9 @@ public class LIMEMappingSetting extends Activity {
 	        	e.printStackTrace();
 	        }
 
+	        if(mLIMEPref.getParameterBoolean("im_loading") == true){
+	        	mLIMEPref.setParameter("im_loading",false);
+	        }
 	        String im_loading_table = mLIMEPref.getParameterString("im_loading_table");
 	        if(im_loading_table != null && im_loading_table.length() > 0){
 	        	imtype = im_loading_table;
@@ -205,7 +208,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("cj");
 								DBSrv.downloadCj();
 	
-								DBSrv.setImInfo("cj", "keyboard", "­Ü¾e¿é¤JªkÁä½L");
+								DBSrv.setImInfo("cj", "keyboard", "å€‰é ¡è¼¸å…¥æ³•éµç›¤");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -235,7 +238,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("scj");
 								DBSrv.downloadScj();
 	
-								DBSrv.setImInfo("scj", "keyboard", "­Ü¾e¿é¤JªkÁä½L");
+								DBSrv.setImInfo("scj", "keyboard", "å€‰é ¡è¼¸å…¥æ³•éµç›¤");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -265,7 +268,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("cj5");
 								DBSrv.downloadCj5();
 	
-								DBSrv.setImInfo("cj5", "keyboard", "­Ü¾e¿é¤JªkÁä½L");
+								DBSrv.setImInfo("cj5", "keyboard", "å€‰é ¡è¼¸å…¥æ³•éµç›¤");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -295,7 +298,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("ecj");
 								DBSrv.downloadEcj();
 	
-								DBSrv.setImInfo("ecj", "keyboard", "­Ü¾e¿é¤JªkÁä½L");
+								DBSrv.setImInfo("ecj", "keyboard", "å€‰é ¡è¼¸å…¥æ³•éµç›¤");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -325,7 +328,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("ez");
 								DBSrv.downloadEz();
 	
-								DBSrv.setImInfo("ez", "keyboard", "»´ÃP¿é¤JªkÁä½L");
+								DBSrv.setImInfo("ez", "keyboard", "è¼•é¬†è¼¸å…¥æ³•éµç›¤");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -355,7 +358,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("array");
 								DBSrv.downloadArray();
 	
-								DBSrv.setImInfo("array", "keyboard", "¦æ¦C¿é¤JªkÁä½L");
+								DBSrv.setImInfo("array", "keyboard", "è¡Œåˆ—è¼¸å…¥æ³•éµç›¤");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -385,7 +388,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("array10");
 								DBSrv.downloadArray10();
 	
-								DBSrv.setImInfo("array10", "keyboard", "¹q¸Ü¼Æ¦rÁä½L");
+								DBSrv.setImInfo("array10", "keyboard", "é›»è©±æ•¸å­—éµç›¤");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -415,7 +418,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("wb");
 								DBSrv.downloadWb();
 	
-								DBSrv.setImInfo("wb", "keyboard", "­Ü¾e¿é¤JªkÁä½L");
+								DBSrv.setImInfo("wb", "keyboard", "å€‰é ¡è¼¸å…¥æ³•éµç›¤");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -512,8 +515,11 @@ public class LIMEMappingSetting extends Activity {
 		 */
 		@Override
 		protected void onResume() {
-			super.onStart();
+			super.onResume();
 			initialButton();
+			if(mLIMEPref.getParameterBoolean("im_loading") == true){
+				startLoadingWindow();
+			}
 		}
 		
 		
@@ -729,7 +735,7 @@ public class LIMEMappingSetting extends Activity {
 				File rootPath = new File(path);
 				File list[] = rootPath.listFiles();
 
-				Arrays.sort(list, new Comparator() {
+				Arrays.sort(list, new Comparator<Object>() {
 		            public int compare(Object a, Object b) {
 		                File filea = (File)a;
 		                File fileb = (File)b;
