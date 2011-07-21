@@ -160,6 +160,7 @@ public class LIMEMappingSetting extends Activity {
 							}
 				        }else{
 				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				    		mLIMEPref.setParameter("db_finish", true);
 						}
 					}
 				});
@@ -187,6 +188,7 @@ public class LIMEMappingSetting extends Activity {
 							}
 				        }else{
 				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				    		mLIMEPref.setParameter("db_finish", true);
 						}
 
 					}
@@ -217,6 +219,7 @@ public class LIMEMappingSetting extends Activity {
 							}
 				        }else{
 				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				    		mLIMEPref.setParameter("db_finish", true);
 						}
 
 					}
@@ -247,6 +250,7 @@ public class LIMEMappingSetting extends Activity {
 							}
 				        }else{
 				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				    		mLIMEPref.setParameter("db_finish", true);
 						}
 
 					}
@@ -277,6 +281,7 @@ public class LIMEMappingSetting extends Activity {
 							}
 				        }else{
 				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				    		mLIMEPref.setParameter("db_finish", true);
 						}
 
 					}
@@ -307,6 +312,7 @@ public class LIMEMappingSetting extends Activity {
 							}
 				        }else{
 				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				    		mLIMEPref.setParameter("db_finish", true);
 						}
 
 					}
@@ -337,6 +343,7 @@ public class LIMEMappingSetting extends Activity {
 							}
 				        }else{
 				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				    		mLIMEPref.setParameter("db_finish", true);
 						}
 
 					}
@@ -367,6 +374,7 @@ public class LIMEMappingSetting extends Activity {
 							}
 				        }else{
 				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				    		mLIMEPref.setParameter("db_finish", true);
 						}
 
 					}
@@ -397,6 +405,7 @@ public class LIMEMappingSetting extends Activity {
 							}
 				        }else{
 				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				    		mLIMEPref.setParameter("db_finish", true);
 						}
 
 					}
@@ -427,6 +436,7 @@ public class LIMEMappingSetting extends Activity {
 							}
 				        }else{
 				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				    		mLIMEPref.setParameter("db_finish", true);
 						}
 
 					}
