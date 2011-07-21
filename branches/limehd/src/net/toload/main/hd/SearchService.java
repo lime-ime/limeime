@@ -39,6 +39,7 @@ import android.database.Cursor;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
+import android.util.Pair;
 
 public class SearchService extends Service {
 	
@@ -75,7 +76,7 @@ public class SearchService extends Service {
 	private HashMap<String,String> selKeyMap = new HashMap<String,String>();
 	//private HashMap<String,String> endKeyMap = new HashMap<String,String>();
 	
-	private static ConcurrentHashMap<String,List<Mapping>> cache = null;
+	private static ConcurrentHashMap<String,Pair<List<Mapping>,List<Mapping>>> cache = null;
 	private static ConcurrentHashMap<String, List<Mapping>> engcache = null;
 	private static ConcurrentHashMap<String, String> keynamecache = null;
 
@@ -172,7 +173,7 @@ public class SearchService extends Service {
 			// Check if system need to reset cache
 			
 			if(mLIMEPref.getParameterBoolean(LIME.SEARCHSRV_RESET_CACHE)){
-				cache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+				cache = new ConcurrentHashMap<String, Pair<List<Mapping>,List<Mapping>>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 				engcache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 				keynamecache = new ConcurrentHashMap<String, String>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
@@ -194,56 +195,77 @@ public class SearchService extends Service {
 				code = code.trim().toLowerCase();
 				temp.setCode(code);
 				result.add(temp);
+				int size = code.length();
 				
-				if(code.length() == 1){
-					preresultlist = new LinkedList<Mapping>();
-				}
-				//Jeremy '11,6,17 Seperate physical keyboard cache with keybaordtype
-				String cacheKey="";
-				if(isPhysicalKeyboardPressed){	
-					if(tablename.equals("phonetic")){
-						cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()
-									+ mLIMEPref.getPhoneticKeyboardType()+code;
-					}else{
-						cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()+code;
-					}
-				}else{
-					if(tablename.equals("phonetic"))
-						cacheKey = db.getTablename()+ mLIMEPref.getPhoneticKeyboardType()+code;
-					else
-						cacheKey = db.getTablename()+code;
-				}
+//				if(code.length() == 1){
+//					preresultlist = new LinkedList<Mapping>();
+//				}
 				
-			    List<Mapping> cacheTemp = cache.get(cacheKey);
-			    
-			    Log.i("SearchService:query()","cachekey:" + cacheKey ); 
-			    
-				if(cacheTemp != null){
-					result.addAll(cacheTemp);
-					preresultlist = cacheTemp;
-				}else{
-
-					List<Mapping> templist = db.getMapping(code, !isPhysicalKeyboardPressed);
-					if(templist.size() > 0){
-						result.addAll(templist);
-						preresultlist = templist;
-						cache.put(cacheKey, templist);
-					}else{
-						if(code.length() > 3 &&  
-								cache.get(cacheKey.subSequence(0, cacheKey.length()-1)) != null && 
-								cache.get(cacheKey.subSequence(0, cacheKey.length()-2)) != null 
-						){ 
-							result.addAll(preresultlist);
-						}
-					}
+				// 11'7,22 rewritten for 連打 
+				for(int i =0; i<size; i++) {
+					Log.i("SearchService:query()","i="+i+" code="+code);
+					String cacheKey="";
 					
+					//Jeremy '11,6,17 Seperate physical keyboard cache with keybaordtype
+					if(isPhysicalKeyboardPressed){	
+						if(tablename.equals("phonetic")){
+							cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()
+							+ mLIMEPref.getPhoneticKeyboardType()+code;
+						}else{
+							cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()+code;
+						}
+					}else{
+						if(tablename.equals("phonetic"))
+							cacheKey = db.getTablename()+ mLIMEPref.getPhoneticKeyboardType()+code;
+						else
+							cacheKey = db.getTablename()+code;
+					}
+
+					Pair<List<Mapping>,List<Mapping>> cacheTemp = cache.get(cacheKey);
+
+					Log.i("SearchService:query()","cachekey:" + cacheKey ); 
+
+					if(cacheTemp != null){
+						List<Mapping> resultlist = cacheTemp.first;
+						List<Mapping> relatedtlist = cacheTemp.second;
+						if(resultlist.size()>0) 
+							result.addAll(resultlist);
+						if(i==0 && relatedtlist.size()>0) 
+							result.addAll(relatedtlist);
+
+						//preresultlist = resultlist;
+					}else{
+
+						Pair<List<Mapping>,List<Mapping>> resultPair = db.getMapping(code, !isPhysicalKeyboardPressed);
+						List<Mapping> resultlist = resultPair.first;
+						List<Mapping> relatedtlist = resultPair.second;
+
+						if(resultlist.size() + relatedtlist.size()  > 0){
+							cache.put(cacheKey, resultPair);
+							if(resultlist.size()>0) 
+								result.addAll(resultlist);
+							if(i==0 && relatedtlist.size()>0) 
+								result.addAll(relatedtlist);
+							//preresultlist = resultlist;
+						
+						}
+//						}else{
+//							if(code.length() > 3 &&  
+//									cache.get(cacheKey.subSequence(0, cacheKey.length()-1)) != null && 
+//									cache.get(cacheKey.subSequence(0, cacheKey.length()-2)) != null 
+//							){ 
+//								result.addAll(preresultlist);
+//							}
+//						}
+					}
+					code= code.substring(0,code.length()-1);
 				}
 			}
 			return result;
 		}
 
 		public void initial() throws RemoteException {
-			cache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+			cache = new ConcurrentHashMap<String, Pair<List<Mapping>,List<Mapping>>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 			engcache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 			keynamecache = new ConcurrentHashMap<String, String>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 		}

@@ -37,6 +37,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+import android.util.Pair;
 
 /**
  * @author Art Hung
@@ -198,6 +199,8 @@ public class LimeDB extends SQLiteOpenHelper {
 
 	// Db loading thread.
 	private Thread thread = null;
+	
+
 
 	public boolean isFinish() {
 		return this.finish;
@@ -1058,9 +1061,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	/*
 	 * Retrieve matched records
 	 */
-	public List<Mapping> getMappingSimiliar(String code) {
+	public Pair<List<Mapping>,List<Mapping>> getMappingSimiliar(String code) {
 
-		List<Mapping> result = new LinkedList<Mapping>();
+		Pair<List<Mapping>,List<Mapping>> result = null;
 		
 		if(mLIMEPref.getSimilarCodeCandidates() > 0){
 			//HashSet<String> wordlist = new HashSet<String>();
@@ -1109,12 +1112,12 @@ public class LimeDB extends SQLiteOpenHelper {
 	/*
 	 * Retrieve matched records
 	 */
-	public List<Mapping> getMapping(String code, boolean softKeyboard) {
+	public Pair<List<Mapping>,List<Mapping>> getMapping(String code, boolean softKeyboard) {
 
 		// Add by Jeremy '10, 3, 27. Extension on multi table query.
 		lastCode = code;
 		lastValidDualCodeList = null; // reset the lastValidDualCodeList
-		List<Mapping> result = new LinkedList<Mapping>();
+		Pair<List<Mapping>,List<Mapping>> result = null;
 		
 		isPhysicalKeyboardPressed = !softKeyboard;
 
@@ -1547,11 +1550,12 @@ public class LimeDB extends SQLiteOpenHelper {
 	/*
 	 * Process search results
 	 */
-	private List<Mapping> buildQueryResult(String query_code, Cursor cursor) {
+	private Pair<List<Mapping>,List<Mapping>> buildQueryResult(String query_code, Cursor cursor) {
 		
-		//if(DEBUG)
-			Log.i("LimDB.buildQueryResult()"," quiery_code:" + query_code);
+		
 		List<Mapping> result = new ArrayList<Mapping>();
+		List<Mapping> relatedresult = new ArrayList<Mapping>();
+		Pair<List<Mapping>,List<Mapping>> resultPair = new Pair<List<Mapping>,List<Mapping>>(result, relatedresult);
 		if (cursor.moveToFirst()) {
 
 			//String relatedlist = null;
@@ -1623,7 +1627,7 @@ public class LimeDB extends SQLiteOpenHelper {
 							//Jeremy '11,6,18 skip if word is empty
 							if(munit.getWord() == null || munit.getWord().trim().equals(""))
 								continue;
-							result.add(munit);
+							relatedresult.add(munit);
 							duplicateCheck.put(unit, unit);
 							scount++;
 						}
@@ -1631,7 +1635,10 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}
 		}
-		return result;
+		//if(DEBUG)
+		Log.i("LimDB.buildQueryResult()"," quiery_code:" + query_code + " result.size=" + result.size()
+				+ " relatedlist.size=" + relatedresult.size());
+		return resultPair;
 	}
 
 	/**
