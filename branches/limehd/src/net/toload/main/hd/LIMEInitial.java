@@ -117,7 +117,7 @@ public class LIMEInitial extends Activity {
 						    						mLIMEPref.setParameter("dbtarget","device");
 						    						btnStoreDevice.setEnabled(false);
 						    						btnStoreSdcard.setEnabled(true);
-
+						    						mLIMEPref.setParameter("db_finish", false);
 						    						btnStoreDevice.setText(getText(R.string.l3_initial_btn_store_device));
 						    						btnStoreSdcard.setText(getText(R.string.l3_initial_btn_store_sdcard));
 							    				} catch (RemoteException e) {
@@ -168,6 +168,7 @@ public class LIMEInitial extends Activity {
 
 						// Reset for SearchSrv
 						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+						mLIMEPref.setParameter("db_finish", false);
 						
 					} catch (RemoteException e) {
 						mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
@@ -202,6 +203,7 @@ public class LIMEInitial extends Activity {
 
 						// Reset for SearchSrv
 						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+						mLIMEPref.setParameter("db_finish", false);
 						
 					} catch (RemoteException e) {
 						mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);

@@ -208,7 +208,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("cj");
 								DBSrv.downloadCj();
 	
-								DBSrv.setImInfo("cj", "keyboard", "å€‰é ¡è¼¸å…¥æ³•éµç›¤");
+								DBSrv.setImInfo("cj", "keyboard",  "­Ü¾e¿é¤JªkÁä½L");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -238,7 +238,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("scj");
 								DBSrv.downloadScj();
 	
-								DBSrv.setImInfo("scj", "keyboard", "å€‰é ¡è¼¸å…¥æ³•éµç›¤");
+								DBSrv.setImInfo("scj", "keyboard",  "­Ü¾e¿é¤JªkÁä½L");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -268,7 +268,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("cj5");
 								DBSrv.downloadCj5();
 	
-								DBSrv.setImInfo("cj5", "keyboard", "å€‰é ¡è¼¸å…¥æ³•éµç›¤");
+								DBSrv.setImInfo("cj5", "keyboard",  "­Ü¾e¿é¤JªkÁä½L");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -298,7 +298,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("ecj");
 								DBSrv.downloadEcj();
 	
-								DBSrv.setImInfo("ecj", "keyboard", "å€‰é ¡è¼¸å…¥æ³•éµç›¤");
+								DBSrv.setImInfo("ecj", "keyboard",  "­Ü¾e¿é¤JªkÁä½L");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -328,7 +328,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("ez");
 								DBSrv.downloadEz();
 	
-								DBSrv.setImInfo("ez", "keyboard", "è¼•é¬†è¼¸å…¥æ³•éµç›¤");
+								DBSrv.setImInfo("ez", "keyboard",  "»´ÃP¿é¤JªkÁä½L");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -358,7 +358,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("array");
 								DBSrv.downloadArray();
 	
-								DBSrv.setImInfo("array", "keyboard", "è¡Œåˆ—è¼¸å…¥æ³•éµç›¤");
+								DBSrv.setImInfo("array", "keyboard", "¦æ¦C¿é¤JªkÁä½L");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -388,7 +388,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("array10");
 								DBSrv.downloadArray10();
 	
-								DBSrv.setImInfo("array10", "keyboard", "é›»è©±æ•¸å­—éµç›¤");
+								DBSrv.setImInfo("array10", "keyboard",  "¹q¸Ü¼Æ¦rÁä½L");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -418,7 +418,7 @@ public class LIMEMappingSetting extends Activity {
 	    						DBSrv.resetMapping("wb");
 								DBSrv.downloadWb();
 	
-								DBSrv.setImInfo("wb", "keyboard", "å€‰é ¡è¼¸å…¥æ³•éµç›¤");
+								DBSrv.setImInfo("wb", "keyboard", "¤­µ§¿é¤JªkÁä½L");
 								
 								mLIMEPref.setParameter("im_loading", true);
 								mLIMEPref.setParameter("im_loading_table", imtype);
