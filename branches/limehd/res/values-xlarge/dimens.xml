@@ -29,5 +29,6 @@
     <dimen name="keyboard_bottom_padding">0.06in</dimen>
     <dimen name="key_text_size">36dip</dimen>
     <dimen name="label_text_size">30dip</dimen>
-     <dimen name="composing_text_size">24sp</dimen>
+    <dimen name="composing_text_size">24sp</dimen>
+    <dimen name="notice_text_size">20sp</dimen>
 </resources>

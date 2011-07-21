@@ -30,4 +30,5 @@
     <dimen name="key_text_size">22dip</dimen>
     <dimen name="label_text_size">16dip</dimen>
     <dimen name="composing_text_size">18sp</dimen>
+    <dimen name="notice_text_size">18sp</dimen>
 </resources>
