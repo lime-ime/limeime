@@ -263,7 +263,7 @@ public class LIMEMappingSetting extends Activity {
 								hasSelectFile = true;
 								resetLabelInfo();
 	    						DBSrv.resetMapping("cj5");
-								DBSrv.downloadScj();
+								DBSrv.downloadCj5();
 	
 								DBSrv.setImInfo("cj5", "keyboard", "­Ü¾e¿é¤JªkÁä½L");
 								
@@ -293,7 +293,7 @@ public class LIMEMappingSetting extends Activity {
 								hasSelectFile = true;
 								resetLabelInfo();
 	    						DBSrv.resetMapping("ecj");
-								DBSrv.downloadScj();
+								DBSrv.downloadEcj();
 	
 								DBSrv.setImInfo("ecj", "keyboard", "­Ü¾e¿é¤JªkÁä½L");
 								
