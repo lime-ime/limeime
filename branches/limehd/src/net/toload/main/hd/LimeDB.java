@@ -1774,7 +1774,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 				SQLiteDatabase db = getSqliteDb(false);
 				db.beginTransaction();
-
+				int percent;  //Jeremy '11,7.24
 				try {
 					// Prepare Source File
 					long fileLength = filename.length();
@@ -1787,8 +1787,8 @@ public class LimeDB extends SQLiteOpenHelper {
 					//String precode = "";
 					
 					while ((line = buf.readLine()) != null) {
-						processedLength += line.length();
-						int percent = (int) ((float)processedLength/(float)fileLength *100);
+						processedLength += line.getBytes().length + 2; // +2 for the eol mark.
+						percent = (int) ((float)processedLength/(float)fileLength *50);
 						if(DEBUG)
 							Log.i("LimeDB:loadFile()", percent +"% precessed" 
 									+ "processedLength:" + processedLength + " fileLength:" + fileLength);
@@ -1968,8 +1968,13 @@ public class LimeDB extends SQLiteOpenHelper {
 				db = getSqliteDb(false);
 				db.beginTransaction();
 				try{
+					long entrySize = hm.size();
+					long i = 0;
 					for(Entry<String, String> entry: hm.entrySet())
 			        {
+						percent = (int) ((float)(i++)/(float)entrySize *50 +50);
+						mLIMEPref.setParameter("im_loading_table_percent", (percent>99)?99:percent);
+						
 						if(!entry.getValue().contains("|"))  // does not have related words; only has exact mappings
 							continue;
 						try{
@@ -2006,6 +2011,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					setImInfo(table, "source", "Failed!!!");
 					e.printStackTrace();
 				} finally {
+					mLIMEPref.setParameter("im_loading_table_percent", 100);
 					db.setTransactionSuccessful();
 					db.endTransaction();
 					db.close();

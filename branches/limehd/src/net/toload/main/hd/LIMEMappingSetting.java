@@ -40,6 +40,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.view.LayoutInflater;
@@ -99,6 +100,7 @@ public class LIMEMappingSetting extends Activity {
 		private AlertDialog mOptionsDialog;
 		
 		Context ctx;
+		
 		
 		/** Called when the activity is first created. */
 		@Override
@@ -303,7 +305,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("cj");
 	    								DBSrv.downloadCj();
 	    	
-	    								DBSrv.setImInfo("cj", "keyboard",  "­Ü¾e¿é¤JªkÁä½L");
+	    								DBSrv.setImInfo("cj", "keyboard",  "ï¿½Ü¾eï¿½ï¿½Jï¿½kï¿½ï¿½L");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -352,7 +354,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("scj");
 	    								DBSrv.downloadScj();
 	    	
-	    								DBSrv.setImInfo("scj", "keyboard",  "­Ü¾e¿é¤JªkÁä½L");
+	    								DBSrv.setImInfo("scj", "keyboard",  "ï¿½Ü¾eï¿½ï¿½Jï¿½kï¿½ï¿½L");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -401,7 +403,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("cj5");
 	    								DBSrv.downloadCj5();
 	    	
-	    								DBSrv.setImInfo("cj5", "keyboard",  "­Ü¾e¿é¤JªkÁä½L");
+	    								DBSrv.setImInfo("cj5", "keyboard",  "ï¿½Ü¾eï¿½ï¿½Jï¿½kï¿½ï¿½L");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -451,7 +453,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("ecj");
 	    								DBSrv.downloadEcj();
 	    	
-	    								DBSrv.setImInfo("ecj", "keyboard",  "­Ü¾e¿é¤JªkÁä½L");
+	    								DBSrv.setImInfo("ecj", "keyboard",  "ï¿½Ü¾eï¿½ï¿½Jï¿½kï¿½ï¿½L");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -501,7 +503,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("ez");
 	    								DBSrv.downloadEz();
 	    	
-	    								DBSrv.setImInfo("ez", "keyboard",  "»´ÃP¿é¤JªkÁä½L");
+	    								DBSrv.setImInfo("ez", "keyboard",  "ï¿½ï¿½ï¿½Pï¿½ï¿½Jï¿½kï¿½ï¿½L");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -550,7 +552,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("array");
 	    								DBSrv.downloadArray();
 	    	
-	    								DBSrv.setImInfo("array", "keyboard", "¦æ¦C¿é¤JªkÁä½L");
+	    								DBSrv.setImInfo("array", "keyboard", "ï¿½ï¿½Cï¿½ï¿½Jï¿½kï¿½ï¿½L");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -600,7 +602,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("array10");
 	    								DBSrv.downloadArray10();
 	    	
-	    								DBSrv.setImInfo("array10", "keyboard",  "¹q¸Ü¼Æ¦rÁä½L");
+	    								DBSrv.setImInfo("array10", "keyboard",  "ï¿½qï¿½Ü¼Æ¦rï¿½ï¿½L");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -649,7 +651,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("wb");
 	    								DBSrv.downloadWb();
 	    	
-	    								DBSrv.setImInfo("wb", "keyboard", "¤­µ§¿é¤JªkÁä½L");
+	    								DBSrv.setImInfo("wb", "keyboard", "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Jï¿½kï¿½ï¿½L");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -765,6 +767,11 @@ public class LIMEMappingSetting extends Activity {
 			if(mLIMEPref.getParameterBoolean("im_loading") == true){
 				startLoadingWindow();
 			}
+			if(DBSrv!= null){
+				updateLabelInfo();
+			}
+			
+			
 		}
 		
 		
