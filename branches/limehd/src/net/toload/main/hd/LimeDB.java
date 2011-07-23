@@ -331,7 +331,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				
 				boolean hasNewTable = false;
 				try{
-					int count = db.query("cj5", null, null, null, null, null, null, null).getCount();
+					//int count = db.query("cj5", null, null, null, null, null, null, null).getCount();
 					 hasNewTable = true;
 				}catch(Exception e){}
 				
@@ -1777,6 +1777,8 @@ public class LimeDB extends SQLiteOpenHelper {
 
 				try {
 					// Prepare Source File
+					long fileLength = filename.length();
+					long processedLength = 0;
 					FileReader fr = new FileReader(filename);
 					BufferedReader buf = new BufferedReader(fr);
 					boolean firstline = true;
@@ -1785,7 +1787,12 @@ public class LimeDB extends SQLiteOpenHelper {
 					//String precode = "";
 					
 					while ((line = buf.readLine()) != null) {
-
+						processedLength += line.length();
+						int percent = (int) ((float)processedLength/(float)fileLength *100);
+						if(DEBUG)
+							Log.i("LimeDB:loadFile()", percent +"% precessed" 
+									+ "processedLength:" + processedLength + " fileLength:" + fileLength);
+						mLIMEPref.setParameter("im_loading_table_percent", (percent>99)?99:percent);
 						/*
 						 * If source is cin format start from the tag %chardef
 						 * begin until %chardef end

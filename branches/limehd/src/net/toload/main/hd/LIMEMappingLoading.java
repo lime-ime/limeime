@@ -20,43 +20,13 @@
 
 package net.toload.main.hd;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-
-import net.toload.main.hd.IDBService;
-import net.toload.main.hd.ISearchService;
 import net.toload.main.hd.R;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.net.ConnectivityManager;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.os.RemoteException;
+import android.os.Handler;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.View.OnTouchListener;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.AdapterView.OnItemClickListener;
 
 /**
  * 
@@ -67,6 +37,15 @@ import android.widget.AdapterView.OnItemClickListener;
 public class LIMEMappingLoading extends Activity {
 
 	private LIMEPreferenceManager mLIMEPref = null;
+	TextView txtLoadingStatus = null;
+    final Handler mHandler = new Handler();
+    // Create runnable for posting
+    final Runnable mUpdateUI = new Runnable() {
+        public void run() {
+        	txtLoadingStatus.setText( mLIMEPref.getParameterInt("im_loading_table_percent") + "%");
+        }
+    };
+
 	
 	/** Called when the activity is first created. */
 	@Override
@@ -74,13 +53,15 @@ public class LIMEMappingLoading extends Activity {
 		super.onCreate(icicle);
 		this.setContentView(R.layout.progress);
 		mLIMEPref = new LIMEPreferenceManager(this);
+		txtLoadingStatus = (TextView) findViewById(R.id.txtLoadingStatus);
+		
 	}
 
 	@Override
 	protected void onResume() {
-		// TODO Auto-generated method stub
-		super.onResume();
 
+		super.onResume();
+		
 		mLIMEPref.setParameter("db_finish", false);
 		
 		Thread thread = new Thread() {
@@ -88,6 +69,8 @@ public class LIMEMappingLoading extends Activity {
 				
 				do{
 					if(!mLIMEPref.getParameterBoolean("db_finish")){
+						mHandler.post(mUpdateUI);
+
 						try {
 							Thread.sleep(1000);
 						} catch (InterruptedException e) {
@@ -101,6 +84,15 @@ public class LIMEMappingLoading extends Activity {
 			}
 		};
 		thread.start();
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if ((keyCode == KeyEvent.KEYCODE_BACK)) {
+	        return true;
+	    }
+
+		return super.onKeyDown(keyCode, event);
 	}
 
 	
