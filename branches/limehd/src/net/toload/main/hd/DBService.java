@@ -470,6 +470,25 @@ public class DBService extends Service {
 			threadTask.start();
 		}
 
+
+		@Override
+		public void downloadPhoneticAdv() throws RemoteException {
+			Thread threadTask = new Thread() {
+				public void run() {
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_adv_start)+ "");
+					downloadedFile = downloadRemoteFile(LIME.PHONETICADV_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETICADV);
+					displayNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_adv_install)+ "");
+					try {
+						loadMapping(downloadedFile.getAbsolutePath(), "phonetic");
+					} catch (RemoteException e) {
+						e.printStackTrace();
+						displayNotificationMessage("Download failed, please check your internet connection.");
+					}
+				}
+			};
+			threadTask.start();
+		}
+		
 		@Override
 		public void downloadPhonetic() throws RemoteException {
 			Thread threadTask = new Thread() {

@@ -87,6 +87,7 @@ public class LIMEMappingSetting extends Activity {
 		private LinearLayout kbLinearLayout;
 		
 		LinearLayout extendLayout = null;
+		LinearLayout extendLayout2 = null;
 		Button extendButton = null;
 		
 		private String imtype = null;
@@ -97,6 +98,8 @@ public class LIMEMappingSetting extends Activity {
 		
 		private AlertDialog mOptionsDialog;
 		
+		Context ctx;
+		
 		/** Called when the activity is first created. */
 		@Override
 		public void onCreate(Bundle icicle) {
@@ -104,6 +107,7 @@ public class LIMEMappingSetting extends Activity {
 			super.onCreate(icicle);
 			this.setContentView(R.layout.kbsetting);
 
+			ctx = this;
 
 			// Startup Service
 			getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
@@ -136,6 +140,8 @@ public class LIMEMappingSetting extends Activity {
 			// Setup Extended Button
 
 			extendLayout = (LinearLayout) findViewById(R.id.extendLayout);
+			extendLayout2 = (LinearLayout) findViewById(R.id.extendLayout2);
+			
 			if(imtype != null && imtype.equals("dayi")){
 				Button extendButton = new Button(this);
 				extendButton.setText(getResources().getString(R.string.l3_im_download_from_dayi));
@@ -143,25 +149,41 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						startLoadingWindow();
 						
-						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
-							try {
-								hasSelectFile = true;
-								resetLabelInfo();
-	    						DBSrv.resetMapping("dayi");
-								DBSrv.downloadDayi();
-								mLIMEPref.setParameter("im_loading", true);
-								mLIMEPref.setParameter("im_loading_table", imtype);
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+	    						startLoadingWindow();
+	     						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								hasSelectFile = true;
+	    								resetLabelInfo();
+	    	    						DBSrv.resetMapping("dayi");
+	    								DBSrv.downloadDayi();
+	    								mLIMEPref.setParameter("im_loading", true);
+	    								mLIMEPref.setParameter("im_loading_table", imtype);
 
-								
-							} catch (RemoteException e) {
-								e.printStackTrace();
-							}
-				        }else{
-				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-				    		mLIMEPref.setParameter("db_finish", true);
-						}
+	    								
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText( ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    		mLIMEPref.setParameter("db_finish", true);
+	    						}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
 					}
 				});
 				
@@ -172,24 +194,88 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						startLoadingWindow();
 						
-						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
-							try {
-								hasSelectFile = true;
-								resetLabelInfo();
-	    						DBSrv.resetMapping("phonetic");
-								DBSrv.downloadPhonetic();
-	
-								mLIMEPref.setParameter("im_loading", true);
-								mLIMEPref.setParameter("im_loading_table", imtype);
-							} catch (RemoteException e) {
-								e.printStackTrace();
-							}
-				        }else{
-				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-				    		mLIMEPref.setParameter("db_finish", true);
-						}
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+	    						startLoadingWindow();
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								hasSelectFile = true;
+	    								resetLabelInfo();
+	    	    						DBSrv.resetMapping("phonetic");
+	    								DBSrv.downloadPhonetic();
+	    	
+	    								mLIMEPref.setParameter("im_loading", true);
+	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    		mLIMEPref.setParameter("db_finish", true);
+	    						}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
+
+					}
+				});
+				
+				Button extendButton2 = new Button(this);
+				extendButton2.setText(getResources().getString(R.string.l3_im_download_from_phonetic_adv));
+				extendLayout2.addView(extendButton2);
+
+				extendButton2.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+
+								
+	    						startLoadingWindow();
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								Toast.makeText(ctx, getText(R.string.l3_im_download_from_phonetic_adv_warning), Toast.LENGTH_SHORT).show();
+		    				    		
+	    								hasSelectFile = true;
+	    								resetLabelInfo();
+	    	    						DBSrv.resetMapping("phonetic");
+	    								DBSrv.downloadPhoneticAdv();
+	    	
+	    								mLIMEPref.setParameter("im_loading", true);
+	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    		mLIMEPref.setParameter("db_finish", true);
+	    						}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
 
 					}
 				});
@@ -201,26 +287,44 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						startLoadingWindow();
 						
-						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
-							try {
-								hasSelectFile = true;
-								resetLabelInfo();
-	    						DBSrv.resetMapping("cj");
-								DBSrv.downloadCj();
-	
-								DBSrv.setImInfo("cj", "keyboard",  "倉頡輸入法鍵盤");
-								
-								mLIMEPref.setParameter("im_loading", true);
-								mLIMEPref.setParameter("im_loading_table", imtype);
-							} catch (RemoteException e) {
-								e.printStackTrace();
-							}
-				        }else{
-				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-				    		mLIMEPref.setParameter("db_finish", true);
-						}
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+
+	    						startLoadingWindow();
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								hasSelectFile = true;
+	    								resetLabelInfo();
+	    	    						DBSrv.resetMapping("cj");
+	    								DBSrv.downloadCj();
+	    	
+	    								DBSrv.setImInfo("cj", "keyboard",  "倉頡輸入法鍵盤");
+	    								
+	    								mLIMEPref.setParameter("im_loading", true);
+	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    		mLIMEPref.setParameter("db_finish", true);
+	    						}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
 
 					}
 				});
@@ -232,26 +336,44 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						startLoadingWindow();
 						
-						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
-							try {
-								hasSelectFile = true;
-								resetLabelInfo();
-	    						DBSrv.resetMapping("scj");
-								DBSrv.downloadScj();
-	
-								DBSrv.setImInfo("scj", "keyboard",  "倉頡輸入法鍵盤");
-								
-								mLIMEPref.setParameter("im_loading", true);
-								mLIMEPref.setParameter("im_loading_table", imtype);
-							} catch (RemoteException e) {
-								e.printStackTrace();
-							}
-				        }else{
-				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-				    		mLIMEPref.setParameter("db_finish", true);
-						}
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+
+	    						startLoadingWindow();
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								hasSelectFile = true;
+	    								resetLabelInfo();
+	    	    						DBSrv.resetMapping("scj");
+	    								DBSrv.downloadScj();
+	    	
+	    								DBSrv.setImInfo("scj", "keyboard",  "倉頡輸入法鍵盤");
+	    								
+	    								mLIMEPref.setParameter("im_loading", true);
+	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    		mLIMEPref.setParameter("db_finish", true);
+	    						}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
 
 					}
 				});
@@ -263,26 +385,44 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						startLoadingWindow();
 						
-						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
-							try {
-								hasSelectFile = true;
-								resetLabelInfo();
-	    						DBSrv.resetMapping("cj5");
-								DBSrv.downloadCj5();
-	
-								DBSrv.setImInfo("cj5", "keyboard",  "倉頡輸入法鍵盤");
-								
-								mLIMEPref.setParameter("im_loading", true);
-								mLIMEPref.setParameter("im_loading_table", imtype);
-							} catch (RemoteException e) {
-								e.printStackTrace();
-							}
-				        }else{
-				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-				    		mLIMEPref.setParameter("db_finish", true);
-						}
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+
+	    						startLoadingWindow();
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								hasSelectFile = true;
+	    								resetLabelInfo();
+	    	    						DBSrv.resetMapping("cj5");
+	    								DBSrv.downloadCj5();
+	    	
+	    								DBSrv.setImInfo("cj5", "keyboard",  "倉頡輸入法鍵盤");
+	    								
+	    								mLIMEPref.setParameter("im_loading", true);
+	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    		mLIMEPref.setParameter("db_finish", true);
+	    						}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
 
 					}
 				});
@@ -294,26 +434,45 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						startLoadingWindow();
 						
-						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
-							try {
-								hasSelectFile = true;
-								resetLabelInfo();
-	    						DBSrv.resetMapping("ecj");
-								DBSrv.downloadEcj();
-	
-								DBSrv.setImInfo("ecj", "keyboard",  "倉頡輸入法鍵盤");
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+
 								
-								mLIMEPref.setParameter("im_loading", true);
-								mLIMEPref.setParameter("im_loading_table", imtype);
-							} catch (RemoteException e) {
-								e.printStackTrace();
-							}
-				        }else{
-				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-				    		mLIMEPref.setParameter("db_finish", true);
-						}
+	    						startLoadingWindow();
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								hasSelectFile = true;
+	    								resetLabelInfo();
+	    	    						DBSrv.resetMapping("ecj");
+	    								DBSrv.downloadEcj();
+	    	
+	    								DBSrv.setImInfo("ecj", "keyboard",  "倉頡輸入法鍵盤");
+	    								
+	    								mLIMEPref.setParameter("im_loading", true);
+	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    		mLIMEPref.setParameter("db_finish", true);
+	    						}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
 
 					}
 				});
@@ -325,26 +484,45 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						startLoadingWindow();
 						
-						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
-							try {
-								hasSelectFile = true;
-								resetLabelInfo();
-	    						DBSrv.resetMapping("ez");
-								DBSrv.downloadEz();
-	
-								DBSrv.setImInfo("ez", "keyboard",  "輕鬆輸入法鍵盤");
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+
 								
-								mLIMEPref.setParameter("im_loading", true);
-								mLIMEPref.setParameter("im_loading_table", imtype);
-							} catch (RemoteException e) {
-								e.printStackTrace();
-							}
-				        }else{
-				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-				    		mLIMEPref.setParameter("db_finish", true);
-						}
+	    						startLoadingWindow();
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								hasSelectFile = true;
+	    								resetLabelInfo();
+	    	    						DBSrv.resetMapping("ez");
+	    								DBSrv.downloadEz();
+	    	
+	    								DBSrv.setImInfo("ez", "keyboard",  "輕鬆輸入法鍵盤");
+	    								
+	    								mLIMEPref.setParameter("im_loading", true);
+	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    		mLIMEPref.setParameter("db_finish", true);
+	    						}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
 
 					}
 				});
@@ -356,26 +534,45 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						startLoadingWindow();
 						
-						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
-						try {
-								hasSelectFile = true;
-								resetLabelInfo();
-	    						DBSrv.resetMapping("array");
-								DBSrv.downloadArray();
-	
-								DBSrv.setImInfo("array", "keyboard", "行列輸入法鍵盤");
-								
-								mLIMEPref.setParameter("im_loading", true);
-								mLIMEPref.setParameter("im_loading_table", imtype);
-							} catch (RemoteException e) {
-								e.printStackTrace();
-							}
-				        }else{
-				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-				    		mLIMEPref.setParameter("db_finish", true);
-						}
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+	     						
+	    						startLoadingWindow();
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    						try {
+	    								hasSelectFile = true;
+	    								resetLabelInfo();
+	    	    						DBSrv.resetMapping("array");
+	    								DBSrv.downloadArray();
+	    	
+	    								DBSrv.setImInfo("array", "keyboard", "行列輸入法鍵盤");
+	    								
+	    								mLIMEPref.setParameter("im_loading", true);
+	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    		mLIMEPref.setParameter("db_finish", true);
+	    						}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
+							
 
 					}
 				});
@@ -387,26 +584,46 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						startLoadingWindow();
 						
-						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
-							try {
-								hasSelectFile = true;
-								resetLabelInfo();
-	    						DBSrv.resetMapping("array10");
-								DBSrv.downloadArray10();
-	
-								DBSrv.setImInfo("array10", "keyboard",  "電話數字鍵盤");
-								
-								mLIMEPref.setParameter("im_loading", true);
-								mLIMEPref.setParameter("im_loading_table", imtype);
-							} catch (RemoteException e) {
-								e.printStackTrace();
-							}
-				        }else{
-				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-				    		mLIMEPref.setParameter("db_finish", true);
-						}
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+	     						
+	    						startLoadingWindow();
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								hasSelectFile = true;
+	    								resetLabelInfo();
+	    	    						DBSrv.resetMapping("array10");
+	    								DBSrv.downloadArray10();
+	    	
+	    								DBSrv.setImInfo("array10", "keyboard",  "電話數字鍵盤");
+	    								
+	    								mLIMEPref.setParameter("im_loading", true);
+	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    		mLIMEPref.setParameter("db_finish", true);
+	    						}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
+									
+							
 
 					}
 				});
@@ -418,26 +635,44 @@ public class LIMEMappingSetting extends Activity {
 
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						startLoadingWindow();
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+	     						startLoadingWindow();
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								hasSelectFile = true;
+	    								resetLabelInfo();
+	    	    						DBSrv.resetMapping("wb");
+	    								DBSrv.downloadWb();
+	    	
+	    								DBSrv.setImInfo("wb", "keyboard", "五筆輸入法鍵盤");
+	    								
+	    								mLIMEPref.setParameter("im_loading", true);
+	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    		mLIMEPref.setParameter("db_finish", true);
+	    						}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
 						
-						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
-							try {
-								hasSelectFile = true;
-								resetLabelInfo();
-	    						DBSrv.resetMapping("wb");
-								DBSrv.downloadWb();
-	
-								DBSrv.setImInfo("wb", "keyboard", "五筆輸入法鍵盤");
-								
-								mLIMEPref.setParameter("im_loading", true);
-								mLIMEPref.setParameter("im_loading_table", imtype);
-							} catch (RemoteException e) {
-								e.printStackTrace();
-							}
-				        }else{
-				        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-				    		mLIMEPref.setParameter("db_finish", true);
-						}
+									
+						
 
 					}
 				});

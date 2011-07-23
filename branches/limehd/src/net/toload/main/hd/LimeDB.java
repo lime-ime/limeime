@@ -2011,7 +2011,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					setImInfo(table, "import", new Date().toLocaleString());
 
 					// If user download from LIME Default IM SET then fill in related information
-					if(filename.getName().equals("phonetic.lime")){
+					if(filename.getName().equals("phonetic.lime") || filename.getName().equals("phonetic_adv.lime")){
 						setImInfo("phonetic", "selkey", "123456789");
 						setImInfo("phonetic", "endkey", "3467'[]\\=<>?:\"{}|~!@#$%^&*()_+");
 						setImInfo("phonetic", "imkeys", ",-./0123456789;abcdefghijklmnopqrstuvwxyz'[]\\=<>?:\"{}|~!@#$%^&*()_+");

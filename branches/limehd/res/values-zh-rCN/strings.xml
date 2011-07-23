@@ -340,6 +340,7 @@
     <string name="l3_tab_manage">输入法管理</string>
     <string name="l3_manage_default">自建</string>
     <string name="l3_manage_phonetic">注音</string>
+    <string name="l3_manage_phonetic_adv">注音连打</string>
     <string name="l3_manage_cj">仓颉</string>
     <string name="l3_manage_cj5">仓颉五</string>
     <string name="l3_manage_ecj">速成</string>
@@ -360,6 +361,7 @@
     
     <string name="l3_message_database_reset_confirm">您是否要移除数据库?</string>
     <string name="l3_message_table_reset_confirm">您是否要清除所有记录?</string>
+    <string name="l3_message_table_download_confirm">您是否要下载字根档?</string>
     <string name="l3_initial_download_database">下载数据库</string>
     <string name="l3_initial_download_failed">数据转换错误, 请重置数据库再重新下载!</string>
     <string name="l3_initial_backup_database">备份数据库</string>
@@ -393,6 +395,12 @@
     <string name="l3_im_download_from_phonetic">下载并安装 OpenVanilla 注音字根</string>
     <string name="l3_im_download_from_phonetic_start">开始下载 OpenVanilla 注音字根</string>
     <string name="l3_im_download_from_phonetic_install">开始安装 OpenVanilla 注音字根</string>
+    
+    <string name="l3_im_download_from_phonetic_adv">下载并安装注音连打字根</string>
+    <string name="l3_im_download_from_phonetic_adv_start">开始下载注音连打字根</string>
+    <string name="l3_im_download_from_phonetic_adv_install">开始安装注音连打字根</string>
+    <string name="l3_im_download_from_phonetic_adv_warning">档案容量较大系统会需要比较长的时间进行资料汇入</string>
+    
     
     <string name="l3_im_download_from_cj">下载并安装仓颉字根</string>
     <string name="l3_im_download_from_cj_start">开始下载仓颉字根</string>

@@ -7,6 +7,7 @@ interface IDBService
 	void resetDownloadDatabase();
 	void downloadDayi();
 	void downloadPhonetic();
+	void downloadPhoneticAdv();
 	void downloadCj();
 	void downloadScj();
 	void downloadCj5();

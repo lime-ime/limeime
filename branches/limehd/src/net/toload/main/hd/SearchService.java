@@ -201,7 +201,7 @@ public class SearchService extends Service {
 //					preresultlist = new LinkedList<Mapping>();
 //				}
 				
-				// 11'7,22 rewritten for 連打 
+				// 11'7,22 rewritten for ��� 
 				for(int i =0; i<size; i++) {
 					//Log.i("SearchService:query()","i="+i+" code="+code);
 					String cacheKey="";
