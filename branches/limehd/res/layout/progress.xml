@@ -5,6 +5,6 @@
   android:layout_height="fill_parent" android:padding="10dip" android:orientation="vertical">
     <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:textAppearance="?android:attr/textAppearanceLarge" android:gravity="center" android:layout_gravity="center" android:id="@+id/txtLoadingStatus" android:text="@string/lime_loading" android:padding="5dip"></TextView>
     <ProgressBar android:id="@+id/progressBar1" style="?android:attr/progressBarStyleLarge" android:layout_gravity="center" android:padding="10dip" android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_marginLeft="30dip" android:layout_marginRight="30dip"></ProgressBar>
-    <Button android:text="@string/lime_loading_cancel" android:id="@+id/btn_cancel" android:layout_width="match_parent" android:layout_height="wrap_content" ></Button>
+    <Button android:text="@string/lime_loading_cancel" android:id="@+id/btn_cancel" android:layout_width="fill_parent" android:layout_height="wrap_content" ></Button>
     
 </LinearLayout>
