@@ -395,7 +395,7 @@ public class LIMEService extends InputMethodService implements
 		// If the display is more than X inches high, don't go to fullscreen mode
 		float max = getResources().getDimension(R.dimen.max_height_for_fullscreen); //1.4in here
 		if(DEBUG) Log.i("onEvaluateFullScreenMode", "DisplayHeight:"+displayHeight+" limit:" + max );
-		if (displayHeight > max) {
+		if (displayHeight > max && this.getMaxWidth() > 500) {
 			return false;
 		} else {
 			return super.onEvaluateFullscreenMode();
