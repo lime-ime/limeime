@@ -20,20 +20,13 @@
 
 package net.toload.main.hd;
 
-//import java.io.File;
-import java.util.List;
-
 import net.toload.main.hd.R;
-import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -41,8 +34,6 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 //import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 
 
 
@@ -168,7 +159,6 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 
 	@Override
 	public void onContentChanged() {
-		// TODO Auto-generated method stub
 		super.onContentChanged();
 	}
 

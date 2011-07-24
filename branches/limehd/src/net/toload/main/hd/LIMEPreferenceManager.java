@@ -7,7 +7,7 @@ import android.preference.PreferenceManager;
 
 public class LIMEPreferenceManager {
 	
-	static private Context ctx; 
+	private Context ctx; 
 	
 	public LIMEPreferenceManager(Context context){		
 		this.ctx = context;
@@ -310,13 +310,12 @@ public class LIMEPreferenceManager {
 	}
 	public int getParameterInt(String label){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		try{
-			return sp.getInt(label, 0);
-		}catch(Exception e){
-			return 0;
-		}
+		return sp.getInt(label, 0);
 	}
-	
+	public int getParameterInt(String label, int defaultvalue){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getInt(label, defaultvalue);
+	}
 	/*
 	 * String Parameter SET/GET
 	 */
@@ -328,6 +327,12 @@ public class LIMEPreferenceManager {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getString(label, "");
 	}
+	
+	public String getParameterString(String label, String defaultstring){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getString(label, defaultstring);
+	}
+
 
 	/*
 	 * Boolean Parameter SET/GET
@@ -339,6 +344,10 @@ public class LIMEPreferenceManager {
 	public boolean getParameterBoolean(String label){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean(label, false);
+	}
+	public boolean getParameterBoolean(String label, Boolean defaultvalue){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean(label, defaultvalue);
 	}
 	
 	private String preProcessTableName(String table){

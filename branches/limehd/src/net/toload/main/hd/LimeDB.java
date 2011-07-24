@@ -2048,7 +2048,21 @@ public class LimeDB extends SQLiteOpenHelper {
 					//setImInfo(table, "keyboard", "lime");
 					// '11,5,23 by Jeremy: Preset keyboard info. by tablename
 					KeyboardObj kobj = getKeyboardObj(table);
-					if( table.equals("cj5")){					
+					if( table.equals("phonetic")){
+						String selectedPhoneticKeyboardType = 
+							mLIMEPref.getParameterString("phonetic_keyboard_type", "standard");
+						if(selectedPhoneticKeyboardType.equals("standard")){
+							kobj = 	getKeyboardObj("phonetic");
+						}else if(selectedPhoneticKeyboardType.equals("eten")){
+							kobj = 	getKeyboardObj("limenumsym");
+						}else if(selectedPhoneticKeyboardType.equals("eten26")||selectedPhoneticKeyboardType.equals("hsu")){
+							if(mLIMEPref.getParameterBoolean("number_row_in_english", false)){
+								kobj = 	getKeyboardObj("limenum");
+							}else{
+								kobj = 	getKeyboardObj("lime");
+							}
+						}
+					}else if( table.equals("cj5")){					
 						kobj = getKeyboardObj("cj");
 					}else if( table.equals("ecj")){				
 						kobj = getKeyboardObj("cj");
