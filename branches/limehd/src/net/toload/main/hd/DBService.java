@@ -92,7 +92,7 @@ public class DBService extends Service {
 					public void run() {
 						//int total = 0;
 						//while (!db.isFinish() || !db.isRelatedFinish() ) {
-						while (!db.isFinish()) {
+						while (!db.isFinish() && !db.isAborted()) {
 							try {
 								this.sleep(10000);
 								

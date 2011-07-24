@@ -76,7 +76,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String BPMF_CHAR = 
 		"ㄅ|ㄆ|ㄇ|ㄈ|ㄉ|ㄊ|ㄋ|ㄌ|ˇ|ㄍ|ㄎ|ㄏ|ˋ|ㄐ|ㄑ|ㄒ|ㄓ|ㄔ|ㄕ|ㄖ|ˊ|ㄗ|ㄘ|ㄙ|˙|ㄧ|ㄨ|ㄩ|ㄚ|ㄛ|ㄜ|ㄝ|ㄞ|ㄟ|ㄠ|ㄡ|ㄢ|ㄣ|ㄤ|ㄥ|ㄦ";
 	private final static String ETEN_KEY = 		 			"@`abcdefghijklmnopqrstuvwxyz12347890-=;',./?";
-	private final static String ETEN_KEY_REMAP = 			"@`81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-y/5tg?";
+	private final static String ETEN_KEY_REMAP = 			"@`81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg?";
 	//private final static String DESIREZ_ETEN_KEY_REMAP = 	"-`81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg/";
 	//private final static String MILESTONE_ETEN_KEY_REMAP =  "-`81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg/";
 	//private final static String MILESTONE3_ETEN_KEY_REMAP = "-h81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg/";
@@ -902,8 +902,8 @@ public class LimeDB extends SQLiteOpenHelper {
 			keyString = getImInfo(table,"imkeys");
 			keynameString = getImInfo(table,"imkeynames");
 			
-			Log.i("ART",keyString);
-			Log.i("ART",keynameString);
+			//Log.i("ART",keyString);
+			//Log.i("ART",keynameString);
 			
 			if(table.equals("phonetic")|| table.equals("dayi") ||
 					keyString.equals("")||keynameString.equals("")){
@@ -1571,6 +1571,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		List<Mapping> result = new ArrayList<Mapping>();
 		List<Mapping> relatedresult = new ArrayList<Mapping>();
 		Pair<List<Mapping>,List<Mapping>> resultPair = new Pair<List<Mapping>,List<Mapping>>(result, relatedresult);
+		HashMap<String, String> duplicateCheck = new HashMap<String, String>();
 		if (cursor.moveToFirst()) {
 
 			//String relatedlist = null;
@@ -1578,7 +1579,6 @@ public class LimeDB extends SQLiteOpenHelper {
 			int wordColumn = cursor.getColumnIndex(FIELD_WORD);
 			int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
 			int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);		
-			HashMap<String, String> duplicateCheck = new HashMap<String, String>();
 			HashMap<String, String> relatedMap = new HashMap<String, String>();
 			do {
 				int idColumn = cursor.getColumnIndex(FIELD_id);
@@ -1606,21 +1606,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					duplicateCheck.put(munit.getWord(), munit.getWord());
 				}
 			} while (cursor.moveToNext());
-			if(query_code.length() == 1){
-				// processing full shaped , and .
-				if( (query_code.equals(",")||query_code.equals("<")) && duplicateCheck.get("，")==null ){
-					Mapping temp = new Mapping();
-					temp.setCode(query_code);
-					temp.setWord("，");
-					result.add(temp);
-				}
-				if( (query_code.equals(".")||query_code.equals(">")) && duplicateCheck.get("。")==null ){
-					Mapping temp = new Mapping();
-					temp.setCode(query_code);
-					temp.setWord("。");
-					result.add(temp);
-				}
-			}
+			
 
 			int ssize = mLIMEPref.getSimilarCodeCandidates();
 			//Jeremy '11,6,1 The related field may have only one word and thus no "|" inside
@@ -1650,8 +1636,24 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}
 		}
+		if(query_code.length() == 1){
+		// processing full shaped , and .
+		if( (query_code.equals(",")||query_code.equals("<")) && duplicateCheck.get("，")==null ){
+			Mapping temp = new Mapping();
+			temp.setCode(query_code);
+			temp.setWord("，");
+			result.add(temp);
+		}
+		if( (query_code.equals(".")||query_code.equals(">")) && duplicateCheck.get("。")==null ){
+			Mapping temp = new Mapping();
+			temp.setCode(query_code);
+			temp.setWord("。");
+			result.add(temp);
+		}
+	}
 		if(DEBUG)
-		Log.i("LimDB.buildQueryResult()"," quiery_code:" + query_code + " result.size=" + result.size()
+		Log.i("LimDB.buildQueryResult()"," query_code:" + query_code + " query_code.length:" + query_code.length()
+				+ " result.size=" + result.size()
 				+ " relatedlist.size=" + relatedresult.size());
 		return resultPair;
 	}

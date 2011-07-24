@@ -2508,7 +2508,8 @@ public class LIMEService extends InputMethodService implements
 						+ isValidDigit(primaryCode) + " isValideSymbo:"
 						+ isValidSymbol(primaryCode) + " onIM:" + onIM);
 			}
-			if(mComposing.length()==0 && (primaryCode==','||primaryCode=='.') &&onIM ){ // Chinese , and . processing
+			if((!hasSymbolMapping)
+					&& (primaryCode==','||primaryCode=='.') &&onIM ){ // Chinese , and . processing
 				mComposing.append((char) primaryCode);
 				getCurrentInputConnection().setComposingText(mComposing, 1);
 				updateCandidates();
@@ -2555,10 +2556,17 @@ public class LIMEService extends InputMethodService implements
 				updateCandidates();
 				misMatched = mComposing.toString();
 
-			} else if (onIM || (!onIM && !mCandidateView.takeSelectedSuggestion())) {
+			} else if (mCandidateView.takeSelectedSuggestion()) {
+					if(onIM){
+						getCurrentInputConnection().commitText(String.valueOf((char) primaryCode),1);
+					}else{
 						getCurrentInputConnection().commitText(
-										mComposing + String.valueOf((char) primaryCode),1);
+								mComposing + String.valueOf((char) primaryCode),1);
 					}
+				
+					mCandidateView.clear();
+					updateCandidates();
+			}
 			
 		} else {
 			/*
