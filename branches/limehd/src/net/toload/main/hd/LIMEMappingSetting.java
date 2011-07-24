@@ -305,7 +305,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("cj");
 	    								DBSrv.downloadCj();
 	    	
-	    								DBSrv.setImInfo("cj", "keyboard",  "倉頡輸入法鍵盤");
+	    								//DBSrv.setImInfo("cj", "keyboard",  "倉頡輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -355,7 +355,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("scj");
 	    								DBSrv.downloadScj();
 	    	
-	    								DBSrv.setImInfo("scj", "keyboard",  "倉頡輸入法鍵盤");
+	    								//DBSrv.setImInfo("scj", "keyboard",  "倉頡輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -405,7 +405,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("cj5");
 	    								DBSrv.downloadCj5();
 	    	
-	    								DBSrv.setImInfo("cj5", "keyboard",  "倉頡輸入法鍵盤");
+	    								//DBSrv.setImInfo("cj5", "keyboard",  "倉頡輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -456,7 +456,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("ecj");
 	    								DBSrv.downloadEcj();
 	    	
-	    								DBSrv.setImInfo("ecj", "keyboard",  "倉頡輸入法鍵盤");
+	    								//DBSrv.setImInfo("ecj", "keyboard",  "倉頡輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -507,7 +507,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("ez");
 	    								DBSrv.downloadEz();
 	    	
-	    								DBSrv.setImInfo("ez", "keyboard",  "輕鬆輸入法鍵盤");
+	    								//DBSrv.setImInfo("ez", "keyboard",  "輕鬆輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -557,7 +557,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("array");
 	    								DBSrv.downloadArray();
 	    	
-	    								DBSrv.setImInfo("array", "keyboard", "行列輸入法鍵盤");
+	    								//DBSrv.setImInfo("array", "keyboard", "行列輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -608,7 +608,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("array10");
 	    								DBSrv.downloadArray10();
 	    	
-	    								DBSrv.setImInfo("array10", "keyboard",  "電話數字鍵盤");
+	    								//DBSrv.setImInfo("array10", "keyboard",  "電話數字鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
@@ -658,7 +658,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("wb");
 	    								DBSrv.downloadWb();
 	    	
-	    								DBSrv.setImInfo("wb", "keyboard", "五筆輸入法鍵盤");
+	    								//DBSrv.setImInfo("wb", "keyboard", "五筆輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
