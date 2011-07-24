@@ -611,7 +611,7 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("array10");
 	    								DBSrv.downloadArray10();
 	    	
-	    								DBSrv.setImInfo("array10", "keyboard",  電話數字鍵盤");
+	    								DBSrv.setImInfo("array10", "keyboard",  "電話數字鍵盤");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
