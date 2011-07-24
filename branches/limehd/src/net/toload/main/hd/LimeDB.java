@@ -36,6 +36,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.SystemClock;
 import android.util.Log;
 import android.util.Pair;
 
@@ -199,6 +200,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 	// Db loading thread.
 	private Thread thread = null;
+	private boolean threadAborted = false;
 	
 
 
@@ -469,16 +471,25 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * Base on given table name to remove records
 	 */
 	public void deleteAll(String table) {
+		if(thread != null){
+			threadAborted = true;
+			while(thread.isAlive()){
+				Log.d("LimeDB:deleteAll()","waiting for thread stopped...");
+				SystemClock.sleep(1000);
+			};
+		}
+
 		SQLiteDatabase db = this.getSqliteDb(false);
-		db.execSQL("DELETE FROM " + table);
+		//db.execSQL("DELETE FROM " + table);
+		db.delete(table, null, null);
+		db.close();
+		
 		finish = false;
 		resetImInfo(table);
 		mLIMEPref.setParameter("im_loading", false);
 		mLIMEPref.setParameter("im_loading_table", "");
-		if(thread != null){
-			thread.interrupt();
-		}
-		db.close();
+		
+		
 	}
 
 	/**
@@ -1710,7 +1721,11 @@ public class LimeDB extends SQLiteOpenHelper {
 	public void loadFile(final String table) {
 
 		if (thread != null) {
-			thread.stop();
+			threadAborted = true;
+			while(thread.isAlive()){
+				Log.d("LimeDB:loadFile()","waiting for last loading thread stopped...");
+				SystemClock.sleep(1000);
+			}
 			thread = null;
 		}
 
@@ -1719,6 +1734,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		// Reset Database Table
 		deleteAll(table);
 		finish = false;
+		threadAborted = false;
 
 		thread = new Thread() {
 
@@ -1785,8 +1801,8 @@ public class LimeDB extends SQLiteOpenHelper {
 					boolean inChardefBlock = false;
 					boolean inKeynameBlock = false;
 					//String precode = "";
-					
-					while ((line = buf.readLine()) != null) {
+
+					while ((line = buf.readLine()) != null && !threadAborted) {
 						processedLength += line.getBytes().length + 2; // +2 for the eol mark.
 						percent = (int) ((float)processedLength/(float)fileLength *50);
 						if(DEBUG)
@@ -1805,37 +1821,37 @@ public class LimeDB extends SQLiteOpenHelper {
 								if (line != null
 										&& line.trim().toLowerCase().startsWith("%chardef")
 										&& line.trim().toLowerCase().endsWith("begin")
-										) {
+								) {
 									inChardefBlock = true;
 								}
 								if (line != null
 										&& line.trim().toLowerCase().startsWith("%keyname")
 										&& line.trim().toLowerCase().endsWith("begin")
-										) {
+								) {
 									inKeynameBlock = true;
 								}
 								// Add by Jeremy '10, 3 , 27
 								// use %cname as mapping_version of .cin
 								// Jeremy '11,6,5 add selkey, endkey and spacestyle support
 								if (!(  line.trim().toLowerCase().startsWith("%cname")
-									  ||line.trim().toLowerCase().startsWith("%selkey")
-									  ||line.trim().toLowerCase().startsWith("%endkey")
-									  ||line.trim().toLowerCase().startsWith("%spacestyle")
-										)) {
+										||line.trim().toLowerCase().startsWith("%selkey")
+										||line.trim().toLowerCase().startsWith("%endkey")
+										||line.trim().toLowerCase().startsWith("%spacestyle")
+								)) {
 									continue;
 								}
 							}
 							if (line != null
 									&& line.trim().toLowerCase().startsWith("%keyname")
 									&& line.trim().toLowerCase().endsWith("end")
-								) {
+							) {
 								inKeynameBlock = false;
 								continue;
 							}
 							if (line != null
 									&& line.trim().toLowerCase().startsWith("%chardef")
 									&& line.trim().toLowerCase().endsWith("end")
-								) {
+							) {
 								break;
 							}
 						}
@@ -1856,7 +1872,7 @@ public class LimeDB extends SQLiteOpenHelper {
 							}
 							firstline = false;
 						} else 	if (line == null || line.trim().equals("") || line.length() < 3) {
-								continue;
+							continue;
 						}
 
 						try {
@@ -1865,19 +1881,19 @@ public class LimeDB extends SQLiteOpenHelper {
 							if (isCinFormat) {
 								if (line.indexOf("\t") != -1) {
 									code = line
-											.substring(0, line.indexOf("\t"));
+									.substring(0, line.indexOf("\t"));
 									word = line
-											.substring(line.indexOf("\t") + 1);
+									.substring(line.indexOf("\t") + 1);
 								} else if (line.indexOf(" ") != -1) {
 									code = line.substring(0, line.indexOf(" "));
 									word = line
-											.substring(line.indexOf(" ") + 1);
+									.substring(line.indexOf(" ") + 1);
 								}
 							} else {
 								code = line.substring(0, line
 										.indexOf(DELIMITER));
 								word = line
-										.substring(line.indexOf(DELIMITER) + 1);
+								.substring(line.indexOf(DELIMITER) + 1);
 							}
 							if (code == null || code.trim().equals("")) {
 								continue;
@@ -1904,7 +1920,7 @@ public class LimeDB extends SQLiteOpenHelper {
 								//Log.i("LimeDB:Loadfile","endkey:"+endkey);
 							} else if (code.toLowerCase().contains("%spacestyle")) {
 								spacestyle = word.trim();
-							
+
 								continue;	
 							} else {
 								code = code.toLowerCase();
@@ -1918,16 +1934,16 @@ public class LimeDB extends SQLiteOpenHelper {
 									else
 										imkeynames = imkeynames + "|"+c; 
 								}
-																
+
 							}
 							else {
 								if (code.length() > 1) {
-								//Jeremy '11,6,1  put the exact match word in the first word of related field
+									//Jeremy '11,6,1  put the exact match word in the first word of related field
 									if (hm.get(code) != null && hm.get(code).startsWith("|"))
 										hm.put(code, word+hm.get(code));
 									else
 										hm.put(code,word);	
-								
+
 									for (int k = 1; k < code.length(); k++) {
 										String rootkey = code.substring(0, code.length() - k);
 										if (hm.get(rootkey) != null) {
@@ -1943,7 +1959,7 @@ public class LimeDB extends SQLiteOpenHelper {
 										}
 									}
 								}
-							
+
 								count++;
 								db.insert(table, null, getInsertItem(code, word));
 							}
@@ -1956,6 +1972,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 
 				} catch (Exception e) {
+					db.close();
 					setImInfo(table, "amount", "0");
 					setImInfo(table, "source", "Failed!!!");
 					e.printStackTrace();
@@ -1971,10 +1988,13 @@ public class LimeDB extends SQLiteOpenHelper {
 					long entrySize = hm.size();
 					long i = 0;
 					for(Entry<String, String> entry: hm.entrySet())
-			        {
+					{
+						if(threadAborted) 	break;
+						
+						
 						percent = (int) ((float)(i++)/(float)entrySize *50 +50);
 						mLIMEPref.setParameter("im_loading_table_percent", (percent>99)?99:percent);
-						
+
 						if(!entry.getValue().contains("|"))  // does not have related words; only has exact mappings
 							continue;
 						try{
@@ -1990,7 +2010,7 @@ public class LimeDB extends SQLiteOpenHelper {
 								db.insert(table, null, cv);
 							}
 							else{
-							//The first word is the exact code corresponding word and has to be trimmed from related field
+								//The first word is the exact code corresponding word and has to be trimmed from related field
 								newValue = tempValue.substring(tempValue.indexOf("|")+1
 										, tempValue.length());
 								cv.put(FIELD_RELATED, newValue);
@@ -1999,29 +2019,35 @@ public class LimeDB extends SQLiteOpenHelper {
 							if(DEBUG)
 								Log.i("loadfile",
 										"create related field. code ="+entry.getKey()+" related = " + entry.getValue()+" trimmedRelated:" + newValue);
-							
-							
+
+
 						}catch(Exception e2){
 							// Just ignore all problem statement
 							Log.i("loadfile","create related field error on code ="+entry.getKey()+" related = " + entry.getValue());
 						}
-			        }
+					}
 				}catch (Exception e){
 					setImInfo(table, "amount", "0");
 					setImInfo(table, "source", "Failed!!!");
 					e.printStackTrace();
 				} finally {
-					mLIMEPref.setParameter("im_loading_table_percent", 100);
+					if(!threadAborted) 
+						mLIMEPref.setParameter("im_loading_table_percent", 100);
+					
 					db.setTransactionSuccessful();
 					db.endTransaction();
 					db.close();
 					mLIMEPref.setParameter("im_loading", false);
 					mLIMEPref.setParameter("im_loading_table", "");
-					
+
 					setImInfo(table, "source", filename.getName());
 					setImInfo(table, "name", imname);
 					setImInfo(table, "amount", String.valueOf(count));
 					setImInfo(table, "import", new Date().toLocaleString());
+					
+					//if(DEBUG) 
+						Log.i("limedb:loadfile()","Fianlly section: source:" 
+								+ getImInfo(table,"source") + " amount:"+getImInfo(table,"amount"));
 
 					// If user download from LIME Default IM SET then fill in related information
 					if(filename.getName().equals("phonetic.lime") || filename.getName().equals("phonetic_adv.lime")){
@@ -2040,8 +2066,9 @@ public class LimeDB extends SQLiteOpenHelper {
 						if (!imkeys.equals("")) setImInfo(table, "imkeys", imkeys);
 						if (!imkeynames.equals("")) setImInfo(table, "imkeynames", imkeynames);
 					}
-					if(DEBUG) Log.i("limedb:loadfile()","imkeys:" +imkeys + " imkeynames:"+imkeynames);
-					
+					if(DEBUG) 
+						Log.i("limedb:loadfile()","Fianlly section: imkeys:" +imkeys + " imkeynames:"+imkeynames);
+
 					// If there is no keyboard assigned for current input method then use default keyboard layout
 					//String keyboard = getImInfo(table, "keyboard");
 					//if(keyboard == null || keyboard.equals("")){
@@ -2076,13 +2103,14 @@ public class LimeDB extends SQLiteOpenHelper {
 						kobj = getKeyboardObj("lime");
 					}
 					setIMKeyboard(table, kobj.getDescription(), kobj.getCode());
-					
+
 				}
-				
-				finish = true;
+				if(!threadAborted)
+					finish = true;
 			}
 
 		};
+		threadAborted = false;
 		thread.start();
 	}
 	

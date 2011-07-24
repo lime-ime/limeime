@@ -27,6 +27,7 @@
     <string name="lime_setting_loading">載入對應檔</string>
     <string name="lime_setting_select_root"> - back to /</string>
     <string name="lime_setting_select_parent"> - back to ..</string>
+    <string name="lime_loading_cancel">取消</string>
     
     <string name="lime_setting_notification_loading">準備資料匯入</string>
     <string name="lime_setting_notification_failed">記錄匯入失敗</string>
@@ -362,6 +363,7 @@
     <string name="l3_message_database_reset_confirm">您是否要移除資料庫?</string>
     <string name="l3_message_table_reset_confirm">您是否要清除所有記錄?</string>
     <string name="l3_message_table_download_confirm">您是否要下載字根檔?</string>
+    <string name="l3_message_table_abort_confirm">您是否要中斷載入字根檔?</string>
     <string name="l3_initial_download_database">下載資料庫</string>
     <string name="l3_initial_download_failed">資料轉換錯誤, 請重置資料庫再重新下載!</string>
     <string name="l3_initial_backup_database">備份資料庫</string>

@@ -23,9 +23,14 @@ package net.toload.main.hd;
 import net.toload.main.hd.R;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.KeyEvent;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.TextView;
 
 /**
@@ -38,11 +43,13 @@ public class LIMEMappingLoading extends Activity {
 
 	private LIMEPreferenceManager mLIMEPref = null;
 	TextView txtLoadingStatus = null;
+	Button btnCancel = null;
+	
     final Handler mHandler = new Handler();
     // Create runnable for posting
     final Runnable mUpdateUI = new Runnable() {
         public void run() {
-        	txtLoadingStatus.setText( mLIMEPref.getParameterInt("im_loading_table_percent") + "%");
+        	txtLoadingStatus.setText( mLIMEPref.getParameterInt("im_loading_table_percent",0) + "%");
         }
     };
 
@@ -54,9 +61,36 @@ public class LIMEMappingLoading extends Activity {
 		this.setContentView(R.layout.progress);
 		mLIMEPref = new LIMEPreferenceManager(this);
 		txtLoadingStatus = (TextView) findViewById(R.id.txtLoadingStatus);
+		btnCancel = (Button) findViewById(R.id.btn_cancel);
+		
+		btnCancel.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+ 				builder.setMessage(getText(R.string.l3_message_table_abort_confirm));
+ 				builder.setCancelable(false);
+ 				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+ 					public void onClick(DialogInterface dialog, int id) {
+	    					mLIMEPref.setParameter("im_loading", false);
+	    					mLIMEPref.setParameter("im_loading_table", "");
+	    					finish();
+ 					}
+	    					
+	    	     });
+    
+	    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+	    	    	public void onClick(DialogInterface dialog, int id) {
+	    	        	}
+	    	     });   
+    
+				AlertDialog alert = builder.create();
+							alert.show();
+			}
+		});
 		
 	}
 
+	
+	
 	@Override
 	protected void onResume() {
 

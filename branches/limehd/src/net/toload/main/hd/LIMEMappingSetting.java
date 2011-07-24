@@ -729,7 +729,6 @@ public class LIMEMappingSetting extends Activity {
 		    					initialButton();
 		    					try {
 		    						resetLabelInfo();
-		    						updateLabelInfo();
 		    						DBSrv.resetMapping(imtype);
 		    						mLIMEPref.setParameter("im_loading", false);
 		    						mLIMEPref.setParameter("im_loading_table", "");
@@ -772,10 +771,20 @@ public class LIMEMappingSetting extends Activity {
 		protected void onResume() {
 			super.onResume();
 			initialButton();
-			if(mLIMEPref.getParameterBoolean("im_loading") == true){
-				startLoadingWindow();
-			}
 			if(DBSrv!= null){
+				if(mLIMEPref.getParameterBoolean("im_loading") == true){
+					startLoadingWindow();
+				}else if(mLIMEPref.getParameterInt("im_loading_table_percent", 0)!=100 ){ // force canceld
+					resetLabelInfo();
+					try {
+						DBSrv.resetMapping(imtype);
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+					btnLoadMapping.setEnabled(true);
+				}
+
+
 				updateLabelInfo();
 			}
 			
@@ -830,6 +839,7 @@ public class LIMEMappingSetting extends Activity {
 					e.printStackTrace();
 				}
 			}
+			
 			
 			if(imtype.equalsIgnoreCase("cj")){
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_cj) +" "+ getText(R.string.l3_im_setting_title) );
@@ -1113,6 +1123,7 @@ public class LIMEMappingSetting extends Activity {
 		}
 
 		private void startLoadingWindow(){
+			mLIMEPref.setParameter("im_loading_table_percent", 0);
 			Intent i = new Intent(this, LIMEMappingLoading.class);
 			startActivity(i);
 		}

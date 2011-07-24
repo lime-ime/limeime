@@ -25,8 +25,9 @@
     <!-- LIME Loading -->
     <string name="lime_setting_btn_load_local_notice">请选择 .LIME 或 .CIN 文档</string>
     <string name="lime_setting_loading">载入对应档</string>
-    <string name="lime_setting_select_root"> - back to /</string>
-    <string name="lime_setting_select_parent"> - back to ..</string>
+    <string name="lime_setting_select_root"> - 回到根目录</string>
+    <string name="lime_setting_select_parent"> - 回到上一层</string>
+    <string name="lime_loading_cancel">取消</string>
     
     <string name="lime_setting_notification_loading">准备数据汇入</string>
     <string name="lime_setting_notification_failed">记录汇入失败</string>
@@ -362,6 +363,7 @@
     <string name="l3_message_database_reset_confirm">您是否要移除数据库?</string>
     <string name="l3_message_table_reset_confirm">您是否要清除所有记录?</string>
     <string name="l3_message_table_download_confirm">您是否要下载字根档?</string>
+    <string name="l3_message_table_abort_confirm">您是否要中断载入字根档?</string>
     <string name="l3_initial_download_database">下载数据库</string>
     <string name="l3_initial_download_failed">数据转换错误, 请重置数据库再重新下载!</string>
     <string name="l3_initial_backup_database">备份数据库</string>
