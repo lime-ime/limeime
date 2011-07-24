@@ -169,6 +169,7 @@ public class LIMEMappingSetting extends Activity {
 
 	    								
 	    							} catch (RemoteException e) {
+	    								mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
@@ -213,6 +214,7 @@ public class LIMEMappingSetting extends Activity {
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
+	    								mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
@@ -261,6 +263,7 @@ public class LIMEMappingSetting extends Activity {
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
+	    								mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
@@ -305,11 +308,12 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("cj");
 	    								DBSrv.downloadCj();
 	    	
-	    								DBSrv.setImInfo("cj", "keyboard",  "�ܾe��J�k��L");
+	    								DBSrv.setImInfo("cj", "keyboard",  "倉頡輸入法鍵盤");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
+	    								mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
@@ -354,11 +358,12 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("scj");
 	    								DBSrv.downloadScj();
 	    	
-	    								DBSrv.setImInfo("scj", "keyboard",  "�ܾe��J�k��L");
+	    								DBSrv.setImInfo("scj", "keyboard",  "倉頡輸入法鍵盤");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
+	    								mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
@@ -403,11 +408,12 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("cj5");
 	    								DBSrv.downloadCj5();
 	    	
-	    								DBSrv.setImInfo("cj5", "keyboard",  "�ܾe��J�k��L");
+	    								DBSrv.setImInfo("cj5", "keyboard",  "倉頡輸入法鍵盤");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
+	    								mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
@@ -453,11 +459,12 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("ecj");
 	    								DBSrv.downloadEcj();
 	    	
-	    								DBSrv.setImInfo("ecj", "keyboard",  "�ܾe��J�k��L");
+	    								DBSrv.setImInfo("ecj", "keyboard",  "倉頡輸入法鍵盤");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
+	    								mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
@@ -503,11 +510,12 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("ez");
 	    								DBSrv.downloadEz();
 	    	
-	    								DBSrv.setImInfo("ez", "keyboard",  "���P��J�k��L");
+	    								DBSrv.setImInfo("ez", "keyboard",  "輕鬆輸入法鍵盤");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
+	    								mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
@@ -552,11 +560,12 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("array");
 	    								DBSrv.downloadArray();
 	    	
-	    								DBSrv.setImInfo("array", "keyboard", "��C��J�k��L");
+	    								DBSrv.setImInfo("array", "keyboard", "行列輸入法鍵盤");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
+	    								mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
@@ -602,11 +611,12 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("array10");
 	    								DBSrv.downloadArray10();
 	    	
-	    								DBSrv.setImInfo("array10", "keyboard",  "�q�ܼƦr��L");
+	    								DBSrv.setImInfo("array10", "keyboard",  電話數字鍵盤");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
+	    								mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
@@ -651,11 +661,12 @@ public class LIMEMappingSetting extends Activity {
 	    	    						DBSrv.resetMapping("wb");
 	    								DBSrv.downloadWb();
 	    	
-	    								DBSrv.setImInfo("wb", "keyboard", "������J�k��L");
+	    								DBSrv.setImInfo("wb", "keyboard", "五筆輸入法鍵盤");
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
+	    								mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
