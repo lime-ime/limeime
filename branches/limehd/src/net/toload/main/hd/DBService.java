@@ -77,7 +77,6 @@ public class DBService extends Service {
 				if (db == null) {loadLimeDB();}
 	
 				db.setFinish(false);
-				db.setAborted(false);
 				db.setFilename(sourcefile);
 				
 				displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading)+ "");
@@ -93,6 +92,7 @@ public class DBService extends Service {
 					public void run() {
 						//int total = 0;
 						//while (!db.isFinish() || !db.isRelatedFinish() ) {
+						db.setAborted(false);
 						while (!db.isFinish() && !db.isAborted()) {
 							try {
 								this.sleep(10000);

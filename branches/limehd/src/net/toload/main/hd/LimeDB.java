@@ -31,13 +31,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -213,12 +208,12 @@ public class LimeDB extends SQLiteOpenHelper {
 		return this.finish;
 	}
 
-	public boolean isAborted() {
-		return this.threadAborted;
+	public void setAborted(boolean value) {
+		this.threadAborted = value;
 	}
 
-	public void setAborted(boolean value) {
-		this.finish = value;
+	public boolean isAborted() {
+		return this.threadAborted;
 	}
 	
 	public void setFinish(boolean value) {
@@ -479,20 +474,6 @@ public class LimeDB extends SQLiteOpenHelper {
 		return null;
 
 	}
-
-	private NotificationManager notificationMgr;
-	private void displayNotificationMessage(String message) {
-		Notification notification = new Notification(R.drawable.icon, message, System.currentTimeMillis());
-		// FLAG_AUTO_CANCEL add by jeremy '10, 3 24
-		notification.flags |= Notification.FLAG_AUTO_CANCEL;
-		PendingIntent contentIntent = PendingIntent.getActivity(ctx, 0,new Intent(ctx, LIMEMenu.class), 0);
-		notification.setLatestEventInfo(ctx, ctx .getText(R.string.ime_setting), message, contentIntent);
-		if(notificationMgr == null){
-			notificationMgr = (NotificationManager) ctx.getSystemService(ctx.NOTIFICATION_SERVICE);
-		}
-		notificationMgr.notify(0, notification);
-	}
-	
 
 	/**
 	 * Base on given table name to remove records
@@ -1749,8 +1730,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	 */
 	public void loadFile(final String table) {
 
-		if (thread != null) {
-			threadAborted = true;
+		if (thread != null ) {
+			//threadAborted = true;
 			while(thread.isAlive()){
 				Log.d("LimeDB:loadFile()","waiting for last loading thread stopped...");
 				SystemClock.sleep(1000);
