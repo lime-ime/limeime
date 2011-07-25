@@ -262,9 +262,9 @@ public class CandidateView extends View {
                 int mPopupComposingY = - popupHeight;
                 //mHandler.removeMessages(MSG_REMOVE_COMPOSING);
                 int [] offsetInWindow = new int[2];
-                mComposingTextView.getLocationInWindow(offsetInWindow);
+                this.getLocationInWindow(offsetInWindow);
                 if (mComposingTextPopup.isShowing()) {              	
-                	mComposingTextPopup.update(0, mPopupComposingY + offsetInWindow[1], 
+                	mComposingTextPopup.update(0,  offsetInWindow[1], 
                             popupWidth, popupHeight);
                 } else {
                 	mComposingTextPopup.setWidth(popupWidth);
