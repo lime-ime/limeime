@@ -436,6 +436,8 @@
     <string name="l3_im_download_from_wb_start">开始下载五笔字根</string>
     <string name="l3_im_download_from_wb_install">开始安装五笔字根</string>
     
+    <string name="l3_im_database_error">资料库操作错误，请稍待一会重新操作。</string>
+    
     <string name="l3_tab_bluetooth">蓝牙设定</string>
     <string name="l3_im_notice">为了节省记忆体使用空间，我们强烈建议您清空不常使用的输入法字根，或使用空白资料库来载入个别输入法字根档。</string>
     

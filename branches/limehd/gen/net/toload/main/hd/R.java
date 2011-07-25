@@ -915,7 +915,7 @@ public final class R {
  AD Message 
  AD Message 
          */
-        public static final int ad_zippy=0x7f0800d5;
+        public static final int ad_zippy=0x7f0800d6;
         /**  Other Messages 
  Indicates that a word has been added to the dictionary 
  Other Messages 
@@ -1052,6 +1052,7 @@ public final class R {
         public static final int l3_dbservice_download_loaded=0x7f080094;
         public static final int l3_dbservice_download_start=0x7f080091;
         public static final int l3_dbservice_download_start_empty=0x7f080092;
+        public static final int l3_im_database_error=0x7f0800d3;
         public static final int l3_im_download_from_array=0x7f0800c7;
         public static final int l3_im_download_from_array10=0x7f0800ca;
         public static final int l3_im_download_from_array10_install=0x7f0800cc;
@@ -1086,7 +1087,7 @@ public final class R {
         public static final int l3_im_download_from_wb=0x7f0800d0;
         public static final int l3_im_download_from_wb_install=0x7f0800d2;
         public static final int l3_im_download_from_wb_start=0x7f0800d1;
-        public static final int l3_im_notice=0x7f0800d4;
+        public static final int l3_im_notice=0x7f0800d5;
         public static final int l3_im_setting_back=0x7f0800a7;
         public static final int l3_im_setting_button_load=0x7f0800ae;
         public static final int l3_im_setting_button_reset=0x7f0800af;
@@ -1138,7 +1139,7 @@ public final class R {
         public static final int l3_message_table_abort_confirm=0x7f080099;
         public static final int l3_message_table_download_confirm=0x7f080098;
         public static final int l3_message_table_reset_confirm=0x7f080097;
-        public static final int l3_tab_bluetooth=0x7f0800d3;
+        public static final int l3_tab_bluetooth=0x7f0800d4;
         public static final int l3_tab_initial=0x7f080079;
         public static final int l3_tab_initial_error=0x7f08007a;
         public static final int l3_tab_initial_message=0x7f08007b;

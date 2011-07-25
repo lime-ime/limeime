@@ -435,6 +435,8 @@
     <string name="l3_im_download_from_wb_start">開始下載五筆字根</string>
     <string name="l3_im_download_from_wb_install">開始安裝五筆字根</string>
     
+    <string name="l3_im_database_error">資料庫操作錯誤，請稍待一會重新操作。</string>
+    
     <string name="l3_tab_bluetooth">藍牙設定</string>
     
     <string name="l3_im_notice">為了節省記憶體使用空間，我們強烈建議您清空不常使用的輸入法字根，或使用空白資料庫來載入個別輸入法字根檔。</string>

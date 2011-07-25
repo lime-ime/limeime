@@ -457,6 +457,8 @@
     <string name="l3_im_download_from_wb_start">Downloading Wubi table</string>
     <string name="l3_im_download_from_wb_install">Importing Wubi table</string>
     
+    <string name="l3_im_database_error">Database operation failed, please try again later.</string>
+    
     <string name="l3_tab_bluetooth">Bluetooth</string>
     <string name="l3_im_notice">For saveing precious device memory space (both RAM and FLASH), IM-tables you are not using are strongly recommeded to be removed.</string>
     
