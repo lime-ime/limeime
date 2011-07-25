@@ -264,7 +264,7 @@ public class CandidateView extends View {
                 int [] offsetInWindow = new int[2];
                 this.getLocationInWindow(offsetInWindow);
                 if (mComposingTextPopup.isShowing()) {              	
-                	mComposingTextPopup.update(0,  offsetInWindow[1], 
+                	mComposingTextPopup.update(0, mPopupComposingY + offsetInWindow[1], 
                             popupWidth, popupHeight);
                 } else {
                 	mComposingTextPopup.setWidth(popupWidth);
