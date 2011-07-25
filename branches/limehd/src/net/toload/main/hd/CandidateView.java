@@ -43,6 +43,7 @@ import android.widget.TextView;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.lang.Math;
 
 import net.toload.main.hd.R;
 
@@ -64,6 +65,7 @@ public class CandidateView extends View {
     private boolean mShowNumber; //Jeremy '11,5,25 for showing physical keyboard number or not.
     
     private Rect mBgPadding;
+    private Rect cursorRect=null; //Jeremy '11,7,25 for store current cursor rect
 
     private static final int MAX_SUGGESTIONS = 200;
     private static final int SCROLL_PIXELS = 20;
@@ -259,18 +261,43 @@ public class CandidateView extends View {
                 final int popupHeight = mComposingTextView.getMeasuredHeight();
                 //mPreviewText.setVisibility(INVISIBLE);
                 
-                int mPopupComposingY = - popupHeight;
+                
                 //mHandler.removeMessages(MSG_REMOVE_COMPOSING);
                 int [] offsetInWindow = new int[2];
                 this.getLocationInWindow(offsetInWindow);
+                int mPopupComposingY = offsetInWindow[1];
+                int mPopupComposingX = 0;
+                
+                Log.i("CandiateView:showcomposing()", " candidateview offsetInWindow x:" 
+                		+offsetInWindow[0] + ". y:" +offsetInWindow[1]);
+                // Show popup windows at the location of cursor  Jeremy '11,7,25
+                // Rely on onCursorUpdate() of inputmethod service, which is not implemented on standard android 
+                // Working on htc implementations
+                if(offsetInWindow[1] == 0 && cursorRect != null){
+                	mPopupComposingX = cursorRect.left;
+                	int [] offsetOnScreen = new int[2];
+                	this.getLocationOnScreen(offsetOnScreen);
+                	mPopupComposingY -= offsetOnScreen[1]- cursorRect.top -  popupHeight;
+                	if(mPopupComposingY > -popupHeight){
+                		mPopupComposingY -= 2* popupHeight;
+                	}       	
+                	 Log.i("CandiateView:showcomposing()", " candidateview offsetOnScreen x:" 
+                     		+offsetOnScreen[0] + ". y:" +offsetOnScreen[1]);
+                }else{
+                	mPopupComposingY -= popupHeight;
+                }
+                	
+                Log.i("CandiateView:showcomposing()", " mPopupComposingX:" 
+                 		+mPopupComposingX + ". mPopupComposingY:" +mPopupComposingY);
+                
                 if (mComposingTextPopup.isShowing()) {              	
-                	mComposingTextPopup.update(0, mPopupComposingY + offsetInWindow[1], 
+                	mComposingTextPopup.update(mPopupComposingX, mPopupComposingY, 
                             popupWidth, popupHeight);
                 } else {
                 	mComposingTextPopup.setWidth(popupWidth);
                 	mComposingTextPopup.setHeight(popupHeight);
-                	mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, 0, 
-                			mPopupComposingY + offsetInWindow[1]);
+                	mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX, 
+                			mPopupComposingY );
                 }
                 mComposingTextView.setVisibility(VISIBLE);
 
@@ -683,5 +710,10 @@ public class CandidateView extends View {
     public void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         hideComposing();
+    }
+    
+    public void onUpdateCursor(Rect newCursor) {
+    	cursorRect = newCursor;
+    	invalidate();
     }
 }

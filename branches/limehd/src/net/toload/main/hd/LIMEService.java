@@ -20,6 +20,7 @@
 
 package net.toload.main.hd;
 
+import android.graphics.Rect;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
@@ -2468,7 +2469,6 @@ public class LIMEService extends InputMethodService implements
 		try {
 			tablename = SearchSrv.getTablename();
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		if (keyPressTime != 0
@@ -2896,6 +2896,15 @@ public class LIMEService extends InputMethodService implements
 				Log.i("ART", "Failed to connect Search Service");
 			}
 		}
+	}
+
+	@Override
+	public void onUpdateCursor(Rect newCursor) {
+		Log.i("LIMEService", "onUpdateCursor(); Top:" 
+				+ newCursor.top + ". Right:" + newCursor.right
+				+ ". bottom:" + newCursor.bottom + ". left:" + newCursor.left);
+		mCandidateView.onUpdateCursor(newCursor);
+		super.onUpdateCursor(newCursor);
 	}
 
 }
