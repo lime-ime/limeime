@@ -236,27 +236,35 @@ public class SearchService extends Service {
 						//preresultlist = resultlist;
 					}else{
 
-						Pair<List<Mapping>,List<Mapping>> resultPair = db.getMapping(code, !isPhysicalKeyboardPressed);
-						List<Mapping> resultlist = resultPair.first;
-						List<Mapping> relatedtlist = resultPair.second;
-
-						if(resultlist.size() + relatedtlist.size()  > 0){
-							cache.put(cacheKey, resultPair);
-							if(resultlist.size()>0) 
-								result.addAll(resultlist);
-							if(i==0 && relatedtlist.size()>0) 
-								result.addAll(relatedtlist);
-							//preresultlist = resultlist;
-						
+						// 25/Jul/2011 by Art
+						// Just ignore error when something wrong with the result set
+						try{
+							Pair<List<Mapping>,List<Mapping>> resultPair = db.getMapping(code, !isPhysicalKeyboardPressed);
+							List<Mapping> resultlist = resultPair.first;
+							List<Mapping> relatedtlist = resultPair.second;
+	
+							if(resultlist.size() + relatedtlist.size()  > 0){
+								cache.put(cacheKey, resultPair);
+								if(resultlist.size()>0) 
+									result.addAll(resultlist);
+								if(i==0 && relatedtlist.size()>0) 
+									result.addAll(relatedtlist);
+								//preresultlist = resultlist;
+							
+							}
+							
+	//						}else{
+	//							if(code.length() > 3 &&  
+	//									cache.get(cacheKey.subSequence(0, cacheKey.length()-1)) != null && 
+	//									cache.get(cacheKey.subSequence(0, cacheKey.length()-2)) != null 
+	//							){ 
+	//								result.addAll(preresultlist);
+	//							}
+	//						}
+						}catch(Exception e){
+							e.printStackTrace();
 						}
-//						}else{
-//							if(code.length() > 3 &&  
-//									cache.get(cacheKey.subSequence(0, cacheKey.length()-1)) != null && 
-//									cache.get(cacheKey.subSequence(0, cacheKey.length()-2)) != null 
-//							){ 
-//								result.addAll(preresultlist);
-//							}
-//						}
+						
 					}
 					code= code.substring(0,code.length()-1);
 				}
