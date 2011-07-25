@@ -489,7 +489,7 @@ public class CandidateView extends View {
 	            	mSelectedIndex = -1;
 	            //}else if(mSuggestions.size() == 1){
 	            	//mSelectedIndex = 0;
-	            }else if(count > 1 &&
+	            }else if(count > 1 && mSuggestions.get(1).getId() !=null && // the suggestion is not from relatedlist.
 	            		mSuggestions.get(0).getWord().equals(mSuggestions.get(1).getCode().toLowerCase()) ){ // exact match
 	            	// default selection on suggestions 1 (0 is typed English in mixed English mode)
 	             	mSelectedIndex = 1;
