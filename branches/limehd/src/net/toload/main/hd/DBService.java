@@ -77,6 +77,7 @@ public class DBService extends Service {
 				if (db == null) {loadLimeDB();}
 	
 				db.setFinish(false);
+				db.setAborted(false);
 				db.setFilename(sourcefile);
 				
 				displayNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading)+ "");

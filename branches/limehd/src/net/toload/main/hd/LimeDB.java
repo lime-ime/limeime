@@ -211,6 +211,10 @@ public class LimeDB extends SQLiteOpenHelper {
 	public boolean isAborted() {
 		return this.threadAborted;
 	}
+
+	public void setAborted(boolean value) {
+		this.finish = value;
+	}
 	
 	public void setFinish(boolean value) {
 		this.finish = value;
