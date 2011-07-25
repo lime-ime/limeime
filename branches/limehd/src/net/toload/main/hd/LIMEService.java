@@ -2556,16 +2556,23 @@ public class LIMEService extends InputMethodService implements
 				updateCandidates();
 				misMatched = mComposing.toString();
 
-			} else if (mCandidateView.takeSelectedSuggestion()) {
-					if(onIM){
-						getCurrentInputConnection().commitText(String.valueOf((char) primaryCode),1);
-					}else{
+			} else {
+				if(onIM){
+					mCandidateView.takeSelectedSuggestion();
+					getCurrentInputConnection().commitText(String.valueOf((char) primaryCode),1);
+				} else{
+					if (!mCandidateView.takeSelectedSuggestion()) {
 						getCurrentInputConnection().commitText(
 								mComposing + String.valueOf((char) primaryCode),1);
+					}else{
+						getCurrentInputConnection().commitText(String.valueOf((char) primaryCode),1);
+						
 					}
+					
+				}
 				
-					mCandidateView.clear();
-					updateCandidates();
+				mCandidateView.clear();
+				updateCandidates();
 			}
 			
 		} else {

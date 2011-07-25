@@ -473,8 +473,9 @@ public class CandidateView extends View {
             mSuggestions = new LinkedList<Mapping>(suggestions);
 	       
 	        if(DEBUG)
-	        	Log.i("setSuggestions:","mSuggestions.size:" + mSuggestions.size());
-	       
+	        	Log.i("CandidateView:setSuggestions()", "mSuggestions.get(0).getWord():" + mSuggestions.get(0).getWord()
+            			+ " mSuggestions.get(1).getCode():" + mSuggestions.get(1).getCode().toLowerCase());
+	           
 	        
 	        if(mSuggestions != null && mSuggestions.size() > 0){
 	            setBackgroundColor(bgcolor);
@@ -482,14 +483,18 @@ public class CandidateView extends View {
 	            count = mSuggestions.size(); 
 	            if(count > MAX_SUGGESTIONS) count = MAX_SUGGESTIONS;
 	            
+	                
 	            if(mSuggestions.get(0).isDictionary()){
 	            	// no default selection for related words
 	            	mSelectedIndex = -1;
-	            }else if(mSuggestions.size() == 1){
-	            	mSelectedIndex = 0;
-	            }else {
+	            //}else if(mSuggestions.size() == 1){
+	            	//mSelectedIndex = 0;
+	            }else if(count > 1 &&
+	            		mSuggestions.get(0).getWord().equals(mSuggestions.get(1).getCode().toLowerCase()) ){ // exact match
 	            	// default selection on suggestions 1 (0 is typed English in mixed English mode)
-	            	mSelectedIndex = 1;
+	             	mSelectedIndex = 1;
+	            }else {
+	            	mSelectedIndex = 0;
 	            }
 	        }else{
 	        	 if(DEBUG)
