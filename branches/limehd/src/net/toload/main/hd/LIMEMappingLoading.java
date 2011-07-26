@@ -31,6 +31,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 /**
@@ -44,12 +45,16 @@ public class LIMEMappingLoading extends Activity {
 	private LIMEPreferenceManager mLIMEPref = null;
 	TextView txtLoadingStatus = null;
 	Button btnCancel = null;
+	ProgressBar progressBar = null;
+	
 	
     final Handler mHandler = new Handler();
     // Create runnable for posting
     final Runnable mUpdateUI = new Runnable() {
         public void run() {
-        	txtLoadingStatus.setText( mLIMEPref.getParameterInt("im_loading_table_percent",0) + "%");
+        	int percentageDone =  mLIMEPref.getParameterInt("im_loading_table_percent",0);
+        	txtLoadingStatus.setText( percentageDone+ "%");
+        	progressBar.setProgress(percentageDone);
         }
     };
 
@@ -59,8 +64,10 @@ public class LIMEMappingLoading extends Activity {
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		this.setContentView(R.layout.progress);
+		this.setTitle(getText(R.string.lime_setting_loading)+"...");
 		mLIMEPref = new LIMEPreferenceManager(this);
 		txtLoadingStatus = (TextView) findViewById(R.id.txtLoadingStatus);
+		progressBar = (ProgressBar)findViewById(R.id.progressBar);
 		btnCancel = (Button) findViewById(R.id.btn_cancel);
 		
 		btnCancel.setOnClickListener(new OnClickListener() {
