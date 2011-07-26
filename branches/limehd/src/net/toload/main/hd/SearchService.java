@@ -165,6 +165,26 @@ public class SearchService extends Service {
 		
 		}
 		
+		private String cacheKey(String code){
+			String key ="";
+			
+			//Jeremy '11,6,17 Seperate physical keyboard cache with keybaordtype
+			if(isPhysicalKeyboardPressed){	
+				if(tablename.equals("phonetic")){
+					key = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()
+					+ mLIMEPref.getPhoneticKeyboardType()+code;
+				}else{
+					key = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()+code;
+				}
+			}else{
+				if(tablename.equals("phonetic"))
+					key = db.getTablename()+ mLIMEPref.getPhoneticKeyboardType()+code;
+				else
+					key = db.getTablename()+code;
+			}
+			return key;
+		}
+		
 		public List<Mapping> query(String code, boolean softkeyboard) throws RemoteException {
 			
 			if(db == null){loadLimeDB();}
@@ -204,23 +224,8 @@ public class SearchService extends Service {
 				// 11'7,22 rewritten for 連打 
 				for(int i =0; i<size; i++) {
 					//Log.i("SearchService:query()","i="+i+" code="+code);
-					String cacheKey="";
 					
-					//Jeremy '11,6,17 Seperate physical keyboard cache with keybaordtype
-					if(isPhysicalKeyboardPressed){	
-						if(tablename.equals("phonetic")){
-							cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()
-							+ mLIMEPref.getPhoneticKeyboardType()+code;
-						}else{
-							cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()+code;
-						}
-					}else{
-						if(tablename.equals("phonetic"))
-							cacheKey = db.getTablename()+ mLIMEPref.getPhoneticKeyboardType()+code;
-						else
-							cacheKey = db.getTablename()+code;
-					}
-
+					String cacheKey = cacheKey(code);
 					Pair<List<Mapping>,List<Mapping>> cacheTemp = cache.get(cacheKey);
 
 					//Log.i("SearchService:query()","cachekey:" + cacheKey ); 
@@ -338,24 +343,7 @@ public class SearchService extends Service {
 					
 					//Jeremy '11,6,13 Words in relatedlist is selected for null id, the relatedlist will later be updated.
 					if(scorelist.get(i).getId()==null){ // Force to delete the cached item.
-						String code = scorelist.get(i).getCode().toLowerCase();
-						//Log.i("SearchService:updateUserdict()","force to delete cached item, code = " + code);
-						String cacheKey="";
-						if(isPhysicalKeyboardPressed){	
-							if(tablename.equals("phonetic")){
-								cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()
-											+ mLIMEPref.getPhoneticKeyboardType()+code;
-							}else{
-								cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()+code;
-							}
-							
-						}else{
-							if(tablename.equals("phonetic"))
-								cacheKey = db.getTablename()+ mLIMEPref.getPhoneticKeyboardType()+code;
-							else
-								cacheKey = db.getTablename()+code;
-						}
-						cache.remove(cacheKey);
+						cache.remove(cacheKey(scorelist.get(i).getCode().toLowerCase()));
 					}
 					
 						
@@ -367,22 +355,8 @@ public class SearchService extends Service {
 		
 		public String keyToKeyname(String code){
 			//Jeremy '11,6,21 Build cache according using cachekey
-			String cacheKey="";
-			if(isPhysicalKeyboardPressed){
-				if(tablename.equals("phonetic")){
-					cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()
-								+ mLIMEPref.getPhoneticKeyboardType()+code;
-				}else{
-					cacheKey = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()+code;
-				}
-				
-			}else{
-				if(tablename.equals("phonetic"))
-					cacheKey = db.getTablename()+ mLIMEPref.getPhoneticKeyboardType()+code;
-				else
-					cacheKey = db.getTablename()+code;
-			}
 			
+			String cacheKey = cacheKey(code);
 			String result = keynamecache.get(cacheKey);
 			if(result == null){
 				if(db == null){loadLimeDB();}

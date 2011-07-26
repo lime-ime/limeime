@@ -599,7 +599,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 	private void addOrUpdateUserdictRecord(String pword, String cword){
 		// Jeremy '11,6,12
-		// Return if not learing related words and cword is not null (recording word frequency in IM relatedlist filed)
+		// Return if not learing related words and cword is not null (recording word frequency in IM relatedlist field)
 		if(!mLIMEPref.getLearnRelatedWord() && cword!=null) return;
 
 		int dictotal = Integer.parseInt(mLIMEPref.getTotalUserdictRecords());
@@ -682,71 +682,9 @@ public class LimeDB extends SQLiteOpenHelper {
 				String code = srcunit.getCode().trim().toLowerCase();
 				if(DEBUG) Log.i("LIMEDb.addScore()","related selectd, code:" + code);
 				addOrUpdateUserdictRecord(srcunit.getWord(),null);
-				// Update relatedlist in IM table now.
-				SQLiteDatabase db = this.getSqliteDb(false);
-				
-				Cursor cursor = db.query(tablename, null, 
-						FIELD_CODE + " = '" + code + "'", 
-						null, null, null, null, null);
-				//int codeColumn = cursor.getColumnIndex(FIELD_CODE);
-				//Log.i("LIMEDB:addScore()","cursor size:" + cursor.getCount());
-				if(cursor.moveToFirst()){
-					int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
-					//int idColumn = cursor.getColumnIndex(FIELD_id);
-					//String code = cursor.getString(codeColumn);
-					String relatedlist = cursor.getString(relatedColumn);
-					if(DEBUG) 
-						Log.i("LIMEDB:addScore()","the original relatedlist:" + relatedlist);
-					String templist[] = relatedlist.split("\\|");
-					LinkedList <Mapping> scorelist = new LinkedList<Mapping>();
-					for (String unit : templist) {
-						Mapping munit =isExists(unit,null);
-						if(munit==null){
-							Mapping mu = new Mapping();
-							mu.setWord(unit);
-							mu.setScore(0);
-							scorelist.addLast(mu);
-							//Log.i("LIMEDB:addScore()","score 0, added in last");
-						}else{
-							Mapping mu = new Mapping();
-							mu.setWord(unit);
-							mu.setScore(munit.getScore());
-							if(scorelist.isEmpty()) scorelist.add(mu);
-							else{
-								boolean added = false;
-								for(int i=0;i<scorelist.size();i++){
-									if(munit.getScore() >= scorelist.get(i).getScore()){
-										scorelist.add(i, mu);
-										//Log.i("LIMEDB:addScore()","score is not 0, added in location "+i+"; with score:" +munit.getScore() );
-										added = true;
-										break;
-									}
-								}
-								if(!added) scorelist.addLast(mu);
-								
-							}			
-						}
-					}
-					
-					String newRelatedlist = "";
-					for(Mapping munit : scorelist){
-						if(newRelatedlist.equals("")) newRelatedlist = munit.getWord();
-						else newRelatedlist = newRelatedlist + "|" + munit.getWord();
-							
-					}
-					if(!newRelatedlist.equals(relatedlist)){
-						ContentValues cv = new ContentValues();
-						cv.put(FIELD_RELATED, newRelatedlist);
-						db.update(tablename, cv, FIELD_CODE + " = '" + code + "'", null);
-					}
-					if(DEBUG) 
-						Log.i("LIMEDB:addScore()","the new relatedlist:" + newRelatedlist);	
-				}
-				
-				db.close();
-			}
-				
-			if (srcunit != null && srcunit.getId() != null &&
+				updateRelatedList(code);
+			
+			}else if (srcunit != null && srcunit.getId() != null &&
 					srcunit.getWord() != null  &&
 					!srcunit.getWord().trim().equals("") ) {
 				if(DEBUG) Log.i("LIMEDb.addScore()","addScore on code:"+srcunit.getCode());
@@ -839,6 +777,76 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 
 		return result;
+	}
+	/**
+	 * Jeremy '11,7,26  Updated related list 
+	 * 
+	 * @param code
+	 */
+	private void updateRelatedList(String code){
+		// Update relatedlist in IM table now.
+		SQLiteDatabase db = this.getSqliteDb(false);
+		
+		Cursor cursor = db.query(tablename, null, 
+				FIELD_CODE + " = '" + code + "'", 
+				null, null, null, null, null);
+		//int codeColumn = cursor.getColumnIndex(FIELD_CODE);
+		//Log.i("LIMEDB:addScore()","cursor size:" + cursor.getCount());
+		if(cursor.moveToFirst()){
+			int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
+			//int idColumn = cursor.getColumnIndex(FIELD_id);
+			//String code = cursor.getString(codeColumn);
+			String relatedlist = cursor.getString(relatedColumn);
+			if(DEBUG) 
+				Log.i("LIMEDB:addScore()","the original relatedlist:" + relatedlist);
+			String templist[] = relatedlist.split("\\|");
+			LinkedList <Mapping> scorelist = new LinkedList<Mapping>();
+			// Sorting the related list by checking scores of each word in same table
+			for (String unit : templist) {
+				Mapping munit =isExists(unit,null);
+				if(munit==null){
+					Mapping mu = new Mapping();
+					mu.setWord(unit);
+					mu.setScore(0);
+					scorelist.addLast(mu);
+					//Log.i("LIMEDB:addScore()","score 0, added in last");
+				}else{
+					Mapping mu = new Mapping();
+					mu.setWord(unit);
+					mu.setScore(munit.getScore());
+					if(scorelist.isEmpty()) scorelist.add(mu);
+					else{
+						boolean added = false;
+						for(int i=0;i<scorelist.size();i++){
+							if(munit.getScore() >= scorelist.get(i).getScore()){
+								scorelist.add(i, mu);
+								//Log.i("LIMEDB:addScore()","score is not 0, added in location "+i+"; with score:" +munit.getScore() );
+								added = true;
+								break;
+							}
+						}
+						if(!added) scorelist.addLast(mu);
+						
+					}			
+				}
+			}
+			// Rebuild the related list string and update the record.
+			String newRelatedlist = "";
+			for(Mapping munit : scorelist){
+				if(newRelatedlist.equals("")) newRelatedlist = munit.getWord();
+				else newRelatedlist = newRelatedlist + "|" + munit.getWord();
+					
+			}
+			if(!newRelatedlist.equals(relatedlist)){
+				ContentValues cv = new ContentValues();
+				cv.put(FIELD_RELATED, newRelatedlist);
+				db.update(tablename, cv, FIELD_CODE + " = '" + code + "'", null);
+			}
+			if(DEBUG) 
+				Log.i("LIMEDB:updateRelatedList()","the new relatedlist:" + newRelatedlist);	
+		}
+		
+		db.close();
 	}
 //Rewrite by Jeremy 11,6,4.  Supporting array and dayi now.
 	public String keyToKeyname(String code, String table, Boolean composingText) {
@@ -1818,7 +1826,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						if(DEBUG)
 							Log.i("LimeDB:loadFile()", percent +"% precessed" 
 									+ "processedLength:" + processedLength + " fileLength:" + fileLength);
-						mLIMEPref.setParameter("im_loading_table_percent", (percent>99)?99:percent);
+						mLIMEPref.setParameter("im_loading_table_percent", (percent>49)?49:percent);
 						/*
 						 * If source is cin format start from the tag %chardef
 						 * begin until %chardef end
