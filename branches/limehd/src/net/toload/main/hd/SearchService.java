@@ -211,8 +211,9 @@ public class SearchService extends Service {
 				
 				
 				Mapping temp = new Mapping();
-				code = code.trim().toLowerCase();
 				temp.setWord(code);
+				code = code.trim().toLowerCase();
+				
 				temp.setCode(code);
 				result.add(temp);
 				int size = code.length();
