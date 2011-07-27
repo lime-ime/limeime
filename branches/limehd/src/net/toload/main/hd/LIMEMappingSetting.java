@@ -154,13 +154,14 @@ public class LIMEMappingSetting extends Activity {
 	     				builder.setCancelable(false);
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
-	    						startLoadingWindow();
 	     						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
 	    								hasSelectFile = true;
 	    								resetLabelInfo();
 	    	    						DBSrv.resetMapping("dayi");
 	    								DBSrv.downloadDayi();
+	    	    						startLoadingWindow();
+
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
 
@@ -200,14 +201,14 @@ public class LIMEMappingSetting extends Activity {
 	     				builder.setCancelable(false);
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
-	    						startLoadingWindow();
+	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
 	    								hasSelectFile = true;
 	    								resetLabelInfo();
 	    	    						DBSrv.resetMapping("phonetic");
 	    								DBSrv.downloadPhonetic();
-	    	
+	    								startLoadingWindow();
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
@@ -246,7 +247,7 @@ public class LIMEMappingSetting extends Activity {
 	     					public void onClick(DialogInterface dialog, int id) {
 
 								
-	    						startLoadingWindow();
+	    			
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
@@ -256,7 +257,7 @@ public class LIMEMappingSetting extends Activity {
 	    								resetLabelInfo();
 	    	    						DBSrv.resetMapping("phonetic");
 	    								DBSrv.downloadPhoneticAdv();
-	    	
+	    								startLoadingWindow();
 	    								mLIMEPref.setParameter("im_loading", true);
 	    								mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
@@ -296,7 +297,7 @@ public class LIMEMappingSetting extends Activity {
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
 
-	    						startLoadingWindow();
+	    						
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
@@ -304,7 +305,7 @@ public class LIMEMappingSetting extends Activity {
 	    								resetLabelInfo();
 	    	    						DBSrv.resetMapping("cj");
 	    								DBSrv.downloadCj();
-	    	
+	    								startLoadingWindow();
 	    								//DBSrv.setImInfo("cj", "keyboard",  "倉頡輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
@@ -346,7 +347,7 @@ public class LIMEMappingSetting extends Activity {
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
 
-	    						startLoadingWindow();
+	    					
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
@@ -354,7 +355,7 @@ public class LIMEMappingSetting extends Activity {
 	    								resetLabelInfo();
 	    	    						DBSrv.resetMapping("scj");
 	    								DBSrv.downloadScj();
-	    	
+	    								startLoadingWindow();
 	    								//DBSrv.setImInfo("scj", "keyboard",  "倉頡輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
@@ -396,7 +397,7 @@ public class LIMEMappingSetting extends Activity {
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
 
-	    						startLoadingWindow();
+	    						
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
@@ -404,7 +405,7 @@ public class LIMEMappingSetting extends Activity {
 	    								resetLabelInfo();
 	    	    						DBSrv.resetMapping("cj5");
 	    								DBSrv.downloadCj5();
-	    	
+	    								startLoadingWindow();
 	    								//DBSrv.setImInfo("cj5", "keyboard",  "倉頡輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
@@ -447,7 +448,7 @@ public class LIMEMappingSetting extends Activity {
 	     					public void onClick(DialogInterface dialog, int id) {
 
 								
-	    						startLoadingWindow();
+	    						
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
@@ -455,7 +456,7 @@ public class LIMEMappingSetting extends Activity {
 	    								resetLabelInfo();
 	    	    						DBSrv.resetMapping("ecj");
 	    								DBSrv.downloadEcj();
-	    	
+	    								startLoadingWindow();
 	    								//DBSrv.setImInfo("ecj", "keyboard",  "倉頡輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
@@ -506,7 +507,7 @@ public class LIMEMappingSetting extends Activity {
 	    								resetLabelInfo();
 	    	    						DBSrv.resetMapping("ez");
 	    								DBSrv.downloadEz();
-	    	
+	    								startLoadingWindow();
 	    								//DBSrv.setImInfo("ez", "keyboard",  "輕鬆輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
@@ -548,7 +549,7 @@ public class LIMEMappingSetting extends Activity {
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
 	     						
-	    						startLoadingWindow();
+	    						
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    						try {
@@ -556,7 +557,7 @@ public class LIMEMappingSetting extends Activity {
 	    								resetLabelInfo();
 	    	    						DBSrv.resetMapping("array");
 	    								DBSrv.downloadArray();
-	    	
+	    								startLoadingWindow();
 	    								//DBSrv.setImInfo("array", "keyboard", "行列輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
@@ -599,7 +600,6 @@ public class LIMEMappingSetting extends Activity {
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
 	     						
-	    						startLoadingWindow();
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
@@ -607,7 +607,8 @@ public class LIMEMappingSetting extends Activity {
 	    								resetLabelInfo();
 	    	    						DBSrv.resetMapping("array10");
 	    								DBSrv.downloadArray10();
-	    	
+
+	    	    						startLoadingWindow();
 	    								//DBSrv.setImInfo("array10", "keyboard",  "電話數字鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
@@ -649,7 +650,7 @@ public class LIMEMappingSetting extends Activity {
 	     				builder.setCancelable(false);
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
-	     						startLoadingWindow();
+	     						
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
@@ -657,7 +658,7 @@ public class LIMEMappingSetting extends Activity {
 	    								resetLabelInfo();
 	    	    						DBSrv.resetMapping("wb");
 	    								DBSrv.downloadWb();
-	    	
+	    								startLoadingWindow();
 	    								//DBSrv.setImInfo("wb", "keyboard", "五筆輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
 	    								mLIMEPref.setParameter("im_loading", true);
@@ -774,15 +775,17 @@ public class LIMEMappingSetting extends Activity {
 			if(DBSrv!= null){
 				if(mLIMEPref.getParameterBoolean("im_loading") == true){
 					startLoadingWindow();
-				}else if(mLIMEPref.getParameterInt("im_loading_table_percent", 0)!=100 ){ // force canceld
-					resetLabelInfo();
+				} else
 					try {
-						DBSrv.resetMapping(imtype);
+						if( DBSrv.getLoadingMappingPercentageDone()!=100 ){ // force canceld
+							btnLoadMapping.setEnabled(true);
+							resetLabelInfo();
+							DBSrv.resetMapping(imtype);
+						
+						}
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
-					btnLoadMapping.setEnabled(true);
-				}
 
 
 				updateLabelInfo();
@@ -1123,7 +1126,6 @@ public class LIMEMappingSetting extends Activity {
 		}
 
 		private void startLoadingWindow(){
-			mLIMEPref.setParameter("im_loading_table_percent", 0);
 			Intent i = new Intent(this, LIMEMappingLoading.class);
 			startActivity(i);
 		}

@@ -29,5 +29,10 @@ interface IDBService
 	String getKeyboardCode(String im);
 	List getKeyboardList();
 	String getKeyboardInfo(String keyboardCode, String field);
+	int	getLoadingMappingCount();
+	int getLoadingMappingPercentageDone();
+	boolean getLoadingMappingFinished();
+	boolean getLoadingMappingAborted();
+
 	
 }

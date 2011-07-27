@@ -24,9 +24,18 @@ import net.toload.main.hd.R;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -43,6 +52,10 @@ import android.widget.TextView;
 public class LIMEMappingLoading extends Activity {
 
 	private LIMEPreferenceManager mLIMEPref = null;
+	private IDBService DBSrv = null;
+	
+	private NotificationManager notificationMgr;
+	
 	TextView txtLoadingStatus = null;
 	Button btnCancel = null;
 	ProgressBar progressBar = null;
@@ -52,9 +65,26 @@ public class LIMEMappingLoading extends Activity {
     // Create runnable for posting
     final Runnable mUpdateUI = new Runnable() {
         public void run() {
-        	int percentageDone =  mLIMEPref.getParameterInt("im_loading_table_percent",0);
+        	int percentageDone = 0, loadedMappingCount =0;
+			try {
+				percentageDone = DBSrv.getLoadingMappingPercentageDone();
+				loadedMappingCount = DBSrv.getLoadingMappingCount();
+			} catch (RemoteException e1) {
+				e1.printStackTrace();
+			}
         	txtLoadingStatus.setText( percentageDone+ "%");
         	progressBar.setProgress(percentageDone);
+        	if(percentageDone < 50 && loadedMappingCount != 0){
+        				setTitle(
+        						getText(R.string.lime_setting_notification_loading_build) + " "
+        						+ getText(R.string.lime_setting_notification_loading_import) + " "
+        						+ loadedMappingCount + " "
+        						+ getText(R.string.lime_setting_notification_loading_end) );
+        	} else if(percentageDone == 100){
+        		setTitle(getText(R.string.lime_setting_notification_finish) + " ");
+        	} else if(percentageDone >= 50 ){
+        		setTitle(getText(R.string.lime_setting_notification_related) + " ");
+        	}
         }
     };
 
@@ -63,6 +93,10 @@ public class LIMEMappingLoading extends Activity {
 	@Override
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
+		
+		// Startup Service
+		getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
+		
 		this.setContentView(R.layout.progress);
 		this.setTitle(getText(R.string.lime_setting_loading)+"...");
 		mLIMEPref = new LIMEPreferenceManager(this);
@@ -109,16 +143,23 @@ public class LIMEMappingLoading extends Activity {
 			public void run() {
 				
 				do{
-					if(!mLIMEPref.getParameterBoolean("db_finish")){
-						mHandler.post(mUpdateUI);
-
-						try {
-							Thread.sleep(1000);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
+					try {
+						Thread.sleep(1000);
+						if(DBSrv.getLoadingMappingAborted() ||DBSrv.getLoadingMappingFinished()){
+							if(DBSrv.getLoadingMappingFinished()){
+								showNotificationMessage(getText(R.string.lime_setting_notification_finish)+ "");
+							}else{
+								showNotificationMessage(getText(R.string.lime_setting_notification_failed)+ "");
+							}
+							mLIMEPref.setParameter("db_finish", true);
+							break;
+						}else{
+							mHandler.post(mUpdateUI);
 						}
-					}else{
-						break;
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
 					}
 				}while(true);
 				finish();
@@ -136,6 +177,26 @@ public class LIMEMappingLoading extends Activity {
 		return super.onKeyDown(keyCode, event);
 	}
 
+	private ServiceConnection serConn = new ServiceConnection() {
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			if(DBSrv == null){
+				DBSrv = IDBService.Stub.asInterface(service);
+			}
+		}
+		public void onServiceDisconnected(ComponentName name) {
+		}
+	};
+	
+	private void showNotificationMessage(String message) {
+		Notification notification = new Notification(R.drawable.icon, message, System.currentTimeMillis());
+		notification.flags |= Notification.FLAG_AUTO_CANCEL;
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,new Intent(this, LIMEMenu.class), 0);
+		notification.setLatestEventInfo(this, this .getText(R.string.ime_setting), message, contentIntent);
+		if(notificationMgr == null){
+			notificationMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		}
+		notificationMgr.notify(0, notification);
+	}
 	
 		
 }

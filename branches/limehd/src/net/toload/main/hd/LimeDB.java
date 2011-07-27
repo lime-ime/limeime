@@ -187,6 +187,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private String tablename = "custom";
 
 	private int count = 0;
+	private int percentageDone = 0;  // Jeremy '11,7,27
 	//private int ncount = 0;
 	private boolean finish = false;
 	//private boolean relatedfinish = false;
@@ -533,7 +534,11 @@ public class LimeDB extends SQLiteOpenHelper {
 	public int getCount(){
 		return count;
 	}
-
+	
+	public int getPercentageDone(){
+		return percentageDone;
+	}
+	
 	/**
 	 * Count total amount loaded records amount
 	 * 
@@ -1757,7 +1762,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		thread = new Thread() {
 
 			public void run() {
-
+				
+				percentageDone = 0;
 				//boolean hasMappingVersion = false;
 				boolean isCinFormat = false;
 				//ArrayList<ContentValues> resultlist = new ArrayList<ContentValues>();
@@ -1808,7 +1814,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 				SQLiteDatabase db = getSqliteDb(false);
 				db.beginTransaction();
-				int percent;  //Jeremy '11,7.24
+				
 				try {
 					// Prepare Source File
 					long fileLength = filename.length();
@@ -1822,11 +1828,11 @@ public class LimeDB extends SQLiteOpenHelper {
 
 					while ((line = buf.readLine()) != null && !threadAborted) {
 						processedLength += line.getBytes().length + 2; // +2 for the eol mark.
-						percent = (int) ((float)processedLength/(float)fileLength *50);
+						percentageDone = (int) ((float)processedLength/(float)fileLength *50);
 						if(DEBUG)
-							Log.i("LimeDB:loadFile()", percent +"% precessed" 
+							Log.i("LimeDB:loadFile()", percentageDone +"% precessed" 
 									+ "processedLength:" + processedLength + " fileLength:" + fileLength);
-						mLIMEPref.setParameter("im_loading_table_percent", (percent>49)?49:percent);
+						if(percentageDone>49) percentageDone = 49;
 						/*
 						 * If source is cin format start from the tag %chardef
 						 * begin until %chardef end
@@ -2010,8 +2016,8 @@ public class LimeDB extends SQLiteOpenHelper {
 						if(threadAborted) 	break;
 						
 						
-						percent = (int) ((float)(i++)/(float)entrySize *50 +50);
-						mLIMEPref.setParameter("im_loading_table_percent", (percent>99)?99:percent);
+						percentageDone = (int) ((float)(i++)/(float)entrySize *50 +50);
+						if(percentageDone>99) percentageDone = 99;
 
 						if(!entry.getValue().contains("|"))  // does not have related words; only has exact mappings
 							continue;
@@ -2049,9 +2055,8 @@ public class LimeDB extends SQLiteOpenHelper {
 					setImInfo(table, "source", "Failed!!!");
 					e.printStackTrace();
 				} finally {
-					if(!threadAborted) 
-						mLIMEPref.setParameter("im_loading_table_percent", 100);
-					
+					if(!threadAborted) percentageDone = 100;
+						
 					db.setTransactionSuccessful();
 					db.endTransaction();
 					db.close();

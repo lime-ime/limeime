@@ -35,7 +35,7 @@
     <string name="lime_setting_notification_related">開始建立關聯字</string>
     <string name="lime_setting_notification_loading_start">LIME</string>
     <string name="lime_setting_notification_loading_end">已載入</string>
-    <string name="lime_setting_notification_loading_build">建立</string>
+    <string name="lime_setting_notification_loading_build">對照表</string>
     <string name="lime_setting_notification_loading_import">字根</string>
       
     <!-- TAB -->

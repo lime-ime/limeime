@@ -1397,9 +1397,9 @@ public class LIMEService extends InputMethodService implements
 			if (dicunit == null) {
 				continue;
 			}
-			if (dicunit.getId() == null) {
-				continue;
-			}
+			//if (dicunit.getId() == null) {
+			//	continue;
+			//}
 			if (dicunit.getCode() == null) {
 				continue;
 			}
@@ -1852,14 +1852,14 @@ public class LIMEService extends InputMethodService implements
 			}
 			if (firstMatched != null) {
 				ic.commitText(this.firstMatched.getWord(), 0);
-				try {
-					SearchSrv.updateMapping(firstMatched.getId(),
-							firstMatched.getCode(), firstMatched.getWord(),
-							firstMatched.getPword(), firstMatched.getScore(),
-							firstMatched.isDictionary());
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
+//				try {
+//					SearchSrv.updateMapping(firstMatched.getId(),
+//							firstMatched.getCode(), firstMatched.getWord(),
+//							firstMatched.getPword(), firstMatched.getScore(),
+//							firstMatched.isDictionary());
+//				} catch (RemoteException e) {
+//					e.printStackTrace();
+//				}
 			}
 		} else {
 			ic.commitText(text, 0);
@@ -2903,7 +2903,8 @@ public class LIMEService extends InputMethodService implements
 		Log.i("LIMEService", "onUpdateCursor(); Top:" 
 				+ newCursor.top + ". Right:" + newCursor.right
 				+ ". bottom:" + newCursor.bottom + ". left:" + newCursor.left);
-		mCandidateView.onUpdateCursor(newCursor);
+		if(mCandidateView!=null)
+			mCandidateView.onUpdateCursor(newCursor);
 		super.onUpdateCursor(newCursor);
 	}
 
