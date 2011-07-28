@@ -1393,24 +1393,25 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void updateUserDict() {
-		for (Mapping dicunit : userdiclist) {
-			if (dicunit == null) {
-				continue;
-			}
-			//if (dicunit.getId() == null) {
-			//	continue;
-			//}
-			if (dicunit.getCode() == null) {
-				continue;
-			}
-			try {
-				SearchSrv.addUserDict(dicunit.getId(), dicunit.getCode(),
-						dicunit.getWord(), dicunit.getPword(),
-						dicunit.getScore(), dicunit.isDictionary());
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
-		}
+// Jeremy '11,7,27 Using signle list for addscore and adduserdict.
+//		for (Mapping dicunit : userdiclist) {
+//			if (dicunit == null) {
+//				continue;
+//			}
+//			//if (dicunit.getId() == null) {
+//			//	continue;
+//			//}
+//			if (dicunit.getCode() == null) {
+//				continue;
+//			}
+//			try {
+//				SearchSrv.addUserDict(dicunit.getId(), dicunit.getCode(),
+//						dicunit.getWord(), dicunit.getPword(),
+//						dicunit.getScore(), dicunit.isDictionary());
+//			} catch (RemoteException e) {
+//				e.printStackTrace();
+//			}
+//		}
 		try {
 			SearchSrv.updateUserDict();
 		} catch (RemoteException e) {

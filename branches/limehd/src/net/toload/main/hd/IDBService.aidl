@@ -31,8 +31,11 @@ interface IDBService
 	String getKeyboardInfo(String keyboardCode, String field);
 	int	getLoadingMappingCount();
 	int getLoadingMappingPercentageDone();
-	boolean getLoadingMappingFinished();
-	boolean getLoadingMappingAborted();
-
+	boolean isLoadingMappingFinished();
+	boolean isLoadingMappingThreadAborted();
+	boolean isLoadingMappingThreadAlive();
+	boolean isRemoteFileDownloading();
+	void abortLoadMapping();
+	void abortRemoteFileDownload();
 	
 }

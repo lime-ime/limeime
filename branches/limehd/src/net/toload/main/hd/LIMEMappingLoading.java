@@ -51,7 +51,7 @@ import android.widget.TextView;
 
 public class LIMEMappingLoading extends Activity {
 
-	private LIMEPreferenceManager mLIMEPref = null;
+	//private LIMEPreferenceManager mLIMEPref = null;
 	private IDBService DBSrv = null;
 	
 	private NotificationManager notificationMgr;
@@ -60,21 +60,27 @@ public class LIMEMappingLoading extends Activity {
 	Button btnCancel = null;
 	ProgressBar progressBar = null;
 	
+	//private String imtype;
 	
     final Handler mHandler = new Handler();
     // Create runnable for posting
     final Runnable mUpdateUI = new Runnable() {
         public void run() {
         	int percentageDone = 0, loadedMappingCount =0;
+        	boolean remoteFileDownloading = false;
 			try {
 				percentageDone = DBSrv.getLoadingMappingPercentageDone();
 				loadedMappingCount = DBSrv.getLoadingMappingCount();
+				remoteFileDownloading = DBSrv.isRemoteFileDownloading();
 			} catch (RemoteException e1) {
 				e1.printStackTrace();
 			}
         	txtLoadingStatus.setText( percentageDone+ "%");
         	progressBar.setProgress(percentageDone);
-        	if(percentageDone < 50 && loadedMappingCount != 0){
+        	if(remoteFileDownloading){
+        		setTitle(getText(R.string.l3_message_table_downloading) + " ");
+        	}
+        	else if(percentageDone < 50 && loadedMappingCount != 0){
         				setTitle(
         						getText(R.string.lime_setting_notification_loading_build) + " "
         						+ getText(R.string.lime_setting_notification_loading_import) + " "
@@ -99,37 +105,57 @@ public class LIMEMappingLoading extends Activity {
 		
 		this.setContentView(R.layout.progress);
 		this.setTitle(getText(R.string.lime_setting_loading)+"...");
-		mLIMEPref = new LIMEPreferenceManager(this);
+		//mLIMEPref = new LIMEPreferenceManager(this);
+		
 		txtLoadingStatus = (TextView) findViewById(R.id.txtLoadingStatus);
 		progressBar = (ProgressBar)findViewById(R.id.progressBar);
 		btnCancel = (Button) findViewById(R.id.btn_cancel);
 		
+//		try{
+//			Bundle bundle = this.getIntent().getExtras();
+//			if(bundle != null){
+//				imtype = bundle.getString("keyboard");
+//			}
+//		}catch(Exception e){
+//			e.printStackTrace();
+//		}
+		
 		btnCancel.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
- 				builder.setMessage(getText(R.string.l3_message_table_abort_confirm));
- 				builder.setCancelable(false);
- 				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
- 					public void onClick(DialogInterface dialog, int id) {
-	    					mLIMEPref.setParameter("im_loading", false);
-	    					mLIMEPref.setParameter("im_loading_table", "");
-	    					finish();
- 					}
-	    					
-	    	     });
-    
-	    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-	    	    	public void onClick(DialogInterface dialog, int id) {
-	    	        	}
-	    	     });   
-    
-				AlertDialog alert = builder.create();
-							alert.show();
+				abortConfirmDialog();
 			}
 		});
 		
 	}
+	
+	private void abortConfirmDialog(){
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setMessage(getText(R.string.l3_message_table_abort_confirm));
+			builder.setCancelable(false);
+			builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int id) {
+					//mLIMEPref.setParameter("im_loading", false);
+					//mLIMEPref.setParameter("im_loading_table", "");
+					try {
+						//DBSrv.resetMapping(imtype);
+						DBSrv.abortRemoteFileDownload();
+						DBSrv.abortLoadMapping();
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+					finish();
+				}
+					
+	     });
 
+	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+	    	public void onClick(DialogInterface dialog, int id) {
+	        	}
+	     });   
+
+		AlertDialog alert = builder.create();
+					alert.show();
+	}
 	
 	
 	@Override
@@ -137,7 +163,7 @@ public class LIMEMappingLoading extends Activity {
 
 		super.onResume();
 		
-		mLIMEPref.setParameter("db_finish", false);
+		//mLIMEPref.setParameter("db_finish", false);
 		
 		Thread thread = new Thread() {
 			public void run() {
@@ -145,16 +171,17 @@ public class LIMEMappingLoading extends Activity {
 				do{
 					try {
 						Thread.sleep(1000);
-						if(DBSrv.getLoadingMappingAborted() ||DBSrv.getLoadingMappingFinished()){
-							if(DBSrv.getLoadingMappingFinished()){
+						if(DBSrv.isRemoteFileDownloading() ||
+								DBSrv.isLoadingMappingThreadAlive() ){
+							mHandler.post(mUpdateUI);			
+						}else{
+							if(DBSrv.isLoadingMappingFinished()){
 								showNotificationMessage(getText(R.string.lime_setting_notification_finish)+ "");
 							}else{
 								showNotificationMessage(getText(R.string.lime_setting_notification_failed)+ "");
 							}
-							mLIMEPref.setParameter("db_finish", true);
+							//mLIMEPref.setParameter("db_finish", true);
 							break;
-						}else{
-							mHandler.post(mUpdateUI);
 						}
 					} catch (RemoteException e) {
 						e.printStackTrace();
@@ -171,6 +198,7 @@ public class LIMEMappingLoading extends Activity {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if ((keyCode == KeyEvent.KEYCODE_BACK)) {
+			abortConfirmDialog();
 	        return true;
 	    }
 

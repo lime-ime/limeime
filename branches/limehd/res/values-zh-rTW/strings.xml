@@ -360,6 +360,7 @@
     <string name="l3_dbservice_download_loaded">資料庫已成功載入.</string>
     <string name="l3_dbservice_download_convert">輸入法進行轉換中...</string>
     
+    <string name="l3_message_table_downloading">下載字根檔...</string>
     <string name="l3_message_database_reset_confirm">您是否要移除資料庫?</string>
     <string name="l3_message_table_reset_confirm">您是否要清除所有記錄?</string>
     <string name="l3_message_table_download_confirm">您是否要下載字根檔?</string>

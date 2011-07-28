@@ -91,7 +91,7 @@ public class LIMEMappingSetting extends Activity {
 		private String imtype = null;
 		List<KeyboardObj> kblist = null;
 		
-		LIMEPreferenceManager mLIMEPref;
+		//LIMEPreferenceManager mLIMEPref;
 		ConnectivityManager connManager = null;
 		
 		private AlertDialog mOptionsDialog;
@@ -114,7 +114,7 @@ public class LIMEMappingSetting extends Activity {
 			
 	        connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE); 
 
-			mLIMEPref = new LIMEPreferenceManager(this.getApplicationContext());
+			//mLIMEPref = new LIMEPreferenceManager(this.getApplicationContext());
 			
 	        try{
 		        Bundle bundle = this.getIntent().getExtras();
@@ -124,14 +124,22 @@ public class LIMEMappingSetting extends Activity {
 	        }catch(Exception e){
 	        	e.printStackTrace();
 	        }
-
-	        if(mLIMEPref.getParameterBoolean("im_loading") == true){
-	        	mLIMEPref.setParameter("im_loading",false);
-	        }
-	        String im_loading_table = mLIMEPref.getParameterString("im_loading_table");
-	        if(im_loading_table != null && im_loading_table.length() > 0){
-	        	imtype = im_loading_table;
-	        }
+	        
+	        try {
+				if(DBSrv != null && DBSrv.isRemoteFileDownloading()){
+					DBSrv.abortRemoteFileDownload();
+					
+				}
+			} catch (RemoteException e1) {
+				e1.printStackTrace();
+			}
+	        //if(mLIMEPref.getParameterBoolean("im_loading") == true){
+	        //	mLIMEPref.setParameter("im_loading",false);
+	        //}
+	       // String im_loading_table = mLIMEPref.getParameterString("im_loading_table");
+	        //if(im_loading_table != null && im_loading_table.length() > 0){
+	        //	imtype = im_loading_table;
+	        //}
 	        
 			// Initial Buttons
 			initialButton();
@@ -158,21 +166,21 @@ public class LIMEMappingSetting extends Activity {
 	    							try {
 	    								hasSelectFile = true;
 	    								resetLabelInfo();
-	    	    						DBSrv.resetMapping("dayi");
+	    	    						//DBSrv.resetMapping("dayi");
 	    								DBSrv.downloadDayi();
 	    	    						startLoadingWindow();
 
-	    								mLIMEPref.setParameter("im_loading", true);
-	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    								//mLIMEPref.setParameter("im_loading", true);
+	    								//mLIMEPref.setParameter("im_loading_table", imtype);
 
 	    								
 	    							} catch (RemoteException e) {
-	    								mLIMEPref.setParameter("im_loading", false);
+	    								//mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
 	    				        	Toast.makeText( ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-	    				    		mLIMEPref.setParameter("db_finish", true);
+	    				    		//mLIMEPref.setParameter("db_finish", true);
 	    						}
 			    	        }
 			    	     });
@@ -206,18 +214,18 @@ public class LIMEMappingSetting extends Activity {
 	    							try {
 	    								hasSelectFile = true;
 	    								resetLabelInfo();
-	    	    						DBSrv.resetMapping("phonetic");
+	    	    						//DBSrv.resetMapping("phonetic");
 	    								DBSrv.downloadPhonetic();
 	    								startLoadingWindow();
-	    								mLIMEPref.setParameter("im_loading", true);
-	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    								//mLIMEPref.setParameter("im_loading", true);
+	    								//mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
-	    								mLIMEPref.setParameter("im_loading", false);
+	    								//mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
 	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-	    				    		mLIMEPref.setParameter("db_finish", true);
+	    				    		//mLIMEPref.setParameter("db_finish", true);
 	    						}
 			    	        }
 			    	     });
@@ -255,18 +263,18 @@ public class LIMEMappingSetting extends Activity {
 		    				    		
 	    								hasSelectFile = true;
 	    								resetLabelInfo();
-	    	    						DBSrv.resetMapping("phonetic");
+	    	    						//DBSrv.resetMapping("phonetic");
 	    								DBSrv.downloadPhoneticAdv();
 	    								startLoadingWindow();
-	    								mLIMEPref.setParameter("im_loading", true);
-	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    								//mLIMEPref.setParameter("im_loading", true);
+	    								//mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
-	    								mLIMEPref.setParameter("im_loading", false);
+	    								//mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
 	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-	    				    		mLIMEPref.setParameter("db_finish", true);
+	    				    		//mLIMEPref.setParameter("db_finish", true);
 	    						}
 			    	        }
 			    	     });
@@ -303,20 +311,20 @@ public class LIMEMappingSetting extends Activity {
 	    							try {
 	    								hasSelectFile = true;
 	    								resetLabelInfo();
-	    	    						DBSrv.resetMapping("cj");
+	    	    						//DBSrv.resetMapping("cj");
 	    								DBSrv.downloadCj();
 	    								startLoadingWindow();
 	    								//DBSrv.setImInfo("cj", "keyboard",  "倉頡輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
-	    								mLIMEPref.setParameter("im_loading", true);
-	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    								//mLIMEPref.setParameter("im_loading", true);
+	    								//mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
-	    								mLIMEPref.setParameter("im_loading", false);
+	    								//mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
 	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-	    				    		mLIMEPref.setParameter("db_finish", true);
+	    				    		//mLIMEPref.setParameter("db_finish", true);
 	    						}
 			    	        }
 			    	     });
@@ -353,20 +361,20 @@ public class LIMEMappingSetting extends Activity {
 	    							try {
 	    								hasSelectFile = true;
 	    								resetLabelInfo();
-	    	    						DBSrv.resetMapping("scj");
+	    	    						//DBSrv.resetMapping("scj");
 	    								DBSrv.downloadScj();
 	    								startLoadingWindow();
 	    								//DBSrv.setImInfo("scj", "keyboard",  "倉頡輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
-	    								mLIMEPref.setParameter("im_loading", true);
-	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    								//mLIMEPref.setParameter("im_loading", true);
+	    								//mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
-	    								mLIMEPref.setParameter("im_loading", false);
+	    								//mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
 	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-	    				    		mLIMEPref.setParameter("db_finish", true);
+	    				    		//mLIMEPref.setParameter("db_finish", true);
 	    						}
 			    	        }
 			    	     });
@@ -403,20 +411,20 @@ public class LIMEMappingSetting extends Activity {
 	    							try {
 	    								hasSelectFile = true;
 	    								resetLabelInfo();
-	    	    						DBSrv.resetMapping("cj5");
+	    	    						//DBSrv.resetMapping("cj5");
 	    								DBSrv.downloadCj5();
 	    								startLoadingWindow();
 	    								//DBSrv.setImInfo("cj5", "keyboard",  "倉頡輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
-	    								mLIMEPref.setParameter("im_loading", true);
-	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    								//mLIMEPref.setParameter("im_loading", true);
+	    								//mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
-	    								mLIMEPref.setParameter("im_loading", false);
+	    								//mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
 	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-	    				    		mLIMEPref.setParameter("db_finish", true);
+	    				    		//mLIMEPref.setParameter("db_finish", true);
 	    						}
 			    	        }
 			    	     });
@@ -454,20 +462,20 @@ public class LIMEMappingSetting extends Activity {
 	    							try {
 	    								hasSelectFile = true;
 	    								resetLabelInfo();
-	    	    						DBSrv.resetMapping("ecj");
+	    	    						//DBSrv.resetMapping("ecj");
 	    								DBSrv.downloadEcj();
 	    								startLoadingWindow();
 	    								//DBSrv.setImInfo("ecj", "keyboard",  "倉頡輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
-	    								mLIMEPref.setParameter("im_loading", true);
-	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    								//mLIMEPref.setParameter("im_loading", true);
+	    								//mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
-	    								mLIMEPref.setParameter("im_loading", false);
+	    								//mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
 	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-	    				    		mLIMEPref.setParameter("db_finish", true);
+	    				    		//mLIMEPref.setParameter("db_finish", true);
 	    						}
 			    	        }
 			    	     });
@@ -505,20 +513,20 @@ public class LIMEMappingSetting extends Activity {
 	    							try {
 	    								hasSelectFile = true;
 	    								resetLabelInfo();
-	    	    						DBSrv.resetMapping("ez");
+	    	    						//DBSrv.resetMapping("ez");
 	    								DBSrv.downloadEz();
 	    								startLoadingWindow();
 	    								//DBSrv.setImInfo("ez", "keyboard",  "輕鬆輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
-	    								mLIMEPref.setParameter("im_loading", true);
-	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    								//mLIMEPref.setParameter("im_loading", true);
+	    								//mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
-	    								mLIMEPref.setParameter("im_loading", false);
+	    								//mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
 	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-	    				    		mLIMEPref.setParameter("db_finish", true);
+	    				    		//mLIMEPref.setParameter("db_finish", true);
 	    						}
 			    	        }
 			    	     });
@@ -555,20 +563,20 @@ public class LIMEMappingSetting extends Activity {
 	    						try {
 	    								hasSelectFile = true;
 	    								resetLabelInfo();
-	    	    						DBSrv.resetMapping("array");
+	    	    						//DBSrv.resetMapping("array");
 	    								DBSrv.downloadArray();
 	    								startLoadingWindow();
 	    								//DBSrv.setImInfo("array", "keyboard", "行列輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
-	    								mLIMEPref.setParameter("im_loading", true);
-	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    								//mLIMEPref.setParameter("im_loading", true);
+	    								//mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
-	    								mLIMEPref.setParameter("im_loading", false);
+	    								//mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
 	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-	    				    		mLIMEPref.setParameter("db_finish", true);
+	    				    		//mLIMEPref.setParameter("db_finish", true);
 	    						}
 			    	        }
 			    	     });
@@ -605,21 +613,21 @@ public class LIMEMappingSetting extends Activity {
 	    							try {
 	    								hasSelectFile = true;
 	    								resetLabelInfo();
-	    	    						DBSrv.resetMapping("array10");
+	    	    						//DBSrv.resetMapping("array10");
 	    								DBSrv.downloadArray10();
 
 	    	    						startLoadingWindow();
 	    								//DBSrv.setImInfo("array10", "keyboard",  "電話數字鍵盤"); // set this in LIMEDb loadfile()
 	    								
-	    								mLIMEPref.setParameter("im_loading", true);
-	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    								//mLIMEPref.setParameter("im_loading", true);
+	    								//mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
-	    								mLIMEPref.setParameter("im_loading", false);
+	    								//mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
 	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-	    				    		mLIMEPref.setParameter("db_finish", true);
+	    				    		//mLIMEPref.setParameter("db_finish", true);
 	    						}
 			    	        }
 			    	     });
@@ -656,20 +664,20 @@ public class LIMEMappingSetting extends Activity {
 	    							try {
 	    								hasSelectFile = true;
 	    								resetLabelInfo();
-	    	    						DBSrv.resetMapping("wb");
+	    	    						//DBSrv.resetMapping("wb");
 	    								DBSrv.downloadWb();
 	    								startLoadingWindow();
 	    								//DBSrv.setImInfo("wb", "keyboard", "五筆輸入法鍵盤"); // set this in LIMEDb loadfile()
 	    								
-	    								mLIMEPref.setParameter("im_loading", true);
-	    								mLIMEPref.setParameter("im_loading_table", imtype);
+	    								//mLIMEPref.setParameter("im_loading", true);
+	    								//mLIMEPref.setParameter("im_loading_table", imtype);
 	    							} catch (RemoteException e) {
-	    								mLIMEPref.setParameter("im_loading", false);
+	    								//mLIMEPref.setParameter("im_loading", false);
 	    								e.printStackTrace();
 	    							}
 	    				        }else{
 	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-	    				    		mLIMEPref.setParameter("db_finish", true);
+	    				    		//mLIMEPref.setParameter("db_finish", true);
 	    						}
 			    	        }
 			    	     });
@@ -731,8 +739,8 @@ public class LIMEMappingSetting extends Activity {
 		    					try {
 		    						resetLabelInfo();
 		    						DBSrv.resetMapping(imtype);
-		    						mLIMEPref.setParameter("im_loading", false);
-		    						mLIMEPref.setParameter("im_loading_table", "");
+		    						//mLIMEPref.setParameter("im_loading", false);
+		    						//mLIMEPref.setParameter("im_loading_table", "");
 		    						btnLoadMapping.setEnabled(true);
 		    					} catch (RemoteException e) {
 		    						e.printStackTrace();
@@ -771,23 +779,19 @@ public class LIMEMappingSetting extends Activity {
 		@Override
 		protected void onResume() {
 			super.onResume();
-			initialButton();
+			
 			if(DBSrv!= null){
-				if(mLIMEPref.getParameterBoolean("im_loading") == true){
-					startLoadingWindow();
-				} else
-					try {
-						if( DBSrv.getLoadingMappingPercentageDone()!=100 ){ // force canceld
-							btnLoadMapping.setEnabled(true);
-							resetLabelInfo();
-							DBSrv.resetMapping(imtype);
-						
-						}
-					} catch (RemoteException e) {
-						e.printStackTrace();
+				try {
+					if(	DBSrv.isRemoteFileDownloading() ||
+							DBSrv.isLoadingMappingThreadAlive()){
+						startLoadingWindow();
+					//} else 	if(! DBSrv.isLoadingMappingFinished() ){ 
+					//		resetLabelInfo();
 					}
-
-
+				} catch (RemoteException e) {			
+					e.printStackTrace();
+				}
+				initialButton();
 				updateLabelInfo();
 			}
 			
@@ -811,36 +815,46 @@ public class LIMEMappingSetting extends Activity {
 			
 			kbLinearLayout = (LinearLayout) this.findViewById(R.id.kbLinearLayout);
 			
-			if(mLIMEPref.getParameterBoolean("im_loading") == true){
-				btnLoadMapping.setEnabled(false);
+			try {
+				if(DBSrv!=null && (DBSrv.isRemoteFileDownloading() ||
+					DBSrv.isLoadingMappingThreadAlive()) ){
+					btnLoadMapping.setEnabled(false);
+				}else
+					btnLoadMapping.setEnabled(true);
+			} catch (RemoteException e) {
+				e.printStackTrace();
 			}
 			
 		}
 
 		public void resetLabelInfo(){
-				labSource.setText("");
-				labVersion.setText("");
-				labTotalAmount.setText("");
-				labImportDate.setText("");
-				labKeyboard.setText("");
+			labSource.setText("");
+			labVersion.setText("");
+			labTotalAmount.setText("");
+			labImportDate.setText("");
+			labKeyboard.setText("");
 		}
-		
+
 		public void updateLabelInfo(){
 			
-			if(mLIMEPref.getParameterBoolean("im_loading") == true){
-				labSource.setText("Loading...");
-				labVersion.setText("Loading...");
-				labTotalAmount.setText("Loading...");
-				labImportDate.setText("Loading...");
-			}else{
-				try{
-					labSource.setText(DBSrv.getImInfo(imtype, "source"));
-					labVersion.setText(DBSrv.getImInfo(imtype, "name"));
-					labTotalAmount.setText(DBSrv.getImInfo(imtype, "amount"));
-					labImportDate.setText(DBSrv.getImInfo(imtype, "import"));
-				}catch(Exception e){
-					e.printStackTrace();
+			try {
+				if(DBSrv!=null && DBSrv.isLoadingMappingThreadAlive()){
+					labSource.setText("Loading...");
+					labVersion.setText("Loading...");
+					labTotalAmount.setText("Loading...");
+					labImportDate.setText("Loading...");
+				}else{
+					try{
+						labSource.setText(DBSrv.getImInfo(imtype, "source"));
+						labVersion.setText(DBSrv.getImInfo(imtype, "name"));
+						labTotalAmount.setText(DBSrv.getImInfo(imtype, "amount"));
+						labImportDate.setText(DBSrv.getImInfo(imtype, "import"));
+					}catch(Exception e){
+						e.printStackTrace();
+					}
 				}
+			} catch (RemoteException e1) {
+				e1.printStackTrace();
 			}
 			
 			
@@ -1040,8 +1054,8 @@ public class LIMEMappingSetting extends Activity {
 				hasSelectFile = true;
 				loadMapping(check);
 				resetLabelInfo();
-				mLIMEPref.setParameter("im_loading", true);
-				mLIMEPref.setParameter("im_loading_table", imtype);
+				//mLIMEPref.setParameter("im_loading", true);
+				//mLIMEPref.setParameter("im_loading_table", imtype);
 			}
 			return templist;
 		}
@@ -1127,6 +1141,9 @@ public class LIMEMappingSetting extends Activity {
 
 		private void startLoadingWindow(){
 			Intent i = new Intent(this, LIMEMappingLoading.class);
+			Bundle bundle = new Bundle();
+	   		bundle.putString("keyboard", imtype);
+	   		i.putExtras(bundle);
 			startActivity(i);
 		}
 		

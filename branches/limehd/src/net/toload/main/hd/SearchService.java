@@ -328,9 +328,13 @@ public class SearchService extends Service {
 			
 			if(db == null){db = new LimeDB(ctx);}
 			//Jeremy '11,6,12 do adduserdict and add score if diclist.size > 0 and only adduserdict if diclist.size >1
-			if(diclist != null && mLIMEPref.getLearnRelatedWord() && diclist.size() > 1){
-				db.addUserDict(diclist);
-				diclist.clear();
+//			if(diclist != null && mLIMEPref.getLearnRelatedWord() && diclist.size() > 1){
+//				db.addUserDict(diclist);
+//				diclist.clear();
+//			}
+			if(scorelist != null && mLIMEPref.getLearnRelatedWord() && scorelist.size() > 1){
+				db.addUserDict(scorelist);
+				scorelist.clear();
 			}
 				
 				//Jeremy '11,6,11, always learn scores, but sorted according preference options

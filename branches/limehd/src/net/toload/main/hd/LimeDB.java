@@ -45,7 +45,7 @@ import android.util.Pair;
  */
 public class LimeDB extends SQLiteOpenHelper {
 
-	private static boolean DEBUG = false;
+	private static boolean DEBUG = true;
 
 	private final static int DATABASE_VERSION = 66; 
 	//private final static int DATABASE_RELATED_SIZE = 50;
@@ -205,19 +205,30 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 
 
-	public boolean isFinish() {
+	public boolean isLoadingMappingFinished() {
+		if(DEBUG) Log.i("LIMEDB():isLoadingMapingThreadAborted()",finish+"");
 		return this.finish;
 	}
 
-	public void setAborted(boolean value) {
+	public void setLoadingMappingThreadAborted(boolean value) {
 		this.threadAborted = value;
 	}
 
-	public boolean isAborted() {
+	public boolean isLoadingMappingThreadAborted() {
+		if(DEBUG) Log.i("LIMEDB():isLoadingMapingThreadAborted()", threadAborted+"");
 		return this.threadAborted;
 	}
 	
+	public boolean isLoadingMappingThreadAlive() {
+		boolean result = false;
+		if(thread==null) result = false;
+		else result = thread.isAlive();
+		if(DEBUG) Log.i("LIMEDB():isLoadingMappingThreadAlive()", result+"");
+		return result;
+	}
+
 	public void setFinish(boolean value) {
+		
 		this.finish = value;
 	}
 	
@@ -490,13 +501,14 @@ public class LimeDB extends SQLiteOpenHelper {
 
 		SQLiteDatabase db = this.getSqliteDb(false);
 		//db.execSQL("DELETE FROM " + table);
-		db.delete(table, null, null);
+		if(countMapping(table)>0)
+			db.delete(table, null, null);
 		db.close();
 		
 		finish = false;
 		resetImInfo(table);
-		mLIMEPref.setParameter("im_loading", false);
-		mLIMEPref.setParameter("im_loading_table", "");
+		//mLIMEPref.setParameter("im_loading", false);
+		//mLIMEPref.setParameter("im_loading_table", "");
 		
 		
 	}
@@ -1752,16 +1764,20 @@ public class LimeDB extends SQLiteOpenHelper {
 			thread = null;
 		}
 
-		// Loading Information
-		
-		// Reset Database Table
-		deleteAll(table);
+
+		//deleteAll(table);
 		finish = false;
 		threadAborted = false;
 
 		thread = new Thread() {
 
 			public void run() {
+				// Reset Database Table		
+				SQLiteDatabase db = getSqliteDb(false);
+				if(countMapping(table)>0) 	db.delete(table, null, null);
+				resetImInfo(table);
+				
+			
 				
 				percentageDone = 0;
 				//boolean hasMappingVersion = false;
@@ -1812,7 +1828,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				// Create Related Words
 				Map<String, String> hm = new HashMap<String, String>();
 
-				SQLiteDatabase db = getSqliteDb(false);
+				//SQLiteDatabase db = getSqliteDb(false);
 				db.beginTransaction();
 				
 				try {
@@ -2060,8 +2076,8 @@ public class LimeDB extends SQLiteOpenHelper {
 					db.setTransactionSuccessful();
 					db.endTransaction();
 					db.close();
-					mLIMEPref.setParameter("im_loading", false);
-					mLIMEPref.setParameter("im_loading_table", "");
+					//mLIMEPref.setParameter("im_loading", false);
+					mLIMEPref.setParameter("_table", "");
 
 					setImInfo(table, "source", filename.getName());
 					setImInfo(table, "name", imname);

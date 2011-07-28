@@ -47,7 +47,7 @@ import android.os.RemoteException;
 import android.util.Log;
 
 public class DBService extends Service {
-	private final boolean DEBUG = false;
+	private final boolean DEBUG = true;
 	private NotificationManager notificationMgr;
 
 	private LimeDB db = null;
@@ -55,6 +55,13 @@ public class DBService extends Service {
 	
 	private boolean remoteFileDownloading = false;
 	private int percentageDone = 0;
+	
+	private String loadingTablename = "";
+	private boolean abortDownload = false;
+	
+	private final int intentLIMEMenu = 0;
+	private final int intentLIMEMappingLoading = 1;
+	private final int intentLIMEInitial = 2;
 	
 	// Monitoring thread.
 //	private Thread thread = null;
@@ -73,7 +80,8 @@ public class DBService extends Service {
 		public void loadLimeDB(){	db = new LimeDB(ctx); }
 		
 		public void loadMapping(String filename, String tablename) throws RemoteException {
-
+				
+				loadingTablename = tablename;
 			
 				File sourcefile = new File(filename);
 				
@@ -83,52 +91,7 @@ public class DBService extends Service {
 				db.setFinish(false);
 				db.setFilename(sourcefile);
 				
-				showNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading)+ "");
-	
-				//'11,7,27 no longed needed with progress bar 
-				// Update Loading Status
-				// Stop and clear the existing thread.
-//				if(thread!=null){
-//					thread.stop();
-//					thread = null;
-//				}
-//				thread = new Thread() {
-//					@SuppressWarnings("static-access")
-//					public void run() {
-//						//int total = 0;
-//						//while (!db.isFinish() || !db.isRelatedFinish() ) {
-//						db.setAborted(false);
-//						while (!db.isFinish() && !db.isAborted()) {
-//							try {
-//								this.sleep(10000);
-//								
-//								if(db.getCount() != 0){
-//									showNotificationMessage(
-//											ctx.getText(R.string.lime_setting_notification_loading_build) + " "
-//											+ ctx.getText(R.string.lime_setting_notification_loading_import) + " "
-//											+ db.getCount() + " "
-//											+ ctx.getText(R.string.lime_setting_notification_loading_end)
-//											);
-//								}
-//								
-//							} catch (InterruptedException e) {
-//								e.printStackTrace();
-//							}
-//						}
-//	
-//						// Finish task
-//						if(db.isFinish()){
-//							showNotificationMessage(ctx.getText(R.string.lime_setting_notification_finish)+ "");
-//						}else{
-//							showNotificationMessage(ctx.getText(R.string.lime_setting_notification_failed)+ "");
-//						}
-//						mLIMEPref.setParameter("db_finish", true);
-//	
-//					}
-//				};
-				//thread.start();
-	
-				// Actually run the loading
+				showNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading)+ "", intentLIMEMappingLoading);
 				db.loadFile(tablename);
 				db.close();
 				
@@ -148,16 +111,36 @@ public class DBService extends Service {
 			return db.getCount();
 		}
 		
-		public boolean getLoadingMappingFinished(){
-			if(remoteFileDownloading) return false;
-			else return db.isFinish();
+		public boolean isLoadingMappingFinished(){
+			return db.isLoadingMappingFinished();
 		}
 		
-		public boolean getLoadingMappingAborted(){
-			if(remoteFileDownloading) return false;
-			return db.isAborted();
+		public boolean isLoadingMappingThreadAborted(){
+			return db.isLoadingMappingThreadAborted();
 		}
 		
+		public boolean isLoadingMappingThreadAlive(){		
+			return db.isLoadingMappingThreadAlive();
+		}
+		
+		public boolean isRemoteFileDownloading(){
+			if(DEBUG) Log.i("DBService:isRemoteFIleDownloading()", remoteFileDownloading+"");
+			return remoteFileDownloading;
+		}
+		
+		public void abortLoadMapping(){
+			try {
+				resetMapping(loadingTablename);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+			
+		}
+		
+		public void abortRemoteFileDownload(){
+			remoteFileDownloading = false;
+			abortDownload = true;
+		}
 		
 		File downloadedFile = null;
 		
@@ -184,7 +167,7 @@ public class DBService extends Service {
 			
 			Thread threadTask = new Thread() {
 				public void run() {
-					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start_empty)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start_empty)+ "", intentLIMEInitial);
 					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_EMPTY, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME_EMPTY);
 					String dbtarget = mLIMEPref.getParameterString("dbtarget");
 					String folder = "";
@@ -203,7 +186,7 @@ public class DBService extends Service {
 						threadTask.start();
 					}
 					getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
-					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEInitial);
 				}
 				
 			};
@@ -216,7 +199,7 @@ public class DBService extends Service {
 			resetDownloadDatabase();
 			Thread threadTask = new Thread() {
 				public void run() { 
-					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start)+ "", intentLIMEInitial);
 					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PRELOADED, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
 					String dbtarget = mLIMEPref.getParameterString("dbtarget");
 					String folder = ""; 
@@ -235,7 +218,7 @@ public class DBService extends Service {
 						threadTask.start();
 					}
 					getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
-					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEInitial);
 				}
 				
 			};
@@ -248,10 +231,12 @@ public class DBService extends Service {
 		public File downloadRemoteFile(String url, String folder, String filename){
 
 			remoteFileDownloading = true;
-			
+			abortDownload = false;
+			if(DEBUG)
+				Log.i("DBService:downloadRemoteFile()", "Starting....");
 			try {
 
-				showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_convert)+ "");
+				//showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_convert)+ "", intentLIMEMappingLoading);
 				
 
 				//Log.i("ART", "URL->"+url);
@@ -298,27 +283,35 @@ public class DBService extends Service {
 							
 					if(numread <=0){break;}
 					fos.write(buf, 0, numread);
-				}while(true);
+				}while(!abortDownload);
 				
 				try{
 					is.close();
 				}catch(Exception e){
+					if(DEBUG)
+						Log.i("DBService:downloadRemoteFile()", "error....");
 					remoteFileDownloading = false;
-					showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "",intentLIMEMenu );
 					e.printStackTrace();
 				}
 				remoteFileDownloading = false;
 				return downloadedFile;
 				
 			} catch (MalformedURLException e) {
+				if(DEBUG)
+					Log.i("DBService:downloadRemoteFile()", "error....");
 				remoteFileDownloading = false;
-				showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "");
+				showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "", intentLIMEMenu);
 				e.printStackTrace();
 			} catch (IOException e){
+				if(DEBUG)
+					Log.i("DBService:downloadRemoteFile()", "error....");
 				remoteFileDownloading = false;
-				showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "");
+				showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "", intentLIMEMenu);
 				e.printStackTrace();
 			}
+			if(DEBUG)
+				Log.i("DBService:downloadRemoteFile()", "finished.");
 			remoteFileDownloading = false;
 			return null;
 			
@@ -362,7 +355,7 @@ public class DBService extends Service {
 				fis.close(); 
 				return true;
 			} catch (Exception e) { 
-				showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "");
+				showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "", intentLIMEInitial);
 				e.printStackTrace(); 
 			}
 			return false;
@@ -406,7 +399,7 @@ public class DBService extends Service {
 
 		@Override
 		public void backupDatabase() throws RemoteException {
-			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_start)+ "");
+			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_start)+ "", intentLIMEInitial);
 
 			File srcFile = null;
 			String dbtarget = mLIMEPref.getParameterString("dbtarget");
@@ -416,12 +409,12 @@ public class DBService extends Service {
 				srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 			}			
 			compressFile(srcFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_BACKUP_NAME);
-			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end)+ "");
+			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end)+ "", intentLIMEInitial);
 		}
 
 		@Override
 		public void restoreDatabase() throws RemoteException {
-			showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start)+ "");
+			showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start)+ "", intentLIMEInitial);
 			File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
 
 			String dbtarget = mLIMEPref.getParameterString("dbtarget");
@@ -431,7 +424,7 @@ public class DBService extends Service {
 				decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME);
 			}			
 			getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
-			showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end)+ ""); 
+			showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end)+ "", intentLIMEInitial); 
 		}
 
 		@Override
@@ -500,14 +493,14 @@ public class DBService extends Service {
 		public void downloadDayi() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_dayi_start)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_dayi_start)+ "", intentLIMEMappingLoading);
 					downloadedFile = downloadRemoteFile(LIME.DAYI_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_DAYI);
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_dayi_install)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_dayi_install)+ "", intentLIMEMappingLoading);
 					try {
 						loadMapping(downloadedFile.getAbsolutePath(), "dayi");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.");
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
 					}
 				}
 			};
@@ -519,14 +512,14 @@ public class DBService extends Service {
 		public void downloadPhoneticAdv() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_adv_start)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_adv_start)+ "", intentLIMEMappingLoading);
 					downloadedFile = downloadRemoteFile(LIME.PHONETICADV_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETICADV);
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_adv_install)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_adv_install)+ "", intentLIMEMappingLoading);
 					try {
 						loadMapping(downloadedFile.getAbsolutePath(), "phonetic");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.");
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
 					}
 				}
 			};
@@ -537,14 +530,14 @@ public class DBService extends Service {
 		public void downloadPhonetic() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_start)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_start)+ "", intentLIMEMappingLoading);
 					downloadedFile = downloadRemoteFile(LIME.PHONETIC_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETIC);
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_install)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_install)+ "", intentLIMEMappingLoading);
 					try {
 						loadMapping(downloadedFile.getAbsolutePath(), "phonetic");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.");
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
 					}
 				}
 			};
@@ -555,14 +548,14 @@ public class DBService extends Service {
 		public void downloadCj5() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj5_start)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj5_start)+ "", intentLIMEMappingLoading);
 					downloadedFile = downloadRemoteFile(LIME.CJ5_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ5);
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj5_install)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj5_install)+ "", intentLIMEMappingLoading);
 					try {
 						loadMapping(downloadedFile.getAbsolutePath(), "cj5");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.");
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
 					}
 				}
 			};
@@ -573,14 +566,14 @@ public class DBService extends Service {
 		public void downloadEcj() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ecj_start)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ecj_start)+ "", intentLIMEMappingLoading);
 					downloadedFile = downloadRemoteFile(LIME.ECJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ECJ);
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ecj_install)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ecj_install)+ "", intentLIMEMappingLoading);
 					try {
 						loadMapping(downloadedFile.getAbsolutePath(), "ecj");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.");
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
 					}
 				}
 			};
@@ -591,14 +584,14 @@ public class DBService extends Service {
 		public void downloadWb() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_wb_start)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_wb_start)+ "", intentLIMEMappingLoading);
 					downloadedFile = downloadRemoteFile(LIME.WB_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_WB);
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_wb_install)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_wb_install)+ "", intentLIMEMappingLoading);
 					try {
 						loadMapping(downloadedFile.getAbsolutePath(), "wb");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.");
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
 					}
 				}
 			};
@@ -609,14 +602,14 @@ public class DBService extends Service {
 		public void downloadCj() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj_start)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj_start)+ "", intentLIMEMappingLoading);
 					downloadedFile = downloadRemoteFile(LIME.CJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ);
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj_install)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj_install)+ "", intentLIMEMappingLoading);
 					try {
 						loadMapping(downloadedFile.getAbsolutePath(), "cj");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.");
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
 					}
 				}
 			};
@@ -627,14 +620,14 @@ public class DBService extends Service {
 		public void downloadScj() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_scj_start)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_scj_start)+ "", intentLIMEMappingLoading);
 					downloadedFile = downloadRemoteFile(LIME.SCJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_SCJ);
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_scj_install)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_scj_install)+ "", intentLIMEMappingLoading);
 					try {
 						loadMapping(downloadedFile.getAbsolutePath(), "scj");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.");
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
 					}
 				}
 			};
@@ -645,14 +638,14 @@ public class DBService extends Service {
 		public void downloadEz() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ez_start)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ez_start)+ "", intentLIMEMappingLoading);
 					downloadedFile = downloadRemoteFile(LIME.EZ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_EZ);
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ez_install)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ez_install)+ "", intentLIMEMappingLoading);
 					try {
 						loadMapping(downloadedFile.getAbsolutePath(), "ez");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.");
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
 					}
 				}
 			};
@@ -663,14 +656,14 @@ public class DBService extends Service {
 		public void downloadArray() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array_start)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array_start)+ "", intentLIMEMappingLoading);
 					downloadedFile = downloadRemoteFile(LIME.ARRAY_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ARRAY);
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array_install)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array_install)+ "", intentLIMEMappingLoading);
 					try {
 						loadMapping(downloadedFile.getAbsolutePath(), "array");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.");
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
 					}
 				}
 			};
@@ -681,14 +674,14 @@ public class DBService extends Service {
 		public void downloadArray10() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array10_start)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array10_start)+ "", intentLIMEMappingLoading);
 					downloadedFile = downloadRemoteFile(LIME.ARRAY10_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ARRAY10);
-					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array10_install)+ "");
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array10_install)+ "", intentLIMEMappingLoading);
 					try {
 						loadMapping(downloadedFile.getAbsolutePath(), "array10");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.");
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
 					}
 				}
 			};
@@ -697,7 +690,8 @@ public class DBService extends Service {
 
 		@Override
 		public int getLoadingMappingPercentageDone() throws RemoteException {
-			return db.getPercentageDone();
+			if(remoteFileDownloading) return 0;
+			else return db.getPercentageDone();
 		}
 		
 	}
@@ -733,11 +727,19 @@ public class DBService extends Service {
 		super.onDestroy();
 	}
 
-	private void showNotificationMessage(String message) {
+	private void showNotificationMessage(String message, int intent) {
 		Notification notification = new Notification(R.drawable.icon, message, System.currentTimeMillis());
 		// FLAG_AUTO_CANCEL add by jeremy '10, 3 24
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,new Intent(this, LIMEMenu.class), 0);
+		Intent i = null;
+		if(intent == intentLIMEMenu)
+			i = new Intent(this, LIMEMenu.class);
+		else if(intent == intentLIMEMappingLoading)
+			i = new Intent(this, LIMEMappingLoading.class);
+		else if (intent == intentLIMEInitial)
+			i = new Intent(this, LIMEInitial.class);
+			
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,i, 0);
 		notification.setLatestEventInfo(this, this .getText(R.string.ime_setting), message, contentIntent);
 		if(notificationMgr == null){
 			notificationMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
