@@ -46,9 +46,12 @@ public class SearchService extends Service {
 	private final boolean DEBUG = false;
 	private LimeDB db = null;
 	private LimeHanConverter hanConverter = null;
-	private static LinkedList<Mapping> diclist = null;
+	//private static LinkedList<Mapping> diclist = null;  
 	private static List<Mapping> scorelist = null;
 
+	private static List<List<Mapping>> LDPhraseListArray = null;
+	private static List<Mapping> LDPhraseList = null;
+	
 	private static StringBuffer selectedText = new StringBuffer();
 	private static String tablename = "";
 
@@ -56,8 +59,6 @@ public class SearchService extends Service {
 	
 	private LIMEPreferenceManager mLIMEPref;
 
-	// Temp Mapping Object For updateMapping method.
-	Mapping updateMappingTemp = null;
 	
 	private static SearchServiceImpl obj = null;
 
@@ -303,7 +304,7 @@ public class SearchService extends Service {
 				}
 			return src;
 		}*/
-
+		/*@Deprecated
 		public void addUserDict(String id, String code, String word,
 				String pword, int score, boolean isDictionary)
 				throws RemoteException {
@@ -322,7 +323,7 @@ public class SearchService extends Service {
 			    diclist.addLast(temp);
 			    
 			    //Log.i("ART","addUserDict:" + temp.getCode());
-		}
+		}*/
 
 		public void updateUserDict() throws RemoteException {
 			if(DEBUG) Log.i("SearchService:","updateUserDict(), scorelist.size=" + scorelist.size());
@@ -406,17 +407,14 @@ public class SearchService extends Service {
 		}
 
 		@Override
-		public void updateMapping(String id, String code, String word,
+		public void addUserDict(String id, String code, String word,
 				String pword, int score, boolean isDictionary)
 				throws RemoteException {
-			//Log.i("ART","updateMapping:"+scorelist);
-			//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-			//boolean item = sp.getBoolean(LIME.LEARNING_SWITCH, false);
 			 
 			if(scorelist == null){scorelist = new ArrayList<Mapping>();}
 			if(db == null){db = new LimeDB(ctx);}
-			
-			updateMappingTemp = new Mapping();
+			// Temp Mapping Object For updateMapping method.
+			Mapping updateMappingTemp = new Mapping();
 			updateMappingTemp.setId(id);
 			updateMappingTemp.setCode(code);
 			updateMappingTemp.setWord(word);
@@ -425,11 +423,31 @@ public class SearchService extends Service {
 			updateMappingTemp.setDictionary(isDictionary);
 		      
 			// Jeremy '11,6,11. Always update score and sort according to preferences.
-			//if(item){
-			//Log.i("ART","updateMapping:"+updateMappingTemp.getCode());
 			scorelist.add(updateMappingTemp);
-			//}
+		}
+		
+		@Override
+		public void addLDPhrase(String id, String code, String word, int score, boolean ending){
+			if(LDPhraseListArray == null) 
+				LDPhraseListArray = new ArrayList<List<Mapping>>();
+			if(LDPhraseList == null)
+				LDPhraseList = new LinkedList<Mapping>(); 
 			
+			if(id != null){ // force interruped if id=null
+				Mapping tempMapping = new Mapping();
+				tempMapping.setId(id);
+				tempMapping.setCode(code);
+				tempMapping.setWord(word);
+				tempMapping.setScore(score);
+				tempMapping.setDictionary(false);
+				LDPhraseList.add(tempMapping);
+			}
+			
+			if(ending){
+				if(LDPhraseList.size()>1)
+					LDPhraseListArray.add(LDPhraseList);
+				LDPhraseList.clear();		
+			}
 			
 		}
 
@@ -447,10 +465,10 @@ public class SearchService extends Service {
 			return result;
 		}
 
-		@Override
+	
 		public void clear() throws RemoteException {
-			if(diclist != null){
-				diclist.clear();
+			if(scorelist != null){
+				scorelist.clear();
 			}
 			if(scorelist != null){
 				scorelist.clear();
@@ -465,6 +483,7 @@ public class SearchService extends Service {
 				keynamecache.clear();
 			}
 		}
+
 
 		@Override
 		public List<Mapping> queryDictionary(String word) throws RemoteException {

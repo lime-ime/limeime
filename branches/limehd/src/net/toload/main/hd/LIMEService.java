@@ -138,7 +138,7 @@ public class LIMEService extends InputMethodService implements
 	private String misMatched;
 
 	private LinkedList<Mapping> templist;
-	private LinkedList<Mapping> userdiclist;
+	//private LinkedList<Mapping> userdiclist;
 
 	private Vibrator mVibrator;
 	private AudioManager mAudioManager;
@@ -208,6 +208,8 @@ public class LIMEService extends InputMethodService implements
 	private final int MY_KEYCODE_CTRL_RIGHT = 114;
 	
 	private final String relatedSelkey = "!@#$%^&*()";
+	
+	private String LDComposingBuffer=""; //Jeremy '11,7,30 for learning continuous typing phrases 
 
 	private LIMEPreferenceManager mLIMEPref;
 	
@@ -270,7 +272,7 @@ public class LIMEService extends InputMethodService implements
 		keyboardSelection = mLIMEPref.getKeyboardSelection();// sp.getString("keyboard_list", "custom");
 
 		// initial Input List
-		userdiclist = new LinkedList<Mapping>();
+		//userdiclist = new LinkedList<Mapping>();
 
 		// initial keyboard list
 		keyboardList = new ArrayList<String>();
@@ -419,6 +421,15 @@ public class LIMEService extends InputMethodService implements
 		if (mInputView != null) {
 			mInputView.closing();
 		}
+		
+		if(LDComposingBuffer.length()>0) { // Force interrupt the LD process
+			LDComposingBuffer = "";
+			try {
+				SearchSrv.addLDPhrase(null,null,null,0, true);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		}
 
 		// Clear current composing text and candidates.
 		mComposing.setLength(0);
@@ -427,9 +438,9 @@ public class LIMEService extends InputMethodService implements
 		setCandidatesViewShown(false);
 		
 		// Add Custom related words
-		if (userdiclist.size() > 0) {
-			updateUserDict();
-		}
+		//if (userdiclist.size() > 0) {
+		updateUserDict();
+		//}
 
 		this.setSuggestions(null, false, false);
 		
@@ -1329,7 +1340,7 @@ public class LIMEService extends InputMethodService implements
 								firstMatchedLength);
 
 						try {
-							SearchSrv.updateMapping(firstMatched.getId(),
+							SearchSrv.addUserDict(firstMatched.getId(),
 									firstMatched.getCode(),
 									firstMatched.getWord(),
 									firstMatched.getPword(),
@@ -1338,19 +1349,48 @@ public class LIMEService extends InputMethodService implements
 						} catch (RemoteException e) {
 							e.printStackTrace();
 						}
-						userdiclist.add(firstMatched);
+						//userdiclist.add(firstMatched);
 						// Update userdict for auto-learning feature
 						// if(userdiclist.size() > 1) { updateUserDict();}
 
 						// Add by Jeremy '10, 4,1 . Reverse Lookup
 						SearchSrv.rQuery(firstMatched.getWord());
+						
+						// Jeremy '11,7,28 for continuous typing (LD) 
 						if(mComposing.length() > firstMatched.getCode().length()){
+							if(LDComposingBuffer.length()==0){
+								//starting LD process
+								LDComposingBuffer = mComposing.toString();
+								if(DEBUG) Log.i("LIMEService:commitedtype()", "starting LD process, LDBuffer=" + LDComposingBuffer +
+										". just commited code=" + firstMatched.getCode());
+								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), firstMatched.getWord(), firstMatched.getScore(), false);
+							}else if(LDComposingBuffer.contains(mComposing.toString())){
+								//Continuous LD process
+								if(DEBUG) Log.i("LIMEService:commitedtype()", "Continuous LD process, LDBuffer=" + LDComposingBuffer +
+										". just commited code=" + firstMatched.getCode());
+								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), firstMatched.getWord(), firstMatched.getScore(), false);
+							}
 							mComposing= mComposing.delete(0, firstMatched.getCode().length());
-							//Log.i("LIMEService:commitedtext()"," new mcomposing:" +mComposing);
+							//Log.i("LIMEService:commitedtext()"," new mComposing:" +mComposing);
 							inputConnection.setComposingText(mComposing, 1);
 							updateCandidates();
 							return;
-						} 
+						} else {
+							if(LDComposingBuffer.length()>0 && LDComposingBuffer.contains(mComposing.toString())){
+								//Ending continuous LD process (last of LD process)
+								if(DEBUG) Log.i("LIMEService:commitedtype()", "Ending LD process, LDBuffer=" + LDComposingBuffer +
+										". just commited code=" + firstMatched.getCode());
+								LDComposingBuffer = "";
+								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), firstMatched.getWord(), firstMatched.getScore(), true);
+							}else if(LDComposingBuffer.length()>0){
+								//LD process interrupted.
+								if(DEBUG) Log.i("LIMEService:commitedtype()", "LD process interrupted, LDBuffer=" + LDComposingBuffer +
+										". just commited code=" + firstMatched.getCode());
+								LDComposingBuffer = "";
+								SearchSrv.addLDPhrase(null,null,null,0, true);
+							}
+								
+						}
 
 						tempMatched = firstMatched;
 						firstMatched = null;
@@ -1363,17 +1403,17 @@ public class LIMEService extends InputMethodService implements
 						firstMatched = null;
 						//hasFirstMatched = false;
 
-						userdiclist.add(null);
+						//userdiclist.add(null);
 					} else {
 						inputConnection.commitText(mComposing,
 								mComposing.length());
 						//hasFirstMatched = false;
-						userdiclist.add(null);
+						//userdiclist.add(null);
 					}
 				} else {
 					inputConnection.commitText(mComposing, mComposing.length());
 					//hasFirstMatched = false;
-					userdiclist.add(null);
+					//userdiclist.add(null);
 				}
 
 				if (mCandidateView != null) {
@@ -2698,6 +2738,7 @@ public class LIMEService extends InputMethodService implements
 		} else if ((mComposing.length() > 0 ||firstMatched != null && firstMatched.isDictionary()) && onIM) {
 			// Log.i("ART","When user pick suggested word which is not from dictionary");
 			commitTyped(getCurrentInputConnection());
+			//Moved to cmmitedTyped();
 //			this.firstMatched = null;
 //			//this.hasFirstMatched = false;
 //			if(templist!=null) templist.clear();
@@ -2887,7 +2928,6 @@ public class LIMEService extends InputMethodService implements
 
 	@Override
 	public void onDestroy() {
-		// TODO Auto-generated method stub
 		super.onDestroy();
 
 		if (SearchSrv != null) {

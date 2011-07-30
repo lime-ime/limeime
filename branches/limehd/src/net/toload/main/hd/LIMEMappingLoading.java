@@ -36,6 +36,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -224,6 +225,18 @@ public class LIMEMappingLoading extends Activity {
 			notificationMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		}
 		notificationMgr.notify(0, notification);
+	}
+
+	@Override
+	protected void onDestroy() {
+		if (DBSrv != null) {
+			try {
+				this.unbindService(serConn);
+			} catch (Exception e) {
+				Log.i("LIMEMappingLoading", "Failed to unbind DB service");
+			}
+		}
+		super.onDestroy();
 	}
 	
 		

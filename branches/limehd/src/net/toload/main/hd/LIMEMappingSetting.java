@@ -41,6 +41,7 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -1146,6 +1147,17 @@ public class LIMEMappingSetting extends Activity {
 	   		i.putExtras(bundle);
 			startActivity(i);
 		}
-		
+		@Override
+		protected void onDestroy() {
+			if (DBSrv != null) {
+				try {
+					this.unbindService(serConn);
+					this.unbindService(serConn2);
+				} catch (Exception e) {
+					Log.i("LIMEMappingLoading", "Failed to unbind DB/Search service");
+				}
+			}
+			super.onDestroy();
+		}
 		
 }

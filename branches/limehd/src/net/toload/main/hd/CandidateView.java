@@ -281,7 +281,7 @@ public class CandidateView extends View {
                 	if(mPopupComposingY > -popupHeight){
                 		mPopupComposingY -= 2* popupHeight;
                 	}       	
-                	 Log.i("CandiateView:showcomposing()", " candidateview offsetOnScreen x:" 
+                	 if(DEBUG) Log.i("CandiateView:showcomposing()", " candidateview offsetOnScreen x:" 
                      		+offsetOnScreen[0] + ". y:" +offsetOnScreen[1]);
                 }else{
                 	mPopupComposingY -= popupHeight;
