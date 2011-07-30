@@ -76,7 +76,7 @@ public class SearchService extends Service {
 	private HashMap<String,String> selKeyMap = new HashMap<String,String>();
 	//private HashMap<String,String> endKeyMap = new HashMap<String,String>();
 	
-	private static ConcurrentHashMap<String,Pair<List<Mapping>,List<Mapping>>> cache = null;
+	private static ConcurrentHashMap<String, Pair<List<Mapping>,List<Mapping>>> cache = null;
 	private static ConcurrentHashMap<String, List<Mapping>> engcache = null;
 	private static ConcurrentHashMap<String, String> keynamecache = null;
 
@@ -234,6 +234,7 @@ public class SearchService extends Service {
 					if(cacheTemp != null){
 						List<Mapping> resultlist = cacheTemp.first;
 						List<Mapping> relatedtlist = cacheTemp.second;
+						
 						if(resultlist.size()>0) 
 							result.addAll(resultlist);
 						if(i==0 && relatedtlist.size()>0) 
@@ -324,31 +325,63 @@ public class SearchService extends Service {
 		}
 
 		public void updateUserDict() throws RemoteException {
-			//Log.i("SearchService:","updateUserDict:"+diclist);
-			
-			if(db == null){db = new LimeDB(ctx);}
-			//Jeremy '11,6,12 do adduserdict and add score if diclist.size > 0 and only adduserdict if diclist.size >1
-//			if(diclist != null && mLIMEPref.getLearnRelatedWord() && diclist.size() > 1){
-//				db.addUserDict(diclist);
-//				diclist.clear();
-//			}
-			if(scorelist != null && mLIMEPref.getLearnRelatedWord() && scorelist.size() > 1){
-				db.addUserDict(scorelist);
-				scorelist.clear();
-			}
-				
-				//Jeremy '11,6,11, always learn scores, but sorted according preference options
-				//boolean item2 = sp.getBoolean(LIME.LEARNING_SWITCH, false);
+			if(DEBUG) Log.i("SearchService:","updateUserDict(), scorelist.size=" + scorelist.size());
 
-				//if(item2 && scorelist != null){
+			if(db == null){db = new LimeDB(ctx);}
+			//Jeremy '11,7,28 combine to adduserdict and addscore 
+			//Jeremy '11,6,12 do adduserdict and add score if diclist.size > 0 and only adduserdict if diclist.size >1
+			//Jeremy '11,6,11, always learn scores, but sorted according preference options
 			if(scorelist != null){
-				for(int i=0 ; i < scorelist.size(); i++){
-					//Log.i("ART","updateUserDict addScore:"+((Mapping)scorelist.get(i)).getCode() + " " + ((Mapping)scorelist.get(i)).getId());
-					db.addScore((Mapping)scorelist.get(i));
+				if(mLIMEPref.getLearnRelatedWord() && scorelist.size() > 1){
+					db.addUserDict(scorelist);
+				}
 					
+				for(int i=0 ; i < scorelist.size(); i++){
+					Mapping cachedMapping = scorelist.get(i);
+					db.addScore(cachedMapping);					
 					//Jeremy '11,6,13 Words in relatedlist is selected for null id, the relatedlist will later be updated.
-					if(scorelist.get(i).getId()==null){ // Force to delete the cached item.
-						cache.remove(cacheKey(scorelist.get(i).getCode().toLowerCase()));
+					// Jeremy '11,7,29 update cached here
+					if (!cachedMapping.isDictionary()){
+						String cachekey = cacheKey( cachedMapping.getCode().toLowerCase());
+						Pair<List<Mapping>, List<Mapping>> cachedPair = cache.get(cachekey);
+						if(cachedMapping.getId()==null   
+								&& cachedPair!=null && cachedPair.second !=null && cachedPair.second.size()>0){
+							if(DEBUG) Log.i("SearchService:","updateUserDict: updating related list");
+							cache.remove(cachekey);
+							Pair<List<Mapping>, List<Mapping>> newPair 
+								= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, db.updateRelatedList(cachekey)) ;
+							cache.put(cachekey, newPair);
+
+						} else  if(cachedMapping.getId()!=null && cachedPair!=null 
+									&& cachedPair.first !=null && cachedPair.first.size()>0) {
+							
+							List<Mapping> cachedList = cachedPair.first;
+							int size = cachedList.size();
+							if(DEBUG) Log.i("SearchService:updateUserDict()","cachedList.size:" + size);
+							for(int j=0; j< size; j++){
+								Mapping cm = cachedList.get(j);
+								if(DEBUG) Log.i("SearchService:updateUserDict()","cachedList at :" + j + ". score="+ cm.getScore());
+								if(cachedMapping.getId() == cm.getId()){
+									int score = cm.getScore() + 1 ;
+									if(DEBUG) Log.i("SearchService:updateUserDict()","cachedMapping found at :" + j +". new score=" +score );
+									cm.setScore(score);
+									if(j>0 && score > cachedList.get(j-1).getScore()){
+										cachedList.remove(j);
+										for(int k=0; k<j; k++){
+											if(cachedList.get(k).getScore() <= score){
+												cachedList.add(k,cm);
+												break;
+											}
+										}
+										
+									}
+									break;
+								}
+							}
+
+						
+							
+						}
 					}
 					
 						

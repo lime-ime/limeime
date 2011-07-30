@@ -47,7 +47,7 @@ import android.os.RemoteException;
 import android.util.Log;
 
 public class DBService extends Service {
-	private final boolean DEBUG = true;
+	private final boolean DEBUG = false;
 	private NotificationManager notificationMgr;
 
 	private LimeDB db = null;

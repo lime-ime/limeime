@@ -1417,7 +1417,7 @@ public class LIMEService extends InputMethodService implements
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-		userdiclist.clear();
+		//userdiclist.clear();
 	}
 
 	/**

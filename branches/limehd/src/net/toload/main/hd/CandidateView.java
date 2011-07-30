@@ -268,7 +268,7 @@ public class CandidateView extends View {
                 int mPopupComposingY = offsetInWindow[1];
                 int mPopupComposingX = 0;
                 
-                Log.i("CandiateView:showcomposing()", " candidateview offsetInWindow x:" 
+               if(DEBUG) Log.i("CandiateView:showcomposing()", " candidateview offsetInWindow x:" 
                 		+offsetInWindow[0] + ". y:" +offsetInWindow[1]);
                 // Show popup windows at the location of cursor  Jeremy '11,7,25
                 // Rely on onCursorUpdate() of inputmethod service, which is not implemented on standard android 
@@ -287,7 +287,7 @@ public class CandidateView extends View {
                 	mPopupComposingY -= popupHeight;
                 }
                 	
-                Log.i("CandiateView:showcomposing()", " mPopupComposingX:" 
+                if(DEBUG) Log.i("CandiateView:showcomposing()", " mPopupComposingX:" 
                  		+mPopupComposingX + ". mPopupComposingY:" +mPopupComposingY);
                 
                 if (mComposingTextPopup.isShowing()) {              	

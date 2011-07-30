@@ -45,7 +45,7 @@ import android.util.Pair;
  */
 public class LimeDB extends SQLiteOpenHelper {
 
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
 
 	private final static int DATABASE_VERSION = 66; 
 	//private final static int DATABASE_RELATED_SIZE = 50;
@@ -698,8 +698,9 @@ public class LimeDB extends SQLiteOpenHelper {
 				srcunit.getWord() != null  && !srcunit.getWord().trim().equals("")){
 				String code = srcunit.getCode().trim().toLowerCase();
 				if(DEBUG) Log.i("LIMEDb.addScore()","related selectd, code:" + code);
-				addOrUpdateUserdictRecord(srcunit.getWord(),null);
-				updateRelatedList(code);
+				// sotre the phrase frequency of relatedlist in reated table with cword =null
+				addOrUpdateUserdictRecord(srcunit.getWord(),null); 
+				//updateRelatedList(code); move to search service Jeremy '11,7,29
 			
 			}else if (srcunit != null && srcunit.getId() != null &&
 					srcunit.getWord() != null  &&
@@ -718,7 +719,8 @@ public class LimeDB extends SQLiteOpenHelper {
 					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
 	
 					SQLiteDatabase db = this.getSqliteDb(false);
-					db.update(tablename, cv, FIELD_id + " = " + srcunit.getId(), null);
+					// Jeremy 11',7,29  update according to word instead of ID, may have multiple records mathing word but withd diff code/id 
+					db.update(tablename, cv, FIELD_WORD + " = '" + srcunit.getWord() + "'", null);
 					db.close();
 				}
 			}
@@ -800,15 +802,15 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * 
 	 * @param code
 	 */
-	private void updateRelatedList(String code){
+	public List<Mapping> updateRelatedList(String code){
 		// Update relatedlist in IM table now.
 		SQLiteDatabase db = this.getSqliteDb(false);
 		
 		Cursor cursor = db.query(tablename, null, 
 				FIELD_CODE + " = '" + code + "'", 
 				null, null, null, null, null);
-		//int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 		//Log.i("LIMEDB:addScore()","cursor size:" + cursor.getCount());
+		LinkedList <Mapping> scorelist = new LinkedList<Mapping>();
 		if(cursor.moveToFirst()){
 			int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
 			//int idColumn = cursor.getColumnIndex(FIELD_id);
@@ -817,7 +819,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			if(DEBUG) 
 				Log.i("LIMEDB:addScore()","the original relatedlist:" + relatedlist);
 			String templist[] = relatedlist.split("\\|");
-			LinkedList <Mapping> scorelist = new LinkedList<Mapping>();
+			
 			// Sorting the related list by checking scores of each word in same table
 			for (String unit : templist) {
 				Mapping munit =isExists(unit,null);
@@ -864,6 +866,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 		
 		db.close();
+		return scorelist;
 	}
 //Rewrite by Jeremy 11,6,4.  Supporting array and dayi now.
 	public String keyToKeyname(String code, String table, Boolean composingText) {
@@ -1846,8 +1849,8 @@ public class LimeDB extends SQLiteOpenHelper {
 						processedLength += line.getBytes().length + 2; // +2 for the eol mark.
 						percentageDone = (int) ((float)processedLength/(float)fileLength *50);
 						if(DEBUG)
-							Log.i("LimeDB:loadFile()", percentageDone +"% precessed" 
-									+ "processedLength:" + processedLength + " fileLength:" + fileLength);
+							Log.i("LimeDB:loadFile()", percentageDone +"% processed" 
+									+ ". processedLength:" + processedLength + ". fileLength:" + fileLength);
 						if(percentageDone>49) percentageDone = 49;
 						/*
 						 * If source is cin format start from the tag %chardef
