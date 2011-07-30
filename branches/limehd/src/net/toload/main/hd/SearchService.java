@@ -334,9 +334,10 @@ public class SearchService extends Service {
 			//Jeremy '11,6,11, always learn scores, but sorted according preference options
 			if(scorelist != null){
 				if(mLIMEPref.getLearnRelatedWord() && scorelist.size() > 1){
+					// userdict learning
 					db.addUserDict(scorelist);
 				}
-					
+				// addscore and update db/cache
 				for(int i=0 ; i < scorelist.size(); i++){
 					Mapping cachedMapping = scorelist.get(i);
 					db.addScore(cachedMapping);					
@@ -389,7 +390,10 @@ public class SearchService extends Service {
 				}
 				scorelist.clear();
 			}	
-			
+			// Learn LD Phrase
+			if(LDPhraseListArray.size()>0){
+				
+			}
 		}
 		
 		public String keyToKeyname(String code){

@@ -186,7 +186,7 @@ public class DBService extends Service {
 						threadTask.start();
 					}
 					getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
-					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEInitial);
+					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 				}
 				
 			};
@@ -218,7 +218,7 @@ public class DBService extends Service {
 						threadTask.start();
 					}
 					getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
-					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEInitial);
+					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 				}
 				
 			};
@@ -355,7 +355,7 @@ public class DBService extends Service {
 				fis.close(); 
 				return true;
 			} catch (Exception e) { 
-				showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "", intentLIMEInitial);
+				showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "", intentLIMEMenu);
 				e.printStackTrace(); 
 			}
 			return false;
@@ -409,7 +409,7 @@ public class DBService extends Service {
 				srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 			}			
 			compressFile(srcFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_BACKUP_NAME);
-			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end)+ "", intentLIMEInitial);
+			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end)+ "", intentLIMEMenu);
 		}
 
 		@Override
@@ -424,7 +424,7 @@ public class DBService extends Service {
 				decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME);
 			}			
 			getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
-			showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end)+ "", intentLIMEInitial); 
+			showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end)+ "", intentLIMEMenu); 
 		}
 
 		@Override
@@ -500,7 +500,7 @@ public class DBService extends Service {
 						loadMapping(downloadedFile.getAbsolutePath(), "dayi");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
 					}
 				}
 			};
@@ -519,7 +519,7 @@ public class DBService extends Service {
 						loadMapping(downloadedFile.getAbsolutePath(), "phonetic");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
 					}
 				}
 			};
@@ -537,7 +537,7 @@ public class DBService extends Service {
 						loadMapping(downloadedFile.getAbsolutePath(), "phonetic");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
 					}
 				}
 			};
@@ -555,7 +555,7 @@ public class DBService extends Service {
 						loadMapping(downloadedFile.getAbsolutePath(), "cj5");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
 					}
 				}
 			};
@@ -573,7 +573,7 @@ public class DBService extends Service {
 						loadMapping(downloadedFile.getAbsolutePath(), "ecj");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
 					}
 				}
 			};
@@ -591,7 +591,7 @@ public class DBService extends Service {
 						loadMapping(downloadedFile.getAbsolutePath(), "wb");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
 					}
 				}
 			};
@@ -609,7 +609,7 @@ public class DBService extends Service {
 						loadMapping(downloadedFile.getAbsolutePath(), "cj");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
 					}
 				}
 			};
@@ -627,7 +627,7 @@ public class DBService extends Service {
 						loadMapping(downloadedFile.getAbsolutePath(), "scj");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
 					}
 				}
 			};
@@ -645,7 +645,7 @@ public class DBService extends Service {
 						loadMapping(downloadedFile.getAbsolutePath(), "ez");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
 					}
 				}
 			};
@@ -663,7 +663,7 @@ public class DBService extends Service {
 						loadMapping(downloadedFile.getAbsolutePath(), "array");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
 					}
 				}
 			};
@@ -681,7 +681,7 @@ public class DBService extends Service {
 						loadMapping(downloadedFile.getAbsolutePath(), "array10");
 					} catch (RemoteException e) {
 						e.printStackTrace();
-						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMappingLoading);
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
 					}
 				}
 			};
