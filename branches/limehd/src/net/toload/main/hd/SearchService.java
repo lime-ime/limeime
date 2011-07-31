@@ -44,6 +44,7 @@ import android.util.Pair;
 public class SearchService extends Service {
 	
 	private final boolean DEBUG = false;
+	private final String TAG = "LIME.SearchService";
 	private LimeDB db = null;
 	private LimeHanConverter hanConverter = null;
 	//private static LinkedList<Mapping> diclist = null;  
@@ -69,7 +70,7 @@ public class SearchService extends Service {
 	private static boolean hasSymbolMapping;
 	
 	
-	private static List<Mapping> preresultlist = null;
+	//private static List<Mapping> preresultlist = null;
 	//private static String precode = null;
 	
 	//Jeremy '11,6,6
@@ -190,7 +191,6 @@ public class SearchService extends Service {
 			
 			if(db == null){loadLimeDB();}
 			
-			//Log.i("ART","Run SearchSrv query:"+ code);
 			// Check if system need to reset cache
 			
 			if(mLIMEPref.getParameterBoolean(LIME.SEARCHSRV_RESET_CACHE)){
@@ -200,10 +200,7 @@ public class SearchService extends Service {
 				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 			}
 			
-			if(preresultlist == null){preresultlist = new LinkedList<Mapping>();}
 			List<Mapping> result = new LinkedList<Mapping>();
-			// Modified by Jeremy '10, 3, 28.  yes-> .. The database is loading (yes) and finished (no).
-			//if(code != null && loadingstatus != null && loadingstatus.equalsIgnoreCase("no")){
 			if(code!=null) {
 				// clear mappingidx when user switching between softkeyboard and hard keyboard. Jeremy '11,6,11
 				if(isPhysicalKeyboardPressed == softkeyboard)
@@ -219,18 +216,14 @@ public class SearchService extends Service {
 				result.add(temp);
 				int size = code.length();
 				
-//				if(code.length() == 1){
-//					preresultlist = new LinkedList<Mapping>();
-//				}
-				
+	
 				// 11'7,22 rewritten for 連打 
 				for(int i =0; i<size; i++) {
-					//Log.i("SearchService:query()","i="+i+" code="+code);
+					if(DEBUG) Log.i(TAG, "query(): i="+i+" code="+code);
 					
 					String cacheKey = cacheKey(code);
 					Pair<List<Mapping>,List<Mapping>> cacheTemp = cache.get(cacheKey);
-
-					//Log.i("SearchService:query()","cachekey:" + cacheKey ); 
+ 
 
 					if(cacheTemp != null){
 						List<Mapping> resultlist = cacheTemp.first;
@@ -240,8 +233,6 @@ public class SearchService extends Service {
 							result.addAll(resultlist);
 						if(i==0 && relatedtlist.size()>0) 
 							result.addAll(relatedtlist);
-
-						//preresultlist = resultlist;
 					}else{
 
 						// 25/Jul/2011 by Art
@@ -250,25 +241,14 @@ public class SearchService extends Service {
 							Pair<List<Mapping>,List<Mapping>> resultPair = db.getMapping(code, !isPhysicalKeyboardPressed);
 							List<Mapping> resultlist = resultPair.first;
 							List<Mapping> relatedtlist = resultPair.second;
-	
-							if(resultlist.size() + relatedtlist.size()  > 0){
-								cache.put(cacheKey, resultPair);
-								if(resultlist.size()>0) 
-									result.addAll(resultlist);
-								if(i==0 && relatedtlist.size()>0) 
-									result.addAll(relatedtlist);
-								//preresultlist = resultlist;
+							cache.put(cacheKey, resultPair);
 							
-							}
-							
-	//						}else{
-	//							if(code.length() > 3 &&  
-	//									cache.get(cacheKey.subSequence(0, cacheKey.length()-1)) != null && 
-	//									cache.get(cacheKey.subSequence(0, cacheKey.length()-2)) != null 
-	//							){ 
-	//								result.addAll(preresultlist);
-	//							}
-	//						}
+							//if(resultlist.size() + relatedtlist.size()  > 0){
+							if(resultlist.size()>0) 
+								result.addAll(resultlist);
+							if(i==0 && relatedtlist.size()>0) 
+								result.addAll(relatedtlist);
+		
 						}catch(Exception e){
 							e.printStackTrace();
 						}
@@ -321,81 +301,166 @@ public class SearchService extends Service {
 			      temp.setScore(score);
 			      temp.setDictionary(isDictionary);
 			    diclist.addLast(temp);
-			    
-			    //Log.i("ART","addUserDict:" + temp.getCode());
+
 		}*/
+		
+		private void updateScoreCache(Mapping cachedMapping){
+			if(DEBUG) Log.i(TAG, "udpateScoreCache(): code=" + cachedMapping.getCode());
+			
+			db.addScore(cachedMapping);					
+			// Jeremy '11,7,29 update cached here
+			if (!cachedMapping.isDictionary()){
+				String code = cachedMapping.getCode().toLowerCase();
+				String cachekey = cacheKey(code);
+				Pair<List<Mapping>, List<Mapping>> cachedPair = cache.get(cachekey);
+				// null id denotes target is a word in related list
+				if(cachedMapping.getId()==null   
+						&& cachedPair!=null && cachedPair.second !=null && cachedPair.second.size()>0){
+					if(DEBUG) Log.i(TAG,"updateUserDict: updating related list");
+					if(cache.remove(cachekey)!=null){
+						Pair<List<Mapping>, List<Mapping>> newPair 
+						= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, db.updateRelatedList(code)) ;
+						cache.put(cachekey, newPair);
+					}
+					// non null id denotes target is in exact match result list.
+				} else  if(cachedMapping.getId()!=null && cachedPair!=null 
+						&& cachedPair.first !=null && cachedPair.first.size()>0) {
 
-		public void updateUserDict() throws RemoteException {
-			if(DEBUG) Log.i("SearchService:","updateUserDict(), scorelist.size=" + scorelist.size());
-
-			if(db == null){db = new LimeDB(ctx);}
-			//Jeremy '11,7,28 combine to adduserdict and addscore 
-			//Jeremy '11,6,12 do adduserdict and add score if diclist.size > 0 and only adduserdict if diclist.size >1
-			//Jeremy '11,6,11, always learn scores, but sorted according preference options
-			if(scorelist != null){
-				if(mLIMEPref.getLearnRelatedWord() && scorelist.size() > 1){
-					// userdict learning
-					db.addUserDict(scorelist);
-				}
-				// addscore and update db/cache
-				for(int i=0 ; i < scorelist.size(); i++){
-					Mapping cachedMapping = scorelist.get(i);
-					db.addScore(cachedMapping);					
-					//Jeremy '11,6,13 Words in relatedlist is selected for null id, the relatedlist will later be updated.
-					// Jeremy '11,7,29 update cached here
-					if (!cachedMapping.isDictionary()){
-						String cachekey = cacheKey( cachedMapping.getCode().toLowerCase());
-						Pair<List<Mapping>, List<Mapping>> cachedPair = cache.get(cachekey);
-						if(cachedMapping.getId()==null   
-								&& cachedPair!=null && cachedPair.second !=null && cachedPair.second.size()>0){
-							if(DEBUG) Log.i("SearchService:","updateUserDict: updating related list");
-							cache.remove(cachekey);
-							Pair<List<Mapping>, List<Mapping>> newPair 
-								= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, db.updateRelatedList(cachekey)) ;
-							cache.put(cachekey, newPair);
-
-						} else  if(cachedMapping.getId()!=null && cachedPair!=null 
-									&& cachedPair.first !=null && cachedPair.first.size()>0) {
-							
-							List<Mapping> cachedList = cachedPair.first;
-							int size = cachedList.size();
-							if(DEBUG) Log.i("SearchService:updateUserDict()","cachedList.size:" + size);
-							for(int j=0; j< size; j++){
-								Mapping cm = cachedList.get(j);
-								if(DEBUG) Log.i("SearchService:updateUserDict()","cachedList at :" + j + ". score="+ cm.getScore());
-								if(cachedMapping.getId() == cm.getId()){
-									int score = cm.getScore() + 1 ;
-									if(DEBUG) Log.i("SearchService:updateUserDict()","cachedMapping found at :" + j +". new score=" +score );
-									cm.setScore(score);
-									if(j>0 && score > cachedList.get(j-1).getScore()){
-										cachedList.remove(j);
-										for(int k=0; k<j; k++){
-											if(cachedList.get(k).getScore() <= score){
-												cachedList.add(k,cm);
-												break;
-											}
-										}
-										
+					List<Mapping> cachedList = cachedPair.first;
+					int size = cachedList.size();
+					if(DEBUG) Log.i(TAG,"updateUserDict(): cachedList.size:" + size);
+					// update exact match cache
+					for(int j=0; j< size; j++){
+						Mapping cm = cachedList.get(j);
+						if(DEBUG) Log.i(TAG,"updateUserDict(): cachedList at :" + j + ". score="+ cm.getScore());
+						if(cachedMapping.getId() == cm.getId()){
+							int score = cm.getScore() + 1 ;
+							if(DEBUG) Log.i(TAG,"updateUserDict(): cachedMapping found at :" + j +". new score=" +score );
+							cm.setScore(score);
+							if(j>0 && score > cachedList.get(j-1).getScore()){
+								cachedList.remove(j);
+								for(int k=0; k<j; k++){
+									if(cachedList.get(k).getScore() <= score){
+										cachedList.add(k,cm);
+										break;
 									}
-									break;
 								}
-							}
 
-						
-							
+							}
+							break;
 						}
 					}
-					
-						
+					// Jeremy '11,7,31
+					// exact match score was changed, related list in similar codes should be rebuild 
+					// (eg. d, de, and def for code, defg)
+					updateSimilarCodeRelatedList(code);
+
+
 				}
-				scorelist.clear();
-			}	
-			// Learn LD Phrase
-			if(LDPhraseListArray.size()>0){
-				
 			}
+
+
+		}
+
+		public void updateUserDict() throws RemoteException {
+			// Jeremy '11,7,31 The updating process takes some time. Create a new thread to do this.
+			Thread UpadtingThread = new Thread(){
+				public void run() {
+					if(db == null){db = new LimeDB(ctx);} 
+					//Jeremy '11,7,28 combine to adduserdict and addscore 
+					//Jeremy '11,6,12 do adduserdict and add score if diclist.size > 0 and only adduserdict if diclist.size >1
+					//Jeremy '11,6,11, always learn scores, but sorted according preference options
+					if(scorelist != null){
+						if(DEBUG) 
+							Log.i(TAG,"updateUserDict(), scorelist.size=" + scorelist.size());
+						if(mLIMEPref.getLearnRelatedWord() && scorelist.size() > 1){
+							// userdict learning
+							db.addUserDict(scorelist);
+						}
+						// addscore and update db/cache
+						//Jeremy '11,7,31 tried to move to addUserdict
+//						for(int i=0 ; i < scorelist.size(); i++){
+//							Mapping cachedMapping = scorelist.get(i);
+//							updateScoreCache(cachedMapping);
+//						}
+						scorelist.clear();
+					}	
+					// Learn LD Phrase
+					if(LDPhraseListArray!=null && LDPhraseListArray.size()>0){
+						if(DEBUG) 
+							Log.i(TAG,"updateUserDict(): LDPhrase learning, arraysize =" + LDPhraseListArray.size());
+						for(List<Mapping> phraselist : LDPhraseListArray ){
+							if(DEBUG) 
+								Log.i(TAG,"updateUserDict(): LDPhrase learning, current list size =" + phraselist.size());
+							if(phraselist.size()>0){	
+								String baseCode="", LDCode ="", QPCode ="", baseWord="";
+								Mapping unit1 = phraselist.get(0);
+								baseCode = unit1.getCode();
+								QPCode = unit1.getCode().substring(0, 1);
+								baseWord = unit1.getWord();
+								if(unit1 == null || unit1.getWord().equals("")){break;}
+
+								for (int i = 0; i < phraselist.size(); i++) {
+									if(i+1 <phraselist.size()){
+										Mapping unit2 = phraselist.get((i + 1));
+										if(unit2 == null || unit2.getWord().equals("")){break;}				
+										baseCode += unit2.getCode();
+										baseCode = baseCode.toLowerCase();
+										baseWord += unit2.getWord();
+										if(tablename.equals("phonetic")) {// remove tone symbol in phonetic table 
+											LDCode = baseCode.replaceAll("[3467]", "").toLowerCase();
+											QPCode += unit2.getCode().substring(0, 1).toLowerCase();
+											if(LDCode.length()>1){
+												db.newMapping(LDCode, baseWord);
+												cache.remove(cacheKey(LDCode));
+												updateSimilarCodeRelatedList(LDCode);
+											}
+											if(QPCode.length()>1){
+												db.newMapping(QPCode, baseWord);
+												cache.remove(cacheKey(QPCode.toLowerCase()));
+												updateSimilarCodeRelatedList(QPCode.toLowerCase());
+											}
+										}else if(baseCode.length()>1){
+											db.newMapping(baseCode, baseWord);
+											cache.remove(cacheKey(baseCode));
+											updateSimilarCodeRelatedList(baseCode);
+										}
+
+										if(DEBUG) 
+											Log.i(TAG,"updateUserDict(): LDPhrase learning, baseCode = " + baseCode 
+													+ ". LDCode=" + LDCode + ". QPCode=" + QPCode);
+
+									}
+								}
+							}
+						}
+						LDPhraseListArray.clear();
+						LDPhraseList.clear();
+					}
+				}
+			};
+			UpadtingThread.start();
+			
 		}
 		
+		private void updateSimilarCodeRelatedList(String code){
+			if(DEBUG)
+				Log.i(TAG, "updateSimilarCodeRelatedList(): code =" + code);
+			String cachekey = cacheKey(code);
+			Pair<List<Mapping>, List<Mapping>> cachedPair = cache.get(cachekey);
+			int len = code.length();
+			if(len > 3 ) len -= 3;
+			for (int k = 1; k < len; k++) {
+				String key = code.substring(0, code.length() - k);
+				cachekey = cacheKey(key);
+				cachedPair = cache.get(cachekey);
+				if(cache.remove(cachekey)!=null && cachedPair !=null){					
+					Pair<List<Mapping>, List<Mapping>> newPair 
+						= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, db.updateRelatedList(key)) ;
+					cache.put(cachekey, newPair);
+				}
+			}
+		}
 		public String keyToKeyname(String code){
 			//Jeremy '11,6,21 Build cache according using cachekey
 			
@@ -418,7 +483,7 @@ public class SearchService extends Service {
 			if(scorelist == null){scorelist = new ArrayList<Mapping>();}
 			if(db == null){db = new LimeDB(ctx);}
 			// Temp Mapping Object For updateMapping method.
-			Mapping updateMappingTemp = new Mapping();
+			final Mapping updateMappingTemp = new Mapping();
 			updateMappingTemp.setId(id);
 			updateMappingTemp.setCode(code);
 			updateMappingTemp.setWord(word);
@@ -428,6 +493,14 @@ public class SearchService extends Service {
 		      
 			// Jeremy '11,6,11. Always update score and sort according to preferences.
 			scorelist.add(updateMappingTemp);
+			Thread UpadtingThread = new Thread(){
+				public void run() {
+					updateScoreCache(updateMappingTemp);
+				}
+			};
+			UpadtingThread.start();
+			
+			
 		}
 		
 		@Override
@@ -436,6 +509,8 @@ public class SearchService extends Service {
 				LDPhraseListArray = new ArrayList<List<Mapping>>();
 			if(LDPhraseList == null)
 				LDPhraseList = new LinkedList<Mapping>(); 
+			
+			
 			
 			if(id != null){ // force interruped if id=null
 				Mapping tempMapping = new Mapping();
@@ -450,8 +525,12 @@ public class SearchService extends Service {
 			if(ending){
 				if(LDPhraseList.size()>1)
 					LDPhraseListArray.add(LDPhraseList);
-				LDPhraseList.clear();		
+				LDPhraseList = new LinkedList<Mapping>();		
 			}
+			
+			if(DEBUG) Log.i(TAG,"addLDPhrase(), code="+code + ". id=" + id + ". engding:" + ending
+					+ ". LDPhraseListArray.size=" + LDPhraseListArray.size()
+					+ ". LDPhraseList.size=" + LDPhraseList.size()); 
 			
 		}
 
@@ -520,7 +599,7 @@ public class SearchService extends Service {
 				try{
 					db.close();
 				}catch(Exception e){
-					Log.i("ART","Database Close error : "+e);
+					Log.i(TAG, "close(): Database Close error : "+e);
 				}
 			}
 		}
@@ -571,7 +650,7 @@ public class SearchService extends Service {
 		@Override
 		public String getSelkey() throws RemoteException {
 			if(DEBUG) 
-				Log.i("SearchService:getSelkey()","hasNumber:" + hasNumberMapping + "hasSymbol:" + hasSymbolMapping);
+				Log.i(TAG, "getSelkey():hasNumber:" + hasNumberMapping + "hasSymbol:" + hasSymbolMapping);
 			String selkey = "";
 			String table = tablename;
 			if(tablename.equals("phonetic")){
@@ -581,7 +660,7 @@ public class SearchService extends Service {
 				if(db == null){db = new LimeDB(ctx);}
 				selkey = db.getImInfo(tablename, "selkey");
 				if(DEBUG)
-					Log.i("SearchService:getSelkey()","selkey from db:"+selkey);
+					Log.i(TAG, "getSelkey():selkey from db:"+selkey);
 				boolean validSelkey = true;
 				if(selkey!=null && selkey.length()==10){
 					for(int i=0; i<10; i++){
@@ -608,7 +687,7 @@ public class SearchService extends Service {
 					}
 				}
 				if(DEBUG)
-					Log.i("SearchService:getSelkey()","selkey:"+selkey);
+					Log.i(TAG, "getSelkey():selkey:"+selkey);
 				selKeyMap.put(table, selkey);
 			}
 			return selKeyMap.get(table);

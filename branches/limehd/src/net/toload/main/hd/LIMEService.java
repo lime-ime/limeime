@@ -68,6 +68,7 @@ public class LIMEService extends InputMethodService implements
 		KeyboardView.OnKeyboardActionListener {
 
 	static final boolean DEBUG = false;
+	static final String TAG = "LIMEService";
 	static final String PREF = "LIMEXY";
 
 	static final int KEYBOARD_SWITCH_CODE = -9;
@@ -240,7 +241,7 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public void onCreate() {
 
-		//Log.i("ART","On Create");
+		if(DEBUG) Log.i(TAG, "OnCreate()");
 		super.onCreate();
 
 		initialViewAndSwitcher();
@@ -254,7 +255,7 @@ public class LIMEService extends InputMethodService implements
 				this.bindService(new Intent(ISearchService.class.getName()),
 						serConn, Context.BIND_AUTO_CREATE);
 			} catch (Exception e) {
-				Log.i("ART", "Failed to connect Search Service");
+				Log.i(TAG, "OnCreate(): Failed to connect Search Service");
 			}
 		}
 		// Construct Preference Access Tool
@@ -320,7 +321,7 @@ public class LIMEService extends InputMethodService implements
 	public void onConfigurationChanged(Configuration conf) {
 
 		if (DEBUG)
-			Log.i("LIMEService:", "OnConfigurationChanged()");
+			Log.i(TAG, "LIMEService:OnConfigurationChanged()");
 
 		if (!TextUtils.equals(conf.locale.toString(), mLocale)) {
 			// initSuggest(conf.locale.toString());
@@ -356,7 +357,7 @@ public class LIMEService extends InputMethodService implements
 	public View onCreateInputView() {
 		
 		if (DEBUG)
-			Log.i("ART", "****ON onCreateInputView");
+			Log.i(TAG, "onCreateInputView()");
 		mInputView = (LIMEKeyboardView) getLayoutInflater().inflate(
 				R.layout.input, null);
 		mKeyboardSwitcher.setInputView(mInputView);
@@ -380,7 +381,7 @@ public class LIMEService extends InputMethodService implements
 	public View onCreateCandidatesView() {
 		
 		if (DEBUG)
-			Log.i("ART", "****ON onCreateCandidatesView");
+			Log.i(TAG,"onCreateCandidatesView()");
 		
 		mKeyboardSwitcher.makeKeyboards(true);
 		mCandidateView = new CandidateView(this);
@@ -1361,30 +1362,34 @@ public class LIMEService extends InputMethodService implements
 							if(LDComposingBuffer.length()==0){
 								//starting LD process
 								LDComposingBuffer = mComposing.toString();
-								if(DEBUG) Log.i("LIMEService:commitedtype()", "starting LD process, LDBuffer=" + LDComposingBuffer +
+								if(DEBUG) 
+									Log.i(TAG, "commitedtype():starting LD process, LDBuffer=" + LDComposingBuffer +
 										". just commited code=" + firstMatched.getCode());
 								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), firstMatched.getWord(), firstMatched.getScore(), false);
 							}else if(LDComposingBuffer.contains(mComposing.toString())){
 								//Continuous LD process
-								if(DEBUG) Log.i("LIMEService:commitedtype()", "Continuous LD process, LDBuffer=" + LDComposingBuffer +
+								if(DEBUG) 
+								Log.i(TAG, "commitedtype():Continuous LD process, LDBuffer=" + LDComposingBuffer +
 										". just commited code=" + firstMatched.getCode());
 								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), firstMatched.getWord(), firstMatched.getScore(), false);
 							}
 							mComposing= mComposing.delete(0, firstMatched.getCode().length());
-							//Log.i("LIMEService:commitedtext()"," new mComposing:" +mComposing);
+							//Log.i(TAG, "commitedtype(): new mComposing:" +mComposing);
 							inputConnection.setComposingText(mComposing, 1);
 							updateCandidates();
 							return;
 						} else {
 							if(LDComposingBuffer.length()>0 && LDComposingBuffer.contains(mComposing.toString())){
 								//Ending continuous LD process (last of LD process)
-								if(DEBUG) Log.i("LIMEService:commitedtype()", "Ending LD process, LDBuffer=" + LDComposingBuffer +
+								if(DEBUG) 
+									Log.i(TAG, "commitedtype():Ending LD process, LDBuffer=" + LDComposingBuffer +
 										". just commited code=" + firstMatched.getCode());
 								LDComposingBuffer = "";
 								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), firstMatched.getWord(), firstMatched.getScore(), true);
 							}else if(LDComposingBuffer.length()>0){
 								//LD process interrupted.
-								if(DEBUG) Log.i("LIMEService:commitedtype()", "LD process interrupted, LDBuffer=" + LDComposingBuffer +
+								if(DEBUG) 
+									Log.i(TAG, "commitedtype():LD process interrupted, LDBuffer=" + LDComposingBuffer +
 										". just commited code=" + firstMatched.getCode());
 								LDComposingBuffer = "";
 								SearchSrv.addLDPhrase(null,null,null,0, true);
@@ -2941,7 +2946,7 @@ public class LIMEService extends InputMethodService implements
 
 	@Override
 	public void onUpdateCursor(Rect newCursor) {
-		Log.i("LIMEService", "onUpdateCursor(); Top:" 
+		if(DEBUG) Log.i("LIMEService", "onUpdateCursor(); Top:" 
 				+ newCursor.top + ". Right:" + newCursor.right
 				+ ". bottom:" + newCursor.bottom + ". left:" + newCursor.left);
 		if(mCandidateView!=null)
