@@ -158,12 +158,17 @@ public class SearchService extends Service {
 		}
 		
 		//Add by jeremy '10, 4,1
-		public void rQuery(String word) throws RemoteException {
+		public void rQuery(final String word) throws RemoteException {
 			if(db == null){loadLimeDB();}
-			String result = db.getRMapping(word);
-			if(result!=null && !result.equals("")){
-				displayNotificationMessage(result);
-			}
+			Thread queryThread = new Thread(){
+				public void run() {
+					String result = db.getRMapping(word);
+					if(result!=null && !result.equals("")){
+						displayNotificationMessage(result);
+					}
+				}
+			};
+			queryThread.start();
 		
 		}
 		
@@ -361,86 +366,117 @@ public class SearchService extends Service {
 
 
 		}
-
-		public void updateUserDict() throws RemoteException {
+		// '11,8,1 renamed from updateuserdict()
+		public void postFinishInput() throws RemoteException {
+			if(DEBUG)
+				if(db == null){db = new LimeDB(ctx);} 
+					Log.i(TAG,"postFinishInput(), creating offline updating thread");
 			// Jeremy '11,7,31 The updating process takes some time. Create a new thread to do this.
 			Thread UpadtingThread = new Thread(){
 				public void run() {
-					if(db == null){db = new LimeDB(ctx);} 
+					// for thread-safe operation, duplicate local copy of scorelist and LDphraselistarray
+					List<Mapping> localScorelist = new LinkedList<Mapping>();
+					if(scorelist != null) {
+						localScorelist.addAll(scorelist);
+						scorelist.clear();
+					}
+					ArrayList<List<Mapping>> localLDPhraseListArray = new ArrayList<List<Mapping>>();
+					if(LDPhraseListArray!=null){
+						localLDPhraseListArray.addAll(LDPhraseListArray);
+						LDPhraseListArray.clear();
+					}
 					//Jeremy '11,7,28 combine to adduserdict and addscore 
 					//Jeremy '11,6,12 do adduserdict and add score if diclist.size > 0 and only adduserdict if diclist.size >1
 					//Jeremy '11,6,11, always learn scores, but sorted according preference options
-					if(scorelist != null){
-						if(DEBUG) 
-							Log.i(TAG,"updateUserDict(), scorelist.size=" + scorelist.size());
-						if(mLIMEPref.getLearnRelatedWord() && scorelist.size() > 1){
-							// userdict learning
-							db.addUserDict(scorelist);
-						}
-						// addscore and update db/cache
-						//Jeremy '11,7,31 tried to move to addUserdict
-//						for(int i=0 ; i < scorelist.size(); i++){
-//							Mapping cachedMapping = scorelist.get(i);
-//							updateScoreCache(cachedMapping);
-//						}
-						scorelist.clear();
-					}	
+						
+					// Learn user dictionary (related words).
+					learnUserDict(localScorelist);
+					
 					// Learn LD Phrase
-					if(LDPhraseListArray!=null && LDPhraseListArray.size()>0){
-						if(DEBUG) 
-							Log.i(TAG,"updateUserDict(): LDPhrase learning, arraysize =" + LDPhraseListArray.size());
-						for(List<Mapping> phraselist : LDPhraseListArray ){
-							if(DEBUG) 
-								Log.i(TAG,"updateUserDict(): LDPhrase learning, current list size =" + phraselist.size());
-							if(phraselist.size()>0){	
-								String baseCode="", LDCode ="", QPCode ="", baseWord="";
-								Mapping unit1 = phraselist.get(0);
-								baseCode = unit1.getCode();
-								QPCode = unit1.getCode().substring(0, 1);
-								baseWord = unit1.getWord();
-								if(unit1 == null || unit1.getWord().equals("")){break;}
-
-								for (int i = 0; i < phraselist.size(); i++) {
-									if(i+1 <phraselist.size()){
-										Mapping unit2 = phraselist.get((i + 1));
-										if(unit2 == null || unit2.getWord().equals("")){break;}				
-										baseCode += unit2.getCode();
-										baseCode = baseCode.toLowerCase();
-										baseWord += unit2.getWord();
-										if(tablename.equals("phonetic")) {// remove tone symbol in phonetic table 
-											LDCode = baseCode.replaceAll("[3467]", "").toLowerCase();
-											QPCode += unit2.getCode().substring(0, 1).toLowerCase();
-											if(LDCode.length()>1){
-												db.newMapping(LDCode, baseWord);
-												cache.remove(cacheKey(LDCode));
-												updateSimilarCodeRelatedList(LDCode);
-											}
-											if(QPCode.length()>1){
-												db.newMapping(QPCode, baseWord);
-												cache.remove(cacheKey(QPCode.toLowerCase()));
-												updateSimilarCodeRelatedList(QPCode.toLowerCase());
-											}
-										}else if(baseCode.length()>1){
-											db.newMapping(baseCode, baseWord);
-											cache.remove(cacheKey(baseCode));
-											updateSimilarCodeRelatedList(baseCode);
-										}
-
-										if(DEBUG) 
-											Log.i(TAG,"updateUserDict(): LDPhrase learning, baseCode = " + baseCode 
-													+ ". LDCode=" + LDCode + ". QPCode=" + QPCode);
-
-									}
-								}
-							}
-						}
-						LDPhraseListArray.clear();
-						LDPhraseList.clear();
-					}
+					learnLDPhrase(localLDPhraseListArray);
+					
 				}
 			};
 			UpadtingThread.start();
 			
+		}
+		
+		private void learnUserDict(List<Mapping> localScorelist){
+			if(localScorelist != null){
+				if(DEBUG) 
+					Log.i(TAG,"learnUserDict(), localScorelist.size=" + localScorelist.size());
+				if(mLIMEPref.getLearnRelatedWord() && localScorelist.size() > 1){
+					for (int i = 0; i < localScorelist.size(); i++) {
+						Mapping unit = localScorelist.get(i);
+						if(unit == null){continue;}	    
+						if(i+1 <localScorelist.size()){
+							Mapping unit2 = localScorelist.get((i + 1));
+							if(unit2 == null){continue;}				
+							if (unit != null 
+					    		&& unit.getWord() != null && !unit.getWord().equals("")
+					    		&& unit2 != null
+					    		&& unit2.getWord() != null && !unit2.getWord().equals("")) {
+								db.addOrUpdateUserdictRecord(unit.getWord(),unit2.getWord());
+							}
+						}
+					}
+				}
+			}	
+		}
+		
+		
+		private void learnLDPhrase(ArrayList<List<Mapping>> localLDPhraseListArray){
+			if(localLDPhraseListArray!=null && localLDPhraseListArray.size()>0){
+				if(DEBUG) 
+					Log.i(TAG,"learnLDPhrase(): LDPhrase learning, arraysize =" + localLDPhraseListArray.size());
+				for(List<Mapping> phraselist : localLDPhraseListArray ){
+					if(DEBUG) 
+						Log.i(TAG,"learnLDPhrase(): LDPhrase learning, current list size =" + phraselist.size());
+					if(phraselist.size()>0){	
+						String baseCode="", LDCode ="", QPCode ="", baseWord="";
+						Mapping unit1 = phraselist.get(0);
+						baseCode = unit1.getCode();
+						QPCode = unit1.getCode().substring(0, 1);
+						baseWord = unit1.getWord();
+						if(unit1 == null || unit1.getWord().equals("")){break;}
+
+						for (int i = 0; i < phraselist.size(); i++) {
+							if(i+1 <phraselist.size()){
+								Mapping unit2 = phraselist.get((i + 1));
+								if(unit2 == null || unit2.getWord().equals("")){break;}				
+								baseCode += unit2.getCode();
+								baseCode = baseCode.toLowerCase();
+								baseWord += unit2.getWord();
+								if(tablename.equals("phonetic")) {// remove tone symbol in phonetic table 
+									LDCode = baseCode.replaceAll("[3467]", "").toLowerCase();
+									QPCode += unit2.getCode().substring(0, 1).toLowerCase();
+									if(LDCode.length()>1){
+										db.addOrUpdateMappingRecord(LDCode, baseWord);
+										cache.remove(cacheKey(LDCode));
+										updateSimilarCodeRelatedList(LDCode);
+									}
+									if(QPCode.length()>1){
+										db.addOrUpdateMappingRecord(QPCode, baseWord);
+										cache.remove(cacheKey(QPCode.toLowerCase()));
+										updateSimilarCodeRelatedList(QPCode.toLowerCase());
+									}
+								}else if(baseCode.length()>1){
+									db.addOrUpdateMappingRecord(baseCode, baseWord);
+									cache.remove(cacheKey(baseCode));
+									updateSimilarCodeRelatedList(baseCode);
+								}
+
+								if(DEBUG) 
+									Log.i(TAG,"learnLDPhrase(): LDPhrase learning, baseCode = " + baseCode 
+											+ ". LDCode=" + LDCode + ". QPCode=" + QPCode);
+
+							}
+						}
+					}
+				}
+				
+				
+			}
 		}
 		
 		private void updateSimilarCodeRelatedList(String code){
@@ -461,6 +497,9 @@ public class SearchService extends Service {
 				}
 			}
 		}
+		
+		
+		
 		public String keyToKeyname(String code){
 			//Jeremy '11,6,21 Build cache according using cachekey
 			

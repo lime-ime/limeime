@@ -615,14 +615,15 @@ public class LimeDB extends SQLiteOpenHelper {
 		db.close();
 	}
 
-	private void addOrUpdateUserdictRecord(String pword, String cword){
+	public void addOrUpdateUserdictRecord(String pword, String cword){
 		// Jeremy '11,6,12
 		// Return if not learing related words and cword is not null (recording word frequency in IM relatedlist field)
 		if(!mLIMEPref.getLearnRelatedWord() && cword!=null) return;
 
 		int dictotal = Integer.parseInt(mLIMEPref.getTotalUserdictRecords());
 		
-		if(DEBUG) Log.i("LIMEDB:addOrUpdateUserdictRecord()","pword:"+pword+" cword:"+cword + "dictotoal:"+dictotal);
+		if(DEBUG) 
+			Log.i(TAG, "addOrUpdateUserdictRecord(): pword:"+pword+" cword:"+cword + "dictotoal:"+dictotal);
 		
 		Mapping munit = this.isUserDictExist(pword , cword);
 		
@@ -638,15 +639,16 @@ public class LimeDB extends SQLiteOpenHelper {
 				dictotal++;
 				mLIMEPref.setTotalUserdictRecords(String.valueOf(dictotal));
 				if(DEBUG) 
-					Log.i("LIMEDB:addOrUpdateUserdictRecord()","new record, dictotal:"+String.valueOf(dictotal));
+					Log.i(TAG, "addOrUpdateUserdictRecord(): new record, dictotal:" + dictotal);
 			}else{//the item exist in preload related database.
 				int score = munit.getScore()+1;
 			  	cv.put(FIELD_SCORE, score);
 			  	db.update("related", cv, FIELD_id + " = " + munit.getId(), null);
 			  	if(DEBUG) 
-			  		Log.i("LIMEDB:addOrUpdateUserdictRecord()","update score on existing record; score:"+score);
+			  		Log.i(TAG, "addOrUpdateUserdictRecord():update score on existing record; score:"+score);
 			}
 		} catch (Exception e) {
+			db.close();
 			e.printStackTrace();
 		}
 		db.close();
@@ -656,12 +658,13 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * learn user dict based on the input maaping list.
 	 * 
 	 * @param srclist
-	 */
+	 *//*
+	 //Jeremy '11,8,1 moved to postfinishinput in searchservice.
 	//Jeremy '11,6,12 rename from addDictionary for consistency 
 	public void addUserDict(List<Mapping> srclist) {
 		//Jeremy '11,6,12 move the db updating to addOrUpdateUserdictRecord
 		if(DEBUG){
-			Log.i("addDictionary:", "Etnering addDictionary");
+			Log.i(TAG, "addUserDict():Entering addDictionary, srclist.size=" + srclist.size());
 		}
 		
 		
@@ -684,15 +687,15 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}
 		}
-	}
+	}*/
 	/**
 	 * Add new mapping into current table
 	 * @param code, word
 	 */
 	//Jeremy '11, 7, 31 add new phrase mapping into current table (for LD phrase learning). 
-	public void newMapping(String code, String word) {
+	public void addOrUpdateMappingRecord(String code, String word) {
 		if(DEBUG)
-				Log.i(TAG, "newMapping(), code = " + code + ". word=" + word  );
+				Log.i(TAG, "addOrUpdateMappingRecord(), code = " + code + ". word=" + word  );
 		SQLiteDatabase db = this.getSqliteDb(false);
 		
 		Mapping munit = isMappingExist(code, word);
@@ -705,7 +708,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					cv.put(FIELD_SCORE, 1);
 					db.insert(tablename, null, cv);
 					if(DEBUG)
-						Log.i(TAG, "newMapping(): mapping is not existed, new cored inserted");
+						Log.i(TAG, "addOrUpdateMappingRecord(): mapping is not existed, new cored inserted");
 				}
 				// build related list
 				//updateRelatedList(code);
@@ -716,7 +719,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			  	cv.put(FIELD_SCORE, score);
 			  	db.update(tablename, cv, FIELD_id + " = " + munit.getId(), null);
 			  	if(DEBUG) 
-			  		Log.i(TAG, "newMapping(): mapping is existed, update score on existing record; score:"+score);
+			  		Log.i(TAG, "addOrUpdateMappingRecord(): mapping is existed, update score on existing record; score:"+score);
 			}
 		} catch (Exception e) {
 			db.close();
@@ -1715,10 +1718,11 @@ public class LimeDB extends SQLiteOpenHelper {
 				Cursor cursor = null;
 	
 				SQLiteDatabase db = this.getSqliteDb(true);
+				// Jeremy '11,8,1 add group by cword to remove duplicate items.
 				//Jeremy '11,6,12, Add constraint on cword is not null (cword =null is for recoding im related list selected count).
 				cursor = db.query("related", null, FIELD_DIC_pword + " = '"
 						+ pword + "' AND " + FIELD_DIC_cword + " IS NOT NULL"
-						, null, null, null, FIELD_SCORE + " DESC", null);
+						, null, FIELD_DIC_cword, null, FIELD_SCORE + " DESC", null);
 	
 				if (cursor.moveToFirst()) {
 	
@@ -2234,7 +2238,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					munit.setId(cursor.getString(idColumn));
 					munit.setCode(cursor.getString(codeColumn));
 					munit.setWord(cursor.getString(wordColumn));
-					munit.setScore(Integer.parseInt(cursor.getString(scoreColumn)));
+					munit.setScore(cursor.getInt(scoreColumn));
 					munit.setRelated(cursor.getString(relatedColumn));
 					munit.setDictionary(false);
 					
@@ -2295,7 +2299,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				e.printStackTrace();
 			}
 		}
-		return null;
+		return munit;
 	}
 	
 

@@ -422,27 +422,23 @@ public class LIMEService extends InputMethodService implements
 		if (mInputView != null) {
 			mInputView.closing();
 		}
-		
+		try {
 		if(LDComposingBuffer.length()>0) { // Force interrupt the LD process
 			LDComposingBuffer = "";
-			try {
-				SearchSrv.addLDPhrase(null,null,null,0, true);
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
+			SearchSrv.addLDPhrase(null,null,null,0, true);
 		}
-
+		// Jeremy '11,8,1 do postfinishinput in searchSrv (learn userdic and LDPhrase). 
+		SearchSrv.postFinishInput();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
 		// Clear current composing text and candidates.
 		mComposing.setLength(0);
 		updateCandidates();
 
 		setCandidatesViewShown(false);
 		
-		// Add Custom related words
-		//if (userdiclist.size() > 0) {
-		updateUserDict();
-		//}
-
+		
 		this.setSuggestions(null, false, false);
 		
 		// -> 26.May.2011 by Art : Update keyboard list when user click the keyboard.
@@ -1437,34 +1433,35 @@ public class LIMEService extends InputMethodService implements
 		}
 	}
 
-	private void updateUserDict() {
-// Jeremy '11,7,27 Using signle list for addscore and adduserdict.
-//		for (Mapping dicunit : userdiclist) {
-//			if (dicunit == null) {
-//				continue;
-//			}
-//			//if (dicunit.getId() == null) {
-//			//	continue;
-//			//}
-//			if (dicunit.getCode() == null) {
-//				continue;
-//			}
-//			try {
-//				SearchSrv.addUserDict(dicunit.getId(), dicunit.getCode(),
-//						dicunit.getWord(), dicunit.getPword(),
-//						dicunit.getScore(), dicunit.isDictionary());
-//			} catch (RemoteException e) {
-//				e.printStackTrace();
-//			}
-//		}
+	//Jeremy '11,8,1 deprecated
+/*	private void updateUserDict() {
+ //Jeremy '11,7,27 Using signle list for addscore and adduserdict.
+		for (Mapping dicunit : userdiclist) {
+			if (dicunit == null) {
+				continue;
+			}
+			//if (dicunit.getId() == null) {
+			//	continue;
+			//}
+			if (dicunit.getCode() == null) {
+				continue;
+			}
+			try {
+				SearchSrv.addUserDict(dicunit.getId(), dicunit.getCode(),
+						dicunit.getWord(), dicunit.getPword(),
+						dicunit.getScore(), dicunit.isDictionary());
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		}
 		try {
-			SearchSrv.updateUserDict();
+			SearchSrv.postFinishInput();
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
 		//userdiclist.clear();
 	}
-
+*/
 	/**
 	 * Helper to update the shift state of our keyboard based on the initial
 	 * editor state.

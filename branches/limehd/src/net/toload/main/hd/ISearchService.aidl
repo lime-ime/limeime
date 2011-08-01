@@ -10,7 +10,7 @@ interface ISearchService
 		List queryUserDic(String word);
 		void addUserDict(String id, String code, String word, String pword, int score, boolean isDictionary);
 		void clear();
-		void updateUserDict();
+		void postFinishInput();
 		String hanConvert(String input);
 		String keyToKeyname(String code);
 		List getKeyboardList();
