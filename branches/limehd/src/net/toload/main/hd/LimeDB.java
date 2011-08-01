@@ -1388,12 +1388,12 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 	private String preProcessingForExtraQueryConditions(String code){
 		if(DEBUG) 
-			Log.i("LIMEDB.preProcessingForExtraQueryConditions()", "code="+code);
+			Log.i(TAG, "preProcessingForExtraQueryConditions(): code="+code);
 		
 		if(code != null ){
 			String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 			String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
-			String dualcode =code;
+			String dualcode ="";
 			String dualKey = "";
 			String dualKeyRemap = "";
 			String remaptable = tablename;
@@ -1456,8 +1456,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 				HashMap<String,String> reMap = new HashMap<String,String>();
 				if(DEBUG)
-					Log.i("LIMEDB.preProcessingForExtraQueryConditions()", 
-							"dualKey="+dualKey+" dualKeyRemap="+dualKeyRemap);
+					Log.i(TAG, "preProcessingForExtraQueryConditions(): dualKey="+dualKey+" dualKeyRemap="+dualKeyRemap);
 				for(int i=0; i< dualKey.length(); i++){
 					String key = dualKey.substring(i,i+1);
 					String value = dualKeyRemap.substring(i,i+1);
@@ -1472,21 +1471,25 @@ public class LimeDB extends SQLiteOpenHelper {
 			
 			if(keysDualMap.get(remaptable)==null
 					|| keysDualMap.get(remaptable).size()==0){
-				return "";
+				dualcode = code;
 			}else{
-				
+
 				HashMap<String,String> reMap = keysDualMap.get(remaptable);
 				dualcode = "";
+				// testing if code contains dual mapped characters. 
 				for (int i = 0; i < code.length(); i++) {
 					String c = reMap.get(code.substring(i, i + 1));
 					if(c!=null) dualcode = dualcode + c;
 				}
 				if(DEBUG)
-					Log.i("LIMEDB.preProcessingForExtraQueryConditions()", "dualcode="+dualcode);
+					Log.i(TAG, "preProcessingForExtraQueryConditions(): dualcode="+dualcode);
 				
 				
 			}
-			if(!dualcode.equalsIgnoreCase(code)){
+			//Jeremy '11,8,1 if phonetic tablename and not ended with tone symbol do the expanddualcode to add tones symbols.
+			if(!dualcode.equalsIgnoreCase(code)
+			//		||(tablename.equals("phonetic") && code.matches(".+[^3467]$") ) 
+				){
 				return expandDualCode(code, remaptable);
 			}
 		}
@@ -1494,15 +1497,15 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 	
 	private HashSet<String> buildDualCodeList(String code, String keytablename){
-		HashMap<String,String> codeDualMap = keysDualMap.get(keytablename);
 		
-		if(codeDualMap == null || codeDualMap.size()==0)
-			return null;
-		else{
-			
-			HashSet<String> dualCodeList = new HashSet<String>();
-			dualCodeList.add(code);
-			
+		
+		HashMap<String,String> codeDualMap = keysDualMap.get(keytablename);
+	
+		HashSet<String> dualCodeList = new HashSet<String>();
+		dualCodeList.add(code);
+
+		if(codeDualMap != null && codeDualMap.size()>0) {
+
 			do{
 				int currentListSize = dualCodeList.size();
 				boolean codeInserted = false;
@@ -1512,7 +1515,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					if(DEBUG) Log.i("LIMEDB:buildDualCodeList()","currentSize:"+ currentListSize + " curretnCode:" + currentCode);
 					for(int j=0; j< currentCode.length(); j++){
 						String c = currentCode.substring(j, j+1);
-						
+
 						if(codeDualMap.get(c)!=null){
 							//Log.i("LIMEDB:buildDualCodeList()","dualCode found:"+ c + " -> " + codeDualMap.get(c));
 							String newCode = "";
@@ -1525,28 +1528,41 @@ public class LimeDB extends SQLiteOpenHelper {
 									newCode = currentCode.substring(0, currentCode.length()-1) + n;
 								else
 									newCode = currentCode.substring(0,j) + n 
-											+ currentCode.substring(j+1, currentCode.length());
+									+ currentCode.substring(j+1, currentCode.length());
 							}
-							
+
 							if(dualCodeList.add(newCode)){
 								if(DEBUG) 
-									Log.i("LIMEDB:buildDualCodeList()","code added:"+ newCode);
+									Log.i(TAG, "buildDualCodeList(): code added:"+ newCode);
 								codeInserted = true;
 							}
-							
+
 						}
 					}
 				}
 				if(!codeInserted) break;
-			
+
 			}while(true);
-			
-			if(dualCodeList.size()==1)
-				return null;
-			else
-				return dualCodeList;
-			
 		}
+		//Jeremy '11,8,1 added for continuous typing.  
+//		if(tablename.equals("phonetic")){
+//			for(String iterator_code: dualCodeList){
+//				if(iterator_code.matches(".+[^3467]$")){ // regular expression .+[^3467] denotes not ending with 3467 tone symboles.
+//					Log.i(TAG, "buildDualCodeList(): phonetic code not ending with tone symobl, code = " + iterator_code);
+//					dualCodeList.add(iterator_code+"3");
+//					dualCodeList.add(iterator_code+"4");
+//					dualCodeList.add(iterator_code+"6");
+//					dualCodeList.add(iterator_code+"7");
+//				}
+//			}
+//		}
+
+		if(dualCodeList.size()==1)
+			return null;
+		else
+			return dualCodeList;
+			
+		
 		
 		
 	}
@@ -1585,7 +1601,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				lastValidDualCodeList = validDualCodeList;
 		}
 		if(DEBUG)
-			Log.i("LIMEDB:expandDualCode()", "result:" + result + " validDualCodeList:" + validDualCodeList);
+			Log.i(TAG, "expandDualCode(): result:" + result + " validDualCodeList:" + validDualCodeList);
 		return result;
 		
 		
@@ -1756,7 +1772,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * Load source file and add records into database
 	 */
 	public void loadFile(final String table) {
-
+		finish = false;
+		percentageDone = 0;
+		count = 0;
 		if (thread != null ) {
 			//threadAborted = true;
 			while(thread.isAlive()){
@@ -1768,7 +1786,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 
 		//deleteAll(table);
-		finish = false;
+
 		threadAborted = false;
 
 		thread = new Thread() {
@@ -1779,9 +1797,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				if(countMapping(table)>0) 	db.delete(table, null, null);
 				resetImInfo(table);
 				
-			
 				
-				percentageDone = 0;
 				//boolean hasMappingVersion = false;
 				boolean isCinFormat = false;
 				//ArrayList<ContentValues> resultlist = new ArrayList<ContentValues>();
@@ -1793,10 +1809,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				String spacestyle = "";
 				String imkeys = "";
 				String imkeynames = "";
-				finish = false;
-				// relatedfinish = false;
-				count = 0;
-				//ncount = 0;
+			
 
 				// Check if source file is .cin format
 				if (filename.getName().toLowerCase().endsWith(".cin")) {

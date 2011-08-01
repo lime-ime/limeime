@@ -1068,12 +1068,11 @@ public class LIMEMappingSetting extends Activity {
 		 */
 		public void loadMapping(File unit) {
 			try {
-				startLoadingWindow();
-				
 				DBSrv.loadMapping(unit.getAbsolutePath(), imtype);
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
+			startLoadingWindow();
 		}
 		
 		/*
