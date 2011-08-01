@@ -491,7 +491,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	/**
 	 * Base on given table name to remove records
 	 */
-	public void deleteAll(String table) {
+	public synchronized void deleteAll(String table) {
 		if(thread != null){
 			threadAborted = true;
 			while(thread.isAlive()){
@@ -517,7 +517,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	/**
 	 * Empty Related table records
 	 */
-	public void deleteUserDictAll() {
+	public synchronized void  deleteUserDictAll() {
 		mLIMEPref.setTotalUserdictRecords("0");
 		// -------------------------------------------------------------------------
 		SQLiteDatabase db = this.getSqliteDb(false);
@@ -577,7 +577,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * 
 	 * @param source
 	 */
-	public void insertList(ArrayList<String> source) {
+	public synchronized void insertList(ArrayList<String> source) {
 
 		this.identifyDelimiter(source);
 
@@ -615,7 +615,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		db.close();
 	}
 
-	public void addOrUpdateUserdictRecord(String pword, String cword){
+	public synchronized void addOrUpdateUserdictRecord(String pword, String cword){
 		// Jeremy '11,6,12
 		// Return if not learing related words and cword is not null (recording word frequency in IM relatedlist field)
 		if(!mLIMEPref.getLearnRelatedWord() && cword!=null) return;
@@ -693,7 +693,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @param code, word
 	 */
 	//Jeremy '11, 7, 31 add new phrase mapping into current table (for LD phrase learning). 
-	public void addOrUpdateMappingRecord(String code, String word) {
+	public synchronized void addOrUpdateMappingRecord(String code, String word) {
 		if(DEBUG)
 				Log.i(TAG, "addOrUpdateMappingRecord(), code = " + code + ". word=" + word  );
 		SQLiteDatabase db = this.getSqliteDb(false);
@@ -735,8 +735,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * 
 	 * @param srcunit
 	 */
-	public void addScore(Mapping srcunit) {
-		try {
+	public synchronized void addScore(Mapping srcunit) {
+		
 			//Jeremy '11,7,31  even selected from realted list, udpate the corresponding score in im table.
 			// Jeremy '11,6,12 Id=null denotes selection from related list in im table
 //			if(srcunit !=null && srcunit.getId()== null && 
@@ -748,29 +748,31 @@ public class LimeDB extends SQLiteOpenHelper {
 //				//updateRelatedList(code); move to search service Jeremy '11,7,29
 //			
 //			}else 
+		SQLiteDatabase db = this.getSqliteDb(false);
+		try {
 			if (srcunit != null && //srcunit.getId() != null &&
 					srcunit.getWord() != null  &&
 					!srcunit.getWord().trim().equals("") ) {
-					if(DEBUG) Log.i("LIMEDb.addScore()","addScore on code:"+srcunit.getCode());
+					if(DEBUG) Log.i(TAG, "addScore(): addScore on code:"+srcunit.getCode());
 
 				if(srcunit.isDictionary()){
 					ContentValues cv = new ContentValues();
 					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
 					
-					SQLiteDatabase db = this.getSqliteDb(false);
+					
 					db.update("related", cv, FIELD_id + " = " + srcunit.getId(), null);
 					db.close();
 				}else{
 					ContentValues cv = new ContentValues();
 					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
 	
-					SQLiteDatabase db = this.getSqliteDb(false);
 					// Jeremy 11',7,29  update according to word instead of ID, may have multiple records mathing word but withd diff code/id 
 					db.update(tablename, cv, FIELD_WORD + " = '" + srcunit.getWord() + "'", null);
 					db.close();
 				}
 			}
 		} catch (Exception e) {
+			db.close();
 			e.printStackTrace();
 		}
 	}
@@ -848,7 +850,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * 
 	 * @param code
 	 */
-	public List<Mapping> updateRelatedList(String code){
+	public synchronized List<Mapping> updateRelatedList(String code){
 		// Jeremy '11,7,31  rebuild relatedlist by query from table directly
 		// Update relatedlist in IM table now.
 		SQLiteDatabase db = this.getSqliteDb(false);
@@ -1771,7 +1773,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	/**
 	 * Load source file and add records into database
 	 */
-	public void loadFile(final String table) {
+	public synchronized void loadFile(final String table) {
 		finish = false;
 		percentageDone = 0;
 		count = 0;
@@ -2319,7 +2321,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	/**
 	 * @param srcunit
 	 */
-	public void resetImInfo(String im) {
+	public synchronized void resetImInfo(String im) {
 		String removeString = "DELETE FROM im WHERE code='"+im+"'";
 		SQLiteDatabase db = this.getSqliteDb(false);
 			           db.execSQL(removeString);
@@ -2352,7 +2354,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	/**
 	 * @param srcunit
 	 */
-	public void removeImInfo(String im, String field) {
+	public synchronized void removeImInfo(String im, String field) {
 		String removeString = "DELETE FROM im WHERE code='"+im+"' AND title='"+field+"'";
 		SQLiteDatabase db = this.getSqliteDb(false);
 			           db.execSQL(removeString);
@@ -2363,7 +2365,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	/**
 	 * @param srcunit
 	 */
-	public void setImInfo(String im, String field, String value) {
+	public synchronized void setImInfo(String im, String field, String value) {
 
 		ContentValues cv = new ContentValues();
 					  cv.put("code", im);
@@ -2454,7 +2456,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		List<KeyboardObj> result = new LinkedList<KeyboardObj>();
 		try {
-			SQLiteDatabase db = this.getSqliteDb(false);
+			SQLiteDatabase db = this.getSqliteDb(true);
 			Cursor cursor = db.query("keyboard", null, null, null, null, null, "name ASC", null);
 			if (cursor.moveToFirst()) {
 				do{
@@ -2484,7 +2486,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		return result;
 	}
 
-	public void setIMKeyboard(String im, String value,
+	public synchronized void setIMKeyboard(String im, String value,
 			String keyboard) {
 
 		ContentValues cv = new ContentValues();
