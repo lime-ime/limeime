@@ -704,6 +704,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			if(munit==null){
 				if (code.length()>0 && word.length()>0) {
 					cv.put(FIELD_CODE, code);
+					if(tablename.equals("phonetic")) cv.put(FIELD_CODE3R, code.replaceAll("[3467]", ""));
 					cv.put(FIELD_WORD, word);
 					cv.put(FIELD_SCORE, 1);
 					db.insert(tablename, null, cv);
@@ -1234,13 +1235,21 @@ public class LimeDB extends SQLiteOpenHelper {
 				Cursor cursor = null;
 				SQLiteDatabase db = this.getSqliteDb(true);
 				try {
+					// Jeremy '11,8,2 Query code3r instead of code for code contains no tone symbols
+					String selectString = FIELD_CODE + " = '" + code + "' " + extraConditions;
+					if(tablename.equals("phonetic")&& 
+							!(selectString.contains("3")||selectString.contains("4")||
+									selectString.contains("6")||selectString.contains("7"))){
+						selectString.replaceAll("code", "code3r");
+					}
+									
 					// Jeremy '11,6,15 Using query with proprocessed code and extra query conditions.
 					if(sort){
-						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' " + extraConditions
+						cursor = db.query(tablename, null, selectString
 								, null, null, null, FIELD_SCORE +" DESC", null);
 						//Log.i("ART","SORT -> run code3r a:"+tablename + " ->count:" + cursor.getCount() + " " + FIELD_CODE + " = '" + code + "' " + code3r);
 					}else{
-						cursor = db.query(tablename, null, FIELD_CODE + " = '" + code + "' " + extraConditions
+						cursor = db.query(tablename, null, selectString
 								, null, null, null, null, null);
 						//Log.i("ART","NO SORT -> run code3r a:"+tablename + " ->count:" + cursor.getCount() + " " + FIELD_CODE + " = '" + code + "' " + code3r);
 					}
@@ -2062,6 +2071,8 @@ public class LimeDB extends SQLiteOpenHelper {
 							//The related field starts with "|" mean no exact code coreesponding and has to insert new one.
 							if (entry.getValue().startsWith("|")){
 								cv.put(FIELD_CODE, code);
+								if(table.equals("phonetic")) 
+										cv.put(FIELD_CODE3R, code.replaceAll("[3467]", ""));;
 								newValue = tempValue.substring(1, tempValue.length());
 								cv.put(FIELD_RELATED, newValue);
 								db.insert(table, null, cv);
