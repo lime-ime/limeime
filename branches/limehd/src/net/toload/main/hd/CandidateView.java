@@ -280,7 +280,11 @@ public class CandidateView extends View {
                 	mPopupComposingY -= offsetOnScreen[1]- cursorRect.top -  popupHeight;
                 	if(mPopupComposingY > -popupHeight){
                 		mPopupComposingY -= 2* popupHeight;
-                	}       	
+                	}
+                	if(mPopupComposingY > 0){
+                		mPopupComposingY= -popupHeight;
+                		
+                	}
                 	 if(DEBUG) Log.i("CandiateView:showcomposing()", " candidateview offsetOnScreen x:" 
                      		+offsetOnScreen[0] + ". y:" +offsetOnScreen[1]);
                 }else{

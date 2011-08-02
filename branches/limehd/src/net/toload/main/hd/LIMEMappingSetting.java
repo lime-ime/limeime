@@ -1146,17 +1146,6 @@ public class LIMEMappingSetting extends Activity {
 	   		i.putExtras(bundle);
 			startActivity(i);
 		}
-		@Override
-		protected void onDestroy() {
-			if (DBSrv != null) {
-				try {
-					this.unbindService(serConn);
-					this.unbindService(serConn2);
-				} catch (Exception e) {
-					Log.i("LIMEMappingLoading", "Failed to unbind DB/Search service");
-				}
-			}
-			super.onDestroy();
-		}
+		
 		
 }

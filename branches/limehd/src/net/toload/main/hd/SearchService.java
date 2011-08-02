@@ -193,6 +193,7 @@ public class SearchService extends Service {
 		}
 		
 		public List<Mapping> query(String code, boolean softkeyboard) throws RemoteException {
+			if(DEBUG) Log.i(TAG, "query(): code="+code);
 			
 			if(db == null){loadLimeDB();}
 			
@@ -224,7 +225,7 @@ public class SearchService extends Service {
 	
 				// 11'7,22 rewritten for 連打 
 				for(int i =0; i<size; i++) {
-					if(DEBUG) Log.i(TAG, "query(): i="+i+" code="+code);
+					
 					
 					String cacheKey = cacheKey(code);
 					Pair<List<Mapping>,List<Mapping>> cacheTemp = cache.get(cacheKey);
@@ -368,9 +369,9 @@ public class SearchService extends Service {
 		}
 		// '11,8,1 renamed from updateuserdict()
 		public void postFinishInput() throws RemoteException {
-			if(DEBUG)
-				if(db == null){db = new LimeDB(ctx);} 
-					Log.i(TAG,"postFinishInput(), creating offline updating thread");
+		
+			if(db == null){db = new LimeDB(ctx);} 
+			if(DEBUG)	Log.i(TAG,"postFinishInput(), creating offline updating thread");
 			// Jeremy '11,7,31 The updating process takes some time. Create a new thread to do this.
 			Thread UpadtingThread = new Thread(){
 				public void run() {

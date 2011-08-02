@@ -184,11 +184,13 @@ public class LIMEMappingLoading extends Activity {
 							//mLIMEPref.setParameter("db_finish", true);
 							break;
 						}
+					
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
+					
 				}while(true);
 				finish();
 			}
@@ -227,17 +229,6 @@ public class LIMEMappingLoading extends Activity {
 		notificationMgr.notify(0, notification);
 	}
 
-	@Override
-	protected void onDestroy() {
-		if (DBSrv != null) {
-			try {
-				this.unbindService(serConn);
-			} catch (Exception e) {
-				Log.i("LIMEMappingLoading", "Failed to unbind DB service");
-			}
-		}
-		super.onDestroy();
-	}
 	
 		
 }

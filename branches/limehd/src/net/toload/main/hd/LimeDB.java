@@ -495,7 +495,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(thread != null){
 			threadAborted = true;
 			while(thread.isAlive()){
-				Log.d("LimeDB:deleteAll()","waiting for thread stopped...");
+				Log.d(TAG, "deleteAll():waiting for thread stopped...");
 				SystemClock.sleep(1000);
 			};
 		}
@@ -1165,22 +1165,17 @@ public class LimeDB extends SQLiteOpenHelper {
 			//HashSet<String> wordlist = new HashSet<String>();
 	
 			if (code != null && !code.trim().equals("")) {
-	
-				code = code.toLowerCase();
-				Cursor cursor = null;
-				//String sql = null;
-	
-				SQLiteDatabase db = this.getSqliteDb(true);
-	
 				int ssize = mLIMEPref.getSimilarCodeCandidates();
 				boolean sort = mLIMEPref.getSortSuggestions();
 				
-				// Process the escape characters of query
+				code = code.toLowerCase();
 				if(code != null){
+					// Process the escape characters of query
 					code = code.replaceAll("'", "''");
 				}
-				
+				SQLiteDatabase db = this.getSqliteDb(true);
 				try {
+					Cursor cursor = null;
 					// When Code3r mode is disable
 					if(sort){
 						cursor = db.query(tablename, null, FIELD_CODE + " LIKE '"
@@ -1209,13 +1204,17 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * Retrieve matched records
 	 */
 	public Pair<List<Mapping>,List<Mapping>> getMapping(String code, boolean softKeyboard) {
+		boolean sort = true;
+		if(softKeyboard) sort = mLIMEPref.getSortSuggestions();
+		else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
+		isPhysicalKeyboardPressed = !softKeyboard;
+		if(DEBUG) 
+			Log.i(TAG, "getmapping(): sort:"+ sort +" physical keyboard:" + isPhysicalKeyboardPressed);
 
 		// Add by Jeremy '10, 3, 27. Extension on multi table query.
 		lastCode = code;
 		lastValidDualCodeList = null; // reset the lastValidDualCodeList
 		Pair<List<Mapping>,List<Mapping>> result = null;
-		
-		isPhysicalKeyboardPressed = !softKeyboard;
 
 		//Two-steps qeury code pre-processing. Jeremy '11,6,15
 		// Step.1 Code re-mapping.  
@@ -1223,35 +1222,28 @@ public class LimeDB extends SQLiteOpenHelper {
 		// Step.2 Build extra query conditions. (e.g. 3row remap)
 		String extraConditions = preProcessingForExtraQueryConditions(code);
 		//Jeremy '11,6,11 seperated suggestions sorting option for physical keyboard
-		boolean sort = true;
-		if(softKeyboard) sort = mLIMEPref.getSortSuggestions();
-		else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
-		
-		if(DEBUG) Log.i("LIMEDB;getmapping()","sort:"+ sort +" soft:" + 
-						mLIMEPref.getSortSuggestions()+" physical:"+mLIMEPref.getSortSuggestions());
-
+	
 		try{
 			if (!code.equals("")) {
-				Cursor cursor = null;
+				
 				SQLiteDatabase db = this.getSqliteDb(true);
 				try {
+					Cursor cursor = null;
 					// Jeremy '11,8,2 Query code3r instead of code for code contains no tone symbols
 					String selectString = FIELD_CODE + " = '" + code + "' " + extraConditions;
 					if(tablename.equals("phonetic")&& 
 							!(selectString.contains("3")||selectString.contains("4")||
 									selectString.contains("6")||selectString.contains("7"))){
-						selectString.replaceAll("code", "code3r");
+						selectString = selectString.replaceAll(FIELD_CODE, FIELD_CODE3R);
 					}
-									
-					// Jeremy '11,6,15 Using query with proprocessed code and extra query conditions.
+					if(DEBUG) Log.i(TAG, "getMapping(): selectString=" + selectString );			
+					// Jeremy '11,6,15 Using query with preprocessed code and extra query conditions.
 					if(sort){
 						cursor = db.query(tablename, null, selectString
 								, null, null, null, FIELD_SCORE +" DESC", null);
-						//Log.i("ART","SORT -> run code3r a:"+tablename + " ->count:" + cursor.getCount() + " " + FIELD_CODE + " = '" + code + "' " + code3r);
 					}else{
 						cursor = db.query(tablename, null, selectString
 								, null, null, null, null, null);
-						//Log.i("ART","NO SORT -> run code3r a:"+tablename + " ->count:" + cursor.getCount() + " " + FIELD_CODE + " = '" + code + "' " + code3r);
 					}
 					
 	
@@ -1273,7 +1265,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 	
 	private String preProcessingRemappingCode(String code){
-		if(DEBUG) Log.i("LIMEDB.preProcessingRemappingCode()", "code="+code);
+		if(DEBUG) 
+			Log.i(TAG, "preProcessingRemappingCode(): code="+code);
 		if(code != null){
 			String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 			String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
@@ -1789,26 +1782,26 @@ public class LimeDB extends SQLiteOpenHelper {
 		if (thread != null ) {
 			//threadAborted = true;
 			while(thread.isAlive()){
-				Log.d("LimeDB:loadFile()","waiting for last loading thread stopped...");
+				Log.d(TAG, "loadFile():waiting for last loading thread stopped...");
 				SystemClock.sleep(1000);
 			}
 			thread = null;
 		}
-
-
-		//deleteAll(table);
-
-		threadAborted = false;
 
 		thread = new Thread() {
 
 			public void run() {
 				// Reset Database Table		
 				SQLiteDatabase db = getSqliteDb(false);
-				if(countMapping(table)>0) 	db.delete(table, null, null);
+				try {
+					if(countMapping(table)>0) 	db.delete(table, null, null);
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}
+				db.close();
 				resetImInfo(table);
-				
-				
+
+
 				//boolean hasMappingVersion = false;
 				boolean isCinFormat = false;
 				//ArrayList<ContentValues> resultlist = new ArrayList<ContentValues>();
@@ -1820,7 +1813,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				String spacestyle = "";
 				String imkeys = "";
 				String imkeynames = "";
-			
+
 
 				// Check if source file is .cin format
 				if (filename.getName().toLowerCase().endsWith(".cin")) {
@@ -1854,9 +1847,9 @@ public class LimeDB extends SQLiteOpenHelper {
 				// Create Related Words
 				Map<String, String> hm = new HashMap<String, String>();
 
-				//SQLiteDatabase db = getSqliteDb(false);
+				db = getSqliteDb(false);
 				db.beginTransaction();
-				
+
 				try {
 					// Prepare Source File
 					long fileLength = filename.length();
@@ -1872,7 +1865,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						processedLength += line.getBytes().length + 2; // +2 for the eol mark.
 						percentageDone = (int) ((float)processedLength/(float)fileLength *50);
 						if(DEBUG)
-							Log.i("LimeDB:loadFile()", percentageDone +"% processed" 
+							Log.i(TAG, "loadFile():loadFile()"+ percentageDone +"% processed" 
 									+ ". processedLength:" + processedLength + ". fileLength:" + fileLength);
 						if(percentageDone>49) percentageDone = 49;
 						/*
@@ -1979,14 +1972,14 @@ public class LimeDB extends SQLiteOpenHelper {
 								continue;
 							} else if (code.toLowerCase().contains("%selkey")) {
 								selkey = word.trim();
-								//Log.i("LimeDB:Loadfile","selkey:"+selkey);
+								if(DEBUG) Log.i(TAG, "loadfile(): selkey:"+selkey);
 								continue;
 							} else if (code.toLowerCase().contains("%endkey")) {
 								endkey = word.trim();
-								//Log.i("LimeDB:Loadfile","endkey:"+endkey);
+								if(DEBUG) Log.i(TAG, "loadfile(): endkey:"+endkey);
+								continue;	
 							} else if (code.toLowerCase().contains("%spacestyle")) {
 								spacestyle = word.trim();
-
 								continue;	
 							} else {
 								code = code.toLowerCase();
@@ -2027,7 +2020,16 @@ public class LimeDB extends SQLiteOpenHelper {
 								}
 
 								count++;
-								db.insert(table, null, getInsertItem(code, word));
+								ContentValues cv = new ContentValues();
+								cv.put(FIELD_CODE, code);
+								if(table.equals("phonetic")) {
+									String code3r = code.replaceAll("[3467]", "");
+									cv.put(FIELD_CODE3R, code3r);;
+									//Log.i(TAG, "loadfile(), code=" + code+ "code3r="+code3r);
+								}
+								cv.put(FIELD_WORD, word);
+								cv.put(FIELD_SCORE, 0);
+								db.insert(table, null, cv);
 							}
 
 						} catch (StringIndexOutOfBoundsException e) {}
@@ -2036,85 +2038,91 @@ public class LimeDB extends SQLiteOpenHelper {
 					buf.close();
 					fr.close();
 
-
+					db.setTransactionSuccessful();
 				} catch (Exception e) {
 					db.close();
 					setImInfo(table, "amount", "0");
 					setImInfo(table, "source", "Failed!!!");
 					e.printStackTrace();
 				} finally {
-					db.setTransactionSuccessful();
+					if(DEBUG) Log.i(TAG, "loadfile(): main import loop final section");
 					db.endTransaction();
 					db.close();
 				}
+				
 
-				db = getSqliteDb(false);
-				db.beginTransaction();
-				try{
-					long entrySize = hm.size();
-					long i = 0;
-					for(Entry<String, String> entry: hm.entrySet())
-					{
-						if(threadAborted) 	break;
-						
-						
-						percentageDone = (int) ((float)(i++)/(float)entrySize *50 +50);
-						if(percentageDone>99) percentageDone = 99;
 
-						if(!entry.getValue().contains("|"))  // does not have related words; only has exact mappings
-							continue;
-						try{
-							ContentValues cv = new ContentValues();
-							String code = entry.getKey().replaceAll("'", "''");
-							String tempValue = entry.getValue();
-							String newValue = "";							
-							//The related field starts with "|" mean no exact code coreesponding and has to insert new one.
-							if (entry.getValue().startsWith("|")){
-								cv.put(FIELD_CODE, code);
-								if(table.equals("phonetic")) 
-										cv.put(FIELD_CODE3R, code.replaceAll("[3467]", ""));;
-								newValue = tempValue.substring(1, tempValue.length());
-								cv.put(FIELD_RELATED, newValue);
-								db.insert(table, null, cv);
+				if(!threadAborted){
+					db = getSqliteDb(false);
+					db.beginTransaction();
+					try{
+						long entrySize = hm.size();
+						long i = 0;
+						for(Entry<String, String> entry: hm.entrySet())	{
+							if(threadAborted) 	break;
+							percentageDone = (int) ((float)(i++)/(float)entrySize *50 +50);
+							if(percentageDone>99) percentageDone = 99;
+
+							if(!entry.getValue().contains("|"))  // does not have related words; only has exact mappings
+								continue;
+							try{
+								ContentValues cv = new ContentValues();
+								String code = entry.getKey().replaceAll("'", "''");
+								String tempValue = entry.getValue();
+								String newValue = "";							
+								//The related field starts with "|" mean no exact code coreesponding and has to insert new one.
+								if (entry.getValue().startsWith("|")){
+									cv.put(FIELD_CODE, code);
+									newValue = tempValue.substring(1, tempValue.length());
+									cv.put(FIELD_RELATED, newValue);
+									db.insert(table, null, cv);
+								}
+								else{
+									//The first word is the exact code corresponding word and has to be trimmed from related field
+									newValue = tempValue.substring(tempValue.indexOf("|")+1
+											, tempValue.length());
+									cv.put(FIELD_RELATED, newValue);
+									db.update(table, cv, FIELD_CODE +"='"+code+"'", null);
+								}
+								if(DEBUG)
+									Log.i(TAG, "loadfile():create related field. code ="+entry.getKey()+" related = " + entry.getValue()+" trimmedRelated:" + newValue);
+
+
+							}catch(Exception e2){
+								// Just ignore all problem statement
+								Log.i(TAG, "loadfile():create related field error on code ="+entry.getKey()+" related = " + entry.getValue());
 							}
-							else{
-								//The first word is the exact code corresponding word and has to be trimmed from related field
-								newValue = tempValue.substring(tempValue.indexOf("|")+1
-										, tempValue.length());
-								cv.put(FIELD_RELATED, newValue);
-								db.update(table, cv, FIELD_CODE +"='"+code+"'", null);
-							}
-							if(DEBUG)
-								Log.i("loadfile",
-										"create related field. code ="+entry.getKey()+" related = " + entry.getValue()+" trimmedRelated:" + newValue);
 
-
-						}catch(Exception e2){
-							// Just ignore all problem statement
-							Log.i("loadfile","create related field error on code ="+entry.getKey()+" related = " + entry.getValue());
 						}
+						db.setTransactionSuccessful();
+					}catch (Exception e){
+						setImInfo(table, "amount", "0");
+						setImInfo(table, "source", "Failed!!!");
+						e.printStackTrace();
+					}finally {
+						if(DEBUG) Log.i(TAG, "loadfile(): related list buiding loop final section");
+						db.endTransaction();
+						db.close();
 					}
-				}catch (Exception e){
-					setImInfo(table, "amount", "0");
-					setImInfo(table, "source", "Failed!!!");
-					e.printStackTrace();
-				} finally {
+					
+					
+				}
+
+
+				if(!threadAborted) {
 					if(!threadAborted) percentageDone = 100;
-						
-					db.setTransactionSuccessful();
-					db.endTransaction();
-					db.close();
-					//mLIMEPref.setParameter("im_loading", false);
+					finish = true;
+				
 					mLIMEPref.setParameter("_table", "");
 
 					setImInfo(table, "source", filename.getName());
 					setImInfo(table, "name", imname);
 					setImInfo(table, "amount", String.valueOf(count));
 					setImInfo(table, "import", new Date().toLocaleString());
-					
-					//if(DEBUG) 
+
+					if(DEBUG) 
 						Log.i("limedb:loadfile()","Fianlly section: source:" 
-								+ getImInfo(table,"source") + " amount:"+getImInfo(table,"amount"));
+							+ getImInfo(table,"source") + " amount:"+getImInfo(table,"amount"));
 
 					// If user download from LIME Default IM SET then fill in related information
 					if(filename.getName().equals("phonetic.lime") || filename.getName().equals("phonetic_adv.lime")){
@@ -2133,8 +2141,8 @@ public class LimeDB extends SQLiteOpenHelper {
 						if (!imkeys.equals("")) setImInfo(table, "imkeys", imkeys);
 						if (!imkeynames.equals("")) setImInfo(table, "imkeynames", imkeynames);
 					}
-					if(DEBUG) 
-						Log.i("limedb:loadfile()","Fianlly section: imkeys:" +imkeys + " imkeynames:"+imkeynames);
+					//if(DEBUG) 
+					Log.i(TAG, "loadfile():update IM info: imkeys:" +imkeys + " imkeynames:"+imkeynames);
 
 					// If there is no keyboard assigned for current input method then use default keyboard layout
 					//String keyboard = getImInfo(table, "keyboard");
@@ -2170,10 +2178,10 @@ public class LimeDB extends SQLiteOpenHelper {
 						kobj = getKeyboardObj("lime");
 					}
 					setIMKeyboard(table, kobj.getDescription(), kobj.getCode());
-
 				}
-				if(!threadAborted)
-					finish = true;
+
+
+
 			}
 
 		};
@@ -2185,7 +2193,6 @@ public class LimeDB extends SQLiteOpenHelper {
 		try {
 				ContentValues cv = new ContentValues();
 				cv.put(FIELD_CODE, code);
-				cv.put(FIELD_CODE3R, "0");
 				cv.put(FIELD_WORD, word);
 				cv.put(FIELD_SCORE, 0);
 				return cv;
