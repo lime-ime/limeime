@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent" android:orientation="vertical">
+    <EditText android:layout_width="fill_parent" android:id="@+id/btStatus" android:text="EditText" android:layout_height="wrap_content"></EditText>
+    <EditText android:layout_width="fill_parent" android:text="EditText" android:layout_height="wrap_content" android:id="@+id/edtDeviceName"></EditText>
+    <EditText android:layout_width="fill_parent" android:text="EditText" android:layout_height="wrap_content" android:id="@+id/edtDeviceMac"></EditText>
+    <Button android:text="Discovery Bluetooth Devices" android:layout_width="wrap_content" android:id="@+id/btnDiscoveryBT" android:layout_height="wrap_content"></Button>
+    <Button android:text="Initial Device" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/btnInitialDevice"></Button>
+    <Button android:text="Connect Device" android:layout_width="wrap_content" android:id="@+id/btnConnectDevice" android:layout_height="wrap_content"></Button>
+</LinearLayout>
