@@ -23,7 +23,6 @@ package net.toload.main.hd;
 import android.graphics.Rect;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
-import android.inputmethodservice.KeyboardView;
 import android.media.AudioManager;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -109,6 +108,7 @@ public class LIMEService extends InputMethodService implements
 
 	LIMEKeyboardSwitcher mKeyboardSwitcher;
 
+
 	private UserDictionary mUserDictionary;
 	//private ContactsDictionary mContactsDictionary;
 	//private ExpandableDictionary mAutoDictionary;
@@ -161,6 +161,7 @@ public class LIMEService extends InputMethodService implements
 	//private boolean hasShiftProcessed = false; // Jeremy '11,6.18
 	private boolean hasCtrlPress = false; // Jeremy '11,5,13
 	//private boolean hasCtrlProcessed = false; // Jeremy '11,6.18
+	private boolean hasDistinctMultitouch;// Jeremy '11,8,3 
 	private boolean hasMenuPress = false; // Jeremy '11,5,29
 	private boolean hasMenuProcessed = false; // Jeremy '11,5,29
 	private boolean hasSearchPress = false; // Jeremy '11,5,29
@@ -356,14 +357,16 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public View onCreateInputView() {
 		
-		if (DEBUG)
-			Log.i(TAG, "onCreateInputView()");
+		
 		mInputView = (LIMEKeyboardView) getLayoutInflater().inflate(
 				R.layout.input, null);
 		mKeyboardSwitcher.setInputView(mInputView);
 		mKeyboardSwitcher.makeKeyboards(true);
 		mInputView.setOnKeyboardActionListener(this);
+		hasDistinctMultitouch = mInputView.hasDistinctMultitouch();
 		
+		if (DEBUG)
+			Log.i(TAG, "onCreateInputView(), hasDistinctMultitouch= " + hasDistinctMultitouch);
 
 		//mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,
 		//		EditorInfo.IME_ACTION_NEXT, true, false, false);
@@ -1467,6 +1470,7 @@ public class LIMEService extends InputMethodService implements
 	 * editor state.
 	 */
 	public void updateShiftKeyState(EditorInfo attr) {
+		if(DEBUG) Log.i(TAG, "updateShiftKeyState()");
 		InputConnection ic = getCurrentInputConnection();
 		if (attr != null && mInputView != null
 				&& mKeyboardSwitcher.isAlphabetMode() && ic != null) {
@@ -1571,11 +1575,9 @@ public class LIMEService extends InputMethodService implements
 		onKey(primaryCode, keyCodes,0,0);
 	}
 	public void onKey(int primaryCode, int[] keyCodes, int x, int y) {
-		if (DEBUG) {
-			Log.i("OnKey", "Entering Onkey(); primaryCode:" + primaryCode
+		if (DEBUG) 
+			Log.i(TAG, "OnKey(): primaryCode:" + primaryCode
 					+ " mEnglishFlagShift:" + mEnglishFlagShift);
-		}
-		
 		
 		if (mLIMEPref.getEnglishEnable()
 				&& primaryCode != Keyboard.KEYCODE_DELETE) {
@@ -1609,7 +1611,8 @@ public class LIMEService extends InputMethodService implements
 			handleBackspace();
 		} else if (primaryCode == Keyboard.KEYCODE_SHIFT) {
 			if (DEBUG) 	Log.i(TAG, "OnKey():KEYCODE_SHIFT");
-			//handleShift();
+			if(!(!isPressPhysicalKeyboard && hasDistinctMultitouch))
+				handleShift();
 		} else if (primaryCode == Keyboard.KEYCODE_CANCEL) {
 			handleClose();
 			return;
@@ -2216,7 +2219,7 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void handleShift() {
-
+		if(DEBUG) Log.i(TAG, "handleShift()");
 		if (mInputView == null) {
 			return;
 		}
@@ -2505,7 +2508,8 @@ public class LIMEService extends InputMethodService implements
 			Log.i("handleCharacter","primaryCode:" + primaryCode + "; keyCodes[0]:"+keyCodes[0]);
 
 		// Adjust metakeystate on printed key pressed.
-		mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+		if(isPressPhysicalKeyboard  )
+			mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 		
 		// Caculate key press time to handle Eazy IM keys mapping
 		// 1,2,3,4,5,6 map to -(45) =(43) [(91) ](93) ,(44) \(92)
@@ -2650,7 +2654,9 @@ public class LIMEService extends InputMethodService implements
 			getCurrentInputConnection().commitText(
 					String.valueOf((char) primaryCode), 1);
 		}
-		updateShiftKeyState(getCurrentInputEditorInfo());
+		
+		if(!(!isPressPhysicalKeyboard && hasDistinctMultitouch))
+			updateShiftKeyState(getCurrentInputEditorInfo());
 	}
 
 	private void handleClose() {
@@ -2797,15 +2803,15 @@ public class LIMEService extends InputMethodService implements
 	 * First method to call after key press
 	 */
 	public void onPress(int primaryCode) {
-
+		if(DEBUG) Log.i(TAG, "onPress(): code = " + primaryCode);
 		// Record key press time (press down)
 		keyPressTime = System.currentTimeMillis();
 		// To identify the source of character (Software keyboard or physical
 		// keyboard)
 		isPressPhysicalKeyboard = false;
 		
-		 if ( primaryCode == Keyboard.KEYCODE_SHIFT) {
-	            //mShiftKeyState.onPress();
+		 if (hasDistinctMultitouch && primaryCode == Keyboard.KEYCODE_SHIFT) {
+			 	hasShiftPress = true;
 	            handleShift();
 		 }
 		if (hasVibration) {
@@ -2850,7 +2856,11 @@ public class LIMEService extends InputMethodService implements
 	 * Last method to execute when key release
 	 */
 	public void onRelease(int primaryCode) {
-		// TODO Auto-generated method stub
+		if(DEBUG) Log.i(TAG, "onRelease(): code = " + primaryCode);
+		if(hasDistinctMultitouch && primaryCode == Keyboard.KEYCODE_SHIFT ){
+			hasShiftPress = false;
+			updateShiftKeyState(getCurrentInputEditorInfo());
+		}
 	}
 
 	private final int UP = 0;
