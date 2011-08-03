@@ -295,7 +295,7 @@ public class PointerTracker {
             }
         }
         if (isValidKeyIndex(keyIndex)) {
-            if (mKeys[keyIndex].repeatable) {
+            if (mKeys[keyIndex].repeatable && mKeys[keyIndex].codes[0]!= LIMEKeyboard.KEYCODE_SPACE) {
                 repeatKey(keyIndex);
                 mHandler.startKeyRepeatTimer(mDelayBeforeKeyRepeatStart, keyIndex, this);
                 mIsRepeatableKey = true;
