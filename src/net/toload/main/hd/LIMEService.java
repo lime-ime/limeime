@@ -162,6 +162,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasCtrlPress = false; // Jeremy '11,5,13
 	//private boolean hasCtrlProcessed = false; // Jeremy '11,6.18
 	private boolean hasDistinctMultitouch;// Jeremy '11,8,3 
+	private boolean hasShiftCombineKeyPressed = false; //Jeremy ,11,8, 3
 	private boolean hasMenuPress = false; // Jeremy '11,5,29
 	private boolean hasMenuProcessed = false; // Jeremy '11,5,29
 	private boolean hasSearchPress = false; // Jeremy '11,5,29
@@ -1217,7 +1218,7 @@ public class LIMEService extends InputMethodService implements
 			// '11,5,14 Jeremy ctrl-shift switch to next available keyboard; 
 			// '11,5,24 blocking switching if full-shape symbol 
 			if (!hasSymbolEntered && (hasMenuPress || hasCtrlPress) ){  
-				nextActiveKeyboard();
+				nextActiveKeyboard(true);
 				if(hasMenuPress) hasMenuProcessed = true;
 				return true;
 			}
@@ -1252,7 +1253,7 @@ public class LIMEService extends InputMethodService implements
 			// alt-@ switch to next active keyboard.
 			if (LIMEMetaKeyKeyListener.getMetaState(mMetaState,
 					LIMEMetaKeyKeyListener.META_SHIFT_ON) > 0) {
-				nextActiveKeyboard();
+				nextActiveKeyboard(true);
 				mMetaState = LIMEMetaKeyKeyListener
 						.adjustMetaAfterKeypress(mMetaState);
 				setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
@@ -1577,7 +1578,7 @@ public class LIMEService extends InputMethodService implements
 	public void onKey(int primaryCode, int[] keyCodes, int x, int y) {
 		if (DEBUG) 
 			Log.i(TAG, "OnKey(): primaryCode:" + primaryCode
-					+ " mEnglishFlagShift:" + mEnglishFlagShift);
+					+ " hasShiftPress:" + hasShiftPress);
 		
 		if (mLIMEPref.getEnglishEnable()
 				&& primaryCode != Keyboard.KEYCODE_DELETE) {
@@ -1616,7 +1617,7 @@ public class LIMEService extends InputMethodService implements
 		} else if (primaryCode == Keyboard.KEYCODE_CANCEL) {
 			handleClose();
 			return;
-			// Process long press on options and shift
+			// long press on options and shift
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_OPTIONS) {
 			handleOptions();
 //		} else if (primaryCode == LIMEKeyboardView.KEYCODE_SHIFT_LONGPRESS) {
@@ -1629,10 +1630,13 @@ public class LIMEService extends InputMethodService implements
 //				toggleCapsLock();
 //			}
 
-		} else if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE
-				&& mInputView != null) {
+		} else if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE	&& mInputView != null) {
 			switchKeyboard(primaryCode);
-		} else if (primaryCode == -9 && mInputView != null) {
+		} else if (primaryCode == LIMEKeyboardView.KEYCODE_NEXT_IM){
+			nextActiveKeyboard(true);
+		} else if (primaryCode == LIMEKeyboardView.KEYCODE_PREV_IM){
+			nextActiveKeyboard(false);
+		} else if (primaryCode == KEYBOARD_SWITCH_CODE && mInputView != null) {
 			switchKeyboard(primaryCode);
 			// Jeremy '11,5,31 Rewrite softkeybaord enter/space and english sepeartor processing.
 		} else if (onIM && ( primaryCode== KEYCODE_SPACE || primaryCode == KEYCODE_ENTER) ){// || primaryCode == -99){
@@ -1722,28 +1726,27 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	@SuppressWarnings("unchecked")
-	private void nextActiveKeyboard() {
+	private void nextActiveKeyboard(boolean forward) {
 		if(DEBUG) Log.i("LIMEService:nextActiveKeyboard()", "entering...");
 		buildActiveKeyboardList();
 		int i;
 		CharSequence keyboardname = "";
 		for (i = 0; i < keyboardListCodes.size(); i++) {
 			if (keyboardSelection.equals(keyboardListCodes.get(i))) {
-				if (i == keyboardListCodes.size() - 1) {
+				if (i == keyboardListCodes.size() - 1 && forward) {
 					keyboardSelection = keyboardListCodes.get(0);
 					keyboardname = keyboardList.get(0);
+				} else if(i == 0 && !forward){
+					keyboardSelection = keyboardListCodes.get(keyboardListCodes.size() - 1);
+					keyboardname = keyboardList.get(keyboardListCodes.size() - 1);
 				} else {
-					keyboardSelection = keyboardListCodes.get(i + 1);
-					keyboardname = keyboardList.get(i + 1);
+					keyboardSelection = keyboardListCodes.get(i + ((forward)?1:-1));
+					keyboardname = keyboardList.get(i + ((forward)?1:-1));
 				}
 				break;
 			}
 		}
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-		SharedPreferences.Editor spe = sp.edit();
-
-		spe.putString("keyboard_list", keyboardSelection);
-		spe.commit();
+		mLIMEPref.setKeyboardSelection(keyboardSelection);
 		// cancel candidate view if it's shown
 		if (mCandidateView != null) {
 			mCandidateView.clear();
@@ -2803,17 +2806,21 @@ public class LIMEService extends InputMethodService implements
 	 * First method to call after key press
 	 */
 	public void onPress(int primaryCode) {
-		if(DEBUG) Log.i(TAG, "onPress(): code = " + primaryCode);
+		if(DEBUG) 
+			Log.i(TAG, "onPress(): code = " + primaryCode);
 		// Record key press time (press down)
 		keyPressTime = System.currentTimeMillis();
 		// To identify the source of character (Software keyboard or physical
 		// keyboard)
 		isPressPhysicalKeyboard = false;
 		
-		 if (hasDistinctMultitouch && primaryCode == Keyboard.KEYCODE_SHIFT) {
-			 	hasShiftPress = true;
-	            handleShift();
-		 }
+		if (hasDistinctMultitouch && primaryCode == Keyboard.KEYCODE_SHIFT) {
+			hasShiftPress = true;
+			hasShiftCombineKeyPressed = false;
+			handleShift();
+		}else if (hasDistinctMultitouch && hasShiftPress){
+			hasShiftCombineKeyPressed = true;
+		}
 		if (hasVibration) {
 			mVibrator.vibrate(40);
 		}
@@ -2856,10 +2863,13 @@ public class LIMEService extends InputMethodService implements
 	 * Last method to execute when key release
 	 */
 	public void onRelease(int primaryCode) {
-		if(DEBUG) Log.i(TAG, "onRelease(): code = " + primaryCode);
+		if(DEBUG) 
+			Log.i(TAG, "onRelease(): code = " + primaryCode);
 		if(hasDistinctMultitouch && primaryCode == Keyboard.KEYCODE_SHIFT ){
 			hasShiftPress = false;
-			updateShiftKeyState(getCurrentInputEditorInfo());
+			if (hasShiftCombineKeyPressed) {
+				updateShiftKeyState(getCurrentInputEditorInfo());
+			}
 		}
 	}
 

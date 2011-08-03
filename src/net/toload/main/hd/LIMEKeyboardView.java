@@ -37,8 +37,13 @@ import android.view.GestureDetector.OnGestureListener;
  */
 public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 	static final boolean DEBUG = false;
+	static final String TAG = "LIMEKeyboardView";
+
 	static final int KEYCODE_OPTIONS = -100;
 	static final int KEYCODE_SHIFT_LONGPRESS = -101;
+    static final int KEYCODE_NEXT_IM = -104;
+    static final int KEYCODE_PREV_IM = -105;
+    
 	//static final String PREF = "LIMEXY";
 	
 	private boolean mLongPressProcessed;
@@ -79,22 +84,25 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 	 */
 	@Override
 	public boolean onTouchEvent(MotionEvent me) {
-		/*
-		// Store Touch Position to Preference for data exchange between activity
-		if(me.getAction() == MotionEvent.ACTION_DOWN){
-			mLongPressProcessed = false;
-			SharedPreferences sp1 = this.getContext().getSharedPreferences(PREF, 0);
-			sp1.edit().putString("xy", String.valueOf(me.getX())+","+String.valueOf(me.getY())).commit();
-			if(DEBUG) Log.i("LIMEKeyboardView", "ACTION_DOWN");				  
-		}else if(me.getAction() == MotionEvent.ACTION_UP){
-			SharedPreferences sp1 = this.getContext().getSharedPreferences(PREF, 0);
-			sp1.edit().putString("xy", String.valueOf(me.getX())+","+String.valueOf(me.getY())).commit();
-			if(mLongPressProcessed) return true;
-			if(DEBUG) Log.i("LIMEKeyboardView", "ACTION_UP");		
-		}else if(me.getAction() == MotionEvent.ACTION_MOVE){
-			if(mLongPressProcessed) return true;
-			if(DEBUG) Log.i("LIMEKeyboardView", "ACTION_MOVE");
-		}*/
+		if(DEBUG) Log.i(TAG, "OnTouchEvent(), me.getAction() =" + me.getAction());
+		LIMEKeyboard keyboard = (LIMEKeyboard) getKeyboard();
+		if (me.getAction() == MotionEvent.ACTION_DOWN) {
+			Log.i(TAG, "OnTouchEvent(), ACTION_DOWN");
+			keyboard.keyReleased();
+		}
+
+		if (me.getAction() == MotionEvent.ACTION_UP) {
+			int spaceDrageDirection = keyboard.getSpaceDragDirection();
+			Log.i(TAG, "OnTouchEvent(), ACTION_UP, spaceDragDirection:" + spaceDrageDirection);
+			if (spaceDrageDirection != 0) {
+				getOnKeyboardActionListener().onKey(
+						spaceDrageDirection == 1 ? KEYCODE_NEXT_IM : KEYCODE_PREV_IM,
+								null,0,0);
+				me.setAction(MotionEvent.ACTION_CANCEL);
+				keyboard.keyReleased();
+				return super.onTouchEvent(me);
+			}
+		}
 		return super.onTouchEvent(me);
 	}
 	

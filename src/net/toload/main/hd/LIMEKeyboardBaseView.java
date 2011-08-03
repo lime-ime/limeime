@@ -68,7 +68,7 @@ import java.util.WeakHashMap;
  * @attr ref R.styleable#LatinKeyboardBaseView_popupLayout
  */
 public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy {
-    private static final String TAG = "LatinKeyboardBaseView";
+    private static final String TAG = "LIMEKeyboardBaseView";
     private static final boolean DEBUG = false;
 
     public static final int NOT_A_TOUCH_COORDINATE = -1;
