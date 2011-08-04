@@ -166,6 +166,29 @@ public class LIMEKeyboardSwitcher {
     	}
     	return "";
     }
+    String getNextActiveKeyboardShortname(){
+    	int i = 0;
+    	for(String code : mActiveKeyboardCodes) {
+    		if(imtype.equals(code)){
+    			if(i==mActiveKeyboardCodes.size()-1)
+    				return activeKeyboardShortnameMap.get(0);
+    			else return activeKeyboardShortnameMap.get(i+1);
+    		}
+    		i++;
+    	}
+    	return "";
+    }
+    String getPrevActiveKeyboardShortname(){
+    	int i = 0;
+    	for(String code : mActiveKeyboardCodes) {
+    		if(imtype.equals(code)){
+    			if(i==0) return activeKeyboardShortnameMap.get(mActiveKeyboardCodes.size()-1);
+    			else return activeKeyboardShortnameMap.get(i);
+    		}
+    		i++;
+    	}
+    	return "";
+    }
     
     void setInputView(LIMEKeyboardView inputView) {
         mInputView = inputView;
