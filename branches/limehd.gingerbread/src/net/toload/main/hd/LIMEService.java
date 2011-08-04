@@ -2868,8 +2868,12 @@ public class LIMEService extends InputMethodService implements
 		if(hasDistinctMultitouch && primaryCode == Keyboard.KEYCODE_SHIFT ){
 			hasShiftPress = false;
 			if (hasShiftCombineKeyPressed) {
+				hasShiftCombineKeyPressed = false;
 				updateShiftKeyState(getCurrentInputEditorInfo());
 			}
+		}else if(hasDistinctMultitouch && !hasShiftPress){
+			updateShiftKeyState(getCurrentInputEditorInfo());
+
 		}
 	}
 
