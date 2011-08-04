@@ -423,9 +423,9 @@ public class LIMEKeyboard extends Keyboard {
         private final int mThreshold;
         private int mDiff;
         private boolean mHitThreshold;
-        private String mCurrentLanguage;
-        private String mNextLanguage;
-        private String mPrevLanguage;
+        private String mCurrentKeyboard;
+        private String mNextKeyboard;
+        private String mPrevKeyboard;
 
         public SlidingSpaceBarDrawable(Drawable background, int width, int height) {
             mBackground = background;
@@ -449,7 +449,7 @@ public class LIMEKeyboard extends Keyboard {
         private void setDiff(int diff) {
             if (diff == Integer.MAX_VALUE) {
                 mHitThreshold = false;
-                mCurrentLanguage = null;
+                mCurrentKeyboard = null;
                 return;
             }
             mDiff = diff;
@@ -472,17 +472,17 @@ public class LIMEKeyboard extends Keyboard {
                 final Drawable lArrow = mLeftDrawable;
                 final Drawable rArrow = mRightDrawable;
                 canvas.clipRect(0, 0, width, height);
-                if (mCurrentLanguage == null) {
-                    mCurrentLanguage = LIMEKeyboardSwitcher.getInstance().getCurrentActiveKeyboardShortname();
-                    //mNextLanguage = getLanguageName(languageSwitcher.getNextInputLocale());
-                    //mPrevLanguage = getLanguageName(languageSwitcher.getPrevInputLocale());
+                if (mCurrentKeyboard == null) {
+                	mCurrentKeyboard = LIMEKeyboardSwitcher.getInstance().getCurrentActiveKeyboardShortname();
+                    mNextKeyboard = LIMEKeyboardSwitcher.getInstance().getNextActiveKeyboardShortname();
+                    mPrevKeyboard = LIMEKeyboardSwitcher.getInstance().getPrevActiveKeyboardShortname();
                 }
                 // Draw language text with shadow
                 final float baseline = mHeight * 0.6f - paint.descent();
                 paint.setColor(mRes.getColor(R.color.limekeyboard_feedback_language_text));
-                canvas.drawText(mCurrentLanguage, width / 2 + diff, baseline, paint);
-                canvas.drawText(mNextLanguage, diff - width / 2, baseline, paint);
-                canvas.drawText(mPrevLanguage, diff + width + width / 2, baseline, paint);
+                canvas.drawText(mCurrentKeyboard, width / 2 + diff, baseline, paint);
+                canvas.drawText(mNextKeyboard, diff - width / 2, baseline, paint);
+                canvas.drawText(mPrevKeyboard, diff + width + width / 2, baseline, paint);
 
                 setDefaultBounds(lArrow);
                 rArrow.setBounds(width - rArrow.getIntrinsicWidth(), 0, width,
