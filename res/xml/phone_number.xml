@@ -54,11 +54,11 @@
     </Row>
     
     <Row android:rowEdgeFlags="bottom">
-        <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:keyEdgeFlags="left"/>
+        <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyEdgeFlags="left"/>
         <Key android:codes="44" android:keyLabel=","/>
         <Key android:codes="48" android:keyLabel="0"/>
         <Key android:codes="35" android:keyLabel="\#"/>
-        <Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete"  android:keyEdgeFlags="right" android:isRepeatable="true"/>
+        <Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" android:isModifier="true"  android:keyEdgeFlags="right" android:isRepeatable="true"/>
     </Row>
     
     

@@ -94,6 +94,14 @@ public class LIMEKeyboardSwitcher {
     
     private HashMap<String, KeyboardObj> kbHm;
     private HashMap<String, String> imHm;
+ 
+    private static List<String> mActiveKeyboardCodes;
+    private static List<String> mActiveKeyboardNames;
+    private static List<String> mActiveKeyboardShortnames;
+    
+    private HashMap<String, String> activeKeyboardNameMap;
+    private HashMap<String, String> activeKeyboardShortnameMap;
+    
 
     LIMEKeyboardSwitcher(LIMEService context) {
         mContext = context;
@@ -123,12 +131,42 @@ public class LIMEKeyboardSwitcher {
     }
     
     void setImList(List<ImObj> list){
-    	imHm = new HashMap<String, String>();
+    	imHm = new HashMap<String, String>();  	
     	for(ImObj o : list){
     		imHm.put(o.getCode(), o.getKeyboard());
     	}    	
     }
-
+    void setActiveKeyboardList(List<String> codes, List<String> names, List<String> shortnames){
+    	mActiveKeyboardCodes = codes;
+    	mActiveKeyboardNames = names;
+    	mActiveKeyboardShortnames = shortnames;
+    	
+    	activeKeyboardNameMap = new HashMap<String, String>();
+    	activeKeyboardShortnameMap = new HashMap<String, String>();
+    	
+    	int i =0;
+    	for(String code : codes) {
+    		activeKeyboardNameMap.put(code, mActiveKeyboardNames.get(i));
+    		activeKeyboardShortnameMap.put(code, mActiveKeyboardShortnames.get(i));
+    		i++;
+    	}
+    }
+    
+    List<String> getActiveKeyboardShortnameList(){
+    	return mActiveKeyboardShortnames;
+    }
+    
+    String getCurrentActiveKeyboardShortname(){
+    	int i = 0;
+    	for(String code : mActiveKeyboardCodes) {
+    		if(imtype.equals(code)){
+    			return activeKeyboardShortnameMap.get(i);
+    		}
+    		i++;
+    	}
+    	return "";
+    }
+    
     void setInputView(LIMEKeyboardView inputView) {
         mInputView = inputView;
     }

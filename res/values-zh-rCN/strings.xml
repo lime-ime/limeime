@@ -256,6 +256,21 @@
 		<item>行列10输入法</item>
 		<!-- <item>五笔输入法</item> -->
 	</string-array>
+	
+	<!-- Keyboard short name List -->
+    <string-array name="keyboardShortname">
+		<item>LIME</item>
+		<item>仓颉</item>
+		<item>快仓</item>
+		<item>仓颉五</item>
+		<item>速成</item>
+		<item>大易</item>
+		<item>注音</item>
+		<item>轻松</item>
+		<item>行列</item>
+		<item>行列10</item>
+		<!-- <item>五笔</item> -->
+	</string-array>
 	<string-array name="keyboard_defaultstate">
 		<item>true</item>
 		<item>true</item>

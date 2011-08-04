@@ -181,6 +181,7 @@ public class LIMEService extends InputMethodService implements
 
 	private String keyboardSelection;
 	private List<String> keyboardList;
+	private List<String> keyboardShortnames;
 	private List<String> keyboardListCodes;
 
 	//private int keyDownCode = 0;
@@ -280,6 +281,7 @@ public class LIMEService extends InputMethodService implements
 		// initial keyboard list
 		keyboardList = new ArrayList<String>();
 		keyboardListCodes = new ArrayList<String>();
+		keyboardShortnames = new ArrayList<String>();
 		buildActiveKeyboardList();
 
 		
@@ -363,6 +365,9 @@ public class LIMEService extends InputMethodService implements
 				R.layout.input, null);
 		mKeyboardSwitcher.setInputView(mInputView);
 		mKeyboardSwitcher.makeKeyboards(true);
+		// build activekeyboard list and store in keybaord switcher.
+		buildActiveKeyboardList();
+		mKeyboardSwitcher.setActiveKeyboardList(keyboardListCodes, keyboardList, keyboardShortnames);
 		mInputView.setOnKeyboardActionListener(this);
 		hasDistinctMultitouch = mInputView.hasDistinctMultitouch();
 		
@@ -1726,7 +1731,7 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	@SuppressWarnings("unchecked")
-	private void nextActiveKeyboard(boolean forward) {
+	private void nextActiveKeyboard(boolean forward) { // forward: true, next IM; false prev. IM
 		if(DEBUG) Log.i("LIMEService:nextActiveKeyboard()", "entering...");
 		buildActiveKeyboardList();
 		int i;
@@ -1768,22 +1773,23 @@ public class LIMEService extends InputMethodService implements
 
 	private void buildActiveKeyboardList() {
 		CharSequence[] items = getResources().getStringArray(R.array.keyboard);
+		CharSequence[] shortNames = getResources().getStringArray(R.array.keyboardShortname);
 		CharSequence[] codes = getResources().getStringArray(
 				R.array.keyboard_codes);
-		SharedPreferences sp = PreferenceManager
-				.getDefaultSharedPreferences(this);
-		String keybaord_state_string = sp.getString("keyboard_state",
-				"0;1;2;3;4;5;6;7;8;9;10;11");
+		
+		String keybaord_state_string = mLIMEPref.getSelectedKeyboardState();
 		String[] s = keybaord_state_string.toString().split(";");
 
 		keyboardList.clear();
 		keyboardListCodes.clear();
+		keyboardShortnames.clear();
 
 		for (int i = 0; i < s.length; i++) {
 			int index = Integer.parseInt(s[i]);
 
 			if (index < items.length) {
 				keyboardList.add(items[index].toString());
+				keyboardShortnames.add(shortNames[index].toString());
 				keyboardListCodes.add(codes[index].toString());
 			} else {
 				break;

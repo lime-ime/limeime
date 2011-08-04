@@ -413,10 +413,11 @@ public class SearchService extends Service {
 						if(i+1 <localScorelist.size()){
 							Mapping unit2 = localScorelist.get((i + 1));
 							if(unit2 == null){continue;}				
-							if (unit != null 
+							if (unit.getId()!=null
 					    		&& unit.getWord() != null && !unit.getWord().equals("")
-					    		&& unit2 != null
-					    		&& unit2.getWord() != null && !unit2.getWord().equals("")) {
+					    		&& unit2.getId() !=null
+					    		&& unit2.getWord() != null && !unit2.getWord().equals("")
+					    	) {
 								db.addOrUpdateUserdictRecord(unit.getWord(),unit2.getWord());
 							}
 						}
