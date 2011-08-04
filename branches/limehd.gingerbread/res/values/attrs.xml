@@ -16,7 +16,7 @@
 
 <resources>
 
-    <declare-styleable name="LatinKeyboardBaseView">
+    <declare-styleable name="LIMEKeyboardBaseView">
         <!-- Default KeyboardView style. -->
         <attr name="keyboardViewStyle" format="reference" />
 

@@ -409,7 +409,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         super(context, attrs, defStyle);
 
         TypedArray a = context.obtainStyledAttributes(
-                attrs, R.styleable.LatinKeyboardBaseView, defStyle, R.style.LatinKeyboardBaseView);
+                attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEKeyboardBaseView);
         LayoutInflater inflate =
                 (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         int previewLayout = 0;
@@ -421,48 +421,48 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             int attr = a.getIndex(i);
 
             switch (attr) {
-            case R.styleable.LatinKeyboardBaseView_keyBackground:
+            case R.styleable.LIMEKeyboardBaseView_keyBackground:
                 mKeyBackground = a.getDrawable(attr);
                 break;
-            case R.styleable.LatinKeyboardBaseView_keyHysteresisDistance:
+            case R.styleable.LIMEKeyboardBaseView_keyHysteresisDistance:
                 mKeyHysteresisDistance = a.getDimensionPixelOffset(attr, 0);
                 break;
-            case R.styleable.LatinKeyboardBaseView_verticalCorrection:
+            case R.styleable.LIMEKeyboardBaseView_verticalCorrection:
                 mVerticalCorrection = a.getDimensionPixelOffset(attr, 0);
                 break;
-            case R.styleable.LatinKeyboardBaseView_keyPreviewLayout:
+            case R.styleable.LIMEKeyboardBaseView_keyPreviewLayout:
                 previewLayout = a.getResourceId(attr, 0);
                 break;
-            case R.styleable.LatinKeyboardBaseView_keyPreviewOffset:
+            case R.styleable.LIMEKeyboardBaseView_keyPreviewOffset:
                 mPreviewOffset = a.getDimensionPixelOffset(attr, 0);
                 break;
-            case R.styleable.LatinKeyboardBaseView_keyPreviewHeight:
+            case R.styleable.LIMEKeyboardBaseView_keyPreviewHeight:
                 mPreviewHeight = a.getDimensionPixelSize(attr, 80);
                 break;
-            case R.styleable.LatinKeyboardBaseView_keyTextSize:
+            case R.styleable.LIMEKeyboardBaseView_keyTextSize:
                 mKeyTextSize = a.getDimensionPixelSize(attr, 18);
                 break;
-            case R.styleable.LatinKeyboardBaseView_keyTextColor:
+            case R.styleable.LIMEKeyboardBaseView_keyTextColor:
                 mKeyTextColor = a.getColor(attr, 0xFF000000);
                 break;
-            case R.styleable.LatinKeyboardBaseView_labelTextSize:
+            case R.styleable.LIMEKeyboardBaseView_labelTextSize:
                 mLabelTextSize = a.getDimensionPixelSize(attr, 14);
                 break;
-            case R.styleable.LatinKeyboardBaseView_popupLayout:
+            case R.styleable.LIMEKeyboardBaseView_popupLayout:
                 mPopupLayout = a.getResourceId(attr, 0);
                 break;
-            case R.styleable.LatinKeyboardBaseView_shadowColor:
+            case R.styleable.LIMEKeyboardBaseView_shadowColor:
                 mShadowColor = a.getColor(attr, 0);
                 break;
-            case R.styleable.LatinKeyboardBaseView_shadowRadius:
+            case R.styleable.LIMEKeyboardBaseView_shadowRadius:
                 mShadowRadius = a.getFloat(attr, 0f);
                 break;
             // TODO: Use Theme (android.R.styleable.Theme_backgroundDimAmount)
-            case R.styleable.LatinKeyboardBaseView_backgroundDimAmount:
+            case R.styleable.LIMEKeyboardBaseView_backgroundDimAmount:
                 mBackgroundDimAmount = a.getFloat(attr, 0.5f);
                 break;
             //case android.R.styleable.
-            case R.styleable.LatinKeyboardBaseView_keyTextStyle:
+            case R.styleable.LIMEKeyboardBaseView_keyTextStyle:
                 int textStyle = a.getInt(attr, 0);
                 switch (textStyle) {
                     case 0:
@@ -476,7 +476,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                         break;
                 }
                 break;
-            case R.styleable.LatinKeyboardBaseView_symbolColorScheme:
+            case R.styleable.LIMEKeyboardBaseView_symbolColorScheme:
                 mSymbolColorScheme = a.getInt(attr, 0);
                 break;
             }
@@ -1319,114 +1319,6 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         return mOldPointerCount;
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent me) {
-        final int action = me.getActionMasked();
-        final int pointerCount = me.getPointerCount();
-        final int oldPointerCount = mOldPointerCount;
-        mOldPointerCount = pointerCount;
-
-        // TODO: cleanup this code into a multi-touch to single-touch event converter class?
-        // If the device does not have distinct multi-touch support panel, ignore all multi-touch
-        // events except a transition from/to single-touch.
-        if (!mHasDistinctMultitouch && pointerCount > 1 && oldPointerCount > 1) {
-            return true;
-        }
-
-        // Track the last few movements to look for spurious swipes.
-        mSwipeTracker.addMovement(me);
-
-        // Gesture detector must be enabled only when mini-keyboard is not on the screen.
-        if (mMiniKeyboard == null
-                && mGestureDetector != null && mGestureDetector.onTouchEvent(me)) {
-            dismissKeyPreview();
-            mHandler.cancelKeyTimers();
-            return true;
-        }
-
-        final long eventTime = me.getEventTime();
-        final int index = me.getActionIndex();
-        final int id = me.getPointerId(index);
-        final int x = (int)me.getX(index);
-        final int y = (int)me.getY(index);
-
-        // Needs to be called after the gesture detector gets a turn, as it may have
-        // displayed the mini keyboard
-        if (mMiniKeyboard != null) {
-            final int miniKeyboardPointerIndex = me.findPointerIndex(mMiniKeyboardTrackerId);
-            if (miniKeyboardPointerIndex >= 0 && miniKeyboardPointerIndex < pointerCount) {
-                final int miniKeyboardX = (int)me.getX(miniKeyboardPointerIndex);
-                final int miniKeyboardY = (int)me.getY(miniKeyboardPointerIndex);
-                MotionEvent translated = generateMiniKeyboardMotionEvent(action,
-                        miniKeyboardX, miniKeyboardY, eventTime);
-                mMiniKeyboard.onTouchEvent(translated);
-                translated.recycle();
-            }
-            return true;
-        }
-
-        if (mHandler.isInKeyRepeat()) {
-            // It will keep being in the key repeating mode while the key is being pressed.
-            if (action == MotionEvent.ACTION_MOVE) {
-                return true;
-            }
-            final PointerTracker tracker = getPointerTracker(id);
-            // Key repeating timer will be canceled if 2 or more keys are in action, and current
-            // event (UP or DOWN) is non-modifier key.
-            if (pointerCount > 1 && !tracker.isModifier()) {
-                mHandler.cancelKeyRepeatTimer();
-            }
-            // Up event will pass through.
-        }
-
-        // TODO: cleanup this code into a multi-touch to single-touch event converter class?
-        // Translate mutli-touch event to single-touch events on the device that has no distinct
-        // multi-touch panel.
-        if (!mHasDistinctMultitouch) {
-            // Use only main (id=0) pointer tracker.
-            PointerTracker tracker = getPointerTracker(0);
-            if (pointerCount == 1 && oldPointerCount == 2) {
-                // Multi-touch to single touch transition.
-                // Send a down event for the latest pointer.
-                tracker.onDownEvent(x, y, eventTime);
-            } else if (pointerCount == 2 && oldPointerCount == 1) {
-                // Single-touch to multi-touch transition.
-                // Send an up event for the last pointer.
-                tracker.onUpEvent(tracker.getLastX(), tracker.getLastY(), eventTime);
-            } else if (pointerCount == 1 && oldPointerCount == 1) {
-                tracker.onTouchEvent(action, x, y, eventTime);
-            } else {
-                Log.w(TAG, "Unknown touch panel behavior: pointer count is " + pointerCount
-                        + " (old " + oldPointerCount + ")");
-            }
-            return true;
-        }
-
-        if (action == MotionEvent.ACTION_MOVE) {
-            for (int i = 0; i < pointerCount; i++) {
-                PointerTracker tracker = getPointerTracker(me.getPointerId(i));
-                tracker.onMoveEvent((int)me.getX(i), (int)me.getY(i), eventTime);
-            }
-        } else {
-            PointerTracker tracker = getPointerTracker(id);
-            switch (action) {
-            case MotionEvent.ACTION_DOWN:
-            case MotionEvent.ACTION_POINTER_DOWN:
-                onDownEvent(tracker, x, y, eventTime);
-                break;
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_POINTER_UP:
-                onUpEvent(tracker, x, y, eventTime);
-                break;
-            case MotionEvent.ACTION_CANCEL:
-                onCancelEvent(tracker, x, y, eventTime);
-                break;
-            }
-        }
-
-        return true;
-    }
-
     private void onDownEvent(PointerTracker tracker, int x, int y, long eventTime) {
         if (tracker.isOnModifierKey(x, y)) {
             // Before processing a down event of modifier key, all pointers already being tracked
@@ -1455,7 +1347,115 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         mPointerQueue.remove(tracker);
     }
 
-    private void onCancelEvent(PointerTracker tracker, int x, int y, long eventTime) {
+    @Override
+	public boolean onTouchEvent(MotionEvent me) {
+	    final int action = me.getActionMasked();
+	    final int pointerCount = me.getPointerCount();
+	    final int oldPointerCount = mOldPointerCount;
+	    mOldPointerCount = pointerCount;
+	
+	    // TODO: cleanup this code into a multi-touch to single-touch event converter class?
+	    // If the device does not have distinct multi-touch support panel, ignore all multi-touch
+	    // events except a transition from/to single-touch.
+	    if (!mHasDistinctMultitouch && pointerCount > 1 && oldPointerCount > 1) {
+	        return true;
+	    }
+	
+	    // Track the last few movements to look for spurious swipes.
+	    mSwipeTracker.addMovement(me);
+	
+	    // Gesture detector must be enabled only when mini-keyboard is not on the screen.
+	    if (mMiniKeyboard == null
+	            && mGestureDetector != null && mGestureDetector.onTouchEvent(me)) {
+	        dismissKeyPreview();
+	        mHandler.cancelKeyTimers();
+	        return true;
+	    }
+	
+	    final long eventTime = me.getEventTime();
+	    final int index = me.getActionIndex();
+	    final int id = me.getPointerId(index);
+	    final int x = (int)me.getX(index);
+	    final int y = (int)me.getY(index);
+	
+	    // Needs to be called after the gesture detector gets a turn, as it may have
+	    // displayed the mini keyboard
+	    if (mMiniKeyboard != null) {
+	        final int miniKeyboardPointerIndex = me.findPointerIndex(mMiniKeyboardTrackerId);
+	        if (miniKeyboardPointerIndex >= 0 && miniKeyboardPointerIndex < pointerCount) {
+	            final int miniKeyboardX = (int)me.getX(miniKeyboardPointerIndex);
+	            final int miniKeyboardY = (int)me.getY(miniKeyboardPointerIndex);
+	            MotionEvent translated = generateMiniKeyboardMotionEvent(action,
+	                    miniKeyboardX, miniKeyboardY, eventTime);
+	            mMiniKeyboard.onTouchEvent(translated);
+	            translated.recycle();
+	        }
+	        return true;
+	    }
+	
+	    if (mHandler.isInKeyRepeat()) {
+	        // It will keep being in the key repeating mode while the key is being pressed.
+	        if (action == MotionEvent.ACTION_MOVE) {
+	            return true;
+	        }
+	        final PointerTracker tracker = getPointerTracker(id);
+	        // Key repeating timer will be canceled if 2 or more keys are in action, and current
+	        // event (UP or DOWN) is non-modifier key.
+	        if (pointerCount > 1 && !tracker.isModifier()) {
+	            mHandler.cancelKeyRepeatTimer();
+	        }
+	        // Up event will pass through.
+	    }
+	
+	    // TODO: cleanup this code into a multi-touch to single-touch event converter class?
+	    // Translate mutli-touch event to single-touch events on the device that has no distinct
+	    // multi-touch panel.
+	    if (!mHasDistinctMultitouch) {
+	        // Use only main (id=0) pointer tracker.
+	        PointerTracker tracker = getPointerTracker(0);
+	        if (pointerCount == 1 && oldPointerCount == 2) {
+	            // Multi-touch to single touch transition.
+	            // Send a down event for the latest pointer.
+	            tracker.onDownEvent(x, y, eventTime);
+	        } else if (pointerCount == 2 && oldPointerCount == 1) {
+	            // Single-touch to multi-touch transition.
+	            // Send an up event for the last pointer.
+	            tracker.onUpEvent(tracker.getLastX(), tracker.getLastY(), eventTime);
+	        } else if (pointerCount == 1 && oldPointerCount == 1) {
+	            tracker.onTouchEvent(action, x, y, eventTime);
+	        } else {
+	            Log.w(TAG, "Unknown touch panel behavior: pointer count is " + pointerCount
+	                    + " (old " + oldPointerCount + ")");
+	        }
+	        return true;
+	    }
+	
+	    if (action == MotionEvent.ACTION_MOVE) {
+	        for (int i = 0; i < pointerCount; i++) {
+	            PointerTracker tracker = getPointerTracker(me.getPointerId(i));
+	            tracker.onMoveEvent((int)me.getX(i), (int)me.getY(i), eventTime);
+	        }
+	    } else {
+	        PointerTracker tracker = getPointerTracker(id);
+	        switch (action) {
+	        case MotionEvent.ACTION_DOWN:
+	        case MotionEvent.ACTION_POINTER_DOWN:
+	            onDownEvent(tracker, x, y, eventTime);
+	            break;
+	        case MotionEvent.ACTION_UP:
+	        case MotionEvent.ACTION_POINTER_UP:
+	            onUpEvent(tracker, x, y, eventTime);
+	            break;
+	        case MotionEvent.ACTION_CANCEL:
+	            onCancelEvent(tracker, x, y, eventTime);
+	            break;
+	        }
+	    }
+	
+	    return true;
+	}
+
+	private void onCancelEvent(PointerTracker tracker, int x, int y, long eventTime) {
         tracker.onCancelEvent(x, y, eventTime);
         mPointerQueue.remove(tracker);
     }

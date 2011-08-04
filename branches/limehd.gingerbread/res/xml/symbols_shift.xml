@@ -85,19 +85,19 @@
         <Key android:codes="124" android:keyLabel="|"/>
         <Key android:codes="92" android:keyLabel="\\" />
         <Key android:codes="191" android:keyLabel="¿"/>
-        <Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete"
+        <Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" android:isModifier="true"
                 android:keyWidth="15%p" android:keyEdgeFlags="right"
                 android:isRepeatable="true"/>
     </Row>
     
     <Row android:rowEdgeFlags="bottom">
-        <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" 
+        <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" 
                 android:keyWidth="20%p" android:keyEdgeFlags="left" />
         <Key android:codes="-2" android:keyLabel="LIME" android:keyWidth="15%p" />
         <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space" android:keyWidth="30%p" 
                 android:isRepeatable="true"/>
         <Key android:codes="8230" android:keyLabel="…" android:keyWidth="15%p" />
-        <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return"
+        <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:isModifier="true"
                 android:keyWidth="20%p" android:keyEdgeFlags="right" />
     </Row>
 </Keyboard>

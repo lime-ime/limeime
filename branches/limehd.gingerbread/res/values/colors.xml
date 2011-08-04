@@ -31,12 +31,12 @@
     <color name="preference_background">#bbffffff</color>
     <color name="preference_text">#ffffffff</color>
     <color name="preference_title">#FFE35900</color>
-     <color name="latinkeyboard_transparent">#00000000</color>
-    <color name="latinkeyboard_bar_language_shadow_white">#80000000</color>
-    <color name="latinkeyboard_bar_language_shadow_black">#80FFFFFF</color>
-    <color name="latinkeyboard_bar_language_text">#FFC0C0C0</color>
-    <color name="latinkeyboard_extension_background">#A0000000</color>
-    <color name="latinkeyboard_feedback_language_text">#FFFFFFFF</color>
-    <color name="latinkeyboard_key_color_white">#FFFFFFFF</color>
-    <color name="latinkeyboard_key_color_black">#FF000000</color>
+     <color name="limekeyboard_transparent">#00000000</color>
+    <color name="limekeyboard_bar_im_shadow_white">#80000000</color>
+    <color name="limekeyboard_bar_im_shadow_black">#80FFFFFF</color>
+    <color name="limekeyboard_bar_im_text">#FFC0C0C0</color>
+    <color name="limekeyboard_extension_background">#A0000000</color>
+    <color name="limekeyboard_feedback_language_text">#FFFFFFFF</color>
+    <color name="limekeyboard_key_color_white">#FFFFFFFF</color>
+    <color name="limekeyboard_key_color_black">#FF000000</color>
 </resources>

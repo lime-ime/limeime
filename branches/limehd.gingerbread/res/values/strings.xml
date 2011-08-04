@@ -278,6 +278,20 @@
 		<item>Array10</item>
 		<!-- <item>Wubi</item> -->
 	</string-array>
+	<!-- Keyboard short name List -->
+    <string-array name="keyboardShortname">
+		<item>Lime</item>
+		<item>Changjei</item>
+		<item>SChangjei</item>
+		<item>Changjei5</item>
+		<item>E-Changjei</item>
+		<item>Dayi</item>
+		<item>BPMF</item>
+		<item>EZ</item>
+		<item>Array</item>
+		<item>Array10</item>
+		<!-- <item>Wubi</item> -->
+	</string-array>
 	<string-array name="keyboard_defaultstate">
 		<item>true</item>
 		<item>true</item>
