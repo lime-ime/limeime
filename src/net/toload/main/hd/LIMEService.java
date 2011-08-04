@@ -1791,6 +1791,7 @@ public class LIMEService extends InputMethodService implements
 				keyboardList.add(items[index].toString());
 				keyboardShortnames.add(shortNames[index].toString());
 				keyboardListCodes.add(codes[index].toString());
+				Log.i(TAG, "activekeyboard["+index+"] = "+ codes[index].toString() +" ;"+ shortNames[index].toString());
 			} else {
 				break;
 			}
