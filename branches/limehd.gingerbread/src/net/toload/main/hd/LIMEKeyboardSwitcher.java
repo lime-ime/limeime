@@ -27,22 +27,8 @@ import android.util.Log;
 public class LIMEKeyboardSwitcher {
 	
 	static final boolean DEBUG = false;
-	
+	static final String TAG = "LIMEKeyboardSwitcher";
     
-    /*
-    public static final int MODE_TEXT_DEFAULT = 10;
-    public static final int MODE_TEXT_DEFAULT_NUMBER = 11;
-    public static final int MODE_TEXT_CJ = 12;
-    public static final int MODE_TEXT_CJ_NUMBER = 13;
-    public static final int MODE_TEXT_PHONETIC = 14;
-    public static final int MODE_TEXT_DAYI = 15;
-    public static final int MODE_TEXT_EZ = 16;
-    public static final int MODE_TEXT_PHONE = 17;
-    public static final int MODE_TEXT_ARRAY = 18;
-    public static final int MODE_TEXT_SCJ = 19;
-    public static final int MODE_TEXT_SCJ_NUMBER = 20;
-    public static final int MODE_TEXT_ARRAY10 = 21;
-    */
 	public static final int MODE_TEXT = 1;
     public static final int MODE_SYMBOLS = 2;
     public static final int MODE_PHONE = 3;
@@ -98,10 +84,7 @@ public class LIMEKeyboardSwitcher {
     private static List<String> mActiveKeyboardCodes;
     private static List<String> mActiveKeyboardNames;
     private static List<String> mActiveKeyboardShortnames;
-    
-    private HashMap<String, String> activeKeyboardNameMap;
-    private HashMap<String, String> activeKeyboardShortnameMap;
-    
+      
 
     LIMEKeyboardSwitcher(LIMEService context) {
         mContext = context;
@@ -137,19 +120,13 @@ public class LIMEKeyboardSwitcher {
     	}    	
     }
     void setActiveKeyboardList(List<String> codes, List<String> names, List<String> shortnames){
+    	Log.i(TAG,"setActiveKeyboardList()");
+    	
     	mActiveKeyboardCodes = codes;
     	mActiveKeyboardNames = names;
     	mActiveKeyboardShortnames = shortnames;
     	
-    	activeKeyboardNameMap = new HashMap<String, String>();
-    	activeKeyboardShortnameMap = new HashMap<String, String>();
     	
-    	int i =0;
-    	for(String code : codes) {
-    		activeKeyboardNameMap.put(code, mActiveKeyboardNames.get(i));
-    		activeKeyboardShortnameMap.put(code, mActiveKeyboardShortnames.get(i));
-    		i++;
-    	}
     }
     
     List<String> getActiveKeyboardShortnameList(){
@@ -157,10 +134,12 @@ public class LIMEKeyboardSwitcher {
     }
     
     String getCurrentActiveKeyboardShortname(){
+    	Log.i(TAG,"getCurrentActiveKeyboardShortName() current IM:"+ imtype);
     	int i = 0;
     	for(String code : mActiveKeyboardCodes) {
     		if(imtype.equals(code)){
-    			return activeKeyboardShortnameMap.get(i);
+    			Log.i(TAG,"getCurrentActiveKeyboardShortName()="+ mActiveKeyboardShortnames.get(i));
+    			return mActiveKeyboardShortnames.get(i);
     		}
     		i++;
     	}
@@ -171,8 +150,8 @@ public class LIMEKeyboardSwitcher {
     	for(String code : mActiveKeyboardCodes) {
     		if(imtype.equals(code)){
     			if(i==mActiveKeyboardCodes.size()-1)
-    				return activeKeyboardShortnameMap.get(0);
-    			else return activeKeyboardShortnameMap.get(i+1);
+    				return mActiveKeyboardShortnames.get(0);
+    			else return mActiveKeyboardShortnames.get(i+1);
     		}
     		i++;
     	}
@@ -182,8 +161,8 @@ public class LIMEKeyboardSwitcher {
     	int i = 0;
     	for(String code : mActiveKeyboardCodes) {
     		if(imtype.equals(code)){
-    			if(i==0) return activeKeyboardShortnameMap.get(mActiveKeyboardCodes.size()-1);
-    			else return activeKeyboardShortnameMap.get(i);
+    			if(i==0) return mActiveKeyboardShortnames.get(mActiveKeyboardCodes.size()-1);
+    			else return mActiveKeyboardShortnames.get(i-1);
     		}
     		i++;
     	}
@@ -299,7 +278,7 @@ public class LIMEKeyboardSwitcher {
 	    if(id != null){
 	        if (!mKeyboards.containsKey(id)) {
 	        	LIMEKeyboard keyboard = new LIMEKeyboard(
-	                mContext, id.mXml, id.mMode);
+	                mContext, id.mXml, id.mMode, this);
 	            if (id.mEnableShiftLock) {
 	                keyboard.enableShiftLock();
 	            }

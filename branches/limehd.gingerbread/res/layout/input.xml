@@ -24,8 +24,8 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/keyboard_background"
-        android:keyBackground="@drawable/btn_keyboard_key_gingerbread"
+        android:keyBackground="@drawable/btn_keyboard_key"
         android:keyTextSize = "@dimen/key_text_size"
         android:labelTextSize = "@dimen/label_text_size"
-        android:popupLayout="@layout/popup_keyboard"
+        android:popupLayout="@layout/keyboard_popup"
         />

@@ -87,13 +87,13 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 		if(DEBUG) Log.i(TAG, "OnTouchEvent(), me.getAction() =" + me.getAction());
 		LIMEKeyboard keyboard = (LIMEKeyboard) getKeyboard();
 		if (me.getAction() == MotionEvent.ACTION_DOWN) {
-			Log.i(TAG, "OnTouchEvent(), ACTION_DOWN");
+			if(DEBUG) Log.i(TAG, "OnTouchEvent(), ACTION_DOWN");
 			keyboard.keyReleased();
 		}
 
 		if (me.getAction() == MotionEvent.ACTION_UP) {
 			int spaceDrageDirection = keyboard.getSpaceDragDirection();
-			Log.i(TAG, "OnTouchEvent(), ACTION_UP, spaceDragDirection:" + spaceDrageDirection);
+			if(DEBUG) Log.i(TAG, "OnTouchEvent(), ACTION_UP, spaceDragDirection:" + spaceDrageDirection);
 			if (spaceDrageDirection != 0) {
 				getOnKeyboardActionListener().onKey(
 						spaceDrageDirection == 1 ? KEYCODE_NEXT_IM : KEYCODE_PREV_IM,
