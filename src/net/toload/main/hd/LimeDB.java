@@ -298,6 +298,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	public void updateDBVersion(){
 		
 			String kbversion = mLIMEPref.getParameterString("kbversion");
+
 			// Upgrade DB version below 330
 			if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 330){
 
@@ -395,8 +396,25 @@ public class LimeDB extends SQLiteOpenHelper {
 				db.close();
 				mLIMEPref.setParameter("kbversion","332");
 			}
-			
-			
+			//Jeremy '11,8,5 to set code3r = code column on phonetic for old table without code3r built in loadfile.
+			// Upgrade DB version below 333
+			if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 333){
+				SQLiteDatabase db = null;
+				String dbtarget = mLIMEPref.getParameterString("dbtarget");
+				String dblocation = "";
+				if(dbtarget.equals("sdcard")){
+					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
+				}else{
+					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
+				}
+				db = SQLiteDatabase.openDatabase(dblocation, null, SQLiteDatabase.OPEN_READWRITE);
+				Cursor cursor = db.query("phonetic", null, FIELD_CODE3R + " = 'ru'", null, null, null, null);
+				if(!cursor.moveToFirst()) {
+					db.execSQL("update phonetic set code3r = code");
+				}
+				db.close();
+				mLIMEPref.setParameter("kbversion","333");
+			}
 			// Upgrade DB version below 333
 			/*if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 333){
 				

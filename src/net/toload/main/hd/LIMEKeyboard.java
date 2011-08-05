@@ -20,8 +20,6 @@
 
 package net.toload.main.hd;
 
-import java.util.Locale;
-
 import net.toload.main.hd.R;
 import android.content.Context;
 import android.content.res.Resources;
@@ -60,7 +58,7 @@ public class LIMEKeyboard extends Keyboard {
     
     private int mShiftState = SHIFT_OFF;
 
-    private static final float SPACEBAR_DRAG_THRESHOLD = 0.8f;
+    private static final float SPACEBAR_DRAG_THRESHOLD = 0.6f;
     
     private SlidingSpaceBarDrawable mSlidingSpaceBarIcon;
     
@@ -83,18 +81,14 @@ public class LIMEKeyboard extends Keyboard {
     
     private final Context mContext;
     private final Resources mRes;
-    private final int mMode;
+    //private final int mMode;
     private LIMEKeyboardSwitcher mKeyboardSwitcher;
     
     public LIMEKeyboard(Context context, int xmlLayoutResId) {
     	this(context, xmlLayoutResId, 0, null);
     }
 
-//    public LIMEKeyboard(Context context, int layoutTemplateResId, 
-//            CharSequence characters, int columns, int horizontalPadding) {
-//        super(context, layoutTemplateResId, characters, columns, horizontalPadding);
-//    }
-//    
+       
     public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, LIMEKeyboardSwitcher keyboardswitcher) {
         super(context, xmlLayoutResId, mode);
         final Resources res = context.getResources();
@@ -108,7 +102,7 @@ public class LIMEKeyboard extends Keyboard {
         sSpacebarVerticalCorrection = res.getDimensionPixelOffset(
                 R.dimen.spacebar_vertical_correction);
         mSpacePreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_space);
-        mMode = mode;
+        //mMode = mode;
         mKeyboardSwitcher = keyboardswitcher;
     }	
     
@@ -305,13 +299,10 @@ public class LIMEKeyboard extends Keyboard {
     void keyReleased() {
         mCurrentlyInSpace = false;
         mSpaceDragLastDiff = 0;
-//        mPrefLetter = 0;
-//        mPrefLetterX = 0;
-//        mPrefLetterY = 0;
-//        mPrefDistance = Integer.MAX_VALUE;
-//        if (mSpaceKey != null) {
-//            updateLocaleDrag(Integer.MAX_VALUE);
-//        }
+
+       if (mSpaceKey != null) {
+    	   updateSpacebarDrag(Integer.MAX_VALUE);
+        }
     }
     
     public int getSpaceDragDirection() {
@@ -334,6 +325,7 @@ public class LIMEKeyboard extends Keyboard {
     }
     
     private void updateSpacebarDrag(int diff) {
+    	if(DEBUG) Log.i(TAG, "updateSpacebarDrag(), deff=" + diff);
         if (mSlidingSpaceBarIcon == null) {
             final int width = Math.max(mSpaceKey.width,
                     (int)(getMinWidth() * SPACEBAR_POPUP_MIN_RATIO));
@@ -469,6 +461,7 @@ public class LIMEKeyboard extends Keyboard {
         }
 
         private void setDiff(int diff) {
+        	if(DEBUG) Log.i(TAG, "setDiff()");
             if (diff == Integer.MAX_VALUE) {
                 mHitThreshold = false;
                 mCurrentKeyboard = null;
@@ -498,16 +491,19 @@ public class LIMEKeyboard extends Keyboard {
                 	mCurrentKeyboard = mKeyboardSwitcher.getCurrentActiveKeyboardShortname();
                     mNextKeyboard = mKeyboardSwitcher.getNextActiveKeyboardShortname();
                     mPrevKeyboard = mKeyboardSwitcher.getPrevActiveKeyboardShortname();
+                    if(DEBUG) Log.i(TAG, "SlidingSpaceBarDrawable:draw(), current=" + mCurrentKeyboard +  
+                    		". next = " + mNextKeyboard + ". prev = " + mPrevKeyboard);
                 }
-                Log.i(TAG, "SlidingSpaceBarDrawable:draw(), current=" + mCurrentKeyboard +  
-                		". next = " + mNextKeyboard + ". prev = " + mPrevKeyboard);
+                
+                
+              
                 // Draw language text with shadow
                 final float baseline = mHeight * SPACEBAR_LANGUAGE_BASELINE - paint.descent();
                 paint.setColor(mRes.getColor(R.color.limekeyboard_key_color_black));
                 paint.setTextSize(mRes.getDimensionPixelSize(R.dimen.spacebar_preview_text_size));
                 canvas.drawText(mCurrentKeyboard, width / 2 + diff, baseline, paint);
-                canvas.drawText(mNextKeyboard, diff - width / 3, baseline, paint);
-                canvas.drawText(mPrevKeyboard, diff + width + width / 3, baseline, paint);
+                canvas.drawText(mNextKeyboard, diff - width /5, baseline, paint);
+                canvas.drawText(mPrevKeyboard, diff + width + width/5, baseline, paint);
 
                 setDefaultBounds(lArrow);
                 rArrow.setBounds(width - rArrow.getIntrinsicWidth(), 0, width,

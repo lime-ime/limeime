@@ -178,7 +178,8 @@ public class LIMEService extends InputMethodService implements
 
 	// Hard Keyboad Shift + Space Status
 	//private boolean hasAltPress = false;
-
+	
+	private String mActiveKeyboardState=""; // Jeremy '11,8,5
 	private String keyboardSelection;
 	private List<String> keyboardList;
 	private List<String> keyboardShortnames;
@@ -1777,8 +1778,13 @@ public class LIMEService extends InputMethodService implements
 		CharSequence[] codes = getResources().getStringArray(
 				R.array.keyboard_codes);
 		
-		String keybaord_state_string = mLIMEPref.getSelectedKeyboardState();
-		String[] s = keybaord_state_string.toString().split(";");
+		String activeKeyboardState = mLIMEPref.getSelectedKeyboardState();
+		
+		if(mActiveKeyboardState.length()>0 && mActiveKeyboardState.equals(activeKeyboardState) ) return;
+		
+		mActiveKeyboardState = activeKeyboardState;
+		
+		String[] s = activeKeyboardState.toString().split(";");
 
 		keyboardList.clear();
 		keyboardListCodes.clear();
