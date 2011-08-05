@@ -82,7 +82,7 @@ public class LIMEKeyboardSwitcher {
     private HashMap<String, String> imHm;
  
     private static List<String> mActiveKeyboardCodes;
-    private static List<String> mActiveKeyboardNames;
+    //private static List<String> mActiveKeyboardNames;
     private static List<String> mActiveKeyboardShortnames;
       
 
@@ -122,8 +122,10 @@ public class LIMEKeyboardSwitcher {
     void setActiveKeyboardList(List<String> codes, List<String> names, List<String> shortnames){
     	Log.i(TAG,"setActiveKeyboardList()");
     	
+    	if(codes.equals(mActiveKeyboardCodes) && shortnames.equals(mActiveKeyboardShortnames)) return;
+    	
     	mActiveKeyboardCodes = codes;
-    	mActiveKeyboardNames = names;
+    	//mActiveKeyboardNames = names;
     	mActiveKeyboardShortnames = shortnames;
     	
     	
@@ -133,38 +135,34 @@ public class LIMEKeyboardSwitcher {
     	return mActiveKeyboardShortnames;
     }
     
-    String getCurrentActiveKeyboardShortname(){
-    	Log.i(TAG,"getCurrentActiveKeyboardShortName() current IM:"+ imtype);
-    	int i = 0;
-    	for(String code : mActiveKeyboardCodes) {
-    		if(imtype.equals(code)){
+    public String getCurrentActiveKeyboardShortname(){
+    	if(DEBUG) Log.i(TAG,"getCurrentActiveKeyboardShortName() current IM:"+ imtype);
+    	for (int i = 0; i < mActiveKeyboardCodes.size(); i++) {
+			if (imtype.equals(mActiveKeyboardCodes.get(i))) {
     			Log.i(TAG,"getCurrentActiveKeyboardShortName()="+ mActiveKeyboardShortnames.get(i));
     			return mActiveKeyboardShortnames.get(i);
     		}
-    		i++;
     	}
     	return "";
     }
-    String getNextActiveKeyboardShortname(){
-    	int i = 0;
-    	for(String code : mActiveKeyboardCodes) {
-    		if(imtype.equals(code)){
+    public String getNextActiveKeyboardShortname(){
+
+    	for (int i = 0; i < mActiveKeyboardCodes.size(); i++) {
+    		if (imtype.equals(mActiveKeyboardCodes.get(i))) {
     			if(i==mActiveKeyboardCodes.size()-1)
     				return mActiveKeyboardShortnames.get(0);
     			else return mActiveKeyboardShortnames.get(i+1);
     		}
-    		i++;
     	}
     	return "";
     }
-    String getPrevActiveKeyboardShortname(){
-    	int i = 0;
-    	for(String code : mActiveKeyboardCodes) {
-    		if(imtype.equals(code)){
+    public String getPrevActiveKeyboardShortname(){
+
+    	for (int i = 0; i < mActiveKeyboardCodes.size(); i++) {
+			if (imtype.equals(mActiveKeyboardCodes.get(i))) {
     			if(i==0) return mActiveKeyboardShortnames.get(mActiveKeyboardCodes.size()-1);
     			else return mActiveKeyboardShortnames.get(i-1);
     		}
-    		i++;
     	}
     	return "";
     }
@@ -223,56 +221,7 @@ public class LIMEKeyboardSwitcher {
         }
     }
     
-    /*void setKeyboardMode(int mode, int imeOptions) {
-        mSymbolsModeState = SYMBOLS_MODE_STATE_NONE;
-        mPreferSymbols = mode == MODE_SYMBOLS;
-        mIsChinese = (mode == MODE_TEXT_DEFAULT ||mode == MODE_TEXT_DEFAULT_NUMBER 
-        		|| mode == MODE_TEXT_PHONETIC ||mode == MODE_TEXT_DAYI 
-        		||mode == MODE_TEXT_EZ ||mode == MODE_TEXT_SCJ ||mode == MODE_TEXT_SCJ_NUMBER ||mode == MODE_TEXT_CJ ||mode == MODE_TEXT_CJ_NUMBER || mode == MODE_TEXT_PHONE);
-        mIsAlphabet = ( mode == MODE_TEXT || mode== MODE_URL 
-        		|| mode == MODE_EMAIL || mode == MODE_IM || mode == MODE_PHONE );
-        if(mIsChinese) mChnMode = mode;
-        if(mIsAlphabet) mEngMode = mode;
-        
-        if(mIsChinese){
-        	this.setKeyboardMode(imtype, mode, imeOptions, true, mPreferSymbols, false, false);
-        	//setKeyboardMode(mode == MODE_SYMBOLS ? mChnMode : mode, imeOptions,
-            //    mPreferSymbols, false);
-        }else{
-        	this.setKeyboardMode(imtype, mode, imeOptions, false, mPreferSymbols, false, false);
-        	//setKeyboardMode(mode == MODE_SYMBOLS ? mEngMode : mode, imeOptions,
-            //        mPreferSymbols, false);
-        }
-    }*/
-
-    /*void setKeyboardMode(int mode, int imeOptions, boolean isSymbols, boolean isShift) {
-    	
-    	if(mInputView == null) return;
-        
-        mImeOptions = imeOptions;
-        mIsSymbols = isSymbols;
-        mIsShifted = isShift;
-        //mInputView.setPreviewEnabled(true);
-        KeyboardId id = getKeyboardId(mode, imeOptions, isSymbols, mIsShifted);
-        LIMEKeyboard keyboard = getKeyboard(id);
-
-        if (mode == MODE_PHONE) {
-            mInputView.setPhoneKeyboard(keyboard);
-            //mInputView.setPreviewEnabled(true);
-        }
-
-        mCurrentId = id;
-        mInputView.setKeyboard(keyboard);
-        
-         
-        keyboard.setShiftLocked(keyboard.isShiftLocked());
-        keyboard.setShifted(mIsShifted);
-        mInputView.setKeyboard(mInputView.getKeyboard()); //instead of invalidateAllKeys();
-        
-        keyboard.setImeOptions(mContext.getResources(), mMode, imeOptions);
-
-    }*/
-
+   
     private LIMEKeyboard getKeyboard(KeyboardId id) {
 
 	    if(id != null){
@@ -296,12 +245,12 @@ public class LIMEKeyboardSwitcher {
     
     void setKeyboardMode(String code, int mode, int imeOptions, boolean isIm, boolean isSymbol, boolean isShift) {
     	if(DEBUG){
-    		Log.i("ART","KBMODE code:"+code);
-    		Log.i("ART","KBMODE mode:"+mode);
-    		Log.i("ART","KBMODE imOphtions:"+imeOptions);
-    		Log.i("ART","KBMODE isIM:"+isIm);
-    		Log.i("ART","KBMODE isSymbol:"+isSymbol);
-    		Log.i("ART","KBMODE isShift:"+isShift);
+    		Log.i(TAG,"KBMODE code:"+code);
+    		Log.i(TAG,"KBMODE mode:"+mode);
+    		Log.i(TAG,"KBMODE imOphtions:"+imeOptions);
+    		Log.i(TAG,"KBMODE isIM:"+isIm);
+    		Log.i(TAG,"KBMODE isSymbol:"+isSymbol);
+    		Log.i(TAG,"KBMODE isShift:"+isShift);
     	}
     	imtype = code;
     	
