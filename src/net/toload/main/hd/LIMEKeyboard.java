@@ -79,17 +79,19 @@ public class LIMEKeyboard extends Keyboard {
     // Height in space key the language name will be drawn. (proportional to space key height)
     private static final float SPACEBAR_LANGUAGE_BASELINE = 0.6f;
     
+    private static final int OPACITY_FULLY_OPAQUE = 255;
+    
     private final Context mContext;
     private final Resources mRes;
     //private final int mMode;
     private LIMEKeyboardSwitcher mKeyboardSwitcher;
     
     public LIMEKeyboard(Context context, int xmlLayoutResId) {
-    	this(context, xmlLayoutResId, 0, null);
+    	this(context, xmlLayoutResId, 0);
     }
 
        
-    public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, LIMEKeyboardSwitcher keyboardswitcher) {
+    public LIMEKeyboard(Context context, int xmlLayoutResId, int mode ) {
         super(context, xmlLayoutResId, mode);
         final Resources res = context.getResources();
         mContext = context;
@@ -103,7 +105,6 @@ public class LIMEKeyboard extends Keyboard {
                 R.dimen.spacebar_vertical_correction);
         mSpacePreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_space);
         //mMode = mode;
-        mKeyboardSwitcher = keyboardswitcher;
     }	
     
     @Override
@@ -419,7 +420,16 @@ public class LIMEKeyboard extends Keyboard {
         }
 
     }
-    private static final int OPACITY_FULLY_OPAQUE = 255;
+    /**
+     * 
+     * Jeremy '11,8,5 make a link back channel to LIMEKeyboardSwitcher
+     */
+    public void setKeyboardSwitcher(LIMEKeyboardSwitcher keyboardswitcher){
+    	mKeyboardSwitcher = keyboardswitcher;
+    }
+    
+    
+    
     /**
      * Animation to be displayed on the spacebar preview popup when switching 
      * IM by swiping the spacebar. It draws the current, previous and
@@ -517,7 +527,8 @@ public class LIMEKeyboard extends Keyboard {
             }
             canvas.restore();
         }
-
+        
+        
         @Override
         public int getOpacity() {
             return PixelFormat.TRANSLUCENT;

@@ -227,7 +227,8 @@ public class LIMEKeyboardSwitcher {
 	    if(id != null){
 	        if (!mKeyboards.containsKey(id)) {
 	        	LIMEKeyboard keyboard = new LIMEKeyboard(
-	                mContext, id.mXml, id.mMode, this);
+	                mContext, id.mXml, id.mMode);
+	        	keyboard.setKeyboardSwitcher(this);
 	            if (id.mEnableShiftLock) {
 	                keyboard.enableShiftLock();
 	            }
