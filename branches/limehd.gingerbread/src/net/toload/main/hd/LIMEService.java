@@ -1753,13 +1753,13 @@ public class LIMEService extends InputMethodService implements
 			}
 		}
 		mLIMEPref.setKeyboardSelection(keyboardSelection);
+		mComposing.setLength(0);
 		// cancel candidate view if it's shown
 		if (mCandidateView != null) {
 			mCandidateView.clear();
 			updateCandidates();
 		}
-		mComposing.setLength(0);
-		//setCandidatesViewShown(false);
+
 		initialKeyboard();
 		Toast.makeText(this, keyboardname, Toast.LENGTH_SHORT / 2).show();
 		try {

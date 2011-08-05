@@ -400,7 +400,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				db.close();
 				mLIMEPref.setParameter("kbversion","332");
 			}
-			//Jeremy '11,8,5 to set code3r = code column on phonetic for old table without code3r built in loadfile.
+			/*//Jeremy '11,8,5 to set code3r = code column on phonetic for old table without code3r built in loadfile.
 			// Upgrade DB version below 333
 			//mLIMEPref.setParameter("kbversion","332");
 			if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 333){
@@ -419,7 +419,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 				db.close();
 				mLIMEPref.setParameter("kbversion","333");
-			}
+			}*/
 			// Upgrade DB version below 333
 			/*if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 333){
 				
@@ -1254,7 +1254,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					Cursor cursor = null;
 					// Jeremy '11,8,2 Query code3r instead of code for code contains no tone symbols
 					String selectClause;
-					if(tablename.equals("phonetic")&&  
+					if(tablename.equals("phonetic")&&  Integer.parseInt(mLIMEPref.getParameterString("kbversion")) >= 333 &&
 							!(code.contains("3")||code.contains("4")||
 									code.contains("6")||code.contains("7"))){
 						selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
@@ -1614,7 +1614,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			for(String dualcode : dualCodeList){
 				
 				String codeCol = FIELD_CODE;
-				if(tablename.equals("phonetic")&&
+				if(tablename.equals("phonetic")&&  Integer.parseInt(mLIMEPref.getParameterString("kbversion")) >= 333 &&
 						!(dualcode.contains("3")||dualcode.contains("4")||
 								dualcode.contains("6")||dualcode.contains("7"))){
 					codeCol = FIELD_CODE3R;
@@ -1845,15 +1845,18 @@ public class LimeDB extends SQLiteOpenHelper {
 				SQLiteDatabase db = getSqliteDb(false);
 				try {
 					if(countMapping(table)>0) 	db.delete(table, null, null);
-					if(table.equals("phonetic")) 
+					if(table.equals("phonetic") &&
+							Integer.parseInt(mLIMEPref.getParameterString("kbversion")) < 333 ) {
 						db.execSQL("CREATE INDEX phonetic_idx_code3r ON phonetic(code3r)");
+						mLIMEPref.setParameter("kbversion","333");
+					}
 				} catch (Exception e1) {
 					e1.printStackTrace();
 				}
 				
 				db.close();
 				resetImInfo(table);
-
+				
 
 				//boolean hasMappingVersion = false;
 				boolean isCinFormat = false;
