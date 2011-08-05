@@ -121,9 +121,9 @@ public class Mapping {
 	 */
 	public String getCode() {
 		if(code != null){
-			return code.toUpperCase();
+			return code.toLowerCase();
 		}
-		return code;
+		return code.toLowerCase();
 	}
 	/**
 	 * @param code the code to set

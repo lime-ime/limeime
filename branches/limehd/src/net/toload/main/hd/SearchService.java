@@ -192,7 +192,7 @@ public class SearchService extends Service {
 			return key;
 		}
 		
-		public List<Mapping> query(String code, boolean softkeyboard) throws RemoteException {
+		public List<Mapping> query(String code, boolean softkeyboard, boolean getAllRecords) throws RemoteException {
 			if(DEBUG) Log.i(TAG, "query(): code="+code);
 			
 			if(db == null){loadLimeDB();}
@@ -212,8 +212,6 @@ public class SearchService extends Service {
 				if(isPhysicalKeyboardPressed == softkeyboard)
 					isPhysicalKeyboardPressed = !softkeyboard;
 					
-				
-				
 				Mapping temp = new Mapping();
 				temp.setWord(code);
 				code = code.trim().toLowerCase();
@@ -222,47 +220,76 @@ public class SearchService extends Service {
 				result.add(temp);
 				int size = code.length();
 				
-	
+				boolean hasMore = false;
 				// 11'7,22 rewritten for 連打 
 				for(int i =0; i<size; i++) {
-					
-					
 					String cacheKey = cacheKey(code);
 					Pair<List<Mapping>,List<Mapping>> cacheTemp = cache.get(cacheKey);
  
-
-					if(cacheTemp != null){
-						List<Mapping> resultlist = cacheTemp.first;
-						List<Mapping> relatedtlist = cacheTemp.second;
-						
-						if(resultlist.size()>0) 
-							result.addAll(resultlist);
-						if(i==0 && relatedtlist.size()>0) 
-							result.addAll(relatedtlist);
-					}else{
-
+					if(cacheTemp == null){
 						// 25/Jul/2011 by Art
 						// Just ignore error when something wrong with the result set
 						try{
-							Pair<List<Mapping>,List<Mapping>> resultPair = db.getMapping(code, !isPhysicalKeyboardPressed);
-							List<Mapping> resultlist = resultPair.first;
-							List<Mapping> relatedtlist = resultPair.second;
-							cache.put(cacheKey, resultPair);
-							
-							//if(resultlist.size() + relatedtlist.size()  > 0){
-							if(resultlist.size()>0) 
-								result.addAll(resultlist);
-							if(i==0 && relatedtlist.size()>0) 
-								result.addAll(relatedtlist);
-		
+							cacheTemp = db.getMapping(code, !isPhysicalKeyboardPressed, getAllRecords);
+							cache.put(cacheKey, cacheTemp);
 						}catch(Exception e){
 							e.printStackTrace();
 						}
 						
 					}
+					
+					if(cacheTemp != null){
+						List<Mapping> resultlist = cacheTemp.first;
+						List<Mapping> relatedtlist = cacheTemp.second;
+						
+						if(getAllRecords &&
+							(resultlist.size()>1 && 
+									resultlist.get(resultlist.size()-1).getCode().equals("has_more_records")||
+							 relatedtlist.size()>1&&
+							 		relatedtlist.get(relatedtlist.size()-1).getCode().equals("has_more_records") )){
+							try{
+								cacheTemp = db.getMapping(code, !isPhysicalKeyboardPressed, true);
+								cache.remove(cacheKey);
+								cache.put(cacheKey, cacheTemp);
+							}catch(Exception e){
+								e.printStackTrace();
+							}
+							
+						}
+					}
+					if(cacheTemp != null){
+						List<Mapping> resultlist = cacheTemp.first;
+						List<Mapping> relatedtlist = cacheTemp.second;
+						
+						if(resultlist.size()>0){ 
+							result.addAll(resultlist);
+							int rsize = result.size();
+							if(result.get(rsize-1).getCode().equals("has_more_records")){
+								result.remove(rsize-1);
+								hasMore = true;
+							}
+						}
+						if(i==0 && relatedtlist.size()>0){ 
+							result.addAll(relatedtlist);
+							int rsize = result.size();
+							if(result.get(rsize-1).getCode().equals("has_more_records")){
+								result.remove(rsize-1);
+								hasMore = true;
+							}
+						}
+						if(DEBUG) Log.i(TAG, "query() code=" + code + " result.size()=" + result.size());
+					}
+					
 					code= code.substring(0,code.length()-1);
 				}
+				if(hasMore){
+					temp = new Mapping();
+					temp.setCode("has_more_records");
+					temp.setWord("...");
+					result.add(temp);
+				}
 			}
+				
 			return result;
 		}
 
@@ -413,10 +440,11 @@ public class SearchService extends Service {
 						if(i+1 <localScorelist.size()){
 							Mapping unit2 = localScorelist.get((i + 1));
 							if(unit2 == null){continue;}				
-							if (unit.getId() != null 
+							if (unit.getId()!=null
 					    		&& unit.getWord() != null && !unit.getWord().equals("")
-					    		&& unit2.getId() != null
-					    		&& unit2.getWord() != null && !unit2.getWord().equals("")) {
+					    		&& unit2.getId() !=null
+					    		&& unit2.getWord() != null && !unit2.getWord().equals("")
+					    	) {
 								db.addOrUpdateUserdictRecord(unit.getWord(),unit2.getWord());
 							}
 						}

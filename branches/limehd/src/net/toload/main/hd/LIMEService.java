@@ -712,7 +712,7 @@ public class LIMEService extends InputMethodService implements
 				if (ci != null)
 					try {
 						stringList.addAll(SearchSrv.query(ci.getText()
-								.toString(), !isPressPhysicalKeyboard));
+								.toString(), !isPressPhysicalKeyboard, true));
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
@@ -1910,13 +1910,17 @@ public class LIMEService extends InputMethodService implements
 		ic.endBatchEdit();
 		updateShiftKeyState(getCurrentInputEditorInfo());
 	}
-
+	
+	private void updateCandidates() {
+		this.updateCandidates(false);
+		
+	}
 	/**
 	 * Update the list of available candidates from the current composing text.
 	 * This will need to be filled in by however you are determining candidates.
 	 */
 	@SuppressWarnings("unchecked")
-	private void updateCandidates() {
+	public void updateCandidates(boolean getAllRecords) {
 
 		// Log.i("ART", "Update Candidate mCompletionOn:"+ mCompletionOn);
 		// Log.i("ART", "Update Candidate mComposing:"+ mComposing);
@@ -1929,7 +1933,7 @@ public class LIMEService extends InputMethodService implements
 
 			try {
 				String keyString = mComposing.toString(), keynameString = "";
-				list.addAll(SearchSrv.query(keyString, !isPressPhysicalKeyboard));				
+				list.addAll(SearchSrv.query(keyString, !isPressPhysicalKeyboard, getAllRecords));				
 				//Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
 				if (list.size() > 0) {
 					String selkey=SearchSrv.getSelkey();
@@ -2723,6 +2727,11 @@ public class LIMEService extends InputMethodService implements
 
 		// This is to prevent if user select the character more than the list
 		if(templist != null && index >= templist.size() ){
+			return;
+		}
+		// if "has_more_records" selected, updatecandidate with getAllRecords set.
+		if(templist.get(index).getCode().equals("has_more_records")){
+			this.updateCandidates(true);
 			return;
 		}
 		
