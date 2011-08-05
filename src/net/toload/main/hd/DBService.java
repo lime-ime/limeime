@@ -103,7 +103,7 @@ public class DBService extends Service {
 			if (db == null) {loadLimeDB();}
 			db.deleteAll(tablename);
 			
-			// Reset for SearchSrv
+			// Reset cache in SearchSrv
 			mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 		}
 		

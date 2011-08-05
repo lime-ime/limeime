@@ -120,7 +120,7 @@ public class LIMEKeyboardSwitcher {
     	}    	
     }
     void setActiveKeyboardList(List<String> codes, List<String> names, List<String> shortnames){
-    	Log.i(TAG,"setActiveKeyboardList()");
+    	if(DEBUG) Log.i(TAG,"setActiveKeyboardList()");
     	
     	if(codes.equals(mActiveKeyboardCodes) && shortnames.equals(mActiveKeyboardShortnames)) return;
     	

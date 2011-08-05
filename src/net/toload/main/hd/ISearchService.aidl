@@ -5,7 +5,7 @@ interface ISearchService
 		void initial();
 		String getTablename();
 		void setTablename(String tablename, boolean numberMapping, boolean symbolMapping);
-		List query(String code, boolean softkeyboard);
+		List query(String code, boolean softkeyboard, boolean getAllRecords);
 		void rQuery(String word);
 		List queryUserDic(String word);
 		void addUserDict(String id, String code, String word, String pword, int score, boolean isDictionary);
