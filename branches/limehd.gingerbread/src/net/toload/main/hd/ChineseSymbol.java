@@ -1,7 +1,7 @@
 package net.toload.main.hd;
 
 public class ChineseSymbol {
-	private final String selkey = ",./";
+	//private final String selkey = ",./";
 
 	public static String getSymbol(char symbol){
 	

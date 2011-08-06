@@ -21,6 +21,11 @@ import java.util.List;
 import java.util.Map;
 
 import net.toload.main.hd.R;
+import net.toload.main.hd.global.ImObj;
+import net.toload.main.hd.global.KeyboardObj;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.keyboard.LIMEKeyboard;
+import net.toload.main.hd.keyboard.LIMEKeyboardView;
 
 import android.util.Log;
 

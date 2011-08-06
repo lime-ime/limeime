@@ -50,6 +50,18 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import net.toload.main.hd.ISearchService;
+import net.toload.main.hd.keyboard.LIMEKeyboard;
+import net.toload.main.hd.keyboard.LIMEKeyboardBaseView;
+import net.toload.main.hd.keyboard.LIMEKeyboardView;
+import net.toload.main.hd.R;
+import net.toload.main.hd.candidate.CandidateView;
+import net.toload.main.hd.candidate.CandidateViewContainer;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.Mapping;
+import net.toload.main.hd.limedb.ExpandableDictionary;
+import net.toload.main.hd.limedb.UserDictionary;
+import net.toload.main.hd.limesettings.LIMEPreference;
 import android.app.AlertDialog;
 import android.app.Service;
 import android.content.ComponentName;
@@ -73,7 +85,8 @@ public class LIMEService extends InputMethodService implements
 	static final int KEYBOARD_SWITCH_CODE = -9;
 
 	private LIMEKeyboardView mInputView = null;
-	private CandidateView mCandidateView = null;
+	private CandidateViewContainer mCandidateViewContainer;
+	private CandidateView mCandidateView;
 	private CompletionInfo[] mCompletions;
 
 	private StringBuilder mComposing = new StringBuilder();
@@ -392,11 +405,17 @@ public class LIMEService extends InputMethodService implements
 		
 		if (DEBUG)
 			Log.i(TAG,"onCreateCandidatesView()");
-		
 		mKeyboardSwitcher.makeKeyboards(true);
-		mCandidateView = new CandidateView(this);
+		mCandidateViewContainer = (CandidateViewContainer) getLayoutInflater().inflate(
+				R.layout.candidates, null);
+		mCandidateViewContainer.initViews();
+		mCandidateView = (CandidateView) mCandidateViewContainer.findViewById(R.id.candidates);
+		//mCandidateView = new CandidateView(this);
 		mCandidateView.setService(this);
-		return mCandidateView;
+		//return mCandidateView;
+		return mCandidateViewContainer;
+		
+		
 	}
 
 	// Jeremy '11,5,31
@@ -510,7 +529,7 @@ public class LIMEService extends InputMethodService implements
 		
 		mKeyboardSwitcher.makeKeyboards(false);
 
-		TextEntryState.newSession(this);
+		//TextEntryState.newSession(this);
 		loadSettings();
 		// mImeOptions = attribute.imeOptions;
 		mImeOptions = attribute.imeOptions;
