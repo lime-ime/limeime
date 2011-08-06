@@ -121,7 +121,7 @@
     </Row>
 
     <Row android:keyboardMode="@+id/mode_normal" android:rowEdgeFlags="bottom">
-    	<Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
+    	<Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
         <Key android:codes="-9" android:keyIcon="@drawable/sw" android:isModifier="true" android:keyWidth="10%p" android:iconPreview="@drawable/sw_l"/>
         <Key android:codes="-2"  android:keyLabel="@string/label_symbol_key" android:isModifier="true" android:keyWidth="10%p" />
         <Key android:keyLabel="," android:keyWidth="10%p" />
@@ -136,7 +136,7 @@
     </Row>
 
     <Row android:keyboardMode="@+id/mode_url" android:rowEdgeFlags="bottom">
-        <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
+        <Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
         <Key android:codes="-9" android:keyIcon="@drawable/sw" android:isModifier="true" android:keyWidth="10%p" android:iconPreview="@drawable/sw_l"/>
         <Key android:codes="-2"  android:keyLabel="@string/label_symbol_key" android:isModifier="true" android:keyWidth="10%p" />
         <Key android:keyLabel="@string/popular_domain_0"
@@ -155,7 +155,7 @@
     </Row>
 
     <Row android:keyboardMode="@+id/mode_email" android:rowEdgeFlags="bottom">
-    	<Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
+    	<Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
         <Key android:codes="-9" android:keyIcon="@drawable/sw" android:isModifier="true" android:keyWidth="10%p" android:iconPreview="@drawable/sw_l"/>
         <Key android:codes="-2"  android:keyLabel="@string/label_symbol_key" android:isModifier="true" android:keyWidth="10%p" />
         <Key android:keyLabel="\@" android:keyWidth="10%p"/>
@@ -174,7 +174,7 @@
     </Row>
 
     <Row android:keyboardMode="@+id/mode_im" android:rowEdgeFlags="bottom">
-    	<Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
+    	<Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
         <Key android:codes="-9" android:keyIcon="@drawable/sw" android:isModifier="true" android:keyWidth="10%p" android:iconPreview="@drawable/sw_l"/>
         <Key android:codes="-2"  android:keyLabel="@string/label_symbol_key" android:isModifier="true" android:keyWidth="15%p"/>
         <Key android:keyLabel="," android:keyWidth="10%p"/>

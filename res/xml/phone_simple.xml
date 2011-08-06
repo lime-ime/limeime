@@ -51,11 +51,11 @@
         <Key android:codes="55" android:keyLabel="7"/>
         <Key android:codes="56" android:keyLabel="8"/>
         <Key android:codes="57" android:keyLabel="9"/>
-        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:isModifier="true" android:isRepeatable="true" android:keyEdgeFlags="right"/>
+        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:isRepeatable="true" android:keyEdgeFlags="right"/>
     </Row>
     
     <Row android:rowEdgeFlags="bottom">
-        <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyEdgeFlags="left"/>
+        <Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyEdgeFlags="left"/>
         <Key android:codes="44" android:keyLabel=","/>
         <Key android:codes="48" android:keyLabel="0"/>
         <Key android:codes="46" android:keyLabel="." android:popupKeyboard="@xml/popup_c_punctuation" />

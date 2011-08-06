@@ -80,10 +80,10 @@
     </Row>
     
     <Row android:rowEdgeFlags="bottom">
-        <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
+        <Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
         <Key android:codes="-9" android:keyIcon="@drawable/sw" android:isModifier="true" android:keyWidth="15%p" android:iconPreview="@drawable/sw_l"/>
         <Key android:codes="44" android:iconPreview="@drawable/ez_comma_l" android:keyIcon="@drawable/ez_comma"/>
-        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:isModifier="true"  android:keyWidth="20%p" android:isRepeatable="true"/>
+        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime"  android:keyWidth="20%p" android:isRepeatable="true"/>
         <Key android:codes="46" 
         		android:iconPreview="@drawable/ez_dot_l"
 				android:popupKeyboard="@xml/popup_c_punctuation"    
