@@ -82,11 +82,11 @@
     </Row>
     
     <Row android:rowEdgeFlags="bottom">
-        <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true"  android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
+        <Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true"  android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
         <Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift"
 			android:keyWidth="15%p" android:isModifier="true" android:isSticky="true" />
         <Key android:codes="-9" android:keyIcon="@drawable/sw" android:isModifier="true"  android:iconPreview="@drawable/sw_l"/>     
-        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:isModifier="true"  android:keyWidth="20%p" android:isRepeatable="true"/>
+        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime"  android:keyWidth="20%p" android:isRepeatable="true"/>
         <Key android:codes="45" android:iconPreview="@drawable/phonetic_dash_l" android:keyIcon="@drawable/phonetic_dash"/>
         <Key android:codes="-5" android:iconPreview="@drawable/sym_keyboard_feedback_delete" android:keyWidth="15%p" android:keyIcon="@drawable/sym_keyboard_delete" android:isModifier="true" android:isRepeatable="true"/>
         <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="right"/>

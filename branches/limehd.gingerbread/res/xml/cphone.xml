@@ -51,11 +51,11 @@
         <Key android:codes="55" android:iconPreview="@drawable/phone_7_l" android:keyIcon="@drawable/phone_7"/>
         <Key android:codes="56" android:iconPreview="@drawable/phone_8_l" android:keyIcon="@drawable/phone_8"/>
         <Key android:codes="57" android:iconPreview="@drawable/phone_9_l" android:keyIcon="@drawable/phone_9"/>
-        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:isModifier="true" android:isRepeatable="true" android:keyEdgeFlags="right"/>
+        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:isRepeatable="true" android:keyEdgeFlags="right"/>
     </Row>
     
     <Row android:rowEdgeFlags="bottom">
-        <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyEdgeFlags="left"/>
+        <Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyEdgeFlags="left"/>
         <Key android:codes="40" android:iconPreview="@drawable/phone_left_l" android:keyIcon="@drawable/phone_left"/>
         <Key android:codes="48" android:iconPreview="@drawable/phone_0_l" android:keyIcon="@drawable/phone_0"/>
         <Key android:codes="44" android:iconPreview="@drawable/phone_right_l" android:keyIcon="@drawable/phone_right"/>

@@ -91,7 +91,7 @@
     </Row>
     
     <Row  android:rowEdgeFlags="bottom">
-        <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true"
+        <Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true"
                 android:keyWidth="15%p" android:keyEdgeFlags="left" />
         <Key android:codes="-2" android:keyLabel="LIME" android:keyWidth="15%p" />
         <Key android:codes="44" android:keyLabel="," android:keyWidth="10%p" />
