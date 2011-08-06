@@ -21,7 +21,6 @@
 package net.toload.main.hd;
 
 import android.view.KeyEvent;
-import android.text.*;
 import android.text.method.MetaKeyKeyListener;
 
 public abstract class LIMEMetaKeyKeyListener extends MetaKeyKeyListener{
@@ -64,10 +63,10 @@ public abstract class LIMEMetaKeyKeyListener extends MetaKeyKeyListener{
     private static final long META_SYM_MASK = META_SYM_ON
             | META_SYM_LOCKED | META_SYM_USED
             | META_SYM_PRESSED | META_SYM_RELEASED;
-	private static final Object CAP = new NoCopySpan.Concrete();
-    private static final Object ALT = new NoCopySpan.Concrete();
-    private static final Object SYM = new NoCopySpan.Concrete();
-	private static final Object SELECTING = new NoCopySpan.Concrete();
+	//private static final Object CAP = new NoCopySpan.Concrete();
+    //private static final Object ALT = new NoCopySpan.Concrete();
+    //private static final Object SYM = new NoCopySpan.Concrete();
+	//private static final Object SELECTING = new NoCopySpan.Concrete();
 	
 
 

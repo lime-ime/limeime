@@ -35,6 +35,13 @@ import java.util.zip.*;
 
 import net.toload.main.hd.IDBService;
 import net.toload.main.hd.R;
+import net.toload.main.hd.global.KeyboardObj;
+import net.toload.main.hd.global.LIME;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.limedb.LimeDB;
+import net.toload.main.hd.limesettings.LIMEInitial;
+import net.toload.main.hd.limesettings.LIMEMappingLoading;
+import net.toload.main.hd.limesettings.LIMEMenu;
 
 import android.app.Notification;
 import android.app.NotificationManager;

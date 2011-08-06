@@ -17,7 +17,7 @@
 ** limitations under the License.
 */
 -->
-<net.toload.main.hd.LIMEKeyboardView
+<net.toload.main.hd.keyboard.LIMEKeyboardView
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/keyboard"
         android:layout_alignParentBottom="true"

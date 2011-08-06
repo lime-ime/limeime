@@ -27,6 +27,18 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.toload.main.hd.ISearchService;
+import net.toload.main.hd.R;
+import net.toload.main.hd.global.FileUtilities;
+import net.toload.main.hd.global.ImObj;
+import net.toload.main.hd.global.KeyboardObj;
+import net.toload.main.hd.global.LIME;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.Mapping;
+import net.toload.main.hd.limedb.LimeDB;
+import net.toload.main.hd.limedb.LimeHanConverter;
+import net.toload.main.hd.limesettings.LIMEMenu;
+
 //import net.toload.main.hd.SearchService.SearchServiceImpl;
 
 import android.app.Notification;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="net.toload.main.hd" android:versionName="3.3.2" android:versionCode="211" >
+	package="net.toload.main.hd" android:versionName="3.3.3" android:versionCode="222" >
 
 	<uses-permission android:name="android.permission.VIBRATE" />
 	<uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
@@ -39,28 +39,22 @@
 			</intent-filter>
 		</service>
 
-		<activity android:name=".LIMEMenu" android:label="@string/ime_setting" android:configChanges="keyboard|keyboardHidden|orientation" >
+		<activity android:label="@string/ime_setting" android:configChanges="keyboard|keyboardHidden|orientation" android:name=".limesettings.LIMEMenu">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
+		</activity>		
+		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name=".limesettings.LIMEInitial">
 		</activity>
-		<!--
-
-			<activity android:name=".LIMESetting"
-			android:label="@string/ime_setting"> </activity>
-		-->
-		
-		<activity android:name=".LIMEInitial"  android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" >
+		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name=".limesettings.LIMEIMSetting">
 		</activity>
-		<activity android:name=".LIMEIMSetting" android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" >
+		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name=".limesettings.LIMEMappingSetting">
 		</activity>
-		<activity android:name=".LIMEMappingSetting" android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" >
-		</activity>
-		<activity android:name=".LIMEPreference" android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting">
+		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name=".limesettings.LIMEPreference">
 		</activity>
 		
-		<activity android:name=".LIMEMappingLoading" android:theme="@android:style/Theme.Dialog" android:configChanges="keyboard|keyboardHidden|orientation" ></activity>
+		<activity android:theme="@android:style/Theme.Dialog" android:configChanges="keyboard|keyboardHidden|orientation" android:name=".limesettings.LIMEMappingLoading"></activity>
 
 	</application>
 
