@@ -26,7 +26,7 @@
         android:background="@drawable/keyboard_suggest_strip"
         >
 
-    <LinearLayout
+   <!--  <LinearLayout
             android:id="@+id/candidate_left_parent"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
@@ -45,7 +45,7 @@
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
             />
-    </LinearLayout>
+    </LinearLayout> -->
     
     <view xmlns:android="http://schemas.android.com/apk/res/android"
 		    class="net.toload.main.hd.candidate.CandidateView"
@@ -55,7 +55,7 @@
 	        android:layout_weight="1"
 			/>
 
-    <LinearLayout
+<!--     <LinearLayout
             android:id="@+id/candidate_right_parent"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
@@ -75,6 +75,6 @@
             android:layout_height="fill_parent"
             android:clickable="true"
             />
-    </LinearLayout>        
+    </LinearLayout>       -->  
     
 </net.toload.main.hd.candidate.CandidateViewContainer>

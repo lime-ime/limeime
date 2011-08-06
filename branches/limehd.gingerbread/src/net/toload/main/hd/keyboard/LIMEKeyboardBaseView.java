@@ -1,17 +1,4 @@
-/* Derive from gigerbread Latin IME LatinKeyboardBaseView
- * Copyright (C) 2010 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+/* Derive from gigerbread Latin IME LatinKeyboardBaseView and modified to compatible with pre 2.2 devices
  */
 
 package net.toload.main.hd.keyboard;
@@ -61,14 +48,14 @@ import net.toload.main.hd.keyboard.SwipeTracker;
  *
  * TODO: References to LatinKeyboard in this class should be replaced with ones to its base class.
  *
- * @attr ref R.styleable#LatinKeyboardBaseView_keyBackground
- * @attr ref R.styleable#LatinKeyboardBaseView_keyPreviewLayout
- * @attr ref R.styleable#LatinKeyboardBaseView_keyPreviewOffset
- * @attr ref R.styleable#LatinKeyboardBaseView_labelTextSize
- * @attr ref R.styleable#LatinKeyboardBaseView_keyTextSize
- * @attr ref R.styleable#LatinKeyboardBaseView_keyTextColor
- * @attr ref R.styleable#LatinKeyboardBaseView_verticalCorrection
- * @attr ref R.styleable#LatinKeyboardBaseView_popupLayout
+ * @attr ref R.styleable#LIMEKeyboardBaseView_keyBackground
+ * @attr ref R.styleable#LIMEKeyboardBaseView_keyPreviewLayout
+ * @attr ref R.styleable#LIMEKeyboardBaseView_keyPreviewOffset
+ * @attr ref R.styleable#LIMEKeyboardBaseView_labelTextSize
+ * @attr ref R.styleable#LIMEKeyboardBaseView_keyTextSize
+ * @attr ref R.styleable#LIMEKeyboardBaseView_keyTextColor
+ * @attr ref R.styleable#LIMEKeyboardBaseView_verticalCorrection
+ * @attr ref R.styleable#LIMEKeyboardBaseView_popupLayout
  */
 public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy {
     private static final String TAG = "LIMEKeyboardBaseView";
@@ -256,6 +243,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private final String KEY_LABEL_HEIGHT_REFERENCE_CHAR = "H";
 
     private final UIHandler mHandler = new UIHandler();
+    
+    private boolean isAPIpre8;
 
     class UIHandler extends Handler {
         private static final int MSG_POPUP_PREVIEW = 1;
@@ -417,7 +406,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         int previewLayout = 0;
         int keyTextSize = 0;
-
+              
+        isAPIpre8 = Integer.parseInt(android.os.Build.VERSION.SDK) < 8;
+        
         int n = a.getIndexCount();
 
         for (int i = 0; i < n; i++) {
@@ -560,10 +551,14 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         };
 
         final boolean ignoreMultitouch = true;
-        mGestureDetector = new GestureDetector(getContext(), listener, null, ignoreMultitouch);
+        if(isAPIpre8)
+        	mGestureDetector = new GestureDetector(getContext(), listener, null);
+        else
+        	mGestureDetector = new GestureDetector(getContext(), listener, null, ignoreMultitouch);
+        	
         mGestureDetector.setIsLongpressEnabled(false);
 
-        mHasDistinctMultitouch = context.getPackageManager()
+        mHasDistinctMultitouch = (isAPIpre8)?false: context.getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN_MULTITOUCH_DISTINCT);
         mKeyRepeatInterval = res.getInteger(R.integer.config_key_repeat_interval);
     }
@@ -1352,7 +1347,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
     @Override
 	public boolean onTouchEvent(MotionEvent me) {
-	    final int action = me.getActionMasked();
+	    final int action = (isAPIpre8)? me.getAction() :  me.getActionMasked();
 	    final int pointerCount = me.getPointerCount();
 	    final int oldPointerCount = mOldPointerCount;
 	    mOldPointerCount = pointerCount;
@@ -1376,7 +1371,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 	    }
 	
 	    final long eventTime = me.getEventTime();
-	    final int index = me.getActionIndex();
+	    final int index = (isAPIpre8)?0:me.getActionIndex();
 	    final int id = me.getPointerId(index);
 	    final int x = (int)me.getX(index);
 	    final int y = (int)me.getY(index);
