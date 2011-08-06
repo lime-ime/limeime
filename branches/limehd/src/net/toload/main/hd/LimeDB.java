@@ -1677,6 +1677,15 @@ public class LimeDB extends SQLiteOpenHelper {
 				munit.setWord(cursor.getString(wordColumn));
 				munit.setId(cursor.getString(idColumn));
 				munit.setCode(code);
+				
+				// 06/Aug/2011 by Art: ignore the result when word == keyToKeyname(code)
+				// Only apply to Array IM
+				if(code != null && code.length() == 1 && tablename.equals("array")){
+					if(keyToKeyname(code, tablename, false).equals(munit.getWord())){
+						continue;
+					}
+				}
+				
 				//if (relatedlist == null
 				//		&& cursor.getString(relatedColumn) != null) {
 				//relatedlist = cursor.getString(relatedColumn);
