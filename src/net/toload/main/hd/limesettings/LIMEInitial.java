@@ -298,8 +298,9 @@ public class LIMEInitial extends Activity {
  				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
  					public void onClick(DialogInterface dialog, int id) {
 	 						mLIMEPref.setParameter("dbtarget","device");
-	 						btnStoreDevice.setEnabled(false);
-	 						btnStoreSdcard.setEnabled(true);
+	 						//btnStoreDevice.setEnabled(false);
+	 						//btnStoreSdcard.setEnabled(true);
+	 						initialButton();
 	    	        	}
 	    	     });
 	    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -322,8 +323,9 @@ public class LIMEInitial extends Activity {
  				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
  					public void onClick(DialogInterface dialog, int id) {
 	 						mLIMEPref.setParameter("dbtarget","sdcard");
-	 						btnStoreDevice.setEnabled(true);
-	 						btnStoreSdcard.setEnabled(false);
+	 						//btnStoreDevice.setEnabled(true);
+	 						//btnStoreSdcard.setEnabled(false);
+	 						initialButton();				
 	    	        	}
 	    	     });
 	    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -387,7 +389,9 @@ public class LIMEInitial extends Activity {
 
 		File checkSdFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
-		if(!checkSdFile.exists() && !checkDbFile.exists() && !mLIMEPref.getParameterBoolean(LIME.DOWNLOAD_START)){
+		if(	( (!checkSdFile.exists() && dbtarget.equals("sdcard") )  
+				|| ( !checkDbFile.exists()) && dbtarget.equals("device")) 
+				&& !mLIMEPref.getParameterBoolean(LIME.DOWNLOAD_START)){
 			
 			btnInitPreloadDB.setEnabled(true);
 			btnInitEmptyDB.setEnabled(true);
@@ -427,55 +431,4 @@ public class LIMEInitial extends Activity {
 
 	};
 	
-
-	/* move to LIMEMENU
-	@Override
-    public boolean onCreateOptionsMenu(Menu menu){
-    	int idGroup = 0;
-    	int orderMenuItem1 = Menu.NONE;
-    	int orderMenuItem2 = Menu.NONE+1;
-    	int orderMenuItem3 = Menu.NONE+2;
-    	
-    	try {
-			PackageInfo pinfo = this.getPackageManager().getPackageInfo(this.getPackageName(), 0);
-	    	menu.add(idGroup, Menu.FIRST, orderMenuItem1, "LIME v" + pinfo.versionName + " - " + pinfo.versionCode);
-	    	menu.add(idGroup, Menu.FIRST+1, orderMenuItem2, R.string.experienced_device);
-	    	menu.add(idGroup, Menu.FIRST+2, orderMenuItem3, R.string.license);
-			} catch (NameNotFoundException e) {
-			e.printStackTrace();
-		}
-    	return super.onCreateOptionsMenu(menu);
-    }
-	
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item){
-
-		boolean hasSwitch = false;
-		try{
-	    	switch(item.getItemId()){
-		    	case (Menu.FIRST+1):
-		    		new AlertDialog.Builder(this)
-				    	.setTitle(R.string.experienced_device)
-				    	.setMessage(R.string.ad_zippy)
-				    	.setNeutralButton("Close", new DialogInterface.OnClickListener() {
-				    	public void onClick(DialogInterface dlg, int sumthin) {
-				    	}
-				    	}).show();
-		    		break;
-		    	case (Menu.FIRST+2):
-		    		new AlertDialog.Builder(this)
-				    	.setTitle(R.string.license)
-				    	.setMessage(R.string.license_detail)
-				    	.setNeutralButton("Close", new DialogInterface.OnClickListener() {
-				    	public void onClick(DialogInterface dlg, int sumthin) {
-				    	}
-				    	}).show();
-		    		break;
-	    	}
-    	}catch(Exception e){
-    		e.printStackTrace();
-    	}
-		return super.onOptionsItemSelected(item);
-    }
-    */
 }
