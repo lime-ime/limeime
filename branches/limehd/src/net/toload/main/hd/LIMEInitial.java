@@ -299,8 +299,9 @@ public class LIMEInitial extends Activity {
  				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
  					public void onClick(DialogInterface dialog, int id) {
 	 						mLIMEPref.setParameter("dbtarget","device");
-	 						btnStoreDevice.setEnabled(false);
-	 						btnStoreSdcard.setEnabled(true);
+	 						//btnStoreDevice.setEnabled(false);
+	 						//btnStoreSdcard.setEnabled(true);
+	 						initialButton();
 	    	        	}
 	    	     });
 	    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -323,8 +324,9 @@ public class LIMEInitial extends Activity {
  				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
  					public void onClick(DialogInterface dialog, int id) {
 	 						mLIMEPref.setParameter("dbtarget","sdcard");
-	 						btnStoreDevice.setEnabled(true);
-	 						btnStoreSdcard.setEnabled(false);
+	 						//btnStoreDevice.setEnabled(true);
+	 						//btnStoreSdcard.setEnabled(false);
+	 						initialButton();
 	    	        	}
 	    	     });
 	    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -388,7 +390,9 @@ public class LIMEInitial extends Activity {
 
 		File checkSdFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
-		if(!checkSdFile.exists() && !checkDbFile.exists() && !mLIMEPref.getParameterBoolean(LIME.DOWNLOAD_START)){
+		if(	( (!checkSdFile.exists() && dbtarget.equals("sdcard") )  
+				|| ( !checkDbFile.exists()) && dbtarget.equals("device")) 
+				&& !mLIMEPref.getParameterBoolean(LIME.DOWNLOAD_START)){
 			
 			btnInitPreloadDB.setEnabled(true);
 			btnInitEmptyDB.setEnabled(true);
