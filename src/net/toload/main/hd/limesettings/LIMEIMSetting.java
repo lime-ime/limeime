@@ -24,6 +24,7 @@ import java.io.File;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
+import net.toload.main.hd.global.LIMEPreferenceManager;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -52,8 +53,9 @@ public class LIMEIMSetting extends Activity {
 	Button btnSetupWb = null;
 	
 	String table = "";
+
 	
-	//LIMEPreferenceManager mLIMEPref;
+	LIMEPreferenceManager mLIMEPref;
 	
 	/** Called when the activity is first created. */
 	@Override
@@ -63,13 +65,10 @@ public class LIMEIMSetting extends Activity {
 		
 
 			this.setContentView(R.layout.imsetting);
-	
+			mLIMEPref = new LIMEPreferenceManager(this.getApplicationContext());
 			// Initial Buttons
 			initialButton();
 			
-			//mLIMEPref = new LIMEPreferenceManager(this.getApplicationContext());
-			
-	
 			btnSetupCustom.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					Intent intent = new Intent();
@@ -236,10 +235,16 @@ public class LIMEIMSetting extends Activity {
 			btnSetupArray10 = (Button) findViewById(R.id.btnSetupArray10);
 			btnSetupWb = (Button) findViewById(R.id.btnSetupWb);		
 		}
-
+		
+		String dbtarget = mLIMEPref.getParameterString("dbtarget");
+		if(dbtarget.equals("")){
+			dbtarget = "device";
+			mLIMEPref.setParameter("dbtarget","device");
+		}
 		File checkSdFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
-		if(!checkSdFile.exists() && !checkDbFile.exists()){
+		if((!checkSdFile.exists() && dbtarget.equals("sdcard") )  
+				|| ( !checkDbFile.exists()) && dbtarget.equals("device")) {
 			btnSetupCustom.setEnabled(false);
 			btnSetupPhonetic.setEnabled(false);
 			btnSetupCJ.setEnabled(false);
