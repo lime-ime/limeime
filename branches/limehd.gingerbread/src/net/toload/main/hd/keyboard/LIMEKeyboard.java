@@ -24,7 +24,6 @@ import net.toload.main.hd.LIMEKeyboardSwitcher;
 import net.toload.main.hd.R;
 import android.content.Context;
 import android.content.res.Resources;
-import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
@@ -316,12 +315,12 @@ public class LIMEKeyboard extends Keyboard {
         }
         return mSpaceDragLastDiff > 0 ? 1 : -1;
     }
-    private int getTextSizeFromTheme(int style, int defValue) {
+   /* private int getTextSizeFromTheme(int style, int defValue) {
         TypedArray array = mContext.getTheme().obtainStyledAttributes(
                 style, new int[] { android.R.attr.textSize });
         int textSize = array.getDimensionPixelSize(array.getResourceId(0, 0), defValue);
         return textSize;
-    }
+    }*/
     private void setDefaultBounds(Drawable drawable) {
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
     }
@@ -458,7 +457,8 @@ public class LIMEKeyboard extends Keyboard {
             mWidth = width;
             mHeight = height;
             mTextPaint = new TextPaint();
-            mTextPaint.setTextSize(getTextSizeFromTheme(android.R.style.TextAppearance_Medium, 18));
+            //mTextPaint.setTextSize(getTextSizeFromTheme(android.R.style.TextAppearance_Medium, 18));
+            mTextPaint.setTextSize(mRes.getDimensionPixelSize(R.dimen.spacebar_preview_text_size));
             mTextPaint.setColor(R.color.limekeyboard_transparent);
             mTextPaint.setTextAlign(Align.CENTER);
             mTextPaint.setAlpha(OPACITY_FULLY_OPAQUE);
