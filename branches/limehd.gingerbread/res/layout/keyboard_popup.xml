@@ -39,6 +39,6 @@
 
             limehd:keyBackground="@drawable/btn_keyboard_key_popup"
             limehd:keyHysteresisDistance="0dip"
-            limehd:verticalCorrection="@dimen/keyboard_vertical_correction"
+            limehd:verticalCorrection="@dimen/mini_keyboard_vertical_correction"
             />
 </LinearLayout>
