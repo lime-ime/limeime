@@ -132,8 +132,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String HSU_KEY =            		"azwsxedcrfvtgbyhnujmikolpq,.";
 	private final static String HSU_KEY_REMAP_INITIAL = 	"hylnju2vbzfwe18csmra9d.xq`<>"; 
 	private final static String HSU_KEY_REMAP_FINAL =   	"hylnju6vb3fwe18csm4a9d./q`<>";  
-	private final static String HSU_DUALKEY_REMAP =		 	"gt5--,okip0;/";
-	private final static String HSU_DUALKEY = 				"vfrx/uhecsadx";
+	private final static String HSU_DUALKEY_REMAP =		 	"gt5--,okip0;7";
+	private final static String HSU_DUALKEY = 				"vfrx/uhecsadn";
 	private final static String HSU_CHAR_INITIAL = 	
 		"(ㄘ/ㄟ)|ㄗ|ㄠ|ㄙ|ㄨ|(ㄧ/ㄝ)|ㄉ|(ㄕ/ㄒ)|ㄖ|ㄈ|(ㄔ/ㄑ)|ㄊ|(ㄍ/ㄜ)|ㄅ|ㄚ|(ㄏ/ㄛ)|(ㄋ/ㄣ)|ㄩ|(ㄐ/ㄓ)|(ㄇ/ㄢ)|ㄞ|(ㄎ/ㄤ)|ㄡ|(ㄌ/ㄦ)|ㄆ|q|，|。";
 	private final static String HSU_CHAR_FINAL = 	
@@ -1267,7 +1267,8 @@ public class LimeDB extends SQLiteOpenHelper {
 					}else{
 						selectClause = FIELD_CODE + " = '" + code + "' " + extraConditions;
 					}
-					if(DEBUG) Log.i(TAG, "getMapping(): selectString=" + selectClause );
+					if(DEBUG) 
+						Log.i(TAG, "getMapping(): selectString=" + selectClause );
 					// Jeremy '11,8,5 limit initial query to limited records
 					String limitClause = null;
 					if(!getAllRecords)
@@ -1508,7 +1509,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 				keysDualMap.put(remaptable, reMap);
 			}
-			
+			// do real prcoessing now
 			if(keysDualMap.get(remaptable)==null
 					|| keysDualMap.get(remaptable).size()==0){
 				dualcode = code;
@@ -1618,7 +1619,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		if(dualCodeList != null) {
 			for(String dualcode : dualCodeList){
-				
+				if(DEBUG) Log.i(TAG, "expandDualCode(): processing dualcode: " + dualcode);
 				String codeCol = FIELD_CODE;
 				if(tablename.equals("phonetic")&&  Integer.parseInt(mLIMEPref.getParameterString("kbversion")) >= 333 &&
 						!(dualcode.contains("3")||dualcode.contains("4")||

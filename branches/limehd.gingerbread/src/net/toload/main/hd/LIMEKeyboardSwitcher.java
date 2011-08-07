@@ -144,7 +144,7 @@ public class LIMEKeyboardSwitcher {
     	if(DEBUG) Log.i(TAG,"getCurrentActiveKeyboardShortName() current IM:"+ imtype);
     	for (int i = 0; i < mActiveKeyboardCodes.size(); i++) {
 			if (imtype.equals(mActiveKeyboardCodes.get(i))) {
-    			Log.i(TAG,"getCurrentActiveKeyboardShortName()="+ mActiveKeyboardShortnames.get(i));
+				if(DEBUG)Log.i(TAG,"getCurrentActiveKeyboardShortName()="+ mActiveKeyboardShortnames.get(i));
     			return mActiveKeyboardShortnames.get(i);
     		}
     	}
