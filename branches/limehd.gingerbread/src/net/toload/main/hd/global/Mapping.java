@@ -123,7 +123,7 @@ public class Mapping {
 		if(code != null){
 			return code.toLowerCase();
 		}
-		return code.toLowerCase();
+		return null;
 	}
 	/**
 	 * @param code the code to set

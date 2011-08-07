@@ -1687,11 +1687,13 @@ public class LimeDB extends SQLiteOpenHelper {
 
 				// 06/Aug/2011 by Art: ignore the result when word == keyToKeyname(code)
 				// Only apply to Array IM
-				if(code != null && code.length() == 1 && tablename.equals("array")){
-					if(keyToKeyname(code, tablename, false).equals(munit.getWord())){
-						continue;
+				try{
+					if(code != null && code.length() == 1 && tablename.equals("array")){
+						if(keyToKeyname(code, tablename, false).equals(munit.getWord())){
+							continue;
+						}
 					}
-				}
+				}catch(Exception e){}
 				
 				if(relatedMap.get(code) == null){
 					relatedMap.put(code, relatedlist);
