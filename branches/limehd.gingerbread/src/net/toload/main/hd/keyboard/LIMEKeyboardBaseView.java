@@ -1,10 +1,16 @@
-/* Derive from gigerbread Latin IME LatinKeyboardBaseView and modified to compatible with pre 2.2 devices
+/* 
+ * Jeremy '11,8,8
+ * Derive from gingerbread Latin IME LatinKeyboardBaseView, 
+ * modified to compatible with pre 2.2 devices, and disable
+ * fling selection of popup minikeybaord on large screen.
+ * 
  */
 
 package net.toload.main.hd.keyboard;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -242,6 +248,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private final float KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR = 0.55f;
     private final String KEY_LABEL_HEIGHT_REFERENCE_CHAR = "H";
 
+    private boolean isLargeScreen; // Jeremy //11,8,8 used for disable fling selection on minipopup keyboard for larger screen
+    
     private final UIHandler mHandler = new UIHandler();
     
     private boolean isAPIpre8;
@@ -407,8 +415,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         int previewLayout = 0;
         int keyTextSize = 0;
               
-        isAPIpre8 = Integer.parseInt(android.os.Build.VERSION.SDK) < 8;
-        
+       
         int n = a.getIndexCount();
 
         for (int i = 0; i < n; i++) {
@@ -477,6 +484,16 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         }
 
         final Resources res = getResources();
+        
+        isAPIpre8 = Integer.parseInt(android.os.Build.VERSION.SDK) < 8;  //Jeremy '11,8,7 detect API level and disable multi-touch API for API leve 7
+        
+        int screenLayout = res.getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK; 
+        boolean large = screenLayout == Configuration.SCREENLAYOUT_SIZE_LARGE;
+        boolean xlarge = screenLayout == Configuration.SCREENLAYOUT_SIZE_XLARGE;
+        
+        isLargeScreen = large || xlarge;
+        	//true;
+        
 
         mPreviewPopup = new PopupWindow(context);
         if (previewLayout != 0) {
@@ -1211,7 +1228,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         mMiniKeyboard.setPopupOffset(adjustedX, y);
         mMiniKeyboard.setShifted(isShifted());
         // Mini keyboard needs no pop-up key preview displayed.
-        mMiniKeyboard.setPreviewEnabled(false);
+        mMiniKeyboard.setPreviewEnabled(isLargeScreen);  // no fling on large screen 
         mMiniKeyboardPopup.setContentView(container);
         mMiniKeyboardPopup.setWidth(container.getMeasuredWidth());
         mMiniKeyboardPopup.setHeight(container.getMeasuredHeight());
@@ -1220,10 +1237,12 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         // Inject down event on the key to mini keyboard.
         long eventTime = SystemClock.uptimeMillis();
         mMiniKeyboardPopupTime = eventTime;
-        MotionEvent downEvent = generateMiniKeyboardMotionEvent(MotionEvent.ACTION_DOWN, popupKey.x
+        if(!isLargeScreen){   // disable fling on large screen
+        	MotionEvent downEvent = generateMiniKeyboardMotionEvent(MotionEvent.ACTION_DOWN, popupKey.x
                 + popupKey.width / 2, popupKey.y + popupKey.height / 2, eventTime);
-        mMiniKeyboard.onTouchEvent(downEvent);
-        downEvent.recycle();
+        	mMiniKeyboard.onTouchEvent(downEvent);
+        	downEvent.recycle();
+        }
 
         invalidateAllKeys();
         return true;
@@ -1378,7 +1397,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 	
 	    // Needs to be called after the gesture detector gets a turn, as it may have
 	    // displayed the mini keyboard
-	    if (mMiniKeyboard != null) {
+	    if (mMiniKeyboard != null && !isLargeScreen) {
 	        final int miniKeyboardPointerIndex = me.findPointerIndex(mMiniKeyboardTrackerId);
 	        if (miniKeyboardPointerIndex >= 0 && miniKeyboardPointerIndex < pointerCount) {
 	            final int miniKeyboardX = (int)me.getX(miniKeyboardPointerIndex);

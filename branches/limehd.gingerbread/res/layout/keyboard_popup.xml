@@ -22,10 +22,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="@drawable/keyboard_popup_panel_background"
-        android:paddingLeft="16dip"
-        android:paddingRight="16dip"
-        >
+        android:background="@drawable/keyboard_popup_panel_background">
+       <!--  android:paddingLeft="16dip"
+        android:paddingRight="16dip" -->
+        
     <net.toload.main.hd.keyboard.LIMEKeyboardBaseView
             xmlns:limehd="http://schemas.android.com/apk/res/net.toload.main.hd"
             android:id="@+id/LIMEKeyboardBaseView"
@@ -33,9 +33,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/limekeyboard_transparent"
+            android:keyTextSize = "@dimen/key_text_size"
+        	android:labelTextSize = "@dimen/label_text_size"
+        	
 
-            limehd:keyBackground="@drawable/btn_keyboard_key_gingerbread_popup"
+            limehd:keyBackground="@drawable/btn_keyboard_key_popup"
             limehd:keyHysteresisDistance="0dip"
-            limehd:verticalCorrection="@dimen/mini_keyboard_vertical_correction"
+            limehd:verticalCorrection="@dimen/keyboard_vertical_correction"
             />
 </LinearLayout>
