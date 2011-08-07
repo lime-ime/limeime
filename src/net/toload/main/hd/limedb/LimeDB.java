@@ -330,7 +330,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						ContentValues 	cv = new ContentValues();
 						cv.put("code", "limenumsym");
 						cv.put("name", "LIMENUMSYM");
-						cv.put("desc", "LIME+數字符號鍵盤");
+						cv.put("desc", "LIME+�詨�蝚西��萇");
 						cv.put("type", "phone");
 						cv.put("image", "lime_number_symbol_keyboard_priview");
 						cv.put("imkb", "lime_number_symbol");
@@ -435,8 +435,8 @@ public class LimeDB extends SQLiteOpenHelper {
 						
 						ContentValues 	cv = new ContentValues();
 						cv.put("code", "wb");
-						cv.put("name", "五筆");
-						cv.put("desc", "五筆輸入法鍵盤");
+						cv.put("name", "鈭�");
+						cv.put("desc", "鈭�頛詨瘜��);
 						cv.put("type", "phone");
 						cv.put("image", "wb_keyboard_preview");
 						cv.put("imkb", "lime_wb");
@@ -494,7 +494,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				ContentValues 	cv = new ContentValues();
 				cv.put("code", "limenumsym");
 				cv.put("name", "LIMENUMSYM");
-				cv.put("desc", "LIME+數字符號鍵盤");
+				cv.put("desc", "LIME+�詨�蝚西��萇");
 				cv.put("type", "phone");
 				cv.put("image", "lime_number_symbol_keyboard_priview");
 				cv.put("imkb", "lime_number_symbol");
@@ -1145,7 +1145,7 @@ public class LimeDB extends SQLiteOpenHelper {
 							(code.equals("q") || code.equals("w") 
 							|| code.equals("d")|| code.equals("f") 
 							|| code.equals("j") || code.equals("k"))){ 
-						// Dual mapped INITIALS have words mapped for ㄗ and ㄘ. for ETEN26
+						// Dual mapped INITIALS have words mapped for ��and �� for ETEN26
 						c = keyMap.get(code);
 					}else if (phonetickeyboardtype.equals("hsu") &&
 						(code.equals("a") || code.equals("e") ||
@@ -1390,7 +1390,7 @@ public class LimeDB extends SQLiteOpenHelper {
 									(code.equals("q") || code.equals("w") 
 									|| code.equals("d")|| code.equals("f") 
 									|| code.equals("j") || code.equals("k"))){ 
-							// Dual mapped INITIALS have words mapped for ㄗ and ㄘ. for ETEN26
+							// Dual mapped INITIALS have words mapped for ��and �� for ETEN26
 							c = reMap.get(code);
 						}else if (phonetickeyboardtype.equals("hsu") &&
 									(code.equals("a") || code.equals("e") ||
@@ -1683,10 +1683,15 @@ public class LimeDB extends SQLiteOpenHelper {
 				munit.setWord(cursor.getString(wordColumn));
 				munit.setId(cursor.getString(idColumn));
 				munit.setCode(code);
-				//if (relatedlist == null
-				//		&& cursor.getString(relatedColumn) != null) {
-				//relatedlist = cursor.getString(relatedColumn);
-				//}
+
+				// 06/Aug/2011 by Art: ignore the result when word == keyToKeyname(code)
+				// Only apply to Array IM
+				if(code != null && code.length() == 1 && tablename.equals("array")){
+					if(keyToKeyname(code, tablename, false).equals(munit.getWord())){
+						continue;
+					}
+				}
+				
 				if(relatedMap.get(code) == null){
 					relatedMap.put(code, relatedlist);
 				}
@@ -1747,6 +1752,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				result.add(temp);
 			}
 		}
+		
 		
 		Mapping temp = new Mapping();
 		temp.setCode("has_more_records");
