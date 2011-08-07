@@ -193,7 +193,7 @@ public class LIMEService extends InputMethodService implements
 	//private boolean hasAltPress = false;
 	
 	private String mActiveKeyboardState=""; // Jeremy '11,8,5
-	private String keyboardSelection;
+	public String keyboardSelection;
 	private List<String> keyboardList;
 	private List<String> keyboardShortnames;
 	private List<String> keyboardListCodes;
@@ -1400,9 +1400,13 @@ public class LIMEService extends InputMethodService implements
 							}
 							mComposing= mComposing.delete(0, firstMatched.getCode().length());
 							//Log.i(TAG, "commitedtype(): new mComposing:" +mComposing);
-							inputConnection.setComposingText(mComposing, 1);
-							updateCandidates();
-							return;
+							if(!mComposing.toString().equals(" ")){
+								if(mComposing.toString().startsWith(""))
+									mComposing= mComposing.deleteCharAt(0);
+								inputConnection.setComposingText(mComposing, 1);
+								updateCandidates();
+								return;
+							}
 						} else {
 							if(LDComposingBuffer.length()>0 && LDComposingBuffer.contains(mComposing.toString())){
 								//Ending continuous LD process (last of LD process)
@@ -1664,9 +1668,14 @@ public class LIMEService extends InputMethodService implements
 		} else if (primaryCode == KEYBOARD_SWITCH_CODE && mInputView != null) {
 			switchKeyboard(primaryCode);
 			// Jeremy '11,5,31 Rewrite softkeybaord enter/space and english sepeartor processing.
-		} else if (onIM && ( primaryCode== KEYCODE_SPACE || primaryCode == KEYCODE_ENTER) ){// || primaryCode == -99){
-			//int codeToSend = primaryCode;
-			//if(primaryCode ==-99 ) codeToSend = KEYCODE_ENTER;
+		} else if (onIM &&  
+				((primaryCode== KEYCODE_SPACE && !keyboardSelection.equals("phonetic"))
+				||(primaryCode== KEYCODE_SPACE && 
+						keyboardSelection.equals("phonetic") && Integer.parseInt(mLIMEPref.getParameterString("kbversion")) < 333 )
+				||(primaryCode== KEYCODE_SPACE && 
+						keyboardSelection.equals("phonetic") && mComposing.toString().endsWith(" "))
+				|| primaryCode == KEYCODE_ENTER) ){
+			
 			if ( mCandidateView != null && mCandidateView.isShown()){ 
 				if(!mCandidateView.takeSelectedSuggestion()){
 					setCandidatesViewShown(false);
@@ -1834,6 +1843,7 @@ public class LIMEService extends InputMethodService implements
 			// if the selected keyboard is not in the active keyboard list.
 			// set the keyboard to the first active keyboard
 			keyboardSelection = keyboardListCodes.get(0);
+			initialKeyboard();
 		}
 
 	}
@@ -1963,7 +1973,8 @@ public class LIMEService extends InputMethodService implements
 		// Log.i("ART", "Update Candidate mCompletionOn:"+ mCompletionOn);
 		// Log.i("ART", "Update Candidate mComposing:"+ mComposing);
 		if(DEBUG) Log.i("updateCandidate", "Update Candidate mComposing:"+ mComposing.length());
-		if (mCandidateView != null) 			mCandidateView.clear();
+		if (mCandidateView != null) 			
+			mCandidateView.clear();
 
 		if (!mCompletionOn && mComposing.length() > 0) {
 
@@ -2635,7 +2646,8 @@ public class LIMEService extends InputMethodService implements
 				misMatched = mComposing.toString();
 			} else if (hasSymbolMapping
 					&& hasNumberMapping
-					&& (isValidSymbol(primaryCode)
+					&& (isValidSymbol(primaryCode) 
+							|| (primaryCode== KEYCODE_SPACE && keyboardSelection.equals("phonetic"))
 							|| isValidLetter(primaryCode) || isValidDigit(primaryCode))	&& onIM) {
 				mComposing.append((char) primaryCode);
 				getCurrentInputConnection().setComposingText(mComposing, 1);

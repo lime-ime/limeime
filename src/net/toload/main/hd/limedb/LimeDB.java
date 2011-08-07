@@ -1237,8 +1237,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(softKeyboard) sort = mLIMEPref.getSortSuggestions();
 		else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
 		isPhysicalKeyboardPressed = !softKeyboard;
-		if(DEBUG) 
-			Log.i(TAG, "getmapping(): sort:"+ sort +" physical keyboard:" + isPhysicalKeyboardPressed);
+		//if(DEBUG) 
+			Log.i(TAG, "getmapping(): code:"+ code + "| kbversion" +mLIMEPref.getParameterString("kbversion"));
 
 		// Add by Jeremy '10, 3, 27. Extension on multi table query.
 		lastCode = code;
@@ -1261,14 +1261,15 @@ public class LimeDB extends SQLiteOpenHelper {
 					// Jeremy '11,8,2 Query code3r instead of code for code contains no tone symbols
 					String selectClause;
 					if(tablename.equals("phonetic")&&  Integer.parseInt(mLIMEPref.getParameterString("kbversion")) >= 333 &&
-							!(code.contains("3")||code.contains("4")||
-									code.contains("6")||code.contains("7"))){
+							!(code.contains("3")||code.contains("4")
+							||code.contains("6")||code.contains("7")|| code.endsWith(" "))){
 						selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
 					}else{
-						selectClause = FIELD_CODE + " = '" + code + "' " + extraConditions;
+						selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
 					}
-					if(DEBUG) 
-						Log.i(TAG, "getMapping(): selectString=" + selectClause );
+					
+					//if(DEBUG) 
+						Log.i(TAG, "getMapping(): selectClause=" + selectClause  );
 					// Jeremy '11,8,5 limit initial query to limited records
 					String limitClause = null;
 					if(!getAllRecords)
@@ -1619,13 +1620,15 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		if(dualCodeList != null) {
 			for(String dualcode : dualCodeList){
-				if(DEBUG) Log.i(TAG, "expandDualCode(): processing dualcode: " + dualcode);
+				//if(DEBUG) 
+					Log.i(TAG, "expandDualCode(): processing dualcode: " + dualcode + "|");
 				String codeCol = FIELD_CODE;
 				if(tablename.equals("phonetic")&&  Integer.parseInt(mLIMEPref.getParameterString("kbversion")) >= 333 &&
-						!(dualcode.contains("3")||dualcode.contains("4")||
-								dualcode.contains("6")||dualcode.contains("7"))){
+						!(dualcode.contains("3")||dualcode.contains("4")
+						  ||dualcode.contains("6")||dualcode.contains("7")|| dualcode.endsWith(" ") )){
 					codeCol = FIELD_CODE3R;
 				}
+				dualcode = dualcode.trim();
 				String[] col = {"DISTINCT " + codeCol};
 				
 				try{
@@ -1650,7 +1653,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			else
 				lastValidDualCodeList = validDualCodeList;
 		}
-		if(DEBUG)
+		//if(DEBUG)
 			Log.i(TAG, "expandDualCode(): result:" + result + " validDualCodeList:" + validDualCodeList);
 		return result;
 		
@@ -1860,10 +1863,14 @@ public class LimeDB extends SQLiteOpenHelper {
 				SQLiteDatabase db = getSqliteDb(false);
 				try {
 					if(countMapping(table)>0) 	db.delete(table, null, null);
+					if(DEBUG) Log.i(TAG, "loadfile(), table = " + table +" kbversion" + 
+							Integer.parseInt(mLIMEPref.getParameterString("kbversion")));
 					if(table.equals("phonetic") &&
 							Integer.parseInt(mLIMEPref.getParameterString("kbversion")) < 333 ) {
-						db.execSQL("CREATE INDEX phonetic_idx_code3r ON phonetic(code3r)");
+						if(DEBUG) Log.i(TAG, "loadfile(), update kbversion to 333");
 						mLIMEPref.setParameter("kbversion","333");
+						db.execSQL("CREATE INDEX phonetic_idx_code3r ON phonetic(code3r)");
+						
 					}
 				} catch (Exception e1) {
 					e1.printStackTrace();
@@ -2212,8 +2219,8 @@ public class LimeDB extends SQLiteOpenHelper {
 						if (!imkeys.equals("")) setImInfo(table, "imkeys", imkeys);
 						if (!imkeynames.equals("")) setImInfo(table, "imkeynames", imkeynames);
 					}
-					//if(DEBUG) 
-					Log.i(TAG, "loadfile():update IM info: imkeys:" +imkeys + " imkeynames:"+imkeynames);
+					if(DEBUG) 
+						Log.i(TAG, "loadfile():update IM info: imkeys:" +imkeys + " imkeynames:"+imkeynames);
 
 					// If there is no keyboard assigned for current input method then use default keyboard layout
 					//String keyboard = getImInfo(table, "keyboard");

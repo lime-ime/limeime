@@ -33,13 +33,19 @@ import android.preference.PreferenceManager;
 
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Display;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.view.WindowManager;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.util.LinkedList;
@@ -53,9 +59,11 @@ import net.toload.main.hd.global.Mapping;
 /**
  * @author Art Hung
  */
-public class CandidateView extends View {
+public class CandidateView extends View //implements View.OnClickListener 
+{
 	
 	private static final boolean DEBUG = false;
+	private static final String TAG = "CandidateView";
 
     private static final int OUT_OF_BOUNDS = -1;
 
@@ -112,7 +120,12 @@ public class CandidateView extends View {
     private boolean hasSlide = false;
     private int bgcolor = 0;
     
+    private View mCandidatePopupContainer;
+   // private PopupWindow  mCandidatePopup;
+    
     private GestureDetector mGestureDetector;
+    private final Context mContext;
+    
    
  
    // private Context ctx;
@@ -123,101 +136,113 @@ public class CandidateView extends View {
      * @param attrs
      */
     public CandidateView(Context context, AttributeSet attrs) {
-        
+
     	super(context, attrs);
     	
-        mSelectionHighlight = context.getResources().getDrawable(
-                android.R.drawable.list_selector_background);
-        mSelectionHighlight.setState(new int[] {
-                android.R.attr.state_enabled,
-                android.R.attr.state_focused,
-                android.R.attr.state_window_focused,
-                android.R.attr.state_pressed
-        });
+    	mContext = context;
+    	
+    	mSelectionHighlight = context.getResources().getDrawable(
+    			android.R.drawable.list_selector_background);
+    	mSelectionHighlight.setState(new int[] {
+    			android.R.attr.state_enabled,
+    			android.R.attr.state_focused,
+    			android.R.attr.state_window_focused,
+    			android.R.attr.state_pressed
+    	});
 
-        Resources r = context.getResources();
-        bgcolor = r.getColor(R.color.candidate_background);
-        
-        mColorNormal = r.getColor(R.color.candidate_normal);
-        mColorDictionary = r.getColor(R.color.candidate_dictionary);
-        mColorRecommended = r.getColor(R.color.candidate_recommended);
-        mColorOther = r.getColor(R.color.candidate_other);
-        mColorNumber = r.getColor(R.color.candidate_number);
-        //mVerticalPadding = r.getDimensionPixelSize(R.dimen.candidate_vertical_padding);
-        
-        
-     // Composing buffer textView
-		LayoutInflater inflate 
-			= (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-	        mComposingTextPopup = new PopupWindow(context);
-	        mComposingTextView = (TextView) inflate.inflate(R.layout.composingtext, null);
-	        mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-	        mComposingTextPopup.setContentView(mComposingTextView);
-	        mComposingTextPopup.setBackgroundDrawable(null);
+    	Resources r = context.getResources();
+    	bgcolor = r.getColor(R.color.candidate_background);
 
-	       
-        
-        mPaint = new Paint();
-        mPaint.setColor(mColorNormal);
-        mPaint.setAntiAlias(true);
-        mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_height));
-        mPaint.setStrokeWidth(0);
-        
-        nPaint = new Paint();
-        nPaint.setColor(mColorNumber);
-        nPaint.setAntiAlias(true);
-        nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_height));
-        nPaint.setStyle(Paint.Style.FILL_AND_STROKE);
-        
-        cPaint = new Paint();
-        cPaint.setColor(mColorNormal);
-        cPaint.setAntiAlias(true);
-        cPaint.setTextSize(r.getDimensionPixelSize(R.dimen.composing_text_size));
-        cPaint.setStrokeWidth(0);
-        
-        //mDescent = (int) mPaint.descent();
-        
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        
-        mGestureDetector = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onScroll(MotionEvent e1, MotionEvent e2,
-                    float distanceX, float distanceY) {
-                mScrolled = true;
-                int sx = getScrollX();
-                sx += distanceX;
-                if (sx < 0) {
-                    sx = 0;
-                }
-                if (sx + getWidth() > mTotalWidth) {                    
-                    sx -= distanceX;
-                }
+    	mColorNormal = r.getColor(R.color.candidate_normal);
+    	mColorDictionary = r.getColor(R.color.candidate_dictionary);
+    	mColorRecommended = r.getColor(R.color.candidate_recommended);
+    	mColorOther = r.getColor(R.color.candidate_other);
+    	mColorNumber = r.getColor(R.color.candidate_number);
+    	//mVerticalPadding = r.getDimensionPixelSize(R.dimen.candidate_vertical_padding);
 
-        		if(sp.getBoolean("candidate_switch", false)){
-        			hasSlide = true;
-                    mTargetScrollX = sx;
-                    scrollTo(sx, getScrollY());
-        		}else{
-        			hasSlide = false;
-                    if(distanceX < 0){
-                    	goLeft = true;
-                    	goRight = false;
-                    }else if(distanceX > 0){
-                    	goLeft = false;
-                    	goRight = true;
-                    }else{
-                        mTargetScrollX = sx;
-                    }
-        		}
-        		
-                invalidate();
-                return true;
-            }
-        });
-        setHorizontalFadingEdgeEnabled(true);
-        setWillNotDraw(false);
-        setHorizontalScrollBarEnabled(false);
-        setVerticalScrollBarEnabled(false);
+
+    	// Composing buffer textView
+    	LayoutInflater inflater 
+    				= (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    	mComposingTextPopup = new PopupWindow(context);
+    	mComposingTextView = (TextView) inflater.inflate(R.layout.composingtext, null);
+    	mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    	mComposingTextPopup.setContentView(mComposingTextView);
+    	mComposingTextPopup.setBackgroundDrawable(null);
+
+    	/*mCandidatePopup = new PopupWindow(context);	
+    	//inflater = (LayoutInflater) context.getSystemService(
+		//	 		Context.LAYOUT_INFLATER_SERVICE);
+    	mCandidatePopupContainer = inflater.inflate(R.layout.candidatepopup, null);
+    	mCandidatePopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    	mCandidatePopup.setContentView(mCandidatePopupContainer);
+    	//mCandidatePopup.setBackgroundDrawable(null);
+    	
+    	View closeButton = mCandidatePopupContainer.findViewById(R.id.closeButton);
+    	if (closeButton != null) closeButton.setOnClickListener(this);
+*/
+
+    	mPaint = new Paint();
+    	mPaint.setColor(mColorNormal);
+    	mPaint.setAntiAlias(true);
+    	mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_height));
+    	mPaint.setStrokeWidth(0);
+
+    	nPaint = new Paint();
+    	nPaint.setColor(mColorNumber);
+    	nPaint.setAntiAlias(true);
+    	nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_height));
+    	nPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+
+    	cPaint = new Paint();
+    	cPaint.setColor(mColorNormal);
+    	cPaint.setAntiAlias(true);
+    	cPaint.setTextSize(r.getDimensionPixelSize(R.dimen.composing_text_size));
+    	cPaint.setStrokeWidth(0);
+
+    	//mDescent = (int) mPaint.descent();
+
+    	final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+
+    	mGestureDetector = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
+    		@Override
+    		public boolean onScroll(MotionEvent e1, MotionEvent e2,
+    				float distanceX, float distanceY) {
+    			mScrolled = true;
+    			int sx = getScrollX();
+    			sx += distanceX;
+    			if (sx < 0) {
+    				sx = 0;
+    			}
+    			if (sx + getWidth() > mTotalWidth) {                    
+    				sx -= distanceX;
+    			}
+
+    			if(sp.getBoolean("candidate_switch", false)){
+    				hasSlide = true;
+    				mTargetScrollX = sx;
+    				scrollTo(sx, getScrollY());
+    			}else{
+    				hasSlide = false;
+    				if(distanceX < 0){
+    					goLeft = true;
+    					goRight = false;
+    				}else if(distanceX > 0){
+    					goLeft = false;
+    					goRight = true;
+    				}else{
+    					mTargetScrollX = sx;
+    				}
+    			}
+
+    			invalidate();
+    			return true;
+    		}
+    	});
+    	setHorizontalFadingEdgeEnabled(true);
+    	setWillNotDraw(false);
+    	setHorizontalScrollBarEnabled(false);
+    	setVerticalScrollBarEnabled(false);
     }
     
 
@@ -234,6 +259,38 @@ public class CandidateView extends View {
             
         }
     };
+    
+    /*public void showCandidatePopup(){
+    	
+    	mCandidatePopup.setContentView(mCandidatePopupContainer);
+    	
+    	TextView tv=(TextView) mCandidatePopupContainer.findViewById(R.id.ctxtView);
+    	ScrollView sv=(ScrollView)mCandidatePopupContainer.findViewById(R.id.sv);
+    	ImageButton btnClose = (ImageButton) mCandidatePopupContainer.findViewById(R.id.closeButton);
+    	
+    	Display display = ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay(); 
+    	int screenWidth =  display.getWidth();
+    	mCandidatePopup.setWidth(screenWidth);
+    	   	
+    	tv.setText("Hello Word 1!!\n");
+    	
+    	for(int i=0; i<5; i++){
+    		tv.append("Hello Word "+ i + "!!\n");
+    	}
+    	tv.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+    	btnClose.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+    	
+    	sv.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT
+    			, tv.getMeasuredHeight()));
+    	
+    	mCandidatePopup.setHeight(tv.getMeasuredHeight()+btnClose.getMeasuredHeight());
+    	mCandidatePopup.showAtLocation(this, Gravity.NO_GRAVITY, 0, 0);
+    	Log.i(TAG, "showCandidatePopup(), popupwidth=" + screenWidth + " popHeight = " 
+    			+ tv.getMeasuredHeight()
+    			+ btnClose.getMeasuredHeight());
+    }*/
     
     public void setComposingText(String composingText){
     	if(composingText != null && !composingText.trim().equals("")){
@@ -525,9 +582,16 @@ public class CandidateView extends View {
 	            	//mSelectedIndex = 0;
 	            }else if(count > 1 && mSuggestions.get(1).getId() !=null && // the suggestion is not from relatedlist.
 	            		mSuggestions.get(0).getWord().toLowerCase()
-	            		.equals(mSuggestions.get(1).getCode().toLowerCase()) ){ // exact match
+	            		.equals(mSuggestions.get(1).getCode().trim())) { // exact match
 	            	// default selection on suggestions 1 (0 is typed English in mixed English mode)
 	             	mSelectedIndex = 1;
+	            }else if(count > 1 && mSuggestions.get(1).getId() !=null &&
+	            		 mService.keyboardSelection.equals("phonetic")&&
+	            		 (mSuggestions.get(0).getWord().trim().toLowerCase()
+	     	            		.equals(mSuggestions.get(1).getCode().trim())||
+	     	              mSuggestions.get(0).getWord().trim().toLowerCase()
+	    	     	        	.equals(mSuggestions.get(1).getCode().trim().replaceAll("[3467]", ""))) ){
+	            	mSelectedIndex = 1;
 	            }else {
 	            	mSelectedIndex = 0;
 	            }
@@ -724,4 +788,8 @@ public class CandidateView extends View {
     	cursorRect = newCursor;
     	invalidate();
     }
+	/*@Override
+	public void onClick(View v) {
+		 mCandidatePopup.dismiss();
+	}*/
 }

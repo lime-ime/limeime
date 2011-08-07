@@ -226,7 +226,7 @@ public class SearchService extends Service {
 					
 				Mapping temp = new Mapping();
 				temp.setWord(code);
-				code = code.trim().toLowerCase();
+				code = code.toLowerCase();
 				
 				temp.setCode(code);
 				result.add(temp);
