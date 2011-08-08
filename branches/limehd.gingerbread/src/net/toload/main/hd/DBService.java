@@ -41,7 +41,6 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.limesettings.LIMEInitial;
 import net.toload.main.hd.limesettings.LIMEMappingLoading;
-import net.toload.main.hd.limesettings.LIMEMenu;
 
 import android.app.Notification;
 import android.app.NotificationManager;
