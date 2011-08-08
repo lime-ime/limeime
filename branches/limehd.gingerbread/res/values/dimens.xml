@@ -18,7 +18,7 @@
 */
 -->
 <resources>
-    <dimen name="max_height_for_fullscreen">1.4in</dimen>
+    <dimen name="max_height_for_fullscreen">2.5in</dimen>
     <dimen name="phone_key_height">48dip</dimen>
     <dimen name="key_height">54dip</dimen>
     <dimen name="key_height_2">40dip</dimen>
@@ -33,7 +33,8 @@
     <dimen name="notice_text_size">18sp</dimen>
   	<dimen name="key_hysteresis_distance">0.05in</dimen>
   	<dimen name="keyboard_vertical_correction">-0.05in</dimen>
- 	<dimen name="mini_keyboard_vertical_correction">-0.325in</dimen>
+  	<dimen name="mini_keyboard_vertical_correction">-0.05in</dimen>
+<!--  	<dimen name="mini_keyboard_vertical_correction">-0.325in</dimen> -->
     <dimen name="mini_keyboard_slide_allowance">0.553in</dimen>
     <dimen name="key_preview_height">80sp</dimen>
     <dimen name="spacebar_preview_text_size">25sp</dimen>

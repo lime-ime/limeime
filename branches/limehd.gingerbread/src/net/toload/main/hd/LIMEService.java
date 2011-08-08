@@ -427,8 +427,9 @@ public class LIMEService extends InputMethodService implements
 		DisplayMetrics dm = getResources().getDisplayMetrics();
 		float displayHeight = dm.heightPixels;
 		// If the display is more than X inches high, don't go to fullscreen mode
-		float max = getResources().getDimension(R.dimen.max_height_for_fullscreen); //1.4in here
-		if(DEBUG) Log.i("onEvaluateFullScreenMode", "DisplayHeight:"+displayHeight+" limit:" + max );
+		float max = getResources().getDimension(R.dimen.max_height_for_fullscreen);
+		//if(DEBUG) 
+			Log.i(TAG, "onEvaluateFullScreenMode() DisplayHeight:"+displayHeight+" limit:" + max );
 		if (displayHeight > max && this.getMaxWidth() > 500) {
 			return false;
 		} else {
@@ -1691,7 +1692,7 @@ public class LIMEService extends InputMethodService implements
 				||(primaryCode== KEYCODE_SPACE && 
 						keyboardSelection.equals("phonetic") && !mLIMEPref.getParameterBoolean("doLDPhonetic", false) )
 				||(primaryCode== KEYCODE_SPACE && 
-						keyboardSelection.equals("phonetic") && mComposing.toString().endsWith(" "))
+						keyboardSelection.equals("phonetic") && (mComposing.toString().endsWith(" ")|| mComposing.length()==0 ))
 				|| primaryCode == KEYCODE_ENTER) ){
 			
 			if ( mCandidateView != null && mCandidateView.isShown()){ 
