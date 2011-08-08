@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="net.toload.main.hd" android:versionName="3.3.3" android:versionCode="225">
+	package="net.toload.main.hd" android:versionName="3.3.3" android:versionCode="226">
 
 	<uses-permission android:name="android.permission.VIBRATE" />
 	<uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
@@ -20,7 +20,7 @@
 	<application android:icon="@drawable/icon" android:label="@string/ime_name">
 
 		<!-- LIME Services -->
-		<service android:name=".LIMEService" android:permission="android.permission.BIND_INPUT_METHOD">
+		<service android:permission="android.permission.BIND_INPUT_METHOD" android:name="LIMEService">
 			<intent-filter>
 				<action android:name="android.view.InputMethod" />
 			</intent-filter>
@@ -28,30 +28,30 @@
 		</service>
 
 		<!-- LIME Services -->
-		<service android:name=".SearchService">
+		<service android:name="SearchService">
 			<intent-filter>
 				<action android:name="net.toload.main.hd.ISearchService"></action>
 			</intent-filter>
 		</service>
-		<service android:name=".DBService">
+		<service android:name="DBService">
 			<intent-filter>
 				<action android:name="net.toload.main.hd.IDBService"></action>
 			</intent-filter>
 		</service>
 
-		<activity android:label="@string/ime_setting" android:configChanges="keyboard|keyboardHidden|orientation" android:name=".limesettings.LIMEMenu">
+		<activity android:label="@string/ime_setting" android:configChanges="keyboard|keyboardHidden|orientation" android:name="LIMEMenu">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>		
-		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name=".limesettings.LIMEInitial">
+		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEInitial">
 		</activity>
-		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name=".limesettings.LIMEIMSetting">
+		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEIMSetting">
 		</activity>
-		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name=".limesettings.LIMEMappingSetting">
+		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEMappingSetting">
 		</activity>
-		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name=".limesettings.LIMEPreference">
+		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreference">
 		</activity>
 		
 		<activity android:theme="@android:style/Theme.Dialog" android:configChanges="keyboard|keyboardHidden|orientation" android:name=".limesettings.LIMEMappingLoading"></activity>

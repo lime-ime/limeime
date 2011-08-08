@@ -37,7 +37,6 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.Mapping;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.limedb.LimeHanConverter;
-import net.toload.main.hd.limesettings.LIMEMenu;
 
 //import net.toload.main.hd.SearchService.SearchServiceImpl;
 

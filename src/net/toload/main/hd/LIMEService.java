@@ -1401,7 +1401,7 @@ public class LIMEService extends InputMethodService implements
 							mComposing= mComposing.delete(0, firstMatched.getCode().length());
 							//Log.i(TAG, "commitedtype(): new mComposing:" +mComposing);
 							if(!mComposing.toString().equals(" ")){
-								if(mComposing.toString().startsWith(""))
+								if(mComposing.toString().startsWith(" "))
 									mComposing= mComposing.deleteCharAt(0);
 								inputConnection.setComposingText(mComposing, 1);
 								updateCandidates();

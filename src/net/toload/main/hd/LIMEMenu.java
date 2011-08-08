@@ -18,12 +18,15 @@
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package net.toload.main.hd.limesettings;
+package net.toload.main.hd;
 
 import java.io.File;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
+import net.toload.main.hd.limesettings.LIMEIMSetting;
+import net.toload.main.hd.limesettings.LIMEInitial;
+import net.toload.main.hd.limesettings.LIMEPreference;
 
 import android.app.AlertDialog;
 import android.app.TabActivity;

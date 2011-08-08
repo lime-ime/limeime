@@ -20,6 +20,7 @@
 
 package net.toload.main.hd.limesettings;
 
+import net.toload.main.hd.LIMEMenu;
 import net.toload.main.hd.R;
 import net.toload.main.hd.IDBService;
 import android.app.Activity;
