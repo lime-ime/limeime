@@ -259,6 +259,7 @@ public class LIMEService extends InputMethodService implements
 	public void onCreate() {
 
 		if(DEBUG) Log.i(TAG, "OnCreate()");
+		
 		super.onCreate();
 
 		initialViewAndSwitcher();
@@ -1825,42 +1826,48 @@ public class LIMEService extends InputMethodService implements
 		
 		String activeKeyboardState = mLIMEPref.getSelectedKeyboardState();
 		
-		if(mActiveKeyboardState.length()>0 && mActiveKeyboardState.equals(activeKeyboardState) ) return;
-		
-		mActiveKeyboardState = activeKeyboardState;
-		
-		String[] s = activeKeyboardState.toString().split(";");
+		if(!(mActiveKeyboardState.length()>0 && mActiveKeyboardState.equals(activeKeyboardState))) {
 
-		keyboardList.clear();
-		keyboardListCodes.clear();
-		keyboardShortnames.clear();
+			mActiveKeyboardState = activeKeyboardState;
 
-		for (int i = 0; i < s.length; i++) {
-			int index = Integer.parseInt(s[i]);
+			String[] s = activeKeyboardState.toString().split(";");
 
-			if (index < items.length) {
-				keyboardList.add(items[index].toString());
-				keyboardShortnames.add(shortNames[index].toString());
-				keyboardListCodes.add(codes[index].toString());
-				if(DEBUG) Log.i(TAG, "activekeyboard["+index+"] = "+ codes[index].toString() +" ;"+ shortNames[index].toString());
-			} else {
-				break;
+			keyboardList.clear();
+			keyboardListCodes.clear();
+			keyboardShortnames.clear();
+
+			for (int i = 0; i < s.length; i++) {
+				int index = Integer.parseInt(s[i]);
+
+				if (index < items.length) {
+					keyboardList.add(items[index].toString());
+					keyboardShortnames.add(shortNames[index].toString());
+					keyboardListCodes.add(codes[index].toString());
+					if(DEBUG) 
+						Log.i(TAG, "buildActiveKeyboardList(): activekeyboard["+index+"] = "
+								+ codes[index].toString() +" ;"+ shortNames[index].toString());
+				} else {
+					break;
+				}
 			}
 		}
-
+		if(DEBUG) Log.i(TAG, "curreneKeyboard:" + keyboardSelection);
 		// check if the selected keybaord is in active keybaord list.
 		boolean matched = false;
 		for (int i = 0; i < keyboardListCodes.size(); i++) {
 			if (keyboardSelection.equals(keyboardListCodes.get(i))) {
+				if(DEBUG) Log.i(TAG, "buildActiveKeyboardList(): activekeyboard["+i+"] matches current keyboard: "+ keyboardSelection);
 				matched = true;
 				break;
 			}
 		}
-		if (!matched) {
+		if (!matched && SearchSrv!=null ) {
 			// if the selected keyboard is not in the active keyboard list.
 			// set the keyboard to the first active keyboard
+			//if(DEBUG) Log.i(TAG, "currene keyboard is not in active list, reset to :" +  keyboardListCodes.get(0));
+			
 			keyboardSelection = keyboardListCodes.get(0);
-			initialKeyboard();
+			switchKeyboard();
 		}
 
 	}
@@ -2431,6 +2438,8 @@ public class LIMEService extends InputMethodService implements
 
 	@SuppressWarnings("unchecked")
 	private void initialViewAndSwitcher() {
+		if(DEBUG)
+			Log.i(TAG, "initialViewAndSwitcher()");
 
 		// Check if mInputView == null;
 		if (mInputView == null) {
@@ -2461,9 +2470,14 @@ public class LIMEService extends InputMethodService implements
 		if(DEBUG) 
 			Log.i("LIMEService", "initialKeyboard()");
 		
-		buildActiveKeyboardList();
-		initialViewAndSwitcher();
 		
+		initialViewAndSwitcher();
+		buildActiveKeyboardList();
+		switchKeyboard();
+		
+	}
+
+	private void switchKeyboard(){
 		onIM = true;
 		mEnglishOnly = false;
 
@@ -2512,21 +2526,20 @@ public class LIMEService extends InputMethodService implements
 		}
 
 		try {
-			String tablename = new String(keyboardSelection);
+			String tablename = keyboardSelection;
 			if (tablename.equals("custom") || tablename.equals("phone")) {
 				tablename = "custom";
 			}
 			//Jeremy '11,6,10 pass hasnumbermapping and hassymbolmapping to searchservice for selkey validation.
-			if(DEBUG)
-				Log.i("LIMEService:initialkeyboard()","current IM:" + 
-							keyboardSelection+" hasnumbermapping:" +hasNumberMapping);
+			//if(DEBUG)
+				Log.i(TAG, "switchKeyboard() current keyboard:" + 
+						tablename+" hasnumbermapping:" +hasNumberMapping + " hasSymbolMapping:" + hasSymbolMapping);
+		
 			SearchSrv.setTablename(tablename, hasNumberMapping, hasSymbolMapping);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
 	}
-
-	
 	
 
 	private boolean handleSelkey(int primaryCode, int[] keyCodes){
