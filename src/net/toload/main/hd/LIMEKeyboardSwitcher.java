@@ -266,13 +266,17 @@ public class LIMEKeyboardSwitcher {
     	mIsShifted = isShift;
     	if(mode!=0) mMode = mode;
     	
-    	String imcode = imHm.get(code); 
+    	String imcode = "";
+    	if(imHm != null) imcode = imHm.get(code); 
     	
     	if(imcode == null || imcode.equals("") || imcode.equals("custom")){
     		imcode = "lime";
     	}
     	
-    	KeyboardObj kobj = kbHm.get(imcode);
+    	KeyboardObj kobj=null;
+    	
+    	if(kbHm!=null) kobj=kbHm.get(imcode);
+    	
     	KeyboardId kid = null;
     	
     	if(kobj != null){
