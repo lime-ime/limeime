@@ -487,12 +487,12 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         
         isAPIpre8 = Integer.parseInt(android.os.Build.VERSION.SDK) < 8;  //Jeremy '11,8,7 detect API level and disable multi-touch API for API leve 7
         
-        int screenLayout = res.getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK; 
+        /*int screenLayout = res.getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK; 
         boolean large = screenLayout == Configuration.SCREENLAYOUT_SIZE_LARGE;
-        boolean xlarge = screenLayout == Configuration.SCREENLAYOUT_SIZE_XLARGE;
+        boolean xlarge = screenLayout == Configuration.SCREENLAYOUT_SIZE_XLARGE;*/
         
-        isLargeScreen = large || xlarge;
-        	//true;
+        isLargeScreen = true; //large || xlarge;  //Force turn off fling selection now.
+        	
         
 
         mPreviewPopup = new PopupWindow(context);
