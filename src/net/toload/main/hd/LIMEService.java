@@ -1383,7 +1383,24 @@ public class LIMEService extends InputMethodService implements
 						SearchSrv.rQuery(firstMatched.getWord());
 						
 						// Jeremy '11,7,28 for continuous typing (LD) 
-						if(mComposing.length() > firstMatched.getCode().length()){
+						boolean composingNotFinish = false;
+						String commitedCode = firstMatched.getCode();
+						int commitedCodeLength=firstMatched.getCode().length();
+						if(keyboardSelection.equals("phonetic") &&
+								mComposing.length() >= firstMatched.getCode().length()){
+								String strippedCode = firstMatched.getCode().trim().replaceAll("[3467]", "");
+								commitedCode = strippedCode;
+							if(mComposing.toString().contains(firstMatched.getCode())){
+								composingNotFinish = true;
+							}else if(mComposing.toString().contains(strippedCode)){
+								composingNotFinish = true;
+							}
+							
+						}else if(mComposing.length() > firstMatched.getCode().length()){
+							composingNotFinish = true;
+						}
+						
+						if(composingNotFinish){
 							if(LDComposingBuffer.length()==0){
 								//starting LD process
 								LDComposingBuffer = mComposing.toString();
@@ -1398,7 +1415,7 @@ public class LIMEService extends InputMethodService implements
 										". just commited code=" + firstMatched.getCode());
 								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), firstMatched.getWord(), firstMatched.getScore(), false);
 							}
-							mComposing= mComposing.delete(0, firstMatched.getCode().length());
+							mComposing= mComposing.delete(0, commitedCodeLength);
 							//Log.i(TAG, "commitedtype(): new mComposing:" +mComposing);
 							if(!mComposing.toString().equals(" ")){
 								if(mComposing.toString().startsWith(" "))
