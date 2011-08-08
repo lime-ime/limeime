@@ -1689,7 +1689,7 @@ public class LIMEService extends InputMethodService implements
 		} else if (onIM &&  
 				((primaryCode== KEYCODE_SPACE && !keyboardSelection.equals("phonetic"))
 				||(primaryCode== KEYCODE_SPACE && 
-						keyboardSelection.equals("phonetic") && Integer.parseInt(mLIMEPref.getParameterString("kbversion")) < 333 )
+						keyboardSelection.equals("phonetic") && !mLIMEPref.getParameterBoolean("doLDPhonetic", false) )
 				||(primaryCode== KEYCODE_SPACE && 
 						keyboardSelection.equals("phonetic") && mComposing.toString().endsWith(" "))
 				|| primaryCode == KEYCODE_ENTER) ){

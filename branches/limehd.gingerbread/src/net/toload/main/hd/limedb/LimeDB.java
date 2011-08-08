@@ -305,8 +305,46 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 	}
 	
+	private void checkCode3RIndexAndRecsordsInPhonetic(){
+		//mLIMEPref.setParameter("checkLDPhonetic", "");
+		if (DEBUG)
+			Log.i(TAG, "checkCode3RIndexAndRecsordsInPhonetic(): checked:" 
+					+ mLIMEPref.getParameterString("checkLDPhonetic") 
+					+ " has valid code3r index and records:" + mLIMEPref.getParameterBoolean("doLDPhonetic", false));
+		String doLDPhonetic = mLIMEPref.getParameterString("checkLDPhonetic", "");
+		if(!doLDPhonetic.equals("done")){
+			SQLiteDatabase db = null;
+			String dbtarget = mLIMEPref.getParameterString("dbtarget");
+			String dblocation = "";
+			if(dbtarget.equals("sdcard")){
+				dblocation = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
+			}else{
+				dblocation = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
+			}
+			db = SQLiteDatabase.openDatabase(dblocation, null, SQLiteDatabase.OPEN_READWRITE);
+			Cursor cursor = db.query("sqlite_master", null, "type='index' and name = 'phonetic_idx_code3r'", 
+					null, null, null, null);
+			boolean hasIndex = false, hasValidRecords = false;
+			if(cursor.moveToFirst()){
+				Log.d(TAG, "checkLDPhonetic(), code3r index is exist!!");
+				hasIndex =true;
+			}
+			cursor = db.query("phonetic", null, "code3r='ru'", null, null, null, null);
+			if(cursor.moveToFirst()){
+				Log.d(TAG, "checkLDPhonetic(), code3r has vaid records.!!");
+				hasValidRecords = true;
+			}
+			
+			mLIMEPref.setParameter("checkLDPhonetic", "done");
+			mLIMEPref.setParameter("doLDPhonetic", hasIndex && hasValidRecords);
+			
+		}
+	}
+	
 	public void updateDBVersion(){
-		
+			
+			checkCode3RIndexAndRecsordsInPhonetic();
+			
 			String kbversion = mLIMEPref.getParameterString("kbversion");
 
 			// Upgrade DB version below 330
@@ -330,7 +368,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						ContentValues 	cv = new ContentValues();
 						cv.put("code", "limenumsym");
 						cv.put("name", "LIMENUMSYM");
-						cv.put("desc", "LIME+�詨�蝚西��萇");
+						cv.put("desc", "LIME 預設鍵盤");
 						cv.put("type", "phone");
 						cv.put("image", "lime_number_symbol_keyboard_priview");
 						cv.put("imkb", "lime_number_symbol");
@@ -1237,7 +1275,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(softKeyboard) sort = mLIMEPref.getSortSuggestions();
 		else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
 		isPhysicalKeyboardPressed = !softKeyboard;
-		//if(DEBUG) 
+		if(DEBUG) 
 			Log.i(TAG, "getmapping(): code:"+ code + "| kbversion" +mLIMEPref.getParameterString("kbversion"));
 
 		// Add by Jeremy '10, 3, 27. Extension on multi table query.
@@ -1260,7 +1298,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					Cursor cursor = null;
 					// Jeremy '11,8,2 Query code3r instead of code for code contains no tone symbols
 					String selectClause;
-					if(tablename.equals("phonetic")&&  Integer.parseInt(mLIMEPref.getParameterString("kbversion")) >= 333 &&
+					if(tablename.equals("phonetic")&&  mLIMEPref.getParameterBoolean("doLDPhonetic", false) &&
 							!(code.contains("3")||code.contains("4")
 							||code.contains("6")||code.contains("7")|| code.endsWith(" "))){
 						selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
@@ -1268,7 +1306,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
 					}
 					
-					//if(DEBUG) 
+					if(DEBUG) 
 						Log.i(TAG, "getMapping(): selectClause=" + selectClause  );
 					// Jeremy '11,8,5 limit initial query to limited records
 					String limitClause = null;
@@ -1623,7 +1661,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				//if(DEBUG) 
 					Log.i(TAG, "expandDualCode(): processing dualcode: " + dualcode + "|");
 				String codeCol = FIELD_CODE;
-				if(tablename.equals("phonetic")&&  Integer.parseInt(mLIMEPref.getParameterString("kbversion")) >= 333 &&
+				if(tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) &&
 						!(dualcode.contains("3")||dualcode.contains("4")
 						  ||dualcode.contains("6")||dualcode.contains("7")|| dualcode.endsWith(" ") )){
 					codeCol = FIELD_CODE3R;
@@ -1866,9 +1904,9 @@ public class LimeDB extends SQLiteOpenHelper {
 					if(DEBUG) Log.i(TAG, "loadfile(), table = " + table +" kbversion" + 
 							Integer.parseInt(mLIMEPref.getParameterString("kbversion")));
 					if(table.equals("phonetic") &&
-							Integer.parseInt(mLIMEPref.getParameterString("kbversion")) < 333 ) {
-						if(DEBUG) Log.i(TAG, "loadfile(), update kbversion to 333");
-						mLIMEPref.setParameter("kbversion","333");
+							!mLIMEPref.getParameterBoolean("doLDPhonetic", false) ) {
+						if(DEBUG) Log.i(TAG, "loadfile(), build code3r index here.");
+						mLIMEPref.setParameter("doLDPhonetic", true);
 						db.execSQL("CREATE INDEX phonetic_idx_code3r ON phonetic(code3r)");
 						
 					}
@@ -2493,7 +2531,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 			db.close();
 		} catch (Exception e) {
-			Log.i("ART","Cannot get IM List : " + e );
+			Log.i(TAG,"getImList(): Cannot get IM List : " + e );
 		}
 		return result;
 	}
