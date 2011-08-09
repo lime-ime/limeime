@@ -596,7 +596,7 @@ public class LIMEService extends InputMethodService implements
 			}
 			if ((attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_COMPLETE) != 0) {
 				mPredictionOn = false;
-				// mCompletionOn = true && isFullscreenMode();
+				mCompletionOn = isFullscreenMode();
 			}
 			if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD
 					|| variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
@@ -748,8 +748,8 @@ public class LIMEService extends InputMethodService implements
 						e.printStackTrace();
 					}
 			}
-			setSuggestions(stringList, isPressPhysicalKeyboard && mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
-					, true, "1234567890");
+			// full-screen mode will never use with physical keyboard
+			setSuggestions(stringList, false , true, "");
 		}
 	}
 
@@ -1386,12 +1386,12 @@ public class LIMEService extends InputMethodService implements
 						
 						// Jeremy '11,7,28 for continuous typing (LD) 
 						boolean composingNotFinish = false;
-						String commitedCode = firstMatched.getCode();
+						//String commitedCode = firstMatched.getCode();
 						int commitedCodeLength=firstMatched.getCode().length();
 						if(keyboardSelection.equals("phonetic") &&
 								mComposing.length() >= firstMatched.getCode().length()){
 								String strippedCode = firstMatched.getCode().trim().replaceAll("[3467]", "");
-								commitedCode = strippedCode;
+								//commitedCode = strippedCode;
 							if(mComposing.toString().contains(firstMatched.getCode())){
 								composingNotFinish = true;
 							}else if(mComposing.toString().contains(strippedCode)){
