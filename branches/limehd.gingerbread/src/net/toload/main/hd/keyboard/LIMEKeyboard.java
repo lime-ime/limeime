@@ -119,6 +119,10 @@ public class LIMEKeyboard extends Keyboard {
             mSpaceKey = key;
             break;
         }
+        
+        // 09/Aug 2011, by redraw the key to construct the customer icon set.
+        // Getting Customer ICON SET
+        // key.icon = new CustomDrawable("A");
         return key;
     }
     
