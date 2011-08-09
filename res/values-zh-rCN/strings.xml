@@ -382,6 +382,7 @@
     <string name="l3_message_table_abort_confirm">您是否要中断载入字根档?</string>
     <string name="l3_initial_download_database">下载数据库</string>
     <string name="l3_initial_download_failed">数据转换错误, 请重置数据库再重新下载!</string>
+    <string name="l3_initial_download_write_sdcard_failed">请确定SDCARD已挂载, 重置数据库再重新下载!</string>
     <string name="l3_initial_backup_database">备份数据库</string>
     <string name="l3_initial_backup_start">开始备份数据库</string>
     <string name="l3_initial_backup_end">数据库备份完成</string>

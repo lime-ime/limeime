@@ -381,6 +381,7 @@
     <string name="l3_message_table_abort_confirm">您是否要中斷載入字根檔?</string>
     <string name="l3_initial_download_database">下載資料庫</string>
     <string name="l3_initial_download_failed">資料轉換錯誤, 請重置資料庫再重新下載!</string>
+    <string name="l3_initial_download_write_sdcard_failed">請確定SDCARD已掛載, 重置資料庫再重新下載!</string>
     <string name="l3_initial_backup_database">備份資料庫</string>
     <string name="l3_initial_backup_start">開始備份資料庫</string>
     <string name="l3_initial_backup_end">資料庫備份完成</string>
