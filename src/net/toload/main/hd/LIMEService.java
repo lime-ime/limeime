@@ -428,7 +428,7 @@ public class LIMEService extends InputMethodService implements
 		float displayHeight = dm.heightPixels;
 		// If the display is more than X inches high, don't go to fullscreen mode
 		float max = getResources().getDimension(R.dimen.max_height_for_fullscreen);
-		//if(DEBUG) 
+		if(DEBUG) 
 			Log.i(TAG, "onEvaluateFullScreenMode() DisplayHeight:"+displayHeight+" limit:" + max );
 		if (displayHeight > max && this.getMaxWidth() > 500) {
 			return false;
@@ -2539,7 +2539,7 @@ public class LIMEService extends InputMethodService implements
 				tablename = "custom";
 			}
 			//Jeremy '11,6,10 pass hasnumbermapping and hassymbolmapping to searchservice for selkey validation.
-			//if(DEBUG)
+			if(DEBUG)
 				Log.i(TAG, "switchKeyboard() current keyboard:" + 
 						tablename+" hasnumbermapping:" +hasNumberMapping + " hasSymbolMapping:" + hasSymbolMapping);
 		
