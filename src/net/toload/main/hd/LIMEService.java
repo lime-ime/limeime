@@ -725,31 +725,13 @@ public class LIMEService extends InputMethodService implements
 	 * the completions ourself, since the editor can not be seen in that
 	 * situation.
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public void onDisplayCompletions(CompletionInfo[] completions) {
 		if (DEBUG)
 			Log.i("LIMEService:", "onDisplayCompletions()");
-		if (mCompletionOn) {
+		if (mCompletionOn){
 			mCompletions = completions;
-			if (completions == null) {
-				setSuggestions(null, false, false);
-				return;
-			}
-
-			LinkedList<Mapping> stringList = new LinkedList<Mapping>();
-			for (int i = 0; i < (completions != null ? completions.length : 0); i++) {
-				CompletionInfo ci = completions[i];
-				if (ci != null)
-					try {
-						stringList.addAll(SearchSrv.query(ci.getText()
-								.toString(), !isPressPhysicalKeyboard, true));
-					} catch (RemoteException e) {
-						e.printStackTrace();
-					}
-			}
-			// full-screen mode will never use with physical keyboard
-			setSuggestions(stringList, false , true, "");
+			if(mComposing.length()==0) updateDictionaryView();
 		}
 	}
 
@@ -2001,7 +1983,8 @@ public class LIMEService extends InputMethodService implements
 		if (mCandidateView != null) 			
 			mCandidateView.clear();
 
-		if (!mCompletionOn && mComposing.length() > 0) {
+		if (//!mCompletionOn && 
+				mComposing.length() > 0) {
 
 			LinkedList<Mapping> list = new LinkedList<Mapping>();
 
@@ -2024,8 +2007,7 @@ public class LIMEService extends InputMethodService implements
 					else if (selkeyOption ==2) 	selkey = mixedModeSelkey + " " +selkey;
 					
 					if(DEBUG) Log.i("LIMEService:updateCandidates()","display selkey:" + selkey);
-					
-					setSuggestions(list, isPressPhysicalKeyboard && mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
+										setSuggestions(list, isPressPhysicalKeyboard && mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
 							, true, selkey);
 					if(DEBUG) Log.i("updateCandidate", "list.size:"+list.size());
 				} else {
@@ -2151,16 +2133,29 @@ public class LIMEService extends InputMethodService implements
 					&& !tempMatched.getWord().equals("")) {
 
 				LinkedList<Mapping> list = new LinkedList<Mapping>();
+				//Jeremy '11,8,9 Insert completion suggestions from application 
+				//in front of related dictionary list in full-screen mode
+				if(mCompletionOn ){
+					for (int i = 0; i < (mCompletions != null ? mCompletions.length : 0); i++) {
+						CompletionInfo ci = mCompletions[i];
+						if (ci != null) {
+							Mapping temp = new Mapping();
+							temp.setWord(ci.getText().toString());
+							temp.setCode("");
+							temp.setDictionary(true);
+							list.add(temp);
+						}
+					}
+				}
 				// Modified by Jeremy '10,3 ,12 for more specific related word
 				// -----------------------------------------------------------
 				if (tempMatched != null && hasMappingList) {
 					list.addAll(SearchSrv.queryUserDic(tempMatched.getWord()));
 				}
 				// -----------------------------------------------------------
-
 				if (list.size() > 0) {
-					//templist = (LinkedList<Mapping>) list;
-					setSuggestions(list, isPressPhysicalKeyboard && mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
+					setSuggestions(list, isPressPhysicalKeyboard  && !isFullscreenMode()
+							&& mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
 							, true, "1234567890");
 				} else {
 					tempMatched = null;
@@ -2814,7 +2809,8 @@ public class LIMEService extends InputMethodService implements
 			return;
 		}
 		//if "has_more_records" selected, updatecandidate with getAllRecords set.
-		if(templist.get(index).getCode() != null && templist.get(index).getCode().equals("has_more_records")){
+		if(templist.get(index).getCode() != null 
+				&& templist.get(index).getCode().equals("has_more_records")){
 			this.updateCandidates(true);
 			return;
 		}
@@ -2825,24 +2821,16 @@ public class LIMEService extends InputMethodService implements
 		}
 
 		if (mCompletionOn && mCompletions != null && index >= 0
-				&& index < mCompletions.length && mEnglishOnly) {
+				&& firstMatched.isDictionary()
+				&& index < mCompletions.length ) {
 			CompletionInfo ci = mCompletions[index];
 			getCurrentInputConnection().commitCompletion(ci);
 			if (DEBUG)
-				Log.i("LIMEService:", "pickSuggestionManually():mCompletionOn:" + mCompletionOn);
+				Log.i(TAG, "pickSuggestionManually():mCompletionOn:" + mCompletionOn);
 
-		} else if ((mComposing.length() > 0 ||firstMatched != null && firstMatched.isDictionary()) && onIM) {
-			// Log.i("ART","When user pick suggested word which is not from dictionary");
+		} else if ((mComposing.length() > 0 
+				||firstMatched != null && firstMatched.isDictionary()) && onIM) {
 			commitTyped(getCurrentInputConnection());
-			//Moved to cmmitedTyped();
-//			this.firstMatched = null;
-//			//this.hasFirstMatched = false;
-//			if(templist!=null) templist.clear();
-//			updateDictionaryView();
-//		} else if (firstMatched != null && firstMatched.isDictionary()&& onIM) {
-//			// Log.i("ART","When user pick suggested word which is from dictionary");
-//			commitTyped(getCurrentInputConnection());
-//			updateDictionaryView();
 		} else if (mLIMEPref.getEnglishEnable() && tempEnglishList != null
 					&& tempEnglishList.size() > 0) {
 				
