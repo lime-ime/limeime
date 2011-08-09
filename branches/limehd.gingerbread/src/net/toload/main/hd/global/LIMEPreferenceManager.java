@@ -143,7 +143,7 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("candidate_suggestion", true);
 	}
 	
-	public boolean getEnglishEnable(){
+	public boolean getEnglishPrediction(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("english_dictionary_enable", true);
 	}
@@ -153,7 +153,7 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("physical_keyboard_enable", true);
 	}
 	
-	public boolean getEnglishEnablePhysicalKeyboard(){
+	public boolean getEnglishPredictionOnPhysicalKeyboard(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("english_dictionary_physical_keyboard", false);
 	}

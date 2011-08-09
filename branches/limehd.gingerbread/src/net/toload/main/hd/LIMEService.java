@@ -731,7 +731,13 @@ public class LIMEService extends InputMethodService implements
 			Log.i("LIMEService:", "onDisplayCompletions()");
 		if (mCompletionOn){
 			mCompletions = completions;
-			if(mComposing.length()==0) updateDictionaryView();
+			if(onIM){
+				if(mComposing.length()==0) updateRelatedWord();
+			} 
+			if(mEnglishOnly && !mPredictionOn) {
+				setSuggestions(buildCompletionList(), false, true);
+			}
+				
 		}
 	}
 
@@ -894,7 +900,7 @@ public class LIMEService extends InputMethodService implements
 			 * updateEnglishDictionaryView(); } }
 			 */
 
-			if (mLIMEPref.getEnglishEnable()) {
+			if (mLIMEPref.getEnglishPrediction()) {
 				if (mComposing.length() > 0 || tempEnglishWord.length() > 0) {
 					onKey(Keyboard.KEYCODE_DELETE, null);
 					return true;
@@ -949,10 +955,10 @@ public class LIMEService extends InputMethodService implements
 					}
 				}
 			}else{
-				if (mLIMEPref.getEnglishEnable() && mPredictionOn
-						&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishEnablePhysicalKeyboard())){
+				if (mLIMEPref.getEnglishPrediction() && mPredictionOn
+						&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())){
 					resetTempEnglishWord();
-					this.updateEnglishDictionaryView();
+					this.updateEnglishPrediction();
 				}
 			}
 			break;
@@ -995,10 +1001,10 @@ public class LIMEService extends InputMethodService implements
 					} 
 				} else {
 					//if (tempEnglishList != null && tempEnglishList.size() > 1	&& tempEnglishWord != null && tempEnglishWord.length() > 0) {
-					if(mLIMEPref.getEnglishEnable()){
+					if(mLIMEPref.getEnglishPrediction()){
 						resetTempEnglishWord();
 					}
-					this.updateEnglishDictionaryView();
+					this.updateEnglishPrediction();
 				}
 				break;
 			}
@@ -1459,7 +1465,7 @@ public class LIMEService extends InputMethodService implements
 					if(templist!=null) templist.clear();
 				}
 				if(onIM)
-					updateDictionaryView();
+					updateRelatedWord();
 
 			}
 		} catch (Exception e) {
@@ -1610,7 +1616,7 @@ public class LIMEService extends InputMethodService implements
 			Log.i(TAG, "OnKey(): primaryCode:" + primaryCode
 					+ " hasShiftPress:" + hasShiftPress);
 		
-		if (mLIMEPref.getEnglishEnable()
+		if (mLIMEPref.getEnglishPrediction()
 				&& primaryCode != Keyboard.KEYCODE_DELETE) {
 			
 
@@ -1693,11 +1699,11 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void handleSeparator(int primaryCode) {
-		if (mLIMEPref.getEnglishEnable() && mPredictionOn
-				&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishEnablePhysicalKeyboard())){
+		if (mLIMEPref.getEnglishPrediction() && mPredictionOn
+				&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())){
 			resetTempEnglishWord();
 		}
-		this.updateEnglishDictionaryView();
+		this.updateEnglishPrediction();
 		sendKeyChar((char)primaryCode);
 		
 	}
@@ -2040,9 +2046,9 @@ public class LIMEService extends InputMethodService implements
 	 * Update English dictionary view
 	 */
 	@SuppressWarnings("unchecked")
-	private void updateEnglishDictionaryView() {
+	private void updateEnglishPrediction() {
 
-		if (mLIMEPref.getEnglishEnable()) {
+		if (mPredictionOn && mLIMEPref.getEnglishPrediction()) {
 
 			try {
 
@@ -2119,7 +2125,7 @@ public class LIMEService extends InputMethodService implements
 	 * Update dictionary view
 	 */
 	@SuppressWarnings("unchecked")
-	private void updateDictionaryView() {
+	private void updateRelatedWord() {
 
 		// Also use this to control whether need to display the english
 		// suggestions words.
@@ -2136,16 +2142,7 @@ public class LIMEService extends InputMethodService implements
 				//Jeremy '11,8,9 Insert completion suggestions from application 
 				//in front of related dictionary list in full-screen mode
 				if(mCompletionOn ){
-					for (int i = 0; i < (mCompletions != null ? mCompletions.length : 0); i++) {
-						CompletionInfo ci = mCompletions[i];
-						if (ci != null) {
-							Mapping temp = new Mapping();
-							temp.setWord(ci.getText().toString());
-							temp.setCode("");
-							temp.setDictionary(true);
-							list.add(temp);
-						}
-					}
+					list.addAll(buildCompletionList());
 				}
 				// Modified by Jeremy '10,3 ,12 for more specific related word
 				// -----------------------------------------------------------
@@ -2165,6 +2162,21 @@ public class LIMEService extends InputMethodService implements
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private List<Mapping> buildCompletionList() {
+		LinkedList<Mapping> list = new LinkedList<Mapping>();
+		for (int i = 0; i < (mCompletions != null ? mCompletions.length : 0); i++) {
+			CompletionInfo ci = mCompletions[i];
+			if (ci != null) {
+				Mapping temp = new Mapping();
+				temp.setWord(ci.getText().toString());
+				temp.setCode("");
+				temp.setDictionary(true);
+				list.add(temp);
+			}
+		}
+		return list;
 	}
 	public void setSuggestions(List<Mapping> suggestions, boolean showNumber,
 			boolean typedWordValid, String diplaySelkey){
@@ -2257,13 +2269,13 @@ public class LIMEService extends InputMethodService implements
 				updateCandidates();
 			}
 			try {
-				if (mLIMEPref.getEnglishEnable()&& mPredictionOn
-					&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishEnablePhysicalKeyboard() )//mPredictionOnPhysicalKeyboard)
+				if (mLIMEPref.getEnglishPrediction()&& mPredictionOn
+					&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard() )//mPredictionOnPhysicalKeyboard)
 					) {
 					if (tempEnglishWord != null && tempEnglishWord.length() > 0) {
 						tempEnglishWord
 								.deleteCharAt(tempEnglishWord.length() - 1);
-						updateEnglishDictionaryView();
+						updateEnglishPrediction();
 					}
 					keyDownUp(KeyEvent.KEYCODE_DEL);
 				} else {
@@ -2712,16 +2724,16 @@ public class LIMEService extends InputMethodService implements
 				}
 			}
 
-			if (mLIMEPref.getEnglishEnable() && mPredictionOn
-					&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishEnablePhysicalKeyboard())
+			if (mLIMEPref.getEnglishPrediction() && mPredictionOn
+					&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())
 				) {
 				if (Character.isLetter((char) primaryCode)) {
 					this.tempEnglishWord.append((char) primaryCode);
-					this.updateEnglishDictionaryView();
+					this.updateEnglishPrediction();
 				}
 				else{ 
 					resetTempEnglishWord();
-					this.updateEnglishDictionaryView(); 
+					this.updateEnglishPrediction(); 
 				  }
 				
 			}
@@ -2796,7 +2808,9 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	public void pickDefaultCandidate() {
-		pickSuggestionManually(0);
+		//pickSuggestionManually(0);
+		if(mCandidateView!=null)
+			mCandidateView.takeSelectedSuggestion();
 	}
 
 	public void pickSuggestionManually(int index) {
@@ -2831,7 +2845,7 @@ public class LIMEService extends InputMethodService implements
 		} else if ((mComposing.length() > 0 
 				||firstMatched != null && firstMatched.isDictionary()) && onIM) {
 			commitTyped(getCurrentInputConnection());
-		} else if (mLIMEPref.getEnglishEnable() && tempEnglishList != null
+		} else if (mLIMEPref.getEnglishPrediction() && tempEnglishList != null
 					&& tempEnglishList.size() > 0) {
 				
 				getCurrentInputConnection().commitText(
@@ -2858,9 +2872,9 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	public void swipeRight() {
-		if (mCompletionOn) {
-			pickDefaultCandidate();
-		}
+		//if (mCompletionOn) {
+		pickDefaultCandidate();
+		//}
 	}
 
 	public void swipeLeft() {
