@@ -209,6 +209,13 @@ public class CandidateView extends View //implements View.OnClickListener
     		public boolean onScroll(MotionEvent e1, MotionEvent e2,
     				float distanceX, float distanceY) {
     			mScrolled = true;
+    			
+    			// Update full candidate list before scroll
+    			if(mSuggestions.get(mSuggestions.size()-1).getCode().equals("has_more_records"))
+    				mService.pickSuggestionManually(mSuggestions.size()-1);
+    			
+    			
+    			
     			int sx = getScrollX();
     			sx += distanceX;
     			if (sx < 0) {
