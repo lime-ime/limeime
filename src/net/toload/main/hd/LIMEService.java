@@ -1381,9 +1381,11 @@ public class LIMEService extends InputMethodService implements
 								String strippedCode = firstMatched.getCode().trim().replaceAll("[3467]", "");
 								//commitedCode = strippedCode;
 							if(mComposing.toString().contains(firstMatched.getCode())){
-								composingNotFinish = true;
+								if(mComposing.length() > firstMatched.getCode().length())
+									composingNotFinish = true;
 							}else if(mComposing.toString().contains(strippedCode)){
 								composingNotFinish = true;
+								commitedCodeLength = strippedCode.length();
 							}
 							
 						}else if(mComposing.length() > firstMatched.getCode().length()){
