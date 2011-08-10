@@ -481,7 +481,14 @@ public class CandidateView extends View //implements View.OnClickListener
             x += wordWidth;
         }
         mTotalWidth = x;
-       
+        
+        //Jeremy '11,8,11. If the candidate is within 1 page and has more records, get full records first.
+        if(mTotalWidth < this.getWidth() && 
+        		mSuggestions.get(mSuggestions.size()-1).getCode().equals("has_more_records")){
+        	mService.pickSuggestionManually(mSuggestions.size()-1);
+        	return;
+        }
+			
  
         // Moved from above by jeremy '10 3, 29. Paint mselectedindex in highlight here
         if (canvas != null && mSelectedIndex >=0) {
