@@ -20,10 +20,10 @@
 
 <resources>
     <dimen name="key_height">76dip</dimen>
-    <dimen name="candidate_stripe_height">48sp</dimen>
+    <dimen name="candidate_stripe_height">50sp</dimen>
     <dimen name="candidate_font_size">42sp</dimen>
     <dimen name="candidate_number_font_size">18sp</dimen>
-    <dimen name="candidate_vertical_padding">6sp</dimen>
+    <dimen name="candidate_vertical_padding">8sp</dimen>
     <dimen name="key_text_size">38dip</dimen>
     <dimen name="label_text_size">32dip</dimen>
 </resources>

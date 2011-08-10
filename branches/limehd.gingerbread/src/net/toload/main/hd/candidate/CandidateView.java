@@ -571,9 +571,9 @@ public class CandidateView extends View //implements View.OnClickListener
         mShowNumber = showNumber && isAndroid3;
         
         if(mShowNumber)
-        	X_GAP = (int) (mContext.getResources().getDimensionPixelSize(R.dimen.candidate_font_size)*0.25f);//13;
+        	X_GAP = (int) (mContext.getResources().getDimensionPixelSize(R.dimen.candidate_font_size)*0.35f);//13;
         else 
-        	X_GAP = (int) (mContext.getResources().getDimensionPixelSize(R.dimen.candidate_font_size)*0.2f);;
+        	X_GAP = (int) (mContext.getResources().getDimensionPixelSize(R.dimen.candidate_font_size)*0.25f);;
     
         if (suggestions != null) {
             mSuggestions = new LinkedList<Mapping>(suggestions);
