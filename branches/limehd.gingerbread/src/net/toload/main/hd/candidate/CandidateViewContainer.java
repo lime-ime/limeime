@@ -5,21 +5,27 @@ package net.toload.main.hd.candidate;
 import net.toload.main.hd.R;
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 
 public class CandidateViewContainer extends LinearLayout implements OnTouchListener {
 
-    private View mButtonLeft;
+    //private View mButtonLeft;
+	//private View mButtonLeftLayout;
     private View mButtonRight;
-    private View mButtonLeftLayout;
     private View mButtonRightLayout;
     private CandidateView mCandidates;
     
-    public CandidateViewContainer(Context screen, AttributeSet attrs) {
-        super(screen, attrs);
+    
+    public CandidateViewContainer(Context context, AttributeSet attrs) {
+        super(context, attrs);
+       
+        
     }
 
     public void initViews() {
@@ -40,14 +46,15 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
 
     @Override
     public void requestLayout() {
-/*        if (mCandidates != null) {
+        /*if (mCandidates != null) {
             int availableWidth = mCandidates.getWidth();
             int neededWidth = mCandidates.computeHorizontalScrollRange();
             int x = mCandidates.getScrollX();
             boolean leftVisible = x > 0;
             boolean rightVisible = x + availableWidth < neededWidth;
+            boolean rightVisible =  availableWidth < neededWidth;
             if (mButtonLeftLayout != null) {
-                mButtonLeftLayout.setVisibility(leftVisible ? VISIBLE : GONE);
+               mButtonLeftLayout.setVisibility(leftVisible ? VISIBLE : GONE);
             }
             if (mButtonRightLayout != null) {
                 mButtonRightLayout.setVisibility(rightVisible ? VISIBLE : GONE);
@@ -57,14 +64,16 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
     }
 
     public boolean onTouch(View v, MotionEvent event) {
-        /*if (event.getAction() == MotionEvent.ACTION_DOWN) {
+      /*  if (event.getAction() == MotionEvent.ACTION_DOWN) {
             if (v == mButtonRight) {
                 mCandidates.scrollNext();
-            } else if (v == mButtonLeft) {
-                mCandidates.scrollPrev();
+            	
+            	//mCandidates.showCandidatePopup();
+            	
             }
         }*/
         return false;
     }
+
     
 }

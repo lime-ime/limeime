@@ -101,6 +101,7 @@ public class CandidateView extends View //implements View.OnClickListener
 
     private int currentX;
     private int mColorNormal;
+    private int mColorInverted;
     private int mColorDictionary;
     private int mColorRecommended;
     private int mColorOther;
@@ -125,6 +126,7 @@ public class CandidateView extends View //implements View.OnClickListener
     
     private GestureDetector mGestureDetector;
     private final Context mContext;
+    private final boolean isAndroid3; //'11,8,11, Jeremy
     
    
  
@@ -140,8 +142,14 @@ public class CandidateView extends View //implements View.OnClickListener
     	super(context, attrs);
     	
     	mContext = context;
+    	 //Jeremy '11,8,11 detect API level and show keyboard number only in 3.0+ 
+    	isAndroid3 = Integer.parseInt(android.os.Build.VERSION.SDK) >11; 
     	
-    	mSelectionHighlight = context.getResources().getDrawable(
+    
+
+    	Resources r = context.getResources();
+    	
+    	mSelectionHighlight = r.getDrawable(
     			android.R.drawable.list_selector_background);
     	mSelectionHighlight.setState(new int[] {
     			android.R.attr.state_enabled,
@@ -149,11 +157,11 @@ public class CandidateView extends View //implements View.OnClickListener
     			android.R.attr.state_window_focused,
     			android.R.attr.state_pressed
     	});
-
-    	Resources r = context.getResources();
+    	
     	bgcolor = r.getColor(R.color.candidate_background);
 
     	mColorNormal = r.getColor(R.color.candidate_normal);
+    	mColorInverted = r.getColor(R.color.candidate_inverted);
     	mColorDictionary = r.getColor(R.color.candidate_dictionary);
     	mColorRecommended = r.getColor(R.color.candidate_recommended);
     	mColorOther = r.getColor(R.color.candidate_other);
@@ -185,13 +193,13 @@ public class CandidateView extends View //implements View.OnClickListener
     	mPaint = new Paint();
     	mPaint.setColor(mColorNormal);
     	mPaint.setAntiAlias(true);
-    	mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_height));
+    	mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_size));
     	mPaint.setStrokeWidth(0);
 
     	nPaint = new Paint();
     	nPaint.setColor(mColorNumber);
     	nPaint.setAntiAlias(true);
-    	nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_height));
+    	nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_size));
     	nPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
     	cPaint = new Paint();
@@ -499,15 +507,12 @@ public class CandidateView extends View //implements View.OnClickListener
             	
                 if(mSuggestions.get(i).isDictionary()){
                 	npaint.setColor(mColorRecommended);
-                	if(i == 0){
-                    	paint.setColor(mColorDictionary);
-                    } else if (i != 0) {
-                        paint.setColor(mColorDictionary);
-                    }
+                    paint.setColor(mColorDictionary);
                 }else{
                 	npaint.setColor(mColorOther);
                     if(i == 0){
-                    	paint.setColor(mColorRecommended);
+                    	if(mSelectedIndex == 0) paint.setColor(mColorInverted);
+                    	else paint.setColor(mColorRecommended);
                     } else if (i != 0) {
                         paint.setColor(mColorOther);
                     }
@@ -562,11 +567,14 @@ public class CandidateView extends View //implements View.OnClickListener
     }
     public void setSuggestions(List<Mapping> suggestions, boolean showNumber, boolean typedWordValid) {
         clear();
-        if(showNumber)
-        	X_GAP = 13;
+        
+        mShowNumber = showNumber && isAndroid3;
+        
+        if(mShowNumber)
+        	X_GAP = (int) (mContext.getResources().getDimensionPixelSize(R.dimen.candidate_font_size)*0.25f);//13;
         else 
-        	X_GAP = 10;
-        mShowNumber = showNumber;
+        	X_GAP = (int) (mContext.getResources().getDimensionPixelSize(R.dimen.candidate_font_size)*0.2f);;
+    
         if (suggestions != null) {
             mSuggestions = new LinkedList<Mapping>(suggestions);
 	       

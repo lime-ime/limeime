@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:baselineAligned="true" 
+  android:orientation="vertical" 
+  android:layout_width="match_parent" 
+  android:layout_height="match_parent"
+  android:background="@drawable/keyboard_suggest_strip">
+
+ <ScrollView 
+	android:id="@+id/sv"
+	android:layout_width="fill_parent"
+	android:layout_height="100dp"
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	>
+<!-- 	android:layout_x="0px"
+	android:layout_y="20px" -->
+
+
+	 <TextView
+			android:id="@+id/ctxtView"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:text="hello,world!"
+			android:textSize="20sp">
+
+	</TextView>
+<!--    <net.toload.main.hd.candidate.CandidatePopupView
+	android:background="@android:color/transparent"
+		android:id="@+id/CandidatePopupView"
+        android:layout_alignParentBottom="true"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        /> -->
+</ScrollView>
+
+<ImageButton android:id="@+id/closeButton"
+		android:background="@android:color/transparent"
+		android:src="@drawable/btn_close"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginLeft="8dp"
+		android:clickable="true" android:layout_gravity="bottom|right"/>
+</LinearLayout>
