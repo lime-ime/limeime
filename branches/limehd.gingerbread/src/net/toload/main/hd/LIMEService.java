@@ -708,15 +708,15 @@ public class LIMEService extends InputMethodService implements
 
 		// If the current selection in the text view changes, we should
 		// clear whatever candidate text we have.
-//		if (mComposing.length() > 0
-//				&& (newSelStart != candidatesEnd || newSelEnd != candidatesEnd)) {
-//			mComposing.setLength(0);
-//			updateCandidates();
-//			InputConnection ic = getCurrentInputConnection();
-//			if (ic != null) {
-//				ic.finishComposingText();
-//			}
-//		}
+		if (mComposing.length() > 0
+				&& (newSelStart != candidatesEnd || newSelEnd != candidatesEnd)) {
+			mComposing.setLength(0);
+			updateCandidates();
+			InputConnection ic = getCurrentInputConnection();
+			if (ic != null) {
+				ic.finishComposingText();
+			}
+		}
 	}
 
 	/**
