@@ -76,7 +76,7 @@
         <Key android:codes="110" android:keyLabel="n\nㄙ" />
         <Key android:codes="109" android:keyLabel="m\nㄩ" />
         <Key android:codes="44" android:keyLabel=",\nㄝ" />
-        <Key android:codes="46" android:keyLabel=".\nㄡ" android:iconPreview="@drawable/hint_popup" 
+        <Key android:codes="46" android:keyLabel=".\nㄡ"   
         	 android:popupKeyboard="@xml/popup_c_punctuation" />
         <Key android:codes="47" android:keyLabel="/\nㄥ" android:keyEdgeFlags="right"/>
     </Row>

@@ -58,6 +58,9 @@
 
         <!-- Layout resource for popup keyboards. -->
         <attr name="popupLayout" format="reference" />
+        
+          <!-- popup hint icon. -->
+        <attr name="popupHint" format="reference" />
 
         <attr name="shadowColor" format="color" />
         <attr name="shadowRadius" format="float" />

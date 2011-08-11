@@ -234,7 +234,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     // Distance from horizontal center of the key, proportional to key label text height.
     private final float KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR = 0.55f;
     private final String KEY_LABEL_HEIGHT_REFERENCE_CHAR = "H";
-
+    
+    private Drawable mPopupHint;//Jeremy /11,8,11 
+    
     private boolean isLargeScreen; // Jeremy //11,8,8 used for disable fling selection on minipopup keyboard for larger screen
     
     private final UIHandler mHandler = new UIHandler();
@@ -446,6 +448,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 break;
             case R.styleable.LIMEKeyboardBaseView_popupLayout:
                 mPopupLayout = a.getResourceId(attr, 0);
+                break;
+            case R.styleable.LIMEKeyboardBaseView_popupHint:
+                mPopupHint = a.getDrawable(attr);
                 break;
             case R.styleable.LIMEKeyboardBaseView_shadowColor:
                 mShadowColor = a.getColor(attr, 0);
@@ -716,7 +721,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     }
 
     protected CharSequence adjustCase(CharSequence label) {
-        if (mKeyboard.isShifted() && label != null && label.length() < 3
+        if (mKeyboard.isShifted() && label != null && label.length() <= 3
                 && Character.isLowerCase(label.charAt(0))) {
             label = label.toString().toUpperCase();
         }
@@ -927,7 +932,11 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 // hint and popup hint.
                 shouldDrawIcon = shouldDrawLabelAndIcon(key);
             }
-            if (key.icon != null && shouldDrawIcon) {
+            if (shouldDrawIcon) {
+            	Drawable icon = key.icon;
+            	if( icon == null ) 
+            		icon = mPopupHint;
+            		
                 // Special handing for the upper-right number hint icons
                 final int drawableWidth;
                 final int drawableHeight;
@@ -939,14 +948,14 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     drawableX = 0;
                     drawableY = NUMBER_HINT_VERTICAL_ADJUSTMENT_PIXEL;
                 } else {
-                    drawableWidth = key.icon.getIntrinsicWidth();
-                    drawableHeight = key.icon.getIntrinsicHeight();
+                    drawableWidth = icon.getIntrinsicWidth();
+                    drawableHeight = icon.getIntrinsicHeight();
                     drawableX = (key.width + padding.left - padding.right - drawableWidth) / 2;
                     drawableY = (key.height + padding.top - padding.bottom - drawableHeight) / 2;
                 }
                 canvas.translate(drawableX, drawableY);
-                key.icon.setBounds(0, 0, drawableWidth, drawableHeight);
-                key.icon.draw(canvas);
+                icon.setBounds(0, 0, drawableWidth, drawableHeight);
+                icon.draw(canvas);
                 canvas.translate(-drawableX, -drawableY);
             }
             canvas.translate(-key.x - kbdPaddingLeft, -key.y - kbdPaddingTop);
@@ -1306,7 +1315,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     }
 
     private boolean shouldDrawIconFully(Key key) {
-    	return hasPopupKeyboard(key);
+    	return (hasPopupKeyboard(key));
         //return isNumberAtEdgeOfPopupChars(key) || isLatinF1Key(key);
                 //|| LIMEKeyboard.hasPuncOrSmileysPopup(key);
                 		
@@ -1320,7 +1329,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     }
     
     private boolean hasPopupKeyboard(Key key) {
-    	 if (key.popupResId !=  0 && key.icon ==null) {
+    	 if (key.popupResId !=  0 && key.icon==null) {
              return true;
          }
          return false;

@@ -99,7 +99,7 @@
         	 android:iconPreview="@drawable/sym_keyboard_feedback_space"
         	 android:keyWidth="30%p" android:isRepeatable="true"/>
         <Key android:codes="46" android:keyLabel="." 
-        						android:keyIcon="@drawable/hint_popup" android:popupKeyboard="@xml/popup_punctuation" 
+        						 android:popupKeyboard="@xml/popup_punctuation" 
         						android:keyWidth="10%p"/>
         <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:iconPreview="@drawable/sym_keyboard_feedback_return" android:isModifier="true"
                 android:keyWidth="20%p" android:keyEdgeFlags="right"

@@ -90,7 +90,7 @@
         <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:iconPreview="@drawable/sym_keyboard_feedback_space"  android:keyWidth="25%p" android:isRepeatable="true"/>
         <Key android:codes="46" 
         		android:keyLabel="." 
-        		android:keyIcon="@drawable/hint_popup" android:popupKeyboard="@xml/popup_c_punctuation"  
+        		 android:popupKeyboard="@xml/popup_c_punctuation"  
         		android:keyWidth="10%p"/>
         <Key android:codes="-2" android:keyIcon="@drawable/number" android:isModifier="true" android:iconPreview="@drawable/number_l"/>
         <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:iconPreview="@drawable/sym_keyboard_feedback_return" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="right"/>
