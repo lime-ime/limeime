@@ -25,6 +25,8 @@
         <item name="keyPreviewOffset">@dimen/key_preview_offset</item>
         <item name="keyPreviewHeight">@dimen/key_preview_height</item>
         <item name="labelTextSize">@dimen/label_text_size</item>
+        <item name="subLabelTextSize">@dimen/sub_label_text_size</item>
+        <item name="smallLabelTextSize">@dimen/small_label_text_size</item>
         <item name="popupLayout">@layout/keyboard_popup</item>
         <item name="keyHysteresisDistance">@dimen/key_hysteresis_distance</item>
         <item name="verticalCorrection">@dimen/keyboard_vertical_correction</item>

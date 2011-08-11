@@ -47,21 +47,6 @@ import java.util.WeakHashMap;
 import net.toload.main.hd.R;
 import net.toload.main.hd.keyboard.SwipeTracker;
 
-/**
- * A view that renders a virtual {@link LatinKeyboard}. It handles rendering of keys and
- * detecting key presses and touch movements.
- *
- * TODO: References to LatinKeyboard in this class should be replaced with ones to its base class.
- *
- * @attr ref R.styleable#LIMEKeyboardBaseView_keyBackground
- * @attr ref R.styleable#LIMEKeyboardBaseView_keyPreviewLayout
- * @attr ref R.styleable#LIMEKeyboardBaseView_keyPreviewOffset
- * @attr ref R.styleable#LIMEKeyboardBaseView_labelTextSize
- * @attr ref R.styleable#LIMEKeyboardBaseView_keyTextSize
- * @attr ref R.styleable#LIMEKeyboardBaseView_keyTextColor
- * @attr ref R.styleable#LIMEKeyboardBaseView_verticalCorrection
- * @attr ref R.styleable#LIMEKeyboardBaseView_popupLayout
- */
 public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy {
     private static final String TAG = "LIMEKeyboardBaseView";
     private static final boolean DEBUG = false;
@@ -163,6 +148,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private int mKeyTextColor;
     private Typeface mKeyTextStyle = Typeface.DEFAULT;
     private int mLabelTextSize;
+    private int mSmallLabelTextSize;
+    private int mSubLabelTextSize;
     private int mSymbolColorScheme = 0;
     private int mShadowColor;
     private float mShadowRadius;
@@ -243,6 +230,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private final Rect mClipRegion = new Rect(0, 0, 0, 0);
     // This map caches key label text height in pixel as value and key label text size as map key.
     private final HashMap<Integer, Integer> mTextHeightCache = new HashMap<Integer, Integer>();
+    private final HashMap<Integer, Integer> mTextWidthCache = new HashMap<Integer, Integer>();
     // Distance from horizontal center of the key, proportional to key label text height.
     private final float KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR = 0.55f;
     private final String KEY_LABEL_HEIGHT_REFERENCE_CHAR = "H";
@@ -447,6 +435,14 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 break;
             case R.styleable.LIMEKeyboardBaseView_labelTextSize:
                 mLabelTextSize = a.getDimensionPixelSize(attr, 14);
+                break;
+            //Jeremy '11,8,11, Extended for sub-label display
+            case R.styleable.LIMEKeyboardBaseView_smallLabelTextSize:
+                mSmallLabelTextSize = a.getDimensionPixelSize(attr, 14);
+                break;
+              //Jeremy '11,8,11, Extended for sub-label display
+            case R.styleable.LIMEKeyboardBaseView_subLabelTextSize:
+                mSubLabelTextSize = a.getDimensionPixelSize(attr, 14);
                 break;
             case R.styleable.LIMEKeyboardBaseView_popupLayout:
                 mPopupLayout = a.getResourceId(attr, 0);
@@ -842,7 +838,20 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             if (label != null) {
                 // For characters, use large font. For labels like "Done", use small font.
                 final int labelSize;
-                if (label.length() > 1 && key.codes.length < 2) {
+               
+                
+                //Jeremy '11,8,11, Extended for sub-label display
+                boolean hasSubLabel = label.contains("\n");
+                String subLabel="";
+                if(hasSubLabel){
+                	String labelA[] = label.split("\n");
+                	label = labelA[1];
+                	subLabel = labelA[0];
+                }
+                if(hasSubLabel){
+                	labelSize = mSmallLabelTextSize;
+                	paint.setTypeface(Typeface.DEFAULT_BOLD);
+                }else if (label.length() > 1 && key.codes.length < 2 ) {
                     labelSize = mLabelTextSize;
                     paint.setTypeface(Typeface.DEFAULT_BOLD);
                 } else {
@@ -851,24 +860,66 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 }
                 paint.setTextSize(labelSize);
 
-                Integer labelHeightValue = mTextHeightCache.get(labelSize);
+               
                 final int labelHeight;
-                if (labelHeightValue != null) {
-                    labelHeight = labelHeightValue;
+                final int labelWidth;
+                if (mTextHeightCache.get(labelSize) != null) {
+                    labelHeight = mTextHeightCache.get(labelSize);
+                    labelWidth =  mTextWidthCache.get(labelSize);
                 } else {
                     Rect textBounds = new Rect();
                     paint.getTextBounds(KEY_LABEL_HEIGHT_REFERENCE_CHAR, 0, 1, textBounds);
                     labelHeight = textBounds.height();
+                    labelWidth = textBounds.width();
                     mTextHeightCache.put(labelSize, labelHeight);
+                    mTextWidthCache.put(labelSize, labelWidth);
                 }
 
                 // Draw a drop shadow for the text
                 paint.setShadowLayer(mShadowRadius, 0, 0, mShadowColor);
                 final int centerX = (key.width + padding.left - padding.right) / 2;
                 final int centerY = (key.height + padding.top - padding.bottom) / 2;
-                final float baseline = centerY
+                float baseline = centerY
                         + labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
-                canvas.drawText(label, centerX, baseline, paint);
+                if(hasSubLabel){
+                	 final int subLabelSize = mSubLabelTextSize;
+                	 final int subLabelHeight;
+                     final int subLabelWidth;
+                    
+                     paint.setTypeface(mKeyTextStyle);
+                	 paint.setTextSize(subLabelSize);
+                     if (mTextHeightCache.get(subLabelSize) != null) {
+                    	 subLabelHeight = mTextHeightCache.get(labelSize);
+                    	 subLabelWidth =  mTextWidthCache.get(labelSize);
+                     } else {
+                         Rect textBounds = new Rect();
+                         paint.getTextBounds(KEY_LABEL_HEIGHT_REFERENCE_CHAR, 0, 1, textBounds);
+                         subLabelHeight = textBounds.height();
+                         subLabelWidth = textBounds.width();
+                         mTextHeightCache.put(subLabelSize, subLabelHeight);
+                         mTextWidthCache.put(subLabelSize, subLabelWidth);
+                     }
+                                
+                	if(key.height>key.width){
+                		baseline = (key.height + padding.top - padding.bottom) *2  / 3
+        					+ labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
+                		float subBaseline = (key.height + padding.top - padding.bottom) /4
+                   			+ subLabelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
+                		canvas.drawText(subLabel, centerX, subBaseline, paint);
+                		paint.setTextSize(labelSize);
+                		paint.setTypeface(Typeface.DEFAULT_BOLD);
+                		canvas.drawText(label, centerX, baseline, paint);
+                		
+                	}else{
+                		canvas.drawText(subLabel, centerX-subLabelWidth, baseline, paint);
+                		paint.setTextSize(labelSize);
+                		paint.setTypeface(Typeface.DEFAULT_BOLD);
+                		canvas.drawText(label, centerX+labelWidth, baseline, paint);
+                		
+                	}
+                		
+                }else
+                	canvas.drawText(label, centerX, baseline, paint);
                 // Turn off drop shadow
                 paint.setShadowLayer(0, 0, 0, 0);
 
@@ -1269,7 +1320,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     }
     
     private boolean hasPopupKeyboard(Key key) {
-    	 if (key.popupResId !=  0) {
+    	 if (key.popupResId !=  0 && key.icon ==null) {
              return true;
          }
          return false;
