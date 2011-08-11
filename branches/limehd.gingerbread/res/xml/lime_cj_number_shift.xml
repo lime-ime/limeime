@@ -68,7 +68,7 @@
     </Row>
     
     <Row>
-        <Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift" android:isModifier="true" 
+        <Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift" android:iconPreview="@drawable/sym_keyboard_feedback_shift" android:isModifier="true" 
                 android:keyWidth="15%p" android:isSticky="true" android:keyEdgeFlags="left"/>
         <Key android:codes="90" android:iconPreview="@drawable/cj_z_u_l" android:keyIcon="@drawable/cj_z_u"/>
         <Key android:codes="88" android:iconPreview="@drawable/cj_x_u_l" android:keyIcon="@drawable/cj_x_u"/>
@@ -77,22 +77,22 @@
         <Key android:codes="66" android:iconPreview="@drawable/cj_b_u_l" android:keyIcon="@drawable/cj_b_u"/>
         <Key android:codes="78" android:iconPreview="@drawable/cj_n_u_l" android:keyIcon="@drawable/cj_n_u"/>
         <Key android:codes="77" android:iconPreview="@drawable/cj_m_u_l" android:keyIcon="@drawable/cj_m_u"/>
-        <Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" android:isModifier="true" 
+        <Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" android:iconPreview="@drawable/sym_keyboard_feedback_delete" android:isModifier="true" 
                 android:keyWidth="15%p" android:keyEdgeFlags="right"
                 android:isRepeatable="true"/>
     </Row>
 
 	<Row android:rowEdgeFlags="bottom">
-        <Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
+        <Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:iconPreview="@drawable/sym_keyboard_feedback_done" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
         <Key android:codes="-9" android:keyIcon="@drawable/sw" android:isModifier="true" android:keyWidth="15%p" android:iconPreview="@drawable/sw_l"/>
         <Key android:codes="58" android:keyLabel=":"  android:keyWidth="10%p"/>
-        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime"  android:keyWidth="25%p" android:isRepeatable="true"/>
+        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:iconPreview="@drawable/sym_keyboard_feedback_space"  android:keyWidth="25%p" android:isRepeatable="true"/>
         <Key android:codes="59" 
         		android:keyLabel=";" 
-        		android:popupKeyboard="@xml/popup_punctuation"  
+        		android:keyIcon="@drawable/hint_popup" android:popupKeyboard="@xml/popup_punctuation"  
         		android:keyWidth="10%p"/>
         <Key android:codes="-2" android:keyIcon="@drawable/number" android:isModifier="true" android:iconPreview="@drawable/number_l"/>
-        <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="right"/>
+        <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:iconPreview="@drawable/sym_keyboard_feedback_return" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="right"/>
     </Row>
     
 </Keyboard>

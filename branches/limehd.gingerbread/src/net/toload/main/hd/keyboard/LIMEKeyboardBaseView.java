@@ -1255,18 +1255,35 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     }
 
     private boolean shouldDrawIconFully(Key key) {
-        return isNumberAtEdgeOfPopupChars(key) || isLatinF1Key(key);
+    	return hasPopupKeyboard(key);
+        //return isNumberAtEdgeOfPopupChars(key) || isLatinF1Key(key);
                 //|| LIMEKeyboard.hasPuncOrSmileysPopup(key);
                 		
     }
 
     private boolean shouldDrawLabelAndIcon(Key key) {
-        return isNumberAtEdgeOfPopupChars(key) || isNonMicLatinF1Key(key);
+    	return hasPopupKeyboard(key);
+        //return isNumberAtEdgeOfPopupChars(key) || isNonMicLatinF1Key(key);
                 //|| LIMEKeyboard.hasPuncOrSmileysPopup(key);
                 		
     }
+    
+    private boolean hasPopupKeyboard(Key key) {
+    	 if (key.popupResId !=  0) {
+             return true;
+         }
+         return false;
+    }
+    
+    private static boolean isNumberAtLeftmostPopupChar(Key key) {
+        if (key.popupCharacters != null && key.popupCharacters.length() > 0
+                && isAsciiDigit(key.popupCharacters.charAt(0))) {
+            return true;
+        }
+        return false;
+    }
 
-    private boolean isLatinF1Key(Key key) {
+   /* private boolean isLatinF1Key(Key key) {
     	return false;
         //return (mKeyboard instanceof LIMEKeyboard) && ((LIMEKeyboard)mKeyboard).isF1Key(key);
     }
@@ -1279,22 +1296,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         return isNumberAtLeftmostPopupChar(key) || isNumberAtRightmostPopupChar(key);
     }
 
-    /* package */ static boolean isNumberAtLeftmostPopupChar(Key key) {
-        if (key.popupCharacters != null && key.popupCharacters.length() > 0
-                && isAsciiDigit(key.popupCharacters.charAt(0))) {
-            return true;
-        }
-        return false;
-    }
-
-    /* package */ static boolean isNumberAtRightmostPopupChar(Key key) {
-        if (key.popupCharacters != null && key.popupCharacters.length() > 0
-                && isAsciiDigit(key.popupCharacters.charAt(key.popupCharacters.length() - 1))) {
-            return true;
-        }
-        return false;
-    }
-
+	*/
     private static boolean isAsciiDigit(char c) {
         return (c < 0x80) && Character.isDigit(c);
     }
