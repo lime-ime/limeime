@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-	
 <!--
 /*    
 **    Copyright 2010, The LimeIME Open Source Project
@@ -76,26 +75,27 @@
 		<Key android:codes="66" android:keyLabel="B" />
 		<Key android:codes="78" android:keyLabel="N" />
 		<Key android:codes="77" android:keyLabel="M" />
-		<Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" android:isModifier="true"
+		<Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" android:iconPreview="@drawable/sym_keyboard_feedback_delete" android:isModifier="true"
 			android:keyWidth="15%p" android:keyEdgeFlags="right"
 			android:isRepeatable="true" />
 	</Row>
 
 	<Row android:rowEdgeFlags="bottom">
-		<Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true"
+		<Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:iconPreview="@drawable/sym_keyboard_feedback_done" android:isModifier="true"
 			android:keyWidth="15%p" android:keyEdgeFlags="left" />
 		<Key android:codes="-9" 
 				android:keyIcon="@drawable/sw" android:isModifier="true" 
 				android:keyWidth="10%p" 
 				android:iconPreview="@drawable/sw_l"/>
-		<Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime"
+		<Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:iconPreview="@drawable/sym_keyboard_feedback_space"
 			android:keyWidth="30%p" android:isRepeatable="true" />
 		<Key android:codes="60" android:keyLabel="&lt;" android:keyWidth="10%p" />
-		<Key android:codes="62" android:keyLabel="&gt;" 
+		<Key android:codes="62" android:keyLabel="&gt;"
+								android:keyIcon="@drawable/hint_popup" 
 								android:popupKeyboard="@xml/popup_punctuation"  
 								android:keyWidth="10%p" />
 		<Key android:codes="63" android:keyLabel="\?" android:keyWidth="10%p" />
-		<Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:isModifier="true"
+		<Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:iconPreview="@drawable/sym_keyboard_feedback_return" android:isModifier="true"
 			android:keyWidth="15%p" android:keyEdgeFlags="right" />
 	</Row>
 

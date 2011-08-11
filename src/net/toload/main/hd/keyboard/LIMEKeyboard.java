@@ -202,19 +202,19 @@ public class LIMEKeyboard extends Keyboard {
             mEnterKey.text = null;
             switch (options&(EditorInfo.IME_MASK_ACTION|EditorInfo.IME_FLAG_NO_ENTER_ACTION)) {
                 case EditorInfo.IME_ACTION_GO:
-                    mEnterKey.iconPreview = null;
+                    //mEnterKey.iconPreview = null;
                     //mEnterKey.icon = res.getDrawable(R.drawable.sym_keyboard_return);
                     mEnterKey.label = res.getText(R.string.label_go_key);
                     break;
                 case EditorInfo.IME_ACTION_NEXT:
-                    mEnterKey.iconPreview = null;
+                    //mEnterKey.iconPreview = null;
                     mEnterKey.icon = null;
                     //int c[] = {-99};
                     //mEnterKey.codes = c;
                     mEnterKey.label = res.getText(R.string.label_next_key);
                     break;
                 case EditorInfo.IME_ACTION_DONE:
-                    mEnterKey.iconPreview = null;
+                    //mEnterKey.iconPreview = null;
                     mEnterKey.icon = null;
                     mEnterKey.label = res.getText(R.string.label_done_key);
                     break;
@@ -226,7 +226,7 @@ public class LIMEKeyboard extends Keyboard {
                     mEnterKey.label = null;
                     break;
                 case EditorInfo.IME_ACTION_SEND:
-                    mEnterKey.iconPreview = null;
+                    //mEnterKey.iconPreview = null;
                     mEnterKey.icon = null;
                     mEnterKey.label = res.getText(R.string.label_send_key);
                     break;
@@ -234,14 +234,14 @@ public class LIMEKeyboard extends Keyboard {
                 	
                     if (mode == LIMEKeyboardSwitcher.MODE_IM) {
                         mEnterKey.icon = null;
-                        mEnterKey.iconPreview = null;
+                        //mEnterKey.iconPreview = null;
                         mEnterKey.label = ":-)";
                         //mEnterKey.text = ":-) ";
                         mEnterKey.popupResId = R.xml.popup_smileys;
                     } else {
                     
-                        mEnterKey.iconPreview = res.getDrawable(
-                                R.drawable.sym_keyboard_feedback_return);
+                        //mEnterKey.iconPreview = res.getDrawable(
+                        //        R.drawable.sym_keyboard_feedback_return);
                         mEnterKey.icon = res.getDrawable(
                                 R.drawable.sym_keyboard_return);
                         mEnterKey.label = null;

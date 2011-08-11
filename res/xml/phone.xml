@@ -34,7 +34,7 @@
         <Key android:codes="49" android:iconPreview="@drawable/phone_1_l" android:keyIcon="@drawable/phone_1"/>
         <Key android:codes="50,97,98,99" android:iconPreview="@drawable/phone_2_l" android:keyIcon="@drawable/phone_2"/>
         <Key android:codes="51,100,101,102" android:iconPreview="@drawable/phone_3_l" android:keyIcon="@drawable/phone_3"/>
-        <Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" android:isModifier="true"  android:keyEdgeFlags="right" android:isRepeatable="true"/>
+        <Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" android:iconPreview="@drawable/sym_keyboard_feedback_delete" android:isModifier="true"  android:keyEdgeFlags="right" android:isRepeatable="true"/>
     </Row>
     
     <Row>
@@ -51,15 +51,15 @@
         <Key android:codes="55,112,113,114,115" android:iconPreview="@drawable/phone_7_l" android:keyIcon="@drawable/phone_7"/>
         <Key android:codes="56,116,117,118" android:iconPreview="@drawable/phone_8_l" android:keyIcon="@drawable/phone_8"/>
         <Key android:codes="57,119,120,121,122" android:iconPreview="@drawable/phone_9_l" android:keyIcon="@drawable/phone_9"/>
-        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:isRepeatable="true" android:keyEdgeFlags="right"/>
+        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:iconPreview="@drawable/sym_keyboard_feedback_space" android:isRepeatable="true" android:keyEdgeFlags="right"/>
     </Row>
     
     <Row android:rowEdgeFlags="bottom">
-        <Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" android:keyEdgeFlags="left"/>
+        <Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:iconPreview="@drawable/sym_keyboard_feedback_done" android:isModifier="true" android:keyEdgeFlags="left"/>
         <Key android:codes="40,41,91,93" android:iconPreview="@drawable/phone_left_l" android:keyIcon="@drawable/phone_left"/>
         <Key android:codes="48,126,94,123,125" android:iconPreview="@drawable/phone_0_l" android:keyIcon="@drawable/phone_0"/>
         <Key android:codes="44,59,63,92,46" android:iconPreview="@drawable/phone_right_l" android:keyIcon="@drawable/phone_right"/>
-        <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:isModifier="true"  android:keyEdgeFlags="right"/>
+        <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:iconPreview="@drawable/sym_keyboard_feedback_return" android:isModifier="true"  android:keyEdgeFlags="right"/>
     </Row>
     
 </Keyboard>
