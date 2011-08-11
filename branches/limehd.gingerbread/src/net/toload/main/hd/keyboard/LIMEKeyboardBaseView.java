@@ -844,13 +844,13 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 // For characters, use large font. For labels like "Done", use small font.
                 final int labelSize;
                
-                
+                if(DEBUG) Log.i(TAG, "onBufferDraw():"+ label);
                 //Jeremy '11,8,11, Extended for sub-label display
                 boolean hasSubLabel = label.contains("\n");
                 String subLabel="";
                 if(hasSubLabel){
                 	String labelA[] = label.split("\n");
-                	label = labelA[1];
+                	if(labelA.length>0) label = labelA[1];
                 	subLabel = labelA[0];
                 }
                 if(hasSubLabel){
@@ -890,8 +890,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 	 final int subLabelSize = mSubLabelTextSize;
                 	 final int subLabelHeight;
                      final int subLabelWidth;
-                    
-                     paint.setTypeface(mKeyTextStyle);
+                     paint.setTypeface(Typeface.DEFAULT_BOLD);
+                     
                 	 paint.setTextSize(subLabelSize);
                      if (mTextHeightCache.get(subLabelSize) != null) {
                     	 subLabelHeight = mTextHeightCache.get(labelSize);
@@ -912,13 +912,13 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                    			+ subLabelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
                 		canvas.drawText(subLabel, centerX, subBaseline, paint);
                 		paint.setTextSize(labelSize);
-                		paint.setTypeface(Typeface.DEFAULT_BOLD);
+                		paint.setTypeface(mKeyTextStyle);
                 		canvas.drawText(label, centerX, baseline, paint);
                 		
                 	}else{
                 		canvas.drawText(subLabel, centerX-subLabelWidth, baseline, paint);
                 		paint.setTextSize(labelSize);
-                		paint.setTypeface(Typeface.DEFAULT_BOLD);
+                		paint.setTypeface(mKeyTextStyle);
                 		canvas.drawText(label, centerX+labelWidth, baseline, paint);
                 		
                 	}

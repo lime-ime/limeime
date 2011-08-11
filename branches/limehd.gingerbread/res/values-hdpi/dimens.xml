@@ -19,8 +19,8 @@
 -->
 <resources>
     <dimen name="key_height">52dip</dimen>
-    <dimen name="candidate_stripe_height">38sp</dimen>
-    <dimen name="candidate_font_size">32sp</dimen>
-    <dimen name="candidate_number_font_size">16sp</dimen>
+    <dimen name="candidate_stripe_height">34sp</dimen>
+    <dimen name="candidate_font_size">30sp</dimen>
+    <dimen name="candidate_number_font_size">15sp</dimen>
     
 </resources>
