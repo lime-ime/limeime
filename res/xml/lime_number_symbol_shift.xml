@@ -92,7 +92,7 @@
 				android:keyWidth="15%p" android:isRepeatable="true" />
 		<Key android:codes="60" android:keyLabel="&lt;" android:keyWidth="10%p" />
 		<Key android:codes="62" android:keyLabel="&gt;" 
-								android:keyIcon="@drawable/hint_popup" android:popupKeyboard="@xml/popup_punctuation"  
+								 android:popupKeyboard="@xml/popup_punctuation"  
 								android:keyWidth="10%p" />
 		<Key android:codes="63" android:keyLabel="\?" android:keyWidth="10%p" />
 		<Key android:codes="95" android:keyLabel="_" />
