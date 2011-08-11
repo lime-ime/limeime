@@ -28,43 +28,43 @@
     android:keyHeight="@dimen/key_height"
     >
     
-    <Row>
-        <Key android:codes="113" android:keyLabel="1^" android:keyEdgeFlags="left"/>
-        <Key android:codes="119" android:keyLabel="2^"/>
-        <Key android:codes="101" android:keyLabel="3^"/>
-        <Key android:codes="114" android:keyLabel="4^"/>
-        <Key android:codes="116" android:keyLabel="5^"/>
-        <Key android:codes="121" android:keyLabel="6^"/>
-        <Key android:codes="117" android:keyLabel="7^"/>
-        <Key android:codes="105" android:keyLabel="8^"/>
-        <Key android:codes="111" android:keyLabel="9^"/>
-        <Key android:codes="112" android:keyLabel="0^" android:keyEdgeFlags="right"/>
+       <Row>
+        <Key android:codes="113" android:keyLabel="q\n1⇡" android:keyEdgeFlags="left"/>
+        <Key android:codes="119" android:keyLabel="w\n2⇡"/>
+        <Key android:codes="101" android:keyLabel="e\n3⇡"/>
+        <Key android:codes="114" android:keyLabel="r\n4⇡"/>
+        <Key android:codes="116" android:keyLabel="t\n5⇡"/>
+        <Key android:codes="121" android:keyLabel="y\n6⇡"/>
+        <Key android:codes="117" android:keyLabel="u\n7⇡"/>
+        <Key android:codes="105" android:keyLabel="i\n8⇡"/>
+        <Key android:codes="111" android:keyLabel="o\n9⇡"/>
+        <Key android:codes="112" android:keyLabel="p\n0⇡" android:keyEdgeFlags="right"/>
     </Row>
     
     <Row>
-        <Key android:codes="97" android:keyLabel="1-" android:keyEdgeFlags="left"/>
-        <Key android:codes="115" android:keyLabel="2-"/>
-        <Key android:codes="100" android:keyLabel="3-"/>
-        <Key android:codes="102" android:keyLabel="4-"/>
-        <Key android:codes="103" android:keyLabel="5-"/>
-        <Key android:codes="104" android:keyLabel="6-"/>
-        <Key android:codes="106" android:keyLabel="7-"/>
-        <Key android:codes="107" android:keyLabel="8-"/>
-        <Key android:codes="108" android:keyLabel="9-"/>
-        <Key android:codes="59" android:keyLabel="0-" android:keyEdgeFlags="right"/>
+        <Key android:codes="97" android:keyLabel="a\n1−" android:keyEdgeFlags="left"/>
+        <Key android:codes="115" android:keyLabel="s\n2−"/>
+        <Key android:codes="100" android:keyLabel="d\n3−"/>
+        <Key android:codes="102" android:keyLabel="f\n4−"/>
+        <Key android:codes="103" android:keyLabel="g\n5−"/>
+        <Key android:codes="104" android:keyLabel="h\n6−"/>
+        <Key android:codes="106" android:keyLabel="j\n7−"/>
+        <Key android:codes="107" android:keyLabel="k\n8−"/>
+        <Key android:codes="108" android:keyLabel="l\n9−"/>
+        <Key android:codes="59" android:keyLabel=";\n0−" android:keyEdgeFlags="right"/>
     </Row>
     
     <Row>
-        <Key android:codes="122" android:keyLabel="1v" android:keyEdgeFlags="left"/>
-        <Key android:codes="120" android:keyLabel="2v"/>
-        <Key android:codes="99" android:keyLabel="3v"/>
-        <Key android:codes="118" android:keyLabel="4v"/>
-        <Key android:codes="98" android:keyLabel="5v"/>
-        <Key android:codes="110" android:keyLabel="6v"/>
-        <Key android:codes="109" android:keyLabel="7v"/>
-        <Key android:codes="44" android:keyLabel="8v"/>
-        <Key android:codes="46" android:keyLabel="9v"/>
-        <Key android:codes="47" android:keyLabel="0v" android:keyEdgeFlags="right"/>
+        <Key android:codes="122" android:keyLabel="z\n1⇣" android:keyEdgeFlags="left"/>
+        <Key android:codes="120" android:keyLabel="x\n2⇣"/>
+        <Key android:codes="99" android:keyLabel="c\n3⇣"/>
+        <Key android:codes="118" android:keyLabel="v\n4⇣"/>
+        <Key android:codes="98" android:keyLabel="b\n5⇣"/>
+        <Key android:codes="110" android:keyLabel="n\n6⇣"/>
+        <Key android:codes="109" android:keyLabel="m\n7⇣"/>
+        <Key android:codes="44" android:keyLabel=",\n8⇣"/>
+        <Key android:codes="46" android:keyLabel=".\n9⇣"  android:popupKeyboard="@xml/popup_c_punctuation"   />
+        <Key android:codes="47" android:keyLabel="/\n0⇣" android:keyEdgeFlags="right"/>
     </Row>
 
 

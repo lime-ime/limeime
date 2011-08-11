@@ -28,43 +28,41 @@
     android:keyHeight="@dimen/key_height"
     >
 
+      <Row>
+        <Key android:codes="113" android:keyLabel="q\n手" android:keyEdgeFlags="left"/>
+        <Key android:codes="119" android:keyLabel="w\n田"/>
+        <Key android:codes="101" android:keyLabel="e\n水"/>
+        <Key android:codes="114" android:keyLabel="r\n口"/>
+        <Key android:codes="116" android:keyLabel="t\n廿"/>
+        <Key android:codes="121" android:keyLabel="y\n卜"/>
+        <Key android:codes="117" android:keyLabel="u\n山"/>
+        <Key android:codes="105" android:keyLabel="i\n戈"/>
+        <Key android:codes="111" android:keyLabel="o\n口"/>
+        <Key android:codes="112" android:keyLabel="p\n心" android:keyEdgeFlags="right"/>
+    </Row>
+    
      <Row>
-        <Key android:codes="113" android:iconPreview="@drawable/cj_q_s_l" android:keyIcon="@drawable/cj_q_s" android:keyEdgeFlags="left"/>
-        <Key android:codes="119" android:iconPreview="@drawable/cj_w_s_l" android:keyIcon="@drawable/cj_w_s"/>
-        <Key android:codes="101" android:iconPreview="@drawable/cj_e_s_l" android:keyIcon="@drawable/cj_e_s"/>
-        <Key android:codes="114" android:iconPreview="@drawable/cj_r_s_l" android:keyIcon="@drawable/cj_r_s"/>
-        <Key android:codes="116" android:iconPreview="@drawable/cj_t_s_l" android:keyIcon="@drawable/cj_t_s"/>
-        <Key android:codes="121" android:iconPreview="@drawable/cj_y_s_l" android:keyIcon="@drawable/cj_y_s"/>
-        <Key android:codes="117" android:iconPreview="@drawable/cj_u_s_l" android:keyIcon="@drawable/cj_u_s"/>
-        <Key android:codes="105" android:iconPreview="@drawable/cj_i_s_l" android:keyIcon="@drawable/cj_i_s"/>
-        <Key android:codes="111" android:iconPreview="@drawable/cj_o_s_l" android:keyIcon="@drawable/cj_o_s"/>
-        <Key android:codes="112" android:iconPreview="@drawable/cj_p_s_l" android:keyIcon="@drawable/cj_p_s" android:keyEdgeFlags="right"/>
+        <Key android:codes="97" android:keyLabel="a\n日" android:horizontalGap="5%p" android:keyEdgeFlags="left"/>
+        <Key android:codes="115" android:keyLabel="s\n尸"/>
+        <Key android:codes="100" android:keyLabel="d\n木"/>
+        <Key android:codes="102" android:keyLabel="f\n火"/>
+        <Key android:codes="103" android:keyLabel="g\n土"/>
+        <Key android:codes="104" android:keyLabel="h\n竹"/>
+        <Key android:codes="106" android:keyLabel="j\n十"/>
+        <Key android:codes="107" android:keyLabel="k\n大"/>
+        <Key android:codes="108" android:keyLabel="l\n中" android:keyEdgeFlags="right"/>
     </Row>
     
     <Row>
-        <Key android:codes="97" android:iconPreview="@drawable/cj_a_s_l" android:keyIcon="@drawable/cj_a_s" android:horizontalGap="5%p" 
-                android:keyEdgeFlags="left"/>
-        <Key android:codes="115" android:iconPreview="@drawable/cj_s_s_l" android:keyIcon="@drawable/cj_s_s"/>
-        <Key android:codes="100" android:iconPreview="@drawable/cj_d_s_l" android:keyIcon="@drawable/cj_d_s"/>
-        <Key android:codes="102" android:iconPreview="@drawable/cj_f_s_l" android:keyIcon="@drawable/cj_f_s"/>
-        <Key android:codes="103" android:iconPreview="@drawable/cj_g_s_l" android:keyIcon="@drawable/cj_g_s"/>
-        <Key android:codes="104" android:iconPreview="@drawable/cj_h_s_l" android:keyIcon="@drawable/cj_h_s"/>
-        <Key android:codes="106" android:iconPreview="@drawable/cj_j_s_l" android:keyIcon="@drawable/cj_j_s"/>
-        <Key android:codes="107" android:iconPreview="@drawable/cj_k_s_l" android:keyIcon="@drawable/cj_k_s"/>
-        <Key android:codes="108" android:iconPreview="@drawable/cj_l_s_l" android:keyIcon="@drawable/cj_l_s" android:keyEdgeFlags="right"/>
-    </Row>
-    
-    <Row>
-        <Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift" android:iconPreview="@drawable/sym_keyboard_feedback_shift" 
-                android:keyWidth="15%p" android:isModifier="true"
-                android:isSticky="true" android:keyEdgeFlags="left"/>
-        <Key android:codes="122" android:iconPreview="@drawable/cj_z_s_l" android:keyIcon="@drawable/cj_z_s"/>
-        <Key android:codes="120" android:iconPreview="@drawable/cj_x_s_l" android:keyIcon="@drawable/cj_x_s"/>
-        <Key android:codes="99" android:iconPreview="@drawable/cj_c_s_l" android:keyIcon="@drawable/cj_c_s"/>
-        <Key android:codes="118" android:iconPreview="@drawable/cj_v_s_l" android:keyIcon="@drawable/cj_v_s"/>
-        <Key android:codes="98" android:iconPreview="@drawable/cj_b_s_l" android:keyIcon="@drawable/cj_b_s"/>
-        <Key android:codes="110" android:iconPreview="@drawable/cj_n_s_l" android:keyIcon="@drawable/cj_n_s"/>
-        <Key android:codes="109" android:iconPreview="@drawable/cj_m_s_l" android:keyIcon="@drawable/cj_m_s"/>
+        <Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift" android:iconPreview="@drawable/sym_keyboard_feedback_shift" android:isModifier="true" 
+                android:keyWidth="15%p" android:isSticky="true" android:keyEdgeFlags="left"/>
+        <Key android:codes="122" android:keyLabel="z\n重" />
+        <Key android:codes="120" android:keyLabel="x\n難"/>
+        <Key android:codes="99" android:keyLabel="c\n金"/>
+        <Key android:codes="118" android:keyLabel="v\n女"/>
+        <Key android:codes="98" android:keyLabel="b\n月"/>
+        <Key android:codes="110" android:keyLabel="n\n弓"/>
+        <Key android:codes="109" android:keyLabel="m\n一"/>
         <Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" android:iconPreview="@drawable/sym_keyboard_feedback_delete" android:isModifier="true" 
                 android:keyWidth="15%p" android:keyEdgeFlags="right"
                 android:isRepeatable="true"/>
@@ -79,7 +77,7 @@
         		android:keyLabel="."
 				 android:popupKeyboard="@xml/popup_c_punctuation"   
         		android:keyWidth="10%p"/>
-        <Key android:codes="-2" android:keyIcon="@drawable/number" android:isModifier="true" android:iconPreview="@drawable/number_l"/>
+        <Key android:codes="-2" android:keyLabel="123" android:isModifier="true" />
         <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:iconPreview="@drawable/sym_keyboard_feedback_return" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="right"/>
     </Row>
     

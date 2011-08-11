@@ -57,7 +57,7 @@
 	<Row>
 		<Key android:codes="97" android:keyLabel="a" android:keyEdgeFlags="left" />
 		<Key android:codes="115" android:keyLabel="s" />
-		<Key android:codes="100" android:keyLabel="d\n日" />
+		<Key android:codes="100" android:keyLabel="d" />
 		<Key android:codes="102" android:keyLabel="f" />
 		<Key android:codes="103" android:keyLabel="g" />
 		<Key android:codes="104" android:keyLabel="h" />

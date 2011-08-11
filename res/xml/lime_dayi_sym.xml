@@ -26,55 +26,55 @@
 	android:verticalGap="0px" android:keyHeight="@dimen/key_height">
 
 	<Row>
-		<Key android:codes="49" android:iconPreview="@drawable/dayi_1_l" android:keyIcon="@drawable/dayi_1" android:keyEdgeFlags="left" />
-		<Key android:codes="50" android:iconPreview="@drawable/dayi_2_l" android:keyIcon="@drawable/dayi_2" />
-		<Key android:codes="51" android:iconPreview="@drawable/dayi_3_l" android:keyIcon="@drawable/dayi_3" />
-		<Key android:codes="52" android:iconPreview="@drawable/dayi_4_l" android:keyIcon="@drawable/dayi_4" />
-		<Key android:codes="53" android:iconPreview="@drawable/dayi_5_l" android:keyIcon="@drawable/dayi_5" />
-		<Key android:codes="54" android:iconPreview="@drawable/dayi_6_l" android:keyIcon="@drawable/dayi_6" />
-		<Key android:codes="55" android:iconPreview="@drawable/dayi_7_l" android:keyIcon="@drawable/dayi_7" />
-		<Key android:codes="56" android:iconPreview="@drawable/dayi_8_l" android:keyIcon="@drawable/dayi_8" />
-		<Key android:codes="57" android:iconPreview="@drawable/dayi_9_l" android:keyIcon="@drawable/dayi_9" />
-		<Key android:codes="48" android:iconPreview="@drawable/dayi_0_l" android:keyIcon="@drawable/dayi_0" android:keyEdgeFlags="right" />
+		<Key android:codes="49" android:keyLabel="1\n言" android:keyEdgeFlags="left" />
+		<Key android:codes="50" android:keyLabel="2\n牛" />
+		<Key android:codes="51" android:keyLabel="3\n目" />
+		<Key android:codes="52" android:keyLabel="4\n四" />
+		<Key android:codes="53" android:keyLabel="5\n王" />
+		<Key android:codes="54" android:keyLabel="6\n門" />
+		<Key android:codes="55" android:keyLabel="7\n田" />
+		<Key android:codes="56" android:keyLabel="8\n米" />
+		<Key android:codes="57" android:keyLabel="9\n足" />
+		<Key android:codes="48" android:keyLabel="0\n金" android:keyEdgeFlags="right" />
 	</Row>
 
 	<Row>
-		<Key android:codes="113" android:iconPreview="@drawable/dayi_q_s_l" android:keyIcon="@drawable/dayi_q_s" android:keyEdgeFlags="left" />
-		<Key android:codes="119" android:iconPreview="@drawable/dayi_w_s_l" android:keyIcon="@drawable/dayi_w_s" />
-		<Key android:codes="101" android:iconPreview="@drawable/dayi_e_s_l" android:keyIcon="@drawable/dayi_e_s" />
-		<Key android:codes="114" android:iconPreview="@drawable/dayi_r_s_l" android:keyIcon="@drawable/dayi_r_s" />
-		<Key android:codes="116" android:iconPreview="@drawable/dayi_t_s_l" android:keyIcon="@drawable/dayi_t_s" />
-		<Key android:codes="121" android:iconPreview="@drawable/dayi_y_s_l" android:keyIcon="@drawable/dayi_y_s" />
-		<Key android:codes="117" android:iconPreview="@drawable/dayi_u_s_l" android:keyIcon="@drawable/dayi_u_s" />
-		<Key android:codes="105" android:iconPreview="@drawable/dayi_i_s_l" android:keyIcon="@drawable/dayi_i_s" />
-		<Key android:codes="111" android:iconPreview="@drawable/dayi_o_s_l" android:keyIcon="@drawable/dayi_o_s" />
-		<Key android:codes="112" android:iconPreview="@drawable/dayi_p_s_l" android:keyIcon="@drawable/dayi_p_s" android:keyEdgeFlags="right" />
+		<Key android:codes="113" android:keyLabel="q\n石" android:keyEdgeFlags="left" />
+		<Key android:codes="119" android:keyLabel="w\n山" />
+		<Key android:codes="101" android:keyLabel="e\n一" />
+		<Key android:codes="114" android:keyLabel="r\n工" />
+		<Key android:codes="116" android:keyLabel="t\n糸" />
+		<Key android:codes="121" android:keyLabel="y\n火" />
+		<Key android:codes="117" android:keyLabel="u\n艸" />
+		<Key android:codes="105" android:keyLabel="i\n木" />
+		<Key android:codes="111" android:keyLabel="o\n口" />
+		<Key android:codes="112" android:keyLabel="p\n耳" android:keyEdgeFlags="right" />
 	</Row>
 
 	<Row>
-		<Key android:codes="97" android:iconPreview="@drawable/dayi_a_s_l" android:keyIcon="@drawable/dayi_a_s" android:keyEdgeFlags="left" />
-		<Key android:codes="115" android:iconPreview="@drawable/dayi_s_s_l" android:keyIcon="@drawable/dayi_s_s" />
-		<Key android:codes="100" android:iconPreview="@drawable/dayi_d_s_l" android:keyIcon="@drawable/dayi_d_s" />
-		<Key android:codes="102" android:iconPreview="@drawable/dayi_f_s_l" android:keyIcon="@drawable/dayi_f_s" />
-		<Key android:codes="103" android:iconPreview="@drawable/dayi_g_s_l" android:keyIcon="@drawable/dayi_g_s" />
-		<Key android:codes="104" android:iconPreview="@drawable/dayi_h_s_l" android:keyIcon="@drawable/dayi_h_s" />
-		<Key android:codes="106" android:iconPreview="@drawable/dayi_j_s_l" android:keyIcon="@drawable/dayi_j_s" />
-		<Key android:codes="107" android:iconPreview="@drawable/dayi_k_s_l" android:keyIcon="@drawable/dayi_k_s" />
-		<Key android:codes="108" android:iconPreview="@drawable/dayi_l_s_l" android:keyIcon="@drawable/dayi_l_s" />
-		<Key android:codes="59" android:iconPreview="@drawable/dayi_semicolon_l" android:keyIcon="@drawable/dayi_semicolon" android:keyEdgeFlags="right" />
+		<Key android:codes="97" android:keyLabel="a\n人" android:keyEdgeFlags="left" />
+		<Key android:codes="115" android:keyLabel="s\n革" />
+		<Key android:codes="100" android:keyLabel="d\n日" />
+		<Key android:codes="102" android:keyLabel="f\n土" />
+		<Key android:codes="103" android:keyLabel="g\n手" />
+		<Key android:codes="104" android:keyLabel="h\n鳥" />
+		<Key android:codes="106" android:keyLabel="j\n月" />
+		<Key android:codes="107" android:keyLabel="k\n立" />
+		<Key android:codes="108" android:keyLabel="l\n女" />
+		<Key android:codes="59" android:keyLabel=";\n虫" android:keyEdgeFlags="right" />
 	</Row>
 
 	<Row>
-		<Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift"
-			android:keyWidth="15%p" android:isModifier="true" android:isSticky="true"
+		<Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift" android:iconPreview="@drawable/sym_keyboard_feedback_shift" android:isModifier="true" 
+			android:keyWidth="15%p" android:isSticky="true"
 			android:keyEdgeFlags="left" />
-		<Key android:codes="122" android:iconPreview="@drawable/dayi_z_s_l" android:keyIcon="@drawable/dayi_z_s" />
-		<Key android:codes="120" android:iconPreview="@drawable/dayi_x_s_l" android:keyIcon="@drawable/dayi_x_s" />
-		<Key android:codes="99" android:iconPreview="@drawable/dayi_c_s_l" android:keyIcon="@drawable/dayi_c_s" />
-		<Key android:codes="118" android:iconPreview="@drawable/dayi_v_s_l" android:keyIcon="@drawable/dayi_v_s" />
-		<Key android:codes="98" android:iconPreview="@drawable/dayi_b_s_l" android:keyIcon="@drawable/dayi_b_s" />
-		<Key android:codes="110" android:iconPreview="@drawable/dayi_n_s_l" android:keyIcon="@drawable/dayi_n_s" />
-		<Key android:codes="109" android:iconPreview="@drawable/dayi_m_s_l" android:keyIcon="@drawable/dayi_m_s" />
+		<Key android:codes="122" android:keyLabel="z\n心" />
+		<Key android:codes="120" android:keyLabel="x\n水" />
+		<Key android:codes="99" android:keyLabel="c\n鹿" />
+		<Key android:codes="118" android:keyLabel="v\n禾" />
+		<Key android:codes="98" android:keyLabel="b\n馬" />
+		<Key android:codes="110" android:keyLabel="n\n魚" />
+		<Key android:codes="109" android:keyLabel="m\n雨" />
 		<Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" android:iconPreview="@drawable/sym_keyboard_feedback_delete" android:isModifier="true"
 			android:keyWidth="15%p" android:keyEdgeFlags="right"
 			android:isRepeatable="true" />
@@ -90,11 +90,12 @@
 				android:iconPreview="@drawable/sw_l"/>
 		<Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:iconPreview="@drawable/sym_keyboard_feedback_space"
 			android:keyWidth="30%p" android:isRepeatable="true" />
-		<Key android:codes="44" android:iconPreview="@drawable/dayi_comma_l" android:keyIcon="@drawable/dayi_comma" android:keyWidth="10%p" />
-		<Key android:codes="46" android:iconPreview="@drawable/dayi_dot_l" android:keyIcon="@drawable/dayi_dot" 
-				android:popupKeyboard="@xml/popup_c_punctuation"   
+		<Key android:codes="44" android:keyLabel=",\n力" android:keyWidth="10%p" />
+		<Key android:codes="46" 
+				android:keyLabel=".\n舟"
+				 android:popupKeyboard="@xml/popup_c_punctuation"   
 				android:keyWidth="10%p" />
-		<Key android:codes="47" android:iconPreview="@drawable/dayi_slash_l" android:keyIcon="@drawable/dayi_slash" android:keyWidth="10%p" />
+		<Key android:codes="47" android:keyLabel="/\n竹" android:keyWidth="10%p" />
 		<Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:iconPreview="@drawable/sym_keyboard_feedback_return" android:isModifier="true"
 			android:keyWidth="15%p" android:keyEdgeFlags="right" />
 	</Row>
