@@ -30,7 +30,7 @@
     <dimen name="key_text_size">22dp</dimen>
     <dimen name="label_text_size">16dp</dimen>
     <dimen name="sub_label_text_size">16dp</dimen>
-    <dimen name="small_label_text_size">22dp</dimen>
+    <dimen name="small_label_text_size">20dp</dimen>
     <dimen name="composing_text_size">18sp</dimen>
     <dimen name="notice_text_size">18sp</dimen>
   	<dimen name="key_hysteresis_distance">0.05in</dimen>
