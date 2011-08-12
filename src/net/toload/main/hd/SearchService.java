@@ -232,6 +232,16 @@ public class SearchService extends Service {
 				int size = code.length();
 				
 				boolean hasMore = false;
+				
+				
+				//Jeremy '11,8,12 if end with tone, do not add result list from less codes without tone into final result
+				boolean isPhonetic = tablename.equals("phonetic");
+				boolean hasTone =  code.matches(".+[3467]$");
+				
+				if(DEBUG) 
+					Log.i(TAG, "query() code=" + code + " isPhonetic:" + isPhonetic
+						+" hasTone:" + hasTone);
+				
 				// 11'7,22 rewritten for 連打 
 				for(int i =0; i<size; i++) {
 					String cacheKey = cacheKey(code);
@@ -268,31 +278,47 @@ public class SearchService extends Service {
 							
 						}
 					}
+					
 					if(cacheTemp != null){
 						List<Mapping> resultlist = cacheTemp.first;
 						List<Mapping> relatedtlist = cacheTemp.second;
 						
-						if(resultlist.size()>0){ 
+						if(DEBUG) 
+						Log.i(TAG, "query() code=" + code + " resultlist.size()=" + resultlist.size()
+								+" relatedlist.size()=" + relatedtlist.size());
+						
+						if(resultlist.size()>0 && (
+							 !isPhonetic 
+							|| (isPhonetic && !hasTone)
+							|| (isPhonetic && hasTone && code.matches(".+[3467]$"))
+								) ){ 
 							result.addAll(resultlist);
 							int rsize = result.size();
 							if(result.get(rsize-1).getCode().equals("has_more_records")){
 								result.remove(rsize-1);
 								hasMore = true;
+								if(DEBUG) 
+									Log.i(TAG, "query() code=" + code + "  resutl list added resultlist.size()=" 
+											+ resultlist.size());
 							}
 						}
-						if(i==0 && relatedtlist.size()>0){ 
-							result.addAll(relatedtlist);
+						if(resultlist.size()>0 && i==0 ){ 
+								result.addAll(relatedtlist);
 							int rsize = result.size();
 							if(result.get(rsize-1).getCode().equals("has_more_records")){
 								result.remove(rsize-1);
 								hasMore = true;
+								if(DEBUG) 
+									Log.i(TAG, "query() code=" + code + "  related list added relatedlist.size()=" 
+										+ relatedtlist.size());
 							}
 						}
-						if(DEBUG) Log.i(TAG, "query() code=" + code + " result.size()=" + result.size());
+						
 					}
 					
 					code= code.substring(0,code.length()-1);
 				}
+				if(DEBUG) Log.i(TAG, "query() code=" + code + " result.size()=" + result.size());
 				if(hasMore){
 					temp = new Mapping();
 					temp.setCode("has_more_records");

@@ -1566,9 +1566,9 @@ public class LimeDB extends SQLiteOpenHelper {
 				
 				
 			}
-			//Jeremy '11,8,1 if phonetic tablename and not ended with tone symbol do the expanddualcode to add tones symbols.
+			//Jeremy '11,8,12 if phonetic has tone symbol in the middle do the expanddualcode
 			if(!dualcode.equalsIgnoreCase(code)
-			//		||(tablename.equals("phonetic") && code.matches(".+[^3467]$") ) 
+					||(tablename.equals("phonetic") && code.matches(".+[ 3467].+") ) 
 				){
 				return expandDualCode(code, remaptable);
 			}
@@ -1578,6 +1578,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 	private HashSet<String> buildDualCodeList(String code, String keytablename){
 		
+		if(DEBUG) Log.i(TAG, "buildDualCodeList(): code:"+ code);
 		
 		HashMap<String,String> codeDualMap = keysDualMap.get(keytablename);
 	
@@ -1624,18 +1625,17 @@ public class LimeDB extends SQLiteOpenHelper {
 
 			}while(true);
 		}
-		//Jeremy '11,8,1 added for continuous typing.  
-//		if(tablename.equals("phonetic")){
-//			for(String iterator_code: dualCodeList){
-//				if(iterator_code.matches(".+[^3467]$")){ // regular expression .+[^3467] denotes not ending with 3467 tone symboles.
-//					Log.i(TAG, "buildDualCodeList(): phonetic code not ending with tone symobl, code = " + iterator_code);
-//					dualCodeList.add(iterator_code+"3");
-//					dualCodeList.add(iterator_code+"4");
-//					dualCodeList.add(iterator_code+"6");
-//					dualCodeList.add(iterator_code+"7");
-//				}
-//			}
-//		}
+		//Jeremy '11,8,12 added for continuous typing.  
+		if(tablename.equals("phonetic")){			
+			HashSet<String> tempList = new HashSet<String>(dualCodeList);
+			for(String iterator_code: tempList){
+				if(iterator_code.matches(".+[ 3467].+")){ // regular expression mathes tone in the middle
+					String newCode = iterator_code.replaceAll("[ 3467]","");
+					dualCodeList.add(newCode);
+					if(DEBUG) Log.i(TAG, "buildDualCodeList(): code added:"+ newCode);
+				}
+			}
+		}
 
 		if(dualCodeList.size()==1)
 			return null;
@@ -1658,7 +1658,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		if(dualCodeList != null) {
 			for(String dualcode : dualCodeList){
-				//if(DEBUG) 
+				if(DEBUG) 
 					Log.i(TAG, "expandDualCode(): processing dualcode: " + dualcode + "|");
 				String codeCol = FIELD_CODE;
 				if(tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) &&
@@ -1691,7 +1691,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			else
 				lastValidDualCodeList = validDualCodeList;
 		}
-		//if(DEBUG)
+		if(DEBUG)
 			Log.i(TAG, "expandDualCode(): result:" + result + " validDualCodeList:" + validDualCodeList);
 		return result;
 		
