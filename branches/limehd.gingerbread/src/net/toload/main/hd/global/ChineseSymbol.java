@@ -1,4 +1,4 @@
-package net.toload.main.hd;
+package net.toload.main.hd.global;
 
 public class ChineseSymbol {
 	//private final String selkey = ",./";

@@ -18,7 +18,7 @@
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package net.toload.main.hd;
+package net.toload.main.hd.keyboard;
 
 import android.view.KeyEvent;
 import android.text.method.MetaKeyKeyListener;
