@@ -55,17 +55,17 @@
 	        android:layout_weight="1"
 			/>
 
-    <!--  <LinearLayout
+     <LinearLayout
             android:id="@+id/candidate_right_parent"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
             android:clickable="true"
             android:orientation="horizontal">
-        <ImageView
+<!--         <ImageView
             android:src="@drawable/keyboard_suggest_strip_divider"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
-            />
+            /> -->
         
         <ImageButton
             android:id="@+id/candidate_right"
@@ -75,6 +75,6 @@
             android:layout_height="fill_parent"
             android:clickable="true"
             />
-    </LinearLayout>        -->
+    </LinearLayout>       
     
 </net.toload.main.hd.candidate.CandidateViewContainer>

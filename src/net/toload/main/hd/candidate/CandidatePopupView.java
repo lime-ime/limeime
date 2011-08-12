@@ -1,14 +1,34 @@
 package net.toload.main.hd.candidate;
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 
-@Deprecated
-public class CandidatePopupView extends android.widget.ScrollView {
+
+public class CandidatePopupView extends CandidateView {
 
 	public CandidatePopupView(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		// TODO Auto-generated constructor stub
+
+	}
+
+	@Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+		// TODO Auto-generated method stub
+		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+	}
+
+	@Override
+	protected void onDraw(Canvas canvas) {
+		// TODO Auto-generated method stub
+		super.onDraw(canvas);
+	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent me) {
+		// TODO Auto-generated method stub
+		return super.onTouchEvent(me);
 	}
 
 }

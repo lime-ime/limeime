@@ -27,6 +27,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.inputmethodservice.Keyboard;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
@@ -39,7 +40,6 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
 import android.widget.ImageButton;
@@ -55,11 +55,13 @@ import java.lang.Math;
 import net.toload.main.hd.LIMEService;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.Mapping;
+import net.toload.main.hd.keyboard.LIMEKeyboardBaseView;
+import net.toload.main.hd.keyboard.LIMEKeyboardBaseView.OnKeyboardActionListener;
 
 /**
  * @author Art Hung
  */
-public class CandidateView extends View //implements View.OnClickListener 
+public class CandidateView extends View implements View.OnClickListener 
 {
 	
 	private static final boolean DEBUG = false;
@@ -122,7 +124,7 @@ public class CandidateView extends View //implements View.OnClickListener
     private int bgcolor = 0;
     
     private View mCandidatePopupContainer;
-   // private PopupWindow  mCandidatePopup;
+    private PopupWindow  mCandidatePopup;
     
     private GestureDetector mGestureDetector;
     private final Context mContext;
@@ -178,7 +180,7 @@ public class CandidateView extends View //implements View.OnClickListener
     	mComposingTextPopup.setContentView(mComposingTextView);
     	mComposingTextPopup.setBackgroundDrawable(null);
 
-    	/*mCandidatePopup = new PopupWindow(context);	
+    	mCandidatePopup = new PopupWindow(context);	
     	//inflater = (LayoutInflater) context.getSystemService(
 		//	 		Context.LAYOUT_INFLATER_SERVICE);
     	mCandidatePopupContainer = inflater.inflate(R.layout.candidatepopup, null);
@@ -188,7 +190,7 @@ public class CandidateView extends View //implements View.OnClickListener
     	
     	View closeButton = mCandidatePopupContainer.findViewById(R.id.closeButton);
     	if (closeButton != null) closeButton.setOnClickListener(this);
-*/
+
 
     	mPaint = new Paint();
     	mPaint.setColor(mColorNormal);
@@ -275,37 +277,80 @@ public class CandidateView extends View //implements View.OnClickListener
         }
     };
     
-    /*public void showCandidatePopup(){
+    public void showCandidatePopup(){
     	
     	mCandidatePopup.setContentView(mCandidatePopupContainer);
     	
-    	TextView tv=(TextView) mCandidatePopupContainer.findViewById(R.id.ctxtView);
+    	//TextView tv=(TextView) mCandidatePopupContainer.findViewById(R.id.ctxtView);
     	ScrollView sv=(ScrollView)mCandidatePopupContainer.findViewById(R.id.sv);
     	ImageButton btnClose = (ImageButton) mCandidatePopupContainer.findViewById(R.id.closeButton);
     	
     	Display display = ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay(); 
     	int screenWidth =  display.getWidth();
+    	int screenHeight = display.getHeight();
     	mCandidatePopup.setWidth(screenWidth);
-    	   	
-    	tv.setText("Hello Word 1!!\n");
     	
-    	for(int i=0; i<5; i++){
-    		tv.append("Hello Word "+ i + "!!\n");
-    	}
-    	tv.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
-                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+    	int [] offsetOnScreen = new int[2];
+    	this.getLocationOnScreen(offsetOnScreen);
+
+
+    	LIMEKeyboardBaseView miniKeyboard =
+    		(LIMEKeyboardBaseView)mCandidatePopupContainer.findViewById(R.id.CandidatePopupView);
+    	miniKeyboard.setOnKeyboardActionListener(new OnKeyboardActionListener() {
+    		public void onKey(int primaryCode, int[] keyCodes, int x, int y) {
+    			Log.i(TAG, "miniKeyboard.setOnKeyboardActionListener(): primaryCode:" + primaryCode);
+    			//dismissPopupKeyboard();
+    		}
+
+    		public void onText(CharSequence text) {     
+    			mCandidatePopup.dismiss();
+    		}
+
+    		public void onCancel() {
+    			mCandidatePopup.dismiss();
+    		}
+
+    		public void swipeLeft() {
+    		}
+    		public void swipeRight() {
+    		}
+    		public void swipeUp() {
+    		}
+    		public void swipeDown() {
+    		}
+    		public void onPress(int primaryCode) {
+    			//mKeyboardActionListener.onPress(primaryCode);
+    		}
+    		public void onRelease(int primaryCode) {
+    			//mKeyboardActionListener.onRelease(primaryCode);
+    		}
+    	});
+    	Keyboard keyboard;
+    	
+        keyboard = new Keyboard(mContext, 
+        		mContext.getResources().getIdentifier("lime_dayi", "xml", mContext.getPackageName()));
+        
+        miniKeyboard.setKeyboard(keyboard);
+        miniKeyboard.setPopupParent(this);
+    	
+    	
     	btnClose.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
     	
-    	sv.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT
-    			, tv.getMeasuredHeight()));
+    	int popHeight = screenHeight - offsetOnScreen[1] ;
+        	
+        	Log.i(TAG, "showCandidatePopup(), screenHeight=" + screenHeight 
+        			+ " offsetOnScreen[1] = " + offsetOnScreen[1]
+        			+ " popHeight = " + popHeight   );
     	
-    	mCandidatePopup.setHeight(tv.getMeasuredHeight()+btnClose.getMeasuredHeight());
+    	sv.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT
+    			, 300- btnClose.getMeasuredHeight()));// tv.getMeasuredHeight()));
+    	
+    	mCandidatePopup.setHeight(300);// popHeight); //tv.getMeasuredHeight()+btnClose.getMeasuredHeight());
     	mCandidatePopup.showAtLocation(this, Gravity.NO_GRAVITY, 0, 0);
-    	Log.i(TAG, "showCandidatePopup(), popupwidth=" + screenWidth + " popHeight = " 
-    			+ tv.getMeasuredHeight()
-    			+ btnClose.getMeasuredHeight());
-    }*/
+    	Log.i(TAG, "showCandidatePopup(), popupwidth=" + screenWidth + " btnClose.getMeasuredHeight() = " +
+    			  			 btnClose.getMeasuredHeight());
+    }
     
     public void setComposingText(String composingText){
     	if(composingText != null && !composingText.trim().equals("")){
@@ -567,6 +612,9 @@ public class CandidateView extends View //implements View.OnClickListener
         scrollTo(sx, getScrollY());
         invalidate();
     }
+    public void setSuggestions(List<Mapping> suggestions){
+    	setSuggestions(suggestions, false, false, "");
+    }
     public void setSuggestions(List<Mapping> suggestions, boolean showNumber, boolean typedWordValid, String displaySelkey) {
     	mDisplaySelkey = displaySelkey;
     	setSuggestions(suggestions, showNumber, typedWordValid);
@@ -810,8 +858,8 @@ public class CandidateView extends View //implements View.OnClickListener
     	cursorRect = newCursor;
     	invalidate();
     }
-	/*@Override
+	@Override
 	public void onClick(View v) {
 		 mCandidatePopup.dismiss();
-	}*/
+	}
 }

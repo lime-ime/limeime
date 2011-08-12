@@ -34,44 +34,45 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
             mButtonLeft = findViewById(R.id.candidate_left);
             if (mButtonLeft != null) {
                 mButtonLeft.setOnTouchListener(this);
-            }
+            }*/
             mButtonRightLayout = findViewById(R.id.candidate_right_parent);
             mButtonRight = findViewById(R.id.candidate_right);
             if (mButtonRight != null) {
                 mButtonRight.setOnTouchListener(this);
-            }*/
+            }
             mCandidates = (CandidateView) findViewById(R.id.candidates);
         }
     }
 
     @Override
     public void requestLayout() {
-        /*if (mCandidates != null) {
+        if (mCandidates != null) {
             int availableWidth = mCandidates.getWidth();
             int neededWidth = mCandidates.computeHorizontalScrollRange();
             int x = mCandidates.getScrollX();
-            boolean leftVisible = x > 0;
-            boolean rightVisible = x + availableWidth < neededWidth;
+            //boolean leftVisible = x > 0;
+            //boolean rightVisible = x + availableWidth < neededWidth;*/
             boolean rightVisible =  availableWidth < neededWidth;
-            if (mButtonLeftLayout != null) {
-               mButtonLeftLayout.setVisibility(leftVisible ? VISIBLE : GONE);
-            }
+            //if (mButtonLeftLayout != null) {
+            //   mButtonLeftLayout.setVisibility(leftVisible ? VISIBLE : GONE);
+            //}
             if (mButtonRightLayout != null) {
-                mButtonRightLayout.setVisibility(rightVisible ? VISIBLE : GONE);
+               // mButtonRightLayout.setVisibility(rightVisible ? VISIBLE : GONE);
+            	 mButtonRightLayout.setVisibility(GONE);
             }
-        }*/
+        }
         super.requestLayout();
     }
 
     public boolean onTouch(View v, MotionEvent event) {
-      /*  if (event.getAction() == MotionEvent.ACTION_DOWN) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
             if (v == mButtonRight) {
-                mCandidates.scrollNext();
+                //mCandidates.scrollNext();
             	
-            	//mCandidates.showCandidatePopup();
+            	mCandidates.showCandidatePopup();
             	
             }
-        }*/
+        }
         return false;
     }
 

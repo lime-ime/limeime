@@ -54,9 +54,11 @@ import net.toload.main.hd.ISearchService;
 import net.toload.main.hd.keyboard.LIMEKeyboard;
 import net.toload.main.hd.keyboard.LIMEKeyboardBaseView;
 import net.toload.main.hd.keyboard.LIMEKeyboardView;
+import net.toload.main.hd.keyboard.LIMEMetaKeyKeyListener;
 import net.toload.main.hd.R;
 import net.toload.main.hd.candidate.CandidateView;
 import net.toload.main.hd.candidate.CandidateViewContainer;
+import net.toload.main.hd.global.ChineseSymbol;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.Mapping;
 import net.toload.main.hd.limedb.ExpandableDictionary;
@@ -704,12 +706,18 @@ public class LIMEService extends InputMethodService implements
 				candidatesStart, candidatesEnd);
 		
 		if(DEBUG) 
-			Log.i("LIMEService", "onUpdateSelection()");
+			Log.i("LIMEService", "onUpdateSelection():oldSelStart" + oldSelStart
+					+" oldSelEnd:" + oldSelEnd
+					+" newSelStart:" + newSelStart + " newSelEnd:" + newSelEnd
+					+" candidatesStart:"+candidatesStart + " candidatesEnd:"+candidatesEnd	);
 
 		// If the current selection in the text view changes, we should
 		// clear whatever candidate text we have.
 		if (mComposing.length() > 0
-				&& (newSelStart != candidatesEnd || newSelEnd != candidatesEnd)) {
+				&& (newSelStart != candidatesEnd || newSelEnd != candidatesEnd)
+				&& candidatesStart >0 && candidatesEnd >0
+				&& (newSelStart < candidatesStart || newSelStart > candidatesEnd)
+				) {
 			mComposing.setLength(0);
 			updateCandidates();
 			InputConnection ic = getCurrentInputConnection();
@@ -1396,22 +1404,25 @@ public class LIMEService extends InputMethodService implements
 							if(LDComposingBuffer.length()==0){
 								//starting LD process
 								LDComposingBuffer = mComposing.toString();
-								if(DEBUG) 
+								//if(DEBUG) 
 									Log.i(TAG, "commitedtype():starting LD process, LDBuffer=" + LDComposingBuffer +
 										". just commited code=" + firstMatched.getCode());
-								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), firstMatched.getWord(), firstMatched.getScore(), false);
+								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), 
+										firstMatched.getWord(), firstMatched.getScore(), false);
 							}else if(LDComposingBuffer.contains(mComposing.toString())){
 								//Continuous LD process
-								if(DEBUG) 
-								Log.i(TAG, "commitedtype():Continuous LD process, LDBuffer=" + LDComposingBuffer +
+								//if(DEBUG) 
+									Log.i(TAG, "commitedtype():Continuous LD process, LDBuffer=" + LDComposingBuffer +
 										". just commited code=" + firstMatched.getCode());
-								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), firstMatched.getWord(), firstMatched.getScore(), false);
+								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), 
+										firstMatched.getWord(), firstMatched.getScore(), false);
 							}
 							mComposing= mComposing.delete(0, commitedCodeLength);
-							//Log.i(TAG, "commitedtype(): new mComposing:" +mComposing);
+							
 							if(!mComposing.toString().equals(" ")){
 								if(mComposing.toString().startsWith(" "))
 									mComposing= mComposing.deleteCharAt(0);
+								Log.i(TAG, "commitedtype(): new mComposing:" +mComposing);
 								inputConnection.setComposingText(mComposing, 1);
 								updateCandidates();
 								return;
