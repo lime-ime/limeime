@@ -720,10 +720,12 @@ public class LIMEService extends InputMethodService implements
 				) {
 			mComposing.setLength(0);
 			updateCandidates();
+			//pickDefaultCandidate();
 			InputConnection ic = getCurrentInputConnection();
 			if (ic != null) {
 				ic.finishComposingText();
 			}
+
 		}
 	}
 
@@ -1963,25 +1965,13 @@ public class LIMEService extends InputMethodService implements
 		if (mPredicting) {
 			commitTyped(ic);
 			//mJustRevertedSeparator = null;
-		} else if (onIM) {
-
-			if (mComposing.length() > 0) {
-				commitTyped(ic);
-			}
-			if (firstMatched != null) {
-				ic.commitText(this.firstMatched.getWord(), 0);
-//				try {
-//					SearchSrv.updateMapping(firstMatched.getId(),
-//							firstMatched.getCode(), firstMatched.getWord(),
-//							firstMatched.getPword(), firstMatched.getScore(),
-//							firstMatched.isDictionary());
-//				} catch (RemoteException e) {
-//					e.printStackTrace();
-//				}
-			}
-		} else {
-			ic.commitText(text, 0);
+		} else if (onIM &&mComposing.length() > 0) {
+			pickDefaultCandidate();
+			//	commitTyped(ic);
 		}
+		ic.commitText(text, 1);
+		//ic.commitText(text, 0);
+		
 		ic.endBatchEdit();
 		updateShiftKeyState(getCurrentInputEditorInfo());
 	}

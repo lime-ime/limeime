@@ -24,6 +24,7 @@ import net.toload.main.hd.LIMEKeyboardSwitcher;
 import net.toload.main.hd.R;
 import android.content.Context;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
@@ -34,6 +35,7 @@ import android.graphics.drawable.Drawable;
 import android.inputmethodservice.Keyboard;
 import android.text.TextPaint;
 import android.util.Log;
+import android.util.Xml;
 import android.view.ViewConfiguration;
 import android.view.inputmethod.EditorInfo;
 
@@ -381,10 +383,16 @@ public class LIMEKeyboard extends Keyboard {
         
         public LIMEKey(Resources res, Keyboard.Row parent, int x, int y, XmlResourceParser parser) {
             super(res, parent, x, y, parser);
+            if(DEBUG) Log.i(TAG,"LIMEKey():"+this.codes[0]);
             if (popupCharacters != null && popupCharacters.length() == 0) {
                 // If there is a keyboard with no keys specified in popupCharacters
                 popupResId = 0;
             }
+            TypedArray a = res.obtainAttributes(Xml.asAttributeSet(parser), R.styleable.LIMEKey);
+            CharSequence testAtttribute = a.getText(R.styleable.LIMEKey_testAttribute);
+            a.recycle();
+            if(testAtttribute!=null)
+            	Log.i(TAG,"LIMEKey(): Got test attribute:" +testAtttribute );
         }
         
         @Override

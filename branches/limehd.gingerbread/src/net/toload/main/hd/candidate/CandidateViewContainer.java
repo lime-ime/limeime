@@ -57,7 +57,7 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
             //   mButtonLeftLayout.setVisibility(leftVisible ? VISIBLE : GONE);
             //}
             if (mButtonRightLayout != null) {
-               // mButtonRightLayout.setVisibility(rightVisible ? VISIBLE : GONE);
+                //mButtonRightLayout.setVisibility(rightVisible ? VISIBLE : GONE);
             	 mButtonRightLayout.setVisibility(GONE);
             }
         }
