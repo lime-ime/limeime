@@ -198,7 +198,8 @@ public class CandidateView extends View implements View.OnClickListener
     			mScrolled = true;
     			
     			// Update full candidate list before scroll
-    			if(mSuggestions.get(mSuggestions.size()-1).getCode().equals("has_more_records"))
+    			if( mSuggestions.get(mSuggestions.size()-1).getCode() !=null
+    	        		&& mSuggestions.get(mSuggestions.size()-1).getCode().equals("has_more_records"))
     				mService.pickSuggestionManually(mSuggestions.size()-1);
     			
     			
@@ -491,9 +492,9 @@ public class CandidateView extends View implements View.OnClickListener
      */
     @Override
     protected void onDraw(Canvas canvas) {
-    	if(DEBUG){
-    		Log.i("Candidateview:OnDraw", "Suggestion count:" + count+" mSuggestions.size:" + mSuggestions.size());
-    	}
+    	//if(DEBUG)
+    		Log.i(TAG, "Candidateview:OnDraw():Suggestion count:" + count+" mSuggestions.size:" + mSuggestions.size());
+    	
         //if (canvas != null) {
         //    super.onDraw(canvas);
         //}  // Jeremy '11,8,12 all draw by ourself.
@@ -521,9 +522,9 @@ public class CandidateView extends View implements View.OnClickListener
         // Modified by jeremy '10, 3, 29.  Update mselectedindex if touched and build wordX[i] and wordwidth[i]
         int x = 0;
         for (int i = 0; i < count; i++) {
-        	if(DEBUG){
-        		Log.i("Candidateview:OnDraw", "updaingting:" + i );
-        	}
+        	//if(DEBUG)
+        		Log.i(TAG, "Candidateview:OnDraw():updaingting:" + i );
+        	
         	String suggestion = mSuggestions.get(i).getWord();
             float textWidth = paint.measureText(suggestion);
             final int wordWidth = (int) textWidth + X_GAP * 2;
@@ -537,9 +538,11 @@ public class CandidateView extends View implements View.OnClickListener
         }
         mTotalWidth = x;
         
+       
         //Jeremy '11,8,11. If the candidate list is within 1 page and has more records, get full records first.
-        if(mTotalWidth < this.getWidth() && 
-        		mSuggestions.get(mSuggestions.size()-1).getCode().equals("has_more_records")){
+        if(mTotalWidth < this.getWidth()  
+        		&& mSuggestions.get(mSuggestions.size()-1).getCode() !=null
+        		&& mSuggestions.get(mSuggestions.size()-1).getCode().equals("has_more_records")){
         	mService.pickSuggestionManually(mSuggestions.size()-1);
         	return;
         }
@@ -557,9 +560,9 @@ public class CandidateView extends View implements View.OnClickListener
         if (canvas != null) {
         	
         	for (int i = 0; i < count; i++) {
-        		if(DEBUG){
-        			Log.i("Candidateview:OnDraw","i:" + i + "  Drawing:" + mSuggestions.get(i).getWord() );
-        		}
+        		//if(DEBUG)
+        			Log.i(TAG, "Candidateview:OnDraw():i:" + i + "  Drawing:" + mSuggestions.get(i).getWord() );
+        		
         	
                 //if ((i == 1 && !typedWordValid) || (i == 0 && typedWordValid)) {
                 //    paint.setFakeBoldText(true);
