@@ -492,7 +492,7 @@ public class CandidateView extends View implements View.OnClickListener
      */
     @Override
     protected void onDraw(Canvas canvas) {
-    	//if(DEBUG)
+    	if(DEBUG)
     		Log.i(TAG, "Candidateview:OnDraw():Suggestion count:" + count+" mSuggestions.size:" + mSuggestions.size());
     	
         //if (canvas != null) {
@@ -522,7 +522,7 @@ public class CandidateView extends View implements View.OnClickListener
         // Modified by jeremy '10, 3, 29.  Update mselectedindex if touched and build wordX[i] and wordwidth[i]
         int x = 0;
         for (int i = 0; i < count; i++) {
-        	//if(DEBUG)
+        	if(DEBUG)
         		Log.i(TAG, "Candidateview:OnDraw():updaingting:" + i );
         	
         	String suggestion = mSuggestions.get(i).getWord();
@@ -560,7 +560,7 @@ public class CandidateView extends View implements View.OnClickListener
         if (canvas != null) {
         	
         	for (int i = 0; i < count; i++) {
-        		//if(DEBUG)
+        		if(DEBUG)
         			Log.i(TAG, "Candidateview:OnDraw():i:" + i + "  Drawing:" + mSuggestions.get(i).getWord() );
         		
         	
