@@ -78,5 +78,12 @@
         </attr>
 
     </declare-styleable>
+     <declare-styleable name="LIMEKey">
+     <!-- Image for the key. This image needs to be a StateListDrawable, with the following
+             possible states: normal, pressed, checkable, checkable+pressed, checkable+checked,
+             checkable+checked+pressed. -->
+        <attr name="testAttribute" format="string" />
+     
+     </declare-styleable>
 
 </resources>
