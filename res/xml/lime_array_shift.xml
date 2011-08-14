@@ -52,7 +52,7 @@
         <Key android:codes="74" android:keyLabel="J\n7−"/>
         <Key android:codes="75" android:keyLabel="K\n8−"/>
         <Key android:codes="76" android:keyLabel="L\n9−"/>
-        <Key android:codes="58" android:keyLabel=":" android:keyEdgeFlags="right"/>
+        <Key android:codes="58" android:keyLabel=":\n0−" android:keyEdgeFlags="right"/>
     </Row> 
      <Row>
         <Key android:codes="90" android:keyLabel="Z\n1⇣" android:keyEdgeFlags="left"/>
@@ -62,9 +62,9 @@
         <Key android:codes="66" android:keyLabel="B\n5⇣"/>
         <Key android:codes="78" android:keyLabel="N\n6⇣"/>
         <Key android:codes="77" android:keyLabel="M\n7⇣"/>
-        <Key android:codes="60" android:keyLabel="&lt;"/>
-        <Key android:codes="62" android:keyLabel="&gt;"  android:popupKeyboard="@xml/popup_c_punctuation"   />
-        <Key android:codes="63" android:keyLabel="\?" android:keyEdgeFlags="right"/>
+        <Key android:codes="60" android:keyLabel="&lt;\n8⇣"/>
+        <Key android:codes="62" android:keyLabel="&gt;\n9⇣"  android:popupKeyboard="@xml/popup_c_punctuation"   />
+        <Key android:codes="63" android:keyLabel="\?\n0⇣" android:keyEdgeFlags="right"/>
     </Row>
 
     <Row android:rowEdgeFlags="bottom">
