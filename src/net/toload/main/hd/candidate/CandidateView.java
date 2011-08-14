@@ -458,6 +458,11 @@ public class CandidateView extends View implements View.OnClickListener
     	return candidateExpanded;
     }
     
+    public boolean hasRoomForExpanding(){ 
+    	int [] offsetOnScreen = new int[2];
+    	this.getLocationOnScreen(offsetOnScreen);
+    	return (mScreenHeight - offsetOnScreen[1]) > 2 * getHeight();
+    }
     
     /**
      * A connection back to the service to communicate with the text field
@@ -540,7 +545,7 @@ public class CandidateView extends View implements View.OnClickListener
             x += wordWidth;
         }
         mTotalWidth = x;
-        
+        requestLayout();
        
         //Jeremy '11,8,11. If the candidate list is within 1 page and has more records, get full records first.
         if(mTotalWidth < this.getWidth() && checkHasMoreRecords()) 			return;

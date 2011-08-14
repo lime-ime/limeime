@@ -50,7 +50,7 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
             //boolean leftVisible = x > 0;
             //boolean rightVisible = x + availableWidth < neededWidth;*/
             boolean rightVisible =  availableWidth < neededWidth;
-            if(mCandidates.isCandidateExpanded()) rightVisible = false;
+            if(mCandidates.isCandidateExpanded() || !mCandidates.hasRoomForExpanding()) rightVisible = false;
             //if (mButtonLeftLayout != null) {
             //   mButtonLeftLayout.setVisibility(leftVisible ? VISIBLE : GONE);
             //}

@@ -181,7 +181,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasMenuPress = false; // Jeremy '11,5,29
 	private boolean hasMenuProcessed = false; // Jeremy '11,5,29
 	private boolean hasSearchPress = false; // Jeremy '11,5,29
-	private boolean hasSearchProcessed = false; // Jeremy '11,5,29
+	//private boolean hasSearchProcessed = false; // Jeremy '11,5,29
 	
 	private boolean hasEnterProcessed = false; // Jeremy '11,6.18
 	private boolean hasSpaceProcessed = false;
@@ -805,10 +805,10 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 
-		if (DEBUG) {
+		if (DEBUG) 
 			Log.i("OnKeyDown", "keyCode:" + keyCode + ";hasCtrlPress:"
 					+ hasCtrlPress);
-		}
+		
 		//hasKeyPress = false;
 		hasSymbolEntered = false;
 
@@ -840,10 +840,6 @@ public class LIMEService extends InputMethodService implements
 		 */
 		switch (keyCode) {
 		// Jeremy '11,5,29 Bypass search and menu combination keys.
-		case KeyEvent.KEYCODE_SEARCH:
-			hasSearchProcessed = false;
-			hasSearchPress = true;
-			break;
 		case KeyEvent.KEYCODE_MENU:
 			hasMenuProcessed = false;
 			hasMenuPress = true;
@@ -1023,7 +1019,12 @@ public class LIMEService extends InputMethodService implements
 				}
 				break;
 			}
-
+		case KeyEvent.KEYCODE_PERIOD:
+		case KeyEvent.KEYCODE_SEARCH:
+			//hasSearchProcessed = false;
+			//hasSearchPress = true;
+			//break;
+		case KeyEvent.KEYCODE_SYM:
 		case KeyEvent.KEYCODE_AT:
 			return true;
 		case KeyEvent.KEYCODE_TAB: // Jeremy '11,5,23: Force bypassing tab
@@ -1031,7 +1032,7 @@ public class LIMEService extends InputMethodService implements
 			break;
 		default:
 			if(hasMenuPress) hasMenuProcessed = true;
-			if(hasSearchPress) hasSearchProcessed = true;
+			//if(hasSearchPress) hasSearchProcessed = true;
 			if(!(hasCtrlPress||hasMenuPress)){
 				if (translateKeyDown(keyCode, event)) {
 					// Log.i("Onkeydown","tranlatekeydown:true");
@@ -1109,66 +1110,7 @@ public class LIMEService extends InputMethodService implements
 			}
 			}
 		}
-		//Jeremy '11,5,29 has !hasControlPress to prevent tranlatekeydown is enough for super to process control combination keys.
-		/*
-		else if(selected != null){
-			// 27.May.2011 Art : Handle CTRL + C to copy selected text
-			if( hasCtrlPress && t == 'c'
-				&& (mComposing == null || mComposing.length() == 0 
-				&& ( mCandidateView == null || !mCandidateView.isShown()) ) ){
-				try {
-					SearchSrv.setSelectedText(String.valueOf(selected));
-					return true;
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-			
-			}else if( hasCtrlPress && t == 'v'
-					&& (mComposing == null || mComposing.length() == 0 
-					&& ( mCandidateView == null || !mCandidateView.isShown()) ) ){
-					// 27.May.2011 Art : Handle CTRL + V to paste selected text
-					try {
-						getCurrentInputConnection().commitText(SearchSrv.getSelectedText(), 0);
-						return true;
-					} catch (RemoteException e) {
-						e.printStackTrace();
-					}
-			}
-		}else if(selected == null){
-			if( hasCtrlPress && t == 'c'
-				&& (mComposing == null || mComposing.length() == 0 
-				&& ( mCandidateView == null || !mCandidateView.isShown()) ) ){
-				// 27.May.2011 Art : Handle CTRL + C to reset selected text
-				try {
-					SearchSrv.setSelectedText("");
-					return true;
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-			}
-		}
 		
-		
-		// Log.i("ART","Test Physical Key:"+Character.isLetter(t));
-		/*
-		 * if(!Character.isLetter(t)){ tempEnglishList.clear();
-		 * tempEnglishWord.delete(0, tempEnglishWord.length());
-		 * this.updateEnglishDictionaryView(); }
-		 *
-		if (mLIMEPref.getEnglishEnable() && Character.isLetter(t)) {
-			this.tempEnglishWord.append(t);
-			this.updateEnglishDictionaryView();
-			return super.onKeyDown(keyCode, event);
-		} else {
-			// Chcek if input character not valid English Character then reset
-			// temp english string
-			
-			// Check If User Press The Number Key
-			if(!hasCtrlPress){
-				resetTempEnglishWord();
-				resetCandidateBar();
-			}
-			*/
 			return super.onKeyDown(keyCode, event);
 	}
 
@@ -1231,10 +1173,10 @@ public class LIMEService extends InputMethodService implements
 
 		switch (keyCode) {
 		//Jeremy '11,5,29 Bypass search and menu keys.
-		case KeyEvent.KEYCODE_SEARCH:
-			hasSearchPress = false;
-			if(hasSearchProcessed) return true;
-			break;
+//		case KeyEvent.KEYCODE_SEARCH:
+//			hasSearchPress = false;
+//			if(hasSearchProcessed) return true;
+//			break;
 		case KeyEvent.KEYCODE_MENU:
 			hasMenuPress = false;
 			if(hasMenuProcessed) return true;
@@ -1281,10 +1223,44 @@ public class LIMEService extends InputMethodService implements
 			}
 			// Jeremy '10, 4, 12 bug fix on repeated enter.
 			break;
+		//Jeremy '11,8,14
+		case KeyEvent.KEYCODE_PERIOD:
+			if (keyPressTime != 0
+					&& System.currentTimeMillis() - keyPressTime > 700) {
+				updateChineseSymbol();
+				return true;
+			} else if (((mEnglishOnly && mPredictionOn) || (!mEnglishOnly && onIM))
+					&& translateKeyDown(keyCode, event)) {
+				return true;
+			} else {
+				translateKeyDown(keyCode, event);
+				super.onKeyDown(keyCode, mKeydownEvent);
+			}
+		case KeyEvent.KEYCODE_SYM:
+		case KeyEvent.KEYCODE_SEARCH:
+			// alt-@ switch to next active keyboard.
+			if (LIMEMetaKeyKeyListener.getMetaState(mMetaState,
+					LIMEMetaKeyKeyListener.META_ALT_ON) > 0) {
+				nextActiveKeyboard(true);
+				mMetaState = LIMEMetaKeyKeyListener
+						.adjustMetaAfterKeypress(mMetaState);
+				setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
+				return true;
+				// Long press physical @ key to swtich chn/eng
+			} else if (keyPressTime != 0
+					&& System.currentTimeMillis() - keyPressTime > 700) {
+				switchChiEng();
+				return true;
+			} else if (((mEnglishOnly && mPredictionOn) || (!mEnglishOnly && onIM))
+					&& translateKeyDown(keyCode, event)) {
+				return true;
+			} else {
+				updateChineseSymbol();
+			}
 		case KeyEvent.KEYCODE_AT:
 			// alt-@ switch to next active keyboard.
 			if (LIMEMetaKeyKeyListener.getMetaState(mMetaState,
-					LIMEMetaKeyKeyListener.META_SHIFT_ON) > 0) {
+					LIMEMetaKeyKeyListener.META_ALT_ON) > 0) {
 				nextActiveKeyboard(true);
 				mMetaState = LIMEMetaKeyKeyListener
 						.adjustMetaAfterKeypress(mMetaState);
@@ -1304,12 +1280,12 @@ public class LIMEService extends InputMethodService implements
 			}
 
 			break;
-		case KeyEvent.KEYCODE_SYM:  // for Desize Z??
-			if (keyPressTime != 0 && System.currentTimeMillis() - keyPressTime > 700) {
-				switchChiEng();
-				return true;
-			}
-			break;
+//		case KeyEvent.KEYCODE_SYM:  // for Desize Z??
+//			if (keyPressTime != 0 && System.currentTimeMillis() - keyPressTime > 700) {
+//				switchChiEng();
+//				return true;
+//			}
+//			break;
 			
 		case KeyEvent.KEYCODE_SPACE:
 			//Jeremy move the chi/eng swithcing to on_KEY_UP '11,6,18
@@ -1978,6 +1954,42 @@ public class LIMEService extends InputMethodService implements
 	private void updateCandidates() {
 		this.updateCandidates(false);
 	}
+	
+	
+	private void updateChineseSymbol(){
+		//ChineseSymbol chineseSym = new ChineseSymbol();
+		List<Mapping> list = ChineseSymbol.getChineseSymoblList();
+		if (list.size() > 0) {
+			String selkey="";
+			try {
+				selkey = SearchSrv.getSelkey();
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+			String mixedModeSelkey = "`";
+			if(hasSymbolMapping && !keyboardSelection.equals("dayi") 
+					&& ! (keyboardSelection.equals("phonetic") 
+							&& mLIMEPref.getPhoneticKeyboardType().equals("standard")) 	){
+				mixedModeSelkey = " ";
+			}
+				
+			
+			int selkeyOption = mLIMEPref.getSelkeyOption();
+			if(selkeyOption ==1) 	selkey = mixedModeSelkey +selkey;
+			else if (selkeyOption ==2) 	selkey = mixedModeSelkey + " " +selkey;
+			
+			
+			
+			setSuggestions(list, isPressPhysicalKeyboard && 
+					mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard"), true, selkey);
+			
+			if(DEBUG) Log.i(TAG, "updateChineseSymbol(): display selkey:" + selkey 
+									+ "list.size:"+list.size());
+		}
+		
+	}
+	
+	
 	/**
 	 * Update the list of available candidates from the current composing text.
 	 * This will need to be filled in by however you are determining candidates.
@@ -1991,8 +2003,7 @@ public class LIMEService extends InputMethodService implements
 		//if (mCandidateView != null) 			
 		//	mCandidateView.clear();
 
-		if (//!mCompletionOn && 
-				mComposing.length() > 0) {
+		if (mComposing.length() > 0) {
 
 			LinkedList<Mapping> list = new LinkedList<Mapping>();
 
@@ -2014,10 +2025,13 @@ public class LIMEService extends InputMethodService implements
 					if(selkeyOption ==1) 	selkey = mixedModeSelkey +selkey;
 					else if (selkeyOption ==2) 	selkey = mixedModeSelkey + " " +selkey;
 					
-					if(DEBUG) Log.i("LIMEService:updateCandidates()","display selkey:" + selkey);
-										setSuggestions(list, isPressPhysicalKeyboard && mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
-							, true, selkey);
-					if(DEBUG) Log.i("updateCandidate", "list.size:"+list.size());
+					
+					
+					setSuggestions(list, isPressPhysicalKeyboard && 
+							mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard"), true, selkey);
+					
+					if(DEBUG) Log.i(TAG, "updateCandidates(): display selkey:" + selkey 
+											+ "list.size:"+list.size());
 				} else {
 					//Jermy '11,8,14
 					clearSuggestions();
@@ -2273,6 +2287,7 @@ public class LIMEService extends InputMethodService implements
 				mCandidateView.clear();
 				updateCandidates();
 			}*/
+			clearSuggestions();
 			try {
 				if (mLIMEPref.getEnglishPrediction()&& mPredictionOn
 					&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard() )//mPredictionOnPhysicalKeyboard)
