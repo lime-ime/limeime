@@ -388,11 +388,11 @@ public class LIMEKeyboard extends Keyboard {
                 // If there is a keyboard with no keys specified in popupCharacters
                 popupResId = 0;
             }
-            TypedArray a = res.obtainAttributes(Xml.asAttributeSet(parser), R.styleable.LIMEKey);
-            CharSequence testAtttribute = a.getText(R.styleable.LIMEKey_testAttribute);
-            a.recycle();
-            if(testAtttribute!=null)
-            	Log.i(TAG,"LIMEKey(): Got test attribute:" +testAtttribute );
+//            TypedArray a = res.obtainAttributes(Xml.asAttributeSet(parser), R.styleable.LIMEKey);
+//            CharSequence testAtttribute = a.getText(R.styleable.LIMEKey_testAttribute);
+//            a.recycle();
+//            if(testAtttribute!=null)
+//            	Log.i(TAG,"LIMEKey(): Got test attribute:" +testAtttribute );
         }
         
         @Override
