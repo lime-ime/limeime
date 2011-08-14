@@ -3,8 +3,6 @@ package net.toload.main.hd.global;
 import java.util.LinkedList;
 import java.util.List;
 
-import android.util.Log;
-
 public class ChineseSymbol {
 	private final static String chineseSymbols = "，|。|、|？|！|：|；|「|」|『|』|【|】|" +
 			"／ |＼|－|＿|＊|＆|︿|％|＄|＃|＠|～|‵|＂|｛|｝|［|］|＜|＞|＋|（|）|｜";	
