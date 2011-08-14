@@ -1,8 +1,16 @@
 package net.toload.main.hd.global;
 
-public class ChineseSymbol {
-	//private final String selkey = ",./";
+import java.util.LinkedList;
+import java.util.List;
 
+import android.util.Log;
+
+public class ChineseSymbol {
+	private final static String chineseSymbols = "，|。|、|？|！|：|；|「|」|『|』|【|】|" +
+			"／ |＼|－|＿|＊|＆|︿|％|＄|＃|＠|～|‵|＂|｛|｝|［|］|＜|＞|＋|（|）|｜";	
+	
+	
+	private static List<Mapping> mChineseSymbolMapping = new LinkedList<Mapping>();
 	public static String getSymbol(char symbol){
 	
 		switch(symbol){
@@ -50,6 +58,25 @@ public class ChineseSymbol {
 		case '!': return "！";
 		}  
 		return null;
+	}
+	
+	public static List<Mapping> getChineseSymoblList(){
+
+		if(mChineseSymbolMapping.size()==0){
+			String [] symArray =  chineseSymbols.split("\\|");
+			
+			for(String sym: symArray){
+				Mapping mapping = new Mapping();
+				mapping.setCode("");
+				mapping.setWord(sym);
+				mapping.setDictionary(false);
+				mChineseSymbolMapping.add(mapping);
+				
+			}
+		}
+		//Log.i("getChineseSymoblList()", "mChineseSymbolMapping.size()=" + mChineseSymbolMapping.size());
+		return mChineseSymbolMapping;
+		
 	}
 	
 }
