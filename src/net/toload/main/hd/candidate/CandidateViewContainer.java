@@ -5,13 +5,10 @@ package net.toload.main.hd.candidate;
 import net.toload.main.hd.R;
 import android.content.Context;
 import android.util.AttributeSet;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.LinearLayout;
-import android.widget.PopupWindow;
 
 public class CandidateViewContainer extends LinearLayout implements OnTouchListener {
 
@@ -49,16 +46,17 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
         if (mCandidates != null) {
             int availableWidth = mCandidates.getWidth();
             int neededWidth = mCandidates.computeHorizontalScrollRange();
-            int x = mCandidates.getScrollX();
+            //int x = mCandidates.getScrollX();
             //boolean leftVisible = x > 0;
             //boolean rightVisible = x + availableWidth < neededWidth;*/
             boolean rightVisible =  availableWidth < neededWidth;
+            if(mCandidates.isCandidateExpanded()) rightVisible = false;
             //if (mButtonLeftLayout != null) {
             //   mButtonLeftLayout.setVisibility(leftVisible ? VISIBLE : GONE);
             //}
             if (mButtonRightLayout != null) {
-                //mButtonRightLayout.setVisibility(rightVisible ? VISIBLE : GONE);
-            	 mButtonRightLayout.setVisibility(GONE);
+                mButtonRightLayout.setVisibility(rightVisible ? VISIBLE : GONE);
+            	// mButtonRightLayout.setVisibility(GONE);
             }
         }
         super.requestLayout();

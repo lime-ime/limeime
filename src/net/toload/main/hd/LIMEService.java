@@ -352,14 +352,10 @@ public class LIMEService extends InputMethodService implements
 			//commitTyped(getCurrentInputConnection());
 			//Jeremy '11,5,31 clear the composing instead of commitTyped
 			
-			if (mCandidateView != null ) {
-				mCandidateView.clear();
-				setCandidatesViewShown(false);
-			}
-			if (mComposing != null && mComposing.length() > 0) {
-				mComposing.setLength(0);
-				getCurrentInputConnection().commitText("", 0);
-			}
+			//Jeremy '11,8,14
+			clearComposing();
+			getCurrentInputConnection().commitText("", 0);
+			
 			mOrientation = conf.orientation;
 		}
 		initialViewAndSwitcher();
@@ -466,13 +462,8 @@ public class LIMEService extends InputMethodService implements
 			e.printStackTrace();
 		}
 		// Clear current composing text and candidates.
-		mComposing.setLength(0);
-		updateCandidates();
-
-		setCandidatesViewShown(false);
-		
-		
-		this.setSuggestions(null, false, false);
+		//Jeremy '11,8,14 
+		clearComposing();
 		
 		// -> 26.May.2011 by Art : Update keyboard list when user click the keyboard.
 		try {
@@ -486,7 +477,24 @@ public class LIMEService extends InputMethodService implements
 			SearchSrv.close();
 		}catch(Exception e){}
 	}
-
+	
+	private void clearComposing(){
+		//Jeremy '11,8,14
+		if (mComposing != null && mComposing.length() > 0)
+			mComposing.setLength(0);
+		hasMappingList = false;
+		if(templist!=null) 
+			templist.clear();
+		clearSuggestions();
+	}
+	
+	private void clearSuggestions(){
+		if(mCandidateView !=null){
+			mCandidateView.clear();
+			setCandidatesViewShown(false);
+		}
+	}
+	
 	/**
 	 * This is the main point where we do our initialization of the input method
 	 * to begin operating on an application. At this point we have been bound to
@@ -646,7 +654,8 @@ public class LIMEService extends InputMethodService implements
 		}
 
 		mInputView.closing();
-		mComposing.setLength(0);
+		//Jeremy '11,8,14
+		clearComposing();
 		mPredicting = false;
 		//mDeleteCount = 0;
 
@@ -718,8 +727,8 @@ public class LIMEService extends InputMethodService implements
 				&& candidatesStart >0 && candidatesEnd >0
 				&& (newSelStart < candidatesStart || newSelStart > candidatesEnd)
 				) {
-			mComposing.setLength(0);
-			updateCandidates();
+			//Jeremy '11,8,14
+			clearComposing();
 			//pickDefaultCandidate();
 			InputConnection ic = getCurrentInputConnection();
 			if (ic != null) {
@@ -745,7 +754,7 @@ public class LIMEService extends InputMethodService implements
 				if(mComposing.length()==0) updateRelatedWord();
 			} 
 			if(mEnglishOnly && !mPredictionOn) {
-				setSuggestions(buildCompletionList(), false, true);
+				setSuggestions(buildCompletionList(), false, true,"");
 			}
 				
 		}
@@ -922,12 +931,9 @@ public class LIMEService extends InputMethodService implements
 				}
 			}
 
-			if (mCandidateView != null) {
-				mCandidateView.clear();
-				updateCandidates();
-			}
-			mComposing.setLength(0);
-			//setCandidatesViewShown(false);
+			//Jeremy '11,8,14
+			clearComposing();
+		
 
 			// ------------------------------------------------------------------------
 			// Remove '10, 3, 26. Replaced with LIMEMetaKeyKeyLister
@@ -974,13 +980,12 @@ public class LIMEService extends InputMethodService implements
 			break;
 
 		case MY_KEYCODE_CTRL_ESC:
-			if (mComposing != null && mComposing.length() > 0) {
-				mCandidateView.clear();
-				mComposing.setLength(0);
-				getCurrentInputConnection().commitText("", 0);
-				return true;
-			}
-			break;
+
+			//Jeremy '11,8,14
+			clearComposing();
+			getCurrentInputConnection().commitText("", 0);
+			return true;
+
 		case KeyEvent.KEYCODE_SPACE:
 
 		
@@ -1096,7 +1101,8 @@ public class LIMEService extends InputMethodService implements
 			// 27.May.2011 Art : when user click Ctrl + Symbol or number then send Chinese Symobl Characters
 			String s = ChineseSymbol.getSymbol(t);
 			if(s != null){
-				if(mCandidateView != null && mCandidateView.isShown()) setSuggestions(null, false, false);;
+				//Jermy '11,8,14
+				clearSuggestions();
 				getCurrentInputConnection().commitText(s, 0);
 				hasSymbolEntered = true;
 				return true;
@@ -1174,7 +1180,8 @@ public class LIMEService extends InputMethodService implements
 		if(!hasCtrlPress){
 			//LinkedList<Mapping> list = new LinkedList<Mapping>();
 			//list.add(empty);
-			setSuggestions(null, false, false);
+			//Jermy '11,8,14
+			clearSuggestions();
 		}
 	}
 
@@ -1472,12 +1479,10 @@ public class LIMEService extends InputMethodService implements
 					//userdiclist.add(null);
 				}
 
-				if (mCandidateView != null) {
-					mCandidateView.clear();
-				}
-				if(mComposing.length()>0){					
-					mComposing.setLength(0);
-					if(templist!=null) templist.clear();
+				
+				if(mComposing.length()>0){
+					//Jeremy '11,8,14
+					clearComposing();
 				}
 				if(onIM)
 					updateRelatedWord();
@@ -1803,12 +1808,10 @@ public class LIMEService extends InputMethodService implements
 			}
 		}
 		mLIMEPref.setKeyboardSelection(keyboardSelection);
-		mComposing.setLength(0);
+		//Jeremy '11,8,14
+		clearComposing();
 		// cancel candidate view if it's shown
-		if (mCandidateView != null) {
-			mCandidateView.clear();
-			updateCandidates();
-		}
+		
 
 		initialKeyboard();
 		Toast.makeText(this, keyboardname, Toast.LENGTH_SHORT / 2).show();
@@ -1934,13 +1937,9 @@ public class LIMEService extends InputMethodService implements
 		spe.putString("keyboard_list", keyboardSelection);
 		spe.commit();
 
-		// cancel candidate view if it's shown
-		if (mCandidateView != null) {
-			mCandidateView.clear();
-			updateCandidates();
-		}
-		mComposing.setLength(0);
-		setCandidatesViewShown(false);
+		
+		//Jeremy '11,8,14
+		clearComposing();
 
 		initialKeyboard();
 
@@ -1989,8 +1988,8 @@ public class LIMEService extends InputMethodService implements
 		// Log.i("ART", "Update Candidate mCompletionOn:"+ mCompletionOn);
 		// Log.i("ART", "Update Candidate mComposing:"+ mComposing);
 		if(DEBUG) Log.i("updateCandidate", "Update Candidate mComposing:"+ mComposing.length());
-		if (mCandidateView != null) 			
-			mCandidateView.clear();
+		//if (mCandidateView != null) 			
+		//	mCandidateView.clear();
 
 		if (//!mCompletionOn && 
 				mComposing.length() > 0) {
@@ -2020,7 +2019,8 @@ public class LIMEService extends InputMethodService implements
 							, true, selkey);
 					if(DEBUG) Log.i("updateCandidate", "list.size:"+list.size());
 				} else {
-					setSuggestions(null, false, false);
+					//Jermy '11,8,14
+					clearSuggestions();
 				}
 				
 				// Show composing window if keyToKeyname got different string. Revised by Jeremy '11,6,4
@@ -2042,7 +2042,8 @@ public class LIMEService extends InputMethodService implements
 			}
 
 		} else
-			setSuggestions(null, false, false);
+			//Jermy '11,8,14
+			clearSuggestions();
 	}
 
 	/*
@@ -2064,7 +2065,8 @@ public class LIMEService extends InputMethodService implements
 				//Log.i("ART", "CACHE STRING -> " + tempEnglishWord.toString());
 				if (tempEnglishWord == null || tempEnglishWord.length() == 0) {
 					//list.add(empty);
-					setSuggestions(null, false, false);
+					//Jermy '11,8,14
+					clearSuggestions();
 				} else {
 					InputConnection ic = getCurrentInputConnection();
 					boolean after = false;
@@ -2112,7 +2114,8 @@ public class LIMEService extends InputMethodService implements
 									, true, "1234567890");
 							tempEnglishList.addAll(list);
 						} else {
-							setSuggestions(null, false, false);
+							//Jermy '11,8,14
+							clearSuggestions();
 						}
 					}
 
@@ -2159,7 +2162,8 @@ public class LIMEService extends InputMethodService implements
 							, true, "1234567890");
 				} else {
 					tempMatched = null;
-					setSuggestions(null, false, false);
+					//Jermy '11,8,14
+					clearSuggestions();
 				}
 			}
 		} catch (Exception e) {
@@ -2215,7 +2219,7 @@ public class LIMEService extends InputMethodService implements
 		
 	}
 	
-	public void setSuggestions(List<Mapping> suggestions, boolean showNumber,
+	/*public void setSuggestions(List<Mapping> suggestions, boolean showNumber,
 			boolean typedWordValid) {
 
 		if (suggestions != null && suggestions.size() > 0) {
@@ -2247,7 +2251,7 @@ public class LIMEService extends InputMethodService implements
 				setCandidatesViewShown(false);
 			}
 		}
-	}
+	}*/
 
 	private void handleBackspace() {
 		if(DEBUG) Log.i("LIMEService:handleBackspace()", "entering...");
@@ -2259,18 +2263,16 @@ public class LIMEService extends InputMethodService implements
 		} else if (length == 1) {
 			// '10, 4, 5 Jeremy. Bug fix on delete last key in buffer.
 			getCurrentInputConnection().setComposingText("", 0);
-			if (mCandidateView != null) {
-				mCandidateView.clear();
-				updateCandidates();
-			}
-			mComposing.setLength(0);
-			setCandidatesViewShown(false);
+			
+			//Jeremy '11,8,14
+			clearComposing();
 			getCurrentInputConnection().commitText("", 0);
 		} else {
-			if (mCandidateView != null) {
+			//TODO: Check here later...
+/*			if (mCandidateView != null) {
 				mCandidateView.clear();
 				updateCandidates();
-			}
+			}*/
 			try {
 				if (mLIMEPref.getEnglishPrediction()&& mPredictionOn
 					&& ( !isPressPhysicalKeyboard || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard() )//mPredictionOnPhysicalKeyboard)
@@ -2282,8 +2284,8 @@ public class LIMEService extends InputMethodService implements
 					}
 					keyDownUp(KeyEvent.KEYCODE_DEL);
 				} else {
-					mComposing.setLength(0);
-					setCandidatesViewShown(false);
+					//Jeremy '11,8,14
+					clearComposing();
 					keyDownUp(KeyEvent.KEYCODE_DEL);
 				}
 			} catch (Exception e) {
@@ -2296,9 +2298,6 @@ public class LIMEService extends InputMethodService implements
 
 	public void setCandidatesViewShown(boolean shown) {
 		super.setCandidatesViewShown(shown);
-		if (mCandidateView != null)  {
-			mCandidateView.clear();;
-		}
 			
 	}
 
@@ -2335,13 +2334,8 @@ public class LIMEService extends InputMethodService implements
 		if(DEBUG) Log.i("LIMEService:switchKeyboard()", "entering...");
 		if (mCapsLock)
 			toggleCapsLock();
-
-		if (mCandidateView != null) {
-			mCandidateView.clear();
-			updateCandidates();
-		}
-		mComposing.setLength(0);
-		
+		//Jeremy '11,8,14
+		clearComposing();
 
 		if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE) {
 			switchSymKeyboard();
@@ -2381,14 +2375,10 @@ public class LIMEService extends InputMethodService implements
 */
 	private void switchChiEng() {
 		
-		if (mCandidateView != null ) {
-			mCandidateView.clear();
-			setCandidatesViewShown(false);
-		}
-		if( mComposing != null && mComposing.length() > 0 ){
-			mComposing.setLength(0);
-			getCurrentInputConnection().commitText("", 0);
-		}
+		//Jeremy '11,8,14
+		clearComposing();
+		getCurrentInputConnection().commitText("", 0);
+		
 		mKeyboardSwitcher.toggleChinese();
 		mEnglishOnly = !mKeyboardSwitcher.isChinese();
 
@@ -2696,8 +2686,9 @@ public class LIMEService extends InputMethodService implements
 				misMatched = mComposing.toString();
 
 			} else {
+				//TODO: need to check later;
 				if(onIM){
-					mCandidateView.takeSelectedSuggestion();
+					mCandidateView.takeSelectedSuggestion();  // check here.
 					getCurrentInputConnection().commitText(String.valueOf((char) primaryCode),1);
 				} else{
 					if (!mCandidateView.takeSelectedSuggestion()) {
@@ -2710,8 +2701,8 @@ public class LIMEService extends InputMethodService implements
 					
 				}
 				
-				mCandidateView.clear();
-				updateCandidates();
+				//Jeremy '11,8,14
+				clearComposing();
 			}
 			
 		} else {
@@ -2753,12 +2744,9 @@ public class LIMEService extends InputMethodService implements
 	private void handleClose() {
 		if(DEBUG) Log.i("LIMEService:handleBackspace()", "entering...");
 		// cancel candidate view if it's shown
-		if (mCandidateView != null) {
-			mCandidateView.clear();
-			updateCandidates();
-		}
-		mComposing.setLength(0);
-		// setCandidatesViewShown(false);
+		
+		//Jeremy '11,8,14
+		clearComposing();
 
 		requestHideSelf(0);
 		mInputView.closing();
@@ -2861,8 +2849,8 @@ public class LIMEService extends InputMethodService implements
 				Mapping temp = new Mapping();
 				temp.setWord("");
 				temp.setDictionary(true);
-				
-				setSuggestions(null, false, false);
+				//Jermy '11,8,14
+				clearSuggestions();
 			
 		}
 
@@ -3048,6 +3036,7 @@ public class LIMEService extends InputMethodService implements
 
 	@Override
 	public void onDestroy() {
+		clearComposing();
 		super.onDestroy();
 
 		if (SearchSrv != null) {
@@ -3069,11 +3058,11 @@ public class LIMEService extends InputMethodService implements
 		super.onUpdateCursor(newCursor);
 	}
 
-	
 	@Override
 	public void onCancel() {
-		// TODO Auto-generated method stub
+		clearComposing();
 		
 	}
+
 
 }
