@@ -1303,7 +1303,18 @@ public class LimeDB extends SQLiteOpenHelper {
 							||code.contains("6")||code.contains("7")|| code.endsWith(" "))){
 						selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
 					}else{
-						selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
+						// Art '11,8,14 code mapping for Array IM keyboard in Shift Mode
+						if(tablename.equals("array")){
+							String revisedCode = code.trim();
+								   revisedCode = revisedCode.replaceAll("<",",");
+								   revisedCode = revisedCode.replaceAll(">","\\.");
+								   revisedCode = revisedCode.replaceAll("\\?","/");
+								   revisedCode = revisedCode.replaceAll(":",";");
+							 
+							selectClause = FIELD_CODE + " = '" + revisedCode + "' " + extraConditions;
+						}else{
+							selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
+						}
 					}
 					
 					if(DEBUG) 
