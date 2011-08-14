@@ -180,7 +180,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasShiftCombineKeyPressed = false; //Jeremy ,11,8, 3
 	private boolean hasMenuPress = false; // Jeremy '11,5,29
 	private boolean hasMenuProcessed = false; // Jeremy '11,5,29
-	private boolean hasSearchPress = false; // Jeremy '11,5,29
+	//private boolean hasSearchPress = false; // Jeremy '11,5,29
 	//private boolean hasSearchProcessed = false; // Jeremy '11,5,29
 	
 	private boolean hasEnterProcessed = false; // Jeremy '11,6.18
@@ -482,7 +482,7 @@ public class LIMEService extends InputMethodService implements
 		//Jeremy '11,8,14
 		if (mComposing != null && mComposing.length() > 0)
 			mComposing.setLength(0);
-		hasMappingList = false;
+		//hasMappingList = false;
 		if(templist!=null) 
 			templist.clear();
 		clearSuggestions();
@@ -1019,11 +1019,12 @@ public class LIMEService extends InputMethodService implements
 				}
 				break;
 			}
-		case KeyEvent.KEYCODE_PERIOD:
-		case KeyEvent.KEYCODE_SEARCH:
+		
+		//case KeyEvent.KEYCODE_SEARCH:
 			//hasSearchProcessed = false;
 			//hasSearchPress = true;
 			//break;
+		case KeyEvent.KEYCODE_PERIOD:
 		case KeyEvent.KEYCODE_SYM:
 		case KeyEvent.KEYCODE_AT:
 			return true;
@@ -1224,6 +1225,7 @@ public class LIMEService extends InputMethodService implements
 			// Jeremy '10, 4, 12 bug fix on repeated enter.
 			break;
 		//Jeremy '11,8,14
+		//case KeyEvent.KEYCODE_SEARCH:
 		case KeyEvent.KEYCODE_PERIOD:
 			if (keyPressTime != 0
 					&& System.currentTimeMillis() - keyPressTime > 700) {
@@ -1237,7 +1239,6 @@ public class LIMEService extends InputMethodService implements
 				super.onKeyDown(keyCode, mKeydownEvent);
 			}
 		case KeyEvent.KEYCODE_SYM:
-		case KeyEvent.KEYCODE_SEARCH:
 			// alt-@ switch to next active keyboard.
 			if (LIMEMetaKeyKeyListener.getMetaState(mMetaState,
 					LIMEMetaKeyKeyListener.META_ALT_ON) > 0) {
@@ -1257,6 +1258,7 @@ public class LIMEService extends InputMethodService implements
 			} else {
 				updateChineseSymbol();
 			}
+		
 		case KeyEvent.KEYCODE_AT:
 			// alt-@ switch to next active keyboard.
 			if (LIMEMetaKeyKeyListener.getMetaState(mMetaState,
@@ -1456,12 +1458,11 @@ public class LIMEService extends InputMethodService implements
 				}
 
 				
-				if(mComposing.length()>0){
-					//Jeremy '11,8,14
-					clearComposing();
-				}
+				clearComposing();				//Jeremy '11,8,14
 				if(onIM)
 					updateRelatedWord();
+
+				
 
 			}
 		} catch (Exception e) {

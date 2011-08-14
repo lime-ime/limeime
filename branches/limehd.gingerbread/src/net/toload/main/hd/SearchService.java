@@ -54,7 +54,7 @@ import android.util.Pair;
 
 public class SearchService extends Service {
 	
-	private final boolean DEBUG = false;
+	private final boolean DEBUG = true;
 	private final String TAG = "LIME.SearchService";
 	private LimeDB db = null;
 	private LimeHanConverter hanConverter = null;
@@ -302,7 +302,7 @@ public class SearchService extends Service {
 											+ resultlist.size());
 							}
 						}
-						if(resultlist.size()>0 && i==0 ){ 
+						if(relatedtlist.size()>0 && i==0 ){ 
 								result.addAll(relatedtlist);
 							int rsize = result.size();
 							if(result.get(rsize-1).getCode().equals("has_more_records")){
