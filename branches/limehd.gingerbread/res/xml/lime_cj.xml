@@ -37,7 +37,7 @@
         <Key android:codes="121" android:keyLabel="y\n卜"/>
         <Key android:codes="117" android:keyLabel="u\n山"/>
         <Key android:codes="105" android:keyLabel="i\n戈"/>
-        <Key android:codes="111" android:keyLabel="o\n口"/>
+        <Key android:codes="111" android:keyLabel="o\n人"/>
         <Key android:codes="112" android:keyLabel="p\n心" android:keyEdgeFlags="right"/>
     </Row>
     

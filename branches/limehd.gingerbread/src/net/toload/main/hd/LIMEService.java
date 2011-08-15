@@ -2291,11 +2291,8 @@ public class LIMEService extends InputMethodService implements
 			clearComposing();
 			getCurrentInputConnection().commitText("", 0);
 		} else {
-			//TODO: Check here later...
-/*			if (mCandidateView != null) {
-				mCandidateView.clear();
-				updateCandidates();
-			}*/
+			
+			//Jeremy '11,8,15
 			clearSuggestions();
 			try {
 				if (mLIMEPref.getEnglishPrediction()&& mPredictionOn
@@ -2714,6 +2711,8 @@ public class LIMEService extends InputMethodService implements
 				if(onIM){
 					mCandidateView.takeSelectedSuggestion();  // check here.
 					getCurrentInputConnection().commitText(String.valueOf((char) primaryCode),1);
+					//Jeremy '11,8,15
+					clearComposing();
 				} else{
 					if (!mCandidateView.takeSelectedSuggestion()) {
 						getCurrentInputConnection().commitText(
@@ -2725,8 +2724,7 @@ public class LIMEService extends InputMethodService implements
 					
 				}
 				
-				//Jeremy '11,8,14
-				clearComposing();
+			
 			}
 			
 		} else {
