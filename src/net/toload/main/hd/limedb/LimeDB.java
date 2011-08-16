@@ -1003,7 +1003,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 		
 		// By Art 11/08/16 modify when table = phonetic, array or ez
-		if(tablename.equals("array") || tablename.equals("phonetic")){
+		if(tablename.equals("array") || tablename.equals("dayi") || tablename.equals("phonetic")){
 			String revisedCode = code.trim();
 				   revisedCode = revisedCode.replaceAll("<",",");
 				   revisedCode = revisedCode.replaceAll(">","\\.");
@@ -1311,10 +1311,18 @@ public class LimeDB extends SQLiteOpenHelper {
 					if(tablename.equals("phonetic")&&  mLIMEPref.getParameterBoolean("doLDPhonetic", false) &&
 							!(code.contains("3")||code.contains("4")
 							||code.contains("6")||code.contains("7")|| code.endsWith(" "))){
-						selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
+						
+						String revisedCode = code.trim();
+							   revisedCode = revisedCode.replaceAll("<",",");
+							   revisedCode = revisedCode.replaceAll(">","\\.");
+							   revisedCode = revisedCode.replaceAll("\\?","/");
+							   revisedCode = revisedCode.replaceAll(":",";");
+					 
+						selectClause = FIELD_CODE3R + " = '" + revisedCode + "' " + extraConditions;
+						//selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
 					}else{
 						// Art '11,8,14 code mapping for Array IM keyboard in Shift Mode
-						if(tablename.equals("array") || tablename.equals("phonetic") || tablename.equals("ez")){
+						if(tablename.equals("array") || tablename.equals("dayi") || tablename.equals("phonetic") || tablename.equals("ez")){
 							String revisedCode = code.trim();
 								   revisedCode = revisedCode.replaceAll("<",",");
 								   revisedCode = revisedCode.replaceAll(">","\\.");
