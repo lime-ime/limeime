@@ -1137,8 +1137,7 @@ public class LIMEService extends InputMethodService implements
 			}
 			}
 		}
-		
-			return super.onKeyDown(keyCode, event);
+		return super.onKeyDown(keyCode, event);
 	}
 
 	private void resetCandidateBar() {
@@ -1264,6 +1263,7 @@ public class LIMEService extends InputMethodService implements
 			} else {
 				translateKeyDown(keyCode, event);
 				super.onKeyDown(keyCode, mKeydownEvent);
+				return true;
 			}
 		case KeyEvent.KEYCODE_SYM:
 		case KeyEvent.KEYCODE_AT:
