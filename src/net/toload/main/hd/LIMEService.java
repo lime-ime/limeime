@@ -1261,9 +1261,13 @@ public class LIMEService extends InputMethodService implements
 					&& translateKeyDown(keyCode, event)) {
 				return true;
 			} else {
+				
 				translateKeyDown(keyCode, event);
 				super.onKeyDown(keyCode, mKeydownEvent);
-				return true;
+				
+				if(keyCode == 56){
+					return true;
+				}
 			}
 		case KeyEvent.KEYCODE_SYM:
 		case KeyEvent.KEYCODE_AT:
