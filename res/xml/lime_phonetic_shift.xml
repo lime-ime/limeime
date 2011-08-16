@@ -65,7 +65,7 @@
         <Key android:codes="74" android:keyLabel="J\nㄨ"/>
         <Key android:codes="75" android:keyLabel="K\nㄜ"/>
         <Key android:codes="76" android:keyLabel="L\nㄠ"/>
-        <Key android:codes="58" android:keyLabel=":" android:keyEdgeFlags="right"/>
+        <Key android:codes="58" android:keyLabel=":\nㄤ" android:keyEdgeFlags="right"/>
     </Row>
     
    <Row>
@@ -76,11 +76,12 @@
         <Key android:codes="66" android:keyLabel="B\nㄖ" />
         <Key android:codes="78" android:keyLabel="N\nㄙ" />
         <Key android:codes="77" android:keyLabel="M\nㄩ" />
-        <Key android:codes="60" android:keyLabel="&lt;" />
-        <Key android:codes="62" android:keyLabel="&gt;"   
+        <Key android:codes="60" android:keyLabel="&lt;\nㄝ" />
+        <Key android:codes="62" android:keyLabel="&gt;\nㄡ"   
         	 android:popupKeyboard="@xml/popup_c_punctuation" />
-        <Key android:codes="63" android:keyLabel="\?" android:keyEdgeFlags="right"/>
+        <Key android:codes="63" android:keyLabel="\?\nㄥ" android:keyEdgeFlags="right"/>
     </Row>    
+    
     
     <Row android:rowEdgeFlags="bottom">
         <Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:iconPreview="@drawable/sym_keyboard_feedback_done" android:isModifier="true"  android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
