@@ -1002,6 +1002,16 @@ public class LimeDB extends SQLiteOpenHelper {
 				" composingText:" + composingText		);
 		}
 		
+		// By Art 11/08/16 modify when table = phonetic, array or ez
+		if(tablename.equals("array") || tablename.equals("phonetic")){
+			String revisedCode = code.trim();
+				   revisedCode = revisedCode.replaceAll("<",",");
+				   revisedCode = revisedCode.replaceAll(">","\\.");
+				   revisedCode = revisedCode.replaceAll("\\?","/");
+				   revisedCode = revisedCode.replaceAll(":",";");
+				   code = revisedCode;
+		}
+		
 		
 		if(isPhysicalKeyboardPressed){
 			if(composingText && table.equals("phonetic")) {// doing composing popup
@@ -1304,7 +1314,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
 					}else{
 						// Art '11,8,14 code mapping for Array IM keyboard in Shift Mode
-						if(tablename.equals("array")){
+						if(tablename.equals("array") || tablename.equals("phonetic") || tablename.equals("ez")){
 							String revisedCode = code.trim();
 								   revisedCode = revisedCode.replaceAll("<",",");
 								   revisedCode = revisedCode.replaceAll(">","\\.");
@@ -1450,6 +1460,19 @@ public class LimeDB extends SQLiteOpenHelper {
 							// and no mapped word on finals d,f,j  for HSU
 							c = reMap.get(code);
 						}else{
+							/*if(tablename.equals("array")){
+								if(code.equals("<")){
+									c = finalReMap.get(',');
+								}else if(code.equals(">")){
+									c = finalReMap.get('.');
+								}else if(code.equals("?")){
+									c = finalReMap.get('/');
+								}else if(code.equals(":")){
+									c = finalReMap.get(';');
+								}
+							}else{
+								
+							}*/
 							c = finalReMap.get(code);
 						}
 						if(c!=null) newcode = c;
