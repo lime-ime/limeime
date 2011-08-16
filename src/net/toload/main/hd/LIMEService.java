@@ -851,11 +851,11 @@ public class LIMEService extends InputMethodService implements
 		// Jeremy '11,5,29 Bypass search and menu combination keys.
 		case KeyEvent.KEYCODE_MENU:
 			if(!keydown) hasMenuProcessed = false; // only do this on first keydown event 
-			if (keyPressTime != 0 && !hasKeyProcessed
+			/*if (keyPressTime != 0 && !hasKeyProcessed &&onIM
 					&& System.currentTimeMillis() - keyPressTime > mLongPressKeyTimeout){// 700) {
 				updateChineseSymbol();
 				hasMenuProcessed = true;
-			}
+			}*/
 			hasMenuPress = true;
 			break;
 		// Add by Jeremy '10, 3, 29. DPAD selection on candidate view
@@ -1039,7 +1039,7 @@ public class LIMEService extends InputMethodService implements
 			//hasSearchPress = true;
 			//break;
 		case KeyEvent.KEYCODE_PERIOD:
-			if (keyPressTime != 0 && !hasKeyProcessed
+			if (keyPressTime != 0 && !hasKeyProcessed &&onIM
 					&& System.currentTimeMillis() - keyPressTime > mLongPressKeyTimeout){// 700) {
 				updateChineseSymbol();
 				hasKeyProcessed = true;

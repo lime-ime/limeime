@@ -501,15 +501,21 @@ public class SearchService extends Service {
 					if(phraselist.size()>0){	
 						String baseCode="", LDCode ="", QPCode ="", baseWord="";
 						Mapping unit1 = phraselist.get(0);
+
+						if(unit1 == null
+								|| unit1.getCode().length()==0
+								|| unit1.getWord().length()==0){break;}
+						
 						baseCode = unit1.getCode();
-						QPCode = unit1.getCode().substring(0, 1);
 						baseWord = unit1.getWord();
-						if(unit1 == null || unit1.getWord().equals("")){break;}
+						QPCode = baseCode.substring(0, 1);
 
 						for (int i = 0; i < phraselist.size(); i++) {
 							if(i+1 <phraselist.size()){
 								Mapping unit2 = phraselist.get((i + 1));
-								if(unit2 == null || unit2.getWord().equals("")){break;}				
+								if(unit2 == null 
+										|| unit2.getCode().length()==0
+										|| unit2.getWord().length()==0){break;}				
 								baseCode += unit2.getCode();
 								baseCode = baseCode.toLowerCase();
 								baseWord += unit2.getWord();
