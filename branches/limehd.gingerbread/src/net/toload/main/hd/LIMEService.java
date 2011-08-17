@@ -1270,6 +1270,7 @@ public class LIMEService extends InputMethodService implements
 				translateKeyDown(keyCode, event);
 				super.onKeyDown(keyCode, mKeydownEvent);
 			}
+			break;
 		case KeyEvent.KEYCODE_SYM:
 		case KeyEvent.KEYCODE_AT:
 			if(hasKeyProcessed){  //(keyPressTime != 0
