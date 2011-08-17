@@ -113,12 +113,13 @@ public class LIMEInitial extends Activity {
 						    						mLIMEPref.setParameter("im_loading", false);
 						    						mLIMEPref.setParameter("im_loading_table", "");
 						    						mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
-						    						mLIMEPref.setParameter("dbtarget","device");
-						    						btnStoreDevice.setEnabled(false);
-						    						btnStoreSdcard.setEnabled(true);
+						    						//Jeremy '11,8,17 preserve dbtaget settings here.
+						    						//mLIMEPref.setParameter("dbtarget","device");
+						    						//btnStoreDevice.setEnabled(false);
+						    						//btnStoreSdcard.setEnabled(true);
 						    						mLIMEPref.setParameter("db_finish", false);
-						    						btnStoreDevice.setText(getText(R.string.l3_initial_btn_store_device));
-						    						btnStoreSdcard.setText(getText(R.string.l3_initial_btn_store_sdcard));
+						    						//btnStoreDevice.setText(getText(R.string.l3_initial_btn_store_device));
+						    						//btnStoreSdcard.setText(getText(R.string.l3_initial_btn_store_sdcard));
 							    				} catch (RemoteException e) {
 							    					e.printStackTrace();
 							    				}

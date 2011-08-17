@@ -1043,6 +1043,12 @@ public class LIMEService extends InputMethodService implements
 					&& System.currentTimeMillis() - keyPressTime > mLongPressKeyTimeout){// 700) {
 				updateChineseSymbol();
 				hasKeyProcessed = true;
+			}else if (hasCtrlPress) {
+				clearSuggestions();
+				getCurrentInputConnection().commitText(
+						ChineseSymbol.getSymbol('.'), 0);
+				hasKeyProcessed = true;
+
 			}
 			return true;						
 		case KeyEvent.KEYCODE_SYM:
@@ -1261,13 +1267,8 @@ public class LIMEService extends InputMethodService implements
 					&& translateKeyDown(keyCode, event)) {
 				return true;
 			} else {
-				
 				translateKeyDown(keyCode, event);
 				super.onKeyDown(keyCode, mKeydownEvent);
-				
-				if(keyCode == 56){
-					return true;
-				}
 			}
 		case KeyEvent.KEYCODE_SYM:
 		case KeyEvent.KEYCODE_AT:
@@ -1973,30 +1974,12 @@ public class LIMEService extends InputMethodService implements
 		//ChineseSymbol chineseSym = new ChineseSymbol();
 		List<Mapping> list = ChineseSymbol.getChineseSymoblList();
 		if (list.size() > 0) {
-			String selkey="";
-			try {
-				selkey = SearchSrv.getSelkey();
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
-			String mixedModeSelkey = "`";
-			if(hasSymbolMapping && !keyboardSelection.equals("dayi") 
-					&& ! (keyboardSelection.equals("phonetic") 
-							&& mLIMEPref.getPhoneticKeyboardType().equals("standard")) 	){
-				mixedModeSelkey = " ";
-			}
-				
-			
-			int selkeyOption = mLIMEPref.getSelkeyOption();
-			if(selkeyOption ==1) 	selkey = mixedModeSelkey +selkey;
-			else if (selkeyOption ==2) 	selkey = mixedModeSelkey + " " +selkey;
-			
 			
 			
 			setSuggestions(list, isPressPhysicalKeyboard && 
-					mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard"), true, selkey);
+					mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard"), true, "1234567890");
 			
-			if(DEBUG) Log.i(TAG, "updateChineseSymbol(): display selkey:" + selkey 
+			if(DEBUG) Log.i(TAG, "updateChineseSymbol():"
 									+ "list.size:"+list.size());
 		}
 		
