@@ -158,8 +158,10 @@ public class DBService extends Service {
 			String dbtarget = mLIMEPref.getParameterString("dbtarget");
 			if(dbtarget.equals("device")){
 				File delTargetFile1 = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
-				File delTargetFile2 = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 				if(delTargetFile1.exists()){delTargetFile1.delete();}			
+				
+			}if(dbtarget.equals("sdcard")){ //Jeremy '11,8,17
+				File delTargetFile2 = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 				if(delTargetFile2.exists()){delTargetFile2.delete();}			
 			}
 			File delTargetFile3 = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_SOURCE_FILENAME);
