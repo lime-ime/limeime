@@ -118,8 +118,8 @@ public class LIMEInitial extends Activity {
 						    						//btnStoreDevice.setEnabled(false);
 						    						//btnStoreSdcard.setEnabled(true);
 						    						mLIMEPref.setParameter("db_finish", false);
-						    						//btnStoreDevice.setText(getText(R.string.l3_initial_btn_store_device));
-						    						//btnStoreSdcard.setText(getText(R.string.l3_initial_btn_store_sdcard));
+						    						btnStoreDevice.setText(getText(R.string.l3_initial_btn_store_device));
+						    						btnStoreSdcard.setText(getText(R.string.l3_initial_btn_store_sdcard));
 							    				} catch (RemoteException e) {
 							    					e.printStackTrace();
 							    				}
