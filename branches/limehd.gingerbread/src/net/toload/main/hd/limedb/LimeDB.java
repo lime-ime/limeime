@@ -1003,16 +1003,32 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 		
 		// By Art 11/08/16 modify when table = phonetic, array or ez
-		if(tablename.equals("array") || tablename.equals("dayi") || tablename.equals("phonetic")){
+		if(tablename.equals("array")){
 			String revisedCode = code.trim();
 				   revisedCode = revisedCode.replaceAll("<",",");
 				   revisedCode = revisedCode.replaceAll(">","\\.");
 				   revisedCode = revisedCode.replaceAll("\\?","/");
 				   revisedCode = revisedCode.replaceAll(":",";");
 				   code = revisedCode;
+		}else if(tablename.equals("phonetic") || tablename.equals("dayi")){
+			String revisedCode = code.trim();
+			   revisedCode = revisedCode.replaceAll("<",",");
+			   revisedCode = revisedCode.replaceAll(">","\\.");
+			   revisedCode = revisedCode.replaceAll("\\?","/");
+			   revisedCode = revisedCode.replaceAll(":",";");
+			   revisedCode = revisedCode.replaceAll("@","1");
+			   revisedCode = revisedCode.replaceAll("#","2");
+			   revisedCode = revisedCode.replaceAll("\\$","3");
+			   revisedCode = revisedCode.replaceAll("%","4");
+			   revisedCode = revisedCode.replaceAll("&","5");
+			   revisedCode = revisedCode.replaceAll("\\*","6");
+			   revisedCode = revisedCode.replaceAll("!","7");
+			   revisedCode = revisedCode.replaceAll("/","8");
+			   revisedCode = revisedCode.replaceAll("\\(","9");
+			   revisedCode = revisedCode.replaceAll("\\)","0");
+			   code = revisedCode;
 		}
-		
-		
+	    
 		if(isPhysicalKeyboardPressed){
 			if(composingText && table.equals("phonetic")) {// doing composing popup
 				keytable = table + keyboardtype + phonetickeyboardtype;
@@ -1313,23 +1329,51 @@ public class LimeDB extends SQLiteOpenHelper {
 							||code.contains("6")||code.contains("7")|| code.endsWith(" "))){
 						
 						String revisedCode = code.trim();
-							   revisedCode = revisedCode.replaceAll("<",",");
-							   revisedCode = revisedCode.replaceAll(">","\\.");
-							   revisedCode = revisedCode.replaceAll("\\?","/");
-							   revisedCode = revisedCode.replaceAll(":",";");
+						   revisedCode = revisedCode.replaceAll("<",",");
+						   revisedCode = revisedCode.replaceAll(">","\\.");
+						   revisedCode = revisedCode.replaceAll("\\?","/");
+						   revisedCode = revisedCode.replaceAll(":",";");
+						   revisedCode = revisedCode.replaceAll("@","1");
+						   revisedCode = revisedCode.replaceAll("#","2");
+						   revisedCode = revisedCode.replaceAll("\\$","3");
+						   revisedCode = revisedCode.replaceAll("%","4");
+						   revisedCode = revisedCode.replaceAll("&","5");
+						   revisedCode = revisedCode.replaceAll("\\*","6");
+						   revisedCode = revisedCode.replaceAll("!","7");
+						   revisedCode = revisedCode.replaceAll("/","8");
+						   revisedCode = revisedCode.replaceAll("\\(","9");
+						   revisedCode = revisedCode.replaceAll("\\)","0");
 					 
 						selectClause = FIELD_CODE3R + " = '" + revisedCode + "' " + extraConditions;
 						//selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
 					}else{
 						// Art '11,8,14 code mapping for Array IM keyboard in Shift Mode
-						if(tablename.equals("array") || tablename.equals("dayi") || tablename.equals("phonetic") || tablename.equals("ez")){
+						if(tablename.equals("array") || tablename.equals("ez")){
+								String revisedCode = code.trim();
+									   revisedCode = revisedCode.replaceAll("<",",");
+									   revisedCode = revisedCode.replaceAll(">","\\.");
+									   revisedCode = revisedCode.replaceAll("\\?","/");
+									   revisedCode = revisedCode.replaceAll(":",";");
+								 
+								selectClause = FIELD_CODE + " = '" + revisedCode + "' " + extraConditions;
+							
+						}else if(tablename.equals("dayi") || tablename.equals("ez")){
 							String revisedCode = code.trim();
-								   revisedCode = revisedCode.replaceAll("<",",");
-								   revisedCode = revisedCode.replaceAll(">","\\.");
-								   revisedCode = revisedCode.replaceAll("\\?","/");
-								   revisedCode = revisedCode.replaceAll(":",";");
-							 
-							selectClause = FIELD_CODE + " = '" + revisedCode + "' " + extraConditions;
+							   revisedCode = revisedCode.replaceAll("<",",");
+							   revisedCode = revisedCode.replaceAll(">","\\.");
+							   revisedCode = revisedCode.replaceAll("\\?","/");
+							   revisedCode = revisedCode.replaceAll(":",";");
+							   revisedCode = revisedCode.replaceAll("@","1");
+							   revisedCode = revisedCode.replaceAll("#","2");
+							   revisedCode = revisedCode.replaceAll("\\$","3");
+							   revisedCode = revisedCode.replaceAll("%","4");
+							   revisedCode = revisedCode.replaceAll("&","5");
+							   revisedCode = revisedCode.replaceAll("\\*","6");
+							   revisedCode = revisedCode.replaceAll("!","7");
+							   revisedCode = revisedCode.replaceAll("/","8");
+							   revisedCode = revisedCode.replaceAll("\\(","9");
+							   revisedCode = revisedCode.replaceAll("\\)","0");
+								selectClause = FIELD_CODE + " = '" + revisedCode + "' " + extraConditions;
 						}else{
 							selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
 						}
