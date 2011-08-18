@@ -240,8 +240,53 @@ public class CandidateView extends View implements View.OnClickListener
     	setHorizontalScrollBarEnabled(false);
     	setVerticalScrollBarEnabled(false);*/
     }
+    final Handler mHandler = new Handler();
+    // Create runnable for posting
+    final Runnable mUpdateUI = new Runnable() {
+    	public void run() { 
+
+    		if (mSuggestions == null) {
+    			setBackgroundColor(0);
+    			hideCandidatePopup();
+    			return;
+    		}
+    		setBackgroundColor(bgcolor);
+    		if(mCandidatePopup != null && mCandidatePopup.isShowing()){
+    			showCandidatePopup();
+
+    		}else{
+    			onDraw(null);
+    			invalidate();
+    		}
+    		requestLayout();
+    	}
+    };
+    final Runnable mShowComping = new Runnable() {
+    	public void run() { 
+    		if(mComposingTextPopup!=null
+        			&& mComposingText != null && !mComposingText.trim().equals("")){
+    			mComposingTextView.setText(mComposingText);
+    		}
+    	}
+
+    };
+    final Runnable mDissmissComping = new Runnable() {
+    	public void run() { 
+    		if(mComposingTextPopup!=null && mComposingTextPopup.isShowing()) {
+    			mComposingTextPopup.dismiss();
+    		}
+    	}
+    };
+    final Runnable mDissmissCandidatePopup = new Runnable() {
+    	public void run() { 
+    		if(mCandidatePopup!=null && mCandidatePopup.isShowing()) 
+    			mCandidatePopup.dismiss();
+    		requestLayout();
+    	}
+    };
     
 /*
+ * 
 	private static final int MSG_UPDATEUI= 1;   
 	Handler mHandler = new Handler() {
         @Override
@@ -344,10 +389,10 @@ public class CandidateView extends View implements View.OnClickListener
     	if(mComposingTextPopup!=null
     			&& composingText != null && !composingText.trim().equals("")){
         	mComposingText = composingText;
-        	mComposingTextView.setText(mComposingText);
+        	mHandler.post(mShowComping); 	//mComposingTextView.setText(mComposingText);
     	}else{
     		mComposingText = "";
-    		hideComposing();
+    		mHandler.post(mDissmissComping);//hideComposing();
     	}
     	
     	 if(DEBUG) Log.i("Canddateview:setComposingText()","mComposingText:"+mComposingText);
@@ -420,8 +465,10 @@ public class CandidateView extends View implements View.OnClickListener
                 	mPopupComposingY -= popupHeight;
                 }
                 	
-                if(DEBUG) Log.i("CandiateView:showcomposing()", " mPopupComposingX:" 
-                 		+mPopupComposingX + ". mPopupComposingY:" +mPopupComposingY);
+                //if(DEBUG) 
+                	Log.i(TAG, "CandiateView:showcomposing():mPopupComposingX:" 
+                 		+mPopupComposingX + ". mPopupComposingY:" +mPopupComposingY
+                 		+"mComposingTextPopup.isShowing()=" + mComposingTextPopup.isShowing() );
                 
                 if (mComposingTextPopup.isShowing()) {              	
                 	mComposingTextPopup.update(mPopupComposingX, mPopupComposingY, 
@@ -442,11 +489,8 @@ public class CandidateView extends View implements View.OnClickListener
     
     public void hideComposing() {
     	if(DEBUG) Log.i(TAG, "hidecomposing()");
-  
-    	if(mComposingTextPopup!=null && mComposingTextPopup.isShowing()) {
-            //mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_REMOVE_COMPOSING), 60);
-        	 mComposingTextPopup.dismiss();
-    	}
+    	mHandler.post(mDissmissComping);
+    	
     }
     
     
@@ -455,9 +499,12 @@ public class CandidateView extends View implements View.OnClickListener
     		Log.i(TAG, "hideCandidatePopup()");
     	
     	candidateExpanded = false;
-    	if(mCandidatePopup!=null && mCandidatePopup.isShowing()) 
+    	mHandler.post(mDissmissCandidatePopup);
+    
+    
+    	/*if(mCandidatePopup!=null && mCandidatePopup.isShowing()) 
     		mCandidatePopup.dismiss();
-        requestLayout();
+        requestLayout();*/
     }
     
     public boolean isCandidateExpanded(){
@@ -506,7 +553,7 @@ public class CandidateView extends View implements View.OnClickListener
      */
     @Override
     protected void onDraw(Canvas canvas) {
-    	if(DEBUG)
+    	//if(DEBUG)
     		Log.i(TAG, "Candidateview:OnDraw():Suggestion mCount:" + mCount+" mSuggestions.size:" + mSuggestions.size());
     	
         //if (canvas != null) {
@@ -539,7 +586,7 @@ public class CandidateView extends View implements View.OnClickListener
         for (int i = 0; i < count; i++) {
         	if(DEBUG)
         		Log.i(TAG, "Candidateview:OnDraw():updating:" + i );
-        	
+        	if(count!=mCount || i >= mCount) return;  // mSuggestion is updated, force abort
         	String suggestion = mSuggestions.get(i).getWord();
             float textWidth = paint.measureText(suggestion);
             final int wordWidth = (int) textWidth + X_GAP * 2;
@@ -570,7 +617,8 @@ public class CandidateView extends View implements View.OnClickListener
         // Paint all the suggestions and lines.
         if (canvas != null) {
         	
-        	for (int i = 0; i < mCount; i++) {
+        	for (int i = 0; i < count; i++) {
+        		if(count!=mCount || i >= mCount) break;
         		if(DEBUG)
         			Log.i(TAG, "Candidateview:OnDraw():i:" + i + "  Drawing:" + mSuggestions.get(i).getWord() );
         		
@@ -665,7 +713,7 @@ public class CandidateView extends View implements View.OnClickListener
         mTouchX = OUT_OF_BOUNDS;
         mCount =0;
         mSelectedIndex =-1;
-        setComposingText("");
+        //setComposingText("");
         
         mShowNumber = showNumber && isAndroid3;
         
@@ -738,27 +786,7 @@ public class CandidateView extends View implements View.OnClickListener
         requestLayout();*/
       
     }
-    final Handler mHandler = new Handler();
-    // Create runnable for posting
-    final Runnable mUpdateUI = new Runnable() {
-    	public void run() { 
 
-    		if (mSuggestions == null) {
-    			setBackgroundColor(0);
-    			hideCandidatePopup();
-    			return;
-    		}
-    		setBackgroundColor(bgcolor);
-    		if(mCandidatePopup != null && mCandidatePopup.isShowing()){
-    			showCandidatePopup();
-
-    		}else{
-    			onDraw(null);
-    			invalidate();
-    		}
-    		requestLayout();
-    	}
-    };
     
 
     public void clear() {
