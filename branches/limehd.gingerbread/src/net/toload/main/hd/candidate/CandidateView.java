@@ -27,7 +27,6 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
-import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Display;
@@ -465,7 +464,7 @@ public class CandidateView extends View implements View.OnClickListener
                 	mPopupComposingY -= popupHeight;
                 }
                 	
-                //if(DEBUG) 
+                if(DEBUG) 
                 	Log.i(TAG, "CandiateView:showcomposing():mPopupComposingX:" 
                  		+mPopupComposingX + ". mPopupComposingY:" +mPopupComposingY
                  		+"mComposingTextPopup.isShowing()=" + mComposingTextPopup.isShowing() );
@@ -552,15 +551,13 @@ public class CandidateView extends View implements View.OnClickListener
      * candidate.
      */
     @Override
-    protected void onDraw(Canvas canvas) {
-    	//if(DEBUG)
-    		Log.i(TAG, "Candidateview:OnDraw():Suggestion mCount:" + mCount+" mSuggestions.size:" + mSuggestions.size());
+    protected synchronized void onDraw(Canvas canvas) {
     	
-        //if (canvas != null) {
-        //    super.onDraw(canvas);
-        //}  // Jeremy '11,8,12 all draw by ourself.
-        mTotalWidth = 0;
         if (mSuggestions == null) return;
+        if(DEBUG)
+    		Log.i(TAG, "Candidateview:OnDraw():Suggestion mCount:" + mCount+" mSuggestions.size:" + mSuggestions.size());
+        mTotalWidth = 0;
+        
         
         if (mBgPadding == null) {
             mBgPadding = new Rect(0, 0, 0, 0);
@@ -586,7 +583,7 @@ public class CandidateView extends View implements View.OnClickListener
         for (int i = 0; i < count; i++) {
         	if(DEBUG)
         		Log.i(TAG, "Candidateview:OnDraw():updating:" + i );
-        	if(count!=mCount || i >= mCount) return;  // mSuggestion is updated, force abort
+        	if(count!=mCount || mSuggestions.size()==0) return;  // mSuggestion is updated, force abort
         	String suggestion = mSuggestions.get(i).getWord();
             float textWidth = paint.measureText(suggestion);
             final int wordWidth = (int) textWidth + X_GAP * 2;
@@ -627,7 +624,7 @@ public class CandidateView extends View implements View.OnClickListener
                 //    paint.setFakeBoldText(true);
                 //    paint.setColor(mColorRecommended);
             	String suggestion = mSuggestions.get(i).getWord();
-            	int mCount = i+1;
+            	int c = i+1;
             	
                 if(mSuggestions.get(i).isDictionary()){
                 	npaint.setColor(mColorRecommended);
@@ -644,9 +641,9 @@ public class CandidateView extends View implements View.OnClickListener
                 canvas.drawText(suggestion, mWordX[i] + X_GAP, y, paint);
                 if(mShowNumber){
                 	//Jeremy '11,6,17 changed from <=10 to mDisplaySekley length. The length maybe 11 or 12 if shifted with space.
-                	if(mCount <= mDisplaySelkey.length()){
+                	if(c <= mDisplaySelkey.length()){
                 		//Jeremy '11,6,11 Drawing text using relative font dimensions.
-                		canvas.drawText(mDisplaySelkey.substring(mCount-1, mCount), 
+                		canvas.drawText(mDisplaySelkey.substring(c-1, c), 
                 				mWordX[i] + mWordWidth[i] - height * 0.3f ,  height * 0.4f, npaint);
                 	}
                 }
@@ -706,14 +703,14 @@ public class CandidateView extends View implements View.OnClickListener
     	setSuggestions(suggestions, showNumber, typedWordValid);
     	
     }
-    public void setSuggestions(List<Mapping> suggestions, boolean showNumber, boolean typedWordValid) {
+    public synchronized void setSuggestions(List<Mapping> suggestions, boolean showNumber, boolean typedWordValid) {
         //clear();
     	//Jeremy '11,8,14 moved from clear();
     	currentX = 0;
         mTouchX = OUT_OF_BOUNDS;
         mCount =0;
         mSelectedIndex =-1;
-        //setComposingText("");
+      
         
         mShowNumber = showNumber && isAndroid3;
         
@@ -725,16 +722,18 @@ public class CandidateView extends View implements View.OnClickListener
         if (suggestions != null) {
             mSuggestions = new LinkedList<Mapping>(suggestions);
 	       
-	        if(DEBUG)
-	        	Log.i("CandidateView:setSuggestions()", "mSuggestions.get(0).getWord():" + mSuggestions.get(0).getWord()
-            			+ " mSuggestions.get(1).getCode():" + mSuggestions.get(1).getCode().toLowerCase());
-	           
-	        
+	        	        
 	        if(mSuggestions != null && mSuggestions.size() > 0){
 	            //setBackgroundColor(bgcolor);
 	            // Add by Jeremy '10, 3, 29
 	            mCount = mSuggestions.size(); 
 	            if(mCount > MAX_SUGGESTIONS) mCount = MAX_SUGGESTIONS;
+	            
+	          if(DEBUG)
+	        	Log.i(TAG, "setSuggestions():mSuggestions.size():" + mSuggestions.size()
+            			+ " mCount=" + mCount);
+	           
+
 	            
 	                
 	            if(mSuggestions.get(0).isDictionary()){

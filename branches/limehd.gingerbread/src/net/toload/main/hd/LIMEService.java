@@ -24,6 +24,7 @@ import android.graphics.Rect;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.media.AudioManager;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.Vibrator;
@@ -498,7 +499,7 @@ public class LIMEService extends InputMethodService implements
 	private void clearSuggestions(){
 		if(mCandidateView !=null){
 			mCandidateView.clear();
-			setCandidatesViewShown(false);
+			mHandler.post(mHideCandidateView);
 		}
 	}
 	
@@ -2196,11 +2197,25 @@ public class LIMEService extends InputMethodService implements
 		}
 		return list;
 	}
+	
+	final Handler mHandler = new Handler();
+	// Create runnable for posting
+	final Runnable mShowCandidateView = new Runnable() {
+		public void run() {
+			setCandidatesViewShown(true);	
+	    	}
+	};
+	final Runnable mHideCandidateView = new Runnable() {
+		public void run() {
+			setCandidatesViewShown(false);	
+	    	}
+	};
+	
 	public void setSuggestions(List<Mapping> suggestions, boolean showNumber,
 			boolean typedWordValid, String diplaySelkey){
 		if (suggestions != null && suggestions.size() > 0) {
 			if(DEBUG) Log.i("setSuggestion", "suggestions.size"+ suggestions.size());
-			setCandidatesViewShown(true);
+			mHandler.post(mShowCandidateView);
 
 			hasMappingList = true;
 
@@ -2307,9 +2322,10 @@ public class LIMEService extends InputMethodService implements
 
 	public void setCandidatesViewShown(boolean shown) {
 		super.setCandidatesViewShown(shown);
-			
 	}
-
+	
+	
+	
 	private void handleShift() {
 		if(DEBUG) Log.i(TAG, "handleShift()");
 		if (mInputView == null) {
