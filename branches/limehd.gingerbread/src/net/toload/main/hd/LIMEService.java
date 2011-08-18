@@ -286,7 +286,7 @@ public class LIMEService extends InputMethodService implements
 		mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 		
 		mLongPressKeyTimeout = getResources().getInteger(R.integer.config_long_press_key_timeout); // Jeremy '11,8,15 read longpress timeout from config resources.
-		Log.i(TAG,"OnCreate(): mLongPressKeyTimeout=" + mLongPressKeyTimeout);
+		if(DEBUG) Log.i(TAG,"OnCreate(): mLongPressKeyTimeout=" + mLongPressKeyTimeout);
 		//SharedPreferences sp = PreferenceManager
 		//		.getDefaultSharedPreferences(this);
 		hasVibration = mLIMEPref.getVibrateOnKeyPressed();//sp.getBoolean("vibrate_on_keypress", false);
@@ -1405,14 +1405,14 @@ public class LIMEService extends InputMethodService implements
 							if(LDComposingBuffer.length()==0){
 								//starting LD process
 								LDComposingBuffer = mComposing.toString();
-								//if(DEBUG) 
+								if(DEBUG) 
 									Log.i(TAG, "commitedtype():starting LD process, LDBuffer=" + LDComposingBuffer +
 										". just commited code=" + firstMatched.getCode());
 								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), 
 										firstMatched.getWord(), firstMatched.getScore(), false);
 							}else if(LDComposingBuffer.contains(mComposing.toString())){
 								//Continuous LD process
-								//if(DEBUG) 
+								if(DEBUG) 
 									Log.i(TAG, "commitedtype():Continuous LD process, LDBuffer=" + LDComposingBuffer +
 										". just commited code=" + firstMatched.getCode());
 								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), 

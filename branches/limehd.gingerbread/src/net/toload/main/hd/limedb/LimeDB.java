@@ -86,6 +86,14 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String BPMF_KEY = "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-";
 	private final static String BPMF_CHAR = 
 		"ㄅ|ㄆ|ㄇ|ㄈ|ㄉ|ㄊ|ㄋ|ㄌ|ˇ|ㄍ|ㄎ|ㄏ|ˋ|ㄐ|ㄑ|ㄒ|ㄓ|ㄔ|ㄕ|ㄖ|ˊ|ㄗ|ㄘ|ㄙ|˙|ㄧ|ㄨ|ㄩ|ㄚ|ㄛ|ㄜ|ㄝ|ㄞ|ㄟ|ㄠ|ㄡ|ㄢ|ㄣ|ㄤ|ㄥ|ㄦ";
+	
+	
+	private final static String SHIFTED_NUMBERIC_KEY = 		 	"!@#$%^&*()";
+	private final static String SHIFTED_NUMBERIC_KEY_REMAP = 	"1234567890";
+	private final static String SHIFTED_SYMBOL_KEY = 		 	"<>?=:";
+	private final static String SHIFTED_SYMBOL_KEY_REMAP = 		",./-;";
+	
+	
 	private final static String ETEN_KEY = 		 			"@`abcdefghijklmnopqrstuvwxyz12347890-=;',./?";
 	private final static String ETEN_KEY_REMAP = 			"@`81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg?";
 	//private final static String DESIREZ_ETEN_KEY_REMAP = 	"-`81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg/";
@@ -994,16 +1002,16 @@ public class LimeDB extends SQLiteOpenHelper {
 		String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
 		String keytable = table;
 		
-		if(DEBUG) {
-			Log.i("limedb:keyToKeyname()","code:" + code + 
+		if(DEBUG) 
+			Log.i(TAG, "keyToKeyname():code:" + code + 
 				" table:"+table + " tablename:" + tablename +
 				" isPhysicalKeybaordPressed:" + isPhysicalKeyboardPressed +
 				" keyboardtype: " + keyboardtype +
 				" composingText:" + composingText		);
-		}
+		
 		
 		// By Art 11/08/16 modify when table = phonetic, array or ez
-		if(tablename.equals("array")){
+		/*if(tablename.equals("array")){
 			String revisedCode = code.trim();
 				   revisedCode = revisedCode.replaceAll("<",",");
 				   revisedCode = revisedCode.replaceAll(">","\\.");
@@ -1027,7 +1035,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			   revisedCode = revisedCode.replaceAll("\\(","9");
 			   revisedCode = revisedCode.replaceAll("\\)","0");
 			   code = revisedCode;
-		}
+		}*/
 	    
 		if(isPhysicalKeyboardPressed){
 			if(composingText && table.equals("phonetic")) {// doing composing popup
@@ -1038,7 +1046,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				keytable = table + phonetickeyboardtype;
 		}
 		if(DEBUG)
-			Log.i("limedb:keyToKeyname()","keytable:" + keytable); 
+			Log.i(TAG, "keyToKeyname():keytable:" + keytable); 
 		
 		if(composingText){// building composing text and has dual mapped codes		
 			String dualCodeList = lastValidDualCodeList;
@@ -1049,7 +1057,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			
 			if(dualCodeList!=null ){
 				if(DEBUG) 
-					Log.i("limedb:keyToKeyname()","dualCodelist:" + dualCodeList + 
+					Log.i(TAG,"keyToKeyname():dualCodelist:" + dualCodeList + 
 						" table:"+table + " tablename:" + tablename);
 				code = dualCodeList;
 				if(tablename.equals("phonetic")){
@@ -1065,7 +1073,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 		
 		if(DEBUG)
-			Log.i("limedb:keyToKeyname()","code:" + code + 
+			Log.i(TAG, "keyToKeyname():code:" + code + 
 				" table:"+table + " tablename:" + tablename + " keytable:"+keytable);
 		
 		if(keysDefMap.get(keytable)==null
@@ -1302,7 +1310,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
 		isPhysicalKeyboardPressed = !softKeyboard;
 		if(DEBUG) 
-			Log.i(TAG, "getmapping(): code:"+ code + "| kbversion" +mLIMEPref.getParameterString("kbversion"));
+			Log.i(TAG, "getmapping(): code:"+ code + "| doLDPhonetic=" +mLIMEPref.getParameterBoolean("doLDPhonetic"));
 
 		// Add by Jeremy '10, 3, 27. Extension on multi table query.
 		lastCode = code;
@@ -1324,59 +1332,14 @@ public class LimeDB extends SQLiteOpenHelper {
 					Cursor cursor = null;
 					// Jeremy '11,8,2 Query code3r instead of code for code contains no tone symbols
 					String selectClause;
-					if(tablename.equals("phonetic")&&  mLIMEPref.getParameterBoolean("doLDPhonetic", false) &&
-							!(code.contains("3")||code.contains("4")
+					if(tablename.equals("phonetic")
+							&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) 
+							//&& code.matches(".+[3467 ].*")){
+							&& !(code.contains("3")||code.contains("4")
 							||code.contains("6")||code.contains("7")|| code.endsWith(" "))){
-						
-						String revisedCode = code.trim();
-						   revisedCode = revisedCode.replaceAll("<",",");
-						   revisedCode = revisedCode.replaceAll(">","\\.");
-						   revisedCode = revisedCode.replaceAll("\\?","/");
-						   revisedCode = revisedCode.replaceAll(":",";");
-						   revisedCode = revisedCode.replaceAll("@","1");
-						   revisedCode = revisedCode.replaceAll("#","2");
-						   revisedCode = revisedCode.replaceAll("\\$","3");
-						   revisedCode = revisedCode.replaceAll("%","4");
-						   revisedCode = revisedCode.replaceAll("&","5");
-						   revisedCode = revisedCode.replaceAll("\\*","6");
-						   revisedCode = revisedCode.replaceAll("!","7");
-						   revisedCode = revisedCode.replaceAll("/","8");
-						   revisedCode = revisedCode.replaceAll("\\(","9");
-						   revisedCode = revisedCode.replaceAll("\\)","0");
-					 
-						selectClause = FIELD_CODE3R + " = '" + revisedCode + "' " + extraConditions;
-						//selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
+						selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
 					}else{
-						// Art '11,8,14 code mapping for Array IM keyboard in Shift Mode
-						if(tablename.equals("array") || tablename.equals("ez")){
-								String revisedCode = code.trim();
-									   revisedCode = revisedCode.replaceAll("<",",");
-									   revisedCode = revisedCode.replaceAll(">","\\.");
-									   revisedCode = revisedCode.replaceAll("\\?","/");
-									   revisedCode = revisedCode.replaceAll(":",";");
-								 
-								selectClause = FIELD_CODE + " = '" + revisedCode + "' " + extraConditions;
-							
-						}else if(tablename.equals("dayi") || tablename.equals("ez")){
-							String revisedCode = code.trim();
-							   revisedCode = revisedCode.replaceAll("<",",");
-							   revisedCode = revisedCode.replaceAll(">","\\.");
-							   revisedCode = revisedCode.replaceAll("\\?","/");
-							   revisedCode = revisedCode.replaceAll(":",";");
-							   revisedCode = revisedCode.replaceAll("@","1");
-							   revisedCode = revisedCode.replaceAll("#","2");
-							   revisedCode = revisedCode.replaceAll("\\$","3");
-							   revisedCode = revisedCode.replaceAll("%","4");
-							   revisedCode = revisedCode.replaceAll("&","5");
-							   revisedCode = revisedCode.replaceAll("\\*","6");
-							   revisedCode = revisedCode.replaceAll("!","7");
-							   revisedCode = revisedCode.replaceAll("/","8");
-							   revisedCode = revisedCode.replaceAll("\\(","9");
-							   revisedCode = revisedCode.replaceAll("\\)","0");
-								selectClause = FIELD_CODE + " = '" + revisedCode + "' " + extraConditions;
-						}else{
-							selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
-						}
+						selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
 					}
 					
 					if(DEBUG) 
@@ -1422,15 +1385,18 @@ public class LimeDB extends SQLiteOpenHelper {
 			String keyString = "", keyRemapString ="", finalKeyRemapString = null;
 			String newcode = code;
 			String remaptable = tablename;
+			
+			// Build cached hashmap remapping table name 
 			if(isPhysicalKeyboardPressed ){
 				if(tablename.equals("phonetic"))
 					remaptable = tablename + keyboardtype + phonetickeyboardtype;
 				else
 					remaptable = tablename + keyboardtype;
-			}else if(tablename.equals("phonetic")) {
+			}else if(tablename.equals("phonetic")) 
 					remaptable = tablename + phonetickeyboardtype;
-			}
+		
 			
+			// Build cached hashmap remapping table if it's not exist
 			if(keysReMap.get(remaptable)==null
 					|| keysReMap.get(remaptable).size()==0){
 			
@@ -1460,7 +1426,19 @@ public class LimeDB extends SQLiteOpenHelper {
 					//Desire Z phonetic keybaord
 					keyString = DESIREZ_KEY;
 					keyRemapString = DESIREZ_BPMF_KEY_REMAP;
+				}else if(!isPhysicalKeyboardPressed){
+					if(tablename.equals("dayi") || tablename.equals("ez")
+						  ||tablename.equals("phonetic")&&phonetickeyboardtype.equals("standard") ){
+						keyString = SHIFTED_NUMBERIC_KEY + SHIFTED_SYMBOL_KEY;
+						keyRemapString = SHIFTED_NUMBERIC_KEY_REMAP + SHIFTED_SYMBOL_KEY_REMAP;
+					}else if(tablename.equals("array")){
+						keyString =  SHIFTED_SYMBOL_KEY;
+						keyRemapString =  SHIFTED_SYMBOL_KEY_REMAP;
+					}
+					
 				}
+				
+				
 				if(!keyString.equals("")){
 					HashMap<String,String> reMap = new HashMap<String,String>();
 					HashMap<String,String> finalReMap = null;
@@ -1477,7 +1455,8 @@ public class LimeDB extends SQLiteOpenHelper {
 						keysReMap.put("final_"+remaptable, finalReMap);
 				}
 			}
-					
+			
+			// Do the remapping here using the cached remapping table
 					
 			if(keysReMap.get(remaptable)==null 
 						|| keysReMap.get(remaptable).size()==0){
@@ -1492,22 +1471,24 @@ public class LimeDB extends SQLiteOpenHelper {
 				
 				if(finalReMap == null){
 					for (int i = 0; i < code.length(); i++) {
-						c = reMap.get(code.substring(i, i + 1));
+						String s = code.substring(i, i + 1);
+						c = reMap.get(s);
 						if(c!=null) newcode = newcode + c;
+						else newcode = newcode + s;
 					}
-				
+
 				}else {
-				
+
 					if(code.length() == 1){
-							if(phonetickeyboardtype.equals("eten26") &&
-									(code.equals("q") || code.equals("w") 
-									|| code.equals("d")|| code.equals("f") 
-									|| code.equals("j") || code.equals("k"))){ 
+						if(phonetickeyboardtype.equals("eten26") &&
+								(code.equals("q") || code.equals("w") 
+										|| code.equals("d")|| code.equals("f") 
+										|| code.equals("j") || code.equals("k"))){ 
 							// Dual mapped INITIALS have words mapped for ��and �� for ETEN26
 							c = reMap.get(code);
 						}else if (phonetickeyboardtype.equals("hsu") &&
-									(code.equals("a") || code.equals("e") ||
-									code.equals("d") || code.equals("f") ||code.equals("j"))){
+								(code.equals("a") || code.equals("e") ||
+										code.equals("d") || code.equals("f") ||code.equals("j"))){
 							// Dual mapped INITIALS have words mapped for a and e   
 							// and no mapped word on finals d,f,j  for HSU
 							c = reMap.get(code);
@@ -1523,30 +1504,32 @@ public class LimeDB extends SQLiteOpenHelper {
 									c = finalReMap.get(';');
 								}
 							}else{
-								
+
 							}*/
 							c = finalReMap.get(code);
 						}
 						if(c!=null) newcode = c;
 						else newcode = code;
-						
+
 					}else {			
 						for (int i = 0; i < code.length(); i++) {
+							String s = code.substring(i, i + 1);
 							if(i>0)
-								c = finalReMap.get(code.substring(i, i + 1));
+								c = finalReMap.get(s);
 							else
 								c = reMap.get(code.substring(i, i + 1));
-							
+
 							if(c!=null) newcode = newcode + c;
+							else newcode = newcode + s;
 						}
-				
-				}
-				if(DEBUG) Log.i("LIMEDB.preProcessingRemappingCode()", "newcode="+newcode);
+					}
 				}
 			}
+					
 			//Process the escape characters of query
 			newcode = newcode.replaceAll("'", "''");
-			
+			if(DEBUG) 
+				Log.i(TAG, "preProcessingRemappingCode():newcode="+newcode);
 			return newcode;
 		}else
 			return "";
@@ -1654,6 +1637,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 			//Jeremy '11,8,12 if phonetic has tone symbol in the middle do the expanddualcode
 			if(!dualcode.equalsIgnoreCase(code)
+					|| !code.equalsIgnoreCase(lastCode) // '11,8,18 Jeremy
 					||(tablename.equals("phonetic") && code.matches(".+[ 3467].+") ) 
 				){
 				return expandDualCode(code, remaptable);
@@ -1723,9 +1707,9 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 		}
 
-		if(dualCodeList.size()==1)
-			return null;
-		else
+		//if(dualCodeList.size()==1)
+		//	return null;
+		//else
 			return dualCodeList;
 			
 		

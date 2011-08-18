@@ -28,18 +28,20 @@
     android:verticalGap="0px"
     android:keyHeight="@dimen/key_height"
     >
-
+    
+   
     <Row>
-        <Key android:codes="64" android:keyLabel="\@" android:keyEdgeFlags="left"/>
-        <Key android:codes="35" android:keyLabel="\#"/>
-        <Key android:codes="36" android:keyLabel="$"/>
-        <Key android:codes="37" android:keyLabel="%"/>
-        <Key android:codes="38" android:keyLabel="&amp;"/>
-        <Key android:codes="42" android:keyLabel="*"/>
-        <Key android:codes="33" android:keyLabel="!"/>
-        <Key android:codes="47" android:keyLabel="/"/>
-        <Key android:codes="40" android:keyLabel="("/>
-        <Key android:codes="41" android:keyLabel=")" android:keyEdgeFlags="right"/>
+      	<Key android:codes="33" android:keyLabel="!儿\n|" 
+			 android:keyEdgeFlags="left" />
+		<Key android:codes="64" android:keyLabel="\@母\n車" />
+		<Key android:codes="35" android:keyLabel="\#匚\n糸" />
+		<Key android:codes="36" android:keyLabel="$]\n言" />
+		<Key android:codes="37" android:keyLabel="%Ｌ\n貝" />
+		<Key android:codes="94" android:keyLabel="^ㄏ\n雨" />
+		<Key android:codes="38" android:keyLabel="&amp;\nㄇ" />
+		<Key android:codes="42" android:keyLabel="*\n八" />
+		<Key android:codes="40" android:keyLabel="(\n耳" />
+		<Key android:codes="41" android:keyLabel=")\n鳥" android:keyEdgeFlags="right" />
     </Row>
     
     <Row>

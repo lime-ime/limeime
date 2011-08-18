@@ -90,7 +90,7 @@
 			android:keyWidth="15%p" android:isModifier="true" android:isSticky="true" />
         <Key android:codes="-9" android:keyIcon="@drawable/sw" android:isModifier="true"  android:iconPreview="@drawable/sw_l"/>
         <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:iconPreview="@drawable/sym_keyboard_feedback_space"  android:keyWidth="20%p" android:isRepeatable="true"/>
-        <Key android:codes="61" android:keyLabel="="/>
+        <Key android:codes="61" android:keyLabel="=\nㄦ"/>
         <Key android:codes="-5" android:keyWidth="15%p" android:keyIcon="@drawable/sym_keyboard_delete" android:iconPreview="@drawable/sym_keyboard_feedback_delete" android:isModifier="true" android:isRepeatable="true"/>
         <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:iconPreview="@drawable/sym_keyboard_feedback_return" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="right"/>
     </Row>
