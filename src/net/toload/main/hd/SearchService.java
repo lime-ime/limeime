@@ -54,7 +54,7 @@ import android.util.Pair;
 
 public class SearchService extends Service {
 	
-	private final boolean DEBUG = true;
+	private final boolean DEBUG = false;
 	private final String TAG = "LIME.SearchService";
 	private LimeDB db = null;
 	private LimeHanConverter hanConverter = null;
@@ -284,7 +284,7 @@ public class SearchService extends Service {
 						List<Mapping> relatedtlist = cacheTemp.second;
 						
 						if(DEBUG) 
-						Log.i(TAG, "query() code=" + code + " resultlist.size()=" + resultlist.size()
+							Log.i(TAG, "query() code=" + code + " resultlist.size()=" + resultlist.size()
 								+" relatedlist.size()=" + relatedtlist.size());
 						
 						if(resultlist.size()>0 && (

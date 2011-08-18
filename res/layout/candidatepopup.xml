@@ -14,37 +14,17 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	>
 <!-- 	android:layout_x="0px"
-	android:layout_y="20px" -->
+	android:layout_y="20px" 
+	
+	-->
 
     <view xmlns:android="http://schemas.android.com/apk/res/android"
 		    class="net.toload.main.hd.candidate.CandidateExpandedView"
 	        android:id="@+id/candidatePopup"
 	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
+	        android:layout_height="100dp"
 			/>
-<!--	 <TextView
-			android:id="@+id/ctxtView"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:text="hello,world!"
-			android:textSize="20sp">
 
-	</TextView>-->
-   <!--  <net.toload.main.hd.keyboard.LIMEKeyboardBaseView
-            xmlns:limehd="http://schemas.android.com/apk/res/net.toload.main.hd"
-            android:id="@+id/CandidatePopupView"
-            android:layout_alignParentBottom="true"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/limekeyboard_transparent"
-            android:keyTextSize = "@dimen/key_text_size"
-        	android:labelTextSize = "@dimen/label_text_size"
-        	
-
-            limehd:keyBackground="@drawable/btn_keyboard_key_popup"
-            limehd:keyHysteresisDistance="0dip"
-            limehd:verticalCorrection="@dimen/mini_keyboard_vertical_correction"
-            /> -->
 </ScrollView>
 
 <ImageButton android:id="@+id/closeButton"
