@@ -189,7 +189,8 @@ public class CandidateExpandedView extends CandidateView {
 		int row=0;
 		int indexInRow=0;
 		mRowStartingIndex[0]=0;
-
+		
+		final int count = mCount;
 		for (int i = 0; i < count; i++) {
 			if(DEBUG)
 				Log.i(TAG, "prepareLayout():updating:" + i +", indexInRox=" + indexInRow );
@@ -243,7 +244,7 @@ public class CandidateExpandedView extends CandidateView {
 		if(DEBUG) Log.i(TAG, "setSuggestions(), suggestions.size()=" + suggestions.size());
 		if(mCandidateView!=null && mCandidateView.mSuggestions!=null){
 			mSuggestions = mCandidateView.mSuggestions;
-			count = mCandidateView.count;
+			mCount = mCandidateView.mCount;
 			mSelectedIndex = mCandidateView.mSelectedIndex;
 			mTouchX = OUT_OF_BOUNDS;
 			mTouchY = OUT_OF_BOUNDS;
@@ -256,7 +257,7 @@ public class CandidateExpandedView extends CandidateView {
 
 	@Override
 	public boolean onTouchEvent(MotionEvent me) {
-		Log.i(TAG, "onTouchEvent(): x =" + me.getX() + ", y=" + me.getY() + ", ScroolY=" +mParentScroolView.getScrollY() );
+		if(DEBUG) Log.i(TAG, "onTouchEvent(): x =" + me.getX() + ", y=" + me.getY() + ", ScroolY=" +mParentScroolView.getScrollY() );
 		int action = me.getAction();
 		int x = (int) me.getX();
 		int y = (int) me.getY();

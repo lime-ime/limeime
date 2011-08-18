@@ -55,8 +55,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	private static String TAG = "LIMEDB";
 	
 	//Jeremy '11,8,5
-	private final static String INITIAL_RESULT_LIMIT = "20";
-	private final static int INITIAL_RELATED_LIMIT = 10;
+	private final static String INITIAL_RESULT_LIMIT = "10";
+	private final static int INITIAL_RELATED_LIMIT = 5;
 
 	private final static int DATABASE_VERSION = 66; 
 	//private final static int DATABASE_RELATED_SIZE = 50;
