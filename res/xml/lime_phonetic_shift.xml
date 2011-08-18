@@ -31,16 +31,18 @@
 
     
     <Row>
-        <Key android:codes="64" android:keyLabel="\@\nㄅ" android:keyEdgeFlags="left" />
-		<Key android:codes="35" android:keyLabel="\#\nㄉ" />
-		<Key android:codes="36" android:keyLabel="$\nˇ" />
-		<Key android:codes="37" android:keyLabel="%\nˋ" />
-		<Key android:codes="38" android:keyLabel="&amp;\nㄓ" />
-		<Key android:codes="42" android:keyLabel="*\nˊ" />
-		<Key android:codes="33" android:keyLabel="!\n˙" />
-		<Key android:codes="47" android:keyLabel="/\nㄚ" />
+    	<Key android:codes="33" android:keyLabel="!\nㄅ" 
+			 android:keyEdgeFlags="left" />
+		<Key android:codes="64" android:keyLabel="\@\nㄉ" />
+		<Key android:codes="35" android:keyLabel="\#\nˇ" />
+		<Key android:codes="36" android:keyLabel="$\nˋ" />
+		<Key android:codes="37" android:keyLabel="%\nㄓ" />
+		<Key android:codes="94" android:keyLabel="^\nˊ" />
+		<Key android:codes="38" android:keyLabel="&amp;\n˙" />
+		<Key android:codes="42" android:keyLabel="*\nㄚ" />
 		<Key android:codes="40" android:keyLabel="(\nㄞ" />
 		<Key android:codes="41" android:keyLabel=")\nㄢ" android:keyEdgeFlags="right" />
+		
     </Row>
     
     <Row>
