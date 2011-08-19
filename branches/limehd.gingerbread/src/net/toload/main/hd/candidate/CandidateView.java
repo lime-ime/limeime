@@ -27,6 +27,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Display;
@@ -51,6 +52,7 @@ import net.toload.main.hd.LIMEService;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.Mapping;
+
 
 /**
  * @author Art Hung
@@ -84,7 +86,7 @@ public class CandidateView extends View implements View.OnClickListener
 	private TextView mComposingTextView;
 	private PopupWindow mComposingTextPopup;
 	//private int mDescent;
-	private String mComposingText = "";
+	//private String mComposingText = "";
     
     protected int[] mWordWidth = new int[MAX_SUGGESTIONS];
     protected int[] mWordX = new int[MAX_SUGGESTIONS];
@@ -133,8 +135,10 @@ public class CandidateView extends View implements View.OnClickListener
     private int mCloseButtonHeight;
     private ScrollView mPopupScrollView;
     private boolean candidateExpanded = false;
- 
-   // private Context ctx;
+
+    private boolean waitingForMoreRecords = false;
+    
+  
 
     /**
      * Construct a CandidateView for showing suggested words for completion.
@@ -203,7 +207,6 @@ public class CandidateView extends View implements View.OnClickListener
     			checkHasMoreRecords();
     			
     			
-    			
     			int sx = getScrollX();
     			sx += distanceX;
     			if (sx < 0) {
@@ -239,69 +242,89 @@ public class CandidateView extends View implements View.OnClickListener
     	setHorizontalScrollBarEnabled(false);
     	setVerticalScrollBarEnabled(false);*/
     }
-    final Handler mHandler = new Handler();
-    // Create runnable for posting
-    final Runnable mUpdateUI = new Runnable() {
-    	public void run() { 
-
-    		if (mSuggestions == null) {
-    			setBackgroundColor(0);
-    			hideCandidatePopup();
-    			return;
-    		}
-    		setBackgroundColor(bgcolor);
-    		if(mCandidatePopup != null && mCandidatePopup.isShowing()){
-    			showCandidatePopup();
-
-    		}else{
-    			onDraw(null);
-    			invalidate();
-    		}
-    		requestLayout();
-    	}
-    };
-    final Runnable mShowComping = new Runnable() {
-    	public void run() { 
-    		if(mComposingTextPopup!=null
-        			&& mComposingText != null && !mComposingText.trim().equals("")){
-    			mComposingTextView.setText(mComposingText);
-    		}
-    	}
-
-    };
-    final Runnable mDissmissComping = new Runnable() {
-    	public void run() { 
-    		if(mComposingTextPopup!=null && mComposingTextPopup.isShowing()) {
-    			mComposingTextPopup.dismiss();
-    		}
-    	}
-    };
-    final Runnable mDissmissCandidatePopup = new Runnable() {
-    	public void run() { 
-    		if(mCandidatePopup!=null && mCandidatePopup.isShowing()) 
-    			mCandidatePopup.dismiss();
-    		requestLayout();
-    	}
-    };
     
-/*
- * 
-	private static final int MSG_UPDATEUI= 1;   
-	Handler mHandler = new Handler() {
+    private final UIHandler mHandler = new UIHandler();
+    class UIHandler extends Handler {
+        private static final int MSG_UPDATE_UI = 1;
+        private static final int MSG_UPDATE_COMPOSING = 2;
+        private static final int MSG_HIDE_COMPOSING = 3;
+        private static final int MSG_UPDATE_CANDIDATE_POPUP = 4;
+        private static final int MSG_HIDE_CANDIDATE_POPUP = 5;
         @Override
         public void handleMessage(Message msg) {
+        	if(DEBUG) Log.i(TAG,"UIHandler.handlMessage(): message:" + msg.what);
             switch (msg.what) {
-                case MSG_UPDATEUI:
-                	updateUI();
+                case MSG_UPDATE_UI:
+                	doUpdateUI();
                     break;
-               
+                case MSG_UPDATE_COMPOSING:
+                	String composingText = (String) msg.obj;
+                	if(DEBUG) Log.i(TAG, "UIHandler.handleMessage(): compsoingText" + composingText);
+                	showComposing(composingText);
+                    break;
+                case MSG_HIDE_COMPOSING: {
+                	if(mComposingTextPopup!=null && mComposingTextPopup.isShowing()) {
+            			mComposingTextPopup.dismiss();
+            		}
+                    break;
+                }
+                case MSG_UPDATE_CANDIDATE_POPUP: {
+                	showCandidatePopup();
+                    break;
+                }
+                case MSG_HIDE_CANDIDATE_POPUP: {
+                	if(mCandidatePopup!=null && mCandidatePopup.isShowing()) 
+            			mCandidatePopup.dismiss();
+            		requestLayout();
+                	break;
+                }
             }
-            
         }
-    };*/
+        public void updateUI (int delay){
+        	sendMessageDelayed(obtainMessage(MSG_UPDATE_UI, 0, 0, null), delay);
+        }
+
+        public void updateComposing (String text ,int delay){
+        	sendMessageDelayed(obtainMessage(MSG_UPDATE_COMPOSING, 0, 0, text), delay);
+        }
+        public void  dismissComposing(int delay) {
+        	sendMessageDelayed(obtainMessage(MSG_HIDE_COMPOSING, 0, 0, null), delay);	
+        }
+
+        public void  updateCandidatePopup(int delay) {
+        	sendMessageDelayed(obtainMessage(MSG_UPDATE_CANDIDATE_POPUP, 0, 0, null), delay);	
+        }
+
+        public void  dismissCandidatePopup(int delay) {
+        	sendMessageDelayed(obtainMessage(MSG_HIDE_CANDIDATE_POPUP, 0, 0, null), delay);	
+        }
+        
+    }
+
     
-    
-    
+    public void doUpdateUI() {
+    	if (mSuggestions == null) {
+    		setBackgroundColor(0);
+    		hideCandidatePopup();
+    		return;
+    	}
+    	setBackgroundColor(bgcolor);
+    	if(mCandidatePopup != null && mCandidatePopup.isShowing()){
+    		showCandidatePopup();
+
+    	}else{
+    		if(!waitingForMoreRecords){  // New suggestion list, reset scroll to (0,0);
+    			scrollTo(0, 0);    
+    	        mTargetScrollX = 0;
+    		}
+    		onDraw(null);
+    		invalidate();
+    		requestLayout();
+    	}
+    	waitingForMoreRecords = false;
+
+    }
+  
     public void showCandidatePopup(){
 
     	candidateExpanded =true;
@@ -385,23 +408,22 @@ public class CandidateView extends View implements View.OnClickListener
     }
     
     public void setComposingText(String composingText){
-    	if(mComposingTextPopup!=null
-    			&& composingText != null && !composingText.trim().equals("")){
-        	mComposingText = composingText;
-        	mHandler.post(mShowComping); 	//mComposingTextView.setText(mComposingText);
+    	if(DEBUG) 
+			Log.i(TAG,"setComposingText():composingText:"+composingText);
+    	if(!composingText.trim().equals("")){
+    		//mComposingText=composingText;
+        	mHandler.updateComposing(composingText, 0);
     	}else{
-    		mComposingText = "";
-    		mHandler.post(mDissmissComping);//hideComposing();
+    		//mComposingText = "";
+    		mHandler.dismissComposing(0);
     	}
     	
-    	 if(DEBUG) Log.i("Canddateview:setComposingText()","mComposingText:"+mComposingText);
+    
     }
-    public String getComposingText(String ComposingText){
-		return mComposingText;
- 	
-    }
-    public void showComposing() {
-    	if(DEBUG) Log.i("candidateview","showcomposing()");
+   
+    public void showComposing(String composingText) {
+    	if(DEBUG) 
+    		Log.i("candidateview","showcomposing():"+composingText);
     	
     	// Composing buffer textView
     	if(mComposingTextPopup==null){
@@ -422,73 +444,73 @@ public class CandidateView extends View implements View.OnClickListener
     		cPaint.setStrokeWidth(0);
     	}
     	
-        if (!mComposingText.equals("")) {	
-            	mComposingTextPopup.setContentView(mComposingTextView);
-                mComposingTextView.setText(mComposingText);
-                mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
-                        MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-                int wordWidth = (int) (cPaint.measureText(mComposingText, 0, mComposingText.length()));
-                	
-                final int popupWidth =  wordWidth
-                        + mComposingTextView.getPaddingLeft() + mComposingTextView.getPaddingRight();
-                final int popupHeight = mComposingTextView.getMeasuredHeight();
-                //mPreviewText.setVisibility(INVISIBLE);
-                
-                
-                //mHandler.removeMessages(MSG_REMOVE_COMPOSING);
-                int [] offsetInWindow = new int[2];
-                this.getLocationInWindow(offsetInWindow);
-                int mPopupComposingY = offsetInWindow[1];
-                int mPopupComposingX = 0;
-                
-               if(DEBUG) Log.i("CandiateView:showcomposing()", " candidateview offsetInWindow x:" 
-                		+offsetInWindow[0] + ". y:" +offsetInWindow[1]);
-                // Show popup windows at the location of cursor  Jeremy '11,7,25
-                // Rely on onCursorUpdate() of inputmethod service, which is not implemented on standard android 
-                // Working on htc implementations
-                if(offsetInWindow[1] == 0 && cursorRect != null){
-                	mPopupComposingX = cursorRect.left;
-                	int [] offsetOnScreen = new int[2];
-                	this.getLocationOnScreen(offsetOnScreen);
-                	mPopupComposingY -= offsetOnScreen[1]- cursorRect.top -  popupHeight;
-                	if(mPopupComposingY > -popupHeight){
-                		mPopupComposingY -= 2* popupHeight;
-                	}
-                	if(mPopupComposingY > 0){
-                		mPopupComposingY= -popupHeight;
-                		
-                	}
-                	 if(DEBUG) Log.i("CandiateView:showcomposing()", " candidateview offsetOnScreen x:" 
-                     		+offsetOnScreen[0] + ". y:" +offsetOnScreen[1]);
-                }else{
-                	mPopupComposingY -= popupHeight;
-                }
-                	
-                if(DEBUG) 
-                	Log.i(TAG, "CandiateView:showcomposing():mPopupComposingX:" 
-                 		+mPopupComposingX + ". mPopupComposingY:" +mPopupComposingY
-                 		+"mComposingTextPopup.isShowing()=" + mComposingTextPopup.isShowing() );
-                
-                if (mComposingTextPopup.isShowing()) {              	
-                	mComposingTextPopup.update(mPopupComposingX, mPopupComposingY, 
-                            popupWidth, popupHeight);
-                } else {
-                	mComposingTextPopup.setWidth(popupWidth);
-                	mComposingTextPopup.setHeight(popupHeight);
-                	mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX, 
-                			mPopupComposingY );
-                }
-               // mComposingTextView.setVisibility(VISIBLE);
+        //if (!mComposingText.equals("")) {	
+    	mComposingTextPopup.setContentView(mComposingTextView);
+    	mComposingTextView.setText(composingText);
+    	mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
+    			MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+    	int wordWidth = (int) (cPaint.measureText(composingText, 0, composingText.length()));
+
+    	final int popupWidth =  wordWidth
+    	+ mComposingTextView.getPaddingLeft() + mComposingTextView.getPaddingRight();
+    	final int popupHeight = mComposingTextView.getMeasuredHeight();
+    	//mPreviewText.setVisibility(INVISIBLE);
 
 
-            }
+    	//mHandler.removeMessages(MSG_REMOVE_COMPOSING);
+    	int [] offsetInWindow = new int[2];
+    	this.getLocationInWindow(offsetInWindow);
+    	int mPopupComposingY = offsetInWindow[1];
+    	int mPopupComposingX = 0;
+
+    	if(DEBUG) Log.i("CandiateView:showcomposing()", " candidateview offsetInWindow x:" 
+    			+offsetInWindow[0] + ". y:" +offsetInWindow[1]);
+    	// Show popup windows at the location of cursor  Jeremy '11,7,25
+    	// Rely on onCursorUpdate() of inputmethod service, which is not implemented on standard android 
+    	// Working on htc implementations
+    	if(offsetInWindow[1] == 0 && cursorRect != null){
+    		mPopupComposingX = cursorRect.left;
+    		int [] offsetOnScreen = new int[2];
+    		this.getLocationOnScreen(offsetOnScreen);
+    		mPopupComposingY -= offsetOnScreen[1]- cursorRect.top -  popupHeight;
+    		if(mPopupComposingY > -popupHeight){
+    			mPopupComposingY -= 2* popupHeight;
+    		}
+    		if(mPopupComposingY > 0){
+    			mPopupComposingY= -popupHeight;
+
+    		}
+    		if(DEBUG) Log.i("CandiateView:showcomposing()", " candidateview offsetOnScreen x:" 
+    				+offsetOnScreen[0] + ". y:" +offsetOnScreen[1]);
+    	}else{
+    		mPopupComposingY -= popupHeight;
+    	}
+
+    	if(DEBUG) 
+    		Log.i(TAG, "CandiateView:showcomposing():mPopupComposingX:" 
+    				+mPopupComposingX + ". mPopupComposingY:" +mPopupComposingY
+    				+"mComposingTextPopup.isShowing()=" + mComposingTextPopup.isShowing() );
+
+    	if (mComposingTextPopup.isShowing()) {              	
+    		mComposingTextPopup.update(mPopupComposingX, mPopupComposingY, 
+    				popupWidth, popupHeight);
+    	} else {
+    		mComposingTextPopup.setWidth(popupWidth);
+    		mComposingTextPopup.setHeight(popupHeight);
+    		mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX, 
+    				mPopupComposingY );
+    	}
+    	mComposingTextView.setVisibility(VISIBLE);
+
+
+           // }
         
     }
 
     
     public void hideComposing() {
     	if(DEBUG) Log.i(TAG, "hidecomposing()");
-    	mHandler.post(mDissmissComping);
+    	mHandler.dismissComposing(0);
     	
     }
     
@@ -498,7 +520,7 @@ public class CandidateView extends View implements View.OnClickListener
     		Log.i(TAG, "hideCandidatePopup()");
     	
     	candidateExpanded = false;
-    	mHandler.post(mDissmissCandidatePopup);
+    	mHandler.dismissCandidatePopup(0);
     
     
     	/*if(mCandidatePopup!=null && mCandidatePopup.isShowing()) 
@@ -658,7 +680,7 @@ public class CandidateView extends View implements View.OnClickListener
                 scrollToTarget();
             }
             
-            showComposing();
+            //showComposing();
         	
         }
        
@@ -669,6 +691,7 @@ public class CandidateView extends View implements View.OnClickListener
     	if(mSuggestions!=null && mSuggestions.size()>0 &&
     			mSuggestions.get(mSuggestions.size()-1).getCode() !=null
         		&& mSuggestions.get(mSuggestions.size()-1).getCode().equals("has_more_records")){
+    		waitingForMoreRecords=true;
     		Thread UpadtingThread = new Thread(){
     			public void run() {
     				mService.pickSuggestionManually(mSuggestions.size()-1);
@@ -723,8 +746,7 @@ public class CandidateView extends View implements View.OnClickListener
         	X_GAP = (int) (mContext.getResources().getDimensionPixelSize(R.dimen.candidate_font_size)*0.25f);;
     
         if (suggestions != null) {
-            mSuggestions = new LinkedList<Mapping>(suggestions);
-	       
+            mSuggestions = new LinkedList<Mapping>(suggestions);    
 	        	        
 	        if(mSuggestions != null && mSuggestions.size() > 0){
 	            //setBackgroundColor(bgcolor);
@@ -735,10 +757,7 @@ public class CandidateView extends View implements View.OnClickListener
 	          if(DEBUG)
 	        	Log.i(TAG, "setSuggestions():mSuggestions.size():" + mSuggestions.size()
             			+ " mCount=" + mCount);
-	           
-
-	            
-	                
+		                
 	            if(mSuggestions.get(0).isDictionary()){
 	            	// no default selection for related words
 	            	mSelectedIndex = -1;
@@ -776,7 +795,7 @@ public class CandidateView extends View implements View.OnClickListener
         	//hideCandidatePopup();
         }
         
-        mHandler.post(mUpdateUI);
+        mHandler.updateUI(0);
         /*//Jeremy '11,8,18 moved to mHandler to be thread-safe.
         if(mCandidatePopup != null && mCandidatePopup.isShowing()){
     		showCandidatePopup();
