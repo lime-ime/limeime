@@ -1334,9 +1334,9 @@ public class LimeDB extends SQLiteOpenHelper {
 					String selectClause;
 					if(tablename.equals("phonetic")
 							&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) 
-							//&& code.matches(".+[3467 ].*")){
-							&& !(code.contains("3")||code.contains("4")
-							||code.contains("6")||code.contains("7")|| code.endsWith(" "))){
+							&& !code.matches(".+[3467 ].*")){
+							//&& !(code.contains("3")||code.contains("4")
+							//||code.contains("6")||code.contains("7")|| code.endsWith(" "))){
 						selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
 					}else{
 						selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
@@ -1731,9 +1731,10 @@ public class LimeDB extends SQLiteOpenHelper {
 				if(DEBUG) 
 					Log.i(TAG, "expandDualCode(): processing dualcode: " + dualcode + "|");
 				String codeCol = FIELD_CODE;
-				if(tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) &&
-						!(dualcode.contains("3")||dualcode.contains("4")
-						  ||dualcode.contains("6")||dualcode.contains("7")|| dualcode.endsWith(" ") )){
+				if(tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) 
+						&& !code.matches(".+[3467 ].*")){
+						//&& !(dualcode.contains("3")||dualcode.contains("4")
+						//  ||dualcode.contains("6")||dualcode.contains("7")|| dualcode.endsWith(" ") )){
 					codeCol = FIELD_CODE3R;
 				}
 				dualcode = dualcode.trim();
