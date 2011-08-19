@@ -615,7 +615,7 @@ public class CandidateView extends View implements View.OnClickListener
         if (canvas != null) {
         	
         	for (int i = 0; i < count; i++) {
-        		if(count!=mCount || i >= mCount) break;
+        		if(count!=mCount || mSuggestions.size()==0) break;
         		if(DEBUG)
         			Log.i(TAG, "Candidateview:OnDraw():i:" + i + "  Drawing:" + mSuggestions.get(i).getWord() );
         		
