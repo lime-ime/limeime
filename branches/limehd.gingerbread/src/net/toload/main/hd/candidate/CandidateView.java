@@ -654,17 +654,20 @@ public class CandidateView extends View implements View.OnClickListener
                 paint.setFakeBoldText(false);
             }
         	
+        	if (mTargetScrollX != getScrollX()) {
+                scrollToTarget();
+            }
+            
+            showComposing();
+        	
         }
        
-        if (mTargetScrollX != getScrollX()) {
-            scrollToTarget();
-        }
         
-        showComposing();
     }
     
     private boolean checkHasMoreRecords(){
-    	if(mSuggestions!=null && mSuggestions.get(mSuggestions.size()-1).getCode() !=null
+    	if(mSuggestions!=null && mSuggestions.size()>0 &&
+    			mSuggestions.get(mSuggestions.size()-1).getCode() !=null
         		&& mSuggestions.get(mSuggestions.size()-1).getCode().equals("has_more_records")){
     		Thread UpadtingThread = new Thread(){
     			public void run() {
