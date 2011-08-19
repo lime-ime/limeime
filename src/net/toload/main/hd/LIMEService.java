@@ -1039,7 +1039,8 @@ public class LIMEService extends InputMethodService implements
 			//hasSearchProcessed = false;
 			//hasSearchPress = true;
 			//break;
-		case KeyEvent.KEYCODE_PERIOD:
+		//Jeremy '11,8,19 removed long press "." first.
+		/*case KeyEvent.KEYCODE_PERIOD:
 			if (keyPressTime != 0 && !hasKeyProcessed &&onIM
 					&& System.currentTimeMillis() - keyPressTime > mLongPressKeyTimeout){// 700) {
 				updateChineseSymbol();
@@ -1051,7 +1052,7 @@ public class LIMEService extends InputMethodService implements
 				hasKeyProcessed = true;
 
 			}
-			return true;						
+			return true;	*/					
 		case KeyEvent.KEYCODE_SYM:
 			return true;		
 		case KeyEvent.KEYCODE_AT:
@@ -1259,7 +1260,7 @@ public class LIMEService extends InputMethodService implements
 			break;
 		//Jeremy '11,8,14
 		//case KeyEvent.KEYCODE_SEARCH:
-		case KeyEvent.KEYCODE_PERIOD:
+		/*case KeyEvent.KEYCODE_PERIOD:
 			if (hasKeyProcessed){ //keyPressTime != 0
 					//&& System.currentTimeMillis() - keyPressTime > 700) {
 				//updateChineseSymbol();  // Jeremy '11,8,15 moved to onKeyDown()
@@ -1271,7 +1272,7 @@ public class LIMEService extends InputMethodService implements
 				translateKeyDown(keyCode, event);
 				super.onKeyDown(keyCode, mKeydownEvent);
 			}
-			break;
+			break;*/
 		case KeyEvent.KEYCODE_SYM:
 		case KeyEvent.KEYCODE_AT:
 			if(hasKeyProcessed){  //(keyPressTime != 0
@@ -1424,7 +1425,7 @@ public class LIMEService extends InputMethodService implements
 							if(!mComposing.toString().equals(" ")){
 								if(mComposing.toString().startsWith(" "))
 									mComposing= mComposing.deleteCharAt(0);
-								Log.i(TAG, "commitedtype(): new mComposing:" +mComposing);
+								if(DEBUG) Log.i(TAG, "commitedtype(): new mComposing:" +mComposing);
 								inputConnection.setComposingText(mComposing, 1);
 								updateCandidates();
 								return;
