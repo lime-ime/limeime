@@ -3070,7 +3070,7 @@ public class LIMEService extends InputMethodService implements
 			try {
 				this.unbindService(serConn);
 			} catch (Exception e) {
-				Log.i("ART", "Failed to connect Search Service");
+				Log.i(TAG, "Failed to connect Search Service");
 			}
 		}
 	}
