@@ -536,12 +536,12 @@ public class LIMEKeyboardSwitcher {
         // followed by a space/enter
         switch (mSymbolsModeState) {
             case SYMBOLS_MODE_STATE_BEGIN:
-                if (key != LIMEService.KEYCODE_SPACE && key != LIMEService.KEYCODE_ENTER && key > 0) {
+                if (key != LIMEService.MY_KEYCODE_SPACE && key != LIMEService.MY_KEYCODE_ENTER && key > 0) {
                     mSymbolsModeState = SYMBOLS_MODE_STATE_SYMBOL;
                 }
                 break;
             case SYMBOLS_MODE_STATE_SYMBOL:
-                if (key == LIMEService.KEYCODE_ENTER || key == LIMEService.KEYCODE_SPACE) return true;
+                if (key == LIMEService.MY_KEYCODE_ENTER || key == LIMEService.MY_KEYCODE_SPACE) return true;
                 break;
         }
         return false;

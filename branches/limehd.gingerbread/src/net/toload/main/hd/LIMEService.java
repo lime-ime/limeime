@@ -113,7 +113,7 @@ public class LIMEService extends InputMethodService implements
 	//private boolean hasFirstMatched = false;
 
 	// if getMapping result has record then set to 'true'
-	private boolean hasMappingList = false;
+	public boolean hasMappingList = false;
 
 	private boolean keydown = false;
 
@@ -161,8 +161,7 @@ public class LIMEService extends InputMethodService implements
 	private AudioManager mAudioManager;
 
 	private final float FX_VOLUME = 1.0f;
-	static final int KEYCODE_ENTER = 10;
-	static final int KEYCODE_SPACE = 32;
+	
 
 	private boolean hasVibration = false;
 	private boolean hasSound = false;
@@ -225,9 +224,11 @@ public class LIMEService extends InputMethodService implements
 
 	// Replace Keycode.KEYCODE_CTRL_LEFT/RIGHT, ESC on android 3.x
 	// for backward compatibility of 2.x
-	private final int MY_KEYCODE_CTRL_ESC = 111;
-	private final int MY_KEYCODE_CTRL_LEFT = 113;
-	private final int MY_KEYCODE_CTRL_RIGHT = 114;
+	static final int MY_KEYCODE_CTRL_ESC = 111;
+	static final int MY_KEYCODE_CTRL_LEFT = 113;
+	static final int MY_KEYCODE_CTRL_RIGHT = 114;
+	static final int MY_KEYCODE_ENTER = 10;
+	static final int MY_KEYCODE_SPACE = 32;
 	
 	private final String relatedSelkey = "!@#$%^&*()";
 	
@@ -283,7 +284,8 @@ public class LIMEService extends InputMethodService implements
 		// Construct Preference Access Tool
 		mLIMEPref = new LIMEPreferenceManager(this);
 
-		mVibrator = (Vibrator) getApplication().getSystemService(Service.VIBRATOR_SERVICE);
+		mVibrator = (Vibrator) getSystemService(Service.VIBRATOR_SERVICE);
+		//getApplication().getSystemService(Service.VIBRATOR_SERVICE);
 		mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 		
 		mLongPressKeyTimeout = getResources().getInteger(R.integer.config_long_press_key_timeout); // Jeremy '11,8,15 read longpress timeout from config resources.
@@ -994,7 +996,8 @@ public class LIMEService extends InputMethodService implements
 
 			//Jeremy '11,8,14
 			clearComposing();
-			getCurrentInputConnection().commitText("", 0);
+			InputConnection ic=getCurrentInputConnection();
+			if(ic!=null) ic.commitText("", 0);
 			return true;
 
 		case KeyEvent.KEYCODE_SPACE:
@@ -1321,9 +1324,9 @@ public class LIMEService extends InputMethodService implements
 	/**
 	 * Helper function to commit any text being composed in to the editor.
 	 */
-	private void commitTyped(InputConnection inputConnection) {
+	private void commitTyped(InputConnection ic) {
 		if (DEBUG)
-			Log.i("LIMEService:", "CommittedTyped()");
+			Log.i(TAG,"CommittedTyped()");
 		try {
 			if (mComposing.length() > 0
 					|| (firstMatched != null && firstMatched.isDictionary())) {
@@ -1357,12 +1360,12 @@ public class LIMEService extends InputMethodService implements
 						}
 
 						if (DEBUG)
-							Log.i("LIMEService", "CommitedTyped Length:"
+							Log.i(TAG,"CommitedTyped() commited Length="
 									+ firstMatchedLength);
 						// Do hanConvert before commit
 						// '10, 4, 17 Jeremy
 						// inputConnection.setComposingText("", 1);
-						inputConnection.commitText(
+						if(ic!=null) ic.commitText(
 								SearchSrv.hanConvert(wordToCommit),
 								firstMatchedLength);
 
@@ -1426,7 +1429,7 @@ public class LIMEService extends InputMethodService implements
 								if(mComposing.toString().startsWith(" "))
 									mComposing= mComposing.deleteCharAt(0);
 								if(DEBUG) Log.i(TAG, "commitedtype(): new mComposing:" +mComposing);
-								inputConnection.setComposingText(mComposing, 1);
+								if(ic!=null) ic.setComposingText(mComposing, 1);
 								updateCandidates();
 								return;
 							}
@@ -1455,20 +1458,20 @@ public class LIMEService extends InputMethodService implements
 					} else if (firstMatched != null
 							&& firstMatched.getWord() != null
 							&& firstMatched.getWord().equals("")) {
-						inputConnection.commitText(misMatched,
+						if(ic!=null) ic.commitText(misMatched,
 								misMatched.length());
 						firstMatched = null;
 						//hasFirstMatched = false;
 
 						//userdiclist.add(null);
 					} else {
-						inputConnection.commitText(mComposing,
+						if(ic!=null) ic.commitText(mComposing,
 								mComposing.length());
 						//hasFirstMatched = false;
 						//userdiclist.add(null);
 					}
 				} else {
-					inputConnection.commitText(mComposing, mComposing.length());
+					if(ic!=null) ic.commitText(mComposing, mComposing.length());
 					//hasFirstMatched = false;
 					//userdiclist.add(null);
 				}
@@ -1571,10 +1574,13 @@ public class LIMEService extends InputMethodService implements
 	 * Helper to send a key down / key up pair to the current editor.
 	 */
 	private void keyDownUp(int keyEventCode) {
-		getCurrentInputConnection().sendKeyEvent(
-				new KeyEvent(KeyEvent.ACTION_DOWN, keyEventCode));
-		getCurrentInputConnection().sendKeyEvent(
-				new KeyEvent(KeyEvent.ACTION_UP, keyEventCode));
+		InputConnection ic=getCurrentInputConnection();
+		if(ic!=null){
+			ic.sendKeyEvent(
+					new KeyEvent(KeyEvent.ACTION_DOWN, keyEventCode));
+			ic.sendKeyEvent(
+					new KeyEvent(KeyEvent.ACTION_UP, keyEventCode));
+		}
 	}
 
 	/**
@@ -1689,12 +1695,12 @@ public class LIMEService extends InputMethodService implements
 			switchKeyboard(primaryCode);
 			// Jeremy '11,5,31 Rewrite softkeybaord enter/space and english sepeartor processing.
 		} else if (onIM &&  
-				((primaryCode== KEYCODE_SPACE && !keyboardSelection.equals("phonetic"))
-				||(primaryCode== KEYCODE_SPACE && 
+				((primaryCode== MY_KEYCODE_SPACE && !keyboardSelection.equals("phonetic"))
+				||(primaryCode== MY_KEYCODE_SPACE && 
 						keyboardSelection.equals("phonetic") && !mLIMEPref.getParameterBoolean("doLDPhonetic", false) )
-				||(primaryCode== KEYCODE_SPACE && 
+				||(primaryCode== MY_KEYCODE_SPACE && 
 						keyboardSelection.equals("phonetic") && (mComposing.toString().endsWith(" ")|| mComposing.length()==0 ))
-				|| primaryCode == KEYCODE_ENTER) ){
+				|| primaryCode == MY_KEYCODE_ENTER) ){
 			
 			if ( mCandidateView != null && mCandidateView.isShown()){ 
 				if(!mCandidateView.takeSelectedSuggestion()){
@@ -2082,6 +2088,7 @@ public class LIMEService extends InputMethodService implements
 					clearSuggestions();
 				} else {
 					InputConnection ic = getCurrentInputConnection();
+					if(ic==null) return;
 					boolean after = false;
 					try {
 						char c = ic.getTextAfterCursor(1, 1).charAt(0);
@@ -2215,7 +2222,7 @@ public class LIMEService extends InputMethodService implements
 	public void setSuggestions(List<Mapping> suggestions, boolean showNumber,
 			boolean typedWordValid, String diplaySelkey){
 		if (suggestions != null && suggestions.size() > 0) {
-			if(DEBUG) Log.i("setSuggestion", "suggestions.size"+ suggestions.size());
+			if(DEBUG) Log.i(TAG, "setSuggestion():suggestions.size="+ suggestions.size());
 			mHandler.post(mShowCandidateView);
 
 			hasMappingList = true;
@@ -2237,7 +2244,7 @@ public class LIMEService extends InputMethodService implements
 						typedWordValid, diplaySelkey);
 			}
 		} else {
-			if(DEBUG) Log.i("setSuggestion", "list=null");
+			if(DEBUG) Log.i(TAG, "setSuggestion() with list=null");
 			hasMappingList = false;
 			//Jeremy '11,8,15
 			clearSuggestions();
@@ -2283,17 +2290,18 @@ public class LIMEService extends InputMethodService implements
 	private void handleBackspace() {
 		if(DEBUG) Log.i("LIMEService:handleBackspace()", "entering...");
 		final int length = mComposing.length();
+		InputConnection ic=getCurrentInputConnection();
 		if (length > 1) {
 			mComposing.delete(length - 1, length);
-			getCurrentInputConnection().setComposingText(mComposing, 1);
+			if(ic!=null) ic.setComposingText(mComposing, 1);
 			updateCandidates();
 		} else if (length == 1) {
 			// '10, 4, 5 Jeremy. Bug fix on delete last key in buffer.
-			getCurrentInputConnection().setComposingText("", 0);
+			if(ic!=null) ic.setComposingText("", 0);
 			
 			//Jeremy '11,8,14
 			clearComposing();
-			getCurrentInputConnection().commitText("", 0);
+			if(ic!=null) ic.commitText("", 0);
 		} else {
 			
 			//Jeremy '11,8,15
@@ -2403,7 +2411,8 @@ public class LIMEService extends InputMethodService implements
 		
 		//Jeremy '11,8,14
 		clearComposing();
-		getCurrentInputConnection().commitText("", 0);
+		InputConnection ic = getCurrentInputConnection();
+		if(ic!=null) ic.commitText("", 0);
 		
 		mKeyboardSwitcher.toggleChinese();
 		mEnglishOnly = !mKeyboardSwitcher.isChinese();
@@ -2662,16 +2671,17 @@ public class LIMEService extends InputMethodService implements
 						+ isValidDigit(primaryCode) + " isValideSymbo:"
 						+ isValidSymbol(primaryCode) + " onIM:" + onIM);
 			}
+			InputConnection ic=getCurrentInputConnection();
 			if((!hasSymbolMapping)
 					&& (primaryCode==','||primaryCode=='.') &&onIM ){ // Chinese , and . processing
 				mComposing.append((char) primaryCode);
-				getCurrentInputConnection().setComposingText(mComposing, 1);
+				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
 			}else if (!hasSymbolMapping && !hasNumberMapping	
 					&& isValidLetter(primaryCode) && onIM) {
 				mComposing.append((char) primaryCode);
-				getCurrentInputConnection().setComposingText(mComposing, 1);
+				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
 			} else if (!hasSymbolMapping
@@ -2679,7 +2689,7 @@ public class LIMEService extends InputMethodService implements
 					&& (isValidLetter(primaryCode) || isValidDigit(primaryCode))
 					&& onIM) {
 				mComposing.append((char) primaryCode);
-				getCurrentInputConnection().setComposingText(mComposing, 1);
+				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
 			} else if (hasSymbolMapping
@@ -2687,7 +2697,7 @@ public class LIMEService extends InputMethodService implements
 					&& (isValidLetter(primaryCode) || isValidSymbol(primaryCode))
 					&& onIM) {
 				mComposing.append((char) primaryCode);
-				getCurrentInputConnection().setComposingText(mComposing, 1);
+				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
 			} else if (hasSymbolMapping && !hasNumberMapping && keyboardSelection.equals("array")
@@ -2698,16 +2708,16 @@ public class LIMEService extends InputMethodService implements
 				// 27.May.2011 Art : This is the method to check user input type
 				// if first previous character is w and second char is number then enable im mode.
 				mComposing.append((char) primaryCode);
-				getCurrentInputConnection().setComposingText(mComposing, 1);
+				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
 			} else if (hasSymbolMapping
 					&& hasNumberMapping
 					&& (isValidSymbol(primaryCode) 
-							|| (primaryCode== KEYCODE_SPACE && keyboardSelection.equals("phonetic"))
+							|| (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals("phonetic"))
 							|| isValidLetter(primaryCode) || isValidDigit(primaryCode))	&& onIM) {
 				mComposing.append((char) primaryCode);
-				getCurrentInputConnection().setComposingText(mComposing, 1);
+				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
 
@@ -2715,15 +2725,15 @@ public class LIMEService extends InputMethodService implements
 				//TODO: need to check later;
 				if(onIM){
 					mCandidateView.takeSelectedSuggestion();  // check here.
-					getCurrentInputConnection().commitText(String.valueOf((char) primaryCode),1);
+					if(ic!=null) ic.commitText(String.valueOf((char) primaryCode),1);
 					//Jeremy '11,8,15
 					clearComposing();
 				} else{
 					if (!mCandidateView.takeSelectedSuggestion()) {
-						getCurrentInputConnection().commitText(
+						if(ic!=null) ic.commitText(
 								mComposing + String.valueOf((char) primaryCode),1);
 					}else{
-						getCurrentInputConnection().commitText(String.valueOf((char) primaryCode),1);
+						if(ic!=null) ic.commitText(String.valueOf((char) primaryCode),1);
 						
 					}
 					
@@ -2833,10 +2843,10 @@ public class LIMEService extends InputMethodService implements
 
 	public void pickSuggestionManually(int index) {
 		if (DEBUG)
-			Log.i("LIMEService:", "pickSuggestionManually():"
+			Log.i(TAG,"pickSuggestionManually():"
 					+ "Pick up word at index : " + index + " templist.size()="+templist.size());
 
-		// This is to prevent if user select the character more than the list
+		// This is to prevent if user select the index more than the list
 		if(templist != null && index >= templist.size() ){
 			return;
 		}
@@ -2851,23 +2861,25 @@ public class LIMEService extends InputMethodService implements
 		if (templist != null && templist.size() > 0) {
 			firstMatched = templist.get(index);
 		}
-
+		
+		InputConnection ic=getCurrentInputConnection();
+	
 		if (mCompletionOn && mCompletions != null && index >= 0
 				&& firstMatched.isDictionary()
 				&& index < mCompletions.length ) {
 			CompletionInfo ci = mCompletions[index];
-			getCurrentInputConnection().commitCompletion(ci);
+			if(ic!=null) ic.commitCompletion(ci);
 			if (DEBUG)
 				Log.i(TAG, "pickSuggestionManually():mCompletionOn:" + mCompletionOn);
 
 		} else if ((mComposing.length() > 0 
 				||firstMatched != null && firstMatched.isDictionary()) && onIM) {
-			commitTyped(getCurrentInputConnection());
+			commitTyped(ic);
 		} else if (mLIMEPref.getEnglishPrediction() && tempEnglishList != null
 					&& tempEnglishList.size() > 0) {
 				
-				getCurrentInputConnection().commitText(
-							this.tempEnglishList.get(index).getWord()
+				if(ic!=null) ic.commitText(
+				this.tempEnglishList.get(index).getWord()
 									.substring(tempEnglishWord.length())
 									+ " ", 0);
 					
@@ -2934,10 +2946,10 @@ public class LIMEService extends InputMethodService implements
 			case Keyboard.KEYCODE_DELETE:
 				sound = AudioManager.FX_KEYPRESS_DELETE;
 				break;
-			case KEYCODE_ENTER:
+			case MY_KEYCODE_ENTER:
 				sound = AudioManager.FX_KEYPRESS_RETURN;
 				break;
-			case KEYCODE_SPACE:
+			case MY_KEYCODE_SPACE:
 				sound = AudioManager.FX_KEYPRESS_SPACEBAR;
 				break;
 			}
