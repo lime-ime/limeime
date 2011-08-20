@@ -18,7 +18,7 @@ package net.toload.main.hd.keyboard;
 
 import android.view.MotionEvent;
 
-class SwipeTracker {
+public class SwipeTracker {
     private static final int NUM_PAST = 4;
     private static final int LONGEST_PAST_TIME = 200;
 
@@ -91,7 +91,7 @@ class SwipeTracker {
         return mYVelocity;
     }
 
-    static class EventRingBuffer {
+    public static class EventRingBuffer {
         private final int bufSize;
         private final float xBuf[];
         private final float yBuf[];
