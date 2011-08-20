@@ -27,7 +27,7 @@ public class SearchSrvTest extends ServiceTestCase<SearchService> {
 	}
 
 	private final String TAG = "SearchSrvTest";
-	private final static String DAYI_KEY = "1234567890qwertyuiopasdfghjkl;zxcvbnm,./";
+	private final static String TEST_KEY = "1234567890qwertyuiopasdfghjkl;zxcvbnm,./-";
 	private List<String> keyList;
 	private ISearchService SearchSrv = null;
 
@@ -46,7 +46,7 @@ public class SearchSrvTest extends ServiceTestCase<SearchService> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public void testQueryStart(){
+	public void testRandomQuery(){
 		Log.i(TAG, "testQueryStart()");
 		try {
 			mContext.bindService(new Intent(ISearchService.class.getName()),
@@ -68,11 +68,15 @@ public class SearchSrvTest extends ServiceTestCase<SearchService> {
 		}
 
 		buildKeyMap();
-		int count=0;
-		int limit = 10000;
-		long timelimit = 250;
+		
+		//Testing parameters.---------------
+		int limit = 10000;   //times performing random queries
+		long timelimit = 250;// Assert the query time smaller than this time spec.
+		boolean getFullRecords = false; 
+		
 		HashSet<String> duplityCheck = new HashSet<String>();
 		Random randomGenerator = new Random();
+		int count=0;
 		while(count<limit){
 			int i = randomGenerator.nextInt(keyList.size());
 			int j = randomGenerator.nextInt(keyList.size());
@@ -86,7 +90,7 @@ public class SearchSrvTest extends ServiceTestCase<SearchService> {
 					long begin =  System.currentTimeMillis();
 					LinkedList<Mapping> list = new LinkedList<Mapping>();
 					try {
-						list.addAll(SearchSrv.query(query_code, true, false));
+						list.addAll(SearchSrv.query(query_code, true, getFullRecords));
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
@@ -100,7 +104,7 @@ public class SearchSrvTest extends ServiceTestCase<SearchService> {
 							+ ", resultlist.size=" +resultsize
 							+", query time=" + elapsed + "ms");
 
-					//assertTrue("Qery time longer than " + timelimit + " ms", elapsed <timelimit);
+					assertTrue("Qery time longer than " + timelimit + " ms", elapsed <timelimit);
 					count++;
 				}
 			}
@@ -109,24 +113,16 @@ public class SearchSrvTest extends ServiceTestCase<SearchService> {
 
 		}
 	}
-	/*@Deprecated
-	 public void testQueryStop(){
-		 try {
-		 		mContext.unbindService(serConn);
-			} catch (Exception e) {
-				Log.i(TAG, "testQueryStart(): Failed to disconnect Search Service");
-			}
-		 
-	 }*/
 	
-	 private void buildKeyMap(){
-		 String keyString = DAYI_KEY;
+	
+	private void buildKeyMap(){
+		 String keyString = TEST_KEY;
 		 keyList = new ArrayList<String>();
 		 for (int i = 0; i < keyString.length(); i++) {
 			 keyList.add( keyString.substring(i, i + 1));
 			
 			}
-	 }
+	}
 	 
 	 /*
 	  * Construct SerConn
