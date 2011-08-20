@@ -86,7 +86,7 @@ public class CandidateView extends View implements View.OnClickListener
 	private TextView mComposingTextView;
 	private PopupWindow mComposingTextPopup;
 	//private int mDescent;
-	//private String mComposingText = "";
+	private String mComposingText = "";
     
     protected int[] mWordWidth = new int[MAX_SUGGESTIONS];
     protected int[] mWordX = new int[MAX_SUGGESTIONS];
@@ -260,7 +260,7 @@ public class CandidateView extends View implements View.OnClickListener
                 case MSG_UPDATE_COMPOSING:
                 	String composingText = (String) msg.obj;
                 	if(DEBUG) Log.i(TAG, "UIHandler.handleMessage(): compsoingText" + composingText);
-                	showComposing(composingText);
+                	//showComposing(composingText);
                     break;
                 case MSG_HIDE_COMPOSING: {
                 	if(mComposingTextPopup!=null && mComposingTextPopup.isShowing()) {
@@ -320,6 +320,8 @@ public class CandidateView extends View implements View.OnClickListener
     		onDraw(null);
     		invalidate();
     		requestLayout();
+
+    		
     	}
     	waitingForMoreRecords = false;
 
@@ -411,10 +413,10 @@ public class CandidateView extends View implements View.OnClickListener
     	if(DEBUG) 
 			Log.i(TAG,"setComposingText():composingText:"+composingText);
     	if(!composingText.trim().equals("")){
-    		//mComposingText=composingText;
-        	mHandler.updateComposing(composingText, 0);
+    		mComposingText=composingText;
+        	//mHandler.updateComposing(composingText, 0);
     	}else{
-    		//mComposingText = "";
+    		mComposingText = "";
     		mHandler.dismissComposing(0);
     	}
     	
@@ -423,7 +425,7 @@ public class CandidateView extends View implements View.OnClickListener
    
     public void showComposing(String composingText) {
     	if(DEBUG) 
-    		Log.i("candidateview","showcomposing():"+composingText);
+    		Log.i(TAG,"showcomposing():"+composingText);
     	
     	// Composing buffer textView
     	if(mComposingTextPopup==null){
@@ -463,7 +465,7 @@ public class CandidateView extends View implements View.OnClickListener
     	int mPopupComposingY = offsetInWindow[1];
     	int mPopupComposingX = 0;
 
-    	if(DEBUG) Log.i("CandiateView:showcomposing()", " candidateview offsetInWindow x:" 
+    	if(DEBUG) Log.i(TAG, "showcomposing(): candidateview offsetInWindow x:" 
     			+offsetInWindow[0] + ". y:" +offsetInWindow[1]);
     	// Show popup windows at the location of cursor  Jeremy '11,7,25
     	// Rely on onCursorUpdate() of inputmethod service, which is not implemented on standard android 
@@ -480,7 +482,7 @@ public class CandidateView extends View implements View.OnClickListener
     			mPopupComposingY= -popupHeight;
 
     		}
-    		if(DEBUG) Log.i("CandiateView:showcomposing()", " candidateview offsetOnScreen x:" 
+    		if(DEBUG) Log.i(TAG, "showcomposing(): candidateview offsetOnScreen x:" 
     				+offsetOnScreen[0] + ". y:" +offsetOnScreen[1]);
     	}else{
     		mPopupComposingY -= popupHeight;
@@ -680,7 +682,7 @@ public class CandidateView extends View implements View.OnClickListener
                 scrollToTarget();
             }
             
-            //showComposing();
+            showComposing(mComposingText);
         	
         }
        
@@ -796,6 +798,7 @@ public class CandidateView extends View implements View.OnClickListener
         }
         
         mHandler.updateUI(0);
+        
         /*//Jeremy '11,8,18 moved to mHandler to be thread-safe.
         if(mCandidatePopup != null && mCandidatePopup.isShowing()){
     		showCandidatePopup();
@@ -811,7 +814,7 @@ public class CandidateView extends View implements View.OnClickListener
     
 
     public void clear() {
-    	if(DEBUG) Log.i("Canddateview","clear()");
+    	if(DEBUG) Log.i(TAG, "clear()");
     	
     	mSuggestions = EMPTY_LIST;
         // Jeremy 11,8,14 close all popup on clear
