@@ -518,18 +518,18 @@ public class LimeDB extends SQLiteOpenHelper {
 				String sdcarddb = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
 
 				if(readonly){
-					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READONLY);
+					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
 				}else{
-					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READWRITE);
+					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
 				}
 			}else{
 				String devicedb = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
 				
 				if(readonly){
-					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READONLY);
+					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
 					//db = this.getReadableDatabase();
 				}else{
-					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READWRITE);
+					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READWRITE |SQLiteDatabase.NO_LOCALIZED_COLLATORS);
 					//db = this.getWritableDatabase();
 				}
 			}
@@ -1010,33 +1010,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				" composingText:" + composingText		);
 		
 		
-		// By Art 11/08/16 modify when table = phonetic, array or ez
-		/*if(tablename.equals("array")){
-			String revisedCode = code.trim();
-				   revisedCode = revisedCode.replaceAll("<",",");
-				   revisedCode = revisedCode.replaceAll(">","\\.");
-				   revisedCode = revisedCode.replaceAll("\\?","/");
-				   revisedCode = revisedCode.replaceAll(":",";");
-				   code = revisedCode;
-		}else if(tablename.equals("phonetic") || tablename.equals("dayi")){
-			String revisedCode = code.trim();
-			   revisedCode = revisedCode.replaceAll("<",",");
-			   revisedCode = revisedCode.replaceAll(">","\\.");
-			   revisedCode = revisedCode.replaceAll("\\?","/");
-			   revisedCode = revisedCode.replaceAll(":",";");
-			   revisedCode = revisedCode.replaceAll("@","1");
-			   revisedCode = revisedCode.replaceAll("#","2");
-			   revisedCode = revisedCode.replaceAll("\\$","3");
-			   revisedCode = revisedCode.replaceAll("%","4");
-			   revisedCode = revisedCode.replaceAll("&","5");
-			   revisedCode = revisedCode.replaceAll("\\*","6");
-			   revisedCode = revisedCode.replaceAll("!","7");
-			   revisedCode = revisedCode.replaceAll("/","8");
-			   revisedCode = revisedCode.replaceAll("\\(","9");
-			   revisedCode = revisedCode.replaceAll("\\)","0");
-			   code = revisedCode;
-		}*/
-	    
+		
 		if(isPhysicalKeyboardPressed){
 			if(composingText && table.equals("phonetic")) {// doing composing popup
 				keytable = table + keyboardtype + phonetickeyboardtype;
