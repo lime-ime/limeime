@@ -2867,12 +2867,12 @@ public class LIMEService extends InputMethodService implements
 		if(templist != null && index >= templist.size() ){
 			return;
 		}
-		//if "has_more_records" selected, updatecandidate with getAllRecords set.
+		/*//if "has_more_records" selected, updatecandidate with getAllRecords set.
 		if(templist.get(index).getCode() != null 
 				&& templist.get(index).getCode().equals("has_more_records")){
 			this.updateCandidates(true);
 			return;
-		}
+		}*/
 		
 		
 		if (templist != null && templist.size() > 0) {
