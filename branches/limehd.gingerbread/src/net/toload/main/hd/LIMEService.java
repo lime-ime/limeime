@@ -81,7 +81,7 @@ import android.content.res.Configuration;
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = false;
+	static final boolean DEBUG = true;
 	static final String TAG = "LIMEService";
 	static final String PREF = "LIMEXY";
 
@@ -454,7 +454,7 @@ public class LIMEService extends InputMethodService implements
 	public void onFinishInput() {
 		
 		if (DEBUG) {
-			Log.i("LimeService", "onFinishInput()");
+			Log.i(TAG ,"onFinishInput()");
 		}
 		super.onFinishInput();
 
@@ -514,7 +514,7 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public void onStartInput(EditorInfo attribute, boolean restarting) {
 		if(DEBUG) 
-			Log.i("LIMEService","onStartInput()");
+			Log.i(TAG,"onStartInput()");
 		super.onStartInputView(attribute, restarting);
 		initOnStartInput(attribute, restarting);
 	}
@@ -522,7 +522,7 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public void onStartInputView(EditorInfo attribute, boolean restarting) {
 		if(DEBUG) 
-			Log.i("LIMEService","onStartInputView()");
+			Log.i(TAG,"onStartInputView()");
 		super.onStartInputView(attribute, restarting);
 		initOnStartInput(attribute, restarting);
 	}
@@ -531,7 +531,7 @@ public class LIMEService extends InputMethodService implements
 	private void initOnStartInput(EditorInfo attribute, boolean restarting) {
 	
 		if (DEBUG)
-			Log.i("LIMEService", "initOnStartInput");
+			Log.i(TAG, "initOnStartInput");
 		if (mInputView == null) {
 			return;
 		}
@@ -725,14 +725,14 @@ public class LIMEService extends InputMethodService implements
 				candidatesStart, candidatesEnd);
 		
 		if(DEBUG) 
-			Log.i("LIMEService", "onUpdateSelection():oldSelStart" + oldSelStart
+			Log.i(TAG, "onUpdateSelection():oldSelStart" + oldSelStart
 					+" oldSelEnd:" + oldSelEnd
 					+" newSelStart:" + newSelStart + " newSelEnd:" + newSelEnd
 					+" candidatesStart:"+candidatesStart + " candidatesEnd:"+candidatesEnd	);
 
 		// If the current selection in the text view changes, we should
 		// clear whatever candidate text we have.
-		if (mComposing.length() > 0
+		/*if (mComposing.length() > 0
 				&& (newSelStart != candidatesEnd || newSelEnd != candidatesEnd)
 				&& candidatesStart >0 && candidatesEnd >0
 				&& (newSelStart < candidatesStart || newSelStart > candidatesEnd)
@@ -745,7 +745,7 @@ public class LIMEService extends InputMethodService implements
 				ic.finishComposingText();
 			}
 
-		}
+		}*/
 	}
 
 	/**
@@ -757,7 +757,7 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public void onDisplayCompletions(CompletionInfo[] completions) {
 		if (DEBUG)
-			Log.i("LIMEService:", "onDisplayCompletions()");
+			Log.i(TAG, "onDisplayCompletions()");
 		if (mCompletionOn){
 			mCompletions = completions;
 			if(onIM){
@@ -816,7 +816,7 @@ public class LIMEService extends InputMethodService implements
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 
 		if (DEBUG) 
-			Log.i("OnKeyDown", "keyCode:" + keyCode + ";hasCtrlPress:"
+			Log.i(TAG, "OnKeyDown():keyCode:" + keyCode + ";hasCtrlPress:"
 					+ hasCtrlPress);
 		
 		//hasKeyPress = false;
@@ -1073,7 +1073,7 @@ public class LIMEService extends InputMethodService implements
 			//if(hasSearchPress) hasSearchProcessed = true;
 			if(!(hasCtrlPress||hasMenuPress)){
 				if (translateKeyDown(keyCode, event)) {
-					// Log.i("Onkeydown","tranlatekeydown:true");
+					 if(DEBUG) Log.i(TAG,"Onkeydown():tranlatekeydown:true");
 					return true;
 				}
 			}
@@ -1135,17 +1135,23 @@ public class LIMEService extends InputMethodService implements
 				case 7: this.pickSuggestionManually(9);return true;
 			}
 		   }	//else 
-		 if((mComposing == null || mComposing.length() == 0) ) 			
-			{
+		 if((mComposing == null || mComposing.length() == 0) ) {		
+			 // Jeremy '11,8,21.  Ctrl-/ to fetch full-shaped chinese symbols in candidateview.
+			 if(t=='/'){
+				updateChineseSymbol();
+				return true;
+			 }
 			// 27.May.2011 Art : when user click Ctrl + Symbol or number then send Chinese Symobl Characters
 			String s = ChineseSymbol.getSymbol(t);
 			if(s != null){
+
 				//Jermy '11,8,14
 				clearSuggestions();
 				getCurrentInputConnection().commitText(s, 0);
 				hasSymbolEntered = true;
 				return true;
-			}
+
+				}
 			}
 		}
 		return super.onKeyDown(keyCode, event);
@@ -1194,7 +1200,7 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
 		if (DEBUG) {
-			Log.i("OnKeyUp", "keyCode:" + keyCode + ";hasCtrlPress:"
+			Log.i(TAG,"OnKeyUp():keyCode:" + keyCode + ";hasCtrlPress:"
 					+ hasCtrlPress
 			/*
 			 * + " KeyEvent.Alt_ON:" +
@@ -1660,7 +1666,7 @@ public class LIMEService extends InputMethodService implements
 				&& (primaryCode == Keyboard.KEYCODE_SHIFT)) {
 			mEnglishFlagShift = true;
 			if (DEBUG) {
-				Log.i("OnKey", "mEnglishFlagShift:" + mEnglishFlagShift);
+				Log.i(TAG, "OnKey():mEnglishFlagShift:" + mEnglishFlagShift);
 			}
 		}
 		if (primaryCode == Keyboard.KEYCODE_DELETE) {
@@ -1787,7 +1793,7 @@ public class LIMEService extends InputMethodService implements
 
 	@SuppressWarnings("unchecked")
 	private void nextActiveKeyboard(boolean forward) { // forward: true, next IM; false prev. IM
-		if(DEBUG) Log.i("LIMEService:nextActiveKeyboard()", "entering...");
+		if(DEBUG) Log.i(TAG, "nextActiveKeyboard()");
 		buildActiveKeyboardList();
 		int i;
 		CharSequence keyboardname = "";
@@ -1954,7 +1960,7 @@ public class LIMEService extends InputMethodService implements
 
 	public void onText(CharSequence text) {
 		if (DEBUG)
-			Log.i("LIMEService:", "OnText()");
+			Log.i(TAG, "OnText()");
 		InputConnection ic = getCurrentInputConnection();
 		if (ic == null)
 			return;
@@ -2004,11 +2010,13 @@ public class LIMEService extends InputMethodService implements
 
 		// Log.i("ART", "Update Candidate mCompletionOn:"+ mCompletionOn);
 		// Log.i("ART", "Update Candidate mComposing:"+ mComposing);
-		if(DEBUG) Log.i("updateCandidate", "Update Candidate mComposing:"+ mComposing.length());
+		if(DEBUG) Log.i(TAG,"updateCandidate():Update Candidate mComposing:"+ mComposing);
 		//if (mCandidateView != null) 			
 		//	mCandidateView.clear();
 
 		if (mComposing.length() > 0) {
+			
+			mHandler.post(mShowCandidateView);
 
 			LinkedList<Mapping> list = new LinkedList<Mapping>();
 
@@ -2224,7 +2232,6 @@ public class LIMEService extends InputMethodService implements
 		if (suggestions != null && suggestions.size() > 0) {
 			if(DEBUG) Log.i(TAG, "setSuggestion():suggestions.size="+ suggestions.size());
 			mHandler.post(mShowCandidateView);
-
 			hasMappingList = true;
 
 			if (mCandidateView != null) {
@@ -2288,7 +2295,7 @@ public class LIMEService extends InputMethodService implements
 	}*/
 
 	private void handleBackspace() {
-		if(DEBUG) Log.i("LIMEService:handleBackspace()", "entering...");
+		if(DEBUG) Log.i(TAG, "handleBackspace()");
 		final int length = mComposing.length();
 		InputConnection ic=getCurrentInputConnection();
 		if (length > 1) {
@@ -2322,7 +2329,7 @@ public class LIMEService extends InputMethodService implements
 					keyDownUp(KeyEvent.KEYCODE_DEL);
 				}
 			} catch (Exception e) {
-				Log.i("ART", "->" + e);
+				Log.i(TAG,"->" + e);
 			}
 		}
 		// updateShiftKeyState(getCurrentInputEditorInfo());
@@ -2365,7 +2372,7 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void switchKeyboard(int primaryCode) {
-		if(DEBUG) Log.i("LIMEService:switchKeyboard()", "entering...");
+		if(DEBUG) Log.i(TAG,"switchKeyboard()");
 		if (mCapsLock)
 			toggleCapsLock();
 		//Jeremy '11,8,14
@@ -2504,7 +2511,7 @@ public class LIMEService extends InputMethodService implements
 	private void initialKeyboard() {
 
 		if(DEBUG) 
-			Log.i("LIMEService", "initialKeyboard()");
+			Log.i(TAG, "initialKeyboard()");
 		
 		
 		initialViewAndSwitcher();
@@ -2579,7 +2586,7 @@ public class LIMEService extends InputMethodService implements
 	
 
 	private boolean handleSelkey(int primaryCode, int[] keyCodes){
-		if(DEBUG) Log.i("LIMEService:handleSelkey()","primarycode:"+primaryCode);
+		if(DEBUG) Log.i(TAG, "handleSelkey():primarycode:"+primaryCode);
 		int i = -1;
 		if (mComposing.length() > 0 && onIM) {
 			// IM candidates view
@@ -2620,7 +2627,7 @@ public class LIMEService extends InputMethodService implements
 	private void handleCharacter(int primaryCode, int[] keyCodes)  {
 		//Jeremy '11,6,9 Cleaned code!!
 		if(DEBUG)
-			Log.i("handleCharacter","primaryCode:" + primaryCode + "; keyCodes[0]:"+keyCodes[0]);
+			Log.i(TAG,"handleCharacter():primaryCode:" + primaryCode);//+ "; keyCodes[0]:"+keyCodes[0]);
 
 		// Adjust metakeystate on printed key pressed.
 		if(isPressPhysicalKeyboard  )
@@ -2666,21 +2673,23 @@ public class LIMEService extends InputMethodService implements
 		if (!mEnglishOnly) {
 		
 			if (DEBUG) {
-				Log.i("HandleCharacter", "isValidLetter:"
+				Log.i(TAG,"HandleCharacter():isValidLetter:"
 						+ isValidLetter(primaryCode) + " isValidDigit:"
 						+ isValidDigit(primaryCode) + " isValideSymbo:"
 						+ isValidSymbol(primaryCode) + " onIM:" + onIM);
 			}
-			InputConnection ic=getCurrentInputConnection();
+			
 			if((!hasSymbolMapping)
 					&& (primaryCode==','||primaryCode=='.') &&onIM ){ // Chinese , and . processing
 				mComposing.append((char) primaryCode);
+				InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
 			}else if (!hasSymbolMapping && !hasNumberMapping	
 					&& isValidLetter(primaryCode) && onIM) {
 				mComposing.append((char) primaryCode);
+				InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
@@ -2689,6 +2698,7 @@ public class LIMEService extends InputMethodService implements
 					&& (isValidLetter(primaryCode) || isValidDigit(primaryCode))
 					&& onIM) {
 				mComposing.append((char) primaryCode);
+				InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
@@ -2697,6 +2707,7 @@ public class LIMEService extends InputMethodService implements
 					&& (isValidLetter(primaryCode) || isValidSymbol(primaryCode))
 					&& onIM) {
 				mComposing.append((char) primaryCode);
+				InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
@@ -2708,6 +2719,7 @@ public class LIMEService extends InputMethodService implements
 				// 27.May.2011 Art : This is the method to check user input type
 				// if first previous character is w and second char is number then enable im mode.
 				mComposing.append((char) primaryCode);
+				InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
@@ -2717,22 +2729,26 @@ public class LIMEService extends InputMethodService implements
 							|| (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals("phonetic"))
 							|| isValidLetter(primaryCode) || isValidDigit(primaryCode))	&& onIM) {
 				mComposing.append((char) primaryCode);
+				InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
 
 			} else {
-				//TODO: need to check later;
+
 				if(onIM){
 					mCandidateView.takeSelectedSuggestion();  // check here.
+					InputConnection ic=getCurrentInputConnection();
 					if(ic!=null) ic.commitText(String.valueOf((char) primaryCode),1);
 					//Jeremy '11,8,15
 					clearComposing();
 				} else{
 					if (!mCandidateView.takeSelectedSuggestion()) {
+						InputConnection ic=getCurrentInputConnection();
 						if(ic!=null) ic.commitText(
 								mComposing + String.valueOf((char) primaryCode),1);
 					}else{
+						InputConnection ic=getCurrentInputConnection();
 						if(ic!=null) ic.commitText(String.valueOf((char) primaryCode),1);
 						
 					}
@@ -2779,7 +2795,7 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void handleClose() {
-		if(DEBUG) Log.i("LIMEService:handleBackspace()", "entering...");
+		if(DEBUG) Log.i(TAG,"handleClose()");
 		// cancel candidate view if it's shown
 		
 		//Jeremy '11,8,14
@@ -2804,14 +2820,14 @@ public class LIMEService extends InputMethodService implements
 		} else {
 			if (mCapsLock) {
 				if (DEBUG) {
-					Log.i("toggleCapsLock", "mCapsLock:true");
+					Log.i(TAG, "toggleCapsLock():mCapsLock:true");
 				}
 				if (!mKeyboardSwitcher.isShifted())
 					mKeyboardSwitcher.toggleShift();
 				((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(true);
 			} else {
 				if (DEBUG) {
-					Log.i("toggleCapsLock", "mCapsLock:false");
+					Log.i(TAG,"toggleCapsLock():mCapsLock:false");
 				}
 				((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(false);
 				if (mKeyboardSwitcher.isShifted())
@@ -2841,21 +2857,14 @@ public class LIMEService extends InputMethodService implements
 			mCandidateView.takeSelectedSuggestion();
 	}
 	
-	public void pickSuggestionManuallyThread(int index) {
+	public void requestFullRecords() {
 		if (DEBUG)
-			Log.i(TAG,"pickSuggestionManually():"
-					+ "Pick up word at index : " + index + " templist.size()="+templist.size());
-
-		// This is to prevent if user select the index more than the list
-		if(templist != null && index >= templist.size() ){
-			return;
-		}
-		//if "has_more_records" selected, updatecandidate with getAllRecords set.
-		if(templist.get(index).getCode() != null 
-				&& templist.get(index).getCode().equals("has_more_records")){
-			this.updateCandidates(true);
-			return;
-		}
+			Log.i(TAG,"requestFullRecords()");
+	
+		
+		//updateCandidates to get full records.
+		this.updateCandidates(true);
+		
 	}
 
 	public void pickSuggestionManually(int index) {
@@ -3106,7 +3115,7 @@ public class LIMEService extends InputMethodService implements
 
 	@Override
 	public void onUpdateCursor(Rect newCursor) {
-		if(DEBUG) Log.i("LIMEService", "onUpdateCursor(); Top:" 
+		if(DEBUG) Log.i(TAG, "onUpdateCursor(): Top:" 
 				+ newCursor.top + ". Right:" + newCursor.right
 				+ ". bottom:" + newCursor.bottom + ". left:" + newCursor.left);
 		if(mCandidateView!=null)

@@ -225,7 +225,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 
 	public boolean isLoadingMappingFinished() {
-		if(DEBUG) Log.i("LIMEDB():isLoadingMapingThreadAborted()",finish+"");
+		if(DEBUG) Log.i(TAG, "isLoadingMapingThreadAborted()"+finish+"");
 		return this.finish;
 	}
 
@@ -234,7 +234,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 
 	public boolean isLoadingMappingThreadAborted() {
-		if(DEBUG) Log.i("LIMEDB():isLoadingMapingThreadAborted()", threadAborted+"");
+		if(DEBUG) Log.i(TAG, "isLoadingMapingThreadAborted()"+ threadAborted+"");
 		return this.threadAborted;
 	}
 	
@@ -242,7 +242,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		boolean result = false;
 		if(thread==null) result = false;
 		else result = thread.isAlive();
-		if(DEBUG) Log.i("LIMEDB():isLoadingMappingThreadAlive()", result+"");
+		if(DEBUG) Log.i(TAG, "isLoadingMappingThreadAlive()"+ result+"");
 		return result;
 	}
 
@@ -879,7 +879,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				cursor = db.query(table, null, FIELD_WORD + " = '" + keyword +"'", null, null,
 						null, null, null);
 				if (DEBUG) {
-					Log.i("getRmapping", "tablename:" + table + "  keyworad:"
+					Log.i(TAG,"getRmapping():tablename:" + table + "  keyworad:"
 							+ keyword + "  cursor.getCount:"
 							+ cursor.getCount());
 				}
@@ -890,7 +890,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					result = cursor.getString(wordColumn) + "="
 							+ keyToKeyname(cursor.getString(codeColumn), table, false);
 					if (DEBUG) {
-						Log.i("getRmapping", "Code:"
+						Log.i(TAG, "getRmapping():Code:"
 								+ cursor.getString(codeColumn));
 					}
 
@@ -900,7 +900,7 @@ public class LimeDB extends SQLiteOpenHelper {
 								+ keyToKeyname(cursor.getString(codeColumn),
 										table, false);
 						if (DEBUG) {
-							Log.i("getRmapping", "Code:"
+							Log.i(TAG,"getRmapping():Code:"
 									+ cursor.getString(codeColumn));
 						}
 					}
@@ -1637,7 +1637,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				HashSet<String> tempSet = new HashSet<String>(dualCodeList);
 				for(String currentCode : tempSet) {
 					//String currentCode = dualCodeList.get(i);
-					if(DEBUG) Log.i("LIMEDB:buildDualCodeList()","currentSize:"+ currentListSize + " curretnCode:" + currentCode);
+					if(DEBUG) Log.i(TAG, "buildDualCodeList():currentSize:"+ currentListSize + " curretnCode:" + currentCode);
 					for(int j=0; j< currentCode.length(); j++){
 						String c = currentCode.substring(j, j+1);
 
