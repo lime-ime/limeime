@@ -86,7 +86,7 @@ public class CandidateView extends View implements View.OnClickListener
 	private TextView mComposingTextView;
 	private PopupWindow mComposingTextPopup;
 	//private int mDescent;
-	private String mComposingText = "";
+	//private String mComposingText = "";
     
     protected int[] mWordWidth = new int[MAX_SUGGESTIONS];
     protected int[] mWordX = new int[MAX_SUGGESTIONS];
@@ -260,7 +260,7 @@ public class CandidateView extends View implements View.OnClickListener
                 case MSG_UPDATE_COMPOSING:
                 	String composingText = (String) msg.obj;
                 	if(DEBUG) Log.i(TAG, "UIHandler.handleMessage(): compsoingText" + composingText);
-                	//showComposing(composingText);
+                	showComposing(composingText);
                     break;
                 case MSG_HIDE_COMPOSING: {
                 	if(mComposingTextPopup!=null && mComposingTextPopup.isShowing()) {
@@ -413,10 +413,10 @@ public class CandidateView extends View implements View.OnClickListener
     	if(DEBUG) 
 			Log.i(TAG,"setComposingText():composingText:"+composingText);
     	if(!composingText.trim().equals("")){
-    		mComposingText=composingText;
-        	//mHandler.updateComposing(composingText, 0);
+    		//mComposingText=composingText;
+        	mHandler.updateComposing(composingText, 0);
     	}else{
-    		mComposingText = "";
+    		//mComposingText = "";
     		mHandler.dismissComposing(0);
     	}
     	
@@ -682,7 +682,7 @@ public class CandidateView extends View implements View.OnClickListener
                 scrollToTarget();
             }
             
-            showComposing(mComposingText);
+            //showComposing(mComposingText);
         	
         }
        
