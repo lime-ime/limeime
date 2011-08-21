@@ -81,7 +81,7 @@ import android.content.res.Configuration;
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = false;
+	static final boolean DEBUG = true;
 	static final String TAG = "LIMEService";
 	static final String PREF = "LIMEXY";
 
@@ -679,7 +679,10 @@ public class LIMEService extends InputMethodService implements
 		 */
 		updateShiftKeyState(getCurrentInputEditorInfo());
 		//Jeremy '11,8,21
-		if(mCandidateView==null) showCandidateView(); // This will make super call onCreateCandidateView 
+		
+		
+		clearSuggestions();
+		showCandidateView(); // Force super to call onCreateCandidateView()
 		hideCandidateView();
 
 		//if (mEnglishIMStart && !isModeURL) {
@@ -2516,6 +2519,8 @@ public class LIMEService extends InputMethodService implements
 				e.printStackTrace();
 			}
 		}
+
+
 
 	}
 
