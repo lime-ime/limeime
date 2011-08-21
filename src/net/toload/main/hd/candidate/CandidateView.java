@@ -60,7 +60,7 @@ import net.toload.main.hd.global.Mapping;
 public class CandidateView extends View implements View.OnClickListener 
 {
 	
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final String TAG = "CandidateView";
 
     protected static final int OUT_OF_BOUNDS = -1;
@@ -696,7 +696,7 @@ public class CandidateView extends View implements View.OnClickListener
     		waitingForMoreRecords=true;
     		Thread UpadtingThread = new Thread(){
     			public void run() {
-    				mService.pickSuggestionManuallyThread(mSuggestions.size()-1);
+    				mService.requestFullRecords();
     			}
     		};
 			UpadtingThread.start();
