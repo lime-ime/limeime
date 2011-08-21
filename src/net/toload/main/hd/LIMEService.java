@@ -501,7 +501,7 @@ public class LIMEService extends InputMethodService implements
 	private void clearSuggestions(){
 		if(mCandidateView !=null){
 			mCandidateView.clear();
-			mHandler.post(mHideCandidateView);
+			hideCandidateView();
 		}
 	}
 	
@@ -678,7 +678,9 @@ public class LIMEService extends InputMethodService implements
 		 * mPredictionOn && mCorrectionMode > 0;
 		 */
 		updateShiftKeyState(getCurrentInputEditorInfo());
-		setCandidatesViewShown(false);
+		//Jeremy '11,8,21
+		if(mCandidateView==null) showCandidateView(); // This will make super call onCreateCandidateView 
+		hideCandidateView();
 
 		//if (mEnglishIMStart && !isModeURL) {
 		//	switchChiEngNoToast();
@@ -979,7 +981,7 @@ public class LIMEService extends InputMethodService implements
 					if( mCandidateView.takeSelectedSuggestion()){
 						return true;
 					}else{
-						setCandidatesViewShown(false);
+						hideCandidateView();
 						break;
 					}
 				}
@@ -1024,7 +1026,7 @@ public class LIMEService extends InputMethodService implements
 						if (mCandidateView.takeSelectedSuggestion()) {
 							return true;
 						} else {
-							setCandidatesViewShown(false);
+							hideCandidateView();
 							break;
 						}
 					} 
@@ -1710,7 +1712,7 @@ public class LIMEService extends InputMethodService implements
 			
 			if ( mCandidateView != null && mCandidateView.isShown()){ 
 				if(!mCandidateView.takeSelectedSuggestion()){
-					setCandidatesViewShown(false);
+					hideCandidateView();
 					sendKeyChar((char)primaryCode);
 				}
 			}else{
@@ -2016,7 +2018,7 @@ public class LIMEService extends InputMethodService implements
 
 		if (mComposing.length() > 0) {
 			
-			mHandler.post(mShowCandidateView);
+			showCandidateView();
 
 			LinkedList<Mapping> list = new LinkedList<Mapping>();
 
@@ -2214,6 +2216,15 @@ public class LIMEService extends InputMethodService implements
 		return list;
 	}
 	
+	//Jeremy '11,8,21 update UI in handler 
+	
+	private void showCandidateView(){
+		mHandler.post(mShowCandidateView);
+	}
+	private void hideCandidateView(){
+		mHandler.post(mHideCandidateView);
+	}
+	
 	final Handler mHandler = new Handler();
 	// Create runnable for posting
 	final Runnable mShowCandidateView = new Runnable() {
@@ -2231,7 +2242,7 @@ public class LIMEService extends InputMethodService implements
 			boolean typedWordValid, String diplaySelkey){
 		if (suggestions != null && suggestions.size() > 0) {
 			if(DEBUG) Log.i(TAG, "setSuggestion():suggestions.size="+ suggestions.size());
-			mHandler.post(mShowCandidateView);
+			showCandidateView();
 			hasMappingList = true;
 
 			if (mCandidateView != null) {
