@@ -696,7 +696,7 @@ public class CandidateView extends View implements View.OnClickListener
     		waitingForMoreRecords=true;
     		Thread UpadtingThread = new Thread(){
     			public void run() {
-    				mService.pickSuggestionManually(mSuggestions.size()-1);
+    				mService.pickSuggestionManuallyThread(mSuggestions.size()-1);
     			}
     		};
 			UpadtingThread.start();

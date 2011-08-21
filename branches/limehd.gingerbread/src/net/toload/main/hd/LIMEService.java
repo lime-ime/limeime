@@ -2840,6 +2840,23 @@ public class LIMEService extends InputMethodService implements
 		if(mCandidateView!=null)
 			mCandidateView.takeSelectedSuggestion();
 	}
+	
+	public void pickSuggestionManuallyThread(int index) {
+		if (DEBUG)
+			Log.i(TAG,"pickSuggestionManually():"
+					+ "Pick up word at index : " + index + " templist.size()="+templist.size());
+
+		// This is to prevent if user select the index more than the list
+		if(templist != null && index >= templist.size() ){
+			return;
+		}
+		//if "has_more_records" selected, updatecandidate with getAllRecords set.
+		if(templist.get(index).getCode() != null 
+				&& templist.get(index).getCode().equals("has_more_records")){
+			this.updateCandidates(true);
+			return;
+		}
+	}
 
 	public void pickSuggestionManually(int index) {
 		if (DEBUG)
