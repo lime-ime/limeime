@@ -24,7 +24,6 @@ import net.toload.main.hd.LIMEKeyboardSwitcher;
 import net.toload.main.hd.R;
 import android.content.Context;
 import android.content.res.Resources;
-import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
@@ -35,7 +34,6 @@ import android.graphics.drawable.Drawable;
 import android.inputmethodservice.Keyboard;
 import android.text.TextPaint;
 import android.util.Log;
-import android.util.Xml;
 import android.view.ViewConfiguration;
 import android.view.inputmethod.EditorInfo;
 
