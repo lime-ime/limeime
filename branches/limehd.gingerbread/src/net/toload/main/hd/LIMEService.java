@@ -81,7 +81,7 @@ import android.content.res.Configuration;
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = true;
+	static final boolean DEBUG = false;
 	static final String TAG = "LIMEService";
 	static final String PREF = "LIMEXY";
 
