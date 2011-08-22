@@ -8,16 +8,14 @@ import java.util.Random;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.util.Pair;
-import net.toload.main.hd.ISearchService;
 import net.toload.main.hd.global.Mapping;
 import net.toload.main.hd.limedb.LimeDB;
 
 
 public class Limedbtest extends AndroidTestCase {	
 	private final String TAG = "LimeDBTest";
-	private final static String DAYI_KEY = "1234567890qwertyuiopasdfghjkl;zxcvbnm,./";
+	private final static String TEST_KEY = "1234567890qwertyuiopasdfghjkl;zxcvbnm,./-";
 	private List<String> keyList;
-	private ISearchService SearchSrv = null;
 
 	@Override
 	protected void setUp() throws Exception {
@@ -81,7 +79,7 @@ public class Limedbtest extends AndroidTestCase {
 
 	}
 	private void buildKeyMap(){
-		String keyString = DAYI_KEY;
+		String keyString = TEST_KEY;
 		keyList = new ArrayList<String>();
 		for (int i = 0; i < keyString.length(); i++) {
 			keyList.add( keyString.substring(i, i + 1));

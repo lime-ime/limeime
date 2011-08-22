@@ -12,6 +12,7 @@ import android.os.Debug;
 import android.os.SystemClock;
 import android.test.ServiceTestCase;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 
 public class TestLimeService extends ServiceTestCase<LIMEService> {
@@ -42,9 +43,9 @@ public class TestLimeService extends ServiceTestCase<LIMEService> {
 	            LIMEService Serv=getService();
 	            assertNotNull(Serv);
 	            
-	            Serv.onCreateCandidatesView();
 	            Serv.onCreateInputView();
-	            
+	            //Serv.onCreateCandidatesView();
+	            	            
 	            EditorInfo attribute = new EditorInfo();
 	            attribute.inputType = EditorInfo.TYPE_CLASS_TEXT;
 				Serv.onStartInput(attribute, false);
@@ -59,13 +60,20 @@ public class TestLimeService extends ServiceTestCase<LIMEService> {
 	            Log.i(TAG, "testLIMEServiceStart() ended.");
 	        }
 	  }
-	private void simulateInput(LIMEService Serv, String code) {
+	private void simulateInput(LIMEService Serv, String code, boolean physicalKey) {
 		
 		int[] keyCodes = {0};
 		char[] charray = code.toCharArray();
 		for(char key: charray){
 			long begin =  System.currentTimeMillis();
-			Serv.onKey((int)key, keyCodes);
+			if(physicalKey){
+				KeyEvent event = new KeyEvent(begin, begin, KeyEvent.ACTION_DOWN , key, 0);
+				Serv.onKeyDown((int)key, event);
+				event = new KeyEvent(begin, begin+5, KeyEvent.ACTION_DOWN , key, 0);
+				Serv.onKeyUp((int)key, event);
+			}else{
+				Serv.onKey((int)key, keyCodes);
+			}
 			long elapsed =  System.currentTimeMillis() - begin;
 			SystemClock.sleep(10);
 			Log.i(TAG,"Simulate onkey() with key=" + String.valueOf(key) + ", using " + elapsed + " ms");
@@ -79,8 +87,13 @@ public class TestLimeService extends ServiceTestCase<LIMEService> {
 		buildKeyMap();
 		
 		//Testing parameters.---------------
-		int limit = 1000;   //times performing random queries
+		int limit = 10;   //times performing random queries
 		//long timelimit = 250;// Assert the query time smaller than this time spec.
+		boolean simulatePhsyicalKeyboard = true;
+		
+		
+		
+		
 		Debug.startMethodTracing("LimeService");
 
 		HashSet<String> duplityCheck = new HashSet<String>();
@@ -95,7 +108,7 @@ public class TestLimeService extends ServiceTestCase<LIMEService> {
 			
 			if(duplityCheck.add(code)){
 				Log.i(TAG,"Simulate typing code=" + code + ", count=" + count);
-				simulateInput(Serv, code);
+				simulateInput(Serv, code, simulatePhsyicalKeyboard);
 			}
 			SystemClock.sleep(100);
 			count++;
