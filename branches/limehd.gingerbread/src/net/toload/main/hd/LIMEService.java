@@ -816,7 +816,7 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		// Clean code by jeremy '11,8,22
-		//if (DEBUG) 
+		if (DEBUG) 
 			Log.i(TAG, "OnKeyDown():keyCode:" + keyCode 
 					+ ", event.getDownTime()"+ event.getDownTime() 
 					+ ", event.getEventTime()"+ event.getEventTime()
