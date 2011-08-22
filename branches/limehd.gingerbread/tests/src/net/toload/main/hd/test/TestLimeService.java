@@ -69,7 +69,8 @@ public class TestLimeService extends ServiceTestCase<LIMEService> {
 			if(physicalKey){
 				KeyEvent event = new KeyEvent(begin, begin, KeyEvent.ACTION_DOWN , key, 0);
 				Serv.onKeyDown((int)key, event);
-				event = new KeyEvent(begin, begin+5, KeyEvent.ACTION_DOWN , key, 0);
+				Serv.onKey((int)key, keyCodes);
+				event = new KeyEvent(begin, begin+5, KeyEvent.ACTION_UP , key, 0);
 				Serv.onKeyUp((int)key, event);
 			}else{
 				Serv.onKey((int)key, keyCodes);
@@ -87,7 +88,7 @@ public class TestLimeService extends ServiceTestCase<LIMEService> {
 		buildKeyMap();
 		
 		//Testing parameters.---------------
-		int limit = 10;   //times performing random queries
+		int limit = 100;   //times performing random queries
 		//long timelimit = 250;// Assert the query time smaller than this time spec.
 		boolean simulatePhsyicalKeyboard = true;
 		
