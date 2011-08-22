@@ -115,7 +115,7 @@ public class LIMEService extends InputMethodService implements
 	// if getMapping result has record then set to 'true'
 	public boolean hasMappingList = false;
 
-	private boolean keydown = false;
+	//private boolean keydown = false;
 
 	private long mMetaState;
 	//private boolean mJustAccepted;
@@ -816,16 +816,20 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		// Clean code by jeremy '11,8,22
-		if (DEBUG) 
-			Log.i(TAG, "OnKeyDown():keyCode:" + keyCode );
+		//if (DEBUG) 
+			Log.i(TAG, "OnKeyDown():keyCode:" + keyCode 
+					+ ", event.getDownTime()"+ event.getDownTime() 
+					+ ", event.getEventTime()"+ event.getEventTime()
+					+ ", event.getRepeatCount()" + event.getRepeatCount());
 		
 		isPressPhysicalKeyboard = true;
 
 		mKeydownEvent = new KeyEvent(event);
 		// Record key pressed time and set key processed flags(key down, for physical keys)
-		if (!keydown) {
-			keyPressTime = System.currentTimeMillis();
-			keydown = true;
+		//Jeremy '11,8,22 using getRepeatCount from event to set processed flags
+		if (event.getRepeatCount()==0){//!keydown) {
+			//keyPressTime = System.currentTimeMillis();
+			//keydown = true;
 			hasKeyProcessed = false;
 			hasMenuProcessed = false; // only do this on first keydown event
 			hasEnterProcessed = false;
@@ -986,11 +990,14 @@ public class LIMEService extends InputMethodService implements
 				break;
 			}
 		
-		case KeyEvent.KEYCODE_SYM:
-			return true;		
+		case KeyEvent.KEYCODE_SYM:	
 		case KeyEvent.KEYCODE_AT:
-			if (keyPressTime != 0 && !hasKeyProcessed
-					&& System.currentTimeMillis() - keyPressTime > mLongPressKeyTimeout){// 700) {
+			//Jeremy '11,8,22 use begintime and eventtime in event to judge long-press or not.
+			if (//keyPressTime != 0 && 
+					!hasKeyProcessed 
+					&& event.getRepeatCount() > 0
+					&& event.getEventTime() -  event.getDownTime() > mLongPressKeyTimeout ) {
+					//&& System.currentTimeMillis() - keyPressTime > mLongPressKeyTimeout){
 				switchChiEng();
 				hasKeyProcessed = true;
 			}
@@ -1108,7 +1115,7 @@ public class LIMEService extends InputMethodService implements
 			);
 
 		}
-		keydown = false;
+		//keydown = false;
 	
 
 		switch (keyCode) {
@@ -2560,7 +2567,7 @@ public class LIMEService extends InputMethodService implements
 			} else if (primaryCode == 52) {
 				primaryCode = 93;
 			} else if (primaryCode == 53) {
-				primaryCode = 44;
+				primaryCode = 39;
 			} else if (primaryCode == 54) {
 				primaryCode = 92;
 			}
