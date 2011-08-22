@@ -681,14 +681,10 @@ public class LIMEService extends InputMethodService implements
 		//Jeremy '11,8,21
 		
 		
-		clearSuggestions();
+		
 		showCandidateView(); // Force super to call onCreateCandidateView()
-		hideCandidateView();
-
-		//if (mEnglishIMStart && !isModeURL) {
-		//	switchChiEngNoToast();
-		//}
-
+		clearSuggestions();
+	
 	}
 
 	private void loadSettings() {
@@ -819,57 +815,31 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-
+		// Clean code by jeremy '11,8,22
 		if (DEBUG) 
-			Log.i(TAG, "OnKeyDown():keyCode:" + keyCode + ";hasCtrlPress:"
-					+ hasCtrlPress);
+			Log.i(TAG, "OnKeyDown():keyCode:" + keyCode );
 		
-		//hasKeyPress = false;
-		hasSymbolEntered = false;
-
-		//Log.i("ART", "Physical Keyboard ->" + keyCode);
-
-		// For system to identify the source of character (Software KB/ Physical
-		// KB)
 		isPressPhysicalKeyboard = true;
 
 		mKeydownEvent = new KeyEvent(event);
-		// Record key press time (key down, for physical keys)
+		// Record key pressed time and set key processed flags(key down, for physical keys)
 		if (!keydown) {
 			keyPressTime = System.currentTimeMillis();
 			keydown = true;
 			hasKeyProcessed = false;
+			hasMenuProcessed = false; // only do this on first keydown event
+			hasEnterProcessed = false;
+			hasSpaceProcessed = false;
+			hasSymbolEntered = false;
 		}
-		hasSpaceProcessed = false;
-		hasEnterProcessed = false;
-
 		
-		/*
-		 * // Check if user press ALT+@ keys combination then display keyboard
-		 * picker window try{ if(keyCode == KeyEvent.KEYCODE_ALT_LEFT || keyCode
-		 * == KeyEvent.KEYCODE_ALT_RIGHT){ hasAltPress = true; }else if(keyCode
-		 * == KeyEvent.KEYCODE_AT){ if(hasAltPress){ this.showKeyboardPicker();
-		 * hasAltPress = false; }else{ hasAltPress = false; } }else if(keyCode
-		 * != KeyEvent.KEYCODE_AT){ hasAltPress = false; }
-		 * 
-		 * 
-		 * // Ignore error }catch(Exception e){}
-		 */
 		switch (keyCode) {
 		// Jeremy '11,5,29 Bypass search and menu combination keys.
 		case KeyEvent.KEYCODE_MENU:
-			if(!keydown) hasMenuProcessed = false; // only do this on first keydown event 
-			/*if (keyPressTime != 0 && !hasKeyProcessed &&onIM
-					&& System.currentTimeMillis() - keyPressTime > mLongPressKeyTimeout){// 700) {
-				updateChineseSymbol();
-				hasMenuProcessed = true;
-			}*/
+			
 			hasMenuPress = true;
 			break;
 		// Add by Jeremy '10, 3, 29. DPAD selection on candidate view
-		// UP/Down to page up/down ??
-		// case KeyEvent.KEYCODE_DPAD_UP:
-		// case KeyEvent.KEYCODE_DPAD_DOWN:
 		case KeyEvent.KEYCODE_DPAD_RIGHT:
 			// Log.i("ART","select:"+1);
 			if (mCandidateView != null && mCandidateView.isShown()) {
@@ -892,7 +862,6 @@ public class LIMEService extends InputMethodService implements
 			}
 			break;
 		// Add by Jeremy '10,3,26, process metakey with
-		// LIMEMetaKeyKeyListner
 		case KeyEvent.KEYCODE_SHIFT_LEFT:
 		case KeyEvent.KEYCODE_SHIFT_RIGHT:
 			hasShiftPress = true;
@@ -901,7 +870,6 @@ public class LIMEService extends InputMethodService implements
 			break;
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
-			// Log.i("ART","select:"+4);
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState,
 					keyCode, event);
 			break;
@@ -910,7 +878,6 @@ public class LIMEService extends InputMethodService implements
 			hasCtrlPress = true;
 			break;
 		case KeyEvent.KEYCODE_BACK:
-			// Log.i("ART","select:"+5);
 			// The InputMethodService already takes care of the back
 			// key for us, to dismiss the input method if it is shown.
 			// However, our keyboard could be showing a pop-up window
@@ -927,16 +894,6 @@ public class LIMEService extends InputMethodService implements
 			// composing text for the user, we want to modify that instead
 			// of let the application to the delete itself.
 
-			// Log.i("ART","select:"+6);
-
-			// ------------------------------------------------------------------------
-			/*
-			 * if(mLIMEPref.getEnglishEnable()){ if(tempEnglishWord != null &&
-			 * tempEnglishWord.length() > 0){
-			 * tempEnglishWord.deleteCharAt(tempEnglishWord.length()-1);
-			 * updateEnglishDictionaryView(); } }
-			 */
-
 			if (mLIMEPref.getEnglishPrediction()) {
 				if (mComposing.length() > 0 || tempEnglishWord.length() > 0) {
 					onKey(Keyboard.KEYCODE_DELETE, null);
@@ -949,18 +906,7 @@ public class LIMEService extends InputMethodService implements
 				}
 			}
 
-			//Jeremy '11,8,14
 			clearComposing();
-		
-
-			// ------------------------------------------------------------------------
-			// Remove '10, 3, 26. Replaced with LIMEMetaKeyKeyLister
-			// Modified by Jeremy '10, 3,12
-			// block milestone alt-del to delete whole line
-			// clear alt state before processed by super
-			// InputConnection ic = getCurrentInputConnection();
-			// if (ic != null){
-			// ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
 			mMetaState = LIMEMetaKeyKeyListener
 					.adjustMetaAfterKeypress(mMetaState);
 			setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
@@ -969,7 +915,6 @@ public class LIMEService extends InputMethodService implements
 			break;
 
 		case KeyEvent.KEYCODE_ENTER:
-			// Log.i("ART","select:"+7);
 			// Let the underlying text editor always handle these, if return
 			// false from takeSelectedSuggestion().
 			// Process enter for candidate view selection in OnKeyUp() to block
@@ -1018,8 +963,6 @@ public class LIMEService extends InputMethodService implements
 			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress) { 
 				this.switchChiEng();
 				if(hasMenuPress)  hasMenuProcessed = true;
-				//if(hasCtrlPress)  hasCtrlProcessed = true;
-				//if(hasShiftPress) hasShiftProcessed = true;
 				hasSpaceProcessed =true;
 				return true;
 			} else {
@@ -1043,24 +986,6 @@ public class LIMEService extends InputMethodService implements
 				break;
 			}
 		
-		//case KeyEvent.KEYCODE_SEARCH:
-			//hasSearchProcessed = false;
-			//hasSearchPress = true;
-			//break;
-		//Jeremy '11,8,19 removed long press "." first.
-		/*case KeyEvent.KEYCODE_PERIOD:
-			if (keyPressTime != 0 && !hasKeyProcessed &&onIM
-					&& System.currentTimeMillis() - keyPressTime > mLongPressKeyTimeout){// 700) {
-				updateChineseSymbol();
-				hasKeyProcessed = true;
-			}else if (hasCtrlPress) {
-				clearSuggestions();
-				getCurrentInputConnection().commitText(
-						ChineseSymbol.getSymbol('.'), 0);
-				hasKeyProcessed = true;
-
-			}
-			return true;	*/					
 		case KeyEvent.KEYCODE_SYM:
 			return true;		
 		case KeyEvent.KEYCODE_AT:
@@ -1074,7 +999,7 @@ public class LIMEService extends InputMethodService implements
 									// processing to super
 			break;
 		default:
-			if(hasMenuPress) hasMenuProcessed = true;
+			
 			//if(hasSearchPress) hasSearchProcessed = true;
 			if(!(hasCtrlPress||hasMenuPress)){
 				if (translateKeyDown(keyCode, event)) {
@@ -1084,50 +1009,16 @@ public class LIMEService extends InputMethodService implements
 			}
 
 		}
-
-		/*
-		 * Log.i("ART", "Super onKeyDown:"+keyCode + " / " + event.getAction());
-		 * Log.i("ART", "Super onKeyDown:"+keyCode + " / " + event);
-		 * Log.i("ART", "Super onKeyDown UP:"+keyCode + " / " +
-		 * KeyEvent.ACTION_UP); Log.i("ART", "Super onKeyDown DOWN:"+keyCode +
-		 * " / " + KeyEvent.ACTION_DOWN); Log.i("ART",
-		 * "Super onKeyDown MULTIPLE:"+keyCode + " / " +
-		 * KeyEvent.ACTION_MULTIPLE);
-		 */
-		/*
-		 * Handle when user input English characters
-		 */
-		/*Log.i("ART",
-				"English Only Physical Keyboard :"
-						+ (char) event.getUnicodeChar(LIMEMetaKeyKeyListener
-								.getMetaState(mMetaState)));*/
 		 
 		int primaryKey = event.getUnicodeChar(LIMEMetaKeyKeyListener.getMetaState(mMetaState));
 		char t = (char) primaryKey;
-		
-		// 29.May.2011 Art, Due to we hand the CTRL+? to super class so no need to implement this method
-		/*String selected = null;
-		try{
-			// Using Java Reflection to dynamic load class and invoke method
-			if(Integer.parseInt(android.os.Build.VERSION.SDK) >= 10){
-				Class[] parTypes = new Class[1];
-				        parTypes[0] = Integer.class;
-				Object[] argList = new Object[1];
-				         argList[0] = 0;
 
-				java.lang.reflect.Method method = getCurrentInputConnection().getClass().getMethod("getSelectedText", parTypes);
-				selected = (String)method.invoke(argList);
-			}
-		}catch(java.lang.NoSuchMethodError e){
-			//Log.i("ERROR", "Get selected error:"+ e);
-		}catch(Exception e){
-			//Log.i("ERROR", "Get selected exception:"+ e);
-		}*/
-
-		if(hasCtrlPress ) {
+		if((hasCtrlPress||hasMenuPress)&&onIM ) {
 			
-		 if (templist != null && templist.size() > 0 && mCandidateView != null && mCandidateView.isShown()){	
-			switch(keyCode){
+			if (hasCtrlPress &&  //Only working with ctrl Jeremy '11,8,22
+				templist != null && templist.size() > 0 
+				&& mCandidateView != null && mCandidateView.isShown()){	
+				switch(keyCode){
 				case 8: this.pickSuggestionManually(0);return true;
 				case 9: this.pickSuggestionManually(1);return true;
 				case 10: this.pickSuggestionManually(2);return true;
@@ -1138,23 +1029,23 @@ public class LIMEService extends InputMethodService implements
 				case 15: this.pickSuggestionManually(7);return true;
 				case 16: this.pickSuggestionManually(8);return true;
 				case 7: this.pickSuggestionManually(9);return true;
+				}
 			}
-		   }	//else 
-		 if((mComposing == null || mComposing.length() == 0) ) {		
-			 // Jeremy '11,8,21.  Ctrl-/ to fetch full-shaped chinese symbols in candidateview.
-			 if(t=='/'){
-				updateChineseSymbol();
-				return true;
-			 }
-			// 27.May.2011 Art : when user click Ctrl + Symbol or number then send Chinese Symobl Characters
-			String s = ChineseSymbol.getSymbol(t);
-			if(s != null){
-
-				//Jermy '11,8,14
-				clearSuggestions();
-				getCurrentInputConnection().commitText(s, 0);
-				hasSymbolEntered = true;
-				return true;
+			if((mComposing == null || mComposing.length() == 0) ) {		
+				// Jeremy '11,8,21.  Ctrl-/ to fetch full-shaped chinese symbols in candidateview.
+				if(t=='/'){
+					if(hasMenuPress) hasMenuProcessed = true;
+					updateChineseSymbol();
+					return true;
+				}
+				// 27.May.2011 Art : when user click Ctrl + Symbol or number then send Chinese Symobl Characters
+				String s = ChineseSymbol.getSymbol(t);
+				if(s != null){
+					clearSuggestions();
+					getCurrentInputConnection().commitText(s, 0);
+					hasSymbolEntered = true;
+					if(hasMenuPress) hasMenuProcessed = true;
+					return true;
 
 				}
 			}
