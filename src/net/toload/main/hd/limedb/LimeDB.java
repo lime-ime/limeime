@@ -1889,11 +1889,12 @@ public class LimeDB extends SQLiteOpenHelper {
 				Cursor cursor = null;
 	
 				SQLiteDatabase db = this.getSqliteDb(true);
+				// Jeremy '11,8.23 remove group by condition to avoid sorting ordr
 				// Jeremy '11,8,1 add group by cword to remove duplicate items.
 				//Jeremy '11,6,12, Add constraint on cword is not null (cword =null is for recoding im related list selected count).
 				cursor = db.query("related", null, FIELD_DIC_pword + " = '"
 						+ pword + "' AND " + FIELD_DIC_cword + " IS NOT NULL"
-						, null, FIELD_DIC_cword, null, FIELD_SCORE + " DESC", null);
+						, null, null , null, FIELD_SCORE + " DESC", null);
 	
 				if (cursor.moveToFirst()) {
 	
