@@ -70,8 +70,8 @@
         <ImageButton
             android:id="@+id/candidate_right"
             android:background="@drawable/ic_suggest_scroll_background"
-            android:src="@drawable/ic_suggest_strip_scroll_right_arrow" 
-            android:layout_width="18dp"
+            android:src="@drawable/ic_suggest_more_arrow" 
+            android:layout_width="22dp"
             android:layout_height="fill_parent"
             android:clickable="true"
             />
