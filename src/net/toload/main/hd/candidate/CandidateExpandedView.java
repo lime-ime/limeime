@@ -27,7 +27,7 @@ public class CandidateExpandedView extends CandidateView {
 	private int mVerticalPadding;
 	private int mTouchX = OUT_OF_BOUNDS;
 	private int mTouchY = OUT_OF_BOUNDS;
-	private int mScrollY;
+	//private int mScrollY;
 	private int[][] mWordX = new int[MAX_SUGGESTIONS][MAX_SUGGESTIONS];
 	private int[][] mWordWidth = new int[MAX_SUGGESTIONS][MAX_SUGGESTIONS];
 	private int[] mRowSize = new int[MAX_SUGGESTIONS];
@@ -89,7 +89,9 @@ public class CandidateExpandedView extends CandidateView {
         
         // Update mSelectedIndex from touch x and y;
         if(mTouchX!=OUT_OF_BOUNDS && mTouchY!=OUT_OF_BOUNDS ){
-        	int touchRow =(int) (mTouchY + mScrollY)/ (height + mVerticalPadding);
+        	//Jeremy '11,8,23 mTouchY is already relative to view origin, no need to add mScrollY
+        	int touchRow =(int) (mTouchY )// + mScrollY)
+        				/ (height + mVerticalPadding);
         	for(int i=0; i<mRowSize[touchRow]; i++){
         		if (mTouchX >= mWordX[touchRow][i] && mTouchX < mWordX[touchRow][i]+ mWordWidth[touchRow][i] ) 
         			mSelectedIndex = mRowStartingIndex[touchRow] +i;
@@ -257,24 +259,27 @@ public class CandidateExpandedView extends CandidateView {
 
 	@Override
 	public boolean onTouchEvent(MotionEvent me) {
-		if(DEBUG) Log.i(TAG, "onTouchEvent(): x =" + me.getX() + ", y=" + me.getY() + ", ScroolY=" +mParentScroolView.getScrollY() );
+		if(DEBUG) 
+			Log.i(TAG, "onTouchEvent(): x =" + me.getX() + ", y=" + me.getY() 
+					+ ", ScroolY=" +mParentScroolView.getScrollY() );
 		int action = me.getAction();
 		int x = (int) me.getX();
 		int y = (int) me.getY();
 		mTouchX = x;
 		mTouchY = y;
-		mScrollY = mParentScroolView.getScrollY();
+		//mScrollY = mParentScroolView.getScrollY();
 		switch (action) {
 		case MotionEvent.ACTION_DOWN:
+			if(DEBUG) Log.i(TAG, "onTouchEvent(), Action_DONW");
 			invalidate();
 			break;
 		case MotionEvent.ACTION_MOVE:
-
+			if(DEBUG) Log.i(TAG, "onTouchEvent(), Action_MOVE");
 			invalidate();
 			break;
 		case MotionEvent.ACTION_UP:
-			
-			invalidate();
+			if(DEBUG) Log.i(TAG, "onTouchEvent(), Action_UP");
+			//invalidate();
 			mCandidateView.takeSuggstionAtIndex(mSelectedIndex);
             
 			break;
