@@ -44,7 +44,7 @@ public class TestLimeService extends ServiceTestCase<LIMEService> {
 	            assertNotNull(Serv);
 	            
 	            Serv.onCreateInputView();
-	            //Serv.onCreateCandidatesView();
+	            Serv.onCreateCandidatesView();
 	            	            
 	            EditorInfo attribute = new EditorInfo();
 	            attribute.inputType = EditorInfo.TYPE_CLASS_TEXT;
@@ -82,6 +82,7 @@ public class TestLimeService extends ServiceTestCase<LIMEService> {
 		if(Serv.hasMappingList) 
 			//Log.i(TAG, "testLIMEServiceStart() hasMappingList true");
 			Serv.pickDefaultCandidate();
+		
 	}
 	
 	private void randomTypingTest(LIMEService Serv){
