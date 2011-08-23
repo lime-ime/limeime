@@ -23,7 +23,7 @@
         android:orientation="horizontal"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content">
-      <!--   android:background="@drawable/keyboard_suggest_strip" -->
+<!--        android:background="@drawable/keyboard_suggest_strip" -->
         
 
    <!--  <LinearLayout
@@ -61,17 +61,18 @@
             android:layout_height="fill_parent"
             android:clickable="true"
             android:orientation="horizontal">
+        <!--  
          <ImageView
             android:src="@drawable/keyboard_suggest_strip_divider"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
             />
-        
+            -->
         <ImageButton
             android:id="@+id/candidate_right"
             android:background="@drawable/ic_suggest_scroll_background"
-            android:src="@drawable/ic_suggest_more_arrow" 
-            android:layout_width="22dp"
+            android:src="@drawable/ic_suggest_expander" 
+            android:layout_width="24dp"
             android:layout_height="fill_parent"
             android:clickable="true"
             />
