@@ -17,7 +17,7 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:state_pressed="false"
-        android:drawable="@android:color/white" />
+        android:drawable="@color/candidate_background" />
 
     <item android:state_pressed="true"
         android:drawable="@android:drawable/list_selector_background" />
