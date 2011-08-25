@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+/*    
+**    Copyright 2010, The LimeIME Open Source Project
+** 
+**    Project Url: http://code.google.com/p/limeime/
+**                 http://android.toload.net/
+**
+**    This program is free software: you can redistribute it and/or modify
+**    it under the terms of the GNU General Public License as published by
+**    the Free Software Foundation, either version 3 of the License, or
+**    (at your option) any later version.
+
+**    This program is distributed in the hope that it will be useful,
+**    but WITHOUT ANY WARRANTY; without even the implied warranty of
+**    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**    GNU General Public License for more details.
+
+**    You should have received a copy of the GNU General Public License
+**    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:keyWidth="20%p"
+    android:horizontalGap="0px"
+    android:verticalGap="0px"
+    android:keyHeight="@dimen/phone_key_height"
+    >
+
+    <Row>
+        <Key android:codes="-2" android:keyLabel="[123]" android:keyEdgeFlags="left"/>
+        <Key android:codes="49" android:iconPreview="@drawable/phone_1_l" android:keyIcon="@drawable/phone_1"/>
+        <Key android:codes="50,65,66,67" android:iconPreview="@drawable/phone_2_l" android:keyIcon="@drawable/phone_2"/>
+        <Key android:codes="51,68,69,70" android:iconPreview="@drawable/phone_3_l" android:keyIcon="@drawable/phone_3"/>
+        <Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" android:iconPreview="@drawable/sym_keyboard_feedback_delete" android:isModifier="true"  android:keyEdgeFlags="right" android:isRepeatable="true"/>
+    </Row>
+    
+    <Row>
+        <Key android:codes="-9" android:keyIcon="@drawable/sw" android:isModifier="true" android:iconPreview="@drawable/sw_l" android:keyEdgeFlags="left"/>
+        <Key android:codes="52,71,72,73" android:iconPreview="@drawable/phone_4_l" android:keyIcon="@drawable/phone_4"/>
+        <Key android:codes="53,74,75,76" android:iconPreview="@drawable/phone_5_l" android:keyIcon="@drawable/phone_5"/>
+        <Key android:codes="54,77,78,79" android:iconPreview="@drawable/phone_6_l" android:keyIcon="@drawable/phone_6"/>
+        <Key android:codes="61,43,45,42,47" android:iconPreview="@drawable/phone_cal_l" android:keyIcon="@drawable/phone_cal" android:keyEdgeFlags="right"/>
+    </Row>
+    
+    <Row>
+        <Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift"
+                android:isSticky="true" android:keyEdgeFlags="left"/>
+        <Key android:codes="55,80,81,82,83" android:iconPreview="@drawable/phone_7_l" android:keyIcon="@drawable/phone_7"/>
+        <Key android:codes="56,84,85,86" android:iconPreview="@drawable/phone_8_l" android:keyIcon="@drawable/phone_8"/>
+        <Key android:codes="57,87,88,89,89" android:iconPreview="@drawable/phone_9_l" android:keyIcon="@drawable/phone_9"/>
+        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:iconPreview="@drawable/sym_keyboard_feedback_space" android:isRepeatable="true" android:keyEdgeFlags="right"/>
+    </Row>
+    
+    <Row android:rowEdgeFlags="bottom">
+        <Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:iconPreview="@drawable/sym_keyboard_feedback_done" android:isModifier="true" android:keyEdgeFlags="left"/>
+        <Key android:codes="40,41,91,93" android:iconPreview="@drawable/phone_left_l" android:keyIcon="@drawable/phone_left"/>
+        <Key android:codes="48,126,94,123,125" android:iconPreview="@drawable/phone_0_l" android:keyIcon="@drawable/phone_0"/>
+        <Key android:codes="44,59,63,92,46" android:iconPreview="@drawable/phone_right_l" android:keyIcon="@drawable/phone_right"/>
+        <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:iconPreview="@drawable/sym_keyboard_feedback_return" android:isModifier="true"  android:keyEdgeFlags="right"/>
+    </Row>
+    
+</Keyboard>
+    
