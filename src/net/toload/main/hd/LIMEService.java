@@ -1584,6 +1584,8 @@ public class LIMEService extends InputMethodService implements
 			// long press on options and shift
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_OPTIONS) {
 			handleOptions();
+		} else if( primaryCode == LIMEKeyboardView.KEYCODE_SPACE_LONGPRESS) {
+			showKeyboardPicker();
 //		} else if (primaryCode == LIMEKeyboardView.KEYCODE_SHIFT_LONGPRESS) {
 //			if (DEBUG) {
 //				Log.i("OnKey", "KEYCODE_SHIFT_LONGPRESS");
