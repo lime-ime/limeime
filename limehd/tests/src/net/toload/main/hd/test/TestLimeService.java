@@ -49,9 +49,22 @@ public class TestLimeService extends ServiceTestCase<LIMEService> {
 	            EditorInfo attribute = new EditorInfo();
 	            attribute.inputType = EditorInfo.TYPE_CLASS_TEXT;
 				Serv.onStartInput(attribute, false);
-				
-				randomTypingTest(Serv);
-				
+				SystemClock.sleep(1000);
+
+				//Testing parameters--------------------------------
+				boolean doRandomTest = false;
+				int radomIterations = 100;
+				String[] testCodes = {"m","vu","ru", "u", "5", "xu", "zj"};
+
+				Debug.startMethodTracing("LimeService");
+				if(doRandomTest){
+					randomTypingTest(Serv, radomIterations);
+				}else{
+					for(String code: testCodes){
+						simulateInput(Serv, code, true);
+					}
+				}
+				Debug.stopMethodTracing();
 
 	         } catch (Exception e) {
 	            e.printStackTrace();
@@ -85,18 +98,17 @@ public class TestLimeService extends ServiceTestCase<LIMEService> {
 		
 	}
 	
-	private void randomTypingTest(LIMEService Serv){
+	private void randomTypingTest(LIMEService Serv,int limit){
 		buildKeyMap();
 		
 		//Testing parameters.---------------
-		int limit = 100;   //times performing random queries
+		//= 100;   //times performing random queries
 		//long timelimit = 250;// Assert the query time smaller than this time spec.
 		boolean simulatePhsyicalKeyboard = true;
 		
 		
 		
 		
-		Debug.startMethodTracing("LimeService");
 
 		HashSet<String> duplityCheck = new HashSet<String>();
 		Random randomGenerator = new Random();
@@ -115,7 +127,7 @@ public class TestLimeService extends ServiceTestCase<LIMEService> {
 			SystemClock.sleep(100);
 			count++;
 		}
-		Debug.stopMethodTracing();
+		
 
 	}
 	 public void testLIMEServiceStop() {
