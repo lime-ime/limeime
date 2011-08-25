@@ -36,6 +36,7 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 
 	public static final int KEYCODE_OPTIONS = -100;
 	public static final int KEYCODE_SHIFT_LONGPRESS = -101;
+	public static final int KEYCODE_SPACE_LONGPRESS = -102;
     public static final int KEYCODE_NEXT_IM = -104;
     public static final int KEYCODE_PREV_IM = -105;
     
@@ -57,6 +58,9 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 	protected boolean onLongPress(Key key) {
 		if (key.codes[0] == Keyboard.KEYCODE_CANCEL) {
 			getOnKeyboardActionListener().onKey(KEYCODE_OPTIONS, null,0,0);
+			return true;
+		}else if (key.codes[0] == LIMEKeyboard.KEYCODE_SPACE){
+			getOnKeyboardActionListener().onKey(KEYCODE_SPACE_LONGPRESS, null,0,0);
 			return true;
 //		} else if (key.codes[0] == Keyboard.KEYCODE_SHIFT) {
 //            getOnKeyboardActionListener().onKey(KEYCODE_SHIFT_LONGPRESS, null,0,0);
