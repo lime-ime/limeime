@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+/*    
+**    Copyright 2010, The LimeIME Open Source Project
+** 
+**    Project Url: http://code.google.com/p/limeime/
+**                 http://android.toload.net/
+**
+**    This program is free software: you can redistribute it and/or modify
+**    it under the terms of the GNU General Public License as published by
+**    the Free Software Foundation, either version 3 of the License, or
+**    (at your option) any later version.
+
+**    This program is distributed in the hope that it will be useful,
+**    but WITHOUT ANY WARRANTY; without even the implied warranty of
+**    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**    GNU General Public License for more details.
+
+**    You should have received a copy of the GNU General Public License
+**    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:keyWidth="10%p"
+    android:horizontalGap="0px"
+    android:verticalGap="0px"
+    android:keyHeight="@dimen/key_height"
+    >
+
+    
+    <Row>
+    	<Key android:codes="33" android:keyLabel="!\nㄅ" 
+			 android:keyEdgeFlags="left" />
+		<Key android:codes="64" android:keyLabel="\@\nㄉ" />
+		<Key android:codes="35" android:keyLabel="\#\nˇ" />
+		<Key android:codes="36" android:keyLabel="$\nˋ" />
+		<Key android:codes="37" android:keyLabel="%\nㄓ" />
+		<Key android:codes="94" android:keyLabel="^\nˊ" />
+		<Key android:codes="38" android:keyLabel="&amp;\n˙" />
+		<Key android:codes="42" android:keyLabel="*\nㄚ" />
+		<Key android:codes="40" android:keyLabel="(\nㄞ" />
+		<Key android:codes="41" android:keyLabel=")\nㄢ" android:keyEdgeFlags="right" />
+		
+    </Row>
+    
+    <Row>
+        <Key android:codes="81" android:keyLabel="Q\nㄆ" android:keyEdgeFlags="left"/>
+        <Key android:codes="87" android:keyLabel="W\nㄊ" />
+        <Key android:codes="69" android:keyLabel="E\nㄍ" />
+        <Key android:codes="82" android:keyLabel="R\nㄐ" />
+        <Key android:codes="84" android:keyLabel="T\nㄔ" />
+        <Key android:codes="89" android:keyLabel="Y\nㄗ" />
+        <Key android:codes="85" android:keyLabel="U\n一" />
+        <Key android:codes="73" android:keyLabel="I\nㄛ" />
+        <Key android:codes="79" android:keyLabel="O\nㄟ" />
+        <Key android:codes="80" android:keyLabel="P\nㄣ" android:keyEdgeFlags="right"/>
+    </Row>
+    
+     <Row>
+        <Key android:codes="65" android:keyLabel="A\nㄇ" android:keyEdgeFlags="left"/>
+        <Key android:codes="83" android:keyLabel="S\nㄋ"/>
+        <Key android:codes="68" android:keyLabel="D\nㄎ"/>
+        <Key android:codes="70" android:keyLabel="F\nㄑ"/>
+        <Key android:codes="71" android:keyLabel="G\nㄕ"/>
+        <Key android:codes="72" android:keyLabel="H\nㄘ"/>
+        <Key android:codes="74" android:keyLabel="J\nㄨ"/>
+        <Key android:codes="75" android:keyLabel="K\nㄜ"/>
+        <Key android:codes="76" android:keyLabel="L\nㄠ"/>
+        <Key android:codes="58" android:keyLabel=":\nㄤ" android:keyEdgeFlags="right"/>
+    </Row>
+    
+   <Row>
+        <Key android:codes="90" android:keyLabel="Z\nㄈ" android:keyEdgeFlags="left"/>
+        <Key android:codes="88" android:keyLabel="X\nㄌ" />
+        <Key android:codes="67" android:keyLabel="C\nㄏ" />
+        <Key android:codes="86" android:keyLabel="V\nㄒ" />
+        <Key android:codes="66" android:keyLabel="B\nㄖ" />
+        <Key android:codes="78" android:keyLabel="N\nㄙ" />
+        <Key android:codes="77" android:keyLabel="M\nㄩ" />
+        <Key android:codes="60" android:keyLabel="&lt;\nㄝ" />
+        <Key android:codes="62" android:keyLabel="&gt;\nㄡ"   
+        	 android:popupKeyboard="@xml/popup_c_punctuation" />
+        <Key android:codes="63" android:keyLabel="\?\nㄥ" android:keyEdgeFlags="right"/>
+    </Row>    
+    
+    
+    <Row android:rowEdgeFlags="bottom">
+        <Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:iconPreview="@drawable/sym_keyboard_feedback_done" android:isModifier="true"  android:keyWidth="15%p" android:keyEdgeFlags="left"/>                
+        <Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift"
+			android:keyWidth="15%p" android:isModifier="true" android:isSticky="true" />
+        <Key android:codes="-9" android:keyIcon="@drawable/sw" android:isModifier="true"  android:iconPreview="@drawable/sw_l"/>
+        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:iconPreview="@drawable/sym_keyboard_feedback_space"  android:keyWidth="20%p" android:isRepeatable="true"/>
+        <Key android:codes="61" android:keyLabel="=\nㄦ"/>
+        <Key android:codes="-5" android:keyWidth="15%p" android:keyIcon="@drawable/sym_keyboard_delete" android:iconPreview="@drawable/sym_keyboard_feedback_delete" android:isModifier="true" android:isRepeatable="true"/>
+        <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:iconPreview="@drawable/sym_keyboard_feedback_return" android:isModifier="true" android:keyWidth="15%p" android:keyEdgeFlags="right"/>
+    </Row>
+</Keyboard>
+    
