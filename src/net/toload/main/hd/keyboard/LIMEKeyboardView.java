@@ -59,7 +59,8 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 		if (key.codes[0] == Keyboard.KEYCODE_CANCEL) {
 			getOnKeyboardActionListener().onKey(KEYCODE_OPTIONS, null,0,0);
 			return true;
-		}else if (key.codes[0] == LIMEKeyboard.KEYCODE_SPACE){
+		}else if (key.codes[0] == LIMEKeyboard.KEYCODE_SPACE 
+				&& ((LIMEKeyboard) this.getKeyboard()).getSpaceDragDiff()==0){
 			getOnKeyboardActionListener().onKey(KEYCODE_SPACE_LONGPRESS, null,0,0);
 			return true;
 //		} else if (key.codes[0] == Keyboard.KEYCODE_SHIFT) {
