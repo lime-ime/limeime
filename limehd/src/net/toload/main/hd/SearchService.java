@@ -432,17 +432,22 @@ public class SearchService extends Service {
 
 		}
 		// '11,8,1 renamed from updateuserdict()
+		List<Mapping> scorelistSnapshot = null; 
 		public void postFinishInput() throws RemoteException {
 		
 			if(db == null){db = new LimeDB(ctx);} 
+			if(scorelistSnapshot==null) scorelistSnapshot = new LinkedList<Mapping>();
+			else scorelistSnapshot.clear();
+			
+			
 			if(DEBUG)	Log.i(TAG,"postFinishInput(), creating offline updating thread");
 			// Jeremy '11,7,31 The updating process takes some time. Create a new thread to do this.
 			Thread UpadtingThread = new Thread(){
 				public void run() {
 					// for thread-safe operation, duplicate local copy of scorelist and LDphraselistarray
-					List<Mapping> localScorelist = new LinkedList<Mapping>();
+					//List<Mapping> localScorelist = new LinkedList<Mapping>();
 					if(scorelist != null) {
-						localScorelist.addAll(scorelist);
+						scorelistSnapshot.addAll(scorelist);
 						scorelist.clear();
 					}
 					ArrayList<List<Mapping>> localLDPhraseListArray = new ArrayList<List<Mapping>>();
@@ -455,7 +460,7 @@ public class SearchService extends Service {
 					//Jeremy '11,6,11, always learn scores, but sorted according preference options
 						
 					// Learn user dictionary (related words).
-					learnUserDict(localScorelist);
+					learnUserDict(scorelistSnapshot);
 					
 					// Learn LD Phrase
 					learnLDPhrase(localLDPhraseListArray);
