@@ -1852,13 +1852,19 @@ public class LimeDB extends SQLiteOpenHelper {
 				Mapping temp = new Mapping();
 				temp.setCode(query_code);
 				temp.setWord("，");
-				result.add(temp);
+				if(result.size()>3)
+					result.add(3,temp);
+				else
+					result.add(temp);
 			}
 			if( (query_code.equals(".")||query_code.equals(">")) && duplicateCheck.add("。") ){
 				Mapping temp = new Mapping();
 				temp.setCode(query_code);
 				temp.setWord("。");
-				result.add(temp);
+				if(result.size()>3)
+					result.add(3,temp);
+				else
+					result.add(temp);
 			}
 		}
 		
