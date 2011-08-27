@@ -310,6 +310,10 @@ public class LIMEKeyboard extends Keyboard {
         }
     }
     
+    
+    public int getSpaceDragDiff() {
+     	return mSpaceDragLastDiff;
+        }
     public int getSpaceDragDirection() {
     	if(DEBUG) Log.i(TAG, "getSpaceDragDirection(): mSpaceDragLastDiff= " + 
     			mSpaceDragLastDiff + ". mSpaceKey.width=" + mSpaceKey.width);
