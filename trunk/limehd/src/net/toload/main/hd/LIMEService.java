@@ -2879,24 +2879,7 @@ public class LIMEService extends InputMethodService implements
 		}else if (hasDistinctMultitouch && hasShiftPress){
 			hasShiftCombineKeyPressed = true;
 		}
-		if (hasVibration) {
-			mVibrator.vibrate(40);
-		}
-		if (hasSound) {
-			int sound = AudioManager.FX_KEYPRESS_STANDARD;
-			switch (primaryCode) {
-			case Keyboard.KEYCODE_DELETE:
-				sound = AudioManager.FX_KEYPRESS_DELETE;
-				break;
-			case MY_KEYCODE_ENTER:
-				sound = AudioManager.FX_KEYPRESS_RETURN;
-				break;
-			case MY_KEYCODE_SPACE:
-				sound = AudioManager.FX_KEYPRESS_SPACEBAR;
-				break;
-			}
-			mAudioManager.playSoundEffect(sound, FX_VOLUME);
-		}
+		doVibrateSound(primaryCode);
 
 		try {
 
@@ -2914,6 +2897,28 @@ public class LIMEService extends InputMethodService implements
 			//hasKeyPress = true;
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+
+	public void doVibrateSound(int primaryCode) {
+		Log.i(TAG,"doVibrateSound()");
+		if (hasVibration) {
+			mVibrator.vibrate(40);
+		}
+		if (hasSound) {
+			int sound = AudioManager.FX_KEYPRESS_STANDARD;
+			switch (primaryCode) {
+			case Keyboard.KEYCODE_DELETE:
+				sound = AudioManager.FX_KEYPRESS_DELETE;
+				break;
+			case MY_KEYCODE_ENTER:
+				sound = AudioManager.FX_KEYPRESS_RETURN;
+				break;
+			case MY_KEYCODE_SPACE:
+				sound = AudioManager.FX_KEYPRESS_SPACEBAR;
+				break;
+			}
+			mAudioManager.playSoundEffect(sound, FX_VOLUME);
 		}
 	}
 
