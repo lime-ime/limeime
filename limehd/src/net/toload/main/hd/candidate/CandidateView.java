@@ -85,7 +85,7 @@ public class CandidateView extends View implements View.OnClickListener
     //Composing view
 	private TextView mComposingTextView;
 	private PopupWindow mComposingTextPopup;
-	//private int mDescent;
+	
 	//private String mComposingText = "";
     
     protected int[] mWordWidth = new int[MAX_SUGGESTIONS];
@@ -192,8 +192,7 @@ public class CandidateView extends View implements View.OnClickListener
     	nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_size));
     	nPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
-    	
-    	//mDescent = (int) mPaint.descent();
+    
 
     	//final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
 
@@ -314,6 +313,11 @@ public class CandidateView extends View implements View.OnClickListener
 
     	}else{
     		if(!waitingForMoreRecords){  // New suggestion list, reset scroll to (0,0);
+    			/*this.setLayoutParams(
+    					new LinearLayout.LayoutParams(
+    						LinearLayout.LayoutParams.WRAP_CONTENT,
+    						mContext.getResources().getDimensionPixelSize(R.dimen.candidate_stripe_height) *3
+    						));*/
     			scrollTo(0, 0);    
     	        mTargetScrollX = 0;
     		}
@@ -328,14 +332,21 @@ public class CandidateView extends View implements View.OnClickListener
     }
   
     public void showCandidatePopup(){
-
+    	if(DEBUG) 
+			Log.i(TAG, "showCandidatePopup(), creating popup windows");
+    	
+    	//Jeremy '11,8.27 do vibrate and sound on candidateview expand button pressed.
+    	if(!candidateExpanded)
+    		mService.doVibrateSound(0);
+    	
     	candidateExpanded =true;
     	requestLayout();
-    	
+     	
     	checkHasMoreRecords();
+    	
+    	
     	if(mCandidatePopup == null){
-    		if(DEBUG) 
-    			Log.i(TAG, "showCandidatePopup(), creating popup windows");
+    		
     		mCandidatePopup = new PopupWindow(mContext);	
     		LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(
     				Context.LAYOUT_INFLATER_SERVICE);
@@ -367,6 +378,8 @@ public class CandidateView extends View implements View.OnClickListener
     	}
 
     	if(mSuggestions.size()==0) return;
+    	
+    	
 		  	
     	mCandidatePopup.setContentView(mCandidatePopupContainer);
     	int [] offsetOnScreen = new int[2];
@@ -948,7 +961,8 @@ public class CandidateView extends View implements View.OnClickListener
     		Log.i(TAG, "takeSuggestion():mSelectedIndex:" + mSelectedIndex);
     	}
     	hideCandidatePopup();
-
+    	//Jeremy '11,8.27 do vibrate and sound on suggestion picked from candidateview
+    	mService.doVibrateSound(0);
     	if (mSuggestions != null && index >= 0 && index <= mSuggestions.size() ) {
     		mService.pickSuggestionManually(index);
     		return true;  // Selection picked
@@ -997,6 +1011,9 @@ public class CandidateView extends View implements View.OnClickListener
     }
 	@Override
 	public void onClick(View v) {
+		//Jeremy '11,8.27 do vibrate and sound on candidateexpandedview close button pressed.
+    	mService.doVibrateSound(0);
+
 		hideCandidatePopup();
 	}
 
