@@ -1696,9 +1696,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		HashSet <String> dualCodeList = buildDualCodeList(code, keytablename);
 		String result="";
 		String validDualCodeList = "";
-		SQLiteDatabase db = this.getSqliteDb(false);
-	
-		
+		//SQLiteDatabase db = this.getSqliteDb(false);
 		
 		if(dualCodeList != null) {
 			for(String dualcode : dualCodeList){
@@ -1706,31 +1704,31 @@ public class LimeDB extends SQLiteOpenHelper {
 					Log.i(TAG, "expandDualCode(): processing dualcode: " + dualcode + "|");
 				String codeCol = FIELD_CODE;
 				if(tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) 
-						&& !code.matches(".+[3467 ].*")){
-						//&& !(dualcode.contains("3")||dualcode.contains("4")
-						//  ||dualcode.contains("6")||dualcode.contains("7")|| dualcode.endsWith(" ") )){
+						&& !code.matches(".+[3467 ].*"))
 					codeCol = FIELD_CODE3R;
-				}
-				dualcode = dualcode.trim();
-				String[] col = {"DISTINCT " + codeCol};
 				
-				try{
-					Cursor cursor = db.query(tablename, col, 
-							codeCol + " = '" + dualcode + "'", 
-								null, null, null, null, null);
-					if(cursor.moveToFirst()){ //fist entry exist, the code is valid.
-						if(validDualCodeList.equals("")) validDualCodeList = dualcode;
-						else validDualCodeList = validDualCodeList + "|" + dualcode;
-						
-						if(!dualcode.equals(code))
-							result = result + " OR "+  codeCol + "= '"+ dualcode +"'";
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				 
+				dualcode = dualcode.trim();
+			//Jeremy '11,8, 26 move valid code list building to buildqueryresult to avoid repeat query.
+//				String[] col = {"DISTINCT " + codeCol};
+//				
+//				try{
+//					Cursor cursor = db.query(tablename, col, 
+//							codeCol + " = '" + dualcode + "'", 
+//								null, null, null, null, null);
+//					if(cursor.moveToFirst()){ //fist entry exist, the code is valid.
+				if(validDualCodeList.equals("")) validDualCodeList = dualcode;
+				else validDualCodeList = validDualCodeList + "|" + dualcode;
+
+				if(!dualcode.equals(code))
+					result = result + " OR "+  codeCol + "= '"+ dualcode +"'";
+		
+//					}
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//				}
+//				 
 			}
-			db.close();
+//			db.close();
 			if(validDualCodeList.equals(""))
 				lastValidDualCodeList = null;
 			else
@@ -1753,11 +1751,18 @@ public class LimeDB extends SQLiteOpenHelper {
 		List<Mapping> relatedresult = new ArrayList<Mapping>();
 		Pair<List<Mapping>,List<Mapping>> resultPair = new Pair<List<Mapping>,List<Mapping>>(result, relatedresult);
 		HashSet<String> duplicateCheck = new HashSet<String>();
+		HashSet<String> validCodeMap = new HashSet<String>();  //Jeremy '11,8,26
 		int rsize = 0;
+		
+		boolean useCode3r =tablename.equals("phonetic")
+				&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) 
+				&& !query_code.matches(".+[3467 ].*");
+		if(DEBUG) Log.i(TAG,"buildQueryResutl(): cursor.getCount()=" + cursor.getCount());
 		if (cursor.moveToFirst()) {
-			//String relatedlist = null;
+
 			int idColumn = cursor.getColumnIndex(FIELD_id);
 			int codeColumn = cursor.getColumnIndex(FIELD_CODE);
+			int code3rColumn = cursor.getColumnIndex(FIELD_CODE3R);
 			int wordColumn = cursor.getColumnIndex(FIELD_WORD);
 			int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
 			int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);		
@@ -1770,6 +1775,13 @@ public class LimeDB extends SQLiteOpenHelper {
 				munit.setWord(cursor.getString(wordColumn));
 				munit.setId(cursor.getString(idColumn));
 				munit.setCode(code);
+				
+				//Jeremy '11,8,26 build valid code map
+				if(useCode3r)
+					validCodeMap.add(cursor.getString(code3rColumn));
+				else
+					validCodeMap.add(code);
+				
 
 				// 06/Aug/2011 by Art: ignore the result when word == keyToKeyname(code)
 				// Only apply to Array IM
@@ -1796,6 +1808,14 @@ public class LimeDB extends SQLiteOpenHelper {
 				rsize++;
 			} while (cursor.moveToNext());
 			
+			//Jeremy '11,8,26 build valid code map
+			if(validCodeMap.size()>0){
+				lastValidDualCodeList="";
+				for(String validCode : validCodeMap){
+					if(lastValidDualCodeList.equals("")) lastValidDualCodeList = validCode;
+					else lastValidDualCodeList = lastValidDualCodeList + "|" + validCode;
+				}
+			}
 
 			int ssize = mLIMEPref.getSimilarCodeCandidates();
 			//Jeremy '11,6,1 The related field may have only one word and thus no "|" inside

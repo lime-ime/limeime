@@ -54,7 +54,7 @@ public class TestLimeService extends ServiceTestCase<LIMEService> {
 				//Testing parameters--------------------------------
 				boolean doRandomTest = false;
 				int radomIterations = 100;
-				String[] testCodes = {"m","vu","ru", "u", "5", "xu", "zj"};
+				String[] testCodes = {"m", "u","vu","ru", "5", "xu", "zj"};
 
 				Debug.startMethodTracing("LimeService");
 				if(doRandomTest){
