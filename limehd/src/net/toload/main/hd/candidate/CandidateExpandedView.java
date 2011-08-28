@@ -125,7 +125,7 @@ public class CandidateExpandedView extends CandidateView {
         		//selRow = i;
         		selCol = mSelectedIndex - mRowStartingIndex[selRow];
         	}*/
-        	//if(DEBUG)
+        	if(DEBUG)
         		Log.i(TAG, "onDraw(): mSelectedIndex in at row:" + mSelRow + ", column:" + mSelCol);
         	
         	// Draw highlight on SelectedIndex
@@ -325,7 +325,7 @@ public class CandidateExpandedView extends CandidateView {
     		mSelectedIndex--;
     		if(mSelectedIndex < mRowStartingIndex[mSelRow] ){
     			mSelRow--;
-    			mSelCol = mRowStartingIndex[mSelRow] + mRowSize[mSelRow]-1;
+    			mSelCol = mRowSize[mSelRow]-1;
     			scrollToRow(mSelRow);
     		}else
     			mSelCol--;
@@ -338,8 +338,13 @@ public class CandidateExpandedView extends CandidateView {
 		if (mSuggestions == null) return;
 		if(mSelRow < mRows-1){
 			mSelRow ++;
-			if(mSelCol > mRowStartingIndex[mSelRow] + mRowSize[mSelRow]-1)
-				mSelCol =mRowStartingIndex[mSelRow] + mRowSize[mSelRow]-1;
+			if(DEBUG)
+				Log.i(TAG,"selectNextRow(): newRow=" + mSelRow 
+					+ ", mSelCol=" + mSelCol
+					+ ", mRowStartingIndex[mSelRow]=" + mRowStartingIndex[mSelRow]
+					+ ", + mRowSize[mSelRow]" + + mRowSize[mSelRow]);
+			if(mSelCol >  mRowSize[mSelRow]-1)
+				mSelCol = mRowSize[mSelRow]-1;
 			
 			mSelectedIndex = mRowStartingIndex[mSelRow] + mSelCol;
 			scrollToRow(mSelRow);
@@ -353,8 +358,9 @@ public class CandidateExpandedView extends CandidateView {
 		if (mSuggestions == null) return;
 		if(mSelRow >0) {
 			mSelRow--;
-			if(mSelCol > mRowStartingIndex[mSelRow] + mRowSize[mSelRow]-1)
-				mSelCol =mRowStartingIndex[mSelRow] + mRowSize[mSelRow]-1;
+			if(mSelCol >  mRowSize[mSelRow]-1)
+				mSelCol = mRowSize[mSelRow]-1;
+			
 			mSelectedIndex = mRowStartingIndex[mSelRow] + mSelCol;
 			scrollToRow(mSelRow);
 			invalidate();
