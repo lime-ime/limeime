@@ -1326,10 +1326,10 @@ public class LimeDB extends SQLiteOpenHelper {
 					// Jeremy '11,6,15 Using query with preprocessed code and extra query conditions.
 					if(sort){
 						cursor = db.query(tablename, null, selectClause
-								, null, null, null, FIELD_SCORE +" DESC", limitClause);
+								, null, null, null, FIELD_SCORE +" DESC, _id ASC", limitClause);
 					}else{
 						cursor = db.query(tablename, null, selectClause
-								, null, null, null, null, limitClause);
+								, null, null, null, "_id ASC", limitClause);
 					}
 					
 	
