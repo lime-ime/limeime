@@ -1142,11 +1142,13 @@ public class LIMEService extends InputMethodService implements
 			if (!hasSymbolEntered && onIM && (hasMenuPress || hasCtrlPress) ){  
 				//nextActiveKeyboard(true);
 				showKeyboardPicker(); //Jeremy '11,8,28
-				if(hasMenuPress) hasMenuProcessed = true;
+				if(hasMenuPress) {
+					hasMenuProcessed = true;
+					hasMenuPress = false;
+				}
+				mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 				return true;
-			}else
-				
-			
+			}
 			break;
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
