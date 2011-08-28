@@ -1022,6 +1022,8 @@ public class CandidateView extends View implements View.OnClickListener
     	if (mSuggestions == null) return;
     	if(mCandidatePopup!=null && mCandidatePopup.isShowing())
     		mPopupCandidateView.selectNextRow();
+    	else if(mScreenWidth < mTotalWidth)
+    		showCandidatePopup();
     	
     }
     public void selectPrevRow() {

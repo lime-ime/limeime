@@ -138,7 +138,7 @@ public class CandidateExpandedView extends CandidateView {
             
             int y = (int) (((height - mPaint.getTextSize()) / 2) - mPaint.ascent());
             int index = 0; //index in mSuggestions
-        	for (int i = 0; i < mRows+1; i++) {
+        	for (int i = 0; i < mRows; i++) {
         		if(i!=0) y += height + mVerticalPadding;
 
         		for(int j = 0; j < mRowSize[i]; j++){
@@ -243,8 +243,8 @@ public class CandidateExpandedView extends CandidateView {
 
 		}
 		//mTotalWidth = x;
-		mRows = row;
-		mTotalHeight = (height + mVerticalPadding) * (mRows+1);
+		mRows = row+1;
+		mTotalHeight = (height + mVerticalPadding) * (mRows);
 	    if(DEBUG) 
 	    	Log.i(TAG, "prepareLayout(): mRows=" + mRows + ", mTotalHeight=" + mTotalHeight);
 	}
