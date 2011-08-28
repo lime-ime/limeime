@@ -339,6 +339,7 @@ public class CandidateView extends View implements View.OnClickListener
     		
     	}
     	candidateExpanded = false;
+    	invalidate();
     	requestLayout();
 	}
     public void doUpdateCandidatePopup(){
@@ -415,7 +416,7 @@ public class CandidateView extends View implements View.OnClickListener
     	if(mPopupCandidateView.getMeasuredHeight()+mCloseButtonHeight < popHeight)
     		popHeight = mPopupCandidateView.getMeasuredHeight()+ mCloseButtonHeight;
     	
-    	if(!hasRoomForExpanding() || mCandidatePopup.isShowing()){
+    	if(!hasRoomForExpanding() ){
     		popHeight =  3 * mHeight + mCloseButtonHeight;
     		if(mPopupCandidateView.getMeasuredHeight()+mCloseButtonHeight < popHeight)
         		popHeight = mPopupCandidateView.getMeasuredHeight()+ mCloseButtonHeight;
@@ -596,10 +597,14 @@ public class CandidateView extends View implements View.OnClickListener
     	return candidateExpanded;
     }
     
+    private boolean mHasroomForExpanding = true;
     public boolean hasRoomForExpanding(){ 
-    	int [] offsetOnScreen = new int[2];
-    	this.getLocationOnScreen(offsetOnScreen);
-    	return (mScreenHeight - offsetOnScreen[1]) > 2 * mHeight;//getHeight();
+    	if(!mCandidatePopup.isShowing()){
+    		int [] offsetOnScreen = new int[2];
+    		this.getLocationOnScreen(offsetOnScreen);
+    		mHasroomForExpanding =  (mScreenHeight - offsetOnScreen[1]) > 2 * mHeight;
+    	}
+    	return mHasroomForExpanding;
     }
     
     /**
