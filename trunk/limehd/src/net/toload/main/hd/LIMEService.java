@@ -1136,13 +1136,16 @@ public class LIMEService extends InputMethodService implements
 		case KeyEvent.KEYCODE_SHIFT_RIGHT:
 			hasShiftPress = false;
 			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,	keyCode, event);
+			// '11,8,28 Jeremy popup keyboard picker instaead of nextIM when onIM
 			// '11,5,14 Jeremy ctrl-shift switch to next available keyboard; 
 			// '11,5,24 blocking switching if full-shape symbol 
-			if (!hasSymbolEntered && (hasMenuPress || hasCtrlPress) ){  
-				nextActiveKeyboard(true);
+			if (!hasSymbolEntered && onIM && (hasMenuPress || hasCtrlPress) ){  
+				//nextActiveKeyboard(true);
+				showKeyboardPicker(); //Jeremy '11,8,28
 				if(hasMenuPress) hasMenuProcessed = true;
 				return true;
-			}
+			}else
+				
 			
 			break;
 		case KeyEvent.KEYCODE_ALT_LEFT:
@@ -1192,10 +1195,11 @@ public class LIMEService extends InputMethodService implements
 				//switchChiEng(); // Jeremy '11,8,15 moved to onKeyDown()
 				return true;
 			} else if (LIMEMetaKeyKeyListener.getMetaState(mMetaState,
-					LIMEMetaKeyKeyListener.META_SHIFT_ON) > 0) {
+					LIMEMetaKeyKeyListener.META_SHIFT_ON) > 0 &&onIM) {
 				// alt-@ is conflict with symbol input thus altered to shift-@ Jeremy '11,8,15
 				// alt-@ switch to next active keyboard.
-				nextActiveKeyboard(true);
+				//nextActiveKeyboard(true);
+				showKeyboardPicker(); //Jeremy '11,8,28
 				mMetaState = LIMEMetaKeyKeyListener
 						.adjustMetaAfterKeypress(mMetaState);
 				setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState(); 
@@ -1210,12 +1214,6 @@ public class LIMEService extends InputMethodService implements
 			}
 
 			break;
-//		case KeyEvent.KEYCODE_SYM:  // for Desize Z??
-//			if (keyPressTime != 0 && System.currentTimeMillis() - keyPressTime > 700) {
-//				switchChiEng();
-//				return true;
-//			}
-//			break;
 			
 		case KeyEvent.KEYCODE_SPACE:
 			//Jeremy move the chi/eng swithcing to on_KEY_UP '11,6,18
@@ -1826,7 +1824,8 @@ public class LIMEService extends InputMethodService implements
 		// The IM is not initialialized. do nothing here if window=null.
 		if (!(window == null)) {
 			WindowManager.LayoutParams lp = window.getAttributes();
-			lp.token = mInputView.getWindowToken();
+			 // Jeremy '11,8,28 Use candidate instead of mInputview because mInputView may not present when using physical keyboard
+			lp.token = mCandidateView.getWindowToken(); 
 			lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
 			window.setAttributes(lp);
 			window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
@@ -2901,7 +2900,7 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	public void doVibrateSound(int primaryCode) {
-		Log.i(TAG,"doVibrateSound()");
+		if(DEBUG) Log.i(TAG,"doVibrateSound()");
 		if (hasVibration) {
 			mVibrator.vibrate(40);
 		}

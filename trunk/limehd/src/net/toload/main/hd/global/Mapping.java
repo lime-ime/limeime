@@ -54,17 +54,19 @@ public class Mapping {
 	public Mapping(){}
 	
 	
-	public Mapping(String c, String w, int s){
+	public Mapping(String c, String w, int s, boolean d){
 		this.setCode(c);
 		this.setWord(w);
 		this.setScore(s);
+		this.setDictionary(d);
 	}
 
-	public Mapping(String pw, String c, String w, int s){
+	public Mapping(String pw, String c, String w, int s, boolean d){
 		this.setPword(pw);
 		this.setCode(c);
 		this.setWord(w);
 		this.setScore(s);
+		this.setDictionary(d);
 	}
 	
 	
@@ -154,6 +156,18 @@ public class Mapping {
 	 */
 	public void setScore(int score) {
 		this.score = score;
+	}
+
+
+	public void clear() {
+		id="";
+		code="";
+		word="";
+		pword="";
+		related="";
+		isDictionary=false;
+		score=0;
+		
 	}
 	
 	

@@ -82,7 +82,7 @@ public class CandidateExpandedView extends CandidateView {
     		Log.i(TAG, "OnDraw():mBgPadding.Top=" + mBgPadding.top 
 				+", mBgPadding.Right=" + mBgPadding.right);
         
-        final int height = mCandidateView.getHeight();
+        final int height = mCandidateView.mHeight;
         final Rect bgPadding = mBgPadding;
         final Paint paint = mPaint;
         final Paint npaint = nPaint;
@@ -185,7 +185,7 @@ public class CandidateExpandedView extends CandidateView {
 		if(DEBUG)
 			Log.i(TAG, "prepareLayout():mSuggestions.size()" + mSuggestions.size());
 		
-		final int height = mCandidateView.getHeight();
+		final int height = mCandidateView.mHeight;
         final Paint paint = mPaint;
 		int x = 0;
 		int row=0;
