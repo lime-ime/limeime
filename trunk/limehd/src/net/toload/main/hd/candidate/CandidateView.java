@@ -414,8 +414,10 @@ public class CandidateView extends View implements View.OnClickListener
     	if(mPopupCandidateView.getMeasuredHeight()+mCloseButtonHeight < popHeight)
     		popHeight = mPopupCandidateView.getMeasuredHeight()+ mCloseButtonHeight;
     	
-    	if(!hasRoomForExpanding()){
+    	if(!hasRoomForExpanding() || mCandidatePopup.isShowing()){
     		popHeight =  3 * mHeight + mCloseButtonHeight;
+    		if(mPopupCandidateView.getMeasuredHeight()+mCloseButtonHeight < popHeight)
+        		popHeight = mPopupCandidateView.getMeasuredHeight()+ mCloseButtonHeight;
     		this.setLayoutParams(
     				new LinearLayout.LayoutParams(mScreenWidth - mExpandButtonWidth, popHeight));
     	}
