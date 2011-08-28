@@ -858,6 +858,21 @@ public class LIMEService extends InputMethodService implements
 				return true;
 			}
 			break;
+		//Jeremy '11,8,28 for expanded canddiateviewi
+		case KeyEvent.KEYCODE_DPAD_UP:
+			// Log.i("ART","select:"+2);
+			if (mCandidateView != null && mCandidateView.isShown()) {
+				mCandidateView.selectPrevRow();
+				return true;
+			}
+			break;
+		case KeyEvent.KEYCODE_DPAD_DOWN:
+			// Log.i("ART","select:"+2);
+			if (mCandidateView != null && mCandidateView.isShown()) {
+				mCandidateView.selectNextRow();
+				return true;
+			}
+			break;
 		case KeyEvent.KEYCODE_DPAD_CENTER:
 			// Log.i("ART","select:"+3);
 			if (mCandidateView != null && mCandidateView.isShown()) {
