@@ -27,6 +27,8 @@ public class CandidateExpandedView extends CandidateView {
 	private int mVerticalPadding;
 	private int mTouchX = OUT_OF_BOUNDS;
 	private int mTouchY = OUT_OF_BOUNDS;
+	private int mSelRow; //Jeremy '11,8,28
+	private int mSelCol; //Jeremy '11,8,28
 	//private int mScrollY;
 	private int[][] mWordX = new int[MAX_SUGGESTIONS][MAX_SUGGESTIONS];
 	private int[][] mWordWidth = new int[MAX_SUGGESTIONS][MAX_SUGGESTIONS];
@@ -41,7 +43,7 @@ public class CandidateExpandedView extends CandidateView {
 		//this.mGestureDetector = null;
 		mVerticalPadding = context.getResources()
 				.getDimensionPixelSize(R.dimen.candidate_vertical_padding);
-		
+	
     	
 	}
 	
@@ -90,42 +92,48 @@ public class CandidateExpandedView extends CandidateView {
         // Update mSelectedIndex from touch x and y;
         if(mTouchX!=OUT_OF_BOUNDS && mTouchY!=OUT_OF_BOUNDS ){
         	//Jeremy '11,8,23 mTouchY is already relative to view origin, no need to add mScrollY
-        	int touchRow =(int) (mTouchY )// + mScrollY)
+        	mSelRow =(int) (mTouchY )// + mScrollY)
         				/ (height + mVerticalPadding);
-        	for(int i=0; i<mRowSize[touchRow]; i++){
-        		if (mTouchX >= mWordX[touchRow][i] && mTouchX < mWordX[touchRow][i]+ mWordWidth[touchRow][i] ) 
-        			mSelectedIndex = mRowStartingIndex[touchRow] +i;
+        	
+        	for(int i=0; i<mRowSize[mSelRow]; i++){
+        		if (mTouchX >= mWordX[mSelRow][i] && mTouchX < mWordX[mSelRow][i]+ mWordWidth[mSelRow][i] ){ 
+        			mSelectedIndex = mRowStartingIndex[mSelRow] +i;
+        			mSelCol = i;
+        			break;
+        		}
         	}
         	if(DEBUG)
-        		Log.i(TAG, "onDraw(): new mSelectedIndex =" + mSelectedIndex + ", touchRow=" + touchRow);
+        		Log.i(TAG, "onDraw(): new mSelectedIndex =" + mSelectedIndex 
+        				+ ", mSelRow=" + mSelRow
+        				+ ", mSelCol=" + mSelCol);
         }
       
         // Paint all the suggestions and lines.
         if (canvas != null) {
         	
         	// Calculate column and row of mSelectedIndex
-        	int selRow =0;
+        	/*int selRow =0;
         	int selCol = mSelectedIndex;
         	if(mSelectedIndex >= mRowSize[0]){
         		
         		for(int i=0; i < mRows+1; i++){
-        			if(DEBUG)
+        			//if(DEBUG)
         				Log.i(TAG, "onDraw(): mRowStartingIndex[" +i +"]=" + mRowStartingIndex[i]);
         			selRow = i;
         			if(mSelectedIndex < mRowStartingIndex[i]+ mRowSize[i] ) break;
         		}
         		//selRow = i;
         		selCol = mSelectedIndex - mRowStartingIndex[selRow];
-        	}
-        	if(DEBUG)
-        		Log.i(TAG, "onDraw(): mSelectedIndex in at row:" + selRow + ", column:" + selCol);
+        	}*/
+        	//if(DEBUG)
+        		Log.i(TAG, "onDraw(): mSelectedIndex in at row:" + mSelRow + ", column:" + mSelCol);
         	
         	// Draw highlight on SelectedIndex
             if (canvas != null && mSelectedIndex >=0) {
-                canvas.translate(mWordX[selRow][selCol], selRow * (height+ mVerticalPadding));
-                mSelectionHighlight.setBounds(0, bgPadding.top, mWordWidth[selRow][selCol], height);
+                canvas.translate(mWordX[mSelRow][mSelCol], mSelRow * (height+ mVerticalPadding));
+                mSelectionHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelRow][mSelCol], height);
                 mSelectionHighlight.draw(canvas);
-                canvas.translate(-mWordX[selRow][selCol], -selRow * (height+ mVerticalPadding));
+                canvas.translate(-mWordX[mSelRow][mSelCol], -mSelRow * (height+ mVerticalPadding));
             }
             
             int y = (int) (((height - mPaint.getTextSize()) / 2) - mPaint.ascent());
@@ -250,6 +258,8 @@ public class CandidateExpandedView extends CandidateView {
 			mSelectedIndex = mCandidateView.mSelectedIndex;
 			mTouchX = OUT_OF_BOUNDS;
 			mTouchY = OUT_OF_BOUNDS;
+			mSelCol = mSelectedIndex;
+			mSelRow = 0; 
 		}
 		prepareLayout();
 		requestLayout();
@@ -287,11 +297,23 @@ public class CandidateExpandedView extends CandidateView {
 		return true;
 	}
 
+	private void scrollToRow(int row){
+		mParentScroolView.scrollTo(0, row*((mHeight + mVerticalPadding)));
+		
+	}
+	
 	@Override
 	public void selectNext() {
 		if (mSuggestions == null) return;
     	if(mSelectedIndex < mCount-1){
     		mSelectedIndex++;
+    		if(mSelectedIndex >= mRowStartingIndex[mSelRow] + mRowSize[mSelRow]){
+    			mSelRow++;
+    			mSelCol=0;
+    			scrollToRow(mSelRow);
+    		}else
+    			mSelCol++;
+    			
     		invalidate();
     	}
 	}
@@ -301,7 +323,42 @@ public class CandidateExpandedView extends CandidateView {
 		if (mSuggestions == null) return;
     	if(mSelectedIndex > 0) {
     		mSelectedIndex--;
+    		if(mSelectedIndex < mRowStartingIndex[mSelRow] ){
+    			mSelRow--;
+    			mSelCol = mRowStartingIndex[mSelRow] + mRowSize[mSelRow]-1;
+    			scrollToRow(mSelRow);
+    		}else
+    			mSelCol--;
     		invalidate();
     	}
+	}
+
+	@Override
+	public void selectNextRow() {
+		if (mSuggestions == null) return;
+		if(mSelRow < mRows-1){
+			mSelRow ++;
+			if(mSelCol > mRowStartingIndex[mSelRow] + mRowSize[mSelRow]-1)
+				mSelCol =mRowStartingIndex[mSelRow] + mRowSize[mSelRow]-1;
+			
+			mSelectedIndex = mRowStartingIndex[mSelRow] + mSelCol;
+			scrollToRow(mSelRow);
+			invalidate();
+		}
+		
+	}
+
+	@Override
+	public void selectPrevRow() {
+		if (mSuggestions == null) return;
+		if(mSelRow >0) {
+			mSelRow--;
+			if(mSelCol > mRowStartingIndex[mSelRow] + mRowSize[mSelRow]-1)
+				mSelCol =mRowStartingIndex[mSelRow] + mRowSize[mSelRow]-1;
+			mSelectedIndex = mRowStartingIndex[mSelRow] + mSelCol;
+			scrollToRow(mSelRow);
+			invalidate();
+		}
+			
 	}
 }

@@ -989,7 +989,7 @@ public class CandidateView extends View implements View.OnClickListener
     //Add by Jeremy '10, 3, 29 for DPAD (physical keyboard) selection.
     public void selectNext() {
     	if (mSuggestions == null) return;
-    	if(mCandidatePopup.isShowing()){
+    	if(mCandidatePopup!=null && mCandidatePopup.isShowing()){
     		mPopupCandidateView.selectNext();
     	}else{
     		if(mSelectedIndex < mCount-1){
@@ -1002,7 +1002,7 @@ public class CandidateView extends View implements View.OnClickListener
     
     public void selectPrev() {
     	if (mSuggestions == null) return;
-    	if(mCandidatePopup.isShowing()){
+    	if(mCandidatePopup!=null && mCandidatePopup.isShowing()){
     		mPopupCandidateView.selectPrev();
     	}else{
     		if(mSelectedIndex > 0) {
@@ -1011,6 +1011,19 @@ public class CandidateView extends View implements View.OnClickListener
     		}
     		invalidate();
     	}
+    }
+    //Jeremy '11,8,28
+    public void selectNextRow(){
+    	if (mSuggestions == null) return;
+    	if(mCandidatePopup!=null && mCandidatePopup.isShowing())
+    		mPopupCandidateView.selectNextRow();
+    	
+    }
+    public void selectPrevRow() {
+    	if (mSuggestions == null) return;
+    	if(mCandidatePopup!=null && mCandidatePopup.isShowing())
+    		mPopupCandidateView.selectPrevRow();
+    	
     }
     
     public boolean takeSuggstionAtIndex(int index){
@@ -1031,7 +1044,10 @@ public class CandidateView extends View implements View.OnClickListener
     	if(DEBUG){
     		Log.i(TAG, "takeSelectedSuggestion():mSelectedIndex:" + mSelectedIndex);
     	}
-    	return takeSuggstionAtIndex(mSelectedIndex);
+    	if(mCandidatePopup!=null && mCandidatePopup.isShowing())
+    		return takeSuggstionAtIndex(mPopupCandidateView.mSelectedIndex);
+    	else
+    		return takeSuggstionAtIndex(mSelectedIndex);
     		
     }
 
