@@ -286,4 +286,22 @@ public class CandidateExpandedView extends CandidateView {
 		}
 		return true;
 	}
+
+	@Override
+	public void selectNext() {
+		if (mSuggestions == null) return;
+    	if(mSelectedIndex < mCount-1){
+    		mSelectedIndex++;
+    		invalidate();
+    	}
+	}
+
+	@Override
+	public void selectPrev() {
+		if (mSuggestions == null) return;
+    	if(mSelectedIndex > 0) {
+    		mSelectedIndex--;
+    		invalidate();
+    	}
+	}
 }

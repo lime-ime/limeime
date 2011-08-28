@@ -164,7 +164,8 @@ public class CandidateView extends View implements View.OnClickListener
     	mScreenHeight = display.getHeight();
     	
     	mSelectionHighlight = r.getDrawable(
-    			android.R.drawable.list_selector_background);
+    			R.drawable.list_selector_background);
+    			//android.R.drawable.list_selector_background);
     	mSelectionHighlight.setState(new int[] {
     			android.R.attr.state_enabled,
     			android.R.attr.state_focused,
@@ -988,20 +989,28 @@ public class CandidateView extends View implements View.OnClickListener
     //Add by Jeremy '10, 3, 29 for DPAD (physical keyboard) selection.
     public void selectNext() {
     	if (mSuggestions == null) return;
-    	if(mSelectedIndex < mCount-1){
-    		mSelectedIndex++;
-    		if(mWordX[mSelectedIndex] + mWordWidth[mSelectedIndex] > currentX + getWidth()) scrollNext();
+    	if(mCandidatePopup.isShowing()){
+    		mPopupCandidateView.selectNext();
+    	}else{
+    		if(mSelectedIndex < mCount-1){
+    			mSelectedIndex++;
+    			if(mWordX[mSelectedIndex] + mWordWidth[mSelectedIndex] > currentX + getWidth()) scrollNext();
+    		}
+    		invalidate();
     	}
-    	invalidate();
     }
     
     public void selectPrev() {
     	if (mSuggestions == null) return;
-        if(mSelectedIndex > 0) {
-        	mSelectedIndex--;
-        	if(mWordX[mSelectedIndex] < currentX) scrollPrev();
-        }
-        invalidate();
+    	if(mCandidatePopup.isShowing()){
+    		mPopupCandidateView.selectPrev();
+    	}else{
+    		if(mSelectedIndex > 0) {
+    			mSelectedIndex--;
+    			if(mWordX[mSelectedIndex] < currentX) scrollPrev();
+    		}
+    		invalidate();
+    	}
     }
     
     public boolean takeSuggstionAtIndex(int index){
