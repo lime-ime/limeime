@@ -96,18 +96,20 @@ public class CandidateView extends View implements View.OnClickListener
     private static final List<Mapping> EMPTY_LIST = new LinkedList<Mapping>();
 
 	
-
+    protected final int mHeight;
     private int currentX;
-    protected int mColorNormal;
-    protected int mColorInverted;
-    protected int mColorDictionary;
-    protected int mColorRecommended;
-    protected int mColorOther;
-    protected int mColorNumber;
+    protected final int mColorNormal;
+    protected final int mColorInverted;
+    protected final int mColorDictionary;
+    protected final int mColorRecommended;
+    protected final int mColorOther;
+    protected final int mColorNumber;
     //private int mVerticalPadding;
+    protected final int mExpandButtonWidth;
+    
     protected Paint mPaint;
     protected Paint nPaint;
-    private Paint cPaint;
+    //private Paint cPaint;
     private boolean mScrolled;
     protected int mTargetScrollX;
     private String mDisplaySelkey = "1234567890";
@@ -179,7 +181,9 @@ public class CandidateView extends View implements View.OnClickListener
     	mColorOther = r.getColor(R.color.candidate_other);
     	mColorNumber = r.getColor(R.color.candidate_number);
     	//mVerticalPadding = r.getDimensionPixelSize(R.dimen.candidate_vertical_padding);
-    
+    	mHeight =  r.getDimensionPixelSize(R.dimen.candidate_stripe_height);
+    	mExpandButtonWidth =  r.getDimensionPixelSize(R.dimen.candidate_expand_button_width);
+    	
     	mPaint = new Paint();
     	mPaint.setColor(mColorNormal);
     	mPaint.setAntiAlias(true);
@@ -247,7 +251,7 @@ public class CandidateView extends View implements View.OnClickListener
         private static final int MSG_UPDATE_UI = 1;
         private static final int MSG_UPDATE_COMPOSING = 2;
         private static final int MSG_HIDE_COMPOSING = 3;
-        private static final int MSG_UPDATE_CANDIDATE_POPUP = 4;
+        private static final int MSG_SHOW_CANDIDATE_POPUP = 4;
         private static final int MSG_HIDE_CANDIDATE_POPUP = 5;
         @Override
         public void handleMessage(Message msg) {
@@ -259,7 +263,7 @@ public class CandidateView extends View implements View.OnClickListener
                 case MSG_UPDATE_COMPOSING:
                 	String composingText = (String) msg.obj;
                 	if(DEBUG) Log.i(TAG, "UIHandler.handleMessage(): compsoingText" + composingText);
-                	showComposing(composingText);
+                	doUpdateComposing(composingText);
                     break;
                 case MSG_HIDE_COMPOSING: {
                 	if(mComposingTextPopup!=null && mComposingTextPopup.isShowing()) {
@@ -267,18 +271,17 @@ public class CandidateView extends View implements View.OnClickListener
             		}
                     break;
                 }
-                case MSG_UPDATE_CANDIDATE_POPUP: {
-                	showCandidatePopup();
+                case MSG_SHOW_CANDIDATE_POPUP: {
+                	doUpdateCandidatePopup();
                     break;
                 }
                 case MSG_HIDE_CANDIDATE_POPUP: {
-                	if(mCandidatePopup!=null && mCandidatePopup.isShowing()) 
-            			mCandidatePopup.dismiss();
-            		requestLayout();
+                	doHideCandidatePopup();
                 	break;
                 }
             }
         }
+		
         public void updateUI (int delay){
         	sendMessageDelayed(obtainMessage(MSG_UPDATE_UI, 0, 0, null), delay);
         }
@@ -290,8 +293,8 @@ public class CandidateView extends View implements View.OnClickListener
         	sendMessageDelayed(obtainMessage(MSG_HIDE_COMPOSING, 0, 0, null), delay);	
         }
 
-        public void  updateCandidatePopup(int delay) {
-        	sendMessageDelayed(obtainMessage(MSG_UPDATE_CANDIDATE_POPUP, 0, 0, null), delay);	
+        public void  showCandidatePopup(int delay) {
+        	sendMessageDelayed(obtainMessage(MSG_SHOW_CANDIDATE_POPUP, 0, 0, null), delay);	
         }
 
         public void  dismissCandidatePopup(int delay) {
@@ -309,15 +312,10 @@ public class CandidateView extends View implements View.OnClickListener
     	}
     	setBackgroundColor(bgcolor);
     	if(mCandidatePopup != null && mCandidatePopup.isShowing()){
-    		showCandidatePopup();
+    		doUpdateCandidatePopup();
 
     	}else{
     		if(!waitingForMoreRecords){  // New suggestion list, reset scroll to (0,0);
-    			/*this.setLayoutParams(
-    					new LinearLayout.LayoutParams(
-    						LinearLayout.LayoutParams.WRAP_CONTENT,
-    						mContext.getResources().getDimensionPixelSize(R.dimen.candidate_stripe_height) *3
-    						));*/
     			scrollTo(0, 0);    
     	        mTargetScrollX = 0;
     		}
@@ -330,8 +328,19 @@ public class CandidateView extends View implements View.OnClickListener
     	waitingForMoreRecords = false;
 
     }
-  
-    public void showCandidatePopup(){
+    private void doHideCandidatePopup() {
+    	
+    	if(mCandidatePopup!=null && mCandidatePopup.isShowing()) {
+    		mCandidatePopup.dismiss();
+    		this.setLayoutParams(new LinearLayout.LayoutParams(
+    						mScreenWidth - mExpandButtonWidth, mHeight));
+    		
+    		
+    	}
+    	candidateExpanded = false;
+    	requestLayout();
+	}
+    public void doUpdateCandidatePopup(){
     	if(DEBUG) 
 			Log.i(TAG, "showCandidatePopup(), creating popup windows");
     	
@@ -343,8 +352,7 @@ public class CandidateView extends View implements View.OnClickListener
     	requestLayout();
      	
     	checkHasMoreRecords();
-    	
-    	
+    	    	
     	if(mCandidatePopup == null){
     		
     		mCandidatePopup = new PopupWindow(mContext);	
@@ -362,13 +370,12 @@ public class CandidateView extends View implements View.OnClickListener
                     MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
           	mCloseButtonHeight =btnClose.getMeasuredHeight();
           	
-          	ScrollView sv=(ScrollView)mCandidatePopupContainer.findViewById(R.id.sv);
-          	mPopupScrollView = sv;
+          	mPopupScrollView=(ScrollView)mCandidatePopupContainer.findViewById(R.id.sv);
           	
           	CandidateExpandedView popupCandidate = 
         		(CandidateExpandedView)mCandidatePopupContainer.findViewById(R.id.candidatePopup);
         	popupCandidate.setParentCandidateView(this);
-        	popupCandidate.setParentScrollView(sv);
+        	popupCandidate.setParentScrollView(mPopupScrollView);
         	popupCandidate.setService(mService);
         	
         	mPopupCandidateView = popupCandidate;
@@ -391,23 +398,48 @@ public class CandidateView extends View implements View.OnClickListener
     	mPopupCandidateView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
     	
+    	/*int popHeight =  3 * mHeight + mCloseButtonHeight;
+    	boolean upperExpand = true;
+    	if(offsetOnScreen[1] < popHeight){
+    		popHeight = mScreenHeight - offsetOnScreen[1] ;
+    		if(mPopupCandidateView.getMeasuredHeight()+mCloseButtonHeight < popHeight)
+        		popHeight = mPopupCandidateView.getMeasuredHeight()+ mCloseButtonHeight;
+    		upperExpand = false;
+    	}else{
+    		this.setLayoutParams(
+    				new LinearLayout.LayoutParams(mScreenWidth - mExpandButtonWidth, popHeight));
+    	}*/
+    	
     	int popHeight = mScreenHeight - offsetOnScreen[1] ;
     	if(mPopupCandidateView.getMeasuredHeight()+mCloseButtonHeight < popHeight)
     		popHeight = mPopupCandidateView.getMeasuredHeight()+ mCloseButtonHeight;
     	
-    	if(DEBUG)
-        	Log.i(TAG, "showCandidatePopup(), screenHeight=" + mScreenHeight 
-        			+ " offsetOnScreen[1] = " + offsetOnScreen[1]
-        			+ " popHeight = " + popHeight   
-        			+ " CandidateExpandedView.measureHeight" + mPopupCandidateView.getMeasuredHeight()
-        			+ "showCandidatePopup(), popupwidth=" + mScreenWidth 
-    				+ " btnClose.getMeasuredHeight() = " +	mCloseButtonHeight);
+    	if(!hasRoomForExpanding()){
+    		popHeight =  3 * mHeight + mCloseButtonHeight;
+    		this.setLayoutParams(
+    				new LinearLayout.LayoutParams(mScreenWidth - mExpandButtonWidth, popHeight));
+    	}
     	
-        
-        mPopupScrollView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT
-    			, popHeight- mCloseButtonHeight));
+    	if(DEBUG)
+        	Log.i(TAG, "showCandidatePopup(), mHeight=" + mHeight 
+        			+ ", offsetOnScreen[1] = " + offsetOnScreen[1]
+        			+ ", popHeight = " + popHeight   
+        			+ ", CandidateExpandedView.measureHeight" + mPopupCandidateView.getMeasuredHeight()
+    				+ ", btnClose.getMeasuredHeight() = " +	mCloseButtonHeight
+    				//+ ", upperExpand:" + upperExpand
+    				);
+    	
+      
     	mCandidatePopup.setWidth(mScreenWidth);
     	mCandidatePopup.setHeight(popHeight);// popHeight); //tv.getMeasuredHeight()+btnClose.getMeasuredHeight());
+    	
+    	mPopupCandidateView.setLayoutParams(
+    			new ScrollView.LayoutParams( LinearLayout.LayoutParams.MATCH_PARENT
+    			, popHeight- mCloseButtonHeight));
+    	  
+        mPopupScrollView.setLayoutParams(
+        		new LinearLayout.LayoutParams( LinearLayout.LayoutParams.MATCH_PARENT
+    			,(int) popHeight- mCloseButtonHeight));
     	
     	
     	if(mCandidatePopup.isShowing())
@@ -419,7 +451,8 @@ public class CandidateView extends View implements View.OnClickListener
     		mPopupScrollView.scrollTo(0, 0);
     		//mCandidatePopup.showAtLocation(this, Gravity.NO_GRAVITY, 0, 0);
     	}
-    	
+    
+
     }
     
     public void setComposingText(String composingText){
@@ -427,18 +460,20 @@ public class CandidateView extends View implements View.OnClickListener
 			Log.i(TAG,"setComposingText():composingText:"+composingText);
     	if(!composingText.trim().equals("")){
     		//mComposingText=composingText;
-        	mHandler.updateComposing(composingText, 0);
+        	//mHandler.updateComposing(composingText, 0);
+    		showComposing(composingText);
     	}else{
     		//mComposingText = "";
-    		mHandler.dismissComposing(0);
+    		//mHandler.dismissComposing(0);
+    		hideComposing();
     	}
     	
     
     }
    
-    public void showComposing(String composingText) {
+    public void doUpdateComposing(String composingText) {
     	if(DEBUG) 
-    		Log.i(TAG,"showcomposing():"+composingText);
+    		Log.i(TAG,"doUpdateComposing():"+composingText);
     	
     	// Composing buffer textView
     	if(mComposingTextPopup==null){
@@ -451,39 +486,46 @@ public class CandidateView extends View implements View.OnClickListener
     		mComposingTextPopup.setBackgroundDrawable(null);
     	}
 
-    	if(cPaint == null){
+    /*	if(cPaint == null){
     		cPaint = new Paint();
     		cPaint.setColor(mColorNormal);
     		cPaint.setAntiAlias(true);
     		cPaint.setTextSize(mContext.getResources().getDimensionPixelSize(R.dimen.composing_text_size));
     		cPaint.setStrokeWidth(0);
-    	}
+    	}*/
     	
-        //if (!mComposingText.equals("")) {	
-    	mComposingTextPopup.setContentView(mComposingTextView);
-    	mComposingTextView.setText(composingText);
+    	
+        if (composingText!=null ) {	
+        	mComposingTextPopup.setContentView(mComposingTextView);
+        	mComposingTextView.setText(composingText);
+        }
     	mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
     			MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-    	int wordWidth = (int) (cPaint.measureText(composingText, 0, composingText.length()));
-
-    	final int popupWidth =  wordWidth
-    	+ mComposingTextView.getPaddingLeft() + mComposingTextView.getPaddingRight();
+    	//int wordWidth = (int) (cPaint.measureText(composingText, 0, composingText.length()));
+    	
+    		//wordWidth
+    		//+ mComposingTextView.getPaddingLeft() + mComposingTextView.getPaddingRight();
+    	final int popupWidth =  mComposingTextView.getMeasuredWidth();
     	final int popupHeight = mComposingTextView.getMeasuredHeight();
-    	//mPreviewText.setVisibility(INVISIBLE);
 
 
-    	//mHandler.removeMessages(MSG_REMOVE_COMPOSING);
     	int [] offsetInWindow = new int[2];
     	this.getLocationInWindow(offsetInWindow);
     	int mPopupComposingY = offsetInWindow[1];
     	int mPopupComposingX = 0;
 
-    	if(DEBUG) Log.i(TAG, "showcomposing(): candidateview offsetInWindow x:" 
-    			+offsetInWindow[0] + ". y:" +offsetInWindow[1]);
+    	
+    			                                           
     	// Show popup windows at the location of cursor  Jeremy '11,7,25
     	// Rely on onCursorUpdate() of inputmethod service, which is not implemented on standard android 
     	// Working on htc implementations
     	if(offsetInWindow[1] == 0 && cursorRect != null){
+    		if(DEBUG) 
+    			Log.i(TAG, "doUpdateComposing(): candidateview offsetInWindow x:" 
+    					+offsetInWindow[0] 
+    					+ ", y:" +offsetInWindow[1]
+    				    + ", cursor.top=" + cursorRect.top
+    				    + ", cursor.left=" + cursorRect.left);
     		mPopupComposingX = cursorRect.left;
     		int [] offsetOnScreen = new int[2];
     		this.getLocationOnScreen(offsetOnScreen);
@@ -495,14 +537,14 @@ public class CandidateView extends View implements View.OnClickListener
     			mPopupComposingY= -popupHeight;
 
     		}
-    		if(DEBUG) Log.i(TAG, "showcomposing(): candidateview offsetOnScreen x:" 
+    		if(DEBUG) Log.i(TAG, "doUpdateComposing(): candidateview offsetOnScreen x:" 
     				+offsetOnScreen[0] + ". y:" +offsetOnScreen[1]);
     	}else{
     		mPopupComposingY -= popupHeight;
     	}
 
     	if(DEBUG) 
-    		Log.i(TAG, "CandiateView:showcomposing():mPopupComposingX:" 
+    		Log.i(TAG, "doUpdateComposing():mPopupComposingX:" 
     				+mPopupComposingX + ". mPopupComposingY:" +mPopupComposingY
     				+"mComposingTextPopup.isShowing()=" + mComposingTextPopup.isShowing() );
 
@@ -518,29 +560,33 @@ public class CandidateView extends View implements View.OnClickListener
     	mComposingTextView.setVisibility(VISIBLE);
 
 
-           // }
         
     }
 
+    public void showComposing(String composingText) {
+    	if(DEBUG) Log.i(TAG, "hidecomposing()");
+    	mHandler.updateComposing(composingText,0);
+    	
+    }
     
     public void hideComposing() {
     	if(DEBUG) Log.i(TAG, "hidecomposing()");
     	mHandler.dismissComposing(0);
     	
     }
+    public void showCandidatePopup(){
+
+    	mHandler.showCandidatePopup(0);
     
+    	
+    }
     
     public void hideCandidatePopup() {
     	if(DEBUG) 
     		Log.i(TAG, "hideCandidatePopup()");
-    	
-    	candidateExpanded = false;
+
     	mHandler.dismissCandidatePopup(0);
     
-    
-    	/*if(mCandidatePopup!=null && mCandidatePopup.isShowing()) 
-    		mCandidatePopup.dismiss();
-        requestLayout();*/
     }
     
     public boolean isCandidateExpanded(){
@@ -550,7 +596,7 @@ public class CandidateView extends View implements View.OnClickListener
     public boolean hasRoomForExpanding(){ 
     	int [] offsetOnScreen = new int[2];
     	this.getLocationOnScreen(offsetOnScreen);
-    	return (mScreenHeight - offsetOnScreen[1]) > 2 * getHeight();
+    	return (mScreenHeight - offsetOnScreen[1]) > 2 * mHeight;//getHeight();
     }
     
     /**
@@ -604,7 +650,7 @@ public class CandidateView extends View implements View.OnClickListener
         }
         
         //final int mCount = mSuggestions.size(); 
-        final int height = getHeight();
+        final int height = mHeight;//= getHeight();
         final Rect bgPadding = mBgPadding;
         final Paint paint = mPaint;
         final Paint npaint = nPaint;
