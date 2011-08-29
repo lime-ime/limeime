@@ -129,12 +129,17 @@ public class CandidateExpandedView extends CandidateView {
         		Log.i(TAG, "onDraw(): mSelectedIndex in at row:" + mSelRow + ", column:" + mSelCol);
         	
         	// Draw highlight on SelectedIndex
-            if (canvas != null && mSelectedIndex >=0) {
-                canvas.translate(mWordX[mSelRow][mSelCol], mSelRow * (height+ mVerticalPadding));
-                mSelectionHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelRow][mSelCol], height);
-                mSelectionHighlight.draw(canvas);
-                canvas.translate(-mWordX[mSelRow][mSelCol], -mSelRow * (height+ mVerticalPadding));
-            }
+        	// 29/Aug/2011, Art just ignore if there is an error. 
+        	try{
+	            if (canvas != null && mSelectedIndex >=0) {
+	                canvas.translate(mWordX[mSelRow][mSelCol], mSelRow * (height+ mVerticalPadding));
+	                mSelectionHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelRow][mSelCol], height);
+	                mSelectionHighlight.draw(canvas);
+	                canvas.translate(-mWordX[mSelRow][mSelCol], -mSelRow * (height+ mVerticalPadding));
+	            }
+        	}catch(ArrayIndexOutOfBoundsException e){
+        		e.printStackTrace();
+        	}
             
             int y = (int) (((height - mPaint.getTextSize()) / 2) - mPaint.ascent());
             int index = 0; //index in mSuggestions
