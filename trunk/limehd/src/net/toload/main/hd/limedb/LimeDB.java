@@ -58,6 +58,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String INITIAL_RESULT_LIMIT = "10";
 	private final static int INITIAL_RELATED_LIMIT = 5;
 	private final static int DUALCODE_COMPOSING_LIMIT = 7;
+	private final static int DUALCODE_LIMIT = 7;
 
 	private final static int DATABASE_VERSION = 66; 
 	//private final static int DATABASE_RELATED_SIZE = 50;
@@ -1702,7 +1703,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 	private String expandDualCode(String code, String keytablename){
 		
-		HashSet <String> dualCodeList = buildDualCodeList(code, keytablename);
+		HashSet <String> dualCodeList = null;
+		if(code.length() < DUALCODE_LIMIT) dualCodeList = buildDualCodeList(code, keytablename);
 		String result="";
 		String validDualCodeList = "";
 		//SQLiteDatabase db = this.getSqliteDb(false);
