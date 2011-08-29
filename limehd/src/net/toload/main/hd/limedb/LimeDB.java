@@ -1022,18 +1022,18 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(DEBUG)
 			Log.i(TAG, "keyToKeyname():keytable:" + keytable); 
 		
-		if(composingText){// building composing text and has dual mapped codes		
-			String dualCodeList = lastValidDualCodeList;
+		if(composingText){// building composing text and get dual mapped codes		
+			
 			if(!code.equals(lastCode)){
 				// unsynchronized cache. do the preprocessing again.
 				preProcessingForExtraQueryConditions(preProcessingRemappingCode(code));
 			}
-			
-			if(dualCodeList!=null ){
+			//String dualCodeList = lastValidDualCodeList;
+			if(lastValidDualCodeList !=null ){
 				if(DEBUG) 
-					Log.i(TAG,"keyToKeyname():dualCodelist:" + dualCodeList + 
+					Log.i(TAG,"keyToKeyname():lastValidDualCodeList:" + lastValidDualCodeList + 
 						" table:"+table + " tablename:" + tablename);
-				code = dualCodeList;
+				//code = dualCodeList;
 				if(tablename.equals("phonetic")){
 					keytable = "phonetic";
 					keyboardtype = "normal_keyboard";
@@ -1058,8 +1058,8 @@ public class LimeDB extends SQLiteOpenHelper {
 			keyString = getImInfo(table,"imkeys");
 			keynameString = getImInfo(table,"imkeynames");
 			
-			//Log.i("ART",keyString);
-			//Log.i("ART",keynameString);
+			if(DEBUG)
+				Log.i(TAG,"keyToKeyname(): load from db: imkeys:keyString=" + keyString + ", imkeynames="+keynameString);
 			
 			if(table.equals("phonetic")|| table.equals("dayi") ||
 					keyString.equals("")||keynameString.equals("")){
@@ -1132,34 +1132,35 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}
 			if(DEBUG) 
-				Log.i("limedb:keyToKeyname()", "keyboardtype:" +keyboardtype + " phonetickeyboardtype:" + phonetickeyboardtype + 
+			Log.i("limedb:keyToKeyname()", "keyboardtype:" +keyboardtype + " phonetickeyboardtype:" + phonetickeyboardtype + 
 					" composing?:" + composingText +
 					" keyString:"+keyString + " keynameString:" +keynameString + " finalkeynameString:" + finalKeynameString);
-			
-			HashMap<String,String> keyMap = new HashMap<String,String>();
-			HashMap<String,String> finalKeyMap = null;
-			if(finalKeynameString != null)
-				finalKeyMap = new HashMap<String,String>();
-			
-			String charlist[] = keynameString.split("\\|");
-			String finalCharlist[] = null;
-			
-			if(finalKeyMap != null)
-				finalCharlist = finalKeynameString.split("\\|");
-				
-			// Ignore the exception of key name mapping.
-			try{
-				for (int i = 0; i < keyString.length(); i++) {
-					keyMap.put(keyString.substring(i, i + 1), charlist[i]);
-					if(finalKeyMap != null && finalCharlist!=null)
-						finalKeyMap.put(keyString.substring(i, i + 1), finalCharlist[i]);
-				}
-			}catch(Exception e){}
-			
-			keyMap.put("|", "|"); //put the seperator for multi-code display
-			keysDefMap.put(keytable, keyMap);
-			if(finalKeyMap != null)
-				keysDefMap.put("final_"+keytable, finalKeyMap);
+			if(keyString!=null && keyString.length()>0){
+				HashMap<String,String> keyMap = new HashMap<String,String>();
+				HashMap<String,String> finalKeyMap = null;
+				if(finalKeynameString != null)
+					finalKeyMap = new HashMap<String,String>();
+
+				String charlist[] = keynameString.split("\\|");
+				String finalCharlist[] = null;
+
+				if(finalKeyMap != null)
+					finalCharlist = finalKeynameString.split("\\|");
+
+				// Ignore the exception of key name mapping.
+				try{
+					for (int i = 0; i < keyString.length(); i++) {
+						keyMap.put(keyString.substring(i, i + 1), charlist[i]);
+						if(finalKeyMap != null && finalCharlist!=null)
+							finalKeyMap.put(keyString.substring(i, i + 1), finalCharlist[i]);
+					}
+				}catch(Exception e){}
+
+				keyMap.put("|", "|"); //put the seperator for multi-code display
+				keysDefMap.put(keytable, keyMap);
+				if(finalKeyMap != null)
+					keysDefMap.put("final_"+keytable, finalKeyMap);
+			}
 			
 		}
 		
@@ -1172,6 +1173,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			return code;
 		
 		}else{
+			code = lastValidDualCodeList;
 			String result = "";
 			HashMap <String,String> keyMap = keysDefMap.get(keytable);
 			HashMap <String,String> finalKeyMap = keysDefMap.get("final_"+keytable);
