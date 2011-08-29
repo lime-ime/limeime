@@ -1173,7 +1173,9 @@ public class LimeDB extends SQLiteOpenHelper {
 			return code;
 		
 		}else{
-			code = lastValidDualCodeList;
+			if(lastValidDualCodeList !=null )
+				code = lastValidDualCodeList;
+			
 			String result = "";
 			HashMap <String,String> keyMap = keysDefMap.get(keytable);
 			HashMap <String,String> finalKeyMap = keysDefMap.get("final_"+keytable);
