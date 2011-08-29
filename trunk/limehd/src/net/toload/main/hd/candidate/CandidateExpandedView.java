@@ -126,7 +126,7 @@ public class CandidateExpandedView extends CandidateView {
         		selCol = mSelectedIndex - mRowStartingIndex[selRow];
         	}*/
         	if(DEBUG)
-        		Log.i(TAG, "onDraw(): mSelectedIndex in at row:" + mSelRow + ", column:" + mSelCol);
+        		Log.i(TAG, "onDraw(): mSelectedIndex=" + mSelectedIndex + " at row:" + mSelRow + ", column:" + mSelCol);
         	
         	// Draw highlight on SelectedIndex
         	// 29/Aug/2011, Art just ignore if there is an error. 
@@ -263,8 +263,14 @@ public class CandidateExpandedView extends CandidateView {
 			mSelectedIndex = mCandidateView.mSelectedIndex;
 			mTouchX = OUT_OF_BOUNDS;
 			mTouchY = OUT_OF_BOUNDS;
-			mSelCol = mSelectedIndex;
-			mSelRow = 0; 
+			if(mSelectedIndex==-1){
+				mSelCol = -1;
+				mSelRow = -1;
+			}else{
+				mSelCol = mSelectedIndex;
+				mSelRow = 0;
+			}
+			 
 		}
 		prepareLayout();
 		requestLayout();
@@ -303,14 +309,27 @@ public class CandidateExpandedView extends CandidateView {
 	}
 
 	private void scrollToRow(int row){
-		mParentScroolView.scrollTo(0, row*((mHeight + mVerticalPadding)));
+		int selY = row*(mHeight + mVerticalPadding);
+		int scrollY = mParentScroolView.getScrollY();
+		int scrollHeight = mParentScroolView.getHeight();
+		if(DEBUG) Log.i(TAG, "scrollToRow(), row=" + row
+					+ ", selected row y=" + selY
+					+ ", ScrollViewHeight" + scrollHeight
+					+ ", ScollY="+scrollY);
+		
+		if(selY <  scrollY || selY > (scrollY + scrollHeight))
+			mParentScroolView.scrollTo(0, row*((mHeight + mVerticalPadding)));
 		
 	}
 	
 	@Override
 	public void selectNext() {
 		if (mSuggestions == null) return;
-    	if(mSelectedIndex < mCount-1){
+		if(mSelectedIndex == -1){
+			mSelectedIndex=0;
+			mSelRow=0;
+			mSelCol=0;
+		}else if(mSelectedIndex < mCount-1){
     		mSelectedIndex++;
     		if(mSelectedIndex >= mRowStartingIndex[mSelRow] + mRowSize[mSelRow]){
     			mSelRow++;
@@ -329,7 +348,7 @@ public class CandidateExpandedView extends CandidateView {
     	if(mSelectedIndex > 0) {
     		mSelectedIndex--;
     		if(mSelectedIndex < mRowStartingIndex[mSelRow] ){
-    			mSelRow--;
+    			mSelRow--;  
     			mSelCol = mRowSize[mSelRow]-1;
     			scrollToRow(mSelRow);
     		}else
@@ -343,6 +362,7 @@ public class CandidateExpandedView extends CandidateView {
 		if (mSuggestions == null) return;
 		if(mSelRow < mRows-1){
 			mSelRow ++;
+
 			if(DEBUG)
 				Log.i(TAG,"selectNextRow(): newRow=" + mSelRow 
 					+ ", mSelCol=" + mSelCol
@@ -350,6 +370,8 @@ public class CandidateExpandedView extends CandidateView {
 					+ ", + mRowSize[mSelRow]" + + mRowSize[mSelRow]);
 			if(mSelCol >  mRowSize[mSelRow]-1)
 				mSelCol = mRowSize[mSelRow]-1;
+			else if(mSelCol == -1)
+				mSelCol =0;
 			
 			mSelectedIndex = mRowStartingIndex[mSelRow] + mSelCol;
 			scrollToRow(mSelRow);
