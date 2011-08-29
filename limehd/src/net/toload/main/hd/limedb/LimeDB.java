@@ -57,6 +57,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	//Jeremy '11,8,5
 	private final static String INITIAL_RESULT_LIMIT = "10";
 	private final static int INITIAL_RELATED_LIMIT = 5;
+	private final static int DUALCODE_COMPOSING_LIMIT = 7;
 
 	private final static int DATABASE_VERSION = 66; 
 	//private final static int DATABASE_RELATED_SIZE = 50;
@@ -1004,6 +1005,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		if(DEBUG) 
 			Log.i(TAG, "keyToKeyname():code:" + code + 
+				" lastValidDualCodeList=" + lastValidDualCodeList +
 				" table:"+table + " tablename:" + tablename +
 				" isPhysicalKeybaordPressed:" + isPhysicalKeyboardPressed +
 				" keyboardtype: " + keyboardtype +
@@ -1026,11 +1028,12 @@ public class LimeDB extends SQLiteOpenHelper {
 			
 			if(!code.equals(lastCode)){
 				// unsynchronized cache. do the preprocessing again.
-				preProcessingForExtraQueryConditions(preProcessingRemappingCode(code));
+				//preProcessingForExtraQueryConditions(preProcessingRemappingCode(code));
+				getMapping(code,false,false);
 			}
 			//String dualCodeList = lastValidDualCodeList;
 			if(lastValidDualCodeList !=null ){
-				if(DEBUG) 
+				//if(DEBUG) 
 					Log.i(TAG,"keyToKeyname():lastValidDualCodeList:" + lastValidDualCodeList + 
 						" table:"+table + " tablename:" + tablename);
 				//code = dualCodeList;
@@ -1175,6 +1178,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		}else{
 			if(lastValidDualCodeList !=null )
 				code = lastValidDualCodeList;
+			if(DEBUG) 
+				Log.i("limedb:keyToKeyname()","lastValidDualCodeList=" + lastValidDualCodeList);
 			
 			String result = "";
 			HashMap <String,String> keyMap = keysDefMap.get(keytable);
@@ -1720,8 +1725,8 @@ public class LimeDB extends SQLiteOpenHelper {
 //							codeCol + " = '" + dualcode + "'", 
 //								null, null, null, null, null);
 //					if(cursor.moveToFirst()){ //fist entry exist, the code is valid.
-				if(validDualCodeList.equals("")) validDualCodeList = dualcode;
-				else validDualCodeList = validDualCodeList + "|" + dualcode;
+//				if(validDualCodeList.equals("")) validDualCodeList = dualcode;
+//				else validDualCodeList = validDualCodeList + "|" + dualcode;
 
 				if(!dualcode.equals(code))
 					result = result + " OR "+  codeCol + "= '"+ dualcode +"'";
@@ -1733,10 +1738,10 @@ public class LimeDB extends SQLiteOpenHelper {
 //				 
 			}
 //			db.close();
-			if(validDualCodeList.equals(""))
-				lastValidDualCodeList = null;
-			else
-				lastValidDualCodeList = validDualCodeList;
+//			if(validDualCodeList.equals(""))
+//				lastValidDualCodeList = null;
+//			else
+//				lastValidDualCodeList = validDualCodeList;
 		}
 		if(DEBUG)
 			Log.i(TAG, "expandDualCode(): result:" + result + " validDualCodeList:" + validDualCodeList);
@@ -1757,6 +1762,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		HashSet<String> duplicateCheck = new HashSet<String>();
 		HashSet<String> validCodeMap = new HashSet<String>();  //Jeremy '11,8,26
 		int rsize = 0;
+		//jeremy '11,8,30 reset lastVaidDualCodeList first.
+		lastValidDualCodeList=null;
 		
 		boolean useCode3r =tablename.equals("phonetic")
 				&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) 
@@ -1781,7 +1788,8 @@ public class LimeDB extends SQLiteOpenHelper {
 				munit.setCode(code);
 				
 				//Jeremy '11,8,26 build valid code map
-				if(useCode3r)
+				//jeremy '11,8,30 add limit for vali code words for composing display
+				if(useCode3r && validCodeMap.size()< DUALCODE_COMPOSING_LIMIT)
 					validCodeMap.add(cursor.getString(code3rColumn));
 				else
 					validCodeMap.add(code);
@@ -1813,10 +1821,10 @@ public class LimeDB extends SQLiteOpenHelper {
 			} while (cursor.moveToNext());
 			
 			//Jeremy '11,8,26 build valid code map
+			
 			if(validCodeMap.size()>0){
-				lastValidDualCodeList="";
 				for(String validCode : validCodeMap){
-					if(lastValidDualCodeList.equals("")) lastValidDualCodeList = validCode;
+					if(lastValidDualCodeList==null) lastValidDualCodeList = validCode;
 					else lastValidDualCodeList = lastValidDualCodeList + "|" + validCode;
 				}
 			}
