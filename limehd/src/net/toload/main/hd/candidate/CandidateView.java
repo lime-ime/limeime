@@ -321,6 +321,7 @@ public class CandidateView extends View implements View.OnClickListener
     	        mTargetScrollX = 0;
     		}
     		onDraw(null);
+    		resetWidth();
     		invalidate();
     		requestLayout();
 
@@ -333,14 +334,17 @@ public class CandidateView extends View implements View.OnClickListener
     	
     	if(mCandidatePopup!=null && mCandidatePopup.isShowing()) {
     		mCandidatePopup.dismiss();
-    		this.setLayoutParams(new LinearLayout.LayoutParams(
-    						mScreenWidth - mExpandButtonWidth, mHeight));
-    		
-    		
+    		resetWidth();	
     	}
     	candidateExpanded = false;
     	invalidate();
     	requestLayout();
+	}
+	private void resetWidth() {
+		int candiWidth = mScreenWidth;
+		if(mTotalWidth > mScreenWidth) candiWidth -= mExpandButtonWidth;
+		this.setLayoutParams(new LinearLayout.LayoutParams(
+				candiWidth, mHeight));
 	}
     public void doUpdateCandidatePopup(){
     	if(DEBUG) 
