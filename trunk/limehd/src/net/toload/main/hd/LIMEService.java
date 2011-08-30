@@ -1974,11 +1974,11 @@ public class LIMEService extends InputMethodService implements
 				// Show composing window if keyToKeyname got different string. Revised by Jeremy '11,6,4
 				if (SearchSrv.getTablename() != null ) {
 						
-					if (keyString != null && !keyString.equals("")&& keyString.length() < 7) {					
+					if (keyString != null && !keyString.equals("") ){//&& keyString.length() < 7) { Jeremy '11,8,30 move the limit to limedb					
 						keynameString = SearchSrv.keyToKeyname(keyString.toLowerCase());
 							if (mCandidateView != null 
 									&& !keynameString.toUpperCase().equals(keyString.toUpperCase())
-									&& !keynameString.equals("")
+									//&& !keynameString.equals("")
 									&& !keynameString.trim().equals("")
 									) {
 								mCandidateView.setComposingText(keynameString);	
