@@ -57,8 +57,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	//Jeremy '11,8,5
 	private final static String INITIAL_RESULT_LIMIT = "10";
 	private final static int INITIAL_RELATED_LIMIT = 5;
+	private final static int COMPOSING_CODE_LENGTH_LIMIT = 12;
 	private final static int DUALCODE_COMPOSING_LIMIT = 7;
-	private final static int DUALCODE_LIMIT = 7;
+	private final static int DUALCODE_LIMIT = 5;
 
 	private final static int DATABASE_VERSION = 66; 
 	//private final static int DATABASE_RELATED_SIZE = 50;
@@ -344,7 +345,10 @@ public class LimeDB extends SQLiteOpenHelper {
 				Log.d(TAG, "checkLDPhonetic(), code3r has vaid records.!!");
 				hasValidRecords = true;
 			}
-			
+			if (cursor != null) {
+				cursor.deactivate();
+				cursor.close();
+			}
 			mLIMEPref.setParameter("checkLDPhonetic", "done");
 			mLIMEPref.setParameter("doLDPhonetic", hasIndex && hasValidRecords);
 			
@@ -969,6 +973,10 @@ public class LimeDB extends SQLiteOpenHelper {
 					scorelist.add(munit);
 				}
 			} while (cursor.moveToNext());
+			if (cursor != null) {
+				cursor.deactivate();
+				cursor.close();
+			}
 		
 		// Rebuild the related list string and update the record.
 			String newRelatedlist = "";
@@ -996,9 +1004,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 //Rewrite by Jeremy 11,6,4.  Supporting array and dayi now.
 	public String keyToKeyname(String code, String table, Boolean composingText) {
-		//QP and LD may >4.
-		//if(composingText && tablename.equals("phonetic") && code.length()>4 ) // phonetic never has code length >4 
-		//	return code;
+		//Jeremy '11,8,30 
+		if(composingText && code.length()> COMPOSING_CODE_LENGTH_LIMIT ) 
+			return code;
 		
 		String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 		String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
@@ -1034,7 +1042,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 			//String dualCodeList = lastValidDualCodeList;
 			if(lastValidDualCodeList !=null ){
-				//if(DEBUG) 
+				if(DEBUG) 
 					Log.i(TAG,"keyToKeyname():lastValidDualCodeList:" + lastValidDualCodeList + 
 						" table:"+table + " tablename:" + tablename);
 				//code = dualCodeList;
@@ -1344,11 +1352,11 @@ public class LimeDB extends SQLiteOpenHelper {
 					
 	
 					result = buildQueryResult(code, cursor, getAllRecords);
-	
 					if (cursor != null) {
 						cursor.deactivate();
 						cursor.close();
 					}
+					
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -1647,7 +1655,8 @@ public class LimeDB extends SQLiteOpenHelper {
 				HashSet<String> tempSet = new HashSet<String>(dualCodeList);
 				for(String currentCode : tempSet) {
 					//String currentCode = dualCodeList.get(i);
-					if(DEBUG) Log.i(TAG, "buildDualCodeList():currentSize:"+ currentListSize + " curretnCode:" + currentCode);
+					if(DEBUG) 
+						Log.i(TAG, "buildDualCodeList():currentSize:"+ currentListSize + " curretnCode:" + currentCode);
 					for(int j=0; j< currentCode.length(); j++){
 						String c = currentCode.substring(j, j+1);
 
@@ -1685,8 +1694,12 @@ public class LimeDB extends SQLiteOpenHelper {
 			for(String iterator_code: tempList){
 				if(iterator_code.matches(".+[ 3467].+")){ // regular expression mathes tone in the middle
 					String newCode = iterator_code.replaceAll("[ 3467]","");
-					dualCodeList.add(newCode);
-					if(DEBUG) Log.i(TAG, "buildDualCodeList(): code added:"+ newCode);
+					if(newCode.length()>0 )
+						if(dualCodeList.add(newCode) 
+							&& DEBUG 
+							)
+							Log.i(TAG, "buildDualCodeList() for LD: code added:"+ newCode);
+					
 				}
 			}
 		}
@@ -1703,48 +1716,66 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 	private String expandDualCode(String code, String keytablename){
 		
-		HashSet <String> dualCodeList = null;
-		if(code.length() < DUALCODE_LIMIT) dualCodeList = buildDualCodeList(code, keytablename);
+		HashSet <String> dualCodeList = buildDualCodeList(code, keytablename);
 		String result="";
 		String validDualCodeList = "";
-		//SQLiteDatabase db = this.getSqliteDb(false);
+	
 		
+
 		if(dualCodeList != null) {
+			SQLiteDatabase db = this.getSqliteDb(false);
+			final boolean NOCheckOnExpand = code.length() < DUALCODE_LIMIT;
+			String codeCol = FIELD_CODE;
+			final boolean doCode3r = tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", false);
+			if( doCode3r && !code.matches(".+[3467 ].*"))
+				codeCol = FIELD_CODE3R;
+		
 			for(String dualcode : dualCodeList){
 				if(DEBUG) 
-					Log.i(TAG, "expandDualCode(): processing dualcode: " + dualcode + "|");
-				String codeCol = FIELD_CODE;
-				if(tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) 
-						&& !code.matches(".+[3467 ].*"))
-					codeCol = FIELD_CODE3R;
-				
-				dualcode = dualcode.trim();
-			//Jeremy '11,8, 26 move valid code list building to buildqueryresult to avoid repeat query.
-//				String[] col = {"DISTINCT " + codeCol};
-//				
-//				try{
-//					Cursor cursor = db.query(tablename, col, 
-//							codeCol + " = '" + dualcode + "'", 
-//								null, null, null, null, null);
-//					if(cursor.moveToFirst()){ //fist entry exist, the code is valid.
-//				if(validDualCodeList.equals("")) validDualCodeList = dualcode;
-//				else validDualCodeList = validDualCodeList + "|" + dualcode;
+					Log.i(TAG, "expandDualCode(): processing dualcode = '" + dualcode + "'");
 
-				if(!dualcode.equals(code))
-					result = result + " OR "+  codeCol + "= '"+ dualcode +"'";
-		
-//					}
-//				} catch (Exception e) {
-//					e.printStackTrace();
-//				}
-//				 
+				dualcode = dualcode.trim();
+				if(dualcode.length()==0) continue;
+
+				if(NOCheckOnExpand){
+					if(!dualcode.equals(code))
+						result = result + " OR "+  codeCol + "= '"+ dualcode +"'";
+				}else{
+					//Jeremy '11,8, 26 move valid code list building to buildqueryresult to avoid repeat query.
+					try{
+						if( doCode3r && !dualcode.matches(".+[3467 ].*"))
+							codeCol = FIELD_CODE3R;
+						else
+							codeCol = FIELD_CODE;
+						String[] col = {codeCol};//"DISTINCT " + codeCol};
+
+						Cursor cursor = db.query(tablename, col, 
+								codeCol + " = '" + dualcode + "'", 
+								null, null, null, null, "1");
+						if(cursor.moveToFirst()){ //fist entry exist, the code is valid.
+							if(validDualCodeList.equals("")) validDualCodeList = dualcode;
+							else validDualCodeList = validDualCodeList + "|" + dualcode;
+							if(!dualcode.equals(code)) 
+								result = result + " OR "+  codeCol + "= '"+ dualcode +"'";
+						}
+						if (cursor != null) {
+							cursor.deactivate();
+							cursor.close();
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+
+				}
 			}
-//			db.close();
-//			if(validDualCodeList.equals(""))
-//				lastValidDualCodeList = null;
-//			else
-//				lastValidDualCodeList = validDualCodeList;
+			db.close();
+			if(validDualCodeList.equals(""))
+				lastValidDualCodeList = null;
+			else
+				lastValidDualCodeList = validDualCodeList;
+
 		}
+		
 		if(DEBUG)
 			Log.i(TAG, "expandDualCode(): result:" + result + " validDualCodeList:" + validDualCodeList);
 		return result;
@@ -1765,7 +1796,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		HashSet<String> validCodeMap = new HashSet<String>();  //Jeremy '11,8,26
 		int rsize = 0;
 		//jeremy '11,8,30 reset lastVaidDualCodeList first.
-		lastValidDualCodeList=null;
+		final boolean buildValidCodeList = lastValidDualCodeList==null;
 		
 		boolean useCode3r =tablename.equals("phonetic")
 				&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) 
@@ -1791,10 +1822,12 @@ public class LimeDB extends SQLiteOpenHelper {
 				
 				//Jeremy '11,8,26 build valid code map
 				//jeremy '11,8,30 add limit for vali code words for composing display
+				if(buildValidCodeList){
 				if(useCode3r && validCodeMap.size()< DUALCODE_COMPOSING_LIMIT)
 					validCodeMap.add(cursor.getString(code3rColumn));
 				else
 					validCodeMap.add(code);
+				}
 				
 
 				// 06/Aug/2011 by Art: ignore the result when word == keyToKeyname(code)
@@ -1822,9 +1855,10 @@ public class LimeDB extends SQLiteOpenHelper {
 				rsize++;
 			} while (cursor.moveToNext());
 			
+			
 			//Jeremy '11,8,26 build valid code map
 			
-			if(validCodeMap.size()>0){
+			if(buildValidCodeList && validCodeMap.size()>0){
 				for(String validCode : validCodeMap){
 					if(lastValidDualCodeList==null) lastValidDualCodeList = validCode;
 					else lastValidDualCodeList = lastValidDualCodeList + "|" + validCode;
@@ -2478,6 +2512,10 @@ public class LimeDB extends SQLiteOpenHelper {
 					munit.setDictionary(false);
 					
 				} 
+				if (cursor != null) {
+					cursor.deactivate();
+					cursor.close();
+				}
 				
 				db.close();
 			} catch (Exception e) {
@@ -2528,6 +2566,10 @@ public class LimeDB extends SQLiteOpenHelper {
 						munit.setDictionary(true);
 					
 				} 
+				if (cursor != null) {
+					cursor.deactivate();
+					cursor.close();
+				}
 				db.close();
 			} catch (Exception e) {
 				db.close();
@@ -2552,23 +2594,26 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @param srcunit
 	 */
 	public String getImInfo(String im, String field) {
+		String iminfo = "";
 		try{
 			//String value = "";
 			String selectString = "SELECT * FROM im WHERE code='"+im+"' AND title='"+field+"'";
 			SQLiteDatabase db = this.getSqliteDb(true);
 	
 			Cursor cursor = db.rawQuery(selectString ,null);
+
 			if (cursor.getCount() > 0) {
 				cursor.moveToFirst();
 				int descCol = cursor.getColumnIndex("desc");
-				String iminfo = cursor.getString(descCol);
-				db.close();
-				return iminfo;
+				iminfo = cursor.getString(descCol);
 			}
-			
+			if (cursor != null) {
+				cursor.deactivate();
+				cursor.close();
+			}
 			db.close();
 		}catch(Exception e){}
-		return "";
+		return iminfo;
 	}
 	
 	/**
@@ -2615,6 +2660,10 @@ public class LimeDB extends SQLiteOpenHelper {
 					}
 				} while (cursor.moveToNext());
 			}
+			if (cursor != null) {
+				cursor.deactivate();
+				cursor.close();
+			}
 			db.close();
 		} catch (Exception e) {
 			Log.i(TAG,"getImList(): Cannot get IM List : " + e );
@@ -2647,6 +2696,10 @@ public class LimeDB extends SQLiteOpenHelper {
 				kobj.setExtendedkb(cursor.getString(cursor.getColumnIndex("extendedkb")));
 				kobj.setExtendedshiftkb(cursor.getString(cursor.getColumnIndex("extendedshiftkb")));
 			}
+			if (cursor != null) {
+				cursor.deactivate();
+				cursor.close();
+			}
 			db.close();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -2662,6 +2715,10 @@ public class LimeDB extends SQLiteOpenHelper {
 					, null, null, null, null, null);
 			if (cursor.moveToFirst()) {
 				info = cursor.getString(cursor.getColumnIndex(field));
+			}
+			if (cursor != null) {
+				cursor.deactivate();
+				cursor.close();
 			}
 			db.close();
 		} catch (Exception e) {
@@ -2698,6 +2755,10 @@ public class LimeDB extends SQLiteOpenHelper {
 								kobj.setExtendedshiftkb(cursor.getString(cursor.getColumnIndex("extendedshiftkb")));
 					result.add(kobj);
 				} while (cursor.moveToNext());
+			}
+			if (cursor != null) {
+				cursor.deactivate();
+				cursor.close();
 			}
 			db.close();
 		} catch (Exception e) {
@@ -2738,6 +2799,10 @@ public class LimeDB extends SQLiteOpenHelper {
 				db.close();
 				return keyboardCode;
 			}
+			if (cursor != null) {
+				cursor.deactivate();
+				cursor.close();
+			}
 			db.close();
 		}catch(Exception e){}
 		return "";
@@ -2761,7 +2826,10 @@ public class LimeDB extends SQLiteOpenHelper {
 					}
 				} while (cursor.moveToNext());
 			}
-			
+			if (cursor != null) {
+				cursor.deactivate();
+				cursor.close();
+			}
 			db.close();
 		}catch(Exception e){}
 		
