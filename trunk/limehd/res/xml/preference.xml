@@ -49,8 +49,15 @@
                 android:key="number_row_in_english"
                 android:title="@string/number_row_in_english" 
                 android:summary="@string/number_row_in_english_summary"
-            	android:defaultValue="false" 
+            	android:defaultValue="true" 
                 />
+       <ListPreference
+    			android:key="font_size"
+    			android:title="@string/font_size" 
+    			android:entries="@array/font_size_options" 
+    			android:entryValues="@array/font_size_values" 
+    			android:dialogTitle="@string/font_size" 
+    			android:defaultValue="1"/>  
         <CheckBoxPreference
                 android:key="vibrate_on_keypress"
                 android:defaultValue="false" 

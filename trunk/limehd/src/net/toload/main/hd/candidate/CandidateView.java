@@ -96,7 +96,7 @@ public class CandidateView extends View implements View.OnClickListener
     private static final List<Mapping> EMPTY_LIST = new LinkedList<Mapping>();
 
 	
-    protected final int mHeight;
+    protected int mHeight;
     private int currentX;
     protected final int mColorNormal;
     protected final int mColorInverted;
@@ -104,8 +104,8 @@ public class CandidateView extends View implements View.OnClickListener
     protected final int mColorRecommended;
     protected final int mColorOther;
     protected final int mColorNumber;
-    //private int mVerticalPadding;
-    protected final int mExpandButtonWidth;
+    protected int mVerticalPadding;
+    protected int mExpandButtonWidth;
     
     protected Paint mPaint;
     protected Paint nPaint;
@@ -128,7 +128,7 @@ public class CandidateView extends View implements View.OnClickListener
     protected int mScreenHeight;
     
     protected GestureDetector mGestureDetector;
-    private final Context mContext;
+    protected final Context mContext;
     private final boolean isAndroid3; //'11,8,11, Jeremy
     
     protected LIMEPreferenceManager mLIMEPref;
@@ -181,20 +181,20 @@ public class CandidateView extends View implements View.OnClickListener
     	mColorRecommended = r.getColor(R.color.candidate_recommended);
     	mColorOther = r.getColor(R.color.candidate_other);
     	mColorNumber = r.getColor(R.color.candidate_number);
-    	//mVerticalPadding = r.getDimensionPixelSize(R.dimen.candidate_vertical_padding);
-    	mHeight =  r.getDimensionPixelSize(R.dimen.candidate_stripe_height);
-    	mExpandButtonWidth =  r.getDimensionPixelSize(R.dimen.candidate_expand_button_width);
+    	mVerticalPadding =(int)( r.getDimensionPixelSize(R.dimen.candidate_vertical_padding)*mLIMEPref.getFontSize());
+    	mHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) *mLIMEPref.getFontSize());
+    	mExpandButtonWidth = r.getDimensionPixelSize(R.dimen.candidate_expand_button_width);// *mLIMEPref.getFontSize());
     	
     	mPaint = new Paint();
     	mPaint.setColor(mColorNormal);
     	mPaint.setAntiAlias(true);
-    	mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_size));
+    	mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_size)*mLIMEPref.getFontSize());
     	mPaint.setStrokeWidth(0);
 
     	nPaint = new Paint();
     	nPaint.setColor(mColorNumber);
     	nPaint.setAntiAlias(true);
-    	nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_size));
+    	nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_size)*mLIMEPref.getFontSize());
     	nPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
     
@@ -312,6 +312,9 @@ public class CandidateView extends View implements View.OnClickListener
     		return;
     	}
     	setBackgroundColor(bgcolor);
+    	
+    	
+    	
     	if(mCandidatePopup != null && mCandidatePopup.isShowing()){
     		doUpdateCandidatePopup();
 
@@ -330,6 +333,16 @@ public class CandidateView extends View implements View.OnClickListener
     	waitingForMoreRecords = false;
 
     }
+	protected void updateFontSize() {
+		Resources r = mContext.getResources();
+		float scaling = mLIMEPref.getFontSize();
+    	mHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) * scaling);
+    	//mExpandButtonWidth =(int) ( r.getDimensionPixelSize(R.dimen.candidate_expand_button_width)  * scaling);
+    	mVerticalPadding =(int)( r.getDimensionPixelSize(R.dimen.candidate_vertical_padding)* scaling);
+    	mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_size)* scaling);
+    	nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_size)* scaling);
+    	if(DEBUG) Log.i(TAG, "updateFontSize(), scaling=" + scaling +", mVerticalPadding=" + mVerticalPadding);
+	}
     private void doHideCandidatePopup() {
     	
     	if(mCandidatePopup!=null && mCandidatePopup.isShowing()) {
@@ -506,7 +519,11 @@ public class CandidateView extends View implements View.OnClickListener
         if (composingText!=null ) {	
         	mComposingTextPopup.setContentView(mComposingTextView);
         	mComposingTextView.setText(composingText);
-        }
+        	mComposingTextView.setTextSize(
+        			mContext.getResources().getDimensionPixelSize(R.dimen.candidate_number_font_size) 
+        			*mLIMEPref.getFontSize());
+        }else
+        	return;
     	mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
     			MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
     	//int wordWidth = (int) (cPaint.measureText(composingText, 0, composingText.length()));
@@ -653,6 +670,7 @@ public class CandidateView extends View implements View.OnClickListener
     		Log.i(TAG, "Candidateview:OnDraw():Suggestion mCount:" + mCount+" mSuggestions.size:" + mSuggestions.size());
         mTotalWidth = 0;
         
+        updateFontSize();
         
         if (mBgPadding == null) {
             mBgPadding = new Rect(0, 0, 0, 0);

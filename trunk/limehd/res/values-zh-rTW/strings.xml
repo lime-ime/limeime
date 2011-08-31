@@ -460,4 +460,16 @@
     <!-- AD Message -->
     <string name="ad_zippy">藍芽鍵盤測試支援\nZIPPY BT-540 藍芽一對六鍵盤 - http://www.zippy.com (Sam Lin/sam_lin@hotmail.com)</string>
     
+    
+    <!-- Version 3 UI and Theme String Set -->
+    <!-- Candi/Composing Font Size Options List -->
+    <string name="font_size">字型大小</string>
+	<string-array name="font_size_options">
+		<item>特大</item>
+		<item>大</item>
+		<item>一般</item>
+		<item>小</item>
+		<item>特小</item>
+	</string-array>
+
 </resources>

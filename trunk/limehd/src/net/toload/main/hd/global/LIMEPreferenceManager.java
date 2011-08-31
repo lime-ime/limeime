@@ -277,6 +277,12 @@ public class LIMEPreferenceManager {
 		return Integer.parseInt(sp.getString("similiar_list", "20"));
 	}
 	
+	public float getFontSize(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return Float.parseFloat(sp.getString("font_size", "1"));
+		
+	}
+	
 	public boolean getShowNumberKeypard(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);

@@ -2,7 +2,6 @@ package net.toload.main.hd.candidate;
 
 import java.util.List;
 
-import net.toload.main.hd.R;
 import net.toload.main.hd.global.Mapping;
 
 import android.content.Context;
@@ -24,7 +23,7 @@ public class CandidateExpandedView extends CandidateView {
 	
 	private CandidateView mCandidateView;
 	private List<Mapping> mSuggestions;
-	private int mVerticalPadding;
+	//private int mVerticalPadding;
 	private int mTouchX = OUT_OF_BOUNDS;
 	private int mTouchY = OUT_OF_BOUNDS;
 	private int mSelRow; //Jeremy '11,8,28
@@ -41,8 +40,8 @@ public class CandidateExpandedView extends CandidateView {
 	public CandidateExpandedView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		//this.mGestureDetector = null;
-		mVerticalPadding = context.getResources()
-				.getDimensionPixelSize(R.dimen.candidate_vertical_padding);
+		//mVerticalPadding =(int)( context.getResources()
+		//		.getDimensionPixelSize(R.dimen.candidate_vertical_padding) *mLIMEPref.getFontSize());
 	
     	
 	}
@@ -69,6 +68,7 @@ public class CandidateExpandedView extends CandidateView {
 		if(DEBUG)
     		Log.i(TAG, "OnDraw() mSuggestions.size:" + mSuggestions.size());
     	
+
     	//mTotalWidth = 0;
     	if (mBgPadding == null) {
     		mBgPadding = new Rect(0, 0, 0, 0);
@@ -155,7 +155,7 @@ public class CandidateExpandedView extends CandidateView {
         				Log.i(TAG, "Candidateview:OnDraw():index:" + index + "  Drawing:" + suggestion );
 
         			if(mSuggestions.get(i).isDictionary()){
-        				npaint.setColor(mColorRecommended);
+        				//npaint.setColor(mColorRecommended);
         				paint.setColor(mColorDictionary);
         			}else{
         				npaint.setColor(mColorOther);
@@ -194,11 +194,13 @@ public class CandidateExpandedView extends CandidateView {
 	{	
 		
 		if(mSuggestions == null || mSuggestions.size()==0) return;
-		
+			
 		if(DEBUG)
 			Log.i(TAG, "prepareLayout():mSuggestions.size()" + mSuggestions.size());
 		
-		final int height = mCandidateView.mHeight;
+		updateFontSize();
+		
+		final int height = mHeight;
         final Paint paint = mPaint;
 		int x = 0;
 		int row=0;
