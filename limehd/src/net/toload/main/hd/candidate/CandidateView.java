@@ -520,7 +520,7 @@ public class CandidateView extends View implements View.OnClickListener
         	mComposingTextPopup.setContentView(mComposingTextView);
         	mComposingTextView.setText(composingText);
         	mComposingTextView.setTextSize(
-        			mContext.getResources().getDimensionPixelSize(R.dimen.candidate_number_font_size) 
+        			mContext.getResources().getDimensionPixelSize(R.dimen.composing_text_size) 
         			*mLIMEPref.getFontSize());
         }else
         	return;
