@@ -62,6 +62,13 @@
                 android:key="vibrate_on_keypress"
                 android:defaultValue="false" 
                 android:title="@string/vibrate_on_keypress" />
+         <ListPreference
+    			android:key="vibrate_level"
+    			android:title="@string/vibrate_level" 
+    			android:entries="@array/vibrate_level_options" 
+    			android:entryValues="@array/vibrate_level_values" 
+    			android:dialogTitle="@string/vibrate_level" 
+    			android:defaultValue="40"/>  
         <CheckBoxPreference
                 android:key="sound_on_keypress"
                 android:defaultValue="false" 

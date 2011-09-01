@@ -2919,7 +2919,8 @@ public class LIMEService extends InputMethodService implements
 	public void doVibrateSound(int primaryCode) {
 		if(DEBUG) Log.i(TAG,"doVibrateSound()");
 		if (hasVibration) {
-			mVibrator.vibrate(40);
+			//Jeremy '11,9,1 add preference on vibrate level
+			mVibrator.vibrate(mLIMEPref.getVibrateLevel());
 		}
 		if (hasSound) {
 			int sound = AudioManager.FX_KEYPRESS_STANDARD;

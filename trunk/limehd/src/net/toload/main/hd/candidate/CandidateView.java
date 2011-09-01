@@ -934,7 +934,7 @@ public class CandidateView extends View implements View.OnClickListener
             if (y <= 0) {
                 // Fling up!?
                 if (mSelectedIndex >= 0) {
-                	takeSelectedSuggestion();
+                	takeSelectedSuggestion(true);
                     mSelectedIndex = -1;
                 }
             }
@@ -943,7 +943,7 @@ public class CandidateView extends View implements View.OnClickListener
         case MotionEvent.ACTION_UP:
             if (!mScrolled) {
                 if (mSelectedIndex >= 0) {
-                    takeSelectedSuggestion();
+                    takeSelectedSuggestion(true);
                 }
             }
             mSelectedIndex = -1;
@@ -1059,9 +1059,8 @@ public class CandidateView extends View implements View.OnClickListener
     	if(DEBUG){
     		Log.i(TAG, "takeSuggestion():mSelectedIndex:" + mSelectedIndex);
     	}
-    	hideCandidatePopup();
-    	//Jeremy '11,8.27 do vibrate and sound on suggestion picked from candidateview
-    	mService.doVibrateSound(0);
+    
+    	
     	if (mSuggestions != null && index >= 0 && index <= mSuggestions.size() ) {
     		mService.pickSuggestionManually(index);
     		return true;  // Selection picked
@@ -1070,12 +1069,18 @@ public class CandidateView extends View implements View.OnClickListener
     }
     
     public boolean takeSelectedSuggestion(){
+    	return this.takeSelectedSuggestion(false);
+    }
+    public boolean takeSelectedSuggestion(boolean vibrateSound){
     	if(DEBUG){
     		Log.i(TAG, "takeSelectedSuggestion():mSelectedIndex:" + mSelectedIndex);
     	}
-    	if(mCandidatePopup!=null && mCandidatePopup.isShowing())
+    	//Jeremy '11,9,1 do vibrate and sound on suggestion picked from candidateview
+    	if(vibrateSound) mService.doVibrateSound(0);
+    	if(mCandidatePopup!=null && mCandidatePopup.isShowing()){
+    		hideCandidatePopup();
     		return takeSuggstionAtIndex(mPopupCandidateView.mSelectedIndex);
-    	else
+    	}else
     		return takeSuggstionAtIndex(mSelectedIndex);
     		
     }
@@ -1085,14 +1090,14 @@ public class CandidateView extends View implements View.OnClickListener
      * gesture.
      * @param x
      */
-    public void takeSuggestionAt(float x) {
+    /*public void takeSuggestionAt(float x) {
     	
         mTouchX = (int) x;
         // To detect candidate
         onDraw(null);
         takeSelectedSuggestion();
         invalidate();
-    }
+    }*/
 
     private void removeHighlight() {
         mTouchX = OUT_OF_BOUNDS;

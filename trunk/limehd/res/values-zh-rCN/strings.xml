@@ -472,5 +472,12 @@
 		<item>小</item>
 		<item>特小</item>
 	</string-array>
+	<!-- Vibrate level Options List -->
+    <string name="vibrate_level">振动强度</string>
+	<string-array name="vibrate_level_options">
+		<item>弱</item>
+		<item>中</item>
+		<item>强</item>
+	</string-array>
 
 </resources>
