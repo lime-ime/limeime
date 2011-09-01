@@ -283,6 +283,12 @@ public class LIMEPreferenceManager {
 		
 	}
 	
+	public Integer getVibrateLevel(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return Integer.parseInt(sp.getString("vibrate_level", "40"));
+	}
+	
+	
 	public boolean getShowNumberKeypard(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);

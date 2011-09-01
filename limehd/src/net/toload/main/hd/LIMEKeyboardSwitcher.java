@@ -228,7 +228,8 @@ public class LIMEKeyboardSwitcher {
     
    
     private LIMEKeyboard getKeyboard(KeyboardId id) {
-
+    	//if(DEUBG)
+    		Log.i(TAG,"getKeyboard()");
 	    if(id != null){
 	        if (!mKeyboards.containsKey(id)) {
 	        	LIMEKeyboard keyboard = new LIMEKeyboard(

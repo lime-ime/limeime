@@ -59,7 +59,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static int INITIAL_RELATED_LIMIT = 5;
 	private final static int COMPOSING_CODE_LENGTH_LIMIT = 12;
 	private final static int DUALCODE_COMPOSING_LIMIT = 7;
-	private final static int DUALCODE_LIMIT = 5;
+	private final static int DUALCODE_NO_CHECK_LIMIT = 5;
+	private final static int DUALCODE_ITERATION_LIMIT = 512;
 
 	private final static int DATABASE_VERSION = 66; 
 	//private final static int DATABASE_RELATED_SIZE = 50;
@@ -1684,7 +1685,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						}
 					}
 				}
-				if(!codeInserted) break;
+				if(!codeInserted || dualCodeList.size() > DUALCODE_ITERATION_LIMIT ) break;
 
 			}while(true);
 		}
@@ -1724,7 +1725,7 @@ public class LimeDB extends SQLiteOpenHelper {
 
 		if(dualCodeList != null) {
 			SQLiteDatabase db = this.getSqliteDb(false);
-			final boolean NOCheckOnExpand = code.length() < DUALCODE_LIMIT;
+			final boolean NOCheckOnExpand = code.length() < DUALCODE_NO_CHECK_LIMIT;
 			String codeCol = FIELD_CODE;
 			final boolean doCode3r = tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", false);
 			if( doCode3r && !code.matches(".+[3467 ].*"))
@@ -1765,7 +1766,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
-
+						
 				}
 			}
 			db.close();

@@ -303,7 +303,7 @@ public class CandidateExpandedView extends CandidateView {
 		case MotionEvent.ACTION_UP:
 			if(DEBUG) Log.i(TAG, "onTouchEvent(), Action_UP");
 			//invalidate();
-			mCandidateView.takeSuggstionAtIndex(mSelectedIndex);
+			mCandidateView.takeSelectedSuggestion();//takeSuggstionAtIndex(mSelectedIndex);
             
 			break;
 		}
