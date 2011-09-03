@@ -1,3 +1,9 @@
+/**
+ * Derived from Gingerbread inputmethodservice Keyboard.java.
+ * Add mKeySizeScale to scale keyboard in vertical direction (height and gap).
+ * Jeremy '11,9,4  
+ */
+
 
 package net.toload.main.hd.keyboard;
 
@@ -39,16 +45,17 @@ import java.util.StringTokenizer;
  *     ...
  * &lt;/Keyboard&gt;
  * </pre>
- * @attr ref android.R.styleable#Keyboard_keyWidth
- * @attr ref android.R.styleable#Keyboard_keyHeight
- * @attr ref android.R.styleable#Keyboard_horizontalGap
- * @attr ref android.R.styleable#Keyboard_verticalGap
+ * @attr ref R.styleable#Keyboard_keyWidth
+ * @attr ref R.styleable#Keyboard_keyHeight
+ * @attr ref R.styleable#Keyboard_horizontalGap
+ * @attr ref R.styleable#Keyboard_verticalGap
  */
 public class LIMEBaseKeyboard {
 
     static final String TAG = "LIMEBaseKeyboard";
     
     // Keyboard XML Tags
+    private static final boolean DEBUG =false;
     private static final String TAG_KEYBOARD = "Keyboard";
     private static final String TAG_ROW = "Row";
     private static final String TAG_KEY = "Key";
@@ -77,6 +84,9 @@ public class LIMEBaseKeyboard {
     /** Default key height */
     private int mDefaultHeight;
 
+    /** KeySizeScale Jerremy '11,9,3 */
+    private static float mKeySizeScale;
+    
     /** Default gap between rows */
     private int mDefaultVerticalGap;
 
@@ -135,12 +145,12 @@ public class LIMEBaseKeyboard {
      * Container for keys in the keyboard. All keys in a row are at the same Y-coordinate. 
      * Some of the key size defaults can be overridden per row from what the {@link LIMEBaseKeyboard}
      * defines. 
-     * @attr ref android.R.styleable#Keyboard_keyWidth
-     * @attr ref android.R.styleable#Keyboard_keyHeight
-     * @attr ref android.R.styleable#Keyboard_horizontalGap
-     * @attr ref android.R.styleable#Keyboard_verticalGap
-     * @attr ref android.R.styleable#Keyboard_Row_rowEdgeFlags
-     * @attr ref android.R.styleable#Keyboard_Row_keyboardMode
+     * @attr ref R.styleable#Keyboard_keyWidth
+     * @attr ref R.styleable#Keyboard_keyHeight
+     * @attr ref R.styleable#Keyboard_horizontalGap
+     * @attr ref R.styleable#Keyboard_verticalGap
+     * @attr ref R.styleable#Keyboard_Row_rowEdgeFlags
+     * @attr ref R.styleable#Keyboard_Row_keyboardMode
      */
     public static class Row {
         /** Default width of a key in this row. */
@@ -173,15 +183,15 @@ public class LIMEBaseKeyboard {
             defaultWidth = getDimensionOrFraction(a, 
                     R.styleable.LIMEBaseKeyboard_keyWidth, 
                     parent.mDisplayWidth, parent.mDefaultWidth);
-            defaultHeight = getDimensionOrFraction(a, 
-                    R.styleable.LIMEBaseKeyboard_keyHeight, 
-                    parent.mDisplayHeight, parent.mDefaultHeight);
+            defaultHeight = getDimensionOrFraction(a,  
+            		R.styleable.LIMEBaseKeyboard_keyHeight, //Jeremy '11,9,4 
+                    parent.mDisplayHeight , parent.mDefaultHeight, mKeySizeScale) ;
             defaultHorizontalGap = getDimensionOrFraction(a,
                     R.styleable.LIMEBaseKeyboard_horizontalGap, 
                     parent.mDisplayWidth, parent.mDefaultHorizontalGap);
-            verticalGap = getDimensionOrFraction(a, 
-                    R.styleable.LIMEBaseKeyboard_verticalGap, 
-                    parent.mDisplayHeight, parent.mDefaultVerticalGap);
+            verticalGap =  getDimensionOrFraction(a, 
+            		 R.styleable.LIMEBaseKeyboard_verticalGap , //Jeremy '11,9,4 
+                    parent.mDisplayHeight, parent.mDefaultVerticalGap, mKeySizeScale);
             a.recycle();
             a = res.obtainAttributes(Xml.asAttributeSet(parser),
                     R.styleable.LIMEBaseKeyboard_Row);
@@ -194,20 +204,20 @@ public class LIMEBaseKeyboard {
     /**
      * Class for describing the position and characteristics of a single key in the keyboard.
      * 
-     * @attr ref android.R.styleable#Keyboard_keyWidth
-     * @attr ref android.R.styleable#Keyboard_keyHeight
-     * @attr ref android.R.styleable#Keyboard_horizontalGap
-     * @attr ref android.R.styleable#Keyboard_Key_codes
-     * @attr ref android.R.styleable#Keyboard_Key_keyIcon
-     * @attr ref android.R.styleable#Keyboard_Key_keyLabel
-     * @attr ref android.R.styleable#Keyboard_Key_iconPreview
-     * @attr ref android.R.styleable#Keyboard_Key_isSticky
-     * @attr ref android.R.styleable#Keyboard_Key_isRepeatable
-     * @attr ref android.R.styleable#Keyboard_Key_isModifier
-     * @attr ref android.R.styleable#Keyboard_Key_popupKeyboard
-     * @attr ref android.R.styleable#Keyboard_Key_popupCharacters
-     * @attr ref android.R.styleable#Keyboard_Key_keyOutputText
-     * @attr ref android.R.styleable#Keyboard_Key_keyEdgeFlags
+     * @attr ref R.styleable#Keyboard_keyWidth
+     * @attr ref R.styleable#Keyboard_keyHeight
+     * @attr ref R.styleable#Keyboard_horizontalGap
+     * @attr ref R.styleable#Keyboard_Key_codes
+     * @attr ref R.styleable#Keyboard_Key_keyIcon
+     * @attr ref R.styleable#Keyboard_Key_keyLabel
+     * @attr ref R.styleable#Keyboard_Key_iconPreview
+     * @attr ref R.styleable#Keyboard_Key_isSticky
+     * @attr ref R.styleable#Keyboard_Key_isRepeatable
+     * @attr ref R.styleable#Keyboard_Key_isModifier
+     * @attr ref R.styleable#Keyboard_Key_popupKeyboard
+     * @attr ref R.styleable#Keyboard_Key_popupCharacters
+     * @attr ref R.styleable#Keyboard_Key_keyOutputText
+     * @attr ref R.styleable#Keyboard_Key_keyEdgeFlags
      */
     public static class Key {
         /** 
@@ -317,9 +327,9 @@ public class LIMEBaseKeyboard {
             width = getDimensionOrFraction(a, 
                     R.styleable.LIMEBaseKeyboard_keyWidth,
                     keyboard.mDisplayWidth, parent.defaultWidth);
-            height = getDimensionOrFraction(a, 
-                    R.styleable.LIMEBaseKeyboard_keyHeight,
-                    keyboard.mDisplayHeight, parent.defaultHeight);
+            height =getDimensionOrFraction(a, 
+            		R.styleable.LIMEBaseKeyboard_keyHeight ,
+                    keyboard.mDisplayHeight, parent.defaultHeight, mKeySizeScale); //Jeremy '11,9,3
             gap = getDimensionOrFraction(a, 
                     R.styleable.LIMEBaseKeyboard_horizontalGap,
                     keyboard.mDisplayWidth, parent.defaultHorizontalGap);
@@ -485,7 +495,7 @@ public class LIMEBaseKeyboard {
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      */
     public LIMEBaseKeyboard(Context context, int xmlLayoutResId) {
-        this(context, xmlLayoutResId, 0);
+        this(context, xmlLayoutResId, 0, 1);
     }
     
     /**
@@ -495,7 +505,7 @@ public class LIMEBaseKeyboard {
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      * @param modeId keyboard mode identifier
      */
-    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId) {
+    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale) {
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         mDisplayWidth = dm.widthPixels;
         mDisplayHeight = dm.heightPixels;
@@ -508,6 +518,7 @@ public class LIMEBaseKeyboard {
         mKeys = new ArrayList<Key>();
         mModifierKeys = new ArrayList<Key>();
         mKeyboardMode = modeId;
+        mKeySizeScale = keySizeScale;
         loadKeyboard(context, context.getResources().getXml(xmlLayoutResId));
     }
 
@@ -754,6 +765,7 @@ public class LIMEBaseKeyboard {
             e.printStackTrace();
         }
         mTotalHeight = y - mDefaultVerticalGap;
+        if(DEBUG) Log.i(TAG, "loadKeyboard():mTotalHeight"+ mTotalHeight);
     }
 
     private void skipToEndOfRow(XmlResourceParser parser) 
@@ -774,25 +786,28 @@ public class LIMEBaseKeyboard {
         mDefaultWidth = getDimensionOrFraction(a,
                 R.styleable.LIMEBaseKeyboard_keyWidth,
                 mDisplayWidth, mDisplayWidth / 10);
-        mDefaultHeight = getDimensionOrFraction(a,
-                R.styleable.LIMEBaseKeyboard_keyHeight,
-                mDisplayHeight, 50);
+        mDefaultHeight = getDimensionOrFraction(a, 
+                R.styleable.LIMEBaseKeyboard_keyHeight , //Jeremy '11,9,4
+                mDisplayHeight, 50, mKeySizeScale) ;
         mDefaultHorizontalGap = getDimensionOrFraction(a,
                 R.styleable.LIMEBaseKeyboard_horizontalGap,
                 mDisplayWidth, 0);
         mDefaultVerticalGap = getDimensionOrFraction(a,
-                R.styleable.LIMEBaseKeyboard_verticalGap,
-                mDisplayHeight, 0);
+        		R.styleable.LIMEBaseKeyboard_verticalGap, //Jeremy '11,9,4
+                mDisplayHeight, 0, mKeySizeScale)  ;
         mProximityThreshold = (int) (mDefaultWidth * SEARCH_DISTANCE);
         mProximityThreshold = mProximityThreshold * mProximityThreshold; // Square it for comparison
         a.recycle();
     }
-    
     static int getDimensionOrFraction(TypedArray a, int index, int base, int defValue) {
+    	return getDimensionOrFraction(a,index,base,defValue,1);
+    }
+    
+    static int getDimensionOrFraction(TypedArray a, int index, int base, int defValue, float scale) {
         TypedValue value = a.peekValue(index);
         if (value == null) return defValue;
         if (value.type == TypedValue.TYPE_DIMENSION) {
-            return a.getDimensionPixelOffset(index, defValue);
+            return (int) (a.getDimensionPixelOffset(index, defValue) * scale);  //Jeremy '11,9,4
         } else if (value.type == TypedValue.TYPE_FRACTION) {
             // Round it to avoid values like 47.9999 from getting truncated
             return Math.round(a.getFraction(index, base, base, defValue));

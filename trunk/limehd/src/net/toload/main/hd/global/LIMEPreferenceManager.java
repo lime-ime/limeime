@@ -283,6 +283,12 @@ public class LIMEPreferenceManager {
 		
 	}
 	
+	public float getKeyboardSize(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return Float.parseFloat(sp.getString("keyboard_size", "1"));
+		
+	}
+	
 	public Integer getVibrateLevel(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return Integer.parseInt(sp.getString("vibrate_level", "40"));

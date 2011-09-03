@@ -466,7 +466,8 @@
     <!-- Version 3 UI and Theme String Set -->
     <!-- Candi/Composing Font Size Options List -->
     <string name="font_size">字型大小</string>
-	<string-array name="font_size">
+    <string name="keyboard_size">键盘大小</string>
+	<string-array name="five_size_scale_options">
 		<item>特大</item>
 		<item>大</item>
 		<item>一般</item>

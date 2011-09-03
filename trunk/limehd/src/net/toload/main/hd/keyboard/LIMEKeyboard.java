@@ -86,12 +86,12 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     private LIMEKeyboardSwitcher mKeyboardSwitcher;
     
     public LIMEKeyboard(Context context, int xmlLayoutResId) {
-    	this(context, xmlLayoutResId, 0);
+    	this(context, xmlLayoutResId, 0, 1 );
     }
 
        
-    public LIMEKeyboard(Context context, int xmlLayoutResId, int mode ) {
-        super(context, xmlLayoutResId, mode);
+    public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, float keySizeScale ) {
+        super(context, xmlLayoutResId, mode, keySizeScale);
         final Resources res = context.getResources();
         mContext = context;
         mRes = res;
