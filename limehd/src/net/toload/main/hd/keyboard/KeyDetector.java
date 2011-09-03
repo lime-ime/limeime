@@ -16,8 +16,8 @@
 
 package net.toload.main.hd.keyboard;
 
-import android.inputmethodservice.Keyboard;
-import android.inputmethodservice.Keyboard.Key;
+
+import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 
 import java.util.Arrays;
 import java.util.List;
@@ -25,7 +25,7 @@ import java.util.List;
 
 
 abstract class KeyDetector {
-    protected Keyboard mKeyboard;
+    protected LIMEBaseKeyboard mKeyboard;
 
     private Key[] mKeys;
 
@@ -37,7 +37,7 @@ abstract class KeyDetector {
 
     protected int mProximityThresholdSquare;
 
-    public Key[] setKeyboard(Keyboard keyboard, float correctionX, float correctionY) {
+    public Key[] setKeyboard(LIMEBaseKeyboard keyboard, float correctionX, float correctionY) {
         if (keyboard == null)
             throw new NullPointerException();
         mCorrectionX = (int)correctionX;

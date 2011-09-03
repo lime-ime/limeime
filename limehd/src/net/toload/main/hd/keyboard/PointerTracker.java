@@ -19,10 +19,9 @@ package net.toload.main.hd.keyboard;
 import net.toload.main.hd.R;
 import net.toload.main.hd.keyboard.LIMEKeyboardBaseView.OnKeyboardActionListener;
 import net.toload.main.hd.keyboard.LIMEKeyboardBaseView.UIHandler;
+import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 
 import android.content.res.Resources;
-import android.inputmethodservice.Keyboard;
-import android.inputmethodservice.Keyboard.Key;
 import android.util.Log;
 import android.view.MotionEvent;
 
@@ -46,7 +45,7 @@ public class PointerTracker {
 
     // Miscellaneous constants
     private static final int NOT_A_KEY = LIMEKeyboardBaseView.NOT_A_KEY;
-    private static final int[] KEY_DELETE = { Keyboard.KEYCODE_DELETE };
+    private static final int[] KEY_DELETE = { LIMEBaseKeyboard.KEYCODE_DELETE };
 
     private final UIProxy mProxy;
     private final UIHandler mHandler;
@@ -214,8 +213,8 @@ public class PointerTracker {
         if (key == null)
             return false;
         int primaryCode = key.codes[0];
-        return primaryCode == Keyboard.KEYCODE_SHIFT
-                || primaryCode == Keyboard.KEYCODE_MODE_CHANGE;
+        return primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT
+                || primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE;
     }
 
     public boolean isModifier() {
@@ -497,7 +496,7 @@ public class PointerTracker {
                 // Multi-tap
                 if (mInMultiTap) {
                     if (mTapCount != -1) {
-                        mListener.onKey(Keyboard.KEYCODE_DELETE, KEY_DELETE, x, y);
+                        mListener.onKey(LIMEBaseKeyboard.KEYCODE_DELETE, KEY_DELETE, x, y);
                     } else {
                         mTapCount = 0;
                     }

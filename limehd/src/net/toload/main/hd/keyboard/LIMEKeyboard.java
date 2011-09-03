@@ -31,7 +31,6 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Paint.Align;
 import android.graphics.drawable.Drawable;
-import android.inputmethodservice.Keyboard;
 import android.text.TextPaint;
 import android.util.Log;
 import android.view.ViewConfiguration;
@@ -40,7 +39,7 @@ import android.view.inputmethod.EditorInfo;
 /**
  * @author Art Hung
  */
-public class LIMEKeyboard extends Keyboard {
+public class LIMEKeyboard extends LIMEBaseKeyboard {
 
 	static final boolean DEBUG = false;
 	static final String TAG = "LIMEKeyboard";
@@ -352,7 +351,7 @@ public class LIMEKeyboard extends Keyboard {
         mSpaceKey.iconPreview.invalidateSelf();
     }
 
-    class LIMEKey extends Keyboard.Key {
+    class LIMEKey extends LIMEBaseKeyboard.Key {
        
     	private boolean mShiftLockEnabled;
 
@@ -383,7 +382,7 @@ public class LIMEKeyboard extends Keyboard {
             return super.getCurrentDrawableState();
         }
         
-        public LIMEKey(Resources res, Keyboard.Row parent, int x, int y, XmlResourceParser parser) {
+        public LIMEKey(Resources res, LIMEBaseKeyboard.Row parent, int x, int y, XmlResourceParser parser) {
             super(res, parent, x, y, parser);
             if(DEBUG) Log.i(TAG,"LIMEKey():"+this.codes[0]);
             if (popupCharacters != null && popupCharacters.length() == 0) {
