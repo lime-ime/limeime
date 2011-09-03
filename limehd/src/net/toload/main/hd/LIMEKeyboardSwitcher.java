@@ -236,7 +236,7 @@ public class LIMEKeyboardSwitcher {
     	if(DEBUG)
     		Log.i(TAG,"getKeyboard()");
     	//Jeremy '11,9,3
-    	if(mLIMEPref.getFontSize()!=mKeySizeScale){
+    	if(mLIMEPref.getKeyboardSize()!=mKeySizeScale){
     		clearKeyboards();
     		mKeySizeScale = mLIMEPref.getKeyboardSize();
     	}
