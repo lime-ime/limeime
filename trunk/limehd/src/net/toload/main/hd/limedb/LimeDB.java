@@ -103,8 +103,11 @@ public class LimeDB extends SQLiteOpenHelper {
 	//private final static String DESIREZ_ETEN_KEY_REMAP = 	"-`81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg/";
 	//private final static String MILESTONE_ETEN_KEY_REMAP =  "-`81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg/";
 	//private final static String MILESTONE3_ETEN_KEY_REMAP = "-h81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg/";
-	private final static String DESIREZ_ETEN_DUALKEY 	= 		"o,ukm9iq5axes"; // remapped from "qweruiop,mlvn";
-	private final static String DESIREZ_ETEN_DUALKEY_REMAP = 	"7634f0p;thg/-";
+	private final static String DESIREZ_ETEN_DUALKEY 	= 		"o,ukm9iq5axesa"; // remapped from "qwer uiop,vlnm";
+	private final static String DESIREZ_ETEN_DUALKEY_REMAP = 	"7634f0p;thg/-h"; // remapped from "1234 7890;-/='";
+	private final static String CHACHA_ETEN_DUALKEY 	= 		",uknljvcrx1?"; // remapped from "werszxchglb?" 
+	private final static String CHACHA_ETEN_DUALKEY_REMAP = 	"7634f0p/g-hy"; // remapped from "1234789-/=';";
+	
 	private final static String MILESTONE_ETEN_DUALKEY 	= 		"o,ukm9iq5aec"; //remapped from "qweruiop,mvh";
 	private final static String MILESTONE_ETEN_DUALKEY_REMAP = 	"7634f0p;th/-";
 	private final static String MILESTONE2_ETEN_DUALKEY 	= 		"o,ukm9iq5aer"; //remapped from "qweruiop,mvg";
@@ -160,11 +163,22 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String DESIREZ_BPMF_CHAR = 
 		"ㄅ|ㄆ|ㄇ|ㄈ|ㄉ|ㄊ|(ㄋ/ㄌ)|(ㄍ/ㄐ)|(ㄎ/ㄑ)|(ㄏ/ㄒ)|ㄓ|ㄔ|(ㄕ/ㄖ)|(ˊ/ˇ)|ㄗ|(ㄘ/ㄙ)|(ˋ/˙)" +
 		"|ㄧ|(ㄨ/ㄩ)|ㄚ|ㄛ|(ㄜ/ㄝ)|ㄞ|ㄟ|(ㄠ/ㄡ)|(ㄢ/ㄣ)|(ㄤ/ㄥ)|ㄦ|,|.";
-	
-	
 	private final static String DESIREZ_DAYI_CHAR =
 		"@|(言/石)|人|心|(牛/山)|革|水|(目/一)|日|鹿|(四/工)|土|禾|(王/糸)|手|馬|(門/火)|鳥|魚|(田/艸)|月|雨|"
 		+"(米/木)|立|?|(足/口)|(女/竹)|(金/耳)|(力/虫)|舟";
+	
+	
+	private final static String CHACHA_KEY =            			"qazwsxedcrfvtgbyhnujmik?olp,.";
+	private final static String CHACHA_BPMF_KEY_REMAP = 			"qax2scedb5t3yh4uj68k.9o/0p-<>";
+	private final static String CHACHA_BPMF_DUALKEY_REMAP = 	"1zwrfvnmgi,7l;";
+	private final static String CHACHA_BPMF_DUALKEY = 			"qxsedchjt8k6op";
+	private final static String CHACHA_DUALKEY_REMAP = 			"123456789-/=';";
+	private final static String CHACHA_DUALKEY = 				"wersdfzxchglb?";
+	private final static String CHACHA_BPMF_CHAR = 
+		"(ㄅ/ㄆ)|(ㄇ/ㄈ)|ㄌ|ㄉ|(ㄊ/ㄋ)|(ㄏ/ㄒ)|(ㄍ/ㄐ)|(ㄎ/ㄑ)|ㄖ|ㄓ|(ㄔ/ㄕ)|ˇ|ㄗ|(ㄘ/ㄙ)|ˋ|ㄧ|(ㄨ/ㄩ)|(ˊ/˙)" +
+		"|(ㄚ/ㄛ)|(ㄜ/ㄝ)|ㄡ|ㄞ|(ㄟ/ㄠ)|ㄥ|ㄢ|(ㄣ/ㄤ)|ㄦ|,|.";
+	
+	
 	
 	private final static String MILESTONE_DUALKEY_REMAP = 	"1234567890;'=-";
 	private final static String MILESTONE_DUALKEY = 		"qwertyuiop,mhv"; 
@@ -1111,6 +1125,10 @@ public class LimeDB extends SQLiteOpenHelper {
 						}else if(keyboardtype.equals("desireZ") && isPhysicalKeyboardPressed){
 							keyString = DESIREZ_KEY;
 							keynameString = DESIREZ_BPMF_CHAR;
+						}else if(keyboardtype.equals("chacha") && isPhysicalKeyboardPressed){
+							keyString = CHACHA_KEY;
+							keynameString = CHACHA_BPMF_CHAR;
+						
 						}else{
 							keyString = BPMF_KEY;
 							keynameString = BPMF_CHAR;
@@ -1419,6 +1437,11 @@ public class LimeDB extends SQLiteOpenHelper {
 					//Desire Z phonetic keybaord
 					keyString = DESIREZ_KEY;
 					keyRemapString = DESIREZ_BPMF_KEY_REMAP;
+				}else if(isPhysicalKeyboardPressed 
+						&& tablename.equals("phonetic") && keyboardtype.equals("chacha")){
+						//Desire Z phonetic keybaord
+						keyString = CHACHA_KEY;
+						keyRemapString = CHACHA_BPMF_KEY_REMAP;
 				}else if(!isPhysicalKeyboardPressed){
 					if(tablename.equals("dayi") || tablename.equals("ez")
 						  ||tablename.equals("phonetic")&&phonetickeyboardtype.equals("standard") ){
@@ -1595,6 +1618,18 @@ public class LimeDB extends SQLiteOpenHelper {
 						dualKey = DESIREZ_DUALKEY;
 						dualKeyRemap = DESIREZ_DUALKEY_REMAP;
 					}
+				}else if(keyboardtype.equals("chacha") && isPhysicalKeyboardPressed ) {
+					if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("eten")){
+						dualKey = CHACHA_ETEN_DUALKEY;
+						dualKeyRemap = CHACHA_ETEN_DUALKEY_REMAP;
+					}else if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("standard")){
+						dualKey = CHACHA_BPMF_DUALKEY;
+						dualKeyRemap = CHACHA_BPMF_DUALKEY_REMAP;
+					}else{
+						dualKey = CHACHA_DUALKEY;
+						dualKeyRemap = CHACHA_DUALKEY_REMAP;
+					}
+					
 				}
 				HashMap<String,String> reMap = new HashMap<String,String>();
 				if(DEBUG)
@@ -1861,6 +1896,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			
 			if(buildValidCodeList && validCodeMap.size()>0){
 				for(String validCode : validCodeMap){
+					if(DEBUG) Log.i(TAG, "buildQueryResult(): buildValidCodeList: valicode=" + validCode);
 					if(lastValidDualCodeList==null) lastValidDualCodeList = validCode;
 					else lastValidDualCodeList = lastValidDualCodeList + "|" + validCode;
 				}
