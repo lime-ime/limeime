@@ -89,12 +89,16 @@ public class LIMEKeyboardSwitcher {
     private static List<String> mActiveKeyboardCodes;
     //private static List<String> mActiveKeyboardNames;
     private static List<String> mActiveKeyboardShortnames;
-      
+    
+    private float mKeySizeScale=1;
+    
 
     LIMEKeyboardSwitcher(LIMEService context) {
         mContext = context;
         mLIMEPref = new LIMEPreferenceManager(context);
         mKeyboards = new HashMap<KeyboardId, LIMEKeyboard>();
+        
+        mKeySizeScale = mLIMEPref.getFontSize();
     }
     
     int getKeyboardSize(){
@@ -177,6 +181,7 @@ public class LIMEKeyboardSwitcher {
     }
     
     void clearKeyboards(){
+    	if(DEBUG) Log.i(TAG, "clearkeyboards()");
     	if(mKeyboards != null){
         	mKeyboards.clear();
     	}
@@ -228,12 +233,17 @@ public class LIMEKeyboardSwitcher {
     
    
     private LIMEKeyboard getKeyboard(KeyboardId id) {
-    	//if(DEUBG)
+    	if(DEBUG)
     		Log.i(TAG,"getKeyboard()");
+    	//Jeremy '11,9,3
+    	if(mLIMEPref.getFontSize()!=mKeySizeScale){
+    		clearKeyboards();
+    		mKeySizeScale = mLIMEPref.getKeyboardSize();
+    	}
 	    if(id != null){
 	        if (!mKeyboards.containsKey(id)) {
 	        	LIMEKeyboard keyboard = new LIMEKeyboard(
-	                mContext, id.mXml, id.mMode);
+	                mContext, id.mXml, id.mMode, mKeySizeScale);
 	        	keyboard.setKeyboardSwitcher(this);
 	            if (id.mEnableShiftLock) {
 	                keyboard.enableShiftLock();
@@ -369,92 +379,6 @@ public class LIMEKeyboardSwitcher {
     }
  
 
-   /* private KeyboardId getKeyboardId(int mode, int imeOptions, boolean isSymbols, boolean isShifted) {
-    	
-
-        Log.i("ART","Package Name : "+mContext.getPackageName());
-        if (isSymbols) {
-        	//if(isShifted) return new KeyboardId(R.xml.symbols_shift, 0, true );
-        	if(isShifted) return new KeyboardId(getKeyboardXMLID("symbols_shift"), 0, true );
-        	else return new KeyboardId(R.xml.symbols);
-        }
-        
-        switch (mode) {
-            case MODE_TEXT:
-                return new KeyboardId(getKeyboardXMLID("lime_english"), KEYBOARDMODE_NORMAL, true);
-                //return new KeyboardId(R.xml.lime_english, KEYBOARDMODE_NORMAL, true);
-            case MODE_TEXT_DEFAULT:
-                return new KeyboardId(getKeyboardXMLID("lime"), 0, true);
-                //return new KeyboardId(R.xml.lime, 0, true);
-            case MODE_TEXT_DEFAULT_NUMBER:
-                if(isShifted) return new KeyboardId(getKeyboardXMLID("lime_number_shift"), 0, true );    
-                else return new KeyboardId(getKeyboardXMLID("lime_number"));
-                //if(isShifted) return new KeyboardId(R.xml.lime_number_shift, 0, true );    
-               // else return new KeyboardId(R.xml.lime_number);
-            case MODE_TEXT_CJ:
-                if(isShifted) return new KeyboardId(getKeyboardXMLID("lime_cj_shift"), 0, true);    
-                else return new KeyboardId(getKeyboardXMLID("lime_cj"));
-                //if(isShifted) return new KeyboardId(R.xml.lime_cj_shift, 0, true);    
-                //else return new KeyboardId(R.xml.lime_cj);
-            case MODE_TEXT_CJ_NUMBER:
-                if(isShifted) return new KeyboardId(getKeyboardXMLID("lime_cj_number_shift"), 0, true);    
-                else return new KeyboardId(getKeyboardXMLID("lime_cj_number"));
-                //if(isShifted) return new KeyboardId(R.xml.lime_cj_number_shift, 0, true);    
-                //else return new KeyboardId(R.xml.lime_cj_number);
-            case MODE_TEXT_SCJ:
-                if(isShifted) return new KeyboardId(getKeyboardXMLID("lime_cj_shift"), 0, true);    
-                else return new KeyboardId(getKeyboardXMLID("lime_cj"));
-                //if(isShifted) return new KeyboardId(R.xml.lime_cj_shift, 0, true);    
-                //else return new KeyboardId(R.xml.lime_cj);
-            case MODE_TEXT_SCJ_NUMBER:
-                if(isShifted) return new KeyboardId(getKeyboardXMLID("lime_cj_number_shift"), 0, true);    
-                else return new KeyboardId(getKeyboardXMLID("lime_cj_number"));
-                //if(isShifted) return new KeyboardId(R.xml.lime_cj_number_shift, 0, true);    
-                //else return new KeyboardId(R.xml.lime_cj_number);
-            case MODE_TEXT_DAYI:
-                if(isShifted) return new KeyboardId(getKeyboardXMLID("lime_dayi_shift"), 0, true);    
-                else return new KeyboardId(getKeyboardXMLID("lime_dayi"));
-                //if(isShifted) return new KeyboardId(R.xml.lime_dayi_shift, 0, true);    
-               // else return new KeyboardId(R.xml.lime_dayi);
-           case MODE_TEXT_ARRAY:
-               if(isShifted) return new KeyboardId(R.xml.lime_dayi_shift, 0, true);    
-                else return new KeyboardId(R.xml.lime_dayi);
-           case MODE_TEXT_ARRAY10:
-               if(isShifted) return new KeyboardId(R.xml.phone, 0, true);    
-                else return new KeyboardId(R.xml.phone);
-            case MODE_TEXT_PHONETIC:
-                if(isShifted) return new KeyboardId(getKeyboardXMLID("lime_phonetic_shift"), 0, true);    
-                else return new KeyboardId(getKeyboardXMLID("lime_phonetic"));
-                //if(isShifted) return new KeyboardId(R.xml.lime_phonetic_shift, 0, true);    
-                //else return new KeyboardId(R.xml.lime_phonetic);
-            case MODE_TEXT_EZ:
-                if(isShifted) return new KeyboardId(getKeyboardXMLID("lime_ez_shift"), 0, true);    
-                else return new KeyboardId(getKeyboardXMLID("lime_ez"));
-               // if(isShifted) return new KeyboardId(R.xml.lime_ez_shift, 0, true);    
-                //else return new KeyboardId(R.xml.lime_ez);
-            case MODE_TEXT_PHONE:
-                return new KeyboardId(getKeyboardXMLID("phone"), 0, false);
-                //return new KeyboardId(R.xml.phone, 0, false);
-            case MODE_SYMBOLS:
-            	if(isShifted) return new KeyboardId(getKeyboardXMLID("symbols_shift"), 0, true);
-            	else return new KeyboardId(getKeyboardXMLID("symbols"));
-            	//if(isShifted) return new KeyboardId(R.xml.symbols_shift, 0, true);
-            	//else return new KeyboardId(R.xml.symbols);
-            case MODE_PHONE:
-                return new KeyboardId(getKeyboardXMLID("phone"));
-               // return new KeyboardId(R.xml.phone);
-            case MODE_URL:
-                return new KeyboardId(getKeyboardXMLID("lime_english"), KEYBOARDMODE_URL, true);
-                //return new KeyboardId(R.xml.lime_english, KEYBOARDMODE_URL, true);
-            case MODE_EMAIL:
-                return new KeyboardId(getKeyboardXMLID("lime_english"), KEYBOARDMODE_EMAIL, true);
-                //return new KeyboardId(R.xml.lime_english, KEYBOARDMODE_EMAIL, true);
-            case MODE_IM:
-            	return new KeyboardId(getKeyboardXMLID("lime_english"), KEYBOARDMODE_IM, true);
-            	//return new KeyboardId(R.xml.lime_english, KEYBOARDMODE_IM, true);
-        }
-        return null;
-    }*/
 
     int getKeyboardMode() {
         return mMode;
@@ -468,15 +392,6 @@ public class LIMEKeyboardSwitcher {
         return mTextMode;
     }
     
-    /*void setTextMode(int position) {
-        if (position < MODE_TEXT_COUNT && position >= 0) {
-            mTextMode = position;
-        }
-        if (isTextMode()) {
-        	this.setKeyboardMode(imtype, mode, imeOptions, true, false, false, false);
-            //setKeyboardMode(MODE_TEXT, mImeOptions);
-        }
-    }*/
 
     int getTextModeCount() {
         return MODE_TEXT_COUNT;

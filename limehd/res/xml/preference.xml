@@ -52,10 +52,17 @@
             	android:defaultValue="true" 
                 />
        <ListPreference
+    			android:key="keyboard_size"
+    			android:title="@string/keyboard_size" 
+    			android:entries="@array/five_size_scale_options" 
+    			android:entryValues="@array/five_size_scale_values" 
+    			android:dialogTitle="@string/keyboard_size" 
+    			android:defaultValue="1"/>  
+       <ListPreference
     			android:key="font_size"
     			android:title="@string/font_size" 
-    			android:entries="@array/font_size_options" 
-    			android:entryValues="@array/font_size_values" 
+    			android:entries="@array/five_size_scale_options" 
+    			android:entryValues="@array/five_size_scale_values" 
     			android:dialogTitle="@string/font_size" 
     			android:defaultValue="1"/>  
         <CheckBoxPreference

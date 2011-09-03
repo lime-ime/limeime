@@ -484,16 +484,17 @@
     <string name="ad_zippy">Bluetooth keyboard experienced device\nZIPPY BT-540 Switch Instantaneously Multi-pairing Bluetooth Keyboard - http://www.zippy.com (Sam Lin/sam_lin@hotmail.com)</string>
     
     <!-- Version 3 UI and Theme String Set -->
-    <!-- Candi/Composing Font Size Options List -->
+    <!-- Candi/Composing Font Size and keyboard size scaling Options List -->
     <string name="font_size">Font Size</string>
-	<string-array name="font_size_options">
+    <string name="keyboard_size">Keyboard Size</string>
+	<string-array name="five_size_scale_options">
 		<item>Extermely Large</item>
 		<item>Large</item>
 		<item>Normal</item>
 		<item>Small</item>
 		<item>Extermely Small</item>
 	</string-array>
-	<string-array name="font_size_values">
+	<string-array name="five_size_scale_values">
 		<item>1.2</item>
 		<item>1.1</item>
 		<item>1</item>
