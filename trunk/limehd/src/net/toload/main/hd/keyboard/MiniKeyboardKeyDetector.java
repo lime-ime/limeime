@@ -16,7 +16,7 @@
 
 package net.toload.main.hd.keyboard;
 
-import android.inputmethodservice.Keyboard.Key;
+import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 
 class MiniKeyboardKeyDetector extends KeyDetector {
     private static final int MAX_NEARBY_KEYS = 1;

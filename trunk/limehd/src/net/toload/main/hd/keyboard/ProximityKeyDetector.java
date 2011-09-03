@@ -16,7 +16,7 @@
 
 package net.toload.main.hd.keyboard;
 
-import android.inputmethodservice.Keyboard.Key;
+import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 
 import java.util.Arrays;
 

@@ -20,9 +20,8 @@
 
 package net.toload.main.hd.keyboard;
 
+import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 import android.content.Context;
-import android.inputmethodservice.Keyboard;
-import android.inputmethodservice.Keyboard.Key;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -56,7 +55,7 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 
 	@Override
 	protected boolean onLongPress(Key key) {
-		if (key.codes[0] == Keyboard.KEYCODE_CANCEL) {
+		if (key.codes[0] == LIMEBaseKeyboard.KEYCODE_CANCEL) {
 			getOnKeyboardActionListener().onKey(KEYCODE_OPTIONS, null,0,0);
 			return true;
 		}else if (key.codes[0] == LIMEKeyboard.KEYCODE_SPACE

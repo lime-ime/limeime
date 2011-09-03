@@ -8,6 +8,7 @@
 
 package net.toload.main.hd.keyboard;
 
+import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -21,8 +22,6 @@ import android.graphics.Rect;
 import android.graphics.Region.Op;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.inputmethodservice.Keyboard;
-import android.inputmethodservice.Keyboard.Key;
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
@@ -162,7 +161,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private int mPopupLayout;
 
     // Main keyboard
-    private Keyboard mKeyboard;
+    private LIMEBaseKeyboard mKeyboard;
     private Key[] mKeys;
     // TODO this attribute should be gotten from Keyboard.
     private int mKeyboardVerticalGap;
@@ -602,7 +601,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
      * @see #getKeyboard()
      * @param keyboard the keyboard to display in this view
      */
-    public void setKeyboard(Keyboard keyboard) {
+    public void setKeyboard(LIMEBaseKeyboard keyboard) {
         if (mKeyboard != null) {
             dismissKeyPreview();
         }
@@ -630,7 +629,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
      * @return the currently attached keyboard
      * @see #setKeyboard(Keyboard)
      */
-    public Keyboard getKeyboard() {
+    public LIMEBaseKeyboard getKeyboard() {
         return mKeyboard;
     }
 
@@ -750,7 +749,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
      * the touch distance from a key's center to avoid taking a square root.
      * @param keyboard
      */
-    private void computeProximityThreshold(Keyboard keyboard) {
+    private void computeProximityThreshold(LIMEBaseKeyboard keyboard) {
         if (keyboard == null) return;
         final Key[] keys = mKeys;
         if (keys == null) return;
@@ -1193,12 +1192,12 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         // Remove gesture detector on mini-keyboard
         miniKeyboard.mGestureDetector = null;
 
-        Keyboard keyboard;
+        LIMEBaseKeyboard keyboard;
         if (popupKey.popupCharacters != null) {
-            keyboard = new Keyboard(getContext(), popupKeyboardId, popupKey.popupCharacters,
+            keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId, popupKey.popupCharacters,
                     -1, getPaddingLeft() + getPaddingRight());
         } else {
-            keyboard = new Keyboard(getContext(), popupKeyboardId);
+            keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId);
         }
         miniKeyboard.setKeyboard(keyboard);
         miniKeyboard.setPopupParent(this);
@@ -1218,7 +1217,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         // and bottom edge flags on.
         // When you want to use one row mini-keyboard from xml file, make sure that the row has
         // both top and bottom edge flags set.
-        return (edgeFlags & Keyboard.EDGE_TOP) != 0 && (edgeFlags & Keyboard.EDGE_BOTTOM) != 0;
+        return (edgeFlags & LIMEBaseKeyboard.EDGE_TOP) != 0 && (edgeFlags & LIMEBaseKeyboard.EDGE_BOTTOM) != 0;
     }
 
     /**

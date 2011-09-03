@@ -22,7 +22,6 @@ package net.toload.main.hd;
 
 import android.graphics.Rect;
 import android.inputmethodservice.InputMethodService;
-import android.inputmethodservice.Keyboard;
 import android.media.AudioManager;
 import android.os.Handler;
 import android.os.IBinder;
@@ -52,6 +51,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import net.toload.main.hd.ISearchService;
+import net.toload.main.hd.keyboard.LIMEBaseKeyboard;
 import net.toload.main.hd.keyboard.LIMEKeyboard;
 import net.toload.main.hd.keyboard.LIMEKeyboardBaseView;
 import net.toload.main.hd.keyboard.LIMEKeyboardView;
@@ -915,12 +915,12 @@ public class LIMEService extends InputMethodService implements
 
 			if (mLIMEPref.getEnglishPrediction()) {
 				if (mComposing.length() > 0 || tempEnglishWord.length() > 0) {
-					onKey(Keyboard.KEYCODE_DELETE, null);
+					onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
 					return true;
 				}
 			} else {
 				if (mComposing.length() > 0) {
-					onKey(Keyboard.KEYCODE_DELETE, null);
+					onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
 					return true;
 				}
 			}
@@ -1560,7 +1560,7 @@ public class LIMEService extends InputMethodService implements
 					+ " hasShiftPress:" + hasShiftPress);
 		
 		if (mLIMEPref.getEnglishPrediction()
-				&& primaryCode != Keyboard.KEYCODE_DELETE) {
+				&& primaryCode != LIMEBaseKeyboard.KEYCODE_DELETE) {
 			
 
 			// Chcek if input character not valid English Character then reset
@@ -1581,19 +1581,19 @@ public class LIMEService extends InputMethodService implements
 
 		// Handle English/Lime Keyboard switch
 		if (mEnglishFlagShift == false
-				&& (primaryCode == Keyboard.KEYCODE_SHIFT)) {
+				&& (primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT)) {
 			mEnglishFlagShift = true;
 			if (DEBUG) {
 				Log.i(TAG, "OnKey():mEnglishFlagShift:" + mEnglishFlagShift);
 			}
 		}
-		if (primaryCode == Keyboard.KEYCODE_DELETE) {
+		if (primaryCode == LIMEBaseKeyboard.KEYCODE_DELETE) {
 			handleBackspace();
-		} else if (primaryCode == Keyboard.KEYCODE_SHIFT) {
+		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT) {
 			if (DEBUG) 	Log.i(TAG, "OnKey():KEYCODE_SHIFT");
 			if(!(!isPressPhysicalKeyboard && hasDistinctMultitouch))
 				handleShift();
-		} else if (primaryCode == Keyboard.KEYCODE_CANCEL) {
+		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_CANCEL) {
 			handleClose();
 			return;
 			// long press on options and shift
@@ -1611,7 +1611,7 @@ public class LIMEService extends InputMethodService implements
 //				toggleCapsLock();
 //			}
 
-		} else if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE	&& mInputView != null) {
+		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE	&& mInputView != null) {
 			switchKeyboard(primaryCode);
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_NEXT_IM){
 			nextActiveKeyboard(true);
@@ -2308,7 +2308,7 @@ public class LIMEService extends InputMethodService implements
 		//Jeremy '11,8,14
 		clearComposing();
 
-		if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE) {
+		if (primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE) {
 			switchSymKeyboard();
 		} else if (primaryCode == KEYBOARD_SWITCH_CODE) {
 			switchChiEng();
@@ -2474,7 +2474,7 @@ public class LIMEService extends InputMethodService implements
 			boolean standardPhonetic = !(mLIMEPref.getPhoneticKeyboardType().equals("eten26")
 					||mLIMEPref.getPhoneticKeyboardType().equals("hsu"));
 			hasNumberMapping = standardPhonetic; 
-			hasSymbolMapping = standardPhonetic;
+			hasSymbolMapping = standardPhonetic; 
 		}else if(keyboardSelection.equals("ez")|| keyboardSelection.equals("dayi")) {
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 			LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
@@ -2499,7 +2499,8 @@ public class LIMEService extends InputMethodService implements
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
 		}
-
+		//Jeremy '11,9,3 for phone numeric key direct input on chacha
+		if(mLIMEPref.getPhysicalKeyboardType().equals("chacha")) hasNumberMapping = false;
 		try {
 			String tablename = keyboardSelection;
 			if (tablename.equals("custom") || tablename.equals("phone")) {
@@ -2888,7 +2889,7 @@ public class LIMEService extends InputMethodService implements
 		// keyboard)
 		isPressPhysicalKeyboard = false;
 		
-		if (hasDistinctMultitouch && primaryCode == Keyboard.KEYCODE_SHIFT) {
+		if (hasDistinctMultitouch && primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT) {
 			hasShiftPress = true;
 			hasShiftCombineKeyPressed = false;
 			handleShift();
@@ -2925,7 +2926,7 @@ public class LIMEService extends InputMethodService implements
 		if (hasSound) {
 			int sound = AudioManager.FX_KEYPRESS_STANDARD;
 			switch (primaryCode) {
-			case Keyboard.KEYCODE_DELETE:
+			case LIMEBaseKeyboard.KEYCODE_DELETE:
 				sound = AudioManager.FX_KEYPRESS_DELETE;
 				break;
 			case MY_KEYCODE_ENTER:
@@ -2945,7 +2946,7 @@ public class LIMEService extends InputMethodService implements
 	public void onRelease(int primaryCode) {
 		if(DEBUG) 
 			Log.i(TAG, "onRelease(): code = " + primaryCode);
-		if(hasDistinctMultitouch && primaryCode == Keyboard.KEYCODE_SHIFT ){
+		if(hasDistinctMultitouch && primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT ){
 			hasShiftPress = false;
 			if (hasShiftCombineKeyPressed) {
 				hasShiftCombineKeyPressed = false;
