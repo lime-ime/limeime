@@ -494,8 +494,8 @@ public class LIMEBaseKeyboard {
      * @param context the application or service context
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      */
-    public LIMEBaseKeyboard(Context context, int xmlLayoutResId) {
-        this(context, xmlLayoutResId, 0, 1);
+    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, float keySizeScale) {
+        this(context, xmlLayoutResId, 0, keySizeScale);
     }
     
     /**
@@ -537,18 +537,19 @@ public class LIMEBaseKeyboard {
      * keyboard will fit as many keys as possible in each row.
      */
     public LIMEBaseKeyboard(Context context, int layoutTemplateResId, 
-            CharSequence characters, int columns, int horizontalPadding) {
-        this(context, layoutTemplateResId);
+            CharSequence characters, int columns, int horizontalPadding, float keySizeScale) {
+        this(context, layoutTemplateResId, keySizeScale);
         int x = 0;
         int y = 0;
         int column = 0;
         mTotalWidth = 0;
+        mKeySizeScale = keySizeScale;
         
         Row row = new Row(this);
-        row.defaultHeight = mDefaultHeight;
+        row.defaultHeight = (int) (mDefaultHeight * mKeySizeScale);
         row.defaultWidth = mDefaultWidth;
         row.defaultHorizontalGap = mDefaultHorizontalGap;
-        row.verticalGap = mDefaultVerticalGap;
+        row.verticalGap =  (int) (mDefaultVerticalGap  * mKeySizeScale);;
         row.rowEdgeFlags = EDGE_TOP | EDGE_BOTTOM;
         final int maxColumns = columns == -1 ? Integer.MAX_VALUE : columns;
         for (int i = 0; i < characters.length(); i++) {
@@ -562,8 +563,8 @@ public class LIMEBaseKeyboard {
             final Key key = new Key(row);
             key.x = x;
             key.y = y;
-            key.width = mDefaultWidth;
-            key.height = mDefaultHeight;
+            key.width = mDefaultWidth ;
+            key.height =(int) ( mDefaultHeight * mKeySizeScale);
             key.gap = mDefaultHorizontalGap;
             key.label = String.valueOf(c);
             key.codes = new int[] { c };
@@ -574,7 +575,7 @@ public class LIMEBaseKeyboard {
                 mTotalWidth = x;
             }
         }
-        mTotalHeight = y + mDefaultHeight; 
+        mTotalHeight = y + row.defaultHeight;//mDefaultHeight; 
     }
     
     public List<Key> getKeys() {

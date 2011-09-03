@@ -8,6 +8,7 @@
 
 package net.toload.main.hd.keyboard;
 
+import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -241,7 +242,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private final UIHandler mHandler = new UIHandler();
     
     private boolean isAPIpre8;
-
+    
+    private LIMEPreferenceManager mLIMEpref;
+    
     class UIHandler extends Handler {
         private static final int MSG_POPUP_PREVIEW = 1;
         private static final int MSG_DISMISS_PREVIEW = 2;
@@ -395,6 +398,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
     public LIMEKeyboardBaseView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        
+        mLIMEpref = new LIMEPreferenceManager(context); //Jeremy '11,9,4
 
         TypedArray a = context.obtainStyledAttributes(
                 attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEKeyboardBaseView);
@@ -1195,9 +1200,11 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         LIMEBaseKeyboard keyboard;
         if (popupKey.popupCharacters != null) {
             keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId, popupKey.popupCharacters,
-                    -1, getPaddingLeft() + getPaddingRight());
+                    -1, getPaddingLeft() + getPaddingRight(), 
+                    LIMEKeyboardBaseView.this.mLIMEpref.getKeyboardSize() );
         } else {
-            keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId);
+            keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId
+            		,LIMEKeyboardBaseView.this.mLIMEpref.getKeyboardSize());
         }
         miniKeyboard.setKeyboard(keyboard);
         miniKeyboard.setPopupParent(this);
