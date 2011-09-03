@@ -207,6 +207,7 @@
 	<string-array name="physical_keyboard_options">
 		<item>Normal keyboard</item>
 		<item>Desire Z</item>
+		<item>ChaCha</item>
 		<item>Milestone</item>
 		<item>Milestone 2</item>
 		<item>Milestone 3</item>
@@ -214,6 +215,7 @@
 	<string-array name="physical_keyboard_options_values">
 		<item>normal_keyboard</item>
 		<item>desireZ</item>
+		<item>chacha</item>
 		<item>milestone</item>
 		<item>milestone2</item>
 		<item>milestone3</item>

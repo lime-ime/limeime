@@ -222,6 +222,11 @@ public class SearchService extends Service {
 				// clear mappingidx when user switching between softkeyboard and hard keyboard. Jeremy '11,6,11
 				if(isPhysicalKeyboardPressed == softkeyboard)
 					isPhysicalKeyboardPressed = !softkeyboard;
+				
+				// Jeremy '11,9, 3 remove cached keyname when request full records
+				if(getAllRecords && keynamecache.get(cacheKey(code))!=null)
+					keynamecache.remove(cacheKey(code));
+				
 					
 				Mapping temp = new Mapping();
 				temp.setWord(code);
