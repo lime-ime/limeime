@@ -2263,8 +2263,11 @@ public class LIMEService extends InputMethodService implements
 			//Jeremy '11,8,14
 			clearComposing();
 			if(ic!=null) ic.commitText("", 0);
+		} else if(onIM && mCandidateView.isShown()
+				&& mLIMEPref.getAutoChineseSymbol()
+				&& !showingChineseSymbolSuggestions ){
+			clearSuggestions();  //Jeremy '11,9,5
 		} else {
-			
 			//Jeremy '11,8,15
 			//clearSuggestions();
 			try {
@@ -2277,8 +2280,6 @@ public class LIMEService extends InputMethodService implements
 						updateEnglishPrediction();
 					}
 					keyDownUp(KeyEvent.KEYCODE_DEL);
-				} else if(onIM && mCandidateView.isShown()&& !showingChineseSymbolSuggestions){
-						clearSuggestions();  //Jeremy '11,9,5
 				} else{
 				
 					//Jeremy '11,8,14
@@ -2289,7 +2290,6 @@ public class LIMEService extends InputMethodService implements
 				Log.i(TAG,"->" + e);
 			}
 		}
-		// updateShiftKeyState(getCurrentInputEditorInfo());
 
 	}
 

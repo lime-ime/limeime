@@ -8,7 +8,6 @@
 
 package net.toload.main.hd.keyboard;
 
-import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -243,7 +242,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     
     private boolean isAPIpre8;
     
-    private LIMEPreferenceManager mLIMEPref;
+    //private LIMEPreferenceManager mLIMEPref;
     
     class UIHandler extends Handler {
         private static final int MSG_POPUP_PREVIEW = 1;
@@ -399,7 +398,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     public LIMEKeyboardBaseView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         
-        mLIMEPref = new LIMEPreferenceManager(context); //Jeremy '11,9,4
+        //mLIMEPref = new LIMEPreferenceManager(context); //Jeremy '11,9,4
 
         TypedArray a = context.obtainStyledAttributes(
                 attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEkeyboardStyle);
@@ -851,7 +850,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 if(DEBUG) Log.i(TAG, "onBufferDraw():"+ label);
                 //Jeremy '11,8,11, Extended for sub-label display
                 //Jeremy '11,9,4 Scale label size
-                float keySizeScale = mLIMEPref.getKeyboardSize();
+                float keySizeScale = mKeyboard.getKeySizeScale();
                 boolean hasSubLabel = label.contains("\n");
                 String subLabel="";
                 if(hasSubLabel){
@@ -1203,10 +1202,10 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         if (popupKey.popupCharacters != null) {
             keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId, popupKey.popupCharacters,
                     -1, getPaddingLeft() + getPaddingRight(), 
-                    LIMEKeyboardBaseView.this.mLIMEPref.getKeyboardSize() );
+                    LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale() );
         } else {
             keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId
-            		,LIMEKeyboardBaseView.this.mLIMEPref.getKeyboardSize());
+            		,LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale());
         }
         miniKeyboard.setKeyboard(keyboard);
         miniKeyboard.setPopupParent(this);
