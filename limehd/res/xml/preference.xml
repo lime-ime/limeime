@@ -85,6 +85,12 @@
     <PreferenceCategory
         		xmlns:android="http://schemas.android.com/apk/res/android"
                 android:summary="" android:key="lime_im" android:title="@string/im">
+    <CheckBoxPreference
+                android:key="auto_chinese_symbol"
+                android:title="@string/auto_chinese_symbol" 
+                android:summary="@string/auto_chinese_symbol_summary"
+            	android:defaultValue="true" 
+                />
     <ListPreference
     			android:key="selkey_option"
     			android:title="@string/selkey_option_list" 

@@ -24,5 +24,5 @@
     <dimen name="candidate_font_size">28sp</dimen>
     <dimen name="candidate_number_font_size">14sp</dimen>
     <dimen name="candidate_vertical_padding">4sp</dimen>
-    <dimen name="composing_text_size">14sp</dimen>
+    <dimen name="composing_text_size">18sp</dimen>
 </resources>
