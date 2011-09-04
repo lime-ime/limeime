@@ -830,8 +830,12 @@ public class LIMEService extends InputMethodService implements
 					+ ", event.getDownTime()"+ event.getDownTime() 
 					+ ", event.getEventTime()"+ event.getEventTime()
 					+ ", event.getRepeatCount()" + event.getRepeatCount());
-		
-		isPhysicalKeyPressed = true;
+		if(!(keyCode == KeyEvent.KEYCODE_HOME
+			 ||keyCode == KeyEvent.KEYCODE_BACK
+			 ||keyCode == KeyEvent.KEYCODE_MENU
+			 ||keyCode == KeyEvent.KEYCODE_SEARCH
+			 )) //Jeremy '11,9,4 exclude the four default hard keys
+				isPhysicalKeyPressed = true;
 
 		mKeydownEvent = new KeyEvent(event);
 		// Record key pressed time and set key processed flags(key down, for physical keys)
