@@ -21,86 +21,86 @@
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 -->
-<Keyboard xmlns:android="http://schemas.android.com/apk/res/net.toload.main.hd"
-	android:keyWidth="10%p" android:horizontalGap="0px"
-	android:verticalGap="0px" android:keyHeight="@dimen/key_height">
+<Keyboard xmlns:limehd="http://schemas.android.com/apk/res/net.toload.main.hd"
+	limehd:keyWidth="10%p" limehd:horizontalGap="0px"
+	limehd:verticalGap="0px" limehd:keyHeight="@dimen/key_height">
 
 	<Row>
-		<Key android:codes="49" android:keyLabel="1" android:keyEdgeFlags="left" />
-		<Key android:codes="50" android:keyLabel="2" />
-		<Key android:codes="51" android:keyLabel="3" />
-		<Key android:codes="52" android:keyLabel="4" />
-		<Key android:codes="53" android:keyLabel="5" />
-		<Key android:codes="54" android:keyLabel="6" />
-		<Key android:codes="55" android:keyLabel="7" />
-		<Key android:codes="56" android:keyLabel="8" />
-		<Key android:codes="57" android:keyLabel="9" />
-		<Key android:codes="48" android:keyLabel="0" android:keyEdgeFlags="right" />
+		<Key limehd:codes="49" limehd:keyLabel="1" limehd:keyEdgeFlags="left" />
+		<Key limehd:codes="50" limehd:keyLabel="2" />
+		<Key limehd:codes="51" limehd:keyLabel="3" />
+		<Key limehd:codes="52" limehd:keyLabel="4" />
+		<Key limehd:codes="53" limehd:keyLabel="5" />
+		<Key limehd:codes="54" limehd:keyLabel="6" />
+		<Key limehd:codes="55" limehd:keyLabel="7" />
+		<Key limehd:codes="56" limehd:keyLabel="8" />
+		<Key limehd:codes="57" limehd:keyLabel="9" />
+		<Key limehd:codes="48" limehd:keyLabel="0" limehd:keyEdgeFlags="right" />
 	</Row>
 
 	<Row>
-		<Key android:codes="113" android:keyLabel="q"
-			android:keyEdgeFlags="left" />
-		<Key android:codes="119" android:keyLabel="w" />
-		<Key android:codes="101" android:keyLabel="e" />
-		<Key android:codes="114" android:keyLabel="r" />
-		<Key android:codes="116" android:keyLabel="t" />
-		<Key android:codes="121" android:keyLabel="y" />
-		<Key android:codes="117" android:keyLabel="u" />
-		<Key android:codes="105" android:keyLabel="i" />
-		<Key android:codes="111" android:keyLabel="o" />
-		<Key android:codes="112" android:keyLabel="p"
-			android:keyEdgeFlags="right" />
+		<Key limehd:codes="113" limehd:keyLabel="q"
+			limehd:keyEdgeFlags="left" />
+		<Key limehd:codes="119" limehd:keyLabel="w" />
+		<Key limehd:codes="101" limehd:keyLabel="e" />
+		<Key limehd:codes="114" limehd:keyLabel="r" />
+		<Key limehd:codes="116" limehd:keyLabel="t" />
+		<Key limehd:codes="121" limehd:keyLabel="y" />
+		<Key limehd:codes="117" limehd:keyLabel="u" />
+		<Key limehd:codes="105" limehd:keyLabel="i" />
+		<Key limehd:codes="111" limehd:keyLabel="o" />
+		<Key limehd:codes="112" limehd:keyLabel="p"
+			limehd:keyEdgeFlags="right" />
 	</Row>
 
 	<Row>
-		<Key android:codes="97" android:keyLabel="a" android:keyEdgeFlags="left" />
-		<Key android:codes="115" android:keyLabel="s" />
-		<Key android:codes="100" android:keyLabel="d" />
-		<Key android:codes="102" android:keyLabel="f" />
-		<Key android:codes="103" android:keyLabel="g" />
-		<Key android:codes="104" android:keyLabel="h" />
-		<Key android:codes="106" android:keyLabel="j" />
-		<Key android:codes="107" android:keyLabel="k" />
-		<Key android:codes="108" android:keyLabel="l" />
-		<Key android:codes="59" android:keyLabel=";" android:keyEdgeFlags="right" />
+		<Key limehd:codes="97" limehd:keyLabel="a" limehd:keyEdgeFlags="left" />
+		<Key limehd:codes="115" limehd:keyLabel="s" />
+		<Key limehd:codes="100" limehd:keyLabel="d" />
+		<Key limehd:codes="102" limehd:keyLabel="f" />
+		<Key limehd:codes="103" limehd:keyLabel="g" />
+		<Key limehd:codes="104" limehd:keyLabel="h" />
+		<Key limehd:codes="106" limehd:keyLabel="j" />
+		<Key limehd:codes="107" limehd:keyLabel="k" />
+		<Key limehd:codes="108" limehd:keyLabel="l" />
+		<Key limehd:codes="59" limehd:keyLabel=";" limehd:keyEdgeFlags="right" />
 	</Row>
 
 	<Row>
-		<Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift"
-			 android:isModifier="true" android:isSticky="true" android:keyEdgeFlags="left" />
-		<Key android:codes="122" android:keyLabel="z" />
-		<Key android:codes="120" android:keyLabel="x" />
-		<Key android:codes="99" android:keyLabel="c" />
-		<Key android:codes="118" android:keyLabel="v" />
-		<Key android:codes="98" android:keyLabel="b" />
-		<Key android:codes="110" android:keyLabel="n" />
-		<Key android:codes="109" android:keyLabel="m" />
-		<Key android:codes="39" android:keyLabel="'" />
-		<Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" android:iconPreview="@drawable/sym_keyboard_feedback_delete" android:isModifier="true"
-			 android:keyEdgeFlags="right"	android:isRepeatable="true" />
+		<Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift"
+			 limehd:isModifier="true" limehd:isSticky="true" limehd:keyEdgeFlags="left" />
+		<Key limehd:codes="122" limehd:keyLabel="z" />
+		<Key limehd:codes="120" limehd:keyLabel="x" />
+		<Key limehd:codes="99" limehd:keyLabel="c" />
+		<Key limehd:codes="118" limehd:keyLabel="v" />
+		<Key limehd:codes="98" limehd:keyLabel="b" />
+		<Key limehd:codes="110" limehd:keyLabel="n" />
+		<Key limehd:codes="109" limehd:keyLabel="m" />
+		<Key limehd:codes="39" limehd:keyLabel="'" />
+		<Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true"
+			 limehd:keyEdgeFlags="right"	limehd:isRepeatable="true" />
 	</Row>
 
 
-	<Row android:rowEdgeFlags="bottom">
-		<Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:iconPreview="@drawable/sym_keyboard_feedback_done" android:isModifier="true"
-			  	android:keyWidth="15%p" android:keyEdgeFlags="left" />
-		<Key android:codes="-9" 
-				android:keyIcon="@drawable/sw" android:isModifier="true" 
-				android:keyWidth="10%p" 
-				android:iconPreview="@drawable/sw_l"/>
-		<Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:iconPreview="@drawable/sym_keyboard_feedback_space"
-				android:keyWidth="15%p" android:isRepeatable="true" />
-		<Key android:codes="44" android:keyLabel=","/>
-		<Key android:codes="46" 
-				android:keyLabel="."
-				 android:popupKeyboard="@xml/popup_c_punctuation"   
-				android:keyWidth="10%p" />
-		<Key android:codes="47" android:keyLabel="/" />
-		<Key android:codes="45" android:keyLabel="-" />
-		<Key android:codes="61" android:keyLabel="=" />
-		<Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:iconPreview="@drawable/sym_keyboard_feedback_return" android:isModifier="true"
-				android:keyEdgeFlags="right" />
+	<Row limehd:rowEdgeFlags="bottom">
+		<Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true"
+			  	limehd:keyWidth="15%p" limehd:keyEdgeFlags="left" />
+		<Key limehd:codes="-9" 
+				limehd:keyIcon="@drawable/sw" limehd:isModifier="true" 
+				limehd:keyWidth="10%p" 
+				limehd:iconPreview="@drawable/sw_l"/>
+		<Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
+				limehd:keyWidth="15%p" limehd:isRepeatable="true" />
+		<Key limehd:codes="44" limehd:keyLabel=","/>
+		<Key limehd:codes="46" 
+				limehd:keyLabel="."
+				 limehd:popupKeyboard="@xml/popup_c_punctuation"   
+				limehd:keyWidth="10%p" />
+		<Key limehd:codes="47" limehd:keyLabel="/" />
+		<Key limehd:codes="45" limehd:keyLabel="-" />
+		<Key limehd:codes="61" limehd:keyLabel="=" />
+		<Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true"
+				limehd:keyEdgeFlags="right" />
 	</Row>
 </Keyboard>
     

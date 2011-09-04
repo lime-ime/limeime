@@ -243,7 +243,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     
     private boolean isAPIpre8;
     
-    private LIMEPreferenceManager mLIMEpref;
+    private LIMEPreferenceManager mLIMEPref;
     
     class UIHandler extends Handler {
         private static final int MSG_POPUP_PREVIEW = 1;
@@ -399,10 +399,10 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     public LIMEKeyboardBaseView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         
-        mLIMEpref = new LIMEPreferenceManager(context); //Jeremy '11,9,4
+        mLIMEPref = new LIMEPreferenceManager(context); //Jeremy '11,9,4
 
         TypedArray a = context.obtainStyledAttributes(
-                attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEKeyboardBaseView);
+                attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEkeyboardStyle);
         LayoutInflater inflate =
                 (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         int previewLayout = 0;
@@ -850,6 +850,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                
                 if(DEBUG) Log.i(TAG, "onBufferDraw():"+ label);
                 //Jeremy '11,8,11, Extended for sub-label display
+                //Jeremy '11,9,4 Scale label size
+                float keySizeScale = mLIMEPref.getKeyboardSize();
                 boolean hasSubLabel = label.contains("\n");
                 String subLabel="";
                 if(hasSubLabel){
@@ -858,13 +860,13 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 	subLabel = labelA[0];
                 }
                 if(hasSubLabel){
-                	labelSize = mSmallLabelTextSize;
+                	labelSize = (int)(mSmallLabelTextSize * keySizeScale);
                 	paint.setTypeface(Typeface.DEFAULT_BOLD);
                 }else if (label.length() > 1 && key.codes.length < 2 ) {
-                    labelSize = mLabelTextSize;
+                    labelSize = (int)(mLabelTextSize * keySizeScale);
                     paint.setTypeface(Typeface.DEFAULT_BOLD);
                 } else {
-                    labelSize = mKeyTextSize;
+                    labelSize = (int)(mKeyTextSize* keySizeScale);
                     paint.setTypeface(mKeyTextStyle);
                 }
                 paint.setTextSize(labelSize);
@@ -891,7 +893,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 float baseline = centerY
                         + labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
                 if(hasSubLabel){
-                	 final int subLabelSize = mSubLabelTextSize;
+                	 final int subLabelSize =  (int)(mSubLabelTextSize* keySizeScale);
                 	 final int subLabelHeight;
                      final int subLabelWidth;
                      paint.setTypeface(Typeface.DEFAULT_BOLD);
@@ -1201,10 +1203,10 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         if (popupKey.popupCharacters != null) {
             keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId, popupKey.popupCharacters,
                     -1, getPaddingLeft() + getPaddingRight(), 
-                    LIMEKeyboardBaseView.this.mLIMEpref.getKeyboardSize() );
+                    LIMEKeyboardBaseView.this.mLIMEPref.getKeyboardSize() );
         } else {
             keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId
-            		,LIMEKeyboardBaseView.this.mLIMEpref.getKeyboardSize());
+            		,LIMEKeyboardBaseView.this.mLIMEPref.getKeyboardSize());
         }
         miniKeyboard.setKeyboard(keyboard);
         miniKeyboard.setPopupParent(this);

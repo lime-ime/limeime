@@ -41,65 +41,65 @@
 */
 -->
 
-<Keyboard xmlns:android="http://schemas.android.com/apk/res/net.toload.main.hd"
-    android:keyWidth="10%p"
-    android:horizontalGap="0px"
-    android:verticalGap="0px"
-    android:keyHeight="@dimen/key_height"
+<Keyboard xmlns:limehd="http://schemas.android.com/apk/res/net.toload.main.hd"
+    limehd:keyWidth="10%p"
+    limehd:horizontalGap="0px"
+    limehd:verticalGap="0px"
+    limehd:keyHeight="@dimen/key_height"
     >
 
     <Row>
-        <Key android:codes="126" android:keyLabel="~" android:keyEdgeFlags="left"/>
-        <Key android:codes="177" android:keyLabel="±"/>
-        <Key android:codes="215" android:keyLabel="×"/>
-        <Key android:codes="247" android:keyLabel="÷"/>
-        <Key android:codes="8226" android:keyLabel="•"/>
-        <Key android:codes="176" android:keyLabel="°"/>
-        <Key android:codes="96" android:keyLabel="`"/>
-        <Key android:codes="180" android:keyLabel="´"/>
-        <Key android:codes="123" android:keyLabel="{"/>
-        <Key android:codes="125" android:keyLabel="}" android:keyEdgeFlags="right"/>
+        <Key limehd:codes="126" limehd:keyLabel="~" limehd:keyEdgeFlags="left"/>
+        <Key limehd:codes="177" limehd:keyLabel="±"/>
+        <Key limehd:codes="215" limehd:keyLabel="×"/>
+        <Key limehd:codes="247" limehd:keyLabel="÷"/>
+        <Key limehd:codes="8226" limehd:keyLabel="•"/>
+        <Key limehd:codes="176" limehd:keyLabel="°"/>
+        <Key limehd:codes="96" limehd:keyLabel="`"/>
+        <Key limehd:codes="180" limehd:keyLabel="´"/>
+        <Key limehd:codes="123" limehd:keyLabel="{"/>
+        <Key limehd:codes="125" limehd:keyLabel="}" limehd:keyEdgeFlags="right"/>
     </Row>
     
     <Row>
-        <Key android:codes="169" android:keyLabel="©" android:keyEdgeFlags="left"/>
-        <Key android:codes="163" android:keyLabel="£"/>
-        <Key android:codes="8364" android:keyLabel="€"/>
-        <Key android:codes="94" android:keyLabel="^"/>
-        <Key android:codes="174" android:keyLabel="®"/>
-        <Key android:codes="165" android:keyLabel="¥"/>
-        <Key android:codes="95" android:keyLabel="_"/>
-        <Key android:codes="61" android:keyLabel="="/>
-        <Key android:codes="91" android:keyLabel="["/>
-        <Key android:codes="93" android:keyLabel="]" android:keyEdgeFlags="right"/>
+        <Key limehd:codes="169" limehd:keyLabel="©" limehd:keyEdgeFlags="left"/>
+        <Key limehd:codes="163" limehd:keyLabel="£"/>
+        <Key limehd:codes="8364" limehd:keyLabel="€"/>
+        <Key limehd:codes="94" limehd:keyLabel="^"/>
+        <Key limehd:codes="174" limehd:keyLabel="®"/>
+        <Key limehd:codes="165" limehd:keyLabel="¥"/>
+        <Key limehd:codes="95" limehd:keyLabel="_"/>
+        <Key limehd:codes="61" limehd:keyLabel="="/>
+        <Key limehd:codes="91" limehd:keyLabel="["/>
+        <Key limehd:codes="93" limehd:keyLabel="]" limehd:keyEdgeFlags="right"/>
     </Row>
     
     <Row>
-        <Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift"
-                android:keyWidth="15%p" android:isModifier="true"
-                android:isSticky="true" android:keyEdgeFlags="left"/>
-        <Key android:codes="161" android:keyLabel="¡" />
-        <Key android:codes="60" android:keyLabel="&lt;"/>
-        <Key android:codes="62" android:keyLabel="&gt;"/>
-        <Key android:codes="162" android:keyLabel="¢"/>
-        <Key android:codes="124" android:keyLabel="|"/>
-        <Key android:codes="92" android:keyLabel="\\" />
-        <Key android:codes="191" android:keyLabel="¿"/>
-        <Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" android:iconPreview="@drawable/sym_keyboard_feedback_delete" android:isModifier="true"
-                android:keyWidth="15%p" android:keyEdgeFlags="right"
-                android:isRepeatable="true"/>
+        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift"
+                limehd:keyWidth="15%p" limehd:isModifier="true"
+                limehd:isSticky="true" limehd:keyEdgeFlags="left"/>
+        <Key limehd:codes="161" limehd:keyLabel="¡" />
+        <Key limehd:codes="60" limehd:keyLabel="&lt;"/>
+        <Key limehd:codes="62" limehd:keyLabel="&gt;"/>
+        <Key limehd:codes="162" limehd:keyLabel="¢"/>
+        <Key limehd:codes="124" limehd:keyLabel="|"/>
+        <Key limehd:codes="92" limehd:keyLabel="\\" />
+        <Key limehd:codes="191" limehd:keyLabel="¿"/>
+        <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true"
+                limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"
+                limehd:isRepeatable="true"/>
     </Row>
     
-    <Row android:rowEdgeFlags="bottom">
-        <Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:isModifier="true" 
-                android:keyWidth="20%p" android:keyEdgeFlags="left" />
-        <Key android:codes="-2" android:keyLabel="LIME" android:keyWidth="15%p" />
-        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space"
-        	android:iconPreview="@drawable/sym_keyboard_feedback_space"
-        	android:keyWidth="30%p" 
-                android:isRepeatable="true"/>
-        <Key android:codes="8230" android:keyLabel="…" android:keyWidth="15%p" />
-        <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:iconPreview="@drawable/sym_keyboard_feedback_return" android:isModifier="true"
-                android:keyWidth="20%p" android:keyEdgeFlags="right" />
+    <Row limehd:rowEdgeFlags="bottom">
+        <Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:isModifier="true" 
+                limehd:keyWidth="20%p" limehd:keyEdgeFlags="left" />
+        <Key limehd:codes="-2" limehd:keyLabel="LIME" limehd:keyWidth="15%p" />
+        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space"
+        	limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
+        	limehd:keyWidth="30%p" 
+                limehd:isRepeatable="true"/>
+        <Key limehd:codes="8230" limehd:keyLabel="…" limehd:keyWidth="15%p" />
+        <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true"
+                limehd:keyWidth="20%p" limehd:keyEdgeFlags="right" />
     </Row>
 </Keyboard>

@@ -15,7 +15,7 @@
 -->
 
 <resources>
-    <style name="LIMEKeyboardBaseView">
+    <style name="LIMEkeyboardStyle">
         <item name="android:background">@drawable/keyboard_background</item>
         <item name="keyBackground">@drawable/btn_keyboard_key</item>
         <item name="keyTextSize">@dimen/key_text_size</item>

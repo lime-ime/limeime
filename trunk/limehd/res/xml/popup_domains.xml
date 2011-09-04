@@ -18,23 +18,23 @@
 */
 -->
 
-<Keyboard xmlns:android="http://schemas.android.com/apk/res/net.toload.main.hd"
-    android:keyWidth="15%p"
-    android:horizontalGap="0px"
-    android:verticalGap="0px"
-    android:keyHeight="@dimen/key_height"
+<Keyboard xmlns:limehd="http://schemas.android.com/apk/res/net.toload.main.hd"
+    limehd:keyWidth="15%p"
+    limehd:horizontalGap="0px"
+    limehd:verticalGap="0px"
+    limehd:keyHeight="@dimen/key_height"
     >
 
-    <Row android:rowEdgeFlags="top|bottom">
-        <Key android:keyLabel="@string/popular_domain_1"
-            android:keyOutputText="@string/popular_domain_1" android:keyEdgeFlags="left" />
-        <Key android:keyLabel="@string/popular_domain_2"
-            android:keyOutputText="@string/popular_domain_2"/>
-        <Key android:keyLabel="@string/popular_domain_3"
-            android:keyOutputText="@string/popular_domain_3"/>
-        <Key android:keyLabel="@string/popular_domain_4"
-            android:keyOutputText="@string/popular_domain_4"/>
-        <Key android:keyLabel="@string/popular_domain_5"
-            android:keyOutputText="@string/popular_domain_5" android:keyEdgeFlags="right" />
+    <Row limehd:rowEdgeFlags="top|bottom">
+        <Key limehd:keyLabel="@string/popular_domain_1"
+            limehd:keyOutputText="@string/popular_domain_1" limehd:keyEdgeFlags="left" />
+        <Key limehd:keyLabel="@string/popular_domain_2"
+            limehd:keyOutputText="@string/popular_domain_2"/>
+        <Key limehd:keyLabel="@string/popular_domain_3"
+            limehd:keyOutputText="@string/popular_domain_3"/>
+        <Key limehd:keyLabel="@string/popular_domain_4"
+            limehd:keyOutputText="@string/popular_domain_4"/>
+        <Key limehd:keyLabel="@string/popular_domain_5"
+            limehd:keyOutputText="@string/popular_domain_5" limehd:keyEdgeFlags="right" />
     </Row>
 </Keyboard>

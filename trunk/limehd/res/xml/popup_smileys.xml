@@ -18,32 +18,32 @@
 */
 -->
 
-<Keyboard xmlns:android="http://schemas.android.com/apk/res/net.toload.main.hd"
-    android:keyWidth="15%p"
-    android:horizontalGap="0px"
-    android:verticalGap="0px"
-    android:keyHeight="@dimen/key_height"
+<Keyboard xmlns:limehd="http://schemas.android.com/apk/res/net.toload.main.hd"
+    limehd:keyWidth="15%p"
+    limehd:horizontalGap="0px"
+    limehd:verticalGap="0px"
+    limehd:keyHeight="@dimen/key_height"
     >
 
-    <Row android:rowEdgeFlags="top">
-        <Key android:keyLabel=":-)" android:keyOutputText=":-) " android:keyEdgeFlags="left" />
-        <Key android:keyLabel=":-(" android:keyOutputText=":-( "/>
-        <Key android:keyLabel=";-)" android:keyOutputText=";-) "/>
-        <Key android:keyLabel=":-P" android:keyOutputText=":-P "/>
-        <Key android:keyLabel="=-O" android:keyOutputText="=-O " android:keyEdgeFlags="right" />
+    <Row limehd:rowEdgeFlags="top">
+        <Key limehd:keyLabel=":-)" limehd:keyOutputText=":-) " limehd:keyEdgeFlags="left" />
+        <Key limehd:keyLabel=":-(" limehd:keyOutputText=":-( "/>
+        <Key limehd:keyLabel=";-)" limehd:keyOutputText=";-) "/>
+        <Key limehd:keyLabel=":-P" limehd:keyOutputText=":-P "/>
+        <Key limehd:keyLabel="=-O" limehd:keyOutputText="=-O " limehd:keyEdgeFlags="right" />
     </Row>
     <Row>
-        <Key android:keyLabel=":-*" android:keyOutputText=":-* " android:keyEdgeFlags="left" />
-        <Key android:keyLabel=":O" android:keyOutputText=":O "/>
-        <Key android:keyLabel="B-)" android:keyOutputText="B-) "/>
-        <Key android:keyLabel=":-$" android:keyOutputText=":-$ "/>
-        <Key android:keyLabel=":-!" android:keyOutputText=":-! " android:keyEdgeFlags="right" />
+        <Key limehd:keyLabel=":-*" limehd:keyOutputText=":-* " limehd:keyEdgeFlags="left" />
+        <Key limehd:keyLabel=":O" limehd:keyOutputText=":O "/>
+        <Key limehd:keyLabel="B-)" limehd:keyOutputText="B-) "/>
+        <Key limehd:keyLabel=":-$" limehd:keyOutputText=":-$ "/>
+        <Key limehd:keyLabel=":-!" limehd:keyOutputText=":-! " limehd:keyEdgeFlags="right" />
     </Row>
-    <Row android:rowEdgeFlags="bottom">
-        <Key android:keyLabel=":-[" android:keyOutputText=":-[ " android:keyEdgeFlags="left" />
-        <Key android:keyLabel="O:-)" android:keyOutputText="O:-) "/>
-        <Key android:keyLabel=":-\\" android:keyOutputText=":-\\ "/>
-        <Key android:keyLabel=":'(" android:keyOutputText=":'( "/>
-        <Key android:keyLabel=":-D" android:keyOutputText=":-D " android:keyEdgeFlags="right" />
+    <Row limehd:rowEdgeFlags="bottom">
+        <Key limehd:keyLabel=":-[" limehd:keyOutputText=":-[ " limehd:keyEdgeFlags="left" />
+        <Key limehd:keyLabel="O:-)" limehd:keyOutputText="O:-) "/>
+        <Key limehd:keyLabel=":-\\" limehd:keyOutputText=":-\\ "/>
+        <Key limehd:keyLabel=":'(" limehd:keyOutputText=":'( "/>
+        <Key limehd:keyLabel=":-D" limehd:keyOutputText=":-D " limehd:keyEdgeFlags="right" />
     </Row>
 </Keyboard>
