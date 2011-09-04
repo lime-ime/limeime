@@ -2266,7 +2266,7 @@ public class LIMEService extends InputMethodService implements
 		} else {
 			
 			//Jeremy '11,8,15
-			clearSuggestions();
+			//clearSuggestions();
 			try {
 				if (mLIMEPref.getEnglishPrediction()&& mPredictionOn
 					&& ( !isPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard() )//mPredictionOnPhysicalKeyboard)
@@ -2277,7 +2277,10 @@ public class LIMEService extends InputMethodService implements
 						updateEnglishPrediction();
 					}
 					keyDownUp(KeyEvent.KEYCODE_DEL);
-				} else {
+				} else if(onIM && mCandidateView.isShown()&& !showingChineseSymbolSuggestions){
+						clearSuggestions();  //Jeremy '11,9,5
+				} else{
+				
 					//Jeremy '11,8,14
 					clearComposing();
 					keyDownUp(KeyEvent.KEYCODE_DEL);
@@ -2387,7 +2390,7 @@ public class LIMEService extends InputMethodService implements
 			Toast.makeText(this, R.string.typing_mode_mixed,
 					Toast.LENGTH_SHORT / 2).show();
 		}
-
+		clearSuggestions(); //Jeremy '11,9,5
 	}
 
 	/*
@@ -3094,7 +3097,7 @@ public class LIMEService extends InputMethodService implements
 	//jeremy '11,9, 5 hideCanddiate when inputView is closed
 	@Override
 	public void updateInputViewShown() {
-		Log.i(TAG, "updateInputViewShown(): mInputView.isShown(): " + mInputView.isShown());
+		if(DEBUG) Log.i(TAG, "updateInputViewShown(): mInputView.isShown(): " + mInputView.isShown());
 		super.updateInputViewShown();
 		if(!mInputView.isShown() && !isPhysicalKeyPressed)
 			hideCandidateView();
