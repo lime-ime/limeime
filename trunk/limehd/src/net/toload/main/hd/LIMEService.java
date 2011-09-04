@@ -500,7 +500,7 @@ public class LIMEService extends InputMethodService implements
 	
 	private void clearSuggestions(){
 		if(mCandidateView !=null){
-			Log.i(TAG, "clearSuggestions(): mInputView.isShown()" +mInputView.isShown()
+			if(DEBUG) Log.i(TAG, "clearSuggestions(): mInputView.isShown()" +mInputView.isShown()
 					+ ", mCandidateView.isShown():" + mCandidateView.isShown());
 			
 			mCandidateView.clear();
@@ -2152,9 +2152,11 @@ public class LIMEService extends InputMethodService implements
 	//Jeremy '11,8,21 update UI in handler 
 	
 	private void showCandidateView(){
+		if(DEBUG) Log.i(TAG,"showCandidateView()");
 		mHandler.post(mShowCandidateView);
 	}
 	private void hideCandidateView(){
+		if(DEBUG) Log.i(TAG,"hideCandidateView()");
 		mHandler.post(mHideCandidateView);
 	}
 	
@@ -3084,8 +3086,9 @@ public class LIMEService extends InputMethodService implements
 	//jeremy '11,9, 5 hideCanddiate when inputView is closed
 	@Override
 	public void updateInputViewShown() {
+		Log.i(TAG, "updateInputViewShown(): mInputView.isShown(): " + mInputView.isShown());
 		super.updateInputViewShown();
-		if(!mInputView.isShown())
+		if(!mInputView.isShown() && !isPhysicalKeyPressed)
 			hideCandidateView();
 	}
 
