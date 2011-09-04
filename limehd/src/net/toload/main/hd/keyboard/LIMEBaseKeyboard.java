@@ -598,7 +598,15 @@ public class LIMEBaseKeyboard {
         return mDefaultVerticalGap;
     }
 
-    protected void setVerticalGap(int gap) {
+    public float getKeySizeScale() {
+		return mKeySizeScale;
+	}
+
+	public void setKeySizeScale(float mKeySizeScale) {
+		LIMEBaseKeyboard.mKeySizeScale = mKeySizeScale;
+	}
+
+	protected void setVerticalGap(int gap) {
         mDefaultVerticalGap = gap;
     }
 
