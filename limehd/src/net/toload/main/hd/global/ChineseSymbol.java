@@ -4,8 +4,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ChineseSymbol {
-	private final static String chineseSymbols = "，|。|、|？|！|：|；|「|」|『|』|【|】|" +
-			"／ |＼|－|＿|＊|＆|︿|％|＄|＃|＠|～|‵|＂|｛|｝|［|］|＜|＞|＋|（|）|｜";	
+	private final static String chineseSymbols = "，|。|、|？|！|：|；|（|）|「|」|『|』|【|】|" +
+			"／ |＼|－|＿|＊|＆|︿|％|＄|＃|＠|～|‵|＂|｛|｝|［|］|＜|＞|＋|｜";	
 	
 	
 	private static List<Mapping> mChineseSymbolMapping = new LinkedList<Mapping>();

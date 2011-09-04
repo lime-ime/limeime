@@ -716,7 +716,8 @@ public class LIMEBaseKeyboard {
         boolean inKey = false;
         boolean inRow = false;
         //boolean leftMostKey = false;
-        int row = 0;
+        @SuppressWarnings("unused")
+		int row = 0;
         int x = 0;
         int y = 0;
         Key key = null;
