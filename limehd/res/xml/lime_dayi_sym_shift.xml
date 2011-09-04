@@ -21,82 +21,82 @@
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 -->
-<Keyboard xmlns:android="http://schemas.android.com/apk/res/net.toload.main.hd"
-	android:keyWidth="10%p" android:horizontalGap="0px"
-	android:verticalGap="0px" android:keyHeight="@dimen/key_height">
+<Keyboard xmlns:limehd="http://schemas.android.com/apk/res/net.toload.main.hd"
+	limehd:keyWidth="10%p" limehd:horizontalGap="0px"
+	limehd:verticalGap="0px" limehd:keyHeight="@dimen/key_height">
 
 
 	<Row>
-		<Key android:codes="33" android:keyLabel="!\n言" 
-			 android:keyEdgeFlags="left" />
-		<Key android:codes="64" android:keyLabel="\@\n牛" />
-		<Key android:codes="35" android:keyLabel="\#\n目" />
-		<Key android:codes="36" android:keyLabel="$\n四" />
-		<Key android:codes="37" android:keyLabel="%\n王" />
-		<Key android:codes="94" android:keyLabel="^\n門" />
-		<Key android:codes="38" android:keyLabel="&amp;\n田" />
-		<Key android:codes="42" android:keyLabel="*\n米" />
-		<Key android:codes="40" android:keyLabel="(\n足" />
-		<Key android:codes="41" android:keyLabel=")\n金" android:keyEdgeFlags="right" />
+		<Key limehd:codes="33" limehd:keyLabel="!\n言" 
+			 limehd:keyEdgeFlags="left" />
+		<Key limehd:codes="64" limehd:keyLabel="\@\n牛" />
+		<Key limehd:codes="35" limehd:keyLabel="\#\n目" />
+		<Key limehd:codes="36" limehd:keyLabel="$\n四" />
+		<Key limehd:codes="37" limehd:keyLabel="%\n王" />
+		<Key limehd:codes="94" limehd:keyLabel="^\n門" />
+		<Key limehd:codes="38" limehd:keyLabel="&amp;\n田" />
+		<Key limehd:codes="42" limehd:keyLabel="*\n米" />
+		<Key limehd:codes="40" limehd:keyLabel="(\n足" />
+		<Key limehd:codes="41" limehd:keyLabel=")\n金" limehd:keyEdgeFlags="right" />
 	</Row>
 	
 	<Row>
-		<Key android:codes="81" android:keyLabel="Q\n石" android:keyEdgeFlags="left" />
-		<Key android:codes="87" android:keyLabel="W\n山" />
-		<Key android:codes="69" android:keyLabel="E\n一" />
-		<Key android:codes="82" android:keyLabel="R\n工" />
-		<Key android:codes="84" android:keyLabel="T\n糸" />
-		<Key android:codes="89" android:keyLabel="Y\n火" />
-		<Key android:codes="85" android:keyLabel="U\n艸" />
-		<Key android:codes="73" android:keyLabel="I\n木" />
-		<Key android:codes="79" android:keyLabel="O\n口" />
-		<Key android:codes="80" android:keyLabel="P\n耳" android:keyEdgeFlags="right" />
+		<Key limehd:codes="81" limehd:keyLabel="Q\n石" limehd:keyEdgeFlags="left" />
+		<Key limehd:codes="87" limehd:keyLabel="W\n山" />
+		<Key limehd:codes="69" limehd:keyLabel="E\n一" />
+		<Key limehd:codes="82" limehd:keyLabel="R\n工" />
+		<Key limehd:codes="84" limehd:keyLabel="T\n糸" />
+		<Key limehd:codes="89" limehd:keyLabel="Y\n火" />
+		<Key limehd:codes="85" limehd:keyLabel="U\n艸" />
+		<Key limehd:codes="73" limehd:keyLabel="I\n木" />
+		<Key limehd:codes="79" limehd:keyLabel="O\n口" />
+		<Key limehd:codes="80" limehd:keyLabel="P\n耳" limehd:keyEdgeFlags="right" />
 	</Row>
 	
 	<Row>
-		<Key android:codes="65" android:keyLabel="A\n人" android:keyEdgeFlags="left" />
-		<Key android:codes="83" android:keyLabel="S\n革" />
-		<Key android:codes="68" android:keyLabel="D\n日" />
-		<Key android:codes="70" android:keyLabel="F\n土" />
-		<Key android:codes="71" android:keyLabel="G\n手" />
-		<Key android:codes="72" android:keyLabel="H\n鳥" />
-		<Key android:codes="74" android:keyLabel="J\n月" />
-		<Key android:codes="75" android:keyLabel="K\n立" />
-		<Key android:codes="76" android:keyLabel="L\n女" />
-		<Key android:codes="58" android:keyLabel=":\n虫" android:keyEdgeFlags="right" />
+		<Key limehd:codes="65" limehd:keyLabel="A\n人" limehd:keyEdgeFlags="left" />
+		<Key limehd:codes="83" limehd:keyLabel="S\n革" />
+		<Key limehd:codes="68" limehd:keyLabel="D\n日" />
+		<Key limehd:codes="70" limehd:keyLabel="F\n土" />
+		<Key limehd:codes="71" limehd:keyLabel="G\n手" />
+		<Key limehd:codes="72" limehd:keyLabel="H\n鳥" />
+		<Key limehd:codes="74" limehd:keyLabel="J\n月" />
+		<Key limehd:codes="75" limehd:keyLabel="K\n立" />
+		<Key limehd:codes="76" limehd:keyLabel="L\n女" />
+		<Key limehd:codes="58" limehd:keyLabel=":\n虫" limehd:keyEdgeFlags="right" />
 	</Row>
 
 	<Row>
-		<Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift"
-			android:keyWidth="15%p" android:isModifier="true" android:isSticky="true"
-			android:keyEdgeFlags="left" />
-		<Key android:codes="90" android:keyLabel="Z\n心" />
-		<Key android:codes="88" android:keyLabel="X\n水" />
-		<Key android:codes="67" android:keyLabel="C\n鹿" />
-		<Key android:codes="86" android:keyLabel="V\n禾" />
-		<Key android:codes="66" android:keyLabel="B\n馬" />
-		<Key android:codes="78" android:keyLabel="N\n魚" />
-		<Key android:codes="77" android:keyLabel="M\n雨" />
-		<Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" android:iconPreview="@drawable/sym_keyboard_feedback_delete" android:isModifier="true"
-			android:keyWidth="15%p" android:keyEdgeFlags="right"
-			android:isRepeatable="true" />
+		<Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift"
+			limehd:keyWidth="15%p" limehd:isModifier="true" limehd:isSticky="true"
+			limehd:keyEdgeFlags="left" />
+		<Key limehd:codes="90" limehd:keyLabel="Z\n心" />
+		<Key limehd:codes="88" limehd:keyLabel="X\n水" />
+		<Key limehd:codes="67" limehd:keyLabel="C\n鹿" />
+		<Key limehd:codes="86" limehd:keyLabel="V\n禾" />
+		<Key limehd:codes="66" limehd:keyLabel="B\n馬" />
+		<Key limehd:codes="78" limehd:keyLabel="N\n魚" />
+		<Key limehd:codes="77" limehd:keyLabel="M\n雨" />
+		<Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true"
+			limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"
+			limehd:isRepeatable="true" />
 	</Row>
-	<Row android:rowEdgeFlags="bottom">
-		<Key android:codes="-3"  android:keyIcon="@drawable/sym_keyboard_done" android:iconPreview="@drawable/sym_keyboard_feedback_done" android:isModifier="true"
-			android:keyWidth="15%p" android:keyEdgeFlags="left" />
-		<Key android:codes="-9" 
-				android:keyIcon="@drawable/sw" android:isModifier="true" 
-				android:keyWidth="10%p" 
-				android:iconPreview="@drawable/sw_l"/>
-		<Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space_lime" android:iconPreview="@drawable/sym_keyboard_feedback_space"
-			android:keyWidth="30%p" android:isRepeatable="true" />
-		<Key android:codes="60" android:keyLabel="&lt;\n力" android:keyWidth="10%p" />
-		<Key android:codes="62" android:keyLabel="&gt;\n舟"						 
-								android:popupKeyboard="@xml/popup_punctuation"  
-								android:keyWidth="10%p" />
-		<Key android:codes="63" android:keyLabel="\?\n竹" android:keyWidth="10%p" />
-		<Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" android:iconPreview="@drawable/sym_keyboard_feedback_return" android:isModifier="true"
-			android:keyWidth="15%p" android:keyEdgeFlags="right" />
+	<Row limehd:rowEdgeFlags="bottom">
+		<Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true"
+			limehd:keyWidth="15%p" limehd:keyEdgeFlags="left" />
+		<Key limehd:codes="-9" 
+				limehd:keyIcon="@drawable/sw" limehd:isModifier="true" 
+				limehd:keyWidth="10%p" 
+				limehd:iconPreview="@drawable/sw_l"/>
+		<Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
+			limehd:keyWidth="30%p" limehd:isRepeatable="true" />
+		<Key limehd:codes="60" limehd:keyLabel="&lt;\n力" limehd:keyWidth="10%p" />
+		<Key limehd:codes="62" limehd:keyLabel="&gt;\n舟"						 
+								limehd:popupKeyboard="@xml/popup_punctuation"  
+								limehd:keyWidth="10%p" />
+		<Key limehd:codes="63" limehd:keyLabel="\?\n竹" limehd:keyWidth="10%p" />
+		<Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true"
+			limehd:keyWidth="15%p" limehd:keyEdgeFlags="right" />
 	</Row>
 
 </Keyboard>

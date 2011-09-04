@@ -477,9 +477,11 @@
 	<!-- Vibrate level Options List -->
     <string name="vibrate_level">震動強度</string>
 	<string-array name="vibrate_level_options">
+		<item>特弱</item>
 		<item>弱</item>
 		<item>中</item>
 		<item>強</item>
+		<item>特強</item>
 	</string-array>
 
 </resources>

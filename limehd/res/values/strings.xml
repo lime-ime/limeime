@@ -505,13 +505,17 @@
 	<!-- Vibrate level Options List -->
     <string name="vibrate_level">Vibrate level</string>
 	<string-array name="vibrate_level_options">
+		<item>Extremely Light</item>
 		<item>Light</item>
 		<item>Moderate</item>
 		<item>Strong</item>
+		<item>Extremely Strong</item>
 	</string-array>
 	<string-array name="vibrate_level_values">
 		<item>20</item>
+		<item>30</item>
 		<item>40</item>
+		<item>50</item>
 		<item>60</item>
 	</string-array>
 	

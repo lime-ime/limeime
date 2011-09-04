@@ -22,29 +22,29 @@
 */
 -->
 
-<Keyboard xmlns:android="http://schemas.android.com/apk/res/net.toload.main.hd"
-    android:keyWidth="10%p"
-    android:horizontalGap="0px"
-    android:verticalGap="0px"
-    android:keyHeight="@dimen/key_height"
+<Keyboard xmlns:limehd="http://schemas.android.com/apk/res/net.toload.main.hd"
+    limehd:keyWidth="10%p"
+    limehd:horizontalGap="0px"
+    limehd:verticalGap="0px"
+    limehd:keyHeight="@dimen/key_height"
     >
-    <Row android:rowEdgeFlags="top">
-        <Key android:keyLabel="【" android:keyEdgeFlags="left" />
-         <Key android:keyLabel="〈" />
-        <Key android:keyLabel="『" />
-        <Key android:keyLabel="「" />
-        <Key android:keyLabel="？" />
-        <Key android:keyLabel="：" />
-        <Key android:keyLabel="。" android:keyEdgeFlags="right" />
+    <Row limehd:rowEdgeFlags="top">
+        <Key limehd:keyLabel="【" limehd:keyEdgeFlags="left" />
+         <Key limehd:keyLabel="〈" />
+        <Key limehd:keyLabel="『" />
+        <Key limehd:keyLabel="「" />
+        <Key limehd:keyLabel="？" />
+        <Key limehd:keyLabel="：" />
+        <Key limehd:keyLabel="。" limehd:keyEdgeFlags="right" />
     </Row>
-    <Row android:rowEdgeFlags="bottom">
-         <Key android:keyLabel="】" android:keyEdgeFlags="left" />
-        <Key android:keyLabel="〉" />
-        <Key android:keyLabel="』" />
-        <Key android:keyLabel="」" />
-        <Key android:keyLabel="！" />
-        <Key android:keyLabel="、" />
-        <Key android:keyLabel="，" android:keyEdgeFlags="right" />
+    <Row limehd:rowEdgeFlags="bottom">
+         <Key limehd:keyLabel="】" limehd:keyEdgeFlags="left" />
+        <Key limehd:keyLabel="〉" />
+        <Key limehd:keyLabel="』" />
+        <Key limehd:keyLabel="」" />
+        <Key limehd:keyLabel="！" />
+        <Key limehd:keyLabel="、" />
+        <Key limehd:keyLabel="，" limehd:keyEdgeFlags="right" />
     </Row>
     
 </Keyboard>
