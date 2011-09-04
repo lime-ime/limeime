@@ -505,7 +505,8 @@ public class LIMEService extends InputMethodService implements
 			
 			mCandidateView.clear();
 			//hideCandidateView();
-			if(onIM && (mInputView.isShown()|| mCandidateView.isShown())) 
+			if(onIM && mLIMEPref.getAutoChineseSymbol()  
+					&&	(mInputView.isShown()|| mCandidateView.isShown())) 
 				updateChineseSymbol(); // Jeremy '11,9,4
 			else
 				hideCandidateView();

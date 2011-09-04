@@ -483,5 +483,6 @@
 		<item>强</item>
 		<item>特强</item>
 	</string-array>
-
+	<string name="auto_chinese_symbol">自动中文标点模式</string>
+    <string name="auto_chinese_symbol_summary">无候选字词时显示中文标点选项</string>
 </resources>

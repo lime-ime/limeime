@@ -289,6 +289,13 @@ public class LIMEPreferenceManager {
 		
 	}
 	
+	public boolean getAutoChineseSymbol(){
+
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("auto_chinese_symbol", true);
+	}
+	
+	
 	public Integer getVibrateLevel(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return Integer.parseInt(sp.getString("vibrate_level", "40"));
