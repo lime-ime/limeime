@@ -544,6 +544,8 @@ public class LIMEService extends InputMethodService implements
 		if (mInputView == null) {
 			return;
 		}
+		
+		isPhysicalKeyPressed = false;  //Jeremy '11,9,6 reset phsycalkeyflag
 		// Reset the IM softkeyboard settings. Jeremy '11,6,19
 		try {
 			mKeyboardSwitcher.setImList(SearchSrv.getImList());
@@ -791,7 +793,8 @@ public class LIMEService extends InputMethodService implements
 		// keyCode, event);
 		// mMetaState =
 		// LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
-
+		isPhysicalKeyPressed = true; // Jeremy '11,9,5
+		
 		int c = event.getUnicodeChar(LIMEMetaKeyKeyListener
 				.getMetaState(mMetaState));
 
@@ -830,12 +833,12 @@ public class LIMEService extends InputMethodService implements
 					+ ", event.getDownTime()"+ event.getDownTime() 
 					+ ", event.getEventTime()"+ event.getEventTime()
 					+ ", event.getRepeatCount()" + event.getRepeatCount());
-		if(!(keyCode == KeyEvent.KEYCODE_HOME
+		/*if(!(keyCode == KeyEvent.KEYCODE_HOME
 			 ||keyCode == KeyEvent.KEYCODE_BACK
 			 ||keyCode == KeyEvent.KEYCODE_MENU
 			 ||keyCode == KeyEvent.KEYCODE_SEARCH
 			 )) //Jeremy '11,9,4 exclude the four default hard keys
-				isPhysicalKeyPressed = true;
+				isPhysicalKeyPressed = true;*/ // Moved to translatekeydown '11,9,5 by jeremy
 
 		mKeydownEvent = new KeyEvent(event);
 		// Record key pressed time and set key processed flags(key down, for physical keys)
@@ -972,7 +975,7 @@ public class LIMEService extends InputMethodService implements
 				}
 			}else{
 				if (mLIMEPref.getEnglishPrediction() && mPredictionOn
-						&& ( !isPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())){
+						&& ( mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())){
 					resetTempEnglishWord();
 					this.updateEnglishPrediction();
 				}
