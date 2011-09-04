@@ -3081,6 +3081,13 @@ public class LIMEService extends InputMethodService implements
 		clearComposing();
 		
 	}
+	//jeremy '11,9, 5 hideCanddiate when inputView is closed
+	@Override
+	public void updateInputViewShown() {
+		super.updateInputViewShown();
+		if(!mInputView.isShown())
+			hideCandidateView();
+	}
 
 
 }
