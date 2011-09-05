@@ -183,7 +183,7 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 							DBSrv.getKeyboardInfo("phonetic", "desc"), "phonetic");
 				}else if(selectedPhoneticKeyboardType.equals("eten")){
 					DBSrv.setIMKeyboard("phonetic", 
-							DBSrv.getKeyboardInfo("dayi", "desc"), "limenumsym");
+							DBSrv.getKeyboardInfo("phoneticet41", "desc"), "phoneticet41");
 				}else if(selectedPhoneticKeyboardType.equals("eten26")||selectedPhoneticKeyboardType.equals("hsu")){
 					if(PreferenceManager.getDefaultSharedPreferences(ctx).
 							getBoolean("number_row_in_english", false)){

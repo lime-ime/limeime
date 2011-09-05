@@ -92,14 +92,16 @@ public class LimeDB extends SQLiteOpenHelper {
 		"ㄅ|ㄆ|ㄇ|ㄈ|ㄉ|ㄊ|ㄋ|ㄌ|ˇ|ㄍ|ㄎ|ㄏ|ˋ|ㄐ|ㄑ|ㄒ|ㄓ|ㄔ|ㄕ|ㄖ|ˊ|ㄗ|ㄘ|ㄙ|˙|ㄧ|ㄨ|ㄩ|ㄚ|ㄛ|ㄜ|ㄝ|ㄞ|ㄟ|ㄠ|ㄡ|ㄢ|ㄣ|ㄤ|ㄥ|ㄦ";
 	
 	
-	private final static String SHIFTED_NUMBERIC_KEY = 		 	"!@#$%^&*()";
-	private final static String SHIFTED_NUMBERIC_KEY_REMAP = 	"1234567890";
-	private final static String SHIFTED_SYMBOL_KEY = 		 	"<>?=:";
-	private final static String SHIFTED_SYMBOL_KEY_REMAP = 		",./-;";
+	private final static String SHIFTED_NUMBERIC_KEY = 		 		"!@#$%^&*()";
+	private final static String SHIFTED_NUMBERIC_KEY_REMAP = 		"1234567890";
+	private final static String SHIFTED_NUMBERIC_ETEN_KEY_REMAP = 	"7634%^f0p;";
+
+	private final static String SHIFTED_SYMBOL_KEY = 		 		"<>?_:+&quot;";
+	private final static String SHIFTED_SYMBOL_KEY_REMAP = 			",./-=;'";
+	private final static String SHIFTED_SYMBOL_ETEN_KEY_REMAP = 	"5tg/hy-";
 	
-	
-	private final static String ETEN_KEY = 		 			"@`abcdefghijklmnopqrstuvwxyz12347890-=;',./?";
-	private final static String ETEN_KEY_REMAP = 			"@`81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg?";
+	private final static String ETEN_KEY = 		 			"abcdefghijklmnopqrstuvwxyz12347890-=;',./!@#$&*()<>?_+:\"";
+	private final static String ETEN_KEY_REMAP = 			"81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg7634f0p;5tg/yh-";
 	//private final static String DESIREZ_ETEN_KEY_REMAP = 	"-`81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg/";
 	//private final static String MILESTONE_ETEN_KEY_REMAP =  "-`81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg/";
 	//private final static String MILESTONE3_ETEN_KEY_REMAP = "-h81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg/";
@@ -115,8 +117,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String MILESTONE3_ETEN_DUALKEY 	= 		"5aew"; // ",mvt"
 	private final static String MILESTONE3_ETEN_DUALKEY_REMAP = 	"th/-";
 	private final static String ETEN_CHAR= 
-		"@|`|ㄚ|ㄅ|ㄒ|ㄉ|ㄧ|ㄈ|ㄐ|ㄏ|ㄞ|ㄖ|ㄎ|ㄌ|ㄇ|ㄋ|ㄛ|ㄆ|ㄟ|ㄜ|ㄙ|ㄊ|ㄩ|ㄍ|ㄝ|ㄨ|ㄡ|ㄠ" +
-		"|˙|ˊ|ˇ|ˋ|ㄑ|ㄢ|ㄣ|ㄤ|ㄥ|ㄦ|ㄗ|ㄘ|ㄓ|ㄔ|ㄕ|?";
+		"ㄚ|ㄅ|ㄒ|ㄉ|ㄧ|ㄈ|ㄐ|ㄏ|ㄞ|ㄖ|ㄎ|ㄌ|ㄇ|ㄋ|ㄛ|ㄆ|ㄟ|ㄜ|ㄙ|ㄊ|ㄩ|ㄍ|ㄝ|ㄨ|ㄡ|ㄠ" +
+		"|˙|ˊ|ˇ|ˋ|ㄑ|ㄢ|ㄣ|ㄤ|ㄥ|ㄦ|ㄗ|ㄘ|ㄓ|ㄔ|ㄕ|˙|ˊ|ˇ|ˋ|ㄑ|ㄢ|ㄣ|ㄤ|ㄓ|ㄔ|ㄕ|ㄥ|ㄦ|ㄗ|ㄘ";
 	private final static String DESIREZ_ETEN_CHAR= 
 		"@|`|ㄚ|ㄅ|ㄒ|ㄉ|(ㄧ/ˇ)|ㄈ|ㄐ|ㄏ|(ㄞ/ㄢ)|ㄖ|ㄎ|(ㄌ/ㄕ)|(ㄇ/ㄘ)|(ㄋ/ㄦ)|(ㄛ/ㄣ)|(ㄆ/ㄤ)|(ㄟ/˙)" +
 		"|(ㄜ/ˋ)|ㄙ|ㄊ|(ㄩ/ㄑ)|(ㄍ/ㄥ)|(ㄝ/ˊ)|ㄨ|ㄡ|ㄠ" +
@@ -494,34 +496,47 @@ public class LimeDB extends SQLiteOpenHelper {
 				mLIMEPref.setParameter("kbversion","333");
 			}*/
 			// Upgrade DB version below 333
-			/*if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 333){
+			//mLIMEPref.setParameter("kbversion","332");
+			
+			if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 333){
+
+				SQLiteDatabase db = null;
+				String dbtarget = mLIMEPref.getParameterString("dbtarget");
+				String dblocation = "";
+				if(dbtarget.equals("sdcard")){
+					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
+				}else{
+					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
+				}
+				db = SQLiteDatabase.openDatabase(dblocation, null, SQLiteDatabase.OPEN_READWRITE);
 				
-				KeyboardObj tobj = getKeyboardObj("limenumsym");
-				if(tobj == null){
+				int count = db.query("keyboard", null, FIELD_CODE +" = 'phoneticet41'", null, null, null, null, null).getCount();
+
+				if(count == 0){
 					try{
-						
+					
 						ContentValues 	cv = new ContentValues();
-						cv.put("code", "wb");
-						cv.put("name", "鈭�");
-						cv.put("desc", "鈭�頛詨瘜��);
+						cv.put("code", "phoneticet41");
+						cv.put("name", "注音倚天");
+						cv.put("desc", "注音倚天41鍵");
 						cv.put("type", "phone");
-						cv.put("image", "wb_keyboard_preview");
-						cv.put("imkb", "lime_wb");
-						cv.put("imshiftkb", "lime_wb_shift");
+						cv.put("image", "lime_et_41_keyboard_priview");
+						cv.put("imkb", "lime_et_41");
+						cv.put("imshiftkb", "lime_et_41_shift");
 						cv.put("engkb", "lime_english_number");
 						cv.put("engshiftkb", "lime_english_shift");
 						cv.put("symbolkb", "symbols");
 						cv.put("symbolshiftkb", "symbols_shift");
 						cv.put("disable", "false");
 						db.insert("keyboard" ,null , cv);
-						
-						db.close();
+
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
+				db.close();
 				mLIMEPref.setParameter("kbversion","333");
-			}*/
+			}
 		
 	}
 	
@@ -1420,18 +1435,10 @@ public class LimeDB extends SQLiteOpenHelper {
 					keyRemapString = HSU_KEY_REMAP_INITIAL;
 					finalKeyRemapString = HSU_KEY_REMAP_FINAL;
 				}else if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("eten")){
-					keyString = ETEN_KEY;
-					/*
-					if((keyboardtype.equals("milestone")||keyboardtype.equals("milestone2")) 
-							&& isPhysicalKeyboardPressed)
-						keyRemapString = MILESTONE_ETEN_KEY_REMAP;
-					else if(keyboardtype.equals("milestone3") && isPhysicalKeyboardPressed)
-						keyRemapString = MILESTONE3_ETEN_KEY_REMAP;
-					else if(keyboardtype.equals("desireZ") && isPhysicalKeyboardPressed)
-						keyRemapString = DESIREZ_ETEN_KEY_REMAP;
-					else
-					*/
-					keyRemapString = ETEN_KEY_REMAP;
+					keyString = ETEN_KEY; 
+							//+ SHIFTED_NUMBERIC_KEY + SHIFTED_SYMBOL_KEY;
+					keyRemapString = ETEN_KEY_REMAP ;
+							//+ SHIFTED_NUMBERIC_ETEN_KEY_REMAP + SHIFTED_SYMBOL_ETEN_KEY_REMAP;
 				}else if(isPhysicalKeyboardPressed 
 					&& tablename.equals("phonetic") && keyboardtype.equals("desireZ")){
 					//Desire Z phonetic keybaord
