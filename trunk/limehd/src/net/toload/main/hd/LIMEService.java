@@ -236,7 +236,7 @@ public class LIMEService extends InputMethodService implements
 
 	private LIMEPreferenceManager mLIMEPref;
 	
-	private boolean showingChineseSymbolSuggestions= false;
+	private boolean isChineseSymbolSuggestionsShowing= false;
 
 	/*
 	 * Construct SerConn
@@ -920,7 +920,7 @@ public class LIMEService extends InputMethodService implements
 			if (event.getRepeatCount() == 0) {
 				if(mInputView != null && mInputView.handleBack())
 					return true;
-				else if(mCandidateView.isShown()&& !showingChineseSymbolSuggestions){
+				else if(mCandidateView.isShown()&& !isChineseSymbolSuggestionsShowing){
 					clearSuggestions();
 					return true;
 				}else
@@ -1929,7 +1929,7 @@ public class LIMEService extends InputMethodService implements
 	
 	private void updateChineseSymbol(){
 		//ChineseSymbol chineseSym = new ChineseSymbol();
-		showingChineseSymbolSuggestions =true;
+		isChineseSymbolSuggestionsShowing =true;
 		List<Mapping> list = ChineseSymbol.getChineseSymoblList();
 		if (list.size() > 0) {
 			
@@ -1950,7 +1950,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@SuppressWarnings("unchecked")
 	public void updateCandidates(boolean getAllRecords) {
-		showingChineseSymbolSuggestions = false;
+		isChineseSymbolSuggestionsShowing = false;
 		// Log.i("ART", "Update Candidate mCompletionOn:"+ mCompletionOn);
 		// Log.i("ART", "Update Candidate mComposing:"+ mComposing);
 		if(DEBUG) Log.i(TAG,"updateCandidate():Update Candidate mComposing:"+ mComposing);
@@ -2021,7 +2021,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@SuppressWarnings("unchecked")
 	private void updateEnglishPrediction() {
-		showingChineseSymbolSuggestions = false;
+		isChineseSymbolSuggestionsShowing = false;
 		if (mPredictionOn && mLIMEPref.getEnglishPrediction()) {
 
 			try {
@@ -2103,7 +2103,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@SuppressWarnings("unchecked")
 	private void updateRelatedWord() {
-		showingChineseSymbolSuggestions = false;
+		isChineseSymbolSuggestionsShowing = false;
 		// Also use this to control whether need to display the english
 		// suggestions words.
 
@@ -2265,7 +2265,7 @@ public class LIMEService extends InputMethodService implements
 			if(ic!=null) ic.commitText("", 0);
 		} else if(onIM && mCandidateView.isShown()
 				&& mLIMEPref.getAutoChineseSymbol()
-				&& !showingChineseSymbolSuggestions ){
+				&& !isChineseSymbolSuggestionsShowing ){
 			clearSuggestions();  //Jeremy '11,9,5
 		} else {
 			//Jeremy '11,8,15
@@ -2590,7 +2590,7 @@ public class LIMEService extends InputMethodService implements
 			Log.i(TAG,"handleCharacter():primaryCode:" + primaryCode);//+ "; keyCodes[0]:"+keyCodes[0]);
 
 		// Adjust metakeystate on printed key pressed.
-		if(isPhysicalKeyPressed  )
+		if(isPhysicalKeyPressed)
 			mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 		
 		// Caculate key press time to handle Eazy IM keys mapping
@@ -2646,7 +2646,8 @@ public class LIMEService extends InputMethodService implements
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
-			}else if (!hasSymbolMapping && !hasNumberMapping	
+			}else if (!hasSymbolMapping && !hasNumberMapping
+					|| (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals("phonetic")) //Jeremy '11,9,6 for et26 and hsu
 					&& isValidLetter(primaryCode) && onIM) {
 				mComposing.append((char) primaryCode);
 				InputConnection ic=getCurrentInputConnection();
@@ -2665,6 +2666,7 @@ public class LIMEService extends InputMethodService implements
 			} else if (hasSymbolMapping
 					&& !hasNumberMapping
 					&& (isValidLetter(primaryCode) || isValidSymbol(primaryCode))
+					|| (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals("phonetic")) //Jeremy '11,9,6 for chacha
 					&& onIM) {
 				mComposing.append((char) primaryCode);
 				InputConnection ic=getCurrentInputConnection();
