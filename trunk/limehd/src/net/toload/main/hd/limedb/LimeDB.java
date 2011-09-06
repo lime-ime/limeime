@@ -94,11 +94,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 	private final static String SHIFTED_NUMBERIC_KEY = 		 		"!@#$%^&*()";
 	private final static String SHIFTED_NUMBERIC_KEY_REMAP = 		"1234567890";
-	private final static String SHIFTED_NUMBERIC_ETEN_KEY_REMAP = 	"7634%^f0p;";
 
-	private final static String SHIFTED_SYMBOL_KEY = 		 		"<>?_:+&quot;";
+	private final static String SHIFTED_SYMBOL_KEY = 		 		"<>?_:+\"";
 	private final static String SHIFTED_SYMBOL_KEY_REMAP = 			",./-=;'";
-	private final static String SHIFTED_SYMBOL_ETEN_KEY_REMAP = 	"5tg/hy-";
 	
 	private final static String ETEN_KEY = 		 			"abcdefghijklmnopqrstuvwxyz12347890-=;',./!@#$&*()<>?_+:\"";
 	private final static String ETEN_KEY_REMAP = 			"81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg7634f0p;5tg/yh-";
@@ -475,27 +473,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				db.close();
 				mLIMEPref.setParameter("kbversion","332");
 			}
-			/*//Jeremy '11,8,5 to set code3r = code column on phonetic for old table without code3r built in loadfile.
-			// Upgrade DB version below 333
-			//mLIMEPref.setParameter("kbversion","332");
-			if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 333){
-				SQLiteDatabase db = null;
-				String dbtarget = mLIMEPref.getParameterString("dbtarget");
-				String dblocation = "";
-				if(dbtarget.equals("sdcard")){
-					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
-				}else{
-					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
-				}
-				db = SQLiteDatabase.openDatabase(dblocation, null, SQLiteDatabase.OPEN_READWRITE);
-				Cursor cursor = db.query("phonetic", null, FIELD_CODE3R + " = 'ru'", null, null, null, null);
-				if(!cursor.moveToFirst()) {
-					db.execSQL("update phonetic set code3r = code");
-				}
-				db.close();
-				mLIMEPref.setParameter("kbversion","333");
-			}*/
-			// Upgrade DB version below 333
+						// Upgrade DB version below 333
 			//mLIMEPref.setParameter("kbversion","332");
 			
 			if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 333){
@@ -1335,8 +1313,10 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(softKeyboard) sort = mLIMEPref.getSortSuggestions();
 		else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
 		isPhysicalKeyboardPressed = !softKeyboard;
-		if(DEBUG) 
-			Log.i(TAG, "getmapping(): code:"+ code + "| doLDPhonetic=" +mLIMEPref.getParameterBoolean("doLDPhonetic"));
+		//if(DEBUG) 
+			Log.i(TAG, "getmapping(): code='"+ code + "' doLDPhonetic=" 
+					+mLIMEPref.getParameterBoolean("doLDPhonetic")
+					+ ", table=" + tablename );
 
 		// Add by Jeremy '10, 3, 27. Extension on multi table query.
 		lastCode = code;
@@ -1368,7 +1348,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
 					}
 					
-					if(DEBUG) 
+					//if(DEBUG) 
 						Log.i(TAG, "getMapping(): selectClause=" + selectClause  );
 					// Jeremy '11,8,5 limit initial query to limited records
 					String limitClause = null;
@@ -1970,7 +1950,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(!getAllRecords && relatedresult.size() == INITIAL_RELATED_LIMIT)
 			relatedresult.add(temp);
 		
-		if(DEBUG)
+		//if(DEBUG)
 			Log.i(TAG, "buildQueryResult():query_code:" + query_code + " query_code.length:" + query_code.length()
 				+ " result.size=" + result.size() + " query size:" + rsize 
 				+ " relatedlist.size=" + relatedresult.size());
