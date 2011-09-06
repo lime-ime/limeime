@@ -84,7 +84,9 @@
     </Row>
     
     <Row>
-        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift" limehd:iconPreview="@drawable/sym_keyboard_feedback_shift" 
+        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift" 
+        		limehd:iconPreview="@drawable/sym_keyboard_feedback_shift" 
+        		limehd:keyWidth="15%p" limehd:isModifier="true"
                 limehd:isSticky="true"/>
         <Key limehd:codes="122" limehd:keyLabel="z"
                  limehd:popupKeyboard="@xml/popup_template"
