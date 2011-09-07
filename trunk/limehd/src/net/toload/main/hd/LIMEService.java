@@ -744,7 +744,7 @@ public class LIMEService extends InputMethodService implements
 
 		// If the current selection in the text view changes, we should
 		// clear whatever candidate text we have.
-		/*if (mComposing.length() > 0
+		if (mComposing.length() > 0
 				&& (newSelStart != candidatesEnd || newSelEnd != candidatesEnd)
 				&& candidatesStart >0 && candidatesEnd >0
 				&& (newSelStart < candidatesStart || newSelStart > candidatesEnd)
@@ -757,7 +757,7 @@ public class LIMEService extends InputMethodService implements
 				ic.finishComposingText();
 			}
 
-		}*/
+		}
 	}
 
 	/**
