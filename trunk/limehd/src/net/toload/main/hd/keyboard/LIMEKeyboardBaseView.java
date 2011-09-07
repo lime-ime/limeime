@@ -1050,7 +1050,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
         int popupWidth = Math.max(mPreviewText.getMeasuredWidth(), key.width
                 + mPreviewText.getPaddingLeft() + mPreviewText.getPaddingRight());
-        final int popupHeight = mPreviewHeight;
+        final int popupHeight = (int) (mPreviewHeight * mKeyboard.getKeySizeScale()) ; //Jeremy '11,9,7
         LayoutParams lp = mPreviewText.getLayoutParams();
         if (lp != null) {
             lp.width = popupWidth;
