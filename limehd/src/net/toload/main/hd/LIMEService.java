@@ -224,7 +224,7 @@ public class LIMEService extends InputMethodService implements
 
 	// Replace Keycode.KEYCODE_CTRL_LEFT/RIGHT, ESC on android 3.x
 	// for backward compatibility of 2.x
-	static final int MY_KEYCODE_CTRL_ESC = 111;
+	static final int MY_KEYCODE_ESC = 111;
 	static final int MY_KEYCODE_CTRL_LEFT = 113;
 	static final int MY_KEYCODE_CTRL_RIGHT = 114;
 	static final int MY_KEYCODE_ENTER = 10;
@@ -912,6 +912,7 @@ public class LIMEService extends InputMethodService implements
 		case MY_KEYCODE_CTRL_RIGHT:
 			hasCtrlPress = true;
 			break;
+		case MY_KEYCODE_ESC:
 		case KeyEvent.KEYCODE_BACK:
 			// The InputMethodService already takes care of the back
 			// key for us, to dismiss the input method if it is shown.
@@ -920,10 +921,11 @@ public class LIMEService extends InputMethodService implements
 			if (event.getRepeatCount() == 0) {
 				if(mInputView != null && mInputView.handleBack())
 					return true;
-				else if(mCandidateView.isShown()&& !isChineseSymbolSuggestionsShowing){
+				else if(mCandidateView !=null && mCandidateView.isShown()
+						&& !isChineseSymbolSuggestionsShowing){
 					clearSuggestions();
 					return true;
-				}else
+				}else if(mCandidateView !=null && mCandidateView.isShown())
 					hideCandidateView();
 					
 			}
@@ -982,13 +984,13 @@ public class LIMEService extends InputMethodService implements
 			}
 			break;
 
-		case MY_KEYCODE_CTRL_ESC:
-
+/*		case MY_KEYCODE_ESC:
+		//Jeremy '11,9,7 treat esc as back key
 			//Jeremy '11,8,14
 			clearComposing();
 			InputConnection ic=getCurrentInputConnection();
 			if(ic!=null) ic.commitText("", 0);
-			return true;
+			return true;*/
 
 		case KeyEvent.KEYCODE_SPACE:
 

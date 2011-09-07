@@ -19,19 +19,19 @@
 -->
 <resources>
     <dimen name="key_height">60dip</dimen>
-    <dimen name="candidate_stripe_height">38sp</dimen>
-    <dimen name="candidate_font_size">32sp</dimen>
-    <dimen name="candidate_number_font_size">16sp</dimen>
+    <dimen name="candidate_stripe_height">34sp</dimen>
+    <dimen name="candidate_font_size">30sp</dimen>
+    <dimen name="candidate_number_font_size">15sp</dimen>
+     <dimen name="candidate_vertical_padding">4sp</dimen>
     <dimen name="phone_key_height">80dip</dimen>
-    <dimen name="key_preview_height">115dp</dimen>
+    <dimen name="key_preview_height">80dp</dimen>
     <dimen name="spacebar_vertical_correction">4dip</dimen>
-    <dimen name="candidate_vertical_padding">6sp</dimen>
     <dimen name="keyboard_bottom_padding">0.06in</dimen>
-    <dimen name="key_text_size">36dp</dimen>
-    <dimen name="label_text_size">30dp</dimen>
-    <dimen name="sub_label_text_size">30dp</dimen>
-    <dimen name="small_label_text_size">36dp</dimen>
-    <dimen name="composing_text_size">24sp</dimen>
+    <dimen name="key_text_size">28dp</dimen>
+    <dimen name="label_text_size">22dp</dimen>
+    <dimen name="sub_label_text_size">22dp</dimen>
+    <dimen name="small_label_text_size">26dp</dimen>
+    <dimen name="composing_text_size">13sp</dimen>
     <dimen name="notice_text_size">20sp</dimen>
     <dimen name="keyboard_vertical_correction">-0.05in</dimen>
     <dimen name="spacebar_preview_text_size">35sp</dimen>
