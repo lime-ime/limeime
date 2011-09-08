@@ -921,11 +921,15 @@ public class LIMEService extends InputMethodService implements
 			if (event.getRepeatCount() == 0) {
 				if(mInputView != null && mInputView.handleBack())
 					return true;
-				else if(mCandidateView !=null && mCandidateView.isShown()
+				else if(onIM && mCandidateView !=null && mCandidateView.isShown()
+						&& mLIMEPref.getAutoChineseSymbol()
 						&& !isChineseSymbolSuggestionsShowing){
 					clearSuggestions();
 					return true;
-				}else if(mCandidateView !=null && mCandidateView.isShown())
+				}else if(mCandidateView !=null && mCandidateView.isShown()){
+					hideCandidateView();
+					return true;
+				}else 
 					hideCandidateView();
 					
 			}
@@ -2265,10 +2269,12 @@ public class LIMEService extends InputMethodService implements
 			//Jeremy '11,8,14
 			clearComposing();
 			if(ic!=null) ic.commitText("", 0);
-		} else if(onIM && mCandidateView.isShown()
+		} else if(onIM && mCandidateView !=null && mCandidateView.isShown()
 				&& mLIMEPref.getAutoChineseSymbol()
 				&& !isChineseSymbolSuggestionsShowing ){
 			clearSuggestions();  //Jeremy '11,9,5
+		} else if(onIM && mCandidateView !=null && mCandidateView.isShown()){
+			hideCandidateView();  //Jeremy '11,9,8
 		} else {
 			//Jeremy '11,8,15
 			//clearSuggestions();
