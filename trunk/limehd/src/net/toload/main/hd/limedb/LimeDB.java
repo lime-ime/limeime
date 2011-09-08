@@ -1073,7 +1073,8 @@ public class LimeDB extends SQLiteOpenHelper {
 				int highestScoreID = getHighestScoreID(db, table, code) ;
 				if (highestScoreID > 0) {
 					db.update(table, cv, FIELD_ID + " = " + highestScoreID,	null);
-					if(DEBUG) Log.i(TAG, "updateRelatedListOnDB(): updating code ="+ code);
+					if(DEBUG) 
+						Log.i(TAG, "updateRelatedListOnDB(): updating code ="+ code);
 				} else {
 					cv.put(FIELD_CODE, code);
 					db.insert(table, null, cv);
@@ -2758,6 +2759,7 @@ public class LimeDB extends SQLiteOpenHelper {
 							} else {
 								code = code.toLowerCase();
 							}
+							code = code.replaceAll("'", "''"); //Jeremy '11,9,9 escape '
 							if(inKeynameBlock) {  //Jeremy '11,6,5 preserve keyname blocks here.
 								imkeys = imkeys + code.toLowerCase().trim();
 								String c = word.trim();
@@ -2771,9 +2773,10 @@ public class LimeDB extends SQLiteOpenHelper {
 							}
 							else {
 								if (code.length() > 1) {
-									codeList.add(code);
-									
-									for (int k = 1; k < code.length(); k++) {
+									//codeList.add(code);
+									int len = code.length();
+									if(len > 3 ) len -= 3;
+									for (int k = 1; k < len; k++) {
 										String subCode = code.substring(0, code.length() - k);
 										codeList.add(subCode);
 									}
