@@ -11,7 +11,7 @@
 			<TableLayout android:id="@+id/tableLayout1"
 				android:layout_height="fill_parent" android:layout_width="fill_parent">
 				
-				<TableRow android:id="@+id/tableRow6" android:layout_width="wrap_content"
+				<TableRow android:id="@+id/tableRow1" android:layout_width="wrap_content"
 					android:layout_height="wrap_content">
 
 					<Button android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px"
@@ -21,17 +21,20 @@
 						android:layout_height="wrap_content" android:text="@string/l3_initial_btn_store_sdcard"
 						android:id="@+id/btnStoreSdcard" android:padding="5px"></Button>
 				</TableRow>
-				<TableRow android:id="@+id/tableRow3"
+				<TableRow android:id="@+id/tableRow2"
 					android:layout_height="wrap_content" android:layout_width="fill_parent">
 					
 					<Button android:layout_width="fill_parent" android:padding="5px" android:layout_weight="1" android:layout_margin="5px"
 						android:layout_height="fill_parent" android:text="@string/l3_initial_btn_load_preload_db"
 						android:id="@+id/btnInitPreloadDB"></Button>
+				</TableRow>
+				<TableRow android:id="@+id/tableRow3"
+					android:layout_height="wrap_content" android:layout_width="fill_parent">
 					<Button android:layout_width="fill_parent" android:padding="5px" android:layout_weight="1" android:layout_margin="5px"
 						android:layout_height="fill_parent" android:text="@string/l3_initial_btn_load_empty_db"
 						android:id="@+id/btnInitEmptyDB"></Button>
 				</TableRow>
-				<TableRow android:id="@+id/tableRow1"
+				<TableRow android:id="@+id/tableRow4"
 					android:layout_height="wrap_content" android:layout_width="fill_parent">
 
 					<Button android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px"
@@ -41,7 +44,7 @@
 						android:layout_height="fill_parent" android:enabled="false"
 						android:padding="5px"></Button>
 				</TableRow>
-				<TableRow android:id="@+id/tableRow4" android:layout_width="wrap_content"
+				<TableRow android:id="@+id/tableRow5" android:layout_width="wrap_content"
 					android:layout_height="wrap_content">
 
 					<Button android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px"

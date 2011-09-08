@@ -8,8 +8,6 @@ import android.content.Context;
 
 public class FileUtilities {
 	
-	
-	
 	public File isFileNotExist(String filepath){
 		
 		File mfile = new File(filepath);
@@ -17,6 +15,15 @@ public class FileUtilities {
 			return null;
 		else
 			return mfile;
+	}
+	
+	public File isFileExist(String filepath){
+		
+		File mfile = new File(filepath);
+		if(mfile.exists())
+			return mfile;
+		else
+			return null;
 	}
 	public void copyRAWFile(InputStream	inStream, File newfile){
 		try{

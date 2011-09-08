@@ -37,13 +37,13 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 
 	//private static boolean DEBUG = false;
 	
-	private final static String DATABASE_NAME = "hanconvert.db";
+	private final static String DATABASE_NAME = "hanconvertv2.db";
 	private final static int DATABASE_VERSION = 59;
 
 
 	private static final String FIELD_CODE = "code";
-
 	private static final String FIELD_WORD = "word";
+	private static final String FIELD_SCORE = "score";
 
 	
 
@@ -81,6 +81,34 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	public int getBaseScore(String input){
+		int score = 0;
+		if(input!=null && !input.equals("")) {
+			Cursor cursor = null;
+			
+			try {
+				SQLiteDatabase db = this.getReadableDatabase();
+				
+				cursor = db.query("TCSC", null, FIELD_CODE + " = '" + input + "' "
+							, null, null, null, null, null);		
+					if (cursor.moveToFirst()) {
+						int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
+						score = cursor.getInt(scoreColumn);
+					}else if(input.length()>1)
+						score = 1;  //phase has default score = 1
+					
+				if (cursor != null) {
+					cursor.deactivate();
+					cursor.close();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return score;
 	}
 	
 	public String convert(String input, Integer hanConvertOption){
