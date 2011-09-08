@@ -100,7 +100,7 @@ public class DBService extends Service {
 			db.setFilename(sourcefile);
 
 			showNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading)+ "", intentLIMEMappingLoading);
-			db.loadFile(tablename);
+			db.loadFileV2(tablename);
 			db.close();
 
 			// Reset for SearchSrv

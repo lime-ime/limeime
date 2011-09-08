@@ -20,7 +20,6 @@
 
 package net.toload.main.hd;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -29,17 +28,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.toload.main.hd.ISearchService;
 import net.toload.main.hd.R;
-import net.toload.main.hd.global.FileUtilities;
 import net.toload.main.hd.global.ImObj;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.Mapping;
 import net.toload.main.hd.limedb.LimeDB;
-import net.toload.main.hd.limedb.LimeHanConverter;
-
-//import net.toload.main.hd.SearchService.SearchServiceImpl;
-
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -57,7 +51,7 @@ public class SearchService extends Service {
 	private final boolean DEBUG = false;
 	private final String TAG = "LIME.SearchService";
 	private LimeDB db = null;
-	private LimeHanConverter hanConverter = null;
+	//private LimeHanConverter hanConverter = null;
 	//private static LinkedList<Mapping> diclist = null;  
 	private static List<Mapping> scorelist = null;
 
@@ -117,19 +111,22 @@ public class SearchService extends Service {
 		}
 		
 		public String hanConvert(String input){
-			if(hanConverter == null){
+			/*if(hanConverter == null){  Jeremy '11,9,8 moved to LIMEDB
 				FileUtilities fu = new FileUtilities();
-				File hanDBFile = fu.isFileNotExist("/data/data/net.toload.main.hd/databases/hanconvert.db");
-				if(hanDBFile!=null){
-					fu.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvert), hanDBFile);
+				//Jeremy '11,9,8 update handconverdb to v2 with base score in TCSC table
+				File hanDBFile = fu.isFileExist("/data/data/net.toload.main.hd/databases/hanconvert.db");
+				if(hanDBFile!=null)
+					hanDBFile.delete();
+				File hanDBV2File = fu.isFileNotExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
+				if(hanDBV2File!=null)
+					fu.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
 					
-				}
 				hanConverter = new LimeHanConverter(ctx);
-				}
+				}*/
 			//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-			Integer hanConvertOption = mLIMEPref.getHanCovertOption(); //Integer.parseInt(sp.getString(HanConvertOption, "0"));
+			//Integer hanConvertOption = mLIMEPref.getHanCovertOption(); //Integer.parseInt(sp.getString(HanConvertOption, "0"));
 			
-			return hanConverter.convert(input, hanConvertOption);
+			return db.hanConvert(input, mLIMEPref.getHanCovertOption());
 			
 		}
 		

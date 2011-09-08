@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import net.toload.main.hd.R;
+import net.toload.main.hd.global.FileUtilities;
 import net.toload.main.hd.global.ImObj;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIME;
@@ -62,14 +64,15 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static int DUALCODE_NO_CHECK_LIMIT = 5;
 	private final static int DUALCODE_ITERATION_LIMIT = 512;
 
-	private final static int DATABASE_VERSION = 66; 
+	private final static int DATABASE_VERSION = 68; 
 	//private final static int DATABASE_RELATED_SIZE = 50;
 
-	public final static String FIELD_id = "_id";
+	public final static String FIELD_ID = "_id";
 	public final static String FIELD_CODE = "code";
 	public final static String FIELD_WORD = "word";
 	public final static String FIELD_RELATED = "related";
 	public final static String FIELD_SCORE = "score";
+	public final static String FIELD_BASESCORE = "basescore"; //jeremy '11,9,8 base frequency got from hanconverter when table loading.
 	public final static String FIELD_CODE3R = "code3r";
 
 	public final static String FIELD_DIC_id = "_id";
@@ -240,6 +243,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	private Thread thread = null;
 	private boolean threadAborted = false;
 	
+	
+	private LimeHanConverter hanConverter;
 
 
 	public boolean isLoadingMappingFinished() {
@@ -300,12 +305,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		this.ctx = context;
 		
 		mLIMEPref = new LIMEPreferenceManager(ctx.getApplicationContext());
-	/*	String dbtarget = mLIMEPref.getParameterString("dbtarget");
-		if(dbtarget.equals("device")){
-			super(context, LIME.DATABASE_NAME, null, DATABASE_VERSION);
-		}else{
-			super(context, LIME.DATABASE_NAME, null, DATABASE_VERSION);
-		}*/
+	
 
 
 	}
@@ -329,9 +329,73 @@ public class LimeDB extends SQLiteOpenHelper {
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		// Start from 3.0v no need to create internal database
 		
+		//Jeremy '11,9,8 starting from 3.6 using onUpgrade() and dbversion store with db again.
+		if(DEBUG) Log.i(TAG, "onUpgrade(), oldVersion=" + oldVersion + ", newVersion="+newVersion);
+		
+		checkCode3RIndexAndRecsordsInPhonetic(db);
+		
+		//String kbversion = mLIMEPref.getParameterString("kbversion");
+
+		// Upgrade DB version below 330
+		if(oldVersion != newVersion){
+		
+			
+			int count = db.query("keyboard", null, FIELD_CODE +" = 'phoneticet41'", null, null, null, null, null).getCount();
+
+			if(count == 0){
+				try{
+				
+					ContentValues 	cv = new ContentValues();
+					cv.put("code", "phoneticet41");
+					cv.put("name", "注音倚天");
+					cv.put("desc", "注音倚天41鍵");
+					cv.put("type", "phone");
+					cv.put("image", "lime_et_41_keyboard_priview");
+					cv.put("imkb", "lime_et_41");
+					cv.put("imshiftkb", "lime_et_41_shift");
+					cv.put("engkb", "lime_english_number");
+					cv.put("engshiftkb", "lime_english_shift");
+					cv.put("symbolkb", "symbols");
+					cv.put("symbolshiftkb", "symbols_shift");
+					cv.put("disable", "false");
+					db.insert("keyboard" ,null , cv);
+				} catch (Exception e) {
+					//e.printStackTrace();
+					Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
+				}
+			}
+			try{
+				db.execSQL("alter table array add 'basescore' type integer");
+				db.execSQL("alter table array10 add 'basescore' type integer");
+				db.execSQL("alter table cj add 'basescore' type integer");
+				db.execSQL("alter table custom add 'basescore' type integer");
+				db.execSQL("alter table dayi add 'basescore' type integer");
+				db.execSQL("alter table ez add 'basescore' type integer");
+				db.execSQL("alter table phonetic add 'basescore' type integer");
+				db.execSQL("alter table scj add 'basescore' type integer");
+				db.execSQL("alter table cj5 add 'basescore' type integer");
+				db.execSQL("alter table imtable1 add 'basescore' type integer");
+				db.execSQL("alter table imtable2 add 'basescore' type integer");
+				db.execSQL("alter table imtable3 add 'basescore' type integer");
+				db.execSQL("alter table imtable4 add 'basescore' type integer");
+				db.execSQL("alter table imtable5 add 'basescore' type integer");
+				db.execSQL("alter table imtable6 add 'basescore' type integer");
+				db.execSQL("alter table imtable7 add 'basescore' type integer");
+				db.execSQL("alter table imtable8 add 'basescore' type integer");
+				db.execSQL("alter table imtable9 add 'basescore' type integer");
+				db.execSQL("alter table imtable10 add 'basescore' type integer");
+			} catch (Exception e) {
+				//e.printStackTrace();
+				Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
+			}
+		}
+		
+		
+		db.setVersion(newVersion);
+		
 	}
 	
-	private void checkCode3RIndexAndRecsordsInPhonetic(){
+	private void checkCode3RIndexAndRecsordsInPhonetic(SQLiteDatabase db){
 		//mLIMEPref.setParameter("checkLDPhonetic", "");
 		if (DEBUG)
 			Log.i(TAG, "checkCode3RIndexAndRecsordsInPhonetic(): checked:" 
@@ -339,7 +403,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					+ " has valid code3r index and records:" + mLIMEPref.getParameterBoolean("doLDPhonetic", false));
 		String doLDPhonetic = mLIMEPref.getParameterString("checkLDPhonetic", "");
 		if(!doLDPhonetic.equals("done")){
-			SQLiteDatabase db = null;
+			/*SQLiteDatabase db = null;
 			String dbtarget = mLIMEPref.getParameterString("dbtarget");
 			String dblocation = "";
 			if(dbtarget.equals("sdcard")){
@@ -348,7 +412,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				dblocation = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
 			}
 			db = SQLiteDatabase.openDatabase(dblocation, null, SQLiteDatabase.OPEN_READWRITE);
-			Cursor cursor = db.query("sqlite_master", null, "type='index' and name = 'phonetic_idx_code3r'", 
+			*/Cursor cursor = db.query("sqlite_master", null, "type='index' and name = 'phonetic_idx_code3r'", 
 					null, null, null, null);
 			boolean hasIndex = false, hasValidRecords = false;
 			if(cursor.moveToFirst()){
@@ -369,8 +433,8 @@ public class LimeDB extends SQLiteOpenHelper {
 			
 		}
 	}
-	
-	public void updateDBVersion(){
+	//Jeremy '11,9,8 deprecated after 3.6
+	/*public void updateDBVersion(){
 			
 			checkCode3RIndexAndRecsordsInPhonetic();
 			
@@ -516,16 +580,16 @@ public class LimeDB extends SQLiteOpenHelper {
 				mLIMEPref.setParameter("kbversion","333");
 			}
 		
-	}
+	}*/
 	
 	
 	public SQLiteDatabase getSqliteDb(boolean readonly){
 		
 		// Execute database schema update process
-		updateDBVersion();
-		
+		//updateDBVersion();
+		SQLiteDatabase db = null;
 		try{
-			SQLiteDatabase db = null;
+
 			String dbtarget = mLIMEPref.getParameterString("dbtarget");
 			//Log.i("ART", "Load Database Target : " + dbtarget);
 			if(dbtarget.equals("sdcard")){
@@ -547,33 +611,24 @@ public class LimeDB extends SQLiteOpenHelper {
 					//db = this.getWritableDatabase();
 				}
 			}
-			/*if(DEBUG) 
-				Log.i("LIMEDB:getSqliteDb()", "database version:" + db.getVersion());
-			// Insert the new lime_number_symbol keyboard record
-			if(!readonly && db.getVersion() < 68){
-				ContentValues 	cv = new ContentValues();
-				cv.put("code", "limenumsym");
-				cv.put("name", "LIMENUMSYM");
-				cv.put("desc", "LIME+�詨�蝚西��萇");
-				cv.put("type", "phone");
-				cv.put("image", "lime_number_symbol_keyboard_priview");
-				cv.put("imkb", "lime_number_symbol");
-				cv.put("imshiftkb", "lime_number_symbol_shift");
-				cv.put("engkb", "lime_english_number");
-				cv.put("engshiftkb", "lime_english_shift");
-				cv.put("symbolkb", "symbols");
-				cv.put("symbolshiftkb", "symbols_shift");
-				cv.put("disable", "false");
-
-				db.insert("keybaord", null, cv);
-				
-				db.setVersion(68);
-			}*/
 			
-			return db;
 		}catch(Exception e){e.printStackTrace();}
+		
+		if(DEBUG) Log.i(TAG, "databaseversion= " +
+				db.getVersion() + " helperVersion= " + DATABASE_VERSION);
+		if (db!=null && db.getVersion() != DATABASE_VERSION) {
+			if(readonly){
+				Log.w(TAG, "Can't upgrade read-only database from version " +
+						db.getVersion() + " to " + DATABASE_VERSION);
+			}else{
+				//if(!readonly) db.setVersion(67);
+				onUpgrade(db, db.getVersion(), DATABASE_VERSION);
+			}
+		}
+
+
 			 
-		return null;
+		return db;
 
 	}
 
@@ -732,7 +787,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			}else{//the item exist in preload related database.
 				int score = munit.getScore()+1;
 			  	cv.put(FIELD_SCORE, score);
-			  	db.update("related", cv, FIELD_id + " = " + munit.getId(), null);
+			  	db.update("related", cv, FIELD_ID + " = " + munit.getId(), null);
 			  	if(DEBUG) 
 			  		Log.i(TAG, "addOrUpdateUserdictRecord():update score on existing record; score:"+score);
 			}
@@ -807,7 +862,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			}else{//the item exist in preload related database.
 				int score = munit.getScore()+1;
 			  	cv.put(FIELD_SCORE, score);
-			  	db.update(tablename, cv, FIELD_id + " = " + munit.getId(), null);
+			  	db.update(tablename, cv, FIELD_ID + " = " + munit.getId(), null);
 			  	if(DEBUG) 
 			  		Log.i(TAG, "addOrUpdateMappingRecord(): mapping is existed, update score on existing record; score:"+score);
 			}
@@ -838,6 +893,9 @@ public class LimeDB extends SQLiteOpenHelper {
 //				//updateRelatedList(code); move to search service Jeremy '11,7,29
 //			
 //			}else 
+		//Jeremy '11,9,8 query highest score first.  Erase relatedlist if new score is not highest.
+		int highestScore = getHighestScore(srcunit.getCode());
+		int newScore = srcunit.getScore() + 1;
 		SQLiteDatabase db = this.getSqliteDb(false);
 		try {
 			if (srcunit != null && //srcunit.getId() != null &&
@@ -850,11 +908,13 @@ public class LimeDB extends SQLiteOpenHelper {
 					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
 					
 					
-					db.update("related", cv, FIELD_id + " = " + srcunit.getId(), null);
+					db.update("related", cv, FIELD_ID + " = " + srcunit.getId(), null);
 					db.close();
 				}else{
 					ContentValues cv = new ContentValues();
-					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
+					cv.put(FIELD_SCORE, newScore);
+					if(newScore< highestScore)
+						cv.put(FIELD_RELATED, "");
 	
 					// Jeremy 11',7,29  update according to word instead of ID, may have multiple records mathing word but withd diff code/id 
 					db.update(tablename, cv, FIELD_WORD + " = '" + srcunit.getWord() + "'", null);
@@ -944,24 +1004,37 @@ public class LimeDB extends SQLiteOpenHelper {
 		// Jeremy '11,7,31  rebuild relatedlist by query from table directly
 		// Update relatedlist in IM table now.
 		SQLiteDatabase db = this.getSqliteDb(false);
+		LinkedList<Mapping> scorelist=null;
+		try {
+			scorelist = updateRelatedListOnDB(db, tablename, code);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		db.close();
+		return scorelist;
+	}
+
+	private LinkedList<Mapping> updateRelatedListOnDB(SQLiteDatabase db, String table, String code) {
 		char[] charray = code.toCharArray();
 		charray[code.length()-1]++;
 		String nextcode = new String(charray);
 		
-		String selectString = "SELECT * FROM '" + tablename +"" +
+		// Jeremy '11,9,8 sorting with score + basescore
+		String selectString = "SELECT * FROM '" + table +"" +
 				"' WHERE " + FIELD_CODE + " > '" + code + "' AND " + FIELD_CODE + " < '" + nextcode + "'"+
-				" ORDER BY " + FIELD_SCORE + " DESC LIMIT 50";
+				" ORDER BY " + FIELD_SCORE + " DESC, "+ FIELD_BASESCORE +" DESC LIMIT 50";
 		Cursor cursor = db.rawQuery(selectString ,null);
 		
 		if(DEBUG) 
-			Log.i(TAG, "updateRelatedList(): raw query string: "+ selectString);
+			Log.i(TAG, "updateRelatedListOnDB(): raw query string: "+ selectString);
 		
 		LinkedList <Mapping> scorelist = null;
 		
 		if(cursor.moveToFirst()){
 			HashSet <String> duplicateCheck = new HashSet<String>();
 			scorelist = new LinkedList<Mapping>();
-			int idColumn = cursor.getColumnIndex(FIELD_id);
+			int idColumn = cursor.getColumnIndex(FIELD_ID);
 			int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 			int wordColumn = cursor.getColumnIndex(FIELD_WORD);
 			int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
@@ -981,33 +1054,40 @@ public class LimeDB extends SQLiteOpenHelper {
 					scorelist.add(munit);
 				}
 			} while (cursor.moveToNext());
-			if (cursor != null) {
-				cursor.deactivate();
-				cursor.close();
-			}
+			
 		
 		// Rebuild the related list string and update the record.
-			String newRelatedlist = "";
+			String newRelatedlist;
 			
-			for(Mapping munit : scorelist){
-				if(newRelatedlist.equals("")) newRelatedlist = munit.getWord();
-				else newRelatedlist = newRelatedlist + "|" + munit.getWord();
-					
+			if (scorelist!=null) {
+				newRelatedlist = "";
+				for (Mapping munit : scorelist) {
+					if (newRelatedlist.equals(""))
+						newRelatedlist = munit.getWord();
+					else
+						newRelatedlist = newRelatedlist + "|" + munit.getWord();
+
+				}
+				ContentValues cv = new ContentValues();
+				cv.put(FIELD_RELATED, newRelatedlist);
+				int highestScoreID = getHighestScoreID(db, table, code) ;
+				if (highestScoreID > 0) {
+					db.update(table, cv, FIELD_ID + " = " + highestScoreID,	null);
+					if(DEBUG) Log.i(TAG, "updateRelatedListOnDB(): updating code ="+ code);
+				} else {
+					cv.put(FIELD_CODE, code);
+					db.insert(table, null, cv);
+					if(DEBUG) Log.i(TAG, "updateRelatedListOnDB(): insert new code ="+ code);
+				}
+				if(DEBUG) 
+					Log.i(TAG, "updateRelatedListOnDB(): the new relatedlist:" + newRelatedlist);	
 			}
-			ContentValues cv = new ContentValues();
-			cv.put(FIELD_RELATED, newRelatedlist);
-			if(isMappingExist(code,null)!=null){
-				db.update(tablename, cv, FIELD_CODE + " = '" + code + "'", null);
-			}else{
-				cv.put(FIELD_CODE, code);
-				db.insert(tablename, null, cv);
-			}
-			
-			if(DEBUG) 
-				Log.i(TAG, "updateRelatedList(): the new relatedlist:" + newRelatedlist);	
+				
 		}
-		
-		db.close();
+		if (cursor != null) {
+			cursor.deactivate();
+			cursor.close();
+		}
 		return scorelist;
 	}
 //Rewrite by Jeremy 11,6,4.  Supporting array and dayi now.
@@ -1313,7 +1393,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(softKeyboard) sort = mLIMEPref.getSortSuggestions();
 		else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
 		isPhysicalKeyboardPressed = !softKeyboard;
-		//if(DEBUG) 
+		if(DEBUG) 
 			Log.i(TAG, "getmapping(): code='"+ code + "' doLDPhonetic=" 
 					+mLIMEPref.getParameterBoolean("doLDPhonetic")
 					+ ", table=" + tablename );
@@ -1348,7 +1428,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
 					}
 					
-					//if(DEBUG) 
+					if(DEBUG) 
 						Log.i(TAG, "getMapping(): selectClause=" + selectClause  );
 					// Jeremy '11,8,5 limit initial query to limited records
 					String limitClause = null;
@@ -1358,10 +1438,12 @@ public class LimeDB extends SQLiteOpenHelper {
 					// Jeremy '11,6,15 Using query with preprocessed code and extra query conditions.
 					if(sort){
 						cursor = db.query(tablename, null, selectClause
-								, null, null, null, FIELD_SCORE +" DESC, _id ASC", limitClause);
+								, null, null, null, FIELD_SCORE +" DESC, +" 
+								+FIELD_BASESCORE + " DESC, "
+								+"_id ASC", limitClause);
 					}else{
 						cursor = db.query(tablename, null, selectClause
-								, null, null, null, "_id ASC", limitClause);
+								, null, null, null, FIELD_BASESCORE + " DESC, _id ASC", limitClause);
 					}
 					
 	
@@ -1827,7 +1909,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(DEBUG) Log.i(TAG,"buildQueryResutl(): cursor.getCount()=" + cursor.getCount());
 		if (cursor.moveToFirst()) {
 
-			int idColumn = cursor.getColumnIndex(FIELD_id);
+			int idColumn = cursor.getColumnIndex(FIELD_ID);
 			int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 			int code3rColumn = cursor.getColumnIndex(FIELD_CODE3R);
 			int wordColumn = cursor.getColumnIndex(FIELD_WORD);
@@ -1950,7 +2032,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(!getAllRecords && relatedresult.size() == INITIAL_RELATED_LIMIT)
 			relatedresult.add(temp);
 		
-		//if(DEBUG)
+		if(DEBUG)
 			Log.i(TAG, "buildQueryResult():query_code:" + query_code + " query_code.length:" + query_code.length()
 				+ " result.size=" + result.size() + " query size:" + rsize 
 				+ " relatedlist.size=" + relatedresult.size());
@@ -1999,7 +2081,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
 					int cwordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
 					int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
-					int idColumn = cursor.getColumnIndex(FIELD_id);
+					int idColumn = cursor.getColumnIndex(FIELD_ID);
 					do {
 						Mapping munit = new Mapping();
 						munit.setId(cursor.getString(idColumn));
@@ -2025,6 +2107,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	/**
 	 * Load source file and add records into database
 	 */
+	@Deprecated //Jeremy '11,9,8 use loadFileV2 after 3.6
 	public synchronized void loadFile(final String table) {
 		finish = false;
 		percentageDone = 0;
@@ -2451,6 +2534,406 @@ public class LimeDB extends SQLiteOpenHelper {
 		thread.start();
 	}
 	
+	
+	/**
+	 * Jeremy '11,9,8 loadFile() with basescore got from hanconverter 
+	 * @param table
+	 */
+	public synchronized void loadFileV2(final String table) {
+		finish = false;
+		percentageDone = 0;
+		count = 0;
+		if (thread != null ) {
+			//threadAborted = true;
+			while(thread.isAlive()){
+				Log.d(TAG, "loadFile():waiting for last loading thread stopped...");
+				SystemClock.sleep(1000);
+			}
+			thread = null;
+		}
+
+		thread = new Thread() {
+
+			public void run() {
+				// Reset Database Table		
+				SQLiteDatabase db = getSqliteDb(false);
+				try {
+					if(countMapping(table)>0) 	db.delete(table, null, null);
+					if(DEBUG) Log.i(TAG, "loadfile(), table = " + table +" kbversion" + 
+							Integer.parseInt(mLIMEPref.getParameterString("kbversion")));
+					if(table.equals("phonetic") &&
+							!mLIMEPref.getParameterBoolean("doLDPhonetic", false) ) {
+						if(DEBUG) Log.i(TAG, "loadfile(), build code3r index here.");
+						mLIMEPref.setParameter("doLDPhonetic", true);
+						db.execSQL("CREATE INDEX phonetic_idx_code3r ON phonetic(code3r)");
+						
+					}
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}
+				
+				db.close();
+				resetImInfo(table);
+				
+
+				//boolean hasMappingVersion = false;
+				boolean isCinFormat = false;
+				//ArrayList<ContentValues> resultlist = new ArrayList<ContentValues>();
+
+				String imname = "";
+				String line = "";
+				String endkey ="";
+				String selkey ="";
+				String spacestyle = "";
+				String imkeys = "";
+				String imkeynames = "";
+
+
+				// Check if source file is .cin format
+				if (filename.getName().toLowerCase().endsWith(".cin")) {
+					isCinFormat = true;
+				}
+
+				// Base on first 100 line to identify the Delimiter
+				try {
+					// Prepare Source File
+					FileReader fr = new FileReader(filename);
+					BufferedReader buf = new BufferedReader(fr);
+					//boolean firstline = true;
+					int i = 0;
+					List<String> templist = new ArrayList<String>();
+					while ((line = buf.readLine()) != null
+							&& isCinFormat == false) {
+						templist.add(line);
+						if (i >= 100) {
+							break;
+						} else {
+							i++;
+						}
+					}
+					identifyDelimiter(templist);
+					templist.clear();
+					buf.close();
+					fr.close();
+				} catch (Exception e) {
+				}
+
+				// Create Related Words
+				HashSet<String> codeList = new HashSet<String>();
+
+				db = getSqliteDb(false);
+				db.beginTransaction();
+
+				try {
+					// Prepare Source File
+					long fileLength = filename.length();
+					long processedLength = 0;
+					FileReader fr = new FileReader(filename);
+					BufferedReader buf = new BufferedReader(fr);
+					boolean firstline = true;
+					boolean inChardefBlock = false;
+					boolean inKeynameBlock = false;
+					//String precode = "";
+
+					while ((line = buf.readLine()) != null && !threadAborted) {
+						processedLength += line.getBytes().length + 2; // +2 for the eol mark.
+						percentageDone = (int) ((float)processedLength/(float)fileLength *50);
+						if(DEBUG)
+							Log.i(TAG, "loadFile():loadFile()"+ percentageDone +"% processed" 
+									+ ". processedLength:" + processedLength + ". fileLength:" + fileLength);
+						if(percentageDone>49) percentageDone = 49;
+						/*
+						 * If source is cin format start from the tag %chardef
+						 * begin until %chardef end
+						 */
+						if (isCinFormat) {
+							if (!(inChardefBlock || inKeynameBlock)) {
+								// Modified by Jeremy '10, 3, 28. Some .cin have
+								// double space between $chardef and begin or
+								// end
+								if (line != null
+										&& line.trim().toLowerCase().startsWith("%chardef")
+										&& line.trim().toLowerCase().endsWith("begin")
+								) {
+									inChardefBlock = true;
+								}
+								if (line != null
+										&& line.trim().toLowerCase().startsWith("%keyname")
+										&& line.trim().toLowerCase().endsWith("begin")
+								) {
+									inKeynameBlock = true;
+								}
+								// Add by Jeremy '10, 3 , 27
+								// use %cname as mapping_version of .cin
+								// Jeremy '11,6,5 add selkey, endkey and spacestyle support
+								if (!(  line.trim().toLowerCase().startsWith("%cname")
+										||line.trim().toLowerCase().startsWith("%selkey")
+										||line.trim().toLowerCase().startsWith("%endkey")
+										||line.trim().toLowerCase().startsWith("%spacestyle")
+								)) {
+									continue;
+								}
+							}
+							if (line != null
+									&& line.trim().toLowerCase().startsWith("%keyname")
+									&& line.trim().toLowerCase().endsWith("end")
+							) {
+								inKeynameBlock = false;
+								continue;
+							}
+							if (line != null
+									&& line.trim().toLowerCase().startsWith("%chardef")
+									&& line.trim().toLowerCase().endsWith("end")
+							) {
+								break;
+							}
+						}
+
+						// Check if file contain BOM MARK at file header
+						if (firstline) {
+							byte srcstring[] = line.getBytes();
+							if (srcstring.length > 3) {
+								if (srcstring[0] == -17 && srcstring[1] == -69
+										&& srcstring[2] == -65) {
+									byte tempstring[] = new byte[srcstring.length - 3];
+									//int a = 0;
+									for (int j = 3; j < srcstring.length; j++) {
+										tempstring[j - 3] = srcstring[j];
+									}
+									line = new String(tempstring);
+								}
+							}
+							firstline = false;
+						} else 	if (line == null || line.trim().equals("") || line.length() < 3) {
+							continue;
+						}
+
+						try {
+
+							String code = null, word = null;
+							if (isCinFormat) {
+								if (line.indexOf("\t") != -1) {
+									code = line
+									.substring(0, line.indexOf("\t"));
+									word = line
+									.substring(line.indexOf("\t") + 1);
+								} else if (line.indexOf(" ") != -1) {
+									code = line.substring(0, line.indexOf(" "));
+									word = line
+									.substring(line.indexOf(" ") + 1);
+								}
+							} else {
+								code = line.substring(0, line
+										.indexOf(DELIMITER));
+								word = line
+								.substring(line.indexOf(DELIMITER) + 1);
+							}
+							if (code == null || code.trim().equals("")) {
+								continue;
+							} else {
+								code = code.trim();
+							}
+							if (word == null || word.trim().equals("")) {
+								continue;
+							} else {
+								word = word.trim();
+							}
+							if (code.toLowerCase().contains("@version@")) {
+								imname = word.trim();
+								continue;
+							} else if (code.toLowerCase().contains("%cname")) {
+								imname = word.trim();
+								continue;
+							} else if (code.toLowerCase().contains("%selkey")) {
+								selkey = word.trim();
+								if(DEBUG) Log.i(TAG, "loadfile(): selkey:"+selkey);
+								continue;
+							} else if (code.toLowerCase().contains("%endkey")) {
+								endkey = word.trim();
+								if(DEBUG) Log.i(TAG, "loadfile(): endkey:"+endkey);
+								continue;	
+							} else if (code.toLowerCase().contains("%spacestyle")) {
+								spacestyle = word.trim();
+								continue;	
+							} else {
+								code = code.toLowerCase();
+							}
+							if(inKeynameBlock) {  //Jeremy '11,6,5 preserve keyname blocks here.
+								imkeys = imkeys + code.toLowerCase().trim();
+								String c = word.trim();
+								if(!c.equals("")){
+									if(imkeynames.equals(""))
+										imkeynames = c;
+									else
+										imkeynames = imkeynames + "|"+c; 
+								}
+
+							}
+							else {
+								if (code.length() > 1) {
+									codeList.add(code);
+									
+									for (int k = 1; k < code.length(); k++) {
+										String subCode = code.substring(0, code.length() - k);
+										codeList.add(subCode);
+									}
+								}
+
+								count++;
+								ContentValues cv = new ContentValues();
+								cv.put(FIELD_CODE, code);
+								if(table.equals("phonetic")) {
+									String code3r = code.replaceAll("[3467]", "");
+									cv.put(FIELD_CODE3R, code3r);;
+									
+								}
+								cv.put(FIELD_WORD, word);
+								cv.put(FIELD_SCORE, 0);
+								int basescore = getBaseScore(word);
+								cv.put(FIELD_BASESCORE, basescore);
+								if(DEBUG) Log.i(TAG, "loadfilev2():code="+code
+										+", word="+word+", basescore="+basescore);
+								db.insert(table, null, cv);
+							}
+
+						} catch (StringIndexOutOfBoundsException e) {}
+					}
+
+					buf.close();
+					fr.close();
+
+					db.setTransactionSuccessful();
+				} catch (Exception e) {
+					db.close();
+					setImInfo(table, "amount", "0");
+					setImInfo(table, "source", "Failed!!!");
+					e.printStackTrace();
+				} finally {
+					if(DEBUG) Log.i(TAG, "loadfile(): main import loop final section");
+					db.endTransaction();
+					db.close();
+				}
+				
+
+
+				if(!threadAborted){
+					db = getSqliteDb(false);
+					db.beginTransaction();
+					try{
+						long entrySize = codeList.size();
+						long i = 0;
+						for(String entry: codeList)	{
+							if(threadAborted) 	break;
+							percentageDone = (int) ((float)(i++)/(float)entrySize *50 +50);
+							if(percentageDone>99) percentageDone = 99;
+
+							try{
+								updateRelatedListOnDB(db, table ,entry);
+
+							}catch(Exception e2){
+								// Just ignore all problem statement
+								Log.i(TAG, "loadfile():create related field error on code ="+entry);
+							}
+
+						}
+						db.setTransactionSuccessful();
+					}catch (Exception e){
+						setImInfo(table, "amount", "0");
+						setImInfo(table, "source", "Failed!!!");
+						e.printStackTrace();
+					}finally {
+						if(DEBUG) Log.i(TAG, "loadfile(): related list buiding loop final section");
+						db.endTransaction();
+						db.close();
+					}
+					
+					
+				}
+
+
+				if(!threadAborted) {
+					if(!threadAborted) percentageDone = 100;
+					finish = true;
+				
+					mLIMEPref.setParameter("_table", "");
+
+					setImInfo(table, "source", filename.getName());
+					setImInfo(table, "name", imname);
+					setImInfo(table, "amount", String.valueOf(count));
+					setImInfo(table, "import", new Date().toLocaleString());
+
+					if(DEBUG) 
+						Log.i("limedb:loadfile()","Fianlly section: source:" 
+							+ getImInfo(table,"source") + " amount:"+getImInfo(table,"amount"));
+
+					// If user download from LIME Default IM SET then fill in related information
+					if(filename.getName().equals("phonetic.lime") || filename.getName().equals("phonetic_adv.lime")){
+						setImInfo("phonetic", "selkey", "123456789");
+						setImInfo("phonetic", "endkey", "3467'[]\\=<>?:\"{}|~!@#$%^&*()_+");
+						setImInfo("phonetic", "imkeys", ",-./0123456789;abcdefghijklmnopqrstuvwxyz'[]\\=<>?:\"{}|~!@#$%^&*()_+");
+						setImInfo("phonetic", "imkeynames", "ㄝ|ㄦ|ㄡ|ㄥ|ㄢ|ㄅ|ㄉ|ˇ|ˋ|ㄓ|ˊ|˙|ㄚ|ㄞ|ㄤ|ㄇ|ㄖ|ㄏ|ㄎ|ㄍ|ㄑ|ㄕ|ㄘ|ㄛ|ㄨ|ㄜ|ㄠ|ㄩ|ㄙ|ㄟ|ㄣ|ㄆ|ㄐ|ㄋ|ㄔ|ㄧ|ㄒ|ㄊ|ㄌ|ㄗ|ㄈ|、|「|」|＼|＝|，|。|？|：|；|『|』|│|～|！|＠|＃|＄|％|︿|＆|＊|（|）|－|＋");
+					}if(filename.getName().equals("array.lime")){
+						setImInfo("array", "selkey", "1234567890");
+						setImInfo("array", "imkeys", "abcdefghijklmnopqrstuvwxyz./;,?*#1#2#3#4#5#6#7#8#9#0");
+						setImInfo("array", "imkeynames", "1-|5⇣|3⇣|3-|3⇡|4-|5-|6-|8⇡|7-|8-|9-|7⇣|6⇣|9⇡|0⇡|1⇡|4⇡|2-|5⇡|7⇡|4⇣|2⇡|2⇣|6⇡|1⇣|9⇣|0⇣|0-|8⇣|？|＊|1|2|3|4|5|6|7|8|9|0");
+					}else{
+						if (!selkey.equals("")) setImInfo(table, "selkey", selkey);
+						if (!endkey.equals("")) setImInfo(table, "endkey", endkey);
+						if (!spacestyle.equals("")) setImInfo(table, "spacestyle", spacestyle);
+						if (!imkeys.equals("")) setImInfo(table, "imkeys", imkeys);
+						if (!imkeynames.equals("")) setImInfo(table, "imkeynames", imkeynames);
+					}
+					if(DEBUG) 
+						Log.i(TAG, "loadfile():update IM info: imkeys:" +imkeys + " imkeynames:"+imkeynames);
+
+					// If there is no keyboard assigned for current input method then use default keyboard layout
+					//String keyboard = getImInfo(table, "keyboard");
+					//if(keyboard == null || keyboard.equals("")){
+					//setImInfo(table, "keyboard", "lime");
+					// '11,5,23 by Jeremy: Preset keyboard info. by tablename
+					KeyboardObj kobj = getKeyboardObj(table);
+					if( table.equals("phonetic")){
+						String selectedPhoneticKeyboardType = 
+							mLIMEPref.getParameterString("phonetic_keyboard_type", "standard");
+						if(selectedPhoneticKeyboardType.equals("standard")){
+							kobj = 	getKeyboardObj("phonetic");
+						}else if(selectedPhoneticKeyboardType.equals("eten")){
+							kobj = 	getKeyboardObj("phoneticet41");
+						}else if(selectedPhoneticKeyboardType.equals("eten26")||selectedPhoneticKeyboardType.equals("hsu")){
+							if(mLIMEPref.getParameterBoolean("number_row_in_english", false)){
+								kobj = 	getKeyboardObj("limenum");
+							}else{
+								kobj = 	getKeyboardObj("lime");
+							}
+						}
+					}else if( table.equals("dayi")){
+						kobj = getKeyboardObj("dayisym");						
+					}else if( table.equals("cj5")){					
+						kobj = getKeyboardObj("cj");
+					}else if( table.equals("ecj")){				
+						kobj = getKeyboardObj("cj");
+					}else if( table.equals("array")){					
+						kobj = getKeyboardObj("arraynum");
+					}else if( table.equals("array10")){					
+						kobj = getKeyboardObj("phonenum");
+					}else if( table.equals("wb")){					
+						kobj = getKeyboardObj("cj");
+					}else if( kobj == null){					
+						kobj = getKeyboardObj("lime");
+					}
+					setIMKeyboard(table, kobj.getDescription(), kobj.getCode());
+				}
+
+
+
+			}
+
+		};
+		threadAborted = false;
+		thread.start();
+	}
+	
+	
 	public ContentValues getInsertItem(String code, String word) {
 		try {
 				ContentValues cv = new ContentValues();
@@ -2508,35 +2991,74 @@ public class LimeDB extends SQLiteOpenHelper {
 	 */
 	public Mapping isMappingExist(String code, String word) {
 		Mapping munit =null;
+		SQLiteDatabase db = this.getSqliteDb(true);
+		try {
+			munit = isMappingExistOnDB(db, code, word);
+		} catch (Exception e) {
+			e.printStackTrace();
+			db.close();
+		}
+		
+		db.close();
+		return munit;
+		
+	}
+
+	private Mapping isMappingExistOnDB(SQLiteDatabase db, String code, String word) {
+		Mapping munit = null;
+		if (code != null && code.trim().length()>0){
+
+
+			Cursor cursor = null;
+
+			if(word==null || word.trim().length()==0){
+				cursor = db.query(tablename, null, FIELD_CODE + " = '"
+						+ code + "'" , null, null, null, null, null);
+			}else{
+				cursor = db.query(tablename, null, FIELD_CODE + " = '"
+						+ code + "'" + " AND " + FIELD_WORD + " = '"
+						+ word + "'", null, null, null, null, null);
+			}
+
+			munit = new Mapping();
+			if (cursor.moveToFirst()) {
+				int idColumn = cursor.getColumnIndex(FIELD_ID);
+				int codeColumn = cursor.getColumnIndex(FIELD_CODE);
+				int wordColumn = cursor.getColumnIndex(FIELD_WORD);
+				int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
+				int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);		
+
+				munit.setId(cursor.getString(idColumn));
+				munit.setCode(cursor.getString(codeColumn));
+				munit.setWord(cursor.getString(wordColumn));
+				munit.setScore(cursor.getInt(scoreColumn));
+				munit.setRelated(cursor.getString(relatedColumn));
+				munit.setDictionary(false);
+
+			} 
+			if (cursor != null) {
+				cursor.deactivate();
+				cursor.close();
+			}
+		}
+		return munit;
+	}
+	/**
+	 * Jeremy '11,9,8 get Highest socre for 'code'.  relatedList will be stored on highest score record after 3.6.
+	 * @param code
+	 * @return
+	 */
+	public int getHighestScore(String code) {
+		int highestScore=0;
 		if (code != null && code.trim().length()>0){
 			SQLiteDatabase db = this.getSqliteDb(true);
 			try {
-				Cursor cursor = null;
+				Cursor cursor = db.query(tablename, null, FIELD_CODE + " = '"
+							+ code + "'" , null, null, null, FIELD_SCORE + " DESC", null);
 				
-				if(word==null || word.trim().length()==0){
-					cursor = db.query(tablename, null, FIELD_CODE + " = '"
-							+ code + "'" , null, null, null, null, null);
-				}else{
-					cursor = db.query(tablename, null, FIELD_CODE + " = '"
-						+ code + "'" + " AND " + FIELD_WORD + " = '"
-						+ word + "'", null, null, null, null, null);
-				}
-				
-				munit = new Mapping();
 				if (cursor.moveToFirst()) {
-					int idColumn = cursor.getColumnIndex(FIELD_id);
-					int codeColumn = cursor.getColumnIndex(FIELD_CODE);
-					int wordColumn = cursor.getColumnIndex(FIELD_WORD);
 					int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
-					int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);		
-					
-					munit.setId(cursor.getString(idColumn));
-					munit.setCode(cursor.getString(codeColumn));
-					munit.setWord(cursor.getString(wordColumn));
-					munit.setScore(cursor.getInt(scoreColumn));
-					munit.setRelated(cursor.getString(relatedColumn));
-					munit.setDictionary(false);
-					
+					highestScore = cursor.getInt(scoreColumn);
 				} 
 				if (cursor != null) {
 					cursor.deactivate();
@@ -2549,10 +3071,37 @@ public class LimeDB extends SQLiteOpenHelper {
 				db.close();
 			}
 		}
-		return null;
+		return highestScore;
 		
 	}
+	
+	/**
+	 * Jeremy '11,9,8 get Highest socre for 'code'.  relatedList will be stored on highest score record after 3.6.
+	 * @param code
+	 * @return
+	 */
+	public int getHighestScoreID(SQLiteDatabase db, String table, String code) {
+		int ID = -1;
+		if (code != null && code.trim().length()>0){
+			
+			Cursor cursor = db.query(table, null, FIELD_CODE + " = '"
+					+ code + "'" , null, null, null, 
+					FIELD_SCORE + " DESC, "+ FIELD_BASESCORE + " DESC", null);
 
+			if (cursor.moveToFirst()) {
+				int idColumn = cursor.getColumnIndex(FIELD_ID);
+				ID = cursor.getInt(idColumn);
+			} 
+			if (cursor != null) {
+				cursor.deactivate();
+				cursor.close();
+			}
+
+
+		}
+		return ID;
+		
+	}
 	/**
 	 * Check if usesr dictionary record exists
 	 * 
@@ -2582,7 +3131,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
 					int cwordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
 					int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
-					int idColumn = cursor.getColumnIndex(FIELD_id);
+					int idColumn = cursor.getColumnIndex(FIELD_ID);
 					
 					munit = new Mapping();
 						munit.setId(cursor.getString(idColumn));
@@ -2860,6 +3409,50 @@ public class LimeDB extends SQLiteOpenHelper {
 		}catch(Exception e){}
 		
 		return result;
+	}
+	/**
+	 * Jeremy '11,9,8 moved from searchService
+	 * @param input
+	 * @param hanConvertOption
+	 * @return
+	 */
+	public String hanConvert(String input, int hanConvertOption){
+		if(hanConverter == null){
+			FileUtilities fu = new FileUtilities();
+			//Jeremy '11,9,8 update handconverdb to v2 with base score in TCSC table
+			File hanDBFile = fu.isFileExist("/data/data/net.toload.main.hd/databases/hanconvert.db");
+			if(hanDBFile!=null)
+				hanDBFile.delete();
+			File hanDBV2File = fu.isFileNotExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
+			if(hanDBV2File!=null)
+				fu.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
+				
+			hanConverter = new LimeHanConverter(ctx);
+		}
+		
+		return hanConverter.convert(input, hanConvertOption);
+		
+	}
+	/**
+	 * Jeremy '11,9,8 get basescore of word store in hanconverter
+	 * @param input
+	 * @return
+	 */
+	public int getBaseScore(String input){
+		if(hanConverter == null){
+			FileUtilities fu = new FileUtilities();
+			//Jeremy '11,9,8 update handconverdb to v2 with base score in TCSC table
+			File hanDBFile = fu.isFileExist("/data/data/net.toload.main.hd/databases/hanconvert.db");
+			if(hanDBFile!=null)
+				hanDBFile.delete();
+			File hanDBV2File = fu.isFileNotExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
+			if(hanDBV2File!=null)
+				fu.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
+				
+			hanConverter = new LimeHanConverter(ctx);
+		}
+		return hanConverter.getBaseScore(input);
+		
 	}
 
 }
