@@ -346,6 +346,7 @@
     <string name="l3_tab_initial_error">下載失敗，請確認裝置已連上網路.</string>
     <string name="l3_tab_initial_message">請點選 [預載資料庫] OR [空白資料庫] 鍵下載 LIME 資料庫或點選 [還原資料庫] 鍵由備份檔案中還原</string>
     <string name="l3_initial_btn_load_empty_db">空白資料庫</string>
+    <string name="l3_initial_btn_load_phonetic_only_db">僅含注音資料庫</string>
     <string name="l3_initial_btn_load_preload_db">預載資料庫</string>
     <string name="l3_initial_btn_reset_db">重置資料庫</string>
     <string name="l3_initial_btn_store_to_sdcard">請問您要變更資料庫的儲存位置至 SDCARD 嗎? 在部份機種上可能會產生效能不佳的問題。</string>

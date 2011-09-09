@@ -369,8 +369,9 @@
     <string name="l3_tab_initial">Manage DB</string>
     <string name="l3_tab_initial_error">Internet connection not available.</string>
     <string name="l3_tab_initial_message">Please initialized lime database using by downloading preloaded or blank lime database or restore from last backup.</string>
-    <string name="l3_initial_btn_load_empty_db">INIT DB (blank))</string>
-    <string name="l3_initial_btn_load_preload_db">INIT DB (preloaded)</string>
+    <string name="l3_initial_btn_load_empty_db">Download empty db</string>
+    <string name="l3_initial_btn_load_phonetic_only_db">Download phonetic only preloaded db</string>
+    <string name="l3_initial_btn_load_preload_db">Download full preloaded db</string>
     <string name="l3_initial_btn_reset_db">Reset DB</string>
     <string name="l3_initial_btn_store_to_sdcard">Are you sure you want to store database on sdcard? this might result in performance issue for some devices.</string>
     <string name="l3_initial_btn_store_to_device">Are you sure you want to store database on device?</string>
@@ -399,7 +400,7 @@
     <string name="l3_dbservice_download_loaded">Database successfully loaded.</string>
     <string name="l3_dbservice_download_convert">Loading the database file...</string>
     
-        <string name="l3_message_table_downloading">Downloading the IM-table file ...</string>
+    <string name="l3_message_table_downloading">Downloading the IM-table file ...</string>
     <string name="l3_message_database_reset_confirm">Are you sure you want to reset the database?</string>
     <string name="l3_message_table_reset_confirm">Are you sure you want to reset this IM-table?</string>
     <string name="l3_message_table_download_confirm">Are you sure you want to donload the IM-table file loading?</string>
