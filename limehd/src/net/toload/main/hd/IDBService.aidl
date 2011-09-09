@@ -17,6 +17,7 @@ interface IDBService
 	void downloadWb();
 	void downloadEz();
 	void downloadPreloadedDatabase();
+	void downloadPhoneticOnlyDatabase();
 	void downloadEmptyDatabase();
 	void backupDatabase();
 	void restoreDatabase();

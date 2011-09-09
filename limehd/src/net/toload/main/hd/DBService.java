@@ -207,6 +207,44 @@ public class DBService extends Service {
 			threadTask.start();
 		}
 
+		
+		@Override
+		public void downloadPhoneticOnlyDatabase() throws RemoteException {
+			if (db == null) {loadLimeDB();}
+			resetDownloadDatabase();
+			Thread threadTask = new Thread() {
+				public void run() { 
+					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start)+ "", intentLIMEInitial);
+					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PHONETIC_ONLY, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
+					if(downloadedFile==null){
+						//showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
+						mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
+					}else{
+						String dbtarget = mLIMEPref.getParameterString("dbtarget");
+						String folder = ""; 
+						if(dbtarget.equals("device")){
+							folder = LIME.DATABASE_DECOMPRESS_FOLDER;
+						}else{
+							folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
+						}
+						if(decompressFile(downloadedFile, folder, LIME.DATABASE_NAME)){
+							Thread threadTask = new Thread() {
+								public void run() {
+									downloadedFile.delete();
+									mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
+								}
+							};
+							threadTask.start();
+						}
+						getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
+						showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
+					}
+				}
+
+			};
+			threadTask.start();
+		}
+		
 		@Override
 		public void downloadPreloadedDatabase() throws RemoteException {
 			if (db == null) {loadLimeDB();}

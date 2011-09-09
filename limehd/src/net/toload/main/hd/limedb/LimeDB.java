@@ -1016,13 +1016,15 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 
 	private LinkedList<Mapping> updateRelatedListOnDB(SQLiteDatabase db, String table, String code) {
-		char[] charray = code.toCharArray();
-		charray[code.length()-1]++;
+		
+		String escapedCode = code.replaceAll("'", "''"); //Jeremy '11,9,10 escape '
+		char[] charray = escapedCode.toCharArray();
+		charray[escapedCode.length()-1]++;
 		String nextcode = new String(charray);
 		
 		// Jeremy '11,9,8 sorting with score + basescore
 		String selectString = "SELECT * FROM '" + table +"" +
-				"' WHERE " + FIELD_CODE + " > '" + code + "' AND " + FIELD_CODE + " < '" + nextcode + "'"+
+				"' WHERE " + FIELD_CODE + " > '" + escapedCode + "' AND " + FIELD_CODE + " < '" + nextcode + "'"+
 				" ORDER BY " + FIELD_SCORE + " DESC, "+ FIELD_BASESCORE +" DESC LIMIT 50";
 		Cursor cursor = db.rawQuery(selectString ,null);
 		
@@ -2759,7 +2761,7 @@ public class LimeDB extends SQLiteOpenHelper {
 							} else {
 								code = code.toLowerCase();
 							}
-							code = code.replaceAll("'", "''"); //Jeremy '11,9,9 escape '
+							
 							if(inKeynameBlock) {  //Jeremy '11,6,5 preserve keyname blocks here.
 								imkeys = imkeys + code.toLowerCase().trim();
 								String c = word.trim();
@@ -2829,7 +2831,8 @@ public class LimeDB extends SQLiteOpenHelper {
 							if(threadAborted) 	break;
 							percentageDone = (int) ((float)(i++)/(float)entrySize *50 +50);
 							if(percentageDone>99) percentageDone = 99;
-
+							if(DEBUG)
+								Log.i(TAG, "loadFileV2():building related list:" + i +"/" + entrySize);
 							try{
 								updateRelatedListOnDB(db, table ,entry);
 
@@ -3013,7 +3016,8 @@ public class LimeDB extends SQLiteOpenHelper {
 
 
 			Cursor cursor = null;
-
+			// Process the escape characters of query
+			code = code.replaceAll("'", "''");
 			if(word==null || word.trim().length()==0){
 				cursor = db.query(tablename, null, FIELD_CODE + " = '"
 						+ code + "'" , null, null, null, null, null);
@@ -3056,6 +3060,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		if (code != null && code.trim().length()>0){
 			SQLiteDatabase db = this.getSqliteDb(true);
 			try {
+				// Process the escape characters of query
+				code = code.replaceAll("'", "''");
 				Cursor cursor = db.query(tablename, null, FIELD_CODE + " = '"
 							+ code + "'" , null, null, null, FIELD_SCORE + " DESC", null);
 				
@@ -3086,7 +3092,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	public int getHighestScoreID(SQLiteDatabase db, String table, String code) {
 		int ID = -1;
 		if (code != null && code.trim().length()>0){
-			
+			// Process the escape characters of query
+			code = code.replaceAll("'", "''");
 			Cursor cursor = db.query(table, null, FIELD_CODE + " = '"
 					+ code + "'" , null, null, null, 
 					FIELD_SCORE + " DESC, "+ FIELD_BASESCORE + " DESC", null);
