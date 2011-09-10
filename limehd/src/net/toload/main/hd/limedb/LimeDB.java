@@ -99,7 +99,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String SHIFTED_NUMBERIC_KEY_REMAP = 		"1234567890";
 
 	private final static String SHIFTED_SYMBOL_KEY = 		 		"<>?_:+\"";
-	private final static String SHIFTED_SYMBOL_KEY_REMAP = 			",./-=;'";
+	private final static String SHIFTED_SYMBOL_KEY_REMAP = 			",./-;='";
 	
 	private final static String ETEN_KEY = 		 			"abcdefghijklmnopqrstuvwxyz12347890-=;',./!@#$&*()<>?_+:\"";
 	private final static String ETEN_KEY_REMAP = 			"81v2uzrc9bdxasiqoknwme,j.l7634f0p;/-yh5tg7634f0p;5tg/yh-";
