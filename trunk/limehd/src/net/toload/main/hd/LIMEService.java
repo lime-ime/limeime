@@ -940,16 +940,16 @@ public class LIMEService extends InputMethodService implements
 			// composing text for the user, we want to modify that instead
 			// of let the application to the delete itself.
 
-			if (mLIMEPref.getEnglishPrediction()) {
-				if (mComposing.length() > 0 || tempEnglishWord.length() > 0) {
-					onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
-					return true;
-				}
-			} else {
+			if (mComposing.length() > 0 || tempEnglishWord.length() > 0 
+				||(mCandidateView!=null&&mCandidateView.isShown())){ //Jeremy '11,9,10 
+				onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
+				return true;
+			
+			/*} else {
 				if (mComposing.length() > 0) {
 					onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
 					return true;
-				}
+				}*/
 			}
 
 			clearComposing();
