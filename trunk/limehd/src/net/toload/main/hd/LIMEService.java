@@ -500,13 +500,14 @@ public class LIMEService extends InputMethodService implements
 	
 	private void clearSuggestions(){
 		if(mCandidateView !=null){
-			if(DEBUG) Log.i(TAG, "clearSuggestions(): mInputView.isShown()" +mInputView.isShown()
+			if(DEBUG) 
+				Log.i(TAG, "clearSuggestions(): mInputView.isShown()" +mInputView.isShown()
 					+ ", mCandidateView.isShown():" + mCandidateView.isShown());
 			
 			mCandidateView.clear();
 			//hideCandidateView();
-			if(onIM && mLIMEPref.getAutoChineseSymbol()  
-					&&	(mInputView.isShown()|| mCandidateView.isShown())) 
+			if(onIM && mLIMEPref.getAutoChineseSymbol() )
+					//&&	(mInputView.isShown()|| mCandidateView.isShown()) 
 				updateChineseSymbol(); // Jeremy '11,9,4
 			else
 				hideCandidateView();
@@ -940,25 +941,25 @@ public class LIMEService extends InputMethodService implements
 			// composing text for the user, we want to modify that instead
 			// of let the application to the delete itself.
 
-			if (mComposing.length() > 0 || tempEnglishWord.length() > 0 
-				||(mCandidateView!=null&&mCandidateView.isShown())){ //Jeremy '11,9,10 
-				onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
-				return true;
+			//if (mComposing.length() > 0 || tempEnglishWord.length() > 0 
+			//	||(mCandidateView!=null&&mCandidateView.isShown())){ //Jeremy '11,9,10 
+			onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
+			return true;
 			
 			/*} else {
 				if (mComposing.length() > 0) {
 					onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
 					return true;
 				}*/
-			}
+			
 
-			clearComposing();
-			mMetaState = LIMEMetaKeyKeyListener
-					.adjustMetaAfterKeypress(mMetaState);
-			setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
+			//clearComposing();
+			//mMetaState = LIMEMetaKeyKeyListener
+			//		.adjustMetaAfterKeypress(mMetaState);
+			//setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
 			// ------------------------------------------------------------------------
 
-			break;
+			//break;
 
 		case KeyEvent.KEYCODE_ENTER:
 			// Let the underlying text editor always handle these, if return
@@ -1938,8 +1939,6 @@ public class LIMEService extends InputMethodService implements
 		isChineseSymbolSuggestionsShowing =true;
 		List<Mapping> list = ChineseSymbol.getChineseSymoblList();
 		if (list.size() > 0) {
-			
-			
 			setSuggestions(list, isPhysicalKeyPressed && 
 					mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard"), true, "1234567890");
 			
@@ -2171,6 +2170,7 @@ public class LIMEService extends InputMethodService implements
 	}
 	private void hideCandidateView(){
 		if(DEBUG) Log.i(TAG,"hideCandidateView()");
+		isChineseSymbolSuggestionsShowing = false;
 		mHandler.post(mHideCandidateView);
 	}
 	
@@ -2255,7 +2255,8 @@ public class LIMEService extends InputMethodService implements
 	}*/
 
 	private void handleBackspace() {
-		if(DEBUG) Log.i(TAG, "handleBackspace()");
+		if(DEBUG) 
+			Log.i(TAG, "handleBackspace()");
 		final int length = mComposing.length();
 		InputConnection ic=getCurrentInputConnection();
 		if (length > 1) {
@@ -2279,7 +2280,7 @@ public class LIMEService extends InputMethodService implements
 			//Jeremy '11,8,15
 			//clearSuggestions();
 			try {
-				if (mLIMEPref.getEnglishPrediction()&& mPredictionOn
+				if (mEnglishOnly && mLIMEPref.getEnglishPrediction()&& mPredictionOn
 					&& ( !isPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard() )//mPredictionOnPhysicalKeyboard)
 					) {
 					if (tempEnglishWord != null && tempEnglishWord.length() > 0) {
@@ -2291,7 +2292,7 @@ public class LIMEService extends InputMethodService implements
 				} else{
 				
 					//Jeremy '11,8,14
-					clearComposing();
+					clearComposing(); //Jeremy '11,9,11
 					keyDownUp(KeyEvent.KEYCODE_DEL);
 				}
 			} catch (Exception e) {
