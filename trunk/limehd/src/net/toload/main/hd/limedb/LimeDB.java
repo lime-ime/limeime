@@ -583,6 +583,13 @@ public class LimeDB extends SQLiteOpenHelper {
 	}*/
 	
 	
+	private String getDBPath(String dbTarget){
+		String dbLocationPrefix = (dbTarget.equals("sdcard"))
+				?LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD:LIME.DATABASE_DECOMPRESS_FOLDER;
+		
+		return dbLocationPrefix + File.separator + LIME.DATABASE_NAME;
+	}	
+	
 	public SQLiteDatabase getSqliteDb(boolean readonly){
 		
 		// Execute database schema update process
@@ -591,8 +598,13 @@ public class LimeDB extends SQLiteOpenHelper {
 		try{
 
 			String dbtarget = mLIMEPref.getParameterString("dbtarget");
-			//Log.i("ART", "Load Database Target : " + dbtarget);
-			if(dbtarget.equals("sdcard")){
+			
+			//Jeremy '11',9,11 clean code
+			db = SQLiteDatabase.openDatabase(getDBPath(dbtarget), 
+					null, (readonly)? SQLiteDatabase.OPEN_READONLY: SQLiteDatabase.OPEN_READWRITE
+					| SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+
+			/*if(dbtarget.equals("sdcard")){
 				String sdcarddb = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
 
 				if(readonly){
@@ -610,10 +622,11 @@ public class LimeDB extends SQLiteOpenHelper {
 					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READWRITE |SQLiteDatabase.NO_LOCALIZED_COLLATORS);
 					//db = this.getWritableDatabase();
 				}
-			}
+			}*/
 			
 		}catch(Exception e){e.printStackTrace();}
 		
+		//Jeremy '11,9, 8 starting from 3.6 using db.getVersion and onUpgrade() again.
 		if(DEBUG) Log.i(TAG, "databaseversion= " +
 				db.getVersion() + " helperVersion= " + DATABASE_VERSION);
 		if (db!=null && db.getVersion() != DATABASE_VERSION) {
@@ -621,7 +634,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				Log.w(TAG, "Can't upgrade read-only database from version " +
 						db.getVersion() + " to " + DATABASE_VERSION);
 			}else{
-				//if(!readonly) db.setVersion(67);
+				//db.setVersion(67);
 				onUpgrade(db, db.getVersion(), DATABASE_VERSION);
 			}
 		}
@@ -1016,8 +1029,11 @@ public class LimeDB extends SQLiteOpenHelper {
 	}
 
 	private LinkedList<Mapping> updateRelatedListOnDB(SQLiteDatabase db, String table, String code) {
-		
 		String escapedCode = code.replaceAll("'", "''"); //Jeremy '11,9,10 escape '
+		
+		if(DEBUG) 
+			Log.i(TAG, "updateRelatedListOnDB(): escapedCodes: "+ escapedCode);
+		
 		char[] charray = escapedCode.toCharArray();
 		charray[escapedCode.length()-1]++;
 		String nextcode = new String(charray);
@@ -1076,14 +1092,16 @@ public class LimeDB extends SQLiteOpenHelper {
 				if (highestScoreID > 0) {
 					db.update(table, cv, FIELD_ID + " = " + highestScoreID,	null);
 					if(DEBUG) 
-						Log.i(TAG, "updateRelatedListOnDB(): updating code ="+ code);
+						Log.i(TAG, "updateRelatedListOnDB(): updating code ="+ code
+								+", the new relatedlist:" + newRelatedlist);
 				} else {
 					cv.put(FIELD_CODE, code);
 					db.insert(table, null, cv);
-					if(DEBUG) Log.i(TAG, "updateRelatedListOnDB(): insert new code ="+ code);
+					if(DEBUG) 
+						Log.i(TAG, "updateRelatedListOnDB(): insert new code ="+ code
+								+", the new relatedlist:" + newRelatedlist);
 				}
-				if(DEBUG) 
-					Log.i(TAG, "updateRelatedListOnDB(): the new relatedlist:" + newRelatedlist);	
+					
 			}
 				
 		}
@@ -2776,11 +2794,15 @@ public class LimeDB extends SQLiteOpenHelper {
 							else {
 								if (code.length() > 1) {
 									//codeList.add(code);
+									if(DEBUG)
+										Log.i(TAG, "loadfilev2():code="+code);
 									int len = code.length();
-									if(len > 3 ) len -= 3;
+									if(len > 4 ) len = 4; //Jeremy '11,9,14
 									for (int k = 1; k < len; k++) {
 										String subCode = code.substring(0, code.length() - k);
-										codeList.add(subCode);
+										
+										if(codeList.add(subCode) &&DEBUG) 
+											Log.i(TAG, "loadfilev2():subcode added:" + subCode);
 									}
 								}
 
@@ -3427,18 +3449,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @return
 	 */
 	public String hanConvert(String input, int hanConvertOption){
-		if(hanConverter == null){
-			FileUtilities fu = new FileUtilities();
-			//Jeremy '11,9,8 update handconverdb to v2 with base score in TCSC table
-			File hanDBFile = fu.isFileExist("/data/data/net.toload.main.hd/databases/hanconvert.db");
-			if(hanDBFile!=null)
-				hanDBFile.delete();
-			File hanDBV2File = fu.isFileNotExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
-			if(hanDBV2File!=null)
-				fu.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
-				
-			hanConverter = new LimeHanConverter(ctx);
-		}
+		checkHanDB();
 		
 		return hanConverter.convert(input, hanConvertOption);
 		
@@ -3449,6 +3460,12 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @return
 	 */
 	public int getBaseScore(String input){
+		checkHanDB();
+		return hanConverter.getBaseScore(input);
+		
+	}
+
+	private void checkHanDB() {
 		if(hanConverter == null){
 			FileUtilities fu = new FileUtilities();
 			//Jeremy '11,9,8 update handconverdb to v2 with base score in TCSC table
@@ -3456,13 +3473,17 @@ public class LimeDB extends SQLiteOpenHelper {
 			if(hanDBFile!=null)
 				hanDBFile.delete();
 			File hanDBV2File = fu.isFileNotExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
-			if(hanDBV2File!=null)
+			
+			if(hanDBV2File!=null) 
 				fu.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
+			else { // Jeremy '11,9,14 copy the db file if it's newer.
+				hanDBV2File = fu.isFileExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
+				if(hanDBV2File!=null && mLIMEPref.getParameterLong("hanDBDate") != hanDBV2File.lastModified())
+					fu.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
+			}
 				
 			hanConverter = new LimeHanConverter(ctx);
 		}
-		return hanConverter.getBaseScore(input);
-		
 	}
 
 }

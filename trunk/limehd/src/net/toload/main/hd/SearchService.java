@@ -564,7 +564,7 @@ public class SearchService extends Service {
 			String cachekey = cacheKey(code);
 			Pair<List<Mapping>, List<Mapping>> cachedPair = cache.get(cachekey);
 			int len = code.length();
-			if(len > 3 ) len -= 3;
+			if(len > 4 ) len = 4; //Jeremy '11,9,14
 			for (int k = 1; k < len; k++) {
 				String key = code.substring(0, code.length() - k);
 				cachekey = cacheKey(key);

@@ -337,10 +337,30 @@ public class LIMEPreferenceManager {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getInt(label, 0);
 	}
+
 	public int getParameterInt(String label, int defaultvalue){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getInt(label, defaultvalue);
 	}
+	
+	/*
+	 * LONG Parameter SET/GET
+	 */
+	public long getParameterLong(String label, long defaultvalue){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getLong(label, defaultvalue);
+	}
+	
+	public long getParameterLong(String label){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getLong(label, 0);
+	}
+	
+	public void setParameter(String label, long value){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		sp.edit().putLong(label, value).commit();	
+	}
+	
 	/*
 	 * String Parameter SET/GET
 	 */
