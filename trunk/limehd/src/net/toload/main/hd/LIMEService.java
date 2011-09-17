@@ -506,8 +506,10 @@ public class LIMEService extends InputMethodService implements
 			
 			mCandidateView.clear();
 			//hideCandidateView();
-			if(onIM && mLIMEPref.getAutoChineseSymbol() )
-					//&&	(mInputView.isShown()|| mCandidateView.isShown()) 
+			if(onIM && mLIMEPref.getAutoChineseSymbol() 
+					&& mCandidateView.isShown())   //Jeremy '11,9,17 resolved the screen jumped complained by Julian 	
+					//(mInputView.isShown()|| 
+					 
 				updateChineseSymbol(); // Jeremy '11,9,4
 			else
 				hideCandidateView();
@@ -1684,8 +1686,10 @@ public class LIMEService extends InputMethodService implements
 	private AlertDialog mOptionsDialog;
 	// Contextual menu positions
 	private static final int POS_SETTINGS = 0;
-	private static final int POS_KEYBOARD = 1;
-	private static final int POS_METHOD = 2;
+	private static final int POS_HANCONVERT = 1;  //Jeremy '11,9,17
+	private static final int POS_KEYBOARD = 2;
+	private static final int POS_METHOD = 3;
+
 
 	/**
 	 * Add by Jeremy '10, 3, 24 for options menu in soft keyboard
@@ -1698,17 +1702,23 @@ public class LIMEService extends InputMethodService implements
 		builder.setTitle(getResources().getString(R.string.ime_name));
 
 		CharSequence itemSettings = getString(R.string.lime_setting_preference);
+		CharSequence hanConvert = getString(R.string.han_convert_option_list);
+
 		CharSequence itemKeyboadList = getString(R.string.keyboard_list);
 		CharSequence itemInputMethod = getString(R.string.input_method);
-
-		builder.setItems(new CharSequence[] { itemSettings, itemKeyboadList,
-				itemInputMethod }, new DialogInterface.OnClickListener() {
+	
+		builder.setItems(new CharSequence[] 
+				{ itemSettings, hanConvert, itemKeyboadList, itemInputMethod}
+				, new DialogInterface.OnClickListener() {
 
 			public void onClick(DialogInterface di, int position) {
 				di.dismiss();
 				switch (position) {
 				case POS_SETTINGS:
 					launchSettings();
+					break;
+				case POS_HANCONVERT:  //Jeremy '11,9,17
+					showHanConvertPicker();
 					break;
 				case POS_KEYBOARD:
 					showKeyboardPicker();
@@ -1717,6 +1727,8 @@ public class LIMEService extends InputMethodService implements
 					((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
 							.showInputMethodPicker();
 					break;
+			
+					
 				}
 			}
 		});
@@ -1831,7 +1843,41 @@ public class LIMEService extends InputMethodService implements
 		}
 
 	}
+	/**
+	 * Add by Jeremy '11,9,17 for han convert (tranditional <-> simplifed) options
+	 */
+	private void showHanConvertPicker() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setCancelable(true);
+		builder.setIcon(R.drawable.sym_keyboard_done);
+		builder.setNegativeButton(android.R.string.cancel, null);
+		builder.setTitle(getResources().getString(R.string.han_convert_option_list));
+		CharSequence[] items =  getResources().getStringArray(R.array.han_convert_options);
+		builder.setSingleChoiceItems(items,  mLIMEPref.getHanCovertOption(),
+				new DialogInterface.OnClickListener() {
 
+					public void onClick(DialogInterface di, int position) {
+						di.dismiss();
+						handlHanConvertSelection(position);
+					}
+				});
+
+		mOptionsDialog = builder.create();
+		Window window = mOptionsDialog.getWindow();
+		if (!(window == null)) {
+			WindowManager.LayoutParams lp = window.getAttributes();
+				lp.token = mCandidateView.getWindowToken(); 
+			lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+			window.setAttributes(lp);
+			window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+
+		}
+		mOptionsDialog.show();
+	}
+	private void handlHanConvertSelection(int position) {
+		mLIMEPref.setHanCovertOption(position);
+		
+	}
 	/**
 	 * Add by Jeremy '10, 3, 24 for keyboard picker menu in options menu
 	 */
@@ -1882,14 +1928,15 @@ public class LIMEService extends InputMethodService implements
 
 	@SuppressWarnings("unchecked")
 	private void handlKeyboardSelection(int position) {
-		SharedPreferences sp = PreferenceManager
-				.getDefaultSharedPreferences(this);
-		SharedPreferences.Editor spe = sp.edit();
+		//SharedPreferences sp = PreferenceManager
+		//		.getDefaultSharedPreferences(this);
+		//SharedPreferences.Editor spe = sp.edit();
 
 		keyboardSelection = keyboardListCodes.get(position);
-
-		spe.putString("keyboard_list", keyboardSelection);
-		spe.commit();
+		
+		mLIMEPref.setKeyboardSelection(keyboardSelection);
+		//spe.putString("keyboard_list", keyboardSelection);
+		//spe.commit();
 
 		
 		//Jeremy '11,8,14
@@ -2913,6 +2960,7 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	public void swipeUp() {
+		handleOptions();
 	}
 
 	/**
