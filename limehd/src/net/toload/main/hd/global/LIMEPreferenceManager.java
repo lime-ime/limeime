@@ -266,6 +266,13 @@ public class LIMEPreferenceManager {
 		return Integer.parseInt(sp.getString("han_convert_option", "0"));
 	}
 	
+	public void setHanCovertOption(int value){
+		
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		sp.edit().putString( "han_convert_option", String.valueOf(value)).commit();	
+		
+	}
+	
 	public Integer getSelkeyOption(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
