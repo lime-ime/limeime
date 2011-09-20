@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="fill_parent" android:orientation="vertical">
+	<ScrollView android:id="@+id/scrollView1"
+		android:layout_width="match_parent" android:layout_height="match_parent">
+		<LinearLayout android:id="@+id/LinearLayout1"
+			android:layout_margin="10px" android:baselineAligned="true" android:layout_gravity="center_horizontal" android:orientation="vertical" android:layout_width="match_parent" android:gravity="center" android:layout_height="wrap_content">
+			<TableLayout android:layout_width="fill_parent" android:id="@+id/tableLayout1" android:layout_height="wrap_content">
+				<TableRow android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/tableRow1">
+					<Button android:layout_width="fill_parent" android:layout_margin="5px" android:id="@+id/btnStoreDevice" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/l3_initial_btn_store_device" android:padding="5px"></Button>
+					<Button android:layout_width="fill_parent" android:layout_margin="5px" android:id="@+id/btnStoreSdcard" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/l3_initial_btn_store_sdcard" android:padding="5px"></Button>
+				</TableRow>
+			</TableLayout>
+			<TableLayout android:layout_width="fill_parent" android:layout_gravity="center|center_horizontal" android:id="@+id/tableLayout2" android:layout_weight="2" android:layout_height="wrap_content">
+				<TableRow android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/tableRow2">
+					<Button android:layout_width="fill_parent" android:layout_margin="5px" android:id="@+id/btnInitPreloadDB" android:layout_weight="1" android:layout_height="fill_parent" android:text="@string/l3_initial_btn_load_preload_db" android:padding="5px"></Button>
+				</TableRow>
+				<TableRow android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/tableRow3">
+					<Button android:layout_width="fill_parent" android:layout_margin="5px" android:id="@+id/btnInitPhoneticOnlyDB" android:layout_weight="1" android:layout_height="fill_parent" android:text="@string/l3_initial_btn_load_phonetic_only_db" android:padding="5px"></Button>
+				</TableRow>
+				<TableRow android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/tableRow4">
+					<Button android:layout_width="fill_parent" android:layout_margin="5px" android:id="@+id/btnInitEmptyDB" android:layout_weight="1" android:layout_height="fill_parent" android:text="@string/l3_initial_btn_load_empty_db" android:padding="5px"></Button>
+				</TableRow>
+				<TableRow android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/tableRow5">
+					<Button android:layout_width="fill_parent" android:layout_margin="5px" android:id="@+id/btnResetDB" android:layout_weight="1" android:layout_height="fill_parent" android:text="@string/l3_initial_btn_reset_db" android:padding="5px"></Button>
+				</TableRow>
+			</TableLayout>
+			<TableLayout android:layout_width="match_parent" android:id="@+id/tableLayout3" android:layout_height="wrap_content">
+			</TableLayout>
+			<TableRow android:layout_height="wrap_content" android:id="@+id/tableRow6" android:layout_width="match_parent">
+				<Button android:layout_width="fill_parent" android:layout_margin="5px" android:id="@+id/btnBackupDB" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/l3_initial_backup_database" android:padding="5px"></Button>
+				<Button android:layout_width="fill_parent" android:layout_margin="5px" android:id="@+id/btnRestoreDB" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/l3_initial_restore_database" android:padding="5px"></Button>
+			</TableRow>
+		</LinearLayout>
+	</ScrollView>
+</LinearLayout>
+
+
+
