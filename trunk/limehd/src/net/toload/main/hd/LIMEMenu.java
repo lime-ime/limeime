@@ -24,6 +24,7 @@ import java.io.File;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
+import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limesettings.LIMEIMSetting;
 import net.toload.main.hd.limesettings.LIMEInitial;
 import net.toload.main.hd.limesettings.LIMEPreference;
@@ -43,11 +44,16 @@ import android.widget.TabHost;
  * @author Art Hung
  */
 public class LIMEMenu extends TabActivity {
+
+	private LIMEPreferenceManager mLIMEPref;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
+		mLIMEPref = new LIMEPreferenceManager(this);
+		
+		
         final TabHost tabHost = getTabHost();
 
         int tabno = 0;
@@ -77,6 +83,27 @@ public class LIMEMenu extends TabActivity {
         if(tabno != 0){
             tabHost.setCurrentTab(tabno);
         }
+        
+        try {
+			PackageInfo pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+			if(mLIMEPref.getParameterString("version_code").equals("") ||
+					!mLIMEPref.getParameterString("version_code").equals(pinfo.versionCode)){
+
+	    			new AlertDialog.Builder(this)
+			    	.setTitle("LIME v" + pinfo.versionName + " - " + pinfo.versionCode)
+			    	.setMessage(R.string.release_note)
+			    	.setNeutralButton("Close", new DialogInterface.OnClickListener() {
+			    	public void onClick(DialogInterface dlg, int sumthin) {
+			    	}
+			    	}).show();
+	    			 
+	    			mLIMEPref.setParameter("version_code", String.valueOf(pinfo.versionCode));
+			}
+		} catch (Exception e) {
+			mLIMEPref.setParameter("version_code", "0");
+			e.printStackTrace();
+		}
+		
         
        /* WindowManager manager = (WindowManager) this.getSystemService(Context.WINDOW_SERVICE);
         Display display = manager.getDefaultDisplay();
@@ -110,6 +137,17 @@ public class LIMEMenu extends TabActivity {
 		//boolean hasSwitch = false;
 		try{
 	    	switch(item.getItemId()){
+	    		case (Menu.FIRST):
+	    			PackageInfo pinfo = this.getPackageManager().getPackageInfo(this.getPackageName(), 0);
+		    	
+		    		new AlertDialog.Builder(this)
+				    	.setTitle("LIME v" + pinfo.versionName + " - " + pinfo.versionCode)
+				    	.setMessage(R.string.release_note)
+				    	.setNeutralButton("Close", new DialogInterface.OnClickListener() {
+				    	public void onClick(DialogInterface dlg, int sumthin) {
+				    	}
+				    	}).show();
+	    		break;
 		    	case (Menu.FIRST+1):
 		    		new AlertDialog.Builder(this)
 				    	.setTitle(R.string.experienced_device)
