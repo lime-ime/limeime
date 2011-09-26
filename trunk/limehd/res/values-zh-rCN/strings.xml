@@ -486,4 +486,25 @@
 	</string-array>
 	<string name="auto_chinese_symbol">自动中文标点模式</string>
     <string name="auto_chinese_symbol_summary">无候选字词时显示中文标点选项</string>
+    
+    
+    <!-- 自动上屏设定 -->
+    <string name="auto_commit">电话键盘自动上屏</string>
+    <string name="auto_commit_summary">当输入字根符合设定数则自动送出组字</string>
+	<string-array name="auto_commit_labels">
+		<item>无</item>
+		<item>2</item>
+		<item>3</item>
+		<item>4</item>
+		<item>5</item>
+		<item>6</item>
+	</string-array>
+	<string-array name="auto_commit_values">
+		<item>0</item>
+		<item>2</item>
+		<item>3</item>
+		<item>4</item>
+		<item>5</item>
+		<item>6</item>
+	</string-array>
 </resources>

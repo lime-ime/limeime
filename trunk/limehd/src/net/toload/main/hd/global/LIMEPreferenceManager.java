@@ -235,6 +235,11 @@ public class LIMEPreferenceManager {
 		return sp.getString("physical_keyboard_type", "normal_keyboard");
 	}
 	
+	public int getAutoCommitValue(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return Integer.parseInt(sp.getString("auto_commit", "0"));
+	}
+	
 	public String getPhoneticKeyboardType(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);

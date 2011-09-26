@@ -122,6 +122,7 @@
     <!-- Popup keyboard char sequences-->
     <string name="chinese_punctuation">「」！？、。，</string>
     
+    
     <!-- Other Messages -->
   	
   	<!-- Indicates that a word has been added to the dictionary -->
@@ -486,4 +487,25 @@
 	</string-array>
 	<string name="auto_chinese_symbol">自動中文標點模式</string>
     <string name="auto_chinese_symbol_summary">無候選字詞時顯示中文標點選項</string>
+    
+    <!-- 自動上屏設定 -->
+    <string name="auto_commit">電話鍵盤自動上屏</string>
+    <string name="auto_commit_summary">當輸入字根符合設定數則自動送出組字</string>
+	<string-array name="auto_commit_labels">
+		<item>無</item>
+		<item>2</item>
+		<item>3</item>
+		<item>4</item>
+		<item>5</item>
+		<item>6</item>
+	</string-array>
+	<string-array name="auto_commit_values">
+		<item>0</item>
+		<item>2</item>
+		<item>3</item>
+		<item>4</item>
+		<item>5</item>
+		<item>6</item>
+	</string-array>
+	
 </resources>
