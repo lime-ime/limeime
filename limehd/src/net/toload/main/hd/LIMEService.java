@@ -221,7 +221,11 @@ public class LIMEService extends InputMethodService implements
 
 	// Weight added to a user picking a new word from the suggestion strip
 	static final int FREQUENCY_FOR_PICKED = 3;
-
+	
+	// Auto Commmit Value
+	private int auto_commit = 0;
+	private String keyboard_xml = "";
+	
 	// Replace Keycode.KEYCODE_CTRL_LEFT/RIGHT, ESC on android 3.x
 	// for backward compatibility of 2.x
 	static final int MY_KEYCODE_ESC = 111;
@@ -712,6 +716,10 @@ public class LIMEService extends InputMethodService implements
 		keyboardSelection = mLIMEPref.getKeyboardSelection();//sp.getString("keyboard_list", "custom");
 		hasQuickSwitch = mLIMEPref.getSwitchEnglishModeHotKey();//sp.getBoolean("switch_english_mode", false);
 		mAutoCap = true; // sp.getBoolean(PREF_AUTO_CAP, true);
+		
+		auto_commit = mLIMEPref.getAutoCommitValue();
+		keyboard_xml = mKeyboardSwitcher.getImKeyboard(keyboardSelection);
+		
 		//mQuickFixes = true;
 		// If there is no auto text data, then quickfix is forced to "on", so
 		// that the other options
@@ -1272,6 +1280,7 @@ public class LIMEService extends InputMethodService implements
 		// Update metakeystate of IC maintained by MetaKeyKeyListerner
 		setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
 
+		
 		return super.onKeyUp(keyCode, event);
 	}
 
@@ -1669,8 +1678,21 @@ public class LIMEService extends InputMethodService implements
 		} else if (mEnglishOnly && isWordSeparator(primaryCode)) {
             handleSeparator(primaryCode); 
             
-		} else 
+		} else {
+
 			handleCharacter(primaryCode, keyCodes);
+			
+			// Art 11, 9, 26 Check if need to auto commit composing
+			if(auto_commit > 0){
+				if(mComposing != null && mComposing.length() == auto_commit  && 
+						keyboard_xml != null && keyboard_xml.indexOf("phone") != -1){
+					InputConnection ic = getCurrentInputConnection();
+					commitTyped(ic);
+					ic.commitText("", 0);
+					clearComposing();
+				}
+			}
+		}
 	}
 
 	private void handleSeparator(int primaryCode) {
@@ -3160,6 +3182,13 @@ public class LIMEService extends InputMethodService implements
 		super.updateInputViewShown();
 		if(!mInputView.isShown() && !isPhysicalKeyPressed)
 			hideCandidateView();
+	}
+	
+	/*
+	 *Art '11,9, 26 auto commit composing
+	 */
+	public void autoCommit(){
+		
 	}
 
 

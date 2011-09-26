@@ -521,4 +521,25 @@
 	</string-array>
 	<string name="auto_chinese_symbol">Auto fetching Chinese Symbols</string>
     <string name="auto_chinese_symbol_summary">Fetch Chinese Symbols when no suggestions present</string>
+
+    <!-- Input auto commit  -->
+    <string name="auto_commit">Phone-KB Auto Commit Composing</string>
+    <string name="auto_commit_summary">Auto commit text when composing length meet the setting</string>
+	<string-array name="auto_commit_labels">
+		<item>None</item>
+		<item>2</item>
+		<item>3</item>
+		<item>4</item>
+		<item>5</item>
+		<item>6</item>
+	</string-array>
+	<string-array name="auto_commit_values">
+		<item>0</item>
+		<item>2</item>
+		<item>3</item>
+		<item>4</item>
+		<item>5</item>
+		<item>6</item>
+	</string-array>
+
 </resources>

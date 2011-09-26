@@ -91,6 +91,16 @@
                 android:summary="@string/auto_chinese_symbol_summary"
             	android:defaultValue="true" 
                 />
+           
+    <ListPreference
+    			android:key="auto_commit"
+    			android:title="@string/auto_commit" 
+    			android:entries="@array/auto_commit_labels" 
+    			android:entryValues="@array/auto_commit_values" 
+    			android:dialogTitle="@string/auto_commit_summary" 
+    			android:defaultValue="0"/>       
+                
+	
     <ListPreference
     			android:key="selkey_option"
     			android:title="@string/selkey_option_list" 
