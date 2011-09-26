@@ -1683,7 +1683,7 @@ public class LIMEService extends InputMethodService implements
 			handleCharacter(primaryCode, keyCodes);
 			
 			// Art 11, 9, 26 Check if need to auto commit composing
-			if(auto_commit > 0){
+			if(auto_commit > 0 && onIM){
 				if(mComposing != null && mComposing.length() == auto_commit  && 
 						keyboard_xml != null && keyboard_xml.indexOf("phone") != -1){
 					InputConnection ic = getCurrentInputConnection();
@@ -1809,7 +1809,9 @@ public class LIMEService extends InputMethodService implements
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-
+		
+		// Update keyboard xml information
+		keyboard_xml = mKeyboardSwitcher.getImKeyboard(keyboardSelection);
 	}
 
 	private void buildActiveKeyboardList() {
@@ -1970,6 +1972,10 @@ public class LIMEService extends InputMethodService implements
 			mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
 			mKeyboardSwitcher.setImList(SearchSrv.getImList());
 			//mKeyboardSwitcher.clearKeyboards();
+			
+			// Update keyboard xml information
+			keyboard_xml = mKeyboardSwitcher.getImKeyboard(keyboardSelection);
+			
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
@@ -2422,6 +2428,8 @@ public class LIMEService extends InputMethodService implements
 		mHasShift = false;
 		updateShiftKeyState(getCurrentInputEditorInfo());
 
+		// Update keyboard xml information
+		keyboard_xml = mKeyboardSwitcher.getImKeyboard(keyboardSelection);
 	}
 
 	private void switchSymKeyboard() {
@@ -2429,6 +2437,8 @@ public class LIMEService extends InputMethodService implements
 
 		mKeyboardSwitcher.toggleSymbols();
 
+		// Update keyboard xml information
+		keyboard_xml = mKeyboardSwitcher.getImKeyboard(keyboardSelection);
 	}
 /*
 	private void switchChiEngNoToast() {
