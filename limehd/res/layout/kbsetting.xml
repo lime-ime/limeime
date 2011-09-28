@@ -80,16 +80,14 @@
 			<!-- Setup Keyboard -->
 			<LinearLayout android:id="@+id/LinearLayout05"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:paddingBottom="20px" android:paddingTop="20px">
-				<TextView android:id="@+id/TextView01"
-					android:layout_width="wrap_content" android:layout_height="wrap_content"
-					android:text="@string/l3_im_setting_select_keyboard" android:paddingRight="10px"></TextView>
+				android:paddingBottom="20px" android:paddingTop="20px" android:orientation="horizontal">
+				<TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="@string/l3_im_setting_select_keyboard" android:paddingRight="10px" android:id="@+id/txtKeyboardInfo"></TextView>
 			</LinearLayout>
 			<LinearLayout android:id="@+id/LinearLayout06"
 				android:layout_width="wrap_content" android:layout_height="wrap_content">
-				<TextView android:id="@+id/TextView01"
-					android:layout_width="wrap_content" android:layout_height="wrap_content"
-					android:text="@string/l3_im_setting_keyboard" android:paddingRight="10px"></TextView>
+				<TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="@string/l3_im_setting_keyboard" android:paddingRight="10px" android:id="@+id/txtSelectKeyboard"></TextView>
 				<TextView android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:id="@+id/labKeyboard"></TextView>
 			</LinearLayout>

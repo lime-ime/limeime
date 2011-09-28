@@ -43,6 +43,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.SystemClock;
 import android.util.Log;
@@ -365,6 +366,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}
 			try{
+				db.execSQL("alter table wb add 'basescore' type integer");
 				db.execSQL("alter table array add 'basescore' type integer");
 				db.execSQL("alter table array10 add 'basescore' type integer");
 				db.execSQL("alter table cj add 'basescore' type integer");
@@ -431,6 +433,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}
 			try{
+				db.execSQL("alter table wb add 'basescore' type integer");
 				db.execSQL("alter table array add 'basescore' type integer");
 				db.execSQL("alter table array10 add 'basescore' type integer");
 				db.execSQL("alter table cj add 'basescore' type integer");
@@ -1536,6 +1539,9 @@ public class LimeDB extends SQLiteOpenHelper {
 						cursor.close();
 					}
 					
+				}catch(SQLiteException e){
+					e.printStackTrace();
+					forceUpgrade();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -2601,7 +2607,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					}else if( table.equals("array10")){					
 						kobj = getKeyboardObj("phonenum");
 					}else if( table.equals("wb")){					
-						kobj = getKeyboardObj("cj");
+						kobj = getKeyboardObj("wb");
 					}else if( kobj == null){					
 						kobj = getKeyboardObj("lime");
 					}
@@ -3007,7 +3013,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					}else if( table.equals("array10")){					
 						kobj = getKeyboardObj("phonenum");
 					}else if( table.equals("wb")){					
-						kobj = getKeyboardObj("cj");
+						kobj = getKeyboardObj("wb");
 					}else if( kobj == null){					
 						kobj = getKeyboardObj("lime");
 					}
@@ -3344,35 +3350,52 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(keyboard == null || keyboard.equals(""))
 			return null;
 		KeyboardObj kobj=null;
-		try {
-			SQLiteDatabase db = this.getSqliteDb(true);
-			Cursor cursor = db.query("keyboard", null, FIELD_CODE +" = '"+keyboard+"'", null, null, null, null, null);
-			if (cursor.moveToFirst()) {
-				kobj = new KeyboardObj();
-				kobj.setCode(cursor.getString(cursor.getColumnIndex("code")));
-				kobj.setName(cursor.getString(cursor.getColumnIndex("name")));
-				kobj.setDescription(cursor.getString(cursor.getColumnIndex("desc")));
-				kobj.setType(cursor.getString(cursor.getColumnIndex("type")));
-				kobj.setImage(cursor.getString(cursor.getColumnIndex("image")));
-				kobj.setImkb(cursor.getString(cursor.getColumnIndex("imkb")));
-				kobj.setImshiftkb(cursor.getString(cursor.getColumnIndex("imshiftkb")));
-				kobj.setEngkb(cursor.getString(cursor.getColumnIndex("engkb")));
-				kobj.setEngshiftkb(cursor.getString(cursor.getColumnIndex("engshiftkb")));
-				kobj.setSymbolkb(cursor.getString(cursor.getColumnIndex("symbolkb")));
-				kobj.setSymbolshiftkb(cursor.getString(cursor.getColumnIndex("symbolshiftkb")));
-				kobj.setDefaultkb(cursor.getString(cursor.getColumnIndex("defaultkb")));
-				kobj.setDefaultshiftkb(cursor.getString(cursor.getColumnIndex("defaultshiftkb")));
-				kobj.setExtendedkb(cursor.getString(cursor.getColumnIndex("extendedkb")));
-				kobj.setExtendedshiftkb(cursor.getString(cursor.getColumnIndex("extendedshiftkb")));
+		
+		if(!keyboard.equals("wb")){
+			try {
+				SQLiteDatabase db = this.getSqliteDb(true);
+				Cursor cursor = db.query("keyboard", null, FIELD_CODE +" = '"+keyboard+"'", null, null, null, null, null);
+				if (cursor.moveToFirst()) {
+					kobj = new KeyboardObj();
+					kobj.setCode(cursor.getString(cursor.getColumnIndex("code")));
+					kobj.setName(cursor.getString(cursor.getColumnIndex("name")));
+					kobj.setDescription(cursor.getString(cursor.getColumnIndex("desc")));
+					kobj.setType(cursor.getString(cursor.getColumnIndex("type")));
+					kobj.setImage(cursor.getString(cursor.getColumnIndex("image")));
+					kobj.setImkb(cursor.getString(cursor.getColumnIndex("imkb")));
+					kobj.setImshiftkb(cursor.getString(cursor.getColumnIndex("imshiftkb")));
+					kobj.setEngkb(cursor.getString(cursor.getColumnIndex("engkb")));
+					kobj.setEngshiftkb(cursor.getString(cursor.getColumnIndex("engshiftkb")));
+					kobj.setSymbolkb(cursor.getString(cursor.getColumnIndex("symbolkb")));
+					kobj.setSymbolshiftkb(cursor.getString(cursor.getColumnIndex("symbolshiftkb")));
+					kobj.setDefaultkb(cursor.getString(cursor.getColumnIndex("defaultkb")));
+					kobj.setDefaultshiftkb(cursor.getString(cursor.getColumnIndex("defaultshiftkb")));
+					kobj.setExtendedkb(cursor.getString(cursor.getColumnIndex("extendedkb")));
+					kobj.setExtendedshiftkb(cursor.getString(cursor.getColumnIndex("extendedshiftkb")));
+				}
+				if (cursor != null) {
+					cursor.deactivate();
+					cursor.close();
+				}
+				db.close();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-			if (cursor != null) {
-				cursor.deactivate();
-				cursor.close();
-			}
-			db.close();
-		} catch (Exception e) {
-			e.printStackTrace();
+		}else{
+			kobj = new KeyboardObj();
+			kobj.setCode("wb");
+			kobj.setName("筆順五碼");
+			kobj.setDescription("筆順五碼輸入法鍵盤");
+			kobj.setType("phone");
+			kobj.setImage("wb_keyboard_preview");
+			kobj.setImkb("lime_wb");
+			kobj.setImshiftkb("lime_wb");
+			kobj.setEngkb("lime");
+			kobj.setEngshiftkb("lime_shift");
+			kobj.setSymbolkb("symbols");
+			kobj.setSymbolshiftkb("symbols_shift");
 		}
+		
 		return kobj;
 	}
 	

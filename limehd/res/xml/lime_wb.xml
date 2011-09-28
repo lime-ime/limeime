@@ -21,64 +21,33 @@
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 -->
+
 <Keyboard xmlns:limehd="http://schemas.android.com/apk/res/net.toload.main.hd"
     limehd:keyWidth="10%p"
     limehd:horizontalGap="0px"
     limehd:verticalGap="0px"
-    limehd:keyHeight="@dimen/key_height"
+    limehd:keyHeight="@dimen/wb_key_height"
     >
 
-      <Row>
-        <Key limehd:codes="113" limehd:keyLabel="q\n手" limehd:keyEdgeFlags="left"/>
-        <Key limehd:codes="119" limehd:keyLabel="w\n田"/>
-        <Key limehd:codes="101" limehd:keyLabel="e\n水"/>
-        <Key limehd:codes="114" limehd:keyLabel="r\n口"/>
-        <Key limehd:codes="116" limehd:keyLabel="t\n廿"/>
-        <Key limehd:codes="121" limehd:keyLabel="y\n卜"/>
-        <Key limehd:codes="117" limehd:keyLabel="u\n山"/>
-        <Key limehd:codes="105" limehd:keyLabel="i\n戈"/>
-        <Key limehd:codes="111" limehd:keyLabel="o\n口"/>
-        <Key limehd:codes="112" limehd:keyLabel="p\n心" limehd:keyEdgeFlags="right"/>
-    </Row>
-    
-     <Row>
-        <Key limehd:codes="97" limehd:keyLabel="a\n日" limehd:horizontalGap="5%p" limehd:keyEdgeFlags="left"/>
-        <Key limehd:codes="115" limehd:keyLabel="s\n尸"/>
-        <Key limehd:codes="100" limehd:keyLabel="d\n木"/>
-        <Key limehd:codes="102" limehd:keyLabel="f\n火"/>
-        <Key limehd:codes="103" limehd:keyLabel="g\n土"/>
-        <Key limehd:codes="104" limehd:keyLabel="h\n竹"/>
-        <Key limehd:codes="106" limehd:keyLabel="j\n十"/>
-        <Key limehd:codes="107" limehd:keyLabel="k\n大"/>
-        <Key limehd:codes="108" limehd:keyLabel="l\n中" limehd:keyEdgeFlags="right"/>
+    <Row>
+        <Key limehd:codes="110" limehd:keyLabel="N\n乛" limehd:keyWidth="25%p" limehd:horizontalGap="12.5%p" limehd:keyEdgeFlags="left"/>
+        <Key limehd:codes="109" limehd:keyLabel="M\n一" limehd:keyWidth="25%p" />
+        <Key limehd:codes="44" limehd:keyLabel="&gt;\n丿" limehd:keyWidth="25%p" limehd:keyEdgeFlags="right"/>
     </Row>
     
     <Row>
-        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift" limehd:iconPreview="@drawable/sym_keyboard_feedback_shift" limehd:isModifier="true" 
-                limehd:keyWidth="15%p" limehd:isSticky="true" limehd:keyEdgeFlags="left"/>
-        <Key limehd:codes="122" limehd:keyLabel="z\n重" />
-        <Key limehd:codes="120" limehd:keyLabel="x\n難"/>
-        <Key limehd:codes="99" limehd:keyLabel="c\n金"/>
-        <Key limehd:codes="118" limehd:keyLabel="v\n女"/>
-        <Key limehd:codes="98" limehd:keyLabel="b\n月"/>
-        <Key limehd:codes="110" limehd:keyLabel="n\n弓"/>
-        <Key limehd:codes="109" limehd:keyLabel="m\n一"/>
+        <Key limehd:codes="-2"  limehd:keyLabel="@string/label_symbol_key" limehd:keyWidth="25%p" limehd:isModifier="true"  limehd:keyEdgeFlags="left"/> 
+        <Key limehd:codes="46" limehd:keyLabel="&lt;\n丶" limehd:keyWidth="25%p"/> 
+        <Key limehd:codes="47" limehd:keyLabel="\?\n丨" limehd:keyWidth="25%p"/>
         <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true" 
-                limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"
+                limehd:keyWidth="25%p" limehd:keyEdgeFlags="right"
                 limehd:isRepeatable="true"/>
     </Row>
-
+    
     <Row limehd:rowEdgeFlags="bottom">
-        <Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true" limehd:keyWidth="15%p" limehd:keyEdgeFlags="left"/>                
-        <Key limehd:codes="-9" limehd:keyIcon="@drawable/sw" limehd:isModifier="true" limehd:keyWidth="15%p" limehd:iconPreview="@drawable/sw_l"/>
-        <Key limehd:codes="44" limehd:keyLabel="," limehd:keyWidth="10%p"/>
-        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"  limehd:keyWidth="25%p" limehd:isRepeatable="true"/>
-        <Key limehd:codes="46" 
-        		limehd:keyLabel="."
-				 limehd:popupKeyboard="@xml/popup_c_punctuation"   
-        		limehd:keyWidth="10%p"/>
-        <Key limehd:codes="-2" limehd:keyLabel="123" limehd:isModifier="true" />
-        <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true" limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"/>
+        <Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true" limehd:keyWidth="25%p" limehd:keyEdgeFlags="left"/>                
+        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"  limehd:keyWidth="50%p" limehd:isRepeatable="true"/>
+        <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true" limehd:keyWidth="25%p" limehd:keyEdgeFlags="right"/>
     </Row>
     
 </Keyboard>

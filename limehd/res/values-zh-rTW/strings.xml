@@ -86,7 +86,7 @@
     <string name="array10_reverse_lookup_list">行列10字根反查</string>
     <string name="cj5_reverse_lookup_list">倉頡五字根反查</string>
     <string name="ecj_reverse_lookup_list">速成字根反查</string>
-    <string name="wb_reverse_lookup_list">五筆字根反查</string>
+    <string name="wb_reverse_lookup_list">筆順五碼字根反查</string>
     
     <string name="han_convert_option_list">中文簡/繁體字碼轉換</string>
     <string name="selkey_option_list">選字鍵選項</string>
@@ -228,7 +228,7 @@
 		<item>輕鬆</item>
 		<item>行列</item>
 		<item>行列10</item>
-		<!-- <item>五筆</item> -->
+		<item>筆順五碼</item>
 	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
@@ -242,7 +242,7 @@
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
-		<!-- <item>wb</item> -->
+		<item>wb</item>
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
@@ -256,7 +256,7 @@
 		<item>輕鬆輸入法</item>
 		<item>行列輸入法</item>
 		<item>行列10輸入法</item>
-		<!-- <item>五筆輸入法</item> -->
+		<item>筆順五碼輸入法</item>
 	</string-array>
 	<!-- Keyboard short name List -->
     <string-array name="keyboardShortname">
@@ -270,7 +270,7 @@
 		<item>輕鬆</item>
 		<item>行列</item>
 		<item>行列10</item>
-		<!-- <item>五筆</item> -->
+		<item>筆順五碼</item>
 	</string-array>
 	<string-array name="keyboard_defaultstate">
 		<item>true</item>
@@ -283,7 +283,7 @@
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
-		<!-- <item>true</item> -->
+		<item>true</item>
 	</string-array>
     <string-array name="keyboard_codes">
 		<item>custom</item>
@@ -296,7 +296,7 @@
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
-		<!-- <item>wb</item> -->
+		<item>wb</item>
 	</string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
@@ -309,7 +309,7 @@
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
-		<!-- <item>wb</item> -->
+		<item>wb</item>
 		<item>related</item>
 		<item>dictionary</item>
 	</string-array>
@@ -335,7 +335,7 @@
 		<item>輕鬆</item>
 		<item>行列</item>
 		<item>行列10</item>
-		<!-- <item>五筆</item> -->
+		<item>筆順五碼</item>
 		<item>預載關聯字</item>
 		<item>英文字典</item>
 	</string-array>
@@ -367,7 +367,7 @@
     <string name="l3_manage_eazy">輕鬆</string>
     <string name="l3_manage_array">行列</string>
     <string name="l3_manage_array10">行列10</string>
-    <string name="l3_manage_wb">五筆</string>
+    <string name="l3_manage_wb">筆順五碼</string>
     
     <string name="l3_tab_preference">喜好設定</string>
     
@@ -450,9 +450,9 @@
     <string name="l3_im_download_from_ez_start">開始下載輕鬆字根</string>
     <string name="l3_im_download_from_ez_install">開始安裝輕鬆字根</string>
     
-    <string name="l3_im_download_from_wb">下載並安裝五筆字根</string>
-    <string name="l3_im_download_from_wb_start">開始下載五筆字根</string>
-    <string name="l3_im_download_from_wb_install">開始安裝五筆字根</string>
+    <string name="l3_im_download_from_wb">下載並安裝筆順五碼字根\n香港長者資訊天地提供\nhttp://sf.net/projects/stroke5input</string>
+    <string name="l3_im_download_from_wb_start">開始下載筆順五碼字根</string>
+    <string name="l3_im_download_from_wb_install">開始安裝筆順五碼字根</string>
     
     <string name="l3_im_database_error">資料庫操作錯誤，請稍待一會重新操作。</string>
     
