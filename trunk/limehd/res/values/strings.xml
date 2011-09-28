@@ -86,7 +86,7 @@
     <string name="array10_reverse_lookup_list">R-Lookup in Array10</string>
     <string name="cj5_reverse_lookup_list">R-Lookup in ChangJei5</string>
     <string name="ecj_reverse_lookup_list">R-Lookup in EazyChangJei</string>
-    <string name="wb_reverse_lookup_list">R-Lookup in Wubi</string>
+    <string name="wb_reverse_lookup_list">R-Lookup in Stroke5</string>
     
     <string name="han_convert_option_list">Chinese Characters Conversion</string>
     <string name="selkey_option_list">Candidate bar options</string>
@@ -250,7 +250,7 @@
 		<item>Eazy</item>
 		<item>Array</item>
 		<item>Array10</item>
-		<!-- <item>Wubi</item> -->
+		<item>Stroke5</item>
 	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
@@ -264,7 +264,7 @@
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
-		<!-- <item>wubi</item> -->
+		<item>Stroke5</item>
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
@@ -278,7 +278,7 @@
 		<item>Eazy</item>
 		<item>Array</item>
 		<item>Array10</item>
-		<!-- <item>Wubi</item> -->
+		<item>Stroke5</item>
 	</string-array>
 	<!-- Keyboard short name List -->
     <string-array name="keyboardShortname">
@@ -292,7 +292,7 @@
 		<item>EZ</item>
 		<item>Array</item>
 		<item>Array10</item>
-		<!-- <item>Wubi</item> -->
+		<item>Stroke5</item>
 	</string-array>
 	<string-array name="keyboard_defaultstate">
 		<item>true</item>
@@ -304,7 +304,7 @@
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
-		<!-- <item>true</item> -->
+		<item>true</item>
 		<item>true</item>
 	</string-array>
     <string-array name="keyboard_codes">
@@ -318,7 +318,7 @@
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
-		<!-- <item>wb</item> -->
+		<item>wb</item>
 	</string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
@@ -331,7 +331,7 @@
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
-		<!-- <item>wb</item> -->
+		<item>wb</item>
 		<item>related</item>
 		<item>dictionary</item>
 	</string-array>
@@ -358,7 +358,7 @@
 		<item>Eazy</item>
 		<item>Array</item>
 		<item>Array10</item>
-		<!-- <item>Wubi</item> -->
+		<item>Stroke5</item>
 		<item>Preload related words</item>
 		<item>Dictionary for English keyboard</item>
 	</string-array>
@@ -390,7 +390,7 @@
     <string name="l3_manage_eazy">Eazy</string>
     <string name="l3_manage_array">Array</string>
     <string name="l3_manage_array10">Array10</string>
-    <string name="l3_manage_wb">Wubi</string>
+    <string name="l3_manage_wb">Stroke5</string>
     
     <string name="l3_tab_preference">Preference</string>
 	
@@ -472,9 +472,9 @@
     <string name="l3_im_download_from_ez_start">Downloading Eazy table</string>
     <string name="l3_im_download_from_ez_install">Importing Eazy table</string>
     
-    <string name="l3_im_download_from_wb">Download/Import Wubi table</string>
-    <string name="l3_im_download_from_wb_start">Downloading Wubi table</string>
-    <string name="l3_im_download_from_wb_install">Importing Wubi table</string>
+    <string name="l3_im_download_from_wb">Download/Import Stroke5 table\nHong Kong Seniors IT Advocates\nhttp://sf.net/projects/stroke5input</string>
+    <string name="l3_im_download_from_wb_start">Downloading Stroke5 table</string>
+    <string name="l3_im_download_from_wb_install">Importing Stroke5 table</string>
     
     <string name="l3_im_database_error">Database operation failed, please try again later.</string>
     

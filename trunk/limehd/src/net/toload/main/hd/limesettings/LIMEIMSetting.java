@@ -139,7 +139,7 @@ public class LIMEIMSetting extends Activity {
 				}
 			});
 	
-			/*btnSetupWb.setOnClickListener(new OnClickListener() {
+			btnSetupWb.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					Intent intent = new Intent();
 					intent.setClass(v.getContext(), LIMEMappingSetting.class);
@@ -148,8 +148,7 @@ public class LIMEIMSetting extends Activity {
 					   intent.putExtras(bundle);
 					startActivity(intent);
 				}
-			});*/
-			
+			});
 	
 	
 			btnSetupDayi.setOnClickListener(new OnClickListener() {
@@ -255,7 +254,7 @@ public class LIMEIMSetting extends Activity {
 			btnSetupEz.setEnabled(false);
 			btnSetupArray.setEnabled(false);
 			btnSetupArray10.setEnabled(false);
-			/*btnSetupWb.setEnabled(false);*/
+			btnSetupWb.setEnabled(false);
 		}else{
 			btnSetupCustom.setEnabled(true);
 			btnSetupPhonetic.setEnabled(true);
@@ -267,7 +266,7 @@ public class LIMEIMSetting extends Activity {
 			btnSetupEz.setEnabled(true);	
 			btnSetupArray.setEnabled(true);
 			btnSetupArray10.setEnabled(true);
-			/*btnSetupWb.setEnabled(true);*/
+			btnSetupWb.setEnabled(true);
 		}
 		
 	}

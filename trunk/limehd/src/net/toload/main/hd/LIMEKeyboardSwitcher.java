@@ -278,15 +278,34 @@ public class LIMEKeyboardSwitcher {
     	if(mode!=0) mMode = mode;
     	
     	String imcode = "";
-    	if(imHm != null) imcode = imHm.get(code); 
-    	
-    	if(imcode == null || imcode.equals("") || imcode.equals("custom")){
-    		imcode = "lime";
+    	if(!code.equals("wb")){
+        	if(imHm != null) imcode = imHm.get(code); 
+    	}else{
+    		imcode = code;
     	}
-    	
+
     	KeyboardObj kobj=null;
     	
-    	if(kbHm!=null) kobj=kbHm.get(imcode);
+    	if(imcode == null || imcode.equals("")|| imcode.equals("custom")){
+    		imcode = "lime";
+        	if(kbHm!=null) kobj=kbHm.get(imcode);
+    	}else if(imcode.equals("wb")){
+    		// Art 28/Sep/2011 Force WB to use it special design keyboard layout
+    		kobj = new KeyboardObj();
+			kobj.setCode("wb");
+			kobj.setName("µ§¶¶¤­½X");
+			kobj.setDescription("µ§¶¶¤­½X¿é¤JªkÁä½L");
+			kobj.setType("phone");
+			kobj.setImage("wb_keyboard_preview");
+			kobj.setImkb("lime_wb");
+			kobj.setImshiftkb("lime_wb");
+			kobj.setEngkb("lime");
+			kobj.setEngshiftkb("lime_shift");
+			kobj.setSymbolkb("symbols");
+			kobj.setSymbolshiftkb("symbols_shift");
+		}else{
+        	if(kbHm!=null) kobj=kbHm.get(imcode);
+		}
     	
     	KeyboardId kid = null;
     	

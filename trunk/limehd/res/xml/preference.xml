@@ -37,7 +37,7 @@
 				android:title="@string/keyboard_list"
 				android:entries="@array/keyboard"
 				android:entryValues="@array/keyboard_defaultstate"
-				android:defaultValue="0;1;2;3;4;5;6;7;8;9;10"
+				android:defaultValue="0;1;2;3;4;5;6;7;8;9;10;11"
 				android:dialogTitle="@string/keyboard_list" />
 		<CheckBoxPreference
                 android:key="default_in_english"

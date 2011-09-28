@@ -1,6 +1,7 @@
-#Fri Aug 12 22:57:59 CST 2011
+#Wed Sep 28 23:54:57 CST 2011
 eclipse.preferences.version=1
 encoding//src/net/toload/main/hd/ChineseSymbol.java=UTF-8
 encoding//src/net/toload/main/hd/SearchService.java=UTF-8
 encoding//src/net/toload/main/hd/global/ChineseSymbol.java=UTF-8
 encoding//src/net/toload/main/hd/limedb/LimeDB.java=UTF-8
+encoding//src/net/toload/main/hd/limesettings/LIMEMappingSetting.java=UTF-8
