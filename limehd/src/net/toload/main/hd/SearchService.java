@@ -255,6 +255,8 @@ public class SearchService extends Service {
 						try{
 							cacheTemp = db.getMapping(code, !isPhysicalKeyboardPressed, getAllRecords);
 							cache.put(cacheKey, cacheTemp);
+						}catch(NullPointerException ne){
+							db.forceUpgrade();
 						}catch(Exception e){
 							e.printStackTrace();
 						}

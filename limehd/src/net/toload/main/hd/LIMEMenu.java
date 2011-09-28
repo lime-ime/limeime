@@ -87,8 +87,9 @@ public class LIMEMenu extends TabActivity {
         try {
 			PackageInfo pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
 			if(mLIMEPref.getParameterString("version_code").equals("") ||
-					!mLIMEPref.getParameterString("version_code").equals(pinfo.versionCode)){
+					!mLIMEPref.getParameterString("version_code").equals(String.valueOf(pinfo.versionCode))){
 
+    				mLIMEPref.setParameter("version_code", String.valueOf(pinfo.versionCode));
 	    			new AlertDialog.Builder(this)
 			    	.setTitle("LIME v" + pinfo.versionName + " - " + pinfo.versionCode)
 			    	.setMessage(R.string.release_note)
@@ -97,7 +98,6 @@ public class LIMEMenu extends TabActivity {
 			    	}
 			    	}).show();
 	    			 
-	    			mLIMEPref.setParameter("version_code", String.valueOf(pinfo.versionCode));
 			}
 		} catch (Exception e) {
 			mLIMEPref.setParameter("version_code", "0");

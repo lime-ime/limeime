@@ -64,7 +64,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static int DUALCODE_NO_CHECK_LIMIT = 5;
 	private final static int DUALCODE_ITERATION_LIMIT = 512;
 
-	private final static int DATABASE_VERSION = 68; 
+	private final static int DATABASE_VERSION = 69; 
 	//private final static int DATABASE_RELATED_SIZE = 50;
 
 	public final static String FIELD_ID = "_id";
@@ -393,6 +393,68 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		db.setVersion(newVersion);
 		
+	}
+	
+	/*
+	 * Art, 28/Sep/2011
+	 * this method force upgrade database when encounter error
+	 */
+	public void forceUpgrade() {
+		
+		SQLiteDatabase db = getSqliteDb(false);
+		
+		checkCode3RIndexAndRecsordsInPhonetic(db);
+		
+			
+			int count = db.query("keyboard", null, FIELD_CODE +" = 'phoneticet41'", null, null, null, null, null).getCount();
+
+			if(count == 0){
+				try{
+				
+					ContentValues 	cv = new ContentValues();
+					cv.put("code", "phoneticet41");
+					cv.put("name", "注音倚天");
+					cv.put("desc", "注音倚天41鍵");
+					cv.put("type", "phone");
+					cv.put("image", "lime_et_41_keyboard_priview");
+					cv.put("imkb", "lime_et_41");
+					cv.put("imshiftkb", "lime_et_41_shift");
+					cv.put("engkb", "lime_english_number");
+					cv.put("engshiftkb", "lime_english_shift");
+					cv.put("symbolkb", "symbols");
+					cv.put("symbolshiftkb", "symbols_shift");
+					cv.put("disable", "false");
+					db.insert("keyboard" ,null , cv);
+				} catch (Exception e) {
+					//e.printStackTrace();
+					Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
+				}
+			}
+			try{
+				db.execSQL("alter table array add 'basescore' type integer");
+				db.execSQL("alter table array10 add 'basescore' type integer");
+				db.execSQL("alter table cj add 'basescore' type integer");
+				db.execSQL("alter table custom add 'basescore' type integer");
+				db.execSQL("alter table dayi add 'basescore' type integer");
+				db.execSQL("alter table ez add 'basescore' type integer");
+				db.execSQL("alter table phonetic add 'basescore' type integer");
+				db.execSQL("alter table scj add 'basescore' type integer");
+				db.execSQL("alter table cj5 add 'basescore' type integer");
+				db.execSQL("alter table imtable1 add 'basescore' type integer");
+				db.execSQL("alter table imtable2 add 'basescore' type integer");
+				db.execSQL("alter table imtable3 add 'basescore' type integer");
+				db.execSQL("alter table imtable4 add 'basescore' type integer");
+				db.execSQL("alter table imtable5 add 'basescore' type integer");
+				db.execSQL("alter table imtable6 add 'basescore' type integer");
+				db.execSQL("alter table imtable7 add 'basescore' type integer");
+				db.execSQL("alter table imtable8 add 'basescore' type integer");
+				db.execSQL("alter table imtable9 add 'basescore' type integer");
+				db.execSQL("alter table imtable10 add 'basescore' type integer");
+		} catch (Exception e) {
+				//e.printStackTrace();
+			Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
+		}
+
 	}
 	
 	private void checkCode3RIndexAndRecsordsInPhonetic(SQLiteDatabase db){
