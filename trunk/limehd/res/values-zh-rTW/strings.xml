@@ -84,7 +84,7 @@
     <string name="ez_reverse_lookup_list">輕鬆字根反查</string>
     <string name="array_reverse_lookup_list">行列字根反查</string>
     <string name="array10_reverse_lookup_list">行列10字根反查</string>
-    <string name="cj5_reverse_lookup_list">倉頡五字根反查</string>
+    <string name="cj5_reverse_lookup_list">倉頡五代字根反查</string>
     <string name="ecj_reverse_lookup_list">速成字根反查</string>
     <string name="wb_reverse_lookup_list">筆順五碼字根反查</string>
     
@@ -221,7 +221,7 @@
 		<item>自建</item>
 		<item>倉頡</item>
 		<item>快倉</item>
-		<item>倉頡五</item>
+		<item>倉頡五代</item>
 		<item>速成</item>
 		<item>大易</item>
 		<item>注音</item>
@@ -249,7 +249,7 @@
 		<item>LIME輸入法</item>
 		<item>倉頡輸入法</item>
 		<item>快倉輸入法</item>
-		<item>倉頡五輸入法</item>
+		<item>倉頡五代輸入法</item>
 		<item>速成輸入法</item>
 		<item>大易輸入法</item>
 		<item>注音輸入法</item>
@@ -263,7 +263,7 @@
 		<item>LIME</item>
 		<item>倉頡</item>
 		<item>快倉</item>
-		<item>倉頡五</item>
+		<item>倉頡五代</item>
 		<item>速成</item>
 		<item>大易</item>
 		<item>注音</item>
@@ -328,7 +328,7 @@
 		<item>自建/電話</item>
 		<item>倉頡</item>
 		<item>快倉</item>
-		<item>倉頡五</item>
+		<item>倉頡五代</item>
 		<item>速成</item>
 		<item>大易</item>
 		<item>注音</item>
@@ -360,7 +360,7 @@
     <string name="l3_manage_phonetic">注音</string>
     <string name="l3_manage_phonetic_adv">注音連打</string>
     <string name="l3_manage_cj">倉頡</string>
-    <string name="l3_manage_cj5">倉頡五</string>
+    <string name="l3_manage_cj5">倉頡五代</string>
     <string name="l3_manage_ecj">速成</string>
     <string name="l3_manage_scj">快倉</string>
     <string name="l3_manage_dayi">大易</string>
@@ -426,9 +426,9 @@
     <string name="l3_im_download_from_cj_start">開始下載倉頡字根</string>
     <string name="l3_im_download_from_cj_install">開始安裝倉頡字根</string>
     
-    <string name="l3_im_download_from_cj5">下載並安裝倉頡五字根</string>
-    <string name="l3_im_download_from_cj5_start">開始下載倉頡五字根</string>
-    <string name="l3_im_download_from_cj5_install">開始安裝倉頡五字根</string>
+    <string name="l3_im_download_from_cj5">下載並安裝倉頡五代字根</string>
+    <string name="l3_im_download_from_cj5_start">開始下載倉頡五代字根</string>
+    <string name="l3_im_download_from_cj5_install">開始安裝倉頡五代字根</string>
     
     <string name="l3_im_download_from_ecj">下載並安裝速成字根</string>
     <string name="l3_im_download_from_ecj_start">開始下載速成字根</string>
@@ -489,7 +489,7 @@
     <string name="auto_chinese_symbol_summary">無候選字詞時顯示中文標點選項</string>
     
     <!-- 自動上屏設定 -->
-    <string name="auto_commit">電話鍵盤自動上屏</string>
+    <string name="auto_commit">電話/筆順五碼自動上屏</string>
     <string name="auto_commit_summary">當輸入字根符合設定數則自動送出組字</string>
 	<string-array name="auto_commit_labels">
 		<item>無</item>

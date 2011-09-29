@@ -31,4 +31,7 @@
     <dimen name="small_label_text_size">24dp</dimen>
     <dimen name="composing_text_size">14sp</dimen>
     <dimen name="key_preview_height">66dp</dimen>
+    
+    <!-- WB -->
+    <dimen name="wb_key_height">68dip</dimen>
    </resources>

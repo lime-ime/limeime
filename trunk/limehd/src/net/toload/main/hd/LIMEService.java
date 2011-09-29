@@ -1685,7 +1685,9 @@ public class LIMEService extends InputMethodService implements
 			// Art 11, 9, 26 Check if need to auto commit composing
 			if(auto_commit > 0 && onIM){
 				if(mComposing != null && mComposing.length() == auto_commit  && 
-						keyboard_xml != null && keyboard_xml.indexOf("phone") != -1){
+						keyboard_xml != null && 
+						( keyboard_xml.indexOf("phone") != -1 || keyboard_xml.indexOf("wb") != -1)
+					){
 					InputConnection ic = getCurrentInputConnection();
 					commitTyped(ic);
 					ic.commitText("", 0);

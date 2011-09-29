@@ -15,10 +15,10 @@
                 </TableRow>
                 <TableRow android:id="@+id/tableRow1" android:layout_height="wrap_content" android:layout_width="fill_parent">
 					<Button android:layout_height="wrap_content" android:id="@+id/btnSetupCJ" android:text="@string/l3_manage_cj" android:padding="5px" android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px"></Button>
-					<Button android:layout_height="wrap_content" android:id="@+id/btnSetupSCJ" android:text="@string/l3_manage_scj" android:padding="5px" android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px"></Button>
+					<Button android:padding="5px" android:layout_weight="1" android:layout_width="fill_parent" android:layout_margin="5px" android:id="@+id/btnSetupCJ5" android:layout_height="wrap_content" android:text="@string/l3_manage_cj5"></Button>
                 </TableRow>
                 <TableRow android:id="@+id/tableRow5" android:layout_height="wrap_content" android:layout_width="fill_parent">
-					<Button android:layout_height="wrap_content" android:id="@+id/btnSetupCJ5" android:text="@string/l3_manage_cj5" android:padding="5px" android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px"></Button>
+                    <Button android:padding="5px" android:layout_weight="1" android:layout_width="fill_parent" android:layout_margin="5px" android:id="@+id/btnSetupSCJ" android:layout_height="wrap_content" android:text="@string/l3_manage_scj"></Button>
 					<Button android:layout_height="wrap_content" android:id="@+id/btnSetupECJ" android:text="@string/l3_manage_ecj" android:padding="5px" android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px"></Button>
                 </TableRow>
                 <TableRow android:layout_height="fill_parent" android:id="@+id/tableRow2" android:layout_width="wrap_content">

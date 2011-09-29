@@ -26,4 +26,7 @@
     <dimen name="candidate_vertical_padding">8sp</dimen>
     <dimen name="key_text_size">38dip</dimen>
     <dimen name="label_text_size">32dip</dimen>
+    
+    <!-- WB -->
+    <dimen name="wb_key_height">92dip</dimen>
 </resources>

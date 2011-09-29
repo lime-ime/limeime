@@ -299,8 +299,8 @@ public class LIMEKeyboardSwitcher {
 			kobj.setImage("wb_keyboard_preview");
 			kobj.setImkb("lime_wb");
 			kobj.setImshiftkb("lime_wb");
-			kobj.setEngkb("lime");
-			kobj.setEngshiftkb("lime_shift");
+			kobj.setEngkb("lime_abc");
+			kobj.setEngshiftkb("lime_abc_shift");
 			kobj.setSymbolkb("symbols");
 			kobj.setSymbolshiftkb("symbols_shift");
 		}else{
@@ -328,30 +328,44 @@ public class LIMEKeyboardSwitcher {
 	                break;
 	            case MODE_URL:
 	            	//Log.i("ART","KBMODE ->: url");
-	            	if(mLIMEPref.getShowNumberRowInEnglish()){
-	            		if(isShift)
-	            			kid = new KeyboardId(getKeyboardXMLID("lime_english_number_shift"), KEYBOARDMODE_URL, true);
-	            		else
-	            			kid = new KeyboardId(getKeyboardXMLID("lime_english_number"), KEYBOARDMODE_URL, true);
+	            	if(!imcode.equals("wb")){
+		            	if(mLIMEPref.getShowNumberRowInEnglish()){
+		            		if(isShift)
+		            			kid = new KeyboardId(getKeyboardXMLID("lime_english_number_shift"), KEYBOARDMODE_URL, true);
+		            		else
+		            			kid = new KeyboardId(getKeyboardXMLID("lime_english_number"), KEYBOARDMODE_URL, true);
+		            	}else{
+		            		if(isShift)
+		            			kid = new KeyboardId(getKeyboardXMLID("lime_english_shift"), KEYBOARDMODE_URL, true);
+		            		else
+		            			kid = new KeyboardId(getKeyboardXMLID("lime_english"), KEYBOARDMODE_URL, true);
+		            	}	
 	            	}else{
 	            		if(isShift)
-	            			kid = new KeyboardId(getKeyboardXMLID("lime_english_shift"), KEYBOARDMODE_URL, true);
+	            			kid = new KeyboardId(getKeyboardXMLID("lime_abc_shift"), KEYBOARDMODE_URL, true);
 	            		else
-	            			kid = new KeyboardId(getKeyboardXMLID("lime_english"), KEYBOARDMODE_URL, true);
-	            	}	
+	            			kid = new KeyboardId(getKeyboardXMLID("lime_abc"), KEYBOARDMODE_URL, true);
+	            	}
 	                break;
 	            case MODE_EMAIL:
 	            	//Log.i("ART","KBMODE ->: email");
-	            	if(mLIMEPref.getShowNumberRowInEnglish()){
-	            		if(isShift)
-	            			kid = new KeyboardId(getKeyboardXMLID("lime_english_number_shift"), KEYBOARDMODE_EMAIL, true);
-	            		else
-	            			kid = new KeyboardId(getKeyboardXMLID("lime_english_number"), KEYBOARDMODE_EMAIL, true);
+	            	if(!imcode.equals("wb")){
+		            	if(mLIMEPref.getShowNumberRowInEnglish()){
+		            		if(isShift)
+		            			kid = new KeyboardId(getKeyboardXMLID("lime_english_number_shift"), KEYBOARDMODE_EMAIL, true);
+		            		else
+		            			kid = new KeyboardId(getKeyboardXMLID("lime_english_number"), KEYBOARDMODE_EMAIL, true);
+		            	}else{
+		            		if(isShift)
+		            			kid = new KeyboardId(getKeyboardXMLID("lime_english_shift"), KEYBOARDMODE_EMAIL, true);
+		            		else
+		            			kid = new KeyboardId(getKeyboardXMLID("lime_english"), KEYBOARDMODE_EMAIL, true); 
+		            	}
 	            	}else{
 	            		if(isShift)
-	            			kid = new KeyboardId(getKeyboardXMLID("lime_english_shift"), KEYBOARDMODE_EMAIL, true);
+	            			kid = new KeyboardId(getKeyboardXMLID("lime_abc_shift"), KEYBOARDMODE_URL, true);
 	            		else
-	            			kid = new KeyboardId(getKeyboardXMLID("lime_english"), KEYBOARDMODE_EMAIL, true); 
+	            			kid = new KeyboardId(getKeyboardXMLID("lime_abc"), KEYBOARDMODE_URL, true);
 	            	}
 	                break;
 	            default:
@@ -365,17 +379,32 @@ public class LIMEKeyboardSwitcher {
 	            		}
 		                mIsChinese = true;
 	            	}else {//if(!isIm){  //English normal keyboard
-	            		if(isShift){
-	    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngshiftkb());
-	                    	kid = new KeyboardId(
-	                    			getKeyboardXMLID(kobj.getEngshiftkb(mLIMEPref.getShowNumberRowInEnglish())), 
-	                    			KEYBOARDMODE_NORMAL, true );
-	            		}else{
-	    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngkb());
-	                    	kid = new KeyboardId(
-	                    			getKeyboardXMLID(kobj.getEngkb(mLIMEPref.getShowNumberRowInEnglish())), 
-	                    			KEYBOARDMODE_NORMAL, true );
-	            		}
+
+		            	if(!imcode.equals("wb")){
+		            		if(isShift){
+		    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngshiftkb());
+		                    	kid = new KeyboardId(
+		                    			getKeyboardXMLID(kobj.getEngshiftkb(mLIMEPref.getShowNumberRowInEnglish())), 
+		                    			KEYBOARDMODE_NORMAL, true );
+		            		}else{
+		    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngkb());
+		                    	kid = new KeyboardId(
+		                    			getKeyboardXMLID(kobj.getEngkb(mLIMEPref.getShowNumberRowInEnglish())), 
+		                    			KEYBOARDMODE_NORMAL, true );
+		            		}
+		            	}else{
+		            		if(isShift){
+		    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngshiftkb());
+		                    	kid = new KeyboardId(
+		                    			getKeyboardXMLID(kobj.getEngshiftkb()), 
+		                    			KEYBOARDMODE_NORMAL, true );
+		            		}else{
+		    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngkb());
+		                    	kid = new KeyboardId(
+		                    			getKeyboardXMLID(kobj.getEngkb()), 
+		                    			KEYBOARDMODE_NORMAL, true );
+		            		}
+		            	}
 	            	}
 	            	
             	}

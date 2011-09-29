@@ -46,7 +46,7 @@
     <dimen name="key_bottom_gap">0.035in</dimen>
     
     <!-- WB -->
-    <dimen name="wb_key_height">72dip</dimen>
+    <dimen name="wb_key_height">66dip</dimen>
     
     
 </resources>

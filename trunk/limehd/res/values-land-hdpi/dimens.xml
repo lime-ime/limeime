@@ -25,4 +25,8 @@
     <dimen name="candidate_number_font_size">16sp</dimen>
     <dimen name="candidate_vertical_padding">6sp</dimen>
     <dimen name="composing_text_size">14sp</dimen>
+    
+    <!-- WB -->
+    <dimen name="wb_key_height">52dip</dimen>
+    
 </resources>
