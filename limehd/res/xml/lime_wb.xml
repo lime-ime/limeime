@@ -30,15 +30,15 @@
     >
 
     <Row>
-        <Key limehd:codes="110" limehd:keyLabel="N\n乛" limehd:keyWidth="25%p" limehd:horizontalGap="12.5%p" limehd:keyEdgeFlags="left"/>
-        <Key limehd:codes="109" limehd:keyLabel="M\n一" limehd:keyWidth="25%p" />
-        <Key limehd:codes="44" limehd:keyLabel="&gt;\n丿" limehd:keyWidth="25%p" limehd:keyEdgeFlags="right"/>
+        <Key limehd:codes="109" limehd:keyLabel="一"  limehd:keyWidth="25%p" limehd:horizontalGap="12.5%p" limehd:keyEdgeFlags="left"/>
+        <Key limehd:codes="47" limehd:keyLabel="丨"  limehd:keyWidth="25%p" />
+        <Key limehd:codes="44" limehd:keyLabel="丿" limehd:keyWidth="25%p" limehd:keyEdgeFlags="right"/>
     </Row>
     
     <Row>
         <Key limehd:codes="-2"  limehd:keyLabel="@string/label_symbol_key" limehd:keyWidth="25%p" limehd:isModifier="true"  limehd:keyEdgeFlags="left"/> 
-        <Key limehd:codes="46" limehd:keyLabel="&lt;\n丶" limehd:keyWidth="25%p"/> 
-        <Key limehd:codes="47" limehd:keyLabel="\?\n丨" limehd:keyWidth="25%p"/>
+        <Key limehd:codes="46" limehd:keyLabel="丶" limehd:keyWidth="25%p"/> 
+        <Key limehd:codes="110" limehd:keyLabel="ㄣ" limehd:keyWidth="25%p"/>
         <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true" 
                 limehd:keyWidth="25%p" limehd:keyEdgeFlags="right"
                 limehd:isRepeatable="true"/>
@@ -46,7 +46,8 @@
     
     <Row limehd:rowEdgeFlags="bottom">
         <Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true" limehd:keyWidth="25%p" limehd:keyEdgeFlags="left"/>                
-        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"  limehd:keyWidth="50%p" limehd:isRepeatable="true"/>
+        <Key limehd:codes="-9" limehd:keyLabel="ABC" limehd:iconPreview="@drawable/sym_keyboard_feedback_space" limehd:isModifier="true"  limehd:keyWidth="25%p" limehd:isRepeatable="true"/>
+        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"  limehd:keyWidth="25%p" limehd:isRepeatable="true"/>
         <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true" limehd:keyWidth="25%p" limehd:keyEdgeFlags="right"/>
     </Row>
     

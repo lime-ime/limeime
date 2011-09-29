@@ -37,4 +37,8 @@
     <dimen name="keyboard_vertical_correction">-0.05in</dimen>
     <dimen name="spacebar_preview_text_size">35sp</dimen>
  	<dimen name="mini_keyboard_vertical_correction">-0.05in</dimen>
+ 	
+ 	
+    <!-- WB -->
+    <dimen name="wb_key_height">128dip</dimen>
 </resources>

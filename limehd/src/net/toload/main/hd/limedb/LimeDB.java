@@ -3390,8 +3390,8 @@ public class LimeDB extends SQLiteOpenHelper {
 			kobj.setImage("wb_keyboard_preview");
 			kobj.setImkb("lime_wb");
 			kobj.setImshiftkb("lime_wb");
-			kobj.setEngkb("lime");
-			kobj.setEngshiftkb("lime_shift");
+			kobj.setEngkb("lime_abc");
+			kobj.setEngshiftkb("lime_abc_shift");
 			kobj.setSymbolkb("symbols");
 			kobj.setSymbolshiftkb("symbols_shift");
 		}

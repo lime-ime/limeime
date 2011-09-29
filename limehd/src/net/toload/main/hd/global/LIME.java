@@ -31,7 +31,7 @@ public class LIME {
 	public static final String DATABASE_SOURCE_SCJ = "scj.lime";
 	public static final String DATABASE_SOURCE_ARRAY = "array.lime";
 	public static final String DATABASE_SOURCE_ARRAY10 = "array10.lime";
-	public static final String DATABASE_SOURCE_WB = "wb.cin";
+	public static final String DATABASE_SOURCE_WB = "stroke5.cin";
 	public static final String DATABASE_SOURCE_EZ = "ez.lime";
 	public static final String DATABASE_SOURCE_FILENAME = "lime.zip";
 	public static final String DATABASE_SOURCE_FILENAME_EMPTY = "empty.zip";

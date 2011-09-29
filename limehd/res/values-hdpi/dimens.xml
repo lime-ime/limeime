@@ -23,4 +23,7 @@
     <dimen name="candidate_font_size">30sp</dimen>
     <dimen name="candidate_number_font_size">15sp</dimen>
     <dimen name="composing_text_size">12sp</dimen>
+    
+    <!-- WB -->
+    <dimen name="wb_key_height">72dip</dimen>
 </resources>
