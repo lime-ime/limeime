@@ -383,6 +383,7 @@
     <string name="l3_message_table_download_confirm">您是否要下载字根档?</string>
     <string name="l3_message_table_abort_confirm">您是否要中断载入字根档?</string>
     <string name="l3_initial_download_database">下载数据库</string>
+    <string name="l3_initial_database_failed">操作失败! 请您稍后再试，请检查数据库是否载入完全!</string>
     <string name="l3_initial_download_failed">数据转换错误, 请重置数据库再重新下载!</string>
     <string name="l3_initial_download_write_sdcard_failed">请确定SDCARD已挂载, 重置数据库再重新下载!</string>
     <string name="l3_initial_backup_database">备份数据库</string>
@@ -489,7 +490,7 @@
     
     
     <!-- 自动上屏设定 -->
-    <string name="auto_commit">电话/笔顺五码自动上屏</string>
+    <string name="auto_commit">电话键盘自动上屏</string>
     <string name="auto_commit_summary">当输入字根符合设定数则自动送出组字</string>
 	<string-array name="auto_commit_labels">
 		<item>无</item>

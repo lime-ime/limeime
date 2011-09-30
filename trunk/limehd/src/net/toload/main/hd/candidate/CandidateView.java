@@ -76,7 +76,7 @@ public class CandidateView extends View implements View.OnClickListener
     protected Rect mBgPadding;
     protected Rect cursorRect=null; //Jeremy '11,7,25 for store current cursor rect
 
-    private static final int MAX_SUGGESTIONS = 200;
+    private static final int MAX_SUGGESTIONS = 500;
     private static final int SCROLL_PIXELS = 20;
     
     // Add by Jeremy '10, 3, 29.

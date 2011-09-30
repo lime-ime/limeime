@@ -1349,6 +1349,11 @@ public class LIMEService extends InputMethodService implements
 						// Add by Jeremy '10, 4,1 . Reverse Lookup
 						SearchSrv.rQuery(firstMatched.getWord());
 						
+						// Art '30,Sep,2011 when show related then clear composing
+						if(keyboard_xml.indexOf("wb") != -1){
+							clearComposing();
+						}
+						
 						// Jeremy '11,7,28 for continuous typing (LD) 
 						boolean composingNotFinish = false;
 						//String commitedCode = firstMatched.getCode();
@@ -1685,9 +1690,7 @@ public class LIMEService extends InputMethodService implements
 			// Art 11, 9, 26 Check if need to auto commit composing
 			if(auto_commit > 0 && onIM){
 				if(mComposing != null && mComposing.length() == auto_commit  && 
-						keyboard_xml != null && 
-						( keyboard_xml.indexOf("phone") != -1 || keyboard_xml.indexOf("wb") != -1)
-					){
+						keyboard_xml != null && keyboard_xml.indexOf("phone") != -1 ){
 					InputConnection ic = getCurrentInputConnection();
 					commitTyped(ic);
 					ic.commitText("", 0);
@@ -2047,6 +2050,18 @@ public class LIMEService extends InputMethodService implements
 
 			try {
 				String keyString = mComposing.toString(), keynameString = "";
+				
+				//Art '30,Sep,2011 restrict the length of composing text for Stroke5
+				if(keyboard_xml.indexOf("wb") != -1){
+					if(keyString.length() > 5){
+						keyString = keyString.substring(0,5);
+						mComposing = new StringBuilder();
+						mComposing.append(keyString);
+						InputConnection ic = getCurrentInputConnection();
+										ic.setComposingText(keyString, 1);
+					}
+				}
+				
 				list.addAll(SearchSrv.query(keyString, !isPhysicalKeyPressed, getAllRecords));				
 				//Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
 				if (list.size() > 0) {
@@ -2971,6 +2986,10 @@ public class LIMEService extends InputMethodService implements
 				//Jermy '11,8,14
 				clearSuggestions();
 			
+		}
+		
+		if(keyboard_xml.indexOf("wb") != -1){
+			ic.setComposingText("", 0);
 		}
 
 	}
