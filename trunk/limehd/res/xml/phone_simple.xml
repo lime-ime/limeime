@@ -30,7 +30,7 @@
     >
 
     <Row>
-        <Key limehd:codes="-2" limehd:keyLabel="[123]" limehd:keyEdgeFlags="left"/>
+        <Key limehd:codes="-2" limehd:isModifier="true" limehd:keyLabel="[123]" limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="49" limehd:keyLabel="1"/>
         <Key limehd:codes="50" limehd:keyLabel="2"/>
         <Key limehd:codes="51" limehd:keyLabel="3"/>
@@ -38,7 +38,7 @@
     </Row>
     
     <Row>
-        <Key limehd:codes="-9" limehd:keyIcon="@drawable/sw" limehd:isModifier="true" limehd:iconPreview="@drawable/sw_l" limehd:keyEdgeFlags="left"/>
+        <Key limehd:codes="-9" limehd:keyLabel="ABC" limehd:isModifier="true" limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="52" limehd:keyLabel="4"/>
         <Key limehd:codes="53" limehd:keyLabel="5"/>
         <Key limehd:codes="54" limehd:keyLabel="6"/>
