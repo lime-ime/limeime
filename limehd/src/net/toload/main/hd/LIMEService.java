@@ -2089,6 +2089,8 @@ public class LIMEService extends InputMethodService implements
 							}
 					}
 				}
+			} catch (NullPointerException e) {
+				e.printStackTrace();
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}

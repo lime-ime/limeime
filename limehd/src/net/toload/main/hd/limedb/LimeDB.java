@@ -48,6 +48,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.Pair;
+import android.widget.Toast;
 
 /**
  * @author Art Hung
@@ -689,7 +690,11 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}*/
 			
-		}catch(Exception e){e.printStackTrace();}
+		}catch(Exception e){
+			e.printStackTrace();
+			Toast.makeText(ctx, ctx.getText(R.string.l3_initial_download_failed), Toast.LENGTH_SHORT).show();
+			return null;
+		}
 		
 		//Jeremy '11,9, 8 starting from 3.6 using db.getVersion and onUpgrade() again.
 		if(DEBUG) Log.i(TAG, "databaseversion= " +
@@ -3570,5 +3575,6 @@ public class LimeDB extends SQLiteOpenHelper {
 			hanConverter = new LimeHanConverter(ctx);
 		}
 	}
+	
 
 }

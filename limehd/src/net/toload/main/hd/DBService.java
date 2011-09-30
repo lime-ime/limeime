@@ -189,17 +189,19 @@ public class DBService extends Service {
 						}else{
 							folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
 						}
-						if(decompressFile(downloadedFile, folder, LIME.DATABASE_NAME)){
-							Thread threadTask = new Thread() {
-								public void run() {
-									downloadedFile.delete();
-									mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
-								}
-							};
-							threadTask.start();
+						if(downloadedFile.exists()){
+							if(decompressFile(downloadedFile, folder, LIME.DATABASE_NAME)){
+								Thread threadTask = new Thread() {
+									public void run() {
+										downloadedFile.delete();
+										mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
+									}
+								};
+								threadTask.start();
+							}
+							getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
+							showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 						}
-						getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
-						showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 					}
 				}
 
@@ -227,17 +229,20 @@ public class DBService extends Service {
 						}else{
 							folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
 						}
-						if(decompressFile(downloadedFile, folder, LIME.DATABASE_NAME)){
-							Thread threadTask = new Thread() {
-								public void run() {
-									downloadedFile.delete();
-									mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
-								}
-							};
-							threadTask.start();
+
+						if(downloadedFile.exists()){
+							if(decompressFile(downloadedFile, folder, LIME.DATABASE_NAME)){
+								Thread threadTask = new Thread() {
+									public void run() {
+										downloadedFile.delete();
+										mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
+									}
+								};
+								threadTask.start();
+							}
+							getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
+							showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 						}
-						getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
-						showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 					}
 				}
 
@@ -264,17 +269,19 @@ public class DBService extends Service {
 						}else{
 							folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
 						}
-						if(decompressFile(downloadedFile, folder, LIME.DATABASE_NAME)){
-							Thread threadTask = new Thread() {
-								public void run() {
-									downloadedFile.delete();
-									mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
-								}
-							};
-							threadTask.start();
+						if(downloadedFile.exists()){
+							if(decompressFile(downloadedFile, folder, LIME.DATABASE_NAME)){
+								Thread threadTask = new Thread() {
+									public void run() {
+										downloadedFile.delete();
+										mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
+									}
+								};
+								threadTask.start();
+							}
+							getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
+							showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 						}
-						getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
-						showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 					}
 				}
 
