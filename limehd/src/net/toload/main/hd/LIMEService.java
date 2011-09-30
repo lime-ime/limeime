@@ -643,7 +643,7 @@ public class LIMEService extends InputMethodService implements
 				//isModePassword = true;
 				mEnglishOnly = true;
 				onIM = false;
-				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,
+				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_EMAIL,
 									mImeOptions, false, false, false);
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS) {
 				mEnglishOnly = true;
