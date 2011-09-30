@@ -86,6 +86,7 @@ public class LIMEService extends InputMethodService implements
 	static final String PREF = "LIMEXY";
 
 	static final int KEYBOARD_SWITCH_CODE = -9;
+	static final int KEYBOARD_SWITCH_IM_CODE = -10;
 
 	private LIMEKeyboardView mInputView = null;
 	private CandidateViewContainer mCandidateViewContainer;
@@ -1664,6 +1665,8 @@ public class LIMEService extends InputMethodService implements
 		} else if (primaryCode == KEYBOARD_SWITCH_CODE && mInputView != null) {
 			switchKeyboard(primaryCode);
 			// Jeremy '11,5,31 Rewrite softkeybaord enter/space and english sepeartor processing.
+		} else if (primaryCode == KEYBOARD_SWITCH_IM_CODE && mInputView != null) {
+			switchKeyboardIM(primaryCode);
 		} else if (onIM &&  
 				((primaryCode== MY_KEYCODE_SPACE && !keyboardSelection.equals("phonetic"))
 				||(primaryCode== MY_KEYCODE_SPACE && 
@@ -2430,7 +2433,27 @@ public class LIMEService extends InputMethodService implements
 			}
 		}
 	}
+	
+	/*
+	 * Art 30,Sep,2011 This method force to switch keyboard back to IM mode
+	 */
+	private void switchKeyboardIM(int primaryCode) {
+		
+		clearComposing();
+		
+		mHasShift = false;
+		onIM = true;
+		Toast.makeText(this, R.string.typing_mode_mixed,
+				Toast.LENGTH_SHORT / 2).show();
 
+		updateShiftKeyState(getCurrentInputEditorInfo());
+		mLIMEPref.setKeyboardSelection(keyboardSelection);
+
+		initialKeyboard();
+		// Update keyboard xml information
+		keyboard_xml = mKeyboardSwitcher.getImKeyboard(keyboardSelection);
+	}
+	
 	private void switchKeyboard(int primaryCode) {
 		if(DEBUG) Log.i(TAG,"switchKeyboard()");
 		if (mCapsLock)

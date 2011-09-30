@@ -173,17 +173,17 @@
 
     <Row limehd:keyboardMode="@+id/mode_im" limehd:rowEdgeFlags="bottom">
     	<Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true" limehd:keyWidth="15%p" limehd:keyEdgeFlags="left"/>                
-        <Key limehd:codes="-9" limehd:keyIcon="@drawable/sw" limehd:isModifier="true" limehd:keyWidth="10%p" limehd:iconPreview="@drawable/sw_l"/>
-        <Key limehd:codes="-2"  limehd:keyLabel="@string/label_symbol_key" limehd:isModifier="true"
-                 limehd:popupKeyboard="@xml/popup_template"
-                limehd:popupCharacters="_"
-                limehd:keyWidth="15%p"/>
+        <Key limehd:codes="-9" limehd:keyLabel="IM" limehd:isModifier="true" limehd:keyWidth="10%p" limehd:iconPreview="@drawable/sw_l"/>
         <Key limehd:codes="60" limehd:keyLabel="&lt;" limehd:keyWidth="10%p" />
         <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space"
                 limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
                 limehd:keyWidth="25%p" limehd:isRepeatable="true"/>
         <Key limehd:codes="62" limehd:keyLabel="&gt;"  limehd:popupKeyboard="@xml/popup_punctuation" 
                 limehd:keyWidth="10%p"/>
+        <Key limehd:codes="-2"  limehd:keyLabel="@string/label_symbol_key" limehd:isModifier="true"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="_"
+                limehd:keyWidth="15%p"/>
         <Key limehd:keyLabel=":-)" limehd:keyOutputText=":-) "
                  limehd:popupKeyboard="@xml/popup_smileys"
                 limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"/>
