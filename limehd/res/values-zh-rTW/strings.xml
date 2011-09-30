@@ -383,6 +383,7 @@
     <string name="l3_message_table_download_confirm">您是否要下載字根檔?</string>
     <string name="l3_message_table_abort_confirm">您是否要中斷載入字根檔?</string>
     <string name="l3_initial_download_database">下載資料庫</string>
+    <string name="l3_initial_database_failed">操作失敗! 請您稍後再試，請檢查資料庫是否載入完全!</string>
     <string name="l3_initial_download_failed">資料轉換錯誤, 請重置資料庫再重新下載!</string>
     <string name="l3_initial_download_write_sdcard_failed">請確定SDCARD已掛載, 重置資料庫再重新下載!</string>
     <string name="l3_initial_backup_database">備份資料庫</string>
@@ -489,7 +490,7 @@
     <string name="auto_chinese_symbol_summary">無候選字詞時顯示中文標點選項</string>
     
     <!-- 自動上屏設定 -->
-    <string name="auto_commit">電話/筆順五碼自動上屏</string>
+    <string name="auto_commit">電話鍵盤自動上屏</string>
     <string name="auto_commit_summary">當輸入字根符合設定數則自動送出組字</string>
 	<string-array name="auto_commit_labels">
 		<item>無</item>

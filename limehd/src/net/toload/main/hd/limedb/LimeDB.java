@@ -692,7 +692,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			
 		}catch(Exception e){
 			e.printStackTrace();
-			Toast.makeText(ctx, ctx.getText(R.string.l3_initial_download_failed), Toast.LENGTH_SHORT).show();
+			Toast.makeText(ctx, ctx.getText(R.string.l3_initial_database_failed), Toast.LENGTH_SHORT).show();
 			return null;
 		}
 		

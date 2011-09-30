@@ -406,6 +406,7 @@
     <string name="l3_message_table_download_confirm">Are you sure you want to donload the IM-table file loading?</string>
     <string name="l3_message_table_abort_confirm">Are you sure you want to abort the IM-table file loading?</string>
     <string name="l3_initial_download_database">Downloading the preloaded database...</string>
+    <string name="l3_initial_database_failed">Action failed! please waiting and check the integrity of database!</string>
     <string name="l3_initial_download_failed">Database conversion failed! Please reset database and try again!</string>
     <string name="l3_initial_download_write_sdcard_failed">Please make sure SDCard is mounted, and then reset database and try again!</string>
     <string name="l3_initial_backup_database">Backup DB</string>
@@ -523,7 +524,7 @@
     <string name="auto_chinese_symbol_summary">Fetch Chinese Symbols when no suggestions present</string>
 
     <!-- Input auto commit  -->
-    <string name="auto_commit">Phone-KB and Stroke5 Auto Commit Composing</string>
+    <string name="auto_commit">Phone-KB Commit Composing</string>
     <string name="auto_commit_summary">Auto commit text when composing length meet the setting</string>
 	<string-array name="auto_commit_labels">
 		<item>None</item>
