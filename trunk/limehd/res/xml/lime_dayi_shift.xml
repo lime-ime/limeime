@@ -84,9 +84,9 @@
 		<Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true"
 			limehd:keyWidth="15%p" limehd:keyEdgeFlags="left" />
 		<Key limehd:codes="-9" 
-				limehd:keyLabel="ABC"  limehd:isModifier="true" 
+				limehd:keyLabel="EN"  limehd:isModifier="true" 
 				limehd:keyWidth="10%p" 
-				limehd:iconPreview="@drawable/sw_l"/>
+				/>
 		<Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
 			limehd:keyWidth="30%p" limehd:isRepeatable="true" />
 		<Key limehd:codes="60" limehd:keyLabel="&lt;" limehd:keyWidth="10%p" />
