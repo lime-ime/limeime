@@ -543,6 +543,8 @@
 		<item>6</item>
 	</string-array>
 	
+	<string name="disable_physical_selkey_option">Disable candidate words selection on physical keyboard</string>
+	
 <string name="release_note">
 		更新說明\n
 		http://facebook.com/limeime\n\n

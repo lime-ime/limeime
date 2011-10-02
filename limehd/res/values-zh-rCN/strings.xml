@@ -509,6 +509,8 @@
 		<item>6</item>
 	</string-array>
 	
+	<string name="disable_physical_selkey_option">关闭实体键盘选字键</string>
+	
 	<string name="release_note">
 		更新说明\n
 		http://facebook.com/limeime\n\n

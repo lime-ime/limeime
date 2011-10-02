@@ -264,6 +264,12 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("auto_complete", true);
 	}
 	
+	public boolean getDisablePhysicalSelkey(){
+		
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("disable_physical_selkey", false);
+	}
+	
 	
 	public Integer getHanCovertOption(){
 		
@@ -304,7 +310,7 @@ public class LIMEPreferenceManager {
 	public boolean getAutoChineseSymbol(){
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean("auto_chinese_symbol", true);
+		return sp.getBoolean("auto_chinese_symbol", false);
 	}
 	
 	
