@@ -89,9 +89,15 @@
                 android:key="auto_chinese_symbol"
                 android:title="@string/auto_chinese_symbol" 
                 android:summary="@string/auto_chinese_symbol_summary"
-            	android:defaultValue="true" 
+            	android:defaultValue="false" 
                 />
-           
+	
+	<CheckBoxPreference
+                android:key="disable_physical_selkey"
+                android:title="@string/disable_physical_selkey_option" 
+            	android:defaultValue="false" 
+                />
+                
     <ListPreference
     			android:key="auto_commit"
     			android:title="@string/auto_commit" 
@@ -100,7 +106,6 @@
     			android:dialogTitle="@string/auto_commit_summary" 
     			android:defaultValue="0"/>       
                 
-	
     <ListPreference
     			android:key="selkey_option"
     			android:title="@string/selkey_option_list" 

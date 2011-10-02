@@ -227,6 +227,9 @@ public class LIMEService extends InputMethodService implements
 	private int auto_commit = 0;
 	private String keyboard_xml = "";
 	
+	// Disable physical keyboard candidate words selection
+	private boolean disable_physical_selection = false;
+	
 	// Replace Keycode.KEYCODE_CTRL_LEFT/RIGHT, ESC on android 3.x
 	// for backward compatibility of 2.x
 	static final int MY_KEYCODE_ESC = 111;
@@ -717,6 +720,8 @@ public class LIMEService extends InputMethodService implements
 		keyboardSelection = mLIMEPref.getKeyboardSelection();//sp.getString("keyboard_list", "custom");
 		hasQuickSwitch = mLIMEPref.getSwitchEnglishModeHotKey();//sp.getBoolean("switch_english_mode", false);
 		mAutoCap = true; // sp.getBoolean(PREF_AUTO_CAP, true);
+		
+		disable_physical_selection = mLIMEPref.getDisablePhysicalSelkey();
 		
 		auto_commit = mLIMEPref.getAutoCommitValue();
 		keyboard_xml = mKeyboardSwitcher.getImKeyboard(keyboardSelection);
@@ -2022,8 +2027,15 @@ public class LIMEService extends InputMethodService implements
 		isChineseSymbolSuggestionsShowing =true;
 		List<Mapping> list = ChineseSymbol.getChineseSymoblList();
 		if (list.size() > 0) {
+
+			// Setup sel key display if 
+			String selkey = "1234567890";
+			if(disable_physical_selection && isPhysicalKeyPressed){
+				selkey = "";
+			}
+			
 			setSuggestions(list, isPhysicalKeyPressed && 
-					mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard"), true, "1234567890");
+					mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard"), true, selkey);
 			
 			if(DEBUG) Log.i(TAG, "updateChineseSymbol():"
 									+ "list.size:"+list.size());
@@ -2081,7 +2093,10 @@ public class LIMEService extends InputMethodService implements
 					if(selkeyOption ==1) 	selkey = mixedModeSelkey +selkey;
 					else if (selkeyOption ==2) 	selkey = mixedModeSelkey + " " +selkey;
 					
-					
+					// Setup sel key display if 
+					if(disable_physical_selection && isPhysicalKeyPressed){
+						selkey = "";
+					}
 					
 					setSuggestions(list, isPhysicalKeyPressed && 
 							mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard"), true, selkey);
@@ -2182,9 +2197,16 @@ public class LIMEService extends InputMethodService implements
 						if (templist.size() > 0) {
 							list.add(temp);
 							list.addAll(templist);
+							
+							// Setup sel key display if 
+							String selkey = "1234567890";
+							if(disable_physical_selection && isPhysicalKeyPressed){
+								selkey = "";
+							}
+							
 							setSuggestions(list, isPhysicalKeyPressed 
 									&& mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
-									, true, "1234567890");
+									, true, selkey);
 							tempEnglishList.addAll(list);
 						} else {
 							//Jermy '11,8,14
@@ -2230,9 +2252,17 @@ public class LIMEService extends InputMethodService implements
 				}
 				// -----------------------------------------------------------
 				if (list.size() > 0) {
+					
+
+					// Setup sel key display if 
+					String selkey = "1234567890";
+					if(disable_physical_selection && isPhysicalKeyPressed){
+						selkey = "";
+					}
+					
 					setSuggestions(list, isPhysicalKeyPressed  && !isFullscreenMode()
 							&& mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")
-							, true, "1234567890");
+							, true, selkey);
 				} else {
 					tempMatched = null;
 					//Jermy '11,8,14
@@ -2676,6 +2706,12 @@ public class LIMEService extends InputMethodService implements
 	
 
 	private boolean handleSelkey(int primaryCode, int[] keyCodes){
+		
+		// Check if disable physical key option is open
+		if(disable_physical_selection && isPhysicalKeyPressed){
+			return false;
+		}
+		
 		if(DEBUG) Log.i(TAG, "handleSelkey():primarycode:"+primaryCode);
 		int i = -1;
 		if (mComposing.length() > 0 && onIM) {
