@@ -73,8 +73,8 @@
         <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift" limehd:iconPreview="@drawable/sym_keyboard_feedback_shift" limehd:isModifier="true" 
                 limehd:keyWidth="15%p" 
                 limehd:isSticky="true"/>             
-        <Key limehd:codes="-9" limehd:keyLabel="ABC"  limehd:isModifier="true" limehd:keyWidth="15%p" limehd:iconPreview="@drawable/sw_l"/>
-        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"  limehd:keyWidth="25%p" limehd:isRepeatable="true"/>
+        <Key limehd:codes="-9" limehd:keyLabel="EN"  limehd:isModifier="true" limehd:keyWidth="10%p" />
+        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"  limehd:keyWidth="30%p" limehd:isRepeatable="true"/>
         <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true" 
                 limehd:keyWidth="15%p" limehd:isRepeatable="true"/>
         <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true" limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"/>

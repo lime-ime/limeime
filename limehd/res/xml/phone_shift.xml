@@ -30,7 +30,7 @@
     >
 
     <Row>
-        <Key limehd:codes="-2" limehd:keyLabel="[123]" limehd:keyEdgeFlags="left"/>
+        <Key limehd:codes="-2" limehd:keyLabel="123" limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="49" limehd:iconPreview="@drawable/phone_1_l" limehd:keyIcon="@drawable/phone_1"/>
         <Key limehd:codes="50,65,66,67" limehd:iconPreview="@drawable/phone_2_l" limehd:keyIcon="@drawable/phone_2"/>
         <Key limehd:codes="51,68,69,70" limehd:iconPreview="@drawable/phone_3_l" limehd:keyIcon="@drawable/phone_3"/>
@@ -38,7 +38,7 @@
     </Row>
     
     <Row>
-        <Key limehd:codes="-9" limehd:keyIcon="@drawable/sw" limehd:isModifier="true" limehd:iconPreview="@drawable/sw_l" limehd:keyEdgeFlags="left"/>
+        <Key limehd:codes="-9" limehd:keyLabel="中" limehd:isModifier="true"  limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="52,71,72,73" limehd:iconPreview="@drawable/phone_4_l" limehd:keyIcon="@drawable/phone_4"/>
         <Key limehd:codes="53,74,75,76" limehd:iconPreview="@drawable/phone_5_l" limehd:keyIcon="@drawable/phone_5"/>
         <Key limehd:codes="54,77,78,79" limehd:iconPreview="@drawable/phone_6_l" limehd:keyIcon="@drawable/phone_6"/>
