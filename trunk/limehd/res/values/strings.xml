@@ -371,7 +371,7 @@
     <string name="l3_tab_initial_message">Please initialized lime database using by downloading preloaded or blank lime database or restore from last backup.</string>
     <string name="l3_initial_btn_load_empty_db">Download empty db</string>
     <string name="l3_initial_btn_load_phonetic_only_db">Download phonetic only preloaded db</string>
-    <string name="l3_initial_btn_load_preload_db">Download full preloaded db</string>
+    <string name="l3_initial_btn_load_preload_db">Download full preloaded db \n(注音, 倉頡, 倉頡五, 快倉, 大易, 輕鬆, 行列, 行列10)</string>
     <string name="l3_initial_btn_reset_db">Reset DB</string>
     <string name="l3_initial_btn_store_to_sdcard">Are you sure you want to store database on sdcard? this might result in performance issue for some devices.</string>
     <string name="l3_initial_btn_store_to_device">Are you sure you want to store database on device?</string>
