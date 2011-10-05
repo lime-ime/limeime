@@ -1668,6 +1668,8 @@ public class LIMEService extends InputMethodService implements
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_PREV_IM){
 			nextActiveKeyboard(false);
 		} else if (primaryCode == KEYBOARD_SWITCH_CODE && mInputView != null) {
+			mEnglishOnly = true;
+			onIM = false;
 			switchKeyboard(primaryCode);
 			// Jeremy '11,5,31 Rewrite softkeybaord enter/space and english sepeartor processing.
 		} else if (primaryCode == KEYBOARD_SWITCH_IM_CODE && mInputView != null) {
@@ -2494,6 +2496,8 @@ public class LIMEService extends InputMethodService implements
 		if (primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE) {
 			switchSymKeyboard();
 		} else if (primaryCode == KEYBOARD_SWITCH_CODE) {
+			mEnglishOnly = true;
+			onIM = false;
 			switchChiEng();
 		}
 

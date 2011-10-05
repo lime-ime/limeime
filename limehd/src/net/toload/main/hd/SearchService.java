@@ -41,6 +41,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteException;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
@@ -255,8 +256,12 @@ public class SearchService extends Service {
 						try{
 							cacheTemp = db.getMapping(code, !isPhysicalKeyboardPressed, getAllRecords);
 							cache.put(cacheKey, cacheTemp);
+						}catch(SQLiteException ne){
+							db.forceUpgrade();
+							ne.printStackTrace();
 						}catch(NullPointerException ne){
 							db.forceUpgrade();
+							ne.printStackTrace();
 						}catch(Exception e){
 							e.printStackTrace();
 						}
