@@ -367,11 +367,12 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}
 			try{
+				db.execSQL("alter table ecj add 'basescore' type integer");
+				db.execSQL("alter table custom add 'basescore' type integer");
 				db.execSQL("alter table wb add 'basescore' type integer");
 				db.execSQL("alter table array add 'basescore' type integer");
 				db.execSQL("alter table array10 add 'basescore' type integer");
 				db.execSQL("alter table cj add 'basescore' type integer");
-				db.execSQL("alter table custom add 'basescore' type integer");
 				db.execSQL("alter table dayi add 'basescore' type integer");
 				db.execSQL("alter table ez add 'basescore' type integer");
 				db.execSQL("alter table phonetic add 'basescore' type integer");
@@ -434,11 +435,12 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}
 			try{
+				db.execSQL("alter table ecj add 'basescore' type integer");
+				db.execSQL("alter table custom add 'basescore' type integer");
 				db.execSQL("alter table wb add 'basescore' type integer");
 				db.execSQL("alter table array add 'basescore' type integer");
 				db.execSQL("alter table array10 add 'basescore' type integer");
 				db.execSQL("alter table cj add 'basescore' type integer");
-				db.execSQL("alter table custom add 'basescore' type integer");
 				db.execSQL("alter table dayi add 'basescore' type integer");
 				db.execSQL("alter table ez add 'basescore' type integer");
 				db.execSQL("alter table phonetic add 'basescore' type integer");
