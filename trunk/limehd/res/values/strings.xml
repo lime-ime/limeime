@@ -544,8 +544,10 @@
 	</string-array>
 	
 	<string name="disable_physical_selkey_option">Disable candidate words selection on physical keyboard</string>
+	<string name="reset_db_note">If text cannot be import please reset and download new database from the server.</string>
 	
 <string name="release_note">
+	    \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案.\n\n
 		更新說明\n
 		http://facebook.com/limeime\n\n
 	

@@ -511,7 +511,9 @@
 	
 	<string name="disable_physical_selkey_option">关闭实体键盘选字键</string>
 	
+	<string name="reset_db_note">若文字无法正确输入，建议您重置资料库并重新下载或汇入字根档案.</string>
 	<string name="release_note">
+	    \n** 若文字无法正确输入，建议您重置资料库并重新下载或汇入字根档案.\n\n
 		更新说明\n
 		http://facebook.com/limeime\n\n
 	
