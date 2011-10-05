@@ -511,7 +511,11 @@
 	
 	<string name="disable_physical_selkey_option">關閉實體鍵盤選字鍵</string>
 	
+	<string name="reset_db_note">若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案.</string>
+	
 	<string name="release_note">
+	    \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案.\n\n
+	
 		更新說明\n
 		http://facebook.com/limeime\n\n
 	
