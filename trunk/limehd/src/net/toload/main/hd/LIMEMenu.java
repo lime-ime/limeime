@@ -25,6 +25,7 @@ import java.io.File;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.limesettings.LIMEIMSetting;
 import net.toload.main.hd.limesettings.LIMEInitial;
 import net.toload.main.hd.limesettings.LIMEPreference;
@@ -89,6 +90,14 @@ public class LIMEMenu extends TabActivity {
 			if(mLIMEPref.getParameterString("version_code").equals("") ||
 					!mLIMEPref.getParameterString("version_code").equals(String.valueOf(pinfo.versionCode))){
 
+					/*
+					 * Force to upgrade the database and ignore all posssible errors
+					 */
+					try{
+						LimeDB db = new LimeDB(this);
+							   db.forceUpgrade();
+					}catch(Exception e){}
+					
     				mLIMEPref.setParameter("version_code", String.valueOf(pinfo.versionCode));
 	    			new AlertDialog.Builder(this)
 			    	.setTitle("LIME v" + pinfo.versionName + " - " + pinfo.versionCode)
