@@ -1068,31 +1068,31 @@ public class LimeDB extends SQLiteOpenHelper {
 				SQLiteDatabase db = this.getSqliteDb(true);
 				cursor = db.query(table, null, FIELD_WORD + " = '" + keyword +"'", null, null,
 						null, null, null);
-				if (DEBUG) {
+				if (DEBUG) 
 					Log.i(TAG,"getRmapping():tablename:" + table + "  keyworad:"
 							+ keyword + "  cursor.getCount:"
 							+ cursor.getCount());
-				}
+
 
 				if (cursor.moveToFirst()) {
 					int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 					int wordColumn = cursor.getColumnIndex(FIELD_WORD);
 					result = cursor.getString(wordColumn) + "="
 							+ keyToKeyname(cursor.getString(codeColumn), table, false);
-					if (DEBUG) {
+					if (DEBUG) 
 						Log.i(TAG, "getRmapping():Code:"
 								+ cursor.getString(codeColumn));
-					}
+					
 
 					while (cursor.moveToNext()) {
 						result = result
 								+ "; "
 								+ keyToKeyname(cursor.getString(codeColumn),
 										table, false);
-						if (DEBUG) {
+						if (DEBUG) 
 							Log.i(TAG,"getRmapping():Code:"
 									+ cursor.getString(codeColumn));
-						}
+						
 					}
 				}
 
@@ -1105,9 +1105,9 @@ public class LimeDB extends SQLiteOpenHelper {
 		} catch (Exception e) {
 		}
 
-		if (DEBUG) {
+		if (DEBUG) 
 			Log.i("getRmapping", "Result:" + result);
-		}
+
 
 		return result;
 	}
@@ -1230,7 +1230,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				" table:"+table + " tablename:" + tablename +
 				" isPhysicalKeybaordPressed:" + isPhysicalKeyboardPressed +
 				" keyboardtype: " + keyboardtype +
-				" composingText:" + composingText		);
+				" composingText:" + composingText);
 		
 		
 		
@@ -1360,7 +1360,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}
 			if(DEBUG) 
-			Log.i("limedb:keyToKeyname()", "keyboardtype:" +keyboardtype + " phonetickeyboardtype:" + phonetickeyboardtype + 
+			Log.i(TAG, "keyToKeyname():keyboardtype:" +keyboardtype + " phonetickeyboardtype:" + phonetickeyboardtype + 
 					" composing?:" + composingText +
 					" keyString:"+keyString + " keynameString:" +keynameString + " finalkeynameString:" + finalKeynameString);
 			if(keyString!=null && keyString.length()>0){
@@ -1397,14 +1397,15 @@ public class LimeDB extends SQLiteOpenHelper {
 		// Starting doing key to keyname conversion ------------------------------------
 		if(keysDefMap.get(keytable)==null 
 				|| keysDefMap.get(keytable).size()==0){
-			if(DEBUG) Log.i("limedb:keyToKeyname()","nokeysDefMap found!!");
+			if(DEBUG) 
+				Log.i(TAG, "keyToKeyname():nokeysDefMap found!!");
 			return code;
 		
 		}else{
-			if(lastValidDualCodeList !=null )
+			if(composingText && (lastValidDualCodeList !=null )) //Jeremy '11,10,6 bug fixed on rmapping returning orignal code.
 				code = lastValidDualCodeList;
 			if(DEBUG) 
-				Log.i("limedb:keyToKeyname()","lastValidDualCodeList=" + lastValidDualCodeList);
+				Log.i(TAG, "keyToKeyname():lastValidDualCodeList=" + lastValidDualCodeList);
 			
 			String result = "";
 			HashMap <String,String> keyMap = keysDefMap.get(keytable);
@@ -1451,7 +1452,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				}
 			}
 			if(DEBUG) 
-				Log.i("limedb:keyToKeyname()","returning:" + result);
+				Log.i(TAG, "keyToKeyname():returning:" + result);
 			
 			if(result.equals("")){
 				return code;
