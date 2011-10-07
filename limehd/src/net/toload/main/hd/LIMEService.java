@@ -1303,8 +1303,9 @@ public class LIMEService extends InputMethodService implements
 				if (onIM) {
 					if (firstMatched != null && firstMatched.getWord() != null
 							&& !firstMatched.getWord().equals("")) {
-						int firstMatchedLength = firstMatched.getWord()
-								.length();
+						/*int firstMatchedLength = firstMatched.getWord()
+								.length();*/
+						int firstMatchedLength = 1;
 
 						if (firstMatched.getCode() == null
 								|| firstMatched.getCode().equals("")) {
