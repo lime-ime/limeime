@@ -528,19 +528,23 @@
     <string name="auto_commit_summary">Auto commit text when composing length meet the setting</string>
 	<string-array name="auto_commit_labels">
 		<item>None</item>
-		<item>2</item>
-		<item>3</item>
 		<item>4</item>
 		<item>5</item>
 		<item>6</item>
+		<item>7</item>
+		<item>8</item>
+		<item>9</item>
+		<item>10</item>
 	</string-array>
 	<string-array name="auto_commit_values">
 		<item>0</item>
-		<item>2</item>
-		<item>3</item>
 		<item>4</item>
 		<item>5</item>
 		<item>6</item>
+		<item>7</item>
+		<item>8</item>
+		<item>9</item>
+		<item>10</item>
 	</string-array>
 	
 	<string name="disable_physical_selkey_option">Disable candidate words selection on physical keyboard</string>
