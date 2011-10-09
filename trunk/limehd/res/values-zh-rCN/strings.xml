@@ -9,7 +9,7 @@
     <string name="input_method">系统输入法切换</string>
     <string name="experienced_device">开发测试装置</string>
     <string name="license">版权声明</string>
-	<string name="license_detail">LIME-HD 是一个输入法框架程式，旨在提供 Android 装置中文输入法程式。\n组织或个人由网路自行下载之输入法字根及字典文档若有版权上的争议，请自行向原作者取得授权，本程式不负担其所产生的任何法律及版权上的责任。\n完整资讯请参考 LIME Project 网站上的版权说明  http://code.google.com/p/limeime/。</string>
+	<string name="license_detail">LIME-HD 是一个输入法框架程式，旨在提供 Android 装置中文输入法程式。\n组织或个人由网路自行下载之输入法字根及字典文件若有版权上的争议，请自行向原作者取得授权，本程式不负担其所产生的任何法律及版权上的责任。\n完整资讯请参考 LIME Project 网站上的版权说明  http://code.google.com/p/limeime/。</string>
 
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
@@ -23,19 +23,19 @@
     
     
     <!-- LIME Loading -->
-    <string name="lime_setting_btn_load_local_notice">请选择 .LIME 或 .CIN 文档</string>
+    <string name="lime_setting_btn_load_local_notice">请选择 .LIME 或 .CIN 文件</string>
     <string name="lime_setting_loading">载入对应档</string>
-    <string name="lime_setting_select_root"> - 回到根目录</string>
-    <string name="lime_setting_select_parent"> - 回到上一层</string>
+    <string name="lime_setting_select_root"> - back to /</string>
+    <string name="lime_setting_select_parent"> - back to ..</string>
     <string name="lime_loading_cancel">取消</string>
     
-    <string name="lime_setting_notification_loading">准备数据汇入</string>
+    <string name="lime_setting_notification_loading">准备资料汇入</string>
     <string name="lime_setting_notification_failed">记录汇入失败</string>
     <string name="lime_setting_notification_finish">记录汇入成功</string>
     <string name="lime_setting_notification_related">开始建立关联字</string>
     <string name="lime_setting_notification_loading_start">LIME</string>
     <string name="lime_setting_notification_loading_end">已载入</string>
-    <string name="lime_setting_notification_loading_build">建立</string>
+    <string name="lime_setting_notification_loading_build">对照表</string>
     <string name="lime_setting_notification_loading_import">字根</string>
       
     <!-- TAB -->
@@ -121,6 +121,7 @@
     
     <!-- Popup keyboard char sequences-->
     <string name="chinese_punctuation">“”！？、。，</string>
+    
     
     <!-- Other Messages -->
   	
@@ -245,7 +246,7 @@
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
-		<item>LIME输入法</item>
+		<item>自建输入法</item>
 		<item>仓颉输入法</item>
 		<item>快仓输入法</item>
 		<item>仓颉五代输入法</item>
@@ -257,10 +258,9 @@
 		<item>行列10输入法</item>
 		<item>笔顺五码输入法</item>
 	</string-array>
-	
 	<!-- Keyboard short name List -->
     <string-array name="keyboardShortname">
-		<item>LIME</item>
+		<item>自建</item>
 		<item>仓颉</item>
 		<item>快仓</item>
 		<item>仓颉五代</item>
@@ -345,10 +345,10 @@
     
     <string name="l3_tab_initial">初始数据库</string>
     <string name="l3_tab_initial_error">下载失败，请确认装置已连上网路.</string>
-    <string name="l3_tab_initial_message">请点选 [预载数据库] OR [空白数据库] 键下载 LIME 数据库或点选 [还原数据库] 键由备份文档中还原</string>
+    <string name="l3_tab_initial_message">请点选 [预载数据库] OR [空白数据库] 键下载 LIME 数据库或点选 [还原数据库] 键由备份文件中还原</string>
     <string name="l3_initial_btn_load_empty_db">空白数据库</string>
-    <string name="l3_initial_btn_load_phonetic_only_db">只含注音数据库</string>
-    <string name="l3_initial_btn_load_preload_db">预载数据库 \n(注音, 仓颉, 仓颉五, 快仓, 大易, 轻松, 行列, 行列10)</string>
+    <string name="l3_initial_btn_load_phonetic_only_db">仅含注音数据库</string>
+    <string name="l3_initial_btn_load_preload_db">预载数据库 \n(注音, 仓颉, 仓颉五代, 快仓, 大易, 轻松, 行列, 行列10)</string>
     <string name="l3_initial_btn_reset_db">重置数据库</string>
     <string name="l3_initial_btn_store_to_sdcard">请问您要变更数据库的储存位置至 SDCARD 吗? 在部份机种上可能会产生效能不佳的问题。</string>
     <string name="l3_initial_btn_store_to_device">请问您要变更数据库的储存位置至装置吗? </string>
@@ -377,14 +377,14 @@
     <string name="l3_dbservice_download_loaded">数据库已成功载入.</string>
     <string name="l3_dbservice_download_convert">输入法进行转换中...</string>
     
-        <string name="l3_message_table_downloading">下载字根档...</string>
+    <string name="l3_message_table_downloading">下载字根档...</string>
     <string name="l3_message_database_reset_confirm">您是否要移除数据库?</string>
     <string name="l3_message_table_reset_confirm">您是否要清除所有记录?</string>
     <string name="l3_message_table_download_confirm">您是否要下载字根档?</string>
     <string name="l3_message_table_abort_confirm">您是否要中断载入字根档?</string>
     <string name="l3_initial_download_database">下载数据库</string>
     <string name="l3_initial_database_failed">操作失败! 请您稍后再试，请检查数据库是否载入完全!</string>
-    <string name="l3_initial_download_failed">数据转换错误, 请重置数据库再重新下载!</string>
+    <string name="l3_initial_download_failed">资料转换错误, 请重置数据库再重新下载!</string>
     <string name="l3_initial_download_write_sdcard_failed">请确定SDCARD已挂载, 重置数据库再重新下载!</string>
     <string name="l3_initial_backup_database">备份数据库</string>
     <string name="l3_initial_backup_start">开始备份数据库</string>
@@ -392,7 +392,7 @@
     <string name="l3_initial_backup_confirm">您是否要备份数据库?</string>
     <string name="l3_initial_backup_error">数据库不存在，无法进行备份.</string>
     <string name="l3_initial_restore_database">还原数据库</string>
-    <string name="l3_initial_restore_error">备份文档不存在，无法进行还原.</string>
+    <string name="l3_initial_restore_error">备份文件不存在，无法进行还原.</string>
     <string name="l3_initial_restore_confirm">您是否要还原数据库?</string>
     <string name="l3_initial_restore_start">开始还原数据库</string>
     <string name="l3_initial_restore_end">数据库还原完成</string>
@@ -421,8 +421,7 @@
     <string name="l3_im_download_from_phonetic_adv">下载并安装注音连打字根</string>
     <string name="l3_im_download_from_phonetic_adv_start">开始下载注音连打字根</string>
     <string name="l3_im_download_from_phonetic_adv_install">开始安装注音连打字根</string>
-    <string name="l3_im_download_from_phonetic_adv_warning">档案容量较大系统会需要比较长的时间进行资料汇入</string>
-    
+    <string name="l3_im_download_from_phonetic_adv_warning">文件容量较大系统会需要比较长的时间进行资料汇入</string>
     
     <string name="l3_im_download_from_cj">下载并安装仓颉字根</string>
     <string name="l3_im_download_from_cj_start">开始下载仓颉字根</string>
@@ -456,15 +455,16 @@
     <string name="l3_im_download_from_wb_start">开始下载笔顺五码字根</string>
     <string name="l3_im_download_from_wb_install">开始安装笔顺五码字根</string>
     
-    <string name="l3_im_database_error">资料库操作错误，请稍待一会重新操作。</string>
+    <string name="l3_im_database_error">数据库操作错误，请稍待一会重新操作。</string>
     
     <string name="l3_tab_bluetooth">蓝牙设定</string>
-    <string name="l3_im_notice">为了节省记忆体使用空间，我们强烈建议您清空不常使用的输入法字根，或使用空白资料库来载入个别输入法字根档。</string>
+    
+    <string name="l3_im_notice">为了节省记忆体使用空间，我们强烈建议您清空不常使用的输入法字根，或使用空白数据库来载入个别输入法字根档。</string>
     
     <!-- AD Message -->
     <string name="ad_zippy">蓝芽键盘测试支援\nZIPPY BT-540 蓝芽一对六键盘 - http://www.zippy.com (Sam Lin/sam_lin@hotmail.com)</string>
     
-     
+    
     <!-- Version 3 UI and Theme String Set -->
     <!-- Candi/Composing Font Size Options List -->
     <string name="font_size">字型大小</string>
@@ -476,8 +476,9 @@
 		<item>小</item>
 		<item>特小</item>
 	</string-array>
+	
 	<!-- Vibrate level Options List -->
-    <string name="vibrate_level">振动强度</string>
+    <string name="vibrate_level">震动强度</string>
 	<string-array name="vibrate_level_options">
 		<item>特弱</item>
 		<item>弱</item>
@@ -488,37 +489,42 @@
 	<string name="auto_chinese_symbol">自动中文标点模式</string>
     <string name="auto_chinese_symbol_summary">无候选字词时显示中文标点选项</string>
     
-    
     <!-- 自动上屏设定 -->
     <string name="auto_commit">电话键盘自动上屏</string>
     <string name="auto_commit_summary">当输入字根符合设定数则自动送出组字</string>
 	<string-array name="auto_commit_labels">
 		<item>无</item>
-		<item>2</item>
-		<item>3</item>
 		<item>4</item>
 		<item>5</item>
 		<item>6</item>
+		<item>7</item>
+		<item>8</item>
+		<item>9</item>
+		<item>10</item>
 	</string-array>
 	<string-array name="auto_commit_values">
 		<item>0</item>
-		<item>2</item>
-		<item>3</item>
 		<item>4</item>
 		<item>5</item>
 		<item>6</item>
+		<item>7</item>
+		<item>8</item>
+		<item>9</item>
+		<item>10</item>
 	</string-array>
 	
 	<string name="disable_physical_selkey_option">关闭实体键盘选字键</string>
 	
-	<string name="reset_db_note">若文字无法正确输入，建议您重置资料库并重新下载或汇入字根档案.</string>
+	<string name="reset_db_note">若文字无法正确输入，建议您重置数据库并重新下载或汇入字根文件.</string>
+	
 	<string name="release_note">
-	    \n** 若文字无法正确输入，建议您重置资料库并重新下载或汇入字根档案.\n\n
+	    \n** 若文字无法正确输入，建议您重置数据库并重新下载或汇入字根文件.\n\n
+	
 		更新说明\n
 		http://facebook.com/limeime\n\n
 	
 		1. 新增字频资料，改善关联字显示顺序\n
-		   (字频功能需重汇字根或预载资料库来启用)\n
+		   (字频功能需重汇字根或预载数据库来启用)\n
 		2. 新增注音连打功能\n
 		3. 键盘文字显示更新\n
 		4. 候选字列扩展，点选候选列向下圆型箭头\n
@@ -526,8 +532,8 @@
 		6. 支援 HTC Flyer 装置显示\n
 		7. 支援 Galaxy Tab 装置显示\n
 		8. 新增自动中文标点模式设定\n
-		9. 改进初始资料库选项\n
-		10. 更新预载资料库内容 (需重新下载)\n
+		9. 改进初始数据库选项\n
+		10. 更新预载数据库内容 (需重新下载)\n
 		11. 输入效能提升、臭虫修正\n
 		12. 支援 ChaCha 键盘输入\n
 		13. 设定字型与键盘大小\n

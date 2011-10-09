@@ -246,7 +246,7 @@
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
-		<item>LIME輸入法</item>
+		<item>自建輸入法</item>
 		<item>倉頡輸入法</item>
 		<item>快倉輸入法</item>
 		<item>倉頡五代輸入法</item>
@@ -260,7 +260,7 @@
 	</string-array>
 	<!-- Keyboard short name List -->
     <string-array name="keyboardShortname">
-		<item>LIME</item>
+		<item>自建</item>
 		<item>倉頡</item>
 		<item>快倉</item>
 		<item>倉頡五代</item>
@@ -348,7 +348,7 @@
     <string name="l3_tab_initial_message">請點選 [預載資料庫] OR [空白資料庫] 鍵下載 LIME 資料庫或點選 [還原資料庫] 鍵由備份檔案中還原</string>
     <string name="l3_initial_btn_load_empty_db">空白資料庫</string>
     <string name="l3_initial_btn_load_phonetic_only_db">僅含注音資料庫</string>
-    <string name="l3_initial_btn_load_preload_db">預載資料庫 \n(注音, 倉頡, 倉頡五, 快倉, 大易, 輕鬆, 行列, 行列10)</string>
+    <string name="l3_initial_btn_load_preload_db">預載資料庫 \n(注音, 倉頡, 倉頡五代, 快倉, 大易, 輕鬆, 行列, 行列10)</string>
     <string name="l3_initial_btn_reset_db">重置資料庫</string>
     <string name="l3_initial_btn_store_to_sdcard">請問您要變更資料庫的儲存位置至 SDCARD 嗎? 在部份機種上可能會產生效能不佳的問題。</string>
     <string name="l3_initial_btn_store_to_device">請問您要變更資料庫的儲存位置至裝置嗎? </string>
@@ -494,19 +494,23 @@
     <string name="auto_commit_summary">當輸入字根符合設定數則自動送出組字</string>
 	<string-array name="auto_commit_labels">
 		<item>無</item>
-		<item>2</item>
-		<item>3</item>
 		<item>4</item>
 		<item>5</item>
 		<item>6</item>
+		<item>7</item>
+		<item>8</item>
+		<item>9</item>
+		<item>10</item>
 	</string-array>
 	<string-array name="auto_commit_values">
 		<item>0</item>
-		<item>2</item>
-		<item>3</item>
 		<item>4</item>
 		<item>5</item>
 		<item>6</item>
+		<item>7</item>
+		<item>8</item>
+		<item>9</item>
+		<item>10</item>
 	</string-array>
 	
 	<string name="disable_physical_selkey_option">關閉實體鍵盤選字鍵</string>

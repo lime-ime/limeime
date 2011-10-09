@@ -296,6 +296,19 @@ public class SearchService extends Service {
 							Log.i(TAG, "query() code=" + code + " resultlist.size()=" + resultlist.size()
 								+" relatedlist.size()=" + relatedtlist.size());
 						
+						// Art '09.11.2011 ignore phonetic tone control
+						if(resultlist.size() > 0){ 
+								result.addAll(resultlist);
+								int rsize = result.size();
+								if(result.get(rsize-1).getCode().equals("has_more_records")){
+									result.remove(rsize-1);
+									hasMore = true;
+									if(DEBUG) 
+										Log.i(TAG, "query() code=" + code + "  resutl list added resultlist.size()=" 
+												+ resultlist.size());
+								}
+							}
+						/*
 						if(resultlist.size()>0 && (
 							 !isPhonetic 
 							|| (isPhonetic && !hasTone)
@@ -310,7 +323,7 @@ public class SearchService extends Service {
 									Log.i(TAG, "query() code=" + code + "  resutl list added resultlist.size()=" 
 											+ resultlist.size());
 							}
-						}
+						}*/
 						if(relatedtlist.size()>0 && i==0 ){ 
 								result.addAll(relatedtlist);
 							int rsize = result.size();
