@@ -178,7 +178,7 @@ public class DBService extends Service {
 			Thread threadTask = new Thread() {
 				public void run() {
 					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start_empty)+ "", intentLIMEInitial);
-					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_EMPTY, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME_EMPTY);
+					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_EMPTY, LIME.G_IM_DOWNLOAD_TARGET_EMPTY, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME_EMPTY);
 					if(downloadedFile==null){
 						mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
 					}else{
@@ -217,7 +217,7 @@ public class DBService extends Service {
 			Thread threadTask = new Thread() {
 				public void run() { 
 					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start)+ "", intentLIMEInitial);
-					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PHONETIC_ONLY, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
+					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PHONETIC_ONLY, LIME.G_IM_DOWNLOAD_TARGET_PHONETIC_ONLY, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
 					if(downloadedFile==null){
 						//showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 						mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
@@ -257,7 +257,7 @@ public class DBService extends Service {
 			Thread threadTask = new Thread() {
 				public void run() { 
 					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start)+ "", intentLIMEInitial);
-					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PRELOADED, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
+					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PRELOADED, LIME.G_IM_DOWNLOAD_TARGET_PRELOADED, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
 					if(downloadedFile==null){
 						//showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 						mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
@@ -290,20 +290,29 @@ public class DBService extends Service {
 		}
 
 		/*
+		 * Select Remote File to download
+		 */
+		public File downloadRemoteFile(String url, String backup_url, String folder, String filename){
+
+			abortDownload = false;
+			remoteFileDownloading = true;
+			File target = downloadRemoteFile(url, folder, filename);
+			if(target == null){
+				target = downloadRemoteFile(backup_url, folder, filename);
+			}
+			remoteFileDownloading = false;
+			return target;
+		}
+		
+		/*
 		 * Download Remote File
 		 */
 		public File downloadRemoteFile(String url, String folder, String filename){
 
-			remoteFileDownloading = true;
-			abortDownload = false;
 			if(DEBUG)
 				Log.i("DBService:downloadRemoteFile()", "Starting....");
+			
 			try {
-
-				//showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_convert)+ "", intentLIMEMappingLoading);
-
-
-				//Log.i("ART", "URL->"+url);
 				URL downloadUrl = new URL(url);
 				URLConnection conn = downloadUrl.openConnection();
 				conn.connect();
@@ -353,31 +362,29 @@ public class DBService extends Service {
 
 				is.close();
 
-				remoteFileDownloading = false;
 				return downloadedFile;
 
 			} catch (FileNotFoundException e) {
 				Log.d(TAG,"downloadRemoteFile(); can't open temp file on sdcard for writing.");
-				remoteFileDownloading = false;
 				showNotificationMessage(ctx.getText(R.string.l3_initial_download_write_sdcard_failed)+ "",intentLIMEMenu );
 				e.printStackTrace();
 
 			} catch (MalformedURLException e) {
 				Log.d("DBService:downloadRemoteFile()", "error....");
-				remoteFileDownloading = false;
 				showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "", intentLIMEMenu);
 				e.printStackTrace();
 			} catch (IOException e){
 				Log.d("DBService:downloadRemoteFile()", "error....");
-				remoteFileDownloading = false;
+				showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "", intentLIMEMenu);
+				e.printStackTrace();
+			} catch (Exception e){
+				Log.d("DBService:downloadRemoteFile()", "error....");
 				showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "", intentLIMEMenu);
 				e.printStackTrace();
 			}
 			//if(DEBUG)
 			Log.i(TAG, "downloadRemoteFile() failed.");
-			remoteFileDownloading = false;
 			return null;
-
 		}
 
 		/*
@@ -578,7 +585,7 @@ public class DBService extends Service {
 			Thread threadTask = new Thread() {
 				public void run() {
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_adv_start)+ "", intentLIMEMappingLoading);
-					downloadedFile = downloadRemoteFile(LIME.PHONETICADV_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETICADV);
+					downloadedFile = downloadRemoteFile(LIME.PHONETICADV_DOWNLOAD_URL, LIME.G_PHONETICADV_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETICADV);
 					if(downloadedFile!=null){
 						showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_adv_install)+ "", intentLIMEMappingLoading);
 						try {
@@ -598,7 +605,7 @@ public class DBService extends Service {
 			Thread threadTask = new Thread() {
 				public void run() {
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_start)+ "", intentLIMEMappingLoading);
-					downloadedFile = downloadRemoteFile(LIME.PHONETIC_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETIC);
+					downloadedFile = downloadRemoteFile(LIME.PHONETIC_DOWNLOAD_URL, LIME.G_PHONETIC_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETIC);
 					if(downloadedFile!=null){
 						showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_install)+ "", intentLIMEMappingLoading);
 						try {
@@ -618,7 +625,7 @@ public class DBService extends Service {
 			Thread threadTask = new Thread() {
 				public void run() {
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj5_start)+ "", intentLIMEMappingLoading);
-					downloadedFile = downloadRemoteFile(LIME.CJ5_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ5);
+					downloadedFile = downloadRemoteFile(LIME.CJ5_DOWNLOAD_URL, LIME.G_CJ5_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ5);
 					if(downloadedFile!=null){
 						showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj5_install)+ "", intentLIMEMappingLoading);
 						try {
@@ -638,7 +645,7 @@ public class DBService extends Service {
 			Thread threadTask = new Thread() {
 				public void run() {
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ecj_start)+ "", intentLIMEMappingLoading);
-					downloadedFile = downloadRemoteFile(LIME.ECJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ECJ);
+					downloadedFile = downloadRemoteFile(LIME.ECJ_DOWNLOAD_URL, LIME.G_ECJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ECJ);
 					if(downloadedFile!=null){
 						showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ecj_install)+ "", intentLIMEMappingLoading);
 						try {
@@ -658,7 +665,7 @@ public class DBService extends Service {
 			Thread threadTask = new Thread() {
 				public void run() {
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_wb_start)+ "", intentLIMEMappingLoading);
-					downloadedFile = downloadRemoteFile(LIME.WB_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_WB);
+					downloadedFile = downloadRemoteFile(LIME.WB_DOWNLOAD_URL, LIME.G_WB_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_WB);
 					if(downloadedFile!=null){
 						showNotificationMessage(ctx.getText(R.string.l3_im_download_from_wb_install)+ "", intentLIMEMappingLoading);
 						try {
@@ -678,7 +685,7 @@ public class DBService extends Service {
 			Thread threadTask = new Thread() {
 				public void run() {
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj_start)+ "", intentLIMEMappingLoading);
-					downloadedFile = downloadRemoteFile(LIME.CJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ);
+					downloadedFile = downloadRemoteFile(LIME.CJ_DOWNLOAD_URL, LIME.G_CJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ);
 					if(downloadedFile!=null){
 						showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj_install)+ "", intentLIMEMappingLoading);
 						try {
@@ -698,7 +705,7 @@ public class DBService extends Service {
 			Thread threadTask = new Thread() {
 				public void run() {
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_scj_start)+ "", intentLIMEMappingLoading);
-					downloadedFile = downloadRemoteFile(LIME.SCJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_SCJ);
+					downloadedFile = downloadRemoteFile(LIME.SCJ_DOWNLOAD_URL, LIME.G_SCJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_SCJ);
 					if(downloadedFile!=null){
 						showNotificationMessage(ctx.getText(R.string.l3_im_download_from_scj_install)+ "", intentLIMEMappingLoading);
 						try {
@@ -718,7 +725,7 @@ public class DBService extends Service {
 			Thread threadTask = new Thread() {
 				public void run() {
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ez_start)+ "", intentLIMEMappingLoading);
-					downloadedFile = downloadRemoteFile(LIME.EZ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_EZ);
+					downloadedFile = downloadRemoteFile(LIME.EZ_DOWNLOAD_URL, LIME.G_EZ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_EZ);
 					if(downloadedFile!=null){
 						showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ez_install)+ "", intentLIMEMappingLoading);
 						try {
@@ -738,7 +745,7 @@ public class DBService extends Service {
 			Thread threadTask = new Thread() {
 				public void run() {
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array_start)+ "", intentLIMEMappingLoading);
-					downloadedFile = downloadRemoteFile(LIME.ARRAY_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ARRAY);
+					downloadedFile = downloadRemoteFile(LIME.ARRAY_DOWNLOAD_URL, LIME.G_ARRAY_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ARRAY);
 					if(downloadedFile!=null){
 						showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array_install)+ "", intentLIMEMappingLoading);
 						try {
@@ -758,7 +765,7 @@ public class DBService extends Service {
 			Thread threadTask = new Thread() {
 				public void run() {
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array10_start)+ "", intentLIMEMappingLoading);
-					downloadedFile = downloadRemoteFile(LIME.ARRAY10_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ARRAY10);
+					downloadedFile = downloadRemoteFile(LIME.ARRAY10_DOWNLOAD_URL, LIME.G_ARRAY10_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ARRAY10);
 					if(downloadedFile!=null){
 						showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array10_install)+ "", intentLIMEMappingLoading);
 						try {
