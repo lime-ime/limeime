@@ -53,7 +53,7 @@ import android.widget.Toast;
 /**
  * @author Art Hung
  */
-public class LimeDB extends SQLiteOpenHelper {
+public class CopyOfLimeDB extends SQLiteOpenHelper {
 
 	private static boolean DEBUG = false;
 	private static String TAG = "LIMEDB";
@@ -301,7 +301,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	/*
 	 * Initialize LIME database, Context and LIMEPreferenceManager
 	 */
-	public LimeDB(Context context) {
+	public CopyOfLimeDB(Context context) {
 		
 		super(context, LIME.DATABASE_NAME, null, DATABASE_VERSION);
 		this.ctx = context;
@@ -1051,7 +1051,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @param keyword
 	 * @return
 	 */
-	public String getRMapping(SQLiteDatabase querydb, String keyword) {
+	public String getRMapping(String keyword) {
 
 		//Log.i("ART", "run get rmapping:"+ keyword);
 		String table = mLIMEPref.getRerverseLookupTable(tablename);
@@ -1065,7 +1065,8 @@ public class LimeDB extends SQLiteOpenHelper {
 
 			if (keyword != null && !keyword.trim().equals("")) {
 				Cursor cursor = null;
-				cursor = querydb.query(table, null, FIELD_WORD + " = '" + keyword +"'", null, null,
+				SQLiteDatabase db = this.getSqliteDb(true);
+				cursor = db.query(table, null, FIELD_WORD + " = '" + keyword +"'", null, null,
 						null, null, null);
 				if (DEBUG) 
 					Log.i(TAG,"getRmapping():tablename:" + table + "  keyworad:"
@@ -1077,7 +1078,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 					int wordColumn = cursor.getColumnIndex(FIELD_WORD);
 					result = cursor.getString(wordColumn) + "="
-							+ keyToKeyname(querydb, cursor.getString(codeColumn), table, false);
+							+ keyToKeyname(cursor.getString(codeColumn), table, false);
 					if (DEBUG) 
 						Log.i(TAG, "getRmapping():Code:"
 								+ cursor.getString(codeColumn));
@@ -1086,7 +1087,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					while (cursor.moveToNext()) {
 						result = result
 								+ "; "
-								+ keyToKeyname(querydb, cursor.getString(codeColumn),
+								+ keyToKeyname(cursor.getString(codeColumn),
 										table, false);
 						if (DEBUG) 
 							Log.i(TAG,"getRmapping():Code:"
@@ -1099,6 +1100,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					cursor.deactivate();
 					cursor.close();
 				}
+				db.close();
 			}
 		} catch (Exception e) {
 		}
@@ -1213,7 +1215,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		return scorelist;
 	}
 //Rewrite by Jeremy 11,6,4.  Supporting array and dayi now.
-	public String keyToKeyname(SQLiteDatabase querydb, String code, String table, Boolean composingText) {
+	public String keyToKeyname(String code, String table, Boolean composingText) {
 		//Jeremy '11,8,30 
 		if(composingText && code.length()> COMPOSING_CODE_LENGTH_LIMIT ) 
 			return code;
@@ -1248,7 +1250,7 @@ public class LimeDB extends SQLiteOpenHelper {
 			if(!code.equals(lastCode)){
 				// unsynchronized cache. do the preprocessing again.
 				//preProcessingForExtraQueryConditions(preProcessingRemappingCode(code));
-				getMapping(querydb, code,false,false);
+				getMapping(code,false,false);
 			}
 			//String dualCodeList = lastValidDualCodeList;
 			if(lastValidDualCodeList !=null ){
@@ -1511,7 +1513,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	/*
 	 * Retrieve matched records
 	 */
-	public Pair<List<Mapping>,List<Mapping>> getMapping(SQLiteDatabase querydb, String code, boolean softKeyboard, boolean getAllRecords) {
+	public Pair<List<Mapping>,List<Mapping>> getMapping(String code, boolean softKeyboard, boolean getAllRecords) {
 		boolean sort = true;
 		if(softKeyboard) sort = mLIMEPref.getSortSuggestions();
 		else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
@@ -1536,6 +1538,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		try{
 			if (!code.equals("")) {
 				
+				SQLiteDatabase db = this.getSqliteDb(true);
 				try {
 					Cursor cursor = null;
 					// Jeremy '11,8,2 Query code3r instead of code for code contains no tone symbols
@@ -1559,17 +1562,17 @@ public class LimeDB extends SQLiteOpenHelper {
 					
 					// Jeremy '11,6,15 Using query with preprocessed code and extra query conditions.
 					if(sort){
-						cursor = querydb.query(tablename, null, selectClause
+						cursor = db.query(tablename, null, selectClause
 								, null, null, null, FIELD_SCORE +" DESC, +" 
 								+FIELD_BASESCORE + " DESC, "
 								+"_id ASC", limitClause);
 					}else{
-						cursor = querydb.query(tablename, null, selectClause
+						cursor = db.query(tablename, null, selectClause
 								, null, null, null, FIELD_BASESCORE + " DESC, _id ASC", limitClause);
 					}
 					
 	
-					result = buildQueryResult(querydb, code, cursor, getAllRecords);
+					result = buildQueryResult(code, cursor, getAllRecords);
 					if (cursor != null) {
 						cursor.deactivate();
 						cursor.close();
@@ -1581,6 +1584,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
+				db.close();
 			}
 		}catch(Exception e){
 			e.printStackTrace();
@@ -2015,7 +2019,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	/*
 	 * Process search results
 	 */
-	private Pair<List<Mapping>,List<Mapping>> buildQueryResult(SQLiteDatabase querydb, String query_code, Cursor cursor, Boolean getAllRecords) {
+	private Pair<List<Mapping>,List<Mapping>> buildQueryResult(String query_code, Cursor cursor, Boolean getAllRecords) {
 		
 		
 		List<Mapping> result = new ArrayList<Mapping>();
@@ -2063,7 +2067,7 @@ public class LimeDB extends SQLiteOpenHelper {
 				// Only apply to Array IM
 				try{
 					if(code != null && code.length() == 1 && tablename.equals("array")){
-						if(keyToKeyname(querydb, code, tablename, false).equals(munit.getWord())){
+						if(keyToKeyname(code, tablename, false).equals(munit.getWord())){
 							continue;
 						}
 					}
@@ -2181,7 +2185,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @param keyword
 	 * @return
 	 */
-	public List<Mapping> queryUserDict(SQLiteDatabase querydb, String pword) {
+	public List<Mapping> queryUserDict(String pword) {
 		
 		List<Mapping> result = new LinkedList<Mapping>();
 
@@ -2192,10 +2196,11 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 				Cursor cursor = null;
 	
+				SQLiteDatabase db = this.getSqliteDb(true);
 				// Jeremy '11,8.23 remove group by condition to avoid sorting ordr
 				// Jeremy '11,8,1 add group by cword to remove duplicate items.
 				//Jeremy '11,6,12, Add constraint on cword is not null (cword =null is for recoding im related list selected count).
-				cursor = querydb.query("related", null, FIELD_DIC_pword + " = '"
+				cursor = db.query("related", null, FIELD_DIC_pword + " = '"
 						+ pword + "' AND " + FIELD_DIC_cword + " IS NOT NULL"
 						, null, null , null, FIELD_SCORE + " DESC", null);
 	
@@ -2221,6 +2226,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					cursor.deactivate();
 					cursor.close();
 				}
+				db.close();
 			}
 		}
 		return result;

@@ -20,6 +20,7 @@
 
 package net.toload.main.hd;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -41,6 +42,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -51,7 +53,8 @@ public class SearchService extends Service {
 	
 	private final boolean DEBUG = false;
 	private final String TAG = "LIME.SearchService";
-	private LimeDB db = null;
+	private LimeDB dbadapter = null;
+	private SQLiteDatabase querydb = null;
 	//private LimeHanConverter hanConverter = null;
 	//private static LinkedList<Mapping> diclist = null;  
 	private static List<Mapping> scorelist = null;
@@ -112,22 +115,7 @@ public class SearchService extends Service {
 		}
 		
 		public String hanConvert(String input){
-			/*if(hanConverter == null){  Jeremy '11,9,8 moved to LIMEDB
-				FileUtilities fu = new FileUtilities();
-				//Jeremy '11,9,8 update handconverdb to v2 with base score in TCSC table
-				File hanDBFile = fu.isFileExist("/data/data/net.toload.main.hd/databases/hanconvert.db");
-				if(hanDBFile!=null)
-					hanDBFile.delete();
-				File hanDBV2File = fu.isFileNotExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
-				if(hanDBV2File!=null)
-					fu.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
-					
-				hanConverter = new LimeHanConverter(ctx);
-				}*/
-			//SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-			//Integer hanConvertOption = mLIMEPref.getHanCovertOption(); //Integer.parseInt(sp.getString(HanConvertOption, "0"));
-			
-			return db.hanConvert(input, mLIMEPref.getHanCovertOption());
+			return dbadapter.hanConvert(input, mLIMEPref.getHanCovertOption());
 			
 		}
 		
@@ -136,42 +124,48 @@ public class SearchService extends Service {
 		}
 		
 		public void setTablename(String table, boolean numberMapping, boolean symbolMapping){
-			if(db == null){loadLimeDB();}
-			db.setTablename(table);
+			loadDBAdapter(); openLimeDatabase();
+			dbadapter.setTablename(table);
 			tablename = table;
 			hasNumberMapping = numberMapping;
 			hasSymbolMapping = symbolMapping;
 		}
+
+		private void openLimeDatabase()
+		{			
+			if(querydb == null || !querydb.isOpen()){
+				querydb = getSqliteDb();
+			}
+		}
 		
-		
-		private void loadLimeDB()
-		{	
-/*			FileUtilities fu = new FileUtilities();
-			fu.copyPreLoadLimeDB(ctx);	*/		
-			db = new LimeDB(ctx);
+		private void loadDBAdapter()
+		{			
+			if(dbadapter == null){
+				dbadapter = new LimeDB(ctx);
+			}
 		}
 		
 		//Modified by Jeremy '10,3 ,12 for more specific related word
 		//-----------------------------------------------------------
 		public List<?> queryUserDic(String word) throws RemoteException {
-			if(db == null){loadLimeDB();}
-			List<?> result = db.queryUserDict(word);
+			loadDBAdapter(); openLimeDatabase();
+			List<?> result = dbadapter.queryUserDict(querydb, word);
 			return result;
 		}
 		//-----------------------------------------------------------
 		
 		public Cursor getDictionaryAll(){
-			if(db == null){loadLimeDB();}
-			return db.getDictionaryAll();
+			loadDBAdapter(); openLimeDatabase();
+			return dbadapter.getDictionaryAll();
 			
 		}
 		
 		//Add by jeremy '10, 4,1
 		public void rQuery(final String word) throws RemoteException {
-			if(db == null){loadLimeDB();}
+			loadDBAdapter(); openLimeDatabase();
 			Thread queryThread = new Thread(){
 				public void run() {
-					String result = db.getRMapping(word);
+					String result = dbadapter.getRMapping(querydb, word);
 					if(result!=null && !result.equals("")){
 						displayNotificationMessage(result);
 					}
@@ -187,16 +181,16 @@ public class SearchService extends Service {
 			//Jeremy '11,6,17 Seperate physical keyboard cache with keybaordtype
 			if(isPhysicalKeyboardPressed){	
 				if(tablename.equals("phonetic")){
-					key = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()
+					key = mLIMEPref.getPhysicalKeyboardType()+dbadapter.getTablename()
 					+ mLIMEPref.getPhoneticKeyboardType()+code;
 				}else{
-					key = mLIMEPref.getPhysicalKeyboardType()+db.getTablename()+code;
+					key = mLIMEPref.getPhysicalKeyboardType()+dbadapter.getTablename()+code;
 				}
 			}else{
 				if(tablename.equals("phonetic"))
-					key = db.getTablename()+ mLIMEPref.getPhoneticKeyboardType()+code;
+					key = dbadapter.getTablename()+ mLIMEPref.getPhoneticKeyboardType()+code;
 				else
-					key = db.getTablename()+code;
+					key = dbadapter.getTablename()+code;
 			}
 			return key;
 		}
@@ -204,7 +198,7 @@ public class SearchService extends Service {
 		public List<Mapping> query(String code, boolean softkeyboard, boolean getAllRecords) throws RemoteException {
 			if(DEBUG) Log.i(TAG, "query(): code="+code);
 			
-			if(db == null){loadLimeDB();}
+			loadDBAdapter(); openLimeDatabase();
 			
 			// Check if system need to reset cache
 			
@@ -254,13 +248,13 @@ public class SearchService extends Service {
 						// 25/Jul/2011 by Art
 						// Just ignore error when something wrong with the result set
 						try{
-							cacheTemp = db.getMapping(code, !isPhysicalKeyboardPressed, getAllRecords);
+							cacheTemp = dbadapter.getMapping(querydb, code, !isPhysicalKeyboardPressed, getAllRecords);
 							cache.put(cacheKey, cacheTemp);
 						}catch(SQLiteException ne){
-							db.forceUpgrade();
+							dbadapter.forceUpgrade();
 							ne.printStackTrace();
 						}catch(NullPointerException ne){
-							db.forceUpgrade();
+							dbadapter.forceUpgrade();
 							ne.printStackTrace();
 						}catch(Exception e){
 							e.printStackTrace();
@@ -278,7 +272,7 @@ public class SearchService extends Service {
 							 relatedtlist.size()>1&&
 							 		relatedtlist.get(relatedtlist.size()-1).getCode().equals("has_more_records") )){
 							try{
-								cacheTemp = db.getMapping(code, !isPhysicalKeyboardPressed, true);
+								cacheTemp = dbadapter.getMapping(querydb, code, !isPhysicalKeyboardPressed, true);
 								cache.remove(cacheKey);
 								cache.put(cacheKey, cacheTemp);
 							}catch(Exception e){
@@ -399,7 +393,7 @@ public class SearchService extends Service {
 		private void updateScoreCache(Mapping cachedMapping){
 			if(DEBUG) Log.i(TAG, "udpateScoreCache(): code=" + cachedMapping.getCode());
 			
-			db.addScore(cachedMapping);					
+			dbadapter.addScore(cachedMapping);					
 			// Jeremy '11,7,29 update cached here
 			if (!cachedMapping.isDictionary()){
 				String code = cachedMapping.getCode().toLowerCase();
@@ -411,7 +405,7 @@ public class SearchService extends Service {
 					if(DEBUG) Log.i(TAG,"updateUserDict: updating related list");
 					if(cache.remove(cachekey)!=null){
 						Pair<List<Mapping>, List<Mapping>> newPair 
-						= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, db.updateRelatedList(code)) ;
+						= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, dbadapter.updateRelatedList(code)) ;
 						cache.put(cachekey, newPair);
 					}
 					// non null id denotes target is in exact match result list.
@@ -457,7 +451,7 @@ public class SearchService extends Service {
 		List<Mapping> scorelistSnapshot = null; 
 		public void postFinishInput() throws RemoteException {
 		
-			if(db == null){db = new LimeDB(ctx);} 
+			if(dbadapter == null){dbadapter = new LimeDB(ctx);} 
 			if(scorelistSnapshot==null) scorelistSnapshot = new LinkedList<Mapping>();
 			else scorelistSnapshot.clear();
 			
@@ -509,7 +503,7 @@ public class SearchService extends Service {
 					    		&& unit2.getId() !=null
 					    		&& unit2.getWord() != null && !unit2.getWord().equals("")
 					    	) {
-								db.addOrUpdateUserdictRecord(unit.getWord(),unit2.getWord());
+								dbadapter.addOrUpdateUserdictRecord(unit.getWord(),unit2.getWord());
 							}
 						}
 					}
@@ -550,17 +544,17 @@ public class SearchService extends Service {
 									LDCode = baseCode.replaceAll("[3467]", "").toLowerCase();
 									QPCode += unit2.getCode().substring(0, 1).toLowerCase();
 									if(LDCode.length()>1){
-										db.addOrUpdateMappingRecord(LDCode, baseWord);
+										dbadapter.addOrUpdateMappingRecord(LDCode, baseWord);
 										cache.remove(cacheKey(LDCode));
 										updateSimilarCodeRelatedList(LDCode);
 									}
 									if(QPCode.length()>1){
-										db.addOrUpdateMappingRecord(QPCode, baseWord);
+										dbadapter.addOrUpdateMappingRecord(QPCode, baseWord);
 										cache.remove(cacheKey(QPCode.toLowerCase()));
 										updateSimilarCodeRelatedList(QPCode.toLowerCase());
 									}
 								}else if(baseCode.length()>1){
-									db.addOrUpdateMappingRecord(baseCode, baseWord);
+									dbadapter.addOrUpdateMappingRecord(baseCode, baseWord);
 									cache.remove(cacheKey(baseCode));
 									updateSimilarCodeRelatedList(baseCode);
 								}
@@ -591,7 +585,7 @@ public class SearchService extends Service {
 				cachedPair = cache.get(cachekey);
 				if(cache.remove(cachekey)!=null && cachedPair !=null){					
 					Pair<List<Mapping>, List<Mapping>> newPair 
-						= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, db.updateRelatedList(key)) ;
+						= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, dbadapter.updateRelatedList(key)) ;
 					cache.put(cachekey, newPair);
 				}
 			}
@@ -605,8 +599,8 @@ public class SearchService extends Service {
 			String cacheKey = cacheKey(code);
 			String result = keynamecache.get(cacheKey);
 			if(result == null){
-				if(db == null){loadLimeDB();}
-				result = db.keyToKeyname(code, tablename, true);
+				loadDBAdapter(); openLimeDatabase();
+				result = dbadapter.keyToKeyname(querydb, code, tablename, true);
 				keynamecache.put(cacheKey, result);
 			}
 			return result;
@@ -619,7 +613,7 @@ public class SearchService extends Service {
 				throws RemoteException {
 			 
 			if(scorelist == null){scorelist = new ArrayList<Mapping>();}
-			if(db == null){db = new LimeDB(ctx);}
+			if(dbadapter == null){dbadapter = new LimeDB(ctx);}
 			// Temp Mapping Object For updateMapping method.
 			final Mapping updateMappingTemp = new Mapping();
 			updateMappingTemp.setId(id);
@@ -674,15 +668,15 @@ public class SearchService extends Service {
 
 		@Override
 		public List<KeyboardObj> getKeyboardList() throws RemoteException {
-			if(db == null){db = new LimeDB(ctx);}
-			List<KeyboardObj> result = db.getKeyboardList();
+			if(dbadapter == null){dbadapter = new LimeDB(ctx);}
+			List<KeyboardObj> result = dbadapter.getKeyboardList();
 			return result;
 		}
 
 		@Override
 		public List<ImObj> getImList() throws RemoteException {
-			if(db == null){db = new LimeDB(ctx);}
-			List<ImObj> result = db.getImList();
+			if(dbadapter == null){dbadapter = new LimeDB(ctx);}
+			List<ImObj> result = dbadapter.getImList();
 			return result;
 		}
 
@@ -715,8 +709,8 @@ public class SearchService extends Service {
 			if(cacheTemp != null){
 				result.addAll(cacheTemp);
 			}else{
-				if(db == null){loadLimeDB();}
-				List<String> tempResult = db.queryDictionary(word);
+				loadDBAdapter(); openLimeDatabase();
+				List<String> tempResult = dbadapter.queryDictionary(word);
 				for(String u: tempResult){
 					Mapping temp = new Mapping();
 				      temp.setWord(u);
@@ -733,9 +727,9 @@ public class SearchService extends Service {
 
 		@Override
 		public void close() throws RemoteException {
-			if(db != null){
+			if(dbadapter != null){
 				try{
-					db.close();
+					dbadapter.close();
 				}catch(Exception e){
 					Log.i(TAG, "close(): Database Close error : "+e);
 				}
@@ -745,8 +739,8 @@ public class SearchService extends Service {
 		@Override
 		public boolean isImKeys(char c) throws RemoteException {
 			if(imKeysMap.get(tablename)==null || imKeysMap.size()==0){
-				if(db == null){db = new LimeDB(ctx);}
-				imKeysMap.put(tablename, db.getImInfo(tablename, "imkeys"));				
+				if(dbadapter == null){dbadapter = new LimeDB(ctx);}
+				imKeysMap.put(tablename, dbadapter.getImInfo(tablename, "imkeys"));				
 			}
 			String imkeys = imKeysMap.get(tablename);
 			if(!(imkeys==null || imkeys.equals(""))){
@@ -759,8 +753,8 @@ public class SearchService extends Service {
 		public int isSelkey(char c) throws RemoteException {
 			String selkey = "";
 			if(selKeyMap.get(tablename)==null || selKeyMap.size()==0){
-				if(db == null){db = new LimeDB(ctx);}
-				selkey = db.getImInfo(tablename, "selkey");
+				if(dbadapter == null){dbadapter = new LimeDB(ctx);}
+				selkey = dbadapter.getImInfo(tablename, "selkey");
 				if(selkey.equals("")) selkey = "'[]-\\^&*()";
 				selKeyMap.put(tablename, selkey);
 			}
@@ -774,8 +768,8 @@ public class SearchService extends Service {
 		@Override
 		public boolean isEndkey(char c) throws RemoteException {
 			if(endKeyMap.get(tablename)==null || endKeyMap.size()==0){
-				if(db == null){db = new LimeDB(ctx);}
-				endKeyMap.put(tablename, db.getImInfo(tablename, "endkey"));
+				if(dbadapter == null){dbadapter = new LimeDB(ctx);}
+				endKeyMap.put(tablename, dbadapter.getImInfo(tablename, "endkey"));
 				
 			}
 			String endkey = endKeyMap.get(tablename);
@@ -795,8 +789,8 @@ public class SearchService extends Service {
 				table = tablename + mLIMEPref.getPhoneticKeyboardType();
 			}
 			if(selKeyMap.get(table)==null || selKeyMap.size()==0){
-				if(db == null){db = new LimeDB(ctx);}
-				selkey = db.getImInfo(tablename, "selkey");
+				if(dbadapter == null){dbadapter = new LimeDB(ctx);}
+				selkey = dbadapter.getImInfo(tablename, "selkey");
 				if(DEBUG)
 					Log.i(TAG, "getSelkey():selkey from db:"+selkey);
 				boolean validSelkey = true;
@@ -837,6 +831,26 @@ public class SearchService extends Service {
 			return getSelkey().indexOf(c);
 			
 		}
+		
+		/*
+		 * This is the method to openDB from Service
+		 */
+		public SQLiteDatabase getSqliteDb(){
+			SQLiteDatabase db = null;
+			try{
+				String dbtarget = mLIMEPref.getParameterString("dbtarget");
+				db = SQLiteDatabase.openDatabase(getDBPath(dbtarget), null, SQLiteDatabase.OPEN_READONLY);
+			}catch(Exception e){return null;}
+			return db;
+
+		}
+		
+		private String getDBPath(String dbTarget){
+			String dbLocationPrefix = (dbTarget.equals("sdcard"))
+					?LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD:LIME.DATABASE_DECOMPRESS_FOLDER;
+			return dbLocationPrefix + File.separator + LIME.DATABASE_NAME;
+		}	
+		
 	}
 
 	@Override
@@ -867,8 +881,11 @@ public class SearchService extends Service {
 	 */
 	@Override
 	public void onDestroy() {
-		if(db != null){
-			db.close();
+		if(dbadapter != null){
+			dbadapter.close();
+		}
+		if(querydb != null && querydb.isOpen()){
+			querydb.close();
 		}
 		super.onDestroy();
 	}
