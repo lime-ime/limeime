@@ -953,10 +953,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @param code, word
 	 */
 	//Jeremy '11, 7, 31 add new phrase mapping into current table (for LD phrase learning). 
-	public synchronized void addOrUpdateMappingRecord(String code, String word) {
+	public synchronized void addOrUpdateMappingRecord(SQLiteDatabase udpatedb, String code, String word) {
 		if(DEBUG)
 				Log.i(TAG, "addOrUpdateMappingRecord(), code = " + code + ". word=" + word  );
-		SQLiteDatabase db = this.getSqliteDb(false);
 		
 		Mapping munit = isMappingExist(code, word);
 		ContentValues cv = new ContentValues();
@@ -967,7 +966,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					if(tablename.equals("phonetic")) cv.put(FIELD_CODE3R, code.replaceAll("[3467]", ""));
 					cv.put(FIELD_WORD, word);
 					cv.put(FIELD_SCORE, 1);
-					db.insert(tablename, null, cv);
+					udpatedb.insert(tablename, null, cv);
 					if(DEBUG)
 						Log.i(TAG, "addOrUpdateMappingRecord(): mapping is not existed, new cored inserted");
 				}
@@ -978,16 +977,13 @@ public class LimeDB extends SQLiteOpenHelper {
 			}else{//the item exist in preload related database.
 				int score = munit.getScore()+1;
 			  	cv.put(FIELD_SCORE, score);
-			  	db.update(tablename, cv, FIELD_ID + " = " + munit.getId(), null);
+			  	udpatedb.update(tablename, cv, FIELD_ID + " = " + munit.getId(), null);
 			  	if(DEBUG) 
 			  		Log.i(TAG, "addOrUpdateMappingRecord(): mapping is existed, update score on existing record; score:"+score);
 			}
 		} catch (Exception e) {
-			db.close();
 			e.printStackTrace();
 		}
-		db.close();
-
 	
 	}
 	
@@ -996,7 +992,7 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * 
 	 * @param srcunit
 	 */
-	public synchronized void addScore(Mapping srcunit) {
+	public synchronized void addScore(SQLiteDatabase updatedb, Mapping srcunit) {
 		
 			//Jeremy '11,7,31  even selected from realted list, udpate the corresponding score in im table.
 			// Jeremy '11,6,12 Id=null denotes selection from related list in im table
@@ -1012,7 +1008,6 @@ public class LimeDB extends SQLiteOpenHelper {
 		//Jeremy '11,9,8 query highest score first.  Erase relatedlist if new score is not highest.
 		int highestScore = getHighestScore(srcunit.getCode());
 		int newScore = srcunit.getScore() + 1;
-		SQLiteDatabase db = this.getSqliteDb(false);
 		try {
 			if (srcunit != null && //srcunit.getId() != null &&
 					srcunit.getWord() != null  &&
@@ -1024,8 +1019,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
 					
 					
-					db.update("related", cv, FIELD_ID + " = " + srcunit.getId(), null);
-					db.close();
+					updatedb.update("related", cv, FIELD_ID + " = " + srcunit.getId(), null);
 				}else{
 					ContentValues cv = new ContentValues();
 					cv.put(FIELD_SCORE, newScore);
@@ -1033,12 +1027,10 @@ public class LimeDB extends SQLiteOpenHelper {
 						cv.put(FIELD_RELATED, "");
 	
 					// Jeremy 11',7,29  update according to word instead of ID, may have multiple records mathing word but withd diff code/id 
-					db.update(tablename, cv, FIELD_WORD + " = '" + srcunit.getWord() + "'", null);
-					db.close();
+					updatedb.update(tablename, cv, FIELD_WORD + " = '" + srcunit.getWord() + "'", null);
 				}
 			}
 		} catch (Exception e) {
-			db.close();
 			e.printStackTrace();
 		}
 	}

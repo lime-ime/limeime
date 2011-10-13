@@ -55,6 +55,7 @@ public class SearchService extends Service {
 	private final String TAG = "LIME.SearchService";
 	private LimeDB dbadapter = null;
 	private SQLiteDatabase querydb = null;
+	private SQLiteDatabase updatedb = null;
 	//private LimeHanConverter hanConverter = null;
 	//private static LinkedList<Mapping> diclist = null;  
 	private static List<Mapping> scorelist = null;
@@ -98,7 +99,8 @@ public class SearchService extends Service {
 		SearchServiceImpl(Context ctx) {
 			this.ctx = ctx;	
 			mLIMEPref = new LIMEPreferenceManager(ctx);
-			
+			loadDBAdapter(); 
+			openLimeDatabase();
 		}
 		
 		public void setSelectedText(String text){
@@ -135,6 +137,9 @@ public class SearchService extends Service {
 		{			
 			if(querydb == null || !querydb.isOpen()){
 				querydb = getSqliteDb();
+			}	
+			if(updatedb == null || !updatedb.isOpen()){
+				updatedb = getSqliteDbWritable();
 			}
 		}
 		
@@ -393,7 +398,7 @@ public class SearchService extends Service {
 		private void updateScoreCache(Mapping cachedMapping){
 			if(DEBUG) Log.i(TAG, "udpateScoreCache(): code=" + cachedMapping.getCode());
 			
-			dbadapter.addScore(cachedMapping);					
+			dbadapter.addScore(updatedb, cachedMapping);					
 			// Jeremy '11,7,29 update cached here
 			if (!cachedMapping.isDictionary()){
 				String code = cachedMapping.getCode().toLowerCase();
@@ -544,17 +549,17 @@ public class SearchService extends Service {
 									LDCode = baseCode.replaceAll("[3467]", "").toLowerCase();
 									QPCode += unit2.getCode().substring(0, 1).toLowerCase();
 									if(LDCode.length()>1){
-										dbadapter.addOrUpdateMappingRecord(LDCode, baseWord);
+										dbadapter.addOrUpdateMappingRecord(updatedb, LDCode, baseWord);
 										cache.remove(cacheKey(LDCode));
 										updateSimilarCodeRelatedList(LDCode);
 									}
 									if(QPCode.length()>1){
-										dbadapter.addOrUpdateMappingRecord(QPCode, baseWord);
+										dbadapter.addOrUpdateMappingRecord(updatedb, QPCode, baseWord);
 										cache.remove(cacheKey(QPCode.toLowerCase()));
 										updateSimilarCodeRelatedList(QPCode.toLowerCase());
 									}
 								}else if(baseCode.length()>1){
-									dbadapter.addOrUpdateMappingRecord(baseCode, baseWord);
+									dbadapter.addOrUpdateMappingRecord(updatedb, baseCode, baseWord);
 									cache.remove(cacheKey(baseCode));
 									updateSimilarCodeRelatedList(baseCode);
 								}
@@ -844,6 +849,19 @@ public class SearchService extends Service {
 			return db;
 
 		}
+
+		/*
+		 * This is the method to openDB from Service
+		 */
+		public SQLiteDatabase getSqliteDbWritable(){
+			SQLiteDatabase db = null;
+			try{
+				String dbtarget = mLIMEPref.getParameterString("dbtarget");
+				db = SQLiteDatabase.openDatabase(getDBPath(dbtarget), null, SQLiteDatabase.OPEN_READWRITE);
+			}catch(Exception e){return null;}
+			return db;
+
+		}
 		
 		private String getDBPath(String dbTarget){
 			String dbLocationPrefix = (dbTarget.equals("sdcard"))
@@ -886,6 +904,9 @@ public class SearchService extends Service {
 		}
 		if(querydb != null && querydb.isOpen()){
 			querydb.close();
+		}
+		if(updatedb != null && updatedb.isOpen()){
+			updatedb.close();
 		}
 		super.onDestroy();
 	}
