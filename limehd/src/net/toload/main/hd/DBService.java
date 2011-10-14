@@ -294,6 +294,7 @@ public class DBService extends Service {
 		 */
 		public File downloadRemoteFile(String url, String backup_url, String folder, String filename){
 
+			mLIMEPref.setParameter("reload_database", true);
 			abortDownload = false;
 			remoteFileDownloading = true;
 			File target = downloadRemoteFile(url, folder, filename);
