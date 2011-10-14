@@ -134,13 +134,25 @@ public class SearchService extends Service {
 		}
 
 		private void openLimeDatabase()
-		{			
-			if(querydb == null || !querydb.isOpen()){
-				querydb = getSqliteDb();
-			}	
-			if(updatedb == null || !updatedb.isOpen()){
-				updatedb = getSqliteDbWritable();
+		{		
+			try{
+				boolean reload = mLIMEPref.getParameterBoolean("reload_database", false);
+				if(reload && querydb != null && querydb.isOpen()){
+					mLIMEPref.setParameter("reload_database", false);
+					querydb.close();
+				}
+				if(reload && updatedb != null && updatedb.isOpen()){
+					mLIMEPref.setParameter("reload_database", false);
+					updatedb.close();
+				}
+			}catch(Exception e){
 			}
+				if(querydb == null || !querydb.isOpen()){
+					querydb = getSqliteDb();
+				}	
+				if(updatedb == null || !updatedb.isOpen()){
+					updatedb = getSqliteDbWritable();
+				}
 		}
 		
 		private void loadDBAdapter()
