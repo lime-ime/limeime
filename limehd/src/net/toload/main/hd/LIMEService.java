@@ -27,8 +27,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.Vibrator;
-import android.preference.PreferenceManager;
-//import android.text.AutoText;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -72,7 +70,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
 
 /**
@@ -2803,12 +2800,16 @@ public class LIMEService extends InputMethodService implements
 			
 		if (!mEnglishOnly) {
 		
-			if (DEBUG) {
-				Log.i(TAG,"HandleCharacter():isValidLetter:"
-						+ isValidLetter(primaryCode) + " isValidDigit:"
-						+ isValidDigit(primaryCode) + " isValideSymbo:"
-						+ isValidSymbol(primaryCode) + " onIM:" + onIM);
-			}
+			if (DEBUG) 
+				Log.i(TAG,"HandleCharacter():"
+						+ "isValidLetter:"+ isValidLetter(primaryCode) 
+						+ " isValidDigit:" + isValidDigit(primaryCode) 
+						+ " isValideSymbol:" + isValidSymbol(primaryCode)
+						+ " hasSymbolMapping:" + hasSymbolMapping
+						+ " hasNumberMapping:" + hasNumberMapping
+						+ " (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals(phonetic):" + (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals("phonetic"))
+						+ " onIM:" + onIM);
+			
 			
 			if((!hasSymbolMapping)
 					&& (primaryCode==','||primaryCode=='.') &&onIM ){ // Chinese , and . processing
@@ -2817,9 +2818,11 @@ public class LIMEService extends InputMethodService implements
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
-			}else if (!hasSymbolMapping && !hasNumberMapping
-					|| (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals("phonetic")) //Jeremy '11,9,6 for et26 and hsu
-					&& isValidLetter(primaryCode) && onIM) {
+			}else if (!hasSymbolMapping && !hasNumberMapping  //Jeremy '11,10.19 fixed to bypass number key in et26 and hsu
+					&&( isValidLetter(primaryCode) 
+							|| (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals("phonetic")) ) //Jeremy '11,9,6 for et26 and hsu
+					&& onIM) {
+				//Log.i(TAG,"handlecharacter(), onIM and no number and no symbol mapping");
 				mComposing.append((char) primaryCode);
 				InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
@@ -2836,8 +2839,8 @@ public class LIMEService extends InputMethodService implements
 				misMatched = mComposing.toString();
 			} else if (hasSymbolMapping
 					&& !hasNumberMapping
-					&& (isValidLetter(primaryCode) || isValidSymbol(primaryCode))
-					|| (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals("phonetic")) //Jeremy '11,9,6 for chacha
+					&& ( isValidLetter(primaryCode) || isValidSymbol(primaryCode)
+							|| (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals("phonetic"))) //Jeremy '11,9,6 for chacha
 					&& onIM) {
 				mComposing.append((char) primaryCode);
 				InputConnection ic=getCurrentInputConnection();
@@ -2870,6 +2873,7 @@ public class LIMEService extends InputMethodService implements
 			} else {
 
 				if(onIM){
+					//Log.i(TAG,"handlecharacter(), onIM and default procedure");
 					mCandidateView.takeSelectedSuggestion();  // check here.
 					InputConnection ic=getCurrentInputConnection();
 					if(ic!=null) ic.commitText(String.valueOf((char) primaryCode),1);
