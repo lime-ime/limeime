@@ -1045,7 +1045,9 @@ public class LIMEService extends InputMethodService implements
 				}
 				break;
 			}
-		
+		case 1000: // milestone chi/eng key
+			switchChiEng();
+			break;
 		case KeyEvent.KEYCODE_SYM:	
 		case KeyEvent.KEYCODE_AT:
 			//Jeremy '11,8,22 use begintime and eventtime in event to judge long-press or not.

@@ -48,7 +48,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.Pair;
-import android.widget.Toast;
 
 /**
  * @author Art Hung
@@ -202,8 +201,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String MILESTONE3_KEY = "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p/";
 	private final static String MILESTONE3_DUALKEY_REMAP = 	";";
 	private final static String MILESTONE3_DUALKEY = 		","; 
-	private final static String MILESTONE3_BPMF_DUALKEY_REMAP = ";/";
-	private final static String MILESTONE3_BPMF_DUALKEY = 		"l.";
+	private final static String MILESTONE3_BPMF_DUALKEY_REMAP = ";/-";
+	private final static String MILESTONE3_BPMF_DUALKEY = 		"l.p";
 	private final static String MILESTONE3_BPMF_CHAR = 
 		"ㄅ|ㄆ|ㄇ|ㄈ|ㄉ|ㄊ|ㄋ|ㄌ|ˇ|ㄍ|ㄎ|ㄏ|ˋ|ㄐ|ㄑ|ㄒ|ㄓ|ㄔ|ㄕ|ㄖ|ˊ|ㄗ|ㄘ|ㄙ|˙|" +
 		"ㄧ|ㄨ|ㄩ|ㄚ|ㄛ|ㄜ|ㄝ|ㄞ|ㄟ|(ㄠ/ㄤ)|(ㄡ/ㄥ)|ㄢ|ㄣ|ㄥ";
