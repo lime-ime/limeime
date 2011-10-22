@@ -151,8 +151,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String HSU_KEY =            		"azwsxedcrfvtgbyhnujmikolpq,.";
 	private final static String HSU_KEY_REMAP_INITIAL = 	"hylnju2vbzfwe18csmra9d.xq`<>"; 
 	private final static String HSU_KEY_REMAP_FINAL =   	"hylnju6vb3fwe18csm4a9d./q`<>";  
-	private final static String HSU_DUALKEY_REMAP =		 	"gt5--,okip0;7";
-	private final static String HSU_DUALKEY = 				"vfrx/uhecsadn";
+	private final static String HSU_DUALKEY_REMAP =		 	"g8t5--,okip0;7";
+	private final static String HSU_DUALKEY = 				"vbfrx/uhecsadn";
 	private final static String HSU_CHAR_INITIAL = 	
 		"(ㄘ/ㄟ)|ㄗ|ㄠ|ㄙ|ㄨ|(ㄧ/ㄝ)|ㄉ|(ㄕ/ㄒ)|ㄖ|ㄈ|(ㄔ/ㄑ)|ㄊ|(ㄍ/ㄜ)|ㄅ|ㄚ|(ㄏ/ㄛ)|(ㄋ/ㄣ)|ㄩ|(ㄐ/ㄓ)|(ㄇ/ㄢ)|ㄞ|(ㄎ/ㄤ)|ㄡ|(ㄌ/ㄦ)|ㄆ|q|，|。";
 	private final static String HSU_CHAR_FINAL = 	
