@@ -485,6 +485,9 @@ public class DBService extends Service {
 
 		@Override
 		public void restoreDatabase() throws RemoteException {
+			
+			mLIMEPref.setParameter("reload_database", true);
+			
 			showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start)+ "", intentLIMEInitial);
 			File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
 
