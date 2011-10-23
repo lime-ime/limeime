@@ -134,7 +134,7 @@ public class SearchService extends Service {
 		}
 
 		private void openLimeDatabase()
-		{		
+		{
 			try{
 				boolean reload = mLIMEPref.getParameterBoolean("reload_database", false);
 				if(reload && querydb != null && querydb.isOpen()){
@@ -147,12 +147,14 @@ public class SearchService extends Service {
 				}
 			}catch(Exception e){
 			}
-				if(querydb == null || !querydb.isOpen()){
-					querydb = getSqliteDb();
-				}	
-				if(updatedb == null || !updatedb.isOpen()){
-					updatedb = getSqliteDbWritable();
-				}
+			if(querydb == null || !querydb.isOpen()){
+				querydb = getSqliteDb();
+				initialCache();
+			}	
+			if(updatedb == null || !updatedb.isOpen()){
+				updatedb = getSqliteDbWritable();
+				initialCache();
+			}
 		}
 		
 		private void loadDBAdapter()
@@ -220,9 +222,7 @@ public class SearchService extends Service {
 			// Check if system need to reset cache
 			
 			if(mLIMEPref.getParameterBoolean(LIME.SEARCHSRV_RESET_CACHE)){
-				cache = new ConcurrentHashMap<String, Pair<List<Mapping>,List<Mapping>>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
-				engcache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
-				keynamecache = new ConcurrentHashMap<String, String>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+				initialCache();
 				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 			}
 			
@@ -364,6 +364,13 @@ public class SearchService extends Service {
 		}
 
 		public void initial() throws RemoteException {
+			initialCache();
+		}
+		
+		/*
+		 * This method is to initial/reset the cache of im. 
+		 */
+		public void initialCache(){
 			cache = new ConcurrentHashMap<String, Pair<List<Mapping>,List<Mapping>>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 			engcache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 			keynamecache = new ConcurrentHashMap<String, String>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
