@@ -79,8 +79,7 @@
         <Key limehd:codes="78" limehd:keyLabel="N\nㄙ" />
         <Key limehd:codes="77" limehd:keyLabel="M\nㄩ" />
         <Key limehd:codes="60" limehd:keyLabel="&lt;\nㄝ" />
-        <Key limehd:codes="62" limehd:keyLabel="&gt;\nㄡ"   
-        	 limehd:popupKeyboard="@xml/popup_c_punctuation" />
+        <Key limehd:codes="62" limehd:keyLabel="&gt;\nㄡ" />
         <Key limehd:codes="63" limehd:keyLabel="\?\nㄥ" limehd:keyEdgeFlags="right"/>
     </Row>    
     

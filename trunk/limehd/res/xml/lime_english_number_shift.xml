@@ -178,8 +178,7 @@
         <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space"
                 limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
                 limehd:keyWidth="25%p" limehd:isRepeatable="true"/>
-        <Key limehd:codes="62" limehd:keyLabel="&gt;"  limehd:popupKeyboard="@xml/popup_punctuation" 
-                limehd:keyWidth="10%p"/>
+        <Key limehd:codes="62" limehd:keyLabel="&gt;"  limehd:keyWidth="10%p"/>
         <Key limehd:codes="-2"  limehd:keyLabel="@string/label_symbol_key" limehd:isModifier="true"
                  limehd:popupKeyboard="@xml/popup_template"
                 limehd:popupCharacters="_"

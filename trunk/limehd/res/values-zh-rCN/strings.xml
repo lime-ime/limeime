@@ -348,7 +348,7 @@
     <string name="l3_tab_initial_message">请点选 [预载数据库] OR [空白数据库] 键下载 LIME 数据库或点选 [还原数据库] 键由备份文件中还原</string>
     <string name="l3_initial_btn_load_empty_db">空白数据库</string>
     <string name="l3_initial_btn_load_phonetic_only_db">仅含注音数据库</string>
-    <string name="l3_initial_btn_load_preload_db">预载数据库 \n注音, 仓颉, 仓颉五代 \n快仓, 大易, 轻松　　\n行列, 行列10　　　　</string>
+    <string name="l3_initial_btn_load_preload_db">预载数据库 \n注音, 仓颉, 仓颉五代 \n快仓, 大易, 轻松　　\n 行列, 行列10　　　　</string>
     <string name="l3_initial_btn_reset_db">重置数据库</string>
     <string name="l3_initial_btn_store_to_sdcard">请问您要变更数据库的储存位置至 SDCARD 吗? 在部份机种上可能会产生效能不佳的问题。</string>
     <string name="l3_initial_btn_store_to_device">请问您要变更数据库的储存位置至装置吗? </string>
@@ -518,7 +518,10 @@
 	<string name="reset_db_note">若文字无法正确输入，建议您重置数据库并重新下载或汇入字根文件.</string>
 	
 	<string name="release_note">
-	    \n** 若文字无法正确输入，建议您重置数据库并重新下载或汇入字根文件.\n\n
+	    \n** 若文字无法正确输入，建议您重置资料库并重新下载或汇入字根档案.
+	    \n** MileStone 3 键盘修正
+	    \n** ET26 及 许式键盘修正
+	    \n** 资料汇入重置问题修正\n\n
 	
 		更新说明\n
 		http://facebook.com/limeime\n\n

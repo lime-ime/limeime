@@ -63,7 +63,7 @@
         <Key limehd:codes="78" limehd:keyLabel="N\n6⇣"/>
         <Key limehd:codes="77" limehd:keyLabel="M\n7⇣"/>
         <Key limehd:codes="60" limehd:keyLabel="&lt;\n8⇣"/>
-        <Key limehd:codes="62" limehd:keyLabel="&gt;\n9⇣"  limehd:popupKeyboard="@xml/popup_c_punctuation"   />
+        <Key limehd:codes="62" limehd:keyLabel="&gt;\n9⇣"   />
         <Key limehd:codes="63" limehd:keyLabel="\?\n0⇣" limehd:keyEdgeFlags="right"/>
     </Row>
 
