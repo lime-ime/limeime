@@ -371,7 +371,7 @@
     <string name="l3_tab_initial_message">Please initialized lime database using by downloading preloaded or blank lime database or restore from last backup.</string>
     <string name="l3_initial_btn_load_empty_db">Download empty db</string>
     <string name="l3_initial_btn_load_phonetic_only_db">Download phonetic only preloaded db</string>
-    <string name="l3_initial_btn_load_preload_db">Download full preloaded db  \n注音, 倉頡, 倉頡五代 \n快倉, 大易, 輕鬆　　\n行列, 行列10　　　　</string>
+    <string name="l3_initial_btn_load_preload_db">Download full preloaded db  \n注音, 倉頡, 倉頡五代 \n快倉, 大易, 輕鬆　　\n 行列, 行列10　　　　</string>
     <string name="l3_initial_btn_reset_db">Reset DB</string>
     <string name="l3_initial_btn_store_to_sdcard">Are you sure you want to store database on sdcard? this might result in performance issue for some devices.</string>
     <string name="l3_initial_btn_store_to_device">Are you sure you want to store database on device?</string>
@@ -551,7 +551,11 @@
 	<string name="reset_db_note">If text cannot be import please reset and download new database from the server.</string>
 	
 <string name="release_note">
-	    \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案.\n\n
+	    \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案.
+	    \n** MileStone 3 鍵盤修正
+	    \n** ET26 及 許式鍵盤修正
+	    \n** 資料匯入重置問題修正\n\n
+	    
 		更新說明\n
 		http://facebook.com/limeime\n\n
 	
