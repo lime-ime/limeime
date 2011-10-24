@@ -2653,6 +2653,9 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @param table
 	 */
 	public synchronized void loadFileV2(final String table) {
+		
+		this.DELIMITER = "";
+		
 		finish = false;
 		percentageDone = 0;
 		count = 0;
