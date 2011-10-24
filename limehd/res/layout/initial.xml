@@ -37,6 +37,12 @@
 					<Button android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px" android:layout_height="wrap_content" android:id="@+id/btnRestoreDB" android:text="@string/l3_initial_restore_database" android:padding="5px"></Button>
 				</TableRow>
 			</TableLayout>
+			<TableLayout android:layout_width="match_parent" android:id="@+id/tableLayout3" android:layout_height="wrap_content">
+				<TableRow android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/tableRow6">
+                    <Button android:layout_weight="1" android:layout_width="fill_parent" android:padding="5px" android:layout_height="wrap_content" android:layout_margin="5px" android:enabled="false"></Button>
+                    <Button android:layout_weight="1" android:layout_width="fill_parent" android:padding="5px" android:layout_height="wrap_content" android:layout_margin="5px" android:enabled="false"></Button>
+				</TableRow>
+			</TableLayout>
 		</LinearLayout>
 	</ScrollView>
 </LinearLayout>
