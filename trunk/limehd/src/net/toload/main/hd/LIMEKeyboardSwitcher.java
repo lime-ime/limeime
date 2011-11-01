@@ -459,13 +459,26 @@ public class LIMEKeyboardSwitcher {
     	}
 
     }
+
+    void setIsChinese(boolean value){
+    	mIsChinese = value;
+    }
+    
+    void setIsSymbols(boolean value){
+    	mIsSymbols = value;
+    }
     
    void toggleChinese() {
 	   mIsChinese = !mIsChinese;
-	   	if(mIsChinese)
+	   
+	   	if(mIsChinese){
+	   		
 	    	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);
-		else{
+	    	
+   		}else{
+   			
 	    	this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
+	    	
 		}
     }
     

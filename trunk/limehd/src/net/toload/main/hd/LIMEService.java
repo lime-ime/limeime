@@ -2511,6 +2511,8 @@ public class LIMEService extends InputMethodService implements
 	private void switchSymKeyboard() {
 		// Switch Keyboard between Symbol and Lime
 
+		onIM = false;
+		mEnglishOnly = true;
 		mKeyboardSwitcher.toggleSymbols();
 
 		// Update keyboard xml information
@@ -2544,7 +2546,7 @@ public class LIMEService extends InputMethodService implements
 		
 		mKeyboardSwitcher.toggleChinese();
 		mEnglishOnly = !mKeyboardSwitcher.isChinese();
-
+		
 		if (mEnglishOnly) {
 			onIM = false;
 			Toast.makeText(this, R.string.typing_mode_english,
