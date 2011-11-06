@@ -1814,7 +1814,11 @@ public class LimeDB extends SQLiteOpenHelper {
 						dualKeyRemap = CHACHA_DUALKEY_REMAP;
 					}
 					
+				}else if(tablename.equals("ez")){
+					dualKey = "123456";
+					dualKeyRemap = "-=[],\\\\";
 				}
+				
 				HashMap<String,String> reMap = new HashMap<String,String>();
 				if(DEBUG)
 					Log.i(TAG, "preProcessingForExtraQueryConditions(): dualKey="+dualKey+" dualKeyRemap="+dualKeyRemap);
@@ -1934,14 +1938,14 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 	}
 	
+	
+	
 	private String expandDualCode(String code, String keytablename){
 		
 		HashSet <String> dualCodeList = buildDualCodeList(code, keytablename);
 		String result="";
 		String validDualCodeList = "";
 	
-		
-
 		if(dualCodeList != null) {
 			SQLiteDatabase db = this.getSqliteDb(false);
 			final boolean NOCheckOnExpand = code.length() < DUALCODE_NO_CHECK_LIMIT;
@@ -1999,7 +2003,6 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(DEBUG)
 			Log.i(TAG, "expandDualCode(): result:" + result + " validDualCodeList:" + validDualCodeList);
 		return result;
-		
 		
 	}
 
