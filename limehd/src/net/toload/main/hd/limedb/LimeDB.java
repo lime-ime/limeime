@@ -1815,8 +1815,8 @@ public class LimeDB extends SQLiteOpenHelper {
 					}
 					
 				}else if(tablename.equals("ez")){
-					dualKey = "123456";
-					dualKeyRemap = "-=[],\\\\";
+					dualKey = ";123456";
+					dualKeyRemap = "'-=[],\\\\";
 				}
 				
 				HashMap<String,String> reMap = new HashMap<String,String>();
