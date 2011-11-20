@@ -55,6 +55,8 @@
     <string name="default_in_english_summary">输入法开启后先使用英文输入模式.</string>
     <string name="number_row_in_english">数字列英文键盘</string>
     <string name="number_row_in_english_summary">在英文键盘显示数字列(5列键盘)</string>
+    <string name="disable_software_keyboard">关闭软体键盘显示</string>
+    <string name="fixed_candidate_view_display">选字列固定显示</string>
     
     <string name="three_rows_remapping">3排键盘重对应</string>
     <string name="three_rows_remapping_summary">对应 1234567890-;至 qwertyuiopv.</string>
@@ -520,8 +522,9 @@
 	<string name="release_note">
 	    \n** 若文字无法正确输入，建议您重置资料库并重新下载或汇入字根档案.\n
 	    \n版本更新说明
-	    \n** 符号、英文键盘修正
-	    \n** 轻松输入法键盘修正\n\n
+	    \n** 喜好设定新增"选字列固定显示"
+	    \n** 修正选字键显示设定
+	    \n** 当使用实体键盘输入自动关闭虚拟键盘 \n\n
 	
 		LIME中文输入法Facebook粉丝专页\n
 		http://facebook.com/limeime/\n\n

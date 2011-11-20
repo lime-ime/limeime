@@ -55,6 +55,8 @@
     <string name="default_in_english_summary">輸入法開啟後先使用英文輸入模式.</string>
     <string name="number_row_in_english">數字列英文鍵盤</string>
     <string name="number_row_in_english_summary">在英文鍵盤顯示數字列(5列鍵盤)</string>
+    <string name="disable_software_keyboard">關閉軟體鍵盤顯示</string>
+    <string name="fixed_candidate_view_display">選字列固定顯示</string>
     
     <string name="three_rows_remapping">3排鍵盤重對應</string>
     <string name="three_rows_remapping_summary">對應 1234567890-;至 qwertyuiopv.</string>
@@ -520,8 +522,9 @@
 	<string name="release_note">
 	    \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案.\n
 	    \n版本更新說明
-	    \n** 符號、英文鍵盤修正
-	    \n** 輕鬆輸入法鍵盤修正\n\n
+	    \n** 喜好設定新增"選字列固定顯示"
+	    \n** 修正選字鍵顯示設定
+	    \n** 當使用實體鍵盤輸入自動關閉虛擬鍵盤 \n\n
 	
 		LIME中文輸入法Facebook粉絲專頁\n
 		http://facebook.com/limeime/\n\n

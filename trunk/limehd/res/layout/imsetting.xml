@@ -31,7 +31,7 @@
                 </TableRow>
                 <TableRow android:id="@+id/tableRow6" android:layout_height="wrap_content" android:layout_width="wrap_content">
                     <Button android:layout_weight="1" android:id="@+id/btnSetupWb" android:layout_width="fill_parent" android:padding="5px" android:text="@string/l3_manage_wb" android:layout_height="wrap_content" android:layout_margin="5px" android:enabled="false"></Button>
-                    <Button android:layout_weight="1" android:layout_width="fill_parent" android:padding="5px" android:layout_height="wrap_content" android:layout_margin="5px" android:enabled="false"></Button>
+                    <Button android:layout_weight="1" android:layout_width="fill_parent" android:padding="5px" android:layout_height="wrap_content" android:layout_margin="5px" android:enabled="false" android:text="華象直覺"></Button>
                 </TableRow>
                 <TableRow android:id="@+id/tableRow7" android:layout_width="wrap_content" android:layout_height="10pt">
                     <Button android:layout_weight="1" android:layout_width="fill_parent" android:padding="5px" android:layout_height="wrap_content" android:layout_margin="5px" android:enabled="false"></Button>

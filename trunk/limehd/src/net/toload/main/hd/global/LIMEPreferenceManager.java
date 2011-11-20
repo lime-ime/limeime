@@ -138,9 +138,26 @@ public class LIMEPreferenceManager {
 		}
 	}
 	
+	
+	
+	public boolean getFixedCandidateViewDisplay(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("fixed_candidate_view_display", false);
+	}
+
+	public boolean getDisableSoftwareKeyboard(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("disable_software_keyboard", false);
+	}
+	
 	public boolean getLearnRelatedWord(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("candidate_suggestion", true);
+	}
+	
+	public boolean getDisablePhysicalSelKeyOption(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("disable_physical_selkey_option", false);
 	}
 	
 	public boolean getEnglishPrediction(){
