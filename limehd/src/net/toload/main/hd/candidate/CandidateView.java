@@ -828,6 +828,9 @@ public class CandidateView extends View implements View.OnClickListener
         mCount =0;
         mSelectedIndex =-1;
       
+        if(mLIMEPref.getDisablePhysicalSelKeyOption()){
+        	showNumber = true;
+        }
         
         mShowNumber = showNumber && isAndroid3;
         

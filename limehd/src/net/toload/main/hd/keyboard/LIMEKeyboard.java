@@ -22,6 +22,7 @@ package net.toload.main.hd.keyboard;
 
 import net.toload.main.hd.LIMEKeyboardSwitcher;
 import net.toload.main.hd.R;
+import net.toload.main.hd.global.LIMEPreferenceManager;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
@@ -89,40 +90,40 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     	this(context, xmlLayoutResId, 0, 1 );
     }
 
-       
     public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, float keySizeScale ) {
         super(context, xmlLayoutResId, mode, keySizeScale);
         final Resources res = context.getResources();
         mContext = context;
-        mRes = res;
-        mShiftLockIcon = res.getDrawable(R.drawable.sym_keyboard_shift_locked);
-        mShiftLockPreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_shift_locked);
-        mShiftLockPreviewIcon.setBounds(0, 0, 
-                mShiftLockPreviewIcon.getIntrinsicWidth(),
-                mShiftLockPreviewIcon.getIntrinsicHeight());
-        sSpacebarVerticalCorrection = res.getDimensionPixelOffset(
-                R.dimen.spacebar_vertical_correction);
-        mSpacePreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_space);
-        //mMode = mode;
+	        mRes = res;
+	        mShiftLockIcon = res.getDrawable(R.drawable.sym_keyboard_shift_locked);
+	        mShiftLockPreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_shift_locked);
+	        mShiftLockPreviewIcon.setBounds(0, 0, 
+	                mShiftLockPreviewIcon.getIntrinsicWidth(),
+	                mShiftLockPreviewIcon.getIntrinsicHeight());
+	        sSpacebarVerticalCorrection = res.getDimensionPixelOffset(
+	                R.dimen.spacebar_vertical_correction);
+	        mSpacePreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_space);
+	        //mMode = mode;
+        
     }	
     
     @Override
     protected Key createKeyFromXml(Resources res, Row parent, int x, int y, 
             XmlResourceParser parser) {
-        Key key = new LIMEKey(res, parent, x, y, parser);
-        switch (key.codes[0]) {
-        case KEYCODE_ENTER:
-            mEnterKey = key;
-            break;
-        case KEYCODE_SPACE:
-            mSpaceKey = key;
-            break;
-        }
-        
-        // 09/Aug 2011, by redraw the key to construct the customer icon set.
-        // Getting Customer ICON SET
-        // key.icon = new CustomDrawable("A");
-        return key;
+	        Key key = new LIMEKey(res, parent, x, y, parser);
+	        switch (key.codes[0]) {
+	        case KEYCODE_ENTER:
+	            mEnterKey = key;
+	            break;
+	        case KEYCODE_SPACE:
+	            mSpaceKey = key;
+	            break;
+	        }
+	        
+	        // 09/Aug 2011, by redraw the key to construct the customer icon set.
+	        // Getting Customer ICON SET
+	        // key.icon = new CustomDrawable("A");
+	        return key;
     }
     
     public void enableShiftLock() {
