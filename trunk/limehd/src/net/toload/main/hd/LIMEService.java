@@ -87,7 +87,7 @@ public class LIMEService extends InputMethodService implements
 
 	private LIMEKeyboardView mInputView = null;
 	private CandidateViewContainer mCandidateViewContainer;
-	private CandidateView mCandidateView;
+	private CandidateView mCandidateView = null;
 	private CompletionInfo[] mCompletions;
 
 	private StringBuilder mComposing = new StringBuilder();
@@ -2334,6 +2334,7 @@ public class LIMEService extends InputMethodService implements
 	};
 	final Runnable mHideCandidateView = new Runnable() {
 		public void run() {
+			if(mCandidateView == null ) return;  // escape if mCandidateView is not created '11,11,30 Jeremy
 			if(isCandidateShown()){
 				setCandidatesViewShown(false);	
 			}else{
@@ -2410,7 +2411,8 @@ public class LIMEService extends InputMethodService implements
 	}*/
 
 	private boolean isCandidateShown(){
-		return mCandidateView.isShown();
+		if(mCandidateView==null) return false; //Jeremy '11,11,30 Fixed FC when startup, before mCandidate is created.
+		else return mCandidateView.isShown();
 	}
 	private void handleBackspace() {
 		if(DEBUG) 
