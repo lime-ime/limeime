@@ -811,6 +811,35 @@ public class LIMEService extends InputMethodService implements
 				.getMetaState(mMetaState));
 
 		InputConnection ic = getCurrentInputConnection();
+		
+		/// Jeremy '12,4,1 XPERIA Pro force translating special keys 
+		if(mLIMEPref.getPhysicalKeyboardType().equals("xperiapro")) {
+			boolean isShift = LIMEMetaKeyKeyListener.getMetaState(mMetaState,
+					LIMEMetaKeyKeyListener.META_SHIFT_ON) > 0;
+			switch(keyCode){	
+			case KeyEvent.KEYCODE_AT:
+				if(isShift) c ='/';
+				else c = '!';
+				break;
+			case KeyEvent.KEYCODE_APOSTROPHE:
+				if(isShift) c ='"';
+				else c = '\'';
+				break;
+			case KeyEvent.KEYCODE_GRAVE:
+				if(isShift) c ='~';
+				else c = '`';
+				break;
+			case KeyEvent.KEYCODE_COMMA:
+				if(isShift) c ='?';
+				else c = '.';
+				break;
+			case KeyEvent.KEYCODE_PERIOD:
+				if(isShift) c ='>';
+				else c = '@';
+				break;
+			
+			}
+		}
 
 		if (c == 0 || ic == null) {
 			return false;
@@ -1049,12 +1078,13 @@ public class LIMEService extends InputMethodService implements
 				}
 				break;
 			}
+		case KeyEvent.KEYCODE_SWITCH_CHARSET: // experia pro earth key
 		case 1000: // milestone chi/eng key
 			switchChiEng();
 			break;
 		case KeyEvent.KEYCODE_SYM:	
-		case KeyEvent.KEYCODE_AT:
-			//Jeremy '11,8,22 use begintime and eventtime in event to judge long-press or not.
+		case KeyEvent.KEYCODE_AT:		
+			//Jeremy '11,8,22 use begintime and eventtime in event to see if long-pressed or not.
 			if (//keyPressTime != 0 && 
 					!hasKeyProcessed 
 					&& event.getRepeatCount() > 0
@@ -1259,7 +1289,8 @@ public class LIMEService extends InputMethodService implements
 				//switchChiEng(); // Jeremy '11,8,15 moved to onKeyDown()
 				return true;
 			} else if (LIMEMetaKeyKeyListener.getMetaState(mMetaState,
-					LIMEMetaKeyKeyListener.META_SHIFT_ON) > 0 &&onIM) {
+					LIMEMetaKeyKeyListener.META_SHIFT_ON) > 0 &&onIM
+					&& !mLIMEPref.getPhysicalKeyboardType().equals("xperiapro")) {  // '12,4,1 Jeremy XPERIA Pro does not use this key as @
 				// alt-@ is conflict with symbol input thus altered to shift-@ Jeremy '11,8,15
 				// alt-@ switch to next active keyboard.
 				//nextActiveKeyboard(true);
@@ -1655,16 +1686,6 @@ public class LIMEService extends InputMethodService implements
 			handleOptions();
 		} else if( primaryCode == LIMEKeyboardView.KEYCODE_SPACE_LONGPRESS) {
 			showKeyboardPicker();
-//		} else if (primaryCode == LIMEKeyboardView.KEYCODE_SHIFT_LONGPRESS) {
-//			if (DEBUG) {
-//				Log.i("OnKey", "KEYCODE_SHIFT_LONGPRESS");
-//			}
-//			if (mCapsLock) {
-//				handleShift();
-//			} else {
-//				toggleCapsLock();
-//			}
-
 		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE	&& mInputView != null) {
 			switchKeyboard(primaryCode);
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_NEXT_IM){
@@ -1698,12 +1719,6 @@ public class LIMEService extends InputMethodService implements
 					sendKeyChar((char)primaryCode);
 				}
 				
-				/*else{
-					clearComposing();
-					if(mLIMEPref.getFixedCandidateViewDisplay() && mComposing.length() ==0 ){
-						sendKeyChar((char)primaryCode);
-					}
-				}*/
 			}else{
 				 sendKeyChar((char)primaryCode);
 			}
@@ -2129,7 +2144,7 @@ public class LIMEService extends InputMethodService implements
 				if (SearchSrv.getTablename() != null ) {
 						
 					if (keyString != null && !keyString.equals("") ){//&& keyString.length() < 7) { Jeremy '11,8,30 move the limit to limedb					
-						keynameString = SearchSrv.keyToKeyname(keyString.toLowerCase());
+						keynameString = SearchSrv.keyToKeyname(keyString); //.toLowerCase()); moved to LimeDB
 							if (mCandidateView != null 
 									&& !keynameString.toUpperCase().equals(keyString.toUpperCase())
 									//&& !keynameString.equals("")
@@ -2751,8 +2766,10 @@ public class LIMEService extends InputMethodService implements
 
 	private boolean handleSelkey(int primaryCode, int[] keyCodes){
 		
+		// Jeremy '12,4,1 only do selkey on starndard keyboard
+		
 		// Check if disable physical key option is open
-		if(disable_physical_selection && isPhysicalKeyPressed){
+		if((disable_physical_selection && isPhysicalKeyPressed) || !mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")){
 			return false;
 		}
 		
@@ -2797,7 +2814,7 @@ public class LIMEService extends InputMethodService implements
 	private void handleCharacter(int primaryCode, int[] keyCodes)  {
 		//Jeremy '11,6,9 Cleaned code!!
 		if(DEBUG)
-			Log.i(TAG,"handleCharacter():primaryCode:" + primaryCode);//+ "; keyCodes[0]:"+keyCodes[0]);
+			Log.i(TAG,"handleCharacter():primaryCode:" + primaryCode ); //+ "; keyCodes[0]:"+keyCodes[0]);
 
 		// Adjust metakeystate on printed key pressed.
 		if(isPhysicalKeyPressed)

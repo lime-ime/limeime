@@ -111,9 +111,10 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String DESIREZ_ETEN_DUALKEY_REMAP = 	"7634f0p;thg/-h"; // remapped from "1234 7890;-/='";
 	private final static String CHACHA_ETEN_DUALKEY 	= 		",uknljvcrx1?"; // remapped from "werszxchglb?" 
 	private final static String CHACHA_ETEN_DUALKEY_REMAP = 	"7634f0p/g-hy"; // remapped from "1234789-/=';";
-	
-	private final static String MILESTONE_ETEN_DUALKEY 	= 		"o,ukm9iq5aec"; //remapped from "qweruiop,mvh";
-	private final static String MILESTONE_ETEN_DUALKEY_REMAP = 	"7634f0p;th/-";
+	private final static String XPERIAPRO_ETEN_DUALKEY 	= 		"o,ukm9iqa52z"; // remapped from "qweruiopm,df";
+	private final static String XPERIAPRO_ETEN_DUALKEY_REMAP = 	"7634f0p;th/-"; // remapped from "12347890;'=-";
+	private final static String MILESTONE_ETEN_DUALKEY 	= 		"o,ukm9iq5aec"; // remapped from "qweruiop,mvh";
+	private final static String MILESTONE_ETEN_DUALKEY_REMAP = 	"7634f0p;th/-"; // remapped from "12347890;'=-";
 	private final static String MILESTONE2_ETEN_DUALKEY 	= 		"o,ukm9iq5aer"; //remapped from "qweruiop,mvg";
 	private final static String MILESTONE2_ETEN_DUALKEY_REMAP = 	"7634f0p;th/-";
 	private final static String MILESTONE3_ETEN_DUALKEY 	= 		"5aew"; // ",mvt"
@@ -181,7 +182,14 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String CHACHA_BPMF_CHAR = 
 		"(ㄅ/ㄆ)|(ㄇ/ㄈ)|ㄌ|ㄉ|(ㄊ/ㄋ)|(ㄏ/ㄒ)|(ㄍ/ㄐ)|(ㄎ/ㄑ)|ㄖ|ㄓ|(ㄔ/ㄕ)|ˇ|ㄗ|(ㄘ/ㄙ)|ˋ|ㄧ|(ㄨ/ㄩ)|(ˊ/˙)" +
 		"|(ㄚ/ㄛ)|(ㄜ/ㄝ)|ㄡ|ㄞ|(ㄟ/ㄠ)|ㄥ|ㄢ|(ㄣ/ㄤ)|ㄦ|,|.";
-	
+		
+	private final static String XPERIAPRO_KEY =            			"qazZwsxXedcCrfvVtgbByhnNujmMik`~ol'\"pP!/@";
+	private final static String XPERIAPRO_BPMF_KEY_REMAP = 			"1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-";
+	//private final static String XPERIAPRO_BPMF_DUALKEY_REMAP = 		"";
+	//private final static String XPERIAPRO_BPMF_DUALKEY = 			"";
+	private final static String XPERIAPRO_DUALKEY_REMAP = 			"1234567890;'=-";
+	private final static String XPERIAPRO_DUALKEY = 				"qwertyuiopm,df";
+	//private final static String XPERIAPRO_BPMF_CHAR =; // Use BPMF_CHAR 
 	
 	
 	private final static String MILESTONE_DUALKEY_REMAP = 	"1234567890;'=-";
@@ -1314,7 +1322,9 @@ public class LimeDB extends SQLiteOpenHelper {
 						}else if(keyboardtype.equals("chacha") && isPhysicalKeyboardPressed){
 							keyString = CHACHA_KEY;
 							keynameString = CHACHA_BPMF_CHAR;
-						
+						}else if(keyboardtype.equals("xperiapro") && isPhysicalKeyboardPressed){
+							keyString = XPERIAPRO_KEY;
+							keynameString = BPMF_CHAR;
 						}else{
 							keyString = BPMF_KEY;
 							keynameString = BPMF_CHAR;
@@ -1520,6 +1530,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		//Two-steps qeury code pre-processing. Jeremy '11,6,15
 		// Step.1 Code re-mapping.  
 		code = preProcessingRemappingCode(code);
+		code = code.toLowerCase(); //Jeremy '12,4,1 moved from SearchService.query();
 		// Step.2 Build extra query conditions. (e.g. 3row remap)
 		String extraConditions = preProcessingForExtraQueryConditions(code);
 		//Jeremy '11,6,11 seperated suggestions sorting option for physical keyboard
@@ -1626,6 +1637,12 @@ public class LimeDB extends SQLiteOpenHelper {
 						//Desire Z phonetic keybaord
 						keyString = CHACHA_KEY;
 						keyRemapString = CHACHA_BPMF_KEY_REMAP;
+				}else if(isPhysicalKeyboardPressed 
+						&& tablename.equals("phonetic") && keyboardtype.equals("xperiapro")){
+						//XPERIA PRO phonetic keybaord
+						keyString = XPERIAPRO_KEY;
+						keyRemapString = XPERIAPRO_BPMF_KEY_REMAP;
+				
 				}else if(!isPhysicalKeyboardPressed){
 					if(tablename.equals("dayi") || tablename.equals("ez")
 						  ||tablename.equals("phonetic")&&phonetickeyboardtype.equals("standard") ){
@@ -1813,7 +1830,18 @@ public class LimeDB extends SQLiteOpenHelper {
 						dualKey = CHACHA_DUALKEY;
 						dualKeyRemap = CHACHA_DUALKEY_REMAP;
 					}
-					
+				}else if(keyboardtype.equals("xperiapro") && isPhysicalKeyboardPressed ) {  //Jeremy '12,4,1
+					if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("eten")){
+						dualKey = XPERIAPRO_ETEN_DUALKEY;
+						dualKeyRemap = XPERIAPRO_ETEN_DUALKEY_REMAP;
+					}else if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("standard")){
+						// no dual key here
+						dualKey = "";
+						dualKeyRemap = "";
+					}else{
+						dualKey = XPERIAPRO_DUALKEY;
+						dualKeyRemap = XPERIAPRO_DUALKEY_REMAP;
+					}
 				}else if(tablename.equals("ez")){
 					dualKey = ";123456";
 					dualKeyRemap = "'-=[],\\\\";
@@ -1928,10 +1956,8 @@ public class LimeDB extends SQLiteOpenHelper {
 			}
 		}
 
-		//if(dualCodeList.size()==1)
-		//	return null;
-		//else
-			return dualCodeList;
+		
+		return dualCodeList;
 			
 		
 		

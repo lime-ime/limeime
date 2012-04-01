@@ -239,7 +239,7 @@ public class SearchService extends Service {
 					
 				Mapping temp = new Mapping();
 				temp.setWord(code);
-				code = code.toLowerCase();
+				//code = code.toLowerCase();  //Jeremy '12,4,1 moved to LimeDB.getMapping after remapping For XPERIA PRO BPMF 
 				
 				temp.setCode(code);
 				result.add(temp);
