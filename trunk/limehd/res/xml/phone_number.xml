@@ -33,11 +33,12 @@
         <Key limehd:codes="49" limehd:keyLabel="1"/>
         <Key limehd:codes="50" limehd:keyLabel="2"/>
         <Key limehd:codes="51" limehd:keyLabel="3"/>
-        <Key limehd:codes="45" limehd:keyLabel="-" limehd:keyEdgeFlags="right"/>
+        <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true" limehd:isRepeatable="true"
+     						   limehd:keyEdgeFlags="right"/>
     </Row>
     
     <Row>
-        <Key limehd:codes="42" limehd:keyLabel="*" limehd:keyEdgeFlags="left"/>
+    	 <Key limehd:codes="45" limehd:keyLabel="-" limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="52" limehd:keyLabel="4"/>
         <Key limehd:codes="53" limehd:keyLabel="5"/>
         <Key limehd:codes="54" limehd:keyLabel="6"/>
@@ -55,10 +56,11 @@
     
     <Row limehd:rowEdgeFlags="bottom">
         <Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true" limehd:keyEdgeFlags="left"/>
-        <Key limehd:codes="44" limehd:keyLabel=","/>
+        <Key limehd:codes="42" limehd:keyLabel="*"/>
         <Key limehd:codes="48" limehd:keyLabel="0"/>
         <Key limehd:codes="35" limehd:keyLabel="\#"/>
-        <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true"  limehd:keyEdgeFlags="right" limehd:isRepeatable="true"/>
+        <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true"
+         limehd:keyEdgeFlags="right"/>
     </Row>
     
     
