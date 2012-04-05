@@ -507,14 +507,6 @@ public class CandidateView extends View implements View.OnClickListener
     		mComposingTextPopup.setBackgroundDrawable(null);
     	}
 
-    /*	if(cPaint == null){
-    		cPaint = new Paint();
-    		cPaint.setColor(mColorNormal);
-    		cPaint.setAntiAlias(true);
-    		cPaint.setTextSize(mContext.getResources().getDimensionPixelSize(R.dimen.composing_text_size));
-    		cPaint.setStrokeWidth(0);
-    	}*/
-    	
     	
         if (composingText!=null ) {	
         	mComposingTextPopup.setContentView(mComposingTextView);
@@ -526,10 +518,8 @@ public class CandidateView extends View implements View.OnClickListener
         	return;
     	mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
     			MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-    	//int wordWidth = (int) (cPaint.measureText(composingText, 0, composingText.length()));
     	
-    		//wordWidth
-    		//+ mComposingTextView.getPaddingLeft() + mComposingTextView.getPaddingRight();
+    	
     	final int popupWidth =  mComposingTextView.getMeasuredWidth();
     	final int popupHeight = mComposingTextView.getMeasuredHeight();
 
@@ -544,16 +534,18 @@ public class CandidateView extends View implements View.OnClickListener
     	// Show popup windows at the location of cursor  Jeremy '11,7,25
     	// Rely on onCursorUpdate() of inputmethod service, which is not implemented on standard android 
     	// Working on htc implementations
-    	if(offsetInWindow[1] == 0 && cursorRect != null){
+    	// Not working on htc ics 4.0. removed by jeremy '12,4,3
+    	/*
+    	if( offsetInWindow[1] == 0 && cursorRect != null){
     		if(DEBUG) 
     			Log.i(TAG, "doUpdateComposing(): candidateview offsetInWindow x:" 
     					+offsetInWindow[0] 
     					+ ", y:" +offsetInWindow[1]
     				    + ", cursor.top=" + cursorRect.top
     				    + ", cursor.left=" + cursorRect.left);
-    		mPopupComposingX = cursorRect.left;
     		int [] offsetOnScreen = new int[2];
     		this.getLocationOnScreen(offsetOnScreen);
+    		mPopupComposingX =  cursorRect.right;
     		mPopupComposingY -= offsetOnScreen[1]- cursorRect.top -  popupHeight;
     		if(mPopupComposingY > -popupHeight){
     			mPopupComposingY -= 2* popupHeight;
@@ -562,11 +554,12 @@ public class CandidateView extends View implements View.OnClickListener
     			mPopupComposingY= -popupHeight;
 
     		}
-    		if(DEBUG) Log.i(TAG, "doUpdateComposing(): candidateview offsetOnScreen x:" 
+    		if(DEBUG) 
+    			Log.i(TAG, "doUpdateComposing(): candidateview offsetOnScreen x:" 
     				+offsetOnScreen[0] + ". y:" +offsetOnScreen[1]);
-    	}else{
+    	}else{*/
     		mPopupComposingY -= popupHeight;
-    	}
+    	//}
 
     	if(DEBUG) 
     		Log.i(TAG, "doUpdateComposing():mPopupComposingX:" 

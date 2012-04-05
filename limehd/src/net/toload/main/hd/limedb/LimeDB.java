@@ -187,8 +187,8 @@ public class LimeDB extends SQLiteOpenHelper {
 	private final static String XPERIAPRO_BPMF_KEY_REMAP = 			"1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-";
 	//private final static String XPERIAPRO_BPMF_DUALKEY_REMAP = 		"";
 	//private final static String XPERIAPRO_BPMF_DUALKEY = 			"";
-	private final static String XPERIAPRO_DUALKEY_REMAP = 			"1234567890;'=-";
-	private final static String XPERIAPRO_DUALKEY = 				"qwertyuiopm,df";
+	private final static String XPERIAPRO_DUALKEY_REMAP = 			"1234567890;,=-";
+	private final static String XPERIAPRO_DUALKEY = 				"qwertyuiopm.df";
 	//private final static String XPERIAPRO_BPMF_CHAR =; // Use BPMF_CHAR 
 	
 	
@@ -882,7 +882,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		db.close();
 	}
 
-	public synchronized void addOrUpdateUserdictRecord(String pword, String cword){
+	public synchronized void addOrUpdateUserdictRecord(SQLiteDatabase db, String pword, String cword){
+		// Jermy '12,4,5 ad paprameter db. db is open and closed in searchservice
 		// Jeremy '11,6,12
 		// Return if not learing related words and cword is not null (recording word frequency in IM relatedlist field)
 		if(!mLIMEPref.getLearnRelatedWord() && cword!=null) return;
@@ -894,7 +895,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		
 		Mapping munit = this.isUserDictExist(pword , cword);
 		
-		SQLiteDatabase db = this.getSqliteDb(false);
+		//SQLiteDatabase db = this.getSqliteDb(false);
 		
 		ContentValues cv = new ContentValues();
 		try {
@@ -915,10 +916,10 @@ public class LimeDB extends SQLiteOpenHelper {
 			  		Log.i(TAG, "addOrUpdateUserdictRecord():update score on existing record; score:"+score);
 			}
 		} catch (Exception e) {
-			db.close();
+			//db.close();
 			e.printStackTrace();
 		}
-		db.close();
+		//db.close();
 
 	}
 	/**
@@ -1532,7 +1533,7 @@ public class LimeDB extends SQLiteOpenHelper {
 		code = preProcessingRemappingCode(code);
 		code = code.toLowerCase(); //Jeremy '12,4,1 moved from SearchService.query();
 		// Step.2 Build extra query conditions. (e.g. 3row remap)
-		String extraConditions = preProcessingForExtraQueryConditions(code);
+		String extraConditions = preProcessingForExtraQueryConditions(querydb, code);
 		//Jeremy '11,6,11 seperated suggestions sorting option for physical keyboard
 	
 		try{
@@ -1655,6 +1656,9 @@ public class LimeDB extends SQLiteOpenHelper {
 					
 				}
 				
+				if(DEBUG) 
+					Log.i(TAG, "preProcessingRemappingCode(): keyString=\"" + keyString +"\";keyRemapString=\"" + keyRemapString +"\"" );
+
 				
 				if(!keyString.equals("")){
 					HashMap<String,String> reMap = new HashMap<String,String>();
@@ -1751,8 +1755,8 @@ public class LimeDB extends SQLiteOpenHelper {
 		}else
 			return "";
 	}
-	
-	private String preProcessingForExtraQueryConditions(String code){
+	//Jeremy '12,4,5 add db parameter because db open/closed is handled in searchservice now.
+	private String preProcessingForExtraQueryConditions(SQLiteDatabase db, String code){
 		if(DEBUG) 
 			Log.i(TAG, "preProcessingForExtraQueryConditions(): code="+code);
 		
@@ -1884,7 +1888,7 @@ public class LimeDB extends SQLiteOpenHelper {
 					|| !code.equalsIgnoreCase(lastCode) // '11,8,18 Jeremy
 					||(tablename.equals("phonetic") && code.matches(".+[ 3467].+") ) 
 				){
-				return expandDualCode(code, remaptable);
+				return expandDualCode(db, code, remaptable);
 			}
 		}
 		return "";
@@ -1966,14 +1970,14 @@ public class LimeDB extends SQLiteOpenHelper {
 	
 	
 	
-	private String expandDualCode(String code, String keytablename){
+	private String expandDualCode(SQLiteDatabase db, String code, String keytablename){
 		
 		HashSet <String> dualCodeList = buildDualCodeList(code, keytablename);
 		String result="";
 		String validDualCodeList = "";
 	
 		if(dualCodeList != null) {
-			SQLiteDatabase db = this.getSqliteDb(false);
+			//SQLiteDatabase db = this.getSqliteDb(false);
 			final boolean NOCheckOnExpand = code.length() < DUALCODE_NO_CHECK_LIMIT;
 			String codeCol = FIELD_CODE;
 			final boolean doCode3r = tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", false);
@@ -2018,7 +2022,7 @@ public class LimeDB extends SQLiteOpenHelper {
 						
 				}
 			}
-			db.close();
+			//db.close();
 			if(validDualCodeList.equals(""))
 				lastValidDualCodeList = null;
 			else

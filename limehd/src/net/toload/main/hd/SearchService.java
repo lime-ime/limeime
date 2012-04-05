@@ -527,7 +527,7 @@ public class SearchService extends Service {
 					    		&& unit2.getId() !=null
 					    		&& unit2.getWord() != null && !unit2.getWord().equals("")
 					    	) {
-								dbadapter.addOrUpdateUserdictRecord(unit.getWord(),unit2.getWord());
+								dbadapter.addOrUpdateUserdictRecord(updatedb, unit.getWord(),unit2.getWord());
 							}
 						}
 					}
