@@ -70,8 +70,8 @@ public class SearchSrvTest extends ServiceTestCase<SearchService> {
 		buildKeyMap();
 		
 		//Testing parameters.---------------
-		int limit = 10000;   //times performing random queries
-		long timelimit = 250;// Assert the query time smaller than this time spec.
+		int limit = 5;   //times performing random queries
+		long timelimit = 5000;// Assert the query time smaller than this time spec.
 		boolean getFullRecords = false; 
 		
 		HashSet<String> duplityCheck = new HashSet<String>();

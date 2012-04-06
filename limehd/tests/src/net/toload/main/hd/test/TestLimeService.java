@@ -42,6 +42,8 @@ public class TestLimeService extends ServiceTestCase<LIMEService> {
 	            startService(intent);
 	            LIMEService Serv=getService();
 	            assertNotNull(Serv);
+	        	SystemClock.sleep(1000);
+
 	            
 	            Serv.onCreateInputView();
 	            Serv.onCreateCandidatesView();
@@ -52,9 +54,9 @@ public class TestLimeService extends ServiceTestCase<LIMEService> {
 				SystemClock.sleep(1000);
 
 				//Testing parameters--------------------------------
-				boolean doRandomTest = false;
-				int radomIterations = 100;
-				String[] testCodes = {"m", "u","vu","ru", "5", "xu", "zj"};
+				boolean doRandomTest = true;
+				int radomIterations = 10;
+				String[] testCodes = {"m", "eeeeeeeeeeee"};
 
 				Debug.startMethodTracing("LimeService");
 				if(doRandomTest){
