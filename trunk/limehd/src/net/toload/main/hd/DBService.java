@@ -101,7 +101,7 @@ public class DBService extends Service {
 
 			showNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading)+ "", intentLIMEMappingLoading);
 			db.loadFileV2(tablename);
-			db.close();
+			//db.close();
 
 			// Reset for SearchSrv
 			mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);

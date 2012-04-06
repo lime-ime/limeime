@@ -893,12 +893,13 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(DEBUG) 
 			Log.i(TAG, "addOrUpdateUserdictRecord(): pword:"+pword+" cword:"+cword + "dictotoal:"+dictotal);
 		
-		Mapping munit = this.isUserDictExist(pword , cword);
 		
 		//SQLiteDatabase db = this.getSqliteDb(false);
 		
 		ContentValues cv = new ContentValues();
 		try {
+			Mapping munit = this.isUserDictExistOnDB(db, pword , cword);
+			
 			if (munit == null) {
 				cv.put(FIELD_DIC_pword, pword);
 				cv.put(FIELD_DIC_cword, cword);
@@ -916,10 +917,9 @@ public class LimeDB extends SQLiteOpenHelper {
 			  		Log.i(TAG, "addOrUpdateUserdictRecord():update score on existing record; score:"+score);
 			}
 		} catch (Exception e) {
-			//db.close();
 			e.printStackTrace();
 		}
-		//db.close();
+
 
 	}
 	/**
@@ -965,9 +965,10 @@ public class LimeDB extends SQLiteOpenHelper {
 		if(DEBUG)
 				Log.i(TAG, "addOrUpdateMappingRecord(), code = " + code + ". word=" + word  );
 		
-		Mapping munit = isMappingExist(code, word);
-		ContentValues cv = new ContentValues();
 		try {
+			Mapping munit = isMappingExistOnDB(udpatedb, code, word);
+			ContentValues cv = new ContentValues();
+			
 			if(munit==null){
 				if (code.length()>0 && word.length()>0) {
 					cv.put(FIELD_CODE, code);
@@ -1014,9 +1015,10 @@ public class LimeDB extends SQLiteOpenHelper {
 //			
 //			}else 
 		//Jeremy '11,9,8 query highest score first.  Erase relatedlist if new score is not highest.
-		int highestScore = getHighestScore(srcunit.getCode());
-		int newScore = srcunit.getScore() + 1;
 		try {
+			int highestScore = getHighestScoreOnDB(updatedb, srcunit.getCode());
+			int newScore = srcunit.getScore() + 1;
+			
 			if (srcunit != null && //srcunit.getId() != null &&
 					srcunit.getWord() != null  &&
 					!srcunit.getWord().trim().equals("") ) {
@@ -1114,10 +1116,10 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * 
 	 * @param code
 	 */
-	public synchronized List<Mapping> updateRelatedList(String code){
+	public synchronized List<Mapping> updateRelatedList(SQLiteDatabase db, String code){
 		// Jeremy '11,7,31  rebuild relatedlist by query from table directly
 		// Update relatedlist in IM table now.
-		SQLiteDatabase db = this.getSqliteDb(false);
+		//SQLiteDatabase db = this.getSqliteDb(false);
 		LinkedList<Mapping> scorelist=null;
 		try {
 			scorelist = updateRelatedListOnDB(db, tablename, code);
@@ -1125,10 +1127,11 @@ public class LimeDB extends SQLiteOpenHelper {
 			e.printStackTrace();
 		}
 		
-		db.close();
+		//db.close();
 		return scorelist;
 	}
-
+	
+	
 	private LinkedList<Mapping> updateRelatedListOnDB(SQLiteDatabase db, String table, String code) {
 		String escapedCode = code.replaceAll("'", "''"); //Jeremy '11,9,10 escape '
 		
@@ -3206,23 +3209,14 @@ public class LimeDB extends SQLiteOpenHelper {
 	 * @return
 	 */
 	public int getHighestScore(String code) {
+		
+		SQLiteDatabase db = this.getSqliteDb(true);
+		
 		int highestScore=0;
 		if (code != null && code.trim().length()>0){
-			SQLiteDatabase db = this.getSqliteDb(true);
+			
 			try {
-				// Process the escape characters of query
-				code = code.replaceAll("'", "''");
-				Cursor cursor = db.query(tablename, null, FIELD_CODE + " = '"
-							+ code + "'" , null, null, null, FIELD_SCORE + " DESC", null);
-				
-				if (cursor.moveToFirst()) {
-					int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
-					highestScore = cursor.getInt(scoreColumn);
-				} 
-				if (cursor != null) {
-					cursor.deactivate();
-					cursor.close();
-				}
+				highestScore = getHighestScoreOnDB(db, code);
 				
 				db.close();
 			} catch (Exception e) {
@@ -3232,6 +3226,36 @@ public class LimeDB extends SQLiteOpenHelper {
 		}
 		return highestScore;
 		
+	}
+	
+	/**
+	 * Jeremy '12,4,6 core of getHightestScore()
+	 * @param code
+	 * @return
+	 */
+	public int getHighestScoreOnDB(SQLiteDatabase db, String code) {
+		
+		
+		int highestScore=0;
+		if (code != null && code.trim().length()>0){
+			
+			
+			// Process the escape characters of query
+			code = code.replaceAll("'", "''");
+			Cursor cursor = db.query(tablename, null, FIELD_CODE + " = '"
+						+ code + "'" , null, null, null, FIELD_SCORE + " DESC", null);
+			
+			if (cursor.moveToFirst()) {
+				int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
+				highestScore = cursor.getInt(scoreColumn);
+			} 
+			if (cursor != null) {
+				cursor.deactivate();
+				cursor.close();
+			}
+			
+		}
+		return highestScore;
 	}
 	
 	/**
@@ -3272,48 +3296,65 @@ public class LimeDB extends SQLiteOpenHelper {
 	public Mapping isUserDictExist(String pword, String cword) {
 
 		Mapping munit =null;
-		if (pword != null && !pword.trim().equals("")){
-			SQLiteDatabase db = this.getSqliteDb(true);
-			try {
-				Cursor cursor = null;
-				
-				if(cword==null || cword.trim().equals("")){
-					cursor = db.query("related", null, FIELD_DIC_pword + " = '"
-							+ pword + "'" + " AND " + FIELD_DIC_cword + " IS NULL"
-							, null, null, null, null, null);
-				}else{
-					cursor = db.query("related", null, FIELD_DIC_pword + " = '"
-						+ pword + "'" + " AND " + FIELD_DIC_cword + " = '"
-						+ cword + "'", null, null, null, null, null);
-				}
-				
-				if (cursor.moveToFirst()) {
-					int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
-					int cwordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
-					int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
-					int idColumn = cursor.getColumnIndex(FIELD_ID);
-					
-					munit = new Mapping();
-						munit.setId(cursor.getString(idColumn));
-						munit.setPword(cursor.getString(pwordColumn));
-						munit.setWord(cursor.getString(cwordColumn));
-						munit.setScore(cursor.getInt(scoreColumn));
-						munit.setDictionary(true);
-					
-				} 
-				if (cursor != null) {
-					cursor.deactivate();
-					cursor.close();
-				}
-				db.close();
-			} catch (Exception e) {
-				db.close();
-				e.printStackTrace();
-			}
+
+		SQLiteDatabase db = this.getSqliteDb(true);
+		try {
+			munit = isUserDictExistOnDB(db, pword, cword);
+			db.close();
+		} catch (Exception e) {
+			db.close();
+			e.printStackTrace();
 		}
+
 		return munit;
 	}
 	
+	/**
+	 * Jeremy '12/4/16 core of isUserDictExist()
+	 * 
+	 * @param pword
+	 * @param cword
+	 * @return
+	 */
+	public Mapping isUserDictExistOnDB(SQLiteDatabase db, String pword, String cword) {
+
+		Mapping munit =null;
+		if (pword != null && !pword.trim().equals("")){
+			Cursor cursor = null;
+
+			if(cword==null || cword.trim().equals("")){
+				cursor = db.query("related", null, FIELD_DIC_pword + " = '"
+						+ pword + "'" + " AND " + FIELD_DIC_cword + " IS NULL"
+						, null, null, null, null, null);
+			}else{
+				cursor = db.query("related", null, FIELD_DIC_pword + " = '"
+						+ pword + "'" + " AND " + FIELD_DIC_cword + " = '"
+						+ cword + "'", null, null, null, null, null);
+			}
+
+			if (cursor.moveToFirst()) {
+				int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
+				int cwordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
+				int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
+				int idColumn = cursor.getColumnIndex(FIELD_ID);
+
+				munit = new Mapping();
+				munit.setId(cursor.getString(idColumn));
+				munit.setPword(cursor.getString(pwordColumn));
+				munit.setWord(cursor.getString(cwordColumn));
+				munit.setScore(cursor.getInt(scoreColumn));
+				munit.setDictionary(true);
+
+			} 
+			if (cursor != null) {
+				cursor.deactivate();
+				cursor.close();
+			}
+
+
+		}
+		return munit;
+	}
 
 	/**
 	 * @param srcunit

@@ -3325,6 +3325,8 @@ public class LIMEService extends InputMethodService implements
 		if(DEBUG) Log.i(TAG, "onUpdateCursor(): Top:" 
 				+ newCursor.top + ". Right:" + newCursor.right
 				+ ". bottom:" + newCursor.bottom + ". left:" + newCursor.left);
+		
+		
 		if(mCandidateView!=null)
 			mCandidateView.onUpdateCursor(newCursor);
 		super.onUpdateCursor(newCursor);

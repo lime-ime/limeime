@@ -54,8 +54,11 @@ public class SearchService extends Service {
 	private final boolean DEBUG = false;
 	private final String TAG = "LIME.SearchService";
 	private LimeDB dbadapter = null;
-	private SQLiteDatabase querydb = null;
-	private SQLiteDatabase updatedb = null;
+	//Jeremy '12,4,6 Combine updatedb and quierydb into db, 
+	//	since query always following with userdict and related learning and dual db connections cause exceptions.
+	//private SQLiteDatabase db = null;
+	//private SQLiteDatabase db = null;
+	private SQLiteDatabase db = null;
 	//private LimeHanConverter hanConverter = null;
 	//private static LinkedList<Mapping> diclist = null;  
 	private static List<Mapping> scorelist = null;
@@ -126,6 +129,8 @@ public class SearchService extends Service {
 		}
 		
 		public void setTablename(String table, boolean numberMapping, boolean symbolMapping){
+			if(DEBUG)
+				Log.i(TAG,"SearchService.setTablename()");
 			loadDBAdapter(); openLimeDatabase();
 			dbadapter.setTablename(table);
 			tablename = table;
@@ -135,30 +140,43 @@ public class SearchService extends Service {
 
 		private void openLimeDatabase()
 		{
+			boolean reload = mLIMEPref.getParameterBoolean("reload_database", false);
+			
+			if(DEBUG) {
+				Log.i(TAG,"SearchService:openLimeDatabase(), reload = " + reload );
+				if(db != null)
+					Log.i(TAG, "db.isOpen()" + db.isOpen());
+			}
+	
+			
 			try{
-				boolean reload = mLIMEPref.getParameterBoolean("reload_database", false);
-				if(reload && querydb != null && querydb.isOpen()){
+				
+				if(reload && db != null && db.isOpen()){
 					mLIMEPref.setParameter("reload_database", false);
-					querydb.close();
+					db.close();
 				}
-				if(reload && updatedb != null && updatedb.isOpen()){
-					mLIMEPref.setParameter("reload_database", false);
-					updatedb.close();
-				}
+				//if(reload && db != null && db.isOpen()){
+				//	mLIMEPref.setParameter("reload_database", false);
+				//	db.close();
+				//}
 			}catch(Exception e){
 			}
-			if(querydb == null || !querydb.isOpen()){
-				querydb = getSqliteDb();
-				initialCache();
-			}	
-			if(updatedb == null || !updatedb.isOpen()){
-				updatedb = getSqliteDbWritable();
+			//if(db == null || !db.isOpen()){
+					
+			//	db = getSqliteDb();
+			//	initialCache();
+			//}	
+			if(db == null || !db.isOpen()){
+				
+				db = getSqliteDbWritable();
 				initialCache();
 			}
 		}
 		
 		private void loadDBAdapter()
 		{			
+			if(DEBUG)
+				Log.i(TAG,"SearchService:loadDBAdapter()");
 			if(dbadapter == null){
 				dbadapter = new LimeDB(ctx);
 			}
@@ -168,7 +186,7 @@ public class SearchService extends Service {
 		//-----------------------------------------------------------
 		public List<?> queryUserDic(String word) throws RemoteException {
 			loadDBAdapter(); openLimeDatabase();
-			List<?> result = dbadapter.queryUserDict(querydb, word);
+			List<?> result = dbadapter.queryUserDict(db, word);
 			return result;
 		}
 		//-----------------------------------------------------------
@@ -184,7 +202,7 @@ public class SearchService extends Service {
 			loadDBAdapter(); openLimeDatabase();
 			Thread queryThread = new Thread(){
 				public void run() {
-					String result = dbadapter.getRMapping(querydb, word);
+					String result = dbadapter.getRMapping(db, word);
 					if(result!=null && !result.equals("")){
 						displayNotificationMessage(result);
 					}
@@ -265,7 +283,7 @@ public class SearchService extends Service {
 						// 25/Jul/2011 by Art
 						// Just ignore error when something wrong with the result set
 						try{
-							cacheTemp = dbadapter.getMapping(querydb, code, !isPhysicalKeyboardPressed, getAllRecords);
+							cacheTemp = dbadapter.getMapping(db, code, !isPhysicalKeyboardPressed, getAllRecords);
 							cache.put(cacheKey, cacheTemp);
 						}catch(SQLiteException ne){
 							dbadapter.forceUpgrade();
@@ -289,7 +307,7 @@ public class SearchService extends Service {
 							 relatedtlist.size()>1&&
 							 		relatedtlist.get(relatedtlist.size()-1).getCode().equals("has_more_records") )){
 							try{
-								cacheTemp = dbadapter.getMapping(querydb, code, !isPhysicalKeyboardPressed, true);
+								cacheTemp = dbadapter.getMapping(db, code, !isPhysicalKeyboardPressed, true);
 								cache.remove(cacheKey);
 								cache.put(cacheKey, cacheTemp);
 							}catch(Exception e){
@@ -417,7 +435,7 @@ public class SearchService extends Service {
 		private void updateScoreCache(Mapping cachedMapping){
 			if(DEBUG) Log.i(TAG, "udpateScoreCache(): code=" + cachedMapping.getCode());
 			
-			dbadapter.addScore(updatedb, cachedMapping);					
+			dbadapter.addScore(db, cachedMapping);					
 			// Jeremy '11,7,29 update cached here
 			if (!cachedMapping.isDictionary()){
 				String code = cachedMapping.getCode().toLowerCase();
@@ -429,7 +447,7 @@ public class SearchService extends Service {
 					if(DEBUG) Log.i(TAG,"updateUserDict: updating related list");
 					if(cache.remove(cachekey)!=null){
 						Pair<List<Mapping>, List<Mapping>> newPair 
-						= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, dbadapter.updateRelatedList(code)) ;
+						= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, dbadapter.updateRelatedList(db, code)) ;
 						cache.put(cachekey, newPair);
 					}
 					// non null id denotes target is in exact match result list.
@@ -527,7 +545,7 @@ public class SearchService extends Service {
 					    		&& unit2.getId() !=null
 					    		&& unit2.getWord() != null && !unit2.getWord().equals("")
 					    	) {
-								dbadapter.addOrUpdateUserdictRecord(updatedb, unit.getWord(),unit2.getWord());
+								dbadapter.addOrUpdateUserdictRecord(db, unit.getWord(),unit2.getWord());
 							}
 						}
 					}
@@ -568,17 +586,17 @@ public class SearchService extends Service {
 									LDCode = baseCode.replaceAll("[3467]", "").toLowerCase();
 									QPCode += unit2.getCode().substring(0, 1).toLowerCase();
 									if(LDCode.length()>1){
-										dbadapter.addOrUpdateMappingRecord(updatedb, LDCode, baseWord);
+										dbadapter.addOrUpdateMappingRecord(db, LDCode, baseWord);
 										cache.remove(cacheKey(LDCode));
 										updateSimilarCodeRelatedList(LDCode);
 									}
 									if(QPCode.length()>1){
-										dbadapter.addOrUpdateMappingRecord(updatedb, QPCode, baseWord);
+										dbadapter.addOrUpdateMappingRecord(db, QPCode, baseWord);
 										cache.remove(cacheKey(QPCode.toLowerCase()));
 										updateSimilarCodeRelatedList(QPCode.toLowerCase());
 									}
 								}else if(baseCode.length()>1){
-									dbadapter.addOrUpdateMappingRecord(updatedb, baseCode, baseWord);
+									dbadapter.addOrUpdateMappingRecord(db, baseCode, baseWord);
 									cache.remove(cacheKey(baseCode));
 									updateSimilarCodeRelatedList(baseCode);
 								}
@@ -609,7 +627,7 @@ public class SearchService extends Service {
 				cachedPair = cache.get(cachekey);
 				if(cache.remove(cachekey)!=null && cachedPair !=null){					
 					Pair<List<Mapping>, List<Mapping>> newPair 
-						= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, dbadapter.updateRelatedList(key)) ;
+						= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, dbadapter.updateRelatedList(db, key)) ;
 					cache.put(cachekey, newPair);
 				}
 			}
@@ -624,7 +642,7 @@ public class SearchService extends Service {
 			String result = keynamecache.get(cacheKey);
 			if(result == null){
 				loadDBAdapter(); openLimeDatabase();
-				result = dbadapter.keyToKeyname(querydb, code, tablename, true);
+				result = dbadapter.keyToKeyname(db, code, tablename, true);
 				keynamecache.put(cacheKey, result);
 			}
 			return result;
@@ -921,11 +939,8 @@ public class SearchService extends Service {
 		if(dbadapter != null){
 			dbadapter.close();
 		}
-		if(querydb != null && querydb.isOpen()){
-			querydb.close();
-		}
-		if(updatedb != null && updatedb.isOpen()){
-			updatedb.close();
+		if(db != null && db.isOpen()){
+			db.close();
 		}
 		super.onDestroy();
 	}
