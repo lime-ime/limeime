@@ -162,18 +162,17 @@ public abstract class LimeSQLiteOpenHelper {
         SQLiteDatabase db = null;
         //if (mDatabase != null) mDatabase. .lock();
         try {
-            mIsInitializing = true;
-            //if (mName == null) {
-            // db = SQLiteDatabase.create(null);
-            //} else {
-                //db = mContext.openOrCreateDatabase(mName, 0, mFactory, mErrorHandler);
-            db = SQLiteDatabase.openDatabase(getDBPath(), null, SQLiteDatabase.OPEN_READWRITE
-    					| SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-            //db = SQLiteDatabase.openDatabase(getDBPath(), mFactory, SQLiteDatabase.OPEN_READWRITE)
-                         //mErrorHandler);
-            //}
 
+        	db = SQLiteDatabase.openDatabase(getDBPath(), null, SQLiteDatabase.OPEN_READWRITE
+        			| SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+        }catch(Exception e){
+        	return null;
+        }
+        try {
+        	 mIsInitializing = true;
             int version = db.getVersion();
+            if(DEBUG)
+            	Log.i(TAG,"getWritableDatabase(), db version= "+ version +"; newversion = " + mNewVersion);
             if (version != mNewVersion) {
                 db.beginTransaction();
                 try {

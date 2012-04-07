@@ -286,10 +286,10 @@ public class SearchService extends Service {
 							cacheTemp = dbadapter.getMapping(code, !isPhysicalKeyboardPressed, getAllRecords);
 							cache.put(cacheKey, cacheTemp);
 						}catch(SQLiteException ne){
-							dbadapter.forceUpgrade();
+							//dbadapter.forceUpgrade();
 							ne.printStackTrace();
 						}catch(NullPointerException ne){
-							dbadapter.forceUpgrade();
+							//dbadapter.forceUpgrade();
 							ne.printStackTrace();
 						}catch(Exception e){
 							e.printStackTrace();
