@@ -54,7 +54,7 @@ import android.util.Pair;
  */
 public class LimeDB  extends LimeSQLiteOpenHelper { 
 
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
 	private static String TAG = "LIMEDB";
 	
 	
@@ -327,10 +327,11 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	/**
 	 * Create SQLite Database and create related tables
 	 */
+	//Jeremy'12,4,7 on OnCreate now. db is always preloaded.
 	//@Override
-	public void onCreate(SQLiteDatabase dbin) {
+	//public void onCreate(SQLiteDatabase dbin) {
 		// Start from 3.0v no need to create internal database
-	}
+	//}
 
 	/*
 	 * Update Database Schema
@@ -341,86 +342,10 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 */
 	//@Override
 	public void onUpgrade(SQLiteDatabase dbin, int oldVersion, int newVersion) {
-		// Start from 3.0v no need to create internal database
-
-		//dbin.close();
 		
-		//forceUpgrade();
-		/*SQLiteDatabase db = getSqliteDb(false);
+	
+		forceUpgrade(dbin);
 		
-		//Jeremy '11,9,8 starting from 3.6 using onUpgrade() and dbversion store with db again.
-		if(DEBUG) Log.i(TAG, "onUpgrade(), oldVersion=" + oldVersion + ", newVersion="+newVersion);
-		
-		checkCode3RIndexAndRecsordsInPhonetic(db);
-		
-		//String kbversion = mLIMEPref.getParameterString("kbversion");
-
-		
-		// Upgrade DB version below 330
-		if(oldVersion != newVersion){
-
-			try{
-				int ecjcount = db.query("ecj", null, null, null, null, null, null, null).getCount();
-				if(ecjcount == 0){
-						execSQL("delete from im where code ='ecj';");
-				}
-			} catch (Exception e) {}
-			
-			
-			int count = db.query("keyboard", null, FIELD_CODE +" = 'phoneticet41'", null, null, null, null, null).getCount();
-
-			if(count == 0){
-				try{
-				
-					ContentValues 	cv = new ContentValues();
-					cv.put("code", "phoneticet41");
-					cv.put("name", "注音倚天");
-					cv.put("desc", "注音倚天41鍵");
-					cv.put("type", "phone");
-					cv.put("image", "lime_et_41_keyboard_priview");
-					cv.put("imkb", "lime_et_41");
-					cv.put("imshiftkb", "lime_et_41_shift");
-					cv.put("engkb", "lime_english_number");
-					cv.put("engshiftkb", "lime_english_shift");
-					cv.put("symbolkb", "symbols");
-					cv.put("symbolshiftkb", "symbols_shift");
-					cv.put("disable", "false");
-					db.insert("keyboard" ,null , cv);
-				} catch (Exception e) {
-					//e.printStackTrace();
-					Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
-				}
-			}
-			try{
-				execSQL("alter table ecj add 'basescore' type integer");
-				execSQL("alter table custom add 'basescore' type integer");
-				execSQL("alter table wb add 'basescore' type integer");
-				execSQL("alter table array add 'basescore' type integer");
-				execSQL("alter table array10 add 'basescore' type integer");
-				execSQL("alter table cj add 'basescore' type integer");
-				execSQL("alter table dayi add 'basescore' type integer");
-				execSQL("alter table ez add 'basescore' type integer");
-				execSQL("alter table phonetic add 'basescore' type integer");
-				execSQL("alter table scj add 'basescore' type integer");
-				execSQL("alter table cj5 add 'basescore' type integer");
-				execSQL("alter table imtable1 add 'basescore' type integer");
-				execSQL("alter table imtable2 add 'basescore' type integer");
-				execSQL("alter table imtable3 add 'basescore' type integer");
-				execSQL("alter table imtable4 add 'basescore' type integer");
-				execSQL("alter table imtable5 add 'basescore' type integer");
-				execSQL("alter table imtable6 add 'basescore' type integer");
-				execSQL("alter table imtable7 add 'basescore' type integer");
-				execSQL("alter table imtable8 add 'basescore' type integer");
-				execSQL("alter table imtable9 add 'basescore' type integer");
-				execSQL("alter table imtable10 add 'basescore' type integer");
-			} catch (Exception e) {
-				//e.printStackTrace();
-				Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
-			}
-		}
-		
-		
-		db.setVersion(newVersion);*/
 		
 	}
 	
@@ -428,21 +353,23 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * Art, 28/Sep/2011
 	 * this method force upgrade database when encounter error
 	 */
-	public void forceUpgrade() {
+	public void forceUpgrade(SQLiteDatabase dbin) {
 		
+			if(DEBUG)
+				Log.i(TAG,"forceUpgrade()");
 			//SQLiteDatabase db = getSqliteDb(false);
 			
-			checkCode3RIndexAndRecsordsInPhonetic();
+			checkCode3RIndexAndRecsordsInPhonetic(dbin);
 			
 			try{
-				int ecjcount = db.query("ecj", null, null, null, null, null, null, null).getCount();
+				int ecjcount = dbin.query("ecj", null, null, null, null, null, null, null).getCount();
 				if(ecjcount == 0){
-						execSQL("delete from im where code ='ecj';");
+						execSQL(dbin, "delete from im where code ='ecj';");
 				}
 			} catch (Exception e) {}
 	
 			try{
-				int count = db.query("keyboard", null, FIELD_CODE +" = 'phoneticet41'", null, null, null, null, null).getCount();
+				int count = dbin.query("keyboard", null, FIELD_CODE +" = 'phoneticet41'", null, null, null, null, null).getCount();
 	
 				if(count == 0){
 					
@@ -459,7 +386,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						cv.put("symbolkb", "symbols");
 						cv.put("symbolshiftkb", "symbols_shift");
 						cv.put("disable", "false");
-						db.insert("keyboard" ,null , cv);
+						dbin.insert("keyboard" ,null , cv);
 				}
 			} catch (Exception e) {
 				//e.printStackTrace();
@@ -467,27 +394,27 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			}
 			
 			try{
-				execSQL("alter table ecj add 'basescore' type integer");
-				execSQL("alter table custom add 'basescore' type integer");
-				execSQL("alter table wb add 'basescore' type integer");
-				execSQL("alter table array add 'basescore' type integer");
-				execSQL("alter table array10 add 'basescore' type integer");
-				execSQL("alter table cj add 'basescore' type integer");
-				execSQL("alter table dayi add 'basescore' type integer");
-				execSQL("alter table ez add 'basescore' type integer");
-				execSQL("alter table phonetic add 'basescore' type integer");
-				execSQL("alter table scj add 'basescore' type integer");
-				execSQL("alter table cj5 add 'basescore' type integer");
-				execSQL("alter table imtable1 add 'basescore' type integer");
-				execSQL("alter table imtable2 add 'basescore' type integer");
-				execSQL("alter table imtable3 add 'basescore' type integer");
-				execSQL("alter table imtable4 add 'basescore' type integer");
-				execSQL("alter table imtable5 add 'basescore' type integer");
-				execSQL("alter table imtable6 add 'basescore' type integer");
-				execSQL("alter table imtable7 add 'basescore' type integer");
-				execSQL("alter table imtable8 add 'basescore' type integer");
-				execSQL("alter table imtable9 add 'basescore' type integer");
-				execSQL("alter table imtable10 add 'basescore' type integer");
+				execSQL(dbin, "alter table ecj add 'basescore' type integer");
+				execSQL(dbin, "alter table custom add 'basescore' type integer");
+				execSQL(dbin, "alter table wb add 'basescore' type integer");
+				execSQL(dbin, "alter table array add 'basescore' type integer");
+				execSQL(dbin, "alter table array10 add 'basescore' type integer");
+				execSQL(dbin, "alter table cj add 'basescore' type integer");
+				execSQL(dbin, "alter table dayi add 'basescore' type integer");
+				execSQL(dbin, "alter table ez add 'basescore' type integer");
+				execSQL(dbin, "alter table phonetic add 'basescore' type integer");
+				execSQL(dbin, "alter table scj add 'basescore' type integer");
+				execSQL(dbin, "alter table cj5 add 'basescore' type integer");
+				execSQL(dbin, "alter table imtable1 add 'basescore' type integer");
+				execSQL(dbin, "alter table imtable2 add 'basescore' type integer");
+				execSQL(dbin, "alter table imtable3 add 'basescore' type integer");
+				execSQL(dbin, "alter table imtable4 add 'basescore' type integer");
+				execSQL(dbin, "alter table imtable5 add 'basescore' type integer");
+				execSQL(dbin, "alter table imtable6 add 'basescore' type integer");
+				execSQL(dbin, "alter table imtable7 add 'basescore' type integer");
+				execSQL(dbin, "alter table imtable8 add 'basescore' type integer");
+				execSQL(dbin, "alter table imtable9 add 'basescore' type integer");
+				execSQL(dbin, "alter table imtable10 add 'basescore' type integer");
 		} catch (Exception e) {
 				//e.printStackTrace();
 			Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
@@ -495,17 +422,17 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 	}
 	
-	private void execSQL(String command){
+	private void execSQL(SQLiteDatabase dbin, String command){
 		try{
 			//SQLiteDatabase db = getSqliteDb(false);
-			db.execSQL(command);
+			dbin.execSQL(command);
 			//db.close();
 		}catch(Exception e){
 			Log.w(TAG, "Ignore all possible exceptions~");
 		}
 	}
 	
-	private void checkCode3RIndexAndRecsordsInPhonetic(){
+	private void checkCode3RIndexAndRecsordsInPhonetic(SQLiteDatabase dbin){
 		//mLIMEPref.setParameter("checkLDPhonetic", "");
 		if (DEBUG)
 			Log.i(TAG, "checkCode3RIndexAndRecsordsInPhonetic(): checked:" 
@@ -513,24 +440,15 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					+ " has valid code3r index and records:" + mLIMEPref.getParameterBoolean("doLDPhonetic", false));
 		String doLDPhonetic = mLIMEPref.getParameterString("checkLDPhonetic", "");
 		if(!doLDPhonetic.equals("done")){
-			/*SQLiteDatabase db = null;
-			String dbtarget = mLIMEPref.getParameterString("dbtarget");
-			String dblocation = "";
-			if(dbtarget.equals("sdcard")){
-				dblocation = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
-			}else{
-				dblocation = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
-			}
-			db = SQLiteDatabase.openDatabase(dblocation, null, SQLiteDatabase.OPEN_READWRITE);
-			*/
-			Cursor cursor = db.query("sqlite_master", null, "type='index' and name = 'phonetic_idx_code3r'", 
+			
+			Cursor cursor = dbin.query("sqlite_master", null, "type='index' and name = 'phonetic_idx_code3r'", 
 					null, null, null, null);
 			boolean hasIndex = false, hasValidRecords = false;
 			if(cursor.moveToFirst()){
 				Log.d(TAG, "checkLDPhonetic(), code3r index is exist!!");
 				hasIndex =true;
 			}
-			cursor = db.query("phonetic", null, "code3r='ru'", null, null, null, null);
+			cursor = dbin.query("phonetic", null, "code3r='ru'", null, null, null, null);
 			if(cursor.moveToFirst()){
 				Log.d(TAG, "checkLDPhonetic(), code3r has vaid records.!!");
 				hasValidRecords = true;
@@ -1559,7 +1477,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	public Pair<List<Mapping>,List<Mapping>> getMapping( String code, boolean softKeyboard, boolean getAllRecords) {
 		
 		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-				if(db==null) return null;
+		if(db==null) openDBConnection(false);
 				
 		
 		boolean sort = true;
@@ -1628,7 +1546,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					
 				}catch(SQLiteException e){
 					e.printStackTrace();
-					forceUpgrade();
+					//forceUpgrade();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -2241,7 +2159,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 */
 	public Cursor getDictionaryAll() {
 		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) return null;
+		if(db==null) openDBConnection(false);
 		
 		Cursor cursor = null;
 		//SQLiteDatabase db = this.getSqliteDb(true);
@@ -3422,7 +3340,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 */
 	public String getImInfo(String im, String field) {
 		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) return "";
+		if(db==null) openDBConnection(false);
 		String iminfo = "";
 		try{
 			//String value = "";
@@ -3478,6 +3396,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 
 	public List<ImObj> getImList() {
+		//Jeremy '12,4,17 db = null when db is restoring or replaced.
+		if(db==null) openDBConnection(false);
 		List<ImObj> result = new LinkedList<ImObj>();
 		try {
 			//SQLiteDatabase db = this.getSqliteDb(true);
@@ -3505,7 +3425,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 	
 	public KeyboardObj getKeyboardObj(String keyboard){
-		if(db == null || keyboard == null || keyboard.equals(""))
+		
+		if(db == null) openDBConnection(false);
+		if( keyboard == null || keyboard.equals(""))
 			return null;
 		KeyboardObj kobj=null;
 		
@@ -3559,7 +3481,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	
 	public String getKeyboardInfo(String keyboardCode, String field) {
 		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) return null;
+		if(db==null) openDBConnection(false);
 
 		String info=null;
 		try {
@@ -3584,7 +3506,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	public List<KeyboardObj> getKeyboardList() {
 		
 		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) return null;
+		if(db==null) openDBConnection(false);
 
 		List<KeyboardObj> result = new LinkedList<KeyboardObj>();
 		try {
@@ -3642,7 +3564,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 	public String getKeyboardCode(String im) {
 		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) return "";
+		if(db==null) openDBConnection(false);
 
 		try{
 			//String value = "";
@@ -3668,7 +3590,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 	public List<String> queryDictionary(String word) {
 		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) return null;
+		if(db==null) openDBConnection(false);
 				
 		List<String> result = new ArrayList<String>();
 		try{
