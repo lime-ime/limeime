@@ -58,7 +58,7 @@ public class DBService extends Service {
 	private final String TAG = "DBService";
 	private NotificationManager notificationMgr;
 
-	private LimeDB db = null;
+	private LimeDB dbAdapter = null;
 	private LIMEPreferenceManager mLIMEPref = null;
 
 	private boolean remoteFileDownloading = false;
@@ -85,7 +85,9 @@ public class DBService extends Service {
 			loadLimeDB();
 		}
 
-		public void loadLimeDB(){	db = new LimeDB(ctx); }
+		public void loadLimeDB(){	
+			dbAdapter = new LimeDB(ctx); 
+		}
 
 		public void loadMapping(String filename, String tablename) throws RemoteException {
 
@@ -94,41 +96,41 @@ public class DBService extends Service {
 			File sourcefile = new File(filename);
 
 			// Start Loading
-			if (db == null) {loadLimeDB();}
+			if (dbAdapter == null) {loadLimeDB();}
 
-			db.setFinish(false);
-			db.setFilename(sourcefile);
+			dbAdapter.setFinish(false);
+			dbAdapter.setFilename(sourcefile);
 
 			showNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading)+ "", intentLIMEMappingLoading);
-			db.loadFileV2(tablename);
-			//db.close();
+			dbAdapter.loadFileV2(tablename);
+			//dbAdapter.close();
 
 			// Reset for SearchSrv
 			mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 		}
 
 		public void resetMapping(final String tablename) throws RemoteException {
-			if (db == null) {loadLimeDB();}
-			db.deleteAll(tablename);
+			if (dbAdapter == null) {loadLimeDB();}
+			dbAdapter.deleteAll(tablename);
 
 			// Reset cache in SearchSrv
 			mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 		}
 
 		public int getLoadingMappingCount(){
-			return db.getCount();
+			return dbAdapter.getCount();
 		}
 
 		public boolean isLoadingMappingFinished(){
-			return db.isLoadingMappingFinished();
+			return dbAdapter.isLoadingMappingFinished();
 		}
 
 		public boolean isLoadingMappingThreadAborted(){
-			return db.isLoadingMappingThreadAborted();
+			return dbAdapter.isLoadingMappingThreadAborted();
 		}
 
 		public boolean isLoadingMappingThreadAlive(){		
-			return db.isLoadingMappingThreadAlive();
+			return dbAdapter.isLoadingMappingThreadAlive();
 		}
 
 		public boolean isRemoteFileDownloading(){
@@ -154,6 +156,10 @@ public class DBService extends Service {
 
 		@Override
 		public void resetDownloadDatabase() throws RemoteException {
+			if (dbAdapter != null) {
+				//Jeremy '12,4,7 close db before replace db file
+				dbAdapter.close();
+			}
 
 			String dbtarget = mLIMEPref.getParameterString("dbtarget");
 			if(dbtarget.equals("device")){
@@ -172,7 +178,9 @@ public class DBService extends Service {
 
 		@Override
 		public void downloadEmptyDatabase() throws RemoteException {
-			if (db == null) {loadLimeDB();}
+			if (dbAdapter == null) {
+				loadLimeDB();
+			}
 			resetDownloadDatabase();
 
 			Thread threadTask = new Thread() {
@@ -212,7 +220,7 @@ public class DBService extends Service {
 		
 		@Override
 		public void downloadPhoneticOnlyDatabase() throws RemoteException {
-			if (db == null) {loadLimeDB();}
+			if (dbAdapter == null) {loadLimeDB();}
 			resetDownloadDatabase();
 			Thread threadTask = new Thread() {
 				public void run() { 
@@ -242,6 +250,8 @@ public class DBService extends Service {
 							}
 							getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
 							showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
+							//Jeremy '12,4,7 re-open the dbconnection
+							dbAdapter.openDBConnection(true);
 						}
 					}
 				}
@@ -252,7 +262,7 @@ public class DBService extends Service {
 		
 		@Override
 		public void downloadPreloadedDatabase() throws RemoteException {
-			if (db == null) {loadLimeDB();}
+			if (dbAdapter == null) {loadLimeDB();}
 			resetDownloadDatabase();
 			Thread threadTask = new Thread() {
 				public void run() { 
@@ -281,6 +291,8 @@ public class DBService extends Service {
 							}
 							getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
 							showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
+							//Jeremy '12,4,7 re-open the dbconnection
+							dbAdapter.openDBConnection(true);
 						}
 					}
 				}
@@ -481,6 +493,9 @@ public class DBService extends Service {
 			}			
 			compressFile(srcFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_BACKUP_NAME);
 			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end)+ "", intentLIMEMenu);
+			
+			//Jeremy '12,4,7 re-open the dbconnection
+			dbAdapter.openDBConnection(true);
 		}
 
 		@Override
@@ -499,68 +514,71 @@ public class DBService extends Service {
 			}			
 			getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
 			showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end)+ "", intentLIMEMenu); 
+			
+			//Jeremy '12,4,7 re-open the dbconnection
+			dbAdapter.openDBConnection(true);
 		}
 
 		@Override
 		public String getImInfo(String im, String field) throws RemoteException {
-			if (db == null) {loadLimeDB();}
-			return db.getImInfo(im, field);
+			if (dbAdapter == null) {loadLimeDB();}
+			return dbAdapter.getImInfo(im, field);
 		}
 
 		@Override
 		public String getKeyboardInfo(String keyboardCode, String field) throws RemoteException {
-			if (db == null) {loadLimeDB();}
-			return db.getKeyboardInfo(keyboardCode, field);
+			if (dbAdapter == null) {loadLimeDB();}
+			return dbAdapter.getKeyboardInfo(keyboardCode, field);
 		}
 
 		@Override
 		public void removeImInfo(String im, String field)
 		throws RemoteException {
-			if (db == null) {loadLimeDB();}
-			db.removeImInfo(im, field);
+			if (dbAdapter == null) {loadLimeDB();}
+			dbAdapter.removeImInfo(im, field);
 
 		}
 
 		@Override
 		public void resetImInfo(String im) throws RemoteException {
-			if (db == null) {loadLimeDB();}
-			db.resetImInfo(im);
+			if (dbAdapter == null) {loadLimeDB();}
+			dbAdapter.resetImInfo(im);
 
 		}
 
 		@Override
 		public void setImInfo(String im, String field, String value)
 		throws RemoteException {
-			if (db == null) {loadLimeDB();}
-			db.setImInfo(im, field, value);
+			if (dbAdapter == null) {loadLimeDB();}
+			dbAdapter.setImInfo(im, field, value);
 
 		}
 
 		@Override
 		public void closeDatabse() throws RemoteException {
-			if (db != null) {
-				db.close();
+			if (dbAdapter != null) {
+				dbAdapter.close();
 			}
 		}
 
 		@Override
 		public List<KeyboardObj> getKeyboardList() throws RemoteException {
-			List<KeyboardObj> result = db.getKeyboardList();
+			List<KeyboardObj> result = dbAdapter.getKeyboardList();
 			return result;
 		}
 
 		@Override
 		public void setIMKeyboard(String im, String value,
 				String keyboard) throws RemoteException {
-			if (db == null) {loadLimeDB();}
-			db.setIMKeyboard(im, value, keyboard);
+			if (dbAdapter == null) {loadLimeDB();}
+			dbAdapter.setIMKeyboard(im, value, keyboard);
 		}
 
 		@Override
 		public String getKeyboardCode(String im)
 		throws RemoteException {
-			if (db == null) {loadLimeDB();}
-			return db.getKeyboardCode(im);
+			if (dbAdapter == null) {loadLimeDB();}
+			return dbAdapter.getKeyboardCode(im);
 		}
 
 		@Override
@@ -787,7 +805,7 @@ public class DBService extends Service {
 		@Override
 		public int getLoadingMappingPercentageDone() throws RemoteException {
 			if(remoteFileDownloading) return 0;
-			else return db.getPercentageDone();
+			else return dbAdapter.getPercentageDone();
 		}
 
 	}
@@ -814,9 +832,9 @@ public class DBService extends Service {
 	 */
 	@Override
 	public void onDestroy() {
-		if (db != null) {
-			db.close();
-			db = null;
+		if (dbAdapter != null) {
+			dbAdapter.close();
+			dbAdapter = null;
 
 		}
 		notificationMgr.cancelAll();

@@ -51,7 +51,7 @@ public class Limedbtest extends AndroidTestCase {
 			int k = randomGenerator.nextInt(keyList.size());
 			int l = randomGenerator.nextInt(keyList.size());
 			String code = keyList.get(i)+keyList.get(j)+keyList.get(k)+keyList.get(l); 
-			SQLiteDatabase dbadapter = db.getSqliteDb(true);
+			//SQLiteDatabase dbadapter = db.getSqliteDb(true);
 			
 			//Log.i(TAG,"code=" + code);
 			for(int m=1; m<4; m++){
@@ -59,7 +59,7 @@ public class Limedbtest extends AndroidTestCase {
 				if(duplityCheck.add(query_code)){
 					long begin =  System.currentTimeMillis();
 					//Log.i(TAG,"query_code="+ query_code);
-					Pair<List<Mapping>,List<Mapping>> temp = db.getMapping(dbadapter, query_code, true, true);
+					Pair<List<Mapping>,List<Mapping>> temp = db.getMapping(query_code, true, true);
 
 
 					long elapsed =  System.currentTimeMillis() - begin;
