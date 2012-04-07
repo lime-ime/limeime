@@ -54,10 +54,9 @@ public class SearchService extends Service {
 	private final boolean DEBUG = false;
 	private final String TAG = "LIME.SearchService";
 	private LimeDB dbadapter = null;
-	//Jeremy '12,4,6 Combine updatedb and quierydb into db, 
+	//Jeremy '12,4,6 Combine updatedb and quierydb into db,
+	//Jeremy '12,4,7 move db open/clsoe back to LimeDB
 	//	since query always following with userdict and related learning and dual db connections cause exceptions.
-	//private SQLiteDatabase db = null;
-	//private SQLiteDatabase db = null;
 	private SQLiteDatabase db = null;
 	//private LimeHanConverter hanConverter = null;
 	//private static LinkedList<Mapping> diclist = null;  
@@ -103,7 +102,7 @@ public class SearchService extends Service {
 			this.ctx = ctx;	
 			mLIMEPref = new LIMEPreferenceManager(ctx);
 			loadDBAdapter(); 
-			openLimeDatabase();
+		
 		}
 		
 		public void setSelectedText(String text){
@@ -131,13 +130,15 @@ public class SearchService extends Service {
 		public void setTablename(String table, boolean numberMapping, boolean symbolMapping){
 			if(DEBUG)
 				Log.i(TAG,"SearchService.setTablename()");
-			loadDBAdapter(); openLimeDatabase();
+			
 			dbadapter.setTablename(table);
 			tablename = table;
 			hasNumberMapping = numberMapping;
 			hasSymbolMapping = symbolMapping;
 		}
-
+		
+		//Deprecated by Jeremy '12,4,7
+		@Deprecated
 		private void openLimeDatabase()
 		{
 			boolean reload = mLIMEPref.getParameterBoolean("reload_database", false);
@@ -168,10 +169,12 @@ public class SearchService extends Service {
 			//}	
 			if(db == null || !db.isOpen()){
 				
-				db = getSqliteDbWritable();
+				db = dbadapter.getSqliteDb(false);
 				initialCache();
 			}
 		}
+		
+		
 		
 		private void loadDBAdapter()
 		{			
@@ -185,24 +188,24 @@ public class SearchService extends Service {
 		//Modified by Jeremy '10,3 ,12 for more specific related word
 		//-----------------------------------------------------------
 		public List<?> queryUserDic(String word) throws RemoteException {
-			loadDBAdapter(); openLimeDatabase();
-			List<?> result = dbadapter.queryUserDict(db, word);
+			
+			List<?> result = dbadapter.queryUserDict(word);
 			return result;
 		}
 		//-----------------------------------------------------------
 		
 		public Cursor getDictionaryAll(){
-			loadDBAdapter(); openLimeDatabase();
+			
 			return dbadapter.getDictionaryAll();
 			
 		}
 		
 		//Add by jeremy '10, 4,1
 		public void rQuery(final String word) throws RemoteException {
-			loadDBAdapter(); openLimeDatabase();
+			
 			Thread queryThread = new Thread(){
 				public void run() {
-					String result = dbadapter.getRMapping(db, word);
+					String result = dbadapter.getRMapping(word);
 					if(result!=null && !result.equals("")){
 						displayNotificationMessage(result);
 					}
@@ -234,9 +237,6 @@ public class SearchService extends Service {
 		
 		public List<Mapping> query(String code, boolean softkeyboard, boolean getAllRecords) throws RemoteException {
 			if(DEBUG) Log.i(TAG, "query(): code="+code);
-			
-			loadDBAdapter(); openLimeDatabase();
-			
 			// Check if system need to reset cache
 			
 			if(mLIMEPref.getParameterBoolean(LIME.SEARCHSRV_RESET_CACHE)){
@@ -283,7 +283,7 @@ public class SearchService extends Service {
 						// 25/Jul/2011 by Art
 						// Just ignore error when something wrong with the result set
 						try{
-							cacheTemp = dbadapter.getMapping(db, code, !isPhysicalKeyboardPressed, getAllRecords);
+							cacheTemp = dbadapter.getMapping(code, !isPhysicalKeyboardPressed, getAllRecords);
 							cache.put(cacheKey, cacheTemp);
 						}catch(SQLiteException ne){
 							dbadapter.forceUpgrade();
@@ -307,7 +307,7 @@ public class SearchService extends Service {
 							 relatedtlist.size()>1&&
 							 		relatedtlist.get(relatedtlist.size()-1).getCode().equals("has_more_records") )){
 							try{
-								cacheTemp = dbadapter.getMapping(db, code, !isPhysicalKeyboardPressed, true);
+								cacheTemp = dbadapter.getMapping(code, !isPhysicalKeyboardPressed, true);
 								cache.remove(cacheKey);
 								cache.put(cacheKey, cacheTemp);
 							}catch(Exception e){
@@ -435,7 +435,7 @@ public class SearchService extends Service {
 		private void updateScoreCache(Mapping cachedMapping){
 			if(DEBUG) Log.i(TAG, "udpateScoreCache(): code=" + cachedMapping.getCode());
 			
-			dbadapter.addScore(db, cachedMapping);					
+			dbadapter.addScore(cachedMapping);					
 			// Jeremy '11,7,29 update cached here
 			if (!cachedMapping.isDictionary()){
 				String code = cachedMapping.getCode().toLowerCase();
@@ -447,7 +447,7 @@ public class SearchService extends Service {
 					if(DEBUG) Log.i(TAG,"updateUserDict: updating related list");
 					if(cache.remove(cachekey)!=null){
 						Pair<List<Mapping>, List<Mapping>> newPair 
-						= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, dbadapter.updateRelatedList(db, code)) ;
+						= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, dbadapter.updateRelatedList(code)) ;
 						cache.put(cachekey, newPair);
 					}
 					// non null id denotes target is in exact match result list.
@@ -545,7 +545,7 @@ public class SearchService extends Service {
 					    		&& unit2.getId() !=null
 					    		&& unit2.getWord() != null && !unit2.getWord().equals("")
 					    	) {
-								dbadapter.addOrUpdateUserdictRecord(db, unit.getWord(),unit2.getWord());
+								dbadapter.addOrUpdateUserdictRecord(unit.getWord(),unit2.getWord());
 							}
 						}
 					}
@@ -586,17 +586,17 @@ public class SearchService extends Service {
 									LDCode = baseCode.replaceAll("[3467]", "").toLowerCase();
 									QPCode += unit2.getCode().substring(0, 1).toLowerCase();
 									if(LDCode.length()>1){
-										dbadapter.addOrUpdateMappingRecord(db, LDCode, baseWord);
+										dbadapter.addOrUpdateMappingRecord(LDCode, baseWord);
 										cache.remove(cacheKey(LDCode));
 										updateSimilarCodeRelatedList(LDCode);
 									}
 									if(QPCode.length()>1){
-										dbadapter.addOrUpdateMappingRecord(db, QPCode, baseWord);
+										dbadapter.addOrUpdateMappingRecord(QPCode, baseWord);
 										cache.remove(cacheKey(QPCode.toLowerCase()));
 										updateSimilarCodeRelatedList(QPCode.toLowerCase());
 									}
 								}else if(baseCode.length()>1){
-									dbadapter.addOrUpdateMappingRecord(db, baseCode, baseWord);
+									dbadapter.addOrUpdateMappingRecord(baseCode, baseWord);
 									cache.remove(cacheKey(baseCode));
 									updateSimilarCodeRelatedList(baseCode);
 								}
@@ -627,7 +627,7 @@ public class SearchService extends Service {
 				cachedPair = cache.get(cachekey);
 				if(cache.remove(cachekey)!=null && cachedPair !=null){					
 					Pair<List<Mapping>, List<Mapping>> newPair 
-						= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, dbadapter.updateRelatedList(db, key)) ;
+						= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, dbadapter.updateRelatedList(key)) ;
 					cache.put(cachekey, newPair);
 				}
 			}
@@ -642,7 +642,7 @@ public class SearchService extends Service {
 			String result = keynamecache.get(cacheKey);
 			if(result == null){
 				loadDBAdapter(); openLimeDatabase();
-				result = dbadapter.keyToKeyname(db, code, tablename, true);
+				result = dbadapter.keyToKeyname(code, tablename, true);
 				keynamecache.put(cacheKey, result);
 			}
 			return result;
@@ -877,6 +877,7 @@ public class SearchService extends Service {
 		/*
 		 * This is the method to openDB from Service
 		 */
+		@Deprecated
 		public SQLiteDatabase getSqliteDb(){
 			SQLiteDatabase db = null;
 			try{
@@ -890,6 +891,7 @@ public class SearchService extends Service {
 		/*
 		 * This is the method to openDB from Service
 		 */
+		@Deprecated
 		public SQLiteDatabase getSqliteDbWritable(){
 			SQLiteDatabase db = null;
 			try{
@@ -899,7 +901,7 @@ public class SearchService extends Service {
 			return db;
 
 		}
-		
+		@Deprecated
 		private String getDBPath(String dbTarget){
 			String dbLocationPrefix = (dbTarget.equals("sdcard"))
 					?LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD:LIME.DATABASE_DECOMPRESS_FOLDER;
@@ -927,6 +929,8 @@ public class SearchService extends Service {
 	public void onCreate() {
 		notificationMgr =(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		super.onCreate();
+		
+		
 	}
 
 	/*
@@ -939,9 +943,7 @@ public class SearchService extends Service {
 		if(dbadapter != null){
 			dbadapter.close();
 		}
-		if(db != null && db.isOpen()){
-			db.close();
-		}
+		
 		super.onDestroy();
 	}
 
