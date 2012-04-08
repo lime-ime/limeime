@@ -903,7 +903,7 @@ public class CandidateView extends View implements View.OnClickListener
 	    	
         }else{
         	mSuggestions = new LinkedList<Mapping>();
-        	//hideCandidatePopup();
+        	hideCandidatePopup();
         }
         
         mHandler.updateUI(0);
@@ -931,6 +931,7 @@ public class CandidateView extends View implements View.OnClickListener
         mTargetScrollX = 0;
         hideComposing();
         hideCandidatePopup();
+        mHandler.updateUI(0);
         
     }
     
