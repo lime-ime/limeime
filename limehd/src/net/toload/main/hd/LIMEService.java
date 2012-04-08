@@ -431,7 +431,7 @@ public class LIMEService extends InputMethodService implements
 		mCandidateView.setService(this);
 		//Jeremy '12,4,8  showcandidate() to construct candidateview so as composing popup won't fc.
 		showCandidateView();
-		clearComposing();
+		//clearComposing();
 		return mCandidateViewContainer;
 		
 		
@@ -504,6 +504,11 @@ public class LIMEService extends InputMethodService implements
 		//Jeremy '11,8,14
 		if (mComposing != null && mComposing.length() > 0)
 			mComposing.setLength(0);
+		InputConnection ic = getCurrentInputConnection();
+		if(ic!=null) ic.commitText("", 0);
+		
+		firstMatched = null;
+				
 		//hasMappingList = false;
 		if(templist!=null) 
 			templist.clear();
@@ -769,8 +774,13 @@ public class LIMEService extends InputMethodService implements
 				&& (newSelStart < candidatesStart || newSelStart > candidatesEnd)
 				) {
 			//Jeremy '11,8,14
-			clearComposing();
+			//clearComposing();
 			//pickDefaultCandidate();
+			if (mComposing != null && mComposing.length() > 0)
+				mComposing.setLength(0);
+			if(templist!=null) 	templist.clear();
+			clearSuggestions();
+			
 			InputConnection ic = getCurrentInputConnection();
 			if (ic != null) {
 				ic.finishComposingText();
@@ -972,20 +982,26 @@ public class LIMEService extends InputMethodService implements
 			// key for us, to dismiss the input method if it is shown.
 			// However, our keyboard could be showing a pop-up window
 			// that back should dismiss, so we first allow it to do that.
+			
 			if (event.getRepeatCount() == 0) {
-				if(mInputView != null && mInputView.handleBack())
+				if(mInputView != null && mInputView.handleBack()){
+					Log.i(TAG,"KEYCODE_BACK mInputView handled the backed key");
 					return true;
+				}
+				//Jeremy '12,4,8 rewrite the logic here
 				else if(onIM && mCandidateView !=null && isCandidateShown()
-						&& mLIMEPref.getAutoChineseSymbol()
-						&& !isChineseSymbolSuggestionsShowing){
-					clearSuggestions();
+						&& ( mComposing.length() > 0 || 
+						(firstMatched != null && firstMatched.isDictionary() &&	!isChineseSymbolSuggestionsShowing )
+						) ){
+					if(DEBUG)
+						Log.i(TAG,"KEYCODE_BACK clearcomposing only.");
+					clearComposing();
 					return true;
-					//Jeremy '12,4,8 add mLIMEPref.getFixedCandidateViewDisplay() too avoid back key unable to do 'real' back
-				}else if(mCandidateView !=null && isCandidateShown() && !mLIMEPref.getFixedCandidateViewDisplay()){
-					hideCandidateView();
-					return true;
-				}else 
-					hideCandidateView();
+				}else {
+					super.setCandidatesViewShown(false);
+					if(DEBUG)
+						Log.i(TAG,"KEYCODE_BACK return to super.");
+				}
 					
 			}
 			break;
@@ -2447,11 +2463,11 @@ public class LIMEService extends InputMethodService implements
 			updateCandidates();
 		} else if (length == 1) {
 			// '10, 4, 5 Jeremy. Bug fix on delete last key in buffer.
-			if(ic!=null) ic.setComposingText("", 0);
+			//if(ic!=null) ic.setComposingText("", 0);
 			
 			//Jeremy '11,8,14
 			clearComposing();
-			if(ic!=null) ic.commitText("", 0);
+			//if(ic!=null) ic.commitText("", 0);
 		} else if(onIM && mCandidateView !=null && isCandidateShown()
 				&& mLIMEPref.getAutoChineseSymbol()
 				&& !isChineseSymbolSuggestionsShowing ){
@@ -2604,8 +2620,8 @@ public class LIMEService extends InputMethodService implements
 		
 		//Jeremy '11,8,14
 		clearComposing();
-		InputConnection ic = getCurrentInputConnection();
-		if(ic!=null) ic.commitText("", 0);
+		//InputConnection ic = getCurrentInputConnection();
+		//if(ic!=null) ic.commitText("", 0);
 		
 		mKeyboardSwitcher.toggleChinese();
 		mEnglishOnly = !mKeyboardSwitcher.isChinese();
