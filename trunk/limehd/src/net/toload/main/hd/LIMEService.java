@@ -27,7 +27,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.Vibrator;
-import android.text.TextUtils;
+//import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyCharacterMap;
@@ -78,7 +78,7 @@ import android.content.res.Configuration;
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = false;
+	static final boolean DEBUG = true;
 	static final String TAG = "LIMEService";
 	static final String PREF = "LIMEXY";
 
@@ -133,8 +133,9 @@ public class LIMEService extends InputMethodService implements
 	//private boolean mShowSuggestions;
 	//private int mCorrectionMode;
 	private int mOrientation;
+	private int mHardkeyboardHidden;
 	private boolean mPredicting;
-	private String mLocale;
+	//private String mLocale;
 	//private int mDeleteCount;
 
 	//private Suggest mSuggest;
@@ -355,11 +356,12 @@ public class LIMEService extends InputMethodService implements
 		if (DEBUG)
 			Log.i(TAG, "LIMEService:OnConfigurationChanged()");
 
-		if (!TextUtils.equals(conf.locale.toString(), mLocale)) {
+		//if (!TextUtils.equals(conf.locale.toString(), mLocale)) {
 			// initSuggest(conf.locale.toString());
-		}
-		// If orientation changed while predicting, commit the change
-		if (conf.orientation != mOrientation) {
+		//}
+		
+		//Jeremy '12,4,7 add hardkeyboard hidden configuration changed event and clear composing to avoid fc.
+		if (conf.orientation != mOrientation || conf.hardKeyboardHidden != mHardkeyboardHidden) {
 			//commitTyped(getCurrentInputConnection());
 			//Jeremy '11,5,31 clear the composing instead of commitTyped
 			
@@ -372,6 +374,7 @@ public class LIMEService extends InputMethodService implements
 			if(ic!=null) ic.commitText("", 0);
 			
 			mOrientation = conf.orientation;
+			mHardkeyboardHidden = conf.hardKeyboardHidden;
 		}
 		initialViewAndSwitcher();
 		mKeyboardSwitcher.makeKeyboards(true);
@@ -427,6 +430,7 @@ public class LIMEService extends InputMethodService implements
 		//mCandidateView = new CandidateView(this);
 		mCandidateView.setService(this);
 		//return mCandidateView;
+		showCandidateView();
 		return mCandidateViewContainer;
 		
 		
@@ -494,6 +498,8 @@ public class LIMEService extends InputMethodService implements
 	}
 	
 	private void clearComposing(){
+		if(DEBUG)
+			Log.i(TAG,"clearComposing()");
 		//Jeremy '11,8,14
 		if (mComposing != null && mComposing.length() > 0)
 			mComposing.setLength(0);
@@ -1974,11 +1980,11 @@ public class LIMEService extends InputMethodService implements
 		builder.setSingleChoiceItems(items, curKB,
 				new DialogInterface.OnClickListener() {
 
-					public void onClick(DialogInterface di, int position) {
-						di.dismiss();
-						handlKeyboardSelection(position);
-					}
-				});
+			public void onClick(DialogInterface di, int position) {
+				di.dismiss();
+				handlKeyboardSelection(position);
+			}
+		});
 
 		mOptionsDialog = builder.create();
 		Window window = mOptionsDialog.getWindow();
@@ -2083,13 +2089,11 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@SuppressWarnings("unchecked")
 	public void updateCandidates(boolean getAllRecords) {
-		isChineseSymbolSuggestionsShowing = false;
-		// Log.i("ART", "Update Candidate mCompletionOn:"+ mCompletionOn);
-		// Log.i("ART", "Update Candidate mComposing:"+ mComposing);
+		
 		if(DEBUG) Log.i(TAG,"updateCandidate():Update Candidate mComposing:"+ mComposing);
-		//if (mCandidateView != null) 			
-		//	mCandidateView.clear();
-
+		
+		isChineseSymbolSuggestionsShowing = false;
+		
 		if (mComposing.length() > 0) {
 			
 			showCandidateView();

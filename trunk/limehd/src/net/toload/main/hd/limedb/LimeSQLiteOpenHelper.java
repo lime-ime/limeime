@@ -1,4 +1,5 @@
-// Jeremy '12,4,7 derived from android SQLiteOpenHelper.java and add stored in device or sdcard option.
+// Jeremy '12,4,7 derived from android SQLiteOpenHelper.java with stored in device or sdcard option 
+//and static dbconnection (all instances share the same db connection).
 
 package net.toload.main.hd.limedb;
 
@@ -7,7 +8,6 @@ import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import android.content.Context;
 import android.database.DatabaseErrorHandler;
-//import android.database.DefaultDatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteException;
@@ -166,7 +166,7 @@ public abstract class LimeSQLiteOpenHelper {
         	db = SQLiteDatabase.openDatabase(getDBPath(), null, SQLiteDatabase.OPEN_READWRITE
         			| SQLiteDatabase.NO_LOCALIZED_COLLATORS);
         }catch(Exception e){
-        	return null;
+        	return null; //return null if db opened failed.
         }
         try {
         	 mIsInitializing = true;
@@ -176,14 +176,8 @@ public abstract class LimeSQLiteOpenHelper {
             if (version != mNewVersion) {
                 db.beginTransaction();
                 try {
-                    if (version == 0) {
-                    //    onCreate(db);
-                    } else {
-                        if (version > mNewVersion) {
-                            onDowngrade(db, version, mNewVersion);
-                        } else {
-                            onUpgrade(db, version, mNewVersion);
-                        }
+                    if (version != mNewVersion) {
+                       onUpgrade(db, version, mNewVersion);
                     }
                     db.setVersion(mNewVersion);
                     db.setTransactionSuccessful();
@@ -198,12 +192,16 @@ public abstract class LimeSQLiteOpenHelper {
         } finally {
             mIsInitializing = false;
             if (success) {
-                if (mDatabase != null) {
-                    try { mDatabase.close(); } catch (Exception e) { }
+            	if(DEBUG)
+            		Log.i(TAG,"getWritableDatabse(), success in finally section");
+                //if (mDatabase != null) {
+                   // try { mDatabase.close(); } catch (Exception e) { }
                    // mDatabase.unlock();
-                }
+                //}
                 mDatabase = db;
+                return db;
             } else {
+            	Log.i(TAG,"getWritableDatabse(), not success in finally section and db closed");
                 //if (mDatabase != null) mDatabase.unlock();
                 if (db != null) db.close();
             }
@@ -251,11 +249,13 @@ public abstract class LimeSQLiteOpenHelper {
 
         SQLiteDatabase db = null;
         try {
-            mIsInitializing = true;
-            //String path = mContext.getDatabasePath(mName).getPath();
-            db = SQLiteDatabase.openDatabase(getDBPath(), null, SQLiteDatabase.OPEN_READONLY
+        	db = SQLiteDatabase.openDatabase(getDBPath(), null, SQLiteDatabase.OPEN_READONLY
 					| SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-            //db = SQLiteDatabase.openDatabase(getDBPath(), mFactory, SQLiteDatabase.OPEN_READONLY),mErrorHandler);
+        }catch(Exception e){
+        	return null;  //return null if db opened failed.
+        }
+        try {
+            mIsInitializing = true;
             if (db.getVersion() != mNewVersion) {
                 throw new SQLiteException("Can't upgrade read-only database from version " +
                         db.getVersion() + " to " + mNewVersion + ": " + getDBPath());
@@ -319,10 +319,10 @@ public abstract class LimeSQLiteOpenHelper {
      * @param oldVersion The old database version.
      * @param newVersion The new database version.
      */
-    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        throw new SQLiteException("Can't downgrade database from version " +
-                oldVersion + " to " + newVersion);
-    }
+    //public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    //    throw new SQLiteException("Can't downgrade database from version " +
+   //             oldVersion + " to " + newVersion);
+    //}
 
     /**
      * Called when the database has been opened.  The implementation

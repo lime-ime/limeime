@@ -60,7 +60,7 @@ import net.toload.main.hd.global.Mapping;
 public class CandidateView extends View implements View.OnClickListener 
 {
 	
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final String TAG = "CandidateView";
 
     protected static final int OUT_OF_BOUNDS = -1;
@@ -205,6 +205,10 @@ public class CandidateView extends View implements View.OnClickListener
     		@Override
     		public boolean onScroll(MotionEvent e1, MotionEvent e2,
     				float distanceX, float distanceY) {
+    			
+    			//Jeremy '12,4,8 filter out small scroll which is actually candidate selection.
+    			if(distanceX < mHeight/2 && distanceY < mHeight/2 ) return true;
+    			
     			mScrolled = true;
     			
     			// Update full candidate list before scroll
@@ -285,6 +289,7 @@ public class CandidateView extends View implements View.OnClickListener
 		
         public void updateUI (int delay){
         	sendMessageDelayed(obtainMessage(MSG_UPDATE_UI, 0, 0, null), delay);
+        	
         }
 
         public void updateComposing (String text ,int delay){
@@ -302,10 +307,16 @@ public class CandidateView extends View implements View.OnClickListener
         	sendMessageDelayed(obtainMessage(MSG_HIDE_CANDIDATE_POPUP, 0, 0, null), delay);	
         }
         
+       
+        
     }
 
     
     public void doUpdateUI() {
+    	
+    	if(DEBUG)
+    		Log.i(TAG,"doUpdateUI()");
+    	
     	if (mSuggestions == null) {
     		setBackgroundColor(0);
     		hideCandidatePopup();
@@ -317,6 +328,7 @@ public class CandidateView extends View implements View.OnClickListener
     	
     	if(mCandidatePopup != null && mCandidatePopup.isShowing()){
     		doUpdateCandidatePopup();
+    		
 
     	}else{
     		if(!waitingForMoreRecords){  // New suggestion list, reset scroll to (0,0);
@@ -344,6 +356,8 @@ public class CandidateView extends View implements View.OnClickListener
     	if(DEBUG) Log.i(TAG, "updateFontSize(), scaling=" + scaling +", mVerticalPadding=" + mVerticalPadding);
 	}
     private void doHideCandidatePopup() {
+    	if(DEBUG)
+    		Log.i(TAG,"doHideCandidatePopup()");
     	
     	if(mCandidatePopup!=null && mCandidatePopup.isShowing()) {
     		mCandidatePopup.dismiss();
@@ -361,7 +375,7 @@ public class CandidateView extends View implements View.OnClickListener
 	}
     public void doUpdateCandidatePopup(){
     	if(DEBUG) 
-			Log.i(TAG, "showCandidatePopup(), creating popup windows");
+			Log.i(TAG, "doUpdateCandidatePopup()(), creating popup windows");
     	
     	//Jeremy '11,8.27 do vibrate and sound on candidateview expand button pressed.
     	if(!candidateExpanded)
@@ -494,7 +508,11 @@ public class CandidateView extends View implements View.OnClickListener
    
     public void doUpdateComposing(String composingText) {
     	if(DEBUG) 
-    		Log.i(TAG,"doUpdateComposing():"+composingText);
+    		Log.i(TAG,"doUpdateComposing():"+composingText + "this.isShown()" + this.isShown());
+    	
+    	//Jeremy '12,4,8 to avoid fc when hard keyboard is engaged and candidateview is not shown
+    	if(!this.isShown()) return;
+    	
     	
     	// Composing buffer textView
     	if(mComposingTextPopup==null){
@@ -582,17 +600,21 @@ public class CandidateView extends View implements View.OnClickListener
     }
 
     public void showComposing(String composingText) {
-    	if(DEBUG) Log.i(TAG, "hidecomposing()");
+    	if(DEBUG) 
+    		Log.i(TAG, "hidecomposing()");
     	mHandler.updateComposing(composingText,0);
     	
     }
     
     public void hideComposing() {
-    	if(DEBUG) Log.i(TAG, "hidecomposing()");
+    	if(DEBUG) 
+    		Log.i(TAG, "hidecomposing()");
     	mHandler.dismissComposing(0);
     	
     }
     public void showCandidatePopup(){
+    	if(DEBUG) 
+    		Log.i(TAG, "showCandidatePopup()");
 
     	mHandler.showCandidatePopup(0);
     
@@ -606,6 +628,8 @@ public class CandidateView extends View implements View.OnClickListener
     	mHandler.dismissCandidatePopup(0);
     
     }
+    
+  
     
     public boolean isCandidateExpanded(){
     	return candidateExpanded;
