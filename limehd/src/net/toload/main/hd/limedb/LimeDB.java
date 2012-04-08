@@ -300,7 +300,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	public void setTablename(String tablename) {
 		this.tablename = tablename;
 		if (DEBUG) {
-			Log.i("setTablename", "tablename:" + tablename + " this.tablename:"
+			Log.i(TAG, "settTableName(), tablename:" + tablename + " this.tablename:"
 					+ this.tablename);
 		}
 	}
@@ -353,7 +353,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * Art, 28/Sep/2011
 	 * this method force upgrade database when encounter error
 	 */
-	public void forceUpgrade(SQLiteDatabase dbin) {
+	private void forceUpgrade(SQLiteDatabase dbin) {
 		
 			if(DEBUG)
 				Log.i(TAG,"forceUpgrade()");
@@ -621,8 +621,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}	
 	
 	//Jeremy '12,4,7
-	public void openDBConnection(boolean force_reload){
-
+	public SQLiteDatabase openDBConnection(boolean force_reload){
 
 		if(DEBUG) {
 			Log.i(TAG,"getDBConnection(), force_reload = " + force_reload );
@@ -640,9 +639,10 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		}catch(Exception e){
 		}
 		
-		if(db == null || !db.isOpen()){
+		if(db == null || (db!=null && !db.isOpen())){
 			db = this.getWritableDatabase();
 		}
+		return db;
 	}
 	
 	
@@ -712,6 +712,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * Base on given table name to remove records
 	 */
 	public synchronized void deleteAll(String table) {
+		if(DEBUG)
+			Log.i(TAG,"deleteAll()");
 		if(thread != null){
 			threadAborted = true;
 			while(thread.isAlive()){
@@ -751,12 +753,17 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @return
 	 */
 	public int countMapping(String table) {
+		if(DEBUG)
+			Log.i(TAG,"countMapping() on table:" + table);
 
 		try {
-			//SQLiteDatabase db = this.getSqliteDb(true);
-			int total = db.rawQuery("SELECT * FROM " + table, null).getCount();
-			//db.close();
-			//Log.i("countMapping", "Table," + table + ": " + total);
+			
+			Cursor cursor = db.rawQuery("SELECT * FROM " + table, null);
+			if(cursor ==null) return 0; 
+			int total = cursor.getCount();
+			cursor.close();
+			if(DEBUG)
+					Log.i(TAG, "countMapping" + "Table," + table + ": " + total);
 			return total;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -2655,8 +2662,17 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 */
 	public synchronized void loadFileV2(final String table) {
 		
+		if(DEBUG)
+			Log.i(TAG,"loadFileV2()");
 		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) return;
+		if(db==null|| (db!=null && !db.isOpen())) {
+			if(DEBUG) 
+				Log.i(TAG,"loadFileV2(), db null and try to re-connect db");
+			if(openDBConnection(false)==null) {
+				Log.i(TAG,"loadFileV2(), openDBConnection failed. Abort loadfile...");
+				return;
+			}
+		}
 		
 		this.DELIMITER = "";
 		
@@ -2677,6 +2693,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			public void run() {
 				// Reset Database Table		
 				//SQLiteDatabase db = getSqliteDb(false);
+				if(DEBUG)
+					Log.i(TAG,"loadFileV2 thread starting...");
 				try {
 					if(countMapping(table)>0) 	db.delete(table, null, null);
 					if(DEBUG) Log.i(TAG, "loadfile(), table = " + table +" kbversion" + 
@@ -3397,7 +3415,11 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 	public List<ImObj> getImList() {
 		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) openDBConnection(false);
+		if(db==null|| (db!=null && !db.isOpen())) {
+			if(DEBUG) 
+				Log.i(TAG,"getImlist(), db null and try to re-connect db");
+			if(openDBConnection(false)==null) return null;
+		}
 		List<ImObj> result = new LinkedList<ImObj>();
 		try {
 			//SQLiteDatabase db = this.getSqliteDb(true);

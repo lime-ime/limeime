@@ -31,6 +31,7 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
                 mButtonRight.setOnTouchListener(this);
             }
             mCandidates = (CandidateView) findViewById(R.id.candidates);
+            
         }
     }
 
