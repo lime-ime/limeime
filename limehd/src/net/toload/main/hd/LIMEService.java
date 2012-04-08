@@ -429,8 +429,9 @@ public class LIMEService extends InputMethodService implements
 		mCandidateView = (CandidateView) mCandidateViewContainer.findViewById(R.id.candidates);
 		//mCandidateView = new CandidateView(this);
 		mCandidateView.setService(this);
-		//return mCandidateView;
+		//Jeremy '12,4,8  showcandidate() to construct candidateview so as composing popup won't fc.
 		showCandidateView();
+		clearComposing();
 		return mCandidateViewContainer;
 		
 		
@@ -524,7 +525,7 @@ public class LIMEService extends InputMethodService implements
 				updateChineseSymbol(); // Jeremy '11,9,4
 			else
 				hideCandidateView();
-			
+				
 		}
 	}
 	
@@ -979,7 +980,8 @@ public class LIMEService extends InputMethodService implements
 						&& !isChineseSymbolSuggestionsShowing){
 					clearSuggestions();
 					return true;
-				}else if(mCandidateView !=null && isCandidateShown()){
+					//Jeremy '12,4,8 add mLIMEPref.getFixedCandidateViewDisplay() too avoid back key unable to do 'real' back
+				}else if(mCandidateView !=null && isCandidateShown() && !mLIMEPref.getFixedCandidateViewDisplay()){
 					hideCandidateView();
 					return true;
 				}else 
@@ -2390,6 +2392,7 @@ public class LIMEService extends InputMethodService implements
 			hasMappingList = false;
 			//Jeremy '11,8,15
 			clearSuggestions();
+			
 			
 		}
 		
