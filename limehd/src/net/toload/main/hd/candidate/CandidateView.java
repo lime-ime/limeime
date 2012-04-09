@@ -197,6 +197,7 @@ public class CandidateView extends View implements View.OnClickListener
     	nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_size)*mLIMEPref.getFontSize());
     	nPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
+
     
 
     	//final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
@@ -206,8 +207,12 @@ public class CandidateView extends View implements View.OnClickListener
     		public boolean onScroll(MotionEvent e1, MotionEvent e2,
     				float distanceX, float distanceY) {
     			
+    			if(DEBUG)
+    				Log.i(TAG, "onScroll(): distanceX = " + distanceX + "; distanceY = " + distanceY );
+    				
+    		
     			//Jeremy '12,4,8 filter out small scroll which is actually candidate selection.
-    			if(distanceX < mHeight/2 && distanceY < mHeight/2 ) return true;
+    			if(Math.abs(distanceX) < mHeight/2 && Math.abs(distanceY) < mHeight/2 ) return true;
     			
     			mScrolled = true;
     			
@@ -937,8 +942,11 @@ public class CandidateView extends View implements View.OnClickListener
     
     @Override
     public boolean onTouchEvent(MotionEvent me) {
-
+    	if(DEBUG)
+    		Log.i(TAG,"OnTouchEvent() action = " + me.getAction());
         if (mGestureDetector!=null && mGestureDetector.onTouchEvent(me)) {
+        	if(DEBUG)
+        		Log.i(TAG,"OnTouchEvent() event processed by mGestureDetector");
             return true;
         }
 
@@ -962,6 +970,8 @@ public class CandidateView extends View implements View.OnClickListener
             invalidate();
             break;
         case MotionEvent.ACTION_UP:
+        	if(DEBUG)
+        		Log.i(TAG,"OnTouchEvent():MotionEvent.ACTION_UP, mScrolled="+mScrolled +"; mSelectedIndex = " + mSelectedIndex);
             if (!mScrolled) {
                 if (mSelectedIndex >= 0) {
                     takeSelectedSuggestion(true);
