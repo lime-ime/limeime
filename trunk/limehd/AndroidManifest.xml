@@ -17,7 +17,7 @@
 	<uses-permission android:name="android.permission.BLUETOOTH" />
 	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" /> -->
 
-	<application android:icon="@drawable/icon" android:label="@string/ime_name">
+	<application android:icon="@drawable/icon" android:label="@string/ime_name" android:theme="@style/LIMEHDTheme">
 
 		<!-- LIME Services -->
 		<service android:permission="android.permission.BIND_INPUT_METHOD" android:name="LIMEService">
@@ -54,7 +54,7 @@
 		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreference">
 		</activity>
 		
-		<activity android:theme="@android:style/Theme.Dialog" android:configChanges="keyboard|keyboardHidden|orientation" android:name=".limesettings.LIMEMappingLoading"></activity>
+		<activity android:theme="@style/LIMEHDDialogTheme" android:configChanges="keyboard|keyboardHidden|orientation" android:name=".limesettings.LIMEMappingLoading"></activity>
 
 	</application>
 

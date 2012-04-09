@@ -54,7 +54,7 @@ import android.os.RemoteException;
 import android.util.Log;
 
 public class DBService extends Service {
-	private final boolean DEBUG = false;
+	private final boolean DEBUG = true;
 	private final String TAG = "DBService";
 	private NotificationManager notificationMgr;
 
@@ -92,6 +92,9 @@ public class DBService extends Service {
 		public void loadMapping(String filename, String tablename) throws RemoteException {
 
 			loadingTablename = tablename;
+			
+			if(DEBUG)
+				Log.i(TAG,"loadMapping() on " + loadingTablename);
 
 			File sourcefile = new File(filename);
 
@@ -110,9 +113,14 @@ public class DBService extends Service {
 		}
 
 		public void resetMapping(final String tablename) throws RemoteException {
+					
 			if (dbAdapter == null) {loadLimeDB();}
+			
+			if(DEBUG)
+				Log.i(TAG,"loadMapping() on " + loadingTablename);
+			
 			dbAdapter.deleteAll(tablename);
-
+			
 			// Reset cache in SearchSrv
 			mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 		}
@@ -122,7 +130,10 @@ public class DBService extends Service {
 		}
 
 		public boolean isLoadingMappingFinished(){
-			return dbAdapter.isLoadingMappingFinished();
+			if(abortDownload)  //Jeremy '12,4,9 to avoid showing finished importing when download stage is aborted. 
+				return false;
+			else
+				return dbAdapter.isLoadingMappingFinished();
 		}
 
 		public boolean isLoadingMappingThreadAborted(){
@@ -140,6 +151,8 @@ public class DBService extends Service {
 
 		public void abortLoadMapping(){
 			try {
+				if(loadingTablename.equals("")) //Jeremy '12,4,9 means abort doloading. no need to reset mappings.
+					return;
 				resetMapping(loadingTablename);
 			} catch (RemoteException e) {
 				e.printStackTrace();

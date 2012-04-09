@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <style name="LIMEHDTheme" parent="android:Theme.DeviceDefault">
+	</style>
+    <style name="LIMEHDDialogTheme" parent="android:Theme.DeviceDefault">
+	</style>
+</resources>
