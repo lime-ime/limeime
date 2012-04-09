@@ -25,10 +25,11 @@ import java.io.File;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -39,6 +40,9 @@ import android.widget.Button;
  * 
  */
 public class LIMEIMSetting extends Activity {
+	
+	final static String TAG = "LIMESetting";
+	final static boolean DEBUG = false;
 	
 	Button btnSetupCustom = null;
 	Button btnSetupPhonetic = null;
@@ -213,6 +217,8 @@ public class LIMEIMSetting extends Activity {
 	 */
 	@Override
 	protected void onResume() {
+		if(DEBUG)
+			Log.i(TAG,"onResume()");
 		super.onStart();
 		initialButton();
 	}
@@ -320,5 +326,12 @@ public class LIMEIMSetting extends Activity {
 		return super.onOptionsItemSelected(item);
     }
     */
+
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		if(DEBUG)
+			Log.i(TAG,"onTouchEvent()");
+		return super.onTouchEvent(event);
+	}
 	
 }

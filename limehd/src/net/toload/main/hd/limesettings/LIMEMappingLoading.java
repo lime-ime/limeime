@@ -37,7 +37,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -52,7 +54,9 @@ import android.widget.TextView;
 
 public class LIMEMappingLoading extends Activity {
 
-	//private LIMEPreferenceManager mLIMEPref = null;
+	final static String TAG = "LIMEMappingLoading";
+	final static boolean DEBUG = false;
+	
 	private IDBService DBSrv = null;
 	
 	private NotificationManager notificationMgr;
@@ -161,7 +165,10 @@ public class LIMEMappingLoading extends Activity {
 	
 	@Override
 	protected void onResume() {
-
+		
+		if(DEBUG)
+			Log.i(TAG,"onREsume()");
+		
 		super.onResume();
 		
 		//mLIMEPref.setParameter("db_finish", false);
@@ -227,6 +234,13 @@ public class LIMEMappingLoading extends Activity {
 			notificationMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		}
 		notificationMgr.notify(0, notification);
+	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		if(DEBUG)
+			Log.i(TAG,"onTouchEvent()");
+		return super.onTouchEvent(event);
 	}
 
 	
