@@ -27,7 +27,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.Vibrator;
-//import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyCharacterMap;
@@ -244,6 +243,8 @@ public class LIMEService extends InputMethodService implements
 	
 	private boolean isChineseSymbolSuggestionsShowing= false;
 
+	
+	
 	/*
 	 * Construct SerConn
 	 */
@@ -767,26 +768,35 @@ public class LIMEService extends InputMethodService implements
 					+" candidatesStart:"+candidatesStart + " candidatesEnd:"+candidatesEnd	);
 
 		// If the current selection in the text view changes, we should
-		// clear whatever candidate text we have.
+		// clear whatever candidate text we have 
+		// (in English prediction do nothing in chinese IM). 
+		// Jeremy '12,4,9  do nothing here now.
+		
 		if (mComposing.length() > 0
-				&& (newSelStart != candidatesEnd || newSelEnd != candidatesEnd)
-				&& candidatesStart >0 && candidatesEnd >0
-				&& (newSelStart < candidatesStart || newSelStart > candidatesEnd)
+				&& candidatesStart >0 && candidatesEnd >0 // in composing  
+				&& (newSelStart != candidatesEnd || newSelEnd != candidatesEnd) // cursor is not in the last character of composing area 
 				) {
-			//Jeremy '11,8,14
-			//clearComposing();
-			//pickDefaultCandidate();
-			if (mComposing != null && mComposing.length() > 0)
-				mComposing.setLength(0);
-			if(templist!=null) 	templist.clear();
-			clearSuggestions();
-			
-			InputConnection ic = getCurrentInputConnection();
-			if (ic != null) {
-				ic.finishComposingText();
-			}
+			if(newSelStart < candidatesStart || newSelStart > candidatesEnd) { // cursor is moved before or after composing area
 
+				if(templist!=null) 	templist.clear();
+				mCandidateView.clear();
+				hideCandidateView();
+
+				if (mComposing != null && mComposing.length() > 0){
+
+					mComposing.setLength(0);
+
+					InputConnection ic = getCurrentInputConnection();
+					if (ic != null) 
+						ic.finishComposingText();
+				}
+			}else{
+				// cursor is moved within the composing area by user. move the cursor back to the end of composing area (don't know how to do now)
+			}
+			
 		}
+		
+		
 	}
 
 	/**
