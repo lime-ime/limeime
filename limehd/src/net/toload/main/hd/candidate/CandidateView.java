@@ -212,7 +212,7 @@ public class CandidateView extends View implements View.OnClickListener
     				
     		
     			//Jeremy '12,4,8 filter out small scroll which is actually candidate selection.
-    			if(Math.abs(distanceX) < mHeight/3 && Math.abs(distanceY) < mHeight/3 ) return true;
+    			if(Math.abs(distanceX) < mHeight/5 && Math.abs(distanceY) < mHeight/5 ) return true;
     			
     			mScrolled = true;
     			
@@ -716,8 +716,8 @@ public class CandidateView extends View implements View.OnClickListener
         int x = 0;
         final int count = mCount; //Cache count here '11,8,18
         for (int i = 0; i < count; i++) {
-        	if(DEBUG)
-        		Log.i(TAG, "Candidateview:OnDraw():updating:" + i );
+        	//if(DEBUG)
+        	//	Log.i(TAG, "Candidateview:OnDraw():updating:" + i );
         	if(count!=mCount || mSuggestions.size()==0) return;  // mSuggestion is updated, force abort
         	String suggestion = mSuggestions.get(i).getWord();
             float textWidth = paint.measureText(suggestion);

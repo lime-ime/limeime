@@ -761,7 +761,7 @@ public class LIMEService extends InputMethodService implements
 		super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd,
 				candidatesStart, candidatesEnd);
 		
-		if(DEBUG) 
+		//if(DEBUG) 
 			Log.i(TAG, "onUpdateSelection():oldSelStart" + oldSelStart
 					+" oldSelEnd:" + oldSelEnd
 					+" newSelStart:" + newSelStart + " newSelEnd:" + newSelEnd
@@ -2033,9 +2033,7 @@ public class LIMEService extends InputMethodService implements
 
 	@SuppressWarnings("unchecked")
 	private void handlKeyboardSelection(int position) {
-		//SharedPreferences sp = PreferenceManager
-		//		.getDefaultSharedPreferences(this);
-		//SharedPreferences.Editor spe = sp.edit();
+		if(DEBUG) Log.i(TAG, "handleKeyboardSelection() position = " + position);
 
 		keyboardSelection = keyboardListCodes.get(position);
 		
@@ -2557,6 +2555,9 @@ public class LIMEService extends InputMethodService implements
 	 */
 	private void switchKeyboardIM(int primaryCode) {
 		
+		if(DEBUG)
+			Log.i(TAG,"switchKeyboardIM() primaryCode =" + primaryCode);
+		
 		clearComposing();
 		super.setCandidatesViewShown(false);
 		
@@ -2627,6 +2628,8 @@ public class LIMEService extends InputMethodService implements
 	}
 */
 	private void switchChiEng() {
+		if(DEBUG)
+			Log.i(TAG,"siwtchChiEng()");
 		
 		//Jeremy '11,8,14
 		clearComposing();
@@ -3341,6 +3344,9 @@ public class LIMEService extends InputMethodService implements
 
 	@Override
 	public void onDestroy() {
+		if(DEBUG)
+			Log.i(TAG,"onDestroy()");
+		
 		clearComposing();
 		super.onDestroy();
 
@@ -3367,7 +3373,9 @@ public class LIMEService extends InputMethodService implements
 
 	@Override
 	public void onCancel() {
-		clearComposing();
+		if(DEBUG)
+			Log.i(TAG,"onCancel()");
+		//clearComposing();  Jeremy '12,4,10 avoid clearcomposing when user slide outside the candidate area
 		
 	}
 	//jeremy '11,9, 5 hideCanddiate when inputView is closed
