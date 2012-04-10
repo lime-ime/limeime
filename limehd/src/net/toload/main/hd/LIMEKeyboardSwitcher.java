@@ -109,6 +109,7 @@ public class LIMEKeyboardSwitcher {
     }
     
     void setKeyboardList(List<KeyboardObj> list){
+    	if(list==null || (list!=null&& list.size()==0)) return; //Jeremy '12,4,10 avoid fc when database is locked.
     	kbHm = new HashMap<String, KeyboardObj>();
     	for(KeyboardObj o : list){
     		kbHm.put(o.getCode(), o);
@@ -123,6 +124,7 @@ public class LIMEKeyboardSwitcher {
     }
     
     void setImList(List<ImObj> list){
+    	if(list==null || (list!=null&& list.size()==0)) return; //Jeremy '12,4,10 avoid fc when database is locked.
     	imHm = new HashMap<String, String>();  	
     	for(ImObj o : list){
     		imHm.put(o.getCode(), o.getKeyboard());
