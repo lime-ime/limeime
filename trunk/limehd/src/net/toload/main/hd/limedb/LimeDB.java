@@ -319,6 +319,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		
 		mLIMEPref = new LIMEPreferenceManager(ctx.getApplicationContext());
 		
+		
+		
 		// Jeremy '12,4,7 open DB connection in constructor
 		openDBConnection(true);
 	
@@ -641,6 +643,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		
 		if(db == null || (db!=null && !db.isOpen())){
 			db = this.getWritableDatabase();
+			mLIMEPref.setMappingLoading(false); // Jeremy '12,4,10 reset mapping_loading status 
 		}
 		return db;
 	}
@@ -2760,6 +2763,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				HashSet<String> codeList = new HashSet<String>();
 
 				//db = getSqliteDb(false);
+				
+				//Jeremy '12,4,10 db will locked after beginTrasaction();
+				mLIMEPref.setMappingLoading(true);
 				db.beginTransaction();
 
 				try {
@@ -2955,6 +2961,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				} finally {
 					if(DEBUG) Log.i(TAG, "loadfile(): main import loop final section");
 					db.endTransaction();
+					mLIMEPref.setMappingLoading(false); // Jeremy '12,4,10 reset mapping_loading status 
 					//db.close();
 				}
 				
@@ -2962,6 +2969,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 				if(!threadAborted){
 					//db = getSqliteDb(false);
+					mLIMEPref.setMappingLoading(true); // Jeremy '12,4,10 reset mapping_loading status 
 					db.beginTransaction();
 					try{
 						long entrySize = codeList.size();
@@ -2989,6 +2997,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					}finally {
 						if(DEBUG) Log.i(TAG, "loadfile(): related list buiding loop final section");
 						db.endTransaction();
+						mLIMEPref.setMappingLoading(false); // Jeremy '12,4,10 reset mapping_loading status 
 						//db.close();
 					}
 					
@@ -3414,12 +3423,16 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 
 	public List<ImObj> getImList() {
+		
+		if(mLIMEPref.getMappingLoading()) return null; //Jeremy '12,4,10 mapping loading. db is locked
 		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null|| (db!=null && !db.isOpen())) {
+		if(db==null || (db!=null && !db.isOpen())) {
 			if(DEBUG) 
 				Log.i(TAG,"getImlist(), db null and try to re-connect db");
 			if(openDBConnection(false)==null) return null;
 		}
+		
+		
 		List<ImObj> result = new LinkedList<ImObj>();
 		try {
 			//SQLiteDatabase db = this.getSqliteDb(true);
@@ -3528,7 +3541,15 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	public List<KeyboardObj> getKeyboardList() {
 		
 		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) openDBConnection(false);
+		
+		if(mLIMEPref.getMappingLoading()) return null; //Jeremy '12,4,10 mapping loading. db is locked
+		
+		if(db==null || (db!=null && !db.isOpen())) {
+			if(DEBUG) 
+				Log.i(TAG,"getImlist(), db null and try to re-connect db");
+			if(openDBConnection(false)==null) return null;
+		}
+		
 
 		List<KeyboardObj> result = new LinkedList<KeyboardObj>();
 		try {

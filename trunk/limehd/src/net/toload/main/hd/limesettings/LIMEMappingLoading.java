@@ -57,6 +57,8 @@ public class LIMEMappingLoading extends Activity {
 	final static String TAG = "LIMEMappingLoading";
 	final static boolean DEBUG = false;
 	
+	private Thread thread = null;
+	
 	private IDBService DBSrv = null;
 	
 	private NotificationManager notificationMgr;
@@ -139,8 +141,6 @@ public class LIMEMappingLoading extends Activity {
 			builder.setCancelable(false);
 			builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int id) {
-					//mLIMEPref.setParameter("im_loading", false);
-					//mLIMEPref.setParameter("im_loading_table", "");
 					try {
 						//DBSrv.resetMapping(imtype);
 						DBSrv.abortRemoteFileDownload();
@@ -162,47 +162,43 @@ public class LIMEMappingLoading extends Activity {
 					alert.show();
 	}
 	
-	
 	@Override
 	protected void onResume() {
-		
 		if(DEBUG)
-			Log.i(TAG,"onREsume()");
-		
+			Log.i(TAG,"onResume()");
 		super.onResume();
-		
-		//mLIMEPref.setParameter("db_finish", false);
-		
-		Thread thread = new Thread() {
-			public void run() {
 				
-				do{
-					try {
-						Thread.sleep(1000);
-						if(DBSrv.isRemoteFileDownloading() ||
-								DBSrv.isLoadingMappingThreadAlive() ){
-							mHandler.post(mUpdateUI);			
-						}else{
-							if(DBSrv.isLoadingMappingFinished()){
-								showNotificationMessage(getText(R.string.lime_setting_notification_finish)+ "");
+		if(thread == null){
+			thread = new Thread() {
+				public void run() {
+
+					do{
+						try {
+							Thread.sleep(1000);
+							if(DBSrv.isRemoteFileDownloading() ||
+									DBSrv.isLoadingMappingThreadAlive() ){
+								mHandler.post(mUpdateUI);			
 							}else{
-								showNotificationMessage(getText(R.string.lime_setting_notification_failed)+ "");
+								if(DBSrv.isLoadingMappingFinished()){
+									showNotificationMessage(getText(R.string.lime_setting_notification_finish)+ "");
+								}else{
+									showNotificationMessage(getText(R.string.lime_setting_notification_failed)+ "");
+								}
+								break;
 							}
-							//mLIMEPref.setParameter("db_finish", true);
-							break;
+
+						} catch (RemoteException e) {
+							e.printStackTrace();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
 						}
-					
-					} catch (RemoteException e) {
-						e.printStackTrace();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					
-				}while(true);
-				finish();
-			}
-		};
-		thread.start();
+
+					}while(true);
+					finish();
+				}
+			};
+			thread.start();
+		}
 	}
 
 	@Override

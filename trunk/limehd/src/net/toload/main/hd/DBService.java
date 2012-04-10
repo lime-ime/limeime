@@ -54,8 +54,9 @@ import android.os.RemoteException;
 import android.util.Log;
 
 public class DBService extends Service {
-	private final boolean DEBUG = true;
-	private final String TAG = "DBService";
+
+	private final boolean DEBUG = false;
+	private final String TAG = "LIME.DBService";
 	private NotificationManager notificationMgr;
 
 	private LimeDB dbAdapter = null;
@@ -141,11 +142,12 @@ public class DBService extends Service {
 		}
 
 		public boolean isLoadingMappingThreadAlive(){		
+			if(DEBUG) Log.i(TAG, "isLoadingMappingThreadAlive()"+  dbAdapter.isLoadingMappingThreadAlive());
 			return dbAdapter.isLoadingMappingThreadAlive();
 		}
 
 		public boolean isRemoteFileDownloading(){
-			if(DEBUG) Log.i("DBService:isRemoteFIleDownloading()", remoteFileDownloading+"");
+			if(DEBUG) Log.i(TAG, "isRemoteFIleDownloading():"+ remoteFileDownloading+"");
 			return remoteFileDownloading;
 		}
 
