@@ -212,7 +212,7 @@ public class CandidateView extends View implements View.OnClickListener
     				
     		
     			//Jeremy '12,4,8 filter out small scroll which is actually candidate selection.
-    			if(Math.abs(distanceX) < mHeight/2 && Math.abs(distanceY) < mHeight/2 ) return true;
+    			if(Math.abs(distanceX) < mHeight/3 && Math.abs(distanceY) < mHeight/3 ) return true;
     			
     			mScrolled = true;
     			
