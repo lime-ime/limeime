@@ -761,7 +761,7 @@ public class LIMEService extends InputMethodService implements
 		super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd,
 				candidatesStart, candidatesEnd);
 		
-		//if(DEBUG) 
+		if(DEBUG) 
 			Log.i(TAG, "onUpdateSelection():oldSelStart" + oldSelStart
 					+" oldSelEnd:" + oldSelEnd
 					+" newSelStart:" + newSelStart + " newSelEnd:" + newSelEnd
