@@ -926,7 +926,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @param code, word
 	 */
 	//Jeremy '11, 7, 31 add new phrase mapping into current table (for LD phrase learning). 
-	public synchronized void addOrUpdateMappingRecord(String code, String word) {
+	public synchronized void addOrUpdateMappingRecord(String raw_code, String word) {
+		String code = preProcessingRemappingCode(raw_code);
 		if(DEBUG)
 				Log.i(TAG, "addOrUpdateMappingRecord(), code = " + code + ". word=" + word  );
 		//Jeremy '12,4,17 db = null when db is restoring or replaced.
