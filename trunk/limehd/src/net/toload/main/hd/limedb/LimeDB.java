@@ -1090,7 +1090,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		//SQLiteDatabase db = this.getSqliteDb(false);
 		LinkedList<Mapping> scorelist=null;
 		try {
-			scorelist = updateRelatedListOnDB(db, tablename, code);
+			scorelist = updateRelatedListOnDB(db, tablename, preProcessingRemappingCode(code)); //Jeremy '12,4,11 should do remapping before update score
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
