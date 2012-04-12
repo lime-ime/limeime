@@ -280,7 +280,7 @@ public class LIMEKeyboardSwitcher {
     	if(mode!=0) mMode = mode;
     	
     	String imcode = "";
-    	if(!code.equals("wb")){
+    	if(!code.equals("wb") && !code.equals("hs") ){
         	if(imHm != null) imcode = imHm.get(code); 
     	}else{
     		imcode = code;
@@ -295,12 +295,26 @@ public class LIMEKeyboardSwitcher {
     		// Art 28/Sep/2011 Force WB to use it special design keyboard layout
     		kobj = new KeyboardObj();
 			kobj.setCode("wb");
-			kobj.setName("µß∂∂§≠ΩX");
-			kobj.setDescription("µß∂∂§≠ΩXøÈ§J™k¡‰ΩL");
+			kobj.setName("Á≠ÜÈ†Ü‰∫îÁ¢º");
+			kobj.setDescription("Á≠ÜÈ†Ü‰∫îÁ¢º");
 			kobj.setType("phone");
 			kobj.setImage("wb_keyboard_preview");
 			kobj.setImkb("lime_wb");
 			kobj.setImshiftkb("lime_wb");
+			kobj.setEngkb("lime_abc");
+			kobj.setEngshiftkb("lime_abc_shift");
+			kobj.setSymbolkb("symbols");
+			kobj.setSymbolshiftkb("symbols_shift");
+		}else if(imcode.equals("hs")){
+    		// Art 7/Feb/2012 HS Input Method
+    		kobj = new KeyboardObj();
+			kobj.setCode("hs");
+			kobj.setName("ËèØË±°Áõ¥Ë¶∫");
+			kobj.setDescription("ËèØË±°Áõ¥Ë¶∫");
+			kobj.setType("phone");
+			kobj.setImage("hs_keyboard_preview");
+			kobj.setImkb("lime_hs");
+			kobj.setImshiftkb("lime_hs_shift");
 			kobj.setEngkb("lime_abc");
 			kobj.setEngshiftkb("lime_abc_shift");
 			kobj.setSymbolkb("symbols");

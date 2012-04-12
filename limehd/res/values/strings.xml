@@ -24,7 +24,7 @@
     
     <!-- LIME Loading -->
     <string name="lime_setting_btn_load_local_notice">Select .LIME or .CIN File</string>
-    <string name="lime_setting_loading">Loading Mapping</string>
+    <string name="lime_setting_loading">Please do not close this window or program during data loading period</string>
     <string name="lime_setting_select_root"> - back to /</string>
     <string name="lime_setting_select_parent"> - back to ..</string>
     <string name="lime_loading">Loading ...</string>
@@ -89,6 +89,7 @@
     <string name="cj5_reverse_lookup_list">R-Lookup in ChangJei5</string>
     <string name="ecj_reverse_lookup_list">R-Lookup in EazyChangJei</string>
     <string name="wb_reverse_lookup_list">R-Lookup in Stroke5</string>
+    <string name="hs_reverse_lookup_list">R-Lookup in HS</string>
     
     <string name="han_convert_option_list">Chinese Characters Conversion</string>
     <string name="selkey_option_list">Candidate bar options</string>
@@ -255,6 +256,7 @@
 		<item>Array</item>
 		<item>Array10</item>
 		<item>Stroke5</item>
+		<item>HS</item>
 	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
@@ -269,6 +271,7 @@
 		<item>array</item>
 		<item>array10</item>
 		<item>Stroke5</item>
+		<item>HS</item>
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
@@ -282,6 +285,7 @@
 		<item>Eazy</item>
 		<item>Array</item>
 		<item>Array10</item>
+		<item>Stroke5</item>
 		<item>Stroke5</item>
 	</string-array>
 	<!-- Keyboard short name List -->
@@ -297,8 +301,10 @@
 		<item>Array</item>
 		<item>Array10</item>
 		<item>Stroke5</item>
+		<item>HS</item>
 	</string-array>
 	<string-array name="keyboard_defaultstate">
+		<item>true</item>
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
@@ -323,6 +329,7 @@
 		<item>array</item>
 		<item>array10</item>
 		<item>wb</item>
+		<item>hs</item>
 	</string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
@@ -336,6 +343,7 @@
 		<item>array</item>
 		<item>array10</item>
 		<item>wb</item>
+		<item>hs</item>
 		<item>related</item>
 		<item>dictionary</item>
 	</string-array>
@@ -363,6 +371,7 @@
 		<item>Array</item>
 		<item>Array10</item>
 		<item>Stroke5</item>
+		<item>HS</item>
 		<item>Preload related words</item>
 		<item>Dictionary for English keyboard</item>
 	</string-array>
@@ -374,6 +383,7 @@
     <string name="l3_tab_initial_error">Internet connection not available.</string>
     <string name="l3_tab_initial_message">Please initialized lime database using by downloading preloaded or blank lime database or restore from last backup.</string>
     <string name="l3_initial_btn_load_empty_db">Download empty db</string>
+    <string name="l3_initial_btn_load_phonetic_hs_only_db">Download phonetic + HS only preloaded db</string>
     <string name="l3_initial_btn_load_phonetic_only_db">Download phonetic only preloaded db</string>
     <string name="l3_initial_btn_load_preload_db">Download full preloaded db  \n注音, 倉頡, 倉頡五代 \n快倉, 大易, 輕鬆　　\n行列, 行列 １０　 　</string>
     <string name="l3_initial_btn_reset_db">Reset DB</string>
@@ -395,6 +405,7 @@
     <string name="l3_manage_array">Array</string>
     <string name="l3_manage_array10">Array10</string>
     <string name="l3_manage_wb">Stroke5</string>
+    <string name="l3_manage_hs">HS</string>
     
     <string name="l3_tab_preference">Preference</string>
 	
@@ -407,7 +418,7 @@
     <string name="l3_message_table_downloading">Downloading the IM-table file ...</string>
     <string name="l3_message_database_reset_confirm">Are you sure you want to reset the database?</string>
     <string name="l3_message_table_reset_confirm">Are you sure you want to reset this IM-table?</string>
-    <string name="l3_message_table_download_confirm">Are you sure you want to donload the IM-table file loading?</string>
+    <string name="l3_message_table_download_confirm">Please do not close this window or program during data loading period, are you sure you want to donload the IM-table file loading?</string>
     <string name="l3_message_table_abort_confirm">Are you sure you want to abort the IM-table file loading?</string>
     <string name="l3_initial_download_database">Downloading the preloaded database...</string>
     <string name="l3_initial_database_failed">Action failed! please waiting and check the integrity of database!</string>
@@ -435,6 +446,10 @@
     <string name="l3_im_setting_button_load">Load table (.lime/.cin)</string>
     <string name="l3_im_setting_button_reset">Reset table</string>
     <string name="l3_im_setting_button_select">Select keyboard</string>
+    
+	<string name="l3_im_download_from_hs">下載並安裝華象直覺字根\n華象直覺輸入法發明人陳華偉製作\nTel:(07)222-3133 手機：0933-616029, hs.h123@msa.hinet.net</string>
+    <string name="l3_im_download_from_hs_start">Downloading HS table</string>
+    <string name="l3_im_download_from_hs_install">Importing HS table</string>
     
     <string name="l3_im_download_from_dayi">Download/Import OpenVanilla DAYI table</string>
     <string name="l3_im_download_from_dayi_start">Downloading OpenVanilla DAYI table</string>
@@ -557,9 +572,18 @@
 <string name="release_note">
 	    \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案.\n
 	    \n版本更新說明
-	    \n** 喜好設定新增"選字列固定顯示"
-	    \n** 修正選字鍵顯示設定
-	    \n** 當使用實體鍵盤輸入自動關閉虛擬鍵盤 \n\n
+	    \n修正 
+		\n1. ICS (4.0.x) FC (DB open/close整個改寫)
+		\n2. 有時觸控不良，點下去候選列消失但又沒有出字\n
+		\n調整 
+		\n1. xhdpi 解析度 (> 320 dpi) 手機，像 Sony Xperia S, HTC One X
+		\n2. 符合 ICS soft menu key 的要求 (android:targetSdkVersion=14)
+		\n3. 取消 HTC 組字提示在輸入區下的功能 (新 HTC Sense 已失效)\n
+		
+		\n新增:
+		\n1. Xperia Pro鍵盤支援 
+		\n2. (選項) 候選列固定顯示
+		\n3. 華象直覺輸入法 \n\n
 	
 		LIME中文輸入法Facebook粉絲專頁\n
 		http://facebook.com/limeime/\n\n

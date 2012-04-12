@@ -370,6 +370,12 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				}
 			} catch (Exception e) {}
 	
+
+			try{
+				execSQL(dbin, "CREATE TABLE hs (_id INTEGER primary key autoincrement,  code text, code3r text, word text, related text, score integer, 'basescore' type integer);");
+				execSQL(dbin, "CREATE INDEX [hs_idx_code] ON [hs] ([code]);");
+			} catch (Exception e) {}
+			
 			try{
 				int count = dbin.query("keyboard", null, FIELD_CODE +" = 'phoneticet41'", null, null, null, null, null).getCount();
 	
@@ -396,6 +402,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			}
 			
 			try{
+				execSQL(dbin, "alter table hs add 'basescore' type integer");
 				execSQL(dbin, "alter table ecj add 'basescore' type integer");
 				execSQL(dbin, "alter table custom add 'basescore' type integer");
 				execSQL(dbin, "alter table wb add 'basescore' type integer");
@@ -1526,6 +1533,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							//&& !(code.contains("3")||code.contains("4")
 							//||code.contains("6")||code.contains("7")|| code.endsWith(" "))){
 						selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
+					}else if(tablename.equals("hs")){
+						String tempcode = code.replaceAll("'", "''");
+						selectClause = FIELD_CODE + " = '" + tempcode.trim() + "' " + extraConditions;
 					}else{
 						selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
 					}
@@ -2644,6 +2654,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						kobj = getKeyboardObj("phonenum");
 					}else if( table.equals("wb")){					
 						kobj = getKeyboardObj("wb");
+					}else if( table.equals("hs")){					
+						kobj = getKeyboardObj("hs");
 					}else if( kobj == null){					
 						kobj = getKeyboardObj("lime");
 					}
@@ -3073,6 +3085,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						kobj = getKeyboardObj("phonenum");
 					}else if( table.equals("wb")){					
 						kobj = getKeyboardObj("wb");
+					}else if( table.equals("hs")){					
+						kobj = getKeyboardObj("hs");
 					}else if( kobj == null){					
 						kobj = getKeyboardObj("lime");
 					}
@@ -3466,8 +3480,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		if( keyboard == null || keyboard.equals(""))
 			return null;
 		KeyboardObj kobj=null;
-		
-		if(!keyboard.equals("wb")){
+
+		if(!keyboard.equals("wb") && !keyboard.equals("hs")){
 			try {
 				//SQLiteDatabase db = this.getSqliteDb(true);
 				Cursor cursor = db.query("keyboard", null, FIELD_CODE +" = '"+keyboard+"'", null, null, null, null, null);
@@ -3497,7 +3511,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		}else{
+		}else if(keyboard.equals("wb")){
 			kobj = new KeyboardObj();
 			kobj.setCode("wb");
 			kobj.setName("筆順五碼");
@@ -3506,6 +3520,19 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			kobj.setImage("wb_keyboard_preview");
 			kobj.setImkb("lime_wb");
 			kobj.setImshiftkb("lime_wb");
+			kobj.setEngkb("lime_abc");
+			kobj.setEngshiftkb("lime_abc_shift");
+			kobj.setSymbolkb("symbols");
+			kobj.setSymbolshiftkb("symbols_shift");
+		}else if(keyboard.equals("hs")){
+			kobj = new KeyboardObj();
+			kobj.setCode("hs");
+			kobj.setName("華象直覺");
+			kobj.setDescription("華象直覺輸入法鍵盤");
+			kobj.setType("phone");
+			kobj.setImage("hs_keyboard_preview");
+			kobj.setImkb("lime_hs");
+			kobj.setImshiftkb("lime_hs_shift");
 			kobj.setEngkb("lime_abc");
 			kobj.setEngshiftkb("lime_abc_shift");
 			kobj.setSymbolkb("symbols");

@@ -708,6 +708,55 @@ public class LIMEMappingSetting extends Activity {
 				Button b1 = (Button) findViewById(R.id.btnSelectKeyboard);
 				 	   b1.setVisibility(View.INVISIBLE);
 							 
+			}else if(imtype != null && imtype.equals("hs")){
+				Button extendButton = new Button(this);
+				extendButton.setText(getResources().getString(R.string.l3_im_download_from_hs));
+				extendLayout.addView(extendButton);
+
+				extendButton.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+	     						
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								hasSelectFile = true;
+	    								resetLabelInfo();
+	    								DBSrv.downloadHs();
+	    								startLoadingWindow();
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    	}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+					}
+				});
+
+				// Remove useless layout LinearLayout05
+				TextView t1 = (TextView) findViewById(R.id.txtKeyboardInfo);
+						 t1.setVisibility(View.INVISIBLE);
+				TextView t2 = (TextView) findViewById(R.id.txtSelectKeyboard);
+				 		 t2.setVisibility(View.INVISIBLE);
+				TextView t3 = (TextView) findViewById(R.id.labKeyboard);
+				 		 t3.setVisibility(View.INVISIBLE);
+				Button b1 = (Button) findViewById(R.id.btnSelectKeyboard);
+				 	   b1.setVisibility(View.INVISIBLE);
+							 
 			}else{
 				extendLayout.removeView(extendButton);
 			}

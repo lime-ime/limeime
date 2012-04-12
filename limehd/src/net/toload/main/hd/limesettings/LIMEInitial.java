@@ -53,7 +53,8 @@ public class LIMEInitial extends Activity {
 
 	private IDBService DBSrv = null;
 	Button btnInitPreloadDB = null;
-	Button btnInitPhoneticOnlyDB = null; //Jeremy '11,9,10
+	Button btnInitPhoneticHsOnlyDB = null; 
+	Button btnInitPhoneticOnlyDB = null;//Jeremy '11,9,10
 	Button btnInitEmptyDB = null;
 	Button btnResetDB = null;
 	Button btnBackupDB = null;
@@ -96,6 +97,7 @@ public class LIMEInitial extends Activity {
 				resetLabelInfo("ez");
 				resetLabelInfo("phonetic");
 				resetLabelInfo("wb");
+				resetLabelInfo("hs");
 				
 				btnResetDB.setEnabled(false);
 				
@@ -110,6 +112,7 @@ public class LIMEInitial extends Activity {
 							    					DBSrv.resetDownloadDatabase();
 							    					btnInitPreloadDB.setEnabled(true);
 							    					btnInitPhoneticOnlyDB.setEnabled(true);
+							    					btnInitPhoneticHsOnlyDB.setEnabled(true);
 							    					btnInitEmptyDB.setEnabled(true);
 							    					btnResetDB.setEnabled(true);
 						    						mLIMEPref.setParameter("im_loading", false);
@@ -154,6 +157,7 @@ public class LIMEInitial extends Activity {
     					DBSrv.closeDatabse();
 		        		btnInitEmptyDB.setEnabled(false);
 		        		btnInitPhoneticOnlyDB.setEnabled(false);
+    					btnInitPhoneticHsOnlyDB.setEnabled(false);
 						btnInitPreloadDB.setEnabled(false);
 						btnStoreDevice.setEnabled(false);
 						btnStoreSdcard.setEnabled(false);
@@ -205,6 +209,45 @@ public class LIMEInitial extends Activity {
 						mLIMEPref.setParameter(LIME.DOWNLOAD_START, true);
 						Toast.makeText(v.getContext(), getText(R.string.l3_initial_download_database), Toast.LENGTH_SHORT).show();
 						DBSrv.downloadPhoneticOnlyDatabase();
+
+						// Reset for SearchSrv
+						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+						mLIMEPref.setParameter("db_finish", false);
+						
+					} catch (RemoteException e) {
+						mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
+						e.printStackTrace();
+					}
+		        }else{
+		        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
+		
+
+		btnInitPhoneticHsOnlyDB.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+
+		        if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
+		        	try {
+    					DBSrv.closeDatabse();
+		        		btnInitEmptyDB.setEnabled(false);
+		        		btnInitPhoneticOnlyDB.setEnabled(false);
+		        		btnInitPhoneticHsOnlyDB.setEnabled(false);
+						btnInitPreloadDB.setEnabled(false);
+						btnStoreDevice.setEnabled(false);
+						btnStoreSdcard.setEnabled(false);
+
+						String dbtarget = mLIMEPref.getParameterString("dbtarget");
+						if(dbtarget.equals("device")){
+							btnStoreSdcard.setText("");
+						}else if(dbtarget.equals("sdcard")){
+							btnStoreDevice.setText("");
+						}
+						
+						mLIMEPref.setParameter(LIME.DOWNLOAD_START, true);
+						Toast.makeText(v.getContext(), getText(R.string.l3_initial_download_database), Toast.LENGTH_SHORT).show();
+						DBSrv.downloadPhoneticHsOnlyDatabase();
 
 						// Reset for SearchSrv
 						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
@@ -417,6 +460,7 @@ public class LIMEInitial extends Activity {
 			btnResetDB = (Button) findViewById(R.id.btnResetDB);
 			btnInitPreloadDB = (Button) findViewById(R.id.btnInitPreloadDB);	
 			btnInitPhoneticOnlyDB = (Button) findViewById(R.id.btnInitPhoneticOnlyDB);
+			btnInitPhoneticHsOnlyDB = (Button) findViewById(R.id.btnInitPhoneticHsOnlyDB);
 			btnInitEmptyDB = (Button) findViewById(R.id.btnInitEmptyDB);	
 			btnBackupDB = (Button) findViewById(R.id.btnBackupDB);
 			btnRestoreDB = (Button) findViewById(R.id.btnRestoreDB);
@@ -438,6 +482,7 @@ public class LIMEInitial extends Activity {
 			
 			btnInitPreloadDB.setEnabled(true);
 			btnInitPhoneticOnlyDB.setEnabled(true);
+			btnInitPhoneticHsOnlyDB.setEnabled(true);
 			btnInitEmptyDB.setEnabled(true);
 			Toast.makeText(this, getText(R.string.l3_tab_initial_message), Toast.LENGTH_SHORT).show();
 			
@@ -459,6 +504,7 @@ public class LIMEInitial extends Activity {
 			btnStoreSdcard.setEnabled(false);
 			btnInitPreloadDB.setEnabled(false);
 			btnInitPhoneticOnlyDB.setEnabled(false);
+			btnInitPhoneticHsOnlyDB.setEnabled(false);
 			btnInitEmptyDB.setEnabled(false);
 		}
 		

@@ -232,6 +232,47 @@ public class DBService extends Service {
 			threadTask.start();
 		}
 
+		@Override
+		public void downloadPhoneticHsOnlyDatabase() throws RemoteException {
+			if (dbAdapter == null) {loadLimeDB();}
+			resetDownloadDatabase();
+			Thread threadTask = new Thread() {
+				public void run() { 
+					showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start)+ "", intentLIMEInitial);
+					downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY, LIME.G_IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
+					if(downloadedFile==null){
+						//showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
+						mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
+					}else{
+						String dbtarget = mLIMEPref.getParameterString("dbtarget");
+						String folder = ""; 
+						if(dbtarget.equals("device")){
+							folder = LIME.DATABASE_DECOMPRESS_FOLDER;
+						}else{
+							folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
+						}
+
+						if(downloadedFile.exists()){
+							if(decompressFile(downloadedFile, folder, LIME.DATABASE_NAME)){
+								Thread threadTask = new Thread() {
+									public void run() {
+										downloadedFile.delete();
+										mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
+									}
+								};
+								threadTask.start();
+							}
+							getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
+							showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
+							//Jeremy '12,4,7 re-open the dbconnection
+							dbAdapter.openDBConnection(true);
+						}
+					}
+				}
+
+			};
+			threadTask.start();
+		}
 		
 		@Override
 		public void downloadPhoneticOnlyDatabase() throws RemoteException {
@@ -697,6 +738,26 @@ public class DBService extends Service {
 			threadTask.start();
 		}
 
+		@Override
+		public void downloadHs() throws RemoteException {
+			Thread threadTask = new Thread() {
+				public void run() {
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_hs_start)+ "", intentLIMEMappingLoading);
+					downloadedFile = downloadRemoteFile(LIME.HS_DOWNLOAD_URL, LIME.G_HS_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_HS);
+					if(downloadedFile!=null){
+						showNotificationMessage(ctx.getText(R.string.l3_im_download_from_hs_install)+ "", intentLIMEMappingLoading);
+						try {
+							loadMapping(downloadedFile.getAbsolutePath(), "hs");
+						} catch (RemoteException e) {
+							e.printStackTrace();
+							showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
+						}
+					}
+				}
+			};
+			threadTask.start();
+		}
+		
 		@Override
 		public void downloadWb() throws RemoteException {
 			Thread threadTask = new Thread() {
