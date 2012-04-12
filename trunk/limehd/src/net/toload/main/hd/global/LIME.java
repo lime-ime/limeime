@@ -15,9 +15,11 @@ public class LIME {
 	public static final String CJ5_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fcj5.zip";
 	public static final String ECJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fecj.zip";
 	public static final String WB_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fwb.zip";
+	public static final String HS_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/hs.zip";
 	public static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Flime1109.zip";
 	public static final String IM_DOWNLOAD_TARGET_EMPTY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fempty1109.zip";
 	public static final String IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphoneticonly1109.zip";
+	public static final String IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://limeime.googlecode.com/svn/branches/database/phonetichs0208.zip";
 	
 	// Google Code
 	public static final String G_CJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj.zip";
@@ -30,9 +32,11 @@ public class LIME {
 	public static final String G_CJ5_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj5.zip";
 	public static final String G_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj.zip";
 	public static final String G_WB_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/wb.zip";
+	public static final String G_HS_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/hs.zip";
 	public static final String G_IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime1109.zip";
 	public static final String G_IM_DOWNLOAD_TARGET_EMPTY = "http://limeime.googlecode.com/svn/branches/database/empty1109.zip";
 	public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://limeime.googlecode.com/svn/branches/database/phoneticonly1109.zip";
+	public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://limeime.googlecode.com/svn/branches/database/phonetichs0208.zip";
 	
 	public static final String IM_LOAD_LIME_ROOT_DIRECTORY = "/sdcard/limehd/";
 	public static final String DOWNLOAD_START = "download_start";
@@ -47,6 +51,7 @@ public class LIME {
 	public static final String DATABASE_SOURCE_SCJ = "scj.lime";
 	public static final String DATABASE_SOURCE_ARRAY = "array.lime";
 	public static final String DATABASE_SOURCE_ARRAY10 = "array10.lime";
+	public static final String DATABASE_SOURCE_HS = "hs.lime";
 	public static final String DATABASE_SOURCE_WB = "stroke5.cin";
 	public static final String DATABASE_SOURCE_EZ = "ez.lime";
 	public static final String DATABASE_SOURCE_FILENAME = "lime.zip";

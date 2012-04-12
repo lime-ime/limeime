@@ -2779,6 +2779,11 @@ public class LIMEService extends InputMethodService implements
 			hasSymbolMapping = true;
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+		}else if (keyboardSelection.equals("hs")) {
+			hasNumberMapping = true;
+			hasSymbolMapping = true;
+			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
+					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
 		}else {
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);

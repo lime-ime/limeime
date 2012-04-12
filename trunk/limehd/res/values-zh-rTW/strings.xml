@@ -24,7 +24,7 @@
     
     <!-- LIME Loading -->
     <string name="lime_setting_btn_load_local_notice">請選擇 .LIME 或 .CIN 檔案</string>
-    <string name="lime_setting_loading">載入對應檔</string>
+    <string name="lime_setting_loading">資料載入期間請勿關閉本視窗或跳出程式，以免匯入失敗</string>
     <string name="lime_setting_select_root"> - back to /</string>
     <string name="lime_setting_select_parent"> - back to ..</string>
     <string name="lime_loading_cancel">取消</string>
@@ -89,6 +89,7 @@
     <string name="cj5_reverse_lookup_list">倉頡五代字根反查</string>
     <string name="ecj_reverse_lookup_list">速成字根反查</string>
     <string name="wb_reverse_lookup_list">筆順五碼字根反查</string>
+    <string name="hs_reverse_lookup_list">華象直覺字根反查</string>
     
     <string name="han_convert_option_list">中文簡/繁體字碼轉換</string>
     <string name="selkey_option_list">選字鍵選項</string>
@@ -246,6 +247,7 @@
 		<item>array</item>
 		<item>array10</item>
 		<item>wb</item>
+		<item>hs</item>
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
@@ -260,6 +262,7 @@
 		<item>行列輸入法</item>
 		<item>行列10輸入法</item>
 		<item>筆順五碼輸入法</item>
+		<item>華象直覺輸入法</item>
 	</string-array>
 	<!-- Keyboard short name List -->
     <string-array name="keyboardShortname">
@@ -274,8 +277,10 @@
 		<item>行列</item>
 		<item>行列10</item>
 		<item>筆順五碼</item>
+		<item>華象直覺</item>
 	</string-array>
 	<string-array name="keyboard_defaultstate">
+		<item>true</item>
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
@@ -300,6 +305,7 @@
 		<item>array</item>
 		<item>array10</item>
 		<item>wb</item>
+		<item>hs</item>
 	</string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
@@ -313,6 +319,7 @@
 		<item>array</item>
 		<item>array10</item>
 		<item>wb</item>
+		<item>hs</item>
 		<item>related</item>
 		<item>dictionary</item>
 	</string-array>
@@ -339,6 +346,7 @@
 		<item>行列</item>
 		<item>行列10</item>
 		<item>筆順五碼</item>
+		<item>華象直覺</item>
 		<item>預載關聯字</item>
 		<item>英文字典</item>
 	</string-array>
@@ -351,6 +359,7 @@
     <string name="l3_tab_initial_message">請點選 [預載資料庫] OR [空白資料庫] 鍵下載 LIME 資料庫或點選 [還原資料庫] 鍵由備份檔案中還原</string>
     <string name="l3_initial_btn_load_empty_db">空白資料庫</string>
     <string name="l3_initial_btn_load_phonetic_only_db">僅含注音資料庫</string>
+    <string name="l3_initial_btn_load_phonetic_hs_only_db">僅含注音+華象直覺資料庫</string>
     <string name="l3_initial_btn_load_preload_db">預載資料庫 \n注音, 倉頡, 倉頡五代 \n快倉, 大易, 輕鬆　　\n行列, 行列 １０　 　</string>
     <string name="l3_initial_btn_reset_db">重置資料庫</string>
     <string name="l3_initial_btn_store_to_sdcard">請問您要變更資料庫的儲存位置至 SDCARD 嗎? 在部份機種上可能會產生效能不佳的問題。</string>
@@ -371,6 +380,7 @@
     <string name="l3_manage_array">行列</string>
     <string name="l3_manage_array10">行列10</string>
     <string name="l3_manage_wb">筆順五碼</string>
+    <string name="l3_manage_hs">華象直覺</string>
     
     <string name="l3_tab_preference">喜好設定</string>
     
@@ -383,7 +393,7 @@
     <string name="l3_message_table_downloading">下載字根檔...</string>
     <string name="l3_message_database_reset_confirm">您是否要移除資料庫?</string>
     <string name="l3_message_table_reset_confirm">您是否要清除所有記錄?</string>
-    <string name="l3_message_table_download_confirm">您是否要下載字根檔?</string>
+    <string name="l3_message_table_download_confirm">資料載入期間請勿關閉本視窗或跳出程式，以免匯入失敗，您是否要下載字根檔?</string>
     <string name="l3_message_table_abort_confirm">您是否要中斷載入字根檔?</string>
     <string name="l3_initial_download_database">下載資料庫</string>
     <string name="l3_initial_database_failed">操作失敗! 請您稍後再試，請檢查資料庫是否載入完全!</string>
@@ -454,6 +464,11 @@
     <string name="l3_im_download_from_ez_start">開始下載輕鬆字根</string>
     <string name="l3_im_download_from_ez_install">開始安裝輕鬆字根</string>
     
+    
+    <string name="l3_im_download_from_hs">下載並安裝華象直覺字根\n華象直覺輸入法發明人陳華偉製作\nTel:(07)222-3133 手機：0933-616029, hs.h123@msa.hinet.net</string>
+    <string name="l3_im_download_from_hs_start">開始下載華象直覺字根</string>
+    <string name="l3_im_download_from_hs_install">開始安裝華象直覺字根</string>
+    
     <string name="l3_im_download_from_wb">下載並安裝筆順五碼字根\n香港長者資訊天地提供\nhttp://sf.net/projects/stroke5input</string>
     <string name="l3_im_download_from_wb_start">開始下載筆順五碼字根</string>
     <string name="l3_im_download_from_wb_install">開始安裝筆順五碼字根</string>
@@ -523,9 +538,18 @@
 	<string name="release_note">
 	    \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案.\n
 	    \n版本更新說明
-	    \n** 喜好設定新增"選字列固定顯示"
-	    \n** 修正選字鍵顯示設定
-	    \n** 當使用實體鍵盤輸入自動關閉虛擬鍵盤 \n\n
+	    \n修正 
+		\n1. ICS (4.0.x) FC (DB open/close整個改寫)
+		\n2. 有時觸控不良，點下去候選列消失但又沒有出字\n
+		\n調整 
+		\n1. xhdpi 解析度 (> 320 dpi) 手機，像 Sony Xperia S, HTC One X
+		\n2. 符合 ICS soft menu key 的要求 (android:targetSdkVersion=14)
+		\n3. 取消 HTC 組字提示在輸入區下的功能 (新 HTC Sense 已失效)\n
+		
+		\n新增:
+		\n1. Xperia Pro鍵盤支援 
+		\n2. (選項) 候選列固定顯示
+		\n3. 華象直覺輸入法 \n\n
 	
 		LIME中文輸入法Facebook粉絲專頁\n
 		http://facebook.com/limeime/\n\n

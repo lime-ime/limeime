@@ -111,7 +111,7 @@ public class LIMEMappingLoading extends Activity {
 		getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
 		
 		this.setContentView(R.layout.progress);
-		this.setTitle(getText(R.string.lime_setting_loading)+"...");
+		this.setTitle(getText(R.string.l3_dbservice_download_convert)+"...");
 		//mLIMEPref = new LIMEPreferenceManager(this);
 		
 		txtLoadingStatus = (TextView) findViewById(R.id.txtLoadingStatus);
