@@ -884,6 +884,12 @@ public class DBService extends Service {
 			else return dbAdapter.getPercentageDone();
 		}
 
+		@Override
+		public void forceUpgrad() throws RemoteException {
+			if (dbAdapter == null) {loadLimeDB();}
+			dbAdapter.forceUpgrade();
+		}
+
 	}
 
 	@Override

@@ -572,13 +572,13 @@
 <string name="release_note">
 	    \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案.\n
 	    \n版本更新說明
-	    \n修正 
-		\n1. ICS (4.0.x) FC (DB open/close整個改寫)
-		\n2. 有時觸控不良，點下去候選列消失但又沒有出字\n
-		\n調整 
-		\n1. xhdpi 解析度 (> 320 dpi) 手機，像 Sony Xperia S, HTC One X
-		\n2. 符合 ICS soft menu key 的要求 (android:targetSdkVersion=14)
-		\n3. 取消 HTC 組字提示在輸入區下的功能 (新 HTC Sense 已失效)\n
+	    \n1. 修正 ICS (4.0.x) 異常中止問題
+		\n2. 修正候選列觸控異常狀況 (點選後候選列消失但沒有出字)
+		\n3. 微調 xhdpi 解析度手機 (>320dpi)，如 Sony Xperia S, HTC One X
+		\n4. 調整純數字鍵盤，增加 enter 鍵
+		\n5. 新增 Xperia Pro 實體鍵盤支援 
+		\n6. 新增候選列固定顯示選項
+		\n7. 新增華象直覺輸入法 (已取得發明人陳華偉先生授權)\n\n
 		
 		\n新增:
 		\n1. Xperia Pro鍵盤支援 
