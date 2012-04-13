@@ -59,7 +59,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	
 	
 	private SQLiteDatabase db = null;
-	private final static int DATABASE_VERSION = 70;
+	private final static int DATABASE_VERSION = 71;
 	//private final static int DATABASE_RELATED_SIZE = 50;
 
 	
@@ -349,6 +349,12 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		forceUpgrade(dbin);
 		
 		
+	}
+	
+	public void forceUpgrade(){
+		if(db != null){
+			forceUpgrade(db);
+		}
 	}
 	
 	/*
@@ -1567,7 +1573,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					
 				}catch(SQLiteException e){
 					e.printStackTrace();
-					//forceUpgrade();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

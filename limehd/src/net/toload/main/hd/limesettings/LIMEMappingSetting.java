@@ -692,9 +692,6 @@ public class LIMEMappingSetting extends Activity {
 						AlertDialog alert = builder.create();
 									alert.show();
 						
-									
-						
-
 					}
 				});
 
@@ -709,6 +706,8 @@ public class LIMEMappingSetting extends Activity {
 				 	   b1.setVisibility(View.INVISIBLE);
 							 
 			}else if(imtype != null && imtype.equals("hs")){
+				
+				
 				Button extendButton = new Button(this);
 				extendButton.setText(getResources().getString(R.string.l3_im_download_from_hs));
 				extendLayout.addView(extendButton);
