@@ -22,7 +22,6 @@ package net.toload.main.hd.keyboard;
 
 import net.toload.main.hd.LIMEKeyboardSwitcher;
 import net.toload.main.hd.R;
-import net.toload.main.hd.global.LIMEPreferenceManager;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
@@ -473,7 +472,8 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
             mTextPaint = new TextPaint();
             //mTextPaint.setTextSize(getTextSizeFromTheme(android.R.style.TextAppearance_Medium, 18));
             mTextPaint.setTextSize(mRes.getDimensionPixelSize(R.dimen.spacebar_preview_text_size));
-            mTextPaint.setColor(R.color.limekeyboard_transparent);
+            int color = mContext.getResources().getColor((R.color.limekeyboard_transparent));
+            mTextPaint.setColor(color);
             mTextPaint.setTextAlign(Align.CENTER);
             mTextPaint.setAlpha(OPACITY_FULLY_OPAQUE);
             mTextPaint.setAntiAlias(true);

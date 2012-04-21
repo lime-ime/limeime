@@ -7,7 +7,7 @@ import java.io.File;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import android.content.Context;
-import android.database.DatabaseErrorHandler;
+//import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteException;
@@ -61,27 +61,7 @@ public abstract class LimeSQLiteOpenHelper {
      *     newer, {@link #onDowngrade} will be used to downgrade the database
      */
     public LimeSQLiteOpenHelper(Context context, String name, CursorFactory factory, int version) {
-        this(context, name, factory, version, null);//new DefaultDatabaseErrorHandler());
-    }
-
-    /**
-     * Create a helper object to create, open, and/or manage a database.
-     * The database is not actually created or opened until one of
-     * {@link #getWritableDatabase} or {@link #getReadableDatabase} is called.
-     *
-     * <p>Accepts input param: a concrete instance of {@link DatabaseErrorHandler} to be
-     * used to handle corruption when sqlite reports database corruption.</p>
-     *
-     * @param context to use to open or create the database
-     * @param name of the database file, or null for an in-memory database
-     * @param factory to use for creating cursor objects, or null for the default
-     * @param version number of the database (starting at 1); if the database is older,
-     *     {@link #onUpgrade} will be used to upgrade the database
-     * @param errorHandler the {@link DatabaseErrorHandler} to be used when sqlite reports database
-     * corruption.
-     */
-    public LimeSQLiteOpenHelper(Context context, String name, CursorFactory factory, int version,
-            DatabaseErrorHandler errorHandler) {
+        
         if (version < 1) throw new IllegalArgumentException("Version must be >= 1, was " + version);
         //if (errorHandler == null) {
         //    throw new IllegalArgumentException("DatabaseErrorHandler param value can't be null.");

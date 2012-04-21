@@ -77,7 +77,7 @@ public abstract class LIMEMetaKeyKeyListener extends MetaKeyKeyListener{
      * the current state, returns the new state.
      */
     public static long adjustMetaAfterKeypress(long state) {
-    	if(Integer.parseInt(android.os.Build.VERSION.SDK) > 10)
+    	if(android.os.Build.VERSION.SDK_INT > 10)
     		return MetaKeyKeyListener.adjustMetaAfterKeypress(state);
     	
         state = adjust(state, META_SHIFT_ON, META_SHIFT_MASK);
@@ -99,7 +99,7 @@ public abstract class LIMEMetaKeyKeyListener extends MetaKeyKeyListener{
      * Handles presses of the meta keys.
      */
     public static long handleKeyDown(long state, int keyCode, KeyEvent event) {
-    	if(Integer.parseInt(android.os.Build.VERSION.SDK) > 10)
+    	if(android.os.Build.VERSION.SDK_INT > 10)
     		return MetaKeyKeyListener.handleKeyDown(state, keyCode, event);
         if (keyCode == KeyEvent.KEYCODE_SHIFT_LEFT || keyCode == KeyEvent.KEYCODE_SHIFT_RIGHT) {
             return press(state, META_SHIFT_ON, META_SHIFT_MASK);
@@ -138,7 +138,7 @@ public abstract class LIMEMetaKeyKeyListener extends MetaKeyKeyListener{
      * Handles release of the meta keys.
      */
     public static long handleKeyUp(long state, int keyCode, KeyEvent event) {
-    	if(Integer.parseInt(android.os.Build.VERSION.SDK) > 10)
+    	if(android.os.Build.VERSION.SDK_INT > 10)
     		return MetaKeyKeyListener.handleKeyUp(state, keyCode, event);
         if (keyCode == KeyEvent.KEYCODE_SHIFT_LEFT || keyCode == KeyEvent.KEYCODE_SHIFT_RIGHT) {
             return release(state, META_SHIFT_ON, META_SHIFT_MASK);
