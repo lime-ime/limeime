@@ -9,7 +9,6 @@
 
 package net.toload.main.hd.limesettings;
 
-import android.R;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -208,11 +207,11 @@ public class MultiListPreference extends DialogPreference {
 			attrs,
 			new int[]{
 				// "android:entries", just like ListPreference
-				R.attr.entries,
+				android.R.attr.entries,
 				// "android:entryValues", these are defaults ONLY
-				R.attr.entryValues,
+				android.R.attr.entryValues,
 				// "android:defaultValue"
-				R.attr.defaultValue
+				android.R.attr.defaultValue
 			}
 		);
 

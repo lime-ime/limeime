@@ -3032,7 +3032,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					setImInfo(table, "source", filename.getName());
 					setImInfo(table, "name", imname);
 					setImInfo(table, "amount", String.valueOf(count));
-					setImInfo(table, "import", new Date().toLocaleString());
+					setImInfo(table, "import", new Date().toString()); //Jeremy '12,4,21 toLocaleString() is deprecated
 
 					if(DEBUG) 
 						Log.i("limedb:loadfile()","Fianlly section: source:" 
