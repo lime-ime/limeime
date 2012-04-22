@@ -77,7 +77,7 @@ import android.content.res.Configuration;
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = true;
+	static final boolean DEBUG = false;
 	static final String TAG = "LIMEService";
 	static final String PREF = "LIMEXY";
 
@@ -499,6 +499,7 @@ public class LIMEService extends InputMethodService implements
 		//Jeremy '11,8,14
 		if (mComposing != null && mComposing.length() > 0)
 			mComposing.setLength(0);
+		
 		InputConnection ic = getCurrentInputConnection();
 		if(ic!=null) ic.finishComposingText(); 
 		
@@ -517,10 +518,11 @@ public class LIMEService extends InputMethodService implements
 		//Jeremy '11,8,14
 		if (mComposing != null && mComposing.length() > 0)
 			mComposing.setLength(0);
-		InputConnection ic = getCurrentInputConnection();
+		
 		
 		if(forceClearComposing){
-			ic.commitText("", 0);
+			InputConnection ic = getCurrentInputConnection();
+			if(ic!=null) ic.commitText("", 0);
 		}
 		
 		firstMatched = null;
@@ -1814,7 +1816,7 @@ public class LIMEService extends InputMethodService implements
 	 * Add by Jeremy '10, 3, 24 for options menu in soft keyboard
 	 */
 	private void handleOptions() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.LIMEHDTheme);
 		builder.setCancelable(true);
 		builder.setIcon(R.drawable.sym_keyboard_done);
 		builder.setNegativeButton(android.R.string.cancel, null);
@@ -1968,7 +1970,7 @@ public class LIMEService extends InputMethodService implements
 	 * Add by Jeremy '11,9,17 for han convert (tranditional <-> simplifed) options
 	 */
 	private void showHanConvertPicker() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.LIMEHDTheme);
 		builder.setCancelable(true);
 		builder.setIcon(R.drawable.sym_keyboard_done);
 		builder.setNegativeButton(android.R.string.cancel, null);
@@ -2006,7 +2008,7 @@ public class LIMEService extends InputMethodService implements
 
 		buildActiveKeyboardList();
 
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.LIMEHDTheme);
 		builder.setCancelable(true);
 		builder.setIcon(R.drawable.sym_keyboard_done);
 		builder.setNegativeButton(android.R.string.cancel, null);
@@ -3366,7 +3368,7 @@ public class LIMEService extends InputMethodService implements
 			Log.i(TAG,"onDestroy()");
 		
 		//jeremy 12,4,21 need to check again---
-		clearComposing(true);
+		//clearComposing(true); see no need to do this '12,4,21
 		super.onDestroy();
 
 		if (SearchSrv != null) {

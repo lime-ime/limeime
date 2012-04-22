@@ -153,7 +153,7 @@ public class CandidateView extends View implements View.OnClickListener
     	
     	mContext = context;
     	 //Jeremy '11,8,11 detect API level and show keyboard number only in 3.0+ 
-    	isAndroid3 = Integer.parseInt(android.os.Build.VERSION.SDK) >11; 
+    	isAndroid3 = android.os.Build.VERSION.SDK_INT >11; 
     	
     	mLIMEPref = new LIMEPreferenceManager(context);
 
