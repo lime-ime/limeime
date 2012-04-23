@@ -1,5 +1,7 @@
 package net.toload.main.hd.global;
 
+import android.os.Environment;
+
 public class LIME {
 	
 	public static final String DAYI_DOWNLOAD_URL = "http://openvanilla.googlecode.com/svn/trunk/Modules/SharedData/dayi3.cin";
@@ -38,7 +40,7 @@ public class LIME {
 	public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://limeime.googlecode.com/svn/branches/database/phoneticonly1109.zip";
 	public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://limeime.googlecode.com/svn/branches/database/phonetichs0208.zip";
 	
-	public static final String IM_LOAD_LIME_ROOT_DIRECTORY = "/sdcard/limehd/";
+	public static final String IM_LOAD_LIME_ROOT_DIRECTORY = Environment.getExternalStorageDirectory() + "/limehd/";
 	public static final String DOWNLOAD_START = "download_start";
 	public static final String DATABASE_DOWNLOAD_STATUS = "database_download_status";
 	public static final String DATABASE_NAME = "lime.db";
@@ -57,7 +59,7 @@ public class LIME {
 	public static final String DATABASE_SOURCE_FILENAME = "lime.zip";
 	public static final String DATABASE_SOURCE_FILENAME_EMPTY = "empty.zip";
 	public static final String DATABASE_DECOMPRESS_FOLDER = "/data/data/net.toload.main.hd/databases";
-	public static final String DATABASE_DECOMPRESS_FOLDER_SDCARD = "/sdcard/limehd/databases";
+	public static final String DATABASE_DECOMPRESS_FOLDER_SDCARD = Environment.getExternalStorageDirectory() + "/limehd/databases";
 	public static final String DATABASE_BACKUP_NAME = "backup.zip";
 	public static final String IM_CJ_STATUS = "im_cj_status";
 	public static final String IM_SCJ_STATUS = "im_scj_status";

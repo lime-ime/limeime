@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import net.toload.main.hd.R;
-import net.toload.main.hd.global.FileUtilities;
+import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.global.ImObj;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIME;
@@ -3719,7 +3719,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 	private void checkHanDB() {
 		if(hanConverter == null){
-			FileUtilities fu = new FileUtilities();
+			LIMEUtilities fu = new LIMEUtilities();
 			//Jeremy '11,9,8 update handconverdb to v2 with base score in TCSC table
 			File hanDBFile = fu.isFileExist("/data/data/net.toload.main.hd/databases/hanconvert.db");
 			if(hanDBFile!=null)

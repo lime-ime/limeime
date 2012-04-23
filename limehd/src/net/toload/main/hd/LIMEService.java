@@ -62,7 +62,9 @@ import net.toload.main.hd.global.Mapping;
 import net.toload.main.hd.limedb.ExpandableDictionary;
 import net.toload.main.hd.limedb.UserDictionary;
 import net.toload.main.hd.limesettings.LIMEPreference;
+import android.annotation.TargetApi;
 import android.app.AlertDialog;
+
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
@@ -234,6 +236,7 @@ public class LIMEService extends InputMethodService implements
 	static final int MY_KEYCODE_CTRL_RIGHT = 114;
 	static final int MY_KEYCODE_ENTER = 10;
 	static final int MY_KEYCODE_SPACE = 32;
+	static final int MY_KEYCODE_SWITCH_CHARSET = 95;
 	
 	private final String relatedSelkey = "!@#$%^&*()";
 	
@@ -1130,7 +1133,7 @@ public class LIMEService extends InputMethodService implements
 				}
 				break;
 			}
-		case KeyEvent.KEYCODE_SWITCH_CHARSET: // experia pro earth key
+		case MY_KEYCODE_SWITCH_CHARSET: // experia pro earth key
 		case 1000: // milestone chi/eng key
 			switchChiEng();
 			break;
@@ -1812,11 +1815,20 @@ public class LIMEService extends InputMethodService implements
 	private static final int POS_METHOD = 3;
 
 
+	
 	/**
 	 * Add by Jeremy '10, 3, 24 for options menu in soft keyboard
 	 */
+	@TargetApi(11)
 	private void handleOptions() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.LIMEHDTheme);
+		AlertDialog.Builder builder = null;
+		
+		if(android.os.Build.VERSION.SDK_INT < 11)
+			builder = new AlertDialog.Builder(this);
+		else
+			builder = new AlertDialog.Builder(this, R.style.LIMEHDTheme);
+			
+		
 		builder.setCancelable(true);
 		builder.setIcon(R.drawable.sym_keyboard_done);
 		builder.setNegativeButton(android.R.string.cancel, null);
@@ -1969,8 +1981,15 @@ public class LIMEService extends InputMethodService implements
 	/**
 	 * Add by Jeremy '11,9,17 for han convert (tranditional <-> simplifed) options
 	 */
+	@TargetApi(11)
 	private void showHanConvertPicker() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.LIMEHDTheme);
+		AlertDialog.Builder builder = null;
+		
+		if(android.os.Build.VERSION.SDK_INT < 11)
+			builder = new AlertDialog.Builder(this);
+		else
+			builder = new AlertDialog.Builder(this, R.style.LIMEHDTheme);
+			
 		builder.setCancelable(true);
 		builder.setIcon(R.drawable.sym_keyboard_done);
 		builder.setNegativeButton(android.R.string.cancel, null);
@@ -2004,11 +2023,18 @@ public class LIMEService extends InputMethodService implements
 	/**
 	 * Add by Jeremy '10, 3, 24 for keyboard picker menu in options menu
 	 */
+	@TargetApi(11)
 	private void showKeyboardPicker() {
 
 		buildActiveKeyboardList();
 
-		AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.LIMEHDTheme);
+		AlertDialog.Builder builder = null;
+		
+		if(android.os.Build.VERSION.SDK_INT < 11)
+			builder = new AlertDialog.Builder(this);
+		else
+			builder = new AlertDialog.Builder(this, R.style.LIMEHDTheme);
+			
 		builder.setCancelable(true);
 		builder.setIcon(R.drawable.sym_keyboard_done);
 		builder.setNegativeButton(android.R.string.cancel, null);

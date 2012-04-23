@@ -20,10 +20,12 @@
 
 package net.toload.main.hd.candidate;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
@@ -140,14 +142,16 @@ public class CandidateView extends View implements View.OnClickListener
 
     private boolean waitingForMoreRecords = false;
     
-  
+    private Rect padding = null;
 
     /**
      * Construct a CandidateView for showing suggested words for completion.
      * @param context
      * @param attrs
      */
-    public CandidateView(Context context, AttributeSet attrs) {
+    @TargetApi(13)
+    @SuppressWarnings("deprecation")
+	public CandidateView(Context context, AttributeSet attrs) {
 
     	super(context, attrs);
     	
@@ -159,9 +163,18 @@ public class CandidateView extends View implements View.OnClickListener
 
     	Resources r = context.getResources();
     	
-    	Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay(); 
-    	mScreenWidth =  display.getWidth();
-    	mScreenHeight = display.getHeight();
+    	Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+    	if(android.os.Build.VERSION.SDK_INT < 13) {
+    		mScreenWidth =  display.getWidth();
+    		mScreenHeight = display.getHeight();
+    	}else{
+    		Point screenSize = new Point();
+    		display.getSize(screenSize);
+    		mScreenWidth = screenSize.x;
+    		mScreenHeight = screenSize.y; 
+    		
+    	}
+    		
     	
     	mSelectionHighlight = r.getDrawable(
     			R.drawable.list_selector_background);
@@ -201,8 +214,8 @@ public class CandidateView extends View implements View.OnClickListener
     
 
     	//final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-
-    	mGestureDetector = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
+    	//Jeremy '12,4,23 add mContext parameter.  The construstor without context is deprecated
+    	mGestureDetector = new GestureDetector(mContext, new GestureDetector.SimpleOnGestureListener() {
     		@Override
     		public boolean onScroll(MotionEvent e1, MotionEvent e2,
     				float distanceX, float distanceY) {
@@ -662,14 +675,14 @@ public class CandidateView extends View implements View.OnClickListener
     public int computeHorizontalScrollRange() {
         return mTotalWidth;
     }
-
+    
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int measuredWidth = resolveSize(mTotalWidth, widthMeasureSpec);
         
         // Get the desired height of the icon menu view (last row of items does
         // not have a divider below)
-        Rect padding = new Rect();
+        if(padding == null) padding = new Rect();
         mSelectionHighlight.getPadding(padding);
         //final int desiredHeight = ((int)mPaint.getTextSize()) + mVerticalPadding
                 //+ padding.top + padding.bottom;
@@ -853,8 +866,8 @@ public class CandidateView extends View implements View.OnClickListener
         if(mLIMEPref.getDisablePhysicalSelKeyOption()){
         	showNumber = true;
         }
-        
-        mShowNumber = showNumber && isAndroid3;
+        //TODO: isAndroid3 should be replace as something which can detect working on tablets but not phones.
+        mShowNumber = showNumber && isAndroid3;  
         
         if(mShowNumber)
         	X_GAP = (int) (mContext.getResources().getDimensionPixelSize(R.dimen.candidate_font_size)*0.35f);//13;
