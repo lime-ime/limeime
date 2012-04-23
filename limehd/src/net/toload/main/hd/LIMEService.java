@@ -79,7 +79,7 @@ import android.content.res.Configuration;
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = false;
+	static final boolean DEBUG = true;
 	static final String TAG = "LIMEService";
 	static final String PREF = "LIMEXY";
 
@@ -426,8 +426,6 @@ public class LIMEService extends InputMethodService implements
 		mCandidateView = (CandidateView) mCandidateViewContainer.findViewById(R.id.candidates);
 		//mCandidateView = new CandidateView(this);
 		mCandidateView.setService(this);
-		//Jeremy '12,4,8  showcandidate() to construct candidateview so as composing popup won't fc.
-		showCandidateView();
 		//clearComposing();
 		return mCandidateViewContainer;
 		
@@ -716,8 +714,7 @@ public class LIMEService extends InputMethodService implements
 		}
 
 		mInputView.closing();
-		//Jeremy '12,4,21 clear internal composing buffer
-		clearComposing(false);
+		
 		mPredicting = false;
 		//mDeleteCount = 0;
 
@@ -730,10 +727,10 @@ public class LIMEService extends InputMethodService implements
 		 * mPredictionOn && mCorrectionMode > 0;
 		 */
 		updateShiftKeyState(getCurrentInputEditorInfo());
-		//Jeremy '11,8,21
 		
-		//resetCandidateView(); // Force super to call onCreateCandidateView()
-		clearSuggestions();
+		//Jeremy '12,4,23  Force super to call onCreateCandidateView() so as composing popup won't fc. and will be hide in clearComposing
+		showCandidateView();  
+		clearComposing(false);
 	
 	}
 
@@ -1112,6 +1109,7 @@ public class LIMEService extends InputMethodService implements
 				this.switchChiEng();
 				if(hasMenuPress)  hasMenuProcessed = true;
 				hasSpaceProcessed =true;
+				
 				return true;
 			} else {
 				if (onIM) { // Changed to onIM by Jeremy '11,5,31
