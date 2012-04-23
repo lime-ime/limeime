@@ -1023,7 +1023,7 @@ public class LIMEService extends InputMethodService implements
 					if(DEBUG)
 						Log.i(TAG,"KEYCODE_BACK clearcomposing only.");
 					//Jeremy 12,4,21 -- need to check again
-					clearComposing(true);
+					finishComposing();
 					return true;
 				}else {
 					super.setCandidatesViewShown(false);
@@ -3051,7 +3051,7 @@ public class LIMEService extends InputMethodService implements
 		// cancel candidate view if it's shown
 		
 		//Jeremy '12,4,23 need to check here.
-		clearComposing(false);
+		finishComposing();
 
 		requestHideSelf(0);
 		mInputView.closing();
