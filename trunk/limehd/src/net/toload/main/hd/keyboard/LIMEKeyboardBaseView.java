@@ -9,6 +9,8 @@
 package net.toload.main.hd.keyboard;
 
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -46,6 +48,7 @@ import java.util.WeakHashMap;
 import net.toload.main.hd.R;
 import net.toload.main.hd.keyboard.SwipeTracker;
 
+@SuppressLint("UseSparseArrays")
 public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy {
     private static final String TAG = "LIMEKeyboardBaseView";
     private static final boolean DEBUG = false;
@@ -395,7 +398,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         this(context, attrs, R.attr.keyboardViewStyle);
     }
 
-    public LIMEKeyboardBaseView(Context context, AttributeSet attrs, int defStyle) {
+    @TargetApi(8)
+	public LIMEKeyboardBaseView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         
         //mLIMEPref = new LIMEPreferenceManager(context); //Jeremy '11,9,4
@@ -488,7 +492,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
         final Resources res = getResources();
         
-        isAPIpre8 = Integer.parseInt(android.os.Build.VERSION.SDK) < 8;  //Jeremy '11,8,7 detect API level and disable multi-touch API for API leve 7
+        isAPIpre8 = android.os.Build.VERSION.SDK_INT < 8;  //Jeremy '11,8,7 detect API level and disable multi-touch API for API leve 7
         
         /*int screenLayout = res.getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK; 
         boolean large = screenLayout == Configuration.SCREENLAYOUT_SIZE_LARGE;
@@ -1432,7 +1436,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         mPointerQueue.remove(tracker);
     }
 
-    @Override
+    @TargetApi(8)
+	@Override
 	public boolean onTouchEvent(MotionEvent me) {
 	    final int action = (isAPIpre8)? me.getAction() :  me.getActionMasked();
 	    final int pointerCount = me.getPointerCount();

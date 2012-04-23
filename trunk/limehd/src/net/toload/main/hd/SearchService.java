@@ -33,11 +33,9 @@ import net.toload.main.hd.global.ImObj;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.global.Mapping;
 import net.toload.main.hd.limedb.LimeDB;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -68,7 +66,7 @@ public class SearchService extends Service {
 	private static StringBuffer selectedText = new StringBuffer();
 	private static String tablename = "";
 
-	private NotificationManager notificationMgr;
+	//private NotificationManager notificationMgr;
 	
 	private LIMEPreferenceManager mLIMEPref;
 
@@ -207,7 +205,10 @@ public class SearchService extends Service {
 				public void run() {
 					String result = dbadapter.getRMapping(word);
 					if(result!=null && !result.equals("")){
-						displayNotificationMessage(result);
+						//displayNotificationMessage(result);
+						LIMEUtilities util = new LIMEUtilities();
+						util.showNotification(
+								ctx, true, R.drawable.icon, ctx.getText(R.string.ime_setting), result, new Intent(ctx, LIMEMenu.class));
 					}
 				}
 			};
@@ -927,7 +928,7 @@ public class SearchService extends Service {
 	 */
 	@Override
 	public void onCreate() {
-		notificationMgr =(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+		//notificationMgr =(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		super.onCreate();
 		
 		
@@ -951,19 +952,27 @@ public class SearchService extends Service {
 	 * (non-Javadoc)
 	 * 
 	 * @see android.app.Service#onStart(android.content.Intent, int)
-	 */
+	 *  Jeremy '12,4,23 onStart is deprecated since API 15. delete here since it do nothing but call the super.
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
 	}
-	
+	/*
 	private void displayNotificationMessage(String message){
+		LIMEUtilities util = new LIMEUtilities();
+		util.showNotification(
+				this, true, R.drawable.icon, this.getText(R.string.ime_setting), message, new Intent(this, LIMEMenu.class));
+		
+		/*
+		
 		Notification notification = new Notification(R.drawable.icon, message, System.currentTimeMillis());
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,new Intent(this, LIMEMenu.class), 0);
 			      	 notification.setLatestEventInfo(this, this.getText(R.string.ime_setting), message, contentIntent);
 			         notificationMgr.notify(0, notification);
+			         *
 	}
-	
+
+*/
 	
 }

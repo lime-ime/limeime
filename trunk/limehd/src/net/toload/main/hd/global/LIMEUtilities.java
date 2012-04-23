@@ -3,10 +3,20 @@ package net.toload.main.hd.global;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+//
+import net.toload.main.hd.R;
 
+import android.app.NotificationManager;
+import android.support.v4.app.NotificationCompat;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 
-public class FileUtilities {
+/**
+ * @author jrywu
+ *
+ */
+public class LIMEUtilities {
 	
 	public File isFileNotExist(String filepath){
 		
@@ -85,5 +95,29 @@ public class FileUtilities {
 			
 		}*/
 	}
+	
+	/** Add by Jeremy '12,4,23 Show notification with notification builder in compatibility package replacing the deprecated alert dialog creation 
+	 * @param context : the activity context
+	 * @param autoCancel
+	 * @param icon
+	 * @param title
+	 * @param message
+	 * @param intent : the Intent the notification should be launch
+	 */
+	public void showNotification(Context context, Boolean autoCancel, int icon,  CharSequence title, CharSequence message, Intent intent){
+		NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+		NotificationCompat.Builder mNotificationBuilder = new NotificationCompat.Builder(context);
+
+
+		mNotificationBuilder.setSmallIcon(R.drawable.icon)
+		    .setAutoCancel(autoCancel)
+		    .setContentTitle(title)
+		    .setContentText(message)
+		    .setContentIntent(PendingIntent.getActivity(context, 0,intent, 0));
+
+		mNotificationManager.notify(R.drawable.icon, mNotificationBuilder.getNotification());
+
+	}
+	
 
 }

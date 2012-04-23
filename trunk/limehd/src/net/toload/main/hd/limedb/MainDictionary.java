@@ -1,7 +1,7 @@
 package net.toload.main.hd.limedb;
 
 import net.toload.main.hd.ISearchService;
-import net.toload.main.hd.global.FileUtilities;
+import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.WordComposer;
 import android.content.Context;
 import android.database.Cursor;
@@ -81,7 +81,7 @@ public class MainDictionary extends ExpandableDictionary {
     
     private void loadLimeDB()
 	{	
-		FileUtilities fu = new FileUtilities();
+		LIMEUtilities fu = new LIMEUtilities();
 		fu.copyPreLoadLimeDB(mContext);			
 		db = new LimeDB(mContext);
 	}

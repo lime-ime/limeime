@@ -717,7 +717,7 @@ public class LIMEBaseKeyboard {
         boolean inRow = false;
         //boolean leftMostKey = false;
 
-		int row = 0;
+		//int row = 0;
         int x = 0;
         int y = 0;
         Key key = null;
@@ -764,7 +764,7 @@ public class LIMEBaseKeyboard {
                         inRow = false;
                         y += currentRow.verticalGap;
                         y += currentRow.defaultHeight;
-                        row++;
+                        //row++;
                     } else {
                         // TODO: error or extend?
                     }

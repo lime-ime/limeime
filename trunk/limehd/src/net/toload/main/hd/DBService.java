@@ -39,13 +39,12 @@ import net.toload.main.hd.R;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.limesettings.LIMEInitial;
 import net.toload.main.hd.limesettings.LIMEMappingLoading;
 
-import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -923,10 +922,9 @@ public class DBService extends Service {
 		super.onDestroy();
 	}
 
+	//Jeremy '12,4,23 rewriting using alert notification builder in LIME utilities to replace the deprecated method
 	private void showNotificationMessage(String message, int intent) {
-		Notification notification = new Notification(R.drawable.icon, message, System.currentTimeMillis());
-		// FLAG_AUTO_CANCEL add by jeremy '10, 3 24
-		notification.flags |= Notification.FLAG_AUTO_CANCEL;
+		
 		Intent i = null;
 		if(intent == intentLIMEMenu)
 			i = new Intent(this, LIMEMenu.class);
@@ -934,6 +932,16 @@ public class DBService extends Service {
 			i = new Intent(this, LIMEMappingLoading.class);
 		else if (intent == intentLIMEInitial)
 			i = new Intent(this, LIMEInitial.class);
+		
+		LIMEUtilities util = new LIMEUtilities();
+		util.showNotification(
+				this, true, R.drawable.icon, this.getText(R.string.ime_setting), message, i);
+	
+		/*
+		Notification notification = new Notification(R.drawable.icon, message, System.currentTimeMillis());
+		// FLAG_AUTO_CANCEL add by jeremy '10, 3 24
+		notification.flags |= Notification.FLAG_AUTO_CANCEL;
+		
 
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,i, 0);
 		notification.setLatestEventInfo(this, this .getText(R.string.ime_setting), message, contentIntent);
@@ -941,6 +949,7 @@ public class DBService extends Service {
 			notificationMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		}
 		notificationMgr.notify(0, notification);
+		*/
 	}
 
 }

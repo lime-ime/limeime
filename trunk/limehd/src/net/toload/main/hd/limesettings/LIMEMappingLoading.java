@@ -23,11 +23,9 @@ package net.toload.main.hd.limesettings;
 import net.toload.main.hd.LIMEMenu;
 import net.toload.main.hd.R;
 import net.toload.main.hd.IDBService;
+import net.toload.main.hd.global.LIMEUtilities;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -61,7 +59,7 @@ public class LIMEMappingLoading extends Activity {
 	
 	private IDBService DBSrv = null;
 	
-	private NotificationManager notificationMgr;
+	//private NotificationManager notificationMgr;
 	
 	TextView txtLoadingStatus = null;
 	Button btnCancel = null;
@@ -222,14 +220,32 @@ public class LIMEMappingLoading extends Activity {
 	};
 	
 	private void showNotificationMessage(String message) {
+		
+		LIMEUtilities util = new LIMEUtilities();
+		util.showNotification(
+				this, true, R.drawable.icon, this.getText(R.string.ime_setting), message, new Intent(this, LIMEMenu.class));
+		/*
+		NotificationManager mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+		Notification.Builder mNotificationBuilder = new Notification.Builder(this);
+
+
+		mNotificationBuilder.setSmallIcon(R.drawable.icon)
+		    .setAutoCancel(true)
+		    .setContentTitle(this.getText(R.string.ime_setting))
+		    .setContentText(message)
+		    .setContentIntent(PendingIntent.getActivity(this, 0,new Intent(this, LIMEMenu.class), 0));
+
+		mNotificationManager.notify(R.drawable.icon, mNotificationBuilder.getNotification());
+		/*		
 		Notification notification = new Notification(R.drawable.icon, message, System.currentTimeMillis());
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,new Intent(this, LIMEMenu.class), 0);
-		notification.setLatestEventInfo(this, this .getText(R.string.ime_setting), message, contentIntent);
+		notification.setLatestEventInfo(this, this.getText(R.string.ime_setting), message, contentIntent);
 		if(notificationMgr == null){
 			notificationMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		}
 		notificationMgr.notify(0, notification);
+		*/
 	}
 
 	@Override
