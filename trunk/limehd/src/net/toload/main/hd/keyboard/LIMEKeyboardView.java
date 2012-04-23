@@ -20,6 +20,7 @@
 
 package net.toload.main.hd.keyboard;
 
+import net.toload.main.hd.R;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 import android.content.Context;
 import android.util.AttributeSet;
@@ -44,22 +45,30 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 	//private boolean mLongPressProcessed;
 	
    // private Keyboard mPhoneKeyboard;
+  
+    private int mKeyHeight=0;
 
 	public LIMEKeyboardView(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		mKeyHeight = context.getResources().getDimensionPixelSize(R.dimen.key_height);
 	}
 
 	public LIMEKeyboardView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
+		mKeyHeight = context.getResources().getDimensionPixelSize(R.dimen.key_height);
 	}
 
 	@Override
 	protected boolean onLongPress(Key key) {
+		Log.i(TAG, "onLongPress, keycode = "+ key.codes[0] 
+				+"; spaceDragDiff = " +((LIMEKeyboard) this.getKeyboard()).getSpaceDragDiff()
+				+"; key_height = " + mKeyHeight
+					);
 		if (key.codes[0] == LIMEBaseKeyboard.KEYCODE_CANCEL) {
 			getOnKeyboardActionListener().onKey(KEYCODE_OPTIONS, null,0,0);
 			return true;
 		}else if (key.codes[0] == LIMEKeyboard.KEYCODE_SPACE
-				&& ((LIMEKeyboard) this.getKeyboard()).getSpaceDragDiff()==0){
+				&& Math.abs(((LIMEKeyboard) this.getKeyboard()).getSpaceDragDiff() ) < mKeyHeight/5){ //Jeremy '12,4,23 avoid small move blocking the long press.
 			getOnKeyboardActionListener().onKey(KEYCODE_SPACE_LONGPRESS, null,0,0);
 			return true;
 //		} else if (key.codes[0] == Keyboard.KEYCODE_SHIFT) {
