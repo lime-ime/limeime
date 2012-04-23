@@ -3050,8 +3050,8 @@ public class LIMEService extends InputMethodService implements
 		if(DEBUG) Log.i(TAG,"handleClose()");
 		// cancel candidate view if it's shown
 		
-		//Jeremy '12,4,21 need to check here.
-		clearComposing(true);
+		//Jeremy '12,4,23 need to check here.
+		clearComposing(false);
 
 		requestHideSelf(0);
 		mInputView.closing();
