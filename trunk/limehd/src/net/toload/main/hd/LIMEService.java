@@ -731,6 +731,7 @@ public class LIMEService extends InputMethodService implements
 		//Jeremy '12,4,23  Force super to call onCreateCandidateView() so as composing popup won't fc. and will be hide in clearComposing
 		showCandidateView();  
 		clearComposing(false);
+		forceHideCandidateView();//Force to hide the candidateview, we don't need it at this stage.
 	
 	}
 
@@ -2411,6 +2412,11 @@ public class LIMEService extends InputMethodService implements
 		isChineseSymbolSuggestionsShowing = false;
 		mHandler.post(mHideCandidateView);
 	}
+	private void forceHideCandidateView(){
+		if(DEBUG) Log.i(TAG,"forceHideCandidateView()");
+		isChineseSymbolSuggestionsShowing = false;
+		mHandler.post(mForceHideCandidateView);
+	}
 	
 	final Handler mHandler = new Handler();
 	// Create runnable for posting
@@ -2421,10 +2427,20 @@ public class LIMEService extends InputMethodService implements
 	};
 	final Runnable mHideCandidateView = new Runnable() {
 		public void run() {
-			if(mCandidateView == null ) return;  // escape if mCandidateView is not created '11,11,30 Jeremy
+			//Jeremy '12,4,24 moved fixedcandidate here
+			if(mCandidateView == null || mLIMEPref.getFixedCandidateViewDisplay() ) return;  // escape if mCandidateView is not created '11,11,30 Jeremy
 			if(isCandidateShown()){
 				setCandidatesViewShown(false);	
-			}else{
+			}//else{
+			//	setCandidatesViewShown(false);	
+			//}
+	    }
+	};
+	final Runnable mForceHideCandidateView = new Runnable() {
+		public void run() {
+			//Jeremy '12,4,24 ignore getfixedcanddiatedisplay
+			if(mCandidateView == null  ) return; 
+			if(isCandidateShown()){
 				setCandidatesViewShown(false);	
 			}
 	    }
@@ -2549,10 +2565,10 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	public void setCandidatesViewShown(boolean shown) {
-		if(mLIMEPref.getFixedCandidateViewDisplay()){
-			if(shown){
+		//if(mLIMEPref.getFixedCandidateViewDisplay()){//jEREMY '12,4,24 moved to mhandler
+		if(shown){
 				super.setCandidatesViewShown(shown);
-			}
+		//}
 		}else{
 			super.setCandidatesViewShown(shown);
 		}
