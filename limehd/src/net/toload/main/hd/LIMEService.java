@@ -433,7 +433,7 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	// Jeremy '11,5,31
-	// Override fullscreen editing mode settings for larger screen  (<1.4in)
+	// Override fullscreen editing mode settings for larger screen  (>1.4in)
 
 	@Override
 	public boolean onEvaluateFullscreenMode() {
@@ -442,7 +442,8 @@ public class LIMEService extends InputMethodService implements
 		// If the display is more than X inches high, don't go to fullscreen mode
 		float max = getResources().getDimension(R.dimen.max_height_for_fullscreen);
 		if(DEBUG) 
-			Log.i(TAG, "onEvaluateFullScreenMode() DisplayHeight:"+displayHeight+" limit:" + max );
+			Log.i(TAG, "onEvaluateFullScreenMode() DisplayHeight:"+displayHeight+" limit:" + max 
+					+ "super.onEvaluateFullscreenMode():" + super.onEvaluateFullscreenMode());
 		if (displayHeight > max && this.getMaxWidth() > 500) {
 			return false;
 		} else {
@@ -2165,7 +2166,7 @@ public class LIMEService extends InputMethodService implements
 		
 		if (mComposing.length() > 0) {
 			
-			showCandidateView();
+			//showCandidateView();
 
 			LinkedList<Mapping> list = new LinkedList<Mapping>();
 
@@ -2422,23 +2423,28 @@ public class LIMEService extends InputMethodService implements
 	// Create runnable for posting
 	final Runnable mShowCandidateView = new Runnable() {
 		public void run() {
+			if(DEBUG)
+				Log.i(TAG,"Runnable(): mShowCandidateView");
+			
 			setCandidatesViewShown(true);	
 	    	}
 	};
 	final Runnable mHideCandidateView = new Runnable() {
 		public void run() {
 			//Jeremy '12,4,24 moved fixedcandidate here
+			if(DEBUG)
+				Log.i(TAG,"Runnable(): mHideCandidateView");
 			if(mCandidateView == null || mLIMEPref.getFixedCandidateViewDisplay() ) return;  // escape if mCandidateView is not created '11,11,30 Jeremy
 			if(isCandidateShown()){
 				setCandidatesViewShown(false);	
-			}//else{
-			//	setCandidatesViewShown(false);	
-			//}
+			}
 	    }
 	};
 	final Runnable mForceHideCandidateView = new Runnable() {
 		public void run() {
 			//Jeremy '12,4,24 ignore getfixedcanddiatedisplay
+			if(DEBUG)
+					Log.i(TAG,"Runnable(): mForceHideCandidateView");
 			if(mCandidateView == null  ) return; 
 			if(isCandidateShown()){
 				setCandidatesViewShown(false);	
@@ -2480,42 +2486,14 @@ public class LIMEService extends InputMethodService implements
 		
 	}
 	
-	/*public void setSuggestions(List<Mapping> suggestions, boolean showNumber,
-			boolean typedWordValid) {
-
-		if (suggestions != null && suggestions.size() > 0) {
-			if(DEBUG) Log.i("setSuggestion", "suggestions.size"+ suggestions.size());
-			setCandidatesViewShown(true);
-
-			hasMappingList = true;
-
-			if (mCandidateView != null) {
-				templist = (LinkedList<Mapping>) suggestions;
-				try {
-					if (suggestions.size() == 1) {
-						firstMatched = suggestions.get(0);
-					} else if (suggestions.size() > 1) {
-						firstMatched = suggestions.get(1);
-					} else {
-						firstMatched = null;
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				mCandidateView.setSuggestions(suggestions, showNumber,
-						typedWordValid);
-			}
-		} else {
-			if(DEBUG) Log.i("setSuggestion", "list=null");
-			hasMappingList = false;
-			if (mCandidateView != null) {
-				setCandidatesViewShown(false);
-			}
-		}
-	}*/
+	
 
 	private boolean isCandidateShown(){
-		if(mCandidateView==null) return false; //Jeremy '11,11,30 Fixed FC when startup, before mCandidate is created.
+		if(mCandidateView==null) {
+			if(DEBUG)
+				Log.i(TAG, "isCandidateViewShown(): mCandidateView is null");
+			return false; //Jeremy '11,11,30 Fixed FC when startup, before mCandidate is created.
+		}
 		else return mCandidateView.isShown();
 	}
 	private void handleBackspace() {
@@ -2565,13 +2543,17 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	public void setCandidatesViewShown(boolean shown) {
-		//if(mLIMEPref.getFixedCandidateViewDisplay()){//jEREMY '12,4,24 moved to mhandler
-		if(shown){
-				super.setCandidatesViewShown(shown);
-		//}
-		}else{
+		//if(mLIMEPref.getFixedCandidateViewDisplay()){//jeremy '12,4,24 moved to mhandler
+		if(DEBUG)
+			Log.i(TAG,"setCandidateViewShown():" + shown);
+		if(shown)
 			super.setCandidatesViewShown(shown);
-		}
+		else
+			super.setCandidatesViewShown(shown);
+		
+		if(DEBUG)
+			Log.i(TAG, "isCandidateViewShown:" +isCandidateShown());
+		
 	}
 	
 	
@@ -3422,7 +3404,8 @@ public class LIMEService extends InputMethodService implements
 
 	@Override
 	public void onUpdateCursor(Rect newCursor) {
-		if(DEBUG) Log.i(TAG, "onUpdateCursor(): Top:" 
+		if(DEBUG) 
+			Log.i(TAG, "onUpdateCursor(): Top:" 
 				+ newCursor.top + ". Right:" + newCursor.right
 				+ ". bottom:" + newCursor.bottom + ". left:" + newCursor.left);
 		
