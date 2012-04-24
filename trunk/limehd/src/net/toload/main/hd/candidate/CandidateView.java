@@ -62,7 +62,7 @@ import net.toload.main.hd.global.Mapping;
 public class CandidateView extends View implements View.OnClickListener 
 {
 	
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final String TAG = "CandidateView";
 
     protected static final int OUT_OF_BOUNDS = -1;
@@ -573,14 +573,17 @@ public class CandidateView extends View implements View.OnClickListener
     	// Not working on htc ics 4.0. removed by jeremy '12,4,3
     	/*
     	if( offsetInWindow[1] == 0 && cursorRect != null){
+    		int [] offsetOnScreen = new int[2];
+    		this.getLocationOnScreen(offsetOnScreen);
+    		
     		if(DEBUG) 
     			Log.i(TAG, "doUpdateComposing(): candidateview offsetInWindow x:" 
     					+offsetInWindow[0] 
-    					+ ", y:" +offsetInWindow[1]
+    					+ ", offsetinwindow y:" +offsetInWindow[1]
     				    + ", cursor.top=" + cursorRect.top
     				    + ", cursor.left=" + cursorRect.left);
-    		int [] offsetOnScreen = new int[2];
-    		this.getLocationOnScreen(offsetOnScreen);
+    		
+    		
     		mPopupComposingX =  cursorRect.right;
     		mPopupComposingY -= offsetOnScreen[1]- cursorRect.top -  popupHeight;
     		if(mPopupComposingY > -popupHeight){
@@ -594,7 +597,7 @@ public class CandidateView extends View implements View.OnClickListener
     			Log.i(TAG, "doUpdateComposing(): candidateview offsetOnScreen x:" 
     				+offsetOnScreen[0] + ". y:" +offsetOnScreen[1]);
     	}else{*/
-    		mPopupComposingY -= popupHeight;
+    	mPopupComposingY -= popupHeight;
     	//}
 
     	if(DEBUG) 
