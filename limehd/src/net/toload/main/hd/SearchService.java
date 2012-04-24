@@ -20,7 +20,6 @@
 
 package net.toload.main.hd;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -40,7 +39,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -55,7 +53,7 @@ public class SearchService extends Service {
 	//Jeremy '12,4,6 Combine updatedb and quierydb into db,
 	//Jeremy '12,4,7 move db open/clsoe back to LimeDB
 	//	since query always following with userdict and related learning and dual db connections cause exceptions.
-	private SQLiteDatabase db = null;
+	//private SQLiteDatabase db = null;
 	//private LimeHanConverter hanConverter = null;
 	//private static LinkedList<Mapping> diclist = null;  
 	private static List<Mapping> scorelist = null;
@@ -136,6 +134,7 @@ public class SearchService extends Service {
 		}
 		
 		//Deprecated by Jeremy '12,4,7
+		/*
 		@Deprecated
 		private void openLimeDatabase()
 		{
@@ -172,7 +171,7 @@ public class SearchService extends Service {
 			}
 		}
 		
-		
+		*/
 		
 		private void loadDBAdapter()
 		{			
@@ -642,7 +641,7 @@ public class SearchService extends Service {
 			String cacheKey = cacheKey(code);
 			String result = keynamecache.get(cacheKey);
 			if(result == null){
-				loadDBAdapter(); openLimeDatabase();
+				//loadDBAdapter(); openLimeDatabase();
 				result = dbadapter.keyToKeyname(code, tablename, true);
 				keynamecache.put(cacheKey, result);
 			}
@@ -752,7 +751,7 @@ public class SearchService extends Service {
 			if(cacheTemp != null){
 				result.addAll(cacheTemp);
 			}else{
-				loadDBAdapter(); openLimeDatabase();
+				//loadDBAdapter(); openLimeDatabase();
 				List<String> tempResult = dbadapter.queryDictionary(word);
 				for(String u: tempResult){
 					Mapping temp = new Mapping();
@@ -877,7 +876,7 @@ public class SearchService extends Service {
 		
 		/*
 		 * This is the method to openDB from Service
-		 */
+		 *
 		@Deprecated
 		public SQLiteDatabase getSqliteDb(){
 			SQLiteDatabase db = null;
@@ -891,7 +890,7 @@ public class SearchService extends Service {
 
 		/*
 		 * This is the method to openDB from Service
-		 */
+		 *
 		@Deprecated
 		public SQLiteDatabase getSqliteDbWritable(){
 			SQLiteDatabase db = null;
@@ -908,6 +907,7 @@ public class SearchService extends Service {
 					?LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD:LIME.DATABASE_DECOMPRESS_FOLDER;
 			return dbLocationPrefix + File.separator + LIME.DATABASE_NAME;
 		}	
+		*/
 		
 	}
 

@@ -22,7 +22,11 @@
 		android:smallScreens="true"
 		android:anyDensity="true" />
 
-	<application android:icon="@drawable/icon" android:label="@string/ime_name" android:theme="@style/LIMEHDTheme">
+	<application 
+	    android:icon="@drawable/icon" 
+	    android:label="@string/ime_name"
+	    android:backupAgent="LIMEBackupAgent" 
+	    android:theme="@style/LIMEHDTheme">
 
 		<!-- LIME Services -->
 		<service android:permission="android.permission.BIND_INPUT_METHOD" android:name="LIMEService">
