@@ -36,12 +36,12 @@
 			<meta-data android:name="android.view.im" android:resource="@xml/method" />
 		</service>
 
-		<!-- LIME Services -->
+		<!-- LIME Services 
 		<service android:name="SearchService">
 			<intent-filter>
 				<action android:name="net.toload.main.hd.ISearchService"></action>
 			</intent-filter>
-		</service>
+		</service> -->
 		<service android:name="DBService">
 			<intent-filter>
 				<action android:name="net.toload.main.hd.IDBService"></action>

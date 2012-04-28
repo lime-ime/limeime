@@ -6,66 +6,56 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import net.toload.main.hd.ISearchService;
-import net.toload.main.hd.SearchService;
+import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.global.Mapping;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.SystemClock;
-import android.test.ServiceTestCase;
+import android.test.AndroidTestCase;
 import android.util.Log;
 
-public class SearchSrvTest extends ServiceTestCase<SearchService> {
+public class SearchSrvTest extends AndroidTestCase {
 	
-	public SearchSrvTest() {
-		super(SearchService.class);
+	//public SearchSrvTest() {
+	//	super(SearchServer.class);
 		// TODO Auto-generated constructor stub
-	}
+	//}
 
 	private final String TAG = "SearchSrvTest";
 	private final static String TEST_KEY = "1234567890qwertyuiopasdfghjkl;zxcvbnm,./-";
 	private List<String> keyList;
-	private ISearchService SearchSrv = null;
+	private SearchServer SearchSrv = null;
 
 	
 
 	protected void setUp() throws Exception {
 		super.setUp();
-		mContext = getContext();
+		//mContext = getContext();
 
 	}
 
 
 	protected void tearDown() throws Exception {
-		mContext = null;
+		//mContext = null;
 		super.tearDown();
 	}
 	
-	@SuppressWarnings("unchecked")
 	public void testRandomQuery(){
 		Log.i(TAG, "testQueryStart()");
-		try {
+		SearchSrv = new SearchServer( getContext());
+		/*try {
 			mContext.bindService(new Intent(ISearchService.class.getName()),
 					serConn, Context.BIND_AUTO_CREATE);
 
 		} catch (Exception e) {
 			Log.i(TAG, "testQueryStart(): Failed to connect Search Service");
 		}
-		
+		*/
 		
 		SystemClock.sleep(1000);
 	
 		
 		assertNotNull (SearchSrv);
-		try {
-			SearchSrv.setTablename("phonetic", true, true);
-		} catch (RemoteException e1) {
-			e1.printStackTrace();
-		}
+		SearchSrv.setTablename("phonetic", true, true);
 
 		buildKeyMap();
 		
@@ -123,10 +113,11 @@ public class SearchSrvTest extends ServiceTestCase<SearchService> {
 			
 			}
 	}
-	 
+	
+	/*
 	 /*
 	  * Construct SerConn
-	  */
+	  *
 	 private ServiceConnection serConn = new ServiceConnection() {
 		 public void onServiceConnected(ComponentName name, IBinder service) {
 			 
@@ -144,4 +135,5 @@ public class SearchSrvTest extends ServiceTestCase<SearchService> {
 		 public void onServiceDisconnected(ComponentName name) {
 		 }
 	 };
+	 */
 }
