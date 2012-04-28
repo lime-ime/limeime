@@ -2807,7 +2807,7 @@ public class LIMEService extends InputMethodService implements
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 				LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
 		}else if (keyboardSelection.equals("array")) {
-			hasNumberMapping = false;
+			hasNumberMapping = true; //Jeremy '12,4,28 array 30 actually use number combination keys to enter symbols 
 			hasSymbolMapping = true;
 			mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
