@@ -24,7 +24,6 @@ import android.graphics.Rect;
 import android.inputmethodservice.InputMethodService;
 import android.media.AudioManager;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.Vibrator;
 import android.util.DisplayMetrics;
@@ -47,7 +46,6 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import net.toload.main.hd.ISearchService;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard;
 import net.toload.main.hd.keyboard.LIMEKeyboard;
 import net.toload.main.hd.keyboard.LIMEKeyboardBaseView;
@@ -66,11 +64,9 @@ import android.annotation.TargetApi;
 import android.app.AlertDialog;
 
 import android.app.Service;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.res.Configuration;
 
 /**
@@ -215,7 +211,8 @@ public class LIMEService extends InputMethodService implements
 
 	//private int previousKeyCode = 0;
 	//private final float moveLength = 15;
-	private ISearchService SearchSrv = null;
+	//private ISearchService SearchSrv = null;
+	private SearchServer SearchSrv = null;
 
 	static final int FREQUENCY_FOR_AUTO_ADD = 250;
 
@@ -250,7 +247,7 @@ public class LIMEService extends InputMethodService implements
 	
 	/*
 	 * Construct SerConn
-	 */
+	 *
 	private ServiceConnection serConn = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			SearchSrv = ISearchService.Stub.asInterface(service);
@@ -265,7 +262,7 @@ public class LIMEService extends InputMethodService implements
 		public void onServiceDisconnected(ComponentName name) {
 		}
 	};
-
+	*/
 	/**
 	 * Main initialization of the input method component. Be sure to call to
 	 * super class.
@@ -276,6 +273,9 @@ public class LIMEService extends InputMethodService implements
 		if(DEBUG) Log.i(TAG, "OnCreate()");
 		
 		super.onCreate();
+		
+		SearchSrv = new SearchServer(this);
+		//SearchSrv.initial();
 
 		initialViewAndSwitcher();
         //mKeyboardSwitcher = new LIMEKeyboardSwitcher(this); 
@@ -283,6 +283,7 @@ public class LIMEService extends InputMethodService implements
 		mEnglishFlagShift = false;
 
 		// Startup Service
+		/*
 		if (SearchSrv == null) {
 			try {
 				this.bindService(new Intent(ISearchService.class.getName()),
@@ -291,6 +292,7 @@ public class LIMEService extends InputMethodService implements
 				Log.i(TAG, "OnCreate(): Failed to connect Search Service");
 			}
 		}
+		*/
 		// Construct Preference Access Tool
 		mLIMEPref = new LIMEPreferenceManager(this);
 
@@ -455,7 +457,7 @@ public class LIMEService extends InputMethodService implements
 	 * This is called when the user is done editing a field. We can use this to
 	 * reset our state.
 	 */
-	@SuppressWarnings("unchecked")
+
 	@Override
 	public void onFinishInput() {
 		
@@ -576,7 +578,6 @@ public class LIMEService extends InputMethodService implements
 		initOnStartInput(attribute, restarting);
 	}
 
-	@SuppressWarnings("unchecked")
 	private void initOnStartInput(EditorInfo attribute, boolean restarting) {
 	
 		if (DEBUG)
@@ -1884,7 +1885,7 @@ public class LIMEService extends InputMethodService implements
 		startActivity(intent);
 	}
 
-	@SuppressWarnings("unchecked")
+
 	private void nextActiveKeyboard(boolean forward) { // forward: true, next IM; false prev. IM
 		if(DEBUG) Log.i(TAG, "nextActiveKeyboard()");
 		buildActiveKeyboardList();
@@ -2075,7 +2076,6 @@ public class LIMEService extends InputMethodService implements
 
 	}
 
-	@SuppressWarnings("unchecked")
 	private void handlKeyboardSelection(int position) {
 		if(DEBUG) Log.i(TAG, "handleKeyboardSelection() position = " + position);
 
@@ -2157,7 +2157,6 @@ public class LIMEService extends InputMethodService implements
 	 * Update the list of available candidates from the current composing text.
 	 * This will need to be filled in by however you are determining candidates.
 	 */
-	@SuppressWarnings("unchecked")
 	public void updateCandidates(boolean getAllRecords) {
 		
 		if(DEBUG) Log.i(TAG,"updateCandidate():Update Candidate mComposing:"+ mComposing);
@@ -2242,7 +2241,6 @@ public class LIMEService extends InputMethodService implements
 	/*
 	 * Update English dictionary view
 	 */
-	@SuppressWarnings("unchecked")
 	private void updateEnglishPrediction() {
 		isChineseSymbolSuggestionsShowing = false;
 		if (mPredictionOn && mLIMEPref.getEnglishPrediction()) {
@@ -2330,7 +2328,6 @@ public class LIMEService extends InputMethodService implements
 	/*
 	 * Update dictionary view
 	 */
-	@SuppressWarnings("unchecked")
 	private void updateRelatedWord() {
 		isChineseSymbolSuggestionsShowing = false;
 		// Also use this to control whether need to display the english
@@ -2353,7 +2350,7 @@ public class LIMEService extends InputMethodService implements
 				// Modified by Jeremy '10,3 ,12 for more specific related word
 				// -----------------------------------------------------------
 				if (tempMatched != null && hasMappingList) {
-					list.addAll(SearchSrv.queryUserDic(tempMatched.getWord()));
+					list.addAll( SearchSrv.queryUserDic(tempMatched.getWord()));
 				}
 				// -----------------------------------------------------------
 				if (list.size() > 0) {
@@ -2731,7 +2728,6 @@ public class LIMEService extends InputMethodService implements
 	 * return mMode; }
 	 */
 
-	@SuppressWarnings("unchecked")
 	private void initialViewAndSwitcher() {
 		if(DEBUG)
 			Log.i(TAG, "initialViewAndSwitcher()");
@@ -2827,19 +2823,15 @@ public class LIMEService extends InputMethodService implements
 		}
 		//Jeremy '11,9,3 for phone numeric key direct input on chacha
 		if(mLIMEPref.getPhysicalKeyboardType().equals("chacha")) hasNumberMapping = false;
-		try {
-			String tablename = keyboardSelection;
-			if (tablename.equals("custom") || tablename.equals("phone")) {
-				tablename = "custom";
-			}
-			//Jeremy '11,6,10 pass hasnumbermapping and hassymbolmapping to searchservice for selkey validation.
-			if(DEBUG)
-				Log.i(TAG, "switchKeyboard() current keyboard:" + 
-						tablename+" hasnumbermapping:" +hasNumberMapping + " hasSymbolMapping:" + hasSymbolMapping);
-			SearchSrv.setTablename(tablename, hasNumberMapping, hasSymbolMapping);
-		} catch (RemoteException e) {
-			e.printStackTrace();
+		String tablename = keyboardSelection;
+		if (tablename.equals("custom") || tablename.equals("phone")) {
+			tablename = "custom";
 		}
+		//Jeremy '11,6,10 pass hasnumbermapping and hassymbolmapping to searchservice for selkey validation.
+		if(DEBUG)
+			Log.i(TAG, "switchKeyboard() current keyboard:" + 
+					tablename+" hasnumbermapping:" +hasNumberMapping + " hasSymbolMapping:" + hasSymbolMapping);
+		SearchSrv.setTablename(tablename, hasNumberMapping, hasSymbolMapping);
 	}
 
 	private boolean handleSelkey(int primaryCode, int[] keyCodes){
@@ -2901,11 +2893,7 @@ public class LIMEService extends InputMethodService implements
 		// Caculate key press time to handle Eazy IM keys mapping
 		// 1,2,3,4,5,6 map to -(45) =(43) [(91) ](93) ,(44) \(92)
 		String tablename="";
-		try {
-			tablename = SearchSrv.getTablename();
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
+		tablename = SearchSrv.getTablename();
 		if (keyPressTime != 0
 				&& (System.currentTimeMillis() - keyPressTime > 700)
 				&& tablename.equals("ez")){// mKeyboardSwitcher.getKeyboardMode() == LIMEKeyboardSwitcher.MODE_TEXT_EZ) {
@@ -3392,7 +3380,7 @@ public class LIMEService extends InputMethodService implements
 		//jeremy 12,4,21 need to check again---
 		//clearComposing(true); see no need to do this '12,4,21
 		super.onDestroy();
-
+/*
 		if (SearchSrv != null) {
 			try {
 				this.unbindService(serConn);
@@ -3400,6 +3388,7 @@ public class LIMEService extends InputMethodService implements
 				Log.i(TAG, "Failed to connect Search Service");
 			}
 		}
+		*/
 	}
 
 	@Override
