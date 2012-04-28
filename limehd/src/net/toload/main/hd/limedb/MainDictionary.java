@@ -1,6 +1,6 @@
 package net.toload.main.hd.limedb;
 
-import net.toload.main.hd.ISearchService;
+import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.WordComposer;
 import android.content.Context;
@@ -21,7 +21,7 @@ public class MainDictionary extends ExpandableDictionary {
 		mContext = context;	
 		   loadDictionary();
 	}
-	public MainDictionary(Context context, ISearchService SearchSrv) {
+	public MainDictionary(Context context, SearchServer SearchSrv) {
 		super(context);
 		mContext = context;
 		//mSearchSrv = SearchSrv;
