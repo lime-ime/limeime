@@ -1561,7 +1561,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 								+"_id ASC", limitClause);
 					}else{
 						cursor = db.query(tablename, null, selectClause
-								, null, null, null, FIELD_BASESCORE + " DESC, _id ASC", limitClause);
+								//, null, null, null, FIELD_BASESCORE + " DESC, _id ASC", limitClause);
+								, null, null, null, FIELD_BASESCORE + " DESC, _id ASC", limitClause); //Jeremy '12,4,28 ignore the basescore when not sorintg
 					}
 					
 	
