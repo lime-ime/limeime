@@ -28,7 +28,6 @@ import java.util.List;
 
 import net.toload.main.hd.IDBService;
 import net.toload.main.hd.R;
-import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 

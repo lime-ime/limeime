@@ -228,6 +228,13 @@
     			android:entryValues="@array/im_reverse_lookup_codes" 
     			android:dialogTitle="@string/im_reverse_lookup_list" 
     			android:defaultValue="none"/>
+   	<ListPreference
+    			android:key="hs_im_reverselookup"
+    			android:title="@string/hs_reverse_lookup_list" 
+    			android:entries="@array/im_reverse_lookup" 
+    			android:entryValues="@array/im_reverse_lookup_codes" 
+    			android:dialogTitle="@string/im_reverse_lookup_list" 
+    			android:defaultValue="none"/>
    
 	</PreferenceCategory>
     
