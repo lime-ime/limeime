@@ -8,6 +8,7 @@
 
 package net.toload.main.hd.keyboard;
 
+import net.toload.main.hd.R;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -44,8 +45,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.WeakHashMap;
-
-import net.toload.main.hd.R;
 import net.toload.main.hd.keyboard.SwipeTracker;
 
 @SuppressLint("UseSparseArrays")
