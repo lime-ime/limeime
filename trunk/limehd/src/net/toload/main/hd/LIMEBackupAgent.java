@@ -17,13 +17,16 @@ import android.util.Log;
 @TargetApi(8)
 public class LIMEBackupAgent extends BackupAgentHelper {
 	static final String TAG = "LIMEBackupAgent";
+	static final boolean DEBUG = true;
+	
     // A key to uniquely identify the set of backup data
     static final String PREFS_BACKUP_KEY = "defaultPrefs";
 
     // Allocate a helper and add it to the backup agent
     @Override
     public void onCreate() {
-    	Log.i(TAG, "onCreate(), backingup default share prferences for :" + this.getPackageName () + "_preferences");
+    	if(DEBUG)
+    		Log.i(TAG, "onCreate(), backingup default share prferences for :" + this.getPackageName () + "_preferences");
         SharedPreferencesBackupHelper helper = new SharedPreferencesBackupHelper(this, this.getPackageName () + "_preferences");
         addHelper(PREFS_BACKUP_KEY, helper);
     }
@@ -33,7 +36,7 @@ public class LIMEBackupAgent extends BackupAgentHelper {
 			ParcelFileDescriptor newState) throws IOException {
 		// TODO Auto-generated method stub
 		super.onBackup(oldState, data, newState);
-		Log.i(TAG,"onBackup()");
+		if(DEBUG) Log.i(TAG,"onBackup()");
 	}
 
 	@Override
@@ -41,6 +44,6 @@ public class LIMEBackupAgent extends BackupAgentHelper {
 			ParcelFileDescriptor newState) throws IOException {
 		// TODO Auto-generated method stub
 		super.onRestore(data, appVersionCode, newState);
-		Log.i(TAG,"onRestore()");
+		if(DEBUG) Log.i(TAG,"onRestore()");
 	}
 }
