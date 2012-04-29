@@ -22,6 +22,8 @@ package net.toload.main.hd.limesettings;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.IDBService;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+import android.app.backup.BackupManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -32,8 +34,6 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceActivity;
-import android.preference.PreferenceManager;
-//import android.preference.PreferenceManager;
 import android.util.Log;
 
 
@@ -45,26 +45,8 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 	private final boolean DEBUG = false;
 	private Context ctx = null;
 	private IDBService DBSrv = null;
-	/*
-	@Override
-	public void onBuildHeaders(List<Header> target) {
-	
-        if (ctx == null) {
-			ctx = this.getApplicationContext();
-		}
-		loadHeadersFromResource(R.xml.preferencehc, target);
-		
-		if (DBSrv == null) {
-			try {
-				ctx.bindService(new Intent(IDBService.class.getName()),
-						serConn, Context.BIND_AUTO_CREATE);
-			} catch (Exception e) {
-				Log.i("ART", "Failed to connect Search Service");
-			}
-		}
-	
-	}
-	*/
+	private LIMEPreferenceManager mLIMEPref = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,7 +55,7 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
         if (ctx == null) {
 			ctx = this.getApplicationContext();
 		}
-        
+        mLIMEPref = new LIMEPreferenceManager(ctx);
         //-----------------------
 
 		addPreferencesFromResource(R.xml.preference);
@@ -88,59 +70,11 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 				Log.i("ART", "Failed to connect Search Service");
 			}
 		}
+
 	
     }
     
-    /* move to LIMEMENU
-	@Override
-    public boolean onCreateOptionsMenu(Menu menu){
-    	int idGroup = 0;
-    	int orderMenuItem1 = Menu.NONE;
-    	int orderMenuItem2 = Menu.NONE+1;
-    	int orderMenuItem3 = Menu.NONE+2;
-    	
-    	try {
-			PackageInfo pinfo = this.getPackageManager().getPackageInfo(this.getPackageName(), 0);
-	    	menu.add(idGroup, Menu.FIRST, orderMenuItem1, "LIME v" + pinfo.versionName + " - " + pinfo.versionCode);
-	    	menu.add(idGroup, Menu.FIRST+1, orderMenuItem2, R.string.experienced_device);
-	    	menu.add(idGroup, Menu.FIRST+2, orderMenuItem3, R.string.license);
-			} catch (NameNotFoundException e) {
-			e.printStackTrace();
-		}
-    	return super.onCreateOptionsMenu(menu);
-    }
-	
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item){
 
-		//boolean hasSwitch = false;
-		try{
-	    	switch(item.getItemId()){
-		    	case (Menu.FIRST+1):
-		    		new AlertDialog.Builder(this)
-				    	.setTitle(R.string.experienced_device)
-				    	.setMessage(R.string.ad_zippy)
-				    	.setNeutralButton("Close", new DialogInterface.OnClickListener() {
-				    	public void onClick(DialogInterface dlg, int sumthin) {
-				    	}
-				    	}).show();
-		    		break;
-		    	case (Menu.FIRST+2):
-		    		new AlertDialog.Builder(this)
-				    	.setTitle(R.string.license)
-				    	.setMessage(R.string.license_detail)
-				    	.setNeutralButton("Close", new DialogInterface.OnClickListener() {
-				    	public void onClick(DialogInterface dlg, int sumthin) {
-				    	}
-				    	}).show();
-		    		break;
-	    	}
-    	}catch(Exception e){
-    		e.printStackTrace();
-    	}
-		return super.onOptionsItemSelected(item);
-    }
-    */
     
     @Override
     protected void onResume() {
@@ -155,7 +89,8 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
         super.onPause();
 
         // Unregister the listener whenever a key changes            
-        getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);    
+        getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+ 
     }
 
 	@Override
@@ -170,8 +105,8 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 			Log.i("LIMEPreference:OnChanged()"," key:" + key);
 			
 		if(key.equals("phonetic_keyboard_type")){
-			String selectedPhoneticKeyboardType = 
-				PreferenceManager.getDefaultSharedPreferences(ctx).getString("phonetic_keyboard_type", "");
+			String selectedPhoneticKeyboardType = mLIMEPref.getPhoneticKeyboardType();
+				//PreferenceManager.getDefaultSharedPreferences(ctx).getString("phonetic_keyboard_type", "");
 			Log.i("LIMEPreference:OnChanged()", "phonetickeyboardtype:" + selectedPhoneticKeyboardType);
 			
 			try {
@@ -185,8 +120,7 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 					DBSrv.setIMKeyboard("phonetic", 
 							DBSrv.getKeyboardInfo("phoneticet41", "desc"), "phoneticet41");
 				}else if(selectedPhoneticKeyboardType.equals("eten26")||selectedPhoneticKeyboardType.equals("hsu")){
-					if(PreferenceManager.getDefaultSharedPreferences(ctx).
-							getBoolean("number_row_in_english", false)){
+					if(mLIMEPref.getShowNumberRowInEnglish()){
 						DBSrv.setIMKeyboard("phonetic", 
 								DBSrv.getKeyboardInfo("limenum", "desc"), "limenum");
 					}else{
@@ -202,13 +136,16 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 			}
 			
 		}
+		BackupManager backupManager = new BackupManager(ctx);
+		backupManager.dataChanged();  //Jeremy '12,4,29 call backup manager to backup the changes.
+		
+		
 	}
 	
 	
 	private ServiceConnection serConn = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			if(DBSrv == null){
-				//Log.i("ART","Start up db service");
 				DBSrv = IDBService.Stub.asInterface(service);
 			}
 		}
