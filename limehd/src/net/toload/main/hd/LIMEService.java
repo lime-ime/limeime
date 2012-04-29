@@ -171,6 +171,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasShiftPress = false;
 	//private boolean hasShiftProcessed = false; // Jeremy '11,6.18
 	private boolean hasCtrlPress = false; // Jeremy '11,5,13
+	private boolean hasWinPress = false; // Jeremy '12,4,29 windows start key on stadard windows keyboard
 	//private boolean hasCtrlProcessed = false; // Jeremy '11,6.18
 	private boolean hasDistinctMultitouch;// Jeremy '11,8,3 
 	private boolean hasShiftCombineKeyPressed = false; //Jeremy ,11,8, 3
@@ -197,11 +198,7 @@ public class LIMEService extends InputMethodService implements
 	private List<String> keyboardShortnames;
 	private List<String> keyboardListCodes;
 
-	//private int keyDownCode = 0;
-	//private float keyDownX = 0;
-	//private float keyDownY = 0;
-	//private float keyUpX = 0;
-	//private float keyUpY = 0;
+	
 
 	// To keep key press time
 	private long keyPressTime = 0;
@@ -234,6 +231,7 @@ public class LIMEService extends InputMethodService implements
 	static final int MY_KEYCODE_ENTER = 10;
 	static final int MY_KEYCODE_SPACE = 32;
 	static final int MY_KEYCODE_SWITCH_CHARSET = 95;
+	static final int MY_KEYCODE_WINDOWS_START = 117; //Jeremy '12,4,29 windows start key
 	
 	private final String relatedSelkey = "!@#$%^&*()";
 	
@@ -1006,6 +1004,9 @@ public class LIMEService extends InputMethodService implements
 		case MY_KEYCODE_CTRL_RIGHT:
 			hasCtrlPress = true;
 			break;
+		case MY_KEYCODE_WINDOWS_START:
+			hasWinPress = true;
+			break;
 		case MY_KEYCODE_ESC:
 		case KeyEvent.KEYCODE_BACK:
 			// The InputMethodService already takes care of the back
@@ -1107,8 +1108,9 @@ public class LIMEService extends InputMethodService implements
 			// 	Shift+Space combination
 			// '11,5,13 Jeremy added Ctrl-space switch chi/eng
 			// '11,6,18 Jeremy moved from on_KEY_UP
+			// '12,4,29 Heremy add hasWinPress + space to switch chi/eng 
 
-			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress) { 
+			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress || hasWinPress) { 
 				this.switchChiEng();
 				if(hasMenuPress)  hasMenuProcessed = true;
 				hasSpaceProcessed =true;
@@ -1306,6 +1308,9 @@ public class LIMEService extends InputMethodService implements
 		case MY_KEYCODE_CTRL_LEFT:
 		case MY_KEYCODE_CTRL_RIGHT:
 			hasCtrlPress = false;
+			break;
+		case MY_KEYCODE_WINDOWS_START:
+			hasWinPress = false;
 			break;
 		case KeyEvent.KEYCODE_ENTER:
 			// Add by Jeremy '10, 3 ,29. Pick selected selection if candidates
