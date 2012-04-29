@@ -304,7 +304,7 @@ public class LIMEService extends InputMethodService implements
 		//		.getDefaultSharedPreferences(this);
 		hasVibration = mLIMEPref.getVibrateOnKeyPressed();//sp.getBoolean("vibrate_on_keypress", false);
 		hasSound = mLIMEPref.getSoundOnKeyPressed();//sp.getBoolean("sound_on_keypress", false);
-		mEnglishIMStart = mLIMEPref.getDefaultInEnglish(); //sp.getBoolean("default_in_english", false);
+		mEnglishIMStart = mLIMEPref.getPersistentLanguageMode(); //sp.getBoolean("default_in_english", false);
 		// hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
 		keyboardSelection = mLIMEPref.getKeyboardSelection();// sp.getString("keyboard_list", "custom");
 
@@ -345,7 +345,7 @@ public class LIMEService extends InputMethodService implements
 	public void onInitializeInterface() {
 
 		Log.i(TAG, "onInitializeInterface()");
-		mEnglishOnly = false;
+		//mEnglishOnly = false;
 		mEnglishFlagShift = false;
 
 		initialViewAndSwitcher();
@@ -409,8 +409,9 @@ public class LIMEService extends InputMethodService implements
 		// mKeyboardSwitcher.setKeyboardMode(
 		// LIMEKeyboardSwitcher.MODE_TEXT_DEFAULT, 0);
 
-		initialKeyboard();
-
+		//initialKeyboard();
+		initialViewAndSwitcher();  //Jeremy '12,4,29.  will do buildactivekeyboardlist on init startInput
+		
 		return mInputView;
 
 	}
@@ -607,7 +608,8 @@ public class LIMEService extends InputMethodService implements
 		// mImeOptions = attribute.imeOptions;
 		mImeOptions = attribute.imeOptions;
 
-		initialKeyboard();
+		//initialKeyboard();
+		buildActiveKeyboardList();  //Jeremy '12,4,29 only this is required here instead of fully initialKeybaord
 		//boolean disableAutoCorrect = false;
 		mPredictionOn = true;
 		mCompletionOn = false;
@@ -695,16 +697,18 @@ public class LIMEService extends InputMethodService implements
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
 			
 			} else { 
-				if(mEnglishIMStart ){//&& mEnglishOnly){
+				if(mEnglishIMStart && mEnglishOnly){
 		        	mPredictionOn = true;
 		        	mEnglishOnly = true;
 			        //onIM = false; //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 			        mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	
 			        		mImeOptions, false, false, false);
+		        	
 				} else{
 					mEnglishOnly = false;
-					mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	
-			    		mImeOptions, true, false, false);
+					//mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	
+			    	//	mImeOptions, true, false, false);
+					initialIMKeyboard();  //'12,4,29 intial chinese IM keybaord
 				}
 			}
 
@@ -744,7 +748,7 @@ public class LIMEService extends InputMethodService implements
 		//		.getDefaultSharedPreferences(this);
 		hasVibration = mLIMEPref.getVibrateOnKeyPressed(); //sp.getBoolean("vibrate_on_keypress", false);
 		hasSound = mLIMEPref.getSoundOnKeyPressed();//sp.getBoolean("sound_on_keypress", false);
-		mEnglishIMStart = mLIMEPref.getDefaultInEnglish();//sp.getBoolean("default_in_english", false);
+		mEnglishIMStart = mLIMEPref.getPersistentLanguageMode();//sp.getBoolean("default_in_english", false);
 		// hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
 		keyboardSelection = mLIMEPref.getKeyboardSelection();//sp.getString("keyboard_list", "custom");
 		hasQuickSwitch = mLIMEPref.getSwitchEnglishModeHotKey();//sp.getBoolean("switch_english_mode", false);
@@ -1212,7 +1216,7 @@ public class LIMEService extends InputMethodService implements
 		}
 		return super.onKeyDown(keyCode, event);
 	}
-
+	/*  deprecated by jeremy '12,4,29
 	private void resetCandidateBar() {
 		//Mapping empty = new Mapping();
 		//empty.setWord("");
@@ -1225,7 +1229,7 @@ public class LIMEService extends InputMethodService implements
 			clearSuggestions();
 		}
 	}
-
+	*/
 	private void resetTempEnglishWord() {
 		tempEnglishWord.delete(0, tempEnglishWord.length());
 		tempEnglishList.clear();
@@ -1722,7 +1726,7 @@ public class LIMEService extends InputMethodService implements
 						return;
 					}
 					resetTempEnglishWord();
-					resetCandidateBar();
+					if(!hasCtrlPress) clearSuggestions(); //Jeremy '12,4,29 moved from resetcandidateBar
 				}
 				
 			}
@@ -1756,13 +1760,13 @@ public class LIMEService extends InputMethodService implements
 			nextActiveKeyboard(true);
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_PREV_IM){
 			nextActiveKeyboard(false);
-		} else if (primaryCode == KEYBOARD_SWITCH_CODE && mInputView != null) {
+		} else if (primaryCode == KEYBOARD_SWITCH_CODE && mInputView != null) { //chi->eng
 			//mEnglishOnly = true;
 			//onIM = false;
 			switchKeyboard(primaryCode);
 			// Jeremy '11,5,31 Rewrite softkeybaord enter/space and english sepeartor processing.
-		} else if (primaryCode == KEYBOARD_SWITCH_IM_CODE && mInputView != null) {
-			switchKeyboardIM(primaryCode);
+		} else if (primaryCode == KEYBOARD_SWITCH_IM_CODE && mInputView != null) { //eng -> chi
+			switchKeyboard(primaryCode);
 		} else if (!mEnglishOnly && //Jeremy '12,4,29 use mEnglishOnly instead of onIM  
 				((primaryCode== MY_KEYCODE_SPACE && !keyboardSelection.equals("phonetic"))
 				||(primaryCode== MY_KEYCODE_SPACE && 
@@ -1920,7 +1924,8 @@ public class LIMEService extends InputMethodService implements
 		// cancel candidate view if it's shown
 		
 
-		initialKeyboard();
+		//initialKeyboard();
+		initialIMKeyboard();
 		Toast.makeText(this, keyboardname, Toast.LENGTH_SHORT / 2).show();
 		try {
 			mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
@@ -1983,7 +1988,7 @@ public class LIMEService extends InputMethodService implements
 			//if(DEBUG) Log.i(TAG, "currene keyboard is not in active list, reset to :" +  keyboardListCodes.get(0));
 			
 			keyboardSelection = keyboardListCodes.get(0);
-			switchKeyboard();
+			//initializeIMKeyboard();
 		}
 
 	}
@@ -2097,7 +2102,8 @@ public class LIMEService extends InputMethodService implements
 		//Jeremy '12,4,21 foce clear when switch to selected keybaord
 		clearComposing(true);
 
-		initialKeyboard();
+		//initialKeyboard();
+		initialIMKeyboard();
 
 		try {
 			mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
@@ -2439,7 +2445,8 @@ public class LIMEService extends InputMethodService implements
 			//Jeremy '12,4,24 moved fixedcandidate here
 			if(DEBUG)
 				Log.i(TAG,"Runnable(): mHideCandidateView");
-			if(mCandidateView == null || mLIMEPref.getFixedCandidateViewDisplay() ) return;  // escape if mCandidateView is not created '11,11,30 Jeremy
+			if(mCandidateView == null 
+					|| mLIMEPref.getFixedCandidateViewDisplay() ) return;  // escape if mCandidateView is not created '11,11,30 Jeremy
 			if(isCandidateShown()){
 				setCandidatesViewShown(false);	
 			}
@@ -2592,9 +2599,9 @@ public class LIMEService extends InputMethodService implements
 		}
 	}
 	
-	/*
+	/* Moved to switchKeybaordIM by Jeremy '12,4,29
 	 * Art 30,Sep,2011 This method force to switch keyboard back to IM mode
-	 */
+	 *
 	private void switchKeyboardIM(int primaryCode) {
 		
 		if(DEBUG)
@@ -2605,32 +2612,40 @@ public class LIMEService extends InputMethodService implements
 		
 		mHasShift = false;
 		//onIM = true;
+		mEnglishOnly = false;
 		Toast.makeText(this, R.string.typing_mode_mixed,
 				Toast.LENGTH_SHORT / 2).show();
 
 		updateShiftKeyState(getCurrentInputEditorInfo());
 		mLIMEPref.setKeyboardSelection(keyboardSelection);
 
-		initialKeyboard();
+		//initialKeyboard();
+		initializeIMKeyboard();
 		// Update keyboard xml information
 		keyboard_xml = mKeyboardSwitcher.getImKeyboard(keyboardSelection);
 	}
-	
+	*/
 	private void switchKeyboard(int primaryCode) {
-		if(DEBUG) Log.i(TAG,"switchKeyboard()");
+		if(DEBUG) Log.i(TAG,"switchKeyboard() primaryCode = " +primaryCode);
 		if (mCapsLock)
 			toggleCapsLock();
-		//Jeremy '11,8,14
+		
 		clearComposing(true);
-		super.setCandidatesViewShown(false);
+		forceHideCandidateView();
 
 		if (primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE) {
-			switchSymKeyboard();
-		} else if (primaryCode == KEYBOARD_SWITCH_CODE) {
+			//switchSymKeyboard();
 			mEnglishOnly = true;
-			//onIM = false;
-			switchChiEng();
+			mKeyboardSwitcher.toggleSymbols();
+		} else if (primaryCode == KEYBOARD_SWITCH_CODE) { //Chi --> Eng
+			mEnglishOnly = true;
+			mKeyboardSwitcher.toggleChinese();
+		} else if(primaryCode == KEYBOARD_SWITCH_IM_CODE){ //Eng --> Chi moved from SwitchKeyboardIM by Jeremy '12,4,29
+			mEnglishOnly = false;
+			initialIMKeyboard();
+			
 		}
+			
 
 		mHasShift = false;
 		updateShiftKeyState(getCurrentInputEditorInfo());
@@ -2639,6 +2654,7 @@ public class LIMEService extends InputMethodService implements
 		keyboard_xml = mKeyboardSwitcher.getImKeyboard(keyboardSelection);
 	}
 
+	/* moved to switchKeyboard by Jeremy '12,4,29
 	private void switchSymKeyboard() {
 		// Switch Keyboard between Symbol and Lime
 
@@ -2671,7 +2687,7 @@ public class LIMEService extends InputMethodService implements
 */
 	private void switchChiEng() {
 		if(DEBUG)
-			Log.i(TAG,"siwtchChiEng()");
+			Log.i(TAG,"switchChiEng(): mEnglishOnly:" + mEnglishOnly);
 		
 		//Jeremy '12,4,21 force clear before switching chi/eng
 		clearComposing(true);
@@ -2680,6 +2696,10 @@ public class LIMEService extends InputMethodService implements
 		
 		mKeyboardSwitcher.toggleChinese();
 		mEnglishOnly = !mKeyboardSwitcher.isChinese();
+		
+		if(DEBUG)
+			Log.i(TAG, "switchChiEng(): mEnglishOnly updated as " + mEnglishOnly);
+		
 		
 		if (mEnglishOnly) {
 			//onIM = false;
@@ -2765,20 +2785,21 @@ public class LIMEService extends InputMethodService implements
 
 
 	}
-
+/* deprecated by Jeremy '12,4,29
 	private void initialKeyboard() {
 
 		if(DEBUG) 
 			Log.i(TAG, "initialKeyboard()");
 			initialViewAndSwitcher();
 			buildActiveKeyboardList();
-			switchKeyboard();
+			//switchKeyboard();
 		
 	}
-
-	private void switchKeyboard(){
-		//onIM = true;
-		mEnglishOnly = false;
+*/
+	private void initialIMKeyboard(){
+		if(DEBUG)
+			Log.i(TAG,"initalizeIMKeyboard(): keyboardSelection:" + keyboardSelection);
+		//mEnglishOnly = false;
 		super.setCandidatesViewShown(false);
 
 		if (keyboardSelection.equals("custom")) {
@@ -2867,7 +2888,8 @@ public class LIMEService extends InputMethodService implements
 				if(i>=0) i = i + mLIMEPref.getSelkeyOption();
 			}
 			
-		} else if(mEnglishOnly || (firstMatched != null && firstMatched.isDictionary()&& !mEnglishOnly)) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+		} else if(mEnglishOnly 
+				|| (firstMatched != null && firstMatched.isDictionary()&& !mEnglishOnly)) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 			// related candidates view
 			i = relatedSelkey.indexOf(primaryCode);
 		} 
@@ -3299,7 +3321,7 @@ public class LIMEService extends InputMethodService implements
 
 		}
 	}
-
+	/*
 	private final int UP = 0;
 	private final int DOWN = 1;
 	private final int LEFT = 2;
@@ -3330,7 +3352,7 @@ public class LIMEService extends InputMethodService implements
 
 		return result;
 	}
-
+	*/
 	public boolean isValidTime(Date target) {
 		Calendar srcCal = Calendar.getInstance();
 		srcCal.setTime(new Date());
@@ -3430,10 +3452,10 @@ public class LIMEService extends InputMethodService implements
 	
 	/*
 	 *Art '11,9, 26 auto commit composing
-	 */
+	 *
 	public void autoCommit(){
 		
-	}
+	}*/
 
 
 }
