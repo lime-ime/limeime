@@ -51,8 +51,8 @@
        
     <string name="keyboard_list">LIME输入法切换</string>
     
-    <string name="default_in_english">先使用英文模式</string>
-    <string name="default_in_english_summary">输入法开启后先使用英文输入模式.</string>
+    <string name="persistent_language_mode">记忆中英模式</string>
+    <string name="persistent_language_mode_summary">下次切换前保持中英模式</string>
     <string name="number_row_in_english">数字列英文键盘</string>
     <string name="number_row_in_english_summary">在英文键盘显示数字列(5列键盘)</string>
     <string name="disable_software_keyboard">关闭软体键盘显示</string>

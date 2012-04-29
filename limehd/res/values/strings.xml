@@ -27,7 +27,7 @@
     <string name="lime_setting_loading">Please do not close this window or program during data loading period</string>
     <string name="lime_setting_select_root"> - back to /</string>
     <string name="lime_setting_select_parent"> - back to ..</string>
-    <string name="lime_loading">Loading ...</string>
+    <!-- <string name="lime_loading">Loading ...</string> -->
     <string name="lime_loading_cancel">Cancel</string>
     
     <string name="lime_setting_notification_loading">Start Loading Mapping Table</string>
@@ -51,8 +51,8 @@
     
     <string name="keyboard_list">LIME Input Method</string>
     
-    <string name="default_in_english">Starting in English mode</string>
-    <string name="default_in_english_summary">Starting input in English mode.</string>
+    <string name="persistent_language_mode">Persistent language mode</string>
+    <string name="persistent_language_mode_summary">Fixed the language mode before next swicthing.</string>
     <string name="number_row_in_english">Show number row in English mode</string>
     <string name="number_row_in_english_summary">Show number row in English keyboards (5 rows keyboard).</string>
     <string name="disable_software_keyboard">Display software keyboard</string>
@@ -112,7 +112,7 @@
     <string name="physical_keyboard_sort">Sort suggestion list using physical keyboard</string>
     <string name="physical_keyboard_sort_summary">Sort suggestion list base on learned frequency, when using physical keyboard</string>
     <string name="accept_number_index">Mapping on numbers</string>
-    <string name="accept_number_index_summary">Allow input 0-9 as mapping code</string>
+    <!-- <string name="accept_number_index_summary">Allow input 0-9 as mapping code</string> -->
     <string name="accept_symbol_index">Mapping on symbols</string>
     <string name="accept_symbol_index_summary">Allow punctuation as mapping code</string>
     <string name="switch_english_mode">Quick switch hotkey</string>

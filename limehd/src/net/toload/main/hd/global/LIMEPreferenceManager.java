@@ -212,10 +212,10 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("sound_on_keypress", false);
 	}
 	
-	public boolean getDefaultInEnglish(){
+	public boolean getPersistentLanguageMode(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean("default_in_english", false);
+		return sp.getBoolean("persistent_language_mode", false);
 	}
 	
 	public boolean getShowNumberRowInEnglish(){
