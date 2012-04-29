@@ -354,8 +354,10 @@ public class LIMEInitial extends Activity {
 			    						}
 		    							btnStoreSdcard.setEnabled(false);
 		    							btnStoreDevice.setEnabled(false);
+		    							
 				    					DBSrv.closeDatabse();
 			    						DBSrv.restoreDatabase();
+			    						initialButton();
 									} catch (RemoteException e) {
 										e.printStackTrace();
 									}
