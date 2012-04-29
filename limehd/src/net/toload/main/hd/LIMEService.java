@@ -75,7 +75,7 @@ import android.content.res.Configuration;
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = false;
+	static final boolean DEBUG = true;
 	static final String TAG = "LIMEService";
 	static final String PREF = "LIMEXY";
 
@@ -614,7 +614,7 @@ public class LIMEService extends InputMethodService implements
 		mCompletions = null;
 		mCapsLock = false;
 		mHasShift = false;
-		mEnglishOnly = false;
+		
 		//isModeURL = false;
 		//isModePassword = false;
 
@@ -691,16 +691,18 @@ public class LIMEService extends InputMethodService implements
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection,
 						LIMEKeyboardSwitcher.MODE_URL, mImeOptions, false, false, false);
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
+				mEnglishOnly = false;
 				mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
 			
 			} else { 
-				if(mEnglishIMStart){
+				if(mEnglishIMStart ){//&& mEnglishOnly){
 		        	mPredictionOn = true;
 		        	mEnglishOnly = true;
 			        //onIM = false; //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 			        mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	
 			        		mImeOptions, false, false, false);
 				} else{
+					mEnglishOnly = false;
 					mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	
 			    		mImeOptions, true, false, false);
 				}
@@ -1074,9 +1076,9 @@ public class LIMEService extends InputMethodService implements
 			if(!mEnglishOnly){ //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 				if (mCandidateView != null && isCandidateShown()) {
 				// To block a real enter after suggestion selection. We have to
-				// return true in OnKeyUp();
-					hasEnterProcessed = true;
+				// return true in OnKeyUp();					
 					if( mCandidateView.takeSelectedSuggestion()){
+						hasEnterProcessed = true;
 						return true;
 					}else{
 						hideCandidateView();
@@ -1755,7 +1757,7 @@ public class LIMEService extends InputMethodService implements
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_PREV_IM){
 			nextActiveKeyboard(false);
 		} else if (primaryCode == KEYBOARD_SWITCH_CODE && mInputView != null) {
-			mEnglishOnly = true;
+			//mEnglishOnly = true;
 			//onIM = false;
 			switchKeyboard(primaryCode);
 			// Jeremy '11,5,31 Rewrite softkeybaord enter/space and english sepeartor processing.
