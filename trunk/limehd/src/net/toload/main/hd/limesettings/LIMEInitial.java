@@ -195,6 +195,7 @@ public class LIMEInitial extends Activity {
     					DBSrv.closeDatabse();
 		        		btnInitEmptyDB.setEnabled(false);
 		        		btnInitPhoneticOnlyDB.setEnabled(false);
+		        		btnInitPhoneticHsOnlyDB.setEnabled(false);
 						btnInitPreloadDB.setEnabled(false);
 						btnStoreDevice.setEnabled(false);
 						btnStoreSdcard.setEnabled(false);
@@ -271,6 +272,7 @@ public class LIMEInitial extends Activity {
     					DBSrv.closeDatabse();
 		        		btnInitEmptyDB.setEnabled(false);
 		        		btnInitPhoneticOnlyDB.setEnabled(false);
+		        		btnInitPhoneticHsOnlyDB.setEnabled(false);
 						btnInitPreloadDB.setEnabled(false);
 						btnStoreDevice.setEnabled(false);
 						btnStoreSdcard.setEnabled(false);
