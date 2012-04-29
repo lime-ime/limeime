@@ -24,13 +24,13 @@
 				<TableRow android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/tableRow3">
 					<Button android:layout_width="fill_parent" android:layout_margin="5px" android:id="@+id/btnInitPhoneticOnlyDB" android:layout_weight="1" android:layout_height="fill_parent" android:text="@string/l3_initial_btn_load_phonetic_only_db" android:padding="5px"></Button>
 				</TableRow>
-				<TableRow android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/tableRow3">
+				<TableRow android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/tableRow4">
 					<Button android:layout_width="fill_parent" android:layout_margin="5px" android:id="@+id/btnInitPhoneticHsOnlyDB" android:layout_weight="1" android:layout_height="fill_parent" android:text="@string/l3_initial_btn_load_phonetic_hs_only_db" android:padding="5px"></Button>
 				</TableRow>
-				<TableRow android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/tableRow4">
+				<TableRow android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/tableRow5">
 					<Button android:layout_width="fill_parent" android:layout_margin="5px" android:id="@+id/btnInitEmptyDB" android:layout_weight="1" android:layout_height="fill_parent" android:text="@string/l3_initial_btn_load_empty_db" android:padding="5px"></Button>
 				</TableRow>
-				<TableRow android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/tableRow5">
+				<TableRow android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/tableRow6">
 					<Button android:layout_width="fill_parent" android:layout_margin="5px" android:id="@+id/btnResetDB" android:layout_weight="1" android:layout_height="fill_parent" android:text="@string/l3_initial_btn_reset_db" android:padding="5px"></Button>
 				</TableRow>
 			</TableLayout>
