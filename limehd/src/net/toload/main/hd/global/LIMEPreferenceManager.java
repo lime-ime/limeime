@@ -99,26 +99,38 @@ public class LIMEPreferenceManager {
 	}
 	public void setTotalUserdictRecords(String records){
 
-		//SharedPreferences sp = ctx.getSharedPreferences("total_userdict_record", 0);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		sp.edit().putString("total_userdict_record", records).commit();	
 	}
 	
 	public boolean getMappingLoading(){
 
-		//SharedPreferences sp = ctx.getSharedPreferences("mapping_loadg", 0);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getString("mapping_loadg", "no").equals("yes");
 	}
 	public void setMappingLoading(boolean loading){
 
-		//SharedPreferences sp = ctx.getSharedPreferences("mapping_loadg", 0);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		String loadingStatus = loading?"yes":"no";
 		
 		sp.edit().putString("mapping_loadg",loadingStatus).commit();
 		
 	}
+	
+	public boolean getLanguageMode(){
+
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getString("language_mode", "no").equals("yes");
+	}
+	public void setLanguageMode(boolean englishOnly){
+
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		String loadingStatus = englishOnly?"yes":"no";
+		
+		sp.edit().putString("language_mode",loadingStatus).commit();
+		
+	}
+	
 	
 	public int getMappingFileImportLines(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
