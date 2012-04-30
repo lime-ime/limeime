@@ -346,7 +346,8 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public void onInitializeInterface() {
 
-		Log.i(TAG, "onInitializeInterface()");
+		if(DEBUG)
+			Log.i(TAG, "onInitializeInterface()");
 		//mEnglishOnly = false;
 		mEnglishFlagShift = false;
 
@@ -1898,8 +1899,7 @@ public class LIMEService extends InputMethodService implements
 					showIMPicker();
 					break;
 				case POS_METHOD:
-					((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
-							.showInputMethodPicker();
+					((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).showInputMethodPicker();				
 					break;
 			
 					

@@ -3,12 +3,19 @@ package net.toload.main.hd.global;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.List;
 //
+import net.toload.main.hd.LIMEService;
 import net.toload.main.hd.R;
 
 import android.app.NotificationManager;
+import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
+import android.view.inputmethod.InputMethodInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 
@@ -17,6 +24,8 @@ import android.content.Intent;
  *
  */
 public class LIMEUtilities {
+	static final String TAG = "LIMEUtilities";
+	static final boolean DEBUG = false;
 	
 	public File isFileNotExist(String filepath){
 		
@@ -119,5 +128,42 @@ public class LIMEUtilities {
 
 	}
 	
+	public boolean isLIMEEnabled(Context context){
+		InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+		List<InputMethodInfo> mInputMethodProperties = imm.getEnabledInputMethodList();
+		String limeID = getLIMEID(context);
+
+		final int N = mInputMethodProperties.size();
+
+		boolean isLIMEActive = false; 
+		
+		for (int i = 0; i < N; i++) {
+			InputMethodInfo imi = mInputMethodProperties.get(i);
+			if(DEBUG) Log.i(TAG, "enabled IM " + i + ":" + imi.getId());
+			if(imi.getId().equals(limeID)) isLIMEActive = true;
+		}
+		return isLIMEActive;
+	}
+
+	public boolean isLIMEActive(Context context){
+		String activeIM = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.DEFAULT_INPUT_METHOD); 
+		String limeID = getLIMEID(context);
+		
+		if(DEBUG) Log.i(TAG, "active IM:" + activeIM + " LIME IM:" + limeID);
+		return activeIM.equals(limeID);
+	}
+	
+	public String getLIMEID(Context context){
+		ComponentName LIMEComponentName = new ComponentName(context, LIMEService.class);
+		return LIMEComponentName.flattenToShortString();
+	}
+	
+	public void showInputMethodSettingsPage(Context context){
+		Intent intent = new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS);
+   	 	context.startActivity(intent);
+	}
+	public void showInputMethodPicker(Context context){
+		((InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE)).showInputMethodPicker();
+	}
 
 }
