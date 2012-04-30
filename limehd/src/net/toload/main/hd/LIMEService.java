@@ -447,8 +447,8 @@ public class LIMEService extends InputMethodService implements
 		if(DEBUG) 
 			Log.i(TAG, "onEvaluateFullScreenMode() DisplayHeight:"+displayHeight+" limit:" + max 
 					+ "super.onEvaluateFullscreenMode():" + super.onEvaluateFullscreenMode());
-		//Jeremy '12,4,30 Turn off evaluation only for tablet and xhdpi phones (required horizontal >800pts)
-		if (displayHeight > max && this.getMaxWidth() > 800) {  
+		//Jeremy '12,4,30 Turn off evaluation only for tablet and xhdpi phones (required horizontal >900pts)
+		if (displayHeight > max && this.getMaxWidth() > 900) {  
 			return false;
 		} else {
 			return super.onEvaluateFullscreenMode();
