@@ -24,6 +24,8 @@ public class LIME {
 	public static final String IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://limeime.googlecode.com/svn/branches/database/phonetichs0208.zip";
 	
 	// Google Code
+	public static final String G_CJ_11643_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cangjie.cin";
+	public static final String G_PHONETIC_11643_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/bopomofo.cin";
 	public static final String G_CJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj.zip";
 	public static final String G_SCJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/scj.zip";
 	public static final String G_ARRAY_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/array.zip";
@@ -46,8 +48,10 @@ public class LIME {
 	public static final String DATABASE_NAME = "lime.db";
 	public static final String DATABASE_SOURCE_DAYI = "dayi.cin";
 	public static final String DATABASE_SOURCE_PHONETIC = "phonetic.lime";
+	public static final String DATABASE_SOURCE_PHONETIC_CNS = "bopomofo.cin";
 	public static final String DATABASE_SOURCE_PHONETICADV = "phonetic_adv.lime";
 	public static final String DATABASE_SOURCE_CJ = "cj.lime";
+	public static final String DATABASE_SOURCE_CJ_CNS = "cangjie.cin";
 	public static final String DATABASE_SOURCE_CJ5 = "cj5.lime";
 	public static final String DATABASE_SOURCE_ECJ = "ecj.lime";
 	public static final String DATABASE_SOURCE_SCJ = "scj.lime";

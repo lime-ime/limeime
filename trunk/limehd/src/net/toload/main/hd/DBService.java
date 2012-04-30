@@ -658,6 +658,47 @@ public class DBService extends Service {
 
 
 		@Override
+		public void downloadCjCns() throws RemoteException {
+			Thread threadTask = new Thread() {
+				public void run() {
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj_cns_start)+ "", intentLIMEMappingLoading);
+					downloadedFile = downloadRemoteFile(LIME.G_CJ_11643_DOWNLOAD_URL, LIME.G_CJ_11643_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ_CNS);
+					if(downloadedFile!=null){
+						showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj_cns_install)+ "", intentLIMEMappingLoading);
+						try {
+							loadMapping(downloadedFile.getAbsolutePath(), "cj");
+						} catch (RemoteException e) {
+							e.printStackTrace();
+							showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
+						}
+					}
+				}
+			};
+			threadTask.start();
+		}
+
+
+		@Override
+		public void downloadPhoneticCns() throws RemoteException {
+			Thread threadTask = new Thread() {
+				public void run() {
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_cns_start)+ "", intentLIMEMappingLoading);
+					downloadedFile = downloadRemoteFile(LIME.G_PHONETIC_11643_DOWNLOAD_URL, LIME.G_PHONETIC_11643_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETIC_CNS);
+					if(downloadedFile!=null){
+						showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_cns_install)+ "", intentLIMEMappingLoading);
+						try {
+							loadMapping(downloadedFile.getAbsolutePath(), "phonetic");
+						} catch (RemoteException e) {
+							e.printStackTrace();
+							showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
+						}
+					}
+				}
+			};
+			threadTask.start();
+		}
+
+		@Override
 		public void downloadPhoneticAdv() throws RemoteException {
 			Thread threadTask = new Thread() {
 				public void run() {

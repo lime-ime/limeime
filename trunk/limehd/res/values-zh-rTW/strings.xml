@@ -436,6 +436,15 @@
     <string name="l3_im_download_from_phonetic_adv_start">開始下載注音連打字根</string>
     <string name="l3_im_download_from_phonetic_adv_install">開始安裝注音連打字根</string>
     <string name="l3_im_download_from_phonetic_adv_warning">檔案容量較大系統會需要比較長的時間進行資料匯入</string>
+   
+    <string name="l3_im_download_from_phonetic_cns">正體注音 CNS11643 字根，由於裝置及操作系統差異，部份字型可能無法正確顯示</string>
+    <string name="l3_im_download_from_phonetic_cns_start">開始下載注音CNS11643字根</string>
+    <string name="l3_im_download_from_phonetic_cns_install">開始安裝注音CNS11643字根</string>
+    <string name="l3_im_download_from_phonetic_cns_warning">檔案容量較大系統會需要比較長的時間進行資料匯入</string>
+   
+    <string name="l3_im_download_from_cj_cns">正體倉頡 CNS11643 字根，由於裝置及操作系統差異，部份字型可能無法正確顯示</string>
+    <string name="l3_im_download_from_cj_cns_start">開始下載倉頡CNS11643字根</string>
+    <string name="l3_im_download_from_cj_cns_install">開始安裝倉頡CNS11643字根</string>
     
     <string name="l3_im_download_from_cj">下載並安裝倉頡字根</string>
     <string name="l3_im_download_from_cj_start">開始下載倉頡字根</string>
@@ -537,8 +546,19 @@
 	<string name="reset_db_note">若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案.</string>
 	
 	<string name="release_note">
-	   \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案, 如果選字與送出的字不同，請關閉喜好設定的中文簡/繁體字碼轉換.\n
+	    \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案, 如果選字與送出的字不同，請關閉喜好設定的中文簡/繁體字碼轉換.\n
 	    \n版本更新說明
+	    \n3.7.2-293
+	    \n1. 「啟動選取排序」或「實體鍵盤啟動選取排序」未勾選時，候選字是依對照表的字序列出
+		\n2. 調整行列的實體鍵盤選字鍵為 !@#$%^&amp;*()
+		\n3. 雙色文字的虛擬鍵盤
+		\n4. 外接鍵盤的 WinKey + space (或Zippy BT540S上地球鍵) 切換中文/英文輸入模式
+		\n5. 英文popup小鍵盤 (英文模式長按 . 或中文 shift 後長按 > ) 加上 : 及 ;
+		\n6. 加上華象直覺輸入法反查
+		\n7. 先啟動英文選項改為「記憶中英模式」，進入輸入區時會使用上一次的中文或英文模式
+		\n8. 喜好設定自動備份，支援 Android 2.2 版本，部份裝置尚未支援。
+		\n9. 新增注音、倉頡 CNS11643 輸入法字根快速下載，請至輸入法管理操作。\n
+
 	    \n3.7.1-291
 	    \n1. 修正選取時，選取區域字會被清除 
 		\n2. 修正LIME預設鍵盤，shift後仍是小寫
