@@ -233,7 +233,7 @@
 		<item>行列</item>
 		<item>行列10</item>
 		<item>筆順五碼</item>
-		<item>華象自覺</item>
+		<item>華象直覺</item>
 	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
@@ -537,8 +537,14 @@
 	<string name="reset_db_note">若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案.</string>
 	
 	<string name="release_note">
-	    \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案.\n
+	   \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案, 如果選字與送出的字不同，請關閉喜好設定的中文簡/繁體字碼轉換.\n
 	    \n版本更新說明
+	    \n3.7.1-291
+	    \n1. 修正選取時，選取區域字會被清除 
+		\n2. 修正LIME預設鍵盤，shift後仍是小寫
+		\n3. 修正實體鍵盤第一字無法輸入的問題 \n
+	   
+	    \n3.7.0-289
 	    \n1. 修正 ICS (4.0.x) 異常中止問題
 		\n2. 修正候選列觸控異常狀況 (點選後候選列消失但沒有出字)
 		\n3. 微調 xhdpi 解析度手機 (>320dpi)，如 Sony Xperia S, HTC One X
@@ -546,6 +552,11 @@
 		\n5. 新增 Xperia Pro 實體鍵盤支援 
 		\n6. 新增候選列固定顯示選項
 		\n7. 新增華象直覺輸入法 (已取得發明人陳華偉先生授權)\n\n
+		
+		\n新增:
+		\n1. Xperia Pro鍵盤支援 
+		\n2. (選項) 候選列固定顯示
+		\n3. 華象直覺輸入法 \n\n
 	
 		LIME中文輸入法Facebook粉絲專頁\n
 		http://facebook.com/limeime/\n\n
