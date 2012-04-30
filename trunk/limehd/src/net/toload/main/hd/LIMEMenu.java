@@ -21,10 +21,10 @@
 package net.toload.main.hd;
 
 import java.io.File;
-
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limesettings.LIMEIMSetting;
 import net.toload.main.hd.limesettings.LIMEInitial;
 import net.toload.main.hd.limesettings.LIMEPreference;
@@ -37,9 +37,12 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.TabHost;
+import android.widget.Toast;
 
 /**
  * @author Art Hung
@@ -47,6 +50,8 @@ import android.widget.TabHost;
 public class LIMEMenu extends TabActivity {
 
 	private LIMEPreferenceManager mLIMEPref;
+	private final String TAG = "LIMEMenu";
+	private final boolean DEBUG = true;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,6 +125,20 @@ public class LIMEMenu extends TabActivity {
 			e.printStackTrace();
 		}
 		
+        LIMEUtilities limeUtil = new LIMEUtilities(); 
+        
+        if(DEBUG)
+        	Log.i(TAG, "LIMEEnabled:" + limeUtil.isLIMEEnabled(this) + " LIMEActive:" + limeUtil.isLIMEActive(this));
+        if(!limeUtil.isLIMEEnabled(this)){
+        	Log.i(TAG, "LIME-HD is not enabled, call showInputMethodSettingsPage() and ask user to enable it");
+        	Toast.makeText(this, "LIME-HD is not enabled, please enable it and press back to go back to LIME-HD settings.", Toast.LENGTH_SHORT ).show();
+        	limeUtil.showInputMethodSettingsPage(this);
+        }
+        if(limeUtil.isLIMEEnabled(this) && !limeUtil.isLIMEActive(this)){
+        	Log.i(TAG, "LIME-HD is not active, call showInputMethodPicker() and ask user to select it");
+        	Toast.makeText(this, "LIME-HD is not active, please select it and press back to go back to LIME-HD settings.", Toast.LENGTH_SHORT ).show();
+        	limeUtil.showInputMethodPicker(this);
+        }
         
        /* WindowManager manager = (WindowManager) this.getSystemService(Context.WINDOW_SERVICE);
         Display display = manager.getDefaultDisplay();
@@ -129,6 +148,9 @@ public class LIMEMenu extends TabActivity {
 
         
     }
+    
+   
+    
     @Override
     public boolean onCreateOptionsMenu(Menu menu){
     	int idGroup = 0;
@@ -155,7 +177,7 @@ public class LIMEMenu extends TabActivity {
 	    	switch(item.getItemId()){
 	    		case (Menu.FIRST):
 	    			PackageInfo pinfo = this.getPackageManager().getPackageInfo(this.getPackageName(), 0);
-		    	
+	    		 	
 		    		new AlertDialog.Builder(this)
 				    	.setTitle("LIME v" + pinfo.versionName + " - " + pinfo.versionCode)
 				    	.setMessage(R.string.release_note)
@@ -163,6 +185,7 @@ public class LIMEMenu extends TabActivity {
 				    	public void onClick(DialogInterface dlg, int sumthin) {
 				    	}
 				    	}).show();
+				    	
 	    		break;
 		    	case (Menu.FIRST+1):
 		    		new AlertDialog.Builder(this)
