@@ -33,6 +33,10 @@
 				android:layout_height="wrap_content"
 				android:paddingBottom="5px" android:paddingTop="5px" android:layout_width="fill_parent">
 			</LinearLayout>
+			<LinearLayout android:id="@+id/extendLayout3"
+				android:layout_height="wrap_content"
+				android:paddingBottom="5px" android:paddingTop="5px" android:layout_width="fill_parent">
+			</LinearLayout>
 			
 			<LinearLayout android:id="@+id/LinearLayout03"
 				android:layout_width="wrap_content" android:layout_height="wrap_content">
