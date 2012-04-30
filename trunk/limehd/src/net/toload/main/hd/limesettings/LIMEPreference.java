@@ -47,7 +47,8 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 	private IDBService DBSrv = null;
 	private LIMEPreferenceManager mLIMEPref = null;
 
-    @Override
+    @SuppressWarnings("deprecation")
+	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //--------------------
@@ -76,7 +77,8 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
     
 
     
-    @Override
+    @SuppressWarnings("deprecation")
+	@Override
     protected void onResume() {
         super.onResume();
 
@@ -84,7 +86,8 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
         getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     }
 
-    @Override
+    @SuppressWarnings("deprecation")
+	@Override
     protected void onPause() {
         super.onPause();
 

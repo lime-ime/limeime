@@ -60,6 +60,7 @@ import net.toload.main.hd.global.Mapping;
 import net.toload.main.hd.limedb.ExpandableDictionary;
 import net.toload.main.hd.limedb.UserDictionary;
 import net.toload.main.hd.limesettings.LIMEPreference;
+import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 
@@ -446,7 +447,8 @@ public class LIMEService extends InputMethodService implements
 		if(DEBUG) 
 			Log.i(TAG, "onEvaluateFullScreenMode() DisplayHeight:"+displayHeight+" limit:" + max 
 					+ "super.onEvaluateFullscreenMode():" + super.onEvaluateFullscreenMode());
-		if (displayHeight > max && this.getMaxWidth() > 500) {
+		//Jeremy '12,4,30 Turn off evaluation only for tablet and xhdpi phones (required horizontal >800pts)
+		if (displayHeight > max && this.getMaxWidth() > 800) {  
 			return false;
 		} else {
 			return super.onEvaluateFullscreenMode();
@@ -1892,7 +1894,10 @@ public class LIMEService extends InputMethodService implements
 	private void launchSettings() {
 		handleClose();
 		Intent intent = new Intent();
-		intent.setClass(LIMEService.this, LIMEPreference.class);
+	    if(android.os.Build.VERSION.SDK_INT < 11)  //Jeremy '12,4,30 Add for deprecated preferenceActivity after API 11 (HC)
+	    	intent.setClass(LIMEService.this, LIMEPreference.class);
+	    else
+	    	intent.setClass(LIMEService.this, LIMEPreferenceHC.class);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		startActivity(intent);
 	}
