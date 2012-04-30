@@ -308,7 +308,7 @@ public class LIMEService extends InputMethodService implements
 		hasSound = mLIMEPref.getSoundOnKeyPressed();//sp.getBoolean("sound_on_keypress", false);
 		mPersistentLanguageMode = mLIMEPref.getPersistentLanguageMode(); //sp.getBoolean("default_in_english", false);
 		// hasNumberKeypads = sp.getBoolean("display_number_keypads", false);
-		activeIMCode = mLIMEPref.getKeyboardSelection();// sp.getString("keyboard_list", "custom");
+		activeIMCode = mLIMEPref.getActiveIM();// sp.getString("keyboard_list", "custom");
 
 		// initial Input List
 		//userdiclist = new LinkedList<Mapping>();
@@ -317,7 +317,7 @@ public class LIMEService extends InputMethodService implements
 		activeIMNameList = new ArrayList<String>();
 		activeIMCodeList = new ArrayList<String>();
 		activeIMShortNameList = new ArrayList<String>();
-		buildActiveKeyboardList();
+		buildActiveIMList();
 
 		
 
@@ -400,7 +400,7 @@ public class LIMEService extends InputMethodService implements
 		mKeyboardSwitcher.setInputView(mInputView);
 		mKeyboardSwitcher.makeKeyboards(true);
 		// build activekeyboard list and store in keybaord switcher.
-		buildActiveKeyboardList();
+		buildActiveIMList();
 		mKeyboardSwitcher.setActiveKeyboardList(activeIMCodeList, activeIMNameList, activeIMShortNameList);
 		mInputView.setOnKeyboardActionListener(this);
 		hasDistinctMultitouch = mInputView.hasDistinctMultitouch();
@@ -637,7 +637,7 @@ public class LIMEService extends InputMethodService implements
 		mImeOptions = attribute.imeOptions;
 
 		//initialKeyboard();
-		buildActiveKeyboardList();  //Jeremy '12,4,29 only this is required here instead of fully initialKeybaord
+		buildActiveIMList();  //Jeremy '12,4,29 only this is required here instead of fully initialKeybaord
 		//boolean disableAutoCorrect = false;
 		mPredictionOn = true;
 		mCompletionOn = false;
@@ -778,7 +778,7 @@ public class LIMEService extends InputMethodService implements
 		hasVibration = mLIMEPref.getVibrateOnKeyPressed();
 		hasSound = mLIMEPref.getSoundOnKeyPressed();
 		mPersistentLanguageMode = mLIMEPref.getPersistentLanguageMode();
-		activeIMCode = mLIMEPref.getKeyboardSelection();
+		activeIMCode = mLIMEPref.getActiveIM();
 		hasQuickSwitch = mLIMEPref.getSwitchEnglishModeHotKey();
 		mAutoCap = true; 
 		
@@ -1785,9 +1785,9 @@ public class LIMEService extends InputMethodService implements
 		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE	&& mInputView != null) {
 			switchKeyboard(primaryCode);
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_NEXT_IM){
-			nextActiveKeyboard(true);
+			nextActiveIM(true);
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_PREV_IM){
-			nextActiveKeyboard(false);
+			nextActiveIM(false);
 		} else if (primaryCode == KEYBOARD_SWITCH_CODE && mInputView != null) { //chi->eng
 			//mEnglishOnly = true;
 			//onIM = false;
@@ -1929,9 +1929,9 @@ public class LIMEService extends InputMethodService implements
 	}
 
 
-	private void nextActiveKeyboard(boolean forward) { // forward: true, next IM; false prev. IM
-		if(DEBUG) Log.i(TAG, "nextActiveKeyboard()");
-		buildActiveKeyboardList();
+	private void nextActiveIM(boolean forward) { // forward: true, next IM; false prev. IM
+		if(DEBUG) Log.i(TAG, "nextActiveIM()");
+		buildActiveIMList();
 		int i;
 		CharSequence activeIMName = "";
 		for (i = 0; i < activeIMCodeList.size(); i++) {
@@ -1949,12 +1949,12 @@ public class LIMEService extends InputMethodService implements
 				break;
 			}
 		}
-		mLIMEPref.setKeyboardSelection(activeIMCode);
+		mLIMEPref.setActiveIM(activeIMCode);
 		//Jeremy '12,4,21 force clear when switch to next keybaord
 		clearComposing(true);
 		// cancel candidate view if it's shown
-		
-
+		mEnglishOnly = false;
+		mLIMEPref.setLanguageMode(false);
 		//initialKeyboard();
 		initialIMKeyboard();
 		Toast.makeText(this, activeIMName, Toast.LENGTH_SHORT / 2).show();
@@ -1970,7 +1970,7 @@ public class LIMEService extends InputMethodService implements
 		activeSoftKeyboard = mKeyboardSwitcher.getImKeyboard(activeIMCode);
 	}
 
-	private void buildActiveKeyboardList() {
+	private void buildActiveIMList() {
 		CharSequence[] items = getResources().getStringArray(R.array.keyboard);
 		CharSequence[] shortNames = getResources().getStringArray(R.array.keyboardShortname);
 		CharSequence[] codes = getResources().getStringArray(
@@ -2072,7 +2072,7 @@ public class LIMEService extends InputMethodService implements
 	@TargetApi(11)
 	private void showIMPicker() {
 
-		buildActiveKeyboardList();
+		buildActiveIMList();
 
 		AlertDialog.Builder builder = null;
 		
@@ -2100,7 +2100,7 @@ public class LIMEService extends InputMethodService implements
 
 			public void onClick(DialogInterface di, int position) {
 				di.dismiss();
-				handlKeyboardSelection(position);
+				handleIMSelection(position);
 			}
 		});
 
@@ -2121,12 +2121,12 @@ public class LIMEService extends InputMethodService implements
 
 	}
 
-	private void handlKeyboardSelection(int position) {
-		if(DEBUG) Log.i(TAG, "handleKeyboardSelection() position = " + position);
+	private void handleIMSelection(int position) {
+		if(DEBUG) Log.i(TAG, "handleIMSelection() position = " + position);
 
 		activeIMCode = activeIMCodeList.get(position);
 		
-		mLIMEPref.setKeyboardSelection(activeIMCode);
+		mLIMEPref.setActiveIM(activeIMCode);
 		//spe.putString("keyboard_list", keyboardSelection);
 		//spe.commit();
 
@@ -2735,7 +2735,7 @@ public class LIMEService extends InputMethodService implements
 		if(DEBUG)
 			Log.i(TAG,"initalizeIMKeyboard(): keyboardSelection:" + activeIMCode);
 		//mEnglishOnly = false;
-		super.setCandidatesViewShown(false);
+		//super.setCandidatesViewShown(false);
 
 		if (activeIMCode.equals("custom")) {
 			mKeyboardSwitcher.setKeyboardMode(activeIMCode,

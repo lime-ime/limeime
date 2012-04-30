@@ -241,15 +241,15 @@ public class LIMEPreferenceManager {
 		return sp.getString("keyboard_state", "0;1;2;3;4;5;6;7;8;9;10;11");
 	}
 	
-	public String getKeyboardSelection(){
+	public String getActiveIM(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getString("keyboard_list", "phonetic");
 	}
 	
 	
-	public void setKeyboardSelection(String keyboardname){
+	public void setActiveIM(String activeIM){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString( "keyboard_list", String.valueOf(keyboardname)).commit();	
+		sp.edit().putString( "keyboard_list", String.valueOf(activeIM)).commit();	
 	}
 	
 	public boolean getThreerowRemapping(){
