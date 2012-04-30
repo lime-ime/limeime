@@ -62,6 +62,9 @@
 		</activity>
 		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreference">
 		</activity>
+		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreferenceHC">
+		</activity>
+		
 		
 		<activity android:theme="@style/LIMEHDDialogTheme" android:configChanges="keyboard|keyboardHidden|orientation" android:name=".limesettings.LIMEMappingLoading"></activity>
 		<meta-data android:name="com.google.android.backup.api_key"

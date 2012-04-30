@@ -28,6 +28,7 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limesettings.LIMEIMSetting;
 import net.toload.main.hd.limesettings.LIMEInitial;
 import net.toload.main.hd.limesettings.LIMEPreference;
+import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 
 import android.app.AlertDialog;
 import android.app.TabActivity;
@@ -67,10 +68,17 @@ public class LIMEMenu extends TabActivity {
         tabHost.addTab(tabHost.newTabSpec("tab1")
         		.setIndicator(this.getText(R.string.l3_tab_manage))
                 .setContent(new Intent(this, LIMEIMSetting.class)));
-        
-        tabHost.addTab(tabHost.newTabSpec("tab2")
-        		.setIndicator(this.getText(R.string.l3_tab_preference))
-        		.setContent(new Intent(this, LIMEPreference.class)));
+
+        if(android.os.Build.VERSION.SDK_INT < 11){  //Jeremy '12,4,30 Add for deprecated preferenceActivity after API 11 (HC)
+        	tabHost.addTab(tabHost.newTabSpec("tab2")
+        			.setIndicator(this.getText(R.string.l3_tab_preference))
+        			.setContent(new Intent(this, LIMEPreference.class)));
+        }else{
+        	tabHost.addTab(tabHost.newTabSpec("tab2")
+        			.setIndicator(this.getText(R.string.l3_tab_preference))
+        			.setContent(new Intent(this, LIMEPreferenceHC.class)));
+
+        }
 
         tabHost.addTab(tabHost.newTabSpec("tab3")
         		.setIndicator(this.getText(R.string.l3_tab_initial))
