@@ -40,7 +40,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.TabHost;
 import android.widget.Toast;
 
@@ -116,29 +115,18 @@ public class LIMEMenu extends TabActivity {
 			    	.setMessage(R.string.release_note)
 			    	.setNeutralButton("Close", new DialogInterface.OnClickListener() {
 			    	public void onClick(DialogInterface dlg, int sumthin) {
+			    		checkIfLIMEEnabledAndActive();
 			    	}
 			    	}).show();
 	    			 
-			}
+			}else
+				checkIfLIMEEnabledAndActive();
 		} catch (Exception e) {
 			mLIMEPref.setParameter("version_code", "0");
 			e.printStackTrace();
 		}
 		
-        LIMEUtilities limeUtil = new LIMEUtilities(); 
-        
-        if(DEBUG)
-        	Log.i(TAG, "LIMEEnabled:" + limeUtil.isLIMEEnabled(this) + " LIMEActive:" + limeUtil.isLIMEActive(this));
-        if(!limeUtil.isLIMEEnabled(this)){
-        	Log.i(TAG, "LIME-HD is not enabled, call showInputMethodSettingsPage() and ask user to enable it");
-        	Toast.makeText(this, "LIME-HD is not enabled, please enable it and press back to go back to LIME-HD settings.", Toast.LENGTH_SHORT ).show();
-        	limeUtil.showInputMethodSettingsPage(this);
-        }
-        if(limeUtil.isLIMEEnabled(this) && !limeUtil.isLIMEActive(this)){
-        	Log.i(TAG, "LIME-HD is not active, call showInputMethodPicker() and ask user to select it");
-        	Toast.makeText(this, "LIME-HD is not active, please select it and press back to go back to LIME-HD settings.", Toast.LENGTH_SHORT ).show();
-        	limeUtil.showInputMethodPicker(this);
-        }
+       
         
        /* WindowManager manager = (WindowManager) this.getSystemService(Context.WINDOW_SERVICE);
         Display display = manager.getDefaultDisplay();
@@ -149,6 +137,22 @@ public class LIMEMenu extends TabActivity {
         
     }
     
+    private void checkIfLIMEEnabledAndActive(){
+    	 LIMEUtilities limeUtil = new LIMEUtilities(); 
+         
+         if(DEBUG)
+         	Log.i(TAG, "LIMEEnabled:" + limeUtil.isLIMEEnabled(this) + " LIMEActive:" + limeUtil.isLIMEActive(this));
+         if(!limeUtil.isLIMEEnabled(this)){
+         	Log.i(TAG, "LIME-HD is not enabled, call showInputMethodSettingsPage() and ask user to enable it");
+         	Toast.makeText(this, "LIME-HD is not enabled, please enable it and press back to go back to LIME-HD settings.", Toast.LENGTH_SHORT ).show();
+         	limeUtil.showInputMethodSettingsPage(this);
+         }
+         if(limeUtil.isLIMEEnabled(this) && !limeUtil.isLIMEActive(this)){
+         	Log.i(TAG, "LIME-HD is not active, call showInputMethodPicker() and ask user to select it");
+         	Toast.makeText(this, "LIME-HD is not active, please select it and press back to go back to LIME-HD settings.", Toast.LENGTH_SHORT ).show();
+         	limeUtil.showInputMethodPicker(this);
+         }
+    }
    
     
     @Override
