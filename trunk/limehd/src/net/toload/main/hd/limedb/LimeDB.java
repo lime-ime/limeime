@@ -48,17 +48,18 @@ import android.os.RemoteException;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.Pair;
+import android.widget.Toast;
 
 /**
  * @author Art Hung
  */
 public class LimeDB  extends LimeSQLiteOpenHelper { 
 
-	private static boolean DEBUG = false;
+	private static boolean DEBUG = true;
 	private static String TAG = "LIMEDB";
 	
 	
-	private SQLiteDatabase db = null;
+	private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier
 	private final static int DATABASE_VERSION = 71;
 	//private final static int DATABASE_RELATED_SIZE = 50;
 
@@ -626,103 +627,122 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		
 	}*/
 	
-	//Jeremy '12,4,7 deprecated and moved to LimeSQLHelper
-	@Deprecated
-	private  String getDBPath(String dbTarget){
-		String dbLocationPrefix = (dbTarget.equals("sdcard"))
-				?LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD:LIME.DATABASE_DECOMPRESS_FOLDER;
-		
-		return dbLocationPrefix + File.separator + LIME.DATABASE_NAME;
-	}	
+//	//Jeremy '12,4,7 deprecated and moved to LimeSQLHelper
+//	@Deprecated
+//	private  String getDBPath(String dbTarget){
+//		String dbLocationPrefix = (dbTarget.equals("sdcard"))
+//				?LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD:LIME.DATABASE_DECOMPRESS_FOLDER;
+//		
+//		return dbLocationPrefix + File.separator + LIME.DATABASE_NAME;
+//	}	
 	
 	//Jeremy '12,4,7
 	public SQLiteDatabase openDBConnection(boolean force_reload){
-
+		
+		 
 		if(DEBUG) {
-			Log.i(TAG,"getDBConnection(), force_reload = " + force_reload );
+			Log.i(TAG,"openDBConnection(), force_reload = " + force_reload );
 			if(db != null)
 				Log.i(TAG, "db.isOpen()" + db.isOpen());
 		}
 		
 		try{
-			
+
 			if(force_reload && db != null && db.isOpen()){
 				mLIMEPref.setParameter("reload_database", false);
 				db.close();
 			}
-			
-		}catch(Exception e){
-		}
+
+		}catch(Exception e){}
 		
-		if(db == null || (db!=null && !db.isOpen())){
+		if(db == null || (db!=null && !db.isOpen())){		
 			db = this.getWritableDatabase();
 			mLIMEPref.setMappingLoading(false); // Jeremy '12,4,10 reset mapping_loading status 
 		}
+		
 		return db;
 	}
 	
-	
-	//Deprecated by Jeremy '12,4,7
-	@Deprecated 
-	public SQLiteDatabase getSqliteDb(boolean readonly){
-		
-		// Execute database schema update process
-		//updateDBVersion();
-		//SQLiteDatabase db = null;
-		try{
-
-			String dbtarget = mLIMEPref.getParameterString("dbtarget");
-			
-			
-			//Jeremy '11',9,11 clean code
-			db = SQLiteDatabase.openDatabase(getDBPath(dbtarget), 
-					null, (readonly)? SQLiteDatabase.OPEN_READONLY: SQLiteDatabase.OPEN_READWRITE
-					| SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-
-			/*if(dbtarget.equals("sdcard")){
-				String sdcarddb = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
-
-				if(readonly){
-					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-				}else{
-					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-				}
-			}else{
-				String devicedb = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
-				
-				if(readonly){
-					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-					//db = this.getReadableDatabase();
-				}else{
-					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READWRITE |SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-					//db = this.getWritableDatabase();
-				}
-			}*/
-			
-		}catch(Exception e){
-			//e.printStackTrace();
-			//Toast.makeText(ctx, ctx.getText(R.string.l3_initial_database_failed), Toast.LENGTH_SHORT).show();
-			return null;
-		}
-		
-		/*//Jeremy '11,9, 8 starting from 3.6 using db.getVersion and onUpgrade() again.
-		if(DEBUG) Log.i(TAG, "databaseversion= " +
-				db.getVersion() + " helperVersion= " + DATABASE_VERSION);
-		if (db!=null && db.getVersion() != DATABASE_VERSION) {
-			if(readonly){
-				Log.w(TAG, "Can't upgrade read-only database from version " +
-						db.getVersion() + " to " + DATABASE_VERSION);
-			}else{
-				//db.setVersion(67);
-				onUpgrade(db, db.getVersion(), DATABASE_VERSION);
-			}
-		}*/
-
-
-			 
-		return db;
+	/**
+	 * Jeremy '12,5,1  checkDBconnection try to openDBconection if db is not open.
+	 * Return true if the db connection is valid, return false if dbconnection is not valid
+	 * 
+	 */
+	private boolean checkDBConnection(){
+		//Jeremy '12,5,1 mapping loading. db is locked
+		if(mLIMEPref.getMappingLoading()) {
+			Toast.makeText(ctx, ctx.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT/2).show();
+			return false; 
+		}else if(openDBConnection(false)==null){ //Jermey'12,5,1 db == null if dabase is not exist
+			Toast.makeText(ctx, ctx.getText(R.string.l3_database_not_exist), Toast.LENGTH_SHORT/2).show();
+			return false;
+		}else 
+			return true;
 
 	}
+	
+//	
+//	//Deprecated by Jeremy '12,4,7
+//	@Deprecated 
+//	public SQLiteDatabase getSqliteDb(boolean readonly){
+//		
+//		// Execute database schema update process
+//		//updateDBVersion();
+//		//SQLiteDatabase db = null;
+//		try{
+//
+//			String dbtarget = mLIMEPref.getParameterString("dbtarget");
+//			
+//			
+//			//Jeremy '11',9,11 clean code
+//			db = SQLiteDatabase.openDatabase(getDBPath(dbtarget), 
+//					null, (readonly)? SQLiteDatabase.OPEN_READONLY: SQLiteDatabase.OPEN_READWRITE
+//					| SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+//
+//			/*if(dbtarget.equals("sdcard")){
+//				String sdcarddb = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
+//
+//				if(readonly){
+//					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+//				}else{
+//					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+//				}
+//			}else{
+//				String devicedb = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
+//				
+//				if(readonly){
+//					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+//					//db = this.getReadableDatabase();
+//				}else{
+//					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READWRITE |SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+//					//db = this.getWritableDatabase();
+//				}
+//			}*/
+//			
+//		}catch(Exception e){
+//			//e.printStackTrace();
+//			//Toast.makeText(ctx, ctx.getText(R.string.l3_initial_database_failed), Toast.LENGTH_SHORT).show();
+//			return null;
+//		}
+//		
+//		/*//Jeremy '11,9, 8 starting from 3.6 using db.getVersion and onUpgrade() again.
+//		if(DEBUG) Log.i(TAG, "databaseversion= " +
+//				db.getVersion() + " helperVersion= " + DATABASE_VERSION);
+//		if (db!=null && db.getVersion() != DATABASE_VERSION) {
+//			if(readonly){
+//				Log.w(TAG, "Can't upgrade read-only database from version " +
+//						db.getVersion() + " to " + DATABASE_VERSION);
+//			}else{
+//				//db.setVersion(67);
+//				onUpgrade(db, db.getVersion(), DATABASE_VERSION);
+//			}
+//		}*/
+//
+//
+//			 
+//		return db;
+//
+//	}
 
 	/**
 	 * Base on given table name to remove records
@@ -1500,8 +1520,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 */
 	public Pair<List<Mapping>,List<Mapping>> getMapping( String code, boolean softKeyboard, boolean getAllRecords) {
 		
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) openDBConnection(false);
+		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		if(!checkDBConnection()) return null;
 				
 		
 		boolean sort = true;
@@ -2185,8 +2205,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @return Cursor for
 	 */
 	public Cursor getDictionaryAll() {
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) openDBConnection(false);
+		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		if(!checkDBConnection()) return null;
 		
 		Cursor cursor = null;
 		//SQLiteDatabase db = this.getSqliteDb(true);
@@ -2686,15 +2706,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		
 		if(DEBUG)
 			Log.i(TAG,"loadFileV2()");
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null|| (db!=null && !db.isOpen())) {
-			if(DEBUG) 
-				Log.i(TAG,"loadFileV2(), db null and try to re-connect db");
-			if(openDBConnection(false)==null) {
-				Log.i(TAG,"loadFileV2(), openDBConnection failed. Abort loadfile...");
-				return;
-			}
-		}
+		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		if(!checkDBConnection()) return;
+				
 		
 		this.DELIMITER = "";
 		
@@ -3387,8 +3401,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @param srcunit
 	 */
 	public String getImInfo(String im, String field) {
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) openDBConnection(false);
+		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		if(!checkDBConnection()) return "";
+		
 		String iminfo = "";
 		try{
 			//String value = "";
@@ -3444,15 +3459,11 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 
 	public List<ImObj> getImList() {
-		
-		if(mLIMEPref.getMappingLoading()) return null; //Jeremy '12,4,10 mapping loading. db is locked
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null || (db!=null && !db.isOpen())) {
-			if(DEBUG) 
-				Log.i(TAG,"getImlist(), db null and try to re-connect db");
-			if(openDBConnection(false)==null) return null;
-		}
-		
+		if(DEBUG)
+			Log.i(TAG,"getIMList()");
+		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		if(!checkDBConnection()) return null;
+
 		
 		List<ImObj> result = new LinkedList<ImObj>();
 		try {
@@ -3473,7 +3484,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				cursor.deactivate();
 				cursor.close();
 			}
-			//db.close();
+			
 		} catch (Exception e) {
 			Log.i(TAG,"getImList(): Cannot get IM List : " + e );
 		}
@@ -3482,7 +3493,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	
 	public KeyboardObj getKeyboardObj(String keyboard){
 		
-		if(db == null) openDBConnection(false);
+		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		if(!checkDBConnection()) return null;
+				
 		if( keyboard == null || keyboard.equals(""))
 			return null;
 		KeyboardObj kobj=null;
@@ -3549,9 +3562,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 	
 	public String getKeyboardInfo(String keyboardCode, String field) {
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) openDBConnection(false);
-
+		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		if(!checkDBConnection()) return null;
+				
 		String info=null;
 		try {
 			//SQLiteDatabase db = this.getSqliteDb(true);
@@ -3574,17 +3587,10 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 	public List<KeyboardObj> getKeyboardList() {
 		
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		
-		if(mLIMEPref.getMappingLoading()) return null; //Jeremy '12,4,10 mapping loading. db is locked
-		
-		if(db==null || (db!=null && !db.isOpen())) {
-			if(DEBUG) 
-				Log.i(TAG,"getImlist(), db null and try to re-connect db");
-			if(openDBConnection(false)==null) return null;
-		}
-		
-
+		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		if(!checkDBConnection()) return null;
+				
+	
 		List<KeyboardObj> result = new LinkedList<KeyboardObj>();
 		try {
 			//SQLiteDatabase db = this.getSqliteDb(true);
@@ -3640,8 +3646,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 
 	public String getKeyboardCode(String im) {
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) openDBConnection(false);
+		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		if(!checkDBConnection()) return "";
+				
 
 		try{
 			//String value = "";
@@ -3666,8 +3673,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 
 	public List<String> queryDictionary(String word) {
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) openDBConnection(false);
+		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		if(!checkDBConnection()) return null;
+				
 				
 		List<String> result = new ArrayList<String>();
 		try{
