@@ -881,7 +881,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	public synchronized void addOrUpdateUserdictRecord(String pword, String cword){
 		
 		//Jeremy '12,4,17 !checkDBConnection() when db is restoring or replaced.
-				if(!checkDBConnection()) return;
+		if(!checkDBConnection()) return;
 				
 		// Jeremy '11,6,12
 		// Return if not learing related words and cword is not null (recording word frequency in IM relatedlist field)
@@ -2089,10 +2089,10 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				//Jeremy '11,8,26 build valid code map
 				//jeremy '11,8,30 add limit for vali code words for composing display
 				if(buildValidCodeList){
-				if(useCode3r && validCodeMap.size()< DUALCODE_COMPOSING_LIMIT)
-					validCodeMap.add(cursor.getString(code3rColumn));
-				else
-					validCodeMap.add(code);
+					if(useCode3r && validCodeMap.size()< DUALCODE_COMPOSING_LIMIT)
+						validCodeMap.add(cursor.getString(code3rColumn));
+					else
+						validCodeMap.add(code);
 				}
 				
 

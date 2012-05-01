@@ -506,9 +506,9 @@ public class LIMEService extends InputMethodService implements
 			e.printStackTrace();
 		}
 		
-		try{
-			SearchSrv.close();
-		}catch(Exception e){}
+//		try{  //Jeremy '12,5,2 should not close the db forever
+//			SearchSrv.close();
+//		}catch(Exception e){}
 	}
 	/**
 	 * add by Jeremy '12,4,21
