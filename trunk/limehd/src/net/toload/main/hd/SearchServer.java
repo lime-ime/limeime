@@ -46,7 +46,7 @@ public class SearchServer {// extends Service {
 
 	private final boolean DEBUG = false;
 	private final String TAG = "LIME.SearchService";
-	private LimeDB dbadapter = null;
+	private static LimeDB dbadapter = null; //Jeremy '12,5,1 shared single LIMEDB object 
 	//Jeremy '12,4,6 Combine updatedb and quierydb into db,
 	//Jeremy '12,4,7 move db open/clsoe back to LimeDB
 	//	since query always following with userdict and related learning and dual db connections cause exceptions.
@@ -106,7 +106,7 @@ public class SearchServer {// extends Service {
 		this.ctx = context;
 
 		mLIMEPref = new LIMEPreferenceManager(ctx.getApplicationContext());
-		loadDBAdapter(); 
+		if(dbadapter == null) dbadapter = new LimeDB(ctx); 
 		initialCache();
 
 
@@ -183,7 +183,7 @@ public class SearchServer {// extends Service {
 		}
 
 	 */
-
+	/* 
 	private void loadDBAdapter()
 	{			
 		if(DEBUG)
@@ -192,6 +192,7 @@ public class SearchServer {// extends Service {
 			dbadapter = new LimeDB(ctx);
 		}
 	}
+	*/
 
 	//Modified by Jeremy '10,3 ,12 for more specific related word
 	//-----------------------------------------------------------

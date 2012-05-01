@@ -55,11 +55,11 @@ import android.widget.Toast;
  */
 public class LimeDB  extends LimeSQLiteOpenHelper { 
 
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
 	private static String TAG = "LIMEDB";
 	
 	
-	private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier
+	private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier. Shared db instance for dbserver and searchserver
 	private final static int DATABASE_VERSION = 71;
 	//private final static int DATABASE_RELATED_SIZE = 50;
 
@@ -674,7 +674,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			Toast.makeText(ctx, ctx.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT/2).show();
 			return false; 
 		}else if(openDBConnection(false)==null){ //Jermey'12,5,1 db == null if dabase is not exist
-			Toast.makeText(ctx, ctx.getText(R.string.l3_database_not_exist), Toast.LENGTH_SHORT/2).show();
+			//Toast.makeText(ctx, ctx.getText(R.string.l3_database_not_exist), Toast.LENGTH_SHORT/2).show(); //annoying.. removed first
 			return false;
 		}else 
 			return true;
@@ -880,8 +880,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 	public synchronized void addOrUpdateUserdictRecord(String pword, String cword){
 		
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-				if(db==null) return;
+		//Jeremy '12,4,17 !checkDBConnection() when db is restoring or replaced.
+				if(!checkDBConnection()) return;
 				
 		// Jeremy '11,6,12
 		// Return if not learing related words and cword is not null (recording word frequency in IM relatedlist field)
@@ -963,8 +963,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		String code = preProcessingRemappingCode(raw_code);
 		if(DEBUG)
 				Log.i(TAG, "addOrUpdateMappingRecord(), code = " + code + ". word=" + word  );
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) return;
+		//Jeremy '12,4,17 !checkDBConnection() when db is restoring or replaced.
+		if(!checkDBConnection()) return;
 		
 		try {
 			Mapping munit = isMappingExistOnDB(db, code, word);
@@ -1004,8 +1004,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 */
 	public synchronized void addScore(Mapping srcunit) {
 		
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-				if(db==null) return;
+		//Jeremy '12,4,17 !checkDBConnection() when db is restoring or replaced.
+		if(!checkDBConnection()) return;
 		
 			//Jeremy '11,7,31  even selected from realted list, udpate the corresponding score in im table.
 			// Jeremy '11,6,12 Id=null denotes selection from related list in im table
@@ -1520,7 +1520,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 */
 	public Pair<List<Mapping>,List<Mapping>> getMapping( String code, boolean softKeyboard, boolean getAllRecords) {
 		
-		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		//Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
 		if(!checkDBConnection()) return null;
 				
 		
@@ -2205,7 +2205,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @return Cursor for
 	 */
 	public Cursor getDictionaryAll() {
-		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		//Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
 		if(!checkDBConnection()) return null;
 		
 		Cursor cursor = null;
@@ -2706,7 +2706,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		
 		if(DEBUG)
 			Log.i(TAG,"loadFileV2()");
-		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		//Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
 		if(!checkDBConnection()) return;
 				
 		
@@ -3389,8 +3389,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @param srcunit
 	 */
 	public synchronized void resetImInfo(String im) {
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) return;
+		//Jeremy '12,5,1
+		if(openDBConnection(false)==null) return;
 		String removeString = "DELETE FROM im WHERE code='"+im+"'";
 		//SQLiteDatabase db = this.getSqliteDb(false);
 		db.execSQL(removeString);
@@ -3401,7 +3401,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @param srcunit
 	 */
 	public String getImInfo(String im, String field) {
-		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		//Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
 		if(!checkDBConnection()) return "";
 		
 		String iminfo = "";
@@ -3430,8 +3430,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @param srcunit
 	 */
 	public synchronized void removeImInfo(String im, String field) {
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) return;
+		//Jeremy '12,4,17 !checkDBConnection() when db is restoring or replaced.
+		if(!checkDBConnection()) return;
 		String removeString = "DELETE FROM im WHERE code='"+im+"' AND title='"+field+"'";
 		//SQLiteDatabase db = this.getSqliteDb(false);
 		db.execSQL(removeString);
@@ -3443,8 +3443,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @param srcunit
 	 */
 	public synchronized void setImInfo(String im, String field, String value) {
-		//Jeremy '12,4,17 db = null when db is restoring or replaced.
-		if(db==null) return;
+		//Jeremy '12,4,17 !checkDBConnection() when db is restoring or replaced.
+		if(!checkDBConnection()) return;
 
 		ContentValues cv = new ContentValues();
 		cv.put("code", im);
@@ -3461,7 +3461,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	public List<ImObj> getImList() {
 		if(DEBUG)
 			Log.i(TAG,"getIMList()");
-		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		//Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
 		if(!checkDBConnection()) return null;
 
 		
@@ -3493,7 +3493,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	
 	public KeyboardObj getKeyboardObj(String keyboard){
 		
-		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		//Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
 		if(!checkDBConnection()) return null;
 				
 		if( keyboard == null || keyboard.equals(""))
@@ -3562,7 +3562,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 	
 	public String getKeyboardInfo(String keyboardCode, String field) {
-		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		//Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
 		if(!checkDBConnection()) return null;
 				
 		String info=null;
@@ -3587,7 +3587,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 	public List<KeyboardObj> getKeyboardList() {
 		
-		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		//Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
 		if(!checkDBConnection()) return null;
 				
 	
@@ -3646,7 +3646,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 
 	public String getKeyboardCode(String im) {
-		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		//Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
 		if(!checkDBConnection()) return "";
 				
 
@@ -3673,7 +3673,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 
 	public List<String> queryDictionary(String word) {
-		//Jeremy '12,5,1 db = null when db is restoring or replaced.
+		//Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
 		if(!checkDBConnection()) return null;
 				
 				
