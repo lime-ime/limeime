@@ -216,8 +216,7 @@ public class SearchServer {// extends Service {
 				String result = dbadapter.getRMapping(word);
 				if(result!=null && !result.equals("")){
 					//displayNotificationMessage(result);
-					LIMEUtilities util = new LIMEUtilities();
-					util.showNotification(
+					LIMEUtilities.showNotification(
 							ctx, true, R.drawable.icon, ctx.getText(R.string.ime_setting), result, new Intent(ctx, LIMEMenu.class));
 				}
 			}
@@ -285,7 +284,7 @@ public class SearchServer {// extends Service {
 				Log.i(TAG, "query() code=" + code + " isPhonetic:" + isPhonetic
 						+" hasTone:" + hasTone);
 
-			// 11'7,22 rewritten for 連打 
+			// 11'7,22 rewritten for ��� 
 			for(int i =0; i<size; i++) {
 				String cacheKey = cacheKey(code);
 				Pair<List<Mapping>,List<Mapping>> cacheTemp = cache.get(cacheKey);

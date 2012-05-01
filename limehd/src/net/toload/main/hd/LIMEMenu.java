@@ -61,13 +61,14 @@ public class LIMEMenu extends TabActivity {
 		
         final TabHost tabHost = getTabHost();
 
-        int tabno = 0;
-
+        //int tabno = 0;
+   
 		File checkSdFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
-		if(!checkSdFile.exists() && !checkDbFile.exists()){
-			tabno = 2;
-		}
+		final boolean dbFileNotExists =  !checkSdFile.exists() && !checkDbFile.exists();
+		//if(!checkSdFile.exists() && !checkDbFile.exists())
+		//	tabno = 2;
+		
 		
         tabHost.addTab(tabHost.newTabSpec("tab1")
         		.setIndicator(this.getText(R.string.l3_tab_manage))
@@ -92,65 +93,56 @@ public class LIMEMenu extends TabActivity {
         		.setIndicator(this.getText(R.string.l3_tab_bluetooth))
                 .setContent(new Intent(this, LIMEBluetooth.class)));*/
 
-        if(tabno != 0){
-            tabHost.setCurrentTab(tabno);
-        }
+        
+        
         
         try {
 			PackageInfo pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
 			if(mLIMEPref.getParameterString("version_code").equals("") ||
 					!mLIMEPref.getParameterString("version_code").equals(String.valueOf(pinfo.versionCode))){
-
-					/*
-					 * Force to upgrade the database and ignore all posssible errors
-					 */
-					//try{
-						//LimeDB db = new LimeDB(this);
-							   //db.forceUpgrade();
-					//}catch(Exception e){}
-					
+	
     				mLIMEPref.setParameter("version_code", String.valueOf(pinfo.versionCode));
 	    			new AlertDialog.Builder(this)
 			    	.setTitle("LIME v" + pinfo.versionName + " - " + pinfo.versionCode)
 			    	.setMessage(R.string.release_note)
 			    	.setNeutralButton("Close", new DialogInterface.OnClickListener() {
 			    	public void onClick(DialogInterface dlg, int sumthin) {
-			    		checkIfLIMEEnabledAndActive();
+			    		//jeremy '12,5,1 if update dialog is shown wait until use press closed button and then switch to the db intial tab if db file is not exist
+			    		if(dbFileNotExists) tabHost.setCurrentTab(2);
 			    	}
 			    	}).show();
 	    			 
-			}else
-				checkIfLIMEEnabledAndActive();
+			}else  //jeremy '12,5,1 if update dialog not shown switch to the db intial tab if db file is not exist 
+				if(dbFileNotExists) tabHost.setCurrentTab(2);
+			
 		} catch (Exception e) {
 			mLIMEPref.setParameter("version_code", "0");
 			e.printStackTrace();
 		}
 		
        
-        
-       /* WindowManager manager = (WindowManager) this.getSystemService(Context.WINDOW_SERVICE);
-        Display display = manager.getDefaultDisplay();
-        
-        Log.i("ART",  display.getWidth() + " * "+ display.getHeight());*/
-        // 09-16 15:53:47.042: INFO/ART(257): 320 * 480 OK
-
+     
         
     }
     
+    private void setupWizardEntry(){
+    	
+    }
+    
     private void checkIfLIMEEnabledAndActive(){
-    	 LIMEUtilities limeUtil = new LIMEUtilities(); 
+
          
          if(DEBUG)
-         	Log.i(TAG, "LIMEEnabled:" + limeUtil.isLIMEEnabled(this) + " LIMEActive:" + limeUtil.isLIMEActive(this));
-         if(!limeUtil.isLIMEEnabled(this)){
+         	Log.i(TAG, "LIMEEnabled:" + LIMEUtilities.isLIMEEnabled(this) + " LIMEActive:" + LIMEUtilities.isLIMEActive(this));
+         if(!LIMEUtilities.isLIMEEnabled(this)){
          	Log.i(TAG, "LIME-HD is not enabled, call showInputMethodSettingsPage() and ask user to enable it");
          	Toast.makeText(this, "LIME-HD is not enabled, please enable it and press back to go back to LIME-HD settings.", Toast.LENGTH_SHORT ).show();
-         	limeUtil.showInputMethodSettingsPage(this);
+         	LIMEUtilities.showInputMethodSettingsPage(this);
          }
-         if(limeUtil.isLIMEEnabled(this) && !limeUtil.isLIMEActive(this)){
+         if(LIMEUtilities.isLIMEEnabled(this) && !LIMEUtilities.isLIMEActive(this)){
          	Log.i(TAG, "LIME-HD is not active, call showInputMethodPicker() and ask user to select it");
          	Toast.makeText(this, "LIME-HD is not active, please select it and press back to go back to LIME-HD settings.", Toast.LENGTH_SHORT ).show();
-         	limeUtil.showInputMethodPicker(this);
+         	LIMEUtilities.showInputMethodPicker(this);
          }
     }
    
