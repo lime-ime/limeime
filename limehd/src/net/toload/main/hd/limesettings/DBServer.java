@@ -85,13 +85,16 @@ public class  DBServer {//extends Service {
 	public DBServer(Context context){
 		this.ctx = context;
 		mLIMEPref = new LIMEPreferenceManager(ctx);
-		loadLimeDB();
+		//loadLimeDB();
+		if(dbAdapter==null)
+			dbAdapter = new LimeDB(ctx); 
 	}
-
+/* deprecated by jeremy '12,5,2
 	public void loadLimeDB(){	
 		if(dbAdapter==null)
 			dbAdapter = new LimeDB(ctx); 
 	}
+*/
 
 	public void loadMapping(String filename, String tablename) throws RemoteException {
 
@@ -103,7 +106,7 @@ public class  DBServer {//extends Service {
 		File sourcefile = new File(filename);
 
 		// Start Loading
-		if (dbAdapter == null) {loadLimeDB();}
+		//if (dbAdapter == null) {loadLimeDB();}
 
 		dbAdapter.setFinish(false);
 		dbAdapter.setFilename(sourcefile);
@@ -118,7 +121,7 @@ public class  DBServer {//extends Service {
 
 	public void resetMapping(final String tablename) throws RemoteException {
 
-		if (dbAdapter == null) {loadLimeDB();}
+		//if (dbAdapter == null) {loadLimeDB();}
 
 		if(DEBUG)
 			Log.i(TAG,"loadMapping() on " + loadingTablename);
@@ -193,9 +196,8 @@ public class  DBServer {//extends Service {
 	}
 
 	public void downloadEmptyDatabase() throws RemoteException {
-		if (dbAdapter == null) {
-			loadLimeDB();
-		}
+		//if (dbAdapter == null) 	loadLimeDB();
+		
 		resetDownloadDatabase();
 
 		Thread threadTask = new Thread() {
@@ -234,7 +236,7 @@ public class  DBServer {//extends Service {
 	}
 
 	public void downloadPhoneticHsOnlyDatabase() throws RemoteException {
-		if (dbAdapter == null) {loadLimeDB();}
+		//if (dbAdapter == null) {loadLimeDB();}
 		resetDownloadDatabase();
 		Thread threadTask = new Thread() {
 			public void run() { 
@@ -277,7 +279,7 @@ public class  DBServer {//extends Service {
 
 
 	public void downloadPhoneticOnlyDatabase() throws RemoteException {
-		if (dbAdapter == null) {loadLimeDB();}
+		//if (dbAdapter == null) {loadLimeDB();}
 		resetDownloadDatabase();
 		Thread threadTask = new Thread() {
 			public void run() { 
@@ -320,7 +322,7 @@ public class  DBServer {//extends Service {
 
 
 	public void downloadPreloadedDatabase() throws RemoteException {
-		if (dbAdapter == null) {loadLimeDB();}
+		//if (dbAdapter == null) {loadLimeDB();}
 		resetDownloadDatabase();
 		Thread threadTask = new Thread() {
 			public void run() { 
@@ -405,27 +407,27 @@ public class  DBServer {//extends Service {
 
 
 	public String getImInfo(String im, String field) throws RemoteException {
-		if (dbAdapter == null) {loadLimeDB();}
+		//if (dbAdapter == null) {loadLimeDB();}
 		return dbAdapter.getImInfo(im, field);
 	}
 
 
 	public String getKeyboardInfo(String keyboardCode, String field) throws RemoteException {
-		if (dbAdapter == null) {loadLimeDB();}
+		//if (dbAdapter == null) {loadLimeDB();}
 		return dbAdapter.getKeyboardInfo(keyboardCode, field);
 	}
 
 
 	public void removeImInfo(String im, String field)
 			throws RemoteException {
-		if (dbAdapter == null) {loadLimeDB();}
+		//if (dbAdapter == null) {loadLimeDB();}
 		dbAdapter.removeImInfo(im, field);
 
 	}
 
 
 	public void resetImInfo(String im) throws RemoteException {
-		if (dbAdapter == null) {loadLimeDB();}
+		//if (dbAdapter == null) {loadLimeDB();}
 		dbAdapter.resetImInfo(im);
 
 	}
@@ -433,7 +435,7 @@ public class  DBServer {//extends Service {
 
 	public void setImInfo(String im, String field, String value)
 			throws RemoteException {
-		if (dbAdapter == null) {loadLimeDB();}
+		//if (dbAdapter == null) {loadLimeDB();}
 		dbAdapter.setImInfo(im, field, value);
 
 	}
@@ -454,14 +456,14 @@ public class  DBServer {//extends Service {
 
 	public void setIMKeyboard(String im, String value,
 			String keyboard) throws RemoteException {
-		if (dbAdapter == null) {loadLimeDB();}
+		//if (dbAdapter == null) {loadLimeDB();}
 		dbAdapter.setIMKeyboard(im, value, keyboard);
 	}
 
 
 	public String getKeyboardCode(String im)
 			throws RemoteException {
-		if (dbAdapter == null) {loadLimeDB();}
+		//if (dbAdapter == null) {loadLimeDB();}
 		return dbAdapter.getKeyboardCode(im);
 	}
 
@@ -934,7 +936,7 @@ public class  DBServer {//extends Service {
 
 
 	public void forceUpgrad() throws RemoteException {
-		if (dbAdapter == null) {loadLimeDB();}
+		//if (dbAdapter == null) {loadLimeDB();}
 		dbAdapter.forceUpgrade();
 	}
 

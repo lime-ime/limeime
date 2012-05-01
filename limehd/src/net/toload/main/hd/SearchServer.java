@@ -188,7 +188,7 @@ public class SearchServer {// extends Service {
 	{			
 		if(DEBUG)
 			Log.i(TAG,"SearchService:loadDBAdapter()");
-		if(dbadapter == null){
+		//if(dbadapter == null){
 			dbadapter = new LimeDB(ctx);
 		}
 	}
@@ -504,7 +504,7 @@ public class SearchServer {// extends Service {
 	List<Mapping> scorelistSnapshot = null; 
 	public void postFinishInput() throws RemoteException {
 
-		if(dbadapter == null){dbadapter = new LimeDB(ctx);} 
+		//if(dbadapter == null){dbadapter = new LimeDB(ctx);} 
 		if(scorelistSnapshot==null) scorelistSnapshot = new LinkedList<Mapping>();
 		else scorelistSnapshot.clear();
 
@@ -528,7 +528,7 @@ public class SearchServer {// extends Service {
 				//Jeremy '11,6,12 do adduserdict and add score if diclist.size > 0 and only adduserdict if diclist.size >1
 				//Jeremy '11,6,11, always learn scores, but sorted according preference options
 
-				// Learn user dictionary (related words).
+				// Learn user dictionary (the consecutive two words as a userdict phrase).
 				learnUserDict(scorelistSnapshot);
 
 				// Learn LD Phrase
@@ -665,7 +665,7 @@ public class SearchServer {// extends Service {
 					throws RemoteException {
 
 		if(scorelist == null){scorelist = new ArrayList<Mapping>();}
-		if(dbadapter == null){dbadapter = new LimeDB(ctx);}
+		//if(dbadapter == null){dbadapter = new LimeDB(ctx);}
 		// Temp Mapping Object For updateMapping method.
 		final Mapping updateMappingTemp = new Mapping();
 		updateMappingTemp.setId(id);
@@ -718,13 +718,13 @@ public class SearchServer {// extends Service {
 	}
 
 	public List<KeyboardObj> getKeyboardList() throws RemoteException {
-		if(dbadapter == null){dbadapter = new LimeDB(ctx);}
+		//if(dbadapter == null){dbadapter = new LimeDB(ctx);}
 		List<KeyboardObj> result = dbadapter.getKeyboardList();
 		return result;
 	}
 
 	public List<ImObj> getImList() throws RemoteException {
-		if(dbadapter == null){dbadapter = new LimeDB(ctx);}
+		//if(dbadapter == null){dbadapter = new LimeDB(ctx);}
 		List<ImObj> result = dbadapter.getImList();
 		return result;
 	}
@@ -773,19 +773,19 @@ public class SearchServer {// extends Service {
 
 	}
 
-	public void close() throws RemoteException {
-		if(dbadapter != null){
-			try{
-				dbadapter.close();
-			}catch(Exception e){
-				Log.i(TAG, "close(): Database Close error : "+e);
-			}
-		}
-	}
+//	public void close() throws RemoteException {
+//		if(dbadapter != null){
+//			try{
+//				dbadapter.close();
+//			}catch(Exception e){
+//				Log.i(TAG, "close(): Database Close error : "+e);
+//			}
+//		}
+//	}
 
 	public boolean isImKeys(char c) throws RemoteException {
 		if(imKeysMap.get(tablename)==null || imKeysMap.size()==0){
-			if(dbadapter == null){dbadapter = new LimeDB(ctx);}
+			//if(dbadapter == null){dbadapter = new LimeDB(ctx);}
 			imKeysMap.put(tablename, dbadapter.getImInfo(tablename, "imkeys"));				
 		}
 		String imkeys = imKeysMap.get(tablename);
@@ -799,7 +799,7 @@ public class SearchServer {// extends Service {
 		public int isSelkey(char c) throws RemoteException {
 			String selkey = "";
 			if(selKeyMap.get(tablename)==null || selKeyMap.size()==0){
-				if(dbadapter == null){dbadapter = new LimeDB(ctx);}
+				//if(dbadapter == null){dbadapter = new LimeDB(ctx);}
 				selkey = dbadapter.getImInfo(tablename, "selkey");
 				if(selkey.equals("")) selkey = "'[]-\\^&*()";
 				selKeyMap.put(tablename, selkey);
@@ -814,7 +814,7 @@ public class SearchServer {// extends Service {
 		@Override
 		public boolean isEndkey(char c) throws RemoteException {
 			if(endKeyMap.get(tablename)==null || endKeyMap.size()==0){
-				if(dbadapter == null){dbadapter = new LimeDB(ctx);}
+				//if(dbadapter == null){dbadapter = new LimeDB(ctx);}
 				endKeyMap.put(tablename, dbadapter.getImInfo(tablename, "endkey"));
 
 			}
@@ -834,7 +834,7 @@ public class SearchServer {// extends Service {
 			table = tablename + mLIMEPref.getPhoneticKeyboardType();
 		}
 		if(selKeyMap.get(table)==null || selKeyMap.size()==0){
-			if(dbadapter == null){dbadapter = new LimeDB(ctx);}
+			//if(dbadapter == null){dbadapter = new LimeDB(ctx);}
 			selkey = dbadapter.getImInfo(tablename, "selkey");
 			if(DEBUG)
 				Log.i(TAG, "getSelkey():selkey from db:"+selkey);
