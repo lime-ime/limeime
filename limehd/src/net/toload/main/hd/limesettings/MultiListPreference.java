@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 public class MultiListPreference extends DialogPreference {
 	/**	Tag for logging! */
+	public static final boolean DEBUG = false;
 	public static final String TAG = "MultiListPreference";
 
 	/**	How the "choices" will be delimeted. */
@@ -41,7 +42,8 @@ public class MultiListPreference extends DialogPreference {
 		@param state Character sequence array to parse.
 		@return Boolean array or null. */
 	private static boolean[] cs2b(CharSequence[] state) {
-		Log.d(TAG, "cs2b()");
+		if(DEBUG)
+			Log.d(TAG, "cs2b()");
 
 		boolean[] out = null;
 		
@@ -61,7 +63,8 @@ public class MultiListPreference extends DialogPreference {
 		@param size The array size.
 		@return Boolean array of given size or null. */
 	private static boolean[] ds2b(CharSequence state, int size) {
-		Log.d(TAG, "ds2b(): " + state + " (" + size + ")");
+		if(DEBUG)
+			Log.d(TAG, "ds2b(): " + state + " (" + size + ")");
 
 		boolean[] out = null;
 
@@ -89,7 +92,8 @@ public class MultiListPreference extends DialogPreference {
 		@param state State array.
 		@return Delimited number thing or null. */
 	private static CharSequence b2ds(boolean[] state) {
-		Log.d(TAG, "b2ds()");
+		if(DEBUG)
+			Log.d(TAG, "b2ds()");
 
 		String out = null;
 
@@ -117,7 +121,8 @@ public class MultiListPreference extends DialogPreference {
 		@param entry New entry array.
 		@return Success or failure flag. */
 	public boolean setEntries(CharSequence[] entry) {
-		Log.d(TAG, "setEntries()");
+		if(DEBUG)
+			Log.d(TAG, "setEntries()");
 
 		boolean updated = false;
 
@@ -141,7 +146,8 @@ public class MultiListPreference extends DialogPreference {
 	/**	Fetch a copy of the current entry array.
 		@return Current entry array clone. */
 	public CharSequence[] getEntries() {
-		Log.d(TAG, "getEntries()");
+		if(DEBUG)
+			Log.d(TAG, "getEntries()");
 
 		return (this.entry.clone());
 	}
@@ -150,7 +156,8 @@ public class MultiListPreference extends DialogPreference {
 		@param state New state array.
 		@return Success or failure flag. */
 	public boolean setValue(boolean[] state) {
-		Log.d(TAG, "setValue()");
+		if(DEBUG)
+			Log.d(TAG, "setValue()");
 
 		boolean updated = false;
 
@@ -175,7 +182,8 @@ public class MultiListPreference extends DialogPreference {
 		@param state New state, given by delimeted index.
 		@return Success or failure flag. */
 	public boolean setValue(CharSequence state) {
-		Log.d(TAG, "setValue(): " + state);
+		if(DEBUG)
+			Log.d(TAG, "setValue(): " + state);
 
 		boolean updated = false;
 
@@ -194,14 +202,17 @@ public class MultiListPreference extends DialogPreference {
 	/**	Fetch a copy of the current state array.
 		@return Current state array clone. */
 	public boolean[] getValue() {
-		Log.d(TAG, "getValue()");
+		if(DEBUG)
+			Log.d(TAG, "getValue()");
 
 		return (this.state.clone());
 	}
 
 
 	public MultiListPreference(Context context, AttributeSet attrs) {
-		super(context, attrs); Log.d(TAG, "MultiListPreference()");
+		super(context, attrs); 
+		if(DEBUG)
+			Log.d(TAG, "MultiListPreference()");
 
 		TypedArray in = context.obtainStyledAttributes(
 			attrs,
@@ -219,9 +230,11 @@ public class MultiListPreference extends DialogPreference {
 		this.defaultValue = in.getString(2);
 
 		if (this.entry == null) {
-			Log.d(TAG, "MultiListPreference(): Could not restore entry.");
+			if(DEBUG)
+				Log.d(TAG, "MultiListPreference(): Could not restore entry.");
 		} else {
-			Log.d(TAG, "MultiListPreference(): Entry from defaults.");
+			if(DEBUG)
+				Log.d(TAG, "MultiListPreference(): Entry from defaults.");
 
 			if (this.defaultValue != null) {
 				this.state = ds2b(this.defaultValue, this.entry.length);
@@ -231,12 +244,15 @@ public class MultiListPreference extends DialogPreference {
 				this.state = cs2b(in.getTextArray(1));
 
 				if (this.state == null) {
-					Log.d(TAG, "MultiListPreference(): Could not restore state.");
+					if(DEBUG)
+						Log.d(TAG, "MultiListPreference(): Could not restore state.");
 				} else {
-					Log.d(TAG, "MultiListPreference(): Restored state from entryValues.");
+					if(DEBUG)
+						Log.d(TAG, "MultiListPreference(): Restored state from entryValues.");
 				}
 			} else {
-				Log.d(TAG, "MultiListPreference(): Restored state from defaultValue.");
+				if(DEBUG)
+					Log.d(TAG, "MultiListPreference(): Restored state from defaultValue.");
 			}
 		}
 
@@ -246,7 +262,8 @@ public class MultiListPreference extends DialogPreference {
 
 	@Override // here we set the multichoiceitem content
 	public void onPrepareDialogBuilder(AlertDialog.Builder builder) {
-		Log.d(TAG, "onPrepareDialogBuilder()");
+		if(DEBUG)
+			Log.d(TAG, "onPrepareDialogBuilder()");
 
 		// try to restore state from persisted value
 		if (this.entry != null || this.state != null) {
@@ -261,7 +278,8 @@ public class MultiListPreference extends DialogPreference {
 			if (persistedState != null) {
 				this.state = persistedState;
 
-				Log.d(TAG, "onPrepareDialogBuilder(): Persisted state restored.");
+				if(DEBUG)
+					Log.d(TAG, "onPrepareDialogBuilder(): Persisted state restored.");
 			}
 		}
 
@@ -280,7 +298,8 @@ public class MultiListPreference extends DialogPreference {
 
 					@Override
 					public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-						Log.d(TAG, "listItem_" + which + ".onClick(): " + isChecked);
+						if(DEBUG)
+							Log.d(TAG, "listItem_" + which + ".onClick(): " + isChecked);
 
 						that.state[which] = isChecked;
 					}
@@ -292,7 +311,8 @@ public class MultiListPreference extends DialogPreference {
 
 	@Override // called when OK (true) or Cancel (false) are pushed
 	public void onDialogClosed(boolean positiveResult) {
-		Log.d(TAG, "onDialogClosed(): " + positiveResult);
+		if(DEBUG)
+			Log.d(TAG, "onDialogClosed(): " + positiveResult);
 
 		if (positiveResult) {
 			// only commit if my change listener says so 
@@ -313,13 +333,15 @@ public class MultiListPreference extends DialogPreference {
 							: this.defaultValue
 					);
 				}
-
-				Log.d(TAG, "onDialogClosed(): Saving: " + out);
+				
+				if(DEBUG)
+					Log.d(TAG, "onDialogClosed(): Saving: " + out);
 
 				if (this.persistString(out)) {
 					this.notifyChanged();
 				} else {
-					Log.d(TAG, "onDialogClosed(): Saving failed.");
+					if(DEBUG)
+						Log.d(TAG, "onDialogClosed(): Saving failed.");
 				}
 			}
 		}
