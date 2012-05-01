@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="net.toload.main.hd" android:versionName="3.7.2" android:versionCode="293">
+	package="net.toload.main.hd" android:versionName="3.7.2" android:versionCode="295">
 
 	<uses-permission android:name="android.permission.VIBRATE" />
 	<uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
@@ -41,13 +41,14 @@
 			<intent-filter>
 				<action android:name="net.toload.main.hd.ISearchService"></action>
 			</intent-filter>
-		</service> -->
+		</service> 
 		<service android:name="DBService">
 			<intent-filter>
 				<action android:name="net.toload.main.hd.IDBService"></action>
 			</intent-filter>
 		</service>
-
+		-->
+		
 		<activity android:label="@string/ime_setting" android:configChanges="keyboard|keyboardHidden|orientation" android:name="LIMEMenu">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />

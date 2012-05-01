@@ -24,18 +24,13 @@ import java.io.File;
 
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.IDBService;
 import net.toload.main.hd.R;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.RemoteException;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -51,7 +46,7 @@ import android.widget.Toast;
 public class LIMEInitial extends Activity {
 	
 
-	private IDBService DBSrv = null;
+	private DBServer DBSrv = null;
 	Button btnInitPreloadDB = null;
 	Button btnInitPhoneticHsOnlyDB = null; 
 	Button btnInitPhoneticOnlyDB = null;//Jeremy '11,9,10
@@ -72,13 +67,16 @@ public class LIMEInitial extends Activity {
 		
 		super.onCreate(icicle);
 		this.setContentView(R.layout.initial);
-
-		// Startup Service
-		getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
-		mLIMEPref = new LIMEPreferenceManager(this.getApplicationContext());
 		
-        connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE); 
-        
+		
+		
+		// Startup Service
+		//getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
+		DBSrv = new DBServer(getApplicationContext());
+		mLIMEPref = new LIMEPreferenceManager(getApplicationContext());
+		connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+		
+	    
 		// Initial Buttons
 		initialButton();
 
@@ -106,22 +104,13 @@ public class LIMEInitial extends Activity {
 		    	     				builder.setCancelable(false);
 		    	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 		    	     					public void onClick(DialogInterface dialog, int id) {
-						    					initialButton();						    					
+						    										    					
 							    				try {
-							    					DBSrv.closeDatabse();
+							    					//DBSrv.closeDatabse(); done in DBSrv.resetDownloadDatabase
 							    					DBSrv.resetDownloadDatabase();
-							    					btnInitPreloadDB.setEnabled(true);
-							    					btnInitPhoneticOnlyDB.setEnabled(true);
-							    					btnInitPhoneticHsOnlyDB.setEnabled(true);
-							    					btnInitEmptyDB.setEnabled(true);
-							    					btnResetDB.setEnabled(true);
 						    						mLIMEPref.setParameter("im_loading", false);
 						    						mLIMEPref.setParameter("im_loading_table", "");
 						    						mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
-						    						//Jeremy '11,8,17 preserve dbtaget settings here.
-						    						//mLIMEPref.setParameter("dbtarget","device");
-						    						//btnStoreDevice.setEnabled(false);
-						    						//btnStoreSdcard.setEnabled(true);
 						    						mLIMEPref.setParameter("db_finish", false);
 						    						btnStoreDevice.setText(getText(R.string.l3_initial_btn_store_device));
 						    						btnStoreSdcard.setText(getText(R.string.l3_initial_btn_store_sdcard));
@@ -129,6 +118,7 @@ public class LIMEInitial extends Activity {
 							    					e.printStackTrace();
 							    				}
 							    				hasReset = true;
+							    				initialButton();	//Jeremy '12,5,1 do initialbutton after resetDatabase
 						    	        	}
 						    	     });
 		    	        
@@ -145,6 +135,7 @@ public class LIMEInitial extends Activity {
 				
 				// Reset for SearchSrv
 				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+				
 			}
 		});
 		
@@ -154,7 +145,7 @@ public class LIMEInitial extends Activity {
 
 		        if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
 		        	try {
-    					DBSrv.closeDatabse();
+    					//DBSrv.closeDatabse(); done in DBSrv already
 		        		btnInitEmptyDB.setEnabled(false);
 		        		btnInitPhoneticOnlyDB.setEnabled(false);
     					btnInitPhoneticHsOnlyDB.setEnabled(false);
@@ -192,7 +183,7 @@ public class LIMEInitial extends Activity {
 
 		        if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
 		        	try {
-    					DBSrv.closeDatabse();
+    					//DBSrv.closeDatabse(); done in DBSrv already
 		        		btnInitEmptyDB.setEnabled(false);
 		        		btnInitPhoneticOnlyDB.setEnabled(false);
 		        		btnInitPhoneticHsOnlyDB.setEnabled(false);
@@ -231,7 +222,7 @@ public class LIMEInitial extends Activity {
 
 		        if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
 		        	try {
-    					DBSrv.closeDatabse();
+    					//DBSrv.closeDatabse(); done in DBSrv already
 		        		btnInitEmptyDB.setEnabled(false);
 		        		btnInitPhoneticOnlyDB.setEnabled(false);
 		        		btnInitPhoneticHsOnlyDB.setEnabled(false);
@@ -269,13 +260,14 @@ public class LIMEInitial extends Activity {
 
 		        if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
 		        	try {
-    					DBSrv.closeDatabse();
+    					//DBSrv.closeDatabse(); done in DBSrv already
 		        		btnInitEmptyDB.setEnabled(false);
 		        		btnInitPhoneticOnlyDB.setEnabled(false);
 		        		btnInitPhoneticHsOnlyDB.setEnabled(false);
 						btnInitPreloadDB.setEnabled(false);
 						btnStoreDevice.setEnabled(false);
 						btnStoreSdcard.setEnabled(false);
+						
 
 						String dbtarget = mLIMEPref.getParameterString("dbtarget");
 						if(dbtarget.equals("device")){
@@ -313,7 +305,7 @@ public class LIMEInitial extends Activity {
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
 			    					try {
-				    					DBSrv.closeDatabse();
+				    					//DBSrv.closeDatabse(); Moved to DBSrv by Jeremy '12,5,1
 										DBSrv.backupDatabase();
 									} catch (RemoteException e) {
 										e.printStackTrace();
@@ -355,7 +347,7 @@ public class LIMEInitial extends Activity {
 		    							btnStoreSdcard.setEnabled(false);
 		    							btnStoreDevice.setEnabled(false);
 		    							
-				    					DBSrv.closeDatabse();
+				    					//DBSrv.closeDatabse(); Moved to DBSrv by Jeremy '12,5,1
 			    						DBSrv.restoreDatabase();
 			    						initialButton();
 									} catch (RemoteException e) {
@@ -488,6 +480,7 @@ public class LIMEInitial extends Activity {
 			btnInitPhoneticOnlyDB.setEnabled(true);
 			btnInitPhoneticHsOnlyDB.setEnabled(true);
 			btnInitEmptyDB.setEnabled(true);
+			btnResetDB.setEnabled(false);
 			Toast.makeText(this, getText(R.string.l3_tab_initial_message), Toast.LENGTH_SHORT).show();
 			
 			if(dbtarget.equals("device")){
@@ -510,20 +503,21 @@ public class LIMEInitial extends Activity {
 			btnInitPhoneticOnlyDB.setEnabled(false);
 			btnInitPhoneticHsOnlyDB.setEnabled(false);
 			btnInitEmptyDB.setEnabled(false);
+			btnResetDB.setEnabled(true);
 		}
 		
 		
 	}
 
-	private ServiceConnection serConn = new ServiceConnection() {
-		public void onServiceConnected(ComponentName name, IBinder service) {
-			if(DBSrv == null){
-				//Log.i("ART","Start up db service");
-				DBSrv = IDBService.Stub.asInterface(service);
-			}
-		}
-		public void onServiceDisconnected(ComponentName name) {}
-
-	};
+//	private ServiceConnection serConn = new ServiceConnection() {
+//		public void onServiceConnected(ComponentName name, IBinder service) {
+//			if(DBSrv == null){
+//				//Log.i("ART","Start up db service");
+//				DBSrv = IDBService.Stub.asInterface(service);
+//			}
+//		}
+//		public void onServiceDisconnected(ComponentName name) {}
+//
+//	};
 	
 }
