@@ -6,6 +6,7 @@ package net.toload.main.hd.limedb;
 import java.io.File;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
 import android.content.Context;
 //import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
@@ -127,6 +128,8 @@ public abstract class LimeSQLiteOpenHelper {
                 return mDatabase;  // The database is already open for business
             }
         }
+        
+        if(LIMEUtilities.isFileExist(getDBPath())==null) return null; //database file is not exist. return null Jeremy '12,5,1
 
         if (mIsInitializing) {
             throw new IllegalStateException("getWritableDatabase called recursively");
@@ -216,6 +219,9 @@ public abstract class LimeSQLiteOpenHelper {
             }
         }
 
+        if(LIMEUtilities.isFileExist(getDBPath())==null) return null; //database file is not exist. return null Jeremy '12,5,1
+
+        
         if (mIsInitializing) {
             throw new IllegalStateException("getReadableDatabase called recursively");
         }
