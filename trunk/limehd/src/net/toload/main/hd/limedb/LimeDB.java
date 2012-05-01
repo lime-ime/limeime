@@ -3720,19 +3720,19 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 	private void checkHanDB() {
 		if(hanConverter == null){
-			LIMEUtilities fu = new LIMEUtilities();
+		
 			//Jeremy '11,9,8 update handconverdb to v2 with base score in TCSC table
-			File hanDBFile = fu.isFileExist("/data/data/net.toload.main.hd/databases/hanconvert.db");
+			File hanDBFile = LIMEUtilities.isFileExist("/data/data/net.toload.main.hd/databases/hanconvert.db");
 			if(hanDBFile!=null)
 				hanDBFile.delete();
-			File hanDBV2File = fu.isFileNotExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
+			File hanDBV2File = LIMEUtilities.isFileNotExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
 			
 			if(hanDBV2File!=null) 
-				fu.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
+				LIMEUtilities.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
 			else { // Jeremy '11,9,14 copy the db file if it's newer.
-				hanDBV2File = fu.isFileExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
+				hanDBV2File = LIMEUtilities.isFileExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
 				if(hanDBV2File!=null && mLIMEPref.getParameterLong("hanDBDate") != hanDBV2File.lastModified())
-					fu.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
+					LIMEUtilities.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
 			}
 				
 			hanConverter = new LimeHanConverter(ctx);

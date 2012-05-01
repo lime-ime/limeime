@@ -43,7 +43,7 @@ public abstract class LimeSQLiteOpenHelper {
    // private final CursorFactory mFactory;
     private final int mNewVersion;
 
-    private SQLiteDatabase mDatabase = null;  // share the same db object for different connections.  Jeremy '12,4,7
+    private  SQLiteDatabase mDatabase = null; 
     private boolean mIsInitializing = false;
    // private final DatabaseErrorHandler mErrorHandler;
 

@@ -27,7 +27,7 @@ public class LIMEUtilities {
 	static final String TAG = "LIMEUtilities";
 	static final boolean DEBUG = false;
 	
-	public File isFileNotExist(String filepath){
+	public static File isFileNotExist(String filepath){
 		
 		File mfile = new File(filepath);
 		if(mfile.exists())
@@ -36,7 +36,7 @@ public class LIMEUtilities {
 			return mfile;
 	}
 	
-	public File isFileExist(String filepath){
+	public static File isFileExist(String filepath){
 		
 		File mfile = new File(filepath);
 		if(mfile.exists())
@@ -44,7 +44,7 @@ public class LIMEUtilities {
 		else
 			return null;
 	}
-	public void copyRAWFile(InputStream	inStream, File newfile){
+	public static void copyRAWFile(InputStream	inStream, File newfile){
 		try{
 			FileOutputStream fs = new FileOutputStream(newfile);
 			copyRAWFile(inStream, fs);
@@ -54,7 +54,7 @@ public class LIMEUtilities {
     		e.printStackTrace();   
            }   
 	}
-	public void copyRAWFile(InputStream	inStream, FileOutputStream outStream){
+	public static void copyRAWFile(InputStream	inStream, FileOutputStream outStream){
 	    	try{
 	    		int	bytesum = 0, byteread = 0 ;
 	    		 
@@ -113,7 +113,7 @@ public class LIMEUtilities {
 	 * @param message
 	 * @param intent : the Intent the notification should be launch
 	 */
-	public void showNotification(Context context, Boolean autoCancel, int icon,  CharSequence title, CharSequence message, Intent intent){
+	public static void showNotification(Context context, Boolean autoCancel, int icon,  CharSequence title, CharSequence message, Intent intent){
 		NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 		NotificationCompat.Builder mNotificationBuilder = new NotificationCompat.Builder(context);
 
@@ -128,7 +128,7 @@ public class LIMEUtilities {
 
 	}
 	
-	public boolean isLIMEEnabled(Context context){
+	public static boolean isLIMEEnabled(Context context){
 		InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
 		List<InputMethodInfo> mInputMethodProperties = imm.getEnabledInputMethodList();
 		String limeID = getLIMEID(context);
@@ -145,7 +145,7 @@ public class LIMEUtilities {
 		return isLIMEActive;
 	}
 
-	public boolean isLIMEActive(Context context){
+	public static boolean isLIMEActive(Context context){
 		String activeIM = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.DEFAULT_INPUT_METHOD); 
 		String limeID = getLIMEID(context);
 		
@@ -153,16 +153,16 @@ public class LIMEUtilities {
 		return activeIM.equals(limeID);
 	}
 	
-	public String getLIMEID(Context context){
+	public static String getLIMEID(Context context){
 		ComponentName LIMEComponentName = new ComponentName(context, LIMEService.class);
 		return LIMEComponentName.flattenToShortString();
 	}
 	
-	public void showInputMethodSettingsPage(Context context){
+	public static void showInputMethodSettingsPage(Context context){
 		Intent intent = new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS);
    	 	context.startActivity(intent);
 	}
-	public void showInputMethodPicker(Context context){
+	public static void showInputMethodPicker(Context context){
 		((InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE)).showInputMethodPicker();
 	}
 

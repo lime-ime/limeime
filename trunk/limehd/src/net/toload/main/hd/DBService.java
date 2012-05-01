@@ -974,8 +974,8 @@ public class DBService extends Service {
 		else if (intent == intentLIMEInitial)
 			i = new Intent(this, LIMEInitial.class);
 		
-		LIMEUtilities util = new LIMEUtilities();
-		util.showNotification(
+
+		LIMEUtilities.showNotification(
 				this, true, R.drawable.icon, this.getText(R.string.ime_setting), message, i);
 	
 		/*
