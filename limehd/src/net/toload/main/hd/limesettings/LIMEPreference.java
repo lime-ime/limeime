@@ -21,17 +21,12 @@
 package net.toload.main.hd.limesettings;
 
 import net.toload.main.hd.R;
-import net.toload.main.hd.IDBService;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import android.app.backup.BackupManager;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceActivity;
 import android.util.Log;
@@ -44,7 +39,7 @@ import android.util.Log;
 public class LIMEPreference extends PreferenceActivity implements OnSharedPreferenceChangeListener {
 	private final boolean DEBUG = false;
 	private Context ctx = null;
-	private IDBService DBSrv = null;
+	private DBServer DBSrv = null;
 	private LIMEPreferenceManager mLIMEPref = null;
 
     @SuppressWarnings("deprecation")
@@ -61,16 +56,17 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 
 		addPreferencesFromResource(R.xml.preference);
        
+		DBSrv = new DBServer(ctx);
 		
-		// Startup Search Service
-		if (DBSrv == null) {
-			try {
-				ctx.bindService(new Intent(IDBService.class.getName()),
-						serConn, Context.BIND_AUTO_CREATE);
-			} catch (Exception e) {
-				Log.i("ART", "Failed to connect Search Service");
-			}
-		}
+//		// Startup Search Service
+//		if (DBSrv == null) {
+//			try {
+//				ctx.bindService(new Intent(IDBService.class.getName()),
+//						serConn, Context.BIND_AUTO_CREATE);
+//			} catch (Exception e) {
+//				Log.i("ART", "Failed to connect Search Service");
+//			}
+//		}
 
 	
     }
@@ -146,14 +142,14 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 	}
 	
 	
-	private ServiceConnection serConn = new ServiceConnection() {
-		public void onServiceConnected(ComponentName name, IBinder service) {
-			if(DBSrv == null){
-				DBSrv = IDBService.Stub.asInterface(service);
-			}
-		}
-		public void onServiceDisconnected(ComponentName name) {}
-
-	};
+//	private ServiceConnection serConn = new ServiceConnection() {
+//		public void onServiceConnected(ComponentName name, IBinder service) {
+//			if(DBSrv == null){
+//				DBSrv = IDBService.Stub.asInterface(service);
+//			}
+//		}
+//		public void onServiceDisconnected(ComponentName name) {}
+//
+//	};
 	
 }

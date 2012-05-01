@@ -22,18 +22,13 @@ package net.toload.main.hd.limesettings;
 
 import net.toload.main.hd.LIMEMenu;
 import net.toload.main.hd.R;
-import net.toload.main.hd.IDBService;
 import net.toload.main.hd.global.LIMEUtilities;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -53,11 +48,11 @@ import android.widget.TextView;
 public class LIMEMappingLoading extends Activity {
 
 	final static String TAG = "LIMEMappingLoading";
-	final static boolean DEBUG = false;
+	final static boolean DEBUG = true;
 	
 	private Thread thread = null;
 	
-	private IDBService DBSrv = null;
+	private DBServer DBSrv = null;
 	
 	//private NotificationManager notificationMgr;
 	
@@ -106,7 +101,8 @@ public class LIMEMappingLoading extends Activity {
 		super.onCreate(icicle);
 		
 		// Startup Service
-		getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
+		//getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
+		DBSrv = new DBServer(getApplicationContext());
 		
 		this.setContentView(R.layout.progress);
 		this.setTitle(getText(R.string.l3_dbservice_download_convert)+"...");
@@ -139,13 +135,9 @@ public class LIMEMappingLoading extends Activity {
 			builder.setCancelable(false);
 			builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int id) {
-					try {
-						//DBSrv.resetMapping(imtype);
-						DBSrv.abortRemoteFileDownload();
-						DBSrv.abortLoadMapping();
-					} catch (RemoteException e) {
-						e.printStackTrace();
-					}
+					//DBSrv.resetMapping(imtype);
+					DBSrv.abortRemoteFileDownload();
+					DBSrv.abortLoadMapping();
 					finish();
 				}
 					
@@ -185,8 +177,6 @@ public class LIMEMappingLoading extends Activity {
 								break;
 							}
 
-						} catch (RemoteException e) {
-							e.printStackTrace();
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
@@ -209,20 +199,20 @@ public class LIMEMappingLoading extends Activity {
 		return super.onKeyDown(keyCode, event);
 	}
 
-	private ServiceConnection serConn = new ServiceConnection() {
-		public void onServiceConnected(ComponentName name, IBinder service) {
-			if(DBSrv == null){
-				DBSrv = IDBService.Stub.asInterface(service);
-			}
-		}
-		public void onServiceDisconnected(ComponentName name) {
-		}
-	};
+//	private ServiceConnection serConn = new ServiceConnection() {
+//		public void onServiceConnected(ComponentName name, IBinder service) {
+//			if(DBSrv == null){
+//				DBSrv = IDBService.Stub.asInterface(service);
+//			}
+//		}
+//		public void onServiceDisconnected(ComponentName name) {
+//		}
+//	};
 	
 	private void showNotificationMessage(String message) {
 		
-		LIMEUtilities util = new LIMEUtilities();
-		util.showNotification(
+		
+		LIMEUtilities.showNotification(
 				this, true, R.drawable.icon, this.getText(R.string.ime_setting), message, new Intent(this, LIMEMenu.class));
 		/*
 		NotificationManager mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);

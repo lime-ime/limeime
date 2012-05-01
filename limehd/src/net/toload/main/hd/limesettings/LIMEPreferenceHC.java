@@ -21,19 +21,14 @@
 package net.toload.main.hd.limesettings;
 
 import net.toload.main.hd.R;
-import net.toload.main.hd.IDBService;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.backup.BackupManager;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceFragment;
 
@@ -63,7 +58,7 @@ public class LIMEPreferenceHC extends Activity {
 		private final boolean DEBUG = false;
 		private final String TAG = "LIMEPreferenceHC";
 		private Context ctx = null;
-		private IDBService DBSrv = null;
+		private DBServer DBSrv = null;
 		private LIMEPreferenceManager mLIMEPref = null;
 		@Override
 		public void onCreate(Bundle savedInstanceState) {
@@ -76,16 +71,17 @@ public class LIMEPreferenceHC extends Activity {
 				ctx = getActivity().getApplicationContext();
 			}
 			mLIMEPref = new LIMEPreferenceManager(ctx);
+			DBSrv = new DBServer(ctx);
 			//-----------------------
-			// Startup Search Service
-			if (DBSrv == null) {
-				try {
-					ctx.bindService(new Intent(IDBService.class.getName()),
-							serConn, Context.BIND_AUTO_CREATE);
-				} catch (Exception e) {
-					Log.i(TAG, "Failed to connect Search Service");
-				}
-			}
+//			// Startup Search Service
+//			if (DBSrv == null) {
+//				try {
+//					ctx.bindService(new Intent(IDBService.class.getName()),
+//							serConn, Context.BIND_AUTO_CREATE);
+//				} catch (Exception e) {
+//					Log.i(TAG, "Failed to connect Search Service");
+//				}
+//			}
 		}
 
 
@@ -113,7 +109,7 @@ public class LIMEPreferenceHC extends Activity {
 		@Override
 		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 			if(DEBUG) 
-				Log.i("LIMEPreference:OnChanged()"," key:" + key);
+				Log.i(TAG,"onSharedPreferenceChanged(), key:" + key);
 
 			if(key.equals("phonetic_keyboard_type")){
 				String selectedPhoneticKeyboardType = mLIMEPref.getPhoneticKeyboardType();
@@ -139,10 +135,10 @@ public class LIMEPreferenceHC extends Activity {
 									DBSrv.getKeyboardInfo("lime", "desc"), "lime");
 						}
 					}
-					if(DEBUG) Log.i("LIMEPreference:OnChanged()", "PhoneticIMInfo.kyeboard:" + 
+					if(DEBUG) Log.i(TAG, "onSharedPreferenceChanged() PhoneticIMInfo.kyeboard:" + 
 							DBSrv.getImInfo("phonetic", "keyboard"));	
 				} catch (RemoteException e) {
-					Log.i("LIMEPreference:OnChanged()", "WriteIMinfo for selected phonetic keyboard failed!!");
+					Log.i(TAG, "onSharedPreferenceChanged(), WriteIMinfo for selected phonetic keyboard failed!!");
 					e.printStackTrace();
 				}
 
@@ -154,15 +150,15 @@ public class LIMEPreferenceHC extends Activity {
 		}
 
 
-		private ServiceConnection serConn = new ServiceConnection() {
-			public void onServiceConnected(ComponentName name, IBinder service) {
-				if(DBSrv == null){
-					DBSrv = IDBService.Stub.asInterface(service);
-				}
-			}
-			public void onServiceDisconnected(ComponentName name) {}
-
-		};
+//		private ServiceConnection serConn = new ServiceConnection() {
+//			public void onServiceConnected(ComponentName name, IBinder service) {
+//				if(DBSrv == null){
+//					DBSrv = IDBService.Stub.asInterface(service);
+//				}
+//			}
+//			public void onServiceDisconnected(ComponentName name) {}
+//
+//		};
 	}
 
 }

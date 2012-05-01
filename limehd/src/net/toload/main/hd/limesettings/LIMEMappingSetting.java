@@ -26,21 +26,18 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-import net.toload.main.hd.IDBService;
+
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -69,7 +66,7 @@ public class LIMEMappingSetting extends Activity {
 		private ArrayList<File> filelist;
 		private boolean hasSelectFile;
 		
-		private IDBService DBSrv = null;
+		private DBServer DBSrv = null;
 		//private SearchServer SearchSrv = null;
 
 		Button btnBackToPreviousPage = null;
@@ -111,7 +108,8 @@ public class LIMEMappingSetting extends Activity {
 			ctx = this;
 
 			// Startup Service
-			getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
+			//getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
+			DBSrv = new DBServer(getApplicationContext());
 			//getApplicationContext().bindService(new Intent(ISearchService.class.getName()), serConn2, Context.BIND_AUTO_CREATE);
 			
 	        connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE); 
@@ -127,21 +125,10 @@ public class LIMEMappingSetting extends Activity {
 	        	e.printStackTrace();
 	        }
 	        
-	        try {
-				if(DBSrv != null && DBSrv.isRemoteFileDownloading()){
-					DBSrv.abortRemoteFileDownload();
-					
-				}
-			} catch (RemoteException e1) {
-				e1.printStackTrace();
+	        if(DBSrv != null && DBSrv.isRemoteFileDownloading()){
+				DBSrv.abortRemoteFileDownload();
+				
 			}
-	        //if(mLIMEPref.getParameterBoolean("im_loading") == true){
-	        //	mLIMEPref.setParameter("im_loading",false);
-	        //}
-	       // String im_loading_table = mLIMEPref.getParameterString("im_loading_table");
-	        //if(im_loading_table != null && im_loading_table.length() > 0){
-	        //	imtype = im_loading_table;
-	        //}
 	        
 			// Initial Buttons
 			initialButton();
@@ -916,15 +903,11 @@ public class LIMEMappingSetting extends Activity {
 			super.onResume();
 			
 			if(DBSrv!= null){
-				try {
-					if(	DBSrv.isRemoteFileDownloading() ||
-							DBSrv.isLoadingMappingThreadAlive()){
-						startLoadingWindow();
-					//} else 	if(! DBSrv.isLoadingMappingFinished() ){ 
-					//		resetLabelInfo();
-					}
-				} catch (RemoteException e) {			
-					e.printStackTrace();
+				if(	DBSrv.isRemoteFileDownloading() ||
+						DBSrv.isLoadingMappingThreadAlive()){
+					startLoadingWindow();
+				//} else 	if(! DBSrv.isLoadingMappingFinished() ){ 
+				//		resetLabelInfo();
 				}
 				initialButton();
 				updateLabelInfo();
@@ -950,15 +933,11 @@ public class LIMEMappingSetting extends Activity {
 			
 			kbLinearLayout = (LinearLayout) this.findViewById(R.id.kbLinearLayout);
 			
-			try {
-				if(DBSrv!=null && (DBSrv.isRemoteFileDownloading() ||
-					DBSrv.isLoadingMappingThreadAlive()) ){
-					btnLoadMapping.setEnabled(false);
-				}else
-					btnLoadMapping.setEnabled(true);
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
+			if(DBSrv!=null && (DBSrv.isRemoteFileDownloading() ||
+				DBSrv.isLoadingMappingThreadAlive()) ){
+				btnLoadMapping.setEnabled(false);
+			}else
+				btnLoadMapping.setEnabled(true);
 			
 		}
 
@@ -972,24 +951,20 @@ public class LIMEMappingSetting extends Activity {
 
 		public void updateLabelInfo(){
 			
-			try {
-				if(DBSrv!=null && DBSrv.isLoadingMappingThreadAlive()){
-					labSource.setText("Loading...");
-					labVersion.setText("Loading...");
-					labTotalAmount.setText("Loading...");
-					labImportDate.setText("Loading...");
-				}else{
-					try{
-						labSource.setText(DBSrv.getImInfo(imtype, "source"));
-						labVersion.setText(DBSrv.getImInfo(imtype, "name"));
-						labTotalAmount.setText(DBSrv.getImInfo(imtype, "amount"));
-						labImportDate.setText(DBSrv.getImInfo(imtype, "import"));
-					}catch(Exception e){
-						e.printStackTrace();
-					}
+			if(DBSrv!=null && DBSrv.isLoadingMappingThreadAlive()){
+				labSource.setText("Loading...");
+				labVersion.setText("Loading...");
+				labTotalAmount.setText("Loading...");
+				labImportDate.setText("Loading...");
+			}else{
+				try{
+					labSource.setText(DBSrv.getImInfo(imtype, "source"));
+					labVersion.setText(DBSrv.getImInfo(imtype, "name"));
+					labTotalAmount.setText(DBSrv.getImInfo(imtype, "amount"));
+					labImportDate.setText(DBSrv.getImInfo(imtype, "import"));
+				}catch(Exception e){
+					e.printStackTrace();
 				}
-			} catch (RemoteException e1) {
-				e1.printStackTrace();
 			}
 			
 			
@@ -1026,18 +1001,18 @@ public class LIMEMappingSetting extends Activity {
 			
 		}
 
-		private ServiceConnection serConn = new ServiceConnection() {
-			public void onServiceConnected(ComponentName name, IBinder service) {
-				//Log.i("ART","DB Service connected!");
-				if(DBSrv == null){
-					DBSrv = IDBService.Stub.asInterface(service);
-					updateLabelInfo();
-				}
-			}
-			public void onServiceDisconnected(ComponentName name) {
-				//Log.i("ART","DB Service disconnected!");
-			}
-		};
+//		private ServiceConnection serConn = new ServiceConnection() {
+//			public void onServiceConnected(ComponentName name, IBinder service) {
+//				//Log.i("ART","DB Service connected!");
+//				if(DBSrv == null){
+//					DBSrv = IDBService.Stub.asInterface(service);
+//					updateLabelInfo();
+//				}
+//			}
+//			public void onServiceDisconnected(ComponentName name) {
+//				//Log.i("ART","DB Service disconnected!");
+//			}
+//		};
 
 		/*
 		 * Construct SerConn
@@ -1212,7 +1187,6 @@ public class LIMEMappingSetting extends Activity {
 		/*
 		 * Show keyboard picker
 		 */
-		@SuppressWarnings("unchecked")
 		private void showKeyboardPicker() {
 
 			AlertDialog.Builder builder = new AlertDialog.Builder(this);
