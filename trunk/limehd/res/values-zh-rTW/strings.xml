@@ -475,7 +475,7 @@
     <string name="l3_im_download_from_ez_install">開始安裝輕鬆字根</string>
     
     
-    <string name="l3_im_download_from_hs">下載並安裝華象直覺字根\n華象直覺輸入法發明人陳華偉製作\nTel:(07)222-3133 手機：0933-616029\nhs.h123@msa.hinet.net</string>
+    <string name="l3_im_download_from_hs">下載並安裝華象直覺字根\n華象直覺輸入法發明人陳華偉製作\nTel:(07)2223133 手機：0933616029\nhs.h123@msa.hinet.net</string>
     <string name="l3_im_download_from_hs_start">開始下載華象直覺字根</string>
     <string name="l3_im_download_from_hs_install">開始安裝華象直覺字根</string>
     
@@ -484,6 +484,9 @@
     <string name="l3_im_download_from_wb_install">開始安裝筆順五碼字根</string>
     
     <string name="l3_im_database_error">資料庫操作錯誤，請稍待一會重新操作。</string>
+    
+    <string name="l3_database_loading">資料庫載入中，請稍待…</string>
+    <string name="l3_database_not_exist">資料庫不存在，請先下載資料庫</string>
     
     <string name="l3_tab_bluetooth">藍牙設定</string>
     

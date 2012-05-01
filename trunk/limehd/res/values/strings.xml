@@ -508,6 +508,11 @@
     
     <string name="l3_im_database_error">Database operation failed, please try again later.</string>
     
+    
+    <string name="l3_database_loading">Database is loading, please wait…</string>
+    <string name="l3_database_not_exist">Database is not exist! Please download database first.</string>
+    
+    
     <string name="l3_tab_bluetooth">Bluetooth</string>
     <string name="l3_im_notice">For saveing precious device memory space (both RAM and FLASH), IM-tables you are not using are strongly recommeded to be removed.</string>
     
