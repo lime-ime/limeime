@@ -57,8 +57,6 @@ import net.toload.main.hd.candidate.CandidateViewContainer;
 import net.toload.main.hd.global.ChineseSymbol;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.Mapping;
-import net.toload.main.hd.limedb.ExpandableDictionary;
-import net.toload.main.hd.limedb.UserDictionary;
 import net.toload.main.hd.limesettings.LIMEPreference;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 import android.annotation.TargetApi;
@@ -121,7 +119,7 @@ public class LIMEService extends InputMethodService implements
 	LIMEKeyboardSwitcher mKeyboardSwitcher;
 
 
-	private UserDictionary mUserDictionary;
+	//private UserDictionary mUserDictionary;
 	//private ContactsDictionary mContactsDictionary;
 	//private ExpandableDictionary mAutoDictionary;
 	
@@ -3152,11 +3150,11 @@ public class LIMEService extends InputMethodService implements
 
 	}
 
-	void promoteToUserDictionary(String word, int frequency) {
-		if (mUserDictionary.isValidWord(word))
-			return;
-		mUserDictionary.addWord(word, frequency);
-	}
+//	void promoteToUserDictionary(String word, int frequency) {
+//		if (mUserDictionary.isValidWord(word))
+//			return;
+//		mUserDictionary.addWord(word, frequency);
+//	}
 
 	public void swipeRight() {
 		//if (mCompletionOn) {
@@ -3302,38 +3300,38 @@ public class LIMEService extends InputMethodService implements
 
 	}
 
-	class AutoDictionary extends ExpandableDictionary {
-		// If the user touches a typed word 2 times or more, it will become
-		// valid.
-		private static final int VALIDITY_THRESHOLD = 2 * FREQUENCY_FOR_PICKED;
-		// If the user touches a typed word 5 times or more, it will be added to
-		// the user dict.
-		private static final int PROMOTION_THRESHOLD = 5 * FREQUENCY_FOR_PICKED;
-
-		public AutoDictionary(Context context) {
-			super(context);
-		}
-
-		@Override
-		public boolean isValidWord(CharSequence word) {
-			final int frequency = getWordFrequency(word);
-			return frequency > VALIDITY_THRESHOLD;
-		}
-
-		@Override
-		public void addWord(String word, int addFrequency) {
-			final int length = word.length();
-			// Don't add very short or very long words.
-			if (length < 2 || length > getMaxWordLength())
-				return;
-			super.addWord(word, addFrequency);
-			final int freq = getWordFrequency(word);
-			if (freq > PROMOTION_THRESHOLD) {
-				LIMEService.this.promoteToUserDictionary(word,
-						FREQUENCY_FOR_AUTO_ADD);
-			}
-		}
-	}
+//	class AutoDictionary extends ExpandableDictionary {
+//		// If the user touches a typed word 2 times or more, it will become
+//		// valid.
+//		private static final int VALIDITY_THRESHOLD = 2 * FREQUENCY_FOR_PICKED;
+//		// If the user touches a typed word 5 times or more, it will be added to
+//		// the user dict.
+//		private static final int PROMOTION_THRESHOLD = 5 * FREQUENCY_FOR_PICKED;
+//
+//		public AutoDictionary(Context context) {
+//			super(context);
+//		}
+//
+//		@Override
+//		public boolean isValidWord(CharSequence word) {
+//			final int frequency = getWordFrequency(word);
+//			return frequency > VALIDITY_THRESHOLD;
+//		}
+//
+//		@Override
+//		public void addWord(String word, int addFrequency) {
+//			final int length = word.length();
+//			// Don't add very short or very long words.
+//			if (length < 2 || length > getMaxWordLength())
+//				return;
+//			super.addWord(word, addFrequency);
+//			final int freq = getWordFrequency(word);
+//			if (freq > PROMOTION_THRESHOLD) {
+//				LIMEService.this.promoteToUserDictionary(word,
+//						FREQUENCY_FOR_AUTO_ADD);
+//			}
+//		}
+//	}
 	
 	
 
