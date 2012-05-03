@@ -513,9 +513,9 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                 final Drawable rArrow = mRightDrawable;
                 canvas.clipRect(0, 0, width, height);
                 if (mCurrentKeyboard == null) {
-                	mCurrentKeyboard = mKeyboardSwitcher.getCurrentActiveKeyboardShortname();
-                    mNextKeyboard = mKeyboardSwitcher.getNextActiveKeyboardShortname();
-                    mPrevKeyboard = mKeyboardSwitcher.getPrevActiveKeyboardShortname();
+                	mCurrentKeyboard = mKeyboardSwitcher.getActiveIMShortname();
+                    mNextKeyboard = mKeyboardSwitcher.getNextActivatedIMShortname();
+                    mPrevKeyboard = mKeyboardSwitcher.getPrevActivatedIMShortname();
                     if(DEBUG) Log.i(TAG, "SlidingSpaceBarDrawable:draw(), current=" + mCurrentKeyboard +  
                     		". next = " + mNextKeyboard + ". prev = " + mPrevKeyboard);
                 }
