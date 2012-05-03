@@ -901,7 +901,7 @@ public class CandidateView extends View implements View.OnClickListener
 	            	// default selection on suggestions 1 (0 is typed English in mixed English mode)
 	             	mSelectedIndex = 1;
 	            }else if(mCount > 1 && mSuggestions.get(1).getId() !=null &&
-	            		 mService.activeIMCode.equals("phonetic")&&
+	            		 mService.activeIM.equals("phonetic")&&
 	            		 (mSuggestions.get(0).getWord().trim().toLowerCase()
 	     	            		.equals(mSuggestions.get(1).getCode().trim())||
 	     	              mSuggestions.get(0).getWord().trim().toLowerCase()

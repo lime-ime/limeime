@@ -86,9 +86,9 @@ public class LIMEKeyboardSwitcher {
     private HashMap<String, KeyboardObj> kbHm;
     private HashMap<String, String> imHm;
  
-    private static List<String> mActiveKeyboardCodes;
+    private static List<String> mActivatedIMList;
     //private static List<String> mActiveKeyboardNames;
-    private static List<String> mActiveKeyboardShortnames;
+    private static List<String> mActivatedIMShortnameList;
     
     private float mKeySizeScale=1;
     
@@ -130,49 +130,49 @@ public class LIMEKeyboardSwitcher {
     		imHm.put(o.getCode(), o.getKeyboard());
     	}    	
     }
-    void setActiveKeyboardList(List<String> codes, List<String> names, List<String> shortnames){
+    void setActivatedIMList(List<String> codes, List<String> names, List<String> shortnames){
     	if(DEBUG) Log.i(TAG,"setActiveKeyboardList()");
     	
-    	if(codes.equals(mActiveKeyboardCodes) && shortnames.equals(mActiveKeyboardShortnames)) return;
+    	if(codes.equals(mActivatedIMList) && shortnames.equals(mActivatedIMShortnameList)) return;
     	
-    	mActiveKeyboardCodes = codes;
+    	mActivatedIMList = codes;
     	//mActiveKeyboardNames = names;
-    	mActiveKeyboardShortnames = shortnames;
+    	mActivatedIMShortnameList = shortnames;
     	
     	
     }
     
-    List<String> getActiveKeyboardShortnameList(){
-    	return mActiveKeyboardShortnames;
+    List<String> getActivatedIMShortnameList(){
+    	return mActivatedIMShortnameList;
     }
     
-    public String getCurrentActiveKeyboardShortname(){
+    public String getActiveIMShortname(){
     	if(DEBUG) Log.i(TAG,"getCurrentActiveKeyboardShortName() current IM:"+ imtype);
-    	for (int i = 0; i < mActiveKeyboardCodes.size(); i++) {
-			if (imtype.equals(mActiveKeyboardCodes.get(i))) {
-				if(DEBUG)Log.i(TAG,"getCurrentActiveKeyboardShortName()="+ mActiveKeyboardShortnames.get(i));
-    			return mActiveKeyboardShortnames.get(i);
+    	for (int i = 0; i < mActivatedIMList.size(); i++) {
+			if (imtype.equals(mActivatedIMList.get(i))) {
+				if(DEBUG)Log.i(TAG,"getCurrentActiveKeyboardShortName()="+ mActivatedIMShortnameList.get(i));
+    			return mActivatedIMShortnameList.get(i);
     		}
     	}
     	return "";
     }
-    public String getNextActiveKeyboardShortname(){
+    public String getNextActivatedIMShortname(){
 
-    	for (int i = 0; i < mActiveKeyboardCodes.size(); i++) {
-    		if (imtype.equals(mActiveKeyboardCodes.get(i))) {
-    			if(i==mActiveKeyboardCodes.size()-1)
-    				return mActiveKeyboardShortnames.get(0);
-    			else return mActiveKeyboardShortnames.get(i+1);
+    	for (int i = 0; i < mActivatedIMList.size(); i++) {
+    		if (imtype.equals(mActivatedIMList.get(i))) {
+    			if(i==mActivatedIMList.size()-1)
+    				return mActivatedIMShortnameList.get(0);
+    			else return mActivatedIMShortnameList.get(i+1);
     		}
     	}
     	return "";
     }
-    public String getPrevActiveKeyboardShortname(){
+    public String getPrevActivatedIMShortname(){
 
-    	for (int i = 0; i < mActiveKeyboardCodes.size(); i++) {
-			if (imtype.equals(mActiveKeyboardCodes.get(i))) {
-    			if(i==0) return mActiveKeyboardShortnames.get(mActiveKeyboardCodes.size()-1);
-    			else return mActiveKeyboardShortnames.get(i-1);
+    	for (int i = 0; i < mActivatedIMList.size(); i++) {
+			if (imtype.equals(mActivatedIMList.get(i))) {
+    			if(i==0) return mActivatedIMShortnameList.get(mActivatedIMList.size()-1);
+    			else return mActivatedIMShortnameList.get(i-1);
     		}
     	}
     	return "";
