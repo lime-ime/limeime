@@ -1,0 +1,42 @@
+android.support.v4.app.BackStackState
+android.support.v4.app.BackStackState: android.os.Parcelable$Creator CREATOR
+android.support.v4.app.Fragment$SavedState
+android.support.v4.app.Fragment$SavedState: android.os.Parcelable$Creator CREATOR
+android.support.v4.app.FragmentActivity
+android.support.v4.app.FragmentManagerState
+android.support.v4.app.FragmentManagerState: android.os.Parcelable$Creator CREATOR
+android.support.v4.app.FragmentState
+android.support.v4.app.FragmentState: android.os.Parcelable$Creator CREATOR
+android.support.v4.content.ModernAsyncTask$Status: android.support.v4.content.ModernAsyncTask$Status[] values()
+android.support.v4.content.ModernAsyncTask$Status: android.support.v4.content.ModernAsyncTask$Status valueOf(java.lang.String)
+android.support.v4.view.PagerTitleStrip
+android.support.v4.view.PagerTitleStrip: PagerTitleStrip(android.content.Context,android.util.AttributeSet)
+android.support.v4.view.ViewPager
+android.support.v4.view.ViewPager: ViewPager(android.content.Context,android.util.AttributeSet)
+android.support.v4.view.ViewPager$LayoutParams
+android.support.v4.view.ViewPager$LayoutParams: ViewPager$LayoutParams(android.content.Context,android.util.AttributeSet)
+android.support.v4.view.ViewPager$SavedState
+android.support.v4.view.ViewPager$SavedState: android.os.Parcelable$Creator CREATOR
+net.toload.main.hd.LIMEBackupAgent
+net.toload.main.hd.LIMEMenu
+net.toload.main.hd.LIMEService
+net.toload.main.hd.candidate.CandidateExpandedView
+net.toload.main.hd.candidate.CandidateExpandedView: CandidateExpandedView(android.content.Context,android.util.AttributeSet)
+net.toload.main.hd.candidate.CandidateView
+net.toload.main.hd.candidate.CandidateView: CandidateView(android.content.Context,android.util.AttributeSet)
+net.toload.main.hd.candidate.CandidateViewContainer
+net.toload.main.hd.candidate.CandidateViewContainer: CandidateViewContainer(android.content.Context,android.util.AttributeSet)
+net.toload.main.hd.keyboard.LIMEKeyboardBaseView
+net.toload.main.hd.keyboard.LIMEKeyboardBaseView: LIMEKeyboardBaseView(android.content.Context,android.util.AttributeSet)
+net.toload.main.hd.keyboard.LIMEKeyboardBaseView: LIMEKeyboardBaseView(android.content.Context,android.util.AttributeSet,int)
+net.toload.main.hd.keyboard.LIMEKeyboardView
+net.toload.main.hd.keyboard.LIMEKeyboardView: LIMEKeyboardView(android.content.Context,android.util.AttributeSet)
+net.toload.main.hd.keyboard.LIMEKeyboardView: LIMEKeyboardView(android.content.Context,android.util.AttributeSet,int)
+net.toload.main.hd.limesettings.LIMEIMSetting
+net.toload.main.hd.limesettings.LIMEInitial
+net.toload.main.hd.limesettings.LIMEMappingLoading
+net.toload.main.hd.limesettings.LIMEMappingSetting
+net.toload.main.hd.limesettings.LIMEPreference
+net.toload.main.hd.limesettings.LIMEPreferenceHC
+net.toload.main.hd.limesettings.MultiListPreference
+net.toload.main.hd.limesettings.MultiListPreference: MultiListPreference(android.content.Context,android.util.AttributeSet)
