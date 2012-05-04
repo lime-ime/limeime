@@ -345,9 +345,6 @@ public class LIMEService extends InputMethodService implements
 		if (DEBUG)
 			Log.i(TAG, "LIMEService:OnConfigurationChanged()");
 
-		//if (!TextUtils.equals(conf.locale.toString(), mLocale)) {
-			// initSuggest(conf.locale.toString());
-		//}
 		
 		//Jeremy '12,4,7 add hardkeyboard hidden configuration changed event and clear composing to avoid fc.
 		if (conf.orientation != mOrientation || conf.hardKeyboardHidden != mHardkeyboardHidden) {
@@ -358,7 +355,7 @@ public class LIMEService extends InputMethodService implements
 			mOrientation = conf.orientation;
 			mHardkeyboardHidden = conf.hardKeyboardHidden;
 		}
-		//initialViewAndSwitcher(true);
+		initialViewAndSwitcher(true);
 		mKeyboardSwitcher.makeKeyboards(true);
 		super.onConfigurationChanged(conf);
 
@@ -587,9 +584,12 @@ public class LIMEService extends InputMethodService implements
 			return;
 		}
 		
-		//initialViewAndSwitcher(false); //jeremy '12,5,4
-		//if(mFixedCandidateViewOn != mLIMEPref.getFixedCandidateViewDisplay()) updateInputViewShown();
 		
+		/*if(mFixedCandidateViewOn != mLIMEPref.getFixedCandidateViewDisplay()) {
+			initialViewAndSwitcher(true); //jeremy '12,5,4
+			setInputView(mInputView);
+		}
+		*/
 		isPhysicalKeyPressed = false;  //Jeremy '11,9,6 reset phsycalkeyflag
 		// Reset the IM softkeyboard settings. Jeremy '11,6,19
 		try {
@@ -743,9 +743,9 @@ public class LIMEService extends InputMethodService implements
 		updateShiftKeyState(getCurrentInputEditorInfo());
 		
 		//Jeremy '12,4,23  Force super to call onCreateCandidateView() so as composing popup won't fc. and will be hide in clearComposing
-		showCandidateView();  
+		initCandidateView(); //Force the oncreatedcandidate to be called   
 		clearComposing(false);
-		hideCandidateView();//Force to hide the candidateview, we don't need it at this stage.
+		
 	
 	}
 
@@ -2424,14 +2424,24 @@ public class LIMEService extends InputMethodService implements
 			e.printStackTrace();
 		}
 	}*/
+	
+	private void initCandidateView(){
+		if(DEBUG) Log.i(TAG,"initCandidateView()");
+		if(mCandidateViewStandAlone == null )	return;
+		mHandler.post(mShowCandidateView);
+		mHandler.post(mHideCandidateView);	
+	}
+	
 	private void showCandidateView(){
 		if(DEBUG) Log.i(TAG,"showCandidateView()");
-		if(mCandidateView == null )	return;
+		if(mCandidateViewStandAlone == null )	return;
 		mHandler.post(mShowCandidateView);
 	}
 	private void hideCandidateView(){
 		if(DEBUG) Log.i(TAG,"hideCandidateView()");
-		if(mCandidateView == null ) return;  // escape if mCandidateView is not created '11,11,30 Jeremy
+		if(mCandidateViewStandAlone == null || !isCandidateShown())
+			return;  // escape if mCandidateView is not created '11,11,30 Jeremy
+		
 		isChineseSymbolSuggestionsShowing = false;
 		mHandler.post(mHideCandidateView);
 	}
@@ -2457,8 +2467,7 @@ public class LIMEService extends InputMethodService implements
 			//Jeremy '12,4,24 moved fixedcandidate here
 			if(DEBUG)
 				Log.i(TAG,"Runnable(): mHideCandidateView");
-			
-			setCandidatesViewShown(false);	
+				setCandidatesViewShown(false);	
 	
 	    }
 	};
@@ -2517,12 +2526,12 @@ public class LIMEService extends InputMethodService implements
 	
 
 	private boolean isCandidateShown(){
-		if(mCandidateView==null) {
+		if(mCandidateViewStandAlone==null) {
 			if(DEBUG)
 				Log.i(TAG, "isCandidateViewShown(): mCandidateView is null");
 			return false; //Jeremy '11,11,30 Fixed FC when startup, before mCandidate is created.
 		}
-		else return mCandidateView.isShown();
+		else return mCandidateViewStandAlone.isShown();
 	}
 	private void handleBackspace() {
 		if(DEBUG) 
@@ -2538,12 +2547,14 @@ public class LIMEService extends InputMethodService implements
 			//Jeremy '12,4, 21 force clear the last characacter in composing
 			clearComposing(true);
 			//Jeremy '12,4,29 use mEnglishOnly instead of onIM
-		} else if(!mEnglishOnly && mCandidateView !=null && isCandidateShown()  // composing length == 0 after here
+		} else if(!mEnglishOnly  // composing length == 0 after here
+				&& mCandidateView !=null && isCandidateShown()  
 				&& mLIMEPref.getAutoChineseSymbol()
 				&& !isChineseSymbolSuggestionsShowing ){
 			clearComposing(false);  //Jeremy '12,4,21 composing length 0, no need to force commit again. 
-		} else if(!mEnglishOnly && mCandidateView !=null && isCandidateShown()
-				//&& !mLIMEPref.getFixedCandidateViewDisplay()
+		} else if(!mEnglishOnly 
+				&& mCandidateView !=null && isCandidateShown()
+				   && !mFixedCandidateViewOn //Jeremy '12,5,4
 				){
 			hideCandidateView();  //Jeremy '11,9,8
 		} else {
@@ -2576,9 +2587,9 @@ public class LIMEService extends InputMethodService implements
 		if(DEBUG)
 			Log.i(TAG,"setCandidateViewShown():" + shown);
 		if(shown)
-			super.setCandidatesViewShown(shown);
+			super.setCandidatesViewShown(true);
 		else
-			super.setCandidatesViewShown(shown);
+			super.setCandidatesViewShown(false);
 		
 		if(DEBUG)
 			Log.i(TAG, "isCandidateViewShown:" +isCandidateShown());
@@ -2690,9 +2701,10 @@ public class LIMEService extends InputMethodService implements
 
 		 
 		if(mFixedCandidateViewOn){ //Have candidateview in InputView
-			//Create inputView if it's null or the fixed candidateview is altered.
+			//Create inputView if it's null 
 			if (mInputViewContainer == null  || forceRecreate //|| mLIMEPref.getFixedCandidateViewDisplay()!=mFixedCandidateViewOn 
 					) {
+				
 				mInputViewContainer = (CandidateInInputViewContainer) getLayoutInflater().inflate(
 						R.layout.inputcandidate, null);
 
@@ -2702,9 +2714,7 @@ public class LIMEService extends InputMethodService implements
 				mInputViewContainer.initViews();
 				mCandidateViewInInputView = (CandidateView) mInputViewContainer.findViewById(R.id.candidatesView);
 				mCandidateViewInInputView.setService(this);
-				
-				mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
-				
+					
 			}
 			mCandidateView = mCandidateViewInInputView;
 
@@ -2715,9 +2725,9 @@ public class LIMEService extends InputMethodService implements
 						R.layout.input, null);
 				mInputView.setOnKeyboardActionListener(this);
 				
-				mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
 			}
 			mCandidateView = mCandidateViewStandAlone;
+			mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
 		}
 		
 
