@@ -22,6 +22,7 @@ package net.toload.main.hd.limesettings;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import android.annotation.TargetApi;
 import android.app.backup.BackupManager;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -58,15 +59,7 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
        
 		DBSrv = new DBServer(ctx);
 		
-//		// Startup Search Service
-//		if (DBSrv == null) {
-//			try {
-//				ctx.bindService(new Intent(IDBService.class.getName()),
-//						serConn, Context.BIND_AUTO_CREATE);
-//			} catch (Exception e) {
-//				Log.i("ART", "Failed to connect Search Service");
-//			}
-//		}
+
 
 	
     }
@@ -98,6 +91,7 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 	}
 
 
+	@TargetApi(8)
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if(DEBUG) 
@@ -135,21 +129,15 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 			}
 			
 		}
-		BackupManager backupManager = new BackupManager(ctx);
-		backupManager.dataChanged();  //Jeremy '12,4,29 call backup manager to backup the changes.
+
+		if(android.os.Build.VERSION.SDK_INT > 7 ){ //Jeremy '12,5,4 Supported after api 8.
+			BackupManager backupManager = new BackupManager(ctx);
+			backupManager.dataChanged();  //Jeremy '12,4,29 call backup manager to backup the changes.
+		}
 		
 		
 	}
 	
-	
-//	private ServiceConnection serConn = new ServiceConnection() {
-//		public void onServiceConnected(ComponentName name, IBinder service) {
-//			if(DBSrv == null){
-//				DBSrv = IDBService.Stub.asInterface(service);
-//			}
-//		}
-//		public void onServiceDisconnected(ComponentName name) {}
-//
-//	};
+
 	
 }
