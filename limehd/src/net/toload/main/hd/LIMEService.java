@@ -2458,9 +2458,8 @@ public class LIMEService extends InputMethodService implements
 			if(DEBUG)
 				Log.i(TAG,"Runnable(): mHideCandidateView");
 			
-			if(isCandidateShown()){
-				setCandidatesViewShown(false);	
-			}
+			setCandidatesViewShown(false);	
+	
 	    }
 	};
 //	final Runnable mForceHideCandidateView = new Runnable() {
