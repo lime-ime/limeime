@@ -541,8 +541,8 @@ public class LIMEService extends InputMethodService implements
 			mCandidateView.clear();
 			//hideCandidateView();
 			if(!mEnglishOnly && mLIMEPref.getAutoChineseSymbol() //Jeremy '12,4,29 use mEnglishOnly instead of onIM 
-					&& isCandidateShown())   //Jeremy '11,9,17 resolved the screen jumped complained by Julian 	
-					//(mInputView.isShown()|| 
+					&& (mFixedCandidateViewOn || isCandidateShown() ))   //Jeremy '11,5,4 add processcing for fixecanddiate in inputview  	
+					
 					 
 				updateChineseSymbol(); // Jeremy '11,9,4
 			else
