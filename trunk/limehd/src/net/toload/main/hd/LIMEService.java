@@ -587,7 +587,8 @@ public class LIMEService extends InputMethodService implements
 			return;
 		}
 		
-		initialViewAndSwitcher(false); //jeremy '12,5,4
+		//initialViewAndSwitcher(false); //jeremy '12,5,4
+		//if(mFixedCandidateViewOn != mLIMEPref.getFixedCandidateViewDisplay()) updateInputViewShown();
 		
 		isPhysicalKeyPressed = false;  //Jeremy '11,9,6 reset phsycalkeyflag
 		// Reset the IM softkeyboard settings. Jeremy '11,6,19
@@ -2691,7 +2692,8 @@ public class LIMEService extends InputMethodService implements
 		 
 		if(mFixedCandidateViewOn){ //Have candidateview in InputView
 			//Create inputView if it's null or the fixed candidateview is altered.
-			if (mInputViewContainer == null || mLIMEPref.getFixedCandidateViewDisplay()!=mFixedCandidateViewOn || forceRecreate ) {
+			if (mInputViewContainer == null  || forceRecreate //|| mLIMEPref.getFixedCandidateViewDisplay()!=mFixedCandidateViewOn 
+					) {
 				mInputViewContainer = (CandidateInInputViewContainer) getLayoutInflater().inflate(
 						R.layout.inputcandidate, null);
 
@@ -2703,20 +2705,22 @@ public class LIMEService extends InputMethodService implements
 				mCandidateViewInInputView.setService(this);
 				
 				mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
+				
 			}
 			mCandidateView = mCandidateViewInInputView;
 
 		}else{
-			if (mInputView == null || mLIMEPref.getFixedCandidateViewDisplay()!=mFixedCandidateViewOn ||forceRecreate ) {
+			if (mInputView == null  ||forceRecreate //|| mLIMEPref.getFixedCandidateViewDisplay()!=mFixedCandidateViewOn
+					) {
 				mInputView = (LIMEKeyboardView) getLayoutInflater().inflate(
 						R.layout.input, null);
 				mInputView.setOnKeyboardActionListener(this);
-				
 				
 				mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
 			}
 			mCandidateView = mCandidateViewStandAlone;
 		}
+		
 
 
 		
