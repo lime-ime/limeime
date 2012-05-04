@@ -328,9 +328,8 @@ public class LIMEService extends InputMethodService implements
 		if(DEBUG)
 			Log.i(TAG, "onInitializeInterface()");
 
-
 		initialViewAndSwitcher(false);
-
+		initCandidateView(); //Force the oncreatedcandidate to be called
 		mKeyboardSwitcher.makeKeyboards(true);
 		super.onInitializeInterface();
 
@@ -743,10 +742,13 @@ public class LIMEService extends InputMethodService implements
 		updateShiftKeyState(getCurrentInputEditorInfo());
 		
 		//Jeremy '12,4,23  Force super to call onCreateCandidateView() so as composing popup won't fc. and will be hide in clearComposing
-		initCandidateView(); //Force the oncreatedcandidate to be called   
+		if(mCandidateViewStandAlone== null)
+			Log.i(TAG,"candiateViewStandAlone is null");
+		else
+			Log.i(TAG,"isCanddaiteViewStandalone.parent null :" + ( mCandidateViewStandAlone.getParent() == null ));
+		//initCandidateView(); //Force the oncreatedcandidate to be called   
 		clearComposing(false);
-		
-	
+			
 	}
 
 	private void loadSettings() {
@@ -2427,30 +2429,25 @@ public class LIMEService extends InputMethodService implements
 	
 	private void initCandidateView(){
 		if(DEBUG) Log.i(TAG,"initCandidateView()");
-		if(mCandidateViewStandAlone == null )	return;
+
 		mHandler.post(mShowCandidateView);
 		mHandler.post(mHideCandidateView);	
 	}
 	
 	private void showCandidateView(){
 		if(DEBUG) Log.i(TAG,"showCandidateView()");
-		if(mCandidateViewStandAlone == null )	return;
+		//if(mCandidateViewStandAlone == null )	return;
 		mHandler.post(mShowCandidateView);
 	}
 	private void hideCandidateView(){
 		if(DEBUG) Log.i(TAG,"hideCandidateView()");
-		if(mCandidateViewStandAlone == null || !isCandidateShown())
+		if(!isCandidateShown())
 			return;  // escape if mCandidateView is not created '11,11,30 Jeremy
 		
 		isChineseSymbolSuggestionsShowing = false;
 		mHandler.post(mHideCandidateView);
 	}
-//	private void forceHideCandidateView(){
-//		if(DEBUG) Log.i(TAG,"forceHideCandidateView()");
-//		isChineseSymbolSuggestionsShowing = false;
-//		if(mCandidateView == null  ) return; 
-//		mHandler.post(mForceHideCandidateView);
-//	}
+
 	
 	final Handler mHandler = new Handler();
 	// Create runnable for posting
@@ -2471,17 +2468,7 @@ public class LIMEService extends InputMethodService implements
 	
 	    }
 	};
-//	final Runnable mForceHideCandidateView = new Runnable() {
-//		public void run() {
-//			//Jeremy '12,4,24 ignore getfixedcanddiatedisplay
-//			if(DEBUG)
-//					Log.i(TAG,"Runnable(): mForceHideCandidateView");
-//			
-//			if(isCandidateShown()){
-//				setCandidatesViewShown(false);	
-//			}
-//	    }
-//	};
+
 	
 	public void setSuggestions(List<Mapping> suggestions, boolean showNumber,
 			boolean typedWordValid, String diplaySelkey){
@@ -2697,9 +2684,7 @@ public class LIMEService extends InputMethodService implements
 	private void initialViewAndSwitcher(boolean forceRecreate) {
 		if(DEBUG)
 			Log.i(TAG, "initialViewAndSwitcher()");
-
-
-		 
+		mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
 		if(mFixedCandidateViewOn){ //Have candidateview in InputView
 			//Create inputView if it's null 
 			if (mInputViewContainer == null  || forceRecreate //|| mLIMEPref.getFixedCandidateViewDisplay()!=mFixedCandidateViewOn 
@@ -2727,7 +2712,7 @@ public class LIMEService extends InputMethodService implements
 				
 			}
 			mCandidateView = mCandidateViewStandAlone;
-			mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
+			
 		}
 		
 
@@ -3096,13 +3081,7 @@ public class LIMEService extends InputMethodService implements
 		//Jeremy '11,5,31
 		String separators =  getResources().getString(R.string.word_separators);
         return separators.contains(String.valueOf((char)code));
-		// String checkCode = String.valueOf((char)code);
-		/*/ if (code == 32 || code == 39 || code == 10) {
-		if (code == 32 || code == 10) {
-			return true;
-		} else {
-			return false;
-		}*/
+
 	}
 
 	public void pickDefaultCandidate() {
@@ -3130,12 +3109,7 @@ public class LIMEService extends InputMethodService implements
 		if(templist != null && index >= templist.size() ){
 			return;
 		}
-		/*//if "has_more_records" selected, updatecandidate with getAllRecords set.
-		if(templist.get(index).getCode() != null 
-				&& templist.get(index).getCode().equals("has_more_records")){
-			this.updateCandidates(true);
-			return;
-		}*/
+
 		
 		
 		if (templist != null && templist.size() > 0) {
@@ -3179,11 +3153,6 @@ public class LIMEService extends InputMethodService implements
 
 	}
 
-//	void promoteToUserDictionary(String word, int frequency) {
-//		if (mUserDictionary.isValidWord(word))
-//			return;
-//		mUserDictionary.addWord(word, frequency);
-//	}
 
 	public void swipeRight() {
 		//if (mCompletionOn) {
@@ -3226,18 +3195,6 @@ public class LIMEService extends InputMethodService implements
 
 		try {
 
-			/*
-			 * if
-			 * (!mKeyboardSwitcher.getImKeyboard(keyboardSelection).equals("phone"
-			 * )) { keyDownCode = primaryCode;
-			 * 
-			 * SharedPreferences sp1 = getSharedPreferences(PREF, 0); String
-			 * xyvalue = sp1.getString("xy", ""); this.keyDownX =
-			 * Float.parseFloat(xyvalue.split(",")[0]); this.keyDownY =
-			 * Float.parseFloat(xyvalue.split(",")[1]); }
-			 */
-
-			//hasKeyPress = true;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -3283,38 +3240,7 @@ public class LIMEService extends InputMethodService implements
 
 		}
 	}
-	/*
-	private final int UP = 0;
-	private final int DOWN = 1;
-	private final int LEFT = 2;
-	private final int RIGHT = 3;
 
-	public int handleSelection(float x, float y, String keys[]) {
-
-		int result = 0;
-		int direction;
-		if (Math.abs(x) > Math.abs(y)) {
-			// move horizontal
-			if (x > 0) {
-				direction = this.LEFT;
-			} else {
-				direction = this.RIGHT;
-			}
-		} else {
-			// move verticle
-			if (y > 0) {
-				direction = this.UP;
-			} else {
-				direction = this.DOWN;
-			}
-		}
-
-		// Select Character to be import
-		result = (int) keys[direction].hashCode();
-
-		return result;
-	}
-	*/
 	public boolean isValidTime(Date target) {
 		Calendar srcCal = Calendar.getInstance();
 		srcCal.setTime(new Date());
@@ -3328,39 +3254,6 @@ public class LIMEService extends InputMethodService implements
 		}
 
 	}
-
-//	class AutoDictionary extends ExpandableDictionary {
-//		// If the user touches a typed word 2 times or more, it will become
-//		// valid.
-//		private static final int VALIDITY_THRESHOLD = 2 * FREQUENCY_FOR_PICKED;
-//		// If the user touches a typed word 5 times or more, it will be added to
-//		// the user dict.
-//		private static final int PROMOTION_THRESHOLD = 5 * FREQUENCY_FOR_PICKED;
-//
-//		public AutoDictionary(Context context) {
-//			super(context);
-//		}
-//
-//		@Override
-//		public boolean isValidWord(CharSequence word) {
-//			final int frequency = getWordFrequency(word);
-//			return frequency > VALIDITY_THRESHOLD;
-//		}
-//
-//		@Override
-//		public void addWord(String word, int addFrequency) {
-//			final int length = word.length();
-//			// Don't add very short or very long words.
-//			if (length < 2 || length > getMaxWordLength())
-//				return;
-//			super.addWord(word, addFrequency);
-//			final int freq = getWordFrequency(word);
-//			if (freq > PROMOTION_THRESHOLD) {
-//				LIMEService.this.promoteToUserDictionary(word,
-//						FREQUENCY_FOR_AUTO_ADD);
-//			}
-//		}
-//	}
 	
 	
 
@@ -3372,17 +3265,8 @@ public class LIMEService extends InputMethodService implements
 		//jeremy 12,4,21 need to check again---
 		//clearComposing(true); see no need to do this '12,4,21
 		super.onDestroy();
-/*
-		if (SearchSrv != null) {
-			try {
-				this.unbindService(serConn);
-			} catch (Exception e) {
-				Log.i(TAG, "Failed to connect Search Service");
-			}
-		}
-		*/
-	}
 
+	}
 	@Override
 	public void onUpdateCursor(Rect newCursor) {
 		if(DEBUG) 
@@ -3409,16 +3293,11 @@ public class LIMEService extends InputMethodService implements
 		if(mInputView == null) return;
 		if(DEBUG) Log.i(TAG, "updateInputViewShown(): mInputView.isShown(): " + mInputView.isShown());
 		super.updateInputViewShown();
-		if(!mInputView.isShown() && !isPhysicalKeyPressed)
+		//if(!mInputView.isShown() && !isPhysicalKeyPressed)
 			hideCandidateView();
 	}
-	
-	/*
-	 *Art '11,9, 26 auto commit composing
-	 *
-	public void autoCommit(){
-		
-	}*/
+
+
 
 
 }
