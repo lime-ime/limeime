@@ -93,7 +93,7 @@ public class LIMEKeyboardSwitcher {
     private float mKeySizeScale=1;
     
 
-    LIMEKeyboardSwitcher(LIMEService context) {
+    public LIMEKeyboardSwitcher(LIMEService context) {
         mContext = context;
         mLIMEPref = new LIMEPreferenceManager(context);
         mKeyboards = new HashMap<KeyboardId, LIMEKeyboard>();
@@ -101,14 +101,14 @@ public class LIMEKeyboardSwitcher {
         mKeySizeScale = mLIMEPref.getFontSize();
     }
     
-    int getKeyboardSize(){
+    public int getKeyboardSize(){
     	if(kbHm != null){
     		return kbHm.size();
     	}
 		return 0;
     }
     
-    void setKeyboardList(List<KeyboardObj> list){
+    public void setKeyboardList(List<KeyboardObj> list){
     	if(list==null || (list!=null&& list.size()==0)) return; //Jeremy '12,4,10 avoid fc when database is locked.
     	kbHm = new HashMap<String, KeyboardObj>();
     	for(KeyboardObj o : list){
@@ -116,21 +116,21 @@ public class LIMEKeyboardSwitcher {
     	}    	
     }
 
-    String getImKeyboard(String code){
+    public String getImKeyboard(String code){
     	if(imHm != null && imHm.get(code) != null){
     		return imHm.get(code);
     	}
     	return "";
     }
     
-    void setImList(List<ImObj> list){
+    public void setImList(List<ImObj> list){
     	if(list==null || (list!=null&& list.size()==0)) return; //Jeremy '12,4,10 avoid fc when database is locked.
     	imHm = new HashMap<String, String>();  	
     	for(ImObj o : list){
     		imHm.put(o.getCode(), o.getKeyboard());
     	}    	
     }
-    void setActivatedIMList(List<String> codes, List<String> names, List<String> shortnames){
+    public void setActivatedIMList(List<String> codes, List<String> names, List<String> shortnames){
     	if(DEBUG) Log.i(TAG,"setActiveKeyboardList()");
     	
     	if(codes.equals(mActivatedIMList) && shortnames.equals(mActivatedIMShortnameList)) return;
@@ -142,7 +142,7 @@ public class LIMEKeyboardSwitcher {
     	
     }
     
-    List<String> getActivatedIMShortnameList(){
+    public List<String> getActivatedIMShortnameList(){
     	return mActivatedIMShortnameList;
     }
     
@@ -178,18 +178,20 @@ public class LIMEKeyboardSwitcher {
     	return "";
     }
     
-    void setInputView(LIMEKeyboardView inputView) {
+    public void setInputView(LIMEKeyboardView inputView) {
         mInputView = inputView;
     }
     
-    void clearKeyboards(){
+    public void clearKeyboards(){
     	if(DEBUG) Log.i(TAG, "clearkeyboards()");
     	if(mKeyboards != null){
         	mKeyboards.clear();
     	}
     }
     
-    void makeKeyboards(boolean forceCreate) {
+    public void makeKeyboards(boolean forceCreate) {
+    	if(DEBUG)
+    		Log.i(TAG, "makekeyboards(): forcereCreate:" + forceCreate);
         if (forceCreate) mKeyboards.clear();
         // Configuration change is coming after the keyboard gets recreated. So don't rely on that.
         // If keyboards have already been made, check if we have a screen width change and 
@@ -262,7 +264,7 @@ public class LIMEKeyboardSwitcher {
         return result;
     }
     
-    void setKeyboardMode(String code, int mode, int imeOptions, boolean isIm, boolean isSymbol, boolean isShift) {
+    public void setKeyboardMode(String code, int mode, int imeOptions, boolean isIm, boolean isSymbol, boolean isShift) {
     	if(DEBUG){
     		Log.i(TAG,"KBMODE code:"+code);
     		Log.i(TAG,"KBMODE mode:"+mode);
@@ -444,28 +446,28 @@ public class LIMEKeyboardSwitcher {
  
 
 
-    int getKeyboardMode() {
+    public int getKeyboardMode() {
         return mMode;
     }
     
-    boolean isTextMode() {
+    public boolean isTextMode() {
         return mMode == MODE_TEXT;
     }
     
-    int getTextMode() {
+    public int getTextMode() {
         return mTextMode;
     }
     
 
-    int getTextModeCount() {
+    public int getTextModeCount() {
         return MODE_TEXT_COUNT;
     }
 
-    boolean isAlphabetMode() {
+    public boolean isAlphabetMode() {
     	return mIsAlphabet;
     }
 
-    void toggleShift() {
+    public void toggleShift() {
     	if(DEBUG) Log.i("LIMEKeyboardSwicher:toggeleshift()","KBMODE mode:"+mMode);
     	mIsShifted= !mIsShifted;
     	if(mIsChinese)
@@ -476,15 +478,15 @@ public class LIMEKeyboardSwitcher {
 
     }
 
-    void setIsChinese(boolean value){
+    public void setIsChinese(boolean value){
     	mIsChinese = value;
     }
     
-    void setIsSymbols(boolean value){
+    public void setIsSymbols(boolean value){
     	mIsSymbols = value;
     }
     
-   void toggleChinese() {
+    public void toggleChinese() {
 	   mIsChinese = !mIsChinese;
 	   
 	   	if(mIsChinese){
@@ -498,7 +500,7 @@ public class LIMEKeyboardSwitcher {
 		}
     }
     
-    void toggleSymbols() {
+   public void toggleSymbols() {
     	mIsSymbols = !mIsSymbols;
     	mIsShifted = false;
     	if(mIsChinese)
@@ -524,7 +526,7 @@ public class LIMEKeyboardSwitcher {
      * Updates state machine to figure out when to automatically switch back to alpha mode.
      * Returns true if the keyboard needs to switch back 
      */
-    boolean onKey(int key) {
+    public boolean onKey(int key) {
         // Switch back to alpha mode if user types one or more non-space/enter characters
         // followed by a space/enter
         switch (mSymbolsModeState) {
