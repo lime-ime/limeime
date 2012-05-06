@@ -515,6 +515,8 @@ public class LIMEService extends InputMethodService implements
 		//Jeremy '11,8,14
 		if (mComposing != null && mComposing.length() > 0)
 			mComposing.setLength(0);
+		if(templist!=null) 
+			templist.clear();
 		
 		
 		if(forceClearComposing){
@@ -525,8 +527,7 @@ public class LIMEService extends InputMethodService implements
 		firstMatched = null;
 				
 		//hasMappingList = false;
-		if(templist!=null) 
-			templist.clear();
+		
 		clearSuggestions();
 	}
 	/**
@@ -541,8 +542,10 @@ public class LIMEService extends InputMethodService implements
 			
 			//hideCandidateView();
 			if(!mEnglishOnly && mLIMEPref.getAutoChineseSymbol() //Jeremy '12,4,29 use mEnglishOnly instead of onIM 
-					&& hasCandidatesShown )   // Change isCandiateShown() to hasCandiatesShown  	
+					&& hasCandidatesShown ){   // Change isCandiateShown() to hasCandiatesShown
+				mCandidateView.clear();
 				updateChineseSymbol(); // Jeremy '11,9,4
+			}
 			else{
 				hasCandidatesShown = false;
 				mCandidateView.clear();
@@ -587,11 +590,19 @@ public class LIMEService extends InputMethodService implements
 		}
 		
 		
+		
+		
+		
 		/*if(mFixedCandidateViewOn != mLIMEPref.getFixedCandidateViewDisplay()) {
+			requestHideSelf(0);
+			mInputView.closing();
 			initialViewAndSwitcher(true); //jeremy '12,5,4
+			if(DEBUG)
+				Log.i(TAG,"mInputView.parent null :" + ( mInputView.getParent() == null ));
+
 			setInputView(mInputView);
-		}
-		*/
+		}*/
+		
 		hasPhysicalKeyPressed = false;  //Jeremy '11,9,6 reset phsycalkeyflag
 		// Reset the IM softkeyboard settings. Jeremy '11,6,19
 		try {
@@ -764,13 +775,13 @@ public class LIMEService extends InputMethodService implements
 		 */
 		updateShiftKeyState(getCurrentInputEditorInfo());
 		
-		//Jeremy '12,4,23  Force super to call onCreateCandidateView() so as composing popup won't fc. and will be hide in clearComposing
-		if(mCandidateViewStandAlone== null)
-			Log.i(TAG,"candiateViewStandAlone is null");
-		else
-			Log.i(TAG,"isCanddaiteViewStandalone.parent null :" + ( mCandidateViewStandAlone.getParent() == null ));
+		//Jeremy '12,5,6 clear internal composing buffer 
+		if (mComposing != null && mComposing.length() > 0)
+			mComposing.setLength(0);  
+		if(templist!=null) 
+			templist.clear();
 		//initCandidateView(); //Force the oncreatedcandidate to be called   
-		clearComposing(false);
+		//clearComposing(false);
 			
 	}
 
@@ -1058,7 +1069,7 @@ public class LIMEService extends InputMethodService implements
 					return true;
 				}
 				//Jeremy '12,4,8 rewrite the logic here
-				else if(!mEnglishOnly && mCandidateView !=null && hasCandidatesShown //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
+				else if(!mEnglishOnly && hasCandidatesShown //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 						&& ( mComposing.length() > 0 || 
 								(firstMatched != null && firstMatched.isDictionary() &&	!hasChineseSymbolCandidatesShown )
 								) ){
@@ -1069,6 +1080,7 @@ public class LIMEService extends InputMethodService implements
 					return true;
 				}else {
 					//super.setCandidatesViewShown(false);
+					hideCandidateView();
 					if(DEBUG)
 						Log.i(TAG,"KEYCODE_BACK return to super.");
 				}
@@ -2464,10 +2476,12 @@ public class LIMEService extends InputMethodService implements
 	}
 	private void hideCandidateView(){
 		if(DEBUG) Log.i(TAG,"hideCandidateView()");
-		if(mCandidateViewStandAlone==null || (mCandidateViewStandAlone!=null && mCandidateViewStandAlone.isShown()))
+		hasCandidatesShown = false;
+		hasChineseSymbolCandidatesShown = false;
+		if(mCandidateViewStandAlone==null || (mCandidateViewStandAlone!=null && !mCandidateViewStandAlone.isShown()))
 			return;  // escape if mCandidateViewStandAlone is not created or it's not shown '12,5,6, Jeremy 
 		
-		hasChineseSymbolCandidatesShown = false;
+		
 		mHandler.post(mHideCandidateView);
 	}
 
@@ -2561,11 +2575,11 @@ public class LIMEService extends InputMethodService implements
 			//Jeremy '12,4, 21 force clear the last characacter in composing
 			clearComposing(true);
 			//Jeremy '12,4,29 use mEnglishOnly instead of onIM
-		} else if(!mEnglishOnly  // composing length == 0 after here
-				&& mCandidateView !=null && hasCandidatesShown // repalce isCandaiteShwon() with hasCandidatesShwn by Jeremy '12,5,6  
-				&& mLIMEPref.getAutoChineseSymbol()
-				&& !hasChineseSymbolCandidatesShown ){
-			clearComposing(false);  //Jeremy '12,4,21 composing length 0, no need to force commit again. 
+//		} else if(!mEnglishOnly  // composing length == 0 after here
+//				&& mCandidateView !=null && hasCandidatesShown // repalce isCandaiteShwon() with hasCandidatesShwn by Jeremy '12,5,6  
+//				&& mLIMEPref.getAutoChineseSymbol()
+//				&& !hasChineseSymbolCandidatesShown ){
+//			clearComposing(false);  //Jeremy '12,4,21 composing length 0, no need to force commit again. 
 		} else if(!mEnglishOnly 
 				//&& mCandidateView !=null && isCandidateShown() 
 				&& hasCandidatesShown //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
@@ -2586,7 +2600,7 @@ public class LIMEService extends InputMethodService implements
 					}
 					keyDownUp(KeyEvent.KEYCODE_DEL);
 				} else{			
-					clearComposing(false); //Jeremy '12,4,21 composing length 0, no need to force commit again. 
+					//clearComposing(false); //Jeremy '12,4,21 composing length 0, no need to force commit again. 
 					keyDownUp(KeyEvent.KEYCODE_DEL);
 				}
 			} catch (Exception e) {
