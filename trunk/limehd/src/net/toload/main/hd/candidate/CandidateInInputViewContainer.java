@@ -22,6 +22,8 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
     
     public CandidateInInputViewContainer(Context context, AttributeSet attrs) {
         super(context, attrs);
+        if(DEBUG)
+    		Log.i(TAG,"CandidateInInputViewContainer() constructor");
     }
 
     public void initViews() {
