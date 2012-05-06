@@ -98,7 +98,7 @@ public class CandidateView extends View implements View.OnClickListener
     private static final List<Mapping> EMPTY_LIST = new LinkedList<Mapping>();
 
 	
-    protected int mHeight;
+    protected int mHeight = 0;
     private int currentX;
     protected final int mColorNormal;
     protected final int mColorInverted;
@@ -142,7 +142,7 @@ public class CandidateView extends View implements View.OnClickListener
 
     private boolean waitingForMoreRecords = false;
     
-    private Rect padding = null;
+    //private Rect padding = null;
 
     /**
      * Construct a CandidateView for showing suggested words for completion.
@@ -195,7 +195,7 @@ public class CandidateView extends View implements View.OnClickListener
     	mColorOther = r.getColor(R.color.candidate_other);
     	mColorNumber = r.getColor(R.color.candidate_number);
     	mVerticalPadding =(int)( r.getDimensionPixelSize(R.dimen.candidate_vertical_padding)*mLIMEPref.getFontSize());
-    	mHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) *mLIMEPref.getFontSize());
+    	//mHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) *mLIMEPref.getFontSize()); move to UpdateSuggestion by Jeremy '12,5,6
     	mExpandButtonWidth = r.getDimensionPixelSize(R.dimen.candidate_expand_button_width);// *mLIMEPref.getFontSize());
     	
     	mPaint = new Paint();
@@ -366,7 +366,7 @@ public class CandidateView extends View implements View.OnClickListener
 	protected void updateFontSize() {
 		Resources r = mContext.getResources();
 		float scaling = mLIMEPref.getFontSize();
-    	mHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) * scaling);
+    	//mHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) * scaling);
     	//mExpandButtonWidth =(int) ( r.getDimensionPixelSize(R.dimen.candidate_expand_button_width)  * scaling);
     	mVerticalPadding =(int)( r.getDimensionPixelSize(R.dimen.candidate_vertical_padding)* scaling);
     	mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_size)* scaling);
@@ -386,6 +386,8 @@ public class CandidateView extends View implements View.OnClickListener
     	requestLayout();
 	}
 	private void resetWidth() {
+		if(DEBUG)
+			Log.i(TAG,"resetWidth() mHieght:" + mHeight);
 		int candiWidth = mScreenWidth;
 		if(mTotalWidth > mScreenWidth) candiWidth -= mExpandButtonWidth;
 		this.setLayoutParams(new LinearLayout.LayoutParams(
@@ -393,7 +395,7 @@ public class CandidateView extends View implements View.OnClickListener
 	}
     public void doUpdateCandidatePopup(){
     	if(DEBUG) 
-			Log.i(TAG, "doUpdateCandidatePopup()(), creating popup windows");
+			Log.i(TAG, "doUpdateCandidatePopup(), mHeight:" + mHeight);
     	
     	//Jeremy '11,8.27 do vibrate and sound on candidateview expand button pressed.
     	if(!candidateExpanded)
@@ -467,6 +469,11 @@ public class CandidateView extends View implements View.OnClickListener
     	
     	if(!hasRoomForExpanding() ){
     		popHeight =  3 * mHeight + mCloseButtonHeight;
+    		
+    		if(DEBUG)
+    			Log.i(TAG, "doUpdateCandidatePopup(), " +
+    					"no enough room for expanded view, expand self first. newHeigh:" + popHeight);
+    		
     		if(mPopupCandidateView.getMeasuredHeight()+mCloseButtonHeight < popHeight)
         		popHeight = mPopupCandidateView.getMeasuredHeight()+ mCloseButtonHeight;
     		this.setLayoutParams(
@@ -474,12 +481,12 @@ public class CandidateView extends View implements View.OnClickListener
     	}
     	
     	if(DEBUG)
-        	Log.i(TAG, "showCandidatePopup(), mHeight=" + mHeight 
+        	Log.i(TAG, "doUpdateCandidatePopup(), mHeight=" + mHeight 
+        			+ ", getHeight()" + getHeight()
         			+ ", offsetOnScreen[1] = " + offsetOnScreen[1]
         			+ ", popHeight = " + popHeight   
         			+ ", CandidateExpandedView.measureHeight" + mPopupCandidateView.getMeasuredHeight()
     				+ ", btnClose.getMeasuredHeight() = " +	mCloseButtonHeight
-    				//+ ", upperExpand:" + upperExpand
     				);
     	
       
@@ -495,14 +502,18 @@ public class CandidateView extends View implements View.OnClickListener
     			,(int) popHeight- mCloseButtonHeight));
     	
     	
-    	if(mCandidatePopup.isShowing())
-    		mCandidatePopup.update(0, 0, mScreenWidth, popHeight );
+    	if(mCandidatePopup.isShowing()){
+    		if(DEBUG)
+    			Log.i(TAG,"doUpdateCandidatePopup(),mCandidatePopup.isShowing ");
+    		//mCandidatePopup.update(0, -getHeight(), mScreenWidth, popHeight );
+    		mCandidatePopup.update(this, mScreenWidth, popHeight );
+    	}
     	else{
     		mCandidatePopup.setWidth(mScreenWidth);
         	mCandidatePopup.setHeight(popHeight);
-    		mCandidatePopup.showAsDropDown(this, 0, -getHeight());
-    		mPopupScrollView.scrollTo(0, 0);
+    		mCandidatePopup.showAsDropDown(this, 0,  -getHeight());
     		//mCandidatePopup.showAtLocation(this, Gravity.NO_GRAVITY, 0, 0);
+    		mPopupScrollView.scrollTo(0, 0);
     	}
     
 
@@ -681,15 +692,17 @@ public class CandidateView extends View implements View.OnClickListener
     
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    	if(DEBUG)
+    		Log.i(TAG,"onMeasure()");
         int measuredWidth = resolveSize(mTotalWidth, widthMeasureSpec);
         
         // Get the desired height of the icon menu view (last row of items does
         // not have a divider below)
-        if(padding == null) padding = new Rect();
-        mSelectionHighlight.getPadding(padding);
+        //if(padding == null) padding = new Rect();
+        //mSelectionHighlight.getPadding(padding);
         //final int desiredHeight = ((int)mPaint.getTextSize()) + mVerticalPadding
                 //+ padding.top + padding.bottom;
-        final int desiredHeight = ((int)mPaint.getTextSize());
+        final int desiredHeight = mHeight;//((int)mPaint.getTextSize());
         
         // Maximum possible width and desired height
         setMeasuredDimension(measuredWidth,
@@ -767,8 +780,8 @@ public class CandidateView extends View implements View.OnClickListener
         	
         	for (int i = 0; i < count; i++) {
         		if(count!=mCount || mSuggestions.size()==0) break;
-        		if(DEBUG)
-        			Log.i(TAG, "Candidateview:OnDraw():i:" + i + "  Drawing:" + mSuggestions.get(i).getWord() );
+        		//if(DEBUG)
+        		//	Log.i(TAG, "Candidateview:OnDraw():i:" + i + "  Drawing:" + mSuggestions.get(i).getWord() );
         		
         	
                 //if ((i == 1 && !typedWordValid) || (i == 0 && typedWordValid)) {
@@ -861,6 +874,10 @@ public class CandidateView extends View implements View.OnClickListener
     public synchronized void setSuggestions(List<Mapping> suggestions, boolean showNumber, boolean typedWordValid) {
         //clear();
     	//Jeremy '11,8,14 moved from clear();
+    	if(DEBUG)
+    		Log.i(TAG,"setSuggestions()");
+    	Resources res = mContext.getResources();
+    	mHeight = (int) (res.getDimensionPixelSize(R.dimen.candidate_stripe_height) *mLIMEPref.getFontSize()); //move from constructor by Jeremy '12,5,6
     	currentX = 0;
         mTouchX = OUT_OF_BOUNDS;
         mCount =0;
@@ -873,9 +890,9 @@ public class CandidateView extends View implements View.OnClickListener
         mShowNumber = showNumber && isAndroid3;  
         
         if(mShowNumber)
-        	X_GAP = (int) (mContext.getResources().getDimensionPixelSize(R.dimen.candidate_font_size)*0.35f);//13;
+        	X_GAP = (int) (res.getDimensionPixelSize(R.dimen.candidate_font_size)*0.35f);//13;
         else 
-        	X_GAP = (int) (mContext.getResources().getDimensionPixelSize(R.dimen.candidate_font_size)*0.25f);;
+        	X_GAP = (int) (res.getDimensionPixelSize(R.dimen.candidate_font_size)*0.25f);;
     
         if (suggestions != null) {
             mSuggestions = new LinkedList<Mapping>(suggestions);    
@@ -945,7 +962,7 @@ public class CandidateView extends View implements View.OnClickListener
 
     public void clear() {
     	if(DEBUG) Log.i(TAG, "clear()");
-    	
+    	mHeight =0; //Jeremy '12,5,6 hide candidate bar when candidateview is fixed.
     	mSuggestions = EMPTY_LIST;
         // Jeremy 11,8,14 close all popup on clear
         setComposingText("");

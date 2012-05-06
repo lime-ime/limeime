@@ -485,7 +485,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	private void finishComposing(){
 		if(DEBUG)
-			Log.i(TAG,"clearComposing()");
+			Log.i(TAG,"finishComposing()");
 		//Jeremy '11,8,14
 		if (mComposing != null && mComposing.length() > 0)
 			mComposing.setLength(0);
@@ -498,7 +498,10 @@ public class LIMEService extends InputMethodService implements
 		//hasMappingList = false;
 		if(templist!=null) 
 			templist.clear();
-		clearSuggestions();
+		//clearSuggestions();
+		hasCandidatesShown = false;
+		mCandidateView.clear();
+		hideCandidateView();
 	}
 	/**
 	 * add by Jeremy '12,4,21
@@ -2572,16 +2575,15 @@ public class LIMEService extends InputMethodService implements
 			mComposing.delete(length - 1, length);
 			if(ic!=null) ic.setComposingText(mComposing, 1);
 			updateCandidates();
-		} else if (length == 1) {
-			
+		} else if (length == 1) {			
 			//Jeremy '12,4, 21 force clear the last characacter in composing
 			clearComposing(true);
 			//Jeremy '12,4,29 use mEnglishOnly instead of onIM
-//		} else if(!mEnglishOnly  // composing length == 0 after here
-//				&& mCandidateView !=null && hasCandidatesShown // repalce isCandaiteShwon() with hasCandidatesShwn by Jeremy '12,5,6  
-//				&& mLIMEPref.getAutoChineseSymbol()
-//				&& !hasChineseSymbolCandidatesShown ){
-//			clearComposing(false);  //Jeremy '12,4,21 composing length 0, no need to force commit again. 
+		} else if(!mEnglishOnly  // composing length == 0 after here
+				&& hasCandidatesShown // repalce isCandaiteShwon() with hasCandidatesShwn by Jeremy '12,5,6  
+				&& mLIMEPref.getAutoChineseSymbol()
+				&& !hasChineseSymbolCandidatesShown ){
+			clearComposing(false);  //Jeremy '12,4,21 composing length 0, no need to force commit again. 
 		} else if(!mEnglishOnly 
 				//&& mCandidateView !=null && isCandidateShown() 
 				&& hasCandidatesShown //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
