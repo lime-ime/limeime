@@ -592,16 +592,18 @@ public class LIMEService extends InputMethodService implements
 		
 		
 		
-		
-		/*if(mFixedCandidateViewOn != mLIMEPref.getFixedCandidateViewDisplay()) {
+		 //jeremy '12,5,6 recreate inputview if fixedCandidateView setting is altered
+		if(mFixedCandidateViewOn != mLIMEPref.getFixedCandidateViewDisplay()) {
 			requestHideSelf(0);
 			mInputView.closing();
-			initialViewAndSwitcher(true); //jeremy '12,5,4
-			if(DEBUG)
-				Log.i(TAG,"mInputView.parent null :" + ( mInputView.getParent() == null ));
-
-			setInputView(mInputView);
-		}*/
+			initialViewAndSwitcher(true);
+			if(mFixedCandidateViewOn){
+				if(DEBUG)
+					Log.i(TAG, "Fixed candiateView in on, return nInputViewContainer ");
+				setInputView(mInputViewContainer);
+			}else
+				setInputView(mInputView);
+		}
 		
 		hasPhysicalKeyPressed = false;  //Jeremy '11,9,6 reset phsycalkeyflag
 		// Reset the IM softkeyboard settings. Jeremy '11,6,19
@@ -2730,11 +2732,9 @@ public class LIMEService extends InputMethodService implements
 			//Create inputView if it's null 
 			if (mInputViewContainer == null  || forceRecreate //|| mLIMEPref.getFixedCandidateViewDisplay()!=mFixedCandidateViewOn 
 					) {
-				
 				mInputViewContainer = (CandidateInInputViewContainer) getLayoutInflater().inflate(
 						R.layout.inputcandidate, null);
-
-				mInputView = (LIMEKeyboardView) mInputViewContainer.findViewById(R.id.keyboard);
+								mInputView = (LIMEKeyboardView) mInputViewContainer.findViewById(R.id.keyboard);
 				mInputView.setOnKeyboardActionListener(this);
 				hasDistinctMultitouch = mInputView.hasDistinctMultitouch();
 				mInputViewContainer.initViews();
@@ -2750,6 +2750,7 @@ public class LIMEService extends InputMethodService implements
 				mInputView = (LIMEKeyboardView) getLayoutInflater().inflate(
 						R.layout.input, null);
 				mInputView.setOnKeyboardActionListener(this);
+				
 				
 			}
 			mCandidateView = mCandidateViewStandAlone;
