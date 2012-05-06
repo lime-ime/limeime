@@ -2,6 +2,7 @@ package net.toload.main.hd.candidate;
 
 import java.util.List;
 
+import net.toload.main.hd.R;
 import net.toload.main.hd.global.Mapping;
 
 import android.content.Context;
@@ -34,6 +35,7 @@ public class CandidateExpandedView extends CandidateView {
 	private int[] mRowSize = new int[MAX_SUGGESTIONS];
 	private int[] mRowStartingIndex = new int[MAX_SUGGESTIONS];
 	private int mRows=0;
+	private int mHeight; // built own mHeight and get from resources.
 	private int mTotalHeight;
 	private ScrollView mParentScroolView;
 
@@ -42,6 +44,8 @@ public class CandidateExpandedView extends CandidateView {
 		//this.mGestureDetector = null;
 		//mVerticalPadding =(int)( context.getResources()
 		//		.getDimensionPixelSize(R.dimen.candidate_vertical_padding) *mLIMEPref.getFontSize());
+		mHeight = (int) (context.getResources().
+				getDimensionPixelSize(R.dimen.candidate_stripe_height) *mLIMEPref.getFontSize()); 
 	
     	
 	}
@@ -84,7 +88,7 @@ public class CandidateExpandedView extends CandidateView {
     		Log.i(TAG, "OnDraw():mBgPadding.Top=" + mBgPadding.top 
 				+", mBgPadding.Right=" + mBgPadding.right);
         
-        final int height = mCandidateView.mHeight;
+        final int height = mHeight;
         final Rect bgPadding = mBgPadding;
         final Paint paint = mPaint;
         final Paint npaint = nPaint;
@@ -151,8 +155,8 @@ public class CandidateExpandedView extends CandidateView {
         			String suggestion = mSuggestions.get(index).getWord();
         			index++;
         			
-        			if(DEBUG)
-        				Log.i(TAG, "Candidateview:OnDraw():index:" + index + "  Drawing:" + suggestion );
+        			//if(DEBUG)
+        			//	Log.i(TAG, "Candidateview:OnDraw():index:" + index + "  Drawing:" + suggestion );
 
         			if(mSuggestions.get(i).isDictionary()){
         				//npaint.setColor(mColorRecommended);
@@ -192,6 +196,8 @@ public class CandidateExpandedView extends CandidateView {
 	
 	public void prepareLayout()
 	{	
+		if(DEBUG)
+			Log.i(TAG, "prepareLayout()");
 		
 		if(mSuggestions == null || mSuggestions.size()==0) return;
 			
@@ -209,8 +215,8 @@ public class CandidateExpandedView extends CandidateView {
 		
 		final int count = mCount;
 		for (int i = 0; i < count; i++) {
-			if(DEBUG)
-				Log.i(TAG, "prepareLayout():updating:" + i +", indexInRox=" + indexInRow );
+			//if(DEBUG)
+			//	Log.i(TAG, "prepareLayout():updating:" + i +", indexInRox=" + indexInRow );
 
 			String suggestion = mSuggestions.get(i).getWord();
 			float textWidth = paint.measureText(suggestion);
