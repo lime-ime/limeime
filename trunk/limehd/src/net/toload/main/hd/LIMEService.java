@@ -149,7 +149,7 @@ public class LIMEService extends InputMethodService implements
 	private StringBuffer tempEnglishWord;
 	private List<Mapping> tempEnglishList;
 
-	private boolean isPhysicalKeyPressed;
+	private boolean hasPhysicalKeyPressed;
 
 	//private String mWordSeparators;
 	private String misMatched;
@@ -244,7 +244,8 @@ public class LIMEService extends InputMethodService implements
 
 	private LIMEPreferenceManager mLIMEPref;
 	
-	private boolean isChineseSymbolSuggestionsShowing= false;
+	private boolean hasChineseSymbolCandidatesShown= false;
+	private boolean hasCandidatesShown = false;
 
 	
 	
@@ -535,17 +536,18 @@ public class LIMEService extends InputMethodService implements
 		if(mCandidateView !=null){
 			if(DEBUG) 
 				Log.i(TAG, "clearSuggestions(): " 
-					+ ", isCandidateShown():" + isCandidateShown());
+					+ ", hasCandidatesShown:" + hasCandidatesShown);
 			
-			mCandidateView.clear();
+			
 			//hideCandidateView();
 			if(!mEnglishOnly && mLIMEPref.getAutoChineseSymbol() //Jeremy '12,4,29 use mEnglishOnly instead of onIM 
-					&& (mFixedCandidateViewOn || isCandidateShown() ))   //Jeremy '11,5,4 add processcing for fixecanddiate in inputview  	
-					
-					 
+					&& hasCandidatesShown )   // Change isCandiateShown() to hasCandiatesShown  	
 				updateChineseSymbol(); // Jeremy '11,9,4
-			else
+			else{
+				hasCandidatesShown = false;
+				mCandidateView.clear();
 				hideCandidateView();
+			}
 				
 		}
 	}
@@ -578,7 +580,8 @@ public class LIMEService extends InputMethodService implements
 	private void initOnStartInput(EditorInfo attribute, boolean restarting) {
 	
 		if (DEBUG)
-			Log.i(TAG, "initOnStartInput");
+			Log.i(TAG, "initOnStartInput(): attribute.inputType & EditorInfo.TYPE_MASK_CLASS: " 
+					+ (attribute.inputType & EditorInfo.TYPE_MASK_CLASS) );
 		if (mInputView == null) {
 			return;
 		}
@@ -589,7 +592,7 @@ public class LIMEService extends InputMethodService implements
 			setInputView(mInputView);
 		}
 		*/
-		isPhysicalKeyPressed = false;  //Jeremy '11,9,6 reset phsycalkeyflag
+		hasPhysicalKeyPressed = false;  //Jeremy '11,9,6 reset phsycalkeyflag
 		// Reset the IM softkeyboard settings. Jeremy '11,6,19
 		try {
 			mKeyboardSwitcher.setImList(SearchSrv.getImList());
@@ -629,19 +632,19 @@ public class LIMEService extends InputMethodService implements
 		//onIM = true; //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 
 		switch (attribute.inputType & EditorInfo.TYPE_MASK_CLASS) {
-		case EditorInfo.TYPE_CLASS_NUMBER:
-		case EditorInfo.TYPE_CLASS_DATETIME:
+		case EditorInfo.TYPE_CLASS_NUMBER:  //0x02
+		case EditorInfo.TYPE_CLASS_DATETIME: //0x04
 			mEnglishOnly = true;
 			//onIM = false; //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 			mKeyboardSwitcher.setKeyboardMode(activeIM, LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, false, true, false);
 			break;
-		case EditorInfo.TYPE_CLASS_PHONE:
+		case EditorInfo.TYPE_CLASS_PHONE: //0x03
 			mEnglishOnly = true;
 			//onIM = false; //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 			mKeyboardSwitcher.setKeyboardMode(activeIM,
 					LIMEKeyboardSwitcher.MODE_PHONE, mImeOptions, false, false, false);
 			break;
-		case EditorInfo.TYPE_CLASS_TEXT:
+		case EditorInfo.TYPE_CLASS_TEXT: //0x01
 
 			// Make sure that passwords are not displayed in candidate view
 			int variation = attribute.inputType
@@ -682,12 +685,14 @@ public class LIMEService extends InputMethodService implements
 				//onIM = false;//Jeremy '12,4,29 use mEnglishOnly instead of onIM
 				mKeyboardSwitcher.setKeyboardMode(activeIM, LIMEKeyboardSwitcher.MODE_EMAIL,
 									mImeOptions, false, false, false);
+				break;
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS) {
 				mEnglishOnly = true;
 				//onIM = false; //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 				mPredictionOn = false;
 				mKeyboardSwitcher.setKeyboardMode(activeIM,
 						LIMEKeyboardSwitcher.MODE_EMAIL, mImeOptions, false, false, false);
+				break;
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_URI) {
 				mPredictionOn = false;
 				mEnglishOnly = true;
@@ -695,11 +700,13 @@ public class LIMEService extends InputMethodService implements
 				//isModeURL = true;
 				mKeyboardSwitcher.setKeyboardMode(activeIM,
 						LIMEKeyboardSwitcher.MODE_URL, mImeOptions, false, false, false);
+				break;
 			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_SHORT_MESSAGE) {
 				mEnglishOnly = false;
 				mKeyboardSwitcher.setKeyboardMode(activeIM, LIMEKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
-			
-			} else { 
+				break;
+			} else {} //no break in else do what should do in default:
+			/*{ 
 				if(mPersistentLanguageMode)
 					mEnglishOnly = mLIMEPref.getLanguageMode(); //Jeremy '12,4,30 restore lanaguage mode from preference.
 				
@@ -719,11 +726,27 @@ public class LIMEService extends InputMethodService implements
 			}
 
 			// updateShiftKeyState(attribute);
-			break;
+			break;*/
 		default:
+			if(mPersistentLanguageMode)
+				mEnglishOnly = mLIMEPref.getLanguageMode(); //Jeremy '12,4,30 restore lanaguage mode from preference.
+			
+			if(mPersistentLanguageMode && mEnglishOnly){
+	        	mPredictionOn = true;
+	        	mEnglishOnly = true;
+		        //onIM = false; //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+		        mKeyboardSwitcher.setKeyboardMode(activeIM, LIMEKeyboardSwitcher.MODE_TEXT,	
+		        		mImeOptions, false, false, false);
+	        	
+			} else{
+				mEnglishOnly = false;
+				//mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	
+		    	//	mImeOptions, true, false, false);
+				initialIMKeyboard();  //'12,4,29 intial chinese IM keybaord
+			}
 			// mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT,
 			// attribute.imeOptions);
-			updateShiftKeyState(attribute);
+			//updateShiftKeyState(attribute);
 		}
 
 		mInputView.closing();
@@ -865,7 +888,7 @@ public class LIMEService extends InputMethodService implements
 		// keyCode, event);
 		// mMetaState =
 		// LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
-		isPhysicalKeyPressed = true; // Jeremy '11,9,5
+		hasPhysicalKeyPressed = true; // Jeremy '11,9,5
 		
 		int c = event.getUnicodeChar(LIMEMetaKeyKeyListener
 				.getMetaState(mMetaState));
@@ -935,7 +958,7 @@ public class LIMEService extends InputMethodService implements
 					+ ", event.getEventTime()"+ event.getEventTime()
 					+ ", event.getRepeatCount()" + event.getRepeatCount());
 		
-		// Force To Close VKeyboard
+		// Force closing VKeyboard
 		if(mInputView.isShown()){
 			mInputView.closing();
 		}
@@ -969,14 +992,14 @@ public class LIMEService extends InputMethodService implements
 		// Add by Jeremy '10, 3, 29. DPAD selection on candidate view
 		case KeyEvent.KEYCODE_DPAD_RIGHT:
 			// Log.i("ART","select:"+1);
-			if (mCandidateView != null && isCandidateShown()) {
+			if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 				mCandidateView.selectNext();
 				return true;
 			}
 			break;
 		case KeyEvent.KEYCODE_DPAD_LEFT:
 			// Log.i("ART","select:"+2);
-			if (mCandidateView != null && isCandidateShown()) {
+			if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 				mCandidateView.selectPrev();
 				return true;
 			}
@@ -984,21 +1007,21 @@ public class LIMEService extends InputMethodService implements
 		//Jeremy '11,8,28 for expanded canddiateviewi
 		case KeyEvent.KEYCODE_DPAD_UP:
 			// Log.i("ART","select:"+2);
-			if (mCandidateView != null && isCandidateShown()) {
+			if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 				mCandidateView.selectPrevRow();
 				return true;
 			}
 			break;
 		case KeyEvent.KEYCODE_DPAD_DOWN:
 			// Log.i("ART","select:"+2);
-			if (mCandidateView != null && isCandidateShown()) {
+			if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 				mCandidateView.selectNextRow();
 				return true;
 			}
 			break;
 		case KeyEvent.KEYCODE_DPAD_CENTER:
 			// Log.i("ART","select:"+3);
-			if (mCandidateView != null && isCandidateShown()) {
+			if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 				mCandidateView.takeSelectedSuggestion();
 				return true;
 			}
@@ -1035,17 +1058,17 @@ public class LIMEService extends InputMethodService implements
 					return true;
 				}
 				//Jeremy '12,4,8 rewrite the logic here
-				else if(!mEnglishOnly && mCandidateView !=null && isCandidateShown() //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+				else if(!mEnglishOnly && mCandidateView !=null && hasCandidatesShown //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 						&& ( mComposing.length() > 0 || 
-						(firstMatched != null && firstMatched.isDictionary() &&	!isChineseSymbolSuggestionsShowing )
-						) ){
+								(firstMatched != null && firstMatched.isDictionary() &&	!hasChineseSymbolCandidatesShown )
+								) ){
 					if(DEBUG)
 						Log.i(TAG,"KEYCODE_BACK clearcomposing only.");
 					//Jeremy 12,4,21 -- need to check again
 					finishComposing();
 					return true;
 				}else {
-					super.setCandidatesViewShown(false);
+					//super.setCandidatesViewShown(false);
 					if(DEBUG)
 						Log.i(TAG,"KEYCODE_BACK return to super.");
 				}
@@ -1086,7 +1109,7 @@ public class LIMEService extends InputMethodService implements
 			// return false;
 			// Log.i("ART", "physical keyboard:"+ keyCode);
 			if(!mEnglishOnly){ //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-				if (mCandidateView != null && isCandidateShown()) {
+				if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 				// To block a real enter after suggestion selection. We have to
 				// return true in OnKeyUp();					
 					if( mCandidateView.takeSelectedSuggestion()){
@@ -1134,7 +1157,7 @@ public class LIMEService extends InputMethodService implements
 			} else {
 				if (!mEnglishOnly) { // //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 					
-					if (mCandidateView != null && isCandidateShown()) {
+					if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 						if (mCandidateView.takeSelectedSuggestion()) {
 							return true;
 						} else {
@@ -1729,7 +1752,7 @@ public class LIMEService extends InputMethodService implements
 			if (!Character.isLetter(primaryCode) && mEnglishOnly) {
 				
 				//Jeremy '11,6,10. Select english sugestion with shift+123457890
-				if (isPhysicalKeyPressed &&(mCandidateView != null && isCandidateShown()) ){
+				if (hasPhysicalKeyPressed &&(mCandidateView != null && hasCandidatesShown)){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 					if(handleSelkey(primaryCode, keyCodes))		{
 						return;
 					}
@@ -1752,7 +1775,7 @@ public class LIMEService extends InputMethodService implements
 			handleBackspace();
 		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT) {
 			if (DEBUG) 	Log.i(TAG, "OnKey():KEYCODE_SHIFT");
-			if(!(!isPhysicalKeyPressed && hasDistinctMultitouch))
+			if(!(!hasPhysicalKeyPressed && hasDistinctMultitouch))
 				handleShift();
 		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_CANCEL) {
 			handleClose();
@@ -1783,7 +1806,7 @@ public class LIMEService extends InputMethodService implements
 						activeIM.equals("phonetic") && (mComposing.toString().endsWith(" ")|| mComposing.length()==0 ))
 				|| primaryCode == MY_KEYCODE_ENTER) ){
 			
-			if ( mCandidateView != null && isCandidateShown()){ 
+			if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 				boolean nullComposing = false;
 				if(mComposing.length() == 0){
 					nullComposing = true;
@@ -1820,7 +1843,7 @@ public class LIMEService extends InputMethodService implements
 
 	private void handleSeparator(int primaryCode) {
 		if (mLIMEPref.getEnglishPrediction() && mPredictionOn
-				&& ( !isPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())){
+				&& ( !hasPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())){
 			resetTempEnglishWord();
 		}
 		this.updateEnglishPrediction();
@@ -2159,17 +2182,17 @@ public class LIMEService extends InputMethodService implements
 	
 	private void updateChineseSymbol(){
 		//ChineseSymbol chineseSym = new ChineseSymbol();
-		isChineseSymbolSuggestionsShowing =true;
+		hasChineseSymbolCandidatesShown =true;
 		List<Mapping> list = ChineseSymbol.getChineseSymoblList();
 		if (list.size() > 0) {
 
 			// Setup sel key display if 
 			String selkey = "1234567890";
-			if(disable_physical_selection && isPhysicalKeyPressed){
+			if(disable_physical_selection && hasPhysicalKeyPressed){
 				selkey = "";
 			}
 			
-			setSuggestions(list, isPhysicalKeyPressed, true, selkey);
+			setSuggestions(list, hasPhysicalKeyPressed, true, selkey);
 			
 			if(DEBUG) Log.i(TAG, "updateChineseSymbol():"
 									+ "list.size:"+list.size());
@@ -2186,7 +2209,7 @@ public class LIMEService extends InputMethodService implements
 		
 		if(DEBUG) Log.i(TAG,"updateCandidate():Update Candidate mComposing:"+ mComposing);
 		
-		isChineseSymbolSuggestionsShowing = false;
+		hasChineseSymbolCandidatesShown = false;
 		
 		if (mComposing.length() > 0) {
 			
@@ -2208,7 +2231,7 @@ public class LIMEService extends InputMethodService implements
 					}
 				}
 				
-				list.addAll(SearchSrv.query(keyString, !isPhysicalKeyPressed, getAllRecords));				
+				list.addAll(SearchSrv.query(keyString, !hasPhysicalKeyPressed, getAllRecords));				
 				//Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
 				if (list.size() > 0) {
 					String selkey=SearchSrv.getSelkey();
@@ -2225,11 +2248,11 @@ public class LIMEService extends InputMethodService implements
 					else if (selkeyOption ==2) 	selkey = mixedModeSelkey + " " +selkey;
 					
 					// Setup sel key display if 
-					if(disable_physical_selection && isPhysicalKeyPressed){
+					if(disable_physical_selection && hasPhysicalKeyPressed){
 						selkey = "";
 					}
 					
-					setSuggestions(list, isPhysicalKeyPressed, true, selkey);
+					setSuggestions(list, hasPhysicalKeyPressed, true, selkey);
 					
 					if(DEBUG) Log.i(TAG, "updateCandidates(): display selkey:" + selkey 
 											+ "list.size:"+list.size());
@@ -2267,7 +2290,7 @@ public class LIMEService extends InputMethodService implements
 	 * Update English dictionary view
 	 */
 	private void updateEnglishPrediction() {
-		isChineseSymbolSuggestionsShowing = false;
+		hasChineseSymbolCandidatesShown = false;
 		if (mPredictionOn && mLIMEPref.getEnglishPrediction()) {
 
 			try {
@@ -2329,11 +2352,11 @@ public class LIMEService extends InputMethodService implements
 							
 							// Setup sel key display if 
 							String selkey = "1234567890";
-							if(disable_physical_selection && isPhysicalKeyPressed){
+							if(disable_physical_selection && hasPhysicalKeyPressed){
 								selkey = "";
 							}
 							
-							setSuggestions(list, isPhysicalKeyPressed 
+							setSuggestions(list, hasPhysicalKeyPressed 
 									, true, selkey);
 							tempEnglishList.addAll(list);
 						} else {
@@ -2354,7 +2377,7 @@ public class LIMEService extends InputMethodService implements
 	 * Update dictionary view
 	 */
 	private void updateRelatedWord() {
-		isChineseSymbolSuggestionsShowing = false;
+		hasChineseSymbolCandidatesShown = false;
 		// Also use this to control whether need to display the english
 		// suggestions words.
 
@@ -2383,11 +2406,11 @@ public class LIMEService extends InputMethodService implements
 
 					// Setup sel key display if 
 					String selkey = "1234567890";
-					if(disable_physical_selection && isPhysicalKeyPressed){
+					if(disable_physical_selection && hasPhysicalKeyPressed){
 						selkey = "";
 					}
 					
-					setSuggestions(list, isPhysicalKeyPressed  && !isFullscreenMode()
+					setSuggestions(list, hasPhysicalKeyPressed  && !isFullscreenMode()
 							, true, selkey);
 				} else {
 					tempMatched = null;
@@ -2441,10 +2464,10 @@ public class LIMEService extends InputMethodService implements
 	}
 	private void hideCandidateView(){
 		if(DEBUG) Log.i(TAG,"hideCandidateView()");
-		if(!isCandidateShown())
-			return;  // escape if mCandidateView is not created '11,11,30 Jeremy
+		if(mCandidateViewStandAlone==null || (mCandidateViewStandAlone!=null && mCandidateViewStandAlone.isShown()))
+			return;  // escape if mCandidateViewStandAlone is not created or it's not shown '12,5,6, Jeremy 
 		
-		isChineseSymbolSuggestionsShowing = false;
+		hasChineseSymbolCandidatesShown = false;
 		mHandler.post(mHideCandidateView);
 	}
 
@@ -2473,13 +2496,17 @@ public class LIMEService extends InputMethodService implements
 	public void setSuggestions(List<Mapping> suggestions, boolean showNumber,
 			boolean typedWordValid, String diplaySelkey){
 		if (suggestions != null && suggestions.size() > 0) {
-			if(DEBUG) Log.i(TAG, "setSuggestion():suggestions.size="+ suggestions.size());
+			if(DEBUG) Log.i(TAG, "setSuggestion():suggestions.size="+ suggestions.size()
+					+ " mFixedCandidateViewOn:" + mFixedCandidateViewOn
+					+ " hasPhysicalKeyPressed:" + hasPhysicalKeyPressed
+					);
 			
-			if(!mFixedCandidateViewOn || (mFixedCandidateViewOn && isPhysicalKeyPressed ) ) //Jeremy '12,5,4
+			hasCandidatesShown = true; //Jeremy '12,5,6 to replace deprecated isCandidateShown()
+			if(!mFixedCandidateViewOn || (mFixedCandidateViewOn && hasPhysicalKeyPressed ) ) //Jeremy '12,5,4
 				showCandidateView();
-			if((!mFixedCandidateViewOn||(mFixedCandidateViewOn && isPhysicalKeyPressed) )
-					&& mCandidateView != mCandidateViewStandAlone )
-				mCandidateView = mCandidateViewStandAlone;
+			if((!mFixedCandidateViewOn||(mFixedCandidateViewOn && hasPhysicalKeyPressed) )
+					&& mCandidateView != mCandidateViewStandAlone ) 
+				mCandidateView = mCandidateViewStandAlone; //Jeremy '12,5,4 use standalone candidateView for physical keyboard (no soft keyboard shown)
 			
 			hasMappingList = true;
 
@@ -2511,7 +2538,7 @@ public class LIMEService extends InputMethodService implements
 	}
 	
 	
-
+	@Deprecated //deprecated by Jeremy '12,5,6. Replace with hasCandaitesShown 
 	private boolean isCandidateShown(){
 		if(mCandidateViewStandAlone==null) {
 			if(DEBUG)
@@ -2535,13 +2562,14 @@ public class LIMEService extends InputMethodService implements
 			clearComposing(true);
 			//Jeremy '12,4,29 use mEnglishOnly instead of onIM
 		} else if(!mEnglishOnly  // composing length == 0 after here
-				&& mCandidateView !=null && isCandidateShown()  
+				&& mCandidateView !=null && hasCandidatesShown // repalce isCandaiteShwon() with hasCandidatesShwn by Jeremy '12,5,6  
 				&& mLIMEPref.getAutoChineseSymbol()
-				&& !isChineseSymbolSuggestionsShowing ){
+				&& !hasChineseSymbolCandidatesShown ){
 			clearComposing(false);  //Jeremy '12,4,21 composing length 0, no need to force commit again. 
 		} else if(!mEnglishOnly 
-				&& mCandidateView !=null && isCandidateShown()
-				   && !mFixedCandidateViewOn //Jeremy '12,5,4
+				//&& mCandidateView !=null && isCandidateShown() 
+				&& hasCandidatesShown //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
+				&& !mFixedCandidateViewOn //Jeremy '12,5,4
 				){
 			hideCandidateView();  //Jeremy '11,9,8
 		} else {
@@ -2549,7 +2577,7 @@ public class LIMEService extends InputMethodService implements
 			//clearSuggestions();
 			try {
 				if (mEnglishOnly && mLIMEPref.getEnglishPrediction()&& mPredictionOn
-					&& ( !isPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard() )//mPredictionOnPhysicalKeyboard)
+					&& ( !hasPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard() )//mPredictionOnPhysicalKeyboard)
 					) {
 					if (tempEnglishWord != null && tempEnglishWord.length() > 0) {
 						tempEnglishWord
@@ -2557,8 +2585,7 @@ public class LIMEService extends InputMethodService implements
 						updateEnglishPrediction();
 					}
 					keyDownUp(KeyEvent.KEYCODE_DEL);
-				} else{
-				
+				} else{			
 					clearComposing(false); //Jeremy '12,4,21 composing length 0, no need to force commit again. 
 					keyDownUp(KeyEvent.KEYCODE_DEL);
 				}
@@ -2579,7 +2606,7 @@ public class LIMEService extends InputMethodService implements
 			super.setCandidatesViewShown(false);
 		
 		if(DEBUG)
-			Log.i(TAG, "isCandidateViewShown:" +isCandidateShown());
+			Log.i(TAG, "isCandidateViewShown:" + mCandidateViewStandAlone.isShown());
 		
 	}
 	
@@ -2815,7 +2842,7 @@ public class LIMEService extends InputMethodService implements
 		// Jeremy '12,4,1 only do selkey on starndard keyboard
 		
 		// Check if disable physical key option is open
-		if((disable_physical_selection && isPhysicalKeyPressed) || !mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")){
+		if((disable_physical_selection && hasPhysicalKeyPressed) || !mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")){
 			return false;
 		}
 		
@@ -2864,7 +2891,7 @@ public class LIMEService extends InputMethodService implements
 			Log.i(TAG,"handleCharacter():primaryCode:" + primaryCode ); //+ "; keyCodes[0]:"+keyCodes[0]);
 
 		// Adjust metakeystate on printed key pressed.
-		if(isPhysicalKeyPressed)
+		if(hasPhysicalKeyPressed)
 			mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 		
 		// Caculate key press time to handle Eazy IM keys mapping
@@ -2892,7 +2919,7 @@ public class LIMEService extends InputMethodService implements
 		
 		//Jeremy '11,6,6 processing physical keyboard selkeys.
 		//Move here '11,6,9 to have lower priority than hasnumbermapping
-		if (isPhysicalKeyPressed && (mCandidateView != null && isCandidateShown())) {
+		if (hasPhysicalKeyPressed && (mCandidateView != null && hasCandidatesShown)){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 			if(handleSelkey(primaryCode, keyCodes))		{
 				updateShiftKeyState(getCurrentInputEditorInfo());
 				return;
@@ -3011,7 +3038,7 @@ public class LIMEService extends InputMethodService implements
 			}
 
 			if (mLIMEPref.getEnglishPrediction() && mPredictionOn
-					&& ( !isPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())
+					&& ( !hasPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())
 				) {
 				if (Character.isLetter((char) primaryCode)) {
 					this.tempEnglishWord.append((char) primaryCode);
@@ -3029,7 +3056,7 @@ public class LIMEService extends InputMethodService implements
 					String.valueOf((char) primaryCode), 1);
 		}
 		
-		if(!(!isPhysicalKeyPressed && hasDistinctMultitouch))
+		if(!(!hasPhysicalKeyPressed && hasDistinctMultitouch))
 			updateShiftKeyState(getCurrentInputEditorInfo());
 	}
 
@@ -3182,7 +3209,7 @@ public class LIMEService extends InputMethodService implements
 		keyPressTime = System.currentTimeMillis();
 		// To identify the source of character (Software keyboard or physical
 		// keyboard)
-		isPhysicalKeyPressed = false;
+		hasPhysicalKeyPressed = false;
 		
 		if (hasDistinctMultitouch && primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT) {
 			hasShiftPress = true;
@@ -3293,7 +3320,7 @@ public class LIMEService extends InputMethodService implements
 		if(mInputView == null) return;
 		if(DEBUG) Log.i(TAG, "updateInputViewShown(): mInputView.isShown(): " + mInputView.isShown());
 		super.updateInputViewShown();
-		//if(!mInputView.isShown() && !isPhysicalKeyPressed)
+		if(!mInputView.isShown() && !hasPhysicalKeyPressed)
 			hideCandidateView();
 	}
 

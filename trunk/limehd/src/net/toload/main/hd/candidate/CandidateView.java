@@ -1124,6 +1124,7 @@ public class CandidateView extends View implements View.OnClickListener
     	}
     	//Jeremy '11,9,1 do vibrate and sound on suggestion picked from candidateview
     	if(vibrateSound) mService.doVibrateSound(0);
+    	hideComposing(); //Jeremy '12,5,6 
     	if(mCandidatePopup!=null && mCandidatePopup.isShowing()){
     		hideCandidatePopup();
     		return takeSuggstionAtIndex(mPopupCandidateView.mSelectedIndex);
