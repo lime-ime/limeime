@@ -962,7 +962,7 @@ public class CandidateView extends View implements View.OnClickListener
 
     public void clear() {
     	if(DEBUG) Log.i(TAG, "clear()");
-    	mHeight =0; //Jeremy '12,5,6 hide candidate bar when candidateview is fixed.
+    	//mHeight =0; //Jeremy '12,5,6 hide candidate bar when candidateview is fixed.
     	mSuggestions = EMPTY_LIST;
         // Jeremy 11,8,14 close all popup on clear
         setComposingText("");
@@ -971,6 +971,12 @@ public class CandidateView extends View implements View.OnClickListener
         hideCandidatePopup();
         mHandler.updateUI(0);
         
+    }
+    
+    //Jeremy '12,5,6 hide candidate bar when candidateview is fixed.
+    public void forceHide() {
+    	clear();
+    	mHeight =0;
     }
     
     @Override

@@ -499,9 +499,9 @@ public class LIMEService extends InputMethodService implements
 		if(templist!=null) 
 			templist.clear();
 		//clearSuggestions();
-		hasCandidatesShown = false;
+		//hasCandidatesShown = false;
 		mCandidateView.clear();
-		hideCandidateView();
+		//hideCandidateView();
 	}
 	/**
 	 * add by Jeremy '12,4,21
@@ -545,7 +545,7 @@ public class LIMEService extends InputMethodService implements
 			
 			//hideCandidateView();
 			if(!mEnglishOnly && mLIMEPref.getAutoChineseSymbol() //Jeremy '12,4,29 use mEnglishOnly instead of onIM 
-					&& hasCandidatesShown ){   // Change isCandiateShown() to hasCandiatesShown
+					&& (hasCandidatesShown || mFixedCandidateViewOn) ){   // Change isCandiateShown() to hasCandiatesShown
 				mCandidateView.clear();
 				updateChineseSymbol(); // Jeremy '11,9,4
 			}
@@ -606,6 +606,7 @@ public class LIMEService extends InputMethodService implements
 				setInputView(mInputViewContainer);
 			}else
 				setInputView(mInputView);
+			mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
 		}
 		
 		hasPhysicalKeyPressed = false;  //Jeremy '11,9,6 reset phsycalkeyflag
@@ -693,6 +694,8 @@ public class LIMEService extends InputMethodService implements
 				mPredictionOn = false;
 				mCompletionOn = isFullscreenMode();
 			}
+			
+			// Switch keyboard here.
 			if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD
 					|| variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
 				mPredictionOn = false;
@@ -721,28 +724,7 @@ public class LIMEService extends InputMethodService implements
 				mEnglishOnly = false;
 				mKeyboardSwitcher.setKeyboardMode(activeIM, LIMEKeyboardSwitcher.MODE_IM, mImeOptions, true, false, false);
 				break;
-			} else {} //no break in else do what should do in default:
-			/*{ 
-				if(mPersistentLanguageMode)
-					mEnglishOnly = mLIMEPref.getLanguageMode(); //Jeremy '12,4,30 restore lanaguage mode from preference.
-				
-				if(mPersistentLanguageMode && mEnglishOnly){
-		        	mPredictionOn = true;
-		        	mEnglishOnly = true;
-			        //onIM = false; //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-			        mKeyboardSwitcher.setKeyboardMode(activeIM, LIMEKeyboardSwitcher.MODE_TEXT,	
-			        		mImeOptions, false, false, false);
-		        	
-				} else{
-					mEnglishOnly = false;
-					//mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	
-			    	//	mImeOptions, true, false, false);
-					initialIMKeyboard();  //'12,4,29 intial chinese IM keybaord
-				}
-			}
-
-			// updateShiftKeyState(attribute);
-			break;*/
+			} else {} 
 		default:
 			if(mPersistentLanguageMode)
 				mEnglishOnly = mLIMEPref.getLanguageMode(); //Jeremy '12,4,30 restore lanaguage mode from preference.
@@ -756,28 +738,18 @@ public class LIMEService extends InputMethodService implements
 	        	
 			} else{
 				mEnglishOnly = false;
-				//mKeyboardSwitcher.setKeyboardMode(keyboardSelection, LIMEKeyboardSwitcher.MODE_TEXT,	
-		    	//	mImeOptions, true, false, false);
-				initialIMKeyboard();  //'12,4,29 intial chinese IM keybaord
+					initialIMKeyboard();  //'12,4,29 intial chinese IM keybaord
 			}
-			// mKeyboardSwitcher.setKeyboardMode(mKeyboardSwitcher.MODE_TEXT,
-			// attribute.imeOptions);
-			//updateShiftKeyState(attribute);
 		}
 
-		mInputView.closing();
-		
-		mPredicting = false;
-		//mDeleteCount = 0;
 
-		/*
-		 * // Override auto correct if (disableAutoCorrect) { mAutoCorrectOn =
-		 * false; if (mCorrectionMode == Suggest.CORRECTION_FULL) {
-		 * mCorrectionMode = Suggest.CORRECTION_BASIC; } }
-		 * mInputView.setProximityCorrectionEnabled(true); if (mSuggest != null)
-		 * { mSuggest.setCorrectionMode(mCorrectionMode); } mPredictionOn =
-		 * mPredictionOn && mCorrectionMode > 0;
-		 */
+		
+		if(mEnglishOnly)
+			forceHideCandidateView();  //Jeremy '12,5,6 zero the canidateView height to force hide it for eng/numeric keyboard
+		else
+			clearComposing(false);
+			
+		mPredicting = false;
 		updateShiftKeyState(getCurrentInputEditorInfo());
 		
 		//Jeremy '12,5,6 clear internal composing buffer 
@@ -785,6 +757,7 @@ public class LIMEService extends InputMethodService implements
 			mComposing.setLength(0);  
 		if(templist!=null) 
 			templist.clear();
+		
 		//initCandidateView(); //Force the oncreatedcandidate to be called   
 		//clearComposing(false);
 			
@@ -1602,7 +1575,7 @@ public class LIMEService extends InputMethodService implements
 				}
 
 				
-				finishComposing();				//Jeremy '12, 4 ,21
+				clearComposing(false);				//Jeremy '12, 4 ,21
 				if(!mEnglishOnly) //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 					updateRelatedWord();
 
@@ -2394,6 +2367,8 @@ public class LIMEService extends InputMethodService implements
 	 * Update dictionary view
 	 */
 	private void updateRelatedWord() {
+		if(DEBUG)
+			Log.i(TAG, "updateRelatedWord()");
 		hasChineseSymbolCandidatesShown = false;
 		// Also use this to control whether need to display the english
 		// suggestions words.
@@ -2489,6 +2464,13 @@ public class LIMEService extends InputMethodService implements
 		
 		mHandler.post(mHideCandidateView);
 	}
+	
+	private void forceHideCandidateView(){
+		if(mFixedCandidateViewOn)
+			mCandidateView.forceHide();
+		else
+			hideCandidateView();
+	}
 
 	
 	final Handler mHandler = new Handler();
@@ -2581,7 +2563,7 @@ public class LIMEService extends InputMethodService implements
 			//Jeremy '12,4,29 use mEnglishOnly instead of onIM
 		} else if(!mEnglishOnly  // composing length == 0 after here
 				&& hasCandidatesShown // repalce isCandaiteShwon() with hasCandidatesShwn by Jeremy '12,5,6  
-				&& mLIMEPref.getAutoChineseSymbol()
+				//&& mLIMEPref.getAutoChineseSymbol()
 				&& !hasChineseSymbolCandidatesShown ){
 			clearComposing(false);  //Jeremy '12,4,21 composing length 0, no need to force commit again. 
 		} else if(!mEnglishOnly 
@@ -2729,7 +2711,7 @@ public class LIMEService extends InputMethodService implements
 	private void initialViewAndSwitcher(boolean forceRecreate) {
 		if(DEBUG)
 			Log.i(TAG, "initialViewAndSwitcher()");
-		mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
+		
 		if(mFixedCandidateViewOn){ //Have candidateview in InputView
 			//Create inputView if it's null 
 			if (mInputViewContainer == null  || forceRecreate //|| mLIMEPref.getFixedCandidateViewDisplay()!=mFixedCandidateViewOn 
