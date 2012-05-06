@@ -98,7 +98,7 @@ public class CandidateView extends View implements View.OnClickListener
     private static final List<Mapping> EMPTY_LIST = new LinkedList<Mapping>();
 
 	
-    protected int mHeight = 0;
+    protected int mHeight;
     private int currentX;
     protected final int mColorNormal;
     protected final int mColorInverted;
@@ -195,7 +195,7 @@ public class CandidateView extends View implements View.OnClickListener
     	mColorOther = r.getColor(R.color.candidate_other);
     	mColorNumber = r.getColor(R.color.candidate_number);
     	mVerticalPadding =(int)( r.getDimensionPixelSize(R.dimen.candidate_vertical_padding)*mLIMEPref.getFontSize());
-    	//mHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) *mLIMEPref.getFontSize()); move to UpdateSuggestion by Jeremy '12,5,6
+    	mHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) *mLIMEPref.getFontSize()); 
     	mExpandButtonWidth = r.getDimensionPixelSize(R.dimen.candidate_expand_button_width);// *mLIMEPref.getFontSize());
     	
     	mPaint = new Paint();

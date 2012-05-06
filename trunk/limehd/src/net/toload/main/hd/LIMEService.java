@@ -550,8 +550,8 @@ public class LIMEService extends InputMethodService implements
 				updateChineseSymbol(); // Jeremy '11,9,4
 			}
 			else{
-				hasCandidatesShown = false;
-				mCandidateView.clear();
+				//hasCandidatesShown = false;
+				//mCandidateView.clear();
 				hideCandidateView();
 			}
 				
@@ -592,24 +592,28 @@ public class LIMEService extends InputMethodService implements
 			return;
 		}
 		
-		
-		
-		
 		 //jeremy '12,5,6 recreate inputview if fixedCandidateView setting is altered
 		if(mFixedCandidateViewOn != mLIMEPref.getFixedCandidateViewDisplay()) {
 			requestHideSelf(0);
 			mInputView.closing();
+			mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
 			initialViewAndSwitcher(true);
+			
 			if(mFixedCandidateViewOn){
 				if(DEBUG)
 					Log.i(TAG, "Fixed candiateView in on, return nInputViewContainer ");
 				setInputView(mInputViewContainer);
-			}else
+			}else{
 				setInputView(mInputView);
-			mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
+				if(DEBUG)
+					Log.i(TAG, "Fixed candiateView in off, return mInputView ");
+			}
+			
 		}
 		
 		hasPhysicalKeyPressed = false;  //Jeremy '11,9,6 reset phsycalkeyflag
+		hasCandidatesShown = false;
+		
 		// Reset the IM softkeyboard settings. Jeremy '11,6,19
 		try {
 			mKeyboardSwitcher.setImList(SearchSrv.getImList());
@@ -824,7 +828,7 @@ public class LIMEService extends InputMethodService implements
 			if(newSelStart < candidatesStart || newSelStart > candidatesEnd) { // cursor is moved before or after composing area
 
 				if(templist!=null) 	templist.clear();
-				mCandidateView.clear();
+				//mCandidateView.clear();
 				hideCandidateView();
 
 				if (mComposing != null && mComposing.length() > 0){
@@ -2456,6 +2460,7 @@ public class LIMEService extends InputMethodService implements
 	}
 	private void hideCandidateView(){
 		if(DEBUG) Log.i(TAG,"hideCandidateView()");
+		if(mCandidateView!=null) mCandidateView.clear();
 		hasCandidatesShown = false;
 		hasChineseSymbolCandidatesShown = false;
 		if(mCandidateViewStandAlone==null || (mCandidateViewStandAlone!=null && !mCandidateViewStandAlone.isShown()))
@@ -3321,6 +3326,15 @@ public class LIMEService extends InputMethodService implements
 		super.updateInputViewShown();
 		if(!mInputView.isShown() && !hasPhysicalKeyPressed)
 			hideCandidateView();
+	}
+
+
+	@Override
+	public void onFinishInputView(boolean finishingInput) {
+		if(DEBUG)
+			Log.i(TAG,"onFinishInputView()");
+		super.onFinishInputView(finishingInput);
+		hideCandidateView(); //Jeremy '12,5,7 hideCandiate when inputview is closed but not yet leave the original field (onfinishinput() will not called). 
 	}
 
 
