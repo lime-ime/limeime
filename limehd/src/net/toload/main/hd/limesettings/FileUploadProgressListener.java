@@ -1,26 +1,17 @@
 package net.toload.main.hd.limesettings;
 
-import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
-
-import android.util.Log;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import java.util.HashMap;
 import com.google.gdata.client.media.ResumableGDataFileUploader;
-import com.google.gdata.client.uploader.FileUploadData;
 import com.google.gdata.client.uploader.ProgressListener;
 import com.google.gdata.client.uploader.ResumableHttpFileUploader;
-import com.google.gdata.data.Link;
 import com.google.gdata.data.docs.DocumentListEntry;
-import com.google.gdata.util.ServiceException;
 
 public class FileUploadProgressListener implements ProgressListener {
 
     private ResumableGDataFileUploader uploader;
-    Map<String, DocumentListEntry> uploaded = Maps.newHashMap();
-    Map<String, String> failed = Maps.newHashMap();
+    HashMap<String, DocumentListEntry> uploaded = new HashMap<String, DocumentListEntry>();// Maps.newHashMap();
+    HashMap<String, String> failed = new HashMap<String, String>() ;//Maps.newHashMap();
     public FileUploadProgressListener() { }
 
     public void listenTo(ResumableGDataFileUploader target) {

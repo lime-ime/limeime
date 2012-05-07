@@ -42,7 +42,6 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.RemoteException;
@@ -55,8 +54,8 @@ public class  DBServer {//extends Service {
 	private final String TAG = "LIME.DBService";
 	//private NotificationManager notificationMgr;
 
-	public static LimeDB dbAdapter = null;
-	private LIMEPreferenceManager mLIMEPref = null;
+	protected static LimeDB dbAdapter = null;  //static LIMEDB for shared LIMEDB between DBServer instances
+	protected static LIMEPreferenceManager mLIMEPref = null;
 
 	private boolean remoteFileDownloading = false;
 	private int percentageDone = 0;
@@ -64,11 +63,11 @@ public class  DBServer {//extends Service {
 	private String loadingTablename = "";
 	private boolean abortDownload = false;
 
-	public final int intentLIMEMenu = 0;
-	public final int intentLIMEMappingLoading = 1;
-	public final int intentLIMEInitial = 2;
+	public final static int intentLIMEMenu = 0;
+	public final static int intentLIMEMappingLoading = 1;
+	public final static int intentLIMEInitial = 2;
 
-	public Context ctx = null;
+	protected static Context ctx = null;
 
 	// Monitoring thread.
 	//	private Thread thread = null;
@@ -84,7 +83,7 @@ public class  DBServer {//extends Service {
 	//			loadLimeDB();
 	//		}
 	public DBServer(Context context){
-		this.ctx = context;
+		DBServer.ctx = context;
 		mLIMEPref = new LIMEPreferenceManager(ctx);
 		//loadLimeDB();
 		if(dbAdapter==null)
@@ -850,7 +849,7 @@ public class  DBServer {//extends Service {
 	/*
 	 * Decompress retrieved file to target folder
 	 */
-	public boolean decompressFile(File sourceFile, String targetFolder, String targetFile){
+	protected static boolean decompressFile(File sourceFile, String targetFolder, String targetFile){
 
 		try {   
 
@@ -973,7 +972,7 @@ public class  DBServer {//extends Service {
 	//	}
 
 	//Jeremy '12,4,23 rewriting using alert notification builder in LIME utilities to replace the deprecated method
-	public void showNotificationMessage(String message, int intent) {
+	public static void showNotificationMessage(String message, int intent) {
 
 		Intent i = null;
 		if(intent == intentLIMEMenu)
