@@ -42,6 +42,7 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.RemoteException;
@@ -54,7 +55,7 @@ public class  DBServer {//extends Service {
 	private final String TAG = "LIME.DBService";
 	//private NotificationManager notificationMgr;
 
-	private static LimeDB dbAdapter = null;
+	public static LimeDB dbAdapter = null;
 	private LIMEPreferenceManager mLIMEPref = null;
 
 	private boolean remoteFileDownloading = false;
@@ -63,9 +64,9 @@ public class  DBServer {//extends Service {
 	private String loadingTablename = "";
 	private boolean abortDownload = false;
 
-	private final int intentLIMEMenu = 0;
-	private final int intentLIMEMappingLoading = 1;
-	private final int intentLIMEInitial = 2;
+	public final int intentLIMEMenu = 0;
+	public final int intentLIMEMappingLoading = 1;
+	public final int intentLIMEInitial = 2;
 
 	public Context ctx = null;
 
@@ -361,8 +362,6 @@ public class  DBServer {//extends Service {
 		};
 		threadTask.start();
 	}
-
-	
 
 	public void backupDatabase() throws RemoteException {
 		showNotificationMessage(ctx.getText(R.string.l3_initial_backup_start)+ "", intentLIMEInitial);
@@ -974,7 +973,7 @@ public class  DBServer {//extends Service {
 	//	}
 
 	//Jeremy '12,4,23 rewriting using alert notification builder in LIME utilities to replace the deprecated method
-	private void showNotificationMessage(String message, int intent) {
+	public void showNotificationMessage(String message, int intent) {
 
 		Intent i = null;
 		if(intent == intentLIMEMenu)
@@ -983,7 +982,6 @@ public class  DBServer {//extends Service {
 			i = new Intent(ctx, LIMEMappingLoading.class);
 		else if (intent == intentLIMEInitial)
 			i = new Intent(ctx, LIMEInitial.class);
-
 
 		LIMEUtilities.showNotification(
 				ctx, true, R.drawable.icon, ctx.getText(R.string.ime_setting), message, i);
@@ -1002,4 +1000,6 @@ public class  DBServer {//extends Service {
 		notificationMgr.notify(0, notification);
 		 */
 	}
+
+
 }

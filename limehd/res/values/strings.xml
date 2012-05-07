@@ -435,6 +435,18 @@
     <string name="l3_initial_restore_end">Restore database task finished.</string>
     <string name="l3_initial_restore_confirm">Are you sure you want to restore lime database from backup?</string>
     
+    <string name="l3_initial_cloud_backup_database">Google Cloud Backup</string>
+    <string name="l3_initial_cloud_backup_start">Starting lime database backup task...</string>
+    <string name="l3_initial_cloud_backup_end">Backup database task finished.</string> 
+    <string name="l3_initial_cloud_backup_confirm">Are you sure you want to backup lime database to the Google Drive?</string>
+    <string name="l3_initial_cloud_backup_error">No database to backup! Please initialized database first!</string>
+    <string name="l3_initial_cloud_restore_database">Google Cloud Restore</string>
+    <string name="l3_initial_cloud_restore_error">Backup not found!</string>
+    <string name="l3_initial_cloud_restore_start">Starting lime database restore task...</string>
+    <string name="l3_initial_cloud_restore_end">Restore database task finished.</string>
+    <string name="l3_initial_cloud_restore_confirm">Are you sure you want to restore lime database from the Google Drive?</string>
+    
+    
     <string name="l3_im_setting_select_keyboard">On-screen soft keyboard</string>
     <string name="l3_im_setting_back">Go back..</string>
     <string name="l3_im_setting_title">table settings</string>

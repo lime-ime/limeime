@@ -65,6 +65,7 @@ public class LIME {
 	public static final String DATABASE_DECOMPRESS_FOLDER =  Environment.getDataDirectory() + "/data/net.toload.main.hd/databases";
 	public static final String DATABASE_DECOMPRESS_FOLDER_SDCARD = Environment.getExternalStorageDirectory() + "/limehd/databases";
 	public static final String DATABASE_BACKUP_NAME = "backup.zip";
+	public static final String DATABASE_CLOUD_TEMP = "cloudtemp.zip";
 	public static final String IM_CJ_STATUS = "im_cj_status";
 	public static final String IM_SCJ_STATUS = "im_scj_status";
 	public static final String IM_PHONETIC_STATUS = "im_phonetic_status";

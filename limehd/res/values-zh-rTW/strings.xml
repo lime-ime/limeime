@@ -411,6 +411,16 @@
     <string name="l3_initial_restore_start">開始還原資料庫</string>
     <string name="l3_initial_restore_end">資料庫還原完成</string>
     
+    <string name="l3_initial_cloud_backup_database">GOOGLE 雲端備份</string>
+    <string name="l3_initial_cloud_backup_start">開始備份資料庫</string>
+    <string name="l3_initial_cloud_backup_end">資料庫備份完成</string>
+    <string name="l3_initial_cloud_backup_confirm">您是否要備份資料庫至 GOOGLE 雲端硬碟?</string>
+    <string name="l3_initial_cloud_backup_error">資料庫不存在，無法進行備份.</string>
+    <string name="l3_initial_cloud_restore_database">GOOGLE 雲端還原</string>
+    <string name="l3_initial_cloud_restore_error">備份檔案不存在，無法進行還原.</string>
+    <string name="l3_initial_cloud_restore_confirm">您是否要還原資料庫由 GOOGLE 雲端硬碟?</string>
+    <string name="l3_initial_cloud_restore_start">開始還原資料庫</string>
+    <string name="l3_initial_cloud_restore_end">資料庫還原完成</string>
     
     <string name="l3_im_setting_select_keyboard">請選擇輸入法鍵盤顯示</string>
     <string name="l3_im_setting_back">回到上一頁</string>
