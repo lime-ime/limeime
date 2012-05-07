@@ -49,7 +49,7 @@ import android.widget.Toast;
 public class LIMEInitial extends Activity {
 	
 
-	private DBServer DBSrv = null;
+	private DBCloudServer DBSrv = null;
 	Button btnInitPreloadDB = null;
 	Button btnInitPhoneticHsOnlyDB = null; 
 	Button btnInitPhoneticOnlyDB = null;//Jeremy '11,9,10
@@ -94,7 +94,7 @@ public class LIMEInitial extends Activity {
 		
 		// Startup Service
 		//getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
-		DBSrv = new DBServer(getApplicationContext());
+		DBSrv = new DBCloudServer(getApplicationContext());
 		mLIMEPref = new LIMEPreferenceManager(getApplicationContext());
 		connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 		
@@ -396,7 +396,7 @@ public class LIMEInitial extends Activity {
 	     				builder.setCancelable(false);
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
-		     						String dbtarget = mLIMEPref.getParameterString("dbtarget");
+		     						//TODO: String dbtarget = mLIMEPref.getParameterString("dbtarget");
 									backupCloudDatabase();
 			    	        	}
 			    	     });
@@ -616,7 +616,7 @@ public class LIMEInitial extends Activity {
 	
 	public class BackupRestoreTask extends AsyncTask<String,Integer,Integer> {
 
-		private DBServer dbsrv = null;
+		private DBCloudServer dbsrv = null;
 		private ProgressDialog pd;
 		private Context ctx;
 		private LIMEInitial activity;
@@ -627,7 +627,7 @@ public class LIMEInitial extends Activity {
 		final public static int BACKUP = 3;
 		final public static int RESTORE = 4;
 		
-		BackupRestoreTask(LIMEInitial act, Context srcctx, DBServer db, File file, int settype){
+		BackupRestoreTask(LIMEInitial act, Context srcctx, DBCloudServer db, File file, int settype){
 			dbsrv = db;
 			activity = act;
 			ctx = srcctx;
@@ -674,9 +674,9 @@ public class LIMEInitial extends Activity {
 					srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 				}
 				dbsrv.compressFile(srcFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_CLOUD_TEMP);
-				DBCloudServer.backup(activity, dbsrv, mLIMEPref, tempfile);
+				dbsrv.cloudBackup(activity,  tempfile);
 			}else if(type == CLOUDRESTORE){
-				DBCloudServer.restore(activity, dbsrv, mLIMEPref, tempfile);
+				DBSrv.cloudRestore(activity,  tempfile);
 			}else if(type == BACKUP){
 				try {
 					dbsrv.backupDatabase();

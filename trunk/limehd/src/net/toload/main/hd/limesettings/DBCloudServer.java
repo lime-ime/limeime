@@ -2,30 +2,22 @@ package net.toload.main.hd.limesettings;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
-import net.toload.main.hd.global.LIMEPreferenceManager;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
-import android.accounts.AuthenticatorException;
-import android.accounts.OperationCanceledException;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -33,34 +25,23 @@ import com.google.api.client.extensions.android2.AndroidHttp;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.extensions.android2.auth.GoogleAccountManager;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson.JacksonFactory;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.gdata.client.GoogleAuthTokenFactory.UserToken;
 import com.google.gdata.client.docs.DocsService;
 import com.google.gdata.client.media.ResumableGDataFileUploader;
-import com.google.gdata.client.uploader.ProgressListener;
-import com.google.gdata.client.uploader.ResumableHttpFileUploader;
-import com.google.gdata.data.Link;
 import com.google.gdata.data.MediaContent;
-import com.google.gdata.data.PlainTextConstruct;
-import com.google.gdata.data.docs.DocumentEntry;
 import com.google.gdata.data.docs.DocumentListEntry;
 import com.google.gdata.data.docs.DocumentListFeed;
 import com.google.gdata.data.media.MediaFileSource;
 import com.google.gdata.data.media.MediaSource;
-import com.google.gdata.util.ServiceException;
-import com.google.gdata.client.uploader.FileUploadData;
-import com.google.gdata.client.uploader.ProgressListener;
-import com.google.gdata.client.uploader.ResumableHttpFileUploader;
 
-public class DBCloudServer {
+public class DBCloudServer extends DBServer {
 
+	private final boolean DEBUG = false;
+	private final String TAG = "DBCloudServer";
 	private static final String AUTH_TOKEN_TYPE = "oauth2:https://docs.google.com/feeds/ https://spreadsheets.google.com/feeds/ https://docs.googleusercontent.com/";
-	private static final int MENU_ACCOUNTS = 0;
+	//private static final int MENU_ACCOUNTS = 0;
 	private static final int REQUEST_AUTHENTICATE = 0;
 
 	private static final int MAX_CONCURRENT_UPLOADS = 10;
@@ -79,17 +60,21 @@ public class DBCloudServer {
 
 	static final String host = "docs.google.com";
 
-	static LIMEPreferenceManager mLIMEPref = null;
+	//static LIMEPreferenceManager mLIMEPref = null;
 	static Activity activity = null;
-	static DBServer DBSrv = null;
+	//static DBServer DBSrv = null;
 	static File tempfile = null;
 
-	public static void backup(Activity act, DBServer db,
-			LIMEPreferenceManager pref, File temp) {
+	public DBCloudServer(Context context) {
+		super(context);
 
-		DBSrv = db;
+	}
+
+	public void cloudBackup(Activity act, File temp) {
+		if(DEBUG) 
+			Log.i(TAG,"cloudBackup()");
+	
 		activity = act;
-		mLIMEPref = pref;
 		tempfile = temp;
 		credential.setAccessToken(null);
 		accountName = mLIMEPref.getParameterString(PREF_ACCOUNT_NAME, null);
@@ -118,24 +103,30 @@ public class DBCloudServer {
 		}
 
 		accountManager.getAccountManager().getAuthToken(account,
-				AUTH_TOKEN_TYPE, true, new AccountManagerCallback<Bundle>() {
+				AUTH_TOKEN_TYPE, null, activity, new AccountManagerCallback<Bundle>() {
 
 					public void run(AccountManagerFuture<Bundle> future) {
 						try {
 							Bundle bundle = future.getResult();
-							if (bundle.containsKey(accountManager
-									.getAccountManager().KEY_INTENT)) {
-								Intent intent = bundle.getParcelable(accountManager
-										.getAccountManager().KEY_INTENT);
+							accountManager
+									.getAccountManager();
+							if (bundle.containsKey(AccountManager.KEY_INTENT)) {
+								accountManager
+										.getAccountManager();
+								Intent intent = bundle.getParcelable(AccountManager.KEY_INTENT);
 								intent.setFlags(intent.getFlags()
 										& ~Intent.FLAG_ACTIVITY_NEW_TASK);
 								activity.startActivityForResult(intent,
 										REQUEST_AUTHENTICATE);
-							} else if (bundle.containsKey(accountManager
-									.getAccountManager().KEY_AUTHTOKEN)) {
-								setAuthToken(bundle.getString(accountManager
-										.getAccountManager().KEY_AUTHTOKEN));
-								backupProcess();
+							} else {
+								accountManager
+										.getAccountManager();
+								if (bundle.containsKey(AccountManager.KEY_AUTHTOKEN)) {
+									accountManager
+											.getAccountManager();
+									setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
+									backupProcess();
+								}
 							}
 						} catch (Exception e) {
 							mLIMEPref.setParameter("cloud_in_process",
@@ -146,13 +137,14 @@ public class DBCloudServer {
 				}, null);
 	}
 
-	public static void restore(Activity act, DBServer db,
-			LIMEPreferenceManager pref, File temp) {
+	public void cloudRestore(Activity act, 
+			//DBServer db, LIMEPreferenceManager pref, 
+			File temp) {
 
-		DBSrv = db;
+		//DBSrv = db;
 
 		activity = act;
-		mLIMEPref = pref;
+		//mLIMEPref = pref;
 		tempfile = temp;
 		credential.setAccessToken(null);
 		accountName = mLIMEPref.getParameterString(PREF_ACCOUNT_NAME, null);
@@ -181,24 +173,30 @@ public class DBCloudServer {
 		}
 
 		accountManager.getAccountManager().getAuthToken(account,
-				AUTH_TOKEN_TYPE, true, new AccountManagerCallback<Bundle>() {
+				AUTH_TOKEN_TYPE, null, activity, new AccountManagerCallback<Bundle>() {
 
 					public void run(AccountManagerFuture<Bundle> future) {
 						try {
 							Bundle bundle = future.getResult();
-							if (bundle.containsKey(accountManager
-									.getAccountManager().KEY_INTENT)) {
-								Intent intent = bundle.getParcelable(accountManager
-										.getAccountManager().KEY_INTENT);
+							accountManager
+									.getAccountManager();
+							if (bundle.containsKey(AccountManager.KEY_INTENT)) {
+								accountManager
+										.getAccountManager();
+								Intent intent = bundle.getParcelable(AccountManager.KEY_INTENT);
 								intent.setFlags(intent.getFlags()
 										& ~Intent.FLAG_ACTIVITY_NEW_TASK);
 								(activity).startActivityForResult(intent,
 										REQUEST_AUTHENTICATE);
-							} else if (bundle.containsKey(accountManager
-									.getAccountManager().KEY_AUTHTOKEN)) {
-								setAuthToken(bundle.getString(accountManager
-										.getAccountManager().KEY_AUTHTOKEN));
-								restoreProcess();
+							} else {
+								accountManager
+										.getAccountManager();
+								if (bundle.containsKey(AccountManager.KEY_AUTHTOKEN)) {
+									accountManager
+											.getAccountManager();
+									setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
+									restoreProcess();
+								}
 							}
 						} catch (Exception e) {
 							mLIMEPref.setParameter("cloud_in_process",
@@ -233,22 +231,22 @@ public class DBCloudServer {
 				}, null);
 	}
 
-	static void setAccountName(String accountName) {
-		mLIMEPref.setParameter(PREF_ACCOUNT_NAME, accountName);
-		accountName = accountName;
+	private static void setAccountName(String accountname) {
+		mLIMEPref.setParameter(PREF_ACCOUNT_NAME, accountname);
+		accountName = accountname;
 	}
 
-	static void setAuthToken(String authToken) {
+	private static void setAuthToken(String authToken) {
 		mLIMEPref.setParameter(PREF_AUTH_TOKEN, authToken);
 		credential.setAccessToken(authToken);
 	}
 
-	static DocsService getDocsService() {
+	private static DocsService getDocsService() {
 		DocsService service = new DocsService("LIMEDocsService");
 		return service;
 	}
 
-	static void restoreProcess() {
+	private static void restoreProcess() {
 		try {
 
 			Thread thread = new Thread(new Runnable() {
@@ -293,21 +291,21 @@ public class DBCloudServer {
 	
 							String dbtarget = mLIMEPref.getParameterString("dbtarget");
 							if (dbtarget.equals("device")) {
-								DBSrv.decompressFile(tempfile,
+								decompressFile(tempfile,
 										LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME);
 							} else {
-								DBSrv.decompressFile(tempfile,
+								decompressFile(tempfile,
 										LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD,
 										LIME.DATABASE_NAME);
 							}
 							mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
-							DBSrv.showNotificationMessage(activity.getApplicationContext()
+							showNotificationMessage(activity.getApplicationContext()
 									.getText(R.string.l3_initial_cloud_restore_end) + "",
-									DBSrv.intentLIMEMenu);
+									intentLIMEMenu);
 	
 							tempfile.deleteOnExit();
 	
-							DBSrv.dbAdapter.openDBConnection(true);
+							dbAdapter.openDBConnection(true);
 							mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
 						}
 					}catch(Exception e){
@@ -323,7 +321,7 @@ public class DBCloudServer {
 		}
 	}
 
-	static void backupProcess() {
+	private static void backupProcess() {
 		try {
 			
 
@@ -381,9 +379,9 @@ public class DBCloudServer {
 						}
 						
 						mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
-						DBSrv.showNotificationMessage(activity.getApplicationContext()
+						showNotificationMessage(activity.getApplicationContext()
 								.getText(R.string.l3_initial_cloud_backup_end) + "",
-								DBSrv.intentLIMEMenu);
+								intentLIMEMenu);
 
 					}catch(Exception e){
 						e.printStackTrace();
@@ -405,7 +403,7 @@ public class DBCloudServer {
 		return mediaFile;
 	}
 
-	static void handleGoogleException(Exception e, boolean isBackup) {
+	private static void handleGoogleException(Exception e, boolean isBackup) {
 		if (e instanceof GoogleJsonResponseException) {
 			GoogleJsonResponseException exception = (GoogleJsonResponseException) e;
 			if (exception.getStatusCode() == 401) {
