@@ -1132,7 +1132,7 @@ public class CandidateView extends View implements View.OnClickListener
     
     	
     	if (mSuggestions != null && index >= 0 && index <= mSuggestions.size() ) {
-    		mService.pickSuggestionManually(index);
+    		mService.pickCandidateManually(index);
     		return true;  // Selection picked
         }else
         	return false;
