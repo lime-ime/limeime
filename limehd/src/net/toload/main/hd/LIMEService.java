@@ -621,12 +621,6 @@ public class LIMEService extends InputMethodService implements
 			e.printStackTrace();
 		}
 		
-		// Reset templist
-		this.firstMatched = null;
-		//this.hasFirstMatched = false;
-		if(templist != null){
-			templist.clear();
-		}
 		
 		mKeyboardSwitcher.makeKeyboards(false);
 
@@ -749,6 +743,7 @@ public class LIMEService extends InputMethodService implements
 
 		
 		if(mEnglishOnly)
+			//Jeremy '12,5,6 clear internal composing buffer in forceHideCandiateView 
 			forceHideCandidateView();  //Jeremy '12,5,6 zero the canidateView height to force hide it for eng/numeric keyboard
 		else
 			clearComposing(false);
@@ -756,11 +751,6 @@ public class LIMEService extends InputMethodService implements
 		mPredicting = false;
 		updateShiftKeyState(getCurrentInputEditorInfo());
 		
-		//Jeremy '12,5,6 clear internal composing buffer 
-		if (mComposing != null && mComposing.length() > 0)
-			mComposing.setLength(0);  
-		if(templist!=null) 
-			templist.clear();
 		
 		//initCandidateView(); //Force the oncreatedcandidate to be called   
 		//clearComposing(false);
@@ -1591,41 +1581,13 @@ public class LIMEService extends InputMethodService implements
 		}
 	}
 
-	//Jeremy '11,8,1 deprecated
-/*	private void updateUserDict() {
- //Jeremy '11,7,27 Using signle list for addscore and adduserdict.
-		for (Mapping dicunit : userdiclist) {
-			if (dicunit == null) {
-				continue;
-			}
-			//if (dicunit.getId() == null) {
-			//	continue;
-			//}
-			if (dicunit.getCode() == null) {
-				continue;
-			}
-			try {
-				SearchSrv.addUserDict(dicunit.getId(), dicunit.getCode(),
-						dicunit.getWord(), dicunit.getPword(),
-						dicunit.getScore(), dicunit.isDictionary());
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
-		}
-		try {
-			SearchSrv.postFinishInput();
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
-		//userdiclist.clear();
-	}
-*/
+
 	/**
 	 * Helper to update the shift state of our keyboard based on the initial
 	 * editor state.
 	 */
 	public void updateShiftKeyState(EditorInfo attr) {
-		if(DEBUG) Log.i(TAG, "updateShiftKeyState()");
+		if(DEBUG) Log.i(TAG, "updateShiftKeyState() " );
 		InputConnection ic = getCurrentInputConnection();
 		if (attr != null && mInputView != null
 				&& mKeyboardSwitcher.isAlphabetMode() && ic != null) {
@@ -2189,7 +2151,7 @@ public class LIMEService extends InputMethodService implements
 			setSuggestions(list, hasPhysicalKeyPressed, true, selkey);
 			
 			if(DEBUG) Log.i(TAG, "updateChineseSymbol():"
-									+ "list.size:"+list.size());
+									+ "templist.size:"+templist.size());
 		}
 		
 	}
@@ -2471,6 +2433,15 @@ public class LIMEService extends InputMethodService implements
 	}
 	
 	private void forceHideCandidateView(){
+		if (mComposing != null && mComposing.length() > 0)
+			mComposing.setLength(0);
+		// Reset templist
+		this.firstMatched = null;
+		//this.hasFirstMatched = false;
+		
+		if(templist!=null) 
+			templist.clear();
+		
 		if(mFixedCandidateViewOn)
 			mCandidateView.forceHide();
 		else
@@ -2531,6 +2502,7 @@ public class LIMEService extends InputMethodService implements
 				}
 				mCandidateView.setSuggestions(suggestions, showNumber,
 						typedWordValid, diplaySelkey);
+				if(DEBUG) Log.i(TAG, "setSuggestion(): templist.size: " + templist.size());
 			}
 		} else {
 			if(DEBUG) Log.i(TAG, "setSuggestion() with list=null");
@@ -2611,7 +2583,7 @@ public class LIMEService extends InputMethodService implements
 			super.setCandidatesViewShown(false);
 		
 		if(DEBUG)
-			Log.i(TAG, "isCandidateViewShown:" + mCandidateViewStandAlone.isShown());
+			Log.i(TAG, "isCandidateViewShown:" + mCandidateViewStandAlone.isShown() );
 		
 	}
 	
@@ -3134,7 +3106,7 @@ public class LIMEService extends InputMethodService implements
 	public void pickSuggestionManually(int index) {
 		if (DEBUG)
 			Log.i(TAG,"pickSuggestionManually():"
-					+ "Pick up word at index : " + index + " templist.size()="+templist.size());
+					+ "Pick up word at index : " + index);
 
 		// This is to prevent if user select the index more than the list
 		if(templist != null && index >= templist.size() ){
@@ -3303,7 +3275,7 @@ public class LIMEService extends InputMethodService implements
 		if(DEBUG) 
 			Log.i(TAG, "onUpdateCursor(): Top:" 
 				+ newCursor.top + ". Right:" + newCursor.right
-				+ ". bottom:" + newCursor.bottom + ". left:" + newCursor.left);
+				+ ". bottom:" + newCursor.bottom + ". left:" + newCursor.left );
 		
 		
 		if(mCandidateView!=null)
