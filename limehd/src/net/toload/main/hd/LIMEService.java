@@ -143,8 +143,8 @@ public class LIMEService extends InputMethodService implements
 
 	//private String mSentenceSeparators;
 
-	private Mapping firstMatched;
-	private Mapping tempMatched;
+	private Mapping selectedCandidate; //Jeremy '12,5,7 renamed from firstMathed
+	private Mapping commitedCandidate; //Jeremy '12,5,7 renamed from tempMatched
 
 	private StringBuffer tempEnglishWord;
 	private List<Mapping> tempEnglishList;
@@ -154,7 +154,7 @@ public class LIMEService extends InputMethodService implements
 	//private String mWordSeparators;
 	private String misMatched;
 
-	private LinkedList<Mapping> templist;
+	private LinkedList<Mapping> mCandidateList; //Jeremy '12,5,7 renamed from templist
 	//private LinkedList<Mapping> userdiclist;
 
 	private Vibrator mVibrator;
@@ -493,11 +493,11 @@ public class LIMEService extends InputMethodService implements
 		InputConnection ic = getCurrentInputConnection();
 		if(ic!=null) ic.finishComposingText(); 
 		
-		firstMatched = null;
+		selectedCandidate = null;
 				
 		//hasMappingList = false;
-		if(templist!=null) 
-			templist.clear();
+		if(mCandidateList!=null) 
+			mCandidateList.clear();
 		//clearSuggestions();
 		//hasCandidatesShown = false;
 		mCandidateView.clear();
@@ -518,8 +518,8 @@ public class LIMEService extends InputMethodService implements
 		//Jeremy '11,8,14
 		if (mComposing != null && mComposing.length() > 0)
 			mComposing.setLength(0);
-		if(templist!=null) 
-			templist.clear();
+		if(mCandidateList!=null) 
+			mCandidateList.clear();
 		
 		
 		if(forceClearComposing){
@@ -527,7 +527,7 @@ public class LIMEService extends InputMethodService implements
 			if(ic!=null) ic.commitText("", 0);
 		}
 		
-		firstMatched = null;
+		selectedCandidate = null;
 				
 		//hasMappingList = false;
 		
@@ -817,7 +817,7 @@ public class LIMEService extends InputMethodService implements
 				) {
 			if(newSelStart < candidatesStart || newSelStart > candidatesEnd) { // cursor is moved before or after composing area
 
-				if(templist!=null) 	templist.clear();
+				if(mCandidateList!=null) 	mCandidateList.clear();
 				//mCandidateView.clear();
 				hideCandidateView();
 
@@ -1043,7 +1043,7 @@ public class LIMEService extends InputMethodService implements
 				//Jeremy '12,4,8 rewrite the logic here
 				else if(!mEnglishOnly && hasCandidatesShown //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 						&& ( mComposing.length() > 0 || 
-								(firstMatched != null && firstMatched.isDictionary() &&	!hasChineseSymbolCandidatesShown )
+								(selectedCandidate != null && selectedCandidate.isDictionary() &&	!hasChineseSymbolCandidatesShown )
 								) ){
 					if(DEBUG)
 						Log.i(TAG,"KEYCODE_BACK clearcomposing only.");
@@ -1195,19 +1195,19 @@ public class LIMEService extends InputMethodService implements
 		if((hasCtrlPress||hasMenuPress)&& !mEnglishOnly ) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 			
 			if (hasCtrlPress &&  //Only working with ctrl Jeremy '11,8,22
-				templist != null && templist.size() > 0 
+				mCandidateList != null && mCandidateList.size() > 0 
 				&& mCandidateView != null && isCandidateShown()){	
 				switch(keyCode){
-				case 8: this.pickSuggestionManually(0);return true;
-				case 9: this.pickSuggestionManually(1);return true;
-				case 10: this.pickSuggestionManually(2);return true;
-				case 11: this.pickSuggestionManually(3);return true;
-				case 12: this.pickSuggestionManually(4);return true;
-				case 13: this.pickSuggestionManually(5);return true;
-				case 14: this.pickSuggestionManually(6);return true;
-				case 15: this.pickSuggestionManually(7);return true;
-				case 16: this.pickSuggestionManually(8);return true;
-				case 7: this.pickSuggestionManually(9);return true;
+				case 8: this.pickCandidateManually(0);return true;
+				case 9: this.pickCandidateManually(1);return true;
+				case 10: this.pickCandidateManually(2);return true;
+				case 11: this.pickCandidateManually(3);return true;
+				case 12: this.pickCandidateManually(4);return true;
+				case 13: this.pickCandidateManually(5);return true;
+				case 14: this.pickCandidateManually(6);return true;
+				case 15: this.pickCandidateManually(7);return true;
+				case 16: this.pickCandidateManually(8);return true;
+				case 7: this.pickCandidateManually(9);return true;
 				}
 			}
 			if((mComposing == null || mComposing.length() == 0) ) {		
@@ -1415,29 +1415,29 @@ public class LIMEService extends InputMethodService implements
 			Log.i(TAG,"CommittedTyped()");
 		try {
 			if (mComposing.length() > 0
-					|| (firstMatched != null && firstMatched.isDictionary())) {
+					|| (selectedCandidate != null && selectedCandidate.isDictionary())) {
 
 				if (!mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-					if (firstMatched != null && firstMatched.getWord() != null
-							&& !firstMatched.getWord().equals("")) {
+					if (selectedCandidate != null && selectedCandidate.getWord() != null
+							&& !selectedCandidate.getWord().equals("")) {
 						/*int firstMatchedLength = firstMatched.getWord()
 								.length();*/
 						int firstMatchedLength = 1;
 
-						if (firstMatched.getCode() == null
-								|| firstMatched.getCode().equals("")) {
+						if (selectedCandidate.getCode() == null
+								|| selectedCandidate.getCode().equals("")) {
 							firstMatchedLength = 1;
 						}
 
-						String wordToCommit = firstMatched.getWord();
+						String wordToCommit = selectedCandidate.getWord();
 
-						if (firstMatched != null
-								&& firstMatched.getCode() != null
-								&& firstMatched.getWord() != null) {
-							if (firstMatched
+						if (selectedCandidate != null
+								&& selectedCandidate.getCode() != null
+								&& selectedCandidate.getWord() != null) {
+							if (selectedCandidate
 									.getCode()
 									.toLowerCase()
-									.equals(firstMatched.getWord()
+									.equals(selectedCandidate.getWord()
 											.toLowerCase())) {
 								firstMatchedLength = 1;
 
@@ -1457,12 +1457,12 @@ public class LIMEService extends InputMethodService implements
 								firstMatchedLength);
 
 						try {
-							SearchSrv.addUserDict(firstMatched.getId(),
-									firstMatched.getCode(),
-									firstMatched.getWord(),
-									firstMatched.getPword(),
-									firstMatched.getScore(),
-									firstMatched.isDictionary());
+							SearchSrv.addUserDict(selectedCandidate.getId(),
+									selectedCandidate.getCode(),
+									selectedCandidate.getWord(),
+									selectedCandidate.getPword(),
+									selectedCandidate.getScore(),
+									selectedCandidate.isDictionary());
 						} catch (RemoteException e) {
 							e.printStackTrace();
 						}
@@ -1471,7 +1471,7 @@ public class LIMEService extends InputMethodService implements
 						// if(userdiclist.size() > 1) { updateUserDict();}
 
 						// Add by Jeremy '10, 4,1 . Reverse Lookup
-						SearchSrv.rQuery(firstMatched.getWord());
+						SearchSrv.rQuery(selectedCandidate.getWord());
 						
 						// Art '30,Sep,2011 when show related then clear composing
 						if(currentSoftKeyboard.indexOf("wb") != -1){
@@ -1481,20 +1481,20 @@ public class LIMEService extends InputMethodService implements
 						// Jeremy '11,7,28 for continuous typing (LD) 
 						boolean composingNotFinish = false;
 						//String commitedCode = firstMatched.getCode();
-						int commitedCodeLength=firstMatched.getCode().length();
+						int commitedCodeLength=selectedCandidate.getCode().length();
 						if(activeIM.equals("phonetic") &&
-								mComposing.length() >= firstMatched.getCode().length()){
-								String strippedCode = firstMatched.getCode().trim().replaceAll("[3467]", "");
+								mComposing.length() >= selectedCandidate.getCode().length()){
+								String strippedCode = selectedCandidate.getCode().trim().replaceAll("[3467]", "");
 								//commitedCode = strippedCode;
-							if(mComposing.toString().contains(firstMatched.getCode())){
-								if(mComposing.length() > firstMatched.getCode().length())
+							if(mComposing.toString().contains(selectedCandidate.getCode())){
+								if(mComposing.length() > selectedCandidate.getCode().length())
 									composingNotFinish = true;
 							}else if(mComposing.toString().contains(strippedCode)){
 								composingNotFinish = true;
 								commitedCodeLength = strippedCode.length();
 							}
 							
-						}else if(mComposing.length() > firstMatched.getCode().length()){
+						}else if(mComposing.length() > selectedCandidate.getCode().length()){
 							composingNotFinish = true;
 						}
 						
@@ -1504,16 +1504,16 @@ public class LIMEService extends InputMethodService implements
 								LDComposingBuffer = mComposing.toString();
 								if(DEBUG) 
 									Log.i(TAG, "commitedtype():starting LD process, LDBuffer=" + LDComposingBuffer +
-										". just commited code=" + firstMatched.getCode());
-								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), 
-										firstMatched.getWord(), firstMatched.getScore(), false);
+										". just commited code=" + selectedCandidate.getCode());
+								SearchSrv.addLDPhrase(selectedCandidate.getId(), selectedCandidate.getCode(), 
+										selectedCandidate.getWord(), selectedCandidate.getScore(), false);
 							}else if(LDComposingBuffer.contains(mComposing.toString())){
 								//Continuous LD process
 								if(DEBUG) 
 									Log.i(TAG, "commitedtype():Continuous LD process, LDBuffer=" + LDComposingBuffer +
-										". just commited code=" + firstMatched.getCode());
-								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), 
-										firstMatched.getWord(), firstMatched.getScore(), false);
+										". just commited code=" + selectedCandidate.getCode());
+								SearchSrv.addLDPhrase(selectedCandidate.getId(), selectedCandidate.getCode(), 
+										selectedCandidate.getWord(), selectedCandidate.getScore(), false);
 							}
 							mComposing= mComposing.delete(0, commitedCodeLength);
 							
@@ -1530,29 +1530,29 @@ public class LIMEService extends InputMethodService implements
 								//Ending continuous LD process (last of LD process)
 								if(DEBUG) 
 									Log.i(TAG, "commitedtype():Ending LD process, LDBuffer=" + LDComposingBuffer +
-										". just commited code=" + firstMatched.getCode());
+										". just commited code=" + selectedCandidate.getCode());
 								LDComposingBuffer = "";
-								SearchSrv.addLDPhrase(firstMatched.getId(), firstMatched.getCode(), firstMatched.getWord(), firstMatched.getScore(), true);
+								SearchSrv.addLDPhrase(selectedCandidate.getId(), selectedCandidate.getCode(), selectedCandidate.getWord(), selectedCandidate.getScore(), true);
 							}else if(LDComposingBuffer.length()>0){
 								//LD process interrupted.
 								if(DEBUG) 
 									Log.i(TAG, "commitedtype():LD process interrupted, LDBuffer=" + LDComposingBuffer +
-										". just commited code=" + firstMatched.getCode());
+										". just commited code=" + selectedCandidate.getCode());
 								LDComposingBuffer = "";
 								SearchSrv.addLDPhrase(null,null,null,0, true);
 							}
 								
 						}
 
-						tempMatched = firstMatched;
-						firstMatched = null;
+						commitedCandidate = selectedCandidate;
+						selectedCandidate = null;
 						//hasFirstMatched = true;
-					} else if (firstMatched != null
-							&& firstMatched.getWord() != null
-							&& firstMatched.getWord().equals("")) {
+					} else if (selectedCandidate != null
+							&& selectedCandidate.getWord() != null
+							&& selectedCandidate.getWord().equals("")) {
 						if(ic!=null) ic.commitText(misMatched,
 								misMatched.length());
-						firstMatched = null;
+						selectedCandidate = null;
 						//hasFirstMatched = false;
 
 						//userdiclist.add(null);
@@ -2121,7 +2121,7 @@ public class LIMEService extends InputMethodService implements
 			commitTyped(ic);
 			//mJustRevertedSeparator = null;
 		} else if (!mEnglishOnly &&mComposing.length() > 0) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-			pickDefaultCandidate();
+			pickHighlightedCandidate();
 			//	commitTyped(ic);
 		}
 		ic.commitText(text, 1);
@@ -2151,7 +2151,7 @@ public class LIMEService extends InputMethodService implements
 			setSuggestions(list, hasPhysicalKeyPressed, true, selkey);
 			
 			if(DEBUG) Log.i(TAG, "updateChineseSymbol():"
-									+ "templist.size:"+templist.size());
+									+ "templist.size:"+mCandidateList.size());
 		}
 		
 	}
@@ -2344,8 +2344,8 @@ public class LIMEService extends InputMethodService implements
 			// Modified by Jeremy '10, 4,1. getCode -> getWord
 			// if( tempMatched != null && tempMatched.getCode() != null &&
 			// !tempMatched.getCode().equals("")){
-			if (tempMatched != null && tempMatched.getWord() != null
-					&& !tempMatched.getWord().equals("")) {
+			if (commitedCandidate != null && commitedCandidate.getWord() != null
+					&& !commitedCandidate.getWord().equals("")) {
 
 				LinkedList<Mapping> list = new LinkedList<Mapping>();
 				//Jeremy '11,8,9 Insert completion suggestions from application 
@@ -2355,8 +2355,8 @@ public class LIMEService extends InputMethodService implements
 				}
 				// Modified by Jeremy '10,3 ,12 for more specific related word
 				// -----------------------------------------------------------
-				if (tempMatched != null && hasMappingList) {
-					list.addAll( SearchSrv.queryUserDic(tempMatched.getWord()));
+				if (commitedCandidate != null && hasMappingList) {
+					list.addAll( SearchSrv.queryUserDic(commitedCandidate.getWord()));
 				}
 				// -----------------------------------------------------------
 				if (list.size() > 0) {
@@ -2371,7 +2371,7 @@ public class LIMEService extends InputMethodService implements
 					setSuggestions(list, hasPhysicalKeyPressed  && !isFullscreenMode()
 							, true, selkey);
 				} else {
-					tempMatched = null;
+					commitedCandidate = null;
 					//Jermy '11,8,14
 					clearSuggestions();
 				}
@@ -2436,11 +2436,11 @@ public class LIMEService extends InputMethodService implements
 		if (mComposing != null && mComposing.length() > 0)
 			mComposing.setLength(0);
 		// Reset templist
-		this.firstMatched = null;
+		this.selectedCandidate = null;
 		//this.hasFirstMatched = false;
 		
-		if(templist!=null) 
-			templist.clear();
+		if(mCandidateList!=null) 
+			mCandidateList.clear();
 		
 		if(mFixedCandidateViewOn)
 			mCandidateView.forceHide();
@@ -2488,21 +2488,21 @@ public class LIMEService extends InputMethodService implements
 			hasMappingList = true;
 
 			if (mCandidateView != null) {
-				templist = (LinkedList<Mapping>) suggestions;
+				mCandidateList = (LinkedList<Mapping>) suggestions;
 				try {
 					if (suggestions.size() == 1) {
-						firstMatched = suggestions.get(0);
+						selectedCandidate = suggestions.get(0);
 					} else if (suggestions.size() > 1) {
-						firstMatched = suggestions.get(1);
+						selectedCandidate = suggestions.get(1);
 					} else {
-						firstMatched = null;
+						selectedCandidate = null;
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 				mCandidateView.setSuggestions(suggestions, showNumber,
 						typedWordValid, diplaySelkey);
-				if(DEBUG) Log.i(TAG, "setSuggestion(): templist.size: " + templist.size());
+				if(DEBUG) Log.i(TAG, "setSuggestion(): templist.size: " + mCandidateList.size());
 			}
 		} else {
 			if(DEBUG) Log.i(TAG, "setSuggestion() with list=null");
@@ -2839,17 +2839,17 @@ public class LIMEService extends InputMethodService implements
 			}
 			
 		} else if(mEnglishOnly 
-				|| (firstMatched != null && firstMatched.isDictionary()&& !mEnglishOnly)) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+				|| (selectedCandidate != null && selectedCandidate.isDictionary()&& !mEnglishOnly)) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 			// related candidates view
 			i = relatedSelkey.indexOf(primaryCode);
 		} 
 		
 		
-		if(i<0 || i >= templist.size()){
+		if(i<0 || i >= mCandidateList.size()){
 				return false;
 		}
 		else{
-			pickSuggestionManually(i);
+			pickCandidateManually(i);
 			return true;
 		}
 		
@@ -3087,7 +3087,7 @@ public class LIMEService extends InputMethodService implements
 
 	}
 
-	public void pickDefaultCandidate() {
+	public void pickHighlightedCandidate() {
 		//pickSuggestionManually(0);
 		if(mCandidateView!=null)
 			mCandidateView.takeSelectedSuggestion();
@@ -3103,26 +3103,26 @@ public class LIMEService extends InputMethodService implements
 		
 	}
 
-	public void pickSuggestionManually(int index) {
+	public void pickCandidateManually(int index) {
 		if (DEBUG)
-			Log.i(TAG,"pickSuggestionManually():"
-					+ "Pick up word at index : " + index);
+			Log.i(TAG,"pickCandidateManually():"
+					+ "Pick up candidate at index : " + index);
 
 		// This is to prevent if user select the index more than the list
-		if(templist != null && index >= templist.size() ){
+		if(mCandidateList != null && index >= mCandidateList.size() ){
 			return;
 		}
 
 		
 		
-		if (templist != null && templist.size() > 0) {
-			firstMatched = templist.get(index);
+		if (mCandidateList != null && mCandidateList.size() > 0) {
+			selectedCandidate = mCandidateList.get(index);
 		}
 		
 		InputConnection ic=getCurrentInputConnection();
 	
 		if (mCompletionOn && mCompletions != null && index >= 0
-				&& firstMatched.isDictionary()
+				&& selectedCandidate.isDictionary()
 				&& index < mCompletions.length ) {
 			CompletionInfo ci = mCompletions[index];
 			if(ic!=null) ic.commitCompletion(ci);
@@ -3130,7 +3130,7 @@ public class LIMEService extends InputMethodService implements
 				Log.i(TAG, "pickSuggestionManually():mCompletionOn:" + mCompletionOn);
 
 		} else if ((mComposing.length() > 0 
-				||firstMatched != null && firstMatched.isDictionary()) && !mEnglishOnly) {  //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+				||selectedCandidate != null && selectedCandidate.isDictionary()) && !mEnglishOnly) {  //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 			commitTyped(ic);
 		} else if (mLIMEPref.getEnglishPrediction() && tempEnglishList != null
 					&& tempEnglishList.size() > 0) {
@@ -3159,7 +3159,7 @@ public class LIMEService extends InputMethodService implements
 
 	public void swipeRight() {
 		//if (mCompletionOn) {
-		pickDefaultCandidate();
+		pickHighlightedCandidate();
 		//}
 	}
 
