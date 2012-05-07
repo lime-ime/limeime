@@ -27,11 +27,14 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.R;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.net.ConnectivityManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.os.StrictMode;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -54,6 +57,8 @@ public class LIMEInitial extends Activity {
 	Button btnResetDB = null;
 	Button btnBackupDB = null;
 	Button btnRestoreDB = null;
+	Button btnCloudBackupDB = null;
+	Button btnCloudRestoreDB = null;
 	Button btnStoreDevice = null;
 	Button btnStoreSdcard = null;
 	
@@ -61,13 +66,30 @@ public class LIMEInitial extends Activity {
 	LIMEPreferenceManager mLIMEPref;
 	ConnectivityManager connManager = null;
 	
+	Activity activity = null;
+	
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle icicle) {
 		
 		super.onCreate(icicle);
 		this.setContentView(R.layout.initial);
+		activity = this;
 		
+		if(android.os.Build.VERSION.SDK_INT > 10){
+			StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()     
+			        //.detectDiskReads()   
+			        //.detectDiskWrites()     
+			        .detectNetwork()   // or .detectAll() for all detectable problems     
+			        .penaltyLog()     
+			        .build());     
+			 StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()     
+			        //.detectLeakedSqlLiteObjects()     
+			        //.detectLeakedClosableObjects()     
+			        .penaltyLog()     
+			        .penaltyDeath()     
+			        .build());
+		}
 		
 		
 		// Startup Service
@@ -304,12 +326,7 @@ public class LIMEInitial extends Activity {
 	     				builder.setCancelable(false);
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
-			    					try {
-				    					//DBSrv.closeDatabse(); Moved to DBSrv by Jeremy '12,5,1
-										DBSrv.backupDatabase();
-									} catch (RemoteException e) {
-										e.printStackTrace();
-									}
+			    					backupDatabase();
 			    	        	}
 			    	     });
 			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -336,8 +353,7 @@ public class LIMEInitial extends Activity {
 	     				builder.setCancelable(false);
 	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     					public void onClick(DialogInterface dialog, int id) {
-			    					try {
-
+			    					
 			    						String dbtarget = mLIMEPref.getParameterString("dbtarget");
 			    						if(dbtarget.equals("device")){
 			    							btnStoreSdcard.setText("");
@@ -347,12 +363,7 @@ public class LIMEInitial extends Activity {
 		    							btnStoreSdcard.setEnabled(false);
 		    							btnStoreDevice.setEnabled(false);
 		    							
-				    					//DBSrv.closeDatabse(); Moved to DBSrv by Jeremy '12,5,1
-			    						DBSrv.restoreDatabase();
-			    						initialButton();
-									} catch (RemoteException e) {
-										e.printStackTrace();
-									}
+				    					restoreDatabase();
 			    	        	}
 			    	     });
 			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -368,6 +379,72 @@ public class LIMEInitial extends Activity {
 					}else{
 						Toast.makeText(v.getContext(), getText(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT).show();
 					}
+			}
+		});
+		
+		btnCloudBackupDB.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+		    			
+				if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
+		        	
+		        
+					File srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+					File srcFile2 = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
+					if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_initial_cloud_backup_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+		     						String dbtarget = mLIMEPref.getParameterString("dbtarget");
+									backupCloudDatabase();
+			    	        	}
+			    	     });
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     }); 
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+					}else{
+						Toast.makeText(v.getContext(), getText(R.string.l3_initial_cloud_backup_error), Toast.LENGTH_SHORT).show();
+					}
+				}else{
+		        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
+		
+		btnCloudRestoreDB.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+						
+				if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
+			        
+					AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     			builder.setMessage(getText(R.string.l3_initial_cloud_restore_confirm));
+	     			builder.setCancelable(false);
+	     			builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     				public void onClick(DialogInterface dialog, int id) {
+	     						restoreCloudDatabase();
+								btnStoreSdcard.setEnabled(false);
+								btnStoreDevice.setEnabled(false);
+			    	        }
+			    	});
+			    	builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    		public void onClick(DialogInterface dialog, int id) {
+			    	    	}
+			    	}); 
+	        
+					AlertDialog alert = builder.create();
+								alert.show();
+							
+					// Reset for SearchSrv
+					mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+
+				}else{
+		        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				}
 			}
 		});
 		
@@ -459,7 +536,9 @@ public class LIMEInitial extends Activity {
 			btnInitPhoneticHsOnlyDB = (Button) findViewById(R.id.btnInitPhoneticHsOnlyDB);
 			btnInitEmptyDB = (Button) findViewById(R.id.btnInitEmptyDB);	
 			btnBackupDB = (Button) findViewById(R.id.btnBackupDB);
-			btnRestoreDB = (Button) findViewById(R.id.btnRestoreDB);
+			btnRestoreDB = (Button) findViewById(R.id.btnRestoreDB);	
+			btnCloudBackupDB = (Button) findViewById(R.id.btnCloudBackupDB);
+			btnCloudRestoreDB = (Button) findViewById(R.id.btnCloudRestoreDB);
 			btnStoreDevice = (Button) findViewById(R.id.btnStoreDevice);
 			btnStoreSdcard = (Button) findViewById(R.id.btnStoreSdcard);
 		}
@@ -481,7 +560,10 @@ public class LIMEInitial extends Activity {
 			btnInitPhoneticHsOnlyDB.setEnabled(true);
 			btnInitEmptyDB.setEnabled(true);
 			btnResetDB.setEnabled(false);
-			Toast.makeText(this, getText(R.string.l3_tab_initial_message), Toast.LENGTH_SHORT).show();
+			
+			if(!mLIMEPref.getParameterBoolean("cloud_in_process")){
+				Toast.makeText(this, getText(R.string.l3_tab_initial_message), Toast.LENGTH_SHORT).show();
+			}
 			
 			if(dbtarget.equals("device")){
 				btnStoreDevice.setEnabled(false);
@@ -505,19 +587,123 @@ public class LIMEInitial extends Activity {
 			btnInitEmptyDB.setEnabled(false);
 			btnResetDB.setEnabled(true);
 		}
-		
-		
 	}
 
-//	private ServiceConnection serConn = new ServiceConnection() {
-//		public void onServiceConnected(ComponentName name, IBinder service) {
-//			if(DBSrv == null){
-//				//Log.i("ART","Start up db service");
-//				DBSrv = IDBService.Stub.asInterface(service);
-//			}
-//		}
-//		public void onServiceDisconnected(ComponentName name) {}
-//
-//	};
+	public void backupDatabase(){
+		 BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, null, BackupRestoreTask.BACKUP);
+		 task.execute("");
+	}
+
+	public void restoreDatabase(){
+		 BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, null, BackupRestoreTask.RESTORE);
+		 task.execute("");
+	}
+	
+	public void backupCloudDatabase() {
+		File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_CLOUD_TEMP);
+		tempFile.deleteOnExit();
+		BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDBACKUP);
+							  task.execute("");
+	}
+
+	public void restoreCloudDatabase() {
+		File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_CLOUD_TEMP);
+		tempFile.deleteOnExit();
+		BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDRESTORE);
+						      task.execute("");
+	    initialButton();
+	}
+	
+	public class BackupRestoreTask extends AsyncTask<String,Integer,Integer> {
+
+		private DBServer dbsrv = null;
+		private ProgressDialog pd;
+		private Context ctx;
+		private LIMEInitial activity;
+		private File tempfile;
+		private int type;
+		final public static int CLOUDBACKUP = 1;
+		final public static int CLOUDRESTORE = 2;
+		final public static int BACKUP = 3;
+		final public static int RESTORE = 4;
+		
+		BackupRestoreTask(LIMEInitial act, Context srcctx, DBServer db, File file, int settype){
+			dbsrv = db;
+			activity = act;
+			ctx = srcctx;
+			tempfile = file;
+			type = settype;
+		}
+		
+		protected void onPreExecute(){
+
+			 if(type == CLOUDBACKUP){
+				pd = ProgressDialog.show(activity, ctx.getText(R.string.l3_initial_cloud_backup_database), ctx.getText(R.string.l3_initial_cloud_backup_start),true);
+			}else if(type == CLOUDRESTORE){
+				pd = ProgressDialog.show(activity, ctx.getText(R.string.l3_initial_cloud_restore_database), ctx.getText(R.string.l3_initial_cloud_restore_start),true);
+			}else if(type == BACKUP){
+				pd = ProgressDialog.show(activity, ctx.getText(R.string.l3_initial_backup_database), ctx.getText(R.string.l3_initial_backup_start),true);
+			}else if(type == RESTORE){
+				pd = ProgressDialog.show(activity, ctx.getText(R.string.l3_initial_restore_database), ctx.getText(R.string.l3_initial_restore_start),true);
+			}
+			 
+			mLIMEPref.setParameter("reload_database", true);
+			try {
+				dbsrv.closeDatabse();
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			} 
+
+			mLIMEPref.setParameter("cloud_in_process", new Boolean(true));
+		}
+		protected void onPostExecute(Integer result){
+			pd.cancel();
+			if(type == CLOUDRESTORE || type == RESTORE){
+				activity.initialButton();
+			}
+		}
+		
+		@Override
+		protected Integer doInBackground(String... arg0) {
+			if(type == CLOUDBACKUP){
+				File srcFile = null;
+				String dbtarget = mLIMEPref.getParameterString("dbtarget");
+				if(dbtarget.equals("device")){
+					srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+				}else{
+					srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
+				}
+				dbsrv.compressFile(srcFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_CLOUD_TEMP);
+				DBCloudServer.backup(activity, dbsrv, mLIMEPref, tempfile);
+			}else if(type == CLOUDRESTORE){
+				DBCloudServer.restore(activity, dbsrv, mLIMEPref, tempfile);
+			}else if(type == BACKUP){
+				try {
+					dbsrv.backupDatabase();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+				mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
+			}else if(type == RESTORE){
+				try {
+					dbsrv.restoreDatabase();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+				mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
+			}
+			boolean inProcess = true;
+			do{
+				inProcess = mLIMEPref.getParameterBoolean("cloud_in_process");
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}while(inProcess);
+			return 1;
+		}
+	}
+	
 	
 }
