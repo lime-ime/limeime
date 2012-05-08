@@ -50,7 +50,7 @@ import android.util.Log;
 //Jeremy '12,5,1 renamed from DBServer and change from service to ordinary class.
 public class  DBServer {//extends Service {
 
-	private final boolean DEBUG = true;
+	private final boolean DEBUG = false;
 	private final String TAG = "LIME.DBService";
 	//private NotificationManager notificationMgr;
 
