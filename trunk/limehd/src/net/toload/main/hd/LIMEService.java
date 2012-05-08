@@ -2864,7 +2864,7 @@ public class LIMEService extends InputMethodService implements
 	private void handleCharacter(int primaryCode, int[] keyCodes)  {
 		//Jeremy '11,6,9 Cleaned code!!
 		if(DEBUG)
-			Log.i(TAG,"handleCharacter():primaryCode:" + primaryCode ); //+ "; keyCodes[0]:"+keyCodes[0]);
+			Log.i(TAG,"handleCharacter():primaryCode:" + primaryCode + "currentSoftKeyboard=" + currentSoftKeyboard ); 
 
 		// Adjust metakeystate on printed key pressed.
 		if(hasPhysicalKeyPressed)
@@ -2872,11 +2872,13 @@ public class LIMEService extends InputMethodService implements
 		
 		// Caculate key press time to handle Eazy IM keys mapping
 		// 1,2,3,4,5,6 map to -(45) =(43) [(91) ](93) ,(44) \(92)
-		String tablename="";
-		tablename = SearchSrv.getTablename();
+		//String tablename="";
+		//tablename = SearchSrv.getTablename();
 		if (keyPressTime != 0
 				&& (System.currentTimeMillis() - keyPressTime > 700)
-				&& tablename.equals("ez")){// mKeyboardSwitcher.getKeyboardMode() == LIMEKeyboardSwitcher.MODE_TEXT_EZ) {
+				&& currentSoftKeyboard.equals("ez") 
+				&& !hasPhysicalKeyPressed  //Jeremy '12,5,8 restricted the mapping on ez softkeybaord and not physical key.
+				){
 			if (primaryCode == 49) {
 				primaryCode = 45;
 			} else if (primaryCode == 50) {

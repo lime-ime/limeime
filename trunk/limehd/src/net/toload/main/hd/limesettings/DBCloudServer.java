@@ -21,13 +21,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.google.api.client.extensions.android2.AndroidHttp;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.extensions.android2.auth.GoogleAccountManager;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson.JacksonFactory;
 import com.google.gdata.client.docs.DocsService;
 import com.google.gdata.client.media.ResumableGDataFileUploader;
 import com.google.gdata.data.MediaContent;
@@ -48,8 +44,8 @@ public class DBCloudServer extends DBServer {
 	private static final int PROGRESS_UPDATE_INTERVAL = 1000;
 	private static final int DEFAULT_CHUNK_SIZE = 10000000;
 
-	final HttpTransport transport = AndroidHttp.newCompatibleTransport();
-	final JsonFactory jsonFactory = new JacksonFactory();
+	//final HttpTransport transport = AndroidHttp.newCompatibleTransport();
+	//final JsonFactory jsonFactory = new JacksonFactory();
 
 	static final String PREF_ACCOUNT_NAME = "accountName1";
 	static final String PREF_AUTH_TOKEN = "authToken";
