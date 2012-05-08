@@ -873,6 +873,12 @@ public class LIMEService extends InputMethodService implements
 		// LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 		hasPhysicalKeyPressed = true; // Jeremy '11,9,5
 		
+		//hide softkeyboard. Jeremy '12,5,8
+		if(mInputView!=null && mInputView.isShown()){
+			mInputView.closing();
+			requestHideSelf(0);
+		}
+		
 		int c = event.getUnicodeChar(LIMEMetaKeyKeyListener
 				.getMetaState(mMetaState));
 
@@ -937,13 +943,18 @@ public class LIMEService extends InputMethodService implements
 		// Clean code by jeremy '11,8,22
 		if (DEBUG) 
 			Log.i(TAG, "OnKeyDown():keyCode:" + keyCode 
-					+ ", event.getDownTime()"+ event.getDownTime() 
+					+", hasMenuPress = " + hasMenuPress
+					+", hasdCtrlPress = " + hasCtrlPress
+					+", hasSHiftPress = " + hasShiftPress
+					+", hasWinPress = " + hasWinPress
+ 					+ ", event.getDownTime()"+ event.getDownTime() 
 					+ ", event.getEventTime()"+ event.getEventTime()
 					+ ", event.getRepeatCount()" + event.getRepeatCount());
 		
-		// Force closing VKeyboard
-		if(mInputView.isShown()){
+		/*/ Force closing VKeyboard Moved to translatekeydown '12,5,8 by jeremy
+		if(mInputView!=null && mInputView.isShown()){
 			mInputView.closing();
+			requestHideSelf(0);
 		}
 		
 		/*if(!(keyCode == KeyEvent.KEYCODE_HOME
@@ -1130,41 +1141,17 @@ public class LIMEService extends InputMethodService implements
 			// 	Shift+Space combination
 			// '11,5,13 Jeremy added Ctrl-space switch chi/eng
 			// '11,6,18 Jeremy moved from on_KEY_UP
-			// '12,4,29 Heremy add hasWinPress + space to switch chi/eng 
-
+			// '12,4,29 Jeremy add hasWinPress + space to switch chi/eng 
+			// '12,5,8  Jeremy add send the space key to onKey with translatekeydown for candidate processing if it's not switching chi/eng 
+			
 			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress || hasWinPress) { 
 				this.switchChiEng();
 				if(hasMenuPress)  hasMenuProcessed = true;
 				hasSpaceProcessed =true;
-				
 				return true;
-			} else {
-				//Jeremy '12,5,8 process space key as first tone in phonetic
-				if (!mEnglishOnly &&   
-						!activeIM.equals("phonetic")
-						|| (activeIM.equals("phonetic") && !mLIMEPref.getParameterBoolean("doLDPhonetic", true) )
-						|| (activeIM.equals("phonetic") && (mComposing.toString().endsWith(" ")|| mComposing.length()==0 )))
-						 {
-					
-					if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
-						if(mCandidateView.takeSelectedSuggestion()){
-							return true;
-						}else if(mComposing.length() == 0){
-							hideCandidateView();
-						}
-					}else{
-						hideCandidateView();
-						break;
-					}
-				} else {
-					//if (tempEnglishList != null && tempEnglishList.size() > 1	&& tempEnglishWord != null && tempEnglishWord.length() > 0) {
-					if(mLIMEPref.getEnglishPrediction()){
-						resetTempEnglishWord();
-					}
-					this.updateEnglishPrediction();
-				}
-				break;
-			}
+			} else 
+				return translateKeyDown(keyCode, event);
+				
 		case MY_KEYCODE_SWITCH_CHARSET: // experia pro earth key
 		case 1000: // milestone chi/eng key
 			switchChiEng();
@@ -1763,22 +1750,18 @@ public class LIMEService extends InputMethodService implements
 			switchKeyboard(primaryCode);
 		} else if (!mEnglishOnly && //Jeremy '12,4,29 use mEnglishOnly instead of onIM  
 				((primaryCode== MY_KEYCODE_SPACE && !activeIM.equals("phonetic"))
-				||(primaryCode== MY_KEYCODE_SPACE && 
-						activeIM.equals("phonetic") && !mLIMEPref.getParameterBoolean("doLDPhonetic", true) )
+				//||(primaryCode== MY_KEYCODE_SPACE && 
+				//		activeIM.equals("phonetic") && !mLIMEPref.getParameterBoolean("doLDPhonetic", true) )
 				||(primaryCode== MY_KEYCODE_SPACE && 
 						activeIM.equals("phonetic") && (mComposing.toString().endsWith(" ")|| mComposing.length()==0 ))
 				|| primaryCode == MY_KEYCODE_ENTER) ){
 			
 			if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
-				//boolean nullComposing = false;
-//				if(mComposing.length() == 0){
-//					nullComposing = true;
-//				}
-				if(!mCandidateView.takeSelectedSuggestion()){
+				if(mCandidateView.takeSelectedSuggestion()){
 					hideCandidateView();
 				}else {
 					if(mComposing.length() == 0)
-								hideCandidateView();
+							hideCandidateView();
 					sendKeyChar((char)primaryCode);
 				}
 				
