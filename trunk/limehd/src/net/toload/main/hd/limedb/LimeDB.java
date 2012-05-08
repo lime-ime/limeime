@@ -453,7 +453,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		if (DEBUG)
 			Log.i(TAG, "checkCode3RIndexAndRecsordsInPhonetic(): checked:" 
 					+ mLIMEPref.getParameterString("checkLDPhonetic") 
-					+ " has valid code3r index and records:" + mLIMEPref.getParameterBoolean("doLDPhonetic", false));
+					+ " has valid code3r index and records:" + mLIMEPref.getParameterBoolean("doLDPhonetic", true));
 		String doLDPhonetic = mLIMEPref.getParameterString("checkLDPhonetic", "");
 		if(!doLDPhonetic.equals("done")){
 			
@@ -1554,7 +1554,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					// Jeremy '11,8,2 Query code3r instead of code for code contains no tone symbols
 					String selectClause;
 					if(tablename.equals("phonetic")
-							&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) 
+							&& mLIMEPref.getParameterBoolean("doLDPhonetic", true) 
 							&& !code.matches(".+[3467 ].*")){
 							//&& !(code.contains("3")||code.contains("4")
 							//||code.contains("6")||code.contains("7")|| code.endsWith(" "))){
@@ -1993,7 +1993,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			//SQLiteDatabase db = this.getSqliteDb(false);
 			final boolean NOCheckOnExpand = code.length() < DUALCODE_NO_CHECK_LIMIT;
 			String codeCol = FIELD_CODE;
-			final boolean doCode3r = tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", false);
+			final boolean doCode3r = tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", true);
 			if( doCode3r && !code.matches(".+[3467 ].*"))
 				codeCol = FIELD_CODE3R;
 		
@@ -2065,7 +2065,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		final boolean buildValidCodeList = lastValidDualCodeList==null;
 		
 		boolean useCode3r =tablename.equals("phonetic")
-				&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) 
+				&& mLIMEPref.getParameterBoolean("doLDPhonetic", true) 
 				&& !query_code.matches(".+[3467 ].*");
 		if(DEBUG) Log.i(TAG,"buildQueryResutl(): cursor.getCount()=" + cursor.getCount());
 		if (cursor.moveToFirst()) {

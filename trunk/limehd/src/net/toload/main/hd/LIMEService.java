@@ -1139,16 +1139,23 @@ public class LIMEService extends InputMethodService implements
 				
 				return true;
 			} else {
-				if (!mEnglishOnly) { // //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+				//Jeremy '12,5,8 process space key as first tone in phonetic
+				if (!mEnglishOnly &&   
+						!activeIM.equals("phonetic")
+						|| (activeIM.equals("phonetic") && !mLIMEPref.getParameterBoolean("doLDPhonetic", true) )
+						|| (activeIM.equals("phonetic") && (mComposing.toString().endsWith(" ")|| mComposing.length()==0 )))
+						 {
 					
 					if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
-						if (mCandidateView.takeSelectedSuggestion()) {
+						if(mCandidateView.takeSelectedSuggestion()){
 							return true;
-						} else {
+						}else if(mComposing.length() == 0){
 							hideCandidateView();
-							break;
 						}
-					} 
+					}else{
+						hideCandidateView();
+						break;
+					}
 				} else {
 					//if (tempEnglishList != null && tempEnglishList.size() > 1	&& tempEnglishWord != null && tempEnglishWord.length() > 0) {
 					if(mLIMEPref.getEnglishPrediction()){
@@ -1757,20 +1764,21 @@ public class LIMEService extends InputMethodService implements
 		} else if (!mEnglishOnly && //Jeremy '12,4,29 use mEnglishOnly instead of onIM  
 				((primaryCode== MY_KEYCODE_SPACE && !activeIM.equals("phonetic"))
 				||(primaryCode== MY_KEYCODE_SPACE && 
-						activeIM.equals("phonetic") && !mLIMEPref.getParameterBoolean("doLDPhonetic", false) )
+						activeIM.equals("phonetic") && !mLIMEPref.getParameterBoolean("doLDPhonetic", true) )
 				||(primaryCode== MY_KEYCODE_SPACE && 
 						activeIM.equals("phonetic") && (mComposing.toString().endsWith(" ")|| mComposing.length()==0 ))
 				|| primaryCode == MY_KEYCODE_ENTER) ){
 			
 			if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
-				boolean nullComposing = false;
-				if(mComposing.length() == 0){
-					nullComposing = true;
-				}
+				//boolean nullComposing = false;
+//				if(mComposing.length() == 0){
+//					nullComposing = true;
+//				}
 				if(!mCandidateView.takeSelectedSuggestion()){
 					hideCandidateView();
-					sendKeyChar((char)primaryCode);
-				}else if(nullComposing){
+				}else {
+					if(mComposing.length() == 0)
+								hideCandidateView();
 					sendKeyChar((char)primaryCode);
 				}
 				
