@@ -27,6 +27,8 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.gdata.client.docs.DocsService;
 import com.google.gdata.client.media.ResumableGDataFileUploader;
 import com.google.gdata.data.MediaContent;
+import com.google.gdata.data.PlainTextConstruct;
+import com.google.gdata.data.docs.DocumentEntry;
 import com.google.gdata.data.docs.DocumentListEntry;
 import com.google.gdata.data.docs.DocumentListFeed;
 import com.google.gdata.data.media.MediaFileSource;
@@ -60,6 +62,7 @@ public class DBCloudServer extends DBServer {
 	static Activity activity = null;
 	//static DBServer DBSrv = null;
 	static File tempfile = null;
+	static boolean isbackup = false;
 
 	public DBCloudServer(Context context) {
 		super(context);
@@ -70,6 +73,7 @@ public class DBCloudServer extends DBServer {
 		if(DEBUG) 
 			Log.i(TAG,"cloudBackup()");
 	
+		isbackup = true;
 		activity = act;
 		tempfile = temp;
 		credential.setAccessToken(null);
@@ -98,39 +102,75 @@ public class DBCloudServer extends DBServer {
 			return;
 		}
 
-		accountManager.getAccountManager().getAuthToken(account,
-				AUTH_TOKEN_TYPE, null, activity, new AccountManagerCallback<Bundle>() {
-
-					public void run(AccountManagerFuture<Bundle> future) {
-						try {
-							Bundle bundle = future.getResult();
-							accountManager
-									.getAccountManager();
-							if (bundle.containsKey(AccountManager.KEY_INTENT)) {
+		if(android.os.Build.VERSION.SDK_INT > 10){
+			accountManager.getAccountManager().getAuthToken(account,
+					AUTH_TOKEN_TYPE, null, activity, new AccountManagerCallback<Bundle>() {
+	
+						public void run(AccountManagerFuture<Bundle> future) {
+							try {
+								Bundle bundle = future.getResult();
 								accountManager
 										.getAccountManager();
-								Intent intent = bundle.getParcelable(AccountManager.KEY_INTENT);
-								intent.setFlags(intent.getFlags()
-										& ~Intent.FLAG_ACTIVITY_NEW_TASK);
-								activity.startActivityForResult(intent,
-										REQUEST_AUTHENTICATE);
-							} else {
-								accountManager
-										.getAccountManager();
-								if (bundle.containsKey(AccountManager.KEY_AUTHTOKEN)) {
+								if (bundle.containsKey(AccountManager.KEY_INTENT)) {
 									accountManager
 											.getAccountManager();
-									setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
-									backupProcess();
+									Intent intent = bundle.getParcelable(AccountManager.KEY_INTENT);
+									intent.setFlags(intent.getFlags()
+											& ~Intent.FLAG_ACTIVITY_NEW_TASK);
+									activity.startActivityForResult(intent,
+											REQUEST_AUTHENTICATE);
+								} else {
+									accountManager
+											.getAccountManager();
+									if (bundle.containsKey(AccountManager.KEY_AUTHTOKEN)) {
+										accountManager
+												.getAccountManager();
+										setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
+										backupProcess();
+									}
 								}
+							} catch (Exception e) {
+								mLIMEPref.setParameter("cloud_in_process",
+										new Boolean(false));
 							}
-						} catch (Exception e) {
-							mLIMEPref.setParameter("cloud_in_process",
-									new Boolean(false));
 						}
-					}
-
-				}, null);
+	
+					}, null);
+		}else{
+			accountManager.getAccountManager().getAuthToken(account,
+					AUTH_TOKEN_TYPE, true, new AccountManagerCallback<Bundle>() {
+	
+						public void run(AccountManagerFuture<Bundle> future) {
+							try {
+								Bundle bundle = future.getResult();
+								accountManager
+										.getAccountManager();
+								if (bundle.containsKey(AccountManager.KEY_INTENT)) {
+									accountManager
+											.getAccountManager();
+									Intent intent = bundle.getParcelable(AccountManager.KEY_INTENT);
+									intent.setFlags(intent.getFlags()
+											& ~Intent.FLAG_ACTIVITY_NEW_TASK);
+									activity.startActivityForResult(intent,
+											REQUEST_AUTHENTICATE);
+								} else {
+									accountManager
+											.getAccountManager();
+									if (bundle.containsKey(AccountManager.KEY_AUTHTOKEN)) {
+										accountManager
+												.getAccountManager();
+										setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
+										backupProcess();
+									}
+								}
+							} catch (Exception e) {
+								mLIMEPref.setParameter("cloud_in_process",
+										new Boolean(false));
+							}
+						}
+	
+					}, null);
+		}
 	}
 
 	public void cloudRestore(Activity act, 
@@ -139,6 +179,7 @@ public class DBCloudServer extends DBServer {
 
 		//DBSrv = db;
 
+		isbackup = false;
 		activity = act;
 		//mLIMEPref = pref;
 		tempfile = temp;
@@ -168,6 +209,8 @@ public class DBCloudServer extends DBServer {
 			return;
 		}
 
+
+		if(android.os.Build.VERSION.SDK_INT > 10){
 		accountManager.getAccountManager().getAuthToken(account,
 				AUTH_TOKEN_TYPE, null, activity, new AccountManagerCallback<Bundle>() {
 
@@ -201,10 +244,49 @@ public class DBCloudServer extends DBServer {
 					}
 
 				}, null);
+		}else{
+			accountManager.getAccountManager().getAuthToken(account,
+					AUTH_TOKEN_TYPE, true, new AccountManagerCallback<Bundle>() {
+
+						public void run(AccountManagerFuture<Bundle> future) {
+							try {
+								Bundle bundle = future.getResult();
+								accountManager
+										.getAccountManager();
+								if (bundle.containsKey(AccountManager.KEY_INTENT)) {
+									accountManager
+											.getAccountManager();
+									Intent intent = bundle.getParcelable(AccountManager.KEY_INTENT);
+									intent.setFlags(intent.getFlags()
+											& ~Intent.FLAG_ACTIVITY_NEW_TASK);
+									(activity).startActivityForResult(intent,
+											REQUEST_AUTHENTICATE);
+								} else {
+									accountManager
+											.getAccountManager();
+									if (bundle.containsKey(AccountManager.KEY_AUTHTOKEN)) {
+										accountManager
+												.getAccountManager();
+										setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
+										restoreProcess();
+									}
+								}
+							} catch (Exception e) {
+								mLIMEPref.setParameter("cloud_in_process",
+										new Boolean(false));
+							}
+						}
+
+					}, null);
+		}
 	}
 
 	private static void chooseAccount() {
 
+		accountManager.invalidateAuthToken(credential.getAccessToken());
+		credential.setAccessToken(null);
+		mLIMEPref.setParameter(PREF_AUTH_TOKEN, null);
+		
 		accountManager.getAccountManager().getAuthTokenByFeatures(
 				GoogleAccountManager.ACCOUNT_TYPE, AUTH_TOKEN_TYPE, null,
 				activity, null, null, new AccountManagerCallback<Bundle>() {
@@ -217,7 +299,11 @@ public class DBCloudServer extends DBServer {
 									.getString(AccountManager.KEY_ACCOUNT_NAME));
 							setAuthToken(bundle
 									.getString(AccountManager.KEY_AUTHTOKEN));
-							restoreProcess();
+							if(isbackup){
+								backupProcess();
+							}else{
+								restoreProcess();
+							}
 						} catch (Exception e) {
 							mLIMEPref.setParameter("cloud_in_process",
 									new Boolean(false));
@@ -343,26 +429,27 @@ public class DBCloudServer extends DBServer {
 							e.printStackTrace();
 						}
 
-						service.setHeader("Content-length", "0");
+						//service.setHeader("Content-length", String.valueOf(0));
 
 						FileUploadProgressListener listener = new FileUploadProgressListener();
 
 						// Pool for handling concurrent upload tasks
 						ExecutorService executor = Executors
 								.newFixedThreadPool(MAX_CONCURRENT_UPLOADS);
-						MediaFileSource mediaFile = getMediaFileSource(tempfile
-								.getAbsolutePath());
+						MediaFileSource mediaFile = getMediaFileSource(tempfile.getAbsolutePath());
 
+						 DocumentListEntry metadata = new DocumentListEntry();
+									  metadata.setHidden(true);
+									  metadata.setCanEdit(false);
+									  metadata.setTitle(new PlainTextConstruct("limedatabasebackup.zip"));
 						ResumableGDataFileUploader uploader = new ResumableGDataFileUploader.Builder(
 								service,
 								new URL(
 										"https://docs.google.com/feeds/upload/create-session/default/private/full"),
-								mediaFile, null /* empty meatadata */)
-								.title("limedatabasebackup.zip")
+								mediaFile, metadata)
 								.chunkSize(DEFAULT_CHUNK_SIZE)
 								.executor(executor)
-								.trackProgress(new FileUploadProgressListener(),
-										PROGRESS_UPDATE_INTERVAL).build();
+								.trackProgress(new FileUploadProgressListener(), PROGRESS_UPDATE_INTERVAL).build();
 						uploader.start();
 						listener.listenTo(uploader);
 
