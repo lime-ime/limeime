@@ -26,7 +26,8 @@
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal" >
+        android:orientation="horizontal" 
+        android:background="@color/limekeyboard_key_color_white">
        
 
         <net.toload.main.hd.candidate.CandidateView
@@ -35,7 +36,7 @@
             android:layout_height="0dp"
             android:layout_weight="1.0"
             android:gravity="center_vertical" 
-            android:background="@drawable/keyboard_suggest_strip"/>
+            android:background="@color/limekeyboard_key_color_white"/>
 			
         <LinearLayout
             android:id="@+id/candidate_right_parent"
@@ -43,8 +44,9 @@
             android:layout_height="fill_parent"
             android:layout_weight="1"
             android:clickable="true"
-            android:orientation="horizontal" >
-
+            android:orientation="horizontal" 
+            android:background="@color/limekeyboard_key_color_white">
+            
             <ImageButton
                 android:id="@+id/candidate_right"
                 android:layout_width="@dimen/candidate_expand_button_width"

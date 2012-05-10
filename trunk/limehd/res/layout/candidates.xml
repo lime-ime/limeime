@@ -22,7 +22,9 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:orientation="horizontal"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@color/candidate_background"
+			>
 
     
     <view xmlns:android="http://schemas.android.com/apk/res/android"
@@ -31,6 +33,7 @@
 	        android:layout_width="wrap_content"
 	        android:layout_height="@dimen/candidate_stripe_height"
 	        android:layout_weight="1"
+	        android:background="@color/candidate_background"
 			/>
 
      <LinearLayout
