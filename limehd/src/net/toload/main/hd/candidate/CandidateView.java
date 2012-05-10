@@ -121,7 +121,7 @@ public class CandidateView extends View implements View.OnClickListener
     private boolean goLeft = false;
     private boolean goRight = false;
     private boolean hasSlide = false;
-    private int bgcolor = 0;
+    //private int bgcolor = 0;
     
     private View mCandidatePopupContainer;
     private PopupWindow  mCandidatePopup;
@@ -186,7 +186,7 @@ public class CandidateView extends View implements View.OnClickListener
     			android.R.attr.state_pressed
     	});
     	
-    	bgcolor = r.getColor(R.color.candidate_background);
+    	//bgcolor = r.getColor(R.color.candidate_background);
 
     	mColorNormal = r.getColor(R.color.candidate_normal);
     	mColorInverted = r.getColor(R.color.candidate_inverted);
@@ -336,11 +336,11 @@ public class CandidateView extends View implements View.OnClickListener
     		Log.i(TAG,"doUpdateUI()");
     	
     	if (mSuggestions == null) {
-    		setBackgroundColor(0);
+    		//setBackgroundColor(0);
     		hideCandidatePopup();
     		return;
     	}
-    	setBackgroundColor(bgcolor);
+    	//setBackgroundColor(bgcolor);
     	
     	
     	
