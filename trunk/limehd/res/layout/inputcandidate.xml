@@ -27,14 +27,16 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal" >
+       
 
         <net.toload.main.hd.candidate.CandidateView
             android:id="@+id/candidatesView"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="1.0"
-            android:gravity="center_vertical" />
-
+            android:gravity="center_vertical" 
+            android:background="@drawable/keyboard_suggest_strip"/>
+			
         <LinearLayout
             android:id="@+id/candidate_right_parent"
             android:layout_width="0dp"
@@ -50,6 +52,7 @@
                 android:background="@drawable/ic_suggest_scroll_background"
                 android:clickable="true"
                 android:src="@drawable/ic_suggest_expander" />
+            
         </LinearLayout>
     </LinearLayout>
 
@@ -58,6 +61,11 @@
         android:id="@+id/keyboard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true" />
-
+        android:layout_alignParentBottom="true" 
+		android:background="@drawable/keyboard_background"
+        android:keyBackground="@drawable/btn_keyboard_key"
+        android:keyTextSize = "@dimen/key_text_size"
+        android:labelTextSize = "@dimen/label_text_size"
+        android:popupLayout="@layout/keyboard_popup" />
+    
 </net.toload.main.hd.candidate.CandidateInInputViewContainer>
