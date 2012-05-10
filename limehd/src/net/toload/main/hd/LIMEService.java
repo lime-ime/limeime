@@ -1016,7 +1016,7 @@ public class LIMEService extends InputMethodService implements
 		case KeyEvent.KEYCODE_DPAD_CENTER:
 			// Log.i("ART","select:"+3);
 			if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
-				mCandidateView.takeSelectedSuggestion();
+				pickHighlightedCandidate();
 				return true;
 			}
 			break;
@@ -1107,7 +1107,7 @@ public class LIMEService extends InputMethodService implements
 				if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 				// To block a real enter after suggestion selection. We have to
 				// return true in OnKeyUp();					
-					if( mCandidateView.takeSelectedSuggestion()){
+					if( pickHighlightedCandidate()){
 						hasEnterProcessed = true;
 						return true;
 					}else{
@@ -1757,9 +1757,7 @@ public class LIMEService extends InputMethodService implements
 				|| primaryCode == MY_KEYCODE_ENTER) ){
 			
 			if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
-				if(mCandidateView.takeSelectedSuggestion()){
-					hideCandidateView();
-				}else {
+				if(!pickHighlightedCandidate()){//Jeremy '12,5,11 fixed for not sedning related.
 					if(mComposing.length() == 0)
 							hideCandidateView();
 					sendKeyChar((char)primaryCode);
@@ -2972,7 +2970,7 @@ public class LIMEService extends InputMethodService implements
 
 				if(!mEnglishOnly){ //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 					//Log.i(TAG,"handlecharacter(), onIM and default procedure");
-					mCandidateView.takeSelectedSuggestion();  // check here.
+					pickHighlightedCandidate();  // check here.
 					InputConnection ic=getCurrentInputConnection();
 					if(ic!=null) ic.commitText(String.valueOf((char) primaryCode),1);
 					//Jeremy '12,4,21
@@ -3079,11 +3077,12 @@ public class LIMEService extends InputMethodService implements
         return separators.contains(String.valueOf((char)code));
 
 	}
-
-	public void pickHighlightedCandidate() {
-		//pickSuggestionManually(0);
-		if(mCandidateView!=null)
-			mCandidateView.takeSelectedSuggestion();
+	//Jeremy '12,5,11 add return value from mCandidate.takeselectedsuggestion()
+	public boolean pickHighlightedCandidate() {
+		if(mCandidateView == null) 
+			return false;
+		else
+			return mCandidateView.takeSelectedSuggestion();
 	}
 	
 	public void requestFullRecords() {

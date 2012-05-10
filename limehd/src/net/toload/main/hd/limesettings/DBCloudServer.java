@@ -28,7 +28,6 @@ import com.google.gdata.client.docs.DocsService;
 import com.google.gdata.client.media.ResumableGDataFileUploader;
 import com.google.gdata.data.MediaContent;
 import com.google.gdata.data.PlainTextConstruct;
-import com.google.gdata.data.docs.DocumentEntry;
 import com.google.gdata.data.docs.DocumentListEntry;
 import com.google.gdata.data.docs.DocumentListFeed;
 import com.google.gdata.data.media.MediaFileSource;
@@ -91,6 +90,7 @@ public class DBCloudServer extends DBServer {
 		gotAccountBackup();
 	}
 
+	@SuppressWarnings("deprecation")
 	private static void gotAccountBackup() {
 		Account account = accountManager.getAccountByName(accountName);
 		if (account == null) {
@@ -198,6 +198,7 @@ public class DBCloudServer extends DBServer {
 		gotAccountRestore();
 	}
 
+	@SuppressWarnings("deprecation")
 	private static void gotAccountRestore() {
 		Account account = accountManager.getAccountByName(accountName);
 		if (account == null) {
