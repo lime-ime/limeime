@@ -30,6 +30,7 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -38,6 +39,7 @@ import android.os.StrictMode;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 
@@ -496,6 +498,11 @@ public class LIMEInitial extends Activity {
 							
 			}
 		});
+		
+
+
+		// Reset Cloud Backup Status
+		mLIMEPref.setParameter("cloud_in_process",new Boolean(false));
 
 	}
 	
@@ -528,6 +535,7 @@ public class LIMEInitial extends Activity {
 	
 	private void initialButton(){
 
+		
 		// Check if button 
 		if(btnResetDB == null){
 			btnResetDB = (Button) findViewById(R.id.btnResetDB);
@@ -616,6 +624,7 @@ public class LIMEInitial extends Activity {
 	
 	public class BackupRestoreTask extends AsyncTask<String,Integer,Integer> {
 
+
 		private DBCloudServer dbsrv = null;
 		private ProgressDialog pd;
 		private Context ctx;
@@ -638,9 +647,35 @@ public class LIMEInitial extends Activity {
 		protected void onPreExecute(){
 
 			 if(type == CLOUDBACKUP){
-				pd = ProgressDialog.show(activity, ctx.getText(R.string.l3_initial_cloud_backup_database), ctx.getText(R.string.l3_initial_cloud_backup_start),true);
+				 pd = new ProgressDialog(activity);
+				 pd.setTitle(ctx.getText(R.string.l3_initial_cloud_backup_database));
+				 pd.setMessage(ctx.getText(R.string.l3_initial_cloud_backup_start));
+				 pd.setCancelable(true);
+				 pd.setOnCancelListener(new OnCancelListener(){
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						mLIMEPref.setParameter("cloud_in_process",new Boolean(false));
+					}
+				 });
+				 pd.setIndeterminate(false);
+				 pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+				 pd.setMax(5);
+				 pd.show();
 			}else if(type == CLOUDRESTORE){
-				pd = ProgressDialog.show(activity, ctx.getText(R.string.l3_initial_cloud_restore_database), ctx.getText(R.string.l3_initial_cloud_restore_start),true);
+				 pd = new ProgressDialog(activity);
+				 pd.setTitle(ctx.getText(R.string.l3_initial_cloud_restore_database));
+				 pd.setMessage(ctx.getText(R.string.l3_initial_cloud_restore_start));
+				 pd.setCancelable(true);
+				 pd.setOnCancelListener(new OnCancelListener(){
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						mLIMEPref.setParameter("cloud_in_process",new Boolean(false));
+					}
+				 });
+				 pd.setIndeterminate(false);
+				 pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+				 pd.setMax(5);
+				 pd.show();
 			}else if(type == BACKUP){
 				pd = ProgressDialog.show(activity, ctx.getText(R.string.l3_initial_backup_database), ctx.getText(R.string.l3_initial_backup_start),true);
 			}else if(type == RESTORE){
@@ -673,10 +708,13 @@ public class LIMEInitial extends Activity {
 				}else{
 					srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 				}
+				pd.setProgress(1);
 				dbsrv.compressFile(srcFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_CLOUD_TEMP);
-				dbsrv.cloudBackup(activity,  tempfile);
+				pd.setProgress(2);
+				dbsrv.cloudBackup(activity,  pd, tempfile);
 			}else if(type == CLOUDRESTORE){
-				DBSrv.cloudRestore(activity,  tempfile);
+				pd.setProgress(1);
+				DBSrv.cloudRestore(activity,  pd, tempfile);
 			}else if(type == BACKUP){
 				try {
 					dbsrv.backupDatabase();
@@ -701,6 +739,7 @@ public class LIMEInitial extends Activity {
 					e.printStackTrace();
 				}
 			}while(inProcess);
+			pd.setProgress(5);
 			return 1;
 		}
 	}
