@@ -24,7 +24,6 @@ import android.util.Log;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.extensions.android2.auth.GoogleAccountManager;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.gdata.client.docs.DocsService;
 import com.google.gdata.client.media.ResumableGDataFileUploader;
 import com.google.gdata.data.MediaContent;
@@ -36,8 +35,8 @@ import com.google.gdata.data.media.MediaSource;
 
 public class DBCloudServer extends DBServer {
 
-	private final boolean DEBUG = false;
-	private final String TAG = "DBCloudServer";
+	private final static boolean DEBUG = true;
+	private final static String TAG = "DBCloudServer";
 	private static final String AUTH_TOKEN_TYPE = "oauth2:https://docs.google.com/feeds/ https://spreadsheets.google.com/feeds/ https://docs.googleusercontent.com/";
 	// private static final int MENU_ACCOUNTS = 0;
 	private static final int REQUEST_AUTHENTICATE = 0;
@@ -74,7 +73,7 @@ public class DBCloudServer extends DBServer {
 		if (DEBUG)
 			Log.i(TAG, "cloudBackup()");
 
-		this.pd = pd;
+		DBCloudServer.pd = pd;
 		isbackup = true;
 		activity = act;
 		tempfile = temp;
@@ -184,7 +183,7 @@ public class DBCloudServer extends DBServer {
 
 		// DBSrv = db;
 
-		this.pd = pd;
+		DBCloudServer.pd = pd;
 		isbackup = false;
 		activity = act;
 		// mLIMEPref = pref;
@@ -339,17 +338,19 @@ public class DBCloudServer extends DBServer {
 
 			Thread thread = new Thread(new Runnable() {
 				public void run() {
+					if(DEBUG)
+						Log.i(TAG,"Google cloud restore thread started...");
 
 					try {
 						DocsService service = getDocsService();
 						service.setOAuth2Credentials(credential);
-						pd.setProgress(2);
+						pd.setProgress(20);
 						// Remove Exists Backup from the cloud
 						String TARGET = "https://docs.google.com/feeds/default/private/full?title=limedatabasebackup";
 						URL metafeedUrl = new URL(TARGET);
 						DocumentListFeed feed = service.getFeed(metafeedUrl,
 								DocumentListFeed.class);
-						pd.setProgress(3);
+						pd.setProgress(40);
 						for (DocumentListEntry entry : feed.getEntries()) {
 
 							MediaContent srcentry = (MediaContent) entry
@@ -365,11 +366,15 @@ public class DBCloudServer extends DBServer {
 								outStream = new FileOutputStream(tempfile
 										.getAbsolutePath());
 
+								long fileSize = mc.getLength();
 								byte[] buffer = new byte[8192];
 								int bytesRead = 0;
 								while ((bytesRead = inStream.read(buffer, 0,
 										8192)) != -1) {
 									outStream.write(buffer, 0, bytesRead);
+									pd.setProgress((int) (40+59* (bytesRead/fileSize)));
+									if(DEBUG) 
+										Log.i(TAG, "restoreProcess(), file size = " + fileSize + ". bytesRead=" + bytesRead);
 								}
 							} finally {
 								if (inStream != null) {
@@ -379,7 +384,7 @@ public class DBCloudServer extends DBServer {
 									outStream.flush();
 									outStream.close();
 								}
-								pd.setProgress(4);
+								pd.setProgress(99);
 							}
 
 							String dbtarget = mLIMEPref
@@ -405,7 +410,7 @@ public class DBCloudServer extends DBServer {
 
 							dbAdapter.openDBConnection(true);
 							mLIMEPref.setParameter("cloud_in_process",new Boolean(false));
-							pd.setProgress(5);
+							pd.setProgress(100);
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -428,6 +433,8 @@ public class DBCloudServer extends DBServer {
 
 			Thread thread = new Thread(new Runnable() {
 				public void run() {
+					if(DEBUG)
+						Log.i(TAG,"Google cloud backup thread started...");
 
 					try {
 
@@ -449,7 +456,7 @@ public class DBCloudServer extends DBServer {
 							handleGoogleException(e);
 							return;
 						}
-						pd.setProgress(3);
+						pd.setProgress(30);
 
 						// service.setHeader("Content-length",
 						// String.valueOf(0));
@@ -478,8 +485,11 @@ public class DBCloudServer extends DBServer {
 						uploader.start();
 						listener.listenTo(uploader);
 
-						pd.setProgress(4);
+						pd.setProgress(40);
 						while (!listener.isDone()) {
+							double progress = 40 + listener.getProgress()*60;
+							if(DEBUG) Log.i(TAG, "Google cloud backup progress : " + progress);
+							pd.setProgress((int) progress );
 							try {
 								Thread.sleep(100);
 							} catch (InterruptedException ie) {
@@ -494,7 +504,7 @@ public class DBCloudServer extends DBServer {
 										R.string.l3_initial_cloud_backup_end)
 										+ "", intentLIMEMenu);
 
-						pd.setProgress(5);
+						pd.setProgress(100);
 					} catch (Exception e) {
 						e.printStackTrace();
 						handleGoogleException(e);
