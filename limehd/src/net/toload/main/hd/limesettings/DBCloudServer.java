@@ -350,6 +350,17 @@ public class DBCloudServer extends DBServer {
 						URL metafeedUrl = new URL(TARGET);
 						DocumentListFeed feed = service.getFeed(metafeedUrl,
 								DocumentListFeed.class);
+						
+						if(feed == null || feed.getEntries().size() == 0){
+							mLIMEPref.setParameter("cloud_in_process",new Boolean(false));
+							showNotificationMessage(
+									activity.getApplicationContext()
+											.getText(
+													R.string.l3_initial_restore_error)
+											+ "", intentLIMEMenu);
+							pd.cancel();
+							return;
+						}
 						pd.setProgress(40);
 						for (DocumentListEntry entry : feed.getEntries()) {
 
@@ -358,7 +369,7 @@ public class DBCloudServer extends DBServer {
 							MediaContent mc = new MediaContent();
 							mc.setUri(srcentry.getUri().toString());
 							MediaSource ms = service.getMedia(mc);
-
+							
 							InputStream inStream = null;
 							FileOutputStream outStream = null;
 							try {
@@ -366,16 +377,24 @@ public class DBCloudServer extends DBServer {
 								outStream = new FileOutputStream(tempfile
 										.getAbsolutePath());
 
-								long fileSize = mc.getLength();
+								long fileSize = inStream.available();
+								if(fileSize == 0 || fileSize == -1){
+									fileSize = mLIMEPref.getParameterLong("cloud_backup_size", 0);
+								}
 								byte[] buffer = new byte[8192];
 								int bytesRead = 0;
+								long totalRead = 0;
 								while ((bytesRead = inStream.read(buffer, 0,
 										8192)) != -1) {
 									outStream.write(buffer, 0, bytesRead);
-									pd.setProgress((int) (40+59* (bytesRead/fileSize)));
+									totalRead += bytesRead; 
+									double percentage = (double)totalRead/(double)fileSize;
+									if(totalRead >0 && fileSize >0 )
+										pd.setProgress((int)(40+(59 * percentage)));
 									if(DEBUG) 
-										Log.i(TAG, "restoreProcess(), file size = " + fileSize + ". bytesRead=" + bytesRead);
+										Log.i(TAG, "restoreProcess(), file size = " + fileSize + ". bytesRead=" + bytesRead + ". totalRead=" + totalRead);
 								}
+								mLIMEPref.setParameter("cloud_backup_size", totalRead);
 							} finally {
 								if (inStream != null) {
 									inStream.close();
@@ -411,6 +430,7 @@ public class DBCloudServer extends DBServer {
 							dbAdapter.openDBConnection(true);
 							mLIMEPref.setParameter("cloud_in_process",new Boolean(false));
 							pd.setProgress(100);
+							break;
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -496,6 +516,8 @@ public class DBCloudServer extends DBServer {
 								throw ie; // rethrow
 							}
 						}
+
+						mLIMEPref.setParameter("cloud_backup_size", tempfile.length());
 
 						mLIMEPref.setParameter("cloud_in_process", new Boolean(
 								false));
