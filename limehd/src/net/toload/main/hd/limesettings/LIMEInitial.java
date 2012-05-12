@@ -39,7 +39,6 @@ import android.os.StrictMode;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 
@@ -659,7 +658,8 @@ public class LIMEInitial extends Activity {
 				 });
 				 pd.setIndeterminate(false);
 				 pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-				 pd.setMax(5);
+				 pd.setCanceledOnTouchOutside(false);
+				 pd.setMax(100);
 				 pd.show();
 			}else if(type == CLOUDRESTORE){
 				 pd = new ProgressDialog(activity);
@@ -674,7 +674,7 @@ public class LIMEInitial extends Activity {
 				 });
 				 pd.setIndeterminate(false);
 				 pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-				 pd.setMax(5);
+				 pd.setMax(100);
 				 pd.show();
 			}else if(type == BACKUP){
 				pd = ProgressDialog.show(activity, ctx.getText(R.string.l3_initial_backup_database), ctx.getText(R.string.l3_initial_backup_start),true);
@@ -708,12 +708,12 @@ public class LIMEInitial extends Activity {
 				}else{
 					srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 				}
-				pd.setProgress(1);
+				pd.setProgress(10);
 				dbsrv.compressFile(srcFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_CLOUD_TEMP);
-				pd.setProgress(2);
+				pd.setProgress(20);
 				dbsrv.cloudBackup(activity,  pd, tempfile);
 			}else if(type == CLOUDRESTORE){
-				pd.setProgress(1);
+				pd.setProgress(10);
 				DBSrv.cloudRestore(activity,  pd, tempfile);
 			}else if(type == BACKUP){
 				try {
@@ -739,7 +739,7 @@ public class LIMEInitial extends Activity {
 					e.printStackTrace();
 				}
 			}while(inProcess);
-			pd.setProgress(5);
+			pd.setProgress(100);
 			return 1;
 		}
 	}
