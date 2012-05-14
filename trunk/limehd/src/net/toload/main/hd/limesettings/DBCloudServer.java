@@ -79,8 +79,7 @@ public class DBCloudServer extends DBServer {
 		tempfile = temp;
 		credential.setAccessToken(null);
 		accountName = mLIMEPref.getParameterString(PREF_ACCOUNT_NAME, null);
-		credential.setAccessToken(mLIMEPref.getParameterString(PREF_AUTH_TOKEN,
-				null));
+		credential.setAccessToken(mLIMEPref.getParameterString(PREF_AUTH_TOKEN,	null));
 
 		accountManager = new GoogleAccountManager(activity);
 
@@ -112,64 +111,42 @@ public class DBCloudServer extends DBServer {
 						public void run(AccountManagerFuture<Bundle> future) {
 							try {
 								Bundle bundle = future.getResult();
-								accountManager.getAccountManager();
-								if (bundle
-										.containsKey(AccountManager.KEY_INTENT)) {
-									accountManager.getAccountManager();
-									Intent intent = bundle
-											.getParcelable(AccountManager.KEY_INTENT);
-									intent.setFlags(intent.getFlags()
-											& ~Intent.FLAG_ACTIVITY_NEW_TASK);
-									activity.startActivityForResult(intent,
-											REQUEST_AUTHENTICATE);
-								} else {
-									accountManager.getAccountManager();
-									if (bundle
-											.containsKey(AccountManager.KEY_AUTHTOKEN)) {
-										accountManager.getAccountManager();
-										setAuthToken(bundle
-												.getString(AccountManager.KEY_AUTHTOKEN));
-										backupProcess();
-									}
+								
+								if (bundle.containsKey(AccountManager.KEY_INTENT)) {
+									Intent intent = bundle.getParcelable(AccountManager.KEY_INTENT);
+									intent.setFlags(intent.getFlags() & ~Intent.FLAG_ACTIVITY_NEW_TASK);
+									activity.startActivityForResult(intent, REQUEST_AUTHENTICATE);
+								} else if (bundle.containsKey(AccountManager.KEY_AUTHTOKEN)) {
+									setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
+									backupProcess();
+									
 								}
 							} catch (Exception e) {
-								mLIMEPref.setParameter("cloud_in_process",
-										new Boolean(false));
+								mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
 							}
 						}
 
 					}, null);
 		} else {
-			accountManager.getAccountManager().getAuthToken(account,
-					AUTH_TOKEN_TYPE, true,
+			accountManager.getAccountManager().getAuthToken(account, AUTH_TOKEN_TYPE, true,
 					new AccountManagerCallback<Bundle>() {
 
 						public void run(AccountManagerFuture<Bundle> future) {
 							try {
 								Bundle bundle = future.getResult();
-								accountManager.getAccountManager();
-								if (bundle
-										.containsKey(AccountManager.KEY_INTENT)) {
+								if (bundle.containsKey(AccountManager.KEY_INTENT)) {
+									
+									Intent intent = bundle.getParcelable(AccountManager.KEY_INTENT);
+									intent.setFlags(intent.getFlags() & ~Intent.FLAG_ACTIVITY_NEW_TASK);
+									activity.startActivityForResult(intent,	REQUEST_AUTHENTICATE);
+								} else if (bundle.containsKey(AccountManager.KEY_AUTHTOKEN)) {
 									accountManager.getAccountManager();
-									Intent intent = bundle
-											.getParcelable(AccountManager.KEY_INTENT);
-									intent.setFlags(intent.getFlags()
-											& ~Intent.FLAG_ACTIVITY_NEW_TASK);
-									activity.startActivityForResult(intent,
-											REQUEST_AUTHENTICATE);
-								} else {
-									accountManager.getAccountManager();
-									if (bundle
-											.containsKey(AccountManager.KEY_AUTHTOKEN)) {
-										accountManager.getAccountManager();
-										setAuthToken(bundle
-												.getString(AccountManager.KEY_AUTHTOKEN));
-										backupProcess();
-									}
+									setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
+									backupProcess();
+									
 								}
 							} catch (Exception e) {
-								mLIMEPref.setParameter("cloud_in_process",
-										new Boolean(false));
+								mLIMEPref.setParameter("cloud_in_process", 	new Boolean(false));
 							}
 						}
 
@@ -190,8 +167,7 @@ public class DBCloudServer extends DBServer {
 		tempfile = temp;
 		credential.setAccessToken(null);
 		accountName = mLIMEPref.getParameterString(PREF_ACCOUNT_NAME, null);
-		credential.setAccessToken(mLIMEPref.getParameterString(PREF_AUTH_TOKEN,
-				null));
+		credential.setAccessToken(mLIMEPref.getParameterString(PREF_AUTH_TOKEN, null));
 
 		accountManager = new GoogleAccountManager(activity);
 
@@ -216,36 +192,26 @@ public class DBCloudServer extends DBServer {
 		}
 
 		if (android.os.Build.VERSION.SDK_INT > 10) {
-			accountManager.getAccountManager().getAuthToken(account,
-					AUTH_TOKEN_TYPE, null, activity,
+			accountManager.getAccountManager().getAuthToken(account, AUTH_TOKEN_TYPE, null, activity,
 					new AccountManagerCallback<Bundle>() {
 
 						public void run(AccountManagerFuture<Bundle> future) {
 							try {
 								Bundle bundle = future.getResult();
-								accountManager.getAccountManager();
-								if (bundle
-										.containsKey(AccountManager.KEY_INTENT)) {
+								
+								if (bundle.containsKey(AccountManager.KEY_INTENT)) {
+									
+									Intent intent = bundle.getParcelable(AccountManager.KEY_INTENT);
+									intent.setFlags(intent.getFlags() & ~Intent.FLAG_ACTIVITY_NEW_TASK);
+									(activity).startActivityForResult(intent, REQUEST_AUTHENTICATE);
+								} else if (bundle.containsKey(AccountManager.KEY_AUTHTOKEN)) {
 									accountManager.getAccountManager();
-									Intent intent = bundle
-											.getParcelable(AccountManager.KEY_INTENT);
-									intent.setFlags(intent.getFlags()
-											& ~Intent.FLAG_ACTIVITY_NEW_TASK);
-									(activity).startActivityForResult(intent,
-											REQUEST_AUTHENTICATE);
-								} else {
-									accountManager.getAccountManager();
-									if (bundle
-											.containsKey(AccountManager.KEY_AUTHTOKEN)) {
-										accountManager.getAccountManager();
-										setAuthToken(bundle
-												.getString(AccountManager.KEY_AUTHTOKEN));
-										restoreProcess();
-									}
+									setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
+									restoreProcess();
+									
 								}
 							} catch (Exception e) {
-								mLIMEPref.setParameter("cloud_in_process",
-										new Boolean(false));
+								mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
 							}
 						}
 
@@ -257,30 +223,18 @@ public class DBCloudServer extends DBServer {
 
 						public void run(AccountManagerFuture<Bundle> future) {
 							try {
-								Bundle bundle = future.getResult();
-								accountManager.getAccountManager();
-								if (bundle
-										.containsKey(AccountManager.KEY_INTENT)) {
+								Bundle bundle = future.getResult();						
+								if (bundle.containsKey(AccountManager.KEY_INTENT)) {								
+									Intent intent = bundle.getParcelable(AccountManager.KEY_INTENT);
+									intent.setFlags(intent.getFlags() & ~Intent.FLAG_ACTIVITY_NEW_TASK);
+									(activity).startActivityForResult(intent, REQUEST_AUTHENTICATE);
+								} else if (bundle.containsKey(AccountManager.KEY_AUTHTOKEN)) {
 									accountManager.getAccountManager();
-									Intent intent = bundle
-											.getParcelable(AccountManager.KEY_INTENT);
-									intent.setFlags(intent.getFlags()
-											& ~Intent.FLAG_ACTIVITY_NEW_TASK);
-									(activity).startActivityForResult(intent,
-											REQUEST_AUTHENTICATE);
-								} else {
-									accountManager.getAccountManager();
-									if (bundle
-											.containsKey(AccountManager.KEY_AUTHTOKEN)) {
-										accountManager.getAccountManager();
-										setAuthToken(bundle
-												.getString(AccountManager.KEY_AUTHTOKEN));
-										restoreProcess();
-									}
+									setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
+									restoreProcess();									
 								}
 							} catch (Exception e) {
-								mLIMEPref.setParameter("cloud_in_process",
-										new Boolean(false));
+								mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
 							}
 						}
 
@@ -296,22 +250,20 @@ public class DBCloudServer extends DBServer {
 
 		accountManager.getAccountManager().getAuthTokenByFeatures(
 				GoogleAccountManager.ACCOUNT_TYPE, AUTH_TOKEN_TYPE, null,
-				activity, null, null, new AccountManagerCallback<Bundle>() {
+					activity, null, null, new AccountManagerCallback<Bundle>() {
 
 					public void run(AccountManagerFuture<Bundle> future) {
 						Bundle bundle;
 						try {
 							bundle = future.getResult();
-							setAccountName(bundle
-									.getString(AccountManager.KEY_ACCOUNT_NAME));
+							setAccountName(bundle.getString(AccountManager.KEY_ACCOUNT_NAME));
 							if (isbackup) {
 								gotAccountBackup();
 							} else {
 								gotAccountRestore();
 							}
 						} catch (Exception e) {
-							mLIMEPref.setParameter("cloud_in_process",
-									new Boolean(false));
+							mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
 						}
 					}
 
@@ -353,19 +305,15 @@ public class DBCloudServer extends DBServer {
 						
 						if(feed == null || feed.getEntries().size() == 0){
 							mLIMEPref.setParameter("cloud_in_process",new Boolean(false));
-							showNotificationMessage(
-									activity.getApplicationContext()
-											.getText(
-													R.string.l3_initial_restore_error)
-											+ "", intentLIMEMenu);
+							showNotificationMessage(activity.getApplicationContext()
+									.getText(R.string.l3_initial_restore_error)	+ "", intentLIMEMenu);
 							pd.cancel();
 							return;
 						}
 						pd.setProgress(40);
 						for (DocumentListEntry entry : feed.getEntries()) {
 
-							MediaContent srcentry = (MediaContent) entry
-									.getContent();
+							MediaContent srcentry = (MediaContent) entry.getContent();
 							MediaContent mc = new MediaContent();
 							mc.setUri(srcentry.getUri().toString());
 							MediaSource ms = service.getMedia(mc);
@@ -519,8 +467,7 @@ public class DBCloudServer extends DBServer {
 
 						mLIMEPref.setParameter("cloud_backup_size", tempfile.length());
 
-						mLIMEPref.setParameter("cloud_in_process", new Boolean(
-								false));
+						mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
 						showNotificationMessage(
 								activity.getApplicationContext().getText(
 										R.string.l3_initial_cloud_backup_end)
