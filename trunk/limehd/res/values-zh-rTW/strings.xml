@@ -502,6 +502,10 @@
     
     <string name="l3_im_notice">為了節省記憶體使用空間，我們強烈建議您清空不常使用的輸入法字根，或使用空白資料庫來載入個別輸入法字根檔。</string>
     
+    <string name="hide_software_keyboard_typing_with_physical">自動隱藏軟鍵盤</string>
+    <string name="hide_software_keyboard_typing_with_physical_summary">以實體鍵盤打字時隱藏軟鍵盤</string>
+  
+    
     <!-- AD Message -->
     <string name="ad_zippy">藍芽鍵盤測試支援\nZIPPY BT-540 藍芽一對六鍵盤 - http://www.zippy.com (Sam Lin/sam_lin@hotmail.com)</string>
     
