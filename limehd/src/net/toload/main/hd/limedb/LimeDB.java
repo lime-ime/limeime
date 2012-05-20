@@ -1553,18 +1553,20 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					Cursor cursor = null;
 					// Jeremy '11,8,2 Query code3r instead of code for code contains no tone symbols
 					String selectClause;
+					code = code.replaceAll("'", "''");  //Jeremy '12,5,20 escape "'" before further processing 
 					if(tablename.equals("phonetic")
 							&& mLIMEPref.getParameterBoolean("doLDPhonetic", true) 
 							&& !code.matches(".+[3467 ].*")){
 							//&& !(code.contains("3")||code.contains("4")
 							//||code.contains("6")||code.contains("7")|| code.endsWith(" "))){
 						selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
-					}else if(tablename.equals("hs")){
-						String tempcode = code.replaceAll("'", "''");
-						selectClause = FIELD_CODE + " = '" + tempcode.trim() + "' " + extraConditions;
+					//}else if(tablename.equals("hs")){
+					//	//String tempcode = code.replaceAll("'", "''");
+						selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
 					}else{
 						selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
 					}
+					
 					
 					if(DEBUG) 
 						Log.i(TAG, "getMapping(): selectClause=" + selectClause  );

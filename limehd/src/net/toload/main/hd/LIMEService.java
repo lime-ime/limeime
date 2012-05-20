@@ -75,7 +75,7 @@ import android.content.res.Configuration;
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = true;
+	static final boolean DEBUG = false;
 	static final String TAG = "LIMEService";
 	//static final String PREF = "LIMEXY";
 
@@ -742,7 +742,7 @@ public class LIMEService extends InputMethodService implements
 
 
 		
-		if(mEnglishOnly)
+		if(mEnglishOnly && mPredictionOn) //Jeremy '12,5,20 Only hide candidateview when prediction mode is not on. 
 			//Jeremy '12,5,6 clear internal composing buffer in forceHideCandiateView 
 			forceHideCandidateView();  //Jeremy '12,5,6 zero the canidateView height to force hide it for eng/numeric keyboard
 		else
@@ -874,13 +874,12 @@ public class LIMEService extends InputMethodService implements
 		hasPhysicalKeyPressed = true; // Jeremy '11,9,5
 		
 		//hide softkeyboard. Jeremy '12,5,8
-		if(mInputView!=null && mInputView.isShown()){
+		if(mInputView!=null && mInputView.isShown() && mLIMEPref.getAutoHideSoftKeyboard()){
 			mInputView.closing();
 			requestHideSelf(0);
 		}
 		
-		int c = event.getUnicodeChar(LIMEMetaKeyKeyListener
-				.getMetaState(mMetaState));
+		int c = event.getUnicodeChar(LIMEMetaKeyKeyListener.getMetaState(mMetaState));
 
 		InputConnection ic = getCurrentInputConnection();
 		
@@ -947,9 +946,8 @@ public class LIMEService extends InputMethodService implements
 					+", hasdCtrlPress = " + hasCtrlPress
 					+", hasSHiftPress = " + hasShiftPress
 					+", hasWinPress = " + hasWinPress
- 					+ ", event.getDownTime()"+ event.getDownTime() 
-					+ ", event.getEventTime()"+ event.getEventTime()
-					+ ", event.getRepeatCount()" + event.getRepeatCount());
+ 					+", event.getEventTime() -  event.getDownTime()"+ ( event.getEventTime() -  event.getDownTime())
+					+", event.getRepeatCount()" + event.getRepeatCount());
 		
 		/*/ Force closing VKeyboard Moved to translatekeydown '12,5,8 by jeremy
 		if(mInputView!=null && mInputView.isShown()){
@@ -1141,11 +1139,10 @@ public class LIMEService extends InputMethodService implements
 			// 	Shift+Space combination
 			// '11,5,13 Jeremy added Ctrl-space switch chi/eng
 			// '11,6,18 Jeremy moved from on_KEY_UP
-			// '12,4,29 Jeremy add hasWinPress + space to switch chi/eng 
+			// '12,4,29 Jeremy add hasWinPress + space to switch chi/eng (earth key on zippy keyboard)
 			// '12,5,8  Jeremy add send the space key to onKey with translatekeydown for candidate processing if it's not switching chi/eng 
-			
-			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress || hasWinPress) { 
-				this.switchChiEng();
+			if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress || hasWinPress ){ 
+				if(!hasWinPress) this.switchChiEng();  //Jeremy '12,5,20 move hasWinPress to winstartkey in onkeyUp()
 				if(hasMenuPress)  hasMenuProcessed = true;
 				hasSpaceProcessed =true;
 				return true;
@@ -1159,8 +1156,7 @@ public class LIMEService extends InputMethodService implements
 		case KeyEvent.KEYCODE_SYM:	
 		case KeyEvent.KEYCODE_AT:		
 			//Jeremy '11,8,22 use begintime and eventtime in event to see if long-pressed or not.
-			if (//keyPressTime != 0 && 
-					!hasKeyProcessed 
+			if (!hasKeyProcessed 
 					&& event.getRepeatCount() > 0
 					&& event.getEventTime() -  event.getDownTime() > mLongPressKeyTimeout ) {
 					//&& System.currentTimeMillis() - keyPressTime > mLongPressKeyTimeout){
@@ -1269,15 +1265,11 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
 		if (DEBUG) {
-			Log.i(TAG,"OnKeyUp():keyCode:" + keyCode + ";hasCtrlPress:"
-					+ hasCtrlPress
-			/*
-			 * + " KeyEvent.Alt_ON:" +
-			 * String.valueOf(LIMEMetaKeyKeyListener.getMetaState( mMetaState,
-			 * LIMEMetaKeyKeyListener.META_ALT_ON)) + " KeyEvent.Shift_ON:" +
-			 * String.valueOf(LIMEMetaKeyKeyListener.getMetaState( mMetaState,
-			 * LIMEMetaKeyKeyListener.META_SHIFT_ON))
-			 */
+			Log.i(TAG,"OnKeyUp():keyCode:" + keyCode 
+					+";hasCtrlPress:"	+ hasCtrlPress
+					+";hasWinPress:" + hasWinPress
+					+", event.getEventTime() -  event.getDownTime()"+ ( event.getEventTime() -  event.getDownTime())
+			
 			);
 
 		}
@@ -1326,6 +1318,11 @@ public class LIMEService extends InputMethodService implements
 			hasCtrlPress = false;
 			break;
 		case MY_KEYCODE_WINDOWS_START:
+			if(hasSpaceProcessed) //Jeremy '12,5,20 long press to show IM picker, switch chi/eng otherwise for the win+space or earth key on zippy
+				if(event.getEventTime() -  event.getDownTime() > mLongPressKeyTimeout )
+					showIMPicker();
+				else
+					switchChiEng();
 			hasWinPress = false;
 			break;
 		case KeyEvent.KEYCODE_ENTER:
@@ -1372,8 +1369,7 @@ public class LIMEService extends InputMethodService implements
 				// alt-@ switch to next active keyboard.
 				//nextActiveKeyboard(true);
 				showIMPicker(); //Jeremy '11,8,28
-				mMetaState = LIMEMetaKeyKeyListener
-						.adjustMetaAfterKeypress(mMetaState);
+				mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 				setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState(); 
 				return true;
 				// Long press physical @ key to swtich chn/eng 
@@ -1389,6 +1385,7 @@ public class LIMEService extends InputMethodService implements
 			
 		case KeyEvent.KEYCODE_SPACE:
 			//Jeremy move the chi/eng swithcing to on_KEY_UP '11,6,18
+			
 			if(hasSpaceProcessed)
 				return true;
 		default:
@@ -2018,7 +2015,8 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@TargetApi(11)
 	private void showIMPicker() {
-
+		if(DEBUG)
+			Log.i(TAG,"showIMPicker()");
 		buildActivatedIMList();
 
 		AlertDialog.Builder builder = null;

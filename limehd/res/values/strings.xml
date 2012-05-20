@@ -528,6 +528,9 @@
     <string name="l3_tab_bluetooth">Bluetooth</string>
     <string name="l3_im_notice">For saveing precious device memory space (both RAM and FLASH), IM-tables you are not using are strongly recommeded to be removed.</string>
     
+    <string name="hide_software_keyboard_typing_with_physical">Auto hide soft keyboard</string>
+    <string name="hide_software_keyboard_typing_with_physical_summary">Hide soft keyboard when typing with physical keyboard.</string>
+    
     <!-- AD Message -->
     <string name="ad_zippy">Bluetooth keyboard experienced device\nZIPPY BT-540 Switch Instantaneously Multi-pairing Bluetooth Keyboard - http://www.zippy.com (Sam Lin/sam_lin@hotmail.com)</string>
     

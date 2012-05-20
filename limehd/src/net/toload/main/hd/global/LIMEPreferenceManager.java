@@ -373,6 +373,14 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("switch_english_mode", false);
 	}
 	
+	
+	public boolean getAutoHideSoftKeyboard(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("hide_software_keyboard_typing_with_physical", true);
+
+	}
+	
+	
 	/*
 	 * INT Parameter SET/GET
 	 */

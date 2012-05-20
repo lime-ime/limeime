@@ -51,11 +51,12 @@
                 android:summary="@string/number_row_in_english_summary"
             	android:defaultValue="true" 
                 />
-       <!-- <CheckBoxPreference
-                android:key="disable_software_keyboard"
-                android:title="@string/disable_software_keyboard" 
-            	android:defaultValue="false" 
-                /> -->
+       <CheckBoxPreference
+                android:key="hide_software_keyboard_typing_with_physical"
+                android:title="@string/hide_software_keyboard_typing_with_physical"
+                android:summary="@string/hide_software_keyboard_typing_with_physical_summary"
+            	android:defaultValue="true" 
+                />
        <CheckBoxPreference
                 android:key="fixed_candidate_view_display"
                 android:title="@string/fixed_candidate_view_display" 
