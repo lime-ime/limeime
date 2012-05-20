@@ -1318,7 +1318,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 		// Inject down event on the key to mini keyboard.
 		long eventTime = SystemClock.uptimeMillis();
 		mMiniKeyboardPopupTime = eventTime;
-		if(!isLargeScreen){   // disable fling on large screen
+		if(!isLargeScreen || miniKeys.size()==1){   // disable fling on large screen; //Jeremy enable fling when popup keyboard only has 1 key '12,5,20
 			MotionEvent downEvent = generateMiniKeyboardMotionEvent(MotionEvent.ACTION_DOWN, popupKey.x
 					+ popupKey.width / 2, popupKey.y + popupKey.height / 2, eventTime);
 			mMiniKeyboard.onTouchEvent(downEvent);
@@ -1481,7 +1481,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
 		// Needs to be called after the gesture detector gets a turn, as it may have
 		// displayed the mini keyboard
-		if (mMiniKeyboard != null && !isLargeScreen) {
+		if (mMiniKeyboard != null && ( !isLargeScreen || mMiniKeyboard.getKeyboard().getKeys().size()==1 )) {  //Jeremy enable fling when popup keyboard only has 1 key '12,5,20
 			final int miniKeyboardPointerIndex = me.findPointerIndex(mMiniKeyboardTrackerId);
 			if (miniKeyboardPointerIndex >= 0 && miniKeyboardPointerIndex < pointerCount) {
 				final int miniKeyboardX = (int)me.getX(miniKeyboardPointerIndex);

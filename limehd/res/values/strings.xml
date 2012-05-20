@@ -409,6 +409,7 @@
     
     <string name="l3_tab_preference">Preference</string>
 	
+    
 	<string name="l3_dbservice_download_start">Downloading preloaded database... It takes few minutes, please wait...</string>
     <string name="l3_dbservice_download_start_empty">Downloading blank database... It takes few minutes, please wait...</string>
     <string name="l3_dbservice_download_initial">Initialize database.</string>

@@ -206,7 +206,7 @@ public class LIMEService extends InputMethodService implements
 	
 
 	// To keep key press time
-	private long keyPressTime = 0;
+	//private long keyPressTime = 0;
 
 	// Keep keydown event
 	KeyEvent mKeydownEvent = null;
@@ -2861,6 +2861,8 @@ public class LIMEService extends InputMethodService implements
 		// 1,2,3,4,5,6 map to -(45) =(43) [(91) ](93) ,(44) \(92)
 		//String tablename="";
 		//tablename = SearchSrv.getTablename();
+		/*  Use popup keyboard to process long processed dual keys. Jeremy '12,5,20
+		 
 		if (keyPressTime != 0
 				&& (System.currentTimeMillis() - keyPressTime > 700)
 				&& currentSoftKeyboard.equals("ez") 
@@ -2880,7 +2882,7 @@ public class LIMEService extends InputMethodService implements
 				primaryCode = 92;
 			}
 		}
-
+		*/
 		
 		//Jeremy '11,6,6 processing physical keyboard selkeys.
 		//Move here '11,6,9 to have lower priority than hasnumbermapping
@@ -3172,7 +3174,7 @@ public class LIMEService extends InputMethodService implements
 		if(DEBUG) 
 			Log.i(TAG, "onPress(): code = " + primaryCode);
 		// Record key press time (press down)
-		keyPressTime = System.currentTimeMillis();
+		//keyPressTime = System.currentTimeMillis();
 		// To identify the source of character (Software keyboard or physical
 		// keyboard)
 		hasPhysicalKeyPressed = false;

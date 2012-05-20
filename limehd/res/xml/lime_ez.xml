@@ -29,13 +29,38 @@
     >
 
     <Row>
-       <Key limehd:codes="49" limehd:keyLabel="1儿\n|" limehd:keyEdgeFlags="left" />
-		<Key limehd:codes="50" limehd:keyLabel="2母\n車" />
-		<Key limehd:codes="51" limehd:keyLabel="3匚\n糸" />
-		<Key limehd:codes="52" limehd:keyLabel="4]\n言" />
-		<Key limehd:codes="53" limehd:keyLabel="5Ｌ\n貝" />
-		<Key limehd:codes="54" limehd:keyLabel="6ㄏ\n雨" />
-		<Key limehd:codes="55" limehd:keyLabel="7\nㄇ" />
+        <Key
+            limehd:codes="49"
+            limehd:keyLabel="1儿\n|"
+            limehd:popupCharacters="-\n儿"
+            limehd:popupKeyboard="@xml/popup_template" />
+             limehd:keyEdgeFlags="left" />
+        <Key
+            limehd:codes="50"
+            limehd:keyLabel="2母\n車"
+            limehd:popupCharacters="=\n母"
+            limehd:popupKeyboard="@xml/popup_template" />
+        <Key
+            limehd:codes="51"
+            limehd:keyLabel="3匚\n糸"
+            limehd:popupCharacters="[\n匚"
+            limehd:popupKeyboard="@xml/popup_template" />
+        <Key
+            limehd:codes="52"
+            limehd:keyLabel="4]\n言"
+            limehd:popupCharacters="]\n]"
+            limehd:popupKeyboard="@xml/popup_template" />
+        <Key
+            limehd:codes="53"
+            limehd:keyLabel="5Ｌ\n貝"
+            limehd:popupCharacters="&apos;\nＬ"
+            limehd:popupKeyboard="@xml/popup_template" />
+        <Key
+            limehd:codes="54"
+            limehd:keyLabel="6ㄏ\n雨"
+            limehd:popupCharacters="\\\nㄏ"
+            limehd:popupKeyboard="@xml/popup_template" />
+        <Key limehd:codes="55" limehd:keyLabel="7\nㄇ" />
 		<Key limehd:codes="56" limehd:keyLabel="8\n八" />
 		<Key limehd:codes="57" limehd:keyLabel="9\n耳" />
 		<Key limehd:codes="48" limehd:keyLabel="0\n鳥" limehd:keyEdgeFlags="right" />
