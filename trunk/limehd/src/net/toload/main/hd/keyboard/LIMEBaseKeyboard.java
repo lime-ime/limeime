@@ -552,6 +552,14 @@ public class LIMEBaseKeyboard {
         row.verticalGap =  (int) (mDefaultVerticalGap  * mKeySizeScale);;
         row.rowEdgeFlags = EDGE_TOP | EDGE_BOTTOM;
         final int maxColumns = columns == -1 ? Integer.MAX_VALUE : columns;
+        
+        CharSequence labels = null;
+        if(characters.toString().contains("\n")){
+        	String[] charactersAndLabel = characters.toString().split("\n");
+        	characters = new String(charactersAndLabel[0]);
+        	labels = new String(charactersAndLabel[1]);
+        }
+        
         for (int i = 0; i < characters.length(); i++) {
             char c = characters.charAt(i);
             if (column >= maxColumns 
@@ -566,7 +574,10 @@ public class LIMEBaseKeyboard {
             key.width = mDefaultWidth ;
             key.height =(int) ( mDefaultHeight * mKeySizeScale);
             key.gap = mDefaultHorizontalGap;
-            key.label = String.valueOf(c);
+            if(labels==null) //Jeremy '12,5,21 add keylabels in popupcharacters seperated as \n. The format is "123\nABC" ABC are keylabels for 123.
+            	key.label = String.valueOf(c);
+            else
+            	key.label = String.valueOf(c) + "\n" + String.valueOf(labels.charAt(i));
             key.codes = new int[] { c };
             column++;
             x += key.width + key.gap;

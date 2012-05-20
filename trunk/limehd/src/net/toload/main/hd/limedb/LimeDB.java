@@ -1553,7 +1553,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					Cursor cursor = null;
 					// Jeremy '11,8,2 Query code3r instead of code for code contains no tone symbols
 					String selectClause;
-					code = code.replaceAll("'", "''");  //Jeremy '12,5,20 escape "'" before further processing 
 					if(tablename.equals("phonetic")
 							&& mLIMEPref.getParameterBoolean("doLDPhonetic", true) 
 							&& !code.matches(".+[3467 ].*")){
@@ -1561,15 +1560,15 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							//||code.contains("6")||code.contains("7")|| code.endsWith(" "))){
 						selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
 					//}else if(tablename.equals("hs")){
-					//	//String tempcode = code.replaceAll("'", "''");
-						selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
+					//	String tempcode = code.replaceAll("'", "''");  //Jeremy '12,5,21 do this in preprocessing already.
+					//	selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
 					}else{
 						selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
 					}
 					
 					
 					if(DEBUG) 
-						Log.i(TAG, "getMapping(): selectClause=" + selectClause  );
+						Log.i(TAG, "getMapping(): code = '" + code + "' selectClause=" + selectClause  );
 					// Jeremy '11,8,5 limit initial query to limited records
 					String limitClause = null;
 					if(!getAllRecords)
@@ -1694,11 +1693,13 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			
 			// Do the remapping here using the cached remapping table
 					
-			if(keysReMap.get(remaptable)==null 
-						|| keysReMap.get(remaptable).size()==0){
-				return code;
-			}
-			else{
+			//if(keysReMap.get(remaptable)==null 
+			//			|| keysReMap.get(remaptable).size()==0){
+				//return code;  //Jeremy '12,5,21 need to do escape. should not return here.
+			//}
+			//else{
+			if(keysReMap.get(remaptable)!=null 
+					&& keysReMap.get(remaptable).size()!=0) {
 				HashMap<String,String> reMap = keysReMap.get(remaptable);
 				HashMap<String,String> finalReMap =  keysReMap.get("final_"+remaptable);
 				
@@ -1861,9 +1862,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						dualKey = XPERIAPRO_DUALKEY;
 						dualKeyRemap = XPERIAPRO_DUALKEY_REMAP;
 					}
-				}else if(tablename.equals("ez")){
+				/*}else if(tablename.equals("ez")  && isPhysicalKeyboardPressed ){ //jeremy '12,5,21. do this in soft keyboard already. 
 					dualKey = ";123456";
-					dualKeyRemap = "'-=[],\\\\";
+					dualKeyRemap = "'-=[],\\\\";*/
 				}
 				
 				HashMap<String,String> reMap = new HashMap<String,String>();
@@ -1873,8 +1874,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					String key = dualKey.substring(i,i+1);
 					String value = dualKeyRemap.substring(i,i+1);
 					//Process the escape characters of query
-					if(key.equals("'")) key = "''";
-					if(value.equals("'")) value = "''";
+					//if(key.equals("'")) key = "''";
+					//if(value.equals("'")) value = "''";  \\Jeremy '12,5,21 do the escape in getmapping
 					reMap.put(key, value);
 					reMap.put(value, value);
 				}
