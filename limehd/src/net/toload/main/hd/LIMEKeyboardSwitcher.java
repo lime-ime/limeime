@@ -247,7 +247,7 @@ public class LIMEKeyboardSwitcher {
 	    if(id != null){
 	        if (!mKeyboards.containsKey(id)) {
 	        	LIMEKeyboard keyboard = new LIMEKeyboard(
-	                mContext, id.mXml, id.mMode, mKeySizeScale);
+	                mContext, id.mXml, id.mMode, mKeySizeScale, mLIMEPref.getShowArrowKeys()); //Jeremy '12,5,21 add the show arrow keys option
 	        	keyboard.setKeyboardSwitcher(this);
 	            if (id.mEnableShiftLock) {
 	                keyboard.enableShiftLock();

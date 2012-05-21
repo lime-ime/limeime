@@ -10,7 +10,7 @@
           android:drawable="@drawable/btn_keyboard_key_normal" />
 	
 	
-        <!-- Toggle keys. Use checkable/checked state. -->
+    <!-- Toggle keys. Use checkable/checked state. -->
 
     <item android:state_checkable="true" android:state_checked="true" android:state_pressed="true"
           android:drawable="@drawable/btn_keyboard_key_pressed_on" />

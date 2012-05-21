@@ -53,9 +53,10 @@ import java.util.StringTokenizer;
 public class LIMEBaseKeyboard {
 
     static final String TAG = "LIMEBaseKeyboard";
+    private static final boolean DEBUG = false;
     
     // Keyboard XML Tags
-    private static final boolean DEBUG =false;
+    
     private static final String TAG_KEYBOARD = "Keyboard";
     private static final String TAG_ROW = "Row";
     private static final String TAG_KEY = "Key";
@@ -71,6 +72,10 @@ public class LIMEBaseKeyboard {
     public static final int KEYCODE_DONE = -4;
     public static final int KEYCODE_DELETE = -5;
     public static final int KEYCODE_ALT = -6;
+    public static final int KEYCODE_UP = -7;
+    public static final int KEYCODE_DOWN = -8;
+    public static final int KEYCODE_LEFT = -9;
+    public static final int KEYCODE_RIGHT = -10;
     
     /** Keyboard label **/
     //private CharSequence mLabel;
@@ -128,7 +133,10 @@ public class LIMEBaseKeyboard {
 
     /** Keyboard mode, or zero, if none.  */
     private int mKeyboardMode;
-
+    
+    /** Show arrow keys on keyboard or not. */ //Add by Jeremy '12,5,21 
+    protected boolean mShowArrowKeys;
+    
     // Variables for pre-computing nearest keys.
     
     private static final int GRID_WIDTH = 10;
@@ -494,8 +502,8 @@ public class LIMEBaseKeyboard {
      * @param context the application or service context
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      */
-    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, float keySizeScale) {
-        this(context, xmlLayoutResId, 0, keySizeScale);
+    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, float keySizeScale, boolean showArrowKeys) {
+        this(context, xmlLayoutResId, 0, keySizeScale, showArrowKeys);
     }
     
     /**
@@ -505,7 +513,7 @@ public class LIMEBaseKeyboard {
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      * @param modeId keyboard mode identifier
      */
-    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale) {
+    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale, boolean showArrowKeys) {
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         mDisplayWidth = dm.widthPixels;
         mDisplayHeight = dm.heightPixels;
@@ -519,6 +527,7 @@ public class LIMEBaseKeyboard {
         mModifierKeys = new ArrayList<Key>();
         mKeyboardMode = modeId;
         mKeySizeScale = keySizeScale;
+        mShowArrowKeys = showArrowKeys;
         loadKeyboard(context, context.getResources().getXml(xmlLayoutResId));
     }
 
@@ -538,12 +547,12 @@ public class LIMEBaseKeyboard {
      */
     public LIMEBaseKeyboard(Context context, int layoutTemplateResId, 
             CharSequence characters, int columns, int horizontalPadding, float keySizeScale) {
-        this(context, layoutTemplateResId, keySizeScale);
+        this(context, layoutTemplateResId, keySizeScale, false); //Jeremy '12,5,21 never show arrow keys in popup keyboard
         int x = 0;
         int y = 0;
         int column = 0;
         mTotalWidth = 0;
-        mKeySizeScale = keySizeScale;
+
         
         Row row = new Row(this);
         row.defaultHeight = (int) (mDefaultHeight * mKeySizeScale);
@@ -722,6 +731,70 @@ public class LIMEBaseKeyboard {
             XmlResourceParser parser) {
         return new Key(res, parent, x, y, parser);
     }
+    
+    
+    final float ARROW_KEY_HEIGHT_FRACTION = 0.65f;
+    protected int createArrowKeysRow(int x, int y){
+    	 if(DEBUG)
+         	Log.i(TAG,"createArrowKeysRow(): mDisplayWidth = " + mDisplayWidth );
+    	
+    	//int x = 0;
+        //int y = 0;
+       
+        
+        Row row = new Row(this);
+        row.defaultHeight = (int) (mDefaultHeight * mKeySizeScale * ARROW_KEY_HEIGHT_FRACTION);
+        row.defaultWidth = Math.round((mDisplayWidth - 3 * mDefaultHorizontalGap) /4);
+        row.defaultHorizontalGap = mDefaultHorizontalGap;
+        row.verticalGap =  (int) (mDefaultVerticalGap  * mKeySizeScale);;
+        row.rowEdgeFlags = EDGE_TOP | EDGE_BOTTOM;
+        
+        
+        for (int i = 0; i < 4 ; i++) {
+            
+        	final Key key = new Key(row);
+            key.x = x;
+            key.y = y;
+            key.width = row.defaultWidth ;
+            key.height =row.defaultHeight;
+            key.gap = row.defaultHorizontalGap;
+            key.modifier = true;
+            
+            switch (i){
+            case 0:
+            	key.label = "¡ô";
+            	key.codes = new int[] { KEYCODE_UP };
+            	break;
+            case 1:
+            	key.label = "¡õ";
+            	key.codes = new int[] { KEYCODE_DOWN };
+            	break;
+            case 2:
+            	key.label = "¡ö";
+            	key.codes = new int[] { KEYCODE_LEFT };
+            	break;
+            case 3:
+            	key.label = "¡÷";
+            	key.codes = new int[] { KEYCODE_RIGHT };
+            	break;
+            }
+             
+            x += key.width + key.gap;
+            
+            if(DEBUG)
+            	Log.i(TAG,"createArrowKeysRow(): key[" + i+ "]" + "; x = " + x);
+            
+            mKeys.add(key);
+            mModifierKeys.add(key);
+            if (x > mTotalWidth) {
+                mTotalWidth = x;
+            }
+        }
+    
+    	
+		return  (row.defaultHeight + row.verticalGap) ;  //return the row total height
+    	
+    }
 
     private void loadKeyboard(Context context, XmlResourceParser parser) {
         boolean inKey = false;
@@ -785,6 +858,11 @@ public class LIMEBaseKeyboard {
             Log.e(TAG, "Parse error:" + e);
             e.printStackTrace();
         }
+        /** Add arrow keys row if mShowArrowKeys is on */  //Add by Jeremy '12,5,21
+        if(mShowArrowKeys)  	
+        	 y += createArrowKeysRow(0,y);
+        	        
+        
         mTotalHeight = y - mDefaultVerticalGap;
         if(DEBUG) Log.i(TAG, "loadKeyboard():mTotalHeight"+ mTotalHeight);
     }

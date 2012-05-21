@@ -85,12 +85,12 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     //private final int mMode;
     private LIMEKeyboardSwitcher mKeyboardSwitcher;
     
-    public LIMEKeyboard(Context context, int xmlLayoutResId) {
-    	this(context, xmlLayoutResId, 0, 1 );
-    }
+   // public LIMEKeyboard(Context context, int xmlLayoutResId) {
+   // 	this(context, xmlLayoutResId, 0, 1, false);
+   // }
 
-    public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, float keySizeScale ) {
-        super(context, xmlLayoutResId, mode, keySizeScale);
+    public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, float keySizeScale, boolean showArrowKeys ) {
+        super(context, xmlLayoutResId, mode, keySizeScale, showArrowKeys);
         final Resources res = context.getResources();
         mContext = context;
 	        mRes = res;
@@ -102,11 +102,12 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 	        sSpacebarVerticalCorrection = res.getDimensionPixelOffset(
 	                R.dimen.spacebar_vertical_correction);
 	        mSpacePreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_space);
-	        //mMode = mode;
+
         
     }	
-    
-    @Override
+   
+
+	@Override
     protected Key createKeyFromXml(Resources res, Row parent, int x, int y, 
             XmlResourceParser parser) {
 	        Key key = new LIMEKey(res, parent, x, y, parser);

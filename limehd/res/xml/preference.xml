@@ -57,6 +57,12 @@
                 android:summary="@string/hide_software_keyboard_typing_with_physical_summary"
             	android:defaultValue="true" 
                 />
+        <CheckBoxPreference
+                android:key="show_arrow_keys"
+                android:title="@string/show_arrow_keys"
+             	android:defaultValue="false" 
+                />
+       
        <CheckBoxPreference
                 android:key="fixed_candidate_view_display"
                 android:title="@string/fixed_candidate_view_display" 

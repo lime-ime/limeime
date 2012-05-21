@@ -859,6 +859,10 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 				//Jeremy '11,8,11, Extended for sub-label display
 				//Jeremy '11,9,4 Scale label size
 				float keySizeScale = mKeyboard.getKeySizeScale();
+				float keyHeightFraction = 1;
+				if(key.height < mKeyboard.getKeyHeight())  //Jeremy '12,5,21 scaled the label size if the key height is smaller than default key height 
+					keyHeightFraction =  key.height / mKeyboard.getKeyHeight();
+					
 				boolean hasSubLabel = label.contains("\n");
 				String subLabel="";
 				if(hasSubLabel){
@@ -867,13 +871,13 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 					subLabel = labelA[0];
 				}
 				if(hasSubLabel){
-					labelSize = (int)(mSmallLabelTextSize * keySizeScale);
+					labelSize = (int)(mSmallLabelTextSize * keySizeScale * keyHeightFraction);
 					paint.setTypeface(Typeface.DEFAULT_BOLD);
 				}else if (label.length() > 1 && key.codes.length < 2 ) {
-					labelSize = (int)(mLabelTextSize * keySizeScale);
+					labelSize = (int)(mLabelTextSize * keySizeScale * keyHeightFraction);
 					paint.setTypeface(Typeface.DEFAULT_BOLD);
 				} else {
-					labelSize = (int)(mKeyTextSize* keySizeScale);
+					labelSize = (int)(mKeyTextSize* keySizeScale * keyHeightFraction);
 					paint.setTypeface(mKeyTextStyle);
 				}
 				paint.setTextSize(labelSize);
@@ -900,7 +904,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 						float baseline = centerY
 								+ labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
 						if(hasSubLabel){
-							final int subLabelSize =  (int)(mSubLabelTextSize* keySizeScale);
+							final int subLabelSize =  (int)(mSubLabelTextSize* keySizeScale * keyHeightFraction);
 							final int subLabelHeight;
 							final int subLabelWidth;
 							paint.setTypeface(Typeface.DEFAULT_BOLD);
@@ -1073,7 +1077,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 		}
 
 		int popupPreviewX = key.x - (popupWidth - key.width) / 2;
-		int popupPreviewY = key.y - popupHeight + mPreviewOffset;
+		int popupPreviewY = (int) (key.y - popupHeight + mPreviewOffset*mKeyboard.getKeySizeScale());
 
 		mHandler.cancelDismissPreview();
 		if (mOffsetInWindow == null) {
@@ -1217,10 +1221,10 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 		if (popupKey.popupCharacters != null) {
 			keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId, popupKey.popupCharacters,
 					-1, getPaddingLeft() + getPaddingRight(), 
-					LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale() );
+					LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale());
 		} else {
 			keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId
-					,LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale());
+					,LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale(), false); //Jeremy '12,5,21 never show arrow keys in popup keyboard
 		}
 		miniKeyboard.setKeyboard(keyboard);
 		miniKeyboard.setPopupParent(this);
@@ -1309,7 +1313,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 		mMiniKeyboard.setPopupOffset(adjustedX, y);
 		mMiniKeyboard.setShifted(isShifted());
 		// Mini keyboard needs no pop-up key preview displayed.
-		mMiniKeyboard.setPreviewEnabled(isLargeScreen);  // no fling on large screen 
+		mMiniKeyboard.setPreviewEnabled(isLargeScreen && miniKeys.size()>1);  // no fling on large screen 
 		mMiniKeyboardPopup.setContentView(container);
 		mMiniKeyboardPopup.setWidth(container.getMeasuredWidth());
 		mMiniKeyboardPopup.setHeight(container.getMeasuredHeight());
