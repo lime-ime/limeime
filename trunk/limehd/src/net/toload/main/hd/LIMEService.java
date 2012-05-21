@@ -1724,10 +1724,18 @@ public class LIMEService extends InputMethodService implements
 			if (DEBUG) 	Log.i(TAG, "OnKey():KEYCODE_SHIFT");
 			if(!(!hasPhysicalKeyPressed && hasDistinctMultitouch))
 				handleShift();
-		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_CANCEL) {
+		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_CANCEL) {// long press on options and shift
 			handleClose();
 			return;
-			// long press on options and shift
+		// Jeremy '12,5,21 process the arrow keys on soft keyboard
+		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_UP) {
+			keyDownUp(KeyEvent.KEYCODE_DPAD_UP);
+		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_DOWN) {
+			keyDownUp(KeyEvent.KEYCODE_DPAD_DOWN);
+		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_RIGHT) {
+			keyDownUp(KeyEvent.KEYCODE_DPAD_RIGHT);
+		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_LEFT) {
+			keyDownUp(KeyEvent.KEYCODE_DPAD_LEFT);
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_OPTIONS) {
 			handleOptions();
 		} else if( primaryCode == LIMEKeyboardView.KEYCODE_SPACE_LONGPRESS) {

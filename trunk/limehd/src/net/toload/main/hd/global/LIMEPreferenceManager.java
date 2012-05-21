@@ -380,6 +380,12 @@ public class LIMEPreferenceManager {
 
 	}
 	
+	public boolean getShowArrowKeys(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("show_arrow_keys", false);
+
+	}
+	
 	
 	/*
 	 * INT Parameter SET/GET

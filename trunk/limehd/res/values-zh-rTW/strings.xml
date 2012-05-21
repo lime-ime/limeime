@@ -504,6 +504,9 @@
     
     <string name="hide_software_keyboard_typing_with_physical">自動隱藏軟鍵盤</string>
     <string name="hide_software_keyboard_typing_with_physical_summary">以實體鍵盤打字時隱藏軟鍵盤</string>
+    
+    <string name="show_arrow_keys">顯示方向鍵</string>
+    
   
     
     <!-- AD Message -->

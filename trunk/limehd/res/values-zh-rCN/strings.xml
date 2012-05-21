@@ -509,6 +509,8 @@
     <string name="hide_software_keyboard_typing_with_physical">自动隐藏软键盘</string>
 	<string name="hide_software_keyboard_typing_with_physical_summary">以实体键盘打字时隐藏软键盘</string>
     
+	<string name="show_arrow_keys">显示方向键</string>
+	
     <!-- AD Message -->
     <string name="ad_zippy">蓝芽键盘测试支援\nZIPPY BT-540 蓝芽一对六键盘 - http://www.zippy.com (Sam Lin/sam_lin@hotmail.com)</string>
     
