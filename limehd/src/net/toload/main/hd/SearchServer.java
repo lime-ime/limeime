@@ -464,29 +464,37 @@ public class SearchServer {// extends Service {
 				// non null id denotes target is in exact match result list.
 			} else  if(cachedMapping.getId()!=null && cachedPair!=null 
 					&& cachedPair.first !=null && cachedPair.first.size()>0) {
-
-				List<Mapping> cachedList = cachedPair.first;
-				int size = cachedList.size();
-				if(DEBUG) Log.i(TAG,"updateUserDict(): cachedList.size:" + size);
-				// update exact match cache
-				for(int j=0; j< size; j++){
-					Mapping cm = cachedList.get(j);
-					if(DEBUG) Log.i(TAG,"updateUserDict(): cachedList at :" + j + ". score="+ cm.getScore());
-					if(cachedMapping.getId() == cm.getId()){
-						int score = cm.getScore() + 1 ;
-						if(DEBUG) Log.i(TAG,"updateUserDict(): cachedMapping found at :" + j +". new score=" +score );
-						cm.setScore(score);
-						if(j>0 && score > cachedList.get(j-1).getScore()){
-							cachedList.remove(j);
-							for(int k=0; k<j; k++){
-								if(cachedList.get(k).getScore() <= score){
-									cachedList.add(k,cm);
-									break;
+				
+				boolean sort = true;
+				if(isPhysicalKeyboardPressed) 
+					sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
+				else
+					sort = mLIMEPref.getSortSuggestions();
+				
+				if(sort){ // Jeremy '12,5,22 do not update the order of exact match list if the sort option is off
+					List<Mapping> cachedList = cachedPair.first;
+					int size = cachedList.size();
+					if(DEBUG) Log.i(TAG,"updateUserDict(): cachedList.size:" + size);
+					// update exact match cache
+					for(int j=0; j< size; j++){
+						Mapping cm = cachedList.get(j);
+						if(DEBUG) Log.i(TAG,"updateUserDict(): cachedList at :" + j + ". score="+ cm.getScore());
+						if(cachedMapping.getId() == cm.getId()){
+							int score = cm.getScore() + 1 ;
+							if(DEBUG) Log.i(TAG,"updateUserDict(): cachedMapping found at :" + j +". new score=" +score );
+							cm.setScore(score);
+							if(j>0 && score > cachedList.get(j-1).getScore()){
+								cachedList.remove(j);
+								for(int k=0; k<j; k++){
+									if(cachedList.get(k).getScore() <= score){
+										cachedList.add(k,cm);
+										break;
+									}
 								}
-							}
 
+							}
+							break;
 						}
-						break;
 					}
 				}
 				// Jeremy '11,7,31

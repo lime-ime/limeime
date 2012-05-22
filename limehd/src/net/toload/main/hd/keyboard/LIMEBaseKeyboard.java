@@ -753,16 +753,14 @@ public class LIMEBaseKeyboard {
         return new Key(res, parent, x, y, parser);
     }
     
-    
-    final float ARROW_KEY_HEIGHT_FRACTION = 0.65f;
+    /**
+     * createArrowKeyssRow() returns the total height of the row.
+     */
+    final float ARROW_KEY_HEIGHT_FRACTION = 0.8f;
     protected int createArrowKeysRow(int x, int y){
     	 if(DEBUG)
          	Log.i(TAG,"createArrowKeysRow(): mDisplayWidth = " + mDisplayWidth );
     	
-    	//int x = 0;
-        //int y = 0;
-       
-        
         Row row = new Row(this);
         row.defaultHeight = (int) (mDefaultHeight * mKeySizeScale * ARROW_KEY_HEIGHT_FRACTION);
         row.defaultWidth = Math.round((mDisplayWidth - 3 * mDefaultHorizontalGap) /4);
@@ -806,7 +804,7 @@ public class LIMEBaseKeyboard {
             	Log.i(TAG,"createArrowKeysRow(): key[" + i+ "]" + "; x = " + x);
             
             mKeys.add(key);
-            mModifierKeys.add(key);
+            //mModifierKeys.add(key);
             if (x > mTotalWidth) {
                 mTotalWidth = x;
             }
@@ -880,7 +878,7 @@ public class LIMEBaseKeyboard {
             e.printStackTrace();
         }
         /** Add arrow keys row if mShowArrowKeys is on */  //Add by Jeremy '12,5,21
-        if(mShowArrowKeys)  	
+        if(mShowArrowKeys && (mDisplayWidth < mDisplayHeight)) //only show arrow key in portraint mode. Jeremy '12,5,22  	
         	 y += createArrowKeysRow(0,y);
         	        
         

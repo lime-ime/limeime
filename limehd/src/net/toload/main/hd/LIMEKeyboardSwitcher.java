@@ -197,9 +197,10 @@ public class LIMEKeyboardSwitcher {
         // If keyboards have already been made, check if we have a screen width change and 
         // create the keyboard layouts again at the correct orientation
         int displayWidth = mContext.getMaxWidth();
-        if (displayWidth == mLastDisplayWidth) return;
-        mLastDisplayWidth = displayWidth;
-        if (!forceCreate) mKeyboards.clear();
+        if (displayWidth != mLastDisplayWidth) {
+        	mLastDisplayWidth = displayWidth;
+        	mKeyboards.clear();
+        }
      }
 
     /**
