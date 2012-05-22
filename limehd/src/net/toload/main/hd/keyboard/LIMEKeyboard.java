@@ -356,8 +356,9 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
        
     	private boolean mShiftLockEnabled;
 
+    	//Jeremy '12,5,22 moved to LIMEBaseKeyboard
     	 // functional normal state (with properties)
-        private final int[] KEY_STATE_FUNCTIONAL_NORMAL = {
+        /*private final int[] KEY_STATE_FUNCTIONAL_NORMAL = {
                 android.R.attr.state_single
         };
 
@@ -365,9 +366,9 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         private final int[] KEY_STATE_FUNCTIONAL_PRESSED = {
                 android.R.attr.state_single,
                 android.R.attr.state_pressed
-        };
+        };*/
         
-        private boolean isFunctionalKey() {
+       /* private boolean isFunctionalKey() {
             return !sticky && modifier;
         }
         
@@ -381,7 +382,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                 }
             }
             return super.getCurrentDrawableState();
-        }
+        }*/
         
         public LIMEKey(Resources res, LIMEBaseKeyboard.Row parent, int x, int y, XmlResourceParser parser) {
             super(res, parent, x, y, parser);
