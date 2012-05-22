@@ -72,10 +72,10 @@ public class LIMEBaseKeyboard {
     public static final int KEYCODE_DONE = -4;
     public static final int KEYCODE_DELETE = -5;
     public static final int KEYCODE_ALT = -6;
-    public static final int KEYCODE_UP = -7;
-    public static final int KEYCODE_DOWN = -8;
-    public static final int KEYCODE_LEFT = -9;
-    public static final int KEYCODE_RIGHT = -10;
+    public static final int KEYCODE_UP = -11;
+    public static final int KEYCODE_DOWN = -12;
+    public static final int KEYCODE_LEFT = -13;
+    public static final int KEYCODE_RIGHT = -14;
     
     /** Keyboard label **/
     //private CharSequence mLabel;
@@ -308,7 +308,18 @@ public class LIMEBaseKeyboard {
         private final static int[] KEY_STATE_PRESSED = {
             android.R.attr.state_pressed
         };
+        // moved from LIMEKeybard by Jeremy '12,5,22
+        private final int[] KEY_STATE_FUNCTIONAL_NORMAL = {
+                android.R.attr.state_single
+        };
 
+        // functional pressed state (with properties)
+        private final int[] KEY_STATE_FUNCTIONAL_PRESSED = {
+                android.R.attr.state_single,
+                android.R.attr.state_pressed
+        };
+        
+        
         /** Create an empty key with no attributes. */
         public Key(Row parent) {
             keyboard = parent.parent;
@@ -408,6 +419,10 @@ public class LIMEBaseKeyboard {
                 on = !on;
             }
         }
+        
+        protected boolean isFunctionalKey() {
+            return !sticky && modifier;
+        }
 
         int[] parseCSV(String value) {
             int count = 0;
@@ -474,7 +489,13 @@ public class LIMEBaseKeyboard {
         public int[] getCurrentDrawableState() {
             int[] states = KEY_STATE_NORMAL;
 
-            if (on) {
+            if (isFunctionalKey()) {
+                if (pressed) {
+                    return KEY_STATE_FUNCTIONAL_PRESSED;
+                } else {
+                    return KEY_STATE_FUNCTIONAL_NORMAL;
+                }
+            }else if (on) {
                 if (pressed) {
                     states = KEY_STATE_PRESSED_ON;
                 } else {
@@ -762,19 +783,19 @@ public class LIMEBaseKeyboard {
             
             switch (i){
             case 0:
-            	key.label = "°Ù";
+            	key.label = "‚Üë";
             	key.codes = new int[] { KEYCODE_UP };
             	break;
             case 1:
-            	key.label = "°ı";
+            	key.label = "‚Üì";
             	key.codes = new int[] { KEYCODE_DOWN };
             	break;
             case 2:
-            	key.label = "°ˆ";
+            	key.label = "‚Üê";
             	key.codes = new int[] { KEYCODE_LEFT };
             	break;
             case 3:
-            	key.label = "°˜";
+            	key.label = "‚Üí";
             	key.codes = new int[] { KEYCODE_RIGHT };
             	break;
             }

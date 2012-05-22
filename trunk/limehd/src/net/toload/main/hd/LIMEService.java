@@ -105,6 +105,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean mEnglishOnly;
 	private boolean mEnglishFlagShift;
 	private boolean mPersistentLanguageMode;  //Jeremy '12,5,1
+	private boolean mShowArrowKeys; //Jeremy '12,5,22 force recreate keyboard if show arrow keys mode changes.
 	
 	//private boolean mPredictionOnPhysicalKeyboard = false;
 
@@ -622,7 +623,7 @@ public class LIMEService extends InputMethodService implements
 		}
 		
 		
-		mKeyboardSwitcher.makeKeyboards(false);
+		mKeyboardSwitcher.makeKeyboards(mShowArrowKeys != mLIMEPref.getShowArrowKeys()); //Jeremy '12,5,22 recreate keyboard if the setting altered.
 
 		//TextEntryState.newSession(this);
 		loadSettings();
@@ -767,11 +768,14 @@ public class LIMEService extends InputMethodService implements
 		mAutoCap = true; 
 		
 		mPersistentLanguageMode = mLIMEPref.getPersistentLanguageMode();
+		mShowArrowKeys = mLIMEPref.getShowArrowKeys();
 		
 		disable_physical_selection = mLIMEPref.getDisablePhysicalSelkey();
 		
 		auto_commit = mLIMEPref.getAutoCommitValue();
 		currentSoftKeyboard = mKeyboardSwitcher.getImKeyboard(activeIM);
+		
+		
 		
 		//mQuickFixes = true;
 		// If there is no auto text data, then quickfix is forced to "on", so
