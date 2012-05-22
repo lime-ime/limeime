@@ -25,6 +25,7 @@ import android.inputmethodservice.InputMethodService;
 import android.media.AudioManager;
 import android.os.Handler;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.os.Vibrator;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -548,7 +549,7 @@ public class LIMEService extends InputMethodService implements
 			if(!mEnglishOnly && mLIMEPref.getAutoChineseSymbol() //Jeremy '12,4,29 use mEnglishOnly instead of onIM 
 					&& (hasCandidatesShown || mFixedCandidateViewOn) ){   // Change isCandiateShown() to hasCandiatesShown
 				mCandidateView.clear();
-				updateChineseSymbol(); // Jeremy '11,9,4
+				if(hasCandidatesShown) updateChineseSymbol(); // Jeremy '12.5,23 do not show chinesesymbol when init for fixed candidate view.
 			}
 			else{
 				//hasCandidatesShown = false;
@@ -809,15 +810,12 @@ public class LIMEService extends InputMethodService implements
 					+" oldSelEnd:" + oldSelEnd
 					+" newSelStart:" + newSelStart + " newSelEnd:" + newSelEnd
 					+" candidatesStart:"+candidatesStart + " candidatesEnd:"+candidatesEnd	);
-
-		// If the current selection in the text view changes, we should
-		// clear whatever candidate text we have 
-		// (in English prediction do nothing in chinese IM). 
-		// Jeremy '12,4,9  do nothing here now.
 		
+		InputConnection ic = getCurrentInputConnection();
+			
 		if (mComposing.length() > 0
-				&& candidatesStart >0 && candidatesEnd >0 // in composing  
-				&& (newSelStart != candidatesEnd || newSelEnd != candidatesEnd) // cursor is not in the last character of composing area 
+				&& candidatesStart >=0 && candidatesEnd >0 // in composing  
+				//&& (newSelStart != candidatesEnd || newSelEnd != candidatesEnd) // cursor is not in the last character of composing area 
 				) {
 			if(newSelStart < candidatesStart || newSelStart > candidatesEnd) { // cursor is moved before or after composing area
 
@@ -829,12 +827,14 @@ public class LIMEService extends InputMethodService implements
 
 					mComposing.setLength(0);
 
-					InputConnection ic = getCurrentInputConnection();
+					
 					if (ic != null) 
 						ic.finishComposingText();
 				}
-			}else{
-				// cursor is moved within the composing area by user. move the cursor back to the end of composing area (don't know how to do now)
+			}else {
+				// Jeremy '12,5,23 Select the composing text and forbidded moving cursor within the composing text.
+				if (ic != null) 
+					ic.setSelection(candidatesStart, candidatesEnd);
 			}
 			
 		}
@@ -944,7 +944,7 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		// Clean code by jeremy '11,8,22
-		if (DEBUG) 
+		//if (DEBUG) 
 			Log.i(TAG, "OnKeyDown():keyCode:" + keyCode 
 					+", hasMenuPress = " + hasMenuPress
 					+", hasdCtrlPress = " + hasCtrlPress
@@ -1268,7 +1268,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		if (DEBUG) {
+		//if (DEBUG) 
 			Log.i(TAG,"OnKeyUp():keyCode:" + keyCode 
 					+";hasCtrlPress:"	+ hasCtrlPress
 					+";hasWinPress:" + hasWinPress
@@ -1276,8 +1276,7 @@ public class LIMEService extends InputMethodService implements
 			
 			);
 
-		}
-		//keydown = false;
+
 	
 
 		switch (keyCode) {
@@ -1632,14 +1631,26 @@ public class LIMEService extends InputMethodService implements
 	/**
 	 * Helper to send a key down / key up pair to the current editor.
 	 */
-	private void keyDownUp(int keyEventCode) {
+	private void keyDownUp(int keyEventCode, boolean sendToSelf) {
 		InputConnection ic=getCurrentInputConnection();
-		if(ic!=null){
-			ic.sendKeyEvent(
-					new KeyEvent(KeyEvent.ACTION_DOWN, keyEventCode));
-			ic.sendKeyEvent(
-					new KeyEvent(KeyEvent.ACTION_UP, keyEventCode));
+
+		long eventTime = SystemClock.uptimeMillis();
+		KeyEvent downEvent = new KeyEvent(eventTime, eventTime,
+				KeyEvent.ACTION_DOWN, keyEventCode, 0, 0, 0, 0,
+				KeyEvent.FLAG_SOFT_KEYBOARD|KeyEvent.FLAG_KEEP_TOUCH_MODE);
+		KeyEvent upEvent = new KeyEvent(SystemClock.uptimeMillis(), eventTime,
+				KeyEvent.ACTION_UP, keyEventCode, 0, 0, 0, 0,
+				KeyEvent.FLAG_SOFT_KEYBOARD|KeyEvent.FLAG_KEEP_TOUCH_MODE);
+		if(sendToSelf) {  //Jeremy '12,5,23 send to this.onKeyDown and onKeyUp if sendToSelf is true.
+			this.onKeyDown(keyEventCode, downEvent);
+			this.onKeyUp(keyEventCode, upEvent);
 		}
+		if(ic!=null){
+			ic.sendKeyEvent(downEvent);
+			ic.sendKeyEvent(upEvent);
+		}
+
+		
 	}
 
 	/**
@@ -1733,13 +1744,13 @@ public class LIMEService extends InputMethodService implements
 			return;
 		// Jeremy '12,5,21 process the arrow keys on soft keyboard
 		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_UP) {
-			keyDownUp(KeyEvent.KEYCODE_DPAD_UP);
+			keyDownUp(KeyEvent.KEYCODE_DPAD_UP, true);
 		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_DOWN) {
-			keyDownUp(KeyEvent.KEYCODE_DPAD_DOWN);
+			keyDownUp(KeyEvent.KEYCODE_DPAD_DOWN, true);
 		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_RIGHT) {
-			keyDownUp(KeyEvent.KEYCODE_DPAD_RIGHT);
+			keyDownUp(KeyEvent.KEYCODE_DPAD_RIGHT, true);
 		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_LEFT) {
-			keyDownUp(KeyEvent.KEYCODE_DPAD_LEFT);
+			keyDownUp(KeyEvent.KEYCODE_DPAD_LEFT, true);
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_OPTIONS) {
 			handleOptions();
 		} else if( primaryCode == LIMEKeyboardView.KEYCODE_SPACE_LONGPRESS) {
@@ -2545,7 +2556,7 @@ public class LIMEService extends InputMethodService implements
 		} else if(!mEnglishOnly 
 				//&& mCandidateView !=null && isCandidateShown() 
 				&& hasCandidatesShown //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
-				&& !mFixedCandidateViewOn //Jeremy '12,5,4
+				//&& !mFixedCandidateViewOn //Jeremy '12,5,23 clear the chinese symbol list for arrow keys to do navigation inside document
 				){
 			hideCandidateView();  //Jeremy '11,9,8
 		} else {
@@ -2560,10 +2571,10 @@ public class LIMEService extends InputMethodService implements
 								.deleteCharAt(tempEnglishWord.length() - 1);
 						updateEnglishPrediction();
 					}
-					keyDownUp(KeyEvent.KEYCODE_DEL);
+					keyDownUp(KeyEvent.KEYCODE_DEL, false);
 				} else{			
 					//clearComposing(false); //Jeremy '12,4,21 composing length 0, no need to force commit again. 
-					keyDownUp(KeyEvent.KEYCODE_DEL);
+					keyDownUp(KeyEvent.KEYCODE_DEL, false);
 				}
 			} catch (Exception e) {
 				Log.i(TAG,"->" + e);
