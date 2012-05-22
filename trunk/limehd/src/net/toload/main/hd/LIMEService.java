@@ -944,7 +944,7 @@ public class LIMEService extends InputMethodService implements
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		// Clean code by jeremy '11,8,22
-		//if (DEBUG) 
+		if (DEBUG) 
 			Log.i(TAG, "OnKeyDown():keyCode:" + keyCode 
 					+", hasMenuPress = " + hasMenuPress
 					+", hasdCtrlPress = " + hasCtrlPress
@@ -1268,7 +1268,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		//if (DEBUG) 
+		if (DEBUG) 
 			Log.i(TAG,"OnKeyUp():keyCode:" + keyCode 
 					+";hasCtrlPress:"	+ hasCtrlPress
 					+";hasWinPress:" + hasWinPress
