@@ -2100,9 +2100,9 @@ public class LIMEService extends InputMethodService implements
 
 		
 		//Jeremy '12,4,21 foce clear when switch to selected keybaord
-		clearComposing(true);
+		if(!mEnglishOnly) clearComposing(true);
 
-		//initialKeyboard();
+		mEnglishOnly = false;//Jeremy '12,5,24 force to switch to Chinese mode if it's choosing in english mode.
 		initialIMKeyboard();
 
 		try {
