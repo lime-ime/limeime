@@ -769,6 +769,8 @@ public class LIMEBaseKeyboard {
         row.rowEdgeFlags = EDGE_TOP | EDGE_BOTTOM;
         
         
+        // Many special symbols : http://star.gg/special-symbols
+        
         for (int i = 0; i < 4 ; i++) {
             
         	final Key key = new Key(row);
@@ -781,19 +783,19 @@ public class LIMEBaseKeyboard {
             
             switch (i){
             case 0:
-            	key.label = "↑";
+            	key.label = "⇑";
             	key.codes = new int[] { KEYCODE_UP };
             	break;
             case 1:
-            	key.label = "↓";
+            	key.label = "⇓";
             	key.codes = new int[] { KEYCODE_DOWN };
             	break;
             case 2:
-            	key.label = "←";
+            	key.label = "⇐";
             	key.codes = new int[] { KEYCODE_LEFT };
             	break;
             case 3:
-            	key.label = "→";
+            	key.label = "⇒";
             	key.codes = new int[] { KEYCODE_RIGHT };
             	break;
             }

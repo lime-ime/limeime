@@ -1,7 +1,8 @@
-#Tue May 01 16:38:37 CST 2012
+#Wed May 23 19:47:34 CST 2012
 eclipse.preferences.version=1
 encoding//src/net/toload/main/hd/ChineseSymbol.java=UTF-8
 encoding//src/net/toload/main/hd/LIMEKeyboardSwitcher.java=UTF-8
 encoding//src/net/toload/main/hd/global/ChineseSymbol.java=UTF-8
+encoding//src/net/toload/main/hd/keyboard/LIMEBaseKeyboard.java=UTF-8
 encoding//src/net/toload/main/hd/limedb/LimeDB.java=UTF-8
 encoding//src/net/toload/main/hd/limesettings/LIMEMappingSetting.java=UTF-8
