@@ -970,7 +970,9 @@ public class CandidateView extends View implements View.OnClickListener
         hideComposing();
         hideCandidatePopup();
         mHandler.updateUI(0);
-        
+        mHeight = (int) (mContext.getResources().getDimensionPixelSize(
+        		R.dimen.candidate_stripe_height) *mLIMEPref.getFontSize()); //restore the height Jeremy '12,5,24
+
     }
     
     //Jeremy '12,5,6 hide candidate bar when candidateview is fixed.

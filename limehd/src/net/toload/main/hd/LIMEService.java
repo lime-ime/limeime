@@ -550,10 +550,9 @@ public class LIMEService extends InputMethodService implements
 					&& (hasCandidatesShown || mFixedCandidateViewOn) ){   // Change isCandiateShown() to hasCandiatesShown
 				mCandidateView.clear();
 				if(hasCandidatesShown) updateChineseSymbol(); // Jeremy '12.5,23 do not show chinesesymbol when init for fixed candidate view.
-			}
-			else{
+			}else{
 				//hasCandidatesShown = false;
-				//mCandidateView.clear();
+				mCandidateView.clear();
 				hideCandidateView();
 			}
 				
@@ -744,11 +743,13 @@ public class LIMEService extends InputMethodService implements
 
 
 		
-		if(mEnglishOnly && mPredictionOn) //Jeremy '12,5,20 Only hide candidateview when prediction mode is not on. 
+		if(mEnglishOnly && !mPredictionOn) //Jeremy '12,5,20 Only hide candidateview when prediction mode is not on. 
 			//Jeremy '12,5,6 clear internal composing buffer in forceHideCandiateView 
 			forceHideCandidateView();  //Jeremy '12,5,6 zero the canidateView height to force hide it for eng/numeric keyboard
-		else
+		else{
 			clearComposing(false);
+			clearSuggestions(); //Jeremy '12,5,24 clear the suggesions and also restore the height of fixed candaiteview if it's hide before 
+		}
 			
 		mPredicting = false;
 		updateShiftKeyState(getCurrentInputEditorInfo());
