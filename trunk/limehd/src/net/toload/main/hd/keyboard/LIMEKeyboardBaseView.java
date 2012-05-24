@@ -855,13 +855,21 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 				// For characters, use large font. For labels like "Done", use small font.
 				final int labelSize;
 
-				if(DEBUG) Log.i(TAG, "onBufferDraw():"+ label);
+				if(DEBUG) 
+					Log.i(TAG, "onBufferDraw():"+ label);
 				//Jeremy '11,8,11, Extended for sub-label display
 				//Jeremy '11,9,4 Scale label size
 				float keySizeScale = mKeyboard.getKeySizeScale();
 				float keyHeightFraction = 1;
-				if(key.height < mKeyboard.getKeyHeight())  //Jeremy '12,5,21 scaled the label size if the key height is smaller than default key height 
-					keyHeightFraction =  key.height / mKeyboard.getKeyHeight();
+				if(key.height < mKeyboard.getKeyHeight()) { //Jeremy '12,5,21 scaled the label size if the key height is smaller than default key height 
+					keyHeightFraction =  (float)(key.height) / (float)(mKeyboard.getKeyHeight());
+					if(DEBUG)
+						Log.i(TAG, "onBufferDraw():"+ label 
+							+ ". mLabelTextSize = " + mLabelTextSize
+							+ ". keyHeightFraction = " + keyHeightFraction
+							+ ". key.height = " + key.height 
+							+ ". mKeyboard.getKeyHeight() = " + mKeyboard.getKeyHeight());
+				}
 					
 				boolean hasSubLabel = label.contains("\n");
 				String subLabel="";
@@ -1224,7 +1232,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 					LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale());
 		} else {
 			keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId
-					,LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale(), false); //Jeremy '12,5,21 never show arrow keys in popup keyboard
+					,LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale(), 0); //Jeremy '12,5,21 never show arrow keys in popup keyboard
 		}
 		miniKeyboard.setKeyboard(keyboard);
 		miniKeyboard.setPopupParent(this);
