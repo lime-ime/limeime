@@ -747,8 +747,8 @@ public class LIMEService extends InputMethodService implements
 			//Jeremy '12,5,6 clear internal composing buffer in forceHideCandiateView 
 			forceHideCandidateView();  //Jeremy '12,5,6 zero the canidateView height to force hide it for eng/numeric keyboard
 		else{
-			clearComposing(false);
-			clearSuggestions(); //Jeremy '12,5,24 clear the suggesions and also restore the height of fixed candaiteview if it's hide before 
+			clearComposing(false);//Jeremy '12,5,24 clear the suggesions and also restore the height of fixed candaiteview if it's hide before
+			//clearSuggestions();  // do this in clearcomposing already.
 		}
 			
 		mPredicting = false;
