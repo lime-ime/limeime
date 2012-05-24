@@ -89,7 +89,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
    // 	this(context, xmlLayoutResId, 0, 1, false);
    // }
 
-    public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, float keySizeScale, boolean showArrowKeys ) {
+    public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, float keySizeScale, int showArrowKeys ) {
         super(context, xmlLayoutResId, mode, keySizeScale, showArrowKeys);
         final Resources res = context.getResources();
         mContext = context;

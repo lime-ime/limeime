@@ -106,7 +106,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean mEnglishOnly;
 	private boolean mEnglishFlagShift;
 	private boolean mPersistentLanguageMode;  //Jeremy '12,5,1
-	private boolean mShowArrowKeys; //Jeremy '12,5,22 force recreate keyboard if show arrow keys mode changes.
+	private int mShowArrowKeys; //Jeremy '12,5,22 force recreate keyboard if show arrow keys mode changes.
 	
 	//private boolean mPredictionOnPhysicalKeyboard = false;
 

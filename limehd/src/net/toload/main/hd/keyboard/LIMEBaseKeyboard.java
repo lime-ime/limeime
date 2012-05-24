@@ -135,7 +135,7 @@ public class LIMEBaseKeyboard {
     private int mKeyboardMode;
     
     /** Show arrow keys on keyboard or not. */ //Add by Jeremy '12,5,21 
-    protected boolean mShowArrowKeys;
+    protected int mShowArrowKeys;
     
     // Variables for pre-computing nearest keys.
     
@@ -523,7 +523,7 @@ public class LIMEBaseKeyboard {
      * @param context the application or service context
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      */
-    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, float keySizeScale, boolean showArrowKeys) {
+    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, float keySizeScale, int showArrowKeys) {
         this(context, xmlLayoutResId, 0, keySizeScale, showArrowKeys);
     }
     
@@ -534,7 +534,7 @@ public class LIMEBaseKeyboard {
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      * @param modeId keyboard mode identifier
      */
-    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale, boolean showArrowKeys) {
+    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale, int showArrowKeys) {
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         mDisplayWidth = dm.widthPixels;
         mDisplayHeight = dm.heightPixels;
@@ -568,7 +568,7 @@ public class LIMEBaseKeyboard {
      */
     public LIMEBaseKeyboard(Context context, int layoutTemplateResId, 
             CharSequence characters, int columns, int horizontalPadding, float keySizeScale) {
-        this(context, layoutTemplateResId, keySizeScale, false); //Jeremy '12,5,21 never show arrow keys in popup keyboard
+        this(context, layoutTemplateResId, keySizeScale, 0); //Jeremy '12,5,21 never show arrow keys in popup keyboard
         int x = 0;
         int y = 0;
         int column = 0;
@@ -830,6 +830,10 @@ public class LIMEBaseKeyboard {
         Resources res = context.getResources();
         boolean skipRow = false;
         
+        boolean showArrowKeysOnTop = (mShowArrowKeys==1) && (mDisplayWidth < mDisplayHeight);  //Jeremy '12,5,24 only show arrows in portaint now.
+        boolean showArrowKeysOnBottom = (mShowArrowKeys==2) && (mDisplayWidth < mDisplayHeight);
+        
+         
         try {
             int event;
             while ((event = parser.next()) != XmlResourceParser.END_DOCUMENT) {
@@ -857,6 +861,8 @@ public class LIMEBaseKeyboard {
                         }
                     } else if (TAG_KEYBOARD.equals(tag)) {
                         parseKeyboardAttributes(res, parser);
+                        if(showArrowKeysOnTop)    //Jeremy '12,5,24 create arrow keys before reading further rows.
+                       	 	y += createArrowKeysRow(0,0);
                     }
                 } else if (event == XmlResourceParser.END_TAG) {
                     if (inKey) {
@@ -880,7 +886,7 @@ public class LIMEBaseKeyboard {
             e.printStackTrace();
         }
         /** Add arrow keys row if mShowArrowKeys is on */  //Add by Jeremy '12,5,21
-        if(mShowArrowKeys && (mDisplayWidth < mDisplayHeight)) //only show arrow key in portraint mode. Jeremy '12,5,22  	
+        if(showArrowKeysOnBottom) 
         	 y += createArrowKeysRow(0,y);
         	        
         

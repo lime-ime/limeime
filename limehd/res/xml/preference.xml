@@ -57,10 +57,13 @@
                 android:summary="@string/hide_software_keyboard_typing_with_physical_summary"
             	android:defaultValue="true" 
                 />
-        <CheckBoxPreference
-                android:key="show_arrow_keys"
+       <ListPreference
+                android:key="show_arrow_key"
                 android:title="@string/show_arrow_keys"
-             	android:defaultValue="false" 
+             	android:entries="@array/show_arrow_keys_options" 
+    			android:entryValues="@array/show_arrow_keys_values" 
+    			android:dialogTitle="@string/show_arrow_keys" 
+    			android:defaultValue="0"/>   
                 />
        
        <CheckBoxPreference
