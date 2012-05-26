@@ -503,7 +503,7 @@
     <string name="l3_im_notice">為了節省記憶體使用空間，我們強烈建議您清空不常使用的輸入法字根，或使用空白資料庫來載入個別輸入法字根檔。</string>
     
     <string name="hide_software_keyboard_typing_with_physical">自動隱藏軟鍵盤</string>
-    <string name="hide_software_keyboard_typing_with_physical_summary">以實體鍵盤打字時隱藏軟鍵盤</string>
+    <string name="hide_software_keyboard_typing_with_physical_summary">以實體鍵盤打字時隱藏軟鍵盤，S-PEN使用者請勿勾選</string>
     
     <string name="show_arrow_keys">顯示方向鍵</string>
     	<string-array name="show_arrow_keys_options">
