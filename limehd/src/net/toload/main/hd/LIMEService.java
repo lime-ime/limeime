@@ -1643,10 +1643,11 @@ public class LIMEService extends InputMethodService implements
 				KeyEvent.ACTION_UP, keyEventCode, 0, 0, 0, 0,
 				KeyEvent.FLAG_SOFT_KEYBOARD|KeyEvent.FLAG_KEEP_TOUCH_MODE);
 		if(sendToSelf) {  //Jeremy '12,5,23 send to this.onKeyDown and onKeyUp if sendToSelf is true.
-			this.onKeyDown(keyEventCode, downEvent);
-			this.onKeyUp(keyEventCode, upEvent);
-		}
-		if(ic!=null){
+			if(!this.onKeyDown(keyEventCode, downEvent) && ic!=null)
+				ic.sendKeyEvent(downEvent);
+			if(!this.onKeyUp(keyEventCode, upEvent) && ic!=null)
+				ic.sendKeyEvent(upEvent);;
+		}else if(ic!=null){
 			ic.sendKeyEvent(downEvent);
 			ic.sendKeyEvent(upEvent);
 		}
@@ -1745,13 +1746,13 @@ public class LIMEService extends InputMethodService implements
 			return;
 		// Jeremy '12,5,21 process the arrow keys on soft keyboard
 		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_UP) {
-			keyDownUp(KeyEvent.KEYCODE_DPAD_UP, true);
+			keyDownUp(KeyEvent.KEYCODE_DPAD_UP, hasCandidatesShown);
 		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_DOWN) {
-			keyDownUp(KeyEvent.KEYCODE_DPAD_DOWN, true);
+			keyDownUp(KeyEvent.KEYCODE_DPAD_DOWN, hasCandidatesShown);
 		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_RIGHT) {
-			keyDownUp(KeyEvent.KEYCODE_DPAD_RIGHT, true);
+			keyDownUp(KeyEvent.KEYCODE_DPAD_RIGHT, hasCandidatesShown);
 		} else if (primaryCode == LIMEBaseKeyboard.KEYCODE_LEFT) {
-			keyDownUp(KeyEvent.KEYCODE_DPAD_LEFT, true);
+			keyDownUp(KeyEvent.KEYCODE_DPAD_LEFT, hasCandidatesShown);
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_OPTIONS) {
 			handleOptions();
 		} else if( primaryCode == LIMEKeyboardView.KEYCODE_SPACE_LONGPRESS) {

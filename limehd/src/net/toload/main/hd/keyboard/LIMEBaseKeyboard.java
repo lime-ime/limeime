@@ -943,14 +943,15 @@ public class LIMEBaseKeyboard {
                             mModifierKeys.add(key);
                         } else if (key.codes[0] == KEYCODE_ALT) {
                             mModifierKeys.add(key);
-                        } else  if(mSeperatedKeyboard 
-                        		&& key.x <  (mDisplayWidth/2 - 2 * key.gap - 2 * mSeperatedKeyWidth  )
-                        		&& key.x + key.width >  mDisplayWidth/2 
+                        } else if(mSeperatedKeyboard 
+                        		&& key.codes[0] == KEYCODE_SPACE 
+                        		&& key.x <  (mDisplayWidth/2 - (mReservedColumnsForSeperatedKeyboard) * ( mDefaultHorizontalGap + mSeperatedKeyWidth))  
+                        		//&& key.x + key.width >  mDisplayWidth/2 
                         			){
                         		int keyRightBound = key.x + key.width + ( mDisplayWidth - 10 * mSeperatedKeyWidth);
                         		key.width = mDisplayWidth/2  - key.x - key.gap - mSeperatedKeyWidth/2;
-                        		if(key.codes[0] == KEYCODE_SPACE 
-                        			&& keyRightBound > mDisplayWidth/2 + key.gap + mSeperatedKeyWidth/2 *3){ // add space key in right side seperated keybaord Jeremy '12,5,26
+                        		if(// key.codes[0] == KEYCODE_SPACE && 
+                        			keyRightBound > mDisplayWidth/2 + key.gap + mSeperatedKeyWidth/2 *3){ // add space key in right side seperated keybaord Jeremy '12,5,26
                         			final Key rightSpaceKey = new Key(currentRow, key); //clone the space key for the space key on right keyboard.
                
                         			rightSpaceKey.x =  mDisplayWidth/2 + key.gap + mSeperatedKeyWidth/2;
@@ -961,7 +962,7 @@ public class LIMEBaseKeyboard {
                         			x += rightSpaceKey.gap *2 + rightSpaceKey.width + mSeperatedKeyWidth ;
                         		}
                     
-                        }
+                        } 
                     } else if (TAG_KEYBOARD.equals(tag)) {
                         parseKeyboardAttributes(res, parser);
 
@@ -977,7 +978,7 @@ public class LIMEBaseKeyboard {
                         x += key.gap + key.width;
                          
                         if(mSeperatedKeyboard 
-                        		&& x >  (mDisplayWidth/2 - 2 * mDefaultHorizontalGap - 2 * mSeperatedKeyWidth  )
+                        		&& x >  (mDisplayWidth/2 - (mReservedColumnsForSeperatedKeyboard) * ( mDefaultHorizontalGap + mSeperatedKeyWidth)) 
                         		&& x <  (mDisplayWidth/2 )
                         		){
                         	x += mDisplayWidth - 10 * mSeperatedKeyWidth;
