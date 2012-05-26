@@ -507,7 +507,7 @@
     <string name="l3_im_notice">为了节省记忆体使用空间，我们强烈建议您清空不常使用的输入法字根，或使用空白数据库来载入个别输入法字根档。</string>
     
     <string name="hide_software_keyboard_typing_with_physical">自动隐藏软键盘</string>
-	<string name="hide_software_keyboard_typing_with_physical_summary">以实体键盘打字时隐藏软键盘</string>
+	<string name="hide_software_keyboard_typing_with_physical_summary">以实体键盘打字时隐藏软键盘，S-PEN使用者请勿勾选</string>
     	
 	<string name="show_arrow_keys">显示方向键</string>
     	<string-array name="show_arrow_keys_options">
