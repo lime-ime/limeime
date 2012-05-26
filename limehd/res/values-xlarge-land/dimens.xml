@@ -24,8 +24,11 @@
     <dimen name="candidate_font_size">42sp</dimen>
     <dimen name="candidate_number_font_size">18sp</dimen>
     <dimen name="candidate_vertical_padding">8sp</dimen>
-    <dimen name="key_text_size">38dip</dimen>
-    <dimen name="label_text_size">32dip</dimen>
+    <dimen name="key_text_size">48dip</dimen>
+    <dimen name="label_text_size">42dip</dimen>
+   
+    <dimen name="sub_label_text_size">42dp</dimen>
+    <dimen name="small_label_text_size">48dp</dimen>
     
     <!-- WB -->
     <dimen name="wb_key_height">92dip</dimen>
