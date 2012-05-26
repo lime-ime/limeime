@@ -150,7 +150,7 @@ public class LIMEBaseKeyboard {
     protected static float mSeperatedKeyWidthScale = 1f;
     
     /** Key width for separated keyboard in landscape mode. */
-    protected int mSeperatedKeyWidth = mDefaultWidth;
+    protected int mSeparatedKeyWidth = mDefaultWidth;
     
 
     
@@ -835,7 +835,7 @@ public class LIMEBaseKeyboard {
         row.defaultHorizontalGap = mDefaultHorizontalGap;
         if(verticalLayout){
         	row.defaultHeight = (int) (mTotalHeight -  3 * row.verticalGap)/4;
-        	row.defaultWidth = mSeperatedKeyWidth;
+        	row.defaultWidth = mSeparatedKeyWidth;
         }else{
         	row.defaultHeight = (int) (mDefaultHeight * mKeySizeScale * ARROW_KEY_HEIGHT_FRACTION);
         	row.defaultWidth = Math.round((mDisplayWidth - 3 * mDefaultHorizontalGap) /4);
@@ -938,6 +938,23 @@ public class LIMEBaseKeyboard {
                         inKey = true;
                         key = createKeyFromXml(res, currentRow, x, y, parser);
                         mKeys.add(key);
+                        
+                        //boolean bottomEdge = (currentRow.rowEdgeFlags & EDGE_BOTTOM) > 0;
+                        if(mSeparatedKeyboard  && separatedThreshold >0  //Jeremy '12,5,26 shift the keys after separated threshold
+                        		&&  (key.x >=  separatedThreshold && key.x <  mDisplayWidth/2) ){
+                        	if(DEBUG)
+                        		Log.i(TAG, "loadkeyboard(): shitfing"
+                    				+ ". key.x = " + key.x
+                    				+ ". key.width = " + key.width
+                    				+ ".  mDisplayWidth/2 = " +  mDisplayWidth/2
+                    				+ ". x = " +x
+                    				);
+                        	
+                        	key.x +=  mDisplayWidth - 10 * mSeparatedKeyWidth;
+                        	x += mDisplayWidth - 10 * mSeparatedKeyWidth;
+                        } 
+                        
+                      
                         if (key.codes[0] == KEYCODE_SHIFT) {
                             mShiftKey = key;
                             mShiftKeyIndex = mKeys.size()-1;
@@ -945,20 +962,33 @@ public class LIMEBaseKeyboard {
                         } else if (key.codes[0] == KEYCODE_ALT) {
                             mModifierKeys.add(key);
                         } else if(mSeparatedKeyboard  && separatedThreshold >0
-                        		&& key.codes[0] == KEYCODE_SPACE 
-                        		&& key.x < separatedThreshold 
+                        		&& ((key.codes[0] == KEYCODE_SPACE && key.x < separatedThreshold)
+                        				|| (key.x <  separatedThreshold && key.x + key.width >  mDisplayWidth/2))
+                        				
                         			){
-                        		int keyRightBound = key.x + key.width + ( mDisplayWidth - 10 * mSeperatedKeyWidth);
-                        		key.width = mDisplayWidth/2  - key.x - key.gap - mSeperatedKeyWidth/2;
-                        		if(keyRightBound > mDisplayWidth/2 + key.gap + mSeperatedKeyWidth/2 *3){ // add space key in right side seperated keybaord Jeremy '12,5,26
-                        			final Key rightSpaceKey = new Key(currentRow, key); //clone the space key for the space key on right keyboard.
-               
-                        			rightSpaceKey.x =  mDisplayWidth/2 + key.gap + mSeperatedKeyWidth/2;
-                        			rightSpaceKey.width = keyRightBound - rightSpaceKey.x;
-                                    
-                        			mKeys.add(rightSpaceKey);
+                        		int keyRightBound = key.x + key.width + ( mDisplayWidth - 10 * mSeparatedKeyWidth);
+                        		
+                        		if(DEBUG)
+                        			Log.i(TAG, "loadkeyboard():  keyRightBound = " +keyRightBound
+                        				+ ". key.x = " + key.x
+                        				+ ". key.width = " + key.width
+                        				+ ". x = " +x
+                        				+ ". mSeperatedKeyWidth = " + mSeparatedKeyWidth
+                        				+ ". separatedThreshold = " + separatedThreshold); 
+                        		
+                        		
+                        		if(keyRightBound > mDisplayWidth/2 + key.gap + mSeparatedKeyWidth/2 *3){ // add space key in right side seperated keybaord Jeremy '12,5,26
                         			
-                        			x += rightSpaceKey.gap *2 + rightSpaceKey.width + mSeperatedKeyWidth ;
+                        			key.width = mDisplayWidth/2  - key.x - key.gap - mSeparatedKeyWidth/2;
+                        			
+                        			final Key rightKey = new Key(currentRow, key); //clone the space key for the space key on right keyboard.
+               
+                        			rightKey.x =  mDisplayWidth/2 + key.gap + mSeparatedKeyWidth/2;
+                        			rightKey.width = keyRightBound - rightKey.x;
+                                    
+                        			mKeys.add(rightKey);
+                        			
+                        			x += rightKey.gap *2 + rightKey.width + mSeparatedKeyWidth ;
                         		}
                     
                         } 
@@ -966,7 +996,7 @@ public class LIMEBaseKeyboard {
                         parseKeyboardAttributes(res, parser);
                         
                         if(mSeparatedKeyboard)
-                        	separatedThreshold = 4* mDefaultHorizontalGap + 5*mSeperatedKeyWidth;
+                        	separatedThreshold = 4* mDefaultHorizontalGap + 5*mSeparatedKeyWidth;
 
                         if(showArrowKeysOnTop)    //Jeremy '12,5,24 create arrow keys before reading further rows.
                        	 	y += createArrowKeys(0,0, false);
@@ -982,14 +1012,9 @@ public class LIMEBaseKeyboard {
                          			+ ". kye.gap = " + key.gap
                          			+ ". key.width = " + key.width
                          			+ ". separatedThreshold = "
-                         			+ ". offsetThreshold = " + 4* mDefaultHorizontalGap + 5*mSeperatedKeyWidth);
+                         			+ ". offsetThreshold = " + 4* mDefaultHorizontalGap + 5*mSeparatedKeyWidth);
                          
-                        if(mSeparatedKeyboard  && separatedThreshold >0
-                        		&& x >=  separatedThreshold  
-                        		&& x <  mDisplayWidth/2 
-                        		){
-                        	x += mDisplayWidth - 10 * mSeperatedKeyWidth;
-                        }
+                       
                         
                         if (x > mTotalWidth) {
                             mTotalWidth = x;
@@ -1015,7 +1040,7 @@ public class LIMEBaseKeyboard {
         mTotalHeight = y - mDefaultVerticalGap;
         
         if(mSeparatedKeyboard)
-        	createArrowKeys((mDisplayWidth - mSeperatedKeyWidth)/2, 0, true);
+        	createArrowKeys((mDisplayWidth - mSeparatedKeyWidth)/2, 0, true);
      
         	
             
@@ -1057,7 +1082,7 @@ public class LIMEBaseKeyboard {
         //Jeremy '12,5,26 for seperated keyboard in landscape with arrow keys
         mReservedColumnsForSeperatedKeyboard =(int)( res.getInteger(R.integer.reserved_columns_for_seperated_keyboard));
         mSeperatedKeyWidthScale = 1f - 0.1f * mReservedColumnsForSeperatedKeyboard;
-        mSeperatedKeyWidth = Math.round((float)(mDefaultWidth) * (1f - 0.1f * mReservedColumnsForSeperatedKeyboard));
+        mSeparatedKeyWidth = Math.round((float)(mDefaultWidth) * (1f - 0.1f * mReservedColumnsForSeperatedKeyboard));
         
         a.recycle();
     }
