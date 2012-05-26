@@ -47,6 +47,5 @@
     
     <!-- WB -->
     <dimen name="wb_key_height">66dip</dimen>
-    
-    
+ 
 </resources>

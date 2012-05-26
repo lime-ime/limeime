@@ -65,8 +65,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     private static int sSpacebarVerticalCorrection;
 
     
-    static final int KEYCODE_ENTER = '\n';
-    static final int KEYCODE_SPACE = ' ';
+
     
     private boolean mCurrentlyInSpace;
     private int mSpaceDragStartX;
