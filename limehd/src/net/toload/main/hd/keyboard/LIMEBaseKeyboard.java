@@ -76,6 +76,9 @@ public class LIMEBaseKeyboard {
     public static final int KEYCODE_DOWN = -12;
     public static final int KEYCODE_LEFT = -13;
     public static final int KEYCODE_RIGHT = -14;
+    //Jeremy '12,5,26 moved from LIMEKeyboard
+    public static final int KEYCODE_ENTER = '\n'; 
+    public static final int KEYCODE_SPACE = ' ';
     
     /** Keyboard label **/
     //private CharSequence mLabel;
@@ -136,6 +139,20 @@ public class LIMEBaseKeyboard {
     
     /** Show arrow keys on keyboard or not. */ //Add by Jeremy '12,5,21 
     protected int mShowArrowKeys;
+    
+    /** Show separated keyboard with arrow keys in the middle. */ //Add by Jeremy '12,5,26
+    protected static boolean mSeperatedKeyboard;
+    
+    /** Reserved space in the middle in unit of columns for separated keyboard in landscape mode. */
+    protected static int mReservedColumnsForSeperatedKeyboard = 2;
+    
+    /** Key width reduction scale for separated keyboard in landscape mode. */
+    protected static float mSeperatedKeyWidthScale = 1f;
+    
+    /** Key width for separated keyboard in landscape mode. */
+    protected int mSeperatedKeyWidth = mDefaultWidth;
+    
+
     
     // Variables for pre-computing nearest keys.
     
@@ -204,8 +221,8 @@ public class LIMEBaseKeyboard {
             a = res.obtainAttributes(Xml.asAttributeSet(parser),
                     R.styleable.LIMEBaseKeyboard_Row);
             rowEdgeFlags = a.getInt(R.styleable.LIMEBaseKeyboard_Row_rowEdgeFlags, 0);
-            mode = a.getResourceId(R.styleable.LIMEBaseKeyboard_Row_keyboardMode,
-                    0);
+            mode = a.getResourceId(R.styleable.LIMEBaseKeyboard_Row_keyboardMode, 0);
+       
         }
     }
 
@@ -325,6 +342,39 @@ public class LIMEBaseKeyboard {
             keyboard = parent.parent;
         }
         
+        /** Clone a key with same attributes*/
+        public Key(Row parent, Key key) {
+            keyboard = parent.parent;
+            
+            x =  key.x;
+			y = key.y;
+			
+			width = key.width;
+			height = key.height;
+			gap = key.gap;
+			codes = key.codes;                            
+            iconPreview = key.iconPreview;
+            popupCharacters = key.popupCharacters;
+            popupResId = key.popupResId;
+            repeatable = key.repeatable;
+            modifier = key.modifier;
+            sticky = key.sticky;
+            edgeFlags = key.edgeFlags;
+            icon = key.icon;
+            label = key.label;
+            text = key.text;
+            if (iconPreview != null) {
+                iconPreview.setBounds(0, 0, iconPreview.getIntrinsicWidth(), 
+                        iconPreview.getIntrinsicHeight());
+            }
+            if (icon != null) {
+            	icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
+            }
+            if (codes == null && !TextUtils.isEmpty(label)) {
+                codes = new int[] { label.charAt(0) };
+            }
+        }
+        
         /** Create a key with the given top-left coordinate and extract its attributes from
          * the XML parser.
          * @param res resources associated with the caller's context
@@ -343,12 +393,25 @@ public class LIMEBaseKeyboard {
             TypedArray a = res.obtainAttributes(Xml.asAttributeSet(parser), 
                     R.styleable.LIMEBaseKeyboard);
 
+            float keyWidthScale = 1f;
+            if(mSeperatedKeyboard)
+            	keyWidthScale =  mSeperatedKeyWidthScale;
+            if(DEBUG)
+            	Log.i(TAG, "Key(): key.mSeperatedKeyboard = " + mSeperatedKeyboard + ". keyWidthScale = " + keyWidthScale);
+            
+            
+            
             width = getDimensionOrFraction(a, 
                     R.styleable.LIMEBaseKeyboard_keyWidth,
-                    keyboard.mDisplayWidth, parent.defaultWidth);
+                    keyboard.mDisplayWidth, Math.round((float)(parent.defaultWidth*keyWidthScale))
+                    		, keyWidthScale); //Jeremy '12,5,26          
+            
             height =getDimensionOrFraction(a, 
             		R.styleable.LIMEBaseKeyboard_keyHeight ,
                     keyboard.mDisplayHeight, parent.defaultHeight, mKeySizeScale); //Jeremy '11,9,3
+            
+            
+        	
             gap = getDimensionOrFraction(a, 
                     R.styleable.LIMEBaseKeyboard_horizontalGap,
                     keyboard.mDisplayWidth, parent.defaultHorizontalGap);
@@ -538,8 +601,8 @@ public class LIMEBaseKeyboard {
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         mDisplayWidth = dm.widthPixels;
         mDisplayHeight = dm.heightPixels;
-        //Log.v(TAG, "keyboard's display metrics:" + dm);
-
+     	
+        
         mDefaultHorizontalGap = 0;
         mDefaultWidth = mDisplayWidth / 10;
         mDefaultVerticalGap = 0;
@@ -549,6 +612,11 @@ public class LIMEBaseKeyboard {
         mKeyboardMode = modeId;
         mKeySizeScale = keySizeScale;
         mShowArrowKeys = showArrowKeys;
+        
+
+        //Jeremy '12,5,26 reserve  columns in the middle for arrow keys in landscape mode.
+        mSeperatedKeyboard = (mDisplayWidth > mDisplayHeight) && mShowArrowKeys != 0;
+   
         loadKeyboard(context, context.getResources().getXml(xmlLayoutResId));
     }
 
@@ -573,7 +641,7 @@ public class LIMEBaseKeyboard {
         int y = 0;
         int column = 0;
         mTotalWidth = 0;
-
+     
         
         Row row = new Row(this);
         row.defaultHeight = (int) (mDefaultHeight * mKeySizeScale);
@@ -757,18 +825,24 @@ public class LIMEBaseKeyboard {
      * createArrowKeyssRow() returns the total height of the row.
      */
     final float ARROW_KEY_HEIGHT_FRACTION = 0.8f;
-    protected int createArrowKeysRow(int x, int y){
+    protected int createArrowKeys(int x, int y, boolean verticalLayout){
     	 if(DEBUG)
-         	Log.i(TAG,"createArrowKeysRow(): mDisplayWidth = " + mDisplayWidth );
+         	Log.i(TAG,"createArrowKeys(): mDisplayWidth = " + mDisplayWidth );
     	
         Row row = new Row(this);
-        row.defaultHeight = (int) (mDefaultHeight * mKeySizeScale * ARROW_KEY_HEIGHT_FRACTION);
-        row.defaultWidth = Math.round((mDisplayWidth - 3 * mDefaultHorizontalGap) /4);
-        row.defaultHorizontalGap = mDefaultHorizontalGap;
+        
         row.verticalGap =  (int) (mDefaultVerticalGap  * mKeySizeScale);;
-        row.rowEdgeFlags = EDGE_TOP | EDGE_BOTTOM;
+        row.defaultHorizontalGap = mDefaultHorizontalGap;
+        if(verticalLayout){
+        	row.defaultHeight = (int) (mTotalHeight -  3 * row.verticalGap)/4;
+        	row.defaultWidth = mSeperatedKeyWidth;
+        }else{
+        	row.defaultHeight = (int) (mDefaultHeight * mKeySizeScale * ARROW_KEY_HEIGHT_FRACTION);
+        	row.defaultWidth = Math.round((mDisplayWidth - 3 * mDefaultHorizontalGap) /4);
+        	row.rowEdgeFlags = EDGE_TOP | EDGE_BOTTOM;
+        }
         
-        
+         
         // Many special symbols : http://star.gg/special-symbols
         
         for (int i = 0; i < 4 ; i++) {
@@ -799,8 +873,12 @@ public class LIMEBaseKeyboard {
             	key.codes = new int[] { KEYCODE_RIGHT };
             	break;
             }
-             
-            x += key.width + key.gap;
+            
+            if(verticalLayout)
+            	y += key.height + row.verticalGap;
+            else
+            	x += key.width + key.gap;
+            
             
             if(DEBUG)
             	Log.i(TAG,"createArrowKeysRow(): key[" + i+ "]" + "; x = " + x);
@@ -817,6 +895,8 @@ public class LIMEBaseKeyboard {
     	
     }
 
+  
+    
     private void loadKeyboard(Context context, XmlResourceParser parser) {
         boolean inKey = false;
         boolean inRow = false;
@@ -836,12 +916,16 @@ public class LIMEBaseKeyboard {
          
         try {
             int event;
+              
+       
+
             while ((event = parser.next()) != XmlResourceParser.END_DOCUMENT) {
                 if (event == XmlResourceParser.START_TAG) {
                     String tag = parser.getName();
                     if (TAG_ROW.equals(tag)) {
                         inRow = true;
                         x = 0;
+                   
                         currentRow = createRowFromXml(res, parser);
                         skipRow = currentRow.mode != 0 && currentRow.mode != mKeyboardMode;
                         if (skipRow) {
@@ -849,6 +933,7 @@ public class LIMEBaseKeyboard {
                             inRow = false;
                         }
                    } else if (TAG_KEY.equals(tag)) {
+                	                  	   
                         inKey = true;
                         key = createKeyFromXml(res, currentRow, x, y, parser);
                         mKeys.add(key);
@@ -858,16 +943,46 @@ public class LIMEBaseKeyboard {
                             mModifierKeys.add(key);
                         } else if (key.codes[0] == KEYCODE_ALT) {
                             mModifierKeys.add(key);
+                        } else  if(mSeperatedKeyboard 
+                        		&& key.x <  (mDisplayWidth/2 - 2 * key.gap - 2 * mSeperatedKeyWidth  )
+                        		&& key.x + key.width >  mDisplayWidth/2 
+                        			){
+                        		int keyRightBound = key.x + key.width + ( mDisplayWidth - 10 * mSeperatedKeyWidth);
+                        		key.width = mDisplayWidth/2  - key.x - key.gap - mSeperatedKeyWidth/2;
+                        		if(key.codes[0] == KEYCODE_SPACE 
+                        			&& keyRightBound > mDisplayWidth/2 + key.gap + mSeperatedKeyWidth/2 *3){ // add space key in right side seperated keybaord Jeremy '12,5,26
+                        			final Key rightSpaceKey = new Key(currentRow, key); //clone the space key for the space key on right keyboard.
+               
+                        			rightSpaceKey.x =  mDisplayWidth/2 + key.gap + mSeperatedKeyWidth/2;
+                        			rightSpaceKey.width = keyRightBound - rightSpaceKey.x;
+                                    
+                        			mKeys.add(rightSpaceKey);
+                        			
+                        			x += rightSpaceKey.gap *2 + rightSpaceKey.width + mSeperatedKeyWidth ;
+                        		}
+                    
                         }
                     } else if (TAG_KEYBOARD.equals(tag)) {
                         parseKeyboardAttributes(res, parser);
+
                         if(showArrowKeysOnTop)    //Jeremy '12,5,24 create arrow keys before reading further rows.
-                       	 	y += createArrowKeysRow(0,0);
+                       	 	y += createArrowKeys(0,0, false);
                     }
                 } else if (event == XmlResourceParser.END_TAG) {
                     if (inKey) {
+                    	if(DEBUG)
+                         	Log.i(TAG, "loadKeyboard() inkey: key.width = " + key.width + ". key.height = " + key.height);
+                    	
                         inKey = false;
                         x += key.gap + key.width;
+                         
+                        if(mSeperatedKeyboard 
+                        		&& x >  (mDisplayWidth/2 - 2 * mDefaultHorizontalGap - 2 * mSeperatedKeyWidth  )
+                        		&& x <  (mDisplayWidth/2 )
+                        		){
+                        	x += mDisplayWidth - 10 * mSeperatedKeyWidth;
+                        }
+                        
                         if (x > mTotalWidth) {
                             mTotalWidth = x;
                         }
@@ -887,10 +1002,15 @@ public class LIMEBaseKeyboard {
         }
         /** Add arrow keys row if mShowArrowKeys is on */  //Add by Jeremy '12,5,21
         if(showArrowKeysOnBottom) 
-        	 y += createArrowKeysRow(0,y);
-        	        
+        	 y += createArrowKeys(0,y, false);
         
         mTotalHeight = y - mDefaultVerticalGap;
+        
+        if(mSeperatedKeyboard)
+        	createArrowKeys((mDisplayWidth - mSeperatedKeyWidth)/2, 0, true);
+     
+        	
+            
         if(DEBUG) Log.i(TAG, "loadKeyboard():mTotalHeight"+ mTotalHeight);
     }
 
@@ -906,6 +1026,8 @@ public class LIMEBaseKeyboard {
     }
     
     private void parseKeyboardAttributes(Resources res, XmlResourceParser parser) {
+    	
+    	
         TypedArray a = res.obtainAttributes(Xml.asAttributeSet(parser), 
                 R.styleable.LIMEBaseKeyboard);
 
@@ -923,6 +1045,12 @@ public class LIMEBaseKeyboard {
                 mDisplayHeight, 0, mKeySizeScale)  ;
         mProximityThreshold = (int) (mDefaultWidth * SEARCH_DISTANCE);
         mProximityThreshold = mProximityThreshold * mProximityThreshold; // Square it for comparison
+        
+        //Jeremy '12,5,26 for seperated keyboard in landscape with arrow keys
+        mReservedColumnsForSeperatedKeyboard =(int)( res.getInteger(R.integer.reserved_columns_for_seperated_keyboard));
+        mSeperatedKeyWidthScale = 1f - 0.1f * mReservedColumnsForSeperatedKeyboard;
+        mSeperatedKeyWidth = Math.round((float)(mDefaultWidth) * (1f - 0.1f * mReservedColumnsForSeperatedKeyboard));
+        
         a.recycle();
     }
     static int getDimensionOrFraction(TypedArray a, int index, int base, int defValue) {
@@ -933,11 +1061,11 @@ public class LIMEBaseKeyboard {
         TypedValue value = a.peekValue(index);
         if (value == null) return defValue;
         if (value.type == TypedValue.TYPE_DIMENSION) {
-            return (int) (a.getDimensionPixelOffset(index, defValue) * scale);  //Jeremy '11,9,4
+            return Math.round(a.getDimensionPixelOffset(index, defValue) * scale);  //Jeremy '11,9,4
         } else if (value.type == TypedValue.TYPE_FRACTION) {
             // Round it to avoid values like 47.9999 from getting truncated
-            return Math.round(a.getFraction(index, base, base, defValue));
-        }
+            return Math.round(a.getFraction(index, base, base, defValue) * scale); //Jeremy '12,5,26
+        } 
         return defValue;
     }
 }

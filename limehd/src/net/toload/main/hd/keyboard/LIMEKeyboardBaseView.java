@@ -860,16 +860,15 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 				//Jeremy '11,8,11, Extended for sub-label display
 				//Jeremy '11,9,4 Scale label size
 				float keySizeScale = mKeyboard.getKeySizeScale();
-				float keyHeightFraction = 1;
-				if(key.height < mKeyboard.getKeyHeight()) { //Jeremy '12,5,21 scaled the label size if the key height is smaller than default key height 
-					keyHeightFraction =  (float)(key.height) / (float)(mKeyboard.getKeyHeight());
-					if(DEBUG)
-						Log.i(TAG, "onBufferDraw():"+ label 
-							+ ". mLabelTextSize = " + mLabelTextSize
-							+ ". keyHeightFraction = " + keyHeightFraction
-							+ ". key.height = " + key.height 
-							+ ". mKeyboard.getKeyHeight() = " + mKeyboard.getKeyHeight());
-				}
+				float labelSizeScale = 1;
+				
+				if(key.height < mKeyboard.getKeyHeight())  //Jeremy '12,5,21 scaled the label size if the key height is smaller than default key height 
+					labelSizeScale =  (float)(key.height) / (float)(mKeyboard.getKeyHeight());
+					
+				if(key.width < mKeyboard.getKeyWidth())  //Jeremy '12,5,26 scaled the label size if the key width is smaller than default key width
+					labelSizeScale *=  (float)(key.width) / (float)(mKeyboard.getKeyWidth());
+					
+				
 					
 				boolean hasSubLabel = label.contains("\n");
 				String subLabel="";
@@ -879,13 +878,13 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 					subLabel = labelA[0];
 				}
 				if(hasSubLabel){
-					labelSize = (int)(mSmallLabelTextSize * keySizeScale * keyHeightFraction);
+					labelSize = (int)(mSmallLabelTextSize * keySizeScale * labelSizeScale);
 					paint.setTypeface(Typeface.DEFAULT_BOLD);
 				}else if (label.length() > 1 && key.codes.length < 2 ) {
-					labelSize = (int)(mLabelTextSize * keySizeScale * keyHeightFraction);
+					labelSize = (int)(mLabelTextSize * keySizeScale * labelSizeScale);
 					paint.setTypeface(Typeface.DEFAULT_BOLD);
 				} else {
-					labelSize = (int)(mKeyTextSize* keySizeScale * keyHeightFraction);
+					labelSize = (int)(mKeyTextSize* keySizeScale * labelSizeScale);
 					paint.setTypeface(mKeyTextStyle);
 				}
 				paint.setTextSize(labelSize);
@@ -912,7 +911,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 						float baseline = centerY
 								+ labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
 						if(hasSubLabel){
-							final int subLabelSize =  (int)(mSubLabelTextSize* keySizeScale * keyHeightFraction);
+							final int subLabelSize =  (int)(mSubLabelTextSize* keySizeScale * labelSizeScale);
 							final int subLabelHeight;
 							final int subLabelWidth;
 							paint.setTypeface(Typeface.DEFAULT_BOLD);
