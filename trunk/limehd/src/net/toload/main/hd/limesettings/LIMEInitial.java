@@ -684,6 +684,7 @@ public class LIMEInitial extends Activity {
 				 });
 				 pd.setIndeterminate(false);
 				 pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+				 pd.setCanceledOnTouchOutside(false);
 				 pd.setMax(100);
 				 pd.show();
 			}else if(type == BACKUP){
