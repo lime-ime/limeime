@@ -1859,9 +1859,22 @@ public class LIMEService extends InputMethodService implements
 		CharSequence itemSplitKeyboard  = getString(R.string.split_keyboard);
 		if(mSplitKeyboard) itemSplitKeyboard  = getString(R.string.merge_keyboard);
 	
-		builder.setItems(new CharSequence[] 
-				{ itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM, itemSplitKeyboard}
-				, new DialogInterface.OnClickListener() {
+		
+		DisplayMetrics dm = getResources().getDisplayMetrics();
+        int displayWidth = dm.widthPixels;
+        int displayHeight = dm.heightPixels;
+        
+        CharSequence[] options;
+        
+        //Jeremy '12,5,27 do not show split/merge keyboard option if in landscape mode and show arrow keys is on
+        if(displayWidth > displayHeight && mShowArrowKeys > 0) 
+        	options = new CharSequence[] 
+    				{ itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM};
+        else
+        	options = new CharSequence[] 
+				{ itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM, itemSplitKeyboard};
+		
+		builder.setItems( options, new DialogInterface.OnClickListener() {
 
 			public void onClick(DialogInterface di, int position) {
 				di.dismiss();
