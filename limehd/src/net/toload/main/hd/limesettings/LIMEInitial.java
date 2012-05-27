@@ -607,6 +607,11 @@ public class LIMEInitial extends Activity {
 	}
 	
 	public void backupCloudDatabase() {
+		File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
+		if(!limedir.exists()){
+			limedir.mkdirs();
+		}
+		
 		File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_CLOUD_TEMP);
 		tempFile.deleteOnExit();
 		BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDBACKUP);
@@ -614,6 +619,11 @@ public class LIMEInitial extends Activity {
 	}
 
 	public void restoreCloudDatabase() {
+		File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
+		if(!limedir.exists()){
+			limedir.mkdirs();
+		}
+		
 		File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_CLOUD_TEMP);
 		tempFile.deleteOnExit();
 		BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDRESTORE);
