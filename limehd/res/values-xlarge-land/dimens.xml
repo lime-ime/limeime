@@ -20,6 +20,7 @@
 
 <resources>
     <dimen name="key_height">76dip</dimen>
+    <dimen name="mini_keyboard_fling_vertical_correction">-76dip</dimen>
     <dimen name="candidate_stripe_height">50sp</dimen>
     <dimen name="candidate_font_size">42sp</dimen>
     <dimen name="candidate_number_font_size">18sp</dimen>
