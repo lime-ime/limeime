@@ -601,7 +601,9 @@ public class LIMEBaseKeyboard {
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         mDisplayWidth = dm.widthPixels;
         mDisplayHeight = dm.heightPixels;
-     	
+        
+        if(DEBUG)
+        	Log.i(TAG, "LIMEBaseKeyboard() mDisplayWidth = " + mDisplayWidth + ". mDisplayHeight" + mDisplayHeight);
         
         mDefaultHorizontalGap = 0;
         mDefaultWidth = mDisplayWidth / 10;
@@ -972,7 +974,7 @@ public class LIMEBaseKeyboard {
                         	
                         	
                         } else if(mSplitKeyboard  && separatedThreshold >0
-                        		&& ((key.codes[0] == KEYCODE_SPACE && key.x < separatedThreshold && mDisplayWidth/2 - key.x >= mSeparatedKeyWidth  )
+                        		&& ((key.codes[0] == KEYCODE_SPACE && key.x < separatedThreshold && key.x <= mDisplayWidth/2 -  mSeparatedKeyWidth *3/2  )
                         				|| (key.x <  separatedThreshold && key.x + key.width >  mDisplayWidth/2))
                         				
                         			){
@@ -1017,8 +1019,8 @@ public class LIMEBaseKeyboard {
                         if(mSplitKeyboard){
                         	
                         	separatedThreshold = (mKeysInRow/2 -1)* mDefaultHorizontalGap + (mKeysInRow/2)*mSeparatedKeyWidth;
-                        	//if(DEBUG)
-                        	Log.i(TAG, "loadkeyboard() keyboard attributed parsed, separatedThreshold = " + separatedThreshold
+                        	if(DEBUG)
+                        		Log.i(TAG, "loadkeyboard() keyboard attributed parsed, separatedThreshold = " + separatedThreshold
                         			+ ". keysInRow = " + mKeysInRow
                         			+ ". mSeparatedKeyWidth = " + mSeparatedKeyWidth
                         			);
@@ -1115,12 +1117,12 @@ public class LIMEBaseKeyboard {
         mSplitedKeyWidthScale = (float)(mSeparatedKeyWidth) / (float) (mDefaultWidth);
         if(DEBUG) 
         	Log.i(TAG, "mKeysInRow = " + mKeysInRow
+        		+". mDisplayWidth = " + mDisplayWidth
+        		+". mDefaultWidth = " + mDefaultWidth
         		+". mSeparatedKeyWidth = " +mSeparatedKeyWidth
         		+". mSeperatedKeyWidthScale = " + mSplitedKeyWidthScale
         		);
-        //mSeperatedKeyWidthScale = 1f - 0.1f * mReservedColumnsForSeperatedKeyboard;
-        //mSeparatedKeyWidth = Math.round((float)(mDefaultWidth) * (1f - 0.1f * mReservedColumnsForSeperatedKeyboard));
-        
+         
         a.recycle();
     }
     static int getDimensionOrFraction(TypedArray a, int index, int base, int defValue) {
@@ -1131,10 +1133,12 @@ public class LIMEBaseKeyboard {
         TypedValue value = a.peekValue(index);
         if (value == null) return defValue;
         if (value.type == TypedValue.TYPE_DIMENSION) {
-            return Math.round(a.getDimensionPixelOffset(index, defValue) * scale);  //Jeremy '11,9,4
+        	//Log.i(TAG, "getDimensionOrFraction() got dimension value, defvalue = " + defValue + ". scale = " +scale);
+            return (int)(a.getDimensionPixelOffset(index, defValue) * scale);  //Jeremy '11,9,4
         } else if (value.type == TypedValue.TYPE_FRACTION) {
             // Round it to avoid values like 47.9999 from getting truncated
-            return Math.round(a.getFraction(index, base, base, defValue) * scale); //Jeremy '12,5,26
+        	//Log.i(TAG, "getDimensionOrFraction() got fraction value, base = " + base + ". defvalue = " + defValue + ". scale = " +scale);
+            return (int)(a.getFraction(index, base, base, defValue) * scale); //Jeremy '12,5,26 add scale. '12,5,27 use (int) instead of round to avoid rouding error
         } 
         return defValue;
     }
