@@ -1221,7 +1221,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 		});
 		// Override default ProximityKeyDetector.
 		miniKeyboard.mKeyDetector = new MiniKeyboardKeyDetector(mMiniKeyboardSlideAllowance);
-		// Remove gesture detector on mini-keyboard
+		// Remove gesture detector on mini-keyboarda
 		miniKeyboard.mGestureDetector = null;
 
 		LIMEBaseKeyboard keyboard;
@@ -1233,6 +1233,10 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 			keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId
 					,LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale(), 0, false); //Jeremy '12,5,21 never show arrow keys in popup keyboard
 		}
+		 //mini keyboard in fling mode override with fling correction. Jeremy '12,5,27
+		if(!isLargeScreen || keyboard.getKeys().size()==1)
+			miniKeyboard.mVerticalCorrection = 
+				getResources().getDimension(R.dimen.mini_keyboard_fling_vertical_correction);
 		miniKeyboard.setKeyboard(keyboard);
 		miniKeyboard.setPopupParent(this);
 

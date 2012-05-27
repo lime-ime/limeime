@@ -37,7 +37,7 @@
   	<dimen name="key_hysteresis_distance">0.05in</dimen>
   	<dimen name="keyboard_vertical_correction">-0.05in</dimen>
   	<dimen name="mini_keyboard_vertical_correction">-0.05in</dimen>
-<!--  	<dimen name="mini_keyboard_vertical_correction">-0.325in</dimen> -->
+	<dimen name="mini_keyboard_fling_vertical_correction">-46dip</dimen>
     <dimen name="mini_keyboard_slide_allowance">0.553in</dimen>
     <dimen name="key_preview_height">80dp</dimen>
     <dimen name="spacebar_preview_text_size">25sp</dimen>

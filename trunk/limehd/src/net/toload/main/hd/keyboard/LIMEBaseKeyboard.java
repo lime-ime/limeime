@@ -972,7 +972,7 @@ public class LIMEBaseKeyboard {
                         	
                         	
                         } else if(mSplitKeyboard  && separatedThreshold >0
-                        		&& ((key.codes[0] == KEYCODE_SPACE && key.x < separatedThreshold)
+                        		&& ((key.codes[0] == KEYCODE_SPACE && key.x < separatedThreshold && mDisplayWidth/2 - key.x >= mSeparatedKeyWidth  )
                         				|| (key.x <  separatedThreshold && key.x + key.width >  mDisplayWidth/2))
                         				
                         			){
