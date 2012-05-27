@@ -19,5 +19,5 @@
 -->
 
 <resources>
-     <integer name="reserved_columns_for_seperated_keyboard">4</integer>
+     <integer name="reserved_columns_for_seperated_keyboard">5</integer>
 </resources>
