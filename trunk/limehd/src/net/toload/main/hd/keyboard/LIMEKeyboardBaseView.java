@@ -623,7 +623,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 		mKeyboard = keyboard;
 		//LatinImeLogger.onSetKeyboard(keyboard);
 		mKeys = mKeyDetector.setKeyboard(keyboard, -getPaddingLeft(),
-				-getPaddingTop() + mVerticalCorrection);
+				-getPaddingTop() + mVerticalCorrection );
 		mKeyboardVerticalGap = (int)getResources().getDimension(R.dimen.key_bottom_gap);
 		for (PointerTracker tracker : mPointerTrackers) {
 			tracker.setKeyboard(mKeys, mKeyHysteresisDistance);
@@ -1084,7 +1084,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 		}
 
 		int popupPreviewX = key.x - (popupWidth - key.width) / 2;
-		int popupPreviewY = (int) (key.y - popupHeight + mPreviewOffset*mKeyboard.getKeySizeScale());
+		int popupPreviewY = (int) ((key.y - popupHeight + mPreviewOffset)*mKeyboard.getKeySizeScale());
 
 		mHandler.cancelDismissPreview();
 		if (mOffsetInWindow == null) {
