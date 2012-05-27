@@ -154,9 +154,7 @@ public class DBCloudServer extends DBServer {
 		}
 	}
 
-	public void cloudRestore(Activity act, ProgressDialog pd, 
-	// DBServer db, LIMEPreferenceManager pref,
-			File temp) {
+	public void cloudRestore(Activity act, ProgressDialog pd, File temp) {
 
 		// DBSrv = db;
 
@@ -322,8 +320,7 @@ public class DBCloudServer extends DBServer {
 							FileOutputStream outStream = null;
 							try {
 								inStream = ms.getInputStream();
-								outStream = new FileOutputStream(tempfile
-										.getAbsolutePath());
+								outStream = new FileOutputStream(tempfile.getAbsolutePath());
 
 								long fileSize = inStream.available();
 								if(fileSize == 0 || fileSize == -1){
@@ -354,8 +351,7 @@ public class DBCloudServer extends DBServer {
 								pd.setProgress(99);
 							}
 
-							String dbtarget = mLIMEPref
-									.getParameterString("dbtarget");
+							String dbtarget = mLIMEPref.getParameterString("dbtarget");
 							if (dbtarget.equals("device")) {
 								decompressFile(tempfile,
 										LIME.DATABASE_DECOMPRESS_FOLDER,

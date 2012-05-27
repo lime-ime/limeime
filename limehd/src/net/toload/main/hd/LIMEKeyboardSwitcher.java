@@ -248,7 +248,10 @@ public class LIMEKeyboardSwitcher {
 	    if(id != null){
 	        if (!mKeyboards.containsKey(id)) {
 	        	LIMEKeyboard keyboard = new LIMEKeyboard(
-	                mContext, id.mXml, id.mMode, mKeySizeScale, mLIMEPref.getShowArrowKeys()); //Jeremy '12,5,21 add the show arrow keys option
+	                mContext, id.mXml, id.mMode, mKeySizeScale, 
+	                mLIMEPref.getShowArrowKeys(), //Jeremy '12,5,21 add the show arrow keys option
+	                mLIMEPref.getSplitKeyboard() //Jeremy '12,5,27 add the split keyboard option
+	                );
 	        	keyboard.setKeyboardSwitcher(this);
 	            if (id.mEnableShiftLock) {
 	                keyboard.enableShiftLock();
@@ -298,8 +301,8 @@ public class LIMEKeyboardSwitcher {
     		// Art 28/Sep/2011 Force WB to use it special design keyboard layout
     		kobj = new KeyboardObj();
 			kobj.setCode("wb");
-			kobj.setName("筆順五碼");
-			kobj.setDescription("筆順五碼");
+			kobj.setName("蝑�鈭Ⅳ");
+			kobj.setDescription("蝑�鈭Ⅳ");
 			kobj.setType("phone");
 			kobj.setImage("wb_keyboard_preview");
 			kobj.setImkb("lime_wb");
@@ -312,8 +315,8 @@ public class LIMEKeyboardSwitcher {
     		// Art 7/Feb/2012 HS Input Method
     		kobj = new KeyboardObj();
 			kobj.setCode("hs");
-			kobj.setName("華象直覺");
-			kobj.setDescription("華象直覺");
+			kobj.setName("�航情�渲死");
+			kobj.setDescription("�航情�渲死");
 			kobj.setType("phone");
 			kobj.setImage("hs_keyboard_preview");
 			kobj.setImkb("lime_hs");

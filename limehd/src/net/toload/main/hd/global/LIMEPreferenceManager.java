@@ -386,6 +386,17 @@ public class LIMEPreferenceManager {
 
 	}
 	
+	public boolean getSplitKeyboard(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("split_keyboard", false);
+	}
+	
+	
+	public void setSplitKeyboard(boolean split){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		sp.edit().putBoolean("split_keyboard", split).commit();	
+		
+	}
 	
 	/*
 	 * INT Parameter SET/GET

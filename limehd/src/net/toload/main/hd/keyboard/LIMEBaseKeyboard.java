@@ -141,13 +141,13 @@ public class LIMEBaseKeyboard {
     protected int mShowArrowKeys;
     
     /** Show separated keyboard with arrow keys in the middle. */ //Add by Jeremy '12,5,26
-    protected static boolean mSeparatedKeyboard;
+    protected static boolean mSplitKeyboard;
     
     /** Reserved space in the middle in unit of columns for separated keyboard in landscape mode. */
-    protected static int mReservedColumnsForSeperatedKeyboard = 2;
+    protected static int mReservedColumnsForSplitedKeyboard = 2;
     
     /** Key width reduction scale for separated keyboard in landscape mode. */
-    protected static float mSeperatedKeyWidthScale = 1f;
+    protected static float mSplitedKeyWidthScale = 1f;
     
     /** Key width for separated keyboard in landscape mode. */
     protected int mSeparatedKeyWidth = mDefaultWidth;
@@ -394,10 +394,10 @@ public class LIMEBaseKeyboard {
                     R.styleable.LIMEBaseKeyboard);
 
             float keyWidthScale = 1f;
-            if(mSeparatedKeyboard)
-            	keyWidthScale =  mSeperatedKeyWidthScale;
+            if(mSplitKeyboard)
+            	keyWidthScale =  mSplitedKeyWidthScale;
             if(DEBUG)
-            	Log.i(TAG, "Key(): key.mSeperatedKeyboard = " + mSeparatedKeyboard + ". keyWidthScale = " + keyWidthScale);
+            	Log.i(TAG, "Key(): key.mSeperatedKeyboard = " + mSplitKeyboard + ". keyWidthScale = " + keyWidthScale);
             
             
             
@@ -586,8 +586,8 @@ public class LIMEBaseKeyboard {
      * @param context the application or service context
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      */
-    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, float keySizeScale, int showArrowKeys) {
-        this(context, xmlLayoutResId, 0, keySizeScale, showArrowKeys);
+    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, float keySizeScale, int showArrowKeys, boolean splitKeyboard ) {
+        this(context, xmlLayoutResId, 0, keySizeScale, showArrowKeys, splitKeyboard );
     }
     
     /**
@@ -597,7 +597,7 @@ public class LIMEBaseKeyboard {
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      * @param modeId keyboard mode identifier
      */
-    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale, int showArrowKeys) {
+    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale, int showArrowKeys, boolean splitKeyboard ) {
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         mDisplayWidth = dm.widthPixels;
         mDisplayHeight = dm.heightPixels;
@@ -615,7 +615,8 @@ public class LIMEBaseKeyboard {
         
 
         //Jeremy '12,5,26 reserve  columns in the middle for arrow keys in landscape mode.
-        mSeparatedKeyboard = (mDisplayWidth > mDisplayHeight) && mShowArrowKeys != 0;
+        //Jeremy '12,5,27 read splitkeyboard setting from preference. 
+        mSplitKeyboard = ((mDisplayWidth > mDisplayHeight) && mShowArrowKeys != 0)|| splitKeyboard;
    
         loadKeyboard(context, context.getResources().getXml(xmlLayoutResId));
     }
@@ -636,7 +637,7 @@ public class LIMEBaseKeyboard {
      */
     public LIMEBaseKeyboard(Context context, int layoutTemplateResId, 
             CharSequence characters, int columns, int horizontalPadding, float keySizeScale) {
-        this(context, layoutTemplateResId, keySizeScale, 0); //Jeremy '12,5,21 never show arrow keys in popup keyboard
+        this(context, layoutTemplateResId, keySizeScale, 0, false); //Jeremy '12,5,21 never show arrow keys in popup keyboard
         int x = 0;
         int y = 0;
         int column = 0;
@@ -951,7 +952,7 @@ public class LIMEBaseKeyboard {
                 				+ ".  mDisplayWidth/2 = " +  mDisplayWidth/2
                 				+ ". x = " +x
                 				);
-                        if(mSeparatedKeyboard  && separatedThreshold >0  
+                        if(mSplitKeyboard  && separatedThreshold >0  
                         		&& ( (key.x >=  separatedThreshold && key.x <  mDisplayWidth/2) 
                         				|| (key.codes[0] != KEYCODE_SPACE
                         					&& key.x + key.width >=  mDisplayWidth/2 - mSeparatedKeyWidth *3/2
@@ -970,7 +971,7 @@ public class LIMEBaseKeyboard {
                     				);
                         	
                         	
-                        } else if(mSeparatedKeyboard  && separatedThreshold >0
+                        } else if(mSplitKeyboard  && separatedThreshold >0
                         		&& ((key.codes[0] == KEYCODE_SPACE && key.x < separatedThreshold)
                         				|| (key.x <  separatedThreshold && key.x + key.width >  mDisplayWidth/2))
                         				
@@ -1013,7 +1014,7 @@ public class LIMEBaseKeyboard {
                     } else if (TAG_KEYBOARD.equals(tag)) {
                         parseKeyboardAttributes(res, parser);
                         
-                        if(mSeparatedKeyboard){
+                        if(mSplitKeyboard){
                         	
                         	separatedThreshold = (mKeysInRow/2 -1)* mDefaultHorizontalGap + (mKeysInRow/2)*mSeparatedKeyWidth;
                         	//if(DEBUG)
@@ -1066,7 +1067,7 @@ public class LIMEBaseKeyboard {
         
         mTotalHeight = y - mDefaultVerticalGap;
         
-        if(mSeparatedKeyboard)
+        if(mSplitKeyboard && mShowArrowKeys!=0 && mDisplayWidth > mDisplayHeight )
         	createArrowKeys((mDisplayWidth - mSeparatedKeyWidth)/2, 0, true);
      
         	
@@ -1107,15 +1108,15 @@ public class LIMEBaseKeyboard {
         mProximityThreshold = mProximityThreshold * mProximityThreshold; // Square it for comparison
         
         //Jeremy '12,5,26 for seperated keyboard in landscape with arrow keys
-        mReservedColumnsForSeperatedKeyboard =(int)( res.getInteger(R.integer.reserved_columns_for_seperated_keyboard));
+        mReservedColumnsForSplitedKeyboard =(int)( res.getInteger(R.integer.reserved_columns_for_seperated_keyboard));
         
         mKeysInRow = Math.round(mDisplayWidth / mDefaultWidth);
-        mSeparatedKeyWidth = Math.round(mDisplayWidth / (mKeysInRow + mReservedColumnsForSeperatedKeyboard));
-        mSeperatedKeyWidthScale = (float)(mSeparatedKeyWidth) / (float) (mDefaultWidth);
+        mSeparatedKeyWidth = Math.round(mDisplayWidth / (mKeysInRow + mReservedColumnsForSplitedKeyboard));
+        mSplitedKeyWidthScale = (float)(mSeparatedKeyWidth) / (float) (mDefaultWidth);
         if(DEBUG) 
         	Log.i(TAG, "mKeysInRow = " + mKeysInRow
         		+". mSeparatedKeyWidth = " +mSeparatedKeyWidth
-        		+". mSeperatedKeyWidthScale = " + mSeperatedKeyWidthScale
+        		+". mSeperatedKeyWidthScale = " + mSplitedKeyWidthScale
         		);
         //mSeperatedKeyWidthScale = 1f - 0.1f * mReservedColumnsForSeperatedKeyboard;
         //mSeparatedKeyWidth = Math.round((float)(mDefaultWidth) * (1f - 0.1f * mReservedColumnsForSeperatedKeyboard));
