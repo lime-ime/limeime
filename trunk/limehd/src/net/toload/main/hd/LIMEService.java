@@ -107,6 +107,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean mEnglishFlagShift;
 	private boolean mPersistentLanguageMode;  //Jeremy '12,5,1
 	private int mShowArrowKeys; //Jeremy '12,5,22 force recreate keyboard if show arrow keys mode changes.
+	private boolean mSplitKeyboard; //Jeremy '12,5,26 force recreate keyboard if split keyboard settings changes
 	
 	//private boolean mPredictionOnPhysicalKeyboard = false;
 
@@ -623,7 +624,9 @@ public class LIMEService extends InputMethodService implements
 		}
 		
 		
-		mKeyboardSwitcher.makeKeyboards(mShowArrowKeys != mLIMEPref.getShowArrowKeys()); //Jeremy '12,5,22 recreate keyboard if the setting altered.
+		mKeyboardSwitcher.makeKeyboards(
+				mShowArrowKeys != mLIMEPref.getShowArrowKeys() //Jeremy '12,5,22 recreate keyboard if the setting altered.
+			 ||	mSplitKeyboard != mLIMEPref.getSplitKeyboard()); //Jeremy '12,5,26 recreate keyboard if the setting altered.
 
 		//TextEntryState.newSession(this);
 		loadSettings();
@@ -771,6 +774,7 @@ public class LIMEService extends InputMethodService implements
 		
 		mPersistentLanguageMode = mLIMEPref.getPersistentLanguageMode();
 		mShowArrowKeys = mLIMEPref.getShowArrowKeys();
+		mSplitKeyboard = mLIMEPref.getSplitKeyboard();
 		
 		disable_physical_selection = mLIMEPref.getDisablePhysicalSelkey();
 		
@@ -1824,6 +1828,7 @@ public class LIMEService extends InputMethodService implements
 	private static final int POS_HANCONVERT = 1;  //Jeremy '11,9,17
 	private static final int POS_KEYBOARD = 2;
 	private static final int POS_METHOD = 3;
+	private static final int POS_SPLIT_KEYBOARD= 4;
 
 
 	
@@ -1848,11 +1853,14 @@ public class LIMEService extends InputMethodService implements
 		CharSequence itemSettings = getString(R.string.lime_setting_preference);
 		CharSequence hanConvert = getString(R.string.han_convert_option_list);
 
-		CharSequence itemKeyboadList = getString(R.string.keyboard_list);
-		CharSequence itemInputMethod = getString(R.string.input_method);
+		CharSequence itemSwitchIM = getString(R.string.keyboard_list);
+		CharSequence itemSwitchSytemIM = getString(R.string.input_method);
+		
+		CharSequence itemSplitKeyboard  = getString(R.string.split_keyboard);
+		if(mSplitKeyboard) itemSplitKeyboard  = getString(R.string.merge_keyboard);
 	
 		builder.setItems(new CharSequence[] 
-				{ itemSettings, hanConvert, itemKeyboadList, itemInputMethod}
+				{ itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM, itemSplitKeyboard}
 				, new DialogInterface.OnClickListener() {
 
 			public void onClick(DialogInterface di, int position) {
@@ -1870,7 +1878,11 @@ public class LIMEService extends InputMethodService implements
 				case POS_METHOD:
 					((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).showInputMethodPicker();				
 					break;
-			
+				case POS_SPLIT_KEYBOARD: //Jeremy '12,5,27 new option to split keyboard
+					mLIMEPref.setSplitKeyboard(!mSplitKeyboard);
+					handleClose();
+					mKeyboardSwitcher.makeKeyboards(true);
+					break;
 					
 				}
 			}

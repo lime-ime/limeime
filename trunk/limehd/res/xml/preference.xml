@@ -67,6 +67,12 @@
                 />
        
        <CheckBoxPreference
+                android:key="split_keyboard"
+                android:title="@string/split_keyboard" 
+            	android:defaultValue="false" 
+                />
+       
+       <CheckBoxPreference
                 android:key="fixed_candidate_view_display"
                 android:title="@string/fixed_candidate_view_display" 
             	android:defaultValue="false" 

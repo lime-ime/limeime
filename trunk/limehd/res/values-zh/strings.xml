@@ -505,6 +505,10 @@
     <string name="hide_software_keyboard_typing_with_physical">自動隱藏軟鍵盤</string>
     <string name="hide_software_keyboard_typing_with_physical_summary">以實體鍵盤打字時隱藏軟鍵盤，S-PEN使用者請勿勾選</string>
     
+    <string name="split_keyboard">分離鍵盤</string>
+    
+    <string name="merge_keyboard">合併鍵盤</string>
+    
     <string name="show_arrow_keys">顯示方向鍵</string>
     	<string-array name="show_arrow_keys_options">
 		<item>無</item>

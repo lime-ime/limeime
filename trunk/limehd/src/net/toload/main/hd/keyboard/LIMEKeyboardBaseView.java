@@ -1231,7 +1231,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 					LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale());
 		} else {
 			keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId
-					,LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale(), 0); //Jeremy '12,5,21 never show arrow keys in popup keyboard
+					,LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale(), 0, false); //Jeremy '12,5,21 never show arrow keys in popup keyboard
 		}
 		miniKeyboard.setKeyboard(keyboard);
 		miniKeyboard.setPopupParent(this);

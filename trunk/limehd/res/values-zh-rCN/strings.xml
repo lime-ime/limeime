@@ -508,6 +508,11 @@
     
     <string name="hide_software_keyboard_typing_with_physical">自动隐藏软键盘</string>
 	<string name="hide_software_keyboard_typing_with_physical_summary">以实体键盘打字时隐藏软键盘，S-PEN使用者请勿勾选</string>
+	
+	   
+    <string name="split_keyboard">分离键盘</string>
+    
+    <string name="merge_keyboard">合并键盘</string>
     	
 	<string name="show_arrow_keys">显示方向键</string>
     	<string-array name="show_arrow_keys_options">
