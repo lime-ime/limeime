@@ -858,29 +858,57 @@ public class LIMEBaseKeyboard {
             key.gap = row.defaultHorizontalGap;
             key.modifier = true;
             
-            switch (i){
-            case 0:
-            	key.label = "⇑";
-            	key.codes = new int[] { KEYCODE_UP };
-            	break;
-            case 1:
-            	key.label = "⇓";
-            	key.codes = new int[] { KEYCODE_DOWN };
-            	break;
-            case 2:
-            	key.label = "⇐";
-            	key.codes = new int[] { KEYCODE_LEFT };
-            	break;
-            case 3:
-            	key.label = "⇒";
-            	key.codes = new int[] { KEYCODE_RIGHT };
-            	break;
+            // Cross shape arrow keys layout if center reserved space is larger than 2 , Jeremy '12,5,28
+            if(verticalLayout && mReservedColumnsForSplitedKeyboard >2){
+            	switch (i){
+            	case 0:
+            		key.label = "⇑";
+            		key.codes = new int[] { KEYCODE_UP };
+            		y += key.height + row.verticalGap;
+            		x -= key.width/2 + key.gap;
+            		break;
+            	case 1:
+            		key.label = "⇐";
+            		key.codes = new int[] { KEYCODE_LEFT };
+            		x += key.width + key.gap * 2;
+            		break;
+            	case 2:
+            		key.label = "⇒";
+            		key.codes = new int[] { KEYCODE_RIGHT };
+            		x -= key.width/2 + key.gap;
+            		y += key.height + row.verticalGap;
+            		break;
+            	case 3:
+            		key.label = "⇓";
+            		key.codes = new int[] { KEYCODE_DOWN };
+            		y += key.height + row.verticalGap;
+            		break;
+            	}
+            	
+            }else{
+            	switch (i){
+            	case 0:
+            		key.label = "⇑";
+            		key.codes = new int[] { KEYCODE_UP };
+            		break;
+            	case 1:
+            		key.label = "⇓";
+            		key.codes = new int[] { KEYCODE_DOWN };
+            		break;
+            	case 2:
+            		key.label = "⇐";
+            		key.codes = new int[] { KEYCODE_LEFT };
+            		break;
+            	case 3:
+            		key.label = "⇒";
+            		key.codes = new int[] { KEYCODE_RIGHT };
+            		break;
+            	}
+            	if(verticalLayout)
+            		y += key.height + row.verticalGap;
+            	else
+            		x += key.width + key.gap;
             }
-            
-            if(verticalLayout)
-            	y += key.height + row.verticalGap;
-            else
-            	x += key.width + key.gap;
             
             
             if(DEBUG)
@@ -913,7 +941,9 @@ public class LIMEBaseKeyboard {
         Resources res = context.getResources();
         boolean skipRow = false;
         
-        boolean showArrowKeysOnTop = (mShowArrowKeys==1) && (mDisplayWidth < mDisplayHeight);  //Jeremy '12,5,24 only show arrows in portaint now.
+        /** Show arrow keys on top of the soft keyboard in portrait mode.*/
+        boolean showArrowKeysOnTop = (mShowArrowKeys==1) && (mDisplayWidth < mDisplayHeight);
+        /** Show arrow keys on bottom of the soft keyboard in portrait mode.*/  
         boolean showArrowKeysOnBottom = (mShowArrowKeys==2) && (mDisplayWidth < mDisplayHeight);
         /** The left bound of the center blank area on split keyboard. */
         int leftSplitBorder = 0;
@@ -921,6 +951,8 @@ public class LIMEBaseKeyboard {
         int splitDistance =  0;
         /** The centerLine of current screen in horizontal direction. */
         int centerLine = mDisplayWidth/2;
+        /** Reserved center space for arrow keys on right or left of the center line. */
+        int reservedCenterSpace = 0;
                 
         try {
             int event;
@@ -958,8 +990,8 @@ public class LIMEBaseKeyboard {
                         if(mSplitKeyboard  && leftSplitBorder > 0  
                         		&& ( (key.x >=  leftSplitBorder && key.x <  centerLine) //key left bound in between split border and centerline 
                         				|| (key.x <  leftSplitBorder  //the key right bound is too closed to centerline so as no enough clearance for center arrow keys
-                        					&& key.x + key.width >=  centerLine - mSplitKeyWidth/2
-                        					&& key.x + splitDistance >  centerLine +  mSplitKeyWidth/2 
+                        					&& key.x + key.width >=  centerLine - reservedCenterSpace
+                        					&& key.x + splitDistance >  centerLine +  reservedCenterSpace
                         					 ))){
                         	key.x +=  splitDistance;
                         	x += splitDistance;
@@ -985,14 +1017,14 @@ public class LIMEBaseKeyboard {
                         				+ ". x = " +x
                         				+ ". y = " +y);
                         		
-                        		// add space key in right side split keybaord Jeremy '12,5,26
-                        		if(keyRightBound > centerLine + key.gap + mSplitKeyWidth/2 *3){
-                        			key.width = centerLine  - key.x - key.gap - mSplitKeyWidth/2;
+                        		// add space key in right side split keyboard Jeremy '12,5,26
+                        		if(keyRightBound > centerLine + key.gap + mSplitKeyWidth + reservedCenterSpace){
+                        			key.width = centerLine  - key.x - key.gap - reservedCenterSpace;
                         			final Key rightKey = new Key(currentRow, key); //clone the space key for the space key on right keyboard.
-                        			rightKey.x =  centerLine + key.gap + mSplitKeyWidth/2;
+                        			rightKey.x =  centerLine + key.gap + reservedCenterSpace;
                         			rightKey.width = keyRightBound - rightKey.x;
                         			mKeys.add(rightKey);
-                        			x += rightKey.gap *2 + rightKey.width + mSplitKeyWidth ; //shift x for the distance on center reserved space + right key width
+                        			x += rightKey.gap *2 + rightKey.width + reservedCenterSpace*2 ; //shift x for the distance on center reserved space + right key width
                         		}
                     
                         } 
@@ -1009,10 +1041,13 @@ public class LIMEBaseKeyboard {
                         parseKeyboardAttributes(res, parser);
                         
                         if(mSplitKeyboard){
-                        	
                         	leftSplitBorder = (mKeysInRow/2 -1)* mDefaultHorizontalGap + (mKeysInRow/2)*mSplitKeyWidth;
                         	splitDistance =  mDisplayWidth - mKeysInRow * mSplitKeyWidth;
-                        	//if(DEBUG)
+                        	if(mReservedColumnsForSplitedKeyboard >2)
+                        		reservedCenterSpace = mSplitKeyWidth; //reserved 2 columns in the center 
+                        	else
+                        		reservedCenterSpace = mSplitKeyWidth/2;  //reserved 1 columns in the center 
+                        	if(DEBUG)
                         		Log.i(TAG, "loadkeyboard() keyboard attributed parsed, leftSplitBorder = " + leftSplitBorder
                         			+ ". keysInRow = " + mKeysInRow
                         			+ ". mSeparatedKeyWidth = " + mSplitKeyWidth
@@ -1036,8 +1071,7 @@ public class LIMEBaseKeyboard {
                          	Log.i(TAG, "loadKeyboard() inkey: x = " + x
                          			+ ". kye.gap = " + key.gap
                          			+ ". key.width = " + key.width
-                         			+ ". separatedThreshold = "
-                         			+ ". offsetThreshold = " + 4* mDefaultHorizontalGap + 5*mSplitKeyWidth);
+                         			+ ". splitDistance = "   + splitDistance );
                          
                        
                         
