@@ -150,7 +150,7 @@ public class LIMEBaseKeyboard {
     protected static float mSplitedKeyWidthScale = 1f;
     
     /** Key width for separated keyboard in landscape mode. */
-    protected int mSeparatedKeyWidth = mDefaultWidth;
+    protected int mSplitKeyWidth = mDefaultWidth;
     /** Default key number in a row . */
     int mKeysInRow = 10;
     
@@ -838,7 +838,7 @@ public class LIMEBaseKeyboard {
         row.defaultHorizontalGap = mDefaultHorizontalGap;
         if(verticalLayout){
         	row.defaultHeight = (int) (mTotalHeight -  3 * row.verticalGap)/4;
-        	row.defaultWidth = mSeparatedKeyWidth;
+        	row.defaultWidth = mSplitKeyWidth;
         }else{
         	row.defaultHeight = (int) (mDefaultHeight * mKeySizeScale * ARROW_KEY_HEIGHT_FRACTION);
         	row.defaultWidth = Math.round((mDisplayWidth - 3 * mDefaultHorizontalGap) /4);
@@ -915,9 +915,12 @@ public class LIMEBaseKeyboard {
         
         boolean showArrowKeysOnTop = (mShowArrowKeys==1) && (mDisplayWidth < mDisplayHeight);  //Jeremy '12,5,24 only show arrows in portaint now.
         boolean showArrowKeysOnBottom = (mShowArrowKeys==2) && (mDisplayWidth < mDisplayHeight);
-        
-        int separatedThreshold = 0;
-  
+        /** The left bound of the center blank area on split keyboard. */
+        int leftSplitBorder = 0;
+        /** The distance to be shifted for right side keyboard */
+        int splitDistance =  0;
+        /** The centerLine of current screen in horizontal direction. */
+        int centerLine = mDisplayWidth/2;
                 
         try {
             int event;
@@ -945,62 +948,51 @@ public class LIMEBaseKeyboard {
                         
                         //Jeremy '12,5,26 shift the keys after separated threshold and 
                         // repeat space keys or keys longer then the distance between space key and half of screen  on right keyboard.
-                        if(DEBUG)
+                        //if(DEBUG)
                         	Log.i(TAG, "loadkeyboard():"
                 				+ ". key.x = " + key.x
                 				+ ". key.width = " + key.width
-                				+ ". mSeperatedKeyWidth = " + mSeparatedKeyWidth
-                				+ ". separatedThreshold = " + separatedThreshold
-                				+ ".  mDisplayWidth/2 = " +  mDisplayWidth/2
-                				+ ". x = " +x
-                				);
-                        if(mSplitKeyboard  && separatedThreshold >0  
-                        		&& ( (key.x >=  separatedThreshold && key.x <  mDisplayWidth/2) 
-                        				|| (key.codes[0] != KEYCODE_SPACE
-                        					&& key.x + key.width >=  mDisplayWidth/2 - mSeparatedKeyWidth *3/2
-                        					&& key.x + key.width <  mDisplayWidth/2)
-                        					&& key.x <  separatedThreshold
-                        					&& key.x + ( mDisplayWidth - 10 * mSeparatedKeyWidth) >  mDisplayWidth/2 +  mSeparatedKeyWidth/2 
-                        					 )){
-                        	key.x +=  mDisplayWidth - mKeysInRow * mSeparatedKeyWidth;
-                        	x += mDisplayWidth - mKeysInRow * mSeparatedKeyWidth;
-                        	if(DEBUG)
+                				         				);
+       
+                        
+                        if(mSplitKeyboard  && leftSplitBorder > 0  
+                        		&& ( (key.x >=  leftSplitBorder && key.x <  centerLine) //key left bound in between split border and centerline 
+                        				|| (key.x <  leftSplitBorder  //the key right bound is too closed to centerline so as no enough clearance for center arrow keys
+                        					&& key.x + key.width >=  centerLine - mSplitKeyWidth/2
+                        					&& key.x + splitDistance >  centerLine +  mSplitKeyWidth/2 
+                        					 ))){
+                        	key.x +=  splitDistance;
+                        	x += splitDistance;
+                        	//if(DEBUG)
                         		Log.i(TAG, "loadkeyboard(): shitfing"
                     				+ ". key.x = " + key.x
                     				+ ". key.width = " + key.width
-                    				+ ".  mDisplayWidth/2 = " +  mDisplayWidth/2
-                    				+ ". x = " +x
-                    				);
+                    				+ ". x = " +x 
+                    				+ ". y = " +y);
                         	
                         	
-                        } else if(mSplitKeyboard  && separatedThreshold >0
-                        		&& ((key.codes[0] == KEYCODE_SPACE && key.x < separatedThreshold )
-                        			|| (key.x <  separatedThreshold && key.x + key.width >  mDisplayWidth/2))
+                        } else if(mSplitKeyboard  && leftSplitBorder >0
+                        		&& ((key.codes[0] == KEYCODE_SPACE && key.x < leftSplitBorder )
+                        			|| (key.x <  leftSplitBorder && key.x + key.width >  centerLine))
                         				
                         			){
-                        		int keyRightBound = key.x + key.width + ( mDisplayWidth - 10 * mSeparatedKeyWidth);
+                        		int keyRightBound = key.x + key.width + splitDistance;
                         		
-                        		if(DEBUG)
+                        		//if(DEBUG)
                         			Log.i(TAG, "loadkeyboard() split keys,  keyRightBound = " +keyRightBound
                         				+ ". key.x = " + key.x
                         				+ ". key.width = " + key.width
                         				+ ". x = " +x
-                        				+ ". mSeperatedKeyWidth = " + mSeparatedKeyWidth
-                        				+ ". separatedThreshold = " + separatedThreshold); 
+                        				+ ". y = " +y);
                         		
-                        		// add space key in right side seperated keybaord Jeremy '12,5,26
-                        		if(keyRightBound > mDisplayWidth/2 + key.gap + mSeparatedKeyWidth/2 *3){
-                        			if( key.x <= mDisplayWidth/2 -  mSeparatedKeyWidth *3/2  ){ 
-                        				key.width = mDisplayWidth/2  - key.x - key.gap - mSeparatedKeyWidth/2;
-                        				final Key rightKey = new Key(currentRow, key); //clone the space key for the space key on right keyboard.
-                        				rightKey.x =  mDisplayWidth/2 + key.gap + mSeparatedKeyWidth/2;
-                        				rightKey.width = keyRightBound - rightKey.x;
-                        				mKeys.add(rightKey);
-                        				x += rightKey.gap *2 + rightKey.width + mSeparatedKeyWidth ;
-                        			}else{// left keyboard does have enough space for the key, shift the key to right keyboard
-                        				key.x +=  mDisplayWidth - mKeysInRow * mSeparatedKeyWidth;
-                                    	x += mDisplayWidth - mKeysInRow * mSeparatedKeyWidth;
-                        			}
+                        		// add space key in right side split keybaord Jeremy '12,5,26
+                        		if(keyRightBound > centerLine + key.gap + mSplitKeyWidth/2 *3){
+                        			key.width = centerLine  - key.x - key.gap - mSplitKeyWidth/2;
+                        			final Key rightKey = new Key(currentRow, key); //clone the space key for the space key on right keyboard.
+                        			rightKey.x =  centerLine + key.gap + mSplitKeyWidth/2;
+                        			rightKey.width = keyRightBound - rightKey.x;
+                        			mKeys.add(rightKey);
+                        			x += rightKey.gap *2 + rightKey.width + mSplitKeyWidth ; //shift x for the distance on center reserved space + right key width
                         		}
                     
                         } 
@@ -1018,11 +1010,14 @@ public class LIMEBaseKeyboard {
                         
                         if(mSplitKeyboard){
                         	
-                        	separatedThreshold = (mKeysInRow/2 -1)* mDefaultHorizontalGap + (mKeysInRow/2)*mSeparatedKeyWidth;
-                        	if(DEBUG)
-                        		Log.i(TAG, "loadkeyboard() keyboard attributed parsed, separatedThreshold = " + separatedThreshold
+                        	leftSplitBorder = (mKeysInRow/2 -1)* mDefaultHorizontalGap + (mKeysInRow/2)*mSplitKeyWidth;
+                        	splitDistance =  mDisplayWidth - mKeysInRow * mSplitKeyWidth;
+                        	//if(DEBUG)
+                        		Log.i(TAG, "loadkeyboard() keyboard attributed parsed, leftSplitBorder = " + leftSplitBorder
                         			+ ". keysInRow = " + mKeysInRow
-                        			+ ". mSeparatedKeyWidth = " + mSeparatedKeyWidth
+                        			+ ". mSeparatedKeyWidth = " + mSplitKeyWidth
+                        			+ ". splitDistance = " + splitDistance
+                        			+ ". centerLine = " +  centerLine
                         			);
                       
                         }
@@ -1042,7 +1037,7 @@ public class LIMEBaseKeyboard {
                          			+ ". kye.gap = " + key.gap
                          			+ ". key.width = " + key.width
                          			+ ". separatedThreshold = "
-                         			+ ". offsetThreshold = " + 4* mDefaultHorizontalGap + 5*mSeparatedKeyWidth);
+                         			+ ". offsetThreshold = " + 4* mDefaultHorizontalGap + 5*mSplitKeyWidth);
                          
                        
                         
@@ -1070,7 +1065,7 @@ public class LIMEBaseKeyboard {
         mTotalHeight = y - mDefaultVerticalGap;
         
         if(mSplitKeyboard && mShowArrowKeys!=0 && mDisplayWidth > mDisplayHeight )
-        	createArrowKeys((mDisplayWidth - mSeparatedKeyWidth)/2, 0, true);
+        	createArrowKeys((mDisplayWidth - mSplitKeyWidth)/2, 0, true);
      
         	
             
@@ -1113,13 +1108,13 @@ public class LIMEBaseKeyboard {
         mReservedColumnsForSplitedKeyboard =(int)( res.getInteger(R.integer.reserved_columns_for_seperated_keyboard));
         
         mKeysInRow = Math.round(mDisplayWidth / mDefaultWidth);
-        mSeparatedKeyWidth = Math.round(mDisplayWidth / (mKeysInRow + mReservedColumnsForSplitedKeyboard));
-        mSplitedKeyWidthScale = (float)(mSeparatedKeyWidth) / (float) (mDefaultWidth);
+        mSplitKeyWidth = Math.round(mDisplayWidth / (mKeysInRow + mReservedColumnsForSplitedKeyboard));
+        mSplitedKeyWidthScale = (float)(mSplitKeyWidth) / (float) (mDefaultWidth);
         if(DEBUG) 
         	Log.i(TAG, "mKeysInRow = " + mKeysInRow
         		+". mDisplayWidth = " + mDisplayWidth
         		+". mDefaultWidth = " + mDefaultWidth
-        		+". mSeparatedKeyWidth = " +mSeparatedKeyWidth
+        		+". mSeparatedKeyWidth = " +mSplitKeyWidth
         		+". mSeperatedKeyWidthScale = " + mSplitedKeyWidthScale
         		);
          
