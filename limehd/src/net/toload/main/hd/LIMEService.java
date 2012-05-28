@@ -888,7 +888,16 @@ public class LIMEService extends InputMethodService implements
 			requestHideSelf(0);
 		}
 		
-		int c = event.getUnicodeChar(LIMEMetaKeyKeyListener.getMetaState(mMetaState));
+		int metaState;
+		if(android.os.Build.VERSION.SDK_INT < 13)
+			metaState = LIMEMetaKeyKeyListener.getMetaState(mMetaState);
+		else//Jeremy '12,5,28 after honeycomb use the metastate sent form KeyEvent to proces the shift/cap_lock etc...
+			metaState = event.getMetaState();
+			
+		int c = event.getUnicodeChar(metaState);
+		
+		
+		
 
 		InputConnection ic = getCurrentInputConnection();
 		
