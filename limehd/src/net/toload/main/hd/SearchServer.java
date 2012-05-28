@@ -42,7 +42,7 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.util.Pair;
 
-public class SearchServer {// extends Service {
+public class SearchServer {
 
 	private final boolean DEBUG = false;
 	private final String TAG = "LIME.SearchService";
@@ -285,7 +285,7 @@ public class SearchServer {// extends Service {
 				Log.i(TAG, "query() code=" + code + " isPhonetic:" + isPhonetic
 						+" hasTone:" + hasTone);
 
-			// 11'7,22 rewritten for ��� 
+			// 11'7,22 rewritten for 嚙踝蕭嚙�
 			for(int i =0; i<size; i++) {
 				String cacheKey = cacheKey(code);
 				Pair<List<Mapping>,List<Mapping>> cacheTemp = cache.get(cacheKey);
