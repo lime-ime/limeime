@@ -1122,7 +1122,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		// Jeremy '11,7,31  rebuild relatedlist by query from table directly
 		// Update relatedlist in IM table now.
 		//SQLiteDatabase db = this.getSqliteDb(false);
-		LinkedList<Mapping> scorelist=null;
+		LinkedList<Mapping> scorelist = new LinkedList<Mapping>(); //Jeremy '12,5,29 should not return null thus new linklist instead of initial with null
 		try {
 			scorelist = updateRelatedListOnDB(db, tablename, preProcessingRemappingCode(code)); //Jeremy '12,4,11 should do remapping before update score
 		} catch (Exception e) {
@@ -1153,11 +1153,10 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		if(DEBUG) 
 			Log.i(TAG, "updateRelatedListOnDB(): raw query string: "+ selectString);
 		
-		LinkedList <Mapping> scorelist = null;
-		
+		LinkedList <Mapping> scorelist = new LinkedList<Mapping>();
 		if(cursor.moveToFirst()){
 			HashSet <String> duplicateCheck = new HashSet<String>();
-			scorelist = new LinkedList<Mapping>();
+			//scorelist = new LinkedList<Mapping>();
 			int idColumn = cursor.getColumnIndex(FIELD_ID);
 			int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 			int wordColumn = cursor.getColumnIndex(FIELD_WORD);
@@ -1183,34 +1182,35 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		// Rebuild the related list string and update the record.
 			String newRelatedlist;
 			
-			if (scorelist!=null) {
-				newRelatedlist = "";
-				for (Mapping munit : scorelist) {
-					if (newRelatedlist.equals(""))
-						newRelatedlist = munit.getWord();
-					else
-						newRelatedlist = newRelatedlist + "|" + munit.getWord();
+			newRelatedlist = "";
+			for (Mapping munit : scorelist) {
+				if (newRelatedlist.equals(""))
+					newRelatedlist = munit.getWord();
+				else
+					newRelatedlist = newRelatedlist + "|" + munit.getWord();
 
-				}
-				ContentValues cv = new ContentValues();
-				cv.put(FIELD_RELATED, newRelatedlist);
-				int highestScoreID = getHighestScoreID(db, table, code) ;
-				if (highestScoreID > 0) {
-					db.update(table, cv, FIELD_ID + " = " + highestScoreID,	null);
-					if(DEBUG) 
-						Log.i(TAG, "updateRelatedListOnDB(): updating code ="+ code
-								+", the new relatedlist:" + newRelatedlist);
-				} else {
-					cv.put(FIELD_CODE, code);
-					db.insert(table, null, cv);
-					if(DEBUG) 
-						Log.i(TAG, "updateRelatedListOnDB(): insert new code ="+ code
-								+", the new relatedlist:" + newRelatedlist);
-				}
-					
 			}
+			ContentValues cv = new ContentValues();
+			cv.put(FIELD_RELATED, newRelatedlist);
+			int highestScoreID = getHighestScoreID(db, table, code) ;
+			if (highestScoreID > 0) {
+				db.update(table, cv, FIELD_ID + " = " + highestScoreID,	null);
+				if(DEBUG) 
+					Log.i(TAG, "updateRelatedListOnDB(): updating code ="+ code
+							+", the new relatedlist:" + newRelatedlist);
+			} else {
+				cv.put(FIELD_CODE, code);
+				db.insert(table, null, cv);
+				if(DEBUG) 
+					Log.i(TAG, "updateRelatedListOnDB(): insert new code ="+ code
+							+", the new relatedlist:" + newRelatedlist);
+			} 
+			
 				
 		}
+		if(DEBUG) 
+			Log.i(TAG, "updateRelatedListOnDB(): scorelist.size() =  "+ scorelist.size());
+		
 		if (cursor != null) {
 			cursor.deactivate();
 			cursor.close();
@@ -3201,6 +3201,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 
 	private Mapping isMappingExistOnDB(SQLiteDatabase db, String code, String word) throws RemoteException {
+		if(DEBUG)
+			Log.i(TAG, "isMappingExistOnDB(), code = " + code);
 		Mapping munit = null;
 		if (code != null && code.trim().length()>0){
 
@@ -3217,8 +3219,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						+ word + "'", null, null, null, null, null);
 			}
 
-			munit = new Mapping();
 			if (cursor.moveToFirst()) {
+				munit = new Mapping();
 				int idColumn = cursor.getColumnIndex(FIELD_ID);
 				int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 				int wordColumn = cursor.getColumnIndex(FIELD_WORD);
@@ -3231,12 +3233,15 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				munit.setScore(cursor.getInt(scoreColumn));
 				munit.setRelated(cursor.getString(relatedColumn));
 				munit.setDictionary(false);
-
-			} 
+				if(DEBUG)
+					Log.i(TAG, "isMappingExistOnDB(), mapping is exist");
+			} else if(DEBUG)
+				Log.i(TAG, "isMappingExistOnDB(), mapping is not exist");
 			if (cursor != null) {
 				cursor.deactivate();
 				cursor.close();
 			}
+			
 		}
 		return munit;
 	}
