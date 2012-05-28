@@ -974,33 +974,33 @@ public class LIMEBaseKeyboard {
                         	
                         	
                         } else if(mSplitKeyboard  && separatedThreshold >0
-                        		&& ((key.codes[0] == KEYCODE_SPACE && key.x < separatedThreshold && key.x <= mDisplayWidth/2 -  mSeparatedKeyWidth *3/2  )
-                        				|| (key.x <  separatedThreshold && key.x + key.width >  mDisplayWidth/2))
+                        		&& ((key.codes[0] == KEYCODE_SPACE && key.x < separatedThreshold )
+                        			|| (key.x <  separatedThreshold && key.x + key.width >  mDisplayWidth/2))
                         				
                         			){
                         		int keyRightBound = key.x + key.width + ( mDisplayWidth - 10 * mSeparatedKeyWidth);
                         		
                         		if(DEBUG)
-                        			Log.i(TAG, "loadkeyboard():  keyRightBound = " +keyRightBound
+                        			Log.i(TAG, "loadkeyboard() split keys,  keyRightBound = " +keyRightBound
                         				+ ". key.x = " + key.x
                         				+ ". key.width = " + key.width
                         				+ ". x = " +x
                         				+ ". mSeperatedKeyWidth = " + mSeparatedKeyWidth
                         				+ ". separatedThreshold = " + separatedThreshold); 
                         		
-                        		
-                        		if(keyRightBound > mDisplayWidth/2 + key.gap + mSeparatedKeyWidth/2 *3){ // add space key in right side seperated keybaord Jeremy '12,5,26
-                        			
-                        			key.width = mDisplayWidth/2  - key.x - key.gap - mSeparatedKeyWidth/2;
-                        			
-                        			final Key rightKey = new Key(currentRow, key); //clone the space key for the space key on right keyboard.
-               
-                        			rightKey.x =  mDisplayWidth/2 + key.gap + mSeparatedKeyWidth/2;
-                        			rightKey.width = keyRightBound - rightKey.x;
-                                    
-                        			mKeys.add(rightKey);
-                        			
-                        			x += rightKey.gap *2 + rightKey.width + mSeparatedKeyWidth ;
+                        		// add space key in right side seperated keybaord Jeremy '12,5,26
+                        		if(keyRightBound > mDisplayWidth/2 + key.gap + mSeparatedKeyWidth/2 *3){
+                        			if( key.x <= mDisplayWidth/2 -  mSeparatedKeyWidth *3/2  ){ 
+                        				key.width = mDisplayWidth/2  - key.x - key.gap - mSeparatedKeyWidth/2;
+                        				final Key rightKey = new Key(currentRow, key); //clone the space key for the space key on right keyboard.
+                        				rightKey.x =  mDisplayWidth/2 + key.gap + mSeparatedKeyWidth/2;
+                        				rightKey.width = keyRightBound - rightKey.x;
+                        				mKeys.add(rightKey);
+                        				x += rightKey.gap *2 + rightKey.width + mSeparatedKeyWidth ;
+                        			}else{// left keyboard does have enough space for the key, shift the key to right keyboard
+                        				key.x +=  mDisplayWidth - mKeysInRow * mSeparatedKeyWidth;
+                                    	x += mDisplayWidth - mKeysInRow * mSeparatedKeyWidth;
+                        			}
                         		}
                     
                         } 
