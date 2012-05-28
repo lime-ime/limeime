@@ -948,7 +948,7 @@ public class LIMEBaseKeyboard {
                         
                         //Jeremy '12,5,26 shift the keys after separated threshold and 
                         // repeat space keys or keys longer then the distance between space key and half of screen  on right keyboard.
-                        //if(DEBUG)
+                        if(DEBUG)
                         	Log.i(TAG, "loadkeyboard():"
                 				+ ". key.x = " + key.x
                 				+ ". key.width = " + key.width
@@ -963,7 +963,7 @@ public class LIMEBaseKeyboard {
                         					 ))){
                         	key.x +=  splitDistance;
                         	x += splitDistance;
-                        	//if(DEBUG)
+                        	if(DEBUG)
                         		Log.i(TAG, "loadkeyboard(): shitfing"
                     				+ ". key.x = " + key.x
                     				+ ". key.width = " + key.width
@@ -978,7 +978,7 @@ public class LIMEBaseKeyboard {
                         			){
                         		int keyRightBound = key.x + key.width + splitDistance;
                         		
-                        		//if(DEBUG)
+                        		if(DEBUG)
                         			Log.i(TAG, "loadkeyboard() split keys,  keyRightBound = " +keyRightBound
                         				+ ". key.x = " + key.x
                         				+ ". key.width = " + key.width
