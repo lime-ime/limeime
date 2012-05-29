@@ -593,12 +593,16 @@ public class LIMEService extends InputMethodService implements
 		if (mInputView == null) {
 			return;
 		}
+		//Jeremy '12,5,29 override the fixCanddiateMode setting in Lanscape mode.
+		boolean fixedCandiateMode = mLIMEPref.getFixedCandidateViewDisplay();
+		if(mOrientation == Configuration.ORIENTATION_LANDSCAPE )
+			fixedCandiateMode = false;
 		
 		 //jeremy '12,5,6 recreate inputview if fixedCandidateView setting is altered
-		if(mFixedCandidateViewOn != mLIMEPref.getFixedCandidateViewDisplay()) {
+		if(mFixedCandidateViewOn != fixedCandiateMode) {
 			requestHideSelf(0);
 			mInputView.closing();
-			mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
+			mFixedCandidateViewOn = fixedCandiateMode;
 			initialViewAndSwitcher(true);
 			
 			if(mFixedCandidateViewOn){
