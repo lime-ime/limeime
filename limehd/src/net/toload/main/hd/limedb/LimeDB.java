@@ -153,16 +153,16 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	private final static String ETEN26_CHAR_FINAL = 	
 		"(ㄗ/ㄟ)|ㄚ|ㄠ|(ㄘ/ㄝ)|ㄙ|ㄨ|ㄧ|˙|(ㄕ/ㄒ)|ㄜ|ˊ|(ㄍ/ㄑ)|(ㄊ/ㄤ)|(ㄐ/ㄓ)|ㄅ|ㄔ|(ㄏ/ㄦ)|(ㄋ/ㄣ)|ㄩ|ˇ|(ㄇ/ㄢ)|ㄞ|ˋ|ㄛ|(ㄌ/ㄥ)|(ㄆ/ㄡ)|，|。";
 	
-	
+	//Jeremy '12,5,31 use dual codes instead of initial/final remap for Hsu phonetic keyboard
 	private final static String HSU_KEY =            		"azwsxedcrfvtgbyhnujmikolpq,.";
-	private final static String HSU_KEY_REMAP_INITIAL = 	"hylnju2vbzfwe18csmra9d.xq`<>"; 
-	private final static String HSU_KEY_REMAP_FINAL =   	"hylnju6vb3fwe18csm4a9d./q`<>";  
-	private final static String HSU_DUALKEY_REMAP =		 	"g8t5--,okip0;7";
-	private final static String HSU_DUALKEY = 				"vbfrx/uhecsadn";
-	private final static String HSU_CHAR_INITIAL = 	
-		"(ㄘ/ㄟ)|ㄗ|ㄠ|ㄙ|ㄨ|(ㄧ/ㄝ)|ㄉ|(ㄕ/ㄒ)|ㄖ|ㄈ|(ㄔ/ㄑ)|ㄊ|(ㄍ/ㄜ)|ㄅ|ㄚ|(ㄏ/ㄛ)|(ㄋ/ㄣ)|ㄩ|(ㄐ/ㄓ)|(ㄇ/ㄢ)|ㄞ|(ㄎ/ㄤ)|ㄡ|(ㄌ/ㄦ)|ㄆ|q|，|。";
-	private final static String HSU_CHAR_FINAL = 	
-		"(ㄘ/ㄟ)|ㄗ|ㄠ|˙|ㄨ|(ㄧ/ㄝ)|ˊ|(ㄕ/ㄒ)|ㄖ|ˇ|(ㄔ/ㄑ)|ㄊ|(ㄍ/ㄜ)|ㄅ|ㄚ|(ㄏ/ㄛ)|(ㄋ/ㄣ)|ㄩ|ˋ|(ㄇ/ㄢ)|ㄞ|(ㄎ/ㄤ)|ㄡ|(ㄥ/ㄦ)|ㄆ|q|，|。";
+	private final static String HSU_KEY_REMAP = 			"hyl7ju6vb3fwe18csm4a9d.xq`<>"; 
+	//private final static String HSU_KEY_REMAP_FINAL =   	"hylnju2vb3fwe18csmra9d.xq`<>";  
+	private final static String HSU_DUALKEY_REMAP =		 	"g8t5r/-,okip0;n2z";
+	private final static String HSU_DUALKEY = 				"vbf45x/uhecsad763";
+	private final static String HSU_CHAR = 	
+		"(ㄘ/ㄟ)|ㄗ|ㄠ|(ㄙ/˙)|ㄨ|(ㄧ/ㄝ)|(ㄉ/ˊ)|(ㄕ/ㄒ)|ㄖ|(ㄈ/ˇ)|(ㄔ/ㄑ)|ㄊ|(ㄍ/ㄜ)|ㄅ|ㄚ|(ㄏ/ㄛ)|(ㄋ/ㄣ)|ㄩ|(ㄐ/ㄓ/ˋ)|(ㄇ/ㄢ)|ㄞ|(ㄎ/ㄤ)|ㄡ|(ㄌ/ㄥ/ㄦ)|ㄆ|q|，|。";
+	//private final static String HSU_CHAR_FINAL = 	
+	//	"(ㄘ/ㄟ)|ㄗ|ㄠ|˙|ㄨ|(ㄧ/ㄝ)|ˊ|(ㄕ/ㄒ)|ㄖ|ˇ|(ㄔ/ㄑ)|ㄊ|(ㄍ/ㄜ)|ㄅ|ㄚ|(ㄏ/ㄛ)|(ㄋ/ㄣ)|ㄩ|ˋ|(ㄇ/ㄢ)|ㄞ|(ㄎ/ㄤ)|ㄡ|(ㄥ/ㄦ)|ㄆ|q|，|。";
 	
 	private final static String DESIREZ_KEY =            			"@qazwsxedcrfvtgbyhnujmik?olp,.";
 	private final static String DESIREZ_BPMF_KEY_REMAP = 			"1qaz2wsedc5tg6yh4uj8ik9ol0;-,.";
@@ -1313,8 +1313,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							finalKeynameString = ETEN26_CHAR_FINAL;
 						}else if(phonetickeyboardtype.equals("hsu")){
 							keyString = HSU_KEY;
-							keynameString = HSU_CHAR_INITIAL;
-							finalKeynameString = HSU_CHAR_FINAL;
+							keynameString = HSU_CHAR;
+							//finalKeynameString = HSU_CHAR_FINAL;
 						}else if((keyboardtype.equals("milestone")||keyboardtype.equals("milestone2")) 
 								&& isPhysicalKeyboardPressed){
 							keyString = MILESTONE_KEY;
@@ -1635,8 +1635,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					finalKeyRemapString = ETEN26_KEY_REMAP_FINAL;
 				}else if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("hsu")){
 					keyString = HSU_KEY;
-					keyRemapString = HSU_KEY_REMAP_INITIAL;
-					finalKeyRemapString = HSU_KEY_REMAP_FINAL;
+					keyRemapString = HSU_KEY_REMAP;
+					//finalKeyRemapString = HSU_KEY_REMAP_FINAL;
 				}else if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("eten")){
 					keyString = ETEN_KEY; 
 							//+ SHIFTED_NUMBERIC_KEY + SHIFTED_SYMBOL_KEY;
