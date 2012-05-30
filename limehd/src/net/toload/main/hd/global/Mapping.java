@@ -30,7 +30,7 @@ public class Mapping {
 	//private String pcode;
 	private String word;
 	private String pword;
-	private String related;
+	private Boolean related;  //Jeremy '12,5,30 changed from string to boolean to indicate if it's from related list or exact match result
 	private boolean isDictionary;
 	private int score;
 	
@@ -38,7 +38,7 @@ public class Mapping {
 	/**
 	 * @return the related
 	 */
-	public String getRelated() {
+	public Boolean getRelated() {
 		return related;
 	}
 
@@ -46,7 +46,7 @@ public class Mapping {
 	/**
 	 * @param related the related to set
 	 */
-	public void setRelated(String related) {
+	public void setRelated(Boolean related) {
 		this.related = related;
 	}
 
@@ -164,7 +164,7 @@ public class Mapping {
 		code="";
 		word="";
 		pword="";
-		related="";
+		related=false;
 		isDictionary=false;
 		score=0;
 		

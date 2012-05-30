@@ -910,9 +910,7 @@ public class CandidateView extends View implements View.OnClickListener
 	            if(mSuggestions.get(0).isDictionary()){
 	            	// no default selection for related words
 	            	mSelectedIndex = -1;
-	            //}else if(mSuggestions.size() == 1){
-	            	//mSelectedIndex = 0;
-	            }else if(mCount > 1 && mSuggestions.get(1).getId() !=null && // the suggestion is not from relatedlist.
+/*	            }else if(mCount > 1 && mSuggestions.get(1).getId() !=null && // the suggestion is not from relatedlist.
 	            		mSuggestions.get(0).getWord().toLowerCase()
 	            		.equals(mSuggestions.get(1).getCode().trim())) { // exact match
 	            	// default selection on suggestions 1 (0 is typed English in mixed English mode)
@@ -923,7 +921,12 @@ public class CandidateView extends View implements View.OnClickListener
 	     	            		.equals(mSuggestions.get(1).getCode().trim())||
 	     	              mSuggestions.get(0).getWord().trim().toLowerCase()
 	    	     	        	.equals(mSuggestions.get(1).getCode().trim().replaceAll("[3467]", ""))) ){
-	            	mSelectedIndex = 1;
+*/	            
+	            //Jeremy '12,5,31 If mSuggestions.get(0).getRelated() is true means no exact match result found, 
+	            //set default candidate as mixed English code, 
+	            //otherwise set default suggestion to the first one of the result list.
+	            }else if(mCount > 1 && !mSuggestions.get(0).getRelated()){ 
+					mSelectedIndex = 1;
 	            }else {
 	            	mSelectedIndex = 0;
 	            }
