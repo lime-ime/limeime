@@ -285,7 +285,7 @@ public class SearchServer {
 				Log.i(TAG, "query() code=" + code + " isPhonetic:" + isPhonetic
 						+" hasTone:" + hasTone);
 
-			// 11'7,22 rewritten for 嚙踝蕭嚙�
+			// 11'7,22 rewritten for ���剖�嚙�
 			for(int i =0; i<size; i++) {
 				String cacheKey = cacheKey(code);
 				Pair<List<Mapping>,List<Mapping>> cacheTemp = cache.get(cacheKey);
