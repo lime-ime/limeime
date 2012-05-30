@@ -271,19 +271,19 @@ public class SearchServer {
 			//code = code.toLowerCase();  //Jeremy '12,4,1 moved to LimeDB.getMapping after remapping For XPERIA PRO BPMF 
 
 			temp.setCode(code);
-			result.add(temp);
+			//result.add(temp);  Jeremy '12,5,30 add later in the result buliding loop
 			int size = code.length();
 
 			boolean hasMore = false;
 
 
 			//Jeremy '11,8,12 if end with tone, do not add result list from less codes without tone into final result
-			boolean isPhonetic = tablename.equals("phonetic");
-			boolean hasTone =  code.matches(".+[3467]$");
+			//boolean isPhonetic = tablename.equals("phonetic");
+			//boolean hasTone =  code.matches(".+[3467]$");
 
-			if(DEBUG) 
-				Log.i(TAG, "query() code=" + code + " isPhonetic:" + isPhonetic
-						+" hasTone:" + hasTone);
+			//if(DEBUG) 
+			//	Log.i(TAG, "query() code=" + code + " isPhonetic:" + isPhonetic
+			//			+" hasTone:" + hasTone);
 
 			// 11'7,22 rewritten for ���剖�嚙�
 			for(int i =0; i<size; i++) {
@@ -335,7 +335,12 @@ public class SearchServer {
 					if(DEBUG) 
 						Log.i(TAG, "query() code=" + code + " resultlist.size()=" + resultlist.size()
 								+" relatedlist.size()=" + relatedtlist.size());
-
+					
+					if(i==0) {//Jeremy add the mixed type English code in first loop 
+						temp.setRelated(resultlist.size()==0); //Jeremy '12,5,31 setRelated true if the exact moatch code has zero result list size.
+						result.add(temp);
+					}
+					
 					// Art '09.11.2011 ignore phonetic tone control
 					if(resultlist.size() > 0){ 
 						result.addAll(resultlist);

@@ -2091,6 +2091,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				munit.setWord(cursor.getString(wordColumn));
 				munit.setId(cursor.getString(idColumn));
 				munit.setCode(code);
+				munit.setRelated(false);//Jeremy '12,5,30 exact match, not from related list
 				
 				//Jeremy '11,8,26 build valid code map
 				//jeremy '11,8,30 add limit for vali code words for composing display
@@ -2173,6 +2174,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				Mapping temp = new Mapping();
 				temp.setCode(query_code);
 				temp.setWord("，");
+				temp.setRelated(false);
 				if(result.size()>3)
 					result.add(3,temp);
 				else
@@ -3228,13 +3230,14 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 				int wordColumn = cursor.getColumnIndex(FIELD_WORD);
 				int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
-				int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);		
+				//int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);		
 
 				munit.setId(cursor.getString(idColumn));
 				munit.setCode(cursor.getString(codeColumn));
 				munit.setWord(cursor.getString(wordColumn));
 				munit.setScore(cursor.getInt(scoreColumn));
-				munit.setRelated(cursor.getString(relatedColumn));
+				//munit.setRelated(cursor.getString(relatedColumn));
+				munit.setRelated(false);
 				munit.setDictionary(false);
 				if(DEBUG)
 					Log.i(TAG, "isMappingExistOnDB(), mapping is exist");
