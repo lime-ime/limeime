@@ -593,7 +593,7 @@ public class LIMEService extends InputMethodService implements
 		if (mInputView == null) {
 			return;
 		}
-		//Jeremy '12,5,29 override the fixCanddiateMode setting in Lanscape mode.
+		//Jeremy '12,5,29 override the fixCanddiateMode setting in Landscape mode (in landscape mode the candidate bar is always not fixed).
 		boolean fixedCandiateMode = mLIMEPref.getFixedCandidateViewDisplay();
 		if(mOrientation == Configuration.ORIENTATION_LANDSCAPE )
 			fixedCandiateMode = false;
