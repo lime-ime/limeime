@@ -1490,25 +1490,32 @@ public class LIMEService extends InputMethodService implements
 							clearComposing(true);
 						}
 						
+						
+						//TODO: Bug to fixed here. Hsu phonetic tone symbols are not 3467 
 						// Jeremy '11,7,28 for continuous typing (LD) 
 						boolean composingNotFinish = false;
-						//String commitedCode = firstMatched.getCode();
-						int commitedCodeLength=selectedCandidate.getCode().length();
-						if(activeIM.equals("phonetic") &&
+						String commitedCode = selectedCandidate.getCode();
+						int commitedCodeLength = commitedCode.length();
+						if(selectedCandidate.getRelated()){
+							//TODO: selectedCandidate is not exact math. the commitedCodeLength should be less the selectedCandidate.getCode()
+							// abandone LD now.
+						/*}else if(activeIM.equals("phonetic") &&
 								mComposing.length() >= selectedCandidate.getCode().length()){
-								String strippedCode = selectedCandidate.getCode().trim().replaceAll("[3467]", "");
+								String strippedCode = commitedCode.trim().replaceAll("[3467]", "");
 								//commitedCode = strippedCode;
-							if(mComposing.toString().contains(selectedCandidate.getCode())){
-								if(mComposing.length() > selectedCandidate.getCode().length())
+							if(mComposing.toString().contains(commitedCode)){
+								if(mComposing.length() > commitedCode.length())
 									composingNotFinish = true;
 							}else if(mComposing.toString().contains(strippedCode)){
 								composingNotFinish = true;
 								commitedCodeLength = strippedCode.length();
 							}
-							
+						*/	
 						}else if(mComposing.length() > selectedCandidate.getCode().length()){
 							composingNotFinish = true;
 						}
+						
+						
 						
 						if(composingNotFinish){
 							if(LDComposingBuffer.length()==0){
