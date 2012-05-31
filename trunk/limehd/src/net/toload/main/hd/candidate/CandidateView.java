@@ -124,7 +124,7 @@ public class CandidateView extends View implements View.OnClickListener
     //private int bgcolor = 0;
     
     private View mCandidatePopupContainer;
-    private PopupWindow  mCandidatePopup;
+    private PopupWindow  mCandidatePopupWindow;
     
     protected int mScreenWidth;
     protected int mScreenHeight;
@@ -344,7 +344,8 @@ public class CandidateView extends View implements View.OnClickListener
     	
     	
     	
-    	if(mCandidatePopup != null && mCandidatePopup.isShowing()){
+    	if(mCandidatePopupWindow != null && mCandidatePopupWindow.isShowing()){
+    		//doHideCandidatePopup();
     		doUpdateCandidatePopup();
     		
 
@@ -377,8 +378,8 @@ public class CandidateView extends View implements View.OnClickListener
     	if(DEBUG)
     		Log.i(TAG,"doHideCandidatePopup()");
     	
-    	if(mCandidatePopup!=null && mCandidatePopup.isShowing()) {
-    		mCandidatePopup.dismiss();
+    	if(mCandidatePopupWindow!=null && mCandidatePopupWindow.isShowing()) {
+    		mCandidatePopupWindow.dismiss();
     		resetWidth();	
     	}
     	candidateExpanded = false;
@@ -406,14 +407,14 @@ public class CandidateView extends View implements View.OnClickListener
      	
     	checkHasMoreRecords();
     	    	
-    	if(mCandidatePopup == null){
+    	if(mCandidatePopupWindow == null){
     		
-    		mCandidatePopup = new PopupWindow(mContext);	
+    		mCandidatePopupWindow = new PopupWindow(mContext);	
     		LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(
     				Context.LAYOUT_INFLATER_SERVICE);
     		mCandidatePopupContainer = inflater.inflate(R.layout.candidatepopup, null);
 		
-        	mCandidatePopup.setContentView(mCandidatePopupContainer);
+        	mCandidatePopupWindow.setContentView(mCandidatePopupContainer);
      	
         	View closeButton = mCandidatePopupContainer.findViewById(R.id.closeButton);
     		if (closeButton != null) closeButton.setOnClickListener(this);
@@ -441,7 +442,7 @@ public class CandidateView extends View implements View.OnClickListener
     	
     	
 		  	
-    	mCandidatePopup.setContentView(mCandidatePopupContainer);
+    	mCandidatePopupWindow.setContentView(mCandidatePopupContainer);
     	int [] offsetOnScreen = new int[2];
     	this.getLocationOnScreen(offsetOnScreen);
     	
@@ -472,7 +473,7 @@ public class CandidateView extends View implements View.OnClickListener
     		
     		if(DEBUG)
     			Log.i(TAG, "doUpdateCandidatePopup(), " +
-    					"no enough room for expanded view, expand self first. newHeigh:" + popHeight);
+    					"no enough room for expanded view, expand self first. newHeight:" + popHeight);
     		
     		if(mPopupCandidateView.getMeasuredHeight()+mCloseButtonHeight < popHeight)
         		popHeight = mPopupCandidateView.getMeasuredHeight()+ mCloseButtonHeight;
@@ -482,39 +483,37 @@ public class CandidateView extends View implements View.OnClickListener
     	
     	if(DEBUG)
         	Log.i(TAG, "doUpdateCandidatePopup(), mHeight=" + mHeight 
-        			+ ", getHeight()" + getHeight()
+        			+ ", getHeight() = " + getHeight()
+        			+ ", mPopupCandidateView.getHeight() = " + mPopupCandidateView.getHeight()
+        			+ ", mPopupScrollView.getHeight() = " + mPopupScrollView.getHeight()
         			+ ", offsetOnScreen[1] = " + offsetOnScreen[1]
         			+ ", popHeight = " + popHeight   
-        			+ ", CandidateExpandedView.measureHeight" + mPopupCandidateView.getMeasuredHeight()
+        			+ ", CandidateExpandedView.measureHeight = " + mPopupCandidateView.getMeasuredHeight()
     				+ ", btnClose.getMeasuredHeight() = " +	mCloseButtonHeight
     				);
     	
-      
-    	mCandidatePopup.setWidth(mScreenWidth);
-    	mCandidatePopup.setHeight(popHeight);// popHeight); //tv.getMeasuredHeight()+btnClose.getMeasuredHeight());
     	
-    	mPopupCandidateView.setLayoutParams(
-    			new ScrollView.LayoutParams( LinearLayout.LayoutParams.MATCH_PARENT
-    			, popHeight- mCloseButtonHeight));
-    	  
-        mPopupScrollView.setLayoutParams(
-        		new LinearLayout.LayoutParams( LinearLayout.LayoutParams.MATCH_PARENT
-    			,(int) popHeight- mCloseButtonHeight));
-    	
-    	
-    	if(mCandidatePopup.isShowing()){
+    	if(mCandidatePopupWindow.isShowing()){
     		if(DEBUG)
     			Log.i(TAG,"doUpdateCandidatePopup(),mCandidatePopup.isShowing ");
-    		//mCandidatePopup.update(0, -getHeight(), mScreenWidth, popHeight );
-    		mCandidatePopup.update(this, mScreenWidth, popHeight );
+    		mCandidatePopupWindow.update(mScreenWidth, popHeight);
     	}
     	else{
-    		mCandidatePopup.setWidth(mScreenWidth);
-        	mCandidatePopup.setHeight(popHeight);
-    		mCandidatePopup.showAsDropDown(this, 0,  -getHeight());
-    		//mCandidatePopup.showAtLocation(this, Gravity.NO_GRAVITY, 0, 0);
+    		mCandidatePopupWindow.setWidth(mScreenWidth);
+        	mCandidatePopupWindow.setHeight(popHeight);
+    		mCandidatePopupWindow.showAsDropDown(this, 0,  -getHeight());
     		mPopupScrollView.scrollTo(0, 0);
     	}
+    	
+    	//Jeremy '12,5,31 do updatelayoutparams after popupWindow update or creation.
+    	mPopupCandidateView.setLayoutParams(
+    			new ScrollView.LayoutParams( ScrollView.LayoutParams.MATCH_PARENT
+    			, popHeight- mCloseButtonHeight));
+    	  
+    	mPopupScrollView.setLayoutParams(
+        		new LinearLayout.LayoutParams( LinearLayout.LayoutParams.MATCH_PARENT
+    			, popHeight- mCloseButtonHeight));
+    	
     
 
     }
@@ -669,7 +668,7 @@ public class CandidateView extends View implements View.OnClickListener
     
     private boolean mHasroomForExpanding = true;
     public boolean hasRoomForExpanding(){ 
-    	if(!mCandidatePopup.isShowing()){
+    	if(!mCandidatePopupWindow.isShowing()){
     		int [] offsetOnScreen = new int[2];
     		this.getLocationOnScreen(offsetOnScreen);
     		mHasroomForExpanding =  (mScreenHeight - offsetOnScreen[1]) > 2 * mHeight;
@@ -1091,7 +1090,7 @@ public class CandidateView extends View implements View.OnClickListener
     //Add by Jeremy '10, 3, 29 for DPAD (physical keyboard) selection.
     public void selectNext() {
     	if (mSuggestions == null) return;
-    	if(mCandidatePopup!=null && mCandidatePopup.isShowing()){
+    	if(mCandidatePopupWindow!=null && mCandidatePopupWindow.isShowing()){
     		mPopupCandidateView.selectNext();
     	}else{
     		if(mSelectedIndex < mCount-1){
@@ -1104,7 +1103,7 @@ public class CandidateView extends View implements View.OnClickListener
     
     public void selectPrev() {
     	if (mSuggestions == null) return;
-    	if(mCandidatePopup!=null && mCandidatePopup.isShowing()){
+    	if(mCandidatePopupWindow!=null && mCandidatePopupWindow.isShowing()){
     		mPopupCandidateView.selectPrev();
     	}else{
     		if(mSelectedIndex > 0) {
@@ -1117,7 +1116,7 @@ public class CandidateView extends View implements View.OnClickListener
     //Jeremy '11,8,28
     public void selectNextRow(){
     	if (mSuggestions == null) return;
-    	if(mCandidatePopup!=null && mCandidatePopup.isShowing())
+    	if(mCandidatePopupWindow!=null && mCandidatePopupWindow.isShowing())
     		mPopupCandidateView.selectNextRow();
     	else if(mScreenWidth < mTotalWidth)
     		showCandidatePopup();
@@ -1125,7 +1124,7 @@ public class CandidateView extends View implements View.OnClickListener
     }
     public void selectPrevRow() {
     	if (mSuggestions == null) return;
-    	if(mCandidatePopup!=null && mCandidatePopup.isShowing())
+    	if(mCandidatePopupWindow!=null && mCandidatePopupWindow.isShowing())
     		mPopupCandidateView.selectPrevRow();
     	
     }
@@ -1153,7 +1152,7 @@ public class CandidateView extends View implements View.OnClickListener
     	//Jeremy '11,9,1 do vibrate and sound on suggestion picked from candidateview
     	if(vibrateSound) mService.doVibrateSound(0);
     	hideComposing(); //Jeremy '12,5,6 
-    	if(mCandidatePopup!=null && mCandidatePopup.isShowing()){
+    	if(mCandidatePopupWindow!=null && mCandidatePopupWindow.isShowing()){
     		hideCandidatePopup();
     		return takeSuggstionAtIndex(mPopupCandidateView.mSelectedIndex);
     	}else
