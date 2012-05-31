@@ -607,7 +607,7 @@ public class SearchServer {
 							baseCode = baseCode.toLowerCase();
 							baseWord += unit2.getWord();
 							if(tablename.equals("phonetic")) {// remove tone symbol in phonetic table 
-								LDCode = baseCode.replaceAll("[3467]", "").toLowerCase();
+								LDCode = baseCode.replaceAll("[3467 ]", "").toLowerCase();
 								QPCode += unit2.getCode().substring(0, 1).toLowerCase();
 								if(LDCode.length()>1){
 									dbadapter.addOrUpdateMappingRecord(LDCode, baseWord);

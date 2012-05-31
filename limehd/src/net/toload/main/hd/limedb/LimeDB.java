@@ -973,7 +973,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			if(munit==null){
 				if (code.length()>0 && word.length()>0) {
 					cv.put(FIELD_CODE, code);
-					if(tablename.equals("phonetic")) cv.put(FIELD_CODE3R, code.replaceAll("[3467]", ""));
+					if(tablename.equals("phonetic")) cv.put(FIELD_CODE3R, code.replaceAll("[ 3467]", ""));//Jeremy '12,6,1, add missing space
 					cv.put(FIELD_WORD, word);
 					cv.put(FIELD_SCORE, 1);
 					db.insert(tablename, null, cv);
@@ -2542,7 +2542,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 								ContentValues cv = new ContentValues();
 								cv.put(FIELD_CODE, code);
 								if(table.equals("phonetic")) {
-									String code3r = code.replaceAll("[3467]", "");
+									String code3r = code.replaceAll("[3467 ]", "");
 									cv.put(FIELD_CODE3R, code3r);;
 									//Log.i(TAG, "loadfile(), code=" + code+ "code3r="+code3r);
 								}
@@ -2981,7 +2981,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 								ContentValues cv = new ContentValues();
 								cv.put(FIELD_CODE, code);
 								if(table.equals("phonetic")) {
-									String code3r = code.replaceAll("[3467]", "");
+									String code3r = code.replaceAll("[3467 ]", "");
 									cv.put(FIELD_CODE3R, code3r);;
 									
 								}
