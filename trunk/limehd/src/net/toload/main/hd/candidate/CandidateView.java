@@ -538,36 +538,11 @@ public class CandidateView extends View implements View.OnClickListener
     	if(DEBUG) 
     		Log.i(TAG,"doUpdateComposing():"+composingText + "this.isShown()" + this.isShown());
     	
-    	//Jeremy '12,4,8 to avoid fc when hard keyboard is engaged and candidateview is not shown
-    	if(!this.isShown()) return;
     	
     	
-    	// Composing buffer textView
-    	if(mComposingTextPopup==null){
-    		LayoutInflater inflater 
-    			= (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    		mComposingTextPopup = new PopupWindow(mContext);
-    		mComposingTextView = (TextView) inflater.inflate(R.layout.composingtext, null);
-    		mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-    		mComposingTextPopup.setContentView(mComposingTextView);
-    		mComposingTextPopup.setBackgroundDrawable(null);
-    	}
-
     	
-        if (composingText!=null ) {	
-        	mComposingTextPopup.setContentView(mComposingTextView);
-        	mComposingTextView.setText(composingText);
-        	mComposingTextView.setTextSize(
-        			mContext.getResources().getDimensionPixelSize(R.dimen.composing_text_size) 
-        			*mLIMEPref.getFontSize());
-        }else
-        	return;
-    	mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
-    			MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-    	
-    	
-    	final int popupWidth =  mComposingTextView.getMeasuredWidth();
-    	final int popupHeight = mComposingTextView.getMeasuredHeight();
+    	final int popupWidth =  mComposingTextView.getWidth();// getMeasuredWidth();  Jeremy '12,6,2 use getWidth and getHeight instead
+    	final int popupHeight = mComposingTextView.getHeight();// .getMeasuredHeight();
 
 
     	int [] offsetInWindow = new int[2];
@@ -633,6 +608,34 @@ public class CandidateView extends View implements View.OnClickListener
     public void showComposing(String composingText) {
     	if(DEBUG) 
     		Log.i(TAG, "hidecomposing()");
+    	//jeremy '12,6,3 moved the creation of mComposingTextPopup and mComposingTextView from doUpdateComposing
+    	//Jeremy '12,4,8 to avoid fc when hard keyboard is engaged and candidateview is not shown
+    	if(!this.isShown()) return;
+    	
+    	
+    	// Composing buffer textView
+    	if(mComposingTextPopup==null){
+    		LayoutInflater inflater 
+    			= (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    		mComposingTextPopup = new PopupWindow(mContext);
+    		mComposingTextView = (TextView) inflater.inflate(R.layout.composingtext, null);
+    		mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    		mComposingTextPopup.setContentView(mComposingTextView);
+    		mComposingTextPopup.setBackgroundDrawable(null);
+    	}
+
+    	
+        if (composingText!=null ) {	
+        	mComposingTextPopup.setContentView(mComposingTextView);
+        	mComposingTextView.setText(composingText);
+        	mComposingTextView.setTextSize(
+        			mContext.getResources().getDimensionPixelSize(R.dimen.composing_text_size) 
+        			*mLIMEPref.getFontSize());
+        }else
+        	return;
+        mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
+    			MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+       
     	mHandler.updateComposing(composingText,0);
     	
     }
