@@ -30,7 +30,7 @@ public class Mapping {
 	//private String pcode;
 	private String word;
 	private String pword;
-	private Boolean related;  //Jeremy '12,5,30 changed from string to boolean to indicate if it's from related list or exact match result
+	private Boolean related=true;  //Jeremy '12,5,30 changed from string to boolean to indicate if it's from related list or exact match result
 	private boolean isDictionary;
 	private int score;
 	
