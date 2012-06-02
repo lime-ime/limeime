@@ -146,8 +146,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	private final static String ETEN26_KEY =            	"qazwsxedcrfvtgbyhnujmikolp,.";
 	private final static String ETEN26_KEY_REMAP_INITIAL = 	"y8lhnju2vkzewr1tcsmba9dixq<>";
 	private final static String ETEN26_KEY_REMAP_FINAL =   	"y8lhnju7vk6ewr1tcsm3a94ixq<>";
-	private final static String ETEN26_DUALKEY_REMAP = 		"o,gf;5p-s0/.p";
-	private final static String ETEN26_DUALKEY = 			"yhvewrscpaxqs";
+	private final static String ETEN26_DUALKEY_REMAP = 		"o,gf;5p-s0/.pbdz2";
+	private final static String ETEN26_DUALKEY = 			"yhvewrscpaxqs3467";
 	private final static String ETEN26_CHAR_INITIAL = 	
 		"(ㄗ/ㄟ)|ㄚ|ㄠ|(ㄘ/ㄝ)|ㄙ|ㄨ|ㄧ|ㄉ|(ㄕ/ㄒ)|ㄜ|ㄈ|(ㄍ/ㄑ)|(ㄊ/ㄤ)|(ㄐ/ㄓ)|ㄅ|ㄔ|(ㄏ/ㄦ)|(ㄋ/ㄣ)|ㄩ|ㄖ|(ㄇ/ㄢ)|ㄞ|ㄎ|ㄛ|(ㄌ/ㄥ)|(ㄆ/ㄡ)|，|。";
 	private final static String ETEN26_CHAR_FINAL = 	
@@ -159,10 +159,10 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	private final static String HSU_KEY_REMAP_FINAL =   	"hyl7ju6vb3fwe18csm4a9d.xq`<>";  
 	private final static String HSU_DUALKEY_REMAP =		 	"g8t5r/-,okip0;n2z";
 	private final static String HSU_DUALKEY = 				"vbf45x/uhecsad763";
-	private final static String HSU_CHAR = 	
-		"(ㄘ/ㄟ)|ㄗ|ㄠ|(ㄙ/˙)|ㄨ|(ㄧ/ㄝ)|(ㄉ/ˊ)|(ㄕ/ㄒ)|ㄖ|(ㄈ/ˇ)|(ㄔ/ㄑ)|ㄊ|(ㄍ/ㄜ)|ㄅ|ㄚ|(ㄏ/ㄛ)|(ㄋ/ㄣ)|ㄩ|(ㄐ/ㄓ/ˋ)|(ㄇ/ㄢ)|ㄞ|(ㄎ/ㄤ)|ㄡ|(ㄌ/ㄥ/ㄦ)|ㄆ|q|，|。";
-	//private final static String HSU_CHAR_FINAL = 	
-	//	"(ㄘ/ㄟ)|ㄗ|ㄠ|˙|ㄨ|(ㄧ/ㄝ)|ˊ|(ㄕ/ㄒ)|ㄖ|ˇ|(ㄔ/ㄑ)|ㄊ|(ㄍ/ㄜ)|ㄅ|ㄚ|(ㄏ/ㄛ)|(ㄋ/ㄣ)|ㄩ|ˋ|(ㄇ/ㄢ)|ㄞ|(ㄎ/ㄤ)|ㄡ|(ㄥ/ㄦ)|ㄆ|q|，|。";
+	private final static String HSU_CHAR_INITIAL = 	
+		"(ㄘ/ㄟ)|ㄗ|ㄠ|ㄙ|ㄨ|(ㄧ/ㄝ)|ㄉ|(ㄕ/ㄒ)|ㄖ|ㄈ|(ㄔ/ㄑ)|ㄊ|(ㄍ/ㄜ)|ㄅ|ㄚ|(ㄏ/ㄛ)|(ㄋ/ㄣ)|ㄩ|(ㄐ/ㄓ)|(ㄇ/ㄢ)|ㄞ|(ㄎ/ㄤ)|ㄡ|(ㄌ/ㄥ/ㄦ)|ㄆ|q|，|。";
+	private final static String HSU_CHAR_FINAL = 	
+		"(ㄘ/ㄟ)|ㄗ|ㄠ|(ㄙ/˙)|ㄨ|(ㄧ/ㄝ)|(ㄉ/ˊ)|(ㄕ/ㄒ)|ㄖ|(ㄈ/ˇ)|(ㄔ/ㄑ)|ㄊ|(ㄍ/ㄜ)|ㄅ|ㄚ|(ㄏ/ㄛ)|(ㄋ/ㄣ)|ㄩ|(ㄐ/ㄓ/ˋ)|(ㄇ/ㄢ)|ㄞ|(ㄎ/ㄤ)|ㄡ|(ㄥ/ㄦ)|ㄆ|q|，|。";
 	
 	private final static String DESIREZ_KEY =            			"@qazwsxedcrfvtgbyhnujmik?olp,.";
 	private final static String DESIREZ_BPMF_KEY_REMAP = 			"1qaz2wsedc5tg6yh4uj8ik9ol0;-,.";
@@ -1108,7 +1108,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		}
 
 		if (DEBUG) 
-			Log.i("getRmapping", "Result:" + result);
+			Log.i(TAG,"getRmapping() Result:" + result);
 
 
 		return result;
@@ -1313,8 +1313,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							finalKeynameString = ETEN26_CHAR_FINAL;
 						}else if(phonetickeyboardtype.equals("hsu")){
 							keyString = HSU_KEY;
-							keynameString = HSU_CHAR;
-							//finalKeynameString = HSU_CHAR_FINAL;
+							keynameString = HSU_CHAR_INITIAL;
+							finalKeynameString = HSU_CHAR_FINAL;
 						}else if((keyboardtype.equals("milestone")||keyboardtype.equals("milestone2")) 
 								&& isPhysicalKeyboardPressed){
 							keyString = MILESTONE_KEY;
@@ -1443,6 +1443,20 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					for (int i = 0; i < code.length(); i++) {
 						String c = "";
 						if(i>0){
+							//Jeremy '12,6,3 If the last character is a tone symbol, the preceding will be intial
+							if(tablename.equals("phonetic")
+									&& i >1 
+									&& code.substring(0, i).matches(".+[sdfj ]$")
+									&& phonetickeyboardtype.equals("hsu") ){
+								if(DEBUG) Log.i(TAG, "preProcessingRemappingCode() hsu finalremap, subcode = " + code.substring(0, i));
+								c = keyMap.get(code.substring(i, i + 1));
+							}else if(tablename.equals("phonetic")
+									&& i >1 
+									&& code.substring(0, i).matches(".+[dfjk ]$")
+									&& phonetickeyboardtype.equals("eten26") ){
+								if(DEBUG) Log.i(TAG, "preProcessingRemappingCode() hsu finalremap, subcode = " + code.substring(0, i));
+								c = keyMap.get(code.substring(i, i + 1));
+							}else
 								c = finalKeyMap.get(code.substring(i, i + 1));
 						}else{
 							c = keyMap.get(code.substring(i, i + 1));
@@ -1555,7 +1569,13 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					// Jeremy '11,8,2 Query code3r instead of code for code contains no tone symbols
 					String selectClause;
 					if(tablename.equals("phonetic")	&& code.matches(".+[3467 ].+")){
-						code = code.replaceAll("[3467 ]", "");
+						//Jeremy '12,6,3 should replace the tone symbol at last character because it may be dual mapped non-tone symbols
+						if(code.matches(".+[ 3467]$")){ 
+							String prefix = code.substring(0, code.length()-1).replaceAll("[3467 ]", "");
+							String postfix = code.substring(code.length()-1, code.length());
+							code = prefix+postfix;
+						}else
+							code = code.replaceAll("[3467 ]", "");
 					}
 					if(tablename.equals("phonetic")
 							&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) 
@@ -1605,7 +1625,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	
 	private String preProcessingRemappingCode(String code){
 		if(DEBUG) 
-			Log.i(TAG, "preProcessingRemappingCode(): code="+code);
+			Log.i(TAG, "preProcessingRemappingCode(): tablename = " + tablename +" , code="+code);
 		if(code != null){
 			String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 			String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
@@ -1749,10 +1769,26 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					}else {			
 						for (int i = 0; i < code.length(); i++) {
 							String s = code.substring(i, i + 1);
-							if(i>0)
-								c = finalReMap.get(s);
-							else
-								c = reMap.get(code.substring(i, i + 1));
+							if(DEBUG)
+								Log.i(TAG, "preProcessingRemappingCode(), prefix = " + code.substring(0, i) );
+							if(i>0){
+								//Jeremy '12,6,3 If the last character is a tone symbol, the preceding will be intial
+								if(tablename.equals("phonetic")
+										&& i >1 
+										&& code.substring(0, i).matches(".+[sdfj ]$")
+										&& phonetickeyboardtype.equals("hsu") ){
+									if(DEBUG) Log.i(TAG, "preProcessingRemappingCode() hsu finalremap, subcode = " + code.substring(0, i));
+									c = reMap.get(s);
+								}else if(tablename.equals("phonetic")
+										&& i >1 
+										&& code.substring(0, i).matches(".+[dfjk ]$")
+										&& phonetickeyboardtype.equals("eten26") ){
+									if(DEBUG) Log.i(TAG, "preProcessingRemappingCode() hsu finalremap, subcode = " + code.substring(0, i));
+									c = reMap.get(s);
+								}else
+									c = finalReMap.get(s);
+							}else
+								c = reMap.get(s);
 
 							if(c!=null) newcode = newcode + c;
 							else newcode = newcode + s;
@@ -1946,9 +1982,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							}
 
 							if(dualCodeList.add(newCode)){
-								if(tablename.equals("phonetic") && newCode.matches(".+[ 3467].+"))	// regular expression mathes tone in the middle
-									dualCodeList.add(newCode.replaceAll("[3467 ]",""));
-								
 								if(DEBUG) 
 									Log.i(TAG, "buildDualCodeList(): code added:"+ newCode);
 								codeInserted = true;
@@ -1961,23 +1994,33 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 			}while(true);
 		}
-		/*//Jeremy '11,8,12 added for continuous typing.  
+		//Jeremy '11,8,12 added for continuous typing.  
 		if(tablename.equals("phonetic")){			
 			HashSet<String> tempList = new HashSet<String>(dualCodeList);
 			for(String iterator_code: tempList){
 				if(iterator_code.matches(".+[ 3467].+")){ // regular expression mathes tone in the middle
-					String newCode = iterator_code.replaceAll("[3467 ]","");
+					String newCode="";
+					//Jeremy '12,6,3 should replace the tone symbol at last character because it may be dual mapped non-tone symbols
+					if(iterator_code.matches(".+[ 3467]$")){
+						String prefix = iterator_code.substring(0, iterator_code.length()-1).replaceAll("[3467 ]", "");
+						String postfix = iterator_code.substring(iterator_code.length()-1, iterator_code.length());
+						newCode = prefix+postfix;
+						if(DEBUG)
+							Log.i(TAG, "buildDualCodeList() prefix = " + prefix +", postfix=" + postfix);
+					}else
+						newCode = iterator_code.replaceAll("[3467 ]","");
 					if(newCode.length()>0 )
 						if(dualCodeList.add(newCode) 
 							&& DEBUG 
 							)
-							Log.i(TAG, "buildDualCodeList() for LD: code added:"+ newCode);
+							Log.i(TAG, "buildDualCodeList() for LD: iterator_code = " + iterator_code 
+									+", remove tone symbols code added:"+ newCode);
 					
 				}
 			}
 		}
 
-		*/
+		
 		if(DEBUG) Log.i(TAG, "buildDualCodeList(): dualCodeList.size()="+ dualCodeList.size());
 		return dualCodeList;
 			
