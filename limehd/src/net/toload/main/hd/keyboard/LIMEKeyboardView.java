@@ -60,7 +60,8 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 
 	@Override
 	protected boolean onLongPress(Key key) {
-		Log.i(TAG, "onLongPress, keycode = "+ key.codes[0] 
+		if(DEBUG)
+			Log.i(TAG, "onLongPress, keycode = "+ key.codes[0] 
 				+"; spaceDragDiff = " +((LIMEKeyboard) this.getKeyboard()).getSpaceDragDiff()
 				+"; key_height = " + mKeyHeight
 					);
