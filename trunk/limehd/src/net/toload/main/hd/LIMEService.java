@@ -76,7 +76,7 @@ import android.content.res.Configuration;
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = false;
+	static final boolean DEBUG = true;
 	static final String TAG = "LIMEService";
 	//static final String PREF = "LIMEXY";
 
@@ -1496,12 +1496,12 @@ public class LIMEService extends InputMethodService implements
 						boolean composingNotFinish = false;
 						String commitedCode = selectedCandidate.getCode();
 						int commitedCodeLength = commitedCode.length();
-						if(selectedCandidate.getRelated()){
+						if(!selectedCandidate.isDictionary() && selectedCandidate.getRelated()){
 							//TODO: selectedCandidate is not exact math. the commitedCodeLength should be less the selectedCandidate.getCode()
 							// abandone LD now.
-						/*}else if(activeIM.equals("phonetic") &&
+						}else if(activeIM.equals("phonetic") &&
 								mComposing.length() >= selectedCandidate.getCode().length()){
-								String strippedCode = commitedCode.trim().replaceAll("[3467]", "");
+								String strippedCode = commitedCode.trim().replaceAll("[3467 ]", "");
 								//commitedCode = strippedCode;
 							if(mComposing.toString().contains(commitedCode)){
 								if(mComposing.length() > commitedCode.length())
@@ -1510,7 +1510,7 @@ public class LIMEService extends InputMethodService implements
 								composingNotFinish = true;
 								commitedCodeLength = strippedCode.length();
 							}
-						*/	
+							
 						}else if(mComposing.length() > selectedCandidate.getCode().length()){
 							composingNotFinish = true;
 						}
