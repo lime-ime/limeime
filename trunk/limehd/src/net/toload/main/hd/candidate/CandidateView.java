@@ -633,8 +633,10 @@ public class CandidateView extends View implements View.OnClickListener
         			*mLIMEPref.getFontSize());
         }else
         	return;
+        mComposingTextView.invalidate();  //Jeremy '12,6,2 invalidate and measure so as to get correct height and width later. 
         mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
     			MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+        
        
     	mHandler.updateComposing(composingText,0);
     	
