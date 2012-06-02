@@ -48,20 +48,19 @@ import android.os.RemoteException;
 import android.util.Log;
 
 //Jeremy '12,5,1 renamed from DBServer and change from service to ordinary class.
-public class  DBServer {//extends Service {
-
+public class  DBServer {
 	private final boolean DEBUG = false;
-	private final String TAG = "LIME.DBService";
+	private final String TAG = "LIME.DBServer";
 	//private NotificationManager notificationMgr;
 
 	protected static LimeDB dbAdapter = null;  //static LIMEDB for shared LIMEDB between DBServer instances
 	protected static LIMEPreferenceManager mLIMEPref = null;
 
-	private boolean remoteFileDownloading = false;
-	private int percentageDone = 0;
+	private static boolean remoteFileDownloading = false;
+	private static int percentageDone = 0;
 
-	private String loadingTablename = "";
-	private boolean abortDownload = false;
+	private static String loadingTablename = "";  //Jeremy '12,6,2 change all variable to static for all instances to share these variables
+	private static boolean abortDownload = false;
 
 	public final static int intentLIMEMenu = 0;
 	public final static int intentLIMEMappingLoading = 1;
@@ -97,11 +96,12 @@ public class  DBServer {//extends Service {
 */
 
 	public void loadMapping(String filename, String tablename) throws RemoteException {
+		if(DEBUG)
+			Log.i(TAG,"loadMapping() on " + loadingTablename);
+
 
 		loadingTablename = tablename;
 
-		if(DEBUG)
-			Log.i(TAG,"loadMapping() on " + loadingTablename);
 
 		File sourcefile = new File(filename);
 
@@ -121,10 +121,8 @@ public class  DBServer {//extends Service {
 
 	public void resetMapping(final String tablename) throws RemoteException {
 
-		//if (dbAdapter == null) {loadLimeDB();}
-
 		if(DEBUG)
-			Log.i(TAG,"loadMapping() on " + loadingTablename);
+			Log.i(TAG,"resetMapping() on " + loadingTablename);
 
 		dbAdapter.deleteAll(tablename);
 
@@ -148,7 +146,7 @@ public class  DBServer {//extends Service {
 	}
 
 	public boolean isLoadingMappingThreadAlive(){		
-		if(DEBUG) Log.i(TAG, "isLoadingMappingThreadAlive()"+  dbAdapter.isLoadingMappingThreadAlive());
+		if(DEBUG) Log.i(TAG, "isLoadingMappingThreadAlive()"+  dbAdapter.isLoadingMappingThreadAlive() + "loadingTablename = " + loadingTablename);
 		return dbAdapter.isLoadingMappingThreadAlive();
 	}
 
@@ -158,6 +156,8 @@ public class  DBServer {//extends Service {
 	}
 
 	public void abortLoadMapping(){
+		if(DEBUG)
+			Log.i(TAG,"abortLoadMapping() on " + loadingTablename);
 		try {
 			if(loadingTablename.equals("")) //Jeremy '12,4,9 means abort doloading. no need to reset mappings.
 				return;

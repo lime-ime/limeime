@@ -76,7 +76,7 @@ import android.content.res.Configuration;
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = true;
+	static final boolean DEBUG = false;
 	static final String TAG = "LIMEService";
 	//static final String PREF = "LIMEXY";
 
@@ -147,6 +147,7 @@ public class LIMEService extends InputMethodService implements
 	//private String mSentenceSeparators;
 
 	private Mapping selectedCandidate; //Jeremy '12,5,7 renamed from firstMathed
+	private int	selectedIndex; //Jeremy '12,5,7 the index in resultList of selectedCandidate
 	private Mapping commitedCandidate; //Jeremy '12,5,7 renamed from tempMatched
 
 	private StringBuffer tempEnglishWord;
@@ -497,6 +498,7 @@ public class LIMEService extends InputMethodService implements
 		if(ic!=null) ic.finishComposingText(); 
 		
 		selectedCandidate = null;
+		selectedIndex = 0;
 				
 		//hasMappingList = false;
 		if(mCandidateList!=null) 
@@ -531,6 +533,7 @@ public class LIMEService extends InputMethodService implements
 		}
 		
 		selectedCandidate = null;
+		selectedIndex = 0;
 				
 		//hasMappingList = false;
 		
@@ -1490,15 +1493,16 @@ public class LIMEService extends InputMethodService implements
 							clearComposing(true);
 						}
 						
-						
-						//TODO: Bug to fixed here. Hsu phonetic tone symbols are not 3467 
+
 						// Jeremy '11,7,28 for continuous typing (LD) 
+						// Jeremy '12,6,2 get real commited code length from searchserver 
 						boolean composingNotFinish = false;
-						String commitedCode = selectedCandidate.getCode();
-						int commitedCodeLength = commitedCode.length();
-						if(!selectedCandidate.isDictionary() && selectedCandidate.getRelated()){
-							//TODO: selectedCandidate is not exact math. the commitedCodeLength should be less the selectedCandidate.getCode()
-							// abandone LD now.
+						//String commitedCode = selectedCandidate.getCode();
+						int commitedCodeLength = SearchSrv.getRealCodeLength(selectedIndex); 
+								//selectedCandidate.getCodeLength(); //commitedCode.length();//Jeremy '12,6,2 get preserved codelenght from mapping
+						/*if(!selectedCandidate.isDictionary() && selectedCandidate.getRelated()){
+
+							commitedCodeLength = SearchSrv.getRealCodeLength(selectedIndex);
 						}else if(activeIM.equals("phonetic") &&
 								mComposing.length() >= selectedCandidate.getCode().length()){
 								String strippedCode = commitedCode.trim().replaceAll("[3467 ]", "");
@@ -1511,7 +1515,8 @@ public class LIMEService extends InputMethodService implements
 								commitedCodeLength = strippedCode.length();
 							}
 							
-						}else if(mComposing.length() > selectedCandidate.getCode().length()){
+						}else */
+						if(mComposing.length() > selectedCandidate.getCode().length()){
 							composingNotFinish = true;
 						}
 						
@@ -1526,7 +1531,7 @@ public class LIMEService extends InputMethodService implements
 										". just commited code=" + selectedCandidate.getCode());
 								SearchSrv.addLDPhrase(selectedCandidate.getId(), selectedCandidate.getCode(), 
 										selectedCandidate.getWord(), selectedCandidate.getScore(), false);
-							}else if(LDComposingBuffer.contains(mComposing.toString())){
+							}else {//if(LDComposingBuffer.contains(mComposing.toString())){
 								//Continuous LD process
 								if(DEBUG) 
 									Log.i(TAG, "commitedtype():Continuous LD process, LDBuffer=" + LDComposingBuffer +
@@ -1545,7 +1550,7 @@ public class LIMEService extends InputMethodService implements
 								return;
 							}
 						} else {
-							if(LDComposingBuffer.length()>0 && LDComposingBuffer.contains(mComposing.toString())){
+							if(LDComposingBuffer.length()>0 ){// && LDComposingBuffer.contains(mComposing.toString())){
 								//Ending continuous LD process (last of LD process)
 								if(DEBUG) 
 									Log.i(TAG, "commitedtype():Ending LD process, LDBuffer=" + LDComposingBuffer +
@@ -1825,8 +1830,7 @@ public class LIMEService extends InputMethodService implements
 						currentSoftKeyboard != null && currentSoftKeyboard.indexOf("phone") != -1 ){
 					InputConnection ic = getCurrentInputConnection();
 					commitTyped(ic);
-					//ic.commitText("", 0);
-					//clearComposing();
+					
 				}
 			}
 		}
@@ -2493,8 +2497,8 @@ public class LIMEService extends InputMethodService implements
 		if (mComposing != null && mComposing.length() > 0)
 			mComposing.setLength(0);
 		// Reset templist
-		this.selectedCandidate = null;
-		//this.hasFirstMatched = false;
+		selectedCandidate = null;
+		selectedIndex = 0;
 		
 		if(mCandidateList!=null) 
 			mCandidateList.clear();
@@ -2547,12 +2551,16 @@ public class LIMEService extends InputMethodService implements
 			if (mCandidateView != null) {
 				mCandidateList = (LinkedList<Mapping>) suggestions;
 				try {
+					
 					if (suggestions.size() == 1) {
 						selectedCandidate = suggestions.get(0);
-					} else if (suggestions.size() > 1) {
+						selectedIndex = 0;
+					} else if (suggestions.size() > 1 && !suggestions.get(0).getRelated()) {
 						selectedCandidate = suggestions.get(1);
+						selectedIndex = 1;  //Jeremy '12,6,2 use getrelated to set default selectedCandidate
 					} else {
-						selectedCandidate = null;
+						selectedCandidate = suggestions.get(0);
+						selectedIndex = 0;
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -3179,6 +3187,7 @@ public class LIMEService extends InputMethodService implements
 		
 		if (mCandidateList != null && mCandidateList.size() > 0) {
 			selectedCandidate = mCandidateList.get(index);
+			selectedIndex = index;
 		}
 		
 		InputConnection ic=getCurrentInputConnection();

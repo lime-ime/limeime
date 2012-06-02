@@ -155,8 +155,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	
 	//Jeremy '12,5,31 use dual codes instead of initial/final remap for Hsu phonetic keyboard
 	private final static String HSU_KEY =            		"azwsxedcrfvtgbyhnujmikolpq,.";
-	private final static String HSU_KEY_REMAP = 			"hyl7ju6vb3fwe18csm4a9d.xq`<>"; 
-	//private final static String HSU_KEY_REMAP_FINAL =   	"hylnju2vb3fwe18csmra9d.xq`<>";  
+	private final static String HSU_KEY_REMAP_INITIAL = 	"hylnju2vbzfwe18csm5a9d.xq`<>"; 
+	private final static String HSU_KEY_REMAP_FINAL =   	"hyl7ju6vb3fwe18csm4a9d.xq`<>";  
 	private final static String HSU_DUALKEY_REMAP =		 	"g8t5r/-,okip0;n2z";
 	private final static String HSU_DUALKEY = 				"vbf45x/uhecsad763";
 	private final static String HSU_CHAR = 	
@@ -747,7 +747,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	/**
 	 * Base on given table name to remove records
 	 */
-	public synchronized void deleteAll(String table) {
+	public void deleteAll(String table) {
 		if(DEBUG)
 			Log.i(TAG,"deleteAll()");
 		if(thread != null){
@@ -1554,11 +1554,13 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					Cursor cursor = null;
 					// Jeremy '11,8,2 Query code3r instead of code for code contains no tone symbols
 					String selectClause;
-					if(tablename.equals("phonetic") && code.matches(".+[3467 ].+"))
-							code = code.replaceAll("[3467 ]", "");
-					 	
-					if(tablename.equals("phonetic")&&!code.matches(".+[3467 ].*")){
-						selectClause = FIELD_CODE3R + " = '" + code.trim() + "' " + extraConditions;
+					if(tablename.equals("phonetic")	&& code.matches(".+[3467 ].+")){
+						code = code.replaceAll("[3467 ]", "");
+					}
+					if(tablename.equals("phonetic")
+							&& mLIMEPref.getParameterBoolean("doLDPhonetic", false) 
+							&&!code.matches(".+[3467 ].*")){
+						selectClause = FIELD_CODE3R + " = '" + code + "' " + extraConditions;
 					}else{
 						selectClause = FIELD_CODE + " = '" + code.trim() + "' " + extraConditions;
 					}
@@ -1631,8 +1633,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					finalKeyRemapString = ETEN26_KEY_REMAP_FINAL;
 				}else if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("hsu")){
 					keyString = HSU_KEY;
-					keyRemapString = HSU_KEY_REMAP;
-					//finalKeyRemapString = HSU_KEY_REMAP_FINAL;
+					keyRemapString = HSU_KEY_REMAP_INITIAL;
+					finalKeyRemapString = HSU_KEY_REMAP_FINAL;
 				}else if(tablename.equals("phonetic")&&phonetickeyboardtype.equals("eten")){
 					keyString = ETEN_KEY; 
 							//+ SHIFTED_NUMBERIC_KEY + SHIFTED_SYMBOL_KEY;
@@ -1913,9 +1915,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		HashMap<String,String> codeDualMap = keysDualMap.get(keytablename);
 	
 		HashSet<String> dualCodeList = new HashSet<String>();
-		
-	
-		
+		dualCodeList.add(code);
 
 		if(codeDualMap != null && codeDualMap.size()>0) {
 
@@ -1997,43 +1997,48 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		if(dualCodeList != null) {
 			final boolean NOCheckOnExpand = code.length() < DUALCODE_NO_CHECK_LIMIT;
 			String codeCol = FIELD_CODE;
-			//final boolean doCode3r = tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", true);
-			//Jeremy '12,5,31 Assume code3r is supported now.
-			//if( tablename.equals("phonetic") && !code.matches(".+[3467 ].*"))
+			final boolean useCode3r = tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", true);
+
+			//if(useCode3r  && !code.matches(".+[3467 ].*"))
 			//	codeCol = FIELD_CODE3R;
-			code = code.replaceAll("'", "''"); //Jeremy '12,5,30 escape ' here, moved from remap.
+			
+			//code = code.replaceAll("'", "''"); //Jeremy '12,5,30 escape ' here, moved from remap.
 			
 			for(String dualcode : dualCodeList){
 				if(DEBUG) 
 					Log.i(TAG, "expandDualCode(): processing dualcode = '" + dualcode + "'" + ". result = " + result);
 
-				dualcode = dualcode.trim().replaceAll("'", "''"); //Jeremy '12,5,30 escape ' here, moved from remap.
 				
+				String querycode = dualcode;
+				
+				if(useCode3r && !dualcode.matches(".+[3467 ].*"))
+					codeCol = FIELD_CODE3R;
+				else{
+					codeCol = FIELD_CODE;
+					querycode = dualcode.trim().replaceAll("'", "''"); //Jeremy '12,5,30 escape ' here, moved from remap.
+				}
+				String[] col = {codeCol};
 				
 				if(dualcode.length()==0) continue;
-				
-				if( tablename.equals("phonetic") && !dualcode.matches(".+[3467 ].*"))
-					codeCol = FIELD_CODE3R;
-				else
-					codeCol = FIELD_CODE;
-
+	
 				if(NOCheckOnExpand){
-					if(!dualcode.equals(code))
-						result = result + " OR "+  codeCol + "= '"+ dualcode +"'";
+					if(!dualcode.equals(code)){
+						result = result + " OR "+  codeCol + "= '"+ querycode +"'";
+					}
 				}else{
 					//Jeremy '11,8, 26 move valid code list building to buildqueryresult to avoid repeat query.
 					try{
 						
-						String[] col = {codeCol};//"DISTINCT " + codeCol};
-
 						Cursor cursor = db.query(tablename, col, 
-								codeCol + " = '" + dualcode + "'", 
+								codeCol + " = '" + querycode + "'", 
 								null, null, null, null, "1");
 						if(cursor.moveToFirst()){ //fist entry exist, the code is valid.
+							if(DEBUG)
+								Log.i(TAG,"expandDualCode() code = '" + dualcode + "' is validcode" );
 							if(validDualCodeList.equals("")) validDualCodeList = dualcode;
 							else validDualCodeList = validDualCodeList + "|" + dualcode;
 							if(!dualcode.equals(code)) 
-								result = result + " OR "+  codeCol + "= '"+ dualcode +"'";
+								result = result + " OR "+  codeCol + "= '"+ querycode +"'";
 						}
 						if (cursor != null) {
 							cursor.deactivate();
@@ -2074,9 +2079,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		//jeremy '11,8,30 reset lastVaidDualCodeList first.
 		final boolean buildValidCodeList = lastValidDualCodeList==null;
 		
-		//boolean useCode3r =tablename.equals("phonetic")
-		//		&& mLIMEPref.getParameterBoolean("doLDPhonetic", true) 
-		//		&& !query_code.matches(".+[3467 ].*");
+		boolean useCode3r =tablename.equals("phonetic")
+				&& mLIMEPref.getParameterBoolean("doLDPhonetic", true) 
+				&& !query_code.matches(".+[3467 ].*");
 		if(DEBUG) Log.i(TAG,"buildQueryResutl(): cursor.getCount()=" + cursor.getCount() + ". lastValidDualCodeList = " + lastValidDualCodeList);
 		if (cursor.moveToFirst()) {
 
@@ -2099,10 +2104,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				
 				//Jeremy '11,8,26 build valid code map
 				//jeremy '11,8,30 add limit for vali code words for composing display
-				//Jeremy '12,5,31 Assume all tables support code3r and has index now.
+				
 				if(buildValidCodeList){
-					if(tablename.equals("phonetic") 
-							&& !query_code.matches(".+[3467 ].*")
+					if(useCode3r && tablename.equals("phonetic") 
 							&& validCodeMap.size()< DUALCODE_COMPOSING_LIMIT)
 						validCodeMap.add(cursor.getString(noToneCodeColumn));
 					else
@@ -2748,11 +2752,10 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					Log.i(TAG,"loadFileV2 thread starting...");
 				try {
 					if(countMapping(table)>0) 	db.delete(table, null, null);
-					if(DEBUG) Log.i(TAG, "loadfile(), table = " + table +" kbversion" + 
-							Integer.parseInt(mLIMEPref.getParameterString("kbversion")));
+					
 					if(table.equals("phonetic")  ) {
 							//&&!mLIMEPref.getParameterBoolean("doLDPhonetic", false)
-						if(DEBUG) Log.i(TAG, "loadfile(), build code3r index here.");
+						if(DEBUG) Log.i(TAG, "loadfile(), build code3r index.");
 						mLIMEPref.setParameter("doLDPhonetic", true);
 						db.execSQL("CREATE INDEX phonetic_idx_code3r ON phonetic(code3r)");
 						
@@ -2830,9 +2833,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					while ((line = buf.readLine()) != null && !threadAborted) {
 						processedLength += line.getBytes().length + 2; // +2 for the eol mark.
 						percentageDone = (int) ((float)processedLength/(float)fileLength *50);
-						if(DEBUG)
-							Log.i(TAG, "loadFile():loadFile()"+ percentageDone +"% processed" 
-									+ ". processedLength:" + processedLength + ". fileLength:" + fileLength);
+						//if(DEBUG)
+						//	Log.i(TAG, "loadFile():loadFile()"+ percentageDone +"% processed" 
+						//			+ ". processedLength:" + processedLength + ". fileLength:" + fileLength + ", threadAborted=" + threadAborted);
 						if(percentageDone>49) percentageDone = 49;
 						/*
 						 * If source is cin format start from the tag %chardef
@@ -2965,15 +2968,15 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							else {
 								if (code.length() > 1) {
 									//codeList.add(code);
-									if(DEBUG)
-										Log.i(TAG, "loadfilev2():code="+code);
+									//if(DEBUG)
+									//	Log.i(TAG, "loadfilev2():code="+code);
 									int len = code.length();
 									if(len > 4 ) len = 4; //Jeremy '11,9,14
 									for (int k = 1; k < len; k++) {
 										String subCode = code.substring(0, code.length() - k);
-										
-										if(codeList.add(subCode) &&DEBUG) 
-											Log.i(TAG, "loadfilev2():subcode added:" + subCode);
+										codeList.add(subCode);
+										//if(codeList.add(subCode) &&DEBUG) 
+										//	Log.i(TAG, "loadfilev2():subcode added:" + subCode);
 									}
 								}
 
@@ -2989,8 +2992,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 								cv.put(FIELD_SCORE, 0);
 								int basescore = getBaseScore(word);
 								cv.put(FIELD_BASESCORE, basescore);
-								if(DEBUG) Log.i(TAG, "loadfilev2():code="+code
-										+", word="+word+", basescore="+basescore);
+								//if(DEBUG) Log.i(TAG, "loadfilev2():code="+code+", word="+word+", basescore="+basescore);
 								db.insert(table, null, cv);
 							}
 
