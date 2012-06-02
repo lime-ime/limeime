@@ -87,7 +87,9 @@ public class SearchServer {
 	private static ConcurrentHashMap<String, List<Mapping>> engcache = null;
 	private static ConcurrentHashMap<String, String> keynamecache = null;
 
-	private Context ctx = null;
+	private Context mContext = null;
+	
+	private static List<Pair<Integer, Integer>> codeLenthMap = new LinkedList<Pair<Integer, Integer>>(); 
 
 	//public class SearchServiceImpl extends ISearchService.Stub {
 
@@ -103,10 +105,10 @@ public class SearchServer {
 	public SearchServer(Context context) {
 
 
-		this.ctx = context;
+		this.mContext = context;
 
-		mLIMEPref = new LIMEPreferenceManager(ctx.getApplicationContext());
-		if(dbadapter == null) dbadapter = new LimeDB(ctx); 
+		mLIMEPref = new LIMEPreferenceManager(mContext.getApplicationContext());
+		if(dbadapter == null) dbadapter = new LimeDB(mContext); 
 		initialCache();
 
 
@@ -218,7 +220,7 @@ public class SearchServer {
 				if(result!=null && !result.equals("")){
 					//displayNotificationMessage(result);
 					LIMEUtilities.showNotification(
-							ctx, true, R.drawable.icon, ctx.getText(R.string.ime_setting), result, new Intent(ctx, LIMEMenu.class));
+							mContext, true, R.drawable.icon, mContext.getText(R.string.ime_setting), result, new Intent(mContext, LIMEMenu.class));
 				}
 			}
 		};
@@ -254,6 +256,8 @@ public class SearchServer {
 			initialCache();
 			mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
 		}
+		
+		codeLenthMap.clear();//Jeremy '12,6,2 reset the codeLengthMap
 
 		List<Mapping> result = new LinkedList<Mapping>();
 		if(code!=null) {
@@ -337,7 +341,7 @@ public class SearchServer {
 								+" relatedlist.size()=" + relatedtlist.size());
 					
 					if(i==0) {//Jeremy add the mixed type English code in first loop 
-						temp.setRelated(resultlist.size()==0); //Jeremy '12,5,31 setRelated true if the exact moatch code has zero result list size.
+						temp.setRelated(resultlist.size()==0); //Jeremy '12,5,31 setRelated true if the exact match code has zero result list size.
 						result.add(temp);
 					}
 					
@@ -382,6 +386,9 @@ public class SearchServer {
 					}
 
 				}
+				codeLenthMap.add(new Pair<Integer, Integer>(code.length(), result.size()));  //Jeremy 12,6,2 preserve the code length in each loop.
+				if(DEBUG)
+					Log.i(TAG,"query() codeLengthMap  codelenth = " + code.length() + ", resultsize = " + result.size());
 
 				code= code.substring(0,code.length()-1);
 			}
@@ -396,12 +403,31 @@ public class SearchServer {
 
 		return result;
 	}
+	
+	/**
+	 * Get the real code length according to  codeLenthMap
+	 */
+	int getRealCodeLength(int index){
+		if(DEBUG)
+			Log.i(TAG,"getRealCodeLength() index = " + index);
+		for(Pair<Integer, Integer> entry: codeLenthMap){
+			if(DEBUG)
+				Log.i(TAG,"getRealCodeLength() codelength = " + entry.first + ", resultsize = " + entry.second);
+			if(index < entry.second){
+				return entry.first;
+			}
+			
+		}
+		return codeLenthMap.get(0).first ; // should not happen
+	}
+	
 	/*
 		public void initial() throws RemoteException {
 			initialCache();
 		}
+	*/
 
-		/*
+	/**
 	 * This method is to initial/reset the cache of im. 
 	 */
 	public void initialCache(){
