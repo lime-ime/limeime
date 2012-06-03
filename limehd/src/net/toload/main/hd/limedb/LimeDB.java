@@ -31,6 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEUtilities;
@@ -247,11 +248,14 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	//private boolean relatedfinish = false;
 	//Jeremy '11,6,16 keep the soft/physical keyboard flag from getmapping()
 	private boolean isPhysicalKeyboardPressed = false;
+	
+	/** Black list cache stored code without valid return. Jeremy '12,6,3 */
+	private static ConcurrentHashMap<String, String> blackListCache = null;
 
 	private LIMEPreferenceManager mLIMEPref;
 	//private Map<String, String> codeDualMap = new HashMap<String, String>();
 
-	private Context ctx;
+	private Context mContext;
 
 	// Db loading thread.
 	private Thread thread = null;
@@ -316,10 +320,12 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	public LimeDB(Context context) {
 		
 		super(context, LIME.DATABASE_NAME, null, DATABASE_VERSION);
-		this.ctx = context;
+		this.mContext = context;
 		
-		mLIMEPref = new LIMEPreferenceManager(ctx.getApplicationContext());
+		mLIMEPref = new LIMEPreferenceManager(mContext.getApplicationContext());
 		
+		
+		blackListCache = new ConcurrentHashMap<String, String>(LIME.LIMEDB_CACHE_SIZE);
 		
 		
 		// Jeremy '12,4,7 open DB connection in constructor
@@ -671,7 +677,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	private boolean checkDBConnection(){
 		//Jeremy '12,5,1 mapping loading. db is locked
 		if(mLIMEPref.getMappingLoading()) {
-			Toast.makeText(ctx, ctx.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT/2).show();
+			Toast.makeText(mContext, mContext.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT/2).show();
 			return false; 
 		}else if(openDBConnection(false)==null){ //Jermey'12,5,1 db == null if dabase is not exist
 			//Toast.makeText(ctx, ctx.getText(R.string.l3_database_not_exist), Toast.LENGTH_SHORT/2).show(); //annoying.. removed first
@@ -769,7 +775,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		//mLIMEPref.setParameter("im_loading", false);
 		//mLIMEPref.setParameter("im_loading_table", "");
 		
-		
+		if(blackListCache != null) blackListCache.clear();//Jeremy '12, 6,3 clear black list cache after mapping file updated 
 	}
 
 	/**
@@ -1949,15 +1955,17 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		HashMap<String,String> codeDualMap = keysDualMap.get(keytablename);
 	
 		HashSet<String> dualCodeList = new HashSet<String>();
+		HashSet<String> resultDualCodeList = new HashSet<String>();
 		dualCodeList.add(code);
+		resultDualCodeList.add(code);
 
 		if(codeDualMap != null && codeDualMap.size()>0) {
 
 			do{
 				int currentListSize = dualCodeList.size();
 				boolean codeInserted = false;
-				HashSet<String> tempSet = new HashSet<String>(dualCodeList);
-				for(String currentCode : tempSet) {
+				HashSet<String> snapShot = new HashSet<String>(dualCodeList);
+				for(String currentCode : snapShot) {
 					//String currentCode = dualCodeList.get(i);
 					if(DEBUG) 
 						Log.i(TAG, "buildDualCodeList():currentSize:"+ currentListSize + " curretnCode:" + currentCode);
@@ -1979,10 +1987,18 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 									+ currentCode.substring(j+1, currentCode.length());
 							}
 
-							if(dualCodeList.add(newCode)){
-								if(DEBUG) 
-									Log.i(TAG, "buildDualCodeList(): code added:"+ newCode);
+							
+							if(!dualCodeList.contains(newCode)){  //Jeremy '12,6,3 look-up the blacklist cache before add to the list.
 								codeInserted = true;
+								dualCodeList.add(newCode);	
+								
+								if(!checkBlackList(newCode)){ //Add newCode to the resultDualCodeList if newCode is not black listed. 
+									resultDualCodeList.add(newCode);	
+									if(DEBUG) 
+										Log.i(TAG, "buildDualCodeList(): code added:"+ newCode);
+								}
+								
+								
 							}
 
 						}
@@ -1994,37 +2010,67 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		}
 		//Jeremy '11,8,12 added for continuous typing.  
 		if(tablename.equals("phonetic")){			
-			HashSet<String> tempList = new HashSet<String>(dualCodeList);
+			HashSet<String> tempList = new HashSet<String>(resultDualCodeList);
 			for(String iterator_code: tempList){
 				if(iterator_code.matches(".+[ 3467].+")){ // regular expression mathes tone in the middle
-					String newCode="";
-					//Jeremy '12,6,3 should replace the tone symbol at last character because it may be dual mapped non-tone symbols
-					/*if(iterator_code.matches(".+[ 3467]$")){
-						String prefix = iterator_code.substring(0, iterator_code.length()-1).replaceAll("[3467 ]", "");
-						String postfix = iterator_code.substring(iterator_code.length()-1, iterator_code.length());
-						newCode = prefix+postfix;
-						if(DEBUG)
-							Log.i(TAG, "buildDualCodeList() prefix = " + prefix +", postfix=" + postfix);
-					}else*/
-						newCode = iterator_code.replaceAll("[3467 ]","");
-					if(newCode.length()>0 )
-						if(dualCodeList.add(newCode) 
-							&& DEBUG 
-							)
-							Log.i(TAG, "buildDualCodeList() for LD: iterator_code = " + iterator_code 
-									+", remove tone symbols code added:"+ newCode);
-					
+					String newCode = iterator_code.replaceAll("[3467 ]","");
+					 //Jeremy '12,6,3 look-up the blacklist cache before add to the list.
+					if(newCode.length()>0 
+							&& !resultDualCodeList.contains(newCode) && !checkBlackList(newCode) ){ 
+						resultDualCodeList.add(newCode);	
+						if(DEBUG) 
+							Log.i(TAG, "buildDualCodeList(): code added:"+ newCode);
+
+
+					}
 				}
 			}
 		}
 
 		
-		if(DEBUG) Log.i(TAG, "buildDualCodeList(): dualCodeList.size()="+ dualCodeList.size());
-		return dualCodeList;
+		if(DEBUG) Log.i(TAG, "buildDualCodeList(): resultDualCodeList.size()="+ resultDualCodeList.size());
+		return resultDualCodeList;
 			
 		
 		
 		
+	}
+	/**
+	 * Jeremy '12,6,4 check black list on code , code + wildcard and reduced code with wildcard
+	 * @param code
+	 * @return
+	 */
+	private boolean checkBlackList(String code){
+		Boolean isBlacklisted = false;
+		if(code.length()< DUALCODE_NO_CHECK_LIMIT){ //code too short, add anyway
+			isBlacklisted = false;
+			if(DEBUG) 
+				Log.i(TAG, "buildDualCodeList(): code too short add without check code=" + code);
+		}else if(blackListCache.get(cacheKey(code)) != null){ //the code is blacklisted
+			isBlacklisted = true;
+			if(DEBUG) 
+				Log.i(TAG, "buildDualCodeList(): black listed code:"+ code);
+		}else if(blackListCache.get(cacheKey(code+"%")) != null){ //the code with wildcard is blacklisted
+			if(DEBUG) 
+				Log.i(TAG, "buildDualCodeList(): check black list code:"+ code 
+					+ ", blackListCache.get(cacheKey(codeToCheck+%))="+blackListCache.get(cacheKey(code+"%")));
+			isBlacklisted = true;
+			if(DEBUG) 
+				Log.i(TAG, "buildDualCodeList(): black listed code:"+ code+"%");
+		}else {
+			for(int i=DUALCODE_NO_CHECK_LIMIT-1; i < code.length(); i++){
+				String codeToCheck = code.substring(0, i) + "%";
+				if(blackListCache.get(cacheKey(codeToCheck)) != null){
+					isBlacklisted = true;
+					if(DEBUG) 
+						Log.i(TAG, "buildDualCodeList(): black listed code:"+ codeToCheck);
+					break;
+				}
+
+			}
+			
+		}
+		return isBlacklisted;
 	}
 	
 	
@@ -2052,20 +2098,26 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				
 				String querycode = dualcode;
 				
-				if(useCode3r && !dualcode.matches(".+[3467 ].*"))
+				if(useCode3r && !dualcode.matches(".+[3467 ].*")){
 					codeCol = FIELD_CODE3R;
-				else{
+					querycode = dualcode.replaceAll("'", "''");
+				}else{
 					codeCol = FIELD_CODE;
 					querycode = dualcode.trim().replaceAll("'", "''"); //Jeremy '12,5,30 escape ' here, moved from remap.
 				}
 				String[] col = {codeCol};
 				
-				if(dualcode.length()==0) continue;
+				if(querycode.length()==0) continue;
 	
 				if(NOCheckOnExpand){
 					if(!dualcode.equals(code)){
 						result = result + " OR "+  codeCol + "= '"+ querycode +"'";
 					}
+				/*// the code must be invalid if the code with 1 character shorter is invalid. Jeremy '12,6,3
+				}else if(blackListCache.get(cacheKey(code.substring(0, code.length()-1))) != null){ 
+					blackListCache.put(cacheKey(code), code);
+					if(DEBUG) 
+						Log.i(TAG, " expandDualCode() blackList code added, code = " +code);*/
 				}else{
 					//Jeremy '11,8, 26 move valid code list building to buildqueryresult to avoid repeat query.
 					try{
@@ -2080,6 +2132,28 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							else validDualCodeList = validDualCodeList + "|" + dualcode;
 							if(!dualcode.equals(code)) 
 								result = result + " OR "+  codeCol + "= '"+ querycode +"'";
+						}else{ //the code is not valid, keep it in the black list cache. Jeremy '12,6,3
+							
+							char[] charray = querycode.toCharArray();
+							charray[querycode.length()-1]++;
+							String nextcode = new String(charray);
+							
+							cursor = db.query(tablename, col, 
+									codeCol + " > '" + querycode + "' AND " + codeCol + " < '" + nextcode + "'", 
+									null, null, null, null, "1");
+							
+							if(!cursor.moveToFirst()){ //code* returns no valid records add the code with wildcard to blacklist
+								blackListCache.put(cacheKey(dualcode+"%"), dualcode);
+								if(DEBUG) 
+									Log.i(TAG, " expandDualCode() blackList wildcard code added, code = " + dualcode+"%"
+											+ ", cachkey = :"+ cacheKey(dualcode+"%") 
+											+ ", black list size = " + blackListCache.size()
+											+ " blackListCache.get() = " + blackListCache.get(cacheKey(dualcode+"%")));
+							}else{ //only add the code to black list
+								blackListCache.put(cacheKey(dualcode), dualcode);
+								if(DEBUG) 
+									Log.i(TAG, " expandDualCode() blackList code added, code = " +dualcode);
+							}
 						}
 						if (cursor != null) {
 							cursor.deactivate();
@@ -2104,8 +2178,18 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		return result;
 		
 	}
+	/**
+	 * Jeremy '12,6,3 Build unique cache key for black list cache. 
+	 * @param code
+	 * @return
+	 */
+	
+	private String cacheKey(String code){
+		
+		return tablename+"_"+code;
+	}
 
-	/*
+	/**
 	 * Process search results
 	 */
 	private Pair<List<Mapping>,List<Mapping>> buildQueryResult(String query_code, Cursor cursor, Boolean getAllRecords) {
@@ -3804,14 +3888,14 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			File hanDBV2File = LIMEUtilities.isFileNotExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
 			
 			if(hanDBV2File!=null) 
-				LIMEUtilities.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
+				LIMEUtilities.copyRAWFile(mContext.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
 			else { // Jeremy '11,9,14 copy the db file if it's newer.
 				hanDBV2File = LIMEUtilities.isFileExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
 				if(hanDBV2File!=null && mLIMEPref.getParameterLong("hanDBDate") != hanDBV2File.lastModified())
-					LIMEUtilities.copyRAWFile(ctx.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
+					LIMEUtilities.copyRAWFile(mContext.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
 			}
 				
-			hanConverter = new LimeHanConverter(ctx);
+			hanConverter = new LimeHanConverter(mContext);
 		}
 	}
 	
