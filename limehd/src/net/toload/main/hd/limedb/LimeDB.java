@@ -1743,9 +1743,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							c = reMap.get(code);
 						}else if (phonetickeyboardtype.equals("hsu") &&
 								(code.equals("a") || code.equals("e") ||
-										code.equals("d") || code.equals("f") ||code.equals("j"))){
+										code.equals("s") || code.equals("d") || code.equals("f") ||code.equals("j"))){
 							// Dual mapped INITIALS have words mapped for a and e   
-							// and no mapped word on finals d,f,j  for HSU
+							// and no mapped word on finals s,d,f,j  for HSU
 							c = reMap.get(code);
 						}else{
 							/*if(tablename.equals("array")){
@@ -1769,8 +1769,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					}else {			
 						for (int i = 0; i < code.length(); i++) {
 							String s = code.substring(i, i + 1);
-							if(DEBUG)
-								Log.i(TAG, "preProcessingRemappingCode(), prefix = " + code.substring(0, i) );
 							if(i>0){
 								//Jeremy '12,6,3 If the last character is a tone symbol, the preceding will be intial
 								if(tablename.equals("phonetic")
@@ -2001,13 +1999,13 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				if(iterator_code.matches(".+[ 3467].+")){ // regular expression mathes tone in the middle
 					String newCode="";
 					//Jeremy '12,6,3 should replace the tone symbol at last character because it may be dual mapped non-tone symbols
-					if(iterator_code.matches(".+[ 3467]$")){
+					/*if(iterator_code.matches(".+[ 3467]$")){
 						String prefix = iterator_code.substring(0, iterator_code.length()-1).replaceAll("[3467 ]", "");
 						String postfix = iterator_code.substring(iterator_code.length()-1, iterator_code.length());
 						newCode = prefix+postfix;
 						if(DEBUG)
 							Log.i(TAG, "buildDualCodeList() prefix = " + prefix +", postfix=" + postfix);
-					}else
+					}else*/
 						newCode = iterator_code.replaceAll("[3467 ]","");
 					if(newCode.length()>0 )
 						if(dualCodeList.add(newCode) 

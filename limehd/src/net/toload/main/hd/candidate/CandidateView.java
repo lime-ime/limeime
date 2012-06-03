@@ -61,7 +61,6 @@ import net.toload.main.hd.global.Mapping;
  */
 public class CandidateView extends View implements View.OnClickListener 
 {
-	
 	private static final boolean DEBUG = false;
 	private static final String TAG = "CandidateView";
 
@@ -276,6 +275,7 @@ public class CandidateView extends View implements View.OnClickListener
         private static final int MSG_HIDE_COMPOSING = 3;
         private static final int MSG_SHOW_CANDIDATE_POPUP = 4;
         private static final int MSG_HIDE_CANDIDATE_POPUP = 5;
+        private static final int MSG_SET_COMPOSING = 6;
         @Override
         public void handleMessage(Message msg) {
         	if(DEBUG) Log.i(TAG,"UIHandler.handlMessage(): message:" + msg.what);
@@ -284,9 +284,7 @@ public class CandidateView extends View implements View.OnClickListener
                 	doUpdateUI();
                     break;
                 case MSG_UPDATE_COMPOSING:
-                	String composingText = (String) msg.obj;
-                	if(DEBUG) Log.i(TAG, "UIHandler.handleMessage(): compsoingText" + composingText);
-                	doUpdateComposing(composingText);
+                	doUpdateComposing();
                     break;
                 case MSG_HIDE_COMPOSING: {
                 	if(mComposingTextPopup!=null && mComposingTextPopup.isShowing()) {
@@ -302,6 +300,12 @@ public class CandidateView extends View implements View.OnClickListener
                 	doHideCandidatePopup();
                 	break;
                 }
+                case MSG_SET_COMPOSING: {
+                	String composingText = (String) msg.obj;
+                	if(DEBUG) Log.i(TAG, "UIHandler.handleMessage(): compsoingText" + composingText);
+                	doSetComposing(composingText);
+                    break;
+                }
             }
         }
 		
@@ -310,8 +314,12 @@ public class CandidateView extends View implements View.OnClickListener
         	
         }
 
-        public void updateComposing (String text ,int delay){
-        	sendMessageDelayed(obtainMessage(MSG_UPDATE_COMPOSING, 0, 0, text), delay);
+        public void setComposing (String text ,int delay){
+        	sendMessageDelayed(obtainMessage(MSG_SET_COMPOSING, 0, 0, text), delay);
+        }
+        
+        public void updateComposing (int delay){
+        	sendMessageDelayed(obtainMessage(MSG_UPDATE_COMPOSING, 0, 0, null), delay);
         }
         public void  dismissComposing(int delay) {
         	sendMessageDelayed(obtainMessage(MSG_HIDE_COMPOSING, 0, 0, null), delay);	
@@ -505,7 +513,7 @@ public class CandidateView extends View implements View.OnClickListener
     		mPopupScrollView.scrollTo(0, 0);
     	}
     	
-    	//Jeremy '12,5,31 do updatelayoutparams after popupWindow update or creation.
+    	//Jeremy '12,5,31 do update layoutparams after popupWindow update or creation.
     	mPopupCandidateView.setLayoutParams(
     			new ScrollView.LayoutParams( ScrollView.LayoutParams.MATCH_PARENT
     			, popHeight- mCloseButtonHeight));
@@ -523,7 +531,7 @@ public class CandidateView extends View implements View.OnClickListener
 			Log.i(TAG,"setComposingText():composingText:"+composingText);
     	if(!composingText.trim().equals("")){
     		//mComposingText=composingText;
-        	//mHandler.updateComposing(composingText, 0);
+        	mHandler.setComposing(composingText, 0);
     		showComposing(composingText);
     	}else{
     		//mComposingText = "";
@@ -533,17 +541,75 @@ public class CandidateView extends View implements View.OnClickListener
     	
     
     }
-   
-    public void doUpdateComposing(String composingText) {
+    
+    /**
+     * Jeremy '12,6,2 separated from doupdateComposing 
+     */
+    
+    public void doSetComposing(String composingText) {
     	if(DEBUG) 
-    		Log.i(TAG,"doUpdateComposing():"+composingText + "this.isShown()" + this.isShown());
+    		Log.i(TAG,"doSetComposing():"+composingText + "this.isShown()" + this.isShown());
     	
-    	
-    	
-    	
-    	final int popupWidth =  mComposingTextView.getWidth();// getMeasuredWidth();  Jeremy '12,6,2 use getWidth and getHeight instead
-    	final int popupHeight = mComposingTextView.getHeight();// .getMeasuredHeight();
 
+    	// Composing buffer textView
+    	if(mComposingTextPopup==null){
+    		LayoutInflater inflater 
+    			= (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    		mComposingTextPopup = new PopupWindow(mContext);
+    		mComposingTextView = (TextView) inflater.inflate(R.layout.composingtext, null);
+    		mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    		mComposingTextPopup.setContentView(mComposingTextView);
+    		mComposingTextPopup.setBackgroundDrawable(null);
+    	}
+
+    	
+        if (composingText!=null ) {	
+        	mComposingTextPopup.setContentView(mComposingTextView);
+        	mComposingTextView.setText(composingText);
+        	mComposingTextView.setTextSize(
+        			mContext.getResources().getDimensionPixelSize(R.dimen.composing_text_size) 
+        			*mLIMEPref.getFontSize());
+        }else
+        	return;
+        
+        mComposingTextView.invalidate();  //Jeremy '12,6,2 invalidate and measure so as to get correct height and width later. 
+        mComposingTextView.setVisibility(VISIBLE);
+        mComposingTextView.measure(
+        		MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
+    			MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+        
+    	
+    	final int popupWidth =  mComposingTextView.getMeasuredWidth(); 
+     	final int popupHeight = mComposingTextView.getMeasuredHeight();
+    
+
+    	int [] offsetInWindow = new int[2];
+    	this.getLocationInWindow(offsetInWindow);
+    	int mPopupComposingY = offsetInWindow[1];
+    	int mPopupComposingX = 0;
+
+    	mPopupComposingY -= popupHeight;
+        
+        if (!mComposingTextPopup.isShowing()) {              	
+    		mComposingTextPopup.setWidth(popupWidth);
+    		mComposingTextPopup.setHeight(popupHeight);
+    		mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX,mPopupComposingY );
+    	}
+    
+       
+    }
+    /**
+     *  Update composing to correct location with a delay after setComposing.
+     */
+   
+    public void doUpdateComposing(){
+           	if(DEBUG) 
+        		Log.i(TAG,"doUpdateComposing(): this.isShown()" + this.isShown());
+        	
+    	
+    	final int popupWidth =  mComposingTextView.getMeasuredWidth();  //Jeremy '12,6,2 use getWidth and getHeight instead
+     	final int popupHeight = mComposingTextView.getMeasuredHeight();
+    
 
     	int [] offsetInWindow = new int[2];
     	this.getLocationInWindow(offsetInWindow);
@@ -586,9 +652,11 @@ public class CandidateView extends View implements View.OnClickListener
     	//}
 
     	if(DEBUG) 
-    		Log.i(TAG, "doUpdateComposing():mPopupComposingX:" 
-    				+mPopupComposingX + ". mPopupComposingY:" +mPopupComposingY
-    				+"mComposingTextPopup.isShowing()=" + mComposingTextPopup.isShowing() );
+    		Log.i(TAG, "doUpdateComposing():mPopupComposingX:" +mPopupComposingX 
+    				+ ". mPopupComposingY:" +mPopupComposingY
+    				+". popupWidth = " + popupWidth
+    				+". popupHeight = " + popupHeight
+    				+ ". mComposingTextPopup.isShowing()=" + mComposingTextPopup.isShowing() );
 
     	if (mComposingTextPopup.isShowing()) {              	
     		mComposingTextPopup.update(mPopupComposingX, mPopupComposingY, 
@@ -599,7 +667,7 @@ public class CandidateView extends View implements View.OnClickListener
     		mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX, 
     				mPopupComposingY );
     	}
-    	mComposingTextView.setVisibility(VISIBLE);
+    	
 
 
         
@@ -607,45 +675,19 @@ public class CandidateView extends View implements View.OnClickListener
 
     public void showComposing(String composingText) {
     	if(DEBUG) 
-    		Log.i(TAG, "hidecomposing()");
+    		Log.i(TAG, "showComposing()");
     	//jeremy '12,6,3 moved the creation of mComposingTextPopup and mComposingTextView from doUpdateComposing
     	//Jeremy '12,4,8 to avoid fc when hard keyboard is engaged and candidateview is not shown
     	if(!this.isShown()) return;
-    	
-    	
-    	// Composing buffer textView
-    	if(mComposingTextPopup==null){
-    		LayoutInflater inflater 
-    			= (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    		mComposingTextPopup = new PopupWindow(mContext);
-    		mComposingTextView = (TextView) inflater.inflate(R.layout.composingtext, null);
-    		mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-    		mComposingTextPopup.setContentView(mComposingTextView);
-    		mComposingTextPopup.setBackgroundDrawable(null);
-    	}
-
-    	
-        if (composingText!=null ) {	
-        	mComposingTextPopup.setContentView(mComposingTextView);
-        	mComposingTextView.setText(composingText);
-        	mComposingTextView.setTextSize(
-        			mContext.getResources().getDimensionPixelSize(R.dimen.composing_text_size) 
-        			*mLIMEPref.getFontSize());
-        }else
-        	return;
-        mComposingTextView.invalidate();  //Jeremy '12,6,2 invalidate and measure so as to get correct height and width later. 
-        mComposingTextView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 
-    			MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-        
-       
-    	mHandler.updateComposing(composingText,0);
+    
+    	mHandler.updateComposing(200); //Jeremy '12,6,3 dealy for 200ms after setcomposing
     	
     }
     
     public void hideComposing() {
     	if(DEBUG) 
     		Log.i(TAG, "hidecomposing()");
-    	mHandler.dismissComposing(0);
+    	mHandler.dismissComposing(200); //Jeremy '12,6,3 the same delay as showComposing to avoid showed after hided
     	
     }
     public void showCandidatePopup(){
