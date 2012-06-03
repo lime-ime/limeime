@@ -621,34 +621,54 @@ public class SearchServer {
 
 					baseCode = unit1.getCode();
 					baseWord = unit1.getWord();
-					QPCode = baseCode.substring(0, 1);
+					//TODO: Do not know how to build QPCode if word length > 1. Abandon now!! Jeremy '12,6,4
+					if(baseWord.length()>1) 
+						QPCode = "";
+					else
+						QPCode = baseCode.substring(0, 1);
 
 					for (int i = 0; i < phraselist.size(); i++) {
 						if(i+1 <phraselist.size()){
+							
 							Mapping unit2 = phraselist.get((i + 1));
 							if(unit2 == null 
 									|| unit2.getCode().length()==0
-									|| unit2.getWord().length()==0){break;}				
+									|| unit2.getWord().length()==0){break;}
+							
+							if(DEBUG)
+								Log.i(TAG,"learnLDPhrase(): code1 = " + unit1.getCode()
+										+ ", code2 = " + unit2.getCode()
+										+ ", word1 = " + unit1.getWord()
+										+ ", word2 = " + unit2.getWord()
+										+ ", code1.length = " + + unit1.getCode().length()
+										+ ", word1.length = " + + unit1.getWord().length()
+										);
+							
+							
 							baseCode += unit2.getCode();
-							baseCode = baseCode.toLowerCase();
 							baseWord += unit2.getWord();
 							if(tablename.equals("phonetic")) {// remove tone symbol in phonetic table 
-								LDCode = baseCode.replaceAll("[3467 ]", "").toLowerCase();
-								QPCode += unit2.getCode().substring(0, 1).toLowerCase();
+								LDCode = baseCode.replaceAll("[3467 ]", "");
+								//TODO: Do not know how to build QPCode if word length > 1. Abandon now!! Jeremy '12,6,4
+								if(unit2.getWord().length()>1) 
+									QPCode = "";
+								else
+									QPCode += unit2.getCode().substring(0, 1);
+								
 								if(LDCode.length()>1){
-									dbadapter.addOrUpdateMappingRecord(LDCode, baseWord);
-									cache.remove(cacheKey(LDCode));
-									updateSimilarCodeRelatedList(LDCode);
+									dbadapter.addOrUpdateMappingRecord(LDCode.toLowerCase(), baseWord);
+									cache.remove(cacheKey(LDCode.toLowerCase()));
+									updateSimilarCodeRelatedList(LDCode.toLowerCase());
 								}
 								if(QPCode.length()>1){
-									dbadapter.addOrUpdateMappingRecord(QPCode, baseWord);
+									dbadapter.addOrUpdateMappingRecord(QPCode.toLowerCase(), baseWord);
 									cache.remove(cacheKey(QPCode.toLowerCase()));
 									updateSimilarCodeRelatedList(QPCode.toLowerCase());
 								}
 							}else if(baseCode.length()>1){
-								dbadapter.addOrUpdateMappingRecord(baseCode, baseWord);
-								cache.remove(cacheKey(baseCode));
-								updateSimilarCodeRelatedList(baseCode);
+								dbadapter.addOrUpdateMappingRecord(baseCode.toLowerCase(), baseWord);
+								cache.remove(cacheKey(baseCode.toLowerCase()));
+								updateSimilarCodeRelatedList(baseCode.toLowerCase());
 							}
 
 							if(DEBUG) 

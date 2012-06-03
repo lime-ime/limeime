@@ -965,8 +965,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @param code, word
 	 */
 	//Jeremy '11, 7, 31 add new phrase mapping into current table (for LD phrase learning). 
-	public synchronized void addOrUpdateMappingRecord(String raw_code, String word) {
-		String code = preProcessingRemappingCode(raw_code);
+	public synchronized void addOrUpdateMappingRecord(String code, String word) {
+		//String code = preProcessingRemappingCode(raw_code);  //Jeremy '12,6,4 the code is build from mapping.getcode() should not do remap again.
 		if(DEBUG)
 				Log.i(TAG, "addOrUpdateMappingRecord(), code = " + code + ". word=" + word  );
 		//Jeremy '12,4,17 !checkDBConnection() when db is restoring or replaced.
@@ -978,11 +978,21 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			
 			if(munit==null){
 				if (code.length()>0 && word.length()>0) {
+					
 					cv.put(FIELD_CODE, code);
-					if(tablename.equals("phonetic")) cv.put(FIELD_CODE3R, code.replaceAll("[ 3467]", ""));//Jeremy '12,6,1, add missing space
+					removeFromBlackList(code);  // remove from black list if it listed. Jeremy 12,6, 4
+					if(tablename.equals("phonetic")) {
+						String code3r = code.replaceAll("[ 3467]", "");
+						cv.put(FIELD_CODE3R, code3r);//Jeremy '12,6,1, add missing space
+						removeFromBlackList(code3r); // remove from black list if it listed. Jeremy 12,6, 4
+					}
 					cv.put(FIELD_WORD, word);
 					cv.put(FIELD_SCORE, 1);
 					db.insert(tablename, null, cv);
+					
+					
+					
+					
 					if(DEBUG)
 						Log.i(TAG, "addOrUpdateMappingRecord(): mapping is not existed, new cored inserted");
 				}
@@ -2073,6 +2083,28 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		return isBlacklisted;
 	}
 	
+	
+	/**
+	 * Jeremy '12,6,4 check black list on code , code + wildcard and reduced code with wildcard
+	 * @param code
+	 * @return
+	 */
+	private void removeFromBlackList(String code){
+		if(blackListCache.get(cacheKey(code)) != null)
+			blackListCache.remove(cacheKey(code));
+		if(blackListCache.get(cacheKey(code+"%")) != null)
+			blackListCache.remove(cacheKey(code+"%"));
+
+
+		for(int i=DUALCODE_NO_CHECK_LIMIT-1; i < code.length(); i++){
+			String codeToCheck = code.substring(0, i) + "%";
+			if(blackListCache.get(cacheKey(codeToCheck)) != null)
+				blackListCache.remove(cacheKey(codeToCheck));
+			
+		}
+
+
+	}
 	
 	
 	private String expandDualCode(String code, String keytablename){
@@ -3341,7 +3373,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 	private Mapping isMappingExistOnDB(SQLiteDatabase db, String code, String word) throws RemoteException {
 		if(DEBUG)
-			Log.i(TAG, "isMappingExistOnDB(), code = " + code);
+			Log.i(TAG, "isMappingExistOnDB(), code = '" + code +"'");
 		Mapping munit = null;
 		if (code != null && code.trim().length()>0){
 
