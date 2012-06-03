@@ -1965,13 +1965,127 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		HashMap<String,String> codeDualMap = keysDualMap.get(keytablename);
 	
 		HashSet<String> dualCodeList = new HashSet<String>();
-		HashSet<String> resultDualCodeList = new HashSet<String>();
+		//HashSet<String> resultDualCodeList = new HashSet<String>();
+		HashSet<String> treeDualCodeList = new HashSet<String>();
 		dualCodeList.add(code);
-		resultDualCodeList.add(code);
+		//resultDualCodeList.add(code);
 
 		if(codeDualMap != null && codeDualMap.size()>0) {
+			
+			HashMap<Integer, List<String>> treemap = new HashMap<Integer, List<String>>();
+		
 
-			do{
+				for(int i=0;i  < code.length(); i++ ){
+					if(DEBUG)
+						Log.i(TAG, "buildDualCodeList() level : " + i);
+								
+
+					List<String> levelnMap = new LinkedList<String>();
+					List<String> lastLevelMap = null;
+					if(i==0) {
+						lastLevelMap = new LinkedList<String>();
+						lastLevelMap.add(code);
+					}else
+						lastLevelMap = treemap.get(i-1);
+
+					String c = null;
+					String n = null;
+					
+					if(lastLevelMap ==null || lastLevelMap.size()==0) {
+						if(DEBUG)
+							Log.i(TAG, "buildDualCodeList() level : " + i + " ended because last level map is empty");
+						continue;
+					}
+					if(DEBUG)
+						Log.i(TAG, "buildDualCodeList() level : " + i + " lastlevelmap size = " + lastLevelMap.size());
+					for(String entry : lastLevelMap){
+						if(DEBUG)
+							Log.i(TAG, "buildDualCodeList() level : " + i
+									+", entry = " + entry);
+						
+						if(entry.length()==1) c = entry;
+						else
+							c = entry.substring(i, i+1);
+						
+
+						boolean codeMapped = false;
+						do{
+								
+							if(entry.length()==1 && !levelnMap.contains(entry) ){
+								treeDualCodeList.add(entry);
+								levelnMap.add(entry);
+								if(DEBUG)
+									Log.i(TAG, "buildDualCodeList() entry.length()==1 treeDualCodeList new code = '" + entry 
+											+ "' added. treeDualCodeList.size = " + treeDualCodeList.size());
+								codeMapped = true;
+							
+							}else if((entry.length()>1 && !levelnMap.contains(entry))
+									&& blackListCache.get(cacheKey(entry.substring(0,i+1)+"%"))==null){
+								treeDualCodeList.add(entry);
+								levelnMap.add(entry);
+								if(DEBUG)
+									Log.i(TAG, "buildDualCodeList() treeDualCodeList new code = '" + entry 
+											+ "' added. treeDualCodeList.size = " + treeDualCodeList.size());
+								codeMapped = true;
+							}else if(codeDualMap.get(c)!=null && !codeDualMap.get(c).equals(c)){
+								n = codeDualMap.get(c);
+								String newCode = "";
+								
+								if(entry.length()==1)
+									newCode =n;
+								else if(i==0)
+									newCode = n + entry.substring(1,entry.length());
+								else if(i ==  entry.length()-1 )
+									newCode = entry.substring(0, entry.length()-1) + n;
+								else
+									newCode = entry.substring(0,i) + n 
+											+ entry.substring(i+1, entry.length());
+								if(DEBUG)
+									Log.i(TAG, "buildDualCodeList()  treeDualCodeList new code = '" + newCode 
+											+ "' blacklistKey = " + cacheKey(newCode.substring(0,i+1)+"%")
+											+ " blacklistValue = " + blackListCache.get(cacheKey(newCode.substring(0,i+1)+"%")));
+								
+								if(newCode.length()==1 && !levelnMap.contains(newCode) ){
+									treeDualCodeList.add(newCode);
+									levelnMap.add(newCode);
+									if(DEBUG)
+										Log.i(TAG, "buildDualCodeList() newCode.length()==1 treeDualCodeList new code = '" + newCode 
+												+ "' added. treeDualCodeList.size = " + treeDualCodeList.size());
+									codeMapped = true;
+								}else if((newCode.length()>1 && !levelnMap.contains(newCode))
+										&& blackListCache.get(cacheKey(newCode.substring(0,i+1)+"%"))==null){
+									levelnMap.add(newCode);
+
+									treeDualCodeList.add(newCode);
+									if(DEBUG)
+										Log.i(TAG, "buildDualCodeList() treeDualCodeList new code = '" + newCode 
+												+ ", c = " + c 
+												+ ", n = " + n
+												+ "' added. treeDualCodeList.size = " + treeDualCodeList.size());
+
+									codeMapped = true;
+								}else if(DEBUG)
+									Log.i(TAG, "buildDualCodeList() treeDualCodeList blacklisted code = '" + entry.substring(0,i)+"%" 
+											+ "'");
+
+								c = n;
+							}else {
+								if(DEBUG)
+									Log.i(TAG, "buildDualCodeList() level : " + i 
+											+ " ended. treeDualCodeList.size = " + treeDualCodeList.size());
+								codeMapped = false;
+							}
+
+							
+						}while(codeMapped);
+						treemap.put(i, levelnMap);
+
+
+					}
+				}
+			//}
+
+			/*do{
 				int currentListSize = dualCodeList.size();
 				boolean codeInserted = false;
 				HashSet<String> snapShot = new HashSet<String>(dualCodeList);
@@ -1990,7 +2104,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							else{
 								if(j==0) 
 									newCode = n + currentCode.substring(1,currentCode.length());
-								else if(j==currentCode.length()) 
+								else if(j==currentCode.length()-1) 
 									newCode = currentCode.substring(0, currentCode.length()-1) + n;
 								else
 									newCode = currentCode.substring(0,j) + n 
@@ -2002,7 +2116,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 								codeInserted = true;
 								dualCodeList.add(newCode);	
 								
-								if(!checkBlackList(newCode)){ //Add newCode to the resultDualCodeList if newCode is not black listed. 
+								if(!checkBlackList(newCode, false)){ //Add newCode to the resultDualCodeList if newCode is not black listed. 
 									resultDualCodeList.add(newCode);	
 									if(DEBUG) 
 										Log.i(TAG, "buildDualCodeList(): code added:"+ newCode);
@@ -2016,18 +2130,18 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				}
 				if(!codeInserted || dualCodeList.size() > DUALCODE_ITERATION_LIMIT ) break;
 
-			}while(true);
+			}while(true);*/
 		}
 		//Jeremy '11,8,12 added for continuous typing.  
 		if(tablename.equals("phonetic")){			
-			HashSet<String> tempList = new HashSet<String>(resultDualCodeList);
+			HashSet<String> tempList = new HashSet<String>(treeDualCodeList);
 			for(String iterator_code: tempList){
 				if(iterator_code.matches(".+[ 3467].+")){ // regular expression mathes tone in the middle
 					String newCode = iterator_code.replaceAll("[3467 ]","");
 					 //Jeremy '12,6,3 look-up the blacklist cache before add to the list.
 					if(newCode.length()>0 
-							&& !resultDualCodeList.contains(newCode) && !checkBlackList(newCode) ){ 
-						resultDualCodeList.add(newCode);	
+							&& !treeDualCodeList.contains(newCode) && !checkBlackList(newCode, false) ){ 
+						treeDualCodeList.add(newCode);	
 						if(DEBUG) 
 							Log.i(TAG, "buildDualCodeList(): code added:"+ newCode);
 
@@ -2038,8 +2152,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		}
 
 		
-		if(DEBUG) Log.i(TAG, "buildDualCodeList(): resultDualCodeList.size()="+ resultDualCodeList.size());
-		return resultDualCodeList;
+		if(DEBUG) Log.i(TAG, "buildDualCodeList(): resultDualCodeList.size()="+ treeDualCodeList.size());
+		return treeDualCodeList;
 			
 		
 		
@@ -2050,25 +2164,25 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @param code
 	 * @return
 	 */
-	private boolean checkBlackList(String code){
+	private boolean checkBlackList(String code, Boolean wildCardOnly){
 		Boolean isBlacklisted = false;
 		if(code.length()< DUALCODE_NO_CHECK_LIMIT){ //code too short, add anyway
 			isBlacklisted = false;
 			if(DEBUG) 
 				Log.i(TAG, "buildDualCodeList(): code too short add without check code=" + code);
-		}else if(blackListCache.get(cacheKey(code)) != null){ //the code is blacklisted
+		}else if(!wildCardOnly && blackListCache.get(cacheKey(code)) != null){ //the code is blacklisted
 			isBlacklisted = true;
 			if(DEBUG) 
 				Log.i(TAG, "buildDualCodeList(): black listed code:"+ code);
-		}else if(blackListCache.get(cacheKey(code+"%")) != null){ //the code with wildcard is blacklisted
+		/*}else if(blackListCache.get(cacheKey(code+"%")) != null){ //the code with wildcard is blacklisted
 			if(DEBUG) 
 				Log.i(TAG, "buildDualCodeList(): check black list code:"+ code 
 					+ ", blackListCache.get(cacheKey(codeToCheck+%))="+blackListCache.get(cacheKey(code+"%")));
 			isBlacklisted = true;
 			if(DEBUG) 
-				Log.i(TAG, "buildDualCodeList(): black listed code:"+ code+"%");
+				Log.i(TAG, "buildDualCodeList(): black listed code:"+ code+"%");*/
 		}else {
-			for(int i=DUALCODE_NO_CHECK_LIMIT-1; i < code.length(); i++){
+			for(int i=DUALCODE_NO_CHECK_LIMIT-1; i <= code.length(); i++){
 				String codeToCheck = code.substring(0, i) + "%";
 				if(blackListCache.get(cacheKey(codeToCheck)) != null){
 					isBlacklisted = true;
@@ -2092,11 +2206,11 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	private void removeFromBlackList(String code){
 		if(blackListCache.get(cacheKey(code)) != null)
 			blackListCache.remove(cacheKey(code));
-		if(blackListCache.get(cacheKey(code+"%")) != null)
+		/*if(blackListCache.get(cacheKey(code+"%")) != null)
 			blackListCache.remove(cacheKey(code+"%"));
+*/
 
-
-		for(int i=DUALCODE_NO_CHECK_LIMIT-1; i < code.length(); i++){
+		for(int i=DUALCODE_NO_CHECK_LIMIT-1; i <= code.length(); i++){
 			String codeToCheck = code.substring(0, i) + "%";
 			if(blackListCache.get(cacheKey(codeToCheck)) != null)
 				blackListCache.remove(cacheKey(codeToCheck));
