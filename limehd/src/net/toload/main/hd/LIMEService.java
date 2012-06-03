@@ -27,6 +27,7 @@ import android.os.Handler;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.Vibrator;
+import android.speech.RecognizerIntent;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyCharacterMap;
@@ -58,6 +59,7 @@ import net.toload.main.hd.candidate.CandidateView;
 import net.toload.main.hd.candidate.CandidateViewContainer;
 import net.toload.main.hd.global.ChineseSymbol;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.global.Mapping;
 import net.toload.main.hd.limesettings.LIMEPreference;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
@@ -589,6 +591,7 @@ public class LIMEService extends InputMethodService implements
 	 * according the input attrubute in editorInfo
 	 */
 	private void initOnStartInput(EditorInfo attribute, boolean restarting) {
+		
 	
 		if (DEBUG)
 			Log.i(TAG, "initOnStartInput(): attribute.inputType & EditorInfo.TYPE_MASK_CLASS: " 
@@ -3380,6 +3383,18 @@ public class LIMEService extends InputMethodService implements
 		hideCandidateView(); //Jeremy '12,5,7 hideCandiate when inputview is closed but not yet leave the original field (onfinishinput() will not called). 
 	}
 
+	private void startVoiceInput(){
+		if(LIMEUtilities.isVoiceSearchServiceExist(getBaseContext()))
+			this.switchInputMethod("com.google.android.voicesearch/.ime.VoiceInputMethodService");
+		
+		/*
+		Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Voice recognition Demo...");
+        this.startActivity(intent);*/
+		
+	}
 
 
 

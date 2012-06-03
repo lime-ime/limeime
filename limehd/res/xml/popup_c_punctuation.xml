@@ -28,6 +28,7 @@
     limehd:verticalGap="0px"
     limehd:keyHeight="@dimen/key_height"
     >
+    
     <Row limehd:rowEdgeFlags="top">
         <Key limehd:keyLabel="【" limehd:keyEdgeFlags="left" />
          <Key limehd:keyLabel="〈" />

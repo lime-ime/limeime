@@ -25,7 +25,7 @@ import android.content.Intent;
  */
 public class LIMEUtilities {
 	static final String TAG = "LIMEUtilities";
-	static final boolean DEBUG = false;
+	static final boolean DEBUG = true;
 	
 	public static File isFileNotExist(String filepath){
 		
@@ -128,19 +128,39 @@ public class LIMEUtilities {
 
 	}
 	
+	public static boolean isVoiceSearchServiceExist(Context context){
+		InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+		List<InputMethodInfo> mInputMethodProperties = imm.getEnabledInputMethodList();
+	
+		boolean isVoiceSearchServiceEnabled = false;
+		for (int i = 0; i < mInputMethodProperties.size(); i++) {
+			InputMethodInfo imi = mInputMethodProperties.get(i);
+			if(DEBUG) Log.i(TAG, "enabled IM " + i + ":" + imi.getId());
+			
+			if(imi.getId().equals("com.google.android.voicesearch/.ime.VoiceInputMethodService")){
+				isVoiceSearchServiceEnabled = true;
+				if(DEBUG) Log.i(TAG,"isVoiceSearchServiceExist(), voice input service ime found.");
+				break;
+			}
+		}
+		return isVoiceSearchServiceEnabled;
+		
+	}
+	
 	public static boolean isLIMEEnabled(Context context){
 		InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
 		List<InputMethodInfo> mInputMethodProperties = imm.getEnabledInputMethodList();
 		String limeID = getLIMEID(context);
 
-		final int N = mInputMethodProperties.size();
-
 		boolean isLIMEActive = false; 
 		
-		for (int i = 0; i < N; i++) {
+		for (int i = 0; i < mInputMethodProperties.size(); i++) {
 			InputMethodInfo imi = mInputMethodProperties.get(i);
 			if(DEBUG) Log.i(TAG, "enabled IM " + i + ":" + imi.getId());
-			if(imi.getId().equals(limeID)) isLIMEActive = true;
+			if(imi.getId().equals(limeID)){
+				isLIMEActive = true;
+				break;
+			}
 		}
 		return isLIMEActive;
 	}
@@ -158,6 +178,16 @@ public class LIMEUtilities {
 		return LIMEComponentName.flattenToShortString();
 	}
 	
+	public static String getVoiceSearchIMId(Context context){
+		ComponentName voiceInputComponent = 
+				new ComponentName("com.google.android.voicesearch", "com.google.android.voicesearch.ime.VoceInputMethdServce");
+		if(DEBUG)
+			Log.i(TAG, "getVoiceSearchIMId(), Comonent name = " 
+					+ voiceInputComponent.flattenToString() + ", id = " 
+					+ voiceInputComponent.flattenToShortString());
+		return voiceInputComponent.flattenToShortString();
+	}
+	
 	public static void showInputMethodSettingsPage(Context context){
 		Intent intent = new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS);
    	 	context.startActivity(intent);
@@ -165,5 +195,7 @@ public class LIMEUtilities {
 	public static void showInputMethodPicker(Context context){
 		((InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE)).showInputMethodPicker();
 	}
+	
+	
 
 }

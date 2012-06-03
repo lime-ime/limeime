@@ -33,11 +33,11 @@
     <Row>
       	<Key limehd:codes="33" limehd:keyLabel="!儿\n|" 
 			 limehd:keyEdgeFlags="left" />
-		<Key limehd:codes="64" limehd:keyLabel="\@母\n車" />
-		<Key limehd:codes="35" limehd:keyLabel="\#匚\n糸" />
-		<Key limehd:codes="36" limehd:keyLabel="$]\n言" />
-		<Key limehd:codes="37" limehd:keyLabel="%Ｌ\n貝" />
-		<Key limehd:codes="94" limehd:keyLabel="^ㄏ\n雨" />
+		<Key limehd:codes="64" limehd:keyLabel="\@\n車" />
+		<Key limehd:codes="35" limehd:keyLabel="\#\n糸" />
+		<Key limehd:codes="36" limehd:keyLabel="$\n言" />
+		<Key limehd:codes="37" limehd:keyLabel="%\n貝" />
+		<Key limehd:codes="94" limehd:keyLabel="^\n雨" />
 		<Key limehd:codes="38" limehd:keyLabel="&amp;\nㄇ" />
 		<Key limehd:codes="42" limehd:keyLabel="*\n八" />
 		<Key limehd:codes="40" limehd:keyLabel="(\n耳" />
