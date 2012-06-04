@@ -29,18 +29,19 @@
     limehd:keyHeight="@dimen/key_height"
     >
 
-    <Row>
-        <Key limehd:codes="64" limehd:keyLabel="\@" limehd:keyEdgeFlags="left"/>
-        <Key limehd:codes="35" limehd:keyLabel="\#"/>
-        <Key limehd:codes="36" limehd:keyLabel="$"/>
-        <Key limehd:codes="37" limehd:keyLabel="%"/>
-        <Key limehd:codes="38" limehd:keyLabel="&amp;"/>
-        <Key limehd:codes="42" limehd:keyLabel="*"/>
-        <Key limehd:codes="33" limehd:keyLabel="!"/>
-        <Key limehd:codes="47" limehd:keyLabel="/"/>
-        <Key limehd:codes="40" limehd:keyLabel="("/>
-        <Key limehd:codes="41" limehd:keyLabel=")" limehd:keyEdgeFlags="right"/>
-    </Row>
+  
+	<Row>
+		<Key limehd:codes="33" limehd:keyLabel="!"  limehd:keyEdgeFlags="left" />
+		<Key limehd:codes="64" limehd:keyLabel="\@" />
+		<Key limehd:codes="35" limehd:keyLabel="\#" />
+		<Key limehd:codes="36" limehd:keyLabel="$" />
+		<Key limehd:codes="37" limehd:keyLabel="%" />
+		<Key limehd:codes="94" limehd:keyLabel="^" />
+		<Key limehd:codes="38" limehd:keyLabel="&amp;" />
+		<Key limehd:codes="42" limehd:keyLabel="*" />
+		<Key limehd:codes="40" limehd:keyLabel="(" />
+		<Key limehd:codes="41" limehd:keyLabel=")" limehd:keyEdgeFlags="right" />
+	</Row>
     
     <Row>
         <Key limehd:codes="81" limehd:keyLabel="Q" limehd:keyEdgeFlags="left"/>
