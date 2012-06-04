@@ -56,7 +56,7 @@ import android.widget.Toast;
  */
 public class LimeDB  extends LimeSQLiteOpenHelper { 
 
-	private static boolean DEBUG = false;
+	private static boolean DEBUG = true;
 	private static String TAG = "LIMEDB";
 	
 	
@@ -1541,7 +1541,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		return result;
 	}*/
 	
-	/*
+	/**
 	 * Retrieve matched records
 	 */
 	public Pair<List<Mapping>,List<Mapping>> getMapping( String code, boolean softKeyboard, boolean getAllRecords) {
@@ -2264,6 +2264,11 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					dualcode = dualcode.trim(); //Jeremy '12,5,30 escape ' here, moved from remap.
 					noToneCode  = dualcode.replaceAll("[3467 ]", "");
 				}
+				/*if(useCode3r && !dualcode.matches(".+[3467 ].*"))
+					codeCol = FIELD_CODE3R;
+				else
+					codeCol = FIELD_CODE;*/
+				
 				String[] col = {codeCol};
 				
 				String querycode = dualcode.replaceAll("'", "''");
@@ -2273,24 +2278,28 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				
 				if(NOCheckOnExpand){
 					if(!dualcode.equals(code)){
-						result = result + " OR "
-						+  codeCol + "= '"+ querycode +"'";
+						result = result + " OR " +  codeCol + "= '"+ querycode +"'";
 					}
 				}else{
 					//Jeremy '11,8, 26 move valid code list building to buildqueryresult to avoid repeat query.
 					try{
+						String selectClause = codeCol + " = '" + querycode + "'";
+						if(!dualcode.equals(noToneCode)){ //code with tones. should strip tone symbols and add to the select condition.
+							selectClause = FIELD_CODE + " = '" + querycode + "' OR " + FIELD_CODE3R + " = '" + queryNoToneCode + "'";
+						}
+						
+						if(DEBUG)
+							Log.i(TAG,"expandDualCode() selectClause = " +selectClause );
 
-						Cursor cursor = db.query(tablename, col, 
-								codeCol + " = '" + querycode + "'", 
+						Cursor cursor = db.query(tablename, col, selectClause, 
 								null, null, null, null, "1");
 						if(cursor.moveToFirst()){ //fist entry exist, the code is valid.
 							if(DEBUG)
-								Log.i(TAG,"expandDualCode() code = '" + dualcode + "' is validcode" );
+								Log.i(TAG,"expandDualCode()  code = '" + dualcode + "' is validcode" );
 							if(validDualCodeList.equals("")) validDualCodeList = dualcode;
 							else validDualCodeList = validDualCodeList + "|" + dualcode;
 							if(!dualcode.equals(code)) 
-								result = result + " OR "
-										+ codeCol + "= '"+ querycode +"'";
+								result = result + " OR " + codeCol + "= '"+ querycode +"'";
 						}else{ //the code is not valid, keep it in the black list cache. Jeremy '12,6,3
 
 							char[] charray = dualcode.toCharArray();
@@ -2298,7 +2307,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							String nextcode = new String(charray);
 							nextcode = nextcode.replaceAll("'", "''");
 
-							String selectClause = codeCol + " > '" + querycode 	+ "' AND " + codeCol + " < '" + nextcode + "'";
+							selectClause = codeCol + " > '" + querycode 	+ "' AND " + codeCol + " < '" + nextcode + "'";
 
 							if(!dualcode.equals(noToneCode)){ //code with tones. should strip tone symbols and add to the select condition.
 								charray = queryNoToneCode.toCharArray();
