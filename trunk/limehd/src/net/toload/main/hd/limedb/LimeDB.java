@@ -56,7 +56,7 @@ import android.widget.Toast;
  */
 public class LimeDB  extends LimeSQLiteOpenHelper { 
 
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
 	private static String TAG = "LIMEDB";
 	
 	
