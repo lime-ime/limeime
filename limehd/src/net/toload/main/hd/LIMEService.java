@@ -27,7 +27,6 @@ import android.os.Handler;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.Vibrator;
-import android.speech.RecognizerIntent;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyCharacterMap;
@@ -3382,17 +3381,11 @@ public class LIMEService extends InputMethodService implements
 		super.onFinishInputView(finishingInput);
 		hideCandidateView(); //Jeremy '12,5,7 hideCandiate when inputview is closed but not yet leave the original field (onfinishinput() will not called). 
 	}
-
+	
 	private void startVoiceInput(){
 		if(LIMEUtilities.isVoiceSearchServiceExist(getBaseContext()))
 			this.switchInputMethod("com.google.android.voicesearch/.ime.VoiceInputMethodService");
 		
-		/*
-		Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Voice recognition Demo...");
-        this.startActivity(intent);*/
 		
 	}
 
