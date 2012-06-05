@@ -69,7 +69,21 @@ public class Mapping {
 		this.setDictionary(d);
 	}
 	
-	
+	/**
+	 * Clone mapping '12,6,5 Jeremy.
+	 * @param mapping
+	 */
+	public Mapping(Mapping mapping) {
+		this.setId(mapping.id);
+		this.setCode(mapping.code);
+		this.setWord(mapping.word);
+		this.setPword(mapping.pword);
+		this.setScore(mapping.score);
+		this.setDictionary(mapping.isDictionary);
+		this.setRelated(mapping.getRelated());
+	}
+
+
 	/**
 	 * @return the pcode
 	 *

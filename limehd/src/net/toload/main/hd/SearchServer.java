@@ -45,7 +45,7 @@ import android.util.Pair;
 public class SearchServer {
 
 	private final boolean DEBUG = false;
-	private final String TAG = "LIME.SearchService";
+	private final String TAG = "LIME.SearchServer";
 	private static LimeDB dbadapter = null; //Jeremy '12,5,1 shared single LIMEDB object 
 	//Jeremy '12,4,6 Combine updatedb and quierydb into db,
 	//Jeremy '12,4,7 move db open/clsoe back to LimeDB
@@ -86,6 +86,8 @@ public class SearchServer {
 	private static ConcurrentHashMap<String, Pair<List<Mapping>,List<Mapping>>> cache = null;
 	private static ConcurrentHashMap<String, List<Mapping>> engcache = null;
 	private static ConcurrentHashMap<String, String> keynamecache = null;
+	/** Store the mapping of typing code and mapped code from query on db  Jeremy '12,6,5  */
+	private static ConcurrentHashMap<String, List<String>> coderemapcache = null;
 
 	private Context mContext = null;
 	
@@ -273,7 +275,6 @@ public class SearchServer {
 			Mapping temp = new Mapping();
 			temp.setWord(code);
 			//code = code.toLowerCase();  //Jeremy '12,4,1 moved to LimeDB.getMapping after remapping For XPERIA PRO BPMF 
-
 			temp.setCode(code);
 			//result.add(temp);  Jeremy '12,5,30 add later in the result buliding loop
 			int size = code.length();
@@ -287,18 +288,41 @@ public class SearchServer {
 				String queryCode = code.substring(0,i+1);
 				String cacheKey = cacheKey(queryCode);
 				Pair<List<Mapping>,List<Mapping>> cacheTemp = cache.get(cacheKey);
-
+				
+				if(DEBUG)
+					Log.i(TAG," query() check if cached exist on code = '" + queryCode + "'");
+				
 				if(cacheTemp == null){
 					// 25/Jul/2011 by Art
 					// Just ignore error when something wrong with the result set
 					try{
 						cacheTemp = dbadapter.getMapping(queryCode, !isPhysicalKeyboardPressed, getAllRecords);
 						cache.put(cacheKey, cacheTemp);
+						//Jeremy '12,6,5 check if need to update code remap cache
+						if(cacheTemp!=null && cacheTemp.first!=null 
+								&& cacheTemp.first.size()>0 && cacheTemp.first.get(0)!=null) {
+							String codeFromMapping = cacheTemp.first.get(0).getCode();
+							if(!queryCode.equals(codeFromMapping) ){
+								 List<String> codeList = coderemapcache.get(codeFromMapping);
+								 String key = cacheKey(queryCode);
+								 if(codeList == null){
+									 List<String> newlist = new LinkedList<String>();
+									 newlist.add(codeFromMapping); //put self in the list
+									 newlist.add(queryCode);
+									 coderemapcache.put(key, newlist);
+								 }else{
+									 codeList.add(queryCode);
+									 coderemapcache.remove(key);
+									 coderemapcache.put(key, codeList);
+								 }
+								
+							}
+							
+						}
+						
 					}catch(SQLiteException ne){
-						//dbadapter.forceUpgrade();
 						ne.printStackTrace();
 					}catch(NullPointerException ne){
-						//dbadapter.forceUpgrade();
 						ne.printStackTrace();
 					}catch(Exception e){
 						e.printStackTrace();
@@ -388,7 +412,7 @@ public class SearchServer {
 
 		return result;
 	}
-	
+
 	/**
 	 * Get the real code length according to  codeLenthMap
 	 */
@@ -419,6 +443,7 @@ public class SearchServer {
 		cache = new ConcurrentHashMap<String, Pair<List<Mapping>,List<Mapping>>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 		engcache = new ConcurrentHashMap<String, List<Mapping>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 		keynamecache = new ConcurrentHashMap<String, String>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+		coderemapcache = new ConcurrentHashMap<String, List<String>>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 	}
 
 	/*public List<Mapping> sortArray(String precode, List<Mapping> src) {
@@ -468,7 +493,7 @@ public class SearchServer {
 			String code = cachedMapping.getCode().toLowerCase();
 			String cachekey = cacheKey(code);
 			Pair<List<Mapping>, List<Mapping>> cachedPair = cache.get(cachekey);
-			// null id denotes target is a word in related list
+			// null id denotes target is selected from the related list (not exact match)
 			if(cachedMapping.getId()==null   
 					&& cachedPair!=null && cachedPair.second !=null && cachedPair.second.size()>0){
 				if(DEBUG) Log.i(TAG,"updateUserDict: updating related list");
@@ -476,6 +501,9 @@ public class SearchServer {
 					Pair<List<Mapping>, List<Mapping>> newPair 
 					= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, dbadapter.updateRelatedList(code)) ;
 					cache.put(cachekey, newPair);
+				}else{//Jeremy '12,6,5 code not in cahe do updateRelatedList and removed cached items of  ramped codes. 
+					dbadapter.updateRelatedList(code);
+					removeRemapedCodeCachedMappings(code);
 				}
 				// non null id denotes target is in exact match result list.
 			} else  if(cachedMapping.getId()!=null && cachedPair!=null 
@@ -519,6 +547,9 @@ public class SearchServer {
 				updateSimilarCodeRelatedList(code);
 
 
+			}else{//Jeremy '12,6,5 code not in cahe do updateRelatedList and removed cached items of  ramped codes. 
+				dbadapter.updateRelatedList(code);
+				removeRemapedCodeCachedMappings(code);
 			}
 		}
 
@@ -630,30 +661,31 @@ public class SearchServer {
 										);
 							
 							
-							baseCode += unit2.getCode();
+							baseCode += unit2.getCode().toLowerCase();
 							baseWord += unit2.getWord();
 							if(tablename.equals("phonetic")) {// remove tone symbol in phonetic table 
-								LDCode = baseCode.replaceAll("[3467 ]", "");
+								LDCode = baseCode.replaceAll("[3467 ]", "").toLowerCase();
 								//TODO: Do not know how to build QPCode if word length > 1. Abandon now!! Jeremy '12,6,4
 								if(unit2.getWord().length()>1) 
 									QPCode = "";
 								else
-									QPCode += unit2.getCode().substring(0, 1);
+									QPCode += unit2.getCode().substring(0, 1).toLowerCase();
 								
 								if(LDCode.length()>1){
-									dbadapter.addOrUpdateMappingRecord(LDCode.toLowerCase(), baseWord);
-									cache.remove(cacheKey(LDCode.toLowerCase()));
-									updateSimilarCodeRelatedList(LDCode.toLowerCase());
+									dbadapter.addOrUpdateMappingRecord(LDCode, baseWord);
+									
+									removeRemapedCodeCachedMappings(LDCode);								
+									updateSimilarCodeRelatedList(LDCode);
 								}
 								if(QPCode.length()>1){
-									dbadapter.addOrUpdateMappingRecord(QPCode.toLowerCase(), baseWord);
-									cache.remove(cacheKey(QPCode.toLowerCase()));
-									updateSimilarCodeRelatedList(QPCode.toLowerCase());
+									dbadapter.addOrUpdateMappingRecord(QPCode, baseWord);
+									removeRemapedCodeCachedMappings(QPCode);
+									updateSimilarCodeRelatedList(QPCode);
 								}
 							}else if(baseCode.length()>1){
-								dbadapter.addOrUpdateMappingRecord(baseCode.toLowerCase(), baseWord);
-								cache.remove(cacheKey(baseCode.toLowerCase()));
-								updateSimilarCodeRelatedList(baseCode.toLowerCase());
+								dbadapter.addOrUpdateMappingRecord(baseCode, baseWord);
+								removeRemapedCodeCachedMappings(baseCode);
+								updateSimilarCodeRelatedList(baseCode);
 							}
 
 							if(DEBUG) 
@@ -669,21 +701,44 @@ public class SearchServer {
 		}
 	}
 
+	/**
+	 * @param code
+	 */
+	private void removeRemapedCodeCachedMappings(String code) {
+		if(DEBUG)
+			Log.i(TAG, "removeRemapedCodeCachedMappings() on code ='" + code + "'");
+		List<String> codelist = coderemapcache.get(cacheKey(code));
+		if(codelist != null){
+			for(String entry: codelist)
+				cache.remove(cacheKey(entry));
+		}
+	}
+
 	private void updateSimilarCodeRelatedList(String code){
 		if(DEBUG)
-			Log.i(TAG, "updateSimilarCodeRelatedList(): code =" + code);
+			Log.i(TAG, "updateSimilarCodeRelatedList(): code = '" + code + "'");
 		String cachekey = cacheKey(code);
-		Pair<List<Mapping>, List<Mapping>> cachedPair = cache.get(cachekey);
+		Pair<List<Mapping>, List<Mapping>> cachedPair;// = cache.get(cachekey);
 		int len = code.length();
 		if(len > 4 ) len = 4; //Jeremy '11,9,14
 		for (int k = 1; k < len; k++) {
 			String key = code.substring(0, code.length() - k);
 			cachekey = cacheKey(key);
 			cachedPair = cache.get(cachekey);
-			if(cache.remove(cachekey)!=null && cachedPair !=null){					
+			if(DEBUG)
+				Log.i(TAG, "updateSimilarCodeRelatedList(): cachekey = '" + cachekey + "' cachedPair == null :" + (cachedPair ==null) );
+			if(cachedPair !=null){
+				if(DEBUG)
+					Log.i(TAG, "updateSimilarCodeRelatedList(): udpate to db cachekey = '" + cachekey + "'");
 				Pair<List<Mapping>, List<Mapping>> newPair 
-				= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, dbadapter.updateRelatedList(key)) ;
+					= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, dbadapter.updateRelatedList(key)) ;
+				cache.remove(cachekey);
 				cache.put(cachekey, newPair);
+			}else{
+				if(DEBUG)
+					Log.i(TAG, "updateSimilarCodeRelatedList(): code not in cache. udpate to db only on code = '" + key + "'");
+				dbadapter.updateRelatedList(key);
+				removeRemapedCodeCachedMappings(key);
 			}
 		}
 	}
@@ -703,22 +758,23 @@ public class SearchServer {
 		return result;
 
 	}
+	/**
+	 * Renamed from addUserDict and pass parameter with mapping directly Jeremy '12,6,5
+	 * @param updateMapping
+	 * @throws RemoteException
+	 */
 
-	public void addUserDict(String id, String code, String word,
-			String pword, int score, boolean isDictionary)
+	public void addUserDictAndUpdateScore(Mapping updateMapping)
+			//String id, String code, String word,
+			//String pword, int score, boolean isDictionary)
 					throws RemoteException {
+		if(DEBUG) Log.i(TAG, "addUserDictAndUpdateScore()");
 
 		if(scorelist == null){scorelist = new ArrayList<Mapping>();}
-		//if(dbadapter == null){dbadapter = new LimeDB(ctx);}
-		// Temp Mapping Object For updateMapping method.
-		final Mapping updateMappingTemp = new Mapping();
-		updateMappingTemp.setId(id);
-		updateMappingTemp.setCode(code);
-		updateMappingTemp.setWord(word);
-		updateMappingTemp.setPword(pword);
-		updateMappingTemp.setScore(score);
-		updateMappingTemp.setDictionary(isDictionary);
-
+		
+		// Temp final Mapping Object For updateMapping thread.
+		final Mapping updateMappingTemp = new Mapping(updateMapping);
+		
 		// Jeremy '11,6,11. Always update score and sort according to preferences.
 		scorelist.add(updateMappingTemp);
 		Thread UpadtingThread = new Thread(){
@@ -788,6 +844,10 @@ public class SearchServer {
 			engcache.clear();
 		}
 		if(keynamecache != null){
+			keynamecache.clear();
+		}
+		
+		if(coderemapcache != null){
 			keynamecache.clear();
 		}
 	}
