@@ -720,7 +720,8 @@ public class SearchServer {
 					Log.i(TAG, "removeRemapedCodeCachedMappings() remove code= '" + entry + "' from cache.");
 				cache.remove(cacheKey(entry));
 			}
-		}
+		}else 
+			cache.remove(cacheKey(code)); //Jeremy '12,6,6 no remap. remove the code mapping from cache.
 	}
 
 	private void updateSimilarCodeRelatedList(String code){
