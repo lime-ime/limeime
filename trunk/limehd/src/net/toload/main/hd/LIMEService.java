@@ -58,7 +58,6 @@ import net.toload.main.hd.candidate.CandidateView;
 import net.toload.main.hd.candidate.CandidateViewContainer;
 import net.toload.main.hd.global.ChineseSymbol;
 import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.global.Mapping;
 import net.toload.main.hd.limesettings.LIMEPreference;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
@@ -1474,12 +1473,13 @@ public class LIMEService extends InputMethodService implements
 								firstMatchedLength);
 
 						try {
-							SearchSrv.addUserDict(selectedCandidate.getId(),
+							SearchSrv.addUserDictAndUpdateScore(selectedCandidate);
+									/*selectedCandidate.getId(),
 									selectedCandidate.getCode(),
 									selectedCandidate.getWord(),
 									selectedCandidate.getPword(),
 									selectedCandidate.getScore(),
-									selectedCandidate.isDictionary());
+									selectedCandidate.isDictionary());*/
 						} catch (RemoteException e) {
 							e.printStackTrace();
 						}
@@ -3382,12 +3382,16 @@ public class LIMEService extends InputMethodService implements
 		hideCandidateView(); //Jeremy '12,5,7 hideCandiate when inputview is closed but not yet leave the original field (onfinishinput() will not called). 
 	}
 	
+	/*
+	 * Experimental start voice input 
+	 * 
+	 *
 	private void startVoiceInput(){
 		if(LIMEUtilities.isVoiceSearchServiceExist(getBaseContext()))
 			this.switchInputMethod("com.google.android.voicesearch/.ime.VoiceInputMethodService");
 		
 		
-	}
+	}*/
 
 
 
