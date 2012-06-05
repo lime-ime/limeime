@@ -304,16 +304,22 @@ public class SearchServer {
 							String codeFromMapping = cacheTemp.first.get(0).getCode();
 							if(!queryCode.equals(codeFromMapping) ){
 								 List<String> codeList = coderemapcache.get(codeFromMapping);
-								 String key = cacheKey(queryCode);
+								 String key = cacheKey(codeFromMapping);
 								 if(codeList == null){
 									 List<String> newlist = new LinkedList<String>();
 									 newlist.add(codeFromMapping); //put self in the list
 									 newlist.add(queryCode);
 									 coderemapcache.put(key, newlist);
+									 if(DEBUG)
+										 Log.i(TAG, "query() build new remap code = '" 
+												 + codeFromMapping  + "' to code = '" + queryCode +"'"
+												 + " coderemapcache.size()=" +coderemapcache.size());
 								 }else{
 									 codeList.add(queryCode);
 									 coderemapcache.remove(key);
 									 coderemapcache.put(key, codeList);
+									 if(DEBUG)
+										 Log.i(TAG, "query() codeFromMapping: add new remap code = '" + codeFromMapping  + "' to code = '" + queryCode +"'");
 								 }
 								
 							}
@@ -706,11 +712,14 @@ public class SearchServer {
 	 */
 	private void removeRemapedCodeCachedMappings(String code) {
 		if(DEBUG)
-			Log.i(TAG, "removeRemapedCodeCachedMappings() on code ='" + code + "'");
+			Log.i(TAG, "removeRemapedCodeCachedMappings() on code ='" + code + "' coderemapcache.size=" + coderemapcache.size());
 		List<String> codelist = coderemapcache.get(cacheKey(code));
 		if(codelist != null){
-			for(String entry: codelist)
+			for(String entry: codelist){
+				if(DEBUG)
+					Log.i(TAG, "removeRemapedCodeCachedMappings() remove code= '" + entry + "' from cache.");
 				cache.remove(cacheKey(entry));
+			}
 		}
 	}
 
