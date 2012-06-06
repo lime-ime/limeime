@@ -282,7 +282,7 @@ public class SearchServer {
 			boolean hasMore = false;
 
 
-			// 11'7,22 rewritten for ���剖�嚙�
+			// 11'7,22 rewritten for 嚙踐�嚙踝蕭�蕭�蕭
 			// 12,6,4 Jeremy. Ascending a ab abc... looking up db if the cache is not exist
 			for(int i =0; i<size; i++) {
 				String queryCode = code.substring(0,i+1);
@@ -336,7 +336,7 @@ public class SearchServer {
 
 				}
 			}
-			// 11'7,22 rewritten for ���剖�嚙�
+			// 11'7,22 rewritten for 嚙踐�嚙踝蕭�蕭�蕭
 			// 12,6,4 Jeremy. Descending  abc ab a... Build the result candidate list.
 			for(int i =0; i<size; i++) {
 				String cacheKey = cacheKey(code);
@@ -657,22 +657,22 @@ public class SearchServer {
 									|| unit2.getCode().length()==0
 									|| unit2.getWord().length()==0){break;}
 							
+							baseCode += unit2.getCode().toLowerCase();
+							baseWord += unit2.getWord();
+							
 							if(DEBUG)
 								Log.i(TAG,"learnLDPhrase(): code1 = " + unit1.getCode()
 										+ ", code2 = " + unit2.getCode()
 										+ ", word1 = " + unit1.getWord()
 										+ ", word2 = " + unit2.getWord()
-										+ ", code1.length = " + + unit1.getCode().length()
-										+ ", word1.length = " + + unit1.getWord().length()
+										+ ", basecode = " + baseCode
+										+ ", baseWord = " + baseWord
 										);
 							
-							
-							baseCode += unit2.getCode().toLowerCase();
-							baseWord += unit2.getWord();
 							if(tablename.equals("phonetic")) {// remove tone symbol in phonetic table 
 								LDCode = baseCode.replaceAll("[3467 ]", "").toLowerCase();
 								//TODO: Do not know how to build QPCode if word length > 1. Abandon now!! Jeremy '12,6,4
-								if(unit2.getWord().length()>1) 
+								if(QPCode.equals("") || unit2.getWord().length()>1) 
 									QPCode = "";
 								else
 									QPCode += unit2.getCode().substring(0, 1).toLowerCase();
