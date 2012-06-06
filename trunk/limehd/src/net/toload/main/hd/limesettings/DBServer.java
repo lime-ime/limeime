@@ -931,12 +931,12 @@ public class  DBServer {
 		if(remoteFileDownloading) return 0;
 		else return dbAdapter.getPercentageDone();
 	}
-
+/*
 	@Deprecated //by Jeremy '12,6,6
 	public void forceUpgrad() throws RemoteException {
 		//if (dbAdapter == null) {loadLimeDB();}
 		dbAdapter.forceUpgrade();
-	}
+	}*/
 
 	//	}
 

@@ -349,29 +349,15 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * android.database.sqlite.SQLit eOpenHelper#onUpgrade(android.database.sqlite
 	 * .SQLiteDatabase, int, int)
 	 */
-	//@Override
+	/**
+	 * Jeremy '12,6,6
+	 * Do upgrade here if db version is not up to date.
+	 */
+	@Override
 	public void onUpgrade(SQLiteDatabase dbin, int oldVersion, int newVersion) {
 		
-	
-		forceUpgrade(dbin);
-		
-		
-	}
-	
-	public void forceUpgrade(){
-		if(db != null){
-			forceUpgrade(db);
-		}
-	}
-	
-	/*
-	 * Art, 28/Sep/2011
-	 * this method force upgrade database when encounter error
-	 */
-	private void forceUpgrade(SQLiteDatabase dbin) {
-		
 			if(DEBUG)
-				Log.i(TAG,"forceUpgrade()");
+				Log.i(TAG,"OnUpgrade()");
 			//SQLiteDatabase db = getSqliteDb(false);
 			
 			//checkCode3RIndexAndRecsordsInPhonetic(dbin); moved to openDbconnectin()
@@ -445,13 +431,11 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			}else if(dbin.getVersion() <76) { // add phonetic hsu keyboard '12,6,6 by jeremy 
 				try{
 					int count = dbin.query("keyboard", null, FIELD_CODE +" = 'hsu'", null, null, null, null, null).getCount();
-
 					if(count == 0){
-
 						ContentValues 	cv = new ContentValues();
 						cv.put("code", "hsu");
-						cv.put("name", "許氏注音");
-						cv.put("desc", "許氏注音鍵盤");
+						cv.put("name", "注音許氏");
+						cv.put("desc", "注音許氏鍵盤");
 						cv.put("type", "phone");
 						cv.put("image", "hsu_keyboard_preview");
 						cv.put("imkb", "lime_hsu");
@@ -463,9 +447,39 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						cv.put("disable", "false");
 						dbin.insert("keyboard" ,null , cv);
 					}
+					count = dbin.query("keyboard", null, FIELD_CODE +" = 'et26'", null, null, null, null, null).getCount();
+					if(count == 0){
+						ContentValues 	cv = new ContentValues();
+						cv.put("code", "et26");
+						cv.put("name", "注音倚天26");
+						cv.put("desc", "注音倚天26鍵");
+						cv.put("type", "phone");
+						cv.put("image", "et26_keyboard_preview");
+						cv.put("imkb", "lime_et26");
+						cv.put("imshiftkb", "lime_et26_shift");
+						cv.put("engkb", "lime_english_number");
+						cv.put("engshiftkb", "lime_english_shift");
+						cv.put("symbolkb", "symbols");
+						cv.put("symbolshiftkb", "symbols_shift");
+						cv.put("disable", "false");
+						dbin.insert("keyboard" ,null , cv);
+					}
+					
+					String selectedPhoneticKeyboardType = mLIMEPref.getPhoneticKeyboardType();
+					if(DEBUG)
+						Log.i("OnUpgrade()", "phonetickeyboardtype:" + selectedPhoneticKeyboardType);
+					if(selectedPhoneticKeyboardType.equals("hsu")){
+						setIMKeyboardOnDB(dbin, "phonetic",
+								getKeyboardInfoOnDB(dbin, "hsu", "desc"), "hsu");//jeremy '12,6,6 new hsu and et26 keybaord
+					}else if(selectedPhoneticKeyboardType.equals("eten26")){
+						setIMKeyboardOnDB(dbin, "phonetic", 
+								getKeyboardInfoOnDB(dbin, "et26", "desc"), "et26");
+					}
+
+					
 				} catch (Exception e) {
-					//e.printStackTrace();
-					Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
+					e.printStackTrace();
+					//Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
 				}
 
 			}
@@ -3847,7 +3861,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				cursor.close();
 			}
 			//db.close();
-		}catch(Exception e){}
+		}catch(Exception e){e.printStackTrace();}
 		return iminfo;
 	}
 	
@@ -3855,12 +3869,25 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @param srcunit
 	 */
 	public synchronized void removeImInfo(String im, String field) {
-		//Jeremy '12,4,17 !checkDBConnection() when db is restoring or replaced.
+		if(DEBUG)
+			Log.i(TAG, "removeImInfo()");
 		if(!checkDBConnection()) return;
+		try{
+			removeImInfoOnDB(db, im, field);
+		}catch(Exception e){e.printStackTrace();}
+	}
+
+	/**
+	 * Jeremy '12,6,7 for working with OnUpgrade() before db is created
+	 * @param im
+	 * @param field
+	 */
+	private void removeImInfoOnDB(SQLiteDatabase dbin, String im, String field) {
+		if(DEBUG)
+			Log.i(TAG, "removeImInfoOnDB()");
 		String removeString = "DELETE FROM im WHERE code='"+im+"' AND title='"+field+"'";
-		//SQLiteDatabase db = this.getSqliteDb(false);
-		db.execSQL(removeString);
-		//db.close();
+		dbin.execSQL(removeString);
+		
 	}
 	
 
@@ -3987,27 +4014,44 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 	
 	public String getKeyboardInfo(String keyboardCode, String field) {
-		//Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
+		if(DEBUG)
+			Log.i(TAG, "getKeyboardInfo()");
 		if(!checkDBConnection()) return null;
-				
 		String info=null;
-		try {
-			//SQLiteDatabase db = this.getSqliteDb(true);
-			Cursor cursor = db.query("keyboard", null, FIELD_CODE +" = '"+keyboardCode+"'"
-					, null, null, null, null, null);
-			if (cursor.moveToFirst()) {
-				info = cursor.getString(cursor.getColumnIndex(field));
-			}
-			if (cursor != null) {
-				cursor.deactivate();
-				cursor.close();
-			}
-			//db.close();
+		try {	
+			info=getKeyboardInfoOnDB(db, keyboardCode, field);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return info;
 	
+	}
+
+	/**
+	 * Jeremy '12,6,7 for working with OnUpgrade() before db is created
+	 * @param keyboardCode
+	 * @param field
+	 * @return
+	 */
+	private String getKeyboardInfoOnDB(SQLiteDatabase dbin, String keyboardCode, String field) {
+		if(DEBUG)
+			Log.i(TAG, "getKeyboardInfoOnDB()");
+
+		String info=null;
+
+		Cursor cursor = dbin.query("keyboard", null, FIELD_CODE +" = '"+keyboardCode+"'"
+				, null, null, null, null, null);
+		if (cursor.moveToFirst()) {
+			info = cursor.getString(cursor.getColumnIndex(field));
+		}
+		if (cursor != null) {
+			cursor.deactivate();
+			cursor.close();
+		}
+		if(DEBUG)
+			Log.i(TAG, "getKeyboardInfoOnDB() info = " + info);
+
+		return info;
 	}
 
 	public List<KeyboardObj> getKeyboardList() {
@@ -4054,20 +4098,36 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 	public synchronized void setIMKeyboard(String im, String value,
 			String keyboard) {
+		if(DEBUG)
+			Log.i(TAG,"setIMKeyboard()");
+		if(!checkDBConnection()) ;
+		try{
+			setIMKeyboardOnDB(db, im, value, keyboard);
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+			           
+		
+	}
 
+	/**
+	 * Jeremy '12,6,7 for working with OnUpgrade() before db is created
+	 * @param im
+	 * @param value
+	 * @param keyboard
+	 */
+	private void setIMKeyboardOnDB(SQLiteDatabase dbin, String im, String value, String keyboard) {
+		if(DEBUG)
+			Log.i(TAG,"setIMKeyboardOnDB()");
 		ContentValues cv = new ContentValues();
 		cv.put("code", im);
 		cv.put("title", "keyboard");
 		cv.put("desc", value);
 		cv.put("keyboard", keyboard);
 
-		removeImInfo(im, "keyboard");
+		removeImInfoOnDB(dbin, im, "keyboard");
 
-		//SQLiteDatabase db = this.getSqliteDb(false);
-		db.insert("im",null, cv);
-		//db.close();
-			           
-		
+		dbin.insert("im",null, cv);
 	}
 
 	public String getKeyboardCode(String im) {

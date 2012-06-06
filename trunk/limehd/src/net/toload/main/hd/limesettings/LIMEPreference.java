@@ -100,7 +100,8 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 		if(key.equals("phonetic_keyboard_type")){
 			String selectedPhoneticKeyboardType = mLIMEPref.getPhoneticKeyboardType();
 				//PreferenceManager.getDefaultSharedPreferences(ctx).getString("phonetic_keyboard_type", "");
-			Log.i("LIMEPreference:OnChanged()", "phonetickeyboardtype:" + selectedPhoneticKeyboardType);
+			if(DEBUG)
+				Log.i("LIMEPreference:OnChanged()", "phonetickeyboardtype:" + selectedPhoneticKeyboardType);
 			
 			try {
 				if(DEBUG)
@@ -114,15 +115,11 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 							DBSrv.getKeyboardInfo("phoneticet41", "desc"), "phoneticet41");
 				}else if(selectedPhoneticKeyboardType.equals("hsu")){
 					DBSrv.setIMKeyboard("phonetic", 
-							DBSrv.getKeyboardInfo("hsu", "desc"), "hsu");//jeremy '12,6,6 new hsu keybaord
+							DBSrv.getKeyboardInfo("hsu", "desc"), "hsu");//jeremy '12,6,6 new hsu and et26 keybaord
 				}else if(selectedPhoneticKeyboardType.equals("eten26")){
-					if(mLIMEPref.getShowNumberRowInEnglish()){
-						DBSrv.setIMKeyboard("phonetic", 
-								DBSrv.getKeyboardInfo("limenum", "desc"), "limenum");
-					}else{
-						DBSrv.setIMKeyboard("phonetic", 
-								DBSrv.getKeyboardInfo("lime", "desc"), "lime");
-					}
+					DBSrv.setIMKeyboard("phonetic", 
+								DBSrv.getKeyboardInfo("et26", "desc"), "et26");
+					
 				}
 				if(DEBUG) Log.i("LIMEPreference:OnChanged()", "PhoneticIMInfo.kyeboard:" + 
 							DBSrv.getImInfo("phonetic", "keyboard"));	
