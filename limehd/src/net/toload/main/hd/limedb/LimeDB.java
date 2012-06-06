@@ -664,7 +664,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		if(db == null || (db!=null && !db.isOpen())){		
 			db = this.getWritableDatabase();
 			mLIMEPref.setMappingLoading(false); // Jeremy '12,4,10 reset mapping_loading status 
-			checkCode3RIndexAndRecsordsInPhonetic(db); // Jeremy '12,6,5 check if phonetic table has code3r clumn and index 
+			
+			if(db!=null && !db.isOpen())
+				checkCode3RIndexAndRecsordsInPhonetic(db); // Jeremy '12,6,5 check if phonetic table has code3r clumn and index 
 		}
 		
 		return db;
