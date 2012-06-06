@@ -31,33 +31,33 @@
     <Row>
         <Key
             limehd:codes="49"
-            limehd:keyLabel="1儿\n|"
+            limehd:keyLabel="1\t儿\n|"
             limehd:popupCharacters="-\n儿"
             limehd:popupKeyboard="@xml/popup_template" />
              limehd:keyEdgeFlags="left" />
         <Key
             limehd:codes="50"
-            limehd:keyLabel="2母\n車"
+            limehd:keyLabel="2\t母\n車"
             limehd:popupCharacters="=\n母"
             limehd:popupKeyboard="@xml/popup_template" />
         <Key
             limehd:codes="51"
-            limehd:keyLabel="3匚\n糸"
+            limehd:keyLabel="3\t匚\n糸"
             limehd:popupCharacters="[\n匚"
             limehd:popupKeyboard="@xml/popup_template" />
         <Key
             limehd:codes="52"
-            limehd:keyLabel="4]\n言"
+            limehd:keyLabel="4\t]\n言"
             limehd:popupCharacters="]\n]"
             limehd:popupKeyboard="@xml/popup_template" />
         <Key
             limehd:codes="53"
-            limehd:keyLabel="5Ｌ\n貝"
+            limehd:keyLabel="5\tＬ\n貝"
             limehd:popupCharacters="&apos;\nＬ"
             limehd:popupKeyboard="@xml/popup_template" />
         <Key
             limehd:codes="54"
-            limehd:keyLabel="6ㄏ\n雨"
+            limehd:keyLabel="6\tㄏ\n雨"
             limehd:popupCharacters="\\\nㄏ"
             limehd:popupKeyboard="@xml/popup_template" />
         <Key limehd:codes="55" limehd:keyLabel="7\nㄇ" />

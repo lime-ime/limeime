@@ -44,8 +44,8 @@
 		<Key limehd:codes="113" limehd:keyLabel="q"
 			limehd:keyEdgeFlags="left" />
 		<Key limehd:codes="119" limehd:keyLabel="w\nㄠ" />
-		<Key limehd:codes="101" limehd:keyLabel="eㄧ\nㄝ" />
-		<Key limehd:codes="114" limehd:keyLabel="rㄖ\nㄚ" />
+		<Key limehd:codes="101" limehd:keyLabel="e\tㄧ\nㄝ" />
+		<Key limehd:codes="114" limehd:keyLabel="r\tㄖ\nㄚ" />
 		<Key limehd:codes="116" limehd:keyLabel="t\nㄊ" />
 		<Key limehd:codes="121" limehd:keyLabel="y\nㄚ" />
 		<Key limehd:codes="117" limehd:keyLabel="u\nㄩ" />
@@ -56,15 +56,15 @@
 	</Row>
 
 	<Row>
-		<Key limehd:codes="97" limehd:keyLabel="aㄘ\nㄟ" limehd:keyEdgeFlags="left" />
+		<Key limehd:codes="97" limehd:keyLabel="a\nㄘ\nㄟ" limehd:keyEdgeFlags="left" />
 		<Key limehd:codes="115" limehd:keyLabel="s\nㄙ" />
 		<Key limehd:codes="100" limehd:keyLabel="dˊ\nㄉ" />
 		<Key limehd:codes="102" limehd:keyLabel="fˇ\nㄈ" />
-		<Key limehd:codes="103" limehd:keyLabel="gㄍ\nㄜ" />
-		<Key limehd:codes="104" limehd:keyLabel="hㄏ\nㄛ" />
-		<Key limehd:codes="106" limehd:keyLabel="jㄓ\nㄐˋ" />
-		<Key limehd:codes="107" limehd:keyLabel="kㄎ\nㄤ" />
-		<Key limehd:codes="108" limehd:keyLabel="lㄌ\nㄦㄥ" />
+		<Key limehd:codes="103" limehd:keyLabel="g\tㄍ\nㄜ" />
+		<Key limehd:codes="104" limehd:keyLabel="h\tㄏ\nㄛ" />
+		<Key limehd:codes="106" limehd:keyLabel="j\tㄓ\nㄐˋ" />
+		<Key limehd:codes="107" limehd:keyLabel="k\tㄎ\nㄤ" />
+		<Key limehd:codes="108" limehd:keyLabel="l\tㄌ\nㄦㄥ" />
 		<Key limehd:codes="59" limehd:keyLabel=";" limehd:keyEdgeFlags="right" />
 	</Row>
 
@@ -74,11 +74,11 @@
                 limehd:isSticky="true" limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="122" limehd:keyLabel="z\nㄗ"/>
         <Key limehd:codes="120" limehd:keyLabel="x\nㄨ"/>
-        <Key limehd:codes="99" limehd:keyLabel="cㄒ\nㄕ"/>
-        <Key limehd:codes="118" limehd:keyLabel="vㄑ\nㄔ"/>
+        <Key limehd:codes="99" limehd:keyLabel="c\tㄒ\nㄕ"/>
+        <Key limehd:codes="118" limehd:keyLabel="v\tㄑ\nㄔ"/>
         <Key limehd:codes="98" limehd:keyLabel="b\nㄅ"/>
-        <Key limehd:codes="110" limehd:keyLabel="nㄋ\nㄣ"/>
-        <Key limehd:codes="109" limehd:keyLabel="mㄇ\nㄢ"/>
+        <Key limehd:codes="110" limehd:keyLabel="n\tㄋ\nㄣ"/>
+        <Key limehd:codes="109" limehd:keyLabel="m\tㄇ\nㄢ"/>
         <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true" 
                 limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"
                 limehd:isRepeatable="true"/>

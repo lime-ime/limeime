@@ -871,11 +871,19 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 				
 					
 				boolean hasSubLabel = label.contains("\n");
-				String subLabel="";
+				boolean hasSecondSubLabel = false;
+				String subLabel="", secondSubLabel="";
 				if(hasSubLabel){
 					String labelA[] = label.split("\n");
 					if(labelA.length>0) label = labelA[1];
 					subLabel = labelA[0];
+					
+					hasSecondSubLabel = subLabel.contains("\t");
+					if(hasSecondSubLabel){
+						String subLabelA[] = subLabel.split("\t");
+						if(subLabelA.length>0) subLabel = subLabelA[0];
+						secondSubLabel = subLabelA[1];
+					}
 				}
 				if(hasSubLabel){
 					if(label.length() > 1 ){ //Jeremy '12,6,6 shrink the font size for more characters on label
@@ -923,9 +931,10 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
 							paint.setTextSize(subLabelSize);
 							if (mTextHeightCache.get(subLabelSize) != null) {
-								subLabelHeight = mTextHeightCache.get(labelSize);
-								subLabelWidth =  mTextWidthCache.get(labelSize);
+								subLabelHeight = mTextHeightCache.get(subLabelSize);
+								subLabelWidth =  mTextWidthCache.get(subLabelSize);
 							} else {
+								
 								Rect textBounds = new Rect();
 								paint.getTextBounds(KEY_LABEL_HEIGHT_REFERENCE_CHAR, 0, 1, textBounds);
 								subLabelHeight = textBounds.height();
@@ -939,17 +948,29 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 										+ labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
 								float subBaseline = (key.height + padding.top - padding.bottom) /4
 										+ subLabelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
-
 								paint.setColor(mKeySubLabelTextColor);
-								canvas.drawText(subLabel, centerX, subBaseline, paint);
+							
+								if(hasSecondSubLabel){
+									canvas.drawText(subLabel, centerX/2, subBaseline, paint);
+									paint.setColor(mKeyTextColor);
+									canvas.drawText(secondSubLabel, centerX/2*3, subBaseline, paint);
+								}else
+									canvas.drawText(subLabel, centerX, subBaseline, paint);
+
 								paint.setTextSize(labelSize);
 								paint.setTypeface(mKeyTextStyle);
 								paint.setColor(mKeyTextColor);
 								canvas.drawText(label, centerX, baseline, paint);
 
 							}else{
-								paint.setColor(mKeySubLabelTextColor);    
-								canvas.drawText(subLabel, centerX-subLabelWidth, baseline, paint);
+								paint.setColor(mKeySubLabelTextColor);
+								if(hasSecondSubLabel){
+									canvas.drawText(subLabel, centerX - subLabelWidth*2, baseline, paint);
+									paint.setColor(mKeyTextColor);
+									canvas.drawText(secondSubLabel, centerX -subLabelWidth, baseline, paint);
+								}else
+									canvas.drawText(subLabel, centerX - subLabelWidth, baseline, paint);
+									
 								paint.setTextSize(labelSize);
 								paint.setTypeface(mKeyTextStyle);
 								paint.setColor(mKeyTextColor);
