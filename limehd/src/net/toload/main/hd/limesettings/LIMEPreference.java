@@ -112,7 +112,10 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 				}else if(selectedPhoneticKeyboardType.equals("eten")){
 					DBSrv.setIMKeyboard("phonetic", 
 							DBSrv.getKeyboardInfo("phoneticet41", "desc"), "phoneticet41");
-				}else if(selectedPhoneticKeyboardType.equals("eten26")||selectedPhoneticKeyboardType.equals("hsu")){
+				}else if(selectedPhoneticKeyboardType.equals("hsu")){
+					DBSrv.setIMKeyboard("phonetic", 
+							DBSrv.getKeyboardInfo("hsu", "desc"), "hsu");//jeremy '12,6,6 new hsu keybaord
+				}else if(selectedPhoneticKeyboardType.equals("eten26")){
 					if(mLIMEPref.getShowNumberRowInEnglish()){
 						DBSrv.setIMKeyboard("phonetic", 
 								DBSrv.getKeyboardInfo("limenum", "desc"), "limenum");

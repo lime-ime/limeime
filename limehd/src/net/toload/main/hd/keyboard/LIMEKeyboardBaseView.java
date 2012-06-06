@@ -878,9 +878,14 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 					subLabel = labelA[0];
 				}
 				if(hasSubLabel){
-					labelSize = (int)(mSmallLabelTextSize * keySizeScale * labelSizeScale);
-					paint.setTypeface(Typeface.DEFAULT_BOLD);
-				}else if (label.length() > 1 && key.codes.length < 2 ) {
+					if(label.length() > 1 ){ //Jeremy '12,6,6 shrink the font size for more characters on label
+						labelSize = (int)(mSmallLabelTextSize * keySizeScale * labelSizeScale * 0.8f);
+						paint.setTypeface(Typeface.DEFAULT_BOLD);
+					}else{
+						labelSize = (int)(mSmallLabelTextSize * keySizeScale * labelSizeScale);
+						paint.setTypeface(Typeface.DEFAULT_BOLD);
+					}
+				}else if (label.length() > 1 && key.codes.length < 2 ) { 
 					labelSize = (int)(mLabelTextSize * keySizeScale * labelSizeScale);
 					paint.setTypeface(Typeface.DEFAULT_BOLD);
 				} else {

@@ -61,7 +61,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	
 	
 	private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier. Shared db instance for dbserver and searchserver
-	private final static int DATABASE_VERSION = 75;
+	private final static int DATABASE_VERSION = 76;
 	//private final static int DATABASE_RELATED_SIZE = 50;
 
 	
@@ -376,30 +376,31 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			
 			//checkCode3RIndexAndRecsordsInPhonetic(dbin); moved to openDbconnectin()
 			
-			try{
-				int ecjcount = dbin.query("ecj", null, null, null, null, null, null, null).getCount();
-				if(ecjcount == 0){
+			if(dbin.getVersion()<75){
+				try{
+					int ecjcount = dbin.query("ecj", null, null, null, null, null, null, null).getCount();
+					if(ecjcount == 0){
 						execSQL(dbin, "delete from im where code ='ecj';");
-				}
-			} catch (Exception e) {}
-	
+					}
+				} catch (Exception e) {}
 
-			try{
-				execSQL(dbin, "CREATE TABLE hs (_id INTEGER primary key autoincrement,  code text, code3r text, word text, related text, score integer, 'basescore' type integer);");
-				execSQL(dbin, "CREATE INDEX [hs_idx_code] ON [hs] ([code]);");
-			} catch (Exception e) {}
-			
-			try{
-				int count = dbin.query("keyboard", null, FIELD_CODE +" = 'phoneticet41'", null, null, null, null, null).getCount();
-	
-				if(count == 0){
-					
+
+				try{
+					execSQL(dbin, "CREATE TABLE hs (_id INTEGER primary key autoincrement,  code text, code3r text, word text, related text, score integer, 'basescore' type integer);");
+					execSQL(dbin, "CREATE INDEX [hs_idx_code] ON [hs] ([code]);");
+				} catch (Exception e) {}
+
+				try{
+					int count = dbin.query("keyboard", null, FIELD_CODE +" = 'phoneticet41'", null, null, null, null, null).getCount();
+
+					if(count == 0){
+
 						ContentValues 	cv = new ContentValues();
 						cv.put("code", "phoneticet41");
 						cv.put("name", "注音倚天");
 						cv.put("desc", "注音倚天41鍵");
 						cv.put("type", "phone");
-						cv.put("image", "lime_et_41_keyboard_priview");
+						cv.put("image", "lime_et_41_keyboard_preview");
 						cv.put("imkb", "lime_et_41");
 						cv.put("imshiftkb", "lime_et_41_shift");
 						cv.put("engkb", "lime_english_number");
@@ -408,39 +409,67 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						cv.put("symbolshiftkb", "symbols_shift");
 						cv.put("disable", "false");
 						dbin.insert("keyboard" ,null , cv);
+					}
+				} catch (Exception e) {
+					//e.printStackTrace();
+					Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
 				}
-			} catch (Exception e) {
-				//e.printStackTrace();
-				Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
+
+				try{
+					execSQL(dbin, "alter table hs add 'basescore' type integer");
+					execSQL(dbin, "alter table ecj add 'basescore' type integer");
+					execSQL(dbin, "alter table custom add 'basescore' type integer");
+					execSQL(dbin, "alter table wb add 'basescore' type integer");
+					execSQL(dbin, "alter table array add 'basescore' type integer");
+					execSQL(dbin, "alter table array10 add 'basescore' type integer");
+					execSQL(dbin, "alter table cj add 'basescore' type integer");
+					execSQL(dbin, "alter table dayi add 'basescore' type integer");
+					execSQL(dbin, "alter table ez add 'basescore' type integer");
+					execSQL(dbin, "alter table phonetic add 'basescore' type integer");
+					execSQL(dbin, "alter table scj add 'basescore' type integer");
+					execSQL(dbin, "alter table cj5 add 'basescore' type integer");
+					execSQL(dbin, "alter table imtable1 add 'basescore' type integer");
+					execSQL(dbin, "alter table imtable2 add 'basescore' type integer");
+					execSQL(dbin, "alter table imtable3 add 'basescore' type integer");
+					execSQL(dbin, "alter table imtable4 add 'basescore' type integer");
+					execSQL(dbin, "alter table imtable5 add 'basescore' type integer");
+					execSQL(dbin, "alter table imtable6 add 'basescore' type integer");
+					execSQL(dbin, "alter table imtable7 add 'basescore' type integer");
+					execSQL(dbin, "alter table imtable8 add 'basescore' type integer");
+					execSQL(dbin, "alter table imtable9 add 'basescore' type integer");
+					execSQL(dbin, "alter table imtable10 add 'basescore' type integer");
+				} catch (Exception e) {
+					//e.printStackTrace();
+					Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
+				}
+			}else if(dbin.getVersion() <76) { // add phonetic hsu keyboard '12,6,6 by jeremy 
+				try{
+					int count = dbin.query("keyboard", null, FIELD_CODE +" = 'hsu'", null, null, null, null, null).getCount();
+
+					if(count == 0){
+
+						ContentValues 	cv = new ContentValues();
+						cv.put("code", "hsu");
+						cv.put("name", "許氏注音");
+						cv.put("desc", "許氏注音鍵盤");
+						cv.put("type", "phone");
+						cv.put("image", "hsu_keyboard_preview");
+						cv.put("imkb", "lime_hsu");
+						cv.put("imshiftkb", "lime_hsu_shift");
+						cv.put("engkb", "lime_english_number");
+						cv.put("engshiftkb", "lime_english_shift");
+						cv.put("symbolkb", "symbols");
+						cv.put("symbolshiftkb", "symbols_shift");
+						cv.put("disable", "false");
+						dbin.insert("keyboard" ,null , cv);
+					}
+				} catch (Exception e) {
+					//e.printStackTrace();
+					Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
+				}
+
 			}
 			
-			try{
-				execSQL(dbin, "alter table hs add 'basescore' type integer");
-				execSQL(dbin, "alter table ecj add 'basescore' type integer");
-				execSQL(dbin, "alter table custom add 'basescore' type integer");
-				execSQL(dbin, "alter table wb add 'basescore' type integer");
-				execSQL(dbin, "alter table array add 'basescore' type integer");
-				execSQL(dbin, "alter table array10 add 'basescore' type integer");
-				execSQL(dbin, "alter table cj add 'basescore' type integer");
-				execSQL(dbin, "alter table dayi add 'basescore' type integer");
-				execSQL(dbin, "alter table ez add 'basescore' type integer");
-				execSQL(dbin, "alter table phonetic add 'basescore' type integer");
-				execSQL(dbin, "alter table scj add 'basescore' type integer");
-				execSQL(dbin, "alter table cj5 add 'basescore' type integer");
-				execSQL(dbin, "alter table imtable1 add 'basescore' type integer");
-				execSQL(dbin, "alter table imtable2 add 'basescore' type integer");
-				execSQL(dbin, "alter table imtable3 add 'basescore' type integer");
-				execSQL(dbin, "alter table imtable4 add 'basescore' type integer");
-				execSQL(dbin, "alter table imtable5 add 'basescore' type integer");
-				execSQL(dbin, "alter table imtable6 add 'basescore' type integer");
-				execSQL(dbin, "alter table imtable7 add 'basescore' type integer");
-				execSQL(dbin, "alter table imtable8 add 'basescore' type integer");
-				execSQL(dbin, "alter table imtable9 add 'basescore' type integer");
-				execSQL(dbin, "alter table imtable10 add 'basescore' type integer");
-		} catch (Exception e) {
-				//e.printStackTrace();
-			Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
-		}
 
 	}
 	
