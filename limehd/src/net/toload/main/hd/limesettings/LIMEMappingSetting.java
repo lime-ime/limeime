@@ -23,6 +23,7 @@ package net.toload.main.hd.limesettings;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -33,20 +34,24 @@ import net.toload.main.hd.global.LIME;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -94,6 +99,9 @@ public class LIMEMappingSetting extends Activity {
 		ConnectivityManager connManager = null;
 		
 		private AlertDialog mOptionsDialog;
+		ListView listview;
+		List<File> flist;
+		LinearLayout toplayout;
 		
 		Context ctx;
 		
@@ -106,6 +114,7 @@ public class LIMEMappingSetting extends Activity {
 			this.setContentView(R.layout.kbsetting);
 
 			ctx = this;
+			flist = new ArrayList<File>();
 
 			// Startup Service
 			//getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
@@ -1038,6 +1047,44 @@ public class LIMEMappingSetting extends Activity {
 		 */
 		public void selectLimeFile(String srcpath, String tablename) {
 
+			   final Dialog dialog = new Dialog(this);
+			   		  dialog.setContentView(R.layout.target);
+			          dialog.setTitle(this.getResources().getText(R.string.lime_setting_btn_load_local_notice));
+   	                  dialog.setCancelable(true);
+   	           Button button = (Button) dialog.findViewById(R.id.btn_loading_sync_cancel);
+		   	          button.setOnClickListener(new OnClickListener() {
+		                @Override
+		                    public void onClick(View v) {
+		                        dialog.dismiss();
+		                    }
+		                });
+		   	          
+		   	   listview = (ListView) dialog.findViewById(R.id.listview_loading_target);
+		   	   toplayout = (LinearLayout) dialog.findViewById(R.id.linearlayout_loading_confirm_top);
+		   	   listview.setAdapter(getAdapter(new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY)));
+		   	   
+		   	   createNavigationButtons(new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY));
+		   	   listview.setOnItemClickListener(new OnItemClickListener(){
+
+				@Override
+				public void onItemClick(AdapterView<?> arg0, View arg1,
+						int position, long arg3) {
+					File f = flist.get(position);
+					if(f.isDirectory()){
+						listview.setAdapter(getAdapter(f));
+						createNavigationButtons(f);
+					}else{
+						getAvailableFiles(f.getAbsolutePath());
+                        dialog.dismiss();
+					}
+				}
+		   		   
+		   	   });
+			   dialog.show();
+
+			
+			
+			/*
 			// Retrieve Filelist
 			filelist = getAvailableFiles(srcpath, tablename);
 
@@ -1098,9 +1145,20 @@ public class LIMEMappingSetting extends Activity {
 
 				ad = builder.create();
 				ad.show();
-			}
+			}*/
 			
 		}
+
+
+		public LIMESelectFileAdapter getAdapter(List<File> list) {
+			return new LIMESelectFileAdapter(this, list);
+		}
+
+		public LIMESelectFileAdapter getAdapter(File path) {
+			flist = getAvailableFiles(path.getAbsolutePath());
+			return new LIMESelectFileAdapter(this, flist);
+		}
+		
 		
 		/**
 		 * Get list of the file from the path
@@ -1108,68 +1166,62 @@ public class LIMEMappingSetting extends Activity {
 		 * @param path
 		 * @return
 		 */
-		private ArrayList<File> getAvailableFiles(String path, String tablename) {
+		private List<File> getAvailableFiles(String path) {
 
-			ArrayList<File> templist = new ArrayList<File>();
-
+			List<File> templist = new ArrayList<File>();
+			List<File> list = new ArrayList<File>();
 			File check = new File(path);
 			
 			if (check.exists() && check.isDirectory()) {
-
-				File root = null;
-				root = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY);
-
-				// Fixed first 1 & 2
-				templist.add(root);
-
-				// Back to Parent
-				if (check.getParentFile().getAbsolutePath().equals("/")) {
-					templist.add(root);
-				} else {
-					templist.add(check.getParentFile());
-				}
-
-				File rootPath = new File(path);
-				File list[] = rootPath.listFiles();
-
-				Arrays.sort(list, new Comparator<Object>() {
-		            public int compare(Object a, Object b) {
-		                File filea = (File)a;
-		                File fileb = (File)b;
-		                //--- Sort directories before files, 
-		                //    otherwise alphabetical ignoring case.
-		                if (filea.isDirectory() && !fileb.isDirectory()) {
-		                    return -1;
-		                } else if (!filea.isDirectory() && fileb.isDirectory()) {
-		                    return 1;
-		                } else {
-		                    return filea.getName().compareToIgnoreCase(fileb.getName());
-		                }
-		            }
-		        });
 				
-				for (File unit : list) {
-					if (unit.isDirectory()
-							|| (unit.isFile() && unit.getName().toLowerCase().endsWith(".lime"))
-							|| (unit.isFile() && unit.getName().toLowerCase().endsWith(".cin"))) {
-						templist.add(unit);
+				for(File f: check.listFiles()){
+					if(f.canRead()){
+						if(!f.isDirectory() &&(
+								f.getName().toLowerCase().endsWith("cin") ||
+								f.getName().toLowerCase().endsWith("lime") ||
+								f.getName().toLowerCase().endsWith("txt")
+						 )){
+							list.add(f);
+						}else{
+							list.add(f);
+						}
 					}
 				}
 				
+				List<File> folders = new ArrayList<File>();
+				List<File> files = new ArrayList<File>();
+				for(File f: list){
+					if(f.isDirectory()){
+						folders.add(f);
+					}else{
+						files.add(f);
+					}
+				}
+				
+				List<File> result = new ArrayList<File>();
+				Collections.sort(folders, SORT_FILENAME);
+				Collections.reverse(folders);
+				result.addAll(folders);
+				Collections.sort(files, SORT_FILENAME);
+				Collections.reverse(files);
+				result.addAll(files);
+				
+				return result;
 
-
-			} else { //if (check.exists() && check.isFile()
-					//&& (  true || check.getName().toLowerCase().endsWith(".lime") || check.getName().toLowerCase().endsWith(".cin"))  ) {
-				//Log.i("ART","run load mapping method : " + imtype);
+			} else { 
 				hasSelectFile = true;
 				loadMapping(check);
 				resetLabelInfo();
-				//mLIMEPref.setParameter("im_loading", true);
-				//mLIMEPref.setParameter("im_loading_table", imtype);
 			}
 			return templist;
 		}
-		
+
+		static final Comparator<File> SORT_FILENAME = new Comparator<File>() {
+		    public int compare(File e1, File e2) {
+		    		return e2.getName().compareTo(e1.getName());
+			}
+	    };
+	    
 		/**
 		 * Import mapping table into database
 		 * 
@@ -1253,6 +1305,57 @@ public class LIMEMappingSetting extends Activity {
 	   		bundle.putString("keyboard", imtype);
 	   		i.putExtras(bundle);
 			startActivity(i);
+		}
+		
+		private void createNavigationButtons(final File dir) {
+
+			// Clean Top Area
+			toplayout.removeAllViews();
+
+			// Create Navigation Buttons
+			String path = dir.getAbsolutePath();
+			String[] pathlist = path.split("\\/");
+
+			String pathconstruct = "/";
+			if (pathlist.length > 0) {
+				for (String p : pathlist) {
+					if (!p.equals("") && !p.equals("/")) {
+						pathconstruct += p + "/";
+					} else {
+						p = "/";
+					}
+					final String actpath = pathconstruct;
+					Button b = new Button(this);
+					b.setText(p);
+					b.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT,
+							LayoutParams.WRAP_CONTENT));
+					b.setOnClickListener(new OnClickListener() {
+						public void onClick(View arg0) {
+							createNavigationButtons(new File(actpath));
+							flist = getAvailableFiles(actpath);
+							listview.setAdapter(getAdapter(flist));
+						}
+					});
+
+					toplayout.addView(b);
+				}
+			} else {
+				final String actpath = pathconstruct;
+				Button b = new Button(this);
+				b.setText("/");
+				b.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT,
+						LayoutParams.WRAP_CONTENT));
+				b.setOnClickListener(new OnClickListener() {
+					public void onClick(View arg0) {
+						createNavigationButtons(new File("/"));
+						flist = getAvailableFiles("/");
+						listview.setAdapter(getAdapter(flist));
+					}
+				});
+				toplayout.addView(b);
+				flist = getAvailableFiles("/");
+				listview.setAdapter(getAdapter(flist));
+			}
 		}
 		
 		
