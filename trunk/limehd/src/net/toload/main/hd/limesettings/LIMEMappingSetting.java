@@ -1176,12 +1176,12 @@ public class LIMEMappingSetting extends Activity {
 				
 				for(File f: check.listFiles()){
 					if(f.canRead()){
-						if(!f.isDirectory() &&(
-								f.getName().toLowerCase().endsWith("cin") ||
+						if(!f.isDirectory()){
+							if( f.getName().toLowerCase().endsWith("cin") ||
 								f.getName().toLowerCase().endsWith("lime") ||
-								f.getName().toLowerCase().endsWith("txt")
-						 )){
-							list.add(f);
+								f.getName().toLowerCase().endsWith("txt")){
+								list.add(f);
+							}
 						}else{
 							list.add(f);
 						}
