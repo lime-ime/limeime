@@ -107,6 +107,9 @@
     <string name="candidate_switch_summary">滑動選取輸入法建議文字</string>
     <string name="candidate_suggestion">啟動自建關聯字</string>
     <string name="candidate_suggestion_summary">依輸入文字自動建立關聯字</string>
+    <string name="learn_phrase">自動學習新詞</string>
+    <string name="learn_phrase_summary">從常用關聯字學習新詞</string>
+   
     <string name="learning_switch">啟動選取排序</string>
     <string name="learning_switch_summary">依選取次數排序選字清單</string>
     <string name="physical_keyboard_sort">啟動實體鍵盤選取排序</string>
@@ -389,9 +392,9 @@
 	<string name="l3_dbservice_download_start_empty">正在取得空白資料庫, 這一個動作會持續一至數分鐘，請您耐心等候.</string>
     <string name="l3_dbservice_download_initial">正在初始化資料庫.</string>
     <string name="l3_dbservice_download_loaded">資料庫已成功載入.</string>
-    <string name="l3_dbservice_download_convert">輸入法進行轉換中...</string>
+    <string name="l3_dbservice_download_convert">輸入法進行轉換中…</string>
     
-    <string name="l3_message_table_downloading">下載字根檔...</string>
+    <string name="l3_message_table_downloading">下載字根檔…</string>
     <string name="l3_message_database_reset_confirm">您是否要移除資料庫?</string>
     <string name="l3_message_table_reset_confirm">您是否要清除所有記錄?</string>
     <string name="l3_message_table_download_confirm">資料載入期間請勿關閉本視窗或跳出程式，以免匯入失敗，您是否要下載字根檔?</string>

@@ -167,6 +167,11 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("candidate_suggestion", true);
 	}
 	
+	public boolean getLearnPhrase(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("learn_phrase", true);
+	}
+	
 	public boolean getDisablePhysicalSelKeyOption(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("disable_physical_selkey_option", false);

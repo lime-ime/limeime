@@ -6,10 +6,10 @@
     <dimen name="candidate_font_size">32sp</dimen>
     <dimen name="candidate_number_font_size">14sp</dimen>
     <dimen name="composing_text_size">10sp</dimen>
-    <dimen name="key_text_size">23dp</dimen>
-    <dimen name="label_text_size">18dp</dimen>
-    <dimen name="sub_label_text_size">18dp</dimen>
-    <dimen name="small_label_text_size">23dp</dimen>
+    <dimen name="key_text_size">22dp</dimen>
+    <dimen name="label_text_size">16dp</dimen>
+    <dimen name="sub_label_text_size">16dp</dimen>
+    <dimen name="small_label_text_size">20dp</dimen>
     
     <!-- WB -->
     <dimen name="wb_key_height">72dip</dimen>

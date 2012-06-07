@@ -27,7 +27,7 @@
     <string name="lime_setting_loading">Please do not close this window or program during data loading period</string>
     <string name="lime_setting_select_root"> - back to /</string>
     <string name="lime_setting_select_parent"> - back to ..</string>
-    <!-- <string name="lime_loading">Loading ...</string> -->
+    <!-- <string name="lime_loading">Loading …</string> -->
     <string name="lime_loading_cancel">Cancel</string>
     
     <string name="lime_setting_notification_loading">Start Loading Mapping Table</string>
@@ -105,14 +105,18 @@
     <string name="candidate_switch_summary">Enable suggestion word sliding selection</string>
     <string name="similiar_enable_switch">Enable related words dictionary</string>
     <string name="similiar_enable_switch_summary">Enable related words dictionary</string>
-    <string name="candidate_suggestion">Auto-build related words</string>
+    <string name="candidate_suggestion">Learn related words</string>
     <string name="candidate_suggestion_summary">Learn related words base on text input</string>
-    <string name="learning_switch">Sort suggestion list</string>
-    <string name="learning_switch_summary">Sort suggestion list base on learned frequency</string>
-    <string name="physical_keyboard_sort">Sort suggestion list using physical keyboard</string>
+    <string name="learn_phrase">Learn phrases</string>
+    <string name="learn_phrase_summary">Learn phrases from frequent selected related words.</string>
+    
+    
+    <string name="learning_switch">Sort suggestions</string>
+    <string name="learning_switch_summary">Sort suggestions base on learned frequency</string>
+    <string name="physical_keyboard_sort">Sort suggestions when using keyboard</string>
     <string name="physical_keyboard_sort_summary">Sort suggestion list base on learned frequency, when using physical keyboard</string>
     <string name="accept_number_index">Mapping on numbers</string>
-    <!-- <string name="accept_number_index_summary">Allow input 0-9 as mapping code</string> -->
+    <string name="accept_number_index_summary">Allow input 0–9 as mapping code</string>
     <string name="accept_symbol_index">Mapping on symbols</string>
     <string name="accept_symbol_index_summary">Allow punctuation as mapping code</string>
     <string name="switch_english_mode">Quick switch hotkey</string>
@@ -410,40 +414,40 @@
     <string name="l3_tab_preference">Preference</string>
 	
     
-	<string name="l3_dbservice_download_start">Downloading preloaded database... It takes few minutes, please wait...</string>
-    <string name="l3_dbservice_download_start_empty">Downloading blank database... It takes few minutes, please wait...</string>
+	<string name="l3_dbservice_download_start">Downloading preloaded database… It takes few minutes, please wait…</string>
+    <string name="l3_dbservice_download_start_empty">Downloading blank database… It takes few minutes, please wait…</string>
     <string name="l3_dbservice_download_initial">Initialize database.</string>
     <string name="l3_dbservice_download_loaded">Database successfully loaded.</string>
-    <string name="l3_dbservice_download_convert">Loading the database file...</string>
+    <string name="l3_dbservice_download_convert">Loading the database file…</string>
     
-    <string name="l3_message_table_downloading">Downloading the IM-table file ...</string>
+    <string name="l3_message_table_downloading">Downloading the IM-table file…</string>
     <string name="l3_message_database_reset_confirm">Are you sure you want to reset the database?</string>
     <string name="l3_message_table_reset_confirm">Are you sure you want to reset this IM-table?</string>
     <string name="l3_message_table_download_confirm">Please do not close this window or program during data loading period, are you sure you want to donload the IM-table file loading?</string>
     <string name="l3_message_table_abort_confirm">Are you sure you want to abort the IM-table file loading?</string>
-    <string name="l3_initial_download_database">Downloading the preloaded database...</string>
+    <string name="l3_initial_download_database">Downloading the preloaded database…</string>
     <string name="l3_initial_database_failed">Action failed! please waiting and check the integrity of database!</string>
     <string name="l3_initial_download_failed">Database conversion failed! Please reset database and try again!</string>
     <string name="l3_initial_download_write_sdcard_failed">Please make sure SDCard is mounted, and then reset database and try again!</string>
     <string name="l3_initial_backup_database">Backup DB</string>
-    <string name="l3_initial_backup_start">Starting lime database backup task...</string>
+    <string name="l3_initial_backup_start">Starting lime database backup task…</string>
     <string name="l3_initial_backup_end">Backup database task finished.</string> 
     <string name="l3_initial_backup_confirm">Are you sure you want to backup lime database?</string>
     <string name="l3_initial_backup_error">No database to backup! Please initialized database first!</string>
     <string name="l3_initial_restore_database">Restore DB</string>
     <string name="l3_initial_restore_error">Backup not found!</string>
-    <string name="l3_initial_restore_start">Starting lime database restore task...</string>
+    <string name="l3_initial_restore_start">Starting lime database restore task…</string>
     <string name="l3_initial_restore_end">Restore database task finished.</string>
     <string name="l3_initial_restore_confirm">Are you sure you want to restore lime database from backup?</string>
     
     <string name="l3_initial_cloud_backup_database">Google Cloud Backup</string>
-    <string name="l3_initial_cloud_backup_start">Starting lime database backup task...</string>
+    <string name="l3_initial_cloud_backup_start">Starting lime database backup task…</string>
     <string name="l3_initial_cloud_backup_end">Backup database task finished.</string> 
     <string name="l3_initial_cloud_backup_confirm">Are you sure you want to backup lime database to the Google Drive?</string>
     <string name="l3_initial_cloud_backup_error">No database to backup! Please initialized database first!</string>
     <string name="l3_initial_cloud_restore_database">Google Cloud Restore</string>
     <string name="l3_initial_cloud_restore_error">Backup not found!</string>
-    <string name="l3_initial_cloud_restore_start">Starting lime database restore task...</string>
+    <string name="l3_initial_cloud_restore_start">Starting lime database restore task…</string>
     <string name="l3_initial_cloud_restore_end">Restore database task finished.</string>
     <string name="l3_initial_cloud_restore_confirm">Are you sure you want to restore lime database from the Google Drive?</string>
     
@@ -460,7 +464,7 @@
     <string name="l3_im_setting_button_reset">Reset table</string>
     <string name="l3_im_setting_button_select">Select keyboard</string>
     
-	<string name="l3_im_download_from_hs">下載並安裝華象直覺字根\n華象直覺輸入法發明人陳華偉製作\nTel:(07)222-3133 mobile：0933-616029\nhs.h123@msa.hinet.net</string>
+	<string name="l3_im_download_from_hs">下載並安裝華象直覺字根\n華象直覺輸入法發明人陳華偉製作\nTel:(07)222–3133 mobile：0933–616029\nhs.h123@msa.hinet.net</string>
     <string name="l3_im_download_from_hs_start">Downloading HS table</string>
     <string name="l3_im_download_from_hs_install">Importing HS table</string>
     
@@ -473,13 +477,13 @@
     <string name="l3_im_download_from_phonetic_install">Importing OpenVanilla Phonetic table</string>
     
     <string name="l3_im_download_from_phonetic_adv">Download/Import Phonetic QP/LD table (large)</string>
-    <string name="l3_im_download_from_phonetic_adv_start">Downloading Phonetic  QP/LD table...</string>
-    <string name="l3_im_download_from_phonetic_adv_install">Importing Phonetic  QP/LD table...</string>
+    <string name="l3_im_download_from_phonetic_adv_start">Downloading Phonetic  QP/LD table…</string>
+    <string name="l3_im_download_from_phonetic_adv_install">Importing Phonetic  QP/LD table…</string>
     <string name="l3_im_download_from_phonetic_adv_warning">The table size is large. It may take more than 10 minutes to finish importing the table.</string>
     
     <string name="l3_im_download_from_phonetic_cns">Download/Import Phonetic QP/LD CNS11643 table (Large)</string>
-    <string name="l3_im_download_from_phonetic_cns_start">Downloading Phonetic  QP/LD CNS11643 table...</string>
-    <string name="l3_im_download_from_phonetic_cns_install">Importing Phonetic  QP/LD CNS11643 table...</string>
+    <string name="l3_im_download_from_phonetic_cns_start">Downloading Phonetic  QP/LD CNS11643 table…</string>
+    <string name="l3_im_download_from_phonetic_cns_install">Importing Phonetic  QP/LD CNS11643 table…</string>
     <string name="l3_im_download_from_phonetic_cns_warning">The table size is large. It may take more than 10 minutes to finish importing the table.</string>
    
     <string name="l3_im_download_from_cj_cns">Download/Import CJ CNS11643 table (Large)</string>

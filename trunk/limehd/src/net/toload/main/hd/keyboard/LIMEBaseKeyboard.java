@@ -92,8 +92,9 @@ public class LIMEBaseKeyboard {
     /** Default key height */
     private int mDefaultHeight;
 
-    /** KeySizeScale Jerremy '11,9,3 */
+    /** KeySizeScale Jeremy '11,9,3 */
     private static float mKeySizeScale;
+
     
     /** Default gap between rows */
     private int mDefaultVerticalGap;
@@ -279,7 +280,31 @@ public class LIMEBaseKeyboard {
         /** Popup characters */
         public CharSequence popupCharacters;
         
-        /** 
+        /** LabelSizeScale Jeremy '12,6,7 */
+        private static float mLabelSizeScale = 0f;
+        
+        public float getLabelSizeScale() {
+        	if(DEBUG)
+        		Log.i(TAG, "getLabelSizeScale() " 
+        				+ ", key height = " + height
+        				+ ", key width = " + width
+        				+ ", mSplitedKeyWidthScale = " + mSplitedKeyWidthScale
+        				+ ", keyboard.getKeyHeight = " + keyboard.getKeyHeight()
+        				+ ", keyboard.getKeyWidth() = " + keyboard.getKeyWidth() );
+        	if(mLabelSizeScale > 0) return mLabelSizeScale;
+        	
+        	//Jeremy '12,6, 7 move from LIMEkeyboardbaseview
+        	mLabelSizeScale =1;
+        	
+    			
+			if(width < keyboard.getKeyWidth())  //Jeremy '12,5,26 scaled the label size if the key width is smaller than default key width
+				mLabelSizeScale =  mSplitKeyboard?1f: mSplitedKeyWidthScale; 
+				//*=  (float)(width) / (float)(keyboard.getKeyWidth());
+	
+			return mLabelSizeScale;
+		}
+
+		/** 
          * Flags that specify the anchoring to edges of the keyboard for detecting touch events
          * that are just out of the boundary of the key. This is a bit mask of 
          * {@link LIMEBaseKeyboard#EDGE_LEFT}, {@link LIMEBaseKeyboard#EDGE_RIGHT}, {@link LIMEBaseKeyboard#EDGE_TOP} and

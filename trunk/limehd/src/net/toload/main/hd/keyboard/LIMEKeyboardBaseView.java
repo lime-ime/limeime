@@ -856,17 +856,20 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 				final int labelSize;
 
 				if(DEBUG) 
-					Log.i(TAG, "onBufferDraw():"+ label);
+					Log.i(TAG, "onBufferDraw():"+ label 
+							+ " keySizeScale = " + mKeyboard.getKeySizeScale() + " "
+							+ " labelSizeScale = " + key.getLabelSizeScale());
 				//Jeremy '11,8,11, Extended for sub-label display
 				//Jeremy '11,9,4 Scale label size
 				float keySizeScale = mKeyboard.getKeySizeScale();
-				float labelSizeScale = 1;
+				float labelSizeScale = key.getLabelSizeScale();
 				
-				if(key.height < mKeyboard.getKeyHeight())  //Jeremy '12,5,21 scaled the label size if the key height is smaller than default key height 
+				//Jeremy '12,6,7 moved to LIMEbasekeyboard
+				/*if(key.height < mKeyboard.getKeyHeight())  //Jeremy '12,5,21 scaled the label size if the key height is smaller than default key height 
 					labelSizeScale =  (float)(key.height) / (float)(mKeyboard.getKeyHeight());
 					
 				if(key.width < mKeyboard.getKeyWidth())  //Jeremy '12,5,26 scaled the label size if the key width is smaller than default key width
-					labelSizeScale *=  (float)(key.width) / (float)(mKeyboard.getKeyWidth());
+					labelSizeScale *=  (float)(key.width) / (float)(mKeyboard.getKeyWidth());*/
 					
 				
 					
@@ -1091,10 +1094,12 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 			mPreviewText.setCompoundDrawables(null, null, null, null);
 			mPreviewText.setText(adjustCase(tracker.getPreviewText(key)));
 			if (key.label.length() > 1 && key.codes.length < 2) {
-				mPreviewText.setTextSize(TypedValue.COMPLEX_UNIT_PX, mKeyTextSize);
+				mPreviewText.setTextSize(TypedValue.COMPLEX_UNIT_PX, mKeyTextSize 
+						* key.getLabelSizeScale() * mKeyboard.getKeySizeScale()); //Jeremy '12,6,7 scale the preview key text size
 				mPreviewText.setTypeface(Typeface.DEFAULT_BOLD);
 			} else {
-				mPreviewText.setTextSize(TypedValue.COMPLEX_UNIT_PX, mPreviewTextSizeLarge);
+				mPreviewText.setTextSize(TypedValue.COMPLEX_UNIT_PX, mPreviewTextSizeLarge 
+						* key.getLabelSizeScale() * mKeyboard.getKeySizeScale());//Jeremy '12,6,7 scale the preview key text size
 				mPreviewText.setTypeface(mKeyTextStyle);
 			}
 		}

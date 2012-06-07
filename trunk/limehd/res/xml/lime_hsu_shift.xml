@@ -61,7 +61,7 @@
         <Key limehd:codes="65" limehd:keyLabel="A\tㄘ\nㄟ" limehd:horizontalGap="5%p" 
                 limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="83" limehd:keyLabel="S\t˙\nㄙ"/>
-        <Key limehd:codes="68" limehd:keyLabel="Dˊ\nㄉ"/>
+        <Key limehd:codes="68" limehd:keyLabel="D\tˊ\nㄉ"/>
         <Key limehd:codes="70" limehd:keyLabel="F\tˇ\nㄈ"/>
         <Key limehd:codes="71" limehd:keyLabel="G\tㄍ\nㄜ"/>
         <Key limehd:codes="72" limehd:keyLabel="H\tㄏ\nㄛ"/>
