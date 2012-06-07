@@ -291,6 +291,11 @@
                 android:title="@string/candidate_suggestion"
                 android:defaultValue="true"
                 android:summary="@string/candidate_suggestion_summary" />
+         <CheckBoxPreference
+                android:key="learn_phrase"
+                android:title="@string/learn_phrase"
+                android:defaultValue="true"
+                android:summary="@string/learn_phrase_summary" />
         <CheckBoxPreference
                 android:key="learning_switch"
                 android:title="@string/learning_switch"

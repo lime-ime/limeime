@@ -107,6 +107,8 @@
     <string name="candidate_switch_summary">滑动选取输入法建议文字</string>
     <string name="candidate_suggestion">启动自建关联字</string>
     <string name="candidate_suggestion_summary">依输入文字自动建立关联字</string>
+ 	<string name="learn_phrase">自动学习新词</string>
+    <string name="learn_phrase_summary">从常用关联字学习新词</string>
     <string name="learning_switch">启动选取排序</string>
     <string name="learning_switch_summary">依选取次数排序选字清单</string>
     <string name="physical_keyboard_sort">启动实体键盘选取排序</string>
@@ -388,9 +390,9 @@
 	<string name="l3_dbservice_download_start_empty">正在取得空白数据库, 这一个动作会持续一至数分钟，请您耐心等候.</string>
     <string name="l3_dbservice_download_initial">正在初始化数据库.</string>
     <string name="l3_dbservice_download_loaded">数据库已成功载入.</string>
-    <string name="l3_dbservice_download_convert">输入法进行转换中...</string>
+    <string name="l3_dbservice_download_convert">输入法进行转换中…</string>
     
-    <string name="l3_message_table_downloading">下载字根档...</string>
+    <string name="l3_message_table_downloading">下载字根档…</string>
     <string name="l3_message_database_reset_confirm">您是否要移除数据库?</string>
     <string name="l3_message_table_reset_confirm">您是否要清除所有记录?</string>
     <string name="l3_message_table_download_confirm">资料载入期间请勿关闭本视窗或跳出程式，以免汇入失败，您是否要下载字根档?</string>
@@ -488,7 +490,7 @@
     <string name="l3_im_download_from_ez_install">开始安装轻松字根</string>
     
     
-    <string name="l3_im_download_from_hs">下载并安装华象直觉字根\n华象直觉输入法发明人陈华伟制作\nTel:(07)222-3133 手机：0933-616029\nhs.h123@msa.hinet.net</string>
+    <string name="l3_im_download_from_hs">下载并安装华象直觉字根\n华象直觉输入法发明人陈华伟制作\nTel:(07)222–3133 手机：0933–616029\nhs.h123@msa.hinet.net</string>
     <string name="l3_im_download_from_hs_start">开始下载华象直觉字根</string>
     <string name="l3_im_download_from_hs_install">开始安装华象直觉字根</string>
     

@@ -57,7 +57,7 @@
 	<Row>
 		<Key limehd:codes="97" limehd:keyLabel="a\tㄘ\nㄟ"  limehd:horizontalGap="5%p" limehd:keyEdgeFlags="left" />
 		<Key limehd:codes="115" limehd:keyLabel="s\t˙\nㄙ" />
-		<Key limehd:codes="100" limehd:keyLabel="dˊ\nㄉ" />
+		<Key limehd:codes="100" limehd:keyLabel="d\tˊ\nㄉ" />
 		<Key limehd:codes="102" limehd:keyLabel="f\tˇ\nㄈ" />
 		<Key limehd:codes="103" limehd:keyLabel="g\tㄍ\nㄜ" />
 		<Key limehd:codes="104" limehd:keyLabel="h\tㄏ\nㄛ" />

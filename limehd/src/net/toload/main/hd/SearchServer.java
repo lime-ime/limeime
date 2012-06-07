@@ -218,7 +218,7 @@ public class SearchServer {
 
 		Thread queryThread = new Thread(){
 			public void run() {
-				String result = dbadapter.getRMapping(word);
+				String result = dbadapter.getRMappingInConvertedKeynameString(word);
 				if(result!=null && !result.equals("")){
 					//displayNotificationMessage(result);
 					LIMEUtilities.showNotification(
@@ -580,17 +580,19 @@ public class SearchServer {
 					scorelistSnapshot.addAll(scorelist);
 					scorelist.clear();
 				}
-				ArrayList<List<Mapping>> localLDPhraseListArray = new ArrayList<List<Mapping>>();
-				if(LDPhraseListArray!=null){
-					localLDPhraseListArray.addAll(LDPhraseListArray);
-					LDPhraseListArray.clear();
-				}
 				//Jeremy '11,7,28 combine to adduserdict and addscore 
 				//Jeremy '11,6,12 do adduserdict and add score if diclist.size > 0 and only adduserdict if diclist.size >1
 				//Jeremy '11,6,11, always learn scores, but sorted according preference options
 
 				// Learn user dictionary (the consecutive two words as a userdict phrase).
 				learnUserDict(scorelistSnapshot);
+				
+				ArrayList<List<Mapping>> localLDPhraseListArray = new ArrayList<List<Mapping>>();
+				if(LDPhraseListArray!=null){
+					localLDPhraseListArray.addAll(LDPhraseListArray);
+					LDPhraseListArray.clear();
+				}
+			
 
 				// Learn LD Phrase
 				learnLDPhrase(localLDPhraseListArray);
@@ -612,12 +614,20 @@ public class SearchServer {
 					if(i+1 <localScorelist.size()){
 						Mapping unit2 = localScorelist.get((i + 1));
 						if(unit2 == null){continue;}				
-						if (unit.getId()!=null
-								&& unit.getWord() != null && !unit.getWord().equals("")
-								&& unit2.getId() !=null
+						if (//unit.getId()!=null
+								unit.getWord() != null && !unit.getWord().equals("")
+								//&& unit2.getId() !=null
 								&& unit2.getWord() != null && !unit2.getWord().equals("")
 								) {
-							dbadapter.addOrUpdateUserdictRecord(unit.getWord(),unit2.getWord());
+							//Jeremy '12,6,7 learn LD phrase if the score of userdic is > 20
+							int score = dbadapter.addOrUpdateUserdictRecord(unit.getWord(),unit2.getWord());
+							if(DEBUG)
+								Log.i(TAG, "learnUserDict(), the return score = " + score);
+							if( score >20 && mLIMEPref.getLearnPhrase()){
+								addLDPhrase(unit, false);
+								addLDPhrase(unit2, true);
+								
+							}
 						}
 					}
 				}
@@ -627,20 +637,53 @@ public class SearchServer {
 
 
 	private void learnLDPhrase(ArrayList<List<Mapping>> localLDPhraseListArray){
+		if(DEBUG) 
+			Log.i(TAG,"learnLDPhrase()");
+		
 		if(localLDPhraseListArray!=null && localLDPhraseListArray.size()>0){
 			if(DEBUG) 
 				Log.i(TAG,"learnLDPhrase(): LDPhrase learning, arraysize =" + localLDPhraseListArray.size());
+			
+			
 			for(List<Mapping> phraselist : localLDPhraseListArray ){
 				if(DEBUG) 
 					Log.i(TAG,"learnLDPhrase(): LDPhrase learning, current list size =" + phraselist.size());
-				if(phraselist.size()>0){	
+				if(phraselist.size()>0){
+					
+					//Do pre-processing looking-up for codes for mapping selected from related or userdict. jeremy '12,6,7
+					List<Mapping> preProcessedPhraselist = new LinkedList<Mapping>();
+					for(Mapping unit: phraselist) {
+						if(unit.getId()==null || unit.isDictionary()) {
+							//TODO:the rmapping may return more than 1 mappings with different codes
+							List<Mapping> rMappingList = dbadapter.getRMapping(unit, tablename);
+							if(rMappingList.size()>0)
+								preProcessedPhraselist.add(rMappingList.get(0));
+							else
+								preProcessedPhraselist.add(unit);
+						}else
+							preProcessedPhraselist.add(unit);
+					}
+					phraselist = preProcessedPhraselist;
+					
+					if(DEBUG) 
+						Log.i(TAG,"learnLDPhrase(): LDPhrase learning, preprocessed list size =" + phraselist.size());
+
+				
 					String baseCode="", LDCode ="", QPCode ="", baseWord="";
 					Mapping unit1 = phraselist.get(0);
-
+					
+					if(DEBUG) 
+						Log.i(TAG,"learnLDPhrase(): unit1.getId() = " + unit1.getId() 
+								+ ", unit1.getCode() =" + unit1.getCode()
+								+ ", unit1.getWord() =" + unit1.getWord());
+ 
 					if(unit1 == null
+							|| unit1.getId() == null //Jermy '12,6,7 break if id is null (selected from related list)
+							|| unit1.getCode() == null //Jermy '12,6,7 break if code is null (selected from userdict)
 							|| unit1.getCode().length()==0
 							|| unit1.getWord().length()==0){break;}
-
+				
+					
 					baseCode = unit1.getCode();
 					baseWord = unit1.getWord();
 					//TODO: Do not know how to build QPCode if word length > 1. Abandon now!! Jeremy '12,6,4
@@ -654,6 +697,8 @@ public class SearchServer {
 							
 							Mapping unit2 = phraselist.get((i + 1));
 							if(unit2 == null 
+									|| unit2.getId() == null //Jermy '12,6,7 break if id is null (selected from related list)
+									|| unit2.getCode() == null //Jermy '12,6,7 break if code is null (selected from userdict)
 									|| unit2.getCode().length()==0
 									|| unit2.getWord().length()==0){break;}
 							
@@ -679,7 +724,6 @@ public class SearchServer {
 								
 								if(LDCode.length()>1){
 									dbadapter.addOrUpdateMappingRecord(LDCode, baseWord);
-									
 									removeRemapedCodeCachedMappings(LDCode);								
 									updateSimilarCodeRelatedList(LDCode);
 								}
@@ -730,7 +774,7 @@ public class SearchServer {
 		String cachekey = cacheKey(code);
 		Pair<List<Mapping>, List<Mapping>> cachedPair;// = cache.get(cachekey);
 		int len = code.length();
-		if(len > 4 ) len = 4; //Jeremy '11,9,14
+		if(len > 5 ) len = 5; //Jeremy '12,6,7 change max backward level to 5.
 		for (int k = 1; k < len; k++) {
 			String key = code.substring(0, code.length() - k);
 			cachekey = cacheKey(key);
@@ -797,7 +841,8 @@ public class SearchServer {
 
 	}
 
-	public void addLDPhrase(String id, String code, String word, int score, boolean ending){
+	public void addLDPhrase(Mapping mapping,//String id, String code, String word, int score, 
+			boolean ending){
 		if(LDPhraseListArray == null) 
 			LDPhraseListArray = new ArrayList<List<Mapping>>();
 		if(LDPhraseList == null)
@@ -805,14 +850,8 @@ public class SearchServer {
 
 
 
-		if(id != null){ // force interruped if id=null
-			Mapping tempMapping = new Mapping();
-			tempMapping.setId(id);
-			tempMapping.setCode(code);
-			tempMapping.setWord(word);
-			tempMapping.setScore(score);
-			tempMapping.setDictionary(false);
-			LDPhraseList.add(tempMapping);
+		if(mapping != null){ // force interruped if mapping=null
+			LDPhraseList.add(mapping);
 		}
 
 		if(ending){
@@ -821,9 +860,10 @@ public class SearchServer {
 			LDPhraseList = new LinkedList<Mapping>();		
 		}
 
-		if(DEBUG) Log.i(TAG,"addLDPhrase(), code="+code + ". id=" + id + ". engding:" + ending
+		if(DEBUG) Log.i(TAG,"addLDPhrase(), code="+mapping.getCode() + ". id=" + mapping.getId() + ". engding:" + ending
 				+ ". LDPhraseListArray.size=" + LDPhraseListArray.size()
-				+ ". LDPhraseList.size=" + LDPhraseList.size()); 
+				+ ". LDPhraseList.size=" + LDPhraseList.size());
+				
 
 	}
 

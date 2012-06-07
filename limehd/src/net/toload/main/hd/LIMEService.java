@@ -460,7 +460,7 @@ public class LIMEService extends InputMethodService implements
 		try {
 		if(LDComposingBuffer.length()>0) { // Force interrupt the LD process
 			LDComposingBuffer = "";
-			SearchSrv.addLDPhrase(null,null,null,0, true);
+			SearchSrv.addLDPhrase(null, true);
 		}
 		// Jeremy '11,8,1 do postfinishinput in searchSrv (learn userdic and LDPhrase). 
 		SearchSrv.postFinishInput();
@@ -1531,15 +1531,13 @@ public class LIMEService extends InputMethodService implements
 								if(DEBUG) 
 									Log.i(TAG, "commitedtype():starting LD process, LDBuffer=" + LDComposingBuffer +
 										". just commited code=" + selectedCandidate.getCode());
-								SearchSrv.addLDPhrase(selectedCandidate.getId(), selectedCandidate.getCode(), 
-										selectedCandidate.getWord(), selectedCandidate.getScore(), false);
+								SearchSrv.addLDPhrase(selectedCandidate, false);
 							}else {//if(LDComposingBuffer.contains(mComposing.toString())){
 								//Continuous LD process
 								if(DEBUG) 
 									Log.i(TAG, "commitedtype():Continuous LD process, LDBuffer=" + LDComposingBuffer +
 										". just commited code=" + selectedCandidate.getCode());
-								SearchSrv.addLDPhrase(selectedCandidate.getId(), selectedCandidate.getCode(), 
-										selectedCandidate.getWord(), selectedCandidate.getScore(), false);
+								SearchSrv.addLDPhrase(selectedCandidate, false);
 							}
 							mComposing= mComposing.delete(0, commitedCodeLength);
 							
@@ -1558,14 +1556,14 @@ public class LIMEService extends InputMethodService implements
 									Log.i(TAG, "commitedtype():Ending LD process, LDBuffer=" + LDComposingBuffer +
 										". just commited code=" + selectedCandidate.getCode());
 								LDComposingBuffer = "";
-								SearchSrv.addLDPhrase(selectedCandidate.getId(), selectedCandidate.getCode(), selectedCandidate.getWord(), selectedCandidate.getScore(), true);
+								SearchSrv.addLDPhrase(selectedCandidate, true);
 							}else if(LDComposingBuffer.length()>0){
 								//LD process interrupted.
 								if(DEBUG) 
 									Log.i(TAG, "commitedtype():LD process interrupted, LDBuffer=" + LDComposingBuffer +
 										". just commited code=" + selectedCandidate.getCode());
 								LDComposingBuffer = "";
-								SearchSrv.addLDPhrase(null,null,null,0, true);
+								SearchSrv.addLDPhrase(null, true);
 							}
 								
 						}

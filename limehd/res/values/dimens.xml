@@ -28,10 +28,10 @@
     <dimen name="candidate_vertical_padding">4sp</dimen>
     <dimen name="candidate_expand_button_width">32sp</dimen>
     <dimen name="keyboard_bottom_padding">0.06in</dimen>
-    <dimen name="key_text_size">22dp</dimen>
-    <dimen name="label_text_size">16dp</dimen>
-    <dimen name="sub_label_text_size">16dp</dimen>
-    <dimen name="small_label_text_size">20dp</dimen>
+    <dimen name="key_text_size">21dp</dimen>
+    <dimen name="label_text_size">15dp</dimen>
+    <dimen name="sub_label_text_size">15dp</dimen>
+    <dimen name="small_label_text_size">19dp</dimen>
     <dimen name="composing_text_size">18sp</dimen>
     <dimen name="notice_text_size">18sp</dimen>
   	<dimen name="key_hysteresis_distance">0.05in</dimen>
