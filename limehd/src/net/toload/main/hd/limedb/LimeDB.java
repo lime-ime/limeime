@@ -516,7 +516,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					getKeyboardInfoOnDB(dbin, "phoneticet41", "desc"), "phoneticet41");
 		}else
 			setIMKeyboardOnDB(dbin, "phonetic", 
-					getKeyboardInfoOnDB(dbin, "phoneticet", "desc"), "phoneticet");
+					getKeyboardInfoOnDB(dbin, "phonetic", "desc"), "phonetic");
 	}
 	
 	private void execSQL(SQLiteDatabase dbin, String command){
