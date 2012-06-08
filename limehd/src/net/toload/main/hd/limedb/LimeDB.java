@@ -467,21 +467,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						dbin.insert("keyboard" ,null , cv);
 					}
 					
-					String selectedPhoneticKeyboardType = mLIMEPref.getPhoneticKeyboardType();
-					if(DEBUG)
-						Log.i("OnUpgrade()", "phonetickeyboardtype:" + selectedPhoneticKeyboardType);
-					if(selectedPhoneticKeyboardType.equals("hsu")){
-						setIMKeyboardOnDB(dbin, "phonetic",
-								getKeyboardInfoOnDB(dbin, "hsu", "desc"), "hsu");//jeremy '12,6,6 new hsu and et26 keybaord
-					}else if(selectedPhoneticKeyboardType.equals("eten26")){
-						setIMKeyboardOnDB(dbin, "phonetic", 
-								getKeyboardInfoOnDB(dbin, "et26", "desc"), "et26");
-					}else if(selectedPhoneticKeyboardType.equals("eten")){
-						setIMKeyboardOnDB(dbin, "phonetic", 
-								getKeyboardInfoOnDB(dbin, "phoneticet41", "desc"), "phoneticet41");
-					}else
-						setIMKeyboardOnDB(dbin, "phonetic", 
-								getKeyboardInfoOnDB(dbin, "phoneticet", "desc"), "phoneticet");
+					checkPhoneticKeyboardSettingOnDB(dbin);
 
 					
 				} catch (Exception e) {
@@ -493,6 +479,44 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 			
 
+	}
+	/**
+	 * Check the consistency of phonetic keyboard setting in preference and db.
+	 * Jeremy '12,6,8
+	 * 
+	 */
+	public void checkPhoneticKeyboardSetting(){
+		if(!checkDBConnection()) return;
+		try{
+			checkPhoneticKeyboardSettingOnDB(db);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+			
+		
+	}
+	
+	
+	
+	/**
+	 * @param dbin
+	 */
+	private void checkPhoneticKeyboardSettingOnDB(SQLiteDatabase dbin) {
+		String selectedPhoneticKeyboardType = mLIMEPref.getPhoneticKeyboardType();
+		if(DEBUG)
+			Log.i("OnUpgrade()", "phonetickeyboardtype:" + selectedPhoneticKeyboardType);
+		if(selectedPhoneticKeyboardType.equals("hsu")){
+			setIMKeyboardOnDB(dbin, "phonetic",
+					getKeyboardInfoOnDB(dbin, "hsu", "desc"), "hsu");//jeremy '12,6,6 new hsu and et26 keybaord
+		}else if(selectedPhoneticKeyboardType.equals("eten26")){
+			setIMKeyboardOnDB(dbin, "phonetic", 
+					getKeyboardInfoOnDB(dbin, "et26", "desc"), "et26");
+		}else if(selectedPhoneticKeyboardType.equals("eten")){
+			setIMKeyboardOnDB(dbin, "phonetic", 
+					getKeyboardInfoOnDB(dbin, "phoneticet41", "desc"), "phoneticet41");
+		}else
+			setIMKeyboardOnDB(dbin, "phonetic", 
+					getKeyboardInfoOnDB(dbin, "phoneticet", "desc"), "phoneticet");
 	}
 	
 	private void execSQL(SQLiteDatabase dbin, String command){
@@ -3754,7 +3778,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 */
 	public int getHighestScore(String code) {
 		
-		//SQLiteDatabase db = this.getSqliteDb(true);
+		if(!checkDBConnection()) return 0;
 		
 		int highestScore=0;
 		if (code != null && code.trim().length()>0){

@@ -216,6 +216,7 @@ public class  DBServer {
 					}
 					if(downloadedFile.exists()){
 						if(decompressFile(downloadedFile, folder, LIME.DATABASE_NAME)){
+							checkPhoneticKeyboardSetting();//Jeremy '12,6,8 check the pheonetic keyboard consistency
 							Thread threadTask = new Thread() {
 								public void run() {
 									downloadedFile.delete();
@@ -227,6 +228,8 @@ public class  DBServer {
 						//getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
 						mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
 						showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
+						dbAdapter.openDBConnection(true);
+						dbAdapter.checkPhoneticKeyboardSetting();//Jeremy '12,6,8 check the pheonetic keyboard consistency
 					}
 				}
 			}
@@ -269,6 +272,7 @@ public class  DBServer {
 						showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 						//Jeremy '12,4,7 re-open the dbconnection
 						dbAdapter.openDBConnection(true);
+						dbAdapter.checkPhoneticKeyboardSetting();//Jeremy '12,6,8 check the pheonetic keyboard consistency
 					}
 				}
 			}
@@ -312,6 +316,7 @@ public class  DBServer {
 						showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 						//Jeremy '12,4,7 re-open the dbconnection
 						dbAdapter.openDBConnection(true);
+						dbAdapter.checkPhoneticKeyboardSetting();//Jeremy '12,6,8 check the pheonetic keyboard consistency
 					}
 				}
 			}
@@ -354,6 +359,7 @@ public class  DBServer {
 						showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 						//Jeremy '12,4,7 re-open the dbconnection
 						dbAdapter.openDBConnection(true);
+						dbAdapter.checkPhoneticKeyboardSetting();//Jeremy '12,6,8 check the pheonetic keyboard consistency
 					}
 				}
 			}
@@ -925,7 +931,15 @@ public class  DBServer {
 			e.printStackTrace();
 		}
 	}
-
+	/**
+	 * Check the consistency of phonetic keyboard setting in preference and db.
+	 * Jeremy '12,6,8
+	 * 
+	 */
+	public void checkPhoneticKeyboardSetting(){
+		dbAdapter.checkPhoneticKeyboardSetting();
+	}
+	
 	
 	public int getLoadingMappingPercentageDone() throws RemoteException {
 		if(remoteFileDownloading) return 0;
