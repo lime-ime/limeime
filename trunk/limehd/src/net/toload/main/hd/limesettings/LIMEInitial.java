@@ -706,6 +706,7 @@ public class LIMEInitial extends Activity {
 			pd.cancel();
 			if(type == CLOUDRESTORE || type == RESTORE){
 				activity.initialButton();
+				dbsrv.checkPhoneticKeyboardSetting();//Jeremy '12,6,8 check the pheonetic keyboard consistency
 			}
 		}
 		
