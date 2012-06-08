@@ -1,42 +1,31 @@
 package net.toload.main.hd.limesettings;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-
-import javax.activation.MimetypesFileTypeMap;
 
 import net.toload.main.hd.R;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class LIMESelectFileAdapter extends BaseAdapter {
 
-	private File currentdir;
+	//private File currentdir;
 	private List<File> list;
 	private LayoutInflater mInflater;
-	private Context mContext;
-	private BaseAdapter adapter;
+	//private Context mContext;
+	//private BaseAdapter adapter;
 	
 	public LIMESelectFileAdapter(Context context, List<File> ls) {
 		this.list = ls;
-		this.mContext = context;
+		//this.mContext = context;
 		this.mInflater = LayoutInflater.from(context);
-		this.adapter = this;
+		//this.adapter = this;
 	}
 	
 

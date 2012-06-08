@@ -22,7 +22,6 @@ package net.toload.main.hd.limesettings;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -40,18 +39,14 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.RemoteException;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -67,9 +62,9 @@ import android.widget.AdapterView.OnItemClickListener;
 public class LIMEMappingSetting extends Activity {
 	
 
-		private AlertDialog ad;
-		private ArrayList<File> filelist;
-		private boolean hasSelectFile;
+		//private AlertDialog ad;
+		//private ArrayList<File> filelist;
+		//private boolean hasSelectFile;
 		
 		private DBServer DBSrv = null;
 		//private SearchServer SearchSrv = null;
@@ -163,7 +158,7 @@ public class LIMEMappingSetting extends Activity {
 	     					public void onClick(DialogInterface dialog, int id) {
 	     						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
-	    								hasSelectFile = true;
+	    								//hasSelectFile = true;
 	    								resetLabelInfo();
 	    	    						//DBSrv.resetMapping("dayi");
 	    								DBSrv.downloadDayi();
@@ -211,7 +206,7 @@ public class LIMEMappingSetting extends Activity {
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
-	    								hasSelectFile = true;
+	    								//hasSelectFile = true;
 	    								resetLabelInfo();
 	    								DBSrv.downloadPhonetic();
 	    								startLoadingWindow();
@@ -256,7 +251,7 @@ public class LIMEMappingSetting extends Activity {
 	    							try {
 	    								Toast.makeText(ctx, getText(R.string.l3_im_download_from_phonetic_adv_warning), Toast.LENGTH_SHORT).show();
 		    				    		
-	    								hasSelectFile = true;
+	    								//hasSelectFile = true;
 	    								resetLabelInfo();
 	    								DBSrv.downloadPhoneticAdv();
 	    								startLoadingWindow();
@@ -299,7 +294,7 @@ public class LIMEMappingSetting extends Activity {
 	    							try {
 	    								Toast.makeText(ctx, getText(R.string.l3_im_download_from_phonetic_cns_warning), Toast.LENGTH_SHORT).show();
 		    				    		
-	    								hasSelectFile = true;
+	    								//hasSelectFile = true;
 	    								resetLabelInfo();
 	    								DBSrv.downloadPhoneticCns();
 	    								startLoadingWindow();
@@ -342,12 +337,12 @@ public class LIMEMappingSetting extends Activity {
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
-	    								hasSelectFile = true;
+	    								//hasSelectFile = true;
 	    								resetLabelInfo();
 	    	    						//DBSrv.resetMapping("cj");
 	    								DBSrv.downloadCj();
 	    								startLoadingWindow();
-	    								//DBSrv.setImInfo("cj", "keyboard",  "�頛詨瘜��); // set this in LIMEDb loadfile()
+	    								//DBSrv.setImInfo("cj", "keyboard",  "嚙踝赯�閰剁��改蕭嚙�; // set this in LIMEDb loadfile()
 	    								
 	    								//mLIMEPref.setParameter("im_loading", true);
 	    								//mLIMEPref.setParameter("im_loading_table", imtype);
@@ -390,7 +385,7 @@ public class LIMEMappingSetting extends Activity {
 	    							try {
 	    								Toast.makeText(ctx, getText(R.string.l3_im_download_from_phonetic_cns_warning), Toast.LENGTH_SHORT).show();
 		    				    		
-	    								hasSelectFile = true;
+	    								//hasSelectFile = true;
 	    								resetLabelInfo();
 	    								DBSrv.downloadCjCns();
 	    								startLoadingWindow();
@@ -432,12 +427,12 @@ public class LIMEMappingSetting extends Activity {
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
-	    								hasSelectFile = true;
+	    								//hasSelectFile = true;
 	    								resetLabelInfo();
 	    	    						//DBSrv.resetMapping("scj");
 	    								DBSrv.downloadScj();
 	    								startLoadingWindow();
-	    								//DBSrv.setImInfo("scj", "keyboard",  "�頛詨瘜��); // set this in LIMEDb loadfile()
+	    								//DBSrv.setImInfo("scj", "keyboard",  "嚙踝赯�閰剁��改蕭嚙�; // set this in LIMEDb loadfile()
 	    								
 	    								//mLIMEPref.setParameter("im_loading", true);
 	    								//mLIMEPref.setParameter("im_loading_table", imtype);
@@ -482,12 +477,12 @@ public class LIMEMappingSetting extends Activity {
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
-	    								hasSelectFile = true;
+	    								//hasSelectFile = true;
 	    								resetLabelInfo();
 	    	    						//DBSrv.resetMapping("cj5");
 	    								DBSrv.downloadCj5();
 	    								startLoadingWindow();
-	    								//DBSrv.setImInfo("cj5", "keyboard",  "�頛詨瘜��); // set this in LIMEDb loadfile()
+	    								//DBSrv.setImInfo("cj5", "keyboard",  "嚙踝赯�閰剁��改蕭嚙�; // set this in LIMEDb loadfile()
 	    								
 	    								//mLIMEPref.setParameter("im_loading", true);
 	    								//mLIMEPref.setParameter("im_loading_table", imtype);
@@ -533,12 +528,12 @@ public class LIMEMappingSetting extends Activity {
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
-	    								hasSelectFile = true;
+	    								//hasSelectFile = true;
 	    								resetLabelInfo();
 	    	    						//DBSrv.resetMapping("ecj");
 	    								DBSrv.downloadEcj();
 	    								startLoadingWindow();
-	    								//DBSrv.setImInfo("ecj", "keyboard",  "�頛詨瘜��); // set this in LIMEDb loadfile()
+	    								//DBSrv.setImInfo("ecj", "keyboard",  "嚙踝赯�閰剁��改蕭嚙�; // set this in LIMEDb loadfile()
 	    								
 	    								//mLIMEPref.setParameter("im_loading", true);
 	    								//mLIMEPref.setParameter("im_loading_table", imtype);
@@ -584,12 +579,12 @@ public class LIMEMappingSetting extends Activity {
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
-	    								hasSelectFile = true;
+	    								//hasSelectFile = true;
 	    								resetLabelInfo();
 	    	    						//DBSrv.resetMapping("ez");
 	    								DBSrv.downloadEz();
 	    								startLoadingWindow();
-	    								//DBSrv.setImInfo("ez", "keyboard",  "頛�頛詨瘜��); // set this in LIMEDb loadfile()
+	    								//DBSrv.setImInfo("ez", "keyboard",  "�嚙賡�閰剁��改蕭嚙�; // set this in LIMEDb loadfile()
 	    								
 	    								//mLIMEPref.setParameter("im_loading", true);
 	    								//mLIMEPref.setParameter("im_loading_table", imtype);
@@ -634,12 +629,12 @@ public class LIMEMappingSetting extends Activity {
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    						try {
-	    								hasSelectFile = true;
+	    								//hasSelectFile = true;
 	    								resetLabelInfo();
 	    	    						//DBSrv.resetMapping("array");
 	    								DBSrv.downloadArray();
 	    								startLoadingWindow();
-	    								//DBSrv.setImInfo("array", "keyboard", "銵�頛詨瘜��); // set this in LIMEDb loadfile()
+	    								//DBSrv.setImInfo("array", "keyboard", "�蛛嚙賡�閰剁��改蕭嚙�; // set this in LIMEDb loadfile()
 	    								
 	    								//mLIMEPref.setParameter("im_loading", true);
 	    								//mLIMEPref.setParameter("im_loading_table", imtype);
@@ -684,13 +679,13 @@ public class LIMEMappingSetting extends Activity {
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
-	    								hasSelectFile = true;
+	    								//hasSelectFile = true;
 	    								resetLabelInfo();
 	    	    						//DBSrv.resetMapping("array10");
 	    								DBSrv.downloadArray10();
 
 	    	    						startLoadingWindow();
-	    								//DBSrv.setImInfo("array10", "keyboard",  "�餉店�詨��萇"); // set this in LIMEDb loadfile()
+	    								//DBSrv.setImInfo("array10", "keyboard",  "嚙賡�摨蕭閰剁蕭嚙質�謆�); // set this in LIMEDb loadfile()
 	    								
 	    								//mLIMEPref.setParameter("im_loading", true);
 	    								//mLIMEPref.setParameter("im_loading_table", imtype);
@@ -735,12 +730,12 @@ public class LIMEMappingSetting extends Activity {
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
-	    								hasSelectFile = true;
+	    								//hasSelectFile = true;
 	    								resetLabelInfo();
 	    	    						//DBSrv.resetMapping("wb");
 	    								DBSrv.downloadWb();
 	    								startLoadingWindow();
-	    								//DBSrv.setImInfo("wb", "keyboard", "鈭�頛詨瘜��); // set this in LIMEDb loadfile()
+	    								//DBSrv.setImInfo("wb", "keyboard", "�叟�嚙賡�閰剁��改蕭嚙�; // set this in LIMEDb loadfile()
 	    								
 	    								//mLIMEPref.setParameter("im_loading", true);
 	    								//mLIMEPref.setParameter("im_loading_table", imtype);
@@ -794,7 +789,7 @@ public class LIMEMappingSetting extends Activity {
 	    						
 	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
 	    							try {
-	    								hasSelectFile = true;
+	    								//hasSelectFile = true;
 	    								resetLabelInfo();
 	    								DBSrv.downloadHs();
 	    								startLoadingWindow();
@@ -845,7 +840,7 @@ public class LIMEMappingSetting extends Activity {
 			
 			btnLoadMapping.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
-					hasSelectFile = false;
+					//hasSelectFile = false;
                 	selectLimeFile(LIME.IM_LOAD_LIME_ROOT_DIRECTORY, imtype);
 				}
 			});
@@ -1133,7 +1128,7 @@ public class LIMEMappingSetting extends Activity {
 				ad.dismiss();
 			}
 
-			if (!hasSelectFile) {
+			if (!//hasSelectFile) {
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
 				builder.setTitle(R.string.lime_setting_btn_load_local_notice);
 				builder.setView(view);
@@ -1209,7 +1204,7 @@ public class LIMEMappingSetting extends Activity {
 				return result;
 
 			} else { 
-				hasSelectFile = true;
+				//hasSelectFile = true;
 				loadMapping(check);
 				resetLabelInfo();
 			}
@@ -1340,7 +1335,7 @@ public class LIMEMappingSetting extends Activity {
 					toplayout.addView(b);
 				}
 			} else {
-				final String actpath = pathconstruct;
+				//final String actpath = pathconstruct;
 				Button b = new Button(this);
 				b.setText("/");
 				b.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT,

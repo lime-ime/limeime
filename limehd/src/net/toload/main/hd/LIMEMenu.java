@@ -46,6 +46,7 @@ import android.widget.Toast;
 /**
  * @author Art Hung
  */
+@SuppressWarnings("deprecation")
 public class LIMEMenu extends TabActivity {
 
 	private LIMEPreferenceManager mLIMEPref;
@@ -125,11 +126,10 @@ public class LIMEMenu extends TabActivity {
         
     }
     
-    private void setupWizardEntry(){
-    	
-    }
+
     
-    private void checkIfLIMEEnabledAndActive(){
+    @SuppressWarnings("unused")
+	private void checkIfLIMEEnabledAndActive(){
 
          
          if(DEBUG)
