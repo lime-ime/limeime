@@ -476,7 +476,12 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					}else if(selectedPhoneticKeyboardType.equals("eten26")){
 						setIMKeyboardOnDB(dbin, "phonetic", 
 								getKeyboardInfoOnDB(dbin, "et26", "desc"), "et26");
-					}
+					}else if(selectedPhoneticKeyboardType.equals("eten")){
+						setIMKeyboardOnDB(dbin, "phonetic", 
+								getKeyboardInfoOnDB(dbin, "phoneticet41", "desc"), "phoneticet41");
+					}else
+						setIMKeyboardOnDB(dbin, "phonetic", 
+								getKeyboardInfoOnDB(dbin, "phoneticet", "desc"), "phoneticet");
 
 					
 				} catch (Exception e) {
