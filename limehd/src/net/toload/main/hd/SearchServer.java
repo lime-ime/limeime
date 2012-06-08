@@ -634,7 +634,10 @@ public class SearchServer {
 			}
 		}	
 	}
-
+	/**
+	 * Jeremy '12,6,9 Rewrited to support word with more than 1 characters 
+	 * @param localLDPhraseListArray
+	 */
 
 	private void learnLDPhrase(ArrayList<List<Mapping>> localLDPhraseListArray){
 		if(DEBUG) 
@@ -644,32 +647,15 @@ public class SearchServer {
 			if(DEBUG) 
 				Log.i(TAG,"learnLDPhrase(): LDPhrase learning, arraysize =" + localLDPhraseListArray.size());
 			
-			
+
 			for(List<Mapping> phraselist : localLDPhraseListArray ){
 				if(DEBUG) 
 					Log.i(TAG,"learnLDPhrase(): LDPhrase learning, current list size =" + phraselist.size());
-				if(phraselist.size()>0){
+				if(phraselist.size()>0 && phraselist.size() <5){ //Jeremy '12,6,8 limit the phrase to have 4 chracters 
 					
-					//Do pre-processing looking-up for codes for mapping selected from related or userdict. jeremy '12,6,7
-					List<Mapping> preProcessedPhraselist = new LinkedList<Mapping>();
-					for(Mapping unit: phraselist) {
-						if(unit.getId()==null || unit.isDictionary()) {
-							//TODO:the rmapping may return more than 1 mappings with different codes
-							List<Mapping> rMappingList = dbadapter.getRMapping(unit, tablename);
-							if(rMappingList.size()>0)
-								preProcessedPhraselist.add(rMappingList.get(0));
-							else
-								preProcessedPhraselist.add(unit);
-						}else
-							preProcessedPhraselist.add(unit);
-					}
-					phraselist = preProcessedPhraselist;
-					
-					if(DEBUG) 
-						Log.i(TAG,"learnLDPhrase(): LDPhrase learning, preprocessed list size =" + phraselist.size());
-
 				
 					String baseCode="", LDCode ="", QPCode ="", baseWord="";
+				
 					Mapping unit1 = phraselist.get(0);
 					
 					if(DEBUG) 
@@ -677,71 +663,123 @@ public class SearchServer {
 								+ ", unit1.getCode() =" + unit1.getCode()
 								+ ", unit1.getWord() =" + unit1.getWord());
  
-					if(unit1 == null
-							|| unit1.getId() == null //Jermy '12,6,7 break if id is null (selected from related list)
-							|| unit1.getCode() == null //Jermy '12,6,7 break if code is null (selected from userdict)
-							|| unit1.getCode().length()==0
-							|| unit1.getWord().length()==0){break;}
-				
+					if( unit1 == null || unit1.getWord().length()==0){break;}
 					
 					baseCode = unit1.getCode();
 					baseWord = unit1.getWord();
-					//TODO: Do not know how to build QPCode if word length > 1. Abandon now!! Jeremy '12,6,4
-					if(baseWord.length()>1) 
-						QPCode = "";
-					else
-						QPCode = baseCode.substring(0, 1);
-
+					
+					if( baseWord.length()==1 ){
+						if(unit1.getId() == null //Jermy '12,6,7 break if id is null (selected from related list)
+								|| unit1.getCode() == null //Jermy '12,6,7 break if code is null (selected from userdict)
+								|| unit1.getCode().length()==0
+								|| unit1.isDictionary()){
+									List<Mapping> rMappingList = dbadapter.getRMapping(baseWord, tablename);
+									if(rMappingList.size()>0)
+										baseCode = rMappingList.get(0).getCode();
+									else 
+										break; //look-up failed, abandon.
+								}
+						if(baseCode!=null && baseCode.length()>0)
+							QPCode += baseCode.substring(0,1);
+						else
+							break;//abandon the phrase learning process;
+					
+					//if word length >0, lookup all codes and rebuild basecode and QPCode	
+					}else if( baseWord.length() >1 && baseWord.length() < 5){ 
+						baseCode = "";
+						for(int i=0; i < baseWord.length(); i++){
+							String c = baseWord.substring(i,i+1);
+							List<Mapping> rMappingList = dbadapter.getRMapping(c, tablename);
+							if(rMappingList.size()>0){
+								baseCode += rMappingList.get(0).getCode();
+								QPCode += rMappingList.get(0).getCode().substring(0,1);
+							}else{
+								baseCode = ""; //r-lookup failed. abandon the phrase learning 
+								break;
+							}
+						}
+					}
+									
+			
 					for (int i = 0; i < phraselist.size(); i++) {
 						if(i+1 <phraselist.size()){
 							
 							Mapping unit2 = phraselist.get((i + 1));
-							if(unit2 == null 
-									|| unit2.getId() == null //Jermy '12,6,7 break if id is null (selected from related list)
-									|| unit2.getCode() == null //Jermy '12,6,7 break if code is null (selected from userdict)
-									|| unit2.getCode().length()==0
-									|| unit2.getWord().length()==0){break;}
+							if(unit2 == null || unit2.getWord().length()==0){break;}
 							
-							baseCode += unit2.getCode().toLowerCase();
-							baseWord += unit2.getWord();
+							String word2 = unit2.getWord();
+							String code2 = unit2.getCode();
+							baseWord += word2;
+							
+							if( word2.length()==1 && baseWord.length() <5){ //limit the phrase size to 4
+								if(unit2.getId() == null //Jermy '12,6,7 break if id is null (selected from related list)
+										|| code2 == null //Jermy '12,6,7 break if code is null (selected from userdict)
+										|| code2.length()==0
+										|| unit2.isDictionary()){
+											List<Mapping> rMappingList = dbadapter.getRMapping(word2, tablename);
+											if(rMappingList.size()>0)
+												code2 = rMappingList.get(0).getCode();
+											else
+												break;
+										}
+								if(code2!=null && code2.length()>0){
+									baseCode+=code2;
+									QPCode += code2.substring(0,1);
+								}else
+									break; //abandon the phrase learning process;
+								
+							//if word length >0, lookup all codes and rebuild basecode and QPCode	
+							}else if( word2.length() > 1 && baseWord.length() < 5){ 
+								for(int j=0; j < word2.length(); j++){
+									String c = word2.substring(j,j+1);
+									List<Mapping> rMappingList = dbadapter.getRMapping(c, tablename);
+									if(rMappingList.size()>0){
+										baseCode += rMappingList.get(0).getCode();
+										QPCode += rMappingList.get(0).getCode().substring(0,1);
+									}else //r-lookup failed. abandon the phrase learning 
+										break;
+								}
+							} else  // abandon the learing process.
+								break;
+							
 							
 							if(DEBUG)
 								Log.i(TAG,"learnLDPhrase(): code1 = " + unit1.getCode()
-										+ ", code2 = " + unit2.getCode()
-										+ ", word1 = " + unit1.getWord()
-										+ ", word2 = " + unit2.getWord()
-										+ ", basecode = " + baseCode
-										+ ", baseWord = " + baseWord
-										);
-							
-							if(tablename.equals("phonetic")) {// remove tone symbol in phonetic table 
-								LDCode = baseCode.replaceAll("[3467 ]", "").toLowerCase();
-								//TODO: Do not know how to build QPCode if word length > 1. Abandon now!! Jeremy '12,6,4
-								if(QPCode.equals("") || unit2.getWord().length()>1) 
-									QPCode = "";
-								else
-									QPCode += unit2.getCode().substring(0, 1).toLowerCase();
-								
-								if(LDCode.length()>1){
-									dbadapter.addOrUpdateMappingRecord(LDCode, baseWord);
-									removeRemapedCodeCachedMappings(LDCode);								
-									updateSimilarCodeRelatedList(LDCode);
+										+ ", code2 = '" + code2
+										+ "', word1 = " + unit1.getWord()
+										+ ", word2 = " + word2
+										+ ", basecode = '" + baseCode
+										+ "', baseWord = " + baseWord
+										+ ", QPcode = '" + QPCode
+										+ "'.");
+							if(i+1 == phraselist.size()-1){//only learn at the end of the phrase word '12,6,8
+								if(tablename.equals("phonetic")) {// remove tone symbol in phonetic table 
+									LDCode = baseCode.replaceAll("[3467 ]", "").toLowerCase();
+									QPCode = QPCode.toLowerCase();
+									if(LDCode.length()>1){
+										dbadapter.addOrUpdateMappingRecord(LDCode, baseWord);
+										removeRemapedCodeCachedMappings(LDCode);								
+										updateSimilarCodeRelatedList(LDCode);
+									}
+									if(QPCode.length()>1){
+										dbadapter.addOrUpdateMappingRecord(QPCode, baseWord);
+										removeRemapedCodeCachedMappings(QPCode);
+										updateSimilarCodeRelatedList(QPCode);
+									}
+								}else if(baseCode.length()>1){
+									baseCode = baseCode.toLowerCase();
+									dbadapter.addOrUpdateMappingRecord(baseCode, baseWord);
+									removeRemapedCodeCachedMappings(baseCode);
+									updateSimilarCodeRelatedList(baseCode);
 								}
-								if(QPCode.length()>1){
-									dbadapter.addOrUpdateMappingRecord(QPCode, baseWord);
-									removeRemapedCodeCachedMappings(QPCode);
-									updateSimilarCodeRelatedList(QPCode);
-								}
-							}else if(baseCode.length()>1){
-								dbadapter.addOrUpdateMappingRecord(baseCode, baseWord);
-								removeRemapedCodeCachedMappings(baseCode);
-								updateSimilarCodeRelatedList(baseCode);
+								if(DEBUG) 
+									Log.i(TAG,"learnLDPhrase(): LDPhrase learning, baseCode = '" + baseCode 
+											+ "', LDCode = '" + LDCode + "', QPCode=" + QPCode + "'."
+											+ ", baseWord" + baseWord );
+
 							}
 
-							if(DEBUG) 
-								Log.i(TAG,"learnLDPhrase(): LDPhrase learning, baseCode = " + baseCode 
-										+ ". LDCode=" + LDCode + ". QPCode=" + QPCode);
-
+						
 						}
 					}
 				}
@@ -860,7 +898,8 @@ public class SearchServer {
 			LDPhraseList = new LinkedList<Mapping>();		
 		}
 
-		if(DEBUG) Log.i(TAG,"addLDPhrase(), code="+mapping.getCode() + ". id=" + mapping.getId() + ". engding:" + ending
+		if(DEBUG) Log.i(TAG,"addLDPhrase()"//+mapping.getCode() + ". id=" + mapping.getId() 
+				+ ". engding:" + ending
 				+ ". LDPhraseListArray.size=" + LDPhraseListArray.size()
 				+ ". LDPhraseList.size=" + LDPhraseList.size());
 				
