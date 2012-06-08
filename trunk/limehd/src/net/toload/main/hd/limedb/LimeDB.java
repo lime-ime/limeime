@@ -1156,7 +1156,11 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @return
 	 */
 	public List<Mapping> getRMapping(Mapping mapping, String table) {
-		String keyword = mapping.getWord(); 
+		String keyword = mapping.getWord();
+		return getRMapping(keyword, table);
+	}
+	public List<Mapping> getRMapping(String keyword, String table) {
+
 		if(DEBUG)
 			Log.i(TAG,"getRmapping():tablename:" + table + "  keyworad:" + keyword);
 		
