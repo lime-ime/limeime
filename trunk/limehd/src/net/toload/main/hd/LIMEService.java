@@ -896,8 +896,14 @@ public class LIMEService extends InputMethodService implements
 			requestHideSelf(0);
 		}
 		
+		if(DEBUG)
+			Log.i(TAG,"translateKeyDown() LIMEMetaKeyKeyListener.getMetaState(mMetaState) = "
+					+ Integer.toHexString( LIMEMetaKeyKeyListener.getMetaState(mMetaState)) 
+					+", event.getMetaState()" + Integer.toHexString( event.getMetaState()));
+		
+		
 		int metaState;
-		if(android.os.Build.VERSION.SDK_INT < 13)
+		if(android.os.Build.VERSION.SDK_INT < 11)  //Jeremy '12,6,10 honeycomb starting from api 11 not 13.
 			metaState = LIMEMetaKeyKeyListener.getMetaState(mMetaState);
 		else//Jeremy '12,5,28 after honeycomb use the metastate sent form KeyEvent to proces the shift/cap_lock etc...
 			metaState = event.getMetaState();
@@ -954,10 +960,6 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	
-
-	//private boolean hasEscPressStep1 = false;
-	//private boolean hasEscPressStep2 = false;
-
 	/**
 	 * Physical KeyBoard Event Handler Use this to monitor key events being
 	 * delivered to the application. We get first crack at them, and can either
@@ -973,7 +975,8 @@ public class LIMEService extends InputMethodService implements
 					+", hasSHiftPress = " + hasShiftPress
 					+", hasWinPress = " + hasWinPress
  					+", event.getEventTime() -  event.getDownTime()"+ ( event.getEventTime() -  event.getDownTime())
-					+", event.getRepeatCount()" + event.getRepeatCount());
+					+", event.getRepeatCount()" + event.getRepeatCount()
+					+", event.getMetaState()" + Integer.toHexString( event.getMetaState()));
 		
 		/*/ Force closing VKeyboard Moved to translatekeydown '12,5,8 by jeremy
 		if(mInputView!=null && mInputView.isShown()){
@@ -1048,13 +1051,11 @@ public class LIMEService extends InputMethodService implements
 		case KeyEvent.KEYCODE_SHIFT_LEFT:
 		case KeyEvent.KEYCODE_SHIFT_RIGHT:
 			hasShiftPress = true;
-			mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState,
-					keyCode, event);
+			mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState, keyCode, event);
 			break;
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
-			mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState,
-					keyCode, event);
+			mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState, keyCode, event);
 			break;
 		case MY_KEYCODE_CTRL_LEFT:
 		case MY_KEYCODE_CTRL_RIGHT:
@@ -1189,10 +1190,14 @@ public class LIMEService extends InputMethodService implements
 				switchChiEng();
 				hasKeyProcessed = true;
 			}
-			return true;
-		case KeyEvent.KEYCODE_TAB: // Jeremy '11,5,23: Force bypassing tab
-									// processing to super
-			break;
+			//if(!mLIMEPref.getPhysicalKeyboardType().equals("xperiapro")){
+				// Adjust metakeystate on printed key pressed. Jeremy '12,6,11
+				//mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+				return true;
+			//}
+		/*case KeyEvent.KEYCODE_TAB: // Jeremy '11,5,23: Force bypassing tab
+									// processing to super	
+					break;*/
 		default:
 			
 			//if(hasSearchPress) hasSearchProcessed = true;
@@ -1212,7 +1217,7 @@ public class LIMEService extends InputMethodService implements
 			
 			if (hasCtrlPress &&  //Only working with ctrl Jeremy '11,8,22
 				mCandidateList != null && mCandidateList.size() > 0 
-				&& mCandidateView != null && isCandidateShown()){	
+				&& mCandidateView != null && hasCandidatesShown){	
 				switch(keyCode){
 				case 8: this.pickCandidateManually(0);return true;
 				case 9: this.pickCandidateManually(1);return true;
@@ -1335,8 +1340,7 @@ public class LIMEService extends InputMethodService implements
 			break;
 		case KeyEvent.KEYCODE_ALT_LEFT:
 		case KeyEvent.KEYCODE_ALT_RIGHT:
-			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState,
-					keyCode, event);
+			mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState, keyCode, event);
 			break;
 		case MY_KEYCODE_CTRL_LEFT:
 		case MY_KEYCODE_CTRL_RIGHT:
@@ -1404,9 +1408,9 @@ public class LIMEService extends InputMethodService implements
 			} else {
 				translateKeyDown(keyCode, event);
 				super.onKeyDown(keyCode, mKeydownEvent);
+				return true;
 			}
-
-			break;
+			//break;
 			
 		case KeyEvent.KEYCODE_SPACE:
 			//Jeremy move the chi/eng swithcing to on_KEY_UP '11,6,18
@@ -1736,6 +1740,15 @@ public class LIMEService extends InputMethodService implements
 			Log.i(TAG, "OnKey(): primaryCode:" + primaryCode
 					+ " hasShiftPress:" + hasShiftPress);
 		
+		// Adjust metakeystate on printed key pressed.
+		if(hasPhysicalKeyPressed){  //Jeremy '12,6,11 moved from handleCharacter()
+			mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+			if(DEBUG)
+				Log.i(TAG,"handleCharacter(): adjustMetaAfterKeypress()"); 
+		
+		}
+
+		
 		if (mLIMEPref.getEnglishPrediction()
 				&& primaryCode != LIMEBaseKeyboard.KEYCODE_DELETE) {
 			
@@ -1837,6 +1850,18 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void handleSeparator(int primaryCode) {
+		if(DEBUG)
+			Log.i(TAG, "handleSeperator() primaryCode = " + primaryCode);
+		
+		// Adjust metakeystate on printed key pressed.
+		/*if(hasPhysicalKeyPressed){ //Jeremy '12,6,11
+			mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+			if(DEBUG)
+				Log.i(TAG,"handleCharacter(): adjustMetaAfterKeypress()"); 
+		
+		}*/
+
+		
 		if (mLIMEPref.getEnglishPrediction() && mPredictionOn
 				&& ( !hasPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())){
 			resetTempEnglishWord();
@@ -2581,7 +2606,7 @@ public class LIMEService extends InputMethodService implements
 	}
 	
 	
-	@Deprecated //deprecated by Jeremy '12,5,6. Replace with hasCandaitesShown 
+	/*@Deprecated //deprecated by Jeremy '12,5,6. Replace with hasCandaitesShown 
 	private boolean isCandidateShown(){
 		if(mCandidateViewStandAlone==null) {
 			if(DEBUG)
@@ -2589,7 +2614,7 @@ public class LIMEService extends InputMethodService implements
 			return false; //Jeremy '11,11,30 Fixed FC when startup, before mCandidate is created.
 		}
 		else return mCandidateViewStandAlone.isShown();
-	}
+	}*/
 	private void handleBackspace() {
 		if(DEBUG) 
 			Log.i(TAG, "handleBackspace()");
@@ -2929,12 +2954,19 @@ public class LIMEService extends InputMethodService implements
 	private void handleCharacter(int primaryCode, int[] keyCodes)  {
 		//Jeremy '11,6,9 Cleaned code!!
 		if(DEBUG)
-			Log.i(TAG,"handleCharacter():primaryCode:" + primaryCode + "currentSoftKeyboard=" + currentSoftKeyboard ); 
+			Log.i(TAG,"handleCharacter():primaryCode:" + primaryCode 
+					+ ", metaState = " + mMetaState
+					+ ", hasphysicalKeyPressed = " + hasPhysicalKeyPressed
+					+ ", currentSoftKeyboard=" + currentSoftKeyboard ); 
 
 		// Adjust metakeystate on printed key pressed.
-		if(hasPhysicalKeyPressed)
+		/*if(hasPhysicalKeyPressed){
 			mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+			if(DEBUG)
+				Log.i(TAG,"handleCharacter(): adjustMetaAfterKeypress()"); 
 		
+		}*/
+			
 		// Caculate key press time to handle Eazy IM keys mapping
 		// 1,2,3,4,5,6 map to -(45) =(43) [(91) ](93) ,(44) \(92)
 		//String tablename="";
