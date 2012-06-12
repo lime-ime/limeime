@@ -1365,6 +1365,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							+", the new relatedlist:" + newRelatedlist);
 			} else {
 				cv.put(FIELD_CODE, code);
+				cv.put(FIELD_SCORE, 0);
+				cv.put(FIELD_BASESCORE, 0);
 				if(table.equals("phonetic")) 
 					cv.put(FIELD_CODE3R, code.replaceAll("[3467 ]", "'")); //Jeremy '12,6,6 should build code3r for phonetic
 				db.insert(table, null, cv);
@@ -2583,7 +2585,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		boolean useCode3r =tablename.equals("phonetic")
 				&& mLIMEPref.getParameterBoolean("doLDPhonetic", true) 
 				&& !query_code.matches(".+[3467 ].*");
-		if(DEBUG) Log.i(TAG,"buildQueryResutl(): cursor.getCount()=" + cursor.getCount() + ". lastValidDualCodeList = " + lastValidDualCodeList);
+		if(DEBUG) Log.i(TAG,"buildQueryResutl(): cursor.getCount()=" + cursor.getCount() 
+				+ ". lastValidDualCodeList = " + lastValidDualCodeList);
 		if (cursor.moveToFirst()) {
 
 			int idColumn = cursor.getColumnIndex(FIELD_ID);
@@ -3476,7 +3479,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							else {
 								if (code.length() > 1) {
 									int len = code.length();
-									if(len > 4 ) len = 4; //Jeremy '11,9,14
+									if(len > 5 ) len = 5; //Jeremy '12,6,12 track code bakcward for 5 levels.
 									for (int k = 1; k < len; k++) {
 										String subCode = code.substring(0, code.length() - k);
 										codeList.add(subCode);
@@ -3528,7 +3531,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						long entrySize = codeList.size();
 						long i = 0;
 						
-						HashSet<String> codeRelatedListBuilt = new HashSet<String>();
 						
 						for(String entry: codeList)	{
 							if(threadAborted) 	break;
@@ -3537,16 +3539,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							if(DEBUG)
 								Log.i(TAG, "loadFileV2():building related list:" + i +"/" + entrySize);
 							try{
-								//Jeremy '12,6,5 build the related list on decending code list for 3 levels in max, like abcd abc ab a...
-								int len = entry.length();
-								if(len > 5) len = 5;//Jeremy '12,6,7 change max backward level to 5. 
-								for (int k = 1; k < len; k++) {
-									String code = entry.substring(0, entry.length() - k);
-									if(!codeRelatedListBuilt.contains(code)){
-										updateRelatedListOnDB(db, table ,code);
-										codeRelatedListBuilt.add(code);
-									}
-								}
+								updateRelatedListOnDB(db, table ,entry);
 
 							}catch(Exception e2){
 								// Just ignore all problem statement
@@ -3555,7 +3548,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 						}
 						codeList.clear();
-						codeRelatedListBuilt.clear();
 						db.setTransactionSuccessful();
 					}catch (Exception e){
 						setImInfo(table, "amount", "0");

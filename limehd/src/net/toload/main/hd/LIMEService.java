@@ -1408,9 +1408,9 @@ public class LIMEService extends InputMethodService implements
 			} else {
 				translateKeyDown(keyCode, event);
 				super.onKeyDown(keyCode, mKeydownEvent);
-				return true;
+				//return true;
 			}
-			//break;
+			break;
 			
 		case KeyEvent.KEYCODE_SPACE:
 			//Jeremy move the chi/eng swithcing to on_KEY_UP '11,6,18
