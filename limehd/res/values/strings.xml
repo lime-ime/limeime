@@ -10,7 +10,7 @@
     <string name="experienced_device">Experienced Device</string>
     <string name="license">License Agreement</string>
     <string name="license_detail">LIME-HD is an open framework inputmethod for Chinese Characters.\nIts objective is to provide Android user a flexible and convenience tools for the text input. We do not support and responsible for any illeage use of this application or its content.\nPlease  refer to http://code.google.com/p/limeime/ for the complete license information.</string>
-
+僅
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
     <string name="word_symbol_separators">\u0020?\n{}&lt;&gt;_+|&quot;</string>
@@ -629,19 +629,17 @@
 <string name="release_note">
 	    \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案, 如果選字與送出的字不同，請關閉喜好設定的中文簡/繁體字碼轉換.\n
 	    \n版本更新說明
-	    \n3.7.3-300
-	    \n1. 修正「啟動選取排序」或「實體鍵盤啟動選取排序」未勾選時，候選字未依對照表匯入字序列出
-		\n2. 修正實體鍵盤使用注音輸入法，無法用 space 輸入一聲
-		\n3. 調整行列的實體鍵盤選字鍵為 !@#$%^&amp;*()
-		\n4. 調整英文虛擬鍵盤的popup符號小鍵盤加上 : 及 ; (英文模式長按 . 或中文模式 shift 後長按 > )
-		\n5. 調整候選列顯示
-		\n6. 「先啟動英文選項」改為「記憶中英模式」，進入輸入區時會使用上一次的中文或英文模式
-		\n7. 可用 Zippy BT-540S 鍵盤的地球鍵 (語言切換鍵)，或外接鍵盤的 WinKey+Space 切換中文/英文輸入模式
-		\n8. 新增雙色文字虛擬鍵盤  
-		\n9. 新增華象直覺輸入法反查
-		\n10. 新增注音、倉頡 CNS11643 輸入法字根快速下載，請至輸入法管理中操作 (Andoid系統字型需更換，否則大部份文字無法顯示)
-		\n11. 新增喜好設定自動備份，重裝 LIME-HD 時自動恢復喜好設定 (需 Android 4.0，部份裝置未支援)
-		\n12. 新增 Google 雲端備份及還原資料庫功能 (使用 Google Docs)
+	    
+		\n3.8.1-311
+		\n1. 修正候選列展開後，畫面亂掉問題
+		\n2. 修正連打學習及注音快拼學習問題
+		\n3. 修正候選列候選字 cache 移除問題
+		\n4. 修正字根對照表匯入問題
+		\n5. 修正 Milestone 2 實體鍵盤 ALT 組合鍵問題
+		\n6. 修改許氏注音及倚天26/41鍵注音資料庫查詢方式，提升反應速度
+		\n7. 修改檔案選取模組，已可選取設備有內建空間的外接sdcard上的檔案
+		\n8. 新增許氏注音及倚天26鍵注音符號軟體鍵盤
+		\n9. 新增中文軟體鍵盤長按「EN/123」鍵可快速切換到半型符號鍵盤
 	
 		LIME中文輸入法Facebook粉絲專頁\n
 		http://facebook.com/limeime/\n\n
