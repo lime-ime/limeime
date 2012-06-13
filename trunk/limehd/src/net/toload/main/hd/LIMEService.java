@@ -1103,25 +1103,15 @@ public class LIMEService extends InputMethodService implements
 			// composing text for the user, we want to modify that instead
 			// of let the application to the delete itself.
 
-			//if (mComposing.length() > 0 || tempEnglishWord.length() > 0 
-			//	||(mCandidateView!=null&&isCandidateShown())){ //Jeremy '11,9,10 
-			onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
-			return true;
+	//		if (mComposing.length() > 0 || tempEnglishWord.length() > 0 
+	//			||hasCandidatesShown){ 
+				onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
+				return true;
+	//		}
 			
-			/*} else {
-				if (mComposing.length() > 0) {
-					onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
-					return true;
-				}*/
-			
-
-			//clearComposing();
-			//mMetaState = LIMEMetaKeyKeyListener
-			//		.adjustMetaAfterKeypress(mMetaState);
-			//setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
-			// ------------------------------------------------------------------------
-
-			//break;
+	//		mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+	//		setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();	
+	//		break;
 
 		case KeyEvent.KEYCODE_ENTER:
 			// Let the underlying text editor always handle these, if return
@@ -1142,13 +1132,12 @@ public class LIMEService extends InputMethodService implements
 						break;
 					}
 				}
-			}else{
-				if (mLIMEPref.getEnglishPrediction() && mPredictionOn
+			}else if(mLIMEPref.getEnglishPrediction() && mPredictionOn
 						&& ( mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())){
-					resetTempEnglishWord();
-					this.updateEnglishPrediction();
-				}
+				resetTempEnglishWord();
+				this.updateEnglishPrediction();
 			}
+				mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 			break;
 
 /*		case MY_KEYCODE_ESC:
@@ -1422,7 +1411,7 @@ public class LIMEService extends InputMethodService implements
 
 		}
 		// Update metakeystate of IC maintained by MetaKeyKeyListerner
-		setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
+		//setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState(); moved to OnKey by jeremy '12,6,13
 
 		
 		return super.onKeyUp(keyCode, event);
@@ -1744,8 +1733,9 @@ public class LIMEService extends InputMethodService implements
 		// Adjust metakeystate on printed key pressed.
 		if(hasPhysicalKeyPressed){  //Jeremy '12,6,11 moved from handleCharacter()
 			mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+			setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState(); //Jeremy '12,6,13 moved from OnkeyUP by Jeremy '12,6,13
 			if(DEBUG)
-				Log.i(TAG,"handleCharacter(): adjustMetaAfterKeypress()"); 
+				Log.i(TAG,"onKey(): adjustMetaAfterKeypress()"); 
 		
 		}
 
@@ -1807,16 +1797,14 @@ public class LIMEService extends InputMethodService implements
 		} else if (primaryCode == LIMEKeyboardView.KEYCODE_PREV_IM){
 			switchToNextActivatedIM(false);
 		} else if (primaryCode == KEYBOARD_SWITCH_CODE && mInputView != null) { //chi->eng
-			//mEnglishOnly = true;
-			//onIM = false;
 			switchKeyboard(primaryCode);
 			// Jeremy '11,5,31 Rewrite softkeybaord enter/space and english sepeartor processing.
 		} else if (primaryCode == KEYBOARD_SWITCH_IM_CODE && mInputView != null) { //eng -> chi
 			switchKeyboard(primaryCode);
 		} else if (!mEnglishOnly && //Jeremy '12,4,29 use mEnglishOnly instead of onIM  
 				((primaryCode== MY_KEYCODE_SPACE && !activeIM.equals("phonetic"))
-				//||(primaryCode== MY_KEYCODE_SPACE && 
-				//		activeIM.equals("phonetic") && !mLIMEPref.getParameterBoolean("doLDPhonetic", true) )
+				||(primaryCode== MY_KEYCODE_SPACE && 
+						activeIM.equals("phonetic") && !mLIMEPref.getParameterBoolean("doLDPhonetic", true) )
 				||(primaryCode== MY_KEYCODE_SPACE && 
 						activeIM.equals("phonetic") && (mComposing.toString().endsWith(" ")|| mComposing.length()==0 ))
 				|| primaryCode == MY_KEYCODE_ENTER) ){
@@ -1831,8 +1819,8 @@ public class LIMEService extends InputMethodService implements
 			}else{
 				 sendKeyChar((char)primaryCode);
 			}
-		} else if (mEnglishOnly && isWordSeparator(primaryCode)) {
-            handleSeparator(primaryCode); 
+		//} else if (mEnglishOnly && isWordSeparator(primaryCode)) { //Jeremy '12,6,13 removed because useless
+         //   handleSeparator(primaryCode); 
             
 		} else {
 
@@ -1850,27 +1838,25 @@ public class LIMEService extends InputMethodService implements
 		}
 	}
 
-	private void handleSeparator(int primaryCode) {
+	/* Deprecated by Jeremy '12,6,13
+	 * private void handleSeparator(int primaryCode) {
 		if(DEBUG)
-			Log.i(TAG, "handleSeperator() primaryCode = " + primaryCode);
+			Log.i(TAG, "handleSeperator() primaryCode = " + primaryCode 
+					+ " committext = " + String.valueOf((char) primaryCode));
 		
-		// Adjust metakeystate on printed key pressed.
-		/*if(hasPhysicalKeyPressed){ //Jeremy '12,6,11
-			mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
-			if(DEBUG)
-				Log.i(TAG,"handleCharacter(): adjustMetaAfterKeypress()"); 
-		
-		}*/
 
 		
 		if (mLIMEPref.getEnglishPrediction() && mPredictionOn
 				&& ( !hasPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())){
 			resetTempEnglishWord();
+			this.updateEnglishPrediction();
+
 		}
-		this.updateEnglishPrediction();
-		sendKeyChar((char)primaryCode);
-		
-	}
+		//sendKeyChar((char)primaryCode);
+		getCurrentInputConnection().commitText(
+				String.valueOf((char) primaryCode), 1);
+
+	}*/
 
 	private AlertDialog mOptionsDialog;
 	// Contextual menu positions
@@ -2648,15 +2634,13 @@ public class LIMEService extends InputMethodService implements
 					&& ( !hasPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard() )//mPredictionOnPhysicalKeyboard)
 					) {
 					if (tempEnglishWord != null && tempEnglishWord.length() > 0) {
-						tempEnglishWord
-								.deleteCharAt(tempEnglishWord.length() - 1);
+						tempEnglishWord.deleteCharAt(tempEnglishWord.length() - 1);
 						updateEnglishPrediction();
 					}
-					keyDownUp(KeyEvent.KEYCODE_DEL, false);
-				} else{			
-					//clearComposing(false); //Jeremy '12,4,21 composing length 0, no need to force commit again. 
-					keyDownUp(KeyEvent.KEYCODE_DEL, false);
-				}
+					//keyDownUp(KeyEvent.KEYCODE_DEL, false);
+				} //else{			
+				keyDownUp(KeyEvent.KEYCODE_DEL, false);
+				//}
 			} catch (Exception e) {
 				Log.i(TAG,"->" + e);
 			}
@@ -2905,7 +2889,8 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private boolean handleSelkey(int primaryCode, int[] keyCodes){
-		
+		if(DEBUG)
+			Log.i(TAG, "handleSelKey()");
 		// Jeremy '12,4,1 only do selkey on starndard keyboard
 		
 		// Check if disable physical key option is open
@@ -3000,6 +2985,8 @@ public class LIMEService extends InputMethodService implements
 		if (hasPhysicalKeyPressed && (mCandidateView != null && hasCandidatesShown)){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 			if(handleSelkey(primaryCode, keyCodes))		{
 				updateShiftKeyState(getCurrentInputEditorInfo());
+				if(DEBUG)
+					Log.i(TAG, "handleCharacter() sel key found return now");
 				return;
 			}
 		}
@@ -3079,14 +3066,14 @@ public class LIMEService extends InputMethodService implements
 
 			} else {
 
-				if(!mEnglishOnly){ //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+				//if(!mEnglishOnly){ //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 					//Log.i(TAG,"handlecharacter(), onIM and default procedure");
-					pickHighlightedCandidate();  // check here.
-					InputConnection ic=getCurrentInputConnection();
-					if(ic!=null) ic.commitText(String.valueOf((char) primaryCode),1);
-					//Jeremy '12,4,21
-					finishComposing();
-				} else{
+				pickHighlightedCandidate();  // check here.
+				InputConnection ic=getCurrentInputConnection();
+				if(ic!=null) ic.commitText(String.valueOf((char) primaryCode),1);
+				//Jeremy '12,4,21
+				finishComposing();
+				/*} else{
 					if (!mCandidateView.takeSelectedSuggestion()) {
 						InputConnection ic=getCurrentInputConnection();
 						if(ic!=null) ic.commitText(
@@ -3098,7 +3085,7 @@ public class LIMEService extends InputMethodService implements
 					}
 					
 				}
-				
+				*/
 			
 			}
 			
@@ -3106,9 +3093,9 @@ public class LIMEService extends InputMethodService implements
 			/*
 			 * Handle when user input English Characters
 			 */
-			/*Log.i("ART",
-					"English Only Software Keyboard :"
-							+ String.valueOf((char) primaryCode));*/
+			if(DEBUG)
+				Log.i(TAG, "handleCharacter() english only mode without prediction, committext = " 
+							+ String.valueOf((char) primaryCode) );
 			if (isInputViewShown()) {
 				if (mInputView.isShifted()) {
 					primaryCode = Character.toUpperCase(primaryCode);
@@ -3121,15 +3108,13 @@ public class LIMEService extends InputMethodService implements
 				if (Character.isLetter((char) primaryCode)) {
 					this.tempEnglishWord.append((char) primaryCode);
 					this.updateEnglishPrediction();
-				}
-				else{ 
+				}else{ 
 					resetTempEnglishWord();
 					this.updateEnglishPrediction(); 
-				  }
+				}
 				
 			}
 
-				
 			getCurrentInputConnection().commitText(
 					String.valueOf((char) primaryCode), 1);
 		}
