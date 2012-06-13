@@ -1138,6 +1138,7 @@ public class LIMEService extends InputMethodService implements
 				this.updateEnglishPrediction();
 			}
 				mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+				setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState(); 
 			break;
 
 /*		case MY_KEYCODE_ESC:
@@ -1326,6 +1327,7 @@ public class LIMEService extends InputMethodService implements
 					hasMenuPress = false;
 				}
 				mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+				setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState(); 
 				return true;
 			}
 			break;
