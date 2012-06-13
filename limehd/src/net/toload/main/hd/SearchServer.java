@@ -616,6 +616,8 @@ public class SearchServer {
 						if(unit2 == null){continue;}				
 						if (//unit.getId()!=null
 								unit.getWord() != null && !unit.getWord().equals("")
+								&& !unit.getCode().equals(unit.getWord())//Jeremy '12,6,13 avoid learning mixed mode english 
+								&& !unit2.getCode().equals(unit2.getWord())
 								//&& unit2.getId() !=null
 								&& unit2.getWord() != null && !unit2.getWord().equals("")
 								) {
@@ -663,7 +665,9 @@ public class SearchServer {
 								+ ", unit1.getCode() =" + unit1.getCode()
 								+ ", unit1.getWord() =" + unit1.getWord());
  
-					if( unit1 == null || unit1.getWord().length()==0){break;}
+					if( unit1 == null || unit1.getWord().length()==0
+							|| unit1.getCode().equals(unit1.getWord())) //Jeremy '12,6,13 avoid learning mixed mode english
+						{break;}
 					
 					baseCode = unit1.getCode();
 					baseWord = unit1.getWord();
@@ -705,7 +709,9 @@ public class SearchServer {
 						if(i+1 <phraselist.size()){
 							
 							Mapping unit2 = phraselist.get((i + 1));
-							if(unit2 == null || unit2.getWord().length()==0){break;}
+							if(unit2 == null || unit2.getWord().length()==0
+									|| unit2.getCode().equals(unit2.getWord())) //Jeremy '12,6,13 avoid learning mixed mode english
+								{break;}
 							
 							String word2 = unit2.getWord();
 							String code2 = unit2.getCode();
