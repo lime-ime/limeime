@@ -10,7 +10,7 @@
     <string name="experienced_device">Experienced Device</string>
     <string name="license">License Agreement</string>
     <string name="license_detail">LIME-HD is an open framework inputmethod for Chinese Characters.\nIts objective is to provide Android user a flexible and convenience tools for the text input. We do not support and responsible for any illeage use of this application or its content.\nPlease  refer to http://code.google.com/p/limeime/ for the complete license information.</string>
-僅
+
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
     <string name="word_symbol_separators">\u0020?\n{}&lt;&gt;_+|&quot;</string>
