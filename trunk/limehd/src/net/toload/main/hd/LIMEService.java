@@ -990,7 +990,7 @@ public class LIMEService extends InputMethodService implements
 			 ||keyCode == KeyEvent.KEYCODE_SEARCH
 			 )) //Jeremy '11,9,4 exclude the four default hard keys
 				isPhysicalKeyPressed = true;*/ // Moved to translatekeydown '11,9,5 by jeremy
-
+		
 		mKeydownEvent = new KeyEvent(event);
 		// Record key pressed time and set key processed flags(key down, for physical keys)
 		//Jeremy '11,8,22 using getRepeatCount from event to set processed flags
@@ -1079,21 +1079,23 @@ public class LIMEService extends InputMethodService implements
 				//Jeremy '12,4,8 rewrite the logic here
 				else if(!mEnglishOnly && hasCandidatesShown //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 						&& ( mComposing.length() > 0 || 
-								(selectedCandidate != null && selectedCandidate.isDictionary() &&	!hasChineseSymbolCandidatesShown )
+								(selectedCandidate != null && selectedCandidate.isDictionary() &&	
+								!hasChineseSymbolCandidatesShown )
 								) ){
 					if(DEBUG)
 						Log.i(TAG,"KEYCODE_BACK clearcomposing only.");
 					//Jeremy 12,4,21 -- need to check again
-					finishComposing();
+					clearComposing(false);
 					return true;
-				}else {
-					//super.setCandidatesViewShown(false);
+				}else if(!mEnglishOnly	&& hasCandidatesShown){ //Jeremy '12,6,13
 					hideCandidateView();
-					if(DEBUG)
-						Log.i(TAG,"KEYCODE_BACK return to super.");
+					return true;
 				}
 					
 			}
+			if(DEBUG)
+				Log.i(TAG,"KEYCODE_BACK return to super.");
+		
 			break;
 
 		case KeyEvent.KEYCODE_DEL:
@@ -1193,7 +1195,7 @@ public class LIMEService extends InputMethodService implements
 			//if(!mLIMEPref.getPhysicalKeyboardType().equals("xperiapro")){
 				// Adjust metakeystate on printed key pressed. Jeremy '12,6,11
 				//mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
-				return true;
+			return true;
 			//}
 		/*case KeyEvent.KEYCODE_TAB: // Jeremy '11,5,23: Force bypassing tab
 									// processing to super	
@@ -1408,7 +1410,6 @@ public class LIMEService extends InputMethodService implements
 			} else {
 				translateKeyDown(keyCode, event);
 				super.onKeyDown(keyCode, mKeydownEvent);
-				//return true;
 			}
 			break;
 			
