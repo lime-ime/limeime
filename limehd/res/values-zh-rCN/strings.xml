@@ -523,6 +523,12 @@
 		<item>软键盘下方</item>
 	</string-array>
 	
+    <string-array name="split_keyboard_options">
+		<item>关闭</item>
+		<item>开启</item>
+		<item>仅横向开启</item>
+	</string-array>
+    	
     <!-- AD Message -->
     <string name="ad_zippy">蓝芽键盘测试支援\nZIPPY BT-540 蓝芽一对六键盘 - http://www.zippy.com (Sam Lin/sam_lin@hotmail.com)</string>
     

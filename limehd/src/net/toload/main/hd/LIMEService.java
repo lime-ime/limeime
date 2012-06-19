@@ -107,7 +107,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean mEnglishFlagShift;
 	private boolean mPersistentLanguageMode;  //Jeremy '12,5,1
 	private int mShowArrowKeys; //Jeremy '12,5,22 force recreate keyboard if show arrow keys mode changes.
-	private boolean mSplitKeyboard; //Jeremy '12,5,26 force recreate keyboard if split keyboard settings changes
+	private int mSplitKeyboard; //Jeremy '12,5,26 force recreate keyboard if split keyboard settings changes; 6/19 changed to int
 	
 	//private boolean mPredictionOnPhysicalKeyboard = false;
 
@@ -597,6 +597,7 @@ public class LIMEService extends InputMethodService implements
 		if (mInputView == null) {
 			return;
 		}
+		
 		//Jeremy '12,5,29 override the fixCanddiateMode setting in Landscape mode (in landscape mode the candidate bar is always not fixed).
 		boolean fixedCandiateMode = mLIMEPref.getFixedCandidateViewDisplay();
 		if(mOrientation == Configuration.ORIENTATION_LANDSCAPE )
@@ -1895,17 +1896,18 @@ public class LIMEService extends InputMethodService implements
 		CharSequence itemSwitchSytemIM = getString(R.string.input_method);
 		
 		CharSequence itemSplitKeyboard  = getString(R.string.split_keyboard);
-		if(mSplitKeyboard) itemSplitKeyboard  = getString(R.string.merge_keyboard);
+		if(mSplitKeyboard >0) itemSplitKeyboard  = getString(R.string.merge_keyboard);
 	
 		
 		DisplayMetrics dm = getResources().getDisplayMetrics();
         int displayWidth = dm.widthPixels;
         int displayHeight = dm.heightPixels;
+        final boolean isLandScape = displayWidth >displayHeight;
         
         CharSequence[] options;
         
         //Jeremy '12,5,27 do not show split/merge keyboard option if in landscape mode and show arrow keys is on
-        if(displayWidth > displayHeight && mShowArrowKeys > 0) 
+        if(isLandScape && mShowArrowKeys > 0) 
         	options = new CharSequence[] 
     				{ itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM};
         else
@@ -1929,8 +1931,19 @@ public class LIMEService extends InputMethodService implements
 				case POS_METHOD:
 					((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).showInputMethodPicker();				
 					break;
-				case POS_SPLIT_KEYBOARD: //Jeremy '12,5,27 new option to split keyboard
-					mLIMEPref.setSplitKeyboard(!mSplitKeyboard);
+				case POS_SPLIT_KEYBOARD: //Jeremy '12,5,27 new option to split keyboard; '12,6,9 add orientation consideration on split keyboard
+					if(mSplitKeyboard == LIMEKeyboard.SPLIT_KEYBOARD_NEVER){
+						if(isLandScape)
+							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY);
+						else
+							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS);
+					}else{
+						if(!isLandScape && mSplitKeyboard == LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS)
+							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY);
+						else
+							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_NEVER);
+					}		
+					
 					handleClose();
 					mKeyboardSwitcher.makeKeyboards(true);
 					break;

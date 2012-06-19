@@ -613,6 +613,18 @@
     <string name="merge_keyboard">Merge Keyboard</string>
    
 	
+    <string-array name="split_keyboard_options">
+		<item>Never</item>
+		<item>Always</item>
+		<item>Landscape Only</item>
+	</string-array>
+	
+	<string-array name="split_keyboard_values">
+		<item>0</item>
+		<item>1</item>
+		<item>2</item>
+	</string-array>
+    
 	<string-array name="show_arrow_keys_options">
 		<item>none</item>
 		<item>Top of softkeyboard</item>
