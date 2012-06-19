@@ -66,10 +66,13 @@
     			android:defaultValue="0"/>   
                 />
        
-       <CheckBoxPreference
-                android:key="split_keyboard"
+       <ListPreference
+                android:key="split_keyboard_mode"
                 android:title="@string/split_keyboard" 
-            	android:defaultValue="false" 
+            	android:entries="@array/split_keyboard_options" 
+    			android:entryValues="@array/split_keyboard_values" 
+    			android:dialogTitle="@string/split_keyboard" 
+    			android:defaultValue="0"/> 
                 />
        
        <CheckBoxPreference

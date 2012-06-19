@@ -519,6 +519,14 @@
 		<item>軟鍵盤下方</item>
 	</string-array>
 	
+   	
+    <string-array name="split_keyboard_options">
+		<item>關閉</item>
+		<item>開啟</item>
+		<item>僅橫向開啟</item>
+	</string-array>
+	
+	
 
     
     <!-- AD Message -->

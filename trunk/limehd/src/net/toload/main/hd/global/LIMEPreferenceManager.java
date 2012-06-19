@@ -388,18 +388,24 @@ public class LIMEPreferenceManager {
 	public int getShowArrowKeys(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return Integer.parseInt(sp.getString("show_arrow_key", "0"));
-
+		
 	}
 	
-	public boolean getSplitKeyboard(){
+	public void setShowArrowKeys(int mode){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean("split_keyboard", false);
+		sp.edit().putString("show_arrow_key", Integer.toString(mode)).commit();	
+		
+	}
+	
+	public int getSplitKeyboard(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return Integer.parseInt(sp.getString("split_keyboard_mode", "0"));
 	}
 	
 	
-	public void setSplitKeyboard(boolean split){
+	public void setSplitKeyboard(int mode){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putBoolean("split_keyboard", split).commit();	
+		sp.edit().putString("split_keyboard_mode", Integer.toString(mode)).commit();	
 		
 	}
 	

@@ -79,7 +79,12 @@ public class LIMEBaseKeyboard {
     //Jeremy '12,5,26 moved from LIMEKeyboard
     public static final int KEYCODE_ENTER = '\n'; 
     public static final int KEYCODE_SPACE = ' ';
-    
+    //Jeremy '12,6,19
+    public static final int SPLIT_KEYBOARD_NEVER = 0;
+    public static final int SPLIT_KEYBOARD_ALWAYS = 1;
+    public static final int SPLIT_KEYBOARD_LANDSCAPD_ONLY = 2;
+    /** orientation of the screen */
+    private boolean mLandScape;
     /** Keyboard label **/
     //private CharSequence mLabel;
 
@@ -611,7 +616,7 @@ public class LIMEBaseKeyboard {
      * @param context the application or service context
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      */
-    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, float keySizeScale, int showArrowKeys, boolean splitKeyboard ) {
+    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, float keySizeScale, int showArrowKeys, int splitKeyboard ) {
         this(context, xmlLayoutResId, 0, keySizeScale, showArrowKeys, splitKeyboard );
     }
     
@@ -622,7 +627,7 @@ public class LIMEBaseKeyboard {
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      * @param modeId keyboard mode identifier
      */
-    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale, int showArrowKeys, boolean splitKeyboard ) {
+    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale, int showArrowKeys, int splitKeyboard ) {
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         mDisplayWidth = dm.widthPixels;
         mDisplayHeight = dm.heightPixels;
@@ -640,10 +645,14 @@ public class LIMEBaseKeyboard {
         mKeySizeScale = keySizeScale;
         mShowArrowKeys = showArrowKeys;
         
+        mLandScape = mDisplayWidth > mDisplayHeight;
 
         //Jeremy '12,5,26 reserve  columns in the middle for arrow keys in landscape mode.
         //Jeremy '12,5,27 read splitkeyboard setting from preference. 
-        mSplitKeyboard = ((mDisplayWidth > mDisplayHeight) && mShowArrowKeys != 0)|| splitKeyboard;
+        //Jeremy '12,6,19  add orientation consideration on split keyboard
+        mSplitKeyboard = (mLandScape && mShowArrowKeys != 0)
+        		|| (mLandScape && splitKeyboard == SPLIT_KEYBOARD_LANDSCAPD_ONLY) 
+        		|| splitKeyboard == SPLIT_KEYBOARD_ALWAYS;
    
         loadKeyboard(context, context.getResources().getXml(xmlLayoutResId));
     }
@@ -664,7 +673,7 @@ public class LIMEBaseKeyboard {
      */
     public LIMEBaseKeyboard(Context context, int layoutTemplateResId, 
             CharSequence characters, int columns, int horizontalPadding, float keySizeScale) {
-        this(context, layoutTemplateResId, keySizeScale, 0, false); //Jeremy '12,5,21 never show arrow keys in popup keyboard
+        this(context, layoutTemplateResId, keySizeScale, 0, 0); //Jeremy '12,5,21 never show arrow keys in popup keyboard
         int x = 0;
         int y = 0;
         int column = 0;
