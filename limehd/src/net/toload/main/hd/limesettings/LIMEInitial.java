@@ -27,6 +27,7 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.R;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -724,9 +725,19 @@ public class LIMEInitial extends Activity {
 				dbsrv.compressFile(srcFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_CLOUD_TEMP);
 				pd.setProgress(20);
 				dbsrv.cloudBackup(activity,  pd, tempfile);
+				if(!dbsrv.getStatus()){
+					mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
+					mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
+					dbsrv.showNotificationMessage("Cannot Backup Database", 0);
+				}
 			}else if(type == CLOUDRESTORE){
 				pd.setProgress(10);
-				DBSrv.cloudRestore(activity,  pd, tempfile);
+				dbsrv.cloudRestore(activity,  pd, tempfile);
+				if(!dbsrv.getStatus()){
+					mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
+					mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
+					dbsrv.showNotificationMessage("Cannot Restore Database", 0);
+				}
 			}else if(type == BACKUP){
 				try {
 					dbsrv.backupDatabase();
