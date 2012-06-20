@@ -35,6 +35,8 @@ import com.google.gdata.data.media.MediaSource;
 
 public class DBCloudServer extends DBServer {
 
+	private static boolean status; 
+	
 	private final static boolean DEBUG = true;
 	private final static String TAG = "DBCloudServer";
 	private static final String AUTH_TOKEN_TYPE = "oauth2:https://docs.google.com/feeds/ https://spreadsheets.google.com/feeds/ https://docs.googleusercontent.com/";
@@ -67,6 +69,10 @@ public class DBCloudServer extends DBServer {
 	public DBCloudServer(Context context) {
 		super(context);
 
+	}
+	
+	public static boolean getStatus(){
+		return status;
 	}
 
 	public void cloudBackup(Activity act, ProgressDialog pd, File temp) {
@@ -121,7 +127,9 @@ public class DBCloudServer extends DBServer {
 									backupProcess();
 									
 								}
+								status = true;
 							} catch (Exception e) {
+								status = false;
 								mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
 							}
 						}
@@ -143,9 +151,10 @@ public class DBCloudServer extends DBServer {
 									accountManager.getAccountManager();
 									setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
 									backupProcess();
-									
 								}
+								status = true;
 							} catch (Exception e) {
+								status = false;
 								mLIMEPref.setParameter("cloud_in_process", 	new Boolean(false));
 							}
 						}
@@ -206,9 +215,10 @@ public class DBCloudServer extends DBServer {
 									accountManager.getAccountManager();
 									setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
 									restoreProcess();
-									
 								}
+								status = true;
 							} catch (Exception e) {
+								status = false;
 								mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
 							}
 						}
@@ -231,7 +241,9 @@ public class DBCloudServer extends DBServer {
 									setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
 									restoreProcess();									
 								}
+								status = true;
 							} catch (Exception e) {
+								status = false;
 								mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
 							}
 						}
@@ -260,7 +272,9 @@ public class DBCloudServer extends DBServer {
 							} else {
 								gotAccountRestore();
 							}
+							status = true;
 						} catch (Exception e) {
+							status = false;
 							mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
 						}
 					}
@@ -319,6 +333,10 @@ public class DBCloudServer extends DBServer {
 							InputStream inStream = null;
 							FileOutputStream outStream = null;
 							try {
+								if(tempfile.exists()){
+									tempfile.delete();
+								}
+								
 								inStream = ms.getInputStream();
 								outStream = new FileOutputStream(tempfile.getAbsolutePath());
 
@@ -340,7 +358,10 @@ public class DBCloudServer extends DBServer {
 										Log.i(TAG, "restoreProcess(), file size = " + fileSize + ". bytesRead=" + bytesRead + ". totalRead=" + totalRead);
 								}
 								mLIMEPref.setParameter("cloud_backup_size", totalRead);
-							} finally {
+							}catch(Exception e){
+								
+							}finally {
+							
 								if (inStream != null) {
 									inStream.close();
 								}
@@ -363,11 +384,15 @@ public class DBCloudServer extends DBServer {
 							}
 							mLIMEPref.setParameter(
 									LIME.DATABASE_DOWNLOAD_STATUS, "true");
-							showNotificationMessage(
-									activity.getApplicationContext()
-											.getText(
-													R.string.l3_initial_cloud_restore_end)
-											+ "", intentLIMEMenu);
+							if(getStatus()){
+								showNotificationMessage(
+										activity.getApplicationContext()
+												.getText(
+														R.string.l3_initial_cloud_restore_end)
+												+ "", intentLIMEMenu);
+							}else{
+								showNotificationMessage("Cannot Restore Database", intentLIMEMenu);
+							}
 
 							tempfile.deleteOnExit();
 
@@ -464,11 +489,16 @@ public class DBCloudServer extends DBServer {
 						mLIMEPref.setParameter("cloud_backup_size", tempfile.length());
 
 						mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
-						showNotificationMessage(
-								activity.getApplicationContext().getText(
-										R.string.l3_initial_cloud_backup_end)
-										+ "", intentLIMEMenu);
+						if(getStatus()){
 
+							showNotificationMessage(
+									activity.getApplicationContext().getText(
+											R.string.l3_initial_cloud_backup_end)
+											+ "", intentLIMEMenu);
+						}else{
+							showNotificationMessage("Cannot Backup Database", intentLIMEMenu);
+						}
+						
 						pd.setProgress(100);
 					} catch (Exception e) {
 						e.printStackTrace();
