@@ -979,19 +979,7 @@ public class LIMEService extends InputMethodService implements
 					+", event.getRepeatCount()" + event.getRepeatCount()
 					+", event.getMetaState()" + Integer.toHexString( event.getMetaState()));
 		
-		/*/ Force closing VKeyboard Moved to translatekeydown '12,5,8 by jeremy
-		if(mInputView!=null && mInputView.isShown()){
-			mInputView.closing();
-			requestHideSelf(0);
-		}
-		
-		/*if(!(keyCode == KeyEvent.KEYCODE_HOME
-			 ||keyCode == KeyEvent.KEYCODE_BACK
-			 ||keyCode == KeyEvent.KEYCODE_MENU
-			 ||keyCode == KeyEvent.KEYCODE_SEARCH
-			 )) //Jeremy '11,9,4 exclude the four default hard keys
-				isPhysicalKeyPressed = true;*/ // Moved to translatekeydown '11,9,5 by jeremy
-		
+			
 		mKeydownEvent = new KeyEvent(event);
 		// Record key pressed time and set key processed flags(key down, for physical keys)
 		//Jeremy '11,8,22 using getRepeatCount from event to set processed flags
@@ -1104,15 +1092,8 @@ public class LIMEService extends InputMethodService implements
 			// composing text for the user, we want to modify that instead
 			// of let the application to the delete itself.
 
-	//		if (mComposing.length() > 0 || tempEnglishWord.length() > 0 
-	//			||hasCandidatesShown){ 
-				onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
-				return true;
-	//		}
-			
-	//		mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
-	//		setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();	
-	//		break;
+			onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
+			return true;
 
 		case KeyEvent.KEYCODE_ENTER:
 			// Let the underlying text editor always handle these, if return
@@ -1183,18 +1164,13 @@ public class LIMEService extends InputMethodService implements
 				switchChiEng();
 				hasKeyProcessed = true;
 			}
-			//if(!mLIMEPref.getPhysicalKeyboardType().equals("xperiapro")){
-				// Adjust metakeystate on printed key pressed. Jeremy '12,6,11
-				//mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 			return true;
-			//}
 		case KeyEvent.KEYCODE_TAB: // Jeremy '12.6,22 Force bypassing tab processing to super if not on milestone 2 with alt on (alt+tab = ~ on milestone2)
 			if (!( LIMEMetaKeyKeyListener.getMetaState(mMetaState,
-					LIMEMetaKeyKeyListener.META_ALT_ON) > 0 && mLIMEPref.getPhoneticKeyboardType().equals("milestone2") ) )
+					LIMEMetaKeyKeyListener.META_ALT_ON) > 0 
+					&& mLIMEPref.getPhysicalKeyboardType().equals("milestone2") ) )
 					break;
 		default:
-			
-			//if(hasSearchPress) hasSearchProcessed = true;
 			if(!(hasCtrlPress||hasMenuPress)){
 				if (translateKeyDown(keyCode, event)) {
 					 if(DEBUG) Log.i(TAG,"Onkeydown():tranlatekeydown:true");
@@ -1204,10 +1180,11 @@ public class LIMEService extends InputMethodService implements
 
 		}
 		 
-		int primaryKey = event.getUnicodeChar(LIMEMetaKeyKeyListener.getMetaState(mMetaState));
-		char t = (char) primaryKey;
-
+	
 		if((hasCtrlPress||hasMenuPress)&& !mEnglishOnly ) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+			int primaryKey = event.getUnicodeChar(LIMEMetaKeyKeyListener.getMetaState(mMetaState));
+			char t = (char) primaryKey;
+
 			
 			if (hasCtrlPress &&  //Only working with ctrl Jeremy '11,8,22
 				mCandidateList != null && mCandidateList.size() > 0 
