@@ -423,6 +423,7 @@
     <string name="l3_initial_cloud_restore_confirm">您是否要还原数据库由 GOOGLE 云端硬盘?</string>
     <string name="l3_initial_cloud_restore_start">开始还原数据库</string>
     <string name="l3_initial_cloud_restore_end">数据库还原完成</string>
+     <string name="l3_initial_cloud_failed">Google 云端硬碟服务暂时无法连接，请稍后再试</string>
     
     
     
@@ -590,7 +591,7 @@
 	    \n版本更新说明
 	    
 		\n3.8.1-311
-		\n〔提升文字查询速度 ，请重汇字根档案或下载预载资料库]
+		\n(提升文字查询速度，请重汇字根档或下载预载资料库[请勿使用旧版备份还原资料库])
 		\n1. 修正候选列展开后，画面乱掉问题
 		\n2. 修正连打学习及注音快拼学习问题
 		\n3. 修正候选列候选字 cache 移除问题
@@ -600,6 +601,8 @@
 		\n7. 修改档案选取模组，已可选取设备有内建空间的外接sdcard上的档案
 		\n8. 新增许氏注音及倚天26键注音符号软体键盘
 		\n9. 新增中文软体键盘长按“EN/123”键可快速切换到半型符号键盘
+		\n10. 修改分离键盘喜好设定，新增“仅横向开启”
+	
 	
 		LIME中文输入法Facebook粉丝专页\n
 		http://facebook.com/limeime/\n\n
