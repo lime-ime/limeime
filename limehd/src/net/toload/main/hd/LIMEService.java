@@ -1188,9 +1188,10 @@ public class LIMEService extends InputMethodService implements
 				//mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
 			return true;
 			//}
-		/*case KeyEvent.KEYCODE_TAB: // Jeremy '11,5,23: Force bypassing tab
-									// processing to super	
-					break;*/
+		case KeyEvent.KEYCODE_TAB: // Jeremy '12.6,22 Force bypassing tab processing to super if not on milestone 2 with alt on (alt+tab = ~ on milestone2)
+			if (!( LIMEMetaKeyKeyListener.getMetaState(mMetaState,
+					LIMEMetaKeyKeyListener.META_ALT_ON) > 0 && mLIMEPref.getPhoneticKeyboardType().equals("milestone2") ) )
+					break;
 		default:
 			
 			//if(hasSearchPress) hasSearchProcessed = true;
