@@ -728,7 +728,7 @@ public class LIMEInitial extends Activity {
 				if(!dbsrv.getStatus()){
 					mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
 					mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
-					dbsrv.showNotificationMessage("Cannot Backup Database", 0);
+					dbsrv.showNotificationMessage(getText(R.string.l3_initial_cloud_failed) +"", 0);
 				}
 			}else if(type == CLOUDRESTORE){
 				pd.setProgress(10);
@@ -736,7 +736,7 @@ public class LIMEInitial extends Activity {
 				if(!dbsrv.getStatus()){
 					mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
 					mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
-					dbsrv.showNotificationMessage("Cannot Restore Database", 0);
+					dbsrv.showNotificationMessage(getText(R.string.l3_initial_cloud_failed) +"", 0);
 				}
 			}else if(type == BACKUP){
 				try {

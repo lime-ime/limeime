@@ -450,6 +450,7 @@
     <string name="l3_initial_cloud_restore_start">Starting lime database restore task…</string>
     <string name="l3_initial_cloud_restore_end">Restore database task finished.</string>
     <string name="l3_initial_cloud_restore_confirm">Are you sure you want to restore lime database from the Google Drive?</string>
+    <string name="l3_initial_cloud_failed">Google Drive temporary unavailable please try again later</string>
     
     
     <string name="l3_im_setting_select_keyboard">On-screen soft keyboard</string>
@@ -643,7 +644,7 @@
 	    \n版本更新說明
 	    
 		\n3.8.1-311
-		\n〔提升文字查詢速度 ，請重匯字根檔案或下載預載資料庫]
+		\n(提升文字查詢速度，請重匯字根檔或下載預載資料庫[請勿使用舊版備份還原資料庫])
 		\n1. 修正候選列展開後，畫面亂掉問題
 		\n2. 修正連打學習及注音快拼學習問題
 		\n3. 修正候選列候選字 cache 移除問題
@@ -653,6 +654,7 @@
 		\n7. 修改檔案選取模組，已可選取設備有內建空間的外接sdcard上的檔案
 		\n8. 新增許氏注音及倚天26鍵注音符號軟體鍵盤
 		\n9. 新增中文軟體鍵盤長按「EN/123」鍵可快速切換到半型符號鍵盤
+		\n10. 修改分離鍵盤喜好設定，新增「僅橫向開啟」
 	
 		LIME中文輸入法Facebook粉絲專頁\n
 		http://facebook.com/limeime/\n\n
