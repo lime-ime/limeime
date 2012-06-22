@@ -1102,6 +1102,8 @@ public class LIMEService extends InputMethodService implements
 			// the real enter afterward.
 			// return false;
 			// Log.i("ART", "physical keyboard:"+ keyCode);
+			mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
+			setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState(); 
 			if(!mEnglishOnly){ //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 				if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 				// To block a real enter after suggestion selection. We have to
@@ -1119,8 +1121,7 @@ public class LIMEService extends InputMethodService implements
 				resetTempEnglishWord();
 				this.updateEnglishPrediction();
 			}
-				mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
-				setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState(); 
+				
 			break;
 
 /*		case MY_KEYCODE_ESC:
