@@ -1872,16 +1872,19 @@ public class LIMEService extends InputMethodService implements
 
 		CharSequence itemSwitchIM = getString(R.string.keyboard_list);
 		CharSequence itemSwitchSytemIM = getString(R.string.input_method);
-		
-		CharSequence itemSplitKeyboard  = getString(R.string.split_keyboard);
-		if(mSplitKeyboard >0) itemSplitKeyboard  = getString(R.string.merge_keyboard);
 	
-		
 		DisplayMetrics dm = getResources().getDisplayMetrics();
         int displayWidth = dm.widthPixels;
         int displayHeight = dm.heightPixels;
         final boolean isLandScape = displayWidth >displayHeight;
-        
+    
+		CharSequence itemSplitKeyboard  = getString(R.string.split_keyboard);
+		if((mSplitKeyboard == LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY && isLandScape)
+			|| mSplitKeyboard == LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS) 
+			itemSplitKeyboard  = getString(R.string.merge_keyboard);
+	
+		
+	    
         CharSequence[] options;
         
         //Jeremy '12,5,27 do not show split/merge keyboard option if in landscape mode and show arrow keys is on
@@ -1915,12 +1918,17 @@ public class LIMEService extends InputMethodService implements
 							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY);
 						else
 							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS);
-					}else{
-						if(!isLandScape && mSplitKeyboard == LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS)
-							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY);
-						else
+					}else if(mSplitKeyboard == LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS){
+						if(isLandScape)
 							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_NEVER);
-					}		
+						else
+							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY);
+					}else {// LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY
+						if(isLandScape)
+							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_NEVER);
+						else
+							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS);
+					}
 					
 					handleClose();
 					mKeyboardSwitcher.makeKeyboards(true);

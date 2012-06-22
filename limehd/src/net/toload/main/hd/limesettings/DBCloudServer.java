@@ -37,7 +37,7 @@ public class DBCloudServer extends DBServer {
 
 	private static boolean status; 
 	
-	private final static boolean DEBUG = true;
+	private final static boolean DEBUG = false;
 	private final static String TAG = "DBCloudServer";
 	private static final String AUTH_TOKEN_TYPE = "oauth2:https://docs.google.com/feeds/ https://spreadsheets.google.com/feeds/ https://docs.googleusercontent.com/";
 	// private static final int MENU_ACCOUNTS = 0;
