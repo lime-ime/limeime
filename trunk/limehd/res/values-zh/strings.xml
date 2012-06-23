@@ -513,6 +513,8 @@
     
     <string name="merge_keyboard">合併鍵盤</string>
     
+    <string name="voice_input">啟動語音輸入…</string>
+    
     <string name="show_arrow_keys">顯示方向鍵</string>
     	<string-array name="show_arrow_keys_options">
 		<item>無</item>

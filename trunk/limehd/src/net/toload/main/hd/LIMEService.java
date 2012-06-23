@@ -58,6 +58,7 @@ import net.toload.main.hd.candidate.CandidateView;
 import net.toload.main.hd.candidate.CandidateViewContainer;
 import net.toload.main.hd.global.ChineseSymbol;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.global.Mapping;
 import net.toload.main.hd.limesettings.LIMEPreference;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
@@ -1842,12 +1843,13 @@ public class LIMEService extends InputMethodService implements
 
 	private AlertDialog mOptionsDialog;
 	// Contextual menu positions
+
 	private static final int POS_SETTINGS = 0;
 	private static final int POS_HANCONVERT = 1;  //Jeremy '11,9,17
 	private static final int POS_KEYBOARD = 2;
 	private static final int POS_METHOD = 3;
 	private static final int POS_SPLIT_KEYBOARD= 4;
-
+	private static final int POS_VOICEINPUT = 5;
 
 	
 	/**
@@ -1887,20 +1889,33 @@ public class LIMEService extends InputMethodService implements
 		
 	    
         CharSequence[] options;
+        CharSequence itemVoiceInput =  getString(R.string.voice_input);
+
         
         //Jeremy '12,5,27 do not show split/merge keyboard option if in landscape mode and show arrow keys is on
-        if(isLandScape && mShowArrowKeys > 0) 
-        	options = new CharSequence[] 
+        if(isLandScape && mShowArrowKeys > 0){
+        	 if(android.os.Build.VERSION.SDK_INT > 13) 
+        		 options = new CharSequence[] 
+         				{itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM, itemVoiceInput};
+        	 else
+        		 options = new CharSequence[] 
     				{ itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM};
-        else
-        	options = new CharSequence[] 
-				{ itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM, itemSplitKeyboard};
-		
+        }else{
+        	if(android.os.Build.VERSION.SDK_INT > 13)
+        		options = new CharSequence[] 
+        				{itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM, itemSplitKeyboard, itemVoiceInput};
+        	else
+        		options = new CharSequence[] 
+        				{ itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM, itemSplitKeyboard};
+        }
+        
+       
 		builder.setItems( options, new DialogInterface.OnClickListener() {
 
 			public void onClick(DialogInterface di, int position) {
 				di.dismiss();
 				switch (position) {
+				
 				case POS_SETTINGS:
 					launchSettings();
 					break;
@@ -1933,6 +1948,9 @@ public class LIMEService extends InputMethodService implements
 					
 					handleClose();
 					mKeyboardSwitcher.makeKeyboards(true);
+					break;
+				case POS_VOICEINPUT:
+					startVoiceInput();
 					break;
 					
 				}
@@ -3400,16 +3418,16 @@ public class LIMEService extends InputMethodService implements
 		hideCandidateView(); //Jeremy '12,5,7 hideCandiate when inputview is closed but not yet leave the original field (onfinishinput() will not called). 
 	}
 	
-	/*
+	/**
 	 * Experimental start voice input 
 	 * 
-	 *
+	 */
 	private void startVoiceInput(){
 		if(LIMEUtilities.isVoiceSearchServiceExist(getBaseContext()))
 			this.switchInputMethod("com.google.android.voicesearch/.ime.VoiceInputMethodService");
 		
 		
-	}*/
+	}
 
 
 

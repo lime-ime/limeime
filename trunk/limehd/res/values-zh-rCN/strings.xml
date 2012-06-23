@@ -516,6 +516,8 @@
     <string name="split_keyboard">分离键盘</string>
     
     <string name="merge_keyboard">合并键盘</string>
+    
+    <string name="voice_input">启动语音输入…</string>
     	
 	<string name="show_arrow_keys">显示方向键</string>
     	<string-array name="show_arrow_keys_options">
