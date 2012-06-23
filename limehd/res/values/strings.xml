@@ -612,6 +612,8 @@
     <string name="split_keyboard">Split Keyboard</string>
     
     <string name="merge_keyboard">Merge Keyboard</string>
+    
+    <string name="voice_input">Start Voice Input…</string>
    
 	
     <string-array name="split_keyboard_options">
