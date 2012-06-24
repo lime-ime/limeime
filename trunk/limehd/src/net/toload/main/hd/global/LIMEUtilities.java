@@ -25,7 +25,7 @@ import android.content.Intent;
  */
 public class LIMEUtilities {
 	static final String TAG = "LIMEUtilities";
-	static final boolean DEBUG = true;
+	static final boolean DEBUG = false;
 	
 	public static File isFileNotExist(String filepath){
 		
@@ -129,6 +129,8 @@ public class LIMEUtilities {
 	}
 	
 	public static boolean isVoiceSearchServiceExist(Context context){
+		if(DEBUG) Log.i(TAG, "isVoiceSearchServiceExist()");
+		
 		InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
 		List<InputMethodInfo> mInputMethodProperties = imm.getEnabledInputMethodList();
 	

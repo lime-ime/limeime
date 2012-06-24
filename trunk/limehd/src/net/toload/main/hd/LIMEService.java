@@ -1857,6 +1857,8 @@ public class LIMEService extends InputMethodService implements
 	 */
 	@TargetApi(11)
 	private void handleOptions() {
+		if(DEBUG)
+			Log.i(TAG, "handleOptions()");
 		AlertDialog.Builder builder = null;
 		
 		if(android.os.Build.VERSION.SDK_INT < 11)
@@ -1890,23 +1892,29 @@ public class LIMEService extends InputMethodService implements
 	    
         CharSequence[] options;
         CharSequence itemVoiceInput =  getString(R.string.voice_input);
+        
 
+        final boolean hasSplitOption;
         
         //Jeremy '12,5,27 do not show split/merge keyboard option if in landscape mode and show arrow keys is on
         if(isLandScape && mShowArrowKeys > 0){
-        	 if(android.os.Build.VERSION.SDK_INT > 13) 
+        	hasSplitOption = false;
+        	 if(android.os.Build.VERSION.SDK_INT > 13) {
         		 options = new CharSequence[] 
-         				{itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM, itemVoiceInput};
-        	 else
+         				{itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM, itemVoiceInput};      		 
+        	 }else{
         		 options = new CharSequence[] 
     				{ itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM};
+        	 }
         }else{
-        	if(android.os.Build.VERSION.SDK_INT > 13)
+        	hasSplitOption = true;
+        	if(android.os.Build.VERSION.SDK_INT > 13){
         		options = new CharSequence[] 
         				{itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM, itemSplitKeyboard, itemVoiceInput};
-        	else
+        	}else{
         		options = new CharSequence[] 
         				{ itemSettings, hanConvert, itemSwitchIM, itemSwitchSytemIM, itemSplitKeyboard};
+        	}
         }
         
        
@@ -1929,26 +1937,28 @@ public class LIMEService extends InputMethodService implements
 					((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).showInputMethodPicker();				
 					break;
 				case POS_SPLIT_KEYBOARD: //Jeremy '12,5,27 new option to split keyboard; '12,6,9 add orientation consideration on split keyboard
-					if(mSplitKeyboard == LIMEKeyboard.SPLIT_KEYBOARD_NEVER){
-						if(isLandScape)
-							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY);
-						else
-							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS);
-					}else if(mSplitKeyboard == LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS){
-						if(isLandScape)
-							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_NEVER);
-						else
-							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY);
-					}else {// LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY
-						if(isLandScape)
-							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_NEVER);
-						else
-							mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS);
+					if(hasSplitOption){
+						if(mSplitKeyboard == LIMEKeyboard.SPLIT_KEYBOARD_NEVER){
+							if(isLandScape)
+								mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY);
+							else
+								mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS);
+						}else if(mSplitKeyboard == LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS){
+							if(isLandScape)
+								mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_NEVER);
+							else
+								mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY);
+						}else {// LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY
+							if(isLandScape)
+								mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_NEVER);
+							else
+								mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS);
+						}
+
+						handleClose();
+						mKeyboardSwitcher.makeKeyboards(true);
+						break;
 					}
-					
-					handleClose();
-					mKeyboardSwitcher.makeKeyboards(true);
-					break;
 				case POS_VOICEINPUT:
 					startVoiceInput();
 					break;
@@ -3423,6 +3433,8 @@ public class LIMEService extends InputMethodService implements
 	 * 
 	 */
 	private void startVoiceInput(){
+		if(DEBUG)
+			Log.i(TAG, "startVoiceInput()");
 		if(LIMEUtilities.isVoiceSearchServiceExist(getBaseContext()))
 			this.switchInputMethod("com.google.android.voicesearch/.ime.VoiceInputMethodService");
 		
