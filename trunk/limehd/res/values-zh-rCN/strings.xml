@@ -9,7 +9,7 @@
     <string name="input_method">系统输入法切换</string>
     <string name="experienced_device">开发测试装置</string>
     <string name="license">版权声明</string>
-	<string name="license_detail">LIME-HD 是一个输入法框架程式，旨在提供 Android 装置中文输入法程式。\n组织或个人由网路自行下载之输入法字根及字典文件若有版权上的争议，请自行向原作者取得授权，本程式不负担其所产生的任何法律及版权上的责任。\n完整资讯请参考 LIME Project 网站上的版权说明  http://code.google.com/p/limeime/。</string>
+	<string name="license_detail">LIME-HD 是一个输入法框架程式，旨在提供 Android 装置中文输入法程式。\n组织或个人由网路自行下载之输入法字根及字典档案若有版权上的争议，请自行向原作者取得授权，本程式不负担其所产生的任何法律及版权上的责任。\n完整资讯请参考 LIME Project 网站上的版权说明  http://code.google.com/p/limeime/。</string>
 
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
@@ -23,7 +23,7 @@
     
     
     <!-- LIME Loading -->
-    <string name="lime_setting_btn_load_local_notice">请选择 .LIME 或 .CIN 文件</string>
+    <string name="lime_setting_btn_load_local_notice">请选择 .LIME 或 .CIN 档案</string>
     <string name="lime_setting_loading">资料载入期间请勿关闭本视窗或跳出程式，以免汇入失败</string>
     <string name="lime_setting_select_root"> - back to /</string>
     <string name="lime_setting_select_parent"> - back to ..</string>
@@ -90,6 +90,7 @@
     <string name="ecj_reverse_lookup_list">速成字根反查</string>
     <string name="wb_reverse_lookup_list">笔顺五码字根反查</string>
     <string name="hs_reverse_lookup_list">华象直觉字根反查</string>
+    <string name="pinyin_reverse_lookup_list">拼音字根反查</string>
     
     <string name="han_convert_option_list">中文简/繁体字码转换</string>
     <string name="selkey_option_list">选字键选项</string>
@@ -107,8 +108,9 @@
     <string name="candidate_switch_summary">滑动选取输入法建议文字</string>
     <string name="candidate_suggestion">启动自建关联字</string>
     <string name="candidate_suggestion_summary">依输入文字自动建立关联字</string>
- 	<string name="learn_phrase">自动学习新词</string>
+    <string name="learn_phrase">自动学习新词</string>
     <string name="learn_phrase_summary">从常用关联字学习新词</string>
+   
     <string name="learning_switch">启动选取排序</string>
     <string name="learning_switch_summary">依选取次数排序选字清单</string>
     <string name="physical_keyboard_sort">启动实体键盘选取排序</string>
@@ -235,6 +237,7 @@
 		<item>行列</item>
 		<item>行列10</item>
 		<item>笔顺五码</item>
+		<item>华象直觉</item>
 	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
@@ -250,6 +253,7 @@
 		<item>array10</item>
 		<item>wb</item>
 		<item>hs</item>
+		<item>pinyin</item>
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
@@ -265,6 +269,7 @@
 		<item>行列10输入法</item>
 		<item>笔顺五码输入法</item>
 		<item>华象直觉输入法</item>
+		<item>拼音输入法</item>
 	</string-array>
 	<!-- Keyboard short name List -->
     <string-array name="keyboardShortname">
@@ -280,8 +285,10 @@
 		<item>行列10</item>
 		<item>笔顺五码</item>
 		<item>华象直觉</item>
+		<item>拼音</item>
 	</string-array>
 	<string-array name="keyboard_defaultstate">
+		<item>true</item>
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
@@ -308,6 +315,7 @@
 		<item>array10</item>
 		<item>wb</item>
 		<item>hs</item>
+		<item>pinyin</item>
 	</string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
@@ -322,6 +330,7 @@
 		<item>array10</item>
 		<item>wb</item>
 		<item>hs</item>
+		<item>pinyin</item>
 		<item>related</item>
 		<item>dictionary</item>
 	</string-array>
@@ -349,23 +358,24 @@
 		<item>行列10</item>
 		<item>笔顺五码</item>
 		<item>华象直觉</item>
+		<item>拼音</item>
 		<item>预载关联字</item>
 		<item>英文字典</item>
 	</string-array>
 	
 	<!-- Version 3 String Set -->
-    <string name="l3_message_initial_required">请初始化 LIME 数据库_</string>
+    <string name="l3_message_initial_required">请初始化 LIME 资料库_</string>
     
-    <string name="l3_tab_initial">初始数据库</string>
+    <string name="l3_tab_initial">初始资料库</string>
     <string name="l3_tab_initial_error">下载失败，请确认装置已连上网路.</string>
-    <string name="l3_tab_initial_message">请点选 [预载数据库] OR [空白数据库] 键下载 LIME 数据库或点选 [还原数据库] 键由备份文件中还原</string>
-    <string name="l3_initial_btn_load_empty_db">空白数据库</string>
-    <string name="l3_initial_btn_load_phonetic_only_db">仅含注音数据库(连打字根)</string>
-    <string name="l3_initial_btn_load_phonetic_hs_only_db">仅含注音+华象直觉数据库</string>
-    <string name="l3_initial_btn_load_preload_db">预载数据库 \n注音, 仓颉, 仓颉五代 \n快仓, 大易, 轻松　　\n行列, 行列 １０　 　</string>
-    <string name="l3_initial_btn_reset_db">重置数据库</string>
-    <string name="l3_initial_btn_store_to_sdcard">请问您要变更数据库的储存位置至 SDCARD 吗? 在部份机种上可能会产生效能不佳的问题。</string>
-    <string name="l3_initial_btn_store_to_device">请问您要变更数据库的储存位置至装置吗? </string>
+    <string name="l3_tab_initial_message">请点选 [预载资料库] OR [空白资料库] 键下载 LIME 资料库或点选 [还原资料库] 键由备份档案中还原</string>
+    <string name="l3_initial_btn_load_empty_db">空白资料库</string>
+    <string name="l3_initial_btn_load_phonetic_only_db">仅含注音资料库(连打字根)</string>
+    <string name="l3_initial_btn_load_phonetic_hs_only_db">仅含注音+华象直觉资料库</string>
+    <string name="l3_initial_btn_load_preload_db">预载资料库 \n注音, 仓颉, 仓颉五代 \n快仓, 大易, 轻松　　\n行列, 行列 １０　 　</string>
+    <string name="l3_initial_btn_reset_db">重置资料库</string>
+    <string name="l3_initial_btn_store_to_sdcard">请问您要变更资料库的储存位置至 SDCARD 吗? 在部份机种上可能会产生效能不佳的问题。</string>
+    <string name="l3_initial_btn_store_to_device">请问您要变更资料库的储存位置至装置吗? </string>
      <string name="l3_initial_btn_store_device">装置空间</string>
     <string name="l3_initial_btn_store_sdcard">SDCARD</string>
     
@@ -383,51 +393,48 @@
     <string name="l3_manage_array10">行列10</string>
     <string name="l3_manage_wb">笔顺五码</string>
     <string name="l3_manage_hs">华象直觉</string>
+    <string name="l3_manage_pinyin">拼音</string>
     
     <string name="l3_tab_preference">喜好设定</string>
     
-	<string name="l3_dbservice_download_start">正在取得预载数据库, 这一个动作会持续一至数分钟，请您耐心等候.</string>
-	<string name="l3_dbservice_download_start_empty">正在取得空白数据库, 这一个动作会持续一至数分钟，请您耐心等候.</string>
-    <string name="l3_dbservice_download_initial">正在初始化数据库.</string>
-    <string name="l3_dbservice_download_loaded">数据库已成功载入.</string>
+	<string name="l3_dbservice_download_start">正在取得预载资料库, 这一个动作会持续一至数分钟，请您耐心等候.</string>
+	<string name="l3_dbservice_download_start_empty">正在取得空白资料库, 这一个动作会持续一至数分钟，请您耐心等候.</string>
+    <string name="l3_dbservice_download_initial">正在初始化资料库.</string>
+    <string name="l3_dbservice_download_loaded">资料库已成功载入.</string>
     <string name="l3_dbservice_download_convert">输入法进行转换中…</string>
     
     <string name="l3_message_table_downloading">下载字根档…</string>
-    <string name="l3_message_database_reset_confirm">您是否要移除数据库?</string>
+    <string name="l3_message_database_reset_confirm">您是否要移除资料库?</string>
     <string name="l3_message_table_reset_confirm">您是否要清除所有记录?</string>
     <string name="l3_message_table_download_confirm">资料载入期间请勿关闭本视窗或跳出程式，以免汇入失败，您是否要下载字根档?</string>
     <string name="l3_message_table_abort_confirm">您是否要中断载入字根档?</string>
-    <string name="l3_initial_download_database">下载数据库</string>
-    <string name="l3_initial_database_failed">操作失败! 请您稍后再试，请检查数据库是否载入完全!</string>
-    <string name="l3_initial_download_failed">资料转换错误, 请重置数据库再重新下载!</string>
-    <string name="l3_initial_download_write_sdcard_failed">请确定SDCARD已挂载, 重置数据库再重新下载!</string>
-    <string name="l3_initial_backup_database">备份数据库</string>
-    <string name="l3_initial_backup_start">开始备份数据库</string>
-    <string name="l3_initial_backup_end">数据库备份完成</string>
-    <string name="l3_initial_backup_confirm">您是否要备份数据库?</string>
-    <string name="l3_initial_backup_error">数据库不存在，无法进行备份.</string>
-    <string name="l3_initial_restore_database">还原数据库</string>
-    <string name="l3_initial_restore_error">备份文件不存在，无法进行还原.</string>
-    <string name="l3_initial_restore_confirm">您是否要还原数据库?</string>
-    <string name="l3_initial_restore_start">开始还原数据库</string>
-    <string name="l3_initial_restore_end">数据库还原完成</string>
+    <string name="l3_initial_download_database">下载资料库</string>
+    <string name="l3_initial_database_failed">操作失败! 请您稍后再试，请检查资料库是否载入完全!</string>
+    <string name="l3_initial_download_failed">资料转换错误, 请重置资料库再重新下载!</string>
+    <string name="l3_initial_download_write_sdcard_failed">请确定SDCARD已挂载, 重置资料库再重新下载!</string>
+    <string name="l3_initial_backup_database">备份资料库</string>
+    <string name="l3_initial_backup_start">开始备份资料库</string>
+    <string name="l3_initial_backup_end">资料库备份完成</string>
+    <string name="l3_initial_backup_confirm">您是否要备份资料库?</string>
+    <string name="l3_initial_backup_error">资料库不存在，无法进行备份.</string>
+    <string name="l3_initial_restore_database">还原资料库</string>
+    <string name="l3_initial_restore_error">备份档案不存在，无法进行还原.</string>
+    <string name="l3_initial_restore_confirm">您是否要还原资料库?</string>
+    <string name="l3_initial_restore_start">开始还原资料库</string>
+    <string name="l3_initial_restore_end">资料库还原完成</string>
     
-    
-     <string name="l3_initial_cloud_backup_database">GOOGLE 云端备份</string>
-    <string name="l3_initial_cloud_backup_start">开始备份数据库</string>
-    <string name="l3_initial_cloud_backup_end">数据库备份完成</string>
-    <string name="l3_initial_cloud_backup_confirm">您是否要备份数据库至 GOOGLE 云端硬盘?</string>
-    <string name="l3_initial_cloud_backup_error">数据库不存在，无法进行备份.</string>
+    <string name="l3_initial_cloud_backup_database">GOOGLE 云端备份</string>
+    <string name="l3_initial_cloud_backup_start">开始备份资料库</string>
+    <string name="l3_initial_cloud_backup_end">资料库备份完成</string>
+    <string name="l3_initial_cloud_backup_confirm">您是否要备份资料库至 GOOGLE 云端硬碟?</string>
+    <string name="l3_initial_cloud_backup_error">资料库不存在，无法进行备份.</string>
     <string name="l3_initial_cloud_restore_database">GOOGLE 云端还原</string>
-    <string name="l3_initial_cloud_restore_error">备份文件不存在，无法进行还原.</string>
-    <string name="l3_initial_cloud_restore_confirm">您是否要还原数据库由 GOOGLE 云端硬盘?</string>
-    <string name="l3_initial_cloud_restore_start">开始还原数据库</string>
-    <string name="l3_initial_cloud_restore_end">数据库还原完成</string>
+    <string name="l3_initial_cloud_restore_error">备份档案不存在，无法进行还原.</string>
+    <string name="l3_initial_cloud_restore_confirm">您是否要还原资料库由 GOOGLE 云端硬碟?</string>
+    <string name="l3_initial_cloud_restore_start">开始还原资料库</string>
+    <string name="l3_initial_cloud_restore_end">资料库还原完成</string>
      <string name="l3_initial_cloud_failed">Google 云端硬碟服务暂时无法连接，请稍后再试</string>
-    
-    
-    
-    
+   
     <string name="l3_im_setting_select_keyboard">请选择输入法键盘显示</string>
     <string name="l3_im_setting_back">回到上一页</string>
     <string name="l3_im_setting_title">对应表设定</string>
@@ -451,8 +458,8 @@
     <string name="l3_im_download_from_phonetic_adv">下载并安装注音连打字根</string>
     <string name="l3_im_download_from_phonetic_adv_start">开始下载注音连打字根</string>
     <string name="l3_im_download_from_phonetic_adv_install">开始安装注音连打字根</string>
-    <string name="l3_im_download_from_phonetic_adv_warning">文件容量较大系统会需要比较长的时间进行资料汇入</string>
-    
+    <string name="l3_im_download_from_phonetic_adv_warning">档案容量较大系统会需要比较长的时间进行资料汇入</string>
+   
     <string name="l3_im_download_from_phonetic_cns">正体注音 CNS11643 字根，由于装置及操作系统差异，部份字型可能无法正确显示</string>
     <string name="l3_im_download_from_phonetic_cns_start">开始下载注音CNS11643字根</string>
     <string name="l3_im_download_from_phonetic_cns_install">开始安装注音CNS11643字根</string>
@@ -491,7 +498,31 @@
     <string name="l3_im_download_from_ez_install">开始安装轻松字根</string>
     
     
-    <string name="l3_im_download_from_hs">下载并安装华象直觉字根\n华象直觉输入法发明人陈华伟制作\nTel:(07)222–3133 手机：0933–616029\nhs.h123@msa.hinet.net</string>
+    <string name="l3_im_download_from_cjk_phonetic">下载并安装注音字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_phonetic_start">开始下载注音字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_phonetic_install">开始安装注音字根LIME版本</string>
+    
+    <string name="l3_im_download_from_cjk_pinyin">下载并安装拼音字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_pinyin_start">开始下载拼音字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_pinyin_install">开始安装拼音字根LIME版本</string>
+    
+    <string name="l3_im_download_from_cjk_ecj">下载并安装速成字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_ecj_start">开始下载速成字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_ecj_install">开始安装速成字根LIME版本</string>
+    
+    <string name="l3_im_download_from_cjk_cj">下载并安装仓颉字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_cj_start">开始下载仓颉字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_cj_install">开始安装仓颉字根LIME版本</string>
+    
+    <string name="l3_im_download_from_pinyin_big5">下载并安装拼音字根BIG5字集版本</string>
+    <string name="l3_im_download_from_pinyin_big5_start">开始下载拼音字根BIG5字集版本</string>
+    <string name="l3_im_download_from_pinyin_big5_install">开始安装拼音字根BIG5字集版本</string>
+    
+    <string name="l3_im_download_from_pinyin_gb">下载并安装拼音字根简体字集版本</string>
+    <string name="l3_im_download_from_pinyin_gb_start">开始下载拼音字根简体字集版本</string>
+    <string name="l3_im_download_from_pinyin_gb_install">开始安装拼音字根简体字集版本</string>
+    
+    <string name="l3_im_download_from_hs">下载并安装华象直觉字根\n华象直觉输入法发明人陈华伟制作\nTel:(07)2223133 手机：0933616029\nhs.h123@msa.hinet.net</string>
     <string name="l3_im_download_from_hs_start">开始下载华象直觉字根</string>
     <string name="l3_im_download_from_hs_install">开始安装华象直觉字根</string>
     
@@ -499,39 +530,41 @@
     <string name="l3_im_download_from_wb_start">开始下载笔顺五码字根</string>
     <string name="l3_im_download_from_wb_install">开始安装笔顺五码字根</string>
     
-    <string name="l3_im_database_error">数据库操作错误，请稍待一会重新操作。</string>
+    <string name="l3_im_database_error">资料库操作错误，请稍待一会重新操作。</string>
     
-    <string name="l3_database_loading">数据库载入中，请稍待…</string>
-    <string name="l3_database_not_exist">数据库不存在，请先下载載数据库</string>
-    
+    <string name="l3_database_loading">资料库载入中，请稍待…</string>
+    <string name="l3_database_not_exist">资料库不存在，请先下载资料库</string>
     
     <string name="l3_tab_bluetooth">蓝牙设定</string>
     
-    <string name="l3_im_notice">为了节省记忆体使用空间，我们强烈建议您清空不常使用的输入法字根，或使用空白数据库来载入个别输入法字根档。</string>
+    <string name="l3_im_notice">为了节省记忆体使用空间，我们强烈建议您清空不常使用的输入法字根，或使用空白资料库来载入个别输入法字根档。</string>
     
     <string name="hide_software_keyboard_typing_with_physical">自动隐藏软键盘</string>
-	<string name="hide_software_keyboard_typing_with_physical_summary">以实体键盘打字时隐藏软键盘，S-PEN使用者请勿勾选</string>
-	
-	   
+    <string name="hide_software_keyboard_typing_with_physical_summary">以实体键盘打字时隐藏软键盘，S-PEN使用者请勿勾选</string>
+    
     <string name="split_keyboard">分离键盘</string>
     
     <string name="merge_keyboard">合并键盘</string>
     
     <string name="voice_input">启动语音输入…</string>
-    	
-	<string name="show_arrow_keys">显示方向键</string>
+    
+    <string name="show_arrow_keys">显示方向键</string>
     	<string-array name="show_arrow_keys_options">
 		<item>无</item>
 		<item>软键盘上方</item>
 		<item>软键盘下方</item>
 	</string-array>
 	
+   	
     <string-array name="split_keyboard_options">
 		<item>关闭</item>
 		<item>开启</item>
 		<item>仅横向开启</item>
 	</string-array>
-    	
+	
+	
+
+    
     <!-- AD Message -->
     <string name="ad_zippy">蓝芽键盘测试支援\nZIPPY BT-540 蓝芽一对六键盘 - http://www.zippy.com (Sam Lin/sam_lin@hotmail.com)</string>
     
@@ -586,7 +619,7 @@
 	
 	<string name="disable_physical_selkey_option">关闭实体键盘选字键</string>
 	
-	<string name="reset_db_note">若文字无法正确输入，建议您重置数据库并重新下载或汇入字根文件.</string>
+	<string name="reset_db_note">若文字无法正确输入，建议您重置资料库并重新下载或汇入字根档案.</string>
 	
 	<string name="release_note">
 	    \n** 若文字无法正确输入，建议您重置资料库并重新下载或汇入字根档案, 如果选字与送出的字不同，请关闭喜好设定的中文简/繁体字码转换.\n

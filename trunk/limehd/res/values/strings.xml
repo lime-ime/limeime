@@ -90,6 +90,7 @@
     <string name="ecj_reverse_lookup_list">R-Lookup in EazyChangJei</string>
     <string name="wb_reverse_lookup_list">R-Lookup in Stroke5</string>
     <string name="hs_reverse_lookup_list">R-Lookup in HS</string>
+    <string name="pinyin_reverse_lookup_list">R-Lookup in PINYIN</string>
     
     <string name="han_convert_option_list">Chinese Characters Conversion</string>
     <string name="selkey_option_list">Candidate bar options</string>
@@ -261,6 +262,7 @@
 		<item>Array10</item>
 		<item>Stroke5</item>
 		<item>HS</item>
+		<item>Pinyin</item>
 	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
@@ -274,8 +276,9 @@
 		<item>ez</item>
 		<item>array</item>
 		<item>array10</item>
-		<item>Stroke5</item>
-		<item>HS</item>
+		<item>stroke5</item>
+		<item>hs</item>
+		<item>pinyin</item>
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
@@ -291,6 +294,7 @@
 		<item>Array10</item>
 		<item>Stroke5</item>
 		<item>HS</item>
+		<item>Pinyin</item>
 	</string-array>
 	<!-- Keyboard short name List -->
     <string-array name="keyboardShortname">
@@ -306,8 +310,10 @@
 		<item>Array10</item>
 		<item>Stroke5</item>
 		<item>HS</item>
+		<item>Pinyin</item>
 	</string-array>
 	<string-array name="keyboard_defaultstate">
+		<item>true</item>
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
@@ -334,6 +340,7 @@
 		<item>array10</item>
 		<item>wb</item>
 		<item>hs</item>
+		<item>pinyin</item>
 	</string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
@@ -348,6 +355,7 @@
 		<item>array10</item>
 		<item>wb</item>
 		<item>hs</item>
+		<item>pinyin</item>
 		<item>related</item>
 		<item>dictionary</item>
 	</string-array>
@@ -376,6 +384,7 @@
 		<item>Array10</item>
 		<item>Stroke5</item>
 		<item>HS</item>
+		<item>Pinyin</item>
 		<item>Preload related words</item>
 		<item>Dictionary for English keyboard</item>
 	</string-array>
@@ -410,6 +419,7 @@
     <string name="l3_manage_array10">Array10</string>
     <string name="l3_manage_wb">Stroke5</string>
     <string name="l3_manage_hs">HS</string>
+    <string name="l3_manage_pinyin">Pinyin</string>
     
     <string name="l3_tab_preference">Preference</string>
 	
@@ -464,6 +474,30 @@
     <string name="l3_im_setting_button_load">Load table (.lime/.cin)</string>
     <string name="l3_im_setting_button_reset">Reset table</string>
     <string name="l3_im_setting_button_select">Select keyboard</string>
+    
+    <string name="l3_im_download_from_cjk_phonetic">Download/Import Phonetic table lime version</string>
+    <string name="l3_im_download_from_cjk_phonetic_start">Downloading Phonetic table lime version</string>
+    <string name="l3_im_download_from_cjk_phonetic_install">Importing Phonetic table lime version</string>
+    
+    <string name="l3_im_download_from_cjk_pinyin">Download/Import Pinyin table lime version</string>
+    <string name="l3_im_download_from_cjk_pinyin_start">Downloading Pinyin table lime version</string>
+    <string name="l3_im_download_from_cjk_pinyin_install">Importing Pinyin table lime version</string>
+    
+    <string name="l3_im_download_from_cjk_ecj">Download/Import ECJ table lime version</string>
+    <string name="l3_im_download_from_cjk_ecj_start">Downloading ECJ table lime version</string>
+    <string name="l3_im_download_from_cjk_ecj_install">Importing ECJ table lime version</string>
+    
+    <string name="l3_im_download_from_cjk_cj">Download/Import CJ table lime version</string>
+    <string name="l3_im_download_from_cjk_cj_start">Downloading CJ table lime version</string>
+    <string name="l3_im_download_from_cjk_cj_install">Importing CJ table lime version</string>
+    
+    <string name="l3_im_download_from_pinyin_big5">Download/Import OpenVanilla Pinyin BIG5 table</string>
+    <string name="l3_im_download_from_pinyin_big5_start">Downloading OpenVanilla Pinyin BIG5 table</string>
+    <string name="l3_im_download_from_pinyin_big5_install">Importing OpenVanilla Pinyin BIG5 table</string>
+    
+    <string name="l3_im_download_from_pinyin_gb">Download/Import OpenVanilla Pinyin GB table</string>
+    <string name="l3_im_download_from_pinyin_gb_start">Downloading OpenVanilla Pinyin GBtable</string>
+    <string name="l3_im_download_from_pinyin_gb_install">Importing OpenVanilla Pinyin GB table</string>
     
 	<string name="l3_im_download_from_hs">下載並安裝華象直覺字根\n華象直覺輸入法發明人陳華偉製作\nTel:(07)222–3133 mobile：0933–616029\nhs.h123@msa.hinet.net</string>
     <string name="l3_im_download_from_hs_start">Downloading HS table</string>

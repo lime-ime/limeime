@@ -56,6 +56,7 @@ public class LIMEIMSetting extends Activity {
 	Button btnSetupArray10 = null;
 	Button btnSetupWb = null;
 	Button btnSetupHs = null;
+	Button btnSetupPinyin = null;
 	
 	String table = "";
 
@@ -166,7 +167,18 @@ public class LIMEIMSetting extends Activity {
 					startActivity(intent);
 				}
 			});
-	
+
+			btnSetupPinyin.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					Intent intent = new Intent();
+					intent.setClass(v.getContext(), LIMEMappingSetting.class);
+					   Bundle bundle = new Bundle();
+					   		  bundle.putString("keyboard", "pinyin");
+					   intent.putExtras(bundle);
+					startActivity(intent);
+				}
+			});
+			
 	
 			btnSetupDayi.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
@@ -253,6 +265,7 @@ public class LIMEIMSetting extends Activity {
 			btnSetupArray10 = (Button) findViewById(R.id.btnSetupArray10);
 			btnSetupWb = (Button) findViewById(R.id.btnSetupWb);			
 			btnSetupHs = (Button) findViewById(R.id.btnSetupHs);	
+			btnSetupPinyin = (Button) findViewById(R.id.btnSetupPinyin);
 		}
 		
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
@@ -276,6 +289,7 @@ public class LIMEIMSetting extends Activity {
 			btnSetupArray10.setEnabled(false);
 			btnSetupWb.setEnabled(false);
 			btnSetupHs.setEnabled(false);
+			btnSetupPinyin.setEnabled(false);
 		}else{
 			btnSetupCustom.setEnabled(true);
 			btnSetupPhonetic.setEnabled(true);
@@ -289,6 +303,7 @@ public class LIMEIMSetting extends Activity {
 			btnSetupArray10.setEnabled(true);
 			btnSetupWb.setEnabled(true);
 			btnSetupHs.setEnabled(true);
+			btnSetupPinyin.setEnabled(true);
 		}
 		
 	}
