@@ -4328,4 +4328,25 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 	
 
+	/**
+	 * This is the method to rename the table name in database
+	 * @param source
+	 * @param target
+	 * @return
+	 */
+	public boolean renameTableName(String source, String target) {
+		if(!checkDBConnection()) return false;
+				
+		try{
+			//ALTER TABLE foo RENAME TO bar
+			db.execSQL("ALTER TABLE "+source+" RENAME TO "+target);	
+		}catch(Exception e){
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+
+	
+
 }

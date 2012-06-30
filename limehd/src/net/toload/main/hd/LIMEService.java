@@ -2901,6 +2901,11 @@ public class LIMEService extends InputMethodService implements
 			hasSymbolMapping = true;
 			mKeyboardSwitcher.setKeyboardMode(activeIM,
 					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+		}else if (activeIM.equals("pinyin")) {
+			hasNumberMapping = true;
+			hasSymbolMapping = false;
+			mKeyboardSwitcher.setKeyboardMode(activeIM,
+					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
 		}else {
 			mKeyboardSwitcher.setKeyboardMode(activeIM,
 					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);

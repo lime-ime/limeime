@@ -90,6 +90,7 @@
     <string name="ecj_reverse_lookup_list">速成字根反查</string>
     <string name="wb_reverse_lookup_list">筆順五碼字根反查</string>
     <string name="hs_reverse_lookup_list">華象直覺字根反查</string>
+    <string name="pinyin_reverse_lookup_list">拼音字根反查</string>
     
     <string name="han_convert_option_list">中文簡/繁體字碼轉換</string>
     <string name="selkey_option_list">選字鍵選項</string>
@@ -252,6 +253,7 @@
 		<item>array10</item>
 		<item>wb</item>
 		<item>hs</item>
+		<item>pinyin</item>
 	</string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
@@ -267,6 +269,7 @@
 		<item>行列10輸入法</item>
 		<item>筆順五碼輸入法</item>
 		<item>華象直覺輸入法</item>
+		<item>拼音輸入法</item>
 	</string-array>
 	<!-- Keyboard short name List -->
     <string-array name="keyboardShortname">
@@ -282,8 +285,10 @@
 		<item>行列10</item>
 		<item>筆順五碼</item>
 		<item>華象直覺</item>
+		<item>拼音</item>
 	</string-array>
 	<string-array name="keyboard_defaultstate">
+		<item>true</item>
 		<item>true</item>
 		<item>true</item>
 		<item>true</item>
@@ -310,6 +315,7 @@
 		<item>array10</item>
 		<item>wb</item>
 		<item>hs</item>
+		<item>pinyin</item>
 	</string-array>
 	<string-array name="table_codes">
 		<item>custom</item>
@@ -324,6 +330,7 @@
 		<item>array10</item>
 		<item>wb</item>
 		<item>hs</item>
+		<item>pinyin</item>
 		<item>related</item>
 		<item>dictionary</item>
 	</string-array>
@@ -351,6 +358,7 @@
 		<item>行列10</item>
 		<item>筆順五碼</item>
 		<item>華象直覺</item>
+		<item>拼音</item>
 		<item>預載關聯字</item>
 		<item>英文字典</item>
 	</string-array>
@@ -385,6 +393,7 @@
     <string name="l3_manage_array10">行列10</string>
     <string name="l3_manage_wb">筆順五碼</string>
     <string name="l3_manage_hs">華象直覺</string>
+    <string name="l3_manage_pinyin">拼音</string>
     
     <string name="l3_tab_preference">喜好設定</string>
     
@@ -488,6 +497,30 @@
     <string name="l3_im_download_from_ez_start">開始下載輕鬆字根</string>
     <string name="l3_im_download_from_ez_install">開始安裝輕鬆字根</string>
     
+    
+    <string name="l3_im_download_from_cjk_phonetic">下載並安裝注音字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_phonetic_start">開始下載注音字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_phonetic_install">開始安裝注音字根LIME版本</string>
+    
+    <string name="l3_im_download_from_cjk_pinyin">下載並安裝拼音字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_pinyin_start">開始下載拼音字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_pinyin_install">開始安裝拼音字根LIME版本</string>
+    
+    <string name="l3_im_download_from_cjk_ecj">下載並安裝速成字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_ecj_start">開始下載速成字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_ecj_install">開始安裝速成字根LIME版本</string>
+    
+    <string name="l3_im_download_from_cjk_cj">下載並安裝倉頡字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_cj_start">開始下載倉頡字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_cj_install">開始安裝倉頡字根LIME版本</string>
+    
+    <string name="l3_im_download_from_pinyin_big5">下載並安裝拼音字根BIG5字集版本</string>
+    <string name="l3_im_download_from_pinyin_big5_start">開始下載拼音字根BIG5字集版本</string>
+    <string name="l3_im_download_from_pinyin_big5_install">開始安裝拼音字根BIG5字集版本</string>
+    
+    <string name="l3_im_download_from_pinyin_gb">下載並安裝拼音字根簡體字集版本</string>
+    <string name="l3_im_download_from_pinyin_gb_start">開始下載拼音字根簡體字集版本</string>
+    <string name="l3_im_download_from_pinyin_gb_install">開始安裝拼音字根簡體字集版本</string>
     
     <string name="l3_im_download_from_hs">下載並安裝華象直覺字根\n華象直覺輸入法發明人陳華偉製作\nTel:(07)2223133 手機：0933616029\nhs.h123@msa.hinet.net</string>
     <string name="l3_im_download_from_hs_start">開始下載華象直覺字根</string>

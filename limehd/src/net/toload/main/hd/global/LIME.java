@@ -4,7 +4,16 @@ import android.os.Environment;
 
 public class LIME {
 	
+	// Special Version CJK Mapping Table Provided By Julian
+	public static final String CJK_CJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj_CJK.lime";
+	public static final String CJK_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj_CJK.lime";
+	public static final String CJK_PHONETIC_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic_CJK.lime";
+	public static final String CJK_PINYIN_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/pinyin-CJK.lime";
+	
+	// OV CIN files download URL
 	public static final String DAYI_DOWNLOAD_URL = "http://openvanilla.googlecode.com/svn/trunk/Modules/SharedData/dayi3.cin";
+	public static final String PINYI_TW_DOWNLOAD_URL = "http://openvanilla.googlecode.com/svn/trunk/Modules/SharedData/pinyinbig5.cin";
+	public static final String PINYI_CN_DOWNLOAD_URL = "http://openvanilla.googlecode.com/svn/trunk/Modules/SharedData/pinyin.cin";
 	
 	// OpenFoundary
 	public static final String CJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fcj.zip";
@@ -19,7 +28,7 @@ public class LIME {
 	public static final String WB_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fwb.zip";
 	public static final String HS_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/hs.zip";
 	//public static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime1206.zip";
-	public static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Flime1206.zip";
+	public static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Flime1207.zip";
 	public static final String IM_DOWNLOAD_TARGET_EMPTY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fempty1109.zip";
 	public static final String IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphoneticonly1206.zip";
 	//public static final String IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://limeime.googlecode.com/svn/branches/database/phoneticonly1206.zip";
@@ -40,7 +49,7 @@ public class LIME {
 	public static final String G_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj.zip";
 	public static final String G_WB_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/wb.zip";
 	public static final String G_HS_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/hs.zip";
-	public static final String G_IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime1206.zip";
+	public static final String G_IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime1207.zip";
 	public static final String G_IM_DOWNLOAD_TARGET_EMPTY = "http://limeime.googlecode.com/svn/branches/database/empty1109.zip";
 	public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://limeime.googlecode.com/svn/branches/database/phoneticonly1206.zip";
 	public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://limeime.googlecode.com/svn/branches/database/phonetichs1206.zip";
@@ -63,6 +72,12 @@ public class LIME {
 	public static final String DATABASE_SOURCE_HS = "hs.lime";
 	public static final String DATABASE_SOURCE_WB = "stroke5.cin";
 	public static final String DATABASE_SOURCE_EZ = "ez.lime";
+	public static final String DATABASE_SOURCE_PINYIN_BIG5 = "pinyin_big5.lime";
+	public static final String DATABASE_SOURCE_PINYIN_GB = "pinyin_gb.lime";
+	public static final String DATABASE_SOURCE_PINYIN_LIME = "pinyin_lime.lime";
+	public static final String DATABASE_SOURCE_CJ_LIME = "cj_lime.lime";
+	public static final String DATABASE_SOURCE_ECJ_LIME = "ecj_lime.lime";
+	public static final String DATABASE_SOURCE_PHONETIC_LIME = "phonetic_lime.lime";
 	public static final String DATABASE_SOURCE_FILENAME = "lime.zip";
 	public static final String DATABASE_SOURCE_FILENAME_EMPTY = "empty.zip";
 	public static final String DATABASE_DECOMPRESS_FOLDER =  Environment.getDataDirectory() + "/data/net.toload.main.hd/databases";

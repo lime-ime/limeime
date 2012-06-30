@@ -85,6 +85,7 @@ public class LIMEMappingSetting extends Activity {
 		LinearLayout extendLayout = null;
 		LinearLayout extendLayout2 = null;
 		LinearLayout extendLayout3 = null;
+		LinearLayout extendLayout4 = null;
 		Button extendButton = null;
 		
 		private String imtype = null;
@@ -131,7 +132,12 @@ public class LIMEMappingSetting extends Activity {
 	        
 	        if(DBSrv != null && DBSrv.isRemoteFileDownloading()){
 				DBSrv.abortRemoteFileDownload();
-				
+			}
+	        
+	        
+	        // If User choice Pinyin then check if db has table pinyin and execute rename process
+	        if(DBSrv != null && !DBSrv.isRemoteFileDownloading() && imtype.equals("pinyin")){
+				DBSrv.renameTableName("imtable1","pinyin");
 			}
 	        
 			// Initial Buttons
@@ -142,6 +148,7 @@ public class LIMEMappingSetting extends Activity {
 			extendLayout = (LinearLayout) findViewById(R.id.extendLayout);
 			extendLayout2 = (LinearLayout) findViewById(R.id.extendLayout2);
 			extendLayout3 = (LinearLayout) findViewById(R.id.extendLayout3);
+			extendLayout4 = (LinearLayout) findViewById(R.id.extendLayout4);
 			
 			if(imtype != null && imtype.equals("dayi")){
 				Button extendButton = new Button(this);
@@ -319,6 +326,47 @@ public class LIMEMappingSetting extends Activity {
 					}
 				});
 				
+				Button extendButton4 = new Button(this);
+				extendButton4.setText(getResources().getString(R.string.l3_im_download_from_cjk_phonetic));
+				extendLayout4.addView(extendButton4);
+
+				extendButton4.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								Toast.makeText(ctx, getText(R.string.l3_im_download_from_cjk_phonetic_start), Toast.LENGTH_SHORT).show();
+		    				    		
+	    								//hasSelectFile = true;
+	    								resetLabelInfo();
+	    								DBSrv.downloadPhoneticLIME();
+	    								startLoadingWindow();
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    	}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
+
+					}
+				});
+				
 			}else if(imtype != null && imtype.equals("cj")){
 				Button extendButton = new Button(this);
 				extendButton.setText(getResources().getString(R.string.l3_im_download_from_cj));
@@ -408,6 +456,49 @@ public class LIMEMappingSetting extends Activity {
 						
 					}
 				});
+				
+
+				Button extendButton3 = new Button(this);
+				extendButton3.setText(getResources().getString(R.string.l3_im_download_from_cjk_cj));
+				extendLayout3.addView(extendButton3);
+
+				extendButton3.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								Toast.makeText(ctx, getText(R.string.l3_im_download_from_cjk_cj_start), Toast.LENGTH_SHORT).show();
+		    				    		
+	    								//hasSelectFile = true;
+	    								resetLabelInfo();
+	    								DBSrv.downloadCJLIME();
+	    								startLoadingWindow();
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    	}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
+
+					}
+				});
+				
 				
 			}else if(imtype != null && imtype.equals("scj")){
 				Button extendButton = new Button(this);
@@ -514,6 +605,7 @@ public class LIMEMappingSetting extends Activity {
 				extendButton.setText(getResources().getString(R.string.l3_im_download_from_ecj));
 				extendLayout.addView(extendButton);
 
+
 				extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
 						
@@ -545,6 +637,48 @@ public class LIMEMappingSetting extends Activity {
 	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
 	    				    		//mLIMEPref.setParameter("db_finish", true);
 	    						}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
+
+					}
+				});
+				
+
+				Button extendButton2 = new Button(this);
+				extendButton2.setText(getResources().getString(R.string.l3_im_download_from_cjk_ecj));
+				extendLayout2.addView(extendButton2);
+
+				extendButton2.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								Toast.makeText(ctx, getText(R.string.l3_im_download_from_cjk_ecj_start), Toast.LENGTH_SHORT).show();
+		    				    		
+	    								//hasSelectFile = true;
+	    								resetLabelInfo();
+	    								DBSrv.downloadECJLIME();
+	    								startLoadingWindow();
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    	}
 			    	        }
 			    	     });
 	        
@@ -822,6 +956,126 @@ public class LIMEMappingSetting extends Activity {
 				Button b1 = (Button) findViewById(R.id.btnSelectKeyboard);
 				 	   b1.setVisibility(View.INVISIBLE);
 							 
+			}else if(imtype != null && imtype.equals("pinyin")){
+				Button extendButton = new Button(this);
+				extendButton.setText(getResources().getString(R.string.l3_im_download_from_pinyin_big5));
+				extendLayout.addView(extendButton);
+				extendButton.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+	    						startLoadingWindow();
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								resetLabelInfo();
+	    								DBSrv.downloadPinyinBig5();
+	    								startLoadingWindow();
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    	}
+			    	        }
+			    	     });
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+						AlertDialog alert = builder.create();
+									alert.show();
+					}
+				});
+				
+
+				Button extendButton2 = new Button(this);
+				extendButton2.setText(getResources().getString(R.string.l3_im_download_from_cjk_pinyin));
+				extendLayout2.addView(extendButton2);
+
+				extendButton2.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								Toast.makeText(ctx, getText(R.string.l3_im_download_from_cjk_pinyin_start), Toast.LENGTH_SHORT).show();
+		    				    		
+	    								//hasSelectFile = true;
+	    								resetLabelInfo();
+	    								DBSrv.downloadPinyinLIME();
+	    								startLoadingWindow();
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    	}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
+
+					}
+				});
+
+				Button extendButton3 = new Button(this);
+				extendButton3.setText(getResources().getString(R.string.l3_im_download_from_pinyin_gb));
+				extendLayout3.addView(extendButton3);
+
+				extendButton3.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
+	     				builder.setCancelable(false);
+	     				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	     					public void onClick(DialogInterface dialog, int id) {
+	    						
+	    						if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){					        
+	    							try {
+	    								Toast.makeText(ctx, getText(R.string.l3_im_download_from_pinyin_gb_start), Toast.LENGTH_SHORT).show();
+		    				    		
+	    								//hasSelectFile = true;
+	    								resetLabelInfo();
+	    								DBSrv.downloadPinyinGB();
+	    								startLoadingWindow();
+	    							} catch (RemoteException e) {
+	    								e.printStackTrace();
+	    							}
+	    				        }else{
+	    				        	Toast.makeText(ctx, getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+	    				    	}
+			    	        }
+			    	     });
+	        
+			    	    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    	    	public void onClick(DialogInterface dialog, int id) {
+			    	        	}
+			    	     });   
+	        
+						AlertDialog alert = builder.create();
+									alert.show();
+						
+
+					}
+				});
+				
+				
+				
 			}else{
 				extendLayout.removeView(extendButton);
 			}
@@ -994,6 +1248,10 @@ public class LIMEMappingSetting extends Activity {
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_ecj) +" "+ getText(R.string.l3_im_setting_title) );
 			}else if(imtype.equalsIgnoreCase("wb")){
 				labMappingSettingTitle.setText(getText(R.string.l3_manage_wb) +" "+ getText(R.string.l3_im_setting_title) );
+			}else if(imtype.equalsIgnoreCase("hs")){
+				labMappingSettingTitle.setText(getText(R.string.l3_manage_hs) +" "+ getText(R.string.l3_im_setting_title) );
+			}else if(imtype.equalsIgnoreCase("pinyin")){
+				labMappingSettingTitle.setText(getText(R.string.l3_manage_pinyin) +" "+ getText(R.string.l3_im_setting_title) );
 			}
 			
 			// Display Keyboard Selection
