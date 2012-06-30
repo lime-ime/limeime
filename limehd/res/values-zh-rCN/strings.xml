@@ -238,6 +238,7 @@
 		<item>行列10</item>
 		<item>笔顺五码</item>
 		<item>华象直觉</item>
+		<item>拼音</item>
 	</string-array>
 	<string-array name="im_reverse_lookup_codes">
 		<item>none</item>
