@@ -1784,11 +1784,11 @@ public class LIMEService extends InputMethodService implements
 			// Jeremy '11,5,31 Rewrite softkeybaord enter/space and english sepeartor processing.
 		} else if (primaryCode == KEYBOARD_SWITCH_IM_CODE && mInputView != null) { //eng -> chi
 			switchKeyboard(primaryCode);
-		} else if (!mEnglishOnly && //Jeremy '12,4,29 use mEnglishOnly instead of onIM  
-				((primaryCode== MY_KEYCODE_SPACE && !activeIM.equals("phonetic"))
-				||(primaryCode== MY_KEYCODE_SPACE && 
+		} else if ( //Jeremy '12,7,1 bug fixed on enter not functioning in english mode
+				((primaryCode== MY_KEYCODE_SPACE &&  !mEnglishOnly && !activeIM.equals("phonetic") )
+				||(primaryCode== MY_KEYCODE_SPACE &&  !mEnglishOnly &&
 						activeIM.equals("phonetic") && !mLIMEPref.getParameterBoolean("doLDPhonetic", true) )
-				||(primaryCode== MY_KEYCODE_SPACE && 
+				||(primaryCode== MY_KEYCODE_SPACE &&  !mEnglishOnly &&
 						activeIM.equals("phonetic") && (mComposing.toString().endsWith(" ")|| mComposing.length()==0 ))
 				|| primaryCode == MY_KEYCODE_ENTER) ){
 			
@@ -3028,10 +3028,13 @@ public class LIMEService extends InputMethodService implements
 
 			
 		if (!mEnglishOnly) {
+			
+			InputConnection ic=getCurrentInputConnection();
 		
 			if (DEBUG) 
 				Log.i(TAG,"HandleCharacter():"
-						+ "isValidLetter:"+ isValidLetter(primaryCode) 
+						+ " ic != null:" + (ic!=null)
+						+ " isValidLetter:"+ isValidLetter(primaryCode) 
 						+ " isValidDigit:" + isValidDigit(primaryCode) 
 						+ " isValideSymbol:" + isValidSymbol(primaryCode)
 						+ " hasSymbolMapping:" + hasSymbolMapping
@@ -3043,7 +3046,7 @@ public class LIMEService extends InputMethodService implements
 			if((!hasSymbolMapping)
 					&& (primaryCode==','||primaryCode=='.') && !mEnglishOnly ){ // Chinese , and . processing //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 				mComposing.append((char) primaryCode);
-				InputConnection ic=getCurrentInputConnection();
+				//InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
@@ -3053,7 +3056,7 @@ public class LIMEService extends InputMethodService implements
 					&& !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 				//Log.i(TAG,"handlecharacter(), onIM and no number and no symbol mapping");
 				mComposing.append((char) primaryCode);
-				InputConnection ic=getCurrentInputConnection();
+				//InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
@@ -3062,7 +3065,7 @@ public class LIMEService extends InputMethodService implements
 					&& (isValidLetter(primaryCode) || isValidDigit(primaryCode))
 					&& !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 				mComposing.append((char) primaryCode);
-				InputConnection ic=getCurrentInputConnection();
+				//InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
@@ -3072,7 +3075,7 @@ public class LIMEService extends InputMethodService implements
 							|| (primaryCode== MY_KEYCODE_SPACE && activeIM.equals("phonetic"))) //Jeremy '11,9,6 for chacha
 					&& !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 				mComposing.append((char) primaryCode);
-				InputConnection ic=getCurrentInputConnection();
+				//InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
@@ -3084,7 +3087,7 @@ public class LIMEService extends InputMethodService implements
 				// 27.May.2011 Art : This is the method to check user input type
 				// if first previous character is w and second char is number then enable im mode.
 				mComposing.append((char) primaryCode);
-				InputConnection ic=getCurrentInputConnection();
+				//InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
@@ -3094,7 +3097,7 @@ public class LIMEService extends InputMethodService implements
 							|| (primaryCode== MY_KEYCODE_SPACE && activeIM.equals("phonetic"))
 							|| isValidLetter(primaryCode) || isValidDigit(primaryCode))	&& !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 				mComposing.append((char) primaryCode);
-				InputConnection ic=getCurrentInputConnection();
+				//InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
 				misMatched = mComposing.toString();
@@ -3104,7 +3107,7 @@ public class LIMEService extends InputMethodService implements
 				//if(!mEnglishOnly){ //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 					//Log.i(TAG,"handlecharacter(), onIM and default procedure");
 				pickHighlightedCandidate();  // check here.
-				InputConnection ic=getCurrentInputConnection();
+				//InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.commitText(String.valueOf((char) primaryCode),1);
 				//Jeremy '12,4,21
 				finishComposing();
