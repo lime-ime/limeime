@@ -797,7 +797,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_pinyin_start)+ "", intentLIMEMappingLoading);
-				downloadedFile = downloadRemoteFile(LIME.CJK_PINYIN_DOWNLOAD_URL, LIME.CJK_PINYIN_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.CJK_PINYIN_DOWNLOAD_URL);
+				downloadedFile = downloadRemoteFile(LIME.CJK_PINYIN_DOWNLOAD_URL, LIME.CJK_PINYIN_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PINYIN_LIME);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_pinyin_install)+ "", intentLIMEMappingLoading);
 					try {
@@ -817,7 +817,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_phonetic_start)+ "", intentLIMEMappingLoading);
-				downloadedFile = downloadRemoteFile(LIME.CJK_PHONETIC_DOWNLOAD_URL, LIME.CJK_PHONETIC_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.CJK_PHONETIC_DOWNLOAD_URL);
+				downloadedFile = downloadRemoteFile(LIME.CJK_PHONETIC_DOWNLOAD_URL, LIME.CJK_PHONETIC_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETIC_LIME);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_phonetic_install)+ "", intentLIMEMappingLoading);
 					try {
@@ -837,7 +837,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_ecj_start)+ "", intentLIMEMappingLoading);
-				downloadedFile = downloadRemoteFile(LIME.CJK_ECJ_DOWNLOAD_URL, LIME.CJK_ECJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.CJK_ECJ_DOWNLOAD_URL);
+				downloadedFile = downloadRemoteFile(LIME.CJK_ECJ_DOWNLOAD_URL, LIME.CJK_ECJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ECJ_LIME);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_ecj_install)+ "", intentLIMEMappingLoading);
 					try {
@@ -857,7 +857,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_cj_start)+ "", intentLIMEMappingLoading);
-				downloadedFile = downloadRemoteFile(LIME.CJK_CJ_DOWNLOAD_URL, LIME.CJK_CJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.CJK_CJ_DOWNLOAD_URL);
+				downloadedFile = downloadRemoteFile(LIME.CJK_CJ_DOWNLOAD_URL, LIME.CJK_CJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ_LIME);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_cj_install)+ "", intentLIMEMappingLoading);
 					try {
