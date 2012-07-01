@@ -8,7 +8,7 @@ public class LIME {
 	public static final String CJK_CJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj_CJK.lime";
 	public static final String CJK_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj_CJK.lime";
 	public static final String CJK_PHONETIC_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic_CJK.lime";
-	public static final String CJK_PINYIN_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/pinyin-CJK.lime";
+	public static final String CJK_PINYIN_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/pinyin_CJK.cin";
 	
 	// OV CIN files download URL
 	public static final String DAYI_DOWNLOAD_URL = "http://openvanilla.googlecode.com/svn/trunk/Modules/SharedData/dayi3.cin";
@@ -72,12 +72,12 @@ public class LIME {
 	public static final String DATABASE_SOURCE_HS = "hs.lime";
 	public static final String DATABASE_SOURCE_WB = "stroke5.cin";
 	public static final String DATABASE_SOURCE_EZ = "ez.lime";
-	public static final String DATABASE_SOURCE_PINYIN_BIG5 = "pinyin_big5.lime";
-	public static final String DATABASE_SOURCE_PINYIN_GB = "pinyin_gb.lime";
-	public static final String DATABASE_SOURCE_PINYIN_LIME = "pinyin_lime.lime";
-	public static final String DATABASE_SOURCE_CJ_LIME = "cj_lime.lime";
-	public static final String DATABASE_SOURCE_ECJ_LIME = "ecj_lime.lime";
-	public static final String DATABASE_SOURCE_PHONETIC_LIME = "phonetic_lime.lime";
+	public static final String DATABASE_SOURCE_PINYIN_BIG5 = "pinyinbig5.cin";
+	public static final String DATABASE_SOURCE_PINYIN_GB = "pinyin.cin";
+	public static final String DATABASE_SOURCE_PINYIN_LIME = "pinyin_CJK.cin";
+	public static final String DATABASE_SOURCE_CJ_LIME = "cj_CJK.lime";
+	public static final String DATABASE_SOURCE_ECJ_LIME = "ecj_CJK.lime";
+	public static final String DATABASE_SOURCE_PHONETIC_LIME = "phonetic_CJK.lime";
 	public static final String DATABASE_SOURCE_FILENAME = "lime.zip";
 	public static final String DATABASE_SOURCE_FILENAME_EMPTY = "empty.zip";
 	public static final String DATABASE_DECOMPRESS_FOLDER =  Environment.getDataDirectory() + "/data/net.toload.main.hd/databases";
