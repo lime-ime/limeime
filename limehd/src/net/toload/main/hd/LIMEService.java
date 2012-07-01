@@ -829,6 +829,7 @@ public class LIMEService extends InputMethodService implements
 		InputConnection ic = getCurrentInputConnection();
 			
 		if (mComposing.length() > 0
+				&& !(candidatesEnd == candidatesStart) //Jeremy '12,7,2 bug fixed on composition being clear after second word in chrome 
 				&& candidatesStart >=0 && candidatesEnd >0 // in composing  
 				//&& (newSelStart != candidatesEnd || newSelEnd != candidatesEnd) // cursor is not in the last character of composing area 
 				) {
