@@ -1117,13 +1117,13 @@ public class LIMEService extends InputMethodService implements
 						break;
 					}
 				}
-			}else if(mLIMEPref.getEnglishPrediction() && mPredictionOn
-						&& ( mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())){
+			}else if(//mLIMEPref.getEnglishPrediction() && 
+					  mPredictionOn	&&  mLIMEPref.getEnglishPredictionOnPhysicalKeyboard()){
 				resetTempEnglishWord();
 				this.updateEnglishPrediction();
-			}
-				
-			break;
+				break;
+			}else  //Jeremy '12',7,1 bug fixed on english mode enter not functioning in chrome
+				break;
 
 /*		case MY_KEYCODE_ESC:
 		//Jeremy '11,9,7 treat esc as back key
