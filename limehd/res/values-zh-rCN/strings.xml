@@ -371,7 +371,7 @@
     <string name="l3_tab_initial_error">下载失败，请确认装置已连上网路.</string>
     <string name="l3_tab_initial_message">请点选 [预载资料库] OR [空白资料库] 键下载 LIME 资料库或点选 [还原资料库] 键由备份档案中还原</string>
     <string name="l3_initial_btn_load_empty_db">空白资料库</string>
-    <string name="l3_initial_btn_load_phonetic_only_db">仅含注音资料库(连打字根)</string>
+    <string name="l3_initial_btn_load_phonetic_only_db">仅含注音资料库</string>
     <string name="l3_initial_btn_load_phonetic_hs_only_db">仅含注音+华象直觉资料库</string>
     <string name="l3_initial_btn_load_preload_db">预载资料库 \n注音, 仓颉, 仓颉五代 \n快仓, 大易, 轻松　　\n行列, 行列 １０　 　</string>
     <string name="l3_initial_btn_reset_db">重置资料库</string>
@@ -499,21 +499,21 @@
     <string name="l3_im_download_from_ez_install">开始安装轻松字根</string>
     
     
-    <string name="l3_im_download_from_cjk_phonetic">下载并安装注音 Unicode CJK 字根</string>
-    <string name="l3_im_download_from_cjk_phonetic_start">开始下载注音 Unicode CJK 字根</string>
-    <string name="l3_im_download_from_cjk_phonetic_install">开始安装注音 Unicode CJK 字根</string>
+    <string name="l3_im_download_from_cjk_phonetic">下载并安装注音字根</string>
+    <string name="l3_im_download_from_cjk_phonetic_start">开始下载注音字根</string>
+    <string name="l3_im_download_from_cjk_phonetic_install">开始安装注音字根</string>
     
-    <string name="l3_im_download_from_cjk_pinyin">下载并安装拼音 Unicode CJK 字根</string>
-    <string name="l3_im_download_from_cjk_pinyin_start">开始下载拼音 Unicode CJK 字根</string>
-    <string name="l3_im_download_from_cjk_pinyin_install">开始安装拼音 Unicode CJK 字根</string>
+    <string name="l3_im_download_from_cjk_pinyin">下载并安装拼音字根</string>
+    <string name="l3_im_download_from_cjk_pinyin_start">开始下载拼音字根</string>
+    <string name="l3_im_download_from_cjk_pinyin_install">开始安装拼音字根</string>
     
-    <string name="l3_im_download_from_cjk_ecj">下载并安装速成 Unicode CJK 字根</string>
-    <string name="l3_im_download_from_cjk_ecj_start">开始下载速成 Unicode CJK 字根</string>
-    <string name="l3_im_download_from_cjk_ecj_install">开始安装速成 Unicode CJK 字根</string>
+    <string name="l3_im_download_from_cjk_ecj">下载并安装速成字根</string>
+    <string name="l3_im_download_from_cjk_ecj_start">开始下载速成字根</string>
+    <string name="l3_im_download_from_cjk_ecj_install">开始安装速成字根</string>
     
-    <string name="l3_im_download_from_cjk_cj">下载并安装仓颉 Unicode CJK 字根</string>
-    <string name="l3_im_download_from_cjk_cj_start">开始下载仓颉 Unicode CJK 字根</string>
-    <string name="l3_im_download_from_cjk_cj_install">开始安装仓颉 Unicode CJK 字根</string>
+    <string name="l3_im_download_from_cjk_cj">下载并安装仓颉字根</string>
+    <string name="l3_im_download_from_cjk_cj_start">开始下载仓颉字根</string>
+    <string name="l3_im_download_from_cjk_cj_install">开始安装仓颉字根</string>
     
     <string name="l3_im_download_from_pinyin_big5">下载并安装拼音字根BIG5字集版本</string>
     <string name="l3_im_download_from_pinyin_big5_start">开始下载拼音字根BIG5字集版本</string>
