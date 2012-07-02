@@ -2037,7 +2037,7 @@ public class LIMEService extends InputMethodService implements
 		CharSequence[] codes = getResources().getStringArray(
 				R.array.keyboard_codes);
 		
-		String pIMActiveState = mLIMEPref.getIMActivatedState();
+		String pIMActiveState = mLIMEPref.getIMActivatedState();  
 		
 		if(!(mIMActivatedState.length()>0 && mIMActivatedState.equals(pIMActiveState))) {
 

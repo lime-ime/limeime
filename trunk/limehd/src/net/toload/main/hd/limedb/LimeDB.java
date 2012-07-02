@@ -470,6 +470,11 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					checkPhoneticKeyboardSettingOnDB(dbin);
 					
 					dbin.execSQL("ALTER TABLE imtable1 RENAME TO pinyin");	
+					String pIMActiveState = mLIMEPref.getIMActivatedState();  //Jeremy '12,7,3 set pinyin to be active keyboard
+					if(!pIMActiveState.endsWith(";12")){
+						pIMActiveState += ";12";
+						mLIMEPref.setIMActivatedState(pIMActiveState);
+					}
 
 					
 				} catch (Exception e) {
