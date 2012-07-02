@@ -499,21 +499,21 @@
     <string name="l3_im_download_from_ez_install">開始安裝輕鬆字根</string>
     
     
-    <string name="l3_im_download_from_cjk_phonetic">下載並安裝注音字根LIME版本</string>
-    <string name="l3_im_download_from_cjk_phonetic_start">開始下載注音字根LIME版本</string>
-    <string name="l3_im_download_from_cjk_phonetic_install">開始安裝注音字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_phonetic">下載並安裝注音 Unicode CJK 字根</string>
+    <string name="l3_im_download_from_cjk_phonetic_start">開始下載注音 Unicode CJK 字根</string>
+    <string name="l3_im_download_from_cjk_phonetic_install">開始安裝注音 Unicode CJK 字根</string>
     
-    <string name="l3_im_download_from_cjk_pinyin">下載並安裝拼音字根LIME版本</string>
-    <string name="l3_im_download_from_cjk_pinyin_start">開始下載拼音字根LIME版本</string>
-    <string name="l3_im_download_from_cjk_pinyin_install">開始安裝拼音字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_pinyin">下載並安裝拼音 Unicode CJK 字根</string>
+    <string name="l3_im_download_from_cjk_pinyin_start">開始下載拼音 Unicode CJK 字根</string>
+    <string name="l3_im_download_from_cjk_pinyin_install">開始安裝拼音 Unicode CJK 字根</string>
     
-    <string name="l3_im_download_from_cjk_ecj">下載並安裝速成字根LIME版本</string>
-    <string name="l3_im_download_from_cjk_ecj_start">開始下載速成字根LIME版本</string>
-    <string name="l3_im_download_from_cjk_ecj_install">開始安裝速成字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_ecj">下載並安裝速成 Unicode CJK 字根</string>
+    <string name="l3_im_download_from_cjk_ecj_start">開始下載速成 Unicode CJK 字根</string>
+    <string name="l3_im_download_from_cjk_ecj_install">開始安裝速成 Unicode CJK 字根</string>
     
-    <string name="l3_im_download_from_cjk_cj">下載並安裝倉頡字根LIME版本</string>
-    <string name="l3_im_download_from_cjk_cj_start">開始下載倉頡字根LIME版本</string>
-    <string name="l3_im_download_from_cjk_cj_install">開始安裝倉頡字根LIME版本</string>
+    <string name="l3_im_download_from_cjk_cj">下載並安裝倉頡 Unicode CJK 字根</string>
+    <string name="l3_im_download_from_cjk_cj_start">開始下載倉頡 Unicode CJK 字根</string>
+    <string name="l3_im_download_from_cjk_cj_install">開始安裝倉頡 Unicode CJK 字根</string>
     
     <string name="l3_im_download_from_pinyin_big5">下載並安裝拼音字根BIG5字集版本</string>
     <string name="l3_im_download_from_pinyin_big5_start">開始下載拼音字根BIG5字集版本</string>
@@ -626,19 +626,23 @@
 	    \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案, 如果選字與送出的字不同，請關閉喜好設定的中文簡/繁體字碼轉換.\n
 	    \n版本更新說明
 	    
-		\n3.8.1-311
-		\n(提升文字查詢速度，請重匯字根檔或下載預載資料庫[請勿使用舊版備份還原資料庫])
+		\n3.8.2-312
+		\n\n(提升文字查詢速度，請重匯字根檔或下載預載資料庫[請勿使用舊版備份還原資料庫])
 		\n1. 修正候選列展開後，畫面亂掉問題
 		\n2. 修正連打學習及注音快拼學習問題
 		\n3. 修正候選列候選字 cache 移除問題
 		\n4. 修正字根對照表匯入問題
 		\n5. 修正 Milestone 2 實體鍵盤 ALT 組合鍵問題
-		\n6. 修改許氏注音及倚天26/41鍵注音資料庫查詢方式，提升反應速度
-		\n7. 修改檔案選取模組，已可選取設備有內建空間的外接sdcard上的檔案
-		\n8. 新增許氏注音及倚天26鍵注音符號軟體鍵盤
-		\n9. 新增中文軟體鍵盤長按「EN/123」鍵可快速切換到半型符號鍵盤
-		\n10. 修改分離鍵盤喜好設定，新增「僅橫向開啟」
-		\n11. 文字預覽跳出視窗會隨著鍵盤大小放大縮小\n\n
+		\n6. 修改預載資料庫中注音輸入法為連打字根
+		\n7. 修改許氏注音及倚天26/41鍵注音資料庫查詢方式，提升反應速度
+		\n8. 修改檔案選取模組，已可選取設備有內建空間的外接sdcard上的檔案
+		\n9. 修改按鍵後文字預覽跳出視窗會隨著鍵盤大小放大縮小
+		\n10. 修改分離鍵盤喜好設定，新增「僅橫向開啟」選項
+		\n11. 新增許氏注音及倚天26鍵注音符號軟體鍵盤
+		\n12. 新增中文軟體鍵盤長按「EN/123」鍵可快速切換到半型符號鍵盤
+		\n13. 新增拼音輸入法，請至輸入法管理中的拼音，下載安裝字根檔
+		\n14. 新增倉頡、簡易及注音 Unicode CJK 字集字根檔，請至輸入法管理中下載安裝字根檔
+		\n15. 新增長按左下鍵盤鍵呼叫系統語音輸入功能 (需 Android 4.0)\n\n
 	
 		LIME中文輸入法Facebook粉絲專頁\n
 		http://facebook.com/limeime/\n\n
