@@ -135,10 +135,11 @@ public class LIMEMappingSetting extends Activity {
 			}
 	        
 	        
+	       /* Moved the db OnUpgarde to ver.77 in LIMEDB. by jeremy '12,7,2 
 	        // If User choice Pinyin then check if db has table pinyin and execute rename process
 	        if(DBSrv != null && !DBSrv.isRemoteFileDownloading() && imtype.equals("pinyin")){
 				DBSrv.renameTableName("imtable1","pinyin");
-			}
+			}*/
 	        
 			// Initial Buttons
 			initialButton();
@@ -963,7 +964,7 @@ public class LIMEMappingSetting extends Activity {
 				 	   b1.setVisibility(View.INVISIBLE);
 							 
 			}else if(imtype != null && imtype.equals("pinyin")){
-				Button extendButton = new Button(this);
+				/*Button extendButton = new Button(this);
 				extendButton.setText(getResources().getString(R.string.l3_im_download_from_pinyin_big5));
 				extendLayout.addView(extendButton);
 				extendButton.setOnClickListener(new OnClickListener() {
@@ -995,7 +996,7 @@ public class LIMEMappingSetting extends Activity {
 						AlertDialog alert = builder.create();
 									alert.show();
 					}
-				});
+				});*/
 				
 
 				Button extendButton2 = new Button(this);

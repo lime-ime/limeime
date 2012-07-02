@@ -61,7 +61,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	
 	
 	private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier. Shared db instance for dbserver and searchserver
-	private final static int DATABASE_VERSION = 76;
+	private final static int DATABASE_VERSION = 77;
 	//private final static int DATABASE_RELATED_SIZE = 50;
 
 	
@@ -428,7 +428,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
 				}
 			}
-			if(oldVersion<76) { // add phonetic hsu keyboard '12,6,6 by jeremy
+			if(oldVersion<77) { // add phonetic hsu keyboard '12,6,6 by jeremy
 				if(DEBUG)
 					Log.i(TAG, "Create new hsu and et26 keyboard for version 76.");
 				try{
@@ -468,6 +468,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					}
 					
 					checkPhoneticKeyboardSettingOnDB(dbin);
+					
+					dbin.execSQL("ALTER TABLE imtable1 RENAME TO pinyin");	
 
 					
 				} catch (Exception e) {
