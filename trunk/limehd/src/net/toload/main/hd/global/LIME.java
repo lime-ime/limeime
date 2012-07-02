@@ -30,10 +30,10 @@ public class LIME {
 	//public static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime1206.zip";
 	public static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Flime1207.zip";
 	public static final String IM_DOWNLOAD_TARGET_EMPTY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fempty1109.zip";
-	public static final String IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphoneticonly1206.zip";
+	public static final String IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphoneticonly1207.zip";
 	//public static final String IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://limeime.googlecode.com/svn/branches/database/phoneticonly1206.zip";
 	//public static final String IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://limeime.googlecode.com/svn/branches/database/phonetichs1206.zip";
-	public static final String IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://limeime.googlecode.com/svn/branches/database/phonetichs1206.zip";
+	public static final String IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphonetichs1207.zip";
 	
 	// Google Code
 	public static final String G_CJ_11643_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cangjie.cin";
@@ -44,7 +44,7 @@ public class LIME {
 	public static final String G_ARRAY10_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/array10.zip";
 	public static final String G_EZ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ez.zip";
 	public static final String G_PHONETIC_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic.zip";
-	public static final String G_PHONETICADV_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic_adv.zip";
+	public static final String G_PHONETICADV_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic_adv_CJK.zip";
 	public static final String G_CJ5_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj5.zip";
 	public static final String G_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj.zip";
 	public static final String G_WB_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/wb.zip";
@@ -61,7 +61,7 @@ public class LIME {
 	public static final String DATABASE_SOURCE_DAYI = "dayi.cin";
 	public static final String DATABASE_SOURCE_PHONETIC = "phonetic.lime";
 	public static final String DATABASE_SOURCE_PHONETIC_CNS = "bopomofo.cin";
-	public static final String DATABASE_SOURCE_PHONETICADV = "phonetic_adv.lime";
+	public static final String DATABASE_SOURCE_PHONETICADV = "phonetic_adv_CJK.lime";
 	public static final String DATABASE_SOURCE_CJ = "cj.lime";
 	public static final String DATABASE_SOURCE_CJ_CNS = "cangjie.cin";
 	public static final String DATABASE_SOURCE_CJ5 = "cj5.lime";

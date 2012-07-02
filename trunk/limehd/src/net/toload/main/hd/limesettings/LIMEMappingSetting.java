@@ -198,6 +198,7 @@ public class LIMEMappingSetting extends Activity {
 				});
 				
 			}else if(imtype != null && imtype.equals("phonetic")){
+				/* Button removed by Jeremy '12,7,2, for simpler UI 
 				Button extendButton = new Button(this);
 				extendButton.setText(getResources().getString(R.string.l3_im_download_from_phonetic));
 				extendLayout.addView(extendButton);
@@ -238,6 +239,7 @@ public class LIMEMappingSetting extends Activity {
 
 					}
 				});
+				*/
 				
 				Button extendButton2 = new Button(this);
 				extendButton2.setText(getResources().getString(R.string.l3_im_download_from_phonetic_adv));
@@ -285,6 +287,7 @@ public class LIMEMappingSetting extends Activity {
 				
 
 				
+				/* Button removed by Jeremy '12,7,2, for simpler UI
 				Button extendButton3 = new Button(this);
 				extendButton3.setText(getResources().getString(R.string.l3_im_download_from_phonetic_cns));
 				extendLayout3.addView(extendButton3);
@@ -324,7 +327,7 @@ public class LIMEMappingSetting extends Activity {
 						
 
 					}
-				});
+				});*/
 				
 				Button extendButton4 = new Button(this);
 				extendButton4.setText(getResources().getString(R.string.l3_im_download_from_cjk_phonetic));
@@ -368,6 +371,7 @@ public class LIMEMappingSetting extends Activity {
 				});
 				
 			}else if(imtype != null && imtype.equals("cj")){
+				/* Button removed by Jeremy '12,7,2, for simpler UI
 				Button extendButton = new Button(this);
 				extendButton.setText(getResources().getString(R.string.l3_im_download_from_cj));
 				extendLayout.addView(extendButton);
@@ -415,9 +419,10 @@ public class LIMEMappingSetting extends Activity {
 						
 
 					}
-				});
+				});*/
 
-				Button extendButton2 = new Button(this);
+				/* Button removed by Jeremy '12,7,2, for simpler UI	
+			 	Button extendButton2 = new Button(this);
 				extendButton2.setText(getResources().getString(R.string.l3_im_download_from_cj_cns));
 				extendLayout2.addView(extendButton2);
 
@@ -455,7 +460,7 @@ public class LIMEMappingSetting extends Activity {
 									alert.show();
 						
 					}
-				});
+				});*/
 				
 
 				Button extendButton3 = new Button(this);
@@ -601,6 +606,7 @@ public class LIMEMappingSetting extends Activity {
 				});
 				
 			}else if(imtype != null && imtype.equals("ecj")){
+				/*
 				Button extendButton = new Button(this);
 				extendButton.setText(getResources().getString(R.string.l3_im_download_from_ecj));
 				extendLayout.addView(extendButton);
@@ -651,7 +657,7 @@ public class LIMEMappingSetting extends Activity {
 
 					}
 				});
-				
+				*/
 
 				Button extendButton2 = new Button(this);
 				extendButton2.setText(getResources().getString(R.string.l3_im_download_from_cjk_ecj));

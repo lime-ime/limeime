@@ -282,7 +282,7 @@ public class SearchServer {
 			boolean hasMore = false;
 
 
-			// 11'7,22 rewritten for 嚙踐�嚙踝蕭�蕭�蕭
+			// 11'7,22 rewritten for ��嚙賢�頦嚙踐��哨蕭謕
 			// 12,6,4 Jeremy. Ascending a ab abc... looking up db if the cache is not exist
 			for(int i =0; i<size; i++) {
 				String queryCode = code.substring(0,i+1);
@@ -336,7 +336,7 @@ public class SearchServer {
 
 				}
 			}
-			// 11'7,22 rewritten for 嚙踐�嚙踝蕭�蕭�蕭
+			// 11'7,22 rewritten for ��嚙賢�頦嚙踐��哨蕭謕
 			// 12,6,4 Jeremy. Descending  abc ab a... Build the result candidate list.
 			for(int i =0; i<size; i++) {
 				String cacheKey = cacheKey(code);
@@ -621,10 +621,13 @@ public class SearchServer {
 								//&& unit2.getId() !=null
 								&& unit2.getWord() != null && !unit2.getWord().equals("")
 								) {
-							//Jeremy '12,6,7 learn LD phrase if the score of userdic is > 20
-							int score = dbadapter.addOrUpdateUserdictRecord(unit.getWord(),unit2.getWord());
+							
+							int score = 0;
+							if(unit.getId()!=null &&  unit2.getId() !=null) //Jeremy '12,7,2 eliminate learing english words.
+								score = dbadapter.addOrUpdateUserdictRecord(unit.getWord(),unit2.getWord());
 							if(DEBUG)
 								Log.i(TAG, "learnUserDict(), the return score = " + score);
+							//Jeremy '12,6,7 learn LD phrase if the score of userdic is > 20
 							if( score >20 && mLIMEPref.getLearnPhrase()){
 								addLDPhrase(unit, false);
 								addLDPhrase(unit2, true);

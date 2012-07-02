@@ -475,21 +475,21 @@
     <string name="l3_im_setting_button_reset">Reset table</string>
     <string name="l3_im_setting_button_select">Select keyboard</string>
     
-    <string name="l3_im_download_from_cjk_phonetic">Download/Import Phonetic Unicode CJK table</string>
-    <string name="l3_im_download_from_cjk_phonetic_start">Downloading Phonetic Unicode CJK table</string>
-    <string name="l3_im_download_from_cjk_phonetic_install">Importing Phonetic Unicode CJK table</string>
+    <string name="l3_im_download_from_cjk_phonetic">Download/Import Phonetic table</string>
+    <string name="l3_im_download_from_cjk_phonetic_start">Downloading Phonetic table</string>
+    <string name="l3_im_download_from_cjk_phonetic_install">Importing Phonetic table</string>
     
-    <string name="l3_im_download_from_cjk_pinyin">Download/Import Pinyi  Unicode CJK table</string>
-    <string name="l3_im_download_from_cjk_pinyin_start">Downloading Pinyin Unicode CJK table</string>
-    <string name="l3_im_download_from_cjk_pinyin_install">Importing Pinyin Unicode CJK table</string>
+    <string name="l3_im_download_from_cjk_pinyin">Download/Import Pinyin table</string>
+    <string name="l3_im_download_from_cjk_pinyin_start">Downloading Pinyin table</string>
+    <string name="l3_im_download_from_cjk_pinyin_install">Importing Pinyin table</string>
     
-    <string name="l3_im_download_from_cjk_ecj">Download/Import ECJ Unicode CJK table</string>
-    <string name="l3_im_download_from_cjk_ecj_start">Downloading ECJ Unicode CJK table</string>
-    <string name="l3_im_download_from_cjk_ecj_install">Importing ECJ Unicode CJK table</string>
+    <string name="l3_im_download_from_cjk_ecj">Download/Import ECJ table</string>
+    <string name="l3_im_download_from_cjk_ecj_start">Downloading ECJ table</string>
+    <string name="l3_im_download_from_cjk_ecj_install">Importing ECJ table</string>
     
-    <string name="l3_im_download_from_cjk_cj">Download/Import CJ Unicode CJK table</string>
-    <string name="l3_im_download_from_cjk_cj_start">Downloading CJ Unicode CJK table</string>
-    <string name="l3_im_download_from_cjk_cj_install">Importing CJ Unicode CJK table</string>
+    <string name="l3_im_download_from_cjk_cj">Download/Import CJ table</string>
+    <string name="l3_im_download_from_cjk_cj_start">Downloading CJ table</string>
+    <string name="l3_im_download_from_cjk_cj_install">Importing CJ table</string>
     
     <string name="l3_im_download_from_pinyin_big5">Download/Import OpenVanilla Pinyin BIG5 table</string>
     <string name="l3_im_download_from_pinyin_big5_start">Downloading OpenVanilla Pinyin BIG5 table</string>
