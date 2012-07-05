@@ -2097,9 +2097,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						dualKey = XPERIAPRO_DUALKEY;
 						dualKeyRemap = XPERIAPRO_DUALKEY_REMAP;
 					}
-				/*}else if(tablename.equals("ez")  && isPhysicalKeyboardPressed ){ //jeremy '12,5,21. do this in soft keyboard already. 
-					dualKey = ";123456";
-					dualKeyRemap = "'-=[],\\\\";*/
+				}else if(tablename.equals("ez")  && !isPhysicalKeyboardPressed ){ //jeremy '12,7,5 remap \ to `. 
+					dualKey = "\\";
+					dualKeyRemap = "`";
 				}
 				
 				HashMap<String,String> reMap = new HashMap<String,String>();

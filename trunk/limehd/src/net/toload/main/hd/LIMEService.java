@@ -208,7 +208,7 @@ public class LIMEService extends InputMethodService implements
 	private List<String> activatedIMList; //jerem '12,4,30 reanmed from keybaordCodeList
 	private String currentSoftKeyboard = "";  //Jeremy '12,4,30 reanmed from keybaord_xml;
 
-	
+	private String selkey;//Jeremy '12,7,5
 
 	// To keep key press time
 	//private long keyPressTime = 0;
@@ -2294,23 +2294,25 @@ public class LIMEService extends InputMethodService implements
 				list.addAll(SearchSrv.query(keyString, !hasPhysicalKeyPressed, getAllRecords));				
 				//Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
 				if (list.size() > 0) {
-					String selkey=SearchSrv.getSelkey();
-					String mixedModeSelkey = "`";
-					if(hasSymbolMapping && !activeIM.equals("dayi") 
-							&& ! (activeIM.equals("phonetic") 
-									&& mLIMEPref.getPhoneticKeyboardType().equals("standard")) 	){
-						mixedModeSelkey = " ";
-					}
-						
-					
-					int selkeyOption = mLIMEPref.getSelkeyOption();
-					if(selkeyOption ==1) 	selkey = mixedModeSelkey +selkey;
-					else if (selkeyOption ==2) 	selkey = mixedModeSelkey + " " +selkey;
 					
 					// Setup sel key display if 
 					if(disable_physical_selection && hasPhysicalKeyPressed){
 						selkey = "";
+					}else{
+						selkey=SearchSrv.getSelkey();
+						String mixedModeSelkey = "`";
+						if(hasSymbolMapping && !activeIM.equals("dayi") 
+								&& ! (activeIM.equals("phonetic") 
+										&& mLIMEPref.getPhoneticKeyboardType().equals("standard")) 	){
+							mixedModeSelkey = " ";
+						}
+
+
+						int selkeyOption = mLIMEPref.getSelkeyOption();
+						if(selkeyOption ==1) 	selkey = mixedModeSelkey +selkey;
+						else if (selkeyOption ==2) 	selkey = mixedModeSelkey + " " +selkey;
 					}
+
 					
 					setSuggestions(list, hasPhysicalKeyPressed, true, selkey);
 					
@@ -2937,8 +2939,32 @@ public class LIMEService extends InputMethodService implements
 		if(DEBUG) Log.i(TAG, "handleSelkey():primarycode:"+primaryCode);
 		int i = -1;
 		if (mComposing.length() > 0 && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+			String selkey="";
+			
+			// Jeremy '12,7,5 rewrite the selkey processing
+			if(disable_physical_selection && hasPhysicalKeyPressed){
+				selkey = "";
+			}else{
+				try{selkey=SearchSrv.getSelkey();
+				} catch (RemoteException e) {}
+
+				String mixedModeSelkey = "`";
+				if(hasSymbolMapping && !activeIM.equals("dayi") 
+						&& ! (activeIM.equals("phonetic") 
+								&& mLIMEPref.getPhoneticKeyboardType().equals("standard")) 	){
+					mixedModeSelkey = " ";
+				}
+
+
+				int selkeyOption = mLIMEPref.getSelkeyOption();
+				if(selkeyOption ==1) 	selkey = mixedModeSelkey +selkey;
+				else if (selkeyOption ==2) 	selkey = mixedModeSelkey + " " +selkey;
+				i = selkey.indexOf((char) primaryCode);
+			}
+			
+			
 			// IM candidates view
-			if(mLIMEPref.getSelkeyOption()>0 && primaryCode == 96) // "`"
+			/*if(mLIMEPref.getSelkeyOption()>0 && primaryCode == 96) // "`"
 				i=0 ;
 			else{
 				try {
@@ -2947,8 +2973,9 @@ public class LIMEService extends InputMethodService implements
 
 					e.printStackTrace();
 				}
+				i = selkey.indexOf((char) primaryCode);
 				if(i>=0) i = i + mLIMEPref.getSelkeyOption();
-			}
+			}*/
 			
 		} else if(mEnglishOnly 
 				|| (selectedCandidate != null && selectedCandidate.isDictionary()&& !mEnglishOnly)) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
