@@ -245,6 +245,7 @@ public class CandidateView extends View implements View.OnClickListener
     				hasSlide = true;
     				mTargetScrollX = sx;
     				scrollTo(sx, getScrollY());
+    				currentX = getScrollX(); //Jeremy '12,7,6 set currentX to the left edge of current scrollview after scrolled 
     			}else{
     				hasSlide = false;
     				if(distanceX < 0){
@@ -875,12 +876,18 @@ public class CandidateView extends View implements View.OnClickListener
         
     }
     
+    
     private boolean checkHasMoreRecords(){
+    	if(DEBUG)
+    		Log.i(TAG, "checkHasMoreRecords(), waitingForMoreRecords = " + waitingForMoreRecords );
+    	
+    	if(waitingForMoreRecords) return false; //Jeremy '12,7,6 avoid repeated calls of requestFullrecords().
     	if(mSuggestions!=null && mSuggestions.size()>0 &&
     			mSuggestions.get(mSuggestions.size()-1).getCode() !=null
         		&& mSuggestions.get(mSuggestions.size()-1).getCode().equals("has_more_records")){
     		waitingForMoreRecords=true;
     		Thread UpadtingThread = new Thread(){
+    			
     			public void run() {
     				mService.requestFullRecords();
     			}
@@ -1109,6 +1116,9 @@ public class CandidateView extends View implements View.OnClickListener
     
     
     public void scrollNext() {
+    	if(DEBUG)
+    		Log.i(TAG, "scrollNext(), currentX = " + currentX + ", mSelectedIndex = " + mSelectedIndex);
+    	checkHasMoreRecords(); //Jeremy '12,7,6 check if has more records before scroll
         int i = 0;
         int targetX = currentX;
         //final int mCount = mSuggestions.size();
@@ -1122,6 +1132,8 @@ public class CandidateView extends View implements View.OnClickListener
             }
             i++;
         }
+        if(DEBUG)
+    		Log.i(TAG, "scrollNext(), new currentX = " + currentX + ", new mSelectedIndex = " + mSelectedIndex);
         updateScrollPosition(targetX);
     }
     
@@ -1136,19 +1148,34 @@ public class CandidateView extends View implements View.OnClickListener
     
     //Add by Jeremy '10, 3, 29 for DPAD (physical keyboard) selection.
     public void selectNext() {
+    	if(DEBUG)
+    		Log.i(TAG, "selectNext(), currentX = " + currentX + ", mSelectedIndex = " + mSelectedIndex);
     	if (mSuggestions == null) return;
     	if(mCandidatePopupWindow!=null && mCandidatePopupWindow.isShowing()){
     		mPopupCandidateView.selectNext();
     	}else{
     		if(mSelectedIndex < mCount-1){
     			mSelectedIndex++;
-    			if(mWordX[mSelectedIndex] + mWordWidth[mSelectedIndex] > currentX + getWidth()) scrollNext();
+    			if(mWordX[mSelectedIndex] + mWordWidth[mSelectedIndex] > currentX + getWidth()) 
+    				scrollNext();
+    			//Jeremy '12,7,6 if the selected index is not in current visible area, set the selected index to the fist item visible
+    			int rightEdge = currentX + getWidth();  			
+    			if(mWordX[mSelectedIndex] < currentX || 
+    					mWordX[mSelectedIndex] + mWordWidth[mSelectedIndex] > rightEdge){
+    				for(int i = 0; i < mCount-1 ; i++)
+    					if(mWordX[i] >= currentX){
+    						mSelectedIndex = i;
+    						break;
+    					}
+    			}
     		}
     		invalidate();
     	}
     }
     
     public void selectPrev() {
+    	if(DEBUG)
+    		Log.i(TAG, "selectPrev(), currentX = " + currentX + ", mSelectedIndex = " + mSelectedIndex);
     	if (mSuggestions == null) return;
     	if(mCandidatePopupWindow!=null && mCandidatePopupWindow.isShowing()){
     		mPopupCandidateView.selectPrev();
@@ -1156,7 +1183,19 @@ public class CandidateView extends View implements View.OnClickListener
     		if(mSelectedIndex > 0) {
     			mSelectedIndex--;
     			if(mWordX[mSelectedIndex] < currentX) scrollPrev();
+    			
     		}
+    		//Jeremy '12,7,6 if the selected index is not in current visible area, set the selected index to the last item visible
+    		int rightEdge = currentX + getWidth();  			
+			if(mSelectedIndex == -1 || 
+					mWordX[mSelectedIndex] < currentX || 
+					mWordX[mSelectedIndex] + mWordWidth[mSelectedIndex] > rightEdge){
+				for(int i = mCount-2; i < mCount-1 ; i--)
+					if(mWordX[i] + mWordWidth[i] <= rightEdge){
+						mSelectedIndex = i;
+						break;
+					}
+			}
     		invalidate();
     	}
     }
