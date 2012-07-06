@@ -21,6 +21,7 @@
 package net.toload.main.hd.limesettings;
 
 import net.toload.main.hd.R;
+import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -116,11 +117,32 @@ public class LIMEPreferenceHC extends Activity {
 				//PreferenceManager.getDefaultSharedPreferences(ctx).getString("phonetic_keyboard_type", "");
 				if(DEBUG)
 					Log.i("LIMEPreference:OnChanged()", "phonetickeyboardtype:" + selectedPhoneticKeyboardType);
-
+				
 				try {
 					if(DEBUG)
 						Log.i("LIMEPreference:OnChanged()", "PhoneticIMInfo.kyeboard:" + 
-								DBSrv.getImInfo("phonetic", "keyboard"));	
+								DBSrv.getImInfo("phonetic", "keyboard"));
+					KeyboardObj kobj = DBSrv.getKeyboardObj("phonetic");
+					
+					if(selectedPhoneticKeyboardType.equals("standard")){
+						kobj = 	DBSrv.getKeyboardObj("phonetic");
+					}else if(selectedPhoneticKeyboardType.equals("eten")){
+						kobj = 	DBSrv.getKeyboardObj("phoneticet41");
+					}else if(selectedPhoneticKeyboardType.equals("eten26")){
+						kobj = 	DBSrv.getKeyboardObj("et26");
+					}else if(selectedPhoneticKeyboardType.equals("hsu")){ //Jeremy '12,7,6 Add HSU english keyboard support
+						if(mLIMEPref.getParameterBoolean("number_row_in_english", false)){ 
+							kobj = 	DBSrv.getKeyboardObj("limenum");
+						}else{
+							kobj = 	DBSrv.getKeyboardObj("lime");
+						}
+					}else if(selectedPhoneticKeyboardType.equals("hsu_symbol")){
+						kobj = 	DBSrv.getKeyboardObj("hsu");
+					}
+					DBSrv.setIMKeyboard("phonetic", kobj.getDescription(), kobj.getCode());
+					/*
+					DBSrv.setIMKeyboard("phonetic", kobj.getDescription(), kobj.getCode());
+					
 					if(selectedPhoneticKeyboardType.equals("standard")){
 						DBSrv.setIMKeyboard("phonetic",  
 								DBSrv.getKeyboardInfo("phonetic", "desc"), "phonetic");
@@ -133,7 +155,7 @@ public class LIMEPreferenceHC extends Activity {
 					}else if(selectedPhoneticKeyboardType.equals("eten26")){
 						DBSrv.setIMKeyboard("phonetic", 
 									DBSrv.getKeyboardInfo("et26", "desc"), "et26");
-					}
+					}*/
 					if(DEBUG) Log.i(TAG, "onSharedPreferenceChanged() PhoneticIMInfo.kyeboard:" + 
 							DBSrv.getImInfo("phonetic", "keyboard"));	
 				} catch (RemoteException e) {

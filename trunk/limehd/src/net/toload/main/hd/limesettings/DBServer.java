@@ -1144,6 +1144,20 @@ public class  DBServer {
 			dbAdapter.renameTableName(source, target);
 		}
 	}
+	
+	/**
+	 * Jeremy '12,7,6 get keyboard object from table name
+	 * @param table
+	 * @return
+	 */
+	public KeyboardObj getKeyboardObj(String table){
+		KeyboardObj kobj = null;
+		if(dbAdapter != null)
+			kobj = dbAdapter.getKeyboardObj(table);
+		return kobj;
+	}
+	
+	
 
 
 }
