@@ -1717,7 +1717,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		if(DEBUG) 
 			Log.i(TAG, "getmapping(): code='"+ code + "' doLDPhonetic=" 
 					+mLIMEPref.getParameterBoolean("doLDPhonetic")
-					+ ", table=" + tablename );
+					+ ", table=" + tablename + ", getAllRecords=" + getAllRecords );
 
 		// Add by Jeremy '10, 3, 27. Extension on multi table query.
 		lastCode = code;
@@ -2577,7 +2577,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	/**
 	 * Process search results
 	 */
-	private Pair<List<Mapping>,List<Mapping>> buildQueryResult(String query_code, Cursor cursor, Boolean getAllRecords) {
+	private synchronized Pair<List<Mapping>,List<Mapping>> buildQueryResult(String query_code, Cursor cursor, Boolean getAllRecords) {
 		
 		
 		List<Mapping> result = new ArrayList<Mapping>();
