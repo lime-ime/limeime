@@ -3621,7 +3621,13 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							kobj = 	getKeyboardObj("phoneticet41");
 						}else if(selectedPhoneticKeyboardType.equals("eten26")){
 							kobj = 	getKeyboardObj("et26");
-						}else if(selectedPhoneticKeyboardType.equals("hsu")){
+						}else if(selectedPhoneticKeyboardType.equals("hsu")){ //Jeremy '12,7,6 Add HSU english keyboard support
+							if(mLIMEPref.getParameterBoolean("number_row_in_english", false)){ 
+								kobj = 	getKeyboardObj("limenum");
+							}else{
+								kobj = 	getKeyboardObj("lime");
+							}
+						}else if(selectedPhoneticKeyboardType.equals("hsu_symbol")){
 							kobj = 	getKeyboardObj("hsu");
 						}
 					}else if( table.equals("dayi")){

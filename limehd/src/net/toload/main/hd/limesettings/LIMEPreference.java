@@ -21,6 +21,7 @@
 package net.toload.main.hd.limesettings;
 
 import net.toload.main.hd.R;
+import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import android.annotation.TargetApi;
 import android.app.backup.BackupManager;
@@ -39,6 +40,7 @@ import android.util.Log;
  */
 public class LIMEPreference extends PreferenceActivity implements OnSharedPreferenceChangeListener {
 	private final boolean DEBUG = false;
+	private final String TAG = "LIMEPreference";
 	private Context ctx = null;
 	private DBServer DBSrv = null;
 	private LIMEPreferenceManager mLIMEPref = null;
@@ -95,18 +97,19 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if(DEBUG) 
-			Log.i("LIMEPreference:OnChanged()"," key:" + key);
+			Log.i(TAG, "LIMEPreference:OnChanged() key:" + key);
 			
 		if(key.equals("phonetic_keyboard_type")){
 			String selectedPhoneticKeyboardType = mLIMEPref.getPhoneticKeyboardType();
 				//PreferenceManager.getDefaultSharedPreferences(ctx).getString("phonetic_keyboard_type", "");
 			if(DEBUG)
-				Log.i("LIMEPreference:OnChanged()", "phonetickeyboardtype:" + selectedPhoneticKeyboardType);
+				Log.i(TAG, "LIMEPreference:OnChanged(), phonetickeyboardtype:" + selectedPhoneticKeyboardType);
 			
 			try {
 				if(DEBUG)
-					Log.i("LIMEPreference:OnChanged()", "PhoneticIMInfo.kyeboard:" + 
+					Log.i(TAG, "LIMEPreference:OnChanged(), PhoneticIMInfo.kyeboard:" + 
 							DBSrv.getImInfo("phonetic", "keyboard"));	
+				/*
 				if(selectedPhoneticKeyboardType.equals("standard")){
 					DBSrv.setIMKeyboard("phonetic",  
 							DBSrv.getKeyboardInfo("phonetic", "desc"), "phonetic");
@@ -121,10 +124,29 @@ public class LIMEPreference extends PreferenceActivity implements OnSharedPrefer
 								DBSrv.getKeyboardInfo("et26", "desc"), "et26");
 					
 				}
-				if(DEBUG) Log.i("LIMEPreference:OnChanged()", "PhoneticIMInfo.kyeboard:" + 
+				*/
+				KeyboardObj kobj = DBSrv.getKeyboardObj("phonetic");
+				
+					if(selectedPhoneticKeyboardType.equals("standard")){
+						kobj = 	DBSrv.getKeyboardObj("phonetic");
+					}else if(selectedPhoneticKeyboardType.equals("eten")){
+						kobj = 	DBSrv.getKeyboardObj("phoneticet41");
+					}else if(selectedPhoneticKeyboardType.equals("eten26")){
+						kobj = 	DBSrv.getKeyboardObj("et26");
+					}else if(selectedPhoneticKeyboardType.equals("hsu")){ //Jeremy '12,7,6 Add HSU english keyboard support
+						if(mLIMEPref.getParameterBoolean("number_row_in_english", false)){ 
+							kobj = 	DBSrv.getKeyboardObj("limenum");
+						}else{
+							kobj = 	DBSrv.getKeyboardObj("lime");
+						}
+					}else if(selectedPhoneticKeyboardType.equals("hsu_symbol")){
+						kobj = 	DBSrv.getKeyboardObj("hsu");
+					}
+					DBSrv.setIMKeyboard("phonetic", kobj.getDescription(), kobj.getCode());
+				if(DEBUG) Log.i(TAG, "LIMEPreference:OnChanged(), PhoneticIMInfo.kyeboard:" + 
 							DBSrv.getImInfo("phonetic", "keyboard"));	
 			} catch (RemoteException e) {
-				Log.i("LIMEPreference:OnChanged()", "WriteIMinfo for selected phonetic keyboard failed!!");
+				Log.i(TAG, "LIMEPreference:OnChanged(), WriteIMinfo for selected phonetic keyboard failed!!");
 				e.printStackTrace();
 			}
 			
