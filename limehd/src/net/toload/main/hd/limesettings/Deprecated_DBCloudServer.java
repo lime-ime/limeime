@@ -431,7 +431,6 @@ public class Deprecated_DBCloudServer extends DBServer {
 
 							tempfile.deleteOnExit();
 
-							dbAdapter.openDBConnection(true);
 							mLIMEPref.setParameter("cloud_in_process",new Boolean(false));
 							pd.setProgress(100);
 							break;
