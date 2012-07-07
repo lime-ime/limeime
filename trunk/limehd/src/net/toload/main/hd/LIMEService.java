@@ -77,7 +77,7 @@ import android.content.res.Configuration;
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = false;
+	static final boolean DEBUG = true;
 	static final String TAG = "LIMEService";
 	//static final String PREF = "LIMEXY";
 
@@ -1093,7 +1093,7 @@ public class LIMEService extends InputMethodService implements
 			// Special handling of the delete key: if we currently are
 			// composing text for the user, we want to modify that instead
 			// of let the application to the delete itself.
-
+			hasPhysicalKeyPressed = true;
 			onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
 			return true;
 
