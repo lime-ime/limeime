@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<resources>
+    <dimen name="key_height">36dip</dimen>
+    <dimen name="mini_keyboard_fling_vertical_correction">-36dip</dimen>
+    <dimen name="candidate_stripe_height">34sp</dimen>
+    <dimen name="candidate_font_size">28sp</dimen>
+    <dimen name="candidate_number_font_size">12sp</dimen>
+    <dimen name="candidate_vertical_padding">6sp</dimen>
+    <dimen name="composing_text_size">8sp</dimen>
+    
+    <!-- WB -->
+    <dimen name="wb_key_height">52dip</dimen>
+    
+</resources>

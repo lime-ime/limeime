@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/* 
+**
+** Copyright 2008, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License"); 
+** you may not use this file except in compliance with the License. 
+** You may obtain a copy of the License at 
+**
+**     http://www.apache.org/licenses/LICENSE-2.0 
+**
+** Unless required by applicable law or agreed to in writing, software 
+** distributed under the License is distributed on an "AS IS" BASIS, 
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+** See the License for the specific language governing permissions and 
+** limitations under the License.
+*/
+-->
+<net.toload.main.hd.candidate.CandidateInInputViewContainer 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" 
+        android:background="@color/limekeyboard_key_color_white">
+       
+
+        <net.toload.main.hd.candidate.CandidateView
+            android:id="@+id/candidatesView"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1.0"
+            android:gravity="center_vertical" 
+            android:background="@color/limekeyboard_key_color_white"/>
+			
+        <LinearLayout
+            android:id="@+id/candidate_right_parent"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:orientation="horizontal" 
+            android:background="@color/limekeyboard_key_color_white">
+            
+            <ImageButton
+                android:id="@+id/candidate_right"
+                android:layout_width="@dimen/candidate_expand_button_width"
+                android:layout_height="fill_parent"
+                android:background="@drawable/ic_suggest_scroll_background"
+                android:clickable="true"
+                android:src="@drawable/ic_suggest_expander" />
+            
+        </LinearLayout>
+    </LinearLayout>
+
+    <net.toload.main.hd.keyboard.LIMEKeyboardView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/keyboard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true" 
+		android:background="@drawable/keyboard_background"
+        android:keyBackground="@drawable/btn_keyboard_key"
+        android:keyTextSize = "@dimen/key_text_size"
+        android:labelTextSize = "@dimen/label_text_size"
+        android:popupLayout="@layout/keyboard_popup" />
+    
+</net.toload.main.hd.candidate.CandidateInInputViewContainer>

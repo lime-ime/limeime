@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/* 
+**
+** Copyright 2008, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License"); 
+** you may not use this file except in compliance with the License. 
+** You may obtain a copy of the License at 
+**
+**     http://www.apache.org/licenses/LICENSE-2.0 
+**
+** Unless required by applicable law or agreed to in writing, software 
+** distributed under the License is distributed on an "AS IS" BASIS, 
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+** See the License for the specific language governing permissions and 
+** limitations under the License.
+*/
+-->
+
+<Keyboard xmlns:limehd="http://schemas.android.com/apk/res/net.toload.main.hd"
+    limehd:keyWidth="10%p"
+    limehd:horizontalGap="0px"
+    limehd:verticalGap="0px"
+    limehd:keyHeight="@dimen/key_height"
+    >
+
+    <Row>
+        <Key limehd:codes="113" limehd:keyLabel="q" limehd:keyEdgeFlags="left"/>
+        <Key limehd:codes="119" limehd:keyLabel="w"/>
+        <Key limehd:codes="101" limehd:keyLabel="e"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_e"
+        />
+        <Key limehd:codes="114" limehd:keyLabel="r"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_r"/>
+        <Key limehd:codes="116" limehd:keyLabel="t"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_t"/>
+        <Key limehd:codes="121" limehd:keyLabel="y"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_y"
+        />
+        <Key limehd:codes="117" limehd:keyLabel="u"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_u"
+        />
+        <Key limehd:codes="105" limehd:keyLabel="i"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_i"
+        />
+        <Key limehd:codes="111" limehd:keyLabel="o"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_o"
+        />
+        <Key limehd:codes="112" limehd:keyLabel="p" limehd:keyEdgeFlags="right"/>
+    </Row>
+    
+    <Row>
+        <Key limehd:codes="97" limehd:keyLabel="a" limehd:horizontalGap="5%p" 
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_a"
+                limehd:keyEdgeFlags="left"/>
+        <Key limehd:codes="115" limehd:keyLabel="s"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_s"
+        />
+        <Key limehd:codes="100" limehd:keyLabel="d"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_d"/>
+        <Key limehd:codes="102" limehd:keyLabel="f"/>
+        <Key limehd:codes="103" limehd:keyLabel="g"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_g"/>
+        />
+        <Key limehd:codes="104" limehd:keyLabel="h"/>
+        <Key limehd:codes="106" limehd:keyLabel="j"/>
+        <Key limehd:codes="107" limehd:keyLabel="k"/>
+        <Key limehd:codes="108" limehd:keyLabel="l" 
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_l"
+                limehd:keyEdgeFlags="right"/>
+    </Row>
+    
+    <Row>
+        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift" limehd:iconPreview="@drawable/sym_keyboard_feedback_shift" 
+                limehd:keyWidth="15%p" limehd:isModifier="true"
+                limehd:isSticky="true"/>
+        <Key limehd:codes="122" limehd:keyLabel="z"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_z"/>
+        <Key limehd:codes="120" limehd:keyLabel="x"/>
+        <Key limehd:codes="99" limehd:keyLabel="c"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_c"
+        />
+        <Key limehd:codes="118" limehd:keyLabel="v"/>
+        <Key limehd:codes="98" limehd:keyLabel="b"/>
+        <Key limehd:codes="110" limehd:keyLabel="n"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="@string/alternates_for_n"
+        />
+        <Key limehd:codes="109" limehd:keyLabel="m"/>
+        <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true"
+                limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"
+                limehd:isRepeatable="true"/>
+    </Row>
+
+    <Row limehd:keyboardMode="@+id/mode_normal" limehd:rowEdgeFlags="bottom">
+    	<Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true" limehd:keyWidth="15%p" limehd:keyEdgeFlags="left"/>                
+        <Key limehd:codes="-9" limehd:keyLabel="中" limehd:isModifier="true" limehd:keyWidth="10%p" />
+        <Key limehd:codes="-2"  limehd:keyLabel="@string/label_symbol_key" limehd:isModifier="true" 
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="_"
+                limehd:keyWidth="10%p" />
+        <Key limehd:keyLabel="," limehd:keyWidth="10%p" />
+        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space"
+                limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
+                limehd:keyWidth="30%p" limehd:isRepeatable="true"/>
+        <Key limehd:codes="46" limehd:keyLabel="."  limehd:popupKeyboard="@xml/popup_punctuation" 
+                limehd:keyWidth="10%p"/>
+        <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true"
+                limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"/>
+    </Row>
+
+    <Row limehd:keyboardMode="@+id/mode_url" limehd:rowEdgeFlags="bottom">
+        <Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true" limehd:keyWidth="15%p" limehd:keyEdgeFlags="left"/>                
+        <Key limehd:codes="-9" limehd:keyLabel="中" limehd:isModifier="true" limehd:keyWidth="10%p" />
+        <Key limehd:codes="-2"  limehd:keyLabel="@string/label_symbol_key" limehd:isModifier="true"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="_"
+                limehd:keyWidth="10%p" />
+        <Key limehd:keyLabel="@string/popular_domain_0"
+                limehd:keyOutputText="@string/popular_domain_0"
+                 limehd:popupKeyboard="@xml/popup_domains"
+                limehd:keyWidth="15%p"/>
+        <Key limehd:keyLabel="/" limehd:keyWidth="10%p"/>
+        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space"
+                limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
+                limehd:keyWidth="15%p" limehd:isRepeatable="true"/>
+        <Key limehd:keyLabel="."  limehd:popupKeyboard="@xml/popup_punctuation"
+                limehd:keyWidth="10%p"/>
+        <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true"
+                limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"/>
+    </Row>
+
+    <Row limehd:keyboardMode="@+id/mode_email" limehd:rowEdgeFlags="bottom">
+    	<Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true" limehd:keyWidth="15%p" limehd:keyEdgeFlags="left"/>                
+        <Key limehd:codes="-9" limehd:keyLabel="中" limehd:isModifier="true" limehd:keyWidth="10%p" />
+        <Key limehd:codes="-2"  limehd:keyLabel="@string/label_symbol_key" limehd:isModifier="true"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="_"
+                limehd:keyWidth="10%p" />
+        <Key limehd:keyLabel="\@" limehd:keyWidth="10%p"/>
+        <Key limehd:keyLabel="@string/popular_domain_0"
+                limehd:keyOutputText="@string/popular_domain_0"
+                 limehd:popupKeyboard="@xml/popup_domains"
+                limehd:keyWidth="15%p"/>
+        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space"
+                limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
+                limehd:keyWidth="15%p" limehd:isRepeatable="true"/>
+        <Key limehd:keyLabel="."  limehd:popupKeyboard="@xml/popup_punctuation"
+                limehd:keyWidth="10%p"/>
+        <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true"
+                limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"/>
+    </Row>
+
+    <Row limehd:keyboardMode="@+id/mode_im" limehd:rowEdgeFlags="bottom">
+    	<Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true" limehd:keyWidth="15%p" limehd:keyEdgeFlags="left"/>                
+        <Key limehd:codes="-10" limehd:keyLabel="中" limehd:isModifier="true" limehd:keyWidth="10%p" />
+        <Key limehd:codes="-2"  limehd:keyLabel="@string/label_symbol_key" limehd:isModifier="true"
+                 limehd:popupKeyboard="@xml/popup_template"
+                limehd:popupCharacters="_"
+                limehd:keyWidth="15%p"/>
+        <Key limehd:keyLabel="," limehd:keyWidth="10%p"/>
+        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space"
+                limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
+                limehd:keyWidth="25%p" limehd:isRepeatable="true"/>
+        <Key limehd:codes="46" limehd:keyLabel="."  limehd:popupKeyboard="@xml/popup_punctuation" 
+                limehd:keyWidth="10%p"/>
+        <Key limehd:keyLabel=":-)" limehd:keyOutputText=":-) "
+                 limehd:popupKeyboard="@xml/popup_smileys"
+                limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"/>
+    </Row>
+</Keyboard>
+    

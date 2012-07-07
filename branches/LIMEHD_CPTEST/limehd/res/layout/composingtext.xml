@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content"
+    android:textSize="@dimen/composing_text_size"
+    android:textColor="@color/candidate_normal"
+    android:background="@color/candidate_dictionary_background"
+    android:minWidth="0dip"
+    android:gravity="top" 
+    />
+<!-- 
+	android:textColor="?android:attr/textColorPrimaryInverse"
+    android:background="@color/candidate_dictionary_background"
+     -->

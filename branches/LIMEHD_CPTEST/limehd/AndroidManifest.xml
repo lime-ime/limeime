@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+	package="net.toload.main.hd" android:versionName="3.8.2" android:versionCode="314">
+
+	<uses-permission android:name="android.permission.VIBRATE" />
+	<uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
+	<uses-permission android:name="android.permission.WAKE_LOCK" />
+	<uses-permission android:name="android.permission.WRITE_USER_DICTIONARY" />
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+	<uses-permission android:name="android.permission.WRITE_SETTINGS" />
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+	<uses-permission android:name="android.permission.INTERNET"/>
+	<uses-permission android:name="android.permission.INSTALL_PACKAGES" />
+	<uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+	<!-- 
+	<uses-permission android:name="android.permission.BLUETOOTH" />
+	<uses-permission android:name="android.permissioann.BLUETOOTH_ADMIN" /> -->
+	<uses-sdk android:minSdkVersion="7" android:targetSdkVersion="14"/>
+	<supports-screens 
+		android:largeScreens="true"
+		android:normalScreens="true" 
+		android:smallScreens="true"
+		android:anyDensity="true" />
+
+	<application 
+	    android:icon="@drawable/icon" 
+	    android:label="@string/ime_name"
+	    android:backupAgent="LIMEBackupAgent" 
+	    android:theme="@style/LIMEHDTheme">
+
+		<!-- LIME Services -->
+		<service android:permission="android.permission.BIND_INPUT_METHOD" android:name="LIMEService">
+			<intent-filter>
+				<action android:name="android.view.InputMethod" />
+			</intent-filter>
+			<meta-data android:name="android.view.im" android:resource="@xml/method" />
+		</service>
+
+		<!-- LIME Services 
+		<service android:name="SearchService">
+			<intent-filter>
+				<action android:name="net.toload.main.hd.ISearchService"></action>
+			</intent-filter>
+		</service> 
+		<service android:name="DBService">
+			<intent-filter>
+				<action android:name="net.toload.main.hd.IDBService"></action>
+			</intent-filter>
+		</service>
+		-->
+		
+		<activity android:label="@string/ime_setting" android:configChanges="keyboard|keyboardHidden|orientation" android:name="LIMEMenu">
+			<intent-filter>
+				<action android:name="android.intent.action.MAIN" />
+				<category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+		</activity>		
+		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEInitial">
+		</activity>
+		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEIMSetting">
+		</activity>
+		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEMappingSetting">
+		</activity>
+		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreference">
+		</activity>
+		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreferenceHC">
+		</activity>
+		
+		
+		<activity android:theme="@style/LIMEHDDialogTheme" android:configChanges="keyboard|keyboardHidden|orientation" android:name=".limesettings.LIMEMappingLoading"></activity>
+		<meta-data android:name="com.google.android.backup.api_key"
+    				android:value="AEdPqrEAAAAILNniwKkk4v3ZBFX77elSlis0Qabd2h2Tn63kYA" />
+	</application>
+
+	
+	
+
+</manifest> 
+

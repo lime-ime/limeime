@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:padding="10dip" android:layout_height="wrap_content" android:orientation="vertical" android:layout_width="fill_parent">
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_weight="1"
+        android:text="@string/lime_setting_loading"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TableRow android:id="@+id/tableRow1" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center_horizontal|center" android:layout_width="wrap_content" android:layout_gravity="center">
+        <ProgressBar android:layout_width="210dip" android:padding="10dip" android:progress="0" android:max="100" style="?android:attr/progressBarStyleHorizontal" android:id="@+id/progressBar" android:layout_height="wrap_content"></ProgressBar>
+        <TextView android:id="@+id/txtLoadingStatus" android:layout_height="wrap_content" android:padding="5dip" android:layout_width="wrap_content" android:text="0%" ></TextView>
+    </TableRow>
+    <Button android:text="@string/lime_loading_cancel" android:layout_height="wrap_content" android:id="@+id/btn_cancel" android:layout_weight="1" android:layout_width="250dip" android:layout_gravity="center_horizontal|center"></Button>
+    
+</LinearLayout>
