@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Calendar;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
@@ -25,10 +24,7 @@ import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.app.Activity;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class CloudRestoreServiceRunnable  implements Runnable{
 
@@ -40,19 +36,19 @@ public class CloudRestoreServiceRunnable  implements Runnable{
 	private Activity activity;
 	
 	private static final String AUTH_TOKEN_TYPE = "oauth2:https://docs.google.com/feeds/ https://docs.googleusercontent.com/";
-	private static final int REQUEST_AUTHENTICATE = 0;
+	/*private static final int REQUEST_AUTHENTICATE = 0;
 	private static final int MAX_CONCURRENT_UPLOADS = 10;
 	private static final int PROGRESS_UPDATE_INTERVAL = 1000;
 	private static final int DEFAULT_CHUNK_SIZE = 10000000;
 	
-	private SharedPreferences pref;
+	private SharedPreferences pref;*/
 	private GoogleAccountManager accountManager;
 	private GoogleCredential credential;
 	static final String PREF_ACCOUNT_NAME = "accountName1";
 	static final String PREF_AUTH_TOKEN = "authToken";
 	LIMEPreferenceManager mLIMEPref;
 
-	private boolean first = true;
+	//private boolean first = true;
 	private boolean ready = false;
 	private boolean failed = false;
 	private File tempfile;
@@ -66,17 +62,17 @@ public class CloudRestoreServiceRunnable  implements Runnable{
 		this.handler = h;
 		this.activity = activity;
 		this.tempfile = tempfile;
-		this.pref = PreferenceManager.getDefaultSharedPreferences(activity);
+		//this.pref = PreferenceManager.getDefaultSharedPreferences(activity);
 		this.accountManager = new GoogleAccountManager(activity);
 		this.credential = new GoogleCredential();
 		this.mLIMEPref = new LIMEPreferenceManager(activity);
 	}
 
-	private DocsService getDocsService(GoogleCredential credential) {
+	/*private DocsService getDocsService(GoogleCredential credential) {
 		DocsService service = new DocsService("LIME");
 					service.setOAuth2Credentials(credential);	
 		return service;
-	}
+	}*/
 	
 	public void run() {
 		
