@@ -1767,7 +1767,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						code = code.trim(); 
 					}
 					
-					
+					// Do escape code here.
 					String selectClause = codeCol + " = '" + code.replaceAll("'", "''") + "' " + extraConditions;
 					
 					
@@ -2412,7 +2412,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					}else if(tonePresent && (toneNotLast || ( !toneNotLast && dualcode.length() >4 ))) //LD phrase and no code3r column present
 						noToneCode = dualcode.replaceAll("[3467 ]", "");
 				}
-				
+				// do escape code for codes
 				String querycode = dualcode.trim().replaceAll("'", "''");
 				String queryNoToneCode = noToneCode.trim().replaceAll("'", "''");
 	
