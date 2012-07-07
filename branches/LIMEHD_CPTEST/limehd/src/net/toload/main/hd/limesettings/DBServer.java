@@ -228,7 +228,7 @@ public class  DBServer {
 						//getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
 						mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
 						showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
-						dbAdapter.openDBConnection(true);
+						
 						dbAdapter.checkPhoneticKeyboardSetting();//Jeremy '12,6,8 check the pheonetic keyboard consistency
 					}
 				}
@@ -271,7 +271,7 @@ public class  DBServer {
 						mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
 						showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 						//Jeremy '12,4,7 re-open the dbconnection
-						dbAdapter.openDBConnection(true);
+						
 						dbAdapter.checkPhoneticKeyboardSetting();//Jeremy '12,6,8 check the pheonetic keyboard consistency
 					}
 				}
@@ -315,7 +315,7 @@ public class  DBServer {
 						mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
 						showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 						//Jeremy '12,4,7 re-open the dbconnection
-						dbAdapter.openDBConnection(true);
+						
 						dbAdapter.checkPhoneticKeyboardSetting();//Jeremy '12,6,8 check the pheonetic keyboard consistency
 					}
 				}
@@ -358,7 +358,7 @@ public class  DBServer {
 						mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
 						showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 						//Jeremy '12,4,7 re-open the dbconnection
-						dbAdapter.openDBConnection(true);
+						
 						dbAdapter.checkPhoneticKeyboardSetting();//Jeremy '12,6,8 check the pheonetic keyboard consistency
 					}
 				}
@@ -383,7 +383,7 @@ public class  DBServer {
 		showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end)+ "", intentLIMEMenu);
 
 		//Jeremy '12,4,7 re-open the dbconnection
-		dbAdapter.openDBConnection(true);
+		
 	}
 
 
@@ -406,7 +406,7 @@ public class  DBServer {
 		showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end)+ "", intentLIMEMenu); 
 
 		//Jeremy '12,4,7 re-open the dbconnection
-		dbAdapter.openDBConnection(true);
+		
 	}
 
 
@@ -446,9 +446,6 @@ public class  DBServer {
 
 
 	public void closeDatabse() throws RemoteException {
-		if (dbAdapter != null) {
-			dbAdapter.close();
-		}
 	}
 
 

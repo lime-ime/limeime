@@ -1,5 +1,6 @@
 package net.toload.main.hd.global;
 
+import android.net.Uri;
 import android.os.Environment;
 
 public class LIME {
@@ -100,11 +101,14 @@ public class LIME {
 	public static final String TOTAL_USERDICT_RECORD = "total_userdict_record";
 	public static final String LEARNING_SWITCH = "learning_switch";
 
-	
-
-
 	public final static String SEARCHSRV_RESET_CACHE = "searchsrv_reset_cache";
 	public final static int SEARCHSRV_RESET_CACHE_SIZE = 500;
 	public final static int LIMEDB_CACHE_SIZE = 1024;
+	
+	// Content Provider Related Values
+	public static final String AUTHORITY = "org.limeime.main.provider";
+	public static final Uri LIME_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/lime");
+    public static final String LIME_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.limeime.db";
+    
 	
 }
