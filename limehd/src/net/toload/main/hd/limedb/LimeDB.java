@@ -1998,7 +1998,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			}
 					
 			//Process the escape characters of query
-			newcode = newcode.replaceAll("'", "''");
+			//newcode = newcode.replaceAll("'", "''"); // Jeremy '12,7,7 do the code escaped before query.
 			if(DEBUG) 
 				Log.i(TAG, "preProcessingRemappingCode():newcode="+newcode);
 			return newcode;
@@ -2187,8 +2187,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					Log.i(TAG, "buildDualCodeList() level : " + i + " lastlevelmap size = " + lastLevelMap.size());
 				for(String entry : lastLevelMap){
 					if(DEBUG)
-						Log.i(TAG, "buildDualCodeList() level : " + i
-								+", entry = " + entry);
+						Log.i(TAG, "buildDualCodeList() level : " + i +", entry = " + entry);
 
 					if(entry.length()==1) c = entry;
 					else
@@ -2281,54 +2280,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 				}
 			}
-			//}
-
-			/*do{
-				int currentListSize = dualCodeList.size();
-				boolean codeInserted = false;
-				HashSet<String> snapShot = new HashSet<String>(dualCodeList);
-				for(String currentCode : snapShot) {
-					//String currentCode = dualCodeList.get(i);
-					if(DEBUG) 
-						Log.i(TAG, "buildDualCodeList():currentSize:"+ currentListSize + " curretnCode:" + currentCode);
-					for(int j=0; j< currentCode.length(); j++){
-						String c = currentCode.substring(j, j+1);
-
-						if(codeDualMap.get(c)!=null){
-							//Log.i("LIMEDB:buildDualCodeList()","dualCode found:"+ c + " -> " + codeDualMap.get(c));
-							String newCode = "";
-							String n = codeDualMap.get(c);
-							if(currentCode.length() == 1) newCode = n;
-							else{
-								if(j==0) 
-									newCode = n + currentCode.substring(1,currentCode.length());
-								else if(j==currentCode.length()-1) 
-									newCode = currentCode.substring(0, currentCode.length()-1) + n;
-								else
-									newCode = currentCode.substring(0,j) + n 
-									+ currentCode.substring(j+1, currentCode.length());
-							}
-
-
-							if(!dualCodeList.contains(newCode)){  //Jeremy '12,6,3 look-up the blacklist cache before add to the list.
-								codeInserted = true;
-								dualCodeList.add(newCode);	
-
-								if(!checkBlackList(newCode, false)){ //Add newCode to the resultDualCodeList if newCode is not black listed. 
-									resultDualCodeList.add(newCode);	
-									if(DEBUG) 
-										Log.i(TAG, "buildDualCodeList(): code added:"+ newCode);
-								}
-
-
-							}
-
-						}
-					}
-				}
-				if(!codeInserted || dualCodeList.size() > DUALCODE_ITERATION_LIMIT ) break;
-
-			}while(true);*/
+		
 
 			//Jeremy '11,8,12 added for continuous typing.  
 			if(tablename.equals("phonetic")){			
@@ -2607,8 +2559,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			do {		
 				String code = cursor.getString(codeColumn);
 				String relatedlist = cursor.getString(relatedColumn);
-				if(DEBUG)
-					Log.i(TAG, "buildQueryResult() code = '" + code + "' relatedlist = " + relatedlist);
+				//if(DEBUG)
+				//	Log.i(TAG, "buildQueryResult() code = '" + code + "' relatedlist = " + relatedlist);
 				
 				Mapping munit = new Mapping();
 				munit.setWord(cursor.getString(wordColumn));
