@@ -235,7 +235,8 @@
 	<string-array name="phonetic_keyboard_type">
 		<item>Standard</item>
 		<item>ETEN 41keys</item>
-		<item>ETEN 26keys</item>
+		<item>ETEN 26keys (Enlisgh Keyboard)</item>
+		<item>ETEN 26keys (Symbole Keyboard)</item>
 		<item>Hsu (English Keyboard)</item>
 		<item>Hsu (Symbol Keyboard)</item>
 	</string-array>
@@ -243,6 +244,7 @@
 		<item>standard</item>
 		<item>eten</item>
 		<item>eten26</item>
+		<item>eten26_symbol</item>
 		<item>hsu</item>
 		<item>hsu_symbol</item>
 	</string-array>
