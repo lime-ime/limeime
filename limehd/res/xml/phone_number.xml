@@ -42,7 +42,8 @@
         <Key limehd:codes="52" limehd:keyLabel="4"/>
         <Key limehd:codes="53" limehd:keyLabel="5"/>
         <Key limehd:codes="54" limehd:keyLabel="6"/>
-        <Key limehd:codes="47" limehd:keyLabel="/" limehd:keyEdgeFlags="right"/>
+        <Key limehd:codes="47" limehd:keyLabel=".\n/" 
+            limehd:popupCharacters="." limehd:popupKeyboard="@xml/popup_template" limehd:keyEdgeFlags="right"/>
     </Row>
     
     <Row>
