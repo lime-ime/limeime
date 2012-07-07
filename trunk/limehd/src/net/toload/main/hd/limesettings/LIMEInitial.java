@@ -24,6 +24,9 @@ import java.io.File;
 
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.handler.CloudBackupServiceRunnable;
+import net.toload.main.hd.handler.CloudRestoreServiceRunnable;
+import net.toload.main.hd.handler.CloudServierHandler;
 import net.toload.main.hd.R;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -50,7 +53,7 @@ import android.widget.Toast;
 public class LIMEInitial extends Activity {
 	
 
-	private DBCloudServer DBSrv = null;
+	private Deprecated_DBCloudServer DBSrv = null;
 	Button btnInitPreloadDB = null;
 	Button btnInitPhoneticHsOnlyDB = null; 
 	Button btnInitPhoneticOnlyDB = null;//Jeremy '11,9,10
@@ -62,6 +65,7 @@ public class LIMEInitial extends Activity {
 	Button btnCloudRestoreDB = null;
 	Button btnStoreDevice = null;
 	Button btnStoreSdcard = null;
+	private ProgressDialog cloudpd;
 	
 	boolean hasReset = false;
 	LIMEPreferenceManager mLIMEPref;
@@ -69,6 +73,21 @@ public class LIMEInitial extends Activity {
 	
 	Activity activity = null;
 	
+	private CloudServierHandler cHandler;
+	private Thread bTask;
+	private Thread rTask;
+	
+	
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		if(bTask != null)
+			cHandler.removeCallbacks(bTask);
+		if(rTask != null)
+			cHandler.removeCallbacks(rTask);
+	}
+
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle icicle) {
@@ -77,25 +96,9 @@ public class LIMEInitial extends Activity {
 		this.setContentView(R.layout.initial);
 		activity = this;
 		
-		if(android.os.Build.VERSION.SDK_INT > 10){
-			StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()     
-			        //.detectDiskReads()   
-			        //.detectDiskWrites()     
-			        .detectNetwork()   // or .detectAll() for all detectable problems     
-			        .penaltyLog()     
-			        .build());     
-			 StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()     
-			        //.detectLeakedSqlLiteObjects()     
-			        //.detectLeakedClosableObjects()     
-			        .penaltyLog()     
-			        .penaltyDeath()     
-			        .build());
-		}
-		
-		
 		// Startup Service
 		//getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
-		DBSrv = new DBCloudServer(getApplicationContext());
+		DBSrv = new Deprecated_DBCloudServer(getApplicationContext());
 		mLIMEPref = new LIMEPreferenceManager(getApplicationContext());
 		connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 		
@@ -614,8 +617,14 @@ public class LIMEInitial extends Activity {
 		
 		File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_CLOUD_TEMP);
 		tempFile.deleteOnExit();
-		BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDBACKUP);
-							  task.execute("");
+		
+		cHandler = new CloudServierHandler(this);
+		bTask = new Thread(new CloudBackupServiceRunnable(cHandler, this, tempFile));
+		bTask.start();
+		
+		showProgressDialog(true);
+		/*BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDBACKUP);
+							  task.execute("");*/
 	}
 
 	public void restoreCloudDatabase() {
@@ -626,16 +635,70 @@ public class LIMEInitial extends Activity {
 		
 		File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_CLOUD_TEMP);
 		tempFile.deleteOnExit();
-		BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDRESTORE);
-						      task.execute("");
+		
+		cHandler = new CloudServierHandler(this);
+		bTask = new Thread(new CloudRestoreServiceRunnable(cHandler, this, tempFile));
+		bTask.start();
+
+		showProgressDialog(false);
+		/*BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDRESTORE);
+						      task.execute("");*/
 	    initialButton();
+	}
+	
+	public void showProgressDialog(boolean isBackup){
+		if(isBackup){
+			 cloudpd = new ProgressDialog(activity);
+			 cloudpd.setTitle(this.getText(R.string.l3_initial_cloud_backup_database));
+			 cloudpd.setMessage(this.getText(R.string.l3_initial_cloud_backup_start));
+			 cloudpd.setCancelable(false);
+			 cloudpd.setOnCancelListener(new OnCancelListener(){
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					mLIMEPref.setParameter("cloud_in_process",new Boolean(false));
+				}
+			 });
+			 cloudpd.setIndeterminate(false);
+			 cloudpd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+			 cloudpd.setCanceledOnTouchOutside(false);
+			 cloudpd.setMax(100);
+			 cloudpd.show();
+		}else{
+			cloudpd = new ProgressDialog(activity);
+			cloudpd.setTitle(this.getText(R.string.l3_initial_cloud_restore_database));
+			 cloudpd.setMessage(this.getText(R.string.l3_initial_cloud_restore_start));
+			 cloudpd.setCancelable(true);
+			 cloudpd.setOnCancelListener(new OnCancelListener(){
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					mLIMEPref.setParameter("cloud_in_process",new Boolean(false));
+				}
+			 });
+			 cloudpd.setIndeterminate(false);
+			 cloudpd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+			 cloudpd.setCanceledOnTouchOutside(false);
+			 cloudpd.setMax(100);
+			 cloudpd.show();
+		}
+	}
+	
+	public void updateProgressDialog(int progress){
+		if(cloudpd!=null && cloudpd.isShowing()){
+			cloudpd.setProgress(progress);
+		}
+	}
+	
+	public void closeProgressDialog(){
+		if(cloudpd != null && cloudpd.isShowing()){
+			cloudpd.dismiss();
+		}
 	}
 	
 	public class BackupRestoreTask extends AsyncTask<String,Integer,Integer> {
 
 
-		private DBCloudServer dbsrv = null;
 		private ProgressDialog pd;
+		private Deprecated_DBCloudServer dbsrv = null;
 		private Context ctx;
 		private LIMEInitial activity;
 		private File tempfile;
@@ -645,7 +708,7 @@ public class LIMEInitial extends Activity {
 		final public static int BACKUP = 3;
 		final public static int RESTORE = 4;
 		
-		BackupRestoreTask(LIMEInitial act, Context srcctx, DBCloudServer db, File file, int settype){
+		BackupRestoreTask(LIMEInitial act, Context srcctx, Deprecated_DBCloudServer db, File file, int settype){
 			dbsrv = db;
 			activity = act;
 			ctx = srcctx;
@@ -655,7 +718,8 @@ public class LIMEInitial extends Activity {
 		
 		protected void onPreExecute(){
 
-			 if(type == CLOUDBACKUP){
+			 pd = new ProgressDialog(activity);
+			 /*if(type == CLOUDBACKUP){
 				 pd = new ProgressDialog(activity);
 				 pd.setTitle(ctx.getText(R.string.l3_initial_cloud_backup_database));
 				 pd.setMessage(ctx.getText(R.string.l3_initial_cloud_backup_start));
@@ -687,7 +751,9 @@ public class LIMEInitial extends Activity {
 				 pd.setCanceledOnTouchOutside(false);
 				 pd.setMax(100);
 				 pd.show();
-			}else if(type == BACKUP){
+			}else */
+			
+			if(type == BACKUP){
 				pd = ProgressDialog.show(activity, ctx.getText(R.string.l3_initial_backup_database), ctx.getText(R.string.l3_initial_backup_start),true);
 			}else if(type == RESTORE){
 				pd = ProgressDialog.show(activity, ctx.getText(R.string.l3_initial_restore_database), ctx.getText(R.string.l3_initial_restore_start),true);
@@ -712,7 +778,12 @@ public class LIMEInitial extends Activity {
 		
 		@Override
 		protected Integer doInBackground(String... arg0) {
-			if(type == CLOUDBACKUP){
+			/*if(type == CLOUDBACKUP){
+				
+				cHandler = new CloudServierHandler(this);
+				bTask = new Thread(new CloudBackupServiceRunnable(sHandler, this, tempfile));
+				bTask.start();
+				
 				File srcFile = null;
 				String dbtarget = mLIMEPref.getParameterString("dbtarget");
 				if(dbtarget.equals("device")){
@@ -723,6 +794,7 @@ public class LIMEInitial extends Activity {
 				pd.setProgress(10);
 				dbsrv.compressFile(srcFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_CLOUD_TEMP);
 				pd.setProgress(20);
+
 				dbsrv.cloudBackup(activity,  pd, tempfile);
 				if(!DBCloudServer.getStatus()){
 					mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
@@ -730,6 +802,11 @@ public class LIMEInitial extends Activity {
 					DBCloudServer.showNotificationMessage(getText(R.string.l3_initial_cloud_failed) +"", 0);
 				}
 			}else if(type == CLOUDRESTORE){
+				
+
+				cHandler = new CloudServierHandler(this);
+				rTask = new Thread(new CloudRestoreServiceRunnable(sHandler, this, tempfile));
+				rTask.start();
 				pd.setProgress(10);
 				dbsrv.cloudRestore(activity,  pd, tempfile);
 				if(!DBCloudServer.getStatus()){
@@ -737,7 +814,9 @@ public class LIMEInitial extends Activity {
 					mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
 					DBCloudServer.showNotificationMessage(getText(R.string.l3_initial_cloud_failed) +"", 0);
 				}
-			}else if(type == BACKUP){
+			}else */
+			
+			if(type == BACKUP){
 				try {
 					dbsrv.backupDatabase();
 				} catch (RemoteException e) {

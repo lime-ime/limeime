@@ -980,7 +980,7 @@ public class  DBServer {
 	/*
 	 * Decompress retrieved file to target folder
 	 */
-	protected static boolean decompressFile(File sourceFile, String targetFolder, String targetFile){
+	public static boolean decompressFile(File sourceFile, String targetFolder, String targetFile){
 
 		try {   
 
