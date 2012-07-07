@@ -38,7 +38,6 @@ import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.os.StrictMode;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -53,7 +52,7 @@ import android.widget.Toast;
 public class LIMEInitial extends Activity {
 	
 
-	private Deprecated_DBCloudServer DBSrv = null;
+	private DBServer DBSrv = null;
 	Button btnInitPreloadDB = null;
 	Button btnInitPhoneticHsOnlyDB = null; 
 	Button btnInitPhoneticOnlyDB = null;//Jeremy '11,9,10
@@ -98,7 +97,7 @@ public class LIMEInitial extends Activity {
 		
 		// Startup Service
 		//getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
-		DBSrv = new Deprecated_DBCloudServer(getApplicationContext());
+		DBSrv = new DBServer(getApplicationContext());
 		mLIMEPref = new LIMEPreferenceManager(getApplicationContext());
 		connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 		
@@ -698,21 +697,21 @@ public class LIMEInitial extends Activity {
 
 
 		private ProgressDialog pd;
-		private Deprecated_DBCloudServer dbsrv = null;
+		private DBServer dbsrv = null;
 		private Context ctx;
 		private LIMEInitial activity;
-		private File tempfile;
+		//private File tempfile;
 		private int type;
 		final public static int CLOUDBACKUP = 1;
 		final public static int CLOUDRESTORE = 2;
 		final public static int BACKUP = 3;
 		final public static int RESTORE = 4;
 		
-		BackupRestoreTask(LIMEInitial act, Context srcctx, Deprecated_DBCloudServer db, File file, int settype){
+		BackupRestoreTask(LIMEInitial act, Context srcctx, DBServer db, File file, int settype){
 			dbsrv = db;
 			activity = act;
 			ctx = srcctx;
-			tempfile = file;
+			//tempfile = file;
 			type = settype;
 		}
 		
