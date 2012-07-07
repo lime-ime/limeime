@@ -219,7 +219,8 @@
 	<string-array name="phonetic_keyboard_type">
 		<item>標準</item>
 		<item>倚天41鍵</item>
-		<item>倚天26鍵</item>
+		<item>倚天26鍵 (英文鍵盤)</item>
+		<item>倚天26鍵 (符號鍵盤)</item>
 		<item>許氏 (英文鍵盤)</item>
 		<item>許氏 (符號鍵盤)</item>
 	</string-array>

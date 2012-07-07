@@ -128,7 +128,13 @@ public class LIMEPreferenceHC extends Activity {
 						kobj = 	DBSrv.getKeyboardObj("phonetic");
 					}else if(selectedPhoneticKeyboardType.equals("eten")){
 						kobj = 	DBSrv.getKeyboardObj("phoneticet41");
-					}else if(selectedPhoneticKeyboardType.equals("eten26")){
+					}else if(selectedPhoneticKeyboardType.equals("eten26")){		
+						if(mLIMEPref.getParameterBoolean("number_row_in_english", false)){ 
+							kobj = 	DBSrv.getKeyboardObj("limenum");
+						}else{
+							kobj = 	DBSrv.getKeyboardObj("lime");
+						}
+					}else if(selectedPhoneticKeyboardType.equals("eten26_symbol")){
 						kobj = 	DBSrv.getKeyboardObj("et26");
 					}else if(selectedPhoneticKeyboardType.equals("hsu")){ //Jeremy '12,7,6 Add HSU english keyboard support
 						if(mLIMEPref.getParameterBoolean("number_row_in_english", false)){ 

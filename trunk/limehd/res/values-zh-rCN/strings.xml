@@ -219,7 +219,8 @@
 	<string-array name="phonetic_keyboard_type">
 		<item>标准</item>
 		<item>倚天41键</item>
-		<item>倚天26键</item>
+		<item>倚天26键 (英文键盘)</item>
+		<item>倚天26键 (符号键盘)</item>
 		<item>许氏 (英文键盘)</item>
 		<item>许氏 (符号键盘)</item>
 	</string-array>
