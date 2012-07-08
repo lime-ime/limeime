@@ -159,7 +159,7 @@ public class LIMEInitial extends Activity {
 		    	    
 				
 				// Reset for SearchSrv
-				mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+				mLIMEPref.setResetCacheFlag(true);
 				
 			}
 		});
@@ -190,7 +190,7 @@ public class LIMEInitial extends Activity {
 						DBSrv.downloadPreloadedDatabase();
 
 						// Reset for SearchSrv
-						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+						mLIMEPref.setResetCacheFlag(true);
 						mLIMEPref.setParameter("db_finish", false);
 						
 					} catch (RemoteException e) {
@@ -228,7 +228,7 @@ public class LIMEInitial extends Activity {
 						DBSrv.downloadPhoneticOnlyDatabase();
 
 						// Reset for SearchSrv
-						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+						mLIMEPref.setResetCacheFlag(true);
 						mLIMEPref.setParameter("db_finish", false);
 						
 					} catch (RemoteException e) {
@@ -267,7 +267,7 @@ public class LIMEInitial extends Activity {
 						DBSrv.downloadPhoneticHsOnlyDatabase();
 
 						// Reset for SearchSrv
-						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+						mLIMEPref.setResetCacheFlag(true);
 						mLIMEPref.setParameter("db_finish", false);
 						
 					} catch (RemoteException e) {
@@ -305,7 +305,7 @@ public class LIMEInitial extends Activity {
 						DBSrv.downloadEmptyDatabase();
 
 						// Reset for SearchSrv
-						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+						mLIMEPref.setResetCacheFlag(true);
 						mLIMEPref.setParameter("db_finish", false);
 						
 					} catch (RemoteException e) {
@@ -378,7 +378,8 @@ public class LIMEInitial extends Activity {
 									alert.show();
 							
 						// Reset for SearchSrv
-						mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+						mLIMEPref.setResetCacheFlag(true);
+						
 					}else{
 						Toast.makeText(v.getContext(), getText(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT).show();
 					}
@@ -443,7 +444,7 @@ public class LIMEInitial extends Activity {
 								alert.show();
 							
 					// Reset for SearchSrv
-					mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+					mLIMEPref.setResetCacheFlag(true);
 
 				}else{
 		        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
@@ -772,6 +773,7 @@ public class LIMEInitial extends Activity {
 			if(type == CLOUDRESTORE || type == RESTORE){
 				activity.initialButton();
 				dbsrv.checkPhoneticKeyboardSetting();//Jeremy '12,6,8 check the pheonetic keyboard consistency
+				mLIMEPref.setResetCacheFlag(true);  //Jeremy '12,7,8 reset cache.
 			}
 		}
 		

@@ -116,7 +116,7 @@ public class  DBServer {
 		//dbAdapter.close();
 
 		// Reset for SearchSrv
-		mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+		mLIMEPref.setResetCacheFlag(true);
 	}
 
 	public void resetMapping(final String tablename) throws RemoteException {
@@ -127,7 +127,7 @@ public class  DBServer {
 		dbAdapter.deleteAll(tablename);
 
 		// Reset cache in SearchSrv
-		mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+		mLIMEPref.setResetCacheFlag(true);
 	}
 
 	public int getLoadingMappingCount(){

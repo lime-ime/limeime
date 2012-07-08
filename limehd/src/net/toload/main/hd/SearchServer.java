@@ -254,9 +254,9 @@ public class SearchServer {
 		if(DEBUG) Log.i(TAG, "query(): code="+code);
 		// Check if system need to reset cache
 
-		if(mLIMEPref.getParameterBoolean(LIME.SEARCHSRV_RESET_CACHE)){
+		if(mLIMEPref.getResetCacheFlag(false)){
 			initialCache();
-			mLIMEPref.setParameter(LIME.SEARCHSRV_RESET_CACHE,false);
+			mLIMEPref.setResetCacheFlag(false);
 		}
 		
 		codeLenthMap.clear();//Jeremy '12,6,2 reset the codeLengthMap
