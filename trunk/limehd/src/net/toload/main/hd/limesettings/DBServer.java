@@ -538,7 +538,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_adv_start)+ "", intentLIMEMappingLoading);
-				downloadedFile = downloadRemoteFile(LIME.PHONETICADV_DOWNLOAD_URL, LIME.G_PHONETICADV_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETICADV);
+				downloadedFile = downloadRemoteFile(LIME.CJK_PHONETICADV_DOWNLOAD_URL, LIME.G_CJK_PHONETICADV_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETICADV);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_adv_install)+ "", intentLIMEMappingLoading);
 					try {
@@ -817,7 +817,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_phonetic_start)+ "", intentLIMEMappingLoading);
-				downloadedFile = downloadRemoteFile(LIME.CJK_PHONETIC_DOWNLOAD_URL, LIME.CJK_PHONETIC_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETIC_LIME);
+				downloadedFile = downloadRemoteFile(LIME.CJK_PHONETIC_DOWNLOAD_URL, LIME.G_CJK_PHONETIC_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETIC_LIME);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_phonetic_install)+ "", intentLIMEMappingLoading);
 					try {
@@ -832,12 +832,30 @@ public class  DBServer {
 		threadTask.start();
 	}
 	
+	public void downloadECJHKLIME() throws RemoteException {
+		Thread threadTask = new Thread() {
+			public void run() {
+				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_hk_ecj_start)+ "", intentLIMEMappingLoading);
+				downloadedFile = downloadRemoteFile(LIME.CJK_HK_ECJ_DOWNLOAD_URL, LIME.G_CJK_HK_ECJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ECJ_LIME);
+				if(downloadedFile!=null){
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_hk_ecj_install)+ "", intentLIMEMappingLoading);
+					try {
+						loadMapping(downloadedFile.getAbsolutePath(), "ecj");
+					} catch (RemoteException e) {
+						e.printStackTrace();
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
+					}
+				}
+			}
+		};
+		threadTask.start();
+	}
 
 	public void downloadECJLIME() throws RemoteException {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_ecj_start)+ "", intentLIMEMappingLoading);
-				downloadedFile = downloadRemoteFile(LIME.CJK_ECJ_DOWNLOAD_URL, LIME.CJK_ECJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ECJ_LIME);
+				downloadedFile = downloadRemoteFile(LIME.CJK_ECJ_DOWNLOAD_URL, LIME.G_CJK_ECJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ECJ_LIME);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_ecj_install)+ "", intentLIMEMappingLoading);
 					try {
@@ -857,7 +875,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_cj_start)+ "", intentLIMEMappingLoading);
-				downloadedFile = downloadRemoteFile(LIME.CJK_CJ_DOWNLOAD_URL, LIME.CJK_CJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ_LIME);
+				downloadedFile = downloadRemoteFile(LIME.CJK_CJ_DOWNLOAD_URL, LIME.G_CJK_CJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ_LIME);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_cj_install)+ "", intentLIMEMappingLoading);
 					try {
@@ -871,6 +889,27 @@ public class  DBServer {
 		};
 		threadTask.start();
 	}
+	
+	public void downloadCJHKLIME() throws RemoteException {
+		Thread threadTask = new Thread() {
+			public void run() {
+				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_hk_cj_start)+ "", intentLIMEMappingLoading);
+				downloadedFile = downloadRemoteFile(LIME.CJK_HK_CJ_DOWNLOAD_URL, LIME.G_CJK_HK_CJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ_LIME);
+				if(downloadedFile!=null){
+					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_hk_cj_install)+ "", intentLIMEMappingLoading);
+					try {
+						loadMapping(downloadedFile.getAbsolutePath(), "cj");
+					} catch (RemoteException e) {
+						e.printStackTrace();
+						showNotificationMessage("Download failed, please check your internet connection.", intentLIMEMenu);
+					}
+				}
+			}
+		};
+		threadTask.start();
+	}
+	
+	
 	
 	
 	/*
