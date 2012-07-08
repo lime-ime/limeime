@@ -111,8 +111,7 @@ public class LIMEPreferenceManager {
 	public void setMappingLoading(boolean loading){
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		String loadingStatus = loading?"yes":"no";
-		
+		String loadingStatus = loading?"yes":"no";	
 		sp.edit().putString("mapping_loadg",loadingStatus).commit();
 		
 	}
@@ -413,6 +412,20 @@ public class LIMEPreferenceManager {
 		
 	}
 	
+	public boolean getResetCacheFlag(boolean defaultvalue){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("searchsrv_reset_cache", defaultvalue);
+	}
+	
+	
+	
+	public void setResetCacheFlag(boolean value){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		sp.edit().putBoolean("searchsrv_reset_cache", value).commit();	
+	}
+	
+	
+	
 	/*
 	 * INT Parameter SET/GET
 	 */
@@ -477,7 +490,7 @@ public class LIMEPreferenceManager {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean(label, false);
 	}
-	public boolean getParameterBoolean(String label, Boolean defaultvalue){
+	public boolean getParameterBoolean(String label, boolean defaultvalue){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean(label, defaultvalue);
 	}

@@ -116,7 +116,7 @@ public class LIME {
 	
 
 
-	public final static String SEARCHSRV_RESET_CACHE = "searchsrv_reset_cache";
+	//public final static String SEARCHSRV_RESET_CACHE = "searchsrv_reset_cache";
 	public final static int SEARCHSRV_RESET_CACHE_SIZE = 500;
 	public final static int LIMEDB_CACHE_SIZE = 1024;
 	
