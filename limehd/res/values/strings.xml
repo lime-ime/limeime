@@ -491,9 +491,19 @@
     <string name="l3_im_download_from_cjk_ecj_start">Downloading ECJ table</string>
     <string name="l3_im_download_from_cjk_ecj_install">Importing ECJ table</string>
     
+    <string name="l3_im_download_from_ecj_hk">Download/Import ECJ with HK character set table</string>
+    <string name="l3_im_download_from_ecj_hk_start">Downloading ECJ with HK character set  table</string>
+    <string name="l3_im_download_from_ecj_hk_install">Importing ECJ with HK character set table</string>
+    
+    
     <string name="l3_im_download_from_cjk_cj">Download/Import CJ table</string>
     <string name="l3_im_download_from_cjk_cj_start">Downloading CJ table</string>
     <string name="l3_im_download_from_cjk_cj_install">Importing CJ table</string>
+    
+    <string name="l3_im_download_from_cj_hk">Download/Import CJ with HK character set table</string>
+    <string name="l3_im_download_from_cj_hk_start">Downloading CJ with HK character set  table</string>
+    <string name="l3_im_download_from_cj_hk_install">Importing CJ with HK character set table</string>
+    
     
     <string name="l3_im_download_from_pinyin_big5">Download/Import OpenVanilla Pinyin BIG5 table</string>
     <string name="l3_im_download_from_pinyin_big5_start">Downloading OpenVanilla Pinyin BIG5 table</string>
@@ -534,7 +544,7 @@
     <string name="l3_im_download_from_cj_start">Downloading CJ table</string>
     <string name="l3_im_download_from_cj_install">Importing CJ table</string>
     
-    <string name="l3_im_download_from_scj">Download/Import SCJ table</string>
+  
     <string name="l3_im_download_from_scj_start">Downloading SCJ table</string>
     <string name="l3_im_download_from_scj_install">Importing SCJ table</string>
     

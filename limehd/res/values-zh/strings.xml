@@ -517,6 +517,15 @@
     <string name="l3_im_download_from_cjk_cj_start">開始下載倉頡字根</string>
     <string name="l3_im_download_from_cjk_cj_install">開始安裝倉頡字根</string>
     
+    <string name="l3_im_download_from_cjk_hk_ecj">下載並安裝速成香港字字根</string>
+    <string name="l3_im_download_from_cjk_hk_ecj_start">開始下載速成香港字字根</string>
+    <string name="l3_im_download_from_cjk_hk_ecj_install">開始安裝速成香港字字根</string>
+    
+    <string name="l3_im_download_from_cjk_hk_cj">下載並安裝倉頡香港字字根</string>
+    <string name="l3_im_download_from_cjk_hk_cj_start">開始下載倉頡香港字字根</string>
+    <string name="l3_im_download_from_cjk_hk_cj_install">開始安裝倉頡香港字字根</string>
+    
+    
     <string name="l3_im_download_from_pinyin_big5">下載並安裝拼音字根BIG5字集版本</string>
     <string name="l3_im_download_from_pinyin_big5_start">開始下載拼音字根BIG5字集版本</string>
     <string name="l3_im_download_from_pinyin_big5_install">開始安裝拼音字根BIG5字集版本</string>

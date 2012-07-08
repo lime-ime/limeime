@@ -5,10 +5,23 @@ import android.os.Environment;
 public class LIME {
 	
 	// Special Version CJK Mapping Table Provided By Julian
-	public static final String CJK_CJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj_CJK.lime";
-	public static final String CJK_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj_CJK.lime";
-	public static final String CJK_PHONETIC_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic_CJK.lime";
-	public static final String CJK_PINYIN_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/pinyin_CJK.cin";
+	//OpenFoundry
+	public static final String CJK_CJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fcj_CJK.lime.zip";
+	public static final String CJK_ECJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fecj_CJK.lime.zip";
+	public static final String CJK_PHONETIC_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphonetic_CJK.lime.zip";
+	public static final String CJK_PHONETICADV_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphonetic_CJK.lime.zip";
+	public static final String CJK_PINYIN_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fpinyin_CJK.cin.zip";
+	public static final String CJK_HK_CJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fcj_CJK_HKSCS.lime.zip";
+	public static final String CJK_HK_ECJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fecj_CJK_HKSCS.lime.zip";
+	//Google
+	public static final String G_CJK_CJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj_CJK.lime";
+	public static final String G_CJK_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj_CJK.limp";
+	public static final String G_CJK_PHONETIC_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic_CJK.lime";
+	public static final String G_CJK_PHONETICADV_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic_CJK.lime";
+	public static final String G_CJK_PINYIN_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/pinyin_CJK.cin";
+	public static final String G_CJK_HK_CJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj_CJK_HKSCS.lime";
+	public static final String G_CJK_HK_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj_CJK_HKSCS.lime";
+	
 	
 	// OV CIN files download URL
 	public static final String DAYI_DOWNLOAD_URL = "http://openvanilla.googlecode.com/svn/trunk/Modules/SharedData/dayi3.cin";
