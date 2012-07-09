@@ -1,5 +1,7 @@
-#Wed Jun 20 22:35:12 CST 2012
+#Tue Jul 10 00:27:18 CST 2012
 eclipse.preferences.version=1
+encoding//res/values-zh/strings.xml=UTF-8
+encoding//res/values/strings.xml=UTF-8
 encoding//src/net/toload/main/hd/ChineseSymbol.java=UTF-8
 encoding//src/net/toload/main/hd/LIMEKeyboardSwitcher.java=UTF-8
 encoding//src/net/toload/main/hd/global/ChineseSymbol.java=UTF-8
