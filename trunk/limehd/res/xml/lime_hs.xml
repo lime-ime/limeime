@@ -41,41 +41,40 @@
 	</Row>
 
 	<Row>
-		<Key limehd:codes="113" limehd:keyLabel="q"
-			limehd:keyEdgeFlags="left" />
-		<Key limehd:codes="119" limehd:keyLabel="w" />
-		<Key limehd:codes="101" limehd:keyLabel="e" />
-		<Key limehd:codes="114" limehd:keyLabel="r" />
-		<Key limehd:codes="116" limehd:keyLabel="t" />
-		<Key limehd:codes="121" limehd:keyLabel="y" />
-		<Key limehd:codes="117" limehd:keyLabel="u" />
-		<Key limehd:codes="105" limehd:keyLabel="i" />
-		<Key limehd:codes="111" limehd:keyLabel="o" />
-		<Key limehd:codes="112" limehd:keyLabel="p"
-			limehd:keyEdgeFlags="right" />
+		<Key limehd:codes="81" limehd:keyLabel="Q" limehd:keyEdgeFlags="left"/>
+        <Key limehd:codes="87" limehd:keyLabel="W"/>
+        <Key limehd:codes="69" limehd:keyLabel="E"/>
+        <Key limehd:codes="82" limehd:keyLabel="R"/>
+        <Key limehd:codes="84" limehd:keyLabel="T"/>
+        <Key limehd:codes="89" limehd:keyLabel="Y"/>
+        <Key limehd:codes="85" limehd:keyLabel="U"/>
+        <Key limehd:codes="73" limehd:keyLabel="I"/>
+        <Key limehd:codes="79" limehd:keyLabel="O"/>
+        <Key limehd:codes="80" limehd:keyLabel="P" limehd:keyEdgeFlags="right"/>
 	</Row>
 
 	<Row>
-		<Key limehd:codes="97" limehd:keyLabel="a" limehd:keyEdgeFlags="left" />
-		<Key limehd:codes="115" limehd:keyLabel="s" />
-		<Key limehd:codes="100" limehd:keyLabel="d" />
-		<Key limehd:codes="102" limehd:keyLabel="f" />
-		<Key limehd:codes="103" limehd:keyLabel="g" />
-		<Key limehd:codes="104" limehd:keyLabel="h" />
-		<Key limehd:codes="106" limehd:keyLabel="j" />
-		<Key limehd:codes="107" limehd:keyLabel="k" />
-		<Key limehd:codes="108" limehd:keyLabel="l" />
+		<Key limehd:codes="65" limehd:keyLabel="A" limehd:horizontalGap="5%p" 
+                limehd:keyEdgeFlags="left"/>
+        <Key limehd:codes="83" limehd:keyLabel="S"/>
+        <Key limehd:codes="68" limehd:keyLabel="D"/>
+        <Key limehd:codes="70" limehd:keyLabel="F"/>
+        <Key limehd:codes="71" limehd:keyLabel="G"/>
+        <Key limehd:codes="72" limehd:keyLabel="H"/>
+        <Key limehd:codes="74" limehd:keyLabel="J"/>
+        <Key limehd:codes="75" limehd:keyLabel="K"/>
+        <Key limehd:codes="76" limehd:keyLabel="L"/>
 		<Key limehd:codes="59" limehd:keyLabel=";" limehd:keyEdgeFlags="right" />
 	</Row>
 
 	<Row>
-		<Key limehd:codes="122" limehd:keyLabel="z" limehd:keyEdgeFlags="left" />
-		<Key limehd:codes="120" limehd:keyLabel="x" />
-		<Key limehd:codes="99" limehd:keyLabel="c" />
-		<Key limehd:codes="118" limehd:keyLabel="v" />
-		<Key limehd:codes="98" limehd:keyLabel="b" />
-		<Key limehd:codes="110" limehd:keyLabel="n" />
-		<Key limehd:codes="109" limehd:keyLabel="m" />
+		<Key limehd:codes="90" limehd:keyLabel="Z" limehd:keyEdgeFlags="left" />
+        <Key limehd:codes="88" limehd:keyLabel="X"/>
+        <Key limehd:codes="67" limehd:keyLabel="C"/>
+        <Key limehd:codes="86" limehd:keyLabel="V"/>
+        <Key limehd:codes="66" limehd:keyLabel="B"/>
+        <Key limehd:codes="78" limehd:keyLabel="N"/>
+        <Key limehd:codes="77" limehd:keyLabel="M"/>
 		<Key limehd:codes="91" limehd:keyLabel="[" />
 		<Key limehd:codes="93" limehd:keyLabel="]" />
 		<Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true"
