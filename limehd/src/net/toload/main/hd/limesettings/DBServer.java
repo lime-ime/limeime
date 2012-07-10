@@ -914,8 +914,9 @@ public class  DBServer {
 	
 	/*
 	 * Select Remote File to download
+	 * First download Mapping from Google Space, if failed then go OpenFoundary to download file
 	 */
-	public File downloadRemoteFile(String url, String backup_url, String folder, String filename){
+	public File downloadRemoteFile(String backup_url, String url, String folder, String filename){
 
 		File olddbfile = new File(folder + filename);
 		if(olddbfile.exists()){

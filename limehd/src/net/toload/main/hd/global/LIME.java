@@ -17,11 +17,10 @@ public class LIME {
 	public static final String G_CJK_CJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj_CJK.lime";
 	public static final String G_CJK_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj_CJK.limp";
 	public static final String G_CJK_PHONETIC_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic_CJK.lime";
-	public static final String G_CJK_PHONETICADV_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic_CJK.lime";
+	public static final String G_CJK_PHONETICADV_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic_adv_CJK.lime";
 	public static final String G_CJK_PINYIN_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/pinyin_CJK.cin";
 	public static final String G_CJK_HK_CJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj_CJK_HKSCS.lime";
 	public static final String G_CJK_HK_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj_CJK_HKSCS.lime";
-	
 	
 	// OV CIN files download URL
 	public static final String DAYI_DOWNLOAD_URL = "http://openvanilla.googlecode.com/svn/trunk/Modules/SharedData/dayi3.cin";
@@ -64,8 +63,8 @@ public class LIME {
 	public static final String G_HS_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/hs.zip";
 	public static final String G_IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime1207.zip";
 	public static final String G_IM_DOWNLOAD_TARGET_EMPTY = "http://limeime.googlecode.com/svn/branches/database/empty1109.zip";
-	public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://limeime.googlecode.com/svn/branches/database/phoneticonly1206.zip";
-	public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://limeime.googlecode.com/svn/branches/database/phonetichs1206.zip";
+	public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://limeime.googlecode.com/svn/branches/database/phoneticonly1207.zip";
+	public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://limeime.googlecode.com/svn/branches/database/phonetichs1207.zip";
 	
 	public static final String IM_LOAD_LIME_ROOT_DIRECTORY = Environment.getExternalStorageDirectory() + "/limehd/";
 	public static final String DOWNLOAD_START = "download_start";
