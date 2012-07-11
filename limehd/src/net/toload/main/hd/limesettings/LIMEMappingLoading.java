@@ -48,7 +48,7 @@ import android.widget.TextView;
 public class LIMEMappingLoading extends Activity {
 
 	final static String TAG = "LIMEMappingLoading";
-	final static boolean DEBUG = true;
+	final static boolean DEBUG = false;
 	
 	private Thread thread = null;
 	

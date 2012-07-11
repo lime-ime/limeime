@@ -51,7 +51,7 @@ public class LIMEMenu extends TabActivity {
 
 	private LIMEPreferenceManager mLIMEPref;
 	private final String TAG = "LIMEMenu";
-	private final boolean DEBUG = true;
+	private final boolean DEBUG = false;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {

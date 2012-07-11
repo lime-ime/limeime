@@ -17,7 +17,7 @@ import android.util.Log;
 @TargetApi(8)
 public class LIMEBackupAgent extends BackupAgentHelper {
 	static final String TAG = "LIMEBackupAgent";
-	static final boolean DEBUG = true;
+	static final boolean DEBUG = false;
 	
     // A key to uniquely identify the set of backup data
     static final String PREFS_BACKUP_KEY = "defaultPrefs";
