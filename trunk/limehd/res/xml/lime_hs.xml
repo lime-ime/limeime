@@ -54,8 +54,7 @@
 	</Row>
 
 	<Row>
-		<Key limehd:codes="65" limehd:keyLabel="A" limehd:horizontalGap="5%p" 
-                limehd:keyEdgeFlags="left"/>
+		<Key limehd:codes="65" limehd:keyLabel="A"  limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="83" limehd:keyLabel="S"/>
         <Key limehd:codes="68" limehd:keyLabel="D"/>
         <Key limehd:codes="70" limehd:keyLabel="F"/>

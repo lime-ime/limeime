@@ -12,7 +12,7 @@ import com.google.gdata.client.uploader.ResumableHttpFileUploader;
 import com.google.gdata.data.docs.DocumentListEntry;
 
 public class FileUploadProgressListener implements ProgressListener {
-	private final boolean DEBUG = true;
+	private final boolean DEBUG = false;
 	private final String TAG = "FileUploadPregressLIstener";
     private ResumableGDataFileUploader uploader;
     HashMap<String, DocumentListEntry> uploaded = new HashMap<String, DocumentListEntry>();// Maps.newHashMap();
