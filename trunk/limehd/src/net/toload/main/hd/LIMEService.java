@@ -904,12 +904,15 @@ public class LIMEService extends InputMethodService implements
 					+ Integer.toHexString( LIMEMetaKeyKeyListener.getMetaState(mMetaState)) 
 					+", event.getMetaState()" + Integer.toHexString( event.getMetaState()));
 		
-		
+		//Jeremy '12,5,28 after honeycomb use the metastate sent form KeyEvent to proces the shift/cap_lock etc...
+		//Jeremy '12,6,10 honeycomb starting from api 11 not 13.
+				
 		int metaState;
-		if(android.os.Build.VERSION.SDK_INT < 11)  //Jeremy '12,6,10 honeycomb starting from api 11 not 13.
-			metaState = LIMEMetaKeyKeyListener.getMetaState(mMetaState);
-		else//Jeremy '12,5,28 after honeycomb use the metastate sent form KeyEvent to proces the shift/cap_lock etc...
+		if(android.os.Build.VERSION.SDK_INT > 10 && mLIMEPref.getPhysicalKeyboardType().equals("standard"))
 			metaState = event.getMetaState();
+		else
+			metaState = LIMEMetaKeyKeyListener.getMetaState(mMetaState);
+			
 			
 		int c = event.getUnicodeChar(metaState);
 		
