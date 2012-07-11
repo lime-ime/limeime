@@ -77,7 +77,7 @@ import android.content.res.Configuration;
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = true;
+	static final boolean DEBUG = false;
 	static final String TAG = "LIMEService";
 	//static final String PREF = "LIMEXY";
 
@@ -1455,19 +1455,11 @@ public class LIMEService extends InputMethodService implements
 
 						try {
 							SearchSrv.addUserDictAndUpdateScore(selectedCandidate);
-									/*selectedCandidate.getId(),
-									selectedCandidate.getCode(),
-									selectedCandidate.getWord(),
-									selectedCandidate.getPword(),
-									selectedCandidate.getScore(),
-									selectedCandidate.isDictionary());*/
+									
 						} catch (RemoteException e) {
 							e.printStackTrace();
 						}
-						//userdiclist.add(firstMatched);
-						// Update userdict for auto-learning feature
-						// if(userdiclist.size() > 1) { updateUserDict();}
-
+						
 						// Add by Jeremy '10, 4,1 . Reverse Lookup
 						SearchSrv.rQuery(selectedCandidate.getWord());
 						
@@ -1482,23 +1474,10 @@ public class LIMEService extends InputMethodService implements
 						boolean composingNotFinish = false;
 						//String commitedCode = selectedCandidate.getCode();
 						int commitedCodeLength = SearchSrv.getRealCodeLength(selectedIndex); 
-								//selectedCandidate.getCodeLength(); //commitedCode.length();//Jeremy '12,6,2 get preserved codelenght from mapping
-						/*if(!selectedCandidate.isDictionary() && selectedCandidate.getRelated()){
-
-							commitedCodeLength = SearchSrv.getRealCodeLength(selectedIndex);
-						}else if(activeIM.equals("phonetic") &&
-								mComposing.length() >= selectedCandidate.getCode().length()){
-								String strippedCode = commitedCode.trim().replaceAll("[3467 ]", "");
-								//commitedCode = strippedCode;
-							if(mComposing.toString().contains(commitedCode)){
-								if(mComposing.length() > commitedCode.length())
-									composingNotFinish = true;
-							}else if(mComposing.toString().contains(strippedCode)){
-								composingNotFinish = true;
-								commitedCodeLength = strippedCode.length();
-							}
-							
-						}else */
+						
+						if(DEBUG) 
+							Log.i(TAG, "commitedtype(): commitedCodeLength = " + commitedCodeLength);
+						
 						if(mComposing.length() > selectedCandidate.getCode().length()){
 							composingNotFinish = true;
 						}
@@ -1511,24 +1490,29 @@ public class LIMEService extends InputMethodService implements
 								LDComposingBuffer = mComposing.toString();
 								if(DEBUG) 
 									Log.i(TAG, "commitedtype():starting LD process, LDBuffer=" + LDComposingBuffer +
-										". just commited code=" + selectedCandidate.getCode());
+										". just commited code= '" + selectedCandidate.getCode() + "'");
 								SearchSrv.addLDPhrase(selectedCandidate, false);
 							}else {//if(LDComposingBuffer.contains(mComposing.toString())){
 								//Continuous LD process
 								if(DEBUG) 
-									Log.i(TAG, "commitedtype():Continuous LD process, LDBuffer=" + LDComposingBuffer +
-										". just commited code=" + selectedCandidate.getCode());
+									Log.i(TAG, "commitedtype():Continuous LD process, LDBuffer='" + LDComposingBuffer +
+										"'. just commited code=" + selectedCandidate.getCode());
 								SearchSrv.addLDPhrase(selectedCandidate, false);
 							}
 							mComposing= mComposing.delete(0, commitedCodeLength);
+							if(DEBUG) 
+								Log.i(TAG, "commitedtype(): trimmed mCopmosing = '" + mComposing + "', " +
+										"+ mCompsing.length = " + mComposing.length());
 							
 							if(!mComposing.toString().equals(" ")){
 								if(mComposing.toString().startsWith(" "))
 									mComposing= mComposing.deleteCharAt(0);
-								if(DEBUG) Log.i(TAG, "commitedtype(): new mComposing:" +mComposing);
-								if(ic!=null) ic.setComposingText(mComposing, 1);
-								updateCandidates();
-								return;
+								if(DEBUG) Log.i(TAG, "commitedtype(): new mComposing:'" +mComposing +  "'");
+								if(mComposing.length()>0){ //Jeremy '12,7,11 only fetch remaining composoing when length >0
+									if(ic!=null) ic.setComposingText(mComposing, 1);
+									updateCandidates();
+									return;
+								}
 							}
 						} else {
 							if(LDComposingBuffer.length()>0 ){// && LDComposingBuffer.contains(mComposing.toString())){
@@ -1799,8 +1783,9 @@ public class LIMEService extends InputMethodService implements
 			if (hasCandidatesShown){ //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
 				if(!pickHighlightedCandidate()){//Jeremy '12,5,11 fixed for not sedning related.
 					if(mComposing.length() == 0)
-							hideCandidateView();
+						hideCandidateView();
 					sendKeyChar((char)primaryCode);
+						
 				}
 				
 			}else{
@@ -3288,7 +3273,8 @@ public class LIMEService extends InputMethodService implements
 				Log.i(TAG, "pickSuggestionManually():mCompletionOn:" + mCompletionOn);
 
 		} else if ((mComposing.length() > 0 
-				||selectedCandidate != null && selectedCandidate.isDictionary()) && !mEnglishOnly) {  //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+				||selectedCandidate != null && selectedCandidate.isDictionary()) && !mEnglishOnly) {  
+			//Jeremy '12,4,29 use mEnglishOnly instead of onIM
 			commitTyped(ic);
 		} else if (mLIMEPref.getEnglishPrediction() && tempEnglishList != null
 					&& tempEnglishList.size() > 0) {
