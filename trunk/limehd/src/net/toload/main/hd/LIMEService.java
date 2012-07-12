@@ -2743,12 +2743,11 @@ public class LIMEService extends InputMethodService implements
 				i = selkey.indexOf((char) primaryCode);
 				
 				//Jeremy '12,7,11 bypass space as first tone for phonetic 
-				if(primaryCode== MY_KEYCODE_SPACE && activeIM.equals("phonetic") 
+				if( i>=0 && selkey.substring(i, i+1).equals(" ")
+						&& primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic") 
 						&& mLIMEPref.getParameterBoolean("doLDPhonetic", true) 
-						&& !(mComposing.toString().endsWith(" ")|| mComposing.length()==0 )
-						&& selkey.substring(i, i+1).equals(" ")) { 
+						&& !(mComposing.toString().endsWith(" ")|| mComposing.length()==0 )	) { 
 					return false;
-					
 				}
 				
 				
