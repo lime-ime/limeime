@@ -544,7 +544,7 @@
     <string name="l3_im_download_from_cj_start">Downloading CJ table</string>
     <string name="l3_im_download_from_cj_install">Importing CJ table</string>
     
-  
+	<string name="l3_im_download_from_scj">Download/Import SCJ table</string>
     <string name="l3_im_download_from_scj_start">Downloading SCJ table</string>
     <string name="l3_im_download_from_scj_install">Importing SCJ table</string>
     
