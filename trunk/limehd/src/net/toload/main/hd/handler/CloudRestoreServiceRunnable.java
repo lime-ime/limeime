@@ -164,7 +164,7 @@ public class CloudRestoreServiceRunnable  implements Runnable{
 						inStream = ms.getInputStream();
 						outStream = new FileOutputStream(tempfile.getAbsolutePath());
 
-						long fileSize = inStream.available();
+						long fileSize = entry.getQuotaBytesUsed();
 						if(fileSize == 0 || fileSize == -1){
 							fileSize = mLIMEPref.getParameterLong("cloud_backup_size", 0);
 						}
