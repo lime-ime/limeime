@@ -3202,8 +3202,10 @@ public class LIMEService extends InputMethodService implements
 	private void startVoiceInput(){
 		if(DEBUG)
 			Log.i(TAG, "startVoiceInput()");
-		if(LIMEUtilities.isVoiceSearchServiceExist(getBaseContext()))
-			this.switchInputMethod("com.google.android.voicesearch/.ime.VoiceInputMethodService");
+		
+		String voiceid= LIMEUtilities.isVoiceSearchServiceExist(getBaseContext()) ;
+		if(voiceid != null)
+			this.switchInputMethod(voiceid);
 		
 		
 	}

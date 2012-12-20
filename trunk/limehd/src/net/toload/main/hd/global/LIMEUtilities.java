@@ -128,24 +128,24 @@ public class LIMEUtilities {
 
 	}
 	
-	public static boolean isVoiceSearchServiceExist(Context context){
+	public static String isVoiceSearchServiceExist(Context context){
 		if(DEBUG) Log.i(TAG, "isVoiceSearchServiceExist()");
 		
 		InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
 		List<InputMethodInfo> mInputMethodProperties = imm.getEnabledInputMethodList();
 	
-		boolean isVoiceSearchServiceEnabled = false;
+		//boolean isVoiceSearchServiceEnabled = false;
 		for (int i = 0; i < mInputMethodProperties.size(); i++) {
 			InputMethodInfo imi = mInputMethodProperties.get(i);
 			if(DEBUG) Log.i(TAG, "enabled IM " + i + ":" + imi.getId());
 			
 			if(imi.getId().equals("com.google.android.voicesearch/.ime.VoiceInputMethodService")){
-				isVoiceSearchServiceEnabled = true;
-				if(DEBUG) Log.i(TAG,"isVoiceSearchServiceExist(), voice input service ime found.");
-				break;
+				return "com.google.android.voicesearch/.ime.VoiceInputMethodService";
+			}else if(imi.getId().equals("com.google.android.googlequicksearchbox/com.google.android.voicesearch.ime.VoiceInputMethodService")){
+				return "com.google.android.googlequicksearchbox/com.google.android.voicesearch.ime.VoiceInputMethodService";
 			}
 		}
-		return isVoiceSearchServiceEnabled;
+		return null;
 		
 	}
 	
