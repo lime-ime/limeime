@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="net.toload.main.hd" android:versionName="3.8.5" android:versionCode="310">
+	package="net.toload.main.hd" android:versionName="3.9.0" android:versionCode="330">
 
 	<uses-permission android:name="android.permission.VIBRATE" />
 	<uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
