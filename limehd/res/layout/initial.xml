@@ -6,6 +6,12 @@
 		android:layout_width="match_parent" android:layout_height="match_parent">
 		<LinearLayout android:id="@+id/LinearLayout1"
 			android:layout_margin="10px" android:baselineAligned="true" android:layout_gravity="center_horizontal" android:orientation="vertical" android:layout_width="match_parent" android:gravity="center" android:layout_height="wrap_content">
+			
+			<TableLayout android:layout_width="match_parent" android:id="@+id/tableLayout4" android:layout_height="wrap_content">
+				<TableRow android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/ad_area">
+                </TableRow>
+			</TableLayout>
+			
 			<TableLayout android:id="@+id/tableLayout4" android:layout_height="wrap_content" android:layout_width="match_parent">
 				<TableRow android:id="@+id/tableRow10" android:layout_width="wrap_content" android:layout_height="wrap_content">
 					<TextView android:layout_width="wrap_content" android:id="@+id/textView1" android:layout_height="wrap_content" android:text="@string/reset_db_note" android:textAppearance="?android:attr/textAppearanceMedium" android:layout_marginTop="10dip" android:layout_marginBottom="10dip" android:paddingTop="5dip" android:paddingBottom="5dip" android:paddingLeft="5dip" android:paddingRight="5dip"></TextView>
@@ -52,6 +58,8 @@
                     <Button android:layout_weight="1" android:layout_width="fill_parent" android:padding="5px" android:layout_height="wrap_content" android:layout_margin="5px" android:enabled="false"></Button>
 				</TableRow>
 			</TableLayout>
+			
+			
 		</LinearLayout>
 	</ScrollView>
 </LinearLayout>

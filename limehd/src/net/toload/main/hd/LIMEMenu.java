@@ -21,6 +21,11 @@
 package net.toload.main.hd;
 
 import java.io.File;
+
+import com.google.ads.AdRequest;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
+
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
@@ -40,6 +45,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.LinearLayout;
 import android.widget.TabHost;
 import android.widget.Toast;
 
@@ -120,8 +126,6 @@ public class LIMEMenu extends TabActivity {
 			mLIMEPref.setParameter("version_code", "0");
 			e.printStackTrace();
 		}
-		
-       
      
         
     }

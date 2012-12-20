@@ -11,12 +11,22 @@
 		android:id="@+id/IMSettingScrollView" android:layout_height="fill_parent">
 		<LinearLayout android:orientation="vertical"
 			android:layout_width="fill_parent" android:layout_height="fill_parent" android:id="@+id/kbLinearLayout">
+			
+		    
+		    
 			<LinearLayout android:id="@+id/LinearLayout02"
 				android:layout_height="wrap_content" android:paddingBottom="15px"
 				android:paddingTop="10px" android:layout_width="fill_parent">
 				<Button android:layout_height="wrap_content" android:text="@string/l3_im_setting_back"
 					android:layout_width="fill_parent" android:id="@+id/btnBackToPreviousPage"></Button>
 			</LinearLayout>
+			
+		    <LinearLayout
+		        android:id="@+id/ad_area"
+		        android:layout_width="match_parent"
+		        android:layout_height="wrap_content" >
+		    </LinearLayout>
+		    
 			<LinearLayout android:id="@+id/LinearLayout03"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
 				android:paddingBottom="20px">
@@ -109,5 +119,6 @@
 			</LinearLayout>
 			
 		</LinearLayout>
+    
 	</ScrollView>
 </LinearLayout>
