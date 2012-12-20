@@ -23,9 +23,9 @@ public class LIME {
 	public static final String G_CJK_HK_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj_CJK_HKSCS.lime";
 	
 	// OV CIN files download URL
-	public static final String DAYI_DOWNLOAD_URL = "http://openvanilla.googlecode.com/svn/trunk/Modules/SharedData/dayi3.cin";
-	public static final String PINYI_TW_DOWNLOAD_URL = "http://openvanilla.googlecode.com/svn/trunk/Modules/SharedData/pinyinbig5.cin";
-	public static final String PINYI_CN_DOWNLOAD_URL = "http://openvanilla.googlecode.com/svn/trunk/Modules/SharedData/pinyin.cin";
+	public static final String DAYI_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/dayi3.cin";
+	public static final String PINYI_TW_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/pinyinbig5.cin";
+	public static final String PINYI_CN_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/pinyin.cin";
 	
 	// OpenFoundary
 	public static final String CJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fcj.zip";
@@ -118,5 +118,8 @@ public class LIME {
 	//public final static String SEARCHSRV_RESET_CACHE = "searchsrv_reset_cache";
 	public final static int SEARCHSRV_RESET_CACHE_SIZE = 500;
 	public final static int LIMEDB_CACHE_SIZE = 1024;
+	
+	// ADMOB
+	public final static String publisher = "a150d26a4156cea";
 	
 }

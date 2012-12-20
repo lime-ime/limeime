@@ -10,7 +10,6 @@
 	<uses-permission android:name="android.permission.WRITE_SETTINGS" />
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 	<uses-permission android:name="android.permission.INTERNET"/>
-	<uses-permission android:name="android.permission.INSTALL_PACKAGES" />
 	<uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
@@ -68,7 +67,9 @@
 		</activity>
 		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreferenceHC">
 		</activity>
-		
+		<activity
+            android:name="com.google.ads.AdActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
 		
 		<activity android:theme="@style/LIMEHDDialogTheme" android:configChanges="keyboard|keyboardHidden|orientation" android:name=".limesettings.LIMEMappingLoading"></activity>
 		<meta-data android:name="com.google.android.backup.api_key"

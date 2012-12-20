@@ -20,6 +20,10 @@
 
 package net.toload.main.hd.limesettings;
 
+import com.google.ads.AdRequest;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
+
 import net.toload.main.hd.LIMEMenu;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEUtilities;
@@ -36,6 +40,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -126,6 +131,7 @@ public class LIMEMappingLoading extends Activity {
 				abortConfirmDialog();
 			}
 		});
+
 		
 	}
 	
