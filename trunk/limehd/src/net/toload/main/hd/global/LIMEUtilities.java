@@ -117,11 +117,11 @@ public class LIMEUtilities {
 		NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 		NotificationCompat.Builder mNotificationBuilder = new NotificationCompat.Builder(context);
 
-
 		mNotificationBuilder.setSmallIcon(R.drawable.icon)
 		    .setAutoCancel(autoCancel)
 		    .setContentTitle(title)
 		    .setContentText(message)
+		    .setTicker(message)
 		    .setContentIntent(PendingIntent.getActivity(context, 0,intent, 0));
 
 		mNotificationManager.notify(R.drawable.icon, mNotificationBuilder.getNotification());
