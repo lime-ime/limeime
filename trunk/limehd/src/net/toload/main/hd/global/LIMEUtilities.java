@@ -25,7 +25,7 @@ import android.content.Intent;
  */
 public class LIMEUtilities {
 	static final String TAG = "LIMEUtilities";
-	static final boolean DEBUG = false;
+	static final boolean DEBUG = true;
 	
 	public static File isFileNotExist(String filepath){
 		

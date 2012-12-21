@@ -100,7 +100,7 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 						score = 1;  //phase has default score = 1
 					
 				if (cursor != null) {
-					cursor.deactivate();
+					//cursor.deactivate();
 					cursor.close();
 				}
 			} catch (Exception e) {
@@ -143,7 +143,7 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 				}
 					
 				if (cursor != null) {
-					cursor.deactivate();
+					//cursor.deactivate();
 					cursor.close();
 				}
 			} catch (Exception e) {
