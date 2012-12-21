@@ -46,6 +46,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard;
 import net.toload.main.hd.keyboard.LIMEKeyboard;
@@ -778,7 +779,7 @@ public class LIMEService extends InputMethodService implements
 		if (mCompletionOn){
 			mCompletions = completions;
 			if(!mEnglishOnly){ //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-				if(mComposing.length()==0) updateRelatedWord();
+				if(mComposing.length()==0) updateRelatedWord(false);
 			} 
 			if(mEnglishOnly && !mPredictionOn) {
 				setSuggestions(buildCompletionList(), false, true,"");
@@ -1309,9 +1310,9 @@ public class LIMEService extends InputMethodService implements
 								&& selectedCandidate.getWord() != null) {
 							if (selectedCandidate
 									.getCode()
-									.toLowerCase()
+									.toLowerCase(Locale.US)
 									.equals(selectedCandidate.getWord()
-											.toLowerCase())) {
+											.toLowerCase(Locale.US))) {
 								firstMatchedLength = 1;
 
 								
@@ -1432,7 +1433,7 @@ public class LIMEService extends InputMethodService implements
 				
 				clearComposing(false);				//Jeremy '12, 4 ,21
 				if(!mEnglishOnly) //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-					updateRelatedWord();
+					updateRelatedWord(false);
 
 				
 
@@ -2123,9 +2124,9 @@ public class LIMEService extends InputMethodService implements
 				if (SearchSrv.getTablename() != null ) {
 						
 					if (keyString != null && !keyString.equals("") ){//&& keyString.length() < 7) { Jeremy '11,8,30 move the limit to limedb					
-						keynameString = SearchSrv.keyToKeyname(keyString); //.toLowerCase()); moved to LimeDB
+						keynameString = SearchSrv.keyToKeyname(keyString); //.toLowerCase(Locale.US)); moved to LimeDB
 							if (mCandidateView != null 
-									&& !keynameString.toUpperCase().equals(keyString.toUpperCase())
+									&& !keynameString.toUpperCase(Locale.US).equals(keyString.toUpperCase(Locale.US))
 									//&& !keynameString.equals("")
 									&& !keynameString.trim().equals("")
 									) {
@@ -2234,7 +2235,7 @@ public class LIMEService extends InputMethodService implements
 	/*
 	 * Update dictionary view
 	 */
-	private void updateRelatedWord() {
+	private void updateRelatedWord(boolean getAllRecords) {
 		if(DEBUG)
 			Log.i(TAG, "updateRelatedWord()");
 		hasChineseSymbolCandidatesShown = false;
@@ -2258,7 +2259,7 @@ public class LIMEService extends InputMethodService implements
 				// Modified by Jeremy '10,3 ,12 for more specific related word
 				// -----------------------------------------------------------
 				if (commitedCandidate != null && hasMappingList) {
-					list.addAll( SearchSrv.queryUserDic(commitedCandidate.getWord()));
+					list.addAll( SearchSrv.queryUserDic(commitedCandidate.getWord(), getAllRecords));
 				}
 				// -----------------------------------------------------------
 				if (list.size() > 0) {
@@ -2977,13 +2978,15 @@ public class LIMEService extends InputMethodService implements
 			return mCandidateView.takeSelectedSuggestion();
 	}
 	
-	public void requestFullRecords() {
+	public void requestFullRecords(boolean isRelated) {
 		if (DEBUG)
 			Log.i(TAG,"requestFullRecords()");
 	
-		
+		if(isRelated)
+			this.updateRelatedWord(true);
+		else
 		//updateCandidates to get full records.
-		this.updateCandidates(true);
+			this.updateCandidates(true);
 		
 	}
 

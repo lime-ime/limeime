@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.toload.main.hd.R;
@@ -200,9 +201,9 @@ public class SearchServer {
 
 	//Modified by Jeremy '10,3 ,12 for more specific related word
 	//-----------------------------------------------------------
-	public List<Mapping> queryUserDic(String word) throws RemoteException {
+	public List<Mapping> queryUserDic(String word, boolean getAllRecords) throws RemoteException {
 
-		List<Mapping> result = dbadapter.queryUserDict(word);
+		List<Mapping> result = dbadapter.queryUserDict(word, getAllRecords);
 		return result;
 	}
 	//-----------------------------------------------------------
@@ -274,7 +275,7 @@ public class SearchServer {
 
 			Mapping temp = new Mapping();
 			temp.setWord(code);
-			//code = code.toLowerCase();  //Jeremy '12,4,1 moved to LimeDB.getMapping after remapping For XPERIA PRO BPMF 
+			//code = code.toLowerCase(Locale.US);  //Jeremy '12,4,1 moved to LimeDB.getMapping after remapping For XPERIA PRO BPMF 
 			temp.setCode(code);
 			//result.add(temp);  Jeremy '12,5,30 add later in the result buliding loop
 			int size = code.length();
@@ -282,7 +283,7 @@ public class SearchServer {
 			boolean hasMore = false;
 
 
-			// 11'7,22 rewritten for ��嚙賢�頦嚙踐��哨蕭謕
+			// 11'7,22 rewritten for 嚙踐�嚙賢�鞈ｇ蕭�佇��批�頦蕭嚙賢�剛�豲
 			// 12,6,4 Jeremy. Ascending a ab abc... looking up db if the cache is not exist
 			for(int i =0; i<size; i++) {
 				String queryCode = code.substring(0,i+1);
@@ -336,7 +337,7 @@ public class SearchServer {
 
 				}
 			}
-			// 11'7,22 rewritten for ��嚙賢�頦嚙踐��哨蕭謕
+			// 11'7,22 rewritten for 嚙踐�嚙賢�鞈ｇ蕭�佇��批�頦蕭嚙賢�剛�豲
 			// 12,6,4 Jeremy. Descending  abc ab a... Build the result candidate list.
 			for(int i =0; i<size; i++) {
 				String cacheKey = cacheKey(code);
@@ -496,7 +497,7 @@ public class SearchServer {
 		dbadapter.addScore(cachedMapping);					
 		// Jeremy '11,7,29 update cached here
 		if (!cachedMapping.isDictionary()){
-			String code = cachedMapping.getCode().toLowerCase();
+			String code = cachedMapping.getCode().toLowerCase(Locale.US);
 			String cachekey = cacheKey(code);
 			Pair<List<Mapping>, List<Mapping>> cachedPair = cache.get(cachekey);
 			// null id denotes target is selected from the related list (not exact match)
@@ -763,8 +764,8 @@ public class SearchServer {
 										+ "'.");
 							if(i+1 == phraselist.size()-1){//only learn at the end of the phrase word '12,6,8
 								if(tablename.equals("phonetic")) {// remove tone symbol in phonetic table 
-									LDCode = baseCode.replaceAll("[3467 ]", "").toLowerCase();
-									QPCode = QPCode.toLowerCase();
+									LDCode = baseCode.replaceAll("[3467 ]", "").toLowerCase(Locale.US);
+									QPCode = QPCode.toLowerCase(Locale.US);
 									if(LDCode.length()>1){
 										dbadapter.addOrUpdateMappingRecord(LDCode, baseWord);
 										removeRemapedCodeCachedMappings(LDCode);								
@@ -776,7 +777,7 @@ public class SearchServer {
 										updateSimilarCodeRelatedList(QPCode);
 									}
 								}else if(baseCode.length()>1){
-									baseCode = baseCode.toLowerCase();
+									baseCode = baseCode.toLowerCase(Locale.US);
 									dbadapter.addOrUpdateMappingRecord(baseCode, baseWord);
 									removeRemapedCodeCachedMappings(baseCode);
 									updateSimilarCodeRelatedList(baseCode);

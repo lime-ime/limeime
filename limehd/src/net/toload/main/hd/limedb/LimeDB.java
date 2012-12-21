@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -48,11 +49,13 @@ import android.os.RemoteException;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.Pair;
+import android.util.SparseArray;
 import android.widget.Toast;
 
 /**
  * @author Art Hung and Jeremy Wu.
  */
+
 public class LimeDB  extends LimeSQLiteOpenHelper { 
 
 	private static boolean DEBUG = false;
@@ -557,7 +560,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				hasValidRecords = true;
 			}
 			if (cursor != null) {
-				cursor.deactivate();
+				//cursor.deactivate();
 				cursor.close();
 			}
 			mLIMEPref.setParameter("checkLDPhonetic", "done");
@@ -944,7 +947,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				if (code == null || code.trim().equals("")) {
 					continue;
 				} else {
-					code = code.toLowerCase();
+					code = code.toLowerCase(Locale.US);
 				}
 				if (word == null || word.trim().equals("")) {
 					continue;
@@ -1120,7 +1123,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			// Jeremy '11,6,12 Id=null denotes selection from related list in im table
 //			if(srcunit !=null && srcunit.getId()== null && 
 //				srcunit.getWord() != null  && !srcunit.getWord().trim().equals("")){
-//				String code = srcunit.getCode().trim().toLowerCase();
+//				String code = srcunit.getCode().trim().toLowerCase(Locale.US);
 //				if(DEBUG) Log.i("LIMEDb.addScore()","related selectd, code:" + code);
 //				// sotre the phrase frequency of relatedlist in reated table with cword =null
 //				addOrUpdateUserdictRecord(srcunit.getWord(),null); 
@@ -1205,7 +1208,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				}
 
 				if (cursor != null) {
-					cursor.deactivate();
+					//cursor.deactivate();
 					cursor.close();
 				}
 			}
@@ -1270,7 +1273,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				}
 
 				if (cursor != null) {
-					cursor.deactivate();
+					//cursor.deactivate();
 					cursor.close();
 				}
 			}
@@ -1387,7 +1390,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			Log.i(TAG, "updateRelatedListOnDB(): scorelist.size() =  "+ scorelist.size());
 		
 		if (cursor != null) {
-			cursor.deactivate();
+			//cursor.deactivate();
 			cursor.close();
 		}
 		return scorelist;
@@ -1668,7 +1671,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				int ssize = mLIMEPref.getSimilarCodeCandidates();
 				boolean sort = mLIMEPref.getSortSuggestions();
 				
-				code = code.toLowerCase();
+				code = code.toLowerCase(Locale.US);
 				if(code != null){
 					// Process the escape characters of query
 					code = code.replaceAll("'", "''");
@@ -1726,7 +1729,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		//Two-steps qeury code pre-processing. Jeremy '11,6,15
 		// Step.1 Code re-mapping.  
 		code = preProcessingRemappingCode(code);
-		code = code.toLowerCase(); //Jeremy '12,4,1 moved from SearchService.query();
+		code = code.toLowerCase(Locale.US); //Jeremy '12,4,1 moved from SearchService.query();
 		// Step.2 Build extra query conditions. (e.g. 3row remap)
 		String extraConditions = preProcessingForExtraQueryConditions(code);
 		//Jeremy '11,6,11 seperated suggestions sorting option for physical keyboard
@@ -1808,7 +1811,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	
 					result = buildQueryResult(code, cursor, getAllRecords);
 					if (cursor != null) {
-						cursor.deactivate();
+						//cursor.deactivate();
 						cursor.close();
 					}
 					
@@ -2159,7 +2162,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		if(codeDualMap != null && codeDualMap.size()>0) {
 
 			//Jeremy '12,6,4 
-			HashMap<Integer, List<String>> treemap = new HashMap<Integer, List<String>>();
+			SparseArray< List<String>> treemap = new SparseArray<List<String>>();
 			for(int i=0;i  < code.length(); i++ ){
 				if(DEBUG)
 					Log.i(TAG, "buildDualCodeList() level : " + i);
@@ -2492,7 +2495,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							
 						}
 						if (cursor != null) {
-							cursor.deactivate();
+							//cursor.deactivate();
 							cursor.close();
 						}
 					} catch (Exception e) {
@@ -2708,7 +2711,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @param keyword
 	 * @return
 	 */
-	public List<Mapping> queryUserDict(String pword) {
+	public List<Mapping> queryUserDict(String pword, boolean getAllRecords) {
+		if(DEBUG)
+			Log.i(TAG,"queryUserDict(), " +getAllRecords);
 		
 		List<Mapping> result = new LinkedList<Mapping>();
 
@@ -2722,9 +2727,15 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				// Jeremy '11,8.23 remove group by condition to avoid sorting ordr
 				// Jeremy '11,8,1 add group by cword to remove duplicate items.
 				//Jeremy '11,6,12, Add constraint on cword is not null (cword =null is for recoding im related list selected count).
+				//Jeremy '12,12,21 Add limitClause to limit candidates in only 1 page first.
+				//					to do 2 stage query.
+				String limitClause = null;
+				
+				if(!getAllRecords) 	limitClause = INITIAL_RESULT_LIMIT;
+				
 				cursor = db.query("related", null, FIELD_DIC_pword + " = '"
 						+ pword + "' AND " + FIELD_DIC_cword + " IS NOT NULL"
-						, null, null , null, FIELD_SCORE + " DESC", null);
+						, null, null , null, FIELD_SCORE + " DESC", limitClause);
 	
 				if (cursor.moveToFirst()) {
 	
@@ -2732,6 +2743,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					int cwordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
 					int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
 					int idColumn = cursor.getColumnIndex(FIELD_ID);
+					int rsize = 0; 
 					do {
 						Mapping munit = new Mapping();
 						munit.setId(cursor.getString(idColumn));
@@ -2741,11 +2753,20 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						munit.setScore(cursor.getInt(scoreColumn));
 						munit.setDictionary(true);
 						result.add(munit);
+						rsize++;
 					} while (cursor.moveToNext());
+					Mapping temp = new Mapping();
+					temp.setCode("has_more_records");
+					temp.setWord("...");
+					
+					if(!getAllRecords && rsize == Integer.parseInt(INITIAL_RESULT_LIMIT))
+						result.add(temp);
 				}
 	
+				
+				
 				if (cursor != null) {
-					cursor.deactivate();
+					//cursor.deactivate();
 					cursor.close();
 				}
 			}
@@ -2821,7 +2842,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 
 				// Check if source file is .cin format
-				if (filename.getName().toLowerCase().endsWith(".cin")) {
+				if (filename.getName().toLowerCase(Locale.US).endsWith(".cin")) {
 					isCinFormat = true;
 				}
 
@@ -2886,38 +2907,38 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 								// double space between $chardef and begin or
 								// end
 								if (line != null
-										&& line.trim().toLowerCase().startsWith("%chardef")
-										&& line.trim().toLowerCase().endsWith("begin")
+										&& line.trim().toLowerCase(Locale.US).startsWith("%chardef")
+										&& line.trim().toLowerCase(Locale.US).endsWith("begin")
 								) {
 									inChardefBlock = true;
 								}
 								if (line != null
-										&& line.trim().toLowerCase().startsWith("%keyname")
-										&& line.trim().toLowerCase().endsWith("begin")
+										&& line.trim().toLowerCase(Locale.US).startsWith("%keyname")
+										&& line.trim().toLowerCase(Locale.US).endsWith("begin")
 								) {
 									inKeynameBlock = true;
 								}
 								// Add by Jeremy '10, 3 , 27
 								// use %cname as mapping_version of .cin
 								// Jeremy '11,6,5 add selkey, endkey and spacestyle support
-								if (!(  line.trim().toLowerCase().startsWith("%cname")
-										||line.trim().toLowerCase().startsWith("%selkey")
-										||line.trim().toLowerCase().startsWith("%endkey")
-										||line.trim().toLowerCase().startsWith("%spacestyle")
+								if (!(  line.trim().toLowerCase(Locale.US).startsWith("%cname")
+										||line.trim().toLowerCase(Locale.US).startsWith("%selkey")
+										||line.trim().toLowerCase(Locale.US).startsWith("%endkey")
+										||line.trim().toLowerCase(Locale.US).startsWith("%spacestyle")
 								)) {
 									continue;
 								}
 							}
 							if (line != null
-									&& line.trim().toLowerCase().startsWith("%keyname")
-									&& line.trim().toLowerCase().endsWith("end")
+									&& line.trim().toLowerCase(Locale.US).startsWith("%keyname")
+									&& line.trim().toLowerCase(Locale.US).endsWith("end")
 							) {
 								inKeynameBlock = false;
 								continue;
 							}
 							if (line != null
-									&& line.trim().toLowerCase().startsWith("%chardef")
-									&& line.trim().toLowerCase().endsWith("end")
+									&& line.trim().toLowerCase(Locale.US).startsWith("%chardef")
+									&& line.trim().toLowerCase(Locale.US).endsWith("end")
 							) {
 								break;
 							}
@@ -2972,29 +2993,29 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							} else {
 								word = word.trim();
 							}
-							if (code.toLowerCase().contains("@version@")) {
+							if (code.toLowerCase(Locale.US).contains("@version@")) {
 								imname = word.trim();
 								continue;
-							} else if (code.toLowerCase().contains("%cname")) {
+							} else if (code.toLowerCase(Locale.US).contains("%cname")) {
 								imname = word.trim();
 								continue;
-							} else if (code.toLowerCase().contains("%selkey")) {
+							} else if (code.toLowerCase(Locale.US).contains("%selkey")) {
 								selkey = word.trim();
 								if(DEBUG) Log.i(TAG, "loadfile(): selkey:"+selkey);
 								continue;
-							} else if (code.toLowerCase().contains("%endkey")) {
+							} else if (code.toLowerCase(Locale.US).contains("%endkey")) {
 								endkey = word.trim();
 								if(DEBUG) Log.i(TAG, "loadfile(): endkey:"+endkey);
 								continue;	
-							} else if (code.toLowerCase().contains("%spacestyle")) {
+							} else if (code.toLowerCase(Locale.US).contains("%spacestyle")) {
 								spacestyle = word.trim();
 								continue;	
 							} else {
-								code = code.toLowerCase();
+								code = code.toLowerCase(Locale.US);
 							}
 							
 							if(inKeynameBlock) {  //Jeremy '11,6,5 preserve keyname blocks here.
-								imkeys = imkeys + code.toLowerCase().trim();
+								imkeys = imkeys + code.toLowerCase(Locale.US).trim();
 								String c = word.trim();
 								if(!c.equals("")){
 									if(imkeynames.equals(""))
@@ -3300,7 +3321,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			} else if(DEBUG)
 				Log.i(TAG, "isMappingExistOnDB(), mapping is not exist");
 			if (cursor != null) {
-				cursor.deactivate();
+				//cursor.deactivate();
 				cursor.close();
 			}
 			
@@ -3353,7 +3374,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				highestScore = cursor.getInt(scoreColumn);
 			} 
 			if (cursor != null) {
-				cursor.deactivate();
+				//cursor.deactivate();
 				cursor.close();
 			}
 			
@@ -3380,7 +3401,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				ID = cursor.getInt(idColumn);
 			} 
 			if (cursor != null) {
-				cursor.deactivate();
+				//cursor.deactivate();
 				cursor.close();
 			}
 
@@ -3450,7 +3471,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 			} 
 			if (cursor != null) {
-				cursor.deactivate();
+				//cursor.deactivate();
 				cursor.close();
 			}
 
@@ -3492,7 +3513,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				iminfo = cursor.getString(descCol);
 			}
 			if (cursor != null) {
-				cursor.deactivate();
+				//cursor.deactivate();
 				cursor.close();
 			}
 			//db.close();
@@ -3568,7 +3589,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				} while (cursor.moveToNext());
 			}
 			if (cursor != null) {
-				cursor.deactivate();
+				//cursor.deactivate();
 				cursor.close();
 			}
 			
@@ -3610,7 +3631,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					kobj.setExtendedshiftkb(cursor.getString(cursor.getColumnIndex("extendedshiftkb")));
 				}
 				if (cursor != null) {
-					cursor.deactivate();
+					//cursor.deactivate();
 					cursor.close();
 				}
 				//db.close();
@@ -3680,7 +3701,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			info = cursor.getString(cursor.getColumnIndex(field));
 		}
 		if (cursor != null) {
-			cursor.deactivate();
+			//cursor.deactivate();
 			cursor.close();
 		}
 		if(DEBUG)
@@ -3721,7 +3742,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				} while (cursor.moveToNext());
 			}
 			if (cursor != null) {
-				cursor.deactivate();
+				//cursor.deactivate();
 				cursor.close();
 			}
 			//db.close();
@@ -3784,7 +3805,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				return keyboardCode;
 			}
 			if (cursor != null) {
-				cursor.deactivate();
+				//cursor.deactivate();
 				cursor.close();
 			}
 			//db.close();
@@ -3793,6 +3814,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 
 	public List<String> queryDictionary(String word) {
+		
 		//Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
 		if(!checkDBConnection()) return null;
 				
@@ -3815,7 +3837,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				} while (cursor.moveToNext());
 			}
 			if (cursor != null) {
-				cursor.deactivate();
+				//cursor.deactivate();
 				cursor.close();
 			}
 			//db.close();
