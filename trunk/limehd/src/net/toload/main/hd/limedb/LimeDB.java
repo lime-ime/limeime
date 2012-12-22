@@ -1747,7 +1747,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					// Jeremy '11,8,2 Query code3r instead of code for code contains no tone symbols
 					// Jeremy '12,6,5 rewrite to consistent with expanddualcode
 					
-					final boolean useCode3r = tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", true);
+					final boolean useCode3r = tablename.equals("phonetic");//&& mLIMEPref.getParameterBoolean("doLDPhonetic", true);
 					String codeCol = FIELD_CODE;
 					
 					if( tablename.equals("phonetic") ){
@@ -2386,7 +2386,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	
 		if(dualCodeList != null) {
 			final boolean NOCheckOnExpand = code.length() < DUALCODE_NO_CHECK_LIMIT;		
-			final boolean useCode3r = tablename.equals("phonetic")&& mLIMEPref.getParameterBoolean("doLDPhonetic", true);
+			final boolean useCode3r = tablename.equals("phonetic");//&& mLIMEPref.getParameterBoolean("doLDPhonetic", true);
 				
 			for(String dualcode : dualCodeList){
 				if(DEBUG) 
@@ -2544,7 +2544,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		final boolean buildValidCodeList = lastValidDualCodeList==null;
 		
 		boolean useCode3r =tablename.equals("phonetic")
-				&& mLIMEPref.getParameterBoolean("doLDPhonetic", true) 
+				//&& mLIMEPref.getParameterBoolean("doLDPhonetic", true) 
 				&& !query_code.matches(".+[3467 ].*");
 		if(DEBUG) Log.i(TAG,"buildQueryResutl(): cursor.getCount()=" + cursor.getCount() 
 				+ ". lastValidDualCodeList = " + lastValidDualCodeList);
