@@ -1604,8 +1604,8 @@ public class LIMEService extends InputMethodService implements
 			switchKeyboard(primaryCode);
 		} else if ( //Jeremy '12,7,1 bug fixed on enter not functioning in english mode
 				((primaryCode== MY_KEYCODE_SPACE &&  !mEnglishOnly && !activeIM.equals("phonetic") )
-				||(primaryCode== MY_KEYCODE_SPACE &&  !mEnglishOnly &&
-						activeIM.equals("phonetic") && !mLIMEPref.getParameterBoolean("doLDPhonetic", true) )
+				//||(primaryCode== MY_KEYCODE_SPACE &&  !mEnglishOnly &&
+				//		activeIM.equals("phonetic") //&& !mLIMEPref.getParameterBoolean("doLDPhonetic", true) 	
 				||(primaryCode== MY_KEYCODE_SPACE &&  !mEnglishOnly &&
 						activeIM.equals("phonetic") && (mComposing.toString().endsWith(" ")|| mComposing.length()==0 ))
 				|| primaryCode == MY_KEYCODE_ENTER) ){
@@ -2746,7 +2746,7 @@ public class LIMEService extends InputMethodService implements
 				//Jeremy '12,7,11 bypass space as first tone for phonetic 
 				if( i>=0 && selkey.substring(i, i+1).equals(" ")
 						&& primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic") 
-						&& mLIMEPref.getParameterBoolean("doLDPhonetic", true) 
+						//&& mLIMEPref.getParameterBoolean("doLDPhonetic", true) 
 						&& !(mComposing.toString().endsWith(" ")|| mComposing.length()==0 )	) { 
 					return false;
 				}
