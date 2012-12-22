@@ -426,17 +426,32 @@
     <string name="l3_initial_restore_start">开始还原资料库</string>
     <string name="l3_initial_restore_end">资料库还原完成</string>
     
-    <string name="l3_initial_cloud_backup_database">GOOGLE 云端备份</string>
+    <string name="l3_initial_cloud_backup_database">GOOGLE Drive备份</string>
     <string name="l3_initial_cloud_backup_start">开始备份资料库</string>
     <string name="l3_initial_cloud_backup_end">资料库备份完成</string>
     <string name="l3_initial_cloud_backup_confirm">您是否要备份资料库至 GOOGLE 云端硬碟?</string>
     <string name="l3_initial_cloud_backup_error">资料库不存在，无法进行备份.</string>
-    <string name="l3_initial_cloud_restore_database">GOOGLE 云端还原</string>
-    <string name="l3_initial_cloud_restore_error">备份档案不存在，无法进行还原.</string>
+    <string name="l3_initial_cloud_restore_database">GOOGLE Drive还原</string>
     <string name="l3_initial_cloud_restore_confirm">您是否要还原资料库由 GOOGLE 云端硬碟?</string>
     <string name="l3_initial_cloud_restore_start">开始还原资料库</string>
     <string name="l3_initial_cloud_restore_end">资料库还原完成</string>
      <string name="l3_initial_cloud_failed">Google 云端硬碟服务暂时无法连接，请稍后再试</string>
+     
+    <string name="l3_initial_dropbox_backup_database">Dropbox 备份</string>
+    <string name="l3_initial_dropbox_backup_start">开始Dropbox资料库备份</string>
+    <string name="l3_initial_dropbox_backup_end">Dropbox资料库备份完成</string>
+    <string name="l3_initial_dropbox_backup_confirm">您是否要备份资料库至Dropbox?</string>
+    <string name="l3_initial_dropbox_backup_error">资料库不存在，无法进行备份.</string>
+    <string name="l3_initial_dropbox_restore_database">Dropbox 还原</string>
+    <string name="l3_initial_dropbox_restore_error">Dropbox 还原失败.</string>
+    <string name="l3_initial_dropbox_restore_confirm">您是否要由Dropboxe还原资料库?</string>
+    <string name="l3_initial_dropbox_restore_start">开始还原Dropbox资料库</string>
+    <string name="l3_initial_dropbox_restore_end">Dropbox资料库还原完成</string>
+    <string name="l3_initial_dropbox_failed">Dropbox服务暂时无法连接，请稍后再试</string>
+	<string name="l3_initial_dropbox_canceled">Dropbox动作已取消，请稍后再试</string>
+    <string name="l3_initial_dropbox_authetication_failed">Dropbox认证失败，请稍后再试</string>
+    <string name="l3_initial_dropbox_large">档案过大无法上传Dropbox</string>
+    
    
     <string name="l3_im_setting_select_keyboard">请选择输入法键盘显示</string>
     <string name="l3_im_setting_back">回到上一页</string>

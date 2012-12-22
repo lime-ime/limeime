@@ -52,6 +52,13 @@
 					<Button android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px" android:layout_height="wrap_content" android:id="@+id/btnCloudRestoreDB" android:text="@string/l3_initial_cloud_restore_database" android:padding="5px"></Button>
 				</TableRow>
 			</TableLayout>
+			<TableLayout android:layout_width="match_parent" android:id="@+id/tableLayout6" android:layout_height="wrap_content">
+				<TableRow android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/tableRow9">
+               		<Button android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px" android:layout_height="wrap_content" android:id="@+id/btnDropboxBackupDB" android:text="@string/l3_initial_dropbox_backup_database" android:padding="5px"></Button>
+					<Button android:layout_width="fill_parent" android:layout_weight="1" android:layout_margin="5px" android:layout_height="wrap_content" android:id="@+id/btnDropboxRestoreDB" android:text="@string/l3_initial_dropbox_restore_database" android:padding="5px"></Button>
+				</TableRow>
+			</TableLayout>
+			
 			<TableLayout android:layout_width="match_parent" android:id="@+id/tableLayout4" android:layout_height="wrap_content">
 				<TableRow android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/tableRow7">
                     <Button android:layout_weight="1" android:layout_width="fill_parent" android:padding="5px" android:layout_height="wrap_content" android:layout_margin="5px" android:enabled="false"></Button>

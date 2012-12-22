@@ -52,18 +52,17 @@ public class CloudBackupServiceRunnable  implements Runnable{
 	//private boolean first = true;
 	private boolean ready = false;
 	private boolean failed = false;
-	private File tempfile;
+	private File sourceFile;
 
 	public final static int intentLIMEMenu = 0;
 	public final static int intentLIMEMappingLoading = 1;
 	public final static int intentLIMEInitial = 2;
 	
-	public CloudBackupServiceRunnable(CloudServierHandler h,
-			LIMEInitial activity, File tempfile) {
+	public CloudBackupServiceRunnable(CloudServierHandler h, LIMEInitial activity, File sourcefile) {
 		this.handler = h;
 		this.activity = activity;
-		this.tempfile = tempfile;
-		//this.pref = PreferenceManager.getDefaultSharedPreferences(activity);
+		this.sourceFile = sourcefile;
+
 		this.accountManager = new GoogleAccountManager(activity);
 		this.credential = new GoogleCredential();
 		this.mLIMEPref = new LIMEPreferenceManager(activity);
@@ -76,6 +75,7 @@ public class CloudBackupServiceRunnable  implements Runnable{
 	}*/
 	
 	public void run() {
+		
 		
 		String accountName = "";
 		accountManager = new GoogleAccountManager(activity);
@@ -120,7 +120,7 @@ public class CloudBackupServiceRunnable  implements Runnable{
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				handler.closeProgressDialog();
-				mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
+				mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
 				failed = true;
 				e.printStackTrace();
 				return;
@@ -150,7 +150,7 @@ public class CloudBackupServiceRunnable  implements Runnable{
 				// Pool for handling concurrent upload tasks
 				ExecutorService executor = Executors
 						.newFixedThreadPool(MAX_CONCURRENT_UPLOADS);
-				MediaFileSource mediaFile = getMediaFileSource(tempfile
+				MediaFileSource mediaFile = getMediaFileSource(sourceFile
 						.getAbsolutePath());
 
 				DocumentListEntry metadata = new DocumentListEntry();
@@ -180,8 +180,8 @@ public class CloudBackupServiceRunnable  implements Runnable{
 					status = true;
 				}
 
-				mLIMEPref.setParameter("cloud_backup_size", tempfile.length());
-				mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
+				mLIMEPref.setParameter("cloud_backup_size", sourceFile.length());
+				mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
 				if(status){
 					DBServer.showNotificationMessage(
 							activity.getApplicationContext().getText(
@@ -195,13 +195,13 @@ public class CloudBackupServiceRunnable  implements Runnable{
 			} catch (Exception e) {
 				e.printStackTrace();
 				DBServer.showNotificationMessage("Cannot Backup Database", intentLIMEMenu);
-				mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
+				mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
 				handler.closeProgressDialog();
 				return;
 			}
 		}else{
 			handler.closeProgressDialog();
-			mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
+			mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
 		}
 	}
 	

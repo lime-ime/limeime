@@ -46,7 +46,7 @@
     
     <!-- Preference -->
     <string name="keyboard">Keyboard</string>
-    <string name="Similiar">Similiar</string>
+    <string name="Similiar">Similar</string>
     <string name="mapping">Mapping</string>
     
     <string name="keyboard_list">LIME Input Method</string>
@@ -454,17 +454,32 @@
     <string name="l3_initial_restore_end">Restore database task finished.</string>
     <string name="l3_initial_restore_confirm">Are you sure you want to restore lime database from backup?</string>
     
-    <string name="l3_initial_cloud_backup_database">Google Cloud Backup</string>
-    <string name="l3_initial_cloud_backup_start">Starting lime database backup task…</string>
-    <string name="l3_initial_cloud_backup_end">Backup database task finished.</string> 
-    <string name="l3_initial_cloud_backup_confirm">Are you sure you want to backup lime database to the Google Drive?</string>
+    <string name="l3_initial_cloud_backup_database">Google Drive Backup</string>
+    <string name="l3_initial_cloud_backup_start">Starting Google Drive database backup task…</string>
+    <string name="l3_initial_cloud_backup_end">Google Drive database backup task finished.</string> 
+    <string name="l3_initial_cloud_backup_confirm">Are you sure you want to backup lime database to Google Drive?</string>
     <string name="l3_initial_cloud_backup_error">No database to backup! Please initialized database first!</string>
-    <string name="l3_initial_cloud_restore_database">Google Cloud Restore</string>
-    <string name="l3_initial_cloud_restore_error">Backup not found!</string>
-    <string name="l3_initial_cloud_restore_start">Starting lime database restore task…</string>
+    <string name="l3_initial_cloud_restore_database">Google Drive Restore</string>
+    <string name="l3_initial_cloud_restore_error">Google Drive restore task failed!</string>
+    <string name="l3_initial_cloud_restore_start">Starting Google Drive database restore task…</string>
     <string name="l3_initial_cloud_restore_end">Restore database task finished.</string>
     <string name="l3_initial_cloud_restore_confirm">Are you sure you want to restore lime database from the Google Drive?</string>
     <string name="l3_initial_cloud_failed">Google Drive temporary unavailable please try again later</string>
+    
+    <string name="l3_initial_dropbox_backup_database">Dropbox Backup</string>
+    <string name="l3_initial_dropbox_backup_start">Starting Dropbox database backup task…</string>
+    <string name="l3_initial_dropbox_backup_end">Dropbox database backup task finished.</string> 
+    <string name="l3_initial_dropbox_backup_confirm">Are you sure you want to backup lime database to Dropbox?</string>
+    <string name="l3_initial_dropbox_backup_error">No database to backup! Please initialized database first!</string>
+    <string name="l3_initial_dropbox_restore_database">Dropbox Restore</string>
+    <string name="l3_initial_dropbox_restore_error">Dropbox restore task failed!</string>
+    <string name="l3_initial_dropbox_restore_start">Starting Dropbox database restore task…</string>
+    <string name="l3_initial_dropbox_restore_end">Dropbox database restore task finished.</string>
+    <string name="l3_initial_dropbox_restore_confirm">Are you sure you want to restore lime database from Dropbox?</string>
+    <string name="l3_initial_dropbox_failed">Dropbox temporary unavailable. Please try again later.</string>
+    <string name="l3_initial_dropbox_authetication_failed">Dropbox autheticaion failed. Please try again later.</string>
+    <string name="l3_initial_dropbox_canceled">Dropbox operations canceled. Please try again later.</string>
+    <string name="l3_initial_dropbox_large">File to large. Dropbox upload failed.</string>
     
     
     <string name="l3_im_setting_select_keyboard">On-screen soft keyboard</string>
@@ -580,7 +595,7 @@
     
     
     <string name="l3_tab_bluetooth">Bluetooth</string>
-    <string name="l3_im_notice">For saveing precious device memory space (both RAM and FLASH), IM-tables you are not using are strongly recommeded to be removed.</string>
+    <string name="l3_im_notice">For saving precious device memory space (both RAM and FLASH), IM-tables you are not using are strongly recommeded to be removed.</string>
     
     
     
