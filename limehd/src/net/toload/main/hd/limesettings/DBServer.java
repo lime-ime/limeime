@@ -49,8 +49,8 @@ import android.util.Log;
 
 //Jeremy '12,5,1 renamed from DBServer and change from service to ordinary class.
 public class  DBServer {
-	private final boolean DEBUG = false;
-	private final String TAG = "LIME.DBServer";
+	private static final boolean DEBUG = true;
+	private static final String TAG = "LIME.DBServer";
 	//private NotificationManager notificationMgr;
 
 	protected static LimeDB dbAdapter = null;  //static LIMEDB for shared LIMEDB between DBServer instances
@@ -370,6 +370,11 @@ public class  DBServer {
 
 	public void backupDatabase() throws RemoteException {
 		showNotificationMessage(ctx.getText(R.string.l3_initial_backup_start)+ "", intentLIMEInitial);
+		
+		File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
+		if(!limedir.exists()){
+			limedir.mkdirs();
+		}
 
 		closeDatabse(); // Jeremy '12,5,1 close database here.
 		File srcFile = null;
@@ -1021,6 +1026,9 @@ public class  DBServer {
 	 * Decompress retrieved file to target folder
 	 */
 	public static boolean decompressFile(File sourceFile, String targetFolder, String targetFile){
+		if(DEBUG)
+			Log.i(TAG, "decompressFile(), srouce = " + sourceFile.toString() + "" +
+					", target = " + targetFolder.toString()+ "/" + targetFile.toString());
 
 		try {   
 
@@ -1062,6 +1070,9 @@ public class  DBServer {
 	}
 
 	public void compressFile(File sourceFile, String targetFolder, String targetFile){
+		if(DEBUG)
+			Log.i(TAG, "compressFile(), srouce = " + sourceFile.toString() + "" +
+					", target = " + targetFolder.toString()+ "/" + targetFile.toString());
 		try{
 			final int BUFFER = 2048;
 
