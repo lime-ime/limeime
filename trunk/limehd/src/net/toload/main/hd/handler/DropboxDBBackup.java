@@ -1,10 +1,11 @@
-package net.toload.main.hd.limesettings;
+package net.toload.main.hd.handler;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
 import net.toload.main.hd.R;
+import net.toload.main.hd.limesettings.DBServer;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -42,8 +43,7 @@ public class DropboxDBBackup extends AsyncTask<Void, Long, Boolean> {
 
     public final static int intentLIMEMenu = 0;
 
-    public DropboxDBBackup(Context context, DropboxAPI<?> api, String dropboxPath,
-            File file) {
+    public DropboxDBBackup(Context context, DropboxAPI<?> api, String dropboxPath, File file) {
         // We set the context this way so we don't accidentally leak activities
         mContext = context.getApplicationContext();
 
@@ -159,11 +159,9 @@ public class DropboxDBBackup extends AsyncTask<Void, Long, Boolean> {
     protected void onPostExecute(Boolean result) {
         mDialog.dismiss();
         if (result) {
-            //showToast("LIME-HD database upload to Dropbox successfully.");
             DBServer.showNotificationMessage(
 					mContext.getText(R.string.l3_initial_dropbox_backup_end)+ "", intentLIMEMenu);
         } else {
-            //showToast(mErrorMsg);
         	DBServer.showNotificationMessage(mErrorMsg+ "", intentLIMEMenu);
         }
     }

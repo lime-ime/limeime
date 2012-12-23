@@ -31,6 +31,8 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.handler.CloudBackupServiceRunnable;
 import net.toload.main.hd.handler.CloudRestoreServiceRunnable;
 import net.toload.main.hd.handler.CloudServierHandler;
+import net.toload.main.hd.handler.DropboxDBBackup;
+import net.toload.main.hd.handler.DropboxDBRestore;
 import net.toload.main.hd.R;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -67,7 +69,7 @@ import com.dropbox.client2.session.TokenPair;
  * 
  */
 public class LIMEInitial extends Activity {
-	private final boolean DEBUG = true;
+	private final boolean DEBUG = false;
 	private final String TAG = "LIMEInitial";
 	// Dropbox API by Jeremy '12,12,22
     // Note that this is a really insecure way to do this, and you shouldn't
@@ -104,6 +106,7 @@ public class LIMEInitial extends Activity {
 	Button btnDropboxRestoreDB = null;
 	Button btnStoreDevice = null;
 	Button btnStoreSdcard = null;
+	Button btnUnlinkDropbox = null;
 	private ProgressDialog cloudpd;
 	
 	boolean hasReset = false;
@@ -482,7 +485,7 @@ public class LIMEInitial extends Activity {
 	     			builder.setCancelable(false);
 	     			builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	     				public void onClick(DialogInterface dialog, int id) {
-	     						restoreCloudDatabase();
+	     						restoreDatabaseGoogleDrive();
 								btnStoreSdcard.setEnabled(false);
 								btnStoreDevice.setEnabled(false);
 			    	        }
@@ -553,15 +556,60 @@ public class LIMEInitial extends Activity {
 			public void onClick(View v) {
 				if(DEBUG)
 					Log.i(TAG, "Dropbox link, mDropboxLoggedIn = " +mDropboxLoggedIn);
+				
+				if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
+			        
+					AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+					builder.setMessage(getText(R.string.l3_initial_dropbox_restore_confirm));
+					builder.setCancelable(false);
+					builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int id) {
+
+							if (!mDropboxLoggedIn) {
+								// Start the remote authentication
+								mDropboxApi.getSession().startAuthentication(LIMEInitial.this);
+								pendingDropboxRestore = true; //do database backup after on Resume();
+							}else{
+								//
+								restoreDatabaseDropbox();
+							}
+
+
+
+							btnStoreSdcard.setEnabled(false);
+							btnStoreDevice.setEnabled(false);
+						}
+					});
+			    	builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			    		public void onClick(DialogInterface dialog, int id) {
+			    	    	}
+			    	}); 
+	        
+					AlertDialog alert = builder.create();
+								alert.show();
+							
+					// Reset for SearchSrv
+					mLIMEPref.setResetCacheFlag(true);
+
+				}else{
+		        	Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
+			
+		
+		btnUnlinkDropbox.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				
 				if (mDropboxLoggedIn) {
                     logOut();
                 } else {
                     // Start the remote authentication
                     mDropboxApi.getSession().startAuthentication(LIMEInitial.this);
                 }
+                
 			}
 		});
-			
 		
 		btnStoreDevice.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -662,11 +710,15 @@ public class LIMEInitial extends Activity {
 	                if(pendingDropboxBackup){
 	                	backupDatabaseDropbox();
 	                }
+	                if(pendingDropboxRestore){
+	                	restoreDatabaseDropbox();
+	                }
 	            } catch (IllegalStateException e) {
 	                Log.i(TAG, "Error authenticating", e);
 	            }
 	        }
 	        pendingDropboxBackup = false;
+	        pendingDropboxRestore = false;
 	}
 
 	public void resetLabelInfo(String imtype){
@@ -677,7 +729,7 @@ public class LIMEInitial extends Activity {
 	}
 	
 	
-	private void initialButton(){
+	public void initialButton(){
 
 		
 		// Check if button 
@@ -693,6 +745,7 @@ public class LIMEInitial extends Activity {
 			btnCloudRestoreDB = (Button) findViewById(R.id.btnCloudRestoreDB);
 			btnDropboxBackupDB = (Button) findViewById(R.id.btnDropboxBackupDB);
 			btnDropboxRestoreDB = (Button) findViewById(R.id.btnDropboxRestoreDB);
+			btnUnlinkDropbox = (Button) findViewById(R.id.btn_reserved2);
 			btnStoreDevice = (Button) findViewById(R.id.btnStoreDevice);
 			btnStoreSdcard = (Button) findViewById(R.id.btnStoreSdcard);
 		}
@@ -780,8 +833,23 @@ public class LIMEInitial extends Activity {
 		/*BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDBACKUP);
 							  task.execute("");*/
 	}
+	public void restoreDatabaseDropbox(){
+		File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
+		if(!limedir.exists()){
+			limedir.mkdirs();
+		}
+		File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_CLOUD_TEMP);
+		tempFile.deleteOnExit();
+		
+		DropboxDBRestore download = 
+				new DropboxDBRestore(this, LIMEInitial.this, mDropboxApi,LIME.DATABASE_BACKUP_NAME , tempFile);
+		download.execute();
+		
+		//initialButton();
+		
+	}
 
-	public void restoreCloudDatabase() {
+	public void restoreDatabaseGoogleDrive() {
 		File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
 		if(!limedir.exists()){
 			limedir.mkdirs();
@@ -1014,7 +1082,7 @@ public class LIMEInitial extends Activity {
 				bTask.start();
 				showProgressDialog(true);
 			}else if(type == DROPBOXBACKUP){
-				//TODO: Jeremy  '12,12,23 do dropbox backup now.
+				// Jeremy  '12,12,23 do dropbox backup now.
 				File sourceFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);		
 		      	DropboxDBBackup upload = new DropboxDBBackup(LIMEInitial.this, mDropboxApi, "", sourceFile);
 		    	upload.execute();

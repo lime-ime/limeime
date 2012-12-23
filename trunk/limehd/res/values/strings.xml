@@ -472,7 +472,7 @@
     <string name="l3_initial_dropbox_backup_confirm">Are you sure you want to backup lime database to Dropbox?</string>
     <string name="l3_initial_dropbox_backup_error">No database to backup! Please initialized database first!</string>
     <string name="l3_initial_dropbox_restore_database">Dropbox Restore</string>
-    <string name="l3_initial_dropbox_restore_error">Dropbox restore task failed!</string>
+    <string name="l3_initial_dropbox_restore_error">Dropbox database backup not found. Please do Dropbox backup first.</string>
     <string name="l3_initial_dropbox_restore_start">Starting Dropbox database restore task…</string>
     <string name="l3_initial_dropbox_restore_end">Dropbox database restore task finished.</string>
     <string name="l3_initial_dropbox_restore_confirm">Are you sure you want to restore lime database from Dropbox?</string>

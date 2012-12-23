@@ -443,7 +443,7 @@
     <string name="l3_initial_dropbox_backup_confirm">您是否要备份资料库至Dropbox?</string>
     <string name="l3_initial_dropbox_backup_error">资料库不存在，无法进行备份.</string>
     <string name="l3_initial_dropbox_restore_database">Dropbox 还原</string>
-    <string name="l3_initial_dropbox_restore_error">Dropbox 还原失败.</string>
+    <string name="l3_initial_dropbox_restore_error">Dropbox 备份不存在. 请先进行Dropbox 备份</string>
     <string name="l3_initial_dropbox_restore_confirm">您是否要由Dropboxe还原资料库?</string>
     <string name="l3_initial_dropbox_restore_start">开始还原Dropbox资料库</string>
     <string name="l3_initial_dropbox_restore_end">Dropbox资料库还原完成</string>

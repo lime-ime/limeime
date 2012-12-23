@@ -1,8 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
-	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry exported="true" kind="lib" path="libs/activation.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/android-support-v4.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/commons-codec-1.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gdata-base-1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gdata-client-1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gdata-core-1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gdata-docs-3.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gdata-media-1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/google-api-client-1.8.0-beta.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/google-api-client-android2-1.8.0-beta.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/google-http-client-1.8.3-beta.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/google-http-client-android2-1.8.3-beta.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/google-oauth-client-1.8.0-beta.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gson-2.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jackson-core-asl-1.9.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jsr305-1.3.9.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/guava-11.0.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/mail.jar"/>
+	<classpathentry kind="lib" path="libs/google-http-client-android3-1.8.3-beta-sources.jar"/>
+	<classpathentry kind="lib" path="libs/google-http-client-android3-1.8.3-beta.jar"/>
+	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry kind="lib" path="libs/GoogleAdMobAdsSdk-6.1.0.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
