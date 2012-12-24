@@ -62,7 +62,7 @@
 			<TableLayout android:layout_width="match_parent" android:id="@+id/tableLayout4" android:layout_height="wrap_content">
 				<TableRow android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/tableRow7">
                     <Button android:layout_width="fill_parent" android:layout_weight="1" android:padding="5px" android:layout_height="wrap_content" android:layout_margin="5px" android:id="@+id/btn_reserved1" android:enabled="false"></Button>
-                    <Button android:layout_width="fill_parent" android:layout_weight="1" android:padding="5px" android:layout_height="wrap_content" android:layout_margin="5px" android:id="@+id/btn_reserved2"></Button>
+                    <Button android:layout_width="fill_parent" android:layout_weight="1" android:padding="5px" android:layout_height="wrap_content" android:layout_margin="5px" android:id="@+id/btn_reserved2" android:enabled="false"></Button>
                           
 				</TableRow>
 			</TableLayout>
