@@ -1005,11 +1005,11 @@ public class LIMEMappingSetting extends Activity {
 			}else if(imtype != null && imtype.equals("hs")){
 				
 				
-				Button extendButton = new Button(this);
-				extendButton.setText(getResources().getString(R.string.l3_im_download_from_hs));
-				extendLayout.addView(extendButton);
+				TextView extendText = new TextView(this);
+				extendText.setText(getResources().getString(R.string.l3_im_download_from_hs));
+				extendLayout.addView(extendText);
 
-				extendButton.setOnClickListener(new OnClickListener() {
+				/*extendButton.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
 						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
 	     				builder.setMessage(getText(R.string.l3_message_table_download_confirm));
@@ -1041,7 +1041,7 @@ public class LIMEMappingSetting extends Activity {
 						AlertDialog alert = builder.create();
 									alert.show();
 					}
-				});
+				});*/
 
 				// Remove useless layout LinearLayout05
 				TextView t1 = (TextView) findViewById(R.id.txtKeyboardInfo);

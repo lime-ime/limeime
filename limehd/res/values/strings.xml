@@ -528,7 +528,7 @@
     <string name="l3_im_download_from_pinyin_gb_start">Downloading OpenVanilla Pinyin GBtable</string>
     <string name="l3_im_download_from_pinyin_gb_install">Importing OpenVanilla Pinyin GB table</string>
     
-	<string name="l3_im_download_from_hs">請使用[初始資料庫]功能下載及安裝華象直覺字根\n華象直覺輸入法發明人陳華偉製作\nTel:(07)2223133 手機：0933616029\nhs.h123@msa.hinet.net</string>
+	<string name="l3_im_download_from_hs">請使用[初始資料庫]功能及安裝華象直覺字根\n華象直覺輸入法發明人陳華偉製作\nTel:(07)2223133 手機：0933616029\nhs.h123@msa.hinet.net</string>
     <string name="l3_im_download_from_hs_start">Downloading HS table</string>
     <string name="l3_im_download_from_hs_install">Importing HS table</string>
     
