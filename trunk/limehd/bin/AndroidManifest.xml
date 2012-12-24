@@ -17,7 +17,7 @@
 	<!-- 
 	<uses-permission android:name="android.permission.BLUETOOTH" />
 	<uses-permission android:name="android.permissioann.BLUETOOTH_ADMIN" /> -->
-	<uses-sdk android:minSdkVersion="7" android:targetSdkVersion="14"/>
+	<uses-sdk android:minSdkVersion="7" android:targetSdkVersion="17"/>
 	<supports-screens 
 		android:largeScreens="true"
 		android:normalScreens="true" 
@@ -28,7 +28,7 @@
 	    android:icon="@drawable/icon" 
 	    android:label="@string/ime_name"
 	    android:backupAgent="LIMEBackupAgent" 
-	    android:theme="@style/LIMEHDTheme">
+	    android:theme="@style/LIMEHDTheme" android:allowBackup="true">
 
 		<!-- LIME Services -->
 		<service android:permission="android.permission.BIND_INPUT_METHOD" android:name="LIMEService">
@@ -72,6 +72,17 @@
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
 		
 		<activity android:theme="@style/LIMEHDDialogTheme" android:configChanges="keyboard|keyboardHidden|orientation" android:name=".limesettings.LIMEMappingLoading"></activity>
+		<activity android:name="com.dropbox.client2.android.AuthActivity"
+      			android:launchMode="singleTask"
+      			android:configChanges="orientation|keyboard">
+      	<intent-filter>
+        	<!-- Change this to be db- followed by your app key -->
+        	<data android:scheme="db-keuuzhfc6efjf6t" />
+        	<action android:name="android.intent.action.VIEW" />
+        	<category android:name="android.intent.category.BROWSABLE"/>
+        	<category android:name="android.intent.category.DEFAULT" />
+      	</intent-filter>
+    </activity>
 		<meta-data android:name="com.google.android.backup.api_key"
     				android:value="AEdPqrEAAAAILNniwKkk4v3ZBFX77elSlis0Qabd2h2Tn63kYA" />
 	</application>
