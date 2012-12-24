@@ -9,7 +9,7 @@
     <string name="input_method">系统输入法切换</string>
     <string name="experienced_device">开发测试装置</string>
     <string name="license">版权声明</string>
-	<string name="license_detail">LIME-HD 是一个输入法框架程式，旨在提供 Android 装置中文输入法程式。\n组织或个人由网路自行下载之输入法字根及字典档案若有版权上的争议，请自行向原作者取得授权，本程式不负担其所产生的任何法律及版权上的责任。\n完整资讯请参考 LIME Project 网站上的版权说明  http://code.google.com/p/limeime/。</string>
+	<string name="license_detail">LIME-HD 是一个输入法框架程式，旨在提供 Android 装置中文输入法程式。\n组织或个人由网路自行下载之输入法字根及字典文件若有版权上的争议，请自行向原作者取得授权，本程式不负担其所产生的任何法律及版权上的责任。\n完整资讯请参考 LIME Project 网站上的版权说明  http://code.google.com/p/limeime/。</string>
 
     <!-- Symbols that are commonly considered word separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
@@ -23,7 +23,7 @@
     
     
     <!-- LIME Loading -->
-    <string name="lime_setting_btn_load_local_notice">请选择 .LIME 或 .CIN 档案</string>
+    <string name="lime_setting_btn_load_local_notice">请选择 .LIME 或 .CIN 文件</string>
     <string name="lime_setting_loading">资料载入期间请勿关闭本视窗或跳出程式，以免汇入失败</string>
     <string name="lime_setting_select_root"> - back to /</string>
     <string name="lime_setting_select_parent"> - back to ..</string>
@@ -367,18 +367,18 @@
 	</string-array>
 	
 	<!-- Version 3 String Set -->
-    <string name="l3_message_initial_required">请初始化 LIME 资料库_</string>
+    <string name="l3_message_initial_required">请初始化 LIME 数据库_</string>
     
-    <string name="l3_tab_initial">初始资料库</string>
+    <string name="l3_tab_initial">初始数据库</string>
     <string name="l3_tab_initial_error">下载失败，请确认装置已连上网路.</string>
-    <string name="l3_tab_initial_message">请点选 [预载资料库] OR [空白资料库] 键下载 LIME 资料库或点选 [还原资料库] 键由备份档案中还原</string>
-    <string name="l3_initial_btn_load_empty_db">空白资料库</string>
-    <string name="l3_initial_btn_load_phonetic_only_db">仅含注音资料库</string>
-    <string name="l3_initial_btn_load_phonetic_hs_only_db">仅含注音+华象直觉资料库</string>
-    <string name="l3_initial_btn_load_preload_db">预载资料库 \n注音, 仓颉, 仓颉五代 \n快仓, 大易, 轻松　　\n行列, 行列 １０　 　</string>
-    <string name="l3_initial_btn_reset_db">重置资料库</string>
-    <string name="l3_initial_btn_store_to_sdcard">请问您要变更资料库的储存位置至 SDCARD 吗? 在部份机种上可能会产生效能不佳的问题。</string>
-    <string name="l3_initial_btn_store_to_device">请问您要变更资料库的储存位置至装置吗? </string>
+    <string name="l3_tab_initial_message">请点选 [预载数据库] OR [空白数据库] 键下载 LIME 数据库或点选 [还原数据库] 键由备份文件中还原</string>
+    <string name="l3_initial_btn_load_empty_db">空白数据库</string>
+    <string name="l3_initial_btn_load_phonetic_only_db">仅含注音数据库</string>
+    <string name="l3_initial_btn_load_phonetic_hs_only_db">仅含注音+华象直觉数据库</string>
+    <string name="l3_initial_btn_load_preload_db">预载数据库 \n注音, 仓颉, 仓颉五代 \n快仓, 大易, 轻松　　\n行列, 行列 １０　 　</string>
+    <string name="l3_initial_btn_reset_db">重置数据库</string>
+    <string name="l3_initial_btn_store_to_sdcard">请问您要变更数据库的储存位置至 SDCARD 吗? 在部份机种上可能会产生效能不佳的问题。</string>
+    <string name="l3_initial_btn_store_to_device">请问您要变更数据库的储存位置至装置吗? </string>
      <string name="l3_initial_btn_store_device">装置空间</string>
     <string name="l3_initial_btn_store_sdcard">SDCARD</string>
     
@@ -400,58 +400,59 @@
     
     <string name="l3_tab_preference">喜好设定</string>
     
-	<string name="l3_dbservice_download_start">正在取得预载资料库, 这一个动作会持续一至数分钟，请您耐心等候.</string>
-	<string name="l3_dbservice_download_start_empty">正在取得空白资料库, 这一个动作会持续一至数分钟，请您耐心等候.</string>
-    <string name="l3_dbservice_download_initial">正在初始化资料库.</string>
-    <string name="l3_dbservice_download_loaded">资料库已成功载入.</string>
+	<string name="l3_dbservice_download_start">正在取得预载数据库, 这一个动作会持续一至数分钟，请您耐心等候.</string>
+	<string name="l3_dbservice_download_start_empty">正在取得空白数据库, 这一个动作会持续一至数分钟，请您耐心等候.</string>
+    <string name="l3_dbservice_download_initial">正在初始化数据库.</string>
+    <string name="l3_dbservice_download_loaded">数据库已成功载入.</string>
     <string name="l3_dbservice_download_convert">输入法进行转换中…</string>
     
     <string name="l3_message_table_downloading">下载字根档…</string>
-    <string name="l3_message_database_reset_confirm">您是否要移除资料库?</string>
+    <string name="l3_message_database_reset_confirm">您是否要移除数据库?</string>
     <string name="l3_message_table_reset_confirm">您是否要清除所有记录?</string>
     <string name="l3_message_table_download_confirm">资料载入期间请勿关闭本视窗或跳出程式，以免汇入失败，您是否要下载字根档?</string>
     <string name="l3_message_table_abort_confirm">您是否要中断载入字根档?</string>
-    <string name="l3_initial_download_database">下载资料库</string>
-    <string name="l3_initial_database_failed">操作失败! 请您稍后再试，请检查资料库是否载入完全!</string>
-    <string name="l3_initial_download_failed">资料转换错误, 请重置资料库再重新下载!</string>
-    <string name="l3_initial_download_write_sdcard_failed">请确定SDCARD已挂载, 重置资料库再重新下载!</string>
-    <string name="l3_initial_backup_database">备份资料库</string>
-    <string name="l3_initial_backup_start">开始备份资料库</string>
-    <string name="l3_initial_backup_end">资料库备份完成</string>
-    <string name="l3_initial_backup_confirm">您是否要备份资料库?</string>
-    <string name="l3_initial_backup_error">资料库不存在，无法进行备份.</string>
-    <string name="l3_initial_restore_database">还原资料库</string>
-    <string name="l3_initial_restore_error">备份档案不存在，无法进行还原.</string>
-    <string name="l3_initial_restore_confirm">您是否要还原资料库?</string>
-    <string name="l3_initial_restore_start">开始还原资料库</string>
-    <string name="l3_initial_restore_end">资料库还原完成</string>
+    <string name="l3_initial_download_database">下载数据库</string>
+    <string name="l3_initial_database_failed">操作失败! 请您稍后再试，请检查数据库是否载入完全!</string>
+    <string name="l3_initial_download_failed">资料转换错误, 请重置数据库再重新下载!</string>
+    <string name="l3_initial_download_write_sdcard_failed">请确定SDCARD已挂载, 重置数据库再重新下载!</string>
+    <string name="l3_initial_backup_database">备份数据库</string>
+    <string name="l3_initial_backup_start">开始备份数据库</string>
+    <string name="l3_initial_backup_end">数据库备份完成</string>
+    <string name="l3_initial_backup_confirm">您是否要备份数据库?</string>
+    <string name="l3_initial_backup_error">数据库不存在，无法进行备份.</string>
+    <string name="l3_initial_restore_database">还原数据库</string>
+    <string name="l3_initial_restore_error">备份文件不存在，无法进行还原.</string>
+    <string name="l3_initial_restore_confirm">您是否要还原数据库?</string>
+    <string name="l3_initial_restore_start">开始还原数据库</string>
+    <string name="l3_initial_restore_end">数据库还原完成</string>
     
-    <string name="l3_initial_cloud_backup_database">GOOGLE Drive备份</string>
-    <string name="l3_initial_cloud_backup_start">开始备份资料库</string>
-    <string name="l3_initial_cloud_backup_end">资料库备份完成</string>
-    <string name="l3_initial_cloud_backup_confirm">您是否要备份资料库至 GOOGLE 云端硬碟?</string>
-    <string name="l3_initial_cloud_backup_error">资料库不存在，无法进行备份.</string>
-    <string name="l3_initial_cloud_restore_database">GOOGLE Drive还原</string>
-    <string name="l3_initial_cloud_restore_confirm">您是否要还原资料库由 GOOGLE 云端硬碟?</string>
-    <string name="l3_initial_cloud_restore_start">开始还原资料库</string>
-    <string name="l3_initial_cloud_restore_end">资料库还原完成</string>
-     <string name="l3_initial_cloud_failed">Google 云端硬碟服务暂时无法连接，请稍后再试</string>
+    <string name="l3_initial_cloud_backup_database">Google Drive备份</string>
+    <string name="l3_initial_cloud_backup_start">开始Google Drive数据库备份</string>
+    <string name="l3_initial_cloud_backup_end">Google Drive数据库备份完成</string>
+    <string name="l3_initial_cloud_backup_confirm">您是否要备份数据库至Google Drive?</string>
+    <string name="l3_initial_cloud_backup_error">数据库不存在，无法进行备份.</string>
+    <string name="l3_initial_cloud_restore_database">Google Drive还原</string>
+    <string name="l3_initial_cloud_restore_error">Google Drive 还原失败.</string>
+    <string name="l3_initial_cloud_restore_confirm">您是否要由 Google Drive还原数据库?</string>
+    <string name="l3_initial_cloud_restore_start">开始还原Google Drive数据库</string>
+    <string name="l3_initial_cloud_restore_end">Google Drive数据库还原完成</string>
+    <string name="l3_initial_cloud_failed">Google Drive服务暂时无法连接，请稍后再试</string>
      
     <string name="l3_initial_dropbox_backup_database">Dropbox 备份</string>
-    <string name="l3_initial_dropbox_backup_start">开始Dropbox资料库备份</string>
-    <string name="l3_initial_dropbox_backup_end">Dropbox资料库备份完成</string>
-    <string name="l3_initial_dropbox_backup_confirm">您是否要备份资料库至Dropbox?</string>
-    <string name="l3_initial_dropbox_backup_error">资料库不存在，无法进行备份.</string>
+    <string name="l3_initial_dropbox_backup_start">开始Dropbox数据库备份</string>
+    <string name="l3_initial_dropbox_backup_end">Dropbox数据库备份完成</string>
+    <string name="l3_initial_dropbox_backup_confirm">您是否要备份数据库至Dropbox?</string>
+    <string name="l3_initial_dropbox_backup_error">数据库不存在，无法进行备份.</string>
     <string name="l3_initial_dropbox_restore_database">Dropbox 还原</string>
     <string name="l3_initial_dropbox_restore_error">Dropbox 备份不存在. 请先进行Dropbox 备份</string>
-    <string name="l3_initial_dropbox_restore_confirm">您是否要由Dropboxe还原资料库?</string>
-    <string name="l3_initial_dropbox_restore_start">开始还原Dropbox资料库</string>
-    <string name="l3_initial_dropbox_restore_end">Dropbox资料库还原完成</string>
+    <string name="l3_initial_dropbox_restore_confirm">您是否要由Dropboxe还原数据库?</string>
+    <string name="l3_initial_dropbox_restore_start">开始还原Dropbox数据库</string>
+    <string name="l3_initial_dropbox_restore_end">Dropbox数据库还原完成</string>
     <string name="l3_initial_dropbox_failed">Dropbox服务暂时无法连接，请稍后再试</string>
-	<string name="l3_initial_dropbox_canceled">Dropbox动作已取消，请稍后再试</string>
+    <string name="l3_initial_dropbox_canceled">Dropbox动作已取消，请稍后再试</string>
     <string name="l3_initial_dropbox_authetication_failed">Dropbox认证失败，请稍后再试</string>
-    <string name="l3_initial_dropbox_large">档案过大无法上传Dropbox</string>
-    
+    <string name="l3_initial_dropbox_large">文件过大无法上传Dropbox</string>
+   
    
     <string name="l3_im_setting_select_keyboard">请选择输入法键盘显示</string>
     <string name="l3_im_setting_back">回到上一页</string>
@@ -476,12 +477,12 @@
     <string name="l3_im_download_from_phonetic_adv">下载并安装注音连打字根</string>
     <string name="l3_im_download_from_phonetic_adv_start">开始下载注音连打字根</string>
     <string name="l3_im_download_from_phonetic_adv_install">开始安装注音连打字根</string>
-    <string name="l3_im_download_from_phonetic_adv_warning">档案容量较大系统会需要比较长的时间进行资料汇入</string>
+    <string name="l3_im_download_from_phonetic_adv_warning">文件容量较大系统会需要比较长的时间进行资料汇入</string>
    
     <string name="l3_im_download_from_phonetic_cns">正体注音 CNS11643 字根，由于装置及操作系统差异，部份字型可能无法正确显示</string>
     <string name="l3_im_download_from_phonetic_cns_start">开始下载注音CNS11643字根</string>
     <string name="l3_im_download_from_phonetic_cns_install">开始安装注音CNS11643字根</string>
-    <string name="l3_im_download_from_phonetic_cns_warning">档案容量较大系统会需要比较长的时间进行资料汇入</string>
+    <string name="l3_im_download_from_phonetic_cns_warning">文件容量较大系统会需要比较长的时间进行资料汇入</string>
    
     <string name="l3_im_download_from_cj_cns">正体仓颉 CNS11643 字根，由于装置及操作系统差异，部份字型可能无法正确显示</string>
     <string name="l3_im_download_from_cj_cns_start">开始下载仓颉CNS11643字根</string>
@@ -540,6 +541,7 @@
     <string name="l3_im_download_from_cjk_hk_cj_start">开始下载仓颉香港字字根</string>
     <string name="l3_im_download_from_cjk_hk_cj_install">开始安装仓颉香港字字根</string>
     
+    
     <string name="l3_im_download_from_pinyin_big5">下载并安装拼音字根BIG5字集版本</string>
     <string name="l3_im_download_from_pinyin_big5_start">开始下载拼音字根BIG5字集版本</string>
     <string name="l3_im_download_from_pinyin_big5_install">开始安装拼音字根BIG5字集版本</string>
@@ -556,14 +558,14 @@
     <string name="l3_im_download_from_wb_start">开始下载笔顺五码字根</string>
     <string name="l3_im_download_from_wb_install">开始安装笔顺五码字根</string>
     
-    <string name="l3_im_database_error">资料库操作错误，请稍待一会重新操作。</string>
+    <string name="l3_im_database_error">数据库操作错误，请稍待一会重新操作。</string>
     
-    <string name="l3_database_loading">资料库载入中，请稍待…</string>
-    <string name="l3_database_not_exist">资料库不存在，请先下载资料库</string>
+    <string name="l3_database_loading">数据库载入中，请稍待…</string>
+    <string name="l3_database_not_exist">数据库不存在，请先下载数据库</string>
     
     <string name="l3_tab_bluetooth">蓝牙设定</string>
     
-    <string name="l3_im_notice">为了节省记忆体使用空间，我们强烈建议您清空不常使用的输入法字根，或使用空白资料库来载入个别输入法字根档。</string>
+    <string name="l3_im_notice">为了节省记忆体使用空间，我们强烈建议您清空不常使用的输入法字根，或使用空白数据库来载入个别输入法字根档。</string>
     
     <string name="hide_software_keyboard_typing_with_physical">自动隐藏软键盘</string>
     <string name="hide_software_keyboard_typing_with_physical_summary">以实体键盘打字时隐藏软键盘，S-PEN使用者请勿勾选</string>
@@ -645,25 +647,24 @@
 	
 	<string name="disable_physical_selkey_option">关闭实体键盘选字键</string>
 	
-	<string name="reset_db_note">若文字无法正确输入，建议您重置资料库并重新下载或汇入字根档案.</string>
+	<string name="reset_db_note">若文字无法正确输入，建议您重置数据库并重新下载或汇入字根文件.</string>
+	
 	
 	<string name="release_note">
-	    \n** 若文字无法正确输入，建议您重置资料库并重新下载或汇入字根档案, 如果选字与送出的字不同，请关闭喜好设定的中文简/繁体字码转换.\n
+	    \n** 若文字无法正确输入，建议您重置数据库并重新下载或汇入字根文件, 如果选字与送出的字不同，请关闭喜好设定的中文简/繁体字码转换.\n
 	    \n版本更新说明
 	    
 		\nLIME-HD 自 3.8.2 版开始，注音/仓颉/速成/行列/拼音 支援 Unicode CJK 3.0 Ext-A 字集，
 		\n输入时如果看到方块字或空白，问题出在使用的设备系统字型缺字，并非 LIME-HD 异常。
 		
-		\n\n更新后，请务必重汇字根档或下载预载资料库 [请勿使用旧版备份还原]
+		\n\n更新后，请务必重汇字根档或下载预载数据库 [请勿使用旧版备份还原]
 	
-		\n1. 修正仓颉及速成（简易）与 CNS 标准拆码不同的问题 (请重新下载预载资料库或重新汇入对照档)
-		\n2. 修正‵ 字根问题 (轻松及华象直觉)
-		\n3. 修正 Milestone 2/3 未阻断系统 ALT-DEL 删除整行功能
-		\n4. 修正候选列使用方向键的问题
-		\n5. 调整轻松输入法软体键盘长按 6 为 ＼及 ‵  双字根，实体键盘修改可用 ‵ 字根
-		\n6. 调整电话键盘，修改 / 键，长按为 .
-		\n7. 调整许氏及倚天26注音键盘选项，可选字根或英文键盘
-		\n8. 调整 Google 云端备份及还原模组\n\n
+		\n1. 修正Android 4.x版本语音输入问题
+		\n2. 改善关联字检索速度
+		\n3. 新增DropBox备份
+		\n4. 讯息列文字显示方式调整
+		\n5. 大易字根下载位址变更
+		\n6. 新增ADMOB广告模组\n\n
 		
 		LIME中文输入法Facebook粉丝专页\n
 		http://facebook.com/limeime/\n\n
