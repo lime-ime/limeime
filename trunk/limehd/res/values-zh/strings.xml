@@ -550,7 +550,7 @@
     <string name="l3_im_download_from_pinyin_gb_start">開始下載拼音字根簡體字集版本</string>
     <string name="l3_im_download_from_pinyin_gb_install">開始安裝拼音字根簡體字集版本</string>
     
-    <string name="l3_im_download_from_hs">請使用[初始資料庫]功能下載及安裝華象直覺字根\n華象直覺輸入法發明人陳華偉製作\nTel:(07)2223133 手機：0933616029\nhs.h123@msa.hinet.net</string>
+    <string name="l3_im_download_from_hs">請使用[初始資料庫]下載及安裝華象直覺字根\n華象直覺輸入法發明人陳華偉製作\nTel:(07)2223133 手機：0933616029\nhs.h123@msa.hinet.net</string>
     <string name="l3_im_download_from_hs_start">開始下載華象直覺字根</string>
     <string name="l3_im_download_from_hs_install">開始安裝華象直覺字根</string>
     
