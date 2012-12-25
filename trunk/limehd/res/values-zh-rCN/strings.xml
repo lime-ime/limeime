@@ -445,7 +445,7 @@
     <string name="l3_initial_dropbox_backup_error">数据库不存在，无法进行备份.</string>
     <string name="l3_initial_dropbox_restore_database">Dropbox 还原</string>
     <string name="l3_initial_dropbox_restore_error">Dropbox 备份不存在. 请先进行Dropbox 备份</string>
-    <string name="l3_initial_dropbox_restore_confirm">您是否要由Dropboxe还原数据库?</string>
+    <string name="l3_initial_dropbox_restore_confirm">您是否要由Dropbox还原数据库?</string>
     <string name="l3_initial_dropbox_restore_start">开始还原Dropbox数据库</string>
     <string name="l3_initial_dropbox_restore_end">Dropbox数据库还原完成</string>
     <string name="l3_initial_dropbox_failed">Dropbox服务暂时无法连接，请稍后再试</string>
