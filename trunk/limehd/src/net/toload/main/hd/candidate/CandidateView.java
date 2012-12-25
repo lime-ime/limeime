@@ -883,8 +883,7 @@ public class CandidateView extends View implements View.OnClickListener
     	
     	if(waitingForMoreRecords) return false; //Jeremy '12,7,6 avoid repeated calls of requestFullrecords().
     	if(mSuggestions!=null && mSuggestions.size()>0 &&
-    			//mSuggestions.get(mSuggestions.size()-1).getCode() !=null&&
-        		 
+    			mSuggestions.get(mSuggestions.size()-1).getCode() !=null &&
         		mSuggestions.get(mSuggestions.size()-1).getCode().equals("has_more_records")){
     		waitingForMoreRecords=true;
     		Thread UpadtingThread = new Thread(){
