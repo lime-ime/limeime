@@ -78,7 +78,7 @@ import android.content.res.Configuration;
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = false;
+	static final boolean DEBUG = true;
 	static final String TAG = "LIMEService";
 
 	static final int KEYBOARD_SWITCH_CODE = -9;
@@ -892,7 +892,8 @@ public class LIMEService extends InputMethodService implements
 					+", event.getRepeatCount()" + event.getRepeatCount()
 					+", event.getMetaState()" + Integer.toHexString( event.getMetaState()));
 		
-			
+
+		
 		mKeydownEvent = new KeyEvent(event);
 		// Record key pressed time and set key processed flags(key down, for physical keys)
 		//Jeremy '11,8,22 using getRepeatCount from event to set processed flags
@@ -1135,6 +1136,7 @@ public class LIMEService extends InputMethodService implements
 				}
 			}
 		}
+		
 		return super.onKeyDown(keyCode, event);
 	}
 
@@ -1184,6 +1186,10 @@ public class LIMEService extends InputMethodService implements
 //			hasSearchPress = false;
 //			if(hasSearchProcessed) return true;
 //			break;
+		case KeyEvent.KEYCODE_CAPS_LOCK:
+			// Modified by Art 20130607
+			// to switch the cap lock mode
+			toggleCapsLock();
 		case KeyEvent.KEYCODE_MENU:
 			hasMenuPress = false;
 			if(hasMenuProcessed) return true;
@@ -1278,6 +1284,14 @@ public class LIMEService extends InputMethodService implements
 		// Update metakeystate of IC maintained by MetaKeyKeyListerner
 		//setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState(); moved to OnKey by jeremy '12,6,13
 
+		if (DEBUG) 
+			Log.i(TAG,"OnKeyUp():keyCode:" + keyCode 
+					+";hasCtrlPress:"	+ hasCtrlPress
+					+";hasWinPress:" + hasWinPress
+					+", event.getEventTime() -  event.getDownTime()"+ ( event.getEventTime() -  event.getDownTime())
+					+" call super.onKeyUp()"
+			);
+		
 		
 		return super.onKeyUp(keyCode, event);
 	}
@@ -1531,6 +1545,13 @@ public class LIMEService extends InputMethodService implements
 			Log.i(TAG, "OnKey(): primaryCode:" + primaryCode
 					+ " hasShiftPress:" + hasShiftPress);
 		
+		// Modified by Art
+		// This is to fixed the CapsLock issue on Physical keyboard
+		if(mCapsLock){
+			if(primaryCode >= 97 && primaryCode <= 122){
+				primaryCode -= 30;
+			}
+		}
 		// Adjust metakeystate on printed key pressed.
 		if(hasPhysicalKeyPressed){  //Jeremy '12,6,11 moved from handleCharacter()
 			mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
