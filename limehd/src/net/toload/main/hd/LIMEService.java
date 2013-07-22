@@ -63,6 +63,7 @@ import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.global.Mapping;
 import net.toload.main.hd.limesettings.LIMEPreference;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
  
@@ -75,6 +76,7 @@ import android.content.res.Configuration;
 /**
  * @author Art Hung
  */
+@SuppressLint("DefaultLocale")
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
@@ -134,7 +136,7 @@ public class LIMEService extends InputMethodService implements
 	private boolean hasPhysicalKeyPressed;
 
 	//private String mWordSeparators;
-	private String misMatched;
+	//private String misMatched;  //Removed by Jeremy '13,1,10
 
 	private LinkedList<Mapping> mCandidateList; //Jeremy '12,5,7 renamed from templist
 
@@ -1303,8 +1305,8 @@ public class LIMEService extends InputMethodService implements
 		if (DEBUG)
 			Log.i(TAG,"CommittedTyped()");
 		try {
-			if (mComposing.length() > 0
-					|| (selectedCandidate != null && selectedCandidate.isDictionary())) {
+			if (mComposing.length() > 0   //denotes composing just finished
+					|| (selectedCandidate != null && selectedCandidate.isDictionary())) { //denotes related candidates are selected.
 
 				if (!mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 					if (selectedCandidate != null && selectedCandidate.getWord() != null
@@ -1343,15 +1345,7 @@ public class LIMEService extends InputMethodService implements
 								SearchSrv.hanConvert(wordToCommit),
 								firstMatchedLength);
 
-						try {
-							SearchSrv.addUserDictAndUpdateScore(selectedCandidate);
-									
-						} catch (RemoteException e) {
-							e.printStackTrace();
-						}
 						
-						// Add by Jeremy '10, 4,1 . Reverse Lookup
-						SearchSrv.rQuery(selectedCandidate.getWord());
 						
 						// Art '30,Sep,2011 when show related then clear composing
 						if(currentSoftKeyboard.indexOf("wb") != -1){
@@ -1373,7 +1367,7 @@ public class LIMEService extends InputMethodService implements
 						}
 						
 						
-						
+						boolean shouldUpdateCandidates = false;
 						if(composingNotFinish){
 							if(LDComposingBuffer.length()==0){
 								//starting LD process
@@ -1400,8 +1394,9 @@ public class LIMEService extends InputMethodService implements
 								if(DEBUG) Log.i(TAG, "commitedtype(): new mComposing:'" +mComposing +  "'");
 								if(mComposing.length()>0){ //Jeremy '12,7,11 only fetch remaining composoing when length >0
 									if(ic!=null) ic.setComposingText(mComposing, 1);
-									updateCandidates();
-									return;
+									//updateCandidates();
+									shouldUpdateCandidates = true;
+									//return;
 								}
 							}
 						} else {
@@ -1420,35 +1415,46 @@ public class LIMEService extends InputMethodService implements
 								LDComposingBuffer = "";
 								SearchSrv.addLDPhrase(null, true);
 							}
+							
 								
 						}
-
-						commitedCandidate = selectedCandidate;
-						selectedCandidate = null;
 						
+						//Jeremy '13,1,10 do dict update and reverse query after updateRelatedword to shorten the time user see related candidates after select a candidate.
+						if(shouldUpdateCandidates){
+							updateCandidates();
+						}else{
+							commitedCandidate = selectedCandidate;
+							selectedCandidate = null;
+
+							clearComposing(false);				
+							updateRelatedWord(false);
+
+							SearchSrv.addUserDictAndUpdateScore(commitedCandidate);			
+							SearchSrv.rQuery(commitedCandidate.getWord());
+						}
+						
+						
+					/*	Remove by jeremy '13,1,10 bacasue this section is equivalent to next else{} section.
 					} else if (selectedCandidate != null
 							&& selectedCandidate.getWord() != null
-							&& selectedCandidate.getWord().equals("")) {
+							&& selectedCandidate.getWord().equals("")) {  //Word="", commit the composing text.
 						if(ic!=null) ic.commitText(misMatched,
 								misMatched.length());
 						selectedCandidate = null;
-						
+					*/	
 					} else {
 						if(ic!=null) ic.commitText(mComposing,
 								mComposing.length());
 						
 					}
-				} else {
+				} else {  //English mode
 					if(ic!=null) 
 						ic.commitText(mComposing, mComposing.length());
 					
 				}
 
 				
-				clearComposing(false);				//Jeremy '12, 4 ,21
-				if(!mEnglishOnly) //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-					updateRelatedWord(false);
-
+				
 				
 
 			}
@@ -2142,18 +2148,15 @@ public class LIMEService extends InputMethodService implements
 				}
 				
 				// Show composing window if keyToKeyname got different string. Revised by Jeremy '11,6,4
-				if (SearchSrv.getTablename() != null ) {
-						
-					if (keyString != null && !keyString.equals("") ){//&& keyString.length() < 7) { Jeremy '11,8,30 move the limit to limedb					
-						keynameString = SearchSrv.keyToKeyname(keyString); //.toLowerCase(Locale.US)); moved to LimeDB
-							if (mCandidateView != null 
-									&& !keynameString.toUpperCase(Locale.US).equals(keyString.toUpperCase(Locale.US))
-									//&& !keynameString.equals("")
-									&& !keynameString.trim().equals("")
-									) {
-								mCandidateView.setComposingText(keynameString);	
-							}
-					}
+				if (SearchSrv.getTablename() != null ) {			
+					keynameString = SearchSrv.keyToKeyname(keyString); //.toLowerCase(Locale.US)); moved to LimeDB
+						if (mCandidateView != null 
+								&& !keynameString.toUpperCase(Locale.US).equals(keyString.toUpperCase(Locale.US))
+								//&& !keynameString.equals("")
+								&& !keynameString.trim().equals("")
+								) {
+							mCandidateView.setComposingText(keynameString);	
+						}
 				}
 			} catch (NullPointerException e) {
 				e.printStackTrace();
@@ -2258,7 +2261,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	private void updateRelatedWord(boolean getAllRecords) {
 		if(DEBUG)
-			Log.i(TAG, "updateRelatedWord()");
+			Log.i(TAG, "updateRelatedWord()" );
 		hasChineseSymbolCandidatesShown = false;
 		// Also use this to control whether need to display the english
 		// suggestions words.
@@ -2842,7 +2845,7 @@ public class LIMEService extends InputMethodService implements
 				//InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
-				misMatched = mComposing.toString();
+				//misMatched = mComposing.toString();
 			}else if (!hasSymbolMapping && !hasNumberMapping  //Jeremy '11,10.19 fixed to bypass number key in et26 and hsu
 					&&( isValidLetter(primaryCode) 
 							|| (primaryCode== MY_KEYCODE_SPACE && activeIM.equals("phonetic")) ) //Jeremy '11,9,6 for et26 and hsu
@@ -2852,7 +2855,7 @@ public class LIMEService extends InputMethodService implements
 				//InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
-				misMatched = mComposing.toString();
+				//misMatched = mComposing.toString();
 			} else if (!hasSymbolMapping
 					&& hasNumberMapping
 					&& (isValidLetter(primaryCode) || isValidDigit(primaryCode))
@@ -2861,7 +2864,7 @@ public class LIMEService extends InputMethodService implements
 				//InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
-				misMatched = mComposing.toString();
+				//misMatched = mComposing.toString();
 			} else if (hasSymbolMapping
 					&& !hasNumberMapping
 					&& ( isValidLetter(primaryCode) || isValidSymbol(primaryCode)
@@ -2871,7 +2874,7 @@ public class LIMEService extends InputMethodService implements
 				//InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
-				misMatched = mComposing.toString();
+				//misMatched = mComposing.toString();
 			} else if (hasSymbolMapping && !hasNumberMapping && activeIM.equals("array")
 					&& mComposing != null && mComposing.length() >= 1
 					&& getCurrentInputConnection().getTextBeforeCursor(1, 1).charAt(0) == 'w'
@@ -2883,7 +2886,7 @@ public class LIMEService extends InputMethodService implements
 				//InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
-				misMatched = mComposing.toString();
+				//misMatched = mComposing.toString();
 			} else if (hasSymbolMapping
 					&& hasNumberMapping
 					&& (isValidSymbol(primaryCode) 
@@ -2893,7 +2896,7 @@ public class LIMEService extends InputMethodService implements
 				//InputConnection ic=getCurrentInputConnection();
 				if(ic!=null) ic.setComposingText(mComposing, 1);
 				updateCandidates();
-				misMatched = mComposing.toString();
+				//misMatched = mComposing.toString();
 
 			} else {
 
@@ -3052,9 +3055,9 @@ public class LIMEService extends InputMethodService implements
 					
 				resetTempEnglishWord();
 
-				Mapping temp = new Mapping();
-				temp.setWord("");
-				temp.setDictionary(true);
+				//Mapping temp = new Mapping();
+				//temp.setWord("");
+				//temp.setDictionary(true);
 				//Jermy '11,8,14
 				clearSuggestions();
 			
