@@ -758,9 +758,9 @@ public class LIMEService extends InputMethodService implements
 						ic.finishComposingText();
 				}
 			}else {
+				// Jeremy '13,8,25 setSelection cause inputbox in Chorme failed to input
 				// Jeremy '12,5,23 Select the composing text and forbidded moving cursor within the composing text.
-				if (ic != null) 
-					ic.setSelection(candidatesStart, candidatesEnd);
+				//if (ic != null)	ic.setSelection(candidatesStart, candidatesEnd);
 			}
 			
 		}
