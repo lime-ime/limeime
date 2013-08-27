@@ -1555,7 +1555,7 @@ public class LIMEService extends InputMethodService implements
 		// This is to fixed the CapsLock issue on Physical keyboard
 		if(mCapsLock){
 			if(primaryCode >= 97 && primaryCode <= 122){
-				primaryCode -= 30;
+				primaryCode -= 32;
 			}
 		}
 		// Adjust metakeystate on printed key pressed.
