@@ -80,7 +80,7 @@ import android.content.res.Configuration;
 public class LIMEService extends InputMethodService implements
 					LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-	static final boolean DEBUG = true;
+	static final boolean DEBUG = false;
 	static final String TAG = "LIMEService";
 
 	static final int KEYBOARD_SWITCH_CODE = -9;
@@ -528,7 +528,8 @@ public class LIMEService extends InputMethodService implements
 	
 		if (DEBUG)
 			Log.i(TAG, "initOnStartInput(): attribute.inputType & EditorInfo.TYPE_MASK_CLASS: " 
-					+ (attribute.inputType & EditorInfo.TYPE_MASK_CLASS) );
+					+ (attribute.inputType & EditorInfo.TYPE_MASK_CLASS) + "; attribute.inputType & EditorInfo.TYPE_MASK_VARIATION: "
+				    + (attribute.inputType & EditorInfo.TYPE_MASK_VARIATION));
 		if (mInputView == null) {
 			return;
 		}
@@ -575,7 +576,7 @@ public class LIMEService extends InputMethodService implements
 		loadSettings();
 		mImeOptions = attribute.imeOptions;
 
-		buildActivatedIMList();  //Jeremy '12,4,29 only this is required here instead of fully initialKeybaord
+		buildActivatedIMList();  //Jeremy '12,4,29 only this is required here, instead of fully initialKeybaord
 		mPredictionOn = true;
 		mCompletionOn = false;
 		mCompletions = null;
@@ -634,6 +635,7 @@ public class LIMEService extends InputMethodService implements
 			
 			// Switch keyboard here.
 			if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD
+					|| variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_PASSWORD  
 					|| variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
 				mPredictionOn = false;
 				//isModePassword = true;
@@ -642,7 +644,8 @@ public class LIMEService extends InputMethodService implements
 				mKeyboardSwitcher.setKeyboardMode(activeIM, LIMEKeyboardSwitcher.MODE_EMAIL,
 									mImeOptions, false, false, false);
 				break;
-			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS) {
+			} else if (variation == EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+					|| variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS ) {
 				mEnglishOnly = true;
 				//onIM = false; //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 				mPredictionOn = false;
