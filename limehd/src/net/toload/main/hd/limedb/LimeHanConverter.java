@@ -23,10 +23,13 @@
 package net.toload.main.hd.limedb;
 
 
+
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
 
 
 
@@ -35,7 +38,9 @@ import android.database.sqlite.SQLiteOpenHelper;
  */
 public class LimeHanConverter extends SQLiteOpenHelper {
 
-	//private static boolean DEBUG = false;
+	private static boolean DEBUG = false;
+	private static String TAG = "LimeHanConverter";
+	
 	
 	private final static String DATABASE_NAME = "hanconvertv2.db";
 	private final static int DATABASE_VERSION = 59;
@@ -46,14 +51,33 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 	private static final String FIELD_SCORE = "score";
 
 	
-
-	//private Context ctx;
-	
 	public LimeHanConverter(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
-		//this.ctx = context;
 	}
+	/**
+	 * Count total amount of specific table
+	 * 
+	 * @return
+	 */
+	public int countMapping(String table) {
+		if(DEBUG)
+			Log.i(TAG,"countMapping() on table:" + table);
 
+		try {
+			SQLiteDatabase db = this.getReadableDatabase();
+			
+			Cursor cursor = db.rawQuery("SELECT * FROM " + table, null);
+			if(cursor ==null) return 0; 
+			int total = cursor.getCount();
+			cursor.close();
+			if(DEBUG)
+					Log.i(TAG, "countMapping" + "Table," + table + ": " + total);
+			return total;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return 0;
+	}
 	/**
 	 * Create SQLite Database and create related tables
 	 */
