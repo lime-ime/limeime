@@ -2,6 +2,10 @@
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
+    <!-- Image button description  -->
+    <string name="more_cand">Click for more candidates.</string>
+    <string name="close_cand">Close the popup candiates view.</string>
+    
     <!-- Title for Latin keyboard  -->
     <string name="app_name">LIME-HD</string>
     <string name="ime_name">LIME-HD</string>
