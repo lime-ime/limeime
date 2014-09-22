@@ -977,11 +977,11 @@ public class  DBServer {
 
 			byte buf[] = new byte[128];
 			do{
-
+				Thread.sleep(300);
 				int numread = is.read(buf);
 				downloadedSize += numread;
 
-				if(downloadedSize ==-1){
+				if(downloadedSize ==-1 || remoteFileSize == -1){
 					percentageDone = 0;
 				}else{
 					percentageDone = (int) ((float)downloadedSize/(float)remoteFileSize *100);
@@ -1005,20 +1005,20 @@ public class  DBServer {
 			e.printStackTrace();
 
 		} catch (MalformedURLException e) {
-			Log.d(TAG, "downloadRemoteFile() error....");
+			Log.d(TAG, "downloadRemoteFile() MalformedURLException....");
 			showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "", intentLIMEMenu);
 			e.printStackTrace();
 		} catch (IOException e){
-			Log.d(TAG, "downloadRemoteFile() error....");
+			Log.d(TAG, "downloadRemoteFile() IOException....");
 			showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "", intentLIMEMenu);
 			e.printStackTrace();
 		} catch (Exception e){
-			Log.d(TAG, "downloadRemoteFile() error....");
+			Log.d(TAG, "downloadRemoteFile() Others....");
 			showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "", intentLIMEMenu);
 			e.printStackTrace();
 		}
-		//if(DEBUG)
-		Log.i(TAG, "downloadRemoteFile() failed.");
+		if(DEBUG)
+			Log.i(TAG, "downloadRemoteFile() failed.");
 		return null;
 	}
 

@@ -735,11 +735,13 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			if(db != null)
 				Log.i(TAG, "db.isOpen()" + db.isOpen());
 		}
+		if(force_reload){
+			mLIMEPref.setParameter("reload_database", false);
+		}
 		
 		try{
 
-			if(force_reload && db != null && db.isOpen()){
-				mLIMEPref.setParameter("reload_database", false);
+			if( db != null && db.isOpen()){
 				db.close();
 			}
 
@@ -766,7 +768,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		if(mLIMEPref.getMappingLoading()) {
 			Toast.makeText(mContext, mContext.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT/2).show();
 			return false; 
-		}else if(openDBConnection(false)==null){ //Jermey'12,5,1 db == null if dabase is not exist
+			 //Jermey'12,5,1 db == null if dabase is not exist
+			 //Jeremy'14,9,22 Fixed restore from Google/Dropbox failed without reset database first. Check with reload_database parameter here.
+		}else if(openDBConnection(false)==null  || mLIMEPref.getParameterBoolean("reload_database", false)){
 			//Toast.makeText(ctx, ctx.getText(R.string.l3_database_not_exist), Toast.LENGTH_SHORT/2).show(); //annoying.. removed first
 			return false;
 		}else 
