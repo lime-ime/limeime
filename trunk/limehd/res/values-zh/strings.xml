@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-
+	
+    <!-- Image button description  -->
+	<string name="more_cand">Click for more candidates.</string>
+    <string name="close_cand">Close the popup candiates view.</string>
+    
     <!-- Title for Latin keyboard  -->
     <string name="app_name">LIME-HD</string>
     <string name="ime_name">LIME-HD</string>
@@ -648,6 +652,53 @@
 	<string name="disable_physical_selkey_option">關閉實體鍵盤選字鍵</string>
 	
 	<string name="reset_db_note">若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案.</string>
+	
+	<string-array name="selkey_options_values">
+		<item>0</item>
+		<item>1</item>
+		<item>2</item>
+	</string-array>
+	<string-array name="five_size_scale_values">
+		<item>1.2</item>
+		<item>1.1</item>
+		<item>1</item>
+		<item>0.9</item>
+		<item>0.8</item>
+	</string-array>
+	<string-array name="phonetic_keyboard_type_values">
+		<item>standard</item>
+		<item>eten</item>
+		<item>eten26</item>
+		<item>eten26_symbol</item>
+		<item>hsu</item>
+		<item>hsu_symbol</item>
+	</string-array>
+	<string-array name="physical_keyboard_options_values">
+		<item>normal_keyboard</item>
+		<item>desireZ</item>
+		<item>chacha</item>
+		<item>milestone</item>
+		<item>milestone2</item>
+		<item>milestone3</item>
+		<item>xperiapro</item>
+	</string-array>
+	<string-array name="show_arrow_keys_values">
+		<item>0</item>
+		<item>1</item>
+		<item>2</item>
+	</string-array>
+	<string-array name="split_keyboard_values">
+		<item>0</item>
+		<item>1</item>
+		<item>2</item>
+	</string-array>
+	<string-array name="vibrate_level_values">
+		<item>20</item>
+		<item>30</item>
+		<item>40</item>
+		<item>50</item>
+		<item>60</item>
+	</string-array>
 	
 	
 	<string name="release_note">

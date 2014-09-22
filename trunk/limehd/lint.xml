@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <lint>
-    <issue id="MissingTranslation" severity="warning" />
+    <issue id="InvalidPackage">
+        <ignore path="libs/mail.jar" />
+    </issue>
+    <issue id="WrongCall">
+        <ignore path="src/net/toload/main/hd/candidate/CandidateView.java" />
+    </issue>
 </lint>
