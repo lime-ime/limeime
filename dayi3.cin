@@ -1,15 +1,19 @@
-﻿# 本表格由太易資訊公司 (http://www.dayi.com) 授權，開放給使用者下載使用。
+# 本表格由太易資訊公司 (http://www.dayi.com) 授權，開放給使用者下載使用。
 # 
 # 使用者不得任意更改此表格中每個字的編碼規則並重新散佈，但允許改變此表格
 # 的格式以適合其他平台或輸入法軟體使用。
 #
+# last modified: 2005-01-14
+# 加入一批標點符號和一個新的 keyname (' 標)
+# 改變二鍵輸入時的一些常用字選字順序：
+# 也道爸就像身假流遠應漢蘭動崗亂病碗獅據遊眾萬灣愈淨管舒陽制夢
+#
 %gen_inp
 %ename Dayi3
+%encoding utf-8
 %cname 大易
-%tcname 大易
-%scname 繁体大易
-%encoding UTF-8
-%selkey '[]-\6789
+%selkey '[]-\67890
+%endkey ='
 %keyname begin
 ,   力
 .   點
@@ -51,6 +55,30 @@ W   山
 X   水
 Y   火
 Z   心
+=   符
+'   標
+%keyname end
+%chardef begin
+=   。
+=   ，
+=   「
+=   」
+=   ！
+=   、
+=   ？
+=   『
+=   』
+=   （
+=   ）
+'   ：
+'   ；
+'   〈
+'   〉
+'   ！
+'   、
+'   ？
+'   《
+'   》
 ,   力
 .   方
 /   竹
@@ -80,7 +108,7 @@ L   女
 M   雨
 N   刀
 O   口
-P   耳
+P   身
 Q   石
 R   工
 S   十
@@ -113,7 +141,6 @@ C   鹿
 C   气
 C   虍
 D   曰
-E   彳
 F   士
 F   丰
 H   戶
@@ -123,7 +150,7 @@ K   立
 N   夕
 N   角
 N   魚
-P   身
+P   耳
 Q   几
 Q   儿
 R   匚
@@ -138,7 +165,7 @@ W   凵
 W   屮
 X   又
 X   乂
-,1  狺
+,1  獅
 ,5  狂
 ,8  賀
 ,;  獨
@@ -148,7 +175,7 @@ X   乂
 ,X  獲
 ,Y  狄
 ..  舫
-.0  凎
+.0  遊
 .8  資
 .9  旋
 .B  馮
@@ -165,7 +192,7 @@ X   乂
 .W  舢
 .X  永
 .Y  為
-/,  竻
+/,  眾
 /.  的
 //  第
 /0  邊
@@ -180,7 +207,7 @@ X   乂
 /D  白
 /I  樂
 /K  乏
-/R  笁
+/R  管
 /S  卑
 /T  系
 /U  篇
@@ -236,7 +263,7 @@ X   乂
 2E  生
 2F  牡
 2I  朱
-2N  觕
+2N  制
 2O  告
 2P  卸
 2Q  先
@@ -346,7 +373,7 @@ X   乂
 88  酋
 8;  公
 8B  翁
-8C  麊
+8C  爸
 8E  醒
 8F  糧
 8G  酵
@@ -402,7 +429,7 @@ X   乂
 ;X  蝦
 ;Y  熊
 ;Z  態
-A,  仂
+A,  像
 A.  仿
 A/  修
 A0  進
@@ -419,7 +446,7 @@ AC  化
 AE  低
 AF  全
 AI  休
-AJ  仴
+AJ  舒
 AK  位
 AN  創
 AO  合
@@ -427,13 +454,13 @@ AP  佴
 AQ  仉
 AR  仝
 AS  什
-AT  尒
+AT  你
 AU  倫
 AV  伕
 AW  仙
-AX  汆
+AX  假
 AY  伙
-AZ  伈
+AZ  愈
 B,  矛
 B.  勺
 B/  勿
@@ -447,7 +474,7 @@ B9  疋
 B;  勾
 BA  驗
 BB  羽
-BC  乜
+BC  也
 BD  旬
 BE  刁
 BF  丑
@@ -490,7 +517,7 @@ CV  麇
 CW  屯
 CX  皮
 CY  麃
-CZ  忥
+CZ  應
 D.  昉
 D/  暢
 D0  遇
@@ -570,7 +597,7 @@ FW  趨
 FX  教
 FY  熱
 FZ  志
-G,  扐
+G,  據
 G.  寸
 G/  才
 G0  抓
@@ -677,7 +704,7 @@ J5  臟
 J6  脯
 JA  臉
 JB  騰
-JC  肊
+JC  亂
 JD  膾
 JE  且
 JF  肚
@@ -696,7 +723,7 @@ JV  膜
 JW  舀
 JX  愛
 JY  炙
-K.  祊
+K.  就
 K/  衫
 K0  適
 K1  新
@@ -827,7 +854,7 @@ OY  吙
 OZ  患
 P,  阞
 P.  防
-P/  髟
+P/  陽
 P0  隨
 P5  職
 P6  陣
@@ -949,16 +976,16 @@ TW  綱
 TX  級
 U.  芳
 U/  芽
-U0  菳
+U0  道
 U1  卅
 U3  苜
-U4  茜
+U4  蘭
 U5  義
 U6  莆
 U7  苗
 U8  莤
 U9  芷
-U;  茧
+U;  萬
 UA  歡
 UB  驚
 UC  芞
@@ -969,7 +996,7 @@ UH  蔦
 UI  藥
 UJ  苛
 UK  芝
-UN  芀
+UN  夢
 UO  落
 UP  茸
 UQ  觀
@@ -982,7 +1009,7 @@ UW  舊
 UX  艾
 UY  苂
 UZ  芯
-V,  夯
+V,  動
 V.  太
 V0  透
 V1  千
@@ -1040,7 +1067,7 @@ X8  酒
 X9  沚
 X;  濁
 XA  滿
-XB  溤
+XB  灣
 XC  汽
 XD  汨
 XE  渣
@@ -1052,12 +1079,12 @@ XL  汝
 XN  漁
 XO  各
 XP  洱
-XQ  沰
+XQ  流
 XR  江
 XS  汁
 XT  潔
 XU  濫
-XV  汏
+XV  漢
 XW  凶
 XX  爻
 XY  濕
@@ -2024,7 +2051,7 @@ QJJ 硼
 QKF 砫
 QKO 碚
 QM7 礌
-QMC 砣
+QMC 碗
 QMK 砃
 QMO 碢
 QNA 砍
@@ -2084,7 +2111,7 @@ WMN 鱟
 WMQ 礐
 WMU 盥
 WMV 岟
-WMW 嶨
+WMW 崗
 WMX 澩
 WMY 燢
 WN. 屻
@@ -3340,7 +3367,7 @@ FNW 埳
 FNX 洯
 FNZ 恝
 FO, 劼
-FO0 迼
+FO0 遠
 FO5 哉
 FOH 鴶
 FOK 袁
@@ -4185,7 +4212,7 @@ XIN 剎
 XIO 涑
 XJ5 淫
 XJE 沮
-XJJ 淜
+XJJ 淨
 XJL 浽
 XJW 滔
 XK9 汴
@@ -13514,7 +13541,7 @@ N7UU 鱧
 N88. 鱒
 N8N2 鱗
 N8OQ 鮵
-N8TU 彞
+N8TU 彝
 N9ET 鮛
 N0ET 鰶
 N0RX 鱍
@@ -14495,7 +14522,7 @@ ZEDE 恒
 L6J  嫺
 ,.   獄
 ,0   狐
-,1   獅
+,1   狺
 ,7   貓
 ,B   駕
 ,C   犯
@@ -14508,7 +14535,7 @@ L6J  嫺
 ,S   獐
 ,V   猴
 ,Z   勰
-.0   遊
+.0   凎
 .1   州
 .A   次
 .D   凍
@@ -14522,7 +14549,7 @@ L6J  嫺
 .Q   航
 .T   舷
 .Z   憑
-/,   眾
+/,   竻
 /4   籣
 /A   簽
 /E   暨
@@ -14536,7 +14563,7 @@ L6J  嫺
 /O   答
 /P   節
 /Q   既
-/R   管
+/R   笁
 /V   奧
 /X   及
 /Z   息
@@ -14592,7 +14619,7 @@ L6J  嫺
 2J   犄
 2K   製
 2L   矮
-2N   制
+2N   觕
 2R   矩
 2U   短
 2W   韜
@@ -14666,7 +14693,7 @@ L6J  嫺
 83   瞥
 84   醺
 8A   欲
-8C   爸
+8C   麊
 8D   曾
 8I   酴
 8J   精
@@ -14708,7 +14735,7 @@ L6J  嫺
 ;S   蝌
 ;T   螺
 ;V   矣
-A,   像
+A,   仂
 A3   值
 A4   黛
 A8   領
@@ -14716,18 +14743,18 @@ AA   飲
 AD   儲
 AG   拿
 AH   鴿
-AJ   舒
+AJ   仴
 AL   餒
 AP   命
 AQ   饒
 AR   館
-AT   你
-AX   假
-AZ   愈
+AT   尒
+AX   汆
+AZ   伈
 B1   馴
 B5   戮
 B8   預
-BC   也
+BC   乜
 BI   柔
 BN   夠
 BP   那
@@ -14740,7 +14767,7 @@ C1   席
 C2   麟
 C3   廂
 C7   瘤
-CA   病
+CA   庂
 CB   虧
 CJ   序
 CK   癢
@@ -14750,7 +14777,7 @@ CP   廊
 CS   癖
 CV   疾
 CY   痰
-CZ   應
+CZ   忥
 D,   勗
 D.   時
 D6   暈
@@ -14786,7 +14813,7 @@ FA   款
 FQ   境
 FR   彗
 FV   埃
-G,   據
+G,   扐
 G5   撼
 GD   揩
 GJ   打
@@ -14825,13 +14852,13 @@ J3   腓
 J7   貓
 J8   腆
 J;   肱
-JC   亂
+JC   肊
 JH   雞
 JT   膘
 JU   胼
 JZ   懇
 K,   豪
-K.   就
+K.   祊
 K2   牽
 K3   盲
 K4   斕
@@ -14886,7 +14913,7 @@ NQ   免
 NR   龜
 NS   斛
 NT   鯨
-NU   彞
+NU   彝
 NX   鰻
 NY   煞
 O/   呀
@@ -14901,7 +14928,7 @@ OU   噎
 OW   啕
 OY   嗚
 P,   聚
-P/   陽
+P/   髟
 P1   隔
 P2   鄰
 PB   聘
@@ -14959,18 +14986,18 @@ TN   紛
 TP   緬
 TZ   總
 U,   蒙
-U0   道
+U0   菳
 U2   葦
-U4   蘭
+U4   茜
 U8   蘋
-U;   萬
+U;   茧
 UC   卷
 UD   藉
 UH   鸛
 UL   茫
-UN   夢
+UN   芀
 UY   薦
-V,   動
+V,   夯
 V/   秒
 V2   犁
 V3   看
@@ -14999,13 +15026,13 @@ X,   濛
 X3   湘
 X7   潘
 X9   瀝
-XB   灣
+XB   溤
 XF   溝
 XG   游
 XH   鴻
 XM   漏
-XQ   流
-XV   漢
+XQ   沰
+XV   汏
 Y,   勞
 Y/   炒
 Y1   烯
@@ -15818,7 +15845,7 @@ WAF  崔
 WAU  崙
 WXJ  崤
 WI;  崧
-WMW  崗
+WMW  嶨
 TM1  常
 SM1  帶
 M1K  帳
@@ -15946,7 +15973,7 @@ XBW  淘
 XAU  淪
 XMI  深
 XAF  淮
-XJJ  淨
+XJJ  淜
 XXJ  淆
 XKS  淬
 XE.  涿
@@ -16631,7 +16658,7 @@ FDQ  睹
 3AF  睢
 2VL  矮
 QKS  碎
-QMC  碗
+QMC  砣
 QM8  碘
 QMO  碉
 Q/S  碑
@@ -17089,7 +17116,7 @@ F9S  趕
 6ER  輕
 6NQ  輓
 KSO  辣
-FO0  遠
+FO0  迼
 SM0  遘
 BG0  遜
 O10  遺
@@ -18021,7 +18048,7 @@ T.O  嚮
 FC8  壙
 77F  壘
 LM7  嬸
-N8U  彞
+N8U  彝
 XSZ  懣
 BB5  戳
 GC8  擴
