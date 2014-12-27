@@ -301,7 +301,7 @@ public class LIMEInitial extends Activity {
 
 		        if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
 		        	try {
-    					//DBSrv.closeDatabse(); done in DBSrv already
+    					
 		        		btnInitEmptyDB.setEnabled(false);
 		        		btnInitPhoneticOnlyDB.setEnabled(false);
 		        		btnInitPhoneticHsOnlyDB.setEnabled(false);
@@ -834,6 +834,13 @@ public class LIMEInitial extends Activity {
 							  task.execute("");*/
 	}
 	public void restoreDatabaseDropbox(){
+		try {
+			DBSrv.closeDatabse();
+		} catch (RemoteException e) {
+			if(DEBUG)
+				Log.i(TAG, "restoreDatabaseDropbox() reset database failed");
+			e.printStackTrace();
+		}
 		File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
 		if(!limedir.exists()){
 			limedir.mkdirs();
@@ -850,6 +857,14 @@ public class LIMEInitial extends Activity {
 	}
 
 	public void restoreDatabaseGoogleDrive() {
+		try {
+			DBSrv.closeDatabse();
+		} catch (RemoteException e) {
+			if(DEBUG)
+				Log.i(TAG, "restoreDatabaseDropbox() reset database failed");
+			e.printStackTrace();
+		}
+		
 		File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
 		if(!limedir.exists()){
 			limedir.mkdirs();
@@ -1064,7 +1079,7 @@ public class LIMEInitial extends Activity {
 				pd = ProgressDialog.show(activity, ctx.getText(R.string.l3_initial_restore_database), ctx.getText(R.string.l3_initial_restore_start),true);
 			}
 			 
-			mLIMEPref.setParameter("reload_database", true);
+			//mLIMEPref.setParameter("reload_database", true);
 			try {
 				dbsrv.closeDatabse();
 			} catch (RemoteException e) {

@@ -58,7 +58,7 @@ import android.widget.Toast;
 
 public class LimeDB  extends LimeSQLiteOpenHelper { 
 
-	private static boolean DEBUG = false;
+	private static boolean DEBUG = true;
 	private static String TAG = "LIMEDB";
 	
 	
@@ -736,24 +736,19 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				Log.i(TAG, "db.isOpen()" + db.isOpen());
 		}
 		if(force_reload){
-			mLIMEPref.setParameter("reload_database", false);
+			//mLIMEPref.setParameter("reload_database", false);
+			try{
+
+				if( db != null && db.isOpen()){
+					db.close();
+				}
+
+			}catch(Exception e){}
 		}
-		
-		try{
-
-			if( db != null && db.isOpen()){
-				db.close();
-			}
-
-		}catch(Exception e){}
-		
 		if(db == null || (db!=null && !db.isOpen())){		
 			db = this.getWritableDatabase();
 			mLIMEPref.setMappingLoading(false); // Jeremy '12,4,10 reset mapping_loading status 
-			
-			/*if(db!=null && !db.isOpen())
-				checkCode3RIndexAndRecsordsInPhonetic(db); // Jeremy '12,6,5 check if phonetic table has code3r clumn and index 
-*/		}
+		}
 		
 		return db;
 	}
@@ -765,12 +760,20 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 */
 	private boolean checkDBConnection(){
 		//Jeremy '12,5,1 mapping loading. db is locked
+		if(DEBUG)
+			Log.i(TAG,"checkDBConnection()");
+		
 		if(mLIMEPref.getMappingLoading()) {
+			if(DEBUG)
+				Log.i(TAG,"checkDBConnection() : mapping loading ");
 			Toast.makeText(mContext, mContext.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT/2).show();
 			return false; 
+			
 			 //Jermey'12,5,1 db == null if dabase is not exist
-			 //Jeremy'14,9,22 Fixed restore from Google/Dropbox failed without reset database first. Check with reload_database parameter here.
-		}else if(openDBConnection(false)==null  || mLIMEPref.getParameterBoolean("reload_database", false)){
+			 
+		}else if(openDBConnection(false)==null ){
+			if(DEBUG)
+				Log.i(TAG,"checkDBConnection() : Open db connection failed");
 			//Toast.makeText(ctx, ctx.getText(R.string.l3_database_not_exist), Toast.LENGTH_SHORT/2).show(); //annoying.. removed first
 			return false;
 		}else 
@@ -3876,15 +3879,25 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		if(hanConverter == null){
 		
 			//Jeremy '11,9,8 update handconverdb to v2 with base score in TCSC table
-			File hanDBFile = LIMEUtilities.isFileExist("/data/data/net.toload.main.hd/databases/hanconvert.db");
+			File hanDBFile = LIMEUtilities.isFileExist( 
+					mContext.getFilesDir().getParentFile().getPath() +
+					"/databases/hanconvert.db");
 			if(hanDBFile!=null)
 				hanDBFile.delete();
-			File hanDBV2File = LIMEUtilities.isFileNotExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
+			File hanDBV2File = LIMEUtilities.isFileNotExist( 
+					mContext.getFilesDir().getParentFile().getPath() +
+					"/databases/hanconvertv2.db");
+			
+			if(DEBUG) Log.i(TAG, "LimeDB: checkHanDB(): hanDBV2Filepaht:" + 
+					mContext.getFilesDir().getParentFile().getPath() +
+					"/databases/hanconvertv2.db");
 			
 			if(hanDBV2File!=null) 
 				LIMEUtilities.copyRAWFile(mContext.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
 			else { // Jeremy '11,9,14 copy the db file if it's newer.
-				hanDBV2File = LIMEUtilities.isFileExist("/data/data/net.toload.main.hd/databases/hanconvertv2.db");
+				hanDBV2File = LIMEUtilities.isFileExist(
+						mContext.getFilesDir().getParentFile().getPath() +
+						"/databases/hanconvertv2.db");
 				if(hanDBV2File!=null && mLIMEPref.getParameterLong("hanDBDate") != hanDBV2File.lastModified())
 					LIMEUtilities.copyRAWFile(mContext.getResources().openRawResource(R.raw.hanconvertv2), hanDBV2File);
 			}

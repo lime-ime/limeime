@@ -285,9 +285,11 @@ public class CandidateExpandedView extends CandidateView {
 		invalidate();
 		
 	}
+	
+	boolean mDownTouch = false;
 
 	@Override
-	public boolean onTouchEvent(MotionEvent me) {
+	public boolean onTouchEvent( MotionEvent me) {
 		if(DEBUG) 
 			Log.i(TAG, "onTouchEvent(): x =" + me.getX() + ", y=" + me.getY() 
 					+ ", ScroolY=" +mParentScroolView.getScrollY() );
@@ -300,6 +302,7 @@ public class CandidateExpandedView extends CandidateView {
 		switch (action) {
 		case MotionEvent.ACTION_DOWN:
 			if(DEBUG) Log.i(TAG, "onTouchEvent(), Action_DONW");
+			mDownTouch = true;
 			invalidate();
 			break;
 		case MotionEvent.ACTION_MOVE:
@@ -308,6 +311,10 @@ public class CandidateExpandedView extends CandidateView {
 			break;
 		case MotionEvent.ACTION_UP:
 			if(DEBUG) Log.i(TAG, "onTouchEvent(), Action_UP");
+			if (mDownTouch) {
+				mDownTouch = false;
+				performClick();
+			}
 			//invalidate();
 			mCandidateView.takeSelectedSuggestion(true);//takeSuggstionAtIndex(mSelectedIndex);
             
@@ -315,6 +322,15 @@ public class CandidateExpandedView extends CandidateView {
 		}
 		return true;
 	}
+	
+	@Override
+	public boolean performClick() {
+		// Calls the super implementation, which generates an AccessibilityEvent
+		// and calls the onClick() listener on the view, if any
+		super.performClick();
+		return true;
+	}
+
 
 	private void scrollToRow(int row){
 		int selY = row*(mHeight + mVerticalPadding);

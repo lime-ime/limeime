@@ -43,6 +43,8 @@ public class FileUploadProgressListener implements ProgressListener {
         case NOT_STARTED:
         	Log.d(TAG,fileId + ":" + "Not Started");
           break;
+	default:
+		break;
       }
     }
 

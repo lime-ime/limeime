@@ -575,13 +575,13 @@
     <string name="l3_im_download_from_ecj_start">Downloading ECJ table</string>
     <string name="l3_im_download_from_ecj_install">Importing ECJ table</string>
     
-    <string name="l3_im_download_from_array">Download/Import Kinfe Array table</string>
-    <string name="l3_im_download_from_array_start">Downloading Kinfe Array table</string>
-    <string name="l3_im_download_from_array_install">Importing Kinfe Array table</string>
+    <string name="l3_im_download_from_array">Download/Import Knife Array table</string>
+    <string name="l3_im_download_from_array_start">Downloading Knife Array table</string>
+    <string name="l3_im_download_from_array_install">Importing Knife Array table</string>
     
-    <string name="l3_im_download_from_array10">Download/Import Kinfe Array10 table</string>
-    <string name="l3_im_download_from_array10_start">Downloading Kinfe Array10 table</string>
-    <string name="l3_im_download_from_array10_install">Importing Kinfe Array10 table</string>
+    <string name="l3_im_download_from_array10">Download/Import Knife Array10 table</string>
+    <string name="l3_im_download_from_array10_start">Downloading Knife Array10 table</string>
+    <string name="l3_im_download_from_array10_install">Importing Knife Array10 table</string>
     
     <string name="l3_im_download_from_ez">Download/Import Eazy table</string>
     <string name="l3_im_download_from_ez_start">Downloading Eazy table</string>

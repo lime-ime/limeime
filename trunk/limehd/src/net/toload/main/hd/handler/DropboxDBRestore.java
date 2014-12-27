@@ -71,16 +71,6 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
         mDialog.setCanceledOnTouchOutside(false);
         mDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         mDialog.setProgress(0);
-        /*
-        mDialog.setButton(DialogInterface.BUTTON_NEGATIVE, 
-        		mContext.getText(R.string.lime_loading_cancel)
-        		, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                // This will cancel the putFile operation
-                mRequest.abort();
-            }
-        });
-        */
         mDialog.show();
     }
 
@@ -112,10 +102,7 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
                             }
                         }
                     });
-        //} catch (DropboxException e) {
-        //    Log.e("DbExampleLog",
-        //            "Something went wrong while getting file.");
-
+   
         } catch (FileNotFoundException e) {
             //Log.e("DbExampleLog", "File not found.");
         	mErrorMsg = mContext.getText(R.string.l3_initial_dropbox_restore_error).toString();
