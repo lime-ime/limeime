@@ -179,7 +179,7 @@ public class  DBServer {
 
 		//Jeremy '12,4,7 close db before replace db file
 		closeDatabse();
-
+		
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
 		if(dbtarget.equals("device")){
 			File delTargetFile1 = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
@@ -395,7 +395,7 @@ public class  DBServer {
 	public void restoreDatabase() throws RemoteException {
 
 		closeDatabse(); // Jeremy '12,5,1 close database here.
-		mLIMEPref.setParameter("reload_database", true);
+		//mLIMEPref.setParameter("reload_database", true);
 
 		showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start)+ "", intentLIMEInitial);
 		File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
@@ -919,7 +919,6 @@ public class  DBServer {
 	
 	/*
 	 * Select Remote File to download
-	 * First download Mapping from Google Space, if failed then go OpenFoundary to download file
 	 */
 	public File downloadRemoteFile(String backup_url, String url, String folder, String filename){
 
@@ -928,7 +927,7 @@ public class  DBServer {
 			olddbfile.delete();
 		}
 		
-		mLIMEPref.setParameter("reload_database", true);
+		//mLIMEPref.setParameter("reload_database", true);
 		abortDownload = false;
 		remoteFileDownloading = true;
 		File target = downloadRemoteFile(url, folder, filename);
@@ -974,8 +973,8 @@ public class  DBServer {
 
 			FileOutputStream fos = null;
 			fos = new FileOutputStream(downloadedFile);
-
-			byte buf[] = new byte[128];
+			// '04,12,27 Jeremy modified buf size from 128 to 128k and dramatically speed-up downloading speed on modern devices
+			byte buf[] = new byte[128000];
 			do{
 				Thread.sleep(300);
 				int numread = is.read(buf);
@@ -994,7 +993,7 @@ public class  DBServer {
 				if(numread <=0){break;}
 				fos.write(buf, 0, numread);
 			}while(!abortDownload);
-
+			fos.close();
 			is.close();
 
 			return downloadedFile;
