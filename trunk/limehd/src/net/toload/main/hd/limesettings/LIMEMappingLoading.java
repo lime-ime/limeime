@@ -20,6 +20,9 @@
 
 package net.toload.main.hd.limesettings;
 
+import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
+import com.google.android.gms.ads.doubleclick.PublisherAdView;
+
 import net.toload.main.hd.LIMEMenu;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEUtilities;
@@ -94,11 +97,13 @@ public class LIMEMappingLoading extends Activity {
         }
     };
 
-	
+    
+
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
+		
 		
 		// Startup Service
 		//getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
@@ -112,14 +117,11 @@ public class LIMEMappingLoading extends Activity {
 		progressBar = (ProgressBar)findViewById(R.id.progressBar);
 		btnCancel = (Button) findViewById(R.id.btn_cancel);
 		
-//		try{
-//			Bundle bundle = this.getIntent().getExtras();
-//			if(bundle != null){
-//				imtype = bundle.getString("keyboard");
-//			}
-//		}catch(Exception e){
-//			e.printStackTrace();
-//		}
+		// Admob 
+		PublisherAdView mAdView = (PublisherAdView) findViewById(R.id.adView);
+        PublisherAdRequest adRequest = new PublisherAdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+	
 		
 		btnCancel.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {

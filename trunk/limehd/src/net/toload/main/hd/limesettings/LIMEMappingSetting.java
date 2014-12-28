@@ -25,10 +25,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
+import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
+import com.google.android.gms.ads.doubleclick.PublisherAdView;
+import com.google.android.gms.ads.AdSize;
 
 
 import net.toload.main.hd.R;
@@ -1200,6 +1201,7 @@ public class LIMEMappingSetting extends Activity {
 				@Override
 				public boolean onTouch(View v, MotionEvent event) {
 					updateLabelInfo();
+					v.performClick();
 					return false;
 				}
 			});
@@ -1237,10 +1239,17 @@ public class LIMEMappingSetting extends Activity {
 				}
 			});
 
-			AdView adView = new AdView(this, AdSize.SMART_BANNER, LIME.publisher);
+			//AdView adView = new AdView(this, AdSize.SMART_BANNER, LIME.publisher);
+			PublisherAdView adView = new PublisherAdView(this);
+			adView.setAdSizes(AdSize.SMART_BANNER);
+			adView.setAdUnitId(LIME.publisher);
+			
 	        LinearLayout layout = (LinearLayout)findViewById(R.id.ad_area);
 	        layout.addView(adView);
-	        AdRequest adRequest = new AdRequest();
+	        //AdRequest adRequest = new AdRequest();
+	        PublisherAdRequest adRequest =
+	        	    new PublisherAdRequest.Builder().build();
+	        adView.loadAd(adRequest);
 	        adView.loadAd(adRequest);
 			
 
@@ -1533,9 +1542,9 @@ public class LIMEMappingSetting extends Activity {
 				for(File f: check.listFiles()){
 					if(f.canRead()){
 						if(!f.isDirectory()){
-							if( f.getName().toLowerCase().endsWith("cin") ||
-								f.getName().toLowerCase().endsWith("lime") ||
-								f.getName().toLowerCase().endsWith("txt")){
+							if( f.getName().toLowerCase(Locale.ENGLISH).endsWith("cin") ||
+								f.getName().toLowerCase(Locale.ENGLISH).endsWith("lime") ||
+								f.getName().toLowerCase(Locale.ENGLISH).endsWith("txt")){
 								list.add(f);
 							}
 						}else{

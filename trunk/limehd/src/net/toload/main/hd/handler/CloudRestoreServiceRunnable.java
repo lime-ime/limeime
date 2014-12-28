@@ -25,6 +25,8 @@ import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.RemoteException;
+import android.util.Log;
 
 public class CloudRestoreServiceRunnable  implements Runnable{
 
@@ -32,6 +34,8 @@ public class CloudRestoreServiceRunnable  implements Runnable{
 	protected void finalize() throws Throwable {
 		super.finalize();
 	}
+	private final boolean DEBUG = false;
+	private final String TAG = "CloudRestoreServiceRunnable";
 	private CloudServierHandler handler;
 	private Activity activity;
 	
@@ -68,12 +72,7 @@ public class CloudRestoreServiceRunnable  implements Runnable{
 		this.mLIMEPref = new LIMEPreferenceManager(activity);
 	}
 
-	/*private DocsService getDocsService(GoogleCredential credential) {
-		DocsService service = new DocsService("LIME");
-					service.setOAuth2Credentials(credential);	
-		return service;
-	}*/
-	
+		
 	public void run() {
 		
 		String accountName = "";
@@ -136,7 +135,7 @@ public class CloudRestoreServiceRunnable  implements Runnable{
 						DocumentListFeed.class);
 				
 				if(feed == null || feed.getEntries().size() == 0){
-					mLIMEPref.setParameter("cloud_in_process",new Boolean(false));
+					mLIMEPref.setParameter("cloud_in_process",false);
 					DBServer.showNotificationMessage(activity.getApplicationContext()
 							.getText(R.string.l3_initial_restore_error)	+ "", intentLIMEMenu);
 					handler.closeProgressDialog();
@@ -189,7 +188,7 @@ public class CloudRestoreServiceRunnable  implements Runnable{
 						status = true;
 					}catch(Exception e){
 						e.printStackTrace();
-						mLIMEPref.setParameter("cloud_in_process",new Boolean(false));
+						mLIMEPref.setParameter("cloud_in_process",false);
 						DBServer.showNotificationMessage(activity.getApplicationContext()
 								.getText(R.string.l3_initial_restore_error)	+ "", intentLIMEMenu);
 						handler.closeProgressDialog();
@@ -206,6 +205,8 @@ public class CloudRestoreServiceRunnable  implements Runnable{
 					}
 
 					if(status){
+						
+					/*
 						String target = mLIMEPref.getParameterString("dbtarget");
 						if (target.equals("device")) {
 							DBServer.decompressFile(tempfile,
@@ -216,18 +217,26 @@ public class CloudRestoreServiceRunnable  implements Runnable{
 									LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD,
 									LIME.DATABASE_NAME);
 						}
+					*/
+						try {
+							DBServer.restoreDatabase(tempfile);
+						} catch (RemoteException e) {
+							if(DEBUG)
+								Log.i(TAG, "restoreDatabaseDropbox() restore database failed");
+							e.printStackTrace();
+						}
 						mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
 
 						tempfile.deleteOnExit();
 					}
 
 					handler.closeProgressDialog();
-					mLIMEPref.setParameter("cloud_in_process",new Boolean(false));
+					mLIMEPref.setParameter("cloud_in_process","false");
 					break;
 				}
 			} catch (Exception e) {
 				handler.closeProgressDialog();
-				mLIMEPref.setParameter("cloud_in_process", new Boolean(false));
+				mLIMEPref.setParameter("cloud_in_process", "false");
 				e.printStackTrace();
 				return;
 			}

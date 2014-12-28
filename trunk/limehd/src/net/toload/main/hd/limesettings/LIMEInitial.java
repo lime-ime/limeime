@@ -22,9 +22,10 @@ package net.toload.main.hd.limesettings;
 
 import java.io.File;
 
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
+import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
+import com.google.android.gms.ads.doubleclick.PublisherAdView;
+import com.google.android.gms.ads.AdSize;
+
 
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
@@ -183,7 +184,7 @@ public class LIMEInitial extends Activity {
 		    	     					public void onClick(DialogInterface dialog, int id) {
 						    										    					
 							    				try {
-							    					//DBSrv.closeDatabse(); done in DBSrv.resetDownloadDatabase
+							    					
 							    					DBSrv.resetDownloadDatabase();
 						    						mLIMEPref.setParameter("im_loading", false);
 						    						mLIMEPref.setParameter("im_loading_table", "");
@@ -662,14 +663,21 @@ public class LIMEInitial extends Activity {
 		
 
 
-		AdView adView = new AdView(this, AdSize.SMART_BANNER, LIME.publisher);
+		//AdView adView = new AdView(this, AdSize.SMART_BANNER, LIME.publisher);
+		PublisherAdView adView = new PublisherAdView(this);
+		adView.setAdSizes(AdSize.SMART_BANNER);
+		adView.setAdUnitId(LIME.publisher);
+		
         LinearLayout layout = (LinearLayout)findViewById(R.id.ad_area);
         layout.addView(adView);
-        AdRequest adRequest = new AdRequest();
+      //AdRequest adRequest = new AdRequest();
+        PublisherAdRequest adRequest =
+        	    new PublisherAdRequest.Builder().build();
+        adView.loadAd(adRequest);
         adView.loadAd(adRequest);
 
 		// Reset Cloud Backup Status
-		mLIMEPref.setParameter("cloud_in_process",Boolean.valueOf(false));
+        mLIMEPref.setParameter("cloud_in_process",false);
 
 	}
 	
@@ -834,13 +842,7 @@ public class LIMEInitial extends Activity {
 							  task.execute("");*/
 	}
 	public void restoreDatabaseDropbox(){
-		try {
-			DBSrv.closeDatabse();
-		} catch (RemoteException e) {
-			if(DEBUG)
-				Log.i(TAG, "restoreDatabaseDropbox() reset database failed");
-			e.printStackTrace();
-		}
+		
 		File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
 		if(!limedir.exists()){
 			limedir.mkdirs();
@@ -851,19 +853,12 @@ public class LIMEInitial extends Activity {
 		DropboxDBRestore download = 
 				new DropboxDBRestore(this, LIMEInitial.this, mDropboxApi,LIME.DATABASE_BACKUP_NAME , tempFile);
 		download.execute();
-		
-		//initialButton();
+
 		
 	}
 
 	public void restoreDatabaseGoogleDrive() {
-		try {
-			DBSrv.closeDatabse();
-		} catch (RemoteException e) {
-			if(DEBUG)
-				Log.i(TAG, "restoreDatabaseDropbox() reset database failed");
-			e.printStackTrace();
-		}
+		
 		
 		File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
 		if(!limedir.exists()){
@@ -878,8 +873,7 @@ public class LIMEInitial extends Activity {
 		bTask.start();
 
 		showProgressDialog(false);
-		/*BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDRESTORE);
-						      task.execute("");*/
+		
 	    initialButton();
 	}
 	
@@ -892,7 +886,7 @@ public class LIMEInitial extends Activity {
 			 cloudpd.setOnCancelListener(new OnCancelListener(){
 				@Override
 				public void onCancel(DialogInterface dialog) {
-					mLIMEPref.setParameter("cloud_in_process",Boolean.valueOf(false));
+					mLIMEPref.setParameter("cloud_in_process",false);
 				}
 			 });
 			 cloudpd.setIndeterminate(false);
@@ -908,7 +902,7 @@ public class LIMEInitial extends Activity {
 			 cloudpd.setOnCancelListener(new OnCancelListener(){
 				@Override
 				public void onCancel(DialogInterface dialog) {
-					mLIMEPref.setParameter("cloud_in_process",Boolean.valueOf(false));
+					mLIMEPref.setParameter("cloud_in_process",false);
 				}
 			 });
 			 cloudpd.setIndeterminate(false);
@@ -1050,7 +1044,7 @@ public class LIMEInitial extends Activity {
 		private DBServer dbsrv = null;
 		private Context ctx;
 		private LIMEInitial activity;
-		//private File tempfile;
+
 		private int type;
 		final public static int CLOUDBACKUP = 1;
 		final public static int CLOUDRESTORE = 2;
@@ -1064,7 +1058,6 @@ public class LIMEInitial extends Activity {
 			dbsrv = db;
 			activity = act;
 			ctx = srcctx;
-			//tempfile = file;
 			type = settype;
 		}
 		
@@ -1079,14 +1072,14 @@ public class LIMEInitial extends Activity {
 				pd = ProgressDialog.show(activity, ctx.getText(R.string.l3_initial_restore_database), ctx.getText(R.string.l3_initial_restore_start),true);
 			}
 			 
-			//mLIMEPref.setParameter("reload_database", true);
+		
 			try {
-				dbsrv.closeDatabse();
+				DBServer.closeDatabse();
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			} 
 
-			mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
+			mLIMEPref.setParameter("cloud_in_process",true);
 		}
 		protected void onPostExecute(Integer result){
 			pd.cancel();
@@ -1118,14 +1111,14 @@ public class LIMEInitial extends Activity {
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
-				mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
+				mLIMEPref.setParameter("cloud_in_process",false);
 			}else if(type == RESTORE){
 				try {
 					dbsrv.restoreDatabase();
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
-				mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
+				mLIMEPref.setParameter("cloud_in_process",false);
 			}
 			boolean inProcess = true;
 			do{

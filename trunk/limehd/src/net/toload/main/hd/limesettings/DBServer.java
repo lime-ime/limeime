@@ -49,7 +49,7 @@ import android.util.Log;
 
 //Jeremy '12,5,1 renamed from DBServer and change from service to ordinary class.
 public class  DBServer {
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private static final String TAG = "LIME.DBServer";
 	//private NotificationManager notificationMgr;
 
@@ -196,7 +196,7 @@ public class  DBServer {
 	}
 
 	public void downloadEmptyDatabase() throws RemoteException {
-		//if (dbAdapter == null) 	loadLimeDB();
+		
 		
 		resetDownloadDatabase();
 
@@ -393,24 +393,27 @@ public class  DBServer {
 
 
 	public void restoreDatabase() throws RemoteException {
-
-		closeDatabse(); // Jeremy '12,5,1 close database here.
-		//mLIMEPref.setParameter("reload_database", true);
-
 		showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start)+ "", intentLIMEInitial);
 		File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
+		restoreDatabase(srcFile);
+		mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
+		showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end)+ "", intentLIMEMenu); 
 
+
+	}
+	
+	public static void restoreDatabase(File srcFile) throws RemoteException {
+
+		closeDatabse(); 
+		
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
 		if(dbtarget.equals("device")){
 			decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME);
 		}else{
 			decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME);
 		}			
-		//getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
-		mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
-		showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end)+ "", intentLIMEMenu); 
-
-		//Jeremy '12,4,7 re-open the dbconnection
+		
+		
 		dbAdapter.openDBConnection(true);
 	}
 
@@ -450,7 +453,7 @@ public class  DBServer {
 	}
 
 
-	public void closeDatabse() throws RemoteException {
+	public static void closeDatabse() throws RemoteException {
 		if (dbAdapter != null) {
 			dbAdapter.close();
 		}
@@ -465,7 +468,7 @@ public class  DBServer {
 
 	public void setIMKeyboard(String im, String value,
 			String keyboard) throws RemoteException {
-		//if (dbAdapter == null) {loadLimeDB();}
+	
 		dbAdapter.setIMKeyboard(im, value, keyboard);
 	}
 

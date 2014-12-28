@@ -508,7 +508,7 @@ public class SearchServer {
 					Pair<List<Mapping>, List<Mapping>> newPair 
 					= new Pair<List<Mapping>, List<Mapping>>(cachedPair.first, dbadapter.updateRelatedList(code)) ;
 					cache.put(cachekey, newPair);
-				}else{//Jeremy '12,6,5 code not in cahe do updateRelatedList and removed cached items of  ramped codes. 
+				}else{//Jeremy '12,6,5 code not in cahe do updateRelatedList and removed cached items of  remaped codes. 
 					dbadapter.updateRelatedList(code);
 					removeRemapedCodeCachedMappings(code);
 				}
@@ -554,7 +554,7 @@ public class SearchServer {
 				updateSimilarCodeRelatedList(code);
 
 
-			}else{//Jeremy '12,6,5 code not in cahe do updateRelatedList and removed cached items of  ramped codes. 
+			}else{//Jeremy '12,6,5 code not in cache do updateRelatedList and removed cached items of  ramped codes. 
 				dbadapter.updateRelatedList(code);
 				removeRemapedCodeCachedMappings(code);
 			}
@@ -870,7 +870,7 @@ public class SearchServer {
 			//String id, String code, String word,
 			//String pword, int score, boolean isDictionary)
 					throws RemoteException {
-		if(DEBUG) Log.i(TAG, "addUserDictAndUpdateScore()");
+		if(DEBUG) Log.i(TAG, "addUserDictAndUpdateScore() ");
 
 		if(scorelist == null){scorelist = new ArrayList<Mapping>();}
 		

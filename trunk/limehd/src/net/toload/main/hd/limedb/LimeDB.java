@@ -58,7 +58,7 @@ import android.widget.Toast;
 
 public class LimeDB  extends LimeSQLiteOpenHelper { 
 
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
 	private static String TAG = "LIMEDB";
 	
 	
@@ -1139,13 +1139,17 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 //			}else 
 		//Jeremy '11,9,8 query highest score first.  Erase relatedlist if new score is not highest.
 		try {
-			int highestScore = getHighestScoreOnDB(db, srcunit.getCode());
-			int newScore = srcunit.getScore() + 1;
 			
-			if (srcunit != null && //srcunit.getId() != null &&
-					srcunit.getWord() != null  &&
+			if (srcunit != null && 	srcunit.getWord() != null  &&
 					!srcunit.getWord().trim().equals("") ) {
-					if(DEBUG) Log.i(TAG, "addScore(): addScore on code:"+srcunit.getCode());
+				int highestScore = getHighestScoreOnDB(db, srcunit.getWord());
+				int newScore = 0; 
+				if(srcunit.getId()==null) 
+					newScore = highestScore +1; // selected from related code list without scores infromaiton
+				else
+					newScore = srcunit.getScore() + 1;
+
+				if(DEBUG) Log.i(TAG, "addScore(): addScore on word:"+srcunit.getWord());
 
 				if(srcunit.isDictionary()){
 					ContentValues cv = new ContentValues();
@@ -1154,10 +1158,10 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				}else{
 					ContentValues cv = new ContentValues();
 					cv.put(FIELD_SCORE, newScore);
-					if(newScore< highestScore)
+					if(newScore< highestScore || (srcunit.getId()==null))
 						cv.put(FIELD_RELATED, "");
-	
-					// Jeremy 11',7,29  update according to word instead of ID, may have multiple records mathing word but withd diff code/id 
+
+					// Jeremy 11',7,29  update according to word instead of ID, may have multiple records mathing word but with diff code/id 
 					db.update(tablename, cv, FIELD_WORD + " = '" + srcunit.getWord() + "'", null);
 				}
 			}
@@ -1334,28 +1338,30 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		if(DEBUG) 
 			Log.i(TAG, "updateRelatedListOnDB(): raw query string: "+ selectString);
 		
-		LinkedList <Mapping> scorelist = new LinkedList<Mapping>();
+		LinkedList <Mapping> newMappingList = new LinkedList<Mapping>();
 		if(cursor.moveToFirst()){
 			HashSet <String> duplicateCheck = new HashSet<String>();
-			//scorelist = new LinkedList<Mapping>();
-			int idColumn = cursor.getColumnIndex(FIELD_ID);
-			int codeColumn = cursor.getColumnIndex(FIELD_CODE);
+			
+			//int idColumn = cursor.getColumnIndex(FIELD_ID);
+			//int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 			int wordColumn = cursor.getColumnIndex(FIELD_WORD);
-			int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
+			//int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
 			do {		
 				
 				Mapping munit = new Mapping();
-				munit.setCode(cursor.getString(codeColumn));
-				munit.setWord(cursor.getString(wordColumn));
-				munit.setId(cursor.getString(idColumn));
-				munit.setScore(cursor.getInt(scoreColumn));
+				munit.setCode(code);
 				munit.setDictionary(false);
+				munit.setWord(cursor.getString(wordColumn));
+				munit.setId(null);
+				munit.setScore(0);
+					
+					
 				
 				if(munit.getWord() == null || munit.getWord().trim().equals(""))
 					continue;
 				
 				if(duplicateCheck.add(munit.getWord())){
-					scorelist.add(munit);
+					newMappingList.add(munit);
 				}
 			} while (cursor.moveToNext());
 			
@@ -1364,7 +1370,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			String newRelatedlist;
 			
 			newRelatedlist = "";
-			for (Mapping munit : scorelist) {
+			for (Mapping munit : newMappingList) {
 				if (newRelatedlist.equals(""))
 					newRelatedlist = munit.getWord();
 				else
@@ -1394,13 +1400,13 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				
 		}
 		if(DEBUG) 
-			Log.i(TAG, "updateRelatedListOnDB(): scorelist.size() =  "+ scorelist.size());
+			Log.i(TAG, "updateRelatedListOnDB(): scorelist.size() =  "+ newMappingList.size());
 		
 		if (cursor != null) {
 			//cursor.deactivate();
 			cursor.close();
 		}
-		return scorelist;
+		return newMappingList;
 	}
 //Rewrite by Jeremy 11,6,4.  Supporting array and dayi now.
 	public String keyToKeyname(String code, String table, Boolean composingText) {
@@ -2736,14 +2742,43 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				//Jeremy '11,6,12, Add constraint on cword is not null (cword =null is for recoding im related list selected count).
 				//Jeremy '12,12,21 Add limitClause to limit candidates in only 1 page first.
 				//					to do 2 stage query.
+				//Jeremy '14,12,38 Add query on word length > 1 to include last character into query 
 				String limitClause = null;
 				
 				if(!getAllRecords) 	limitClause = INITIAL_RESULT_LIMIT;
 				
-				cursor = db.query("related", null, FIELD_DIC_pword + " = '"
-						+ pword + "' AND " + FIELD_DIC_cword + " IS NOT NULL"
-						, null, null , null, FIELD_SCORE + " DESC", limitClause);
-	
+				if(pword.length() > 1){
+ 
+					String last = pword.substring(pword.length()-1);
+					
+					String selectString = 
+							"SELECT " + FIELD_ID + ", " + FIELD_DIC_pword + ", "  + FIELD_DIC_cword + ", " + FIELD_SCORE  
+							+ ", length(" + FIELD_DIC_pword +") as len from related where "  
+							+ FIELD_DIC_pword + " = '" + pword 
+							+ "' or " + FIELD_DIC_pword + " = '" + last
+							+ "' and " + FIELD_DIC_cword + " is not null"
+							+ " order by len desc, " + FIELD_SCORE + " desc ";
+					if(limitClause != null) 
+						selectString += " limit " + limitClause;
+					if(DEBUG)
+						Log.i(TAG, "queryUserDict() selectString = " + selectString);
+					cursor = db.rawQuery(selectString, null);
+							
+					/*		
+					
+					cursor = db.query("related", null, 
+							FIELD_DIC_pword + " = '" + pword 
+							+ "' OR " + FIELD_DIC_pword + " = '" + last
+							+ "' AND " + FIELD_DIC_cword + " IS NOT NULL"
+							, null, null , null, FIELD_SCORE + " DESC", limitClause);
+					*/
+
+				}else {
+					cursor = db.query("related", null, FIELD_DIC_pword + " = '" + pword 
+							+ "' and " + FIELD_DIC_cword + " is not null "
+							, null, null , null, FIELD_SCORE + " DESC", limitClause);
+				}
+
 				if (cursor.moveToFirst()) {
 	
 					int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
@@ -2773,7 +2808,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				
 				
 				if (cursor != null) {
-					//cursor.deactivate();
 					cursor.close();
 				}
 			}
@@ -3340,19 +3374,18 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @param code
 	 * @return
 	 */
-	public int getHighestScore(String code) {
+	public int getHighestScore(String word) {
 		
 		if(!checkDBConnection()) return 0;
 		
 		int highestScore=0;
-		if (code != null && code.trim().length()>0){
+		if (word != null && word.trim().length()>0){
 			
 			try {
-				highestScore = getHighestScoreOnDB(db, code);				
-				//db.close();
+				highestScore = getHighestScoreOnDB(db, word);				
+			
 			} catch (Exception e) {
 				e.printStackTrace();
-				//db.close();
 			}
 		}
 		return highestScore;
@@ -3364,17 +3397,17 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 * @param code
 	 * @return
 	 */
-	private int getHighestScoreOnDB(SQLiteDatabase db, String code) throws RemoteException {
-		
+	private int getHighestScoreOnDB(SQLiteDatabase db, String word) throws RemoteException {
+		// '14,12,28 use word instead of code when evaluating scores
 		
 		int highestScore=0;
-		if (code != null && code.trim().length()>0){
+		if (word != null && word.trim().length()>0){
 			
 			
 			// Process the escape characters of query
-			code = code.replaceAll("'", "''");
-			Cursor cursor = db.query(tablename, null, FIELD_CODE + " = '"
-						+ code + "'" , null, null, null, FIELD_SCORE + " DESC", null);
+			word = word.replaceAll("'", "''");
+			Cursor cursor = db.query(tablename, null, FIELD_WORD + " = '"
+						+ word + "'" , null, null, null, FIELD_SCORE + " DESC", null);
 			
 			if (cursor.moveToFirst()) {
 				int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
@@ -3762,7 +3795,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	public synchronized void setIMKeyboard(String im, String value,
 			String keyboard) {
 		if(DEBUG)
-			Log.i(TAG,"setIMKeyboard()");
+			Log.i(TAG,"setIMKeyboard() im=" + im + " value= " + value + " keyboard= " + keyboard);
 		if(!checkDBConnection()) ;
 		try{
 			setIMKeyboardOnDB(db, im, value, keyboard);
