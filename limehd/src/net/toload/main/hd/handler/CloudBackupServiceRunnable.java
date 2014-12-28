@@ -120,7 +120,7 @@ public class CloudBackupServiceRunnable  implements Runnable{
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				handler.closeProgressDialog();
-				mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
+				mLIMEPref.setParameter("cloud_in_process",false);
 				failed = true;
 				e.printStackTrace();
 				return;
@@ -181,7 +181,7 @@ public class CloudBackupServiceRunnable  implements Runnable{
 				}
 
 				mLIMEPref.setParameter("cloud_backup_size", sourceFile.length());
-				mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
+				mLIMEPref.setParameter("cloud_in_process",false);
 				if(status){
 					DBServer.showNotificationMessage(
 							activity.getApplicationContext().getText(
@@ -195,13 +195,13 @@ public class CloudBackupServiceRunnable  implements Runnable{
 			} catch (Exception e) {
 				e.printStackTrace();
 				DBServer.showNotificationMessage("Cannot Backup Database", intentLIMEMenu);
-				mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
+				mLIMEPref.setParameter("cloud_in_process",false);
 				handler.closeProgressDialog();
 				return;
 			}
 		}else{
 			handler.closeProgressDialog();
-			mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
+			mLIMEPref.setParameter("cloud_in_process",false);
 		}
 	}
 	

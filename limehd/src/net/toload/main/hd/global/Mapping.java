@@ -20,6 +20,8 @@
 
 package net.toload.main.hd.global;
 
+import java.util.Locale;
+
 /**
  * @author Art Hung
  */
@@ -74,10 +76,10 @@ public class Mapping {
 	 * @param mapping
 	 */
 	public Mapping(Mapping mapping) {
-		this.setId(mapping.id);
-		this.setCode(mapping.code);
-		this.setWord(mapping.word);
-		this.setPword(mapping.pword);
+		if(mapping.getId()!=null) this.setId(mapping.getId());
+		if(mapping.getCode()!=null) this.setCode(mapping.getCode());
+		if(mapping.getWord()!=null) this.setWord(mapping.getWord());
+		if(mapping.getPword()!=null) this.setPword(mapping.getPword());
 		this.setScore(mapping.score);
 		this.setDictionary(mapping.isDictionary);
 		this.setRelated(mapping.getRelated());
@@ -137,7 +139,7 @@ public class Mapping {
 	 */
 	public String getCode() {
 		if(code != null){
-			return code.toLowerCase();
+			return code.toLowerCase(Locale.US);
 		}
 		return null;
 	}

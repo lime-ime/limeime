@@ -347,8 +347,7 @@ public class LIMEService extends InputMethodService implements
 			Log.i(TAG,"onCreateCandidatesView()");
 		
 
-		mCandidateViewContainer = (CandidateViewContainer) getLayoutInflater().inflate(
-				R.layout.candidates, null);
+		mCandidateViewContainer = (CandidateViewContainer) getLayoutInflater().inflate(R.layout.candidates, null);
 		mCandidateViewContainer.initViews();
 		mCandidateViewStandAlone = (CandidateView) mCandidateViewContainer.findViewById(R.id.candidates);
 
@@ -450,7 +449,7 @@ public class LIMEService extends InputMethodService implements
 	/**
 	 * add by Jeremy '12,4,21
 	 * clearComposing buffer upon composing is about to end   
-	 * add forceClearComposing parameter to control force clear the system composing buffer
+	 * add forceClearComposing parameter to control forced clear the system composing buffer
 	 * 
 	 */
 	/**
@@ -1306,7 +1305,7 @@ public class LIMEService extends InputMethodService implements
 	 */
 	private void commitTyped(InputConnection ic) {
 		if (DEBUG)
-			Log.i(TAG,"CommittedTyped()");
+			Log.i(TAG,"CommitedTyped()");
 		try {
 			if (mComposing.length() > 0   //denotes composing just finished
 					|| (selectedCandidate != null && selectedCandidate.isDictionary())) { //denotes related candidates are selected.
@@ -1314,7 +1313,7 @@ public class LIMEService extends InputMethodService implements
 				if (!mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
 					if (selectedCandidate != null && selectedCandidate.getWord() != null
 							&& !selectedCandidate.getWord().equals("")) {
-					
+
 						int firstMatchedLength = 1;
 
 						if (selectedCandidate.getCode() == null
@@ -1334,7 +1333,7 @@ public class LIMEService extends InputMethodService implements
 											.toLowerCase(Locale.US))) {
 								firstMatchedLength = 1;
 
-								
+
 							}
 						}
 
@@ -1348,28 +1347,28 @@ public class LIMEService extends InputMethodService implements
 								SearchSrv.hanConvert(wordToCommit),
 								firstMatchedLength);
 
-						
-						
+
+
 						// Art '30,Sep,2011 when show related then clear composing
 						if(currentSoftKeyboard.indexOf("wb") != -1){
 							clearComposing(true);
 						}
-						
+
 
 						// Jeremy '11,7,28 for continuous typing (LD) 
 						// Jeremy '12,6,2 get real commited code length from searchserver 
 						boolean composingNotFinish = false;
 						//String commitedCode = selectedCandidate.getCode();
 						int commitedCodeLength = SearchSrv.getRealCodeLength(selectedIndex); 
-						
+
 						if(DEBUG) 
 							Log.i(TAG, "commitedtype(): commitedCodeLength = " + commitedCodeLength);
-						
+
 						if(mComposing.length() > selectedCandidate.getCode().length()){
 							composingNotFinish = true;
 						}
-						
-						
+
+
 						boolean shouldUpdateCandidates = false;
 						if(composingNotFinish){
 							if(LDComposingBuffer.length()==0){
@@ -1377,20 +1376,20 @@ public class LIMEService extends InputMethodService implements
 								LDComposingBuffer = mComposing.toString();
 								if(DEBUG) 
 									Log.i(TAG, "commitedtype():starting LD process, LDBuffer=" + LDComposingBuffer +
-										". just commited code= '" + selectedCandidate.getCode() + "'");
+											". just commited code= '" + selectedCandidate.getCode() + "'");
 								SearchSrv.addLDPhrase(selectedCandidate, false);
 							}else {//if(LDComposingBuffer.contains(mComposing.toString())){
 								//Continuous LD process
 								if(DEBUG) 
 									Log.i(TAG, "commitedtype():Continuous LD process, LDBuffer='" + LDComposingBuffer +
-										"'. just commited code=" + selectedCandidate.getCode());
+											"'. just commited code=" + selectedCandidate.getCode());
 								SearchSrv.addLDPhrase(selectedCandidate, false);
 							}
 							mComposing= mComposing.delete(0, commitedCodeLength);
 							if(DEBUG) 
 								Log.i(TAG, "commitedtype(): trimmed mCopmosing = '" + mComposing + "', " +
 										"+ mCompsing.length = " + mComposing.length());
-							
+
 							if(!mComposing.toString().equals(" ")){
 								if(mComposing.toString().startsWith(" "))
 									mComposing= mComposing.deleteCharAt(0);
@@ -1407,58 +1406,53 @@ public class LIMEService extends InputMethodService implements
 								//Ending continuous LD process (last of LD process)
 								if(DEBUG) 
 									Log.i(TAG, "commitedtype():Ending LD process, LDBuffer=" + LDComposingBuffer +
-										". just commited code=" + selectedCandidate.getCode());
+											". just commited code=" + selectedCandidate.getCode());
 								LDComposingBuffer = "";
 								SearchSrv.addLDPhrase(selectedCandidate, true);
 							}else if(LDComposingBuffer.length()>0){
 								//LD process interrupted.
 								if(DEBUG) 
 									Log.i(TAG, "commitedtype():LD process interrupted, LDBuffer=" + LDComposingBuffer +
-										". just commited code=" + selectedCandidate.getCode());
+											". just commited code=" + selectedCandidate.getCode());
 								LDComposingBuffer = "";
 								SearchSrv.addLDPhrase(null, true);
 							}
-							
-								
+
+
 						}
-						
+
 						//Jeremy '13,1,10 do dict update and reverse query after updateRelatedword to shorten the time user see related candidates after select a candidate.
 						if(shouldUpdateCandidates){
 							updateCandidates();
 						}else{
-							commitedCandidate = selectedCandidate;
+							commitedCandidate = new Mapping(selectedCandidate);
 							selectedCandidate = null;
 
-							clearComposing(false);				
-							updateRelatedWord(false);
 
+							clearComposing(false);				
+							
+							
 							SearchSrv.addUserDictAndUpdateScore(commitedCandidate);			
 							SearchSrv.rQuery(commitedCandidate.getWord());
+							
+							updateRelatedWord(false);
 						}
+
 						
-						
-					/*	Remove by jeremy '13,1,10 bacasue this section is equivalent to next else{} section.
-					} else if (selectedCandidate != null
-							&& selectedCandidate.getWord() != null
-							&& selectedCandidate.getWord().equals("")) {  //Word="", commit the composing text.
-						if(ic!=null) ic.commitText(misMatched,
-								misMatched.length());
-						selectedCandidate = null;
-					*/	
 					} else {
 						if(ic!=null) ic.commitText(mComposing,
 								mComposing.length());
-						
+
 					}
 				} else {  //English mode
 					if(ic!=null) 
 						ic.commitText(mComposing, mComposing.length());
-					
+
 				}
 
-				
-				
-				
+
+
+
 
 			}
 		} catch (Exception e) {

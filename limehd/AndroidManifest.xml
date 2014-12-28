@@ -17,7 +17,7 @@
 	<!-- 
 	<uses-permission android:name="android.permission.BLUETOOTH" />
 	<uses-permission android:name="android.permissioann.BLUETOOTH_ADMIN" /> -->
-	<uses-sdk android:minSdkVersion="7" android:targetSdkVersion="17"/>
+	<uses-sdk android:minSdkVersion="11" android:targetSdkVersion="19"/>
 	<supports-screens 
 		android:largeScreens="true"
 		android:normalScreens="true" 
@@ -67,11 +67,13 @@
 		</activity>
 		<activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreferenceHC">
 		</activity>
-		<activity
-            android:name="com.google.ads.AdActivity"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
-		
-		<activity android:theme="@style/LIMEHDDialogTheme" android:configChanges="keyboard|keyboardHidden|orientation" android:name=".limesettings.LIMEMappingLoading"></activity>
+		<!-- Include the AdActivity configChanges and theme. -->
+		<meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
+        <activity
+            android:name="com.google.android.gms.ads.AdActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
+            android:theme="@android:style/Theme.Translucent" />
+<activity android:theme="@style/LIMEHDDialogTheme" android:configChanges="keyboard|keyboardHidden|orientation" android:name=".limesettings.LIMEMappingLoading"></activity>
 		<activity android:name="com.dropbox.client2.android.AuthActivity"
       			android:launchMode="singleTask"
       			android:configChanges="orientation|keyboard">

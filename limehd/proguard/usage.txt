@@ -93,8 +93,8 @@ android.support.v4.app.Fragment:
     946:946:public android.view.View getView()
     1218:1219:public void registerForContextMenu(android.view.View)
     1229:1230:public void unregisterForContextMenu(android.view.View)
-android.support.v4.app.Fragment$SavedState
-android.support.v4.app.Fragment$SavedState$1
+android.support.v4.app.Fragment$SavedState:
+    291:293:Fragment$SavedState(android.os.Bundle)
 android.support.v4.app.FragmentActivity:
     private static final java.lang.String TAG
     private static final java.lang.String FRAGMENTS_TAG
@@ -356,11 +356,15 @@ android.support.v4.view.PagerAdapter:
     public static final int POSITION_UNCHANGED
     public static final int POSITION_NONE
     78:79:public PagerAdapter()
+    268:268:public int getItemPosition(java.lang.Object)
     276:277:public void notifyDataSetChanged()
 android.support.v4.view.PagerTitleStrip:
     private static final java.lang.String TAG
     private static final int SIDE_ALPHA
     private static final int TEXT_SPACING
+    67:68:public PagerTitleStrip(android.content.Context)
+android.support.v4.view.PagerTitleStrip$PageListener:
+    318:319:public void onAdapterChanged(android.support.v4.view.PagerAdapter,android.support.v4.view.PagerAdapter)
 android.support.v4.view.VelocityTrackerCompat:
     25:51:public VelocityTrackerCompat()
     91:91:public static float getYVelocity(android.view.VelocityTracker,int)
@@ -432,18 +436,32 @@ android.support.v4.view.ViewPager:
     private static final int DEFAULT_OFFSCREEN_PAGES
     private static final int MAX_SETTLE_DURATION
     private static final int MIN_DISTANCE_FOR_FLING
+    private android.support.v4.view.ViewPager$PagerObserver mObserver
     private static final int INVALID_POINTER
     private long mFakeDragBeginTime
     public static final int SCROLL_STATE_IDLE
     public static final int SCROLL_STATE_DRAGGING
     public static final int SCROLL_STATE_SETTLING
+    271:273:public ViewPager(android.content.Context)
+    314:351:public void setAdapter(android.support.v4.view.PagerAdapter)
+    354:362:private void removeNonDecorViews()
+    385:387:public void setCurrentItem(int)
+    462:463:public void setOnPageChangeListener(android.support.v4.view.ViewPager$OnPageChangeListener)
     485:485:public int getOffscreenPageLimit()
+    506:515:public void setOffscreenPageLimit(int)
+    526:533:public void setPageMargin(int)
     541:541:public int getPageMargin()
+    550:554:public void setPageMarginDrawable(android.graphics.drawable.Drawable)
+    562:563:public void setPageMarginDrawable(int)
     596:597:void smoothScrollTo(int,int)
+    660:717:void dataSetChanged()
     1652:1668:public boolean beginFakeDrag()
     1678:1697:public void endFakeDrag()
     1707:1735:public void fakeDragBy(float)
     1747:1747:public boolean isFakeDragging()
+android.support.v4.view.ViewPager$OnAdapterChangeListener:
+    public abstract void onAdapterChanged(android.support.v4.view.PagerAdapter,android.support.v4.view.PagerAdapter)
+android.support.v4.view.ViewPager$PagerObserver
 android.support.v4.view.ViewPager$SimpleOnPageChangeListener
 android.support.v4.view.accessibility.AccessibilityEventCompat
 android.support.v4.view.accessibility.AccessibilityEventCompat$AccessibilityEventIcsImpl
@@ -776,8 +794,6 @@ com.google.api.client.http.HttpHeaders:
     568:568:public final java.lang.String getAuthenticate()
     577:578:public final void setAuthenticate(java.lang.String)
     587:591:public final void setBasicAuthentication(java.lang.String,java.lang.String)
-com.google.api.client.http.HttpMethod:
-    23:23:public static com.google.api.client.http.HttpMethod valueOf(java.lang.String)
 com.google.api.client.http.HttpRequest:
     public static final java.lang.String VERSION
     public static final java.lang.String USER_AGENT_SUFFIX
@@ -898,9 +914,6 @@ com.google.api.client.json.CustomizeJsonParser:
 com.google.api.client.json.GenericJson:
     49:49:public final com.google.api.client.json.JsonFactory getFactory()
 com.google.api.client.json.Json
-com.google.api.client.json.JsonEncoding:
-    27:27:public static com.google.api.client.json.JsonEncoding[] values()
-    27:27:public static com.google.api.client.json.JsonEncoding valueOf(java.lang.String)
 com.google.api.client.json.JsonFactory:
     public abstract com.google.api.client.json.JsonParser createJsonParser(java.lang.String)
     public abstract com.google.api.client.json.JsonParser createJsonParser(java.io.Reader)
@@ -922,8 +935,6 @@ com.google.api.client.json.JsonParser:
     339:343:public final void parseArrayAndClose(java.util.Collection,java.lang.Class,com.google.api.client.json.CustomizeJsonParser)
     358:361:public final java.util.Collection parseArray(java.lang.Class,java.lang.Class,com.google.api.client.json.CustomizeJsonParser)
     375:376:public final void parseArray(java.util.Collection,java.lang.Class,com.google.api.client.json.CustomizeJsonParser)
-com.google.api.client.json.JsonToken:
-    23:23:public static com.google.api.client.json.JsonToken valueOf(java.lang.String)
 com.google.api.client.json.gson.GsonFactory
 com.google.api.client.json.gson.GsonGenerator
 com.google.api.client.json.gson.GsonGenerator$StringNumber
@@ -1469,8 +1480,6 @@ com.google.common.collect.AbstractBiMap$ValueSet
 com.google.common.collect.AbstractBiMap$ValueSet$1
 com.google.common.collect.AbstractIterator:
     168:171:public final java.lang.Object peek()
-com.google.common.collect.AbstractIterator$State:
-    70:70:public static com.google.common.collect.AbstractIterator$State valueOf(java.lang.String)
 com.google.common.collect.AbstractListMultimap
 com.google.common.collect.AbstractMapBasedMultiset:
     private static final long serialVersionUID
@@ -1702,9 +1711,6 @@ com.google.common.collect.GenericMapMaker:
     public abstract java.util.concurrent.ConcurrentMap makeMap()
     abstract com.google.common.collect.MapMakerInternalMap makeCustomMap()
     public abstract java.util.concurrent.ConcurrentMap makeComputingMap(com.google.common.base.Function)
-com.google.common.collect.GenericMapMaker$NullListener:
-    43:43:public static com.google.common.collect.GenericMapMaker$NullListener[] values()
-    43:43:public static com.google.common.collect.GenericMapMaker$NullListener valueOf(java.lang.String)
 com.google.common.collect.GwtTransient
 com.google.common.collect.HashBasedTable
 com.google.common.collect.HashBasedTable$Factory
@@ -2225,8 +2231,6 @@ com.google.common.collect.MapMaker$NullComputingConcurrentMap
 com.google.common.collect.MapMaker$NullConcurrentMap:
     private static final long serialVersionUID
 com.google.common.collect.MapMaker$RemovalCause:
-    771:771:public static com.google.common.collect.MapMaker$RemovalCause[] values()
-    771:771:public static com.google.common.collect.MapMaker$RemovalCause valueOf(java.lang.String)
     abstract boolean wasEvicted()
 com.google.common.collect.MapMaker$RemovalCause$1:
     779:779:boolean wasEvicted()
@@ -2264,20 +2268,12 @@ com.google.common.collect.MapMakerInternalMap$CleanupMapTask
 com.google.common.collect.MapMakerInternalMap$EntryFactory:
     static final int EXPIRABLE_MASK
     static final int EVICTABLE_MASK
-    352:352:public static com.google.common.collect.MapMakerInternalMap$EntryFactory[] values()
-    352:352:public static com.google.common.collect.MapMakerInternalMap$EntryFactory valueOf(java.lang.String)
-com.google.common.collect.MapMakerInternalMap$NullEntry:
-    771:771:public static com.google.common.collect.MapMakerInternalMap$NullEntry[] values()
-    771:771:public static com.google.common.collect.MapMakerInternalMap$NullEntry valueOf(java.lang.String)
 com.google.common.collect.MapMakerInternalMap$Segment:
     2510:2528:boolean containsValue(java.lang.Object)
     2995:3018:boolean clearValue(java.lang.Object,int,com.google.common.collect.MapMakerInternalMap$ValueReference)
 com.google.common.collect.MapMakerInternalMap$SerializationProxy
 com.google.common.collect.MapMakerInternalMap$SoftValueReference:
     1808:1808:public java.lang.Object waitForValue()
-com.google.common.collect.MapMakerInternalMap$Strength:
-    290:290:public static com.google.common.collect.MapMakerInternalMap$Strength[] values()
-    290:290:public static com.google.common.collect.MapMakerInternalMap$Strength valueOf(java.lang.String)
 com.google.common.collect.MapMakerInternalMap$StrongValueReference:
     1844:1844:public java.lang.Object waitForValue()
 com.google.common.collect.MapMakerInternalMap$ValueReference:
@@ -2647,12 +2643,6 @@ com.google.common.collect.SortedLists:
     191:192:public static int binarySearch(java.util.List,java.lang.Comparable,com.google.common.collect.SortedLists$KeyPresentBehavior,com.google.common.collect.SortedLists$KeyAbsentBehavior)
     205:205:public static int binarySearch(java.util.List,com.google.common.base.Function,java.lang.Comparable,com.google.common.collect.SortedLists$KeyPresentBehavior,com.google.common.collect.SortedLists$KeyAbsentBehavior)
     228:228:public static int binarySearch(java.util.List,com.google.common.base.Function,java.lang.Object,java.util.Comparator,com.google.common.collect.SortedLists$KeyPresentBehavior,com.google.common.collect.SortedLists$KeyAbsentBehavior)
-com.google.common.collect.SortedLists$KeyAbsentBehavior:
-    139:139:public static com.google.common.collect.SortedLists$KeyAbsentBehavior[] values()
-    139:139:public static com.google.common.collect.SortedLists$KeyAbsentBehavior valueOf(java.lang.String)
-com.google.common.collect.SortedLists$KeyPresentBehavior:
-    48:48:public static com.google.common.collect.SortedLists$KeyPresentBehavior[] values()
-    48:48:public static com.google.common.collect.SortedLists$KeyPresentBehavior valueOf(java.lang.String)
 com.google.common.collect.SortedMapDifference
 com.google.common.collect.SortedMaps
 com.google.common.collect.SortedMaps$1
@@ -3066,9 +3056,6 @@ com.google.common.util.concurrent.UncheckedExecutionException
 com.google.common.util.concurrent.UncheckedTimeoutException
 com.google.common.util.concurrent.Uninterruptibles
 com.google.common.util.concurrent.package-info
-com.google.gdata.client.ClientLoginAccountType:
-    25:25:public static final com.google.gdata.client.ClientLoginAccountType[] values()
-    25:25:public static com.google.gdata.client.ClientLoginAccountType valueOf(java.lang.String)
 com.google.gdata.client.CookieManager:
     public abstract void setCookiesEnabled(boolean)
 com.google.gdata.client.DocumentQuery
@@ -3190,8 +3177,6 @@ com.google.gdata.client.Service$ClientStreamProperties:
     1915:1915:protected com.google.gdata.util.common.net.UriParameterMap getParameterMap()
 com.google.gdata.client.Service$GDataRequest:
     public abstract void setPrivateHeader(java.lang.String,java.lang.String)
-com.google.gdata.client.Service$GDataRequest$RequestType:
-    200:200:public static com.google.gdata.client.Service$GDataRequest$RequestType valueOf(java.lang.String)
 com.google.gdata.client.Service$GDataRequestFactory:
     public abstract void setPrivateHeader(java.lang.String,java.lang.String)
     public abstract com.google.gdata.client.Service$GDataRequest getRequest(com.google.gdata.client.Query,com.google.gdata.util.ContentType)
@@ -3282,8 +3267,6 @@ com.google.gdata.client.media.ResumableGDataFileUploader$Builder:
     163:167:public ResumableGDataFileUploader$Builder(com.google.gdata.client.media.MediaService,com.google.gdata.data.media.MediaFileSource,com.google.gdata.data.IEntry)
     177:178:public com.google.gdata.client.media.ResumableGDataFileUploader$Builder title(java.lang.String)
     225:226:public com.google.gdata.client.media.ResumableGDataFileUploader$Builder requestType(com.google.gdata.client.media.ResumableGDataFileUploader$RequestType)
-com.google.gdata.client.media.ResumableGDataFileUploader$RequestType:
-    52:52:public static com.google.gdata.client.media.ResumableGDataFileUploader$RequestType valueOf(java.lang.String)
 com.google.gdata.client.spreadsheet.CellQuery
 com.google.gdata.client.spreadsheet.FeedURLFactory
 com.google.gdata.client.spreadsheet.ListQuery
@@ -3302,14 +3285,11 @@ com.google.gdata.client.uploader.BackoffPolicy$1:
 com.google.gdata.client.uploader.ByteArrayUploadData
 com.google.gdata.client.uploader.FileUploadData:
     50:51:public void read(byte[])
-    68:68:public java.lang.String getFileName()
 com.google.gdata.client.uploader.ResumableHttpFileUploader:
     public static final long DEFAULT_PROGRESS_INTERVAL_MS
     public static final java.lang.String METHOD_OVERRIDE
     402:408:public ResumableHttpFileUploader(java.net.URL,java.io.File,java.util.concurrent.ExecutorService,com.google.gdata.client.uploader.ProgressListener,long)
     485:489:public void setHttpRequestMethod(com.google.gdata.client.uploader.ResumableHttpFileUploader$RequestMethod)
-    535:535:public synchronized long getNumBytesUploaded()
-    545:549:public double getProgress()
     560:571:public com.google.gdata.client.uploader.ResumableHttpFileUploader$ResponseMessage getResponse()
     611:615:public void resume()
 com.google.gdata.client.uploader.ResumableHttpFileUploader$Builder:
@@ -3318,9 +3298,6 @@ com.google.gdata.client.uploader.ResumableHttpFileUploader$Builder:
     359:360:public com.google.gdata.client.uploader.ResumableHttpFileUploader$Builder setRequestMethod(com.google.gdata.client.uploader.ResumableHttpFileUploader$RequestMethod)
     369:370:public com.google.gdata.client.uploader.ResumableHttpFileUploader$Builder setBackoffPolicy(com.google.gdata.client.uploader.BackoffPolicy)
     381:381:public com.google.gdata.client.uploader.ResumableHttpFileUploader build()
-com.google.gdata.client.uploader.ResumableHttpFileUploader$RequestMethod:
-    138:138:public static final com.google.gdata.client.uploader.ResumableHttpFileUploader$RequestMethod[] values()
-    138:138:public static com.google.gdata.client.uploader.ResumableHttpFileUploader$RequestMethod valueOf(java.lang.String)
 com.google.gdata.client.uploader.ResumableHttpFileUploader$ResponseMessage:
     76:76:public int getContentLength()
     86:86:public java.io.InputStream getInputStream()
@@ -3328,9 +3305,6 @@ com.google.gdata.client.uploader.ResumableHttpFileUploader$ResponseMessage:
     61:61:static synthetic int access$000(com.google.gdata.client.uploader.ResumableHttpFileUploader$ResponseMessage)
     61:61:static synthetic java.io.InputStream access$100(com.google.gdata.client.uploader.ResumableHttpFileUploader$ResponseMessage)
 com.google.gdata.client.uploader.ResumableHttpFileUploader$ResponseMessage$1
-com.google.gdata.client.uploader.ResumableHttpFileUploader$UploadState:
-    131:131:public static final com.google.gdata.client.uploader.ResumableHttpFileUploader$UploadState[] values()
-    131:131:public static com.google.gdata.client.uploader.ResumableHttpFileUploader$UploadState valueOf(java.lang.String)
 com.google.gdata.client.uploader.ResumableHttpUploadTask:
     private static final java.lang.String CONTENT_LENGTH_HEADER_NAME
     private static final java.lang.String CONTENT_RANGE_HEADER_NAME
@@ -3393,6 +3367,7 @@ com.google.gdata.data.BaseEntry:
     425:425:public void setPubControl(com.google.gdata.data.PubControl)
     428:428:public com.google.gdata.client.Service getService()
     430:430:public boolean getCanEdit()
+    431:431:public void setCanEdit(boolean)
     474:480:public java.util.List getLinks(java.lang.String,java.lang.String)
     493:500:public void removeLinks(java.lang.String,java.lang.String)
     506:507:public void removeLinks()
@@ -3830,9 +3805,6 @@ com.google.gdata.data.acl.AclScope:
     123:137:public static com.google.gdata.data.acl.AclScope fromExternalForm(java.lang.String)
     172:172:private static java.lang.String getTypeIdentifier(com.google.gdata.data.acl.AclScope$Type)
     176:182:private static com.google.gdata.data.acl.AclScope$Type getType(java.lang.String)
-com.google.gdata.data.acl.AclScope$Type:
-    55:55:public static final com.google.gdata.data.acl.AclScope$Type[] values()
-    55:55:public static com.google.gdata.data.acl.AclScope$Type valueOf(java.lang.String)
 com.google.gdata.data.acl.AclWithKey:
     static final java.lang.String XML_NAME
     private static final java.lang.String KEY
@@ -3875,7 +3847,6 @@ com.google.gdata.data.batch.BatchOperation:
     70:70:public com.google.gdata.data.batch.BatchOperationType getType()
     75:76:public void setType(com.google.gdata.data.batch.BatchOperationType)
 com.google.gdata.data.batch.BatchOperationType:
-    35:35:public static com.google.gdata.data.batch.BatchOperationType valueOf(java.lang.String)
     79:79:public java.lang.String getMethod()
     104:107:public void generateAtom(com.google.gdata.util.common.xml.XmlWriter)
 com.google.gdata.data.batch.BatchStatus:
@@ -4040,6 +4011,7 @@ com.google.gdata.data.docs.DocumentListEntry:
     278:285:public java.lang.String getType()
     296:297:public void setFile(java.io.File)
     303:308:public void setFile(java.io.File,java.lang.String)
+    317:322:public void setHidden(boolean)
     329:329:public boolean isHidden()
     339:344:public void setStarred(boolean)
     351:351:public boolean isStarred()
@@ -4102,9 +4074,6 @@ com.google.gdata.data.docs.ExportFormat:
     126:126:public java.lang.String getTarget()
     135:137:public void setTarget(java.lang.String)
     145:145:public boolean hasTarget()
-com.google.gdata.data.docs.ExportFormat$Source:
-    56:56:public static final com.google.gdata.data.docs.ExportFormat$Source[] values()
-    56:56:public static com.google.gdata.data.docs.ExportFormat$Source valueOf(java.lang.String)
 com.google.gdata.data.docs.ExportStatus:
     static final java.lang.String XML_NAME
     73:76:public ExportStatus(com.google.gdata.data.docs.ExportStatus$Value)
@@ -4112,9 +4081,6 @@ com.google.gdata.data.docs.ExportStatus:
     93:95:public void setValue(com.google.gdata.data.docs.ExportStatus$Value)
     103:103:public boolean hasValue()
     123:127:public static com.google.gdata.data.ExtensionDescription getDefaultDescription(boolean,boolean)
-com.google.gdata.data.docs.ExportStatus$Value:
-    47:47:public static final com.google.gdata.data.docs.ExportStatus$Value[] values()
-    47:47:public static com.google.gdata.data.docs.ExportStatus$Value valueOf(java.lang.String)
 com.google.gdata.data.docs.Feature:
     static final java.lang.String XML_NAME
     60:60:public com.google.gdata.data.docs.FeatureName getFeatureName()
@@ -4154,9 +4120,6 @@ com.google.gdata.data.docs.ImportFormat:
     126:126:public com.google.gdata.data.docs.ImportFormat$Target getTarget()
     135:137:public void setTarget(com.google.gdata.data.docs.ImportFormat$Target)
     145:145:public boolean hasTarget()
-com.google.gdata.data.docs.ImportFormat$Target:
-    56:56:public static final com.google.gdata.data.docs.ImportFormat$Target[] values()
-    56:56:public static com.google.gdata.data.docs.ImportFormat$Target valueOf(java.lang.String)
 com.google.gdata.data.docs.LargestChangestamp:
     static final java.lang.String XML_NAME
     private static final java.lang.String VALUE
@@ -4271,9 +4234,6 @@ com.google.gdata.data.docs.QueryParameter:
     169:169:public java.lang.String getValue()
     178:180:public void setValue(java.lang.String)
     188:188:public boolean hasValue()
-com.google.gdata.data.docs.QueryParameter$Type:
-    60:60:public static final com.google.gdata.data.docs.QueryParameter$Type[] values()
-    60:60:public static com.google.gdata.data.docs.QueryParameter$Type valueOf(java.lang.String)
 com.google.gdata.data.docs.QuotaBytesUsedInTrash:
     static final java.lang.String XML_NAME
     55:58:public QuotaBytesUsedInTrash(java.lang.Long)
@@ -4401,9 +4361,7 @@ com.google.gdata.data.extensions.Im$Rel
 com.google.gdata.data.extensions.Image
 com.google.gdata.data.extensions.Image$Handler
 com.google.gdata.data.extensions.Image$Rel
-com.google.gdata.data.extensions.Labels:
-    private static final java.lang.String gLabels
-    28:30:private Labels()
+com.google.gdata.data.extensions.Labels
 com.google.gdata.data.extensions.LastModifiedBy:
     static final java.lang.String XML_NAME
     57:58:public LastModifiedBy(com.google.gdata.data.Person)
@@ -4678,8 +4636,6 @@ com.google.gdata.model.AttributeCreatorImpl:
     28:28:public bridge synthetic com.google.gdata.model.AttributeCreator setVirtualValue(com.google.gdata.model.Metadata$VirtualValue)
     28:28:public bridge synthetic com.google.gdata.model.AttributeCreator setRequired(boolean)
     28:28:public bridge synthetic com.google.gdata.model.AttributeCreator setName(com.google.gdata.model.QName)
-com.google.gdata.model.AttributeIterator$Mode:
-    34:34:public static com.google.gdata.model.AttributeIterator$Mode valueOf(java.lang.String)
 com.google.gdata.model.AttributeMetadata:
     public abstract com.google.gdata.model.AttributeKey getKey()
     public abstract com.google.gdata.model.AttributeMetadata bind(com.google.gdata.model.MetadataContext)
@@ -4783,24 +4739,16 @@ com.google.gdata.model.ElementCreatorImpl:
     42:42:public bridge synthetic com.google.gdata.model.ElementCreator setCardinality(com.google.gdata.model.ElementMetadata$Cardinality)
     42:42:public bridge synthetic com.google.gdata.model.ElementCreator adapt(java.lang.String,com.google.gdata.model.ElementKey)
     42:42:public bridge synthetic com.google.gdata.model.ElementCreator setRequired(boolean)
-com.google.gdata.model.ElementCreatorImpl$Action:
-    46:46:public static final com.google.gdata.model.ElementCreatorImpl$Action[] values()
-    46:46:public static com.google.gdata.model.ElementCreatorImpl$Action valueOf(java.lang.String)
 com.google.gdata.model.ElementCreatorImpl$AttributeInfo:
     687:688:ElementCreatorImpl$AttributeInfo(com.google.gdata.model.AttributeKey)
 com.google.gdata.model.ElementCreatorImpl$ElementInfo:
     706:707:ElementCreatorImpl$ElementInfo(com.google.gdata.model.ElementKey)
-com.google.gdata.model.ElementIterator$Mode:
-    37:37:public static com.google.gdata.model.ElementIterator$Mode valueOf(java.lang.String)
 com.google.gdata.model.ElementMetadata:
     public abstract com.google.gdata.model.ElementMetadata bind(com.google.gdata.model.MetadataContext)
     public abstract boolean isReferenced()
     public abstract boolean isFlattened()
     public abstract com.google.gdata.model.ElementValidator getValidator()
     public abstract java.util.Collection getReferencedNamespaces()
-com.google.gdata.model.ElementMetadata$Cardinality:
-    42:42:public static final com.google.gdata.model.ElementMetadata$Cardinality[] values()
-    42:42:public static com.google.gdata.model.ElementMetadata$Cardinality valueOf(java.lang.String)
 com.google.gdata.model.ElementMetadata$MultipleVirtualElement:
     public abstract void parse(com.google.gdata.model.Element,com.google.gdata.model.ElementMetadata,java.util.Collection,com.google.gdata.model.ElementMetadata)
 com.google.gdata.model.ElementMetadata$SingleVirtualElement:
@@ -5202,7 +5150,6 @@ com.google.gdata.model.atompub.Categories:
     295:295:public boolean hasScheme()
     38:38:public bridge synthetic com.google.gdata.model.Element lock()
 com.google.gdata.model.atompub.Categories$Fixed:
-    41:41:public static com.google.gdata.model.atompub.Categories$Fixed valueOf(java.lang.String)
     75:75:public static com.google.gdata.model.atompub.Categories$Fixed fromString(java.lang.String)
 com.google.gdata.model.atompub.Collection:
     82:92:public static void registerMetadata(com.google.gdata.model.MetadataRegistry)
@@ -5245,7 +5192,6 @@ com.google.gdata.model.atompub.Draft:
     164:164:public boolean hasValue()
     34:34:public bridge synthetic com.google.gdata.model.Element lock()
 com.google.gdata.model.atompub.Draft$Value:
-    37:37:public static com.google.gdata.model.atompub.Draft$Value valueOf(java.lang.String)
     71:71:public static com.google.gdata.model.atompub.Draft$Value fromString(java.lang.String)
 com.google.gdata.model.atompub.Edited:
     45:51:public static void registerMetadata(com.google.gdata.model.MetadataRegistry)
@@ -5417,8 +5363,6 @@ com.google.gdata.util.EntityTooLargeException:
     42:44:public EntityTooLargeException(java.lang.Throwable)
     53:55:public EntityTooLargeException(com.google.gdata.util.ErrorContent)
     58:60:public EntityTooLargeException(com.google.gdata.util.ErrorContent,java.lang.Throwable)
-com.google.gdata.util.ErrorContent$LocationType:
-    33:33:public static com.google.gdata.util.ErrorContent$LocationType valueOf(java.lang.String)
 com.google.gdata.util.ErrorDomain:
     96:98:protected ErrorDomain()
 com.google.gdata.util.ErrorDomain$ErrorCode:
@@ -5908,9 +5852,6 @@ com.google.gdata.util.common.xml.XmlWriter$Element:
     public static final int NOT_REPEATING
     public boolean hasAttributes
 com.google.gdata.util.common.xml.XmlWriter$Namespace
-com.google.gdata.util.common.xml.XmlWriter$WriterFlags:
-    120:120:public static final com.google.gdata.util.common.xml.XmlWriter$WriterFlags[] values()
-    120:120:public static com.google.gdata.util.common.xml.XmlWriter$WriterFlags valueOf(java.lang.String)
 com.google.gdata.util.common.xml.parsing.SecureGenericXMLFactory:
     47:47:protected SecureGenericXMLFactory()
     56:56:public static javax.xml.parsers.DocumentBuilderFactory getDocumentBuilderFactory(javax.xml.parsers.DocumentBuilderFactory)
@@ -7116,7 +7057,10 @@ myjava.awt.datatransfer.MimeTypeProcessor$MimeType:
 myjava.awt.datatransfer.Transferable
 myjava.awt.datatransfer.UnsupportedFlavorException
 net.toload.main.hd.BuildConfig
-net.toload.main.hd.LIMEBackupAgent
+net.toload.main.hd.LIMEBackupAgent:
+    static final java.lang.String TAG
+    static final boolean DEBUG
+    static final java.lang.String PREFS_BACKUP_KEY
 net.toload.main.hd.LIMEKeyboardSwitcher:
     static final boolean DEBUG
     static final java.lang.String TAG
@@ -7168,7 +7112,7 @@ net.toload.main.hd.LIMEService:
     private static final int POS_HANCONVERT
     private static final int POS_KEYBOARD
     private static final int POS_METHOD
-    3241:3249:public boolean isValidTime(java.util.Date)
+    3240:3248:public boolean isValidTime(java.util.Date)
 net.toload.main.hd.R:
     10:10:public R()
 net.toload.main.hd.R$anim
@@ -7185,6 +7129,45 @@ net.toload.main.hd.R$raw
 net.toload.main.hd.R$string
 net.toload.main.hd.R$style
 net.toload.main.hd.R$styleable:
+    public static final int LIMEBaseKeyboard_horizontalGap
+    public static final int LIMEBaseKeyboard_keyHeight
+    public static final int LIMEBaseKeyboard_keyWidth
+    public static final int LIMEBaseKeyboard_verticalGap
+    public static final int LIMEBaseKeyboard_Key_codes
+    public static final int LIMEBaseKeyboard_Key_iconPreview
+    public static final int LIMEBaseKeyboard_Key_isModifier
+    public static final int LIMEBaseKeyboard_Key_isRepeatable
+    public static final int LIMEBaseKeyboard_Key_isSticky
+    public static final int LIMEBaseKeyboard_Key_keyEdgeFlags
+    public static final int LIMEBaseKeyboard_Key_keyIcon
+    public static final int LIMEBaseKeyboard_Key_keyLabel
+    public static final int LIMEBaseKeyboard_Key_keyOutputText
+    public static final int LIMEBaseKeyboard_Key_keyboardMode
+    public static final int LIMEBaseKeyboard_Key_popupCharacters
+    public static final int LIMEBaseKeyboard_Key_popupKeyboard
+    public static final int LIMEBaseKeyboard_Row_keyboardMode
+    public static final int LIMEBaseKeyboard_Row_rowEdgeFlags
+    public static final int LIMEKey_testAttribute
+    public static final int LIMEKeyboardBaseView_backgroundDimAmount
+    public static final int LIMEKeyboardBaseView_keyBackground
+    public static final int LIMEKeyboardBaseView_keyHysteresisDistance
+    public static final int LIMEKeyboardBaseView_keyPreviewHeight
+    public static final int LIMEKeyboardBaseView_keyPreviewLayout
+    public static final int LIMEKeyboardBaseView_keyPreviewOffset
+    public static final int LIMEKeyboardBaseView_keySubLabelTextColor
+    public static final int LIMEKeyboardBaseView_keyTextColor
+    public static final int LIMEKeyboardBaseView_keyTextSize
+    public static final int LIMEKeyboardBaseView_keyTextStyle
+    public static final int LIMEKeyboardBaseView_keyboardViewStyle
+    public static final int LIMEKeyboardBaseView_labelTextSize
+    public static final int LIMEKeyboardBaseView_popupHint
+    public static final int LIMEKeyboardBaseView_popupLayout
+    public static final int LIMEKeyboardBaseView_shadowColor
+    public static final int LIMEKeyboardBaseView_shadowRadius
+    public static final int LIMEKeyboardBaseView_smallLabelTextSize
+    public static final int LIMEKeyboardBaseView_subLabelTextSize
+    public static final int LIMEKeyboardBaseView_symbolColorScheme
+    public static final int LIMEKeyboardBaseView_verticalCorrection
     1186:1186:public R$styleable()
 net.toload.main.hd.R$xml
 net.toload.main.hd.SearchServer:
@@ -7310,8 +7293,6 @@ net.toload.main.hd.global.LIMEPreferenceManager:
     354:355:public boolean getShowNumberKeypard()
     384:385:public int getParameterInt(java.lang.String)
     389:390:public int getParameterInt(java.lang.String,int)
-    397:398:public long getParameterLong(java.lang.String,long)
-    407:409:public void setParameter(java.lang.String,long)
     446:453:private java.lang.String preProcessTableName(java.lang.String)
 net.toload.main.hd.global.LIMEUtilities:
     static final java.lang.String TAG
@@ -7329,6 +7310,7 @@ net.toload.main.hd.global.Mapping:
     64:70:public Mapping(java.lang.String,java.lang.String,java.lang.String,int,boolean)
     163:171:public void clear()
 net.toload.main.hd.keyboard.KeyDetector:
+    68:69:public void setProximityCorrectionEnabled(boolean)
     72:72:public boolean isProximityCorrectionEnabled()
 net.toload.main.hd.keyboard.LIMEBaseKeyboard:
     static final java.lang.String TAG
@@ -7381,6 +7363,7 @@ net.toload.main.hd.keyboard.LIMEKeyboardBaseView:
     private static final int NUMBER_HINT_VERTICAL_ADJUSTMENT_PIXEL
     700:700:public boolean isPreviewEnabled()
     704:704:public int getSymbolColorScheme()
+    724:725:public void setProximityCorrectionEnabled(boolean)
     731:731:public boolean isProximityCorrectionEnabled()
     1411:1414:public boolean isInSlidingKeyInput()
     1419:1419:public int getPointerCount()
@@ -7565,6 +7548,8 @@ net.toload.main.hd.limedb.LimeSQLiteOpenHelper:
     100:100:public java.lang.String getDatabaseName()
     213:257:public synchronized android.database.sqlite.SQLiteDatabase getReadableDatabase()
 net.toload.main.hd.limesettings.DBCloudServer:
+    private static final boolean DEBUG
+    private static final java.lang.String TAG
     private static final java.lang.String AUTH_TOKEN_TYPE
     private static final int REQUEST_AUTHENTICATE
     private static final int MAX_CONCURRENT_UPLOADS
@@ -7583,7 +7568,8 @@ net.toload.main.hd.limesettings.DBServer:
     437:439:public void setImInfo(java.lang.String,java.lang.String,java.lang.String)
     938:939:public void forceUpgrad()
 net.toload.main.hd.limesettings.FileUploadProgressListener:
-    50:53:public synchronized java.util.Collection getUploaded()
+    73:76:public synchronized java.util.Collection getUploaded()
+    82:83:public double getProgress()
 net.toload.main.hd.limesettings.LIMEIMSetting:
     static final java.lang.String TAG
     static final boolean DEBUG
