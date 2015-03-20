@@ -20,6 +20,7 @@
 
 package net.toload.main.hd.candidate;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
@@ -59,6 +60,7 @@ import net.toload.main.hd.global.Mapping;
 /**
  * @author Art Hung
  */
+@SuppressLint({ "InflateParams", "HandlerLeak" })
 public class CandidateView extends View implements View.OnClickListener 
 {
 	private static final boolean DEBUG = false;
@@ -403,7 +405,8 @@ public class CandidateView extends View implements View.OnClickListener
 		this.setLayoutParams(new LinearLayout.LayoutParams(
 				candiWidth, mHeight));
 	}
-    public void doUpdateCandidatePopup(){
+    @SuppressLint("InflateParams")
+	public void doUpdateCandidatePopup(){
     	if(DEBUG) 
 			Log.i(TAG, "doUpdateCandidatePopup(), mHeight:" + mHeight);
     	
@@ -1086,11 +1089,19 @@ public class CandidateView extends View implements View.OnClickListener
                 	scrollNext();
                 }
             }
-            
+            performClick();
             break;
         }
+        
         return true;
     }
+    @Override
+	public boolean performClick() {
+		// Calls the super implementation, which generates an AccessibilityEvent
+		// and calls the onClick() listener on the view, if any
+		super.performClick();
+		return true;
+	}
     
     public void scrollPrev() {
         int i = 0;
