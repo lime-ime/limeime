@@ -120,6 +120,6 @@ public class LIME {
 	public final static int LIMEDB_CACHE_SIZE = 1024;
 	
 	// ADMOB
-	public final static String publisher = "a150d26a4156cea";
+	public final static String publisher = "ca-app-pub-6429718170873338/7028669804";
 	
 }

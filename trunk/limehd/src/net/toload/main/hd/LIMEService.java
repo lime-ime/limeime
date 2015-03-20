@@ -339,6 +339,7 @@ public class LIMEService extends InputMethodService implements
 	 * You can return null to have no candidates view; the default implementation returns null.
 	 * 
 	 */
+	@SuppressLint("InflateParams")
 	@Override
 	public View onCreateCandidatesView() {
 		
@@ -2592,6 +2593,7 @@ public class LIMEService extends InputMethodService implements
 
 	
 
+	@SuppressLint("InflateParams")
 	private void initialViewAndSwitcher(boolean forceRecreate) {
 		if(DEBUG)
 			Log.i(TAG, "initialViewAndSwitcher()");
