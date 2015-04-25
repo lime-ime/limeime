@@ -43,7 +43,7 @@
                     <Button
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/add_im_btn_import_standard"
+                        android:text="@string/add_im_import_standard"
                         android:id="@+id/btnAddImImportStandard"
                         android:layout_gravity="center_horizontal"
                         android:layout_weight="1"
@@ -54,8 +54,8 @@
                     <Button
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/add_im_import_package"
-                        android:id="@+id/btnAddImImportPackage"
+                        android:text="@string/add_im_import_related"
+                        android:id="@+id/btnAddImImportRelated"
                         android:layout_weight="1"
                         android:padding="5dp"
                         android:layout_marginLeft="10dp"

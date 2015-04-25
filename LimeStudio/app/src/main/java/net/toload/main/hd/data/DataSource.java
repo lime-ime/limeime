@@ -4,7 +4,11 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import net.toload.main.hd.Lime;
+
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 資料庫的各項查詢操作
@@ -81,6 +85,38 @@ public class DataSource {
 				database.execSQL(removesql);
 			}
 		}
+	}
+
+	public List<Im> getIm(String code, String type){
+		List<Im> result = new ArrayList<Im>();
+		if(database != null && database.isOpen()){
+			Cursor cursor = null;
+			String query = null;
+			if(code != null && code.length() > 1) {
+				query = Lime.DB_IM_COLUMN_CODE + "='"+code+"'";
+			}
+			if(type != null && type.length() > 1){
+				if(query != null){
+					query += " AND ";
+				}else{
+					query = "";
+				}
+
+				query += " " + Lime.DB_IM_COLUMN_TITLE + "='"+type+"'";;
+			}
+
+			cursor = database.query(Lime.DB_IM,
+					null, query,
+					null, null, null, Lime.DB_IM_COLUMN_DESC + " ASC");
+			cursor.moveToFirst();
+			while(!cursor.isAfterLast()){
+				Im r = Im.get(cursor);
+				result.add(r);
+				cursor.moveToNext();
+			}
+			cursor.close();
+		}
+		return result;
 	}
 
 	

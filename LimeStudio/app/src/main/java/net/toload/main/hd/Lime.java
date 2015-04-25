@@ -86,4 +86,10 @@ public class Lime {
     public static final String DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB = "extendedshiftkb";
     public static final String DB_KEYBOARD_COLUMN_DISABLE = "disable";
 
+    public static final String IM_TYPE_NAME = "name";
+    public static final String IM_TYPE_SOURCE = "source";
+    public static final String IM_TYPE_AMOUNT = "amount";
+    public static final String IM_TYPE_IMPORT = "import";
+    public static final String IM_TYPE_KEYBOARD = "keyboard";
+
 }
