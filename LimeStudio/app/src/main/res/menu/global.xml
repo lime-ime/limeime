@@ -1,0 +1,20 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_preference"
+        android:icon="@drawable/ic_action_settings"
+        android:title="@string/action_preference"
+        android:orderInCategory="100"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_help"
+        android:title="@string/action_help"
+        android:orderInCategory="200"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_adfree"
+        android:title="@string/action_adfree"
+        android:orderInCategory="300"
+        app:showAsAction="never" />
+</menu>
+<!-- From: file:/C:/Data/Development/Android/Studio/LIMEIMEAS/app/src/main/res/menu/global.xml -->

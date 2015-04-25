@@ -1,0 +1,58 @@
+<resources>
+    <string name="app_name">LIMEIME</string>
+
+    <string name="title_section1">Section 1</string>
+    <string name="title_section2">Section 2</string>
+    <string name="title_section3">Section 3</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+    <string name="action_adfree">移除廣告</string>
+    <string name="action_help">使用說明</string>
+    <string name="action_preference">喜好設定</string>
+    <string name="add_im_backup_dropbox">Dropbox 備份</string>
+    <string name="add_im_backup_google">Google 備份</string>
+    <string name="add_im_backup_local">本地備份</string>
+    <string name="add_im_btn_import_standard">匯入 .CIN/TXT 格式</string>
+    <string name="add_im_database">備份/還原資料庫</string>
+    <string name="add_im_database_description">備份完整資料庫至本地/雲端空間，或者由本地/雲端空間還原完整資料庫檔案</string>
+    <string name="add_im_download">下載輸入法</string>
+    <string name="add_im_download_description">下載並匯入系統提供的輸入法，這一個操作需要連線網際網路，請啟用相關設定</string>
+    <string name="add_im_import">新增輸入法</string>
+    <string name="add_im_import_description">請選擇要匯入的檔案，系統支援標準 .CIN 格式、LIME 簡易字根表及 .LIME 輸入法備份檔</string>
+    <string name="add_im_import_package">匯入 .LIME 備份</string>
+    <string name="add_im_restore_dropbox">Dropbox 還原</string>
+    <string name="add_im_restore_google">Google 還原</string>
+    <string name="add_im_restore_local">本地還原</string>
+    <string name="default_menu_initial">設定輸入法</string>
+
+    <string name="im_array">行列</string>
+    <string name="im_array10">行列10</string>
+    <string name="im_cj">倉頡</string>
+    <string name="im_cj5">倉頡五代</string>
+    <string name="im_dayi">大易</string>
+    <string name="im_ecj">速成</string>
+    <string name="im_ez">輕鬆</string>
+    <string name="im_hs">華象直覺</string>
+    <string name="im_phonetic">注音</string>
+    <string name="im_phonetic_advanced">注音連打</string>
+    <string name="im_pinyin">拼音</string>
+    <string name="im_scj">快倉</string>
+    <string name="im_wb">篳順五碼</string>
+
+    <string name="manage_im_add">新增</string>
+    <string name="manage_im_edit">編輯</string>
+    <string name="manage_im_copy">複製</string>
+    <string name="manage_im_keyboard">請選擇輸入法鍵盤</string>
+    <string name="manage_im_management">管理輸入法</string>
+    <string name="manage_im_move">搬移</string>
+    <string name="manage_im_remove">移除</string>
+    <string name="manage_im_reset">清除</string>
+    <string name="manage_im_search">檢索</string>
+    <string name="manage_im_previous">上一頁</string>
+    <string name="manage_im_next">下一頁</string>
+
+</resources>
