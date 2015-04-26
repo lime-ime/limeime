@@ -92,18 +92,19 @@ public class ManageImFragment extends Fragment {
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_manage_im, container, false);
 
-        activity = this.getActivity();
+        this.handler = new ManageImHandler(this);
+        this.activity = this.getActivity();
 
-        progress = new ProgressDialog(this.activity);
-        progress.setCancelable(false);
-        progress.setMessage(getResources().getString(R.string.manage_im_loading));
+        this.progress = new ProgressDialog(this.activity);
+        this.progress.setCancelable(false);
+        this.progress.setMessage(getResources().getString(R.string.manage_im_loading));
 
-        gridManageIm = (GridView) root.findViewById(R.id.gridManageIm);
-        btnManageImAdd = (Button) root.findViewById(R.id.btnManageImAdd);
-        btnManageImKeyboard = (Button) root.findViewById(R.id.btnManageImKeyboard);
+        this.gridManageIm = (GridView) root.findViewById(R.id.gridManageIm);
+        this.btnManageImAdd = (Button) root.findViewById(R.id.btnManageImAdd);
+        this.btnManageImKeyboard = (Button) root.findViewById(R.id.btnManageImKeyboard);
 
-        toggleManageIm = (ToggleButton) root.findViewById(R.id.toggleManageIm);
-        toggleManageIm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        this.toggleManageIm = (ToggleButton) root.findViewById(R.id.toggleManageIm);
+        this.toggleManageIm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
@@ -116,9 +117,9 @@ public class ManageImFragment extends Fragment {
             }
         });
 
-        btnManageImNext = (Button) root.findViewById(R.id.btnManageImNext);
-        btnManageImNext.setEnabled(false);
-        btnManageImNext.setOnClickListener(new View.OnClickListener() {
+        this.btnManageImNext = (Button) root.findViewById(R.id.btnManageImNext);
+        this.btnManageImNext.setEnabled(false);
+        this.btnManageImNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 int checkrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * (page+1);
@@ -128,9 +129,9 @@ public class ManageImFragment extends Fragment {
                 updateGridView(wordlist);
             }
         });
-        btnManageImPrevious = (Button) root.findViewById(R.id.btnManageImPrevious);
-        btnManageImPrevious.setEnabled(false);
-        btnManageImPrevious.setOnClickListener(new View.OnClickListener() {
+        this.btnManageImPrevious = (Button) root.findViewById(R.id.btnManageImPrevious);
+        this.btnManageImPrevious.setEnabled(false);
+        this.btnManageImPrevious.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(page > 0){
@@ -140,10 +141,10 @@ public class ManageImFragment extends Fragment {
             }
         });
 
-        edtManageImSearch = (EditText) root.findViewById(R.id.edtManageImSearch);
+        this.edtManageImSearch = (EditText) root.findViewById(R.id.edtManageImSearch);
 
-        btnManageImSearch = (Button) root.findViewById(R.id.btnManageImSearch);
-        btnManageImSearch.setOnClickListener(new View.OnClickListener(){
+        this.btnManageImSearch = (Button) root.findViewById(R.id.btnManageImSearch);
+        this.btnManageImSearch.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 String query = edtManageImSearch.getText().toString();
@@ -155,10 +156,10 @@ public class ManageImFragment extends Fragment {
             }
         });
 
-        txtNavigationInfo = (TextView) root.findViewById(R.id.txtNavigationInfo);
+        this.txtNavigationInfo = (TextView) root.findViewById(R.id.txtNavigationInfo);
 
-        manageimthread = new Thread(new ManageImRunnable(this.handler, this.activity, this.code, null, searchroot));
-        manageimthread.start();
+        this.manageimthread = new Thread(new ManageImRunnable(this.handler, this.activity, this.code, null, searchroot));
+        this.manageimthread.start();
 
         /*
         private EditText edtManageImSearch;
@@ -179,34 +180,47 @@ public class ManageImFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if(manageimthread != null){
-            handler.removeCallbacks(manageimthread);
+        if(this.manageimthread != null){
+            this.handler.removeCallbacks(manageimthread);
         }
-        if(progress.isShowing()){
-            progress.cancel();
+        if(this.progress.isShowing()){
+            this.progress.cancel();
         }
     }
 
     public void showProgress(){
-        if(!progress.isShowing()){
-            progress.show();
+        if(!this.progress.isShowing()){
+            this.progress.show();
         }
     }
 
     public void cancelProgress(){
-        if(progress.isShowing()){
-            progress.cancel();
+        if(this.progress.isShowing()){
+            this.progress.cancel();
         }
     }
 
     public void updateGridView(List<Word> wordlist){
 
+        this.wordlist = wordlist;
         List<Word> templist = new ArrayList<Word>();
 
         int startrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * page;
         int endrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
 
-        if(wordlist.size() > 0){
+        if(page > 0){
+            this.btnManageImPrevious.setEnabled(true);
+        }else{
+            this.btnManageImPrevious.setEnabled(false);
+        }
+
+        if(endrecord <= this.wordlist.size()){
+            this.btnManageImNext.setEnabled(true);
+        }else{
+            this.btnManageImNext.setEnabled(false);
+        }
+
+        if(this.wordlist.size() > 0){
 
             for(int i = startrecord; i < endrecord ; i++){
                 if(i >= this.wordlist.size()){
@@ -218,22 +232,23 @@ public class ManageImFragment extends Fragment {
             }
         }
 
-        if(adapter == null){
-            adapter = new ManageImAdapter(this.activity, templist);
-            gridManageIm.setAdapter(adapter);
+        if(this.adapter == null){
+            this.adapter = new ManageImAdapter(this.activity, templist);
+            this.gridManageIm.setAdapter(this.adapter);
         }else{
-            adapter.setList(templist);
-            adapter.notifyDataSetChanged();
+            this.adapter.setList(templist);
+            this.adapter.notifyDataSetChanged();
         }
 
         String nav = "0";
 
         if(this.wordlist.size() > 0){
-            nav += startrecord + "-" + endrecord;
+            nav = (startrecord+1) + "-" + endrecord;
             nav += " of " + this.wordlist.size();
         }
 
-        txtNavigationInfo.setText(nav);
+        this.txtNavigationInfo.setText(nav);
+        cancelProgress();
 
     }
 }

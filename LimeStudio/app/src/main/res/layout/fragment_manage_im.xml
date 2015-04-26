@@ -128,7 +128,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Medium Text"
+                android:text="0"
                 android:id="@+id/txtNavigationInfo"
                 android:textSize="8pt"
                 android:gravity="center_horizontal"
