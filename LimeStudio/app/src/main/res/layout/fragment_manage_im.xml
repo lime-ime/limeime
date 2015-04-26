@@ -1,25 +1,21 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="10dp"
     tools:context="net.toload.main.hd.ManageIMFragment">
-
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="10dp">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-
-        <TableLayout
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal">
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+            android:layout_width="match_parent">
 
                 <TextView
                     android:layout_width="0dp"
@@ -39,26 +35,21 @@
                     android:layout_gravity="right"
                     android:layout_column="11" />
 
-
-            </TableRow>
-        </TableLayout>
+        </LinearLayout>
 
         <Button
-            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_width="match_parent"
             android:text="@string/manage_im_keyboard"
             android:id="@+id/btnManageImKeyboard"
             android:layout_gravity="center_horizontal"
             android:padding="5dp" />
 
-        <TableLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal">
 
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent">
 
                 <ToggleButton
                     android:layout_width="wrap_content"
@@ -82,9 +73,7 @@
                     android:text="@string/manage_im_search"
                     android:id="@+id/btnManageImSearch"
                     android:layout_column="11" />
-
-            </TableRow>
-        </TableLayout>
+        </LinearLayout>
 
         <Space
             android:layout_width="match_parent"
@@ -95,9 +84,8 @@
 
         <GridView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:id="@+id/gridManageIm"
-            android:layout_weight="1"
             android:numColumns="auto_fit"
             android:stretchMode="columnWidth"
             android:gravity="center"
@@ -108,45 +96,44 @@
 
         </GridView>
 
+    </LinearLayout>
 
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="50dp">
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent">
 
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/manage_im_previous"
-                android:id="@+id/btnManageImPrevious"
-                android:layout_margin="2dp"
-                android:paddingRight="10dp"
-                android:paddingLeft="10dp" />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/manage_im_previous"
+            android:id="@+id/btnManageImPrevious"
+            android:layout_margin="2dp"
+            android:paddingRight="10dp"
+            android:paddingLeft="10dp" />
 
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="0"
-                android:id="@+id/txtNavigationInfo"
-                android:textSize="8pt"
-                android:gravity="center_horizontal"
-                android:layout_weight="1" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="0"
+            android:id="@+id/txtNavigationInfo"
+            android:textSize="8pt"
+            android:gravity="center_horizontal"
+            android:layout_weight="1" />
 
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/manage_im_next"
-                android:id="@+id/btnManageImNext"
-                android:layout_margin="2dp"
-                android:paddingLeft="10dp"
-                android:paddingRight="10dp" />
-
-        </LinearLayout>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/manage_im_next"
+            android:id="@+id/btnManageImNext"
+            android:layout_margin="2dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp" />
 
     </LinearLayout>
 
 
-</FrameLayout>
+</LinearLayout>
 <!-- From: file:/C:/Data/Development/Android/Studio/LIMEIMEAS/app/src/main/res/layout/fragment_manage_im.xml -->

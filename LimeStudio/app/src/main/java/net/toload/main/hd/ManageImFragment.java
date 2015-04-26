@@ -113,6 +113,7 @@ public class ManageImFragment extends Fragment {
                 }else{
                     searchroot = true;
                 }
+                prequery = "";
                 edtManageImSearch.setText("");
             }
         });
@@ -159,9 +160,9 @@ public class ManageImFragment extends Fragment {
                     if(query != null && query.length() > 0 && (prequery == null || !prequery.equals(query))){
                         query = query.trim();
                         searchword(query);
-                        searchreset = true;
-                        btnManageImSearch.setText(getResources().getText(R.string.manage_im_reset));
                     }
+                    searchreset = true;
+                    btnManageImSearch.setText(getResources().getText(R.string.manage_im_reset));
                 }else{
                     searchword(null);
                     edtManageImSearch.setText("");
@@ -187,6 +188,7 @@ public class ManageImFragment extends Fragment {
         if(manageimthread != null && manageimthread.isAlive()){
             handler.removeCallbacks(manageimthread);
         }
+        page = 0;
         manageimthread = new Thread(new ManageImRunnable(handler, activity, code, curquery, searchroot));
         manageimthread.start();
         prequery = curquery;
@@ -210,6 +212,7 @@ public class ManageImFragment extends Fragment {
         if(this.progress.isShowing()){
             this.progress.cancel();
         }
+        this.wordlist = null;
     }
 
     public void showProgress(){
@@ -267,8 +270,8 @@ public class ManageImFragment extends Fragment {
         String nav = "0";
 
         if(this.wordlist.size() > 0){
-            nav = (startrecord+1) + "-" + endrecord;
-            nav += " of " + this.wordlist.size();
+            nav = Lime.format(startrecord + 1) + "-" + Lime.format(endrecord);
+            nav += " of " + Lime.format(this.wordlist.size());
         }
 
         this.txtNavigationInfo.setText(nav);

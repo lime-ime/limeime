@@ -97,7 +97,12 @@ public class Lime {
     public static final int IM_MANAGE_DISPLAY_AMOUNT = 50;
 
     public static String format(int number){
-        DecimalFormat df = new DecimalFormat("##,##,##,##,##,##,##0.00");
-        return df.format(number);
+        try {
+            DecimalFormat df = new DecimalFormat("##,##,##,##,##,##,##0");
+            return df.format(number);
+        }catch(Exception e){
+            e.printStackTrace();
+            return "0";
+        }
     }
 }

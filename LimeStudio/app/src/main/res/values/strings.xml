@@ -43,6 +43,8 @@
     <string name="manage_im_add">新增</string>
     <string name="manage_im_edit">編輯</string>
     <string name="manage_im_copy">複製</string>
+    <string name="manage_im_update">更新</string>
+    <string name="manage_im_cancel">取消</string>
     <string name="manage_im_keyboard">請設定輸入法鍵盤</string>
     <string name="manage_im_management">管理輸入法</string>
     <string name="manage_im_move">搬移</string>
