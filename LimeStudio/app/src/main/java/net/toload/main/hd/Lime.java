@@ -50,7 +50,6 @@ public class Lime {
     public static final String DB_COLUMN_SCORE = "score";
     public static final String DB_COLUMN_BASESCORE = "basescore";
 
-
     public static final String DB_IM = "im";
     public static final String DB_IM_COLUMN_ID = "_id";
     public static final String DB_IM_COLUMN_CODE = "code";

@@ -83,7 +83,7 @@ public class MainActivity extends ActionBarActivity
             int number = position -1;
             String code = imlist.get(number).getCode();
             fragmentManager.beginTransaction()
-                    .replace(R.id.container, ManageImFragment.newInstance(position + 1, code))
+                    .replace(R.id.container, net.toload.main.hd.ui.ManageImFragment.newInstance(position + 1, code))
                     .commit();
         }
     }

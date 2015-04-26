@@ -1,4 +1,4 @@
-package net.toload.main.hd;
+package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -14,10 +14,10 @@ import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import net.toload.main.hd.Lime;
+import net.toload.main.hd.MainActivity;
+import net.toload.main.hd.R;
 import net.toload.main.hd.data.Word;
-import net.toload.main.hd.ui.ManageImAdapter;
-import net.toload.main.hd.ui.ManageImHandler;
-import net.toload.main.hd.ui.ManageImRunnable;
 
 import java.util.ArrayList;
 import java.util.List;

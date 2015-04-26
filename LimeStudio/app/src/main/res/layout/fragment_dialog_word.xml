@@ -3,41 +3,85 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/scrollView2"
         android:layout_weight="1"
-        android:fillViewport="false" >
+        android:fillViewport="false"
+        android:padding="5dp">
 
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"></LinearLayout>
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/manage_word_code"
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/edtManageImWordCode"
+                android:layout_weight="1" />
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/manage_word_code3r"
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/edtManageImWordCode3r"
+                android:layout_weight="1" />
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/manage_word_word"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/edtManageImWordWord"
+                android:layout_weight="1"
+                android:minLines="5" />
+
+        </LinearLayout>
     </ScrollView>
 
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:padding="5dp">
 
         <Button
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/manage_im_cancel"
-            android:id="@+id/button"
+            android:id="@+id/btnManageImWordCancel"
             android:layout_weight="1" />
         <Button
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/manage_im_remove"
-            android:id="@+id/button"
+            android:id="@+id/btnManageImWordRemove"
             android:layout_weight="1" />
         <Button
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/manage_im_update"
-            android:id="@+id/button"
+            android:id="@+id/btnManageImWordUpdate"
             android:layout_weight="1" />
     </LinearLayout>
 

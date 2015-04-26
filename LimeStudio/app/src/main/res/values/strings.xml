@@ -54,7 +54,11 @@
     <string name="manage_im_previous">上一頁</string>
     <string name="manage_im_next">下一頁</string>
     <string name="manage_im_loading">讀取中 ...</string>
-    <string name="manage_im_word">字義</string>
+    <string name="manage_im_word">文字</string>
     <string name="manage_im_root">字根</string>
+
+    <string name="manage_word_code">字根</string>
+    <string name="manage_word_code3r">三碼</string>
+    <string name="manage_word_word">文字</string>
 
 </resources>
