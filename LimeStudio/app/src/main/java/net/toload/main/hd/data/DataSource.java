@@ -155,4 +155,38 @@ public class DataSource {
 		return result;
 	}
 
+	public Word getWord(String code, long id) {
+		Word w = null;
+		if(database != null && database.isOpen()){
+			Cursor cursor = null;
+
+			String query = Lime.DB_COLUMN_ID + " = '"+id+"' ";
+
+			cursor = database.query(code,
+					null, query,
+					null, null, null, null);
+
+			cursor.moveToFirst();
+			w = Word.get(cursor);
+			cursor.close();
+		}
+		return w;
+	}
+
+	public void update(String updatesql) {
+		if(database != null && database.isOpen()){
+			if(updatesql.toLowerCase().startsWith("update")){
+				database.execSQL(updatesql);
+			}
+		}
+	}
+
+	public void add(String addsql) {
+		if(database != null && database.isOpen()){
+			if(addsql.toLowerCase().startsWith("insert")){
+				database.execSQL(addsql);
+			}
+		}
+	}
+
 }

@@ -1,12 +1,14 @@
 package net.toload.main.hd.ui;
 
 import android.app.Activity;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -17,8 +19,10 @@ import android.widget.ToggleButton;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
+import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Word;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +44,6 @@ public class ManageImFragment extends Fragment {
      */
     private static final String ARG_SECTION_NUMBER = "section_number";
     private static final String ARG_SECTION_CODE = "section_code";
-
 
     private GridView gridManageIm;
 
@@ -70,6 +73,8 @@ public class ManageImFragment extends Fragment {
 
     private Thread manageimthread;
 
+    private DataSource datasource;
+
     private ProgressDialog progress;
 
     /**
@@ -93,24 +98,52 @@ public class ManageImFragment extends Fragment {
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_manage_im, container, false);
 
-        this.handler = new ManageImHandler(this);
         this.activity = this.getActivity();
+        this.datasource = new DataSource(this.activity);
+        this.handler = new ManageImHandler(this);
 
         this.progress = new ProgressDialog(this.activity);
         this.progress.setCancelable(false);
         this.progress.setMessage(getResources().getString(R.string.manage_im_loading));
 
         this.gridManageIm = (GridView) root.findViewById(R.id.gridManageIm);
+        this.gridManageIm.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                try {
+                    datasource.open();
+                    Word w = datasource.getWord(code, id);
+                    datasource.close();
+                    FragmentTransaction ft = getFragmentManager().beginTransaction();
+
+                    // Create and show the dialog.
+                    ManageImWordEditDialog dialog = ManageImWordEditDialog.newInstance();
+                    dialog.setHandler(handler, w);
+                    dialog.show(ft, "editdialog");
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         this.btnManageImAdd = (Button) root.findViewById(R.id.btnManageImAdd);
+        this.btnManageImAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                ManageImWordAddDialog dialog = ManageImWordAddDialog.newInstance();
+                dialog.show(ft, "adddialog");
+            }
+        });
         this.btnManageImKeyboard = (Button) root.findViewById(R.id.btnManageImKeyboard);
 
         this.toggleManageIm = (ToggleButton) root.findViewById(R.id.toggleManageIm);
         this.toggleManageIm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked){
+                if (isChecked) {
                     searchroot = false;
-                }else{
+                } else {
                     searchroot = true;
                 }
                 prequery = "";
@@ -152,18 +185,18 @@ public class ManageImFragment extends Fragment {
         });
 
         this.btnManageImSearch = (Button) root.findViewById(R.id.btnManageImSearch);
-        this.btnManageImSearch.setOnClickListener(new View.OnClickListener(){
+        this.btnManageImSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!searchreset){
+                if (!searchreset) {
                     String query = edtManageImSearch.getText().toString();
-                    if(query != null && query.length() > 0 && (prequery == null || !prequery.equals(query))){
+                    if (query != null && query.length() > 0 && (prequery == null || !prequery.equals(query))) {
                         query = query.trim();
                         searchword(query);
                     }
                     searchreset = true;
                     btnManageImSearch.setText(getResources().getText(R.string.manage_im_reset));
-                }else{
+                } else {
                     searchword(null);
                     edtManageImSearch.setText("");
                     searchreset = false;
@@ -174,8 +207,7 @@ public class ManageImFragment extends Fragment {
 
         this.txtNavigationInfo = (TextView) root.findViewById(R.id.txtNavigationInfo);
 
-        this.manageimthread = new Thread(new ManageImRunnable(this.handler, this.activity, this.code, null, searchroot));
-        this.manageimthread.start();
+        searchword(null);
 
         /*
         private EditText edtManageImSearch;
@@ -277,5 +309,76 @@ public class ManageImFragment extends Fragment {
         this.txtNavigationInfo.setText(nav);
         cancelProgress();
 
+    }
+
+    public void removeWord(int id){
+        for(int i = 0 ; i < this.wordlist.size() ; i++){
+           if(id== this.wordlist.get(i).getId()){
+               this.wordlist.remove(i);
+               break;
+           }
+        }
+
+        String removesql = "DELETE FROM " + this.code + " WHERE " + Lime.DB_COLUMN_ID + " = '" + id + "'";
+
+        try {
+            datasource.open();
+            datasource.remove(removesql);
+            datasource.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        updateGridView(this.wordlist);
+    }
+
+    public void addWord(String code, String code3r, String word) {
+
+        Word obj = new Word();
+             obj.setCode(code);
+             obj.setCode3r(code3r);
+             obj.setWord(word);
+             obj.setBasescore(0);
+             obj.setScore(1);
+
+        String insertsql = Word.getInsertQuery(this.code, obj);
+
+        try {
+            datasource.open();
+            datasource.insert(insertsql);
+            datasource.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        searchword(prequery);
+    }
+
+    public void updateWord(int id, String code, String code3r, String word) {
+
+        for(int i = 0 ; i < this.wordlist.size() ; i++){
+            if(id== this.wordlist.get(i).getId()){
+                Word check = this.wordlist.get(i);
+                     check.setCode(code);
+                     check.setCode3r(code3r);
+                     check.setWord(word);
+                this.wordlist.remove(i);
+                this.wordlist.add(i, check);
+                break;
+            }
+        }
+
+        String updatesql = "UPDATE " + this.code + " SET ";
+                updatesql += Lime.DB_COLUMN_CODE + " = '" + code + "', ";
+                updatesql += Lime.DB_COLUMN_WORD + " = '" + word + "' ";
+                updatesql += " WHERE " + Lime.DB_COLUMN_ID + " = '" + id + "'";
+
+        try {
+            datasource.open();
+            datasource.update(updatesql);
+            datasource.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        updateGridView(this.wordlist);
     }
 }

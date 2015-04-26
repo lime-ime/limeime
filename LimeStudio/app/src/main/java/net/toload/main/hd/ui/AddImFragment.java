@@ -1,4 +1,4 @@
-package net.toload.main.hd;
+package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -6,6 +6,9 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import net.toload.main.hd.MainActivity;
+import net.toload.main.hd.R;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.

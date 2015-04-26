@@ -10,7 +10,7 @@
         android:id="@+id/scrollView2"
         android:layout_weight="1"
         android:fillViewport="false"
-        android:padding="5dp">
+        android:padding="10dp">
 
         <LinearLayout
             android:orientation="vertical"
@@ -27,7 +27,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/edtManageImWordCode"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:textSize="16pt"
+                android:textIsSelectable="false" />
 
 
             <TextView
@@ -40,7 +42,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/edtManageImWordCode3r"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:textSize="16pt" />
 
 
             <TextView
@@ -54,7 +57,9 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/edtManageImWordWord"
                 android:layout_weight="1"
-                android:minLines="5" />
+                android:minLines="3"
+                android:gravity="top"
+                android:textSize="16pt" />
 
         </LinearLayout>
     </ScrollView>
@@ -63,7 +68,7 @@
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="5dp">
+        android:padding="10dp">
 
         <Button
             android:layout_width="0dp"

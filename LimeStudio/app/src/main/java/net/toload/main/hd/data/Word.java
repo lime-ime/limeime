@@ -100,14 +100,12 @@ public class Word {
 	public static String getInsertQuery(String table, Word record){
 		StringBuffer sb = new StringBuffer();
 					 sb.append("INSERT INTO " + table + "(");
-					 sb.append(Lime.DB_COLUMN_ID +", ");
 					 sb.append(Lime.DB_COLUMN_CODE +", ");
 					 sb.append(Lime.DB_COLUMN_CODE3R +", ");
 					 sb.append(Lime.DB_COLUMN_WORD +", ");
 					 sb.append(Lime.DB_COLUMN_RELATED +", ");
 					 sb.append(Lime.DB_COLUMN_SCORE +", ");
 					 sb.append(Lime.DB_COLUMN_BASESCORE +") VALUES(");
-					 sb.append("\""+record.getId()+"\",");
 					 sb.append("\""+record.getCode()+"\",");
 					 sb.append("\""+record.getCode3r()+"\",");
 					 sb.append("\""+record.getWord()+"\",");

@@ -10,6 +10,7 @@ import android.view.MenuItem;
 
 import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Im;
+import net.toload.main.hd.ui.AddImFragment;
 
 import java.sql.SQLException;
 import java.util.ArrayList;

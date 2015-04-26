@@ -6,6 +6,12 @@
 
     <string name="action_settings">Settings</string>
 
+    <string name="insert_error">無法新增記錄，請檢查參數</string>
+    <string name="update_error">無法更新記錄，請檢查參數</string>
+
+    <string name="dialog_confirm">確認</string>
+    <string name="dialog_cancel">取消</string>
+
     <string name="action_adfree">移除廣告</string>
     <string name="action_help">使用說明</string>
     <string name="action_preference">喜好設定</string>
@@ -40,6 +46,7 @@
     <string name="im_scj">快倉</string>
     <string name="im_wb">篳順五碼</string>
 
+    <string name="manage_im_save">儲存</string>
     <string name="manage_im_add">新增</string>
     <string name="manage_im_edit">編輯</string>
     <string name="manage_im_copy">複製</string>
@@ -60,5 +67,14 @@
     <string name="manage_word_code">字根</string>
     <string name="manage_word_code3r">三碼</string>
     <string name="manage_word_word">文字</string>
+
+    <string name="manage_word_dialog_edit">編輯內容</string>
+    <string name="manage_word_dialog_message">請問是否要儲存記錄並離開?</string>
+
+    <string name="manage_word_dialog_delete">刪除內容</string>
+    <string name="manage_word_dialog_delete_message">請問是否要刪除記錄並離開?</string>
+
+    <string name="manage_word_dialog_add">新增內容</string>
+    <string name="manage_word_dialog_add_message">請問是否要新增記錄並離開?</string>
 
 </resources>
