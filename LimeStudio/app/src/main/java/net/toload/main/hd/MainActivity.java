@@ -79,8 +79,11 @@ public class MainActivity extends ActionBarActivity
                     .replace(R.id.container, AddImFragment.newInstance(position + 1))
                     .commit();
         }else{
+            initialImList();
+            int number = position -1;
+            String code = imlist.get(number).getCode();
             fragmentManager.beginTransaction()
-                    .replace(R.id.container, ManageImFragment.newInstance(position + 1))
+                    .replace(R.id.container, ManageImFragment.newInstance(position + 1, code))
                     .commit();
         }
     }

@@ -92,4 +92,6 @@ public class Lime {
     public static final String IM_TYPE_IMPORT = "import";
     public static final String IM_TYPE_KEYBOARD = "keyboard";
 
+    public static final int IM_MANAGE_DISPLAY_AMOUNT = 50;
+
 }

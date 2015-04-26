@@ -43,7 +43,7 @@
     <string name="manage_im_add">新增</string>
     <string name="manage_im_edit">編輯</string>
     <string name="manage_im_copy">複製</string>
-    <string name="manage_im_keyboard">請選擇輸入法鍵盤</string>
+    <string name="manage_im_keyboard">請設定輸入法鍵盤</string>
     <string name="manage_im_management">管理輸入法</string>
     <string name="manage_im_move">搬移</string>
     <string name="manage_im_remove">移除</string>
@@ -51,5 +51,8 @@
     <string name="manage_im_search">檢索</string>
     <string name="manage_im_previous">上一頁</string>
     <string name="manage_im_next">下一頁</string>
+    <string name="manage_im_loading">讀取中 ...</string>
+    <string name="manage_im_word">字義</string>
+    <string name="manage_im_root">字根</string>
 
 </resources>

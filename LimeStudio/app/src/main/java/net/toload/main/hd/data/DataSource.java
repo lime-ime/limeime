@@ -15,7 +15,6 @@ import java.util.List;
  */
 public class DataSource {
 
-
 	private SQLiteDatabase database;
 	private DBHelper dbhelper;
 	
@@ -119,5 +118,41 @@ public class DataSource {
 		return result;
 	}
 
-	
+	public List<Word> loadWord(String code, String query, boolean searchroot) {
+		List<Word> result = new ArrayList<Word>();
+		if(database != null && database.isOpen()){
+			Cursor cursor = null;
+			if(query != null && query.length() >= 1){
+				if(searchroot){
+					query = Lime.DB_COLUMN_CODE + " LIKE '"+query+"%' AND ifnull("+Lime.DB_COLUMN_WORD+", '') <> ''";
+				}else{
+					query = Lime.DB_COLUMN_WORD + " LIKE '%"+query+"%' AND ifnull("+Lime.DB_COLUMN_WORD+", '') <> ''";
+				}
+			}else{
+				query = "ifnull("+Lime.DB_COLUMN_WORD+", '') <> ''";
+			}
+
+			String order = "";
+
+			if(searchroot){
+				order = Lime.DB_COLUMN_CODE + " ASC";
+			}else{
+				order = Lime.DB_COLUMN_WORD + " ASC";
+			}
+
+			cursor = database.query(code,
+					null, query,
+					null, null, null, order);
+
+			cursor.moveToFirst();
+			while(!cursor.isAfterLast()){
+				Word r = Word.get(cursor);
+				result.add(r);
+				cursor.moveToNext();
+			}
+			cursor.close();
+		}
+		return result;
+	}
+
 }
