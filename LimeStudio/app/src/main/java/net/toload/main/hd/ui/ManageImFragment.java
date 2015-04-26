@@ -1,10 +1,10 @@
 package net.toload.main.hd.ui;
 
 import android.app.Activity;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +21,8 @@ import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.DataSource;
+import net.toload.main.hd.data.Im;
+import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.data.Word;
 
 import java.sql.SQLException;
@@ -59,7 +61,9 @@ public class ManageImFragment extends Fragment {
     private EditText edtManageImSearch;
     private TextView txtNavigationInfo;
 
+    private List<Im> imkeyboardlist;
     private List<Word> wordlist;
+    private List<Keyboard> keyboardlist;
 
     private int page = 0;
     private boolean searchroot = true;
@@ -103,6 +107,16 @@ public class ManageImFragment extends Fragment {
         this.datasource = new DataSource(this.activity);
         this.handler = new ManageImHandler(this);
 
+        // initial imlist
+        imkeyboardlist = new ArrayList<Im>();
+         try {
+               datasource.open();
+               imkeyboardlist = datasource.getIm(null, Lime.IM_TYPE_KEYBOARD);
+               datasource.close();
+         } catch (SQLException e) {
+              e.printStackTrace();
+         }
+
         this.progress = new ProgressDialog(this.activity);
         this.progress.setCancelable(false);
         this.progress.setMessage(getResources().getString(R.string.manage_im_loading));
@@ -137,7 +151,17 @@ public class ManageImFragment extends Fragment {
                 dialog.show(ft, "adddialog");
             }
         });
+
         this.btnManageImKeyboard = (Button) root.findViewById(R.id.btnManageImKeyboard);
+        this.btnManageImKeyboard.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                ManageImKeyboardDialog dialog = ManageImKeyboardDialog.newInstance();
+                                       dialog.setHandler(handler, code);
+                dialog.show(ft, "keyboarddialog");
+            }
+        });
 
         this.toggleManageIm = (ToggleButton) root.findViewById(R.id.toggleManageIm);
         this.toggleManageIm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -209,12 +233,16 @@ public class ManageImFragment extends Fragment {
 
         this.txtNavigationInfo = (TextView) root.findViewById(R.id.txtNavigationInfo);
 
+        // UpdateKeyboard display
+        for(Im obj : imkeyboardlist){
+            if(obj.getCode().equals(code)){
+                btnManageImKeyboard.setText(obj.getDesc());
+                break;
+            }
+        }
+
         searchword(null);
 
-        /*
-        private EditText edtManageImSearch;
-        private TextView txtNavigationInfo;
-        */
         return root;
     }
 
@@ -387,5 +415,31 @@ public class ManageImFragment extends Fragment {
             e.printStackTrace();
         }
         updateGridView(this.wordlist);
+    }
+
+    public void updateKeyboard(String keyboard) {
+
+        if(keyboardlist == null){
+            try {
+                datasource.open();
+                keyboardlist = datasource.getKeyboard();
+                datasource.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        for(Keyboard k: keyboardlist){
+            if(k.getCode().equals(keyboard)){
+                try {
+                    datasource.open();
+                    datasource.setImKeyboard(code, k);
+                    datasource.close();
+                    btnManageImKeyboard.setText(k.getDesc());
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
     }
 }

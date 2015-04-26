@@ -35,6 +35,9 @@ public class ManageImHandler extends Handler {
             String code3r = msg.getData().getString("code3r");
             String word = msg.getData().getString("word");
             fragment.updateWord(id, code, code3r, word);
+        }else if(action.equals("keyboard")){
+            String keyboard = msg.getData().getString("keyboard");
+            fragment.updateKeyboard(keyboard);
         }else if(action.equals("remove")){
             int id = msg.getData().getInt("id");
             fragment.removeWord(id);
@@ -70,7 +73,7 @@ public class ManageImHandler extends Handler {
         m.getData().putString("code", code);
         m.getData().putString("code3r", code3r);
         m.getData().putString("word", word);
-        this.sendMessageDelayed(m, 1000);
+        this.sendMessageDelayed(m, 1);
     }
 
     public void addWord(String code, String code3r, String word) {
@@ -79,6 +82,13 @@ public class ManageImHandler extends Handler {
         m.getData().putString("code", code);
         m.getData().putString("code3r", code3r);
         m.getData().putString("word", word);
+        this.sendMessageDelayed(m, 1);
+    }
+
+    public void updateKeyboardButton(String keyboard) {
+        Message m = new Message();
+        m.getData().putString("action", "keyboard");
+        m.getData().putString("keyboard", keyboard);
         this.sendMessageDelayed(m, 1000);
     }
 

@@ -86,6 +86,22 @@ public class DataSource {
 		}
 	}
 
+	public List<Keyboard> getKeyboard(){
+		List<Keyboard> result = new ArrayList<Keyboard>();
+		if(database != null && database.isOpen()){
+			Cursor cursor = database.query(Lime.DB_KEYBOARD,null, null,
+												null, null, null, Lime.DB_KEYBOARD_COLUMN_NAME + " ASC");
+			cursor.moveToFirst();
+			while(!cursor.isAfterLast()){
+				Keyboard r = Keyboard.get(cursor);
+				result.add(r);
+				cursor.moveToNext();
+			}
+			cursor.close();
+		}
+		return result;
+	}
+
 	public List<Im> getIm(String code, String type){
 		List<Im> result = new ArrayList<Im>();
 		if(database != null && database.isOpen()){
@@ -186,6 +202,24 @@ public class DataSource {
 			if(addsql.toLowerCase().startsWith("insert")){
 				database.execSQL(addsql);
 			}
+		}
+	}
+
+	public void setImKeyboard(String code, Keyboard keyboard) {
+		if(database != null && database.isOpen()){
+
+			String removesql = "DELETE FROM " + Lime.DB_IM + " WHERE " + Lime.DB_IM_COLUMN_CODE + " = '" + code +"'";
+			        removesql += " AND " + Lime.DB_IM_COLUMN_TITLE + " = '"+Lime.IM_TYPE_KEYBOARD+"'";
+			database.execSQL(removesql);
+
+			Im im = new Im();
+			   im.setCode(code);
+			   im.setKeyboard(keyboard.getCode());
+			   im.setTitle(Lime.IM_TYPE_KEYBOARD);
+			   im.setDesc(keyboard.getDesc());
+
+			String addsql = Im.getInsertQuery(im);
+			database.execSQL(addsql);
 		}
 	}
 

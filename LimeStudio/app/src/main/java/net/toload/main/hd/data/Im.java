@@ -121,7 +121,6 @@ public class Im {
 	public static String getInsertQuery(Im record){
 		StringBuffer sb = new StringBuffer();
 					 sb.append("INSERT INTO " + Lime.DB_IM + "(");
-					 sb.append(Lime.DB_IM_COLUMN_ID +", ");
 					 sb.append(Lime.DB_IM_COLUMN_CODE +", ");
 					 sb.append(Lime.DB_IM_COLUMN_TITLE +", ");
 					 sb.append(Lime.DB_IM_COLUMN_DESC +", ");
@@ -130,7 +129,6 @@ public class Im {
 					 sb.append(Lime.DB_IM_COLUMN_SELKEY +", ");
 					 sb.append(Lime.DB_IM_COLUMN_ENDKEY +", ");
 					 sb.append(Lime.DB_IM_COLUMN_SPACESTYLE +") VALUES(");
-					 sb.append("\""+record.getId()+"\",");
 					 sb.append("\""+record.getCode()+"\",");
 					 sb.append("\""+record.getTitle()+"\",");
 					 sb.append("\""+record.getDesc()+"\",");

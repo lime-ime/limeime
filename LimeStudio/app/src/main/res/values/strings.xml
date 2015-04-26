@@ -69,6 +69,8 @@
     <string name="manage_word_code3r">三碼</string>
     <string name="manage_word_word">文字</string>
 
+    <string name="manage_select_keyboard">請選擇鍵盤</string>
+
     <string name="manage_word_dialog_edit">編輯內容</string>
     <string name="manage_word_dialog_message">請問是否要儲存記錄並離開?</string>
 
