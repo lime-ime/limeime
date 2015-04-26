@@ -67,7 +67,7 @@
                     android:layout_column="1"
                     android:checked="false"
                     android:textOff="@string/manage_im_root"
-                    android:textOn="@string/manage_im_root" />
+                    android:textOn="@string/manage_im_word" />
 
                 <EditText
                     android:layout_width="0dp"

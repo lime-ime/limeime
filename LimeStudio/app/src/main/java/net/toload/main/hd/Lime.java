@@ -2,6 +2,8 @@ package net.toload.main.hd;
 
 import android.os.Environment;
 
+import java.text.DecimalFormat;
+
 /**
  * Created by Art Hung on 2015/4/24.
  */
@@ -94,4 +96,8 @@ public class Lime {
 
     public static final int IM_MANAGE_DISPLAY_AMOUNT = 50;
 
+    public static String format(int number){
+        DecimalFormat df = new DecimalFormat("##,##,##,##,##,##,##0.00");
+        return df.format(number);
+    }
 }

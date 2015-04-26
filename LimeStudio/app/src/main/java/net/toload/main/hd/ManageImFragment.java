@@ -59,6 +59,7 @@ public class ManageImFragment extends Fragment {
 
     private int page = 0;
     private boolean searchroot = true;
+    private boolean searchreset = false;
 
     private String prequery = "";
 
@@ -107,7 +108,6 @@ public class ManageImFragment extends Fragment {
         this.toggleManageIm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
                 if(isChecked){
                     searchroot = false;
                 }else{
@@ -122,8 +122,8 @@ public class ManageImFragment extends Fragment {
         this.btnManageImNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int checkrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * (page+1);
-                if(checkrecord < wordlist.size()){
+                int checkrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
+                if (checkrecord < wordlist.size()) {
                     page++;
                 }
                 updateGridView(wordlist);
@@ -134,7 +134,7 @@ public class ManageImFragment extends Fragment {
         this.btnManageImPrevious.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(page > 0){
+                if (page > 0) {
                     page--;
                 }
                 updateGridView(wordlist);
@@ -142,16 +142,31 @@ public class ManageImFragment extends Fragment {
         });
 
         this.edtManageImSearch = (EditText) root.findViewById(R.id.edtManageImSearch);
+        this.edtManageImSearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                searchreset = false;
+                btnManageImSearch.setText(getResources().getText(R.string.manage_im_search));
+            }
+        });
 
         this.btnManageImSearch = (Button) root.findViewById(R.id.btnManageImSearch);
         this.btnManageImSearch.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                String query = edtManageImSearch.getText().toString();
-                if(query != null && query.length() > 0){
-                    query = query.trim();
-                    manageimthread = new Thread(new ManageImRunnable(handler, activity, code, query, searchroot));
-                    manageimthread.start();
+                if(!searchreset){
+                    String query = edtManageImSearch.getText().toString();
+                    if(query != null && query.length() > 0 && (prequery == null || !prequery.equals(query))){
+                        query = query.trim();
+                        searchword(query);
+                        searchreset = true;
+                        btnManageImSearch.setText(getResources().getText(R.string.manage_im_reset));
+                    }
+                }else{
+                    searchword(null);
+                    edtManageImSearch.setText("");
+                    searchreset = false;
+                    btnManageImSearch.setText(getResources().getText(R.string.manage_im_search));
                 }
             }
         });
@@ -166,6 +181,15 @@ public class ManageImFragment extends Fragment {
         private TextView txtNavigationInfo;
         */
         return root;
+    }
+
+    public void searchword(String curquery){
+        if(manageimthread != null && manageimthread.isAlive()){
+            handler.removeCallbacks(manageimthread);
+        }
+        manageimthread = new Thread(new ManageImRunnable(handler, activity, code, curquery, searchroot));
+        manageimthread.start();
+        prequery = curquery;
     }
 
     @Override
