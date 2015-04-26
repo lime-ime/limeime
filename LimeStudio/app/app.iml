@@ -82,12 +82,36 @@
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/rs" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/symbols" />
       <excludeFolder url="file://$MODULE_DIR$/build/outputs" />
-      <excludeFolder url="file://$MODULE_DIR$/build/tmp" />
     </content>
     <orderEntry type="jdk" jdkName="Android API 22 Platform (1)" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="support-v4-22.0.0" level="project" />
+    <orderEntry type="library" exported="" name="android-support-v4" level="project" />
+    <orderEntry type="library" exported="" name="httpmime-4.0.3" level="project" />
+    <orderEntry type="library" exported="" name="google-api-client-android2-1.8.0-beta" level="project" />
+    <orderEntry type="library" exported="" name="google-http-client-android2-1.8.3-beta" level="project" />
+    <orderEntry type="library" exported="" name="GoogleAdMobAdsSdk-6.1.0" level="project" />
+    <orderEntry type="library" exported="" name="google-api-client-1.8.0-beta" level="project" />
+    <orderEntry type="library" exported="" name="gdata-media-1.0" level="project" />
     <orderEntry type="library" exported="" name="support-annotations-22.0.0" level="project" />
+    <orderEntry type="library" exported="" name="google-oauth-client-1.8.0-beta" level="project" />
+    <orderEntry type="library" exported="" name="activation" level="project" />
+    <orderEntry type="library" exported="" name="commons-logging-1.1.1" level="project" />
+    <orderEntry type="library" exported="" name="dropbox-android-sdk-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="gdata-client-1.0" level="project" />
+    <orderEntry type="library" exported="" name="jsr305-1.3.9" level="project" />
+    <orderEntry type="library" exported="" name="commons-codec-1.3" level="project" />
+    <orderEntry type="library" exported="" name="mail" level="project" />
+    <orderEntry type="library" exported="" name="gdata-docs-3.0" level="project" />
+    <orderEntry type="library" exported="" name="gdata-base-1.0" level="project" />
+    <orderEntry type="library" exported="" name="support-v4-22.0.0" level="project" />
     <orderEntry type="library" exported="" name="appcompat-v7-22.0.0" level="project" />
+    <orderEntry type="library" exported="" name="jackson-core-asl-1.9.4" level="project" />
+    <orderEntry type="library" exported="" name="httpcore-4.0.1" level="project" />
+    <orderEntry type="library" exported="" name="httpclient-4.0.3" level="project" />
+    <orderEntry type="library" exported="" name="google-http-client-1.8.3-beta" level="project" />
+    <orderEntry type="library" exported="" name="json_simple-1.1" level="project" />
+    <orderEntry type="library" exported="" name="guava-11.0.2" level="project" />
+    <orderEntry type="library" exported="" name="gson-2.1" level="project" />
+    <orderEntry type="library" exported="" name="gdata-core-1.0" level="project" />
   </component>
 </module>

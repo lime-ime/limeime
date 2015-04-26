@@ -19,6 +19,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:backupAgent="LIMEBackupAgent"
         android:theme="@style/AppTheme" >
         <activity
             android:name=".MainActivity"
@@ -35,6 +36,70 @@
             android:name=".SettingsActivity"
             android:label="@string/action_preference" >
         </activity>
+
+
+
+
+        <!-- LIME Services -->
+        <service android:permission="android.permission.BIND_INPUT_METHOD" android:name="LIMEService">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data android:name="android.view.im" android:resource="@xml/method" />
+        </service>
+
+        <!-- LIME Services
+        <service android:name="SearchService">
+            <intent-filter>
+                <action android:name="net.toload.main.hd.ISearchService"></action>
+            </intent-filter>
+        </service>
+        <service android:name="DBService">
+            <intent-filter>
+                <action android:name="net.toload.main.hd.IDBService"></action>
+            </intent-filter>
+        </service>
+        -->
+
+        <!--<activity android:label="@string/ime_setting" android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" android:name="LIMEMenu">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>-->
+
+        <activity android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" android:name="net.toload.main.hd.limesettings.LIMEInitial">
+        </activity>
+        <activity android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" android:name="net.toload.main.hd.limesettings.LIMEIMSetting">
+        </activity>
+        <activity android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" android:name="net.toload.main.hd.limesettings.LIMEMappingSetting">
+        </activity>
+        <activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreference">
+        </activity>
+        <activity android:configChanges="keyboard|keyboardHidden|orientation" android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreferenceHC">
+        </activity>
+        <!--<activity
+            android:name="com.google.ads.AdActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />-->
+
+        <activity android:theme="@style/LIMEHDDialogTheme" android:configChanges="keyboard|keyboardHidden|orientation" android:name=".limesettings.LIMEMappingLoading"></activity>
+
+        <activity android:name="com.dropbox.client2.android.AuthActivity"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|keyboard">
+            <intent-filter>
+                <!-- Change this to be db- followed by your app key -->
+                <data android:scheme="db-keuuzhfc6efjf6t" />
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!--
+        <meta-data android:name="com.google.android.backup.api_key"
+            android:value="AEdPqrEAAAAILNniwKkk4v3ZBFX77elSlis0Qabd2h2Tn63kYA" />-->
+
     </application>
 
 </manifest>
