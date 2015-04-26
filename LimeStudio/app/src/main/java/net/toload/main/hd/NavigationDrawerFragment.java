@@ -1,6 +1,7 @@
 package net.toload.main.hd;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -274,6 +275,18 @@ public class NavigationDrawerFragment extends Fragment {
         if (mDrawerToggle.onOptionsItemSelected(item)) {
             return true;
         }
+
+        if(item.getItemId() == R.id.action_preference){
+            Intent setting = new Intent(this.getActivity(), SettingsActivity.class);
+            startActivity(setting);
+        }
+
+        /**
+         *
+         Intent download = new Intent(v.getContext(), DownloadActivity.class);
+         download.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+         startActivity(download);
+         */
 
         /*if (item.getItemId() == R.id.action_example) {
             Toast.makeText(getActivity(), "Example action.", Toast.LENGTH_SHORT).show();
