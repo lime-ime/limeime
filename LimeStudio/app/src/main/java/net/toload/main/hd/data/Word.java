@@ -106,10 +106,10 @@ public class Word {
 					 sb.append(Lime.DB_COLUMN_RELATED +", ");
 					 sb.append(Lime.DB_COLUMN_SCORE +", ");
 					 sb.append(Lime.DB_COLUMN_BASESCORE +") VALUES(");
-					 sb.append("\""+record.getCode()+"\",");
-					 sb.append("\""+record.getCode3r()+"\",");
-					 sb.append("\""+record.getWord()+"\",");
-					 sb.append("\""+record.getRelated()+"\",");
+					 sb.append("\""+Lime.formatSqlValue(record.getCode())+"\",");
+					 sb.append("\""+Lime.formatSqlValue(record.getCode3r())+"\",");
+					 sb.append("\""+Lime.formatSqlValue(record.getWord())+"\",");
+					 sb.append("\""+Lime.formatSqlValue(record.getRelated())+"\",");
 					 sb.append("\""+record.getScore()+"\",");
 					 sb.append("\""+record.getBasescore()+"\"");;
 					 sb.append(")");

@@ -127,11 +127,14 @@ public class ManageImWordEditDialog extends DialogFragment {
 								String code = edtManageImWordCode.getText().toString();
 								String code3r = edtManageImWordCode3r.getText().toString();
 								String text = edtManageImWordWord.getText().toString();
-								if(!code.isEmpty() && !text.isEmpty()){
+								if(!code.isEmpty() && !text.isEmpty() && (
+										!word.getCode().equalsIgnoreCase(code) ||
+												(word.getCode3r() != null && !word.getCode().equalsIgnoreCase(code3r)) ||
+										!word.getWord().equalsIgnoreCase(text) ) ) {
 									if(!code3r.isEmpty()){
 										code3r = code3r.trim();
 									}
-									handler.updateWord(word.getId(), code.trim(), code3r, text.trim());
+									handler.updateWord(word.getId(), code, code3r, text);
 									dialog.dismiss();
 									cancelDialog();
 								}else{

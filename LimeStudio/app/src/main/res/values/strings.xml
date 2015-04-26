@@ -6,6 +6,7 @@
 
     <string name="action_settings">Settings</string>
 
+    <string name="no_search_result">沒有任何符合的記錄</string>
     <string name="insert_error">無法新增記錄，請檢查參數</string>
     <string name="update_error">無法更新記錄，請檢查參數</string>
 

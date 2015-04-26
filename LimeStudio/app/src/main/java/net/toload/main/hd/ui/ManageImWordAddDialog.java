@@ -100,7 +100,7 @@ public class ManageImWordAddDialog extends DialogFragment {
 									if(!code3r.isEmpty()){
 										code3r = code3r.trim();
 									}
-									handler.addWord(code.trim(), code3r, text.trim());
+									handler.addWord(code, code3r, text);
 									dialog.dismiss();
 									cancelDialog();
 								}else{

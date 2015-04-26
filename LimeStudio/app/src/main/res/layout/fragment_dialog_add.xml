@@ -20,6 +20,21 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="@string/manage_word_word"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/edtManageImWordWord"
+                android:layout_weight="1"
+                android:minLines="3"
+                android:gravity="top"
+                android:textSize="16pt" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="@string/manage_word_code"
                 android:textAppearance="?android:attr/textAppearanceMedium"/>
 
@@ -43,22 +58,6 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/edtManageImWordCode3r"
                 android:layout_weight="1"
-                android:textSize="16pt" />
-
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/manage_word_word"
-                android:textAppearance="?android:attr/textAppearanceMedium" />
-
-            <EditText
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/edtManageImWordWord"
-                android:layout_weight="1"
-                android:minLines="3"
-                android:gravity="top"
                 android:textSize="16pt" />
 
         </LinearLayout>

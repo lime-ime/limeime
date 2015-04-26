@@ -14,6 +14,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import net.toload.main.hd.Lime;
@@ -132,6 +133,7 @@ public class ManageImFragment extends Fragment {
             public void onClick(View v) {
                 FragmentTransaction ft = getFragmentManager().beginTransaction();
                 ManageImWordAddDialog dialog = ManageImWordAddDialog.newInstance();
+                                    dialog.setHandler(handler);
                 dialog.show(ft, "adddialog");
             }
         });
@@ -289,6 +291,8 @@ public class ManageImFragment extends Fragment {
                 Word w = this.wordlist.get(i);
                 templist.add(w);
             }
+        }else{
+            Toast.makeText(activity, R.string.no_search_result, Toast.LENGTH_SHORT).show();
         }
 
         if(this.adapter == null){
@@ -368,9 +372,12 @@ public class ManageImFragment extends Fragment {
         }
 
         String updatesql = "UPDATE " + this.code + " SET ";
-                updatesql += Lime.DB_COLUMN_CODE + " = '" + code + "', ";
-                updatesql += Lime.DB_COLUMN_WORD + " = '" + word + "' ";
-                updatesql += " WHERE " + Lime.DB_COLUMN_ID + " = '" + id + "'";
+                updatesql += Lime.DB_COLUMN_CODE + " = \"" + Lime.formatSqlValue(code) + "\", ";
+                if(!code3r.isEmpty()){
+                    updatesql += Lime.DB_COLUMN_CODE3R + " = \"" + Lime.formatSqlValue(code3r) + "\", ";
+                }
+                updatesql += Lime.DB_COLUMN_WORD + " = \"" + Lime.formatSqlValue(word) + "\" ";
+                updatesql += " WHERE " + Lime.DB_COLUMN_ID + " = \"" + id + "\"";
 
         try {
             datasource.open();

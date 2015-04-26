@@ -104,4 +104,14 @@ public class Lime {
             return "0";
         }
     }
+
+    public static String formatSqlValue(String value){
+        if(value != null) {
+            value = value.replaceAll("\"", "\"\"");
+            value = value.replaceAll("'", "\\\'");
+            return value;
+        }else{
+            return "";
+        }
+    }
 }
