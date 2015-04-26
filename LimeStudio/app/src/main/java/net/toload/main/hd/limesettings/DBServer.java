@@ -20,6 +20,19 @@
 
 package net.toload.main.hd.limesettings;
 
+import android.content.Context;
+import android.content.Intent;
+import android.os.RemoteException;
+import android.util.Log;
+
+import net.toload.main.hd.MainActivity;
+import net.toload.main.hd.R;
+import net.toload.main.hd.global.KeyboardObj;
+import net.toload.main.hd.global.LIME;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
+import net.toload.main.hd.limedb.LimeDB;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -32,20 +45,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
-import java.util.zip.*;
-
-import net.toload.main.hd.LIMEMenu;
-import net.toload.main.hd.R;
-import net.toload.main.hd.global.KeyboardObj;
-import net.toload.main.hd.global.LIME;
-import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.limedb.LimeDB;
-
-import android.content.Context;
-import android.content.Intent;
-import android.os.RemoteException;
-import android.util.Log;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 //Jeremy '12,5,1 renamed from DBServer and change from service to ordinary class.
 public class  DBServer {
@@ -1166,7 +1168,7 @@ public class  DBServer {
 
 		Intent i = null;
 		if(intent == intentLIMEMenu)
-			i = new Intent(ctx, LIMEMenu.class);
+			i = new Intent(ctx, MainActivity.class);
 		else if(intent == intentLIMEMappingLoading)
 			i = new Intent(ctx, LIMEMappingLoading.class);
 		else if (intent == intentLIMEInitial)

@@ -20,9 +20,6 @@
 
 package net.toload.main.hd.limesettings;
 
-import net.toload.main.hd.LIMEMenu;
-import net.toload.main.hd.R;
-import net.toload.main.hd.global.LIMEUtilities;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -38,6 +35,10 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import net.toload.main.hd.MainActivity;
+import net.toload.main.hd.R;
+import net.toload.main.hd.global.LIMEUtilities;
 
 /**
  * 
@@ -214,7 +215,7 @@ public class LIMEMappingLoading extends Activity {
 		
 		
 		LIMEUtilities.showNotification(
-				this, true, R.drawable.icon, this.getText(R.string.ime_setting), message, new Intent(this, LIMEMenu.class));
+				this, true, R.drawable.icon, this.getText(R.string.ime_setting), message, new Intent(this, MainActivity.class));
 		/*
 		NotificationManager mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
 		Notification.Builder mNotificationBuilder = new Notification.Builder(this);
