@@ -10,7 +10,7 @@ import android.view.MenuItem;
 
 import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Im;
-import net.toload.main.hd.ui.AddImFragment;
+import net.toload.main.hd.ui.SetupImFragment;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ public class MainActivity extends ActionBarActivity
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
     private NavigationDrawerFragment mNavigationDrawerFragment;
-    private AddImFragment mAddImFragment;
+    private SetupImFragment mAddImFragment;
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -77,7 +77,7 @@ public class MainActivity extends ActionBarActivity
         FragmentManager fragmentManager = getSupportFragmentManager();
         if(position == 0){
             fragmentManager.beginTransaction()
-                    .replace(R.id.container, AddImFragment.newInstance(position + 1))
+                    .replace(R.id.container, SetupImFragment.newInstance(position + 1))
                     .commit();
         }else{
             initialImList();

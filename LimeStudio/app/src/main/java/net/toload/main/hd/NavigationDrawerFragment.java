@@ -116,6 +116,7 @@ public class NavigationDrawerFragment extends Fragment {
             }
         });
 
+
         // Load Menu Item
         try {
             datasource.open();

@@ -10,6 +10,10 @@
     <string name="insert_error">無法新增記錄，請檢查參數</string>
     <string name="update_error">無法更新記錄，請檢查參數</string>
 
+    <string name="global_remove">移除</string>
+    <string name="global_update">更新</string>
+    <string name="global_add">新增</string>
+
     <string name="dialog_confirm">確認</string>
     <string name="dialog_cancel">取消</string>
     <string name="dialog_close">關閉</string>
@@ -17,21 +21,26 @@
     <string name="action_adfree">移除廣告</string>
     <string name="action_help">使用說明</string>
     <string name="action_preference">喜好設定</string>
-    <string name="add_im_backup_dropbox">Dropbox 備份</string>
-    <string name="add_im_backup_google">Google 備份</string>
-    <string name="add_im_backup_local">本地備份</string>
-    <string name="add_im_database">備份/還原資料庫</string>
-    <string name="add_im_database_description">備份完整資料庫至本地/雲端空間，或者由本地/雲端空間還原完整資料庫檔案</string>
-    <string name="add_im_download">下載輸入法</string>
-    <string name="add_im_download_description">下載並匯入系統提供的輸入法，這一個操作需要連線網際網路，請啟用相關設定</string>
-    <string name="add_im_import">新增輸入法</string>
-    <string name="add_im_import_description">請選擇要匯入的檔案，系統支援標準 .CIN 格式、LIME 簡易字根表及 .LIME 輸入法備份檔</string>
-    <string name="add_im_import_standard">匯入自定字根表</string>
-    <string name="add_im_import_package">匯入 .LIME 備份</string>
-    <string name="add_im_import_related">匯入關聯字庫</string>
-    <string name="add_im_restore_dropbox">Dropbox 還原</string>
-    <string name="add_im_restore_google">Google 還原</string>
-    <string name="add_im_restore_local">本地還原</string>
+
+    <string name="setup_im_backup_dropbox">Dropbox 備份</string>
+    <string name="setup_im_backup_google">Google 備份</string>
+    <string name="setup_im_backup_local">本地備份</string>
+    <string name="setup_im_database">備份/還原資料庫</string>
+    <string name="setup_im_database_description">備份完整資料庫至本地/雲端空間，或者由本地/雲端空間還原完整資料庫檔案</string>
+    <string name="setup_im_download">下載輸入法</string>
+    <string name="setup_im_download_description">下載並匯入系統提供的輸入法，這一個操作需要連線網際網路，請啟用相關設定</string>
+    <string name="setup_im_import">新增輸入法</string>
+    <string name="setup_im_import_description">請選擇要匯入的檔案，系統支援標準 .CIN 格式、LIME 簡易字根表及 .LIME 輸入法備份檔</string>
+    <string name="setup_im_import_standard">匯入自定字根表</string>
+    <string name="setup_im_import_reset">移除自定字根表</string>
+    <string name="setup_im_import_related">匯入關聯字庫</string>
+    <string name="setup_im_restore_dropbox">Dropbox 還原</string>
+    <string name="setup_im_restore_google">Google 還原</string>
+    <string name="setup_im_restore_local">本地還原</string>
+
+    <string name="setup_im_load_standard">匯入自定字根表</string>
+    <string name="setup_im_load_reset">移除自定字根表</string>
+    
     <string name="default_menu_initial">設定輸入法</string>
 
     <string name="im_array">行列</string>

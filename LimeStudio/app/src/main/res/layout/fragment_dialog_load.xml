@@ -3,6 +3,7 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -16,6 +17,11 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/manage_word_word"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -23,14 +29,30 @@
                 android:text="@string/manage_word_word"
                 android:textAppearance="?android:attr/textAppearanceMedium" />
 
-            <EditText
-                android:layout_width="match_parent"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/edtManageImWordWord"
-                android:layout_weight="1"
-                android:minLines="3"
-                android:gravity="top"
-                android:textSize="16pt" />
+                android:text="@string/manage_word_word"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="New Button"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="New Button"
+                    android:layout_weight="1" />
+
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -38,29 +60,25 @@
                 android:text="@string/manage_word_code"
                 android:textAppearance="?android:attr/textAppearanceMedium"/>
 
-            <EditText
+            <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/edtManageImWordCode"
-                android:layout_weight="1"
-                android:textSize="16pt"
-                android:textIsSelectable="false" />
-
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/manage_word_code3r"
-                android:textAppearance="?android:attr/textAppearanceMedium"/>
-
-            <EditText
+                android:id="@+id/button1"
+                android:enabled="false" />
+            <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/edtManageImWordCode3r"
-                android:layout_weight="1"
-                android:textSize="16pt" />
+                android:id="@+id/button2"
+                android:enabled="false" />
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/button3"
+                android:enabled="false" />
+
 
         </LinearLayout>
+
     </ScrollView>
 
     <LinearLayout
@@ -73,20 +91,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/manage_im_cancel"
-            android:id="@+id/btnManageImWordCancel"
+            android:id="@+id/btnSetupImportCancel"
             android:layout_weight="1" />
-        <Button
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="@string/manage_im_remove"
-            android:id="@+id/btnManageImWordRemove"
-            android:layout_weight="1" />
-        <Button
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="@string/manage_im_update"
-            android:id="@+id/btnManageImWordUpdate"
-            android:layout_weight="1" />
+
     </LinearLayout>
 
 </LinearLayout>

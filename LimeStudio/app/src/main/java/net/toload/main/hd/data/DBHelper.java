@@ -30,7 +30,7 @@ public class DBHelper {
 		File destdir = new File(Lime.DATABASE_FOLDER + File.separator);
 			 destdir.mkdirs();
 			 
-		File destpath = new File(Lime.DATABASE_FOLDER + File.separator + Lime.DB_NAME);
+		File destpath = new File(Lime.DATABASE_FOLDER + File.separator + Lime.DATABASE_NAME);
 		
 		if (!destpath.exists()) {
 			
