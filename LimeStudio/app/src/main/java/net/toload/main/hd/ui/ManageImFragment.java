@@ -344,6 +344,8 @@ public class ManageImFragment extends Fragment {
     }
 
     public void removeWord(int id){
+
+        // Remove from the temp list
         for(int i = 0 ; i < this.wordlist.size() ; i++){
            if(id== this.wordlist.get(i).getId()){
                this.wordlist.remove(i);
@@ -351,6 +353,7 @@ public class ManageImFragment extends Fragment {
            }
         }
 
+        // Remove from the database
         String removesql = "DELETE FROM " + this.code + " WHERE " + Lime.DB_COLUMN_ID + " = '" + id + "'";
 
         try {
@@ -365,6 +368,7 @@ public class ManageImFragment extends Fragment {
 
     public void addWord(String code, String code3r, String word) {
 
+        // Add to database
         Word obj = new Word();
              obj.setCode(code);
              obj.setCode3r(code3r);
@@ -382,11 +386,15 @@ public class ManageImFragment extends Fragment {
             e.printStackTrace();
         }
 
-        searchword(prequery);
+        // Add to temp list
+        page = 0;
+        this.wordlist.add(0,obj);
+        updateGridView(this.wordlist);
     }
 
     public void updateWord(int id, String code, String code3r, String word) {
 
+        // remove from temp list
         for(int i = 0 ; i < this.wordlist.size() ; i++){
             if(id== this.wordlist.get(i).getId()){
                 Word check = this.wordlist.get(i);
@@ -399,6 +407,7 @@ public class ManageImFragment extends Fragment {
             }
         }
 
+        // Update record in the database
         String updatesql = "UPDATE " + this.code + " SET ";
                 updatesql += Lime.DB_COLUMN_CODE + " = \"" + Lime.formatSqlValue(code) + "\", ";
                 if(!code3r.isEmpty()){

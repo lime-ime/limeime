@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -24,6 +25,9 @@ import android.widget.ListView;
 
 import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Im;
+import net.toload.main.hd.limesettings.LIMEPreference;
+import net.toload.main.hd.limesettings.LIMEPreferenceHC;
+import net.toload.main.hd.ui.HelpDialog;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -277,8 +281,18 @@ public class NavigationDrawerFragment extends Fragment {
         }
 
         if(item.getItemId() == R.id.action_preference){
-            Intent setting = new Intent(this.getActivity(), SettingsActivity.class);
-            startActivity(setting);
+            if(android.os.Build.VERSION.SDK_INT < 11){  //Jeremy '12,4,30 Add for deprecated preferenceActivity after API 11 (HC)
+                Intent setting = new Intent(this.getActivity(), LIMEPreference.class);
+                startActivity(setting);
+            }else{
+                Intent setting = new Intent(this.getActivity(), LIMEPreferenceHC.class);
+                startActivity(setting);
+
+            }
+        }else if(item.getItemId() == R.id.action_help){
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
+            HelpDialog dialog = HelpDialog.newInstance();
+                         dialog.show(ft, "helpdialog");
         }
 
         /**
