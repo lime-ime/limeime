@@ -74,15 +74,17 @@ public class ManageRelatedAdapter extends BaseAdapter {
 					hwlist.get(position).setCheck(arg1);
 				}});*/
             String pword = r.getPword();
-            String cword = r.getPword();
+            String cword = r.getCword();
+            String text = pword+" " + cword;
+
             int freq = r.getScore();
 
-            /*if(wordtext.length() > 4){
-                wordtext = wordtext.substring(0,3) + "...";
-            }*/
+            if(text.length() > 6){
+                text = text.substring(0,6) + "...";
+            }
 
-            holder.txtWord.setText(pword+" " + cword);
-            holder.txtFreq.setText(freq);
+            holder.txtWord.setText(text);
+            holder.txtFreq.setText(freq+"");
         }
 
         return convertView;

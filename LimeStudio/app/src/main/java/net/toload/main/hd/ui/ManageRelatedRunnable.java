@@ -3,7 +3,7 @@ package net.toload.main.hd.ui;
 import android.app.Activity;
 
 import net.toload.main.hd.data.DataSource;
-import net.toload.main.hd.data.Word;
+import net.toload.main.hd.data.Related;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -15,39 +15,35 @@ import java.util.List;
 public class ManageRelatedRunnable implements Runnable{
 
 
-    private ManageImHandler handler;
+    private ManageRelatedHandler handler;
     private Activity activity;
     private DataSource datasource;
-    private String table;
     private String query;
-    private boolean searchRoot;
 
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
     }
 
-    public ManageRelatedRunnable(ManageImHandler handler, Activity activity, String table, String query, boolean searchRoot) {
+    public ManageRelatedRunnable(ManageRelatedHandler handler, Activity activity, String query) {
         this.handler = handler;
         this.activity = activity;
-        this.table = table;
         this.query = query;
-        this.searchRoot = searchRoot;
 
         datasource = new DataSource(this.activity);
     }
 
     public void run() {
         handler.showProgress();
-        handler.updateGridView(loadImWord(table, query));
+        handler.updateGridView(loadRelated(query));
     }
 
-    private List<Word> loadImWord(String table, String query){
-        List<Word> results = new ArrayList<>();
+    private List<Related> loadRelated(String pword){
+        List<Related> results = new ArrayList<>();
 
         try {
             datasource.open();
-            results = datasource.loadWord(table, query, this.searchRoot);
+            results = datasource.loadRelated(pword);
             datasource.close();
         } catch (SQLException e) {
             e.printStackTrace();

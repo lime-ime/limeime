@@ -10,20 +10,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.DataSource;
-import net.toload.main.hd.data.Im;
-import net.toload.main.hd.data.Keyboard;
-import net.toload.main.hd.data.Word;
+import net.toload.main.hd.data.Related;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -40,43 +36,34 @@ import java.util.List;
  */
 public class ManageRelatedFragment extends Fragment {
 
-
     /**
      * The fragment argument representing the section number for this
      * fragment.
      */
     private static final String ARG_SECTION_NUMBER = "section_number";
-    private static final String ARG_SECTION_CODE = "section_code";
 
-    private GridView gridManageIm;
+    private GridView gridManageRelated;
 
-    private ToggleButton toggleManageIm;
+    private Button btnManageRelatedAdd;
+    private Button btnManageRelatedSearch;
+    private Button btnManageRelatedPrevious;
+    private Button btnManageRelatedNext;
 
-    private Button btnManageImAdd;
-    private Button btnManageImKeyboard;
-    private Button btnManageImSearch;
-    private Button btnManageImPrevious;
-    private Button btnManageImNext;
-
-    private EditText edtManageImSearch;
+    private EditText edtManageRelatedSearch;
     private TextView txtNavigationInfo;
 
-    private List<Im> imkeyboardlist;
-    private List<Word> wordlist;
-    private List<Keyboard> keyboardlist;
+    private List<Related> relatedlist;
 
     private int page = 0;
-    private boolean searchroot = true;
     private boolean searchreset = false;
 
     private String prequery = "";
 
-    private String code;
     private Activity activity;
-    private ManageImHandler handler;
-    private ManageImAdapter adapter;
+    private ManageRelatedHandler handler;
+    private ManageRelatedAdapter adapter;
 
-    private Thread manageimthread;
+    private Thread ManageRelatedthread;
 
     private DataSource datasource;
 
@@ -86,11 +73,10 @@ public class ManageRelatedFragment extends Fragment {
      * Returns a new instance of this fragment for the given section
      * number.
      */
-    public static ManageRelatedFragment newInstance(int sectionNumber, String code) {
+    public static ManageRelatedFragment newInstance(int sectionNumber) {
         ManageRelatedFragment fragment = new ManageRelatedFragment();
         Bundle args = new Bundle();
                 args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-                args.putString(ARG_SECTION_CODE, code);
         fragment.setArguments(args);
         return fragment;
     }
@@ -101,38 +87,28 @@ public class ManageRelatedFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_manage_im, container, false);
+        View root = inflater.inflate(R.layout.fragment_manage_related, container, false);
 
         this.activity = this.getActivity();
         this.datasource = new DataSource(this.activity);
-        this.handler = new ManageImHandler(this);
-
-        // initial imlist
-        imkeyboardlist = new ArrayList<Im>();
-         try {
-               datasource.open();
-               imkeyboardlist = datasource.getIm(null, Lime.IM_TYPE_KEYBOARD);
-               datasource.close();
-         } catch (SQLException e) {
-              e.printStackTrace();
-         }
+        this.handler = new ManageRelatedHandler(this);
 
         this.progress = new ProgressDialog(this.activity);
         this.progress.setCancelable(false);
-        this.progress.setMessage(getResources().getString(R.string.manage_im_loading));
+        this.progress.setMessage(getResources().getString(R.string.manage_related_loading));
 
-        this.gridManageIm = (GridView) root.findViewById(R.id.gridManageIm);
-        this.gridManageIm.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        this.gridManageRelated = (GridView) root.findViewById(R.id.gridManageRelated);
+        this.gridManageRelated.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 try {
                     datasource.open();
-                    Word w = datasource.getWord(code, id);
+                    Related w = datasource.getRelated(id);
                     datasource.close();
                     FragmentTransaction ft = getFragmentManager().beginTransaction();
 
                     // Create and show the dialog.
-                    ManageImEditDialog dialog = ManageImEditDialog.newInstance();
+                    ManageRelatedEditDialog dialog = ManageRelatedEditDialog.newInstance();
                     dialog.setHandler(handler, w);
                     dialog.show(ft, "editdialog");
                 } catch (SQLException e) {
@@ -141,118 +117,86 @@ public class ManageRelatedFragment extends Fragment {
             }
         });
 
-        this.btnManageImAdd = (Button) root.findViewById(R.id.btnManageImAdd);
-        this.btnManageImAdd.setOnClickListener(new View.OnClickListener() {
+        this.btnManageRelatedAdd = (Button) root.findViewById(R.id.btnManageRelatedAdd);
+        this.btnManageRelatedAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 FragmentTransaction ft = getFragmentManager().beginTransaction();
-                ManageImAddDialog dialog = ManageImAddDialog.newInstance();
-                                    dialog.setHandler(handler);
+                ManageRelatedAddDialog dialog = ManageRelatedAddDialog.newInstance();
+                dialog.setHandler(handler);
                 dialog.show(ft, "adddialog");
             }
         });
 
-        this.btnManageImKeyboard = (Button) root.findViewById(R.id.btnManageImKeyboard);
-        this.btnManageImKeyboard.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                ManageImKeyboardDialog dialog = ManageImKeyboardDialog.newInstance();
-                                       dialog.setHandler(handler, code);
-                dialog.show(ft, "keyboarddialog");
-            }
-        });
-
-        this.toggleManageIm = (ToggleButton) root.findViewById(R.id.toggleManageIm);
-        this.toggleManageIm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    searchroot = false;
-                } else {
-                    searchroot = true;
-                }
-                prequery = "";
-                edtManageImSearch.setText("");
-            }
-        });
-
-        this.btnManageImNext = (Button) root.findViewById(R.id.btnManageImNext);
-        this.btnManageImNext.setEnabled(false);
-        this.btnManageImNext.setOnClickListener(new View.OnClickListener() {
+        this.btnManageRelatedNext = (Button) root.findViewById(R.id.btnManageRelatedNext);
+        this.btnManageRelatedNext.setEnabled(false);
+        this.btnManageRelatedNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 int checkrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
-                if (checkrecord < wordlist.size()) {
+                if (checkrecord < relatedlist.size()) {
                     page++;
                 }
-                updateGridView(wordlist);
+                updateGridView(relatedlist);
             }
         });
-        this.btnManageImPrevious = (Button) root.findViewById(R.id.btnManageImPrevious);
-        this.btnManageImPrevious.setEnabled(false);
-        this.btnManageImPrevious.setOnClickListener(new View.OnClickListener() {
+        this.btnManageRelatedPrevious = (Button) root.findViewById(R.id.btnManageRelatedPrevious);
+        this.btnManageRelatedPrevious.setEnabled(false);
+        this.btnManageRelatedPrevious.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (page > 0) {
                     page--;
                 }
-                updateGridView(wordlist);
+                updateGridView(relatedlist);
             }
         });
 
-        this.edtManageImSearch = (EditText) root.findViewById(R.id.edtManageImSearch);
-        this.edtManageImSearch.setOnClickListener(new View.OnClickListener() {
+        this.edtManageRelatedSearch = (EditText) root.findViewById(R.id.edtManageRelatedSearch);
+        this.edtManageRelatedSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 searchreset = false;
-                btnManageImSearch.setText(getResources().getText(R.string.manage_im_search));
+                btnManageRelatedSearch.setText(getResources().getText(R.string.manage_related_search));
             }
         });
 
-        this.btnManageImSearch = (Button) root.findViewById(R.id.btnManageImSearch);
-        this.btnManageImSearch.setOnClickListener(new View.OnClickListener() {
+        this.btnManageRelatedSearch = (Button) root.findViewById(R.id.btnManageRelatedSearch);
+        this.btnManageRelatedSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!searchreset) {
-                    String query = edtManageImSearch.getText().toString();
-                    if (query != null && query.length() > 0 && (prequery == null || !prequery.equals(query))) {
+                    String query = edtManageRelatedSearch.getText().toString();
+                    if (query != null && query.length() > 0 &&
+                            ( prequery == null || !prequery.equals(query) || !searchreset) ) {
                         query = query.trim();
-                        searchword(query);
+                        searchrelated(query);
                     }
                     searchreset = true;
-                    btnManageImSearch.setText(getResources().getText(R.string.manage_im_reset));
+                    btnManageRelatedSearch.setText(getResources().getText(R.string.manage_related_reset));
                 } else {
-                    searchword(null);
-                    edtManageImSearch.setText("");
+                    searchrelated(null);
+                    edtManageRelatedSearch.setText("");
                     searchreset = false;
-                    btnManageImSearch.setText(getResources().getText(R.string.manage_im_search));
+                    btnManageRelatedSearch.setText(getResources().getText(R.string.manage_related_search));
                 }
             }
         });
 
         this.txtNavigationInfo = (TextView) root.findViewById(R.id.txtNavigationInfo);
 
-        // UpdateKeyboard display
-        for(Im obj : imkeyboardlist){
-            if(obj.getCode().equals(code)){
-                btnManageImKeyboard.setText(obj.getDesc());
-                break;
-            }
-        }
-
-        searchword(null);
+        searchrelated(null);
 
         return root;
     }
 
-    public void searchword(String curquery){
-        if(manageimthread != null && manageimthread.isAlive()){
-            handler.removeCallbacks(manageimthread);
+    public void searchrelated(String curquery){
+        if(ManageRelatedthread != null && ManageRelatedthread.isAlive()){
+            handler.removeCallbacks(ManageRelatedthread);
         }
         page = 0;
-        manageimthread = new Thread(new ManageImRunnable(handler, activity, code, curquery, searchroot));
-        manageimthread.start();
+        ManageRelatedthread = new Thread(new ManageRelatedRunnable(handler, activity, curquery));
+        ManageRelatedthread.start();
         prequery = curquery;
     }
 
@@ -261,20 +205,18 @@ public class ManageRelatedFragment extends Fragment {
         super.onAttach(activity);
         ((MainActivity) activity).onSectionAttached(
                 getArguments().getInt(ARG_SECTION_NUMBER));
-
-        this.code = getArguments().getString(ARG_SECTION_CODE);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if(this.manageimthread != null){
-            this.handler.removeCallbacks(manageimthread);
+        if(this.ManageRelatedthread != null){
+            this.handler.removeCallbacks(ManageRelatedthread);
         }
         if(this.progress.isShowing()){
             this.progress.cancel();
         }
-        this.wordlist = null;
+        this.relatedlist = null;
     }
 
     public void showProgress(){
@@ -289,34 +231,34 @@ public class ManageRelatedFragment extends Fragment {
         }
     }
 
-    public void updateGridView(List<Word> wordlist){
+    public void updateGridView(List<Related> relatedlist){
 
-        this.wordlist = wordlist;
-        List<Word> templist = new ArrayList<Word>();
+        this.relatedlist = relatedlist;
+        List<Related> templist = new ArrayList<Related>();
 
         int startrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * page;
         int endrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
 
         if(page > 0){
-            this.btnManageImPrevious.setEnabled(true);
+            this.btnManageRelatedPrevious.setEnabled(true);
         }else{
-            this.btnManageImPrevious.setEnabled(false);
+            this.btnManageRelatedPrevious.setEnabled(false);
         }
 
-        if(endrecord <= this.wordlist.size()){
-            this.btnManageImNext.setEnabled(true);
+        if(endrecord <= this.relatedlist.size()){
+            this.btnManageRelatedNext.setEnabled(true);
         }else{
-            this.btnManageImNext.setEnabled(false);
+            this.btnManageRelatedNext.setEnabled(false);
         }
 
-        if(this.wordlist.size() > 0){
+        if(this.relatedlist.size() > 0){
 
             for(int i = startrecord; i < endrecord ; i++){
-                if(i >= this.wordlist.size()){
-                    endrecord = this.wordlist.size();
+                if(i >= this.relatedlist.size()){
+                    endrecord = this.relatedlist.size();
                     break;
                 }
-                Word w = this.wordlist.get(i);
+                Related w = this.relatedlist.get(i);
                 templist.add(w);
             }
         }else{
@@ -324,18 +266,19 @@ public class ManageRelatedFragment extends Fragment {
         }
 
         if(this.adapter == null){
-            this.adapter = new ManageImAdapter(this.activity, templist);
-            this.gridManageIm.setAdapter(this.adapter);
+            this.adapter = new ManageRelatedAdapter(this.activity, templist);
+            this.gridManageRelated.setAdapter(this.adapter);
         }else{
             this.adapter.setList(templist);
             this.adapter.notifyDataSetChanged();
+            this.gridManageRelated.setSelection(0);
         }
 
         String nav = "0";
 
-        if(this.wordlist.size() > 0){
+        if(this.relatedlist.size() > 0){
             nav = Lime.format(startrecord + 1) + "-" + Lime.format(endrecord);
-            nav += " of " + Lime.format(this.wordlist.size());
+            nav += " of " + Lime.format(this.relatedlist.size());
         }
 
         this.txtNavigationInfo.setText(nav);
@@ -343,18 +286,18 @@ public class ManageRelatedFragment extends Fragment {
 
     }
 
-    public void removeWord(int id){
+    public void removeRelated(int id){
 
         // Remove from the temp list
-        for(int i = 0 ; i < this.wordlist.size() ; i++){
-           if(id== this.wordlist.get(i).getId()){
-               this.wordlist.remove(i);
+        for(int i = 0 ; i < this.relatedlist.size() ; i++){
+           if(id== this.relatedlist.get(i).getId()){
+               this.relatedlist.remove(i);
                break;
            }
         }
 
         // Remove from the database
-        String removesql = "DELETE FROM " + this.code + " WHERE " + Lime.DB_COLUMN_ID + " = '" + id + "'";
+        String removesql = "DELETE FROM " + Lime.DB_RELATED + " WHERE " + Lime.DB_COLUMN_ID + " = '" + id + "'";
 
         try {
             datasource.open();
@@ -363,20 +306,18 @@ public class ManageRelatedFragment extends Fragment {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        updateGridView(this.wordlist);
+        updateGridView(this.relatedlist);
     }
 
-    public void addWord(String code, String code3r, String word) {
+    public void addRelated(String pword, String cword, int score) {
 
         // Add to database
-        Word obj = new Word();
-             obj.setCode(code);
-             obj.setCode3r(code3r);
-             obj.setWord(word);
-             obj.setBasescore(0);
-             obj.setScore(1);
+        Related obj = new Related();
+             obj.setPword(pword);
+             obj.setCword(cword);
+             obj.setScore(score);
 
-        String insertsql = Word.getInsertQuery(this.code, obj);
+        String insertsql = Related.getInsertQuery(obj);
 
         try {
             datasource.open();
@@ -388,33 +329,31 @@ public class ManageRelatedFragment extends Fragment {
 
         // Add to temp list
         page = 0;
-        this.wordlist.add(0,obj);
-        updateGridView(this.wordlist);
+        this.relatedlist.add(0,obj);
+        updateGridView(this.relatedlist);
     }
 
-    public void updateWord(int id, String code, String code3r, String word) {
+    public void updateRelated(int id, String pword, String cword, int score) {
 
         // remove from temp list
-        for(int i = 0 ; i < this.wordlist.size() ; i++){
-            if(id== this.wordlist.get(i).getId()){
-                Word check = this.wordlist.get(i);
-                     check.setCode(code);
-                     check.setCode3r(code3r);
-                     check.setWord(word);
-                this.wordlist.remove(i);
-                this.wordlist.add(i, check);
+        for(int i = 0 ; i < this.relatedlist.size() ; i++){
+            if(id== this.relatedlist.get(i).getId()){
+                Related check = this.relatedlist.get(i);
+                     check.setPword(pword);
+                     check.setCword(cword);
+                     check.setScore(score);
+                this.relatedlist.remove(i);
+                this.relatedlist.add(i, check);
                 break;
             }
         }
 
         // Update record in the database
-        String updatesql = "UPDATE " + this.code + " SET ";
-                updatesql += Lime.DB_COLUMN_CODE + " = \"" + Lime.formatSqlValue(code) + "\", ";
-                if(!code3r.isEmpty()){
-                    updatesql += Lime.DB_COLUMN_CODE3R + " = \"" + Lime.formatSqlValue(code3r) + "\", ";
-                }
-                updatesql += Lime.DB_COLUMN_WORD + " = \"" + Lime.formatSqlValue(word) + "\" ";
-                updatesql += " WHERE " + Lime.DB_COLUMN_ID + " = \"" + id + "\"";
+        String updatesql = "UPDATE " + Lime.DB_RELATED + " SET ";
+                updatesql += Lime.DB_RELATED_COLUMN_PWORD + " = \"" + Lime.formatSqlValue(pword) + "\", ";
+                updatesql += Lime.DB_RELATED_COLUMN_CWORD + " = \"" + Lime.formatSqlValue(cword) + "\", ";
+                updatesql += Lime.DB_RELATED_COLUMN_SCORE + " = \"" + score + "\" ";
+                updatesql += " WHERE " + Lime.DB_RELATED_COLUMN_ID + " = \"" + id + "\"";
 
         try {
             datasource.open();
@@ -423,32 +362,7 @@ public class ManageRelatedFragment extends Fragment {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        updateGridView(this.wordlist);
+        updateGridView(this.relatedlist);
     }
 
-    public void updateKeyboard(String keyboard) {
-
-        if(keyboardlist == null){
-            try {
-                datasource.open();
-                keyboardlist = datasource.getKeyboard();
-                datasource.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-        for(Keyboard k: keyboardlist){
-            if(k.getCode().equals(keyboard)){
-                try {
-                    datasource.open();
-                    datasource.setImKeyboard(code, k);
-                    datasource.close();
-                    btnManageImKeyboard.setText(k.getDesc());
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-    }
 }

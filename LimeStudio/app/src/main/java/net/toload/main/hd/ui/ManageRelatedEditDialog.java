@@ -13,27 +13,24 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.Word;
+import net.toload.main.hd.data.Related;
 
 public class ManageRelatedEditDialog extends DialogFragment {
 
 	Activity activity;
 	View view;
-
-	//Button btnQuizExitConfirm;
-	//Button btnQuizExitCancel;
 	
-	ManageImHandler handler;
+	ManageRelatedHandler handler;
 
-	Word word;
+	Related related;
 
-	Button btnManageImWordCancel;
-	Button btnManageImWordRemove;
-	Button btnManageImWordUpdate;
+	Button btnManageRelatedCancel;
+	Button btnManageRelatedRemove;
+	Button btnManageRelatedUpdate;
 
-	EditText edtManageImWordCode;
-	EditText edtManageImWordCode3r;
-	EditText edtManageImWordWord;
+	EditText edtManageRelatedPword;
+	EditText edtManageRelatedCword;
+	EditText edtManageRelatedScore;
 
 	@Override
 	public void onDestroy() {
@@ -46,8 +43,8 @@ public class ManageRelatedEditDialog extends DialogFragment {
 		return btd;
 	}
 	
-	public void setHandler(ManageImHandler handler, Word word){
-		this.word = word;
+	public void setHandler(ManageRelatedHandler handler, Related related){
+		this.related = related;
 		this.handler = handler;
 	}
 
@@ -73,32 +70,31 @@ public class ManageRelatedEditDialog extends DialogFragment {
 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 
-		getDialog().getWindow().setTitle(getResources().getString(R.string.manage_word_dialog_edit));
+		getDialog().getWindow().setTitle(getResources().getString(R.string.manage_related_dialog_edit));
 
 		activity = getActivity();
-		view = inflater.inflate(R.layout.fragment_dialog_edit, container, false);
+		view = inflater.inflate(R.layout.fragment_dialog_related_edit, container, false);
 
-		btnManageImWordCancel = (Button) view.findViewById(R.id.btnManageImWordCancel);
-		btnManageImWordCancel.setOnClickListener(new View.OnClickListener() {
+		btnManageRelatedCancel = (Button) view.findViewById(R.id.btnManageRelatedCancel);
+		btnManageRelatedCancel.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				cancelDialog();
 			}
 		});
 
-		btnManageImWordRemove = (Button) view.findViewById(R.id.btnManageImWordRemove);
-		btnManageImWordRemove.setOnClickListener(new View.OnClickListener() {
+		btnManageRelatedRemove = (Button) view.findViewById(R.id.btnManageRelatedRemove);
+		btnManageRelatedRemove.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 
 				AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
-				alertDialog.setTitle(activity.getResources().getString(R.string.manage_word_dialog_delete));
-				alertDialog.setMessage(activity.getResources().getString(R.string.manage_word_dialog_delete_message));
-				//alertDialog.setIcon(R.drawable.);
+				alertDialog.setTitle(activity.getResources().getString(R.string.manage_related_dialog_delete));
+				alertDialog.setMessage(activity.getResources().getString(R.string.manage_related_dialog_delete_message));
 				alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int which) {
-								handler.removeWord(word.getId());
+								handler.removeRelated(related.getId());
 								dialog.dismiss();
 								cancelDialog();
 							}
@@ -113,28 +109,29 @@ public class ManageRelatedEditDialog extends DialogFragment {
 			}
 		});
 
-		btnManageImWordUpdate = (Button) view.findViewById(R.id.btnManageImWordUpdate);
-		btnManageImWordUpdate.setOnClickListener(new View.OnClickListener() {
+		btnManageRelatedUpdate = (Button) view.findViewById(R.id.btnManageRelatedUpdate);
+		btnManageRelatedUpdate.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
-				alertDialog.setTitle(activity.getResources().getString(R.string.manage_word_dialog_edit));
-				alertDialog.setMessage(activity.getResources().getString(R.string.manage_word_dialog_message));
+				alertDialog.setTitle(activity.getResources().getString(R.string.manage_related_dialog_edit));
+				alertDialog.setMessage(activity.getResources().getString(R.string.manage_related_dialog_message));
 				//alertDialog.setIcon(R.drawable.);
 				alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int which) {
-								String code = edtManageImWordCode.getText().toString();
-								String code3r = edtManageImWordCode3r.getText().toString();
-								String text = edtManageImWordWord.getText().toString();
-								if(!code.isEmpty() && !text.isEmpty() && (
-										!word.getCode().equalsIgnoreCase(code) ||
-												(word.getCode3r() != null && !word.getCode().equalsIgnoreCase(code3r)) ||
-										!word.getWord().equalsIgnoreCase(text) ) ) {
-									if(!code3r.isEmpty()){
-										code3r = code3r.trim();
-									}
-									handler.updateWord(word.getId(), code, code3r, text);
+								String pword = edtManageRelatedPword.getText().toString();
+								String cword = edtManageRelatedCword.getText().toString();
+								String score = edtManageRelatedScore.getText().toString();
+								if(!pword.isEmpty() && !cword.isEmpty() ) {
+									pword = pword.trim();
+									cword = cword.trim();
+									int s = 0;
+									try{
+										s = Integer.parseInt(score);
+									}catch(Exception e){}
+
+									handler.updateRelated(related.getId(), pword, cword, s);
 									dialog.dismiss();
 									cancelDialog();
 								}else{
@@ -152,28 +149,13 @@ public class ManageRelatedEditDialog extends DialogFragment {
 			}
 		});
 
-		edtManageImWordCode = (EditText) view.findViewById(R.id.edtManageImWordCode);
-		edtManageImWordCode3r = (EditText) view.findViewById(R.id.edtManageImWordCode3r);
-		edtManageImWordWord = (EditText) view.findViewById(R.id.edtManageImWordWord);
+		edtManageRelatedPword = (EditText) view.findViewById(R.id.edtManageRelatedPword);
+		edtManageRelatedCword = (EditText) view.findViewById(R.id.edtManageRelatedCword);
+		edtManageRelatedScore = (EditText) view.findViewById(R.id.edtManageRelatedScore);
 
-		edtManageImWordCode.setText(word.getCode());
-		edtManageImWordCode3r.setText(word.getCode3r());
-		edtManageImWordWord.setText(word.getWord());
-
-		//getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-		/*btnQuizExitConfirm = (Button) view.findViewById(R.id.btnQuizExitConfirm);
-		btnQuizExitConfirm.setOnClickListener(new OnClickListener(){
-			@Override
-			public void onClick(View v) {
-				handler.enterCategoryActivity();
-			}});
-		
-		btnQuizExitCancel = (Button) view.findViewById(R.id.btnQuizExitCancel);
-		btnQuizExitCancel.setOnClickListener(new OnClickListener(){
-			@Override
-			public void onClick(View v) {
-				dismiss();
-			}});*/
+		edtManageRelatedPword.setText(related.getPword());
+		edtManageRelatedCword.setText(related.getCword());
+		edtManageRelatedScore.setText(related.getScore() + "");
 		
 		return view;
 	}

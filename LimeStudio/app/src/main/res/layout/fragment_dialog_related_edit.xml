@@ -43,6 +43,7 @@
                 android:id="@+id/edtManageRelatedCword"
                 android:layout_weight="1"
                 android:textSize="16pt"
+                android:minLines="3"
                 android:textIsSelectable="false" />
 
 
@@ -73,6 +74,12 @@
             android:layout_height="wrap_content"
             android:text="@string/manage_related_cancel"
             android:id="@+id/btnManageRelatedCancel"
+            android:layout_weight="1" />
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/manage_related_remove"
+            android:id="@+id/btnManageRelatedRemove"
             android:layout_weight="1" />
 
         <Button

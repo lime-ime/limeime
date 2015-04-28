@@ -42,6 +42,7 @@
     <string name="setup_im_load_reset">移除自定字根表</string>
     
     <string name="default_menu_initial">設定輸入法</string>
+    <string name="default_menu_related">管理關聯字庫</string>
 
     <string name="im_array">行列</string>
     <string name="im_array10">行列10</string>
@@ -84,8 +85,20 @@
     <string name="manage_related_cword">關聯文字</string>
     <string name="manage_related_score">顯示優先序</string>
     <string name="manage_related_cancel">取消</string>
-    <string name="manage_related_save">儲存</string>
     <string name="manage_related_update">更新</string>
+    <string name="manage_related_remove">移除</string>
+    <string name="manage_related_save">儲存</string>
+    <string name="manage_related_loading">讀取中 ...</string>
+    <string name="manage_related_reset">重置</string>
+
+    <string name="manage_related_dialog_edit">編輯內容</string>
+    <string name="manage_related_dialog_message">請問是否要儲存記錄並離開?</string>
+
+    <string name="manage_related_dialog_delete">刪除內容</string>
+    <string name="manage_related_dialog_delete_message">請問是否要刪除記錄並離開?</string>
+
+    <string name="manage_related_dialog_add">新增內容</string>
+    <string name="manage_related_dialog_add_message">請問是否要新增記錄並離開?</string>
 
     <string name="manage_word_code">字根</string>
     <string name="manage_word_code3r">三碼</string>

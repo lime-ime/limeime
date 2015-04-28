@@ -74,6 +74,14 @@ public class DataSource {
 		}
 	}
 
+	public void add(String addsql) {
+		if(database != null && database.isOpen()){
+			if(addsql.toLowerCase().startsWith("insert")){
+				database.execSQL(addsql);
+			}
+		}
+	}
+
     /**
      * 移除 SQL 指令的操作
      * @param removesql
@@ -85,6 +93,16 @@ public class DataSource {
 			}
 		}
 	}
+
+
+	public void update(String updatesql) {
+		if(database != null && database.isOpen()){
+			if(updatesql.toLowerCase().startsWith("update")){
+				database.execSQL(updatesql);
+			}
+		}
+	}
+
 
 	public List<Keyboard> getKeyboard(){
 		List<Keyboard> result = new ArrayList<Keyboard>();
@@ -157,8 +175,8 @@ public class DataSource {
 			}
 
 			cursor = database.query(code,
-					null, query,
-					null, null, null, order);
+										null, query,
+										null, null, null, order);
 
 			cursor.moveToFirst();
 			while(!cursor.isAfterLast()){
@@ -189,22 +207,6 @@ public class DataSource {
 		return w;
 	}
 
-	public void update(String updatesql) {
-		if(database != null && database.isOpen()){
-			if(updatesql.toLowerCase().startsWith("update")){
-				database.execSQL(updatesql);
-			}
-		}
-	}
-
-	public void add(String addsql) {
-		if(database != null && database.isOpen()){
-			if(addsql.toLowerCase().startsWith("insert")){
-				database.execSQL(addsql);
-			}
-		}
-	}
-
 	public void setImKeyboard(String code, Keyboard keyboard) {
 		if(database != null && database.isOpen()){
 
@@ -223,35 +225,30 @@ public class DataSource {
 		}
 	}
 
-	public List<Word> loadWord(String code, String query, boolean searchroot) {
-		List<Word> result = new ArrayList<Word>();
+	public List<Related> loadRelated(String pword) {
+
+		List<Related> result = new ArrayList<Related>();
+
 		if(database != null && database.isOpen()){
 			Cursor cursor = null;
-			if(query != null && query.length() >= 1){
-				if(searchroot){
-					query = Lime.DB_COLUMN_CODE + " LIKE '"+query+"%' AND ifnull("+Lime.DB_COLUMN_WORD+", '') <> ''";
-				}else{
-					query = Lime.DB_COLUMN_WORD + " LIKE '%"+query+"%' AND ifnull("+Lime.DB_COLUMN_WORD+", '') <> ''";
-				}
-			}else{
-				query = "ifnull("+Lime.DB_COLUMN_WORD+", '') <> ''";
+
+			String query = "";
+			if(pword != null && !pword.isEmpty()){
+				query = Lime.DB_RELATED_COLUMN_PWORD + " = '"+pword +
+						"' AND ";
 			}
 
-			String order = "";
+			query += "ifnull("+Lime.DB_RELATED_COLUMN_CWORD +", '') <> ''";
 
-			if(searchroot){
-				order = Lime.DB_COLUMN_CODE + " ASC";
-			}else{
-				order = Lime.DB_COLUMN_WORD + " ASC";
-			}
+			String order = Lime.DB_RELATED_COLUMN_PWORD+" asc," + Lime.DB_RELATED_COLUMN_SCORE + " desc";
 
-			cursor = database.query(code,
+			cursor = database.query(Lime.DB_RELATED,
 					null, query,
 					null, null, null, order);
 
 			cursor.moveToFirst();
 			while(!cursor.isAfterLast()){
-				Word r = Word.get(cursor);
+				Related r = Related.get(cursor);
 				result.add(r);
 				cursor.moveToNext();
 			}
@@ -265,14 +262,14 @@ public class DataSource {
 		if(database != null && database.isOpen()){
 			Cursor cursor = null;
 
-			String query = Lime.DB_COLUMN_ID + " = '"+id+"' ";
+			String query = Lime.DB_RELATED_COLUMN_ID + " = '"+id+"' ";
 
-			cursor = database.query(code,
+			cursor = database.query(Lime.DB_RELATED,
 					null, query,
 					null, null, null, null);
 
 			cursor.moveToFirst();
-			w = Word.get(cursor);
+			w = Related.get(cursor);
 			cursor.close();
 		}
 		return w;

@@ -3,7 +3,7 @@ package net.toload.main.hd.ui;
 import android.os.Handler;
 import android.os.Message;
 
-import net.toload.main.hd.data.Word;
+import net.toload.main.hd.data.Related;
 
 import java.util.List;
 
@@ -12,10 +12,10 @@ import java.util.List;
  */
 public class ManageRelatedHandler extends Handler {
 
-    private List<Word> wordlist;
-    private ManageImFragment fragment = null;
+    private List<Related> relatedlist;
+    private ManageRelatedFragment fragment = null;
 
-    public ManageRelatedHandler(ManageImFragment fragment) {
+    public ManageRelatedHandler(ManageRelatedFragment fragment) {
         this.fragment = fragment;
     }
 
@@ -25,24 +25,21 @@ public class ManageRelatedHandler extends Handler {
         if(action.equals("progress")){
             fragment.showProgress();
         }else if(action.equals("add")){
-            String code = msg.getData().getString("code");
-            String code3r = msg.getData().getString("code3r");
-            String word = msg.getData().getString("word");
-            fragment.addWord(code, code3r, word);
+            String pword = msg.getData().getString("pword");
+            String cword = msg.getData().getString("cword");
+            int score = msg.getData().getInt("score");
+            fragment.addRelated(pword, cword, score);
         }else if(action.equals("update")){
             int id = msg.getData().getInt("id");
-            String code = msg.getData().getString("code");
-            String code3r = msg.getData().getString("code3r");
-            String word = msg.getData().getString("word");
-            fragment.updateWord(id, code, code3r, word);
-        }else if(action.equals("keyboard")){
-            String keyboard = msg.getData().getString("keyboard");
-            fragment.updateKeyboard(keyboard);
+            String pword = msg.getData().getString("pword");
+            String cword = msg.getData().getString("cword");
+            int score = msg.getData().getInt("score");
+            fragment.updateRelated(id, pword, cword, score);
         }else if(action.equals("remove")){
             int id = msg.getData().getInt("id");
-            fragment.removeWord(id);
+            fragment.removeRelated(id);
         }else{
-            fragment.updateGridView(this.wordlist);
+            fragment.updateGridView(this.relatedlist);
         }
     }
 
@@ -52,45 +49,37 @@ public class ManageRelatedHandler extends Handler {
         this.sendMessageDelayed(m, 1000);
     }
 
-    public void updateGridView(List<Word> words) {
-        this.wordlist = words;
+    public void updateGridView(List<Related> related) {
+        this.relatedlist = related;
         Message m = new Message();
                 m.getData().putString("action", "display");
         this.sendMessageDelayed(m, 1000);
     }
 
-    public void removeWord(int id) {
+    public void removeRelated(int id) {
         Message m = new Message();
         m.getData().putString("action", "remove");
         m.getData().putInt("id", id);
         this.sendMessageDelayed(m, 1000);
     }
 
-    public void updateWord(int id, String code, String code3r, String word) {
+    public void updateRelated(int id, String pword, String cword, int score) {
         Message m = new Message();
         m.getData().putString("action", "update");
         m.getData().putInt("id", id);
-        m.getData().putString("code", code);
-        m.getData().putString("code3r", code3r);
-        m.getData().putString("word", word);
+        m.getData().putString("pword", pword);
+        m.getData().putString("cword", cword);
+        m.getData().putInt("score", score);
         this.sendMessageDelayed(m, 1);
     }
 
-    public void addWord(String code, String code3r, String word) {
+    public void addRelated(String pword, String cword, int score) {
         Message m = new Message();
         m.getData().putString("action", "add");
-        m.getData().putString("code", code);
-        m.getData().putString("code3r", code3r);
-        m.getData().putString("word", word);
+        m.getData().putString("pword", pword);
+        m.getData().putString("cword", cword);
+        m.getData().putInt("score", score);
         this.sendMessageDelayed(m, 1);
     }
-
-    public void updateKeyboardButton(String keyboard) {
-        Message m = new Message();
-        m.getData().putString("action", "keyboard");
-        m.getData().putString("keyboard", keyboard);
-        this.sendMessageDelayed(m, 1000);
-    }
-
 
 }

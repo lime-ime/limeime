@@ -121,16 +121,20 @@ public class NavigationDrawerFragment extends Fragment {
         try {
             datasource.open();
             List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
-            int menucount = imlist.size() + 1;
-            int checkcount = 1;
+            int menucount = imlist.size() + 2;
+            int checkcount = 2;
+
             menulist = new String[menucount];
             menulist[0] = this.getResources().getString(R.string.default_menu_initial);
+            menulist[1] = this.getResources().getString(R.string.default_menu_related);
+
             for(int i = 0; i < imlist.size() ; i++){
                 Im obj = imlist.get(i);
                 menulist[checkcount] = obj.getDesc();
                 checkcount++;
             }
             datasource.close();
+
         } catch (SQLException e) {
             e.printStackTrace();
         }

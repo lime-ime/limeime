@@ -18,9 +18,6 @@ import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.handler.CloudBackupServiceRunnable;
-import net.toload.main.hd.handler.CloudServierHandler;
-import net.toload.main.hd.handler.DropboxDBBackup;
 import net.toload.main.hd.limesettings.DBServer;
 
 import java.io.File;
@@ -145,7 +142,7 @@ public class SetupImFragment extends Fragment {
             }
         });
 
-        btnSetupImRestoreLocal = (Button) rootView.findViewById(R.id.btnSetupImRestoreLocal);
+        /*btnSetupImRestoreLocal = (Button) rootView.findViewById(R.id.btnSetupImRestoreLocal);
         btnSetupImRestoreLocal.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -345,7 +342,7 @@ public class SetupImFragment extends Fragment {
                     Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
                 }
             }
-        });
+        });*/
 
         return rootView;
     }
@@ -407,7 +404,7 @@ public class SetupImFragment extends Fragment {
         }
 
         protected void onPostExecute(Integer result){
-            pd.cancel();
+           /* pd.cancel();
             if(type == CLOUDBACKUP){
                 File sourceFile = new File(Lime.DATABASE_FOLDER_EXTERNAL + File.separator + Lime.DATABASE_BACKUP_NAME);
                 cHandler = new CloudServierHandler(LIMEInitial.this);
@@ -423,7 +420,7 @@ public class SetupImFragment extends Fragment {
                 activity.initialButton();
                 dbsrv.checkPhoneticKeyboardSetting();//Jeremy '12,6,8 check the pheonetic keyboard consistency
                 mLIMEPref.setResetCacheFlag(true);  //Jeremy '12,7,8 reset cache.
-            }
+            }*/
         }
 
         @Override

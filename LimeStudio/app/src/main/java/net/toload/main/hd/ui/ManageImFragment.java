@@ -40,7 +40,6 @@ import java.util.List;
  */
 public class ManageImFragment extends Fragment {
 
-
     /**
      * The fragment argument representing the section number for this
      * fragment.
@@ -216,7 +215,8 @@ public class ManageImFragment extends Fragment {
             public void onClick(View v) {
                 if (!searchreset) {
                     String query = edtManageImSearch.getText().toString();
-                    if (query != null && query.length() > 0 && (prequery == null || !prequery.equals(query))) {
+                    if (query != null && query.length() > 0 &&
+                            ( prequery == null || !prequery.equals(query) || !searchreset) ) {
                         query = query.trim();
                         searchword(query);
                     }
@@ -329,6 +329,7 @@ public class ManageImFragment extends Fragment {
         }else{
             this.adapter.setList(templist);
             this.adapter.notifyDataSetChanged();
+            this.gridManageIm.setSelection(0);
         }
 
         String nav = "0";

@@ -19,17 +19,14 @@ public class ManageRelatedAddDialog extends DialogFragment {
 	Activity activity;
 	View view;
 
-	//Button btnQuizExitConfirm;
-	//Button btnQuizExitCancel;
-	
-	ManageImHandler handler;
+	ManageRelatedHandler handler;
 
-	Button btnManageImWordCancel;
-	Button btnManageImWordSave;
+	Button btnManageRelatedCancel;
+	Button btnManageRelatedSave;
 
-	EditText edtManageImWordCode;
-	EditText edtManageImWordCode3r;
-	EditText edtManageImWordWord;
+	EditText edtManageRelatedPword;
+	EditText edtManageRelatedCword;
+	EditText edtManageRelatedScore;
 
 	@Override
 	public void onDestroy() {
@@ -42,7 +39,7 @@ public class ManageRelatedAddDialog extends DialogFragment {
 		return btd;
 	}
 	
-	public void setHandler(ManageImHandler handler){
+	public void setHandler(ManageRelatedHandler handler){
 		this.handler = handler;
 	}
 
@@ -68,39 +65,40 @@ public class ManageRelatedAddDialog extends DialogFragment {
 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 
-		getDialog().getWindow().setTitle(getResources().getString(R.string.manage_word_dialog_add));
+		getDialog().getWindow().setTitle(getResources().getString(R.string.manage_related_dialog_add));
 
 		activity = getActivity();
-		view = inflater.inflate(R.layout.fragment_dialog_add, container, false);
+		view = inflater.inflate(R.layout.fragment_dialog_related_add, container, false);
 
-		btnManageImWordCancel = (Button) view.findViewById(R.id.btnManageImWordCancel);
-		btnManageImWordCancel.setOnClickListener(new View.OnClickListener() {
+		btnManageRelatedCancel = (Button) view.findViewById(R.id.btnManageRelatedCancel);
+		btnManageRelatedCancel.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				cancelDialog();
 			}
 		});
 
-
-
-		btnManageImWordSave = (Button) view.findViewById(R.id.btnManageImWordSave);
-		btnManageImWordSave.setOnClickListener(new View.OnClickListener() {
+		btnManageRelatedSave = (Button) view.findViewById(R.id.btnManageRelatedSave);
+		btnManageRelatedSave.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
-				alertDialog.setTitle(activity.getResources().getString(R.string.manage_word_dialog_add));
-				alertDialog.setMessage(activity.getResources().getString(R.string.manage_word_dialog_add_message));
+				alertDialog.setTitle(activity.getResources().getString(R.string.manage_related_dialog_add));
+				alertDialog.setMessage(activity.getResources().getString(R.string.manage_related_dialog_add_message));
 				alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int which) {
-								String code = edtManageImWordCode.getText().toString();
-								String code3r = edtManageImWordCode3r.getText().toString();
-								String text = edtManageImWordWord.getText().toString();
-								if(!code.isEmpty() && !text.isEmpty()){
-									if(!code3r.isEmpty()){
-										code3r = code3r.trim();
-									}
-									handler.addWord(code, code3r, text);
+								String pword = edtManageRelatedPword.getText().toString();
+								String cword = edtManageRelatedCword.getText().toString();
+								String score = edtManageRelatedScore.getText().toString();
+								if(!pword.isEmpty() && !cword.isEmpty()){
+									pword = pword.trim();
+									cword = cword.trim();
+									int s = 0;
+									try{
+										s = Integer.parseInt(score);
+									} catch(Exception e){}
+									handler.addRelated(pword, cword, s);
 									dialog.dismiss();
 									cancelDialog();
 								}else{
@@ -118,9 +116,9 @@ public class ManageRelatedAddDialog extends DialogFragment {
 			}
 		});
 
-		edtManageImWordCode = (EditText) view.findViewById(R.id.edtManageImWordCode);
-		edtManageImWordCode3r = (EditText) view.findViewById(R.id.edtManageImWordCode3r);
-		edtManageImWordWord = (EditText) view.findViewById(R.id.edtManageImWordWord);
+		edtManageRelatedPword = (EditText) view.findViewById(R.id.edtManageRelatedPword);
+		edtManageRelatedCword = (EditText) view.findViewById(R.id.edtManageRelatedCword);
+		edtManageRelatedScore = (EditText) view.findViewById(R.id.edtManageRelatedScore);
 		
 		return view;
 	}

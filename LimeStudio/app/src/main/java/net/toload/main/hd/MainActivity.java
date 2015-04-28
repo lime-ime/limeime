@@ -10,6 +10,7 @@ import android.view.MenuItem;
 
 import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Im;
+import net.toload.main.hd.ui.ManageRelatedFragment;
 import net.toload.main.hd.ui.SetupImFragment;
 
 import java.sql.SQLException;
@@ -74,27 +75,35 @@ public class MainActivity extends ActionBarActivity
     @Override
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
+
         FragmentManager fragmentManager = getSupportFragmentManager();
-        if(position == 0){
+        if (position == 0) {
             fragmentManager.beginTransaction()
-                    .replace(R.id.container, SetupImFragment.newInstance(position + 1))
+                    .replace(R.id.container, SetupImFragment.newInstance(position))
+                    .commit();
+        }else if (position == 1){
+            fragmentManager.beginTransaction()
+                    .replace(R.id.container, ManageRelatedFragment.newInstance(position))
                     .commit();
         }else{
             initialImList();
-            int number = position -1;
+            int number = position - 2;
             String code = imlist.get(number).getCode();
             fragmentManager.beginTransaction()
-                    .replace(R.id.container, net.toload.main.hd.ui.ManageImFragment.newInstance(position + 1, code))
+                    .replace(R.id.container, net.toload.main.hd.ui.ManageImFragment.newInstance(position, code))
                     .commit();
         }
     }
 
     public void onSectionAttached(int number) {
         initialImList();
-        if(number == 1){
+        if (number == 0) {
             mTitle = this.getResources().getString(R.string.default_menu_initial);
             mCode = "initial";
-        }else{
+        } else if (number == 1){
+            mTitle = this.getResources().getString(R.string.default_menu_related);
+            mCode = "related";
+        } else {
             int position = number - 2;
             mTitle = imlist.get(position).getDesc();
             mCode = imlist.get(position).getCode();
