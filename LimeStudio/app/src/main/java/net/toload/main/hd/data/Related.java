@@ -70,11 +70,9 @@ public class Related {
 	public static String getInsertQuery(Related record){
 		StringBuffer sb = new StringBuffer();
 		sb.append("INSERT INTO " + Lime.DB_RELATED + "(");
-		sb.append(Lime.DB_RELATED_COLUMN_ID +", ");
 		sb.append(Lime.DB_RELATED_COLUMN_PWORD +", ");
 		sb.append(Lime.DB_RELATED_COLUMN_CWORD +", ");
 		sb.append(Lime.DB_RELATED_COLUMN_SCORE +") VALUES(");
-		sb.append("\""+record.getId()+"\",");
 		sb.append("\""+record.getPword()+"\",");
 		sb.append("\""+record.getCword()+"\",");
 		sb.append("\""+record.getScore()+"\"");

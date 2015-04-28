@@ -15,7 +15,7 @@ import android.widget.Toast;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Word;
 
-public class ManageImWordEditDialog extends DialogFragment {
+public class ManageImEditDialog extends DialogFragment {
 
 	Activity activity;
 	View view;
@@ -40,8 +40,8 @@ public class ManageImWordEditDialog extends DialogFragment {
 		super.onDestroy();
 	}
 
-	public static ManageImWordEditDialog newInstance() {
-		ManageImWordEditDialog btd = new ManageImWordEditDialog();
+	public static ManageImEditDialog newInstance() {
+		ManageImEditDialog btd = new ManageImEditDialog();
 						   btd.setCancelable(true);
 		return btd;
 	}

@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class ManageImFragment extends Fragment {
+public class ManageRelatedFragment extends Fragment {
 
 
     /**
@@ -86,8 +86,8 @@ public class ManageImFragment extends Fragment {
      * Returns a new instance of this fragment for the given section
      * number.
      */
-    public static ManageImFragment newInstance(int sectionNumber, String code) {
-        ManageImFragment fragment = new ManageImFragment();
+    public static ManageRelatedFragment newInstance(int sectionNumber, String code) {
+        ManageRelatedFragment fragment = new ManageRelatedFragment();
         Bundle args = new Bundle();
                 args.putInt(ARG_SECTION_NUMBER, sectionNumber);
                 args.putString(ARG_SECTION_CODE, code);
@@ -95,7 +95,7 @@ public class ManageImFragment extends Fragment {
         return fragment;
     }
 
-    public ManageImFragment() {
+    public ManageRelatedFragment() {
     }
 
     @Override

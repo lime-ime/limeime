@@ -1,0 +1,122 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="10dp"
+    tools:context="net.toload.main.hd.ManageRelatedFragment">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="@string/manage_related_management"
+                    android:id="@+id/txtManageRelatedTitle"
+                    android:layout_marginBottom="5dp"
+                    android:layout_weight="1" />
+
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/manage_related_add"
+                    android:id="@+id/btnManageRelatedAdd"
+                    android:layout_gravity="right"
+                    android:layout_column="11" />
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent">
+
+            <EditText
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/edtManageRelatedSearch"
+                    android:layout_column="2"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/manage_related_search"
+                    android:id="@+id/btnManageRelatedSearch"
+                    android:layout_column="11" />
+        </LinearLayout>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp" />
+
+        <GridView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/gridManageRelated"
+            android:numColumns="auto_fit"
+            android:stretchMode="columnWidth"
+            android:gravity="center"
+            android:verticalSpacing="2dp"
+            android:horizontalSpacing="2dp"
+            android:choiceMode="multipleChoice"
+            android:columnWidth="80dp">
+
+        </GridView>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/manage_related_previous"
+            android:id="@+id/btnManageRelatedPrevious"
+            android:layout_margin="2dp"
+            android:paddingRight="10dp"
+            android:paddingLeft="10dp" />
+
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="0"
+            android:id="@+id/txtNavigationInfo"
+            android:textSize="8pt"
+            android:gravity="center_horizontal"
+            android:layout_weight="1" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/manage_related_next"
+            android:id="@+id/btnManageRelatedNext"
+            android:layout_margin="2dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp" />
+
+    </LinearLayout>
+
+
+</LinearLayout>
+<!-- From: file:/C:/Data/Development/Android/Studio/LIMEIMEAS/app/src/main/res/layout/fragment_manage_related.xml -->

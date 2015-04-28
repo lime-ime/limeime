@@ -14,7 +14,7 @@ import android.widget.Toast;
 
 import net.toload.main.hd.R;
 
-public class ManageImWordAddDialog extends DialogFragment {
+public class ManageRelatedAddDialog extends DialogFragment {
 
 	Activity activity;
 	View view;
@@ -36,8 +36,8 @@ public class ManageImWordAddDialog extends DialogFragment {
 		super.onDestroy();
 	}
 
-	public static ManageImWordAddDialog newInstance() {
-		ManageImWordAddDialog btd = new ManageImWordAddDialog();
+	public static ManageRelatedAddDialog newInstance() {
+		ManageRelatedAddDialog btd = new ManageRelatedAddDialog();
 						   btd.setCancelable(true);
 		return btd;
 	}
