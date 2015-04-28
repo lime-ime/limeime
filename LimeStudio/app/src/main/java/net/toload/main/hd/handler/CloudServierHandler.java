@@ -4,16 +4,16 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 
-import net.toload.main.hd.limesettings.LIMEInitial;
+import net.toload.main.hd.ui.SetupImFragment;
 
 public class CloudServierHandler extends Handler {
 
 	public static final String tag = "CloudServierHandler";
 	
-	private LIMEInitial activity = null;
+	private SetupImFragment fragment;
 
-	public CloudServierHandler(LIMEInitial activity) {
-		this.activity = activity;
+	public CloudServierHandler(SetupImFragment fragment) {
+		this.fragment = fragment;
 	}
 	
 	@Override
@@ -23,15 +23,15 @@ public class CloudServierHandler extends Handler {
 		if(action.equals("show")){
 			String type = msg.getData().getString("type");  
 			if(type.equals("backup")){
-				activity.showProgressDialog(true);
+				fragment.showProgressDialog(true);
 			}else if(type.equals("restore")){
-				activity.showProgressDialog(false);
+				fragment.showProgressDialog(false);
 			}
 		}else if(action.equals("update")){
 			int progress = msg.getData().getInt("progress");
-			activity.updateProgressDialog(progress);
+			fragment.updateProgressDialog(progress);
 		}else if(action.equals("close")){
-			activity.closeProgressDialog();
+			fragment.closeProgressDialog();
 		}
 		
 	}

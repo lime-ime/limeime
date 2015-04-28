@@ -17,10 +17,10 @@ import java.util.List;
  */
 public class ManageRelatedAdapter extends BaseAdapter {
 
-    List<Related> relatedlist;
+    private  List<Related> relatedlist;
 
-    Activity activity;
-    LayoutInflater mInflater;
+    private Activity activity;
+    private LayoutInflater mInflater;
 
     public ManageRelatedAdapter(Activity activity,
                                 List<Related> relatedlist) {

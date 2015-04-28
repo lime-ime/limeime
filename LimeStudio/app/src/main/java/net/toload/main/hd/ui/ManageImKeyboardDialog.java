@@ -21,15 +21,15 @@ import java.util.List;
 public class ManageImKeyboardDialog extends DialogFragment implements
 		AdapterView.OnItemClickListener {
 
-	Activity activity;
-	View view;
+	private Activity activity;
+	private View view;
 
 
-	List<Keyboard> keyboardlist;
-	ListView listSelectKeyboard;
+	private List<Keyboard> keyboardlist;
+	private ListView listSelectKeyboard;
 
-	DataSource datasource;
-	String code;
+	private DataSource datasource;
+	private String code;
 	private ManageImHandler handler;
 
 	@Override

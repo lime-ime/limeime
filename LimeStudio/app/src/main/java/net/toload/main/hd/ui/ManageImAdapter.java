@@ -17,10 +17,10 @@ import java.util.List;
  */
 public class ManageImAdapter extends BaseAdapter {
 
-    List<Word> wordlist;
+    private List<Word> wordlist;
 
-    Activity activity;
-    LayoutInflater mInflater;
+    private Activity activity;
+    private LayoutInflater mInflater;
 
     public ManageImAdapter(Activity activity,
                              List<Word> wordlist) {

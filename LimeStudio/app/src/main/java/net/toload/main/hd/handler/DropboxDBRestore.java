@@ -1,4 +1,5 @@
 package net.toload.main.hd.handler;
+
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
@@ -17,7 +18,7 @@ import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limesettings.DBServer;
-import net.toload.main.hd.limesettings.LIMEInitial;
+import net.toload.main.hd.ui.SetupImFragment;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -36,7 +37,7 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
     public final static int intentLIMEMenu = 0;
 	LIMEPreferenceManager mLIMEPref;
 
-	private LIMEInitial mActivity;
+	private SetupImFragment fragment;
     private Context mContext;
     private final ProgressDialog mDialog;
     private DropboxAPI<?> mApi;
@@ -52,10 +53,10 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
 
     
 
-    public DropboxDBRestore(LIMEInitial activity, Context context, DropboxAPI<?> api,String dropboxPath , File tempfile) {
+    public DropboxDBRestore(SetupImFragment fragment, Context context, DropboxAPI<?> api,String dropboxPath , File tempfile) {
         // We set the context this way so we don't accidentally leak activities
-        
-    	mActivity = activity;
+
+        fragment = fragment;
     	mContext = context.getApplicationContext();
         
         mApi = api;
@@ -216,8 +217,8 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
     	if(DEBUG)
     		Log.i(TAG, "onPostExecute()");
         mDialog.dismiss();
-        if (result) {     	
-        	mActivity.initialButton();
+        if (result) {
+            //fragment.initialButton();
             DBServer.showNotificationMessage(
 					mContext.getText(R.string.l3_initial_dropbox_restore_end)+ "", intentLIMEMenu);
             

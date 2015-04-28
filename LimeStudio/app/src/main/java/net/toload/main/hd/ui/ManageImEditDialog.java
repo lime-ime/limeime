@@ -17,23 +17,23 @@ import net.toload.main.hd.data.Word;
 
 public class ManageImEditDialog extends DialogFragment {
 
-	Activity activity;
-	View view;
+	private Activity activity;
+	private View view;
 
 	//Button btnQuizExitConfirm;
 	//Button btnQuizExitCancel;
-	
-	ManageImHandler handler;
 
-	Word word;
+	private ManageImHandler handler;
 
-	Button btnManageImWordCancel;
-	Button btnManageImWordRemove;
-	Button btnManageImWordUpdate;
+	private Word word;
 
-	EditText edtManageImWordCode;
-	EditText edtManageImWordCode3r;
-	EditText edtManageImWordWord;
+	private Button btnManageImWordCancel;
+	private Button btnManageImWordRemove;
+	private Button btnManageImWordUpdate;
+
+	private EditText edtManageImWordCode;
+	private EditText edtManageImWordCode3r;
+	private EditText edtManageImWordWord;
 
 	@Override
 	public void onDestroy() {

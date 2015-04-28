@@ -16,17 +16,17 @@ import net.toload.main.hd.R;
 
 public class ManageRelatedAddDialog extends DialogFragment {
 
-	Activity activity;
-	View view;
+	private Activity activity;
+	private View view;
 
-	ManageRelatedHandler handler;
+	private ManageRelatedHandler handler;
 
-	Button btnManageRelatedCancel;
-	Button btnManageRelatedSave;
+	private Button btnManageRelatedCancel;
+	private Button btnManageRelatedSave;
 
-	EditText edtManageRelatedPword;
-	EditText edtManageRelatedCword;
-	EditText edtManageRelatedScore;
+	private EditText edtManageRelatedPword;
+	private EditText edtManageRelatedCword;
+	private EditText edtManageRelatedScore;
 
 	@Override
 	public void onDestroy() {

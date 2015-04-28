@@ -20,48 +20,7 @@
 
 package net.toload.main.hd.limesettings;
 
-import java.io.File;
-
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
-
-import net.toload.main.hd.global.LIME;
-import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.handler.CloudBackupServiceRunnable;
-import net.toload.main.hd.handler.CloudRestoreServiceRunnable;
-import net.toload.main.hd.handler.CloudServierHandler;
-import net.toload.main.hd.handler.DropboxDBBackup;
-import net.toload.main.hd.handler.DropboxDBRestore;
-import net.toload.main.hd.R;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.DialogInterface.OnCancelListener;
-import android.content.SharedPreferences.Editor;
-import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.RemoteException;
-import android.util.Log;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.Toast;
-import com.dropbox.client2.DropboxAPI;
-import com.dropbox.client2.android.AndroidAuthSession;
-import com.dropbox.client2.android.AuthActivity;
-import com.dropbox.client2.session.AccessTokenPair;
-import com.dropbox.client2.session.AppKeyPair;
-import com.dropbox.client2.session.Session.AccessType;
-import com.dropbox.client2.session.TokenPair;
 
 /**
  * 
@@ -69,7 +28,8 @@ import com.dropbox.client2.session.TokenPair;
  * 
  */
 public class LIMEInitial extends Activity {
-	private final boolean DEBUG = false;
+	
+	/*private final boolean DEBUG = false;
 	private final String TAG = "LIMEInitial";
 	// Dropbox API by Jeremy '12,12,22
     // Note that this is a really insecure way to do this, and you shouldn't
@@ -130,7 +90,7 @@ public class LIMEInitial extends Activity {
 			cHandler.removeCallbacks(rTask);
 	}
 
-	/** Called when the activity is first created. */
+	*//** Called when the activity is first created. *//*
 	@Override
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
@@ -673,9 +633,9 @@ public class LIMEInitial extends Activity {
 
 	}
 	
-	/* (non-Javadoc)
+	*//* (non-Javadoc)
 	 * @see android.app.Activity#onStart()
-	 */
+	 *//*
 	@Override
 	protected void onStart() {
 		super.onStart();
@@ -683,9 +643,9 @@ public class LIMEInitial extends Activity {
 	}
 	
 
-	/* (non-Javadoc)
+	*//* (non-Javadoc)
 	 * @see android.app.Activity#onStart()
-	 */
+	 *//*
 	@Override
 	protected void onResume() {	
 		super.onResume();
@@ -824,14 +784,14 @@ public class LIMEInitial extends Activity {
 		task.execute("");
 		
 		
-		/*  Jeremy '12,12,23 Moved to postExcute of bakcupRestoreTask.  Zip db first (backupdatabase) before backup to google drive now.
+		*//*  Jeremy '12,12,23 Moved to postExcute of bakcupRestoreTask.  Zip db first (backupdatabase) before backup to google drive now.
 		cHandler = new CloudServierHandler(this);
 		bTask = new Thread(new CloudBackupServiceRunnable(cHandler, this, tempFile));
 		bTask.start();
-		*/
+		*//*
 		//showProgressDialog(true);
-		/*BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDBACKUP);
-							  task.execute("");*/
+		*//*BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDBACKUP);
+							  task.execute("");*//*
 	}
 	public void restoreDatabaseDropbox(){
 		File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
@@ -863,8 +823,8 @@ public class LIMEInitial extends Activity {
 		bTask.start();
 
 		showProgressDialog(false);
-		/*BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDRESTORE);
-						      task.execute("");*/
+		*//*BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDRESTORE);
+						      task.execute("");*//*
 	    initialButton();
 	}
 	
@@ -962,13 +922,13 @@ public class LIMEInitial extends Activity {
         error.show();
     }
 
-    /**
+    *//**
      * Shows keeping the access keys returned from Trusted Authenticator in a local
      * store, rather than storing user name & password, and re-authenticating each
      * time (which is not to be done, ever).
      *
      * @return Array of [access_key, access_secret], or null if none stored
-     */
+     *//*
     private String[] getKeys() {
         SharedPreferences prefs = getSharedPreferences(ACCOUNT_PREFS_NAME, 0);
         String key = prefs.getString(ACCESS_KEY_NAME, null);
@@ -983,11 +943,11 @@ public class LIMEInitial extends Activity {
         }
     }
 
-    /**
+    *//**
      * Shows keeping the access keys returned from Trusted Authenticator in a local
      * store, rather than storing user name & password, and re-authenticating each
      * time (which is not to be done, ever).
-     */
+     *//*
     private void storeKeys(String key, String secret) {
         // Save the access key for later
         SharedPreferences prefs = getSharedPreferences(ACCOUNT_PREFS_NAME, 0);
@@ -1125,6 +1085,6 @@ public class LIMEInitial extends Activity {
 			return 1;
 		}
 	}
-	
+	*/
 	
 }

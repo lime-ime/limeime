@@ -4,7 +4,6 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
-import android.app.Activity;
 import android.os.Bundle;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
@@ -20,7 +19,7 @@ import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limesettings.DBServer;
 import net.toload.main.hd.limesettings.FileUploadProgressListener;
-import net.toload.main.hd.limesettings.LIMEInitial;
+import net.toload.main.hd.ui.SetupImFragment;
 
 import java.io.File;
 import java.net.URI;
@@ -35,7 +34,7 @@ public class CloudBackupServiceRunnable  implements Runnable{
 		super.finalize();
 	}
 	private CloudServierHandler handler;
-	private Activity activity;
+	private SetupImFragment fragment;
 	
 	private static final String AUTH_TOKEN_TYPE = "oauth2:https://docs.google.com/feeds/ https://docs.googleusercontent.com/";
 	//private static final int REQUEST_AUTHENTICATE = 0;
@@ -59,14 +58,14 @@ public class CloudBackupServiceRunnable  implements Runnable{
 	public final static int intentLIMEMappingLoading = 1;
 	public final static int intentLIMEInitial = 2;
 	
-	public CloudBackupServiceRunnable(CloudServierHandler h, LIMEInitial activity, File sourcefile) {
+	public CloudBackupServiceRunnable(CloudServierHandler h, SetupImFragment fragment, File sourcefile) {
 		this.handler = h;
-		this.activity = activity;
+		this.fragment = fragment;
 		this.sourceFile = sourcefile;
 
-		this.accountManager = new GoogleAccountManager(activity);
+		this.accountManager = new GoogleAccountManager(fragment.getActivity());
 		this.credential = new GoogleCredential();
-		this.mLIMEPref = new LIMEPreferenceManager(activity);
+		this.mLIMEPref = new LIMEPreferenceManager(fragment.getActivity());
 	}
 
 	/*private DocsService getDocsService(GoogleCredential credential) {
@@ -79,7 +78,7 @@ public class CloudBackupServiceRunnable  implements Runnable{
 		
 		
 		String accountName = "";
-		accountManager = new GoogleAccountManager(activity);
+		accountManager = new GoogleAccountManager(fragment.getActivity());
 
         if(accountManager.getAccounts().length > 0){	
         	accountName = accountManager.getAccounts()[0].name;
@@ -92,7 +91,7 @@ public class CloudBackupServiceRunnable  implements Runnable{
         
 		Account account = accountManager.getAccountByName(accountName);
 		accountManager.getAccountManager().getAuthToken(account,
-				AUTH_TOKEN_TYPE, null, activity,
+				AUTH_TOKEN_TYPE, null, fragment.getActivity(),
 				new AccountManagerCallback<Bundle>() {
 
 					public void run(AccountManagerFuture<Bundle> future) {
@@ -185,7 +184,7 @@ public class CloudBackupServiceRunnable  implements Runnable{
 				mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
 				if(status){
 					DBServer.showNotificationMessage(
-							activity.getApplicationContext().getText(
+							fragment.getActivity().getText(
 									R.string.l3_initial_cloud_backup_end)
 									+ "", intentLIMEMenu);
 				}else{

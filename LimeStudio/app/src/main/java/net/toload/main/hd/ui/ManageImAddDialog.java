@@ -16,20 +16,20 @@ import net.toload.main.hd.R;
 
 public class ManageImAddDialog extends DialogFragment {
 
-	Activity activity;
-	View view;
+	private Activity activity;
+	private View view;
 
 	//Button btnQuizExitConfirm;
 	//Button btnQuizExitCancel;
-	
-	ManageImHandler handler;
 
-	Button btnManageImWordCancel;
-	Button btnManageImWordSave;
+	private ManageImHandler handler;
 
-	EditText edtManageImWordCode;
-	EditText edtManageImWordCode3r;
-	EditText edtManageImWordWord;
+	private Button btnManageImWordCancel;
+	private Button btnManageImWordSave;
+
+	private EditText edtManageImWordCode;
+	private EditText edtManageImWordCode3r;
+	private EditText edtManageImWordWord;
 
 	@Override
 	public void onDestroy() {

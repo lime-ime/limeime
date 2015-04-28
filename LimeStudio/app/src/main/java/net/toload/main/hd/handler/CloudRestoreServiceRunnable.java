@@ -19,7 +19,6 @@ import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limesettings.DBServer;
-import net.toload.main.hd.limesettings.LIMEInitial;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -57,8 +56,7 @@ public class CloudRestoreServiceRunnable  implements Runnable{
 	public final static int intentLIMEMappingLoading = 1;
 	public final static int intentLIMEInitial = 2;
 	
-	public CloudRestoreServiceRunnable(CloudServierHandler h,
-			LIMEInitial activity, File tempfile) {
+	public CloudRestoreServiceRunnable(CloudServierHandler h, Activity activity, File tempfile) {
 		this.handler = h;
 		this.activity = activity;
 		this.tempfile = tempfile;
