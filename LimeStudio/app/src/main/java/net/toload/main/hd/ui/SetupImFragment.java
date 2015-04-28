@@ -140,6 +140,15 @@ public class SetupImFragment extends Fragment {
         mLIMEPref = new LIMEPreferenceManager(getActivity());
         DBSrv = new DBServer(getActivity());
         activity = getActivity();
+        connManager = (ConnectivityManager) this.activity.getSystemService(this.activity.CONNECTIVITY_SERVICE);
+
+        //Dropbox initialization  '12,12,23 Jermey
+        // We create a new AuthSession so that we can use the Dropbox API.
+        AndroidAuthSession session = buildSession();
+        mDropboxApi = new DropboxAPI<AndroidAuthSession>(session);
+        checkAppKeySetup();
+        mDropboxLoggedIn = mDropboxApi.getSession().isLinked();
+
 
         View rootView = inflater.inflate(R.layout.fragment_setup_im, container, false);
 
