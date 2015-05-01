@@ -12,7 +12,7 @@ public class Lime {
     // Database Setting
 
     final public static String DATABASE_NAME = "lime.db";
-    final public static String DATABASE_FOLDER =  Environment.getDataDirectory() + "/data/net.toload.main.hd/databases";
+    final public static String DATABASE_DEVICE_FOLDER =  Environment.getDataDirectory() + "/data/net.toload.main.hd/databases";
     final public static String DATABASE_DECOMPRESS_FOLDER_SDCARD = Environment.getExternalStorageDirectory() + "/limehd/databases";
     final public static String DATABASE_FOLDER_EXTERNAL = Environment.getExternalStorageDirectory() + "/limehd/";
     final public static String DATABASE_BACKUP_NAME = "backup.zip";
@@ -104,6 +104,8 @@ public class Lime {
 
     // Cloud Backup/Restore
     // Dropbox
+    public static final String DATABASE_DOWNLOAD_STATUS = "database_download_status";
+
     public static final String APP_KEY = "keuuzhfc6efjf6t";
     public static final String APP_SECRET = "4y8fy4rqk8rofd8";
 
@@ -123,6 +125,7 @@ public class Lime {
     public static final String DROPBOX = "DROPBOX";
 
     public static final String DEVICE = "device";
+    public static final int GOOGLE_RETRIEVE_MAXIMUM = 500;
 
 
     // Global Utility Methods

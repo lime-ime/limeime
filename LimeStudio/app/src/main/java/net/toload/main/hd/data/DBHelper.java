@@ -27,10 +27,10 @@ public class DBHelper {
 		this.ctx = context;
 
 		// Initial Database
-		File destdir = new File(Lime.DATABASE_FOLDER + File.separator);
+		File destdir = new File(Lime.DATABASE_DEVICE_FOLDER + File.separator);
 			 destdir.mkdirs();
 			 
-		File destpath = new File(Lime.DATABASE_FOLDER + File.separator + Lime.DATABASE_NAME);
+		File destpath = new File(Lime.DATABASE_DEVICE_FOLDER + File.separator + Lime.DATABASE_NAME);
 		
 		if (!destpath.exists()) {
 			
