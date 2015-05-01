@@ -26,9 +26,10 @@
             android:configChanges="keyboard|keyboardHidden|orientation"
             android:label="@string/app_name"
             android:screenOrientation="portrait" >
-            <intent-filter>
+            <!--<meta-data android:name="com.google.android.apps.drive.APP_ID" android:value="id=949554397968-2qakobi3defu4016dqm70ipms4ipnv13.apps.googleusercontent.com" />
+            --><intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
+                <action android:name="com.google.android.apps.drive.DRIVE_OPEN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

@@ -1,3 +1,4 @@
+/*
 package net.toload.main.hd.handler;
 
 import android.accounts.Account;
@@ -8,12 +9,6 @@ import android.app.Activity;
 import android.os.Bundle;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.extensions.android2.auth.GoogleAccountManager;
-import com.google.gdata.client.docs.DocsService;
-import com.google.gdata.data.MediaContent;
-import com.google.gdata.data.docs.DocumentListEntry;
-import com.google.gdata.data.docs.DocumentListFeed;
-import com.google.gdata.data.media.MediaSource;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
@@ -27,7 +22,8 @@ import java.net.URL;
 
 public class CloudRestoreServiceRunnable  implements Runnable{
 
-	@Override
+	*/
+/*@Override
 	protected void finalize() throws Throwable {
 		super.finalize();
 	}
@@ -35,12 +31,16 @@ public class CloudRestoreServiceRunnable  implements Runnable{
 	private Activity activity;
 	
 	private static final String AUTH_TOKEN_TYPE = "oauth2:https://docs.google.com/feeds/ https://docs.googleusercontent.com/";
-	/*private static final int REQUEST_AUTHENTICATE = 0;
+	*//*
+*/
+/*private static final int REQUEST_AUTHENTICATE = 0;
 	private static final int MAX_CONCURRENT_UPLOADS = 10;
 	private static final int PROGRESS_UPDATE_INTERVAL = 1000;
 	private static final int DEFAULT_CHUNK_SIZE = 10000000;
 	
-	private SharedPreferences pref;*/
+	private SharedPreferences pref;*//*
+*/
+/*
 	private GoogleAccountManager accountManager;
 	private GoogleCredential credential;
 	static final String PREF_ACCOUNT_NAME = "accountName1";
@@ -66,11 +66,15 @@ public class CloudRestoreServiceRunnable  implements Runnable{
 		this.mLIMEPref = new LIMEPreferenceManager(activity);
 	}
 
-	/*private DocsService getDocsService(GoogleCredential credential) {
+	*//*
+*/
+/*private DocsService getDocsService(GoogleCredential credential) {
 		DocsService service = new DocsService("LIME");
 					service.setOAuth2Credentials(credential);	
 		return service;
-	}*/
+	}*//*
+*/
+/*
 	
 	public void run() {
 		
@@ -236,6 +240,8 @@ public class CloudRestoreServiceRunnable  implements Runnable{
 	private static DocsService getDocsService() {
 		DocsService service = new DocsService("LIMEDocsService");
 		return service;
-	}
+	}*//*
+
 
 }
+*/

@@ -20,15 +20,6 @@
 
 package net.toload.main.hd.limesettings;
 
-import java.io.File;
-
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
-
-import net.toload.main.hd.R;
-import net.toload.main.hd.global.LIME;
-import net.toload.main.hd.global.LIMEPreferenceManager;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -37,7 +28,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.LinearLayout;
+
+import net.toload.main.hd.R;
+import net.toload.main.hd.global.LIME;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+
+import java.io.File;
 
 /**
  * 
@@ -229,13 +225,13 @@ public class LIMEIMSetting extends Activity {
 				}
 			});
 
-
+/*
 			AdView adView = new AdView(this, AdSize.SMART_BANNER, LIME.publisher);
 	        LinearLayout layout = (LinearLayout)findViewById(R.id.ad_area);
 	        layout.addView(adView);
 	        AdRequest adRequest = new AdRequest();
 	        adView.loadAd(adRequest);
-		
+		*/
 		
 	}
 

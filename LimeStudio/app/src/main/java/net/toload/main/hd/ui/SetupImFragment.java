@@ -1,12 +1,12 @@
 package net.toload.main.hd.ui;
 
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -20,12 +20,16 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.dropbox.client2.DropboxAPI;
-import com.dropbox.client2.android.AndroidAuthSession;
-import com.dropbox.client2.android.AuthActivity;
-import com.dropbox.client2.session.AccessTokenPair;
-import com.dropbox.client2.session.AppKeyPair;
-import com.dropbox.client2.session.Session;
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
+import com.google.api.client.http.FileContent;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.DriveScopes;
+import com.google.api.services.drive.model.FileList;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
@@ -33,13 +37,16 @@ import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.handler.CloudBackupServiceRunnable;
-import net.toload.main.hd.handler.CloudRestoreServiceRunnable;
 import net.toload.main.hd.handler.CloudServierHandler;
-import net.toload.main.hd.handler.DropboxDBBackup;
-import net.toload.main.hd.handler.DropboxDBRestore;
 import net.toload.main.hd.limesettings.DBServer;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
@@ -50,6 +57,22 @@ import java.io.File;
  * A placeholder fragment containing a simple view.
  */
 public class SetupImFragment extends Fragment {
+
+    // Google API
+    static final int REQUEST_ACCOUNT_PICKER = 1;
+    static final int REQUEST_AUTHORIZATION = 2;
+
+    static final int REQUEST_LOCAL_BACKUP = 3;
+    static final int REQUEST_LOCAL_RESTORE = 4;
+    static final int REQUEST_GOOGLE_BACKUP = 5;
+    static final int REQUEST_GOOGLE_RESTORE = 6;
+    static final int REQUEST_DROPBOX_BACKUP = 7;
+    static final int REQUEST_DROPBOX_RESTORE = 8;
+
+    // Google Drive
+    private static Uri fileUri;
+    private static Drive service;
+    private GoogleAccountCredential credential;
 
     // Parameters from previous version
     private final boolean DEBUG = false;
@@ -64,12 +87,12 @@ public class SetupImFragment extends Fragment {
     final static private String APP_SECRET = "4y8fy4rqk8rofd8";
     // If you'd like to change the access type to the full Dropbox instead of
     // an app folder, change this value.
-    final static private Session.AccessType ACCESS_TYPE = Session.AccessType.APP_FOLDER;
+    //final static private Session.AccessType ACCESS_TYPE = Session.AccessType.APP_FOLDER;
     // You don't need to change these, leave them alone.
     final static private String ACCOUNT_PREFS_NAME = "prefs";
     final static private String ACCESS_KEY_NAME = "ACCESS_KEY";
     final static private String ACCESS_SECRET_NAME = "ACCESS_SECRET";
-    DropboxAPI<AndroidAuthSession> mDropboxApi;
+   // DropboxAPI<AndroidAuthSession> mDropboxApi;
 
     private boolean mDropboxLoggedIn;
     private boolean pendingDropboxBackup = false;
@@ -111,6 +134,8 @@ public class SetupImFragment extends Fragment {
     private Activity activity;
     private LIMEPreferenceManager mLIMEPref;
 
+    private String separator = java.io.File.separator;
+
     /**
      * The fragment argument representing the section number for this
      * fragment.
@@ -144,10 +169,10 @@ public class SetupImFragment extends Fragment {
 
         //Dropbox initialization  '12,12,23 Jermey
         // We create a new AuthSession so that we can use the Dropbox API.
-        AndroidAuthSession session = buildSession();
-        mDropboxApi = new DropboxAPI<AndroidAuthSession>(session);
+        //AndroidAuthSession session = buildSession();
+        //mDropboxApi = new DropboxAPI<AndroidAuthSession>(session);
         checkAppKeySetup();
-        mDropboxLoggedIn = mDropboxApi.getSession().isLinked();
+       // mDropboxLoggedIn = mDropboxApi.getSession().isLinked();
 
 
         View rootView = inflater.inflate(R.layout.fragment_setup_im, container, false);
@@ -171,8 +196,8 @@ public class SetupImFragment extends Fragment {
             @Override
             public void onClick(View v) {
 
-                File srcFile = new File(Lime.DATABASE_FOLDER + File.separator + Lime.DATABASE_NAME);
-                File srcFile2 = new File(Lime.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + Lime.DATABASE_NAME);
+                File srcFile = new File(Lime.DATABASE_FOLDER + separator + Lime.DATABASE_NAME);
+                File srcFile2 = new File(Lime.DATABASE_DECOMPRESS_FOLDER_SDCARD + separator + Lime.DATABASE_NAME);
 
                 if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
                     AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
@@ -203,8 +228,8 @@ public class SetupImFragment extends Fragment {
             @Override
             public void onClick(View v) {
 
-                File srcFile = new File(Lime.DATABASE_FOLDER + File.separator + Lime.DATABASE_NAME);
-                File srcFile2 = new File(Lime.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + Lime.DATABASE_NAME);
+                File srcFile = new File(Lime.DATABASE_FOLDER + separator + Lime.DATABASE_NAME);
+                File srcFile2 = new File(Lime.DATABASE_DECOMPRESS_FOLDER_SDCARD + separator + Lime.DATABASE_NAME);
                 if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
@@ -250,8 +275,8 @@ public class SetupImFragment extends Fragment {
                 if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
 
 
-                    File srcFile = new File(Lime.DATABASE_FOLDER + File.separator + Lime.DATABASE_NAME);
-                    File srcFile2 = new File(Lime.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + Lime.DATABASE_NAME);
+                    File srcFile = new File(Lime.DATABASE_FOLDER + separator + Lime.DATABASE_NAME);
+                    File srcFile2 = new File(Lime.DATABASE_DECOMPRESS_FOLDER_SDCARD + separator + Lime.DATABASE_NAME);
 
                     if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
                         AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
@@ -321,8 +346,8 @@ public class SetupImFragment extends Fragment {
 
                 if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
 
-                    File srcFile = new File(Lime.DATABASE_FOLDER + File.separator + Lime.DATABASE_NAME);
-                    File srcFile2 = new File(Lime.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + Lime.DATABASE_NAME);
+                    File srcFile = new File(Lime.DATABASE_FOLDER + separator + Lime.DATABASE_NAME);
+                    File srcFile2 = new File(Lime.DATABASE_DECOMPRESS_FOLDER_SDCARD + separator + Lime.DATABASE_NAME);
 
                     if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
                         AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
@@ -333,7 +358,7 @@ public class SetupImFragment extends Fragment {
 
                                 if (!mDropboxLoggedIn) {
                                     // Start the remote authentication
-                                    mDropboxApi.getSession().startAuthentication(activity);
+                                   // mDropboxApi.getSession().startAuthentication(activity);
                                     pendingDropboxBackup = true; //do database backup after on Resume();
                                 }else{
                                     //
@@ -374,7 +399,7 @@ public class SetupImFragment extends Fragment {
 
                             if (!mDropboxLoggedIn) {
                                 // Start the remote authentication
-                                mDropboxApi.getSession().startAuthentication(activity);
+                               // mDropboxApi.getSession().startAuthentication(activity);
                                 pendingDropboxRestore = true; //do database backup after on Resume();
                             }else{
                                 //
@@ -429,10 +454,13 @@ public class SetupImFragment extends Fragment {
 
     public void backupDatabaseGooldDrive() {
 
+        credential = GoogleAccountCredential.usingOAuth2(this.getActivity(), Arrays.asList(DriveScopes.DRIVE));
+        startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
+
         //tempFile.deleteOnExit();
 
-        BackupRestoreTask task = new BackupRestoreTask(this, DBSrv, BackupRestoreTask.CLOUDBACKUP);
-        task.execute("");
+        //BackupRestoreTask task = new BackupRestoreTask(this, DBSrv, BackupRestoreTask.CLOUDBACKUP);
+        //task.execute("");
 
 
 		/*  Jeremy '12,12,23 Moved to postExcute of bakcupRestoreTask.  Zip db first (backupdatabase) before backup to google drive now.
@@ -445,23 +473,198 @@ public class SetupImFragment extends Fragment {
 							  task.execute("");*/
     }
 
+
     public void restoreDatabaseGoogleDrive() {
+
+        credential = GoogleAccountCredential.usingOAuth2(this.getActivity(), Arrays.asList(DriveScopes.DRIVE));
+        startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
+
+
+        /*
         File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
         if(!limedir.exists()){
             limedir.mkdirs();
         }
 
-        File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_CLOUD_TEMP);
+        File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + separator + LIME.DATABASE_CLOUD_TEMP);
         tempFile.deleteOnExit();
 
         cHandler = new CloudServierHandler(this);
         bTask = new Thread(new CloudRestoreServiceRunnable(cHandler, activity, tempFile));
         bTask.start();
 
-        showProgressDialog(false);
+        showProgressDialog(false);*/
 		/*BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDRESTORE);
 						      task.execute("");*/
         //initialButton();
+    }
+
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data){
+        switch (requestCode) {
+            case REQUEST_ACCOUNT_PICKER:
+                if (resultCode == this.getActivity().RESULT_OK && data != null && data.getExtras() != null) {
+                    String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+                    if (accountName != null) {
+                        credential.setSelectedAccountName(accountName);
+                        service = getDriveService(credential);
+                        // Do Something
+                        saveFileToDrive();
+                    }
+                }
+                break;
+            case REQUEST_AUTHORIZATION:
+                if (resultCode == Activity.RESULT_OK) {
+                    // Do somehting backup
+                    saveFileToDrive();
+                } else {
+                    startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
+                }
+                break;
+            case REQUEST_DROPBOX_BACKUP :
+                if (resultCode == Activity.RESULT_OK) {
+                    // Do Something backup
+                    saveFileToDrive();
+                }
+        }
+    }
+
+   /* @Override
+    void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        switch (requestCode) {
+            case REQUEST_ACCOUNT_PICKER:
+                if (resultCode == this.getActivity().RESULT_OK && data != null && data.getExtras() != null) {
+                    String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+                    if (accountName != null) {
+                        credential.setSelectedAccountName(accountName);
+                        service = getDriveService(credential);
+                        // Do Something
+                    }
+                }
+                break;
+            case REQUEST_AUTHORIZATION:
+                if (resultCode == Activity.RESULT_OK) {
+                    // Do somehting backup
+                    //saveFileToDrive();
+                } else {
+                    startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
+                }
+                break;
+            case REQUEST_DROPBOX_BACKUP :
+                if (resultCode == Activity.RESULT_OK) {
+                    // Do Something backup
+                    //saveFileToDrive();
+                }
+        }
+    }*/
+
+    protected void saveFileToDrive() {
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // File's binary content
+                    java.io.File fileContent = new java.io.File(Lime.DATABASE_FOLDER_EXTERNAL + "cloudtemp.zip");
+                    java.io.File saveContent = new java.io.File(Lime.DATABASE_FOLDER_EXTERNAL + "cloudtempsaved.zip");
+                    FileContent uploadtarget = new FileContent("application/zip", fileContent);
+
+                    // File's metadata.
+                    com.google.api.services.drive.model.File body = new com.google.api.services.drive.model.File();
+                    body.setTitle(fileContent.getName());
+                    body.setMimeType("application/zip");
+
+                    Drive.Files.List request = null;
+                    List<com.google.api.services.drive.model.File> result = new ArrayList<com.google.api.services.drive.model.File>();
+                    try {
+                        boolean continueload = true;
+                        request = service.files().list();
+                        String id = null;
+
+                        do {
+                            try {
+                                FileList files = request.execute();
+                                for(com.google.api.services.drive.model.File f: files.getItems()){
+                                    if(f.getTitle().equalsIgnoreCase("cloudtemp.zip")){
+                                        id = f.getId();
+                                        continueload = true;
+
+                                        if(saveContent.exists()){
+                                            saveContent.delete();
+                                        }
+
+                                        InputStream fi = downloadFile(service, f);
+                                        FileOutputStream fo = new FileOutputStream(saveContent);
+                                        try {
+                                            int bytesRead;
+                                            byte[] buffer = new byte[8 * 1024];
+                                            while ((bytesRead = fi.read(buffer)) != -1) {
+                                                fo.write(buffer, 0, bytesRead);
+                                            }
+                                        } finally {
+                                            fo.close();
+                                        }
+
+                                        break;
+                                    }
+                                }
+                            } catch (IOException e) {
+                                System.out.println("An error occurred: " + e);
+                                request.setPageToken(null);
+                            }
+                            if(!continueload){
+                                break;
+                            }
+                        } while (request.getPageToken() != null &&
+                                request.getPageToken().length() > 0);
+
+                        if(id != null){
+                            service.files().delete(id).execute();
+                        }
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+
+                    com.google.api.services.drive.model.File file = service.files().insert(body, uploadtarget).execute();
+                     if (file != null) {
+                        //showToast("Photo uploaded: " + file.getTitle());
+                        //startCameraIntent();
+                         //showToast("Success");
+                    }else{
+                         //showToast("failed");
+                     }
+
+                } catch (UserRecoverableAuthIOException e) {
+                    startActivityForResult(e.getIntent(), REQUEST_AUTHORIZATION);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        t.start();
+    }
+
+    private static InputStream downloadFile(Drive service, com.google.api.services.drive.model.File file) {
+        if (file.getDownloadUrl() != null && file.getDownloadUrl().length() > 0) {
+            try {
+                HttpResponse resp =
+                        service.getRequestFactory().buildGetRequest(new GenericUrl(file.getDownloadUrl()))
+                                .execute();
+                return resp.getContent();
+            } catch (IOException e) {
+                // An error occurred.
+                e.printStackTrace();
+                return null;
+            }
+        } else {
+            // The file doesn't have any content stored on Drive.
+            return null;
+        }
+    }
+
+    private Drive getDriveService(GoogleAccountCredential credential) {
+        return new Drive.Builder(AndroidHttp.newCompatibleTransport(), new GsonFactory(), credential)
+                .build();
     }
 
     public void restoreDatabaseDropbox(){
@@ -469,12 +672,12 @@ public class SetupImFragment extends Fragment {
         if(!limedir.exists()){
             limedir.mkdirs();
         }
-        File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_CLOUD_TEMP);
+        File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + separator + LIME.DATABASE_CLOUD_TEMP);
         tempFile.deleteOnExit();
 
-        DropboxDBRestore download =
-                new DropboxDBRestore(this, activity, mDropboxApi,LIME.DATABASE_BACKUP_NAME , tempFile);
-        download.execute();
+      /*  DropboxDBRestore download =
+                new DropboxDBRestore(this, activity, mDropboxApi,LIME.DATABASE_BACKUP_NAME , tempFile);*/
+        //download.execute();
 
         //initialButton();
 
@@ -532,7 +735,7 @@ public class SetupImFragment extends Fragment {
         if(DEBUG)
             Log.i(TAG, "logout Dropbox session, mDropboxLoggedIn = " + mDropboxLoggedIn);
         // Remove credentials from the session
-        mDropboxApi.getSession().unlink();
+        //mDropboxApi.getSession().unlink();
 
         // Clear our stored keys
         clearKeys();
@@ -541,7 +744,7 @@ public class SetupImFragment extends Fragment {
     }
 
     private void checkAppKeySetup() {
-        // Check to make sure that we have a valid app key
+        /*// Check to make sure that we have a valid app key
         if (APP_KEY.startsWith("CHANGE") ||
                 APP_SECRET.startsWith("CHANGE")) {
             showToast("You must apply for an app key and secret from developers.dropbox.com, and add them to the DBRoulette ap before trying it.");
@@ -561,7 +764,7 @@ public class SetupImFragment extends Fragment {
                     "com.dropbox.client2.android.AuthActivity with the " +
                     "scheme: " + scheme);
             this.activity.finish();
-        }
+        }*/
     }
 
     private void showToast(String msg) {
@@ -611,7 +814,7 @@ public class SetupImFragment extends Fragment {
         edit.commit();
     }
 
-    private AndroidAuthSession buildSession() {
+   /* private AndroidAuthSession buildSession() {
         if(DEBUG)
             Log.i(TAG, "buildSession()");
 
@@ -632,7 +835,7 @@ public class SetupImFragment extends Fragment {
         }
 
         return session;
-    }
+    }*/
 
 
     public class BackupRestoreTask extends AsyncTask<String,Integer,Integer> {
@@ -682,16 +885,16 @@ public class SetupImFragment extends Fragment {
         protected void onPostExecute(Integer result){
             pd.cancel();
             if(type == CLOUDBACKUP){
-                File sourceFile = new File(Lime.DATABASE_FOLDER_EXTERNAL + File.separator + Lime.DATABASE_BACKUP_NAME);
+                File sourceFile = new File(Lime.DATABASE_FOLDER_EXTERNAL + separator + Lime.DATABASE_BACKUP_NAME);
                 cHandler = new CloudServierHandler(fragment);
                 bTask = new Thread(new CloudBackupServiceRunnable(cHandler, fragment, sourceFile));
                 bTask.start();
                 showProgressDialog(true);
             }else if(type == DROPBOXBACKUP){
                 // Jeremy  '12,12,23 do dropbox backup now.
-                File sourceFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
-                DropboxDBBackup upload = new DropboxDBBackup(activity, mDropboxApi, "", sourceFile);
-                upload.execute();
+                File sourceFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + separator + LIME.DATABASE_BACKUP_NAME);
+               // DropboxDBBackup upload = new DropboxDBBackup(activity, mDropboxApi, "", sourceFile);
+               // upload.execute();
             }else if(type == CLOUDRESTORE || type == RESTORE){
                 //activity.initialButton();
                 dbsrv.checkPhoneticKeyboardSetting();//Jeremy '12,6,8 check the pheonetic keyboard consistency

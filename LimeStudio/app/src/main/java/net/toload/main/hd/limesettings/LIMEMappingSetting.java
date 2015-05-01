@@ -20,21 +20,6 @@
 
 package net.toload.main.hd.limesettings;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
-
-
-import net.toload.main.hd.R;
-import net.toload.main.hd.global.KeyboardObj;
-import net.toload.main.hd.global.LIME;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -50,12 +35,22 @@ import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.AdapterView.OnItemClickListener;
+
+import net.toload.main.hd.R;
+import net.toload.main.hd.global.KeyboardObj;
+import net.toload.main.hd.global.LIME;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * 
@@ -1237,11 +1232,11 @@ public class LIMEMappingSetting extends Activity {
 				}
 			});
 
-			AdView adView = new AdView(this, AdSize.SMART_BANNER, LIME.publisher);
+		/*	AdView adView = new AdView(this, AdSize.SMART_BANNER, LIME.publisher);
 	        LinearLayout layout = (LinearLayout)findViewById(R.id.ad_area);
 	        layout.addView(adView);
 	        AdRequest adRequest = new AdRequest();
-	        adView.loadAd(adRequest);
+	        adView.loadAd(adRequest);*/
 			
 
 		}

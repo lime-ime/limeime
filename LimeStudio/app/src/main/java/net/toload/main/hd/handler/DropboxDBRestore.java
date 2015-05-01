@@ -1,3 +1,4 @@
+/*
 package net.toload.main.hd.handler;
 
 import android.app.ProgressDialog;
@@ -25,11 +26,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+*/
 /**
  * Here we show getting metadata for a directory and downloading a file in a
  * background thread, trying to show typical exception handling and flow of
  * control for an app that downloads a file from Dropbox.
- */
+ *//*
+
 
 public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
 	private final boolean DEBUG = false;
@@ -72,7 +75,8 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
         mDialog.setCanceledOnTouchOutside(false);
         mDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         mDialog.setProgress(0);
-        /*
+        */
+/*
         mDialog.setButton(DialogInterface.BUTTON_NEGATIVE, 
         		mContext.getText(R.string.lime_loading_cancel)
         		, new DialogInterface.OnClickListener() {
@@ -81,7 +85,8 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
                 mRequest.abort();
             }
         });
-        */
+        *//*
+
         mDialog.show();
     }
 
@@ -232,3 +237,4 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
 
 
 }
+*/

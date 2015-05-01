@@ -1,31 +1,11 @@
 package net.toload.main.hd.handler;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.accounts.AccountManagerCallback;
-import android.accounts.AccountManagerFuture;
-import android.os.Bundle;
+import com.google.android.gms.drive.Drive;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.extensions.android2.auth.GoogleAccountManager;
-import com.google.gdata.client.docs.DocsService;
-import com.google.gdata.client.media.ResumableGDataFileUploader;
-import com.google.gdata.data.PlainTextConstruct;
-import com.google.gdata.data.docs.DocumentListEntry;
-import com.google.gdata.data.docs.DocumentListFeed;
-import com.google.gdata.data.media.MediaFileSource;
-
-import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.limesettings.DBServer;
-import net.toload.main.hd.limesettings.FileUploadProgressListener;
 import net.toload.main.hd.ui.SetupImFragment;
 
 import java.io.File;
-import java.net.URI;
-import java.net.URL;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class CloudBackupServiceRunnable  implements Runnable{
 
@@ -42,9 +22,9 @@ public class CloudBackupServiceRunnable  implements Runnable{
 	private static final int PROGRESS_UPDATE_INTERVAL = 1000;
 	private static final int DEFAULT_CHUNK_SIZE = 10000000;
 	
-	//private SharedPreferences pref;
-	private GoogleAccountManager accountManager;
-	private GoogleCredential credential;
+
+	private Drive drive;
+
 	static final String PREF_ACCOUNT_NAME = "accountName1";
 	static final String PREF_AUTH_TOKEN = "authToken";
 	LIMEPreferenceManager mLIMEPref;
@@ -63,8 +43,6 @@ public class CloudBackupServiceRunnable  implements Runnable{
 		this.fragment = fragment;
 		this.sourceFile = sourcefile;
 
-		this.accountManager = new GoogleAccountManager(fragment.getActivity());
-		this.credential = new GoogleCredential();
 		this.mLIMEPref = new LIMEPreferenceManager(fragment.getActivity());
 	}
 
@@ -75,8 +53,19 @@ public class CloudBackupServiceRunnable  implements Runnable{
 	}*/
 	
 	public void run() {
-		
-		
+
+
+
+		/*
+
+		credential = GoogleAccountCredential.usingOAuth2(this, Collections.singleton(TasksScopes.TASKS));
+
+		this.credential = new GoogleCredential().setAccessToken(PREF_AUTH_TOKEN);
+		this.drive = new Plus.builder(new NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
+				.setApplicationName("Google-PlusSample/1.0")
+				.build();
+
+		this.accountManager = new GoogleAccountManager(fragment.getActivity());
 		String accountName = "";
 		accountManager = new GoogleAccountManager(fragment.getActivity());
 
@@ -202,11 +191,11 @@ public class CloudBackupServiceRunnable  implements Runnable{
 		}else{
 			handler.closeProgressDialog();
 			mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
-		}
+		}*/
 	}
 	
 
-	private static DocsService getDocsService() {
+	/*private static DocsService getDocsService() {
 		DocsService service = new DocsService("LIMEDocsService");
 		return service;
 	}
@@ -216,6 +205,6 @@ public class CloudBackupServiceRunnable  implements Runnable{
 		MediaFileSource mediaFile = new MediaFileSource(file,
 				"application/x-zip");
 		return mediaFile;
-	}
+	}*/
 	
 }
