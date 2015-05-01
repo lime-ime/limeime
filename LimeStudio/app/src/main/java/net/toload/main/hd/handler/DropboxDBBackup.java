@@ -1,17 +1,8 @@
-/*
 package net.toload.main.hd.handler;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-
-import net.toload.main.hd.R;
-import net.toload.main.hd.limesettings.DBServer;
 
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
-
 
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.UploadRequest;
@@ -24,13 +15,18 @@ import com.dropbox.client2.exception.DropboxPartialFileException;
 import com.dropbox.client2.exception.DropboxServerException;
 import com.dropbox.client2.exception.DropboxUnlinkedException;
 
-*/
+import net.toload.main.hd.R;
+import net.toload.main.hd.limesettings.DBServer;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
 /**
  * Here we show uploading a file in a background thread, trying to show
  * typical exception handling and flow of control for an app that uploads a
  * file from Dropbox.
- *//*
-
+ */
 public class DropboxDBBackup extends AsyncTask<Void, Long, Boolean> {
 
     private DropboxAPI<?> mApi;
@@ -61,8 +57,7 @@ public class DropboxDBBackup extends AsyncTask<Void, Long, Boolean> {
         mDialog.setTitle(mContext.getText(R.string.l3_initial_dropbox_backup_database));
         mDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         mDialog.setProgress(0);
-        */
-/*
+        /*
         mDialog.setButton(DialogInterface.BUTTON_NEGATIVE, 
         		mContext.getText(R.string.lime_loading_cancel)
         		, new DialogInterface.OnClickListener() {
@@ -71,8 +66,7 @@ public class DropboxDBBackup extends AsyncTask<Void, Long, Boolean> {
                 mRequest.abort();
             }
         });
-        *//*
-
+        */
         mDialog.show();
     }
 
@@ -173,4 +167,3 @@ public class DropboxDBBackup extends AsyncTask<Void, Long, Boolean> {
 
    
 }
-*/

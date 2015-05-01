@@ -108,6 +108,7 @@
     <orderEntry type="library" exported="" name="google-http-client-jdo-1.20.0" level="project" />
     <orderEntry type="library" exported="" name="httpcore-4.0.1" level="project" />
     <orderEntry type="library" exported="" name="jdo2-api-2.3-eb" level="project" />
+    <orderEntry type="library" exported="" name="json_simple-1.1" level="project" />
     <orderEntry type="library" exported="" name="google-oauth-client-1.20.0" level="project" />
     <orderEntry type="library" exported="" name="google-oauth-client-appengine-1.20.0" level="project" />
     <orderEntry type="library" exported="" name="gson-2.1" level="project" />

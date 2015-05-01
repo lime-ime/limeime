@@ -110,7 +110,7 @@ public class LIMEInitial extends Activity {
 		//Dropbox initialization  '12,12,23 Jermey
 		// We create a new AuthSession so that we can use the Dropbox API.
         AndroidAuthSession session = buildSession();
-        mDropboxApi = new DropboxAPI<AndroidAuthSession>(session);
+        mDBApi = new DropboxAPI<AndroidAuthSession>(session);
         checkAppKeySetup();
 		mDropboxLoggedIn = mDropboxApi.getSession().isLinked();
 	    

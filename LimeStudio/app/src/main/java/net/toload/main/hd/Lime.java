@@ -16,6 +16,7 @@ public class Lime {
     final public static String DATABASE_DECOMPRESS_FOLDER_SDCARD = Environment.getExternalStorageDirectory() + "/limehd/databases";
     final public static String DATABASE_FOLDER_EXTERNAL = Environment.getExternalStorageDirectory() + "/limehd/";
     final public static String DATABASE_BACKUP_NAME = "backup.zip";
+    final public static String DATABASE_CLOUD_TEMP = "cloudtemp.zip";
 
     // Database Tables and columns
 
@@ -97,6 +98,34 @@ public class Lime {
     public static final String IM_TYPE_KEYBOARD = "keyboard";
 
     public static final int IM_MANAGE_DISPLAY_AMOUNT = 50;
+
+
+    public static final String separator = java.io.File.separator;
+
+    // Cloud Backup/Restore
+    // Dropbox
+    public static final String APP_KEY = "keuuzhfc6efjf6t";
+    public static final String APP_SECRET = "4y8fy4rqk8rofd8";
+
+    public final static String ACCOUNT_PREFS_NAME = "prefs";
+    public final static String ACCESS_KEY_NAME = "ACCESS_KEY";
+    public final static String ACCESS_SECRET_NAME = "ACCESS_SECRET";
+
+    public static final String BACKUP = "backup";
+    public static final String RESTORE = "restore";
+
+    public static final String GOOGLE = "GOOGLE";
+    public static final String GOOGLE_ACCOUNT_NAME = "GOOGLE_ACCOUNT_NAME";
+    public static final String GOOGLE_BACKUP_FILENAME = "limedatabasebackup.zip";
+
+    public static final String LOCAL = "LOCAL";
+
+    public static final String DROPBOX = "DROPBOX";
+
+    public static final String DEVICE = "device";
+
+
+    // Global Utility Methods
 
     public static String format(int number){
         try {
