@@ -1,9 +1,9 @@
 package net.toload.main.hd.ui;
 
 import android.os.RemoteException;
+import android.util.Log;
 
 import com.dropbox.client2.DropboxAPI;
-import com.dropbox.client2.ProgressListener;
 import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.exception.DropboxException;
 import com.dropbox.client2.exception.DropboxIOException;
@@ -20,6 +20,7 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
 
 import net.toload.main.hd.Lime;
+import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limesettings.DBServer;
@@ -65,15 +66,17 @@ public class SetupImRestoreRunnable implements Runnable{
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        handler.cancelProgress();
     }
 
+
     public void run() {
+
         handler.showProgress();
 
         if(type.equals(Lime.LOCAL)){
             try {
                 dbsrv.restoreDatabase();
+                handler.cancelProgress();
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -112,33 +115,42 @@ public class SetupImRestoreRunnable implements Runnable{
             } while (request.getPageToken() != null &&
                     request.getPageToken().length() > 0);
 
-            java.io.File tempfile = new java.io.File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DATABASE_CLOUD_TEMP);
+            if(cloudbackupfile != null){
+                java.io.File tempfile = new java.io.File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DATABASE_CLOUD_TEMP);
 
-            if(tempfile.exists()){
-                tempfile.delete();
-            }
+                if(tempfile.exists()){
+                    tempfile.delete();
+                }
 
-            InputStream fi = downloadFile(service, cloudbackupfile);
-            FileOutputStream fo = new FileOutputStream(tempfile);
-            try {
+                Log.i("LIME", cloudbackupfile.getId());
+                Log.i("LIME", cloudbackupfile.getTitle());
+                Log.i("LIME", cloudbackupfile.getDescription());
+                Log.i("LIME", cloudbackupfile.getDownloadUrl());
+
+                InputStream fi = downloadFile(service, cloudbackupfile);
+                FileOutputStream fo = new FileOutputStream(tempfile);
+
                 int bytesRead;
                 byte[] buffer = new byte[8 * 1024];
                 while ((bytesRead = fi.read(buffer)) != -1) {
                     fo.write(buffer, 0, bytesRead);
                 }
-            } finally {
+
                 fo.close();
+                Log.i("LIME", tempfile.getAbsoluteFile() + " -> " + tempfile.length());
+                // Decompress tempfile
+                DBServer.decompressFile(tempfile, Lime.DATABASE_DEVICE_FOLDER, Lime.DATABASE_NAME, true);
+                dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_cloud_restore_end), 0);
+            }else{
+                dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_cloud_restore_error), 0);
             }
 
-            // Decompress tempfile
-            DBServer.decompressFile(tempfile, Lime.DATABASE_DEVICE_FOLDER, Lime.DATABASE_NAME);
-
             mLIMEPref.setParameter(Lime.DATABASE_DOWNLOAD_STATUS, "true");
-            tempfile.deleteOnExit();
 
         } catch (Exception e1) {
             e1.printStackTrace();
         }
+        handler.cancelProgress();
 
     }
 
@@ -170,28 +182,11 @@ public class SetupImRestoreRunnable implements Runnable{
 
         try {
 
-            // mOutputStream is class level field.
             mFos = new FileOutputStream(tempfile);
 
-            //DropboxFileInfo info =
-            mdbapi.getFile("", null, mFos, new ProgressListener() {
+            DropboxAPI.DropboxFileInfo info = mdbapi.getFile(Lime.DATABASE_BACKUP_NAME, null, mFos, null);
+            Log.i("DbExampleLog", "The file's rev is: " + info.getMetadata().rev);
 
-                @Override
-                public void onProgress(long bytes, long total) {
-                    if (!mCanceled){
-                        //publishProgress(bytes, total);
-                        Long[] bytess = {bytes, total};
-                        //publishProgress(bytess);
-                    }else {
-                        if (mFos != null) {
-                            try {
-                                mFos.close();
-                            } catch (IOException e) {
-                            }
-                        }
-                    }
-                }
-            });
 
             //} catch (DropboxException e) {
             //    Log.e("DbExampleLog",
@@ -254,8 +249,9 @@ public class SetupImRestoreRunnable implements Runnable{
                     mFos = null;
 
                     //Download finished. Restore db now.
-                    DBServer.decompressFile(tempfile, Lime.DATABASE_DEVICE_FOLDER, Lime.DATABASE_NAME);
+                    DBServer.decompressFile(tempfile, Lime.DATABASE_DEVICE_FOLDER, Lime.DATABASE_NAME, true);
                     mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
+                    dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_dropbox_restore_end), 0);
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -263,6 +259,7 @@ public class SetupImRestoreRunnable implements Runnable{
             }
 
         }
+        handler.cancelProgress();
     }
 
 }

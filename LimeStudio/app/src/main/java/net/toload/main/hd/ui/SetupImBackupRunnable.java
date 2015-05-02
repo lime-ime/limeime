@@ -4,7 +4,6 @@ import android.os.RemoteException;
 import android.widget.Toast;
 
 import com.dropbox.client2.DropboxAPI;
-import com.dropbox.client2.ProgressListener;
 import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.exception.DropboxException;
 import com.dropbox.client2.exception.DropboxFileSizeException;
@@ -61,7 +60,6 @@ public class SetupImBackupRunnable implements Runnable{
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        handler.cancelProgress();
     }
 
     @Override
@@ -84,6 +82,9 @@ public class SetupImBackupRunnable implements Runnable{
         }else if(type.equals(Lime.DROPBOX)){
             File sourcefile = new File(Lime.DATABASE_FOLDER_EXTERNAL  + Lime.DATABASE_BACKUP_NAME);
             backupToDropbox(sourcefile);
+        }else{
+            dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_backup_end), 0);
+            handler.cancelProgress();
         }
     }
 
@@ -139,6 +140,7 @@ public class SetupImBackupRunnable implements Runnable{
         } catch (Exception e1) {
             e1.printStackTrace();
         }
+        handler.cancelProgress();
 
     }
 
@@ -146,32 +148,21 @@ public class SetupImBackupRunnable implements Runnable{
         return new Drive.Builder(AndroidHttp.newCompatibleTransport(), new GsonFactory(), credential).build();
     }
 
-
     private void backupToDropbox(File fileContent){
 
         try {
 
-            // By creating a request, we get a handle to the putFile operation,
-            // so we can cancel it later if we want to
-
             FileInputStream fis = new FileInputStream(fileContent);
-            String path = fileContent.getName();
-            mRequest = mdbapi.putFileOverwriteRequest(path, fis, fileContent.length(),
-                    new ProgressListener() {
-                        @Override
-                        public long progressInterval() {
-                            // Update the progress bar every half-second or so
-                            return 500;
-                        }
-                        @Override
-                        public void onProgress(long bytes, long total) {
-                            //publishProgress(bytes);
-                        }
-                    });
+            String filename = fileContent.getName();
 
-            if (mRequest != null) {
-                mRequest.upload();
-            }
+            // Remove exist file
+            try{
+                mdbapi.delete(Lime.DATABASE_BACKUP_NAME);
+            }catch(Exception e){}
+
+            // Upload new file
+            DropboxAPI.Entry response = mdbapi.putFile(Lime.DATABASE_BACKUP_NAME, fis, fileContent.length(), null, null);
+            dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_dropbox_backup_end), 0);
 
         } catch (DropboxUnlinkedException e) {
             // This session wasn't authenticated properly or user unlinked
@@ -220,6 +211,7 @@ public class SetupImBackupRunnable implements Runnable{
             //mErrorMsg = mContext.getText(R.string.l3_initial_dropbox_failed).toString();
         } catch (FileNotFoundException e) {
         }
+        handler.cancelProgress();
 
     }
 

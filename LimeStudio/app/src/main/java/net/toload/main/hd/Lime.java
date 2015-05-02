@@ -106,8 +106,6 @@ public class Lime {
     // Dropbox
     public static final String DATABASE_DOWNLOAD_STATUS = "database_download_status";
 
-    public static final String APP_KEY = "keuuzhfc6efjf6t";
-    public static final String APP_SECRET = "4y8fy4rqk8rofd8";
 
     public final static String ACCOUNT_PREFS_NAME = "prefs";
     public final static String ACCESS_KEY_NAME = "ACCESS_KEY";
@@ -123,10 +121,14 @@ public class Lime {
     public static final String LOCAL = "LOCAL";
 
     public static final String DROPBOX = "DROPBOX";
+    public static final String DROPBOX_TYPE = "DROPBOX_TYPE";
+    public static final String DROPBOX_APP_KEY = "1a85ahrq8uh60r7";
+    public static final String DROPBOX_APP_SECRET = "l3yyjll7ef3vfb3";
+    public static final String DROPBOX_ACCESS_TOKEN = "DROPBOX_ACCESS_TOKEN";
+    public static final String DROPBOX_REQUEST_FLAG = "DROPBOX_REQUEST_FLAG";
 
     public static final String DEVICE = "device";
     public static final int GOOGLE_RETRIEVE_MAXIMUM = 500;
-
 
     // Global Utility Methods
 
@@ -149,4 +151,5 @@ public class Lime {
             return "";
         }
     }
+
 }

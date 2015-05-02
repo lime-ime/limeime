@@ -25,7 +25,6 @@ public class MainActivity extends ActionBarActivity
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
     private NavigationDrawerFragment mNavigationDrawerFragment;
-    private SetupImFragment mAddImFragment;
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -35,7 +34,6 @@ public class MainActivity extends ActionBarActivity
 
     private DataSource datasource;
     private List<Im> imlist;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

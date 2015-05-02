@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +19,6 @@ import android.widget.Toast;
 
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.android.AndroidAuthSession;
-import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.AppKeyPair;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.services.drive.DriveScopes;
@@ -69,9 +69,10 @@ public class SetupImFragment extends Fragment {
     static final int REQUEST_DROPBOX_RESTORE = 8;
 
     // Dropbox
-    private DropboxAPI<AndroidAuthSession> mDBApi;
+    DropboxAPI<AndroidAuthSession> mdbapi;
+    String dropboxAccessToken;
 
-    // Custom Import
+            // Custom Import
     Button btnSetupImImportStandard;
     Button btnSetupImImportRelated;
 
@@ -115,16 +116,50 @@ public class SetupImFragment extends Fragment {
     public static SetupImFragment newInstance(int sectionNumber) {
         SetupImFragment frg = new SetupImFragment();
         Bundle args = new Bundle();
-        args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+                 args.putInt(ARG_SECTION_NUMBER, sectionNumber);
         frg.setArguments(args);
         return frg;
     }
 
-    public void showProgress(){
-        if(!progress.isShowing()){
+
+    @Override
+    public void onResume() {
+
+        super.onResume();
+
+        boolean dropboxrequest = mLIMEPref.getParameterBoolean(Lime.DROPBOX_REQUEST_FLAG, false);
+
+        if (dropboxrequest && mdbapi != null && mdbapi.getSession().authenticationSuccessful()) {
+            try {
+                // Required to complete auth, sets the access token on the session
+                mdbapi.getSession().finishAuthentication();
+                dropboxAccessToken = mdbapi.getSession().getOAuth2AccessToken();
+
+                mLIMEPref.setParameter(Lime.DROPBOX_ACCESS_TOKEN, dropboxAccessToken);
+                String type = mLIMEPref.getParameterString(Lime.DROPBOX_TYPE, null);
+
+                if(type != null && type.equals(Lime.BACKUP)){
+                    backupDropboxDrive(mdbapi);
+                }else if(type != null && type.equals(Lime.RESTORE)){
+                    restoreDropboxDrive(mdbapi);
+                }
+
+            } catch (IllegalStateException e) {
+                Log.i("DbAuthLog", "Error authenticating", e);
+            }
+        }
+
+        // Reset DropBox Request
+        mLIMEPref.setParameter(Lime.DROPBOX_REQUEST_FLAG, false);
+
+    }
+
+    public void showProgress() {
+        if (!progress.isShowing()) {
             progress.show();
         }
     }
+
     public void cancelProgress(){
         if(progress.isShowing()){
             progress.dismiss();
@@ -133,6 +168,11 @@ public class SetupImFragment extends Fragment {
     public void updateProgress(int value){
         if(!progress.isShowing()){
            progress.setProgress(value);
+        }
+    }
+    public void updateProgress(String value){
+        if(!progress.isShowing()){
+            progress.setMessage(value);
         }
     }
 
@@ -145,6 +185,7 @@ public class SetupImFragment extends Fragment {
         activity = getActivity();
         progress = new ProgressDialog(activity);
         progress.setMax(100);
+        progress.setCancelable(false);
 
         DBSrv = new DBServer(activity);
         mLIMEPref = new LIMEPreferenceManager(activity);
@@ -230,97 +271,6 @@ public class SetupImFragment extends Fragment {
         return rootView;
     }
 
-/*
-                if(DEBUG)
-                    Log.i(TAG, "Dropbox link, mDropboxLoggedIn = " + mDropboxLoggedIn);
-
-                if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
-
-                    File srcFile = new File(Lime.DATABASE_FOLDER + Lime.separator + Lime.DATABASE_NAME);
-                    File srcFile2 = new File(Lime.DATABASE_DECOMPRESS_FOLDER_SDCARD + Lime.separator + Lime.DATABASE_NAME);
-
-                    if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
-                        AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                        builder.setMessage(getText(R.string.l3_initial_dropbox_backup_confirm));
-                        builder.setCancelable(false);
-                        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-
-                                initialDropBoxSession();
-
-                                backupDropbox();
-
-                                    *//*mDBApi.getSession().startOAuth2Authentication(activity);
-
-                                    if (!mDropboxLoggedIn) {
-                                        // Start the remote authentication
-                                       // mDropboxApi.getSession().startAuthentication(activity);
-                                        pendingDropboxBackup = true; //do database backup after on Resume();
-                                    }else{
-                                        //
-                                        backupDatabaseDropbox();
-                                    }*//*
-                            }
-                        });
-                        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                            }
-                        });
-
-                        AlertDialog alert = builder.create();
-                        alert.show();
-                    }else{
-                        Toast.makeText(v.getContext(), getText(R.string.l3_initial_cloud_backup_error), Toast.LENGTH_SHORT).show();
-                    }
-                }else{
-                    Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-                }*/
-
-       /* btnSetupImRestoreDropbox = (Button) rootView.findViewById(R.id.btnSetupImRestoreDropbox);
-        btnSetupImRestoreDropbox.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(DEBUG)
-                    Log.i(TAG, "Dropbox link, mDropboxLoggedIn = " +mDropboxLoggedIn);
-
-                if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                    builder.setMessage(getText(R.string.l3_initial_dropbox_restore_confirm));
-                    builder.setCancelable(false);
-                    builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-
-                            if (!mDropboxLoggedIn) {
-                                // Start the remote authentication
-                                // mDropboxApi.getSession().startAuthentication(activity);
-                                pendingDropboxRestore = true; //do database backup after on Resume();
-                            }else{
-                                //
-                                restoreDatabaseDropbox();
-                            }
-
-                                *//*btnStoreSdcard.setEnabled(false);
-                                btnStoreDevice.setEnabled(false);*//*
-                        }
-                    });
-                    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                        }
-                    });
-
-                    AlertDialog alert = builder.create();
-                    alert.show();
-
-                    // Reset for SearchSrv
-                    mLIMEPref.setResetCacheFlag(true);
-
-                }else{
-                    Toast.makeText(v.getContext(), getText(R.string.l3_tab_initial_error), Toast.LENGTH_SHORT).show();
-                }
-            }
-        });*/
-
     public void showAlertDialog(final String action, final String type, String message){
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setMessage(message);
@@ -330,6 +280,7 @@ public class SetupImFragment extends Fragment {
                     public void onClick(DialogInterface dialog, int id) {
                         if(action != null){
                             if(action.equalsIgnoreCase(Lime.BACKUP)) {
+
                                 if(type.equalsIgnoreCase(Lime.LOCAL)){
                                     backupLocalDrive();
                                 }else if(type.equalsIgnoreCase(Lime.GOOGLE)){
@@ -337,14 +288,17 @@ public class SetupImFragment extends Fragment {
                                 }else if(type.equalsIgnoreCase(Lime.DROPBOX)){
                                     requestDropboxDrive(Lime.BACKUP);
                                 }
+
                             }else if(action.equalsIgnoreCase(Lime.RESTORE)){
-                                    restoreLocalDrive();
+
                                 if(type.equalsIgnoreCase(Lime.LOCAL)){
+                                    restoreLocalDrive();
                                 }else if(type.equalsIgnoreCase(Lime.GOOGLE)){
                                     requestGoogleDrive(Lime.RESTORE);
                                 }else if(type.equalsIgnoreCase(Lime.DROPBOX)){
                                     requestDropboxDrive(Lime.RESTORE);
                                 }
+
                             }
                         }
                     }
@@ -372,18 +326,20 @@ public class SetupImFragment extends Fragment {
         switch (requestCode) {
             case REQUEST_ACCOUNT_PICKER_BACKUP:
                 if (resultCode == activity.RESULT_OK && data != null && data.getExtras() != null) {
-                    String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-                    if (accountName != null) {
-                        credential.setSelectedAccountName(accountName);
+                    String accountname = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+                    if (accountname != null) {
+                        mLIMEPref.setParameter(Lime.GOOGLE_ACCOUNT_NAME, accountname);
+                        credential.setSelectedAccountName(accountname);
                         backupGoogleDrive(credential);
                     }
                 }
                 break;
             case REQUEST_ACCOUNT_PICKER_RESTORE:
                 if (resultCode == activity.RESULT_OK && data != null && data.getExtras() != null) {
-                    String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-                    if (accountName != null) {
-                        credential.setSelectedAccountName(accountName);
+                    String accountname = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+                    if (accountname != null) {
+                        mLIMEPref.setParameter(Lime.GOOGLE_ACCOUNT_NAME, accountname);
+                        credential.setSelectedAccountName(accountname);
                         restoreGoogleDrive(credential);
                     }
                 }
@@ -400,6 +356,7 @@ public class SetupImFragment extends Fragment {
             if(accountname == null){
                 this.startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER_BACKUP);
             }else{
+                mLIMEPref.setParameter(Lime.GOOGLE_ACCOUNT_NAME, accountname);
                 credential.setSelectedAccountName(accountname);
                 backupGoogleDrive(credential);
             }
@@ -407,6 +364,7 @@ public class SetupImFragment extends Fragment {
             if(accountname == null){
                 this.startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER_RESTORE);
             }else{
+                mLIMEPref.setParameter(Lime.GOOGLE_ACCOUNT_NAME, accountname);
                 credential.setSelectedAccountName(accountname);
                 restoreGoogleDrive(credential);
             }
@@ -414,13 +372,30 @@ public class SetupImFragment extends Fragment {
     }
 
     public void requestDropboxDrive(String type){
-        AndroidAuthSession session = buildSession();
-        mDBApi = new DropboxAPI<>(session);
 
-        if(type != null && type.equals(Lime.BACKUP)){
-            backupDropboxDrive(mDBApi);
-        }else if(type != null && type.equals(Lime.RESTORE)){
-            restoreDropboxDrive(mDBApi);
+        mLIMEPref.setParameter(Lime.DROPBOX_TYPE, type);
+        mLIMEPref.setParameter(Lime.DROPBOX_REQUEST_FLAG, true);
+
+        AppKeyPair appKeys = new AppKeyPair(Lime.DROPBOX_APP_KEY, Lime.DROPBOX_APP_SECRET);
+        AndroidAuthSession session = new AndroidAuthSession(appKeys);
+        mdbapi = new DropboxAPI<AndroidAuthSession>(session);
+
+        dropboxAccessToken = mLIMEPref.getParameterString(Lime.DROPBOX_ACCESS_TOKEN, null);
+        if(dropboxAccessToken == null){
+            mdbapi.getSession().startOAuth2Authentication(this.getActivity().getApplicationContext());
+        }else{
+
+            mdbapi = new DropboxAPI<AndroidAuthSession>(new AndroidAuthSession(appKeys, dropboxAccessToken));
+
+            if(mdbapi.getSession().isLinked()){
+                if(type != null && type.equals(Lime.BACKUP)){
+                    backupDropboxDrive(mdbapi);
+                }else if(type != null && type.equals(Lime.RESTORE)){
+                    restoreDropboxDrive(mdbapi);
+                }
+            }else{
+                mdbapi.getSession().startOAuth2Authentication(this.getActivity().getApplicationContext());
+            }
         }
     }
 
@@ -473,7 +448,8 @@ public class SetupImFragment extends Fragment {
         toast.show();
     }
 
-    private AndroidAuthSession buildSession() {
+    /*private AndroidAuthSession buildSession() {
+
         AppKeyPair appKeyPair = new AppKeyPair(Lime.APP_KEY, Lime.APP_SECRET);
         AndroidAuthSession session;
 
@@ -486,7 +462,7 @@ public class SetupImFragment extends Fragment {
         }
 
         return session;
-    }
+    }*/
 
     private String[] getDropboxKeys() {
         SharedPreferences prefs = activity.getSharedPreferences(Lime.ACCOUNT_PREFS_NAME, 0);
@@ -502,501 +478,15 @@ public class SetupImFragment extends Fragment {
         }
     }
 
-
-    /*private void initialDropBoxSession(){
-        if(mDBApi == null || !mDBApi.getSession().isLinked()){
-            AppKeyPair appKeys = new AppKeyPair(APP_KEY, APP_SECRET);
-            AndroidAuthSession session = new AndroidAuthSession(appKeys);
-            mDBApi = new DropboxAPI<AndroidAuthSession>(session);
-        }
-    }
-
-    public void backupDropbox(){
-        if (mDBApi.getSession().authenticationSuccessful()) {
-            try {
-                // Required to complete auth, sets the access token on the session
-                mDBApi.getSession().finishAuthentication();
-                String accessToken = mDBApi.getSession().getOAuth2AccessToken();
-            } catch (IllegalStateException e) {
-                Log.i("DbAuthLog", "Error authenticating", e);
-            }
-        }else{
-            mDBApi.getSession().startOAuth2Authentication(fragment.getActivity());
-        }
-    }
-
-    public void backupDatabase(){
-        BackupRestoreTask task = new BackupRestoreTask(SetupImFragment.this, DBSrv, BackupRestoreTask.BACKUP);
-        task.execute("");
-    }
-
-    public void restoreDatabase(){
-        BackupRestoreTask task = new BackupRestoreTask(SetupImFragment.this, DBSrv, BackupRestoreTask.RESTORE);
-        task.execute("");
-    }
-
-    private void backupDatabaseDropbox(){
-        BackupRestoreTask task = new BackupRestoreTask(SetupImFragment.this, DBSrv, BackupRestoreTask.DROPBOXBACKUP);
-        task.execute("");
-    }
-
-    public void backupDatabaseGooldDrive() {
-
-        credential = GoogleAccountCredential.usingOAuth2(fragment.getActivity(), Arrays.asList(DriveScopes.DRIVE));
-        fragment.startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
-
-        //tempFile.deleteOnExit();
-
-        //BackupRestoreTask task = new BackupRestoreTask(this, DBSrv, BackupRestoreTask.CLOUDBACKUP);
-        //task.execute("");
-
-
-		*//*  Jeremy '12,12,23 Moved to postExcute of bakcupRestoreTask.  Zip db first (backupdatabase) before backup to google drive now.
-		cHandler = new CloudServierHandler(this);
-		bTask = new Thread(new CloudBackupServiceRunnable(cHandler, this, tempFile));
-		bTask.start();
-		*//*
-        //showProgressDialog(true);
-		*//*BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDBACKUP);
-							  task.execute("");*//*
-    }
-
-
-    public void restoreDatabaseGoogleDrive() {
-
-        credential = GoogleAccountCredential.usingOAuth2(fragment.getActivity(), Arrays.asList(DriveScopes.DRIVE));
-        fragment.startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
-
-
-        *//*
-        File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
-        if(!limedir.exists()){
-            limedir.mkdirs();
-        }
-
-        File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + Lime.separator + LIME.DATABASE_CLOUD_TEMP);
-        tempFile.deleteOnExit();
-
-        cHandler = new CloudServierHandler(this);
-        bTask = new Thread(new CloudRestoreServiceRunnable(cHandler, activity, tempFile));
-        bTask.start();
-
-        showProgressDialog(false);*//*
-		*//*BackupRestoreTask task = new BackupRestoreTask(this,this.getApplicationContext(), DBSrv, tempFile, BackupRestoreTask.CLOUDRESTORE);
-						      task.execute("");*//*
-        //initialButton();
-    }
-
-
-    *//* @Override
-    void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
-        switch (requestCode) {
-            case REQUEST_ACCOUNT_PICKER:
-                if (resultCode == this.getActivity().RESULT_OK && data != null && data.getExtras() != null) {
-                    String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-                    if (accountName != null) {
-                        credential.setSelectedAccountName(accountName);
-                        service = getDriveService(credential);
-                        // Do Something
-                    }
-                }
-                break;
-            case REQUEST_AUTHORIZATION:
-                if (resultCode == Activity.RESULT_OK) {
-                    // Do somehting backup
-                    //saveFileToDrive();
-                } else {
-                    startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
-                }
-                break;
-            case REQUEST_DROPBOX_BACKUP :
-                if (resultCode == Activity.RESULT_OK) {
-                    // Do Something backup
-                    //saveFileToDrive();
-                }
-        }
-    }*//*
-
-    protected void saveFileToDrive() {
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    // File's binary content
-                    java.io.File fileContent = new java.io.File(Lime.DATABASE_FOLDER_EXTERNAL + "cloudtemp.zip");
-                    java.io.File saveContent = new java.io.File(Lime.DATABASE_FOLDER_EXTERNAL + "cloudtempsaved.zip");
-                    FileContent uploadtarget = new FileContent("application/zip", fileContent);
-
-                    // File's metadata.
-                    com.google.api.services.drive.model.File body = new com.google.api.services.drive.model.File();
-                    body.setTitle(fileContent.getName());
-                    body.setMimeType("application/zip");
-
-                    Drive.Files.List request = null;
-                    List<com.google.api.services.drive.model.File> result = new ArrayList<com.google.api.services.drive.model.File>();
-                    try {
-                        boolean continueload = true;
-                        request = service.files().list();
-                        String id = null;
-
-                        do {
-                            try {
-                                FileList files = request.execute();
-                                for(com.google.api.services.drive.model.File f: files.getItems()){
-                                    if(f.getTitle().equalsIgnoreCase("cloudtemp.zip")){
-                                        id = f.getId();
-                                        continueload = true;
-
-                                        if(saveContent.exists()){
-                                            saveContent.delete();
-                                        }
-
-                                        InputStream fi = downloadFile(service, f);
-                                        FileOutputStream fo = new FileOutputStream(saveContent);
-                                        try {
-                                            int bytesRead;
-                                            byte[] buffer = new byte[8 * 1024];
-                                            while ((bytesRead = fi.read(buffer)) != -1) {
-                                                fo.write(buffer, 0, bytesRead);
-                                            }
-                                        } finally {
-                                            fo.close();
-                                        }
-
-                                        break;
-                                    }
-                                }
-                            } catch (IOException e) {
-                                System.out.println("An error occurred: " + e);
-                                request.setPageToken(null);
-                            }
-                            if(!continueload){
-                                break;
-                            }
-                        } while (request.getPageToken() != null &&
-                                request.getPageToken().length() > 0);
-
-                        if(id != null){
-                            service.files().delete(id).execute();
-                        }
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-
-                    com.google.api.services.drive.model.File file = service.files().insert(body, uploadtarget).execute();
-                     if (file != null) {
-                        //showToast("Photo uploaded: " + file.getTitle());
-                        //startCameraIntent();
-                         //showToast("Success");
-                    }else{
-                         //showToast("failed");
-                     }
-
-                } catch (UserRecoverableAuthIOException e) {
-                    fragment.startActivityForResult(e.getIntent(), REQUEST_AUTHORIZATION);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        t.start();
-    }
-
-    private static InputStream downloadFile(Drive service, com.google.api.services.drive.model.File file) {
-        if (file.getDownloadUrl() != null && file.getDownloadUrl().length() > 0) {
-            try {
-                HttpResponse resp =
-                        service.getRequestFactory().buildGetRequest(new GenericUrl(file.getDownloadUrl()))
-                                .execute();
-                return resp.getContent();
-            } catch (IOException e) {
-                // An error occurred.
-                e.printStackTrace();
-                return null;
-            }
-        } else {
-            // The file doesn't have any content stored on Drive.
-            return null;
-        }
-    }
-
-    private Drive getDriveService(GoogleAccountCredential credential) {
-        return new Drive.Builder(AndroidHttp.newCompatibleTransport(), new GsonFactory(), credential)
-                .build();
-    }
-
-    public void restoreDatabaseDropbox(){
-        File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
-        if(!limedir.exists()){
-            limedir.mkdirs();
-        }
-        File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + Lime.separator + LIME.DATABASE_CLOUD_TEMP);
-        tempFile.deleteOnExit();
-
-      *//*  DropboxDBRestore download =
-                new DropboxDBRestore(this, activity, mDropboxApi,LIME.DATABASE_BACKUP_NAME , tempFile);*//*
-        //download.execute();
-
-        //initialButton();
-
-    }
-
-    public void showProgressDialog(boolean isBackup){
-        if(isBackup){
-            cloudpd = new ProgressDialog(activity);
-            cloudpd.setTitle(fragment.getText(R.string.l3_initial_cloud_backup_database));
-            cloudpd.setMessage(fragment.getText(R.string.l3_initial_cloud_backup_start));
-            cloudpd.setCancelable(false);
-            cloudpd.setOnCancelListener(new DialogInterface.OnCancelListener(){
-                @Override
-                public void onCancel(DialogInterface dialog) {
-                    mLIMEPref.setParameter("cloud_in_process",Boolean.valueOf(false));
-                }
-            });
-            cloudpd.setIndeterminate(false);
-            cloudpd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            cloudpd.setCanceledOnTouchOutside(false);
-            cloudpd.setMax(100);
-            cloudpd.show();
-        }else{
-            cloudpd = new ProgressDialog(activity);
-            cloudpd.setTitle(fragment.getText(R.string.l3_initial_cloud_restore_database));
-            cloudpd.setMessage(fragment.getText(R.string.l3_initial_cloud_restore_start));
-            cloudpd.setCancelable(true);
-            cloudpd.setOnCancelListener(new DialogInterface.OnCancelListener(){
-                @Override
-                public void onCancel(DialogInterface dialog) {
-                    mLIMEPref.setParameter("cloud_in_process",Boolean.valueOf(false));
-                }
-            });
-            cloudpd.setIndeterminate(false);
-            cloudpd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            cloudpd.setCanceledOnTouchOutside(false);
-            cloudpd.setMax(100);
-            cloudpd.show();
-        }
-    }
-
-    public void updateProgressDialog(int progress){
-        if(cloudpd!=null && cloudpd.isShowing()){
-            cloudpd.setProgress(progress);
-        }
-    }
-
-    public void closeProgressDialog(){
-        if(cloudpd != null && cloudpd.isShowing()){
-            cloudpd.dismiss();
-        }
-    }
-
-    private void logOut() {
-        if(DEBUG)
-            Log.i(TAG, "logout Dropbox session, mDropboxLoggedIn = " + mDropboxLoggedIn);
-        // Remove credentials from the session
-        //mDropboxApi.getSession().unlink();
-
-        // Clear our stored keys
-        clearKeys();
-        // Change UI state to display logged out version
-        mDropboxLoggedIn = false;
-    }
-
-  /*  private void checkAppKeySetup() {
-        *//**//*//**//*//* Check to make sure that we have a valid app key
-        if (APP_KEY.startsWith("CHANGE") ||
-                APP_SECRET.startsWith("CHANGE")) {
-            showToast("You must apply for an app key and secret from developers.dropbox.com, and add them to the DBRoulette ap before trying it.");
-            this.activity.finish();
-            return;
-        }
-
-        // Check if the app has set up its manifest properly.
-        Intent testIntent = new Intent(Intent.ACTION_VIEW);
-        String scheme = "db-" + APP_KEY;
-        String uri = scheme + "://" + AuthActivity.AUTH_VERSION + "/test";
-        testIntent.setData(Uri.parse(uri));
-        PackageManager pm = this.activity.getPackageManager();
-        if (0 == pm.queryIntentActivities(testIntent, 0).size()) {
-            showToast("URL scheme in your app's " +
-                    "manifest is not set up correctly. You should have a " +
-                    "com.dropbox.client2.android.AuthActivity with the " +
-                    "scheme: " + scheme);
-            this.activity.finish();
-        }*//**//*
-    }
-
-    *//**//**
-     *
-     * @param msg
-     * @param length
-     *//**//*
-
-    *//**//**
-     * Shows keeping the access keys returned from Trusted Authenticator in a local
-     * store, rather than storing user name & password, and re-authenticating each
-     * time (which is not to be done, ever).
-     *
-     * @return Array of [access_key, access_secret], or null if none stored
-     *//**//*
-    private String[] getKeys() {
-        SharedPreferences prefs = SetupImFragment.this.activity.getSharedPreferences(ACCOUNT_PREFS_NAME, 0);
-        String key = prefs.getString(ACCESS_KEY_NAME, null);
-        String secret = prefs.getString(ACCESS_SECRET_NAME, null);
-        if (key != null && secret != null) {
-            String[] ret = new String[2];
-            ret[0] = key;
-            ret[1] = secret;
-            return ret;
-        } else {
-            return null;
-        }
-    }
-
-    *//**//**
-     * Shows keeping the access keys returned from Trusted Authenticator in a local
-     * store, rather than storing user name & password, and re-authenticating each
-     * time (which is not to be done, ever).
-     *//**//*
     private void storeKeys(String key, String secret) {
         // Save the access key for later
-        SharedPreferences prefs = SetupImFragment.this.activity.getSharedPreferences(ACCOUNT_PREFS_NAME, 0);
+        SharedPreferences prefs = activity.getSharedPreferences(Lime.ACCOUNT_PREFS_NAME, 0);
         SharedPreferences.Editor edit = prefs.edit();
-        edit.putString(ACCESS_KEY_NAME, key);
-        edit.putString(ACCESS_SECRET_NAME, secret);
+        edit.putString(Lime.ACCESS_KEY_NAME, key);
+        edit.putString(Lime.ACCESS_SECRET_NAME, secret);
         edit.commit();
     }
 
-    private void clearKeys() {
-        SharedPreferences prefs = SetupImFragment.this.activity.getSharedPreferences(ACCOUNT_PREFS_NAME, 0);
-        SharedPreferences.Editor edit = prefs.edit();
-        edit.clear();
-        edit.commit();
-    }
-
-    public void onResume() {
-        fragment.onResume();
-    }
-
-   *//**//* private AndroidAuthSession buildSession() {
-        if(DEBUG)
-            Log.i(TAG, "buildSession()");
-
-        AppKeyPair appKeyPair = new AppKeyPair(APP_KEY, APP_SECRET);
-        AndroidAuthSession session;
-
-        String[] stored = getKeys();
-        if (stored != null) {
-            if(DEBUG)
-                Log.i(TAG, "Got stored key, key = " + stored[0] + ", secret = " + stored[1]);
-            AccessTokenPair accessToken = new AccessTokenPair(stored[0], stored[1]);
-            session = new AndroidAuthSession(appKeyPair, ACCESS_TYPE, accessToken);
-        } else {
-            if(DEBUG)
-                Log.i(TAG, "no stored key. start a new session.");
-
-            session = new AndroidAuthSession(appKeyPair, ACCESS_TYPE);
-        }
-
-        return session;
-    }*//**//**/
-
-
-    /*public class BackupRestoreTask extends AsyncTask<String,Integer,Integer> {
-
-        private ProgressDialog pd;
-        private DBServer dbsrv = null;
-        private Activity activity;
-        private SetupImFragment fragment;
-
-        //private File tempfile;
-        private int type;
-        final public static int CLOUDBACKUP = 1;
-        final public static int CLOUDRESTORE = 2;
-        final public static int BACKUP = 3;
-        final public static int RESTORE = 4;
-        final public static int DROPBOXBACKUP = 5;
-        final public static int DROPBOXRESTORE = 6;
-
-        BackupRestoreTask(SetupImFragment fragment, DBServer db, int settype){
-            dbsrv = db;
-            this.fragment = fragment;
-            activity = fragment.fragment.getActivity();
-            type = settype;
-        }
-
-        protected void onPreExecute(){
-
-            pd = new ProgressDialog(activity);
-            if(type == BACKUP || type == CLOUDBACKUP || type == DROPBOXBACKUP){
-                pd = ProgressDialog.show(activity, activity.getResources().getString(R.string.l3_initial_backup_database),
-                        activity.getResources().getString(R.string.l3_initial_backup_start), true);
-            }else if(type == RESTORE){
-                pd = ProgressDialog.show(activity, activity.getResources().getString(R.string.l3_initial_restore_database),
-                        activity.getResources().getString(R.string.l3_initial_restore_start), true);
-            }
-
-            mLIMEPref.setParameter("reload_database", true);
-            try {
-                dbsrv.closeDatabse();
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-
-            mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
-        }*/
-
-   /*     protected void onPostExecute(Integer result){
-            pd.cancel();
-            if(type == CLOUDBACKUP){
-                File sourceFile = new File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.separator + Lime.DATABASE_BACKUP_NAME);
-                cHandler = new CloudServierHandler(fragment);
-                bTask = new Thread(new CloudBackupServiceRunnable(cHandler, fragment, sourceFile));
-                bTask.start();
-                showProgressDialog(true);
-            }else if(type == DROPBOXBACKUP){
-                // Jeremy  '12,12,23 do dropbox backup now.
-                File sourceFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + Lime.separator + LIME.DATABASE_BACKUP_NAME);
-               // DropboxDBBackup upload = new DropboxDBBackup(activity, mDropboxApi, "", sourceFile);
-               // upload.execute();
-            }else if(type == CLOUDRESTORE || type == RESTORE){
-                //activity.initialButton();
-                dbsrv.checkPhoneticKeyboardSetting();//Jeremy '12,6,8 check the pheonetic keyboard consistency
-                mLIMEPref.setResetCacheFlag(true);  //Jeremy '12,7,8 reset cache.
-            }
-        }*/
-
-     /*   @Override
-        protected Integer doInBackground(String... arg0) {
-
-            if(type == BACKUP || type == CLOUDBACKUP || type == DROPBOXBACKUP){
-                try {
-                    dbsrv.backupDatabase();
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-                mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
-            }else if(type == RESTORE){
-                try {
-                    dbsrv.restoreDatabase();
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-                mLIMEPref.setParameter("cloud_in_process", Boolean.valueOf(false));
-            }
-
-            boolean inProcess = true;
-            do{
-                inProcess = mLIMEPref.getParameterBoolean("cloud_in_process");
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }while(inProcess);
-            pd.setProgress(100);
-            return 1;
-        }
-    }*/
 
 
 }

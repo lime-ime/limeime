@@ -29,6 +29,9 @@ public class SetupImHandler extends Handler {
                 }else if(type.equalsIgnoreCase("update")){
                     int value= msg.getData().getInt("value");
                     fragment.updateProgress(value);
+                }else if(type.equalsIgnoreCase("message")){
+                    String message = msg.getData().getString("message");
+                    fragment.updateProgress(message);
                 }
             }
         }else if(action != null && action.equalsIgnoreCase("toast")){
@@ -63,6 +66,14 @@ public class SetupImHandler extends Handler {
         m.getData().putString("action", "progress");
         m.getData().putString("type", "update");
         m.getData().putInt("value", value);
+        this.sendMessageDelayed(m, 1);
+    }
+
+    public void updateProgress(String message) {
+        Message m = new Message();
+        m.getData().putString("action", "progress");
+        m.getData().putString("type", "message");
+        m.getData().putString("message", message);
         this.sendMessageDelayed(m, 1);
     }
 

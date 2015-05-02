@@ -20,6 +20,27 @@
 
 package net.toload.main.hd.limedb;
 
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteCantOpenDatabaseException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.os.RemoteException;
+import android.os.SystemClock;
+import android.util.Log;
+import android.util.Pair;
+import android.util.SparseArray;
+import android.widget.Toast;
+
+import net.toload.main.hd.R;
+import net.toload.main.hd.global.ImObj;
+import net.toload.main.hd.global.KeyboardObj;
+import net.toload.main.hd.global.LIME;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
+import net.toload.main.hd.global.Mapping;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -32,25 +53,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-
-import net.toload.main.hd.R;
-import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.global.ImObj;
-import net.toload.main.hd.global.KeyboardObj;
-import net.toload.main.hd.global.LIME;
-import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.global.Mapping;
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteException;
-import android.os.RemoteException;
-import android.os.SystemClock;
-import android.util.Log;
-import android.util.Pair;
-import android.util.SparseArray;
-import android.widget.Toast;
 
 /**
  * @author Art Hung and Jeremy Wu.
@@ -746,14 +748,19 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			}
 
 		}catch(Exception e){}
-		
-		if(db == null || (db!=null && !db.isOpen())){		
-			db = this.getWritableDatabase();
-			mLIMEPref.setMappingLoading(false); // Jeremy '12,4,10 reset mapping_loading status 
+
+		try {
+			if (db == null || (db != null && !db.isOpen())) {
+				db = this.getWritableDatabase();
+				mLIMEPref.setMappingLoading(false); // Jeremy '12,4,10 reset mapping_loading status
 			
 			/*if(db!=null && !db.isOpen())
 				checkCode3RIndexAndRecsordsInPhonetic(db); // Jeremy '12,6,5 check if phonetic table has code3r clumn and index 
-*/		}
+*/
+			}
+		}catch(SQLiteCantOpenDatabaseException e){
+			Log.i("Lime", "Cannot open database ");
+		}
 		
 		return db;
 	}
@@ -766,7 +773,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	private boolean checkDBConnection(){
 		//Jeremy '12,5,1 mapping loading. db is locked
 		if(mLIMEPref.getMappingLoading()) {
-			Toast.makeText(mContext, mContext.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT/2).show();
+			Toast.makeText(mContext, mContext.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT).show();
 			return false; 
 			 //Jermey'12,5,1 db == null if dabase is not exist
 			 //Jeremy'14,9,22 Fixed restore from Google/Dropbox failed without reset database first. Check with reload_database parameter here.
@@ -777,69 +784,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			return true;
 
 	}
-	
-//	
-//	//Deprecated by Jeremy '12,4,7
-//	@Deprecated 
-//	public SQLiteDatabase getSqliteDb(boolean readonly){
-//		
-//		// Execute database schema update process
-//		//updateDBVersion();
-//		//SQLiteDatabase db = null;
-//		try{
-//
-//			String dbtarget = mLIMEPref.getParameterString("dbtarget");
-//			
-//			
-//			//Jeremy '11',9,11 clean code
-//			db = SQLiteDatabase.openDatabase(getDBPath(dbtarget), 
-//					null, (readonly)? SQLiteDatabase.OPEN_READONLY: SQLiteDatabase.OPEN_READWRITE
-//					| SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-//
-//			/*if(dbtarget.equals("sdcard")){
-//				String sdcarddb = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
-//
-//				if(readonly){
-//					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-//				}else{
-//					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-//				}
-//			}else{
-//				String devicedb = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
-//				
-//				if(readonly){
-//					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-//					//db = this.getReadableDatabase();
-//				}else{
-//					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READWRITE |SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-//					//db = this.getWritableDatabase();
-//				}
-//			}*/
-//			
-//		}catch(Exception e){
-//			//e.printStackTrace();
-//			//Toast.makeText(ctx, ctx.getText(R.string.l3_initial_database_failed), Toast.LENGTH_SHORT).show();
-//			return null;
-//		}
-//		
-//		/*//Jeremy '11,9, 8 starting from 3.6 using db.getVersion and onUpgrade() again.
-//		if(DEBUG) Log.i(TAG, "databaseversion= " +
-//				db.getVersion() + " helperVersion= " + DATABASE_VERSION);
-//		if (db!=null && db.getVersion() != DATABASE_VERSION) {
-//			if(readonly){
-//				Log.w(TAG, "Can't upgrade read-only database from version " +
-//						db.getVersion() + " to " + DATABASE_VERSION);
-//			}else{
-//				//db.setVersion(67);
-//				onUpgrade(db, db.getVersion(), DATABASE_VERSION);
-//			}
-//		}*/
-//
-//
-//			 
-//		return db;
-//
-//	}
 
 	/**
 	 * Base on given table name to remove records
@@ -1162,12 +1106,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			e.printStackTrace();
 		}
 	}
-	/**
-	 * Jeremy '12,6,7 for phrase learning to get code from word 
-	 * @param keyword
-	 * @param tablenam
-	 * @return
-	 */
+
+
 	public List<Mapping> getRMapping(Mapping mapping, String table) {
 		String keyword = mapping.getWord();
 		return getRMapping(keyword, table);
@@ -2709,12 +2649,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		return cursor;
 	}
 
-	/**
-	 * Get dictionary database contents
-	 * 
-	 * @param keyword
-	 * @return
-	 */
+
 	public List<Mapping> queryUserDict(String pword, boolean getAllRecords) {
 		if(DEBUG)
 			Log.i(TAG,"queryUserDict(), " +getAllRecords);
@@ -3484,9 +3419,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		return munit;
 	}
 
-	/**
-	 * @param srcunit
-	 */
 	public synchronized void resetImInfo(String im) {
 		//Jeremy '12,5,1
 		if(openDBConnection(false)==null) return;
@@ -3496,9 +3428,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		// db.close();
 	}
 	
-	/**
-	 * @param srcunit
-	 */
+
 	public String getImInfo(String im, String field) {
 		//Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
 		if(!checkDBConnection()) return "";
@@ -3524,10 +3454,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		}catch(Exception e){e.printStackTrace();}
 		return iminfo;
 	}
-	
-	/**
-	 * @param srcunit
-	 */
+
 	public synchronized void removeImInfo(String im, String field) {
 		if(DEBUG)
 			Log.i(TAG, "removeImInfo()");
@@ -3551,9 +3478,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 	
 
-	/**
-	 * @param srcunit
-	 */
 	public synchronized void setImInfo(String im, String field, String value) {
 		//Jeremy '12,4,17 !checkDBConnection() when db is restoring or replaced.
 		if(!checkDBConnection()) return;
