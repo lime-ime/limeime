@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp">
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:text="New Button"
+        android:id="@+id/btnSetupImDialogLoad1"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:padding="10dp" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:text="New Button"
+        android:id="@+id/btnSetupImDialogLoad2"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:padding="10dp" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:text="New Button"
+        android:id="@+id/btnSetupImDialogLoad3"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:padding="10dp" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:text="@string/dialog_cancel"
+        android:id="@+id/btnSetupImDialogCancel"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:padding="10dp" />
+</LinearLayout>

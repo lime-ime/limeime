@@ -211,12 +211,12 @@
                     <Button
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/im_hs"
                         android:id="@+id/btnSetupImHs"
                         android:layout_weight="1"
                         android:padding="5dp"
                         android:layout_marginLeft="10dp"
-                        android:layout_marginRight="10dp" />
+                        android:layout_marginRight="10dp"
+                        android:enabled="false" />
                 </TableRow>
 
                 <TableRow

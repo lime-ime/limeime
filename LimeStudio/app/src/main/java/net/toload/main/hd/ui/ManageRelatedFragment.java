@@ -22,7 +22,6 @@ import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Related;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,6 +54,7 @@ public class ManageRelatedFragment extends Fragment {
     private List<Related> relatedlist;
 
     private int page = 0;
+    private int total = 0;
     private boolean searchreset = false;
 
     private String prequery = "";
@@ -134,10 +134,11 @@ public class ManageRelatedFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 int checkrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
-                if (checkrecord < relatedlist.size()) {
+                if (checkrecord < total) {
                     page++;
                 }
-                updateGridView(relatedlist);
+                searchrelated();
+                //updateGridView(relatedlist);
             }
         });
         this.btnManageRelatedPrevious = (Button) root.findViewById(R.id.btnManageRelatedPrevious);
@@ -148,7 +149,8 @@ public class ManageRelatedFragment extends Fragment {
                 if (page > 0) {
                     page--;
                 }
-                updateGridView(relatedlist);
+                searchrelated();
+                //updateGridView(relatedlist);
             }
         });
 
@@ -175,6 +177,7 @@ public class ManageRelatedFragment extends Fragment {
                     searchreset = true;
                     btnManageRelatedSearch.setText(getResources().getText(R.string.manage_related_reset));
                 } else {
+                    total = 0;
                     searchrelated(null);
                     edtManageRelatedSearch.setText("");
                     searchreset = false;
@@ -190,12 +193,29 @@ public class ManageRelatedFragment extends Fragment {
         return root;
     }
 
+    public void searchrelated(){
+        searchrelated(prequery);
+    }
+
     public void searchrelated(String curquery){
+
+        int offset = Lime.IM_MANAGE_DISPLAY_AMOUNT * page;
+
+        if((curquery == null && total == 0) || curquery != prequery ){
+            try {
+                datasource.open();
+                total = datasource.getRelatedSize(curquery);
+                page = 0;
+                datasource.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         if(ManageRelatedthread != null && ManageRelatedthread.isAlive()){
             handler.removeCallbacks(ManageRelatedthread);
         }
-        page = 0;
-        ManageRelatedthread = new Thread(new ManageRelatedRunnable(handler, activity, curquery));
+        ManageRelatedthread = new Thread(new ManageRelatedRunnable(handler, activity, curquery,
+                                                                Lime.IM_MANAGE_DISPLAY_AMOUNT, offset));
         ManageRelatedthread.start();
         prequery = curquery;
     }
@@ -234,7 +254,6 @@ public class ManageRelatedFragment extends Fragment {
     public void updateGridView(List<Related> relatedlist){
 
         this.relatedlist = relatedlist;
-        List<Related> templist = new ArrayList<Related>();
 
         int startrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * page;
         int endrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
@@ -245,40 +264,31 @@ public class ManageRelatedFragment extends Fragment {
             this.btnManageRelatedPrevious.setEnabled(false);
         }
 
-        if(endrecord <= this.relatedlist.size()){
+        if(endrecord <= total){
             this.btnManageRelatedNext.setEnabled(true);
         }else{
             this.btnManageRelatedNext.setEnabled(false);
+            endrecord = total;
         }
 
-        if(this.relatedlist.size() > 0){
-
-            for(int i = startrecord; i < endrecord ; i++){
-                if(i >= this.relatedlist.size()){
-                    endrecord = this.relatedlist.size();
-                    break;
-                }
-                Related w = this.relatedlist.get(i);
-                templist.add(w);
+        if(total > 0){
+            if(this.adapter == null){
+                this.adapter = new ManageRelatedAdapter(this.activity, relatedlist);
+                this.gridManageRelated.setAdapter(this.adapter);
+            }else{
+                this.adapter.setList(relatedlist);
+                this.adapter.notifyDataSetChanged();
+                this.gridManageRelated.setSelection(0);
             }
         }else{
             Toast.makeText(activity, R.string.no_search_result, Toast.LENGTH_SHORT).show();
         }
 
-        if(this.adapter == null){
-            this.adapter = new ManageRelatedAdapter(this.activity, templist);
-            this.gridManageRelated.setAdapter(this.adapter);
-        }else{
-            this.adapter.setList(templist);
-            this.adapter.notifyDataSetChanged();
-            this.gridManageRelated.setSelection(0);
-        }
-
         String nav = "0";
 
-        if(this.relatedlist.size() > 0){
+        if(total > 0){
             nav = Lime.format(startrecord + 1) + "-" + Lime.format(endrecord);
-            nav += " of " + Lime.format(this.relatedlist.size());
+            nav += " of " + Lime.format(total);
         }
 
         this.txtNavigationInfo.setText(nav);
@@ -289,7 +299,7 @@ public class ManageRelatedFragment extends Fragment {
     public void removeRelated(int id){
 
         // Remove from the temp list
-        for(int i = 0 ; i < this.relatedlist.size() ; i++){
+        for(int i = 0 ; i < total ; i++){
            if(id== this.relatedlist.get(i).getId()){
                this.relatedlist.remove(i);
                break;
@@ -306,7 +316,9 @@ public class ManageRelatedFragment extends Fragment {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        updateGridView(this.relatedlist);
+        total--;
+        searchrelated();
+        //updateGridView(this.relatedlist);
     }
 
     public void addRelated(String pword, String cword, int score) {
@@ -327,16 +339,19 @@ public class ManageRelatedFragment extends Fragment {
             e.printStackTrace();
         }
 
+        total++;
+        searchrelated();
+
         // Add to temp list
-        page = 0;
-        this.relatedlist.add(0,obj);
-        updateGridView(this.relatedlist);
+        //page = 0;
+        //this.relatedlist.add(0,obj);
+        //updateGridView(this.relatedlist);
     }
 
     public void updateRelated(int id, String pword, String cword, int score) {
 
         // remove from temp list
-        for(int i = 0 ; i < this.relatedlist.size() ; i++){
+        for(int i = 0 ; i < total ; i++){
             if(id== this.relatedlist.get(i).getId()){
                 Related check = this.relatedlist.get(i);
                      check.setPword(pword);
@@ -362,7 +377,9 @@ public class ManageRelatedFragment extends Fragment {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        updateGridView(this.relatedlist);
+
+        searchrelated();
+        //updateGridView(this.relatedlist);
     }
 
 }

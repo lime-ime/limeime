@@ -6,10 +6,10 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -58,15 +58,6 @@ public class SetupImFragment extends Fragment {
     private GoogleAccountCredential credential;
     static final int REQUEST_ACCOUNT_PICKER_BACKUP = 1;
     static final int REQUEST_ACCOUNT_PICKER_RESTORE = 2;
-    static final int REQUEST_AUTHORIZATION_BACKUP = 3;
-    static final int REQUEST_AUTHORIZATION_RESTORE = 4;
-
-    static final int REQUEST_LOCAL_BACKUP = 3;
-    static final int REQUEST_LOCAL_RESTORE = 4;
-    static final int REQUEST_GOOGLE_BACKUP = 5;
-    static final int REQUEST_GOOGLE_RESTORE = 6;
-    static final int REQUEST_DROPBOX_BACKUP = 7;
-    static final int REQUEST_DROPBOX_RESTORE = 8;
 
     // Dropbox
     DropboxAPI<AndroidAuthSession> mdbapi;
@@ -87,6 +78,7 @@ public class SetupImFragment extends Fragment {
     Button btnSetupImArray;
     Button btnSetupImArray10;
     Button btnSetupImHs;
+    Button btnSetupImWb;
     Button btnSetupImPinyin;
 
     // Backup Restore
@@ -197,17 +189,127 @@ public class SetupImFragment extends Fragment {
 
         btnSetupImImportStandard = (Button) rootView.findViewById(R.id.btnSetupImImportStandard);
         btnSetupImImportRelated = (Button) rootView.findViewById(R.id.btnSetupImImportRelated);
+
         btnSetupImPhonetic = (Button) rootView.findViewById(R.id.btnSetupImPhonetic);
+        btnSetupImPhonetic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_PHONETIC);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
         btnSetupImCj = (Button) rootView.findViewById(R.id.btnSetupImCj);
+        btnSetupImCj.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CJ);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
         btnSetupImCj5 = (Button) rootView.findViewById(R.id.btnSetupImCj5);
+        btnSetupImCj5.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CJ5);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
         btnSetupImScj = (Button) rootView.findViewById(R.id.btnSetupImScj);
+        btnSetupImScj.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_SCJ);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
         btnSetupImEcj = (Button) rootView.findViewById(R.id.btnSetupImEcj);
+        btnSetupImEcj.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ECJ);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
         btnSetupImDayi = (Button) rootView.findViewById(R.id.btnSetupImDayi);
+        btnSetupImDayi.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_DAYI);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
         btnSetupImEz = (Button) rootView.findViewById(R.id.btnSetupImEz);
+        btnSetupImEz.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_EZ);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
         btnSetupImArray = (Button) rootView.findViewById(R.id.btnSetupImArray);
+        btnSetupImArray.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ARRAY);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
         btnSetupImArray10 = (Button) rootView.findViewById(R.id.btnSetupImArray10);
+        btnSetupImArray10.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ARRAY10);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
         btnSetupImHs = (Button) rootView.findViewById(R.id.btnSetupImHs);
+        btnSetupImHs.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /*FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_HS);
+                dialog.show(ft, "loadimdialog");*/
+            }
+        });
+
+        btnSetupImWb = (Button) rootView.findViewById(R.id.btnSetupImWb);
+        btnSetupImWb.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_WB);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
+
         btnSetupImPinyin = (Button) rootView.findViewById(R.id.btnSetupImPinyin);
+        btnSetupImPinyin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_PINYIN);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
 
 
         // Backup and Restore Setting
@@ -272,6 +374,7 @@ public class SetupImFragment extends Fragment {
     }
 
     public void showAlertDialog(final String action, final String type, String message){
+
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setMessage(message);
         builder.setCancelable(false);
@@ -447,46 +550,5 @@ public class SetupImFragment extends Fragment {
         Toast toast = Toast.makeText(activity, msg, length);
         toast.show();
     }
-
-    /*private AndroidAuthSession buildSession() {
-
-        AppKeyPair appKeyPair = new AppKeyPair(Lime.APP_KEY, Lime.APP_SECRET);
-        AndroidAuthSession session;
-
-        String[] stored = getDropboxKeys();
-        if (stored != null) {
-            AccessTokenPair accessToken = new AccessTokenPair(stored[0], stored[1]);
-            session = new AndroidAuthSession(appKeyPair, accessToken);
-        } else {
-            session = new AndroidAuthSession(appKeyPair);
-        }
-
-        return session;
-    }*/
-
-    private String[] getDropboxKeys() {
-        SharedPreferences prefs = activity.getSharedPreferences(Lime.ACCOUNT_PREFS_NAME, 0);
-        String key = prefs.getString(Lime.ACCESS_KEY_NAME, null);
-        String secret = prefs.getString(Lime.ACCESS_SECRET_NAME, null);
-        if (key != null && secret != null) {
-            String[] ret = new String[2];
-            ret[0] = key;
-            ret[1] = secret;
-            return ret;
-        } else {
-            return null;
-        }
-    }
-
-    private void storeKeys(String key, String secret) {
-        // Save the access key for later
-        SharedPreferences prefs = activity.getSharedPreferences(Lime.ACCOUNT_PREFS_NAME, 0);
-        SharedPreferences.Editor edit = prefs.edit();
-        edit.putString(Lime.ACCESS_KEY_NAME, key);
-        edit.putString(Lime.ACCESS_SECRET_NAME, secret);
-        edit.commit();
-    }
-
-
 
 }

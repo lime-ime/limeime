@@ -22,26 +22,26 @@ public class ManageImHandler extends Handler {
     @Override
     public void handleMessage(Message msg) {
         String action = msg.getData().getString("action");
-        if(action.equals("progress")){
+        if (action.equals("progress")) {
             fragment.showProgress();
-        }else if(action.equals("add")){
+        } else if (action.equals("add")) {
             String code = msg.getData().getString("code");
             String code3r = msg.getData().getString("code3r");
             String word = msg.getData().getString("word");
             fragment.addWord(code, code3r, word);
-        }else if(action.equals("update")){
+        } else if (action.equals("update")) {
             int id = msg.getData().getInt("id");
             String code = msg.getData().getString("code");
             String code3r = msg.getData().getString("code3r");
             String word = msg.getData().getString("word");
             fragment.updateWord(id, code, code3r, word);
-        }else if(action.equals("keyboard")){
+        } else if (action.equals("keyboard")) {
             String keyboard = msg.getData().getString("keyboard");
             fragment.updateKeyboard(keyboard);
-        }else if(action.equals("remove")){
+        } else if (action.equals("remove")) {
             int id = msg.getData().getInt("id");
             fragment.removeWord(id);
-        }else{
+        } else {
             fragment.updateGridView(this.wordlist);
         }
     }
@@ -49,21 +49,21 @@ public class ManageImHandler extends Handler {
     public void showProgress() {
         Message m = new Message();
                 m.getData().putString("action", "progress");
-        this.sendMessageDelayed(m, 1000);
+        this.sendMessageDelayed(m, 1);
     }
 
     public void updateGridView(List<Word> words) {
         this.wordlist = words;
         Message m = new Message();
                 m.getData().putString("action", "display");
-        this.sendMessageDelayed(m, 1000);
+        this.sendMessageDelayed(m, 1);
     }
 
     public void removeWord(int id) {
         Message m = new Message();
         m.getData().putString("action", "remove");
         m.getData().putInt("id", id);
-        this.sendMessageDelayed(m, 1000);
+        this.sendMessageDelayed(m, 1);
     }
 
     public void updateWord(int id, String code, String code3r, String word) {
@@ -89,7 +89,7 @@ public class ManageImHandler extends Handler {
         Message m = new Message();
         m.getData().putString("action", "keyboard");
         m.getData().putString("keyboard", keyboard);
-        this.sendMessageDelayed(m, 1000);
+        this.sendMessageDelayed(m, 1);
     }
 
 

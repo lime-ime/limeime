@@ -40,6 +40,8 @@
 
     <string name="setup_im_load_standard">匯入自定字根表</string>
     <string name="setup_im_load_reset">移除自定字根表</string>
+
+    <string name="setup_im_dialog_title">下載輸入法</string>
     
     <string name="default_menu_initial">設定輸入法</string>
     <string name="default_menu_related">管理關聯字庫</string>

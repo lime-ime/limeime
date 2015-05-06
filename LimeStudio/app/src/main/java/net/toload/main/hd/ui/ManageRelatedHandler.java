@@ -38,7 +38,7 @@ public class ManageRelatedHandler extends Handler {
         }else if(action.equals("remove")){
             int id = msg.getData().getInt("id");
             fragment.removeRelated(id);
-        }else{
+        } else {
             fragment.updateGridView(this.relatedlist);
         }
     }
@@ -46,21 +46,21 @@ public class ManageRelatedHandler extends Handler {
     public void showProgress() {
         Message m = new Message();
                 m.getData().putString("action", "progress");
-        this.sendMessageDelayed(m, 1000);
+        this.sendMessageDelayed(m, 1);
     }
 
     public void updateGridView(List<Related> related) {
         this.relatedlist = related;
         Message m = new Message();
                 m.getData().putString("action", "display");
-        this.sendMessageDelayed(m, 1000);
+        this.sendMessageDelayed(m, 1);
     }
 
     public void removeRelated(int id) {
         Message m = new Message();
         m.getData().putString("action", "remove");
         m.getData().putInt("id", id);
-        this.sendMessageDelayed(m, 1000);
+        this.sendMessageDelayed(m, 1);
     }
 
     public void updateRelated(int id, String pword, String cword, int score) {

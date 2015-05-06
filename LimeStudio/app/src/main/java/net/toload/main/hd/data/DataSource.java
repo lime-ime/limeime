@@ -152,7 +152,7 @@ public class DataSource {
 		return result;
 	}
 
-	public List<Word> loadWord(String code, String query, boolean searchroot) {
+	public List<Word> loadWord(String code, String query, boolean searchroot, int maximum, int offset) {
 		List<Word> result = new ArrayList<Word>();
 		if(database != null && database.isOpen()){
 			Cursor cursor = null;
@@ -173,6 +173,11 @@ public class DataSource {
 			}else{
 				order = Lime.DB_COLUMN_WORD + " ASC";
 			}
+
+			if(maximum > 0){
+				order += " LIMIT " + maximum + " OFFSET " + offset;
+			}
+
 
 			cursor = database.query(code,
 										null, query,
@@ -225,7 +230,7 @@ public class DataSource {
 		}
 	}
 
-	public List<Related> loadRelated(String pword) {
+	public List<Related> loadRelated(String pword, int maximum, int offset) {
 
 		List<Related> result = new ArrayList<Related>();
 
@@ -241,6 +246,10 @@ public class DataSource {
 			query += "ifnull("+Lime.DB_RELATED_COLUMN_CWORD +", '') <> ''";
 
 			String order = Lime.DB_RELATED_COLUMN_PWORD+" asc," + Lime.DB_RELATED_COLUMN_SCORE + " desc";
+
+			if(maximum > 0){
+				order += " LIMIT " + maximum + " OFFSET " + offset;
+			}
 
 			cursor = database.query(Lime.DB_RELATED,
 					null, query,
@@ -275,4 +284,61 @@ public class DataSource {
 		return w;
 	}
 
+
+	public int getWordSize(String table, String curquery, boolean searchroot) {
+
+		int total = 0;
+
+		if(database != null && database.isOpen()){
+
+			Cursor cursor = null;
+
+			String query = "SELECT COUNT(*) as count FROM " + table + " WHERE ";
+
+			if(curquery != null && curquery.length() >= 1){
+				if(searchroot){
+					query += Lime.DB_COLUMN_CODE + " LIKE '"+curquery+"%' AND ifnull("+Lime.DB_COLUMN_WORD+", '') <> ''";
+				}else{
+					query += Lime.DB_COLUMN_WORD + " LIKE '%"+curquery+"%' AND ifnull("+Lime.DB_COLUMN_WORD+", '') <> ''";
+				}
+			}else{
+				query += " ifnull("+Lime.DB_COLUMN_WORD+", '') <> ''";
+			}
+
+			cursor = database.rawQuery(query, null);
+
+			cursor.moveToFirst();
+			total = cursor.getInt(cursor.getColumnIndex(Lime.DB_TOTAL_COUNT));
+			cursor.close();
+		}
+
+		return total;
+
+	}
+
+
+	public int getRelatedSize(String pword) {
+
+		int total = 0;
+
+		if(database != null && database.isOpen()){
+			Cursor cursor = null;
+
+			String query = "SELECT COUNT(*) as count FROM " + Lime.DB_RELATED + " WHERE ";
+
+			if(pword != null && !pword.isEmpty()){
+				query += Lime.DB_RELATED_COLUMN_PWORD + " = '"+pword +
+						"' AND ";
+			}
+
+			query += "ifnull("+Lime.DB_RELATED_COLUMN_CWORD +", '') <> ''";
+
+			cursor = database.rawQuery(query, null);
+
+			cursor.moveToFirst();
+			total = cursor.getInt(cursor.getColumnIndex(Lime.DB_TOTAL_COUNT));
+			cursor.close();
+		}
+		return total;
+	}
 }

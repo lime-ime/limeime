@@ -65,6 +65,7 @@ public class ManageImFragment extends Fragment {
     private List<Keyboard> keyboardlist;
 
     private int page = 0;
+    private int total = 0;
     private boolean searchroot = true;
     private boolean searchreset = false;
 
@@ -182,10 +183,11 @@ public class ManageImFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 int checkrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
-                if (checkrecord < wordlist.size()) {
+                if (checkrecord < total) {
                     page++;
                 }
-                updateGridView(wordlist);
+                searchword();
+                //updateGridView(wordlist);
             }
         });
         this.btnManageImPrevious = (Button) root.findViewById(R.id.btnManageImPrevious);
@@ -196,7 +198,8 @@ public class ManageImFragment extends Fragment {
                 if (page > 0) {
                     page--;
                 }
-                updateGridView(wordlist);
+                searchword();
+                //updateGridView(wordlist);
             }
         });
 
@@ -223,6 +226,7 @@ public class ManageImFragment extends Fragment {
                     searchreset = true;
                     btnManageImSearch.setText(getResources().getText(R.string.manage_im_reset));
                 } else {
+                    total = 0;
                     searchword(null);
                     edtManageImSearch.setText("");
                     searchreset = false;
@@ -246,12 +250,29 @@ public class ManageImFragment extends Fragment {
         return root;
     }
 
+    public void searchword(){
+        searchword(prequery);
+    }
+
     public void searchword(String curquery){
+
+        int offset = Lime.IM_MANAGE_DISPLAY_AMOUNT * page;
+
+        if((curquery == null && total == 0) || curquery != prequery ){
+            try {
+                datasource.open();
+                total = datasource.getWordSize(code, curquery, searchroot);
+                page = 0;
+                datasource.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         if(manageimthread != null && manageimthread.isAlive()){
             handler.removeCallbacks(manageimthread);
         }
-        page = 0;
-        manageimthread = new Thread(new ManageImRunnable(handler, activity, code, curquery, searchroot));
+        manageimthread = new Thread(new ManageImRunnable(handler, activity, code, curquery, searchroot,
+                                                                            Lime.IM_MANAGE_DISPLAY_AMOUNT, offset));
         manageimthread.start();
         prequery = curquery;
     }
@@ -292,7 +313,6 @@ public class ManageImFragment extends Fragment {
     public void updateGridView(List<Word> wordlist){
 
         this.wordlist = wordlist;
-        List<Word> templist = new ArrayList<Word>();
 
         int startrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * page;
         int endrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
@@ -303,40 +323,31 @@ public class ManageImFragment extends Fragment {
             this.btnManageImPrevious.setEnabled(false);
         }
 
-        if(endrecord <= this.wordlist.size()){
+        if(endrecord <= total){
             this.btnManageImNext.setEnabled(true);
         }else{
             this.btnManageImNext.setEnabled(false);
+            endrecord = total;
         }
 
-        if(this.wordlist.size() > 0){
-
-            for(int i = startrecord; i < endrecord ; i++){
-                if(i >= this.wordlist.size()){
-                    endrecord = this.wordlist.size();
-                    break;
-                }
-                Word w = this.wordlist.get(i);
-                templist.add(w);
+        if(total > 0){
+            if(this.adapter == null){
+                this.adapter = new ManageImAdapter(this.activity, wordlist);
+                this.gridManageIm.setAdapter(this.adapter);
+            }else{
+                this.adapter.setList(wordlist);
+                this.adapter.notifyDataSetChanged();
+                this.gridManageIm.setSelection(0);
             }
         }else{
             Toast.makeText(activity, R.string.no_search_result, Toast.LENGTH_SHORT).show();
         }
 
-        if(this.adapter == null){
-            this.adapter = new ManageImAdapter(this.activity, templist);
-            this.gridManageIm.setAdapter(this.adapter);
-        }else{
-            this.adapter.setList(templist);
-            this.adapter.notifyDataSetChanged();
-            this.gridManageIm.setSelection(0);
-        }
-
         String nav = "0";
 
-        if(this.wordlist.size() > 0){
+        if(total > 0){
             nav = Lime.format(startrecord + 1) + "-" + Lime.format(endrecord);
-            nav += " of " + Lime.format(this.wordlist.size());
+            nav += " of " + Lime.format(total);
         }
 
         this.txtNavigationInfo.setText(nav);
@@ -347,7 +358,7 @@ public class ManageImFragment extends Fragment {
     public void removeWord(int id){
 
         // Remove from the temp list
-        for(int i = 0 ; i < this.wordlist.size() ; i++){
+        for(int i = 0 ; i < total ; i++){
            if(id== this.wordlist.get(i).getId()){
                this.wordlist.remove(i);
                break;
@@ -364,7 +375,10 @@ public class ManageImFragment extends Fragment {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        updateGridView(this.wordlist);
+
+        total--;
+        searchword();
+        //updateGridView(this.wordlist);
     }
 
     public void addWord(String code, String code3r, String word) {
@@ -387,16 +401,18 @@ public class ManageImFragment extends Fragment {
             e.printStackTrace();
         }
 
+        total++;
+        searchword();
         // Add to temp list
-        page = 0;
+        /*page = 0;
         this.wordlist.add(0,obj);
-        updateGridView(this.wordlist);
+        updateGridView(this.wordlist);*/
     }
 
     public void updateWord(int id, String code, String code3r, String word) {
 
         // remove from temp list
-        for(int i = 0 ; i < this.wordlist.size() ; i++){
+        for(int i = 0 ; i < total ; i++){
             if(id== this.wordlist.get(i).getId()){
                 Word check = this.wordlist.get(i);
                      check.setCode(code);
@@ -424,7 +440,8 @@ public class ManageImFragment extends Fragment {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        updateGridView(this.wordlist);
+        searchword();
+        //updateGridView(this.wordlist);
     }
 
     public void updateKeyboard(String keyboard) {
@@ -452,4 +469,5 @@ public class ManageImFragment extends Fragment {
         }
 
     }
+
 }
