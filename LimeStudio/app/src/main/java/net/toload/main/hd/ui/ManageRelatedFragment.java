@@ -22,6 +22,7 @@ import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Related;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -281,6 +282,9 @@ public class ManageRelatedFragment extends Fragment {
                 this.gridManageRelated.setSelection(0);
             }
         }else{
+            this.adapter.setList(new ArrayList());
+            this.adapter.notifyDataSetChanged();
+            this.gridManageRelated.setSelection(0);
             Toast.makeText(activity, R.string.no_search_result, Toast.LENGTH_SHORT).show();
         }
 

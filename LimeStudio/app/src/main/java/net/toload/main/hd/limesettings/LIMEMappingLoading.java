@@ -76,7 +76,7 @@ public class LIMEMappingLoading extends Activity {
 			} catch (RemoteException e1) {
 				e1.printStackTrace();
 			}
-        	txtLoadingStatus.setText( percentageDone+ "%");
+        	txtLoadingStatus.setText(percentageDone + "%");
         	progressBar.setProgress(percentageDone);
         	if(remoteFileDownloading){
         		setTitle(getText(R.string.l3_message_table_downloading) + " ");
@@ -100,12 +100,12 @@ public class LIMEMappingLoading extends Activity {
 	@Override
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
-		
+
 		// Startup Service
 		//getApplicationContext().bindService(new Intent(IDBService.class.getName()), serConn, Context.BIND_AUTO_CREATE);
 		DBSrv = new DBServer(getApplicationContext());
 		
-		this.setContentView(R.layout.progress);
+		this.setContentView(R.layout.loading_progress);
 		this.setTitle(getText(R.string.l3_dbservice_download_convert)+"...");
 		//mLIMEPref = new LIMEPreferenceManager(this);
 		

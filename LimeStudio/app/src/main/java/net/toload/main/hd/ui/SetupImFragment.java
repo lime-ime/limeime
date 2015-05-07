@@ -26,10 +26,16 @@ import com.google.api.services.drive.DriveScopes;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
+import net.toload.main.hd.data.DataSource;
+import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limesettings.DBServer;
+import net.toload.main.hd.limesettings.LIMEMappingLoading;
 
+import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
@@ -91,6 +97,8 @@ public class SetupImFragment extends Fragment {
 
     private ConnectivityManager connManager;
 
+    private View view;
+    private DataSource datasource;
     private DBServer DBSrv = null;
     private Activity activity;
     private LIMEPreferenceManager mLIMEPref;
@@ -172,6 +180,8 @@ public class SetupImFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+        datasource = new DataSource(this.getActivity());
+
         handler = new SetupImHandler(this);
 
         activity = getActivity();
@@ -185,135 +195,33 @@ public class SetupImFragment extends Fragment {
         connManager = (ConnectivityManager) SetupImFragment.this.activity.getSystemService(
                 SetupImFragment.this.activity.CONNECTIVITY_SERVICE);
 
-        View rootView = inflater.inflate(R.layout.fragment_setup_im, container, false);
+        view = inflater.inflate(R.layout.fragment_setup_im, container, false);
 
-        btnSetupImImportStandard = (Button) rootView.findViewById(R.id.btnSetupImImportStandard);
-        btnSetupImImportRelated = (Button) rootView.findViewById(R.id.btnSetupImImportRelated);
+        btnSetupImImportStandard = (Button) view.findViewById(R.id.btnSetupImImportStandard);
+        btnSetupImImportRelated = (Button) view.findViewById(R.id.btnSetupImImportRelated);
+        btnSetupImPhonetic = (Button) view.findViewById(R.id.btnSetupImPhonetic);
+        btnSetupImCj = (Button) view.findViewById(R.id.btnSetupImCj);
+        btnSetupImCj5 = (Button) view.findViewById(R.id.btnSetupImCj5);
+        btnSetupImScj = (Button) view.findViewById(R.id.btnSetupImScj);
+        btnSetupImEcj = (Button) view.findViewById(R.id.btnSetupImEcj);
+        btnSetupImDayi = (Button) view.findViewById(R.id.btnSetupImDayi);
+        btnSetupImEz = (Button) view.findViewById(R.id.btnSetupImEz);
+        btnSetupImArray = (Button) view.findViewById(R.id.btnSetupImArray);
+        btnSetupImArray10 = (Button) view.findViewById(R.id.btnSetupImArray10);
+        btnSetupImHs = (Button) view.findViewById(R.id.btnSetupImHs);
+        btnSetupImWb = (Button) view.findViewById(R.id.btnSetupImWb);
+        btnSetupImPinyin = (Button) view.findViewById(R.id.btnSetupImPinyin);
 
-        btnSetupImPhonetic = (Button) rootView.findViewById(R.id.btnSetupImPhonetic);
-        btnSetupImPhonetic.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_PHONETIC);
-                dialog.show(ft, "loadimdialog");
-            }
-        });
-
-        btnSetupImCj = (Button) rootView.findViewById(R.id.btnSetupImCj);
-        btnSetupImCj.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CJ);
-                dialog.show(ft, "loadimdialog");
-            }
-        });
-
-        btnSetupImCj5 = (Button) rootView.findViewById(R.id.btnSetupImCj5);
-        btnSetupImCj5.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CJ5);
-                dialog.show(ft, "loadimdialog");
-            }
-        });
-
-        btnSetupImScj = (Button) rootView.findViewById(R.id.btnSetupImScj);
-        btnSetupImScj.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_SCJ);
-                dialog.show(ft, "loadimdialog");
-            }
-        });
-
-        btnSetupImEcj = (Button) rootView.findViewById(R.id.btnSetupImEcj);
-        btnSetupImEcj.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ECJ);
-                dialog.show(ft, "loadimdialog");
-            }
-        });
-
-        btnSetupImDayi = (Button) rootView.findViewById(R.id.btnSetupImDayi);
-        btnSetupImDayi.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_DAYI);
-                dialog.show(ft, "loadimdialog");
-            }
-        });
-
-        btnSetupImEz = (Button) rootView.findViewById(R.id.btnSetupImEz);
-        btnSetupImEz.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_EZ);
-                dialog.show(ft, "loadimdialog");
-            }
-        });
-
-        btnSetupImArray = (Button) rootView.findViewById(R.id.btnSetupImArray);
-        btnSetupImArray.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ARRAY);
-                dialog.show(ft, "loadimdialog");
-            }
-        });
-
-        btnSetupImArray10 = (Button) rootView.findViewById(R.id.btnSetupImArray10);
-        btnSetupImArray10.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ARRAY10);
-                dialog.show(ft, "loadimdialog");
-            }
-        });
-
-        btnSetupImHs = (Button) rootView.findViewById(R.id.btnSetupImHs);
-        btnSetupImHs.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                /*FragmentTransaction ft = getFragmentManager().beginTransaction();
-                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_HS);
-                dialog.show(ft, "loadimdialog");*/
-            }
-        });
-
-        btnSetupImWb = (Button) rootView.findViewById(R.id.btnSetupImWb);
-        btnSetupImWb.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_WB);
-                dialog.show(ft, "loadimdialog");
-            }
-        });
-
-
-        btnSetupImPinyin = (Button) rootView.findViewById(R.id.btnSetupImPinyin);
-        btnSetupImPinyin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_PINYIN);
-                dialog.show(ft, "loadimdialog");
-            }
-        });
-
+        initialbutton();
 
         // Backup and Restore Setting
-        btnSetupImBackupLocal = (Button) rootView.findViewById(R.id.btnSetupImBackupLocal);
+        btnSetupImBackupLocal = (Button) view.findViewById(R.id.btnSetupImBackupLocal);
+        btnSetupImRestoreLocal = (Button) view.findViewById(R.id.btnSetupImRestoreLocal);
+        btnSetupImBackupGoogle = (Button) view.findViewById(R.id.btnSetupImBackupGoogle);
+        btnSetupImRestoreGoogle = (Button) view.findViewById(R.id.btnSetupImRestoreGoogle);
+        btnSetupImBackupDropbox = (Button) view.findViewById(R.id.btnSetupImBackupDropbox);
+        btnSetupImRestoreDropbox = (Button) view.findViewById(R.id.btnSetupImRestoreDropbox);
+
         btnSetupImBackupLocal.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -321,7 +229,6 @@ public class SetupImFragment extends Fragment {
             }
         });
 
-        btnSetupImRestoreLocal = (Button) rootView.findViewById(R.id.btnSetupImRestoreLocal);
         btnSetupImRestoreLocal.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -329,7 +236,6 @@ public class SetupImFragment extends Fragment {
             }
         });
 
-        btnSetupImBackupGoogle = (Button) rootView.findViewById(R.id.btnSetupImBackupGoogle);
         btnSetupImBackupGoogle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -339,8 +245,6 @@ public class SetupImFragment extends Fragment {
             }
         });
 
-
-        btnSetupImRestoreGoogle = (Button) rootView.findViewById(R.id.btnSetupImRestoreGoogle);
         btnSetupImRestoreGoogle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -349,8 +253,6 @@ public class SetupImFragment extends Fragment {
                 }
             }
         });
-
-        btnSetupImBackupDropbox = (Button) rootView.findViewById(R.id.btnSetupImBackupDropbox);
         btnSetupImBackupDropbox.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -360,7 +262,6 @@ public class SetupImFragment extends Fragment {
             }
         });
 
-        btnSetupImRestoreDropbox = (Button) rootView.findViewById(R.id.btnSetupImRestoreDropbox);
         btnSetupImRestoreDropbox.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -370,7 +271,207 @@ public class SetupImFragment extends Fragment {
             }
         });
 
-        return rootView;
+        return view;
+    }
+
+    public void initialbutton(){
+
+        HashMap<String, String> check = new HashMap<String, String>();
+
+        // Load Menu Item
+        try {
+            datasource.open();
+            List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+            for(int i = 0; i < imlist.size() ; i++){
+                check.put(imlist.get(i).getCode(), imlist.get(i).getCode());
+            }
+            datasource.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        if(check.get(Lime.DB_TABLE_PHONETIC) != null){
+            btnSetupImPhonetic.setAlpha(Lime.HALF_ALPHA_VALUE);
+        }else {
+            btnSetupImPhonetic.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+        }
+
+        btnSetupImPhonetic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_PHONETIC, handler);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
+
+        if(check.get(Lime.DB_TABLE_CJ) != null){
+            btnSetupImCj.setAlpha(Lime.HALF_ALPHA_VALUE);
+        }else {
+            btnSetupImCj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+        }
+
+        btnSetupImCj.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CJ, handler);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
+
+
+        if(check.get(Lime.DB_TABLE_CJ5) != null){
+            btnSetupImCj5.setAlpha(Lime.HALF_ALPHA_VALUE);
+        }else {
+            btnSetupImCj5.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+        }
+
+        btnSetupImCj5.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CJ5, handler);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
+        if(check.get(Lime.DB_TABLE_SCJ) != null){
+            btnSetupImScj.setAlpha(Lime.HALF_ALPHA_VALUE);
+        }else {
+            btnSetupImScj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+        }
+        btnSetupImScj.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_SCJ, handler);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
+        if(check.get(Lime.DB_TABLE_ECJ) != null){
+            btnSetupImEcj.setAlpha(Lime.HALF_ALPHA_VALUE);
+        }else {
+            btnSetupImEcj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+        }
+
+        btnSetupImEcj.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ECJ, handler);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
+        if(check.get(Lime.DB_TABLE_DAYI) != null){
+            btnSetupImDayi.setAlpha(Lime.HALF_ALPHA_VALUE);
+        }else {
+            btnSetupImDayi.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+        }
+
+        btnSetupImDayi.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_DAYI, handler);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
+        if(check.get(Lime.DB_TABLE_EZ) != null){
+            btnSetupImEz.setAlpha(Lime.HALF_ALPHA_VALUE);
+        }else {
+            btnSetupImEz.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+        }
+
+        btnSetupImEz.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_EZ, handler);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
+        if(check.get(Lime.DB_TABLE_ARRAY) != null){
+            btnSetupImArray.setAlpha(Lime.HALF_ALPHA_VALUE);
+        }else {
+            btnSetupImArray.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+        }
+
+        btnSetupImArray.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ARRAY, handler);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
+        if(check.get(Lime.DB_TABLE_ARRAY10) != null){
+            btnSetupImArray10.setAlpha(Lime.HALF_ALPHA_VALUE);
+        }else {
+            btnSetupImArray10.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+        }
+
+        btnSetupImArray10.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ARRAY10, handler);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
+        if(check.get(Lime.DB_TABLE_HS) != null){
+            btnSetupImHs.setAlpha(Lime.HALF_ALPHA_VALUE);
+        }else {
+            btnSetupImHs.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+        }
+
+        btnSetupImHs.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /*FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_HS);
+                dialog.show(ft, "loadimdialog");*/
+            }
+        });
+
+        if(check.get(Lime.DB_TABLE_WB) != null){
+            btnSetupImWb.setAlpha(Lime.HALF_ALPHA_VALUE);
+        }else {
+            btnSetupImWb.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+        }
+
+        btnSetupImWb.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_WB, handler);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+
+        if(check.get(Lime.DB_TABLE_PINYIN) != null){
+            btnSetupImPinyin.setAlpha(Lime.HALF_ALPHA_VALUE);
+        }else {
+            btnSetupImPinyin.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+        }
+
+        btnSetupImPinyin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_PINYIN, handler);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
+        
     }
 
     public void showAlertDialog(final String action, final String type, String message){
@@ -551,4 +652,11 @@ public class SetupImFragment extends Fragment {
         toast.show();
     }
 
+    public void startLoadingWindow(String imtype) {
+        Intent i = new Intent(activity, LIMEMappingLoading.class);
+        Bundle bundle = new Bundle();
+        bundle.putString("keyboard", imtype);
+        i.putExtras(bundle);
+        startActivity(i);
+    }
 }

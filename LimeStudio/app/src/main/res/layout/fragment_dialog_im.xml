@@ -7,6 +7,15 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:text="@string/setup_im_dialog_custom"
+        android:id="@+id/btnSetupImDialogCustom"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:padding="10dp" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
         android:text="New Button"
         android:id="@+id/btnSetupImDialogLoad1"
         android:layout_gravity="center_horizontal"

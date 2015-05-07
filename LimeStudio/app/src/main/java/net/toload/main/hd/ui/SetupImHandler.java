@@ -44,7 +44,13 @@ public class SetupImHandler extends Handler {
                 fragment.showToastMessage("Error", length);
             }
 
+        }else if(action != null && action.equalsIgnoreCase("initialbutton")){
+            fragment.initialbutton();
+        }else if(action != null && action.equalsIgnoreCase("startloadingwindow")){
+            String value = msg.getData().getString("value");
+            fragment.startLoadingWindow(value);
         }
+
     }
 
     public void cancelProgress() {
@@ -79,10 +85,22 @@ public class SetupImHandler extends Handler {
 
     public void showToastMessage(String message, int length){
         Message m = new Message();
-        m.getData().putString("action", "toast");
-        m.getData().putString("message", message);
-        m.getData().putInt("length", length);
+                m.getData().putString("action", "toast");
+                m.getData().putString("message", message);
+                m.getData().putInt("length", length);
         this.sendMessageDelayed(m, 1);
     }
 
+    public void initialImButtons() {
+        Message m = new Message();
+                m.getData().putString("action", "initialbutton");
+        this.sendMessageDelayed(m, 1);
+    }
+
+    public void startLoadingWindow(String imtype) {
+        Message m = new Message();
+                m.getData().putString("action", "startloadingwindow");
+                m.getData().putString("value", imtype);
+        this.sendMessageDelayed(m, 1);
+    }
 }

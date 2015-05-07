@@ -121,6 +121,7 @@ public class DataSource {
 	}
 
 	public List<Im> getIm(String code, String type){
+
 		List<Im> result = new ArrayList<Im>();
 		if(database != null && database.isOpen()){
 			Cursor cursor = null;
@@ -284,6 +285,22 @@ public class DataSource {
 		return w;
 	}
 
+	public int count(String table) {
+
+		int total = 0;
+
+		if(database != null && database.isOpen()){
+			Cursor cursor = null;
+			String query = "SELECT COUNT(*) as count FROM " + table;
+			cursor = database.rawQuery(query, null);
+			cursor.moveToFirst();
+			total = cursor.getInt(cursor.getColumnIndex(Lime.DB_TOTAL_COUNT));
+			cursor.close();
+		}
+
+		return total;
+
+	}
 
 	public int getWordSize(String table, String curquery, boolean searchroot) {
 

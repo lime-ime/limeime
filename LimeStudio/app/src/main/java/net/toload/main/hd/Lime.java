@@ -193,6 +193,8 @@ public class Lime {
 
     public static final String DEVICE = "device";
     public static final int GOOGLE_RETRIEVE_MAXIMUM = 500;
+    public static final float HALF_ALPHA_VALUE = .5f;
+    public static final float NORMAL_ALPHA_VALUE = 1f;
 
     // Global Utility Methods
 

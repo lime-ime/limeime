@@ -340,6 +340,9 @@ public class ManageImFragment extends Fragment {
                 this.gridManageIm.setSelection(0);
             }
         }else{
+            this.adapter.setList(new ArrayList());
+            this.adapter.notifyDataSetChanged();
+            this.gridManageIm.setSelection(0);
             Toast.makeText(activity, R.string.no_search_result, Toast.LENGTH_SHORT).show();
         }
 
