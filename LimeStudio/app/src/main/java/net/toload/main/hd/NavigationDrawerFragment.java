@@ -72,8 +72,15 @@ public class NavigationDrawerFragment extends Fragment {
     private String[] menulist;
 
     private DataSource datasource;
+    private ArrayAdapter adapter;
 
     public NavigationDrawerFragment(){}
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -139,10 +146,12 @@ public class NavigationDrawerFragment extends Fragment {
             e.printStackTrace();
         }
 
-        mDrawerListView.setAdapter(new ArrayAdapter<String>(
+        adapter = new ArrayAdapter<String>(
                 getActionBar().getThemedContext(),
                 android.R.layout.simple_list_item_activated_1,
-                android.R.id.text1,menulist));
+                android.R.id.text1,menulist);
+
+        mDrawerListView.setAdapter(adapter);
         mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
         return mDrawerListView;
     }
@@ -328,6 +337,40 @@ public class NavigationDrawerFragment extends Fragment {
 
     private ActionBar getActionBar() {
         return ((ActionBarActivity) getActivity()).getSupportActionBar();
+    }
+
+    public void updateMenuItems() {
+
+        if(mDrawerListView != null){
+            try {
+                datasource.open();
+                List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+                int menucount = imlist.size() + 2;
+                int checkcount = 2;
+
+                menulist = new String[menucount];
+                menulist[0] = this.getResources().getString(R.string.default_menu_initial);
+                menulist[1] = this.getResources().getString(R.string.default_menu_related);
+
+                for(int i = 0; i < imlist.size() ; i++){
+                    Im obj = imlist.get(i);
+                    menulist[checkcount] = obj.getDesc();
+                    checkcount++;
+                }
+                datasource.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            adapter = new ArrayAdapter<String>(
+                    getActionBar().getThemedContext(),
+                    android.R.layout.simple_list_item_activated_1,
+                    android.R.id.text1,menulist);
+
+            mDrawerListView.setAdapter(adapter);
+            adapter.setNotifyOnChange(true);
+
+        }
     }
 
     /**

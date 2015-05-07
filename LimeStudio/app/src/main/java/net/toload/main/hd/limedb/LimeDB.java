@@ -33,6 +33,7 @@ import android.util.Pair;
 import android.util.SparseArray;
 import android.widget.Toast;
 
+import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.ImObj;
 import net.toload.main.hd.global.KeyboardObj;
@@ -3008,8 +3009,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					mLIMEPref.setMappingLoading(false); // Jeremy '12,4,10 reset mapping_loading status 
 					//db.close();
 				}
-				
-
 
 				if(!threadAborted){
 					//db = getSqliteDb(false);
@@ -3048,9 +3047,37 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						//db.close();
 					}
 					
-					
 				}
 
+				// If table not from custom then use the default IM name
+				String defaultname = null;
+				if(table.equalsIgnoreCase(Lime.DB_TABLE_ARRAY)){
+					defaultname = mContext.getResources().getString(R.string.im_array);
+				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_ARRAY10)){
+					defaultname = mContext.getResources().getString(R.string.im_array10);
+				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_CJ)){
+					defaultname = mContext.getResources().getString(R.string.im_cj);
+				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_CJ5)){
+					defaultname = mContext.getResources().getString(R.string.im_cj5);
+				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_DAYI)){
+					defaultname = mContext.getResources().getString(R.string.im_dayi);
+				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_ECJ)){
+					defaultname = mContext.getResources().getString(R.string.im_ecj);
+				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_EZ)){
+					defaultname = mContext.getResources().getString(R.string.im_ez);
+				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_HS)){
+					defaultname = mContext.getResources().getString(R.string.im_hs);
+				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_PHONETIC)){
+					defaultname = mContext.getResources().getString(R.string.im_phonetic);
+				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_PINYIN)){
+					defaultname = mContext.getResources().getString(R.string.im_pinyin);
+				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_SCJ)){
+					defaultname = mContext.getResources().getString(R.string.im_scj);
+				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_WB)){
+					defaultname = mContext.getResources().getString(R.string.im_wb);
+				}else{
+					defaultname = imname;
+				}
 
 				if(!threadAborted) {
 					if(!threadAborted) percentageDone = 100;
@@ -3059,7 +3086,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					mLIMEPref.setParameter("_table", "");
 
 					setImInfo(table, "source", filename.getName());
-					setImInfo(table, "name", imname);
+					setImInfo(table, "name", defaultname);
 					setImInfo(table, "amount", String.valueOf(count));
 					setImInfo(table, "import", new Date().toString()); //Jeremy '12,4,21 toLocaleString() is deprecated
 

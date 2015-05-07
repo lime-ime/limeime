@@ -32,7 +32,6 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limesettings.DBServer;
 import net.toload.main.hd.limesettings.LIMEMappingLoading;
 
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -151,6 +150,10 @@ public class SetupImFragment extends Fragment {
 
         // Reset DropBox Request
         mLIMEPref.setParameter(Lime.DROPBOX_REQUEST_FLAG, false);
+
+        if(btnSetupImImportStandard != null){
+            initialbutton();
+        }
 
     }
 
@@ -286,7 +289,7 @@ public class SetupImFragment extends Fragment {
                 check.put(imlist.get(i).getCode(), imlist.get(i).getCode());
             }
             datasource.close();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -655,7 +658,7 @@ public class SetupImFragment extends Fragment {
     public void startLoadingWindow(String imtype) {
         Intent i = new Intent(activity, LIMEMappingLoading.class);
         Bundle bundle = new Bundle();
-        bundle.putString("keyboard", imtype);
+        bundle.putString("imtype", imtype);
         i.putExtras(bundle);
         startActivity(i);
     }

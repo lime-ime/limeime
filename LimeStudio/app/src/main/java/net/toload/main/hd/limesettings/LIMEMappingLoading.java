@@ -36,6 +36,7 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEUtilities;
@@ -56,12 +57,13 @@ public class LIMEMappingLoading extends Activity {
 	private DBServer DBSrv = null;
 	
 	//private NotificationManager notificationMgr;
-	
+
+	TextView txtLoadingIm = null;
 	TextView txtLoadingStatus = null;
 	Button btnCancel = null;
 	ProgressBar progressBar = null;
 	
-	//private String imtype;
+	private String imtype;
 	
     final Handler mHandler = new Handler();
     // Create runnable for posting
@@ -108,19 +110,52 @@ public class LIMEMappingLoading extends Activity {
 		this.setContentView(R.layout.loading_progress);
 		this.setTitle(getText(R.string.l3_dbservice_download_convert)+"...");
 		//mLIMEPref = new LIMEPreferenceManager(this);
-		
+
+		txtLoadingIm = (TextView) findViewById(R.id.txtLoadingIm);
 		txtLoadingStatus = (TextView) findViewById(R.id.txtLoadingStatus);
 		progressBar = (ProgressBar)findViewById(R.id.progressBar);
 		btnCancel = (Button) findViewById(R.id.btn_cancel);
 		
-//		try{
-//			Bundle bundle = this.getIntent().getExtras();
-//			if(bundle != null){
-//				imtype = bundle.getString("keyboard");
-//			}
-//		}catch(Exception e){
-//			e.printStackTrace();
-//		}
+		try{
+			Bundle bundle = this.getIntent().getExtras();
+			if(bundle != null){
+				imtype = bundle.getString("imtype");
+
+				String defaultname = null;
+				if(imtype.equalsIgnoreCase(Lime.DB_TABLE_ARRAY)){
+					defaultname = getResources().getString(R.string.im_array);
+				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_ARRAY10)){
+					defaultname = getResources().getString(R.string.im_array10);
+				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_CJ)){
+					defaultname = getResources().getString(R.string.im_cj);
+				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_CJ5)){
+					defaultname = getResources().getString(R.string.im_cj5);
+				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_DAYI)){
+					defaultname = getResources().getString(R.string.im_dayi);
+				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_ECJ)){
+					defaultname = getResources().getString(R.string.im_ecj);
+				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_EZ)){
+					defaultname = getResources().getString(R.string.im_ez);
+				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_HS)){
+					defaultname = getResources().getString(R.string.im_hs);
+				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_PHONETIC)){
+					defaultname = getResources().getString(R.string.im_phonetic);
+				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_PINYIN)){
+					defaultname = getResources().getString(R.string.im_pinyin);
+				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_SCJ)){
+					defaultname = getResources().getString(R.string.im_scj);
+				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_WB)){
+					defaultname = getResources().getString(R.string.im_wb);
+				}else{
+					defaultname = imtype;
+				}
+
+				txtLoadingIm.setText(defaultname);
+
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
 		
 		btnCancel.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -246,7 +281,5 @@ public class LIMEMappingLoading extends Activity {
 			Log.i(TAG,"onTouchEvent()");
 		return super.onTouchEvent(event);
 	}
-
-	
 		
 }

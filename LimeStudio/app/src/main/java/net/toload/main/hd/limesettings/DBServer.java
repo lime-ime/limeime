@@ -101,7 +101,6 @@ public class  DBServer {
 		if(DEBUG)
 			Log.i(TAG,"loadMapping() on " + loadingTablename);
 
-
 		loadingTablename = tablename;
 
 
