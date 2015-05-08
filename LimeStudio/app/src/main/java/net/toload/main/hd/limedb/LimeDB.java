@@ -293,7 +293,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 
 	public void setFinish(boolean value) {
-		
 		this.finish = value;
 	}
 	

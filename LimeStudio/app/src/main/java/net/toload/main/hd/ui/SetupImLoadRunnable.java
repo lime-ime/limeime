@@ -177,6 +177,8 @@ public class SetupImLoadRunnable implements Runnable{
         }
         setIMKeyboard(imtype, kobj.getDescription(), kobj.getCode());
 
+        mLIMEPref.setResetCacheFlag(true);
+
         handler.cancelProgress();
         handler.initialImButtons();
     }
@@ -308,7 +310,6 @@ public class SetupImLoadRunnable implements Runnable{
             removeImInfoOnDB(im, field);
         }catch(Exception e){e.printStackTrace();}
     }
-
 
 
     public KeyboardObj getKeyboardObj(String keyboard){
