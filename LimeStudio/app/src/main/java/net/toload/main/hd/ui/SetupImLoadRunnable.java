@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.RemoteException;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
@@ -62,35 +63,37 @@ public class SetupImLoadRunnable implements Runnable{
         handler.showProgress();
 
         // Download DB File
+        handler.updateProgress(activity.getResources().getString(R.string.setup_load_download));
         File tempfile = downloadRemoteFile(url);
 
         // Load DB
         int count = migrateDb(tempfile, imtype);
+        String im_input = activity.getResources().getString(R.string.im_input_method);
         String defaultname = imtype;
         if(imtype.equalsIgnoreCase(Lime.DB_TABLE_ARRAY)){
-            defaultname = activity.getResources().getString(R.string.im_array);
+            defaultname = activity.getResources().getString(R.string.im_array) + im_input;
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_ARRAY10)){
-            defaultname = activity.getResources().getString(R.string.im_array10);
+            defaultname = activity.getResources().getString(R.string.im_array10) + im_input;
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_CJ)){
-            defaultname = activity.getResources().getString(R.string.im_cj);
+            defaultname = activity.getResources().getString(R.string.im_cj) + im_input;
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_CJ5)){
-            defaultname = activity.getResources().getString(R.string.im_cj5);
+            defaultname = activity.getResources().getString(R.string.im_cj5) + im_input;
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_DAYI)){
-            defaultname = activity.getResources().getString(R.string.im_dayi);
+            defaultname = activity.getResources().getString(R.string.im_dayi) + im_input;
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_ECJ)){
-            defaultname = activity.getResources().getString(R.string.im_ecj);
+            defaultname = activity.getResources().getString(R.string.im_ecj) + im_input;
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_EZ)){
-            defaultname = activity.getResources().getString(R.string.im_ez);
+            defaultname = activity.getResources().getString(R.string.im_ez) + im_input;
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_HS)){
-            defaultname = activity.getResources().getString(R.string.im_hs);
+            defaultname = activity.getResources().getString(R.string.im_hs) + im_input;
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_PHONETIC)){
-            defaultname = activity.getResources().getString(R.string.im_phonetic);
+            defaultname = activity.getResources().getString(R.string.im_phonetic) + im_input;
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_PINYIN)){
-            defaultname = activity.getResources().getString(R.string.im_pinyin);
+            defaultname = activity.getResources().getString(R.string.im_pinyin) + im_input;
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_SCJ)){
-            defaultname = activity.getResources().getString(R.string.im_scj);
+            defaultname = activity.getResources().getString(R.string.im_scj) + im_input;
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_WB)){
-            defaultname = activity.getResources().getString(R.string.im_wb) ;
+            defaultname = activity.getResources().getString(R.string.im_wb) + im_input;
         }
 
         // Update Related Table
@@ -174,6 +177,8 @@ public class SetupImLoadRunnable implements Runnable{
         }
         setIMKeyboard(imtype, kobj.getDescription(), kobj.getCode());
 
+        handler.cancelProgress();
+        handler.initialImButtons();
     }
 
     public int migrateDb(File tempfile, String imtype){
@@ -182,17 +187,35 @@ public class SetupImLoadRunnable implements Runnable{
 
         String sourcedbfile = Lime.DATABASE_FOLDER_EXTERNAL + imtype;
 
+        handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_load));
         DBServer.decompressFile(tempfile, Lime.DATABASE_FOLDER_EXTERNAL, imtype, true);
         SQLiteDatabase sourcedb = SQLiteDatabase.openDatabase(sourcedbfile, null, SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
         results = loadWord(sourcedb, imtype);
         sourcedb.close();
 
         try {
+
+            // Remove Imtype and related info
+            try {
+                dbsrv.resetMapping(imtype);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+
+            int total = results.size();
+            int c = 0;
+
             datasource.open();
             datasource.beginTransaction();
+
             for(Word w: results){
+                c++;
                 String insert = Word.getInsertQuery(imtype, w);
                 datasource.add(insert);
+                if(c % 100 == 0){
+                    int p = (int)(c * 100 / total);
+                    handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_import) + " " + p + "%");
+                }
             }
             datasource.endTransaction();
             datasource.close();
@@ -367,8 +390,8 @@ public class SetupImLoadRunnable implements Runnable{
             URLConnection conn = downloadUrl.openConnection();
             conn.connect();
             InputStream is = conn.getInputStream();
-            long remoteFileSize = conn.getContentLength();
-            long downloadedSize = 0;
+            //long remoteFileSize = conn.getContentLength();
+            //long downloadedSize = 0;
 
             if(is == null){
                 throw new RuntimeException("stream is null");
@@ -385,12 +408,9 @@ public class SetupImLoadRunnable implements Runnable{
             FileOutputStream fos = null;
             fos = new FileOutputStream(downloadedFile);
 
-            byte buf[] = new byte[128];
+            byte buf[] = new byte[4096];
             do{
-                Thread.sleep(300);
                 int numread = is.read(buf);
-                downloadedSize += numread;
-
                 if(numread <=0){break;}
                 fos.write(buf, 0, numread);
             }while(true);

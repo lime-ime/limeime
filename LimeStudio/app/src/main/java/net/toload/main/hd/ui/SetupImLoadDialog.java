@@ -456,53 +456,7 @@ public class SetupImLoadDialog extends DialogFragment {
 
     public void downloadAndLoadIm(String code, String type){
         if (connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()) {
-            /**
 
-
-             public static final String DATABASE_CLOUD_URL_BASED = "https://github.com/hosoyu/LimeStudio/raw/master/Database/";
-             public static final String DATABASE_CLOUD_IM_WB = DATABASE_CLOUD_URL_BASED + "wb.zip";
-             public static final String DATABASE_CLOUD_IM_WB_KEYBOARD = "wb";
-
-             public static final String DATABASE_CLOUD_IM_PINYINGB = DATABASE_CLOUD_URL_BASED + "pinyingb.zip";
-             public static final String DATABASE_CLOUD_IM_PINYINGB_KEYBOARD = "lime";
-
-             public static final String DATABASE_CLOUD_IM_PINYIN = DATABASE_CLOUD_URL_BASED + "pinyin.zip";
-             public static final String DATABASE_CLOUD_IM_PINYIN_KEYBOARD = "lime";
-
-             public static final String DATABASE_CLOUD_IM_PHONETICCOMPLETE = DATABASE_CLOUD_URL_BASED + "phoneticcomplete.zip";
-             public static final String DATABASE_CLOUD_IM_PHONETICCOMPLETE_KEYBOARD = "phonetic";
-
-             public static final String DATABASE_CLOUD_IM_PHONETIC = DATABASE_CLOUD_URL_BASED + "phonetic.zip";
-             public static final String DATABASE_CLOUD_IM_PHONETIC_KEYBOARD = "phonetic";
-
-             public static final String DATABASE_CLOUD_IM_EZ = DATABASE_CLOUD_URL_BASED + "ez.zip";
-             public static final String DATABASE_CLOUD_IM_EZ_KEYBOARD = "ez";
-
-             public static final String DATABASE_CLOUD_IM_ECJHK = DATABASE_CLOUD_URL_BASED + "ecjhkzip";
-             public static final String DATABASE_CLOUD_IM_ECJHK_KEYBOARD = "cj";
-
-             public static final String DATABASE_CLOUD_IM_ECJ = DATABASE_CLOUD_URL_BASED + "ecj.zip";
-             public static final String DATABASE_CLOUD_IM_ECJ_KEYBOARD = "cj";
-
-             public static final String DATABASE_CLOUD_IM_DAYI = DATABASE_CLOUD_URL_BASED + "dayi.zip";
-             public static final String DATABASE_CLOUD_IM_DAYI_KEYBOARD = "dayisym";
-
-             public static final String DATABASE_CLOUD_IM_CJHK = DATABASE_CLOUD_URL_BASED + "cjhk.zip";
-             public static final String DATABASE_CLOUD_IM_CJHK_KEYBOARD = "cj";
-
-             public static final String DATABASE_CLOUD_IM_CJ5 = DATABASE_CLOUD_URL_BASED + "cj5.zip";
-             public static final String DATABASE_CLOUD_IM_CJ5_KEYBOARD = "cj";
-
-             public static final String DATABASE_CLOUD_IM_CJ = DATABASE_CLOUD_URL_BASED + "cj.zip";
-             public static final String DATABASE_CLOUD_IM_CJ_KEYBOARD = "cj";
-
-             public static final String DATABASE_CLOUD_IM_ARRAY10 = DATABASE_CLOUD_URL_BASED + "array10.zip";
-             public static final String DATABASE_CLOUD_IM_ARRAY10_KEYBOARD = "phonenum";
-
-             public static final String DATABASE_CLOUD_IM_ARRAY = DATABASE_CLOUD_URL_BASED + "array.zip";
-             public static final String DATABASE_CLOUD_IM_ARRAY_KEYBOARD = "arraynum";
-
-             */
             String url = null;
 
             if(type.equals(Lime.IM_ARRAY )){
@@ -539,6 +493,8 @@ public class SetupImLoadDialog extends DialogFragment {
 
             loadthread = new Thread(new SetupImLoadRunnable(getActivity(), handler, code, url));
             loadthread.start();
+
+            dismiss();
         }else{
             showToastMessage(getResources().getString(R.string.l3_tab_initial_error), Toast.LENGTH_LONG);
         }
