@@ -191,6 +191,7 @@ public class NavigationDrawerFragment extends Fragment {
             @Override
             public void onDrawerClosed(View drawerView) {
                 super.onDrawerClosed(drawerView);
+
                 if (!isAdded()) {
                     return;
                 }
@@ -201,6 +202,10 @@ public class NavigationDrawerFragment extends Fragment {
             @Override
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
+
+                // Reset ImList
+                updateMenuItems();
+
                 if (!isAdded()) {
                     return;
                 }

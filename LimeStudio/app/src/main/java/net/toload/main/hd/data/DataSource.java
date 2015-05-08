@@ -1,5 +1,6 @@
 package net.toload.main.hd.data;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -357,5 +358,18 @@ public class DataSource {
 			cursor.close();
 		}
 		return total;
+	}
+
+	public void insert(String table, ContentValues cv) {
+		if (database != null && database.isOpen()) {
+			database.insert(table, null, cv);
+		}
+	}
+
+	public Cursor query(String table, String where) {
+		if (database != null && database.isOpen()) {
+			return database.query(table, null, where, null, null, null, null, null);
+		}
+		return null;
 	}
 }

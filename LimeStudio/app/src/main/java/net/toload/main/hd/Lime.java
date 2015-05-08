@@ -20,6 +20,11 @@ public class Lime {
 
     // Input Method Editor Online Database Location
     // https://github.com/hosoyu/LimeStudio/raw/master/Database/array.zip
+
+    public static final String separator = java.io.File.separator;
+
+    public static final String DATABASE_IM_TEMP = "temp.zip";
+
     public static final String DATABASE_CLOUD_URL_BASED = "https://github.com/hosoyu/LimeStudio/raw/master/Database/";
     public static final String DATABASE_CLOUD_IM_WB = DATABASE_CLOUD_URL_BASED + "wb.zip";
     public static final String DATABASE_CLOUD_IM_WB_KEYBOARD = "wb";
@@ -50,6 +55,9 @@ public class Lime {
 
     public static final String DATABASE_CLOUD_IM_CJHK = DATABASE_CLOUD_URL_BASED + "cjhk.zip";
     public static final String DATABASE_CLOUD_IM_CJHK_KEYBOARD = "cj";
+
+    public static final String DATABASE_CLOUD_IM_SCJ = DATABASE_CLOUD_URL_BASED + "scj.zip";
+    public static final String DATABASE_CLOUD_IM_SCJ_KEYBOARD = "limenum";
 
     public static final String DATABASE_CLOUD_IM_CJ5 = DATABASE_CLOUD_URL_BASED + "cj5.zip";
     public static final String DATABASE_CLOUD_IM_CJ5_KEYBOARD = "cj";
@@ -161,10 +169,7 @@ public class Lime {
     public static final String IM_TYPE_IMPORT = "import";
     public static final String IM_TYPE_KEYBOARD = "keyboard";
 
-    public static final int IM_MANAGE_DISPLAY_AMOUNT = 50;
-
-
-    public static final String separator = java.io.File.separator;
+    public static final int IM_MANAGE_DISPLAY_AMOUNT = 100;
 
     // Cloud Backup/Restore
     // Dropbox

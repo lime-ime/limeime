@@ -166,15 +166,18 @@ public class SetupImFragment extends Fragment {
     public void cancelProgress(){
         if(progress.isShowing()){
             progress.dismiss();
+            handler.initialImButtons();
         }
     }
+
     public void updateProgress(int value){
         if(!progress.isShowing()){
            progress.setProgress(value);
         }
     }
+
     public void updateProgress(String value){
-        if(!progress.isShowing()){
+        if(progress.isShowing()){
             progress.setMessage(value);
         }
     }
@@ -286,12 +289,27 @@ public class SetupImFragment extends Fragment {
             datasource.open();
             List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
             for(int i = 0; i < imlist.size() ; i++){
-                check.put(imlist.get(i).getCode(), imlist.get(i).getCode());
+                check.put(imlist.get(i).getCode(), imlist.get(i).getDesc());
             }
             datasource.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
+        if(check.get(Lime.DB_TABLE_CUSTOM) != null){
+            btnSetupImImportStandard.setAlpha(Lime.HALF_ALPHA_VALUE);
+            btnSetupImImportStandard.setText(check.get(Lime.DB_TABLE_CUSTOM));
+        }else {
+            btnSetupImImportStandard.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+        }
+
+        btnSetupImImportStandard.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CUSTOM, handler);
+                dialog.show(ft, "loadimdialog");
+            }
+        });
 
         if(check.get(Lime.DB_TABLE_PHONETIC) != null){
             btnSetupImPhonetic.setAlpha(Lime.HALF_ALPHA_VALUE);
@@ -662,4 +680,9 @@ public class SetupImFragment extends Fragment {
         i.putExtras(bundle);
         startActivity(i);
     }
+
+    public void updateCustomButton() {
+        btnSetupImImportStandard.setText(getResources().getString(R.string.setup_im_load_standard));
+    }
+
 }

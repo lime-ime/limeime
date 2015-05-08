@@ -3018,7 +3018,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						long entrySize = codeList.size();
 						long i = 0;
 						
-						
 						for(String entry: codeList)	{
 							if(threadAborted) 	break;
 							percentageDone = (int) ((float)(i++)/(float)entrySize *50 +50);
@@ -3050,32 +3049,36 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				}
 
 				// If table not from custom then use the default IM name
+				String im_input = mContext.getResources().getString(R.string.im_input_method);
 				String defaultname = null;
 				if(table.equalsIgnoreCase(Lime.DB_TABLE_ARRAY)){
-					defaultname = mContext.getResources().getString(R.string.im_array);
+					defaultname = mContext.getResources().getString(R.string.im_array)+ im_input;
 				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_ARRAY10)){
-					defaultname = mContext.getResources().getString(R.string.im_array10);
+					defaultname = mContext.getResources().getString(R.string.im_array10)+ im_input;
 				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_CJ)){
-					defaultname = mContext.getResources().getString(R.string.im_cj);
+					defaultname = mContext.getResources().getString(R.string.im_cj)+ im_input;
 				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_CJ5)){
-					defaultname = mContext.getResources().getString(R.string.im_cj5);
+					defaultname = mContext.getResources().getString(R.string.im_cj5)+ im_input;
 				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_DAYI)){
-					defaultname = mContext.getResources().getString(R.string.im_dayi);
+					defaultname = mContext.getResources().getString(R.string.im_dayi)+ im_input;
 				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_ECJ)){
-					defaultname = mContext.getResources().getString(R.string.im_ecj);
+					defaultname = mContext.getResources().getString(R.string.im_ecj)+ im_input;
 				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_EZ)){
-					defaultname = mContext.getResources().getString(R.string.im_ez);
+					defaultname = mContext.getResources().getString(R.string.im_ez)+ im_input;
 				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_HS)){
-					defaultname = mContext.getResources().getString(R.string.im_hs);
+					defaultname = mContext.getResources().getString(R.string.im_hs)+ im_input;
 				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_PHONETIC)){
-					defaultname = mContext.getResources().getString(R.string.im_phonetic);
+					defaultname = mContext.getResources().getString(R.string.im_phonetic)+ im_input;
 				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_PINYIN)){
-					defaultname = mContext.getResources().getString(R.string.im_pinyin);
+					defaultname = mContext.getResources().getString(R.string.im_pinyin)+ im_input;
 				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_SCJ)){
-					defaultname = mContext.getResources().getString(R.string.im_scj);
+					defaultname = mContext.getResources().getString(R.string.im_scj)+ im_input;
 				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_WB)){
-					defaultname = mContext.getResources().getString(R.string.im_wb);
+					defaultname = mContext.getResources().getString(R.string.im_wb) + im_input;
 				}else{
+					if(imname.isEmpty()){
+						imname = filename.getName();
+					}
 					defaultname = imname;
 				}
 
@@ -3087,6 +3090,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 					setImInfo(table, "source", filename.getName());
 					setImInfo(table, "name", defaultname);
+					setImInfo(table, "original", imname);
 					setImInfo(table, "amount", String.valueOf(count));
 					setImInfo(table, "import", new Date().toString()); //Jeremy '12,4,21 toLocaleString() is deprecated
 
@@ -3717,8 +3721,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
-			           
-		
 	}
 
 	/**

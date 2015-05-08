@@ -1033,10 +1033,6 @@ public class  DBServer {
 	 * Decompress retrieved file to target folder
 	 */
 	public static boolean decompressFile(File sourceFile, String targetFolder, String targetFile, boolean remove){
-		if(DEBUG)
-			Log.i(TAG, "decompressFile(), srouce = " + sourceFile.toString() + "" +
-					", target = " + targetFolder.toString()+ "/" + targetFile.toString());
-
 		try {   
 
 			File targetFolderObj = new File(targetFolder);

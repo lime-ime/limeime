@@ -72,6 +72,7 @@ public class SetupImRestoreRunnable implements Runnable{
     public void run() {
 
         handler.showProgress();
+        handler.updateProgress(this.fragment.getResources().getString(R.string.setup_im_restore_message));
 
         if(type.equals(Lime.LOCAL)){
             try {

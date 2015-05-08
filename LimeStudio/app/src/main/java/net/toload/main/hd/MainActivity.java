@@ -53,20 +53,18 @@ public class MainActivity extends ActionBarActivity
                 (DrawerLayout) findViewById(R.id.drawer_layout));
     }
 
-    private void initialImList(){
+    public void initialImList(){
 
         if(datasource == null)
             datasource = new DataSource(this);
 
-        if(imlist == null){
-            imlist = new ArrayList<Im>();
-            try {
-                datasource.open();
-                imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
-                datasource.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+        imlist = new ArrayList<Im>();
+        try {
+            datasource.open();
+            imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+            datasource.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -94,7 +92,6 @@ public class MainActivity extends ActionBarActivity
     }
 
     public void onSectionAttached(int number) {
-        initialImList();
         if (number == 0) {
             mTitle = this.getResources().getString(R.string.default_menu_initial);
             mCode = "initial";
@@ -118,8 +115,6 @@ public class MainActivity extends ActionBarActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-
-        mNavigationDrawerFragment.updateMenuItems();
 
         if (!mNavigationDrawerFragment.isDrawerOpen()) {
             // Only show items in the action bar relevant to this screen

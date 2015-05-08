@@ -121,33 +121,34 @@ public class LIMEMappingLoading extends Activity {
 			if(bundle != null){
 				imtype = bundle.getString("imtype");
 
+				String im_input_method = getResources().getString(R.string.im_input_method);
 				String defaultname = null;
 				if(imtype.equalsIgnoreCase(Lime.DB_TABLE_ARRAY)){
-					defaultname = getResources().getString(R.string.im_array);
+					defaultname = getResources().getString(R.string.im_array)+ im_input_method;
 				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_ARRAY10)){
-					defaultname = getResources().getString(R.string.im_array10);
+					defaultname = getResources().getString(R.string.im_array10)+ im_input_method;
 				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_CJ)){
 					defaultname = getResources().getString(R.string.im_cj);
 				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_CJ5)){
-					defaultname = getResources().getString(R.string.im_cj5);
+					defaultname = getResources().getString(R.string.im_cj5)+ im_input_method;
 				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_DAYI)){
-					defaultname = getResources().getString(R.string.im_dayi);
+					defaultname = getResources().getString(R.string.im_dayi)+ im_input_method;
 				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_ECJ)){
-					defaultname = getResources().getString(R.string.im_ecj);
+					defaultname = getResources().getString(R.string.im_ecj)+ im_input_method;
 				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_EZ)){
-					defaultname = getResources().getString(R.string.im_ez);
+					defaultname = getResources().getString(R.string.im_ez)+ im_input_method;
 				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_HS)){
-					defaultname = getResources().getString(R.string.im_hs);
+					defaultname = getResources().getString(R.string.im_hs)+ im_input_method;
 				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_PHONETIC)){
-					defaultname = getResources().getString(R.string.im_phonetic);
+					defaultname = getResources().getString(R.string.im_phonetic)+ im_input_method;
 				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_PINYIN)){
-					defaultname = getResources().getString(R.string.im_pinyin);
+					defaultname = getResources().getString(R.string.im_pinyin)+ im_input_method;
 				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_SCJ)){
-					defaultname = getResources().getString(R.string.im_scj);
+					defaultname = getResources().getString(R.string.im_scj)+ im_input_method;
 				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_WB)){
-					defaultname = getResources().getString(R.string.im_wb);
+					defaultname = getResources().getString(R.string.im_wb)+ im_input_method;
 				}else{
-					defaultname = imtype;
+					defaultname = getResources().getString(R.string.setup_im_load_custom);
 				}
 
 				txtLoadingIm.setText(defaultname);

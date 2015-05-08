@@ -51,7 +51,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/manage_word_code3r"
-                android:textAppearance="?android:attr/textAppearanceMedium"/>
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:id="@+id/txtManageImWordCode3r" />
 
             <EditText
                 android:layout_width="match_parent"

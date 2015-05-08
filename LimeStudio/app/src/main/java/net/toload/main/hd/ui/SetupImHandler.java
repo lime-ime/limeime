@@ -49,7 +49,11 @@ public class SetupImHandler extends Handler {
         }else if(action != null && action.equalsIgnoreCase("startloadingwindow")){
             String value = msg.getData().getString("value");
             fragment.startLoadingWindow(value);
+        }else if(action != null && action.equalsIgnoreCase("updatecustombutton")){
+            fragment.updateCustomButton();
         }
+
+
 
     }
 
@@ -101,6 +105,12 @@ public class SetupImHandler extends Handler {
         Message m = new Message();
                 m.getData().putString("action", "startloadingwindow");
                 m.getData().putString("value", imtype);
+        this.sendMessageDelayed(m, 1);
+    }
+
+    public void updateCustomButton() {
+        Message m = new Message();
+        m.getData().putString("action", "updatecustombutton");
         this.sendMessageDelayed(m, 1);
     }
 }

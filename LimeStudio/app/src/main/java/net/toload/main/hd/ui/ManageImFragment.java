@@ -132,7 +132,7 @@ public class ManageImFragment extends Fragment {
                     FragmentTransaction ft = getFragmentManager().beginTransaction();
 
                     // Create and show the dialog.
-                    ManageImEditDialog dialog = ManageImEditDialog.newInstance();
+                    ManageImEditDialog dialog = ManageImEditDialog.newInstance(code);
                     dialog.setHandler(handler, w);
                     dialog.show(ft, "editdialog");
                 } catch (SQLException e) {
@@ -146,7 +146,7 @@ public class ManageImFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 FragmentTransaction ft = getFragmentManager().beginTransaction();
-                ManageImAddDialog dialog = ManageImAddDialog.newInstance();
+                ManageImAddDialog dialog = ManageImAddDialog.newInstance(code);
                                     dialog.setHandler(handler);
                 dialog.show(ft, "adddialog");
             }

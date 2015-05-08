@@ -22,6 +22,8 @@
     <string name="action_help">使用說明</string>
     <string name="action_preference">喜好設定</string>
 
+    <string name="setup_im_backup_message">資料庫備份中，請耐心等候 ...</string>
+    <string name="setup_im_restore_message">資料庫還原中，請耐心等候 ...</string>
     <string name="setup_im_backup_dropbox">Dropbox 備份</string>
     <string name="setup_im_backup_google">Google 備份</string>
     <string name="setup_im_backup_local">本地備份</string>
@@ -37,6 +39,8 @@
     <string name="setup_im_restore_dropbox">Dropbox 還原</string>
     <string name="setup_im_restore_google">Google 還原</string>
     <string name="setup_im_restore_local">本地還原</string>
+
+    <string name="setup_im_load_custom">自定字根表</string>
 
     <string name="setup_im_load_standard">匯入自定字根表</string>
     <string name="setup_im_load_reset">移除自定字根表</string>
@@ -54,6 +58,7 @@
     <string name="default_menu_initial">設定輸入法</string>
     <string name="default_menu_related">管理關聯字庫</string>
 
+    <string name="im_input_method">輸入法</string>
     <string name="im_array">行列</string>
     <string name="im_array10">行列10</string>
     <string name="im_cj">倉頡</string>

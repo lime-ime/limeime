@@ -10,8 +10,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Word;
 
@@ -19,6 +21,8 @@ public class ManageImEditDialog extends DialogFragment {
 
 	private Activity activity;
 	private View view;
+
+	private String imtype;
 
 	//Button btnQuizExitConfirm;
 	//Button btnQuizExitCancel;
@@ -35,13 +39,19 @@ public class ManageImEditDialog extends DialogFragment {
 	private EditText edtManageImWordCode3r;
 	private EditText edtManageImWordWord;
 
+	private TextView txtManageImWordCode3r;
+
+	public ManageImEditDialog(String imtype) {
+		this.imtype = imtype;
+	}
+
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
 	}
 
-	public static ManageImEditDialog newInstance() {
-		ManageImEditDialog btd = new ManageImEditDialog();
+	public static ManageImEditDialog newInstance(String imtype) {
+		ManageImEditDialog btd = new ManageImEditDialog(imtype);
 						   btd.setCancelable(true);
 		return btd;
 	}
@@ -160,20 +170,12 @@ public class ManageImEditDialog extends DialogFragment {
 		edtManageImWordCode3r.setText(word.getCode3r());
 		edtManageImWordWord.setText(word.getWord());
 
-		//getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-		/*btnQuizExitConfirm = (Button) view.findViewById(R.id.btnQuizExitConfirm);
-		btnQuizExitConfirm.setOnClickListener(new OnClickListener(){
-			@Override
-			public void onClick(View v) {
-				handler.enterCategoryActivity();
-			}});
-		
-		btnQuizExitCancel = (Button) view.findViewById(R.id.btnQuizExitCancel);
-		btnQuizExitCancel.setOnClickListener(new OnClickListener(){
-			@Override
-			public void onClick(View v) {
-				dismiss();
-			}});*/
+		txtManageImWordCode3r = (TextView) view.findViewById(R.id.txtManageImWordCode3r);
+
+		if(!imtype.equals(Lime.DB_TABLE_DAYI)){
+			edtManageImWordCode3r.setVisibility(View.GONE);
+			txtManageImWordCode3r.setVisibility(View.GONE);
+		}
 		
 		return view;
 	}

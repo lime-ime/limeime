@@ -10,14 +10,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 
 public class ManageImAddDialog extends DialogFragment {
 
 	private Activity activity;
 	private View view;
+
+	private String imtype;
 
 	//Button btnQuizExitConfirm;
 	//Button btnQuizExitCancel;
@@ -31,13 +35,19 @@ public class ManageImAddDialog extends DialogFragment {
 	private EditText edtManageImWordCode3r;
 	private EditText edtManageImWordWord;
 
+	private TextView txtManageImWordCode3r;
+
+	public ManageImAddDialog(String imtype) {
+		this.imtype = imtype;
+	}
+
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
 	}
 
-	public static ManageImAddDialog newInstance() {
-		ManageImAddDialog btd = new ManageImAddDialog();
+	public static ManageImAddDialog newInstance(String imtype) {
+		ManageImAddDialog btd = new ManageImAddDialog(imtype);
 						   btd.setCancelable(true);
 		return btd;
 	}
@@ -121,6 +131,13 @@ public class ManageImAddDialog extends DialogFragment {
 		edtManageImWordCode = (EditText) view.findViewById(R.id.edtManageImWordCode);
 		edtManageImWordCode3r = (EditText) view.findViewById(R.id.edtManageImWordCode3r);
 		edtManageImWordWord = (EditText) view.findViewById(R.id.edtManageImWordWord);
+
+		txtManageImWordCode3r = (TextView) view.findViewById(R.id.txtManageImWordCode3r);
+
+		if(!imtype.equals(Lime.DB_TABLE_DAYI)){
+			edtManageImWordCode3r.setVisibility(View.GONE);
+			txtManageImWordCode3r.setVisibility(View.GONE);
+		}
 		
 		return view;
 	}

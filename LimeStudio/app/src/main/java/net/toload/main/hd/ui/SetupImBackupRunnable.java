@@ -66,6 +66,7 @@ public class SetupImBackupRunnable implements Runnable{
     public void run() {
 
         handler.showProgress();
+        handler.updateProgress(this.fragment.getResources().getString(R.string.setup_im_backup_message));
 
         // Preparing the file to be backup
         if(type.equals(Lime.LOCAL) || type.equals(Lime.GOOGLE) || type.equals(Lime.DROPBOX)){
