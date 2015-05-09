@@ -16,6 +16,16 @@
             android:id="@+id/SetupImList"
             android:padding="10dp">
 
+            <!--<com.google.android.gms.ads.AdView
+                android:id="@+id/adView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_alignParentBottom="true"
+                ads:adSize="BANNER"
+                ads:adUnitId="@string/ad_unit_banner">
+            </com.google.android.gms.ads.AdView>-->
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

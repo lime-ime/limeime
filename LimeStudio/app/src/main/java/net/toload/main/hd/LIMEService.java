@@ -20,6 +20,14 @@
 
 package net.toload.main.hd;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
+import android.app.AlertDialog;
+import android.app.Service;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.inputmethodservice.InputMethodService;
 import android.media.AudioManager;
@@ -38,22 +46,8 @@ import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
-
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-
-import net.toload.main.hd.keyboard.LIMEBaseKeyboard;
-import net.toload.main.hd.keyboard.LIMEKeyboard;
-import net.toload.main.hd.keyboard.LIMEKeyboardBaseView;
-import net.toload.main.hd.keyboard.LIMEKeyboardView;
-import net.toload.main.hd.keyboard.LIMEMetaKeyKeyListener;
-import net.toload.main.hd.R;
 import net.toload.main.hd.candidate.CandidateInInputViewContainer;
 import net.toload.main.hd.candidate.CandidateView;
 import net.toload.main.hd.candidate.CandidateViewContainer;
@@ -61,17 +55,20 @@ import net.toload.main.hd.global.ChineseSymbol;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.global.Mapping;
+import net.toload.main.hd.keyboard.LIMEBaseKeyboard;
+import net.toload.main.hd.keyboard.LIMEKeyboard;
+import net.toload.main.hd.keyboard.LIMEKeyboardBaseView;
+import net.toload.main.hd.keyboard.LIMEKeyboardView;
+import net.toload.main.hd.keyboard.LIMEMetaKeyKeyListener;
 import net.toload.main.hd.limesettings.LIMEPreference;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
-import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
-import android.app.AlertDialog;
- 
-import android.app.Service;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.res.Configuration;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Art Hung
@@ -264,8 +261,6 @@ public class LIMEService extends InputMethodService implements
 		activatedIMShortNameList = new ArrayList<String>();
 		activeIM = mLIMEPref.getActiveIM();
 		buildActivatedIMList();
-
-		
 
 	}
 
@@ -1845,7 +1840,7 @@ public class LIMEService extends InputMethodService implements
 		mLIMEPref.setLanguageMode(false);
 		//initialKeyboard();
 		initialIMKeyboard();
-		Toast.makeText(this, activeIMName, Toast.LENGTH_SHORT / 2).show();
+		Toast.makeText(this, activeIMName, Toast.LENGTH_SHORT).show();
 		try {
 			mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
 			mKeyboardSwitcher.setImList(SearchSrv.getImList());
@@ -2588,10 +2583,10 @@ public class LIMEService extends InputMethodService implements
 		
 		if (mEnglishOnly) {
 			Toast.makeText(this, R.string.typing_mode_english,
-					Toast.LENGTH_SHORT / 2).show();
+					Toast.LENGTH_SHORT).show();
 		} else {
 			Toast.makeText(this, R.string.typing_mode_mixed,
-					Toast.LENGTH_SHORT / 2).show();
+					Toast.LENGTH_SHORT).show();
 		}
 		clearSuggestions(); //Jeremy '11,9,5
 	}

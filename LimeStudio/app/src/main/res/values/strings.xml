@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">萊姆輸入法</string>
+    <string name="app_setting">設定萊姆輸入法</string>
+
+    <!--<string name="ad_unit_interstitial">ca-app-pub-6429718170873338/5892033402</string>
+    <string name="ad_unit_banner">ca-app-pub-6429718170873338/7028669804</string>-->
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>

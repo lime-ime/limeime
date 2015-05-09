@@ -35,6 +35,14 @@ public class MainActivity extends ActionBarActivity
     private DataSource datasource;
     private List<Im> imlist;
 
+    //private InterstitialAd interstitial;
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+       // displayInterstitial();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,7 +59,25 @@ public class MainActivity extends ActionBarActivity
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
+
+        // Create ad request.
+       // AdRequest adRequest = new AdRequest.Builder().build();
+
+        /*// Setup AD
+        interstitial = new InterstitialAd(this);
+        interstitial.setAdUnitId(getResources().getString(R.string.ad_unit_interstitial));
+
+        // Begin loading your interstitial.
+        interstitial.loadAd(adRequest);*/
+
     }
+
+    // Invoke displayInterstitial() when you are ready to display an interstitial.
+   /* public void displayInterstitial() {
+        if (interstitial.isLoaded()) {
+            interstitial.show();
+        }
+    }*/
 
     public void initialImList(){
 
@@ -141,5 +167,7 @@ public class MainActivity extends ActionBarActivity
 
         return super.onOptionsItemSelected(item);
     }
+
+
 
 }

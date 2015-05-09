@@ -277,6 +277,12 @@ public class SetupImFragment extends Fragment {
             }
         });
 
+        // Create ad request.
+        //AdRequest adRequest = new AdRequest.Builder().build();
+       /* AdRequest adRequest = new AdRequest.Builder().addTestDevice("0328DD28E577D5F5C03E42009BCBD82E").build();
+        AdView mAdView = (AdView) view.findViewById(R.id.adView);
+               mAdView.loadAd(adRequest);*/
+
         return view;
     }
 
