@@ -63,4 +63,5 @@ dependencies {
     compile files('libs/httpmime-4.0.3.jar')
     compile files('libs/dropbox-android-sdk-1.6.3.jar')
     compile files('libs/json_simple-1.1.jar')
+    compile files('libs/vpadn-sdk-obf428-17a84eb.jar')
 }

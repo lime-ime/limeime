@@ -1,12 +1,15 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:vpadn="http://schemas.android.com/apk/lib/com.vpadn.ads"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="net.toload.main.hd.SetupImFragment">
+    android:orientation="vertical"
+    tools:context="net.toload.main.hd.ManageRelatedFragment">
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:id="@+id/scrollView">
 
         <LinearLayout
@@ -15,16 +18,6 @@
             android:layout_height="fill_parent"
             android:id="@+id/SetupImList"
             android:padding="10dp">
-
-            <!--<com.google.android.gms.ads.AdView
-                android:id="@+id/adView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_alignParentBottom="true"
-                ads:adSize="BANNER"
-                ads:adUnitId="@string/ad_unit_banner">
-            </com.google.android.gms.ads.AdView>-->
 
             <TextView
                 android:layout_width="wrap_content"
@@ -376,5 +369,14 @@
 
     </ScrollView>
 
-</FrameLayout>
-<!-- From: file:/C:/Data/Development/Android/Studio/LIMEIMEAS/app/src/main/res/layout/fragment_setup_imim.xml -->
+    <com.vpadn.ads.VpadnBanner
+        android:id="@+id/vpadnBannerXML"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        vpadn:adSize="SMART_BANNER"
+        vpadn:autoFresh="true"
+        vpadn:bannerId="8a8081824cfe92fa014d3707f493630b"
+        vpadn:loadAdOnCreate="true"
+        vpadn:platform="TW" />
+
+</LinearLayout>

@@ -1,13 +1,14 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:vpadn="http://schemas.android.com/apk/lib/com.vpadn.ads"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="10dp"
     tools:context="net.toload.main.hd.ManageIMFragment">
 
     <LinearLayout
         android:orientation="vertical"
+        android:padding="5dp"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
@@ -133,6 +134,16 @@
             android:paddingRight="10dp" />
 
     </LinearLayout>
+
+    <com.vpadn.ads.VpadnBanner
+        android:id="@+id/vpadnBannerXML"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        vpadn:adSize="SMART_BANNER"
+        vpadn:autoFresh="true"
+        vpadn:bannerId="8a8081824cfe92fa014d3707f493630b"
+        vpadn:loadAdOnCreate="true"
+        vpadn:platform="TW" />
 
 
 </LinearLayout>

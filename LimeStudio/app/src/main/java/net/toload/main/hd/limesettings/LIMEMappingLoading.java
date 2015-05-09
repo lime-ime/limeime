@@ -36,6 +36,11 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.vpadn.ads.VpadnAd;
+import com.vpadn.ads.VpadnAdListener;
+import com.vpadn.ads.VpadnAdRequest;
+import com.vpadn.ads.VpadnInterstitialAd;
+
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
@@ -47,7 +52,10 @@ import net.toload.main.hd.global.LIMEUtilities;
  * 
  */
 
-public class LIMEMappingLoading extends Activity {
+public class LIMEMappingLoading extends Activity implements VpadnAdListener {
+
+	private String interstitialBannerId = "8a8081824cfe92fa014d3735bc886311";
+	private VpadnInterstitialAd interstitialAd;
 
 	final static String TAG = "LIMEMappingLoading";
 	final static boolean DEBUG = false;
@@ -97,7 +105,15 @@ public class LIMEMappingLoading extends Activity {
         }
     };
 
-	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		if (interstitialAd != null) {
+			interstitialAd.destroy();
+			interstitialAd = null;
+		}
+	}
+
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle icicle) {
@@ -164,6 +180,12 @@ public class LIMEMappingLoading extends Activity {
 			}
 		});
 
+		// Vpon
+		interstitialAd = new VpadnInterstitialAd(this, interstitialBannerId, "TW");
+		interstitialAd.setAdListener(this);
+		VpadnAdRequest request = new VpadnAdRequest();
+		interstitialAd.loadAd(request);
+
 		
 	}
 	
@@ -223,7 +245,6 @@ public class LIMEMappingLoading extends Activity {
 					finish();
 				}
 			};
-			thread.start();
 		}
 	}
 
@@ -282,5 +303,36 @@ public class LIMEMappingLoading extends Activity {
 			Log.i(TAG,"onTouchEvent()");
 		return super.onTouchEvent(event);
 	}
-		
+
+	@Override
+	public void onVpadnReceiveAd(VpadnAd vpadnAd) {
+		if (vpadnAd == this.interstitialAd) {
+			//show interstitial ad 或可以延後在show
+			interstitialAd.show();
+		}
+	}
+
+	@Override
+	public void onVpadnFailedToReceiveAd(VpadnAd vpadnAd, VpadnAdRequest.VpadnErrorCode vpadnErrorCode) {
+		if(thread != null && !thread.isAlive()){
+			thread.start();
+		}
+	}
+
+	@Override
+	public void onVpadnPresentScreen(VpadnAd vpadnAd) {
+
+	}
+
+	@Override
+	public void onVpadnDismissScreen(VpadnAd vpadnAd) {
+		if(thread != null && !thread.isAlive()){
+			thread.start();
+		}
+	}
+
+	@Override
+	public void onVpadnLeaveApplication(VpadnAd vpadnAd) {
+
+	}
 }
