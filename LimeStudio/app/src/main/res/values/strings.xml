@@ -41,6 +41,11 @@
     <string name="setup_im_download_description">下載並匯入系統提供的輸入法，這一個操作需要連線網際網路，請啟用相關設定</string>
     <string name="setup_im_import">新增輸入法</string>
     <string name="setup_im_import_description">請選擇要匯入的檔案，系統支援標準 .CIN 格式、LIME 簡易字根表及 .LIME 輸入法備份檔</string>
+    <string name="setup_im_system_settings">啟動萊姆輸入法</string>
+    <string name="setup_im_system_selectLIME">選用萊姆輸入法</string>
+    <string name="setup_im_wizard_nextstep">下一步</string>
+    <string name="setup_im_system_settings_description">萊姆輸入法尚未啟動，請按下一步後，在系統鍵盤輸入法頁面啟動萊姆輸入法。完成後請按返回鍵繼續其他設定。</string>
+    <string name="setup_im_system_impicker_description">萊姆輸入法已啟動但尚未被選用，請按下方按鈕後，在系統鍵盤輸入法選擇頁選用萊姆輸入法。</string>
     <string name="setup_im_import_standard">匯入自定字根表</string>
     <string name="setup_im_import_reset">移除自定字根表</string>
     <string name="setup_im_import_related">匯入關聯字庫</string>

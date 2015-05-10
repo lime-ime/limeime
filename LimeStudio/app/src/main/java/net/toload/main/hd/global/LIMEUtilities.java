@@ -192,6 +192,7 @@ public class LIMEUtilities {
 	
 	public static void showInputMethodSettingsPage(Context context){
 		Intent intent = new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS);
+		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
    	 	context.startActivity(intent);
 	}
 	public static void showInputMethodPicker(Context context){

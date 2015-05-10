@@ -1684,11 +1684,8 @@ public class LIMEService extends InputMethodService implements
 			Log.i(TAG, "handleOptions()");
 		AlertDialog.Builder builder = null;
 		
-		if(android.os.Build.VERSION.SDK_INT < 11)
-			builder = new AlertDialog.Builder(this);
-		else
-			builder = new AlertDialog.Builder(this, R.style.LIMEHDTheme);
-			
+		builder = new AlertDialog.Builder(this);
+
 		
 		builder.setCancelable(true);
 		builder.setIcon(R.drawable.sym_keyboard_done);
@@ -1913,11 +1910,9 @@ public class LIMEService extends InputMethodService implements
 	private void showHanConvertPicker() {
 		AlertDialog.Builder builder = null;
 		
-		if(android.os.Build.VERSION.SDK_INT < 11)
-			builder = new AlertDialog.Builder(this);
-		else
-			builder = new AlertDialog.Builder(this, R.style.LIMEHDTheme);
-			
+
+		builder = new AlertDialog.Builder(this);
+
 		builder.setCancelable(true);
 		builder.setIcon(R.drawable.sym_keyboard_done);
 		builder.setNegativeButton(android.R.string.cancel, null);
@@ -1960,11 +1955,9 @@ public class LIMEService extends InputMethodService implements
 
 		AlertDialog.Builder builder = null;
 		
-		if(android.os.Build.VERSION.SDK_INT < 11)
-			builder = new AlertDialog.Builder(this);
-		else
-			builder = new AlertDialog.Builder(this, R.style.LIMEHDTheme);
-			
+
+		builder = new AlertDialog.Builder(this);
+
 		builder.setCancelable(true);
 		builder.setIcon(R.drawable.sym_keyboard_done);
 		builder.setNegativeButton(android.R.string.cancel, null);

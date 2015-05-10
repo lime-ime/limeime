@@ -1,5 +1,6 @@
 package net.toload.main.hd;
 
+
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
@@ -121,6 +122,13 @@ public class MainActivity extends ActionBarActivity
     //private InterstitialAd interstitial;
 
     @Override
+    public void  onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        SetupImFragment ImFragment  = (SetupImFragment) getSupportFragmentManager().findFragmentByTag("SetupImFragment");
+        if(ImFragment == null) return;
+        if( hasFocus && ImFragment.isVisible()) ImFragment.initialbutton();
+    }
+    @Override
     protected void onStop() {
         super.onStop();
         this.SearchSrv.initialCache();
@@ -179,8 +187,9 @@ public class MainActivity extends ActionBarActivity
         FragmentManager fragmentManager = getSupportFragmentManager();
         if (position == 0) {
             fragmentManager.beginTransaction()
-                    .replace(R.id.container, SetupImFragment.newInstance(position))
-                    .commit();
+                    .replace(R.id.container, SetupImFragment.newInstance(position), "SetupImFragment")
+                    .addToBackStack("SetupImFragment")
+            .commit();
         }else if (position == 1){
             fragmentManager.beginTransaction()
                     .replace(R.id.container, ManageRelatedFragment.newInstance(position))
