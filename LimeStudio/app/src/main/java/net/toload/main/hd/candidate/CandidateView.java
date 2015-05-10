@@ -32,6 +32,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.Gravity;
@@ -566,10 +567,11 @@ public class CandidateView extends View implements View.OnClickListener
     	
         if (composingText!=null ) {	
         	mComposingTextPopup.setContentView(mComposingTextView);
-        	mComposingTextView.setText(composingText);
-        	mComposingTextView.setTextSize(
-        			mContext.getResources().getDimensionPixelSize(R.dimen.composing_text_size) 
-        			*mLIMEPref.getFontSize());
+			mComposingTextView.setText(composingText);
+			//The textsize got is coverted into PX already. Thus force setup the setTextSize in unit of PX.
+			float scaledTextSize = mContext.getResources().getDimensionPixelSize(R.dimen.composing_text_size)*mLIMEPref.getFontSize();
+			mComposingTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, scaledTextSize);
+
         }else
         	return;
         

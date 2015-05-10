@@ -6,7 +6,7 @@
     </style>
     <style name="LIMEHDTheme" parent="android:Theme">
     </style>
-    <style name="LIMEHDDialogTheme" parent="android:Theme.Dialog">
+    <style name="LIMEHDDialogTheme" parent="android:style/Theme.Dialog">
     </style>
     <style name="LIMEkeyboardStyle">
         <item name="android:background">@drawable/keyboard_background</item>
