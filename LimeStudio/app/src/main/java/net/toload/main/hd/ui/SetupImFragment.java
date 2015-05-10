@@ -157,9 +157,8 @@ public class SetupImFragment extends Fragment {
         // Reset DropBox Request
         mLIMEPref.setParameter(Lime.DROPBOX_REQUEST_FLAG, false);
 
-        if(btnSetupImImportStandard != null){
-            initialbutton();
-        }
+        initialbutton();
+
 
     }
 
@@ -314,10 +313,12 @@ public class SetupImFragment extends Fragment {
         if(LIMEUtilities.isLIMEEnabled(getActivity().getApplicationContext())){  //LIME is activated in system
             btnSetupImSystemSettings.setVisibility(View.GONE);
             view.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.GONE);
+            view.findViewById(R.id.SetupImList).setVisibility(View.VISIBLE);
             if(LIMEUtilities.isLIMEActive(getActivity().getApplicationContext())) {  //LIME is activated and also the active Keyboard
                 btnSetupImSystemIMPicker.setVisibility(View.GONE);
-                view.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
-                view.findViewById(R.id.setup_im_system_settings).setVisibility(View.GONE);
+                //view.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
+                //view.findViewById(R.id.setup_im_system_settings).setVisibility(View.GONE);
+                view.findViewById(R.id.Setup_Wizard).setVisibility(View.GONE);
             }
             else  //LIME is activated, but not active keyboard
             {
@@ -330,6 +331,7 @@ public class SetupImFragment extends Fragment {
             view.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.VISIBLE);
             btnSetupImSystemIMPicker.setVisibility(View.GONE);
             view.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
+            view.findViewById(R.id.SetupImList).setVisibility(View.GONE);
         }
         btnSetupImSystemSettings.setOnClickListener(new View.OnClickListener() {
             @Override
