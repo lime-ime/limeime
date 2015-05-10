@@ -307,7 +307,7 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 	@Override
 	public void onVpadnReceiveAd(VpadnAd vpadnAd) {
 		if (vpadnAd == this.interstitialAd) {
-			//show interstitial ad ©Î¥i¥H©µ«á¦bshow
+			//show interstitial ad æˆ–å¯ä»¥å»¶å¾Œåœ¨show
 			interstitialAd.show();
 		}
 	}

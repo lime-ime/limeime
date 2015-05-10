@@ -4,6 +4,7 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -29,6 +30,7 @@ import net.toload.main.hd.R;
 import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limesettings.DBServer;
 import net.toload.main.hd.limesettings.LIMEMappingLoading;
 
@@ -68,7 +70,12 @@ public class SetupImFragment extends Fragment {
     DropboxAPI<AndroidAuthSession> mdbapi;
     String dropboxAccessToken;
 
-            // Custom Import
+    //Activate LIME IM
+
+    Button btnSetupImSystemSettings;
+    Button btnSetupImSystemIMPicker;
+
+    // Custom Import
     Button btnSetupImImportStandard;
     Button btnSetupImImportRelated;
 
@@ -119,7 +126,6 @@ public class SetupImFragment extends Fragment {
         frg.setArguments(args);
         return frg;
     }
-
 
     @Override
     public void onResume() {
@@ -203,6 +209,8 @@ public class SetupImFragment extends Fragment {
 
         view = inflater.inflate(R.layout.fragment_setup_im, container, false);
 
+        btnSetupImSystemSettings = (Button) view.findViewById(R.id.btnSetupImSystemSetting);
+        btnSetupImSystemIMPicker = (Button) view.findViewById(R.id.btnSetupImSystemIMPicker);
         btnSetupImImportStandard = (Button) view.findViewById(R.id.btnSetupImImportStandard);
         btnSetupImImportRelated = (Button) view.findViewById(R.id.btnSetupImImportRelated);
         btnSetupImPhonetic = (Button) view.findViewById(R.id.btnSetupImPhonetic);
@@ -301,6 +309,43 @@ public class SetupImFragment extends Fragment {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        Context ctx = getActivity().getApplicationContext();
+        if(LIMEUtilities.isLIMEEnabled(getActivity().getApplicationContext())){  //LIME is activated in system
+            btnSetupImSystemSettings.setVisibility(View.GONE);
+            view.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.GONE);
+            if(LIMEUtilities.isLIMEActive(getActivity().getApplicationContext())) {  //LIME is activated and also the active Keyboard
+                btnSetupImSystemIMPicker.setVisibility(View.GONE);
+                view.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
+                view.findViewById(R.id.setup_im_system_settings).setVisibility(View.GONE);
+            }
+            else  //LIME is activated, but not active keyboard
+            {
+                btnSetupImSystemIMPicker.setVisibility(View.VISIBLE);
+                view.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.VISIBLE);
+
+            }
+        }else {
+            btnSetupImSystemSettings.setVisibility(View.VISIBLE);
+            view.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.VISIBLE);
+            btnSetupImSystemIMPicker.setVisibility(View.GONE);
+            view.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
+        }
+        btnSetupImSystemSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+             public void onClick(View v) {
+                LIMEUtilities.showInputMethodSettingsPage(getActivity().getApplicationContext());
+            }
+        });
+
+        btnSetupImSystemIMPicker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LIMEUtilities.showInputMethodPicker(getActivity().getApplicationContext());
+                view.invalidate();
+            }
+        });
+
         if(check.get(Lime.DB_TABLE_CUSTOM) != null){
             btnSetupImImportStandard.setAlpha(Lime.HALF_ALPHA_VALUE);
             btnSetupImImportStandard.setText(check.get(Lime.DB_TABLE_CUSTOM));
@@ -308,12 +353,15 @@ public class SetupImFragment extends Fragment {
             btnSetupImImportStandard.setAlpha(Lime.NORMAL_ALPHA_VALUE);
         }
 
+
+
         btnSetupImImportStandard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 FragmentTransaction ft = getFragmentManager().beginTransaction();
                 SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CUSTOM, handler);
                 dialog.show(ft, "loadimdialog");
+
             }
         });
 
