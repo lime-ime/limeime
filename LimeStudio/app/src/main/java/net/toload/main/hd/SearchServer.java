@@ -117,6 +117,12 @@ public class SearchServer {
 
 	}
 
+	public void closeDatabase(){
+		if(dbadapter != null){
+			dbadapter.close();
+		}
+	}
+
 	public void setSelectedText(String text){
 		selectedText = new StringBuffer();
 		selectedText.append(text);

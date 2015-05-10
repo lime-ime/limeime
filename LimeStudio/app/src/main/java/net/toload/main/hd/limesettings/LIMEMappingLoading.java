@@ -193,10 +193,6 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 			interstitialAd.setAdListener(this);
 			VpadnAdRequest request = new VpadnAdRequest();
 			interstitialAd.loadAd(request);
-		}else{
-			if(thread != null && !thread.isAlive()){
-				thread.start();
-			}
 		}
 		
 	}
@@ -258,6 +254,13 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 				}
 			};
 		}
+
+		boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
+		if(paymentflag) {
+			if(thread != null && !thread.isAlive()){
+				thread.start();
+			}
+		}
 	}
 
 	@Override
@@ -285,28 +288,7 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 		
 		LIMEUtilities.showNotification(
 				this, true, R.drawable.icon, this.getText(R.string.ime_setting), message, new Intent(this, MainActivity.class));
-		/*
-		NotificationManager mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-		Notification.Builder mNotificationBuilder = new Notification.Builder(this);
 
-
-		mNotificationBuilder.setSmallIcon(R.drawable.icon)
-		    .setAutoCancel(true)
-		    .setContentTitle(this.getText(R.string.ime_setting))
-		    .setContentText(message)
-		    .setContentIntent(PendingIntent.getActivity(this, 0,new Intent(this, LIMEMenu.class), 0));
-
-		mNotificationManager.notify(R.drawable.icon, mNotificationBuilder.getNotification());
-		/*		
-		Notification notification = new Notification(R.drawable.icon, message, System.currentTimeMillis());
-		notification.flags |= Notification.FLAG_AUTO_CANCEL;
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,new Intent(this, LIMEMenu.class), 0);
-		notification.setLatestEventInfo(this, this.getText(R.string.ime_setting), message, contentIntent);
-		if(notificationMgr == null){
-			notificationMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		}
-		notificationMgr.notify(0, notification);
-		*/
 	}
 
 	@Override

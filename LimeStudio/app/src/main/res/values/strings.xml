@@ -77,7 +77,7 @@
     <string name="payment_plan_2">USD 1.99 / 永久移除廣告</string>
     <string name="payment_plan_3">USD 2.99 / 永久移除廣告</string>
     <string name="payment_service_failed">Google Play 服務無法正常啟用，請稍後再試 !</string>
-    <string name="payment_service_success">感謝您對於 LIME 開發團隊的支持，我們會持續努力，提供更好的服務給大家 !!!</string>
+    <string name="payment_service_success">感謝您對於 LIME 開發團隊的支持，我們會持續努力，提供更好的服務給所有的使用者 !!!</string>
 
     <string name="default_menu_initial">設定輸入法</string>
     <string name="default_menu_related">管理關聯字庫</string>

@@ -44,11 +44,27 @@ public class DataSource {
 		}
 		database = dbhelper.getWritableDatabase();
 	}
+
+	public void openReadonly() throws SQLException{
+		if(dbhelper == null && ctx != null){
+			dbhelper = new DBHelper(ctx);
+		}
+		database = dbhelper.getReadonlyDatabase();
+	}
 	
 	public void close() {
 		if(dbhelper != null && database != null){
 			dbhelper.close();
 		}
+	}
+
+	public boolean isLock(){
+		if(dbhelper != null && database != null){
+			if(database.isOpen()){
+				return database.isDbLockedByCurrentThread();
+			}
+		}
+		return false;
 	}
 
     /**

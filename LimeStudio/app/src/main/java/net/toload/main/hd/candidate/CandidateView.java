@@ -364,7 +364,7 @@ public class CandidateView extends View implements View.OnClickListener
     			scrollTo(0, 0);    
     	        mTargetScrollX = 0;
     		}
-    		draw(null);
+    		//draw(null);
     		resetWidth();
     		invalidate();
     		requestLayout();

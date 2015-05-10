@@ -127,6 +127,7 @@ public class MainActivity extends ActionBarActivity
         SetupImFragment ImFragment  = (SetupImFragment) getSupportFragmentManager().findFragmentByTag("SetupImFragment");
         if(ImFragment == null) return;
         if( hasFocus && ImFragment.isVisible()) ImFragment.initialbutton();
+
     }
     @Override
     protected void onStop() {

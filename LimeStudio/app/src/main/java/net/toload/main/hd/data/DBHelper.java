@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
+import net.toload.main.hd.SearchServer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -20,11 +21,13 @@ public class DBHelper {
 	Context ctx;
 	File databasepath;
 
+	private SearchServer SearchSrv = null;
 	private SQLiteDatabase database = null;
 
 	DBHelper(Context context) {
 		
 		this.ctx = context;
+		this.SearchSrv = new SearchServer(this.ctx);
 
 		// Initial Database
 		File destdir = new File(Lime.DATABASE_DEVICE_FOLDER + File.separator);
@@ -57,15 +60,25 @@ public class DBHelper {
 		
 		databasepath = destpath;
 	}
-	
+
 	public synchronized SQLiteDatabase getWritableDatabase() {
+
 		if(database == null || !database.isOpen()){
 			database = SQLiteDatabase.openDatabase(databasepath.getAbsolutePath(), null, SQLiteDatabase.OPEN_READWRITE
-        			| SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+					| SQLiteDatabase.NO_LOCALIZED_COLLATORS);
 			return database;
 		}
 		return null;
-    }
+	}
+
+	public synchronized SQLiteDatabase getReadonlyDatabase() {
+
+		if(database == null || !database.isOpen()){
+			database = SQLiteDatabase.openDatabase(databasepath.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY );
+			return database;
+		}
+		return null;
+	}
 	
 	public synchronized void close() {
 		if(database != null && database.isOpen()){
