@@ -154,6 +154,16 @@ public class ManageRelatedEditDialog extends DialogFragment {
 		edtManageRelatedScore = (EditText) view.findViewById(R.id.edtManageRelatedScore);
 
 		edtManageRelatedPword.setText(related.getPword());
+		edtManageRelatedPword.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+			@Override
+			public void onFocusChange(View v, boolean hasFocus) {
+				if(edtManageRelatedPword.getText() != null && !edtManageRelatedPword.getText().equals("") &&
+						edtManageRelatedPword.getText().length() > 1){
+					edtManageRelatedPword.setText(edtManageRelatedPword.getText().subSequence(0,1));
+				}
+			}
+		});
+
 		edtManageRelatedCword.setText(related.getCword());
 		edtManageRelatedScore.setText(related.getScore() + "");
 		

@@ -13,38 +13,14 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_height="wrap_content"
-            android:layout_width="match_parent">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceLarge"
-                    android:text="@string/manage_im_management"
-                    android:id="@+id/txtManageImTitle"
-                    android:layout_marginBottom="5dp"
-                    android:layout_weight="1" />
-
-
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/manage_im_add"
-                    android:id="@+id/btnManageImAdd"
-                    android:layout_gravity="right"
-                    android:layout_column="11" />
-
-        </LinearLayout>
-
         <Button
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
             android:text="@string/manage_im_keyboard"
             android:id="@+id/btnManageImKeyboard"
             android:layout_gravity="center_horizontal"
-            android:padding="5dp" />
+            android:padding="5dp"
+            android:textStyle="bold" />
 
 
         <LinearLayout
@@ -59,7 +35,8 @@
                     android:layout_column="1"
                     android:checked="false"
                     android:textOff="@string/manage_im_root"
-                    android:textOn="@string/manage_im_word" />
+                    android:textOn="@string/manage_im_word"
+                    android:textStyle="bold" />
 
                 <EditText
                     android:layout_width="0dp"
@@ -73,7 +50,16 @@
                     android:layout_height="wrap_content"
                     android:text="@string/manage_im_search"
                     android:id="@+id/btnManageImSearch"
-                    android:layout_column="11" />
+                    android:layout_column="11"
+                    android:textStyle="bold" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/manage_im_add"
+                android:id="@+id/btnManageImAdd"
+                android:layout_column="11"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <Space
@@ -111,7 +97,8 @@
             android:id="@+id/btnManageImPrevious"
             android:layout_margin="2dp"
             android:paddingRight="10dp"
-            android:paddingLeft="10dp" />
+            android:paddingLeft="10dp"
+            android:textStyle="bold" />
 
 
         <TextView
@@ -131,19 +118,18 @@
             android:id="@+id/btnManageImNext"
             android:layout_margin="2dp"
             android:paddingLeft="10dp"
-            android:paddingRight="10dp" />
+            android:paddingRight="10dp"
+            android:textStyle="bold" />
 
     </LinearLayout>
 
-    <com.vpadn.ads.VpadnBanner
-        android:id="@+id/vpadnBannerXML"
-        android:layout_width="wrap_content"
+
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        vpadn:adSize="SMART_BANNER"
-        vpadn:autoFresh="true"
-        vpadn:bannerId="8a8081824cfe92fa014d3707f493630b"
-        vpadn:loadAdOnCreate="true"
-        vpadn:platform="TW" />
+        android:id="@+id/adLayout">
+
+    </RelativeLayout>
 
 
 </LinearLayout>

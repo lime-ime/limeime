@@ -37,9 +37,7 @@ public class ManageImAddDialog extends DialogFragment {
 
 	private TextView txtManageImWordCode3r;
 
-	public ManageImAddDialog(String imtype) {
-		this.imtype = imtype;
-	}
+	public ManageImAddDialog(){}
 
 	@Override
 	public void onDestroy() {
@@ -47,8 +45,11 @@ public class ManageImAddDialog extends DialogFragment {
 	}
 
 	public static ManageImAddDialog newInstance(String imtype) {
-		ManageImAddDialog btd = new ManageImAddDialog(imtype);
+		ManageImAddDialog btd = new ManageImAddDialog();
 						   btd.setCancelable(true);
+		Bundle bundle = new Bundle(1);
+		bundle.putString("imtype", imtype);
+		btd.setArguments(bundle);
 		return btd;
 	}
 	
@@ -79,6 +80,8 @@ public class ManageImAddDialog extends DialogFragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 
 		getDialog().getWindow().setTitle(getResources().getString(R.string.manage_word_dialog_add));
+
+		imtype = getArguments().getString("imtype");
 
 		activity = getActivity();
 		view = inflater.inflate(R.layout.fragment_dialog_add, container, false);

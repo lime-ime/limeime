@@ -297,7 +297,8 @@
                         android:layout_weight="1"
                         android:padding="5dp"
                         android:layout_marginRight="10dp"
-                        android:layout_marginLeft="10dp" />
+                        android:layout_marginLeft="10dp"
+                        android:textStyle="bold" />
 
                     <Button
                         android:layout_width="0dp"
@@ -307,7 +308,8 @@
                         android:layout_weight="1"
                         android:padding="5dp"
                         android:layout_marginLeft="10dp"
-                        android:layout_marginRight="10dp" />
+                        android:layout_marginRight="10dp"
+                        android:textStyle="bold" />
 
                 </TableRow>
 
@@ -325,7 +327,8 @@
                         android:layout_weight="1"
                         android:padding="5dp"
                         android:layout_marginRight="10dp"
-                        android:layout_marginLeft="10dp" />
+                        android:layout_marginLeft="10dp"
+                        android:textStyle="bold" />
 
                     <Button
                         android:layout_width="0dp"
@@ -335,7 +338,8 @@
                         android:layout_weight="1"
                         android:padding="5dp"
                         android:layout_marginLeft="10dp"
-                        android:layout_marginRight="10dp" />
+                        android:layout_marginRight="10dp"
+                        android:textStyle="bold" />
                 </TableRow>
 
                 <TableRow
@@ -351,7 +355,8 @@
                         android:layout_weight="1"
                         android:padding="5dp"
                         android:layout_marginRight="10dp"
-                        android:layout_marginLeft="10dp" />
+                        android:layout_marginLeft="10dp"
+                        android:textStyle="bold" />
 
                     <Button
                         android:layout_width="0dp"
@@ -361,7 +366,8 @@
                         android:layout_weight="1"
                         android:padding="5dp"
                         android:layout_marginLeft="10dp"
-                        android:layout_marginRight="10dp" />
+                        android:layout_marginRight="10dp"
+                        android:textStyle="bold" />
                 </TableRow>
             </TableLayout>
 
@@ -369,14 +375,12 @@
 
     </ScrollView>
 
-    <com.vpadn.ads.VpadnBanner
-        android:id="@+id/vpadnBannerXML"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        vpadn:adSize="SMART_BANNER"
-        vpadn:autoFresh="true"
-        vpadn:bannerId="8a8081824cfe92fa014d3707f493630b"
-        vpadn:loadAdOnCreate="true"
-        vpadn:platform="TW" />
+        android:id="@+id/adLayout">
+
+    </RelativeLayout>
+
 
 </LinearLayout>

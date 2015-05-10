@@ -1,15 +1,28 @@
 package net.toload.main.hd;
 
+import android.app.PendingIntent;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentSender;
+import android.content.ServiceConnection;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
+
+import com.android.vending.billing.IInAppBillingService;
 
 import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Im;
+import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.ui.ManageRelatedFragment;
 import net.toload.main.hd.ui.SetupImFragment;
 
@@ -25,6 +38,7 @@ public class MainActivity extends ActionBarActivity
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
     private NavigationDrawerFragment mNavigationDrawerFragment;
+    private SearchServer SearchSrv = null;
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -35,18 +49,92 @@ public class MainActivity extends ActionBarActivity
     private DataSource datasource;
     private List<Im> imlist;
 
+    private ConnectivityManager connManager;
+    private LIMEPreferenceManager mLIMEPref;
+
+    IInAppBillingService mService;
+    ServiceConnection mServiceConn = new ServiceConnection() {
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mService = null;
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name,
+                                       IBinder service) {
+            mService = IInAppBillingService.Stub.asInterface(service);
+
+            boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
+            if(!paymentflag) {
+                try {
+                    Bundle ownedItems = mService.getPurchases(3, getPackageName(), "inapp", null);
+                    int response = ownedItems.getInt("RESPONSE_CODE");
+                    if (response == 0) {
+                        ArrayList<String> owned =  ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
+                        ArrayList<String>  purchaseDataList =  ownedItems.getStringArrayList("INAPP_PURCHASE_DATA_LIST");
+                        ArrayList<String>  signatureList =  ownedItems.getStringArrayList("INAPP_DATA_SIGNATURE_LIST");
+                        String continuationToken = ownedItems.getString("INAPP_CONTINUATION_TOKEN");
+
+                        for (int i = 0; i < purchaseDataList.size(); ++i) {
+                            String purchaseData = purchaseDataList.get(i);
+                            String signature = signatureList.get(i);
+                            String sku = owned.get(i);
+                            mLIMEPref.setParameter(Lime.PAYMENT_FLAG, true);
+                        }
+
+                    }
+
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+    };
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+         if (requestCode == 1001) {
+             String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
+            //int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
+            //String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
+
+            if (resultCode == RESULT_OK) {
+                mLIMEPref.setParameter(Lime.PAYMENT_FLAG, true);
+                showToastMessage(getResources().getString(R.string.payment_service_success), Toast.LENGTH_LONG);
+                //Log.i("LIME", "purchasing complete " + new Date() + " / " + purchaseData);
+            }
+         }
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mService != null) {
+            unbindService(mServiceConn);
+        }
+
+    }
+
     //private InterstitialAd interstitial;
 
     @Override
     protected void onStop() {
         super.onStop();
-       // displayInterstitial();
+        this.SearchSrv.initialCache();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+
+        this.SearchSrv = new SearchServer(this);
+        this.mLIMEPref = new LIMEPreferenceManager(this);
 
         // initial imlist
         initialImList();
@@ -60,24 +148,14 @@ public class MainActivity extends ActionBarActivity
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
 
-        // Create ad request.
-       // AdRequest adRequest = new AdRequest.Builder().build();
-
-        /*// Setup AD
-        interstitial = new InterstitialAd(this);
-        interstitial.setAdUnitId(getResources().getString(R.string.ad_unit_interstitial));
-
-        // Begin loading your interstitial.
-        interstitial.loadAd(adRequest);*/
+        boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
+        if(!paymentflag) {
+            Intent serviceIntent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
+            serviceIntent.setPackage("com.android.vending");
+            bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
+        }
 
     }
-
-    // Invoke displayInterstitial() when you are ready to display an interstitial.
-   /* public void displayInterstitial() {
-        if (interstitial.isLoaded()) {
-            interstitial.show();
-        }
-    }*/
 
     public void initialImList(){
 
@@ -168,6 +246,45 @@ public class MainActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
+    public void purchase(String productid){
+
+        if (connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()) {
+
+            if(mService != null){
+
+                Bundle buyIntentBundle = null;
+                try {
+                    buyIntentBundle = mService.getBuyIntent(3, getPackageName(),
+                            productid, "inapp", "callback/"+productid);
+
+                    int status = buyIntentBundle.getInt("RESPONSE_CODE");
+
+                    if(status == 0){
+                        PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
+                        try {
+                            startIntentSenderForResult(pendingIntent.getIntentSender(),
+                                    1001, new Intent(), Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0));
+                        } catch (IntentSender.SendIntentException e) {
+                            e.printStackTrace();
+                        }
+                    }else{
+                        showToastMessage(getResources().getString(R.string.payment_service_failed), Toast.LENGTH_LONG);
+                    }
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }else{
+                showToastMessage(getResources().getString(R.string.payment_service_failed), Toast.LENGTH_LONG);
+            }
+        }else{
+            showToastMessage(getResources().getString(R.string.error_network_failed), Toast.LENGTH_LONG);
+        }
+    }
+
+    public void showToastMessage(String msg, int length) {
+        Toast toast = Toast.makeText(this, msg, length);
+        toast.show();
+    }
 
 
 }

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/payment_service_success"
+        android:id="@+id/txtPaymentSuccess"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:padding="10dp"
+        android:visibility="gone"
+        android:textSize="24sp" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:text="@string/payment_plan_1"
+        android:id="@+id/btnPaymentPlan1"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:padding="10dp" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:text="@string/payment_plan_2"
+        android:id="@+id/btnPaymentPlan2"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:padding="10dp" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:text="@string/payment_plan_3"
+        android:id="@+id/btnPaymentPlan3"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:padding="10dp" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:text="@string/dialog_cancel"
+        android:id="@+id/btnPaymentCancel"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:padding="10dp" />
+</LinearLayout>

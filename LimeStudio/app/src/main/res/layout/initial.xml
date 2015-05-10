@@ -29,7 +29,7 @@
 					<Button android:layout_width="fill_parent" android:layout_margin="5dp" android:id="@+id/btnInitPhoneticOnlyDB" android:layout_weight="1" android:layout_height="fill_parent" android:text="@string/l3_initial_btn_load_phonetic_only_db" android:padding="5dp"></Button>
 				</TableRow>
 				<TableRow android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/tableRow4">
-					<Button android:layout_width="fill_parent" android:layout_margin="5dp" android:id="@+id/btnInitPhoneticHsOnlyDB" android:layout_weight="1" android:layout_height="fill_parent" android:text="@string/l3_initial_btn_load_phonetic_hs_only_db" android:padding="5dp"></Button>
+					<Button android:layout_width="fill_parent" android:layout_margin="5dp" android:id="@+id/btnInitPhoneticHsOnlyDB" android:layout_weight="1" android:layout_height="fill_parent" android:padding="5dp"></Button>
 				</TableRow>
 				<TableRow android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/tableRow5">
 					<Button android:layout_width="fill_parent" android:layout_margin="5dp" android:id="@+id/btnInitEmptyDB" android:layout_weight="1" android:layout_height="fill_parent" android:text="@string/l3_initial_btn_load_empty_db" android:padding="5dp"></Button>

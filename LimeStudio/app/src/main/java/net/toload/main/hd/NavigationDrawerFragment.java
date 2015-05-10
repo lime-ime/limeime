@@ -28,6 +28,7 @@ import net.toload.main.hd.data.Im;
 import net.toload.main.hd.limesettings.LIMEPreference;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 import net.toload.main.hd.ui.HelpDialog;
+import net.toload.main.hd.ui.PaymentDialog;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -312,6 +313,10 @@ public class NavigationDrawerFragment extends Fragment {
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             HelpDialog dialog = HelpDialog.newInstance();
                          dialog.show(ft, "helpdialog");
+        }else if(item.getItemId() == R.id.action_adfree){
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
+            PaymentDialog dialog = PaymentDialog.newInstance();
+            dialog.show(ft, "paymentdialog");
         }
 
         /**

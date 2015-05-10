@@ -117,6 +117,16 @@ public class ManageRelatedAddDialog extends DialogFragment {
 		});
 
 		edtManageRelatedPword = (EditText) view.findViewById(R.id.edtManageRelatedPword);
+		edtManageRelatedPword.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+			@Override
+			public void onFocusChange(View v, boolean hasFocus) {
+				if(edtManageRelatedPword.getText() != null && !edtManageRelatedPword.getText().equals("") &&
+						edtManageRelatedPword.getText().length() > 1){
+					edtManageRelatedPword.setText(edtManageRelatedPword.getText().subSequence(0,1));
+				}
+			}
+		});
+
 		edtManageRelatedCword = (EditText) view.findViewById(R.id.edtManageRelatedCword);
 		edtManageRelatedScore = (EditText) view.findViewById(R.id.edtManageRelatedScore);
 		

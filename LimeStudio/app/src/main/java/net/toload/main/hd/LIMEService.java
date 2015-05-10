@@ -2699,11 +2699,6 @@ public class LIMEService extends InputMethodService implements
 			hasSymbolMapping = true;
 			mKeyboardSwitcher.setKeyboardMode(activeIM,
 					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
-		}else if (activeIM.equals("hs")) {
-			hasNumberMapping = true;
-			hasSymbolMapping = true;
-			mKeyboardSwitcher.setKeyboardMode(activeIM,
-					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
 		}else if (activeIM.equals("pinyin")) {
 			hasNumberMapping = true;
 			hasSymbolMapping = false;
@@ -2713,6 +2708,16 @@ public class LIMEService extends InputMethodService implements
 			mKeyboardSwitcher.setKeyboardMode(activeIM,
 					LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
 		}
+
+		/**
+		 * else if (activeIM.equals("hs")) {
+		 hasNumberMapping = true;
+		 hasSymbolMapping = true;
+		 mKeyboardSwitcher.setKeyboardMode(activeIM,
+		 LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+		 }
+		 */
+
 		//Jeremy '11,9,3 for phone numeric key direct input on chacha
 		if(mLIMEPref.getPhysicalKeyboardType().equals("chacha")) hasNumberMapping = false;
 		String tablename = activeIM;

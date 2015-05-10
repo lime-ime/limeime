@@ -16,6 +16,8 @@
     <string name="insert_error">無法新增記錄，請檢查參數</string>
     <string name="update_error">無法更新記錄，請檢查參數</string>
 
+    <string name="error_network_failed">這一個操作需要連線網際網路，請啟用相關設定</string>
+
     <string name="global_remove">移除</string>
     <string name="global_update">更新</string>
     <string name="global_add">新增</string>
@@ -24,7 +26,7 @@
     <string name="dialog_cancel">取消</string>
     <string name="dialog_close">關閉</string>
 
-    <string name="action_adfree">移除廣告</string>
+    <string name="action_adfree">贊助開發團隊</string>
     <string name="action_help">使用說明</string>
     <string name="action_preference">喜好設定</string>
 
@@ -62,8 +64,15 @@
     <string name="setup_im_dialog_remove_confirm_message">您確定要移除輸入法資料表嗎 ?</string>
 
     <string name="setup_load_download">下載輸入法檔案</string>
-    <string name="setup_load_migrate_load">載入輸入法字根</string>
+    <string name="setup_load_migrate_load">準備輸入法字根</string>
     <string name="setup_load_migrate_import">匯入輸入法字根</string>
+
+    <string name="payment_dialog_title">贊助開發團隊</string>
+    <string name="payment_plan_1">USD 0.99 / 永久移除廣告</string>
+    <string name="payment_plan_2">USD 1.99 / 永久移除廣告</string>
+    <string name="payment_plan_3">USD 2.99 / 永久移除廣告</string>
+    <string name="payment_service_failed">Google Play 服務無法正常啟用，請稍後再試 !</string>
+    <string name="payment_service_success">感謝您對於 LIME 開發團隊的支持，我們會持續努力，提供更好的服務給大家 !!!</string>
 
     <string name="default_menu_initial">設定輸入法</string>
     <string name="default_menu_related">管理關聯字庫</string>
@@ -75,8 +84,8 @@
     <string name="im_cj5">倉頡五代</string>
     <string name="im_dayi">大易</string>
     <string name="im_ecj">速成</string>
-    <string name="im_ez">輕鬆</string>
-    <string name="im_hs">華象直覺</string>
+    <string name="im_ez">輕鬆</string><!--
+    <string name="im_hs">華象直覺</string>-->
     <string name="im_phonetic">注音</string>
     <string name="im_phonetic_advanced">注音連打</string>
     <string name="im_pinyin">拼音</string>

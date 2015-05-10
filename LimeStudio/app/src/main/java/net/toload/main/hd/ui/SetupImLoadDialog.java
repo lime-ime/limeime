@@ -77,7 +77,9 @@ public class SetupImLoadDialog extends DialogFragment {
 
     private Thread loadthread;
 
-    SetupImLoadDialog(SetupImHandler handler){
+    public SetupImLoadDialog(){}
+
+    public void setHandler(SetupImHandler handler){
         this.handler = handler;
     }
 
@@ -86,10 +88,11 @@ public class SetupImLoadDialog extends DialogFragment {
      * number.
      */
     public static SetupImLoadDialog newInstance(String imtype, SetupImHandler handler) {
-        SetupImLoadDialog frg = new SetupImLoadDialog(handler);
+        SetupImLoadDialog frg = new SetupImLoadDialog();
         Bundle args = new Bundle();
                args.putString(IM_TYPE, imtype);
                frg.setArguments(args);
+               frg.setHandler(handler);
         return frg;
     }
 

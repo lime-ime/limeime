@@ -42,7 +42,7 @@
                 </TableRow>
                 <TableRow android:id="@+id/tableRow6" android:layout_height="wrap_content" android:layout_width="wrap_content">
                     <Button android:layout_weight="1" android:id="@+id/btnSetupWb" android:layout_width="fill_parent" android:padding="5dp" android:text="@string/l3_manage_wb" android:layout_height="wrap_content" android:layout_margin="5dp" android:enabled="false"></Button>
-                    <Button android:layout_weight="1" android:id="@+id/btnSetupHs" android:layout_width="fill_parent" android:padding="5dp" android:layout_height="wrap_content" android:layout_margin="5dp" android:text="@string/l3_manage_hs"></Button>
+                    <Button android:layout_weight="1" android:id="@+id/btnSetupHs" android:layout_width="fill_parent" android:padding="5dp" android:layout_height="wrap_content" android:layout_margin="5dp" ></Button>
                 </TableRow>
                 <TableRow android:id="@+id/tableRow7" android:layout_width="wrap_content" android:layout_height="10pt">
                     <Button android:layout_weight="1" android:id="@+id/btnSetupPinyin" android:layout_width="fill_parent" android:padding="5dp" android:text="@string/l3_manage_pinyin" android:layout_height="wrap_content" android:layout_margin="5dp" android:enabled="false"></Button>

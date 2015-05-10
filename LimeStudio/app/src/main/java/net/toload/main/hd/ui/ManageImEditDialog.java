@@ -41,9 +41,7 @@ public class ManageImEditDialog extends DialogFragment {
 
 	private TextView txtManageImWordCode3r;
 
-	public ManageImEditDialog(String imtype) {
-		this.imtype = imtype;
-	}
+	public ManageImEditDialog() {}
 
 	@Override
 	public void onDestroy() {
@@ -51,8 +49,11 @@ public class ManageImEditDialog extends DialogFragment {
 	}
 
 	public static ManageImEditDialog newInstance(String imtype) {
-		ManageImEditDialog btd = new ManageImEditDialog(imtype);
+		ManageImEditDialog btd = new ManageImEditDialog();
 						   btd.setCancelable(true);
+		Bundle bundle = new Bundle(1);
+		bundle.putString("imtype", imtype);
+		btd.setArguments(bundle);
 		return btd;
 	}
 	
@@ -84,6 +85,8 @@ public class ManageImEditDialog extends DialogFragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 
 		getDialog().getWindow().setTitle(getResources().getString(R.string.manage_word_dialog_edit));
+
+		imtype = getArguments().getString("imtype");
 
 		activity = getActivity();
 		view = inflater.inflate(R.layout.fragment_dialog_edit, container, false);

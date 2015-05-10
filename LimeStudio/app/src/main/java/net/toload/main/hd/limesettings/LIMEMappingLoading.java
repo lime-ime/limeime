@@ -44,6 +44,7 @@ import com.vpadn.ads.VpadnInterstitialAd;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
+import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 
 /**
@@ -72,6 +73,7 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 	ProgressBar progressBar = null;
 	
 	private String imtype;
+	private LIMEPreferenceManager mLIMEPref;
 	
     final Handler mHandler = new Handler();
     // Create runnable for posting
@@ -124,8 +126,8 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 		DBSrv = new DBServer(getApplicationContext());
 		
 		this.setContentView(R.layout.loading_progress);
-		this.setTitle(getText(R.string.l3_dbservice_download_convert)+"...");
-		//mLIMEPref = new LIMEPreferenceManager(this);
+		this.setTitle(getText(R.string.l3_dbservice_download_convert) + "...");
+		mLIMEPref = new LIMEPreferenceManager(this);
 
 		txtLoadingIm = (TextView) findViewById(R.id.txtLoadingIm);
 		txtLoadingStatus = (TextView) findViewById(R.id.txtLoadingStatus);
@@ -153,8 +155,6 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 					defaultname = getResources().getString(R.string.im_ecj)+ im_input_method;
 				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_EZ)){
 					defaultname = getResources().getString(R.string.im_ez)+ im_input_method;
-				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_HS)){
-					defaultname = getResources().getString(R.string.im_hs)+ im_input_method;
 				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_PHONETIC)){
 					defaultname = getResources().getString(R.string.im_phonetic)+ im_input_method;
 				}else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_PINYIN)){
@@ -166,6 +166,12 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 				}else{
 					defaultname = getResources().getString(R.string.setup_im_load_custom);
 				}
+
+				/**
+				 * else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_HS)){
+				 defaultname = getResources().getString(R.string.im_hs)+ im_input_method;
+				 }
+				 */
 
 				txtLoadingIm.setText(defaultname);
 
@@ -180,12 +186,18 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 			}
 		});
 
-		// Vpon
-		interstitialAd = new VpadnInterstitialAd(this, interstitialBannerId, "TW");
-		interstitialAd.setAdListener(this);
-		VpadnAdRequest request = new VpadnAdRequest();
-		interstitialAd.loadAd(request);
-
+		// Vpon AD
+		boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
+		if(!paymentflag) {
+			interstitialAd = new VpadnInterstitialAd(this, interstitialBannerId, "TW");
+			interstitialAd.setAdListener(this);
+			VpadnAdRequest request = new VpadnAdRequest();
+			interstitialAd.loadAd(request);
+		}else{
+			if(thread != null && !thread.isAlive()){
+				thread.start();
+			}
+		}
 		
 	}
 	
@@ -307,7 +319,6 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 	@Override
 	public void onVpadnReceiveAd(VpadnAd vpadnAd) {
 		if (vpadnAd == this.interstitialAd) {
-			//show interstitial ad 或可以延後在show
 			interstitialAd.show();
 		}
 	}

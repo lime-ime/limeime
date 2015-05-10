@@ -201,6 +201,13 @@ public class Lime {
     public static final float HALF_ALPHA_VALUE = .5f;
     public static final float NORMAL_ALPHA_VALUE = 1f;
 
+    // AD
+    public static final String VPON_BANNER_ID = "8a8081824cfe92fa014d3707f493630b";
+
+    // Payment
+
+    public static final String PAYMENT_FLAG = "PAYMENT_FLAG";
+
     // Global Utility Methods
 
     public static String format(int number){

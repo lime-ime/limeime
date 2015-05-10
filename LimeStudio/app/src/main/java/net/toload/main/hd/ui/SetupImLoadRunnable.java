@@ -84,8 +84,6 @@ public class SetupImLoadRunnable implements Runnable{
             defaultname = activity.getResources().getString(R.string.im_ecj) + im_input;
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_EZ)){
             defaultname = activity.getResources().getString(R.string.im_ez) + im_input;
-        }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_HS)){
-            defaultname = activity.getResources().getString(R.string.im_hs) + im_input;
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_PHONETIC)){
             defaultname = activity.getResources().getString(R.string.im_phonetic) + im_input;
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_PINYIN)){
@@ -95,6 +93,11 @@ public class SetupImLoadRunnable implements Runnable{
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_WB)){
             defaultname = activity.getResources().getString(R.string.im_wb) + im_input;
         }
+        /**
+         * else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_HS)){
+         defaultname = activity.getResources().getString(R.string.im_hs) + im_input;
+         }
+         */
 
         // Update Related Table
         mLIMEPref.setParameter("_table", "");
@@ -116,11 +119,11 @@ public class SetupImLoadRunnable implements Runnable{
             setImInfo("phonetic", "selkey", "123456789");
             setImInfo("phonetic", "endkey", "3467'[]\\=<>?:\"{}|~!@#$%^&*()_+");
             setImInfo("phonetic", "imkeys", ",-./0123456789;abcdefghijklmnopqrstuvwxyz'[]\\=<>?:\"{}|~!@#$%^&*()_+");
-            setImInfo("phonetic", "imkeynames", "£Æ|£∑|£≤|£∂|£≥|£t|£x|£æ|£ø|£§|£Ω|£ª|£´|£Ø|£µ|£v|£ß|£~|£}|£||£¢|£¶|£©|£¨|£π|£≠|£±|£∫|£™|£∞|£¥|£u|£°|£z|£•|£∏|££|£y|£{|£®|£w|°B|°u|°v|¢@|°◊|°A|°C|°H|°G|°F|°y|°z|¢x|°„|°I|¢I|°≠|¢C|¢H|°s|°Æ|°Ø|°]|°^|°–|°œ");
+            setImInfo("phonetic", "imkeynames", "„Ñù|„Ñ¶|„Ñ°|„Ñ•|„Ñ¢|„ÑÖ|„Ñâ|Àá|Àã|„Ñì|Àä|Àô|„Ñö|„Ñû|„Ñ§|„Ñá|„Ññ|„Ñè|„Ñé|„Ñç|„Ñë|„Ñï|„Ñò|„Ñõ|„Ñ®|„Ñú|„Ñ†|„Ñ©|„Ñô|„Ñü|„Ñ£|„ÑÜ|„Ñê|„Ñã|„Ñî|„Ñß|„Ñí|„Ñä|„Ñå|„Ñó|„Ñà|„ÄÅ|„Äå|„Äç|Ôºº|Ôºù|Ôºå|„ÄÇ|Ôºü|Ôºö|Ôºõ|„Äé|„Äè|‚îÇ|ÔΩû|ÔºÅ|Ôº†|ÔºÉ|ÔºÑ|ÔºÖ|Ô∏ø|ÔºÜ|Ôºä|Ôºà|Ôºâ|Ôºç|Ôºã");
         }if(imtype.equals(Lime.DB_TABLE_ARRAY)){
             setImInfo("array", "selkey", "1234567890");
             setImInfo("array", "imkeys", "abcdefghijklmnopqrstuvwxyz./;,?*#1#2#3#4#5#6#7#8#9#0");
-            setImInfo("array", "imkeynames", "1-|5?|3?|3-|3?|4-|5-|6-|8?|7-|8-|9-|7?|6?|9?|0?|1?|4?|2-|5?|7?|4?|2?|2?|6?|1?|9?|0?|0-|8?|°H|°Ø|1|2|3|4|5|6|7|8|9|0");
+            setImInfo("array", "imkeynames", "1-|5?|3?|3-|3?|4-|5-|6-|8?|7-|8-|9-|7?|6?|9?|0?|1?|4?|2-|5?|7?|4?|2?|2?|6?|1?|9?|0?|0-|8?|Ôºü|Ôºä|1|2|3|4|5|6|7|8|9|0");
         }else{
             if (!selkey.equals("")) setImInfo(imtype, "selkey", selkey);
             if (!endkey.equals("")) setImInfo(imtype, "endkey", endkey);
@@ -352,8 +355,8 @@ public class SetupImLoadRunnable implements Runnable{
         }else if(keyboard.equals("wb")){
             kobj = new KeyboardObj();
             kobj.setCode("wb");
-            kobj.setName("µß∂∂§≠ΩX");
-            kobj.setDescription("µß∂∂§≠ΩXøÈ§J™k¡‰ΩL");
+            kobj.setName("Á≠ÜÈ†Ü‰∫îÁ¢º");
+            kobj.setDescription("Á≠ÜÈ†Ü‰∫îÁ¢ºËº∏ÂÖ•Ê≥ïÈçµÁõ§");
             kobj.setType("phone");
             kobj.setImage("wb_keyboard_preview");
             kobj.setImkb("lime_wb");
@@ -365,8 +368,8 @@ public class SetupImLoadRunnable implements Runnable{
         }else if(keyboard.equals("hs")){
             kobj = new KeyboardObj();
             kobj.setCode("hs");
-            kobj.setName("µÿ∂H™Ωƒ±");
-            kobj.setDescription("µÿ∂H™Ωƒ±øÈ§J™k¡‰ΩL");
+            kobj.setName("ËèØË±°Áõ¥Ë¶∫");
+            kobj.setDescription("ËèØË±°Áõ¥Ë¶∫Ëº∏ÂÖ•Ê≥ïÈçµÁõ§");
             kobj.setType("phone");
             kobj.setImage("hs_keyboard_preview");
             kobj.setImkb("lime_hs");

@@ -115,13 +115,8 @@ public class LIMEPreferenceHC extends Activity {
 			if(key.equals("phonetic_keyboard_type")){
 				String selectedPhoneticKeyboardType = mLIMEPref.getPhoneticKeyboardType();
 				//PreferenceManager.getDefaultSharedPreferences(ctx).getString("phonetic_keyboard_type", "");
-				if(DEBUG)
-					Log.i("LIMEPreference:OnChanged()", "phonetickeyboardtype:" + selectedPhoneticKeyboardType);
-				
 				try {
-					if(DEBUG)
-						Log.i("LIMEPreference:OnChanged()", "PhoneticIMInfo.kyeboard:" + 
-								DBSrv.getImInfo("phonetic", "keyboard"));
+
 					KeyboardObj kobj = DBSrv.getKeyboardObj("phonetic");
 					
 					if(selectedPhoneticKeyboardType.equals("standard")){

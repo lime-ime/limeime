@@ -12,14 +12,21 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.vpadn.ads.VpadnAdRequest;
+import com.vpadn.ads.VpadnAdSize;
+import com.vpadn.ads.VpadnBanner;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
+import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Related;
+import net.toload.main.hd.global.LIMEPreferenceManager;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -42,6 +49,7 @@ public class ManageRelatedFragment extends Fragment {
      */
     private static final String ARG_SECTION_NUMBER = "section_number";
 
+    private SearchServer SearchSrv = null;
     private GridView gridManageRelated;
 
     private Button btnManageRelatedAdd;
@@ -69,6 +77,11 @@ public class ManageRelatedFragment extends Fragment {
     private DataSource datasource;
 
     private ProgressDialog progress;
+    private LIMEPreferenceManager mLIMEPref;
+
+    // AD
+    private RelativeLayout adBannerLayout;
+    private VpadnBanner vpadnBanner = null;
 
     /**
      * Returns a new instance of this fragment for the given section
@@ -92,11 +105,14 @@ public class ManageRelatedFragment extends Fragment {
 
         this.activity = this.getActivity();
         this.datasource = new DataSource(this.activity);
+        this.SearchSrv = new SearchServer(this.activity);
+
         this.handler = new ManageRelatedHandler(this);
 
         this.progress = new ProgressDialog(this.activity);
         this.progress.setCancelable(false);
         this.progress.setMessage(getResources().getString(R.string.manage_related_loading));
+        mLIMEPref = new LIMEPreferenceManager(activity);
 
         this.gridManageRelated = (GridView) root.findViewById(R.id.gridManageRelated);
         this.gridManageRelated.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -171,7 +187,7 @@ public class ManageRelatedFragment extends Fragment {
                 if (!searchreset) {
                     String query = edtManageRelatedSearch.getText().toString();
                     if (query != null && query.length() > 0 &&
-                            ( prequery == null || !prequery.equals(query) || !searchreset) ) {
+                            (prequery == null || !prequery.equals(query) || !searchreset)) {
                         query = query.trim();
                         searchrelated(query);
                     }
@@ -190,6 +206,20 @@ public class ManageRelatedFragment extends Fragment {
         this.txtNavigationInfo = (TextView) root.findViewById(R.id.txtNavigationInfo);
 
         searchrelated(null);
+
+
+        // Handle AD Display
+        boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
+        if(!paymentflag) {
+            adBannerLayout = (RelativeLayout) root.findViewById(R.id.adLayout);
+            vpadnBanner = new VpadnBanner(getActivity(), Lime.VPON_BANNER_ID, VpadnAdSize.SMART_BANNER, "TW");
+
+            VpadnAdRequest adRequest = new VpadnAdRequest();
+            adRequest.setEnableAutoRefresh(true);
+            vpadnBanner.loadAd(adRequest);
+
+            adBannerLayout.addView(vpadnBanner);
+        }
 
         return root;
     }
@@ -238,6 +268,7 @@ public class ManageRelatedFragment extends Fragment {
             this.progress.cancel();
         }
         this.relatedlist = null;
+        this.SearchSrv.initialCache();
     }
 
     public void showProgress(){

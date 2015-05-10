@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -15,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.dropbox.client2.DropboxAPI;
@@ -22,6 +24,10 @@ import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.session.AppKeyPair;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.services.drive.DriveScopes;
+
+import com.vpadn.ads.VpadnAdRequest;
+import com.vpadn.ads.VpadnAdSize;
+import com.vpadn.ads.VpadnBanner;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
@@ -102,6 +108,11 @@ public class SetupImFragment extends Fragment {
     private Activity activity;
     private LIMEPreferenceManager mLIMEPref;
 
+    // AD
+    private RelativeLayout adBannerLayout;
+    private VpadnBanner vpadnBanner = null;
+
+
     /**
      * The fragment argument representing the section number for this
      * fragment.
@@ -120,6 +131,14 @@ public class SetupImFragment extends Fragment {
         return frg;
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(vpadnBanner != null){
+            vpadnBanner.destroy();
+            vpadnBanner = null;
+        }
+    }
 
     @Override
     public void onResume() {
@@ -277,11 +296,18 @@ public class SetupImFragment extends Fragment {
             }
         });
 
-        // Create ad request.
-        //AdRequest adRequest = new AdRequest.Builder().build();
-       /* AdRequest adRequest = new AdRequest.Builder().addTestDevice("0328DD28E577D5F5C03E42009BCBD82E").build();
-        AdView mAdView = (AdView) view.findViewById(R.id.adView);
-               mAdView.loadAd(adRequest);*/
+        // Handle AD Display
+        boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
+        if(!paymentflag){
+            adBannerLayout = (RelativeLayout) view.findViewById(R.id.adLayout);
+            vpadnBanner = new VpadnBanner(getActivity(), Lime.VPON_BANNER_ID, VpadnAdSize.SMART_BANNER, "TW");
+
+            VpadnAdRequest adRequest = new VpadnAdRequest();
+            adRequest.setEnableAutoRefresh(true);
+            vpadnBanner.loadAd(adRequest);
+
+            adBannerLayout.addView(vpadnBanner);
+        }
 
         return view;
     }
@@ -304,8 +330,10 @@ public class SetupImFragment extends Fragment {
         if(check.get(Lime.DB_TABLE_CUSTOM) != null){
             btnSetupImImportStandard.setAlpha(Lime.HALF_ALPHA_VALUE);
             btnSetupImImportStandard.setText(check.get(Lime.DB_TABLE_CUSTOM));
+            btnSetupImImportStandard.setTypeface(null, Typeface.ITALIC);
         }else {
             btnSetupImImportStandard.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+            btnSetupImImportStandard.setTypeface(null, Typeface.BOLD);
         }
 
         btnSetupImImportStandard.setOnClickListener(new View.OnClickListener() {
@@ -319,8 +347,10 @@ public class SetupImFragment extends Fragment {
 
         if(check.get(Lime.DB_TABLE_PHONETIC) != null){
             btnSetupImPhonetic.setAlpha(Lime.HALF_ALPHA_VALUE);
+            btnSetupImPhonetic.setTypeface(null, Typeface.ITALIC);
         }else {
             btnSetupImPhonetic.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+            btnSetupImPhonetic.setTypeface(null, Typeface.BOLD);
         }
 
         btnSetupImPhonetic.setOnClickListener(new View.OnClickListener() {
@@ -335,8 +365,10 @@ public class SetupImFragment extends Fragment {
 
         if(check.get(Lime.DB_TABLE_CJ) != null){
             btnSetupImCj.setAlpha(Lime.HALF_ALPHA_VALUE);
+            btnSetupImCj.setTypeface(null, Typeface.ITALIC);
         }else {
             btnSetupImCj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+            btnSetupImCj.setTypeface(null, Typeface.BOLD);
         }
 
         btnSetupImCj.setOnClickListener(new View.OnClickListener() {
@@ -352,8 +384,10 @@ public class SetupImFragment extends Fragment {
 
         if(check.get(Lime.DB_TABLE_CJ5) != null){
             btnSetupImCj5.setAlpha(Lime.HALF_ALPHA_VALUE);
+            btnSetupImCj5.setTypeface(null, Typeface.ITALIC);
         }else {
             btnSetupImCj5.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+            btnSetupImCj5.setTypeface(null, Typeface.BOLD);
         }
 
         btnSetupImCj5.setOnClickListener(new View.OnClickListener() {
@@ -367,8 +401,10 @@ public class SetupImFragment extends Fragment {
 
         if(check.get(Lime.DB_TABLE_SCJ) != null){
             btnSetupImScj.setAlpha(Lime.HALF_ALPHA_VALUE);
+            btnSetupImScj.setTypeface(null, Typeface.ITALIC);
         }else {
             btnSetupImScj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+            btnSetupImScj.setTypeface(null, Typeface.BOLD);
         }
         btnSetupImScj.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -381,8 +417,10 @@ public class SetupImFragment extends Fragment {
 
         if(check.get(Lime.DB_TABLE_ECJ) != null){
             btnSetupImEcj.setAlpha(Lime.HALF_ALPHA_VALUE);
+            btnSetupImEcj.setTypeface(null, Typeface.ITALIC);
         }else {
             btnSetupImEcj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+            btnSetupImEcj.setTypeface(null, Typeface.BOLD);
         }
 
         btnSetupImEcj.setOnClickListener(new View.OnClickListener() {
@@ -396,8 +434,10 @@ public class SetupImFragment extends Fragment {
 
         if(check.get(Lime.DB_TABLE_DAYI) != null){
             btnSetupImDayi.setAlpha(Lime.HALF_ALPHA_VALUE);
+            btnSetupImDayi.setTypeface(null, Typeface.ITALIC);
         }else {
             btnSetupImDayi.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+            btnSetupImDayi.setTypeface(null, Typeface.BOLD);
         }
 
         btnSetupImDayi.setOnClickListener(new View.OnClickListener() {
@@ -411,8 +451,10 @@ public class SetupImFragment extends Fragment {
 
         if(check.get(Lime.DB_TABLE_EZ) != null){
             btnSetupImEz.setAlpha(Lime.HALF_ALPHA_VALUE);
+            btnSetupImEz.setTypeface(null, Typeface.ITALIC);
         }else {
             btnSetupImEz.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+            btnSetupImEz.setTypeface(null, Typeface.BOLD);
         }
 
         btnSetupImEz.setOnClickListener(new View.OnClickListener() {
@@ -426,8 +468,10 @@ public class SetupImFragment extends Fragment {
 
         if(check.get(Lime.DB_TABLE_ARRAY) != null){
             btnSetupImArray.setAlpha(Lime.HALF_ALPHA_VALUE);
+            btnSetupImArray.setTypeface(null, Typeface.ITALIC);
         }else {
             btnSetupImArray.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+            btnSetupImArray.setTypeface(null, Typeface.BOLD);
         }
 
         btnSetupImArray.setOnClickListener(new View.OnClickListener() {
@@ -441,8 +485,10 @@ public class SetupImFragment extends Fragment {
 
         if(check.get(Lime.DB_TABLE_ARRAY10) != null){
             btnSetupImArray10.setAlpha(Lime.HALF_ALPHA_VALUE);
+            btnSetupImArray10.setTypeface(null, Typeface.ITALIC);
         }else {
             btnSetupImArray10.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+            btnSetupImArray10.setTypeface(null, Typeface.BOLD);
         }
 
         btnSetupImArray10.setOnClickListener(new View.OnClickListener() {
@@ -454,11 +500,13 @@ public class SetupImFragment extends Fragment {
             }
         });
 
-        if(check.get(Lime.DB_TABLE_HS) != null){
+        /*if(check.get(Lime.DB_TABLE_HS) != null){
             btnSetupImHs.setAlpha(Lime.HALF_ALPHA_VALUE);
+            btnSetupImPhonetic.setTypeface(null, Typeface.ITALIC);
         }else {
             btnSetupImHs.setAlpha(Lime.NORMAL_ALPHA_VALUE);
-        }
+            btnSetupImPhonetic.setTypeface(null, Typeface.BOLD);
+        }*/
 
         btnSetupImHs.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -471,8 +519,10 @@ public class SetupImFragment extends Fragment {
 
         if(check.get(Lime.DB_TABLE_WB) != null){
             btnSetupImWb.setAlpha(Lime.HALF_ALPHA_VALUE);
+            btnSetupImWb.setTypeface(null, Typeface.ITALIC);
         }else {
             btnSetupImWb.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+            btnSetupImWb.setTypeface(null, Typeface.BOLD);
         }
 
         btnSetupImWb.setOnClickListener(new View.OnClickListener() {
@@ -486,8 +536,10 @@ public class SetupImFragment extends Fragment {
 
         if(check.get(Lime.DB_TABLE_PINYIN) != null){
             btnSetupImPinyin.setAlpha(Lime.HALF_ALPHA_VALUE);
+            btnSetupImPinyin.setTypeface(null, Typeface.ITALIC);
         }else {
             btnSetupImPinyin.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+            btnSetupImPinyin.setTypeface(null, Typeface.BOLD);
         }
 
         btnSetupImPinyin.setOnClickListener(new View.OnClickListener() {

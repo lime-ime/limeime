@@ -91,8 +91,8 @@
     <string name="cj5_reverse_lookup_list">倉頡五代字根反查</string>
     <string name="ecj_reverse_lookup_list">速成字根反查</string>
     <string name="wb_reverse_lookup_list">筆順五碼字根反查</string>
-    <string name="hs_reverse_lookup_list">華象直覺字根反查</string>
-    <string name="pinyin_reverse_lookup_list">拼音字根反查</string>
+    <!--<string name="hs_reverse_lookup_list">華象直覺字根反查</string>
+    --><string name="pinyin_reverse_lookup_list">拼音字根反查</string>
 
     <string name="han_convert_option_list">中文簡/繁體字碼轉換</string>
     <string name="selkey_option_list">選字鍵選項</string>
@@ -241,7 +241,7 @@
         <item>行列</item>
         <item>行列10</item>
         <item>筆順五碼</item>
-        <item>華象直覺</item>
+        <!--<item>華象直覺</item>-->
         <item>拼音</item>
     </string-array>
     <string-array name="im_reverse_lookup_codes">
@@ -257,8 +257,8 @@
         <item>array</item>
         <item>array10</item>
         <item>wb</item>
-        <item>hs</item>
-        <item>pinyin</item>
+        <!--<item>hs</item>
+        --><item>pinyin</item>
     </string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
@@ -273,7 +273,7 @@
         <item>行列輸入法</item>
         <item>行列10輸入法</item>
         <item>筆順五碼輸入法</item>
-        <item>華象直覺輸入法</item>
+        <!--<item>華象直覺輸入法</item>-->
         <item>拼音輸入法</item>
     </string-array>
     <!-- Keyboard short name List -->
@@ -289,7 +289,7 @@
         <item>行列</item>
         <item>行列10</item>
         <item>筆順五碼</item>
-        <item>華象直覺</item>
+       <!-- <item>華象直覺</item>-->
         <item>拼音</item>
     </string-array>
     <string-array name="keyboard_defaultstate">
@@ -304,7 +304,7 @@
         <item>true</item>
         <item>true</item>
         <item>true</item>
-        <item>true</item>
+       <!-- <item>true</item>-->
         <item>true</item>
     </string-array>
     <string-array name="keyboard_codes">
@@ -319,8 +319,8 @@
         <item>array</item>
         <item>array10</item>
         <item>wb</item>
-        <item>hs</item>
-        <item>pinyin</item>
+        <!--<item>hs</item>
+        --><item>pinyin</item>
     </string-array>
     <string-array name="table_codes">
         <item>custom</item>
@@ -334,8 +334,8 @@
         <item>array</item>
         <item>array10</item>
         <item>wb</item>
-        <item>hs</item>
-        <item>pinyin</item>
+        <!--<item>hs</item>
+        --><item>pinyin</item>
         <item>related</item>
         <item>dictionary</item>
     </string-array>
@@ -362,7 +362,7 @@
         <item>行列</item>
         <item>行列10</item>
         <item>筆順五碼</item>
-        <item>華象直覺</item>
+        <!--<item>華象直覺</item>-->
         <item>拼音</item>
         <item>預載關聯字</item>
         <item>英文字典</item>
@@ -376,8 +376,8 @@
     <string name="l3_tab_initial_message">請點選 [預載資料庫] OR [空白資料庫] 鍵下載 LIME 資料庫或點選 [還原資料庫] 鍵由備份檔案中還原</string>
     <string name="l3_initial_btn_load_empty_db">空白資料庫</string>
     <string name="l3_initial_btn_load_phonetic_only_db">僅含注音資料庫</string>
-    <string name="l3_initial_btn_load_phonetic_hs_only_db">僅含注音+華象直覺資料庫</string>
-    <string name="l3_initial_btn_load_preload_db">預載資料庫 \n注音, 倉頡, 倉頡五代 \n快倉, 大易, 輕鬆　　\n行列, 行列 １０　 　</string>
+    <!--<string name="l3_initial_btn_load_phonetic_hs_only_db">僅含注音+華象直覺資料庫</string>
+    --><string name="l3_initial_btn_load_preload_db">預載資料庫 \n注音, 倉頡, 倉頡五代 \n快倉, 大易, 輕鬆　　\n行列, 行列 １０　 　</string>
     <string name="l3_initial_btn_reset_db">重置資料庫</string>
     <string name="l3_initial_btn_store_to_sdcard">請問您要變更資料庫的儲存位置至 SDCARD 嗎? 在部份機種上可能會產生效能不佳的問題。</string>
     <string name="l3_initial_btn_store_to_device">請問您要變更資料庫的儲存位置至裝置嗎? </string>
@@ -397,8 +397,8 @@
     <string name="l3_manage_array">行列</string>
     <string name="l3_manage_array10">行列10</string>
     <string name="l3_manage_wb">筆順五碼</string>
-    <string name="l3_manage_hs">華象直覺</string>
-    <string name="l3_manage_pinyin">拼音</string>
+   <!-- <string name="l3_manage_hs">華象直覺</string>
+   --> <string name="l3_manage_pinyin">拼音</string>
 
     <string name="l3_tab_preference">喜好設定</string>
 
@@ -552,9 +552,11 @@
     <string name="l3_im_download_from_pinyin_gb_start">開始下載拼音字根簡體字集版本</string>
     <string name="l3_im_download_from_pinyin_gb_install">開始安裝拼音字根簡體字集版本</string>
 
+<!--
     <string name="l3_im_download_from_hs">請使用[初始資料庫]下載及安裝華象直覺字根\n華象直覺輸入法發明人陳華偉製作\nTel:(07)2223133 手機：0933616029\nhs.h123@msa.hinet.net</string>
     <string name="l3_im_download_from_hs_start">開始下載華象直覺字根</string>
     <string name="l3_im_download_from_hs_install">開始安裝華象直覺字根</string>
+-->
 
     <string name="l3_im_download_from_wb">安裝筆順五碼字根\n香港長者資訊天地提供</string>
     <string name="l3_im_download_from_wb_start">開始下載筆順五碼字根</string>

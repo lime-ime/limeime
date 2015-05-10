@@ -241,7 +241,7 @@ public class  DBServer {
 
 	public void downloadPhoneticHsOnlyDatabase() throws RemoteException {
 		//if (dbAdapter == null) {loadLimeDB();}
-		resetDownloadDatabase();
+		/*resetDownloadDatabase();
 		Thread threadTask = new Thread() {
 			public void run() { 
 				showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start)+ "", intentLIMEInitial);
@@ -269,7 +269,7 @@ public class  DBServer {
 							threadTask.start();
 						}
 						//getSharedPreferences(LIME.DATABASE_DOWNLOAD_STATUS, 0).edit().putString(LIME.DATABASE_DOWNLOAD_STATUS, "true").commit();
-						mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
+						//mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
 						showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 						//Jeremy '12,4,7 re-open the dbconnection
 						dbAdapter.openDBConnection(true);
@@ -279,7 +279,7 @@ public class  DBServer {
 			}
 
 		};
-		threadTask.start();
+		threadTask.start();*/
 	}
 
 
@@ -621,7 +621,7 @@ public class  DBServer {
 	}
 
 
-	public void downloadHs() throws RemoteException {
+	/*public void downloadHs() throws RemoteException {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_hs_start)+ "", intentLIMEMappingLoading);
@@ -638,7 +638,7 @@ public class  DBServer {
 			}
 		};
 		threadTask.start();
-	}
+	}*/
 
 
 	public void downloadWb() throws RemoteException {

@@ -3064,8 +3064,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					defaultname = mContext.getResources().getString(R.string.im_ecj)+ im_input;
 				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_EZ)){
 					defaultname = mContext.getResources().getString(R.string.im_ez)+ im_input;
-				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_HS)){
-					defaultname = mContext.getResources().getString(R.string.im_hs)+ im_input;
 				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_PHONETIC)){
 					defaultname = mContext.getResources().getString(R.string.im_phonetic)+ im_input;
 				}else if (table.equalsIgnoreCase(Lime.DB_TABLE_PINYIN)){
@@ -3080,6 +3078,12 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					}
 					defaultname = imname;
 				}
+
+				/**
+				 * else if (table.equalsIgnoreCase(Lime.DB_TABLE_HS)){
+				 defaultname = mContext.getResources().getString(R.string.im_hs)+ im_input;
+				 }
+				 */
 
 				if(!threadAborted) {
 					if(!threadAborted) percentageDone = 100;

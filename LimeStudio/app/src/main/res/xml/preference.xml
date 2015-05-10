@@ -37,7 +37,7 @@
 				android:title="@string/keyboard_list"
 				android:entries="@array/keyboard"
 				android:entryValues="@array/keyboard_defaultstate"
-				android:defaultValue="0;1;2;3;4;5;6;7;8;9;10;11;12"
+				android:defaultValue="0;1;2;3;4;5;6;7;8;9;10;11"
 				android:dialogTitle="@string/keyboard_list" />
 		<CheckBoxPreference
                 android:key="persistent_language_mode"
@@ -247,13 +247,13 @@
     			android:entryValues="@array/im_reverse_lookup_codes" 
     			android:dialogTitle="@string/im_reverse_lookup_list" 
     			android:defaultValue="none"/>
-   	<ListPreference
+   <!--	<ListPreference
     			android:key="hs_im_reverselookup"
     			android:title="@string/hs_reverse_lookup_list" 
     			android:entries="@array/im_reverse_lookup" 
     			android:entryValues="@array/im_reverse_lookup_codes" 
     			android:dialogTitle="@string/im_reverse_lookup_list" 
-    			android:defaultValue="none"/>
+    			android:defaultValue="none"/>-->
    	<ListPreference
     			android:key="pinyin_im_reverselookup"
     			android:title="@string/pinyin_reverse_lookup_list" 
