@@ -220,7 +220,8 @@ public class MainActivity extends ActionBarActivity
 
     public void restoreActionBar() {
         ActionBar actionBar = getSupportActionBar();
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+        //setNavigationMode is deprecated after API21 (v5.0). Removed setNavigationMode to have unified results for v5.0 and pre-v5.0 and won't show navigation drawer at startup so as the setup wizard can run directly.
+        //actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
         actionBar.setDisplayShowTitleEnabled(true);
         actionBar.setTitle(mTitle);
     }
