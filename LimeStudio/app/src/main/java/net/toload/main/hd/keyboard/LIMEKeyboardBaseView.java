@@ -948,7 +948,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 								mTextWidthCache.put(subLabelSize, subLabelWidth);
 							}
 
-							if(key.height>key.width){
+							if(key.height>key.width){  //portrait keyboard
 								baseline = (key.height + padding.top - padding.bottom) *2  / 3
 										+ labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
 								float subBaseline = (key.height + padding.top - padding.bottom) /4
@@ -968,8 +968,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 								paint.setColor(key.isFunctionalKey()?mFunctionKeyTextColor:mKeyTextColor);
 								canvas.drawText(label, centerX, baseline, paint);
 
-							}else{
+							}else{ 	//landscape keyboard
 								paint.setColor(mKeySubLabelTextColor);
+								if(subLabel.length()>2)  paint.setTextSize(subLabelSize * 2/3);  //123 EN  in landscape is usually to wide.
 								if(hasSecondSubLabel){
 									canvas.drawText(subLabel, centerX - subLabelWidth*2, baseline, paint);
 									paint.setColor(key.isFunctionalKey()?mFunctionKeyTextColor:mKeyTextColor);

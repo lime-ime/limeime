@@ -862,7 +862,7 @@ public class LIMEBaseKeyboard {
      * createArrowKeyssRow() returns the total height of the row.
      */
     final float ARROW_KEY_HEIGHT_FRACTION = 0.8f;
-    protected int createArrowKeys(int x, int y, boolean verticalLayout){
+    protected int createArrowKeys(Resources res,int x, int y, boolean verticalLayout){
     	 if(DEBUG)
          	Log.i(TAG,"createArrowKeys(): mDisplayWidth = " + mDisplayWidth );
     	
@@ -891,29 +891,34 @@ public class LIMEBaseKeyboard {
             key.height =row.defaultHeight;
             key.gap = row.defaultHorizontalGap;
             key.modifier = true;
-            
+
+
             // Cross shape arrow keys layout if center reserved space is larger than 2 , Jeremy '12,5,28
             if(verticalLayout && mReservedColumnsForSplitedKeyboard >2){
             	switch (i){
             	case 0:
-            		key.label = "⇑";
+            		//key.label = "⇑";
+                    key.icon= res.getDrawable(R.drawable.sym_flat_keyboard_up);
             		key.codes = new int[] { KEYCODE_UP };
             		y += key.height + row.verticalGap;
             		x -= key.width/2 + key.gap;
             		break;
             	case 1:
-            		key.label = "⇐";
+            		//key.label = "⇐";
+                    key.icon= res.getDrawable(R.drawable.sym_flat_keyboard_left);
             		key.codes = new int[] { KEYCODE_LEFT };
             		x += key.width + key.gap * 2;
             		break;
             	case 2:
-            		key.label = "⇒";
+            		//key.label = "⇒";
+                    key.icon= res.getDrawable(R.drawable.sym_flat_keyboard_right);
             		key.codes = new int[] { KEYCODE_RIGHT };
             		x -= key.width/2 + key.gap;
             		y += key.height + row.verticalGap;
             		break;
             	case 3:
-            		key.label = "⇓";
+            		//key.label = "⇓";
+                    key.icon= res.getDrawable(R.drawable.sym_flat_keyboard_down);
             		key.codes = new int[] { KEYCODE_DOWN };
             		y += key.height + row.verticalGap;
             		break;
@@ -922,19 +927,23 @@ public class LIMEBaseKeyboard {
             }else{
             	switch (i){
             	case 0:
-            		key.label = "⇑";
+            		//key.label = "⇑";
+                    key.icon= res.getDrawable(R.drawable.sym_flat_keyboard_up);
             		key.codes = new int[] { KEYCODE_UP };
             		break;
             	case 1:
-            		key.label = "⇓";
+            		//key.label = "⇓";
+                    key.icon= res.getDrawable(R.drawable.sym_flat_keyboard_down);
             		key.codes = new int[] { KEYCODE_DOWN };
             		break;
             	case 2:
-            		key.label = "⇐";
+            		//key.label = "⇐";
+                    key.icon= res.getDrawable(R.drawable.sym_flat_keyboard_left);
             		key.codes = new int[] { KEYCODE_LEFT };
             		break;
             	case 3:
-            		key.label = "⇒";
+            		//key.label = "⇒";
+                    key.icon= res.getDrawable(R.drawable.sym_flat_keyboard_right);
             		key.codes = new int[] { KEYCODE_RIGHT };
             		break;
             	}
@@ -1093,7 +1102,7 @@ public class LIMEBaseKeyboard {
                         
                           			
                         if(showArrowKeysOnTop)    //Jeremy '12,5,24 create arrow keys before reading further rows.
-                       	 	y += createArrowKeys(0,0, false);
+                       	 	y += createArrowKeys(res, 0,0, false);
                     }
                 } else if (event == XmlResourceParser.END_TAG) {
                     if (inKey) {
@@ -1128,12 +1137,12 @@ public class LIMEBaseKeyboard {
         }
         /** Add arrow keys row if mShowArrowKeys is on */  //Add by Jeremy '12,5,21
         if(showArrowKeysOnBottom) 
-        	 y += createArrowKeys(0,y, false);
+        	 y += createArrowKeys(res,0,y, false);
         
         mTotalHeight = y - mDefaultVerticalGap;
         
         if(mSplitKeyboard && mShowArrowKeys!=0 && mDisplayWidth > mDisplayHeight )
-        	createArrowKeys((mDisplayWidth - mSplitKeyWidth)/2, 0, true);
+        	createArrowKeys(res,(mDisplayWidth - mSplitKeyWidth)/2, 0, true);
      
         	
             

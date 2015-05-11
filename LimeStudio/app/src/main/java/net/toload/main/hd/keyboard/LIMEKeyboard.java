@@ -93,7 +93,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         final Resources res = context.getResources();
         mContext = context;
 	        mRes = res;
-	        mShiftLockIcon = res.getDrawable(R.drawable.sym_keyboard_shift_locked);
+	        mShiftLockIcon = res.getDrawable(R.drawable.sym_flat_keyboard_shift_locked);
 	        mShiftLockPreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_shift_locked);
 	        mShiftLockPreviewIcon.setBounds(0, 0, 
 	                mShiftLockPreviewIcon.getIntrinsicWidth(),

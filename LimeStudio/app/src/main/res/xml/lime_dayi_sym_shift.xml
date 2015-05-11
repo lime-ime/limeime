@@ -67,7 +67,7 @@
 	</Row>
 
 	<Row>
-		<Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift"
+		<Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_flat_keyboard_shift_normal"
 			limehd:keyWidth="15%p" limehd:isModifier="true" limehd:isSticky="true"
 			limehd:keyEdgeFlags="left" />
 		<Key limehd:codes="90" limehd:keyLabel="Z\n心" />
@@ -77,7 +77,7 @@
 		<Key limehd:codes="66" limehd:keyLabel="B\n馬" />
 		<Key limehd:codes="78" limehd:keyLabel="N\n魚" />
 		<Key limehd:codes="77" limehd:keyLabel="M\n雨" />
-		<Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true"
+		<Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_flat_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true"
 			limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"
 			limehd:isRepeatable="true" />
 	</Row>
@@ -90,7 +90,7 @@
 				limehd:isModifier="true" 
 				limehd:keyWidth="10%p" 
 				/>
-		<Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
+		<Key limehd:codes="32" limehd:keyIcon="@drawable/sym_flat_keyboard_space" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
 			limehd:keyWidth="30%p" limehd:isRepeatable="true" />
 		<Key limehd:codes="60" limehd:keyLabel="&lt;\n力" limehd:keyWidth="10%p" />
 		<Key limehd:codes="62" limehd:keyLabel="&gt;\n舟"						 

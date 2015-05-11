@@ -1688,7 +1688,7 @@ public class LIMEService extends InputMethodService implements
 
 		
 		builder.setCancelable(true);
-		builder.setIcon(R.drawable.sym_keyboard_done);
+		builder.setIcon(R.drawable.sym_flat_keyboard_keyboard);
 		builder.setNegativeButton(android.R.string.cancel, null);
 		builder.setTitle(getResources().getString(R.string.ime_name));
 
@@ -1914,7 +1914,7 @@ public class LIMEService extends InputMethodService implements
 		builder = new AlertDialog.Builder(this);
 
 		builder.setCancelable(true);
-		builder.setIcon(R.drawable.sym_keyboard_done);
+		builder.setIcon(R.drawable.sym_flat_keyboard_keyboard);
 		builder.setNegativeButton(android.R.string.cancel, null);
 		builder.setTitle(getResources().getString(R.string.han_convert_option_list));
 		CharSequence[] items =  getResources().getStringArray(R.array.han_convert_options);
@@ -1959,7 +1959,7 @@ public class LIMEService extends InputMethodService implements
 		builder = new AlertDialog.Builder(this);
 
 		builder.setCancelable(true);
-		builder.setIcon(R.drawable.sym_keyboard_done);
+		builder.setIcon(R.drawable.sym_flat_keyboard_keyboard);
 		builder.setNegativeButton(android.R.string.cancel, null);
 		builder.setTitle(getResources().getString(R.string.keyboard_list));
 

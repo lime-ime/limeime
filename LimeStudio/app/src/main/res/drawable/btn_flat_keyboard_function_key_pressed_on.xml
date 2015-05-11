@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@drawable/btn_flat_keyboard_key_pressed" />
-    <item  android:top="40dp" android:right="8dp" android:bottom="5dp"       android:left="8dp">
+    <item android:top="25dp" android:right="8dp" android:bottom="1dp" android:left="8dp">
         <shape android:shape="line">
             <stroke
                 android:width="3dp"

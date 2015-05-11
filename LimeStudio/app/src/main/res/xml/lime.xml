@@ -56,7 +56,7 @@
     </Row>
     
     <Row>
-        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_feedback_shift" limehd:iconPreview="@drawable/sym_keyboard_feedback_shift" limehd:isModifier="true"
+        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_flat_keyboard_shift_normal" limehd:iconPreview="@drawable/sym_keyboard_feedback_shift" limehd:isModifier="true"
                 limehd:keyWidth="15%p"
                 limehd:isSticky="true" limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="122" limehd:keyLabel="z"/>

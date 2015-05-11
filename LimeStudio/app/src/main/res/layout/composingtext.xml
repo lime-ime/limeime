@@ -4,8 +4,8 @@
     android:layout_width="wrap_content" 
     android:layout_height="wrap_content"
     android:textSize="@dimen/composing_text_size"
-    android:textColor="@color/candidate_normal"
-    android:background="@color/candidate_dictionary_background"
+    android:textColor="@color/composing_text"
+    android:background="@color/composing_background"
     android:minWidth="0dip"
     android:gravity="top" 
     />

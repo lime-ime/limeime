@@ -66,7 +66,7 @@
         <Key limehd:codes="83" limehd:keyLabel="S"  limehd:keyEdgeFlags="right"/>
     </Row>
     <Row>
-        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift" limehd:iconPreview="@drawable/sym_keyboard_feedback_shift" 
+        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_flat_keyboard_shift_normal" limehd:iconPreview="@drawable/sym_keyboard_feedback_shift"
                 limehd:keyWidth="15%p" limehd:isModifier="true"
                 limehd:isSticky="true" limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="84" limehd:keyLabel="T"/>
@@ -76,7 +76,7 @@
         <Key limehd:codes="88" limehd:keyLabel="X"/>
         <Key limehd:codes="89" limehd:keyLabel="Y"/>
         <Key limehd:codes="90" limehd:keyLabel="Z"/>
-        <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true" 
+        <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_flat_keyboard_delete" limehd:isModifier="true"
                 limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"
                 limehd:isRepeatable="true"/>
     </Row>
@@ -85,7 +85,7 @@
         <Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true" limehd:keyWidth="15%p" limehd:keyEdgeFlags="left"/>                
         <Key limehd:codes="-10" limehd:keyLabel="中"  limehd:isModifier="true" limehd:keyWidth="10%p" />
         <Key limehd:codes="58" limehd:keyLabel=":" limehd:keyWidth="10%p"/>
-        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"  limehd:keyWidth="30%p" limehd:isRepeatable="true"/>
+        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_flat_keyboard_space"  limehd:keyWidth="30%p" limehd:isRepeatable="true"/>
         <Key limehd:codes="59" 
         		limehd:keyLabel=";"
         		 limehd:popupKeyboard="@xml/popup_c_punctuation"   

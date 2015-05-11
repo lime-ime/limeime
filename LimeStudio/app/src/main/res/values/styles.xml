@@ -14,7 +14,7 @@
         <item name="keyTextSize">@dimen/key_text_size</item>
         <item name="keyTextColor">#FF0F0F0F</item>
         <item name="functionKeyTextColor">#FF717171</item>
-        <item name="keySubLabelTextColor">#FFCEFFCE</item>
+        <item name="keySubLabelTextColor">#FF7D7D7D</item>
         <item name="keyPreviewLayout">@layout/key_preview</item>
         <item name="keyPreviewOffset">@dimen/key_preview_offset</item>
         <item name="keyPreviewHeight">@dimen/key_preview_height</item>
