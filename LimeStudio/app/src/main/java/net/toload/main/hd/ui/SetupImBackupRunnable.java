@@ -189,7 +189,7 @@ public class SetupImBackupRunnable implements Runnable{
                 // path not found (or if it was the thumbnail, can't be
                 // thumbnailed)
             } else if (e.error == DropboxServerException._507_INSUFFICIENT_STORAGE) {
-                // user is over quota
+                showToastMessage(fragment.getResources().getString(R.string.setup_im_backup_dropbox_error_507), Toast.LENGTH_LONG);
             } else {
                 // Something else
             }
@@ -214,6 +214,11 @@ public class SetupImBackupRunnable implements Runnable{
         }
         handler.cancelProgress();
 
+    }
+
+    public void showToastMessage(String msg, int length) {
+        Toast toast = Toast.makeText(fragment.getActivity(), msg, length);
+        toast.show();
     }
 
 }

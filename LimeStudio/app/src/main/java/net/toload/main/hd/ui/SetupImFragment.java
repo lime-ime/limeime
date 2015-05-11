@@ -655,6 +655,8 @@ public class SetupImFragment extends Fragment {
                 getArguments().getInt(ARG_SECTION_NUMBER));*/
     }
 
+
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
 
@@ -680,6 +682,18 @@ public class SetupImFragment extends Fragment {
                 }
                 break;
         }
+
+        if (requestCode == 1001) {
+            String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
+            //int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
+            //String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
+
+            if (resultCode == this.getActivity().RESULT_OK) {
+                mLIMEPref.setParameter(Lime.PAYMENT_FLAG, true);
+                showToastMessage(getResources().getString(R.string.payment_service_success), Toast.LENGTH_LONG);
+                //Log.i("LIME", "purchasing complete " + new Date() + " / " + purchaseData);
+            }
+        }
     }
 
     public void requestGoogleDrive(String type){
@@ -689,7 +703,7 @@ public class SetupImFragment extends Fragment {
 
         if(type != null && type.equals(Lime.BACKUP)){
             if(accountname == null){
-                this.startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER_BACKUP);
+                startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER_BACKUP);
             }else{
                 mLIMEPref.setParameter(Lime.GOOGLE_ACCOUNT_NAME, accountname);
                 credential.setSelectedAccountName(accountname);
@@ -697,7 +711,7 @@ public class SetupImFragment extends Fragment {
             }
         }else if(type != null && type.equals(Lime.RESTORE)){
             if(accountname == null){
-                this.startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER_RESTORE);
+                startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER_RESTORE);
             }else{
                 mLIMEPref.setParameter(Lime.GOOGLE_ACCOUNT_NAME, accountname);
                 credential.setSelectedAccountName(accountname);

@@ -33,6 +33,7 @@
     <string name="setup_im_backup_message">資料庫備份中，請耐心等候 ...</string>
     <string name="setup_im_restore_message">資料庫還原中，請耐心等候 ...</string>
     <string name="setup_im_backup_dropbox">Dropbox 備份</string>
+    <string name="setup_im_backup_dropbox_error_507">Dropbox 已沒有足夠的空間進行備份，請檢查</string>
     <string name="setup_im_backup_google">Google 備份</string>
     <string name="setup_im_backup_local">本地備份</string>
     <string name="setup_im_database">備份/還原資料庫</string>

@@ -93,7 +93,7 @@ public class MainActivity extends ActionBarActivity
         }
     };
 
-    @Override
+   /* @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
          if (requestCode == 1001) {
@@ -108,7 +108,7 @@ public class MainActivity extends ActionBarActivity
             }
          }
 
-    }
+    }*/
 
     @Override
     protected void onDestroy() {
