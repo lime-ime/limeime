@@ -12,7 +12,8 @@
         <item name="android:background">@drawable/keyboard_background</item>
         <item name="keyBackground">@drawable/btn_keyboard_key</item>
         <item name="keyTextSize">@dimen/key_text_size</item>
-        <item name="keyTextColor">#FFFFFFFF</item>
+        <item name="keyTextColor">#FF0F0F0F</item>
+        <item name="functionKeyTextColor">#FF717171</item>
         <item name="keySubLabelTextColor">#FFCEFFCE</item>
         <item name="keyPreviewLayout">@layout/key_preview</item>
         <item name="keyPreviewOffset">@dimen/key_preview_offset</item>
@@ -25,7 +26,7 @@
         <item name="keyHysteresisDistance">@dimen/key_hysteresis_distance</item>
         <item name="verticalCorrection">@dimen/keyboard_vertical_correction</item>
         <item name="shadowColor">#BB000000</item>
-        <item name="shadowRadius">2.75</item>
+        <item name="shadowRadius">0</item>
         <item name="backgroundDimAmount">0.5</item>
         <item name="symbolColorScheme">white</item>
     </style>

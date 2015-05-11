@@ -35,7 +35,7 @@
      <color name="limekeyboard_transparent">#00000000</color>
     <color name="limekeyboard_bar_im_shadow_white">#80000000</color>
     <color name="limekeyboard_bar_im_shadow_black">#80FFFFFF</color>
-    <color name="limekeyboard_bar_im_text">#FFC0C0C0</color>
+    <color name="limekeyboard_bar_im_text">#FF0F0F0F</color>
     <color name="limekeyboard_extension_background">#A0000000</color>
     <color name="limekeyboard_feedback_language_text">#FFFFFFFF</color>
     <color name="limekeyboard_key_color_white">#FFFFFFFF</color>

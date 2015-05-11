@@ -23,8 +23,8 @@
 -->
 <Keyboard xmlns:limehd="http://schemas.android.com/apk/res/net.toload.main.hd"
     limehd:keyWidth="10%p"
-    limehd:horizontalGap="0px"
-    limehd:verticalGap="0px"
+    limehd:horizontalGap="1dp"
+    limehd:verticalGap="1dp"
     limehd:keyHeight="@dimen/key_height"
     >
 

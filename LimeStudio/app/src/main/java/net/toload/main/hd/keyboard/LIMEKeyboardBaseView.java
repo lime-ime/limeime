@@ -147,6 +147,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 	// XML attribute
 	private int mKeyTextSize;
 	private int mKeyTextColor;
+	private int mFunctionKeyTextColor;
 	private int mKeySubLabelTextColor; //Jeremy '12,4,29 
 	private Typeface mKeyTextStyle = Typeface.DEFAULT;
 	private int mLabelTextSize;
@@ -439,6 +440,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 			case R.styleable.LIMEKeyboardBaseView_keyTextSize:
 				mKeyTextSize = a.getDimensionPixelSize(attr, 18);
 				break;
+			case R.styleable.LIMEKeyboardBaseView_functionKeyTextColor:
+				mFunctionKeyTextColor = a.getColor(attr, 0xFF000000);
+				break;
 			case R.styleable.LIMEKeyboardBaseView_keyTextColor:
 				mKeyTextColor = a.getColor(attr, 0xFF000000);
 				break;
@@ -609,7 +613,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 	/**
 	 * Attaches a keyboard to this view. The keyboard can be switched at any time and the
 	 * view will re-layout itself to accommodate the keyboard.
-	 * @see Keyboard
+	 //* @see Keyboard
 	 * @see #getKeyboard()
 	 * @param keyboard the keyboard to display in this view
 	 */
@@ -639,7 +643,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 	/**
 	 * Returns the current keyboard being displayed by this view.
 	 * @return the currently attached keyboard
-	 * @see #setKeyboard(Keyboard)
+	 //* @see #setKeyboard(Keyboard)
 	 */
 	public LIMEBaseKeyboard getKeyboard() {
 		return mKeyboard;
@@ -870,9 +874,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 					
 				if(key.width < mKeyboard.getKeyWidth())  //Jeremy '12,5,26 scaled the label size if the key width is smaller than default key width
 					labelSizeScale *=  (float)(key.width) / (float)(mKeyboard.getKeyWidth());*/
-					
-				
-					
+
 				boolean hasSubLabel = label.contains("\n");
 				boolean hasSecondSubLabel = false;
 				String subLabel="", secondSubLabel="";
@@ -921,7 +923,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 				}
 
 				// Draw a drop shadow for the text
-				paint.setShadowLayer(mShadowRadius, 0, 0, mShadowColor);
+				if(mShadowRadius >0) 	paint.setShadowLayer(mShadowRadius, 0, 0, mShadowColor);
 						final int centerX = (key.width + padding.left - padding.right) / 2;
 						final int centerY = (key.height + padding.top - padding.bottom) / 2;
 						float baseline = centerY
@@ -954,39 +956,40 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 								paint.setColor(mKeySubLabelTextColor);
 							
 								if(hasSecondSubLabel){
-									canvas.drawText(subLabel, centerX/2, subBaseline, paint);
-									paint.setColor(mKeyTextColor);
+									canvas.drawText(subLabel, centerX / 2, subBaseline, paint);
+									int keyColor  = key.isFunctionalKey()?mFunctionKeyTextColor:mKeyTextColor;
+									paint.setColor(key.isFunctionalKey()?mFunctionKeyTextColor:mKeyTextColor);
 									canvas.drawText(secondSubLabel, centerX/2*3, subBaseline, paint);
 								}else
 									canvas.drawText(subLabel, centerX, subBaseline, paint);
 
 								paint.setTextSize(labelSize);
 								paint.setTypeface(mKeyTextStyle);
-								paint.setColor(mKeyTextColor);
+								paint.setColor(key.isFunctionalKey()?mFunctionKeyTextColor:mKeyTextColor);
 								canvas.drawText(label, centerX, baseline, paint);
 
 							}else{
 								paint.setColor(mKeySubLabelTextColor);
 								if(hasSecondSubLabel){
 									canvas.drawText(subLabel, centerX - subLabelWidth*2, baseline, paint);
-									paint.setColor(mKeyTextColor);
+									paint.setColor(key.isFunctionalKey()?mFunctionKeyTextColor:mKeyTextColor);
 									canvas.drawText(secondSubLabel, centerX -subLabelWidth, baseline, paint);
 								}else
 									canvas.drawText(subLabel, centerX - subLabelWidth, baseline, paint);
 									
 								paint.setTextSize(labelSize);
 								paint.setTypeface(mKeyTextStyle);
-								paint.setColor(mKeyTextColor);
+								paint.setColor(key.isFunctionalKey()?mFunctionKeyTextColor:mKeyTextColor);
 								canvas.drawText(label, centerX+labelWidth, baseline, paint);
 
 							}
 
 						}else{
-							paint.setColor(mKeyTextColor);
+							paint.setColor(key.isFunctionalKey()?mFunctionKeyTextColor:mKeyTextColor);
 							canvas.drawText(label, centerX, baseline, paint);
 						}
 						// Turn off drop shadow
-						paint.setShadowLayer(0, 0, 0, 0);
+				if(mShadowRadius >0) paint.setShadowLayer(0, 0, 0, 0);
 
 						// Usually don't draw icon if label is not null, but we draw icon for the number
 						// hint and popup hint.
@@ -1174,7 +1177,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 	 * Invalidates a key so that it will be redrawn on the next repaint. Use this method if only
 	 * one key is changing it's content. Any changes that affect the position or size of the key
 	 * may not be honored.
-	 * @param key key in the attached {@link Keyboard}.
+	 //* @param key key in the attached {@link //Keyboard}.
 	 * @see #invalidateAllKeys
 	 */
 	public void invalidateKey(Key key) {
