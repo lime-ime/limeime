@@ -15,11 +15,24 @@
 -->
 
 <resources>
-
-    <declare-styleable name="LIMEKeyboardBaseView">
+    <!-- Default App Theme. -->
+    <declare-styleable name="AppTheme">
         <!-- Default KeyboardView style. -->
         <attr name="keyboardViewStyle" format="reference" />
 
+        <attr name="composingTextColor" format="color" />
+        <attr name="composingTextBackGroundColor" format="color" />
+        <!--Special key Icons for all keyboard -->
+        <attr name="shiftKeyLockedIcon" format="reference" />
+        <attr name="shiftKeyLockedPreviewIcon" format="reference" />
+        <attr name="spaceKeyIcon" format="reference" />
+        <attr name="spaceKeyPreviewIcon" format="reference" />
+        <attr name="enterKeyIcon" format="reference" />
+        <attr name="enterKeyPreviewIcon" format="reference" />
+        <attr name="searchKeyIcon" format="reference" />
+        <attr name="searchKeyPreviewIcon" format="reference" />
+    </declare-styleable>
+    <declare-styleable name="LIMEKeyboardBaseView">
         <!-- Image for the key. This image needs to be a StateListDrawable, with the following
              possible states: normal, pressed, checkable, checkable+pressed, checkable+checked,
              checkable+checked+pressed. -->

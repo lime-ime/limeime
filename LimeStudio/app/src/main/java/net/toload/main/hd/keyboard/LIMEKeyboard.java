@@ -24,6 +24,7 @@ import net.toload.main.hd.LIMEKeyboardSwitcher;
 import net.toload.main.hd.R;
 import android.content.Context;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
@@ -62,6 +63,12 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     private SlidingSpaceBarDrawable mSlidingSpaceBarIcon;
     
     private Drawable mSpacePreviewIcon;
+
+    private Drawable mEnterIcon;
+    private Drawable mEnterPreviewIcon;
+    private Drawable mSearchIcon;
+    private Drawable mSearchPreviewIcon;
+
     private static int sSpacebarVerticalCorrection;
 
     
@@ -90,19 +97,31 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 
     public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, float keySizeScale, int showArrowKeys, int splitKeyboard ) {
         super(context, xmlLayoutResId, mode, keySizeScale, showArrowKeys, splitKeyboard);
+
+        TypedArray a = context.getTheme().obtainStyledAttributes(R.style.AppTheme, new int[] {
+                    R.attr.shiftKeyLockedIcon, R.attr.shiftKeyLockedPreviewIcon, R.attr.spaceKeyPreviewIcon,
+                    R.attr.enterKeyIcon,R.attr.enterKeyPreviewIcon,
+                    R.attr.searchKeyIcon, R.attr.searchKeyPreviewIcon                });
         final Resources res = context.getResources();
         mContext = context;
-	        mRes = res;
-	        mShiftLockIcon = res.getDrawable(R.drawable.sym_flat_keyboard_shift_locked);
-	        mShiftLockPreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_shift_locked);
-	        mShiftLockPreviewIcon.setBounds(0, 0, 
-	                mShiftLockPreviewIcon.getIntrinsicWidth(),
-	                mShiftLockPreviewIcon.getIntrinsicHeight());
-	        sSpacebarVerticalCorrection = res.getDimensionPixelOffset(
-	                R.dimen.spacebar_vertical_correction);
-	        mSpacePreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_space);
+        mRes = res;
 
-        
+        mShiftLockIcon = res.getDrawable(a.getResourceId(0, 0));
+        mShiftLockPreviewIcon = res.getDrawable(a.getResourceId(1, 0));
+        mShiftLockPreviewIcon.setBounds(0, 0,
+                mShiftLockPreviewIcon.getIntrinsicWidth(),
+                mShiftLockPreviewIcon.getIntrinsicHeight());
+        sSpacebarVerticalCorrection = res.getDimensionPixelOffset(
+                R.dimen.spacebar_vertical_correction);
+        mSpacePreviewIcon = res.getDrawable(a.getResourceId(2, 0));
+
+        mEnterIcon = res.getDrawable(a.getResourceId(3,0));
+        mEnterPreviewIcon = res.getDrawable(a.getResourceId(4,0));
+        mSearchIcon = res.getDrawable(a.getResourceId(5,0));
+        mSearchPreviewIcon = res.getDrawable(a.getResourceId(6,0));
+
+        a.recycle();
+
     }	
    
 
@@ -218,10 +237,8 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                     mEnterKey.label = res.getText(R.string.label_done_key);
                     break;
                 case EditorInfo.IME_ACTION_SEARCH:
-                    mEnterKey.iconPreview = res.getDrawable(
-                            R.drawable.sym_keyboard_feedback_search);
-                    mEnterKey.icon = res.getDrawable(
-                            R.drawable.sym_keyboard_search);
+                    mEnterKey.iconPreview = mSearchPreviewIcon;
+                    mEnterKey.icon = mSearchIcon;
                     mEnterKey.label = null;
                     break;
                 case EditorInfo.IME_ACTION_SEND:
@@ -239,10 +256,8 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                         mEnterKey.popupResId = R.xml.popup_smileys;
                     } else {
                     
-                        mEnterKey.iconPreview = res.getDrawable(
-                                R.drawable.sym_keyboard_feedback_return);
-                        mEnterKey.icon = res.getDrawable(
-                                R.drawable.sym_keyboard_return);
+                        mEnterKey.iconPreview = mEnterPreviewIcon;
+                        mEnterKey.icon = mEnterIcon;
                         mEnterKey.label = null;
                     }
                     break;

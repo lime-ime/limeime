@@ -28,7 +28,7 @@
     <!-- <color name="candidate_background">#bbffffff</color>-->
     <!--composing text view-->
     <color name="composing_text">#FF717171</color>
-    <color name="composing_background">#FFE1E1E1</color>
+    <color name="composing_background">#BBE1E1E1</color>
 
     <!-- Preference -->
     <color name="preference_background">#bbffffff</color>

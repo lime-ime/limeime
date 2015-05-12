@@ -2,13 +2,22 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
+
+        <item name="shiftKeyLockedIcon">@drawable/sym_flat_keyboard_shift_locked</item>
+        <item name="shiftKeyLockedPreviewIcon">@drawable/sym_flat_keyboard_shift_locked</item>
+        <item name="spaceKeyIcon">@drawable/sym_flat_keyboard_space</item>
+        <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space</item>
+        <item name="enterKeyIcon">@drawable/sym_flat_keyboard_enter</item>
+        <item name="enterKeyPreviewIcon">@drawable/sym_flat_keyboard_enter</item>
+        <item name="searchKeyIcon">@drawable/sym_flat_keyboard_search</item>
+        <item name="searchKeyPreviewIcon">@drawable/sym_flat_keyboard_search</item>
+        
+        <item name="composingTextColor">@color/composing_text</item>
+        <item name="composingTextBackGroundColor">@color/composing_background</item>
+        
     </style>
-    <style name="LIMEHDTheme" parent="android:Theme">
-    </style>
-    <style name="LIMEHDDialogTheme" parent="android:style/Theme.Dialog">
-    </style>
-    <style name="LIMEkeyboardStyle">
+    <style name="LIMEKeyboardBaseView">
+
         <item name="android:background">@drawable/keyboard_background</item>
         <item name="keyBackground">@drawable/btn_keyboard_key</item>
         <item name="keyTextSize">@dimen/key_text_size</item>

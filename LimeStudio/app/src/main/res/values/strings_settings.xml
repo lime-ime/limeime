@@ -20,7 +20,7 @@
     <!-- Labels on soft keys -->
     <string name="label_go_key">Go</string>
     <string name="label_next_key">Next</string>
-    <string name="label_send_key">傳送</string>
+    <string name="label_send_key">Send</string>
     <string name="label_close_key">關閉</string>
 
 
