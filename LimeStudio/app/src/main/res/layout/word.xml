@@ -7,7 +7,7 @@
         android:layout_height="wrap_content"
         android:text="W"
         android:id="@+id/txtWord"
-        android:textSize="12pt"
+        android:textSize="10pt"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
         android:layout_gravity="center" />
