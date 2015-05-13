@@ -844,6 +844,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 			int[] drawableState = key.getCurrentDrawableState();
 			keyBackground.setState(drawableState);
 
+
 			// Switch the character to uppercase if shift is pressed
 			String label = key.label == null? null : adjustCase(key.label).toString();
 
@@ -1000,6 +1001,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 				Drawable icon = key.icon;
 				if( icon == null ) 
 					icon = mPopupHint;
+				else
+					icon.setState(drawableState);
+
 
 				// Special handing for the upper-right number hint icons
 				final int drawableWidth;
