@@ -66,7 +66,7 @@
 
 
 	<Row>
-		<Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift"
+		<Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift_shifted"
 			 limehd:isModifier="true" limehd:isSticky="true" limehd:keyEdgeFlags="left" />
 		<Key limehd:codes="90" limehd:keyLabel="Z" />
 		<Key limehd:codes="88" limehd:keyLabel="X" />
@@ -88,7 +88,7 @@
 				limehd:keyLabel="EN" limehd:isModifier="true" 
 				limehd:keyWidth="10%p" 
 				/>
-		<Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
+		<Key limehd:codes="32" limehd:keyIcon="@drawable/sym_flat_keyboard_space" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
 				limehd:keyWidth="15%p" limehd:isRepeatable="true" />
 		<Key limehd:codes="60" limehd:keyLabel="&lt;" limehd:keyWidth="10%p" />
 		<Key limehd:codes="62" limehd:keyLabel="&gt;" 

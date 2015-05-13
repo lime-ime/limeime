@@ -47,7 +47,7 @@
     <Row limehd:rowEdgeFlags="bottom">
         <Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true" limehd:keyWidth="25%p" limehd:keyEdgeFlags="left"/>                
         <Key limehd:codes="-9" limehd:keyLabel="ABC" limehd:iconPreview="@drawable/sym_keyboard_feedback_space" limehd:isModifier="true"  limehd:keyWidth="25%p" limehd:isRepeatable="true"/>
-        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"  limehd:keyWidth="25%p" limehd:isRepeatable="true"/>
+        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_flat_keyboard_space" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"  limehd:keyWidth="25%p" limehd:isRepeatable="true"/>
         <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true" limehd:keyWidth="25%p" limehd:keyEdgeFlags="right"/>
     </Row>
     

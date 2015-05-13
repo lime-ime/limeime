@@ -75,7 +75,7 @@
     </Row>
     
     <Row>
-        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift"
+        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift_shifted"
                 limehd:keyWidth="15%p" limehd:isModifier="true"
                 limehd:isSticky="true" limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="161" limehd:keyLabel="¡" />

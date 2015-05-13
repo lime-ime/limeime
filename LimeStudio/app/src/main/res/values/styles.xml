@@ -2,28 +2,37 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-
-        <item name="shiftKeyLockedIcon">@drawable/sym_flat_keyboard_shift_locked</item>
-        <item name="shiftKeyLockedPreviewIcon">@drawable/sym_flat_keyboard_shift_locked</item>
-        <item name="spaceKeyIcon">@drawable/sym_flat_keyboard_space</item>
-        <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space</item>
-        <item name="enterKeyIcon">@drawable/sym_flat_keyboard_enter</item>
-        <item name="enterKeyPreviewIcon">@drawable/sym_flat_keyboard_enter</item>
-        <item name="searchKeyIcon">@drawable/sym_flat_keyboard_search</item>
-        <item name="searchKeyPreviewIcon">@drawable/sym_flat_keyboard_search</item>
-        
         <item name="composingTextColor">@color/composing_text</item>
         <item name="composingTextBackGroundColor">@color/composing_background</item>
-        
     </style>
-    <style name="LIMEKeyboardBaseView">
+    <style name="LIMEKeyboardLight">
+        <item name="spaceKeyIcon">@drawable/sym_keyboard_space</item>
+        <item name="spaceKeyPreviewIcon">@drawable/sym_keyboard_space</item>
+        <item name="enterKeyIcon">@drawable/sym_keyboard_return</item>
+        <item name="enterKeyPreviewIcon">@drawable/sym_keyboard_return</item>
+        <item name="searchKeyIcon">@drawable/sym_keyboard_search</item>
+        <item name="searchKeyPreviewIcon">@drawable/sym_keyboard_search</item>
+        <item name="spacebarVerticalCorrection">@dimen/spacebar_vertical_correction</item>
+        <item name="spacebarSlidingTextSize">@dimen/spacebar_preview_text_size</item>
+        <item name="spacebarSlidingLeftArrow">@drawable/ic_suggest_strip_scroll_left_arrow</item>
+        <item name="spacebarSlidingRightArrow">@drawable/ic_suggest_strip_scroll_right_arrow</item>
+
+    </style>
+    <style name="LIMEKeyboardBaseViewLight">
 
         <item name="android:background">@drawable/keyboard_background</item>
         <item name="keyBackground">@drawable/btn_keyboard_key</item>
         <item name="keyTextSize">@dimen/key_text_size</item>
-        <item name="keyTextColor">#FF0F0F0F</item>
-        <item name="functionKeyTextColor">#FF717171</item>
-        <item name="keySubLabelTextColor">#FF7D7D7D</item>
+
+        <item name="keyTextColorNormal">#FF0F0F0F</item>
+        <item name="keyTextColorPressed">#FF4DB6AC</item>
+
+        <item name="functionKeyTextColorNormal">#FF717171</item>
+        <item name="functionKeyTextColorPressed">#FF80CBC4</item>
+
+        <item name="keySubLabelTextColorNormal">#FF7D7D7D</item>
+        <item name="keySubLabelTextColorPressed">#FF80CBC4</item>
+
         <item name="keyPreviewLayout">@layout/key_preview</item>
         <item name="keyPreviewOffset">@dimen/key_preview_offset</item>
         <item name="keyPreviewHeight">@dimen/key_preview_height</item>
@@ -46,5 +55,13 @@
     <style name="MiniKeyboardAnimation">
         <item name="android:windowEnterAnimation">@anim/mini_keyboard_fadein</item>
         <item name="android:windowExitAnimation">@anim/mini_keyboard_fadeout</item>
+    </style>
+
+    <style name="LIMEBaseKeyboardLight">
+
+        <item name="drawableArrowUp">@drawable/sym_keyboard_up</item>
+        <item name="drawableArrowDown">@drawable/sym_keyboard_down</item>
+        <item name="drawableArrowRight">@drawable/sym_keyboard_right</item>
+        <item name="drawableArrowLeft">@drawable/sym_keyboard_left</item>
     </style>
 </resources>

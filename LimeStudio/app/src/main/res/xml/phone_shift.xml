@@ -46,12 +46,12 @@
     </Row>
     
     <Row>
-        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift"
+        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift_shifted"
                 limehd:isSticky="true" limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="55,80,81,82,83" limehd:iconPreview="@drawable/phone_7_l" limehd:keyIcon="@drawable/phone_7"/>
         <Key limehd:codes="56,84,85,86" limehd:iconPreview="@drawable/phone_8_l" limehd:keyIcon="@drawable/phone_8"/>
         <Key limehd:codes="57,87,88,89,89" limehd:iconPreview="@drawable/phone_9_l" limehd:keyIcon="@drawable/phone_9"/>
-        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space" limehd:isRepeatable="true" limehd:keyEdgeFlags="right"/>
+        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_flat_keyboard_space" limehd:iconPreview="@drawable/sym_keyboard_feedback_space" limehd:isRepeatable="true" limehd:keyEdgeFlags="right"/>
     </Row>
     
     <Row limehd:rowEdgeFlags="bottom">

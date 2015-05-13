@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010 The Android Open Source Project
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -22,16 +21,8 @@
 
         <attr name="composingTextColor" format="color" />
         <attr name="composingTextBackGroundColor" format="color" />
-        <!--Special key Icons for all keyboard -->
-        <attr name="shiftKeyLockedIcon" format="reference" />
-        <attr name="shiftKeyLockedPreviewIcon" format="reference" />
-        <attr name="spaceKeyIcon" format="reference" />
-        <attr name="spaceKeyPreviewIcon" format="reference" />
-        <attr name="enterKeyIcon" format="reference" />
-        <attr name="enterKeyPreviewIcon" format="reference" />
-        <attr name="searchKeyIcon" format="reference" />
-        <attr name="searchKeyPreviewIcon" format="reference" />
     </declare-styleable>
+
     <declare-styleable name="LIMEKeyboardBaseView">
         <!-- Image for the key. This image needs to be a StateListDrawable, with the following
              possible states: normal, pressed, checkable, checkable+pressed, checkable+checked,
@@ -43,24 +34,27 @@
 
         <!-- Size of the label text for custom keys with some text and no icon. -->
         <attr name="labelTextSize" format="dimension" />
-         
-         <!-- Size of the sub label text for custom keys with some text and no icon. -->
+
+        <!-- Size of the sub label text for custom keys with some text and no icon. -->
         <attr name="subLabelTextSize" format="dimension" />
-        
+
         <!-- Size of the label text with sub-label for custom keys with some text and no icon. -->
         <attr name="smallLabelTextSize" format="dimension" />
-        
+
 
         <!-- Color to use for the label in a key. -->
-        <attr name="keyTextColor" format="color" />
+        <attr name="keyTextColorNormal" format="color" />
+        <attr name="keyTextColorPressed" format="color" />
 
         <!-- Color to use for the label in a function key. -->
-        <attr name="functionKeyTextColor" format="color" />
+        <attr name="functionKeyTextColorPressed" format="color" />
+        <attr name="functionKeyTextColorNormal" format="color" />
 
         <!-- Color to use for the sub-label in a key. -->
-        <attr name="keySubLabelTextColor" format="color" />
-        
-        
+        <attr name="keySubLabelTextColorNormal" format="color" />
+        <attr name="keySubLabelTextColorPressed" format="color" />
+
+
         <!-- Layout resource for key press feedback.-->
         <attr name="keyPreviewLayout" format="reference" />
 
@@ -78,8 +72,8 @@
 
         <!-- Layout resource for popup keyboards. -->
         <attr name="popupLayout" format="reference" />
-        
-          <!-- popup hint icon. -->
+
+        <!-- popup hint icon. -->
         <attr name="popupHint" format="reference" />
 
         <attr name="shadowColor" format="color" />
@@ -98,16 +92,30 @@
         </attr>
 
     </declare-styleable>
-     <declare-styleable name="LIMEKey">
-     <!-- Image for the key. This image needs to be a StateListDrawable, with the following
-             possible states: normal, pressed, checkable, checkable+pressed, checkable+checked,
-             checkable+checked+pressed. -->
+    <declare-styleable name="LIMEKey">
+        <!-- Image for the key. This image needs to be a StateListDrawable, with the following
+                possible states: normal, pressed, checkable, checkable+pressed, checkable+checked,
+                checkable+checked+pressed. -->
         <attr name="testAttribute" format="string" />
-     
-     </declare-styleable>
-     
-          
-     <declare-styleable name="LIMEBaseKeyboard">
+
+    </declare-styleable>
+
+    <declare-styleable name="LIMEKeyboard">
+        <!--Special key Icons for all keyboard -->
+        <attr name="spaceKeyIcon" format="reference" />
+        <attr name="spaceKeyPreviewIcon" format="reference" />
+        <attr name="enterKeyIcon" format="reference" />
+        <attr name="enterKeyPreviewIcon" format="reference" />
+        <attr name="searchKeyIcon" format="reference" />
+        <attr name="searchKeyPreviewIcon" format="reference" />
+        <attr name="spacebarVerticalCorrection" format="dimension" />
+        <attr name="spacebarSlidingTextSize" format="dimension" />
+        <attr name="spacebarSlidingLeftArrow" format="reference" />
+        <attr name="spacebarSlidingRightArrow" format="reference" />
+
+    </declare-styleable>
+
+    <declare-styleable name="LIMEBaseKeyboard">
         <!-- Default width of a key, in pixels or percentage of display width. -->
         <attr name="keyWidth" format="dimension|fraction" />
         <!-- Default height of a key, in pixels or percentage of display width. -->
@@ -116,6 +124,11 @@
         <attr name="horizontalGap" format="dimension|fraction" />
         <!-- Default vertical gap between rows of keys. -->
         <attr name="verticalGap" format="dimension|fraction" />
+        <!-- Arrow keyboard drawables -->
+        <attr name="drawableArrowUp" format="reference" />
+        <attr name="drawableArrowDown" format="reference" />
+        <attr name="drawableArrowRight" format="reference" />
+        <attr name="drawableArrowLeft" format="reference" />
     </declare-styleable>
 
     <declare-styleable name="LIMEBaseKeyboard_Row">

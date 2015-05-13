@@ -26,12 +26,6 @@
 <!-- for the Search Manager. -->
 
 <input-method xmlns:android="http://schemas.android.com/apk/res/android" 
-					android:settingsActivity="net.toload.main.hd.MainActivity"
-					android:icon="@drawable/icon"
-					android:supportsSwitchingToNextInputMethod="true">
-
-</input-method>
-
-
+			  android:settingsActivity="net.toload.main.hd.LIMEMenu"/>
 			  
 			  

@@ -87,7 +87,7 @@
 				limehd:keyLabel="EN"  limehd:isModifier="true" 
 				limehd:keyWidth="10%p" 
 				/>
-		<Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
+		<Key limehd:codes="32" limehd:keyIcon="@drawable/sym_flat_keyboard_space" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
 				limehd:keyWidth="15%p" limehd:isRepeatable="true" />
 		<Key limehd:codes="44" limehd:keyLabel=",\nㄓ"/>
 		<Key limehd:codes="46" 

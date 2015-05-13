@@ -45,11 +45,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 	static final boolean DEBUG = false;
 	static final String TAG = "LIMEKeyboard";
 
-	private Drawable mShiftLockIcon;
-    private Drawable mShiftLockPreviewIcon;
-    private Drawable mOldShiftIcon;
-    private Drawable mOldShiftPreviewIcon;
-    private Key mShiftKey;
+	private Key mShiftKey;
     private Key mEnterKey;
 	    
     private static final int SHIFT_OFF = 0;
@@ -60,29 +56,32 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 
     private static final float SPACEBAR_DRAG_THRESHOLD = 0.6f;
     
-    private SlidingSpaceBarDrawable mSlidingSpaceBarIcon;
+    private static SlidingSpaceBarDrawable mSlidingSpaceBarIcon;
     
-    private Drawable mSpacePreviewIcon;
+    private static Drawable mSpacePreviewIcon;
 
-    private Drawable mEnterIcon;
-    private Drawable mEnterPreviewIcon;
-    private Drawable mSearchIcon;
-    private Drawable mSearchPreviewIcon;
+    private static Drawable mEnterIcon;
+    private static Drawable mEnterPreviewIcon;
+    private static Drawable mSearchIcon;
+    private static Drawable mSearchPreviewIcon;
+    private static Drawable mSlidingLeftArrow;
+    private static Drawable mSlidingRightArrow;
+    private static int mSlidingTextSize;
 
-    private static int sSpacebarVerticalCorrection;
+    private static int mSpacebarVerticalCorrection;
 
     
 
     
     private boolean mCurrentlyInSpace;
-    private int mSpaceDragStartX;
-    private int mSpaceDragLastDiff;
+    private static int mSpaceDragStartX;
+    private static int mSpaceDragLastDiff;
     private Key mSpaceKey;
     
     // Minimum width of space key preview (proportional to keyboard width)
     private static final float SPACEBAR_POPUP_MIN_RATIO = 0.4f;
     // Height in space key the language name will be drawn. (proportional to space key height)
-    private static final float SPACEBAR_LANGUAGE_BASELINE = 0.6f;
+    private static final float SPACEBAR_IMNAME_BASELINE = 0.6f;
     
     private static final int OPACITY_FULLY_OPAQUE = 255;
     
@@ -98,27 +97,22 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, float keySizeScale, int showArrowKeys, int splitKeyboard ) {
         super(context, xmlLayoutResId, mode, keySizeScale, showArrowKeys, splitKeyboard);
 
-        TypedArray a = context.getTheme().obtainStyledAttributes(R.style.AppTheme, new int[] {
-                    R.attr.shiftKeyLockedIcon, R.attr.shiftKeyLockedPreviewIcon, R.attr.spaceKeyPreviewIcon,
-                    R.attr.enterKeyIcon,R.attr.enterKeyPreviewIcon,
-                    R.attr.searchKeyIcon, R.attr.searchKeyPreviewIcon                });
-        final Resources res = context.getResources();
+
         mContext = context;
-        mRes = res;
+        mRes = context.getResources();;
 
-        mShiftLockIcon = res.getDrawable(a.getResourceId(0, 0));
-        mShiftLockPreviewIcon = res.getDrawable(a.getResourceId(1, 0));
-        mShiftLockPreviewIcon.setBounds(0, 0,
-                mShiftLockPreviewIcon.getIntrinsicWidth(),
-                mShiftLockPreviewIcon.getIntrinsicHeight());
-        sSpacebarVerticalCorrection = res.getDimensionPixelOffset(
-                R.dimen.spacebar_vertical_correction);
-        mSpacePreviewIcon = res.getDrawable(a.getResourceId(2, 0));
+        TypedArray a = context.getTheme().obtainStyledAttributes(R.style.LIMEKeyboardLight, R.styleable.LIMEKeyboard);
+        mSpacebarVerticalCorrection = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spacebarVerticalCorrection, 0);
+        mSpacePreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyIcon);
+        mEnterIcon = a.getDrawable(R.styleable.LIMEKeyboard_enterKeyIcon);
+        mEnterPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_enterKeyPreviewIcon);
+        mSearchIcon = a.getDrawable(R.styleable.LIMEKeyboard_searchKeyIcon);
+        mSearchPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_searchKeyPreviewIcon);
 
-        mEnterIcon = res.getDrawable(a.getResourceId(3,0));
-        mEnterPreviewIcon = res.getDrawable(a.getResourceId(4,0));
-        mSearchIcon = res.getDrawable(a.getResourceId(5,0));
-        mSearchPreviewIcon = res.getDrawable(a.getResourceId(6,0));
+        // for sliding space bar
+        mSlidingTextSize = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spacebarSlidingTextSize,25);
+        mSlidingLeftArrow = a.getDrawable(R.styleable.LIMEKeyboard_spacebarSlidingLeftArrow);
+        mSlidingRightArrow = a.getDrawable(R.styleable.LIMEKeyboard_spacebarSlidingRightArrow);
 
         a.recycle();
 
@@ -151,8 +145,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
             if (mShiftKey instanceof LIMEKey) {
                 ((LIMEKey)mShiftKey).enableShiftLock();
             }
-            mOldShiftIcon = mShiftKey.icon;
-            mOldShiftPreviewIcon = mShiftKey.iconPreview;
+
         }
     }
 
@@ -161,11 +154,10 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         if (mShiftKey != null) {
             if (shiftLocked) {
                 mShiftKey.on = true;
-                mShiftKey.icon = mShiftLockIcon;
                 mShiftState = SHIFT_LOCKED;
+
             } else {
                 mShiftKey.on = false;
-                mShiftKey.icon = mShiftLockIcon;
                 mShiftState = SHIFT_ON;
             }
         }
@@ -184,13 +176,10 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                 shiftChanged = mShiftState != SHIFT_OFF;
                 mShiftState = SHIFT_OFF;
                 mShiftKey.on = false;
-                mShiftKey.icon = mOldShiftIcon;
-                mShiftKey.iconPreview = mOldShiftPreviewIcon;
             } else {
                 if (mShiftState == SHIFT_OFF) {
                     shiftChanged = mShiftState == SHIFT_OFF;
                     mShiftState = SHIFT_ON;
-                    mShiftKey.icon = mShiftLockIcon;
                 }
             }
         } else {
@@ -287,7 +276,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
             if (code == KEYCODE_SHIFT) x += key.width / 6;
             if (code == KEYCODE_DELETE) x -= key.width / 6;
         } else if (code == KEYCODE_SPACE) {
-            y += LIMEKeyboard.sSpacebarVerticalCorrection;
+            y += LIMEKeyboard.mSpacebarVerticalCorrection;
             
                 if (mCurrentlyInSpace) {
                     int diff = x - mSpaceDragStartX;
@@ -353,7 +342,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
             final int width = Math.max(mSpaceKey.width,
                     (int)(getMinWidth() * SPACEBAR_POPUP_MIN_RATIO));
             final int height = mSpacePreviewIcon.getIntrinsicHeight();
-            mSlidingSpaceBarIcon = new SlidingSpaceBarDrawable(mSpacePreviewIcon, width, height);
+            mSlidingSpaceBarIcon = new SlidingSpaceBarDrawable(mSpacePreviewIcon,mSlidingLeftArrow,mSlidingRightArrow,mSlidingTextSize, width, height);
             mSlidingSpaceBarIcon.setBounds(0, 0, width, height);
             mSpaceKey.iconPreview = mSlidingSpaceBarIcon;
         }
@@ -370,34 +359,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
        
     	private boolean mShiftLockEnabled;
 
-    	//Jeremy '12,5,22 moved to LIMEBaseKeyboard
-    	 // functional normal state (with properties)
-        /*private final int[] KEY_STATE_FUNCTIONAL_NORMAL = {
-                android.R.attr.state_single
-        };
 
-        // functional pressed state (with properties)
-        private final int[] KEY_STATE_FUNCTIONAL_PRESSED = {
-                android.R.attr.state_single,
-                android.R.attr.state_pressed
-        };*/
-        
-       /* private boolean isFunctionalKey() {
-            return !sticky && modifier;
-        }
-        
-        @Override
-        public int[] getCurrentDrawableState() {
-            if (isFunctionalKey()) {
-                if (pressed) {
-                    return KEY_STATE_FUNCTIONAL_PRESSED;
-                } else {
-                    return KEY_STATE_FUNCTIONAL_NORMAL;
-                }
-            }
-            return super.getCurrentDrawableState();
-        }*/
-        
         public LIMEKey(Resources res, LIMEBaseKeyboard.Row parent, int x, int y, XmlResourceParser parser) {
             super(res, parent, x, y, parser);
             if(DEBUG) Log.i(TAG,"LIMEKey():"+this.codes[0]);
@@ -479,25 +441,27 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         private String mCurrentKeyboard;
         private String mNextKeyboard;
         private String mPrevKeyboard;
+        private int mSlidingTextSize;
 
-        public SlidingSpaceBarDrawable(Drawable background, int width, int height) {
+        public SlidingSpaceBarDrawable(Drawable background, Drawable leftArrow, Drawable rightArrow, int slidingTextSize, int width, int height) {
             mBackground = background;
             setDefaultBounds(mBackground);
+            mLeftDrawable = leftArrow;
+            mRightDrawable = rightArrow;
+            mSlidingTextSize = slidingTextSize;
+
             mWidth = width;
             mHeight = height;
+
             mTextPaint = new TextPaint();
-            //mTextPaint.setTextSize(getTextSizeFromTheme(android.R.style.TextAppearance_Medium, 18));
-            mTextPaint.setTextSize(mRes.getDimensionPixelSize(R.dimen.spacebar_preview_text_size));
+            mTextPaint.setTextSize(mSlidingTextSize);
             int color = mContext.getResources().getColor((R.color.limekeyboard_transparent));
             mTextPaint.setColor(color);
             mTextPaint.setTextAlign(Align.CENTER);
             mTextPaint.setAlpha(OPACITY_FULLY_OPAQUE);
             mTextPaint.setAntiAlias(true);
             mMiddleX = (mWidth - mBackground.getIntrinsicWidth()) / 2;
-            mLeftDrawable =
-                    mRes.getDrawable(R.drawable.ic_suggest_strip_scroll_left_arrow);
-            mRightDrawable =
-                    mRes.getDrawable(R.drawable.ic_suggest_strip_scroll_right_arrow);
+
             mThreshold = ViewConfiguration.get(mContext).getScaledTouchSlop();
         }
 
@@ -539,9 +503,9 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                 
               
                 // Draw language text with shadow
-                final float baseline = mHeight * SPACEBAR_LANGUAGE_BASELINE - paint.descent();
+                final float baseline = mHeight * SPACEBAR_IMNAME_BASELINE - paint.descent();
                 paint.setColor(mRes.getColor(R.color.limekeyboard_key_color_black));
-                paint.setTextSize(mRes.getDimensionPixelSize(R.dimen.spacebar_preview_text_size));
+                paint.setTextSize(mSlidingTextSize);
                 canvas.drawText(mCurrentKeyboard, width / 2 + diff, baseline, paint);
                 canvas.drawText(mNextKeyboard, diff - width /5, baseline, paint);
                 canvas.drawText(mPrevKeyboard, diff + width + width/5, baseline, paint);

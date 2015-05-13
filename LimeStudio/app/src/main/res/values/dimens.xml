@@ -33,6 +33,8 @@
     <dimen name="key_preview_text_size_large">40sp</dimen>
     <dimen name="key_preview_offset">0.000in</dimen>
     <dimen name="key_bottom_gap">0.035in</dimen>
+    <dimen name="key_horizontal_gap">0dp</dimen>
+    <dimen name="key_vertical_gap">0dp</dimen>
 
     <!-- WB -->
     <dimen name="wb_key_height">66dip</dimen>

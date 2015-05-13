@@ -51,7 +51,7 @@
         <Key limehd:codes="55,112,113,114,115" limehd:iconPreview="@drawable/phone_7_l" limehd:keyIcon="@drawable/phone_7"/>
         <Key limehd:codes="56,116,117,118" limehd:iconPreview="@drawable/phone_8_l" limehd:keyIcon="@drawable/phone_8"/>
         <Key limehd:codes="57,119,120,121,122" limehd:iconPreview="@drawable/phone_9_l" limehd:keyIcon="@drawable/phone_9"/>
-        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space_lime" limehd:iconPreview="@drawable/sym_keyboard_feedback_space" limehd:isRepeatable="true" limehd:keyEdgeFlags="right"/>
+        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_flat_keyboard_space" limehd:iconPreview="@drawable/sym_keyboard_feedback_space" limehd:isRepeatable="true" limehd:keyEdgeFlags="right"/>
     </Row>
     
     <Row limehd:rowEdgeFlags="bottom">

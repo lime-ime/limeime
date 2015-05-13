@@ -23,8 +23,8 @@
 -->
 <Keyboard xmlns:limehd="http://schemas.android.com/apk/res/net.toload.main.hd"
     limehd:keyWidth="10%p"
-    limehd:horizontalGap="1dp"
-    limehd:verticalGap="1dp"
+    limehd:horizontalGap="0px"
+    limehd:verticalGap="0px"
     limehd:keyHeight="@dimen/key_height"
     >
 
@@ -64,7 +64,7 @@
         <Key limehd:codes="115" limehd:keyLabel="s" limehd:keyEdgeFlags="right"/>
     </Row>
     <Row>
-        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_flat_keyboard_shift_normal" limehd:iconPreview="@drawable/sym_keyboard_feedback_shift"
+        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift" limehd:iconPreview="@drawable/sym_keyboard_feedback_shift" 
                 limehd:keyWidth="15%p" limehd:isModifier="true"
                 limehd:isSticky="true" limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="116" limehd:keyLabel="t"/>
@@ -74,7 +74,7 @@
         <Key limehd:codes="120" limehd:keyLabel="x"/>
         <Key limehd:codes="121" limehd:keyLabel="y"/>
         <Key limehd:codes="122" limehd:keyLabel="z"/>
-        <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_flat_keyboard_delete" limehd:isModifier="true"
+        <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true" 
                 limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"
                 limehd:isRepeatable="true"/>
     </Row>
