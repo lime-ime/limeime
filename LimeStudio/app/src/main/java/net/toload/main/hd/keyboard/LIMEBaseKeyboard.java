@@ -766,6 +766,14 @@ public class LIMEBaseKeyboard {
 
         mLandScape = mDisplayWidth > mDisplayHeight;
 
+        TypedArray a = context.getTheme().obtainStyledAttributes(R.style.LIMEBaseKeyboardLight, R.styleable.LIMEBaseKeyboard);
+
+        mDrawableArrowUp = a.getDrawable(R.styleable.LIMEBaseKeyboard_drawableArrowUp);
+        mDrawableArrowDown = a.getDrawable(R.styleable.LIMEBaseKeyboard_drawableArrowDown);
+        mDrawableArrowLeft = a.getDrawable(R.styleable.LIMEBaseKeyboard_drawableArrowLeft);
+        mDrawableArrowRight = a.getDrawable((R.styleable.LIMEBaseKeyboard_drawableArrowRight));
+
+
         //Jeremy '12,5,26 reserve  columns in the middle for arrow keys in landscape mode.
         //Jeremy '12,5,27 read splitkeyboard setting from preference. 
         //Jeremy '12,6,19  add orientation consideration on split keyboard
@@ -844,12 +852,6 @@ public class LIMEBaseKeyboard {
         }
         mTotalHeight = y + row.defaultHeight;//mDefaultHeight;
 
-        TypedArray a = context.getTheme().obtainStyledAttributes(R.style.LIMEBaseKeyboardLight, R.styleable.LIMEBaseKeyboard);
-
-        mDrawableArrowUp = a.getDrawable(R.styleable.LIMEBaseKeyboard_drawableArrowUp);
-        mDrawableArrowDown = a.getDrawable(R.styleable.LIMEBaseKeyboard_drawableArrowDown);
-        mDrawableArrowLeft = a.getDrawable(R.styleable.LIMEBaseKeyboard_drawableArrowLeft);
-        mDrawableArrowRight = a.getDrawable((R.styleable.LIMEBaseKeyboard_drawableArrowRight));
 
 
     }
@@ -1061,23 +1063,23 @@ public class LIMEBaseKeyboard {
             } else {
                 switch (i) {
                     case 0:
-                        //key.label = "⇑";
-                        key.icon = res.getDrawable(R.drawable.sym_flat_keyboard_up);
+
+                        key.icon = mDrawableArrowUp;
                         key.codes = new int[]{KEYCODE_UP};
                         break;
                     case 1:
-                        //key.label = "⇓";
-                        key.icon = res.getDrawable(R.drawable.sym_flat_keyboard_down);
+
+                        key.icon = mDrawableArrowDown;
                         key.codes = new int[]{KEYCODE_DOWN};
                         break;
                     case 2:
-                        //key.label = "⇐";
-                        key.icon = res.getDrawable(R.drawable.sym_flat_keyboard_left);
+
+                        key.icon = mDrawableArrowLeft;
                         key.codes = new int[]{KEYCODE_LEFT};
                         break;
                     case 3:
-                        //key.label = "⇒";
-                        key.icon = res.getDrawable(R.drawable.sym_flat_keyboard_right);
+
+                        key.icon = mDrawableArrowRight;
                         key.codes = new int[]{KEYCODE_RIGHT};
                         break;
                 }
