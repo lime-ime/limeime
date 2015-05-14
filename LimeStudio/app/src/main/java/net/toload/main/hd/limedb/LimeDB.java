@@ -289,6 +289,14 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		return result;
 	}
 
+	public void prepapreBackup() {
+		//turn of WAL mode before backup for compatibility issue
+		if (db != null && db.isWriteAheadLoggingEnabled()) {
+			Log.i(TAG,"prepareBackup(): wal is turned on, tried to turn off")
+			db.disableWriteAheadLogging();
+
+			}
+	}
 	public void setFinish(boolean value) {
 
 		this.finish = value;
@@ -568,163 +576,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 		}
 	}
-	//Jeremy '11,9,8 deprecated after 3.6
-	/*public void updateDBVersion(){
-			
-			checkCode3RIndexAndRecsordsInPhonetic();
-			
-			String kbversion = mLIMEPref.getParameterString("kbversion");
 
-			// Upgrade DB version below 330
-			if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 330){
-
-				SQLiteDatabase db = null;
-				String dbtarget = mLIMEPref.getParameterString("dbtarget");
-				String dblocation = "";
-				if(dbtarget.equals("sdcard")){
-					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
-				}else{
-					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
-				}
-				db = SQLiteDatabase.openDatabase(dblocation, null, SQLiteDatabase.OPEN_READWRITE);
-				
-				int count = db.query("keyboard", null, FIELD_CODE +" = 'limenumsym'", null, null, null, null, null).getCount();
-				
-				if(count == 0){
-					try{
-					
-						ContentValues 	cv = new ContentValues();
-						cv.put("code", "limenumsym");
-						cv.put("name", "LIMENUMSYM");
-						cv.put("desc", "LIME 預設鍵盤");
-						cv.put("type", "phone");
-						cv.put("image", "lime_number_symbol_keyboard_priview");
-						cv.put("imkb", "lime_number_symbol");
-						cv.put("imshiftkb", "lime_number_symbol_shift");
-						cv.put("engkb", "lime_english_number");
-						cv.put("engshiftkb", "lime_english_shift");
-						cv.put("symbolkb", "symbols");
-						cv.put("symbolshiftkb", "symbols_shift");
-						cv.put("disable", "false");
-						db.insert("keyboard" ,null , cv);
-
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-				db.close();
-				mLIMEPref.setParameter("kbversion","330");
-			}
-	
-			// Upgrade DB version below 332
-			if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 332){
-
-				SQLiteDatabase db = null;
-				String dbtarget = mLIMEPref.getParameterString("dbtarget");
-				String dblocation = "";
-				if(dbtarget.equals("sdcard")){
-					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
-				}else{
-					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
-				}
-				db = SQLiteDatabase.openDatabase(dblocation, null, SQLiteDatabase.OPEN_READWRITE);
-				
-				boolean hasNewTable = false;
-				try{
-					//int count = db.query("cj5", null, null, null, null, null, null, null).getCount();
-					 hasNewTable = true;
-				}catch(Exception e){}
-				
-				if(!hasNewTable){
-					try{
-
-						db.execSQL("CREATE TABLE cj5 (" + FIELD_id + " INTEGER primary key autoincrement, " + " "
-								+ FIELD_CODE + " text, " + FIELD_CODE3R + " text, " + FIELD_WORD + " text, " + FIELD_RELATED + " text, " + FIELD_SCORE + " integer)");
-	
-						db.execSQL("CREATE TABLE ecj (" + FIELD_id + " INTEGER primary key autoincrement, " + " "
-								+ FIELD_CODE + " text, " + FIELD_CODE3R + " text, " + FIELD_WORD + " text, " + FIELD_RELATED + " text, " + FIELD_SCORE + " integer)");
-	
-						db.execSQL("CREATE TABLE wb (" + FIELD_id + " INTEGER primary key autoincrement, " + " "
-								+ FIELD_CODE + " text, " + FIELD_CODE3R + " text, " + FIELD_WORD + " text, " + FIELD_RELATED + " text, " + FIELD_SCORE + " integer)");
-
-						// To modify the user keyboard selection
-						String keybaord_state_string = mLIMEPref.getSelectedKeyboardState();
-						
-						if(!keybaord_state_string.equals("0;1;2;3;4;5;6;7;8;9;10;11")){
-							String ks[] = keybaord_state_string.split(";");
-							String update_value = "";
-							for(String u: ks){
-								try{
-									int i = Integer.parseInt(u);
-									if(i < 3){
-										update_value += i+";";
-									}else{
-										update_value += (i+2)+";";
-									}
-								}catch(Exception e){}
-							}
-							mLIMEPref.setParameter("keyboard_state", update_value);
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-				db.close();
-				mLIMEPref.setParameter("kbversion","332");
-			}
-						// Upgrade DB version below 333
-			//mLIMEPref.setParameter("kbversion","332");
-			
-			if(kbversion == null || kbversion.equals("") || Integer.parseInt(kbversion) < 333){
-
-				SQLiteDatabase db = null;
-				String dbtarget = mLIMEPref.getParameterString("dbtarget");
-				String dblocation = "";
-				if(dbtarget.equals("sdcard")){
-					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
-				}else{
-					dblocation = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
-				}
-				db = SQLiteDatabase.openDatabase(dblocation, null, SQLiteDatabase.OPEN_READWRITE);
-				
-				int count = db.query("keyboard", null, FIELD_CODE +" = 'phoneticet41'", null, null, null, null, null).getCount();
-
-				if(count == 0){
-					try{
-					
-						ContentValues 	cv = new ContentValues();
-						cv.put("code", "phoneticet41");
-						cv.put("name", "注音倚天");
-						cv.put("desc", "注音倚天41鍵");
-						cv.put("type", "phone");
-						cv.put("image", "lime_et_41_keyboard_priview");
-						cv.put("imkb", "lime_et_41");
-						cv.put("imshiftkb", "lime_et_41_shift");
-						cv.put("engkb", "lime_english_number");
-						cv.put("engshiftkb", "lime_english_shift");
-						cv.put("symbolkb", "symbols");
-						cv.put("symbolshiftkb", "symbols_shift");
-						cv.put("disable", "false");
-						db.insert("keyboard" ,null , cv);
-
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-				db.close();
-				mLIMEPref.setParameter("kbversion","333");
-			}
-		
-	}*/
-
-//	//Jeremy '12,4,7 deprecated and moved to LimeSQLHelper
-//	@Deprecated
-//	private  String getDBPath(String dbTarget){
-//		String dbLocationPrefix = (dbTarget.equals("sdcard"))
-//				?LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD:LIME.DATABASE_DECOMPRESS_FOLDER;
-//		
-//		return dbLocationPrefix + File.separator + LIME.DATABASE_NAME;
-//	}	
 
 	//Jeremy '12,4,7
 	public SQLiteDatabase openDBConnection(boolean force_reload){
@@ -1171,8 +1023,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 	/**
 	 * Jeremy '12,6,7 for phrase learning to get code from word 
-	 * @param keyword
-	 * @param tablenam
+	 * @param mapping
+	 * @param table
 	 * @return
 	 */
 	public List<Mapping> getRMapping(Mapping mapping, String table) {
@@ -2721,7 +2573,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	/**
 	 * Get dictionary database contents
 	 *
-	 * @param keyword
+	 * @param pword
+	 * @param getAllRecords
 	 * @return
 	 */
 	public List<Mapping> queryUserDict(String pword, boolean getAllRecords) {
@@ -3371,7 +3224,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 	/**
 	 * Jeremy '11,9,8 get Highest socre for 'code'.  relatedList will be stored on highest score record after 3.6.
-	 * @param code
+	 * @param word
 	 * @return
 	 */
 	public int getHighestScore(String word) {
@@ -3394,7 +3247,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 	/**
 	 * Jeremy '12,4,6 core of getHightestScore()
-	 * @param code
+	 * @param db
+	 * @param word
 	 * @return
 	 */
 	private int getHighestScoreOnDB(SQLiteDatabase db, String word) throws RemoteException {
@@ -3521,7 +3375,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 
 	/**
-	 * @param srcunit
+	 * @param im
 	 */
 	public synchronized void resetImInfo(String im) {
 		//Jeremy '12,5,1
@@ -3533,7 +3387,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 
 	/**
-	 * @param srcunit
+	 * @param im
+	 * @param field
 	 */
 	public String getImInfo(String im, String field) {
 		//Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
@@ -3562,7 +3417,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	}
 
 	/**
-	 * @param srcunit
+	 * @param im
+	 * @param field
 	 */
 	public synchronized void removeImInfo(String im, String field) {
 		if(DEBUG)
@@ -3588,7 +3444,8 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 
 	/**
-	 * @param srcunit
+	 * @param im
+	 * @param value
 	 */
 	public synchronized void setImInfo(String im, String field, String value) {
 		//Jeremy '12,4,17 !checkDBConnection() when db is restoring or replaced.

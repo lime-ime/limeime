@@ -159,9 +159,9 @@ public class DropboxDBBackup extends AsyncTask<Void, Long, Boolean> {
         mDialog.dismiss();
         if (result) {
             DBServer.showNotificationMessage(
-					mContext.getText(R.string.l3_initial_dropbox_backup_end)+ "", intentLIMEMenu);
+					mContext.getText(R.string.l3_initial_dropbox_backup_end)+ "");
         } else {
-        	DBServer.showNotificationMessage(mErrorMsg+ "", intentLIMEMenu);
+        	DBServer.showNotificationMessage(mErrorMsg+ "");
         }
     }
 

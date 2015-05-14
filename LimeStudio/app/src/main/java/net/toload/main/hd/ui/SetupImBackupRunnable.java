@@ -84,7 +84,7 @@ public class SetupImBackupRunnable implements Runnable{
             File sourcefile = new File(Lime.DATABASE_FOLDER_EXTERNAL  + Lime.DATABASE_BACKUP_NAME);
             backupToDropbox(sourcefile);
         }else{
-            dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_backup_end), 0);
+            dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_backup_end));
             handler.cancelProgress();
         }
     }
@@ -163,7 +163,7 @@ public class SetupImBackupRunnable implements Runnable{
 
             // Upload new file
             DropboxAPI.Entry response = mdbapi.putFile(Lime.DATABASE_BACKUP_NAME, fis, fileContent.length(), null, null);
-            dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_dropbox_backup_end), 0);
+            dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_dropbox_backup_end));
 
         } catch (DropboxUnlinkedException e) {
             // This session wasn't authenticated properly or user unlinked

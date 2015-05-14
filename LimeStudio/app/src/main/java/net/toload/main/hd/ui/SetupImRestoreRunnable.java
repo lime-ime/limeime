@@ -141,9 +141,9 @@ public class SetupImRestoreRunnable implements Runnable{
                 Log.i("LIME", tempfile.getAbsoluteFile() + " -> " + tempfile.length());
                 // Decompress tempfile
                 DBServer.decompressFile(tempfile, Lime.DATABASE_DEVICE_FOLDER, Lime.DATABASE_NAME, true);
-                dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_cloud_restore_end), 0);
+                dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_cloud_restore_end));
             }else{
-                dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_cloud_restore_error), 0);
+                dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_cloud_restore_error));
             }
 
             mLIMEPref.setParameter(Lime.DATABASE_DOWNLOAD_STATUS, "true");
@@ -252,7 +252,7 @@ public class SetupImRestoreRunnable implements Runnable{
                     //Download finished. Restore db now.
                     DBServer.decompressFile(tempfile, Lime.DATABASE_DEVICE_FOLDER, Lime.DATABASE_NAME, true);
                     mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
-                    dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_dropbox_restore_end), 0);
+                    dbsrv.showNotificationMessage(fragment.getResources().getString(R.string.l3_initial_dropbox_restore_end));
 
                 } catch (IOException e) {
                     e.printStackTrace();

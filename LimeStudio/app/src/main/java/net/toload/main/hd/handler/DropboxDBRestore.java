@@ -178,11 +178,11 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
         			if (target.equals("device")) {
         				DBServer.decompressFile(mFile,
         						LIME.DATABASE_DECOMPRESS_FOLDER,
-        						LIME.DATABASE_NAME);
+        						LIME.DATABASE_NAME, true);
         			} else {
         				DBServer.decompressFile(mFile,
         						LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD,
-        						LIME.DATABASE_NAME);
+        						LIME.DATABASE_NAME, true);
         			}
         			mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
         			mDialog.setProgress(100);
@@ -220,10 +220,10 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
         if (result) {
             //fragment.initialButton();
             DBServer.showNotificationMessage(
-					mContext.getText(R.string.l3_initial_dropbox_restore_end)+ "", intentLIMEMenu);
+					mContext.getText(R.string.l3_initial_dropbox_restore_end)+ "");
             
         } else {
-        	DBServer.showNotificationMessage(mErrorMsg+ "", intentLIMEMenu);
+        	DBServer.showNotificationMessage(mErrorMsg+ "");
         }
 
     }
