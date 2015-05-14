@@ -289,14 +289,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		return result;
 	}
 
-	public void prepapreBackup() {
-		//turn of WAL mode before backup for compatibility issue
-		if (db != null && db.isWriteAheadLoggingEnabled()) {
-			Log.i(TAG,"prepareBackup(): wal is turned on, tried to turn off")
-			db.disableWriteAheadLogging();
 
-			}
-	}
 	public void setFinish(boolean value) {
 
 		this.finish = value;

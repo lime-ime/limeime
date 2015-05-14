@@ -67,10 +67,11 @@
         <activity android:configChanges="keyboard|keyboardHidden|orientation"
             android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreferenceHC">
         </activity>
-        <!--<activity android:name="com.google.android.gms.ads.AdActivity"
+        <activity android:name="com.google.android.gms.ads.AdActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
-            android:theme="@android:style/Theme.Translucent" />-->
+            android:theme="@android:style/Theme.Translucent" />
 
+        <!--
         <activity
             android:name="com.vpadn.widget.VpadnActivity"
             android:configChanges="orientation|keyboardHidden|navigation|keyboard|screenLayout|uiMode|screenSize|smallestScreenSize"
@@ -78,7 +79,7 @@
             android:hardwareAccelerated="true"
             >
         </activity>
-
+        -->
         <activity android:screenOrientation="portrait" android:configChanges="keyboard|keyboardHidden|orientation" android:name=".limesettings.LIMEMappingLoading"></activity>
 
         <activity

@@ -366,6 +366,8 @@ public class  DBServer {
 	}
 
 	public void backupDatabase() throws RemoteException {
+		if(DEBUG)
+			Log.i(TAG,"backupDatabase()");
 		showNotificationMessage(ctx.getText(R.string.l3_initial_backup_start)+ "");
 
 		File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
@@ -373,7 +375,6 @@ public class  DBServer {
 			limedir.mkdirs();
 		}
 
-		prepapreBackup();
 		closeDatabse(); // Jeremy '12,5,1 close database here.
 		File srcFile = null;
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
@@ -393,22 +394,22 @@ public class  DBServer {
 	public void restoreDatabase() throws RemoteException {
 		showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start) + "");
 		File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
-		restoreDatabase(srcFile);
+		restoreDatabase(srcFile, false);
 		mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
 		showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end) + "");
 
 
 	}
 
-	public static void restoreDatabase(File srcFile) throws RemoteException {
+	public static void restoreDatabase(File srcFile, Boolean removeSourceFile) throws RemoteException {
 
 		closeDatabse();
 
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
 		if(dbtarget.equals("device")){
-			decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME, false);
+			decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME, removeSourceFile);
 		}else{
-			decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME, false);
+			decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME, removeSourceFile);
 		}
 
 
@@ -450,15 +451,11 @@ public class  DBServer {
 
 	}
 
-	public static void prepapreBackup() {
-		if(dbAdapter!=null){
-			dbAdapter.prepapreBackup();
-		}
 
-	}
 
 
 	public static void closeDatabse() throws RemoteException {
+		Log.i(TAG,"closeDatabase()");
 		if (dbAdapter != null) {
 			dbAdapter.close();
 		}
@@ -1034,8 +1031,7 @@ public class  DBServer {
 	 */
 	public static boolean decompressFile(File sourceFile, String targetFolder, String targetFile, boolean removeOriginal){
 		if(DEBUG)
-			Log.i(TAG, "decompressFile(), srouce = " + sourceFile.toString() + "" +
-					", target = " + targetFolder.toString()+ "/" + targetFile.toString());
+			Log.i(TAG, "decompressFile(), srouce = " + sourceFile.toString() + "" +	", target = " + targetFolder.toString()+ "/" + targetFile.toString());
 
 		try {
 

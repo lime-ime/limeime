@@ -20,9 +20,12 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.android.vending.billing.IInAppBillingService;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
 
 import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Im;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.ui.ManageRelatedFragment;
 import net.toload.main.hd.ui.SetupImFragment;
@@ -40,6 +43,9 @@ public class MainActivity extends ActionBarActivity
      */
     private NavigationDrawerFragment mNavigationDrawerFragment;
     private SearchServer SearchSrv = null;
+
+    //Admob IntersitialAD
+    InterstitialAd mInterstitialAd;
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -119,7 +125,6 @@ public class MainActivity extends ActionBarActivity
 
     }
 
-    //private InterstitialAd interstitial;
 
     @Override
     public void  onWindowFocusChanged(boolean hasFocus) {
@@ -145,6 +150,8 @@ public class MainActivity extends ActionBarActivity
         this.SearchSrv = new SearchServer(this);
         this.mLIMEPref = new LIMEPreferenceManager(this);
 
+
+
         // initial imlist
         initialImList();
 
@@ -162,8 +169,25 @@ public class MainActivity extends ActionBarActivity
             Intent serviceIntent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
             serviceIntent.setPackage("com.android.vending");
             bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
+
+            //admob IntersitialAd
+            mInterstitialAd = new InterstitialAd(this);
+            mInterstitialAd.setAdUnitId(LIME.publisher);
+            requestNewInterstitial();
+            if (mInterstitialAd.isLoaded()) {
+                mInterstitialAd.show();
+            }
         }
 
+    }
+
+
+    private void requestNewInterstitial() {
+        AdRequest adRequest = new AdRequest.Builder()
+                //.addTestDevice("")
+                .build();
+
+        //mInterstitialAd.loadAd(adRequest);
     }
 
     public void initialImList(){

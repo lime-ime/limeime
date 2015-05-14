@@ -23,16 +23,25 @@ import android.widget.Toast;
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.session.AppKeyPair;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.services.drive.DriveScopes;
+/*  vpon import
 import com.vpadn.ads.VpadnAdRequest;
 import com.vpadn.ads.VpadnAdSize;
 import com.vpadn.ads.VpadnBanner;
+*/
+// admob import
+import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
+import com.google.android.gms.ads.doubleclick.PublisherAdView;
+import com.google.android.gms.ads.AdSize;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Im;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limesettings.DBServer;
@@ -113,9 +122,9 @@ public class SetupImFragment extends Fragment {
     private Activity activity;
     private LIMEPreferenceManager mLIMEPref;
 
-    // AD
-    private RelativeLayout adBannerLayout;
-    private VpadnBanner vpadnBanner = null;
+    // Vpon
+    //private RelativeLayout adBannerLayout;
+    // private VpadnBanner vpadnBanner = null;
 
 
     /**
@@ -139,10 +148,11 @@ public class SetupImFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        /*
         if(vpadnBanner != null){
             vpadnBanner.destroy();
             vpadnBanner = null;
-        }
+        }*/
     }
 
     @Override
@@ -304,16 +314,32 @@ public class SetupImFragment extends Fragment {
 
         // Handle AD Display
         boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
+
+
         if(!paymentflag){
+            AdView mAdView = (AdView) view.findViewById(R.id.adView);
+            AdRequest adRequest = new AdRequest.Builder().build();
+            mAdView.loadAd(adRequest);
+            // smart banner
+            //PublisherAdView adView = new PublisherAdView(getActivity().getApplicationContext());
+            //adView.setAdSizes(AdSize.SMART_BANNER);
+            //adView.setAdUnitId(LIME.publisher);
+
+            /*
             adBannerLayout = (RelativeLayout) view.findViewById(R.id.adLayout);
             vpadnBanner = new VpadnBanner(getActivity(), Lime.VPON_BANNER_ID, VpadnAdSize.SMART_BANNER, "TW");
-
             VpadnAdRequest adRequest = new VpadnAdRequest();
             adRequest.setEnableAutoRefresh(true);
             vpadnBanner.loadAd(adRequest);
-
             adBannerLayout.addView(vpadnBanner);
+            */
         }
+        else{
+            AdView mAdView = (AdView) view.findViewById(R.id.adView);
+            mAdView.setVisibility(View.GONE);
+
+        }
+
 
         return view;
     }

@@ -4,8 +4,9 @@
 
     <string name="vpon_banner_id">8a8081824cfe92fa014d3707f493630b</string>
 
-    <!--<string name="ad_unit_interstitial">ca-app-pub-6429718170873338/5892033402</string>
-    <string name="ad_unit_banner">ca-app-pub-6429718170873338/7028669804</string>-->
+    <string name="ad_unit_interstitial">ca-app-pub-6429718170873338/5892033402</string>
+    <string name="ad_unit_banner">ca-app-pub-6429718170873338/7028669804</string>
+
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>

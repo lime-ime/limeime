@@ -85,6 +85,8 @@ public abstract class LimeSQLiteOpenHelper {
 
 
     public synchronized SQLiteDatabase getWritableDatabase() {
+        if(DEBUG)
+            Log.i(TAG,"getWritableDatabase()");
         if (mDatabase != null) {
             if (!mDatabase.isOpen()) {
                 // darn! the user closed the database by calling mDatabase.close()
@@ -120,7 +122,7 @@ public abstract class LimeSQLiteOpenHelper {
         	 mIsInitializing = true;
             int version = db.getVersion();
             if(DEBUG)
-            	Log.i(TAG,"getWritableDatabase(), db version= "+ version +"; newversion = " + mNewVersion);
+            	Log.i(TAG,"getWritableDatabase(), db version= "+ version +"; newversion = " + mNewVersion + "WAL mode=" + db.isWriteAheadLoggingEnabled());
             if (version != mNewVersion) {
                 db.beginTransaction();
                 try {
@@ -226,6 +228,8 @@ public abstract class LimeSQLiteOpenHelper {
      * Close any open database object.
      */
     public synchronized void close() {
+        if(DEBUG)
+            Log.i(TAG,"close()");
         if (mIsInitializing) throw new IllegalStateException("Closed during initialization");
 
         if (mDatabase != null && mDatabase.isOpen()) {

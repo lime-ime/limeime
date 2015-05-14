@@ -37,7 +37,7 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
     public final static int intentLIMEMenu = 0;
 	LIMEPreferenceManager mLIMEPref;
 
-	private SetupImFragment fragment;
+	private SetupImFragment  mFragment;
     private Context mContext;
     private final ProgressDialog mDialog;
     private DropboxAPI<?> mApi;
@@ -56,7 +56,7 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
     public DropboxDBRestore(SetupImFragment fragment, Context context, DropboxAPI<?> api,String dropboxPath , File tempfile) {
         // We set the context this way so we don't accidentally leak activities
 
-        fragment = fragment;
+        mFragment = fragment;
     	mContext = context.getApplicationContext();
         
         mApi = api;
@@ -218,7 +218,7 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
     		Log.i(TAG, "onPostExecute()");
         mDialog.dismiss();
         if (result) {
-            //fragment.initialButton();
+            mFragment.initialbutton();
             DBServer.showNotificationMessage(
 					mContext.getText(R.string.l3_initial_dropbox_restore_end)+ "");
             
