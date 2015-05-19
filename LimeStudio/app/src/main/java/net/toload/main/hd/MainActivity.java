@@ -44,8 +44,6 @@ public class MainActivity extends ActionBarActivity
     private NavigationDrawerFragment mNavigationDrawerFragment;
     private SearchServer SearchSrv = null;
 
-    //Admob IntersitialAD
-    InterstitialAd mInterstitialAd;
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -170,25 +168,11 @@ public class MainActivity extends ActionBarActivity
             serviceIntent.setPackage("com.android.vending");
             bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
 
-            //admob IntersitialAd
-            mInterstitialAd = new InterstitialAd(this);
-            mInterstitialAd.setAdUnitId(LIME.publisher);
-            requestNewInterstitial();
-            if (mInterstitialAd.isLoaded()) {
-                mInterstitialAd.show();
-            }
+
         }
 
     }
 
-
-    private void requestNewInterstitial() {
-        AdRequest adRequest = new AdRequest.Builder()
-                //.addTestDevice("")
-                .build();
-
-        //mInterstitialAd.loadAd(adRequest);
-    }
 
     public void initialImList(){
 

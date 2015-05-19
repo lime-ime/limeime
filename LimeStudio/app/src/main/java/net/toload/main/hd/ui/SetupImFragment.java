@@ -23,8 +23,13 @@ import android.widget.Toast;
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.session.AppKeyPair;
+
+//admob
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.AdSize;
+//google drive
+import com.google.android.gms.ads.InterstitialAd;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.services.drive.DriveScopes;
 /*  vpon import
@@ -33,9 +38,6 @@ import com.vpadn.ads.VpadnAdSize;
 import com.vpadn.ads.VpadnBanner;
 */
 // admob import
-import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
-import com.google.android.gms.ads.doubleclick.PublisherAdView;
-import com.google.android.gms.ads.AdSize;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
@@ -317,13 +319,25 @@ public class SetupImFragment extends Fragment {
 
 
         if(!paymentflag){
+
+            AdRequest adRequest = new AdRequest.Builder()
+                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                    .build();
+
+
             AdView mAdView = (AdView) view.findViewById(R.id.adView);
-            AdRequest adRequest = new AdRequest.Builder().build();
             mAdView.loadAd(adRequest);
-            // smart banner
-            //PublisherAdView adView = new PublisherAdView(getActivity().getApplicationContext());
-            //adView.setAdSizes(AdSize.SMART_BANNER);
-            //adView.setAdUnitId(LIME.publisher);
+
+            //Admob IntersitialAD
+            InterstitialAd mInterstitialAd = new InterstitialAd(this.getActivity().getApplicationContext());
+            mInterstitialAd.setAdUnitId(LIME.publisher);
+
+
+            mInterstitialAd.loadAd(adRequest);
+            if (mInterstitialAd.isLoaded()) {
+                mInterstitialAd.show();
+            }
+
 
             /*
             adBannerLayout = (RelativeLayout) view.findViewById(R.id.adLayout);
@@ -369,7 +383,7 @@ public class SetupImFragment extends Fragment {
                         //view.findViewById(R.id.setup_im_system_settings).setVisibility(View.GONE);
                         view.findViewById(R.id.Setup_Wizard).setVisibility(View.GONE);
                     }
-                    else  //LIME is activated, but not active keyboard
+                    else  //LIME is activated, but not active keyboadd
                     {
                         btnSetupImSystemIMPicker.setVisibility(View.VISIBLE);
                         view.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.VISIBLE);
