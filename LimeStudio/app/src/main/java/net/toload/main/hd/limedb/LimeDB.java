@@ -33,6 +33,7 @@ import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.global.ImObj;
@@ -2661,7 +2662,16 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		return result;
 	}
 
+	public int importDb(String sourcedbfile, String imtype)
+	{
+		if(!checkDBConnection()) return -1;
 
+		db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
+		deleteAll(imtype);
+		db.execSQL("insert into " + imtype + " select * from sourceDB." + imtype);
+		db.execSQL("detach database sourceDB");
+		return countMapping(imtype);
+	}
 
 
 	/**

@@ -166,6 +166,7 @@ public class MainActivity extends ActionBarActivity
         if(!paymentflag) {
             Intent serviceIntent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
             serviceIntent.setPackage("com.android.vending");
+            mService =null;
             bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
 
 

@@ -34,8 +34,10 @@ import java.net.URLConnection;
 import java.util.List;
 import java.util.zip.*;
 
+import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
+import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
@@ -93,14 +95,17 @@ public class  DBServer {
 */
 
 	public void loadMapping(String filename, String tablename) throws RemoteException {
+
+		File sourcefile = new File(filename);
+		loadMapping(sourcefile, tablename);
+	}
+	public void loadMapping(File sourcefile, String tablename) throws RemoteException {
 		if(DEBUG)
 			Log.i(TAG,"loadMapping() on " + loadingTablename);
 
 
 		loadingTablename = tablename;
 
-
-		File sourcefile = new File(filename);
 
 		// Start Loading
 		//if (dbAdapter == null) {loadLimeDB();}
@@ -126,6 +131,17 @@ public class  DBServer {
 		// Reset cache in SearchSrv
 		mLIMEPref.setResetCacheFlag(true);
 	}
+
+	public int importMapping(File compressedSourceDB, String imtype) {
+
+		List<Word> results = null;
+
+		String sourcedbfile = Lime.DATABASE_FOLDER_EXTERNAL + imtype;
+		decompressFile(compressedSourceDB, Lime.DATABASE_FOLDER_EXTERNAL, imtype, true);
+
+		return dbAdapter.importDb(sourcedbfile, imtype);
+	}
+
 
 	public int getLoadingMappingCount(){
 		return dbAdapter.getCount();
@@ -164,6 +180,9 @@ public class  DBServer {
 		}
 
 	}
+
+
+
 
 	public void abortRemoteFileDownload(){
 		remoteFileDownloading = false;

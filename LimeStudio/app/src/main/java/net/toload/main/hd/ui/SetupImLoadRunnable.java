@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.RemoteException;
+import android.util.Log;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
@@ -31,6 +32,8 @@ import java.util.List;
  * Created by Art Hung on 2015/4/26.
  */
 public class SetupImLoadRunnable implements Runnable{
+    private static boolean DEBUG = true;
+    private static String TAG = "SetupImLoadRunnable";
 
     // Global
     private String url = null;
@@ -66,8 +69,12 @@ public class SetupImLoadRunnable implements Runnable{
         handler.updateProgress(activity.getResources().getString(R.string.setup_load_download));
         File tempfile = downloadRemoteFile(url);
 
+
         // Load DB
-        int count = migrateDb(tempfile, imtype);
+        handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_load));
+         int count = dbsrv.importMapping(tempfile, imtype);
+        // int count = migrateDb(tempfile, imtype);
+
         String im_input = activity.getResources().getString(R.string.im_input_method);
         String defaultname = imtype;
         if(imtype.equalsIgnoreCase(Lime.DB_TABLE_ARRAY)){
@@ -181,7 +188,6 @@ public class SetupImLoadRunnable implements Runnable{
         setIMKeyboard(imtype, kobj.getDescription(), kobj.getCode());
 
         mLIMEPref.setResetCacheFlag(true);
-
         handler.cancelProgress();
         handler.initialImButtons();
     }
@@ -417,6 +423,9 @@ public class SetupImLoadRunnable implements Runnable{
                 int numread = is.read(buf);
                 if(numread <=0){break;}
                 fos.write(buf, 0, numread);
+                if(DEBUG)
+                    Log.i(TAG, numread +  "bytes download.");
+
             }while(true);
 
             is.close();

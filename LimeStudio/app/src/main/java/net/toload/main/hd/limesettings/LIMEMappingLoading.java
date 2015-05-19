@@ -35,12 +35,12 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
+/*
 import com.vpadn.ads.VpadnAd;
 import com.vpadn.ads.VpadnAdListener;
 import com.vpadn.ads.VpadnAdRequest;
 import com.vpadn.ads.VpadnInterstitialAd;
-
+*/
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
@@ -53,13 +53,13 @@ import net.toload.main.hd.global.LIMEUtilities;
  * 
  */
 
-public class LIMEMappingLoading extends Activity implements VpadnAdListener {
-
-	private String interstitialBannerId = "8a8081824cfe92fa014d3735bc886311";
-	private VpadnInterstitialAd interstitialAd;
+public class LIMEMappingLoading extends Activity {
+	//implements VpadnAdListener {
+	//private String interstitialBannerId = "8a8081824cfe92fa014d3735bc886311";
+	//private VpadnInterstitialAd interstitialAd;
 
 	final static String TAG = "LIMEMappingLoading";
-	final static boolean DEBUG = false;
+	final static boolean DEBUG = true;
 	
 	private Thread thread = null;
 	
@@ -79,12 +79,16 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
     // Create runnable for posting
     final Runnable mUpdateUI = new Runnable() {
         public void run() {
+			if(DEBUG)
+				Log.i(TAG,"mUpdateUI launched");
         	int percentageDone = 0, loadedMappingCount =0;
         	boolean remoteFileDownloading = false;
 			try {
 				percentageDone = DBSrv.getLoadingMappingPercentageDone();
 				loadedMappingCount = DBSrv.getLoadingMappingCount();
 				remoteFileDownloading = DBSrv.isRemoteFileDownloading();
+				if(DEBUG)
+					Log.i(TAG,"mUpdateUI: mapping loading " + percentageDone + "%, loadedMappingcount: " +loadedMappingCount);
 			} catch (RemoteException e1) {
 				e1.printStackTrace();
 			}
@@ -110,10 +114,12 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		/*
 		if (interstitialAd != null) {
 			interstitialAd.destroy();
 			interstitialAd = null;
 		}
+		*/
 	}
 
 	/** Called when the activity is first created. */
@@ -186,13 +192,16 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 			}
 		});
 
-		// Vpon AD
+
+		//
 		boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
 		if(!paymentflag) {
+			/* '//Vpon AD
 			interstitialAd = new VpadnInterstitialAd(this, interstitialBannerId, "TW");
 			interstitialAd.setAdListener(this);
 			VpadnAdRequest request = new VpadnAdRequest();
 			interstitialAd.loadAd(request);
+			*/
 		}
 		
 	}
@@ -233,11 +242,15 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 					do{
 						try {
 							Thread.sleep(1000);
+							if(DEBUG)
+								Log.i(TAG,"UIThread updating");
 							if(DBSrv.isRemoteFileDownloading() ||
 									DBSrv.isLoadingMappingThreadAlive() ){
 								mHandler.post(mUpdateUI);			
 							}else{
 								if(DBSrv.isLoadingMappingFinished()){
+									mLIMEPref.setResetCacheFlag(true);
+
 									showNotificationMessage(getText(R.string.lime_setting_notification_finish)+ "");
 								}else{
 									showNotificationMessage(getText(R.string.lime_setting_notification_failed)+ "");
@@ -257,9 +270,11 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 
 		boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
 		if(paymentflag) {
-			if(thread != null && !thread.isAlive()){
-				thread.start();
+
 			}
+		if(thread != null && !thread.isAlive()){
+			thread.start();
+
 		}
 	}
 
@@ -297,6 +312,7 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 			Log.i(TAG,"onTouchEvent()");
 		return super.onTouchEvent(event);
 	}
+	/*
 
 	@Override
 	public void onVpadnReceiveAd(VpadnAd vpadnAd) {
@@ -327,5 +343,5 @@ public class LIMEMappingLoading extends Activity implements VpadnAdListener {
 	@Override
 	public void onVpadnLeaveApplication(VpadnAd vpadnAd) {
 
-	}
+	}*/
 }
