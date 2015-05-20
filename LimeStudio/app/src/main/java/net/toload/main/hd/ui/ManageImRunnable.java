@@ -2,10 +2,9 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 
-import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Word;
+import net.toload.main.hd.limedb.LimeDB;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +16,7 @@ public class ManageImRunnable implements Runnable{
 
     private ManageImHandler handler;
     private Activity activity;
-    private DataSource datasource;
+    private LimeDB datasource;
     private String table;
     private String query;
     private boolean searchRoot;
@@ -39,7 +38,7 @@ public class ManageImRunnable implements Runnable{
         this.maximum = maximum;
         this.offset = offset;
 
-        datasource = new DataSource(this.activity);
+        datasource = new LimeDB(this.activity);
     }
 
     public void run() {
@@ -57,13 +56,13 @@ public class ManageImRunnable implements Runnable{
     private List<Word> loadImWord(String table, String query, int maximum, int offset){
         List<Word> results = new ArrayList<>();
 
-        try {
+        results = datasource.loadWord(table, query, this.searchRoot, maximum, offset);
+        /*try {
             datasource.open();
-            results = datasource.loadWord(table, query, this.searchRoot, maximum, offset);
             datasource.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
         return results;
     }
 

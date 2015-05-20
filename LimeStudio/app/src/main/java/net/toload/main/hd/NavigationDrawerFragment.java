@@ -23,14 +23,13 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Im;
+import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.limesettings.LIMEPreference;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 import net.toload.main.hd.ui.HelpDialog;
 import net.toload.main.hd.ui.PaymentDialog;
 
-import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -72,7 +71,7 @@ public class NavigationDrawerFragment extends Fragment {
 
     private String[] menulist;
 
-    private DataSource datasource;
+    private LimeDB datasource;
     private ArrayAdapter adapter;
 
     public NavigationDrawerFragment(){}
@@ -113,7 +112,7 @@ public class NavigationDrawerFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        datasource = new DataSource(this.getActivity());
+        datasource = new LimeDB(this.getActivity());
 
         mDrawerListView = (ListView) inflater.inflate(
                 R.layout.fragment_navigation_drawer, container, false);
@@ -126,26 +125,28 @@ public class NavigationDrawerFragment extends Fragment {
 
 
         // Load Menu Item
+        List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+        int menucount = imlist.size() + 2;
+        int checkcount = 2;
+
+        menulist = new String[menucount];
+        menulist[0] = this.getResources().getString(R.string.default_menu_initial);
+        menulist[1] = this.getResources().getString(R.string.default_menu_related);
+
+        for(int i = 0; i < imlist.size() ; i++){
+            Im obj = imlist.get(i);
+            menulist[checkcount] = obj.getDesc();
+            checkcount++;
+        }
+        /*
         try {
-            datasource.open();
-            List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
-            int menucount = imlist.size() + 2;
-            int checkcount = 2;
+            //datasource.open();
 
-            menulist = new String[menucount];
-            menulist[0] = this.getResources().getString(R.string.default_menu_initial);
-            menulist[1] = this.getResources().getString(R.string.default_menu_related);
-
-            for(int i = 0; i < imlist.size() ; i++){
-                Im obj = imlist.get(i);
-                menulist[checkcount] = obj.getDesc();
-                checkcount++;
-            }
-            datasource.close();
+            //datasource.close();
 
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
 
         adapter = new ArrayAdapter<String>(
                 getActionBar().getThemedContext(),
@@ -352,25 +353,29 @@ public class NavigationDrawerFragment extends Fragment {
     public void updateMenuItems() {
 
         if(mDrawerListView != null){
+
+            List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+            int menucount = imlist.size() + 2;
+            int checkcount = 2;
+
+            menulist = new String[menucount];
+            menulist[0] = this.getResources().getString(R.string.default_menu_initial);
+            menulist[1] = this.getResources().getString(R.string.default_menu_related);
+
+            for(int i = 0; i < imlist.size() ; i++){
+                Im obj = imlist.get(i);
+                menulist[checkcount] = obj.getDesc();
+                checkcount++;
+            }
+
+            /*
             try {
                 datasource.open();
-                List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
-                int menucount = imlist.size() + 2;
-                int checkcount = 2;
 
-                menulist = new String[menucount];
-                menulist[0] = this.getResources().getString(R.string.default_menu_initial);
-                menulist[1] = this.getResources().getString(R.string.default_menu_related);
-
-                for(int i = 0; i < imlist.size() ; i++){
-                    Im obj = imlist.get(i);
-                    menulist[checkcount] = obj.getDesc();
-                    checkcount++;
-                }
                 datasource.close();
             } catch (SQLException e) {
                 e.printStackTrace();
-            }
+            }*/
 
             adapter = new ArrayAdapter<String>(
                     getActionBar().getThemedContext(),

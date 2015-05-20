@@ -16,18 +16,16 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.limesettings.DBServer;
 import net.toload.main.hd.limesettings.LIMESelectFileAdapter;
 
 import java.io.File;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -63,7 +61,7 @@ public class SetupImLoadDialog extends DialogFragment {
     private int imcount = 0;
 
     private SetupImLoadDialog frgdialog;
-    private DataSource datasource;
+    private LimeDB datasource;
     private DBServer DBSrv = null;
     private Activity activity;
     private LIMEPreferenceManager mLIMEPref;
@@ -111,20 +109,20 @@ public class SetupImLoadDialog extends DialogFragment {
         frgdialog = this;
         imtype = getArguments().getString(IM_TYPE);
         activity = getActivity();
-        datasource = new DataSource(activity);
+        datasource = new LimeDB(activity);
         DBSrv = new DBServer(activity);
         mLIMEPref = new LIMEPreferenceManager(activity);
 
         connManager = (ConnectivityManager) activity.getSystemService(
                 SetupImLoadDialog.this.activity.CONNECTIVITY_SERVICE);
 
-        try {
+        imcount = datasource.count(imtype);
+        /*try {
             datasource.open();
-            imcount = datasource.count(imtype);
             datasource.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
 
         View rootView = inflater.inflate(R.layout.fragment_dialog_im, container, false);
 

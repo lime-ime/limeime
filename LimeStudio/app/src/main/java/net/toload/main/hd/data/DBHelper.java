@@ -1,24 +1,11 @@
 package net.toload.main.hd.data;
 
-import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
-
-import net.toload.main.hd.Lime;
-import net.toload.main.hd.R;
-import net.toload.main.hd.SearchServer;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
 /**
  * 資料庫輔助類別
  */
 public class DBHelper {
 
-	Context ctx;
+	/*Context ctx;
 	File databasepath;
 
 	private SearchServer SearchSrv = null;
@@ -84,7 +71,7 @@ public class DBHelper {
 		if(database != null && database.isOpen()){
 			database.close();
 		}
-	}
+	}*/
 	
 	
 	

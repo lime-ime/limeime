@@ -2,10 +2,9 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 
-import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Related;
+import net.toload.main.hd.limedb.LimeDB;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +16,7 @@ public class ManageRelatedRunnable implements Runnable{
 
     private ManageRelatedHandler handler;
     private Activity activity;
-    private DataSource datasource;
+    private LimeDB datasource;
     private String query;
     private int maximum;
     private int offset;
@@ -34,7 +33,7 @@ public class ManageRelatedRunnable implements Runnable{
         this.maximum = maximum;
         this.offset = offset;
 
-        datasource = new DataSource(this.activity);
+        datasource = new LimeDB(this.activity);
     }
 
     public void run() {
@@ -52,13 +51,13 @@ public class ManageRelatedRunnable implements Runnable{
     private List<Related> loadRelated(String pword, int maximum, int offset){
         List<Related> results = new ArrayList<>();
 
-        try {
+        results = datasource.loadRelated(pword, maximum, offset);
+        /*try {
             datasource.open();
-            results = datasource.loadRelated(pword, maximum, offset);
             datasource.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
         return results;
     }
 
