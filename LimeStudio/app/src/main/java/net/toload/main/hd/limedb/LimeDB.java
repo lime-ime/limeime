@@ -3043,7 +3043,11 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					mLIMEPref.setParameter("_table", "");
 
 					setImInfo(table, "source", filename.getName());
-					setImInfo(table, "name", imname);
+					if(imname == null || imname.isEmpty()){
+						setImInfo(table, "name", filename.getName());
+					}else{
+						setImInfo(table, "name", imname);
+					}
 					setImInfo(table, "amount", String.valueOf(count));
 					setImInfo(table, "import", new Date().toString()); //Jeremy '12,4,21 toLocaleString() is deprecated
 
@@ -3520,7 +3524,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			}
 
 		} catch (Exception e) {
-			Log.i(TAG,"getImList(): Cannot get IM List : " + e );
+			Log.i(TAG, "getImList(): Cannot get IM List : " + e );
 		}
 		return result;
 	}
