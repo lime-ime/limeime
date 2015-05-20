@@ -363,6 +363,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	@Override
 	public void onUpgrade(SQLiteDatabase dbin, int oldVersion, int newVersion) {
 
+
 		if(DEBUG)
 			Log.w(TAG,"OnUpgrade() db old version = " + oldVersion + ", new version = " + newVersion);
 
@@ -371,7 +372,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			try {
 				String add_column = "ALTER TABLE " + Lime.DB_RELATED + " ADD ";
 				add_column += Lime.DB_RELATED_COLUMN_USERSCORE + " INTEGER DEFAULT 0 NOT NULL";
-				db.execSQL(add_column);
+				execSQL(dbin, add_column);
 			} catch (SQLiteException e) {
 				e.printStackTrace();
 			}
@@ -551,9 +552,12 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		}
 	}
 
+	/*
+	* Calling from onUpgrade with SquliteDataabase object to upgrade.
+	 */
 	private void execSQL(SQLiteDatabase dbin, String command){
+
 		try{
-			//SQLiteDatabase db = getSqliteDb(false);
 			dbin.execSQL(command);
 			
 		}catch(Exception e){
