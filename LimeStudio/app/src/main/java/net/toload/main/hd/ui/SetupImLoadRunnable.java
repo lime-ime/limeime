@@ -9,10 +9,10 @@ import android.util.Log;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.limesettings.DBServer;
 
 import java.io.File;
@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -43,7 +42,7 @@ public class SetupImLoadRunnable implements Runnable{
     private DBServer dbsrv = null;
     private SetupImHandler handler;
 
-    private DataSource datasource;
+    private LimeDB datasource;
     private LIMEPreferenceManager mLIMEPref;
 
     public SetupImLoadRunnable(Activity activity, SetupImHandler handler, String imtype, String url) {
@@ -52,7 +51,7 @@ public class SetupImLoadRunnable implements Runnable{
         this.url = url;
         this.activity = activity;
         this.dbsrv = new DBServer(activity);
-        this.datasource = new DataSource(activity);
+        this.datasource = new LimeDB(activity);
         this.mLIMEPref = new LIMEPreferenceManager(activity);
     }
 
@@ -204,37 +203,41 @@ public class SetupImLoadRunnable implements Runnable{
         results = loadWord(sourcedb, imtype);
         sourcedb.close();
 
+
+        // Remove Imtype and related info
         try {
-
-            // Remove Imtype and related info
-            try {
-                dbsrv.resetMapping(imtype);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-
-            int total = results.size();
-            int c = 0;
-
-            datasource.open();
-            datasource.beginTransaction();
-
-            for(Word w: results){
-                c++;
-                String insert = Word.getInsertQuery(imtype, w);
-                datasource.add(insert);
-                if(c % 100 == 0){
-                    int p = (int)(c * 100 / total);
-                    handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_import) + " " + p + "%");
-                }
-            }
-            datasource.endTransaction();
-            datasource.close();
-            return results.size();
-        } catch (SQLException e) {
+            dbsrv.resetMapping(imtype);
+        } catch (RemoteException e) {
             e.printStackTrace();
         }
-        return 0;
+
+        int total = results.size();
+        int c = 0;
+
+        //datasource.open();
+        datasource.beginTransaction();
+
+        for(Word w: results){
+            c++;
+            String insert = Word.getInsertQuery(imtype, w);
+            datasource.add(insert);
+            if(c % 100 == 0){
+                int p = (int)(c * 100 / total);
+                handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_import) + " " + p + "%");
+            }
+        }
+        datasource.endTransaction();
+        return results.size();
+
+        //datasource.close();
+        /*
+        try {
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }*/
+
+        //return 0;
     }
 
     public List<Word> loadWord(SQLiteDatabase sourcedb, String code) {
@@ -265,13 +268,13 @@ public class SetupImLoadRunnable implements Runnable{
 
         removeImInfo(im, field);
 
-        try {
+        datasource.insert("im", cv);
+        /*try {
             datasource.open();
-            datasource.insert("im", cv);
             datasource.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     private void setIMKeyboardOnDB(String im, String value, String keyboard) {
@@ -284,24 +287,24 @@ public class SetupImLoadRunnable implements Runnable{
 
         removeImInfoOnDB(im, "keyboard");
 
-        try {
+        datasource.insert("im", cv);
+       /* try {
             datasource.open();
-            datasource.insert("im", cv);
             datasource.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     private void removeImInfoOnDB(String im, String field) {
         String removeString = "DELETE FROM im WHERE code='"+im+"' AND title='"+field+"'";
-        try {
+        datasource.remove(removeString);
+       /* try {
             datasource.open();
-            datasource.remove(removeString);
             datasource.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
 
@@ -332,7 +335,7 @@ public class SetupImLoadRunnable implements Runnable{
                 //SQLiteDatabase db = this.getSqliteDb(true);
 
 
-                datasource.open();
+               // datasource.open();
                 Cursor cursor = datasource.query("keyboard", "code" +" = '"+keyboard+"'");
                 if (cursor.moveToFirst()) {
                     kobj = new KeyboardObj();
@@ -353,7 +356,7 @@ public class SetupImLoadRunnable implements Runnable{
                     kobj.setExtendedshiftkb(cursor.getString(cursor.getColumnIndex("extendedshiftkb")));
                 }
                 cursor.close();
-                datasource.close();
+                //datasource.close();
 
             } catch (Exception e) {
                 e.printStackTrace();

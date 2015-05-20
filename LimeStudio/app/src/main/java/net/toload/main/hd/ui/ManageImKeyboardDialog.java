@@ -12,10 +12,9 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Keyboard;
+import net.toload.main.hd.limedb.LimeDB;
 
-import java.sql.SQLException;
 import java.util.List;
 
 public class ManageImKeyboardDialog extends DialogFragment implements
@@ -28,7 +27,7 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 	private List<Keyboard> keyboardlist;
 	private ListView listSelectKeyboard;
 
-	private DataSource datasource;
+	private LimeDB datasource;
 	private String code;
 	private ManageImHandler handler;
 
@@ -68,7 +67,7 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 		getDialog().getWindow().setTitle(getResources().getString(R.string.manage_select_keyboard));
 
 		activity = getActivity();
-		datasource = new DataSource(this.activity);
+		datasource = new LimeDB(this.activity);
 
 		view = inflater.inflate(R.layout.fragment_dialog_keyboard, container, false);
 
@@ -83,19 +82,14 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 
 		String[] listitems = new String[]{};
 
-		try {
-			datasource.open();
+			//datasource.open();
 			keyboardlist = datasource.getKeyboard();
-			datasource.close();
+			//datasource.close();
 
 			listitems = new String[keyboardlist.size()];
 			for(int i = 0; i < keyboardlist.size() ; i++){
 				listitems[i] = keyboardlist.get(i).getDesc();
 			}
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
 
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
 				android.R.layout.simple_list_item_1, listitems);
@@ -114,13 +108,14 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
 		Keyboard keyboard = keyboardlist.get(position);
-		try {
-			datasource.open();
-			datasource.setImKeyboard(this.code, keyboard);
-			datasource.close();
-		} catch (SQLException e) {
+		datasource.setImKeyboard(this.code, keyboard);
+
+		//try {
+			//datasource.open();
+			//datasource.close();
+		/*} catch (SQLException e) {
 			e.printStackTrace();
-		}
+		}*/
 
 		handler.updateKeyboardButton(keyboard.getCode());
 		this.dismiss();

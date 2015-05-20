@@ -3,16 +3,25 @@
 
 package net.toload.main.hd.limedb;
 
-import java.io.File;
-import net.toload.main.hd.global.LIME;
-import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.global.LIMEUtilities;
 import android.content.Context;
-//import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteException;
 import android.util.Log;
+
+import net.toload.main.hd.Lime;
+import net.toload.main.hd.R;
+import net.toload.main.hd.global.LIME;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+//import android.database.DatabaseErrorHandler;
 
 public abstract class LimeSQLiteOpenHelper {
 
@@ -20,11 +29,12 @@ public abstract class LimeSQLiteOpenHelper {
 	private final String TAG = "LimeSQLiteOpenHelper";
 	
 	private LIMEPreferenceManager mLIMEPref;
-	
-    //private final Context mContext;
+
     private final String mName;
    // private final CursorFactory mFactory;
     private final int mNewVersion;
+
+    private Context mContext;
 
     private  SQLiteDatabase mDatabase = null; 
     private boolean mIsInitializing = false;
@@ -51,7 +61,7 @@ public abstract class LimeSQLiteOpenHelper {
         //    throw new IllegalArgumentException("DatabaseErrorHandler param value can't be null.");
         //}
 
-        //mContext = context;
+        mContext = context;
         mName = name;
         //mFactory = factory;
         mNewVersion = version;
@@ -62,10 +72,17 @@ public abstract class LimeSQLiteOpenHelper {
     }
 
 	private String getDBPath(String dbTarget){
-		String dbLocationPrefix = (dbTarget.equals("sdcard"))
-				?LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD:LIME.DATABASE_DECOMPRESS_FOLDER;
+
+        File destpath = new File(Lime.DATABASE_DEVICE_FOLDER + File.separator + Lime.DATABASE_NAME);
+
+        if(dbTarget.equalsIgnoreCase("sdcard")){
+            destpath = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD);
+        }
+
+		/*String dbLocationPrefix = (dbTarget.equals("sdcard"))
+				?LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD:LIME.DATABASE_DECOMPRESS_FOLDER;*/
 		
-		return dbLocationPrefix + File.separator + LIME.DATABASE_NAME;
+		return destpath.getAbsolutePath();
 	}
 	private String getDBPath(){
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
@@ -85,6 +102,7 @@ public abstract class LimeSQLiteOpenHelper {
 
 
     public synchronized SQLiteDatabase getWritableDatabase() {
+
         if(DEBUG)
             Log.i(TAG,"getWritableDatabase()");
         if (mDatabase != null) {
@@ -95,6 +113,41 @@ public abstract class LimeSQLiteOpenHelper {
                 return mDatabase;  // The database is already open for business
             }
         }
+
+        // Initial Database
+        // Copy DB file from Raw Dir to Database Dir
+        File destdir = new File(Lime.DATABASE_DEVICE_FOLDER + File.separator);
+        destdir.mkdirs();
+
+        File destpath = new File(Lime.DATABASE_DEVICE_FOLDER + File.separator + Lime.DATABASE_NAME);
+
+        if (!destpath.exists()) {
+
+            InputStream from = mContext.getResources().openRawResource( R.raw.lime);
+            try {
+                FileOutputStream to = new FileOutputStream(destpath);
+                byte[] buffer = new byte[4096];
+                int bytes_read;
+                while ((bytes_read = from.read(buffer)) != -1) {
+                    to.write(buffer, 0, bytes_read);
+                }
+                if (from != null) {
+                    from.close();
+                }
+                if (to != null) {
+                    to.close();
+                }
+
+                // The preloaded database has new column user_score in the table related
+                mLIMEPref.setParameter(Lime.DB_CHECK_RELATED_USERSCORE, true);
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         
         if(LIMEUtilities.isFileExist(getDBPath())==null) return null; //database file is not exist. return null Jeremy '12,5,1
 

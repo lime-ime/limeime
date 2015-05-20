@@ -20,17 +20,13 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.android.vending.billing.IInAppBillingService;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.InterstitialAd;
 
-import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Im;
-import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.ui.ManageRelatedFragment;
 import net.toload.main.hd.ui.SetupImFragment;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,7 +47,7 @@ public class MainActivity extends ActionBarActivity
     private CharSequence mTitle;
     private CharSequence mCode;
 
-    private DataSource datasource;
+    private LimeDB datasource;
     private List<Im> imlist;
 
     private ConnectivityManager connManager;
@@ -178,16 +174,16 @@ public class MainActivity extends ActionBarActivity
     public void initialImList(){
 
         if(datasource == null)
-            datasource = new DataSource(this);
+            datasource = new LimeDB(this);
 
         imlist = new ArrayList<Im>();
-        try {
-            datasource.open();
-            imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
-            datasource.close();
+        imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+       /* try {
+            //datasource.open();
+            //datasource.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     @Override

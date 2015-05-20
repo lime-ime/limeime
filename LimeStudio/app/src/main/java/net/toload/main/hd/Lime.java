@@ -142,6 +142,7 @@ public class Lime {
     public static final String DB_RELATED_COLUMN_PWORD = "pword";
     public static final String DB_RELATED_COLUMN_CWORD = "cword";
     public static final String DB_RELATED_COLUMN_SCORE = "score";
+    public static final String DB_RELATED_COLUMN_USERSCORE = "user_score";
 
     public static final String DB_KEYBOARD = "keyboard";
     public static final String DB_KEYBOARD_COLUMN_ID = "_id";
@@ -170,6 +171,8 @@ public class Lime {
     public static final String IM_TYPE_KEYBOARD = "keyboard";
 
     public static final int IM_MANAGE_DISPLAY_AMOUNT = 100;
+
+    public static final String DB_CHECK_RELATED_USERSCORE = "db_user_score_check";
 
     // Cloud Backup/Restore
     // Dropbox

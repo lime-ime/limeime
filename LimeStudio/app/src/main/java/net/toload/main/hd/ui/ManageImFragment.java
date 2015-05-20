@@ -26,13 +26,12 @@ import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
 import net.toload.main.hd.SearchServer;
-import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.limedb.LimeDB;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,7 +85,7 @@ public class ManageImFragment extends Fragment {
 
     private Thread manageimthread;
 
-    private DataSource datasource;
+    private LimeDB datasource;
 
     private ProgressDialog progress;
     private LIMEPreferenceManager mLIMEPref;
@@ -117,7 +116,7 @@ public class ManageImFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_manage_im, container, false);
 
         this.activity = this.getActivity();
-        this.datasource = new DataSource(this.activity);
+        this.datasource = new LimeDB(this.activity);
         this.SearchSrv = new SearchServer(this.activity);
 
         this.handler = new ManageImHandler(this);
@@ -125,14 +124,14 @@ public class ManageImFragment extends Fragment {
 
         // initial imlist
         imkeyboardlist = new ArrayList<Im>();
-         try {
+        imkeyboardlist = datasource.getIm(null, Lime.IM_TYPE_KEYBOARD);
+        /* try {
                datasource.open();
-               imkeyboardlist = datasource.getIm(null, Lime.IM_TYPE_KEYBOARD);
                datasource.close();
          } catch (SQLException e) {
               e.printStackTrace();
          }
-
+*/
         this.progress = new ProgressDialog(this.activity);
         this.progress.setCancelable(false);
         this.progress.setMessage(getResources().getString(R.string.manage_im_loading));
@@ -141,19 +140,19 @@ public class ManageImFragment extends Fragment {
         this.gridManageIm.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                try {
-                    datasource.open();
+                //try {
+                    //datasource.open();
                     Word w = datasource.getWord(code, id);
-                    datasource.close();
+                    //datasource.close();
                     FragmentTransaction ft = getFragmentManager().beginTransaction();
 
                     // Create and show the dialog.
                     ManageImEditDialog dialog = ManageImEditDialog.newInstance(code);
                     dialog.setHandler(handler, w);
                     dialog.show(ft, "editdialog");
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                //} catch (SQLException e) {
+                //    e.printStackTrace();
+                //}
             }
         });
 
@@ -292,14 +291,14 @@ public class ManageImFragment extends Fragment {
         int offset = Lime.IM_MANAGE_DISPLAY_AMOUNT * page;
 
         if((curquery == null && total == 0) || curquery != prequery ){
-            try {
+            total = datasource.getWordSize(code, curquery, searchroot);
+            page = 0;
+           /* try {
                 datasource.open();
-                total = datasource.getWordSize(code, curquery, searchroot);
-                page = 0;
                 datasource.close();
             } catch (SQLException e) {
                 e.printStackTrace();
-            }
+            }*/
         }
         if(manageimthread != null && manageimthread.isAlive()){
             handler.removeCallbacks(manageimthread);
@@ -409,13 +408,13 @@ public class ManageImFragment extends Fragment {
         // Remove from the database
         String removesql = "DELETE FROM " + this.code + " WHERE " + Lime.DB_COLUMN_ID + " = '" + id + "'";
 
-        try {
+        datasource.remove(removesql);
+        /*try {
             datasource.open();
-            datasource.remove(removesql);
             datasource.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
 
         total--;
         searchword();
@@ -433,14 +432,14 @@ public class ManageImFragment extends Fragment {
              obj.setScore(1);
 
         String insertsql = Word.getInsertQuery(this.code, obj);
+        datasource.insert(insertsql);
 
-        try {
+       /* try {
             datasource.open();
-            datasource.insert(insertsql);
             datasource.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
 
         total++;
         searchword();
@@ -474,13 +473,13 @@ public class ManageImFragment extends Fragment {
                 updatesql += Lime.DB_COLUMN_WORD + " = \"" + Lime.formatSqlValue(word) + "\" ";
                 updatesql += " WHERE " + Lime.DB_COLUMN_ID + " = \"" + id + "\"";
 
-        try {
+        datasource.update(updatesql);
+        /*try {
             datasource.open();
-            datasource.update(updatesql);
             datasource.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
         searchword();
         //updateGridView(this.wordlist);
     }
@@ -488,24 +487,24 @@ public class ManageImFragment extends Fragment {
     public void updateKeyboard(String keyboard) {
 
         if(keyboardlist == null){
-            try {
+            keyboardlist = datasource.getKeyboard();
+           /* try {
                 datasource.open();
-                keyboardlist = datasource.getKeyboard();
                 datasource.close();
             } catch (SQLException e) {
                 e.printStackTrace();
-            }
+            }*/
         }
         for(Keyboard k: keyboardlist){
             if(k.getCode().equals(keyboard)){
-                try {
+                datasource.setImKeyboard(code, k);
+                btnManageImKeyboard.setText(k.getDesc());
+                /*try {
                     datasource.open();
-                    datasource.setImKeyboard(code, k);
                     datasource.close();
-                    btnManageImKeyboard.setText(k.getDesc());
                 } catch (SQLException e) {
                     e.printStackTrace();
-                }
+                }*/
             }
         }
 

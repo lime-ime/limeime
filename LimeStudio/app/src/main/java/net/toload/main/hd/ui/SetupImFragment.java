@@ -17,41 +17,39 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.session.AppKeyPair;
-
-//admob
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.AdSize;
-//google drive
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.services.drive.DriveScopes;
-/*  vpon import
-import com.vpadn.ads.VpadnAdRequest;
-import com.vpadn.ads.VpadnAdSize;
-import com.vpadn.ads.VpadnBanner;
-*/
-// admob import
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
+import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.limesettings.DBServer;
 import net.toload.main.hd.limesettings.LIMEMappingLoading;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+
+//admob
+//google drive
+/*  vpon import
+import com.vpadn.ads.VpadnAdRequest;
+import com.vpadn.ads.VpadnAdSize;
+import com.vpadn.ads.VpadnBanner;
+*/
+// admob import
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
@@ -119,7 +117,7 @@ public class SetupImFragment extends Fragment {
     private ConnectivityManager connManager;
 
     private View view;
-    private DataSource datasource;
+    private LimeDB datasource;
     private DBServer DBSrv = null;
     private Activity activity;
     private LIMEPreferenceManager mLIMEPref;
@@ -221,7 +219,7 @@ public class SetupImFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        datasource = new DataSource(this.getActivity());
+        datasource = new LimeDB(this.getActivity());
 
         handler = new SetupImHandler(this);
 
@@ -365,12 +363,12 @@ public class SetupImFragment extends Fragment {
         // Load Menu Item
         if(!mLIMEPref.getMappingLoading()){
             try {
-                datasource.open();
+                //datasource.open();
                 List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
                 for(int i = 0; i < imlist.size() ; i++){
                     check.put(imlist.get(i).getCode(), imlist.get(i).getDesc());
                 }
-                datasource.close();
+               // datasource.close();
 
                 Context ctx = getActivity().getApplicationContext();
                 if(LIMEUtilities.isLIMEEnabled(getActivity().getApplicationContext())){  //LIME is activated in system

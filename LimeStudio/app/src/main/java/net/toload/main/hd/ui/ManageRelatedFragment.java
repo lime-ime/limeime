@@ -24,11 +24,10 @@ import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
 import net.toload.main.hd.SearchServer;
-import net.toload.main.hd.data.DataSource;
 import net.toload.main.hd.data.Related;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.limedb.LimeDB;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,7 +73,7 @@ public class ManageRelatedFragment extends Fragment {
 
     private Thread ManageRelatedthread;
 
-    private DataSource datasource;
+    private LimeDB datasource;
 
     private ProgressDialog progress;
     private LIMEPreferenceManager mLIMEPref;
@@ -104,7 +103,7 @@ public class ManageRelatedFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_manage_related, container, false);
 
         this.activity = this.getActivity();
-        this.datasource = new DataSource(this.activity);
+        this.datasource = new LimeDB(this.activity);
         this.SearchSrv = new SearchServer(this.activity);
 
         this.handler = new ManageRelatedHandler(this);
@@ -118,19 +117,19 @@ public class ManageRelatedFragment extends Fragment {
         this.gridManageRelated.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                try {
-                    datasource.open();
+               // try {
+                    //datasource.open();
                     Related w = datasource.getRelated(id);
-                    datasource.close();
+                    //datasource.close();
                     FragmentTransaction ft = getFragmentManager().beginTransaction();
 
                     // Create and show the dialog.
                     ManageRelatedEditDialog dialog = ManageRelatedEditDialog.newInstance();
                     dialog.setHandler(handler, w);
                     dialog.show(ft, "editdialog");
-                } catch (SQLException e) {
+                /*} catch (SQLException e) {
                     e.printStackTrace();
-                }
+                }*/
             }
         });
 
@@ -233,14 +232,14 @@ public class ManageRelatedFragment extends Fragment {
         int offset = Lime.IM_MANAGE_DISPLAY_AMOUNT * page;
 
         if((curquery == null && total == 0) || curquery != prequery ){
-            try {
+            total = datasource.getRelatedSize(curquery);
+            page = 0;
+            /*try {
                 datasource.open();
-                total = datasource.getRelatedSize(curquery);
-                page = 0;
                 datasource.close();
             } catch (SQLException e) {
                 e.printStackTrace();
-            }
+            }*/
         }
         if(ManageRelatedthread != null && ManageRelatedthread.isAlive()){
             handler.removeCallbacks(ManageRelatedthread);
@@ -344,13 +343,13 @@ public class ManageRelatedFragment extends Fragment {
         // Remove from the database
         String removesql = "DELETE FROM " + Lime.DB_RELATED + " WHERE " + Lime.DB_COLUMN_ID + " = '" + id + "'";
 
-        try {
+        datasource.remove(removesql);
+        /*try {
             datasource.open();
-            datasource.remove(removesql);
             datasource.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
         total--;
         searchrelated();
         //updateGridView(this.relatedlist);
@@ -366,13 +365,13 @@ public class ManageRelatedFragment extends Fragment {
 
         String insertsql = Related.getInsertQuery(obj);
 
-        try {
+        datasource.insert(insertsql);
+        /*try {
             datasource.open();
-            datasource.insert(insertsql);
             datasource.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
 
         total++;
         searchrelated();
@@ -405,13 +404,13 @@ public class ManageRelatedFragment extends Fragment {
                 updatesql += Lime.DB_RELATED_COLUMN_SCORE + " = \"" + score + "\" ";
                 updatesql += " WHERE " + Lime.DB_RELATED_COLUMN_ID + " = \"" + id + "\"";
 
-        try {
+        datasource.update(updatesql);
+       /* try {
             datasource.open();
-            datasource.update(updatesql);
             datasource.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
 
         searchrelated();
         //updateGridView(this.relatedlist);

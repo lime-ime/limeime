@@ -33,7 +33,12 @@ import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
+import net.toload.main.hd.data.Im;
+import net.toload.main.hd.data.Keyboard;
+import net.toload.main.hd.data.Related;
+import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.global.ImObj;
 import net.toload.main.hd.global.KeyboardObj;
@@ -272,6 +277,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		return this.finish;
 	}
 
+	public void setLoadingMappingThreadAborted(boolean value) {
+		this.threadAborted = value;
+	}
 
 	public boolean isLoadingMappingAborted() {
 		if(DEBUG) Log.i(TAG, "isLoadingMapingAborted()"+ threadAborted+"");
@@ -595,10 +603,23 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			}
 			db = this.getWritableDatabase();
 			mLIMEPref.setMappingLoading(false); // Jeremy '12,4,10 reset mapping_loading status
+			// Update the database schema
+			if(!mLIMEPref.getParameterBoolean(Lime.DB_CHECK_RELATED_USERSCORE, false)){
+				try{
+					String add_column = "ALTER TABLE " + Lime.DB_RELATED + " ADD ";
+					add_column += Lime.DB_RELATED_COLUMN_USERSCORE + " INTEGER DEFAULT 0 NOT NULL";
+					db.execSQL(add_column);
+				}catch(SQLiteException e){
+					e.printStackTrace();
+				}
+				mLIMEPref.setParameter(Lime.DB_CHECK_RELATED_USERSCORE, true);
+			}
+
 			return db != null && db.isOpen();
 		}
 
 
+		
 	}
 
 	/**
@@ -2493,7 +2514,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 									+ FIELD_DIC_pword + " = '" + pword
 									+ "' or " + FIELD_DIC_pword + " = '" + last
 									+ "' and " + FIELD_DIC_cword + " is not null"
-									+ " order by len desc, " + FIELD_SCORE + " desc ";
+									+ " order by len desc, " + Lime.DB_RELATED_COLUMN_USERSCORE + " desc, "
+									+ Lime.DB_RELATED_COLUMN_SCORE + " desc ";
+
 					if(limitClause != null)
 						selectString += " limit " + limitClause;
 					if(DEBUG)
@@ -2985,7 +3008,11 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					mLIMEPref.setParameter("_table", "");
 
 					setImInfo(table, "source", filename.getName());
-					setImInfo(table, "name", imname);
+					if(imname == null || imname.isEmpty()){
+						setImInfo(table, "name", filename.getName());
+					}else{
+						setImInfo(table, "name", imname);
+					}
 					setImInfo(table, "amount", String.valueOf(count));
 					setImInfo(table, "import", new Date().toString()); //Jeremy '12,4,21 toLocaleString() is deprecated
 
@@ -3745,6 +3772,378 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		return true;
 	}
 
+	// Method from DataSource
+
+
+	public void beginTransaction() {
+		if (db != null && db.isOpen()) {
+			db.beginTransaction();
+		}
+	}
+
+	public void endTransaction() {
+		if (db != null && db.isOpen()) {
+			db.setTransactionSuccessful();
+			db.endTransaction();
+		}
+	}
+
+	/*public void open() throws SQLException {
+		if(DEBUG)   Log.i(TAG,"open()");
+		if (dbhelper == null && ctx != null) {
+			dbhelper = new DBHelper(ctx);
+		}
+		db = dbhelper.getWritabledb();
+	}
+
+	public void openReadonly() throws SQLException {
+		if (dbhelper == null && ctx != null) {
+			dbhelper = new DBHelper(ctx);
+		}
+		db = dbhelper.getReadonlydb();
+	}
+
+	public void close() {
+		if(DEBUG)   Log.i(TAG, "close()");
+		if (dbhelper != null && db != null) {
+			dbhelper.close();
+		}
+	}
+
+	public boolean isLock() {
+		if (dbhelper != null && db != null) {
+			if (db.isOpen()) {
+				return db.isDbLockedByCurrentThread();
+			}
+		}
+		return false;
+	}*/
+
+	/**
+	 * 取得表格內的所有記錄
+	 *
+	 * @param table
+	 * @return
+	 */
+	public Cursor list(String table) {
+		Cursor cursor = null;
+		if (db != null && db.isOpen()) {
+			cursor = db.query(table, null, null, null, null, null, null);
+		}
+		return cursor;
+	}
+
+	/**
+	 * 依 SQL 指令進行資料新增
+	 *
+	 * @param insertsql
+	 */
+	public void insert(String insertsql) {
+		if (db != null && db.isOpen() &&
+				insertsql != null && insertsql.toLowerCase().trim().startsWith("insert")) {
+			db.execSQL(insertsql);
+		}
+	}
+
+	public void add(String addsql) {
+		if (db != null && db.isOpen()) {
+			if (addsql.toLowerCase().startsWith("insert")) {
+				db.execSQL(addsql);
+			}
+		}
+	}
+
+	/**
+	 * 移除 SQL 指令的操作
+	 *
+	 * @param removesql
+	 */
+	public void remove(String removesql) {
+		if (db != null && db.isOpen()) {
+			if (removesql.toLowerCase().startsWith("delete")) {
+				db.execSQL(removesql);
+			}
+		}
+	}
+
+
+	public void update(String updatesql) {
+		if (db != null && db.isOpen()) {
+			if (updatesql.toLowerCase().startsWith("update")) {
+				db.execSQL(updatesql);
+			}
+		}
+	}
+
+
+	public List<Keyboard> getKeyboard() {
+		List<Keyboard> result = new ArrayList<Keyboard>();
+		if (db != null && db.isOpen()) {
+			Cursor cursor = db.query(Lime.DB_KEYBOARD, null, null,
+					null, null, null, Lime.DB_KEYBOARD_COLUMN_NAME + " ASC");
+			cursor.moveToFirst();
+			while (!cursor.isAfterLast()) {
+				Keyboard r = Keyboard.get(cursor);
+				result.add(r);
+				cursor.moveToNext();
+			}
+			cursor.close();
+		}
+		return result;
+	}
+
+	public List<Im> getIm(String code, String type) {
+
+		List<Im> result = new ArrayList<Im>();
+		if (db != null && db.isOpen()) {
+			Cursor cursor = null;
+			String query = null;
+			if (code != null && code.length() > 1) {
+				query = Lime.DB_IM_COLUMN_CODE + "='" + code + "'";
+			}
+			if (type != null && type.length() > 1) {
+				if (query != null) {
+					query += " AND ";
+				} else {
+					query = "";
+				}
+
+				query += " " + Lime.DB_IM_COLUMN_TITLE + "='" + type + "'";
+				;
+			}
+
+			cursor = db.query(Lime.DB_IM,
+					null, query,
+					null, null, null, Lime.DB_IM_COLUMN_DESC + " ASC");
+			cursor.moveToFirst();
+			while (!cursor.isAfterLast()) {
+				Im r = Im.get(cursor);
+				result.add(r);
+				cursor.moveToNext();
+			}
+			cursor.close();
+		}
+		return result;
+	}
+
+	public List<Word> loadWord(String code, String query, boolean searchroot, int maximum, int offset) {
+		List<Word> result = new ArrayList<Word>();
+		if (db != null && db.isOpen()) {
+			Cursor cursor = null;
+			if (query != null && query.length() >= 1) {
+				if (searchroot) {
+					query = Lime.DB_COLUMN_CODE + " LIKE '" + query + "%' AND ifnull(" + Lime.DB_COLUMN_WORD + ", '') <> ''";
+				} else {
+					query = Lime.DB_COLUMN_WORD + " LIKE '%" + query + "%' AND ifnull(" + Lime.DB_COLUMN_WORD + ", '') <> ''";
+				}
+			} else {
+				query = "ifnull(" + Lime.DB_COLUMN_WORD + ", '') <> ''";
+			}
+
+			String order = "";
+
+			if (searchroot) {
+				order = Lime.DB_COLUMN_CODE + " ASC";
+			} else {
+				order = Lime.DB_COLUMN_WORD + " ASC";
+			}
+
+			if (maximum > 0) {
+				order += " LIMIT " + maximum + " OFFSET " + offset;
+			}
+
+
+			cursor = db.query(code,
+					null, query,
+					null, null, null, order);
+
+			cursor.moveToFirst();
+			while (!cursor.isAfterLast()) {
+				Word r = Word.get(cursor);
+				result.add(r);
+				cursor.moveToNext();
+			}
+			cursor.close();
+		}
+		return result;
+	}
+
+	public Word getWord(String code, long id) {
+		Word w = null;
+		if (db != null && db.isOpen()) {
+			Cursor cursor = null;
+
+			String query = Lime.DB_COLUMN_ID + " = '" + id + "' ";
+
+			cursor = db.query(code,
+					null, query,
+					null, null, null, null);
+
+			cursor.moveToFirst();
+			w = Word.get(cursor);
+			cursor.close();
+		}
+		return w;
+	}
+
+	public void setImKeyboard(String code, Keyboard keyboard) {
+		if (db != null && db.isOpen()) {
+
+			String removesql = "DELETE FROM " + Lime.DB_IM + " WHERE " + Lime.DB_IM_COLUMN_CODE + " = '" + code + "'";
+			removesql += " AND " + Lime.DB_IM_COLUMN_TITLE + " = '" + Lime.IM_TYPE_KEYBOARD + "'";
+			db.execSQL(removesql);
+
+			Im im = new Im();
+			im.setCode(code);
+			im.setKeyboard(keyboard.getCode());
+			im.setTitle(Lime.IM_TYPE_KEYBOARD);
+			im.setDesc(keyboard.getDesc());
+
+			String addsql = Im.getInsertQuery(im);
+			db.execSQL(addsql);
+		}
+	}
+
+	public List<Related> loadRelated(String pword, int maximum, int offset) {
+
+		List<Related> result = new ArrayList<Related>();
+
+		if (db != null && db.isOpen()) {
+			Cursor cursor = null;
+
+			String query = "";
+			if (pword != null && !pword.isEmpty()) {
+				query = Lime.DB_RELATED_COLUMN_PWORD + " = '" + pword +
+						"' AND ";
+			}
+
+			query += "ifnull(" + Lime.DB_RELATED_COLUMN_CWORD + ", '') <> ''";
+
+			String order = Lime.DB_RELATED_COLUMN_PWORD + " asc," + Lime.DB_RELATED_COLUMN_SCORE + " desc";
+
+			if (maximum > 0) {
+				order += " LIMIT " + maximum + " OFFSET " + offset;
+			}
+
+			cursor = db.query(Lime.DB_RELATED,
+					null, query,
+					null, null, null, order);
+
+			cursor.moveToFirst();
+			while (!cursor.isAfterLast()) {
+				Related r = Related.get(cursor);
+				result.add(r);
+				cursor.moveToNext();
+			}
+			cursor.close();
+		}
+		return result;
+	}
+
+	public Related getRelated(long id) {
+		Related w = null;
+		if (db != null && db.isOpen()) {
+			Cursor cursor = null;
+
+			String query = Lime.DB_RELATED_COLUMN_ID + " = '" + id + "' ";
+
+			cursor = db.query(Lime.DB_RELATED,
+					null, query,
+					null, null, null, null);
+
+			cursor.moveToFirst();
+			w = Related.get(cursor);
+			cursor.close();
+		}
+		return w;
+	}
+
+	public int count(String table) {
+
+		int total = 0;
+
+		if (db != null && db.isOpen()) {
+			Cursor cursor = null;
+			String query = "SELECT COUNT(*) as count FROM " + table;
+			cursor = db.rawQuery(query, null);
+			cursor.moveToFirst();
+			total = cursor.getInt(cursor.getColumnIndex(Lime.DB_TOTAL_COUNT));
+			cursor.close();
+		}
+
+		return total;
+
+	}
+
+	public int getWordSize(String table, String curquery, boolean searchroot) {
+
+		int total = 0;
+
+		if (db != null && db.isOpen()) {
+
+			Cursor cursor = null;
+
+			String query = "SELECT COUNT(*) as count FROM " + table + " WHERE ";
+
+			if (curquery != null && curquery.length() >= 1) {
+				if (searchroot) {
+					query += Lime.DB_COLUMN_CODE + " LIKE '" + curquery + "%' AND ifnull(" + Lime.DB_COLUMN_WORD + ", '') <> ''";
+				} else {
+					query += Lime.DB_COLUMN_WORD + " LIKE '%" + curquery + "%' AND ifnull(" + Lime.DB_COLUMN_WORD + ", '') <> ''";
+				}
+			} else {
+				query += " ifnull(" + Lime.DB_COLUMN_WORD + ", '') <> ''";
+			}
+
+			cursor = db.rawQuery(query, null);
+
+			cursor.moveToFirst();
+			total = cursor.getInt(cursor.getColumnIndex(Lime.DB_TOTAL_COUNT));
+			cursor.close();
+		}
+
+		return total;
+
+	}
+
+
+	public int getRelatedSize(String pword) {
+
+		int total = 0;
+
+		if (db != null && db.isOpen()) {
+			Cursor cursor = null;
+
+			String query = "SELECT COUNT(*) as count FROM " + Lime.DB_RELATED + " WHERE ";
+
+			if (pword != null && !pword.isEmpty()) {
+				query += Lime.DB_RELATED_COLUMN_PWORD + " = '" + pword +
+						"' AND ";
+			}
+
+			query += "ifnull(" + Lime.DB_RELATED_COLUMN_CWORD + ", '') <> ''";
+
+			cursor = db.rawQuery(query, null);
+
+			cursor.moveToFirst();
+			total = cursor.getInt(cursor.getColumnIndex(Lime.DB_TOTAL_COUNT));
+			cursor.close();
+		}
+		return total;
+	}
+
+	public void insert(String table, ContentValues cv) {
+		if (db != null && db.isOpen()) {
+			db.insert(table, null, cv);
+		}
+	}
+
+	public Cursor query(String table, String where) {
+		if (db != null && db.isOpen()) {
+			return db.query(table, null, where, null, null, null, null, null);
+		}
+		return null;
+	}
 
 
 }
