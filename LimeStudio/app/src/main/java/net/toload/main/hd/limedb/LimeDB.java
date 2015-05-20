@@ -601,6 +601,18 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			mLIMEPref.setMappingLoading(false); // Jeremy '12,4,10 reset mapping_loading status 
 		}
 
+		// Update the database schema
+		if(!mLIMEPref.getParameterBoolean(Lime.DB_CHECK_RELATED_USERSCORE, false)){
+			try{
+				String add_column = "ALTER TABLE " + Lime.DB_RELATED + " ADD ";
+				add_column += Lime.DB_RELATED_COLUMN_USERSCORE + " INTEGER DEFAULT 0 NOT NULL";
+				db.execSQL(add_column);
+			}catch(SQLiteException e){
+				e.printStackTrace();
+			}
+			mLIMEPref.setParameter(Lime.DB_CHECK_RELATED_USERSCORE, true);
+		}
+
 		return db;
 	}
 
@@ -1691,7 +1703,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 	private String preProcessingRemappingCode(String code){
 		if(DEBUG)
-			Log.i(TAG, "preProcessingRemappingCode(): tablename = " + tablename +" , code="+code);
+			Log.i(TAG, "preProcessingRemappingCode(): tablename = " + tablename + " , code=" + code);
 		if(code != null){
 			String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
 			String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
@@ -2607,7 +2619,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 									+ FIELD_DIC_pword + " = '" + pword
 									+ "' or " + FIELD_DIC_pword + " = '" + last
 									+ "' and " + FIELD_DIC_cword + " is not null"
-									+ " order by len desc, " + FIELD_SCORE + " desc ";
+									+ " order by len desc, " + Lime.DB_RELATED_COLUMN_USERSCORE + " desc, "
+									+ Lime.DB_RELATED_COLUMN_SCORE + " desc ";
+
 					if(limitClause != null)
 						selectString += " limit " + limitClause;
 					if(DEBUG)
@@ -3433,7 +3447,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			String selectString = "SELECT * FROM im WHERE code='"+im+"' AND title='"+field+"'";
 			//SQLiteDatabase db = this.getSqliteDb(true);
 
-			Cursor cursor = db.rawQuery(selectString ,null);
+			Cursor cursor = db.rawQuery(selectString, null);
 
 			if (cursor.getCount() > 0) {
 				cursor.moveToFirst();
@@ -3524,7 +3538,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			}
 
 		} catch (Exception e) {
-			Log.i(TAG, "getImList(): Cannot get IM List : " + e );
+			Log.i(TAG, "getImList(): Cannot get IM List : " + e);
 		}
 		return result;
 	}
@@ -3713,7 +3727,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 		removeImInfoOnDB(dbin, im, "keyboard");
 
-		dbin.insert("im",null, cv);
+		dbin.insert("im", null, cv);
 	}
 
 	public String getKeyboardCode(String im) {
@@ -4221,7 +4235,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		}
 		return null;
 	}
-
 
 
 }

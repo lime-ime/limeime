@@ -137,6 +137,10 @@ public abstract class LimeSQLiteOpenHelper {
                 if (to != null) {
                     to.close();
                 }
+
+                // The preloaded database has new column user_score in the table related
+                mLIMEPref.setParameter(Lime.DB_CHECK_RELATED_USERSCORE, true);
+
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } catch (IOException e) {

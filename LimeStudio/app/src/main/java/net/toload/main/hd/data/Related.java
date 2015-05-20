@@ -13,6 +13,7 @@ public class Related {
 	private String pword;
 	private String cword;
 	private int score;
+	private int userscore;
 
 	public int getId() {
 		return id;
@@ -46,12 +47,16 @@ public class Related {
 		this.score = score;
 	}
 
+	public int getUserscore() {return userscore;}
+
+	public void setUserscore(int userscore) {this.userscore = userscore;}
 
 	public static Related get(Cursor cursor){
 		Related record = new Related();
 				record.setId(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_ID)));
 				record.setPword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_PWORD)));
 				record.setCword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD)));
+				record.setUserscore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
 				record.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_SCORE)));
 		return record;
 	}
@@ -72,9 +77,11 @@ public class Related {
 		sb.append("INSERT INTO " + Lime.DB_RELATED + "(");
 		sb.append(Lime.DB_RELATED_COLUMN_PWORD +", ");
 		sb.append(Lime.DB_RELATED_COLUMN_CWORD +", ");
+		sb.append(Lime.DB_RELATED_COLUMN_USERSCORE +", ");
 		sb.append(Lime.DB_RELATED_COLUMN_SCORE +") VALUES(");
 		sb.append("\""+record.getPword()+"\",");
 		sb.append("\""+record.getCword()+"\",");
+		sb.append("\""+record.getUserscore()+"\",");
 		sb.append("\""+record.getScore()+"\"");
 		sb.append(")");
 		return sb.toString();
