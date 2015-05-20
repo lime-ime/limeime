@@ -1159,8 +1159,6 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
-		//db.close();
 		return scorelist;
 	}
 
@@ -2430,7 +2428,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				munit.setRelated(false);//Jeremy '12,5,30 exact match, not from related list
 
 				//Jeremy '11,8,26 build valid code map
-				//jeremy '11,8,30 add limit for vali code words for composing display
+				//jeremy '11,8,30 add limit for valid code words for composing display
 
 				if(buildValidCodeList){
 					String noToneCode = cursor.getString(noToneCodeColumn);
@@ -2673,10 +2671,33 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		return countMapping(imtype);
 	}
 
+	public int backupUserData(final String table)
+	{
+		if(!checkDBConnection()) return -1;
+		String backupTableName =table+ "_user";
+
+		db.execSQL("create table " + backupTableName + " as select * from " + table +
+				"where (word is null and related is not null) or score >0 order by score desc");
+
+		return countMapping(backupTableName);
+	}
+
+	public void restoreUserData(final String table)
+	{
+		if(!checkDBConnection()) return;
+		String backupTableName =table+ "_user";
+		// check if user data backup table is present and have valid records
+		if(countMapping(backupTableName) == 0) return;
+		// start to restore user data
+		// restore user score first
+		db.execSQL("select");  //TODO: to be finished here.
+
+
+	}
 
 	/**
 	 * Jeremy '11,9,8 loadFile() with basescore got from hanconverter 
-	 * @param table
+	 *
 	 */
 	public synchronized void loadFileV2(final String table) {
 
@@ -2752,7 +2773,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					int i = 0;
 					List<String> templist = new ArrayList<String>();
 					while ((line = buf.readLine()) != null
-							&& isCinFormat == false) {
+							&& !isCinFormat) {
 						templist.add(line);
 						if (i >= 100) {
 							break;
@@ -2764,10 +2785,10 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					templist.clear();
 					buf.close();
 					fr.close();
-				} catch (Exception e) {
+				} catch (Exception ignored) {
 				}
 
-				// Create Related Words
+
 				HashSet<String> codeList = new HashSet<String>();
 
 				//db = getSqliteDb(false);
@@ -2968,7 +2989,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				}
 
 
-
+				// Create related field
 				if(!threadAborted){
 					//db = getSqliteDb(false);
 					mLIMEPref.setMappingLoading(true); // Jeremy '12,4,10 reset mapping_loading status 

@@ -97,7 +97,7 @@
     <string name="im_phonetic_advanced">注音連打</string>
     <string name="im_pinyin">拼音</string>
     <string name="im_scj">快倉</string>
-    <string name="im_wb">篳順五碼</string>
+    <string name="im_wb">筆順五碼</string>
 
     <string name="manage_im_add">新增</string>
     <string name="manage_im_edit">編輯</string>
