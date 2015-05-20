@@ -107,9 +107,6 @@ public class  DBServer {
 		loadingTablename = tablename;
 
 
-		// Start Loading
-		//if (dbAdapter == null) {loadLimeDB();}
-
 		dbAdapter.setFinish(false);
 		dbAdapter.setFilename(sourcefile);
 
@@ -154,13 +151,13 @@ public class  DBServer {
 			return dbAdapter.isLoadingMappingFinished();
 	}
 
-	public boolean isLoadingMappingThreadAborted(){
-		return dbAdapter.isLoadingMappingThreadAborted();
+	public boolean isLoadingMappingAborted(){
+		return dbAdapter.isLoadingMappingAborted();
 	}
 
-	public boolean isLoadingMappingThreadAlive(){
-		if(DEBUG) Log.i(TAG, "isLoadingMappingThreadAlive()"+  dbAdapter.isLoadingMappingThreadAlive() + "loadingTablename = " + loadingTablename);
-		return dbAdapter.isLoadingMappingThreadAlive();
+	public boolean isLoadingMappingInProgress(){
+		if(DEBUG) Log.i(TAG, "isLoadingMappingInProgress()"+  dbAdapter.isLoadingMappingInProgress() + "loadingTablename = " + loadingTablename);
+		return dbAdapter.isLoadingMappingInProgress();
 	}
 
 	public boolean isRemoteFileDownloading(){

@@ -245,13 +245,13 @@ public class LIMEMappingLoading extends Activity {
 							if(DEBUG)
 								Log.i(TAG,"UIThread updating");
 							if(DBSrv.isRemoteFileDownloading() ||
-									DBSrv.isLoadingMappingThreadAlive() ){
+									DBSrv.isLoadingMappingInProgress() ){
 								mHandler.post(mUpdateUI);			
 							}else{
 								if(DBSrv.isLoadingMappingFinished()){
 									mLIMEPref.setResetCacheFlag(true);
 
-									showNotificationMessage(getText(R.string.lime_setting_notification_finish)+ "");
+									showNotificationMessage(getText(R.string.lime_setting_notification_finish) + "");
 								}else{
 									showNotificationMessage(getText(R.string.lime_setting_notification_failed)+ "");
 								}

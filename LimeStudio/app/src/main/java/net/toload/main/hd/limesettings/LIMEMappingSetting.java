@@ -1231,7 +1231,7 @@ public class LIMEMappingSetting extends Activity {
 			
 			if(DBSrv!= null){
 				if(	DBSrv.isRemoteFileDownloading() ||
-						DBSrv.isLoadingMappingThreadAlive()){
+						DBSrv.isLoadingMappingInProgress()){
 					startLoadingWindow();
 				//} else 	if(! DBSrv.isLoadingMappingFinished() ){ 
 				//		resetLabelInfo();
@@ -1261,7 +1261,7 @@ public class LIMEMappingSetting extends Activity {
 			kbLinearLayout = (LinearLayout) this.findViewById(R.id.kbLinearLayout);
 			
 			if(DBSrv!=null && (DBSrv.isRemoteFileDownloading() ||
-				DBSrv.isLoadingMappingThreadAlive()) ){
+				DBSrv.isLoadingMappingInProgress()) ){
 				btnLoadMapping.setEnabled(false);
 			}else
 				btnLoadMapping.setEnabled(true);
@@ -1278,7 +1278,7 @@ public class LIMEMappingSetting extends Activity {
 
 		public void updateLabelInfo(){
 			
-			if(DBSrv!=null && DBSrv.isLoadingMappingThreadAlive()){
+			if(DBSrv!=null && DBSrv.isLoadingMappingInProgress()){
 				labSource.setText("Loading...");
 				labVersion.setText("Loading...");
 				labTotalAmount.setText("Loading...");
