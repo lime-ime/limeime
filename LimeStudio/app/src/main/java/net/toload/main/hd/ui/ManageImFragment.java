@@ -531,4 +531,8 @@ public class ManageImFragment extends Fragment {
 
     }
 
+    public void updateRelated(String updatecode) {
+        datasource.updateRelatedList(code, updatecode);
+    }
+
 }

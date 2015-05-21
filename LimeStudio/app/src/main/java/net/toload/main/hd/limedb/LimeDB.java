@@ -1166,7 +1166,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 		LinkedList<Mapping> scorelist = new LinkedList<Mapping>(); //Jeremy '12,5,29 should not return null thus new linklist instead of initial with null
 		try {
-			scorelist = updateRelatedListOnDB(db, tablename,code); //Jeremy '12,6,5 the code is retrieve from mapping, and thus should not remap.
+			scorelist = updateRelatedListOnDB(db, tablename, code); //Jeremy '12,6,5 the code is retrieve from mapping, and thus should not remap.
 			//preProcessingRemappingCode(code)); //Jeremy '12,4,11 should do remapping before update score
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -1174,6 +1174,21 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		return scorelist;
 	}
 
+	public synchronized List<Mapping> updateRelatedList(String table, String code){
+		// Jeremy '11,7,31  rebuild relatedlist by query from table directly
+		// Update relatedlist in IM table now.
+
+		if(!checkDBConnection()) return null;
+
+		LinkedList<Mapping> scorelist = new LinkedList<Mapping>(); //Jeremy '12,5,29 should not return null thus new linklist instead of initial with null
+		try {
+			scorelist = updateRelatedListOnDB(db, table, code); //Jeremy '12,6,5 the code is retrieve from mapping, and thus should not remap.
+			//preProcessingRemappingCode(code)); //Jeremy '12,4,11 should do remapping before update score
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return scorelist;
+	}
 
 	private LinkedList<Mapping> updateRelatedListOnDB(SQLiteDatabase db, String table, String code) {
 
@@ -3031,10 +3046,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 						
 					}
 
-
 				}
 
-
+				// Fill IM information into the IM Table
 				if(!threadAborted) {
 					if(!threadAborted) percentageDone = 100;
 					finish = true;
@@ -3073,6 +3087,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					}
 					if(DEBUG)
 						Log.i(TAG, "loadfilev2():update IM info: imkeys:" +imkeys + " imkeynames:"+imkeynames);
+
+
+					// Prepare and Setup the Keyboard of the IM
 
 					// If there is no keyboard assigned for current input method then use default keyboard layout
 					//String keyboard = getImInfo(table, "keyboard");

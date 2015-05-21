@@ -148,6 +148,7 @@ public class ManageImEditDialog extends DialogFragment {
 										code3r = code3r.trim();
 									}
 									handler.updateWord(word.getId(), code, code3r, text);
+									handler.updateRelated(code);
 									dialog.dismiss();
 									cancelDialog();
 								}else{
