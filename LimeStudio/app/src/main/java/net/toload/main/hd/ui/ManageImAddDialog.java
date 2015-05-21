@@ -114,6 +114,7 @@ public class ManageImAddDialog extends DialogFragment {
 										code3r = code3r.trim();
 									}
 									handler.addWord(code, code3r, text);
+									handler.updateRelated(code);
 									dialog.dismiss();
 									cancelDialog();
 								}else{

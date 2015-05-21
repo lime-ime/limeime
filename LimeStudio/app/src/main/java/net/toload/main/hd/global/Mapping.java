@@ -33,6 +33,7 @@ public class Mapping {
 	private Boolean related=true;  //Jeremy '12,5,30 changed from string to boolean to indicate if it's from related list or exact match result
 	private boolean isDictionary;
 	private int score;
+	private int userscore;
 	
 	
 	/**
@@ -52,8 +53,15 @@ public class Mapping {
 
 
 	public Mapping(){}
-	
-	
+
+	public int getUserscore() {
+		return userscore;
+	}
+
+	public void setUserscore(int userscore) {
+		this.userscore = userscore;
+	}
+
 	public Mapping(String c, String w, int s, boolean d){
 		this.setCode(c);
 		this.setWord(w);

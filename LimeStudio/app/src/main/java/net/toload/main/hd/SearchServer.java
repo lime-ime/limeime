@@ -20,21 +20,6 @@
 
 package net.toload.main.hd;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.ConcurrentHashMap;
-
-import net.toload.main.hd.R;
-import net.toload.main.hd.global.ImObj;
-import net.toload.main.hd.global.KeyboardObj;
-import net.toload.main.hd.global.LIME;
-import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.global.Mapping;
-import net.toload.main.hd.limedb.LimeDB;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -42,6 +27,21 @@ import android.database.sqlite.SQLiteException;
 import android.os.RemoteException;
 import android.util.Log;
 import android.util.Pair;
+
+import net.toload.main.hd.global.ImObj;
+import net.toload.main.hd.global.KeyboardObj;
+import net.toload.main.hd.global.LIME;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
+import net.toload.main.hd.global.Mapping;
+import net.toload.main.hd.limedb.LimeDB;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SearchServer {
 
@@ -875,18 +875,18 @@ public class SearchServer {
 		if(scorelist == null){scorelist = new ArrayList<Mapping>();}
 
 		// Temp final Mapping Object For updateMapping thread.
-		final Mapping updateMappingTemp = new Mapping(updateMapping);
+		if(updateMapping != null){
+			final Mapping updateMappingTemp = new Mapping(updateMapping);
 
-		// Jeremy '11,6,11. Always update score and sort according to preferences.
-		scorelist.add(updateMappingTemp);
-		Thread UpadtingThread = new Thread(){
-			public void run() {
-				updateScoreCache(updateMappingTemp);
-			}
-		};
-		UpadtingThread.start();
-
-
+			// Jeremy '11,6,11. Always update score and sort according to preferences.
+			scorelist.add(updateMappingTemp);
+			Thread UpadtingThread = new Thread(){
+				public void run() {
+					updateScoreCache(updateMappingTemp);
+				}
+			};
+			UpadtingThread.start();
+		}
 	}
 
 	public void addLDPhrase(Mapping mapping,//String id, String code, String word, int score, 

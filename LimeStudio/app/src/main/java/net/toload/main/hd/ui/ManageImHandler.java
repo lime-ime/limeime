@@ -38,7 +38,10 @@ public class ManageImHandler extends Handler {
         } else if (action.equals("keyboard")) {
             String keyboard = msg.getData().getString("keyboard");
             fragment.updateKeyboard(keyboard);
-        } else if (action.equals("remove")) {
+        } else if (action.equals("related")) {
+            String code = msg.getData().getString("code");
+            fragment.updateRelated(code);
+        }  else if (action.equals("remove")) {
             int id = msg.getData().getInt("id");
             fragment.removeWord(id);
         } else {
@@ -93,4 +96,10 @@ public class ManageImHandler extends Handler {
     }
 
 
+    public void updateRelated(String code) {
+        Message m = new Message();
+        m.getData().putString("action", "related");
+        m.getData().putString("code", code);
+        this.sendMessageDelayed(m, 1);
+    }
 }
