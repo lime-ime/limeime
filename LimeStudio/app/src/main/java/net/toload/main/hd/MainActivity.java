@@ -15,13 +15,18 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.android.vending.billing.IInAppBillingService;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
 
 import net.toload.main.hd.data.Im;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.ui.ManageRelatedFragment;
@@ -45,13 +50,17 @@ public class MainActivity extends ActionBarActivity
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
     private CharSequence mTitle;
-    private CharSequence mCode;
+    //private CharSequence mCode;
 
     private LimeDB datasource;
     private List<Im> imlist;
 
     private ConnectivityManager connManager;
     private LIMEPreferenceManager mLIMEPref;
+
+    //Admob
+    InterstitialAd mInterstitialAd;
+    Boolean intersitialAdShowed=false;
 
     IInAppBillingService mService;
     ServiceConnection mServiceConn = new ServiceConnection() {
@@ -74,13 +83,16 @@ public class MainActivity extends ActionBarActivity
                         ArrayList<String> owned =  ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
                         ArrayList<String>  purchaseDataList =  ownedItems.getStringArrayList("INAPP_PURCHASE_DATA_LIST");
                         ArrayList<String>  signatureList =  ownedItems.getStringArrayList("INAPP_DATA_SIGNATURE_LIST");
-                        String continuationToken = ownedItems.getString("INAPP_CONTINUATION_TOKEN");
+                        //String continuationToken = ownedItems.getString("INAPP_CONTINUATION_TOKEN");
 
                         for (int i = 0; i < purchaseDataList.size(); ++i) {
                             String purchaseData = purchaseDataList.get(i);
                             String signature = signatureList.get(i);
                             String sku = owned.get(i);
                             mLIMEPref.setParameter(Lime.PAYMENT_FLAG, true);
+                            mLIMEPref.setParameter("purchanseData", purchaseData);
+                            mLIMEPref.setParameter("signature", signature);
+                            mLIMEPref.setParameter("sku", sku);
                         }
 
                     }
@@ -129,6 +141,17 @@ public class MainActivity extends ActionBarActivity
 
     }
     @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if ((keyCode == KeyEvent.KEYCODE_BACK)) {
+            SetupImFragment ImFragment  = (SetupImFragment) getSupportFragmentManager().findFragmentByTag("SetupImFragment");
+            if(ImFragment == null || !ImFragment.isVisible())  onNavigationDrawerItemSelected(0);
+            return true;
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
     protected void onStop() {
         super.onStop();
         this.SearchSrv.initialCache();
@@ -166,17 +189,40 @@ public class MainActivity extends ActionBarActivity
             bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
 
 
+            AdRequest adRequest = new AdRequest.Builder()
+                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                    .build();
+
+            //Admob IntersitialAD
+            //Only show intersitialAd for one time.  It's quite annoying
+            mInterstitialAd = new InterstitialAd(this);
+            mInterstitialAd.setAdUnitId(LIME.publisher);
+
+            mInterstitialAd.loadAd(adRequest);
+
+            mInterstitialAd.setAdListener(new AdListener() {
+                public void onAdLoaded() {
+                    if (intersitialAdShowed) return;
+                    if (mInterstitialAd.isLoaded()) {
+                        mInterstitialAd.show();
+                        intersitialAdShowed = true;
+                        mInterstitialAd.setAdListener(null);
+                        mInterstitialAd = null; //destroy mintersitialAd
+                    }
+                }
+            });
+
+
         }
 
     }
-
 
     public void initialImList(){
 
         if(datasource == null)
             datasource = new LimeDB(this);
 
-        imlist = new ArrayList<Im>();
+        imlist = new ArrayList<>();
         imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
        /* try {
             //datasource.open();
@@ -198,14 +244,16 @@ public class MainActivity extends ActionBarActivity
             .commit();
         }else if (position == 1){
             fragmentManager.beginTransaction()
-                    .replace(R.id.container, ManageRelatedFragment.newInstance(position))
+                    .replace(R.id.container, ManageRelatedFragment.newInstance(position), "ManageRelatedFragment")
+                    .addToBackStack("ManageRelatedFragment")
                     .commit();
         }else{
             initialImList();
             int number = position - 2;
             String code = imlist.get(number).getCode();
             fragmentManager.beginTransaction()
-                    .replace(R.id.container, net.toload.main.hd.ui.ManageImFragment.newInstance(position, code))
+                    .replace(R.id.container, net.toload.main.hd.ui.ManageImFragment.newInstance(position, code), "ManageImFragment_" + code)
+                    .addToBackStack("ManageImFragment_" + code)
                     .commit();
         }
     }
@@ -213,21 +261,20 @@ public class MainActivity extends ActionBarActivity
     public void onSectionAttached(int number) {
         if (number == 0) {
             mTitle = this.getResources().getString(R.string.default_menu_initial);
-            mCode = "initial";
+            //mCode = "initial";
         } else if (number == 1){
             mTitle = this.getResources().getString(R.string.default_menu_related);
-            mCode = "related";
+            //mCode = "related";
         } else {
             int position = number - 2;
             mTitle = imlist.get(position).getDesc();
-            mCode = imlist.get(position).getCode();
+            //mCode = imlist.get(position).getCode();
         }
     }
 
     public void restoreActionBar() {
         ActionBar actionBar = getSupportActionBar();
-        //setNavigationMode is deprecated after API21 (v5.0). Removed setNavigationMode to have unified results for v5.0 and pre-v5.0 and won't show navigation drawer at startup so as the setup wizard can run directly.
-        //actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+        //actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD); //setNavigationMode is deprecated after API21 (v5.0).
         actionBar.setDisplayShowTitleEnabled(true);
         actionBar.setTitle(mTitle);
     }
@@ -252,7 +299,7 @@ public class MainActivity extends ActionBarActivity
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+        //int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
        /* if (id == R.id.action_settings) {
@@ -268,7 +315,7 @@ public class MainActivity extends ActionBarActivity
 
             if(mService != null){
 
-                Bundle buyIntentBundle = null;
+                Bundle buyIntentBundle;
                 try {
                     buyIntentBundle = mService.getBuyIntent(3, getPackageName(),
                             productid, "inapp", "callback/"+productid);
@@ -279,7 +326,7 @@ public class MainActivity extends ActionBarActivity
                         PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
                         try {
                             startIntentSenderForResult(pendingIntent.getIntentSender(),
-                                    1001, new Intent(), Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0));
+                                    1001, new Intent(), 0, 0, 0);
                         } catch (IntentSender.SendIntentException e) {
                             e.printStackTrace();
                         }

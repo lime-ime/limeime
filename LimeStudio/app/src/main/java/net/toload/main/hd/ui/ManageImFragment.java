@@ -13,15 +13,18 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.GridView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+
+/* Vpon
 import com.vpadn.ads.VpadnAdRequest;
 import com.vpadn.ads.VpadnAdSize;
 import com.vpadn.ads.VpadnBanner;
-
+*/
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
@@ -90,9 +93,9 @@ public class ManageImFragment extends Fragment {
     private ProgressDialog progress;
     private LIMEPreferenceManager mLIMEPref;
 
-    // AD
-    private RelativeLayout adBannerLayout;
-    private VpadnBanner vpadnBanner = null;
+    // Vpon AD
+    //private RelativeLayout adBannerLayout;
+    //private VpadnBanner vpadnBanner = null;
 
     /**
      * Returns a new instance of this fragment for the given section
@@ -113,7 +116,7 @@ public class ManageImFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_manage_im, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_manage_im, container, false);
 
         this.activity = this.getActivity();
         this.datasource = new LimeDB(this.activity);
@@ -136,7 +139,7 @@ public class ManageImFragment extends Fragment {
         this.progress.setCancelable(false);
         this.progress.setMessage(getResources().getString(R.string.manage_im_loading));
 
-        this.gridManageIm = (GridView) root.findViewById(R.id.gridManageIm);
+        this.gridManageIm = (GridView) rootView.findViewById(R.id.gridManageIm);
         this.gridManageIm.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -156,7 +159,7 @@ public class ManageImFragment extends Fragment {
             }
         });
 
-        this.btnManageImAdd = (Button) root.findViewById(R.id.btnManageImAdd);
+        this.btnManageImAdd = (Button) rootView.findViewById(R.id.btnManageImAdd);
         this.btnManageImAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -167,7 +170,7 @@ public class ManageImFragment extends Fragment {
             }
         });
 
-        this.btnManageImKeyboard = (Button) root.findViewById(R.id.btnManageImKeyboard);
+        this.btnManageImKeyboard = (Button) rootView.findViewById(R.id.btnManageImKeyboard);
         this.btnManageImKeyboard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -178,7 +181,7 @@ public class ManageImFragment extends Fragment {
             }
         });
 
-        this.toggleManageIm = (ToggleButton) root.findViewById(R.id.toggleManageIm);
+        this.toggleManageIm = (ToggleButton) rootView.findViewById(R.id.toggleManageIm);
         this.toggleManageIm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -196,7 +199,7 @@ public class ManageImFragment extends Fragment {
             }
         });
 
-        this.btnManageImNext = (Button) root.findViewById(R.id.btnManageImNext);
+        this.btnManageImNext = (Button) rootView.findViewById(R.id.btnManageImNext);
         this.btnManageImNext.setEnabled(false);
         this.btnManageImNext.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -209,7 +212,7 @@ public class ManageImFragment extends Fragment {
                 //updateGridView(wordlist);
             }
         });
-        this.btnManageImPrevious = (Button) root.findViewById(R.id.btnManageImPrevious);
+        this.btnManageImPrevious = (Button) rootView.findViewById(R.id.btnManageImPrevious);
         this.btnManageImPrevious.setEnabled(false);
         this.btnManageImPrevious.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -222,7 +225,7 @@ public class ManageImFragment extends Fragment {
             }
         });
 
-        this.edtManageImSearch = (EditText) root.findViewById(R.id.edtManageImSearch);
+        this.edtManageImSearch = (EditText) rootView.findViewById(R.id.edtManageImSearch);
         this.edtManageImSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -231,7 +234,7 @@ public class ManageImFragment extends Fragment {
             }
         });
 
-        this.btnManageImSearch = (Button) root.findViewById(R.id.btnManageImSearch);
+        this.btnManageImSearch = (Button) rootView.findViewById(R.id.btnManageImSearch);
         this.btnManageImSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -254,7 +257,7 @@ public class ManageImFragment extends Fragment {
             }
         });
 
-        this.txtNavigationInfo = (TextView) root.findViewById(R.id.txtNavigationInfo);
+        this.txtNavigationInfo = (TextView) rootView.findViewById(R.id.txtNavigationInfo);
 
         // UpdateKeyboard display
         for(Im obj : imkeyboardlist){
@@ -269,6 +272,7 @@ public class ManageImFragment extends Fragment {
         // Handle AD Display
         boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
         if(!paymentflag) {
+            /* Vpon
             adBannerLayout = (RelativeLayout) root.findViewById(R.id.adLayout);
             vpadnBanner = new VpadnBanner(getActivity(), Lime.VPON_BANNER_ID, VpadnAdSize.SMART_BANNER, "TW");
 
@@ -277,9 +281,24 @@ public class ManageImFragment extends Fragment {
             vpadnBanner.loadAd(adRequest);
 
             adBannerLayout.addView(vpadnBanner);
+            */
+            AdRequest adRequest = new AdRequest.Builder()
+                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                    .build();
+
+
+            AdView mAdView = (AdView) rootView.findViewById(R.id.adView);
+            mAdView.loadAd(adRequest);
+
+
+        }
+        else{
+            AdView mAdView = (AdView) rootView.findViewById(R.id.adView);
+            mAdView.setVisibility(View.GONE);
+
         }
 
-        return root;
+        return rootView;
     }
 
     public void searchword(){
@@ -342,6 +361,8 @@ public class ManageImFragment extends Fragment {
             this.progress.cancel();
         }
     }
+
+
 
     public void updateGridView(List<Word> wordlist){
 

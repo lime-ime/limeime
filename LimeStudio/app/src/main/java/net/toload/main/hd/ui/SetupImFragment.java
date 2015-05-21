@@ -24,7 +24,7 @@ import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.session.AppKeyPair;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.InterstitialAd;
+
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.services.drive.DriveScopes;
 
@@ -57,7 +57,7 @@ import com.vpadn.ads.VpadnBanner;
  * design guidelines</a> for a complete explanation of the behaviors implemented here.
  */
 /**
- * A placeholder fragment containing a simple view.
+ * A placeholder fragment containing a simple rootView.
  */
 public class SetupImFragment extends Fragment {
 
@@ -116,7 +116,7 @@ public class SetupImFragment extends Fragment {
 
     private ConnectivityManager connManager;
 
-    private View view;
+    private View rootView;
     private LimeDB datasource;
     private DBServer DBSrv = null;
     private Activity activity;
@@ -125,6 +125,7 @@ public class SetupImFragment extends Fragment {
     // Vpon
     //private RelativeLayout adBannerLayout;
     // private VpadnBanner vpadnBanner = null;
+
 
 
     /**
@@ -234,34 +235,34 @@ public class SetupImFragment extends Fragment {
         connManager = (ConnectivityManager) SetupImFragment.this.activity.getSystemService(
                 SetupImFragment.this.activity.CONNECTIVITY_SERVICE);
 
-        view = inflater.inflate(R.layout.fragment_setup_im, container, false);
+        rootView = inflater.inflate(R.layout.fragment_setup_im, container, false);
 
-        btnSetupImSystemSettings = (Button) view.findViewById(R.id.btnSetupImSystemSetting);
-        btnSetupImSystemIMPicker = (Button) view.findViewById(R.id.btnSetupImSystemIMPicker);
-        btnSetupImImportStandard = (Button) view.findViewById(R.id.btnSetupImImportStandard);
-        btnSetupImImportRelated = (Button) view.findViewById(R.id.btnSetupImImportRelated);
-        btnSetupImPhonetic = (Button) view.findViewById(R.id.btnSetupImPhonetic);
-        btnSetupImCj = (Button) view.findViewById(R.id.btnSetupImCj);
-        btnSetupImCj5 = (Button) view.findViewById(R.id.btnSetupImCj5);
-        btnSetupImScj = (Button) view.findViewById(R.id.btnSetupImScj);
-        btnSetupImEcj = (Button) view.findViewById(R.id.btnSetupImEcj);
-        btnSetupImDayi = (Button) view.findViewById(R.id.btnSetupImDayi);
-        btnSetupImEz = (Button) view.findViewById(R.id.btnSetupImEz);
-        btnSetupImArray = (Button) view.findViewById(R.id.btnSetupImArray);
-        btnSetupImArray10 = (Button) view.findViewById(R.id.btnSetupImArray10);
-        btnSetupImHs = (Button) view.findViewById(R.id.btnSetupImHs);
-        btnSetupImWb = (Button) view.findViewById(R.id.btnSetupImWb);
-        btnSetupImPinyin = (Button) view.findViewById(R.id.btnSetupImPinyin);
+        btnSetupImSystemSettings = (Button) rootView.findViewById(R.id.btnSetupImSystemSetting);
+        btnSetupImSystemIMPicker = (Button) rootView.findViewById(R.id.btnSetupImSystemIMPicker);
+        btnSetupImImportStandard = (Button) rootView.findViewById(R.id.btnSetupImImportStandard);
+        btnSetupImImportRelated = (Button) rootView.findViewById(R.id.btnSetupImImportRelated);
+        btnSetupImPhonetic = (Button) rootView.findViewById(R.id.btnSetupImPhonetic);
+        btnSetupImCj = (Button) rootView.findViewById(R.id.btnSetupImCj);
+        btnSetupImCj5 = (Button) rootView.findViewById(R.id.btnSetupImCj5);
+        btnSetupImScj = (Button) rootView.findViewById(R.id.btnSetupImScj);
+        btnSetupImEcj = (Button) rootView.findViewById(R.id.btnSetupImEcj);
+        btnSetupImDayi = (Button) rootView.findViewById(R.id.btnSetupImDayi);
+        btnSetupImEz = (Button) rootView.findViewById(R.id.btnSetupImEz);
+        btnSetupImArray = (Button) rootView.findViewById(R.id.btnSetupImArray);
+        btnSetupImArray10 = (Button) rootView.findViewById(R.id.btnSetupImArray10);
+        btnSetupImHs = (Button) rootView.findViewById(R.id.btnSetupImHs);
+        btnSetupImWb = (Button) rootView.findViewById(R.id.btnSetupImWb);
+        btnSetupImPinyin = (Button) rootView.findViewById(R.id.btnSetupImPinyin);
 
         initialbutton();
 
         // Backup and Restore Setting
-        btnSetupImBackupLocal = (Button) view.findViewById(R.id.btnSetupImBackupLocal);
-        btnSetupImRestoreLocal = (Button) view.findViewById(R.id.btnSetupImRestoreLocal);
-        btnSetupImBackupGoogle = (Button) view.findViewById(R.id.btnSetupImBackupGoogle);
-        btnSetupImRestoreGoogle = (Button) view.findViewById(R.id.btnSetupImRestoreGoogle);
-        btnSetupImBackupDropbox = (Button) view.findViewById(R.id.btnSetupImBackupDropbox);
-        btnSetupImRestoreDropbox = (Button) view.findViewById(R.id.btnSetupImRestoreDropbox);
+        btnSetupImBackupLocal = (Button) rootView.findViewById(R.id.btnSetupImBackupLocal);
+        btnSetupImRestoreLocal = (Button) rootView.findViewById(R.id.btnSetupImRestoreLocal);
+        btnSetupImBackupGoogle = (Button) rootView.findViewById(R.id.btnSetupImBackupGoogle);
+        btnSetupImRestoreGoogle = (Button) rootView.findViewById(R.id.btnSetupImRestoreGoogle);
+        btnSetupImBackupDropbox = (Button) rootView.findViewById(R.id.btnSetupImBackupDropbox);
+        btnSetupImRestoreDropbox = (Button) rootView.findViewById(R.id.btnSetupImRestoreDropbox);
 
         btnSetupImBackupLocal.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -323,22 +324,12 @@ public class SetupImFragment extends Fragment {
                     .build();
 
 
-            AdView mAdView = (AdView) view.findViewById(R.id.adView);
+            AdView mAdView = (AdView)  rootView.findViewById(R.id.adView);
             mAdView.loadAd(adRequest);
-
-            //Admob IntersitialAD
-            InterstitialAd mInterstitialAd = new InterstitialAd(this.getActivity().getApplicationContext());
-            mInterstitialAd.setAdUnitId(LIME.publisher);
-
-
-            mInterstitialAd.loadAd(adRequest);
-            if (mInterstitialAd.isLoaded()) {
-                mInterstitialAd.show();
-            }
 
 
             /*
-            adBannerLayout = (RelativeLayout) view.findViewById(R.id.adLayout);
+            adBannerLayout = (RelativeLayout) rootView.findViewById(R.id.adLayout);
             vpadnBanner = new VpadnBanner(getActivity(), Lime.VPON_BANNER_ID, VpadnAdSize.SMART_BANNER, "TW");
             VpadnAdRequest adRequest = new VpadnAdRequest();
             adRequest.setEnableAutoRefresh(true);
@@ -347,13 +338,13 @@ public class SetupImFragment extends Fragment {
             */
         }
         else{
-            AdView mAdView = (AdView) view.findViewById(R.id.adView);
+            AdView mAdView = (AdView) rootView.findViewById(R.id.adView);
             mAdView.setVisibility(View.GONE);
 
         }
 
 
-        return view;
+        return rootView;
     }
 
     public void initialbutton(){
@@ -373,26 +364,26 @@ public class SetupImFragment extends Fragment {
                 Context ctx = getActivity().getApplicationContext();
                 if(LIMEUtilities.isLIMEEnabled(getActivity().getApplicationContext())){  //LIME is activated in system
                     btnSetupImSystemSettings.setVisibility(View.GONE);
-                    view.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.GONE);
-                    view.findViewById(R.id.SetupImList).setVisibility(View.VISIBLE);
+                    rootView.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.GONE);
+                    rootView.findViewById(R.id.SetupImList).setVisibility(View.VISIBLE);
                     if(LIMEUtilities.isLIMEActive(getActivity().getApplicationContext())) {  //LIME is activated and also the active Keyboard
                         btnSetupImSystemIMPicker.setVisibility(View.GONE);
-                        //view.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
-                        //view.findViewById(R.id.setup_im_system_settings).setVisibility(View.GONE);
-                        view.findViewById(R.id.Setup_Wizard).setVisibility(View.GONE);
+                        //rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
+                        //rootView.findViewById(R.id.setup_im_system_settings).setVisibility(View.GONE);
+                        rootView.findViewById(R.id.Setup_Wizard).setVisibility(View.GONE);
                     }
                     else  //LIME is activated, but not active keyboadd
                     {
                         btnSetupImSystemIMPicker.setVisibility(View.VISIBLE);
-                        view.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.VISIBLE);
+                        rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.VISIBLE);
 
                     }
                 }else {
                     btnSetupImSystemSettings.setVisibility(View.VISIBLE);
-                    view.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.VISIBLE);
+                    rootView.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.VISIBLE);
                     btnSetupImSystemIMPicker.setVisibility(View.GONE);
-                    view.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
-                    view.findViewById(R.id.SetupImList).setVisibility(View.GONE);
+                    rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
+                    rootView.findViewById(R.id.SetupImList).setVisibility(View.GONE);
                 }
                 btnSetupImSystemSettings.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -405,7 +396,7 @@ public class SetupImFragment extends Fragment {
                     @Override
                     public void onClick(View v) {
                         LIMEUtilities.showInputMethodPicker(getActivity().getApplicationContext());
-                        view.invalidate();
+                        rootView.invalidate();
                     }
                 });
 

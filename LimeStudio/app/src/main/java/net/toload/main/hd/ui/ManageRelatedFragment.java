@@ -16,15 +16,20 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+
+/* Vpon import
 import com.vpadn.ads.VpadnAdRequest;
 import com.vpadn.ads.VpadnAdSize;
 import com.vpadn.ads.VpadnBanner;
-
+*/
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
 import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.Related;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 
@@ -79,8 +84,8 @@ public class ManageRelatedFragment extends Fragment {
     private LIMEPreferenceManager mLIMEPref;
 
     // AD
-    private RelativeLayout adBannerLayout;
-    private VpadnBanner vpadnBanner = null;
+    //private RelativeLayout adBannerLayout;
+    //private VpadnBanner vpadnBanner = null;
 
     /**
      * Returns a new instance of this fragment for the given section
@@ -100,7 +105,7 @@ public class ManageRelatedFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_manage_related, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_manage_related, container, false);
 
         this.activity = this.getActivity();
         this.datasource = new LimeDB(this.activity);
@@ -113,7 +118,7 @@ public class ManageRelatedFragment extends Fragment {
         this.progress.setMessage(getResources().getString(R.string.manage_related_loading));
         mLIMEPref = new LIMEPreferenceManager(activity);
 
-        this.gridManageRelated = (GridView) root.findViewById(R.id.gridManageRelated);
+        this.gridManageRelated = (GridView) rootView.findViewById(R.id.gridManageRelated);
         this.gridManageRelated.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -133,7 +138,7 @@ public class ManageRelatedFragment extends Fragment {
             }
         });
 
-        this.btnManageRelatedAdd = (Button) root.findViewById(R.id.btnManageRelatedAdd);
+        this.btnManageRelatedAdd = (Button) rootView.findViewById(R.id.btnManageRelatedAdd);
         this.btnManageRelatedAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -144,7 +149,7 @@ public class ManageRelatedFragment extends Fragment {
             }
         });
 
-        this.btnManageRelatedNext = (Button) root.findViewById(R.id.btnManageRelatedNext);
+        this.btnManageRelatedNext = (Button) rootView.findViewById(R.id.btnManageRelatedNext);
         this.btnManageRelatedNext.setEnabled(false);
         this.btnManageRelatedNext.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -157,7 +162,7 @@ public class ManageRelatedFragment extends Fragment {
                 //updateGridView(relatedlist);
             }
         });
-        this.btnManageRelatedPrevious = (Button) root.findViewById(R.id.btnManageRelatedPrevious);
+        this.btnManageRelatedPrevious = (Button) rootView.findViewById(R.id.btnManageRelatedPrevious);
         this.btnManageRelatedPrevious.setEnabled(false);
         this.btnManageRelatedPrevious.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -170,7 +175,7 @@ public class ManageRelatedFragment extends Fragment {
             }
         });
 
-        this.edtManageRelatedSearch = (EditText) root.findViewById(R.id.edtManageRelatedSearch);
+        this.edtManageRelatedSearch = (EditText) rootView.findViewById(R.id.edtManageRelatedSearch);
         this.edtManageRelatedSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -179,7 +184,7 @@ public class ManageRelatedFragment extends Fragment {
             }
         });
 
-        this.btnManageRelatedSearch = (Button) root.findViewById(R.id.btnManageRelatedSearch);
+        this.btnManageRelatedSearch = (Button) rootView.findViewById(R.id.btnManageRelatedSearch);
         this.btnManageRelatedSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -202,7 +207,7 @@ public class ManageRelatedFragment extends Fragment {
             }
         });
 
-        this.txtNavigationInfo = (TextView) root.findViewById(R.id.txtNavigationInfo);
+        this.txtNavigationInfo = (TextView) rootView.findViewById(R.id.txtNavigationInfo);
 
         searchrelated(null);
 
@@ -210,7 +215,8 @@ public class ManageRelatedFragment extends Fragment {
         // Handle AD Display
         boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
         if(!paymentflag) {
-            adBannerLayout = (RelativeLayout) root.findViewById(R.id.adLayout);
+            /*VPon add.
+            adBannerLayout = (RelativeLayout) rootView.findViewById(R.id.adLayout);
             vpadnBanner = new VpadnBanner(getActivity(), Lime.VPON_BANNER_ID, VpadnAdSize.SMART_BANNER, "TW");
 
             VpadnAdRequest adRequest = new VpadnAdRequest();
@@ -218,9 +224,23 @@ public class ManageRelatedFragment extends Fragment {
             vpadnBanner.loadAd(adRequest);
 
             adBannerLayout.addView(vpadnBanner);
+            */
+            AdRequest adRequest = new AdRequest.Builder()
+                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                    .build();
+
+
+            AdView mAdView = (AdView) rootView.findViewById(R.id.adView);
+            mAdView.loadAd(adRequest);
+
+        }
+        else{
+            AdView mAdView = (AdView) rootView.findViewById(R.id.adView);
+            mAdView.setVisibility(View.GONE);
+
         }
 
-        return root;
+        return rootView;
     }
 
     public void searchrelated(){

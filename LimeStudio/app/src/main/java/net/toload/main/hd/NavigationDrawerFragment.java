@@ -6,7 +6,7 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
@@ -24,6 +24,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import net.toload.main.hd.data.Im;
+import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.limesettings.LIMEPreference;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
@@ -138,17 +139,8 @@ public class NavigationDrawerFragment extends Fragment {
             menulist[checkcount] = obj.getDesc();
             checkcount++;
         }
-        /*
-        try {
-            //datasource.open();
 
-            //datasource.close();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }*/
-
-        adapter = new ArrayAdapter<String>(
+        adapter = new ArrayAdapter<>(
                 getActionBar().getThemedContext(),
                 android.R.layout.simple_list_item_activated_1,
                 android.R.id.text1,menulist);
@@ -186,7 +178,7 @@ public class NavigationDrawerFragment extends Fragment {
         mDrawerToggle = new ActionBarDrawerToggle(
                 getActivity(),                    /* host Activity */
                 mDrawerLayout,                    /* DrawerLayout object */
-                R.drawable.ic_drawer,             /* nav drawer image to replace 'Up' caret */
+               // R.drawable.ic_drawer,             /* nav drawer image to replace 'Up' caret */
                 R.string.navigation_drawer_open,  /* "open drawer" description for accessibility */
                 R.string.navigation_drawer_close  /* "close drawer" description for accessibility */
         ) {
@@ -227,7 +219,9 @@ public class NavigationDrawerFragment extends Fragment {
 
         // If the user hasn't 'learned' about the drawer, open it to introduce them to the drawer,
         // per the navigation drawer design guidelines.
-        if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+        // If LIME is not enabled, the setup wizard will be launched and thus don't open the drawer
+        if (LIMEUtilities.isLIMEEnabled(this.getActivity() ) ||
+                ( !mUserLearnedDrawer && !mFromSavedInstanceState) ){
             mDrawerLayout.openDrawer(mFragmentContainerView);
         }
 
@@ -342,7 +336,7 @@ public class NavigationDrawerFragment extends Fragment {
     private void showGlobalContextActionBar() {
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayShowTitleEnabled(true);
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+       // actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD); //deprecated after API 21
         actionBar.setTitle(R.string.app_name);
     }
 
@@ -368,16 +362,7 @@ public class NavigationDrawerFragment extends Fragment {
                 checkcount++;
             }
 
-            /*
-            try {
-                datasource.open();
-
-                datasource.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }*/
-
-            adapter = new ArrayAdapter<String>(
+            adapter = new ArrayAdapter<>(
                     getActionBar().getThemedContext(),
                     android.R.layout.simple_list_item_activated_1,
                     android.R.id.text1,menulist);
@@ -391,7 +376,7 @@ public class NavigationDrawerFragment extends Fragment {
     /**
      * Callbacks interface that all activities using this fragment must implement.
      */
-    public static interface NavigationDrawerCallbacks {
+    public  interface NavigationDrawerCallbacks {
         /**
          * Called when an item in the navigation drawer is selected.
          */
