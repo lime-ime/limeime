@@ -91,7 +91,7 @@ public class LIME {
 	public static final String DATABASE_SOURCE_PHONETIC_LIME = "phonetic_CJK.lime";
 	public static final String DATABASE_SOURCE_FILENAME = "lime.zip";
 	public static final String DATABASE_SOURCE_FILENAME_EMPTY = "empty.zip";
-	public static final String DATABASE_FOLDER =  Environment.getDataDirectory() + "/data/net.toload.main.hd";//databases";
+	public static final String DATABASE_FOLDER =  Environment.getDataDirectory() + "/data/net.toload.main.hd/databases";
 	public static final String SHARED_PREFS_FOLDER =  Environment.getDataDirectory() + "/data/net.toload.main.hd/shared_prefs";
 	public static final String DATABASE_NAME = "lime.db";
 	public static final String DATABASE_JOURNAL = "lime.db-journal";

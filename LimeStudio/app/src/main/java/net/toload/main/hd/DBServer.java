@@ -402,13 +402,12 @@ public class  DBServer {
 		}
 		mLIMEPref.holdDatabaseCoonection(true);
 		closeDatabse(); // Jeremy '12,5,1 close database here.
-		File dbFile, jounralFilel;
+		File dbFile=null, jounralFilel=null;
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
-		try {
+		//try {
 			if (dbtarget.equals("device")) {
 
 				//LIMEUtilities.zipFolder(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + LIME.DATABASE_BACKUP_NAME, LIME.DATABASE_FOLDER, true);
-
 				dbFile = new File(LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_NAME);
 				jounralFilel = new File(LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_JOURNAL);
 			} else {
@@ -416,9 +415,8 @@ public class  DBServer {
 				dbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 				jounralFilel = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_JOURNAL);
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		//} catch (Exception e) {			e.printStackTrace();		}
+
 		compressFile(dbFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_BACKUP_NAME);
 		compressFile(jounralFilel, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_JOURNAL_BACKUP_NAME);
 		mLIMEPref.holdDatabaseCoonection(false);
@@ -461,19 +459,15 @@ public class  DBServer {
 
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
 
-		try {
-			if (dbtarget.equals("device")) {
-				//LIMEUtilities.unzipFolder(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + LIME.DATABASE_BACKUP_NAME, LIME.DATABASE_FOLDER, true);
-				decompressFile(dbBackup, LIME.DATABASE_FOLDER, LIME.DATABASE_NAME, false);
-				decompressFile(journalBackup, LIME.DATABASE_FOLDER, LIME.DATABASE_JOURNAL, false);
-			} else {
-				//LIMEUtilities.unzipFolder(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + LIME.DATABASE_BACKUP_NAME, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, true);
-				decompressFile(dbBackup, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME, false);
-				decompressFile(journalBackup, LIME.DATABASE_FOLDER, LIME.DATABASE_JOURNAL, false);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		if (dbtarget.equals("device")) {
+            //LIMEUtilities.unzipFolder(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + LIME.DATABASE_BACKUP_NAME, LIME.DATABASE_FOLDER, true);
+            decompressFile(dbBackup, LIME.DATABASE_FOLDER, LIME.DATABASE_NAME, false);
+            decompressFile(journalBackup, LIME.DATABASE_FOLDER, LIME.DATABASE_JOURNAL, false);
+        } else {
+            //LIMEUtilities.unzipFolder(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + LIME.DATABASE_BACKUP_NAME, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, true);
+            decompressFile(dbBackup, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME, false);
+            decompressFile(journalBackup, LIME.DATABASE_FOLDER, LIME.DATABASE_JOURNAL, false);
+        }
 
 
 		mLIMEPref.holdDatabaseCoonection(false);
