@@ -24,18 +24,16 @@ import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.session.AppKeyPair;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.services.drive.DriveScopes;
 
+import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Im;
-import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
-import net.toload.main.hd.DBServer;
 import net.toload.main.hd.limesettings.LIMEMappingLoading;
 
 import java.util.Arrays;
@@ -359,8 +357,10 @@ public class SetupImFragment extends Fragment {
                 for(int i = 0; i < imlist.size() ; i++){
                     check.put(imlist.get(i).getCode(), imlist.get(i).getDesc());
                 }
-               // datasource.close();
 
+                // Update IM pick up list items
+                mLIMEPref.syncIMActivatedState(imlist);
+                
                 Context ctx = getActivity().getApplicationContext();
                 if(LIMEUtilities.isLIMEEnabled(getActivity().getApplicationContext())){  //LIME is activated in system
                     btnSetupImSystemSettings.setVisibility(View.GONE);

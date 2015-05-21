@@ -5,6 +5,12 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import net.toload.main.hd.Lime;
+import net.toload.main.hd.data.Im;
+
+import java.util.HashMap;
+import java.util.List;
+
 public class LIMEPreferenceManager {
 	
 	private Context ctx; 
@@ -238,6 +244,64 @@ public class LIMEPreferenceManager {
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("number_row_in_english", false);
+	}
+	public void syncIMActivatedState(List<Im> imlist){
+		String state = "";
+		HashMap<String, String> imhm = new HashMap<String, String>();
+		for(Im i :imlist){
+			imhm.put(i.getCode(), i.getCode());
+		}
+
+		if(imhm.get(Lime.IM_CUSTOM) != null){
+			state += "0";
+		}
+
+		if(imhm.get(Lime.IM_CJ) != null){
+			if(!state.equals("")){state += ";";}
+			state += "1";
+		}
+		if(imhm.get(Lime.IM_SCJ) != null){
+			if(!state.equals("")){state += ";";}
+			state += "2";
+		}
+		if(imhm.get(Lime.IM_CJ5) != null){
+			if(!state.equals("")){state += ";";}
+			state += "3";
+		}
+		if(imhm.get(Lime.IM_ECJ) != null){
+			if(!state.equals("")){state += ";";}
+			state += "4";
+		}
+		if(imhm.get(Lime.IM_DAYI) != null){
+			if(!state.equals("")){state += ";";}
+			state += "5";
+		}
+		if(imhm.get(Lime.IM_PHONETIC) != null){
+			if(!state.equals("")){state += ";";}
+			state += "6";
+		}
+		if(imhm.get(Lime.IM_EZ) != null){
+			if(!state.equals("")){state += ";";}
+			state += "7";
+		}
+		if(imhm.get(Lime.IM_ARRAY) != null){
+			if(!state.equals("")){state += ";";}
+			state += "8";
+		}
+		if(imhm.get(Lime.IM_ARRAY10) != null){
+			if(!state.equals("")){state += ";";}
+			state += "9";
+		}
+		if(imhm.get(Lime.IM_WB) != null){
+			if(!state.equals("")){state += ";";}
+			state += "10";
+		}
+		if(imhm.get(Lime.IM_PINYIN) != null){
+			if(!state.equals("")){state += ";";}
+			state += "11";
+		}
+
+		setIMActivatedState(state);
 	}
 	
 	public String getIMActivatedState(){
