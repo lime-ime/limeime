@@ -13,7 +13,7 @@ import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
-import net.toload.main.hd.limesettings.DBServer;
+import net.toload.main.hd.DBServer;
 
 import java.io.File;
 import java.io.FileNotFoundException;

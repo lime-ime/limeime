@@ -282,7 +282,7 @@ public class LIMEIMSetting extends Activity {
 			mLIMEPref.setParameter("dbtarget","device");
 		}
 		File checkSdFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
-		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+		File checkDbFile = new File(LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_NAME);
 		if((!checkSdFile.exists() && dbtarget.equals("sdcard") )  
 				|| ( !checkDbFile.exists()) && dbtarget.equals("device")) {
 			btnSetupCustom.setEnabled(false);

@@ -21,7 +21,7 @@ import com.google.api.services.drive.model.FileList;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
-import net.toload.main.hd.limesettings.DBServer;
+import net.toload.main.hd.DBServer;
 
 import java.io.File;
 import java.io.FileInputStream;

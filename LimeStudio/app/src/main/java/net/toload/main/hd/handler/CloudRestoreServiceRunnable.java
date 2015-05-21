@@ -211,7 +211,7 @@ public class CloudRestoreServiceRunnable  implements Runnable{
 						String target = mLIMEPref.getParameterString("dbtarget");
 						if (target.equals("device")) {
 							DBServer.decompressFile(tempfile,
-									LIME.DATABASE_DECOMPRESS_FOLDER,
+									LIME.DATABASE_FOLDER,
 									LIME.DATABASE_NAME);
 						} else {
 							DBServer.decompressFile(tempfile,

@@ -1109,7 +1109,7 @@ public class SearchServer {
 		@Deprecated
 		private String getDBPath(String dbTarget){
 			String dbLocationPrefix = (dbTarget.equals("sdcard"))
-					?LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD:LIME.DATABASE_DECOMPRESS_FOLDER;
+					?LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD:LIME.DATABASE_FOLDER;
 			return dbLocationPrefix + File.separator + LIME.DATABASE_NAME;
 		}	
 	 */

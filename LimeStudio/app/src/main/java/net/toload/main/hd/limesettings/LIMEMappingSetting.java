@@ -42,6 +42,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import net.toload.main.hd.DBServer;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIME;

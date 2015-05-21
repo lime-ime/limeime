@@ -18,7 +18,7 @@
  **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.toload.main.hd.limesettings;
+package net.toload.main.hd;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -28,15 +28,14 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.*;
 
-import net.toload.main.hd.Lime;
-import net.toload.main.hd.MainActivity;
-import net.toload.main.hd.R;
 import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIME;
@@ -46,6 +45,7 @@ import net.toload.main.hd.limedb.LimeDB;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -195,7 +195,7 @@ public class  DBServer {
 
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
 		if(dbtarget.equals("device")){
-			File delTargetFile1 = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+			File delTargetFile1 = new File(LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_NAME);
 			if(delTargetFile1.exists()){delTargetFile1.delete();}
 
 		}if(dbtarget.equals("sdcard")){ //Jeremy '11,8,17
@@ -223,7 +223,7 @@ public class  DBServer {
 					String dbtarget = mLIMEPref.getParameterString("dbtarget");
 					String folder = "";
 					if(dbtarget.equals("device")){
-						folder = LIME.DATABASE_DECOMPRESS_FOLDER;
+						folder = LIME.DATABASE_FOLDER;
 					}else{
 						folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
 					}
@@ -265,7 +265,7 @@ public class  DBServer {
 					String dbtarget = mLIMEPref.getParameterString("dbtarget");
 					String folder = "";
 					if(dbtarget.equals("device")){
-						folder = LIME.DATABASE_DECOMPRESS_FOLDER;
+						folder = LIME.DATABASE_FOLDER;
 					}else{
 						folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
 					}
@@ -309,7 +309,7 @@ public class  DBServer {
 					String dbtarget = mLIMEPref.getParameterString("dbtarget");
 					String folder = "";
 					if(dbtarget.equals("device")){
-						folder = LIME.DATABASE_DECOMPRESS_FOLDER;
+						folder = LIME.DATABASE_FOLDER;
 					}else{
 						folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
 					}
@@ -353,7 +353,7 @@ public class  DBServer {
 					String dbtarget = mLIMEPref.getParameterString("dbtarget");
 					String folder = "";
 					if(dbtarget.equals("device")){
-						folder = LIME.DATABASE_DECOMPRESS_FOLDER;
+						folder = LIME.DATABASE_FOLDER;
 					}else{
 						folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
 					}
@@ -390,48 +390,121 @@ public class  DBServer {
 		if(!limedir.exists()){
 			limedir.mkdirs();
 		}
-
+		mLIMEPref.holdDatabase(true);
 		closeDatabse(); // Jeremy '12,5,1 close database here.
-		File srcFile = null;
+		File dbFile, jounralFilel;
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
 		if(dbtarget.equals("device")){
-			srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+			dbFile = new File(LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_NAME);
+			jounralFilel = new File(LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_JOURNAL);
 		}else{
-			srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
+			dbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
+			jounralFilel = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_JOURNAL);
 		}
-		compressFile(srcFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_BACKUP_NAME);
+		compressFile(dbFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_BACKUP_NAME);
+		compressFile(jounralFilel, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_JOURNAL_BACKUP_NAME);
+		mLIMEPref.holdDatabase(false);
 		showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end) + "");
+
+		//backup shared preferences
+		File sharePrefs;
+		sharePrefs = new File(LIME.SHARED_PREFS_FOLDER + File.separator + LIME.SHARED_PREFS);
+		compressFile(sharePrefs, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.SHARED_PREFS_BACKUP_NAME);
+
 
 		//Jeremy '12,4,7 re-open the dbconnection
 		dbAdapter.openDBConnection(true);
 	}
 
+	public static void restoreDatabase(File srcFile, Boolean removeSourceFile) throws RemoteException {
+
+		mLIMEPref.holdDatabase(true);
+		closeDatabse();
+
+		String dbtarget = mLIMEPref.getParameterString("dbtarget");
+		if(dbtarget.equals("device")){
+			decompressFile(srcFile, LIME.DATABASE_FOLDER, LIME.DATABASE_NAME, removeSourceFile);
+		}else{
+			decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME, removeSourceFile);
+		}
+		mLIMEPref.holdDatabase(false);
+
+		dbAdapter.openDBConnection(true);
+	}
 
 	public void restoreDatabase() throws RemoteException {
 		showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start) + "");
-		File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
-		restoreDatabase(srcFile, false);
-		mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
+		mLIMEPref.holdDatabase(true);
+		closeDatabse();
+
+		File dbBackup, journalBackup, sharedPrefsBackup;
+
+		dbBackup = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
+		journalBackup = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_JOURNAL_BACKUP_NAME);
+		sharedPrefsBackup = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.SHARED_PREFS_BACKUP_NAME);
+
+		String dbtarget = mLIMEPref.getParameterString("dbtarget");
+		if(dbtarget.equals("device")){
+			decompressFile(dbBackup, LIME.DATABASE_FOLDER, LIME.DATABASE_NAME, false);
+			decompressFile(journalBackup, LIME.DATABASE_FOLDER, LIME.DATABASE_JOURNAL, false);
+		}else{
+			decompressFile(dbBackup, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME, false);
+			decompressFile(journalBackup, LIME.DATABASE_FOLDER, LIME.DATABASE_JOURNAL, false);
+		}
+		mLIMEPref.holdDatabase(false);
+		dbAdapter.openDBConnection(true);
+		//restore shared preference
+		decompressFile(sharedPrefsBackup, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.SHARED_PREFS, false);
+		File sharePrefs = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.SHARED_PREFS);
+		restoreDefaultSharedPreference(sharePrefs);
+
 		showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end) + "");
 
 
 	}
 
-	public static void restoreDatabase(File srcFile, Boolean removeSourceFile) throws RemoteException {
+	public void restoreDefaultSharedPreference(File sharePrefs )
+	{
+		ObjectInputStream inputStream = null;
 
-		closeDatabse();
+		try {
+			inputStream = new ObjectInputStream(new FileInputStream(sharePrefs));
+			SharedPreferences.Editor prefEdit = ctx.getSharedPreferences(ctx.getPackageName() + "_preferences", Context.MODE_PRIVATE).edit();
+			prefEdit.clear();
+			Map<String, ?> entries = (Map<String, ?>) inputStream.readObject();
+			for (Map.Entry<String, ?> entry : entries.entrySet()) {
+				Object v = entry.getValue();
+				String key = entry.getKey();
 
-		String dbtarget = mLIMEPref.getParameterString("dbtarget");
-		if(dbtarget.equals("device")){
-			decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER, LIME.DATABASE_NAME, removeSourceFile);
-		}else{
-			decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME, removeSourceFile);
+				if (v instanceof Boolean)
+					prefEdit.putBoolean(key, ((Boolean) v).booleanValue());
+				else if (v instanceof Float)
+					prefEdit.putFloat(key, ((Float) v).floatValue());
+				else if (v instanceof Integer)
+					prefEdit.putInt(key, ((Integer) v).intValue());
+				else if (v instanceof Long)
+					prefEdit.putLong(key, ((Long) v).longValue());
+				else if (v instanceof String)
+					prefEdit.putString(key, ((String) v));
+			}
+			prefEdit.commit();
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}finally {
+			try {
+				if (inputStream != null) {
+					inputStream.close();
+				}
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
 		}
-
-
-		dbAdapter.openDBConnection(true);
 	}
-
 
 	public String getImInfo(String im, String field) throws RemoteException {
 		//if (dbAdapter == null) {loadLimeDB();}

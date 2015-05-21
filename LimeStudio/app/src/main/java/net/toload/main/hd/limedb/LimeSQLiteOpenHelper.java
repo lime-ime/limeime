@@ -80,7 +80,7 @@ public abstract class LimeSQLiteOpenHelper {
         }
 
 		/*String dbLocationPrefix = (dbTarget.equals("sdcard"))
-				?LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD:LIME.DATABASE_DECOMPRESS_FOLDER;*/
+				?LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD:LIME.DATABASE_FOLDER;*/
 		
 		return destpath.getAbsolutePath();
 	}

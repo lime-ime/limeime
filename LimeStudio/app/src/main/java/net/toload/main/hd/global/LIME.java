@@ -69,7 +69,6 @@ public class LIME {
 	public static final String IM_LOAD_LIME_ROOT_DIRECTORY = Environment.getExternalStorageDirectory() + "/limehd/";
 	public static final String DOWNLOAD_START = "download_start";
 	public static final String DATABASE_DOWNLOAD_STATUS = "database_download_status";
-	public static final String DATABASE_NAME = "lime.db";
 	public static final String DATABASE_SOURCE_DAYI = "dayi.cin";
 	public static final String DATABASE_SOURCE_PHONETIC = "phonetic.lime";
 	public static final String DATABASE_SOURCE_PHONETIC_CNS = "bopomofo.cin";
@@ -92,9 +91,15 @@ public class LIME {
 	public static final String DATABASE_SOURCE_PHONETIC_LIME = "phonetic_CJK.lime";
 	public static final String DATABASE_SOURCE_FILENAME = "lime.zip";
 	public static final String DATABASE_SOURCE_FILENAME_EMPTY = "empty.zip";
-	public static final String DATABASE_DECOMPRESS_FOLDER =  Environment.getDataDirectory() + "/data/net.toload.main.hd/databases";
-	public static final String DATABASE_DECOMPRESS_FOLDER_SDCARD = Environment.getExternalStorageDirectory() + "/limehd/databases";
+	public static final String DATABASE_FOLDER =  Environment.getDataDirectory() + "/data/net.toload.main.hd/databases";
+	public static final String SHARED_PREFS_FOLDER =  Environment.getDataDirectory() + "/data/net.toload.main.hd/shared_prefs";
+	public static final String DATABASE_NAME = "lime.db";
+	public static final String DATABASE_JOURNAL = "lime.db-journal";
+	public static final String SHARED_PREFS = "net.toload.main.hd_preferences.xml";
+	public static final String DATABASE_DECOMPRESS_FOLDER_SDCARD = Environment.getExternalStorageDirectory() + "/limehd";
 	public static final String DATABASE_BACKUP_NAME = "backup.zip";
+	public static final String DATABASE_JOURNAL_BACKUP_NAME = "backupJournal.zip";
+	public static final String SHARED_PREFS_BACKUP_NAME= "backupPrefs.zip";
 	public static final String DATABASE_CLOUD_TEMP = "cloudtemp.zip";
 	public static final String IM_CJ_STATUS = "im_cj_status";
 	public static final String IM_SCJ_STATUS = "im_scj_status";

@@ -35,7 +35,7 @@ import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
-import net.toload.main.hd.limesettings.DBServer;
+import net.toload.main.hd.DBServer;
 import net.toload.main.hd.limesettings.LIMEMappingLoading;
 
 import java.util.Arrays;

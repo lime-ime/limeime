@@ -20,6 +20,7 @@
 
 package net.toload.main.hd.limesettings;
 
+import net.toload.main.hd.DBServer;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIMEPreferenceManager;

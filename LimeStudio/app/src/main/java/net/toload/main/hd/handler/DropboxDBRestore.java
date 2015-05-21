@@ -17,7 +17,7 @@ import com.dropbox.client2.exception.DropboxUnlinkedException;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.limesettings.DBServer;
+import net.toload.main.hd.DBServer;
 import net.toload.main.hd.ui.SetupImFragment;
 
 import java.io.File;
@@ -177,7 +177,7 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
                 	String target = mLIMEPref.getParameterString("dbtarget");
         			if (target.equals("device")) {
         				DBServer.decompressFile(mFile,
-        						LIME.DATABASE_DECOMPRESS_FOLDER,
+        						LIME.DATABASE_FOLDER,
         						LIME.DATABASE_NAME, true);
         			} else {
         				DBServer.decompressFile(mFile,

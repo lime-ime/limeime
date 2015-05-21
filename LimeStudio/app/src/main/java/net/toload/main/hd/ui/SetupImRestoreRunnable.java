@@ -24,7 +24,7 @@ import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.handler.DropboxDBRestore;
-import net.toload.main.hd.limesettings.DBServer;
+import net.toload.main.hd.DBServer;
 
 import java.io.File;
 import java.io.FileNotFoundException;

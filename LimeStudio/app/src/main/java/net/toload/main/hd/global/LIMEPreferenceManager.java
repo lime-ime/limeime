@@ -108,7 +108,7 @@ public class LIMEPreferenceManager {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getString("mapping_loadg", "no").equals("yes");
 	}
-	public void setMappingLoading(boolean loading){
+	public void holdDatabase(boolean loading){
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		String loadingStatus = loading?"yes":"no";	

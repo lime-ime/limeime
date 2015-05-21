@@ -617,7 +617,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				}
 			}
 			db = this.getWritableDatabase();
-			mLIMEPref.setMappingLoading(false); // Jeremy '12,4,10 reset mapping_loading status
+			mLIMEPref.holdDatabase(false); // Jeremy '12,4,10 reset holdDatabase status
 			return db != null && db.isOpen();
 		}
 	}
@@ -669,7 +669,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 //					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
 //				}
 //			}else{
-//				String devicedb = LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME;
+//				String devicedb = LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_NAME;
 //				
 //				if(readonly){
 //					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
@@ -2578,15 +2578,20 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	*  Backup learned user scores and phrases from the specified table to the backup table.
     *  Jeremy '15,5,21
     */
-	public int backupUserData(final String table)
+	public int backupUserRecords(final String table)
 	{
 		if(!checkDBConnection()) return -1;
 		String backupTableName =table+ "_user";
 
-		db.execSQL("create table " + backupTableName +
-				" as select * from " + table +
+		String selectString = "select * from " + table +
 				" where " + FIELD_WORD + " is not null and " +
-				FIELD_SCORE + " >0 order by " + FIELD_SCORE + " desc");
+				FIELD_SCORE + " >0 order by " + FIELD_SCORE + " desc";
+		Cursor cursor = db.rawQuery(selectString, null);
+
+		if(cursor!=null && cursor.getCount()>0) {
+			cursor.close();
+			db.execSQL("create table " + backupTableName + " as " + selectString);
+		}
 
 		return countMapping(backupTableName);
 	}
@@ -2594,7 +2599,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	*  Restore learned user scores and phrases from the backup table to the specified table.
 	*  Jeremy '15,5,21
 	 */
-	public void restoreUserData(final String table)
+	public void restoreUserRecords(final String table)
 	{
 		if(!checkDBConnection()) return;
 		String backupTableName =table+ "_user";
@@ -2764,7 +2769,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				//db = getSqliteDb(false);
 
 				//Jeremy '12,4,10 db will locked after beginTrasaction();
-				mLIMEPref.setMappingLoading(true);
+				mLIMEPref.holdDatabase(true);
 				db.beginTransaction();
 
 				try {
@@ -2954,7 +2959,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				} finally {
 					if(DEBUG) Log.i(TAG, "loadfile(): main import loop final section");
 					db.endTransaction();
-					mLIMEPref.setMappingLoading(false); // Jeremy '12,4,10 reset mapping_loading status 
+					mLIMEPref.holdDatabase(false); // Jeremy '12,4,10 reset mapping_loading status
 					
 				}
 
@@ -2962,7 +2967,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				// Create related field
 				if(!threadAborted){
 					//db = getSqliteDb(false);
-					mLIMEPref.setMappingLoading(true); // Jeremy '12,4,10 reset mapping_loading status 
+					mLIMEPref.holdDatabase(true); // Jeremy '12,4,10 reset mapping_loading status
 					db.beginTransaction();
 					try{
 						long entrySize = codeList.size();
@@ -2993,7 +2998,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					}finally {
 						if(DEBUG) Log.i(TAG, "loadfile(): related list buiding loop final section");
 						db.endTransaction();
-						mLIMEPref.setMappingLoading(false); // Jeremy '12,4,10 reset mapping_loading status 
+						mLIMEPref.holdDatabase(false); // Jeremy '12,4,10 reset mapping_loading status
 						
 					}
 

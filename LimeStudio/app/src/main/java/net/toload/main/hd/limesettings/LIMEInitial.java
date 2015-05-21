@@ -335,7 +335,7 @@ public class LIMEInitial extends Activity {
 		btnBackupDB.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 		    			
-					File srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+					File srcFile = new File(LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_NAME);
 					File srcFile2 = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 					if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
 						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
@@ -407,7 +407,7 @@ public class LIMEInitial extends Activity {
 				if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
 		        	
 		        
-					File srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+					File srcFile = new File(LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_NAME);
 					File srcFile2 = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 					if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
 						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
@@ -476,7 +476,7 @@ public class LIMEInitial extends Activity {
 				if(connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()){
 		        	
 			        
-					File srcFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+					File srcFile = new File(LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_NAME);
 					File srcFile2 = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 					if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
 						AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
@@ -717,7 +717,7 @@ public class LIMEInitial extends Activity {
 		}
 
 		File checkSdFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
-		File checkDbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER + File.separator + LIME.DATABASE_NAME);
+		File checkDbFile = new File(LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_NAME);
 		if(	( (!checkSdFile.exists() && dbtarget.equals("sdcard") )  
 				|| ( !checkDbFile.exists()) && dbtarget.equals("device")) 
 				&& !mLIMEPref.getParameterBoolean(LIME.DOWNLOAD_START)){

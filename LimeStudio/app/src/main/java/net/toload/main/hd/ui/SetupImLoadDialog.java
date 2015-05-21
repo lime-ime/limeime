@@ -22,7 +22,7 @@ import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
-import net.toload.main.hd.limesettings.DBServer;
+import net.toload.main.hd.DBServer;
 import net.toload.main.hd.limesettings.LIMESelectFileAdapter;
 
 import java.io.File;

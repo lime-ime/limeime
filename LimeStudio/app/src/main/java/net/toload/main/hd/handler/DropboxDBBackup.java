@@ -16,7 +16,7 @@ import com.dropbox.client2.exception.DropboxServerException;
 import com.dropbox.client2.exception.DropboxUnlinkedException;
 
 import net.toload.main.hd.R;
-import net.toload.main.hd.limesettings.DBServer;
+import net.toload.main.hd.DBServer;
 
 import java.io.File;
 import java.io.FileInputStream;
