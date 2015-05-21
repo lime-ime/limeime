@@ -220,8 +220,8 @@ public class NavigationDrawerFragment extends Fragment {
         // If the user hasn't 'learned' about the drawer, open it to introduce them to the drawer,
         // per the navigation drawer design guidelines.
         // If LIME is not enabled, the setup wizard will be launched and thus don't open the drawer
-        if (LIMEUtilities.isLIMEEnabled(this.getActivity() ) ||
-                ( !mUserLearnedDrawer && !mFromSavedInstanceState) ){
+        if (LIMEUtilities.isLIMEEnabled(this.getActivity() ) && !mUserLearnedDrawer) {
+                //( !mUserLearnedDrawer && !mFromSavedInstanceState) ){
             mDrawerLayout.openDrawer(mFragmentContainerView);
         }
 

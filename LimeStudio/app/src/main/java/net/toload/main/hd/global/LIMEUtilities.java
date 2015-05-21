@@ -1,9 +1,16 @@
 package net.toload.main.hd.global;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 //
 import net.toload.main.hd.LIMEService;
 import net.toload.main.hd.R;
@@ -44,6 +51,97 @@ public class LIMEUtilities {
 		else
 			return null;
 	}
+
+	public static void zipFolder( String zipFilePath,  String sourceFolder, Boolean OverWrite)
+			throws Exception {
+		File zipFile = new File(zipFilePath);
+		if( zipFile.exists() && !OverWrite) return;
+		else if(zipFile.exists() && OverWrite) zipFile.delete();
+
+		ZipOutputStream zos = null;
+		FileOutputStream outStream = null;
+		outStream = new FileOutputStream(zipFile);
+		zos = new ZipOutputStream(outStream);
+
+		File item = new File(sourceFolder);
+		for (String fileName : item.list()) {
+			addFileToZip(item. getCanonicalPath(), sourceFolder + File.separator  + fileName, zos);
+		}
+
+		zos.flush();
+		zos.close();
+	}
+
+
+	private static void addFileToZip(String folderPath, String sourceFilePath, ZipOutputStream zos) throws Exception {
+
+		File item = new File(sourceFilePath);
+		if (item.isDirectory()) {
+			for (String fileName : item.list()) {
+				addFileToZip(folderPath + File.separator + item.getName(), sourceFilePath + File.separator  + fileName, zos);
+			}
+		} else {
+			byte[] buf = new byte[102400]; //100k buffer
+			int len;
+			FileInputStream inStream = new FileInputStream(sourceFilePath);
+			zos.putNextEntry(new ZipEntry(folderPath + "/" + item.getName()));
+			while ((len = inStream.read(buf)) > 0) {
+				zos.write(buf, 0, len);
+			}
+
+		}
+	}
+
+	public static void unzipFolder(String zipFilePath, String targetFolder, Boolean OverWrite) throws IOException {
+		unzipFolder(new File(zipFilePath), new File(targetFolder), OverWrite);
+	}
+
+	public static void unzipFolder(File zipFile, File targetDirectory, Boolean OverWrite) throws IOException {
+		ZipInputStream zis = new ZipInputStream(
+				new BufferedInputStream(new FileInputStream(zipFile)));
+		try {
+			ZipEntry ze;
+			int count;
+			byte[] buffer = new byte[8192];
+			while ((ze = zis.getNextEntry()) != null) {
+				File targetFile = new File(targetDirectory, ze.getName());
+				if(targetFile.exists() && OverWrite)
+					targetFile.delete();
+				File dir = ze.isDirectory() ? targetFile : targetFile.getParentFile();
+				if (!dir.isDirectory() && !dir.mkdirs())
+					throw new FileNotFoundException("Failed to ensure target directory: " +	dir.getAbsolutePath());
+				if (ze.isDirectory())
+					continue;
+				FileOutputStream outStream = new FileOutputStream(targetFile);
+				try {
+					while ((count = zis.read(buffer)) != -1)
+						outStream.write(buffer, 0, count);
+				} finally {
+					outStream.close();
+				}
+
+			}
+		} finally {
+			zis.close();
+		}
+	}
+	public static boolean copyFile(String sourceFilePath, String targetFilePath, Boolean overWrite) {
+		File sourceFile = isFileExist(sourceFilePath);
+		if(sourceFilePath == null) return false;
+		File targetFile = isFileExist(targetFilePath);
+		if(targetFilePath!=null && !overWrite ) return false;
+		targetFile = new File(targetFilePath);
+		try{
+			FileInputStream inStream = new FileInputStream(sourceFile);
+			FileOutputStream outSteram = new FileOutputStream(targetFile);
+			copyRAWFile(inStream, outSteram);
+			return true;
+		}
+		catch(Exception ignored){
+			return false;
+		}
+
+	}
 	public static void copyRAWFile(InputStream	inStream, File newfile){
 		try{
 			FileOutputStream fs = new FileOutputStream(newfile);
@@ -64,7 +162,8 @@ public class LIMEUtilities {
 	                   System.out.println(bytesum);   
 	                   outStream.write(buffer, 0, byteread);   
 	             	}   
-	            inStream.close();      
+	            inStream.close();
+				outStream.close();
 	        	}   
 	    	catch(Exception e){      
 	    		e.printStackTrace();   
