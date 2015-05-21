@@ -20,6 +20,31 @@
 
 package net.toload.main.hd.limedb;
 
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.os.RemoteException;
+import android.os.SystemClock;
+import android.util.Log;
+import android.util.Pair;
+import android.util.SparseArray;
+import android.widget.Toast;
+
+import net.toload.main.hd.Lime;
+import net.toload.main.hd.R;
+import net.toload.main.hd.data.Im;
+import net.toload.main.hd.data.Keyboard;
+import net.toload.main.hd.data.Related;
+import net.toload.main.hd.data.Word;
+import net.toload.main.hd.global.ImObj;
+import net.toload.main.hd.global.KeyboardObj;
+import net.toload.main.hd.global.LIME;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
+import net.toload.main.hd.global.Mapping;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -32,30 +57,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-
-import net.toload.main.hd.Lime;
-import net.toload.main.hd.R;
-import net.toload.main.hd.data.Im;
-import net.toload.main.hd.data.Keyboard;
-import net.toload.main.hd.data.Related;
-import net.toload.main.hd.data.Word;
-import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.global.ImObj;
-import net.toload.main.hd.global.KeyboardObj;
-import net.toload.main.hd.global.LIME;
-import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.global.Mapping;
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteException;
-import android.os.RemoteException;
-import android.os.SystemClock;
-import android.util.Log;
-import android.util.Pair;
-import android.util.SparseArray;
-import android.widget.Toast;
 
 /**
  * @author Art Hung and Jeremy Wu.
@@ -84,7 +85,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	public final static String FIELD_ID = "_id";
 	public final static String FIELD_CODE = "code";
 	public final static String FIELD_WORD = "word";
-	public final static String FIELD_RELATED = "related";
+	public final static String FIELD_RELATED = Lime.DB_RELATED;
 	public final static String FIELD_SCORE = "score";
 	public final static String FIELD_BASESCORE = "basescore"; //jeremy '11,9,8 base frequency got from hanconverter when table loading.
 	public final static String FIELD_CODE3R = "code3r";
@@ -267,6 +268,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	// Db loading thread.
 	private Thread thread = null;
 	private boolean threadAborted = false;
+
+	// Cache for Related Score
+	private HashMap<String, Integer> relatedscore  = new HashMap<String, Integer>();
 
 
 	private LimeHanConverter hanConverter;
@@ -607,6 +611,11 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		if(!force_reload && db != null && db.isOpen()) {
 			return true;
 		}else {
+
+			// Reset Related Word Score Cache
+			if(relatedscore != null)
+				relatedscore.clear();
+
 			if(force_reload){
 				try{
 					if( db != null && db.isOpen()){
@@ -739,7 +748,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		mLIMEPref.setTotalUserdictRecords("0");
 		// -------------------------------------------------------------------------
 		//SQLiteDatabase db = this.getSqliteDb(false);
-		db.delete("related", FIELD_DIC_score + " > 0", null);
+		db.delete(Lime.DB_RELATED, FIELD_DIC_score + " > 0", null);
 		
 	}
 
@@ -803,7 +812,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	 *
 	 * not used deprecated by Jeremy '15/5/20
 	 */
-	@Deprecated
+	/*@Deprecated
 	public synchronized void insertList(ArrayList<String> source) {
 
 		this.identifyDelimiter(source);
@@ -840,7 +849,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			}
 		}
 		
-	}
+	}*/
 	/**
 	 * Return the score after add or updated. Jerem '12,6,7
 	 * @param pword
@@ -869,18 +878,27 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			Mapping munit = this.isUserDictExistOnDB(db, pword , cword);
 
 			if (munit == null) {
-				cv.put(FIELD_DIC_pword, pword);
-				cv.put(FIELD_DIC_cword, cword);
-				cv.put(FIELD_DIC_score, score);
-				db.insert("related", null, cv);
+				cv.put(Lime.DB_RELATED_COLUMN_PWORD, pword);
+				cv.put(Lime.DB_RELATED_COLUMN_CWORD, cword);
+				cv.put(Lime.DB_RELATED_COLUMN_SCORE, score);
+				cv.put(Lime.DB_RELATED_COLUMN_USERSCORE, score);
+				db.insert(Lime.DB_RELATED, null, cv);
 				dictotal++;
 				mLIMEPref.setTotalUserdictRecords(String.valueOf(dictotal));
 				if(DEBUG)
 					Log.i(TAG, "addOrUpdateUserdictRecord(): new record, dictotal:" + dictotal);
 			}else{//the item exist in preload related database.
-				score = munit.getScore()+1;
-				cv.put(FIELD_SCORE, score);
-				db.update("related", cv, FIELD_ID + " = " + munit.getId(), null);
+				if(relatedscore.get(munit.getId()) == null){
+					score = munit.getUserscore() + 1;
+					relatedscore.put(munit.getId(), score);
+				}else{
+					score = relatedscore.get(munit.getId()) + 1;
+					relatedscore.put(munit.getId(), score);
+				}
+				cv.put(Lime.DB_RELATED_COLUMN_USERSCORE, score);
+				db.update(Lime.DB_RELATED, cv, FIELD_ID + " = " + munit.getId(), null);
+
+				//Log.i("TAG RELATED A", munit.getId() + " : Related ADD Score :" + score);
 
 				if(DEBUG)
 					Log.i(TAG, "addOrUpdateUserdictRecord():update score on existing record; score:"+score);
@@ -971,24 +989,37 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 			if (srcunit != null && 	srcunit.getWord() != null  &&
 					!srcunit.getWord().trim().equals("") ) {
-				int highestScore = getHighestScoreOnDB(db, srcunit.getWord());
+				//int highestScore = getHighestScoreOnDB(db, srcunit.getWord());
 				int newScore = 0;
-				if(srcunit.getId()==null)
-					newScore = highestScore +1; // selected from related code list without scores infromaiton
+				/*if(srcunit.getId()==null)
+					newScore = highestScore +1; // selected from related code list without scores information
 				else
-					newScore = srcunit.getScore() + 1;
+					newScore = srcunit.getScore() + 1;*/
 
 				if(DEBUG) Log.i(TAG, "addScore(): addScore on word:"+srcunit.getWord());
 
 				if(srcunit.isDictionary()){
+
+					int score = 1;
+					if(relatedscore.get(srcunit.getId()) == null){
+						score = srcunit.getUserscore() + 1;
+						relatedscore.put(srcunit.getId(), score);
+					}else{
+						score = relatedscore.get(srcunit.getId()) + 1;
+						relatedscore.put(srcunit.getId(), score);
+					}
+
 					ContentValues cv = new ContentValues();
-					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
-					db.update("related", cv, FIELD_ID + " = " + srcunit.getId(), null);
+					cv.put(Lime.DB_RELATED_COLUMN_USERSCORE, score);
+					db.update(Lime.DB_RELATED, cv, FIELD_ID + " = " + srcunit.getId(), null);
+
+					//Log.i("TAG RELATED B", srcunit.getId() + " : Related ADD Score :" + score);
+
 				}else{
 					ContentValues cv = new ContentValues();
-					cv.put(FIELD_SCORE, newScore);
-					if(newScore< highestScore || (srcunit.getId()==null))
-						cv.put(FIELD_RELATED, "");
+					cv.put(FIELD_SCORE, srcunit.getScore() + 1);
+					/*if(newScore< highestScore || (srcunit.getId()==null))
+						cv.put(FIELD_RELATED, "");*/
 
 					// Jeremy 11',7,29  update according to word instead of ID, may have multiple records mathing word but with diff code/id 
 					db.update(tablename, cv, FIELD_WORD + " = '" + srcunit.getWord() + "'", null);
@@ -2509,8 +2540,9 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					String last = pword.substring(pword.length()-1);
 
 					String selectString =
-							"SELECT " + FIELD_ID + ", " + FIELD_DIC_pword + ", "  + FIELD_DIC_cword + ", " + FIELD_SCORE
-									+ ", length(" + FIELD_DIC_pword +") as len from related where "
+							"SELECT " + FIELD_ID + ", " + FIELD_DIC_pword + ", "  + FIELD_DIC_cword + ", "
+									+ FIELD_SCORE+ ", " + Lime.DB_RELATED_COLUMN_USERSCORE
+									+ ", length(" + FIELD_DIC_pword +") as len FROM "+Lime.DB_RELATED+" where "
 									+ FIELD_DIC_pword + " = '" + pword
 									+ "' or " + FIELD_DIC_pword + " = '" + last
 									+ "' and " + FIELD_DIC_cword + " is not null"
@@ -2525,26 +2557,23 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 							
 		
 				}else {
-					cursor = db.query("related", null, FIELD_DIC_pword + " = '" + pword
+					cursor = db.query(Lime.DB_RELATED, null, FIELD_DIC_pword + " = '" + pword
 							+ "' and " + FIELD_DIC_cword + " is not null "
-							, null, null , null, FIELD_SCORE + " DESC", limitClause);
+							, null, null , null, Lime.DB_RELATED_COLUMN_USERSCORE + " DESC, " + Lime.DB_RELATED_COLUMN_SCORE + " DESC", limitClause);
 				}
 				if (cursor != null) {
 
 					if (cursor.moveToFirst()) {
 
-						int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
-						int cwordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
-						int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
-						int idColumn = cursor.getColumnIndex(FIELD_ID);
 						int rsize = 0;
 						do {
 							Mapping munit = new Mapping();
-							munit.setId(cursor.getString(idColumn));
-							munit.setPword(cursor.getString(pwordColumn));
+							munit.setId(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_ID)));
+							munit.setPword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_PWORD)));
 							munit.setCode("");
-							munit.setWord(cursor.getString(cwordColumn));
-							munit.setScore(cursor.getInt(scoreColumn));
+							munit.setWord(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD)));
+							munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_SCORE)));
+							munit.setUserscore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
 							munit.setDictionary(true);
 							result.add(munit);
 							rsize++;
@@ -3330,26 +3359,22 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 			Cursor cursor = null;
 
 			if(cword==null || cword.trim().equals("")){
-				cursor = db.query("related", null, FIELD_DIC_pword + " = '"
+				cursor = db.query(Lime.DB_RELATED, null, FIELD_DIC_pword + " = '"
 						+ pword + "'" + " AND " + FIELD_DIC_cword + " IS NULL"
 						, null, null, null, null, null);
 			}else{
-				cursor = db.query("related", null, FIELD_DIC_pword + " = '"
+				cursor = db.query(Lime.DB_RELATED, null, FIELD_DIC_pword + " = '"
 						+ pword + "'" + " AND " + FIELD_DIC_cword + " = '"
 						+ cword + "'", null, null, null, null, null);
 			}
 
 			if (cursor.moveToFirst()) {
-				int pwordColumn = cursor.getColumnIndex(FIELD_DIC_pword);
-				int cwordColumn = cursor.getColumnIndex(FIELD_DIC_cword);
-				int scoreColumn = cursor.getColumnIndex(FIELD_DIC_score);
-				int idColumn = cursor.getColumnIndex(FIELD_ID);
-
 				munit = new Mapping();
-				munit.setId(cursor.getString(idColumn));
-				munit.setPword(cursor.getString(pwordColumn));
-				munit.setWord(cursor.getString(cwordColumn));
-				munit.setScore(cursor.getInt(scoreColumn));
+				munit.setId(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_ID)));
+				munit.setPword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_PWORD)));
+				munit.setWord(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD)));
+				munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_SCORE)));
+				munit.setUserscore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
 				munit.setDictionary(true);
 
 			}
@@ -4014,6 +4039,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 		List<Related> result = new ArrayList<Related>();
 
 		if (db != null && db.isOpen()) {
+
 			Cursor cursor = null;
 
 			String query = "";
@@ -4024,7 +4050,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 			query += "ifnull(" + Lime.DB_RELATED_COLUMN_CWORD + ", '') <> ''";
 
-			String order = Lime.DB_RELATED_COLUMN_PWORD + " asc," + Lime.DB_RELATED_COLUMN_SCORE + " desc";
+			String order = Lime.DB_RELATED_COLUMN_USERSCORE + " desc," + Lime.DB_RELATED_COLUMN_SCORE + " desc";
 
 			if (maximum > 0) {
 				order += " LIMIT " + maximum + " OFFSET " + offset;
