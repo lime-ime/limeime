@@ -360,7 +360,7 @@ public class SetupImFragment extends Fragment {
 
                 // Update IM pick up list items
                 mLIMEPref.syncIMActivatedState(imlist);
-                
+
                 Context ctx = getActivity().getApplicationContext();
                 if(LIMEUtilities.isLIMEEnabled(getActivity().getApplicationContext())){  //LIME is activated in system
                     btnSetupImSystemSettings.setVisibility(View.GONE);
