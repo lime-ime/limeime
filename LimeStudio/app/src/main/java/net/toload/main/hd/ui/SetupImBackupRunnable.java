@@ -264,7 +264,7 @@ public class SetupImBackupRunnable implements Runnable {
         @Override
         protected void onProgressUpdate(Long... progress) {
             int percent = (int) (100.0 * (double) progress[0] / mFileLen + 0.5);
-            mHandler.updateProgress( mFragment.getText(R.string.l3_initial_dropbox_backup_database).toString()  +"  "+  percent + "%");
+            mHandler.updateProgress( mFragment.getText(R.string.l3_initial_dropbox_uploading).toString()  +"  "+  percent + "%");
 
         }
         @Override
