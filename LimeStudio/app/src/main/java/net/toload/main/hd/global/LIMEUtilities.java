@@ -174,7 +174,7 @@ public class LIMEUtilities {
 		try {
 			ZipEntry ze;
 			int count;
-			byte[] buffer = new byte[8192];
+			byte[] buffer = new byte[102400];
 			while ((ze = zis.getNextEntry()) != null) {
 				String itemName = ze.getName();
 				File targetFile = null;

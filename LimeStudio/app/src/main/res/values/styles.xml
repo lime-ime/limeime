@@ -24,14 +24,14 @@
         <item name="keyBackground">@drawable/btn_keyboard_key</item>
         <item name="keyTextSize">@dimen/key_text_size</item>
 
-        <item name="keyTextColorNormal">#FF0F0F0F</item>
-        <item name="keyTextColorPressed">#FF4DB6AC</item>
+        <item name="keyTextColorNormal">@color/limekeyboard_key_color_light</item>
+        <item name="keyTextColorPressed">@color/limekeyboard_key_color_light_hl</item>
 
-        <item name="functionKeyTextColorNormal">#FF717171</item>
-        <item name="functionKeyTextColorPressed">#FF80CBC4</item>
+        <item name="functionKeyTextColorNormal">@color/limekeyboard_function_key_color_light</item>
+        <item name="functionKeyTextColorPressed">@color/limekeyboard_function_key_color_light_hl</item>
 
-        <item name="keySubLabelTextColorNormal">#FF7D7D7D</item>
-        <item name="keySubLabelTextColorPressed">#FF80CBC4</item>
+        <item name="keySubLabelTextColorNormal">@color/limekeyboard_subkey_color_light</item>
+        <item name="keySubLabelTextColorPressed">@color/limekeyboard_subkey_color_light_hl</item>
 
         <item name="keyPreviewLayout">@layout/key_preview</item>
         <item name="keyPreviewOffset">@dimen/key_preview_offset</item>

@@ -396,7 +396,7 @@ public class  DBServer {
 	public static void backupDatabase() throws RemoteException {
 		if (DEBUG)
 			Log.i(TAG, "backupDatabase()");
-		showNotificationMessage(ctx.getText(R.string.l3_initial_backup_start) + "");
+		//showNotificationMessage(ctx.getText(R.string.l3_initial_backup_start) + "");
 
 		File limedir = new File(LIME.LIME_SDCARD_FOLDER + File.separator);
 		if (!limedir.exists()) {
@@ -423,9 +423,9 @@ public class  DBServer {
 			LIMEUtilities.zip(LIME.LIME_SDCARD_FOLDER+ LIME.DATABASE_BACKUP_NAME, backupFileList, LIME.getLimeDataRootFolder() , true);
 		} catch (Exception e) {
 			e.printStackTrace();
-			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end) + "");
-		} finally {
 			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_error) + "");
+		} finally {
+			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end) + "");
 		}
 
 
