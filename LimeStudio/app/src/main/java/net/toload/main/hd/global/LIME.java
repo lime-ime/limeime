@@ -99,7 +99,7 @@ public class LIME {
 	public static final String DATABASE_DECOMPRESS_FOLDER_SDCARD = Environment.getExternalStorageDirectory() + "/limehd";
 	public static final String DATABASE_BACKUP_NAME = "backup.zip";
 	public static final String DATABASE_JOURNAL_BACKUP_NAME = "backupJournal.zip";
-	public static final String SHARED_PREFS_BACKUP_NAME= "backupPrefs.zip";
+	public static final String SHARED_PREFS_BACKUP_NAME= "shared_prefs.bak";
 	public static final String DATABASE_CLOUD_TEMP = "cloudtemp.zip";
 	public static final String IM_CJ_STATUS = "im_cj_status";
 	public static final String IM_SCJ_STATUS = "im_scj_status";

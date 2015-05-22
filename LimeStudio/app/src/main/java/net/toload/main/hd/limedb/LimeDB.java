@@ -626,7 +626,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				}
 			}
 			db = this.getWritableDatabase();
-			mLIMEPref.holdDatabase(false); // Jeremy '12,4,10 reset holdDatabase status
+			mLIMEPref.holdDatabaseCoonection(false); // Jeremy '12,4,10 reset holdDatabaseCoonection status
 			return db != null && db.isOpen();
 		}
 	}
@@ -2813,7 +2813,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				//db = getSqliteDb(false);
 
 				//Jeremy '12,4,10 db will locked after beginTrasaction();
-				mLIMEPref.holdDatabase(true);
+				mLIMEPref.holdDatabaseCoonection(true);
 				db.beginTransaction();
 
 				try {
@@ -3003,7 +3003,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				} finally {
 					if(DEBUG) Log.i(TAG, "loadfile(): main import loop final section");
 					db.endTransaction();
-					mLIMEPref.holdDatabase(false); // Jeremy '12,4,10 reset mapping_loading status
+					mLIMEPref.holdDatabaseCoonection(false); // Jeremy '12,4,10 reset mapping_loading status
 					
 				}
 
@@ -3011,7 +3011,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 				// Create related field
 				if(!threadAborted){
 					//db = getSqliteDb(false);
-					mLIMEPref.holdDatabase(true); // Jeremy '12,4,10 reset mapping_loading status
+					mLIMEPref.holdDatabaseCoonection(true); // Jeremy '12,4,10 reset mapping_loading status
 					db.beginTransaction();
 					try{
 						long entrySize = codeList.size();
@@ -3042,7 +3042,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 					}finally {
 						if(DEBUG) Log.i(TAG, "loadfile(): related list buiding loop final section");
 						db.endTransaction();
-						mLIMEPref.holdDatabase(false); // Jeremy '12,4,10 reset mapping_loading status
+						mLIMEPref.holdDatabaseCoonection(false); // Jeremy '12,4,10 reset mapping_loading status
 						
 					}
 
