@@ -177,7 +177,7 @@ public class DropboxDBRestore extends AsyncTask<Void, Long, Boolean> {
                 	String target = mLIMEPref.getParameterString("dbtarget");
         			if (target.equals("device")) {
         				DBServer.decompressFile(mFile,
-        						LIME.DATABASE_FOLDER,
+        						LIME.getLIMEDatabaseFolder(),
         						LIME.DATABASE_NAME, true);
         			} else {
         				DBServer.decompressFile(mFile,

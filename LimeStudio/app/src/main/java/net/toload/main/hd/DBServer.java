@@ -33,6 +33,7 @@ import java.io.ObjectOutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.*;
@@ -135,8 +136,9 @@ public class  DBServer {
 
 		List<Word> results = null;
 
-		String sourcedbfile = Lime.DATABASE_FOLDER_EXTERNAL + imtype;
-		decompressFile(compressedSourceDB, Lime.DATABASE_FOLDER_EXTERNAL, imtype, true);
+		String sourcedbfile = LIME.LIME_SDCARD_FOLDER + imtype;
+		decompressFile(compressedSourceDB, LIME.LIME_SDCARD_FOLDER, imtype, true);
+		//LIMEUtilities(compressedSourceDB)
 
 		return dbAdapter.importDb(sourcedbfile, imtype);
 	}
@@ -196,7 +198,7 @@ public class  DBServer {
 
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
 		if (dbtarget.equals("device")) {
-			File delTargetFile1 = new File(LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_NAME);
+			File delTargetFile1 = new File(LIME.getLIMEDatabaseFolder() + File.separator + LIME.DATABASE_NAME);
 			if (delTargetFile1.exists()) {
 				delTargetFile1.delete();
 			}
@@ -208,8 +210,8 @@ public class  DBServer {
 				delTargetFile2.delete();
 			}
 		}
-		File delTargetFile3 = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_SOURCE_FILENAME);
-		File delTargetFile2 = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_SOURCE_FILENAME_EMPTY);
+		File delTargetFile3 = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_SOURCE_FILENAME);
+		File delTargetFile2 = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_SOURCE_FILENAME_EMPTY);
 		if (delTargetFile3.exists()) {
 			delTargetFile3.delete();
 		}
@@ -226,14 +228,14 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start_empty) + "");
-				downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_EMPTY, LIME.G_IM_DOWNLOAD_TARGET_EMPTY, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME_EMPTY);
+				downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_EMPTY, LIME.G_IM_DOWNLOAD_TARGET_EMPTY, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_FILENAME_EMPTY);
 				if (downloadedFile == null) {
 					mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
 				} else {
 					String dbtarget = mLIMEPref.getParameterString("dbtarget");
 					String folder = "";
 					if (dbtarget.equals("device")) {
-						folder = LIME.DATABASE_FOLDER;
+						folder = LIME.getLIMEDatabaseFolder();
 					} else {
 						folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
 					}
@@ -267,7 +269,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start)+ "", intentLIMEMenu);
-				downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY, LIME.G_IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
+				downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY, LIME.G_IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_FILENAME);
 				if(downloadedFile==null){
 					//showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 					mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
@@ -275,7 +277,7 @@ public class  DBServer {
 					String dbtarget = mLIMEPref.getParameterString("dbtarget");
 					String folder = "";
 					if(dbtarget.equals("device")){
-						folder = LIME.DATABASE_FOLDER;
+						folder = LIME.getLIMEDatabaseFolder();
 					}else{
 						folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
 					}
@@ -311,7 +313,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start) + "");
-				downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PHONETIC_ONLY, LIME.G_IM_DOWNLOAD_TARGET_PHONETIC_ONLY, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
+				downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PHONETIC_ONLY, LIME.G_IM_DOWNLOAD_TARGET_PHONETIC_ONLY, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_FILENAME);
 				if (downloadedFile == null) {
 					//showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 					mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
@@ -319,7 +321,7 @@ public class  DBServer {
 					String dbtarget = mLIMEPref.getParameterString("dbtarget");
 					String folder = "";
 					if (dbtarget.equals("device")) {
-						folder = LIME.DATABASE_FOLDER;
+						folder = LIME.getLIMEDatabaseFolder();
 					} else {
 						folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
 					}
@@ -355,7 +357,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_start) + "");
-				downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PRELOADED, LIME.G_IM_DOWNLOAD_TARGET_PRELOADED, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_FILENAME);
+				downloadedFile = downloadRemoteFile(LIME.IM_DOWNLOAD_TARGET_PRELOADED, LIME.G_IM_DOWNLOAD_TARGET_PRELOADED, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_FILENAME);
 				if (downloadedFile == null) {
 					//showNotificationMessage(ctx.getText(R.string.l3_dbservice_download_loaded)+ "", intentLIMEMenu);
 					mLIMEPref.setParameter(LIME.DOWNLOAD_START, false);
@@ -363,7 +365,7 @@ public class  DBServer {
 					String dbtarget = mLIMEPref.getParameterString("dbtarget");
 					String folder = "";
 					if (dbtarget.equals("device")) {
-						folder = LIME.DATABASE_FOLDER;
+						folder = LIME.getLIMEDatabaseFolder();
 					} else {
 						folder = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD;
 					}
@@ -391,45 +393,71 @@ public class  DBServer {
 		threadTask.start();
 	}
 
-	public void backupDatabase() throws RemoteException {
+	public static void backupDatabase() throws RemoteException {
 		if (DEBUG)
 			Log.i(TAG, "backupDatabase()");
 		showNotificationMessage(ctx.getText(R.string.l3_initial_backup_start) + "");
 
-		File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
+		File limedir = new File(LIME.LIME_SDCARD_FOLDER + File.separator);
 		if (!limedir.exists()) {
 			limedir.mkdirs();
 		}
+
+		//backup shared preferences
+		File fileSharedPrefsBakup = new File(LIME.getLimeDataRootFolder(), LIME.SHARED_PREFS_BACKUP_NAME);
+		if(fileSharedPrefsBakup.exists())  fileSharedPrefsBakup.delete();
+		backupDefaultSharedPreference(fileSharedPrefsBakup);
+
+		// create backup file list.
+		List<String> backupFileList = new ArrayList<>();
+		backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator+ LIME.DATABASE_NAME);
+		backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator+LIME.DATABASE_JOURNAL);
+		backupFileList.add(LIME.SHARED_PREFS_BACKUP_NAME);
+
+		// hold database connection and close database.
 		mLIMEPref.holdDatabaseCoonection(true);
-		closeDatabse(); // Jeremy '12,5,1 close database here.
+		closeDatabse();
+
+		//ready to zip backup file list
+		try {
+			LIMEUtilities.zip(LIME.LIME_SDCARD_FOLDER+ LIME.DATABASE_BACKUP_NAME, backupFileList, LIME.getLimeDataRootFolder() , true);
+		} catch (Exception e) {
+			e.printStackTrace();
+			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end) + "");
+		} finally {
+			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_error) + "");
+		}
+
+
+		/*
 		File dbFile=null, jounralFilel=null;
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
 		//try {
 			if (dbtarget.equals("device")) {
 
-				//LIMEUtilities.zipFolder(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + LIME.DATABASE_BACKUP_NAME, LIME.DATABASE_FOLDER, true);
-				dbFile = new File(LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_NAME);
-				jounralFilel = new File(LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_JOURNAL);
+				//LIMEUtilities.zipFolder(LIME.LIME_SDCARD_FOLDER + LIME.DATABASE_BACKUP_NAME, LIME.getLIMEDatabaseFolder(), true);
+				dbFile = new File(LIME.getLIMEDatabaseFolder() + File.separator + LIME.DATABASE_NAME);
+				jounralFilel = new File(LIME.getLIMEDatabaseFolder() + File.separator + LIME.DATABASE_JOURNAL);
 			} else {
-				//LIMEUtilities.zipFolder(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + LIME.DATABASE_BACKUP_NAME, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, true);
+				//LIMEUtilities.zipFolder(LIME.LIME_SDCARD_FOLDER + LIME.DATABASE_BACKUP_NAME, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, true);
 				dbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 				jounralFilel = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_JOURNAL);
 			}
 		//} catch (Exception e) {			e.printStackTrace();		}
+		compressFile(dbFile, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_BACKUP_NAME);
+		compressFile(jounralFilel, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_JOURNAL_BACKUP_NAME);
+		*/
 
-		compressFile(dbFile, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_BACKUP_NAME);
-		compressFile(jounralFilel, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_JOURNAL_BACKUP_NAME);
+		// backup finished.  unhold the database connection and false reopen the database.
 		mLIMEPref.holdDatabaseCoonection(false);
-		showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end) + "");
-
-		//backup shared preferences
-		backupDefaultSharedPreference(new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + LIME.SHARED_PREFS_BACKUP_NAME));
-
-
-		//Jeremy '12,4,7 re-open the dbconnection
 		dbAdapter.openDBConnection(true);
-	}
 
+		//cleanup the shared preference backup file.
+		if( fileSharedPrefsBakup!=null && fileSharedPrefsBakup.exists() ) fileSharedPrefsBakup.delete();
+
+
+	}
+/*
 	public static void restoreDatabase(File srcFile, Boolean removeSourceFile) throws RemoteException {
 
 		mLIMEPref.holdDatabaseCoonection(true);
@@ -437,50 +465,70 @@ public class  DBServer {
 
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
 			if (dbtarget.equals("device")) {
-				decompressFile(srcFile, LIME.DATABASE_FOLDER, LIME.DATABASE_NAME, removeSourceFile);
+				decompressFile(srcFile, LIME.getLIMEDatabaseFolder(), LIME.DATABASE_NAME, removeSourceFile);
 			} else {decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME, removeSourceFile);
 			}
+
 
 		mLIMEPref.holdDatabaseCoonection(false);
 
 		dbAdapter.openDBConnection(true);
 	}
+*/
+	public static void restoreDatabase() throws RemoteException {
+		restoreDatabase(LIME.LIME_SDCARD_FOLDER + LIME.DATABASE_BACKUP_NAME, false);
+	}
+	public static void restoreDatabase(String srcFilePath, Boolean removeSourceFile) throws RemoteException {
 
-	public void restoreDatabase() throws RemoteException {
 		showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start) + "");
 		mLIMEPref.holdDatabaseCoonection(true);
 		closeDatabse();
 
-		File dbBackup, journalBackup, sharedPrefsBackup;
+		try {
+			LIMEUtilities.unzip(srcFilePath, LIME.getLimeDataRootFolder(), true);
+		} catch (Exception e) {
+			e.printStackTrace();
+			showNotificationMessage(ctx.getText(R.string.l3_initial_restore_error) + "");
+		}
+		finally {
+			showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end) + "");
+		}
 
-		dbBackup = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
-		journalBackup = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_JOURNAL_BACKUP_NAME);
-		sharedPrefsBackup = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.SHARED_PREFS_BACKUP_NAME);
+
+		/*
+		File dbBackup, journalBackup, sharedPrefsBackup;
+		dbBackup = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_BACKUP_NAME);
+		journalBackup = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_JOURNAL_BACKUP_NAME);
+		sharedPrefsBackup = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.SHARED_PREFS_BACKUP_NAME);
 
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
 
 		if (dbtarget.equals("device")) {
-            //LIMEUtilities.unzipFolder(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + LIME.DATABASE_BACKUP_NAME, LIME.DATABASE_FOLDER, true);
-            decompressFile(dbBackup, LIME.DATABASE_FOLDER, LIME.DATABASE_NAME, false);
-            decompressFile(journalBackup, LIME.DATABASE_FOLDER, LIME.DATABASE_JOURNAL, false);
+			try {
+				LIMEUtilities.unzip(LIME.LIME_SDCARD_FOLDER + LIME.DATABASE_BACKUP_NAME, LIME.getLIMEDatabaseFolder(), true);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			//decompressFile(dbBackup, LIME.getLIMEDatabaseFolder(), LIME.DATABASE_NAME, false);
+           // decompressFile(journalBackup, LIME.getLIMEDatabaseFolder(), LIME.DATABASE_JOURNAL, false);
         } else {
-            //LIMEUtilities.unzipFolder(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + LIME.DATABASE_BACKUP_NAME, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, true);
+            //LIMEUtilities.unzip(LIME.LIME_SDCARD_FOLDER + LIME.DATABASE_BACKUP_NAME, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, true);
             decompressFile(dbBackup, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME, false);
-            decompressFile(journalBackup, LIME.DATABASE_FOLDER, LIME.DATABASE_JOURNAL, false);
+            decompressFile(journalBackup, LIME.getLIMEDatabaseFolder(), LIME.DATABASE_JOURNAL, false);
         }
-
+		*/
 
 		mLIMEPref.holdDatabaseCoonection(false);
 		dbAdapter.openDBConnection(true);
 		//restore shared preference
-		restoreDefaultSharedPreference(new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + LIME.SHARED_PREFS_BACKUP_NAME));
+		restoreDefaultSharedPreference(new File(LIME.LIME_SDCARD_FOLDER + LIME.SHARED_PREFS_BACKUP_NAME));
 
-		showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end) + "");
+
 
 
 	}
 
-	public void backupDefaultSharedPreference(File sharePrefs) {
+	public static void backupDefaultSharedPreference(File sharePrefs) {
 
 		if(sharePrefs.exists()) sharePrefs.delete();
 
@@ -509,7 +557,7 @@ public class  DBServer {
 
 
 
-	public void restoreDefaultSharedPreference(File sharePrefs )
+	public static void restoreDefaultSharedPreference(File sharePrefs )
 	{
 		ObjectInputStream inputStream = null;
 
@@ -621,7 +669,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_dayi_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.DAYI_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_DAYI);
+				downloadedFile = downloadRemoteFile(LIME.DAYI_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_DAYI);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_dayi_install)+ "");
 					try {
@@ -642,7 +690,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj_cns_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.G_CJ_11643_DOWNLOAD_URL, LIME.G_CJ_11643_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ_CNS);
+				downloadedFile = downloadRemoteFile(LIME.G_CJ_11643_DOWNLOAD_URL, LIME.G_CJ_11643_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_CJ_CNS);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj_cns_install)+ "");
 					try {
@@ -663,7 +711,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_cns_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.G_PHONETIC_11643_DOWNLOAD_URL, LIME.G_PHONETIC_11643_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETIC_CNS);
+				downloadedFile = downloadRemoteFile(LIME.G_PHONETIC_11643_DOWNLOAD_URL, LIME.G_PHONETIC_11643_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_PHONETIC_CNS);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_cns_install)+ "");
 					try {
@@ -683,7 +731,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_adv_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.CJK_PHONETICADV_DOWNLOAD_URL, LIME.G_CJK_PHONETICADV_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETICADV);
+				downloadedFile = downloadRemoteFile(LIME.CJK_PHONETICADV_DOWNLOAD_URL, LIME.G_CJK_PHONETICADV_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_PHONETICADV);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_adv_install)+ "");
 					try {
@@ -703,7 +751,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.PHONETIC_DOWNLOAD_URL, LIME.G_PHONETIC_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETIC);
+				downloadedFile = downloadRemoteFile(LIME.PHONETIC_DOWNLOAD_URL, LIME.G_PHONETIC_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_PHONETIC);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_phonetic_install)+ "");
 					try {
@@ -723,7 +771,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj5_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.CJ5_DOWNLOAD_URL, LIME.G_CJ5_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ5);
+				downloadedFile = downloadRemoteFile(LIME.CJ5_DOWNLOAD_URL, LIME.G_CJ5_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_CJ5);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj5_install)+ "");
 					try {
@@ -743,7 +791,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ecj_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.ECJ_DOWNLOAD_URL, LIME.G_ECJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ECJ);
+				downloadedFile = downloadRemoteFile(LIME.ECJ_DOWNLOAD_URL, LIME.G_ECJ_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_ECJ);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ecj_install)+ "");
 					try {
@@ -763,7 +811,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_hs_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.HS_DOWNLOAD_URL, LIME.G_HS_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_HS);
+				downloadedFile = downloadRemoteFile(LIME.HS_DOWNLOAD_URL, LIME.G_HS_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_HS);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_hs_install)+ "");
 					try {
@@ -783,7 +831,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_wb_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.WB_DOWNLOAD_URL, LIME.G_WB_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_WB);
+				downloadedFile = downloadRemoteFile(LIME.WB_DOWNLOAD_URL, LIME.G_WB_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_WB);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_wb_install)+ "");
 					try {
@@ -803,7 +851,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.CJ_DOWNLOAD_URL, LIME.G_CJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ);
+				downloadedFile = downloadRemoteFile(LIME.CJ_DOWNLOAD_URL, LIME.G_CJ_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_CJ);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cj_install)+ "");
 					try {
@@ -823,7 +871,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_scj_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.SCJ_DOWNLOAD_URL, LIME.G_SCJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_SCJ);
+				downloadedFile = downloadRemoteFile(LIME.SCJ_DOWNLOAD_URL, LIME.G_SCJ_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_SCJ);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_scj_install)+ "");
 					try {
@@ -843,7 +891,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ez_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.EZ_DOWNLOAD_URL, LIME.G_EZ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_EZ);
+				downloadedFile = downloadRemoteFile(LIME.EZ_DOWNLOAD_URL, LIME.G_EZ_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_EZ);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_ez_install)+ "");
 					try {
@@ -863,7 +911,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.ARRAY_DOWNLOAD_URL, LIME.G_ARRAY_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ARRAY);
+				downloadedFile = downloadRemoteFile(LIME.ARRAY_DOWNLOAD_URL, LIME.G_ARRAY_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_ARRAY);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array_install)+ "");
 					try {
@@ -883,7 +931,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array10_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.ARRAY10_DOWNLOAD_URL, LIME.G_ARRAY10_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ARRAY10);
+				downloadedFile = downloadRemoteFile(LIME.ARRAY10_DOWNLOAD_URL, LIME.G_ARRAY10_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_ARRAY10);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_array10_install)+ "");
 					try {
@@ -903,7 +951,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_pinyin_big5_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.PINYI_TW_DOWNLOAD_URL, LIME.PINYI_TW_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PINYIN_BIG5);
+				downloadedFile = downloadRemoteFile(LIME.PINYI_TW_DOWNLOAD_URL, LIME.PINYI_TW_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_PINYIN_BIG5);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_pinyin_big5_install)+ "");
 					try {
@@ -923,7 +971,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_pinyin_gb_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.PINYI_CN_DOWNLOAD_URL, LIME.PINYI_CN_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PINYIN_GB);
+				downloadedFile = downloadRemoteFile(LIME.PINYI_CN_DOWNLOAD_URL, LIME.PINYI_CN_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_PINYIN_GB);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_pinyin_gb_install)+ "");
 					try {
@@ -942,7 +990,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_pinyin_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.CJK_PINYIN_DOWNLOAD_URL, LIME.CJK_PINYIN_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PINYIN_LIME);
+				downloadedFile = downloadRemoteFile(LIME.CJK_PINYIN_DOWNLOAD_URL, LIME.CJK_PINYIN_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_PINYIN_LIME);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_pinyin_install)+ "");
 					try {
@@ -962,7 +1010,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_phonetic_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.CJK_PHONETIC_DOWNLOAD_URL, LIME.G_CJK_PHONETIC_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_PHONETIC_LIME);
+				downloadedFile = downloadRemoteFile(LIME.CJK_PHONETIC_DOWNLOAD_URL, LIME.G_CJK_PHONETIC_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_PHONETIC_LIME);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_phonetic_install)+ "");
 					try {
@@ -981,7 +1029,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_hk_ecj_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.CJK_HK_ECJ_DOWNLOAD_URL, LIME.G_CJK_HK_ECJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ECJ_LIME);
+				downloadedFile = downloadRemoteFile(LIME.CJK_HK_ECJ_DOWNLOAD_URL, LIME.G_CJK_HK_ECJ_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_ECJ_LIME);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_hk_ecj_install)+ "");
 					try {
@@ -1000,7 +1048,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_ecj_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.CJK_ECJ_DOWNLOAD_URL, LIME.G_CJK_ECJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_ECJ_LIME);
+				downloadedFile = downloadRemoteFile(LIME.CJK_ECJ_DOWNLOAD_URL, LIME.G_CJK_ECJ_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_ECJ_LIME);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_ecj_install)+ "");
 					try {
@@ -1020,7 +1068,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_cj_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.CJK_CJ_DOWNLOAD_URL, LIME.G_CJK_CJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ_LIME);
+				downloadedFile = downloadRemoteFile(LIME.CJK_CJ_DOWNLOAD_URL, LIME.G_CJK_CJ_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_CJ_LIME);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_cj_install)+ "");
 					try {
@@ -1039,7 +1087,7 @@ public class  DBServer {
 		Thread threadTask = new Thread() {
 			public void run() {
 				showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_hk_cj_start)+ "");
-				downloadedFile = downloadRemoteFile(LIME.CJK_HK_CJ_DOWNLOAD_URL, LIME.G_CJK_HK_CJ_DOWNLOAD_URL, LIME.IM_LOAD_LIME_ROOT_DIRECTORY, LIME.DATABASE_SOURCE_CJ_LIME);
+				downloadedFile = downloadRemoteFile(LIME.CJK_HK_CJ_DOWNLOAD_URL, LIME.G_CJK_HK_CJ_DOWNLOAD_URL, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_SOURCE_CJ_LIME);
 				if(downloadedFile!=null){
 					showNotificationMessage(ctx.getText(R.string.l3_im_download_from_cjk_hk_cj_install)+ "");
 					try {

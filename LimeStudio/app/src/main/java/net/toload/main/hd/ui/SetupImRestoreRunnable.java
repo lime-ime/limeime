@@ -23,7 +23,6 @@ import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.handler.DropboxDBRestore;
 import net.toload.main.hd.DBServer;
 
 import java.io.File;
@@ -120,11 +119,11 @@ public class SetupImRestoreRunnable implements Runnable{
 
             if(cloudbackupfile != null){
                 //java.io.File tempfile = new java.io.File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DATABASE_CLOUD_TEMP);
-                File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
+                File limedir = new File(LIME.LIME_SDCARD_FOLDER + File.separator);
                 if(!limedir.exists()){
                     limedir.mkdirs();
                 }
-                File tempfile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_CLOUD_TEMP);
+                File tempfile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_CLOUD_TEMP);
 
 
                 if(tempfile.exists()){
@@ -151,7 +150,7 @@ public class SetupImRestoreRunnable implements Runnable{
 
                 // Decompress tempfile
                 //DBServer.decompressFile(tempfile, Lime.DATABASE_DEVICE_FOLDER, Lime.DATABASE_NAME, true);
-                DBServer.restoreDatabase(tempfile, true);
+                DBServer.restoreDatabase(tempfile.getAbsolutePath(), true);
 
                 dbsrv.showNotificationMessage(mFragment.getResources().getString(R.string.l3_initial_cloud_restore_end));
             }else{
@@ -191,11 +190,11 @@ public class SetupImRestoreRunnable implements Runnable{
 
     public void restoreFromDropbox(){
 
-        File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
+        File limedir = new File(LIME.LIME_SDCARD_FOLDER + File.separator);
         if(!limedir.exists()){
             limedir.mkdirs();
         }
-        File tempfile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_CLOUD_TEMP);
+        String tempfile = LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_CLOUD_TEMP;
 
         //DropboxDBRestore download =   new DropboxDBRestore(mFragment,   , mdbapi,LIME.DATABASE_BACKUP_NAME , tempfile);
         //download.execute();
