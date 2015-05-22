@@ -60,7 +60,7 @@ public class MainActivity extends ActionBarActivity
 
     //Admob
     InterstitialAd mInterstitialAd;
-    Boolean intersitialAdShowed=false;
+    Boolean intersitialAdShowed=true;
 
     IInAppBillingService mService;
     ServiceConnection mServiceConn = new ServiceConnection() {
@@ -167,7 +167,7 @@ public class MainActivity extends ActionBarActivity
         this.SearchSrv = new SearchServer(this);
         this.mLIMEPref = new LIMEPreferenceManager(this);
 
-
+        LIME.PACKAGE_NAME = getApplicationContext().getPackageName();
 
         // initial imlist
         initialImList();

@@ -421,9 +421,9 @@
     <string name="l3_initial_backup_start">開始備份資料庫</string>
     <string name="l3_initial_backup_end">資料庫備份完成</string>
     <string name="l3_initial_backup_confirm">您是否要備份資料庫?</string>
-    <string name="l3_initial_backup_error">資料庫不存在，無法進行備份.</string>
+    <string name="l3_initial_backup_error">資料庫備份失敗</string>
     <string name="l3_initial_restore_database">還原資料庫</string>
-    <string name="l3_initial_restore_error">備份檔案不存在，無法進行還原.</string>
+    <string name="l3_initial_restore_error">還原失敗, 且確定備份檔案存在.</string>
     <string name="l3_initial_restore_confirm">您是否要還原資料庫?</string>
     <string name="l3_initial_restore_start">開始還原資料庫</string>
     <string name="l3_initial_restore_end">資料庫還原完成</string>

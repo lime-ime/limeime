@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -16,6 +17,7 @@ import net.toload.main.hd.LIMEService;
 import net.toload.main.hd.R;
 
 import android.app.NotificationManager;
+import android.os.Environment;
 import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -52,8 +54,40 @@ public class LIMEUtilities {
 			return null;
 	}
 
-	public static void zipFolder( String zipFilePath,  String sourceFolderPath, Boolean OverWrite)
-			throws Exception {
+	/*
+*   Zip singl file into single zip.
+*   sourceFile should be assigned with absolute path.
+*
+ */
+	public static void zip(String zipFilePath, String sourceFile, Boolean OverWrite) 	throws Exception {
+		zip(zipFilePath,sourceFile,"",OverWrite);
+	}
+	/*
+	*   Zip singl file into single zip.
+	*   sourceFile is specify relative to the baseFolderPath.
+	*   sourceFile should be assigned with absolute path if baseFolderPath is null of empty
+	*
+ 	*/
+	public static void zip(String zipFilePath, String sourceFile, String baseFolderPath, Boolean OverWrite) 	throws Exception {
+		List<String> sourceFileList = new ArrayList<>();
+		sourceFileList.add(sourceFile);
+		zip(zipFilePath,sourceFileList,baseFolderPath,OverWrite);
+	}
+	/*
+	*   Zip multile files into single zip.
+	*   sourceFiles should be assigned with absolute path.
+	*
+	 */
+	public static void zip(String zipFilePath, List<String> sourceFiles, Boolean OverWrite) 	throws Exception {
+		zip(zipFilePath, sourceFiles, "", OverWrite);
+	}
+	/*
+	*   Zip multile files into single zip.
+	*   sourceFiles is specify relative to the baseFolderPath.
+	*   sourceFiles should be assigned with absolute path if baseFolderPath is null of empty
+	*
+	 */
+	public static void zip(String zipFilePath, List<String> sourceFiles, String baseFolderPath, Boolean OverWrite) 	throws Exception {
 		File zipFile = new File(zipFilePath);
 		if( zipFile.exists() && !OverWrite) return;
 		else if(zipFile.exists() && OverWrite) zipFile.delete();
@@ -63,31 +97,53 @@ public class LIMEUtilities {
 		outStream = new FileOutputStream(zipFile);
 		zos = new ZipOutputStream(outStream);
 
-		File sourceFolderFile = new File(sourceFolderPath);
-		for (String item : sourceFolderFile.list()) {
-			addFileToZip("", sourceFolderPath + File.separator  + item, zos);
-		}
+		if(baseFolderPath == null) baseFolderPath="";
 
+		for(String item : sourceFiles) {
+			String itemName = (item.startsWith(File.separator) || baseFolderPath.endsWith(File.separator) )?item:(File.separator + item) ;
+
+			if(baseFolderPath.equals("")) //absolute path
+				addFileToZip(baseFolderPath + itemName, zos);
+			else  //relative path
+				addFileToZip(baseFolderPath + itemName, baseFolderPath, zos);
+
+
+		}
 		zos.flush();
 		zos.close();
+
 	}
 
+	private static void addFileToZip(String sourceFilePath, String baseFolderPath, ZipOutputStream zos) throws Exception {
+		addFileToZip("", sourceFilePath, baseFolderPath, zos);
+	}
+	private static void addFileToZip( String sourceFilePath, ZipOutputStream zos) throws Exception {
+		addFileToZip("", sourceFilePath, "", zos);
+	}
 
-	private static void addFileToZip(String folderPath, String sourceFilePath, ZipOutputStream zos) throws Exception {
-
+	private static void addFileToZip(String sourceFolderPath, String sourceFilePath, String baseFolderPath, ZipOutputStream zos) throws Exception {
 
 		File item = new File(sourceFilePath);
+		if( item==null || !item.exists()) return; //skip if the file is not exist
 		if (isSymLink(item)) return ; // do nothing to symbolic links.
+
+		if(baseFolderPath == null) baseFolderPath = "";
 
 		if (item.isDirectory()) {
 			for (String subItem : item.list()) {
-				addFileToZip(folderPath + File.separator + item.getName(), sourceFilePath + File.separator  + subItem, zos);
+				addFileToZip(sourceFolderPath + File.separator + item.getName(), sourceFilePath + File.separator  + subItem, baseFolderPath, zos);
 			}
 		} else {
 			byte[] buf = new byte[102400]; //100k buffer
 			int len;
 			FileInputStream inStream = new FileInputStream(sourceFilePath);
-			zos.putNextEntry(new ZipEntry(folderPath + "/" + item.getName()));
+			if(baseFolderPath.equals(""))  //sourceFiles in absolute path, zip the file with absolute path
+				zos.putNextEntry(new ZipEntry(sourceFilePath));
+			else {//relative path
+				String relativePath = sourceFilePath.substring(baseFolderPath.length() );
+				zos.putNextEntry(new ZipEntry(relativePath));
+			}
+
 			while ((len = inStream.read(buf)) > 0) {
 				zos.write(buf, 0, len);
 			}
@@ -108,11 +164,11 @@ public class LIMEUtilities {
 		return !canonical.getCanonicalFile().equals(canonical.getAbsoluteFile());
 	}
 
-	public static void unzipFolder(String zipFilePath, String targetFolder, Boolean OverWrite) throws IOException {
-		unzipFolder(new File(zipFilePath), new File(targetFolder), OverWrite);
+	public static void unzip(String zipFilePath, String targetFolder, Boolean OverWrite) throws IOException {
+		unzip(new File(zipFilePath), new File(targetFolder), OverWrite);
 	}
 
-	public static void unzipFolder(File zipFile, File targetDirectory, Boolean OverWrite) throws IOException {
+	public static void unzip(File zipFile, File targetDirectory, Boolean OverWrite) throws IOException {
 		ZipInputStream zis = new ZipInputStream(
 				new BufferedInputStream(new FileInputStream(zipFile)));
 		try {
@@ -120,7 +176,23 @@ public class LIMEUtilities {
 			int count;
 			byte[] buffer = new byte[8192];
 			while ((ze = zis.getNextEntry()) != null) {
-				File targetFile = new File(targetDirectory, ze.getName());
+				String itemName = ze.getName();
+				File targetFile = null;
+
+				if(itemName.startsWith("/sdcard/") || itemName.startsWith(String.valueOf(Environment.getExternalStorageDirectory())+File.separator)){
+					targetFile = new File(ze.getName());  //target is zipped with absolute path on /sdcard
+				}
+				else if(itemName.startsWith("/data/") || itemName.startsWith(String.valueOf(Environment.getDataDirectory())+File.separator)){
+					//target is zipped with absolute path on /data, we need to confirm the targetfolder is within our package.
+					String packageRoot = LIME.getLimeDataRootFolder();
+					if(!itemName.startsWith(packageRoot))  //skip if the target path is not under our package root
+						continue;
+					targetFile = new File(ze.getName());  //target is zipped with absolute path on /sdcard
+				}
+				else {
+					targetFile = new File(targetDirectory, ze.getName());
+				}
+
 				File dir = ze.isDirectory() ? targetFile : targetFile.getParentFile();
 				if (!dir.isDirectory() && !dir.mkdirs())
 					throw new FileNotFoundException("Failed to ensure target directory: " +	dir.getAbsolutePath());
@@ -143,10 +215,10 @@ public class LIMEUtilities {
 	}
 	public static boolean copyFile(String sourceFilePath, String targetFilePath, Boolean overWrite) {
 		File sourceFile = isFileExist(sourceFilePath);
-		if(sourceFilePath == null) return false;
+		if(sourceFilePath == null || sourceFile == null || targetFilePath == null) return false;
 		File targetFile = isFileExist(targetFilePath);
-		if(targetFilePath!=null && !overWrite ) return false;
-		targetFile = new File(targetFilePath);
+		if(targetFile!=null && !overWrite ) return false;
+		if(targetFile == null) targetFile = new File(targetFilePath);
 		try{
 			FileInputStream inStream = new FileInputStream(sourceFile);
 			FileOutputStream outSteram = new FileOutputStream(targetFile);
@@ -170,12 +242,12 @@ public class LIMEUtilities {
 	}
 	public static void copyRAWFile(InputStream	inStream, FileOutputStream outStream){
 	    	try{
-	    		int	bytesum = 0, byteread = 0 ;
-	    		 
-	            byte[] buffer  = new byte[102400]; //100k buffer   
+	    		int bytesum=0, byteread=0;
+
+	            byte[] buffer  = new byte[102400]; //100k buffer
 	            while((byteread = inStream.read(buffer))!=-1){   
-	               	   bytesum     +=     byteread;       
-	                   System.out.println(bytesum);   
+	               	   bytesum     +=     byteread;
+	                   System.out.println(bytesum);
 	                   outStream.write(buffer, 0, byteread);   
 	             	}   
 	            inStream.close();
@@ -185,48 +257,10 @@ public class LIMEUtilities {
 	    		e.printStackTrace();   
 	           }   
 	     }
-	public void copyPreLoadLimeDB(Context ctx){
-		
-		/*
-		File dbDir = new File("/data/data/net.toload.main/databases");
-		if(!dbDir.exists()){
-			dbDir.mkdirs();
-		}
-		
-		File LimeDBFile = isFileNotExist("/data/data/net.toload.main/databases/lime" );
-		if(LimeDBFile!=null){
-			try {
-				FileOutputStream fs = new FileOutputStream(LimeDBFile);
-				copyRAWFile(ctx.getResources().openRawResource(R.raw.lime1),fs);
-				copyRAWFile(ctx.getResources().openRawResource(R.raw.lime2),fs);
-				copyRAWFile(ctx.getResources().openRawResource(R.raw.lime3),fs);
-				copyRAWFile(ctx.getResources().openRawResource(R.raw.lime4),fs);
-				copyRAWFile(ctx.getResources().openRawResource(R.raw.lime5),fs);
-				fs.close();
-			}
-			catch(Exception e){      
-	    		e.printStackTrace();   
-	        }   
-			
-			//
-			LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(ctx);
-			mLIMEPref.setTableTotalRecords("phonetic", "14149");
-			mLIMEPref.setTableTotalRecords("related", "66943");
-			mLIMEPref.setTableTotalRecords("dictionary", "20000");
-			mLIMEPref.setTableVersion("phonetic", "�w��`��");
-			mLIMEPref.setTableVersion("related", "�ŭ���w�R�");
-			mLIMEPref.setTableVersion("dictionary", "Wikitionary TV/Movies");
-			
-		}*/
-	}
+
 	
 	/** Add by Jeremy '12,4,23 Show notification with notification builder in compatibility package replacing the deprecated alert dialog creation 
-	 * @param context : the activity context
-	 * @param autoCancel
-	 * @param icon
-	 * @param title
-	 * @param message
-	 * @param intent : the Intent the notification should be launch
+
 	 */
 	public static void showNotification(Context context, Boolean autoCancel, int icon,  CharSequence title, CharSequence message, Intent intent){
 		NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);

@@ -1159,7 +1159,7 @@ public class LIMEMappingSetting extends Activity {
 			btnLoadMapping.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					//hasSelectFile = false;
-                	selectLimeFile(LIME.IM_LOAD_LIME_ROOT_DIRECTORY, imtype);
+                	selectLimeFile(LIME.LIME_SDCARD_FOLDER, imtype);
 				}
 			});
 
@@ -1388,9 +1388,9 @@ public class LIMEMappingSetting extends Activity {
 		   	          
 		   	   listview = (ListView) dialog.findViewById(R.id.listview_loading_target);
 		   	   toplayout = (LinearLayout) dialog.findViewById(R.id.linearlayout_loading_confirm_top);
-		   	   listview.setAdapter(getAdapter(new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY)));
+		   	   listview.setAdapter(getAdapter(new File(LIME.LIME_SDCARD_FOLDER)));
 		   	   
-		   	   createNavigationButtons(new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY));
+		   	   createNavigationButtons(new File(LIME.LIME_SDCARD_FOLDER));
 		   	   listview.setOnItemClickListener(new OnItemClickListener(){
 
 				@Override

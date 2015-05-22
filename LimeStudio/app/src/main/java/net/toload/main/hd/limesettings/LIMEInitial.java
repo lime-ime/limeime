@@ -362,7 +362,7 @@ public class LIMEInitial extends Activity {
 		btnRestoreDB.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 					
-					File srcFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
+					File srcFile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_BACKUP_NAME);
 					File srcFile2 = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
 					if((srcFile2.exists() && srcFile2.length() > 1024) || (srcFile.exists() && srcFile.length() > 1024)){
 						
@@ -794,11 +794,11 @@ public class LIMEInitial extends Activity {
 							  task.execute("");*//*
 	}
 	public void restoreDatabaseDropbox(){
-		File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
+		File limedir = new File(LIME.LIME_SDCARD_FOLDER + File.separator);
 		if(!limedir.exists()){
 			limedir.mkdirs();
 		}
-		File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_CLOUD_TEMP);
+		File tempFile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_CLOUD_TEMP);
 		tempFile.deleteOnExit();
 		
 		DropboxDBRestore download = 
@@ -810,12 +810,12 @@ public class LIMEInitial extends Activity {
 	}
 
 	public void restoreDatabaseGoogleDrive() {
-		File limedir = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator);
+		File limedir = new File(LIME.LIME_SDCARD_FOLDER + File.separator);
 		if(!limedir.exists()){
 			limedir.mkdirs();
 		}
 		
-		File tempFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_CLOUD_TEMP);
+		File tempFile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_CLOUD_TEMP);
 		tempFile.deleteOnExit();
 		
 		cHandler = new CloudServierHandler(this);
@@ -1036,14 +1036,14 @@ public class LIMEInitial extends Activity {
 		protected void onPostExecute(Integer result){
 			pd.cancel();
 			if(type == CLOUDBACKUP){
-				File sourceFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);
+				File sourceFile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_BACKUP_NAME);
 				cHandler = new CloudServierHandler(LIMEInitial.this);
 				bTask = new Thread(new CloudBackupServiceRunnable(cHandler, LIMEInitial.this, sourceFile));
 				bTask.start();
 				showProgressDialog(true);
 			}else if(type == DROPBOXBACKUP){
 				// Jeremy  '12,12,23 do dropbox backup now.
-				File sourceFile = new File(LIME.IM_LOAD_LIME_ROOT_DIRECTORY + File.separator + LIME.DATABASE_BACKUP_NAME);		
+				File sourceFile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_BACKUP_NAME);
 		      	DropboxDBBackup upload = new DropboxDBBackup(LIMEInitial.this, mDropboxApi, "", sourceFile);
 		    	upload.execute();
 			}else if(type == CLOUDRESTORE || type == RESTORE){
