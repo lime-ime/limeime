@@ -52,7 +52,7 @@ public class LIMEUtilities {
 			return null;
 	}
 
-	public static void zipFolder( String zipFilePath,  String sourceFolder, Boolean OverWrite)
+	public static void zipFolder( String zipFilePath,  String sourceFolderPath, Boolean OverWrite)
 			throws Exception {
 		File zipFile = new File(zipFilePath);
 		if( zipFile.exists() && !OverWrite) return;
@@ -63,9 +63,9 @@ public class LIMEUtilities {
 		outStream = new FileOutputStream(zipFile);
 		zos = new ZipOutputStream(outStream);
 
-		File item = new File(sourceFolder);
-		for (String fileName : item.list()) {
-			addFileToZip(item. getCanonicalPath(), sourceFolder + File.separator  + fileName, zos);
+		File sourceFolderFile = new File(sourceFolderPath);
+		for (String item : sourceFolderFile.list()) {
+			addFileToZip("", sourceFolderPath + File.separator  + item, zos);
 		}
 
 		zos.flush();
@@ -75,10 +75,13 @@ public class LIMEUtilities {
 
 	private static void addFileToZip(String folderPath, String sourceFilePath, ZipOutputStream zos) throws Exception {
 
+
 		File item = new File(sourceFilePath);
+		if (isSymLink(item)) return ; // do nothing to symbolic links.
+
 		if (item.isDirectory()) {
-			for (String fileName : item.list()) {
-				addFileToZip(folderPath + File.separator + item.getName(), sourceFilePath + File.separator  + fileName, zos);
+			for (String subItem : item.list()) {
+				addFileToZip(folderPath + File.separator + item.getName(), sourceFilePath + File.separator  + subItem, zos);
 			}
 		} else {
 			byte[] buf = new byte[102400]; //100k buffer
@@ -90,6 +93,19 @@ public class LIMEUtilities {
 			}
 
 		}
+	}
+
+	public static boolean isSymLink(File filePath) throws IOException {
+		if (filePath == null)
+			throw new NullPointerException("filePath cannot be null");
+		File canonical;
+		if (filePath.getParent() == null) {
+			canonical = filePath;
+		} else {
+			File canonDir = filePath.getParentFile().getCanonicalFile();
+			canonical = new File(canonDir, filePath.getName());
+		}
+		return !canonical.getCanonicalFile().equals(canonical.getAbsoluteFile());
 	}
 
 	public static void unzipFolder(String zipFilePath, String targetFolder, Boolean OverWrite) throws IOException {
@@ -105,13 +121,13 @@ public class LIMEUtilities {
 			byte[] buffer = new byte[8192];
 			while ((ze = zis.getNextEntry()) != null) {
 				File targetFile = new File(targetDirectory, ze.getName());
-				if(targetFile.exists() && OverWrite)
-					targetFile.delete();
 				File dir = ze.isDirectory() ? targetFile : targetFile.getParentFile();
 				if (!dir.isDirectory() && !dir.mkdirs())
 					throw new FileNotFoundException("Failed to ensure target directory: " +	dir.getAbsolutePath());
 				if (ze.isDirectory())
 					continue;
+				if(targetFile.exists() && OverWrite)
+					targetFile.delete();
 				FileOutputStream outStream = new FileOutputStream(targetFile);
 				try {
 					while ((count = zis.read(buffer)) != -1)
