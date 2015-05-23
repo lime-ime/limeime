@@ -1,9 +1,13 @@
 package net.toload.main.hd.ui;
 
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.os.AsyncTask;
 import android.os.RemoteException;
 import android.util.Log;
 
 import com.dropbox.client2.DropboxAPI;
+import com.dropbox.client2.ProgressListener;
 import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.exception.DropboxException;
 import com.dropbox.client2.exception.DropboxIOException;
@@ -36,7 +40,7 @@ import java.util.List;
 /**
  * Created by Art Hung on 2015/4/26.
  */
-public class SetupImRestoreRunnable implements Runnable{
+public class SetupImRestoreRunnable implements Runnable {
 
     // Global
     private String mType = null;
@@ -75,21 +79,27 @@ public class SetupImRestoreRunnable implements Runnable{
         mHandler.showProgress();
         mHandler.updateProgress(this.mFragment.getResources().getString(R.string.setup_im_restore_message));
 
-        if(mType.equals(Lime.LOCAL)){
+        if (mType.equals(Lime.LOCAL)) {
             try {
                 dbsrv.restoreDatabase();
                 mHandler.cancelProgress();
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
-        }else if(mType.equals(Lime.GOOGLE)){
+        } else if (mType.equals(Lime.GOOGLE)) {
             restoreFromGoogle();
-        }else if(mType.equals(Lime.DROPBOX)){
-            restoreFromDropbox();
+        } else if (mType.equals(Lime.DROPBOX)) {
+            File limedir = new File(LIME.LIME_SDCARD_FOLDER + File.separator);
+            if(!limedir.exists()) limedir.mkdirs();
+            File tempFile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_CLOUD_TEMP);
+            tempFile.deleteOnExit();
+
+            restoreFromDropbox download = new restoreFromDropbox(mHandler, mFragment,mdbapi, LIME.DATABASE_BACKUP_NAME, tempFile);
+            download.execute();
         }
     }
 
-    private void restoreFromGoogle(){
+    private void restoreFromGoogle() {
 
         service = getDriveService(credential);
 
@@ -103,30 +113,30 @@ public class SetupImRestoreRunnable implements Runnable{
             // Search and get cloudbackupfile
             do {
                 FileList files = request.execute();
-                for(com.google.api.services.drive.model.File f: files.getItems()){
-                    if(f.getTitle().equalsIgnoreCase(Lime.GOOGLE_BACKUP_FILENAME)){
+                for (com.google.api.services.drive.model.File f : files.getItems()) {
+                    if (f.getTitle().equalsIgnoreCase(Lime.GOOGLE_BACKUP_FILENAME)) {
                         cloudbackupfile = f;
                         continueload = false;
                         break;
                     }
                 }
                 count += files.getItems().size();
-                if(!continueload || count >= Lime.GOOGLE_RETRIEVE_MAXIMUM){
+                if (!continueload || count >= Lime.GOOGLE_RETRIEVE_MAXIMUM) {
                     break;
                 }
             } while (request.getPageToken() != null &&
                     request.getPageToken().length() > 0);
 
-            if(cloudbackupfile != null){
+            if (cloudbackupfile != null) {
                 //java.io.File tempfile = new java.io.File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DATABASE_CLOUD_TEMP);
                 File limedir = new File(LIME.LIME_SDCARD_FOLDER + File.separator);
-                if(!limedir.exists()){
+                if (!limedir.exists()) {
                     limedir.mkdirs();
                 }
                 File tempfile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_CLOUD_TEMP);
 
 
-                if(tempfile.exists()){
+                if (tempfile.exists()) {
                     tempfile.delete();
                 }
 
@@ -153,7 +163,7 @@ public class SetupImRestoreRunnable implements Runnable{
                 DBServer.restoreDatabase(tempfile.getAbsolutePath(), true);
 
                 dbsrv.showNotificationMessage(mFragment.getResources().getString(R.string.l3_initial_cloud_restore_end));
-            }else{
+            } else {
                 dbsrv.showNotificationMessage(mFragment.getResources().getString(R.string.l3_initial_cloud_restore_error));
             }
 
@@ -188,101 +198,160 @@ public class SetupImRestoreRunnable implements Runnable{
         }
     }
 
-    public void restoreFromDropbox(){
+    private class restoreFromDropbox extends AsyncTask<Void, Long, Boolean> {
 
-        File limedir = new File(LIME.LIME_SDCARD_FOLDER + File.separator);
-        if(!limedir.exists()){
-            limedir.mkdirs();
+
+        private SetupImHandler mHandler;
+        private SetupImFragment mFragment;
+        private DropboxAPI<?> mApi;
+        private String mPath;
+        private File mFile;
+
+        private FileOutputStream mFos;
+
+
+        private boolean mCanceled;
+        private String mErrorMsg;
+
+
+        public restoreFromDropbox(SetupImHandler handler, SetupImFragment fragment, DropboxAPI<?> api, String backupFile, File tempfile) {
+            // We set the context this way so we don't accidentally leak activities
+
+            mHandler =handler;
+            mFragment = fragment;
+            mApi = api;
+            mPath = backupFile;
+            mFile = tempfile;
+
+            mHandler.updateProgress(mFragment.getText(R.string.l3_initial_dropbox_restore_start).toString());
         }
-        String tempfile = LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_CLOUD_TEMP;
 
-        //DropboxDBRestore download =   new DropboxDBRestore(mFragment,   , mdbapi,LIME.DATABASE_BACKUP_NAME , tempfile);
-        //download.execute();
-
-        try {
-
-            mFos = new FileOutputStream(tempfile);
-
-            DropboxAPI.DropboxFileInfo info = mdbapi.getFile(Lime.DATABASE_BACKUP_NAME, null, mFos, null);
-            Log.i("DbExampleLog", "The file's rev is: " + info.getMetadata().rev);
+        @Override
+        protected Boolean doInBackground(Void... params) {
 
 
-            //} catch (DropboxException e) {
-            //    Log.e("DbExampleLog",
-            //            "Something went wrong while getting file.");
+            try {
 
-        } catch (FileNotFoundException e) {
-            //Log.e("DbExampleLog", "File not found.");
-            //mErrorMsg = mContext.getText(R.string.l3_initial_dropbox_restore_error).toString();
 
-        } catch (DropboxUnlinkedException e) {
-            // The AuthSession wasn't properly authenticated or user unlinked.
-           // mErrorMsg = mContext.getText(R.string.l3_initial_dropbox_authetication_failed).toString();
-        } catch (DropboxPartialFileException e) {
-            // We canceled the operation
-            //mErrorMsg = mContext.getText(R.string.l3_initial_dropbox_failed).toString();
-        } catch (DropboxServerException e) {
-            // Server-side exception.  These are examples of what could happen,
-            // but we don't do anything special with them here.
-            if (e.error == DropboxServerException._304_NOT_MODIFIED) {
-                // won't happen since we don't pass in revision with metadata
-            } else if (e.error == DropboxServerException._401_UNAUTHORIZED) {
-                // Unauthorized, so we should unlink them.  You may want to
-                // automatically log the user out in this case.
-            } else if (e.error == DropboxServerException._403_FORBIDDEN) {
-                // Not allowed to access this
-            } else if (e.error == DropboxServerException._404_NOT_FOUND) {
-                // path not found (or if it was the thumbnail, can't be
-                // thumbnailed)
-            } else if (e.error == DropboxServerException._406_NOT_ACCEPTABLE) {
-                // too many entries to return
-            } else if (e.error == DropboxServerException._415_UNSUPPORTED_MEDIA) {
-                // can't be thumbnailed
-            } else if (e.error == DropboxServerException._507_INSUFFICIENT_STORAGE) {
-                // user is over quota
-            } else {
-                // Something else
-            }
-            // This gets the Dropbox error, translated into the user's language
-            //mErrorMsg = e.body.userError;
-            //if (mErrorMsg == null) {
-            //    mErrorMsg = e.body.error;
-            //}
-        } catch (DropboxIOException e) {
-            // Happens all the time, probably want to retry automatically.
-            //mErrorMsg = "Network error.  Try again.";
-            //mErrorMsg = mContext.getText(R.string.l3_initial_dropbox_failed).toString();
-        } catch (DropboxParseException e) {
-            // Probably due to Dropbox server restarting, should retry
-            //mErrorMsg = "Dropbox error.  Try again.";
-            //mErrorMsg = mContext.getText(R.string.l3_initial_dropbox_failed).toString();
-        } catch (DropboxException e) {
-            // Unknown error
-            //mErrorMsg = "Unknown error.  Try again.";
-            //mErrorMsg = mContext.getText(R.string.l3_initial_dropbox_failed).toString();
+                // mOutputStream is class level field.
+                mFos = new FileOutputStream(mFile);
+                //DropboxFileInfo info =
+                mApi.getFile(mPath, null, mFos, new ProgressListener() {
 
-        } finally {
-            if (mFos != null) {
-                try {
-                    mFos.close();
-                    mFos = null;
+                    @Override
+                    public void onProgress(long bytes, long total) {
+                        if (!mCanceled) {
+                            Long[] bytess = {bytes, total};
+                            publishProgress(bytess);
+                        } else {
+                            if (mFos != null) {
+                                try {
+                                    mFos.close();
+                                } catch (IOException ignored) {
+                                }
+                            }
+                        }
+                    }
+                });
+                //} catch (DropboxException e) {
+                //    Log.e("DbExampleLog",
+                //            "Something went wrong while getting file.");
 
-                    //Download finished. Restore db now.
-                    //DBServer.decompressFile(tempfile, Lime.DATABASE_DEVICE_FOLDER, Lime.DATABASE_NAME, true);
-                   DBServer.restoreDatabase(tempfile, true);
-                    mLIMEPref.setParameter(LIME.DATABASE_DOWNLOAD_STATUS, "true");
-                    dbsrv.showNotificationMessage(mFragment.getResources().getString(R.string.l3_initial_dropbox_restore_end));
+            } catch (FileNotFoundException e) {
+                //Log.e("DbExampleLog", "File not found.");
+                mErrorMsg = mFragment.getText(R.string.l3_initial_dropbox_restore_error).toString();
 
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (RemoteException e) {
-                    e.printStackTrace();
+            } catch (DropboxUnlinkedException e) {
+                // The AuthSession wasn't properly authenticated or user unlinked.
+                mErrorMsg = mFragment.getText(R.string.l3_initial_dropbox_authetication_failed).toString();
+            } catch (DropboxPartialFileException e) {
+                // We canceled the operation
+                mErrorMsg = mFragment.getText(R.string.l3_initial_dropbox_failed).toString();
+            } catch (DropboxServerException e) {
+                // Server-side exception.  These are examples of what could happen,
+                // but we don't do anything special with them here.
+                if (e.error == DropboxServerException._304_NOT_MODIFIED) {
+                    // won't happen since we don't pass in revision with metadata
+                } else if (e.error == DropboxServerException._401_UNAUTHORIZED) {
+                    // Unauthorized, so we should unlink them.  You may want to
+                    // automatically log the user out in this case.
+                } else if (e.error == DropboxServerException._403_FORBIDDEN) {
+                    // Not allowed to access this
+                } else if (e.error == DropboxServerException._404_NOT_FOUND) {
+                    // path not found (or if it was the thumbnail, can't be
+                    // thumbnailed)
+                } else if (e.error == DropboxServerException._406_NOT_ACCEPTABLE) {
+                    // too many entries to return
+                } else if (e.error == DropboxServerException._415_UNSUPPORTED_MEDIA) {
+                    // can't be thumbnailed
+                } else if (e.error == DropboxServerException._507_INSUFFICIENT_STORAGE) {
+                    // user is over quota
+                } else {
+                    // Something else
+                }
+                // This gets the Dropbox error, translated into the user's language
+                mErrorMsg = e.body.userError;
+                if (mErrorMsg == null) {
+                    mErrorMsg = e.body.error;
+                }
+            } catch (DropboxIOException e) {
+                // Happens all the time, probably want to retry automatically.
+                //mErrorMsg = "Network error.  Try again.";
+                mErrorMsg = mFragment.getText(R.string.l3_initial_dropbox_failed).toString();
+            } catch (DropboxParseException e) {
+                // Probably due to Dropbox server restarting, should retry
+                //mErrorMsg = "Dropbox error.  Try again.";
+                mErrorMsg = mFragment.getText(R.string.l3_initial_dropbox_failed).toString();
+            } catch (DropboxException e) {
+                // Unknown error
+                //mErrorMsg = "Unknown error.  Try again.";
+                mErrorMsg = mFragment.getText(R.string.l3_initial_dropbox_failed).toString();
+
+            } finally {
+                if (mFos != null) {
+                    try {
+                        mFos.close();
+                        mFos = null;
+
+                        //Download finished. Restore db now.
+                        try {
+                            DBServer.restoreDatabase(mFile.getAbsolutePath(),true);
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+                        finally{
+                            return true;
+                        }
+                    } catch (IOException ignored) {
+                    }
                 }
 
             }
+            return false;
 
         }
-        mHandler.cancelProgress();
-    }
 
+
+        @Override
+        protected void onProgressUpdate(Long... progress) {
+            int percent = (int) (100.0 * (double) progress[0] / progress[1] + 0.5);
+            mHandler.updateProgress(mFragment.getText(R.string.l3_initial_dropbox_downloading).toString() + "  " + percent + "%");
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            super.onPostExecute(result);
+            mHandler.cancelProgress();
+
+            if (result) {
+                DBServer.showNotificationMessage(mFragment.getText(R.string.l3_initial_dropbox_restore_end) + "");
+            } else {
+                DBServer.showNotificationMessage(mErrorMsg + "");
+            }
+
+        }
+
+
+    }
 }
+

@@ -441,6 +441,8 @@
     <string name="l3_initial_cloud_failed">Google Drive服務暫時無法連接，請稍後再試</string>
 
     <string name="l3_initial_dropbox_backup_database">Dropbox 備份</string>
+    <string name="l3_initial_dropbox_downloading">Dropbox 備份檔下載中 </string>
+    <string name="l3_initial_dropbox_uploading">Dropbox 備份檔上傳中 </string>
     <string name="l3_initial_dropbox_backup_start">開始Dropbox資料庫備份</string>
     <string name="l3_initial_dropbox_backup_end">Dropbox資料庫備份完成</string>
     <string name="l3_initial_dropbox_backup_confirm">您是否要備份資料庫至Dropbox?</string>
