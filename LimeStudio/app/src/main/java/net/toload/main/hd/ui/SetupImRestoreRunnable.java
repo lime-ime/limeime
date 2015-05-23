@@ -76,7 +76,7 @@ public class SetupImRestoreRunnable implements Runnable {
 
     public void run() {
 
-        mHandler.showProgress();
+        mHandler.showProgress(true);
         mHandler.updateProgress(this.mFragment.getResources().getString(R.string.setup_im_restore_message));
 
         if (mType.equals(Lime.LOCAL)) {
@@ -253,9 +253,7 @@ public class SetupImRestoreRunnable implements Runnable {
                         }
                     }
                 });
-                //} catch (DropboxException e) {
-                //    Log.e("DbExampleLog",
-                //            "Something went wrong while getting file.");
+
 
             } catch (FileNotFoundException e) {
                 //Log.e("DbExampleLog", "File not found.");

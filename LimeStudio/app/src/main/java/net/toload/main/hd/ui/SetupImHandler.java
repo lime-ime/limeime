@@ -22,12 +22,15 @@ public class SetupImHandler extends Handler {
 
         if(action != null && action.equalsIgnoreCase("progress")){
             if(type != null){
-                if(type.equalsIgnoreCase("show")){
-                    fragment.showProgress();;
+                if(type.equalsIgnoreCase("showSpinner")){
+                    fragment.showProgress(true, null);
+                }else if(type.equalsIgnoreCase("showHorizontal")){
+                    String message = msg.getData().getString("message");
+                    fragment.showProgress(false, message);
                 }else if(type.equalsIgnoreCase("cancel")){
                     fragment.cancelProgress();
                 }else if(type.equalsIgnoreCase("update")){
-                    int value= msg.getData().getInt("value");
+                    int value = msg.getData().getInt("value");
                     fragment.updateProgress(value);
                 }else if(type.equalsIgnoreCase("message")){
                     String message = msg.getData().getString("message");
@@ -64,11 +67,18 @@ public class SetupImHandler extends Handler {
         this.sendMessageDelayed(m, 1);
     }
 
-    public void showProgress() {
+    public void showProgress(boolean spinnerStyle) {
+        showProgress(spinnerStyle, "");
+    }
+    public void showProgress(boolean spinnerStyle, String message) {
+        updateProgress(message);
         Message m = new Message();
         m.getData().putString("action", "progress");
-        m.getData().putString("type", "show");
-        this.sendMessageDelayed(m, 1);
+        if(spinnerStyle)
+            m.getData().putString("type", "showSpinner");
+        else
+            m.getData().putString("type", "showHorizontal");
+        this.sendMessageDelayed(m, 100);
     }
 
     public void updateProgress(int value) {
@@ -100,7 +110,7 @@ public class SetupImHandler extends Handler {
                 m.getData().putString("action", "initialbutton");
         this.sendMessageDelayed(m, 1);
     }
-
+    @Deprecated
     public void startLoadingWindow(String imtype) {
         Message m = new Message();
                 m.getData().putString("action", "startloadingwindow");
