@@ -341,7 +341,6 @@ public class SetupImFragment extends Fragment {
 
         }
 
-
         return rootView;
     }
 

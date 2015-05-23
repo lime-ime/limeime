@@ -2,12 +2,14 @@ package net.toload.main.hd;
 
 
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.ServiceConnection;
 import android.net.ConnectivityManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -31,7 +33,9 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.ui.ManageRelatedFragment;
 import net.toload.main.hd.ui.SetupImFragment;
+import net.toload.main.hd.ui.ShareRunnable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,6 +61,10 @@ public class MainActivity extends ActionBarActivity
 
     private ConnectivityManager connManager;
     private LIMEPreferenceManager mLIMEPref;
+
+    private ProgressDialog progress;
+    private MainActivityHandler handler;
+    private Thread sharethread;
 
     //Admob
     InterstitialAd mInterstitialAd;
@@ -162,6 +170,14 @@ public class MainActivity extends ActionBarActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+
+        handler = new MainActivityHandler(this);
+
+        progress = new ProgressDialog(this);
+        progress.setMax(100);
+        progress.setCancelable(false);
+
         connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 
         this.SearchSrv = new SearchServer(this);
@@ -238,6 +254,7 @@ public class MainActivity extends ActionBarActivity
 
         FragmentManager fragmentManager = getSupportFragmentManager();
         if (position == 0) {
+
             fragmentManager.beginTransaction()
                     .replace(R.id.container, SetupImFragment.newInstance(position), "SetupImFragment")
                     .addToBackStack("SetupImFragment")
@@ -248,6 +265,7 @@ public class MainActivity extends ActionBarActivity
                     .addToBackStack("ManageRelatedFragment")
                     .commit();
         }else{
+
             initialImList();
             int number = position - 2;
             String code = imlist.get(number).getCode();
@@ -282,7 +300,6 @@ public class MainActivity extends ActionBarActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-
         if (!mNavigationDrawerFragment.isDrawerOpen()) {
             // Only show items in the action bar relevant to this screen
             // if the drawer is not showing. Otherwise, let the drawer
@@ -349,5 +366,45 @@ public class MainActivity extends ActionBarActivity
         toast.show();
     }
 
+    public void initialShare(String imtype){
+        sharethread = new Thread(new ShareRunnable(this, imtype, handler));
+        sharethread.start();
+    }
+
+    public void showProgress() {
+        if (!progress.isShowing()) {
+            progress.show();
+        }
+    }
+
+    public void cancelProgress(){
+        if(progress.isShowing()){
+            progress.dismiss();
+        }
+    }
+
+    public void updateProgress(int value){
+        if(!progress.isShowing()){
+            progress.setProgress(value);
+        }
+    }
+
+    public void updateProgress(String value){
+        if(progress.isShowing()){
+            progress.setMessage(value);
+        }
+    }
+
+    public void shareTo(String filepath){
+        Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+        sharingIntent.setType("text/plain");
+
+        File target = new File(filepath);
+        Uri targetfile = Uri.fromFile(target);
+        sharingIntent.putExtra(Intent.EXTRA_STREAM, targetfile);
+
+        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, target.getName());
+        startActivity(Intent.createChooser(sharingIntent, target.getName()));
+    }
 
 }

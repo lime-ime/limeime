@@ -6,13 +6,13 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -30,6 +30,7 @@ import net.toload.main.hd.limesettings.LIMEPreference;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 import net.toload.main.hd.ui.HelpDialog;
 import net.toload.main.hd.ui.PaymentDialog;
+import net.toload.main.hd.ui.ShareDialog;
 
 import java.util.List;
 
@@ -295,7 +296,11 @@ public class NavigationDrawerFragment extends Fragment {
             return true;
         }
 
-        if(item.getItemId() == R.id.action_preference){
+        if(item.getItemId() == R.id.action_share){
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
+            ShareDialog dialog = ShareDialog.newInstance();
+            dialog.show(ft, "sharedialog");
+        }else if(item.getItemId() == R.id.action_preference){
             if(android.os.Build.VERSION.SDK_INT < 11){  //Jeremy '12,4,30 Add for deprecated preferenceActivity after API 11 (HC)
                 Intent setting = new Intent(this.getActivity(), LIMEPreference.class);
                 startActivity(setting);

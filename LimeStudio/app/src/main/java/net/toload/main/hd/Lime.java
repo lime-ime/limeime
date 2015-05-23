@@ -169,6 +169,9 @@ public class Lime {
     public static final String IM_TYPE_AMOUNT = "amount";
     public static final String IM_TYPE_IMPORT = "import";
     public static final String IM_TYPE_KEYBOARD = "keyboard";
+    public static final String IM_TYPE_SELKEY = "selkey";
+    public static final String IM_TYPE_ENDKEY = "endkey";
+    public static final String IM_TYPE_SPACESTYLE = "spacestyle";
 
     public static final int IM_MANAGE_DISPLAY_AMOUNT = 100;
 

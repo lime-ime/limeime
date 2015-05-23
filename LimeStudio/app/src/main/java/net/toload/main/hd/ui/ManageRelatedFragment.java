@@ -12,29 +12,28 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 
-/* Vpon import
-import com.vpadn.ads.VpadnAdRequest;
-import com.vpadn.ads.VpadnAdSize;
-import com.vpadn.ads.VpadnBanner;
-*/
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
 import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.Related;
-import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;
 import java.util.List;
+
+/* Vpon import
+import com.vpadn.ads.VpadnAdRequest;
+import com.vpadn.ads.VpadnAdSize;
+import com.vpadn.ads.VpadnBanner;
+*/
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.

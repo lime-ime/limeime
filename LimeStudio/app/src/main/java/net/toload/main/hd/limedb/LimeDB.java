@@ -2902,24 +2902,37 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 						try {
 
+							int source_score = 0, source_basescore = 0;
 							String code = null, word = null;
+
 							if (isCinFormat) {
 								if (line.contains("\t")) {
-									code = line
-											.substring(0, line.indexOf("\t"));
-									word = line
-											.substring(line.indexOf("\t") + 1);
+									code = line.substring(0, line.indexOf("\t"));
+									word = line.substring(line.indexOf("\t") + 1);
+									try{
+										// Simply ignore error and try to load score and basescore values
+										source_score = Integer.parseInt(line.substring(2, line.indexOf("\t")));
+										source_basescore = Integer.parseInt(line.substring(3, line.indexOf("\t")));
+									}catch(Exception e){}
 								} else if (line.contains(" ")) {
 									code = line.substring(0, line.indexOf(" "));
-									word = line
-											.substring(line.indexOf(" ") + 1);
+									word = line.substring(line.indexOf(" ") + 1);
+									try{
+										// Simply ignore error and try to load score and basescore values
+										source_score = Integer.parseInt(line.substring(2, line.indexOf(" ")));
+										source_basescore = Integer.parseInt(line.substring(3, line.indexOf(" ")));
+									}catch(Exception e){}
 								}
 							} else {
-								code = line.substring(0, line
-										.indexOf(DELIMITER));
-								word = line
-										.substring(line.indexOf(DELIMITER) + 1);
+								code = line.substring(0, line.indexOf(DELIMITER));
+								word = line.substring(line.indexOf(DELIMITER) + 1);
+								try{
+									// Simply ignore error and try to load score and basescore values
+									source_score = Integer.parseInt(line.substring(2, line.indexOf(DELIMITER)));
+									source_basescore = Integer.parseInt(line.substring(3, line.indexOf(DELIMITER)));
+								}catch(Exception e){}
 							}
+
 							if (code == null || code.trim().equals("")) {
 								continue;
 							} else {
@@ -2981,9 +2994,11 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 								}
 								cv.put(FIELD_WORD, word);
-								cv.put(FIELD_SCORE, 0);
-								int basescore = getBaseScore(word);
-								cv.put(FIELD_BASESCORE, basescore);
+								cv.put(FIELD_SCORE, source_score);
+								if(source_basescore == 0){
+									source_basescore = getBaseScore(word);
+								}
+								cv.put(FIELD_BASESCORE, source_basescore);
 								//if(DEBUG) Log.i(TAG, "loadfilev2():code="+code+", word="+word+", basescore="+basescore);
 								db.insert(table, null, cv);
 							}
@@ -3477,8 +3492,23 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 
 		removeImInfo(im, field);
 
-		db.insert("im",null, cv);
+		db.insert("im", null, cv);
 		
+	}
+	public List<Im> getImList(String code) {
+
+		if(!checkDBConnection()) return null;
+
+		List<Im> result = null;
+		try {
+			//SQLiteDatabase db = this.getSqliteDb(true);
+			Cursor cursor = db.query("im", null, Lime.DB_IM_COLUMN_CODE +" = '" + code +"'", null, null, null, "code ASC", null);
+			result = Im.getList(cursor);
+			cursor.close();
+		} catch (Exception e) {
+			Log.i(TAG,"getIm(): Cannot get IM : " + e );
+		}
+		return result;
 	}
 
 	public List<ImObj> getImList() {
@@ -3875,7 +3905,7 @@ public class LimeDB  extends LimeSQLiteOpenHelper {
 	public Cursor list(String table) {
 		Cursor cursor = null;
 		if (db != null && db.isOpen()) {
-			cursor = db.query(table, null, null, null, null, null, null);
+			cursor = db.query(table, null, null, null, null, null, Lime.DB_COLUMN_CODE + " asc");
 		}
 		return cursor;
 	}
