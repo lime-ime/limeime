@@ -1851,6 +1851,7 @@ public class LIMEService extends InputMethodService implements
 	}
 
 	private void buildActivatedIMList() {
+
 		CharSequence[] items = getResources().getStringArray(R.array.keyboard);
 		CharSequence[] shortNames = getResources().getStringArray(R.array.keyboardShortname);
 		CharSequence[] codes = getResources().getStringArray(
@@ -1869,18 +1870,20 @@ public class LIMEService extends InputMethodService implements
 			activatedIMShortNameList.clear();
 
 			for (int i = 0; i < s.length; i++) {
-				int index = Integer.parseInt(s[i]);
+				try{
+					int index = Integer.parseInt(s[i]);
 
-				if (index < items.length) {
-					activatedIMNameList.add(items[index].toString());
-					activatedIMShortNameList.add(shortNames[index].toString());
-					activatedIMList.add(codes[index].toString());
-					if(DEBUG) 
-						Log.i(TAG, "buildActivatedIMList()(): buildActivatedIMList()["+index+"] = "
-								+ codes[index].toString() +" ;"+ shortNames[index].toString());
-				} else {
-					break;
-				}
+					if (index < items.length) {
+						activatedIMNameList.add(items[index].toString());
+						activatedIMShortNameList.add(shortNames[index].toString());
+						activatedIMList.add(codes[index].toString());
+						if(DEBUG)
+							Log.i(TAG, "buildActivatedIMList()(): buildActivatedIMList()["+index+"] = "
+									+ codes[index].toString() +" ;"+ shortNames[index].toString());
+					} else {
+						break;
+					}
+				}catch(Exception e){}
 			}
 		}
 		if(DEBUG) Log.i(TAG, "currene active IM:" + activeIM);
@@ -1893,7 +1896,7 @@ public class LIMEService extends InputMethodService implements
 				break;
 			}
 		}
-		if (!matched && SearchSrv!=null ) {
+		if (!matched && SearchSrv!=null && activatedIMList != null && activatedIMList.size() > 0) {
 			// if the selected keyboard is not in the active keyboard list.
 			// set the keyboard to the first active keyboard
 			//if(DEBUG) Log.i(TAG, "currene keyboard is not in active list, reset to :" +  keyboardListCodes.get(0));
