@@ -20,6 +20,20 @@
 
 package net.toload.main.hd;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.RemoteException;
+import android.util.Log;
+
+import net.toload.main.hd.data.Word;
+import net.toload.main.hd.global.KeyboardObj;
+import net.toload.main.hd.global.LIME;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEProgressListener;
+import net.toload.main.hd.global.LIMEUtilities;
+import net.toload.main.hd.limedb.LimeDB;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -36,21 +50,9 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.*;
-
-import net.toload.main.hd.data.Word;
-import net.toload.main.hd.global.KeyboardObj;
-import net.toload.main.hd.global.LIME;
-import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.global.LIMEProgressListener;
-import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.limedb.LimeDB;
-
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.RemoteException;
-import android.util.Log;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 //Jeremy '12,5,1 renamed from DBServer and change from service to ordinary class.
 public class  DBServer {
@@ -137,6 +139,10 @@ public class  DBServer {
 
 		// Reset cache in SearchSrv
 		mLIMEPref.setResetCacheFlag(true);
+	}
+
+	public boolean importBackupDb(File sourcedb, String imtype) {
+		return dbAdapter.importBackupDb(sourcedb, imtype);
 	}
 
 	public int importMapping(File compressedSourceDB, String imtype) {

@@ -33,7 +33,8 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.ui.ManageRelatedFragment;
 import net.toload.main.hd.ui.SetupImFragment;
-import net.toload.main.hd.ui.ShareRunnable;
+import net.toload.main.hd.ui.ShareDbRunnable;
+import net.toload.main.hd.ui.ShareTxtRunnable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -368,7 +369,12 @@ public class MainActivity extends ActionBarActivity
     }
 
     public void initialShare(String imtype){
-        sharethread = new Thread(new ShareRunnable(this, imtype, handler));
+        sharethread = new Thread(new ShareTxtRunnable(this, imtype, handler));
+        sharethread.start();
+    }
+
+    public void initialShareDb(String imtype){
+        sharethread = new Thread(new ShareDbRunnable(this, imtype, handler));
         sharethread.start();
     }
 
@@ -396,9 +402,9 @@ public class MainActivity extends ActionBarActivity
         }
     }
 
-    public void shareTo(String filepath){
+    public void shareTo(String filepath, String type){
         Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
-        sharingIntent.setType("text/plain");
+        sharingIntent.setType(type);
 
         File target = new File(filepath);
         Uri targetfile = Uri.fromFile(target);
@@ -424,7 +430,7 @@ public class MainActivity extends ActionBarActivity
         Boolean hide_software_keyboard_typing_with_physical = mLIMEPref.getParameterBoolean("hide_software_keyboard_typing_with_physical", true);
         mLIMEPref.setParameter("hide_software_keyboard_typing_with_physical", hide_software_keyboard_typing_with_physical);
 
-        String show_arrow_key = mLIMEPref.getParameterString("show_arrow_key", "0");
+        Boolean show_arrow_key = mLIMEPref.getParameterBoolean("show_arrow_key", false);
         mLIMEPref.setParameter("hide_software_keyboard_typing_with_physical", show_arrow_key);
 
         String split_keyboard_mode = mLIMEPref.getParameterString("split_keyboard_mode", "0");

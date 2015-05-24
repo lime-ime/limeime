@@ -4,16 +4,17 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Looper;
 import android.os.RemoteException;
 import android.util.Log;
 
+import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
-import net.toload.main.hd.DBServer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -24,7 +25,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -62,6 +62,9 @@ public class SetupImLoadRunnable implements Runnable{
 
     @Override
     public void run() {
+
+        Looper.prepare();
+
         handler.showProgress(true);
 
         // Download DB File
@@ -71,10 +74,16 @@ public class SetupImLoadRunnable implements Runnable{
 
         // Load DB
         handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_load));
-         int count = dbsrv.importMapping(tempfile, imtype);
+        int count = dbsrv.importMapping(tempfile, imtype);
+
+        mLIMEPref.setParameter("_table", "");
+        mLIMEPref.setResetCacheFlag(true);
+        handler.cancelProgress();
+        handler.initialImButtons();
+
         // int count = migrateDb(tempfile, imtype);
 
-        String im_input = activity.getResources().getString(R.string.im_input_method);
+       /* String im_input = activity.getResources().getString(R.string.im_input_method);
         String defaultname = imtype;
         if(imtype.equalsIgnoreCase(Lime.DB_TABLE_ARRAY)){
             defaultname = activity.getResources().getString(R.string.im_array) + im_input;
@@ -99,11 +108,11 @@ public class SetupImLoadRunnable implements Runnable{
         }else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_WB)){
             defaultname = activity.getResources().getString(R.string.im_wb) + im_input;
         }
-        /**
+        *//**
          * else if (imtype.equalsIgnoreCase(Lime.DB_TABLE_HS)){
          defaultname = activity.getResources().getString(R.string.im_hs) + im_input;
          }
-         */
+         *//*
 
         // Update Related Table
         mLIMEPref.setParameter("_table", "");
@@ -184,11 +193,8 @@ public class SetupImLoadRunnable implements Runnable{
                 kobj = 	getKeyboardObj("lime");
             }
         }
-        setIMKeyboard(imtype, kobj.getDescription(), kobj.getCode());
+        setIMKeyboard(imtype, kobj.getDescription(), kobj.getCode());*/
 
-        mLIMEPref.setResetCacheFlag(true);
-        handler.cancelProgress();
-        handler.initialImButtons();
     }
 
     public int migrateDb(File tempfile, String imtype){
@@ -414,9 +420,7 @@ public class SetupImLoadRunnable implements Runnable{
             downloadFolder.mkdirs();
 
             File downloadedFile = new File(downloadFolder.getAbsolutePath() + File.separator + Lime.DATABASE_IM_TEMP);
-            if(downloadedFile.exists()){
-                downloadedFile.delete();
-            }
+                 downloadedFile.deleteOnExit();
 
             FileOutputStream fos = null;
             fos = new FileOutputStream(downloadedFile);
