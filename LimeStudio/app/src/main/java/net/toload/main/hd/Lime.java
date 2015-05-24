@@ -220,6 +220,8 @@ public class Lime {
     public static final String SUPPORT_FILE_EXT_LIMEDB = "limedb";
     public static final String SUPPORT_FILE_EXT_CIN= "cin";
 
+    public static final String EXPORT_FILENAME_RELATED = "lime.related";
+
     // AD
     public static final String VPON_BANNER_ID = "8a8081824cfe92fa014d3707f493630b";
 

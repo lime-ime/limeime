@@ -120,6 +120,13 @@
                     android:id="@+id/btnShareWb" />
             </LinearLayout>
 
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/related"
+                android:id="@+id/btnShareRelated"
+                android:layout_gravity="center_horizontal"
+                android:layout_weight="1" />
 
         </LinearLayout>
 

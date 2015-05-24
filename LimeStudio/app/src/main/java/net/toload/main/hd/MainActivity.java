@@ -34,6 +34,8 @@ import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.ui.ManageRelatedFragment;
 import net.toload.main.hd.ui.SetupImFragment;
 import net.toload.main.hd.ui.ShareDbRunnable;
+import net.toload.main.hd.ui.ShareRelatedDbRunnable;
+import net.toload.main.hd.ui.ShareRelatedTxtRunnable;
 import net.toload.main.hd.ui.ShareTxtRunnable;
 
 import java.io.File;
@@ -376,6 +378,16 @@ public class MainActivity extends ActionBarActivity
 
     public void initialShareDb(String imtype){
         sharethread = new Thread(new ShareDbRunnable(this, imtype, handler));
+        sharethread.start();
+    }
+
+    public void initialShareRelated(){
+        sharethread = new Thread(new ShareRelatedTxtRunnable(this, handler));
+        sharethread.start();
+    }
+
+    public void initialShareRelatedDb(){
+        sharethread = new Thread(new ShareRelatedDbRunnable(this, handler));
         sharethread.start();
     }
 

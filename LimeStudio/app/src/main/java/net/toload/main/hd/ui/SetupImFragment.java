@@ -422,6 +422,17 @@ public class SetupImFragment extends Fragment {
                     }
                 });
 
+                // User can always load new related table ...
+                btnSetupImImportRelated.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        FragmentTransaction ft = getFragmentManager().beginTransaction();
+                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_RELATED, handler);
+                        dialog.show(ft, "loadimdialog");
+
+                    }
+                });
+
                 if(check.get(Lime.DB_TABLE_PHONETIC) != null){
                     btnSetupImPhonetic.setAlpha(Lime.HALF_ALPHA_VALUE);
                     btnSetupImPhonetic.setTypeface(null, Typeface.ITALIC);

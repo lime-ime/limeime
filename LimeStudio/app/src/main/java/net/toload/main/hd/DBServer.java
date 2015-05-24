@@ -98,12 +98,6 @@ public class  DBServer {
 			dbAdapter = new LimeDB(ctx); 
 	}
 */
-	public void loadMapping(String filename, String tablename) throws RemoteException {
-		loadMapping(filename,tablename,null);
-	}
-	public void loadMapping(File sourcefile, String tablename) throws RemoteException {
-		loadMapping(sourcefile,tablename,null);
-	}
 
 	public void loadMapping(String filename, String tablename, LIMEProgressListener progressListener) throws RemoteException {
 
@@ -139,6 +133,10 @@ public class  DBServer {
 
 		// Reset cache in SearchSrv
 		mLIMEPref.setResetCacheFlag(true);
+	}
+
+	public boolean importBackupRelatedDb(File sourcedb){
+		return dbAdapter.importBackupRelatedDb(sourcedb);
 	}
 
 	public boolean importBackupDb(File sourcedb, String imtype) {

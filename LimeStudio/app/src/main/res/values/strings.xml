@@ -63,6 +63,9 @@
     <string name="setup_im_load_standard">匯入自定字根表</string>
     <string name="setup_im_load_reset">移除自定字根表</string>
 
+    <string name="setup_im_related_title">安裝關聯字庫</string>
+    <string name="setup_im_related_custom">匯入關聯字庫</string>
+
     <string name="setup_im_dialog_title">安裝輸入法</string>
     <string name="setup_im_dialog_custom">匯入自定義字根表</string>
 
@@ -104,6 +107,7 @@
     <string name="im_pinyin">拼音</string>
     <string name="im_scj">快倉</string>
     <string name="im_wb">筆順五碼</string>
+    <string name="related">關聯字庫</string>
 
     <string name="manage_im_add">新增</string>
     <string name="manage_im_edit">編輯</string>
@@ -162,9 +166,11 @@
     <string name="manage_word_dialog_add">新增內容</string>
     <string name="manage_word_dialog_add_message">請問是否要新增記錄並離開?</string>
 
+    <string name="share_dialog_related_title">分享關聯字庫</string>
+    <string name="share_dialog_related_title_message">透過分享您可以將關聯字庫匯出並傳送給你的朋友，目前支援 limedb (資料庫) 格式</string>
 
     <string name="share_dialog_title">分享輸入法</string>
-    <string name="share_dialog_title_message">透過分享您可以將輸入法匯出並傳送給你的朋友，目前支援 .lime (文字格式) 及 limedb (資料庫檔案)，請選擇匯出方式?</string>
+    <string name="share_dialog_title_message">透過分享您可以將輸入法匯出並傳送給你的朋友，目前支援 .lime (文字) 及 limedb (資料庫)，請選擇匯出格式?</string>
 
     <string name="share_step_initial">準備資料中 ...</string>
     <string name="share_step_write">寫入暫存檔 ...</string>

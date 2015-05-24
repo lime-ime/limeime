@@ -2563,6 +2563,17 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return result;
     }
 
+    public boolean prepareBackupRelatedDb(String sourcedbfile) {
+        if (!checkDBConnection()) return false;
+
+        holdDBConnection();
+        db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
+        db.execSQL("insert into sourceDB." + Lime.DB_RELATED + " select * from " + Lime.DB_RELATED);
+        db.execSQL("detach database sourceDB");
+        unHoldDBConnection();
+        return true;
+    }
+
     public boolean prepareBackupDb(String sourcedbfile, String sourcetable) {
         if (!checkDBConnection()) return false;
 
@@ -2571,6 +2582,22 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         db.execSQL("insert into sourceDB." + Lime.DB_TABLE_CUSTOM + " select * from " + sourcetable);
         db.execSQL("insert into sourceDB." + Lime.DB_IM + " select * from " + Lime.DB_IM + " WHERE code='" + sourcetable +"'");
         db.execSQL("update sourceDB." + Lime.DB_IM + " set "+ Lime.DB_IM_COLUMN_CODE + "='"+sourcetable+"'");
+        db.execSQL("detach database sourceDB");
+        unHoldDBConnection();
+        return true;
+    }
+
+    public boolean importBackupRelatedDb(File sourcedbfile){
+        if (!checkDBConnection()) return false;
+
+        // Reset IM Info
+        deleteAll(Lime.DB_RELATED);
+
+        holdDBConnection();
+
+        // Load data from DB File
+        db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
+        db.execSQL("insert into " + Lime.DB_RELATED + " select * from sourceDB." + Lime.DB_RELATED);
         db.execSQL("detach database sourceDB");
         unHoldDBConnection();
         return true;
@@ -3170,8 +3197,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 //finishing
 
             }
-
         };
+
+
 
 
         Thread reportProgressThread = new Thread() {

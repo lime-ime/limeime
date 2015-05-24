@@ -41,6 +41,8 @@ public class ShareDialog extends DialogFragment {
 	Button btnShareScj;
 	Button btnShareWb;
 
+	Button btnShareRelated;
+
 	ShareDialog sharedialog;
 
 	public static ShareDialog newInstance() {
@@ -95,6 +97,8 @@ public class ShareDialog extends DialogFragment {
 		btnSharePinyin = (Button) view.findViewById(R.id.btnSharePinyin);
 		btnShareScj = (Button) view.findViewById(R.id.btnShareScj);
 		btnShareWb = (Button) view.findViewById(R.id.btnShareWb);
+
+		btnShareRelated = (Button) view.findViewById(R.id.btnShareRelated);
 		
 		btnShareCancel = (Button) view.findViewById(R.id.btnShareCancel);
 		btnShareCancel.setOnClickListener(new View.OnClickListener() {
@@ -304,30 +308,59 @@ public class ShareDialog extends DialogFragment {
 			});
 		}
 
+		btnShareRelated.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				confirmShareDialog(Lime.DB_RELATED);
+			}
+		});
+
 		return view;
 	}
 
 	public void confirmShareDialog(final String imtype){
 
 		AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
-		alertDialog.setTitle(activity.getResources().getString(R.string.share_dialog_title));
-		alertDialog.setMessage(activity.getResources().getString(R.string.share_dialog_title_message));
-		alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.share_lime_cin),
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						// Call Share IM Processes
-						((MainActivity) activity).initialShare(imtype);
-						dismiss();
-						sharedialog.dismiss();
-					}
-				});
+
+		if(imtype.equalsIgnoreCase(Lime.DB_RELATED)) {
+			alertDialog.setTitle(activity.getResources().getString(R.string.share_dialog_related_title));
+			alertDialog.setMessage(activity.getResources().getString(R.string.share_dialog_related_title_message));
+		}else{
+			alertDialog.setTitle(activity.getResources().getString(R.string.share_dialog_title));
+			alertDialog.setMessage(activity.getResources().getString(R.string.share_dialog_title_message));
+		}
+		if(!imtype.equalsIgnoreCase(Lime.DB_RELATED)){
+			alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.share_lime_cin),
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							if(imtype.equals(Lime.DB_RELATED)){
+								// Call Share IM Processes
+								((MainActivity) activity).initialShareRelated();
+								dismiss();
+								sharedialog.dismiss();
+							}else{
+								// Call Share IM Processes
+								((MainActivity) activity).initialShare(imtype);
+								dismiss();
+								sharedialog.dismiss();
+							}
+						}
+					});
+		}
+
 		alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL, activity.getResources().getString(R.string.share_lime_db),
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						// Call Share IM Processes
-						((MainActivity) activity).initialShareDb(imtype);
-						dismiss();
-						sharedialog.dismiss();
+						if(imtype.equals(Lime.DB_RELATED)){
+							((MainActivity) activity).initialShareRelatedDb();
+							dismiss();
+							sharedialog.dismiss();
+						}else{
+							// Call Share IM Processes
+							((MainActivity) activity).initialShareDb(imtype);
+							dismiss();
+							sharedialog.dismiss();
+						}
 					}
 				});
 		alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),

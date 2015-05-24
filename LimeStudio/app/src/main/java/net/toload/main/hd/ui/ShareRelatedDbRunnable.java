@@ -20,27 +20,23 @@ import java.util.List;
 /**
  * Created by Art Hung on 2015/4/26.
  */
-public class ShareDbRunnable implements Runnable{
+public class ShareRelatedDbRunnable implements Runnable{
 
     private static boolean DEBUG = true;
-    private static String TAG = "ShareDbRunnable";
+    private static String TAG = "ShareRelatedDbRunnable";
 
     // Global
-    private String imtype = null;
     private Activity activity;
     private MainActivityHandler handler;
 
     private LimeDB datasource;
     private DBServer dbsrv = null;
-    //private LIMEPreferenceManager mLIMEPref;
 
-    public ShareDbRunnable(Activity activity, String imtype, MainActivityHandler handler) {
+    public ShareRelatedDbRunnable(Activity activity, MainActivityHandler handler) {
         this.handler = handler;
-        this.imtype = imtype;
         this.activity = activity;
         this.dbsrv = new DBServer(activity);
         this.datasource = new LimeDB(activity);
-        //this.mLIMEPref = new LIMEPreferenceManager(activity);
     }
 
     @Override
@@ -53,12 +49,12 @@ public class ShareDbRunnable implements Runnable{
 
         handler.showProgress();
 
-        File targetfile = new File(Lime.DATABASE_FOLDER_EXTERNAL + imtype + Lime.DATABASE_EXT);
+        File targetfile = new File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DB_RELATED + Lime.DATABASE_EXT);
         if(targetfile.exists()){
             targetfile.deleteOnExit();
         }
 
-        File targetfilezip = new File(Lime.DATABASE_FOLDER_EXTERNAL + imtype + ".limedb");
+        File targetfilezip = new File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DB_RELATED + ".limedb");
         if(targetfilezip.exists()){
             targetfilezip.deleteOnExit();
         }
@@ -66,10 +62,9 @@ public class ShareDbRunnable implements Runnable{
         // Prepare database file
         handler.updateProgress(activity.getResources().getString(R.string.share_step_initial));
 
-
         // Copy Database File
         try {
-            InputStream from = activity.getResources().openRawResource( R.raw.blank );
+            InputStream from = activity.getResources().openRawResource( R.raw.blankrelated );
             FileOutputStream to = new FileOutputStream(targetfile);
             byte[] buffer = new byte[4096];
             int bytes_read;
@@ -86,7 +81,7 @@ public class ShareDbRunnable implements Runnable{
 
         // Open Database File
         handler.updateProgress(activity.getResources().getString(R.string.share_step_write));
-        datasource.prepareBackupDb(targetfile.getAbsolutePath(), imtype);
+        datasource.prepareBackupRelatedDb(targetfile.getAbsolutePath());
 
         //ready to zip backup file list
         try {

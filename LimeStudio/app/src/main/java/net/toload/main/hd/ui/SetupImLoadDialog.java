@@ -133,220 +133,242 @@ public class SetupImLoadDialog extends DialogFragment {
         btnSetupImDialogLoad2 = (Button) rootView.findViewById(R.id.btnSetupImDialogLoad2);
         btnSetupImDialogLoad3 = (Button) rootView.findViewById(R.id.btnSetupImDialogLoad3);
 
-        if(imcount > 0){
+        if(imtype.equalsIgnoreCase(Lime.DB_RELATED)){
 
-            getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_dialog_title_remove));
+            getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_related_title));
 
-            btnSetupImDialogLoad1.setText(getResources().getString(R.string.setup_im_dialog_remove));
-            btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
-                    alertDialog.setMessage(activity.getResources().getString(R.string.setup_im_dialog_remove_confirm_message));
-                    //alertDialog.setIcon(R.drawable.);
-                    alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    try {
-                                        DBSrv.resetMapping(imtype);
-                                        if(imtype.equals(Lime.DB_TABLE_CUSTOM)){
-                                            handler.updateCustomButton();
-                                        }
-                                    } catch (RemoteException e) {
-                                        e.printStackTrace();
-                                    }
-                                    handler.initialImButtons();
-                                    dismiss();
-                                    frgdialog.dismiss();
-                                }
-                            });
-                    alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            });
-                    alertDialog.show();
-                }
-            });
-            btnSetupImDialogLoad2.setVisibility(View.GONE);
-            btnSetupImDialogLoad3.setVisibility(View.GONE);
-            btnSetupImDialogCustom.setVisibility(View.GONE);
-
-        } else {
-
-            getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_dialog_title));
-
+            btnSetupImDialogCustom.setText(getResources().getString(R.string.setup_im_related_custom));
             btnSetupImDialogCustom.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    selectMappingFile(Lime.DATABASE_FOLDER_EXTERNAL, imtype);
+                    selectMappingFile();
                     handler.initialImButtons();
                     dismiss();
                 }
             });
 
-            if (imtype.equals(Lime.DB_TABLE_PHONETIC)) {
+            btnSetupImDialogLoad1.setVisibility(View.GONE);
+            btnSetupImDialogLoad2.setVisibility(View.GONE);
+            btnSetupImDialogLoad3.setVisibility(View.GONE);
 
-                btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_phonetic));
+        }else{
+            if(imcount > 0){
+
+                getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_dialog_title_remove));
+
+                btnSetupImDialogLoad1.setText(getResources().getString(R.string.setup_im_dialog_remove));
                 btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_PHONETIC, Lime.IM_PHONETIC);
-                    }
-                });
-                btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_phonetic_adv));
-                btnSetupImDialogLoad2.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_PHONETIC, Lime.IM_PHONETIC_ADV);
-                    }
-                });
-                btnSetupImDialogLoad3.setVisibility(View.GONE);
-
-            } else if (imtype.equals(Lime.DB_TABLE_CJ)) {
-
-                btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_cj));
-                btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_CJ, Lime.IM_CJ);
-                    }
-                });
-                btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_cjk_hk_cj));
-                btnSetupImDialogLoad2.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_CJ, Lime.IM_CJHK);
-                    }
-                });
-                btnSetupImDialogLoad3.setVisibility(View.GONE);
-
-            } else if (imtype.equals(Lime.DB_TABLE_CJ5)) {
-
-                btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_cj5));
-                btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_CJ5, Lime.IM_CJ5);
+                        AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
+                        alertDialog.setMessage(activity.getResources().getString(R.string.setup_im_dialog_remove_confirm_message));
+                        //alertDialog.setIcon(R.drawable.);
+                        alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        try {
+                                            DBSrv.resetMapping(imtype);
+                                            if(imtype.equals(Lime.DB_TABLE_CUSTOM)){
+                                                handler.updateCustomButton();
+                                            }
+                                        } catch (RemoteException e) {
+                                            e.printStackTrace();
+                                        }
+                                        handler.initialImButtons();
+                                        dismiss();
+                                        frgdialog.dismiss();
+                                    }
+                                });
+                        alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                });
+                        alertDialog.show();
                     }
                 });
                 btnSetupImDialogLoad2.setVisibility(View.GONE);
                 btnSetupImDialogLoad3.setVisibility(View.GONE);
+                btnSetupImDialogCustom.setVisibility(View.GONE);
 
-            } else if (imtype.equals(Lime.DB_TABLE_SCJ)) {
-
-                btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_scj));
-                btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_SCJ, Lime.IM_SCJ);
-                    }
-                });
-                btnSetupImDialogLoad2.setVisibility(View.GONE);
-                btnSetupImDialogLoad3.setVisibility(View.GONE);
-
-            } else if (imtype.equals(Lime.DB_TABLE_ECJ)) {
-
-                btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_ecj));
-                btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_ECJ, Lime.IM_ECJ);
-                    }
-                });
-                btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_cjk_hk_ecj));
-                btnSetupImDialogLoad2.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_ECJ, Lime.IM_ECJHK);
-                    }
-                });
-                btnSetupImDialogLoad3.setVisibility(View.GONE);
-
-            } else if (imtype.equals(Lime.DB_TABLE_DAYI)) {
-
-                btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_dayi));
-                btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_DAYI, Lime.IM_DAYI);
-                    }
-                });
-                btnSetupImDialogLoad2.setVisibility(View.GONE);
-                btnSetupImDialogLoad3.setVisibility(View.GONE);
-
-            } else if (imtype.equals(Lime.DB_TABLE_EZ)) {
-
-                btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_ez));
-                btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_EZ, Lime.IM_EZ);
-                    }
-                });
-                btnSetupImDialogLoad2.setVisibility(View.GONE);
-                btnSetupImDialogLoad3.setVisibility(View.GONE);
-
-            } else if (imtype.equals(Lime.DB_TABLE_ARRAY)) {
-
-                btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_array));
-                btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_ARRAY, Lime.IM_ARRAY);
-                    }
-                });
-                btnSetupImDialogLoad2.setVisibility(View.GONE);
-                btnSetupImDialogLoad3.setVisibility(View.GONE);
-
-            } else if (imtype.equals(Lime.DB_TABLE_ARRAY10)) {
-
-                btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_array10));
-                btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_ARRAY10, Lime.IM_ARRAY10);
-                    }
-                });
-                btnSetupImDialogLoad2.setVisibility(View.GONE);
-                btnSetupImDialogLoad3.setVisibility(View.GONE);
-
-            } else if (imtype.equals(Lime.DB_TABLE_PINYIN)) {
-
-                btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_pinyin_big5));
-                btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_PINYIN, Lime.IM_PINYIN);
-                    }
-                });
-                btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_pinyin_gb));
-                btnSetupImDialogLoad2.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_PINYIN, Lime.IM_PINYINGB);
-                    }
-                });
-                btnSetupImDialogLoad3.setVisibility(View.GONE);
-
-            } else if (imtype.equals(Lime.DB_TABLE_WB)) {
-
-                btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_wb));
-                btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        downloadAndLoadIm(Lime.DB_TABLE_WB, Lime.IM_WB);
-                    }
-                });
-                btnSetupImDialogLoad2.setVisibility(View.GONE);
-                btnSetupImDialogLoad3.setVisibility(View.GONE);
             } else {
-                btnSetupImDialogLoad1.setVisibility(View.GONE);
-                btnSetupImDialogLoad2.setVisibility(View.GONE);
-                btnSetupImDialogLoad3.setVisibility(View.GONE);
+
+                getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_dialog_title));
+
+                btnSetupImDialogCustom.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        selectMappingFile();
+                        handler.initialImButtons();
+                        dismiss();
+                    }
+                });
+
+                if (imtype.equals(Lime.DB_TABLE_PHONETIC)) {
+
+                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_phonetic));
+                    btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_PHONETIC, Lime.IM_PHONETIC);
+                        }
+                    });
+                    btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_phonetic_adv));
+                    btnSetupImDialogLoad2.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_PHONETIC, Lime.IM_PHONETIC_ADV);
+                        }
+                    });
+                    btnSetupImDialogLoad3.setVisibility(View.GONE);
+
+                } else if (imtype.equals(Lime.DB_TABLE_CJ)) {
+
+                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_cj));
+                    btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_CJ, Lime.IM_CJ);
+                        }
+                    });
+                    btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_cjk_hk_cj));
+                    btnSetupImDialogLoad2.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_CJ, Lime.IM_CJHK);
+                        }
+                    });
+                    btnSetupImDialogLoad3.setVisibility(View.GONE);
+
+                } else if (imtype.equals(Lime.DB_TABLE_CJ5)) {
+
+                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_cj5));
+                    btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_CJ5, Lime.IM_CJ5);
+                        }
+                    });
+                    btnSetupImDialogLoad2.setVisibility(View.GONE);
+                    btnSetupImDialogLoad3.setVisibility(View.GONE);
+
+                } else if (imtype.equals(Lime.DB_TABLE_SCJ)) {
+
+                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_scj));
+                    btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_SCJ, Lime.IM_SCJ);
+                        }
+                    });
+                    btnSetupImDialogLoad2.setVisibility(View.GONE);
+                    btnSetupImDialogLoad3.setVisibility(View.GONE);
+
+                } else if (imtype.equals(Lime.DB_TABLE_ECJ)) {
+
+                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_ecj));
+                    btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_ECJ, Lime.IM_ECJ);
+                        }
+                    });
+                    btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_cjk_hk_ecj));
+                    btnSetupImDialogLoad2.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_ECJ, Lime.IM_ECJHK);
+                        }
+                    });
+                    btnSetupImDialogLoad3.setVisibility(View.GONE);
+
+                } else if (imtype.equals(Lime.DB_TABLE_DAYI)) {
+
+                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_dayi));
+                    btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_DAYI, Lime.IM_DAYI);
+                        }
+                    });
+                    btnSetupImDialogLoad2.setVisibility(View.GONE);
+                    btnSetupImDialogLoad3.setVisibility(View.GONE);
+
+                } else if (imtype.equals(Lime.DB_TABLE_EZ)) {
+
+                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_ez));
+                    btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_EZ, Lime.IM_EZ);
+                        }
+                    });
+                    btnSetupImDialogLoad2.setVisibility(View.GONE);
+                    btnSetupImDialogLoad3.setVisibility(View.GONE);
+
+                } else if (imtype.equals(Lime.DB_TABLE_ARRAY)) {
+
+                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_array));
+                    btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_ARRAY, Lime.IM_ARRAY);
+                        }
+                    });
+                    btnSetupImDialogLoad2.setVisibility(View.GONE);
+                    btnSetupImDialogLoad3.setVisibility(View.GONE);
+
+                } else if (imtype.equals(Lime.DB_TABLE_ARRAY10)) {
+
+                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_array10));
+                    btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_ARRAY10, Lime.IM_ARRAY10);
+                        }
+                    });
+                    btnSetupImDialogLoad2.setVisibility(View.GONE);
+                    btnSetupImDialogLoad3.setVisibility(View.GONE);
+
+                } else if (imtype.equals(Lime.DB_TABLE_PINYIN)) {
+
+                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_pinyin_big5));
+                    btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_PINYIN, Lime.IM_PINYIN);
+                        }
+                    });
+                    btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_pinyin_gb));
+                    btnSetupImDialogLoad2.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_PINYIN, Lime.IM_PINYINGB);
+                        }
+                    });
+                    btnSetupImDialogLoad3.setVisibility(View.GONE);
+
+                } else if (imtype.equals(Lime.DB_TABLE_WB)) {
+
+                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_wb));
+                    btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_WB, Lime.IM_WB);
+                        }
+                    });
+                    btnSetupImDialogLoad2.setVisibility(View.GONE);
+                    btnSetupImDialogLoad3.setVisibility(View.GONE);
+                } else {
+                    btnSetupImDialogLoad1.setVisibility(View.GONE);
+                    btnSetupImDialogLoad2.setVisibility(View.GONE);
+                    btnSetupImDialogLoad3.setVisibility(View.GONE);
+                }
             }
         }
+
+
 
         btnSetupImDialogCancel = (Button) rootView.findViewById(R.id.btnSetupImDialogCancel);
         btnSetupImDialogCancel.setOnClickListener(new View.OnClickListener() {
@@ -359,7 +381,7 @@ public class SetupImLoadDialog extends DialogFragment {
         return rootView;
     }
 
-    public void selectMappingFile(String srcpath, String tablename) {
+    public void selectMappingFile() {
 
         final Dialog dialog = new Dialog(activity);
 
@@ -521,13 +543,21 @@ public class SetupImLoadDialog extends DialogFragment {
             for(File f: check.listFiles()){
                 if(f.canRead()){
                     if(!f.isDirectory()){
-                        if( f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_TXT) ||
-                                (f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIMEDB) &&
-                                f.getName().toLowerCase().startsWith(imtype) ) ||
-                                f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIME) ||
-                                f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_CIN)
-                                ){
-                            list.add(f);
+                        if(imtype.equalsIgnoreCase(Lime.DB_RELATED)){
+                            if( (f.getName().toLowerCase().startsWith(Lime.DB_RELATED) &&
+                                    f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIMEDB))
+                                    ){
+                                list.add(f);
+                            }
+                        }else{
+                            if( f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_TXT) ||
+                                    (f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIMEDB) &&
+                                            f.getName().toLowerCase().startsWith(imtype) ) ||
+                                    f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIME) ||
+                                    f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_CIN)
+                                    ){
+                                list.add(f);
+                            }
                         }
                     }else{
                         list.add(f);
@@ -556,14 +586,20 @@ public class SetupImLoadDialog extends DialogFragment {
             return result;
 
         } else {
-            if( check.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_TXT) ||
-                    check.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIME) ||
-                    check.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_CIN)
-                    ){
-                loadMapping(check);
+
+            if(imtype.equalsIgnoreCase(Lime.DB_RELATED)){
+                loadDbRelatedMapping(check);
             }else{
-                loadDbMapping(check);
+                if( check.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_TXT) ||
+                        check.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIME) ||
+                        check.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_CIN)
+                        ){
+                    loadMapping(check);
+                }else{
+                    loadDbMapping(check);
+                }
             }
+
         }
         return templist;
     }
@@ -573,6 +609,19 @@ public class SetupImLoadDialog extends DialogFragment {
             return e2.getName().compareTo(e1.getName());
         }
     };
+
+    public void loadDbRelatedMapping(File unit) {
+        try {
+            //unzip file
+            File sourcedbpath = new File(LIMEUtilities.unzip(unit.getAbsolutePath(), Lime.DATABASE_FOLDER_EXTERNAL, true));
+            DBSrv.importBackupRelatedDb(sourcedbpath.getAbsoluteFile());
+            sourcedbpath.deleteOnExit();
+            showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
+        } catch (Exception e) {
+            e.printStackTrace();
+            showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
+        }
+    }
 
     public void loadDbMapping(File unit) {
 
