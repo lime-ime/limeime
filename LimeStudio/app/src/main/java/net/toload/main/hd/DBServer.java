@@ -518,7 +518,10 @@ public class  DBServer {
 			dbAdapter.openDBConnection(true);
 
 			//restore shared preference
-			restoreDefaultSharedPreference(new File(LIME.LIME_SDCARD_FOLDER + LIME.SHARED_PREFS_BACKUP_NAME));
+			File checkpref = new File(LIME.LIME_SDCARD_FOLDER + LIME.SHARED_PREFS_BACKUP_NAME);
+			if(checkpref.exists()){
+				restoreDefaultSharedPreference(checkpref);
+			}
 
 			mLIMEPref.setResetCacheFlag(true);
 
