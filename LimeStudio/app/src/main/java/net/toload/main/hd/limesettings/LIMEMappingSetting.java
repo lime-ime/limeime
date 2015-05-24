@@ -44,7 +44,7 @@ import android.widget.Toast;
 
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.R;
-import net.toload.main.hd.global.KeyboardObj;
+import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 
 import java.io.File;

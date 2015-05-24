@@ -18,7 +18,7 @@
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package net.toload.main.hd.global;
+package net.toload.main.hd.data;
 
 /**
  * @author Art Hung
@@ -97,12 +97,6 @@ public class Mapping {
 	 *
 	public String getPcode() {
 		return pcode;
-	}
-	/**
-	 * @param pcode the pcode to set
-	 *
-	public void setPcode(String pcode) {
-		this.pcode = pcode;
 	}
 	/**
 	 * @return the pword

@@ -108,7 +108,7 @@ public class Im {
 
 
 	public static List<Im> getList(Cursor cursor){
-		List<Im> list = new ArrayList<Im>();
+		List<Im> list = new ArrayList<>();
 		cursor.moveToFirst();
 		while(!cursor.isAfterLast()){
 			list.add(get(cursor));

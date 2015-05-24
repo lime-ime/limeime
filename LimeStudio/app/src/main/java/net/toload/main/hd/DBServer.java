@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.zip.*;
 
 import net.toload.main.hd.data.Word;
-import net.toload.main.hd.global.KeyboardObj;
+import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;

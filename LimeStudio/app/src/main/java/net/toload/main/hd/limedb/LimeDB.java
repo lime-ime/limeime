@@ -38,13 +38,13 @@ import net.toload.main.hd.data.Im;
 import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.data.Related;
 import net.toload.main.hd.data.Word;
-import net.toload.main.hd.global.ImObj;
-import net.toload.main.hd.global.KeyboardObj;
+import net.toload.main.hd.data.ImObj;
+import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;
 import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.global.Mapping;
+import net.toload.main.hd.data.Mapping;
 
 import java.io.BufferedReader;
 import java.io.File;

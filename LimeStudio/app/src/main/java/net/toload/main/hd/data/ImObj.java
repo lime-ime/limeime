@@ -1,4 +1,4 @@
-package net.toload.main.hd.global;
+package net.toload.main.hd.data;
 
 public class ImObj {
 
