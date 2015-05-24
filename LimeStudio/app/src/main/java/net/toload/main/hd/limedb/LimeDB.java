@@ -45,7 +45,6 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.data.Mapping;
-import net.toload.main.hd.limesettings.LIMEPreference;
 
 import java.io.BufferedReader;
 import java.io.File;

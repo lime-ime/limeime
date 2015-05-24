@@ -24,9 +24,9 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import net.toload.main.hd.data.Im;
+import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
-import net.toload.main.hd.limesettings.LIMEPreference;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 import net.toload.main.hd.ui.HelpDialog;
 import net.toload.main.hd.ui.PaymentDialog;
@@ -71,6 +71,8 @@ public class NavigationDrawerFragment extends Fragment {
     private boolean mUserLearnedDrawer;
 
 
+    private LIMEPreferenceManager mLIMEPref;
+
     private String[] menulist;
 
     private LimeDB datasource;
@@ -88,11 +90,13 @@ public class NavigationDrawerFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Construct Preference Manager object
+        mLIMEPref = new LIMEPreferenceManager(getActivity());
+
         // Read in the flag indicating whether or not the user has demonstrated awareness of the
         // drawer. See PREF_USER_LEARNED_DRAWER for details.
 
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+        mUserLearnedDrawer = mLIMEPref.getParameterBoolean(PREF_USER_LEARNED_DRAWER, false);
 
         if (savedInstanceState != null) {
             mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
@@ -209,9 +213,7 @@ public class NavigationDrawerFragment extends Fragment {
                     // The user manually opened the drawer; store this flag to prevent auto-showing
                     // the navigation drawer automatically in the future.
                     mUserLearnedDrawer = true;
-                    SharedPreferences sp = PreferenceManager
-                            .getDefaultSharedPreferences(getActivity());
-                    sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
+                    mLIMEPref.setParameter(PREF_USER_LEARNED_DRAWER, true);
                 }
 
                 getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()

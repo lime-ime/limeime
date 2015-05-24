@@ -60,7 +60,6 @@ import net.toload.main.hd.keyboard.LIMEKeyboard;
 import net.toload.main.hd.keyboard.LIMEKeyboardBaseView;
 import net.toload.main.hd.keyboard.LIMEKeyboardView;
 import net.toload.main.hd.keyboard.LIMEMetaKeyKeyListener;
-import net.toload.main.hd.limesettings.LIMEPreference;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 
 import java.util.ArrayList;
@@ -245,7 +244,7 @@ public class LIMEService extends InputMethodService implements
 		mEnglishFlagShift = false;
 
 		
-		// Construct Preference Access Tool
+		// Construct Preference Manager object
 		mLIMEPref = new LIMEPreferenceManager(this);
 		
 		mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
