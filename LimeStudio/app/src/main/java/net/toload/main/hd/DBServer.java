@@ -491,58 +491,41 @@ public class  DBServer {
 	}
 */
 	public static void restoreDatabase() throws RemoteException {
-		restoreDatabase(LIME.LIME_SDCARD_FOLDER + LIME.DATABASE_BACKUP_NAME, false);
+		restoreDatabase(LIME.LIME_SDCARD_FOLDER + LIME.DATABASE_BACKUP_NAME);
 	}
-	public static void restoreDatabase(String srcFilePath, Boolean removeSourceFile) throws RemoteException {
+	public static void restoreDatabase(String srcFilePath) throws RemoteException {
 
-		showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start) + "");
-		//mLIMEPref.holdDatabaseCoonection(true);
-		dbAdapter.holdDBConnection(); //Jeremy '15,5,23
-		closeDatabse();
+		File check = new File(srcFilePath);
 
-		try {
-			LIMEUtilities.unzip(srcFilePath, LIME.getLimeDataRootFolder(), true);
-		} catch (Exception e) {
-			e.printStackTrace();
-			showNotificationMessage(ctx.getText(R.string.l3_initial_restore_error) + "");
-		}
-		finally {
-			showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end) + "");
-		}
+		if(check.exists()){
 
+			showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start) + "");
+			//mLIMEPref.holdDatabaseCoonection(true);
+			dbAdapter.holdDBConnection(); //Jeremy '15,5,23
+			closeDatabse();
 
-		/*
-		File dbBackup, journalBackup, sharedPrefsBackup;
-		dbBackup = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_BACKUP_NAME);
-		journalBackup = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_JOURNAL_BACKUP_NAME);
-		sharedPrefsBackup = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.SHARED_PREFS_BACKUP_NAME);
-
-		String dbtarget = mLIMEPref.getParameterString("dbtarget");
-
-		if (dbtarget.equals("device")) {
 			try {
-				LIMEUtilities.unzip(LIME.LIME_SDCARD_FOLDER + LIME.DATABASE_BACKUP_NAME, LIME.getLIMEDatabaseFolder(), true);
-			} catch (IOException e) {
+				LIMEUtilities.unzip(srcFilePath, LIME.getLimeDataRootFolder(), true);
+			} catch (Exception e) {
 				e.printStackTrace();
+				showNotificationMessage(ctx.getText(R.string.l3_initial_restore_error) + "");
 			}
-			//decompressFile(dbBackup, LIME.getLIMEDatabaseFolder(), LIME.DATABASE_NAME, false);
-           // decompressFile(journalBackup, LIME.getLIMEDatabaseFolder(), LIME.DATABASE_JOURNAL, false);
-        } else {
-            //LIMEUtilities.unzip(LIME.LIME_SDCARD_FOLDER + LIME.DATABASE_BACKUP_NAME, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, true);
-            decompressFile(dbBackup, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME, false);
-            decompressFile(journalBackup, LIME.getLIMEDatabaseFolder(), LIME.DATABASE_JOURNAL, false);
-        }
-		*/
+			finally {
+				showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end) + "");
+			}
 
-		//mLIMEPref.holdDatabaseCoonection(false);
-		dbAdapter.unHoldDBConnection(); //Jeremy '15,5,23
-		dbAdapter.openDBConnection(true);
-		//restore shared preference
-		restoreDefaultSharedPreference(new File(LIME.LIME_SDCARD_FOLDER + LIME.SHARED_PREFS_BACKUP_NAME));
+			dbAdapter.unHoldDBConnection(); //Jeremy '15,5,23
+			dbAdapter.openDBConnection(true);
 
-		mLIMEPref.setResetCacheFlag(true);
+			//restore shared preference
+			restoreDefaultSharedPreference(new File(LIME.LIME_SDCARD_FOLDER + LIME.SHARED_PREFS_BACKUP_NAME));
 
+			mLIMEPref.setResetCacheFlag(true);
 
+		}else{
+			showNotificationMessage(ctx.getText(R.string.error_restore_not_found) + "");
+
+		}
 
 	}
 
