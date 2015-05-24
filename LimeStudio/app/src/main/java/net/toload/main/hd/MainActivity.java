@@ -417,7 +417,7 @@ public class MainActivity extends ActionBarActivity
 
     public void initialDefaultPreference(){
 
-        String keyboard_state = mLIMEPref.getParameterString("keyboard_state");
+        /*String keyboard_state = mLIMEPref.getParameterString("keyboard_state");
         if(keyboard_state.isEmpty()){
             mLIMEPref.setParameter("keyboard_state", "0;1;2;3;4;5;6;7;8;9;10;11");
         }
@@ -547,7 +547,7 @@ public class MainActivity extends ActionBarActivity
 
         Boolean switch_english_mode = mLIMEPref.getParameterBoolean("switch_english_mode", false);
         mLIMEPref.setParameter("switch_english_mode", switch_english_mode);
-
+*/
     }
 
 }
