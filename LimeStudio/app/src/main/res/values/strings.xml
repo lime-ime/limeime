@@ -35,6 +35,7 @@
 
     <string name="setup_im_backup_message">資料庫備份中，請耐心等候 ...</string>
     <string name="setup_im_restore_message">資料庫還原中，請耐心等候 ...</string>
+    <string name="setup_im_import_complete">資料庫匯入完成</string>
     <string name="setup_im_backup_dropbox">Dropbox 備份</string>
     <string name="setup_im_backup_dropbox_error_507">Dropbox 已沒有足夠的空間進行備份，請檢查</string>
     <string name="setup_im_backup_google">Google 備份</string>
@@ -163,10 +164,13 @@
 
 
     <string name="share_dialog_title">分享輸入法</string>
-    <string name="share_dialog_title_message">請問是否要匯出並分享輸入法字根檔?</string>
+    <string name="share_dialog_title_message">透過分享您可以將輸入法匯出並傳送給你的朋友，目前支援 .lime (文字格式) 及 limedb (資料庫檔案)，請選擇匯出方式?</string>
 
     <string name="share_step_initial">準備資料中 ...</string>
     <string name="share_step_write">寫入暫存檔 ...</string>
+
+    <string name="share_lime_cin">純文字格式</string>
+    <string name="share_lime_db">資料庫檔案</string>
 
     <string name="help_dialog_title">使用說明</string>
     <string name="help_dialog_detail">
@@ -181,5 +185,7 @@
 		由於 Android 裝置種類繁多，礙於專案團隊設備上的限制無法做全面的測試並兼顧到各種不同鍵盤配置，若 LIME 無法支援您的硬體設備還請見諒。
 		若您對本專案感興趣，歡迎加入開發或測試，亦歡迎廠商贊助團隊設備回饋 Android 使用者社群。\n
     </string>
+
+    <string name="error_import_db">匯入失敗，可能是檔案毀損或格式錯誤，請再試一次</string>
 
 </resources>

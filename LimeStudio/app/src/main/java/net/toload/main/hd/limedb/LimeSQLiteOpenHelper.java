@@ -172,7 +172,6 @@ public abstract class LimeSQLiteOpenHelper {
                 e.printStackTrace();
             }
         }
-
         
         if(LIMEUtilities.isFileExist(getDBPath())==null) return null; //database file is not exist. return null Jeremy '12,5,1
 

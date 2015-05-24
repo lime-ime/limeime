@@ -12,6 +12,7 @@ public class Lime {
     // Database Setting
 
     final public static String DATABASE_NAME = "lime.db";
+    final public static String DATABASE_EXT = ".db";
     final public static String DATABASE_DEVICE_FOLDER =  Environment.getDataDirectory() + "/data/net.toload.main.hd/databases";
     final public static String DATABASE_DECOMPRESS_FOLDER_SDCARD = Environment.getExternalStorageDirectory() + "/limehd/databases";
     final public static String DATABASE_FOLDER_EXTERNAL = Environment.getExternalStorageDirectory() + "/limehd/";
@@ -25,7 +26,7 @@ public class Lime {
 
     public static final String DATABASE_IM_TEMP = "temp.zip";
 
-    public static final String DATABASE_CLOUD_URL_BASED = "https://github.com/hosoyu/LimeStudio/raw/master/Database/";
+    public static final String DATABASE_CLOUD_URL_BASED = "https://github.com/jrywu/limeime/raw/master/Database/";
     public static final String DATABASE_CLOUD_IM_WB = DATABASE_CLOUD_URL_BASED + "wb.zip";
     public static final String DATABASE_CLOUD_IM_WB_KEYBOARD = "wb";
 
@@ -210,6 +211,14 @@ public class Lime {
     public static final int GOOGLE_RETRIEVE_MAXIMUM = 500;
     public static final float HALF_ALPHA_VALUE = .5f;
     public static final float NORMAL_ALPHA_VALUE = 1f;
+
+    public static final String SHARE_TYPE_TXT = "text/plain";
+    public static final String SHARE_TYPE_ZIP = "application/zip";
+
+    public static final String SUPPORT_FILE_EXT_TXT = "txt";
+    public static final String SUPPORT_FILE_EXT_LIME = "lime";
+    public static final String SUPPORT_FILE_EXT_LIMEDB = "limedb";
+    public static final String SUPPORT_FILE_EXT_CIN= "cin";
 
     // AD
     public static final String VPON_BANNER_ID = "8a8081824cfe92fa014d3707f493630b";

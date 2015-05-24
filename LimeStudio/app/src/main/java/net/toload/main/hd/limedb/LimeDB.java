@@ -660,73 +660,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     }
 
-//	
-//	//Deprecated by Jeremy '12,4,7
-//	@Deprecated 
-//	public SQLiteDatabase getSqliteDb(boolean readonly){
-//		
-//		// Execute database schema update process
-//		//updateDBVersion();
-//		//SQLiteDatabase db = null;
-//		try{
-//
-//			String dbtarget = mLIMEPref.getParameterString("dbtarget");
-//			
-//			
-//			//Jeremy '11',9,11 clean code
-//			db = SQLiteDatabase.openDatabase(getDBPath(dbtarget), 
-//					null, (readonly)? SQLiteDatabase.OPEN_READONLY: SQLiteDatabase.OPEN_READWRITE
-//					| SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-//
-//			/*if(dbtarget.equals("sdcard")){
-//				String sdcarddb = LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME;
-//
-//				if(readonly){
-//					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-//				}else{
-//					db = SQLiteDatabase.openDatabase(sdcarddb, null, SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-//				}
-//			}else{
-//				String devicedb = LIME.DATABASE_FOLDER + File.separator + LIME.DATABASE_NAME;
-//				
-//				if(readonly){
-//					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-//					//db = this.getReadableDatabase();
-//				}else{
-//					db = SQLiteDatabase.openDatabase(devicedb, null, SQLiteDatabase.OPEN_READWRITE |SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-//					//db = this.getWritableDatabase();
-//				}
-//			}*/
-//			
-//		}catch(Exception e){
-//			//e.printStackTrace();
-//			//Toast.makeText(ctx, ctx.getText(R.string.l3_initial_database_failed), Toast.LENGTH_SHORT).show();
-//			return null;
-//		}
-//		
-//		/*//Jeremy '11,9, 8 starting from 3.6 using db.getVersion and onUpgrade() again.
-//		if(DEBUG) Log.i(TAG, "databaseversion= " +
-//				db.getVersion() + " helperVersion= " + DATABASE_VERSION);
-//		if (db!=null && db.getVersion() != DATABASE_VERSION) {
-//			if(readonly){
-//				Log.w(TAG, "Can't upgrade read-only database from version " +
-//						db.getVersion() + " to " + DATABASE_VERSION);
-//			}else{
-//				//db.setVersion(67);
-//				onUpgrade(db, db.getVersion(), DATABASE_VERSION);
-//			}
-//		}*/
-//
-//
-//			 
-//		return db;
-//
-//	}
-
     /**
      * Base on given table name to remove records
      */
     public void deleteAll(String table) {
+
         if (DEBUG)
             Log.i(TAG, "deleteAll()");
         if (loadingMappingThread != null) {
@@ -2625,6 +2563,33 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return result;
     }
 
+    public boolean prepareBackupDb(String sourcedbfile, String sourcetable) {
+        if (!checkDBConnection()) return false;
+
+        holdDBConnection();
+        db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
+        db.execSQL("insert into sourceDB." + Lime.DB_TABLE_CUSTOM + " select * from " + sourcetable);
+        db.execSQL("insert into sourceDB." + Lime.DB_IM + " select * from " + Lime.DB_IM + " WHERE code='" + sourcetable +"'");
+        db.execSQL("update sourceDB." + Lime.DB_IM + " set "+ Lime.DB_IM_COLUMN_CODE + "='"+sourcetable+"'");
+        db.execSQL("detach database sourceDB");
+        unHoldDBConnection();
+        return true;
+    }
+
+    public boolean importBackupDb(File sourcedbfile, String imtype) {
+        if (!checkDBConnection()) return false;
+
+        holdDBConnection();
+        db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
+        deleteAll(imtype);
+        db.execSQL("insert into " + imtype + " select * from sourceDB." + Lime.DB_TABLE_CUSTOM);
+        db.execSQL("update sourceDB." + Lime.DB_IM + " set "+Lime.DB_IM_COLUMN_CODE + "='" + imtype + "'");
+        db.execSQL("insert into " + Lime.DB_IM + " select * from sourceDB." + Lime.DB_IM);
+        db.execSQL("detach database sourceDB");
+        unHoldDBConnection();
+        return true;
+    }
+
     public int importDb(String sourcedbfile, String imtype) {
         if (!checkDBConnection()) return -1;
 
@@ -2632,6 +2597,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         holdDBConnection();
         db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
         db.execSQL("insert into " + imtype + " select * from sourceDB." + imtype);
+        db.execSQL("insert into " + Lime.DB_IM + " select * from sourceDB." + Lime.DB_IM);
         db.execSQL("detach database sourceDB");
         unHoldDBConnection();
 

@@ -75,7 +75,7 @@ public class SetupImHandler extends Handler {
             m.getData().putString("type", "showSpinner");
         else
             m.getData().putString("type", "showHorizontal");
-        this.sendMessageDelayed(m, 100);
+        this.sendMessageDelayed(m, 1);
     }
 
     public void updateProgress(int value) {

@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Created by Art Hung on 2015/4/26.
  */
-public class ShareRunnable implements Runnable{
+public class ShareTxtRunnable implements Runnable{
 
     private static boolean DEBUG = true;
     private static String TAG = "ShareRunnable";
@@ -36,7 +36,7 @@ public class ShareRunnable implements Runnable{
     private LimeDB datasource;
     private LIMEPreferenceManager mLIMEPref;
 
-    public ShareRunnable(Activity activity, String imtype, MainActivityHandler handler) {
+    public ShareTxtRunnable(Activity activity, String imtype, MainActivityHandler handler) {
         this.handler = handler;
         this.imtype = imtype;
         this.activity = activity;
@@ -121,7 +121,7 @@ public class ShareRunnable implements Runnable{
         }
 
         handler.cancelProgress();
-        handler.shareTo(targetfile);
+        handler.shareTxtTo(targetfile);
     }
 
 }

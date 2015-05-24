@@ -44,9 +44,12 @@ public class MainActivityHandler extends Handler {
                 activity.showToastMessage("Error", length);
             }
 
-        }else if(action != null && action.equalsIgnoreCase("share")){
+        }else if(action != null && action.equalsIgnoreCase("sharezip")){
             String filepath = msg.getData().getString("filepath");
-            activity.shareTo(filepath);
+            activity.shareTo(filepath, Lime.SHARE_TYPE_ZIP);
+        }else if(action != null && action.equalsIgnoreCase("sharetxt")){
+            String filepath = msg.getData().getString("filepath");
+            activity.shareTo(filepath, Lime.SHARE_TYPE_TXT);
         }else if(action != null && action.equalsIgnoreCase("initialpreference")){
             activity.initialDefaultPreference();
         }
@@ -91,9 +94,16 @@ public class MainActivityHandler extends Handler {
         this.sendMessageDelayed(m, 1);
     }
 
-    public void shareTo(String filepath){
+    public void shareTxtTo(String filepath){
         Message m = new Message();
-        m.getData().putString("action", "share");
+        m.getData().putString("action", "sharetxt");
+        m.getData().putString("filepath", filepath);
+        this.sendMessageDelayed(m, 1);
+    }
+
+    public void shareZipTo(String filepath){
+        Message m = new Message();
+        m.getData().putString("action", "sharezip");
         m.getData().putString("filepath", filepath);
         this.sendMessageDelayed(m, 1);
     }

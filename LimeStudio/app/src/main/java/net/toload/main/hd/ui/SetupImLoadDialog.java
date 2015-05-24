@@ -18,12 +18,13 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;
+import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
-import net.toload.main.hd.DBServer;
 import net.toload.main.hd.limesettings.LIMESelectFileAdapter;
 
 import java.io.File;
@@ -458,6 +459,7 @@ public class SetupImLoadDialog extends DialogFragment {
     }
 
     public void downloadAndLoadIm(String code, String type){
+
         if (connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()) {
 
             String url = null;
@@ -519,9 +521,11 @@ public class SetupImLoadDialog extends DialogFragment {
             for(File f: check.listFiles()){
                 if(f.canRead()){
                     if(!f.isDirectory()){
-                        if( f.getName().toLowerCase().endsWith("cin") ||
-                                f.getName().toLowerCase().endsWith("lime") ||
-                                f.getName().toLowerCase().endsWith("txt")){
+                        if( f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_TXT) ||
+                                f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIMEDB) ||
+                                f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIME) ||
+                                f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_CIN)
+                                ){
                             list.add(f);
                         }
                     }else{
@@ -551,7 +555,14 @@ public class SetupImLoadDialog extends DialogFragment {
             return result;
 
         } else {
-            loadMapping(check);
+            if( check.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_TXT) ||
+                    check.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIME) ||
+                    check.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_CIN)
+                    ){
+                loadMapping(check);
+            }else{
+                loadDbMapping(check);
+            }
         }
         return templist;
     }
@@ -561,6 +572,22 @@ public class SetupImLoadDialog extends DialogFragment {
             return e2.getName().compareTo(e1.getName());
         }
     };
+
+    public void loadDbMapping(File unit) {
+
+
+        try {
+            //unzip file
+            File sourcedbpath = new File(Lime.DATABASE_FOLDER_EXTERNAL + imtype + Lime.DATABASE_EXT);
+            LIMEUtilities.unzip(unit.getAbsolutePath(), Lime.DATABASE_FOLDER_EXTERNAL, true);
+            DBSrv.importBackupDb(sourcedbpath.getAbsoluteFile(), imtype);
+            sourcedbpath.deleteOnExit();
+            showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
+        } catch (Exception e) {
+            e.printStackTrace();
+            showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
+        }
+    }
 
     public void loadMapping(File unit) {
 
@@ -593,5 +620,4 @@ public class SetupImLoadDialog extends DialogFragment {
        // handler.startLoadingWindow(imtype);
 
     }
-
 }

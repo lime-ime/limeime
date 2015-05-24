@@ -312,11 +312,20 @@ public class ShareDialog extends DialogFragment {
 		AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
 		alertDialog.setTitle(activity.getResources().getString(R.string.share_dialog_title));
 		alertDialog.setMessage(activity.getResources().getString(R.string.share_dialog_title_message));
-		alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
+		alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.share_lime_cin),
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						// Call Share IM Processes
-						((MainActivity)activity).initialShare(imtype);
+						((MainActivity) activity).initialShare(imtype);
+						dismiss();
+						sharedialog.dismiss();
+					}
+				});
+		alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL, activity.getResources().getString(R.string.share_lime_db),
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						// Call Share IM Processes
+						((MainActivity) activity).initialShareDb(imtype);
 						dismiss();
 						sharedialog.dismiss();
 					}
