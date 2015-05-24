@@ -95,6 +95,111 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="@string/setup_im_database"
+            android:id="@+id/textView4" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/setup_im_database_description"
+            android:id="@+id/textView6"
+            android:layout_marginBottom="5dp" />
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TableRow
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_marginBottom="5dp">
+
+                <Button
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setup_im_backup_local"
+                    android:id="@+id/btnSetupImBackupLocal"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:padding="5dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="10dp" />
+
+                <Button
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setup_im_restore_local"
+                    android:id="@+id/btnSetupImRestoreLocal"
+                    android:layout_weight="1"
+                    android:padding="5dp"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp" />
+
+            </TableRow>
+
+            <TableRow
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_marginBottom="5dp">
+
+                <Button
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setup_im_backup_google"
+                    android:id="@+id/btnSetupImBackupGoogle"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:padding="5dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="10dp" />
+
+                <Button
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setup_im_restore_google"
+                    android:id="@+id/btnSetupImRestoreGoogle"
+                    android:layout_weight="1"
+                    android:padding="5dp"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="5dp">
+
+                <Button
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setup_im_backup_dropbox"
+                    android:id="@+id/btnSetupImBackupDropbox"
+                    android:layout_weight="1"
+                    android:padding="5dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="10dp" />
+
+                <Button
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setup_im_restore_dropbox"
+                    android:id="@+id/btnSetupImRestoreDropbox"
+                    android:layout_weight="1"
+                    android:padding="5dp"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp" />
+            </TableRow>
+        </TableLayout>
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
             android:text="@string/setup_im_import"
             android:id="@+id/setup_im_input_im" />
 
@@ -330,112 +435,7 @@
             </TableRow>
         </TableLayout>
 
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="@string/setup_im_database"
-            android:id="@+id/textView4" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="@string/setup_im_database_description"
-            android:id="@+id/textView6"
-            android:layout_marginBottom="5dp" />
-
-        <TableLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TableRow
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:layout_marginBottom="5dp">
-
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_im_backup_local"
-                    android:id="@+id/btnSetupImBackupLocal"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_weight="1"
-                    android:padding="5dp"
-                    android:layout_marginRight="10dp"
-                    android:layout_marginLeft="10dp" />
-
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_im_restore_local"
-                    android:id="@+id/btnSetupImRestoreLocal"
-                    android:layout_weight="1"
-                    android:padding="5dp"
-                    android:layout_marginLeft="10dp"
-                    android:layout_marginRight="10dp" />
-
-            </TableRow>
-
-            <TableRow
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:layout_marginBottom="5dp">
-
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_im_backup_google"
-                    android:id="@+id/btnSetupImBackupGoogle"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_weight="1"
-                    android:padding="5dp"
-                    android:layout_marginRight="10dp"
-                    android:layout_marginLeft="10dp" />
-
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_im_restore_google"
-                    android:id="@+id/btnSetupImRestoreGoogle"
-                    android:layout_weight="1"
-                    android:padding="5dp"
-                    android:layout_marginLeft="10dp"
-                    android:layout_marginRight="10dp" />
-            </TableRow>
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginBottom="5dp">
-
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_im_backup_dropbox"
-                    android:id="@+id/btnSetupImBackupDropbox"
-                    android:layout_weight="1"
-                    android:padding="5dp"
-                    android:layout_marginRight="10dp"
-                    android:layout_marginLeft="10dp" />
-
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_im_restore_dropbox"
-                    android:id="@+id/btnSetupImRestoreDropbox"
-                    android:layout_weight="1"
-                    android:padding="5dp"
-                    android:layout_marginLeft="10dp"
-                    android:layout_marginRight="10dp" />
-            </TableRow>
-        </TableLayout>
     </LinearLayout>
     </LinearLayout>
     </ScrollView>
