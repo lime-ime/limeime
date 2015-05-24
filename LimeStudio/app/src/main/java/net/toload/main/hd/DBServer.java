@@ -147,6 +147,8 @@ public class  DBServer {
 		decompressFile(compressedSourceDB, LIME.LIME_SDCARD_FOLDER, imtype, true);
 		//LIMEUtilities(compressedSourceDB)
 
+		mLIMEPref.setResetCacheFlag(true);
+
 		return dbAdapter.importDb(sourcedbfile, imtype);
 	}
 
@@ -226,7 +228,7 @@ public class  DBServer {
 			delTargetFile2.delete();
 		}
 	}
-
+/*
 	public void downloadEmptyDatabase() throws RemoteException {
 
 
@@ -313,7 +315,7 @@ public class  DBServer {
 		threadTask.start();
 	}
 */
-
+/*
 	public void downloadPhoneticOnlyDatabase() throws RemoteException {
 		//if (dbAdapter == null) {loadLimeDB();}
 		resetDownloadDatabase();
@@ -399,7 +401,7 @@ public class  DBServer {
 		};
 		threadTask.start();
 	}
-
+*/
 	public static void backupDatabase() throws RemoteException {
 		if (DEBUG)
 			Log.i(TAG, "backupDatabase()");
@@ -534,6 +536,7 @@ public class  DBServer {
 		//restore shared preference
 		restoreDefaultSharedPreference(new File(LIME.LIME_SDCARD_FOLDER + LIME.SHARED_PREFS_BACKUP_NAME));
 
+		mLIMEPref.setResetCacheFlag(true);
 
 
 
@@ -675,7 +678,7 @@ public class  DBServer {
 		return dbAdapter.getKeyboardCode(im);
 	}
 
-
+/*
 	public void downloadDayi() throws RemoteException {
 		Thread threadTask = new Thread() {
 			public void run() {
@@ -816,7 +819,7 @@ public class  DBServer {
 		};
 		threadTask.start();
 	}
-
+*/
 /*
 	public void downloadHs() throws RemoteException {
 		Thread threadTask = new Thread() {
@@ -838,6 +841,7 @@ public class  DBServer {
 	}
 
 */
+	/*
 	public void downloadWb() throws RemoteException {
 		Thread threadTask = new Thread() {
 			public void run() {
@@ -1112,7 +1116,7 @@ public class  DBServer {
 		};
 		threadTask.start();
 	}
-
+   */
 
 
 
