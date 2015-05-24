@@ -1800,10 +1800,12 @@ public class LIMEService extends InputMethodService implements
 	private void launchSettings() {
 		handleClose();
 		Intent intent = new Intent();
-	    if(android.os.Build.VERSION.SDK_INT < 11)  //Jeremy '12,4,30 Add for deprecated preferenceActivity after API 11 (HC)
-	    	intent.setClass(LIMEService.this, LIMEPreference.class);
-	    else
-	    	intent.setClass(LIMEService.this, LIMEPreferenceHC.class);
+		//targeting at SDK_INT > 16 now.Jeremy '15,5/24
+		/*
+		if (android.os.Build.VERSION.SDK_INT < 11)  //Jeremy '12,4,30 Add for deprecated preferenceActivity after API 11 (HC)
+			intent.setClass(LIMEService.this, LIMEPreference.class);
+		else*/
+			intent.setClass(LIMEService.this, LIMEPreferenceHC.class);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		startActivity(intent);
 	}

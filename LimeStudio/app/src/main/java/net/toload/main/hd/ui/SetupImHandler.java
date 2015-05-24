@@ -49,9 +49,6 @@ public class SetupImHandler extends Handler {
 
         }else if(action != null && action.equalsIgnoreCase("initialbutton")){
             fragment.initialbutton();
-        }else if(action != null && action.equalsIgnoreCase("startloadingwindow")){
-            String value = msg.getData().getString("value");
-            fragment.startLoadingWindow(value);
         }else if(action != null && action.equalsIgnoreCase("updatecustombutton")){
             fragment.updateCustomButton();
         }

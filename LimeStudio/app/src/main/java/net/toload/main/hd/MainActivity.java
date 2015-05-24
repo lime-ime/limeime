@@ -230,7 +230,7 @@ public class MainActivity extends ActionBarActivity
         }
 
         // Initial Preference Setting
-        handler.initialDefaultPreference();
+        //handler.initialDefaultPreference();
 
     }
 
