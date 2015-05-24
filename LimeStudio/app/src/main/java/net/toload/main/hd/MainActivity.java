@@ -153,6 +153,7 @@ public class MainActivity extends ActionBarActivity
         if ((keyCode == KeyEvent.KEYCODE_BACK)) {
             SetupImFragment ImFragment  = (SetupImFragment) getSupportFragmentManager().findFragmentByTag("SetupImFragment");
             if(ImFragment == null || !ImFragment.isVisible())  onNavigationDrawerItemSelected(0);
+            else finish();
             return true;
         }
 

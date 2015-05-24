@@ -59,10 +59,11 @@
             <meta-data android:name="android.view.im" android:resource="@xml/method" />
         </service>
 
-
+        <!--
         <activity android:configChanges="keyboard|keyboardHidden|orientation"
             android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreference">
         </activity>
+        -->
         <activity android:configChanges="keyboard|keyboardHidden|orientation"
             android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreferenceHC">
         </activity>
