@@ -108,12 +108,13 @@ public class LIMEPreferenceManager {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		sp.edit().putString("total_userdict_record", records).commit();	
 	}
-	
-	public boolean getMappingLoading(){
+	@Deprecated
+	public boolean getDatabaseOnHold(){
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getString("mapping_loadg", "no").equals("yes");
 	}
+	@Deprecated
 	public void holdDatabaseCoonection(boolean loading){
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);

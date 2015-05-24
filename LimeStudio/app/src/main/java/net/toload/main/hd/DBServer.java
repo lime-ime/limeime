@@ -42,6 +42,7 @@ import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEProgressListener;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 
@@ -95,14 +96,20 @@ public class  DBServer {
 			dbAdapter = new LimeDB(ctx); 
 	}
 */
-
 	public void loadMapping(String filename, String tablename) throws RemoteException {
-
-		File sourcefile = new File(filename);
-		loadMapping(sourcefile, tablename);
+		loadMapping(filename,tablename,null);
+	}
+	public void loadMapping(File sourcefile, String tablename) throws RemoteException {
+		loadMapping(sourcefile,tablename,null);
 	}
 
-	public void loadMapping(File sourcefile, String tablename) throws RemoteException {
+	public void loadMapping(String filename, String tablename, LIMEProgressListener progressListener) throws RemoteException {
+
+		File sourcefile = new File(filename);
+		loadMapping(sourcefile, tablename, progressListener);
+	}
+
+	public void loadMapping(File sourcefile, String tablename, LIMEProgressListener progressListener) throws RemoteException {
 		if (DEBUG)
 			Log.i(TAG, "loadMapping() on " + loadingTablename);
 
@@ -114,7 +121,7 @@ public class  DBServer {
 		dbAdapter.setFilename(sourcefile);
 
 		showNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading) + "");
-		dbAdapter.loadFileV2(tablename);
+		dbAdapter.loadFileV2(tablename, progressListener);
 		//dbAdapter.close();
 
 		// Reset for SearchSrv
@@ -415,7 +422,8 @@ public class  DBServer {
 		backupFileList.add(LIME.SHARED_PREFS_BACKUP_NAME);
 
 		// hold database connection and close database.
-		mLIMEPref.holdDatabaseCoonection(true);
+		//mLIMEPref.holdDatabaseCoonection(true);
+		dbAdapter.holdDBConnection(); //Jeremy '15,5,23
 		closeDatabse();
 
 		//ready to zip backup file list
@@ -449,7 +457,8 @@ public class  DBServer {
 		*/
 
 		// backup finished.  unhold the database connection and false reopen the database.
-		mLIMEPref.holdDatabaseCoonection(false);
+		dbAdapter.unHoldDBConnection(); //Jeremy '15,5,23
+		//mLIMEPref.holdDatabaseCoonection(false);
 		dbAdapter.openDBConnection(true);
 
 		//cleanup the shared preference backup file.
@@ -481,7 +490,8 @@ public class  DBServer {
 	public static void restoreDatabase(String srcFilePath, Boolean removeSourceFile) throws RemoteException {
 
 		showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start) + "");
-		mLIMEPref.holdDatabaseCoonection(true);
+		//mLIMEPref.holdDatabaseCoonection(true);
+		dbAdapter.holdDBConnection(); //Jeremy '15,5,23
 		closeDatabse();
 
 		try {
@@ -518,7 +528,8 @@ public class  DBServer {
         }
 		*/
 
-		mLIMEPref.holdDatabaseCoonection(false);
+		//mLIMEPref.holdDatabaseCoonection(false);
+		dbAdapter.unHoldDBConnection(); //Jeremy '15,5,23
 		dbAdapter.openDBConnection(true);
 		//restore shared preference
 		restoreDefaultSharedPreference(new File(LIME.LIME_SDCARD_FOLDER + LIME.SHARED_PREFS_BACKUP_NAME));
@@ -1309,7 +1320,7 @@ public class  DBServer {
 
 	public int getLoadingMappingPercentageDone() throws RemoteException {
 		if(remoteFileDownloading) return 0;
-		else return dbAdapter.getPercentageDone();
+		else return dbAdapter.getProgressPercentageDone();
 	}
 /*
 	@Deprecated //by Jeremy '12,6,6
@@ -1381,7 +1392,9 @@ public class  DBServer {
 		return kobj;
 	}
 
-
+	public boolean isDatabseOnHold() {
+		return dbAdapter.isDatabseOnHold();
+	}
 
 
 }

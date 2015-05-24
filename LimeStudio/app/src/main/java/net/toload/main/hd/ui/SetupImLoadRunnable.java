@@ -62,7 +62,7 @@ public class SetupImLoadRunnable implements Runnable{
 
     @Override
     public void run() {
-        handler.showProgress();
+        handler.showProgress(true);
 
         // Download DB File
         handler.updateProgress(activity.getResources().getString(R.string.setup_load_download));

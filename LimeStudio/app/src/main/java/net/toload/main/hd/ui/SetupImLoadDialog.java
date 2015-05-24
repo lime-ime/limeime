@@ -21,6 +21,7 @@ import android.widget.Toast;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEProgressListener;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.limesettings.LIMESelectFileAdapter;
@@ -562,12 +563,35 @@ public class SetupImLoadDialog extends DialogFragment {
     };
 
     public void loadMapping(File unit) {
+
+        handler.showProgress(false);
+
         try {
-            DBSrv.loadMapping(unit.getAbsolutePath(), imtype);
+            DBSrv.loadMapping(unit.getAbsolutePath(), imtype, new LIMEProgressListener() {
+
+                @Override
+                public void onProgress(long percentageDone, long var2, String status) {
+                    handler.updateProgress(status);
+                    handler.updateProgress( (int) percentageDone );
+                }
+                @Override
+                public void onStatusUpdate(String status){
+                    handler.updateProgress(status);
+                }
+                @Override
+                public void onError(int code, String source){
+                    showToastMessage(source, Toast.LENGTH_LONG);
+                }
+                @Override
+                public void onPostExecute(boolean success, String status, int code){
+                    handler.cancelProgress();
+                }
+            });
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-        handler.startLoadingWindow(imtype);
+       // handler.startLoadingWindow(imtype);
+
     }
 
 }

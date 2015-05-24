@@ -12,6 +12,7 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.text.BoringLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -189,10 +190,13 @@ public class SetupImFragment extends Fragment {
 
     }
 
-    public void showProgress() {
-        if (!progress.isShowing()) {
-            progress.show();
-        }
+    public void showProgress(boolean spinnerStyle, String message) {
+
+        if (progress.isShowing()) progress.dismiss();
+        progress.setProgressStyle(spinnerStyle?ProgressDialog.STYLE_SPINNER:ProgressDialog.STYLE_HORIZONTAL);
+        if(message!=null) progress.setMessage(message);
+        progress.show();
+
     }
 
     public void cancelProgress(){
@@ -203,15 +207,12 @@ public class SetupImFragment extends Fragment {
     }
 
     public void updateProgress(int value){
-        if(!progress.isShowing()){
-           progress.setProgress(value);
-        }
+          progress.setProgress(value);
     }
 
     public void updateProgress(String value){
-        if(progress.isShowing()){
-            progress.setMessage(value);
-        }
+          progress.setMessage(value);
+
     }
 
     @Override
@@ -349,7 +350,8 @@ public class SetupImFragment extends Fragment {
         HashMap<String, String> check = new HashMap<String, String>();
 
         // Load Menu Item
-        if(!mLIMEPref.getMappingLoading()){
+        //if(!mLIMEPref.getDatabaseOnHold()){
+        if(!DBSrv.isDatabseOnHold()){
             try {
                 //datasource.open();
                 List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
@@ -824,7 +826,7 @@ public class SetupImFragment extends Fragment {
         Toast toast = Toast.makeText(activity, msg, length);
         toast.show();
     }
-
+@Deprecated
     public void startLoadingWindow(String imtype) {
         Intent i = new Intent(activity, LIMEMappingLoading.class);
         Bundle bundle = new Bundle();

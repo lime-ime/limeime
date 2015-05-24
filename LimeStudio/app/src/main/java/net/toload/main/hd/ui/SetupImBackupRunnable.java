@@ -67,7 +67,7 @@ public class SetupImBackupRunnable implements Runnable {
     @Override
     public void run() {
 
-        mHandler.showProgress();
+        mHandler.showProgress(true);
         mHandler.updateProgress(this.mFragment.getResources().getString(R.string.setup_im_backup_message));
 
         // Preparing the file to be backup
@@ -192,11 +192,6 @@ public class SetupImBackupRunnable implements Runnable {
                 String path = mPath + mFile.getName();
                 mRequest = mApi.putFileOverwriteRequest(path, fis, mFile.length(),
                         new ProgressListener() {
-                            @Override
-                            public long progressInterval() {
-                                // Update the progress bar every half-second or so
-                                return 500;
-                            }
 
                             @Override
                             public void onProgress(long bytes, long total) {

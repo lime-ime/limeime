@@ -47,8 +47,8 @@
     <string name="setup_im_system_settings">啟動萊姆輸入法</string>
     <string name="setup_im_system_selectLIME">選用萊姆輸入法</string>
     <string name="setup_im_wizard_nextstep">下一步</string>
-    <string name="setup_im_system_settings_description">萊姆輸入法尚未啟動，請按下一步後，在系統鍵盤輸入法頁面啟動萊姆輸入法。完成後請按返回鍵繼續其他設定。</string>
-    <string name="setup_im_system_impicker_description">萊姆輸入法已啟動但尚未被選用，請按下方按鈕後，在系統鍵盤輸入法選擇頁選用萊姆輸入法。</string>
+    <string name="setup_im_system_settings_description">萊姆輸入法尚未啟用，請按下一步後，在系統鍵盤輸入法頁面啟用萊姆輸入法。完成後請按返回鍵繼續其他設定。</string>
+    <string name="setup_im_system_impicker_description">萊姆輸入法已啟用但尚未被選用，請按下方按鈕後，在系統鍵盤輸入法選擇頁選用萊姆輸入法。</string>
     <string name="setup_im_import_standard">匯入自定字根表</string>
     <string name="setup_im_import_reset">移除自定字根表</string>
     <string name="setup_im_import_related">匯入關聯字庫</string>
@@ -74,6 +74,8 @@
     <string name="setup_load_download">下載輸入法檔案</string>
     <string name="setup_load_migrate_load">準備輸入法字根</string>
     <string name="setup_load_migrate_import">匯入輸入法字根</string>
+    <string name="setup_load_migrate_rebuild_related">建立關連字根查詢表</string>
+    <string name="setup_load_import_finish">完成輸入法字根匯入</string>
 
     <string name="payment_dialog_title">贊助開發團隊</string>
     <string name="payment_plan_1">USD 0.99 / 永久移除廣告</string>
