@@ -47,6 +47,8 @@ public class MainActivityHandler extends Handler {
         }else if(action != null && action.equalsIgnoreCase("share")){
             String filepath = msg.getData().getString("filepath");
             activity.shareTo(filepath);
+        }else if(action != null && action.equalsIgnoreCase("initialpreference")){
+            activity.initialDefaultPreference();
         }
 
     }
@@ -94,5 +96,11 @@ public class MainActivityHandler extends Handler {
         m.getData().putString("action", "share");
         m.getData().putString("filepath", filepath);
         this.sendMessageDelayed(m, 1);
+    }
+
+    public void initialDefaultPreference(){
+        Message m = new Message();
+        m.getData().putString("action", "initialpreference");
+        this.sendMessageDelayed(m, 1000);
     }
 }

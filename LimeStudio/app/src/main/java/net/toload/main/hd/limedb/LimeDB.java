@@ -69,7 +69,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private static boolean DEBUG = false;
     private static String TAG = "LIMEDB";
 
-
     private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier. Shared db instance for dbserver and searchserver
     private final static int DATABASE_VERSION = 78;
 
