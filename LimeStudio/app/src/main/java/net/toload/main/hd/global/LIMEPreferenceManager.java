@@ -244,7 +244,7 @@ public class LIMEPreferenceManager {
 	public boolean getShowNumberRowInEnglish(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean("number_row_in_english", false);
+		return sp.getBoolean("number_row_in_english", true);
 	}
 	public void syncIMActivatedState(List<Im> imlist){
 		String state = "";
