@@ -7,7 +7,6 @@
     <string name="ad_unit_interstitial">ca-app-pub-6429718170873338/5892033402</string>
     <string name="ad_unit_banner">ca-app-pub-6429718170873338/7028669804</string>
 
-
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
@@ -27,6 +26,8 @@
     <string name="dialog_confirm">確認</string>
     <string name="dialog_cancel">取消</string>
     <string name="dialog_close">關閉</string>
+
+    <string name="sdcard_transfer_message">升級資料庫並轉移至裝置空間</string>
 
     <string name="action_adfree">贊助開發團隊</string>
     <string name="action_help">使用說明</string>

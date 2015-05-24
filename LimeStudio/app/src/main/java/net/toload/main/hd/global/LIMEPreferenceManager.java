@@ -557,7 +557,11 @@ public class LIMEPreferenceManager {
 	}
 	public boolean getParameterBoolean(String label, boolean defaultvalue){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean(label, defaultvalue);
+		try{
+			return sp.getBoolean(label, defaultvalue);
+		}catch(Exception e){
+			return defaultvalue;
+		}
 	}
 	
 	private String preProcessTableName(String table){

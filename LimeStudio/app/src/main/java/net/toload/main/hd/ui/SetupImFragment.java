@@ -12,7 +12,6 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import android.text.BoringLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -224,6 +223,7 @@ public class SetupImFragment extends Fragment {
         handler = new SetupImHandler(this);
 
         activity = getActivity();
+
         progress = new ProgressDialog(activity);
         progress.setMax(100);
         progress.setCancelable(false);

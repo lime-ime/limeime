@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteException;
 import android.util.Log;
+import android.widget.Toast;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
@@ -16,6 +17,7 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -114,6 +116,18 @@ public abstract class LimeSQLiteOpenHelper {
             }
         }
 
+        // Correct dbtarget setting move database from sdcard to device
+        String checktarget = mLIMEPref.getParameterString("dbtarget");
+        boolean source_from_sdcard = false;
+        File sdtarget = null;
+        if(checktarget.equalsIgnoreCase("sdcard")){
+            mLIMEPref.setParameter("dbtarget", "device");
+            sdtarget = new File(Lime.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + Lime.DATABASE_NAME);
+            if(sdtarget.exists() && sdtarget.length() > (1024 * 1024 * 1)){
+                source_from_sdcard = true;
+            }
+        }
+
         // Initial Database
         // Copy DB file from Raw Dir to Database Dir
         File destdir = new File(Lime.DATABASE_DEVICE_FOLDER + File.separator);
@@ -123,7 +137,18 @@ public abstract class LimeSQLiteOpenHelper {
 
         if (!destpath.exists()) {
 
-            InputStream from = mContext.getResources().openRawResource( R.raw.lime);
+            InputStream from = null;
+            if(!source_from_sdcard){
+                from = mContext.getResources().openRawResource( R.raw.lime);
+            } else {
+                try {
+                    showToastMessage(mContext, mContext.getResources().getString(R.string.sdcard_transfer_message), Toast.LENGTH_LONG);
+                    from = new FileInputStream(sdtarget);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+
             try {
                 FileOutputStream to = new FileOutputStream(destpath);
                 byte[] buffer = new byte[4096];
@@ -340,4 +365,9 @@ public abstract class LimeSQLiteOpenHelper {
      * @param db The database.
      */
     public void onOpen(SQLiteDatabase db) {}
+
+    public void showToastMessage(Context ctx, String msg, int length) {
+        Toast toast = Toast.makeText(ctx, msg, length);
+        toast.show();
+    }
 }

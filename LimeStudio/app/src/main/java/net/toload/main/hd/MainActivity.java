@@ -190,7 +190,7 @@ public class MainActivity extends ActionBarActivity
 
         mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
-        mTitle = getTitle();
+        //mTitle = getTitle();
 
         // Set up the drawer.
         mNavigationDrawerFragment.setUp(
@@ -227,8 +227,6 @@ public class MainActivity extends ActionBarActivity
                     }
                 }
             });
-
-
         }
 
         // Initial Preference Setting
@@ -296,8 +294,8 @@ public class MainActivity extends ActionBarActivity
     public void restoreActionBar() {
         ActionBar actionBar = getSupportActionBar();
         //actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD); //setNavigationMode is deprecated after API21 (v5.0).
-        actionBar.setDisplayShowTitleEnabled(true);
-        actionBar.setTitle(mTitle);
+                    actionBar.setDisplayShowTitleEnabled(true);
+                    actionBar.setTitle(mTitle);
     }
 
 
