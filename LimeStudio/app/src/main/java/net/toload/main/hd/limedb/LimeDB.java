@@ -3556,6 +3556,24 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     }
 
+
+    public List<Im> getImList(String code) {
+
+        if(!checkDBConnection()) return null;
+
+        List<Im> result = null;
+        try {
+            //SQLiteDatabase db = this.getSqliteDb(true);
+            Cursor cursor = db.query("im", null, Lime.DB_IM_COLUMN_CODE +" = '" + code +"'", null, null, null, "code ASC", null);
+            result = Im.getList(cursor);
+            cursor.close();
+        } catch (Exception e) {
+            Log.i(TAG,"getIm(): Cannot get IM : " + e );
+        }
+        return result;
+    }
+
+
     public List<ImObj> getImList() {
         if (DEBUG)
             Log.i(TAG, "getIMList()");
