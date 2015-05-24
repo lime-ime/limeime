@@ -2579,11 +2579,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     public boolean importBackupDb(File sourcedbfile, String imtype) {
         if (!checkDBConnection()) return false;
 
-        holdDBConnection();
-
         // Reset IM Info
         deleteAll(imtype);
         db.execSQL("delete from " + Lime.DB_IM + " where " + Lime.DB_IM_COLUMN_CODE + "='" + imtype + "'");
+
+        holdDBConnection();
 
         // Load data from DB File
         db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
