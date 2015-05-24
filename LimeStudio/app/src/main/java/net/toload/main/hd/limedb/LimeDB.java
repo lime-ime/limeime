@@ -2580,8 +2580,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (!checkDBConnection()) return false;
 
         holdDBConnection();
-        db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
+
+        // Reset IM Info
         deleteAll(imtype);
+        db.execSQL("delete from " + Lime.DB_IM + " where " + Lime.DB_IM_COLUMN_CODE + "='" + imtype + "'");
+
+        // Load data from DB File
+        db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
         db.execSQL("insert into " + imtype + " select * from sourceDB." + Lime.DB_TABLE_CUSTOM);
         db.execSQL("update sourceDB." + Lime.DB_IM + " set "+Lime.DB_IM_COLUMN_CODE + "='" + imtype + "'");
         db.execSQL("insert into " + Lime.DB_IM + " select * from sourceDB." + Lime.DB_IM);

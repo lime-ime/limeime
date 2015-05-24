@@ -1,5 +1,20 @@
 package net.toload.main.hd.global;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Environment;
+import android.provider.Settings;
+import android.support.v4.app.NotificationCompat;
+import android.util.Log;
+import android.view.inputmethod.InputMethodInfo;
+import android.view.inputmethod.InputMethodManager;
+
+import net.toload.main.hd.LIMEService;
+import net.toload.main.hd.R;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,21 +27,8 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-//
-import net.toload.main.hd.LIMEService;
-import net.toload.main.hd.R;
 
-import android.app.NotificationManager;
-import android.os.Environment;
-import android.provider.Settings;
-import android.support.v4.app.NotificationCompat;
-import android.util.Log;
-import android.view.inputmethod.InputMethodInfo;
-import android.view.inputmethod.InputMethodManager;
-import android.app.PendingIntent;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
+//
 
 /**
  * @author jrywu
@@ -164,11 +166,11 @@ public class LIMEUtilities {
 		return !canonical.getCanonicalFile().equals(canonical.getAbsoluteFile());
 	}
 
-	public static void unzip(String zipFilePath, String targetFolder, Boolean OverWrite) throws IOException {
-		unzip(new File(zipFilePath), new File(targetFolder), OverWrite);
+	public static String unzip(String zipFilePath, String targetFolder, Boolean OverWrite) throws IOException {
+		return unzip(new File(zipFilePath), new File(targetFolder), OverWrite);
 	}
 
-	public static void unzip(File zipFile, File targetDirectory, Boolean OverWrite) throws IOException {
+	public static String unzip(File zipFile, File targetDirectory, Boolean OverWrite) throws IOException {
 		ZipInputStream zis = new ZipInputStream(
 				new BufferedInputStream(new FileInputStream(zipFile)));
 		try {
@@ -208,10 +210,12 @@ public class LIMEUtilities {
 					outStream.close();
 				}
 
+				return targetFile.getAbsolutePath();
 			}
 		} finally {
 			zis.close();
 		}
+		return null;
 	}
 	public static boolean copyFile(String sourceFilePath, String targetFilePath, Boolean overWrite) {
 		File sourceFile = isFileExist(sourceFilePath);

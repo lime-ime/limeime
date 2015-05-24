@@ -522,7 +522,8 @@ public class SetupImLoadDialog extends DialogFragment {
                 if(f.canRead()){
                     if(!f.isDirectory()){
                         if( f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_TXT) ||
-                                f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIMEDB) ||
+                                (f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIMEDB) &&
+                                f.getName().toLowerCase().startsWith(imtype) ) ||
                                 f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIME) ||
                                 f.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_CIN)
                                 ){
@@ -575,11 +576,9 @@ public class SetupImLoadDialog extends DialogFragment {
 
     public void loadDbMapping(File unit) {
 
-
         try {
             //unzip file
-            File sourcedbpath = new File(Lime.DATABASE_FOLDER_EXTERNAL + imtype + Lime.DATABASE_EXT);
-            LIMEUtilities.unzip(unit.getAbsolutePath(), Lime.DATABASE_FOLDER_EXTERNAL, true);
+            File sourcedbpath = new File(LIMEUtilities.unzip(unit.getAbsolutePath(), Lime.DATABASE_FOLDER_EXTERNAL, true));
             DBSrv.importBackupDb(sourcedbpath.getAbsoluteFile(), imtype);
             sourcedbpath.deleteOnExit();
             showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
