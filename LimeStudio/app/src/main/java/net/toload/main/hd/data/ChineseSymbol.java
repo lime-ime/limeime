@@ -1,4 +1,6 @@
-package net.toload.main.hd.global;
+package net.toload.main.hd.data;
+
+import net.toload.main.hd.data.Mapping;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -8,7 +10,7 @@ public class ChineseSymbol {
 			"／|＼|－|＿|＊|＆|︿|％|＄|＃|＠|～|｛|｝|［|］|＜|＞|＋|｜|‵|＂";	
 	
 	
-	private static List<Mapping> mChineseSymbolMapping = new LinkedList<Mapping>();
+	private static List<Mapping> mChineseSymbolMapping = new LinkedList<>();
 	public static String getSymbol(char symbol){
 	
 		switch(symbol){

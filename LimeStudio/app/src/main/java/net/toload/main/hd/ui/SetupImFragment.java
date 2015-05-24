@@ -34,7 +34,6 @@ import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
-import net.toload.main.hd.limesettings.LIMEMappingLoading;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -194,6 +193,7 @@ public class SetupImFragment extends Fragment {
         if (progress.isShowing()) progress.dismiss();
         progress.setProgressStyle(spinnerStyle?ProgressDialog.STYLE_SPINNER:ProgressDialog.STYLE_HORIZONTAL);
         if(message!=null) progress.setMessage(message);
+        if(!spinnerStyle) progress.setProgress(0);
         progress.show();
 
     }
@@ -825,14 +825,6 @@ public class SetupImFragment extends Fragment {
     public void showToastMessage(String msg, int length) {
         Toast toast = Toast.makeText(activity, msg, length);
         toast.show();
-    }
-@Deprecated
-    public void startLoadingWindow(String imtype) {
-        Intent i = new Intent(activity, LIMEMappingLoading.class);
-        Bundle bundle = new Bundle();
-        bundle.putString("imtype", imtype);
-        i.putExtras(bundle);
-        startActivity(i);
     }
 
     public void updateCustomButton() {

@@ -54,7 +54,7 @@ import java.lang.Math;
 import net.toload.main.hd.LIMEService;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.global.Mapping;
+import net.toload.main.hd.data.Mapping;
 
 
 /**

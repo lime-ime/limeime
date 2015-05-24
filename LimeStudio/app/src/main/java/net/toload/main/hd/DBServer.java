@@ -26,8 +26,8 @@ import android.content.SharedPreferences;
 import android.os.RemoteException;
 import android.util.Log;
 
+import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.data.Word;
-import net.toload.main.hd.global.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;
@@ -153,6 +153,8 @@ public class  DBServer {
 		decompressFile(compressedSourceDB, LIME.LIME_SDCARD_FOLDER, imtype, true);
 		//LIMEUtilities(compressedSourceDB)
 
+		mLIMEPref.setResetCacheFlag(true);
+
 		return dbAdapter.importDb(sourcedbfile, imtype);
 	}
 
@@ -232,7 +234,7 @@ public class  DBServer {
 			delTargetFile2.delete();
 		}
 	}
-
+/*
 	public void downloadEmptyDatabase() throws RemoteException {
 
 
@@ -319,7 +321,7 @@ public class  DBServer {
 		threadTask.start();
 	}
 */
-
+/*
 	public void downloadPhoneticOnlyDatabase() throws RemoteException {
 		//if (dbAdapter == null) {loadLimeDB();}
 		resetDownloadDatabase();
@@ -405,7 +407,7 @@ public class  DBServer {
 		};
 		threadTask.start();
 	}
-
+*/
 	public static void backupDatabase() throws RemoteException {
 		if (DEBUG)
 			Log.i(TAG, "backupDatabase()");
@@ -540,6 +542,7 @@ public class  DBServer {
 		//restore shared preference
 		restoreDefaultSharedPreference(new File(LIME.LIME_SDCARD_FOLDER + LIME.SHARED_PREFS_BACKUP_NAME));
 
+		mLIMEPref.setResetCacheFlag(true);
 
 
 
@@ -662,12 +665,6 @@ public class  DBServer {
 	}
 
 
-	public List<KeyboardObj> getKeyboardList() throws RemoteException {
-		List<KeyboardObj> result = dbAdapter.getKeyboardList();
-		return result;
-	}
-
-
 	public void setIMKeyboard(String im, String value,
 							  String keyboard) throws RemoteException {
 
@@ -681,7 +678,7 @@ public class  DBServer {
 		return dbAdapter.getKeyboardCode(im);
 	}
 
-
+/*
 	public void downloadDayi() throws RemoteException {
 		Thread threadTask = new Thread() {
 			public void run() {
@@ -822,7 +819,7 @@ public class  DBServer {
 		};
 		threadTask.start();
 	}
-
+*/
 /*
 	public void downloadHs() throws RemoteException {
 		Thread threadTask = new Thread() {
@@ -844,6 +841,7 @@ public class  DBServer {
 	}
 
 */
+	/*
 	public void downloadWb() throws RemoteException {
 		Thread threadTask = new Thread() {
 			public void run() {
@@ -1118,7 +1116,7 @@ public class  DBServer {
 		};
 		threadTask.start();
 	}
-
+   */
 
 
 

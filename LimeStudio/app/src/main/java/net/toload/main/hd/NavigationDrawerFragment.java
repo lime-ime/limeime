@@ -301,14 +301,14 @@ public class NavigationDrawerFragment extends Fragment {
             ShareDialog dialog = ShareDialog.newInstance();
             dialog.show(ft, "sharedialog");
         }else if(item.getItemId() == R.id.action_preference){
+            /*  Targeting at SDK level > 16 now.
             if(android.os.Build.VERSION.SDK_INT < 11){  //Jeremy '12,4,30 Add for deprecated preferenceActivity after API 11 (HC)
                 Intent setting = new Intent(this.getActivity(), LIMEPreference.class);
                 startActivity(setting);
-            }else{
-                Intent setting = new Intent(this.getActivity(), LIMEPreferenceHC.class);
-                startActivity(setting);
-
-            }
+            }else {*/
+            Intent setting = new Intent(this.getActivity(), LIMEPreferenceHC.class);
+            startActivity(setting);
+            //}
         }else if(item.getItemId() == R.id.action_help){
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             HelpDialog dialog = HelpDialog.newInstance();

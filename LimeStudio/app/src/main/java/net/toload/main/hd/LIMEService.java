@@ -51,10 +51,10 @@ import android.widget.Toast;
 import net.toload.main.hd.candidate.CandidateInInputViewContainer;
 import net.toload.main.hd.candidate.CandidateView;
 import net.toload.main.hd.candidate.CandidateViewContainer;
-import net.toload.main.hd.global.ChineseSymbol;
+import net.toload.main.hd.data.ChineseSymbol;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.global.Mapping;
+import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard;
 import net.toload.main.hd.keyboard.LIMEKeyboard;
 import net.toload.main.hd.keyboard.LIMEKeyboardBaseView;
@@ -1800,10 +1800,12 @@ public class LIMEService extends InputMethodService implements
 	private void launchSettings() {
 		handleClose();
 		Intent intent = new Intent();
-	    if(android.os.Build.VERSION.SDK_INT < 11)  //Jeremy '12,4,30 Add for deprecated preferenceActivity after API 11 (HC)
-	    	intent.setClass(LIMEService.this, LIMEPreference.class);
-	    else
-	    	intent.setClass(LIMEService.this, LIMEPreferenceHC.class);
+		//targeting at SDK_INT > 16 now.Jeremy '15,5/24
+		/*
+		if (android.os.Build.VERSION.SDK_INT < 11)  //Jeremy '12,4,30 Add for deprecated preferenceActivity after API 11 (HC)
+			intent.setClass(LIMEService.this, LIMEPreference.class);
+		else*/
+			intent.setClass(LIMEService.this, LIMEPreferenceHC.class);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		startActivity(intent);
 	}

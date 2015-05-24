@@ -28,12 +28,12 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.util.Pair;
 
-import net.toload.main.hd.global.ImObj;
-import net.toload.main.hd.global.KeyboardObj;
+import net.toload.main.hd.data.ImObj;
+import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.global.Mapping;
+import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;

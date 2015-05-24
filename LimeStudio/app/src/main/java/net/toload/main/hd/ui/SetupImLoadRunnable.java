@@ -12,7 +12,7 @@ import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Word;
-import net.toload.main.hd.global.KeyboardObj;
+import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 
