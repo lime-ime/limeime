@@ -374,7 +374,7 @@ public class MainActivity extends ActionBarActivity
                         PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
                         try {
                             startIntentSenderForResult(pendingIntent.getIntentSender(),
-                                    1001, new Intent(), 0, 0, 0);
+                                    Lime.PAYMENT_REQUEST_CODE, new Intent(), 0, 0, 0);
                         } catch (IntentSender.SendIntentException e) {
                             e.printStackTrace();
                         }

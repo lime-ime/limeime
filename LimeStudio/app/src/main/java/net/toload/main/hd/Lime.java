@@ -228,6 +228,7 @@ public class Lime {
     // Payment
 
     public static final String PAYMENT_FLAG = "PAYMENT_FLAG";
+    public static final int PAYMENT_REQUEST_CODE = 1001;
 
     // Global Utility Methods
 

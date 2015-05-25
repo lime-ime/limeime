@@ -702,6 +702,7 @@ public class SetupImFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, Intent data){
 
         switch (requestCode) {
+
             case REQUEST_ACCOUNT_PICKER_BACKUP:
                 if (resultCode == activity.RESULT_OK && data != null && data.getExtras() != null) {
                     String accountname = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
@@ -724,7 +725,7 @@ public class SetupImFragment extends Fragment {
                 break;
         }
 
-        if (requestCode == 1001) {
+        if (requestCode == Lime.PAYMENT_REQUEST_CODE) {
             String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
             //int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
             //String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
@@ -735,6 +736,7 @@ public class SetupImFragment extends Fragment {
                 //Log.i("LIME", "purchasing complete " + new Date() + " / " + purchaseData);
             }
         }
+
     }
 
     public void requestGoogleDrive(String type){
