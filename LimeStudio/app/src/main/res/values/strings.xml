@@ -34,7 +34,7 @@
     <string name="action_help">使用說明</string>
     <string name="action_preference">喜好設定</string>
 
-    <string name="global_exit_title">離開設定程式</string>
+    <string name="global_exit_title">離開萊姆設定程式</string>
 
     <string name="setup_im_backup_message">資料庫備份中，請耐心等候 ...</string>
     <string name="setup_im_restore_message">資料庫還原中，請耐心等候 ...</string>
@@ -183,16 +183,15 @@
 
     <string name="help_dialog_title">使用說明</string>
     <string name="help_dialog_detail">
-        \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案, 如果選字與送出的字不同，請關閉喜好設定的中文簡/繁體字碼轉換.\n
-	    \n版本更新說明
+        \n** 若文字無法正確輸入，建議您重新下載或匯入字根檔案, 如果選字與送出的字不同，請關閉喜好設定的中文簡/繁體字碼轉換.\n
+	    \n版本更新說明\n\n
 
 		LIME中文輸入法Facebook粉絲專頁\n
 		http://facebook.com/limeime/\n\n
 		LIME 使用與操作說明\n
 		http://netkidz.net/blog/\nhttp://goo.gl/vtW1F\n\n
 
-		由於 Android 裝置種類繁多，礙於專案團隊設備上的限制無法做全面的測試並兼顧到各種不同鍵盤配置，若 LIME 無法支援您的硬體設備還請見諒。
-		若您對本專案感興趣，歡迎加入開發或測試，亦歡迎廠商贊助團隊設備回饋 Android 使用者社群。\n
+		由於裝置種類繁多，目前尚無法兼顧到各種不同鍵盤及硬體配置，若程式尚未支援您的硬體設備還請見諒。若您對萊姆輸入法感興趣，歡迎加入開發或測試的行列亦歡迎您直接贊助開發團隊。\n
     </string>
 
     <string name="error_import_db">匯入失敗，可能是檔案毀損或格式錯誤，請再試一次</string>
