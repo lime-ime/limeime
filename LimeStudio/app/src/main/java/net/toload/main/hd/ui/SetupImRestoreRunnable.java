@@ -97,7 +97,7 @@ public class SetupImRestoreRunnable implements Runnable {
         }
 
         // Revoke the flag to force application check the payment status
-        mLIMEPref.setParameter(Lime.PAYMENT_FLAG, false);
+        // mLIMEPref.setParameter(Lime.PAYMENT_FLAG, false);
     }
 
     private void restoreFromGoogle() {
