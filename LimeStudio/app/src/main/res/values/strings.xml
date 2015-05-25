@@ -34,6 +34,8 @@
     <string name="action_help">使用說明</string>
     <string name="action_preference">喜好設定</string>
 
+    <string name="global_exit_title">離開設定程式</string>
+
     <string name="setup_im_backup_message">資料庫備份中，請耐心等候 ...</string>
     <string name="setup_im_restore_message">資料庫還原中，請耐心等候 ...</string>
     <string name="setup_im_import_complete">資料庫匯入完成</string>

@@ -1,10 +1,13 @@
 package net.toload.main.hd;
 
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.ServiceConnection;
@@ -69,12 +72,15 @@ public class MainActivity extends ActionBarActivity
     private MainActivityHandler handler;
     private Thread sharethread;
 
+    private Activity activity;
+
     //Admob
     InterstitialAd mInterstitialAd;
     Boolean intersitialAdShowed=true;
 
     IInAppBillingService mService;
     ServiceConnection mServiceConn = new ServiceConnection() {
+
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mService = null;
@@ -112,7 +118,6 @@ public class MainActivity extends ActionBarActivity
                     e.printStackTrace();
                 }
             }
-
         }
     };
 
@@ -139,9 +144,7 @@ public class MainActivity extends ActionBarActivity
         if (mService != null) {
             unbindService(mServiceConn);
         }
-
     }
-
 
     @Override
     public void  onWindowFocusChanged(boolean hasFocus) {
@@ -151,13 +154,34 @@ public class MainActivity extends ActionBarActivity
         if( hasFocus && ImFragment.isVisible()) ImFragment.initialbutton();
 
     }
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if ((keyCode == KeyEvent.KEYCODE_BACK)) {
-            SetupImFragment ImFragment  = (SetupImFragment) getSupportFragmentManager().findFragmentByTag("SetupImFragment");
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(getResources().getString(R.string.global_exit_title));
+            builder.setCancelable(false);
+            builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // Kill and stop my activity
+                            android.os.Process.killProcess(android.os.Process.myPid());
+                            System.exit(1);
+                        }
+                    });
+            builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                        }
+                    });
+
+            AlertDialog alert = builder.create();
+            alert.show();
+
+            /*SetupImFragment ImFragment  = (SetupImFragment) getSupportFragmentManager().findFragmentByTag("SetupImFragment");
             if(ImFragment == null || !ImFragment.isVisible())  onNavigationDrawerItemSelected(0);
             else finish();
-            return true;
+            return true;*/
         }
 
         return super.onKeyDown(keyCode, event);
@@ -174,7 +198,7 @@ public class MainActivity extends ActionBarActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
+        activity = this.activity;
 
         handler = new MainActivityHandler(this);
 
