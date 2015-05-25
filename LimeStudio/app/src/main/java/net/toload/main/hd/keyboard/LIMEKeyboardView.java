@@ -23,6 +23,7 @@ package net.toload.main.hd.keyboard;
 import net.toload.main.hd.R;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -35,7 +36,7 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 	static final String TAG = "LIMEKeyboardView";
 
 	public static final int KEYCODE_OPTIONS = -100;
-	public static final int KEYCODE_SHIFT_LONGPRESS = -101;
+	//public static final int KEYCODE_SHIFT_LONGPRESS = -101;
 	public static final int KEYCODE_SPACE_LONGPRESS = -102;
     public static final int KEYCODE_NEXT_IM = -104;
     public static final int KEYCODE_PREV_IM = -105;
@@ -92,7 +93,7 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 	 * )
 	 */
 	@Override
-	public boolean onTouchEvent(MotionEvent me) {
+	public boolean onTouchEvent(@NonNull MotionEvent me) {
 		if(DEBUG) Log.i(TAG, "OnTouchEvent(), me.getAction() =" + me.getAction());
 		LIMEKeyboard keyboard = (LIMEKeyboard) getKeyboard();
 		if (me.getAction() == MotionEvent.ACTION_DOWN) {

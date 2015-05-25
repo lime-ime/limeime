@@ -2416,8 +2416,7 @@ public class LIMEService extends InputMethodService implements
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				mCandidateView.setSuggestions(suggestions, showNumber,
-						typedWordValid, diplaySelkey);
+				mCandidateView.setSuggestions(suggestions, showNumber, diplaySelkey);
 				if(DEBUG) Log.i(TAG, "setSuggestion(): templist.size: " + mCandidateList.size());
 			}
 		} else {

@@ -14,8 +14,8 @@ import net.toload.main.hd.R;
 
 public class CandidateInInputViewContainer extends LinearLayout  implements OnTouchListener {
 
-	private final boolean DEBUG = false;
-	private final String TAG = "CandidanteInputViewContainer";
+	private static final boolean DEBUG = false;
+	private static final String TAG = "CandiInputViewContainer";
     private View mButtonRight;
     private View mButtonRightLayout;
     private CandidateView mCandidates;
