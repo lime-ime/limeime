@@ -574,15 +574,17 @@ public class  DBServer {
 				String key = entry.getKey();
 
 				if (v instanceof Boolean)
-					prefEdit.putBoolean(key, ((Boolean) v).booleanValue());
+					prefEdit.putBoolean(key, (Boolean) v);
 				else if (v instanceof Float)
-					prefEdit.putFloat(key, ((Float) v).floatValue());
+					prefEdit.putFloat(key, (Float) v);
 				else if (v instanceof Integer)
-					prefEdit.putInt(key, ((Integer) v).intValue());
+					prefEdit.putInt(key, (Integer) v);
 				else if (v instanceof Long)
-					prefEdit.putLong(key, ((Long) v).longValue());
-				else if (v instanceof String)
-					prefEdit.putString(key, ((String) v));
+					prefEdit.putLong(key, (Long) v);
+				else if (v instanceof String) {
+					if(!v.equals("PAYMENT_FLAG"))
+						prefEdit.putString(key, ((String) v));
+				}
 			}
 			prefEdit.commit();
 
