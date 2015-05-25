@@ -95,6 +95,9 @@ public class SetupImRestoreRunnable implements Runnable {
             restoreFromDropbox download = new restoreFromDropbox(mHandler, mFragment,mdbapi, LIME.DATABASE_BACKUP_NAME, tempFile);
             download.execute();
         }
+
+        // Revoke the flag to force application check the payment status
+        mLIMEPref.setParameter(Lime.PAYMENT_FLAG, false);
     }
 
     private void restoreFromGoogle() {
@@ -321,10 +324,8 @@ public class SetupImRestoreRunnable implements Runnable {
                     } catch (IOException ignored) {
                     }
                 }
-
             }
             return false;
-
         }
 
 
