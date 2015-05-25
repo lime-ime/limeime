@@ -18,6 +18,7 @@
     <string name="update_error">無法更新記錄，請檢查參數</string>
 
     <string name="error_network_failed">這一個操作需要連線網際網路，請啟用相關設定</string>
+    <string name="error_restore_not_found">無法還原資料庫，找不到備份檔案</string>
 
     <string name="global_remove">移除</string>
     <string name="global_update">更新</string>

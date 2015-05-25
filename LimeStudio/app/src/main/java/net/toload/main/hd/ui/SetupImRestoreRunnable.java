@@ -1,7 +1,5 @@
 package net.toload.main.hd.ui;
 
-import android.app.ProgressDialog;
-import android.content.Context;
 import android.os.AsyncTask;
 import android.os.RemoteException;
 import android.util.Log;
@@ -23,11 +21,11 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
 
+import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.DBServer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -160,7 +158,7 @@ public class SetupImRestoreRunnable implements Runnable {
 
                 // Decompress tempfile
                 //DBServer.decompressFile(tempfile, Lime.DATABASE_DEVICE_FOLDER, Lime.DATABASE_NAME, true);
-                DBServer.restoreDatabase(tempfile.getAbsolutePath(), true);
+                DBServer.restoreDatabase(tempfile.getAbsolutePath());
 
                 dbsrv.showNotificationMessage(mFragment.getResources().getString(R.string.l3_initial_cloud_restore_end));
             } else {
@@ -313,7 +311,7 @@ public class SetupImRestoreRunnable implements Runnable {
 
                         //Download finished. Restore db now.
                         try {
-                            DBServer.restoreDatabase(mFile.getAbsolutePath(),true);
+                            DBServer.restoreDatabase(mFile.getAbsolutePath());
                         } catch (RemoteException e) {
                             e.printStackTrace();
                         }
