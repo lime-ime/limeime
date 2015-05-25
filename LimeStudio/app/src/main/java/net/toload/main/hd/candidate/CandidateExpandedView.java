@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -17,8 +18,8 @@ import java.util.List;
 
 public class CandidateExpandedView extends CandidateView {
 	
-	private final boolean DEBUG = false;
-	private final String TAG = "CandidateExpandedView";
+	private static final boolean DEBUG = false;
+	private static final String TAG = "CandidateExpandedView";
 	
     private static final int MAX_SUGGESTIONS = 200;
 	
@@ -71,7 +72,7 @@ public class CandidateExpandedView extends CandidateView {
 		if(mSuggestions == null) return;
 		if(DEBUG)
     		Log.i(TAG, "OnDraw() mSuggestions.size:" + mSuggestions.size());
-    	
+
 
     	//mTotalWidth = 0;
     	if (mBgPadding == null) {
@@ -96,7 +97,7 @@ public class CandidateExpandedView extends CandidateView {
         // Update mSelectedIndex from touch x and y;
         if(mTouchX!=OUT_OF_BOUNDS && mTouchY!=OUT_OF_BOUNDS ){
         	//Jeremy '11,8,23 mTouchY is already relative to view origin, no need to add mScrollY
-        	mSelRow =(int) (mTouchY )// + mScrollY)
+        	mSelRow = mTouchY// + mScrollY)
         				/ (height + mVerticalPadding);
         	
         	for(int i=0; i<mRowSize[mSelRow]; i++){
@@ -135,7 +136,7 @@ public class CandidateExpandedView extends CandidateView {
         	// Draw highlight on SelectedIndex
         	// 29/Aug/2011, Art just ignore if there is an error. 
         	try{
-	            if (canvas != null && mSelectedIndex >=0) {
+	            if (mSelectedIndex >= 0) {
 	                canvas.translate(mWordX[mSelRow][mSelCol], mSelRow * (height+ mVerticalPadding));
 	                mSelectionHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelRow][mSelCol], height);
 	                mSelectionHighlight.draw(canvas);
@@ -287,7 +288,7 @@ public class CandidateExpandedView extends CandidateView {
 	}
 
 	@Override
-	public boolean onTouchEvent(MotionEvent me) {
+	public boolean onTouchEvent(@NonNull MotionEvent me) {
 		if(DEBUG) 
 			Log.i(TAG, "onTouchEvent(): x =" + me.getX() + ", y=" + me.getY() 
 					+ ", ScroolY=" +mParentScroolView.getScrollY() );
