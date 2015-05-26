@@ -138,7 +138,7 @@ public class SetupImFragment extends Fragment {
     public static SetupImFragment newInstance(int sectionNumber) {
         SetupImFragment frg = new SetupImFragment();
         Bundle args = new Bundle();
-                 args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+                args.putInt(ARG_SECTION_NUMBER, sectionNumber);
         frg.setArguments(args);
         return frg;
     }

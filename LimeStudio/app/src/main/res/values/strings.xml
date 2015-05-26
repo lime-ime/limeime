@@ -181,6 +181,17 @@
     <string name="share_lime_cin">純文字格式</string>
     <string name="share_lime_db">資料庫檔案</string>
 
+
+    <string name="import_dialog_related_title">匯入文字至關聯資料庫</string>
+
+    <string name="import_dialog_title">匯入文字至輸入法表格</string>
+    <string name="import_code_hint">\n\n請輸入字根檔案</string>
+    <string name="import_code_empty">您必需輸入字根</string>
+
+    <string name="import_related_success">成功建立關聯資料庫</string>
+    <string name="import_word_success">成功建立輸入法字根</string>
+
+
     <string name="help_dialog_title">使用說明</string>
     <string name="help_dialog_detail">
         \n** 若文字無法正確輸入，建議您重新下載或匯入字根檔案, 如果選字與送出的字不同，請關閉喜好設定的中文簡/繁體字碼轉換.\n

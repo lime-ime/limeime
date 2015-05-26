@@ -115,7 +115,7 @@ public class  DBServer {
 		dbAdapter.setFinish(false);
 		dbAdapter.setFilename(sourcefile);
 
-		showNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading) + "");
+		//showNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading) + "");
 		dbAdapter.loadFileV2(tablename, progressListener);
 		//dbAdapter.close();
 
@@ -264,7 +264,7 @@ public class  DBServer {
 
 		if(check.exists()){
 
-			showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start) + "");
+			//showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start) + "");
 			//mLIMEPref.holdDatabaseCoonection(true);
 			dbAdapter.holdDBConnection(); //Jeremy '15,5,23
 			closeDatabse();
