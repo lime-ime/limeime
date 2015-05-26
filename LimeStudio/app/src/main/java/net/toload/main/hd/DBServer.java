@@ -146,13 +146,23 @@ public class  DBServer {
 
 		List<Word> results = null;
 
-		String sourcedbfile = LIME.LIME_SDCARD_FOLDER + imtype;
-		decompressFile(compressedSourceDB, LIME.LIME_SDCARD_FOLDER, imtype, true);
-		//LIMEUtilities(compressedSourceDB)
-
-		mLIMEPref.setResetCacheFlag(true);
-
-		return dbAdapter.importDb(sourcedbfile, imtype);
+		//String sourcedbfile = LIME.LIME_SDCARD_FOLDER + imtype;
+		List<String> unzipFilePaths = new ArrayList<>();
+		try {
+			unzipFilePaths = LIMEUtilities.unzip(compressedSourceDB.getAbsolutePath(), LIME.LIME_SDCARD_FOLDER,true);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		//decompressFile(compressedSourceDB, LIME.LIME_SDCARD_FOLDER, imtype, true);
+		if(unzipFilePaths.size()!=1){
+			//TODO: Process exception here.
+			return -1;
+		}
+		else {
+			int count = dbAdapter.importDb(unzipFilePaths.get(0), imtype);
+			mLIMEPref.setResetCacheFlag(true);
+			return count;
+		}
 	}
 
 

@@ -166,13 +166,14 @@ public class LIMEUtilities {
 		return !canonical.getCanonicalFile().equals(canonical.getAbsoluteFile());
 	}
 
-	public static String unzip(String zipFilePath, String targetFolder, Boolean OverWrite) throws IOException {
+	public static List<String> unzip(String zipFilePath, String targetFolder, Boolean OverWrite) throws IOException {
 		return unzip(new File(zipFilePath), new File(targetFolder), OverWrite);
 	}
 
-	public static String unzip(File zipFile, File targetDirectory, Boolean OverWrite) throws IOException {
+	public static List<String> unzip(File zipFile, File targetDirectory, Boolean OverWrite) throws IOException {
 		ZipInputStream zis = new ZipInputStream(
 				new BufferedInputStream(new FileInputStream(zipFile)));
+		List<String> returnFilePaths = new ArrayList<>();
 		try {
 			ZipEntry ze;
 			int count;
@@ -206,16 +207,18 @@ public class LIMEUtilities {
 				try {
 					while ((count = zis.read(buffer)) != -1)
 						outStream.write(buffer, 0, count);
+				} catch (IOException e){
+					e.printStackTrace();
 				} finally {
 					outStream.close();
 				}
 
-				return targetFile.getAbsolutePath();
+				returnFilePaths.add(targetFile.getAbsolutePath());
 			}
 		} finally {
 			zis.close();
 		}
-		return null;
+		return returnFilePaths;
 	}
 	public static boolean copyFile(String sourceFilePath, String targetFilePath, Boolean overWrite) {
 		File sourceFile = isFileExist(sourceFilePath);
