@@ -43,12 +43,17 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
 
     @Override
     public void requestLayout() {
-    	if(DEBUG)
-    		Log.i(TAG,"requestLayout()");
-        if (mCandidates != null) {
+        if(DEBUG)
+            Log.i(TAG,"requestLayout()");
+
+    	if (mCandidates != null) {
             int availableWidth = mCandidates.getWidth();
             int neededWidth = mCandidates.computeHorizontalScrollRange();
-         
+
+            if(DEBUG)
+                Log.i(TAG,"requestLayout() availableWidth:" + availableWidth+ " neededWidth:" + neededWidth);
+
+
             boolean rightVisible =  availableWidth < neededWidth;
             if(mCandidates.isCandidateExpanded())
             	rightVisible = false;
@@ -56,6 +61,7 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
             if (mButtonRightLayout != null) {
                 mButtonRightLayout.setVisibility(rightVisible ? VISIBLE : GONE);
             }
+            invalidate();
         }
         super.requestLayout();
     }

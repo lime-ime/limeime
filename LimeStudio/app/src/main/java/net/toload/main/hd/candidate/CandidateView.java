@@ -61,7 +61,7 @@ import net.toload.main.hd.data.Mapping;
 
 
 public class CandidateView extends View implements View.OnClickListener {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final String TAG = "CandidateView";
 
     protected static final int OUT_OF_BOUNDS = -1;
@@ -89,7 +89,7 @@ public class CandidateView extends View implements View.OnClickListener {
     protected int mCount = 0;
     //Composing view
     private TextView mComposingTextView;
-    private static PopupWindow mComposingTextPopup;
+    private PopupWindow mComposingTextPopup;
 
     //private String mComposingText = "";
 
@@ -275,6 +275,12 @@ public class CandidateView extends View implements View.OnClickListener {
     	setVerticalScrollBarEnabled(false);*/
     }
 
+    public void doHideComposing(){
+        if (mComposingTextPopup != null && mComposingTextPopup.isShowing()) {
+            mComposingTextPopup.dismiss();
+        }
+    }
+
     public void setContainerView(CandidateInInputViewContainer candidateInInputViewContainer){
         mCandidateInInputViewContainer = candidateInInputViewContainer;
     }
@@ -297,7 +303,7 @@ public class CandidateView extends View implements View.OnClickListener {
         private static final int MSG_SET_COMPOSING = 6;
 
         private UIHandler(CandidateView candiInstance) {
-            mCandidateViewWeakReference = new WeakReference<CandidateView>(candiInstance);
+            mCandidateViewWeakReference = new WeakReference<>(candiInstance);
         }
 
         @Override
@@ -315,9 +321,7 @@ public class CandidateView extends View implements View.OnClickListener {
                     mCandiView.doUpdateComposing();
                     break;
                 case MSG_HIDE_COMPOSING: {
-                    if (mComposingTextPopup != null && mComposingTextPopup.isShowing()) {
-                        mComposingTextPopup.dismiss();
-                    }
+                    mCandiView.doHideComposing();
                     break;
                 }
                 case MSG_SHOW_CANDIDATE_POPUP: {
@@ -388,8 +392,8 @@ public class CandidateView extends View implements View.OnClickListener {
             invalidate();
 
             //requestLayout();
-            //if(mCandidateViewContainer!=null) mCandidateViewContainer.requestLayout();
-            //if(mCandidateInInputViewContainer!=null) mCandidateInInputViewContainer.requestLayout();
+            if(mCandidateViewContainer!=null) mCandidateViewContainer.requestLayout();
+            if(mCandidateInInputViewContainer!=null) mCandidateInInputViewContainer.requestLayout();
 
 
         }
@@ -830,9 +834,14 @@ public class CandidateView extends View implements View.OnClickListener {
             }
             x += wordWidth;
         }
-        mTotalWidth = x;
-        //requestLayout();
 
+        if(mTotalWidth!=x) {
+            if (DEBUG)
+                Log.i(TAG, "Candidateview:OnDraw(), UpdateUI again.:  mTotalWidth:" + mTotalWidth + " newWidth:" + x);
+            mTotalWidth = x;
+            mHandler.updateUI(0) ;
+        }
+        //requestLayout();
 
         //Jeremy '11,8,11. If the candidate list is within 1 page and has more records, get full records first.
         if (mTotalWidth < this.getWidth()) checkHasMoreRecords();
@@ -1048,9 +1057,11 @@ public class CandidateView extends View implements View.OnClickListener {
         mTargetScrollX = 0;
         hideComposing();
         hideCandidatePopup();
-        mHandler.updateUI(0);
+
         mHeight = (int) (mContext.getResources().getDimensionPixelSize(
                 R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize()); //restore the height Jeremy '12,5,24
+        mTotalWidth = 0;
+        mHandler.updateUI(0);
 
     }
 

@@ -165,7 +165,7 @@ public class MainActivity extends ActionBarActivity
                         public void onClick(DialogInterface dialog, int id) {
                             // Kill and stop my activity
                             android.os.Process.killProcess(android.os.Process.myPid());
-                            System.exit(1);
+                            System.exit(0);
                         }
                     });
             builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),

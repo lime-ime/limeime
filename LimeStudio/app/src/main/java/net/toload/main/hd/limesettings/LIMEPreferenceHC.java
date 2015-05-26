@@ -26,6 +26,7 @@ import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.backup.BackupManager;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -35,11 +36,10 @@ import android.os.RemoteException;
 import android.preference.PreferenceFragment;
 
 import android.util.Log;
+import android.view.KeyEvent;
 
 
-
-@TargetApi(11)
-public class LIMEPreferenceHC extends Activity { 
+public class LIMEPreferenceHC extends Activity {
 	
 
 
@@ -85,9 +85,6 @@ public class LIMEPreferenceHC extends Activity {
 //				}
 //			}
 		}
-
-
-
 
 		@Override
 		public void onResume() {

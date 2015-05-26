@@ -263,7 +263,7 @@ public class CandidateExpandedView extends CandidateView {
 	    	Log.i(TAG, "prepareLayout(): mRows=" + mRows + ", mTotalHeight=" + mTotalHeight);
 	}
 	
-	@Override
+
 	public void setSuggestions(List<Mapping> suggestions) {
 		if(DEBUG) Log.i(TAG, "setSuggestions(), suggestions.size()=" + suggestions.size());
 		if(mCandidateView!=null && mCandidateView.mSuggestions!=null){
