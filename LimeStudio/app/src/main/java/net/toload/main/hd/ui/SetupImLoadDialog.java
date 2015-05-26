@@ -639,7 +639,7 @@ public class SetupImLoadDialog extends DialogFragment {
 
     public void loadMapping(File unit) {
 
-        handler.showProgress(false);
+        handler.showProgress(false, activity.getResources().getString(R.string.setup_im_dialog_custom));
 
         try {
             DBSrv.loadMapping(unit.getAbsolutePath(), imtype, new LIMEProgressListener() {

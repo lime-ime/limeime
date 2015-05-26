@@ -2,7 +2,6 @@ package net.toload.main.hd.ui;
 
 import android.os.AsyncTask;
 import android.os.RemoteException;
-import android.util.Log;
 
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.ProgressListener;
@@ -74,7 +73,7 @@ public class SetupImRestoreRunnable implements Runnable {
 
     public void run() {
 
-        mHandler.showProgress(true);
+        mHandler.showProgress(true, "");
         mHandler.updateProgress(this.mFragment.getResources().getString(R.string.setup_im_restore_message));
 
         if (mType.equals(Lime.LOCAL)) {
@@ -141,11 +140,11 @@ public class SetupImRestoreRunnable implements Runnable {
                     tempfile.delete();
                 }
 
-                Log.i("LIME", cloudbackupfile.getId());
+                /*Log.i("LIME", cloudbackupfile.getId());
                 Log.i("LIME", cloudbackupfile.getTitle());
                 Log.i("LIME", cloudbackupfile.getDescription());
                 Log.i("LIME", cloudbackupfile.getDownloadUrl());
-
+*/
                 InputStream fi = downloadFile(service, cloudbackupfile);
                 FileOutputStream fo = new FileOutputStream(tempfile);
 
@@ -156,7 +155,7 @@ public class SetupImRestoreRunnable implements Runnable {
                 }
 
                 fo.close();
-                Log.i("LIME", tempfile.getAbsoluteFile() + " -> " + tempfile.length());
+                //Log.i("LIME", tempfile.getAbsoluteFile() + " -> " + tempfile.length());
 
 
                 // Decompress tempfile

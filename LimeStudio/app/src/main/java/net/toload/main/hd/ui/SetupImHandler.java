@@ -20,6 +20,9 @@ public class SetupImHandler extends Handler {
         String action = msg.getData().getString("action");
         String type = msg.getData().getString("type");
 
+        //Log.i("LIME", "action: " + action);
+        //Log.i("LIME", "type: " + type);
+
         if(action != null && action.equalsIgnoreCase("progress")){
             if(type != null){
                 if(type.equalsIgnoreCase("showSpinner")){
@@ -64,13 +67,20 @@ public class SetupImHandler extends Handler {
         this.sendMessageDelayed(m, 1);
     }
 
-    public void showProgress(boolean spinnerStyle) {
+    /*public void showProgress(boolean spinnerStyle) {
         showProgress(spinnerStyle, "");
-    }
+    }*/
     public void showProgress(boolean spinnerStyle, String message) {
-        updateProgress(message);
+        //updateProgress(message);
+        //Log.i("LIME", "initial spinnerStyle: " + spinnerStyle);
+        //Log.i("LIME", "initial message: " + message);
+
         Message m = new Message();
         m.getData().putString("action", "progress");
+        if(message != null && !message.isEmpty()){
+            m.getData().putString("message", message);
+        }
+
         if(spinnerStyle)
             m.getData().putString("type", "showSpinner");
         else
@@ -107,13 +117,13 @@ public class SetupImHandler extends Handler {
                 m.getData().putString("action", "initialbutton");
         this.sendMessageDelayed(m, 1);
     }
-    @Deprecated
+   /* @Deprecated
     public void startLoadingWindow(String imtype) {
         Message m = new Message();
                 m.getData().putString("action", "startloadingwindow");
                 m.getData().putString("value", imtype);
         this.sendMessageDelayed(m, 1);
-    }
+    }*/
 
     public void updateCustomButton() {
         Message m = new Message();

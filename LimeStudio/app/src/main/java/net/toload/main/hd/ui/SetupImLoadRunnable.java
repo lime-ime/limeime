@@ -65,7 +65,8 @@ public class SetupImLoadRunnable implements Runnable{
 
         Looper.prepare();
 
-        handler.showProgress(true);
+        //Log.i("LIME", "showProgress Runnable:");
+        handler.showProgress(true, "");
 
         // Download DB File
         handler.updateProgress(activity.getResources().getString(R.string.setup_load_download));

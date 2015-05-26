@@ -67,7 +67,7 @@ public class SetupImBackupRunnable implements Runnable {
     @Override
     public void run() {
 
-        mHandler.showProgress(true);
+        mHandler.showProgress(true, "");
         mHandler.updateProgress(this.mFragment.getResources().getString(R.string.setup_im_backup_message));
 
         // Preparing the file to be backup

@@ -190,10 +190,23 @@ public class SetupImFragment extends Fragment {
 
     public void showProgress(boolean spinnerStyle, String message) {
 
+
         if (progress.isShowing()) progress.dismiss();
-        progress.setProgressStyle(spinnerStyle?ProgressDialog.STYLE_SPINNER:ProgressDialog.STYLE_HORIZONTAL);
+
+        progress = new ProgressDialog(activity);
+        progress.setProgressStyle(spinnerStyle ? ProgressDialog.STYLE_SPINNER : ProgressDialog.STYLE_HORIZONTAL);
         if(message!=null) progress.setMessage(message);
         if(!spinnerStyle) progress.setProgress(0);
+
+
+        /*Log.i("LIME", "SpinnerStyle: " + spinnerStyle);
+        Log.i("LIME", "message: " + message);
+        if(spinnerStyle == false){
+            Log.i("LIME", "Horizontal");
+        }else{
+            Log.i("LIME", "Spinner");
+        }
+*/
         progress.show();
 
     }
@@ -210,8 +223,9 @@ public class SetupImFragment extends Fragment {
     }
 
     public void updateProgress(String value){
-          progress.setMessage(value);
-
+        if(progress != null){
+            progress.setMessage(value);
+        }
     }
 
     @Override
