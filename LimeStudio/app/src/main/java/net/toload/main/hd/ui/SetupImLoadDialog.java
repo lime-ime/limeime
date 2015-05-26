@@ -613,10 +613,16 @@ public class SetupImLoadDialog extends DialogFragment {
     public void loadDbRelatedMapping(File unit) {
         try {
             //unzip file
-            File sourcedbpath = new File(LIMEUtilities.unzip(unit.getAbsolutePath(), Lime.DATABASE_FOLDER_EXTERNAL, true));
-            DBSrv.importBackupRelatedDb(sourcedbpath.getAbsoluteFile());
-            sourcedbpath.deleteOnExit();
-            showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
+            List<String> unzipPaths = LIMEUtilities.unzip(unit.getAbsolutePath(), Lime.DATABASE_FOLDER_EXTERNAL, true);
+            if(unzipPaths.size()!=1) {
+                showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
+            }
+            else {
+                File fileToImport = new File(unzipPaths.get(0));
+                DBSrv.importBackupRelatedDb(fileToImport);
+                fileToImport.deleteOnExit();
+                showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
@@ -627,10 +633,16 @@ public class SetupImLoadDialog extends DialogFragment {
 
         try {
             //unzip file
-            File sourcedbpath = new File(LIMEUtilities.unzip(unit.getAbsolutePath(), Lime.DATABASE_FOLDER_EXTERNAL, true));
-            DBSrv.importBackupDb(sourcedbpath.getAbsoluteFile(), imtype);
-            sourcedbpath.deleteOnExit();
-            showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
+            List<String> unzipPaths = LIMEUtilities.unzip(unit.getAbsolutePath(), Lime.DATABASE_FOLDER_EXTERNAL, true);
+            if(unzipPaths.size()!=1) {
+                showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
+            }
+            else {
+                File fileToImport = new File(unzipPaths.get(0));
+                DBSrv.importBackupDb(fileToImport.getAbsoluteFile(), imtype);
+                fileToImport.deleteOnExit();
+                showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
@@ -646,16 +658,19 @@ public class SetupImLoadDialog extends DialogFragment {
 
                 @Override
                 public void onProgress(long percentageDone, long var2, String status) {
-                    handler.updateProgress(status);
+                    if(status!=null && !status.isEmpty())
+                        handler.updateProgress(status);
                     handler.updateProgress( (int) percentageDone );
                 }
                 @Override
                 public void onStatusUpdate(String status){
-                    handler.updateProgress(status);
+                    if(status!=null && !status.isEmpty())
+                        handler.updateProgress(status);
                 }
                 @Override
                 public void onError(int code, String source){
-                    showToastMessage(source, Toast.LENGTH_LONG);
+                    if(source!=null && !source.isEmpty())
+                        showToastMessage(source, Toast.LENGTH_LONG);
                 }
                 @Override
                 public void onPostExecute(boolean success, String status, int code){
