@@ -34,6 +34,7 @@ import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
+import net.toload.main.hd.ui.ImportDialog;
 import net.toload.main.hd.ui.ManageRelatedFragment;
 import net.toload.main.hd.ui.SetupImFragment;
 import net.toload.main.hd.ui.ShareDbRunnable;
@@ -194,7 +195,9 @@ public class MainActivity extends ActionBarActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
 
         activity = this.activity;
@@ -229,9 +232,28 @@ public class MainActivity extends ActionBarActivity
             purchaseVerification();
         }
 
+        // Handle Import Text from other application
+        String action = getIntent().getAction();
+        String type = getIntent().getType();
+        if (Intent.ACTION_SEND.equals(action) && type != null) {
+            if ("text/plain".equals(type)) {
+                handleSendText(getIntent());
+            }
+        }
+
         // Initial Preference Setting
         //handler.initialDefaultPreference();
 
+    }
+
+
+    void handleSendText(Intent intent) {
+        String importtext = intent.getStringExtra(Intent.EXTRA_TEXT);
+        if (importtext != null && !importtext.isEmpty()) {
+            android.app.FragmentTransaction ft = getFragmentManager().beginTransaction();
+            ImportDialog dialog = ImportDialog.newInstance(importtext);
+                         dialog.show(ft, "importdialog");
+        }
     }
 
     public void purchaseVerification(){

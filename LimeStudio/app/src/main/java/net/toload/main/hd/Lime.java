@@ -215,6 +215,8 @@ public class Lime {
     public static final String SHARE_TYPE_TXT = "text/plain";
     public static final String SHARE_TYPE_ZIP = "application/zip";
 
+    public static final String IMPORT_TEXT = "import_text";
+
     public static final String SUPPORT_FILE_EXT_TXT = "txt";
     public static final String SUPPORT_FILE_EXT_LIME = "lime";
     public static final String SUPPORT_FILE_EXT_LIMEDB = "limedb";
