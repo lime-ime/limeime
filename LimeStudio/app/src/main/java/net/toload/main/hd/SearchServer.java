@@ -56,6 +56,8 @@ public class SearchServer {
 	//private static LinkedList<Mapping> diclist = null;  
 	private static List<Mapping> scorelist = null;
 
+	private static boolean mResetCache;
+
 	private static List<List<Mapping>> LDPhraseListArray = null;
 	private static List<Mapping> LDPhraseList = null;
 
@@ -94,17 +96,6 @@ public class SearchServer {
 
 	private static List<Pair<Integer, Integer>> codeLenthMap = new LinkedList<Pair<Integer, Integer>>();
 
-	//public class SearchServiceImpl extends ISearchService.Stub {
-
-	//Context ctx = null;
-	/*
-		SearchServiceImpl(Context ctx) {
-			this.ctx = ctx;	
-			mLIMEPref = new LIMEPreferenceManager(ctx);
-			loadDBAdapter(); 
-
-		}
-	 */
 	public SearchServer(Context context) {
 
 
@@ -116,6 +107,11 @@ public class SearchServer {
 
 
 	}
+
+	public static void resetCache(boolean resetCache) {
+		mResetCache = resetCache;
+	}
+
 
 	public void setSelectedText(String text){
 		selectedText = new StringBuffer();
@@ -255,9 +251,10 @@ public class SearchServer {
 		if(DEBUG) Log.i(TAG, "query(): code="+code);
 		// Check if system need to reset cache
 
-		if(mLIMEPref.getResetCacheFlag(false)){
+		//check reset cache with local variable isntead of reading from shared preference for better perfomance
+		if(mResetCache){
 			initialCache();
-			mLIMEPref.setResetCacheFlag(false);
+			mResetCache = false;
 		}
 
 		codeLenthMap.clear();//Jeremy '12,6,2 reset the codeLengthMap

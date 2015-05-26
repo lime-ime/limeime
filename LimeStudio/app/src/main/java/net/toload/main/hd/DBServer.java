@@ -120,7 +120,8 @@ public class  DBServer {
 		//dbAdapter.close();
 
 		// Reset for SearchSrv
-		mLIMEPref.setResetCacheFlag(true);
+		//mLIMEPref.setResetCacheFlag(true);
+		resetCache();
 	}
 
 	public void resetMapping(final String tablename) throws RemoteException {
@@ -131,7 +132,11 @@ public class  DBServer {
 		dbAdapter.deleteAll(tablename);
 
 		// Reset cache in SearchSrv
-		mLIMEPref.setResetCacheFlag(true);
+		//mLIMEPref.setResetCacheFlag(true);
+		resetCache();
+	}
+	public static void resetCache(){
+		SearchServer.resetCache(true);
 	}
 
 	public boolean importBackupRelatedDb(File sourcedb){
@@ -160,7 +165,8 @@ public class  DBServer {
 		}
 		else {
 			int count = dbAdapter.importDb(unzipFilePaths.get(0), imtype);
-			mLIMEPref.setResetCacheFlag(true);
+			//mLIMEPref.setResetCacheFlag(true);
+			resetCache();
 			return count;
 		}
 	}
@@ -288,7 +294,8 @@ public class  DBServer {
 				restoreDefaultSharedPreference(checkpref);
 			}
 
-			mLIMEPref.setResetCacheFlag(true);
+			//mLIMEPref.setResetCacheFlag(true);
+			resetCache();
 
 		}else{
 			showNotificationMessage(ctx.getText(R.string.error_restore_not_found) + "");

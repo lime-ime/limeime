@@ -78,7 +78,8 @@ public class SetupImLoadRunnable implements Runnable{
         int count = dbsrv.importMapping(tempfile, imtype);
 
         mLIMEPref.setParameter("_table", "");
-        mLIMEPref.setResetCacheFlag(true);
+        //mLIMEPref.setResetCacheFlag(true);
+        DBServer.resetCache();
         handler.cancelProgress();
         handler.initialImButtons();
 
