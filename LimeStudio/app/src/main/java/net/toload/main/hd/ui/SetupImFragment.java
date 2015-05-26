@@ -194,6 +194,7 @@ public class SetupImFragment extends Fragment {
         if (progress.isShowing()) progress.dismiss();
 
         progress = new ProgressDialog(activity);
+        progress.setCancelable(false);
         progress.setProgressStyle(spinnerStyle ? ProgressDialog.STYLE_SPINNER : ProgressDialog.STYLE_HORIZONTAL);
         if(message!=null) progress.setMessage(message);
         if(!spinnerStyle) progress.setProgress(0);
