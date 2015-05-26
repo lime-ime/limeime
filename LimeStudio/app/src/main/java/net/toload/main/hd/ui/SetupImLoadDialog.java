@@ -101,8 +101,21 @@ public class SetupImLoadDialog extends DialogFragment {
     @Override
     public void onResume() {
         super.onResume();
-    }
 
+        getDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
+            @Override
+            public boolean onKey(android.content.DialogInterface dialog,
+                                 int keyCode, android.view.KeyEvent event) {
+                if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
+                    // To dismiss the fragment when the back-button is pressed.
+                    dismiss();
+                    return true;
+                }
+                // Otherwise, do nothing else
+                else return false;
+            }
+        });
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -380,6 +393,7 @@ public class SetupImLoadDialog extends DialogFragment {
 
         return rootView;
     }
+
 
     public void selectMappingFile() {
 

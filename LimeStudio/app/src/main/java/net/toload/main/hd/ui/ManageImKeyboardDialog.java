@@ -62,6 +62,26 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 		this.setCancelable(false);
 	}
 
+
+	@Override
+	public void onResume() {
+		super.onResume();
+
+		getDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
+			@Override
+			public boolean onKey(android.content.DialogInterface dialog,
+								 int keyCode, android.view.KeyEvent event) {
+				if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
+					// To dismiss the fragment when the back-button is pressed.
+					dismiss();
+					return true;
+				}
+				// Otherwise, do nothing else
+				else return false;
+			}
+		});
+	}
+
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 
 		getDialog().getWindow().setTitle(getResources().getString(R.string.manage_select_keyboard));
