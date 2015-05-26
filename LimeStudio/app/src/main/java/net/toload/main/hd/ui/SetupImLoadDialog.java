@@ -646,16 +646,19 @@ public class SetupImLoadDialog extends DialogFragment {
 
                 @Override
                 public void onProgress(long percentageDone, long var2, String status) {
-                    handler.updateProgress(status);
+                    if(status!=null && !status.isEmpty())
+                        handler.updateProgress(status);
                     handler.updateProgress( (int) percentageDone );
                 }
                 @Override
                 public void onStatusUpdate(String status){
-                    handler.updateProgress(status);
+                    if(status!=null && !status.isEmpty())
+                        handler.updateProgress(status);
                 }
                 @Override
                 public void onError(int code, String source){
-                    showToastMessage(source, Toast.LENGTH_LONG);
+                    if(source!=null && !source.isEmpty())
+                        showToastMessage(source, Toast.LENGTH_LONG);
                 }
                 @Override
                 public void onPostExecute(boolean success, String status, int code){
