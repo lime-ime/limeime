@@ -97,7 +97,7 @@ public class CandidateView extends View implements View.OnClickListener {
     private boolean mShowNumber; //Jeremy '11,5,25 for showing physical keyboard number or not.
 
     protected Rect mBgPadding;
-    protected Rect cursorRect = null; //Jeremy '11,7,25 for store current cursor rect
+    //protected Rect cursorRect = null; //Jeremy '11,7,25 for store current cursor rect
 
     private static final int MAX_SUGGESTIONS = 500;
     private static final int SCROLL_PIXELS = 20;
@@ -998,21 +998,7 @@ public class CandidateView extends View implements View.OnClickListener {
                 if (mSuggestions.get(0).isDictionary()) {
                     // no default selection for related words
                     mSelectedIndex = -1;
-/*	            }else if(mCount > 1 && mSuggestions.get(1).getId() !=null && // the suggestion is not from relatedlist.
-	            		mSuggestions.get(0).getWord().toLowerCase()
-	            		.equals(mSuggestions.get(1).getCode().trim())) { // exact match
-	            	// default selection on suggestions 1 (0 is typed English in mixed English mode)
-	             	mSelectedIndex = 1;
-	            }else if(mCount > 1 && mSuggestions.get(1).getId() !=null &&
-	            		 mService.activeIM.equals("phonetic")&&
-	            		 (mSuggestions.get(0).getWord().trim().toLowerCase()
-	     	            		.equals(mSuggestions.get(1).getCode().trim())||
-	     	              mSuggestions.get(0).getWord().trim().toLowerCase()
-	    	     	        	.equals(mSuggestions.get(1).getCode().trim().replaceAll("[3467]", ""))) ){
-*/
-                    //Jeremy '12,5,31 If mSuggestions.get(0).getRelated() is true means no exact match result found,
-                    //set default candidate as mixed English code,
-                    //otherwise set default suggestion to the first one of the result list.
+
                 } else if (mCount > 1 && !mSuggestions.get(0).getRelated()) {
                     mSelectedIndex = 1;
                 } else {
@@ -1024,10 +1010,6 @@ public class CandidateView extends View implements View.OnClickListener {
                 //setBackgroundColor(0);
             }
 
-            //mTypedWordValid = typedWordValid;
-            //scrollTo(0, 0);
-            //mTargetScrollX = 0;
-            // Compute the total width
 
 
         } else {
@@ -1035,17 +1017,7 @@ public class CandidateView extends View implements View.OnClickListener {
             hideCandidatePopup();
         }
 
-        mHandler.updateUI(0);
-
-        /*//Jeremy '11,8,18 moved to mHandler to be thread-safe.
-        if(mCandidatePopup != null && mCandidatePopup.isShowing()){
-    		showCandidatePopup();
-
-    	}else{
-    		onDraw(null);
- 	        invalidate();
-    	}
-        requestLayout();*/
+        mHandler.updateUI(1);
 
     }
 
@@ -1298,10 +1270,6 @@ public class CandidateView extends View implements View.OnClickListener {
         hideCandidatePopup();
     }
 
-    public void onUpdateCursor(Rect newCursor) {
-        cursorRect = newCursor;
-        invalidate();
-    }
 
     @Override
     public void onClick(View v) {
