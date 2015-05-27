@@ -165,7 +165,7 @@ public class MainActivity extends ActionBarActivity
                     new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             // Kill and stop my activity
-                            android.os.Process.killProcess(android.os.Process.myPid());
+                            //android.os.Process.killProcess(android.os.Process.myPid());
                             System.exit(0);
                         }
                     });

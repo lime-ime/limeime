@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.widget.PopupWindow;
 import android.widget.ScrollView;
 
 import net.toload.main.hd.R;
@@ -18,12 +19,11 @@ import java.util.List;
 
 public class CandidateExpandedView extends CandidateView {
 	
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final String TAG = "CandidateExpandedView";
 	
     private static final int MAX_SUGGESTIONS = 200;
-	
-	private CandidateView mCandidateView;
+
 	private List<Mapping> mSuggestions;
 	//private int mVerticalPadding;
 	private int mTouchX = OUT_OF_BOUNDS;
@@ -55,7 +55,9 @@ public class CandidateExpandedView extends CandidateView {
 		mParentScroolView = v;
 	}
 	                                         
-	
+	public void setCandidatePopupWIndow(PopupWindow candidatePopup){
+		mCandidatePopupWindow = candidatePopup;
+	}
 
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -192,7 +194,8 @@ public class CandidateExpandedView extends CandidateView {
 	
 	
 	public void setParentCandidateView(CandidateView v){
-		mCandidateView =v;	
+		mCandidateView =v;
+		mHandler = new UIHandler(v);
 	}
 	
 	public void prepareLayout()
