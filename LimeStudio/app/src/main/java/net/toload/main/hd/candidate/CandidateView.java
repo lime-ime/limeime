@@ -82,7 +82,7 @@ public class CandidateView extends View implements View.OnClickListener {
     private CandidateExpandedView mPopupCandidateView;
     private View mCandidatePopupContainer;
     protected PopupWindow mCandidatePopupWindow;
-    // this for candidateView and parent candidateView when in expandedCandiateView.
+    // mCanddiateView = this for candidateView and is parent candidateView when in expandedCandiateView.
     protected CandidateView mCandidateView;
 
 
