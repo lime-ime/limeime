@@ -62,7 +62,7 @@ import net.toload.main.hd.data.Mapping;
 
 
 public class CandidateView extends View implements View.OnClickListener {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final String TAG = "CandidateView";
 
 

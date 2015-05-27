@@ -19,7 +19,7 @@ import java.util.List;
 
 public class CandidateExpandedView extends CandidateView {
 	
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private static final String TAG = "CandidateExpandedView";
 	
     private static final int MAX_SUGGESTIONS = 200;
