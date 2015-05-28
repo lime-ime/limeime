@@ -23,7 +23,8 @@ public class SetupImHandler extends Handler {
         if(action != null && action.equalsIgnoreCase("progress")){
             if(type != null){
                 if(type.equalsIgnoreCase("showSpinner")){
-                    fragment.showProgress(true, null);
+                    String message = msg.getData().getString("message");
+                    fragment.showProgress(true, message);
                 }else if(type.equalsIgnoreCase("showHorizontal")){
                     String message = msg.getData().getString("message");
                     fragment.showProgress(false, message);

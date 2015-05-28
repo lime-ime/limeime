@@ -57,9 +57,7 @@ public class SetupImBackupRunnable implements Runnable {
     @Override
     public void run() {
 
-        mHandler.showProgress(false, this.mFragment.getResources().getString(R.string.setup_im_backup_message));
-        mHandler.setProgressIndeterminate(true);
-
+        mHandler.showProgress(true, this.mFragment.getResources().getString(R.string.setup_im_backup_message));
         // Preparing the file to be backup
         if (mType.equals(Lime.LOCAL) || mType.equals(Lime.GOOGLE) || mType.equals(Lime.DROPBOX)) {
             try {
@@ -76,6 +74,10 @@ public class SetupImBackupRunnable implements Runnable {
                 break;
             }
             case Lime.DROPBOX: {
+                mHandler.cancelProgress();
+                mHandler.showProgress(false, this.mFragment.getResources().getString(R.string.setup_im_backup_message));
+                mHandler.setProgressIndeterminate(true);
+
                 File sourcefile = new File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DATABASE_BACKUP_NAME);
                 mHandler.setProgressIndeterminate(false);
                 backupToDropbox upload = new backupToDropbox(mHandler, mFragment, mdbapi, "", sourcefile);

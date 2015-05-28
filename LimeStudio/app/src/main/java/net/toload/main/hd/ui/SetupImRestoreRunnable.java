@@ -69,13 +69,13 @@ public class SetupImRestoreRunnable implements Runnable {
 
     public void run() {
 
-        mHandler.showProgress(false, this.mFragment.getResources().getString(R.string.setup_im_restore_message));
-        mHandler.setProgressIndeterminate(true);
+
 
 
         switch (mType) {
             case Lime.LOCAL:
                 try {
+                    mHandler.showProgress(true, this.mFragment.getResources().getString(R.string.setup_im_restore_message));
                     DBServer.restoreDatabase();
                     mHandler.cancelProgress();
                 } catch (RemoteException e) {
@@ -83,9 +83,13 @@ public class SetupImRestoreRunnable implements Runnable {
                 }
                 break;
             case Lime.GOOGLE:
+                mHandler.showProgress(true, this.mFragment.getResources().getString(R.string.setup_im_restore_message));
                 restoreFromGoogle();
                 break;
             case Lime.DROPBOX:
+                mHandler.showProgress(false, this.mFragment.getResources().getString(R.string.setup_im_restore_message));
+                mHandler.setProgressIndeterminate(true);
+
                 File limedir = new File(LIME.LIME_SDCARD_FOLDER + File.separator);
                 if (!limedir.exists()) limedir.mkdirs();
                 File tempFile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_CLOUD_TEMP);
