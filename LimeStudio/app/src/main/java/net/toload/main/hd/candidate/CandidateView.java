@@ -20,7 +20,6 @@
 
 package net.toload.main.hd.candidate;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
@@ -31,6 +30,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -58,10 +58,6 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.data.Mapping;
 
 
-/**
- * @author Art Hung
- */
-@SuppressLint({"InflateParams", "HandlerLeak"})
 public class CandidateView extends View implements View.OnClickListener {
     private static final boolean DEBUG = false;
     private static final String TAG = "CandidateView";
@@ -70,6 +66,9 @@ public class CandidateView extends View implements View.OnClickListener {
 
     protected LIMEService mService;
     protected List<Mapping> mSuggestions;
+    protected CandidateView mCandidateView;
+
+
     protected int mSelectedIndex;
     protected int mTouchX = OUT_OF_BOUNDS;
     protected Drawable mSelectionHighlight;
@@ -77,6 +76,8 @@ public class CandidateView extends View implements View.OnClickListener {
     private boolean mShowNumber; //Jeremy '11,5,25 for showing physical keyboard number or not.
 
     protected Rect mBgPadding;
+
+
 
     private static final int MAX_SUGGESTIONS = 500;
     private static final int SCROLL_PIXELS = 20;
@@ -134,7 +135,6 @@ public class CandidateView extends View implements View.OnClickListener {
 
     protected GestureDetector mGestureDetector;
     protected final Context mContext;
-    private final boolean isAndroid3; //'11,8,11, Jeremy
 
     protected LIMEPreferenceManager mLIMEPref;
 
@@ -157,12 +157,21 @@ public class CandidateView extends View implements View.OnClickListener {
         super(context, attrs);
 
         mContext = context;
+
+        mCandidateView =this;
         //Jeremy '11,8,11 detect API level and show keyboard number only in 3.0+
-        isAndroid3 = android.os.Build.VERSION.SDK_INT > 11;
+
 
         mLIMEPref = new LIMEPreferenceManager(context);
 
         Resources r = context.getResources();
+
+
+        //Jeremy '15,5,28 remove isAndroid3 and isXlTablet.  There are no phones with keyboard today.
+        // For phones with bluetooth keyboard, we should still show select keys in the candidateView
+        //int screenLayout = r.getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
+        //isXlTablet =  (screenLayout == Configuration.SCREENLAYOUT_SIZE_XLARGE);
+        //isAndroid3 = android.os.Build.VERSION.SDK_INT > 11;
 
         Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         Point screenSize = new Point();
@@ -172,9 +181,9 @@ public class CandidateView extends View implements View.OnClickListener {
 
 
 
-        mSelectionHighlight = r.getDrawable(
+        mSelectionHighlight = ContextCompat.getDrawable(context.getApplicationContext(),
                 R.drawable.list_selector_background);
-        //android.R.drawable.list_selector_background);
+
         if (mSelectionHighlight != null) {
             mSelectionHighlight.setState(new int[]{
                     android.R.attr.state_enabled,
@@ -261,6 +270,7 @@ public class CandidateView extends View implements View.OnClickListener {
                 return true;
             }
         });
+
     }
 
     public void setContainerView(CandidateInInputViewContainer candidateInInputViewContainer) {
@@ -271,9 +281,11 @@ public class CandidateView extends View implements View.OnClickListener {
         mCandidateViewContainer = candidateViewContainer;
     }
 
-    private final UIHandler mHandler = new UIHandler();
+    protected  UIHandler mHandler = new UIHandler(this);
 
-    class UIHandler extends Handler {
+    protected class UIHandler extends Handler {
+
+        private final CandidateView mCandiInstatnce;
         private static final int MSG_UPDATE_UI = 1;
         private static final int MSG_UPDATE_COMPOSING = 2;
         private static final int MSG_HIDE_COMPOSING = 3;
@@ -281,35 +293,41 @@ public class CandidateView extends View implements View.OnClickListener {
         private static final int MSG_HIDE_CANDIDATE_POPUP = 5;
         private static final int MSG_SET_COMPOSING = 6;
 
+        public UIHandler(CandidateView candiInstance) {
+            mCandiInstatnce = candiInstance;
+        }
+
         @Override
         public void handleMessage(Message msg) {
             if (DEBUG) Log.i(TAG, "UIHandler.handlMessage(): message:" + msg.what);
+
+
+            if(mCandiInstatnce ==null) return;
+
             switch (msg.what) {
                 case MSG_UPDATE_UI:
-                    doUpdateUI();
+                    mCandiInstatnce.doUpdateUI();
                     break;
                 case MSG_UPDATE_COMPOSING:
-                    doUpdateComposing();
+                    mCandiInstatnce.doUpdateComposing();
                     break;
                 case MSG_HIDE_COMPOSING: {
-                    if (mComposingTextPopup != null && mComposingTextPopup.isShowing()) {
-                        mComposingTextPopup.dismiss();
-                    }
+                    mCandiInstatnce.doHideComposing();
                     break;
                 }
                 case MSG_SHOW_CANDIDATE_POPUP: {
-                    doUpdateCandidatePopup();
+                    mCandiInstatnce.doUpdateCandidatePopup();
                     break;
                 }
                 case MSG_HIDE_CANDIDATE_POPUP: {
-                    doHideCandidatePopup();
+                    mCandiInstatnce.doHideCandidatePopup();
                     break;
                 }
                 case MSG_SET_COMPOSING: {
                     String composingText = (String) msg.obj;
                     if (DEBUG)
                         Log.i(TAG, "UIHandler.handleMessage(): compsoingText" + composingText);
-                    doSetComposing(composingText);
+                    mCandiInstatnce.doSetComposing(composingText);
                     break;
                 }
             }
@@ -404,7 +422,7 @@ public class CandidateView extends View implements View.OnClickListener {
         }
         candidateExpanded = false;
         invalidate();
-        requestLayout();
+        doUpdateUI();
     }
 
     private void resetWidth() {
@@ -416,7 +434,7 @@ public class CandidateView extends View implements View.OnClickListener {
                 candiWidth, mHeight));
     }
 
-    @SuppressLint("InflateParams")
+
     public void doUpdateCandidatePopup() {
         if (DEBUG)
             Log.i(TAG, "doUpdateCandidatePopup(), mHeight:" + mHeight);
@@ -541,16 +559,19 @@ public class CandidateView extends View implements View.OnClickListener {
         if (DEBUG)
             Log.i(TAG, "setComposingText():composingText:" + composingText);
         if (!composingText.trim().equals("")) {
-            //mComposingText=composingText;
             mHandler.setComposing(composingText, 0);
             showComposing();
         } else {
-            //mComposingText = "";
-            //mHandler.dismissComposing(0);
             hideComposing();
         }
 
 
+    }
+
+    public void doHideComposing(){
+        if (mComposingTextPopup != null && mComposingTextPopup.isShowing()) {
+            mComposingTextPopup.dismiss();
+        }
     }
 
     /**
@@ -605,7 +626,7 @@ public class CandidateView extends View implements View.OnClickListener {
         if (!mComposingTextPopup.isShowing()) {
             mComposingTextPopup.setWidth(popupWidth);
             mComposingTextPopup.setHeight(popupHeight);
-            mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX, mPopupComposingY);
+            mComposingTextPopup.showAtLocation(mCandidateView, Gravity.NO_GRAVITY, mPopupComposingX, mPopupComposingY);
         }
 
 
@@ -952,8 +973,8 @@ public class CandidateView extends View implements View.OnClickListener {
         if (mLIMEPref.getDisablePhysicalSelKeyOption()) {
             showNumber = true;
         }
-        //TODO: isAndroid3 should be replace as something which can detect working on tablets but not phones.
-        mShowNumber = showNumber && isAndroid3;
+
+        mShowNumber = showNumber;
 
         if (mShowNumber)
             X_GAP = (int) (res.getDimensionPixelSize(R.dimen.candidate_font_size) * 0.35f);//13;

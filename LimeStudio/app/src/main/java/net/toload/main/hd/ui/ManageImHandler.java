@@ -7,9 +7,7 @@ import net.toload.main.hd.data.Word;
 
 import java.util.List;
 
-/**
- * Created by Art Hung on 2015/4/26.
- */
+
 public class ManageImHandler extends Handler {
 
     private List<Word> wordlist;
@@ -22,30 +20,42 @@ public class ManageImHandler extends Handler {
     @Override
     public void handleMessage(Message msg) {
         String action = msg.getData().getString("action");
-        if (action.equals("progress")) {
-            fragment.showProgress();
-        } else if (action.equals("add")) {
-            String code = msg.getData().getString("code");
-            String code3r = msg.getData().getString("code3r");
-            String word = msg.getData().getString("word");
-            fragment.addWord(code, code3r, word);
-        } else if (action.equals("update")) {
-            int id = msg.getData().getInt("id");
-            String code = msg.getData().getString("code");
-            String code3r = msg.getData().getString("code3r");
-            String word = msg.getData().getString("word");
-            fragment.updateWord(id, code, code3r, word);
-        } else if (action.equals("keyboard")) {
-            String keyboard = msg.getData().getString("keyboard");
-            fragment.updateKeyboard(keyboard);
-        } else if (action.equals("related")) {
-            String code = msg.getData().getString("code");
-            fragment.updateRelated(code);
-        }  else if (action.equals("remove")) {
-            int id = msg.getData().getInt("id");
-            fragment.removeWord(id);
-        } else {
-            fragment.updateGridView(this.wordlist);
+        switch (action) {
+            case "progress":
+                fragment.showProgress();
+                break;
+            case "add": {
+                String code = msg.getData().getString("code");
+                String code3r = msg.getData().getString("code3r");
+                String word = msg.getData().getString("word");
+                fragment.addWord(code, code3r, word);
+                break;
+            }
+            case "update": {
+                int id = msg.getData().getInt("id");
+                String code = msg.getData().getString("code");
+                String code3r = msg.getData().getString("code3r");
+                String word = msg.getData().getString("word");
+                fragment.updateWord(id, code, code3r, word);
+                break;
+            }
+            case "keyboard":
+                String keyboard = msg.getData().getString("keyboard");
+                fragment.updateKeyboard(keyboard);
+                break;
+            case "related": {
+                String code = msg.getData().getString("code");
+                fragment.updateRelated(code);
+                break;
+            }
+            case "remove": {
+                int id = msg.getData().getInt("id");
+                fragment.removeWord(id);
+                break;
+            }
+            default:
+                fragment.updateGridView(this.wordlist);
+                break;
         }
     }
 

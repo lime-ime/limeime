@@ -7,39 +7,45 @@ import net.toload.main.hd.data.Related;
 
 import java.util.List;
 
-/**
- * Created by Art Hung on 2015/4/26.
- */
 public class ManageRelatedHandler extends Handler {
 
     private List<Related> relatedlist;
-    private ManageRelatedFragment fragment = null;
+    private ManageRelatedFragment mFragment = null;
 
     public ManageRelatedHandler(ManageRelatedFragment fragment) {
-        this.fragment = fragment;
+        mFragment = fragment;
     }
 
     @Override
     public void handleMessage(Message msg) {
         String action = msg.getData().getString("action");
-        if(action.equals("progress")){
-            fragment.showProgress();
-        }else if(action.equals("add")){
-            String pword = msg.getData().getString("pword");
-            String cword = msg.getData().getString("cword");
-            int score = msg.getData().getInt("score");
-            fragment.addRelated(pword, cword, score);
-        }else if(action.equals("update")){
-            int id = msg.getData().getInt("id");
-            String pword = msg.getData().getString("pword");
-            String cword = msg.getData().getString("cword");
-            int score = msg.getData().getInt("score");
-            fragment.updateRelated(id, pword, cword, score);
-        }else if(action.equals("remove")){
-            int id = msg.getData().getInt("id");
-            fragment.removeRelated(id);
-        } else {
-            fragment.updateGridView(this.relatedlist);
+        switch (action) {
+            case "progress":
+                mFragment.showProgress();
+                break;
+            case "add": {
+                String pword = msg.getData().getString("pword");
+                String cword = msg.getData().getString("cword");
+                int score = msg.getData().getInt("score");
+                mFragment.addRelated(pword, cword, score);
+                break;
+            }
+            case "update": {
+                int id = msg.getData().getInt("id");
+                String pword = msg.getData().getString("pword");
+                String cword = msg.getData().getString("cword");
+                int score = msg.getData().getInt("score");
+                mFragment.updateRelated(id, pword, cword, score);
+                break;
+            }
+            case "remove": {
+                int id = msg.getData().getInt("id");
+                mFragment.removeRelated(id);
+                break;
+            }
+            default:
+                mFragment.updateGridView(this.relatedlist);
+                break;
         }
     }
 
