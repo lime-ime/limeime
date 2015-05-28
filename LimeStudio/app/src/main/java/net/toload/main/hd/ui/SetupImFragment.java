@@ -199,15 +199,6 @@ public class SetupImFragment extends Fragment {
         if(message!=null) progress.setMessage(message);
         if(!spinnerStyle) progress.setProgress(0);
 
-
-        /*Log.i("LIME", "SpinnerStyle: " + spinnerStyle);
-        Log.i("LIME", "message: " + message);
-        if(spinnerStyle == false){
-            Log.i("LIME", "Horizontal");
-        }else{
-            Log.i("LIME", "Spinner");
-        }
-*/
         progress.show();
 
     }
@@ -217,6 +208,10 @@ public class SetupImFragment extends Fragment {
             progress.dismiss();
             handler.initialImButtons();
         }
+    }
+
+    public void setProgressIndeterminate(boolean flag){
+        progress.setIndeterminate(flag);
     }
 
     public void updateProgress(int value){
