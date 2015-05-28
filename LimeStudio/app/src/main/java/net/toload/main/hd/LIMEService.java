@@ -327,7 +327,6 @@ public class LIMEService extends InputMethodService implements
         CandidateViewContainer mCandidateViewContainer = (CandidateViewContainer) getLayoutInflater().inflate(R.layout.candidates, null);
         mCandidateViewContainer.initViews();
         mCandidateViewStandAlone = (CandidateView) mCandidateViewContainer.findViewById(R.id.candidates);
-
         mCandidateViewStandAlone.setService(this);
         mCandidateViewStandAlone.setContainerView(mCandidateViewContainer);
 
@@ -2360,9 +2359,16 @@ public class LIMEService extends InputMethodService implements
             hasCandidatesShown = true; //Jeremy '12,5,6 to replace deprecated isCandidateShown()
             if (!mFixedCandidateViewOn || (hasPhysicalKeyPressed)) //Jeremy '12,5,4
                 showCandidateView();
+            else
+                hideCandidateView();
+
             if ((!mFixedCandidateViewOn || (mFixedCandidateViewOn && hasPhysicalKeyPressed))
-                    && mCandidateView != mCandidateViewStandAlone)
+                    && mCandidateView != mCandidateViewStandAlone) {
                 mCandidateView = mCandidateViewStandAlone; //Jeremy '12,5,4 use standalone candidateView for physical keyboard (no soft keyboard shown)
+            } else if (mFixedCandidateViewOn && !hasPhysicalKeyPressed &&
+                    mCandidateView !=mCandidateViewInInputView){
+                mCandidateView = mCandidateViewInInputView;
+            }
 
             hasMappingList = true;
 

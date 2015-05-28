@@ -3,9 +3,6 @@ package net.toload.main.hd.ui;
 import android.os.Handler;
 import android.os.Message;
 
-/**
- * Created by Art Hung on 2015/4/26.
- */
 public class SetupImHandler extends Handler {
 
     private SetupImFragment fragment = null;
