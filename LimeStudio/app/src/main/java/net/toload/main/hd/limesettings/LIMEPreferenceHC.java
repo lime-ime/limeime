@@ -20,13 +20,7 @@
 
 package net.toload.main.hd.limesettings;
 
-import net.toload.main.hd.DBServer;
-import net.toload.main.hd.R;
-import net.toload.main.hd.data.KeyboardObj;
-import net.toload.main.hd.global.LIMEPreferenceManager;
-import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.backup.BackupManager;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -34,9 +28,13 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.preference.PreferenceFragment;
-
 import android.util.Log;
 import android.view.KeyEvent;
+
+import net.toload.main.hd.DBServer;
+import net.toload.main.hd.R;
+import net.toload.main.hd.data.KeyboardObj;
+import net.toload.main.hd.global.LIMEPreferenceManager;
 
 
 public class LIMEPreferenceHC extends Activity {
@@ -52,9 +50,6 @@ public class LIMEPreferenceHC extends Activity {
 				new PrefsFragment()).commit();
 
 	}
-
-
-
 
 	public static class PrefsFragment extends PreferenceFragment implements OnSharedPreferenceChangeListener{ 
 		private final boolean DEBUG = false;
@@ -180,5 +175,7 @@ public class LIMEPreferenceHC extends Activity {
 //
 //		};
 	}
+
+
 
 }
