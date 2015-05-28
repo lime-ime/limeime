@@ -2,9 +2,12 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:alertDialogStyle">@style/LIMEAlertDialogTheme</item>
         <item name="composingTextColor">@color/composing_text</item>
         <item name="composingTextBackGroundColor">@color/composing_background</item>
     </style>
+    <style name="LIMEAlertDialogTheme" parent="@android:style/Theme.Dialog">
+        </style>
     <style name="LIMEKeyboardLight">
         <item name="spaceKeyIcon">@drawable/sym_keyboard_space</item>
         <item name="spaceKeyPreviewIcon">@drawable/sym_keyboard_space</item>

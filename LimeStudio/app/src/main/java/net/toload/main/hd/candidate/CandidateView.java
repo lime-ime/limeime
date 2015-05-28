@@ -30,6 +30,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -76,7 +77,6 @@ public class CandidateView extends View implements View.OnClickListener {
     private boolean mShowNumber; //Jeremy '11,5,25 for showing physical keyboard number or not.
 
     protected Rect mBgPadding;
-    protected Rect cursorRect = null; //Jeremy '11,7,25 for store current cursor rect
 
     private static final int MAX_SUGGESTIONS = 500;
     private static final int SCROLL_PIXELS = 20;
@@ -95,7 +95,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
     protected static int X_GAP = 12;
 
-    private static final List<Mapping> EMPTY_LIST = new LinkedList<Mapping>();
+    private static final List<Mapping> EMPTY_LIST = new LinkedList<>();
 
     //container view with close button
     protected CandidateInInputViewContainer mCandidateInInputViewContainer = null;
@@ -165,27 +165,24 @@ public class CandidateView extends View implements View.OnClickListener {
         Resources r = context.getResources();
 
         Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        if (android.os.Build.VERSION.SDK_INT < 13) {
-            mScreenWidth = display.getWidth();
-            mScreenHeight = display.getHeight();
-        } else {
-            Point screenSize = new Point();
-            display.getSize(screenSize);
-            mScreenWidth = screenSize.x;
-            mScreenHeight = screenSize.y;
+        Point screenSize = new Point();
+        display.getSize(screenSize);
+        mScreenWidth = screenSize.x;
+        mScreenHeight = screenSize.y;
 
-        }
 
 
         mSelectionHighlight = r.getDrawable(
                 R.drawable.list_selector_background);
         //android.R.drawable.list_selector_background);
-        mSelectionHighlight.setState(new int[]{
-                android.R.attr.state_enabled,
-                android.R.attr.state_focused,
-                android.R.attr.state_window_focused,
-                android.R.attr.state_pressed
-        });
+        if (mSelectionHighlight != null) {
+            mSelectionHighlight.setState(new int[]{
+                    android.R.attr.state_enabled,
+                    android.R.attr.state_focused,
+                    android.R.attr.state_window_focused,
+                    android.R.attr.state_pressed
+            });
+        }
 
         //bgcolor = r.getColor(R.color.candidate_background);
 
@@ -546,7 +543,7 @@ public class CandidateView extends View implements View.OnClickListener {
         if (!composingText.trim().equals("")) {
             //mComposingText=composingText;
             mHandler.setComposing(composingText, 0);
-            showComposing(composingText);
+            showComposing();
         } else {
             //mComposingText = "";
             //mHandler.dismissComposing(0);
@@ -686,7 +683,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
     }
 
-    public void showComposing(String composingText) {
+    public void showComposing() {
         if (DEBUG)
             Log.i(TAG, "showComposing()");
         //jeremy '12,6,3 moved the creation of mComposingTextPopup and mComposingTextView from doUpdateComposing
@@ -740,7 +737,6 @@ public class CandidateView extends View implements View.OnClickListener {
     /**
      * A connection back to the service to communicate with the text field
      *
-     * @param listener
      */
     public void setService(LIMEService listener) {
         mService = listener;
@@ -860,7 +856,7 @@ public class CandidateView extends View implements View.OnClickListener {
                     if (i == 0) {
                         if (mSelectedIndex == 0) paint.setColor(mColorInverted);
                         else paint.setColor(mColorRecommended);
-                    } else if (i != 0) {
+                    } else {
                         paint.setColor(mColorOther);
                     }
                 }
@@ -933,9 +929,7 @@ public class CandidateView extends View implements View.OnClickListener {
         invalidate();
     }
 
-    public void setSuggestions(List<Mapping> suggestions) {
-        setSuggestions(suggestions, false, "");
-    }
+
 
     public void setSuggestions(List<Mapping> suggestions, boolean showNumber, String displaySelkey) {
         mDisplaySelkey = displaySelkey;
@@ -965,12 +959,12 @@ public class CandidateView extends View implements View.OnClickListener {
             X_GAP = (int) (res.getDimensionPixelSize(R.dimen.candidate_font_size) * 0.35f);//13;
         else
             X_GAP = (int) (res.getDimensionPixelSize(R.dimen.candidate_font_size) * 0.25f);
-        ;
+
 
         if (suggestions != null) {
-            mSuggestions = new LinkedList<Mapping>(suggestions);
+            mSuggestions = new LinkedList<>(suggestions);
 
-            if (mSuggestions != null && mSuggestions.size() > 0) {
+            if (mSuggestions.size() > 0) {
                 //setBackgroundColor(bgcolor);
                 // Add by Jeremy '10, 3, 29
                 mCount = mSuggestions.size();
@@ -1016,7 +1010,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
 
         } else {
-            mSuggestions = new LinkedList<Mapping>();
+            mSuggestions = new LinkedList<>();
             hideCandidatePopup();
         }
 
@@ -1057,7 +1051,7 @@ public class CandidateView extends View implements View.OnClickListener {
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent me) {
+    public boolean onTouchEvent(@NonNull MotionEvent me) {
         if (DEBUG)
             Log.i(TAG, "OnTouchEvent() action = " + me.getAction());
         if (mGestureDetector != null && mGestureDetector.onTouchEvent(me)) {
@@ -1300,11 +1294,6 @@ public class CandidateView extends View implements View.OnClickListener {
         super.onDetachedFromWindow();
         hideComposing();
         hideCandidatePopup();
-    }
-
-    public void onUpdateCursor(Rect newCursor) {
-        cursorRect = newCursor;
-        invalidate();
     }
 
     @Override
