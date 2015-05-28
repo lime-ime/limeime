@@ -1,29 +1,28 @@
 package net.toload.main.hd.candidate;
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.support.annotation.NonNull;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.view.MotionEvent;
-import android.widget.PopupWindow;
-import android.widget.ScrollView;
+import java.util.List;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Mapping;
 
-import java.util.List;
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.widget.ScrollView;
 
 
 public class CandidateExpandedView extends CandidateView {
 	
-	private static final boolean DEBUG = false;
-	private static final String TAG = "CandidateExpandedView";
+	private final boolean DEBUG = false;
+	private final String TAG = "CandidateExpandedView";
 	
     private static final int MAX_SUGGESTIONS = 200;
-
+	
+	private CandidateView mCandidateView;
 	private List<Mapping> mSuggestions;
 	//private int mVerticalPadding;
 	private int mTouchX = OUT_OF_BOUNDS;
@@ -55,9 +54,7 @@ public class CandidateExpandedView extends CandidateView {
 		mParentScroolView = v;
 	}
 	                                         
-	public void setCandidatePopupWIndow(PopupWindow candidatePopup){
-		mCandidatePopupWindow = candidatePopup;
-	}
+	
 
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -74,7 +71,7 @@ public class CandidateExpandedView extends CandidateView {
 		if(mSuggestions == null) return;
 		if(DEBUG)
     		Log.i(TAG, "OnDraw() mSuggestions.size:" + mSuggestions.size());
-
+    	
 
     	//mTotalWidth = 0;
     	if (mBgPadding == null) {
@@ -99,7 +96,7 @@ public class CandidateExpandedView extends CandidateView {
         // Update mSelectedIndex from touch x and y;
         if(mTouchX!=OUT_OF_BOUNDS && mTouchY!=OUT_OF_BOUNDS ){
         	//Jeremy '11,8,23 mTouchY is already relative to view origin, no need to add mScrollY
-        	mSelRow = mTouchY// + mScrollY)
+        	mSelRow =(int) (mTouchY )// + mScrollY)
         				/ (height + mVerticalPadding);
         	
         	for(int i=0; i<mRowSize[mSelRow]; i++){
@@ -138,7 +135,7 @@ public class CandidateExpandedView extends CandidateView {
         	// Draw highlight on SelectedIndex
         	// 29/Aug/2011, Art just ignore if there is an error. 
         	try{
-	            if (mSelectedIndex >= 0) {
+	            if (canvas != null && mSelectedIndex >=0) {
 	                canvas.translate(mWordX[mSelRow][mSelCol], mSelRow * (height+ mVerticalPadding));
 	                mSelectionHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelRow][mSelCol], height);
 	                mSelectionHighlight.draw(canvas);
@@ -194,8 +191,7 @@ public class CandidateExpandedView extends CandidateView {
 	
 	
 	public void setParentCandidateView(CandidateView v){
-		mCandidateView =v;
-		mHandler = new UIHandler(v);
+		mCandidateView =v;	
 	}
 	
 	public void prepareLayout()
@@ -266,7 +262,7 @@ public class CandidateExpandedView extends CandidateView {
 	    	Log.i(TAG, "prepareLayout(): mRows=" + mRows + ", mTotalHeight=" + mTotalHeight);
 	}
 	
-
+	@Override
 	public void setSuggestions(List<Mapping> suggestions) {
 		if(DEBUG) Log.i(TAG, "setSuggestions(), suggestions.size()=" + suggestions.size());
 		if(mCandidateView!=null && mCandidateView.mSuggestions!=null){
@@ -289,9 +285,11 @@ public class CandidateExpandedView extends CandidateView {
 		invalidate();
 		
 	}
+	
+	boolean mDownTouch = false;
 
 	@Override
-	public boolean onTouchEvent(@NonNull MotionEvent me) {
+	public boolean onTouchEvent( MotionEvent me) {
 		if(DEBUG) 
 			Log.i(TAG, "onTouchEvent(): x =" + me.getX() + ", y=" + me.getY() 
 					+ ", ScroolY=" +mParentScroolView.getScrollY() );
@@ -304,6 +302,7 @@ public class CandidateExpandedView extends CandidateView {
 		switch (action) {
 		case MotionEvent.ACTION_DOWN:
 			if(DEBUG) Log.i(TAG, "onTouchEvent(), Action_DONW");
+			mDownTouch = true;
 			invalidate();
 			break;
 		case MotionEvent.ACTION_MOVE:
@@ -312,6 +311,10 @@ public class CandidateExpandedView extends CandidateView {
 			break;
 		case MotionEvent.ACTION_UP:
 			if(DEBUG) Log.i(TAG, "onTouchEvent(), Action_UP");
+			if (mDownTouch) {
+				mDownTouch = false;
+				performClick();
+			}
 			//invalidate();
 			mCandidateView.takeSelectedSuggestion(true);//takeSuggstionAtIndex(mSelectedIndex);
             
@@ -319,6 +322,15 @@ public class CandidateExpandedView extends CandidateView {
 		}
 		return true;
 	}
+	
+	@Override
+	public boolean performClick() {
+		// Calls the super implementation, which generates an AccessibilityEvent
+		// and calls the onClick() listener on the view, if any
+		super.performClick();
+		return true;
+	}
+
 
 	private void scrollToRow(int row){
 		int selY = row*(mHeight + mVerticalPadding);
