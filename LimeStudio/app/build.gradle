@@ -9,8 +9,8 @@ android {
         applicationId "net.toload.main.hd"
         minSdkVersion 16
         targetSdkVersion 22
-        versionCode 400
-        versionName '4.0.1'
+        versionCode 501
+        versionName '5.0.1'
     }
     buildTypes {
         release {

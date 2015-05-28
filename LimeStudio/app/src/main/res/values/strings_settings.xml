@@ -702,30 +702,4 @@
         <item>60</item>
     </string-array>
 
-
-	<string name="release_note">
-	    \n** 若文字無法正確輸入，建議您重置資料庫並重新下載或匯入字根檔案, 如果選字與送出的字不同，請關閉喜好設定的中文簡/繁體字碼轉換.\n
-	    \n版本更新說明
-
-		\nLIME-HD 自 3.8.2 版開始，注音/倉頡/速成/行列/拼音 支援 Unicode CJK 3.0 Ext-A 字集，
-		\n輸入時如果看到方塊字或空白，問題出在使用的設備系統字型缺字，並非 LIME-HD 異常。
-
-		\n\n更新後，請務必重匯字根檔或下載預載資料庫 [請勿使用舊版備份還原]
-
-		\n1. 修正Android 4.x版本語音輸入問題
-		\n2. 改善關聯字檢索速度
-		\n3. 新增DropBox備份
-		\n4. 訊息列文字顯示方式調整
-		\n5. 新增ADMOB廣告模組\n\n
-
-		LIME中文輸入法Facebook粉絲專頁\n
-		http://facebook.com/limeime/\n\n
-		LIME 使用與操作說明\n
-		http://netkidz.net/blog/\nhttp://goo.gl/vtW1F\n\n
-
-		由於 Android 裝置種類繁多，礙於專案團隊設備上的限制無法做全面的測試並兼顧到各種不同鍵盤配置，若 LIME 無法支援您的硬體設備還請見諒。
-		若您對本專案感興趣，歡迎加入開發或測試，亦歡迎廠商贊助團隊設備回饋 Android 使用者社群。\n
-
-	</string>
-
 </resources>
