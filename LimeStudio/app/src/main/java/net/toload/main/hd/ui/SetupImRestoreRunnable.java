@@ -41,12 +41,9 @@ public class SetupImRestoreRunnable implements Runnable {
 
     // Global
     private String mType = null;
-    private DBServer dbsrv = null;
     private SetupImFragment mFragment = null;
     private LIMEPreferenceManager mLIMEPref;
 
-    // Google
-    private static Drive service;
     private SetupImHandler mHandler;
     private GoogleAccountCredential credential;
 
@@ -61,7 +58,6 @@ public class SetupImRestoreRunnable implements Runnable {
         this.mType = type;
         this.mdbapi = mdbapi;
         this.mFragment = fragment;
-        this.dbsrv = new DBServer(this.mFragment.getActivity());
         this.mLIMEPref = new LIMEPreferenceManager(this.mFragment.getActivity());
     }
 
@@ -73,26 +69,31 @@ public class SetupImRestoreRunnable implements Runnable {
 
     public void run() {
 
-        mHandler.showProgress(true, "");
-        mHandler.updateProgress(this.mFragment.getResources().getString(R.string.setup_im_restore_message));
+        mHandler.showProgress(false, this.mFragment.getResources().getString(R.string.setup_im_restore_message));
+        mHandler.setProgressIndeterminate(true);
 
-        if (mType.equals(Lime.LOCAL)) {
-            try {
-                dbsrv.restoreDatabase();
-                mHandler.cancelProgress();
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-        } else if (mType.equals(Lime.GOOGLE)) {
-            restoreFromGoogle();
-        } else if (mType.equals(Lime.DROPBOX)) {
-            File limedir = new File(LIME.LIME_SDCARD_FOLDER + File.separator);
-            if(!limedir.exists()) limedir.mkdirs();
-            File tempFile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_CLOUD_TEMP);
-            tempFile.deleteOnExit();
 
-            restoreFromDropbox download = new restoreFromDropbox(mHandler, mFragment,mdbapi, LIME.DATABASE_BACKUP_NAME, tempFile);
-            download.execute();
+        switch (mType) {
+            case Lime.LOCAL:
+                try {
+                    DBServer.restoreDatabase();
+                    mHandler.cancelProgress();
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case Lime.GOOGLE:
+                restoreFromGoogle();
+                break;
+            case Lime.DROPBOX:
+                File limedir = new File(LIME.LIME_SDCARD_FOLDER + File.separator);
+                if (!limedir.exists()) limedir.mkdirs();
+                File tempFile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_CLOUD_TEMP);
+                tempFile.deleteOnExit();
+
+                restoreFromDropbox download = new restoreFromDropbox(mHandler, mFragment, mdbapi, LIME.DATABASE_BACKUP_NAME, tempFile);
+                download.execute();
+                break;
         }
 
         // Revoke the flag to force application check the payment status
@@ -101,9 +102,9 @@ public class SetupImRestoreRunnable implements Runnable {
 
     private void restoreFromGoogle() {
 
-        service = getDriveService(credential);
+        Drive service = getDriveService(credential);
 
-        List<com.google.api.services.drive.model.File> result = new ArrayList<com.google.api.services.drive.model.File>();
+        List<com.google.api.services.drive.model.File> result = new ArrayList<>();
         try {
             int count = 0;
             boolean continueload = false;
@@ -150,8 +151,10 @@ public class SetupImRestoreRunnable implements Runnable {
 
                 int bytesRead;
                 byte[] buffer = new byte[8 * 1024];
-                while ((bytesRead = fi.read(buffer)) != -1) {
-                    fo.write(buffer, 0, bytesRead);
+                if (fi != null) {
+                    while ((bytesRead = fi.read(buffer)) != -1) {
+                        fo.write(buffer, 0, bytesRead);
+                    }
                 }
 
                 fo.close();
@@ -162,9 +165,9 @@ public class SetupImRestoreRunnable implements Runnable {
                 //DBServer.decompressFile(tempfile, Lime.DATABASE_DEVICE_FOLDER, Lime.DATABASE_NAME, true);
                 DBServer.restoreDatabase(tempfile.getAbsolutePath());
 
-                dbsrv.showNotificationMessage(mFragment.getResources().getString(R.string.l3_initial_cloud_restore_end));
+                DBServer.showNotificationMessage(mFragment.getResources().getString(R.string.l3_initial_cloud_restore_end));
             } else {
-                dbsrv.showNotificationMessage(mFragment.getResources().getString(R.string.l3_initial_cloud_restore_error));
+                DBServer.showNotificationMessage(mFragment.getResources().getString(R.string.l3_initial_cloud_restore_error));
             }
 
             mLIMEPref.setParameter(Lime.DATABASE_DOWNLOAD_STATUS, "true");
@@ -208,9 +211,6 @@ public class SetupImRestoreRunnable implements Runnable {
         private File mFile;
 
         private FileOutputStream mFos;
-
-
-        private boolean mCanceled;
         private String mErrorMsg;
 
 
@@ -223,6 +223,7 @@ public class SetupImRestoreRunnable implements Runnable {
             mPath = backupFile;
             mFile = tempfile;
 
+            mHandler.setProgressIndeterminate(false);
             mHandler.updateProgress(mFragment.getText(R.string.l3_initial_dropbox_restore_start).toString());
         }
 
@@ -262,44 +263,33 @@ public class SetupImRestoreRunnable implements Runnable {
             } catch (DropboxUnlinkedException e) {
                 // The AuthSession wasn't properly authenticated or user unlinked.
                 mErrorMsg = mFragment.getText(R.string.l3_initial_dropbox_authetication_failed).toString();
-            } catch (DropboxPartialFileException e) {
-                // We canceled the operation
-                mErrorMsg = mFragment.getText(R.string.l3_initial_dropbox_failed).toString();
             } catch (DropboxServerException e) {
                 // Server-side exception.  These are examples of what could happen,
                 // but we don't do anything special with them here.
-                if (e.error == DropboxServerException._304_NOT_MODIFIED) {
+                //if (e.error == DropboxServerException._304_NOT_MODIFIED) {
                     // won't happen since we don't pass in revision with metadata
-                } else if (e.error == DropboxServerException._401_UNAUTHORIZED) {
+                //} else if (e.error == DropboxServerException._401_UNAUTHORIZED) {
                     // Unauthorized, so we should unlink them.  You may want to
                     // automatically log the user out in this case.
-                } else if (e.error == DropboxServerException._403_FORBIDDEN) {
+                //} else if (e.error == DropboxServerException._403_FORBIDDEN) {
                     // Not allowed to access this
-                } else if (e.error == DropboxServerException._404_NOT_FOUND) {
+                //} else if (e.error == DropboxServerException._404_NOT_FOUND) {
                     // path not found (or if it was the thumbnail, can't be
                     // thumbnailed)
-                } else if (e.error == DropboxServerException._406_NOT_ACCEPTABLE) {
+                //} else if (e.error == DropboxServerException._406_NOT_ACCEPTABLE) {
                     // too many entries to return
-                } else if (e.error == DropboxServerException._415_UNSUPPORTED_MEDIA) {
+                //} else if (e.error == DropboxServerException._415_UNSUPPORTED_MEDIA) {
                     // can't be thumbnailed
-                } else if (e.error == DropboxServerException._507_INSUFFICIENT_STORAGE) {
+                //} else if (e.error == DropboxServerException._507_INSUFFICIENT_STORAGE) {
                     // user is over quota
-                } else {
+                //} else {
                     // Something else
-                }
+                //}
                 // This gets the Dropbox error, translated into the user's language
                 mErrorMsg = e.body.userError;
                 if (mErrorMsg == null) {
                     mErrorMsg = e.body.error;
                 }
-            } catch (DropboxIOException e) {
-                // Happens all the time, probably want to retry automatically.
-                //mErrorMsg = "Network error.  Try again.";
-                mErrorMsg = mFragment.getText(R.string.l3_initial_dropbox_failed).toString();
-            } catch (DropboxParseException e) {
-                // Probably due to Dropbox server restarting, should retry
-                //mErrorMsg = "Dropbox error.  Try again.";
-                mErrorMsg = mFragment.getText(R.string.l3_initial_dropbox_failed).toString();
             } catch (DropboxException e) {
                 // Unknown error
                 //mErrorMsg = "Unknown error.  Try again.";
@@ -331,7 +321,8 @@ public class SetupImRestoreRunnable implements Runnable {
         @Override
         protected void onProgressUpdate(Long... progress) {
             int percent = (int) (100.0 * (double) progress[0] / progress[1] + 0.5);
-            mHandler.updateProgress(mFragment.getText(R.string.l3_initial_dropbox_downloading).toString() + "  " + percent + "%");
+            mHandler.updateProgress(mFragment.getText(R.string.l3_initial_dropbox_downloading).toString() );
+            mHandler.updateProgress(percent);
         }
 
         @Override

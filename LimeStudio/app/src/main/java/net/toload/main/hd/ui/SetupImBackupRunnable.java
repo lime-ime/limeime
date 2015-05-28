@@ -6,11 +6,8 @@ import android.widget.Toast;
 
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.ProgressListener;
-import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.exception.DropboxException;
 import com.dropbox.client2.exception.DropboxFileSizeException;
-import com.dropbox.client2.exception.DropboxIOException;
-import com.dropbox.client2.exception.DropboxParseException;
 import com.dropbox.client2.exception.DropboxPartialFileException;
 import com.dropbox.client2.exception.DropboxServerException;
 import com.dropbox.client2.exception.DropboxUnlinkedException;
@@ -21,9 +18,9 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
 
+import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
-import net.toload.main.hd.DBServer;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,23 +28,17 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Art Hung on 2015/4/26.
- */
 public class SetupImBackupRunnable implements Runnable {
 
     // Global
     private String mType = null;
-    private DBServer dbsrv = null;
     private SetupImFragment mFragment = null;
 
-    // Google
-    private static Drive service;
     private SetupImHandler mHandler;
     private GoogleAccountCredential mCredential;
 
     // Dropbox
-    private DropboxAPI<AndroidAuthSession> mdbapi;
+    private DropboxAPI mdbapi;
     private DropboxAPI.UploadRequest mRequest;
 
     public SetupImBackupRunnable(SetupImFragment fragment, SetupImHandler handler, String type, GoogleAccountCredential credential, DropboxAPI mdbapi) {
@@ -56,7 +47,6 @@ public class SetupImBackupRunnable implements Runnable {
         this.mType = type;
         this.mdbapi = mdbapi;
         this.mFragment = fragment;
-        this.dbsrv = new DBServer(this.mFragment.getActivity());
     }
 
     @Override
@@ -67,29 +57,35 @@ public class SetupImBackupRunnable implements Runnable {
     @Override
     public void run() {
 
-        mHandler.showProgress(true, "");
-        mHandler.updateProgress(this.mFragment.getResources().getString(R.string.setup_im_backup_message));
+        mHandler.showProgress(false, this.mFragment.getResources().getString(R.string.setup_im_backup_message));
+        mHandler.setProgressIndeterminate(true);
 
         // Preparing the file to be backup
         if (mType.equals(Lime.LOCAL) || mType.equals(Lime.GOOGLE) || mType.equals(Lime.DROPBOX)) {
             try {
-                dbsrv.backupDatabase();
+                DBServer.backupDatabase();
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
         }
 
-        if (mType.equals(Lime.GOOGLE)) {
-            File sourcefile = new File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DATABASE_BACKUP_NAME);
-            backupToGoogle(sourcefile);
-        } else if (mType.equals(Lime.DROPBOX)) {
-            File sourcefile = new File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DATABASE_BACKUP_NAME);
-            //backupToDropbox(sourcefile);
-            backupToDropbox upload = new backupToDropbox(mHandler, mFragment, mdbapi, "", sourcefile);
-            upload.execute();
-        } else {
-            dbsrv.showNotificationMessage(mFragment.getResources().getString(R.string.l3_initial_backup_end));
-            mHandler.cancelProgress();
+        switch (mType) {
+            case Lime.GOOGLE: {
+                File sourcefile = new File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DATABASE_BACKUP_NAME);
+                backupToGoogle(sourcefile);
+                break;
+            }
+            case Lime.DROPBOX: {
+                File sourcefile = new File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DATABASE_BACKUP_NAME);
+                mHandler.setProgressIndeterminate(false);
+                backupToDropbox upload = new backupToDropbox(mHandler, mFragment, mdbapi, "", sourcefile);
+                upload.execute();
+                break;
+            }
+            default:
+                DBServer.showNotificationMessage(mFragment.getResources().getString(R.string.l3_initial_backup_end));
+                mHandler.cancelProgress();
+                break;
         }
     }
 
@@ -104,7 +100,7 @@ public class SetupImBackupRunnable implements Runnable {
         body.setMimeType("application/zip");
         body.setDescription("This is the backup file uploaded by LIMEIME");
 
-        service = getDriveService(mCredential);
+        Drive service = getDriveService(mCredential);
 
         List<com.google.api.services.drive.model.File> result = new ArrayList<>();
         try {
@@ -166,7 +162,7 @@ public class SetupImBackupRunnable implements Runnable {
 
         private String mErrorMsg;
 
-        public final static int intentLIMEMenu = 0;
+
 
         public backupToDropbox(SetupImHandler handler, SetupImFragment fragment, DropboxAPI<?> api, String dropboxPath, File file) {
 
@@ -221,37 +217,28 @@ public class SetupImBackupRunnable implements Runnable {
             } catch (DropboxServerException e) {
                 // Server-side exception.  These are examples of what could happen,
                 // but we don't do anything special with them here.
-                if (e.error == DropboxServerException._401_UNAUTHORIZED) {
+                //if (e.error == DropboxServerException._401_UNAUTHORIZED) {
                     // Unauthorized, so we should unlink them.  You may want to
                     // automatically log the user out in this case.
-                } else if (e.error == DropboxServerException._403_FORBIDDEN) {
+                //} else if (e.error == DropboxServerException._403_FORBIDDEN) {
                     // Not allowed to access this
-                } else if (e.error == DropboxServerException._404_NOT_FOUND) {
+                //} else if (e.error == DropboxServerException._404_NOT_FOUND) {
                     // path not found (or if it was the thumbnail, can't be
                     // thumbnailed)
-                } else if (e.error == DropboxServerException._507_INSUFFICIENT_STORAGE) {
+                //} else if (e.error == DropboxServerException._507_INSUFFICIENT_STORAGE) {
                     // user is over quota
-                } else {
+                //} else {
                     // Something else
-                }
+                //}
                 // This gets the Dropbox error, translated into the user's language
                 mErrorMsg = e.body.userError;
                 if (mErrorMsg == null) {
                     mErrorMsg = e.body.error;
                 }
-            } catch (DropboxIOException e) {
-                // Happens all the time, probably want to retry automatically.
-                //mErrorMsg = "Network error.  Try again.";
-                mErrorMsg = mFragment.getText(R.string.l3_initial_dropbox_failed).toString();
-            } catch (DropboxParseException e) {
-                // Probably due to Dropbox server restarting, should retry
-                //mErrorMsg = "Dropbox error.  Try again.";
-                mErrorMsg  = mFragment.getText(R.string.l3_initial_dropbox_failed).toString();
-            } catch (DropboxException e) {
+            } catch (DropboxException | FileNotFoundException e) {
                 // Unknown error
                 //mErrorMsg = "Unknown error.  Try again.";
                 mErrorMsg = mFragment.getText(R.string.l3_initial_dropbox_failed).toString();
-            } catch (FileNotFoundException e) {
             }
             return false;
         }
@@ -259,7 +246,8 @@ public class SetupImBackupRunnable implements Runnable {
         @Override
         protected void onProgressUpdate(Long... progress) {
             int percent = (int) (100.0 * (double) progress[0] / mFileLen + 0.5);
-            mHandler.updateProgress( mFragment.getText(R.string.l3_initial_dropbox_uploading).toString()  +"  "+  percent + "%");
+            mHandler.updateProgress( mFragment.getText(R.string.l3_initial_dropbox_uploading).toString() );
+            mHandler.updateProgress(percent);
 
         }
         @Override

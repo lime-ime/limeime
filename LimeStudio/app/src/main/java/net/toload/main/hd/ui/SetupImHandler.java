@@ -35,6 +35,9 @@ public class SetupImHandler extends Handler {
                 }else if(type.equalsIgnoreCase("message")){
                     String message = msg.getData().getString("message");
                     fragment.updateProgress(message);
+                }else if(type.equalsIgnoreCase("indeterminate")){
+                    Boolean flag = msg.getData().getBoolean("flag");
+                    fragment.setProgressIndeterminate(flag);
                 }
             }
         }else if(action != null && action.equalsIgnoreCase("toast")){
@@ -64,13 +67,9 @@ public class SetupImHandler extends Handler {
         this.sendMessageDelayed(m, 1);
     }
 
-    /*public void showProgress(boolean spinnerStyle) {
-        showProgress(spinnerStyle, "");
-    }*/
+
+
     public void showProgress(boolean spinnerStyle, String message) {
-        //updateProgress(message);
-        //Log.i("LIME", "initial spinnerStyle: " + spinnerStyle);
-        //Log.i("LIME", "initial message: " + message);
 
         Message m = new Message();
         m.getData().putString("action", "progress");
@@ -82,6 +81,14 @@ public class SetupImHandler extends Handler {
             m.getData().putString("type", "showSpinner");
         else
             m.getData().putString("type", "showHorizontal");
+        this.sendMessageDelayed(m, 1);
+    }
+
+    public void setProgressIndeterminate(boolean flag){
+        Message m = new Message();
+        m.getData().putString("action", "progress");
+        m.getData().putString("type", "indeterminate");
+        m.getData().putBoolean("flag", flag);
         this.sendMessageDelayed(m, 1);
     }
 
