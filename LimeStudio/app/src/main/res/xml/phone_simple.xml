@@ -42,7 +42,7 @@
         <Key limehd:codes="52" limehd:keyLabel="4"/>
         <Key limehd:codes="53" limehd:keyLabel="5"/>
         <Key limehd:codes="54" limehd:keyLabel="6"/>
-        <Key limehd:codes="61,43,45,42,47" limehd:iconPreview="@drawable/phone_cal_l" limehd:keyIcon="@drawable/phone_cal" limehd:keyEdgeFlags="right"/>
+        <Key limehd:codes="61,43,45,42,47" limehd:keyLabel="+-*/\n=" limehd:keyEdgeFlags="right"/>
     </Row>
     
     <Row>
@@ -51,7 +51,7 @@
         <Key limehd:codes="55" limehd:keyLabel="7"/>
         <Key limehd:codes="56" limehd:keyLabel="8"/>
         <Key limehd:codes="57" limehd:keyLabel="9"/>
-        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_flat_keyboard_space" limehd:iconPreview="@drawable/sym_keyboard_feedback_space" limehd:isRepeatable="true" limehd:keyEdgeFlags="right"/>
+        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space" limehd:iconPreview="@drawable/sym_keyboard_feedback_space" limehd:isRepeatable="true" limehd:keyEdgeFlags="right"/>
     </Row>
     
     <Row limehd:rowEdgeFlags="bottom">

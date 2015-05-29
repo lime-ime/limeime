@@ -927,7 +927,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
                 final int labelHeight;
                 final int labelWidth;
-                String KEY_LABEL_HEIGHT_REFERENCE_CHAR = "H";
+                String KEY_LABEL_HEIGHT_REFERENCE_CHAR = "W";
                 if (mTextHeightCache.get(labelSize) != null) {
                     labelHeight = mTextHeightCache.get(labelSize);
                     labelWidth = mTextWidthCache.get(labelSize);
@@ -972,8 +972,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                         mTextWidthCache.put(subLabelSize, subLabelWidth);
                     }
 
-
-                    if (key.height > key.width) {  //portrait keyboard
+                    //portrait keyboard
+                    if (key.height > key.width || subLabel.length() >2) {
                         baseline = (key.height + padding.top - padding.bottom) * 2 / 3
                                 + labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
                         float subBaseline = (key.height + padding.top - padding.bottom) / 4
@@ -995,8 +995,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
                     } else {    //landscape keyboard
                         paint.setColor(subKeyColor);
-                        if (subLabel.length() > 2)
-                            paint.setTextSize(subLabelSize * 2 / 3);  //123 EN  in landscape is usually to wide.
+                        //if (subLabel.length() > 2)  // draw sub keys as portrait keys in two rows.
+                        //    paint.setTextSize(subLabelSize * 2 / 3);  //123 EN  in landscape is usually to wide.
                         if (hasSecondSubLabel) {
                             canvas.drawText(subLabel, centerX - subLabelWidth * 2, baseline, paint);
                             paint.setColor(keyColor);
@@ -1007,7 +1007,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                         paint.setTextSize(labelSize);
                         paint.setTypeface(mKeyTextStyle);
                         paint.setColor(keyColor);
-                        canvas.drawText(label, centerX + labelWidth, baseline, paint);
+                        canvas.drawText(label, centerX + labelWidth/2, baseline, paint);
 
                     }
 
