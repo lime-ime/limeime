@@ -2361,8 +2361,7 @@ public class LIMEService extends InputMethodService implements
             hasCandidatesShown = true; //Jeremy '12,5,6 to replace deprecated isCandidateShown()
             if (!mFixedCandidateViewOn || (hasPhysicalKeyPressed)) //Jeremy '12,5,4
                 showCandidateView();
-            else
-                hideCandidateView();
+
 
             if ((!mFixedCandidateViewOn || (mFixedCandidateViewOn && hasPhysicalKeyPressed))
                     && mCandidateView != mCandidateViewStandAlone) {
@@ -2420,7 +2419,7 @@ public class LIMEService extends InputMethodService implements
             clearComposing(true);
             //Jeremy '12,4,29 use mEnglishOnly instead of onIM
         } else if (!mEnglishOnly  // composing length == 0 after here
-                && hasCandidatesShown // repalce isCandaiteShwon() with hasCandidatesShwn by Jeremy '12,5,6  
+                && (hasCandidatesShown )// repalce isCandaiteShwon() with hasCandidatesShwn by Jeremy '12,5,6
                 //&& mLIMEPref.getAutoChineseSymbol()
                 && !hasChineseSymbolCandidatesShown) {
             clearComposing(false);  //Jeremy '12,4,21 composing length 0, no need to force commit again. 
@@ -2981,7 +2980,6 @@ public class LIMEService extends InputMethodService implements
         if (isRelated)
             this.updateRelatedWord(true);
         else
-            //updateCandidates to get full records.
             this.updateCandidates(true);
 
     }
