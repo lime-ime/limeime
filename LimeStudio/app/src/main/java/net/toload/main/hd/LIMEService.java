@@ -328,7 +328,7 @@ public class LIMEService extends InputMethodService implements
         mCandidateViewContainer.initViews();
         mCandidateViewStandAlone = (CandidateView) mCandidateViewContainer.findViewById(R.id.candidates);
         mCandidateViewStandAlone.setService(this);
-        mCandidateViewStandAlone.setContainerView(mCandidateViewContainer);
+
 
         if (!mFixedCandidateViewOn)
             mCandidateView = mCandidateViewStandAlone;
@@ -2357,15 +2357,17 @@ public class LIMEService extends InputMethodService implements
             );
 
             hasCandidatesShown = true; //Jeremy '12,5,6 to replace deprecated isCandidateShown()
-            if (!mFixedCandidateViewOn || (hasPhysicalKeyPressed)) //Jeremy '12,5,4
+            if (!mFixedCandidateViewOn || (hasPhysicalKeyPressed))
                 showCandidateView();
-
 
             if ((!mFixedCandidateViewOn || (mFixedCandidateViewOn && hasPhysicalKeyPressed))
                     && mCandidateView != mCandidateViewStandAlone) {
+                mCandidateViewInInputView.clear();
                 mCandidateView = mCandidateViewStandAlone; //Jeremy '12,5,4 use standalone candidateView for physical keyboard (no soft keyboard shown)
             } else if (mFixedCandidateViewOn && !hasPhysicalKeyPressed &&
                     mCandidateView !=mCandidateViewInInputView){
+                mCandidateViewStandAlone.clear();
+                hideCandidateView();
                 mCandidateView = mCandidateViewInInputView;
             }
 
@@ -2563,8 +2565,7 @@ public class LIMEService extends InputMethodService implements
 
         if (mFixedCandidateViewOn) { //Have candidateview in InputView
             //Create inputView if it's null 
-            if (mCandidateInInputView == null || forceRecreate //|| mLIMEPref.getFixedCandidateViewDisplay()!=mFixedCandidateViewOn
-                    ) {
+            if (mCandidateInInputView == null || forceRecreate ) {
                 mCandidateInInputView = (CandidateInInputViewContainer) getLayoutInflater().inflate(
                         R.layout.inputcandidate, null);
                 mInputView = (LIMEKeyboardView) mCandidateInInputView.findViewById(R.id.keyboard);
@@ -2573,10 +2574,9 @@ public class LIMEService extends InputMethodService implements
                 mCandidateInInputView.initViews();
                 mCandidateViewInInputView = (CandidateView) mCandidateInInputView.findViewById(R.id.candidatesView);
                 mCandidateViewInInputView.setService(this);
-                mCandidateViewInInputView.setContainerView(mCandidateInInputView);
-
             }
-            mCandidateView = mCandidateViewInInputView;
+            if(mCandidateView !=mCandidateViewInInputView)
+                mCandidateView = mCandidateViewInInputView;
 
         } else {
             if (mInputView == null || forceRecreate //|| mLIMEPref.getFixedCandidateViewDisplay()!=mFixedCandidateViewOn
