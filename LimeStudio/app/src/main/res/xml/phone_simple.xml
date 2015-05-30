@@ -46,8 +46,8 @@
     </Row>
     
     <Row>
-        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift"
-                limehd:isSticky="true" limehd:keyEdgeFlags="left"/>
+        <Key  limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
+            limehd:isRepeatable="true" limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="55" limehd:keyLabel="7"/>
         <Key limehd:codes="56" limehd:keyLabel="8"/>
         <Key limehd:codes="57" limehd:keyLabel="9"/>
