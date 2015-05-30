@@ -140,9 +140,12 @@ public class LIMEService extends InputMethodService implements
 
     // Hard Keyboad Shift + Space Status
     private boolean hasShiftPress = false;
-    //private boolean hasShiftProcessed = false; // Jeremy '11,6.18
+    private boolean onlyShiftPress = false;  //Jeremy '15,5,30 shift only to switch between chi/eng
+
     private boolean hasCtrlPress = false; // Jeremy '11,5,13
-    private boolean hasWinPress = false; // Jeremy '12,4,29 windows start key on stadard windows keyboard
+    private boolean lastKeyCtrl = false;  // Jeremy '15,5,30 for process physical keyboard ctrl-space with missing space down event
+    private boolean spaceKeyPress = false; // Jeremy '15,5,30 for process physical keyboard ctrl-space with missing space down event
+    private boolean hasWinPress = false; // Jeremy '12,4,29 windows start key on standard windows keyboard
     //private boolean hasCtrlProcessed = false; // Jeremy '11,6.18
     private boolean hasDistinctMultitouch;// Jeremy '11,8,3 
     private boolean hasShiftCombineKeyPressed = false; //Jeremy ,11,8, 3
@@ -855,8 +858,9 @@ public class LIMEService extends InputMethodService implements
         if (DEBUG)
             Log.i(TAG, "OnKeyDown():keyCode:" + keyCode
                     + ", hasMenuPress = " + hasMenuPress
-                    + ", hasdCtrlPress = " + hasCtrlPress
-                    + ", hasSHiftPress = " + hasShiftPress
+                    + ", hasCtrlPress = " + hasCtrlPress
+                    + ", hasShiftPress = " + hasShiftPress
+                    + ", onlyShiftPress = " + onlyShiftPress
                     + ", hasWinPress = " + hasWinPress
                     + ", event.getEventTime() -  event.getDownTime()" + (event.getEventTime() - event.getDownTime())
                     + ", event.getRepeatCount()" + event.getRepeatCount()
@@ -874,7 +878,12 @@ public class LIMEService extends InputMethodService implements
             hasEnterProcessed = false;
             hasSpaceProcessed = false;
             hasSymbolEntered = false;
+            //Jeremy '15,5,30 for physical keyboard
+            onlyShiftPress = false;
+            lastKeyCtrl = false;
+            spaceKeyPress= false;
         }
+
 
         switch (keyCode) {
             // Jeremy '11,5,29 Bypass search and menu combination keys.
@@ -923,6 +932,7 @@ public class LIMEService extends InputMethodService implements
             case KeyEvent.KEYCODE_SHIFT_LEFT:
             case KeyEvent.KEYCODE_SHIFT_RIGHT:
                 hasShiftPress = true;
+                onlyShiftPress = true;
                 mMetaState = LIMEMetaKeyKeyListener.handleKeyDown(mMetaState, keyCode, event);
                 break;
             case KeyEvent.KEYCODE_ALT_LEFT:
@@ -932,6 +942,7 @@ public class LIMEService extends InputMethodService implements
             case MY_KEYCODE_CTRL_LEFT:
             case MY_KEYCODE_CTRL_RIGHT:
                 hasCtrlPress = true;
+                lastKeyCtrl = true;
                 break;
             case MY_KEYCODE_WINDOWS_START:
                 hasWinPress = true;
@@ -1016,10 +1027,8 @@ public class LIMEService extends InputMethodService implements
 			return true;*/
 
             case KeyEvent.KEYCODE_SPACE:
-
-
+                spaceKeyPress = true;
                 hasQuickSwitch = mLIMEPref.getSwitchEnglishModeHotKey();
-
                 // If user enable Quick Switch Mode control then check if has
                 // 	Shift+Space combination
                 // '11,5,13 Jeremy added Ctrl-space switch chi/eng
@@ -1161,8 +1170,9 @@ public class LIMEService extends InputMethodService implements
     public boolean onKeyUp(int keyCode, @NonNull KeyEvent event) {
         if (DEBUG)
             Log.i(TAG, "OnKeyUp():keyCode:" + keyCode
-                            + ";hasCtrlPress:" + hasCtrlPress
-                            + ";hasWinPress:" + hasWinPress
+                            + ", hasCtrlPress:" + hasCtrlPress
+                            + ", hasWinPress:" + hasWinPress
+                            + ", hasShiftPress = " + hasShiftPress
                             + ", event.getEventTime() -  event.getDownTime()" + (event.getEventTime() - event.getDownTime())
 
             );
@@ -1202,6 +1212,9 @@ public class LIMEService extends InputMethodService implements
                     }
                     mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
                     setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
+                    return true;
+                }else if(onlyShiftPress){
+                    this.switchChiEng();
                     return true;
                 }
                 break;
@@ -1263,6 +1276,11 @@ public class LIMEService extends InputMethodService implements
 
             case KeyEvent.KEYCODE_SPACE:
                 //Jeremy move the chi/eng swithcing to on_KEY_UP '11,6,18
+
+                if(!spaceKeyPress && lastKeyCtrl){ //missing space down event when ctrl-space is pressed
+                    this.switchChiEng();
+                    return true;
+                }
 
                 if (hasSpaceProcessed)
                     return true;
