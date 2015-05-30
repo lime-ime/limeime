@@ -479,7 +479,7 @@ public class CandidateView extends View implements View.OnClickListener {
             popHeight = mPopupCandidateView.getMeasuredHeight() + mCloseButtonHeight;
 
         if (!hasRoomForExpanding()) {
-            popHeight = 3 * mHeight + mCloseButtonHeight;
+            popHeight = 3 * (configHeight + mVerticalPadding) + mCloseButtonHeight;
 
             if (DEBUG)
                 Log.i(TAG, "doUpdateCandidatePopup(), " +
