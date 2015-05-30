@@ -98,11 +98,9 @@ public class CandidateView extends View implements View.OnClickListener {
 
     private static final List<Mapping> EMPTY_LIST = new LinkedList<>();
 
-    //container view with close button
-    protected CandidateInInputViewContainer mCandidateInInputViewContainer = null;
-    protected CandidateViewContainer mCandidateViewContainer = null;
 
     protected int mHeight;
+    private int configHeight;
     private int currentX;
     protected final int mColorNormal;
     protected final int mColorInverted;
@@ -201,7 +199,8 @@ public class CandidateView extends View implements View.OnClickListener {
         mColorOther = r.getColor(R.color.candidate_other);
         mColorNumber = r.getColor(R.color.candidate_number);
         mVerticalPadding = (int) (r.getDimensionPixelSize(R.dimen.candidate_vertical_padding) * mLIMEPref.getFontSize());
-        mHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
+        configHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
+        mHeight = configHeight;
         mExpandButtonWidth = r.getDimensionPixelSize(R.dimen.candidate_expand_button_width);// *mLIMEPref.getFontSize());
 
         mPaint = new Paint();
@@ -272,28 +271,10 @@ public class CandidateView extends View implements View.OnClickListener {
 
     }
 
-    @Override
-    public void requestLayout()
-    {
-        if (DEBUG)
-            Log.i(TAG, "requestLayout(): mCandidateViewContainer = " + mCandidateViewContainer +
-                    "; mCandidateInInputViewContainer = " + mCandidateInInputViewContainer);
 
-       // if (mCandidateViewContainer != null) mCandidateViewContainer.requestLayout();
-        //if (mCandidateInInputViewContainer != null)  mCandidateInInputViewContainer.requestLayout();
-        super.requestLayout();
-    }
-    public void setContainerView(CandidateInInputViewContainer candidateInInputViewContainer) {
-        mCandidateInInputViewContainer = candidateInInputViewContainer;
-    }
+    private UIHandler mHandler = new UIHandler(this);
 
-    public void setContainerView(CandidateViewContainer candidateViewContainer) {
-        mCandidateViewContainer = candidateViewContainer;
-    }
-
-    protected UIHandler mHandler = new UIHandler(this);
-
-    protected class UIHandler extends Handler {
+    private class UIHandler extends Handler {
 
         private final WeakReference<CandidateView> mCandidateViewWeakReference;
 
@@ -346,6 +327,7 @@ public class CandidateView extends View implements View.OnClickListener {
         }
 
         public void updateUI(int delay) {
+
             sendMessageDelayed(obtainMessage(MSG_UPDATE_UI, 0, 0, null), delay);
 
         }
@@ -392,9 +374,9 @@ public class CandidateView extends View implements View.OnClickListener {
                 scrollTo(0, 0);
                 mTargetScrollX = 0;
             }
-            invalidate();  // caused onDraw and update mTotoalX
             resetWidth();  // update layout width of this view
-            requestLayout(); //request Layout from super
+            invalidate();  // caused onDraw and update mTotoalX
+
         }
         waitingForMoreRecords = false;
 
@@ -406,6 +388,7 @@ public class CandidateView extends View implements View.OnClickListener {
         mVerticalPadding = (int) (r.getDimensionPixelSize(R.dimen.candidate_vertical_padding) * scaling);
         mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_size) * scaling);
         nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_size) * scaling);
+        configHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) * scaling);
         if (DEBUG)
             Log.i(TAG, "updateFontSize(), scaling=" + scaling + ", mVerticalPadding=" + mVerticalPadding);
     }
@@ -416,10 +399,10 @@ public class CandidateView extends View implements View.OnClickListener {
 
         if (mCandidatePopupWindow != null && mCandidatePopupWindow.isShowing()) {
             mCandidatePopupWindow.dismiss();
-            resetWidth();
+            //resetWidth();
         }
         candidateExpanded = false;
-        invalidate();
+
         doUpdateUI();
     }
 
@@ -431,6 +414,7 @@ public class CandidateView extends View implements View.OnClickListener {
         if (DEBUG)
             Log.i(TAG, "resetWidth() candiWidth:" + candiWidth);
         this.setLayoutParams(new LinearLayout.LayoutParams(candiWidth, mHeight));
+        requestLayout();
     }
 
 
@@ -736,16 +720,26 @@ public class CandidateView extends View implements View.OnClickListener {
                 resolveSize(desiredHeight, heightMeasureSpec));
     }
 
+
     /**
      * If the canvas is null, then only touch calculations are performed to pick the target
      * candidate.
      */
     @Override
     protected synchronized void onDraw(Canvas canvas) {
+        doDraw(canvas);
+    }
+
+    private void prepareLayout(){
+        doDraw(null);
+    }
+
+    private void doDraw(Canvas canvas){
+
 
         if (mSuggestions == null) return;
         if (DEBUG)
-            Log.i(TAG, "Candidateview:OnDraw():Suggestion mCount:" + mCount + " mSuggestions.size:" + mSuggestions.size());
+            Log.i(TAG, "Candidateview:doDraw():Suggestion mCount:" + mCount + " mSuggestions.size:" + mSuggestions.size());
         mTotalWidth = 0;
 
         updateFontSize();
@@ -757,7 +751,7 @@ public class CandidateView extends View implements View.OnClickListener {
             }
         }
 
-        //final int mCount = mSuggestions.size(); 
+        //final int mCount = mSuggestions.size();
         final int height = mHeight;//= getHeight();
         final Rect bgPadding = mBgPadding;
         final Paint paint = mPaint;
@@ -788,13 +782,11 @@ public class CandidateView extends View implements View.OnClickListener {
             }
             x += wordWidth;
         }
-        if(mTotalWidth != x) {
-            mTotalWidth = x;
-            requestLayout();
-        }
+
+        mTotalWidth = x;
 
         if (DEBUG)
-            Log.i(TAG, "Candidateview:OnDraw():mTotalWidth :" + mTotalWidth + "  this.getWidth():" +  this.getWidth());
+            Log.i(TAG, "Candidateview:doDraw():mTotalWidth :" + mTotalWidth + "  this.getWidth():" +  this.getWidth());
 
         //Jeremy '11,8,11. If the candidate list is within 1 page and has more records, get full records first.
         if (mTotalWidth < this.getWidth())
@@ -848,7 +840,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
             if (mTargetScrollX != getScrollX()) {
                 if (DEBUG)
-                    Log.i(TAG, "Candidateview:OnDraw():mTargetScrollX :" + mTargetScrollX + "  getScrollX():" +  getScrollX());
+                    Log.i(TAG, "Candidateview:doDraw():mTargetScrollX :" + mTargetScrollX + "  getScrollX():" +  getScrollX());
                 scrollToTarget();
             }
 
@@ -913,8 +905,10 @@ public class CandidateView extends View implements View.OnClickListener {
         //Jeremy '11,8,14 moved from clear();
         if (DEBUG)
             Log.i(TAG, "setSuggestions()");
+
         Resources res = mContext.getResources();
-        mHeight = (int) (res.getDimensionPixelSize(R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize()); //move from constructor by Jeremy '12,5,6
+
+        mHeight = configHeight;
         currentX = 0;
         mTouchX = OUT_OF_BOUNDS;
         mCount = 0;
@@ -961,6 +955,9 @@ public class CandidateView extends View implements View.OnClickListener {
             hideCandidatePopup();
         }
 
+        prepareLayout();
+
+
         mHandler.updateUI(0);
 
 
@@ -977,16 +974,21 @@ public class CandidateView extends View implements View.OnClickListener {
         mTotalWidth = 0;
         hideComposing();
         hideCandidatePopup();
+
+        prepareLayout();
+        resetWidth();  // update layout width of this view
         mHandler.updateUI(0);
+
         mHeight = (int) (mContext.getResources().getDimensionPixelSize(
                 R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize()); //restore the height Jeremy '12,5,24
 
     }
 
-    //Jeremy '12,5,6 hide candidate bar when candidateview is fixed.
+    //Jeremy '12,5,6 hide candidate bar when candidateView is fixed.
     public void forceHide() {
         clear();
         mHeight = 0;
+        resetWidth();
     }
 
     @Override

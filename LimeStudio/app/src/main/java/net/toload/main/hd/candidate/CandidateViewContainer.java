@@ -13,8 +13,8 @@ import net.toload.main.hd.R;
 
 public class CandidateViewContainer extends LinearLayout implements OnTouchListener {
 
-    private View mButtonRight;
-    private View mButtonRightLayout;
+    private View mButtonExpand;
+    private View mButtonExpandLayout;
     private CandidateView mCandidates;
     
     
@@ -26,10 +26,10 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
 
     public void initViews() {
         if (mCandidates == null) {
-            mButtonRightLayout = findViewById(R.id.candidate_right_parent);
-            mButtonRight = findViewById(R.id.candidate_right);
-            if (mButtonRight != null) {
-                mButtonRight.setOnTouchListener(this);
+            mButtonExpandLayout = findViewById(R.id.candidate_right_parent);
+            mButtonExpand = findViewById(R.id.candidate_right);
+            if (mButtonExpand != null) {
+                mButtonExpand.setOnTouchListener(this);
             }
             mCandidates = (CandidateView) findViewById(R.id.candidates);
             
@@ -43,12 +43,11 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
             int neededWidth = mCandidates.computeHorizontalScrollRange();
          
             boolean rightVisible =  availableWidth < neededWidth;
-            if(mCandidates.isCandidateExpanded())// || !mCandidates.hasRoomForExpanding()) 
+            if(mCandidates.isCandidateExpanded())
             	rightVisible = false;
             
-            if (mButtonRightLayout != null) {
-                mButtonRightLayout.setVisibility(rightVisible ? VISIBLE : GONE);
-            	// mButtonRightLayout.setVisibility(GONE);
+            if (mButtonExpandLayout != null) {
+                mButtonExpandLayout.setVisibility(rightVisible ? VISIBLE : GONE);
             }
         }
         super.requestLayout();
@@ -56,8 +55,7 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
 
     public boolean onTouch(View v, MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            if (v == mButtonRight) {
-                //mCandidates.scrollNext();
+            if (v == mButtonExpand) {
             	
             	mCandidates.showCandidatePopup();
             	

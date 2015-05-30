@@ -276,7 +276,7 @@ public class CandidateExpandedView extends CandidateView {
 
         }
         prepareLayout();
-        requestLayout();
+        //requestLayout();
         invalidate();
 
     }

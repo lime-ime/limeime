@@ -16,8 +16,8 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
 
 	private static final boolean DEBUG = false;
 	private static final String TAG = "CandiInputViewContainer";
-    private View mButtonRight;
-    private View mButtonRightLayout;
+    private View mButtonExpand;
+    private View mButtonRightExpand;
     private CandidateView mCandidates;
 
     
@@ -31,10 +31,10 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
     	if(DEBUG)
     		Log.i(TAG,"initViews()");
         if (mCandidates == null) {
-            mButtonRightLayout = findViewById(R.id.candidate_right_parent);
-            mButtonRight = findViewById(R.id.candidate_right);
-            if (mButtonRight != null) {
-                mButtonRight.setOnTouchListener(this);
+            mButtonRightExpand = findViewById(R.id.candidate_right_parent);
+            mButtonExpand = findViewById(R.id.candidate_right);
+            if (mButtonExpand != null) {
+                mButtonExpand.setOnTouchListener(this);
             }
             mCandidates = (CandidateView) findViewById(R.id.candidatesView);
             
@@ -58,17 +58,16 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
             if(mCandidates.isCandidateExpanded())
             	rightVisible = false;
             
-            if (mButtonRightLayout != null) {
-                mButtonRightLayout.setVisibility(rightVisible ? VISIBLE : GONE);
+            if (mButtonRightExpand != null) {
+                mButtonRightExpand.setVisibility(rightVisible ? VISIBLE : GONE);
             }
-            invalidate();
         }
         super.requestLayout();
     }
 
     public boolean onTouch(View v, MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            if (v == mButtonRight) {
+            if (v == mButtonExpand) {
               	mCandidates.showCandidatePopup();
             	
             }
