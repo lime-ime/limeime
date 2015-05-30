@@ -20,6 +20,12 @@
 
 package net.toload.main.hd;
 
+import android.app.AlertDialog;
+import android.app.Service;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.res.Configuration;
 import android.inputmethodservice.InputMethodService;
 import android.media.AudioManager;
 import android.os.Handler;
@@ -38,35 +44,26 @@ import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
-
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-
+import net.toload.main.hd.candidate.CandidateInInputViewContainer;
+import net.toload.main.hd.candidate.CandidateView;
+import net.toload.main.hd.candidate.CandidateViewContainer;
+import net.toload.main.hd.data.ChineseSymbol;
+import net.toload.main.hd.data.Mapping;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard;
 import net.toload.main.hd.keyboard.LIMEKeyboard;
 import net.toload.main.hd.keyboard.LIMEKeyboardBaseView;
 import net.toload.main.hd.keyboard.LIMEKeyboardView;
 import net.toload.main.hd.keyboard.LIMEMetaKeyKeyListener;
-import net.toload.main.hd.candidate.CandidateInInputViewContainer;
-import net.toload.main.hd.candidate.CandidateView;
-import net.toload.main.hd.candidate.CandidateViewContainer;
-import net.toload.main.hd.data.ChineseSymbol;
-import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 
-import android.app.AlertDialog;
-
-import android.app.Service;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.res.Configuration;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
 
 
 public class LIMEService extends InputMethodService implements
@@ -1871,8 +1868,13 @@ public class LIMEService extends InputMethodService implements
             // set the keyboard to the first active keyboard
             //if(DEBUG) Log.i(TAG, "currene keyboard is not in active list, reset to :" +  keyboardListCodes.get(0));
 
-            activeIM = activatedIMList.get(0);
+            try {
+                activeIM = activatedIMList.get(0);
+            }catch(IndexOutOfBoundsException e){
+                Toast.makeText(this, getResources().getString(R.string.error_set_active_im), Toast.LENGTH_LONG).show();
+            }
             //initializeIMKeyboard();
+
         }
 
     }

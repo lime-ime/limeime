@@ -207,4 +207,6 @@
 
     <string name="error_import_db">匯入失敗，可能是檔案毀損或格式錯誤，請再試一次</string>
 
+    <string name="error_set_active_im">請先下載輸入法或匯入字根檔</string>
+
 </resources>

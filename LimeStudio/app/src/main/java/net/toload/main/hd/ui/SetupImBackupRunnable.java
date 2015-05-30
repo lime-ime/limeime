@@ -12,6 +12,8 @@ import com.dropbox.client2.exception.DropboxPartialFileException;
 import com.dropbox.client2.exception.DropboxServerException;
 import com.dropbox.client2.exception.DropboxUnlinkedException;
 import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.http.FileContent;
 import com.google.api.client.json.gson.GsonFactory;
@@ -103,6 +105,9 @@ public class SetupImBackupRunnable implements Runnable {
         body.setDescription("This is the backup file uploaded by LIMEIME");
 
         Drive service = getDriveService(mCredential);
+
+        GoogleTokenResponse authResponse = new GoogleAuthorizationCodeTokenRequest(transport, jsonFactory, CLIENT_ID, CLIENT_SECRET, authToken, CALLBACK_URL).execute();
+        accessToken = authResponse.getAccessToken();
 
         List<com.google.api.services.drive.model.File> result = new ArrayList<>();
         try {
