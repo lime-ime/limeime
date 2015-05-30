@@ -50,6 +50,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -76,12 +77,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private static boolean databseOnhold = false;
 
     //Jeremy '11,8,5
-    private final static String INITIAL_RESULT_LIMIT = "30";
+    private final static String INITIAL_RESULT_LIMIT = "15";
     private final static int INITIAL_RELATED_LIMIT = 5;
     private final static int COMPOSING_CODE_LENGTH_LIMIT = 16; //Jermey '12,5,30 changed from 12 to 16 because of improved performance using binary tree.
     private final static int DUALCODE_COMPOSING_LIMIT = 16; //Jermey '12,5,30 changed from 7 to 16 because of improved performance using binary tree. 
     private final static int DUALCODE_NO_CHECK_LIMIT = 3; //Jermey '12,5,30 changed from 5 to 3 for phonetic correct valid code display.
-    //private final static int DUALCODE_ITERATION_LIMIT = 512;
+
 
 
     public final static String FIELD_ID = "_id";
@@ -238,9 +239,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private final static String CJ_KEY = "qwertyuiopasdfghjklzxcvbnm";
     private final static String CJ_CHAR = "手|田|水|口|廿|卜|山|戈|人|心|日|尸|木|火|土|竹|十|大|中|重|難|金|女|月|弓|一";
 
-    private HashMap<String, HashMap<String, String>> keysDefMap = new HashMap<String, HashMap<String, String>>();
-    private HashMap<String, HashMap<String, String>> keysReMap = new HashMap<String, HashMap<String, String>>();
-    private HashMap<String, HashMap<String, String>> keysDualMap = new HashMap<String, HashMap<String, String>>();
+    private HashMap<String, HashMap<String, String>> keysDefMap = new HashMap<>();
+    private HashMap<String, HashMap<String, String>> keysReMap = new HashMap<>();
+    private HashMap<String, HashMap<String, String>> keysDualMap = new HashMap<>();
 
     private String lastCode = "";
     private String lastValidDualCodeList = "";
@@ -276,12 +277,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private boolean threadAborted = false;
 
     // Cache for Related Score
-    private HashMap<String, Integer> relatedscore = new HashMap<String, Integer>();
+    private HashMap<String, Integer> relatedscore = new HashMap<>();
 
 
     private LimeHanConverter hanConverter;
 
-
+    /*
     public boolean isLoadingMappingFinished() {
         if (DEBUG) Log.i(TAG, "isLoadingMapingThreadAborted()" + finish + "");
         return this.finish;
@@ -302,7 +303,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (DEBUG) Log.i(TAG, "isLoadingMappingInProgress()" + result + "");
         return result;
     }
-
+    */
 
     public void setFinish(boolean value) {
 
@@ -342,7 +343,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         mLIMEPref = new LIMEPreferenceManager(mContext.getApplicationContext());
 
 
-        blackListCache = new ConcurrentHashMap<String, Boolean>(LIME.LIMEDB_CACHE_SIZE);
+        blackListCache = new ConcurrentHashMap<>(LIME.LIMEDB_CACHE_SIZE);
 
 
         // Jeremy '12,4,7 open DB connection in constructor
@@ -429,7 +430,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
             } catch (Exception e) {
                 //e.printStackTrace();
-                Log.e(TAG, "OnUpgrade() exception:" + e.getStackTrace());
+                Log.e(TAG, "OnUpgrade() exception:" + Arrays.toString(e.getStackTrace()));
             }
 
             try {
@@ -457,7 +458,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 execSQL(dbin, "alter table imtable10 add 'basescore' type integer");
             } catch (Exception e) {
                 //e.printStackTrace();
-                Log.w(TAG, "OnUpgrade() exception:" + e.getStackTrace());
+                Log.w(TAG, "OnUpgrade() exception:" + Arrays.toString(e.getStackTrace()));
             }
         }
         if (oldVersion < 77) { // add phonetic hsu keyboard '12,6,6 by jeremy
@@ -673,7 +674,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 Log.d(TAG, "deleteAll():waiting for loadingMappingThread stopped...");
                 SystemClock.sleep(1000);
             }
-            ;
         }
 
         if (countMapping(table) > 0)
@@ -803,9 +803,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Return the score after add or updated. Jerem '12,6,7
      *
-     * @param pword
-     * @param cword
-     * @return
      */
 
     public synchronized int addOrUpdateUserdictRecord(String pword, String cword) {
@@ -938,7 +935,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             if (srcunit != null && srcunit.getWord() != null &&
                     !srcunit.getWord().trim().equals("")) {
                 //int highestScore = getHighestScoreOnDB(db, srcunit.getWord());
-                int newScore = 0;
+                //int newScore = 0;
 				/*if(srcunit.getId()==null)
 					newScore = highestScore +1; // selected from related code list without scores information
 				else
@@ -948,7 +945,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                 if (srcunit.isDictionary()) {
 
-                    int score = 1;
+                    int score;
                     if (relatedscore.get(srcunit.getId()) == null) {
                         score = srcunit.getUserscore() + 1;
                         relatedscore.put(srcunit.getId(), score);
@@ -981,11 +978,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Jeremy '12,6,7 for phrase learning to get code from word
      */
+    /*
     public List<Mapping> getRMapping(Mapping mapping, String table) {
         String keyword = mapping.getWord();
         return getRMapping(keyword, table);
     }
-
+*/
     public List<Mapping> getRMapping(String keyword, String table) {
 
         if (DEBUG)
@@ -993,12 +991,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         if (!checkDBConnection()) return null;
 
-        List<Mapping> result = new LinkedList<Mapping>();
+        List<Mapping> result = new LinkedList<>();
 
         try {
 
             if (keyword != null && !keyword.trim().equals("")) {
-                Cursor cursor = null;
+                Cursor cursor;
                 cursor = db.query(table, null, FIELD_WORD + " = '" + keyword + "'", null, null,
                         null, FIELD_SCORE + " DESC", null);
                 if (DEBUG)
@@ -1055,11 +1053,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             return null;
         }
 
-        String result = new String("");
+        String result = "";
         try {
 
             if (keyword != null && !keyword.trim().equals("")) {
-                Cursor cursor = null;
+                Cursor cursor;
                 cursor = db.query(table, null, FIELD_WORD + " = '" + keyword + "'", null, null,
                         null, null, null);
                 if (DEBUG)
@@ -1114,7 +1112,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         if (!checkDBConnection()) return null;
 
-        LinkedList<Mapping> scorelist = new LinkedList<Mapping>(); //Jeremy '12,5,29 should not return null thus new linklist instead of initial with null
+        LinkedList<Mapping> scorelist = new LinkedList<>(); //Jeremy '12,5,29 should not return null thus new linklist instead of initial with null
         try {
             scorelist = updateRelatedListOnDB(db, tablename, code); //Jeremy '12,6,5 the code is retrieve from mapping, and thus should not remap.
             //preProcessingRemappingCode(code)); //Jeremy '12,4,11 should do remapping before update score
@@ -1130,7 +1128,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         if (!checkDBConnection()) return null;
 
-        LinkedList<Mapping> scorelist = new LinkedList<Mapping>(); //Jeremy '12,5,29 should not return null thus new linklist instead of initial with null
+        LinkedList<Mapping> scorelist = new LinkedList<>(); //Jeremy '12,5,29 should not return null thus new linklist instead of initial with null
         try {
             scorelist = updateRelatedListOnDB(db, table, code); //Jeremy '12,6,5 the code is retrieve from mapping, and thus should not remap.
             //preProcessingRemappingCode(code)); //Jeremy '12,4,11 should do remapping before update score
@@ -1159,11 +1157,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (DEBUG)
             Log.i(TAG, "updateRelatedListOnDB(): raw query string: " + selectString);
 
-        LinkedList<Mapping> newMappingList = new LinkedList<Mapping>();
+        LinkedList<Mapping> newMappingList = new LinkedList<>();
 
         if (cursor != null) {
             if (cursor.moveToFirst()) {
-                HashSet<String> duplicateCheck = new HashSet<String>();
+                HashSet<String> duplicateCheck = new HashSet<>();
 
                 //int idColumn = cursor.getColumnIndex(FIELD_ID);
                 //int codeColumn = cursor.getColumnIndex(FIELD_CODE);
@@ -1297,7 +1295,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (keysDefMap.get(keytable) == null
                 || keysDefMap.get(keytable).size() == 0) {
 
-            String keyString = "", keynameString = "", finalKeynameString = null;
+            String keyString, keynameString, finalKeynameString = null;
             //Jeremy 11,6,4 Load keys and keynames from im table.
             keyString = getImInfo(table, "imkeys");
             keynameString = getImInfo(table, "imkeynames");
@@ -1307,78 +1305,92 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
             if (table.equals("phonetic") || table.equals("dayi") ||
                     keyString.equals("") || keynameString.equals("")) {
-                if (table.equals("cj") || table.equals("scj") || table.equals("cj5") || table.equals("ecj")) {
-                    keyString = CJ_KEY;
-                    keynameString = CJ_CHAR;
-                } else if (table.equals("phonetic")) {
-                    if (composingText) {  // building composing text popup
-                        if (phonetickeyboardtype.equals("eten")) {
-                            keyString = ETEN_KEY;
-                            if (keyboardtype.equals("milestone") && isPhysicalKeyboardPressed)
-                                keynameString = MILESTONE_ETEN_CHAR;
-                            else if (keyboardtype.equals("milestone2") && isPhysicalKeyboardPressed)
-                                keynameString = MILESTONE2_ETEN_CHAR;
-                            else if (keyboardtype.equals("milestone3") && isPhysicalKeyboardPressed)
-                                keynameString = MILESTONE3_ETEN_CHAR;
-                            else if (keyboardtype.equals("desireZ") && isPhysicalKeyboardPressed)
-                                keynameString = DESIREZ_ETEN_CHAR;
-                            else
-                                keynameString = ETEN_CHAR;
-                        } else if (phonetickeyboardtype.equals("eten26")) {
-                            keyString = ETEN26_KEY;
-                            keynameString = ETEN26_CHAR_INITIAL;
-                            finalKeynameString = ETEN26_CHAR_FINAL;
-                        } else if (phonetickeyboardtype.equals("hsu")) {
-                            keyString = HSU_KEY;
-                            keynameString = HSU_CHAR_INITIAL;
-                            finalKeynameString = HSU_CHAR_FINAL;
-                        } else if ((keyboardtype.equals("milestone") || keyboardtype.equals("milestone2"))
-                                && isPhysicalKeyboardPressed) {
-                            keyString = MILESTONE_KEY;
-                            keynameString = MILESTONE_BPMF_CHAR;
-                        } else if (keyboardtype.equals("milestone3") && isPhysicalKeyboardPressed) {
-                            keyString = MILESTONE3_KEY;
-                            keynameString = MILESTONE3_BPMF_CHAR;
-                        } else if (keyboardtype.equals("desireZ") && isPhysicalKeyboardPressed) {
-                            keyString = DESIREZ_KEY;
-                            keynameString = DESIREZ_BPMF_CHAR;
-                        } else if (keyboardtype.equals("chacha") && isPhysicalKeyboardPressed) {
-                            keyString = CHACHA_KEY;
-                            keynameString = CHACHA_BPMF_CHAR;
-                        } else if (keyboardtype.equals("xperiapro") && isPhysicalKeyboardPressed) {
-                            keyString = XPERIAPRO_KEY;
-                            keynameString = BPMF_CHAR;
+                switch (table) {
+                    case "cj":
+                    case "scj":
+                    case "cj5":
+                    case "ecj":
+                        keyString = CJ_KEY;
+                        keynameString = CJ_CHAR;
+                        break;
+                    case "phonetic":
+                        if (composingText) {  // building composing text popup
+                            if (phonetickeyboardtype.equals("eten")) {
+                                keyString = ETEN_KEY;
+                                if (keyboardtype.equals("milestone") && isPhysicalKeyboardPressed)
+                                    keynameString = MILESTONE_ETEN_CHAR;
+                                else if (keyboardtype.equals("milestone2") && isPhysicalKeyboardPressed)
+                                    keynameString = MILESTONE2_ETEN_CHAR;
+                                else if (keyboardtype.equals("milestone3") && isPhysicalKeyboardPressed)
+                                    keynameString = MILESTONE3_ETEN_CHAR;
+                                else if (keyboardtype.equals("desireZ") && isPhysicalKeyboardPressed)
+                                    keynameString = DESIREZ_ETEN_CHAR;
+                                else
+                                    keynameString = ETEN_CHAR;
+                            } else if (phonetickeyboardtype.equals("eten26")) {
+                                keyString = ETEN26_KEY;
+                                keynameString = ETEN26_CHAR_INITIAL;
+                                finalKeynameString = ETEN26_CHAR_FINAL;
+                            } else if (phonetickeyboardtype.equals("hsu")) {
+                                keyString = HSU_KEY;
+                                keynameString = HSU_CHAR_INITIAL;
+                                finalKeynameString = HSU_CHAR_FINAL;
+                            } else if ((keyboardtype.equals("milestone") || keyboardtype.equals("milestone2"))
+                                    && isPhysicalKeyboardPressed) {
+                                keyString = MILESTONE_KEY;
+                                keynameString = MILESTONE_BPMF_CHAR;
+                            } else if (keyboardtype.equals("milestone3") && isPhysicalKeyboardPressed) {
+                                keyString = MILESTONE3_KEY;
+                                keynameString = MILESTONE3_BPMF_CHAR;
+                            } else if (keyboardtype.equals("desireZ") && isPhysicalKeyboardPressed) {
+                                keyString = DESIREZ_KEY;
+                                keynameString = DESIREZ_BPMF_CHAR;
+                            } else if (keyboardtype.equals("chacha") && isPhysicalKeyboardPressed) {
+                                keyString = CHACHA_KEY;
+                                keynameString = CHACHA_BPMF_CHAR;
+                            } else if (keyboardtype.equals("xperiapro") && isPhysicalKeyboardPressed) {
+                                keyString = XPERIAPRO_KEY;
+                                keynameString = BPMF_CHAR;
+                            } else {
+                                keyString = BPMF_KEY;
+                                keynameString = BPMF_CHAR;
+                            }
+
                         } else {
                             keyString = BPMF_KEY;
                             keynameString = BPMF_CHAR;
                         }
-
-                    } else {
-                        keyString = BPMF_KEY;
-                        keynameString = BPMF_CHAR;
-                    }
-                } else if (table.equals("array")) {
-                    keyString = ARRAY_KEY;
-                    keynameString = ARRAY_CHAR;
-                } else if (table.equals("dayi")) {
-                    if (isPhysicalKeyboardPressed && composingText) { // only do this on composing mapping popup
-                        if (keyboardtype.equals("milestone") || keyboardtype.equals("milestone2")) {
-                            keyString = MILESTONE_KEY;
-                            keynameString = MILESTONE_DAYI_CHAR;
-                        } else if (keyboardtype.equals("milestone3")) {
-                            keyString = MILESTONE3_KEY;
-                            keynameString = MILESTONE3_DAYI_CHAR;
-                        } else if (keyboardtype.equals("desireZ")) {
-                            keyString = DESIREZ_KEY;
-                            keynameString = DESIREZ_DAYI_CHAR;
+                        break;
+                    case "array":
+                        keyString = ARRAY_KEY;
+                        keynameString = ARRAY_CHAR;
+                        break;
+                    case "dayi":
+                        if (isPhysicalKeyboardPressed && composingText) { // only do this on composing mapping popup
+                            switch (keyboardtype) {
+                                case "milestone":
+                                case "milestone2":
+                                    keyString = MILESTONE_KEY;
+                                    keynameString = MILESTONE_DAYI_CHAR;
+                                    break;
+                                case "milestone3":
+                                    keyString = MILESTONE3_KEY;
+                                    keynameString = MILESTONE3_DAYI_CHAR;
+                                    break;
+                                case "desireZ":
+                                    keyString = DESIREZ_KEY;
+                                    keynameString = DESIREZ_DAYI_CHAR;
+                                    break;
+                                default:
+                                    keyString = DAYI_KEY;
+                                    keynameString = DAYI_CHAR;
+                                    break;
+                            }
                         } else {
                             keyString = DAYI_KEY;
                             keynameString = DAYI_CHAR;
                         }
-                    } else {
-                        keyString = DAYI_KEY;
-                        keynameString = DAYI_CHAR;
-                    }
+                        break;
                 }
             }
             if (DEBUG)
@@ -1386,10 +1398,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         " composing?:" + composingText +
                         " keyString:" + keyString + " keynameString:" + keynameString + " finalkeynameString:" + finalKeynameString);
             if (keyString != null && keyString.length() > 0) {
-                HashMap<String, String> keyMap = new HashMap<String, String>();
+                HashMap<String, String> keyMap = new HashMap<>();
                 HashMap<String, String> finalKeyMap = null;
                 if (finalKeynameString != null)
-                    finalKeyMap = new HashMap<String, String>();
+                    finalKeyMap = new HashMap<>();
 
                 String charlist[] = keynameString.split("\\|");
                 String finalCharlist[] = null;
@@ -1401,10 +1413,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 try {
                     for (int i = 0; i < keyString.length(); i++) {
                         keyMap.put(keyString.substring(i, i + 1), charlist[i]);
-                        if (finalKeyMap != null && finalCharlist != null)
+                        if (finalKeyMap != null)
                             finalKeyMap.put(keyString.substring(i, i + 1), finalCharlist[i]);
                     }
-                } catch (Exception e) {
+                } catch (Exception ignored) {
                 }
 
                 keyMap.put("|", "|"); //put the seperator for multi-code display
@@ -1458,7 +1470,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     if (c != null) result = c.trim();
                 } else {
                     for (int i = 0; i < code.length(); i++) {
-                        String c = "";
+                        String c;
                         if (i > 0) {
                             //Jeremy '12,6,3 If the last character is a tone symbol, the preceding will be intial
                             if (tablename.equals("phonetic")
@@ -1508,7 +1520,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (!checkDBConnection()) return null;
 
 
-        boolean sort = true;
+        boolean sort;
         if (softKeyboard) sort = mLIMEPref.getSortSuggestions();
         else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
         isPhysicalKeyboardPressed = !softKeyboard;
@@ -1537,7 +1549,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 try {
 
 
-                    Cursor cursor = null;
+                    Cursor cursor;
                     // Jeremy '11,8,2 Query code3r instead of code for code contains no tone symbols
                     // Jeremy '12,6,5 rewrite to consistent with expanddualcode
 
@@ -1669,10 +1681,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
                 if (!keyString.equals("")) {
-                    HashMap<String, String> reMap = new HashMap<String, String>();
+                    HashMap<String, String> reMap = new HashMap<>();
                     HashMap<String, String> finalReMap = null;
                     if (finalKeyRemapString != null)
-                        finalReMap = new HashMap<String, String>();
+                        finalReMap = new HashMap<>();
 
                     for (int i = 0; i < keyString.length(); i++) {
                         reMap.put(keyString.substring(i, i + 1), keyRemapString.substring(i, i + 1));
@@ -1698,7 +1710,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 HashMap<String, String> finalReMap = keysReMap.get("final_" + remaptable);
 
                 newcode = "";
-                String c = null;
+                String c;
 
                 if (finalReMap == null) {
                     for (int i = 0; i < code.length(); i++) {
@@ -1791,7 +1803,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (code != null) {
             String keyboardtype = mLIMEPref.getPhysicalKeyboardType();
             String phonetickeyboardtype = mLIMEPref.getPhoneticKeyboardType();
-            String dualcode = "";
+            String dualcode;
             String dualKey = "";
             String dualKeyRemap = "";
             String remaptable = tablename;
@@ -1879,7 +1891,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     dualKeyRemap = "`";
                 }
 
-                HashMap<String, String> reMap = new HashMap<String, String>();
+                HashMap<String, String> reMap = new HashMap<>();
                 if (DEBUG)
                     Log.i(TAG, "preProcessingForExtraQueryConditions(): dualKey=" + dualKey + " dualKeyRemap=" + dualKeyRemap);
                 for (int i = 0; i < dualKey.length(); i++) {
@@ -1928,34 +1940,33 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         HashMap<String, String> codeDualMap = keysDualMap.get(keytablename);
 
-        HashSet<String> dualCodeList = new HashSet<String>();
+        //HashSet<String> dualCodeList = new HashSet<>();
         //HashSet<String> resultDualCodeList = new HashSet<String>();
-        HashSet<String> treeDualCodeList = new HashSet<String>();
-        dualCodeList.add(code);
+        HashSet<String> treeDualCodeList = new HashSet<>();
+       // dualCodeList.add(code);
         //resultDualCodeList.add(code);
 
         if (codeDualMap != null && codeDualMap.size() > 0) {
 
             //Jeremy '12,6,4 
-            SparseArray<List<String>> treemap = new SparseArray<List<String>>();
+            SparseArray<List<String>> treemap = new SparseArray<>();
             for (int i = 0; i < code.length(); i++) {
                 if (DEBUG)
                     Log.i(TAG, "buildDualCodeList() level : " + i);
 
 
-                List<String> levelnMap = new LinkedList<String>();
-                List<String> lastLevelMap = null;
+                List<String> levelnMap = new LinkedList<>();
+                List<String> lastLevelMap;
                 if (i == 0) {
-                    lastLevelMap = new LinkedList<String>();
+                    lastLevelMap = new LinkedList<>();
                     lastLevelMap.add(code);
                 } else
                     lastLevelMap = treemap.get(i - 1);
 
-                String c = null;
-                String n = null;
+                String c;
+                String n;
 
-                if (lastLevelMap == null ||
-                        (lastLevelMap != null && lastLevelMap.size() == 0)) {
+                if (lastLevelMap == null || (lastLevelMap.size() == 0)) {
                     if (DEBUG)
                         Log.i(TAG, "buildDualCodeList() level : " + i + " ended because last level map is empty");
                     continue;
@@ -2000,7 +2011,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                         } else if (codeDualMap.get(c) != null && !codeDualMap.get(c).equals(c)) {
                             n = codeDualMap.get(c);
-                            String newCode = "";
+                            String newCode;
 
                             if (entry.length() == 1)
                                 newCode = n;
@@ -2064,7 +2075,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
             //Jeremy '11,8,12 added for continuous typing.  
             if (tablename.equals("phonetic")) {
-                HashSet<String> tempList = new HashSet<String>(treeDualCodeList);
+                HashSet<String> tempList = new HashSet<>(treeDualCodeList);
                 for (String iterator_code : tempList) {
                     if (iterator_code.matches(".+[ 3467].+")) { // regular expression mathes tone in the middle
                         String newCode = iterator_code.replaceAll("[3467 ]", "");
@@ -2178,13 +2189,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     if (useCode3r) { //code3r (phonetic comibnation without tones) is present
                         if (tonePresent) {
                             //LD phrase if tone symbols present but not in last character or in last character but the lenth > 4 (phonetic combinations never has length >4)
-                            if (toneNotLast || (!toneNotLast && dualcode.length() > 4))
+                            if (toneNotLast || (dualcode.length() > 4))
                                 noToneCode = dualcode.replaceAll("[3467 ]", "");
 
                         } else { // no tone symbols present, check code3r column
                             codeCol = FIELD_CODE3R;
                         }
-                    } else if (tonePresent && (toneNotLast || (!toneNotLast && dualcode.length() > 4))) //LD phrase and no code3r column present
+                    } else if (tonePresent && (toneNotLast || (dualcode.length() > 4))) //LD phrase and no code3r column present
                         noToneCode = dualcode.replaceAll("[3467 ]", "");
                 }
                 // do escape code for codes
@@ -2259,9 +2270,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                             } else { //only add the code to black list
                                 blackListCache.put(cacheKey(dualcode), true);
-                                if (cursor != null) {
-                                    cursor.close();
-                                }
+                                cursor.close();
                                 if (DEBUG)
                                     Log.i(TAG, " expandDualCode() blackList code added, code = " + dualcode);
                             }
@@ -2292,8 +2301,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Jeremy '12,6,3 Build unique cache key for black list cache.
      *
-     * @param code
-     * @return
      */
 
     private String cacheKey(String code) {
@@ -2307,11 +2314,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private synchronized Pair<List<Mapping>, List<Mapping>> buildQueryResult(String query_code, Cursor cursor, Boolean getAllRecords) {
 
 
-        List<Mapping> result = new ArrayList<Mapping>();
-        List<Mapping> relatedresult = new ArrayList<Mapping>();
-        Pair<List<Mapping>, List<Mapping>> resultPair = new Pair<List<Mapping>, List<Mapping>>(result, relatedresult);
-        HashSet<String> duplicateCheck = new HashSet<String>();
-        HashSet<String> validCodeMap = new HashSet<String>();  //Jeremy '11,8,26
+        List<Mapping> result = new ArrayList<>();
+        List<Mapping> relatedresult = new ArrayList<>();
+        Pair<List<Mapping>, List<Mapping>> resultPair = new Pair<>(result, relatedresult);
+        HashSet<String> duplicateCheck = new HashSet<>();
+        HashSet<String> validCodeMap = new HashSet<>();  //Jeremy '11,8,26
         int rsize = 0;
         //jeremy '11,8,30 reset lastVaidDualCodeList first.
         final boolean buildValidCodeList = lastValidDualCodeList == null;
@@ -2329,7 +2336,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             int wordColumn = cursor.getColumnIndex(FIELD_WORD);
             int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
             int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
-            HashMap<String, String> relatedMap = new HashMap<String, String>();
+            HashMap<String, String> relatedMap = new HashMap<>();
 
             do {
                 String code = cursor.getString(codeColumn);
@@ -2364,7 +2371,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             continue;
                         }
                     }
-                } catch (Exception e) {
+                } catch (Exception ignored) {
                 }
 
                 if (relatedlist != null && relatedMap.get(code) == null) {
@@ -2407,7 +2414,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     String templist[] = relatedlist.split("\\|");
 
                     for (String unit : templist) {
-                        if (ssize != 0 && scount > ssize) {
+                        if (scount > ssize) {
                             break;
                         }
                         if (duplicateCheck.add(unit)) {
@@ -2475,7 +2482,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (!checkDBConnection()) return null;
 
-        Cursor cursor = null;
+        Cursor cursor;
         cursor = db.query("dictionary", null, null, null, null, null, null, null);
         return cursor;
     }
@@ -2487,14 +2494,14 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (DEBUG)
             Log.i(TAG, "queryUserDict(), " + getAllRecords);
 
-        List<Mapping> result = new LinkedList<Mapping>();
+        List<Mapping> result = new LinkedList<>();
 
 
         if (mLIMEPref.getSimiliarEnable()) {
 
             if (pword != null && !pword.trim().equals("")) {
 
-                Cursor cursor = null;
+                Cursor cursor;
 
                 // Jeremy '11,8.23 remove group by condition to avoid sorting ordr
                 // Jeremy '11,8,1 add group by cword to remove duplicate items.
@@ -2683,7 +2690,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             if (cursor.moveToFirst()) {
 
                 int codeColumn = cursor.getColumnIndex(FIELD_CODE);
-                HashSet<String> codeList = new HashSet<String>();
+                HashSet<String> codeList = new HashSet<>();
                 do {
                     String code = cursor.getString(codeColumn);
                     codeList.add(code);
@@ -2788,7 +2795,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 boolean isCinFormat = false;
 
                 String imname = "";
-                String line = "";
+                String line;
                 String endkey = "";
                 String selkey = "";
                 String spacestyle = "";
@@ -2807,7 +2814,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     FileReader fr = new FileReader(filename);
                     BufferedReader buf = new BufferedReader(fr);
                     int i = 0;
-                    List<String> templist = new ArrayList<String>();
+                    List<String> templist = new ArrayList<>();
                     while ((line = buf.readLine()) != null
                             && !isCinFormat) {
                         templist.add(line);
@@ -2826,7 +2833,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
 
 
-                HashSet<String> codeList = new HashSet<String>();
+                HashSet<String> codeList = new HashSet<>();
 
                 //db = getSqliteDb(false);
 
@@ -2910,9 +2917,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                         && srcstring[2] == -65) {
                                     byte tempstring[] = new byte[srcstring.length - 3];
                                     //int a = 0;
-                                    for (int j = 3; j < srcstring.length; j++) {
-                                        tempstring[j - 3] = srcstring[j];
-                                    }
+                                    System.arraycopy(srcstring, 3, tempstring, 0, srcstring.length - 3);
                                     line = new String(tempstring);
                                 }
                             }
@@ -2935,7 +2940,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 										// Simply ignore error and try to load score and basescore values
 										source_score = Integer.parseInt(line.substring(2, line.indexOf("\t")));
 										source_basescore = Integer.parseInt(line.substring(3, line.indexOf("\t")));
-									}catch(Exception e){}
+									}catch(Exception ignored){}
                                 } else if (line.contains(" ")) {
                                     code = line.substring(0, line.indexOf(" "));
                                     word = line
@@ -2944,7 +2949,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 										// Simply ignore error and try to load score and basescore values
 										source_score = Integer.parseInt(line.substring(2, line.indexOf(" ")));
 										source_basescore = Integer.parseInt(line.substring(3, line.indexOf(" ")));
-									}catch(Exception e){}
+									}catch(Exception ignored){}
                                 }
                             } else {
                                 code = line.substring(0, line
@@ -2955,7 +2960,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 									// Simply ignore error and try to load score and basescore values
 									source_score = Integer.parseInt(line.substring(2, line.indexOf(DELIMITER)));
 									source_basescore = Integer.parseInt(line.substring(3, line.indexOf(DELIMITER)));
-								}catch(Exception e){}
+								}catch(Exception ignored){}
                             }
                             if (code == null || code.trim().equals("")) {
                                 continue;
@@ -3015,7 +3020,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                 if (table.equals("phonetic")) {
                                     String code3r = code.replaceAll("[3467 ]", "");
                                     cv.put(FIELD_CODE3R, code3r);
-                                    ;
 
                                 }
                                 cv.put(FIELD_WORD, word);
@@ -3149,26 +3153,33 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     if (table.equals("phonetic")) {
                         String selectedPhoneticKeyboardType =
                                 mLIMEPref.getParameterString("phonetic_keyboard_type", "standard");
-                        if (selectedPhoneticKeyboardType.equals("standard")) {
-                            kobj = getKeyboardObj("phonetic");
-                        } else if (selectedPhoneticKeyboardType.equals("eten")) {
-                            kobj = getKeyboardObj("phoneticet41");
-                        } else if (selectedPhoneticKeyboardType.equals("eten26")) {
-                            if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
-                                kobj = getKeyboardObj("limenum");
-                            } else {
-                                kobj = getKeyboardObj("lime");
-                            }
-                        } else if (selectedPhoneticKeyboardType.equals("eten26_symbol")) {
-                            kobj = getKeyboardObj("et26");
-                        } else if (selectedPhoneticKeyboardType.equals("hsu")) { //Jeremy '12,7,6 Add HSU english keyboard support
-                            if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
-                                kobj = getKeyboardObj("limenum");
-                            } else {
-                                kobj = getKeyboardObj("lime");
-                            }
-                        } else if (selectedPhoneticKeyboardType.equals("hsu_symbol")) {
-                            kobj = getKeyboardObj("hsu");
+                        switch (selectedPhoneticKeyboardType) {
+                            case "standard":
+                                kobj = getKeyboardObj("phonetic");
+                                break;
+                            case "eten":
+                                kobj = getKeyboardObj("phoneticet41");
+                                break;
+                            case "eten26":
+                                if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
+                                    kobj = getKeyboardObj("limenum");
+                                } else {
+                                    kobj = getKeyboardObj("lime");
+                                }
+                                break;
+                            case "eten26_symbol":
+                                kobj = getKeyboardObj("et26");
+                                break;
+                            case "hsu":  //Jeremy '12,7,6 Add HSU english keyboard support
+                                if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
+                                    kobj = getKeyboardObj("limenum");
+                                } else {
+                                    kobj = getKeyboardObj("lime");
+                                }
+                                break;
+                            case "hsu_symbol":
+                                kobj = getKeyboardObj("hsu");
+                                break;
                         }
                     } else if (table.equals("dayi")) {
                         kobj = getKeyboardObj("dayisym");
@@ -3298,7 +3309,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (code != null && code.trim().length() > 0) {
 
 
-            Cursor cursor = null;
+            Cursor cursor;
             // Process the escape characters of query
             code = code.replaceAll("'", "''");
             if (word == null || word.trim().length() == 0) {
@@ -3435,15 +3446,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Jeremy '12/4/16 core of isUserDictExist()
      *
-     * @param pword previous word
-     * @param cword current word
-     * @return mapping if exist, null otherwise.
      */
     private Mapping isUserDictExistOnDB(SQLiteDatabase db, String pword, String cword) throws RemoteException {
 
         Mapping munit = null;
         if (pword != null && !pword.trim().equals("")) {
-            Cursor cursor = null;
+            Cursor cursor;
 
             if (cword == null || cword.trim().equals("")) {
                 cursor = db.query(Lime.DB_RELATED, null, FIELD_DIC_pword + " = '"
@@ -3465,10 +3473,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 munit.setDictionary(true);
 
             }
-            if (cursor != null) {
-                //cursor.deactivate();
-                cursor.close();
-            }
+            //cursor.deactivate();
+            cursor.close();
 
 
         }
@@ -3580,7 +3586,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (!checkDBConnection()) return null;
 
 
-        List<ImObj> result = new LinkedList<ImObj>();
+        List<ImObj> result = new LinkedList<>();
         try {
             //SQLiteDatabase db = this.getSqliteDb(true);
             Cursor cursor = db.query("im", null, null, null, null, null, "code ASC", null);
@@ -3718,7 +3724,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (!checkDBConnection()) return null;
 
 
-        List<KeyboardObj> result = new LinkedList<KeyboardObj>();
+        List<KeyboardObj> result = new LinkedList<>();
         try {
             //SQLiteDatabase db = this.getSqliteDb(true);
             Cursor cursor = db.query("keyboard", null, null, null, null, null, "name ASC", null);
@@ -3758,7 +3764,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                            String keyboard) {
         if (DEBUG)
             Log.i(TAG, "setIMKeyboard() im=" + im + " value= " + value + " keyboard= " + keyboard);
-        if (!checkDBConnection()) ;
+        if (!checkDBConnection()) return;
         try {
             setIMKeyboardOnDB(db, im, value, keyboard);
         } catch (Exception e) {
@@ -3801,9 +3807,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 if (cursor.getCount() > 0) {
                     cursor.moveToFirst();
                     int descCol = cursor.getColumnIndex("keyboard");
-                    String keyboardCode = cursor.getString(descCol);
 
-                    return keyboardCode;
+                    return cursor.getString(descCol);
                 }
                 cursor.close();
             }
@@ -3819,7 +3824,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (!checkDBConnection()) return null;
 
 
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         try {
             //String value = "";
             int ssize = mLIMEPref.getSimilarCodeCandidates();
@@ -3859,8 +3864,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Jeremy '11,9,8 get basescore of word store in hanconverter
      *
-     * @param input
-     * @return
      */
     public int getBaseScore(String input) {
         checkHanDB();
@@ -3935,8 +3938,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * 取得表格內的所有記錄
      *
-     * @param table
-     * @return
      */
     public Cursor list(String table) {
         Cursor cursor = null;
@@ -3949,7 +3950,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * 依 SQL 指令進行資料新增
      *
-     * @param insertsql
      */
     public void insert(String insertsql) {
         if (db != null && db.isOpen() &&
@@ -3969,7 +3969,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * 移除 SQL 指令的操作
      *
-     * @param removesql
      */
     public void remove(String removesql) {
         if (!checkDBConnection()) return;
@@ -3992,7 +3991,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
     public List<Keyboard> getKeyboard() {
-        List<Keyboard> result = new ArrayList<Keyboard>();
+        List<Keyboard> result = new ArrayList<>();
         if (!checkDBConnection()) return result;
 
         Cursor cursor = db.query(Lime.DB_KEYBOARD, null, null,
@@ -4010,10 +4009,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     public List<Im> getIm(String code, String type) {
 
-        List<Im> result = new ArrayList<Im>();
+        List<Im> result = new ArrayList<>();
         if (!checkDBConnection()) return result;
 
-        Cursor cursor = null;
+        Cursor cursor;
         String query = null;
         if (code != null && code.length() > 1) {
             query = Lime.DB_IM_COLUMN_CODE + "='" + code + "'";
@@ -4026,7 +4025,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             }
 
             query += " " + Lime.DB_IM_COLUMN_TITLE + "='" + type + "'";
-            ;
         }
 
         cursor = db.query(Lime.DB_IM,
@@ -4044,10 +4042,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     public List<Word> loadWord(String code, String query, boolean searchroot, int maximum, int offset) {
-        List<Word> result = new ArrayList<Word>();
+        List<Word> result = new ArrayList<>();
         if (!checkDBConnection()) return result;
 
-        Cursor cursor = null;
+        Cursor cursor;
         if (query != null && query.length() >= 1) {
             if (searchroot) {
                 query = Lime.DB_COLUMN_CODE + " LIKE '" + query + "%' AND ifnull(" + Lime.DB_COLUMN_WORD + ", '') <> ''";
@@ -4058,7 +4056,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             query = "ifnull(" + Lime.DB_COLUMN_WORD + ", '') <> ''";
         }
 
-        String order = "";
+        String order;
 
         if (searchroot) {
             order = Lime.DB_COLUMN_CODE + " ASC";
@@ -4088,8 +4086,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     public Word getWord(String code, long id) {
         if (!checkDBConnection()) return null;
-        Word w = null;
-        Cursor cursor = null;
+        Word w;
+        Cursor cursor;
 
         String query = Lime.DB_COLUMN_ID + " = '" + id + "' ";
 
@@ -4123,11 +4121,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     public List<Related> loadRelated(String pword, int maximum, int offset) {
 
-        List<Related> result = new ArrayList<Related>();
+        List<Related> result = new ArrayList<>();
         if (!checkDBConnection()) return result;
 
 
-        Cursor cursor = null;
+        Cursor cursor;
 
         String query = "";
         if (pword != null && !pword.isEmpty()) {
@@ -4160,8 +4158,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     public Related getRelated(long id) {
         if (!checkDBConnection()) return null;
-        Related w = null;
-        Cursor cursor = null;
+        Related w;
+        Cursor cursor;
 
         String query = Lime.DB_RELATED_COLUMN_ID + " = '" + id + "' ";
 
@@ -4179,10 +4177,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     public int count(String table) {
 
         if (!checkDBConnection()) return 0;
-        int total = 0;
+        int total;
 
 
-        Cursor cursor = null;
+        Cursor cursor;
         String query = "SELECT COUNT(*) as count FROM " + table;
         cursor = db.rawQuery(query, null);
         cursor.moveToFirst();
@@ -4197,9 +4195,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         if (!checkDBConnection()) return 0;
 
-        int total = 0;
+        int total;
 
-        Cursor cursor = null;
+        Cursor cursor;
 
         String query = "SELECT COUNT(*) as count FROM " + table + " WHERE ";
 
@@ -4226,9 +4224,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     public int getRelatedSize(String pword) {
 
         if (!checkDBConnection()) return -1;
-        int total = 0;
+        int total;
 
-        Cursor cursor = null;
+        Cursor cursor;
 
         String query = "SELECT COUNT(*) as count FROM " + Lime.DB_RELATED + " WHERE ";
 
