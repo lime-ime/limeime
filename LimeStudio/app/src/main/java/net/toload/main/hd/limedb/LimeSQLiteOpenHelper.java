@@ -27,8 +27,8 @@ import java.io.InputStream;
 
 public abstract class LimeSQLiteOpenHelper {
 
-	private final boolean DEBUG = false;
-	private final String TAG = "LimeSQLiteOpenHelper";
+	private final static boolean DEBUG = false;
+	private final static String TAG = "LimeSQLiteOpenHelper";
 	
 	private LIMEPreferenceManager mLIMEPref;
 
@@ -123,7 +123,7 @@ public abstract class LimeSQLiteOpenHelper {
         if(checktarget.equalsIgnoreCase("sdcard")){
             mLIMEPref.setParameter("dbtarget", "device");
             sdtarget = new File(Lime.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + Lime.DATABASE_NAME);
-            if(sdtarget.exists() && sdtarget.length() > (1024 * 1024 * 1)){
+            if(sdtarget.exists() && sdtarget.length() > (1024 * 1024)){
                 source_from_sdcard = true;
             }
         }
@@ -153,21 +153,19 @@ public abstract class LimeSQLiteOpenHelper {
                 FileOutputStream to = new FileOutputStream(destpath);
                 byte[] buffer = new byte[4096];
                 int bytes_read;
-                while ((bytes_read = from.read(buffer)) != -1) {
-                    to.write(buffer, 0, bytes_read);
+                if (from != null) {
+                    while ((bytes_read = from.read(buffer)) != -1) {
+                        to.write(buffer, 0, bytes_read);
+                    }
                 }
                 if (from != null) {
                     from.close();
                 }
-                if (to != null) {
-                    to.close();
-                }
+                to.close();
 
                 // The preloaded database has new column user_score in the table related
                 mLIMEPref.setParameter(Lime.DB_CHECK_RELATED_USERSCORE, true);
 
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -186,7 +184,7 @@ public abstract class LimeSQLiteOpenHelper {
         // lock on the read-only database, which shuts out other users.
 
         boolean success = false;
-        SQLiteDatabase db = null;
+        SQLiteDatabase db;
         //if (mDatabase != null) mDatabase. .lock();
         try {
 
@@ -203,9 +201,7 @@ public abstract class LimeSQLiteOpenHelper {
             if (version != mNewVersion) {
                 db.beginTransaction();
                 try {
-                    if (version != mNewVersion) {
-                       onUpgrade(db, version, mNewVersion);
-                    }
+                    onUpgrade(db, version, mNewVersion);
                     db.setVersion(mNewVersion);
                     db.setTransactionSuccessful();
                 } finally {
@@ -221,18 +217,15 @@ public abstract class LimeSQLiteOpenHelper {
             if (success) {
             	if(DEBUG)
             		Log.i(TAG,"getWritableDatabse(), success in finally section");
-                //if (mDatabase != null) {
-                   // try { mDatabase.close(); } catch (Exception e) { }
-                   // mDatabase.unlock();
-                //}
                 mDatabase = db;
                 return db;
             } else {
             	Log.i(TAG,"getWritableDatabse(), not success in finally section and db closed");
-                //if (mDatabase != null) mDatabase.unlock();
+
                 if (db != null) db.close();
             }
         }
+
     }
 
     /**

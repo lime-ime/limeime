@@ -38,8 +38,8 @@ import android.util.Log;
  */
 public class LimeHanConverter extends SQLiteOpenHelper {
 
-	private static boolean DEBUG = false;
-	private static String TAG = "LimeHanConverter";
+	private final static boolean DEBUG = false;
+	private final static String TAG = "LimeHanConverter";
 	
 	
 	private final static String DATABASE_NAME = "hanconvertv2.db";
@@ -56,9 +56,8 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 	}
 	/**
 	 * Count total amount of specific table
-	 * 
-	 * @return
-	 */
+	 *
+
 	public int countMapping(String table) {
 		if(DEBUG)
 			Log.i(TAG,"countMapping() on table:" + table);
@@ -83,14 +82,7 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 	 */
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-
 		// ignore error when create tables
-		try{
-		
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 	/**
@@ -98,19 +90,16 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 	 */
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		
-		try{
-		
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+
 		
 	}
 	
 	public int getBaseScore(String input){
+		if(DEBUG)
+			Log.i(TAG, "getBaseScore()");
 		int score = 0;
 		if(input!=null && !input.equals("")) {
-			Cursor cursor = null;
+			Cursor cursor;
 			
 			try {
 				SQLiteDatabase db = this.getReadableDatabase();
@@ -122,11 +111,9 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 						score = cursor.getInt(scoreColumn);
 					}else if(input.length()>1)
 						score = 1;  //phase has default score = 1
-					
-				if (cursor != null) {
-					//cursor.deactivate();
-					cursor.close();
-				}
+
+				//cursor.deactivate();
+				cursor.close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -136,10 +123,10 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 	}
 	
 	public String convert(String input, Integer hanConvertOption){
-		String output = new String(input);
+		String output=input;
 		//Log.i("LimeHanConverter.convert()","hanConvertOption:"+hanConvertOption);
 		if(input!=null && !input.equals("") && hanConvertOption != 0){
-			String tablename = new String("");
+			String tablename = "";
 			Cursor cursor = null;
 			if(hanConvertOption == 1 ) { //TC to SC
 				tablename = "TCSC";
