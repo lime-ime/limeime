@@ -4,63 +4,65 @@
 
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-
     <uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
-    <!--<uses-permission android:name="android.permission.READ_PHONE_STATE"/>-->
+    <!-- <uses-permission android:name="android.permission.READ_PHONE_STATE"/> -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_USER_DICTIONARY" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>-->
-    <!--<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>-->
+    <!-- <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/> -->
+    <!-- <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/> -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
-
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
-
     <uses-permission android:name="com.android.vending.BILLING" />
 
     <application
         android:allowBackup="true"
+        android:backupAgent=".LIMEBackupAgent"
         android:icon="@drawable/icon"
         android:label="@string/app_name"
-        android:backupAgent="LIMEBackupAgent"
         android:theme="@style/AppTheme" >
-
-        <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
 
         <activity
             android:name=".MainActivity"
             android:configChanges="keyboard|keyboardHidden|orientation"
-            android:label="@string/app_name"
             android:hardwareAccelerated="true"
+            android:label="@string/app_name"
             android:screenOrientation="portrait" >
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="com.google.android.apps.drive.DRIVE_OPEN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="text/plain" />
             </intent-filter>
-
         </activity>
 
-
         <!-- LIME Services -->
-        <service android:label="@string/app_name" android:permission="android.permission.BIND_INPUT_METHOD" android:name="LIMEService">
+        <service
+            android:name=".LIMEService"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_INPUT_METHOD" >
             <intent-filter>
                 <action android:name="android.view.InputMethod" />
             </intent-filter>
-            <meta-data android:name="android.view.im" android:resource="@xml/method" />
+
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
         </service>
 
         <!--
@@ -68,15 +70,15 @@
             android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreference">
         </activity>
         -->
-        <activity android:configChanges="keyboard|keyboardHidden|orientation"
-            android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreferenceHC">
+        <activity
+            android:name=".limesettings.LIMEPreferenceHC"
+            android:configChanges="keyboard|keyboardHidden|orientation"
+            android:label="@string/ime_setting" >
         </activity>
-
-
-        <activity android:name="com.google.android.gms.ads.AdActivity"
+        <activity
+            android:name="com.google.android.gms.ads.AdActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:theme="@android:style/Theme.Translucent" />
-
 
         <!--
         <activity
@@ -90,22 +92,30 @@
 
         <activity
             android:name="com.dropbox.client2.android.AuthActivity"
-            android:launchMode="singleTask"
-            android:configChanges="orientation|keyboard">
+            android:configChanges="orientation|keyboard"
+            android:launchMode="singleTask" >
             <intent-filter>
+
                 <!-- Change this to be db- followed by your app key -->
                 <data android:scheme="db-keuuzhfc6efjf6t" />
+
                 <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.BROWSABLE"/>
+
+                <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
-
         <!--
         <meta-data android:name="com.google.android.backup.api_key"
-            android:value="AEdPqrEAAAAILNniwKkk4v3ZBFX77elSlis0Qabd2h2Tn63kYA" />-->
+            android:value="AEdPqrEAAAAILNniwKkk4v3ZBFX77elSlis0Qabd2h2Tn63kYA" />
+        -->
 
+        <activity
+            android:name=".ui.SetupImGoogleActivity"
+            android:label="@string/title_activity_setup_im_google"
+            android:theme="@style/Theme.AppCompat.Transparent" >
+        </activity>
     </application>
 
 </manifest>
