@@ -59,12 +59,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-
-/**
- * @author Art Hung and Jeremy Wu.
- */
-
-
 public class LimeDB extends LimeSQLiteOpenHelper {
 
     private static boolean DEBUG = false;
@@ -83,12 +77,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private final static int COMPOSING_CODE_LENGTH_LIMIT = 16; //Jermey '12,5,30 changed from 12 to 16 because of improved performance using binary tree.
     private final static int DUALCODE_COMPOSING_LIMIT = 16; //Jermey '12,5,30 changed from 7 to 16 because of improved performance using binary tree. 
     private final static int DUALCODE_NO_CHECK_LIMIT = 3; //Jermey '12,5,30 changed from 5 to 3 for phonetic correct valid code display.
-
-
-    private final static Boolean betweenSearch = false;
-    public static Boolean getBetweenSearch() {
-        return betweenSearch;
-    }
 
 
     public final static String FIELD_ID = "_id";
@@ -288,31 +276,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     private LimeHanConverter hanConverter;
 
-    /*
-    public boolean isLoadingMappingFinished() {
-        if (DEBUG) Log.i(TAG, "isLoadingMapingThreadAborted()" + finish + "");
-        return this.finish;
+
+
+    private final static Boolean betweenSearch = false;
+    public static Boolean getBetweenSearch() {
+        return betweenSearch;
     }
 
-    public void setLoadingMappingThreadAborted(boolean value) {
-        this.threadAborted = value;
-    }
-
-    public boolean isLoadingMappingAborted() {
-        if (DEBUG) Log.i(TAG, "isLoadingMapingAborted()" + threadAborted + "");
-        return this.threadAborted;
-    }
-
-    public boolean isLoadingMappingInProgress() {
-        boolean result = false;
-        result = loadingMappingThread != null && loadingMappingThread.isAlive();
-        if (DEBUG) Log.i(TAG, "isLoadingMappingInProgress()" + result + "");
-        return result;
-    }
-    */
 
     public void setFinish(boolean value) {
-
         this.finish = value;
     }
 
@@ -762,52 +734,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return total;
     }
 
-    /**
-     * Insert mapping item into database
-     *
-     * not used deprecated by Jeremy '15/5/20
-     */
-	/*@Deprecated
-	public synchronized void insertList(ArrayList<String> source) {
-
-		this.identifyDelimiter(source);
-
-		//SQLiteDatabase db = this.getSqliteDb(false);
-		for (String unit : source) {
-
-			try {
-				String code = unit.substring(0, unit.indexOf(this.DELIMITER));
-				String word = unit.substring(unit.indexOf(this.DELIMITER) + 1);
-
-				if (code == null || code.trim().equals("")) {
-					continue;
-				} else {
-					code = code.toLowerCase(Locale.US);
-				}
-				if (word == null || word.trim().equals("")) {
-					continue;
-				}
-				if (code.equalsIgnoreCase("@VERSION@")) {
-					mLIMEPref.setTableVersion("lime", word.trim());
-					continue;
-				}
-
-				ContentValues cv = new ContentValues();
-				cv.put(FIELD_CODE, code);
-				cv.put(FIELD_WORD, word);
-				cv.put(FIELD_SCORE, 0);
-
-				db.insert("mapping", null, cv);
-				count++;
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		
-	}*/
 
     /**
-     * Return the score after add or updated. Jerem '12,6,7
+     * Return the score after add or updated. Jeremy '12,6,7
      *
      */
 
@@ -1587,23 +1516,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         code = code.trim();
                     }
 
-                    String selectClause="";
+                    String selectClause;
                     String sortClause;
                     String escapedCode = code.replaceAll("'", "''");
 
-                    //betweenSearch = !extraConditions.isEmpty(); // do between search if no extracondition like dual code mapping for Hsu or Eten26.
+                    //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
                     if(betweenSearch){
-                        /*
-                        char[] charray = code.toCharArray();
-                        charray[code.length() - 1]++;
-                        String nextcode = new String(charray);
-                        nextcode = nextcode.replaceAll("'", "''");
-                        if(code.length()>1){
-                            for(int i=0;i<code.length()-1;i++){
-                                selectClause+= codeCol + "= '" + code.substring(0,i+1) + "' or ";
-                            }
-                        }
-                        selectClause += codeCol + " >= '" + escapedCode  + "' and " + codeCol + " < '" + nextcode +"' " */
                         selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectCluase;
                         sortClause = "( ("+codeCol +" ='" + escapedCode +"' " + extraSortClause +
                                             ") and (score > 0 or basescore >2) ) desc, ";
@@ -1657,22 +1575,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         String nextcode = new String(charray);
         nextcode = nextcode.replaceAll("'", "''");
 
-        //String[] validDualCode;
-       // int n;
-        //if(lastValidDualCodeList != null) {
-         //   validDualCode = lastValidDualCodeList.split("\\|");
-        //}else{
-        //    validDualCode = new String[]{code};
-        //}
-       // for (int i = 0; i < validDualCode.length; i++) {
-            if ( code.length() > 1) {
-                for (int j = 0; j < code.length() - 1; j++) {
-                    selectClause += searchColumn + "= '" +  code.substring(0, j + 1) + "' or ";
-                }
+        if (code.length() > 1) {
+            for (int j = 0; j < code.length() - 1; j++) {
+                selectClause += searchColumn + "= '" + code.substring(0, j + 1) + "' or ";
             }
-     //   }
-        selectClause += searchColumn + " >= '" + escapedCode  + "' and " + searchColumn + " < '" + nextcode +"' ";
+        }
 
+        selectClause += searchColumn + " >= '" + escapedCode + "' and " + searchColumn + " < '" + nextcode + "' ";
         return selectClause;
     }
 
@@ -1792,28 +1701,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                 (code.equals("q") || code.equals("w")
                                         || code.equals("d") || code.equals("f")
                                         || code.equals("j") || code.equals("k"))) {
-                            // Dual mapped INITIALS have words mapped for ��and �� for ETEN26
                             c = reMap.get(code);
                         } else if (phonetickeyboardtype.startsWith("hsu") &&
                                 (code.equals("a") || code.equals("e") ||
                                         code.equals("s") || code.equals("d") || code.equals("f") || code.equals("j"))) {
-                            // Dual mapped INITIALS have words mapped for a and e   
-                            // and no mapped word on finals s,d,f,j  for HSU
                             c = reMap.get(code);
                         } else {
-							/*if(tablename.equals("array")){
-								if(code.equals("<")){
-									c = finalReMap.get(',');
-								}else if(code.equals(">")){
-									c = finalReMap.get('.');
-								}else if(code.equals("?")){
-									c = finalReMap.get('/');
-								}else if(code.equals(":")){
-									c = finalReMap.get(';');
-								}
-							}else{
-
-							}*/
                             c = finalReMap.get(code);
                         }
                         if (c != null) newcode = c;
@@ -2550,7 +2443,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     /**
      * @return Cursor for
-     */
+     *
     public Cursor getDictionaryAll() {
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (!checkDBConnection()) return null;
@@ -2558,7 +2451,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         Cursor cursor;
         cursor = db.query("dictionary", null, null, null, null, null, null, null);
         return cursor;
-    }
+    } */
 
     /**
      * Get dictionary database contents
