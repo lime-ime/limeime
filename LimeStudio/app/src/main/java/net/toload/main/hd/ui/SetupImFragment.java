@@ -749,9 +749,11 @@ public class SetupImFragment extends Fragment {
 
         if(type != null && type.equals(Lime.BACKUP)) {
             Intent intent = new Intent().setClass(this.getActivity(), SetupImGoogleActivity.class);
+                    intent.putExtra("actiontype", Lime.BACKUP);
             startActivity(intent);
         }else{
             Intent intent = new Intent().setClass(this.getActivity(), SetupImGoogleActivity.class);
+                    intent.putExtra("actiontype", Lime.RESTORE);
             startActivity(intent);
         }
 
