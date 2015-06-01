@@ -72,6 +72,8 @@ public class LIMEService extends InputMethodService implements
     private static final boolean DEBUG = false;
     private static final String TAG = "LIMEService";
 
+    private static Thread queryThread; // queryThread for no-blocking I/O  Jermy '16,6,1
+
     static final int KEYBOARD_SWITCH_CODE = -9;
     static final int KEYBOARD_SWITCH_IM_CODE = -10;
 
@@ -449,7 +451,7 @@ public class LIMEService extends InputMethodService implements
     /**
      * Clear suggestions or candidates in candidate view.
      */
-    private void clearSuggestions() {
+    private synchronized void clearSuggestions() {
         if (mCandidateView != null) {
             if (DEBUG)
                 Log.i(TAG, "clearSuggestions(): "
@@ -775,13 +777,18 @@ public class LIMEService extends InputMethodService implements
         // keyCode, event);
         // mMetaState =
         // LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
-        hasPhysicalKeyPressed = true; // Jeremy '11,9,5
 
+
+        hasPhysicalKeyPressed = true;
         //hide softkeyboard. Jeremy '12,5,8
+        //Should not hide inputView or the candidateView cannot be shown in first stroke. Jeremy '15,6,1
+        /*
         if (mInputView != null && mInputView.isShown() && mLIMEPref.getAutoHideSoftKeyboard()) {
             mInputView.closing();
             requestHideSelf(0);
         }
+        */
+
 
         if (DEBUG)
             Log.i(TAG, "translateKeyDown() LIMEMetaKeyKeyListener.getMetaState(mMetaState) = "
@@ -2072,7 +2079,7 @@ public class LIMEService extends InputMethodService implements
      * Update the list of available candidates from the current composing text.
      * This will need to be filled in by however you are determining candidates.
      */
-    public void updateCandidates(boolean getAllRecords) {
+    public void updateCandidates(final boolean getAllRecords) {
 
         if (DEBUG) Log.i(TAG, "updateCandidate():Update Candidate mComposing:" + mComposing);
 
@@ -2082,10 +2089,10 @@ public class LIMEService extends InputMethodService implements
 
             //showCandidateView();
 
-            LinkedList<Mapping> list = new LinkedList<>();
+            final LinkedList<Mapping> list = new LinkedList<>();
 
-            try {
-                String keyString = mComposing.toString(), keynameString;
+
+                String keyString = mComposing.toString();
 
                 //Art '30,Sep,2011 restrict the length of composing text for Stroke5
                 if (currentSoftKeyboard.contains("wb")) {
@@ -2098,53 +2105,81 @@ public class LIMEService extends InputMethodService implements
                     }
                 }
 
-                list.addAll(SearchSrv.query(keyString, !hasPhysicalKeyPressed, getAllRecords));
-                //Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
-                if (list.size() > 0) {
+                final String finalKeyString = keyString;
+                if(queryThread!=null && queryThread.isAlive()) queryThread.interrupt();
 
-                    // Setup sel key display if 
-                    String selkey;
-                    if (disable_physical_selection && hasPhysicalKeyPressed) {
-                        selkey = "";
-                    } else {
-                        selkey = SearchSrv.getSelkey();
-                        String mixedModeSelkey = "`";
-                        if (hasSymbolMapping && !activeIM.equals("dayi")
-                                && !(activeIM.equals("phonetic")
-                                && mLIMEPref.getPhoneticKeyboardType().equals("standard"))) {
-                            mixedModeSelkey = " ";
+                queryThread = new Thread() {
+
+                    public void run() {
+
+                        try {
+                            list.addAll(SearchSrv.query(finalKeyString, !hasPhysicalKeyPressed, getAllRecords));
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+                        try {
+                            sleep(1);
+                        } catch (InterruptedException ignored) {
+                            return;   // terminate thread here, since it is interrupted and more recent query will update the suggestions.
+                        }
+                        //Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
+                        if (list.size() > 0) {
+                            // Setup sel key display if
+                            String selkey = null;
+                            if (disable_physical_selection && hasPhysicalKeyPressed) {
+                                selkey = "";
+                            } else {
+                                try {
+                                    selkey = SearchSrv.getSelkey();
+                                } catch (RemoteException e) {
+                                    e.printStackTrace();
+                                }
+                                String mixedModeSelkey = "`";
+                                if (hasSymbolMapping && !activeIM.equals("dayi")
+                                        && !(activeIM.equals("phonetic")
+                                        && mLIMEPref.getPhoneticKeyboardType().equals("standard"))) {
+                                    mixedModeSelkey = " ";
+                                }
+
+
+                                int selkeyOption = mLIMEPref.getSelkeyOption();
+                                if (selkeyOption == 1) selkey = mixedModeSelkey + selkey;
+                                else if (selkeyOption == 2) selkey = mixedModeSelkey + " " + selkey;
+                            }
+
+                            try {
+                                sleep(1);
+                            } catch (InterruptedException ignored) {
+                                return;   // terminate thread here, since it is interrupted and more recent query will update the suggestions.
+                            }
+                            setSuggestions(list, hasPhysicalKeyPressed, selkey);
+
+                            if (DEBUG) Log.i(TAG, "updateCandidates(): display selkey:" + selkey
+                                    + "list.size:" + list.size());
+                        } else {
+                            //Jeremy '11,8,14
+                            clearSuggestions();
                         }
 
-
-                        int selkeyOption = mLIMEPref.getSelkeyOption();
-                        if (selkeyOption == 1) selkey = mixedModeSelkey + selkey;
-                        else if (selkeyOption == 2) selkey = mixedModeSelkey + " " + selkey;
+                        // Show composing window if keyToKeyname got different string. Revised by Jeremy '11,6,4
+                        if (SearchSrv.getTablename() != null) {
+                            String keynameString = SearchSrv.keyToKeyname(finalKeyString); //.toLowerCase(Locale.US)); moved to LimeDB
+                            if (mCandidateView != null
+                                    && !keynameString.toUpperCase(Locale.US).equals(finalKeyString.toUpperCase(Locale.US))
+                                    && !keynameString.trim().equals("")
+                                    ) {
+                                try {
+                                    sleep(1);
+                                } catch (InterruptedException ignored) {
+                                    return;   // terminate thread here, since it is interrupted and more recent query will update the suggestions.
+                                }
+                                mCandidateView.setComposingText(keynameString);
+                            }
+                        }
                     }
+                };
+                queryThread.run();
 
-
-                    setSuggestions(list, hasPhysicalKeyPressed, selkey);
-
-                    if (DEBUG) Log.i(TAG, "updateCandidates(): display selkey:" + selkey
-                            + "list.size:" + list.size());
-                } else {
-                    //Jermy '11,8,14
-                    clearSuggestions();
-                }
-
-                // Show composing window if keyToKeyname got different string. Revised by Jeremy '11,6,4
-                if (SearchSrv.getTablename() != null) {
-                    keynameString = SearchSrv.keyToKeyname(keyString); //.toLowerCase(Locale.US)); moved to LimeDB
-                    if (mCandidateView != null
-                            && !keynameString.toUpperCase(Locale.US).equals(keyString.toUpperCase(Locale.US))
-                            //&& !keynameString.equals("")
-                            && !keynameString.trim().equals("")
-                            ) {
-                        mCandidateView.setComposingText(keynameString);
-                    }
-                }
-            } catch (NullPointerException | RemoteException e) {
-                e.printStackTrace();
-            }
 
         } else
             //Jermy '11,8,14
@@ -2160,7 +2195,7 @@ public class LIMEService extends InputMethodService implements
 
             try {
 
-                LinkedList<Mapping> list = new LinkedList<>();
+                final LinkedList<Mapping> list = new LinkedList<>();
 
                 Mapping empty = new Mapping();
                 empty.setWord("");
@@ -2204,30 +2239,49 @@ public class LIMEService extends InputMethodService implements
 
                         tempEnglishList.clear();
 
-                        Mapping temp = new Mapping();
-                        temp.setWord(tempEnglishWord.toString());
-                        temp.setDictionary(true);
 
-                        List<Mapping> templist = SearchSrv
-                                .queryDictionary(tempEnglishWord.toString());
+                        if(queryThread!=null && queryThread.isAlive()) queryThread.interrupt();
+                        queryThread = new Thread() {
+                            public void run() {
+                                final Mapping temp = new Mapping();
+                                temp.setWord(tempEnglishWord.toString());
+                                temp.setDictionary(true);
 
-                        if (templist.size() > 0) {
-                            list.add(temp);
-                            list.addAll(templist);
+                                List<Mapping> templist = null;
+                                try {
+                                    templist = SearchSrv.queryDictionary(tempEnglishWord.toString());
+                                } catch (RemoteException e) {
+                                    e.printStackTrace();
+                                }
+                                try {
+                                    sleep(1);
+                                } catch (InterruptedException ignored) {
+                                    return;   // terminate thread here, since it is interrupted and more recent query will update the suggestions.
+                                }
 
-                            // Setup sel key display if 
-                            String selkey = "1234567890";
-                            if (disable_physical_selection && hasPhysicalKeyPressed) {
-                                selkey = "";
+                                if (templist.size() > 0) {
+                                    list.add(temp);
+                                    list.addAll(templist);
+
+                                    // Setup sel key display if
+                                    String selkey = "1234567890";
+                                    if (disable_physical_selection && hasPhysicalKeyPressed) {
+                                        selkey = "";
+                                    }
+                                    try {
+                                        sleep(1);
+                                    } catch (InterruptedException ignored) {
+                                        return;   // terminate thread here, since it is interrupted and more recent query will update the suggestions.
+                                    }
+                                    setSuggestions(list, hasPhysicalKeyPressed, selkey);
+                                    tempEnglishList.addAll(list);
+                                } else{
+                                    //Jermy '11,8,14
+                                    clearSuggestions();
+                                }
                             }
-
-                            setSuggestions(list, hasPhysicalKeyPressed
-                                    , selkey);
-                            tempEnglishList.addAll(list);
-                        } else {
-                            //Jermy '11,8,14
-                            clearSuggestions();
-                        }
+                        };
+                        queryThread.run();
                     }
 
                 }
@@ -2342,7 +2396,7 @@ public class LIMEService extends InputMethodService implements
             mCandidateList.clear();
 
         if (mFixedCandidateViewOn)
-            mCandidateView.forceHide();
+            mCandidateViewInInputView.forceHide();
         else
             hideCandidateView();
     }
@@ -2369,21 +2423,21 @@ public class LIMEService extends InputMethodService implements
     };
 
 
-    public void setSuggestions(List<Mapping> suggestions, boolean showNumber, String diplaySelkey) {
+    public synchronized void setSuggestions(List<Mapping> suggestions, boolean showNumber, String diplaySelkey) {
         if (suggestions != null && suggestions.size() > 0) {
             if (DEBUG) Log.i(TAG, "setSuggestion():suggestions.size=" + suggestions.size()
                             + " mFixedCandidateViewOn:" + mFixedCandidateViewOn
                             + " hasPhysicalKeyPressed:" + hasPhysicalKeyPressed
             );
 
-            hasCandidatesShown = true; //Jeremy '12,5,6 to replace deprecated isCandidateShown()
+
 
 
             if ((!mFixedCandidateViewOn || (mFixedCandidateViewOn && hasPhysicalKeyPressed))
                     && mCandidateView != mCandidateViewStandAlone) {
                 mCandidateViewInInputView.clear();
                 mCandidateView = mCandidateViewStandAlone; //Jeremy '12,5,4 use standalone candidateView for physical keyboard (no soft keyboard shown)
-                initCandidateView();
+                forceHideCandidateView();
             }else if (mFixedCandidateViewOn && !hasPhysicalKeyPressed &&
                     mCandidateView !=mCandidateViewInInputView){
                 mCandidateViewStandAlone.clear();
@@ -2393,7 +2447,7 @@ public class LIMEService extends InputMethodService implements
             if (!mFixedCandidateViewOn || (hasPhysicalKeyPressed))
                 showCandidateView();
 
-
+            hasCandidatesShown = true; //Jeremy '15,6,1 move after hideCandidateView if candidateView is fixed.
             hasMappingList = true;
 
             if (mCandidateView != null) {

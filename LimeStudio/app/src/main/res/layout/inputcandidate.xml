@@ -36,7 +36,7 @@
             android:layout_height="0dp"
             android:layout_weight="1.0"
             android:gravity="center_vertical" 
-            android:background="@color/limekeyboard_key_color_white"/>
+            android:background="@color/candidate_background"/>
 			
         <LinearLayout
             android:id="@+id/candidate_right_parent"
