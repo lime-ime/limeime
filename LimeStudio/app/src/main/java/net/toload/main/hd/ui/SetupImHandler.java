@@ -55,9 +55,14 @@ public class SetupImHandler extends Handler {
             fragment.initialbutton();
         }else if(action != null && action.equalsIgnoreCase("updatecustombutton")){
             fragment.updateCustomButton();
+        }else if(action != null && action.equalsIgnoreCase("reset")){
+            String imtype = msg.getData().getString("im");
+            boolean backuplearning = msg.getData().getBoolean("backup");
+            fragment.resetImTable(imtype, backuplearning);
+        }else if(action != null && action.equalsIgnoreCase("finish")){
+            String imtype = msg.getData().getString("im");
+            fragment.finishProgress(imtype);
         }
-
-
 
     }
 
@@ -133,6 +138,22 @@ public class SetupImHandler extends Handler {
     public void updateCustomButton() {
         Message m = new Message();
         m.getData().putString("action", "updatecustombutton");
+        this.sendMessageDelayed(m, 1);
+    }
+
+    public void resetImTable(String imtype, Boolean backuplearning) {
+        Message m = new Message();
+        m.getData().putString("action", "reset");
+        m.getData().putString("im", imtype);
+        m.getData().putBoolean("backup", backuplearning);
+        this.sendMessageDelayed(m, 1);
+    }
+
+
+    public void finishLoading(String imtype) {
+        Message m = new Message();
+        m.getData().putString("action", "finish");
+        m.getData().putString("im", imtype);
         this.sendMessageDelayed(m, 1);
     }
 }

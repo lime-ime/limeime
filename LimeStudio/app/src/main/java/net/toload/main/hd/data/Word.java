@@ -96,23 +96,35 @@ public class Word {
 		cursor.close();
 		return list;
 	}
-		
+
 	public static String getInsertQuery(String table, Word record){
 		StringBuffer sb = new StringBuffer();
-					 sb.append("INSERT INTO " + table + "(");
-					 sb.append(Lime.DB_COLUMN_CODE +", ");
-					 sb.append(Lime.DB_COLUMN_CODE3R +", ");
-					 sb.append(Lime.DB_COLUMN_WORD +", ");
-					 sb.append(Lime.DB_COLUMN_RELATED +", ");
-					 sb.append(Lime.DB_COLUMN_SCORE +", ");
-					 sb.append(Lime.DB_COLUMN_BASESCORE +") VALUES(");
-					 sb.append("\""+Lime.formatSqlValue(record.getCode())+"\",");
-					 sb.append("\""+Lime.formatSqlValue(record.getCode3r())+"\",");
-					 sb.append("\""+Lime.formatSqlValue(record.getWord())+"\",");
-					 sb.append("\""+Lime.formatSqlValue(record.getRelated())+"\",");
-					 sb.append("\""+record.getScore()+"\",");
-					 sb.append("\""+record.getBasescore()+"\"");;
-					 sb.append(")");
+		sb.append("INSERT INTO " + table + "(");
+		sb.append(Lime.DB_COLUMN_CODE +", ");
+		sb.append(Lime.DB_COLUMN_CODE3R +", ");
+		sb.append(Lime.DB_COLUMN_WORD +", ");
+		sb.append(Lime.DB_COLUMN_RELATED +", ");
+		sb.append(Lime.DB_COLUMN_SCORE +", ");
+		sb.append(Lime.DB_COLUMN_BASESCORE +") VALUES(");
+		sb.append("\""+Lime.formatSqlValue(record.getCode())+"\",");
+		sb.append("\""+Lime.formatSqlValue(record.getCode3r())+"\",");
+		sb.append("\""+Lime.formatSqlValue(record.getWord())+"\",");
+		sb.append("\""+Lime.formatSqlValue(record.getRelated())+"\",");
+		sb.append("\""+record.getScore()+"\",");
+		sb.append("\""+record.getBasescore()+"\"");;
+		sb.append(")");
+		return sb.toString();
+	}
+
+	public static String getUpdateScoreQuery(String table, Word w){
+		StringBuffer sb = new StringBuffer();
+		sb.append("UPDATE " + table + " SET ");
+		sb.append(Lime.DB_COLUMN_SCORE +"='");
+		sb.append(w.getScore() +"', ");
+		sb.append(Lime.DB_COLUMN_BASESCORE +"='");
+		sb.append(w.getBasescore() +"' ");
+		sb.append(" WHERE " + Lime.DB_COLUMN_ID + " ='");
+		sb.append(w.getId() + "'");
 		return sb.toString();
 	}
 

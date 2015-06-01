@@ -48,6 +48,7 @@ public class ShareRelatedTxtRunnable implements Runnable{
 
     @Override
     public void run() {
+
         handler.showProgress();
 
         handler.updateProgress(activity.getResources().getString(R.string.share_step_initial));

@@ -79,65 +79,6 @@ public class SetupImBackupRunnable implements Runnable {
         }
     }
 
-   /* private void backupToGoogle(File fileContent) {
-
-        // File's binary content
-        FileContent uploadtarget = new FileContent("application/zip", fileContent);
-
-        // File's metadata.
-        com.google.api.services.drive.model.File body = new com.google.api.services.drive.model.File();
-        body.setTitle(Lime.GOOGLE_BACKUP_FILENAME);
-        body.setMimeType("application/zip");
-        body.setDescription("This is the backup file uploaded by LIMEIME");
-
-        Drive service = getDriveService(mCredential);
-
-        List<com.google.api.services.drive.model.File> result = new ArrayList<>();
-        try {
-            int count = 0;
-            boolean continueload = false;
-            Drive.Files.List request = service.files().list();
-            com.google.api.services.drive.model.File cloudbackupfile = null;
-
-            // Search and get cloudbackupfile
-            do {
-                FileList files = request.execute();
-                for (com.google.api.services.drive.model.File f : files.getItems()) {
-                    if (f.getTitle().equalsIgnoreCase(Lime.GOOGLE_BACKUP_FILENAME)) {
-                        cloudbackupfile = f;
-                        continueload = false;
-                        break;
-                    }
-                }
-                count += files.getItems().size();
-                if (!continueload || count >= Lime.GOOGLE_RETRIEVE_MAXIMUM) {
-                    break;
-                }
-            } while (request.getPageToken() != null &&
-                    request.getPageToken().length() > 0);
-
-            // Remove the file on the google drive if exists
-            if (cloudbackupfile != null) {
-                service.files().delete(cloudbackupfile.getId()).execute();
-            }
-
-            // Upload file to the google drive
-            com.google.api.services.drive.model.File checkfile = service.files().insert(body, uploadtarget).execute();
-            if (checkfile != null) {
-                mHandler.showToastMessage(mFragment.getResources().getString(R.string.l3_initial_cloud_backup_end), Toast.LENGTH_LONG);
-            } else {
-                mHandler.showToastMessage(mFragment.getResources().getString(R.string.l3_initial_cloud_restore_error), Toast.LENGTH_LONG);
-            }
-        } catch (Exception e1) {
-            e1.printStackTrace();
-        }
-        mHandler.cancelProgress();
-
-    }
-
-    private Drive getDriveService(GoogleAccountCredential credential) {
-        return new Drive.Builder(AndroidHttp.newCompatibleTransport(), new GsonFactory(), credential).build();
-    }*/
 
     private class backupToDropbox extends AsyncTask< Void, Long, Boolean> {
 

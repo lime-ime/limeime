@@ -125,6 +125,7 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
                             drivefile.trash(mGoogleApiClient).setResultCallback(null);
                         }
                     }
+                    result.getMetadataBuffer().release();
                     startBackup();
                 }
             };
@@ -247,6 +248,7 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
                             }.start();
                         }
                     }
+                    result.getMetadataBuffer().release();
                 }
             };
 

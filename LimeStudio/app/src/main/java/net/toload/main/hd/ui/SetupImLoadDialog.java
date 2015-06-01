@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -56,6 +57,8 @@ public class SetupImLoadDialog extends DialogFragment {
     Button btnSetupImDialogLoad2;
     Button btnSetupImDialogLoad3;
     Button btnSetupImDialogCancel;
+
+    CheckBox chkSetupImBackupLearning;
 
     private ConnectivityManager connManager;
 
@@ -141,6 +144,8 @@ public class SetupImLoadDialog extends DialogFragment {
 
         View rootView = inflater.inflate(R.layout.fragment_dialog_im, container, false);
 
+        chkSetupImBackupLearning = (CheckBox) rootView.findViewById(R.id.chkSetupImBackupLearning);
+
         btnSetupImDialogCustom = (Button) rootView.findViewById(R.id.btnSetupImDialogCustom);
         btnSetupImDialogLoad1 = (Button) rootView.findViewById(R.id.btnSetupImDialogLoad1);
         btnSetupImDialogLoad2 = (Button) rootView.findViewById(R.id.btnSetupImDialogLoad2);
@@ -163,6 +168,7 @@ public class SetupImLoadDialog extends DialogFragment {
             btnSetupImDialogLoad1.setVisibility(View.GONE);
             btnSetupImDialogLoad2.setVisibility(View.GONE);
             btnSetupImDialogLoad3.setVisibility(View.GONE);
+            chkSetupImBackupLearning.setVisibility(View.GONE);
 
         }else{
             if(imcount > 0){
@@ -179,13 +185,12 @@ public class SetupImLoadDialog extends DialogFragment {
                         alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
                                 new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int which) {
-                                        try {
-                                            DBSrv.resetMapping(imtype);
-                                            if(imtype.equals(Lime.DB_TABLE_CUSTOM)){
-                                                handler.updateCustomButton();
-                                            }
-                                        } catch (RemoteException e) {
-                                            e.printStackTrace();
+
+                                        boolean backuplearning = chkSetupImBackupLearning.isChecked();
+                                        handler.resetImTable(imtype, backuplearning);
+                                        //DBSrv.resetMapping(imtype);
+                                        if (imtype.equals(Lime.DB_TABLE_CUSTOM)) {
+                                            handler.updateCustomButton();
                                         }
                                         handler.initialImButtons();
                                         dismiss();
@@ -206,6 +211,9 @@ public class SetupImLoadDialog extends DialogFragment {
                 btnSetupImDialogCustom.setVisibility(View.GONE);
 
             } else {
+
+                // Remove Backup Learning Data Checkbox
+                chkSetupImBackupLearning.setVisibility(View.GONE);
 
                 getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_dialog_title));
 
