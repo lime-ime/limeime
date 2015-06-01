@@ -7,18 +7,11 @@ import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.ProgressListener;
 import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.exception.DropboxException;
-import com.dropbox.client2.exception.DropboxIOException;
-import com.dropbox.client2.exception.DropboxParseException;
-import com.dropbox.client2.exception.DropboxPartialFileException;
 import com.dropbox.client2.exception.DropboxServerException;
 import com.dropbox.client2.exception.DropboxUnlinkedException;
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponse;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.model.FileList;
 
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
@@ -31,8 +24,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Art Hung on 2015/4/26.
@@ -45,15 +36,14 @@ public class SetupImRestoreRunnable implements Runnable {
     private LIMEPreferenceManager mLIMEPref;
 
     private SetupImHandler mHandler;
-    private GoogleAccountCredential credential;
+    //private GoogleAccountCredential credential;
 
     // Dropbox
     private DropboxAPI<AndroidAuthSession> mdbapi;
     private FileOutputStream mFos;
     private boolean mCanceled;
 
-    public SetupImRestoreRunnable(SetupImFragment fragment, SetupImHandler handler, String type, GoogleAccountCredential credential, DropboxAPI mdbapi) {
-        this.credential = credential;
+    public SetupImRestoreRunnable(SetupImFragment fragment, SetupImHandler handler, String type, DropboxAPI mdbapi) {
         this.mHandler = handler;
         this.mType = type;
         this.mdbapi = mdbapi;
@@ -70,8 +60,6 @@ public class SetupImRestoreRunnable implements Runnable {
     public void run() {
 
 
-
-
         switch (mType) {
             case Lime.LOCAL:
                 try {
@@ -81,10 +69,6 @@ public class SetupImRestoreRunnable implements Runnable {
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
-                break;
-            case Lime.GOOGLE:
-                mHandler.showProgress(true, this.mFragment.getResources().getString(R.string.setup_im_restore_message));
-                restoreFromGoogle();
                 break;
             case Lime.DROPBOX:
                 mHandler.showProgress(false, this.mFragment.getResources().getString(R.string.setup_im_restore_message));
@@ -104,7 +88,7 @@ public class SetupImRestoreRunnable implements Runnable {
         // mLIMEPref.setParameter(Lime.PAYMENT_FLAG, false);
     }
 
-    private void restoreFromGoogle() {
+    /*private void restoreFromGoogle() {
 
         Drive service = getDriveService(credential);
 
@@ -145,11 +129,11 @@ public class SetupImRestoreRunnable implements Runnable {
                     tempfile.delete();
                 }
 
-                /*Log.i("LIME", cloudbackupfile.getId());
+                *//*Log.i("LIME", cloudbackupfile.getId());
                 Log.i("LIME", cloudbackupfile.getTitle());
                 Log.i("LIME", cloudbackupfile.getDescription());
                 Log.i("LIME", cloudbackupfile.getDownloadUrl());
-*/
+*//*
                 InputStream fi = downloadFile(service, cloudbackupfile);
                 FileOutputStream fo = new FileOutputStream(tempfile);
 
@@ -185,7 +169,7 @@ public class SetupImRestoreRunnable implements Runnable {
 
     private Drive getDriveService(GoogleAccountCredential credential) {
         return new Drive.Builder(AndroidHttp.newCompatibleTransport(), new GsonFactory(), credential).build();
-    }
+    }*/
 
     private static InputStream downloadFile(Drive service, com.google.api.services.drive.model.File file) {
         if (file.getDownloadUrl() != null && file.getDownloadUrl().length() > 0) {

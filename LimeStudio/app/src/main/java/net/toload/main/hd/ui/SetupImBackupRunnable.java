@@ -11,14 +11,6 @@ import com.dropbox.client2.exception.DropboxFileSizeException;
 import com.dropbox.client2.exception.DropboxPartialFileException;
 import com.dropbox.client2.exception.DropboxServerException;
 import com.dropbox.client2.exception.DropboxUnlinkedException;
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
-import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.client.http.FileContent;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.model.FileList;
 
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
@@ -27,8 +19,6 @@ import net.toload.main.hd.R;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class SetupImBackupRunnable implements Runnable {
 
@@ -37,14 +27,14 @@ public class SetupImBackupRunnable implements Runnable {
     private SetupImFragment mFragment = null;
 
     private SetupImHandler mHandler;
-    private GoogleAccountCredential mCredential;
+    //private GoogleAccountCredential mCredential;
 
     // Dropbox
     private DropboxAPI mdbapi;
     private DropboxAPI.UploadRequest mRequest;
 
-    public SetupImBackupRunnable(SetupImFragment fragment, SetupImHandler handler, String type, GoogleAccountCredential credential, DropboxAPI mdbapi) {
-        this.mCredential = credential;
+    public SetupImBackupRunnable(SetupImFragment fragment, SetupImHandler handler, String type, DropboxAPI mdbapi) {
+        //this.mCredential = credential;
         this.mHandler = handler;
         this.mType = type;
         this.mdbapi = mdbapi;
@@ -70,11 +60,7 @@ public class SetupImBackupRunnable implements Runnable {
         }
 
         switch (mType) {
-            case Lime.GOOGLE: {
-                File sourcefile = new File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DATABASE_BACKUP_NAME);
-                backupToGoogle(sourcefile);
-                break;
-            }
+
             case Lime.DROPBOX: {
                 mHandler.cancelProgress();
                 mHandler.showProgress(false, this.mFragment.getResources().getString(R.string.setup_im_backup_message));
@@ -93,7 +79,7 @@ public class SetupImBackupRunnable implements Runnable {
         }
     }
 
-    private void backupToGoogle(File fileContent) {
+   /* private void backupToGoogle(File fileContent) {
 
         // File's binary content
         FileContent uploadtarget = new FileContent("application/zip", fileContent);
@@ -105,9 +91,6 @@ public class SetupImBackupRunnable implements Runnable {
         body.setDescription("This is the backup file uploaded by LIMEIME");
 
         Drive service = getDriveService(mCredential);
-
-        GoogleTokenResponse authResponse = new GoogleAuthorizationCodeTokenRequest(transport, jsonFactory, CLIENT_ID, CLIENT_SECRET, authToken, CALLBACK_URL).execute();
-        accessToken = authResponse.getAccessToken();
 
         List<com.google.api.services.drive.model.File> result = new ArrayList<>();
         try {
@@ -154,7 +137,7 @@ public class SetupImBackupRunnable implements Runnable {
 
     private Drive getDriveService(GoogleAccountCredential credential) {
         return new Drive.Builder(AndroidHttp.newCompatibleTransport(), new GsonFactory(), credential).build();
-    }
+    }*/
 
     private class backupToDropbox extends AsyncTask< Void, Long, Boolean> {
 

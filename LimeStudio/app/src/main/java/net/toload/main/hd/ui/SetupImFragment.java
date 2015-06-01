@@ -1,6 +1,5 @@
 package net.toload.main.hd.ui;
 
-import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -24,8 +23,6 @@ import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.session.AppKeyPair;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.services.drive.DriveScopes;
 
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
@@ -35,7 +32,6 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -72,9 +68,9 @@ public class SetupImFragment extends Fragment {
     private ProgressDialog progress;
 
     // Google API
-    private GoogleAccountCredential credential;
+    /*private GoogleAccountCredential credential;
     static final int REQUEST_ACCOUNT_PICKER_BACKUP = 1;
-    static final int REQUEST_ACCOUNT_PICKER_RESTORE = 2;
+    static final int REQUEST_ACCOUNT_PICKER_RESTORE = 2;*/
 
     // Dropbox
     DropboxAPI<AndroidAuthSession> mdbapi;
@@ -711,7 +707,7 @@ public class SetupImFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
 
-        switch (requestCode) {
+        /*switch (requestCode) {
 
             case REQUEST_ACCOUNT_PICKER_BACKUP:
                 if (resultCode == activity.RESULT_OK && data != null && data.getExtras() != null) {
@@ -734,7 +730,7 @@ public class SetupImFragment extends Fragment {
                 }
                 break;
         }
-
+*/
         if (requestCode == Lime.PAYMENT_REQUEST_CODE) {
             String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
             //int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
@@ -751,7 +747,15 @@ public class SetupImFragment extends Fragment {
 
     public void requestGoogleDrive(String type){
 
-        credential = GoogleAccountCredential.usingOAuth2(activity, Arrays.asList(DriveScopes.DRIVE));
+        if(type != null && type.equals(Lime.BACKUP)) {
+            Intent intent = new Intent().setClass(this.getActivity(), SetupImGoogleActivity.class);
+            startActivity(intent);
+        }else{
+            Intent intent = new Intent().setClass(this.getActivity(), SetupImGoogleActivity.class);
+            startActivity(intent);
+        }
+
+       /* credential = GoogleAccountCredential.usingOAuth2(activity, Arrays.asList(DriveScopes.DRIVE));
         String accountname = mLIMEPref.getParameterString(Lime.GOOGLE_ACCOUNT_NAME, null);
 
         if(type != null && type.equals(Lime.BACKUP)){
@@ -770,7 +774,7 @@ public class SetupImFragment extends Fragment {
                 credential.setSelectedAccountName(accountname);
                 restoreGoogleDrive(credential);
             }
-        }
+        }*/
     }
 
     public void requestDropboxDrive(String type){
@@ -802,30 +806,30 @@ public class SetupImFragment extends Fragment {
     }
 
     public void backupDropboxDrive(DropboxAPI mdbapi){
-        initialThreadTask(Lime.BACKUP, Lime.DROPBOX, null, mdbapi);
+        initialThreadTask(Lime.BACKUP, Lime.DROPBOX, mdbapi);
     }
 
     public void restoreDropboxDrive(DropboxAPI mdbapi){
-        initialThreadTask(Lime.RESTORE, Lime.DROPBOX, null, mdbapi);
+        initialThreadTask(Lime.RESTORE, Lime.DROPBOX, mdbapi);
     }
 
-    public void backupGoogleDrive(GoogleAccountCredential credential){
+   /* public void backupGoogleDrive(GoogleAccountCredential credential){
         initialThreadTask(Lime.BACKUP, Lime.GOOGLE, credential, null);
     }
 
     public void restoreGoogleDrive(GoogleAccountCredential credential){
         initialThreadTask(Lime.RESTORE, Lime.GOOGLE, credential, null);
-    }
+    }*/
 
     public void backupLocalDrive(){
-        initialThreadTask(Lime.BACKUP, Lime.LOCAL, null, null);
+        initialThreadTask(Lime.BACKUP, Lime.LOCAL, null);
     }
 
     public void restoreLocalDrive(){
-        initialThreadTask(Lime.RESTORE, Lime.LOCAL, null, null);
+        initialThreadTask(Lime.RESTORE, Lime.LOCAL, null);
     }
 
-    public void initialThreadTask(String action, String type, GoogleAccountCredential credential, DropboxAPI mdbapi) {
+    public void initialThreadTask(String action, String type, DropboxAPI mdbapi) {
 
         // Default Setting
         mLIMEPref.setParameter("dbtarget", Lime.DEVICE);
@@ -834,13 +838,13 @@ public class SetupImFragment extends Fragment {
             if(backupthread != null && backupthread.isAlive()){
                 handler.removeCallbacks(backupthread);
             }
-            backupthread = new Thread(new SetupImBackupRunnable(this, handler, type, credential, mdbapi));
+            backupthread = new Thread(new SetupImBackupRunnable(this, handler, type, mdbapi));
             backupthread.start();
         }else if(action.equals(Lime.RESTORE)){
             if(restorethread != null && restorethread.isAlive()){
                 handler.removeCallbacks(restorethread);
             }
-            restorethread = new Thread(new SetupImRestoreRunnable(this, handler, type, credential, mdbapi));
+            restorethread = new Thread(new SetupImRestoreRunnable(this, handler, type, mdbapi));
             restorethread.start();
         }
     }

@@ -67,4 +67,13 @@
         <item name="drawableArrowRight">@drawable/sym_keyboard_right</item>
         <item name="drawableArrowLeft">@drawable/sym_keyboard_left</item>
     </style>
+
+    <style name="Theme.AppCompat.Transparent" parent="@style/Theme.AppCompat.Light">
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
 </resources>
