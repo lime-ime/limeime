@@ -69,7 +69,7 @@ import java.util.Locale;
 public class LIMEService extends InputMethodService implements
         LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final String TAG = "LIMEService";
 
     static final int KEYBOARD_SWITCH_CODE = -9;
@@ -775,13 +775,18 @@ public class LIMEService extends InputMethodService implements
         // keyCode, event);
         // mMetaState =
         // LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
-        hasPhysicalKeyPressed = true; // Jeremy '11,9,5
 
+
+        hasPhysicalKeyPressed = true;
         //hide softkeyboard. Jeremy '12,5,8
+        //Should not hide inputView or the candidateView cannot be shown in first stroke. Jeremy '15,6,1
+        /*
         if (mInputView != null && mInputView.isShown() && mLIMEPref.getAutoHideSoftKeyboard()) {
             mInputView.closing();
             requestHideSelf(0);
         }
+        */
+
 
         if (DEBUG)
             Log.i(TAG, "translateKeyDown() LIMEMetaKeyKeyListener.getMetaState(mMetaState) = "
@@ -2342,7 +2347,7 @@ public class LIMEService extends InputMethodService implements
             mCandidateList.clear();
 
         if (mFixedCandidateViewOn)
-            mCandidateView.forceHide();
+            mCandidateViewInInputView.forceHide();
         else
             hideCandidateView();
     }
@@ -2383,7 +2388,7 @@ public class LIMEService extends InputMethodService implements
                     && mCandidateView != mCandidateViewStandAlone) {
                 mCandidateViewInInputView.clear();
                 mCandidateView = mCandidateViewStandAlone; //Jeremy '12,5,4 use standalone candidateView for physical keyboard (no soft keyboard shown)
-                initCandidateView();
+                forceHideCandidateView();
             }else if (mFixedCandidateViewOn && !hasPhysicalKeyPressed &&
                     mCandidateView !=mCandidateViewInInputView){
                 mCandidateViewStandAlone.clear();

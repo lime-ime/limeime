@@ -40,6 +40,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
 import android.widget.ImageButton;
@@ -60,7 +61,7 @@ import net.toload.main.hd.data.Mapping;
 
 
 public class CandidateView extends View implements View.OnClickListener {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final String TAG = "CandidateView";
 
     protected static final int OUT_OF_BOUNDS = -1;
@@ -274,7 +275,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
     private UIHandler mHandler = new UIHandler(this);
 
-    private class UIHandler extends Handler {
+    private static class UIHandler extends Handler {
 
         private final WeakReference<CandidateView> mCandidateViewWeakReference;
 
@@ -361,8 +362,9 @@ public class CandidateView extends View implements View.OnClickListener {
         if (DEBUG)
             Log.i(TAG, "doUpdateUI()");
 
-        if (mSuggestions == null) {
-            hideCandidatePopup();
+        if ((mSuggestions == null || mSuggestions.isEmpty() )
+                && (mCandidatePopupWindow != null && mCandidatePopupWindow.isShowing()))  {
+            doHideCandidatePopup();
             return;
         }
 
@@ -436,7 +438,7 @@ public class CandidateView extends View implements View.OnClickListener {
             mCandidatePopupWindow = new PopupWindow(mContext);
             LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(
                     Context.LAYOUT_INFLATER_SERVICE);
-            mCandidatePopupContainer = inflater.inflate(R.layout.candidatepopup, null);
+            mCandidatePopupContainer = inflater.inflate(R.layout.candidatepopup, (ViewGroup)this.getRootView(), false);
 
             mCandidatePopupWindow.setContentView(mCandidatePopupContainer);
 
@@ -559,7 +561,7 @@ public class CandidateView extends View implements View.OnClickListener {
             LayoutInflater inflater
                     = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             mComposingTextPopup = new PopupWindow(mContext);
-            mComposingTextView = (TextView) inflater.inflate(R.layout.composingtext, null);
+            mComposingTextView = (TextView) inflater.inflate(R.layout.composingtext, (ViewGroup)getRootView(), false);
             mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
             mComposingTextPopup.setContentView(mComposingTextView);
             mComposingTextPopup.setBackgroundDrawable(null);
@@ -582,6 +584,8 @@ public class CandidateView extends View implements View.OnClickListener {
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
 
+        doUpdateComposing();
+        /*
 
         final int popupWidth = mComposingTextView.getMeasuredWidth();
         final int popupHeight = mComposingTextView.getMeasuredHeight();
@@ -594,13 +598,20 @@ public class CandidateView extends View implements View.OnClickListener {
 
         mPopupComposingY -= popupHeight;
 
+        if (DEBUG)
+            Log.i(TAG, "doSetComposing():mPopupComposingX:" + mPopupComposingX
+                    + ". mPopupComposingY:" + mPopupComposingY
+                    + ". popupWidth = " + popupWidth
+                    + ". popupHeight = " + popupHeight
+                    + ". mComposingTextPopup.isShowing()=" + mComposingTextPopup.isShowing());
+
         if (!mComposingTextPopup.isShowing()) {
             mComposingTextPopup.setWidth(popupWidth);
             mComposingTextPopup.setHeight(popupHeight);
             mComposingTextPopup.showAtLocation(mCandidateView, Gravity.NO_GRAVITY, mPopupComposingX, mPopupComposingY);
         }
 
-
+        */
     }
 
     /**
@@ -651,14 +662,14 @@ public class CandidateView extends View implements View.OnClickListener {
         //Jeremy '12,4,8 to avoid fc when hard keyboard is engaged and candidateview is not shown
         if (!this.isShown()) return;
 
-        mHandler.updateComposing(200); //Jeremy '12,6,3 dealy for 200ms after setcomposing
+        mHandler.updateComposing(100); //Jeremy '12,6,3 dealy for 200ms after setcomposing
 
     }
 
     public void hideComposing() {
         if (DEBUG)
             Log.i(TAG, "hidecomposing()");
-        mHandler.dismissComposing(200); //Jeremy '12,6,3 the same delay as showComposing to avoid showed after hided
+        mHandler.dismissComposing(100); //Jeremy '12,6,3 the same delay as showComposing to avoid showed after hided
 
     }
 
@@ -973,7 +984,7 @@ public class CandidateView extends View implements View.OnClickListener {
         mTargetScrollX = 0;
         mTotalWidth = 0;
         hideComposing();
-        hideCandidatePopup();
+        //hideCandidatePopup();
 
         prepareLayout();
         resetWidth();  // update layout width of this view
