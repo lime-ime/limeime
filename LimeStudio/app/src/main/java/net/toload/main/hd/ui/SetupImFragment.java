@@ -870,82 +870,86 @@ public class SetupImFragment extends Fragment {
 
         cancelProgress();
 
-        AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
-        alertDialog.setTitle(activity.getResources().getString(R.string.setup_im_restore_learning_data));
-        alertDialog.setMessage(activity.getResources().getString(R.string.setup_im_restore_learning_data_message));
-        alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
+        final String sourcefile = Lime.DATABASE_FOLDER_EXTERNAL + imtype + ".learning";
 
-                        handler.showProgress(true, activity.getResources().getString(R.string.setup_im_restore_learning_data));
+        final File checkfile = new File(sourcefile);
 
-                        final String sourcefile = Lime.DATABASE_FOLDER_EXTERNAL + imtype + ".learning";
+        if(checkfile.exists()){
 
-                        File checkfile = new File(sourcefile);
-                        HashMap<String, String> scorecache = new HashMap<String, String>();
+            AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
+            alertDialog.setTitle(activity.getResources().getString(R.string.setup_im_restore_learning_data));
+            alertDialog.setMessage(activity.getResources().getString(R.string.setup_im_restore_learning_data_message));
+            alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
 
-                        if(checkfile.exists()){
+                            handler.showProgress(true, activity.getResources().getString(R.string.setup_im_restore_learning_data));
 
-                            String line = "";
-                            // Restore Score
-                            // Base on first 100 line to identify the Delimiter
-                            try {
-                                // Prepare Source File
-                                FileReader fr = new FileReader(checkfile);
-                                BufferedReader buf = new BufferedReader(fr);
-                                int i = 0;
-                                List<String> templist = new ArrayList<>();
-                                while ((line = buf.readLine()) != null) {
-                                    String[] items = line.split("|");
-                                    if(items.length == 4){
-                                        String key = items[0] + items[1];
-                                        String score = items[2] + "," + items[3];
-                                        scorecache.put(key, score);
+                            HashMap<String, String> scorecache = new HashMap<String, String>();
+
+                            if(checkfile.exists()){
+
+                                String line = "";
+                                // Restore Score
+                                // Base on first 100 line to identify the Delimiter
+                                try {
+                                    // Prepare Source File
+                                    FileReader fr = new FileReader(checkfile);
+                                    BufferedReader buf = new BufferedReader(fr);
+                                    int i = 0;
+                                    List<String> templist = new ArrayList<>();
+                                    while ((line = buf.readLine()) != null) {
+                                        String[] items = line.split("|");
+                                        if(items.length == 4){
+                                            String key = items[0] + items[1];
+                                            String score = items[2] + "," + items[3];
+                                            scorecache.put(key, score);
+                                        }
+                                    }
+                                    buf.close();
+                                    fr.close();
+                                } catch (Exception ignored) {
+                                    ignored.printStackTrace();
+                                }
+
+                                List<Word> wordlist = new ArrayList<Word>();
+                                Cursor cursor = datasource.list(imtype);
+                                cursor.moveToFirst();
+                                while(!cursor.isAfterLast()){
+                                    Word r = Word.get(cursor);
+                                    wordlist.add(r);
+                                    cursor.moveToNext();
+                                }
+                                cursor.close();
+
+                                List<Word> scorelist = new ArrayList<Word>();
+                                for(Word w: wordlist){
+                                    String key = w.getCode()+w.getWord();
+                                    if(scorecache.get(key) != null){
+                                        int score = w.getScore();
+                                        int basescore = w.getBasescore();
+                                        w.setScore(score);
+                                        w.setBasescore(basescore);
+                                        scorelist.add(w);
                                     }
                                 }
-                                buf.close();
-                                fr.close();
-                            } catch (Exception ignored) {
-                                ignored.printStackTrace();
+
+                                datasource.updateBackupScore(imtype, scorelist);
                             }
 
-                            List<Word> wordlist = new ArrayList<Word>();
-                            Cursor cursor = datasource.list(imtype);
-                            cursor.moveToFirst();
-                            while(!cursor.isAfterLast()){
-                                Word r = Word.get(cursor);
-                                wordlist.add(r);
-                                cursor.moveToNext();
-                            }
-                            cursor.close();
-
-                            List<Word> scorelist = new ArrayList<Word>();
-                            for(Word w: wordlist){
-                                String key = w.getCode()+w.getWord();
-                                if(scorecache.get(key) != null){
-                                    int score = w.getScore();
-                                    int basescore = w.getBasescore();
-                                    w.setScore(score);
-                                    w.setBasescore(basescore);
-                                    scorelist.add(w);
-                                }
-                            }
-
-                            datasource.updateBackupScore(imtype, scorelist);
+                            checkfile.deleteOnExit();
+                            handler.cancelProgress();
                         }
-
-                        checkfile.deleteOnExit();
-                        handler.cancelProgress();
-                    }
-                });
-        alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
-        alertDialog.show();
-
-
+                    });
+            alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+            alertDialog.show();
+        }else{
+            handler.cancelProgress();
+        }
     }
 }

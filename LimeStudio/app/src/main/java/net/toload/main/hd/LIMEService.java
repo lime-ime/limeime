@@ -1836,6 +1836,7 @@ public class LIMEService extends InputMethodService implements
     }
 
     private void buildActivatedIMList() {
+
         CharSequence[] items = getResources().getStringArray(R.array.keyboard);
         CharSequence[] shortNames = getResources().getStringArray(R.array.keyboardShortname);
         CharSequence[] codes = getResources().getStringArray(
@@ -1896,7 +1897,7 @@ public class LIMEService extends InputMethodService implements
             try {
                 activeIM = activatedIMList.get(0);
             }catch(IndexOutOfBoundsException e){
-                Toast.makeText(this, getResources().getString(R.string.error_set_active_im), Toast.LENGTH_LONG).show();
+                //Toast.makeText(this, getResources().getString(R.string.error_set_active_im), Toast.LENGTH_LONG).show();
             }
             //initializeIMKeyboard();
 
