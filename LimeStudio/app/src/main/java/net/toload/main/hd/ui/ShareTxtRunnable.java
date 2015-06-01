@@ -51,6 +51,7 @@ public class ShareTxtRunnable implements Runnable{
 
     @Override
     public void run() {
+
         handler.showProgress();
 
         handler.updateProgress(activity.getResources().getString(R.string.share_step_initial));
@@ -108,7 +109,7 @@ public class ShareTxtRunnable implements Runnable{
 
                 for(Word w: wordlist){
                     if(w.getWord() == null || w.getWord().equals("null")){continue;}
-                    String s = w.getCode()+"|"+w.getWord();
+                    String s = w.getCode()+"|"+w.getWord()+"|"+w.getScore()+"|"+w.getBasescore();
                     fout.write(s);
                     fout.newLine();
                 }

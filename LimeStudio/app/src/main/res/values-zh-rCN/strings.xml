@@ -78,6 +78,10 @@
 
     <string name="setup_im_dialog_remove_confirm">移除输入法</string>
     <string name="setup_im_dialog_remove_confirm_message">您确定要移除输入法资料表吗 ?</string>
+    <string name="setup_im_backup_learning_data">备份输入法选字喜好</string>
+
+    <string name="setup_im_restore_learning_data">还原输入法选字喜好</string>
+    <string name="setup_im_restore_learning_data_message">请问您是否要还原输入法选字喜好?</string>
 
     <string name="setup_load_download">下载输入法文档</string>
     <string name="setup_load_migrate_load">准备输入法字根</string>

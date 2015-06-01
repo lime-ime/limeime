@@ -2719,7 +2719,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             return;
         }
 
-
         this.DELIMITER = "";
 
         finish = false;
@@ -4240,4 +4239,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return databseOnhold;
     }
 
+    public void updateBackupScore(String imtype, List<Word> scorelist) {
+        if (!checkDBConnection()) return;
+        db.beginTransaction();
+        for(Word w: scorelist){
+            String updatesql = Word.getUpdateScoreQuery(imtype, w);
+            db.execSQL(updatesql);
+        }
+        db.setTransactionSuccessful();
+    }
 }

@@ -6,9 +6,11 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
@@ -28,10 +30,20 @@ import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Im;
+import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -796,4 +808,144 @@ public class SetupImFragment extends Fragment {
         btnSetupImImportStandard.setText(getResources().getString(R.string.setup_im_load_standard));
     }
 
+    public void resetImTable(String imtable, boolean backuplearning){
+        try {
+            if(backuplearning){
+                exportBackupData(imtable);
+            }
+            DBSrv.resetMapping(imtable);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void exportBackupData(String imtable){
+
+        // Load
+        List<Word> wordlist = new ArrayList<Word>();
+        Cursor cursor = datasource.list(imtable);
+        cursor.moveToFirst();
+        while(!cursor.isAfterLast()){
+            Word r = Word.get(cursor);
+            wordlist.add(r);
+            cursor.moveToNext();
+        }
+        cursor.close();
+
+        int count = 0;
+        String targetfile = Lime.DATABASE_FOLDER_EXTERNAL + imtable + ".learning";
+        try {
+            File target = new File(targetfile);
+            target.deleteOnExit();
+
+            Writer writer = new OutputStreamWriter( new FileOutputStream(target), "UTF-8");
+            BufferedWriter fout = new BufferedWriter(writer);
+
+            for(Word w: wordlist){
+                if(w.getWord() == null || w.getWord().equals("null")){continue;}
+                if(w.getScore() > 0) {
+                    String s = w.getCode() + "|" + w.getWord() + "|" + w.getScore() + "|" + w.getBasescore();
+                    fout.write(s);
+                    fout.newLine();
+                    count++;
+                }
+            }
+
+            fout.close();
+
+            if(count == 0){
+                File check = new File(targetfile);
+                if(check.exists()){
+                   check.delete();
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void finishProgress(final String imtype) {
+
+        cancelProgress();
+
+        AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
+        alertDialog.setTitle(activity.getResources().getString(R.string.setup_im_restore_learning_data));
+        alertDialog.setMessage(activity.getResources().getString(R.string.setup_im_restore_learning_data_message));
+        alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        handler.showProgress(true, activity.getResources().getString(R.string.setup_im_restore_learning_data));
+
+                        final String sourcefile = Lime.DATABASE_FOLDER_EXTERNAL + imtype + ".learning";
+
+                        File checkfile = new File(sourcefile);
+                        HashMap<String, String> scorecache = new HashMap<String, String>();
+
+                        if(checkfile.exists()){
+
+                            String line = "";
+                            // Restore Score
+                            // Base on first 100 line to identify the Delimiter
+                            try {
+                                // Prepare Source File
+                                FileReader fr = new FileReader(checkfile);
+                                BufferedReader buf = new BufferedReader(fr);
+                                int i = 0;
+                                List<String> templist = new ArrayList<>();
+                                while ((line = buf.readLine()) != null) {
+                                    String[] items = line.split("|");
+                                    if(items.length == 4){
+                                        String key = items[0] + items[1];
+                                        String score = items[2] + "," + items[3];
+                                        scorecache.put(key, score);
+                                    }
+                                }
+                                buf.close();
+                                fr.close();
+                            } catch (Exception ignored) {
+                                ignored.printStackTrace();
+                            }
+
+                            List<Word> wordlist = new ArrayList<Word>();
+                            Cursor cursor = datasource.list(imtype);
+                            cursor.moveToFirst();
+                            while(!cursor.isAfterLast()){
+                                Word r = Word.get(cursor);
+                                wordlist.add(r);
+                                cursor.moveToNext();
+                            }
+                            cursor.close();
+
+                            List<Word> scorelist = new ArrayList<Word>();
+                            for(Word w: wordlist){
+                                String key = w.getCode()+w.getWord();
+                                if(scorecache.get(key) != null){
+                                    int score = w.getScore();
+                                    int basescore = w.getBasescore();
+                                    w.setScore(score);
+                                    w.setBasescore(basescore);
+                                    scorelist.add(w);
+                                }
+                            }
+
+                            datasource.updateBackupScore(imtype, scorelist);
+                        }
+
+                        checkfile.deleteOnExit();
+                        handler.cancelProgress();
+                    }
+                });
+        alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        alertDialog.show();
+
+
+    }
 }
