@@ -2377,19 +2377,22 @@ public class LIMEService extends InputMethodService implements
             );
 
             hasCandidatesShown = true; //Jeremy '12,5,6 to replace deprecated isCandidateShown()
-            if (!mFixedCandidateViewOn || (hasPhysicalKeyPressed))
-                showCandidateView();
+
 
             if ((!mFixedCandidateViewOn || (mFixedCandidateViewOn && hasPhysicalKeyPressed))
                     && mCandidateView != mCandidateViewStandAlone) {
                 mCandidateViewInInputView.clear();
                 mCandidateView = mCandidateViewStandAlone; //Jeremy '12,5,4 use standalone candidateView for physical keyboard (no soft keyboard shown)
-            } else if (mFixedCandidateViewOn && !hasPhysicalKeyPressed &&
+                initCandidateView();
+            }else if (mFixedCandidateViewOn && !hasPhysicalKeyPressed &&
                     mCandidateView !=mCandidateViewInInputView){
                 mCandidateViewStandAlone.clear();
                 hideCandidateView();
                 mCandidateView = mCandidateViewInInputView;
             }
+            if (!mFixedCandidateViewOn || (hasPhysicalKeyPressed))
+                showCandidateView();
+
 
             hasMappingList = true;
 
