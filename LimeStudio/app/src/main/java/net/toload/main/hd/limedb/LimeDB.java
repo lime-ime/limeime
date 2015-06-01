@@ -4246,6 +4246,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             String updatesql = Word.getUpdateScoreQuery(imtype, w);
             db.execSQL(updatesql);
         }
+        db.endTransaction();;
         db.setTransactionSuccessful();
     }
 }

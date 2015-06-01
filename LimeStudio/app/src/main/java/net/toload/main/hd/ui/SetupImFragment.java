@@ -819,50 +819,60 @@ public class SetupImFragment extends Fragment {
         }
     }
 
-    public void exportBackupData(String imtable){
+    public void exportBackupData(final String imtable){
 
-        // Load
-        List<Word> wordlist = new ArrayList<Word>();
-        Cursor cursor = datasource.list(imtable);
-        cursor.moveToFirst();
-        while(!cursor.isAfterLast()){
-            Word r = Word.get(cursor);
-            wordlist.add(r);
-            cursor.moveToNext();
-        }
-        cursor.close();
+        new Thread() {
 
-        int count = 0;
-        String targetfile = Lime.DATABASE_FOLDER_EXTERNAL + imtable + ".learning";
-        try {
-            File target = new File(targetfile);
-            target.deleteOnExit();
+            @Override
+            public void run() {
 
-            Writer writer = new OutputStreamWriter( new FileOutputStream(target), "UTF-8");
-            BufferedWriter fout = new BufferedWriter(writer);
-
-            for(Word w: wordlist){
-                if(w.getWord() == null || w.getWord().equals("null")){continue;}
-                if(w.getScore() > 0) {
-                    String s = w.getCode() + "|" + w.getWord() + "|" + w.getScore() + "|" + w.getBasescore();
-                    fout.write(s);
-                    fout.newLine();
-                    count++;
+                // Load
+                List<Word> wordlist = new ArrayList<Word>();
+                Cursor cursor = datasource.list(imtable);
+                cursor.moveToFirst();
+                while(!cursor.isAfterLast()){
+                    Word r = Word.get(cursor);
+                    wordlist.add(r);
+                    cursor.moveToNext();
                 }
-            }
+                cursor.close();
 
-            fout.close();
+                int count = 0;
+                String targetfile = Lime.DATABASE_FOLDER_EXTERNAL + imtable + ".learning";
+                try {
+                    File target = new File(targetfile);
+                    target.deleteOnExit();
 
-            if(count == 0){
-                File check = new File(targetfile);
-                if(check.exists()){
-                   check.delete();
+                    Writer writer = new OutputStreamWriter( new FileOutputStream(target), "UTF-8");
+                    BufferedWriter fout = new BufferedWriter(writer);
+
+                    for(Word w: wordlist){
+                        if(w.getWord() == null || w.getWord().equals("null")){continue;}
+                        if(w.getScore() > 0) {
+                            String s = w.getCode() + "|" + w.getWord() + "|" + w.getScore() + "|" + w.getBasescore();
+                            fout.write(s);
+                            fout.newLine();
+                            count++;
+                        }
+                    }
+
+                    fout.close();
+
+                    if(count == 0){
+                        File check = new File(targetfile);
+                        if(check.exists()){
+                            check.delete();
+                        }
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            }
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+            }
+        }.start();
+
 
     }
 
@@ -885,60 +895,69 @@ public class SetupImFragment extends Fragment {
 
                             handler.showProgress(true, activity.getResources().getString(R.string.setup_im_restore_learning_data));
 
-                            HashMap<String, String> scorecache = new HashMap<String, String>();
+                            new Thread() {
 
-                            if(checkfile.exists()){
+                                @Override
+                                public void run() {
 
-                                String line = "";
-                                // Restore Score
-                                // Base on first 100 line to identify the Delimiter
-                                try {
-                                    // Prepare Source File
-                                    FileReader fr = new FileReader(checkfile);
-                                    BufferedReader buf = new BufferedReader(fr);
-                                    int i = 0;
-                                    List<String> templist = new ArrayList<>();
-                                    while ((line = buf.readLine()) != null) {
-                                        String[] items = line.split("|");
-                                        if(items.length == 4){
-                                            String key = items[0] + items[1];
-                                            String score = items[2] + "," + items[3];
-                                            scorecache.put(key, score);
+                                    HashMap<String, String> scorecache = new HashMap<String, String>();
+
+                                    if(checkfile.exists()){
+
+                                        String line = "";
+                                        // Restore Score
+                                        // Base on first 100 line to identify the Delimiter
+                                        try {
+                                            // Prepare Source File
+                                            FileReader fr = new FileReader(checkfile);
+                                            BufferedReader buf = new BufferedReader(fr);
+                                            int i = 0;
+                                            List<String> templist = new ArrayList<>();
+                                            while ((line = buf.readLine()) != null) {
+                                                String[] items = line.split("|");
+                                                if(items.length == 4){
+                                                    String key = items[0] + items[1];
+                                                    String score = items[2] + "," + items[3];
+                                                    scorecache.put(key, score);
+                                                }
+                                            }
+                                            buf.close();
+                                            fr.close();
+                                        } catch (Exception ignored) {
+                                            ignored.printStackTrace();
                                         }
+
+                                        List<Word> wordlist = new ArrayList<Word>();
+                                        Cursor cursor = datasource.list(imtype);
+                                        cursor.moveToFirst();
+                                        while(!cursor.isAfterLast()){
+                                            Word r = Word.get(cursor);
+                                            wordlist.add(r);
+                                            cursor.moveToNext();
+                                        }
+                                        cursor.close();
+
+                                        List<Word> scorelist = new ArrayList<Word>();
+                                        for(Word w: wordlist){
+                                            String key = w.getCode()+w.getWord();
+                                            if(scorecache.get(key) != null){
+                                                int score = w.getScore();
+                                                int basescore = w.getBasescore();
+                                                w.setScore(score);
+                                                w.setBasescore(basescore);
+                                                scorelist.add(w);
+                                            }
+                                        }
+
+                                        datasource.updateBackupScore(imtype, scorelist);
                                     }
-                                    buf.close();
-                                    fr.close();
-                                } catch (Exception ignored) {
-                                    ignored.printStackTrace();
+
+                                    checkfile.deleteOnExit();
+                                    cancelProgress();
+
                                 }
+                            }.start();
 
-                                List<Word> wordlist = new ArrayList<Word>();
-                                Cursor cursor = datasource.list(imtype);
-                                cursor.moveToFirst();
-                                while(!cursor.isAfterLast()){
-                                    Word r = Word.get(cursor);
-                                    wordlist.add(r);
-                                    cursor.moveToNext();
-                                }
-                                cursor.close();
-
-                                List<Word> scorelist = new ArrayList<Word>();
-                                for(Word w: wordlist){
-                                    String key = w.getCode()+w.getWord();
-                                    if(scorecache.get(key) != null){
-                                        int score = w.getScore();
-                                        int basescore = w.getBasescore();
-                                        w.setScore(score);
-                                        w.setBasescore(basescore);
-                                        scorelist.add(w);
-                                    }
-                                }
-
-                                datasource.updateBackupScore(imtype, scorelist);
-                            }
-
-                            checkfile.deleteOnExit();
-                            handler.cancelProgress();
                         }
                     });
             alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
