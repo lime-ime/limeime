@@ -87,12 +87,12 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
 
         action = getIntent().getExtras().getString("actiontype");
 
-        handler.show(this.getResources().getString(R.string.setup_im_backup_message));
     }
 
     public void backupToGoogle() {
 
         // Create backup File Temp
+        handler.show(this.getResources().getString(R.string.setup_im_backup_message));
         try {
             DBServer.backupDatabase();
         } catch (RemoteException e) {
@@ -181,6 +181,8 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
 
 
     public void restoreFromGoogle() {
+
+        handler.show(this.getResources().getString(R.string.setup_im_restore_message));
 
         // Load old backup file
         Query query = new Query.Builder()

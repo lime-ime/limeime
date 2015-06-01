@@ -594,14 +594,6 @@ public class SetupImFragment extends Fragment {
                     }
                 });
 
-        /*if(check.get(Lime.DB_TABLE_HS) != null){
-            btnSetupImHs.setAlpha(Lime.HALF_ALPHA_VALUE);
-            btnSetupImPhonetic.setTypeface(null, Typeface.ITALIC);
-        }else {
-            btnSetupImHs.setAlpha(Lime.NORMAL_ALPHA_VALUE);
-            btnSetupImPhonetic.setTypeface(null, Typeface.BOLD);
-        }*/
-
                 btnSetupImHs.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -698,39 +690,12 @@ public class SetupImFragment extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-       /* ((MainActivity) activity).onSectionAttached(
-                getArguments().getInt(ARG_SECTION_NUMBER));*/
     }
 
 
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
-
-        /*switch (requestCode) {
-
-            case REQUEST_ACCOUNT_PICKER_BACKUP:
-                if (resultCode == activity.RESULT_OK && data != null && data.getExtras() != null) {
-                    String accountname = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-                    if (accountname != null) {
-                        mLIMEPref.setParameter(Lime.GOOGLE_ACCOUNT_NAME, accountname);
-                        credential.setSelectedAccountName(accountname);
-                        backupGoogleDrive(credential);
-                    }
-                }
-                break;
-            case REQUEST_ACCOUNT_PICKER_RESTORE:
-                if (resultCode == activity.RESULT_OK && data != null && data.getExtras() != null) {
-                    String accountname = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-                    if (accountname != null) {
-                        mLIMEPref.setParameter(Lime.GOOGLE_ACCOUNT_NAME, accountname);
-                        credential.setSelectedAccountName(accountname);
-                        restoreGoogleDrive(credential);
-                    }
-                }
-                break;
-        }
-*/
         if (requestCode == Lime.PAYMENT_REQUEST_CODE) {
             String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
             //int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
@@ -756,27 +721,6 @@ public class SetupImFragment extends Fragment {
                     intent.putExtra("actiontype", Lime.RESTORE);
             startActivity(intent);
         }
-
-       /* credential = GoogleAccountCredential.usingOAuth2(activity, Arrays.asList(DriveScopes.DRIVE));
-        String accountname = mLIMEPref.getParameterString(Lime.GOOGLE_ACCOUNT_NAME, null);
-
-        if(type != null && type.equals(Lime.BACKUP)){
-            if(accountname == null){
-                startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER_BACKUP);
-            }else{
-                mLIMEPref.setParameter(Lime.GOOGLE_ACCOUNT_NAME, accountname);
-                credential.setSelectedAccountName(accountname);
-                backupGoogleDrive(credential);
-            }
-        }else if(type != null && type.equals(Lime.RESTORE)){
-            if(accountname == null){
-                startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER_RESTORE);
-            }else{
-                mLIMEPref.setParameter(Lime.GOOGLE_ACCOUNT_NAME, accountname);
-                credential.setSelectedAccountName(accountname);
-                restoreGoogleDrive(credential);
-            }
-        }*/
     }
 
     public void requestDropboxDrive(String type){
@@ -814,14 +758,6 @@ public class SetupImFragment extends Fragment {
     public void restoreDropboxDrive(DropboxAPI mdbapi){
         initialThreadTask(Lime.RESTORE, Lime.DROPBOX, mdbapi);
     }
-
-   /* public void backupGoogleDrive(GoogleAccountCredential credential){
-        initialThreadTask(Lime.BACKUP, Lime.GOOGLE, credential, null);
-    }
-
-    public void restoreGoogleDrive(GoogleAccountCredential credential){
-        initialThreadTask(Lime.RESTORE, Lime.GOOGLE, credential, null);
-    }*/
 
     public void backupLocalDrive(){
         initialThreadTask(Lime.BACKUP, Lime.LOCAL, null);

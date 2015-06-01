@@ -210,6 +210,4 @@
     <string name="error_set_active_im">請先下載輸入法或匯入字根檔</string>
     <string name="title_activity_setup_im_google">SetupImGoogleActivity</string>
 
-    <string name="hello_world">Hello world!</string>
-
 </resources>
