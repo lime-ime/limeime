@@ -1366,7 +1366,7 @@ public class LIMEService extends InputMethodService implements
                         // Jeremy '11,7,28 for continuous typing (LD) 
                         // Jeremy '12,6,2 get real commited code length from searchserver 
                         boolean composingNotFinish = false;
-                        //String commitedCode = selectedCandidate.getCode();
+                        //TODO: need to rewrite for betweenSearch
                         int commitedCodeLength = SearchSrv.getRealCodeLength(selectedIndex);
 
                         if (DEBUG)

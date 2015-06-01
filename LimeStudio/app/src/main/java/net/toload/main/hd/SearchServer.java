@@ -328,7 +328,7 @@ public class SearchServer {
 
 				}
 			}
-			// 11'7,22 rewritten for 嚙踐�嚙賢�鞈ｇ蕭�佇��批�頦蕭嚙賢�剛�豲
+
 			// 12,6,4 Jeremy.
 			// Descending  abc ab a... Build the result candidate list.
 			HashSet<String> duplicateCheck = new HashSet<>();
@@ -367,8 +367,9 @@ public class SearchServer {
 								+ " relatedlist.size()=" + relatedtlist.size());
 
 					if (i == 0) {//Jeremy add the mixed type English code in first loop
-						//Jeremy '12,5,31 setRelated true if the exact match code has zero result list size.
-						temp.setRelated(resultlist.size() == 0|| !resultlist.get(0).getCode().equalsIgnoreCase(code));
+						//Jeremy '12,5,31 setRelated true if the exact match code has zero result.
+						//Jeremy '15,6,2 rewrote for betweenSerach.  getRelated = false for the first element means no any exact match suggestions.
+						temp.setRelated(resultlist.size() == 0|| resultlist.get(0).getRelated());
 						result.add(temp);
 					}
 

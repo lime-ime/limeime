@@ -278,7 +278,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
 
-    private final static Boolean betweenSearch = false;
+    private final static Boolean betweenSearch = true;
     public static Boolean getBetweenSearch() {
         return betweenSearch;
     }
@@ -1520,14 +1520,19 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     String sortClause;
                     String escapedCode = code.replaceAll("'", "''");
 
+                    String limitClause = (getAllRecords) ?FINAL_RESULT_LIMIT: INITIAL_RESULT_LIMIT;
+
                     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
                     if(betweenSearch){
                         selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectCluase;
-                        sortClause = "( ("+codeCol +" ='" + escapedCode +"' " + extraSortClause +
-                                            ") and (score > 0 or basescore >2) ) desc, ";
+                        String exactMatchCondition = " (" +codeCol +" ='" + escapedCode +"') " + extraSortClause ;
+                        sortClause = "( (exactmatch = 1) and (score > 0 or basescore >2) ) desc, ";
                         if(sort) sortClause += " score desc, basescore desc, ";
                         sortClause += "_id asc";
 
+                        String selectString = "select _id, code, code3r, word, score, basescore, (" + exactMatchCondition + ") as exactmatch"
+                                +" from " + tablename + " where " + selectClause + " order by " + sortClause + " limit " + limitClause;
+                        cursor = db.rawQuery(selectString, null);
                      }
                     else{
                         selectClause = codeCol + " = '" + escapedCode + "' " + extraSelectCluase;
@@ -1535,19 +1540,17 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             sortClause = FIELD_SCORE + " DESC, +" + FIELD_BASESCORE + " DESC, " + "_id ASC";
                         else
                             sortClause = "_id ASC";
+                        cursor = db.query(tablename, null, selectClause, null, null, null, sortClause, limitClause);
                     }
 
 
                     if (DEBUG)
                         Log.i(TAG, "getMapping(): code = '" + code + "' selectClause=" + selectClause);
                     // Jeremy '11,8,5 limit initial query to limited records
-
-                    String limitClause = (getAllRecords) ?FINAL_RESULT_LIMIT: INITIAL_RESULT_LIMIT;
-
                     // Jeremy '11,6,15 Using query with preprocessed code and extra query conditions.
 
 
-                    cursor = db.query(tablename, null, selectClause, null, null, null, sortClause, limitClause);
+
 
 
                     if (cursor != null) {
@@ -2298,19 +2301,20 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             int wordColumn = cursor.getColumnIndex(FIELD_WORD);
             int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
             int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
+            int exactMatchColumn = cursor.getColumnIndex("exactmatch");
             HashMap<String, String> relatedMap = new HashMap<>();
 
             do {
                 String code = cursor.getString(codeColumn);
-                String relatedlist = cursor.getString(relatedColumn);
-                //if(DEBUG)
-                //	Log.i(TAG, "buildQueryResult() code = '" + code + "' relatedlist = " + relatedlist);
+                String relatedlist = (betweenSearch)?null: cursor.getString(relatedColumn);
+
+                Boolean related = (betweenSearch)?!cursor.getString(exactMatchColumn).equals("1"):false;
 
                 Mapping munit = new Mapping();
                 munit.setWord(cursor.getString(wordColumn));
                 munit.setId(cursor.getString(idColumn));
                 munit.setCode(code);
-                munit.setRelated(false);//Jeremy '12,5,30 exact match, not from related list
+                munit.setRelated(related);//Jeremy '12,5,30 exact match, not from related list
 
                 //Jeremy '11,8,26 build valid code map
                 //jeremy '11,8,30 add limit for valid code words for composing display
@@ -2337,7 +2341,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 } catch (Exception ignored) {
                 }
 
-                if (!betweenSearch && relatedlist != null && relatedMap.get(code) == null) {
+                if ( relatedlist != null && relatedMap.get(code) == null) {
                     relatedMap.put(code, relatedlist);
                     if (DEBUG)
                         Log.i(TAG, "buildQueryResult() build relatedmap on code = '" + code + "' relatedlist = " + relatedlist);
