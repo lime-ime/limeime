@@ -2376,7 +2376,7 @@ public class LIMEService extends InputMethodService implements
                             + " hasPhysicalKeyPressed:" + hasPhysicalKeyPressed
             );
 
-            hasCandidatesShown = true; //Jeremy '12,5,6 to replace deprecated isCandidateShown()
+
 
 
             if ((!mFixedCandidateViewOn || (mFixedCandidateViewOn && hasPhysicalKeyPressed))
@@ -2393,7 +2393,7 @@ public class LIMEService extends InputMethodService implements
             if (!mFixedCandidateViewOn || (hasPhysicalKeyPressed))
                 showCandidateView();
 
-
+            hasCandidatesShown = true; //Jeremy '15,6,1 move after hideCandidateView if candidateView is fixed.
             hasMappingList = true;
 
             if (mCandidateView != null) {
