@@ -84,6 +84,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private final static int DUALCODE_NO_CHECK_LIMIT = 3; //Jermey '12,5,30 changed from 5 to 3 for phonetic correct valid code display.
 
 
+    private static Boolean betweenSearch = true;
+    public static Boolean getBetweenSearch() {
+        return betweenSearch;
+    }
+
 
     public final static String FIELD_ID = "_id";
     public final static String FIELD_CODE = "code";
@@ -1575,8 +1580,31 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         code = code.trim();
                     }
 
-                    // Do escape code here.
-                    String selectClause = codeCol + " = '" + code.replaceAll("'", "''") + "' " + extraConditions;
+                    String selectClause="";
+                    String sortClause;
+                    String escapedCode = code.replaceAll("'", "''");
+
+                    betweenSearch = !extraConditions.isEmpty(); // do between search if no extracondition like dual code mapping for Hsu or Eten26.
+                    if(betweenSearch){
+                        char[] charray = code.toCharArray();
+                        charray[code.length() - 1]++;
+                        String nextcode = new String(charray);
+
+                        nextcode = nextcode.replaceAll("'", "''");
+                        if(code.length()>1){
+                            for(int i=0;i<code.length()-1;i++){
+                                selectClause+= codeCol + "= '" + code.substring(0,i+1) + "' or ";
+                            }
+                        }
+                        selectClause += codeCol + " >= '" + escapedCode  + "' and " + codeCol + " < '" + nextcode +"' "
+                                + extraConditions;
+                        sortClause = "( ( code ='" + escapedCode +
+                                "') and (score > 0 or basescore >0) ) desc, score desc, basescore desc, _id asc";
+                     }
+                    else{
+                        selectClause = codeCol + " = '" + escapedCode + "' " + extraConditions;
+                        sortClause = FIELD_SCORE + " DESC, +" + FIELD_BASESCORE + " DESC, " + "_id ASC";
+                    }
 
 
                     if (DEBUG)
@@ -1585,12 +1613,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     String limitClause = null;
                     if (!getAllRecords)
                         limitClause = INITIAL_RESULT_LIMIT;
+                    else
+                        limitClause = "50";
 
                     // Jeremy '11,6,15 Using query with preprocessed code and extra query conditions.
                     if (sort) {
-                        cursor = db.query(tablename, null, selectClause, null, null, null,
-                                FIELD_SCORE + " DESC, +" + FIELD_BASESCORE + " DESC, " + "_id ASC"
-                                , limitClause);
+                        cursor = db.query(tablename, null, selectClause, null, null, null, sortClause, limitClause);
                     } else {
                         cursor = db.query(tablename, null, selectClause
                                 , null, null, null, "_id ASC", limitClause); //Jeremy '12,4,28 ignore the basescore when not sorintg
@@ -2353,7 +2381,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 //Jeremy '11,8,26 build valid code map
                 //jeremy '11,8,30 add limit for valid code words for composing display
 
-                if (buildValidCodeList) {
+                if ((!betweenSearch || tablename.equals("phonetic")) && buildValidCodeList) {
                     String noToneCode = cursor.getString(noToneCodeColumn);
                     if (useCode3r && noToneCode != null
                             && validCodeMap.size() < DUALCODE_COMPOSING_LIMIT)
@@ -2374,7 +2402,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 } catch (Exception ignored) {
                 }
 
-                if (relatedlist != null && relatedMap.get(code) == null) {
+                if (!betweenSearch && relatedlist != null && relatedMap.get(code) == null) {
                     relatedMap.put(code, relatedlist);
                     if (DEBUG)
                         Log.i(TAG, "buildQueryResult() build relatedmap on code = '" + code + "' relatedlist = " + relatedlist);
@@ -2407,35 +2435,38 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             int ssize = mLIMEPref.getSimilarCodeCandidates();
             //Jeremy '11,6,1 The related field may have only one word and thus no "|" inside
             //Jeremy '11,6,11 allow multiple relatedlist from different codes.
-            int scount = 0;
-            for (Entry<String, String> entry : relatedMap.entrySet()) {
-                String relatedlist = entry.getValue();
-                if (ssize > 0 && relatedlist != null && scount <= ssize) {
-                    String templist[] = relatedlist.split("\\|");
+            if (!betweenSearch) {
+                int scount = 0;
+                for (Entry<String, String> entry : relatedMap.entrySet()) {
+                    String relatedlist = entry.getValue();
+                    if (ssize > 0 && relatedlist != null && scount <= ssize) {
+                        String templist[] = relatedlist.split("\\|");
 
-                    for (String unit : templist) {
-                        if (scount > ssize) {
-                            break;
-                        }
-                        if (duplicateCheck.add(unit)) {
-                            Mapping munit = new Mapping();
-                            munit.setWord(unit);
-                            //munit.setPword(relatedlist);
-                            munit.setScore(0);
-                            munit.setCode(entry.getKey());
-                            //Jeremy '11,6,18 skip if word is empty
-                            if (munit.getWord() == null || munit.getWord().trim().equals(""))
-                                continue;
-                            relatedresult.add(munit);
-                            scount++;
-                            // Jeremy '11, 8, 5 break if limit number exceeds
-                            if (!getAllRecords && scount == INITIAL_RELATED_LIMIT) break;
+                        for (String unit : templist) {
+                            if (scount > ssize) {
+                                break;
+                            }
+                            if (duplicateCheck.add(unit)) {
+                                Mapping munit = new Mapping();
+                                munit.setWord(unit);
+                                //munit.setPword(relatedlist);
+                                munit.setScore(0);
+                                munit.setCode(entry.getKey());
+                                //Jeremy '11,6,18 skip if word is empty
+                                if (munit.getWord() == null || munit.getWord().trim().equals(""))
+                                    continue;
+                                relatedresult.add(munit);
+                                scount++;
+                                // Jeremy '11, 8, 5 break if limit number exceeds
+                                if (!getAllRecords && scount == INITIAL_RELATED_LIMIT) break;
+                            }
                         }
                     }
                 }
             }
         }
         if (query_code.length() == 1) {
+            if(betweenSearch) relatedresult.addAll(result);
             // processing full shaped , and .
             if ((query_code.equals(",") || query_code.equals("<")) && duplicateCheck.add("，")) {
                 Mapping temp = new Mapping();
@@ -3369,7 +3400,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     }
 
-    /**
+    /**f
      * Jeremy '12,4,6 core of getHightestScore()
      */
     private int getHighestScoreOnDB(SQLiteDatabase db, String word) throws RemoteException {

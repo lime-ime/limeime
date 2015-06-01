@@ -36,6 +36,7 @@ import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -270,10 +271,9 @@ public class SearchServer {
 
 			Mapping temp = new Mapping();
 			temp.setWord(code);
-			//code = code.toLowerCase(Locale.US);  //Jeremy '12,4,1 moved to LimeDB.getMapping after remapping For XPERIA PRO BPMF 
 			temp.setCode(code);
-			//result.add(temp);  Jeremy '12,5,30 add later in the result buliding loop
-			int size = code.length();
+
+			int size =code.length();
 
 			boolean hasMore = false;
 
@@ -329,8 +329,11 @@ public class SearchServer {
 				}
 			}
 			// 11'7,22 rewritten for 嚙踐�嚙賢�鞈ｇ蕭�佇��批�頦蕭嚙賢�剛�豲
-			// 12,6,4 Jeremy. Descending  abc ab a... Build the result candidate list.
-			for (int i = 0; i < size; i++) {
+			// 12,6,4 Jeremy.
+			// Descending  abc ab a... Build the result candidate list.
+			HashSet<String> duplicateCheck = new HashSet<>();
+
+			for (int i = 0; i < ((dbadapter.getBetweenSearch())?1: size); i++) {
 				String cacheKey = cacheKey(code);
 				Pair<List<Mapping>, List<Mapping>> cacheTemp = cache.get(cacheKey);
 
@@ -364,7 +367,8 @@ public class SearchServer {
 								+ " relatedlist.size()=" + relatedtlist.size());
 
 					if (i == 0) {//Jeremy add the mixed type English code in first loop
-						temp.setRelated(resultlist.size() == 0); //Jeremy '12,5,31 setRelated true if the exact match code has zero result list size.
+						//Jeremy '12,5,31 setRelated true if the exact match code has zero result list size.
+						temp.setRelated(resultlist.size() == 0|| !resultlist.get(0).getCode().equalsIgnoreCase(code));
 						result.add(temp);
 					}
 
