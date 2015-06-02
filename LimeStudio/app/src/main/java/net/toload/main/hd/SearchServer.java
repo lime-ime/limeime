@@ -438,9 +438,9 @@ public class SearchServer {
 	/**
 	 * Get the real code length according to  codeLenthMap
 	 */
-	int getRealCodeLength(Mapping selectedMapping, int index) {
+	int getRealCodeLength(Mapping selectedMapping) {
 		if (DEBUG)
-			Log.i(TAG, "getRealCodeLength() index = " + index);
+			Log.i(TAG, "getRealCodeLength()");
 
 		// Return real code length form code length preserved in exact match stack instead of code length map. Jeremy '15,6,2
 		// return real code by iterating the current exact match stack.

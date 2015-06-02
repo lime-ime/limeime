@@ -118,7 +118,7 @@ public class LIMEService extends InputMethodService implements
 
     private Mapping selectedCandidate; //Jeremy '12,5,7 renamed from firstMathed
     private int selectedIndex; //Jeremy '12,5,7 the index in resultList of selectedCandidate
-    private Mapping commitedCandidate; //Jeremy '12,5,7 renamed from tempMatched
+    private Mapping committedCandidate; //Jeremy '12,5,7 renamed from tempMatched
 
     private StringBuffer tempEnglishWord;
     private List<Mapping> tempEnglishList;
@@ -1314,7 +1314,7 @@ public class LIMEService extends InputMethodService implements
      */
     private void commitTyped(InputConnection ic) {
         if (DEBUG)
-            Log.i(TAG, "CommitedTyped()");
+            Log.i(TAG, "commitTyped()");
         try {
             if (mComposing.length() > 0   //denotes composing just finished
                     || (selectedCandidate != null && selectedCandidate.isDictionary())) { //denotes related candidates are selected.
@@ -1347,7 +1347,7 @@ public class LIMEService extends InputMethodService implements
                         }
 
                         if (DEBUG)
-                            Log.i(TAG, "CommitedTyped() commited Length="
+                            Log.i(TAG, "commitTyped() committed Length="
                                     + firstMatchedLength);
                         // Do hanConvert before commit
                         // '10, 4, 17 Jeremy
@@ -1364,13 +1364,13 @@ public class LIMEService extends InputMethodService implements
 
 
                         // Jeremy '11,7,28 for continuous typing (LD) 
-                        // Jeremy '12,6,2 get real commited code length from searchserver 
+                        // Jeremy '12,6,2 get real committed code length from searchserver
                         boolean composingNotFinish = false;
-                        //TODO: need to rewrite for betweenSearch
-                        int commitedCodeLength = SearchSrv.getRealCodeLength(selectedCandidate, selectedIndex);
+                        //Jeremy '15,6,2 retrieve real code length with selectedCandidate using exact code match stack in search server
+                        int committedCodeLength = SearchSrv.getRealCodeLength(selectedCandidate);
 
                         if (DEBUG)
-                            Log.i(TAG, "commitedtype(): commitedCodeLength = " + commitedCodeLength);
+                            Log.i(TAG, "commitTyped(): committedCodeLength = " + committedCodeLength);
 
                         if (mComposing.length() > selectedCandidate.getCode().length()) {
                             composingNotFinish = true;
@@ -1383,26 +1383,26 @@ public class LIMEService extends InputMethodService implements
                                 //starting LD process
                                 LDComposingBuffer = mComposing.toString();
                                 if (DEBUG)
-                                    Log.i(TAG, "commitedtype():starting LD process, LDBuffer=" + LDComposingBuffer +
-                                            ". just commited code= '" + selectedCandidate.getCode() + "'");
+                                    Log.i(TAG, "commitTyped():starting LD process, LDBuffer=" + LDComposingBuffer +
+                                            ". just committed code= '" + selectedCandidate.getCode() + "'");
                                 SearchSrv.addLDPhrase(selectedCandidate, false);
                             } else {//if(LDComposingBuffer.contains(mComposing.toString())){
                                 //Continuous LD process
                                 if (DEBUG)
-                                    Log.i(TAG, "commitedtype():Continuous LD process, LDBuffer='" + LDComposingBuffer +
-                                            "'. just commited code=" + selectedCandidate.getCode());
+                                    Log.i(TAG, "commitTyped():Continuous LD process, LDBuffer='" + LDComposingBuffer +
+                                            "'. just committed code=" + selectedCandidate.getCode());
                                 SearchSrv.addLDPhrase(selectedCandidate, false);
                             }
-                            mComposing = mComposing.delete(0, commitedCodeLength);
+                            mComposing = mComposing.delete(0, committedCodeLength);
                             if (DEBUG)
-                                Log.i(TAG, "commitedtype(): trimmed mCopmosing = '" + mComposing + "', " +
-                                        "+ mCompsing.length = " + mComposing.length());
+                                Log.i(TAG, "commitTyped(): trimmed mCopmosing = '" + mComposing + "', " +
+                                        "+ mComposing.length = " + mComposing.length());
 
                             if (!mComposing.toString().equals(" ")) {
                                 if (mComposing.toString().startsWith(" "))
                                     mComposing = mComposing.deleteCharAt(0);
                                 if (DEBUG)
-                                    Log.i(TAG, "commitedtype(): new mComposing:'" + mComposing + "'");
+                                    Log.i(TAG, "commitTyped(): new mComposing:'" + mComposing + "'");
                                 if (mComposing.length() > 0) { //Jeremy '12,7,11 only fetch remaining composoing when length >0
                                     if (ic != null) ic.setComposingText(mComposing, 1);
                                     //updateCandidates();
@@ -1414,15 +1414,15 @@ public class LIMEService extends InputMethodService implements
                             if (LDComposingBuffer.length() > 0) {// && LDComposingBuffer.contains(mComposing.toString())){
                                 //Ending continuous LD process (last of LD process)
                                 if (DEBUG)
-                                    Log.i(TAG, "commitedtype():Ending LD process, LDBuffer=" + LDComposingBuffer +
-                                            ". just commited code=" + selectedCandidate.getCode());
+                                    Log.i(TAG, "commitTyped():Ending LD process, LDBuffer=" + LDComposingBuffer +
+                                            ". just committed code=" + selectedCandidate.getCode());
                                 LDComposingBuffer = "";
                                 SearchSrv.addLDPhrase(selectedCandidate, true);
                             } else if (LDComposingBuffer.length() > 0) {
                                 //LD process interrupted.
                                 if (DEBUG)
-                                    Log.i(TAG, "commitedtype():LD process interrupted, LDBuffer=" + LDComposingBuffer +
-                                            ". just commited code=" + selectedCandidate.getCode());
+                                    Log.i(TAG, "commitTyped():LD process interrupted, LDBuffer=" + LDComposingBuffer +
+                                            ". just committed code=" + selectedCandidate.getCode());
                                 LDComposingBuffer = "";
                                 SearchSrv.addLDPhrase(null, true);
                             }
@@ -1434,15 +1434,15 @@ public class LIMEService extends InputMethodService implements
                         if (shouldUpdateCandidates) {
                             updateCandidates();
                         } else {
-                            commitedCandidate = new Mapping(selectedCandidate);
+                            committedCandidate = new Mapping(selectedCandidate);
                             selectedCandidate = null;
 
 
                             clearComposing(false);
 
 
-                            SearchSrv.addUserDictAndUpdateScore(commitedCandidate);
-                            SearchSrv.getCodeListStringFromWord(commitedCandidate.getWord());
+                            SearchSrv.addUserDictAndUpdateScore(committedCandidate);
+                            SearchSrv.getCodeListStringFromWord(committedCandidate.getWord());
 
                             updateRelatedWord(false);
                         }
@@ -2308,8 +2308,8 @@ public class LIMEService extends InputMethodService implements
             // Modified by Jeremy '10, 4,1. getCode -> getWord
             // if( tempMatched != null && tempMatched.getCode() != null &&
             // !tempMatched.getCode().equals("")){
-            if (commitedCandidate != null && commitedCandidate.getWord() != null
-                    && !commitedCandidate.getWord().equals("")) {
+            if (committedCandidate != null && committedCandidate.getWord() != null
+                    && !committedCandidate.getWord().equals("")) {
 
                 LinkedList<Mapping> list = new LinkedList<>();
                 //Jeremy '11,8,9 Insert completion suggestions from application 
@@ -2319,8 +2319,8 @@ public class LIMEService extends InputMethodService implements
                 }
                 // Modified by Jeremy '10,3 ,12 for more specific related word
                 // -----------------------------------------------------------
-                if (commitedCandidate != null && hasMappingList) {
-                    list.addAll(SearchSrv.getUserDictMappingFromWord(commitedCandidate.getWord(), getAllRecords));
+                if (committedCandidate != null && hasMappingList) {
+                    list.addAll(SearchSrv.getUserDictMappingFromWord(committedCandidate.getWord(), getAllRecords));
                 }
                 // -----------------------------------------------------------
                 if (list.size() > 0) {
@@ -2335,7 +2335,7 @@ public class LIMEService extends InputMethodService implements
                     setSuggestions(list, hasPhysicalKeyPressed && !isFullscreenMode()
                             , selkey);
                 } else {
-                    commitedCandidate = null;
+                    committedCandidate = null;
                     //Jermy '11,8,14
                     clearSuggestions();
                 }
