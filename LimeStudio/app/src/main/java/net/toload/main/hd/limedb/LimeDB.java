@@ -70,7 +70,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
     private final static Boolean betweenSearch = true;
     // hold database connection when database is in maintainance. Jeremy '15,5,23
-    private static boolean databaseOnhold = false;
+    private static boolean databaseOnHold = false;
 
     //Jeremy '11,8,5
     private final static String INITIAL_RESULT_LIMIT = "15";
@@ -78,7 +78,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private final static int INITIAL_RELATED_LIMIT = 5;
     private final static int COMPOSING_CODE_LENGTH_LIMIT = 16; //Jermey '12,5,30 changed from 12 to 16 because of improved performance using binary tree.
     private final static int DUALCODE_COMPOSING_LIMIT = 16; //Jermey '12,5,30 changed from 7 to 16 because of improved performance using binary tree. 
-    private final static int DUALCODE_NO_CHECK_LIMIT = 3; //Jermey '12,5,30 changed from 5 to 3 for phonetic correct valid code display.
+    private final static int DUALCODE_NO_CHECK_LIMIT = 2; //Jermey '12,5,30 changed from 5 to 3 for phonetic correct valid code display.
+    private final static int BETWEEN_SEARCH_WAY_BACK_LEVELS = 3; //Jermey '15,6,30
 
 
     public final static String FIELD_ID = "_id";
@@ -615,7 +616,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             }
             db = this.getWritableDatabase();
             //mLIMEPref.holdDatabaseCoonection(false); // Jeremy '12,4,10 reset holdDatabaseCoonection status
-            databaseOnhold = false;
+            databaseOnHold = false;
             return db != null && db.isOpen();
         }
     }
@@ -631,7 +632,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (DEBUG)
             Log.i(TAG, "checkDBConnection()");
 
-        if (databaseOnhold) {   //mapping loading in progress, database is not available for query
+        if (databaseOnHold) {   //mapping loading in progress, database is not available for query
             if (DEBUG)
                 Log.i(TAG, "checkDBConnection() : mapping loading ");
             Toast.makeText(mContext, mContext.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT).show();
@@ -921,7 +922,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return getMappingFromWord(keyword, table);
     }
 */
-    public List<Mapping> getMappingFromWord(String keyword, String table) {
+    public List<Mapping> getMappingByWord(String keyword, String table) {
 
         if (DEBUG)
             Log.i(TAG, "getRmapping():tablename:" + table + "  keyworad:" + keyword);
@@ -980,7 +981,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Reverse lookup on keyword.
      */
-    public String getCodeListStringWithWord(String keyword) {
+    public String getCodeListStringByWord(String keyword) {
 
         if (!checkDBConnection()) return null;
 
@@ -1203,7 +1204,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             if (!code.equals(lastCode)) {
                 // unsynchronized cache. do the preprocessing again.
                 //preProcessingForExtraQueryConditions(preProcessingRemappingCode(code));
-                getMappingFromCode(code, false, false);
+                getMappinpByCode(code, false, false);
             }
             //String dualCodeList = lastValidDualCodeList;
             if (lastValidDualCodeList != null) {
@@ -1451,7 +1452,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * Retrieve matched records
      * Add synchronized modifier to avoid later search finsihed earlier in ascending searching like a ab to avoid incorrect order of exact match stack.
      */
-    public synchronized Pair<List<Mapping>, List<Mapping>> getMappingFromCode(String code, boolean softKeyboard, boolean getAllRecords) {
+    public synchronized Pair<List<Mapping>, List<Mapping>> getMappinpByCode(String code, boolean softKeyboard, boolean getAllRecords) {
 
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (!checkDBConnection()) return null;
@@ -1462,7 +1463,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
         isPhysicalKeyboardPressed = !softKeyboard;
         if (DEBUG)
-            Log.i(TAG, "getMappingFromCode(): code='" + code + "' doLDPhonetic="
+            Log.i(TAG, "getMappingByCode(): code='" + code + "' doLDPhonetic="
                     + mLIMEPref.getParameterBoolean("doLDPhonetic")
                     + ", table=" + tablename + ", getAllRecords=" + getAllRecords);
 
@@ -1474,8 +1475,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         //Two-steps qeury code pre-processing. Jeremy '11,6,15
         // Step.1 Code re-mapping.  
         code = preProcessingRemappingCode(code);
-        code = code.toLowerCase(Locale.US); //Jeremy '12,4,1 moved from SearchService.getMappingFromCode();
-        // Step.2 Build extra getMappingFromCode conditions. (e.g. dualcode remap)
+        code = code.toLowerCase(Locale.US); //Jeremy '12,4,1 moved from SearchService.getMappingByCode();
+        // Step.2 Build extra getMappingByCode conditions. (e.g. dualcode remap)
         Pair<String, String> extraCondidtions = preProcessingForExtraQueryConditions(code);
         String extraSelectCluase ="";
         String extraSortClause = "";
@@ -1535,6 +1536,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         String selectString = "select _id, code, code3r, word, score, basescore, (" + exactMatchCondition + ") as exactmatch "
                                 +" from " + tablename + " where " + selectClause + " order by " + sortClause + " limit " + limitClause;
                         cursor = db.rawQuery(selectString, null);
+
+                        if(DEBUG)
+                            Log.i(TAG, "getMappinpByCode() between search select string:"+selectString);
                      }
                     else{
                         selectClause = codeCol + " = '" + escapedCode + "' " + extraSelectCluase;
@@ -1547,9 +1551,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
                     if (DEBUG)
-                        Log.i(TAG, "getMappingFromCode(): code = '" + code + "' selectClause=" + selectClause);
-                    // Jeremy '11,8,5 limit initial getMappingFromCode to limited records
-                    // Jeremy '11,6,15 Using getMappingFromCode with preprocessed code and extra getMappingFromCode conditions.
+                        Log.i(TAG, "getMappingByCode(): code = '" + code + "' selectClause=" + selectClause);
+                    // Jeremy '11,8,5 limit initial getMappingByCode to limited records
+                    // Jeremy '11,6,15 Using getMappingByCode with preprocessed code and extra getMappingByCode conditions.
 
 
 
@@ -1580,8 +1584,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         String nextcode = new String(charray);
         nextcode = nextcode.replaceAll("'", "''");
 
-        if (code.length() > 1) {
-            for (int j = 0; j < code.length() - 1; j++) {
+        int len = code.length();
+        int start = (len>BETWEEN_SEARCH_WAY_BACK_LEVELS)?len - BETWEEN_SEARCH_WAY_BACK_LEVELS: 0;
+        if (len > 1) {
+            for (int j = start; j < len - 1; j++) {
                 selectClause += searchColumn + "= '" + code.substring(0, j + 1) + "' or ";
             }
         }
@@ -1748,8 +1754,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
             }
 
-            //Process the escape characters of getMappingFromCode
-            //newcode = newcode.replaceAll("'", "''"); // Jeremy '12,7,7 do the code escaped before getMappingFromCode.
+            //Process the escape characters of getMappingByCode
+            //newcode = newcode.replaceAll("'", "''"); // Jeremy '12,7,7 do the code escaped before getMappingByCode.
             if (DEBUG)
                 Log.i(TAG, "preProcessingRemappingCode():newcode=" + newcode);
             return newcode;
@@ -2232,7 +2238,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                 blackListCache.put(cacheKey(dualcode + "%"), true);
                                 if (DEBUG)
                                     Log.i(TAG, " expandDualCode() blackList wildcard code added, code = " + dualcode + "%"
-                                            + ", cachkey = :" + cacheKey(dualcode + "%")
+                                            + ", cachekey = :" + cacheKey(dualcode + "%")
                                             + ", black list size = " + blackListCache.size()
                                             + ", blackListCache.get() = " + blackListCache.get(cacheKey(dualcode + "%")));
 
@@ -4251,15 +4257,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     // Hold database connection to prevent further transactions when database is in maintenance. Jeremy '15,5,23
     public void holdDBConnection() {
-        databaseOnhold = true;
+        databaseOnHold = true;
     }
 
     public void unHoldDBConnection() {
-        databaseOnhold = false;
+        databaseOnHold = false;
     }
 
     public boolean isDatabseOnHold() {
-        return databaseOnhold;
+        return databaseOnHold;
     }
 
     public void updateBackupScore(String imtype, List<Word> scorelist) {

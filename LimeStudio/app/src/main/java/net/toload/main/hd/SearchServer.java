@@ -36,8 +36,6 @@ import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -90,7 +88,7 @@ public class SearchServer {
 	private static ConcurrentHashMap<String, List<Mapping>> engcache = null;
 	private static ConcurrentHashMap<String, String> keynamecache = null;
 	/**
-	 * Store the mapping of typing code and mapped code from getMappingFromCode on db  Jeremy '12,6,5
+	 * Store the mapping of typing code and mapped code from getMappingByCode on db  Jeremy '12,6,5
 	 */
 	private static ConcurrentHashMap<String, List<String>> coderemapcache = null;
 
@@ -201,7 +199,7 @@ public class SearchServer {
 
 	//Modified by Jeremy '10,3 ,12 for more specific related word
 	//-----------------------------------------------------------
-	public List<Mapping> getUserDictMappingFromWord(String word, boolean getAllRecords) throws RemoteException {
+	public List<Mapping> getUserDictMappingByWord(String word, boolean getAllRecords) throws RemoteException {
 
 		return dbadapter.queryUserDict(word, getAllRecords);
 	}
@@ -220,7 +218,7 @@ public class SearchServer {
 
 		Thread queryThread = new Thread() {
 			public void run() {
-				String result = dbadapter.getCodeListStringWithWord(word);
+				String result = dbadapter.getCodeListStringByWord(word);
 				if (result != null && !result.equals("")) {
 					//displayNotificationMessage(result);
 					LIMEUtilities.showNotification(
@@ -252,8 +250,8 @@ public class SearchServer {
 		return key;
 	}
 
-	public List<Mapping> getMappingFromCode(String code, boolean softkeyboard, boolean getAllRecords) throws RemoteException {
-		if (DEBUG) Log.i(TAG, "getMappingFromCode(): code=" + code);
+	public List<Mapping> getMappingByCode(String code, boolean softkeyboard, boolean getAllRecords) throws RemoteException {
+		if (DEBUG) Log.i(TAG, "getMappingByCode(): code=" + code);
 		// Check if system need to reset cache
 		//check reset cache with local variable instead of reading from shared preference for better perfomance
 		if (mResetCache) {
@@ -294,13 +292,13 @@ public class SearchServer {
 				Pair<List<Mapping>, List<Mapping>> cacheTemp = cache.get(cacheKey);
 
 				if (DEBUG)
-					Log.i(TAG, " getMappingFromCode() check if cached exist on code = '" + queryCode + "'");
+					Log.i(TAG, " getMappingByCode() check if cached exist on code = '" + queryCode + "'");
 
 				if (cacheTemp == null) {
 					// 25/Jul/2011 by Art
 					// Just ignore error when something wrong with the result set
 					try {
-						cacheTemp = dbadapter.getMappingFromCode(queryCode, !isPhysicalKeyboardPressed, getAllRecords);
+						cacheTemp = dbadapter.getMappinpByCode(queryCode, !isPhysicalKeyboardPressed, getAllRecords);
 						cache.put(cacheKey, cacheTemp);
 						//Jeremy '12,6,5 check if need to update code remap cache
 						if (cacheTemp != null && cacheTemp.first != null
@@ -315,7 +313,7 @@ public class SearchServer {
 									newlist.add(queryCode);
 									coderemapcache.put(key, newlist);
 									if (DEBUG)
-										Log.i(TAG, "getMappingFromCode() build new remap code = '"
+										Log.i(TAG, "getMappingByCode() build new remap code = '"
 												+ codeFromMapping + "' to code = '" + queryCode + "'"
 												+ " coderemapcache.size()=" + coderemapcache.size());
 								} else {
@@ -323,7 +321,7 @@ public class SearchServer {
 									coderemapcache.remove(key);
 									coderemapcache.put(key, codeList);
 									if (DEBUG)
-										Log.i(TAG, "getMappingFromCode() codeFromMapping: add new remap code = '" + codeFromMapping + "' to code = '" + queryCode + "'");
+										Log.i(TAG, "getMappingByCode() codeFromMapping: add new remap code = '" + codeFromMapping + "' to code = '" + queryCode + "'");
 								}
 
 							}
@@ -360,7 +358,7 @@ public class SearchServer {
 									relatedtlist.size() > 1 &&
 											relatedtlist.get(relatedtlist.size() - 1).getCode().equals("has_more_records"))) {
 						try {
-							cacheTemp = dbadapter.getMappingFromCode(code, !isPhysicalKeyboardPressed, true);
+							cacheTemp = dbadapter.getMappinpByCode(code, !isPhysicalKeyboardPressed, true);
 							cache.remove(cacheKey);
 							cache.put(cacheKey, cacheTemp);
 						} catch (Exception e) {
@@ -375,7 +373,7 @@ public class SearchServer {
 					List<Mapping> relatedtlist = cacheTemp.second;
 
 					if (DEBUG)
-						Log.i(TAG, "getMappingFromCode() code=" + code + " resultlist.size()=" + resultlist.size()
+						Log.i(TAG, "getMappingByCode() code=" + code + " resultlist.size()=" + resultlist.size()
 								+ " relatedlist.size()=" + relatedtlist.size());
 
 					if (i == 0) {//Jeremy add the mixed type English code in first loop
@@ -401,7 +399,7 @@ public class SearchServer {
 							result.remove(rsize - 1);
 							hasMore = true;
 							if (DEBUG)
-								Log.i(TAG, "getMappingFromCode() code=" + code + "  result list added resultlist.size()="
+								Log.i(TAG, "getMappingByCode() code=" + code + "  result list added resultlist.size()="
 										+ resultlist.size());
 						}
 					}
@@ -412,18 +410,18 @@ public class SearchServer {
 							result.remove(rsize - 1);
 							hasMore = true;
 							if (DEBUG)
-								Log.i(TAG, "getMappingFromCode() code=" + code + "  related list added relatedlist.size()="
+								Log.i(TAG, "getMappingByCode() code=" + code + "  related list added relatedlist.size()="
 										+ relatedtlist.size());
 						}
 					}
 				}
 				//codeLenthMap.add(new Pair<>(code.length(), result.size()));  //Jeremy 12,6,2 preserve the code length in each loop.
 				if (DEBUG)
-					Log.i(TAG, "getMappingFromCode() codeLengthMap  code length = " + code.length() + ", result size = " + result.size());
+					Log.i(TAG, "getMappingByCode() codeLengthMap  code length = " + code.length() + ", result size = " + result.size());
 
 				code = code.substring(0, code.length() - 1);
 			}
-			if (DEBUG) Log.i(TAG, "getMappingFromCode() code=" + code + " result.size()=" + result.size());
+			if (DEBUG) Log.i(TAG, "getMappingByCode() code=" + code + " result.size()=" + result.size());
 			if (hasMore) {
 				self = new Mapping();
 				self.setCode("has_more_records");
@@ -677,7 +675,7 @@ public class SearchServer {
 								|| unit1.getCode() == null //Jeremy '12,6,7 break if code is null (selected from userdict)
 								|| unit1.getCode().length() == 0
 								|| unit1.isDictionary()) {
-							List<Mapping> rMappingList = dbadapter.getMappingFromWord(baseWord, tablename);
+							List<Mapping> rMappingList = dbadapter.getMappingByWord(baseWord, tablename);
 							if (rMappingList.size() > 0)
 								baseCode = rMappingList.get(0).getCode();
 							else
@@ -693,7 +691,7 @@ public class SearchServer {
 						baseCode = "";
 						for (int i = 0; i < baseWord.length(); i++) {
 							String c = baseWord.substring(i, i + 1);
-							List<Mapping> rMappingList = dbadapter.getMappingFromWord(c, tablename);
+							List<Mapping> rMappingList = dbadapter.getMappingByWord(c, tablename);
 							if (rMappingList.size() > 0) {
 								baseCode += rMappingList.get(0).getCode();
 								QPCode += rMappingList.get(0).getCode().substring(0, 1);
@@ -724,7 +722,7 @@ public class SearchServer {
 										|| code2 == null //Jermy '12,6,7 break if code is null (selected from userdict)
 										|| code2.length() == 0
 										|| unit2.isDictionary()) {
-									List<Mapping> rMappingList = dbadapter.getMappingFromWord(word2, tablename);
+									List<Mapping> rMappingList = dbadapter.getMappingByWord(word2, tablename);
 									if (rMappingList.size() > 0)
 										code2 = rMappingList.get(0).getCode();
 									else
@@ -740,7 +738,7 @@ public class SearchServer {
 							} else if (word2.length() > 1 && baseWord.length() < 5) {
 								for (int j = 0; j < word2.length(); j++) {
 									String c = word2.substring(j, j + 1);
-									List<Mapping> rMappingList = dbadapter.getMappingFromWord(c, tablename);
+									List<Mapping> rMappingList = dbadapter.getMappingByWord(c, tablename);
 									if (rMappingList.size() > 0) {
 										baseCode += rMappingList.get(0).getCode();
 										QPCode += rMappingList.get(0).getCode().substring(0, 1);
@@ -947,7 +945,7 @@ public class SearchServer {
 	}
 
 
-	public List<Mapping> getMappingFromEnglishWord(String word) throws RemoteException {
+	public List<Mapping> getMappingByEnglishWord(String word) throws RemoteException {
 
 		List<Mapping> result = new LinkedList<>();
 		List<Mapping> cacheTemp = engcache.get(word);
