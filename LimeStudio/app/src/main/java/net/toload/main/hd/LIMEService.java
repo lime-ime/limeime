@@ -1367,7 +1367,7 @@ public class LIMEService extends InputMethodService implements
                         // Jeremy '12,6,2 get real commited code length from searchserver 
                         boolean composingNotFinish = false;
                         //TODO: need to rewrite for betweenSearch
-                        int commitedCodeLength = SearchSrv.getRealCodeLength(selectedIndex);
+                        int commitedCodeLength = SearchSrv.getRealCodeLength(selectedCandidate, selectedIndex);
 
                         if (DEBUG)
                             Log.i(TAG, "commitedtype(): commitedCodeLength = " + commitedCodeLength);

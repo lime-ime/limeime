@@ -199,13 +199,15 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
     final private ResultCallback<DriveApi.MetadataBufferResult> restorecallback = new
             ResultCallback<DriveApi.MetadataBufferResult>() {
                 @Override
-                public void onResult(DriveApi.MetadataBufferResult result) {
+                public void onResult(final DriveApi.MetadataBufferResult result) {
                     if (!result.getStatus().isSuccess()) {
                         return;
                     }
+
                     int count = result.getMetadataBuffer().getCount();
 
                     for(int i=0 ; i < count ; i++){
+
                         final Metadata m = result.getMetadataBuffer().get(i);
 
                         if(!m.isTrashed()){
@@ -243,12 +245,12 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
                                     }
 
                                     driveContents.discard(mGoogleApiClient);
+                                    result.getMetadataBuffer().release();
                                     finish();
                                 }
                             }.start();
                         }
                     }
-                    result.getMetadataBuffer().release();
                 }
             };
 
