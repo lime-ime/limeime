@@ -2643,8 +2643,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (userRecordsCount == 0) return;
         // start to restore user data
         // restore user score first
-        db.execSQL("update " + table + "set " + table + "." + FIELD_SCORE + " = " + backupTableName + "." + FIELD_SCORE +
-                " (select * from " + backupTableName + " where " + table + "." + FIELD_CODE + " = " + backupTableName + "." + FIELD_CODE +
+        db.execSQL("update " + table + " set " + FIELD_SCORE + " = " +
+                " (select "+backupTableName+"."+ FIELD_SCORE +" from " + backupTableName + " where " + table + "." + FIELD_CODE + " = " + backupTableName + "." + FIELD_CODE +
                 " and " + table + "." + FIELD_WORD + " = " + backupTableName + "." + FIELD_WORD + " )");
         // restore learned phrasees  (base_score is null)
         db.execSQL("insert into " + table +
@@ -2703,6 +2703,23 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         }
 
 
+    }
+
+    public boolean checkBackuptable(String table) {
+
+        try {
+            String backupTableName = table + "_user";
+            Cursor cursor = db.rawQuery("select " + FIELD_CODE + " from " + backupTableName, null);
+
+            if (cursor != null && cursor.getCount() > 0) {
+                Log.i("LIME", "Total size :" + cursor.getCount());
+                return true;
+            } else {
+                return false;
+            }
+        }catch(SQLiteException s){
+            return false;
+        }
     }
 
 
