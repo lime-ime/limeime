@@ -99,7 +99,7 @@ public class LIMEService extends InputMethodService implements
     private int mShowArrowKeys; //Jeremy '12,5,22 force recreate keyboard if show arrow keys mode changes.
     private int mSplitKeyboard; //Jeremy '12,5,26 force recreate keyboard if split keyboard settings changes; 6/19 changed to int
 
-    // if getMapping result has record then set to 'true'
+    // if getMappingFromCode result has record then set to 'true'
     public boolean hasMappingList = false;
 
     //private boolean keydown = false;
@@ -1366,7 +1366,7 @@ public class LIMEService extends InputMethodService implements
                         // Jeremy '11,7,28 for continuous typing (LD) 
                         // Jeremy '12,6,2 get real commited code length from searchserver 
                         boolean composingNotFinish = false;
-                        //String commitedCode = selectedCandidate.getCode();
+                        //TODO: need to rewrite for betweenSearch
                         int commitedCodeLength = SearchSrv.getRealCodeLength(selectedIndex);
 
                         if (DEBUG)
@@ -1430,7 +1430,7 @@ public class LIMEService extends InputMethodService implements
 
                         }
 
-                        //Jeremy '13,1,10 do dict update and reverse query after updateRelatedword to shorten the time user see related candidates after select a candidate.
+                        //Jeremy '13,1,10 do dict update and reverse getMappingFromCode after updateRelatedword to shorten the time user see related candidates after select a candidate.
                         if (shouldUpdateCandidates) {
                             updateCandidates();
                         } else {
@@ -1442,7 +1442,7 @@ public class LIMEService extends InputMethodService implements
 
 
                             SearchSrv.addUserDictAndUpdateScore(commitedCandidate);
-                            SearchSrv.rQuery(commitedCandidate.getWord());
+                            SearchSrv.getCodeListStringFromWord(commitedCandidate.getWord());
 
                             updateRelatedWord(false);
                         }
@@ -2114,14 +2114,14 @@ public class LIMEService extends InputMethodService implements
                     public void run() {
 
                         try {
-                            list.addAll(SearchSrv.query(finalKeyString, !hasPhysicalKeyPressed, getAllRecords));
+                            list.addAll(SearchSrv.getMappingFromCode(finalKeyString, !hasPhysicalKeyPressed, getAllRecords));
                         } catch (RemoteException e) {
                             e.printStackTrace();
                         }
                         try {
                             sleep(1);
                         } catch (InterruptedException ignored) {
-                            return;   // terminate thread here, since it is interrupted and more recent query will update the suggestions.
+                            return;   // terminate thread here, since it is interrupted and more recent getMappingFromCode will update the suggestions.
                         }
                         //Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
                         if (list.size() > 0) {
@@ -2151,7 +2151,7 @@ public class LIMEService extends InputMethodService implements
                             try {
                                 sleep(1);
                             } catch (InterruptedException ignored) {
-                                return;   // terminate thread here, since it is interrupted and more recent query will update the suggestions.
+                                return;   // terminate thread here, since it is interrupted and more recent getMappingFromCode will update the suggestions.
                             }
                             setSuggestions(list, hasPhysicalKeyPressed, selkey);
 
@@ -2172,7 +2172,7 @@ public class LIMEService extends InputMethodService implements
                                 try {
                                     sleep(1);
                                 } catch (InterruptedException ignored) {
-                                    return;   // terminate thread here, since it is interrupted and more recent query will update the suggestions.
+                                    return;   // terminate thread here, since it is interrupted and more recent getMappingFromCode will update the suggestions.
                                 }
                                 mCandidateView.setComposingText(keynameString);
                             }
@@ -2250,14 +2250,14 @@ public class LIMEService extends InputMethodService implements
 
                                 List<Mapping> templist = null;
                                 try {
-                                    templist = SearchSrv.queryDictionary(tempEnglishWord.toString());
+                                    templist = SearchSrv.getMappingFromEnglishWord(tempEnglishWord.toString());
                                 } catch (RemoteException e) {
                                     e.printStackTrace();
                                 }
                                 try {
                                     sleep(1);
                                 } catch (InterruptedException ignored) {
-                                    return;   // terminate thread here, since it is interrupted and more recent query will update the suggestions.
+                                    return;   // terminate thread here, since it is interrupted and more recent getMappingFromCode will update the suggestions.
                                 }
 
                                 if (templist.size() > 0) {
@@ -2272,7 +2272,7 @@ public class LIMEService extends InputMethodService implements
                                     try {
                                         sleep(1);
                                     } catch (InterruptedException ignored) {
-                                        return;   // terminate thread here, since it is interrupted and more recent query will update the suggestions.
+                                        return;   // terminate thread here, since it is interrupted and more recent getMappingFromCode will update the suggestions.
                                     }
                                     setSuggestions(list, hasPhysicalKeyPressed, selkey);
                                     tempEnglishList.addAll(list);
@@ -2320,7 +2320,7 @@ public class LIMEService extends InputMethodService implements
                 // Modified by Jeremy '10,3 ,12 for more specific related word
                 // -----------------------------------------------------------
                 if (commitedCandidate != null && hasMappingList) {
-                    list.addAll(SearchSrv.queryUserDic(commitedCandidate.getWord(), getAllRecords));
+                    list.addAll(SearchSrv.getUserDictMappingFromWord(commitedCandidate.getWord(), getAllRecords));
                 }
                 // -----------------------------------------------------------
                 if (list.size() > 0) {
