@@ -42,9 +42,9 @@ public class ManageRelatedRunnable implements Runnable{
         handler.updateGridView(loadRelated(query, maximum, offset));
 
         /*if(maximum > 0){
-            handler.updateGridViewInitial(loadRelated(query, maximum));
+            handler.updateGridViewInitial(loadRelated(getMappingFromCode, maximum));
         }else{
-            handler.updateGridView(loadRelated(query, maximum));
+            handler.updateGridView(loadRelated(getMappingFromCode, maximum));
         }*/
     }
 

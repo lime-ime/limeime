@@ -296,7 +296,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     /*
-     * For LIMEService to setup tablename for further word mapping query
+     * For LIMEService to setup tablename for further word mapping getMappingFromCode
 	 */
     public void setTablename(String tablename) {
         this.tablename = tablename;
@@ -629,7 +629,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (DEBUG)
             Log.i(TAG, "checkDBConnection()");
 
-        if (databseOnhold) {   //mapping loading in progress, database is not available for query
+        if (databseOnhold) {   //mapping loading in progress, database is not available for getMappingFromCode
             if (DEBUG)
                 Log.i(TAG, "checkDBConnection() : mapping loading ");
             Toast.makeText(mContext, mContext.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT).show();
@@ -864,7 +864,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 //				//updateRelatedList(code); move to search service Jeremy '11,7,29
 //			
 //			}else 
-        //Jeremy '11,9,8 query highest score first.  Erase relatedlist if new score is not highest.
+        //Jeremy '11,9,8 getMappingFromCode highest score first.  Erase relatedlist if new score is not highest.
         try {
 
             if (srcunit != null && srcunit.getWord() != null &&
@@ -914,12 +914,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * Jeremy '12,6,7 for phrase learning to get code from word
      */
     /*
-    public List<Mapping> getRMapping(Mapping mapping, String table) {
+    public List<Mapping> getMappingFromWord(Mapping mapping, String table) {
         String keyword = mapping.getWord();
-        return getRMapping(keyword, table);
+        return getMappingFromWord(keyword, table);
     }
 */
-    public List<Mapping> getRMapping(String keyword, String table) {
+    public List<Mapping> getMappingFromWord(String keyword, String table) {
 
         if (DEBUG)
             Log.i(TAG, "getRmapping():tablename:" + table + "  keyworad:" + keyword);
@@ -978,7 +978,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Reverse lookup on keyword.
      */
-    public String getRMappingInConvertedKeynameString(String keyword) {
+    public String getCodeListStringWithWord(String keyword) {
 
         if (!checkDBConnection()) return null;
 
@@ -1024,7 +1024,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         }
                     }
 
-                    //cursor.deactivate();
                     cursor.close();
                 }
             }
@@ -1042,7 +1041,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * Jeremy '11,7,26  Updated related list
      */
     public synchronized List<Mapping> updateRelatedList(String code) {
-        // Jeremy '11,7,31  rebuild relatedlist by query from table directly
+        // Jeremy '11,7,31  rebuild relatedlist by getMappingFromCode from table directly
         // Update relatedlist in IM table now.
 
         if (!checkDBConnection()) return null;
@@ -1058,7 +1057,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     public synchronized List<Mapping> updateRelatedList(String table, String code) {
-        // Jeremy '11,7,31  rebuild relatedlist by query from table directly
+        // Jeremy '11,7,31  rebuild relatedlist by getMappingFromCode from table directly
         // Update relatedlist in IM table now.
 
         if (!checkDBConnection()) return null;
@@ -1090,7 +1089,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         Cursor cursor = db.rawQuery(selectString, null);
 
         if (DEBUG)
-            Log.i(TAG, "updateRelatedListOnDB(): raw query string: " + selectString);
+            Log.i(TAG, "updateRelatedListOnDB(): raw getMappingFromCode string: " + selectString);
 
         LinkedList<Mapping> newMappingList = new LinkedList<>();
 
@@ -1202,7 +1201,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             if (!code.equals(lastCode)) {
                 // unsynchronized cache. do the preprocessing again.
                 //preProcessingForExtraQueryConditions(preProcessingRemappingCode(code));
-                getMapping(code, false, false);
+                getMappingFromCode(code, false, false);
             }
             //String dualCodeList = lastValidDualCodeList;
             if (lastValidDualCodeList != null) {
@@ -1449,7 +1448,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Retrieve matched records
      */
-    public Pair<List<Mapping>, List<Mapping>> getMapping(String code, boolean softKeyboard, boolean getAllRecords) {
+    public Pair<List<Mapping>, List<Mapping>> getMappingFromCode(String code, boolean softKeyboard, boolean getAllRecords) {
 
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (!checkDBConnection()) return null;
@@ -1464,7 +1463,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     + mLIMEPref.getParameterBoolean("doLDPhonetic")
                     + ", table=" + tablename + ", getAllRecords=" + getAllRecords);
 
-        // Add by Jeremy '10, 3, 27. Extension on multi table query.
+        // Add by Jeremy '10, 3, 27. Extension on multi table getMappingFromCode.
         lastCode = code;
         lastValidDualCodeList = null; // reset the lastValidDualCodeList
         Pair<List<Mapping>, List<Mapping>> result = null;
@@ -1472,8 +1471,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         //Two-steps qeury code pre-processing. Jeremy '11,6,15
         // Step.1 Code re-mapping.  
         code = preProcessingRemappingCode(code);
-        code = code.toLowerCase(Locale.US); //Jeremy '12,4,1 moved from SearchService.query();
-        // Step.2 Build extra query conditions. (e.g. dualcode remap)
+        code = code.toLowerCase(Locale.US); //Jeremy '12,4,1 moved from SearchService.getMappingFromCode();
+        // Step.2 Build extra getMappingFromCode conditions. (e.g. dualcode remap)
         Pair<String, String> extraCondidtions = preProcessingForExtraQueryConditions(code);
         String extraSelectCluase ="";
         String extraSortClause = "";
@@ -1524,13 +1523,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
                     if(betweenSearch){
-                        selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectCluase;
+                        selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectCluase + " and word is not null group by word " ;
                         String exactMatchCondition = " (" +codeCol +" ='" + escapedCode +"') " + extraSortClause ;
                         sortClause = "( (exactmatch = 1) and (score > 0 or basescore >2) ) desc, ";
                         if(sort) sortClause += " score desc, basescore desc, ";
                         sortClause += "_id asc";
 
-                        String selectString = "select _id, code, code3r, word, score, basescore, (" + exactMatchCondition + ") as exactmatch"
+                        String selectString = "select _id, code, code3r, word, score, basescore, (" + exactMatchCondition + ") as exactmatch "
                                 +" from " + tablename + " where " + selectClause + " order by " + sortClause + " limit " + limitClause;
                         cursor = db.rawQuery(selectString, null);
                      }
@@ -1545,9 +1544,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
                     if (DEBUG)
-                        Log.i(TAG, "getMapping(): code = '" + code + "' selectClause=" + selectClause);
-                    // Jeremy '11,8,5 limit initial query to limited records
-                    // Jeremy '11,6,15 Using query with preprocessed code and extra query conditions.
+                        Log.i(TAG, "getMappingFromCode(): code = '" + code + "' selectClause=" + selectClause);
+                    // Jeremy '11,8,5 limit initial getMappingFromCode to limited records
+                    // Jeremy '11,6,15 Using getMappingFromCode with preprocessed code and extra getMappingFromCode conditions.
 
 
 
@@ -1746,8 +1745,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
             }
 
-            //Process the escape characters of query
-            //newcode = newcode.replaceAll("'", "''"); // Jeremy '12,7,7 do the code escaped before query.
+            //Process the escape characters of getMappingFromCode
+            //newcode = newcode.replaceAll("'", "''"); // Jeremy '12,7,7 do the code escaped before getMappingFromCode.
             if (DEBUG)
                 Log.i(TAG, "preProcessingRemappingCode():newcode=" + newcode);
             return newcode;
@@ -1858,7 +1857,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 for (int i = 0; i < dualKey.length(); i++) {
                     String key = dualKey.substring(i, i + 1);
                     String value = dualKeyRemap.substring(i, i + 1);
-                    //Process the escape characters of query
+                    //Process the escape characters of getMappingFromCode
                     //if(key.equals("'")) key = "''";
                     //if(value.equals("'")) value = "''";  \\Jeremy '12,5,21 do the escape in getmapping
                     reMap.put(key, value);
@@ -2069,7 +2068,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Jeremy '12,6,4 check black list on code , code + wildcard and reduced code with wildcard
      *
-     * @param code blacklist query code
+     * @param code blacklist getMappingFromCode code
      * @return true if the cod is black listed
      */
     private boolean checkBlackList(String code, Boolean wildCardOnly) {
@@ -2175,7 +2174,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         sortClause += " or (" + codeCol + " ='" + queryCode +"') ";
                     }
                 } else {
-                    //Jeremy '11,8, 26 move valid code list building to buildqueryresult to avoid repeat query.
+                    //Jeremy '11,8, 26 move valid code list building to buildqueryresult to avoid repeat getMappingFromCode.
                     try {
                         String selectValidCodeClause = codeCol + " = '" + queryCode + "'";
                         if (!dualcode.equals(noToneCode)) { //code with tones. should strip tone symbols and add to the select condition.
@@ -2440,7 +2439,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         if (DEBUG)
             Log.i(TAG, "buildQueryResult():query_code:" + query_code + " query_code.length:" + query_code.length()
-                    + " result.size=" + result.size() + " query size:" + rsize
+                    + " result.size=" + result.size() + " getMappingFromCode size:" + rsize
                     + " relatedlist.size=" + relatedresult.size());
         return resultPair;
     }
@@ -2453,7 +2452,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (!checkDBConnection()) return null;
 
         Cursor cursor;
-        cursor = db.query("dictionary", null, null, null, null, null, null, null);
+        cursor = db.getMappingFromCode("dictionary", null, null, null, null, null, null, null);
         return cursor;
     } */
 
@@ -2477,8 +2476,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 // Jeremy '11,8,1 add group by cword to remove duplicate items.
                 //Jeremy '11,6,12, Add constraint on cword is not null (cword =null is for recoding im related list selected count).
                 //Jeremy '12,12,21 Add limitClause to limit candidates in only 1 page first.
-                //					to do 2 stage query.
-                //Jeremy '14,12,38 Add query on word length > 1 to include last character into query 
+                //					to do 2 stage getMappingFromCode.
+                //Jeremy '14,12,38 Add getMappingFromCode on word length > 1 to include last character into getMappingFromCode
                 String limitClause;
 
                 limitClause = (getAllRecords) ?FINAL_RESULT_LIMIT: INITIAL_RESULT_LIMIT;
@@ -3280,7 +3279,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
             Cursor cursor;
-            // Process the escape characters of query
+            // Process the escape characters of getMappingFromCode
             code = code.replaceAll("'", "''");
             if (word == null || word.trim().length() == 0) {
                 cursor = db.query(tablename, null, FIELD_CODE + " = '"
@@ -3349,7 +3348,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (word != null && word.trim().length() > 0) {
 
 
-            // Process the escape characters of query
+            // Process the escape characters of getMappingFromCode
             word = word.replaceAll("'", "''");
             Cursor cursor = db.query(tablename, null, FIELD_WORD + " = '"
                     + word + "'", null, null, null, FIELD_SCORE + " DESC", null);
@@ -3372,7 +3371,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     public int getHighestScoreIDOnDB(SQLiteDatabase db, String table, String code) {
         int ID = -1;
         if (code != null && code.trim().length() > 0) {
-            // Process the escape characters of query
+            // Process the escape characters of getMappingFromCode
             code = code.replaceAll("'", "''");
             Cursor cursor = db.query(table, null, FIELD_CODE + " = '"
                             + code + "'", null, null, null,

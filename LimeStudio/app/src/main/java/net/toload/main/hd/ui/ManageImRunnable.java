@@ -47,9 +47,9 @@ public class ManageImRunnable implements Runnable{
         handler.updateGridView(loadImWord(table, query, maximum, offset));
 
         /*if (maximum > 0) {
-            handler.updateGridViewInitial(loadImWord(table, query, maximum, offset));
+            handler.updateGridViewInitial(loadImWord(table, getMappingFromCode, maximum, offset));
         }else{
-            handler.updateGridView(loadImWord(table, query, maximum, offset));
+            handler.updateGridView(loadImWord(table, getMappingFromCode, maximum, offset));
         }*/
     }
 
