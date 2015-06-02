@@ -67,8 +67,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier. Shared db instance for dbserver and searchserver
     private final static int DATABASE_VERSION = 78;
 
+    //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
+    private final static Boolean betweenSearch = true;
     // hold database connection when database is in maintainance. Jeremy '15,5,23
-    private static boolean databseOnhold = false;
+    private static boolean databaseOnhold = false;
 
     //Jeremy '11,8,5
     private final static String INITIAL_RESULT_LIMIT = "15";
@@ -278,7 +280,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
 
-    private final static Boolean betweenSearch = true;
+
     public static Boolean getBetweenSearch() {
         return betweenSearch;
     }
@@ -613,7 +615,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             }
             db = this.getWritableDatabase();
             //mLIMEPref.holdDatabaseCoonection(false); // Jeremy '12,4,10 reset holdDatabaseCoonection status
-            databseOnhold = false;
+            databaseOnhold = false;
             return db != null && db.isOpen();
         }
     }
@@ -629,7 +631,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (DEBUG)
             Log.i(TAG, "checkDBConnection()");
 
-        if (databseOnhold) {   //mapping loading in progress, database is not available for query
+        if (databaseOnhold) {   //mapping loading in progress, database is not available for query
             if (DEBUG)
                 Log.i(TAG, "checkDBConnection() : mapping loading ");
             Toast.makeText(mContext, mContext.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT).show();
@@ -1447,8 +1449,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     /**
      * Retrieve matched records
+     * Add synchronized modifier to avoid later search finsihed earlier in ascending searching like a ab to avoid incorrect order of exact match stack.
      */
-    public Pair<List<Mapping>, List<Mapping>> getMappingFromCode(String code, boolean softKeyboard, boolean getAllRecords) {
+    public synchronized Pair<List<Mapping>, List<Mapping>> getMappingFromCode(String code, boolean softKeyboard, boolean getAllRecords) {
 
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (!checkDBConnection()) return null;
@@ -4248,15 +4251,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     // Hold database connection to prevent further transactions when database is in maintenance. Jeremy '15,5,23
     public void holdDBConnection() {
-        databseOnhold = true;
+        databaseOnhold = true;
     }
 
     public void unHoldDBConnection() {
-        databseOnhold = false;
+        databaseOnhold = false;
     }
 
     public boolean isDatabseOnHold() {
-        return databseOnhold;
+        return databaseOnhold;
     }
 
     public void updateBackupScore(String imtype, List<Word> scorelist) {

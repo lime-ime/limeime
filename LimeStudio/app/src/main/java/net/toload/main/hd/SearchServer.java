@@ -96,7 +96,8 @@ public class SearchServer {
 
 	private Context mContext = null;
 
-	private static List<Pair<Integer, Integer>> codeLenthMap = new LinkedList<>();
+	// deprecated and using exact match stack to get real code length now. Jerey '15,6,2
+	//private static List<Pair<Integer, Integer>> codeLenthMap = new LinkedList<>();
 
 	public SearchServer(Context context) {
 
@@ -262,11 +263,14 @@ public class SearchServer {
 
 		lastCode = code;
 
-		if(exactMatchStack!=null && !exactMatchStack.isEmpty()
-				&& !code.startsWith( exactMatchStack.lastElement().second))  // code is not start with the previous kept code, clear the stack.  The composition is start over.
-			exactMatchStack.clear();
 
-		codeLenthMap.clear();//Jeremy '12,6,2 reset the codeLengthMap
+		if(exactMatchStack!=null && !exactMatchStack.isEmpty()
+				&& !code.startsWith( exactMatchStack.lastElement().second)) {
+			// code is not start with the previous kept code, clear the stack.  The composition is start over.
+			exactMatchStack.clear();
+		}
+
+		//codeLenthMap.clear();//Jeremy '12,6,2 reset the codeLengthMap
 
 		List<Mapping> result = new LinkedList<>();
 		if (code != null) {
@@ -381,7 +385,7 @@ public class SearchServer {
 							self.setRelated(true);
 						}else{
 							self.setRelated(false);
-							//push the exact match mapping with current code into exact match stack
+							//push the exact match mapping with current code into exact match stack. '15,6,2 Jeremy
 							exactMatchStack.push(new Pair<>(resultlist.get(0), code));
 						}
 
@@ -413,7 +417,7 @@ public class SearchServer {
 						}
 					}
 				}
-				codeLenthMap.add(new Pair<>(code.length(), result.size()));  //Jeremy 12,6,2 preserve the code length in each loop.
+				//codeLenthMap.add(new Pair<>(code.length(), result.size()));  //Jeremy 12,6,2 preserve the code length in each loop.
 				if (DEBUG)
 					Log.i(TAG, "getMappingFromCode() codeLengthMap  code length = " + code.length() + ", result size = " + result.size());
 
@@ -437,25 +441,17 @@ public class SearchServer {
 	int getRealCodeLength(Mapping selectedMapping, int index) {
 		if (DEBUG)
 			Log.i(TAG, "getRealCodeLength() index = " + index);
-		if(!LimeDB.getBetweenSearch()) {
-			for (Pair<Integer, Integer> entry : codeLenthMap) {
-				if (DEBUG)
-					Log.i(TAG, "getRealCodeLength() codelength = " + entry.first + ", resultsize = " + entry.second);
-				if (index < entry.second) {
-					return entry.first;
-				}
 
-			}
-		}else{
-			// return real code by interating the current exact match stack.
-			if(exactMatchStack.isEmpty())
-				return lastCode.length(); // the selected mapping is not a exact match mapping
-			for(Iterator<Pair<Mapping, String> >iter =exactMatchStack.iterator(); iter.hasNext(); ){
-				if(iter.next().first.getWord().equals(selectedMapping.getWord()))
-					return iter.next().second.length();
+		// Return real code length form code length preserved in exact match stack instead of code length map. Jeremy '15,6,2
+		// return real code by iterating the current exact match stack.
+		if (exactMatchStack.isEmpty())
+			return lastCode.length(); // the selected mapping is not a exact match mapping
+		for (Pair<Mapping, String> p : exactMatchStack) {
+			if (p.first.getWord().equals(selectedMapping.getWord()))
+				return p.second.length();
 
-			}
 		}
+
 		return lastCode.length(); // should not happen
 	}
 
