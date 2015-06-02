@@ -49,7 +49,7 @@ public class SearchServer {
 	private static LimeDB dbadapter = null; //Jeremy '12,5,1 shared single LIMEDB object 
 	//Jeremy '12,4,6 Combine updatedb and quierydb into db,
 	//Jeremy '12,4,7 move db open/clsoe back to LimeDB
-	//	since getMappingFromCode always following with userdict and related learning and dual db connections cause exceptions.
+	//	since query always following with userdict and related learning and dual db connections cause exceptions.
 	//private SQLiteDatabase db = null;
 	//private LimeHanConverter hanConverter = null;
 	//private static LinkedList<Mapping> diclist = null;  
@@ -395,7 +395,6 @@ public class SearchServer {
 										+ relatedtlist.size());
 						}
 					}
-
 				}
 				codeLenthMap.add(new Pair<>(code.length(), result.size()));  //Jeremy 12,6,2 preserve the code length in each loop.
 				if (DEBUG)
