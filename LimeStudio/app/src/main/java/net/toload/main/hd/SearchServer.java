@@ -37,9 +37,11 @@ import net.toload.main.hd.limedb.LimeDB;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SearchServer {
@@ -54,6 +56,9 @@ public class SearchServer {
 	//private LimeHanConverter hanConverter = null;
 	//private static LinkedList<Mapping> diclist = null;  
 	private static List<Mapping> scorelist = null;
+
+	private static Stack<Pair<Mapping, String>> exactMatchStack;  //Jeremy '15,6,2 preserve the exact match mapping with the code user typed.
+	private static String lastCode; // preserved the last code queried from LIMEService
 
 	private static boolean mResetCache;
 
@@ -249,12 +254,17 @@ public class SearchServer {
 	public List<Mapping> getMappingFromCode(String code, boolean softkeyboard, boolean getAllRecords) throws RemoteException {
 		if (DEBUG) Log.i(TAG, "getMappingFromCode(): code=" + code);
 		// Check if system need to reset cache
-
-		//check reset cache with local variable isntead of reading from shared preference for better perfomance
+		//check reset cache with local variable instead of reading from shared preference for better perfomance
 		if (mResetCache) {
 			initialCache();
 			mResetCache = false;
 		}
+
+		lastCode = code;
+
+		if(exactMatchStack!=null && !exactMatchStack.isEmpty()
+				&& !code.startsWith( exactMatchStack.lastElement().second))  // code is not start with the previous kept code, clear the stack.  The composition is start over.
+			exactMatchStack.clear();
 
 		codeLenthMap.clear();//Jeremy '12,6,2 reset the codeLengthMap
 
@@ -267,11 +277,6 @@ public class SearchServer {
 			// Jeremy '11,9, 3 remove cached keyname when request full records
 			if (getAllRecords && keynamecache.get(cacheKey(code)) != null)
 				keynamecache.remove(cacheKey(code));
-
-
-			Mapping temp = new Mapping();
-			temp.setWord(code);
-			temp.setCode(code);
 
 			int size =code.length();
 
@@ -328,11 +333,15 @@ public class SearchServer {
 				}
 			}
 
+			// put self into the first mapping for mixed input.
+			Mapping self = new Mapping();
+			self.setWord(code);
+			self.setCode(code);
+
 			// 12,6,4 Jeremy.
 			// Descending  abc ab a... Build the result candidate list.
-			HashSet<String> duplicateCheck = new HashSet<>();
 
-			for (int i = 0; i < ((dbadapter.getBetweenSearch())?1: size); i++) {
+			for (int i = 0; i < ((LimeDB.getBetweenSearch())?1: size); i++) {
 				String cacheKey = cacheKey(code);
 				Pair<List<Mapping>, List<Mapping>> cacheTemp = cache.get(cacheKey);
 
@@ -367,9 +376,17 @@ public class SearchServer {
 
 					if (i == 0) {//Jeremy add the mixed type English code in first loop
 						//Jeremy '12,5,31 setRelated true if the exact match code has zero result.
-						//Jeremy '15,6,2 rewrote for betweenSerach.  getRelated = false for the first element means no any exact match suggestions.
-						temp.setRelated(resultlist.size() == 0|| resultlist.get(0).getRelated());
-						result.add(temp);
+						//Jeremy '15,6,2 rewrote for betweenSearch.  getRelated = false for the first element means no any exact match suggestions.
+						if(resultlist.size() == 0 || resultlist.get(0).getRelated()) {
+							self.setRelated(true);
+						}else{
+							self.setRelated(false);
+							//push the exact match mapping with current code into exact match stack
+							exactMatchStack.push(new Pair<>(resultlist.get(0), code));
+						}
+
+
+						result.add(self);
 					}
 
 					// Art '09.11.2011 ignore phonetic tone control
@@ -405,10 +422,10 @@ public class SearchServer {
 			}
 			if (DEBUG) Log.i(TAG, "getMappingFromCode() code=" + code + " result.size()=" + result.size());
 			if (hasMore) {
-				temp = new Mapping();
-				temp.setCode("has_more_records");
-				temp.setWord("...");
-				result.add(temp);
+				self = new Mapping();
+				self.setCode("has_more_records");
+				self.setWord("...");
+				result.add(self);
 			}
 		}
 
@@ -418,25 +435,31 @@ public class SearchServer {
 	/**
 	 * Get the real code length according to  codeLenthMap
 	 */
-	int getRealCodeLength(int index) {
+	int getRealCodeLength(Mapping selectedMapping, int index) {
 		if (DEBUG)
 			Log.i(TAG, "getRealCodeLength() index = " + index);
-		for (Pair<Integer, Integer> entry : codeLenthMap) {
-			if (DEBUG)
-				Log.i(TAG, "getRealCodeLength() codelength = " + entry.first + ", resultsize = " + entry.second);
-			if (index < entry.second) {
-				return entry.first;
-			}
+		if(!LimeDB.getBetweenSearch()) {
+			for (Pair<Integer, Integer> entry : codeLenthMap) {
+				if (DEBUG)
+					Log.i(TAG, "getRealCodeLength() codelength = " + entry.first + ", resultsize = " + entry.second);
+				if (index < entry.second) {
+					return entry.first;
+				}
 
+			}
+		}else{
+			// return real code by interating the current exact match stack.
+			if(exactMatchStack.isEmpty())
+				return lastCode.length(); // the selected mapping is not a exact match mapping
+			for(Iterator<Pair<Mapping, String> >iter =exactMatchStack.iterator(); iter.hasNext(); ){
+				if(iter.next().first.getWord().equals(selectedMapping.getWord()))
+					return iter.next().second.length();
+
+			}
 		}
-		return codeLenthMap.get(0).first; // should not happen
+		return lastCode.length(); // should not happen
 	}
-	
-	/*
-		public void initial() throws RemoteException {
-			initialCache();
-		}
-	*/
+
 
 	/**
 	 * This method is to initial/reset the cache of im.
@@ -451,6 +474,10 @@ public class SearchServer {
 		engcache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 		keynamecache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 		coderemapcache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+
+		//  initial exact match stack here
+		exactMatchStack = new Stack<>();
+
 	}
 
 
