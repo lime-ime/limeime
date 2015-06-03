@@ -355,9 +355,10 @@ public class SearchServer {
 
 					if (getAllRecords &&
 							(resultlist.size() > 1 &&
-									resultlist.get(resultlist.size() - 1).getCode().equals("has_more_records") ||
+									resultlist.get(resultlist.size() - 1).isHasMoreRecordsMarkRecord() ||  //.getCode().equals("has_more_records") ||
 									relatedtlist.size() > 1 &&
-											relatedtlist.get(relatedtlist.size() - 1).getCode().equals("has_more_records"))) {
+											relatedtlist.get(relatedtlist.size() - 1).isHasMoreRecordsMarkRecord() )){
+											// getCode().equals("has_more_records"))) {
 						try {
 							cacheTemp = dbadapter.getMappingByCode(code, !isPhysicalKeyboardPressed, true);
 							cache.remove(cacheKey);
@@ -378,12 +379,12 @@ public class SearchServer {
 								+ " relatedlist.size()=" + relatedtlist.size());
 
 					if (i == 0) {//Jeremy add the mixed type English code in first loop
-						//Jeremy '12,5,31 setRelated true if the exact match code has zero result.
-						//Jeremy '15,6,2 rewrite for betweenSearch.  getRelated = false for the first element means no any exact match suggestions.
-						if(resultlist.size() == 0 || resultlist.get(0).getRelated()) {
-							self.setRelated(true);
+						//Jeremy '12,5,31 setHighLighted true if the exact match code has zero result.
+						// Jeremy '15 ,6, 4 if no exact matched results(first element is partial matched), set highlighted item to composing code
+						if(resultlist.size() == 0 || resultlist.get(0).isPartialMatchToCodeRecord()) {
+							self.setHighLighted(true);
 						}else{
-							self.setRelated(false);
+							self.setHighLighted(false);
 							//push the exact match mapping with current code into exact match stack. '15,6,2 Jeremy
 							exactMatchStack.push(new Pair<>(resultlist.get(0), code));
 						}
@@ -396,7 +397,7 @@ public class SearchServer {
 					if (relatedtlist!=null && resultlist.size() > 0) {
 						result.addAll(resultlist);
 						int rsize = result.size();
-						if (result.get(rsize - 1).getCode().equals("has_more_records")) {
+						if (result.get(rsize - 1).isHasMoreRecordsMarkRecord()){ //getCode().equals("has_more_records")) {
 							result.remove(rsize - 1);
 							hasMore = true;
 							if (DEBUG)
@@ -407,7 +408,7 @@ public class SearchServer {
 					if (relatedtlist!=null &&relatedtlist.size() > 0 && i == 0) {
 						result.addAll(relatedtlist);
 						int rsize = result.size();
-						if (result.get(rsize - 1).getCode().equals("has_more_records")) {
+						if (result.get(rsize - 1).isHasMoreRecordsMarkRecord()){ //.getCode().equals("has_more_records")) {
 							result.remove(rsize - 1);
 							hasMore = true;
 							if (DEBUG)
@@ -425,10 +426,11 @@ public class SearchServer {
 			}
 			if (DEBUG) Log.i(TAG, "getMappingByCode() code=" + code + " result.size()=" + result.size());
 			if (hasMore) {
-				self = new Mapping();
-				self.setCode("has_more_records");
-				self.setWord("...");
-				result.add(self);
+				Mapping hasMoreRecord = new Mapping();
+				hasMoreRecord.setCode("has_more_records");
+				hasMoreRecord.setWord("...");
+				hasMoreRecord.setHasMoreRecordsMarkRecord();
+				result.add(hasMoreRecord);
 			}
 		}
 

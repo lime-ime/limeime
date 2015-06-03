@@ -874,7 +874,7 @@ public class CandidateView extends View implements View.OnClickListener {
             return false; //Jeremy '12,7,6 avoid repeated calls of requestFullrecords().
         if (mSuggestions != null && mSuggestions.size() > 0 &&
                 mSuggestions.get(mSuggestions.size() - 1).getCode() != null &&
-                mSuggestions.get(mSuggestions.size() - 1).getCode().equals("has_more_records")) {
+                mSuggestions.get(mSuggestions.size() - 1).isHasMoreRecordsMarkRecord()) {  //getCode().equals("has_more_records")) {
             waitingForMoreRecords = true;
             Thread updatingThread = new Thread() {
 
@@ -956,7 +956,7 @@ public class CandidateView extends View implements View.OnClickListener {
                 if (mSuggestions.get(0).isRelatedPhraseRecord()) {
                     // no default selection for related phrase
                     mSelectedIndex = -1;
-                } else if (mCount > 1 && !mSuggestions.get(0).getRelated()) {
+                } else if (mCount > 1 && !mSuggestions.get(0).isHighLighted()) {
                     mSelectedIndex = 1;
                 } else {
                     mSelectedIndex = 0;

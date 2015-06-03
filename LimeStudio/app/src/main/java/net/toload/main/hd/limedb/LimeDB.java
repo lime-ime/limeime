@@ -2286,7 +2286,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 String relatedlist = (betweenSearch)?null: cursor.getString(relatedColumn);
 
                 Boolean exactMatch = cursor.getString(exactMatchColumn).equals("1"); //Jeremy '15,6,3 new exact match virtual column built in query time.
-                m.setRelated((betweenSearch) && !exactMatch);//Jeremy '12,5,30 exact match, not from related list
+                m.setHighLighted((betweenSearch) && !exactMatch);//Jeremy '12,5,30 exact match, not from related list
 
                 //Jeremy 15,6,3 new exact or partial record type
                 if(exactMatch)
@@ -2404,14 +2404,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         }
 
 
-        Mapping temp = new Mapping();
-        temp.setCode("has_more_records");
-        temp.setWord("...");
+        Mapping hasMore = new Mapping();
+        hasMore.setCode("has_more_records");
+        hasMore.setWord("...");
+        hasMore.setHasMoreRecordsMarkRecord();
 
         if (!getAllRecords && rsize == Integer.parseInt(INITIAL_RESULT_LIMIT))
-            result.add(temp);
+            result.add(hasMore);
         if (!getAllRecords && relatedresult.size() == INITIAL_RELATED_LIMIT)
-            relatedresult.add(temp);
+            relatedresult.add(hasMore);
 
         if (DEBUG)
             Log.i(TAG, "buildQueryResult():query_code:" + query_code + " query_code.length:" + query_code.length()
@@ -2504,6 +2505,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         Mapping temp = new Mapping();
                         temp.setCode("has_more_records");
                         temp.setWord("...");
+                        temp.setHasMoreRecordsMarkRecord();
 
                         if ((!getAllRecords && rsize == Integer.parseInt(INITIAL_RESULT_LIMIT) ) ||
                                 (getAllRecords && rsize == Integer.parseInt(FINAL_RESULT_LIMIT)))
@@ -3295,8 +3297,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     munit.setCode(cursor.getString(codeColumn));
                     munit.setWord(cursor.getString(wordColumn));
                     munit.setScore(cursor.getInt(scoreColumn));
-                    //munit.setRelated(cursor.getString(relatedColumn));
-                    munit.setRelated(false);
+                    //munit.setHighLighted(cursor.getString(relatedColumn));
+                    munit.setHighLighted(false);
                     munit.setExactMatchToCodeRecord();
                     if (DEBUG)
                         Log.i(TAG, "isMappingExistOnDB(), mapping is exist");

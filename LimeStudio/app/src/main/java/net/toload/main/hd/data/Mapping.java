@@ -26,12 +26,12 @@ package net.toload.main.hd.data;
 public class Mapping {
 
 	private String id;
-	private String code;
-	//private String pcode;
+	private String code;;
 	private String word;
 	private String pword;
-	private Boolean related=true;  //Jeremy '12,5,30 changed from string to boolean to indicate if it's from related list or exact match result
-	//private boolean isDictionary;
+	//Jeremy '12,5,30 changed from string to boolean to indicate if it's from highLighted list or exact match result
+	//Jeremy '15,6,4 renamed to highLighted.
+	private Boolean highLighted =true;
 	private int score;
 	private int userscore;
 	private int recordType;
@@ -61,47 +61,27 @@ public class Mapping {
 		this.setWord(mapping.word);
 		this.setPword(mapping.pword);
 		this.setScore(mapping.score);
-		//this.setDictionary(mapping.isDictionary);
-		this.setRelated(mapping.getRelated());
+		this.setUserscore(mapping.userscore);
+		this.setHighLighted(mapping.isHighLighted());
 		this.setRecordType(mapping.recordType);
 	}
 
-	/**
-	 * @return the related
-	 */
-	public Boolean getRelated() {
-		return related;
+	public Boolean isHighLighted() {
+		return highLighted;
 	}
-
-
-	/**
-	 * @param related the related to set
-	 */
-	public void setRelated(Boolean related) {
-		this.related = related;
+	public void setHighLighted(Boolean related) {
+		this.highLighted = related;
 	}
-
-
 
 	public int getUserscore() {
 		return userscore;
 	}
-
 	public void setUserscore(int userscore) {
 		this.userscore = userscore;
 	}
 
-
-
-	private void setRecordType(int recordType) {this.recordType = recordType;	}
-
-	public int getRecordType(){ return  recordType;}
-
-
-
-
 	/**
-	 * @return previous word.  used in related phrase
+	 * @return previous word.  used in highLighted phrase
 	 */
 	public String getPword() {
 		return pword;
@@ -112,17 +92,18 @@ public class Mapping {
 	public void setPword(String pword) {
 		this.pword = pword;
 	}
-	public boolean isComposingCodeRecord() {
-		return recordType == RECORD_COMPOSING_CODE;
-	}
+
+
+	private void setRecordType(int recordType) {this.recordType = recordType;	}
+	public int getRecordType(){ return  recordType;}
+
+	public boolean isComposingCodeRecord() { return recordType == RECORD_COMPOSING_CODE; }
 	public boolean isExactMatchToCodeRecord(){ return recordType == RECORD_EXACT_MATCH_TO_CODE;};
 	public boolean isPartialMatchToCodeRecord(){ return recordType == RECORD_PARTIAL_MATCH_TO_CODE;};
 	public boolean isRelatedPhraseRecord(){return recordType == RECORD_RELATED_PHRASE;	}
 	public boolean isEnglishSuggestionRecord() { return recordType == RECORD_ENGLISH_SUGGESTION;	}
 	public boolean isChinesePunctuationSymbolRecord(){ return recordType == RECORD_CHINESE_PUNCTUATION_SYMBOL;}
-	public boolean isHasMoreRecordsMarkRecord(){
-		return recordType == RECORD_HAS_MORE_RECORDS_MARK;
-	}
+	public boolean isHasMoreRecordsMarkRecord(){ return recordType == RECORD_HAS_MORE_RECORDS_MARK; }
 	public boolean isRuntimeBuiltPhraseRecord(){ return recordType == RECORD_RUNTIME_BUILT_PHRASE;	}
 	// Identify exactly or partially match to the word queried ( reverse query codes by word)
 	public boolean isExactMatchToWordRecord(){ return recordType == RECORD_EXACT_MATCH_TO_WORD;	}
@@ -130,13 +111,9 @@ public class Mapping {
 	public boolean isCompletionSuggestionRecord(){ return recordType == RECORD_COMPLETION_SUGGESTION_WORD;	}
 
 	//Identify the record to be the current code typed by user and can be used to type English in mixed mode..
-	public void setComposingCodeRecord() {
-		this.recordType = RECORD_COMPOSING_CODE;
-	}
+	public void setComposingCodeRecord() { 	this.recordType = RECORD_COMPOSING_CODE; }
 	public void setExactMatchToCodeRecord() {this.recordType = RECORD_EXACT_MATCH_TO_CODE;}
-	public void setPartialMatchToCodeRecord(){
-		this.recordType = RECORD_PARTIAL_MATCH_TO_CODE;
-	}
+	public void setPartialMatchToCodeRecord(){ this.recordType = RECORD_PARTIAL_MATCH_TO_CODE;	}
 	public void setRelatedPhraseRecord()	{
 		this.recordType = RECORD_RELATED_PHRASE;
 	}
@@ -144,9 +121,7 @@ public class Mapping {
 		this.recordType = RECORD_ENGLISH_SUGGESTION;
 	}
 	public void setChinesePunctuationSymbolRecord(){	this.recordType = RECORD_CHINESE_PUNCTUATION_SYMBOL;}
-	public void setHasMoreRecordsMarkRecord(){
-		this.recordType = RECORD_HAS_MORE_RECORDS_MARK;
-	}
+	public void setHasMoreRecordsMarkRecord(){ this.recordType = RECORD_HAS_MORE_RECORDS_MARK; }
 	public void setRuntimeBuiltPhraseRecord(){	this.recordType = RECORD_RUNTIME_BUILT_PHRASE;	}
 	// Identify exactly or partially match to the word queried ( reverse query codes by word)
 	public void setExactMatchToWordRecord() { this.recordType = RECORD_EXACT_MATCH_TO_WORD; }
