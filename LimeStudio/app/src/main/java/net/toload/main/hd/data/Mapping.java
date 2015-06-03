@@ -31,11 +31,41 @@ public class Mapping {
 	private String word;
 	private String pword;
 	private Boolean related=true;  //Jeremy '12,5,30 changed from string to boolean to indicate if it's from related list or exact match result
-	private boolean isDictionary;
+	//private boolean isDictionary;
 	private int score;
 	private int userscore;
-	
-	
+	private int recordType;
+
+
+	public static final int RECORD_COMPOSING_CODE = 1;
+	public static final int RECORD_EXACT_MATCH_TO_CODE = 2;
+	public static final int RECORD_PARTIAL_MATCH_TO_CODE = 3;
+	public static final int RECORD_RELATED_PHRASE = 4;
+	public static final int RECORD_ENGLISH_SUGGESTION = 5;
+	public static final int RECORD_RUNTIME_BUILT_PHRASE = 6;
+	public static final int RECORD_CHINESE_PUNCTUATION_SYMBOL = 7;
+	public static final int RECORD_HAS_MORE_RECORDS_MARK = 8;
+	public static final int RECORD_EXACT_MATCH_TO_WORD = 9;
+	public static final int RECORD_PARTIAL_MATCH_TO_WORD = 10;
+	public static final int RECORD_COMPLETION_SUGGESTION_WORD = 11;
+
+	// empty constructor
+	public Mapping(){}
+
+	/**
+	 *  constructor for clone mapping '12,6,5 Jeremy.
+	 */
+	public Mapping(Mapping mapping) {
+		this.setId(mapping.id);
+		this.setCode(mapping.code);
+		this.setWord(mapping.word);
+		this.setPword(mapping.pword);
+		this.setScore(mapping.score);
+		//this.setDictionary(mapping.isDictionary);
+		this.setRelated(mapping.getRelated());
+		this.setRecordType(mapping.recordType);
+	}
+
 	/**
 	 * @return the related
 	 */
@@ -52,7 +82,6 @@ public class Mapping {
 	}
 
 
-	public Mapping(){}
 
 	public int getUserscore() {
 		return userscore;
@@ -62,44 +91,17 @@ public class Mapping {
 		this.userscore = userscore;
 	}
 
-	public Mapping(String c, String w, int s, boolean d){
-		this.setCode(c);
-		this.setWord(w);
-		this.setScore(s);
-		this.setDictionary(d);
-	}
 
-	public Mapping(String pw, String c, String w, int s, boolean d){
-		this.setPword(pw);
-		this.setCode(c);
-		this.setWord(w);
-		this.setScore(s);
-		this.setDictionary(d);
-	}
-	
-	/**
-	 * Clone mapping '12,6,5 Jeremy.
-	 * @param mapping
-	 */
-	public Mapping(Mapping mapping) {
-		this.setId(mapping.id);
-		this.setCode(mapping.code);
-		this.setWord(mapping.word);
-		this.setPword(mapping.pword);
-		this.setScore(mapping.score);
-		this.setDictionary(mapping.isDictionary);
-		this.setRelated(mapping.getRelated());
-	}
+
+	private void setRecordType(int recordType) {this.recordType = recordType;	}
+
+	public int getRecordType(){ return  recordType;}
+
+
 
 
 	/**
-	 * @return the pcode
-	 *
-	public String getPcode() {
-		return pcode;
-	}
-	/**
-	 * @return the pword
+	 * @return previous word.  used in related phrase
 	 */
 	public String getPword() {
 		return pword;
@@ -110,18 +112,50 @@ public class Mapping {
 	public void setPword(String pword) {
 		this.pword = pword;
 	}
-	/**
-	 * @return the isDictionary
-	 */
-	public boolean isDictionary() {
-		return isDictionary;
+	public boolean isComposingCodeRecord() {
+		return recordType == RECORD_COMPOSING_CODE;
 	}
-	/**
-	 * @param isDictionary the isDictionary to set
-	 */
-	public void setDictionary(boolean isDictionary) {
-		this.isDictionary = isDictionary;
+	public boolean isExactMatchToCodeRecord(){ return recordType == RECORD_EXACT_MATCH_TO_CODE;};
+	public boolean isPartialMatchToCodeRecord(){ return recordType == RECORD_PARTIAL_MATCH_TO_CODE;};
+	public boolean isRelatedPhraseRecord(){return recordType == RECORD_RELATED_PHRASE;	}
+	public boolean isEnglishSuggestionRecord() { return recordType == RECORD_ENGLISH_SUGGESTION;	}
+	public boolean isChinesePunctuationSymbolRecord(){ return recordType == RECORD_CHINESE_PUNCTUATION_SYMBOL;}
+	public boolean isHasMoreRecordsMarkRecord(){
+		return recordType == RECORD_HAS_MORE_RECORDS_MARK;
 	}
+	public boolean isRuntimeBuiltPhraseRecord(){ return recordType == RECORD_RUNTIME_BUILT_PHRASE;	}
+	// Identify exactly or partially match to the word queried ( reverse query codes by word)
+	public boolean isExactMatchToWordRecord(){ return recordType == RECORD_EXACT_MATCH_TO_WORD;	}
+	public boolean isPartialMatchToWordRecord(){return recordType == RECORD_PARTIAL_MATCH_TO_WORD;}
+	public boolean isCompletionSuggestionRecord(){ return recordType == RECORD_COMPLETION_SUGGESTION_WORD;	}
+
+	//Identify the record to be the current code typed by user and can be used to type English in mixed mode..
+	public void setComposingCodeRecord() {
+		this.recordType = RECORD_COMPOSING_CODE;
+	}
+	public void setExactMatchToCodeRecord() {this.recordType = RECORD_EXACT_MATCH_TO_CODE;}
+	public void setPartialMatchToCodeRecord(){
+		this.recordType = RECORD_PARTIAL_MATCH_TO_CODE;
+	}
+	public void setRelatedPhraseRecord()	{
+		this.recordType = RECORD_RELATED_PHRASE;
+	}
+	public void setEnglishSuggestionRecord() {
+		this.recordType = RECORD_ENGLISH_SUGGESTION;
+	}
+	public void setChinesePunctuationSymbolRecord(){	this.recordType = RECORD_CHINESE_PUNCTUATION_SYMBOL;}
+	public void setHasMoreRecordsMarkRecord(){
+		this.recordType = RECORD_HAS_MORE_RECORDS_MARK;
+	}
+	public void setRuntimeBuiltPhraseRecord(){	this.recordType = RECORD_RUNTIME_BUILT_PHRASE;	}
+	// Identify exactly or partially match to the word queried ( reverse query codes by word)
+	public void setExactMatchToWordRecord() { this.recordType = RECORD_EXACT_MATCH_TO_WORD; }
+	public void setPartialMatchToWordRecord(){
+		this.recordType = RECORD_PARTIAL_MATCH_TO_WORD;
+	}
+	public void setCompletionSuggestionRecord(){ this.recordType = RECORD_COMPLETION_SUGGESTION_WORD;	}
+
+
 	/**
 	 * @return the id
 	 */
@@ -175,16 +209,5 @@ public class Mapping {
 	}
 
 
-	public void clear() {
-		id="";
-		code="";
-		word="";
-		pword="";
-		related=false;
-		isDictionary=false;
-		score=0;
-		
-	}
-	
 	
 }

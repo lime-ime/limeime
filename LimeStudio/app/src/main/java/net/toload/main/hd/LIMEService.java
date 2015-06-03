@@ -757,7 +757,7 @@ public class LIMEService extends InputMethodService implements
         if (mCompletionOn) {
             mCompletions = completions;
             if (!mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-                if (mComposing.length() == 0) updateRelatedWord(false);
+                if (mComposing.length() == 0) updateRelatedPhrase(false);
             }
             if (mEnglishOnly && !mPredictionOn) {
                 setSuggestions(buildCompletionList(), false, "");
@@ -967,14 +967,15 @@ public class LIMEService extends InputMethodService implements
                         return true;
                     }
                     //Jeremy '12,4,8 rewrite the logic here
-                    else if (!mEnglishOnly && hasCandidatesShown //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
-                            && (mComposing.length() > 0 ||
-                            (selectedCandidate != null && selectedCandidate.isDictionary() &&
-                                    !hasChineseSymbolCandidatesShown)
-                    )) {
+                    //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
+                    //TODO: need to recheck here.
+                    else if (!mEnglishOnly
+                            && hasCandidatesShown
+                            && (mComposing.length() > 0
+                            || (selectedCandidate != null && !selectedCandidate.isComposingCodeRecord()
+                            && !hasChineseSymbolCandidatesShown) )) {
                         if (DEBUG)
                             Log.i(TAG, "KEYCODE_BACK clearcomposing only.");
-                        //Jeremy 12,4,21 -- need to check again
                         clearComposing(false);
                         return true;
                     } else if (!mEnglishOnly && hasCandidatesShown) { //Jeremy '12,6,13
@@ -1317,7 +1318,7 @@ public class LIMEService extends InputMethodService implements
             Log.i(TAG, "commitTyped()");
         try {
             if (mComposing.length() > 0   //denotes composing just finished
-                    || (selectedCandidate != null && selectedCandidate.isDictionary())) { //denotes related candidates are selected.
+             ||( selectedCandidate != null && ! selectedCandidate.isComposingCodeRecord() )){ // commit selected candidate if it is not the composing text. '15,6,4 Jeremy
 
                 if (!mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                     if (selectedCandidate != null && selectedCandidate.getWord() != null
@@ -1444,7 +1445,7 @@ public class LIMEService extends InputMethodService implements
                             SearchSrv.addUserDictAndUpdateScore(committedCandidate);
                             SearchSrv.getCodeListStringFromWord(committedCandidate.getWord());
 
-                            updateRelatedWord(false);
+                            updateRelatedPhrase(false);
                         }
 
 
@@ -2188,7 +2189,7 @@ public class LIMEService extends InputMethodService implements
     }
 
     /*
-	 * Update English dictionary view
+	 * Update English suggestions view
 	 */
     private void updateEnglishPrediction() {
         hasChineseSymbolCandidatesShown = false;
@@ -2198,14 +2199,8 @@ public class LIMEService extends InputMethodService implements
 
                 final LinkedList<Mapping> list = new LinkedList<>();
 
-                Mapping empty = new Mapping();
-                empty.setWord("");
-                empty.setDictionary(true);
-
-                //Log.i("ART", "CACHE STRING -> " + tempEnglishWord.toString());
                 if (tempEnglishWord == null || tempEnglishWord.length() == 0) {
-                    //list.add(empty);
-                    //Jermy '11,8,14
+                    //Jeremy '11,8,14
                     clearSuggestions();
                 } else {
                     InputConnection ic = getCurrentInputConnection();
@@ -2244,13 +2239,13 @@ public class LIMEService extends InputMethodService implements
                         if(queryThread!=null && queryThread.isAlive()) queryThread.interrupt();
                         queryThread = new Thread() {
                             public void run() {
-                                final Mapping temp = new Mapping();
-                                temp.setWord(tempEnglishWord.toString());
-                                temp.setDictionary(true);
+                                final Mapping self = new Mapping();
+                                self.setWord(tempEnglishWord.toString());
+                                self.setComposingCodeRecord();
 
-                                List<Mapping> templist = null;
+                                List<Mapping> suggestions = null;
                                 try {
-                                    templist = SearchSrv.getMappingByEnglishWord(tempEnglishWord.toString());
+                                    suggestions = SearchSrv.getEnglishSuggestions(tempEnglishWord.toString());
                                 } catch (RemoteException e) {
                                     e.printStackTrace();
                                 }
@@ -2260,9 +2255,9 @@ public class LIMEService extends InputMethodService implements
                                     return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                                 }
 
-                                if (templist.size() > 0) {
-                                    list.add(temp);
-                                    list.addAll(templist);
+                                if ((suggestions != null ? suggestions.size() : 0) > 0) {
+                                    list.add(self);
+                                    list.addAll(suggestions);
 
                                     // Setup sel key display if
                                     String selkey = "1234567890";
@@ -2296,9 +2291,9 @@ public class LIMEService extends InputMethodService implements
     /*
 	 * Update dictionary view
 	 */
-    private void updateRelatedWord(boolean getAllRecords) {
+    private void updateRelatedPhrase(boolean getAllRecords) {
         if (DEBUG)
-            Log.i(TAG, "updateRelatedWord()");
+            Log.i(TAG, "updateRelatedPhrase()");
         hasChineseSymbolCandidatesShown = false;
         // Also use this to control whether need to display the english
         // suggestions words.
@@ -2320,7 +2315,7 @@ public class LIMEService extends InputMethodService implements
                 // Modified by Jeremy '10,3 ,12 for more specific related word
                 // -----------------------------------------------------------
                 if (committedCandidate != null && hasMappingList) {
-                    list.addAll(SearchSrv.getUserDictMappingByWord(committedCandidate.getWord(), getAllRecords));
+                    list.addAll(SearchSrv.getRelatedPhrase(committedCandidate.getWord(), getAllRecords));
                 }
                 // -----------------------------------------------------------
                 if (list.size() > 0) {
@@ -2353,7 +2348,7 @@ public class LIMEService extends InputMethodService implements
                 Mapping temp = new Mapping();
                 temp.setWord(ci.getText().toString());
                 temp.setCode("");
-                temp.setDictionary(true);
+                temp.setCompletionSuggestionRecord();
                 list.add(temp);
             }
         }
@@ -2434,8 +2429,7 @@ public class LIMEService extends InputMethodService implements
 
 
 
-            if ((!mFixedCandidateViewOn || (mFixedCandidateViewOn && hasPhysicalKeyPressed))
-                    && mCandidateView != mCandidateViewStandAlone) {
+            if ((!mFixedCandidateViewOn ||hasPhysicalKeyPressed) && mCandidateView != mCandidateViewStandAlone) {
                 mCandidateViewInInputView.clear();
                 mCandidateView = mCandidateViewStandAlone; //Jeremy '12,5,4 use standalone candidateView for physical keyboard (no soft keyboard shown)
                 forceHideCandidateView();
@@ -2832,7 +2826,8 @@ public class LIMEService extends InputMethodService implements
 
             }
 
-        } else if (mEnglishOnly || (selectedCandidate != null && selectedCandidate.isDictionary())) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+        //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+        } else if (mEnglishOnly || (selectedCandidate != null && ! selectedCandidate.isComposingCodeRecord())) {
             // related candidates view
             String relatedSelkey = "!@#$%^&*()";
             i = relatedSelkey.indexOf(primaryCode);
@@ -3049,12 +3044,12 @@ public class LIMEService extends InputMethodService implements
         return mCandidateView != null && mCandidateView.takeSelectedSuggestion();
     }
 
-    public void requestFullRecords(boolean isRelated) {
+    public void requestFullRecords(boolean isRelatedPhrase) {
         if (DEBUG)
             Log.i(TAG, "requestFullRecords()");
 
-        if (isRelated)
-            this.updateRelatedWord(true);
+        if (isRelatedPhrase)
+            this.updateRelatedPhrase(true);
         else
             this.updateCandidates(true);
 
@@ -3079,19 +3074,19 @@ public class LIMEService extends InputMethodService implements
         InputConnection ic = getCurrentInputConnection();
 
         if (mCompletionOn && mCompletions != null && index >= 0
-                && selectedCandidate.isDictionary()
-                && index < mCompletions.length) {
+                && selectedCandidate.isPartialMatchToCodeRecord()
+                && index < mCompletions.length) {  // user picked the completion suggestion item.
             CompletionInfo ci = mCompletions[index];
             if (ic != null) ic.commitCompletion(ci);
             if (DEBUG)
                 Log.i(TAG, "pickSuggestionManually():mCompletionOn:" + mCompletionOn);
 
-        } else if ((mComposing.length() > 0
-                || selectedCandidate != null && selectedCandidate.isDictionary()) && !mEnglishOnly) {
+        } else if ((mComposing.length() > 0 ||(selectedCandidate != null && !selectedCandidate.isComposingCodeRecord()))
+                    && !mEnglishOnly) {  // user picked candidates from composing candidate or related phrase candidates
             //Jeremy '12,4,29 use mEnglishOnly instead of onIM
             commitTyped(ic);
         } else if (mLIMEPref.getEnglishPrediction() && tempEnglishList != null
-                && tempEnglishList.size() > 0) {
+                && tempEnglishList.size() > 0) {  // user picked English prediction suggestions
 
             if (ic != null) ic.commitText(
                     this.tempEnglishList.get(index).getWord()
@@ -3100,10 +3095,6 @@ public class LIMEService extends InputMethodService implements
 
             resetTempEnglishWord();
 
-            //Mapping temp = new Mapping();
-            //temp.setWord("");
-            //temp.setDictionary(true);
-            //Jermy '11,8,14
             clearSuggestions();
 
         }

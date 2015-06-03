@@ -797,7 +797,7 @@ public class CandidateView extends View implements View.OnClickListener {
         mTotalWidth = x;
 
         if (DEBUG)
-            Log.i(TAG, "Candidateview:doDraw():mTotalWidth :" + mTotalWidth + "  this.getWidth():" +  this.getWidth());
+            Log.i(TAG, "Candidateview:doDraw():mTotalWidth :" + mTotalWidth + "  this.getWidth():" + this.getWidth());
 
         //Jeremy '11,8,11. If the candidate list is within 1 page and has more records, get full records first.
         if (mTotalWidth < this.getWidth())
@@ -821,17 +821,21 @@ public class CandidateView extends View implements View.OnClickListener {
                 String suggestion = mSuggestions.get(i).getWord();
                 int c = i + 1;
 
-                if (mSuggestions.get(i).isDictionary()) {
-                    npaint.setColor(mColorRecommended);
-                    paint.setColor(mColorDictionary);
-                } else {
-                    npaint.setColor(mColorOther);
-                    if (i == 0) {
-                        if (mSelectedIndex == 0) paint.setColor(mColorInverted);
-                        else paint.setColor(mColorRecommended);
-                    } else {
-                        paint.setColor(mColorOther);
-                    }
+                switch (mSuggestions.get(i).getRecordType()){
+                    case Mapping.RECORD_EXACT_MATCH_TO_CODE:
+                    case Mapping.RECORD_PARTIAL_MATCH_TO_CODE:
+                    case Mapping.RECORD_COMPOSING_CODE:
+                        npaint.setColor(mColorOther);
+                        if (i == 0) {
+                            if (mSelectedIndex == 0) paint.setColor(mColorInverted);
+                            else paint.setColor(mColorRecommended);
+                        } else {
+                            paint.setColor(mColorOther);
+                        }
+                        break;
+                    default:
+                        npaint.setColor(mColorRecommended);
+                        paint.setColor(mColorDictionary);
                 }
                 canvas.drawText(suggestion, mWordX[i] + X_GAP, y, paint);
                 if (mShowNumber) {
@@ -875,7 +879,7 @@ public class CandidateView extends View implements View.OnClickListener {
             Thread updatingThread = new Thread() {
 
                 public void run() {
-                    mService.requestFullRecords(mSuggestions.get(0).isDictionary());
+                    mService.requestFullRecords(mSuggestions.get(0).isRelatedPhraseRecord());
                 }
             };
             updatingThread.start();
@@ -949,8 +953,8 @@ public class CandidateView extends View implements View.OnClickListener {
                     Log.i(TAG, "setSuggestions():mSuggestions.size():" + mSuggestions.size()
                             + " mCount=" + mCount);
 
-                if (mSuggestions.get(0).isDictionary()) {
-                    // no default selection for related words
+                if (mSuggestions.get(0).isRelatedPhraseRecord()) {
+                    // no default selection for related phrase
                     mSelectedIndex = -1;
                 } else if (mCount > 1 && !mSuggestions.get(0).getRelated()) {
                     mSelectedIndex = 1;

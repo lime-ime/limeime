@@ -73,6 +73,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private static boolean databaseOnHold = false;
 
     //Jeremy '11,8,5
+    //TODO: should set INITIAL_RESULT_LIMIT according to screen size.
     private final static String INITIAL_RESULT_LIMIT = "15";
     private final static String FINAL_RESULT_LIMIT = "50";
     private final static int INITIAL_RELATED_LIMIT = 5;
@@ -601,7 +602,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             return true;
         } else {
 
-            // Reset Related Word Score Cache
+            // Reset related phrsae score cache
             if (relatedscore != null)
                 relatedscore.clear();
 
@@ -743,7 +744,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      *
      */
 
-    public synchronized int addOrUpdateUserdictRecord(String pword, String cword) {
+    public synchronized int addOrUpdateRelatedPhraseRecord(String pword, String cword) {
 
         //Jeremy '12,4,17 !checkDBConnection() when db is restoring or replaced.
         if (!checkDBConnection()) return -1;
@@ -755,7 +756,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         int dictotal = Integer.parseInt(mLIMEPref.getTotalUserdictRecords());
 
         if (DEBUG)
-            Log.i(TAG, "addOrUpdateUserdictRecord(): pword:" + pword + " cword:" + cword + "dictotoal:" + dictotal);
+            Log.i(TAG, "addOrUpdateRelatedPhraseRecord(): pword:" + pword + " cword:" + cword + "dictotoal:" + dictotal);
 
         int score = 1;
 
@@ -772,7 +773,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 dictotal++;
                 mLIMEPref.setTotalUserdictRecords(String.valueOf(dictotal));
                 if (DEBUG)
-                    Log.i(TAG, "addOrUpdateUserdictRecord(): new record, dictotal:" + dictotal);
+                    Log.i(TAG, "addOrUpdateRelatedPhraseRecord(): new record, dictotal:" + dictotal);
             } else {//the item exist in preload related database.
                 if (relatedscore.get(munit.getId()) == null) {
                     score = munit.getUserscore() + 1;
@@ -787,7 +788,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 //Log.i("TAG RELATED A", munit.getId() + " : Related ADD Score :" + score);
 
                 if (DEBUG)
-                    Log.i(TAG, "addOrUpdateUserdictRecord():update score on existing record; score:" + score);
+                    Log.i(TAG, "addOrUpdateRelatedPhraseRecord():update score on existing record; score:" + score);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -832,7 +833,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         Log.i(TAG, "addOrUpdateMappingRecord(): mapping does not exist, new cored inserted");
                 }
                 // build related list
-                //updateRelatedList(code);
+                //updateSimilarCodeListInRelatedColumn(code);
 
 
             } else {//the item exist in preload related database.
@@ -858,30 +859,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         //Jeremy '11,7,31  even selected from realted list, udpate the corresponding score in im table.
         // Jeremy '11,6,12 Id=null denotes selection from related list in im table
-//			if(srcunit !=null && srcunit.getId()== null && 
-//				srcunit.getWord() != null  && !srcunit.getWord().trim().equals("")){
-//				String code = srcunit.getCode().trim().toLowerCase(Locale.US);
-//				if(DEBUG) Log.i("LIMEDb.addScore()","related selectd, code:" + code);
-//				// sotre the phrase frequency of relatedlist in reated table with cword =null
-//				addOrUpdateUserdictRecord(srcunit.getWord(),null); 
-//				//updateRelatedList(code); move to search service Jeremy '11,7,29
-//			
-//			}else 
         //Jeremy '11,9,8 query highest score first.  Erase relatedlist if new score is not highest.
         try {
 
             if (srcunit != null && srcunit.getWord() != null &&
                     !srcunit.getWord().trim().equals("")) {
-                //int highestScore = getHighestScoreOnDB(db, srcunit.getWord());
-                //int newScore = 0;
-				/*if(srcunit.getId()==null)
-					newScore = highestScore +1; // selected from related code list without scores information
-				else
-					newScore = srcunit.getScore() + 1;*/
 
                 if (DEBUG) Log.i(TAG, "addScore(): addScore on word:" + srcunit.getWord());
 
-                if (srcunit.isDictionary()) {
+                if (srcunit.isRelatedPhraseRecord()) {
 
                     int score;
                     if (relatedscore.get(srcunit.getId()) == null) {
@@ -901,10 +887,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 } else {
                     ContentValues cv = new ContentValues();
                     cv.put(FIELD_SCORE, srcunit.getScore() + 1);
-					/*if(newScore< highestScore || (srcunit.getId()==null))
-						cv.put(FIELD_RELATED, "");*/
-
-                    // Jeremy 11',7,29  update according to word instead of ID, may have multiple records mathing word but with diff code/id 
+					// Jeremy 11',7,29  update according to word instead of ID, may have multiple records mathing word but with diff code/id
                     db.update(tablename, cv, FIELD_WORD + " = '" + srcunit.getWord() + "'", null);
                 }
             }
@@ -925,7 +908,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     public List<Mapping> getMappingByWord(String keyword, String table) {
 
         if (DEBUG)
-            Log.i(TAG, "getRmapping():tablename:" + table + "  keyworad:" + keyword);
+            Log.i(TAG, "getMappingByWord():tablename:" + table + "  keyworad:" + keyword);
 
         if (!checkDBConnection()) return null;
 
@@ -938,7 +921,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 cursor = db.query(table, null, FIELD_WORD + " = '" + keyword + "'", null, null,
                         null, FIELD_SCORE + " DESC", null);
                 if (DEBUG)
-                    Log.i(TAG, "getRmapping():tablename:" + table + "  keyworad:"
+                    Log.i(TAG, "getMappingByWord():tablename:" + table + "  keyworad:"
                             + keyword + "  cursor.getCount:"
                             + cursor.getCount());
 
@@ -953,25 +936,21 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             munit.setId(cursor.getString(idColumn));
                             munit.setCode(cursor.getString(codeColumn));
                             munit.setWord(cursor.getString(wordColumn));
-                            munit.setRelated(false);
+                            munit.setExactMatchToWordRecord();
                             munit.setScore(cursor.getInt(scoreColumn));
-                            munit.setDictionary(false);
                             result.add(munit);
 
                         } while (cursor.moveToNext());
 
                     }
-
-
-                    //cursor.deactivate();
-                    cursor.close();
+                 cursor.close();
                 }
             }
         } catch (Exception ignored) {
         }
 
         if (DEBUG)
-            Log.i(TAG, "getRmapping() Result.size() = " + result.size());
+            Log.i(TAG, "getMappingByWord() Result.size() = " + result.size());
 
 
         return result;
@@ -1043,15 +1022,20 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Jeremy '11,7,26  Updated related list
      */
-    public synchronized List<Mapping> updateRelatedList(String code) {
+    public synchronized List<Mapping> updateSimilarCodeListInRelatedColumn(String code) {
+        return updateSimilarCodeListInRelatedColumn(tablename, code);
+    }
+
+    public synchronized List<Mapping> updateSimilarCodeListInRelatedColumn(String table, String code) {
+
+        if(betweenSearch) return null;
         // Jeremy '11,7,31  rebuild relatedlist by query from table directly
         // Update relatedlist in IM table now.
-
         if (!checkDBConnection()) return null;
 
         LinkedList<Mapping> scorelist = new LinkedList<>(); //Jeremy '12,5,29 should not return null thus new linklist instead of initial with null
         try {
-            scorelist = updateRelatedListOnDB(db, tablename, code); //Jeremy '12,6,5 the code is retrieve from mapping, and thus should not remap.
+            scorelist = updateSimilarCodeListInRelatedColumnOnDB(db, table, code); //Jeremy '12,6,5 the code is retrieve from mapping, and thus should not remap.
             //preProcessingRemappingCode(code)); //Jeremy '12,4,11 should do remapping before update score
         } catch (Exception e) {
             e.printStackTrace();
@@ -1059,27 +1043,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return scorelist;
     }
 
-    public synchronized List<Mapping> updateRelatedList(String table, String code) {
-        // Jeremy '11,7,31  rebuild relatedlist by query from table directly
-        // Update relatedlist in IM table now.
-
-        if (!checkDBConnection()) return null;
-
-        LinkedList<Mapping> scorelist = new LinkedList<>(); //Jeremy '12,5,29 should not return null thus new linklist instead of initial with null
-        try {
-            scorelist = updateRelatedListOnDB(db, table, code); //Jeremy '12,6,5 the code is retrieve from mapping, and thus should not remap.
-            //preProcessingRemappingCode(code)); //Jeremy '12,4,11 should do remapping before update score
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return scorelist;
-    }
-
-    private LinkedList<Mapping> updateRelatedListOnDB(SQLiteDatabase db, String table, String code) {
+    private LinkedList<Mapping> updateSimilarCodeListInRelatedColumnOnDB(SQLiteDatabase db, String table, String code) {
 
         String escapedCode = code.replaceAll("'", "''"); //Jeremy '11,9,10 escape '
         if (DEBUG)
-            Log.i(TAG, "updateRelatedListOnDB(): escapedCodes: " + escapedCode);
+            Log.i(TAG, "updateSimilarCodeListInRelatedColumnOnDB(): escapedCodes: " + escapedCode);
 
         char[] charray = escapedCode.toCharArray();
         charray[escapedCode.length() - 1]++;
@@ -1092,7 +1060,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         Cursor cursor = db.rawQuery(selectString, null);
 
         if (DEBUG)
-            Log.i(TAG, "updateRelatedListOnDB(): raw query string: " + selectString);
+            Log.i(TAG, "updateSimilarCodeListInRelatedColumnOnDB(): raw query string: " + selectString);
 
         LinkedList<Mapping> newMappingList = new LinkedList<>();
 
@@ -1108,7 +1076,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     Mapping munit = new Mapping();
                     munit.setCode(code);
-                    munit.setDictionary(false);
+                    munit.setPartialMatchToCodeRecord();
                     munit.setWord(cursor.getString(wordColumn));
                     munit.setId(null);
                     munit.setScore(0);
@@ -1140,7 +1108,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 if (highestScoreID > 0) {
                     db.update(table, cv, FIELD_ID + " = " + highestScoreID, null);
                     if (DEBUG)
-                        Log.i(TAG, "updateRelatedListOnDB(): updating code =" + code
+                        Log.i(TAG, "updateSimilarCodeListInRelatedColumnOnDB(): updating code =" + code
                                 + ", the new relatedlist:" + newRelatedlist);
                 } else {
                     cv.put(FIELD_CODE, code);
@@ -1150,14 +1118,14 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         cv.put(FIELD_NO_TONE_CODE, code.replaceAll("[3467 ]", "'")); //Jeremy '12,6,6 should build noToneCode for phonetic
                     db.insert(table, null, cv);
                     if (DEBUG)
-                        Log.i(TAG, "updateRelatedListOnDB(): insert new code =" + code
+                        Log.i(TAG, "updateSimilarCodeListInRelatedColumnOnDB(): insert new code =" + code
                                 + ", the new relatedlist:" + newRelatedlist);
                 }
 
 
             }
             if (DEBUG)
-                Log.i(TAG, "updateRelatedListOnDB(): scorelist.size() =  " + newMappingList.size());
+                Log.i(TAG, "updateSimilarCodeListInRelatedColumnOnDB(): scorelist.size() =  " + newMappingList.size());
 
 
             //cursor.deactivate();
@@ -1477,12 +1445,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         code = preProcessingRemappingCode(code);
         code = code.toLowerCase(Locale.US); //Jeremy '12,4,1 moved from SearchService.getMappingByCode();
         // Step.2 Build extra getMappingByCode conditions. (e.g. dualcode remap)
-        Pair<String, String> extraCondidtions = preProcessingForExtraQueryConditions(code);
-        String extraSelectCluase ="";
+        Pair<String, String> extraConditions = preProcessingForExtraQueryConditions(code);
+        String extraSelectClause ="";
         String extraExactMatchClause = "";
-        if(extraCondidtions!=null){
-            extraSelectCluase = extraCondidtions.first;
-            extraExactMatchClause = extraCondidtions.second;
+        if(extraConditions!=null){
+            extraSelectClause = extraConditions.first;
+            extraExactMatchClause = extraConditions.second;
         }
         //Jeremy '11,6,11 seperated suggestions sorting option for physical keyboard
 
@@ -1527,7 +1495,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
                     if(betweenSearch){
-                        selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectCluase + " and word is not null group by word " ;
+                        selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectClause + " and word is not null group by word " ;
                         String exactMatchCondition = " (" +codeCol +" ='" + escapedCode +"' " + extraExactMatchClause  +  ") ";
                         sortClause = "( exactmatch = 1 and ( score > 5 or  basescore >2) )*length(code) desc, ";
                         if(sort) sortClause += " score desc, basescore desc, ";
@@ -1541,7 +1509,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             Log.i(TAG, "getMappingByCode() between search select string:"+selectString);
                      }
                     else{
-                        selectClause = codeCol + " = '" + escapedCode + "' " + extraSelectCluase;
+                        selectClause = codeCol + " = '" + escapedCode + "' " + extraSelectClause;
                         if (sort)
                             sortClause = FIELD_SCORE + " DESC, +" + FIELD_BASESCORE + " DESC, " + "_id ASC";
                         else
@@ -1554,10 +1522,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         Log.i(TAG, "getMappingByCode(): code = '" + code + "' selectClause=" + selectClause);
                     // Jeremy '11,8,5 limit initial getMappingByCode to limited records
                     // Jeremy '11,6,15 Using getMappingByCode with preprocessed code and extra getMappingByCode conditions.
-
-
-
-
 
                     if (cursor != null) {
                         result = buildQueryResult(code, cursor, getAllRecords);
@@ -2313,20 +2277,30 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             HashMap<String, String> relatedMap = new HashMap<>();
 
             do {
+                String word = cursor.getString(wordColumn);
+                //skip if word is null
+                if (word == null || word.trim().equals(""))
+                    continue;
                 String code = cursor.getString(codeColumn);
+                Mapping m = new Mapping();
+                m.setCode(code);
+                m.setWord(word);
+                m.setId(cursor.getString(idColumn));
+                m.setScore(cursor.getInt(scoreColumn));
+
                 String relatedlist = (betweenSearch)?null: cursor.getString(relatedColumn);
 
-                Boolean related = (betweenSearch)?!cursor.getString(exactMatchColumn).equals("1"):false;
+                Boolean exactMatch = cursor.getString(exactMatchColumn).equals("1"); //Jeremy '15,6,3 new exact match virtual column built in query time.
+                m.setRelated((betweenSearch) && !exactMatch);//Jeremy '12,5,30 exact match, not from related list
 
-                Mapping munit = new Mapping();
-                munit.setWord(cursor.getString(wordColumn));
-                munit.setId(cursor.getString(idColumn));
-                munit.setCode(code);
-                munit.setRelated(related);//Jeremy '12,5,30 exact match, not from related list
+                //Jeremy 15,6,3 new exact or partial record type
+                if(exactMatch)
+                    m.setExactMatchToCodeRecord();
+                else
+                    m.setPartialMatchToCodeRecord();
 
                 //Jeremy '11,8,26 build valid code map
                 //jeremy '11,8,30 add limit for valid code words for composing display
-
                 if (buildValidCodeList) {
                     String noToneCode = cursor.getString(noToneCodeColumn);
                     if (searchNoToneColumn && noToneCode != null
@@ -2342,34 +2316,29 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 // Only apply to Array IM
                 try {
                     if (code != null && code.length() == 1 && tablename.equals("array")) {
-                        if (keyToKeyname(code, tablename, false).equals(munit.getWord())) {
+                        if (keyToKeyname(code, tablename, false).equals(m.getWord())) {
                             continue;
                         }
                     }
-                } catch (Exception ignored) {
-                }
+                } catch (Exception ignored) { }
 
+                //related list always null in between search mode. Jeremy '15,6,3----------------
                 if ( relatedlist != null && relatedMap.get(code) == null) {
                     relatedMap.put(code, relatedlist);
                     if (DEBUG)
                         Log.i(TAG, "buildQueryResult() build relatedmap on code = '" + code + "' relatedlist = " + relatedlist);
 
                 }
-                munit.setScore(cursor.getInt(scoreColumn));
-                munit.setDictionary(false);
+                //-----------------------------------------------------------------------------------------------
 
-                if (munit.getWord() == null || munit.getWord().trim().equals(""))
-                    continue;
-
-                if (duplicateCheck.add(munit.getWord())) {
-                    result.add(munit);
+                if (duplicateCheck.add(m.getWord())) {
+                    result.add(m);
                 }
                 rsize++;
             } while (cursor.moveToNext());
 
 
             //Jeremy '11,8,26 build valid code map
-
             if (buildValidCodeList && validCodeMap.size() > 0) {
                 for (String validCode : validCodeMap) {
                     if (DEBUG)
@@ -2382,6 +2351,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             int ssize = mLIMEPref.getSimilarCodeCandidates();
             //Jeremy '11,6,1 The related field may have only one word and thus no "|" inside
             //Jeremy '11,6,11 allow multiple relatedlist from different codes.
+            //Jeremy '15,6,3 not used in between search mode ---------------------------------------
             if (!betweenSearch) {
                 int scount = 0;
                 for (Entry<String, String> entry : relatedMap.entrySet()) {
@@ -2395,10 +2365,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             }
                             if (duplicateCheck.add(unit)) {
                                 Mapping munit = new Mapping();
-                                munit.setWord(unit);
-                                //munit.setPword(relatedlist);
-                                munit.setScore(0);
                                 munit.setCode(entry.getKey());
+                                munit.setWord(unit);
+                                munit.setPartialMatchToCodeRecord();
+                                munit.setScore(0);
                                 //Jeremy '11,6,18 skip if word is empty
                                 if (munit.getWord() == null || munit.getWord().trim().equals(""))
                                     continue;
@@ -2411,15 +2381,17 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     }
                 }
             }
+            //----------------------------------------------------------------------------------------------------
         }
+
+
+        // Add full shaped punctuation symbol to the third place  , and .
         if (query_code.length() == 1) {
-            if(betweenSearch) relatedresult.addAll(result);
-            // processing full shaped , and .
+
             if ((query_code.equals(",") || query_code.equals("<")) && duplicateCheck.add("，")) {
                 Mapping temp = new Mapping();
                 temp.setCode(query_code);
                 temp.setWord("，");
-                temp.setRelated(false);
                 if (result.size() > 3)
                     result.add(3, temp);
                 else
@@ -2468,9 +2440,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Get dictionary database contents
      */
-    public List<Mapping> queryUserDict(String pword, boolean getAllRecords) {
+    public List<Mapping> getRelatedPhraseRecord(String pword, boolean getAllRecords) {
         if (DEBUG)
-            Log.i(TAG, "queryUserDict(), " + getAllRecords);
+            Log.i(TAG, "getRelatedPhraseRecord(), " + getAllRecords);
 
         List<Mapping> result = new LinkedList<>();
 
@@ -2508,7 +2480,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     selectString += " limit " + limitClause;
 
                     if (DEBUG)
-                        Log.i(TAG, "queryUserDict() selectString = " + selectString);
+                        Log.i(TAG, "getRelatedPhraseRecord() selectString = " + selectString);
                     cursor = db.rawQuery(selectString, null);
 
 
@@ -2530,7 +2502,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             munit.setWord(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD)));
                             munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_SCORE)));
                             munit.setUserscore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
-                            munit.setDictionary(true);
+                            munit.setRelatedPhraseRecord();
                             result.add(munit);
                             rsize++;
                         } while (cursor.moveToNext());
@@ -2692,7 +2664,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         //if(DEBUG)
                         //	Log.i(TAG, "loadFileV2():building related list:" + i +"/" + entrySize);
                         try {
-                            updateRelatedListOnDB(db, table, entry);
+                            updateSimilarCodeListInRelatedColumnOnDB(db, table, entry);
 
                         } catch (Exception e2) {
                             Log.i(TAG, "restoreUserData():create related field error on code =" + entry);
@@ -3068,7 +3040,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             if (progressPercentageDone > 99) progressPercentageDone = 99;
 
                             try {
-                                updateRelatedListOnDB(db, table, entry);
+                                updateSimilarCodeListInRelatedColumnOnDB(db, table, entry);
 
                             } catch (Exception e2) {
 
@@ -3330,7 +3302,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     munit.setScore(cursor.getInt(scoreColumn));
                     //munit.setRelated(cursor.getString(relatedColumn));
                     munit.setRelated(false);
-                    munit.setDictionary(false);
+                    munit.setExactMatchToCodeRecord();
                     if (DEBUG)
                         Log.i(TAG, "isMappingExistOnDB(), mapping is exist");
                 } else if (DEBUG)
@@ -3465,10 +3437,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 munit.setWord(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD)));
                 munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_SCORE)));
                 munit.setUserscore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
-                munit.setDictionary(true);
+                munit.setRelatedPhraseRecord();
 
             }
-            //cursor.deactivate();
             cursor.close();
 
 
@@ -3813,7 +3784,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return "";
     }
 
-    public List<String> queryDictionary(String word) {
+    public List<String> getEnglishSuggesions(String word) {
 
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (!checkDBConnection()) return null;

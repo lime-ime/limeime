@@ -199,9 +199,9 @@ public class SearchServer {
 
 	//Modified by Jeremy '10,3 ,12 for more specific related word
 	//-----------------------------------------------------------
-	public List<Mapping> getUserDictMappingByWord(String word, boolean getAllRecords) throws RemoteException {
+	public List<Mapping> getRelatedPhrase(String word, boolean getAllRecords) throws RemoteException {
 
-		return dbadapter.queryUserDict(word, getAllRecords);
+		return dbadapter.getRelatedPhraseRecord(word, getAllRecords);
 	}
 	//-----------------------------------------------------------
 
@@ -339,6 +339,7 @@ public class SearchServer {
 			Mapping self = new Mapping();
 			self.setWord(code);
 			self.setCode(code);
+			self.setComposingCodeRecord();
 
 			// 12,6,4 Jeremy.
 			// Descending  abc ab a... Build the result candidate list.
@@ -378,7 +379,7 @@ public class SearchServer {
 
 					if (i == 0) {//Jeremy add the mixed type English code in first loop
 						//Jeremy '12,5,31 setRelated true if the exact match code has zero result.
-						//Jeremy '15,6,2 rewrote for betweenSearch.  getRelated = false for the first element means no any exact match suggestions.
+						//Jeremy '15,6,2 rewrite for betweenSearch.  getRelated = false for the first element means no any exact match suggestions.
 						if(resultlist.size() == 0 || resultlist.get(0).getRelated()) {
 							self.setRelated(true);
 						}else{
@@ -415,7 +416,8 @@ public class SearchServer {
 						}
 					}
 				}
-				//codeLenthMap.add(new Pair<>(code.length(), result.size()));  //Jeremy 12,6,2 preserve the code length in each loop.
+				//codeLengthMap is deprecated and replace by exact match stack scheme '15,6,3 jeremy
+				//codeLengthMap.add(new Pair<>(code.length(), result.size()));  //Jeremy 12,6,2 preserve the code length in each loop.
 				if (DEBUG)
 					Log.i(TAG, "getMappingByCode() codeLengthMap  code length = " + code.length() + ", result size = " + result.size());
 
@@ -480,25 +482,25 @@ public class SearchServer {
 
 		dbadapter.addScore(cachedMapping);
 		// Jeremy '11,7,29 update cached here
-		if (!cachedMapping.isDictionary()) {
+		if (!cachedMapping.isRelatedPhraseRecord()) {
 			String code = cachedMapping.getCode().toLowerCase(Locale.US);
 			String cachekey = cacheKey(code);
 			Pair<List<Mapping>, List<Mapping>> cachedPair = cache.get(cachekey);
 			// null id denotes target is selected from the related list (not exact match)
-			if (cachedMapping.getId() == null
+			if ((cachedMapping.getId() == null || cachedMapping.isPartialMatchToCodeRecord()) //Jeremy '15,6,3 new record type to identify partial match
 					&& cachedPair != null && cachedPair.second != null && cachedPair.second.size() > 0) {
 				if (DEBUG) Log.i(TAG, "updateUserDict: updating related list");
 				if (cache.remove(cachekey) != null) {
 					Pair<List<Mapping>, List<Mapping>> newPair
-							= new Pair<>(cachedPair.first, dbadapter.updateRelatedList(code));
+							= new Pair<>(cachedPair.first, dbadapter.updateSimilarCodeListInRelatedColumn(code));
 					cache.put(cachekey, newPair);
-				} else {//Jeremy '12,6,5 code not in cahe do updateRelatedList and removed cached items of  remaped codes.
-					dbadapter.updateRelatedList(code);
+				} else {//Jeremy '12,6,5 code not in cache do updateSimilarCodeListInRelatedColumn and removed cached items of  remaped codes.
+					dbadapter.updateSimilarCodeListInRelatedColumn(code);
 					removeRemapedCodeCachedMappings(code);
 				}
 				// non null id denotes target is in exact match result list.
-			} else if (cachedMapping.getId() != null && cachedPair != null
-					&& cachedPair.first != null && cachedPair.first.size() > 0) {
+			} else if ((cachedMapping.getId() != null || cachedMapping.isExactMatchToCodeRecord()) //Jeremy '15,6,3 new record type to identify exact match
+					&& cachedPair != null && cachedPair.first != null && cachedPair.first.size() > 0) {
 
 				boolean sort;
 				if (isPhysicalKeyboardPressed)
@@ -540,8 +542,8 @@ public class SearchServer {
 				updateSimilarCodeRelatedList(code);
 
 
-			} else {//Jeremy '12,6,5 code not in cache do updateRelatedList and removed cached items of  ramped codes.
-				dbadapter.updateRelatedList(code);
+			} else {//Jeremy '12,6,5 code not in cache do updateSimilarCodeListInRelatedColumn and removed cached items of  ramped codes.
+				dbadapter.updateSimilarCodeListInRelatedColumn(code);
 				removeRemapedCodeCachedMappings(code);
 			}
 		}
@@ -617,7 +619,7 @@ public class SearchServer {
 
 							int score = 0;
 							if (unit.getId() != null && unit2.getId() != null) //Jeremy '12,7,2 eliminate learing english words.
-								score = dbadapter.addOrUpdateUserdictRecord(unit.getWord(), unit2.getWord());
+								score = dbadapter.addOrUpdateRelatedPhraseRecord(unit.getWord(), unit2.getWord());
 							if (DEBUG)
 								Log.i(TAG, "learnUserDict(), the return score = " + score);
 							//Jeremy '12,6,7 learn LD phrase if the score of userdic is > 20
@@ -634,7 +636,7 @@ public class SearchServer {
 	}
 
 	/**
-	 * Jeremy '12,6,9 Rewrited to support word with more than 1 characters
+	 * Jeremy '12,6,9 Rewrite to support word with more than 1 characters
 	 */
 
 	private void learnLDPhrase(ArrayList<List<Mapping>> localLDPhraseListArray) {
@@ -672,9 +674,10 @@ public class SearchServer {
 
 					if (baseWord.length() == 1) {
 						if (unit1.getId() == null //Jeremy '12,6,7 break if id is null (selected from related list)
+								|| unit1.isPartialMatchToCodeRecord() //Jeremy '15,6,3 new record identification
 								|| unit1.getCode() == null //Jeremy '12,6,7 break if code is null (selected from userdict)
 								|| unit1.getCode().length() == 0
-								|| unit1.isDictionary()) {
+								|| unit1.isRelatedPhraseRecord()) {
 							List<Mapping> rMappingList = dbadapter.getMappingByWord(baseWord, tablename);
 							if (rMappingList.size() > 0)
 								baseCode = rMappingList.get(0).getCode();
@@ -718,10 +721,11 @@ public class SearchServer {
 							baseWord += word2;
 
 							if (word2.length() == 1 && baseWord.length() < 5) { //limit the phrase size to 4
-								if (unit2.getId() == null //Jermy '12,6,7 break if id is null (selected from related list)
-										|| code2 == null //Jermy '12,6,7 break if code is null (selected from userdict)
+								if (unit2.getId() == null //Jeremy '12,6,7 break if id is null (selected from related list)
+										|| unit2.isPartialMatchToCodeRecord() //Jeremy '15,6,3 new record identification
+										|| code2 == null //Jeremy '12,6,7 break if code is null (selected from userdict)
 										|| code2.length() == 0
-										|| unit2.isDictionary()) {
+										|| unit2.isRelatedPhraseRecord()) {
 									List<Mapping> rMappingList = dbadapter.getMappingByWord(word2, tablename);
 									if (rMappingList.size() > 0)
 										code2 = rMappingList.get(0).getCode();
@@ -829,13 +833,13 @@ public class SearchServer {
 				if (DEBUG)
 					Log.i(TAG, "updateSimilarCodeRelatedList(): udpate to db cachekey = '" + cachekey + "'");
 				Pair<List<Mapping>, List<Mapping>> newPair
-						= new Pair<>(cachedPair.first, dbadapter.updateRelatedList(key));
+						= new Pair<>(cachedPair.first, dbadapter.updateSimilarCodeListInRelatedColumn(key));
 				cache.remove(cachekey);
 				cache.put(cachekey, newPair);
 			} else {
 				if (DEBUG)
 					Log.i(TAG, "updateSimilarCodeRelatedList(): code not in cache. udpate to db only on code = '" + key + "'");
-				dbadapter.updateRelatedList(key);
+				dbadapter.updateSimilarCodeListInRelatedColumn(key);
 				removeRemapedCodeCachedMappings(key);
 			}
 		}
@@ -945,7 +949,7 @@ public class SearchServer {
 	}
 
 
-	public List<Mapping> getMappingByEnglishWord(String word) throws RemoteException {
+	public List<Mapping> getEnglishSuggestions(String word) throws RemoteException {
 
 		List<Mapping> result = new LinkedList<>();
 		List<Mapping> cacheTemp = engcache.get(word);
@@ -954,11 +958,11 @@ public class SearchServer {
 			result.addAll(cacheTemp);
 		} else {
 			//loadDBAdapter(); openLimeDatabase();
-			List<String> tempResult = dbadapter.queryDictionary(word);
+			List<String> tempResult = dbadapter.getEnglishSuggesions(word);
 			for (String u : tempResult) {
 				Mapping temp = new Mapping();
 				temp.setWord(u);
-				temp.setDictionary(true);
+				temp.setEnglishSuggestionRecord();
 				result.add(temp);
 			}
 			if (result.size() > 0) {
@@ -1002,7 +1006,7 @@ public class SearchServer {
 				}
 			} else
 				validSelkey = false;
-			//Jeremy '11,6,19 Rewrote for IM has symbol mapping like ETEN
+			//Jeremy '11,6,19 Rewrite for IM has symbol mapping like ETEN
 			if (!validSelkey || tablename.equals("phonetic")) {
 				if (hasNumberMapping && hasSymbolMapping) {
 					if (tablename.equals("dayi")

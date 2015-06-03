@@ -114,20 +114,7 @@ public class CandidateExpandedView extends CandidateView {
         // Paint all the suggestions and lines.
         if (canvas != null) {
 
-            // Calculate column and row of mSelectedIndex
-            /*int selRow =0;
-        	int selCol = mSelectedIndex;
-        	if(mSelectedIndex >= mRowSize[0]){
-        		
-        		for(int i=0; i < mRows+1; i++){
-        			//if(DEBUG)
-        				Log.i(TAG, "onDraw(): mRowStartingIndex[" +i +"]=" + mRowStartingIndex[i]);
-        			selRow = i;
-        			if(mSelectedIndex < mRowStartingIndex[i]+ mRowSize[i] ) break;
-        		}
-        		//selRow = i;
-        		selCol = mSelectedIndex - mRowStartingIndex[selRow];
-        	}*/
+
             if (DEBUG)
                 Log.i(TAG, "onDraw(): mSelectedIndex=" + mSelectedIndex + " at row:" + mSelRow + ", column:" + mSelCol);
 
@@ -157,17 +144,21 @@ public class CandidateExpandedView extends CandidateView {
                     //if(DEBUG)
                     //	Log.i(TAG, "Candidateview:OnDraw():index:" + index + "  Drawing:" + suggestion );
 
-                    if (mSuggestions.get(i).isDictionary()) {
-                        //npaint.setColor(mColorRecommended);
-                        paint.setColor(mColorDictionary);
-                    } else {
-                        npaint.setColor(mColorOther);
-                        if (i == 0 && j == 0) {
-                            if (mSelectedIndex == 0) paint.setColor(mColorInverted);
-                            else paint.setColor(mColorRecommended);
-                        } else
-                            paint.setColor(mColorOther);
-
+                    switch (mSuggestions.get(i).getRecordType()) {
+                        case Mapping.RECORD_EXACT_MATCH_TO_CODE:
+                        case Mapping.RECORD_PARTIAL_MATCH_TO_CODE:
+                        case Mapping.RECORD_COMPOSING_CODE:
+                            npaint.setColor(mColorOther);
+                            if (i == 0 && j==0) {
+                                if (mSelectedIndex == 0) paint.setColor(mColorInverted);
+                                else paint.setColor(mColorRecommended);
+                            } else {
+                                paint.setColor(mColorOther);
+                            }
+                            break;
+                        default:
+                            //npaint.setColor(mColorRecommended);
+                            paint.setColor(mColorDictionary);
                     }
                     canvas.drawText(suggestion, mWordX[i][j] + X_GAP, y, paint);
 

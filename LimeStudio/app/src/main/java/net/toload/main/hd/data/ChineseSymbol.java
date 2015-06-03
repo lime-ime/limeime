@@ -69,7 +69,7 @@ public class ChineseSymbol {
 				Mapping mapping = new Mapping();
 				mapping.setCode("");
 				mapping.setWord(sym);
-				mapping.setDictionary(true);
+				mapping.setChinesePunctuationSymbolRecord();
 				mChineseSymbolMapping.add(mapping);
 				
 			}
