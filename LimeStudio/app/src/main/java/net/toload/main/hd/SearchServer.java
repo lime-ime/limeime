@@ -298,7 +298,7 @@ public class SearchServer {
 					// 25/Jul/2011 by Art
 					// Just ignore error when something wrong with the result set
 					try {
-						cacheTemp = dbadapter.getMappinpByCode(queryCode, !isPhysicalKeyboardPressed, getAllRecords);
+						cacheTemp = dbadapter.getMappingByCode(queryCode, !isPhysicalKeyboardPressed, getAllRecords);
 						cache.put(cacheKey, cacheTemp);
 						//Jeremy '12,6,5 check if need to update code remap cache
 						if (cacheTemp != null && cacheTemp.first != null
@@ -359,7 +359,7 @@ public class SearchServer {
 									relatedtlist.size() > 1 &&
 											relatedtlist.get(relatedtlist.size() - 1).getCode().equals("has_more_records"))) {
 						try {
-							cacheTemp = dbadapter.getMappinpByCode(code, !isPhysicalKeyboardPressed, true);
+							cacheTemp = dbadapter.getMappingByCode(code, !isPhysicalKeyboardPressed, true);
 							cache.remove(cacheKey);
 							cache.put(cacheKey, cacheTemp);
 						} catch (Exception e) {
@@ -393,7 +393,7 @@ public class SearchServer {
 					}
 
 					// Art '09.11.2011 ignore phonetic tone control
-					if (resultlist.size() > 0) {
+					if (relatedtlist!=null && resultlist.size() > 0) {
 						result.addAll(resultlist);
 						int rsize = result.size();
 						if (result.get(rsize - 1).getCode().equals("has_more_records")) {
@@ -404,7 +404,7 @@ public class SearchServer {
 										+ resultlist.size());
 						}
 					}
-					if (relatedtlist.size() > 0 && i == 0) {
+					if (relatedtlist!=null &&relatedtlist.size() > 0 && i == 0) {
 						result.addAll(relatedtlist);
 						int rsize = result.size();
 						if (result.get(rsize - 1).getCode().equals("has_more_records")) {
@@ -862,13 +862,14 @@ public class SearchServer {
 
 	/**
 	 * Renamed from addUserDict and pass parameter with mapping directly Jeremy '12,6,5
+	 * Renamed to learnRelatedPhraseAndUpdateScore Jeremy '15,6,4
 	 */
 
-	public void addUserDictAndUpdateScore(Mapping updateMapping)
+	public void learnRelatedPhraseAndUpdateScore(Mapping updateMapping)
 	//String id, String code, String word,
 	//String pword, int score, boolean isDictionary)
 			throws RemoteException {
-		if (DEBUG) Log.i(TAG, "addUserDictAndUpdateScore() ");
+		if (DEBUG) Log.i(TAG, "learnRelatedPhraseAndUpdateScore() ");
 
 		if (scorelist == null) {
 			scorelist = new ArrayList<>();
@@ -880,12 +881,12 @@ public class SearchServer {
 
 			// Jeremy '11,6,11. Always update score and sort according to preferences.
 			scorelist.add(updateMappingTemp);
-			Thread UpadtingThread = new Thread() {
+			Thread UpdatingThread = new Thread() {
 				public void run() {
 					updateScoreCache(updateMappingTemp);
 				}
 			};
-			UpadtingThread.start();
+			UpdatingThread.start();
 		}
 	}
 

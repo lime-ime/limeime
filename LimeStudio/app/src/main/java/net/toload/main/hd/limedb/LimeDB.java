@@ -1027,16 +1027,16 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     public synchronized List<Mapping> updateSimilarCodeListInRelatedColumn(String table, String code) {
-
-        if(betweenSearch) return null;
-        // Jeremy '11,7,31  rebuild relatedlist by query from table directly
-        // Update relatedlist in IM table now.
-        if (!checkDBConnection()) return null;
-
-        LinkedList<Mapping> scorelist = new LinkedList<>(); //Jeremy '12,5,29 should not return null thus new linklist instead of initial with null
+        //Jeremy '12,5,29 should not return null thus new linklist instead of initial with null
+        LinkedList<Mapping> scorelist = new LinkedList<>();
+        //Jeremy '15,6,4 do nothing in between search mode
+        if(betweenSearch) return scorelist;
+        if (!checkDBConnection()) return scorelist;
         try {
-            scorelist = updateSimilarCodeListInRelatedColumnOnDB(db, table, code); //Jeremy '12,6,5 the code is retrieve from mapping, and thus should not remap.
-            //preProcessingRemappingCode(code)); //Jeremy '12,4,11 should do remapping before update score
+            // Jeremy '11,7,31  rebuild relatedlist by query from table directly
+            // Update relatedlist in IM table now.
+            //Jeremy '12,6,5 the code is retrieve from mapping, and thus should not remap.
+            scorelist = updateSimilarCodeListInRelatedColumnOnDB(db, table, code);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1172,7 +1172,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             if (!code.equals(lastCode)) {
                 // unsynchronized cache. do the preprocessing again.
                 //preProcessingForExtraQueryConditions(preProcessingRemappingCode(code));
-                getMappinpByCode(code, false, false);
+                getMappingByCode(code, false, false);
             }
             //String dualCodeList = lastValidDualCodeList;
             if (lastValidDualCodeList != null) {
@@ -1420,7 +1420,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * Retrieve matched records
      * Add synchronized modifier to avoid later search finsihed earlier in ascending searching like a ab to avoid incorrect order of exact match stack.
      */
-    public synchronized Pair<List<Mapping>, List<Mapping>> getMappinpByCode(String code, boolean softKeyboard, boolean getAllRecords) {
+    public synchronized Pair<List<Mapping>, List<Mapping>> getMappingByCode(String code, boolean softKeyboard, boolean getAllRecords) {
 
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (!checkDBConnection()) return null;
@@ -1440,7 +1440,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         lastValidDualCodeList = null; // reset the lastValidDualCodeList
         Pair<List<Mapping>, List<Mapping>> result = null;
 
-        //Two-steps qeury code pre-processing. Jeremy '11,6,15
+        //Two-steps query with code pre-processing. Jeremy '11,6,15
         // Step.1 Code re-mapping.  
         code = preProcessingRemappingCode(code);
         code = code.toLowerCase(Locale.US); //Jeremy '12,4,1 moved from SearchService.getMappingByCode();
@@ -1872,12 +1872,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (DEBUG) Log.i(TAG, "buildDualCodeList(): code:" + code);
 
         HashMap<String, String> codeDualMap = keysDualMap.get(keytablename);
-
-        //HashSet<String> dualCodeList = new HashSet<>();
-        //HashSet<String> resultDualCodeList = new HashSet<String>();
         HashSet<String> treeDualCodeList = new HashSet<>();
-       // dualCodeList.add(code);
-        //resultDualCodeList.add(code);
 
         if (codeDualMap != null && codeDualMap.size() > 0) {
 

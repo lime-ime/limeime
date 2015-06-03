@@ -1442,7 +1442,7 @@ public class LIMEService extends InputMethodService implements
                             clearComposing(false);
 
 
-                            SearchSrv.addUserDictAndUpdateScore(committedCandidate);
+                            SearchSrv.learnRelatedPhraseAndUpdateScore(committedCandidate);
                             SearchSrv.getCodeListStringFromWord(committedCandidate.getWord());
 
                             updateRelatedPhrase(false);
