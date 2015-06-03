@@ -26,17 +26,17 @@ public class ManageImHandler extends Handler {
                 break;
             case "add": {
                 String code = msg.getData().getString("code");
-                String code3r = msg.getData().getString("code3r");
+                int score = msg.getData().getInt("score");
                 String word = msg.getData().getString("word");
-                fragment.addWord(code, code3r, word);
+                fragment.addWord(code, score, word);
                 break;
             }
             case "update": {
                 int id = msg.getData().getInt("id");
                 String code = msg.getData().getString("code");
-                String code3r = msg.getData().getString("code3r");
+                int score = msg.getData().getInt("score");
                 String word = msg.getData().getString("word");
-                fragment.updateWord(id, code, code3r, word);
+                fragment.updateWord(id, code, score, word);
                 break;
             }
             case "keyboard":
@@ -79,21 +79,21 @@ public class ManageImHandler extends Handler {
         this.sendMessageDelayed(m, 1);
     }
 
-    public void updateWord(int id, String code, String code3r, String word) {
+    public void updateWord(int id, String code, int score, String word) {
         Message m = new Message();
         m.getData().putString("action", "update");
         m.getData().putInt("id", id);
         m.getData().putString("code", code);
-        m.getData().putString("code3r", code3r);
+        m.getData().putInt("score", score);
         m.getData().putString("word", word);
         this.sendMessageDelayed(m, 1);
     }
 
-    public void addWord(String code, String code3r, String word) {
+    public void addWord(String code, int score, String word) {
         Message m = new Message();
         m.getData().putString("action", "add");
         m.getData().putString("code", code);
-        m.getData().putString("code3r", code3r);
+        m.getData().putInt("score", score);
         m.getData().putString("word", word);
         this.sendMessageDelayed(m, 1);
     }

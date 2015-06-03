@@ -49,5 +49,7 @@
     <color name="limekeyboard_subkey_color_light">#FF7D7D7D</color>
     <color name="limekeyboard_subkey_color_light_hl">#FF80CBC4</color>
 
+    <color name="background_score">#88333333</color>
+
 
 </resources>

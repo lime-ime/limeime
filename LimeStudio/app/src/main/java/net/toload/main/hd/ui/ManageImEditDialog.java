@@ -2,6 +2,7 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
@@ -13,7 +14,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Word;
 
@@ -35,11 +35,13 @@ public class ManageImEditDialog extends DialogFragment {
 	private Button btnManageImWordRemove;
 	private Button btnManageImWordUpdate;
 
-	private EditText edtManageImWordCode;
-	private EditText edtManageImWordCode3r;
-	private EditText edtManageImWordWord;
+	private Button btnManageMinusScore;
+	private Button btnManageAddScore;
 
-	private TextView txtManageImWordCode3r;
+	private TextView edtManageImWordScore;
+
+	private EditText edtManageImWordCode;
+	private EditText edtManageImWordWord;
 
 	public ManageImEditDialog() {}
 
@@ -78,6 +80,15 @@ public class ManageImEditDialog extends DialogFragment {
 		this.setCancelable(false);
 	}
 
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		Dialog dialog = getDialog();
+		if (dialog != null) {
+			dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+		}
+	}
 
 	@Override
 	public void onResume() {
@@ -153,21 +164,15 @@ public class ManageImEditDialog extends DialogFragment {
 				AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
 				alertDialog.setTitle(activity.getResources().getString(R.string.manage_word_dialog_edit));
 				alertDialog.setMessage(activity.getResources().getString(R.string.manage_word_dialog_message));
-				//alertDialog.setIcon(R.drawable.);
 				alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int which) {
 								String code = edtManageImWordCode.getText().toString();
-								String code3r = edtManageImWordCode3r.getText().toString();
 								String text = edtManageImWordWord.getText().toString();
-								if(!code.isEmpty() && !text.isEmpty() && (
-										!word.getCode().equalsIgnoreCase(code) ||
-												(word.getCode3r() != null && !word.getCode().equalsIgnoreCase(code3r)) ||
-										!word.getWord().equalsIgnoreCase(text) ) ) {
-									if(!code3r.isEmpty()){
-										code3r = code3r.trim();
-									}
-									handler.updateWord(word.getId(), code, code3r, text);
+								if(!code.isEmpty() && !text.isEmpty()) {
+
+									int value = Integer.parseInt(edtManageImWordScore.getText().toString());
+									handler.updateWord(word.getId(), code, value, text);
 									handler.updateRelated(code);
 									dialog.dismiss();
 									cancelDialog();
@@ -186,20 +191,48 @@ public class ManageImEditDialog extends DialogFragment {
 			}
 		});
 
+		btnManageMinusScore = (Button) view.findViewById(R.id.btnManageMinusScore);
+		btnManageMinusScore.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				try{
+					int value = Integer.parseInt(edtManageImWordScore.getText().toString());
+					if(value > 0){
+						value = value -1 ;
+						edtManageImWordScore.setText(String.valueOf(value));
+					}
+				}catch(Exception e){}
+			}
+		});
+
+		btnManageAddScore = (Button) view.findViewById(R.id.btnManageAddScore);
+		btnManageAddScore.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				try{
+					int value = Integer.parseInt(edtManageImWordScore.getText().toString());
+					value = value + 1 ;
+					edtManageImWordScore.setText(String.valueOf(value));
+				}catch(Exception e){}
+			}
+		});
+
+		edtManageImWordScore = (TextView) view.findViewById(R.id.edtManageImWordScore);
+
+
 		edtManageImWordCode = (EditText) view.findViewById(R.id.edtManageImWordCode);
-		edtManageImWordCode3r = (EditText) view.findViewById(R.id.edtManageImWordCode3r);
 		edtManageImWordWord = (EditText) view.findViewById(R.id.edtManageImWordWord);
 
 		edtManageImWordCode.setText(word.getCode());
-		edtManageImWordCode3r.setText(word.getCode3r());
+		edtManageImWordScore.setText(String.valueOf(word.getScore()));
 		edtManageImWordWord.setText(word.getWord());
 
-		txtManageImWordCode3r = (TextView) view.findViewById(R.id.txtManageImWordCode3r);
+		/*txtManageImWordCode3r = (TextView) view.findViewById(R.id.txtManageImWordCode3r);
 
 		if(!imtype.equals(Lime.DB_TABLE_DAYI)){
 			edtManageImWordCode3r.setVisibility(View.GONE);
 			txtManageImWordCode3r.setVisibility(View.GONE);
-		}
+		}*/
 		
 		return view;
 	}

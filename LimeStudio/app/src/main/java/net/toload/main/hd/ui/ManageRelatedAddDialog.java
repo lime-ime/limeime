@@ -2,6 +2,7 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
@@ -10,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import net.toload.main.hd.R;
@@ -24,9 +26,13 @@ public class ManageRelatedAddDialog extends DialogFragment {
 	private Button btnManageRelatedCancel;
 	private Button btnManageRelatedSave;
 
+	private Button btnManageMinusScore;
+	private Button btnManageAddScore;
+
+	private TextView edtManageRelatedScore;
+
 	private EditText edtManageRelatedPword;
 	private EditText edtManageRelatedCword;
-	private EditText edtManageRelatedScore;
 
 	@Override
 	public void onDestroy() {
@@ -59,6 +65,15 @@ public class ManageRelatedAddDialog extends DialogFragment {
 		this.setCancelable(false);
 	}
 
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		Dialog dialog = getDialog();
+		if (dialog != null) {
+			dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+		}
+	}
 
 	@Override
 	public void onResume() {
@@ -136,6 +151,32 @@ public class ManageRelatedAddDialog extends DialogFragment {
 			}
 		});
 
+		btnManageMinusScore = (Button) view.findViewById(R.id.btnManageMinusScore);
+		btnManageMinusScore.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				try{
+					int value = Integer.parseInt(edtManageRelatedScore.getText().toString());
+					if(value > 0){
+						value = value -1 ;
+						edtManageRelatedScore.setText(String.valueOf(value));
+					}
+				}catch(Exception e){}
+			}
+		});
+
+		btnManageAddScore = (Button) view.findViewById(R.id.btnManageAddScore);
+		btnManageAddScore.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				try{
+					int value = Integer.parseInt(edtManageRelatedScore.getText().toString());
+					value = value + 1 ;
+					edtManageRelatedScore.setText(String.valueOf(value));
+				}catch(Exception e){}
+			}
+		});
+
 		edtManageRelatedPword = (EditText) view.findViewById(R.id.edtManageRelatedPword);
 		edtManageRelatedPword.setOnFocusChangeListener(new View.OnFocusChangeListener() {
 			@Override
@@ -148,7 +189,8 @@ public class ManageRelatedAddDialog extends DialogFragment {
 		});
 
 		edtManageRelatedCword = (EditText) view.findViewById(R.id.edtManageRelatedCword);
-		edtManageRelatedScore = (EditText) view.findViewById(R.id.edtManageRelatedScore);
+		edtManageRelatedScore = (TextView) view.findViewById(R.id.edtManageRelatedScore);
+		edtManageRelatedScore.setText("1");
 		
 		return view;
 	}
