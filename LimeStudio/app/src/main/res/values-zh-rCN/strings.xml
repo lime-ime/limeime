@@ -161,6 +161,7 @@
     <string name="manage_word_code">字根</string>
     <string name="manage_word_code3r">三码</string>
     <string name="manage_word_word">文字</string>
+    <string name="manage_word_score">显示优先序</string>
 
     <string name="manage_select_keyboard">请选择键盘</string>
 

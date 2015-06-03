@@ -2,6 +2,7 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
@@ -13,7 +14,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 
 public class ManageImAddDialog extends DialogFragment {
@@ -30,12 +30,15 @@ public class ManageImAddDialog extends DialogFragment {
 
 	private Button btnManageImWordCancel;
 	private Button btnManageImWordSave;
+	private Button btnManageMinusScore;
+	private Button btnManageAddScore;
+
+	private TextView edtManageImWordScore;
 
 	private EditText edtManageImWordCode;
-	private EditText edtManageImWordCode3r;
 	private EditText edtManageImWordWord;
 
-	private TextView txtManageImWordCode3r;
+	//private TextView txtManageImWordCode3r;
 
 	public ManageImAddDialog(){}
 
@@ -51,6 +54,15 @@ public class ManageImAddDialog extends DialogFragment {
 		bundle.putString("imtype", imtype);
 		btd.setArguments(bundle);
 		return btd;
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		Dialog dialog = getDialog();
+		if (dialog != null) {
+			dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+		}
 	}
 	
 	public void setHandler(ManageImHandler handler){
@@ -114,8 +126,6 @@ public class ManageImAddDialog extends DialogFragment {
 			}
 		});
 
-
-
 		btnManageImWordSave = (Button) view.findViewById(R.id.btnManageImWordSave);
 		btnManageImWordSave.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -127,13 +137,12 @@ public class ManageImAddDialog extends DialogFragment {
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int which) {
 								String code = edtManageImWordCode.getText().toString();
-								String code3r = edtManageImWordCode3r.getText().toString();
+								//String code3r = edtManageImWordCode3r.getText().toString();
 								String text = edtManageImWordWord.getText().toString();
 								if(!code.isEmpty() && !text.isEmpty()){
-									if(!code3r.isEmpty()){
-										code3r = code3r.trim();
-									}
-									handler.addWord(code, code3r, text);
+
+									int value = Integer.parseInt(edtManageImWordScore.getText().toString());
+									handler.addWord(code, value, text);
 									handler.updateRelated(code);
 									dialog.dismiss();
 									cancelDialog();
@@ -152,16 +161,44 @@ public class ManageImAddDialog extends DialogFragment {
 			}
 		});
 
+		btnManageMinusScore = (Button) view.findViewById(R.id.btnManageMinusScore);
+		btnManageMinusScore.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				try{
+					int value = Integer.parseInt(edtManageImWordScore.getText().toString());
+						if(value > 0){
+							value = value -1 ;
+							edtManageImWordScore.setText(String.valueOf(value));
+						}
+				}catch(Exception e){}
+			}
+		});
+
+		btnManageAddScore = (Button) view.findViewById(R.id.btnManageAddScore);
+		btnManageAddScore.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				try{
+					int value = Integer.parseInt(edtManageImWordScore.getText().toString());
+						value = value + 1 ;
+						edtManageImWordScore.setText(String.valueOf(value));
+				}catch(Exception e){}
+			}
+		});
+
+		edtManageImWordScore = (TextView) view.findViewById(R.id.edtManageImWordScore);
+		edtManageImWordScore.setText("1");
+
 		edtManageImWordCode = (EditText) view.findViewById(R.id.edtManageImWordCode);
-		edtManageImWordCode3r = (EditText) view.findViewById(R.id.edtManageImWordCode3r);
 		edtManageImWordWord = (EditText) view.findViewById(R.id.edtManageImWordWord);
 
-		txtManageImWordCode3r = (TextView) view.findViewById(R.id.txtManageImWordCode3r);
+		//txtManageImWordCode3r = (TextView) view.findViewById(R.id.txtManageImWordCode3r);
 
-		if(!imtype.equals(Lime.DB_TABLE_DAYI)){
+		/*if(!imtype.equals(Lime.DB_TABLE_DAYI)){
 			edtManageImWordCode3r.setVisibility(View.GONE);
 			txtManageImWordCode3r.setVisibility(View.GONE);
-		}
+		}*/
 		
 		return view;
 	}

@@ -442,15 +442,15 @@ public class ManageImFragment extends Fragment {
         //updateGridView(this.wordlist);
     }
 
-    public void addWord(String code, String code3r, String word) {
+    public void addWord(String code, int score, String word) {
 
         // Add to database
         Word obj = new Word();
              obj.setCode(code);
-             obj.setCode3r(code3r);
+             obj.setCode3r("");
              obj.setWord(word);
              obj.setBasescore(0);
-             obj.setScore(1);
+             obj.setScore(score);
 
         String insertsql = Word.getInsertQuery(this.code, obj);
         datasource.insert(insertsql);
@@ -470,15 +470,16 @@ public class ManageImFragment extends Fragment {
         updateGridView(this.wordlist);*/
     }
 
-    public void updateWord(int id, String code, String code3r, String word) {
+    public void updateWord(int id, String code, int score, String word) {
 
         // remove from temp list
         for(int i = 0 ; i < total ; i++){
             if(id== this.wordlist.get(i).getId()){
                 Word check = this.wordlist.get(i);
                      check.setCode(code);
-                     check.setCode3r(code3r);
+                     check.setCode3r("");
                      check.setWord(word);
+                     check.setScore(score);
                 this.wordlist.remove(i);
                 this.wordlist.add(i, check);
                 break;
@@ -488,9 +489,7 @@ public class ManageImFragment extends Fragment {
         // Update record in the database
         String updatesql = "UPDATE " + this.code + " SET ";
                 updatesql += Lime.DB_COLUMN_CODE + " = \"" + Lime.formatSqlValue(code) + "\", ";
-                if(!code3r.isEmpty()){
-                    updatesql += Lime.DB_COLUMN_CODE3R + " = \"" + Lime.formatSqlValue(code3r) + "\", ";
-                }
+                updatesql += Lime.DB_COLUMN_SCORE + " = \"" + score + "\", ";
                 updatesql += Lime.DB_COLUMN_WORD + " = \"" + Lime.formatSqlValue(word) + "\" ";
                 updatesql += " WHERE " + Lime.DB_COLUMN_ID + " = \"" + id + "\"";
 
