@@ -76,10 +76,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private final static String INITIAL_RESULT_LIMIT = "15";
     private final static String FINAL_RESULT_LIMIT = "50";
     private final static int INITIAL_RELATED_LIMIT = 5;
-    private final static int COMPOSING_CODE_LENGTH_LIMIT = 16; //Jermey '12,5,30 changed from 12 to 16 because of improved performance using binary tree.
-    private final static int DUALCODE_COMPOSING_LIMIT = 16; //Jermey '12,5,30 changed from 7 to 16 because of improved performance using binary tree. 
-    private final static int DUALCODE_NO_CHECK_LIMIT = 2; //Jermey '12,5,30 changed from 5 to 3 for phonetic correct valid code display.
-    private final static int BETWEEN_SEARCH_WAY_BACK_LEVELS = 3; //Jermey '15,6,30
+    private final static int COMPOSING_CODE_LENGTH_LIMIT = 16; //Jeremy '12,5,30 changed from 12 to 16 because of improved performance using binary tree.
+    private final static int DUALCODE_COMPOSING_LIMIT = 16; //Jeremy '12,5,30 changed from 7 to 16 because of improved performance using binary tree.
+    private final static int DUALCODE_NO_CHECK_LIMIT = 2; //Jeremy '12,5,30 changed from 5 to 3 for phonetic correct valid code display.
+    private final static int BETWEEN_SEARCH_WAY_BACK_LEVELS = 5; //Jeremy '15,6,30
 
 
     public final static String FIELD_ID = "_id";
@@ -87,7 +87,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     public final static String FIELD_WORD = "word";
     public final static String FIELD_RELATED = Lime.DB_RELATED;
     public final static String FIELD_SCORE = "score";
-    public final static String FIELD_BASESCORE = "basescore"; //jeremy '11,9,8 base frequency got from hanconverter when table loading.
+    public final static String FIELD_BASESCORE = "basescore"; //jeremy '11,9,8 base frequency got from han converter when table loading.
     public final static String FIELD_NO_TONE_CODE = "code3r";
 
     public final static String FIELD_DIC_id = "_id";
@@ -1479,10 +1479,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         // Step.2 Build extra getMappingByCode conditions. (e.g. dualcode remap)
         Pair<String, String> extraCondidtions = preProcessingForExtraQueryConditions(code);
         String extraSelectCluase ="";
-        String extraSortClause = "";
+        String extraExactMatchClause = "";
         if(extraCondidtions!=null){
             extraSelectCluase = extraCondidtions.first;
-            extraSortClause = extraCondidtions.second;
+            extraExactMatchClause = extraCondidtions.second;
         }
         //Jeremy '11,6,11 seperated suggestions sorting option for physical keyboard
 
@@ -1528,17 +1528,17 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
                     if(betweenSearch){
                         selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectCluase + " and word is not null group by word " ;
-                        String exactMatchCondition = " (" +codeCol +" ='" + escapedCode +"') " + extraSortClause ;
-                        sortClause = "( (exactmatch = 1) and (score > 0 or basescore >2) ) desc, ";
+                        String exactMatchCondition = " (" +codeCol +" ='" + escapedCode +"' " + extraExactMatchClause  +  ") ";
+                        sortClause = "( exactmatch = 1 and ( score > 5 or  basescore >2) )*length(code) desc, ";
                         if(sort) sortClause += " score desc, basescore desc, ";
                         sortClause += "_id asc";
 
-                        String selectString = "select _id, code, code3r, word, score, basescore, (" + exactMatchCondition + ") as exactmatch "
+                        String selectString = "select _id, code, code3r, word, score, basescore, " + exactMatchCondition + " as exactmatch "
                                 +" from " + tablename + " where " + selectClause + " order by " + sortClause + " limit " + limitClause;
                         cursor = db.rawQuery(selectString, null);
 
                         if(DEBUG)
-                            Log.i(TAG, "getMappinpByCode() between search select string:"+selectString);
+                            Log.i(TAG, "getMappingByCode() between search select string:"+selectString);
                      }
                     else{
                         selectClause = codeCol + " = '" + escapedCode + "' " + extraSelectCluase;
@@ -1592,7 +1592,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             }
         }
 
-        selectClause += searchColumn + " >= '" + escapedCode + "' and " + searchColumn + " < '" + nextcode + "' ";
+        selectClause += " (" + searchColumn + " >= '" + escapedCode + "' and " + searchColumn + " < '" + nextcode + "') ";
         return selectClause;
     }
 
@@ -2136,7 +2136,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         HashSet<String> dualCodeList = buildDualCodeList(code, keytablename);
         String selectClause = "";
-        String sortClause = "";
+        String exactMatchClause = "";
         String validDualCodeList = "";
 
         if (dualCodeList != null) {
@@ -2180,7 +2180,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     if (!dualcode.equals(code)) {
                         //result = result + " OR " + codeCol + "= '" + queryCode + "'";
                         selectClause += " or (" + expandBetweenSearchClause(codeCol, dualcode) + ") ";
-                        sortClause += " or (" + codeCol + " ='" + queryCode +"') ";
+                        exactMatchClause += " or " + codeCol + " ='" + queryCode +"' ";
                     }
                 } else {
                     //Jeremy '11,8, 26 move valid code list building to buildqueryresult to avoid repeat query.
@@ -2203,7 +2203,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                 if (!dualcode.equals(code)) {
                                     //result = result + " OR " + codeCol + "= '" + queryCode + "'";
                                     selectClause += " or (" + expandBetweenSearchClause(codeCol, dualcode) + ") ";
-                                    sortClause += " or (" + codeCol + " ='" + queryCode +"') ";
+                                    exactMatchClause += " or (" + codeCol + " ='" + queryCode +"') ";
                                 }
                             } else { //the code is not valid, keep it in the black list cache. Jeremy '12,6,3
 
@@ -2268,7 +2268,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         if (DEBUG)
             Log.i(TAG, "expandDualCode(): result:" + selectClause + " validDualCodeList:" + validDualCodeList);
-        return new Pair<>(selectClause, sortClause);
+        return new Pair<>(selectClause, exactMatchClause);
 
     }
 
