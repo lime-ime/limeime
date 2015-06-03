@@ -766,7 +766,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             if (munit == null) {
                 cv.put(Lime.DB_RELATED_COLUMN_PWORD, pword);
                 cv.put(Lime.DB_RELATED_COLUMN_CWORD, cword);
-                cv.put(Lime.DB_RELATED_COLUMN_SCORE, score);
+                //cv.put(Lime.DB_RELATED_COLUMN_SCORE, score);  leave this field null so as we can distinguish records learned from user.  Jeremy '15,6,3
                 cv.put(Lime.DB_RELATED_COLUMN_USERSCORE, score);
                 db.insert(Lime.DB_RELATED, null, cv);
                 dictotal++;
