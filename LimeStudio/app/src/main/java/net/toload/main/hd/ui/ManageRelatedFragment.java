@@ -2,12 +2,14 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -189,6 +191,9 @@ public class ManageRelatedFragment extends Fragment {
             public void onClick(View v) {
                 if (!searchreset) {
                     String query = edtManageRelatedSearch.getText().toString();
+                    // hide the soft keyboard before search Jeremy 15,6,4
+                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(edtManageRelatedSearch.getWindowToken(), 0);
                     if (query != null && query.length() > 0 &&
                             (prequery == null || !prequery.equals(query) || !searchreset)) {
                         query = query.trim();

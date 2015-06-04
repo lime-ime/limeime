@@ -919,7 +919,7 @@ public class SearchServer {
 		}
 
 		if (DEBUG) Log.i(TAG, "addLDPhrase()"//+mapping.getCode() + ". id=" + mapping.getId()
-				+ ". engding:" + ending
+				+ ". ending:" + ending
 				+ ". LDPhraseListArray.size=" + LDPhraseListArray.size()
 				+ ". LDPhraseList.size=" + LDPhraseList.size());
 
