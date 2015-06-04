@@ -160,7 +160,7 @@ public class LIMEPreferenceManager {
 	
 	public boolean getFixedCandidateViewDisplay(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean("fixed_candidate_view_display", false);
+		return sp.getBoolean("fixed_candidate_view_display", true);  //Jeremy '15,6,4 set default to  true.
 	}
 
 	public boolean getDisableSoftwareKeyboard(){
