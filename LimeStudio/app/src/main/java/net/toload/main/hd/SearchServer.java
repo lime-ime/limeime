@@ -261,10 +261,10 @@ public class SearchServer {
 
 		lastCode = code;
 
-
+		// If the composition is start over, we need to clear the stack here.  Jeremy'15,6,4.
 		if(exactMatchStack!=null && !exactMatchStack.isEmpty()
 				&& !code.startsWith( exactMatchStack.lastElement().second)) {
-			// code is not start with the previous kept code, clear the stack.  The composition is start over.
+		// code is not start with the previous kept code, clear the stack.  The composition is start over.
 			exactMatchStack.clear();
 		}
 
@@ -334,6 +334,10 @@ public class SearchServer {
 
 				}
 			}
+
+
+
+
 
 			// put self into the first mapping for mixed input.
 			Mapping self = new Mapping();

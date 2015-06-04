@@ -2071,7 +2071,7 @@ public class LIMEService extends InputMethodService implements
             setSuggestions(list, hasPhysicalKeyPressed, selkey);
 
             if (DEBUG) Log.i(TAG, "updateChineseSymbol():"
-                    + "templist.size:" + mCandidateList.size());
+                    + "mCandidateList.size:" + mCandidateList.size());
         }
 
     }
@@ -2449,13 +2449,11 @@ public class LIMEService extends InputMethodService implements
                 mCandidateList = (LinkedList<Mapping>) suggestions;
                 try {
 
-                    if (suggestions.size() == 1) {
-                        selectedCandidate = suggestions.get(0);
-                        selectedIndex = 0;
-                    } else if (suggestions.size() > 1 && !suggestions.get(0).isHighLighted()) {
+                  if (suggestions.size() > 1 && suggestions.get(1).isExactMatchToCodeRecord() ) {
                         selectedCandidate = suggestions.get(1);
-                        selectedIndex = 1;  //Jeremy '12,6,2 use getrelated to set default selectedCandidate
-                    } else {
+                        selectedIndex = 1;
+                        // this is for no exact match condition with code.  //do not set default suggestion for other record type like chinese punctuation symbols or related phrases. Jeremy '15,6,4
+                    } else if(suggestions.size() > 0 && suggestions.get(0).isComposingCodeRecord()) {
                         selectedCandidate = suggestions.get(0);
                         selectedIndex = 0;
                     }
@@ -2463,7 +2461,7 @@ public class LIMEService extends InputMethodService implements
                     e.printStackTrace();
                 }
                 mCandidateView.setSuggestions(suggestions, showNumber, diplaySelkey);
-                if (DEBUG) Log.i(TAG, "setSuggestion(): templist.size: " + mCandidateList.size());
+                if (DEBUG) Log.i(TAG, "setSuggestion(): mCandidateList.size: " + mCandidateList.size());
             }
         } else {
             if (DEBUG) Log.i(TAG, "setSuggestion() with list=null");

@@ -63,7 +63,7 @@ import org.w3c.dom.Text;
 
 
 public class CandidateView extends View implements View.OnClickListener {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final String TAG = "CandidateView";
 
     protected static final int OUT_OF_BOUNDS = -1;
@@ -970,13 +970,13 @@ public class CandidateView extends View implements View.OnClickListener {
                     Log.i(TAG, "setSuggestions():mSuggestions.size():" + mSuggestions.size()
                             + " mCount=" + mCount);
 
-                if (mSuggestions.get(0).isRelatedPhraseRecord()) {
-                    // no default selection for related phrase
-                    mSelectedIndex = -1;
-                } else if (mCount > 1 && !mSuggestions.get(0).isHighLighted()) {
+                if (mCount > 1 && mSuggestions.get(1).isExactMatchToCodeRecord()) {
                     mSelectedIndex = 1;
-                } else {
+                } else if(mCount >0 && mSuggestions.get(0).isComposingCodeRecord()){
                     mSelectedIndex = 0;
+                }else{
+                    // no default selection for related phrase, chinese punctuation symbols and English suggestions  Jeremy '15,6,4
+                    mSelectedIndex = -1;
                 }
             } else {
                 if (DEBUG)

@@ -2286,7 +2286,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 String relatedlist = (betweenSearch)?null: cursor.getString(relatedColumn);
 
                 Boolean exactMatch = cursor.getString(exactMatchColumn).equals("1"); //Jeremy '15,6,3 new exact match virtual column built in query time.
-                m.setHighLighted((betweenSearch) && !exactMatch);//Jeremy '12,5,30 exact match, not from related list
+                //m.setHighLighted((betweenSearch) && !exactMatch);//Jeremy '12,5,30 exact match, not from related list
 
                 //Jeremy 15,6,3 new exact or partial record type
                 if(exactMatch)
