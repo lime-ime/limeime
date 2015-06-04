@@ -24,8 +24,8 @@
     <color name="candidate_recommended">#FFE35900</color>
     <color name="candidate_other">#FF101010</color>
     <color name="candidate_number">#CC5E5A80</color> 
-    <color name="candidate_background">#FAFAFA</color>
-    <!-- <color name="candidate_background">#bbffffff</color>-->
+    <color name="candidate_background">#FFFAFAFA</color>
+    <color name="candidate_container_background">#00FAFAFA</color>
     <!--composing text view-->
     <color name="composing_text">#FF717171</color>
     <color name="composing_background">#BBE1E1E1</color>
