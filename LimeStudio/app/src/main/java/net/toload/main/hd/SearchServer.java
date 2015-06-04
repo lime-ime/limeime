@@ -286,8 +286,8 @@ public class SearchServer {
 
 
 			// 12,6,4 Jeremy. Ascending a ab abc... looking up db if the cache is not exist
-			for (int i = 0; i < size; i++) {
-				String queryCode = code.substring(0, i + 1);
+			for (int i = 0; i < (LimeDB.getBetweenSearch()?1: size); i++) {
+				String queryCode  = LimeDB.getBetweenSearch()?code : code.substring(0, i + 1);
 				String cacheKey = cacheKey(queryCode);
 				Pair<List<Mapping>, List<Mapping>> cacheTemp = cache.get(cacheKey);
 
@@ -302,7 +302,8 @@ public class SearchServer {
 						cache.put(cacheKey, cacheTemp);
 						//Jeremy '12,6,5 check if need to update code remap cache
 						if (cacheTemp != null && cacheTemp.first != null
-								&& cacheTemp.first.size() > 0 && cacheTemp.first.get(0) != null) {
+								&& cacheTemp.first.size() > 0 && cacheTemp.first.get(0) != null
+								&& cacheTemp.first.get(0).isExactMatchToCodeRecord()) {
 							String codeFromMapping = cacheTemp.first.get(0).getCode();
 							if (!queryCode.equals(codeFromMapping)) {
 								List<String> codeList = coderemapcache.get(codeFromMapping);
@@ -582,7 +583,7 @@ public class SearchServer {
 				//Jeremy '11,6,11, always learn scores, but sorted according preference options
 
 				// Learn user dictionary (the consecutive two words as a userdict phrase).
-				learnUserDict(scorelistSnapshot);
+				learnRelatedPhrase(scorelistSnapshot);
 
 				ArrayList<List<Mapping>> localLDPhraseListArray = new ArrayList<>();
 				if (LDPhraseListArray != null) {
@@ -600,10 +601,10 @@ public class SearchServer {
 
 	}
 
-	private void learnUserDict(List<Mapping> localScorelist) {
+	private void learnRelatedPhrase(List<Mapping> localScorelist) {
 		if (localScorelist != null) {
 			if (DEBUG)
-				Log.i(TAG, "learnUserDict(), localScorelist.size=" + localScorelist.size());
+				Log.i(TAG, "learnRelatedPhrase(), localScorelist.size=" + localScorelist.size());
 			if (mLIMEPref.getLearnRelatedWord() && localScorelist.size() > 1) {
 				for (int i = 0; i < localScorelist.size(); i++) {
 					Mapping unit = localScorelist.get(i);
@@ -615,19 +616,22 @@ public class SearchServer {
 						if (unit2 == null) {
 							continue;
 						}
-						if (//unit.getId()!=null
-								unit.getWord() != null && !unit.getWord().equals("")
-										&& !unit.getCode().equals(unit.getWord())//Jeremy '12,6,13 avoid learning mixed mode english
-										&& !unit2.getCode().equals(unit2.getWord())
-										//&& unit2.getId() !=null
-										&& unit2.getWord() != null && !unit2.getWord().equals("")
+						if (	unit.getWord() != null && !unit.getWord().equals("")
+								&& unit2.getWord() != null && !unit2.getWord().equals("")
+								&&(unit.isExactMatchToCodeRecord()|| unit.isPartialMatchToCodeRecord()
+									|| unit.isRelatedPhraseRecord()) // use record type to identify records. Jeremy '15,6,4
+								&&(unit2.isExactMatchToCodeRecord()|| unit2.isPartialMatchToCodeRecord()
+									|| unit.isRelatedPhraseRecord() || unit2.isChinesePunctuationSymbolRecord())  //allow unit2 to be chinese punctuation symbols.
+								//&& !unit.getCode().equals(unit.getWord())//Jeremy '12,6,13 avoid learning mixed mode english
+								//&& !unit2.getCode().equals(unit2.getWord())
+								///&& unit2.getId() !=null
 								) {
 
 							int score = 0;
-							if (unit.getId() != null && unit2.getId() != null) //Jeremy '12,7,2 eliminate learing english words.
+							//if (unit.getId() != null && unit2.getId() != null) //Jeremy '12,7,2 eliminate learning english words.
 								score = dbadapter.addOrUpdateRelatedPhraseRecord(unit.getWord(), unit2.getWord());
 							if (DEBUG)
-								Log.i(TAG, "learnUserDict(), the return score = " + score);
+								Log.i(TAG, "learnRelatedPhrase(), the return score = " + score);
 							//Jeremy '12,6,7 learn LD phrase if the score of userdic is > 20
 							if (score > 20 && mLIMEPref.getLearnPhrase()) {
 								addLDPhrase(unit, false);
@@ -716,8 +720,8 @@ public class SearchServer {
 						if (i + 1 < phraselist.size()) {
 
 							Mapping unit2 = phraselist.get((i + 1));
-							if (unit2 == null || unit2.getWord().length() == 0
-									|| unit2.getCode().equals(unit2.getWord())) //Jeremy '12,6,13 avoid learning mixed mode english
+							if (unit2 == null || unit2.getWord().length() == 0 ||unit2.isComposingCodeRecord()) //Jeremy 15,6,4 exclude composing code
+									//|| unit2.getCode().equals(unit2.getWord())) //Jeremy '12,6,13 avoid learning mixed mode english
 							{
 								break;
 							}
@@ -727,9 +731,9 @@ public class SearchServer {
 							baseWord += word2;
 
 							if (word2.length() == 1 && baseWord.length() < 5) { //limit the phrase size to 4
-								if (unit2.getId() == null //Jeremy '12,6,7 break if id is null (selected from related list)
+								if ( unit2.getId() == null //Jeremy '12,6,7 break if id is null (selected from related phrase)
 										|| unit2.isPartialMatchToCodeRecord() //Jeremy '15,6,3 new record identification
-										|| code2 == null //Jeremy '12,6,7 break if code is null (selected from userdict)
+										|| code2 == null //Jeremy '12,6,7 break if code is null (selected from relatedphrase)
 										|| code2.length() == 0
 										|| unit2.isRelatedPhraseRecord()) {
 									List<Mapping> rMappingList = dbadapter.getMappingByWord(word2, tablename);

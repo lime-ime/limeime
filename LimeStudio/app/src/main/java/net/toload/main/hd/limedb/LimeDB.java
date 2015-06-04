@@ -1497,7 +1497,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     if(betweenSearch){
                         selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectClause + " and word is not null group by word " ;
                         String exactMatchCondition = " (" +codeCol +" ='" + escapedCode +"' " + extraExactMatchClause  +  ") ";
-                        sortClause = "( exactmatch = 1 and ( score > 5 or  basescore >2) )*length(code) desc, ";
+                        sortClause = "( exactmatch = 1 and ( score > 0 or  basescore >2) )*length(code) desc, ";
                         if(sort) sortClause += " score desc, basescore desc, ";
                         sortClause += "_id asc";
 
