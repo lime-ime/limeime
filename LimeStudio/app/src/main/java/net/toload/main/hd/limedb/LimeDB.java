@@ -2436,9 +2436,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Get dictionary database contents
      */
-    public List<Mapping> getRelatedPhraseRecord(String pword, boolean getAllRecords) {
+    public List<Mapping> getRelatedPhrase(String pword, boolean getAllRecords) {
         if (DEBUG)
-            Log.i(TAG, "getRelatedPhraseRecord(), " + getAllRecords);
+            Log.i(TAG, "getRelatedPhrase(), " + getAllRecords);
 
         List<Mapping> result = new LinkedList<>();
 
@@ -2476,7 +2476,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     selectString += " limit " + limitClause;
 
                     if (DEBUG)
-                        Log.i(TAG, "getRelatedPhraseRecord() selectString = " + selectString);
+                        Log.i(TAG, "getRelatedPhrase() selectString = " + selectString);
                     cursor = db.rawQuery(selectString, null);
 
 
@@ -2507,8 +2507,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         temp.setWord("...");
                         temp.setHasMoreRecordsMarkRecord();
 
-                        if ((!getAllRecords && rsize == Integer.parseInt(INITIAL_RESULT_LIMIT) ) ||
-                                (getAllRecords && rsize == Integer.parseInt(FINAL_RESULT_LIMIT)))
+                        if ((!getAllRecords && rsize == Integer.parseInt(INITIAL_RESULT_LIMIT) ) )
+                             //||   (getAllRecords && rsize == Integer.parseInt(FINAL_RESULT_LIMIT)))
                             result.add(temp);
                     }
                     cursor.close();

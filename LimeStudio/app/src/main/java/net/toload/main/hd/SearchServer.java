@@ -201,7 +201,7 @@ public class SearchServer {
 	//-----------------------------------------------------------
 	public List<Mapping> getRelatedPhrase(String word, boolean getAllRecords) throws RemoteException {
 
-		return dbadapter.getRelatedPhraseRecord(word, getAllRecords);
+		return dbadapter.getRelatedPhrase(word, getAllRecords);
 	}
 	//-----------------------------------------------------------
 
