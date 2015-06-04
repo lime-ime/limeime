@@ -17,10 +17,8 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
     private View mButtonExpand;
     private View mButtonExpandLayout;
     private CandidateView mCandidateView;
-    private TextView mEmbeddedTextView;
 
-    
-    
+
     public CandidateViewContainer(Context context, AttributeSet attrs) {
         super(context, attrs);
        
@@ -35,7 +33,7 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
                 mButtonExpand.setOnTouchListener(this);
             }
             mCandidateView = (CandidateView) findViewById(R.id.candidates);
-            mEmbeddedTextView = (TextView) findViewById(R.id.embeddedComposing);
+            TextView mEmbeddedTextView = (TextView) findViewById(R.id.embeddedComposing);
             mCandidateView.setEmbeddedComposingView(mEmbeddedTextView);
             
         }
