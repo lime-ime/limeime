@@ -20,17 +20,31 @@
 
 <net.toload.main.hd.candidate.CandidateViewContainer
         xmlns:android="http://schemas.android.com/apk/res/android"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:background="@color/candidate_background"
 			>
 
-    
+    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/embeddedComposing"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/composing_text_size"
+        android:textColor="@color/composing_text"
+        android:background="@color/composing_background"
+        android:minWidth="0dip"
+        android:gravity="top"
+        />
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:background="@color/candidate_background">
+
     <view xmlns:android="http://schemas.android.com/apk/res/android"
 		    class="net.toload.main.hd.candidate.CandidateView"
 	        android:id="@+id/candidates"
-	        android:layout_width="wrap_content"
+	        android:layout_width="0dp"
 	        android:layout_height="@dimen/candidate_stripe_height"
 	        android:layout_weight="1"
 	        android:background="@color/candidate_background"
@@ -42,13 +56,7 @@
             android:layout_height="fill_parent"
             android:clickable="true"
             android:orientation="horizontal">
-        <!--  
-         <ImageView
-            android:src="@drawable/keyboard_suggest_strip_divider"
-            android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            />
-            -->
+
         <ImageButton
             android:id="@+id/candidate_right"
             android:contentDescription="@string/more_cand"
@@ -58,6 +66,7 @@
             android:layout_height="fill_parent"
             android:clickable="true"
             />
-    </LinearLayout>       
+    </LinearLayout>
+    </LinearLayout>
     
 </net.toload.main.hd.candidate.CandidateViewContainer>

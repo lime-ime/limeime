@@ -8,6 +8,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import net.toload.main.hd.R;
 
@@ -15,7 +16,9 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
 
     private View mButtonExpand;
     private View mButtonExpandLayout;
-    private CandidateView mCandidates;
+    private CandidateView mCandidateView;
+    private TextView mEmbeddedTextView;
+
     
     
     public CandidateViewContainer(Context context, AttributeSet attrs) {
@@ -25,25 +28,27 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
     }
 
     public void initViews() {
-        if (mCandidates == null) {
+        if (mCandidateView == null) {
             mButtonExpandLayout = findViewById(R.id.candidate_right_parent);
             mButtonExpand = findViewById(R.id.candidate_right);
             if (mButtonExpand != null) {
                 mButtonExpand.setOnTouchListener(this);
             }
-            mCandidates = (CandidateView) findViewById(R.id.candidates);
+            mCandidateView = (CandidateView) findViewById(R.id.candidates);
+            mEmbeddedTextView = (TextView) findViewById(R.id.embeddedComposing);
+            mCandidateView.setEmbeddedComposingView(mEmbeddedTextView);
             
         }
     }
 
     @Override
     public void requestLayout() {
-        if (mCandidates != null) {
-            int availableWidth = mCandidates.getWidth();
-            int neededWidth = mCandidates.computeHorizontalScrollRange();
+        if (mCandidateView != null) {
+            int availableWidth = mCandidateView.getWidth();
+            int neededWidth = mCandidateView.computeHorizontalScrollRange();
          
             boolean rightVisible =  availableWidth < neededWidth;
-            if(mCandidates.isCandidateExpanded())
+            if(mCandidateView.isCandidateExpanded())
             	rightVisible = false;
             
             if (mButtonExpandLayout != null) {
@@ -57,7 +62,7 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             if (v == mButtonExpand) {
             	
-            	mCandidates.showCandidatePopup();
+            	mCandidateView.showCandidatePopup();
             	
             }
         }

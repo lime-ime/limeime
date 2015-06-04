@@ -59,6 +59,8 @@ import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.data.Mapping;
 
+import org.w3c.dom.Text;
+
 
 public class CandidateView extends View implements View.OnClickListener {
     private static final boolean DEBUG = false;
@@ -69,7 +71,7 @@ public class CandidateView extends View implements View.OnClickListener {
     protected LIMEService mService;
     protected List<Mapping> mSuggestions;
     protected CandidateView mCandidateView;
-
+    private TextView embeddedComposing;
 
     protected int mSelectedIndex;
     protected int mTouchX = OUT_OF_BOUNDS;
@@ -158,7 +160,7 @@ public class CandidateView extends View implements View.OnClickListener {
         mContext = context;
 
         mCandidateView = this;
-        //Jeremy '11,8,11 detect API level and show keyboard number only in 3.0+
+        embeddedComposing = null;  // Jeremy '15,6,4 for embedded composing view in candidateView when floating candidateView (not fixed)
 
 
         mLIMEPref = new LIMEPreferenceManager(context);
@@ -272,6 +274,13 @@ public class CandidateView extends View implements View.OnClickListener {
 
     }
 
+    /*
+    * New embedded composing view inside candidate container for floating candidate mode. Jeremy '15,6,14
+    * (android 5.1 does not allow popup compsing go over candidate area).
+     */
+    public void setEmbeddedComposingView(TextView composingView){
+        embeddedComposing = composingView;
+    }
 
     private UIHandler mHandler = new UIHandler(this);
 
@@ -557,7 +566,9 @@ public class CandidateView extends View implements View.OnClickListener {
 
 
         // Composing buffer textView
-        if (mComposingTextPopup == null) {
+        if(embeddedComposing!=null){
+            mComposingTextView = embeddedComposing;
+        }else if (mComposingTextPopup == null) {
             LayoutInflater inflater
                     = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             mComposingTextPopup = new PopupWindow(mContext);
@@ -565,11 +576,11 @@ public class CandidateView extends View implements View.OnClickListener {
             mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
             mComposingTextPopup.setContentView(mComposingTextView);
             mComposingTextPopup.setBackgroundDrawable(null);
+            mComposingTextPopup.setContentView(mComposingTextView);
         }
 
 
         if (composingText != null) {
-            mComposingTextPopup.setContentView(mComposingTextView);
             mComposingTextView.setText(composingText);
             //The textsize got is coverted into PX already. Thus force setup the setTextSize in unit of PX.
             float scaledTextSize = mContext.getResources().getDimensionPixelSize(R.dimen.composing_text_size) * mLIMEPref.getFontSize();
@@ -584,7 +595,10 @@ public class CandidateView extends View implements View.OnClickListener {
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
 
-        doUpdateComposing();
+        //Jeremy '15,6, 4 bypass updating popup when composing view is embedded in candidate container
+
+        if(embeddedComposing==null)
+            doUpdateComposing();
         /*
 
         final int popupWidth = mComposingTextView.getMeasuredWidth();
@@ -622,6 +636,7 @@ public class CandidateView extends View implements View.OnClickListener {
         if (DEBUG)
             Log.i(TAG, "doUpdateComposing(): this.isShown()" + this.isShown());
 
+        if(embeddedComposing!=null) return ; //Jeremy '15,6, 4 bypass updating popup when composing view is embedded in candidate container
 
         final int popupWidth = mComposingTextView.getMeasuredWidth();  //Jeremy '12,6,2 use getWidth and getHeight instead
         final int popupHeight = mComposingTextView.getMeasuredHeight();
@@ -642,15 +657,17 @@ public class CandidateView extends View implements View.OnClickListener {
                     + ". popupHeight = " + popupHeight
                     + ". mComposingTextPopup.isShowing()=" + mComposingTextPopup.isShowing());
 
-        if (mComposingTextPopup.isShowing()) {
-            mComposingTextPopup.update(mPopupComposingX, mPopupComposingY,
-                    popupWidth, popupHeight);
-        } else {
-            mComposingTextPopup.setWidth(popupWidth);
-            mComposingTextPopup.setHeight(popupHeight);
-            mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX,
-                    mPopupComposingY);
-        }
+
+            if (mComposingTextPopup.isShowing()) {
+                mComposingTextPopup.update(mPopupComposingX, mPopupComposingY,
+                        popupWidth, popupHeight);
+            } else {
+                mComposingTextPopup.setWidth(popupWidth);
+                mComposingTextPopup.setHeight(popupHeight);
+                mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX,
+                        mPopupComposingY);
+            }
+
 
 
     }
