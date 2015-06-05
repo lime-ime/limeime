@@ -1,6 +1,6 @@
-/*    
+/*
  **    Copyright 2010, The LimeIME Open Source Project
- ** 
+ **
  **    Project Url: http://code.google.com/p/limeime/
  **                 http://android.toload.net/
  **
@@ -46,13 +46,13 @@ public class SearchServer {
 
 	private static final boolean DEBUG = false;
 	private static final String TAG = "LIME.SearchServer";
-	private static LimeDB dbadapter = null; //Jeremy '12,5,1 shared single LIMEDB object 
+	private static LimeDB dbadapter = null; //Jeremy '12,5,1 shared single LIMEDB object
 	//Jeremy '12,4,6 Combine updatedb and quierydb into db,
 	//Jeremy '12,4,7 move db open/clsoe back to LimeDB
 	//	since query always following with userdict and related learning and dual db connections cause exceptions.
 	//private SQLiteDatabase db = null;
 	//private LimeHanConverter hanConverter = null;
-	//private static LinkedList<Mapping> diclist = null;  
+	//private static LinkedList<Mapping> diclist = null;
 	private static List<Mapping> scorelist = null;
 
 	private static Stack<Pair<Mapping, String>> exactMatchStack;  //Jeremy '15,6,2 preserve the exact match mapping with the code user typed.
@@ -177,7 +177,7 @@ public class SearchServer {
 
 			//	db = getSqliteDb();
 			//	initialCache();
-			//}	
+			//}
 			if(db == null || !db.isOpen()){
 
 				db = dbadapter.getSqliteDb(false);
@@ -186,9 +186,9 @@ public class SearchServer {
 		}
 
 	 */
-	/* 
+	/*
 	private void loadDBAdapter()
-	{			
+	{
 		if(DEBUG)
 			Log.i(TAG,"SearchService:loadDBAdapter()");
 		//if(dbadapter == null){
@@ -250,6 +250,10 @@ public class SearchServer {
 		return key;
 	}
 
+	public void resetExactExactMatchStack(){
+		exactMatchStack.clear();
+	}
+
 	public List<Mapping> getMappingByCode(String code, boolean softkeyboard, boolean getAllRecords) throws RemoteException {
 		if (DEBUG) Log.i(TAG, "getMappingByCode(): code=" + code);
 		// Check if system need to reset cache
@@ -259,14 +263,20 @@ public class SearchServer {
 			mResetCache = false;
 		}
 
-		lastCode = code;
 
-		// If the composition is start over, we need to clear the stack here.  Jeremy'15,6,4.
-		if(exactMatchStack!=null && !exactMatchStack.isEmpty()
-				&& !code.startsWith( exactMatchStack.lastElement().second)) {
-		// code is not start with the previous kept code, clear the stack.  The composition is start over.
-			exactMatchStack.clear();
+		if(exactMatchStack!=null && !exactMatchStack.isEmpty() ){
+			// code is start over, clear the stack.  The composition is start over.   Jeremy'15,6,4.
+			if(code.length() == 1 ){
+				exactMatchStack.clear();
+			}else if(code.length() ==  lastCode.length() -1  //user press backspace.
+					&& exactMatchStack.lastElement().second.equals(lastCode)){
+				//pop the last kept exact match mapping because it's canceled by backspace.  Jeremy 15,6,4
+				exactMatchStack.pop();
+
+			}
+
 		}
+		lastCode = code;
 
 		//codeLenthMap.clear();//Jeremy '12,6,2 reset the codeLengthMap
 
@@ -286,6 +296,7 @@ public class SearchServer {
 
 
 			// 12,6,4 Jeremy. Ascending a ab abc... looking up db if the cache is not exist
+			//'15,6,4 Jeremy. Do exact search only in between search mode.
 			for (int i = 0; i < (LimeDB.getBetweenSearch()?1: size); i++) {
 				String queryCode  = LimeDB.getBetweenSearch()?code : code.substring(0, i + 1);
 				String cacheKey = cacheKey(queryCode);
@@ -304,25 +315,25 @@ public class SearchServer {
 						if (cacheTemp != null && cacheTemp.first != null
 								&& cacheTemp.first.size() > 0 && cacheTemp.first.get(0) != null
 								&& cacheTemp.first.get(0).isExactMatchToCodeRecord()) {
-							String codeFromMapping = cacheTemp.first.get(0).getCode();
-							if (!queryCode.equals(codeFromMapping)) {
-								List<String> codeList = coderemapcache.get(codeFromMapping);
-								String key = cacheKey(codeFromMapping);
+							String remappedCode = cacheTemp.first.get(0).getCode();
+							if (!queryCode.equals(remappedCode)) {
+								List<String> codeList = coderemapcache.get(remappedCode);
+								String key = cacheKey(remappedCode);
 								if (codeList == null) {
 									List<String> newlist = new LinkedList<>();
-									newlist.add(codeFromMapping); //put self in the list
+									newlist.add(remappedCode); //put self in the list
 									newlist.add(queryCode);
 									coderemapcache.put(key, newlist);
 									if (DEBUG)
 										Log.i(TAG, "getMappingByCode() build new remap code = '"
-												+ codeFromMapping + "' to code = '" + queryCode + "'"
+												+ remappedCode + "' to code = '" + queryCode + "'"
 												+ " coderemapcache.size()=" + coderemapcache.size());
 								} else {
 									codeList.add(queryCode);
 									coderemapcache.remove(key);
 									coderemapcache.put(key, codeList);
 									if (DEBUG)
-										Log.i(TAG, "getMappingByCode() codeFromMapping: add new remap code = '" + codeFromMapping + "' to code = '" + queryCode + "'");
+										Log.i(TAG, "getMappingByCode() remappedCode: add new remap code = '" + remappedCode + "' to code = '" + queryCode + "'");
 								}
 
 							}
@@ -346,9 +357,8 @@ public class SearchServer {
 			self.setCode(code);
 			self.setComposingCodeRecord();
 
-			// 12,6,4 Jeremy.
-			// Descending  abc ab a... Build the result candidate list.
-
+			// 12,6,4 Jeremy. Descending  abc ab a... Build the result candidate list.
+			//'15,6,4 Jeremy. Do exact search only in between search mode.
 			for (int i = 0; i < ((LimeDB.getBetweenSearch())?1: size); i++) {
 				String cacheKey = cacheKey(code);
 				Pair<List<Mapping>, List<Mapping>> cacheTemp = cache.get(cacheKey);
@@ -358,12 +368,11 @@ public class SearchServer {
 					List<Mapping> resultlist = cacheTemp.first;
 					List<Mapping> relatedtlist = cacheTemp.second;
 
+					//if getAllRecords is true and result list or related list has has more mark in the end
+					// recall LimeDB.GetMappingByCode with getAllRecords true.
 					if (getAllRecords &&
-							(resultlist.size() > 1 &&
-									resultlist.get(resultlist.size() - 1).isHasMoreRecordsMarkRecord() ||  //.getCode().equals("has_more_records") ||
-									relatedtlist.size() > 1 &&
-											relatedtlist.get(relatedtlist.size() - 1).isHasMoreRecordsMarkRecord() )){
-											// getCode().equals("has_more_records"))) {
+							(resultlist.size() > 1 && resultlist.get(resultlist.size() - 1).isHasMoreRecordsMarkRecord() ||
+									relatedtlist.size() > 1&& relatedtlist.get(relatedtlist.size() - 1).isHasMoreRecordsMarkRecord() )){
 						try {
 							cacheTemp = dbadapter.getMappingByCode(code, !isPhysicalKeyboardPressed, true);
 							cache.remove(cacheKey);
@@ -383,26 +392,30 @@ public class SearchServer {
 						Log.i(TAG, "getMappingByCode() code=" + code + " resultlist.size()=" + resultlist.size()
 								+ " relatedlist.size()=" + relatedtlist.size());
 
-					if (i == 0) {//Jeremy add the mixed type English code in first loop
-						//Jeremy '12,5,31 setHighLighted true if the exact match code has zero result.
-						// Jeremy '15 ,6, 4 if no exact matched results(first element is partial matched), set highlighted item to composing code
-						if(resultlist.size() == 0 || resultlist.get(0).isPartialMatchToCodeRecord()) {
-							self.setHighLighted(true);
-						}else{
-							self.setHighLighted(false);
+
+					if (i == 0) {
+						if(LimeDB.getBetweenSearch() && resultlist.size() == 0 && code.length() > 1) {
+							//If the result list is empty we need to go back to last result list with nonzero result list
+							String wayBackCode = code;
+							do{
+								wayBackCode = wayBackCode.substring(0, wayBackCode.length() - 1);
+								cacheTemp = cache.get(cacheKey(wayBackCode));
+								if(cacheTemp!=null)
+									resultlist = cacheTemp.first;
+							}while(resultlist.size() == 0 && wayBackCode.length() > 1);
+						}else if( resultlist.get(0).isExactMatchToCodeRecord()) {
 							//push the exact match mapping with current code into exact match stack. '15,6,2 Jeremy
 							exactMatchStack.push(new Pair<>(resultlist.get(0), code));
 						}
-
-
 						result.add(self);
 					}
 
-					// Art '09.11.2011 ignore phonetic tone control
-					if (relatedtlist!=null && resultlist.size() > 0) {
+					if (resultlist!=null && resultlist.size() > 0) {
 						result.addAll(resultlist);
 						int rsize = result.size();
-						if (result.get(rsize - 1).isHasMoreRecordsMarkRecord()){ //getCode().equals("has_more_records")) {
+						if (LimeDB.getBetweenSearch() &&
+								result.get(rsize - 1).isHasMoreRecordsMarkRecord()){
+							//do not need to touch the has more record in between search mode. Jeremy '15,6,4
 							result.remove(rsize - 1);
 							hasMore = true;
 							if (DEBUG)
@@ -445,10 +458,33 @@ public class SearchServer {
 	/**
 	 * Get the real code length according to  codeLenthMap
 	 */
-	int getRealCodeLength(Mapping selectedMapping, String composing) {
+	int getRealCodeLength(Mapping selectedMapping, String currentCode) {
 		if (DEBUG)
 			Log.i(TAG, "getRealCodeLength()");
 
+		String code = selectedMapping.getCode();
+		if (tablename.equals("phonetic")) {
+
+			if (LimeDB.isCodeDualMapped()) { //abandon LD support for dual mapped codes. Jeremy '15,6,5
+				return currentCode.length();
+			} else {
+				String selectedPhoneticKeyboardType =
+						mLIMEPref.getParameterString("phonetic_keyboard_type", "standard");
+				String lcode = currentCode;
+				if (selectedPhoneticKeyboardType.startsWith("eten")) {
+					lcode = dbadapter.preProcessingRemappingCode(currentCode);
+				}
+				String noToneCode = code.replaceAll("[3467 ]", "");
+				if (code.equals(noToneCode)) {
+					return code.length();
+				} else if (!lcode.startsWith(code) && lcode.startsWith(noToneCode)) {
+					return noToneCode.length();
+				} else {
+					return currentCode.length(); //unexpected condition.
+				}
+			}
+		}
+		/*
 		// Return real code length form code length preserved in exact match stack instead of code length map. Jeremy '15,6,2
 		// return real code by iterating the current exact match stack.
 		if (exactMatchStack.isEmpty())
@@ -456,10 +492,8 @@ public class SearchServer {
 		for (Pair<Mapping, String> p : exactMatchStack) {
 			if (p.first.getWord().equals(selectedMapping.getWord()))
 				return p.second.length();
-
-		}
-
-		return composing.length(); // should not happen
+		}*/
+		return currentCode.length();
 	}
 
 
@@ -544,7 +578,7 @@ public class SearchServer {
 					}
 				}
 				// Jeremy '11,7,31
-				// exact match score was changed, related list in similar codes should be rebuild 
+				// exact match score was changed, related list in similar codes should be rebuild
 				// (eg. d, de, and def for code, defg)
 				updateSimilarCodeRelatedList(code);
 
@@ -563,7 +597,7 @@ public class SearchServer {
 
 	public void postFinishInput() throws RemoteException {
 
-		//if(dbadapter == null){dbadapter = new LimeDB(ctx);} 
+		//if(dbadapter == null){dbadapter = new LimeDB(ctx);}
 		if (scorelistSnapshot == null) scorelistSnapshot = new LinkedList<>();
 		else scorelistSnapshot.clear();
 
@@ -578,7 +612,7 @@ public class SearchServer {
 					scorelistSnapshot.addAll(scorelist);
 					scorelist.clear();
 				}
-				//Jeremy '11,7,28 combine to adduserdict and addscore 
+				//Jeremy '11,7,28 combine to adduserdict and addscore
 				//Jeremy '11,6,12 do adduserdict and add score if diclist.size > 0 and only adduserdict if diclist.size >1
 				//Jeremy '11,6,11, always learn scores, but sorted according preference options
 
@@ -619,17 +653,17 @@ public class SearchServer {
 						if (	unit.getWord() != null && !unit.getWord().equals("")
 								&& unit2.getWord() != null && !unit2.getWord().equals("")
 								&&(unit.isExactMatchToCodeRecord()|| unit.isPartialMatchToCodeRecord()
-									|| unit.isRelatedPhraseRecord()) // use record type to identify records. Jeremy '15,6,4
+								|| unit.isRelatedPhraseRecord()) // use record type to identify records. Jeremy '15,6,4
 								&&(unit2.isExactMatchToCodeRecord()|| unit2.isPartialMatchToCodeRecord()
-									|| unit.isRelatedPhraseRecord() || unit2.isChinesePunctuationSymbolRecord())  //allow unit2 to be chinese punctuation symbols.
-								//&& !unit.getCode().equals(unit.getWord())//Jeremy '12,6,13 avoid learning mixed mode english
-								//&& !unit2.getCode().equals(unit2.getWord())
-								///&& unit2.getId() !=null
+								|| unit.isRelatedPhraseRecord() || unit2.isChinesePunctuationSymbolRecord())  //allow unit2 to be chinese punctuation symbols.
+							//&& !unit.getCode().equals(unit.getWord())//Jeremy '12,6,13 avoid learning mixed mode english
+							//&& !unit2.getCode().equals(unit2.getWord())
+							///&& unit2.getId() !=null
 								) {
 
 							int score = 0;
 							//if (unit.getId() != null && unit2.getId() != null) //Jeremy '12,7,2 eliminate learning english words.
-								score = dbadapter.addOrUpdateRelatedPhraseRecord(unit.getWord(), unit2.getWord());
+							score = dbadapter.addOrUpdateRelatedPhraseRecord(unit.getWord(), unit2.getWord());
 							if (DEBUG)
 								Log.i(TAG, "learnRelatedPhrase(), the return score = " + score);
 							//Jeremy '12,6,7 learn LD phrase if the score of userdic is > 20
@@ -664,7 +698,7 @@ public class SearchServer {
 				if (phraselist.size() > 0 && phraselist.size() < 5) { //Jeremy '12,6,8 limit the phrase to have 4 chracters
 
 
-					String baseCode, LDCode, QPCode = "", baseWord;
+					String baseCode, LDCode = "", QPCode = "", baseWord;
 
 					Mapping unit1 = phraselist.get(0);
 
@@ -709,7 +743,7 @@ public class SearchServer {
 								baseCode += rMappingList.get(0).getCode();
 								QPCode += rMappingList.get(0).getCode().substring(0, 1);
 							} else {
-								baseCode = ""; //r-lookup failed. abandon the phrase learning 
+								baseCode = ""; //r-lookup failed. abandon the phrase learning
 								break;
 							}
 						}
@@ -721,7 +755,7 @@ public class SearchServer {
 
 							Mapping unit2 = phraselist.get((i + 1));
 							if (unit2 == null || unit2.getWord().length() == 0 ||unit2.isComposingCodeRecord()) //Jeremy 15,6,4 exclude composing code
-									//|| unit2.getCode().equals(unit2.getWord())) //Jeremy '12,6,13 avoid learning mixed mode english
+							//|| unit2.getCode().equals(unit2.getWord())) //Jeremy '12,6,13 avoid learning mixed mode english
 							{
 								break;
 							}
@@ -867,7 +901,6 @@ public class SearchServer {
 			keynamecache.put(cacheKey, result);
 		}
 		return result;
-
 	}
 
 	/**
@@ -900,7 +933,7 @@ public class SearchServer {
 		}
 	}
 
-	public void addLDPhrase(Mapping mapping,//String id, String code, String word, int score, 
+	public void addLDPhrase(Mapping mapping,//String id, String code, String word, int score,
 							boolean ending) {
 		if (LDPhraseListArray == null)
 			LDPhraseListArray = new ArrayList<>();
@@ -984,16 +1017,16 @@ public class SearchServer {
 
 	}
 
-/*
-	public boolean isImKeys(char c) throws RemoteException {
-		if (imKeysMap.get(tablename) == null || imKeysMap.size() == 0) {
-			//if(dbadapter == null){dbadapter = new LimeDB(ctx);}
-			imKeysMap.put(tablename, dbadapter.getImInfo(tablename, "imkeys"));
-		}
-		String imkeys = imKeysMap.get(tablename);
-		return !(imkeys == null || imkeys.equals("")) && (imkeys.indexOf(c) >= 0);
-	}
-*/
+	/*
+        public boolean isImKeys(char c) throws RemoteException {
+            if (imKeysMap.get(tablename) == null || imKeysMap.size() == 0) {
+                //if(dbadapter == null){dbadapter = new LimeDB(ctx);}
+                imKeysMap.put(tablename, dbadapter.getImInfo(tablename, "imkeys"));
+            }
+            String imkeys = imKeysMap.get(tablename);
+            return !(imkeys == null || imkeys.equals("")) && (imkeys.indexOf(c) >= 0);
+        }
+    */
 	public String getSelkey() throws RemoteException {
 		if (DEBUG)
 			Log.i(TAG, "getSelkey():hasNumber:" + hasNumberMapping + "hasSymbol:" + hasSymbolMapping);
