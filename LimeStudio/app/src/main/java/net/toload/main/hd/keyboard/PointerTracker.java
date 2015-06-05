@@ -221,6 +221,14 @@ public class PointerTracker {
         return isModifierInternal(mKeyState.getKeyIndex());
     }
 
+    public boolean isFunctionalKey(){
+        int keyIndex = mKeyState.getKeyIndex();
+        Key key = getKey( keyIndex);
+        if(key==null) return false;
+        else
+            return key.isFunctionalKey() || isSpaceKey(keyIndex);
+    }
+
     public boolean isOnModifierKey(int x, int y) {
         return isModifierInternal(mKeyDetector.getKeyIndexAndNearbyCodes(x, y, null));
     }
@@ -368,7 +376,7 @@ public class PointerTracker {
         if (DEBUG)
             debugLog("onUpEvent  :", x, y);
         mHandler.cancelKeyTimers();
-        mHandler.cancelPopupPreview();
+        //mHandler.cancelPopupPreview();
         showKeyPreviewAndUpdateKey(NOT_A_KEY);
         mIsInSlidingKeyInput = false;
         if (mKeyAlreadyProcessed)
@@ -456,15 +464,17 @@ public class PointerTracker {
     }
 
     private void showKeyPreviewAndUpdateKey(int keyIndex) {
+        if(DEBUG)
+            Log.i(TAG, "showKeyPreviewAndUpdateKey() keyIndex=" + keyIndex + "isModifier() = "+ isModifier() );
         updateKey(keyIndex);
         // The modifier key, such as shift key, should not be shown as preview when multi-touch is
         // supported. On the other hand, if multi-touch is not supported, the modifier key should
         // be shown as preview.
-        if (mHasDistinctMultitouch && isModifier()) {
+        if (mHasDistinctMultitouch && isFunctionalKey()){ // isModifier()) {   Jeremy '15,6,5 do not show preview on all functional keys.
             mProxy.showPreview(NOT_A_KEY, this);
         } else {
             mProxy.showPreview(keyIndex, this);
-        }
+       }
     }
 
     private void startLongPressTimer(int keyIndex) {

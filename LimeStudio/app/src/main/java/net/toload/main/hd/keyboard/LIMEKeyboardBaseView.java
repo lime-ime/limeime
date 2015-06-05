@@ -266,18 +266,23 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_POPUP_PREVIEW:
+                    if(DEBUG) Log.i(TAG, "handleMessage()  MSG_POPUP_PREVIEW");
                     showKey(msg.arg1, (PointerTracker) msg.obj);
                     break;
                 case MSG_DISMISS_PREVIEW:
-                    mPreviewPopup.dismiss();
+                    if(DEBUG) Log.i(TAG, "handleMessage()  MSG_DISMISS_PREVIEW");
+                    if(mPreviewPopup.isShowing())    //mPreviewPopup.dismiss();
+                            mPreviewText.setVisibility(INVISIBLE);
                     break;
                 case MSG_REPEAT_KEY: {
+                    if(DEBUG) Log.i(TAG, "handleMessage()  MSG_REPEAT_KEY");
                     final PointerTracker tracker = (PointerTracker) msg.obj;
                     tracker.repeatKey(msg.arg1);
                     startKeyRepeatTimer(mKeyRepeatInterval, msg.arg1, tracker);
                     break;
                 }
                 case MSG_LONGPRESS_KEY: {
+                    if(DEBUG) Log.i(TAG, "handleMessage()  MSG_LONGPRESS_KEY");
                     final PointerTracker tracker = (PointerTracker) msg.obj;
                     openPopupIfRequired(msg.arg1, tracker);
                     break;
@@ -286,6 +291,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         }
 
         public void popupPreview(long delay, int keyIndex, PointerTracker tracker) {
+            if(DEBUG)
+                Log.i(TAG, "UIHandler.popupPreview() delay="+delay + "; keyindex = "+ keyIndex);
             removeMessages(MSG_POPUP_PREVIEW);
             if (mPreviewPopup.isShowing() && mPreviewText.getVisibility() == VISIBLE) {
                 // Show right away, if it's already visible and finger is moving around
@@ -297,39 +304,55 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         }
 
         public void cancelPopupPreview() {
+            if(DEBUG)
+                Log.i(TAG, "UIHandler.cancelPopupPreview()");
             removeMessages(MSG_POPUP_PREVIEW);
         }
 
         public void dismissPreview(long delay) {
-            if (mPreviewPopup.isShowing()) {
-                sendMessageDelayed(obtainMessage(MSG_DISMISS_PREVIEW), delay);
-            }
+            if(DEBUG)
+                Log.i(TAG, "UIHandler.dismissPreview() delay=" + delay);
+            //if (mPreviewPopup.isShowing()) {
+           sendMessageDelayed(obtainMessage(MSG_DISMISS_PREVIEW), delay);
+            //}
         }
 
         public void cancelDismissPreview() {
+            if(DEBUG)
+                Log.i(TAG, "UIHandler.cancelDismissPreview()");
             removeMessages(MSG_DISMISS_PREVIEW);
         }
 
         public void startKeyRepeatTimer(long delay, int keyIndex, PointerTracker tracker) {
+            if(DEBUG)
+                Log.i(TAG, "UIHandler.startKeyRepeatTimer() delay=" + delay + "keyIndex= " + keyIndex);
             mInKeyRepeat = true;
             sendMessageDelayed(obtainMessage(MSG_REPEAT_KEY, keyIndex, 0, tracker), delay);
         }
 
         public void cancelKeyRepeatTimer() {
+            if(DEBUG)
+                Log.i(TAG, "UIHandler.cancelKeyRepeatTimer()");
             mInKeyRepeat = false;
             removeMessages(MSG_REPEAT_KEY);
         }
 
         public boolean isInKeyRepeat() {
+            if(DEBUG)
+                Log.i(TAG, "UIHandler.isInKeyRepeat(): " + mInKeyRepeat);
             return mInKeyRepeat;
         }
 
         public void startLongPressTimer(long delay, int keyIndex, PointerTracker tracker) {
+            if(DEBUG)
+                Log.i(TAG, "UIHandler.startLongPressTimer() delay=" + delay + "keyIndex= " + keyIndex);
             removeMessages(MSG_LONGPRESS_KEY);
             sendMessageDelayed(obtainMessage(MSG_LONGPRESS_KEY, keyIndex, 0, tracker), delay);
         }
 
         public void cancelLongPressTimer() {
+            if(DEBUG)
+                Log.i(TAG, "UIHandler.cancelLongPressTimer()");
             removeMessages(MSG_LONGPRESS_KEY);
         }
 
@@ -533,7 +556,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             mShowPreview = false;
         }
         mPreviewPopup.setTouchable(false);
-        mPreviewPopup.setAnimationStyle(R.style.KeyPreviewAnimation);
+        //mPreviewPopup.setAnimationStyle(R.style.KeyPreviewAnimation);
         mDelayBeforePreview = res.getInteger(R.integer.config_delay_before_preview);
         mDelayAfterPreview = res.getInteger(R.integer.config_delay_after_preview);
 
@@ -1092,8 +1115,13 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     }
 
     public void showPreview(int keyIndex, PointerTracker tracker) {
+
         int oldKeyIndex = mOldPreviewKeyIndex;
         mOldPreviewKeyIndex = keyIndex;
+
+        if(DEBUG)
+            Log.i(TAG,"showPreview() keyindex =" + keyIndex + "oldKeyIndex = " + oldKeyIndex);
+
         // final boolean isLanguageSwitchEnabled = false; //processed in LIMEKeyboard
         //(mKeyboard instanceof LIMEKeyboard)
         //        && ((LIMEKeyboard)mKeyboard).isLanguageSwitchEnabled();
@@ -1106,7 +1134,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 && mShowPreview
                 || (hidePreviewOrShowSpaceKeyPreview)){// && isLanguageSwitchEnabled))) {
             if (keyIndex == NOT_A_KEY) {
-                mHandler.cancelPopupPreview();
+                //mHandler.cancelPopupPreview();
                 mHandler.dismissPreview(mDelayAfterPreview);
             } else if (tracker != null) {
                 mHandler.popupPreview(mDelayBeforePreview, keyIndex, tracker);
@@ -1115,13 +1143,15 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     }
 
     private void showKey(final int keyIndex, PointerTracker tracker) {
+        if(DEBUG)
+            Log.i(TAG,"showKey() keyindex =" + keyIndex);
         Key key = tracker.getKey(keyIndex);
         if (key == null)
             return;
         // Should not draw hint icon in key preview
         if (key.icon != null && !shouldDrawLabelAndIcon(key)) {
-            mPreviewText.setCompoundDrawables(null, null, null,
-                    key.iconPreview != null ? key.iconPreview : key.icon);
+            mPreviewText.setCompoundDrawables(null,
+                    key.iconPreview != null ? key.iconPreview : key.icon, null, null);
             mPreviewText.setText(null);
         } else {
             mPreviewText.setCompoundDrawables(null, null, null, null);
@@ -1148,9 +1178,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         }
 
         int popupPreviewX = key.x - (popupWidth - key.width) / 2;
-        int popupPreviewY = (int) ((key.y - popupHeight + mPreviewOffset) * mKeyboard.getKeySizeScale());
+        int popupPreviewY = (key.y +key.height - popupHeight + mPreviewOffset);
 
-        mHandler.cancelDismissPreview();
+       // mHandler.cancelDismissPreview();
         if (mOffsetInWindow == null) {
             mOffsetInWindow = new int[2];
             getLocationInWindow(mOffsetInWindow);
