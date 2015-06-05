@@ -61,7 +61,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 public class LimeDB extends LimeSQLiteOpenHelper {
 
-    private static boolean DEBUG = true;
+    private static boolean DEBUG = false;
     private static String TAG = "LIMEDB";
 
     private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier. Shared db instance for dbserver and searchserver

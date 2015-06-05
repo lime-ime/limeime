@@ -445,21 +445,21 @@ public class SearchServer {
 	/**
 	 * Get the real code length according to  codeLenthMap
 	 */
-	int getRealCodeLength(Mapping selectedMapping) {
+	int getRealCodeLength(Mapping selectedMapping, String composing) {
 		if (DEBUG)
 			Log.i(TAG, "getRealCodeLength()");
 
 		// Return real code length form code length preserved in exact match stack instead of code length map. Jeremy '15,6,2
 		// return real code by iterating the current exact match stack.
 		if (exactMatchStack.isEmpty())
-			return lastCode.length(); // the selected mapping is not a exact match mapping
+			return composing.length(); // the selected mapping is not a exact match mapping
 		for (Pair<Mapping, String> p : exactMatchStack) {
 			if (p.first.getWord().equals(selectedMapping.getWord()))
 				return p.second.length();
 
 		}
 
-		return lastCode.length(); // should not happen
+		return composing.length(); // should not happen
 	}
 
 
