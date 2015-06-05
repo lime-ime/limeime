@@ -45,7 +45,7 @@ public class Lime {
     public static final String DATABASE_CLOUD_IM_EZ = DATABASE_CLOUD_URL_BASED + "ez.zip";
     public static final String DATABASE_CLOUD_IM_EZ_KEYBOARD = "ez";
 
-    public static final String DATABASE_CLOUD_IM_ECJHK = DATABASE_CLOUD_URL_BASED + "ecjhkzip";
+    public static final String DATABASE_CLOUD_IM_ECJHK = DATABASE_CLOUD_URL_BASED + "ecjhk.zip";
     public static final String DATABASE_CLOUD_IM_ECJHK_KEYBOARD = "cj";
 
     public static final String DATABASE_CLOUD_IM_ECJ = DATABASE_CLOUD_URL_BASED + "ecj.zip";

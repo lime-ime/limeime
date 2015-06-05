@@ -66,10 +66,10 @@ public class SetupImLoadRunnable implements Runnable{
         Looper.prepare();
 
         //Log.i("LIME", "showProgress Runnable:");
-        handler.showProgress(true, "");
+        handler.showProgress(false, activity.getResources().getString(R.string.setup_load_download));
 
         // Download DB File
-        handler.updateProgress(activity.getResources().getString(R.string.setup_load_download));
+        //handler.updateProgress(activity.getResources().getString(R.string.setup_load_download));
         File tempfile = downloadRemoteFile(url);
 
 
@@ -297,6 +297,10 @@ public class SetupImLoadRunnable implements Runnable{
             URLConnection conn = downloadUrl.openConnection();
             conn.connect();
             InputStream is = conn.getInputStream();
+
+            int size = conn.getContentLength();
+            int downloadsize = 0;
+
             //long remoteFileSize = conn.getContentLength();
             //long downloadedSize = 0;
 
@@ -313,11 +317,18 @@ public class SetupImLoadRunnable implements Runnable{
             FileOutputStream fos = null;
             fos = new FileOutputStream(downloadedFile);
 
+
             byte buf[] = new byte[4096];
             do{
                 int numread = is.read(buf);
                 if(numread <=0){break;}
                 fos.write(buf, 0, numread);
+                if(size > 0){
+                    downloadsize += 4096;
+                    float percent = (float)downloadsize / (float)size;
+                            percent *= 100;
+                    handler.updateProgress((int)percent);
+                }
                 if(DEBUG)
                     Log.i(TAG, numread +  "bytes download.");
 
