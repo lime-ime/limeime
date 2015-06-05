@@ -61,7 +61,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 public class LimeDB extends LimeSQLiteOpenHelper {
 
-    private static boolean DEBUG = false;
+    private static boolean DEBUG = true;
     private static String TAG = "LIMEDB";
 
     private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier. Shared db instance for dbserver and searchserver
@@ -82,6 +82,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private final static int DUALCODE_NO_CHECK_LIMIT = 2; //Jeremy '12,5,30 changed from 5 to 3 for phonetic correct valid code display.
     private final static int BETWEEN_SEARCH_WAY_BACK_LEVELS = 5; //Jeremy '15,6,30
 
+    private static boolean codeDualMapped=false;
+    public static boolean isCodeDualMapped() {return codeDualMapped; }
 
     public final static String FIELD_ID = "_id";
     public final static String FIELD_CODE = "code";
@@ -1560,7 +1562,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return selectClause;
     }
 
-    private String preProcessingRemappingCode(String code) {
+    public String preProcessingRemappingCode(String code) {
         if (DEBUG)
             Log.i(TAG, "preProcessingRemappingCode(): tablename = " + tablename + " , code=" + code);
         if (code != null) {
@@ -1838,12 +1840,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
                 keysDualMap.put(remaptable, reMap);
             }
-            // do real prcoessing now
+            // do real precessing now
             if (keysDualMap.get(remaptable) == null
                     || keysDualMap.get(remaptable).size() == 0) {
+                codeDualMapped = false;
                 dualcode = code;
             } else {
-
+                codeDualMapped = true;
                 HashMap<String, String> reMap = keysDualMap.get(remaptable);
                 dualcode = "";
                 // testing if code contains dual mapped characters. 
@@ -3298,7 +3301,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     munit.setWord(cursor.getString(wordColumn));
                     munit.setScore(cursor.getInt(scoreColumn));
                     //munit.setHighLighted(cursor.getString(relatedColumn));
-                    munit.setHighLighted(false);
+                    //munit.setHighLighted(false);
                     munit.setExactMatchToCodeRecord();
                     if (DEBUG)
                         Log.i(TAG, "isMappingExistOnDB(), mapping is exist");

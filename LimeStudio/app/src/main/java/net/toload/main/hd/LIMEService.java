@@ -1368,7 +1368,7 @@ public class LIMEService extends InputMethodService implements
                         // Jeremy '12,6,2 get real committed code length from searchserver
                         boolean composingNotFinish = false;
                         //Jeremy '15,6,2 retrieve real code length with selectedCandidate using exact code match stack in search server
-                        int committedCodeLength = SearchSrv.getRealCodeLength(selectedCandidate);
+                        int committedCodeLength = SearchSrv.getRealCodeLength(selectedCandidate, mComposing.toString());
 
                         if (DEBUG)
                             Log.i(TAG, "commitTyped(): committedCodeLength = " + committedCodeLength);
@@ -1404,7 +1404,7 @@ public class LIMEService extends InputMethodService implements
                                     mComposing = mComposing.deleteCharAt(0);
                                 if (DEBUG)
                                     Log.i(TAG, "commitTyped(): new mComposing:'" + mComposing + "'");
-                                if (mComposing.length() > 0) { //Jeremy '12,7,11 only fetch remaining composoing when length >0
+                                if (mComposing.length() > 0) { //Jeremy '12,7,11 only fetch remaining composing when length >0
                                     if (ic != null) ic.setComposingText(mComposing, 1);
                                     //updateCandidates();
                                     shouldUpdateCandidates = true;
@@ -1412,6 +1412,7 @@ public class LIMEService extends InputMethodService implements
                                 }
                             }
                         } else {
+
                             if (LDComposingBuffer.length() > 0) {// && LDComposingBuffer.contains(mComposing.toString())){
                                 //Ending continuous LD process (last of LD process)
                                 if (DEBUG)
@@ -2089,10 +2090,7 @@ public class LIMEService extends InputMethodService implements
 
         if (mComposing.length() > 0) {
 
-            //showCandidateView();
-
             final LinkedList<Mapping> list = new LinkedList<>();
-
 
                 String keyString = mComposing.toString();
 
