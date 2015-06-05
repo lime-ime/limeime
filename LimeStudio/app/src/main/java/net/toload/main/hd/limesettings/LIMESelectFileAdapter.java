@@ -57,7 +57,7 @@ public class LIMESelectFileAdapter extends BaseAdapter {
 		if(list.get(position).isDirectory()){
 			holder.image.setImageResource(R.drawable.folder);
 		}else{
-			holder.image.setImageResource(R.drawable.text_x_generic);
+			holder.image.setImageResource(R.drawable.scolling_holder);
 		}
 		holder.filename.setText(list.get(position).getName());
 		
