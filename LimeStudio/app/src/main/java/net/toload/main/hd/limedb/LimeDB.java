@@ -1343,7 +1343,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             return code;
 
         } else {
-            if (composingText && (lastValidDualCodeList != null)) //Jeremy '11,10,6 bug fixed on rmapping returning orignal code.
+            if (composingText && codeDualMapped &&  //Jeremy '15,6,5 don't use valid code list if no dual code mapping is using
+                    (lastValidDualCodeList != null)) //Jeremy '11,10,6 bug fixed on rmapping returning orignal code.
                 code = lastValidDualCodeList;
             if (DEBUG)
                 Log.i(TAG, "keyToKeyname():lastValidDualCodeList=" + lastValidDualCodeList);
@@ -1503,11 +1504,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         if(sort) sortClause += " score desc, basescore desc, ";
                         sortClause += "_id asc";
 
-                        String selectString = "select _id, code, code3r, word, score, basescore, " + exactMatchCondition + " as exactmatch, instr("+ codeCol +", '" + escapedCode +"') as startwith"
-                                +" from " + tablename + " where " + selectClause + " order by " + sortClause + " limit " + limitClause;
+                        String selectString = "select _id, code, code3r, word, score, basescore, " + exactMatchCondition
+                                + " as exactmatch, instr("+ codeCol +", '" + escapedCode +"') as startwith";
+
+                        selectString += " from " + tablename + " where " + selectClause + " order by " + sortClause + " limit " + limitClause;
                         cursor = db.rawQuery(selectString, null);
 
-                        if(DEBUG)
+                       // if(DEBUG)
                             Log.i(TAG, "getMappingByCode() between search select string:"+selectString);
                      }
                     else{
@@ -1543,22 +1546,26 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     *  Jeremy '15,5,1 expand the search clause to include cod = abc, ab, c descending
      */
     private String expandBetweenSearchClause(String searchColumn, String code){
+
         String selectClause="";
+
+        int len = code.length();
+        int end = (len>4) ? 5 : len;
+        //int start = (len>BETWEEN_SEARCH_WAY_BACK_LEVELS)?len - BETWEEN_SEARCH_WAY_BACK_LEVELS: 0;
+        if (len > 1) {
+            for (int j = 0; j < end - 1; j++) {
+                selectClause += searchColumn + "= '" + code.substring(0, j + 1) + "' or ";
+            }
+        }
+        code = (len>4) ?  code.substring(0,len-1) : code;
         String escapedCode = code.replaceAll("'", "''");
         char[] charray = code.toCharArray();
         charray[code.length() - 1]++;
         String nextcode = new String(charray);
         nextcode = nextcode.replaceAll("'", "''");
-
-        int len = code.length();
-        int start = (len>BETWEEN_SEARCH_WAY_BACK_LEVELS)?len - BETWEEN_SEARCH_WAY_BACK_LEVELS: 0;
-        if (len > 1) {
-            for (int j = start; j < len - 1; j++) {
-                selectClause += searchColumn + "= '" + code.substring(0, j + 1) + "' or ";
-            }
-        }
-
         selectClause += " (" + searchColumn + " >= '" + escapedCode + "' and " + searchColumn + " < '" + nextcode + "') ";
+      //  if(DEBUG)
+            Log.i(TAG,"expandBetweenSearchClause() selectClause =" + selectClause);
         return selectClause;
     }
 
