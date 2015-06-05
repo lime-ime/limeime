@@ -552,7 +552,8 @@ public class CandidateView extends View implements View.OnClickListener {
 
     public void doHideComposing() {
         if (mComposingTextPopup != null && mComposingTextPopup.isShowing()) {
-            mComposingTextPopup.dismiss();
+            //mComposingTextPopup.dismiss();
+            mComposingTextView.setVisibility(INVISIBLE);
         }
     }
 
@@ -564,26 +565,31 @@ public class CandidateView extends View implements View.OnClickListener {
         if (DEBUG)
             Log.i(TAG, "doSetComposing():" + composingText + "this.isShown()" + this.isShown());
 
+        // Initialize mComposingTextView as embedding composing or popup window for fixed candidate mode. Jeremy '15,6,4
+        if(mComposingTextView == null) {
+            if (embeddedComposing != null) {
+                mComposingTextView = embeddedComposing;
+            } else {
+                LayoutInflater inflater
+                        = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                mComposingTextView = (TextView) inflater.inflate(R.layout.composingtext, (ViewGroup) getRootView(), false);
 
-        // Composing buffer textView
-        if(embeddedComposing!=null){
-            mComposingTextView = embeddedComposing;
-        }else if (mComposingTextPopup == null) {
-            LayoutInflater inflater
-                    = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            mComposingTextPopup = new PopupWindow(mContext);
-            mComposingTextView = (TextView) inflater.inflate(R.layout.composingtext, (ViewGroup)getRootView(), false);
-            mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-            mComposingTextPopup.setContentView(mComposingTextView);
-            mComposingTextPopup.setBackgroundDrawable(null);
-            mComposingTextPopup.setContentView(mComposingTextView);
+                if (mComposingTextPopup == null) {
+                    mComposingTextPopup = new PopupWindow(mContext);
+                }
+                mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+                mComposingTextPopup.setContentView(mComposingTextView);
+                mComposingTextPopup.setBackgroundDrawable(null);
+                mComposingTextPopup.setContentView(mComposingTextView);
+            }
         }
 
 
         if (composingText != null) {
             mComposingTextView.setText(composingText);
             //The textsize got is coverted into PX already. Thus force setup the setTextSize in unit of PX.
-            float scaledTextSize = mContext.getResources().getDimensionPixelSize(R.dimen.composing_text_size) * mLIMEPref.getFontSize();
+            float scaledTextSize =
+                    mContext.getResources().getDimensionPixelSize(R.dimen.composing_text_size) * mLIMEPref.getFontSize();
             mComposingTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, scaledTextSize);
 
         } else
@@ -591,41 +597,12 @@ public class CandidateView extends View implements View.OnClickListener {
 
         mComposingTextView.invalidate();  //Jeremy '12,6,2 invalidate and measure so as to get correct height and width later. 
         mComposingTextView.setVisibility(VISIBLE);
-        mComposingTextView.measure(
-                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
 
         //Jeremy '15,6, 4 bypass updating popup when composing view is embedded in candidate container
 
         if(embeddedComposing==null)
             doUpdateComposing();
-        /*
 
-        final int popupWidth = mComposingTextView.getMeasuredWidth();
-        final int popupHeight = mComposingTextView.getMeasuredHeight();
-
-
-        int[] offsetInWindow = new int[2];
-        this.getLocationInWindow(offsetInWindow);
-        int mPopupComposingY = offsetInWindow[1];
-        int mPopupComposingX = 0;
-
-        mPopupComposingY -= popupHeight;
-
-        if (DEBUG)
-            Log.i(TAG, "doSetComposing():mPopupComposingX:" + mPopupComposingX
-                    + ". mPopupComposingY:" + mPopupComposingY
-                    + ". popupWidth = " + popupWidth
-                    + ". popupHeight = " + popupHeight
-                    + ". mComposingTextPopup.isShowing()=" + mComposingTextPopup.isShowing());
-
-        if (!mComposingTextPopup.isShowing()) {
-            mComposingTextPopup.setWidth(popupWidth);
-            mComposingTextPopup.setHeight(popupHeight);
-            mComposingTextPopup.showAtLocation(mCandidateView, Gravity.NO_GRAVITY, mPopupComposingX, mPopupComposingY);
-        }
-
-        */
     }
 
     /**
@@ -636,7 +613,12 @@ public class CandidateView extends View implements View.OnClickListener {
         if (DEBUG)
             Log.i(TAG, "doUpdateComposing(): this.isShown()" + this.isShown());
 
+
         if(embeddedComposing!=null) return ; //Jeremy '15,6, 4 bypass updating popup when composing view is embedded in candidate container
+
+        mComposingTextView.measure(
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
 
         final int popupWidth = mComposingTextView.getMeasuredWidth();  //Jeremy '12,6,2 use getWidth and getHeight instead
         final int popupHeight = mComposingTextView.getMeasuredHeight();

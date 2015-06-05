@@ -2382,17 +2382,18 @@ public class LIMEService extends InputMethodService implements
     private void forceHideCandidateView() {
         if (mComposing != null && mComposing.length() > 0)
             mComposing.setLength(0);
-        // Reset templist
+
         selectedCandidate = null;
         selectedIndex = 0;
 
         if (mCandidateList != null)
             mCandidateList.clear();
 
-        if (mFixedCandidateViewOn)
+        if (mFixedCandidateViewOn) {
             mCandidateViewInInputView.forceHide();
-        else
+        }else {
             hideCandidateView();
+        }
     }
 
 
