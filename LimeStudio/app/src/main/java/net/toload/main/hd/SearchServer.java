@@ -403,7 +403,7 @@ public class SearchServer {
 								if(cacheTemp!=null)
 									resultlist = cacheTemp.first;
 							}while(resultlist.size() == 0 && wayBackCode.length() > 1);
-						}else if( resultlist.get(0).isExactMatchToCodeRecord()) {
+						}else if(resultlist.size() >0 && resultlist.get(0).isExactMatchToCodeRecord()) {
 							//push the exact match mapping with current code into exact match stack. '15,6,2 Jeremy
 							exactMatchStack.push(new Pair<>(resultlist.get(0), code));
 						}
@@ -493,7 +493,7 @@ public class SearchServer {
 			if (p.first.getWord().equals(selectedMapping.getWord()))
 				return p.second.length();
 		}*/
-		return currentCode.length();
+		return code.length();
 	}
 
 

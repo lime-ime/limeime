@@ -69,6 +69,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
     private final static Boolean betweenSearch = true;
+    private final static Boolean fuzzySearch = false;
     // hold database connection when database is in maintainance. Jeremy '15,5,23
     private static boolean databaseOnHold = false;
 
@@ -1292,9 +1293,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     /**
      * Retrieve matched records
-     * Add synchronized modifier to avoid later search finsihed earlier in ascending searching like a ab to avoid incorrect order of exact match stack.
      */
-    public synchronized Pair<List<Mapping>, List<Mapping>> getMappingByCode(String code, boolean softKeyboard, boolean getAllRecords) {
+    public Pair<List<Mapping>, List<Mapping>> getMappingByCode(String code, boolean softKeyboard, boolean getAllRecords) {
 
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (!checkDBConnection()) return null;
@@ -1340,10 +1340,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     String codeCol = FIELD_CODE;
 
-                    if (tablename.equals("phonetic")) {
-                        final boolean tonePresent = code.matches(".+[3467 ].*"); // Tone symbols present in any locoation except the first character
-                        final boolean toneNotLast = code.matches(".+[3467 ].+"); // Tone symbols present in any locoation except the first and last character
+                    final boolean tonePresent = code.matches(".+[3467 ].*"); // Tone symbols present in any locoation except the first character
+                    final boolean toneNotLast = code.matches(".+[3467 ].+"); // Tone symbols present in any locoation except the first and last character
 
+                    if(tablename.equals("phonetic")) {
                         if (tonePresent) {
                             //LD phrase if tone symbols present but not in last character or in last character but the length > 4
                             // (phonetic combinations never has length >4)
@@ -1353,9 +1353,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         } else { // no tone symbols present, check NoToneCode column
                             codeCol = FIELD_NO_TONE_CODE;
                         }
-
                         code = code.trim();
                     }
+
 
                     String selectClause;
                     String sortClause;
@@ -1365,17 +1365,19 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
                     if(betweenSearch){
-                        selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectClause + " and word is not null group by word " ;
+                        selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectClause + " group by word " ;
                         String exactMatchCondition = " (" +codeCol +" ='" + escapedCode +"' " + extraExactMatchClause  +  ") ";
-                        sortClause = "( exactmatch = 1 and ( score > 0 or  basescore >2) and length(word)=1) desc, " ;
+                        sortClause = "( exactmatch = 1 and ( score > 0 or  basescore >2) and length(word)=1) desc, exactmatch desc," +
+                                " (length("+codeCol+") >= " +  escapedCode.length() + " ) desc, " ;
                         if(sort) sortClause += " score desc, basescore desc, ";
                         sortClause += "_id asc";
 
                         String selectString = "select _id, code, code3r, word, score, basescore, " + exactMatchCondition + " as exactmatch  "
-                                                    + " from " + tablename + " where " + selectClause + " order by " + sortClause + " limit " + limitClause;
+                                                    + " from " + tablename + " where word is not null and " + selectClause + " order by " + sortClause
+                                                    + " limit " + limitClause;
                         cursor = db.rawQuery(selectString, null);
 
-                       // if(DEBUG)
+                       if(DEBUG)
                             Log.i(TAG, "getMappingByCode() between search select string:"+selectString);
                      }
                     else{
@@ -1413,25 +1415,24 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      */
     private String expandBetweenSearchClause(String searchColumn, String code){
 
-        String selectClause="";
+        String selectClause = searchColumn + "= '" + code.replaceAll("'", "''") + "' or ";
 
         int len = code.length();
         int end = (len>4) ? 5 : len;
-        //int start = (len>BETWEEN_SEARCH_WAY_BACK_LEVELS)?len - BETWEEN_SEARCH_WAY_BACK_LEVELS: 0;
+
         if (len > 1) {
             for (int j = 0; j < end - 1; j++) {
-                selectClause += searchColumn + "= '" + code.substring(0, j + 1) + "' or ";
+                selectClause += searchColumn + "= '" + code.substring(0, j + 1).replaceAll("'", "''") + "' or ";
             }
         }
-        code = (len>4) ?  code.substring(0,len-1) : code;
-        String escapedCode = code.replaceAll("'", "''");
-        char[] charray = code.toCharArray();
-        charray[code.length() - 1]++;
-        String nextcode = new String(charray);
-        nextcode = nextcode.replaceAll("'", "''");
-        selectClause += " (" + searchColumn + " >= '" + escapedCode + "' and " + searchColumn + " < '" + nextcode + "') ";
-      //  if(DEBUG)
-            Log.i(TAG,"expandBetweenSearchClause() selectClause =" + selectClause);
+        if(fuzzySearch) code = (len>4) ?  code.substring(0,len-1) : code;
+        char[] chArray = code.toCharArray();
+        chArray[code.length() - 1]++;
+        String nextCode = new String(chArray);
+        selectClause += " (" + searchColumn + " > '" + code.replaceAll("'", "''") + "' and " + searchColumn
+                + " <'"  + nextCode.replaceAll("'", "''") + "') ";
+        if(DEBUG)
+            Log.i(TAG,"expandBetweenSearchClause() selectClause: " + selectClause);
         return selectClause;
     }
 
