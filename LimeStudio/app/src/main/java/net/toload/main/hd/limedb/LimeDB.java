@@ -65,7 +65,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private static String TAG = "LIMEDB";
 
     private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier. Shared db instance for dbserver and searchserver
-    private final static int DATABASE_VERSION = 78;
+    private final static int DATABASE_VERSION = 80;
 
     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
     private final static Boolean betweenSearch = true;
@@ -353,18 +353,43 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 	 */
 
     /**
-     * Jeremy '12,6,6
+     * Jeremy '15,6,6 left only oldVersion <80
      * Do upgrade here if db version is not up to date.
      */
     @Override
     public void onUpgrade(SQLiteDatabase dbin, int oldVersion, int newVersion) {
 
+       Log.i(TAG, "OnUpgrade() db old version = " + oldVersion + ", new version = " + newVersion);
 
-        if (DEBUG)
-            Log.w(TAG, "OnUpgrade() db old version = " + oldVersion + ", new version = " + newVersion);
+        if (oldVersion < 80) {
+            long startTime=System.currentTimeMillis();
+            Cursor cursor = dbin.query("sqlite_master", null, "type='index' and name = 'phonetic_idx_code3r'",
+                    null, null, null, null);
 
-        if (oldVersion < 78) {
-            // Add userscoe field to related table
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    Log.i(TAG, "OnUpgrade(), NoToneCodeI index is exist!!");
+                } else {
+                    Log.i( TAG, "OnUpgrade()  creating phonetic code3r column and index.");
+                    execSQL(dbin, "alter table phonetic add column 'code3r'");
+                    execSQL(dbin, "create index 'phonetic_idx_code3r' on phonetic (code3r)");
+                }
+                cursor.close();
+            }
+            cursor = dbin.query("phonetic", null, "code3r='ru'", null, null, null, null);
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    Log.i(TAG, "OnUpgrade(), NoToneCode column has valid data!!");
+                }else{
+                    Log.i( TAG, "OnUpgrade()  update phonetic code3r data from trimmed code.");
+                    execSQL(dbin, "update phonetic set code3r=trim(code,'3467')");
+                }
+                cursor.close();
+            }
+            long endTime = System.currentTimeMillis();
+            Log.i( TAG, "OnUpgrade() build phonetic code3r finished.  Elapsed time = " + (endTime-startTime) + "ms.");
+
+            // Add user score field to related table
             try {
                 String add_column = "ALTER TABLE " + Lime.DB_RELATED + " ADD ";
                 add_column += Lime.DB_RELATED_COLUMN_USERSCORE + " INTEGER DEFAULT 0 NOT NULL";
@@ -374,131 +399,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             }
         }
 
-        checkNoToneCodeIndexAndRecsordsInPhonetic(dbin);
 
-        if (oldVersion < 75) {
-            try {
-                int ecjcount = dbin.query("ecj", null, null, null, null, null, null, null).getCount();
-                if (ecjcount == 0) {
-                    execSQL(dbin, "delete from im where code ='ecj';");
-                }
-            } catch (Exception ignored) {
-            }
-
-
-            try {
-                execSQL(dbin, "CREATE TABLE hs (_id INTEGER primary key autoincrement,  code text, code3r text, word text, related text, score integer, 'basescore' type integer);");
-                execSQL(dbin, "CREATE INDEX [hs_idx_code] ON [hs] ([code]);");
-            } catch (Exception ignored) {
-            }
-
-            try {
-                int count = dbin.query("keyboard", null, FIELD_CODE + " = 'phoneticet41'", null, null, null, null, null).getCount();
-
-                if (count == 0) {
-
-                    ContentValues cv = new ContentValues();
-                    cv.put("code", "phoneticet41");
-                    cv.put("name", "注音倚天");
-                    cv.put("desc", "注音倚天41鍵");
-                    cv.put("type", "phone");
-                    cv.put("image", "lime_et_41_keyboard_preview");
-                    cv.put("imkb", "lime_et_41");
-                    cv.put("imshiftkb", "lime_et_41_shift");
-                    cv.put("engkb", "lime_english_number");
-                    cv.put("engshiftkb", "lime_english_shift");
-                    cv.put("symbolkb", "symbols");
-                    cv.put("symbolshiftkb", "symbols_shift");
-                    cv.put("disable", "false");
-                    dbin.insert("keyboard", null, cv);
-                }
-            } catch (Exception e) {
-                //e.printStackTrace();
-                Log.e(TAG, "OnUpgrade() exception:" + Arrays.toString(e.getStackTrace()));
-            }
-
-            try {
-                execSQL(dbin, "alter table hs add 'basescore' type integer");
-                execSQL(dbin, "alter table ecj add 'basescore' type integer");
-                execSQL(dbin, "alter table custom add 'basescore' type integer");
-                execSQL(dbin, "alter table wb add 'basescore' type integer");
-                execSQL(dbin, "alter table array add 'basescore' type integer");
-                execSQL(dbin, "alter table array10 add 'basescore' type integer");
-                execSQL(dbin, "alter table cj add 'basescore' type integer");
-                execSQL(dbin, "alter table dayi add 'basescore' type integer");
-                execSQL(dbin, "alter table ez add 'basescore' type integer");
-                execSQL(dbin, "alter table phonetic add 'basescore' type integer");
-                execSQL(dbin, "alter table scj add 'basescore' type integer");
-                execSQL(dbin, "alter table cj5 add 'basescore' type integer");
-                execSQL(dbin, "alter table imtable1 add 'basescore' type integer");
-                execSQL(dbin, "alter table imtable2 add 'basescore' type integer");
-                execSQL(dbin, "alter table imtable3 add 'basescore' type integer");
-                execSQL(dbin, "alter table imtable4 add 'basescore' type integer");
-                execSQL(dbin, "alter table imtable5 add 'basescore' type integer");
-                execSQL(dbin, "alter table imtable6 add 'basescore' type integer");
-                execSQL(dbin, "alter table imtable7 add 'basescore' type integer");
-                execSQL(dbin, "alter table imtable8 add 'basescore' type integer");
-                execSQL(dbin, "alter table imtable9 add 'basescore' type integer");
-                execSQL(dbin, "alter table imtable10 add 'basescore' type integer");
-            } catch (Exception e) {
-                //e.printStackTrace();
-                Log.w(TAG, "OnUpgrade() exception:" + Arrays.toString(e.getStackTrace()));
-            }
-        }
-        if (oldVersion < 77) { // add phonetic hsu keyboard '12,6,6 by jeremy
-            if (DEBUG)
-                Log.i(TAG, "Create new hsu and et26 keyboard for version 76.");
-            try {
-                int count = dbin.query("keyboard", null, FIELD_CODE + " = 'hsu'", null, null, null, null, null).getCount();
-                if (count == 0) {
-                    ContentValues cv = new ContentValues();
-                    cv.put("code", "hsu");
-                    cv.put("name", "注音許氏");
-                    cv.put("desc", "注音許氏鍵盤");
-                    cv.put("type", "phone");
-                    cv.put("image", "hsu_keyboard_preview");
-                    cv.put("imkb", "lime_hsu");
-                    cv.put("imshiftkb", "lime_hsu_shift");
-                    cv.put("engkb", "lime_english_number");
-                    cv.put("engshiftkb", "lime_english_shift");
-                    cv.put("symbolkb", "symbols");
-                    cv.put("symbolshiftkb", "symbols_shift");
-                    cv.put("disable", "false");
-                    dbin.insert("keyboard", null, cv);
-                }
-                count = dbin.query("keyboard", null, FIELD_CODE + " = 'et26'", null, null, null, null, null).getCount();
-                if (count == 0) {
-                    ContentValues cv = new ContentValues();
-                    cv.put("code", "et26");
-                    cv.put("name", "注音倚天26");
-                    cv.put("desc", "注音倚天26鍵");
-                    cv.put("type", "phone");
-                    cv.put("image", "et26_keyboard_preview");
-                    cv.put("imkb", "lime_et26");
-                    cv.put("imshiftkb", "lime_et26_shift");
-                    cv.put("engkb", "lime_english_number");
-                    cv.put("engshiftkb", "lime_english_shift");
-                    cv.put("symbolkb", "symbols");
-                    cv.put("symbolshiftkb", "symbols_shift");
-                    cv.put("disable", "false");
-                    dbin.insert("keyboard", null, cv);
-                }
-
-                checkPhoneticKeyboardSettingOnDB(dbin);
-
-                dbin.execSQL("ALTER TABLE imtable1 RENAME TO pinyin");
-                String pIMActiveState = mLIMEPref.getIMActivatedState();  //Jeremy '12,7,3 set pinyin to be active keyboard
-                if (!pIMActiveState.endsWith(";12")) {
-                    pIMActiveState += ";12";
-                    mLIMEPref.setIMActivatedState(pIMActiveState);
-                }
-
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
 
 
     }
@@ -557,36 +458,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         } catch (Exception e) {
             Log.w(TAG, "Ignore all possible exceptions~");
-        }
-    }
-
-    private void checkNoToneCodeIndexAndRecsordsInPhonetic(SQLiteDatabase dbin) {
-        //mLIMEPref.setParameter("checkLDPhonetic", "");
-        if (DEBUG)
-            Log.i(TAG, "checkNoToneCodeIndexAndRecsordsInPhonetic(): checked:"
-                    + mLIMEPref.getParameterString("checkLDPhonetic")
-                    + " has valid NoToneCodeI index and records:" + mLIMEPref.getParameterBoolean("doLDPhonetic", true));
-        String doLDPhonetic = mLIMEPref.getParameterString("checkLDPhonetic", "");
-        if (!doLDPhonetic.equals("done")) {
-
-            Cursor cursor = dbin.query("sqlite_master", null, "type='index' and name = 'phonetic_idx_code3r'",
-                    null, null, null, null);
-            boolean hasIndex = false, hasValidRecords = false;
-            if (cursor.moveToFirst()) {
-                Log.d(TAG, "checkLDPhonetic(), NoToneCodeI index is exist!!");
-                hasIndex = true;
-            }
-            cursor = dbin.query("phonetic", null, "code3r='ru'", null, null, null, null);
-            if (cursor != null) {
-                if (cursor.moveToFirst()) {
-                    Log.d(TAG, "checkLDPhonetic(), NoToneCodeI has vaid records.!!");
-                    hasValidRecords = true;
-                }
-                cursor.close();
-            }
-            mLIMEPref.setParameter("checkLDPhonetic", "done");
-            mLIMEPref.setParameter("doLDPhonetic", hasIndex && hasValidRecords);
-
         }
     }
 
@@ -800,14 +671,17 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     }
 
+    public synchronized void addOrUpdateMappingRecord( String code, String word) {
+        addOrUpdateMappingRecord(this.tablename, code, word, -1);
+    }
     /**
      * Add new mapping into current table
      */
     //Jeremy '11, 7, 31 add new phrase mapping into current table (for LD phrase learning). 
-    public synchronized void addOrUpdateMappingRecord(String code, String word) {
+    public synchronized void addOrUpdateMappingRecord(String table, String code, String word, int score) {
         //String code = preProcessingRemappingCode(raw_code);  //Jeremy '12,6,4 the code is build from mapping.getcode() should not do remap again.
         if (DEBUG)
-            Log.i(TAG, "addOrUpdateMappingRecord(), code = '" + code + "'. word=" + word);
+            Log.i(TAG, "addOrUpdateMappingRecord(), code = '" + code + "'. word=" + word + ", score =" +score);
         //Jeremy '12,4,17 !checkDBConnection() when db is restoring or replaced.
         if (!checkDBConnection()) return;
 
@@ -820,27 +694,25 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     cv.put(FIELD_CODE, code);
                     removeFromBlackList(code);  // remove from black list if it listed. Jeremy 12,6, 4
-                    if (tablename.equals("phonetic")) {
+                    if (table.equals("phonetic")) {
                         String noToneCode = code.replaceAll("[ 3467]", "");
                         cv.put(FIELD_NO_TONE_CODE, noToneCode);//Jeremy '12,6,1, add missing space
                         removeFromBlackList(noToneCode); // remove from black list if it listed. Jeremy 12,6, 4
                     }
                     cv.put(FIELD_WORD, word);
-                    cv.put(FIELD_SCORE, 1);
-                    db.insert(tablename, null, cv);
+                    cv.put(FIELD_SCORE, (score==-1)?1:score);
+                    db.insert(table, null, cv);
 
 
                     if (DEBUG)
-                        Log.i(TAG, "addOrUpdateMappingRecord(): mapping does not exist, new cored inserted");
+                        Log.i(TAG, "addOrUpdateMappingRecord(): mapping does not exist, new record inserted");
                 }
-                // build related list
-                //updateSimilarCodeListInRelatedColumn(code);
-
 
             } else {//the item exist in preload related database.
-                int score = munit.getScore() + 1;
-                cv.put(FIELD_SCORE, score);
-                db.update(tablename, cv, FIELD_ID + " = " + munit.getId(), null);
+
+                int newScore = (score==-1)? munit.getScore() + 1 :score;
+                cv.put(FIELD_SCORE, newScore);
+                db.update(table, cv, FIELD_ID + " = " + munit.getId(), null);
                 if (DEBUG)
                     Log.i(TAG, "addOrUpdateMappingRecord(): mapping exist, update score on existing record; score:" + score);
             }
@@ -1433,9 +1305,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
         isPhysicalKeyboardPressed = !softKeyboard;
         if (DEBUG)
-            Log.i(TAG, "getMappingByCode(): code='" + code + "' doLDPhonetic="
-                    + mLIMEPref.getParameterBoolean("doLDPhonetic")
-                    + ", table=" + tablename + ", getAllRecords=" + getAllRecords);
+            Log.i(TAG, "getMappingByCode(): code='" + code +", table=" + tablename + ", getAllRecords=" + getAllRecords);
 
         // Add by Jeremy '10, 3, 27. Extension on multi table query.
         lastCode = code;
@@ -1466,25 +1336,23 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     Cursor cursor;
                     // Jeremy '11,8,2 Query noToneCode instead of code for code contains no tone symbols
                     // Jeremy '12,6,5 rewrite to consistent with expanddualcode
+                    // Jeremy '15,6,6 always search no tone code for phonetic. The db will be upgraded in onUprade if code3r is not present
 
-                    final boolean searchNoToneCode = tablename.equals("phonetic");
                     String codeCol = FIELD_CODE;
 
                     if (tablename.equals("phonetic")) {
                         final boolean tonePresent = code.matches(".+[3467 ].*"); // Tone symbols present in any locoation except the first character
                         final boolean toneNotLast = code.matches(".+[3467 ].+"); // Tone symbols present in any locoation except the first and last character
 
-                        if (searchNoToneCode) { //noToneCode (phonetic comibnation without tones) is present
-                            if (tonePresent) {
-                                //LD phrase if tone symbols present but not in last character or in last character but the lenth > 4 (phonetic combinations never has length >4)
-                                if (toneNotLast || (code.length() > 4))
-                                    code = code.replaceAll("[3467 ]", "");
+                        if (tonePresent) {
+                            //LD phrase if tone symbols present but not in last character or in last character but the length > 4
+                            // (phonetic combinations never has length >4)
+                            if (toneNotLast || (code.length() > 4))
+                                code = code.replaceAll("[3467 ]", "");
 
-                            } else { // no tone symbols present, check NoToneCode column
-                                codeCol = FIELD_NO_TONE_CODE;
-                            }
-                        } else if (tonePresent && (toneNotLast || (code.length() > 4))) //LD phrase and no NoToneCode column present
-                            code = code.replaceAll("[3467 ]", "");
+                        } else { // no tone symbols present, check NoToneCode column
+                            codeCol = FIELD_NO_TONE_CODE;
+                        }
 
                         code = code.trim();
                     }
@@ -2108,7 +1976,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         if (dualCodeList != null) {
             final boolean NOCheckOnExpand = code.length() < DUALCODE_NO_CHECK_LIMIT;
-            final boolean searchNoToneCode = tablename.equals("phonetic");//&& mLIMEPref.getParameterBoolean("doLDPhonetic", true);
+            final boolean searchNoToneCode = tablename.equals("phonetic");
 
             for (String dualcode : dualCodeList) {
                 if (DEBUG)
@@ -2753,7 +2621,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     if (table.equals("phonetic")) {
                         if (DEBUG) Log.i(TAG, "loadfile(), build code3r index.");
-                        mLIMEPref.setParameter("doLDPhonetic", true);
+                        mLIMEPref.setParameter("checkLDPhonetic", "doneV2");
                         db.execSQL("CREATE INDEX phonetic_idx_code3r ON phonetic(code3r)");
 
                     }
