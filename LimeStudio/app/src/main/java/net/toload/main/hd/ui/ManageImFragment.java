@@ -83,7 +83,7 @@ public class ManageImFragment extends Fragment {
 
     private String prequery = "";
 
-    private String code;
+    private String table;
     private Activity activity;
     private ManageImHandler handler;
     private ManageImAdapter adapter;
@@ -147,12 +147,12 @@ public class ManageImFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 //try {
                     //datasource.open();
-                    Word w = datasource.getWord(code, id);
+                    Word w = datasource.getWord(table, id);
                     //datasource.close();
                     FragmentTransaction ft = getFragmentManager().beginTransaction();
 
                     // Create and show the dialog.
-                    ManageImEditDialog dialog = ManageImEditDialog.newInstance(code);
+                    ManageImEditDialog dialog = ManageImEditDialog.newInstance(table);
                     dialog.setHandler(handler, w);
                     dialog.show(ft, "editdialog");
                 //} catch (SQLException e) {
@@ -166,7 +166,7 @@ public class ManageImFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 FragmentTransaction ft = getFragmentManager().beginTransaction();
-                ManageImAddDialog dialog = ManageImAddDialog.newInstance(code);
+                ManageImAddDialog dialog = ManageImAddDialog.newInstance(table);
                                     dialog.setHandler(handler);
                 dialog.show(ft, "adddialog");
             }
@@ -178,7 +178,7 @@ public class ManageImFragment extends Fragment {
             public void onClick(View v) {
                 FragmentTransaction ft = getFragmentManager().beginTransaction();
                 ManageImKeyboardDialog dialog = ManageImKeyboardDialog.newInstance();
-                                       dialog.setHandler(handler, code);
+                                       dialog.setHandler(handler, table);
                 dialog.show(ft, "keyboarddialog");
             }
         });
@@ -267,7 +267,7 @@ public class ManageImFragment extends Fragment {
 
         // UpdateKeyboard display
         for(Im obj : imkeyboardlist){
-            if(obj.getCode().equals(code)){
+            if(obj.getCode().equals(table)){
                 btnManageImKeyboard.setText(obj.getDesc());
                 break;
             }
@@ -316,7 +316,7 @@ public class ManageImFragment extends Fragment {
         int offset = Lime.IM_MANAGE_DISPLAY_AMOUNT * page;
 
         if((curquery == null && total == 0) || curquery != prequery ){
-            total = datasource.getWordSize(code, curquery, searchroot);
+            total = datasource.getWordSize(table, curquery, searchroot);
             page = 0;
            /* try {
                 datasource.open();
@@ -328,7 +328,7 @@ public class ManageImFragment extends Fragment {
         if(manageimthread != null && manageimthread.isAlive()){
             handler.removeCallbacks(manageimthread);
         }
-        manageimthread = new Thread(new ManageImRunnable(handler, activity, code, curquery, searchroot,
+        manageimthread = new Thread(new ManageImRunnable(handler, activity, table, curquery, searchroot,
                                                                             Lime.IM_MANAGE_DISPLAY_AMOUNT, offset));
         manageimthread.start();
         prequery = curquery;
@@ -340,7 +340,7 @@ public class ManageImFragment extends Fragment {
         ((MainActivity) activity).onSectionAttached(
                 getArguments().getInt(ARG_SECTION_NUMBER));
 
-        this.code = getArguments().getString(ARG_SECTION_CODE);
+        this.table = getArguments().getString(ARG_SECTION_CODE);
     }
 
     @Override
@@ -433,7 +433,7 @@ public class ManageImFragment extends Fragment {
         }
 
         // Remove from the database
-        String removesql = "DELETE FROM " + this.code + " WHERE " + Lime.DB_COLUMN_ID + " = '" + id + "'";
+        String removesql = "DELETE FROM " + this.table + " WHERE " + Lime.DB_COLUMN_ID + " = '" + id + "'";
 
         datasource.remove(removesql);
         /*try {
@@ -457,9 +457,12 @@ public class ManageImFragment extends Fragment {
              obj.setWord(word);
              obj.setBasescore(0);
              obj.setScore(score);
+        //Jeremy '15,6,6 the record may already exist, use original add or update mapping function in LIMEDB instead.
+        // code3r information will also generated for phonetic table.
+        datasource.addOrUpdateMappingRecord(this.table, code, word, score);
+        //String insertsql = Word.getInsertQuery(this.table, obj);
+        //datasource.insert(insertsql);
 
-        String insertsql = Word.getInsertQuery(this.code, obj);
-        datasource.insert(insertsql);
 
        /* try {
             datasource.open();
@@ -492,14 +495,21 @@ public class ManageImFragment extends Fragment {
             }
         }
 
+        //Jeremy '15,6,6  use original add or update mapping function in LIMEDB instead.
+        // code3r information will also generated for phonetic table.
+        datasource.addOrUpdateMappingRecord(this.table, code, word, score);
+/*
         // Update record in the database
-        String updatesql = "UPDATE " + this.code + " SET ";
+        String updatesql = "UPDATE " + this.table + " SET ";
                 updatesql += Lime.DB_COLUMN_CODE + " = \"" + Lime.formatSqlValue(code) + "\", ";
+                if(this.table.equals("phonetic"))  //Jeremy '15,6,6 add no tone code (code3r) with code ripped 3467
+                    updatesql += Lime.DB_COLUMN_CODE3R + " = \"" + Lime.formatSqlValue(code.replaceAll("[3467 ]", "")) + "\", ";
                 updatesql += Lime.DB_COLUMN_SCORE + " = \"" + score + "\", ";
                 updatesql += Lime.DB_COLUMN_WORD + " = \"" + Lime.formatSqlValue(word) + "\" ";
                 updatesql += " WHERE " + Lime.DB_COLUMN_ID + " = \"" + id + "\"";
 
-        datasource.update(updatesql);
+        //datasource.update(updatesql);
+      */
         /*try {
             datasource.open();
             datasource.close();
@@ -523,7 +533,7 @@ public class ManageImFragment extends Fragment {
         }
         for(Keyboard k: keyboardlist){
             if(k.getCode().equals(keyboard)){
-                datasource.setImKeyboard(code, k);
+                datasource.setImKeyboard(table, k);
                 btnManageImKeyboard.setText(k.getDesc());
                 /*try {
                     datasource.open();
@@ -537,7 +547,7 @@ public class ManageImFragment extends Fragment {
     }
 
     public void updateRelated(String updatecode) {
-        datasource.updateSimilarCodeListInRelatedColumn(code, updatecode);
+        datasource.updateSimilarCodeListInRelatedColumn(table, updatecode);
     }
 
 }

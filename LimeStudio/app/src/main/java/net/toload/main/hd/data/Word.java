@@ -78,7 +78,7 @@ public class Word {
 		Word record = new Word();
 			record.setId(cursor.getInt(cursor.getColumnIndex(Lime.DB_COLUMN_ID)));
 			record.setCode(cursor.getString(cursor.getColumnIndex(Lime.DB_COLUMN_CODE)));
-			record.setCode3r(cursor.getString(cursor.getColumnIndex(Lime.DB_COLUMN_CODE3R)));
+			//record.setCode3r(cursor.getString(cursor.getColumnIndex(Lime.DB_COLUMN_CODE3R)));  Jeremy '15,6,6 may not present in old db.
 			record.setWord(cursor.getString(cursor.getColumnIndex(Lime.DB_COLUMN_WORD)));
 			record.setRelated(cursor.getString(cursor.getColumnIndex(Lime.DB_COLUMN_RELATED)));
 			record.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_COLUMN_SCORE)));
@@ -100,14 +100,14 @@ public class Word {
 	public static String getInsertQuery(String table, Word record){
 		StringBuffer sb = new StringBuffer();
 		sb.append("INSERT INTO " + table + "(");
-		sb.append(Lime.DB_COLUMN_CODE +", ");
-		sb.append(Lime.DB_COLUMN_CODE3R +", ");
+		sb.append(Lime.DB_COLUMN_CODE + ", ");
+		if(table.equals("phonetic"))  sb.append(Lime.DB_COLUMN_CODE3R +", ");
 		sb.append(Lime.DB_COLUMN_WORD +", ");
 		sb.append(Lime.DB_COLUMN_RELATED +", ");
 		sb.append(Lime.DB_COLUMN_SCORE +", ");
 		sb.append(Lime.DB_COLUMN_BASESCORE +") VALUES(");
 		sb.append("\""+Lime.formatSqlValue(record.getCode())+"\",");
-		sb.append("\""+Lime.formatSqlValue(record.getCode3r())+"\",");
+		if(table.equals("phonetic")) sb.append("\""+Lime.formatSqlValue(record.getCode().replaceAll("[ 3467]", ""))+"\","); //Jeremy '15,6,6. remove 3467 tone keys from code as code3r
 		sb.append("\""+Lime.formatSqlValue(record.getWord())+"\",");
 		sb.append("\""+Lime.formatSqlValue(record.getRelated())+"\",");
 		sb.append("\""+record.getScore()+"\",");

@@ -321,10 +321,10 @@ public class MainActivity extends ActionBarActivity
 
             initialImList();
             int number = position - 2;
-            String code = imlist.get(number).getCode();
+            String table = imlist.get(number).getCode();
             fragmentManager.beginTransaction()
-                    .replace(R.id.container, net.toload.main.hd.ui.ManageImFragment.newInstance(position, code), "ManageImFragment_" + code)
-                    .addToBackStack("ManageImFragment_" + code)
+                    .replace(R.id.container, net.toload.main.hd.ui.ManageImFragment.newInstance(position, table), "ManageImFragment_" + table)
+                    .addToBackStack("ManageImFragment_" + table)
                     .commit();
         }
     }
