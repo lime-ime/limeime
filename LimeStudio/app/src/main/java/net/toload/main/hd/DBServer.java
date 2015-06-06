@@ -685,7 +685,7 @@ public class  DBServer {
 		i = new Intent(ctx, MainActivity.class);
 
 		LIMEUtilities.showNotification(
-				ctx, true, R.drawable.icon, ctx.getText(R.string.ime_setting), message, i);
+				ctx, true, R.drawable.logo, ctx.getText(R.string.ime_setting), message, i);
 
 
 	}
