@@ -496,7 +496,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
             } catch (Exception e) {
                 e.printStackTrace();
-                //Log.w(TAG, "OnUpgrade() exception:"+ e.getStackTrace());
             }
 
         }
@@ -1500,14 +1499,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     if(betweenSearch){
                         selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectClause + " and word is not null group by word " ;
                         String exactMatchCondition = " (" +codeCol +" ='" + escapedCode +"' " + extraExactMatchClause  +  ") ";
-                        sortClause = "( exactmatch = 1 and ( score > 0 or  basescore >2) ) desc,  startwith desc, " ;
+                        sortClause = "( exactmatch = 1 and ( score > 0 or  basescore >2) and length(word)=1) desc, " ;
                         if(sort) sortClause += " score desc, basescore desc, ";
                         sortClause += "_id asc";
 
-                        String selectString = "select _id, code, code3r, word, score, basescore, " + exactMatchCondition
-                                + " as exactmatch, instr("+ codeCol +", '" + escapedCode +"') as startwith";
-
-                        selectString += " from " + tablename + " where " + selectClause + " order by " + sortClause + " limit " + limitClause;
+                        String selectString = "select _id, code, code3r, word, score, basescore, " + exactMatchCondition + " as exactmatch  "
+                                                    + " from " + tablename + " where " + selectClause + " order by " + sortClause + " limit " + limitClause;
                         cursor = db.rawQuery(selectString, null);
 
                        // if(DEBUG)
@@ -1520,11 +1517,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         else
                             sortClause = "_id ASC";
                         cursor = db.query(tablename, null, selectClause, null, null, null, sortClause, limitClause);
+                        if (DEBUG)
+                            Log.i(TAG, "getMappingByCode(): code = '" + code + "' selectClause=" + selectClause);
+
                     }
 
 
-                    if (DEBUG)
-                        Log.i(TAG, "getMappingByCode(): code = '" + code + "' selectClause=" + selectClause);
                     // Jeremy '11,8,5 limit initial getMappingByCode to limited records
                     // Jeremy '11,6,15 Using getMappingByCode with preprocessed code and extra getMappingByCode conditions.
 
