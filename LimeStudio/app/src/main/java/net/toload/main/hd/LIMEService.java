@@ -2178,7 +2178,7 @@ public class LIMEService extends InputMethodService implements
                         }
                     }
                 };
-                queryThread.run();
+                queryThread.start();
 
 
         } else
@@ -2275,7 +2275,7 @@ public class LIMEService extends InputMethodService implements
                                 }
                             }
                         };
-                        queryThread.run();
+                        queryThread.start();
                     }
 
                 }
@@ -2289,7 +2289,7 @@ public class LIMEService extends InputMethodService implements
     /*
 	 * Update dictionary view
 	 */
-    private void updateRelatedPhrase(boolean getAllRecords) {
+    private void updateRelatedPhrase(final boolean getAllRecords) {
         if (DEBUG)
             Log.i(TAG, "updateRelatedPhrase()");
         hasChineseSymbolCandidatesShown = false;
@@ -2297,45 +2297,53 @@ public class LIMEService extends InputMethodService implements
         // suggestions words.
 
         // If there is no Temp Matched word exist then not to display dictionary
-        try {
-            // Modified by Jeremy '10, 4,1. getCode -> getWord
-            // if( tempMatched != null && tempMatched.getCode() != null &&
-            // !tempMatched.getCode().equals("")){
-            if (committedCandidate != null && committedCandidate.getWord() != null
-                    && !committedCandidate.getWord().equals("")) {
+        // Modified by Jeremy '10, 4,1. getCode -> getWord
+        // if( tempMatched != null && tempMatched.getCode() != null &&
+        // !tempMatched.getCode().equals("")){
+        if (committedCandidate != null && committedCandidate.getWord() != null
+                && !committedCandidate.getWord().equals("")) {
 
-                LinkedList<Mapping> list = new LinkedList<>();
-                //Jeremy '11,8,9 Insert completion suggestions from application 
-                //in front of related dictionary list in full-screen mode
-                if (mCompletionOn) {
-                    list.addAll(buildCompletionList());
-                }
-                // Modified by Jeremy '10,3 ,12 for more specific related word
-                // -----------------------------------------------------------
-                if (committedCandidate != null && hasMappingList) {
-                    list.addAll(SearchSrv.getRelatedPhrase(committedCandidate.getWord(), getAllRecords));
-                }
-                // -----------------------------------------------------------
-                if (list.size() > 0) {
+            queryThread = new Thread() {
+                public void run() {
 
-
-                    // Setup sel key display if 
-                    String selkey = "1234567890";
-                    if (disable_physical_selection && hasPhysicalKeyPressed) {
-                        selkey = "";
+                    LinkedList<Mapping> list = new LinkedList<>();
+                    //Jeremy '11,8,9 Insert completion suggestions from application
+                    //in front of related dictionary list in full-screen mode
+                    if (mCompletionOn) {
+                        list.addAll(buildCompletionList());
                     }
 
-                    setSuggestions(list, hasPhysicalKeyPressed && !isFullscreenMode()
-                            , selkey);
-                } else {
-                    committedCandidate = null;
-                    //Jermy '11,8,14
-                    clearSuggestions();
+
+                    if (committedCandidate != null && hasMappingList) {
+                        if (queryThread != null && queryThread.isAlive()) queryThread.interrupt();
+                        try {
+                            list.addAll(SearchSrv.getRelatedPhrase(committedCandidate.getWord(), getAllRecords));
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+
+                        if (list.size() > 0) {
+
+
+                            // Setup sel key display if
+                            String selkey = "1234567890";
+                            if (disable_physical_selection && hasPhysicalKeyPressed) {
+                                selkey = "";
+                            }
+
+                            setSuggestions(list, hasPhysicalKeyPressed && !isFullscreenMode()
+                                    , selkey);
+                        } else {
+                            committedCandidate = null;
+                            //Jermy '11,8,14
+                            clearSuggestions();
+                        }
+                    }
                 }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+            };
+            queryThread.start();
         }
+
     }
 
     private List<Mapping> buildCompletionList() {

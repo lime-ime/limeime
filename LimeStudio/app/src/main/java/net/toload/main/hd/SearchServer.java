@@ -145,6 +145,40 @@ public class SearchServer {
 		tablename = table;
 		hasNumberMapping = numberMapping;
 		hasSymbolMapping = symbolMapping;
+
+		//run prefetch on first keys thread to feed the data into cache first for better response on large table.  Jeremy '15, 6,7
+		if(cache.get(cacheKey("a"))==null){  // no cache records present. do prefetch now.  '15,6,7
+			prefetchCache(numberMapping, symbolMapping);
+		}
+
+
+	}
+	private void prefetchCache(boolean numberMapping, boolean symbolMapping) {
+		Log.i(TAG, "prefetchCache() on table :" + tablename );
+
+		String keys = "abcdefghijklmnoprstuvwxyz";
+		if(numberMapping)
+			keys += "01234567890";
+		if(symbolMapping)
+		    keys += ",./;";
+		final String finalKeys = keys;
+		Thread prefetchThread = new Thread(){
+			public void run() {
+				long startime = System.currentTimeMillis();
+				for (int i = 0; i < finalKeys.length(); i++) {
+					String key = finalKeys.substring(i, i + 1);
+					try {
+						getMappingByCode(key, true, false);
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+				}
+				Log.i(TAG, "prefetchCache() on table :" + tablename  + " finished.  Elapsed time = "
+						+ (System.currentTimeMillis()-startime) + " ms." );
+			}
+		};
+		prefetchThread.start();
+
 	}
 
 	//Deprecated by Jeremy '12,4,7
