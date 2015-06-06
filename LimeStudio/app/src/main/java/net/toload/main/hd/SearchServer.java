@@ -222,7 +222,7 @@ public class SearchServer {
 				if (result != null && !result.equals("")) {
 					//displayNotificationMessage(result);
 					LIMEUtilities.showNotification(
-							mContext, true, R.drawable.icon, mContext.getText(R.string.ime_setting), result, new Intent(mContext, MainActivity.class));
+							mContext, true, R.drawable.logo, mContext.getText(R.string.ime_setting), result, new Intent(mContext, MainActivity.class));
 				}
 			}
 		};
