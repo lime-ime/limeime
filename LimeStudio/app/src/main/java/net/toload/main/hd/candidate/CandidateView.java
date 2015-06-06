@@ -990,7 +990,7 @@ public class CandidateView extends View implements View.OnClickListener {
         //hideCandidatePopup();
 
         prepareLayout();
-        resetWidth();  // update layout width of this view
+        //resetWidth();  // should do in updateUI or caused wrong thread exception.,
         mHandler.updateUI(0);
 
         mHeight = (int) (mContext.getResources().getDimensionPixelSize(
