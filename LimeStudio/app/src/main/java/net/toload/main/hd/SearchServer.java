@@ -153,6 +153,8 @@ public class SearchServer {
 
 
 	}
+
+	private static Thread prefetchThread;
 	private void prefetchCache(boolean numberMapping, boolean symbolMapping) {
 		Log.i(TAG, "prefetchCache() on table :" + tablename );
 
@@ -162,7 +164,10 @@ public class SearchServer {
 		if(symbolMapping)
 		    keys += ",./;";
 		final String finalKeys = keys;
-		Thread prefetchThread = new Thread(){
+
+		if(prefetchThread!=null && prefetchThread.isAlive()) return;
+
+		prefetchThread = new Thread(){
 			public void run() {
 				long startime = System.currentTimeMillis();
 				for (int i = 0; i < finalKeys.length(); i++) {

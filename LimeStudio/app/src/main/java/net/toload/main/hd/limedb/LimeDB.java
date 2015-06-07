@@ -20,6 +20,7 @@
 
 package net.toload.main.hd.limedb;
 
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -70,6 +71,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
     private final static Boolean betweenSearch = true;
     private final static Boolean fuzzySearch = false;
+    private static Boolean checkCodeColumnPending = false;
     // hold database connection when database is in maintainance. Jeremy '15,5,23
     private static boolean databaseOnHold = false;
 
@@ -307,12 +309,46 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 	 */
     public void setTablename(String tablename) {
         this.tablename = tablename;
+        //checkLengthColumn(tablename);
         if (DEBUG) {
             Log.i(TAG, "settTableName(), tablename:" + tablename + " this.tablename:"
                     + this.tablename);
         }
     }
 
+    /*
+
+    private void checkLengthColumn(String table){
+        if (!getImInfo(table, "lengthcolumns").equals("present")) {
+            if (!checkDBConnection()) {
+                checkCodeColumnPending = true;
+                return;
+            }
+            Toast.makeText(mContext, mContext.getText(R.string.l3_database_upgrade), Toast.LENGTH_SHORT).show();
+
+
+            Log.i(TAG, "checkLengthColumn(); create code length columns and index on table:" + table);
+            long startTime = System.currentTimeMillis();
+            holdDBConnection();
+            db.execSQL("alter table " + table + " add 'codelen'");
+            db.execSQL("alter table " + table + " add 'wordlen'");
+            db.execSQL("create index " + table + "_idx_code_len on " + table + " (codelen)");
+            db.execSQL("create index " + table + "_idx_word_len on " + table + " (wordlen)");
+            if (table.equals("phonetic")) {
+                db.execSQL("alter table " + table + " add 'code3rlen'");
+                db.execSQL("create index " + table + "_idx_code3r_len on " + table + " (code3rlen)");
+                db.execSQL("update " + table + " set codelen=length(code), code3rlen=length(code3r), wordlen=length(word)");
+            } else {
+                db.execSQL("update " + table + " set codelen=length(code), wordlen=length(word)");
+            }
+            Log.i(TAG, "checkLengthColumn() create code length columns and index on table:" + table
+                    + ". Elapsed time = " + (System.currentTimeMillis() - startTime));
+            unHoldDBConnection();
+            setImInfo(table, "lengthcolumns", "present");
+        }
+
+    }
+    */
     public String getTablename() {
         return this.tablename;
     }
@@ -363,6 +399,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
        Log.i(TAG, "OnUpgrade() db old version = " + oldVersion + ", new version = " + newVersion);
 
         if (oldVersion < 80) {
+
+
             long startTime=System.currentTimeMillis();
             Cursor cursor = dbin.query("sqlite_master", null, "type='index' and name = 'phonetic_idx_code3r'",
                     null, null, null, null);
@@ -398,6 +436,30 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             } catch (SQLiteException e) {
                 e.printStackTrace();
             }
+
+            /*
+            // create length column of code code3r and word
+            ArrayList<String> tableList =
+                    new ArrayList<>(Arrays.asList("cusom", "cj", "scj", "cj5", "ecj",  "phonetic", "ez", "dayi","array","array10", "wb", "hs", "pinyin"));
+            for(String table: tableList) {
+                Log.i(TAG, "checkLengthColumn(); create code length columns and index on table:" + table);
+                startTime = System.currentTimeMillis();
+                execSQL(dbin, "alter table " + table + " add 'codelen'");
+                execSQL(dbin, "alter table " + table + " add 'wordlen'");
+                execSQL(dbin, "create index " + table + "_idx_code_len on " + table + " (codelen)");
+                execSQL(dbin, "create index " + table + "_idx_word_len on " + table + " (wordlen)");
+                if (table.equals("phonetic")) {
+                    execSQL(dbin, "alter table " + table + " add 'code3rlen'");
+                    execSQL(dbin, "create index " + table + "_idx_code3r_len on " + table + " (code3rlen)");
+                    execSQL(dbin, "update " + table + " set codelen=length(code), code3rlen=length(code3r), wordlen=length(word)");
+                } else {
+                    execSQL(dbin, "update " + table + " set codelen=length(code), wordlen=length(word)");
+                }
+                Log.i(TAG, "checkLengthColumn() create code length columns and index on table:" + table
+                        + ". Elapsed time = " + (System.currentTimeMillis() - startTime));
+
+            }
+         */
         }
 
 
@@ -489,7 +551,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
             }
             db = this.getWritableDatabase();
-            //mLIMEPref.holdDatabaseCoonection(false); // Jeremy '12,4,10 reset holdDatabaseCoonection status
             databaseOnHold = false;
             return db != null && db.isOpen();
         }
@@ -1377,7 +1438,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                                     + " limit " + limitClause;
                         cursor = db.rawQuery(selectString, null);
 
-                       if(DEBUG)
+                        if(DEBUG)
                             Log.i(TAG, "getMappingByCode() between search select string:"+selectString);
                      }
                     else{
@@ -1706,9 +1767,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 for (int i = 0; i < dualKey.length(); i++) {
                     String key = dualKey.substring(i, i + 1);
                     String value = dualKeyRemap.substring(i, i + 1);
-                    //Process the escape characters of query
-                    //if(key.equals("'")) key = "''";
-                    //if(value.equals("'")) value = "''";  \\Jeremy '12,5,21 do the escape in getmapping
                     reMap.put(key, value);
                     reMap.put(value, value);
                 }
@@ -2933,11 +2991,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         if (DEBUG)
                             Log.i(TAG, "loadfile(): related list buiding loop final section");
                         db.endTransaction();
-                        //LIMEPref.holdDatabaseCoonection(false); // Jeremy '12,4,10 reset mapping_loading status
-                        unHoldDBConnection(); //Jeremy '12,5,23
                         progressListener.onStatusUpdate(mContext.getResources().getText(R.string.setup_load_import_finish).toString());
 
                     }
+                    unHoldDBConnection(); //Jeremy '15,6,3. need to un-hold DB connection either loading is successfully or not.
 
                 }
 
@@ -4124,3 +4181,4 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         db.setTransactionSuccessful();
     }
 }
+
