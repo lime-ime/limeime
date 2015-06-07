@@ -551,8 +551,13 @@ public class CandidateView extends View implements View.OnClickListener {
     }
 
     public void doHideComposing() {
-        if (mComposingTextPopup != null && mComposingTextPopup.isShowing()) {
-            //mComposingTextPopup.dismiss();
+
+        if(mComposingTextView==null) return;
+
+        if (embeddedComposing!=null || // for embedded composing in floating candidateView
+                (mComposingTextPopup != null  // for fixed candidate View
+                        && (mComposingTextPopup.isShowing()) || mComposingTextView.getVisibility() == VISIBLE )) {
+
             mComposingTextView.setVisibility(INVISIBLE);
         }
     }
