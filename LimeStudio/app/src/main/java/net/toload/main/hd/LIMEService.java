@@ -418,7 +418,8 @@ public class LIMEService extends InputMethodService implements
 
         if (mCandidateList != null)
             mCandidateList.clear();
-        mCandidateView.clear();
+        if(mCandidateView!=null)
+            mCandidateView.clear();
     }
 
     /**
