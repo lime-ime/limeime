@@ -416,7 +416,9 @@ public class CandidateView extends View implements View.OnClickListener {
 
         doUpdateUI();
     }
-
+    /*
+    * Contains requestLayout() which can only call from UI thread
+    */
     private void resetWidth() {
         if (DEBUG)
             Log.i(TAG, "resetWidth() mHieght:" + mHeight);
@@ -1005,9 +1007,10 @@ public class CandidateView extends View implements View.OnClickListener {
 
     //Jeremy '12,5,6 hide candidate bar when candidateView is fixed.
     public void forceHide() {
-        clear();
         mHeight = 0;
-        resetWidth();
+        clear();
+        //resetWidth();// will cause wrong thread exception. clear() will call updateUI() and will do resetWidth
+
     }
 
     @Override
