@@ -418,7 +418,7 @@ public class LIMEPreferenceManager {
 	
 	public Integer getVibrateLevel(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return Integer.parseInt(sp.getString("vibrate_level", "20"));
+		return Integer.parseInt(sp.getString("vibrate_level", "40"));
 	}
 	
 	
