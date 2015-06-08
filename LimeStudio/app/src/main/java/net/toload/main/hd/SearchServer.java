@@ -355,7 +355,7 @@ public class SearchServer {
 							String phrase = p.first.getWord() + remainingCodeExactMatchMapping.getWord();
 							if(phrase.length()<2) continue; // should not possible.
 							int averageScore = ( p.first.getBasescore() + remainingCodeExactMatchMapping.getBasescore()) / phrase.length() ;
-							//if(DEBUG)
+							if(DEBUG)
 								Log.i(TAG,"getMappingFromCode() remaining code = "+ remainingCode + "" +
 										", got exact match and new phrase = " + phrase + " average score =" + averageScore);
 
@@ -368,7 +368,8 @@ public class SearchServer {
 								highestRelatedScore = relatedMapping.getScore();
 								suggestMapping.setScore(highestRelatedScore);
 								suggestMapping.setBasescore(averageScore);
-								Log.i(TAG,"getMappingByCode()  run-time suggest phrase verified from related table ="
+								if(DEBUG)
+									Log.i(TAG,"getMappingByCode()  run-time suggest phrase verified from related table ="
 										+ phrase + " score = " + highestRelatedScore);
 							} else if (highestRelatedScore == 0// no mapping is verified from related table
 									&&  averageScore > highestScore	) {
@@ -377,7 +378,8 @@ public class SearchServer {
 								suggestMapping.setWord(phrase);
 								highestScore = averageScore;
 								suggestMapping.setBasescore(highestScore);
-								Log.i(TAG,"getMappingByCode()  run-time suggest phrase =" + phrase + "average score = " + highestScore);
+								if(DEBUG)
+									Log.i(TAG,"getMappingByCode()  run-time suggest phrase =" + phrase + "average score = " + highestScore);
 							}
 						}
 					}
@@ -390,7 +392,7 @@ public class SearchServer {
 			}
 
 			// dump exactMatch List
-			if(  //DEBUG &&
+			if( DEBUG &&
 					exactMatchList!=null && !exactMatchList.isEmpty()){
 				for(int i=0; i< exactMatchList.size();i++ ){
 					Log.i(TAG, "getMappingFromCode() exactMatch(" +i + "): word="
