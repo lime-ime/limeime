@@ -24,6 +24,10 @@ public class SetupImGoogleHandler extends Handler {
             case "show":
                 activity.showProgress(message);
                 break;
+            case "update":
+                int progress = msg.getData().getInt("progress");
+                activity.updateProgress(progress);
+                break;
             case "backup":
                 activity.backupToGoogle();
                 break;
@@ -44,6 +48,13 @@ public class SetupImGoogleHandler extends Handler {
     public void restore() {
         Message m = new Message();
         m.getData().putString("action", "restore");
+        this.sendMessageDelayed(m, 1);
+    }
+
+    public void update(int progress) {
+        Message m = new Message();
+        m.getData().putString("action", "update");
+        m.getData().putInt("progress", progress);
         this.sendMessageDelayed(m, 1);
     }
 
