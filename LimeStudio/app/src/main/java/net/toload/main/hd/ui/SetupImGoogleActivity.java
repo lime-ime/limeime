@@ -161,12 +161,15 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
                             public void run() {
 
                                 File fileContent = new File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DATABASE_BACKUP_NAME);
+                                long filesize = fileContent.lastModified();
                                 OutputStream outputStream = result.getDriveContents().getOutputStream();
                                 try {
                                     BufferedInputStream stream = new BufferedInputStream(new FileInputStream(fileContent));
                                     byte buffer[] = new byte[8192];
+                                    long total = 0;
                                     int byteread;
                                     while ((byteread = stream.read(buffer)) != -1) {
+                                        total += buffer.length;
                                         outputStream.write(buffer);
                                     }
                                 } catch (Exception e) {
@@ -224,6 +227,7 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
                                 public void run() {
 
                                     DriveFile drivefile = Drive.DriveApi.getFile(mGoogleApiClient, m.getDriveId());
+                                    long filesize = m.getFileSize();
                                     DriveApi.DriveContentsResult driveContentsResult =
                                             drivefile.open(mGoogleApiClient, DriveFile.MODE_READ_ONLY, null).await();
 
@@ -235,10 +239,12 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
                                     try {
                                         fo = new FileOutputStream(tempfile);
                                         int bytesRead;
+                                        long total = 0;
                                         byte[] buffer = new byte[8 * 1024];
 
                                         if (fi != null) {
                                             while ((bytesRead = fi.read(buffer)) != -1) {
+                                                total += buffer.length;
                                                 fo.write(buffer, 0, bytesRead);
                                             }
                                         }
@@ -271,6 +277,8 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
             progress.dismiss();
         }
 
+        //progress.setMax(100);
+        //progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         progress.setMessage(message);
         progress.show();
 
