@@ -50,6 +50,15 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
     @Override
     protected void onResume() {
         super.onResume();
+
+        action = getIntent().getExtras().getString("actiontype");
+
+        if(action.equals(Lime.BACKUP)){
+            handler.show(this.getResources().getString(R.string.setup_im_backup_message));
+        }else{
+            handler.show(this.getResources().getString(R.string.setup_im_restore_message));
+        }
+
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addApi(Drive.API)
@@ -76,6 +85,9 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
         if(progress != null && progress.isShowing()){
             progress.dismiss();
         }
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.disconnect();
+        }
     }
 
     @Override
@@ -84,17 +96,6 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
         setContentView(R.layout.activity_setup_im_google);
 
         handler = new SetupImGoogleHandler(this);
-
-        action = getIntent().getExtras().getString("actiontype");
-
-        if(action.equals(Lime.BACKUP)){
-            handler.show(this.getResources().getString(R.string.setup_im_backup_message));
-            handler.backup();
-        }else{
-            handler.show(this.getResources().getString(R.string.setup_im_restore_message));
-            handler.restore();
-        }
-
 
     }
 
@@ -115,7 +116,6 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
         Drive.DriveApi.query(mGoogleApiClient, query).setResultCallback(querycallback);
 
     }
-
 
     final private ResultCallback<DriveApi.MetadataBufferResult> querycallback = new
             ResultCallback<DriveApi.MetadataBufferResult>() {
@@ -162,12 +162,21 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
 
                                 File fileContent = new File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DATABASE_BACKUP_NAME);
                                 OutputStream outputStream = result.getDriveContents().getOutputStream();
+
+                                long total = fileContent.length();
+                                long uploadsize = 0;
+
                                 try {
                                     BufferedInputStream stream = new BufferedInputStream(new FileInputStream(fileContent));
                                     byte buffer[] = new byte[8192];
                                     int byteread;
                                     while ((byteread = stream.read(buffer)) != -1) {
                                         outputStream.write(buffer);
+                                        uploadsize += buffer.length;
+
+                                        float percent = (float)uploadsize / (float)total;
+                                        percent = percent * 100;
+                                        handler.update((int)percent);
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -199,9 +208,6 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
 
     }
 
-
-
-
     final private ResultCallback<DriveApi.MetadataBufferResult> restorecallback = new
             ResultCallback<DriveApi.MetadataBufferResult>() {
                 @Override
@@ -229,10 +235,14 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
 
                                     DriveContents driveContents = driveContentsResult.getDriveContents();
 
-                                    File tempfile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_CLOUD_TEMP);
-                                    InputStream fi = driveContents.getInputStream();
-                                    FileOutputStream fo = null;
+                                    long total = m.getFileSize();
+                                    long downloadsize = 0;
+
                                     try {
+                                        File tempfile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_CLOUD_TEMP);
+                                        InputStream fi = driveContents.getInputStream();
+                                        FileOutputStream fo = null;
+
                                         fo = new FileOutputStream(tempfile);
                                         int bytesRead;
                                         byte[] buffer = new byte[8 * 1024];
@@ -240,18 +250,22 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
                                         if (fi != null) {
                                             while ((bytesRead = fi.read(buffer)) != -1) {
                                                 fo.write(buffer, 0, bytesRead);
+                                                downloadsize += buffer.length;
+
+                                                float percent = (float)downloadsize / (float)total;
+                                                percent = percent * 100;
+                                                handler.update((int)percent);
                                             }
                                         }
                                         DBServer.restoreDatabase(tempfile.getAbsolutePath());
 
                                         fo.close();
+
+                                        driveContents.discard(mGoogleApiClient);
+                                        result.getMetadataBuffer().release();
                                     } catch (Exception e) {
                                         e.printStackTrace();
-                                        finish();
                                     }
-
-                                    driveContents.discard(mGoogleApiClient);
-                                    result.getMetadataBuffer().release();
                                     finish();
                                 }
                             }.start();
@@ -260,6 +274,11 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
                 }
             };
 
+    public void updateProgress(int value) {
+        if(progress.isShowing()){
+            progress.setProgress(value);
+        }
+    }
 
     public void showProgress(String message) {
         if(progress == null){
@@ -271,6 +290,8 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
             progress.dismiss();
         }
 
+        progress.setMax(100);
+        progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         progress.setMessage(message);
         progress.show();
 
@@ -278,6 +299,7 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
 
     @Override
     public void onConnected(Bundle bundle) {
+        Log.e(TAG, "Google Drive Connected");
         if(action.equals(Lime.BACKUP)){
             handler.backup();
         }else{

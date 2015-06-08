@@ -224,7 +224,7 @@ public class LIMEPreferenceManager {
 	public boolean getVibrateOnKeyPressed(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean("vibrate_on_keypress", false);
+		return sp.getBoolean("vibrate_on_keypress", true);
 	}
 	
 	
