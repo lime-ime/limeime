@@ -239,6 +239,10 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
                                     long downloadsize = 0;
 
                                     try {
+                                        File tempdir = new File(LIME.LIME_SDCARD_FOLDER + File.separator);
+                                        if(!tempdir.exists()){
+                                            tempdir.mkdirs();
+                                        }
                                         File tempfile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_CLOUD_TEMP);
                                         InputStream fi = driveContents.getInputStream();
                                         FileOutputStream fo = null;

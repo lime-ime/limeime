@@ -78,7 +78,7 @@
        <CheckBoxPreference
                 android:key="fixed_candidate_view_display"
                 android:title="@string/fixed_candidate_view_display" 
-            	android:defaultValue="false" 
+            	android:defaultValue="true"
                 />
        <ListPreference
     			android:key="keyboard_size"
@@ -96,7 +96,7 @@
     			android:defaultValue="1"/>  
         <CheckBoxPreference
                 android:key="vibrate_on_keypress"
-                android:defaultValue="false" 
+                android:defaultValue="true"
                 android:title="@string/vibrate_on_keypress" />
          <ListPreference
     			android:key="vibrate_level"

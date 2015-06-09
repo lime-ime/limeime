@@ -38,7 +38,7 @@ public abstract class LimeSQLiteOpenHelper {
 
     private Context mContext;
 
-    private  SQLiteDatabase mDatabase = null; 
+    private static SQLiteDatabase mDatabase = null;
     private boolean mIsInitializing = false;
    // private final DatabaseErrorHandler mErrorHandler;
 
@@ -135,7 +135,7 @@ public abstract class LimeSQLiteOpenHelper {
 
         File destpath = new File(Lime.DATABASE_DEVICE_FOLDER + File.separator + Lime.DATABASE_NAME);
 
-        if (!destpath.exists()) {
+        if (!destpath.exists() || destpath.length() < 1000) {
 
             InputStream from = null;
             if(!source_from_sdcard){
@@ -171,7 +171,7 @@ public abstract class LimeSQLiteOpenHelper {
             }
         }
         
-        if(LIMEUtilities.isFileExist(getDBPath())==null) return null; //database file is not exist. return null Jeremy '12,5,1
+        if(LIMEUtilities.isFileExist(destpath.getAbsolutePath())==null) return null; //database file is not exist. return null Jeremy '12,5,1
 
         if (mIsInitializing) {
             throw new IllegalStateException("getWritableDatabase called recursively");
@@ -188,9 +188,15 @@ public abstract class LimeSQLiteOpenHelper {
         //if (mDatabase != null) mDatabase. .lock();
         try {
 
-        	db = SQLiteDatabase.openDatabase(getDBPath(), null, SQLiteDatabase.OPEN_READWRITE
+        	db = SQLiteDatabase.openDatabase(destpath.getAbsolutePath(), null, SQLiteDatabase.OPEN_READWRITE
         			| SQLiteDatabase.NO_LOCALIZED_COLLATORS);
         }catch(Exception e){
+
+            File ch = new File(destpath.getAbsolutePath());
+            Log.i("LIME", ch.getAbsolutePath());
+            Log.i("LIME", ch.length()+"");
+
+            e.printStackTrace();
         	return null; //return null if db opened failed.
         }
         try {
