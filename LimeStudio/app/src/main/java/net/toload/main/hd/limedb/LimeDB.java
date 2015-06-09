@@ -70,7 +70,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
     private final static Boolean betweenSearch = true;
-    private final static Boolean fuzzySearch = false;
+    //private final static Boolean fuzzySearch = false;
     private static Boolean checkCodeColumnPending = false;
     // hold database connection when database is in maintainance. Jeremy '15,5,23
     private static boolean databaseOnHold = false;
@@ -1385,7 +1385,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             extraSelectClause = extraConditions.first;
             extraExactMatchClause = extraConditions.second;
         }
-        //Jeremy '11,6,11 seperated suggestions sorting option for physical keyboard
+        //Jeremy '11,6,11 separated suggestions sorting option for physical keyboard
 
 
         try {
@@ -1434,16 +1434,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         sortClause += "_id asc";
 
                         String selectString = "select _id, code, code3r, word, score, basescore, " + exactMatchCondition + " as exactmatch  ";
-                        if(fuzzySearch){
-                            String likelyCode;
-
-                        }
 
                         selectString   += " from " + tablename + " where word is not null and " + selectClause + " order by " + sortClause
                                                     + " limit " + limitClause;
                         cursor = db.rawQuery(selectString, null);
 
-                        if(DEBUG)
+                        //if(DEBUG)
                             Log.i(TAG, "getMappingByCode() between search select string:"+selectString);
                      }
                     else{
@@ -1491,11 +1487,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 selectClause += searchColumn + "= '" + code.substring(0, j + 1).replaceAll("'", "''") + "' or ";
             }
         }
-        if(fuzzySearch) code = (len>2) ?  code.substring(0,2) : code;
+        //if(fuzzySearch) code = (len>2) ?  code.substring(0,2) : code;
         char[] chArray = code.toCharArray();
         chArray[code.length() - 1]++;
         String nextCode = new String(chArray);
-        selectClause += " (" + searchColumn + " > '" + code.replaceAll("'", "''") + "' and " + searchColumn
+        selectClause += " (" + searchColumn + " >= '" + code.replaceAll("'", "''") + "' and " + searchColumn
                 + " <'"  + nextCode.replaceAll("'", "''") + "') ";
         if(DEBUG)
             Log.i(TAG,"expandBetweenSearchClause() selectClause: " + selectClause);
@@ -2207,7 +2203,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             int noToneCodeColumn = cursor.getColumnIndex(FIELD_NO_TONE_CODE); //Jeremy '12,5,31 renamed from noToneCode Column
             int wordColumn = cursor.getColumnIndex(FIELD_WORD);
             int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
-            int baseCcoreColumn = cursor.getColumnIndex(FIELD_BASESCORE);
+            int baseScoreColumn = cursor.getColumnIndex(FIELD_BASESCORE);
             int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
             int exactMatchColumn = cursor.getColumnIndex("exactmatch");
             HashMap<String, String> relatedMap = new HashMap<>();
@@ -2223,7 +2219,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 m.setWord(word);
                 m.setId(cursor.getString(idColumn));
                 m.setScore(cursor.getInt(scoreColumn));
-                m.setBasescore(cursor.getInt(baseCcoreColumn));
+                m.setBasescore(cursor.getInt(baseScoreColumn));
 
                 String relatedlist = (betweenSearch)?null: cursor.getString(relatedColumn);
 
