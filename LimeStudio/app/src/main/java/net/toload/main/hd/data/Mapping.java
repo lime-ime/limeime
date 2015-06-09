@@ -34,6 +34,7 @@ public class Mapping {
 	private Boolean highLighted =true;
 	private int score;
 	private int userscore;
+	private int basescore;
 	private int recordType;
 
 
@@ -61,6 +62,7 @@ public class Mapping {
 		this.setWord(mapping.word);
 		this.setPword(mapping.pword);
 		this.setScore(mapping.score);
+		this.setBasescore(mapping.basescore);
 		this.setUserscore(mapping.userscore);
 		this.setHighLighted(mapping.isHighLighted());
 		this.setRecordType(mapping.recordType);
@@ -76,9 +78,10 @@ public class Mapping {
 	public int getUserscore() {
 		return userscore;
 	}
-	public void setUserscore(int userscore) {
-		this.userscore = userscore;
-	}
+	public void setUserscore(int userscore) { this.userscore = userscore;	}
+	public int getBasescore() { return basescore;}
+	public void setBasescore(int score) {this.basescore=score;}
+
 
 	/**
 	 * @return previous word.  used in highLighted phrase

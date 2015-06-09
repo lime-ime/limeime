@@ -235,6 +235,15 @@ public class ManageImFragment extends Fragment {
                 btnManageImSearch.setText(getResources().getText(R.string.manage_im_search));
             }
         });
+        this.edtManageImSearch.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(edtManageImSearch.getWindowToken(), 0);
+                }
+            }
+        });
 
         this.btnManageImSearch = (Button) rootView.findViewById(R.id.btnManageImSearch);
         this.btnManageImSearch.setOnClickListener(new View.OnClickListener() {
@@ -346,6 +355,7 @@ public class ManageImFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
+
         if(this.manageimthread != null){
             this.handler.removeCallbacks(manageimthread);
         }

@@ -150,6 +150,7 @@ public class ManageRelatedFragment extends Fragment {
             }
         });
 
+
         this.btnManageRelatedNext = (Button) rootView.findViewById(R.id.btnManageRelatedNext);
         this.btnManageRelatedNext.setEnabled(false);
         this.btnManageRelatedNext.setOnClickListener(new View.OnClickListener() {
@@ -182,6 +183,15 @@ public class ManageRelatedFragment extends Fragment {
             public void onClick(View v) {
                 searchreset = false;
                 btnManageRelatedSearch.setText(getResources().getText(R.string.manage_related_search));
+            }
+        });
+        this.edtManageRelatedSearch.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(edtManageRelatedSearch.getWindowToken(), 0);
+                }
             }
         });
 

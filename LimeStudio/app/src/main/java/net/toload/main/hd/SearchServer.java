@@ -36,6 +36,7 @@ import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -48,14 +49,15 @@ public class SearchServer {
 	private static final String TAG = "LIME.SearchServer";
 	private static LimeDB dbadapter = null; //Jeremy '12,5,1 shared single LIMEDB object
 	//Jeremy '12,4,6 Combine updatedb and quierydb into db,
-	//Jeremy '12,4,7 move db open/clsoe back to LimeDB
-	//	since query always following with userdict and related learning and dual db connections cause exceptions.
-	//private SQLiteDatabase db = null;
-	//private LimeHanConverter hanConverter = null;
-	//private static LinkedList<Mapping> diclist = null;
+	//Jeremy '12,4,7 move db open/close back to LimeDB
+
+	//Jeremy '12,6,9 make run-time suggestion phrase
+	private static final boolean doRunTimeSuggestion =true;
+
 	private static List<Mapping> scorelist = null;
 
-	private static Stack<Pair<Mapping, String>> exactMatchStack;  //Jeremy '15,6,2 preserve the exact match mapping with the code user typed.
+	//Jeremy '15,6,2 preserve the exact match mapping with the code user typed.
+	private static List<Pair<Mapping, String>> exactMatchList;
 	private static String lastCode; // preserved the last code queried from LIMEService
 
 	private static boolean mResetCache;
@@ -63,25 +65,16 @@ public class SearchServer {
 	private static List<List<Mapping>> LDPhraseListArray = null;
 	private static List<Mapping> LDPhraseList = null;
 
-	//private static StringBuffer selectedText = new StringBuffer();
 	private static String tablename = "";
-
-	//private NotificationManager notificationMgr;
 
 	private LIMEPreferenceManager mLIMEPref;
 
-
-	//private static SearchServiceImpl obj = null;
-
-	//private static int recAmount = 0;
 	private static boolean isPhysicalKeyboardPressed; // Sync to LIMEService and LIMEDB
 	//Jeremy '11,6,10
 	private static boolean hasNumberMapping;
 	private static boolean hasSymbolMapping;
 
-
 	//Jeremy '11,6,6
-	//private HashMap<String, String> imKeysMap = new HashMap<>();
 	private HashMap<String, String> selKeyMap = new HashMap<>();
 
 	private static ConcurrentHashMap<String, Pair<List<Mapping>, List<Mapping>>> cache = null;
@@ -95,7 +88,7 @@ public class SearchServer {
 	private Context mContext = null;
 
 	// deprecated and using exact match stack to get real code length now. Jerey '15,6,2
-	//private static List<Pair<Integer, Integer>> codeLenthMap = new LinkedList<>();
+	//private static List<Pair<Integer, Integer>> codeLengthMap = new LinkedList<>();
 
 	public SearchServer(Context context) {
 
@@ -236,21 +229,11 @@ public class SearchServer {
 	}
 	*/
 
-	//Modified by Jeremy '10,3 ,12 for more specific related word
-	//-----------------------------------------------------------
+	//TODO: Should cache related phrase 15,6,8 Jeremy
 	public List<Mapping> getRelatedPhrase(String word, boolean getAllRecords) throws RemoteException {
 
 		return dbadapter.getRelatedPhrase(word, getAllRecords);
 	}
-	//-----------------------------------------------------------
-
-	/*
-	public Cursor getDictionaryAll(){
-
-		return dbadapter.getDictionaryAll();
-
-	}
-	*/
 
 	//Add by jeremy '10, 4,1
 	public void getCodeListStringFromWord(final String word) throws RemoteException {
@@ -290,8 +273,122 @@ public class SearchServer {
 	}
 
 	public void resetExactExactMatchStack(){
-		exactMatchStack.clear();
+		exactMatchList.clear();
 	}
+
+	private final static boolean dumpSuggestion = true;
+
+	private void makeRunTimeSuggestion(String code, Pair<List<Mapping>,List<Mapping>> completeCodeResultPair){
+
+		//check if the composing is start over or user pressed backspace
+		if(exactMatchList !=null && !exactMatchList.isEmpty() ){
+			// code is start over, clear the stack.  The composition is start over.   Jeremy'15,6,4.
+			if(code.length() == 1 ){
+				exactMatchList.clear();
+			}else if(code.length() ==  lastCode.length() -1  //user press backspace.
+					&& exactMatchList.get(exactMatchList.size()-1).second.equals(lastCode)){
+				//pop the last kept exact match mapping because it's canceled by backspace.  Jeremy 15,6,4
+				exactMatchList.remove(exactMatchList.size()-1);
+			}
+
+		}
+		lastCode = code;
+
+		//15,6,8  Jeremy. Do remaining code search and make suggestion mapping to be put in first of candidate lists..
+		List<Mapping> completeCodeResultList =null;
+		if(completeCodeResultPair.first!=null) completeCodeResultList = completeCodeResultPair.first;
+		if(completeCodeResultList!=null && completeCodeResultList.size()>0 && completeCodeResultList.get(0).isExactMatchToCodeRecord() ){
+			Mapping exactMatchMapping = completeCodeResultList.get(0);
+
+			if(exactMatchMapping.getScore()>0 && exactMatchMapping.getBasescore()==0){
+				//user created phrase. should give a reasonable high basescore for calculating average scores later.
+				exactMatchMapping.setBasescore(50*exactMatchMapping.getWord().length());
+			}
+
+			if(DEBUG||dumpSuggestion)
+				Log.i(TAG,"makeRunTimeSuggestion() complete code = "+ code + "" +
+						", got exact match  = " + exactMatchMapping.getWord()
+						+ " score =" + exactMatchMapping.getScore() + ", basescore="+ exactMatchMapping.getBasescore());
+
+			Iterator<Pair<Mapping,String>> it = exactMatchList.iterator();
+			while(it.hasNext()){
+				Pair<Mapping,String> pe= it.next();
+				if (exactMatchMapping.getWord().contains(pe.first.getWord())){
+					it.remove();
+				}
+			}
+			//push the exact match mapping with current code into exact match stack. '15,6,2 Jeremy
+			exactMatchList.add(new Pair<>(exactMatchMapping, code));
+		}else if(!exactMatchList.isEmpty()){
+			List<Pair<Mapping,String>> exactMatchSnapshot = new LinkedList<>(exactMatchList);
+
+			Mapping suggestMapping = new Mapping();
+			int highestScore = 0, highestRelatedScore = 0;
+			//iterate all previous exact match mapping and check for exact match on remaining code.
+			for (Pair<Mapping, String> p : exactMatchSnapshot) {
+				String pCode = p.second;
+				if (pCode.length() < code.length() && code.startsWith(pCode)) { //TODO:check code reduced because of user press backspace.
+					String remainingCode = code.substring(pCode.length(), code.length());
+					//TODO:should lookup 1+1 , 1+2 , 1+3 ....
+					Pair<List<Mapping>, List<Mapping>> resultPair =  //do remaining code query
+							getMappingByCodeFromCacheOrDB(remainingCode, false);
+					if(resultPair == null) continue;
+
+					List<Mapping> resultList = resultPair.first;
+					if (resultList.size() > 0 && resultList.get(0).isExactMatchToCodeRecord()) {  //remaining code search got exact match
+						Mapping remainingCodeExactMatchMapping = resultList.get(0);
+						String phrase = p.first.getWord() + remainingCodeExactMatchMapping.getWord();
+						if(phrase.length()<2) continue; // should not possible.
+						int averageScore = ( p.first.getBasescore() + remainingCodeExactMatchMapping.getBasescore()) / phrase.length() ;
+						if(DEBUG||dumpSuggestion)
+							Log.i(TAG,"makeRunTimeSuggestion() remaining code = "+ remainingCode + "" +
+									", got exact match and new phrase = " + phrase + "with score = "+ p.first.getBasescore() +" average score =" + averageScore);
+
+						//verify if the new phrase is in related table.
+						Mapping relatedMapping = dbadapter.isRelatedPhraseExist(phrase.substring(phrase.length()-2, phrase.length()-1), phrase.substring(phrase.length()-1, phrase.length()));
+						if (relatedMapping != null && relatedMapping.getScore() > highestRelatedScore) {
+							suggestMapping.setRuntimeBuiltPhraseRecord();
+							suggestMapping.setCode(code);
+							suggestMapping.setWord(phrase);
+							highestRelatedScore = relatedMapping.getScore();
+							suggestMapping.setScore(highestRelatedScore);
+							suggestMapping.setBasescore(averageScore * 10);
+							if(DEBUG||dumpSuggestion)
+								Log.i(TAG,"makeRunTimeSuggestion()  run-time suggest phrase verified from related table ="
+										+ phrase + " score = " + highestRelatedScore + " , basescore = "+ suggestMapping.getBasescore());
+						} else if (highestRelatedScore == 0// no mapping is verified from related table
+								&&  averageScore > highestScore	) {
+							suggestMapping.setRuntimeBuiltPhraseRecord();
+							suggestMapping.setCode(code);
+							suggestMapping.setWord(phrase);
+							highestScore = averageScore;
+							suggestMapping.setBasescore(highestScore);
+							if(DEBUG||dumpSuggestion)
+								Log.i(TAG,"makeRunTimeSuggestion()  run-time suggest phrase =" + phrase + "with score = " +remainingCodeExactMatchMapping.getBasescore()
+										+"average score = " + highestScore);
+						}
+					}
+				}
+			}
+			if(suggestMapping.getWord()!=null) {
+				//exactMatchList.clear();
+				exactMatchList.add(new Pair<>(suggestMapping, code));
+			}
+
+		}
+
+		// dump exactMatch List
+		if( (DEBUG||dumpSuggestion) &&
+				exactMatchList!=null && !exactMatchList.isEmpty()){
+			for(int i=0; i< exactMatchList.size();i++ ){
+				Log.i(TAG, "makeRunTimeSuggestion() exactMatch(" +i + "): word="
+						+ exactMatchList.get(i).first.getWord() + ", code=" + exactMatchList.get(i).second
+						+ ", basescore=" + exactMatchList.get(i).first.getBasescore()
+						+ ", score=" + exactMatchList.get(i).first.getScore());
+			}
+		}
+	}
+
 
 	public List<Mapping> getMappingByCode(String code, boolean softkeyboard, boolean getAllRecords) throws RemoteException {
 		if (DEBUG) Log.i(TAG, "getMappingByCode(): code=" + code);
@@ -302,22 +399,7 @@ public class SearchServer {
 			mResetCache = false;
 		}
 
-
-		if(exactMatchStack!=null && !exactMatchStack.isEmpty() ){
-			// code is start over, clear the stack.  The composition is start over.   Jeremy'15,6,4.
-			if(code.length() == 1 ){
-				exactMatchStack.clear();
-			}else if(code.length() ==  lastCode.length() -1  //user press backspace.
-					&& exactMatchStack.lastElement().second.equals(lastCode)){
-				//pop the last kept exact match mapping because it's canceled by backspace.  Jeremy 15,6,4
-				exactMatchStack.pop();
-
-			}
-
-		}
-		lastCode = code;
-
-		//codeLenthMap.clear();//Jeremy '12,6,2 reset the codeLengthMap
+		//codeLengthMap.clear();//Jeremy '12,6,2 reset the codeLengthMap
 
 		List<Mapping> result = new LinkedList<>();
 		if (code != null) {
@@ -335,66 +417,16 @@ public class SearchServer {
 
 
 			// 12,6,4 Jeremy. Ascending a ab abc... looking up db if the cache is not exist
-			//'15,6,4 Jeremy. Do exact search only in between search mode.
+			//'15,6,4 Jeremy. Do exact search only in between search mode (1 time only).
+			Pair<List<Mapping>,List<Mapping>> completeCodeResultPair = null;
 			for (int i = 0; i < (LimeDB.getBetweenSearch()?1: size); i++) {
 				String queryCode  = LimeDB.getBetweenSearch()?code : code.substring(0, i + 1);
-				String cacheKey = cacheKey(queryCode);
-				Pair<List<Mapping>, List<Mapping>> cacheTemp = cache.get(cacheKey);
-
-				if (DEBUG)
-					Log.i(TAG, " getMappingByCode() check if cached exist on code = '" + queryCode + "'");
-
-				if (cacheTemp == null) {
-					// 25/Jul/2011 by Art
-					// Just ignore error when something wrong with the result set
-					try {
-						cacheTemp = dbadapter.getMappingByCode(queryCode, !isPhysicalKeyboardPressed, getAllRecords);
-						cache.put(cacheKey, cacheTemp);
-						//Jeremy '12,6,5 check if need to update code remap cache
-						if (cacheTemp != null && cacheTemp.first != null
-								&& cacheTemp.first.size() > 0 && cacheTemp.first.get(0) != null
-								&& cacheTemp.first.get(0).isExactMatchToCodeRecord()) {
-							String remappedCode = cacheTemp.first.get(0).getCode();
-							if (!queryCode.equals(remappedCode)) {
-								List<String> codeList = coderemapcache.get(remappedCode);
-								String key = cacheKey(remappedCode);
-								if (codeList == null) {
-									List<String> newlist = new LinkedList<>();
-									newlist.add(remappedCode); //put self in the list
-									newlist.add(queryCode);
-									coderemapcache.put(key, newlist);
-									if (DEBUG)
-										Log.i(TAG, "getMappingByCode() build new remap code = '"
-												+ remappedCode + "' to code = '" + queryCode + "'"
-												+ " coderemapcache.size()=" + coderemapcache.size());
-								} else {
-									codeList.add(queryCode);
-									coderemapcache.remove(key);
-									coderemapcache.put(key, codeList);
-									if (DEBUG)
-										Log.i(TAG, "getMappingByCode() remappedCode: add new remap code = '" + remappedCode + "' to code = '" + queryCode + "'");
-								}
-
-							}
-
-						}
-
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-
-				}
+				completeCodeResultPair=getMappingByCodeFromCacheOrDB(queryCode,getAllRecords);
 			}
+			// make run-time suggestion '15, 6, 9 Jeremy.
+			if(doRunTimeSuggestion)
+				makeRunTimeSuggestion(code, completeCodeResultPair);
 
-
-
-
-
-			// put self into the first mapping for mixed input.
-			Mapping self = new Mapping();
-			self.setWord(code);
-			self.setCode(code);
-			self.setComposingCodeRecord();
 
 			// 12,6,4 Jeremy. Descending  abc ab a... Build the result candidate list.
 			//'15,6,4 Jeremy. Do exact search only in between search mode.
@@ -442,11 +474,25 @@ public class SearchServer {
 								if(cacheTemp!=null)
 									resultlist = cacheTemp.first;
 							}while(resultlist.size() == 0 && wayBackCode.length() > 1);
-						}else if(resultlist.size() >0 && resultlist.get(0).isExactMatchToCodeRecord()) {
-							//push the exact match mapping with current code into exact match stack. '15,6,2 Jeremy
-							exactMatchStack.push(new Pair<>(resultlist.get(0), code));
 						}
-						result.add(self);
+
+
+						Mapping self = new Mapping();
+						self.setWord(code);
+						self.setCode(code);
+						self.setComposingCodeRecord();
+						// put run-time built suggestion if it's present
+						if(!exactMatchList.isEmpty()   // the last element is run-time built suggestion from remaining code query
+								&& exactMatchList.get(exactMatchList.size()-1).first.isRuntimeBuiltPhraseRecord()){
+							Mapping phraseMapping = exactMatchList.get(exactMatchList.size()-1).first;
+							if(code.length()<6 || phraseMapping.getWord().length()<4){
+								result.add(self);
+							}
+							result.add(phraseMapping);
+						}else{
+							// put self into the first mapping for mixed input.
+							result.add(self);
+						}
 					}
 
 					if (resultlist!=null && resultlist.size() > 0) {
@@ -476,8 +522,7 @@ public class SearchServer {
 				}
 				//codeLengthMap is deprecated and replace by exact match stack scheme '15,6,3 jeremy
 				//codeLengthMap.add(new Pair<>(code.length(), result.size()));  //Jeremy 12,6,2 preserve the code length in each loop.
-				if (DEBUG)
-					Log.i(TAG, "getMappingByCode() codeLengthMap  code length = " + code.length() + ", result size = " + result.size());
+				//if (DEBUG) 	Log.i(TAG, "getMappingByCode() codeLengthMap  code length = " + code.length() + ", result size = " + result.size());
 
 				code = code.substring(0, code.length() - 1);
 			}
@@ -494,8 +539,61 @@ public class SearchServer {
 		return result;
 	}
 
+	/*
+	*   Get mapping list from cache or from db if it's not in cache. Separated from getMappingByCode() Jeremy '15,6,8
+	 */
+
+	private Pair<List<Mapping>, List<Mapping>> getMappingByCodeFromCacheOrDB(String queryCode, Boolean getAllRecords){
+		String cacheKey = cacheKey(queryCode);
+		Pair<List<Mapping>, List<Mapping>> cacheTemp = cache.get(cacheKey);
+
+		if (DEBUG)
+			Log.i(TAG, " getMappingByCode() check if cached exist on code = '" + queryCode + "'");
+
+		if (cacheTemp == null) {
+			// 25/Jul/2011 by Art
+			// Just ignore error when something wrong with the result set
+			try {
+				cacheTemp = dbadapter.getMappingByCode(queryCode, !isPhysicalKeyboardPressed, getAllRecords);
+				if(cacheTemp!=null) cache.put(cacheKey, cacheTemp);
+				//Jeremy '12,6,5 check if need to update code remap cache
+				if (cacheTemp != null && cacheTemp.first != null
+						&& cacheTemp.first.size() > 0 && cacheTemp.first.get(0) != null
+						&& cacheTemp.first.get(0).isExactMatchToCodeRecord()) {
+					String remappedCode = cacheTemp.first.get(0).getCode();
+					if (!queryCode.equals(remappedCode)) {
+						List<String> codeList = coderemapcache.get(remappedCode);
+						String key = cacheKey(remappedCode);
+						if (codeList == null) {
+							List<String> newlist = new LinkedList<>();
+							newlist.add(remappedCode); //put self in the list
+							newlist.add(queryCode);
+							coderemapcache.put(key, newlist);
+							if (DEBUG)
+								Log.i(TAG, "getMappingByCode() build new remap code = '"
+										+ remappedCode + "' to code = '" + queryCode + "'"
+										+ " coderemapcache.size()=" + coderemapcache.size());
+						} else {
+							codeList.add(queryCode);
+							coderemapcache.remove(key);
+							coderemapcache.put(key, codeList);
+							if (DEBUG)
+								Log.i(TAG, "getMappingByCode() remappedCode: add new remap code = '" + remappedCode + "' to code = '" + queryCode + "'");
+						}
+
+					}
+
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return cacheTemp;
+	}
+
 	/**
-	 * Get the real code length according to  codeLenthMap
+	 * get real code length
 	 */
 	int getRealCodeLength(Mapping selectedMapping, String currentCode) {
 		if (DEBUG)
@@ -526,9 +624,9 @@ public class SearchServer {
 		/*
 		// Return real code length form code length preserved in exact match stack instead of code length map. Jeremy '15,6,2
 		// return real code by iterating the current exact match stack.
-		if (exactMatchStack.isEmpty())
+		if (exactMatchList.isEmpty())
 			return composing.length(); // the selected mapping is not a exact match mapping
-		for (Pair<Mapping, String> p : exactMatchStack) {
+		for (Pair<Mapping, String> p : exactMatchList) {
 			if (p.first.getWord().equals(selectedMapping.getWord()))
 				return p.second.length();
 		}*/
@@ -551,14 +649,14 @@ public class SearchServer {
 		coderemapcache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 
 		//  initial exact match stack here
-		exactMatchStack = new Stack<>();
+		exactMatchList = new LinkedList<>();
 
 	}
 
 
 
 	private void updateScoreCache(Mapping cachedMapping) {
-		if (DEBUG) Log.i(TAG, "udpateScoreCache(): code=" + cachedMapping.getCode());
+		if (DEBUG) Log.i(TAG, "updateScoreCache(): code=" + cachedMapping.getCode());
 
 		dbadapter.addScore(cachedMapping);
 		// Jeremy '11,7,29 update cached here
@@ -569,7 +667,7 @@ public class SearchServer {
 			// null id denotes target is selected from the related list (not exact match)
 			if ((cachedMapping.getId() == null || cachedMapping.isPartialMatchToCodeRecord()) //Jeremy '15,6,3 new record type to identify partial match
 					&& cachedPair != null && cachedPair.second != null && cachedPair.second.size() > 0) {
-				if (DEBUG) Log.i(TAG, "updateUserDict: updating related list");
+				if (DEBUG) Log.i(TAG, "updateScoreCache(): updating related list");
 				if (cache.remove(cachekey) != null) {
 					Pair<List<Mapping>, List<Mapping>> newPair
 							= new Pair<>(cachedPair.first, dbadapter.updateSimilarCodeListInRelatedColumn(code));
@@ -591,16 +689,16 @@ public class SearchServer {
 				if (sort) { // Jeremy '12,5,22 do not update the order of exact match list if the sort option is off
 					List<Mapping> cachedList = cachedPair.first;
 					int size = cachedList.size();
-					if (DEBUG) Log.i(TAG, "updateUserDict(): cachedList.size:" + size);
+					if (DEBUG) Log.i(TAG, "updateScoreCache(): cachedList.size:" + size);
 					// update exact match cache
 					for (int j = 0; j < size; j++) {
 						Mapping cm = cachedList.get(j);
 						if (DEBUG)
-							Log.i(TAG, "updateUserDict(): cachedList at :" + j + ". score=" + cm.getScore());
+							Log.i(TAG, "updateScoreCache(): cachedList at :" + j + ". score=" + cm.getScore());
 						if (cachedMapping.getId().equals(cm.getId())) {
 							int score = cm.getScore() + 1;
 							if (DEBUG)
-								Log.i(TAG, "updateUserDict(): cachedMapping found at :" + j + ". new score=" + score);
+								Log.i(TAG, "updateScoreCache(): cachedMapping found at :" + j + ". new score=" + score);
 							cm.setScore(score);
 							if (j > 0 && score > cachedList.get(j - 1).getScore()) {
 								cachedList.remove(j);
@@ -636,14 +734,13 @@ public class SearchServer {
 
 	public void postFinishInput() throws RemoteException {
 
-		//if(dbadapter == null){dbadapter = new LimeDB(ctx);}
 		if (scorelistSnapshot == null) scorelistSnapshot = new LinkedList<>();
 		else scorelistSnapshot.clear();
 
 
 		if (DEBUG) Log.i(TAG, "postFinishInput(), creating offline updating thread");
 		// Jeremy '11,7,31 The updating process takes some time. Create a new thread to do this.
-		Thread UpadtingThread = new Thread() {
+		Thread UpdatingThread = new Thread() {
 			public void run() {
 				// for thread-safe operation, duplicate local copy of scorelist and LDphraselistarray
 				//List<Mapping> localScorelist = new LinkedList<Mapping>();
@@ -655,7 +752,7 @@ public class SearchServer {
 				//Jeremy '11,6,12 do adduserdict and add score if diclist.size > 0 and only adduserdict if diclist.size >1
 				//Jeremy '11,6,11, always learn scores, but sorted according preference options
 
-				// Learn user dictionary (the consecutive two words as a userdict phrase).
+				// Learn the consecutive two words as a related phrase).
 				learnRelatedPhrase(scorelistSnapshot);
 
 				ArrayList<List<Mapping>> localLDPhraseListArray = new ArrayList<>();
@@ -664,13 +761,12 @@ public class SearchServer {
 					LDPhraseListArray.clear();
 				}
 
-
 				// Learn LD Phrase
 				learnLDPhrase(localLDPhraseListArray);
 
 			}
 		};
-		UpadtingThread.start();
+		UpdatingThread.start();
 
 	}
 
