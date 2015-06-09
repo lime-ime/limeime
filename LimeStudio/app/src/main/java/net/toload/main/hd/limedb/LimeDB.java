@@ -20,7 +20,6 @@
 
 package net.toload.main.hd.limedb;
 
-import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -36,22 +35,21 @@ import android.widget.Toast;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Im;
+import net.toload.main.hd.data.ImObj;
 import net.toload.main.hd.data.Keyboard;
+import net.toload.main.hd.data.KeyboardObj;
+import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.data.Related;
 import net.toload.main.hd.data.Word;
-import net.toload.main.hd.data.ImObj;
-import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;
 import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.data.Mapping;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1139,6 +1137,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             //Jeremy 11,6,4 Load keys and keynames from im table.
             keyString = getImInfo(table, "imkeys");
             keynameString = getImInfo(table, "imkeynames");
+
+            // Force the system to use the Default KeyString for Array Keyboard
+            if(table.equals("array")){
+                keyString = "";
+                keynameString = "";
+            }
 
             if (DEBUG)
                 Log.i(TAG, "keyToKeyname(): load from db: imkeys:keyString=" + keyString + ", imkeynames=" + keynameString);
