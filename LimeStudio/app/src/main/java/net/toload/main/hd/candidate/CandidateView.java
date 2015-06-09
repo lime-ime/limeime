@@ -49,17 +49,14 @@ import android.widget.PopupWindow;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import net.toload.main.hd.LIMEService;
+import net.toload.main.hd.R;
+import net.toload.main.hd.data.Mapping;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
-import java.lang.Math;
-
-import net.toload.main.hd.LIMEService;
-import net.toload.main.hd.R;
-import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.data.Mapping;
-
-import org.w3c.dom.Text;
 
 
 public class CandidateView extends View implements View.OnClickListener {

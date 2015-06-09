@@ -2,6 +2,7 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -70,6 +71,16 @@ public class ShareDialog extends DialogFragment {
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		this.setCancelable(false);
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+
+		Dialog dialog = getDialog();
+		if (dialog != null) {
+			dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+		}
 	}
 
 	@Override
