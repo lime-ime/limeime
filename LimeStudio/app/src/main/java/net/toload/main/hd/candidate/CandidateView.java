@@ -416,7 +416,9 @@ public class CandidateView extends View implements View.OnClickListener {
 
         doUpdateUI();
     }
-
+    /*
+    * Contains requestLayout() which can only call from UI thread
+    */
     private void resetWidth() {
         if (DEBUG)
             Log.i(TAG, "resetWidth() mHieght:" + mHeight);
@@ -959,7 +961,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
                 if (mCount > 1 && mSuggestions.get(1).isExactMatchToCodeRecord()) {
                     mSelectedIndex = 1;
-                } else if(mCount >0 && mSuggestions.get(0).isComposingCodeRecord()){
+                } else if(mCount >0 && (mSuggestions.get(0).isComposingCodeRecord()|| mSuggestions.get(0).isRuntimeBuiltPhraseRecord() )){
                     mSelectedIndex = 0;
                 }else{
                     // no default selection for related phrase, chinese punctuation symbols and English suggestions  Jeremy '15,6,4
@@ -1005,9 +1007,10 @@ public class CandidateView extends View implements View.OnClickListener {
 
     //Jeremy '12,5,6 hide candidate bar when candidateView is fixed.
     public void forceHide() {
-        clear();
         mHeight = 0;
-        resetWidth();
+        clear();
+        //resetWidth();// will cause wrong thread exception. clear() will call updateUI() and will do resetWidth
+
     }
 
     @Override
