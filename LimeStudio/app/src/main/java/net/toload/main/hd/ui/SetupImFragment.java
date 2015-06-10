@@ -182,7 +182,6 @@ public class SetupImFragment extends Fragment {
 
         initialbutton();
 
-
     }
 
     public void showProgress(boolean spinnerStyle, String message) {
@@ -259,8 +258,6 @@ public class SetupImFragment extends Fragment {
         btnSetupImHs = (Button) rootView.findViewById(R.id.btnSetupImHs);
         btnSetupImWb = (Button) rootView.findViewById(R.id.btnSetupImWb);
         btnSetupImPinyin = (Button) rootView.findViewById(R.id.btnSetupImPinyin);
-
-        initialbutton();
 
         // Backup and Restore Setting
         btnSetupImBackupLocal = (Button) rootView.findViewById(R.id.btnSetupImBackupLocal);
@@ -375,7 +372,7 @@ public class SetupImFragment extends Fragment {
                     rootView.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.GONE);
                     rootView.findViewById(R.id.SetupImList).setVisibility(View.VISIBLE);
                     if(LIMEUtilities.isLIMEActive(getActivity().getApplicationContext())) {  //LIME is activated and also the active Keyboard
-                        btnSetupImSystemIMPicker.setVisibility(View.GONE);
+                        btnSetupImSystemIMPicker.setVisibility(View.INVISIBLE);
                         //rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
                         //rootView.findViewById(R.id.setup_im_system_settings).setVisibility(View.GONE);
                         rootView.findViewById(R.id.Setup_Wizard).setVisibility(View.GONE);
@@ -389,7 +386,7 @@ public class SetupImFragment extends Fragment {
                 }else {
                     btnSetupImSystemSettings.setVisibility(View.VISIBLE);
                     rootView.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.VISIBLE);
-                    btnSetupImSystemIMPicker.setVisibility(View.GONE);
+                    btnSetupImSystemIMPicker.setVisibility(View.INVISIBLE);
                     rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
                     rootView.findViewById(R.id.SetupImList).setVisibility(View.GONE);
                 }
