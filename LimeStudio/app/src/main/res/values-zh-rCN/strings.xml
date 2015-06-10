@@ -83,6 +83,9 @@
     <string name="setup_im_restore_learning_data">还原输入法选字喜好</string>
     <string name="setup_im_restore_learning_data_message">请问您是否要还原输入法选字喜好?</string>
 
+    <string name="setup_load_download_dayiuni">安装 Unicode 3+4 码单字版</string>
+    <string name="setup_load_download_dayiunip">安装 Unicode 3+4 码词库版</string>
+
     <string name="setup_load_download">下载输入法文档</string>
     <string name="setup_load_migrate_load">准备输入法字根</string>
     <string name="setup_load_migrate_import">汇入输入法字根</string>

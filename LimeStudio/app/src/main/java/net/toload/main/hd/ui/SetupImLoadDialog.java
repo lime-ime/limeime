@@ -313,8 +313,20 @@ public class SetupImLoadDialog extends DialogFragment {
                             downloadAndLoadIm(Lime.DB_TABLE_DAYI, Lime.IM_DAYI);
                         }
                     });
-                    btnSetupImDialogLoad2.setVisibility(View.GONE);
-                    btnSetupImDialogLoad3.setVisibility(View.GONE);
+                    btnSetupImDialogLoad2.setText(getResources().getString(R.string.setup_load_download_dayiuni));
+                    btnSetupImDialogLoad2.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_DAYI, Lime.IM_DAYIUNI);
+                        }
+                    });
+                    btnSetupImDialogLoad3.setText(getResources().getString(R.string.setup_load_download_dayiunip));
+                    btnSetupImDialogLoad3.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_DAYI, Lime.IM_DAYIUNIP);
+                        }
+                    });
 
                 } else if (imtype.equals(Lime.DB_TABLE_EZ)) {
 
@@ -520,6 +532,10 @@ public class SetupImLoadDialog extends DialogFragment {
                 url = Lime.DATABASE_CLOUD_IM_CJ5;
             }else if(type.equals(Lime.IM_DAYI )){
                 url = Lime.DATABASE_CLOUD_IM_DAYI;
+            }else if(type.equals(Lime.IM_DAYIUNI )){
+                url = Lime.DATABASE_CLOUD_IM_DAYIUNI;
+            }else if(type.equals(Lime.IM_DAYIUNIP )){
+                url = Lime.DATABASE_CLOUD_IM_DAYIUNIP;
             }else if(type.equals(Lime.IM_ECJ )){
                 url = Lime.DATABASE_CLOUD_IM_ECJ;
             }else if(type.equals(Lime.IM_ECJHK )){
