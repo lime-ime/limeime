@@ -28,10 +28,10 @@ import android.util.Pair;
 
 import net.toload.main.hd.data.ImObj;
 import net.toload.main.hd.data.KeyboardObj;
+import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;
@@ -40,7 +40,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SearchServer {
@@ -216,7 +215,8 @@ public class SearchServer {
 	private final static boolean dumpSuggestion = true;
 
 	private void makeRunTimeSuggestion(String code, Pair<List<Mapping>,List<Mapping>> completeCodeResultPair){
-
+		if(DEBUG||dumpSuggestion)
+			Log.i(TAG,"makeRunTimeSuggestion() code = "+ code );
 		//check if the composing is start over or user pressed backspace
 		if(exactMatchList !=null && !exactMatchList.isEmpty() ){
 			// code is start over, clear the stack.  The composition is start over.   Jeremy'15,6,4.
@@ -235,27 +235,31 @@ public class SearchServer {
 		List<Mapping> completeCodeResultList =null;
 		if(completeCodeResultPair!=null) completeCodeResultList = completeCodeResultPair.first;
 		if(completeCodeResultList!=null && completeCodeResultList.size()>0 && completeCodeResultList.get(0).isExactMatchToCodeRecord() ){
-			Mapping exactMatchMapping = completeCodeResultList.get(0);
-
-			if(exactMatchMapping.getScore()>0 && exactMatchMapping.getBasescore()==0){
-				//user created phrase. should give a reasonable high basescore for calculating average scores later.
-				exactMatchMapping.setBasescore(50*exactMatchMapping.getWord().length());
-			}
-
-			if(DEBUG||dumpSuggestion)
-				Log.i(TAG,"makeRunTimeSuggestion() complete code = "+ code + "" +
-						", got exact match  = " + exactMatchMapping.getWord()
-						+ " score =" + exactMatchMapping.getScore() + ", basescore="+ exactMatchMapping.getBasescore());
-
-			Iterator<Pair<Mapping,String>> it = exactMatchList.iterator();
-			while(it.hasNext()){
-				Pair<Mapping,String> pe= it.next();
-				if (exactMatchMapping.getWord().contains(pe.first.getWord())){
-					it.remove();
+			Mapping exactMatchMapping;
+			int i =0;
+			do {
+				exactMatchMapping = completeCodeResultList.get(i);
+				if (exactMatchMapping.getScore() > 0 && exactMatchMapping.getBasescore() == 0) {
+					//user created phrase. should give a reasonable high basescore for calculating average scores later.
+					exactMatchMapping.setBasescore(50 * exactMatchMapping.getWord().length());
 				}
-			}
-			//push the exact match mapping with current code into exact match stack. '15,6,2 Jeremy
-			exactMatchList.add(new Pair<>(exactMatchMapping, code));
+
+				if (DEBUG || dumpSuggestion)
+					Log.i(TAG, "makeRunTimeSuggestion() complete code = " + code + "" +
+							", got exact match  = " + exactMatchMapping.getWord()
+							+ " score =" + exactMatchMapping.getScore() + ", basescore=" + exactMatchMapping.getBasescore());
+
+				Iterator<Pair<Mapping, String>> it = exactMatchList.iterator();
+				while (it.hasNext()) {
+					Pair<Mapping, String> pe = it.next();
+					if (exactMatchMapping.getWord().contains(pe.first.getWord())) {
+						it.remove();
+					}
+				}
+				//push the exact match mapping with current code into exact match stack. '15,6,2 Jeremy
+				exactMatchList.add(new Pair<>(exactMatchMapping, code));
+				i++;
+			}while(completeCodeResultList.size()>i && completeCodeResultList.get(i).isExactMatchToCodeRecord() && i<5); //process at most 5 exact match items.
 		}else if(!exactMatchList.isEmpty()){
 			List<Pair<Mapping,String>> exactMatchSnapshot = new LinkedList<>(exactMatchList);
 
@@ -271,7 +275,7 @@ public class SearchServer {
 					Log.i(TAG,"makeRunTimeSuggestion() working on previous exact match item = "+ p.first.getWord() +
 							" with base score = " + p.first.getBasescore() + ", remainingCode =" + remainingCode);
 
-					//TODO:should lookup 1+1 , 1+2 , 1+3 ....
+
 					Pair<List<Mapping>, List<Mapping>> resultPair =  //do remaining code query
 							getMappingByCodeFromCacheOrDB(remainingCode, false);
 					if(resultPair == null) continue;
@@ -279,35 +283,48 @@ public class SearchServer {
 					List<Mapping> resultList = resultPair.first;
 					if (resultList.size() > 0 && resultList.get(0).isExactMatchToCodeRecord()) {  //remaining code search got exact match
 						Mapping remainingCodeExactMatchMapping = resultList.get(0);
-						String phrase = p.first.getWord() + remainingCodeExactMatchMapping.getWord();
-						if(phrase.length()<2) continue; // should not possible.
+						Mapping previousMapping = p.first;
+						String phrase = previousMapping.getWord() + remainingCodeExactMatchMapping.getWord();
+						int phraseLen = phrase.length();
+						if(phraseLen<2 ||remainingCodeExactMatchMapping.getBasescore()<2 ) continue;
 						int remainingScore = remainingCodeExactMatchMapping.getBasescore();
+						remainingScore =  remainingScore / remainingCodeExactMatchMapping.getWord().length() /(5-remainingCode.length());
 						if(remainingScore>150) remainingScore =150;
-						int averageScore = ( p.first.getBasescore() + remainingScore) /phrase.length() *remainingCode.length() ;
+						int averageScore =previousMapping.getBasescore() /previousMapping.getWord().length() /2 + remainingScore;
+
+						// This is where to control the candidate View list display
 						if(DEBUG||dumpSuggestion)
 							Log.i(TAG,"makeRunTimeSuggestion() remaining code = "+ remainingCode + "" +
 									", got exact match  = " + remainingCodeExactMatchMapping.getWord() + " with base score = "
 									+  remainingScore +" average score =" + averageScore);
 
 						//verify if the new phrase is in related table.
-						Mapping relatedMapping = dbadapter.isRelatedPhraseExist(phrase.substring(phrase.length()-2, phrase.length()-1), phrase.substring(phrase.length()-1, phrase.length()));
-						if (relatedMapping != null && relatedMapping.getScore() > highestRelatedScore) {
+						// check up to four characters phrase 1-3, 1-2 , 1-1
+						Mapping relatedMapping = null;
+						for(int i=( (phraseLen<4)?phraseLen-1: 3);i>0 ; i--) {
+							relatedMapping = dbadapter.isRelatedPhraseExist(phrase.substring(phraseLen - i-1, phraseLen - i),
+									phrase.substring(phraseLen - i, phraseLen));
+						}
+						if (relatedMapping != null && relatedMapping.getScore() > highestRelatedScore && averageScore > highestScore) {
 							suggestMapping.setRuntimeBuiltPhraseRecord();
 							suggestMapping.setCode(code);
 							suggestMapping.setWord(phrase);
 							highestRelatedScore = relatedMapping.getScore();
 							suggestMapping.setScore(highestRelatedScore);
-							suggestMapping.setBasescore(averageScore * 10* phrase.length() );
+							suggestMapping.setBasescore((previousMapping.getBasescore() / previousMapping.getWord().length() +
+									remainingScore * 10) / phrase.length() * remainingCode.length());
+							exactMatchList.add(new Pair<>(suggestMapping, code));
 							if(DEBUG||dumpSuggestion)
 								Log.i(TAG,"makeRunTimeSuggestion()  run-time suggest phrase verified from related table ="
 										+ phrase + "score from related table = " + highestRelatedScore + " , new base score = "+ suggestMapping.getBasescore());
 						} else if (highestRelatedScore == 0// no mapping is verified from related table
-								&&  averageScore > highestScore	) {
+								&& averageScore > highestScore	) {
 							suggestMapping.setRuntimeBuiltPhraseRecord();
 							suggestMapping.setCode(code);
 							suggestMapping.setWord(phrase);
 							highestScore = averageScore;
 							suggestMapping.setBasescore(highestScore);
+							exactMatchList.add(new Pair<>(suggestMapping, code));
 							if(DEBUG||dumpSuggestion)
 								Log.i(TAG,"makeRunTimeSuggestion()  run-time suggest phrase =" + phrase
 										+", new base score = " + highestScore);
@@ -315,10 +332,10 @@ public class SearchServer {
 					}
 				}
 			}
-			if(suggestMapping.getWord()!=null) {
+			//if(suggestMapping.getWord()!=null) {
 				//exactMatchList.clear();
-				exactMatchList.add(new Pair<>(suggestMapping, code));
-			}
+				//exactMatchList.add(new Pair<>(suggestMapping, code));
+		//	}
 
 		}
 
