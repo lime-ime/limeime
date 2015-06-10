@@ -1005,8 +1005,15 @@ public class CandidateView extends View implements View.OnClickListener {
     //Jeremy '12,5,6 hide candidate bar when candidateView is fixed.
     public void forceHide() {
         mHeight = 0;
-        clear();
+        //clear();
         //resetWidth();// will cause wrong thread exception. clear() will call updateUI() and will do resetWidth
+        mSuggestions = EMPTY_LIST;
+        // Jeremy 11,8,14 close all popup on clear
+        setComposingText("");
+        mTargetScrollX = 0;
+        mTotalWidth = 0;
+        mHandler.dismissComposing(0);
+        mHandler.updateUI(0);
 
     }
 
