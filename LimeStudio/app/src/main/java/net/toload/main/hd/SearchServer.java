@@ -106,20 +106,7 @@ public class SearchServer {
 		mResetCache = resetCache;
 	}
 
- 	/*
-	public void setSelectedText(String text){
-		selectedText = new StringBuffer();
-		selectedText.append(text);
-	}
 
-	public String getSelectedText(){
-		if(selectedText != null){
-			return selectedText.toString().trim();
-		}else{
-			return "";
-		}
-	}
-	*/
 
 	public String hanConvert(String input) {
 		return dbadapter.hanConvert(input, mLIMEPref.getHanCovertOption());
@@ -179,55 +166,6 @@ public class SearchServer {
 
 	}
 
-	//Deprecated by Jeremy '12,4,7
-	/*
-		@Deprecated
-		private void openLimeDatabase()
-		{
-			boolean reload = mLIMEPref.getParameterBoolean("reload_database", false);
-
-			if(DEBUG) {
-				Log.i(TAG,"SearchService:openLimeDatabase(), reload = " + reload );
-				if(db != null)
-					Log.i(TAG, "db.isOpen()" + db.isOpen());
-			}
-
-
-			try{
-
-				if(reload && db != null && db.isOpen()){
-					mLIMEPref.setParameter("reload_database", false);
-					db.close();
-				}
-				//if(reload && db != null && db.isOpen()){
-				//	mLIMEPref.setParameter("reload_database", false);
-				//	db.close();
-				//}
-			}catch(Exception e){
-			}
-			//if(db == null || !db.isOpen()){
-
-			//	db = getSqliteDb();
-			//	initialCache();
-			//}
-			if(db == null || !db.isOpen()){
-
-				db = dbadapter.getSqliteDb(false);
-				initialCache();
-			}
-		}
-
-	 */
-	/*
-	private void loadDBAdapter()
-	{
-		if(DEBUG)
-			Log.i(TAG,"SearchService:loadDBAdapter()");
-		//if(dbadapter == null){
-			dbadapter = new LimeDB(ctx);
-		}
-	}
-	*/
 
 	//TODO: Should cache related phrase 15,6,8 Jeremy
 	public List<Mapping> getRelatedPhrase(String word, boolean getAllRecords) throws RemoteException {
@@ -242,7 +180,6 @@ public class SearchServer {
 			public void run() {
 				String result = dbadapter.getCodeListStringByWord(word);
 				if (result != null && !result.equals("")) {
-					//displayNotificationMessage(result);
 					LIMEUtilities.showNotification(
 							mContext, true, R.drawable.logo, mContext.getText(R.string.ime_setting), result, new Intent(mContext, MainActivity.class));
 				}
@@ -322,6 +259,8 @@ public class SearchServer {
 		}else if(!exactMatchList.isEmpty()){
 			List<Pair<Mapping,String>> exactMatchSnapshot = new LinkedList<>(exactMatchList);
 
+			Log.i(TAG,"makeRunTimeSuggestion() no exact match on complete code = "+ code );
+
 			Mapping suggestMapping = new Mapping();
 			int highestScore = 0, highestRelatedScore = 0;
 			//iterate all previous exact match mapping and check for exact match on remaining code.
@@ -329,6 +268,9 @@ public class SearchServer {
 				String pCode = p.second;
 				if (pCode.length() < code.length() && code.startsWith(pCode)) { //TODO:check code reduced because of user press backspace.
 					String remainingCode = code.substring(pCode.length(), code.length());
+					Log.i(TAG,"makeRunTimeSuggestion() working on previous exact match item = "+ p.first.getWord() +
+							" with base score = " + p.first.getBasescore() + ", remainingCode =" + remainingCode);
+
 					//TODO:should lookup 1+1 , 1+2 , 1+3 ....
 					Pair<List<Mapping>, List<Mapping>> resultPair =  //do remaining code query
 							getMappingByCodeFromCacheOrDB(remainingCode, false);
@@ -339,12 +281,13 @@ public class SearchServer {
 						Mapping remainingCodeExactMatchMapping = resultList.get(0);
 						String phrase = p.first.getWord() + remainingCodeExactMatchMapping.getWord();
 						if(phrase.length()<2) continue; // should not possible.
-						int averageScore = ( p.first.getBasescore() + remainingCodeExactMatchMapping.getBasescore())
-								/ phrase.length() *remainingCode.length() ;
+						int remainingScore = remainingCodeExactMatchMapping.getBasescore();
+						if(remainingScore>150) remainingScore =150;
+						int averageScore = ( p.first.getBasescore() + remainingScore) /phrase.length() *remainingCode.length() ;
 						if(DEBUG||dumpSuggestion)
 							Log.i(TAG,"makeRunTimeSuggestion() remaining code = "+ remainingCode + "" +
-									", got exact match and new phrase = " + phrase + " with score = "
-									+ p.first.getBasescore() +" average score =" + averageScore);
+									", got exact match  = " + remainingCodeExactMatchMapping.getWord() + " with base score = "
+									+  remainingScore +" average score =" + averageScore);
 
 						//verify if the new phrase is in related table.
 						Mapping relatedMapping = dbadapter.isRelatedPhraseExist(phrase.substring(phrase.length()-2, phrase.length()-1), phrase.substring(phrase.length()-1, phrase.length()));
@@ -357,7 +300,7 @@ public class SearchServer {
 							suggestMapping.setBasescore(averageScore * 10* phrase.length() );
 							if(DEBUG||dumpSuggestion)
 								Log.i(TAG,"makeRunTimeSuggestion()  run-time suggest phrase verified from related table ="
-										+ phrase + " score = " + highestRelatedScore + " , basescore = "+ suggestMapping.getBasescore());
+										+ phrase + "score from related table = " + highestRelatedScore + " , new base score = "+ suggestMapping.getBasescore());
 						} else if (highestRelatedScore == 0// no mapping is verified from related table
 								&&  averageScore > highestScore	) {
 							suggestMapping.setRuntimeBuiltPhraseRecord();
@@ -366,8 +309,8 @@ public class SearchServer {
 							highestScore = averageScore;
 							suggestMapping.setBasescore(highestScore);
 							if(DEBUG||dumpSuggestion)
-								Log.i(TAG,"makeRunTimeSuggestion()  run-time suggest phrase =" + phrase + "with score = " +remainingCodeExactMatchMapping.getBasescore()
-										+"average score = " + highestScore);
+								Log.i(TAG,"makeRunTimeSuggestion()  run-time suggest phrase =" + phrase
+										+", new base score = " + highestScore);
 						}
 					}
 				}
@@ -488,7 +431,7 @@ public class SearchServer {
 								&& exactMatchList.get(exactMatchList.size()-1).first.getBasescore() > 150
 								&& exactMatchList.get(exactMatchList.size()-1).first.isRuntimeBuiltPhraseRecord()){
 							Mapping phraseMapping = exactMatchList.get(exactMatchList.size()-1).first;
-							if(code.length()<6 || phraseMapping.getWord().length()<4){
+							if(code.length()<8 && phraseMapping.getWord().length()<4){
 								result.add(self);
 							}
 							result.add(phraseMapping);
@@ -603,11 +546,11 @@ public class SearchServer {
 			Log.i(TAG, "getRealCodeLength()");
 
 		String code = selectedMapping.getCode();
-		if (tablename.equals("phonetic")) {
-
-			if (LimeDB.isCodeDualMapped()) { //abandon LD support for dual mapped codes. Jeremy '15,6,5
-				return currentCode.length();
-			} else {
+		int realCodeLen=code.length();
+		if (LimeDB.isCodeDualMapped()) { //abandon LD support for dual mapped codes. Jeremy '15,6,5
+			realCodeLen = currentCode.length();
+		}else{
+			if (tablename.equals("phonetic")) {
 				String selectedPhoneticKeyboardType =
 						mLIMEPref.getParameterString("phonetic_keyboard_type", "standard");
 				String lcode = currentCode;
@@ -616,24 +559,28 @@ public class SearchServer {
 				}
 				String noToneCode = code.replaceAll("[3467 ]", "");
 				if (code.equals(noToneCode)) {
-					return code.length();
+					realCodeLen= code.length();
 				} else if (!lcode.startsWith(code) && lcode.startsWith(noToneCode)) {
-					return noToneCode.length();
+					realCodeLen = noToneCode.length();
 				} else {
-					return currentCode.length(); //unexpected condition.
+					realCodeLen = currentCode.length(); //unexpected condition.
 				}
 			}
 		}
-		/*
-		// Return real code length form code length preserved in exact match stack instead of code length map. Jeremy '15,6,2
-		// return real code by iterating the current exact match stack.
-		if (exactMatchList.isEmpty())
-			return composing.length(); // the selected mapping is not a exact match mapping
-		for (Pair<Mapping, String> p : exactMatchList) {
-			if (p.first.getWord().equals(selectedMapping.getWord()))
-				return p.second.length();
-		}*/
-		return code.length();
+
+		//remove elements in exactMatchList with code length smaller than current code length - submitted code length
+		if(realCodeLen < currentCode.length()){
+			Iterator<Pair<Mapping,String>> it = exactMatchList.iterator();
+			while(it.hasNext()){
+				Pair<Mapping,String> pe= it.next();
+				if (pe.second.length()> currentCode.length()-realCodeLen){
+					it.remove();
+				}
+			}
+
+		}
+
+		return realCodeLen;
 	}
 
 

@@ -1425,6 +1425,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     String selectClause;
                     String sortClause;
                     String escapedCode = code.replaceAll("'", "''");
+                    int codeLen =code.length();
 
                     String limitClause = (getAllRecords) ?FINAL_RESULT_LIMIT: INITIAL_RESULT_LIMIT;
 
@@ -1432,8 +1433,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     if(betweenSearch){
                         selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectClause + " group by word " ;
                         String exactMatchCondition = " (" +codeCol +" ='" + escapedCode +"' " + extraExactMatchClause  +  ") ";
-                        sortClause = "( exactmatch = 1 and ( score > 0 or  basescore >2) and length(word)=1) desc, exactmatch desc," +
-                                " (length("+codeCol+") >= " +  escapedCode.length() + " ) desc, " ;
+                        sortClause = "( exactmatch = 1 and ( score > 0 or  basescore >2) and length(word)=1) desc, exactmatch desc,"
+                              + " (length("+codeCol+") >= " +  codeLen + " ) desc, "
+                              +  "(length("+codeCol+") <= " + ( (codeLen>5)?5:codeLen) + " )*length("+codeCol+") desc, ";
                         if(sort) sortClause += " score desc, basescore desc, ";
                         sortClause += "_id asc";
 
@@ -1443,7 +1445,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                                     + " limit " + limitClause;
                         cursor = db.rawQuery(selectString, null);
 
-                        //if(DEBUG)
+                        if(DEBUG)
                             Log.i(TAG, "getMappingByCode() between search select string:"+selectString);
                      }
                     else{
@@ -1481,10 +1483,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      */
     private String expandBetweenSearchClause(String searchColumn, String code){
 
-        String selectClause = searchColumn + "= '" + code.replaceAll("'", "''") + "' or ";
+        String selectClause = "";// searchColumn + "= '" + code.replaceAll("'", "''") + "' or ";
 
         int len = code.length();
-        int end = (len>4) ? 5 : len;
+        int end = (len>5) ? 6 : len;
 
         if (len > 1) {
             for (int j = 0; j < end - 1; j++) {
@@ -2450,7 +2452,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         temp.setHasMoreRecordsMarkRecord();
 
                         if ((!getAllRecords && rsize == Integer.parseInt(INITIAL_RESULT_LIMIT) ) )
-                             //||   (getAllRecords && rsize == Integer.parseInt(FINAL_RESULT_LIMIT)))
                             result.add(temp);
                     }
                     cursor.close();
