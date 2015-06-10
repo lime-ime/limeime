@@ -284,7 +284,7 @@ public class SearchServer {
 						if(remainingScore>150) remainingScore =150;
 
 						// This is where to control the candidate View list display
-						int averageScore = (( p.first.getBasescore() + remainingScore) / phrase.length() *remainingCode.length()) / 5 ;
+						int averageScore = (( p.first.getBasescore() + remainingScore) / phrase.length() *remainingCode.length()) ;
 						if(DEBUG||dumpSuggestion)
 							Log.i(TAG,"makeRunTimeSuggestion() remaining code = "+ remainingCode + "" +
 									", got exact match  = " + remainingCodeExactMatchMapping.getWord() + " with base score = "
