@@ -2549,6 +2549,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         if (cursor != null && cursor.getCount() > 0) {
             cursor.close();
+            db.execSQL("drop table " + backupTableName);
             db.execSQL("create table " + backupTableName + " as " + selectString);
         }
 
