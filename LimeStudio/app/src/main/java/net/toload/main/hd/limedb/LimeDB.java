@@ -45,6 +45,7 @@ import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;
 import net.toload.main.hd.global.LIMEUtilities;
+import net.toload.main.hd.tools.Stemmer;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -59,6 +60,7 @@ import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 public class LimeDB extends LimeSQLiteOpenHelper {
+
 
     private static boolean DEBUG = false;
     private static String TAG = "LIMEDB";
@@ -252,6 +254,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     private File filename = null;
     private String tablename = "custom";
+
+    // Stemmer for English Dictionary
+    Stemmer stemmer = new Stemmer();
 
     private int count = 0;
     // Jeremy '15,5,23 for new progress listener progress status update
@@ -2549,6 +2554,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         if (cursor != null && cursor.getCount() > 0) {
             cursor.close();
+            try {
+                db.execSQL("drop table " + backupTableName);
+            }catch(Exception e){
+                Log.i(TAG, "Remove the table " + backupTableName);
+            }
             db.execSQL("create table " + backupTableName + " as " + selectString);
         }
 
@@ -3734,6 +3744,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         try {
             //String value = "";
             int ssize = mLIMEPref.getSimilarCodeCandidates();
+            char[] sourcechars = word.toCharArray();
+            /*stemmer = new Stemmer();
+            for(char c: sourcechars){
+                stemmer.add(c);
+            }
+            stemmer.stem();*/
             String selectString = "SELECT word FROM dictionary WHERE word MATCH '" + word + "*' ORDER BY word ASC LIMIT " + ssize + ";";
             //SQLiteDatabase db = this.getSqliteDb(true);
 

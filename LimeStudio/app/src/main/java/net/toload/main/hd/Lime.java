@@ -52,6 +52,8 @@ public class Lime {
     public static final String DATABASE_CLOUD_IM_ECJ_KEYBOARD = "cj";
 
     public static final String DATABASE_CLOUD_IM_DAYI = DATABASE_CLOUD_URL_BASED + "dayi.zip";
+    public static final String DATABASE_CLOUD_IM_DAYIUNI = DATABASE_CLOUD_URL_BASED + "dayiuni.zip";
+    public static final String DATABASE_CLOUD_IM_DAYIUNIP = DATABASE_CLOUD_URL_BASED + "dayiunip.zip";
     public static final String DATABASE_CLOUD_IM_DAYI_KEYBOARD = "dayisym";
 
     public static final String DATABASE_CLOUD_IM_CJHK = DATABASE_CLOUD_URL_BASED + "cjhk.zip";
@@ -105,6 +107,8 @@ public class Lime {
     public static final String IM_CJ5 = "cj5";
     public static final String IM_CUSTOM = "custom";
     public static final String IM_DAYI = "dayi";
+    public static final String IM_DAYIUNI = "dayiuni";
+    public static final String IM_DAYIUNIP = "dayiunip";
     public static final String IM_ECJ = "ecj";
     public static final String IM_ECJHK = "ecjhk";
     public static final String IM_EZ = "ez";
