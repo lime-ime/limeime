@@ -1407,9 +1407,7 @@ public class LIMEService extends InputMethodService implements
                                     Log.i(TAG, "commitTyped(): new mComposing:'" + mComposing + "'");
                                 if (mComposing.length() > 0) { //Jeremy '12,7,11 only fetch remaining composing when length >0
                                     if (ic != null) ic.setComposingText(mComposing, 1);
-                                    //updateCandidates();
                                     shouldUpdateCandidates = true;
-                                    //return;
                                 }
                             }
                         } else {
@@ -1433,21 +1431,18 @@ public class LIMEService extends InputMethodService implements
 
                         }
 
-                        //Jeremy '13,1,10 do dict update and reverse getMappingByCode after updateRelatedword to shorten the time user see related candidates after select a candidate.
+                        //Jeremy '13,1,10 do update score and reverse lookup after updateRelatedPhrase to shorten the time user see related candidates after select a candidate.
                         if (shouldUpdateCandidates) {
                             updateCandidates();
                         } else {
                             committedCandidate = new Mapping(selectedCandidate);
                             selectedCandidate = null;
-
-
                             clearComposing(false);
-
+                            updateRelatedPhrase(false);
 
                             SearchSrv.learnRelatedPhraseAndUpdateScore(committedCandidate);
-                            SearchSrv.getCodeListStringFromWord(committedCandidate.getWord());
+                            SearchSrv.getCodeListStringFromWord(committedCandidate.getWord());  //do reverse lookup and display notification if required.
 
-                            updateRelatedPhrase(false);
                         }
 
 
