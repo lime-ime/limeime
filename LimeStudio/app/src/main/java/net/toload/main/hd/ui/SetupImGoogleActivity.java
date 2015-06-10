@@ -1,6 +1,7 @@
 package net.toload.main.hd.ui;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -314,6 +315,7 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
     @Override
     public void onConnectionSuspended(int i) {
         Log.i(TAG, "GoogleApiClient connection suspended");
+        finish();
     }
 
     @Override
@@ -321,7 +323,7 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
         Log.i(TAG, "GoogleApiClient connection failed: " + result.toString());
         if (!result.hasResolution()) {
             GooglePlayServicesUtil.getErrorDialog(result.getErrorCode(), this, 0).show();
-            return;
+            finish();
         }
         try {
             result.startResolutionForResult(this, REQUEST_CODE_RESOLUTION);
@@ -330,5 +332,15 @@ public class SetupImGoogleActivity extends ActionBarActivity  implements
             finish();
         }
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_CANCELED) {
+            Log.i(TAG, "#onActivityResult RC_SIGN_IN user cancelled");
+            finish();
+        }
+    }
+
 
 }
