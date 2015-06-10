@@ -296,7 +296,7 @@ public class SearchServer {
 
 		//15,6,8  Jeremy. Do remaining code search and make suggestion mapping to be put in first of candidate lists..
 		List<Mapping> completeCodeResultList =null;
-		if(completeCodeResultPair.first!=null) completeCodeResultList = completeCodeResultPair.first;
+		if(completeCodeResultPair!=null) completeCodeResultList = completeCodeResultPair.first;
 		if(completeCodeResultList!=null && completeCodeResultList.size()>0 && completeCodeResultList.get(0).isExactMatchToCodeRecord() ){
 			Mapping exactMatchMapping = completeCodeResultList.get(0);
 
@@ -339,10 +339,12 @@ public class SearchServer {
 						Mapping remainingCodeExactMatchMapping = resultList.get(0);
 						String phrase = p.first.getWord() + remainingCodeExactMatchMapping.getWord();
 						if(phrase.length()<2) continue; // should not possible.
-						int averageScore = ( p.first.getBasescore() + remainingCodeExactMatchMapping.getBasescore()) / phrase.length() ;
+						int averageScore = ( p.first.getBasescore() + remainingCodeExactMatchMapping.getBasescore())
+								/ phrase.length() *remainingCode.length() ;
 						if(DEBUG||dumpSuggestion)
 							Log.i(TAG,"makeRunTimeSuggestion() remaining code = "+ remainingCode + "" +
-									", got exact match and new phrase = " + phrase + "with score = "+ p.first.getBasescore() +" average score =" + averageScore);
+									", got exact match and new phrase = " + phrase + " with score = "
+									+ p.first.getBasescore() +" average score =" + averageScore);
 
 						//verify if the new phrase is in related table.
 						Mapping relatedMapping = dbadapter.isRelatedPhraseExist(phrase.substring(phrase.length()-2, phrase.length()-1), phrase.substring(phrase.length()-1, phrase.length()));
@@ -352,7 +354,7 @@ public class SearchServer {
 							suggestMapping.setWord(phrase);
 							highestRelatedScore = relatedMapping.getScore();
 							suggestMapping.setScore(highestRelatedScore);
-							suggestMapping.setBasescore(averageScore * 10);
+							suggestMapping.setBasescore(averageScore * 10* phrase.length() );
 							if(DEBUG||dumpSuggestion)
 								Log.i(TAG,"makeRunTimeSuggestion()  run-time suggest phrase verified from related table ="
 										+ phrase + " score = " + highestRelatedScore + " , basescore = "+ suggestMapping.getBasescore());
@@ -483,6 +485,7 @@ public class SearchServer {
 						self.setComposingCodeRecord();
 						// put run-time built suggestion if it's present
 						if(!exactMatchList.isEmpty()   // the last element is run-time built suggestion from remaining code query
+								&& exactMatchList.get(exactMatchList.size()-1).first.getBasescore() > 150
 								&& exactMatchList.get(exactMatchList.size()-1).first.isRuntimeBuiltPhraseRecord()){
 							Mapping phraseMapping = exactMatchList.get(exactMatchList.size()-1).first;
 							if(code.length()<6 || phraseMapping.getWord().length()<4){
