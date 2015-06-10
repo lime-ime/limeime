@@ -28,10 +28,10 @@ import android.util.Pair;
 
 import net.toload.main.hd.data.ImObj;
 import net.toload.main.hd.data.KeyboardObj;
+import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;
@@ -40,7 +40,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SearchServer {
@@ -283,7 +282,9 @@ public class SearchServer {
 						if(phrase.length()<2) continue; // should not possible.
 						int remainingScore = remainingCodeExactMatchMapping.getBasescore();
 						if(remainingScore>150) remainingScore =150;
-						int averageScore = ( p.first.getBasescore() + remainingScore) /phrase.length() *remainingCode.length() ;
+
+						// This is where to control the candidate View list display
+						int averageScore = (( p.first.getBasescore() + remainingScore) / phrase.length() *remainingCode.length()) / 5 ;
 						if(DEBUG||dumpSuggestion)
 							Log.i(TAG,"makeRunTimeSuggestion() remaining code = "+ remainingCode + "" +
 									", got exact match  = " + remainingCodeExactMatchMapping.getWord() + " with base score = "
