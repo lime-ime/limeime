@@ -807,9 +807,9 @@ public class SetupImFragment extends Fragment {
 
     public void finishProgress(final String imtype) {
 
-        cancelProgress();
-
         boolean check = datasource.checkBackuptable(imtype);
+
+        cancelProgress();
 
         if(check){
 
@@ -821,7 +821,6 @@ public class SetupImFragment extends Fragment {
                         public void onClick(DialogInterface dialog, int which) {
 
                             handler.showProgress(true, activity.getResources().getString(R.string.setup_im_restore_learning_data));
-
                             new Thread() {
 
                                 @Override

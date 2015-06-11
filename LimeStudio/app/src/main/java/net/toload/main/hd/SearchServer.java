@@ -301,11 +301,6 @@ public class SearchServer {
 						int previousScore = previousMapping.getBasescore() /previousMapping.getWord().length();
 						int averageScore = ( previousScore + remainingScore)/2;
 
-						// This is where to control the candidate View list display
-<<<<<<< HEAD
-						int averageScore = (( p.first.getBasescore() + remainingScore) / phrase.length() *remainingCode.length()) ;
-=======
->>>>>>> 7876b64c380f341bfbe4676ac146f9d01ca38ab5
 						if(DEBUG||dumpSuggestion)
 							Log.i(TAG,"makeRunTimeSuggestion() remaining code = "+ remainingCode + "" +
 									", got exact match  = " + remainingCodeExactMatchMapping.getWord() + " with base score = "

@@ -2570,83 +2570,94 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 	*  Jeremy '15,5,21
 	 */
     public void restoreUserRecords(final String table) {
+
         if (!checkDBConnection()) return;
+
         String backupTableName = table + "_user";
+
         // check if user data backup table is present and have valid records
         int userRecordsCount = countMapping(backupTableName);
         if (userRecordsCount == 0) return;
-        // start to restore user data
-        // restore user score first
-        db.execSQL("update " + table + " set " + FIELD_SCORE + " = " +
-                " (select "+backupTableName+"."+ FIELD_SCORE +" from " + backupTableName + " where " + table + "." + FIELD_CODE + " = " + backupTableName + "." + FIELD_CODE +
-                " and " + table + "." + FIELD_WORD + " = " + backupTableName + "." + FIELD_WORD + " )");
-        // restore learned phrasees  (base_score is null)
-        db.execSQL("insert into " + table +
-                " select * from " + backupTableName + " where " + FIELD_BASESCORE + " is null");
-        //TODO:  put this into working loadingMappingThread?
-        Cursor cursor = db.rawQuery("select " + FIELD_CODE + " from " + backupTableName, null);
 
-        if (cursor != null) {
+        try {
+            // start to restore user data
+            // restore user score first
+            db.execSQL("update " + table + " set " + FIELD_SCORE + " = " +
+                    " (select " + backupTableName + "." + FIELD_SCORE + " from " + backupTableName + " where " + table + "." + FIELD_CODE + " = " + backupTableName + "." + FIELD_CODE +
+                    " and " + table + "." + FIELD_WORD + " = " + backupTableName + "." + FIELD_WORD + " )");
+            // restore learned phrasees  (base_score is null)
+            db.execSQL("insert into " + table +
+                    " select * from " + backupTableName + " where " + FIELD_BASESCORE + " is null");
 
-            if (cursor.moveToFirst()) {
+            //TODO:  put this into working loadingMappingThread?
+            Cursor cursor = db.rawQuery("select " + FIELD_CODE + " from " + backupTableName, null);
 
-                int codeColumn = cursor.getColumnIndex(FIELD_CODE);
-                HashSet<String> codeList = new HashSet<>();
-                do {
-                    String code = cursor.getString(codeColumn);
-                    codeList.add(code);
-                    if (code.length() > 1) {
-                        int len = code.length();
-                        if (len > 5) len = 5; //Jeremy '12,6,12 track code bakcward for 5 levels.
-                        for (int k = 1; k < len; k++) {
-                            String subCode = code.substring(0, code.length() - k);
-                            codeList.add(subCode);
+            if (cursor != null) {
+
+                if (cursor.moveToFirst()) {
+
+                    int codeColumn = cursor.getColumnIndex(FIELD_CODE);
+                    HashSet<String> codeList = new HashSet<>();
+                    do {
+                        String code = cursor.getString(codeColumn);
+                        codeList.add(code);
+                        if (code.length() > 1) {
+                            int len = code.length();
+                            if (len > 5)
+                                len = 5; //Jeremy '12,6,12 track code bakcward for 5 levels.
+                            for (int k = 1; k < len; k++) {
+                                String subCode = code.substring(0, code.length() - k);
+                                codeList.add(subCode);
+                            }
                         }
-                    }
-                } while (cursor.moveToNext());
+                    } while (cursor.moveToNext());
 
-                db.beginTransaction();
-                try {
-                    for (String entry : codeList) {
-                        //if(threadAborted) 	break;
-                        //progressPercentageDone = (int) ((float)(i++)/(float)entrySize *50 +50);
-                        //f(progressPercentageDone>99) progressPercentageDone = 99;
-                        //if(DEBUG)
-                        //	Log.i(TAG, "loadFileV2():building related list:" + i +"/" + entrySize);
-                        try {
-                            updateSimilarCodeListInRelatedColumnOnDB(db, table, entry);
+                    db.beginTransaction();
+                    try {
+                        for (String entry : codeList) {
+                            //if(threadAborted) 	break;
+                            //progressPercentageDone = (int) ((float)(i++)/(float)entrySize *50 +50);
+                            //f(progressPercentageDone>99) progressPercentageDone = 99;
+                            //if(DEBUG)
+                            //	Log.i(TAG, "loadFileV2():building related list:" + i +"/" + entrySize);
+                            try {
+                                updateSimilarCodeListInRelatedColumnOnDB(db, table, entry);
 
-                        } catch (Exception e2) {
-                            Log.i(TAG, "restoreUserData():create related field error on code =" + entry);
+                            } catch (Exception e2) {
+                                Log.i(TAG, "restoreUserData():create related field error on code =" + entry);
+                            }
+
                         }
+                        codeList.clear();
+                        db.setTransactionSuccessful();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        if (DEBUG)
+                            Log.i(TAG, "restoreUserData():  related list buiding loop final section");
+                        db.endTransaction();
 
                     }
-                    codeList.clear();
-                    db.setTransactionSuccessful();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    if (DEBUG)
-                        Log.i(TAG, "restoreUserData():  related list buiding loop final section");
-                    db.endTransaction();
 
                 }
-
+                cursor.close();
             }
-            cursor.close();
+        }catch(Exception e){
+            e.printStackTrace();
         }
-
-
     }
 
     public boolean checkBackuptable(String table) {
 
         try {
             String backupTableName = table + "_user";
-            Cursor cursor = db.rawQuery("select " + FIELD_CODE + " from " + backupTableName, null);
+            Cursor cursor = db.rawQuery("select COUNT(*) as total from " + backupTableName, null);
 
-            if (cursor != null && cursor.getCount() > 0) {
-                Log.i("LIME", "Total size :" + cursor.getCount());
+                   cursor.moveToFirst();
+
+            int total = cursor.getInt(cursor.getColumnIndex("total"));
+            if (total > 0 ) {
+                Log.i("LIME", "Total size :" + total);
                 return true;
             } else {
                 return false;
