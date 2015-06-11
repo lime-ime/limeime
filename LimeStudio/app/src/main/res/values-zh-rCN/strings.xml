@@ -218,4 +218,8 @@
     <string name="error_set_active_im">请先下载输入法或汇入字根档</string>
     <string name="title_activity_setup_im_google">SetupImGoogleActivity</string>
 
+    <string name="smart_chinese_input">smart_chinese_input</string>
+    <string name="preference_smart_chinese_input">开启中文智慧选字</string>
+    <string name="preference_smart_chinese_input_message">部份输入法可能会影响中英混打功能</string>
+
 </resources>

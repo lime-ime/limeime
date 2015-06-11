@@ -408,6 +408,11 @@ public class LIMEPreferenceManager {
 		return Float.parseFloat(sp.getString("keyboard_size", "1"));
 		
 	}
+
+	public boolean getSmartChineseInput(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("smart_chinese_input", true);
+	}
 	
 	public boolean getAutoChineseSymbol(){
 

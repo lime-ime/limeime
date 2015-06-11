@@ -114,6 +114,15 @@
     <PreferenceCategory
         		xmlns:android="http://schemas.android.com/apk/res/android"
                 android:summary="" android:key="lime_im" android:title="@string/im">
+
+		<CheckBoxPreference
+			android:key="smart_chinese_input"
+			android:title="@string/preference_smart_chinese_input"
+			android:summary="@string/preference_smart_chinese_input_message"
+			android:defaultValue="true"
+			/>
+
+
     <CheckBoxPreference
                 android:key="auto_chinese_symbol"
                 android:title="@string/auto_chinese_symbol" 
