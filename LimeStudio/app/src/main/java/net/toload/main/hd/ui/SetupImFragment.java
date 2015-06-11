@@ -820,7 +820,8 @@ public class SetupImFragment extends Fragment {
                     new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
 
-                            handler.showProgress(true, activity.getResources().getString(R.string.setup_im_restore_learning_data));
+                            showProgress(true, activity.getResources().getString(R.string.setup_im_restore_learning_data));
+
                             new Thread() {
 
                                 @Override
