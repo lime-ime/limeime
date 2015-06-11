@@ -301,7 +301,7 @@ public class SearchServer {
 						int previousScore = previousMapping.getBasescore() /previousMapping.getWord().length();
 						int averageScore = ( previousScore + remainingScore)/2;
 
-						if(mLIMEPref.getSmartChineseInput()){
+						if(!mLIMEPref.getSmartChineseInput()){
 							averageScore = 0;
 						}
 
