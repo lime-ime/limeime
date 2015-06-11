@@ -464,12 +464,10 @@ public class SearchServer {
 						// put run-time built suggestion if it's present
 						if(!exactMatchList.isEmpty()   // the last element is run-time built suggestion from remaining code query
 								&& (exactMatchList.get(exactMatchList.size()-1).first.getBasescore()
-								        / exactMatchList.get(exactMatchList.size()-1).first.getWord().length()) > 120
+								        / exactMatchList.get(exactMatchList.size()-1).first.getWord().length()) > 100
 								&& exactMatchList.get(exactMatchList.size()-1).first.isRuntimeBuiltPhraseRecord()){
 							Mapping phraseMapping = exactMatchList.get(exactMatchList.size()-1).first;
-							if(code.length()<8 && phraseMapping.getWord().length()<4){
-								result.add(self);
-							}
+							result.add(self);
 							result.add(phraseMapping);
 						}else{
 							// put self into the first mapping for mixed input.
