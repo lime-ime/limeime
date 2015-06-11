@@ -301,10 +301,6 @@ public class SearchServer {
 						int previousScore = previousMapping.getBasescore() /previousMapping.getWord().length();
 						int averageScore = ( previousScore + remainingScore)/2;
 
-						if(!mLIMEPref.getSmartChineseInput()){
-							averageScore = 0;
-						}
-
 						if(DEBUG||dumpSuggestion)
 							Log.i(TAG,"makeRunTimeSuggestion() remaining code = "+ remainingCode + "" +
 									", got exact match  = " + remainingCodeExactMatchMapping.getWord() + " with base score = "
@@ -408,10 +404,9 @@ public class SearchServer {
 
 			// make run-time suggestion '15, 6, 9 Jeremy.
 			//if(doRunTimeSuggestion)
-			if(doRunTimeSuggestion){
+			if( mLIMEPref.getSmartChineseInput()){
 				makeRunTimeSuggestion(code, completeCodeResultPair);
 			}
-
 
 			// 12,6,4 Jeremy. Descending  abc ab a... Build the result candidate list.
 			//'15,6,4 Jeremy. Do exact search only in between search mode.

@@ -95,7 +95,7 @@
     --><string name="pinyin_reverse_lookup_list">拼音字根反查</string>
 
     <string name="han_convert_option_list">中文簡/繁體字碼轉換</string>
-    <string name="selkey_option_list">選字鍵選項</string>
+    <string name="selkey_option_list">設定選字鍵預選順序</string>
 
 
     <string name="table_list">對應表選取</string>

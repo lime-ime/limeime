@@ -119,7 +119,7 @@
 			android:key="smart_chinese_input"
 			android:title="@string/preference_smart_chinese_input"
 			android:summary="@string/preference_smart_chinese_input_message"
-			android:defaultValue="true"
+			android:defaultValue="false"
 			/>
 
 

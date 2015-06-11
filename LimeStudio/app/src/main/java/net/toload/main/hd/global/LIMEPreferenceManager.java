@@ -411,7 +411,7 @@ public class LIMEPreferenceManager {
 
 	public boolean getSmartChineseInput(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean("smart_chinese_input", true);
+		return sp.getBoolean("smart_chinese_input", false);
 	}
 	
 	public boolean getAutoChineseSymbol(){
