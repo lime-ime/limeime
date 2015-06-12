@@ -434,7 +434,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             // UPdate Related table
             try {
 
-                String BACKUP_OLD_RELATED = "ALTER " + Lime.DB_RELATED + " RENAME TO " + Lime.DB_RELATED + "_old";
+                String BACKUP_OLD_RELATED = "ALTER TABLE " + Lime.DB_RELATED + " RENAME TO " + Lime.DB_RELATED + "_old";
                 execSQL(dbin, BACKUP_OLD_RELATED);
 
                 String CREATE_NEW_TABLE = "";
@@ -449,11 +449,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                 execSQL(dbin, CREATE_NEW_TABLE);
 
-                String CREATE_INDEX = "";
-                CREATE_INDEX += "CREATE INDEX \""+Lime.DB_RELATED+"\".\"related_idx_pword\" ";
-                CREATE_INDEX += "ON \""+Lime.DB_RELATED+"\" (\""+Lime.DB_RELATED_COLUMN_PWORD+"\" ASC); ";
+                try {
+                    String CREATE_INDEX = "";
+                    CREATE_INDEX += "CREATE INDEX \"related_idx_pword\" ";
+                    CREATE_INDEX += "ON \"" + Lime.DB_RELATED + "\" (\"" + Lime.DB_RELATED_COLUMN_PWORD + "\" ASC); ";
 
-                execSQL(dbin, CREATE_INDEX);
+                    execSQL(dbin, CREATE_INDEX);
+                }catch(Exception e){
+                    // ignore index creation error
+                }
 
                 String MIGRATE_DATA = "";
                 MIGRATE_DATA += "INSERT INTO "+Lime.DB_RELATED+"("+Lime.DB_RELATED_COLUMN_PWORD+", "+Lime.DB_RELATED_COLUMN_CWORD+", "+Lime.DB_RELATED_COLUMN_BASESCORE+")";
