@@ -437,20 +437,19 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     String CREATE_NEW_TABLE = "";
 
-                    CREATE_NEW_TABLE += "CREATE TABLE \"" + Lime.DB_RELATED + "\" ( ";
-                    CREATE_NEW_TABLE += "        \"" + Lime.DB_COLUMN_ID + "\"  INTEGER PRIMARY KEY AUTOINCREMENT,";
-                    CREATE_NEW_TABLE += "       \"" + Lime.DB_RELATED_COLUMN_PWORD + "\"  text,";
-                    CREATE_NEW_TABLE += "        \"" + Lime.DB_RELATED_COLUMN_CWORD + "\"  text,";
-                    CREATE_NEW_TABLE += "        \"" + Lime.DB_RELATED_COLUMN_BASESCORE + "\"  INTEGER DEFAULT 0,";
-                    CREATE_NEW_TABLE += "        \"" + Lime.DB_RELATED_COLUMN_USERSCORE + "\"  INTEGER DEFAULT 0  NOT NULL";
-                    CREATE_NEW_TABLE += ");";
+                    CREATE_NEW_TABLE += "CREATE TABLE " +  Lime.DB_RELATED  + " ("
+                                    + Lime.DB_COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                                    + Lime.DB_RELATED_COLUMN_PWORD + " text, "
+                                    + Lime.DB_RELATED_COLUMN_CWORD + " text, "
+                                    + Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER, "
+                                    + Lime.DB_RELATED_COLUMN_USERSCORE + " INTEGER DEFAULT 0  NOT NULL)";
 
                     execSQL(dbin, CREATE_NEW_TABLE);
 
                     try {
                         String CREATE_INDEX = "";
-                        CREATE_INDEX += "CREATE INDEX \"related_idx_pword\" ";
-                        CREATE_INDEX += "ON \"" + Lime.DB_RELATED + "\" (\"" + Lime.DB_RELATED_COLUMN_PWORD + "\" ); ";
+                        CREATE_INDEX += "CREATE INDEX related_idx_pword "
+                                                   +"ON " + Lime.DB_RELATED + "("+ Lime.DB_RELATED_COLUMN_PWORD +"); ";
 
                         execSQL(dbin, CREATE_INDEX);
                     } catch (Exception e) {
@@ -458,8 +457,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     }
 
                     String MIGRATE_DATA = "";
-                    MIGRATE_DATA += "INSERT INTO " + Lime.DB_RELATED + "(" + Lime.DB_RELATED_COLUMN_PWORD + ", " + Lime.DB_RELATED_COLUMN_CWORD + ", " + Lime.DB_RELATED_COLUMN_BASESCORE + ")";
-                    MIGRATE_DATA += "SELECT " + Lime.DB_RELATED_COLUMN_PWORD + ", " + Lime.DB_RELATED_COLUMN_CWORD + ", score FROM " + Lime.DB_RELATED + "_old";
+                    MIGRATE_DATA += "INSERT INTO " + Lime.DB_RELATED + "("
+                            + Lime.DB_RELATED_COLUMN_PWORD + ", "
+                            + Lime.DB_RELATED_COLUMN_CWORD + ", "
+                            + Lime.DB_RELATED_COLUMN_USERSCORE +","
+                            + Lime.DB_RELATED_COLUMN_BASESCORE + ")";
+                    MIGRATE_DATA += "SELECT " + Lime.DB_RELATED_COLUMN_PWORD + ", "
+                            + Lime.DB_RELATED_COLUMN_CWORD + ", user_score, score  FROM " + Lime.DB_RELATED + "_old";
 
                     execSQL(dbin, MIGRATE_DATA);
 
@@ -473,7 +477,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
             }else{
                 String add_column = "ALTER TABLE " + Lime.DB_RELATED + " ADD ";
-                add_column += Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER DEFAULT 0 NOT NULL";
+                add_column += Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER DEFAULT 0 ";
                 execSQL(dbin, add_column);
             }
 
@@ -818,7 +822,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     Log.i(TAG, "addOrUpdateRelatedPhraseRecord(): new record, dictotal:" + dictotal);
             } else {//the item exist in preload related database.
                 if (relatedscore.get(munit.getId()) == null) {
-                    score = munit.getUserscore() + 1;
+                    score = munit.getScore() + 1;
                     relatedscore.put(munit.getId(), score);
                 } else {
                     score = relatedscore.get(munit.getId()) + 1;
@@ -914,7 +918,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     int score;
                     if (relatedscore.get(srcunit.getId()) == null) {
-                        score = srcunit.getUserscore() + 1;
+                        score = srcunit.getScore() + 1;
                         relatedscore.put(srcunit.getId(), score);
                     } else {
                         score = relatedscore.get(srcunit.getId()) + 1;
@@ -2537,7 +2541,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 } else {
                     cursor = db.query(Lime.DB_RELATED, null, FIELD_DIC_pword + " = '" + pword
                             + "' and " + FIELD_DIC_cword + " is not null "
-                            , null, null, null, Lime.DB_RELATED_COLUMN_USERSCORE + " DESC, " + Lime.DB_RELATED_COLUMN_BASESCORE + " DESC", limitClause);
+                            , null, null, null, Lime.DB_RELATED_COLUMN_USERSCORE + " DESC, "
+                            + Lime.DB_RELATED_COLUMN_BASESCORE + " DESC", limitClause);
                 }
                 if (cursor != null) {
 
@@ -2550,8 +2555,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             munit.setPword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_PWORD)));
                             munit.setCode("");
                             munit.setWord(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD)));
-                            munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_BASESCORE)));
-                            munit.setUserscore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
+                            munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
+                            munit.setBasescore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_BASESCORE)));
                             munit.setRelatedPhraseRecord();
                             result.add(munit);
                             rsize++;
