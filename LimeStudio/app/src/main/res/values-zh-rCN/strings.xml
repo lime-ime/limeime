@@ -96,8 +96,7 @@
     <string name="payment_plan_1">USD 0.99 / 永久移除广告</string>
     <string name="payment_plan_2">USD 1.99 / 永久移除广告</string>
     <string name="payment_plan_3">USD 2.99 / 永久移除广告</string>
-    <string name="payment_service_failed">Google Play 服务无法正常启用，请稍后再试 !</string>
-    <string name="payment_service_success">感谢您对于 LIME 开发团队的支持，我们会持续努力，提供更好的服务给所有的使用者 !!!</string>
+    <string name="payment_service_failed">Google Play 服务无法正常启用，请稍后再试 !</string><string name="payment_service_success">感谢您对于LIME 开发团队的支持，我们会持续努力，提供更好的服务给所有的使用者!!!\n\n 若程式下方仍显示广告区块，请您完全退出莱姆输入法设定程式后再重新进入。 </string>
 
     <string name="default_menu_initial">设定输入法</string>
     <string name="default_menu_related">管理关联字库</string>
@@ -202,15 +201,34 @@
 
     <string name="help_dialog_title">使用说明</string>
     <string name="help_dialog_detail">
-        \n** 若文字无法正确输入，建议您重新下载或汇入字根文档, 如果选字与送出的字不同，请关闭喜好设定的中文简/繁体字码转换.\n
-	    \n版本更新说明\n\n
+        \n** 若文字无法正确输入，建议您重新下载或汇入字根档案, 如果选字与送出的字不同，请关闭喜好设定的中文简/繁体字码转换.\n
+\n版本更新说明\n\n
+        5.0.1 版本新功能\n\n
 
-		LIME中文输入法Facebook粉丝专页\n
-		http://facebook.com/limeime/\n\n
-		LIME 使用与操作说明\n
-		http://netkidz.net/blog/\nhttp://goo.gl/vtW1F\n\n
+        - 编辑输入法字根\n
+        - 编辑关联字库\n
 
-		由于装置种类繁多，目前尚无法兼顾到各种不同键盘及硬体配置，若程式尚未支援您的硬体设备还请见谅。若您对莱姆输入法感兴趣，欢迎加入开发或测试的行列亦欢迎您直接赞助开发团队。\n
+        - 分享输入法字库\n
+
+        - 快速备份还原\n
+        - 更新云端备份模组\n
+        - 备份选字顺序及喜好设定\n
+
+        - 新增连打智慧选字\n
+        - 提升输入法查询效率\n
+        - 提升关联字查询效率\n
+
+        - 平面化输入法键盘显示\n
+        - 新增赞助、广告移除模组\n\n
+
+        感谢大易输入法发明者王赞杰先生，莱姆正式获得使用授权\n\n
+
+        LIME中文输入法Facebook粉丝专页\n
+        http://facebook.com/limeime/\n\n
+        LIME 使用与操作说明\n
+        http://netkidz.net/blog/\nhttp://goo.gl/vtW1F\n\n
+
+        由于装置种类繁多，目前尚无法兼顾到各种不同键盘及硬体配置，若程式尚未支援您的硬体设备还请见谅。若您对莱姆输入法感兴趣，欢迎加入开发或测试的行列亦欢迎您直接赞助开发团队。 \n
     </string>
 
     <string name="error_import_db">汇入失败，可能是文档毁损或格式错误，请再试一次</string>

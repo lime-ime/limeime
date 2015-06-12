@@ -97,7 +97,7 @@
     <string name="payment_plan_2">USD 1.99 / 永久移除廣告</string>
     <string name="payment_plan_3">USD 2.99 / 永久移除廣告</string>
     <string name="payment_service_failed">Google Play 服務無法正常啟用，請稍後再試 !</string>
-    <string name="payment_service_success">感謝您對於 LIME 開發團隊的支持，我們會持續努力，提供更好的服務給所有的使用者 !!!</string>
+    <string name="payment_service_success">感謝您對於 LIME 開發團隊的支持，我們會持續努力，提供更好的服務給所有的使用者 !!! \n\n 若程式下方仍顯示廣告區塊，請您完全退出萊姆輸入法設定程式後再重新進入。</string>
 
     <string name="default_menu_initial">設定輸入法</string>
     <string name="default_menu_related">管理關聯字庫</string>
@@ -204,6 +204,25 @@
     <string name="help_dialog_detail">
         \n** 若文字無法正確輸入，建議您重新下載或匯入字根檔案, 如果選字與送出的字不同，請關閉喜好設定的中文簡/繁體字碼轉換.\n
 	    \n版本更新說明\n\n
+        5.0.1 版本新功能\n\n
+
+        - 編輯輸入法字根\n
+        - 編輯關聯字庫\n
+
+        - 分享輸入法字庫\n
+
+        - 快速備份還原\n
+        - 更新雲端備份模組\n
+        - 備份選字順序及喜好設定\n
+
+        - 新增連打智慧選字\n
+        - 提升輸入法查詢效率\n
+        - 提升關聯字查詢效率\n
+
+        - 平面化輸入法鍵盤顯示\n
+        - 新增贊助、廣告移除模組\n\n
+
+        感謝大易輸入法發明者王贊傑先生，萊姆正式獲得使用授權\n\n
 
 		LIME中文輸入法Facebook粉絲專頁\n
 		http://facebook.com/limeime/\n\n
