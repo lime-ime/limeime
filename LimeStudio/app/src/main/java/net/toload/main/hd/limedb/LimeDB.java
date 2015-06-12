@@ -2516,7 +2516,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     String selectString =
                             "SELECT " + FIELD_ID + ", " + FIELD_DIC_pword + ", " + FIELD_DIC_cword + ", "
-                                    + FIELD_SCORE + ", " + Lime.DB_RELATED_COLUMN_USERSCORE
+                                    + Lime.DB_RELATED_COLUMN_BASESCORE + ", " + Lime.DB_RELATED_COLUMN_USERSCORE
                                     + ", length(" + FIELD_DIC_pword + ") as len FROM " + Lime.DB_RELATED + " where "
                                     + FIELD_DIC_pword + " = '" + pword
                                     + "' or " + FIELD_DIC_pword + " = '" + last
