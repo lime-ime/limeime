@@ -785,6 +785,9 @@ public class CandidateView extends View implements View.OnClickListener {
             if (count != mCount || mSuggestions.size() == 0)
                 return;  // mSuggestion is updated, force abort
             String suggestion = mSuggestions.get(i).getWord();
+            if(mSuggestions.get(i).isComposingCodeRecord() && mSuggestions.size()>1 && mSuggestions.get(i+1).isRuntimeBuiltPhraseRecord() && suggestion.length() >8){
+                suggestion = suggestion.substring(0, 2) + "..";
+            }
             float textWidth = paint.measureText(suggestion);
             final int wordWidth = (int) textWidth + X_GAP * 2;
 
@@ -822,8 +825,11 @@ public class CandidateView extends View implements View.OnClickListener {
                 if (count != mCount || mSuggestions.size() == 0) break;
 
                 String suggestion = mSuggestions.get(i).getWord();
-                int c = i + 1;
+                if(mSuggestions.get(i).isComposingCodeRecord() && mSuggestions.size()>1 && mSuggestions.get(i+1).isRuntimeBuiltPhraseRecord() && suggestion.length() >8){
+                    suggestion = suggestion.substring(0, 2) + "..";
+                }
 
+                    int c = i + 1;
                 switch (mSuggestions.get(i).getRecordType()){
                     case Mapping.RECORD_EXACT_MATCH_TO_CODE:
                     case Mapping.RECORD_PARTIAL_MATCH_TO_CODE:
