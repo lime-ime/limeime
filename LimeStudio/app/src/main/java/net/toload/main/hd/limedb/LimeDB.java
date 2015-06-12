@@ -401,7 +401,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
        Log.i(TAG, "OnUpgrade() db old version = " + oldVersion + ", new version = " + newVersion);
 
-        if (oldVersion < 80) {
+        if (oldVersion < 100) {
 
 
             long startTime=System.currentTimeMillis();
