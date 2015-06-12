@@ -431,47 +431,53 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             long endTime = System.currentTimeMillis();
             Log.i( TAG, "OnUpgrade() build phonetic code3r finished.  Elapsed time = " + (endTime-startTime) + "ms.");
 
-            // UPdate Related table
-            try {
-
-                String BACKUP_OLD_RELATED = "ALTER TABLE " + Lime.DB_RELATED + " RENAME TO " + Lime.DB_RELATED + "_old";
-                execSQL(dbin, BACKUP_OLD_RELATED);
-
-                String CREATE_NEW_TABLE = "";
-
-                CREATE_NEW_TABLE += "CREATE TABLE \""+Lime.DB_RELATED+"\" ( ";
-                CREATE_NEW_TABLE += "        \""+Lime.DB_COLUMN_ID+"\"  INTEGER PRIMARY KEY AUTOINCREMENT,";
-                CREATE_NEW_TABLE += "       \""+Lime.DB_RELATED_COLUMN_PWORD+"\"  text,";
-                CREATE_NEW_TABLE += "        \""+Lime.DB_RELATED_COLUMN_CWORD+"\"  text,";
-                CREATE_NEW_TABLE += "        \""+Lime.DB_RELATED_COLUMN_BASESCORE+"\"  integer,";
-                CREATE_NEW_TABLE += "        \""+Lime.DB_RELATED_COLUMN_USERSCORE+"\"  INTEGER DEFAULT 0";
-                CREATE_NEW_TABLE += ");";
-
-                execSQL(dbin, CREATE_NEW_TABLE);
-
+            // Update Related table
+            if(oldVersion > 78) {
                 try {
-                    String CREATE_INDEX = "";
-                    CREATE_INDEX += "CREATE INDEX \"related_idx_pword\" ";
-                    CREATE_INDEX += "ON \"" + Lime.DB_RELATED + "\" (\"" + Lime.DB_RELATED_COLUMN_PWORD + "\" ASC); ";
 
-                    execSQL(dbin, CREATE_INDEX);
-                }catch(Exception e){
-                    // ignore index creation error
+                    String BACKUP_OLD_RELATED = "ALTER TABLE " + Lime.DB_RELATED + " RENAME TO " + Lime.DB_RELATED + "_old";
+                    execSQL(dbin, BACKUP_OLD_RELATED);
+
+                    String CREATE_NEW_TABLE = "";
+
+                    CREATE_NEW_TABLE += "CREATE TABLE \"" + Lime.DB_RELATED + "\" ( ";
+                    CREATE_NEW_TABLE += "        \"" + Lime.DB_COLUMN_ID + "\"  INTEGER PRIMARY KEY AUTOINCREMENT,";
+                    CREATE_NEW_TABLE += "       \"" + Lime.DB_RELATED_COLUMN_PWORD + "\"  text,";
+                    CREATE_NEW_TABLE += "        \"" + Lime.DB_RELATED_COLUMN_CWORD + "\"  text,";
+                    CREATE_NEW_TABLE += "        \"" + Lime.DB_RELATED_COLUMN_BASESCORE + "\"  INTEGER DEFAULT 0,";
+                    CREATE_NEW_TABLE += "        \"" + Lime.DB_RELATED_COLUMN_USERSCORE + "\"  INTEGER DEFAULT 0  NOT NULL";
+                    CREATE_NEW_TABLE += ");";
+
+                    execSQL(dbin, CREATE_NEW_TABLE);
+
+                    try {
+                        String CREATE_INDEX = "";
+                        CREATE_INDEX += "CREATE INDEX \"related_idx_pword\" ";
+                        CREATE_INDEX += "ON \"" + Lime.DB_RELATED + "\" (\"" + Lime.DB_RELATED_COLUMN_PWORD + "\" ); ";
+
+                        execSQL(dbin, CREATE_INDEX);
+                    } catch (Exception e) {
+                        // ignore index creation error
+                    }
+
+                    String MIGRATE_DATA = "";
+                    MIGRATE_DATA += "INSERT INTO " + Lime.DB_RELATED + "(" + Lime.DB_RELATED_COLUMN_PWORD + ", " + Lime.DB_RELATED_COLUMN_CWORD + ", " + Lime.DB_RELATED_COLUMN_BASESCORE + ")";
+                    MIGRATE_DATA += "SELECT " + Lime.DB_RELATED_COLUMN_PWORD + ", " + Lime.DB_RELATED_COLUMN_CWORD + ", score FROM " + Lime.DB_RELATED + "_old";
+
+                    execSQL(dbin, MIGRATE_DATA);
+
+                    String DROP_OLD_TABLE = "DROP TABLE " + Lime.DB_RELATED + "_old";
+                    execSQL(dbin, DROP_OLD_TABLE);
+
+                    // Download and restore related DB
+
+                } catch (SQLiteException e) {
+                    e.printStackTrace();
                 }
-
-                String MIGRATE_DATA = "";
-                MIGRATE_DATA += "INSERT INTO "+Lime.DB_RELATED+"("+Lime.DB_RELATED_COLUMN_PWORD+", "+Lime.DB_RELATED_COLUMN_CWORD+", "+Lime.DB_RELATED_COLUMN_BASESCORE+")";
-                MIGRATE_DATA += "SELECT "+Lime.DB_RELATED_COLUMN_PWORD+", "+Lime.DB_RELATED_COLUMN_CWORD+", score FROM " + Lime.DB_RELATED + "_old";
-
-                execSQL(dbin, MIGRATE_DATA);
-
-                String DROP_OLD_TABLE = "DROP TABLE " + Lime.DB_RELATED + "_old";
-                execSQL(dbin, DROP_OLD_TABLE);
-
-                // Download and restore related DB
-
-            } catch (SQLiteException e) {
-                e.printStackTrace();
+            }else{
+                String add_column = "ALTER TABLE " + Lime.DB_RELATED + " ADD ";
+                add_column += Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER DEFAULT 0 NOT NULL";
+                execSQL(dbin, add_column);
             }
 
         }
