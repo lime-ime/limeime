@@ -319,7 +319,7 @@ public class SearchServer {
 							suggestMapping.setRuntimeBuiltPhraseRecord();
 							suggestMapping.setCode(code);
 							suggestMapping.setWord(phrase);
-							highestRelatedScore = relatedMapping.getScore();
+							highestRelatedScore = relatedMapping.getBasescore();
 							suggestMapping.setScore(highestRelatedScore);
 
 							suggestMapping.setBasescore( ( averageScore + 50 ) *phraseLen);

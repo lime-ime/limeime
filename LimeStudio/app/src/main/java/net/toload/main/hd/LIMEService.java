@@ -418,7 +418,7 @@ public class LIMEService extends InputMethodService implements
 
         if (mCandidateList != null)
             mCandidateList.clear();
-        if(mCandidateView!=null)
+        if (mCandidateView != null)
             mCandidateView.clear();
     }
 
@@ -799,7 +799,7 @@ public class LIMEService extends InputMethodService implements
         //Jeremy '12,5,28 after honeycomb use the metastate sent form KeyEvent to proces the shift/cap_lock etc...
 
         int metaState;
-        if ( mLIMEPref.getPhysicalKeyboardType().equals("standard"))
+        if (mLIMEPref.getPhysicalKeyboardType().equals("standard"))
             metaState = event.getMetaState();
         else
             metaState = LIMEMetaKeyKeyListener.getMetaState(mMetaState);
@@ -889,7 +889,7 @@ public class LIMEService extends InputMethodService implements
             //Jeremy '15,5,30 for physical keyboard
             onlyShiftPress = false;
             lastKeyCtrl = false;
-            spaceKeyPress= false;
+            spaceKeyPress = false;
         }
 
 
@@ -974,7 +974,7 @@ public class LIMEService extends InputMethodService implements
                             && hasCandidatesShown
                             && (mComposing.length() > 0
                             || (selectedCandidate != null && !selectedCandidate.isComposingCodeRecord()
-                            && !hasChineseSymbolCandidatesShown) )) {
+                            && !hasChineseSymbolCandidatesShown))) {
                         if (DEBUG)
                             Log.i(TAG, "KEYCODE_BACK clearcomposing only.");
                         clearComposing(false);
@@ -1222,7 +1222,7 @@ public class LIMEService extends InputMethodService implements
                     mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
                     setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
                     return true;
-                }else if(onlyShiftPress){
+                } else if (onlyShiftPress) {
                     this.switchChiEng();
                     return true;
                 }
@@ -1286,7 +1286,7 @@ public class LIMEService extends InputMethodService implements
             case KeyEvent.KEYCODE_SPACE:
                 //Jeremy move the chi/eng swithcing to on_KEY_UP '11,6,18
 
-                if(!spaceKeyPress && lastKeyCtrl){ //missing space down event when ctrl-space is pressed
+                if (!spaceKeyPress && lastKeyCtrl) { //missing space down event when ctrl-space is pressed
                     this.switchChiEng();
                     return true;
                 }
@@ -1319,7 +1319,7 @@ public class LIMEService extends InputMethodService implements
             Log.i(TAG, "commitTyped()");
         try {
             if (mComposing.length() > 0   //denotes composing just finished
-             ||( selectedCandidate != null && ! selectedCandidate.isComposingCodeRecord() )){ // commit selected candidate if it is not the composing text. '15,6,4 Jeremy
+                    || (selectedCandidate != null && !selectedCandidate.isComposingCodeRecord())) { // commit selected candidate if it is not the composing text. '15,6,4 Jeremy
 
                 if (!mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                     if (selectedCandidate != null && selectedCandidate.getWord() != null
@@ -1784,7 +1784,7 @@ public class LIMEService extends InputMethodService implements
         handleClose();
         Intent intent = new Intent();
         /*if(android.os.Build.VERSION.SDK_INT < 11)  //Jeremy '12,4,30 Add for deprecated preferenceActivity after API 11 (HC)
-	    	intent.setClass(LIMEService.this, LIMEPreference.class);
+            intent.setClass(LIMEService.this, LIMEPreference.class);
 	    else*/
         intent.setClass(LIMEService.this, LIMEPreferenceHC.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -1894,7 +1894,7 @@ public class LIMEService extends InputMethodService implements
 
             try {
                 activeIM = activatedIMList.get(0);
-            }catch(IndexOutOfBoundsException e){
+            } catch (IndexOutOfBoundsException e) {
                 //Toast.makeText(this, getResources().getString(R.string.error_set_active_im), Toast.LENGTH_LONG).show();
             }
             //initializeIMKeyboard();
@@ -2088,93 +2088,93 @@ public class LIMEService extends InputMethodService implements
 
             final LinkedList<Mapping> list = new LinkedList<>();
 
-                String keyString = mComposing.toString();
+            String keyString = mComposing.toString();
 
-                //Art '30,Sep,2011 restrict the length of composing text for Stroke5
-                if (currentSoftKeyboard.contains("wb")) {
-                    if (keyString.length() > 5) {
-                        keyString = keyString.substring(0, 5);
-                        mComposing = new StringBuilder();
-                        mComposing.append(keyString);
-                        InputConnection ic = getCurrentInputConnection();
-                        ic.setComposingText(keyString, 1);
-                    }
+            //Art '30,Sep,2011 restrict the length of composing text for Stroke5
+            if (currentSoftKeyboard.contains("wb")) {
+                if (keyString.length() > 5) {
+                    keyString = keyString.substring(0, 5);
+                    mComposing = new StringBuilder();
+                    mComposing.append(keyString);
+                    InputConnection ic = getCurrentInputConnection();
+                    ic.setComposingText(keyString, 1);
                 }
+            }
 
-                final String finalKeyString = keyString;
-                if(queryThread!=null && queryThread.isAlive()) queryThread.interrupt();
+            final String finalKeyString = keyString;
+            final boolean finalHasPhysicalKeyPressed = hasPhysicalKeyPressed;
+            if (queryThread != null && queryThread.isAlive()) queryThread.interrupt();
+            queryThread = new Thread() {
 
-                queryThread = new Thread() {
+                public void run() {
 
-                    public void run() {
+                    try {
+                        list.addAll(SearchSrv.getMappingByCode(finalKeyString, !finalHasPhysicalKeyPressed, getAllRecords));
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        sleep(1);
+                    } catch (InterruptedException ignored) {
+                        return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
+                    }
+                    //Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
+                    if (list.size() > 0) {
+                        // Setup sel key display if
+                        String selkey = null;
+                        if (disable_physical_selection && finalHasPhysicalKeyPressed) {
+                            selkey = "";
+                        } else {
+                            try {
+                                selkey = SearchSrv.getSelkey();
+                            } catch (RemoteException e) {
+                                e.printStackTrace();
+                            }
+                            String mixedModeSelkey = "`";
+                            if (hasSymbolMapping && !activeIM.equals("dayi")
+                                    && !(activeIM.equals("phonetic")
+                                    && mLIMEPref.getPhoneticKeyboardType().equals("standard"))) {
+                                mixedModeSelkey = " ";
+                            }
 
-                        try {
-                            list.addAll(SearchSrv.getMappingByCode(finalKeyString, !hasPhysicalKeyPressed, getAllRecords));
-                        } catch (RemoteException e) {
-                            e.printStackTrace();
+
+                            int selkeyOption = mLIMEPref.getSelkeyOption();
+                            if (selkeyOption == 1) selkey = mixedModeSelkey + selkey;
+                            else if (selkeyOption == 2) selkey = mixedModeSelkey + " " + selkey;
                         }
+
                         try {
                             sleep(1);
                         } catch (InterruptedException ignored) {
                             return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                         }
-                        //Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
-                        if (list.size() > 0) {
-                            // Setup sel key display if
-                            String selkey = null;
-                            if (disable_physical_selection && hasPhysicalKeyPressed) {
-                                selkey = "";
-                            } else {
-                                try {
-                                    selkey = SearchSrv.getSelkey();
-                                } catch (RemoteException e) {
-                                    e.printStackTrace();
-                                }
-                                String mixedModeSelkey = "`";
-                                if (hasSymbolMapping && !activeIM.equals("dayi")
-                                        && !(activeIM.equals("phonetic")
-                                        && mLIMEPref.getPhoneticKeyboardType().equals("standard"))) {
-                                    mixedModeSelkey = " ";
-                                }
+                        setSuggestions(list, finalHasPhysicalKeyPressed, selkey);
 
+                        if (DEBUG) Log.i(TAG, "updateCandidates(): display selkey:" + selkey
+                                + "list.size:" + list.size());
+                    } else {
+                        //Jeremy '11,8,14
+                        clearSuggestions();
+                    }
 
-                                int selkeyOption = mLIMEPref.getSelkeyOption();
-                                if (selkeyOption == 1) selkey = mixedModeSelkey + selkey;
-                                else if (selkeyOption == 2) selkey = mixedModeSelkey + " " + selkey;
-                            }
-
+                    // Show composing window if keyToKeyname got different string. Revised by Jeremy '11,6,4
+                    if (SearchSrv.getTablename() != null) {
+                        String keynameString = SearchSrv.keyToKeyname(finalKeyString); //.toLowerCase(Locale.US)); moved to LimeDB
+                        if (mCandidateView != null
+                                && !keynameString.toUpperCase(Locale.US).equals(finalKeyString.toUpperCase(Locale.US))
+                                && !keynameString.trim().equals("")
+                                ) {
                             try {
                                 sleep(1);
                             } catch (InterruptedException ignored) {
                                 return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                             }
-                            setSuggestions(list, hasPhysicalKeyPressed, selkey);
-
-                            if (DEBUG) Log.i(TAG, "updateCandidates(): display selkey:" + selkey
-                                    + "list.size:" + list.size());
-                        } else {
-                            //Jeremy '11,8,14
-                            clearSuggestions();
-                        }
-
-                        // Show composing window if keyToKeyname got different string. Revised by Jeremy '11,6,4
-                        if (SearchSrv.getTablename() != null) {
-                            String keynameString = SearchSrv.keyToKeyname(finalKeyString); //.toLowerCase(Locale.US)); moved to LimeDB
-                            if (mCandidateView != null
-                                    && !keynameString.toUpperCase(Locale.US).equals(finalKeyString.toUpperCase(Locale.US))
-                                    && !keynameString.trim().equals("")
-                                    ) {
-                                try {
-                                    sleep(1);
-                                } catch (InterruptedException ignored) {
-                                    return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
-                                }
-                                mCandidateView.setComposingText(keynameString);
-                            }
+                            mCandidateView.setComposingText(keynameString);
                         }
                     }
-                };
-                queryThread.start();
+                }
+            };
+            queryThread.start();
 
 
         } else
@@ -2229,8 +2229,8 @@ public class LIMEService extends InputMethodService implements
 
                         tempEnglishList.clear();
 
-
-                        if(queryThread!=null && queryThread.isAlive()) queryThread.interrupt();
+                        final boolean finalHasPhysicalKeyPressed = hasPhysicalKeyPressed;
+                        if (queryThread != null && queryThread.isAlive()) queryThread.interrupt();
                         queryThread = new Thread() {
                             public void run() {
                                 final Mapping self = new Mapping();
@@ -2255,7 +2255,7 @@ public class LIMEService extends InputMethodService implements
 
                                     // Setup sel key display if
                                     String selkey = "1234567890";
-                                    if (disable_physical_selection && hasPhysicalKeyPressed) {
+                                    if (disable_physical_selection && finalHasPhysicalKeyPressed) {
                                         selkey = "";
                                     }
                                     try {
@@ -2263,9 +2263,9 @@ public class LIMEService extends InputMethodService implements
                                     } catch (InterruptedException ignored) {
                                         return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                                     }
-                                    setSuggestions(list, hasPhysicalKeyPressed, selkey);
+                                    setSuggestions(list, finalHasPhysicalKeyPressed, selkey);
                                     tempEnglishList.addAll(list);
-                                } else{
+                                } else {
                                     //Jermy '11,8,14
                                     clearSuggestions();
                                 }
@@ -2299,6 +2299,8 @@ public class LIMEService extends InputMethodService implements
         if (committedCandidate != null && committedCandidate.getWord() != null
                 && !committedCandidate.getWord().equals("")) {
 
+            final boolean finalHasPhysicalKeyPressed = hasPhysicalKeyPressed;
+            if (queryThread != null && queryThread.isAlive()) queryThread.interrupt();
             queryThread = new Thread() {
                 public void run() {
 
@@ -2323,11 +2325,11 @@ public class LIMEService extends InputMethodService implements
 
                             // Setup sel key display if
                             String selkey = "1234567890";
-                            if (disable_physical_selection && hasPhysicalKeyPressed) {
+                            if (disable_physical_selection && finalHasPhysicalKeyPressed) {
                                 selkey = "";
                             }
 
-                            setSuggestions(list, hasPhysicalKeyPressed && !isFullscreenMode()
+                            setSuggestions(list, finalHasPhysicalKeyPressed && !isFullscreenMode()
                                     , selkey);
                         } else {
                             committedCandidate = null;
@@ -2395,7 +2397,7 @@ public class LIMEService extends InputMethodService implements
 
         if (mFixedCandidateViewOn) {
             mCandidateViewInInputView.forceHide();
-        }else {
+        } else {
             hideCandidateView();
         }
     }
@@ -2430,14 +2432,12 @@ public class LIMEService extends InputMethodService implements
             );
 
 
-
-
-            if ((!mFixedCandidateViewOn ||hasPhysicalKeyPressed) && mCandidateView != mCandidateViewStandAlone) {
+            if ((!mFixedCandidateViewOn || hasPhysicalKeyPressed) && mCandidateView != mCandidateViewStandAlone) {
                 mCandidateViewInInputView.clear();
                 mCandidateView = mCandidateViewStandAlone; //Jeremy '12,5,4 use standalone candidateView for physical keyboard (no soft keyboard shown)
                 forceHideCandidateView();
-            }else if (mFixedCandidateViewOn && !hasPhysicalKeyPressed &&
-                    mCandidateView !=mCandidateViewInInputView){
+            } else if (mFixedCandidateViewOn && !hasPhysicalKeyPressed &&
+                    mCandidateView != mCandidateViewInInputView) {
                 mCandidateViewStandAlone.clear();
                 hideCandidateView();
                 mCandidateView = mCandidateViewInInputView;
@@ -2452,12 +2452,12 @@ public class LIMEService extends InputMethodService implements
                 mCandidateList = (LinkedList<Mapping>) suggestions;
                 try {
 
-                  if (suggestions.size() > 1 && suggestions.get(1).isExactMatchToCodeRecord() ) {
+                    if (suggestions.size() > 1 && suggestions.get(1).isExactMatchToCodeRecord()) {
                         selectedCandidate = suggestions.get(1);
                         selectedIndex = 1;
                         // this is for no exact match condition with code.  //do not set default suggestion for other record type like chinese punctuation symbols or related phrases. Jeremy '15,6,4
-                    } else if(suggestions.size() > 0
-                          &&( suggestions.get(0).isComposingCodeRecord()|| suggestions.get(0).isRuntimeBuiltPhraseRecord() )) {
+                    } else if (suggestions.size() > 0
+                            && (suggestions.get(0).isComposingCodeRecord() || suggestions.get(0).isRuntimeBuiltPhraseRecord())) {
                         selectedCandidate = suggestions.get(0);
                         selectedIndex = 0;
                     }
@@ -2465,7 +2465,8 @@ public class LIMEService extends InputMethodService implements
                     e.printStackTrace();
                 }
                 mCandidateView.setSuggestions(suggestions, showNumber, diplaySelkey);
-                if (DEBUG) Log.i(TAG, "setSuggestion(): mCandidateList.size: " + mCandidateList.size());
+                if (DEBUG)
+                    Log.i(TAG, "setSuggestion(): mCandidateList.size: " + mCandidateList.size());
             }
         } else {
             if (DEBUG) Log.i(TAG, "setSuggestion() with list=null");
@@ -2493,7 +2494,7 @@ public class LIMEService extends InputMethodService implements
             clearComposing(true);
             //Jeremy '12,4,29 use mEnglishOnly instead of onIM
         } else if (!mEnglishOnly  // composing length == 0 after here
-                && (hasCandidatesShown )// repalce isCandaiteShwon() with hasCandidatesShwn by Jeremy '12,5,6
+                && (hasCandidatesShown)// repalce isCandaiteShwon() with hasCandidatesShwn by Jeremy '12,5,6
                 //&& mLIMEPref.getAutoChineseSymbol()
                 && !hasChineseSymbolCandidatesShown) {
             clearComposing(false);  //Jeremy '12,4,21 composing length 0, no need to force commit again. 
@@ -2639,7 +2640,7 @@ public class LIMEService extends InputMethodService implements
 
         if (mFixedCandidateViewOn) { //Have candidateview in InputView
             //Create inputView if it's null 
-            if (mCandidateInInputView == null || forceRecreate ) {
+            if (mCandidateInInputView == null || forceRecreate) {
                 mCandidateInInputView = (CandidateInInputViewContainer) getLayoutInflater().inflate(
                         R.layout.inputcandidate, null);
                 mInputView = (LIMEKeyboardView) mCandidateInInputView.findViewById(R.id.keyboard);
@@ -2649,7 +2650,7 @@ public class LIMEService extends InputMethodService implements
                 mCandidateViewInInputView = (CandidateView) mCandidateInInputView.findViewById(R.id.candidatesView);
                 mCandidateViewInInputView.setService(this);
             }
-            if(mCandidateView !=mCandidateViewInInputView)
+            if (mCandidateView != mCandidateViewInInputView)
                 mCandidateView = mCandidateViewInInputView;
 
         } else {
@@ -2828,8 +2829,8 @@ public class LIMEService extends InputMethodService implements
 
             }
 
-        //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-        } else if (mEnglishOnly || (selectedCandidate != null && ! selectedCandidate.isComposingCodeRecord())) {
+            //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+        } else if (mEnglishOnly || (selectedCandidate != null && !selectedCandidate.isComposingCodeRecord())) {
             // related candidates view
             String relatedSelkey = "!@#$%^&*()";
             i = relatedSelkey.indexOf(primaryCode);
@@ -3083,8 +3084,8 @@ public class LIMEService extends InputMethodService implements
             if (DEBUG)
                 Log.i(TAG, "pickSuggestionManually():mCompletionOn:" + mCompletionOn);
 
-        } else if ((mComposing.length() > 0 ||(selectedCandidate != null && !selectedCandidate.isComposingCodeRecord()))
-                    && !mEnglishOnly) {  // user picked candidates from composing candidate or related phrase candidates
+        } else if ((mComposing.length() > 0 || (selectedCandidate != null && !selectedCandidate.isComposingCodeRecord()))
+                && !mEnglishOnly) {  // user picked candidates from composing candidate or related phrase candidates
             //Jeremy '12,4,29 use mEnglishOnly instead of onIM
             commitTyped(ic);
         } else if (mLIMEPref.getEnglishPrediction() && tempEnglishList != null
