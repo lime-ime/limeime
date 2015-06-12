@@ -11,8 +11,8 @@ import android.util.Log;
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.Word;
 import net.toload.main.hd.data.KeyboardObj;
+import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 
@@ -45,7 +45,9 @@ public class SetupImLoadRunnable implements Runnable{
     private LimeDB datasource;
     private LIMEPreferenceManager mLIMEPref;
 
-    public SetupImLoadRunnable(Activity activity, SetupImHandler handler, String imtype, String url) {
+    private boolean restorepreference;
+
+    public SetupImLoadRunnable(Activity activity, SetupImHandler handler, String imtype, String url, boolean restorepreference) {
         this.handler = handler;
         this.imtype = imtype;
         this.url = url;
@@ -53,6 +55,7 @@ public class SetupImLoadRunnable implements Runnable{
         this.dbsrv = new DBServer(activity);
         this.datasource = new LimeDB(activity);
         this.mLIMEPref = new LIMEPreferenceManager(activity);
+        this.restorepreference = restorepreference;
     }
 
     @Override
@@ -80,6 +83,22 @@ public class SetupImLoadRunnable implements Runnable{
         mLIMEPref.setParameter("_table", "");
         //mLIMEPref.setResetCacheFlag(true);
         DBServer.resetCache();
+
+        if(restorepreference){
+            handler.updateProgress(activity.getResources().getString(R.string.setup_im_restore_learning_data));
+            handler.updateProgress(0);
+            boolean check = datasource.checkBackuptable(imtype);
+            handler.updateProgress(25);
+            if(check){
+                datasource.restoreUserRecordsStep1(imtype);
+                handler.updateProgress(50);
+                datasource.restoreUserRecordsStep2(imtype);
+                handler.updateProgress(75);
+                datasource.restoreUserRecordsStep3(imtype);
+                handler.updateProgress(100);
+            }
+        }
+
         handler.finishLoading(imtype);
         handler.initialImButtons();
 

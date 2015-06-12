@@ -2569,7 +2569,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 	*  Restore learned user scores and phrases from the backup table to the specified table.
 	*  Jeremy '15,5,21
 	 */
-    public void restoreUserRecords(final String table) {
+    public void restoreUserRecordsStep1(final String table) {
 
         if (!checkDBConnection()) return;
 
@@ -2585,10 +2585,41 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             db.execSQL("update " + table + " set " + FIELD_SCORE + " = " +
                     " (select " + backupTableName + "." + FIELD_SCORE + " from " + backupTableName + " where " + table + "." + FIELD_CODE + " = " + backupTableName + "." + FIELD_CODE +
                     " and " + table + "." + FIELD_WORD + " = " + backupTableName + "." + FIELD_WORD + " )");
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+    public void restoreUserRecordsStep2(final String table) {
+
+        if (!checkDBConnection()) return;
+
+        String backupTableName = table + "_user";
+
+        // check if user data backup table is present and have valid records
+        int userRecordsCount = countMapping(backupTableName);
+        if (userRecordsCount == 0) return;
+
+        try {
             // restore learned phrasees  (base_score is null)
             db.execSQL("insert into " + table +
                     " select * from " + backupTableName + " where " + FIELD_BASESCORE + " is null");
 
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void restoreUserRecordsStep3(final String table) {
+
+        if (!checkDBConnection()) return;
+
+        String backupTableName = table + "_user";
+
+        // check if user data backup table is present and have valid records
+        int userRecordsCount = countMapping(backupTableName);
+        if (userRecordsCount == 0) return;
+
+        try {
             //TODO:  put this into working loadingMappingThread?
             Cursor cursor = db.rawQuery("select " + FIELD_CODE + " from " + backupTableName, null);
 
@@ -2646,6 +2677,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             e.printStackTrace();
         }
     }
+
 
     public boolean checkBackuptable(String table) {
 

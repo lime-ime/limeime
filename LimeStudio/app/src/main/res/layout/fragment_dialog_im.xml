@@ -4,6 +4,17 @@
     android:layout_height="match_parent"
     android:padding="10dp">
 
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:text="@string/setup_im_restore_learning_data"
+        android:id="@+id/chkSetupImRestoreLearning"
+        android:layout_gravity="center_horizontal"
+        android:padding="10dp"
+        android:layout_weight="1"
+        android:checked="true" />
+
     <CheckBox
         android:layout_width="wrap_content"
         android:layout_height="0dp"

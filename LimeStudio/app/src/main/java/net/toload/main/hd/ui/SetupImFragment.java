@@ -807,10 +807,9 @@ public class SetupImFragment extends Fragment {
 
     public void finishProgress(final String imtype) {
 
-        boolean check = datasource.checkBackuptable(imtype);
-
         cancelProgress();
 
+        /*boolean check = datasource.checkBackuptable(imtype);
         if(check){
 
             AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
@@ -841,6 +840,6 @@ public class SetupImFragment extends Fragment {
             alertDialog.show();
         }else{
             handler.cancelProgress();
-        }
+        }*/
     }
 }

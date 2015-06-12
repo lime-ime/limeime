@@ -59,6 +59,7 @@ public class SetupImLoadDialog extends DialogFragment {
     Button btnSetupImDialogCancel;
 
     CheckBox chkSetupImBackupLearning;
+    CheckBox chkSetupImRestoreLearning;
 
     private ConnectivityManager connManager;
 
@@ -98,6 +99,16 @@ public class SetupImLoadDialog extends DialogFragment {
                frg.setArguments(args);
                frg.setHandler(handler);
         return frg;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        Dialog dialog = getDialog();
+        if (dialog != null) {
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        }
     }
 
 
@@ -145,6 +156,7 @@ public class SetupImLoadDialog extends DialogFragment {
         View rootView = inflater.inflate(R.layout.fragment_dialog_im, container, false);
 
         chkSetupImBackupLearning = (CheckBox) rootView.findViewById(R.id.chkSetupImBackupLearning);
+        chkSetupImRestoreLearning = (CheckBox) rootView.findViewById(R.id.chkSetupImRestoreLearning);
 
         btnSetupImDialogCustom = (Button) rootView.findViewById(R.id.btnSetupImDialogCustom);
         btnSetupImDialogLoad1 = (Button) rootView.findViewById(R.id.btnSetupImDialogLoad1);
@@ -169,8 +181,11 @@ public class SetupImLoadDialog extends DialogFragment {
             btnSetupImDialogLoad2.setVisibility(View.GONE);
             btnSetupImDialogLoad3.setVisibility(View.GONE);
             chkSetupImBackupLearning.setVisibility(View.GONE);
+            chkSetupImRestoreLearning.setVisibility(View.GONE);
 
         }else{
+
+            // Display remove IM confirm dialog
             if(imcount > 0){
 
                 getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_dialog_title_remove));
@@ -210,10 +225,18 @@ public class SetupImLoadDialog extends DialogFragment {
                 btnSetupImDialogLoad3.setVisibility(View.GONE);
                 btnSetupImDialogCustom.setVisibility(View.GONE);
 
+                chkSetupImBackupLearning.setVisibility(View.VISIBLE);
+                chkSetupImRestoreLearning.setVisibility(View.GONE);
+
             } else {
+
+                // Display Import IM dialog
 
                 // Remove Backup Learning Data Checkbox
                 chkSetupImBackupLearning.setVisibility(View.GONE);
+
+                // Display Restore User Preference Checkbox
+                chkSetupImRestoreLearning.setVisibility(View.VISIBLE);
 
                 getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_dialog_title));
 
@@ -516,6 +539,8 @@ public class SetupImLoadDialog extends DialogFragment {
 
     public void downloadAndLoadIm(String code, String type){
 
+        boolean restorelearning = chkSetupImRestoreLearning.isChecked();
+
         if (connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()) {
 
             String url = null;
@@ -556,7 +581,7 @@ public class SetupImLoadDialog extends DialogFragment {
                 url = Lime.DATABASE_CLOUD_IM_WB;
             }
 
-            loadthread = new Thread(new SetupImLoadRunnable(getActivity(), handler, code, url));
+            loadthread = new Thread(new SetupImLoadRunnable(getActivity(), handler, code, url, restorelearning));
             loadthread.start();
 
             dismiss();
