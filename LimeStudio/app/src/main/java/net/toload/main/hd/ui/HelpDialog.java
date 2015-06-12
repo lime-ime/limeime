@@ -1,6 +1,7 @@
 package net.toload.main.hd.ui;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
@@ -46,6 +47,16 @@ public class HelpDialog extends DialogFragment {
 		this.setCancelable(false);
 	}
 
+
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		Dialog dialog = getDialog();
+		if (dialog != null) {
+			dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+		}
+	}
 
 	@Override
 	public void onResume() {
