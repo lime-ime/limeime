@@ -395,7 +395,7 @@ public class ManageRelatedFragment extends Fragment {
         Related obj = new Related();
              obj.setPword(pword);
              obj.setCword(cword);
-             obj.setScore(score);
+             obj.setBasescore(score);
 
         String insertsql = Related.getInsertQuery(obj);
 
@@ -424,7 +424,7 @@ public class ManageRelatedFragment extends Fragment {
                 Related check = this.relatedlist.get(i);
                      check.setPword(pword);
                      check.setCword(cword);
-                     check.setScore(score);
+                     check.setBasescore(score);
                 this.relatedlist.remove(i);
                 this.relatedlist.add(i, check);
                 break;
@@ -435,7 +435,7 @@ public class ManageRelatedFragment extends Fragment {
         String updatesql = "UPDATE " + Lime.DB_RELATED + " SET ";
                 updatesql += Lime.DB_RELATED_COLUMN_PWORD + " = \"" + Lime.formatSqlValue(pword) + "\", ";
                 updatesql += Lime.DB_RELATED_COLUMN_CWORD + " = \"" + Lime.formatSqlValue(cword) + "\", ";
-                updatesql += Lime.DB_RELATED_COLUMN_SCORE + " = \"" + score + "\" ";
+                updatesql += Lime.DB_RELATED_COLUMN_BASESCORE + " = \"" + score + "\" ";
                 updatesql += " WHERE " + Lime.DB_RELATED_COLUMN_ID + " = \"" + id + "\"";
 
         datasource.update(updatesql);

@@ -77,7 +77,7 @@ public class ShareRelatedTxtRunnable implements Runnable{
 
             for(Related w: relatedlist){
                 if(w.getPword() == null || w.getCword() == null || w.getCword().isEmpty() ){continue;}
-                String s = w.getPword()+w.getCword()+"|"+w.getScore()+"|"+w.getUserscore();
+                String s = w.getPword()+w.getCword()+"|"+w.getBasescore()+"|"+w.getUserscore();
                 fout.write(s);
                 fout.newLine();
             }

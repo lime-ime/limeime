@@ -12,7 +12,7 @@ public class Related {
 	private int id;
 	private String pword;
 	private String cword;
-	private int score;
+	private int basescore;
 	private int userscore;
 
 	public int getId() {
@@ -39,12 +39,12 @@ public class Related {
 		this.cword = cword;
 	}
 
-	public int getScore() {
-		return score;
+	public int getBasescore() {
+		return basescore;
 	}
 
-	public void setScore(int score) {
-		this.score = score;
+	public void setBasescore(int basescore) {
+		this.basescore = basescore;
 	}
 
 	public int getUserscore() {return userscore;}
@@ -57,7 +57,7 @@ public class Related {
 				record.setPword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_PWORD)));
 				record.setCword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD)));
 				record.setUserscore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
-				record.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_SCORE)));
+				record.setBasescore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_BASESCORE)));
 		return record;
 	}
 
@@ -78,11 +78,11 @@ public class Related {
 		sb.append(Lime.DB_RELATED_COLUMN_PWORD +", ");
 		sb.append(Lime.DB_RELATED_COLUMN_CWORD +", ");
 		sb.append(Lime.DB_RELATED_COLUMN_USERSCORE +", ");
-		sb.append(Lime.DB_RELATED_COLUMN_SCORE +") VALUES(");
+		sb.append(Lime.DB_RELATED_COLUMN_BASESCORE +") VALUES(");
 		sb.append("\""+record.getPword()+"\",");
 		sb.append("\""+record.getCword()+"\",");
 		sb.append("\""+record.getUserscore()+"\",");
-		sb.append("\""+record.getScore()+"\"");
+		sb.append("\""+record.getBasescore()+"\"");
 		sb.append(")");
 		return sb.toString();
 	}

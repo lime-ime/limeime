@@ -415,7 +415,7 @@ public class ImportDialog extends DialogFragment {
 		Related obj = new Related();
 				obj.setPword(pword);
 				obj.setCword(cword);
-				obj.setScore(0);
+				obj.setBasescore(0);
 				obj.setUserscore(1);
 
 		datasource.add(Related.getInsertQuery(obj));

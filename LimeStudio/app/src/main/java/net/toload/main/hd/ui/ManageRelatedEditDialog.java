@@ -228,7 +228,7 @@ public class ManageRelatedEditDialog extends DialogFragment {
 		});
 
 		edtManageRelatedCword.setText(related.getCword());
-		edtManageRelatedScore.setText(related.getScore() + "");
+		edtManageRelatedScore.setText(related.getBasescore() + "");
 		
 		return view;
 	}

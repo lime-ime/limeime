@@ -66,7 +66,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private static String TAG = "LIMEDB";
 
     private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier. Shared db instance for dbserver and searchserver
-    private final static int DATABASE_VERSION = 80;
+    private final static int DATABASE_VERSION = 100;
 
     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
     private final static Boolean betweenSearch = true;
@@ -433,9 +433,39 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
             // Add user score field to related table
             try {
-                String add_column = "ALTER TABLE " + Lime.DB_RELATED + " ADD ";
-                add_column += Lime.DB_RELATED_COLUMN_USERSCORE + " INTEGER DEFAULT 0 NOT NULL";
-                execSQL(dbin, add_column);
+
+                String BACKUP_OLD_RELATED = "ALTER " + Lime.DB_RELATED + " RENAME TO " + Lime.DB_RELATED + "_old";
+                execSQL(dbin, BACKUP_OLD_RELATED);
+
+                String CREATE_NEW_TABLE = "";
+
+                        CREATE_NEW_TABLE += "CREATE TABLE \""+Lime.DB_RELATED+"\" ( ";
+                        CREATE_NEW_TABLE += "        \""+Lime.DB_COLUMN_ID+"\"  INTEGER PRIMARY KEY AUTOINCREMENT,";
+                        CREATE_NEW_TABLE += "       \""+Lime.DB_RELATED_COLUMN_PWORD+"\"  text,";
+                        CREATE_NEW_TABLE += "        \""+Lime.DB_RELATED_COLUMN_CWORD+"\"  text,";
+                        CREATE_NEW_TABLE += "        \""+Lime.DB_RELATED_COLUMN_BASESCORE+"\"  integer,";
+                        CREATE_NEW_TABLE += "        \""+Lime.DB_RELATED_COLUMN_USERSCORE+"\"  INTEGER DEFAULT 0";
+                        CREATE_NEW_TABLE += ");";
+
+                execSQL(dbin, CREATE_NEW_TABLE);
+
+                String CREATE_INDEX = "";
+                        CREATE_INDEX += "CREATE INDEX \""+Lime.DB_RELATED+"\".\"related_idx_pword\" ";
+                        CREATE_INDEX += "ON \""+Lime.DB_RELATED+"\" (\""+Lime.DB_RELATED_COLUMN_PWORD+"\" ASC); ";
+
+                execSQL(dbin, CREATE_INDEX);
+
+                String MIGRATE_DATA = "";
+                        MIGRATE_DATA += "INSERT INTO "+Lime.DB_RELATED+"("+Lime.DB_RELATED_COLUMN_PWORD+", "+Lime.DB_RELATED_COLUMN_CWORD+", "+Lime.DB_RELATED_COLUMN_BASESCORE+")";
+                        MIGRATE_DATA += "SELECT "+Lime.DB_RELATED_COLUMN_PWORD+", "+Lime.DB_RELATED_COLUMN_CWORD+", score FROM " + Lime.DB_RELATED + "_old";
+
+                execSQL(dbin, MIGRATE_DATA);
+
+                String DROP_OLD_TABLE = "DROP TABLE " + Lime.DB_RELATED + "_old";
+                execSQL(dbin, DROP_OLD_TABLE);
+
+                // Download and restore related DB
+
             } catch (SQLiteException e) {
                 e.printStackTrace();
             }
@@ -2420,7 +2450,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                     + "' or " + FIELD_DIC_pword + " = '" + last
                                     + "' and " + FIELD_DIC_cword + " is not null"
                                     + " order by len desc, " + Lime.DB_RELATED_COLUMN_USERSCORE + " desc, "
-                                    + Lime.DB_RELATED_COLUMN_SCORE + " desc ";
+                                    + Lime.DB_RELATED_COLUMN_BASESCORE + " desc ";
 
                     selectString += " limit " + limitClause;
 
@@ -2432,7 +2462,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 } else {
                     cursor = db.query(Lime.DB_RELATED, null, FIELD_DIC_pword + " = '" + pword
                             + "' and " + FIELD_DIC_cword + " is not null "
-                            , null, null, null, Lime.DB_RELATED_COLUMN_USERSCORE + " DESC, " + Lime.DB_RELATED_COLUMN_SCORE + " DESC", limitClause);
+                            , null, null, null, Lime.DB_RELATED_COLUMN_USERSCORE + " DESC, " + Lime.DB_RELATED_COLUMN_BASESCORE + " DESC", limitClause);
                 }
                 if (cursor != null) {
 
@@ -2445,7 +2475,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             munit.setPword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_PWORD)));
                             munit.setCode("");
                             munit.setWord(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD)));
-                            munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_SCORE)));
+                            munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_BASESCORE)));
                             munit.setUserscore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
                             munit.setRelatedPhraseRecord();
                             result.add(munit);
@@ -3428,7 +3458,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 munit.setId(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_ID)));
                 munit.setPword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_PWORD)));
                 munit.setWord(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD)));
-                munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_SCORE)));
+                munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_BASESCORE)));
                 munit.setUserscore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
                 munit.setRelatedPhraseRecord();
 
@@ -4100,7 +4130,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         query += "ifnull(" + Lime.DB_RELATED_COLUMN_CWORD + ", '') <> ''";
 
-        String order = Lime.DB_RELATED_COLUMN_USERSCORE + " desc," + Lime.DB_RELATED_COLUMN_SCORE + " desc";
+        String order = Lime.DB_RELATED_COLUMN_USERSCORE + " desc," + Lime.DB_RELATED_COLUMN_BASESCORE + " desc";
 
         if (maximum > 0) {
             order += " LIMIT " + maximum + " OFFSET " + offset;

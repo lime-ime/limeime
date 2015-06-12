@@ -146,7 +146,7 @@ public class Lime {
     public static final String DB_RELATED_COLUMN_ID = "_id";
     public static final String DB_RELATED_COLUMN_PWORD = "pword";
     public static final String DB_RELATED_COLUMN_CWORD = "cword";
-    public static final String DB_RELATED_COLUMN_SCORE = "score";
+    public static final String DB_RELATED_COLUMN_BASESCORE = "base_score";
     public static final String DB_RELATED_COLUMN_USERSCORE = "user_score";
 
     public static final String DB_KEYBOARD = "keyboard";

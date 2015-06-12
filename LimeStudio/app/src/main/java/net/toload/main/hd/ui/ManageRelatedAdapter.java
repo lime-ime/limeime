@@ -77,7 +77,7 @@ public class ManageRelatedAdapter extends BaseAdapter {
             String cword = r.getCword();
             String text = pword+" " + cword;
 
-            int freq = r.getScore();
+            int freq = r.getBasescore();
 
             if(text.length() > 6){
                 text = text.substring(0,6) + "...";
