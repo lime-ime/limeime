@@ -3536,8 +3536,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 munit.setId(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_ID)));
                 munit.setPword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_PWORD)));
                 munit.setWord(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD)));
-                munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_BASESCORE)));
-                munit.setUserscore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
+                munit.setBasescore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_BASESCORE)));
+                munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
                 munit.setRelatedPhraseRecord();
 
             }
