@@ -25,6 +25,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -88,13 +89,81 @@ public class SetupImLoadRunnable implements Runnable{
             handler.updateProgress(activity.getResources().getString(R.string.setup_im_restore_learning_data));
             handler.updateProgress(0);
             boolean check = datasource.checkBackuptable(imtype);
-            handler.updateProgress(25);
+            handler.updateProgress(5);
+
             if(check){
-                datasource.restoreUserRecordsStep1(imtype);
-                handler.updateProgress(50);
+
+                String backupTableName = imtype + "_user";
+
+                // check if user data backup table is present and have valid records
+                int userRecordsCount = datasource.countMapping(backupTableName);
+                handler.updateProgress(10);
+                if (userRecordsCount == 0) return;
+
+                try {
+                    // Load backuptable records
+                    Cursor cursorsource = datasource.rawQuery("select * from " + imtype);
+                    List<Word> clist = Word.getList(cursorsource);
+                    cursorsource.close();
+
+                    HashMap<String, Word> wordcheck = new HashMap<String, Word>();
+                    for(Word w : clist){
+                        String key = w.getCode() + w.getWord();
+                        wordcheck.put(key, w);
+                    }
+                    handler.updateProgress(20);
+
+                    Cursor cursorbackup = datasource.rawQuery("select * from " + backupTableName);
+                    List<Word> backuplist = Word.getList(cursorbackup);
+                    cursorbackup.close();
+
+                    int progressvalue = 0;
+                    int recordcount = 0;
+                    int recordtotal = backuplist.size();
+
+                    for(Word w: backuplist){
+
+                        recordcount++;
+
+                        // update record
+                        String key = w.getCode() + w.getWord();
+
+                        if(wordcheck.containsKey(key)){
+                            try{
+                                datasource.execSQL("update " + imtype + " set " + Lime.DB_COLUMN_SCORE + " = " + w.getScore()
+                                                + " WHERE " + Lime.DB_COLUMN_CODE + " = '" + w.getCode() + "'"
+                                                + " AND " + Lime.DB_COLUMN_WORD + " = '" + w.getWord() + "'"
+                                );
+                            }catch(Exception e){
+                                e.printStackTrace();
+                            }
+                        }else{
+                            try{
+                                Word temp = wordcheck.get(key);
+                                String insertsql = Word.getInsertQuery(imtype, temp);
+                                datasource.execSQL(insertsql);
+                            }catch(Exception e){
+                                e.printStackTrace();
+                            }
+                        }
+
+                        // Update Progress
+                        double progress = (((recordcount / recordtotal) * 0.7) * 100) + 20;
+
+                        if((int)progress != progressvalue){
+                            progressvalue = (int)progress;
+                            handler.updateProgress(progressvalue);
+                        }
+
+                    }
+
+                    wordcheck.clear();
+
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+
                 datasource.restoreUserRecordsStep2(imtype);
-                handler.updateProgress(75);
-                datasource.restoreUserRecordsStep3(imtype);
                 handler.updateProgress(100);
             }
         }
