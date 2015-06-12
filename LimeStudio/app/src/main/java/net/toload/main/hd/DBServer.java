@@ -60,7 +60,7 @@ public class  DBServer {
 	private static final String TAG = "LIME.DBServer";
 	//private NotificationManager notificationMgr;
 
-	protected static LimeDB dbAdapter = null;  //static LIMEDB for shared LIMEDB between DBServer instances
+	protected static LimeDB datasource = null;  //static LIMEDB for shared LIMEDB between DBServer instances
 	protected static LIMEPreferenceManager mLIMEPref = null;
 
 	private static boolean remoteFileDownloading = false;
@@ -88,13 +88,13 @@ public class  DBServer {
 		DBServer.ctx = context;
 		mLIMEPref = new LIMEPreferenceManager(ctx);
 		//loadLimeDB();
-		if (dbAdapter == null)
-			dbAdapter = new LimeDB(ctx);
+		if (datasource == null)
+			datasource = new LimeDB(ctx);
 	}
 /* deprecated by jeremy '12,5,2
 	public void loadLimeDB(){	
-		if(dbAdapter==null)
-			dbAdapter = new LimeDB(ctx); 
+		if(datasource==null)
+			datasource = new LimeDB(ctx); 
 	}
 */
 
@@ -112,12 +112,12 @@ public class  DBServer {
 		loadingTablename = tablename;
 
 
-		dbAdapter.setFinish(false);
-		dbAdapter.setFilename(sourcefile);
+		datasource.setFinish(false);
+		datasource.setFilename(sourcefile);
 
 		//showNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading) + "");
-		dbAdapter.loadFileV2(tablename, progressListener);
-		//dbAdapter.close();
+		datasource.loadFileV2(tablename, progressListener);
+		//datasource.close();
 
 		// Reset for SearchSrv
 		//mLIMEPref.setResetCacheFlag(true);
@@ -129,7 +129,7 @@ public class  DBServer {
 		if (DEBUG)
 			Log.i(TAG, "resetMapping() on " + loadingTablename);
 
-		dbAdapter.deleteAll(tablename);
+		datasource.deleteAll(tablename);
 
 		// Reset cache in SearchSrv
 		//mLIMEPref.setResetCacheFlag(true);
@@ -140,11 +140,11 @@ public class  DBServer {
 	}
 
 	public boolean importBackupRelatedDb(File sourcedb){
-		return dbAdapter.importBackupRelatedDb(sourcedb);
+		return datasource.importBackupRelatedDb(sourcedb);
 	}
 
 	public boolean importBackupDb(File sourcedb, String imtype) {
-		return dbAdapter.importBackupDb(sourcedb, imtype);
+		return datasource.importBackupDb(sourcedb, imtype);
 	}
 
 	public int importMapping(File compressedSourceDB, String imtype) {
@@ -164,7 +164,7 @@ public class  DBServer {
 			return -1;
 		}
 		else {
-			int count = dbAdapter.importDb(unzipFilePaths.get(0), imtype);
+			int count = datasource.importDb(unzipFilePaths.get(0), imtype);
 			//mLIMEPref.setResetCacheFlag(true);
 			resetCache();
 			return count;
@@ -173,7 +173,7 @@ public class  DBServer {
 
 
 	public int getLoadingMappingCount() {
-		return dbAdapter.getCount();
+		return datasource.getCount();
 	}
 
 
@@ -200,7 +200,7 @@ public class  DBServer {
 
 		// hold database connection and close database.
 		//mLIMEPref.holdDatabaseCoonection(true);
-		dbAdapter.holdDBConnection(); //Jeremy '15,5,23
+		datasource.holdDBConnection(); //Jeremy '15,5,23
 		closeDatabse();
 
 		//ready to zip backup file list
@@ -234,9 +234,9 @@ public class  DBServer {
 		*/
 
 		// backup finished.  unhold the database connection and false reopen the database.
-		dbAdapter.unHoldDBConnection(); //Jeremy '15,5,23
+		datasource.unHoldDBConnection(); //Jeremy '15,5,23
 		//mLIMEPref.holdDatabaseCoonection(false);
-		dbAdapter.openDBConnection(true);
+		datasource.openDBConnection(true);
 
 		//cleanup the shared preference backup file.
 		if( fileSharedPrefsBakup!=null && fileSharedPrefsBakup.exists() ) fileSharedPrefsBakup.delete();
@@ -258,7 +258,7 @@ public class  DBServer {
 
 		mLIMEPref.holdDatabaseCoonection(false);
 
-		dbAdapter.openDBConnection(true);
+		datasource.openDBConnection(true);
 	}
 */
 	public static void restoreDatabase() throws RemoteException {
@@ -272,7 +272,7 @@ public class  DBServer {
 
 			//showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start) + "");
 			//mLIMEPref.holdDatabaseCoonection(true);
-			dbAdapter.holdDBConnection(); //Jeremy '15,5,23
+			datasource.holdDBConnection(); //Jeremy '15,5,23
 			closeDatabse();
 
 			try {
@@ -285,8 +285,8 @@ public class  DBServer {
 				showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end) + "");
 			}
 
-			dbAdapter.unHoldDBConnection(); //Jeremy '15,5,23
-			dbAdapter.openDBConnection(true);
+			datasource.unHoldDBConnection(); //Jeremy '15,5,23
+			datasource.openDBConnection(true);
 
 			//restore shared preference
 			File checkpref = new File(LIME.getLimeDataRootFolder(), LIME.SHARED_PREFS_BACKUP_NAME);
@@ -296,6 +296,9 @@ public class  DBServer {
 
 			//mLIMEPref.setResetCacheFlag(true);
 			resetCache();
+
+			// Check and upgrade the database table
+			datasource.checkAndUpdateRelatedTable();
 
 		}else{
 			showNotificationMessage(ctx.getText(R.string.error_restore_not_found) + "");
@@ -378,36 +381,36 @@ public class  DBServer {
 	}
 
 	public String getImInfo(String im, String field) throws RemoteException {
-		//if (dbAdapter == null) {loadLimeDB();}
-		return dbAdapter.getImInfo(im, field);
+		//if (datasource == null) {loadLimeDB();}
+		return datasource.getImInfo(im, field);
 	}
 
 
 	public String getKeyboardInfo(String keyboardCode, String field) throws RemoteException {
-		//if (dbAdapter == null) {loadLimeDB();}
-		return dbAdapter.getKeyboardInfo(keyboardCode, field);
+		//if (datasource == null) {loadLimeDB();}
+		return datasource.getKeyboardInfo(keyboardCode, field);
 	}
 
 
 	public void removeImInfo(String im, String field)
 			throws RemoteException {
-		//if (dbAdapter == null) {loadLimeDB();}
-		dbAdapter.removeImInfo(im, field);
+		//if (datasource == null) {loadLimeDB();}
+		datasource.removeImInfo(im, field);
 
 	}
 
 
 	public void resetImInfo(String im) throws RemoteException {
-		//if (dbAdapter == null) {loadLimeDB();}
-		dbAdapter.resetImInfo(im);
+		//if (datasource == null) {loadLimeDB();}
+		datasource.resetImInfo(im);
 
 	}
 
 
 	public void setImInfo(String im, String field, String value)
 			throws RemoteException {
-		//if (dbAdapter == null) {loadLimeDB();}
-		dbAdapter.setImInfo(im, field, value);
+		//if (datasource == null) {loadLimeDB();}
+		datasource.setImInfo(im, field, value);
 
 	}
 
@@ -416,8 +419,8 @@ public class  DBServer {
 
 	public static void closeDatabse() throws RemoteException {
 		Log.i(TAG,"closeDatabase()");
-		if (dbAdapter != null) {
-			dbAdapter.close();
+		if (datasource != null) {
+			datasource.close();
 		}
 	}
 
@@ -425,14 +428,14 @@ public class  DBServer {
 	public void setIMKeyboard(String im, String value,
 							  String keyboard) throws RemoteException {
 
-		dbAdapter.setIMKeyboard(im, value, keyboard);
+		datasource.setIMKeyboard(im, value, keyboard);
 	}
 
 
 	public String getKeyboardCode(String im)
 			throws RemoteException {
-		//if (dbAdapter == null) {loadLimeDB();}
-		return dbAdapter.getKeyboardCode(im);
+		//if (datasource == null) {loadLimeDB();}
+		return datasource.getKeyboardCode(im);
 	}
 
 
@@ -630,19 +633,19 @@ public class  DBServer {
 	 *
 	 */
 	public void checkPhoneticKeyboardSetting(){
-		dbAdapter.checkPhoneticKeyboardSetting();
+		datasource.checkPhoneticKeyboardSetting();
 	}
 
 
 	public int getLoadingMappingPercentageDone() throws RemoteException {
 		if(remoteFileDownloading) return 0;
-		else return dbAdapter.getProgressPercentageDone();
+		else return datasource.getProgressPercentageDone();
 	}
 /*
 	@Deprecated //by Jeremy '12,6,6
 	public void forceUpgrad() throws RemoteException {
-		//if (dbAdapter == null) {loadLimeDB();}
-		dbAdapter.forceUpgrade();
+		//if (datasource == null) {loadLimeDB();}
+		datasource.forceUpgrade();
 	}*/
 
 	//	}
@@ -669,9 +672,9 @@ public class  DBServer {
 	//	 */
 	//	
 	//	public void onDestroy() {
-	//		if (dbAdapter != null) {
-	//			dbAdapter.close();
-	//			dbAdapter = null;
+	//		if (datasource != null) {
+	//			datasource.close();
+	//			datasource = null;
 	//
 	//		}
 	//		notificationMgr.cancelAll();
@@ -691,8 +694,8 @@ public class  DBServer {
 	}
 
 	public void renameTableName(String source, String target) {
-		if(dbAdapter != null){
-			dbAdapter.renameTableName(source, target);
+		if(datasource != null){
+			datasource.renameTableName(source, target);
 		}
 	}
 
@@ -703,13 +706,13 @@ public class  DBServer {
 	 */
 	public KeyboardObj getKeyboardObj(String table){
 		KeyboardObj kobj = null;
-		if(dbAdapter != null)
-			kobj = dbAdapter.getKeyboardObj(table);
+		if(datasource != null)
+			kobj = datasource.getKeyboardObj(table);
 		return kobj;
 	}
 
 	public boolean isDatabseOnHold() {
-		return dbAdapter.isDatabseOnHold();
+		return datasource.isDatabseOnHold();
 	}
 
 
