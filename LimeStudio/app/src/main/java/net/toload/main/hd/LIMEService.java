@@ -2329,8 +2329,7 @@ public class LIMEService extends InputMethodService implements
                                 selkey = "";
                             }
 
-                            setSuggestions(list, finalHasPhysicalKeyPressed && !isFullscreenMode()
-                                    , selkey);
+                            setSuggestions(list, finalHasPhysicalKeyPressed && !isFullscreenMode(), selkey);
                         } else {
                             committedCandidate = null;
                             //Jermy '11,8,14
@@ -2830,7 +2829,7 @@ public class LIMEService extends InputMethodService implements
             }
 
             //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-        } else if (mEnglishOnly || (selectedCandidate != null && !selectedCandidate.isComposingCodeRecord())) {
+        } else if (mEnglishOnly || (mComposing.length() == 0)) {
             // related candidates view
             String relatedSelkey = "!@#$%^&*()";
             i = relatedSelkey.indexOf(primaryCode);
