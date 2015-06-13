@@ -249,9 +249,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private String lastCode = "";
     private String lastValidDualCodeList = "";
 
-
-    public String DELIMITER = "";
-
     private File filename = null;
     private String tablename = "custom";
 
@@ -2526,7 +2523,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     String selectString =
                             "SELECT " + FIELD_ID + ", " + FIELD_DIC_pword + ", " + FIELD_DIC_cword + ", "
-                                    +  Lime.DB_RELATED_COLUMN_BASESCORE + ", " + Lime.DB_RELATED_COLUMN_USERSCORE
+                                    + Lime.DB_RELATED_COLUMN_BASESCORE + ", " + Lime.DB_RELATED_COLUMN_USERSCORE
                                     + ", length(" + FIELD_DIC_pword + ") as len FROM " + Lime.DB_RELATED + " where "
                                     + FIELD_DIC_pword + " = '" + pword
                                     + "' or " + FIELD_DIC_pword + " = '" + last
@@ -2682,7 +2679,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 	*  Restore learned user scores and phrases from the backup table to the specified table.
 	*  Jeremy '15,5,21
 	 */
-    public void restoreUserRecordsStep1(final String table) {
+   /* public void restoreUserRecordsStep1(final String table) {
 
         if (!checkDBConnection()) return;
 
@@ -2693,36 +2690,64 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (userRecordsCount == 0) return;
 
         try {
-            // start to restore user data
-            // restore user score first
-            db.execSQL("update " + table + " set " + FIELD_SCORE + " = " +
-                    " (select " + backupTableName + "." + FIELD_SCORE + " from " + backupTableName + " where " + table + "." + FIELD_CODE + " = " + backupTableName + "." + FIELD_CODE +
-                    " and " + table + "." + FIELD_WORD + " = " + backupTableName + "." + FIELD_WORD + " )");
+            // Load backuptable records
+            Cursor cursorsource = db.rawQuery("select * from " + table, null);
+            List<Word> clist = Word.getList(cursorsource);
+            cursorsource.close();
+
+            HashMap<String, Word> check = new HashMap<String, Word>();
+            for(Word w : clist){
+                String key = w.getCode() + w.getWord();
+                check.put(key, w);
+            }
+
+            Cursor cursorbackup = db.rawQuery("select * from " + backupTableName, null);
+            List<Word> backuplist = Word.getList(cursorbackup);
+            cursorbackup.close();
+
+            int count = 0;
+            int total = backuplist.size();
+
+            for(Word w: backuplist){
+
+                count++;
+
+                // update record
+                String key = w.getCode() + w.getWord();
+
+                if(check.containsKey(key)){
+                    try{
+                        db.execSQL("update " + table + " set " + Lime.DB_COLUMN_SCORE + " = " + w.getScore()
+                                        + " WHERE " + Lime.DB_COLUMN_CODE + " = '" + w.getCode() + "'"
+                                        + " AND " + Lime.DB_COLUMN_WORD + " = '" + w.getWord() + "'"
+                        );
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }
+                }else{
+                    try{
+                        Word temp = check.get(key);
+                        String insertsql = Word.getInsertQuery(table, temp);
+                        db.execSQL(insertsql);
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }
+                }
+
+                // Update Progress
+                double progress = (((count / total) * 0.8) * 100) + 10;
+
+
+            }
+
+            check.clear();
+
         }catch(Exception e){
             e.printStackTrace();
         }
-    }
+    }*/
+
     public void restoreUserRecordsStep2(final String table) {
-
-        if (!checkDBConnection()) return;
-
-        String backupTableName = table + "_user";
-
-        // check if user data backup table is present and have valid records
-        int userRecordsCount = countMapping(backupTableName);
-        if (userRecordsCount == 0) return;
-
-        try {
-            // restore learned phrasees  (base_score is null)
-            db.execSQL("insert into " + table +
-                    " select * from " + backupTableName + " where " + FIELD_BASESCORE + " is null");
-
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-    }
-
-    public void restoreUserRecordsStep3(final String table) {
 
         if (!checkDBConnection()) return;
 
@@ -2826,8 +2851,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             return;
         }
 
-        this.DELIMITER = "";
-
         finish = false;
         progressPercentageDone = 0;
         count = 0;
@@ -2843,6 +2866,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         loadingMappingThread = new Thread() {
 
             public void run() {
+
+                String delimiter_symbol = "";
+
                 // Reset Database Table		
                 //SQLiteDatabase db = getSqliteDb(false);
                 if (DEBUG)
@@ -2897,7 +2923,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             i++;
                         }
                     }
-                    identifyDelimiter(templist);
+                    delimiter_symbol = identifyDelimiter(templist);
                     templist.clear();
                     buf.close();
                     fr.close();
@@ -3005,35 +3031,41 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             String code = null, word = null;
                             if (isCinFormat) {
                                 if (line.contains("\t")) {
-                                    code = line
-                                            .substring(0, line.indexOf("\t"));
-                                    word = line
-                                            .substring(line.indexOf("\t") + 1);
+                                    code = line.split("\t")[0];
+                                    word = line.split("\t")[1];
 									try{
 										// Simply ignore error and try to load score and basescore values
-										source_score = Integer.parseInt(line.substring(2, line.indexOf("\t")));
-										source_basescore = Integer.parseInt(line.substring(3, line.indexOf("\t")));
+										source_score = Integer.parseInt(line.split("\t")[2]);
+										source_basescore = Integer.parseInt(line.split("\t")[3]);
 									}catch(Exception ignored){}
                                 } else if (line.contains(" ")) {
-                                    code = line.substring(0, line.indexOf(" "));
-                                    word = line
-                                            .substring(line.indexOf(" ") + 1);
+                                    code = line.split(" ")[0];
+                                    word = line.split(" ")[1];
 									try{
 										// Simply ignore error and try to load score and basescore values
-										source_score = Integer.parseInt(line.substring(2, line.indexOf(" ")));
-										source_basescore = Integer.parseInt(line.substring(3, line.indexOf(" ")));
+										source_score = Integer.parseInt(line.split(" ")[2]);
+										source_basescore = Integer.parseInt(line.split(" ")[3]);
 									}catch(Exception ignored){}
                                 }
                             } else {
-                                code = line.substring(0, line
-                                        .indexOf(DELIMITER));
-                                word = line
-                                        .substring(line.indexOf(DELIMITER) + 1);
-								try{
-									// Simply ignore error and try to load score and basescore values
-									source_score = Integer.parseInt(line.substring(2, line.indexOf(DELIMITER)));
-									source_basescore = Integer.parseInt(line.substring(3, line.indexOf(DELIMITER)));
-								}catch(Exception ignored){}
+                                if(delimiter_symbol.equals("|")){
+                                    code = line.split("\\|")[0];
+                                    word = line.split("\\|")[1];
+                                    try{
+                                        // Simply ignore error and try to load score and basescore values
+                                        source_score = Integer.parseInt(line.split("\\|")[2]);
+                                        source_basescore = Integer.parseInt(line.split("\\|")[3]);
+                                    }catch(Exception ignored){}
+                                }else{
+                                    code = line.split(delimiter_symbol)[0];
+                                    word = line.split(delimiter_symbol)[1];
+                                    try{
+                                        // Simply ignore error and try to load score and basescore values
+                                        source_score = Integer.parseInt(line.split(delimiter_symbol)[2]);
+                                        source_basescore = Integer.parseInt(line.split(delimiter_symbol)[3]);
+                                    }catch(Exception ignored){}
+                                }
+
                             }
                             if (code == null || code.trim().equals("")) {
                                 continue;
@@ -3326,34 +3358,32 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      *
      * @param src text format table string
      */
-    public void identifyDelimiter(List<String> src) {
+    public String identifyDelimiter(List<String> src) {
 
         int commaCount = 0;
         int tabCount = 0;
         int pipeCount = 0;
 
-        if (this.DELIMITER.equals("")) {
-            for (String line : src) {
-                if (line.contains("\t")) {
-                    tabCount++;
-                }
-                if (line.contains(",")) {
-                    commaCount++;
-                }
-                if (line.contains("|")) {
-                    pipeCount++;
-                }
+        for (String line : src) {
+            if (line.contains("\t")) {
+                tabCount++;
             }
-            if (commaCount > 0 || tabCount > 0 || pipeCount > 0) {
-                if (commaCount >= tabCount && commaCount >= pipeCount) {
-                    this.DELIMITER = ",";
-                } else if (tabCount >= commaCount && tabCount >= pipeCount) {
-                    this.DELIMITER = "\t";
-                } else if (pipeCount >= tabCount && pipeCount >= commaCount) {
-                    this.DELIMITER = "|";
-                }
+            if (line.contains(",")) {
+                commaCount++;
+            }
+            if (line.contains("|")) {
+                pipeCount++;
             }
         }
+        if (commaCount >= tabCount && commaCount >= pipeCount) {
+            return ",";
+        } else if (tabCount >= commaCount && tabCount >= pipeCount) {
+            return "\t";
+        } else if (pipeCount >= tabCount && pipeCount >= commaCount) {
+            return "|";
+        }
+
+        return " ";
     }
 
     /**
@@ -4360,6 +4390,25 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         }
         db.endTransaction();;
         db.setTransactionSuccessful();
+    }
+
+    public Cursor rawQuery(String query) {
+        if (!checkDBConnection()) return null;
+        try {
+            return db.rawQuery(query, null);
+        } catch (Exception e) {
+            Log.w(TAG, "Ignore all possible exceptions~");
+        }
+        return null;
+    }
+
+    public void execSQL(String insertsql) {
+        if (!checkDBConnection()) return ;
+        try {
+            db.execSQL(insertsql);
+        } catch (Exception e) {
+            Log.w(TAG, "Ignore all possible exceptions~");
+        }
     }
 }
 

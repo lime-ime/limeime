@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -22,6 +23,7 @@ import android.widget.Toast;
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
+import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;
 import net.toload.main.hd.global.LIMEUtilities;
@@ -32,6 +34,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -424,8 +427,6 @@ public class SetupImLoadDialog extends DialogFragment {
             }
         }
 
-
-
         btnSetupImDialogCancel = (Button) rootView.findViewById(R.id.btnSetupImDialogCancel);
         btnSetupImDialogCancel.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -737,6 +738,93 @@ public class SetupImLoadDialog extends DialogFragment {
                 }
                 @Override
                 public void onPostExecute(boolean success, String status, int code){
+
+                    boolean restorelearning = chkSetupImRestoreLearning.isChecked();
+
+                    if(restorelearning){
+
+                        handler.updateProgress(activity.getResources().getString(R.string.setup_im_restore_learning_data));
+                        handler.updateProgress(0);
+                        boolean check = datasource.checkBackuptable(imtype);
+                        handler.updateProgress(5);
+
+                        if(check){
+
+                            String backupTableName = imtype + "_user";
+
+                            // check if user data backup table is present and have valid records
+                            int userRecordsCount = datasource.countMapping(backupTableName);
+                            handler.updateProgress(10);
+                            if (userRecordsCount == 0) return;
+
+                            try {
+                                // Load backuptable records
+                                Cursor cursorsource = datasource.rawQuery("select * from " + imtype);
+                                List<Word> clist = Word.getList(cursorsource);
+                                cursorsource.close();
+
+                                HashMap<String, Word> wordcheck = new HashMap<String, Word>();
+                                for(Word w : clist){
+                                    String key = w.getCode() + w.getWord();
+                                    wordcheck.put(key, w);
+                                }
+                                handler.updateProgress(20);
+
+                                Cursor cursorbackup = datasource.rawQuery("select * from " + backupTableName);
+                                List<Word> backuplist = Word.getList(cursorbackup);
+                                cursorbackup.close();
+
+                                int progressvalue = 0;
+                                int recordcount = 0;
+                                int recordtotal = backuplist.size();
+
+                                for(Word w: backuplist){
+
+                                    recordcount++;
+
+                                    // update record
+                                    String key = w.getCode() + w.getWord();
+
+                                    if(wordcheck.containsKey(key)){
+                                        try{
+                                            datasource.execSQL("update " + imtype + " set " + Lime.DB_COLUMN_SCORE + " = " + w.getScore()
+                                                            + " WHERE " + Lime.DB_COLUMN_CODE + " = '" + w.getCode() + "'"
+                                                            + " AND " + Lime.DB_COLUMN_WORD + " = '" + w.getWord() + "'"
+                                            );
+                                        }catch(Exception e){
+                                            e.printStackTrace();
+                                        }
+                                    }else{
+                                        try{
+                                            Word temp = wordcheck.get(key);
+                                            String insertsql = Word.getInsertQuery(imtype, temp);
+                                            datasource.execSQL(insertsql);
+                                        }catch(Exception e){
+                                            e.printStackTrace();
+                                        }
+                                    }
+
+                                    // Update Progress
+                                    double progress = (((recordcount / recordtotal) * 0.7) * 100) + 20;
+
+                                    if((int)progress != progressvalue){
+                                        progressvalue = (int)progress;
+                                        handler.updateProgress(progressvalue);
+                                    }
+
+                                }
+
+                                wordcheck.clear();
+
+                            }catch(Exception e){
+                                e.printStackTrace();
+                            }
+
+                            datasource.restoreUserRecordsStep2(imtype);
+                            handler.updateProgress(100);
+                        }
+                    }
+
                     handler.cancelProgress();
                 }
             });
