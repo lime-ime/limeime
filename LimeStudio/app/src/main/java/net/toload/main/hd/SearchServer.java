@@ -245,7 +245,7 @@ public class SearchServer {
 				}else if (score >200){
 					score =200;
 				}
-				int codeLenBonus = exactMatchMapping.getWord().length()/exactMatchMapping.getCode().length()*30;
+				int codeLenBonus = exactMatchMapping.getCode().length()/exactMatchMapping.getWord().length()*30;
 				exactMatchMapping.setBasescore((score + codeLenBonus)* exactMatchMapping.getWord().length());
 
 				if (DEBUG || dumpSuggestion)
@@ -271,10 +271,11 @@ public class SearchServer {
 			//iterate all previous exact match mapping and check for exact match on remaining code.
 			for (Pair<Mapping, String> p : exactMatchSnapshot) {
 				String pCode = p.second;
-				if (pCode.length() < code.length() && code.startsWith(pCode)) { //TODO:check code reduced because of user press backspace.
+				if (pCode.length() < code.length() && code.startsWith(pCode) && code.length()-pCode.length() <=5   ) {
 					String remainingCode = code.substring(pCode.length(), code.length());
 					Log.i(TAG,"makeRunTimeSuggestion() working on previous exact match item = "+ p.first.getWord() +
-							" with base score = " + p.first.getBasescore() + ", remainingCode =" + remainingCode);
+							" with base score = " + p.first.getBasescore() + ", average score = " + p.first.getBasescore()/p.first.getWord().length()+
+							", remainingCode =" + remainingCode);
 
 
 					Pair<List<Mapping>, List<Mapping>> resultPair =  //do remaining code query
@@ -282,15 +283,16 @@ public class SearchServer {
 					if(resultPair == null) continue;
 
 					List<Mapping> resultList = resultPair.first;
-					if (resultList.size() > 0 && resultList.get(0).isExactMatchToCodeRecord()) {  //remaining code search got exact match
+					if (resultList.size() > 0
+							&& resultList.get(0).isExactMatchToCodeRecord()) {  //remaining code search got exact match
 						Mapping remainingCodeExactMatchMapping = resultList.get(0);
 						Mapping previousMapping = p.first;
 						String phrase = previousMapping.getWord() + remainingCodeExactMatchMapping.getWord();
 						int phraseLen = phrase.length();
 						if(phraseLen<2 ||remainingCodeExactMatchMapping.getBasescore()<2 ) continue;
 						int remainingScore = remainingCodeExactMatchMapping.getBasescore();
-						int codeLenBonus = remainingCodeExactMatchMapping.getWord().length()/
-								remainingCodeExactMatchMapping.getCode().length() *30;
+						int codeLenBonus = remainingCodeExactMatchMapping.getCode().length()/
+								remainingCodeExactMatchMapping.getWord().length() *30;
 						if(remainingScore>120) remainingScore =120;
 						remainingScore = remainingScore/ remainingCodeExactMatchMapping.getWord().length()	+ codeLenBonus ;
 
@@ -333,8 +335,8 @@ public class SearchServer {
 							suggestMapping.setRuntimeBuiltPhraseRecord();
 							suggestMapping.setCode(code);
 							suggestMapping.setWord(phrase);
-							highestScore = averageScore * phraseLen;
-							suggestMapping.setBasescore(highestScore);
+							highestScore = averageScore;
+							suggestMapping.setBasescore(highestScore * phraseLen);
 							exactMatchList.add(new Pair<>(suggestMapping, code));
 							if(DEBUG||dumpSuggestion)
 								Log.i(TAG,"makeRunTimeSuggestion()  run-time suggest phrase =" + phrase
@@ -343,11 +345,6 @@ public class SearchServer {
 					}
 				}
 			}
-			//if(suggestMapping.getWord()!=null) {
-				//exactMatchList.clear();
-				//exactMatchList.add(new Pair<>(suggestMapping, code));
-		//	}
-
 		}
 
 		// dump exactMatch List
@@ -835,7 +832,7 @@ public class SearchServer {
 					if (baseWord.length() == 1) {
 						if (unit1.getId() == null //Jeremy '12,6,7 break if id is null (selected from related list)
 								|| unit1.isPartialMatchToCodeRecord() //Jeremy '15,6,3 new record identification
-								|| unit1.getCode() == null //Jeremy '12,6,7 break if code is null (selected from userdict)
+								|| unit1.getCode() == null //Jeremy '12,6,7 break if code is null (selected from related phrase)
 								|| unit1.getCode().length() == 0
 								|| unit1.isRelatedPhraseRecord()) {
 							List<Mapping> rMappingList = dbadapter.getMappingByWord(baseWord, tablename);

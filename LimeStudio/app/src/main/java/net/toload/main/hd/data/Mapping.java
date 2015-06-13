@@ -33,7 +33,6 @@ public class Mapping {
 	//Jeremy '15,6,4 renamed to highLighted.
 	private Boolean highLighted =true;
 	private int score;
-	private int userscore;
 	private int basescore;
 	private int recordType;
 
@@ -63,7 +62,6 @@ public class Mapping {
 		this.setPword(mapping.pword);
 		this.setScore(mapping.score);
 		this.setBasescore(mapping.basescore);
-		this.setUserscore(mapping.userscore);
 		this.setHighLighted(mapping.isHighLighted());
 		this.setRecordType(mapping.recordType);
 	}
@@ -75,10 +73,6 @@ public class Mapping {
 		this.highLighted = related;
 	}
 
-	public int getUserscore() {
-		return userscore;
-	}
-	public void setUserscore(int userscore) { this.userscore = userscore;	}
 	public int getBasescore() { return basescore;}
 	public void setBasescore(int score) {this.basescore=score;}
 
