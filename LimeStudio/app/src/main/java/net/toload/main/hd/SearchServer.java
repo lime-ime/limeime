@@ -216,7 +216,7 @@ public class SearchServer {
     }
 
 
-    private final static boolean dumpRunTimeSuggestion = true;
+    private final static boolean dumpRunTimeSuggestion = false;
 
     private synchronized void makeRunTimeSuggestion(String code, Pair<List<Mapping>, List<Mapping>> completeCodeResultPair) {
         if (DEBUG || dumpRunTimeSuggestion)
