@@ -155,7 +155,8 @@ public class SearchServer {
                 for (int i = 0; i < finalKeys.length(); i++) {
                     String key = finalKeys.substring(i, i + 1);
                     try {
-                        getMappingByCode(key, true, false);
+                        //bypass run-time suggestion for prefetch queries
+                        getMappingByCode(key, true, false, true);
                     } catch (RemoteException e) {
                         e.printStackTrace();
                     }
@@ -212,7 +213,7 @@ public class SearchServer {
     }
 
 
-    private final static boolean dumpRunTimeSuggestion = false;
+    private final static boolean dumpRunTimeSuggestion = true;
 
     private synchronized void makeRunTimeSuggestion(String code, Pair<List<Mapping>, List<Mapping>> completeCodeResultPair) {
         if (DEBUG || dumpRunTimeSuggestion)
@@ -418,6 +419,9 @@ public class SearchServer {
 
 
     public synchronized List<Mapping> getMappingByCode(String code, boolean softkeyboard, boolean getAllRecords) throws RemoteException {
+        return getMappingByCode(code,softkeyboard,getAllRecords,false);
+    }
+    public synchronized List<Mapping> getMappingByCode(String code, boolean softkeyboard, boolean getAllRecords, boolean noRunTimeSuggestion) throws RemoteException {
         if (DEBUG) Log.i(TAG, "getMappingByCode(): code=" + code);
         // Check if system need to reset cache
         //check reset cache with local variable instead of reading from shared preference for better perfomance
@@ -454,7 +458,7 @@ public class SearchServer {
 
             // make run-time suggestion '15, 6, 9 Jeremy.
             //if(doRunTimeSuggestion)
-            if (mLIMEPref.getSmartChineseInput()) {
+            if (!noRunTimeSuggestion && mLIMEPref.getSmartChineseInput()) {
                 makeRunTimeSuggestion(code, completeCodeResultPair);
             }
 
