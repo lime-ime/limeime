@@ -150,6 +150,7 @@
     <string name="manage_related_save">储存</string>
     <string name="manage_related_loading">读取中 ...</string>
     <string name="manage_related_reset">重置</string>
+    <string name="manage_related_duplicated">关联字重覆，无法储存</string>
 
     <string name="manage_related_dialog_edit">编辑内容</string>
     <string name="manage_related_dialog_message">请问是否要储存记录并离开?</string>

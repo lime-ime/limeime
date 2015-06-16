@@ -391,63 +391,58 @@ public class ManageRelatedFragment extends Fragment {
 
     public void addRelated(String pword, String cword, int score) {
 
-        // Add to database
-        Related obj = new Related();
-             obj.setPword(pword);
-             obj.setCword(cword);
-             obj.setBasescore(score);
+        if(datasource.hasRelated(pword, cword) == 0){
+            // Add to database
+            Related obj = new Related();
+            obj.setPword(pword);
+            obj.setCword(cword);
+            obj.setBasescore(score);
 
-        String insertsql = Related.getInsertQuery(obj);
+            String insertsql = Related.getInsertQuery(obj);
 
-        datasource.insert(insertsql);
-        /*try {
-            datasource.open();
-            datasource.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }*/
+            datasource.insert(insertsql);
 
-        total++;
-        searchrelated();
+            total++;
+            searchrelated();
 
-        // Add to temp list
-        //page = 0;
-        //this.relatedlist.add(0,obj);
-        //updateGridView(this.relatedlist);
+        }else{
+            Toast.makeText(activity, R.string.manage_related_duplicated, Toast.LENGTH_SHORT).show();
+        }
+
     }
 
     public void updateRelated(int id, String pword, String cword, int score) {
 
-        // remove from temp list
-        for(int i = 0 ; i < total ; i++){
-            if(id== this.relatedlist.get(i).getId()){
-                Related check = this.relatedlist.get(i);
-                     check.setPword(pword);
-                     check.setCword(cword);
-                     check.setBasescore(score);
-                this.relatedlist.remove(i);
-                this.relatedlist.add(i, check);
-                break;
+        if(datasource.hasRelated(pword, cword) == 0){
+
+            // remove from temp list
+            for(int i = 0 ; i < total ; i++){
+                if(id== this.relatedlist.get(i).getId()){
+                    Related check = this.relatedlist.get(i);
+                    check.setPword(pword);
+                    check.setCword(cword);
+                    check.setBasescore(score);
+                    this.relatedlist.remove(i);
+                    this.relatedlist.add(i, check);
+                    break;
+                }
             }
+
+            // Update record in the database
+            String updatesql = "UPDATE " + Lime.DB_RELATED + " SET ";
+            updatesql += Lime.DB_RELATED_COLUMN_PWORD + " = \"" + Lime.formatSqlValue(pword) + "\", ";
+            updatesql += Lime.DB_RELATED_COLUMN_CWORD + " = \"" + Lime.formatSqlValue(cword) + "\", ";
+            updatesql += Lime.DB_RELATED_COLUMN_BASESCORE + " = \"" + score + "\" ";
+            updatesql += " WHERE " + Lime.DB_RELATED_COLUMN_ID + " = \"" + id + "\"";
+
+            datasource.update(updatesql);
+
+            searchrelated();
+
+        }else{
+            Toast.makeText(activity, R.string.manage_related_duplicated, Toast.LENGTH_SHORT).show();
         }
 
-        // Update record in the database
-        String updatesql = "UPDATE " + Lime.DB_RELATED + " SET ";
-                updatesql += Lime.DB_RELATED_COLUMN_PWORD + " = \"" + Lime.formatSqlValue(pword) + "\", ";
-                updatesql += Lime.DB_RELATED_COLUMN_CWORD + " = \"" + Lime.formatSqlValue(cword) + "\", ";
-                updatesql += Lime.DB_RELATED_COLUMN_BASESCORE + " = \"" + score + "\" ";
-                updatesql += " WHERE " + Lime.DB_RELATED_COLUMN_ID + " = \"" + id + "\"";
-
-        datasource.update(updatesql);
-       /* try {
-            datasource.open();
-            datasource.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }*/
-
-        searchrelated();
-        //updateGridView(this.relatedlist);
     }
 
 }

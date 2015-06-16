@@ -75,7 +75,7 @@ public class ManageRelatedAdapter extends BaseAdapter {
 				}});*/
             String pword = r.getPword();
             String cword = r.getCword();
-            String text = pword+" " + cword;
+            String text = pword + cword;
 
             int freq = r.getBasescore();
 

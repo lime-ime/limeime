@@ -31,8 +31,7 @@ public class ManageRelatedAddDialog extends DialogFragment {
 
 	private TextView edtManageRelatedScore;
 
-	private EditText edtManageRelatedPword;
-	private EditText edtManageRelatedCword;
+	private EditText edtManageRelatedWord;
 
 	@Override
 	public void onDestroy() {
@@ -123,17 +122,17 @@ public class ManageRelatedAddDialog extends DialogFragment {
 				alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int which) {
-								String pword = edtManageRelatedPword.getText().toString();
-								String cword = edtManageRelatedCword.getText().toString();
+
 								String score = edtManageRelatedScore.getText().toString();
-								if(!pword.isEmpty() && !cword.isEmpty()){
-									pword = pword.trim();
-									cword = cword.trim();
-									int s = 0;
-									try{
-										s = Integer.parseInt(score);
-									} catch(Exception e){}
-									handler.addRelated(pword, cword, s);
+								String source = edtManageRelatedWord.getText().toString();
+								String pword = "";
+								String cword = "";
+
+								if(!source.isEmpty() || source.length() > 1){
+									source = source.trim();
+									pword = source.substring(0, 1);
+									cword = source.substring(1);
+									handler.addRelated(pword, cword, Integer.parseInt(score));
 									dialog.dismiss();
 									cancelDialog();
 								}else{
@@ -177,18 +176,14 @@ public class ManageRelatedAddDialog extends DialogFragment {
 			}
 		});
 
-		edtManageRelatedPword = (EditText) view.findViewById(R.id.edtManageRelatedPword);
-		edtManageRelatedPword.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+		edtManageRelatedWord = (EditText) view.findViewById(R.id.edtManageRelatedWord);
+		edtManageRelatedWord.setOnFocusChangeListener(new View.OnFocusChangeListener() {
 			@Override
 			public void onFocusChange(View v, boolean hasFocus) {
-				if(edtManageRelatedPword.getText() != null && !edtManageRelatedPword.getText().equals("") &&
-						edtManageRelatedPword.getText().length() > 1){
-					edtManageRelatedPword.setText(edtManageRelatedPword.getText().subSequence(0,1));
-				}
+
 			}
 		});
 
-		edtManageRelatedCword = (EditText) view.findViewById(R.id.edtManageRelatedCword);
 		edtManageRelatedScore = (TextView) view.findViewById(R.id.edtManageRelatedScore);
 		edtManageRelatedScore.setText("1");
 		

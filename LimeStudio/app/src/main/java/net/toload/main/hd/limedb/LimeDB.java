@@ -4227,18 +4227,53 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     }
 
+    public int hasRelated(String pword, String cword) {
+
+        Cursor cursor;
+
+        String query = "";
+        if (pword != null && !pword.isEmpty() && cword != null && !cword.isEmpty()) {
+            query = Lime.DB_RELATED_COLUMN_PWORD + " = '" + pword + "' AND ";
+            query += Lime.DB_RELATED_COLUMN_CWORD + " = '" + cword + "'";
+        }
+
+        cursor = db.query(Lime.DB_RELATED,
+                null, query,
+                null, null, null, null);
+
+        int id = 0;
+        cursor.moveToFirst();
+        while (!cursor.isAfterLast()) {
+            Related r = Related.get(cursor);
+            id = r.getId();
+            cursor.moveToNext();
+        }
+        cursor.close();
+
+        return id;
+    }
+
     public List<Related> loadRelated(String pword, int maximum, int offset) {
 
         List<Related> result = new ArrayList<>();
         if (!checkDBConnection()) return result;
 
-
         Cursor cursor;
 
         String query = "";
+        String cword = "";
+
+        if(pword != null && pword.length() > 1){
+            cword = pword.substring(1);
+            pword = pword.substring(0,1);
+        }
         if (pword != null && !pword.isEmpty()) {
             query = Lime.DB_RELATED_COLUMN_PWORD + " = '" + pword +
                     "' AND ";
+        }
+        if(cword != null && !cword.isEmpty()){
+            query += Lime.DB_RELATED_COLUMN_CWORD + " LIKE '" + cword +
+                    "%' AND ";
         }
 
         query += "ifnull(" + Lime.DB_RELATED_COLUMN_CWORD + ", '') <> ''";
@@ -4338,9 +4373,18 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         String query = "SELECT COUNT(*) as count FROM " + Lime.DB_RELATED + " WHERE ";
 
+        String cword = "";
+        if(pword != null && !pword.isEmpty()){
+            cword = pword.substring(1);
+            pword = pword.substring(0,1);
+        }
+
         if (pword != null && !pword.isEmpty()) {
             query += Lime.DB_RELATED_COLUMN_PWORD + " = '" + pword +
                     "' AND ";
+        }
+        if( cword != null && !cword.isEmpty()){
+            query += Lime.DB_RELATED_COLUMN_CWORD + " LIKE '" + cword + "%' AND ";
         }
 
         query += "ifnull(" + Lime.DB_RELATED_COLUMN_CWORD + ", '') <> ''";

@@ -65,27 +65,13 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/manage_related_pword"
-                android:textAppearance="?android:attr/textAppearanceMedium"/>
-
-            <EditText
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/edtManageRelatedPword"
-                android:layout_weight="1"
-                android:textSize="16pt"
-                android:textIsSelectable="false" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="@string/manage_related_cword"
                 android:textAppearance="?android:attr/textAppearanceMedium"/>
 
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/edtManageRelatedCword"
+                android:id="@+id/edtManageRelatedWord"
                 android:layout_weight="1"
                 android:textSize="16pt"
                 android:minLines="3"

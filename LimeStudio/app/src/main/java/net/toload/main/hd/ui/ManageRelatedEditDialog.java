@@ -35,8 +35,7 @@ public class ManageRelatedEditDialog extends DialogFragment {
 
 	private TextView edtManageRelatedScore;
 
-	private EditText edtManageRelatedPword;
-	private EditText edtManageRelatedCword;
+	private EditText edtManageRelatedWord;
 
 	@Override
 	public void onDestroy() {
@@ -156,23 +155,23 @@ public class ManageRelatedEditDialog extends DialogFragment {
 				alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int which) {
-								String pword = edtManageRelatedPword.getText().toString();
-								String cword = edtManageRelatedCword.getText().toString();
-								String score = edtManageRelatedScore.getText().toString();
-								if(!pword.isEmpty() && !cword.isEmpty() ) {
-									pword = pword.trim();
-									cword = cword.trim();
-									int s = 0;
-									try{
-										s = Integer.parseInt(score);
-									}catch(Exception e){}
 
-									handler.updateRelated(related.getId(), pword, cword, s);
+								String score = edtManageRelatedScore.getText().toString();
+								String source = edtManageRelatedWord.getText().toString();
+								String pword = "";
+								String cword = "";
+
+								if(!source.isEmpty() || source.length() > 1){
+									source = source.trim();
+									pword = source.substring(0,1);
+									cword = source.substring(1);
+									handler.updateRelated(related.getId(), pword, cword, Integer.parseInt(score));
 									dialog.dismiss();
 									cancelDialog();
 								}else{
 									Toast.makeText(activity, R.string.update_error, Toast.LENGTH_SHORT).show();
 								}
+
 							}
 						});
 				alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
@@ -211,23 +210,17 @@ public class ManageRelatedEditDialog extends DialogFragment {
 			}
 		});
 
-		edtManageRelatedPword = (EditText) view.findViewById(R.id.edtManageRelatedPword);
-		edtManageRelatedCword = (EditText) view.findViewById(R.id.edtManageRelatedCword);
+		edtManageRelatedWord = (EditText) view.findViewById(R.id.edtManageRelatedWord);
 
 		edtManageRelatedScore = (TextView) view.findViewById(R.id.edtManageRelatedScore);
 
-		edtManageRelatedPword.setText(related.getPword());
-		edtManageRelatedPword.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+		edtManageRelatedWord.setText(related.getPword() + related.getCword());
+		edtManageRelatedWord.setOnFocusChangeListener(new View.OnFocusChangeListener() {
 			@Override
 			public void onFocusChange(View v, boolean hasFocus) {
-				if(edtManageRelatedPword.getText() != null && !edtManageRelatedPword.getText().equals("") &&
-						edtManageRelatedPword.getText().length() > 1){
-					edtManageRelatedPword.setText(edtManageRelatedPword.getText().subSequence(0,1));
-				}
+
 			}
 		});
-
-		edtManageRelatedCword.setText(related.getCword());
 		edtManageRelatedScore.setText(related.getBasescore() + "");
 		
 		return view;

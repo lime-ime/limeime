@@ -151,6 +151,7 @@
     <string name="manage_related_save">儲存</string>
     <string name="manage_related_loading">讀取中 ...</string>
     <string name="manage_related_reset">重置</string>
+    <string name="manage_related_duplicated">關聯字重覆，無法儲存</string>
 
     <string name="manage_related_dialog_edit">編輯內容</string>
     <string name="manage_related_dialog_message">請問是否要儲存記錄並離開?</string>
