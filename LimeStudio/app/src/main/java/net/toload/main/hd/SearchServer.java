@@ -40,7 +40,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -61,9 +60,12 @@ public class SearchServer {
     private static List<List<Pair<Mapping, String>>> suggestionLoL;
     private static Stack<Pair<Mapping,String>> bestSuggestionStack;
     private static String lastCode; // preserved the last code queried from LIMEService
-    private static runTimeSuggestion mRunTimeSuggestion = null;
+
     private static String confirmedBestSuggestion=null;
     private static String lastConfirmedBestSuggestion=null;
+
+    //Jeremy '15,6,21
+    private static int maxCodeLength = 4 ;
 
     private static boolean mResetCache;
 
@@ -135,7 +137,10 @@ public class SearchServer {
             prefetchCache(numberMapping, symbolMapping);
         }
 
-
+        //Jeremy '15,6,21 set max code length
+        if(tablename.startsWith("cj")){
+            maxCodeLength = 5;
+        }
     }
 
     private static Thread prefetchThread;
@@ -230,6 +235,8 @@ public class SearchServer {
                 }
                 suggestionLoL.clear();
                 if(bestSuggestionStack!=null) bestSuggestionStack.clear();
+                confirmedBestSuggestion = null;
+                lastConfirmedBestSuggestion = null;
 
             } else if (code.length() == lastCode.length() - 1) {  //user press backspace.
                 for (List<Pair<Mapping, String>> suggestList : suggestionLoL) {
@@ -298,8 +305,8 @@ public class SearchServer {
             if (!suggestionLoL.isEmpty() && highestScoreIndex != suggestionLoL.size() - 1) {//move bestSuggestionList to the last element
                 List<Pair<Mapping, String>> bestSuggestionList = suggestionLoL.remove(highestScoreIndex);
                 suggestionLoL.add(bestSuggestionList);
-                confirmedBestSuggestion = bestSuggestionList.get(bestSuggestionList.size()-1).first.getWord();
-                lastConfirmedBestSuggestion = null;
+                //confirmedBestSuggestion = bestSuggestionList.get(bestSuggestionList.size()-1).first.getWord();
+                //lastConfirmedBestSuggestion = null;
             }
 
         } else if (!suggestionLoL.isEmpty()) {
@@ -331,7 +338,7 @@ public class SearchServer {
 
                 for (Pair<Mapping, String> p : suggestionList) {
                     String pCode = p.second;
-                    if (pCode.length() < code.length() && code.startsWith(pCode) && code.length() - pCode.length() <= 5) {
+                    if (pCode.length() < code.length() && code.startsWith(pCode) && code.length() - pCode.length() <= maxCodeLength) {
                         String remainingCode = code.substring(pCode.length(), code.length());
                         Log.i(TAG, "makeRunTimeSuggestion() working on previous exact match item = " + p.first.getWord() +
                                 " with base score = " + p.first.getBasescore() + ", average score = " + p.first.getBasescore() / p.first.getWord().length() +
@@ -428,31 +435,31 @@ public class SearchServer {
 
         }
         //push best suggestion to stack
-        List<Pair<Mapping, String>> bestSuggestionList = null;
+        List<Pair<Mapping, String>> bestSuggestionList;
         if (!suggestionLoL.isEmpty()) {
             bestSuggestionList = suggestionLoL.get(suggestionLoL.size() - 1);
             if (bestSuggestionList != null && !bestSuggestionList.isEmpty()) {
-                Mapping lastBestSuggestionMapping = null, bestSuggestionMapping=null;
-                if(!bestSuggestionStack.isEmpty()) lastBestSuggestionMapping = bestSuggestionStack.lastElement().first;
-                bestSuggestionMapping = bestSuggestionList.get(bestSuggestionList.size() - 1).first;
                 bestSuggestionStack.push(bestSuggestionList.get(bestSuggestionList.size() - 1));
-
-                //check for common longest string as confirmed best suggestion
-                if(lastBestSuggestionMapping!=null&& bestSuggestionMapping!=null){
-                    String lastBestSuggestion=lastBestSuggestionMapping.getWord(), bestSuggestion = bestSuggestionMapping.getWord();
-                    if(lastBestSuggestion.length()>1 && bestSuggestion.length()>=lastBestSuggestion.length()){
-                        lastConfirmedBestSuggestion = confirmedBestSuggestion;
-                        confirmedBestSuggestion= lcs(lastBestSuggestion,bestSuggestion);
-                    }
-                }
-                if ((DEBUG || dumpRunTimeSuggestion)) {
-                    Log.i(TAG,"makeRunTimeSuggestion() confirmed best suggestion = " + confirmedBestSuggestion);
-                }
-
             }
         }
 
-
+        //find confirmed best suggestion with longest common string
+        if(bestSuggestionStack!=null && !bestSuggestionStack.isEmpty() && bestSuggestionStack.size()>1){
+            for(int i=bestSuggestionStack.size()-1; i>0 ;i--){
+                if(code.length() - bestSuggestionStack.get(i).first.getCode().length() > maxCodeLength){
+                    String lastBestSuggestion=bestSuggestionStack.get(i-1).first.getWord(), bestSuggestion = bestSuggestionStack.get(i).first.getWord();
+                    if(lastBestSuggestion.length()>1
+                            && bestSuggestion.length()>=lastBestSuggestion.length()){
+                        lastConfirmedBestSuggestion = confirmedBestSuggestion;
+                        confirmedBestSuggestion= lcs(lastBestSuggestion,bestSuggestion);
+                    }
+                    break;
+                }
+            }
+            if ((DEBUG || dumpRunTimeSuggestion)) {
+                Log.i(TAG,"makeRunTimeSuggestion() confirmed best suggestion = " + confirmedBestSuggestion);
+            }
+        }
 
 
 
@@ -933,7 +940,7 @@ public class SearchServer {
                             ///&& unit2.getId() !=null
                                 ) {
 
-                            int score = 0;
+                            int score;
                             //if (unit.getId() != null && unit2.getId() != null) //Jeremy '12,7,2 eliminate learning english words.
                             score = dbadapter.addOrUpdateRelatedPhraseRecord(unit.getWord(), unit2.getWord());
                             if (DEBUG)
@@ -970,7 +977,7 @@ public class SearchServer {
                 if (phraselist.size() > 0 && phraselist.size() < 5) { //Jeremy '12,6,8 limit the phrase to have 4 chracters
 
 
-                    String baseCode, LDCode = "", QPCode = "", baseWord;
+                    String baseCode, LDCode, QPCode = "", baseWord;
 
                     Mapping unit1 = phraselist.get(0);
 
@@ -1343,7 +1350,7 @@ public class SearchServer {
         }
         return selKeyMap.get(table);
     }
-
+/*
     private class runTimeSuggestion {
 
         private List<List<Pair<Mapping, String>>> suggestionLoL;
@@ -1487,5 +1494,6 @@ public class SearchServer {
         }
 
     }
+    */
 
 }
