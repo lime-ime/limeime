@@ -305,16 +305,16 @@ public class SearchServer {
             if (!suggestionLoL.isEmpty() && highestScoreIndex != suggestionLoL.size() - 1) {//move bestSuggestionList to the last element
                 List<Pair<Mapping, String>> bestSuggestionList = suggestionLoL.remove(highestScoreIndex);
                 suggestionLoL.add(bestSuggestionList);
-                //confirmedBestSuggestion = bestSuggestionList.get(bestSuggestionList.size()-1).first.getWord();
-                //lastConfirmedBestSuggestion = null;
+
             }
 
         } else if (!suggestionLoL.isEmpty()) {
 
             Log.i(TAG, "makeRunTimeSuggestion() no exact match on complete code = " + code);
 
+            /*
             // if confirmed best suggestion found and contains last confirmed best suggestion (double confirm) remove all other list not start with last confirmed best suggestion
-            /*if( lastConfirmedBestSuggestion!=null && confirmedBestSuggestion!=null
+            if( lastConfirmedBestSuggestion!=null && confirmedBestSuggestion!=null
                     &&lastConfirmedBestSuggestion.length()>1 && confirmedBestSuggestion.startsWith(lastConfirmedBestSuggestion)){
                 Iterator<List<Pair<Mapping,String>>> it = suggestionLoL.iterator();
                 while (it.hasNext()) {
@@ -323,8 +323,8 @@ public class SearchServer {
                         it.remove();
                     }
                 }
-            }*/
-
+            }
+            */
 
 
 
@@ -340,7 +340,8 @@ public class SearchServer {
                     String pCode = p.second;
                     if (pCode.length() < code.length() && code.startsWith(pCode) && code.length() - pCode.length() <= maxCodeLength) {
                         String remainingCode = code.substring(pCode.length(), code.length());
-                        Log.i(TAG, "makeRunTimeSuggestion() working on previous exact match item = " + p.first.getWord() +
+                        if (DEBUG || dumpRunTimeSuggestion)
+                            Log.i(TAG, "makeRunTimeSuggestion() working on previous exact match item = " + p.first.getWord() +
                                 " with base score = " + p.first.getBasescore() + ", average score = " + p.first.getBasescore() / p.first.getWord().length() +
                                 ", remainingCode =" + remainingCode + " , highestScoreIndex = " + highestScoreIndex);
 
@@ -448,16 +449,25 @@ public class SearchServer {
             for(int i=bestSuggestionStack.size()-1; i>0 ;i--){
                 if(code.length() - bestSuggestionStack.get(i).first.getCode().length() > maxCodeLength){
                     String lastBestSuggestion=bestSuggestionStack.get(i-1).first.getWord(), bestSuggestion = bestSuggestionStack.get(i).first.getWord();
-                    if(lastBestSuggestion.length()>1
-                            && bestSuggestion.length()>=lastBestSuggestion.length()){
-                        lastConfirmedBestSuggestion = confirmedBestSuggestion;
-                        confirmedBestSuggestion= lcs(lastBestSuggestion,bestSuggestion);
+                    if(lastBestSuggestion!=null &&
+                            lastBestSuggestion.length()>1 && bestSuggestion.length()>=lastBestSuggestion.length()){
+                        String tempBestSuggestion =  lcs(lastBestSuggestion,bestSuggestion);
+                        if(confirmedBestSuggestion==null){
+                            confirmedBestSuggestion=tempBestSuggestion;
+                        }else if(lastConfirmedBestSuggestion==null
+                            ||tempBestSuggestion.length() > lastConfirmedBestSuggestion.length() ){
+                            lastConfirmedBestSuggestion = confirmedBestSuggestion;
+                            confirmedBestSuggestion=tempBestSuggestion;
+                        }
                     }
                     break;
                 }
             }
             if ((DEBUG || dumpRunTimeSuggestion)) {
-                Log.i(TAG,"makeRunTimeSuggestion() confirmed best suggestion = " + confirmedBestSuggestion);
+                if(lastConfirmedBestSuggestion!=null)
+                    Log.i(TAG,"makeRunTimeSuggestion() last confirmed best suggestion = " + lastConfirmedBestSuggestion);
+                if(confirmedBestSuggestion !=null)
+                     Log.i(TAG,"makeRunTimeSuggestion() confirmed best suggestion = " + confirmedBestSuggestion);
             }
         }
 
