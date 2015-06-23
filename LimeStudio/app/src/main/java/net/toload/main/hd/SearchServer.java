@@ -454,7 +454,8 @@ public class SearchServer {
                 }
                 if (lolSize == suggestionLoL.size()) {
                     suggestionLoL.add(seedSuggestionList);
-                    Log.i(TAG, "makeRunTimeSuggestion()  no new suggestion list. add back the seed suggestion list to location 0 because of last run.");
+                    if(DEBUG||dumpRunTimeSuggestion)
+                        Log.i(TAG, "makeRunTimeSuggestion()  no new suggestion list. add back the seed suggestion list to location 0 because of last run.");
                 }
                 i++;
             }
@@ -836,6 +837,7 @@ public class SearchServer {
                             if(selectedWord.startsWith(bestSuggestionList.get(j).first.getWord())){
                                 if(bestSuggestionList.get(j).first.getWord().length() > 8 )  break; //stop learning if word length > 8
                                 dbadapter.addOrUpdateMappingRecord(bestSuggestionList.get(j).second, bestSuggestionList.get(j).first.getWord());
+                                removeRemapedCodeCachedMappings(bestSuggestionList.get(j).second);
                             }
 
                             if ((DEBUG || dumpRunTimeSuggestion) )// dump best suggestion list
