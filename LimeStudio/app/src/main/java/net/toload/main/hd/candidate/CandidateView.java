@@ -89,7 +89,7 @@ public class CandidateView extends View implements View.OnClickListener {
     protected int mCount = 0;
     //Composing view
     private TextView mComposingTextView;
-    private PopupWindow mComposingTextPopup;
+    private static PopupWindow mComposingTextPopup;
 
     //private String mComposingText = "";
 
