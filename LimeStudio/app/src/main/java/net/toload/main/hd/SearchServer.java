@@ -1,7 +1,7 @@
 /*
- **    Copyright 2010, The LimeIME Open Source Project
+ **    Copyright 2015, The LimeIME Open Source Project
  **
- **    Project Url: http://code.google.com/p/limeime/
+ **    Project Url: http://github.com/jrywu/limeime/
  **                 http://android.toload.net/
  **
  **    This program is free software: you can redistribute it and/or modify
@@ -259,9 +259,10 @@ public class SearchServer {
         if (completeCodeResultPair != null) completeCodeResultList = completeCodeResultPair.first;
         if (completeCodeResultList != null && completeCodeResultList.size() > 0 && completeCodeResultList.get(0).isExactMatchToCodeRecord()) {
             Mapping exactMatchMapping;
-            int i = 0, highestScore = 0, initialSize = suggestionLoL.size(), highestScoreIndex = initialSize;
+            int k = 0, highestScore = 0, initialSize = suggestionLoL.size(), highestScoreIndex = initialSize;
+            List<List<Pair<Mapping,String>>> suggestLoLSnapshot = null;
             do {
-                exactMatchMapping = completeCodeResultList.get(i);
+                exactMatchMapping = completeCodeResultList.get(k);
                 int score = exactMatchMapping.getBasescore();
                 if (score < 120) {
                     score = 120;
@@ -281,8 +282,10 @@ public class SearchServer {
 
                 //push the exact match mapping with current code into exact match stack. '15,6,2 Jeremy
                 if (exactMatchMapping.getBasescore() > 0) {
-                    if(i==0&& exactMatchMapping.getWord().length()>1){ //clear all previous traces if exact match phrase found
+                    if(k==0&& exactMatchMapping.getWord().length()>1){ //clear all previous traces if exact match phrase found
+                        suggestLoLSnapshot = new LinkedList<>();
                         for(List<Pair<Mapping,String>> lpm:suggestionLoL){
+                            suggestLoLSnapshot.add(new LinkedList<>(lpm));
                             lpm.clear();
                         }
                         suggestionLoL.clear();
@@ -292,16 +295,39 @@ public class SearchServer {
 
                     if (newScore > highestScore) {
                         highestScore = newScore;
-                        highestScoreIndex = i + initialSize;
+                        highestScoreIndex = k + initialSize;
                     }
                     List<Pair<Mapping, String>> suggestionList = new LinkedList<>();
+
+                    //trace back to mappings in snapshot if the exact matching word is start with it.
+                    if(suggestLoLSnapshot!=null) {
+                        for (int i = 0; i < suggestLoLSnapshot.size(); i++) {
+                            if (suggestLoLSnapshot.get(i) != null && !suggestLoLSnapshot.get(i).isEmpty()
+                                    && exactMatchMapping.getWord().startsWith(suggestLoLSnapshot.get(i).get(0).first.getWord())) {
+                                suggestionList.add(suggestLoLSnapshot.get(i).get(0));
+                                if (suggestLoLSnapshot.get(i).size() > 1) {
+                                    for (int j = 1; j < suggestLoLSnapshot.get(i).size(); j++) {
+                                        if (exactMatchMapping.getWord().startsWith(suggestLoLSnapshot.get(i).get(j).first.getWord()))
+                                            suggestionList.add(suggestLoLSnapshot.get(i).get(j));
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     suggestionList.add(new Pair<>(exactMatchMapping, code));
                     suggestionLoL.add(suggestionList);
                 }
-                i++;
+                k++;
             }
-            while (completeCodeResultList.size() > i && completeCodeResultList.get(i).isExactMatchToCodeRecord() && i < 5); //process at most 5 exact match items.
+            while (completeCodeResultList.size() > k && completeCodeResultList.get(k).isExactMatchToCodeRecord() && k < 5); //process at most 5 exact match items.
+            // clear suggestLoLSnapshot if it's not empty
+            if(suggestLoLSnapshot!=null){
+                for(List<Pair<Mapping,String>> lpm:suggestLoLSnapshot){
+                    lpm.clear();
+                }
+                suggestLoLSnapshot.clear();
+            }
             if (!suggestionLoL.isEmpty() && highestScoreIndex != suggestionLoL.size() - 1) {//move bestSuggestionList to the last element
                 List<Pair<Mapping, String>> bestSuggestionList = suggestionLoL.remove(highestScoreIndex);
                 suggestionLoL.add(bestSuggestionList);
@@ -310,7 +336,8 @@ public class SearchServer {
 
         } else if (!suggestionLoL.isEmpty()) {
 
-            Log.i(TAG, "makeRunTimeSuggestion() no exact match on complete code = " + code);
+            if(DEBUG||dumpRunTimeSuggestion)
+                Log.i(TAG, "makeRunTimeSuggestion() no exact match on complete code = " + code);
 
             /*
             // if confirmed best suggestion found and contains last confirmed best suggestion (double confirm) remove all other list not start with last confirmed best suggestion
@@ -468,18 +495,25 @@ public class SearchServer {
                     Log.i(TAG,"makeRunTimeSuggestion() last confirmed best suggestion = " + lastConfirmedBestSuggestion);
                 if(confirmedBestSuggestion !=null)
                      Log.i(TAG,"makeRunTimeSuggestion() confirmed best suggestion = " + confirmedBestSuggestion);
+                if(!bestSuggestionStack.isEmpty()){
+                    int i=0;
+                    for(Pair<Mapping, String> it:bestSuggestionStack){
+                        Log.i(TAG,"makeRunTimeSuggestion() best suggestion stack ("+ (i) + ")= "+ bestSuggestionStack.get(i).first.getWord());
+                        i++;
+                    }
+                }
             }
         }
 
 
 
-        // dump exactMatch List
+        // dump suggestion list of list
         if ((DEBUG || dumpRunTimeSuggestion) &&
                 suggestionLoL != null && !suggestionLoL.isEmpty()) {
             for (int i = 0; i < suggestionLoL.size(); i++) {
                 if (suggestionLoL.get(i) != null && !suggestionLoL.get(i).isEmpty()) {
                     for (int j = 0; j < suggestionLoL.get(i).size(); j++) {
-                        Log.i(TAG, "makeRunTimeSuggestion() exactMatch(" + i + ")(" + j + "): word="
+                        Log.i(TAG, "makeRunTimeSuggestion() suggestionLoL(" + i + ")(" + j + "): word="
                                 + suggestionLoL.get(i).get(j).first.getWord() + ", code=" + suggestionLoL.get(i).get(j).second
                                 + ", base score=" + suggestionLoL.get(i).get(j).first.getBasescore()
                                 + ", average base score=" + suggestionLoL.get(i).get(j).first.getBasescore() / suggestionLoL.get(i).get(j).first.getWord().length()
@@ -734,7 +768,7 @@ public class SearchServer {
     /**
      * get real code length
      */
-    int getRealCodeLength(Mapping selectedMapping, String currentCode) {
+    int getRealCodeLength(final Mapping selectedMapping, String currentCode) {
         if (DEBUG)
             Log.i(TAG, "getRealCodeLength()");
 
@@ -782,6 +816,38 @@ public class SearchServer {
                     it.remove();
                 }
             }
+        }
+
+        // learn ld phrase if the select mapping is run-time suggestion
+        if(selectedMapping!=null && selectedMapping.isRuntimeBuiltPhraseRecord() &&
+                suggestionLoL != null && !suggestionLoL.isEmpty()) {
+
+            final List<Pair<Mapping,String>> bestSuggestionList = new LinkedList<>(suggestionLoL.get(suggestionLoL.size()-1));
+            final String selectedWord = selectedMapping.getWord();
+
+            Thread learnLDPhraseThread = new Thread(){
+                public void run(){
+
+                    if(!bestSuggestionList.isEmpty()){
+                        for (int j = 0; j < bestSuggestionList.size(); j++) {
+                            //TODO:should learn QP code for phonetic table
+                            if(selectedWord.startsWith(bestSuggestionList.get(j).first.getWord())){
+                                if(bestSuggestionList.get(j).first.getWord().length() > 8 )  break; //stop learning if word length > 8
+                                dbadapter.addOrUpdateMappingRecord(bestSuggestionList.get(j).second,bestSuggestionList.get(j).first.getWord());
+                            }
+
+                            if ((DEBUG || dumpRunTimeSuggestion) )// dump best suggestion list
+                                Log.i(TAG, "getRealCodeLength() best suggestion list(" + j + "): word="
+                                    + bestSuggestionList.get(j).first.getWord() + ", code=" + bestSuggestionList.get(j).second);
+
+                        }
+
+                    }
+
+                }
+            };
+            learnLDPhraseThread.start();
+
         }
 
         return realCodeLen;
