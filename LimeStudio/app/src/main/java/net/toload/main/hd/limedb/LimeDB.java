@@ -2933,11 +2933,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     while ((line = buf.readLine()) != null && !threadAborted) {
                         processedLength += line.getBytes().length + 2; // +2 for the eol mark.
-                        progressPercentageDone = (int) ((float) processedLength / (float) fileLength * 50);
+                        progressPercentageDone = (int) ((float) processedLength / (float) fileLength * 100);
                         //if(DEBUG)
                         //	Log.i(TAG, "loadFile():loadFile()"+ progressPercentageDone +"% processed"
                         //			+ ". processedLength:" + processedLength + ". fileLength:" + fileLength + ", threadAborted=" + threadAborted);
-                        if (progressPercentageDone > 49) progressPercentageDone = 49;
+                        if (progressPercentageDone > 99) progressPercentageDone = 99;
 						/*
 						 * If source is cin format start from the tag %chardef
 						 * begin until %chardef end
@@ -3136,8 +3136,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                 }
 
-
+                //TODO: do phrase table learning here.
                 // Create related field
+                /*
                 if (!threadAborted) {
                     //db = getSqliteDb(false);
                     progressStatus = mContext.getResources().getText(R.string.setup_load_migrate_rebuild_related).toString();
@@ -3179,7 +3180,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     }
                     unHoldDBConnection(); //Jeremy '15,6,3. need to un-hold DB connection either loading is successfully or not.
 
-                }
+                }*/
 
                 // Fill IM information into the IM Table
                 if (!threadAborted) {
