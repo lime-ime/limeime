@@ -27,6 +27,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
+import android.os.Looper;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.util.Log;
@@ -681,7 +682,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (databaseOnHold) {   //mapping loading in progress, database is not available for query
             if (DEBUG)
                 Log.i(TAG, "checkDBConnection() : mapping loading ");
+            if(Looper.myLooper()==null)
+                Looper.prepare();
             Toast.makeText(mContext, mContext.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT).show();
+            Looper.loop();
             return false;
         } else return openDBConnection(false);
 
