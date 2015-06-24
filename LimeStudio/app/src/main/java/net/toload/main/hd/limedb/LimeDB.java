@@ -71,10 +71,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private final static int DATABASE_VERSION = 100;
 
     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
-    private final static Boolean betweenSearch = true;
+
     //private final static Boolean fuzzySearch = false;
-    private static Boolean checkCodeColumnPending = false;
-    // hold database connection when database is in maintainance. Jeremy '15,5,23
+    // hold database connection when database is in maintainable. Jeremy '15,5,23
     private static boolean databaseOnHold = false;
 
     //Jeremy '11,8,5
@@ -290,9 +289,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
 
-    public static Boolean getBetweenSearch() {
-        return betweenSearch;
-    }
+
 
 
     public void setFinish(boolean value) {
@@ -1068,29 +1065,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return result;
     }
 
-    /**
-     * Jeremy '11,7,26  Updated related list
-     */
-    public synchronized List<Mapping> updateSimilarCodeListInRelatedColumn(String code) {
-        return updateSimilarCodeListInRelatedColumn(tablename, code);
-    }
 
-    public synchronized List<Mapping> updateSimilarCodeListInRelatedColumn(String table, String code) {
-        //Jeremy '12,5,29 should not return null thus new linklist instead of initial with null
-        LinkedList<Mapping> scorelist = new LinkedList<>();
-        //Jeremy '15,6,4 do nothing in between search mode
-        if(betweenSearch) return scorelist;
-        if (!checkDBConnection()) return scorelist;
-        try {
-            // Jeremy '11,7,31  rebuild relatedlist by query from table directly
-            // Update relatedlist in IM table now.
-            //Jeremy '12,6,5 the code is retrieve from mapping, and thus should not remap.
-            scorelist = updateSimilarCodeListInRelatedColumnOnDB(db, table, code);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return scorelist;
-    }
 
     private LinkedList<Mapping> updateSimilarCodeListInRelatedColumnOnDB(SQLiteDatabase db, String table, String code) {
 
@@ -1475,7 +1450,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Retrieve matched records
      */
-    public Pair<List<Mapping>, List<Mapping>> getMappingByCode(String code, boolean softKeyboard, boolean getAllRecords) {
+    public List<Mapping> getMappingByCode(String code, boolean softKeyboard, boolean getAllRecords) {
 
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (!checkDBConnection()) return null;
@@ -1491,7 +1466,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         // Add by Jeremy '10, 3, 27. Extension on multi table query.
         lastCode = code;
         lastValidDualCodeList = null; // reset the lastValidDualCodeList
-        Pair<List<Mapping>, List<Mapping>> result = null;
+        List<Mapping> result = null;
 
         //Two-steps query with code pre-processing. Jeremy '11,6,15
         // Step.1 Code re-mapping.  
@@ -1546,7 +1521,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     String limitClause = (getAllRecords) ?FINAL_RESULT_LIMIT: INITIAL_RESULT_LIMIT;
 
                     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
-                    if(betweenSearch){
+                    //if(betweenSearch){
                         selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectClause + " group by word " ;
                         String exactMatchCondition = " (" +codeCol +" ='" + escapedCode +"' " + extraExactMatchClause  +  ") ";
                         sortClause = "( exactmatch = 1 and ( score > 0 or  basescore >0) and length(word)=1) desc, exactmatch desc,"
@@ -1563,7 +1538,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                         if(DEBUG)
                             Log.i(TAG, "getMappingByCode() between search select string:"+selectString);
-                     }
+                    /* }
                     else{
                         selectClause = codeCol + " = '" + escapedCode + "' " + extraSelectClause;
                         if (sort)
@@ -1574,7 +1549,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         if (DEBUG)
                             Log.i(TAG, "getMappingByCode(): code = '" + code + "' selectClause=" + selectClause);
 
-                    }
+                    }*/
 
 
                     // Jeremy '11,8,5 limit initial getMappingByCode to limited records
@@ -2302,12 +2277,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Process search results
      */
-    private synchronized Pair<List<Mapping>, List<Mapping>> buildQueryResult(String query_code, Cursor cursor, Boolean getAllRecords) {
+    private synchronized List<Mapping> buildQueryResult(String query_code, Cursor cursor, Boolean getAllRecords) {
 
 
         List<Mapping> result = new ArrayList<>();
-        List<Mapping> relatedresult = new ArrayList<>();
-        Pair<List<Mapping>, List<Mapping>> resultPair = new Pair<>(result, relatedresult);
+
+
         HashSet<String> duplicateCheck = new HashSet<>();
         HashSet<String> validCodeMap = new HashSet<>();  //Jeremy '11,8,26
         int rsize = 0;
@@ -2343,7 +2318,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 m.setScore(cursor.getInt(scoreColumn));
                 m.setBasescore(cursor.getInt(baseScoreColumn));
 
-                String relatedlist = (betweenSearch)?null: cursor.getString(relatedColumn);
+                //String relatedlist = (betweenSearch)?null: cursor.getString(relatedColumn);
 
                 Boolean exactMatch = cursor.getString(exactMatchColumn).equals("1"); //Jeremy '15,6,3 new exact match virtual column built in query time.
                 //m.setHighLighted((betweenSearch) && !exactMatch);//Jeremy '12,5,30 exact match, not from related list
@@ -2378,12 +2353,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 } catch (Exception ignored) { }
 
                 //related list always null in between search mode. Jeremy '15,6,3----------------
+                /*
                 if ( relatedlist != null && relatedMap.get(code) == null) {
                     relatedMap.put(code, relatedlist);
                     if (DEBUG)
                         Log.i(TAG, "buildQueryResult() build relatedmap on code = '" + code + "' relatedlist = " + relatedlist);
 
-                }
+                }*/
                 //-----------------------------------------------------------------------------------------------
 
                 if (duplicateCheck.add(m.getWord())) {
@@ -2407,6 +2383,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             //Jeremy '11,6,1 The related field may have only one word and thus no "|" inside
             //Jeremy '11,6,11 allow multiple relatedlist from different codes.
             //Jeremy '15,6,3 not used in between search mode ---------------------------------------
+            /*
             if (!betweenSearch) {
                 int scount = 0;
                 for (Entry<String, String> entry : relatedMap.entrySet()) {
@@ -2436,6 +2413,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     }
                 }
             }
+            */
             //----------------------------------------------------------------------------------------------------
         }
 
@@ -2471,14 +2449,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         if (!getAllRecords && rsize == Integer.parseInt(INITIAL_RESULT_LIMIT))
             result.add(hasMore);
-        if (!getAllRecords && relatedresult.size() == INITIAL_RELATED_LIMIT)
-            relatedresult.add(hasMore);
 
         if (DEBUG)
             Log.i(TAG, "buildQueryResult():query_code:" + query_code + " query_code.length:" + query_code.length()
-                    + " result.size=" + result.size() + " query size:" + rsize
-                    + " relatedlist.size=" + relatedresult.size());
-        return resultPair;
+                    + " result.size=" + result.size() + " query size:" + rsize);
+        return result;
     }
 
     /**

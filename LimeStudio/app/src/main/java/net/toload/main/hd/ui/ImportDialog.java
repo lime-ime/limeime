@@ -452,7 +452,7 @@ public class ImportDialog extends DialogFragment {
 			 obj.setScore(1);
 			 obj.setBasescore(0);
 		datasource.add(Word.getInsertQuery(imtype, obj));
-		datasource.updateSimilarCodeListInRelatedColumn(imtype, addcode);
+
 		Toast.makeText(activity, getResources().getString(R.string.import_word_success), Toast.LENGTH_SHORT).show();
 
 	}

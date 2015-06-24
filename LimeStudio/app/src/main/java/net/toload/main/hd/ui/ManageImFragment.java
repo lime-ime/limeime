@@ -578,8 +578,8 @@ public class ManageImFragment extends Fragment {
 
     }
 
-    public void updateRelated(String updatecode) {
-        datasource.updateSimilarCodeListInRelatedColumn(table, updatecode);
-    }
+    //public void updateRelated(String updatecode) {
+    //    datasource.updateSimilarCodeListInRelatedColumn(table, updatecode);
+    //}
 
 }

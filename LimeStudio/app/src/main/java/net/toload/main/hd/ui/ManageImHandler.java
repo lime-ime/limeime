@@ -67,7 +67,7 @@ public class ManageImHandler extends Handler {
                 break;
             case "related": {
                 String code = msg.getData().getString("code");
-                fragment.updateRelated(code);
+                //fragment.updateRelated(code);
                 break;
             }
             case "remove": {
