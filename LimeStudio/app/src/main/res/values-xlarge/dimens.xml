@@ -25,7 +25,7 @@
     <dimen name="phone_key_height">80dip</dimen>
     <dimen name="key_height">84dip</dimen>
     <dimen name="mini_keyboard_fling_vertical_correction">-84dip</dimen>
-    <dimen name="key_preview_height">115dp</dimen>
+    <dimen name="key_preview_height">165dp</dimen>
     <dimen name="spacebar_vertical_correction">4dip</dimen>
     <dimen name="candidate_stripe_height">50sp</dimen>
     <dimen name="candidate_font_size">42sp</dimen>
