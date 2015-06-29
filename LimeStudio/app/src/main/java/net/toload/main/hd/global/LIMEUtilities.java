@@ -22,11 +22,14 @@
 
 package net.toload.main.hd.global;
 
+import android.annotation.TargetApi;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
@@ -291,20 +294,38 @@ public class LIMEUtilities {
 	/** Add by Jeremy '12,4,23 Show notification with notification builder in compatibility package replacing the deprecated alert dialog creation 
 
 	 */
-	public static void showNotification(Context context, Boolean autoCancel, int icon,  CharSequence title, CharSequence message, Intent intent){
-		NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-		NotificationCompat.Builder mNotificationBuilder = new NotificationCompat.Builder(context);
+	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+	public static void showNotification(Context context, Boolean autoCancel,  CharSequence title, CharSequence message, Intent intent){
 
-		mNotificationBuilder.setSmallIcon(R.drawable.logo)
-		    .setAutoCancel(autoCancel)
-		    .setContentTitle(title)
-		    .setContentText(message)
-		    .setTicker(message)
-		    .setContentIntent(PendingIntent.getActivity(context, 0,intent, 0));
+		NotificationCompat.Builder mBuilder =
+				new NotificationCompat.Builder(context)
+						.setSmallIcon(getNotificationIcon())
+						.setLargeIcon(getNotificationIconBitmap(context))
+						.setContentTitle(title)
+						.setContentText(message);
 
-		mNotificationManager.notify(R.drawable.logo, mNotificationBuilder.getNotification());
+		NotificationManager mNotificationManager =
+						(NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
+		mNotificationManager.notify(501, mBuilder.build());
 	}
+
+	private static int getNotificationIcon() {
+		boolean whiteIcon = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
+		return whiteIcon ? R.drawable.logobw : R.drawable.logo;
+	}
+
+	private static Bitmap getNotificationIconBitmap(Context context) {
+		boolean whiteIcon = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
+		Bitmap bm = null;
+		if(whiteIcon){
+			bm = BitmapFactory.decodeResource(context.getResources(), R.drawable.logo);
+		}else{
+			bm = BitmapFactory.decodeResource(context.getResources(), R.drawable.logo);
+		}
+		return bm;
+	}
+
 	
 	public static String isVoiceSearchServiceExist(Context context){
 		if(DEBUG) Log.i(TAG, "isVoiceSearchServiceExist()");

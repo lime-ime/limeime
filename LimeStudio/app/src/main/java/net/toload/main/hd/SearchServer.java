@@ -194,7 +194,7 @@ public class SearchServer {
                 String result = dbadapter.getCodeListStringByWord(word);
                 if (result != null && !result.equals("")) {
                     LIMEUtilities.showNotification(
-                            mContext, true, R.drawable.logo, mContext.getText(R.string.ime_setting), result, new Intent(mContext, MainActivity.class));
+                            mContext, true, mContext.getText(R.string.ime_setting), result, new Intent(mContext, MainActivity.class));
                 }
             }
         };

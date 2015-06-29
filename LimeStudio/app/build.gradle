@@ -29,7 +29,7 @@ android {
     buildToolsVersion '22.0.1'
     defaultConfig {
         applicationId "net.toload.main.hd"
-        minSdkVersion 15
+        minSdkVersion 16
         targetSdkVersion 22
         versionCode 501
         versionName '5.0.1'

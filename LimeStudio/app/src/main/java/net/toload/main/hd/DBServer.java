@@ -25,6 +25,7 @@ package net.toload.main.hd;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -690,8 +691,7 @@ public class  DBServer {
 		i = new Intent(ctx, MainActivity.class);
 
 		LIMEUtilities.showNotification(
-				ctx, true, R.drawable.logo, ctx.getText(R.string.ime_setting), message, i);
-
+				ctx, true, ctx.getText(R.string.ime_setting), message, i);
 
 	}
 
