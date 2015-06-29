@@ -2590,11 +2590,20 @@ public class LIMEService extends InputMethodService implements
             mEnglishOnly = true;
             mLIMEPref.setLanguageMode(true);
             mKeyboardSwitcher.toggleChinese();
+            if(mFixedCandidateViewOn) {
+                if (!mPredictionOn) {
+                    forceHideCandidateView();
+                } else {
+                    mCandidateViewInInputView.setSuggestions(null, false);  // reset the candiate view if it's force hided before
+                }
+            }
         } else if (primaryCode == KEYBOARD_SWITCH_IM_CODE) { //Eng --> Chi moved from SwitchKeyboardIM by Jeremy '12,4,29
             mEnglishOnly = false;
             mLIMEPref.setLanguageMode(false);
             initialIMKeyboard();
-
+            if (mFixedCandidateViewOn) {
+                mCandidateViewInInputView.setSuggestions(null,false);  // reset the candiate view if it's force hided before
+            }
         }
 
 
@@ -2603,6 +2612,7 @@ public class LIMEService extends InputMethodService implements
 
         // Update keyboard xml information
         currentSoftKeyboard = mKeyboardSwitcher.getImKeyboard(activeIM);
+
     }
 
 

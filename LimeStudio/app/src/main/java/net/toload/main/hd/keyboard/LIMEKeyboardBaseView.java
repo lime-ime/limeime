@@ -694,6 +694,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         }
         requestLayout();
         // Hint to reallocate the buffer if the size changed
+        mOffsetInWindow = null;  //reset offset window.  keyboard changed.
         mKeyboardChanged = true;
         invalidateAllKeys();
         computeProximityThreshold(keyboard);
