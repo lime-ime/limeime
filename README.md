@@ -2,7 +2,7 @@ LIME (Lightweight Input Method Editor) 程式碼採用開源GPL 的方式授權�
 
 我們歡迎您能夠加入 LIME IME 專案團隊，協助程式的開發與測試，讓更多 Android 的使用者享受到科技帶來的好處、推廣並延續繁體中文輸入的社群。
 
-Github Project 網址 http://github/lime-ime/    http://www.limeime.org/
+Github Project 網址 http://github.com/lime-ime/    http://www.limeime.org/
 
 OpenFoundary http://www.openfoundry.org/of/projects/1920
 
