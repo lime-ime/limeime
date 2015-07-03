@@ -1,5 +1,5 @@
 <component name="CopyrightManager">
-  <settings default="GNU">
+  <settings default="">
     <module2copyright>
       <element module="All" copyright="GNU" />
     </module2copyright>

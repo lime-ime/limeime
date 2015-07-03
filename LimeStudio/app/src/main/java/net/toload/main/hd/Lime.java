@@ -50,7 +50,7 @@ public class Lime {
 
     public static final String DATABASE_IM_TEMP = "temp.zip";
 
-    public static final String DATABASE_CLOUD_URL_BASED = "https://github.com/jrywu/limeime/raw/master/Database/";
+    public static final String DATABASE_CLOUD_URL_BASED = "https://github.com/lime-ime/limeime/raw/master/Database/";
     public static final String DATABASE_CLOUD_IM_WB = DATABASE_CLOUD_URL_BASED + "wb.zip";
     public static final String DATABASE_CLOUD_IM_WB_KEYBOARD = "wb";
 
