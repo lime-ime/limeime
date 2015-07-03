@@ -461,6 +461,7 @@ public class SearchServer {
             }
 
         }
+        /*
         //push best suggestion to stack
         List<Pair<Mapping, String>> bestSuggestionList;
         if (!suggestionLoL.isEmpty()) {
@@ -503,7 +504,7 @@ public class SearchServer {
                 }
             }
         }
-
+        */
 
         // dump suggestion list of list
         if ((DEBUG || dumpRunTimeSuggestion) &&
