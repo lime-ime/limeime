@@ -463,7 +463,7 @@ public class SearchServer {
             }
 
         }
-        /*
+
         //push best suggestion to stack
         List<Pair<Mapping, String>> bestSuggestionList;
         if (!suggestionLoL.isEmpty()) {
@@ -472,7 +472,7 @@ public class SearchServer {
                 bestSuggestionStack.push(bestSuggestionList.get(bestSuggestionList.size() - 1));
             }
         }
-
+        /*
         //find confirmed best suggestion with longest common string
         if (bestSuggestionStack != null && !bestSuggestionStack.isEmpty() && bestSuggestionStack.size() > 1) {
             for (int i = bestSuggestionStack.size() - 1; i > 0; i--) {
@@ -572,7 +572,7 @@ public class SearchServer {
 
             int size = code.length();
 
-            boolean hasMore = false;
+            //boolean hasMore = false;
 
 
             // 12,6,4 Jeremy. Ascending a ab abc... looking up db if the cache is not exist
@@ -664,15 +664,19 @@ public class SearchServer {
 
                 if (resultlist != null && resultlist.size() > 0) {
                     result.addAll(resultlist);
+                    /*
                     int rsize = result.size();
                     if (result.get(rsize - 1).isHasMoreRecordsMarkRecord()) {
                         //do not need to touch the has more record in between search mode. Jeremy '15,6,4
                         result.remove(rsize - 1);
                         hasMore = true;
-                        if (DEBUG)
-                            Log.i(TAG, "getMappingByCode() code=" + code + "  result list added resultlist.size()="
-                                    + resultlist.size());
-                    }
+
+                        }
+                        */
+                    if (DEBUG)
+                        Log.i(TAG, "getMappingByCode() code=" + code + "  result list added resultlist.size()="
+                                + resultlist.size());
+
                 }
 
             }
