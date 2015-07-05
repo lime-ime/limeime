@@ -2940,7 +2940,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         processedLength += line.getBytes().length + 2; // +2 for the eol mark.
                         progressPercentageDone = (int) ((float) processedLength / (float) fileLength * 100);
 
-                        Log.i(TAG, line + " / " + delimiter_symbol.equals(" ") + " / " + line.indexOf(delimiter_symbol));
+                        //Log.i(TAG, line + " / " + delimiter_symbol.equals(" ") + " / " + line.indexOf(delimiter_symbol));
                         //if(DEBUG)
                         //	Log.i(TAG, "loadFile():loadFile()"+ progressPercentageDone +"% processed"
                         //			+ ". processedLength:" + processedLength + ". fileLength:" + fileLength + ", threadAborted=" + threadAborted);
