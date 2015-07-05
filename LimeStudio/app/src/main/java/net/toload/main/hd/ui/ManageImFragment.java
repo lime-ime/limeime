@@ -170,15 +170,15 @@ public class ManageImFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 //try {
-                    //datasource.open();
-                    Word w = datasource.getWord(table, id);
-                    //datasource.close();
-                    FragmentTransaction ft = getFragmentManager().beginTransaction();
+                //datasource.open();
+                Word w = datasource.getWord(table, id);
+                //datasource.close();
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
 
-                    // Create and show the dialog.
-                    ManageImEditDialog dialog = ManageImEditDialog.newInstance(table);
-                    dialog.setHandler(handler, w);
-                    dialog.show(ft, "editdialog");
+                // Create and show the dialog.
+                ManageImEditDialog dialog = ManageImEditDialog.newInstance(table);
+                dialog.setHandler(handler, w);
+                dialog.show(ft, "editdialog");
                 //} catch (SQLException e) {
                 //    e.printStackTrace();
                 //}
@@ -197,15 +197,19 @@ public class ManageImFragment extends Fragment {
         });
 
         this.btnManageImKeyboard = (Button) rootView.findViewById(R.id.btnManageImKeyboard);
-        this.btnManageImKeyboard.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                ManageImKeyboardDialog dialog = ManageImKeyboardDialog.newInstance();
-                                       dialog.setHandler(handler, table);
-                dialog.show(ft, "keyboarddialog");
-            }
-        });
+        if(table != null && table.equals(Lime.IM_HS)){
+            this.btnManageImKeyboard.setEnabled(false);
+        }else{
+            this.btnManageImKeyboard.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    FragmentTransaction ft = getFragmentManager().beginTransaction();
+                    ManageImKeyboardDialog dialog = ManageImKeyboardDialog.newInstance();
+                    dialog.setHandler(handler, table);
+                    dialog.show(ft, "keyboarddialog");
+                }
+            });
+        }
 
         this.toggleManageIm = (ToggleButton) rootView.findViewById(R.id.toggleManageIm);
         this.toggleManageIm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {

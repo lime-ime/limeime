@@ -68,6 +68,7 @@ public class ImportDialog extends DialogFragment {
 	Button btnImportPinyin;
 	Button btnImportScj;
 	Button btnImportWb;
+	Button btnImportHs;
 
 	Button btnImportRelated;
 
@@ -151,6 +152,7 @@ public class ImportDialog extends DialogFragment {
 		btnImportPinyin = (Button) view.findViewById(R.id.btnImportPinyin);
 		btnImportScj = (Button) view.findViewById(R.id.btnImportScj);
 		btnImportWb = (Button) view.findViewById(R.id.btnImportWb);
+		btnImportHs = (Button) view.findViewById(R.id.btnImportHs);
 
 		btnImportRelated = (Button) view.findViewById(R.id.btnImportRelated);
 		
@@ -326,6 +328,22 @@ public class ImportDialog extends DialogFragment {
 				@Override
 				public void onClick(View v) {
 					confirmimportdialog(Lime.IM_ARRAY10);
+				}
+			});
+		}
+
+		if(check.get(Lime.DB_TABLE_HS) == null){
+			btnImportHs.setAlpha(Lime.HALF_ALPHA_VALUE);
+			btnImportHs.setTypeface(null, Typeface.ITALIC);
+			btnImportHs.setEnabled(false);
+		}else {
+			btnImportHs.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnImportHs.setTypeface(null, Typeface.BOLD);
+
+			btnImportHs.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					confirmimportdialog(Lime.IM_HS);
 				}
 			});
 		}

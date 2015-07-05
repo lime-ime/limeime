@@ -133,8 +133,8 @@
     <string name="im_cj5">仓颉五代</string>
     <string name="im_dayi">大易</string>
     <string name="im_ecj">速成</string>
-    <string name="im_ez">轻松</string><!--
-    <string name="im_hs">华象直觉</string>-->
+    <string name="im_ez">轻松</string>
+    <string name="im_hs">华象直觉</string>
     <string name="im_phonetic">注音</string>
     <string name="im_phonetic_advanced">注音连打</string>
     <string name="im_pinyin">拼音</string>

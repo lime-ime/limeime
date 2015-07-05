@@ -65,6 +65,7 @@ public class ShareDialog extends DialogFragment {
 	Button btnSharePinyin;
 	Button btnShareScj;
 	Button btnShareWb;
+	Button btnShareHs;
 
 	Button btnShareRelated;
 
@@ -150,6 +151,7 @@ public class ShareDialog extends DialogFragment {
 		btnSharePinyin = (Button) view.findViewById(R.id.btnSharePinyin);
 		btnShareScj = (Button) view.findViewById(R.id.btnShareScj);
 		btnShareWb = (Button) view.findViewById(R.id.btnShareWb);
+		btnShareHs = (Button) view.findViewById(R.id.btnShareHs);
 
 		btnShareRelated = (Button) view.findViewById(R.id.btnShareRelated);
 		
@@ -325,6 +327,22 @@ public class ShareDialog extends DialogFragment {
 				@Override
 				public void onClick(View v) {
 					confirmShareDialog(Lime.IM_ARRAY10);
+				}
+			});
+		}
+
+		if(check.get(Lime.DB_TABLE_HS) == null){
+			btnShareHs.setAlpha(Lime.HALF_ALPHA_VALUE);
+			btnShareHs.setTypeface(null, Typeface.ITALIC);
+			btnShareHs.setEnabled(false);
+		}else {
+			btnShareHs.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnShareHs.setTypeface(null, Typeface.BOLD);
+
+			btnShareHs.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					confirmShareDialog(Lime.IM_HS);
 				}
 			});
 		}

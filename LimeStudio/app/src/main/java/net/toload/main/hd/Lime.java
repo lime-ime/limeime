@@ -98,6 +98,12 @@ public class Lime {
     public static final String DATABASE_CLOUD_IM_ARRAY = DATABASE_CLOUD_URL_BASED + "array.zip";
     public static final String DATABASE_CLOUD_IM_ARRAY_KEYBOARD = "arraynum";
 
+    public static final String DATABASE_CLOUD_IM_HS = DATABASE_CLOUD_URL_BASED + "hs.zip";
+    public static final String DATABASE_CLOUD_IM_HS_V1 = DATABASE_CLOUD_URL_BASED + "hs1.zip";
+    public static final String DATABASE_CLOUD_IM_HS_V2 = DATABASE_CLOUD_URL_BASED + "hs2.zip";
+    public static final String DATABASE_CLOUD_IM_HS_V3 = DATABASE_CLOUD_URL_BASED + "hs3.zip";
+    public static final String DATABASE_CLOUD_IM_HS_KEYBOARD = "hs";
+
     // Database Tables and columns
 
     public static final String DB_TABLE_IMTABLE2 = "imtable2";
@@ -137,6 +143,9 @@ public class Lime {
     public static final String IM_ECJHK = "ecjhk";
     public static final String IM_EZ = "ez";
     public static final String IM_HS = "hs";
+    public static final String IM_HS_V1 = "hs1";
+    public static final String IM_HS_V2 = "hs2";
+    public static final String IM_HS_V3 = "hs3";
     public static final String IM_PHONETIC = "phonetic";
     public static final String IM_PHONETIC_ADV = "phoneticadv";
     public static final String IM_PINYIN = "pinyin";

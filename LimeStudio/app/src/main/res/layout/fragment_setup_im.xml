@@ -418,9 +418,10 @@
                     android:id="@+id/btnSetupImHs"
                     android:layout_weight="1"
                     android:padding="5dp"
+                    android:text="@string/im_hs"
                     android:layout_marginLeft="10dp"
                     android:layout_marginRight="10dp"
-                    android:enabled="false" />
+                    android:enabled="true"/>
             </TableRow>
 
             <TableRow

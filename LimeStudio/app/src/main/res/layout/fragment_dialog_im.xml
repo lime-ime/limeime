@@ -84,6 +84,14 @@
         android:layout_gravity="center_horizontal"
         android:layout_weight="1"
         android:padding="10dp" />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:text="New Button"
+        android:id="@+id/btnSetupImDialogLoad4"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:padding="10dp" />
 
     <Button
         android:layout_width="match_parent"

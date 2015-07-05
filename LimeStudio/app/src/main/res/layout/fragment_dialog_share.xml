@@ -147,6 +147,14 @@
             <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="@string/im_hs"
+                android:id="@+id/btnShareHs"
+                android:layout_gravity="center_horizontal"
+                android:layout_weight="1" />
+
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:text="@string/related"
                 android:id="@+id/btnShareRelated"
                 android:layout_gravity="center_horizontal"

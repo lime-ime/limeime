@@ -616,12 +616,21 @@ public class SetupImFragment extends Fragment {
                     }
                 });
 
+
+                if(check.get(Lime.DB_TABLE_HS) != null){
+                    btnSetupImHs.setAlpha(Lime.HALF_ALPHA_VALUE);
+                    btnSetupImHs.setTypeface(null, Typeface.ITALIC);
+                }else {
+                    btnSetupImHs.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+                    btnSetupImHs.setTypeface(null, Typeface.BOLD);
+                }
+
                 btnSetupImHs.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                /*FragmentTransaction ft = getFragmentManager().beginTransaction();
-                SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_HS);
-                dialog.show(ft, "loadimdialog");*/
+                        FragmentTransaction ft = getFragmentManager().beginTransaction();
+                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_HS, handler);
+                        dialog.show(ft, "loadimdialog");
                     }
                 });
 
