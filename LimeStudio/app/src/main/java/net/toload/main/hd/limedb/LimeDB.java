@@ -62,7 +62,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 public class LimeDB extends LimeSQLiteOpenHelper {
 
@@ -2940,10 +2939,28 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     while ((line = buf.readLine()) != null && !threadAborted) {
                         processedLength += line.getBytes().length + 2; // +2 for the eol mark.
                         progressPercentageDone = (int) ((float) processedLength / (float) fileLength * 100);
+
+                        Log.i(TAG, line + " / " + delimiter_symbol.equals(" ") + " / " + line.indexOf(delimiter_symbol));
                         //if(DEBUG)
                         //	Log.i(TAG, "loadFile():loadFile()"+ progressPercentageDone +"% processed"
                         //			+ ". processedLength:" + processedLength + ". fileLength:" + fileLength + ", threadAborted=" + threadAborted);
                         if (progressPercentageDone > 99) progressPercentageDone = 99;
+
+                        if(delimiter_symbol.equals(" ") && line.indexOf(delimiter_symbol) == -1){
+                            continue;
+                        }
+
+						if(delimiter_symbol.equals(" ")){
+                            line = line.replaceAll("     "," ");
+                            line = line.replaceAll("    "," ");
+                            line = line.replaceAll("   "," ");
+                            line = line.replaceAll("  "," ");
+                        }
+
+                        if(line.length() < 3 ){
+                            continue;
+                        }
+
 						/*
 						 * If source is cin format start from the tag %chardef
 						 * begin until %chardef end
@@ -3105,10 +3122,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                 count++;
                                 ContentValues cv = new ContentValues();
                                 cv.put(FIELD_CODE, code);
-                                if (table.equals("phonetic")) {
-                                    String noToneCode = code.replaceAll("[3467 ]", "");
-                                    cv.put(FIELD_NO_TONE_CODE, noToneCode);
 
+                                if ( table.equals("phonetic") ) {
+                                    cv.put(FIELD_NO_TONE_CODE, code.replaceAll("[3467 ]", ""));
                                 }
                                 cv.put(FIELD_WORD, word);
 								cv.put(FIELD_SCORE, source_score);
@@ -3130,6 +3146,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     db.setTransactionSuccessful();
                 } catch (Exception e) {
 
+                    Log.i(TAG, "Error : " + e);
                     setImInfo(table, "amount", "0");
                     setImInfo(table, "source", "Failed!!!");
                     e.printStackTrace();
@@ -3347,6 +3364,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         int commaCount = 0;
         int tabCount = 0;
         int pipeCount = 0;
+        int spaceCount = 0;
 
         for (String line : src) {
             if (line.contains("\t")) {
@@ -3358,13 +3376,18 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             if (line.contains("|")) {
                 pipeCount++;
             }
+            if (line.contains(" ")) {
+                spaceCount++;
+            }
         }
-        if (commaCount >= tabCount && commaCount >= pipeCount) {
+        if (commaCount >= tabCount && commaCount >= pipeCount && commaCount >= spaceCount) {
             return ",";
-        } else if (tabCount >= commaCount && tabCount >= pipeCount) {
+        } else if (tabCount >= commaCount && tabCount >= pipeCount && tabCount >= spaceCount) {
             return "\t";
-        } else if (pipeCount >= tabCount && pipeCount >= commaCount) {
+        } else if (pipeCount >= tabCount && pipeCount >= commaCount && pipeCount >= spaceCount) {
             return "|";
+        } else if (spaceCount >= tabCount && spaceCount >= commaCount && spaceCount >= pipeCount) {
+            return " ";
         }
 
         return " ";
