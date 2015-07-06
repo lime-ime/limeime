@@ -1527,7 +1527,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
                     //if(betweenSearch){
-                        selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectClause + " group by word " ;
+                        selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectClause ;
                         String exactMatchCondition = " (" +codeCol +" ='" + escapedCode +"' " + extraExactMatchClause  +  ") ";
                         sortClause = "( exactmatch = 1 and ( score > 0 or  basescore >0) and length(word)=1) desc, exactmatch desc,"
                               + " (length("+codeCol+") >= " +  codeLen + " ) desc, "
