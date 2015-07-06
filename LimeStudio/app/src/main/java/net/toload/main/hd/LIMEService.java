@@ -73,7 +73,7 @@ import java.util.Locale;
 public class LIMEService extends InputMethodService implements
         LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final String TAG = "LIMEService";
 
     private static Thread queryThread; // queryThread for no-blocking I/O  Jermy '16,6,1
@@ -434,23 +434,27 @@ public class LIMEService extends InputMethodService implements
     private void clearComposing(boolean forceClearComposing) {
         if (DEBUG)
             Log.i(TAG, "clearComposing()");
-        //Jeremy '11,8,14
-        if (mComposing != null && mComposing.length() > 0)
-            mComposing.setLength(0);
-        if (mCandidateList != null)
-            mCandidateList.clear();
 
+        try {
+            //Jeremy '11,8,14
+            if (mComposing != null && mComposing.length() > 0)
+                mComposing.setLength(0);
+            if (mCandidateList != null)
+                mCandidateList.clear();
 
-        if (forceClearComposing) {
-            InputConnection ic = getCurrentInputConnection();
-            if (ic != null) ic.commitText("", 0);
+            /*if (forceClearComposing) {
+                InputConnection ic = getCurrentInputConnection();
+                if (ic != null) ic.commitText("", 0);
+            }*/
+
+            selectedCandidate = null;
+            selectedIndex = 0;
+
+            clearSuggestions();
+        }catch(Exception e){
+            e.printStackTrace();
+            // ignore candidate clear error
         }
-
-        selectedCandidate = null;
-        selectedIndex = 0;
-
-
-        clearSuggestions();
     }
 
     /**
@@ -1899,6 +1903,7 @@ public class LIMEService extends InputMethodService implements
             try {
                 activeIM = activatedIMList.get(0);
             } catch (IndexOutOfBoundsException e) {
+                e.printStackTrace();
                 //Toast.makeText(this, getResources().getString(R.string.error_set_active_im), Toast.LENGTH_LONG).show();
             }
             //initializeIMKeyboard();
@@ -2120,6 +2125,7 @@ public class LIMEService extends InputMethodService implements
                     try {
                         sleep(1);
                     } catch (InterruptedException ignored) {
+                        ignored.printStackTrace();
                         return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                     }
                     //Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
@@ -2150,6 +2156,7 @@ public class LIMEService extends InputMethodService implements
                         try {
                             sleep(1);
                         } catch (InterruptedException ignored) {
+                            ignored.printStackTrace();
                             return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                         }
                         setSuggestions(list, finalHasPhysicalKeyPressed, selkey);
@@ -2171,6 +2178,7 @@ public class LIMEService extends InputMethodService implements
                             try {
                                 sleep(1);
                             } catch (InterruptedException ignored) {
+                                ignored.printStackTrace();
                                 return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                             }
                             mCandidateView.setComposingText(keynameString);
@@ -2210,6 +2218,7 @@ public class LIMEService extends InputMethodService implements
                             after = true;
                         }
                     } catch (StringIndexOutOfBoundsException e) {
+                        e.printStackTrace();
                         after = true;
                     }
 
@@ -2226,6 +2235,7 @@ public class LIMEService extends InputMethodService implements
                                 matchedtemp = true;
                             }
                         } catch (StringIndexOutOfBoundsException ignored) {
+                            ignored.printStackTrace();
                         }
                     }
 
@@ -2250,6 +2260,7 @@ public class LIMEService extends InputMethodService implements
                                 try {
                                     sleep(1);
                                 } catch (InterruptedException ignored) {
+                                    ignored.printStackTrace();
                                     return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                                 }
 
@@ -2265,6 +2276,7 @@ public class LIMEService extends InputMethodService implements
                                     try {
                                         sleep(1);
                                     } catch (InterruptedException ignored) {
+                                        ignored.printStackTrace();
                                         return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                                     }
                                     setSuggestions(list, finalHasPhysicalKeyPressed, selkey);
@@ -2281,6 +2293,7 @@ public class LIMEService extends InputMethodService implements
                 }
 
             } catch (Exception e) {
+                e.printStackTrace();
                 Log.i("ART", "Error to update English predication");
             }
         }
@@ -2530,6 +2543,7 @@ public class LIMEService extends InputMethodService implements
                 keyDownUp(KeyEvent.KEYCODE_DEL, false);
 
             } catch (Exception e) {
+                e.printStackTrace();
                 Log.i(TAG, "->" + e);
             }
         }
@@ -2821,6 +2835,7 @@ public class LIMEService extends InputMethodService implements
                 try {
                     selkey = SearchSrv.getSelkey();
                 } catch (RemoteException ignored) {
+                    ignored.printStackTrace();
                 }
 
                 String mixedModeSelkey = "`";
