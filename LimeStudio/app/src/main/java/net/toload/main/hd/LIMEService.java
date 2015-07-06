@@ -442,10 +442,10 @@ public class LIMEService extends InputMethodService implements
             if (mCandidateList != null)
                 mCandidateList.clear();
 
-            /*if (forceClearComposing) {
+            if (forceClearComposing) {
                 InputConnection ic = getCurrentInputConnection();
                 if (ic != null) ic.commitText("", 0);
-            }*/
+            }
 
             selectedCandidate = null;
             selectedIndex = 0;
@@ -1822,7 +1822,7 @@ public class LIMEService extends InputMethodService implements
         }
         mLIMEPref.setActiveIM(activeIM);
         //Jeremy '12,4,21 force clear when switch to next keybaord
-        clearComposing(true);
+        clearComposing(false);
         // cancel candidate view if it's shown
         mEnglishOnly = false;
         mLIMEPref.setLanguageMode(false);
@@ -2603,7 +2603,7 @@ public class LIMEService extends InputMethodService implements
         if (mCapsLock)
             toggleCapsLock();
 
-        clearComposing(true);
+        clearComposing(false);
         hideCandidateView();
 
         if (primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE) { //Symbol keyboard
@@ -2647,7 +2647,7 @@ public class LIMEService extends InputMethodService implements
             Log.i(TAG, "switchChiEng(): mEnglishOnly:" + mEnglishOnly);
 
         //Jeremy '12,4,21 force clear before switching chi/eng
-        clearComposing(true);
+        clearComposing(false);
 
         mKeyboardSwitcher.toggleChinese();
         mEnglishOnly = !mKeyboardSwitcher.isChinese();
