@@ -67,12 +67,7 @@ import net.toload.main.hd.ui.ShareRelatedDbRunnable;
 import net.toload.main.hd.ui.ShareRelatedTxtRunnable;
 import net.toload.main.hd.ui.ShareTxtRunnable;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -272,7 +267,7 @@ public class MainActivity extends ActionBarActivity
         }
 
         // Download Message from the server
-        new Thread(new Runnable() {
+       /* new Thread(new Runnable() {
 
             @Override
             public void run() {
@@ -305,7 +300,7 @@ public class MainActivity extends ActionBarActivity
 
                 }
             }
-        }).start();
+        }).start();*/
 
 
         // Initial Preference Setting

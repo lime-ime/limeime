@@ -2367,7 +2367,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }*/
                 //-----------------------------------------------------------------------------------------------
 
-                if (duplicateCheck.add(m.getWord())) {
+                if (duplicateCheck.add(m.getWord()+m.getCode())) {
                     result.add(m);
                 }
                 rsize++;
