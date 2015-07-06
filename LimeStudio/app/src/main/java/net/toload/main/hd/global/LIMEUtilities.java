@@ -305,11 +305,17 @@ public class LIMEUtilities {
 		NotificationCompat.Builder mBuilder =
 				new NotificationCompat.Builder(context)
 						.setLargeIcon(getNotificationIconBitmap(context))
-						.setSmallIcon(R.drawable.logo)
 						.setContentTitle(title)
 						.setAutoCancel(autoCancel)
 						.setTicker(message)
 						.setContentText(message);
+
+		boolean lollipop = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
+		if(lollipop){
+			mBuilder.setSmallIcon(R.drawable.logobw);
+		}else{
+			mBuilder.setSmallIcon(R.drawable.logo);
+		}
 
 		NotificationManager mNotificationManager =
 						(NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);

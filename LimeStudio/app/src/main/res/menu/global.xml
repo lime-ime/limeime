@@ -37,6 +37,11 @@
         android:orderInCategory="100"
         app:showAsAction="always" />
     <item
+        android:id="@+id/action_news"
+        android:title="@string/action_news"
+        android:orderInCategory="150"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_help"
         android:title="@string/action_help"
         android:orderInCategory="200"

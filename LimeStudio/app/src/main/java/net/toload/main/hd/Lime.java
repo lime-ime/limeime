@@ -46,6 +46,9 @@ public class Lime {
     // Input Method Editor Online Database Location
     // https://github.com/hosoyu/LimeStudio/raw/master/Database/array.zip
 
+    public static final String LIME_NEWS_CONTENT = "lime_news_content";
+    public static final String LIME_NEWS_CONTENT_URL = "https://github.com/lime-ime/limeime/raw/master/Resources/Message/content.html";
+
     public static final String separator = java.io.File.separator;
 
     public static final String DATABASE_IM_TEMP = "temp.zip";

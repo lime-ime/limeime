@@ -26,10 +26,8 @@ package net.toload.main.hd;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
@@ -53,6 +51,7 @@ import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 import net.toload.main.hd.ui.HelpDialog;
+import net.toload.main.hd.ui.NewsDialog;
 import net.toload.main.hd.ui.PaymentDialog;
 import net.toload.main.hd.ui.ShareDialog;
 
@@ -335,6 +334,10 @@ public class NavigationDrawerFragment extends Fragment {
             Intent setting = new Intent(this.getActivity(), LIMEPreferenceHC.class);
             startActivity(setting);
             //}
+        }else if(item.getItemId() == R.id.action_news){
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
+            NewsDialog dialog = NewsDialog.newInstance();
+            dialog.show(ft, "newsdialog");
         }else if(item.getItemId() == R.id.action_help){
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             HelpDialog dialog = HelpDialog.newInstance();
