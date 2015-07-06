@@ -27,6 +27,7 @@ package net.toload.main.hd.ui;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
@@ -114,12 +115,11 @@ public class NewsDialog extends DialogFragment {
 
 		getDialog().getWindow().setTitle(getResources().getString(R.string.help_dialog_title));
 
-		mLIMEPref = new LIMEPreferenceManager(activity);
+		mLIMEPref = new LIMEPreferenceManager(getActivity());
 
-		String newscontent = mLIMEPref.getParameterString(Lime.LIME_NEWS_CONTENT, "");
 		view = inflater.inflate(R.layout.fragment_dialog_news, container, false);
-
-		if(!newscontent.isEmpty()){
+		ConnectivityManager connManager = (ConnectivityManager) getActivity().getSystemService(getActivity().CONNECTIVITY_SERVICE);
+		if (connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()) {
 
 			WebView newsContentArea = (WebView) view.findViewById(R.id.newsContentArea);
 			newsContentArea.loadUrl(Lime.LIME_NEWS_CONTENT_URL);
