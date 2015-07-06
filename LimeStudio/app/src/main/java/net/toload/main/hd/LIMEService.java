@@ -2461,8 +2461,15 @@ public class LIMEService extends InputMethodService implements
                         // this is for no exact match condition with code.  //do not set default suggestion for other record type like chinese punctuation symbols or related phrases. Jeremy '15,6,4
                     } else if (suggestions.size() > 0
                             && (suggestions.get(0).isComposingCodeRecord() || suggestions.get(0).isRuntimeBuiltPhraseRecord())) {
-                        selectedCandidate = suggestions.get(0);
-                        selectedIndex = 0;
+
+                        int seloption = mLIMEPref.getSelkeyOption();
+                        if(seloption > 0 && suggestions.size() > seloption){
+                            selectedCandidate = suggestions.get(seloption);
+                            selectedIndex = seloption;
+                        }else{
+                            selectedCandidate = suggestions.get(0);
+                            selectedIndex = 0;
+                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

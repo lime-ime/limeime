@@ -112,6 +112,8 @@ public class NewsDialog extends DialogFragment {
 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 
+		getDialog().getWindow().setTitle(getResources().getString(R.string.action_news));
+
 		mLIMEPref = new LIMEPreferenceManager(getActivity());
 
 		view = inflater.inflate(R.layout.fragment_dialog_news, container, false);
