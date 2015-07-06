@@ -60,13 +60,19 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.ui.ImportDialog;
 import net.toload.main.hd.ui.ManageRelatedFragment;
+import net.toload.main.hd.ui.NewsDialog;
 import net.toload.main.hd.ui.SetupImFragment;
 import net.toload.main.hd.ui.ShareDbRunnable;
 import net.toload.main.hd.ui.ShareRelatedDbRunnable;
 import net.toload.main.hd.ui.ShareRelatedTxtRunnable;
 import net.toload.main.hd.ui.ShareTxtRunnable;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -264,6 +270,43 @@ public class MainActivity extends ActionBarActivity
                 handleSendText(getIntent());
             }
         }
+
+        // Download Message from the server
+        new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+
+                if (connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()) {
+
+                    String html_value = "";
+                    try {
+                        // Create a URL for the desired page
+                        URL url = new URL(Lime.LIME_NEWS_CONTENT_URL);
+
+                        // Read all the text returned by the server
+                        BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+                        String str;
+                        while ((str = in.readLine()) != null) {
+                            html_value += str;
+                        }
+                        in.close();
+
+                        String tempcontent = mLIMEPref.getParameterString(Lime.LIME_NEWS_CONTENT, "");
+                        if( (tempcontent.isEmpty() && !html_value.isEmpty()) ||
+                                (!tempcontent.isEmpty() && !html_value.isEmpty() && !tempcontent.equals(html_value)) ){
+                            mLIMEPref.setParameter(Lime.LIME_NEWS_CONTENT, html_value);
+                            handler.showMessageBoard();
+                        }
+
+                    } catch (MalformedURLException e) {
+                    } catch (IOException e) {
+                    }
+
+                }
+            }
+        }).start();
+
 
         // Initial Preference Setting
         //handler.initialDefaultPreference();
@@ -632,6 +675,16 @@ public class MainActivity extends ActionBarActivity
         Boolean switch_english_mode = mLIMEPref.getParameterBoolean("switch_english_mode", false);
         mLIMEPref.setParameter("switch_english_mode", switch_english_mode);
 */
+
     }
 
+    public void showMessageBoard() {
+        try {
+            android.support.v4.app.FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            NewsDialog dialog = NewsDialog.newInstance();
+            dialog.show(ft, "newsdialog");
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
 }

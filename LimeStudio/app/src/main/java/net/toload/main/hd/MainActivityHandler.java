@@ -76,6 +76,8 @@ public class MainActivityHandler extends Handler {
             activity.shareTo(filepath, Lime.SHARE_TYPE_TXT);
         }else if(action != null && action.equalsIgnoreCase("initialpreference")){
             activity.initialDefaultPreference();
+        }else if(action != null && action.equalsIgnoreCase("showmessageboard")){
+            activity.showMessageBoard();
         }
 
     }
@@ -136,5 +138,11 @@ public class MainActivityHandler extends Handler {
         Message m = new Message();
         m.getData().putString("action", "initialpreference");
         this.sendMessageDelayed(m, 1000);
+    }
+
+    public void showMessageBoard() {
+        Message m = new Message();
+        m.getData().putString("action", "showmessageboard");
+        this.sendMessageDelayed(m, 1);
     }
 }
