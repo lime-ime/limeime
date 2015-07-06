@@ -973,13 +973,13 @@ public class CandidateView extends View implements View.OnClickListener {
                 if (mCount > 1 && mSuggestions.get(1).isExactMatchToCodeRecord()) {
                     mSelectedIndex = 1;
                 } else if(mCount >0 && (mSuggestions.get(0).isComposingCodeRecord()|| mSuggestions.get(0).isRuntimeBuiltPhraseRecord() )){
-
+/*
                     int seloption = mLIMEPref.getSelkeyOption();
                     if(seloption > 0 && suggestions.size() > seloption){
                         mSelectedIndex = seloption;
-                    }else{
+                    }else{*/
                         mSelectedIndex = 0;
-                    }
+                    //}
 
                 }else{
                     // no default selection for related phrase, chinese punctuation symbols and English suggestions  Jeremy '15,6,4
