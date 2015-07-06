@@ -299,11 +299,16 @@ public class LIMEUtilities {
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 	public static void showNotification(Context context, Boolean autoCancel,  CharSequence title, CharSequence message, Intent intent){
 
+		//Intent resultIntent = new Intent(context, MainActivity.class);
+		//PendingIntent pi = PendingIntent.getActivity(context, 0, resultIntent, 0);
+
 		NotificationCompat.Builder mBuilder =
 				new NotificationCompat.Builder(context)
-						.setSmallIcon(getNotificationIcon())
 						.setLargeIcon(getNotificationIconBitmap(context))
 						.setContentTitle(title)
+						.setAutoCancel(true)
+						.setAutoCancel(autoCancel)
+						.setTicker(message)
 						.setContentText(message);
 
 		NotificationManager mNotificationManager =
