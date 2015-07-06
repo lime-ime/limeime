@@ -305,8 +305,8 @@ public class LIMEUtilities {
 		NotificationCompat.Builder mBuilder =
 				new NotificationCompat.Builder(context)
 						.setLargeIcon(getNotificationIconBitmap(context))
+						.setSmallIcon(R.drawable.logo)
 						.setContentTitle(title)
-						.setAutoCancel(true)
 						.setAutoCancel(autoCancel)
 						.setTicker(message)
 						.setContentText(message);

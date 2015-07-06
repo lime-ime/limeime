@@ -55,6 +55,7 @@
     <string name="sdcard_transfer_message">升级数据库并转移至装置空间</string>
 
     <string name="action_adfree">赞助开发团队</string>
+    <string name="action_news">最新消息</string>
     <string name="action_help">使用说明</string>
     <string name="action_preference">喜好设定</string>
 
