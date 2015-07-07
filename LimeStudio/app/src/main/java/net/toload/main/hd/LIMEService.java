@@ -2385,7 +2385,6 @@ public class LIMEService extends InputMethodService implements
 
     private void showCandidateView() {
         if (DEBUG) Log.i(TAG, "showCandidateView()");
-        //if(mCandidateViewStandAlone == null )	return;
         mHandler.post(mShowCandidateView);
     }
 
@@ -2442,7 +2441,8 @@ public class LIMEService extends InputMethodService implements
 
     public synchronized void setSuggestions(List<Mapping> suggestions, boolean showNumber, String diplaySelkey) {
         if (suggestions != null && suggestions.size() > 0) {
-            if (DEBUG) Log.i(TAG, "setSuggestion():suggestions.size=" + suggestions.size()
+            if (DEBUG)
+                Log.i(TAG, "setSuggestion():suggestions.size=" + suggestions.size()
                             + " mFixedCandidateViewOn:" + mFixedCandidateViewOn
                             + " hasPhysicalKeyPressed:" + hasPhysicalKeyPressed
             );
@@ -2457,6 +2457,7 @@ public class LIMEService extends InputMethodService implements
                 mCandidateViewStandAlone.clear();
                 hideCandidateView();
                 mCandidateView = mCandidateViewInInputView;
+                if(mCandidateViewStandAlone!=null) mCandidateViewStandAlone.setEmbeddedComposingView(null);
             }
             if (!mFixedCandidateViewOn || (hasPhysicalKeyPressed))
                 showCandidateView();

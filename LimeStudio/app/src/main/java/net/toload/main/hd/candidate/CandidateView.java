@@ -91,6 +91,7 @@ public class CandidateView extends View implements View.OnClickListener {
     protected int mCount = 0;
     //Composing view
     private TextView mComposingTextView;
+    private static TextView mComposingPopupTextView;
     private static PopupWindow mComposingTextPopup;
 
     //private String mComposingText = "";
@@ -280,6 +281,8 @@ public class CandidateView extends View implements View.OnClickListener {
     * (android 5.1 does not allow popup compsing go over candidate area).
      */
     public void setEmbeddedComposingView(TextView composingView){
+        if(DEBUG)
+            Log.i(TAG,"setEmbeddedComposingView()");
         embeddedComposing = composingView;
     }
 
@@ -330,7 +333,7 @@ public class CandidateView extends View implements View.OnClickListener {
                 case MSG_SET_COMPOSING: {
                     String composingText = (String) msg.obj;
                     if (DEBUG)
-                        Log.i(TAG, "UIHandler.handleMessage(): compsoingText" + composingText);
+                        Log.i(TAG, "UIHandler.handleMessage(): composingText" + composingText);
                     mCandiInstatnce.doSetComposing(composingText);
                     break;
                 }
@@ -555,6 +558,9 @@ public class CandidateView extends View implements View.OnClickListener {
 
     public void doHideComposing() {
 
+        if(DEBUG)
+            Log.i(TAG, "doHideComposing()");
+
         if(mComposingTextView==null) return;
 
         if (embeddedComposing!=null || // for embedded composing in floating candidateView
@@ -571,26 +577,31 @@ public class CandidateView extends View implements View.OnClickListener {
 
     public void doSetComposing(String composingText) {
         if (DEBUG)
-            Log.i(TAG, "doSetComposing():" + composingText + "this.isShown()" + this.isShown());
+            Log.i(TAG, "doSetComposing():" + composingText + "; this.isShown()" + this.isShown() +
+                    "(mComposingTextView == null):"+(mComposingTextView == null)+
+                    ";(embeddedComposing == null):" + (embeddedComposing != null));
 
         // Initialize mComposingTextView as embedding composing or popup window for fixed candidate mode. Jeremy '15,6,4
-        if(mComposingTextView == null) {
-            if (embeddedComposing != null) {
-                mComposingTextView = embeddedComposing;
-            } else {
+
+        if (embeddedComposing != null) {
+            mComposingTextView = embeddedComposing;
+        } else {
+            if (mComposingPopupTextView == null) {
                 LayoutInflater inflater
                         = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                mComposingTextView = (TextView) inflater.inflate(R.layout.composingtext, (ViewGroup) getRootView(), false);
+                mComposingPopupTextView = (TextView) inflater.inflate(R.layout.composingtext, (ViewGroup) getRootView(), false);
 
                 if (mComposingTextPopup == null) {
                     mComposingTextPopup = new PopupWindow(mContext);
                 }
                 mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-                mComposingTextPopup.setContentView(mComposingTextView);
+                mComposingTextPopup.setContentView(mComposingPopupTextView);
                 mComposingTextPopup.setBackgroundDrawable(null);
-                mComposingTextPopup.setContentView(mComposingTextView);
             }
+            if( mComposingTextView!= mComposingPopupTextView )
+                mComposingTextView = mComposingPopupTextView;
         }
+
 
 
         if (composingText != null) {
@@ -619,7 +630,8 @@ public class CandidateView extends View implements View.OnClickListener {
 
     public void doUpdateComposing() {
         if (DEBUG)
-            Log.i(TAG, "doUpdateComposing(): this.isShown()" + this.isShown());
+            Log.i(TAG, "doUpdateComposing(): this.isShown()" + this.isShown() +
+                    "; embeddedComposing is null:" + (embeddedComposing==null));
 
 
         if(embeddedComposing!=null) return ; //Jeremy '15,6, 4 bypass updating popup when composing view is embedded in candidate container
@@ -674,7 +686,7 @@ public class CandidateView extends View implements View.OnClickListener {
     }
 
     public void hideComposing() {
-        if (DEBUG)
+       if (DEBUG)
             Log.i(TAG, "hidecomposing()");
         mHandler.dismissComposing(100); //Jeremy '12,6,3 the same delay as showComposing to avoid showed after hided
 
@@ -784,9 +796,9 @@ public class CandidateView extends View implements View.OnClickListener {
         int x = 0;
         final int count = mCount; //Cache count here '11,8,18
         for (int i = 0; i < count; i++) {
-            //if(DEBUG)
+            if(DEBUG)
             //	Log.i(TAG, "Candidateview:OnDraw():updating:" + i );
-            if (count != mCount || mSuggestions.size() == 0)
+            if (count != mCount || mSuggestions==null || mSuggestions.size() == 0)
                 return;  // mSuggestion is updated, force abort
             String suggestion = mSuggestions.get(i).getWord();
             if(mSuggestions.get(i).isComposingCodeRecord() && mSuggestions.size()>1
@@ -1006,7 +1018,8 @@ public class CandidateView extends View implements View.OnClickListener {
     public void clear() {
         if (DEBUG) Log.i(TAG, "clear()");
         //mHeight =0; //Jeremy '12,5,6 hide candidate bar when candidateview is fixed.
-        mSuggestions = EMPTY_LIST;
+        if(mSuggestions!=null) mSuggestions.clear();
+        mCount=0;
         // Jeremy 11,8,14 close all popup on clear
         setComposingText("");
         mTargetScrollX = 0;
@@ -1025,6 +1038,8 @@ public class CandidateView extends View implements View.OnClickListener {
 
     //Jeremy '12,5,6 hide candidate bar when candidateView is fixed.
     public void forceHide() {
+        if(DEBUG)
+            Log.i(TAG,"forceHide()");
         mHeight = 0;
         //clear();
         //resetWidth();// will cause wrong thread exception. clear() will call updateUI() and will do resetWidth
