@@ -140,11 +140,23 @@ public class SetupImFragment extends Fragment {
     private Activity activity;
     private LIMEPreferenceManager mLIMEPref;
 
+    List<Im> imlist;
+
     // Vpon
     //private RelativeLayout adBannerLayout;
     // private VpadnBanner vpadnBanner = null;
 
 
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        // Update IM pick up list items
+        if(imlist != null && imlist.size() > 0){
+            mLIMEPref.syncIMActivatedState(imlist);
+        }
+
+    }
 
     /**
      * The fragment argument representing the section number for this
@@ -382,7 +394,7 @@ public class SetupImFragment extends Fragment {
         if(!DBSrv.isDatabseOnHold()){
             try {
                 //datasource.open();
-                List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+                imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
                 for(int i = 0; i < imlist.size() ; i++){
                     check.put(imlist.get(i).getCode(), imlist.get(i).getDesc());
                 }

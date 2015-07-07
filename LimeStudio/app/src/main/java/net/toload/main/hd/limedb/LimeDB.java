@@ -3031,16 +3031,24 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             String code = null, word = null;
                             if (isCinFormat) {
                                 if (line.contains("\t")) {
-                                    code = line.split("\t")[0];
-                                    word = line.split("\t")[1];
+                                    try{
+                                        code = line.split("\t")[0];
+                                        word = line.split("\t")[1];
+                                    }catch(Exception e){
+                                        continue;
+                                    }
 									try{
 										// Simply ignore error and try to load score and basescore values
 										source_score = Integer.parseInt(line.split("\t")[2]);
 										source_basescore = Integer.parseInt(line.split("\t")[3]);
 									}catch(Exception ignored){}
                                 } else if (line.contains(" ")) {
-                                    code = line.split(" ")[0];
-                                    word = line.split(" ")[1];
+                                    try{
+                                        code = line.split(" ")[0];
+                                        word = line.split(" ")[1];
+                                    }catch(Exception e){
+                                        continue;
+                                    }
 									try{
 										// Simply ignore error and try to load score and basescore values
 										source_score = Integer.parseInt(line.split(" ")[2]);
@@ -3049,16 +3057,24 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                 }
                             } else {
                                 if(delimiter_symbol.equals("|")){
-                                    code = line.split("\\|")[0];
-                                    word = line.split("\\|")[1];
+                                    try{
+                                        code = line.split("\\|")[0];
+                                        word = line.split("\\|")[1];
+                                    }catch(Exception e){
+                                        continue;
+                                    }
                                     try{
                                         // Simply ignore error and try to load score and basescore values
                                         source_score = Integer.parseInt(line.split("\\|")[2]);
                                         source_basescore = Integer.parseInt(line.split("\\|")[3]);
                                     }catch(Exception ignored){}
                                 }else{
-                                    code = line.split(delimiter_symbol)[0];
-                                    word = line.split(delimiter_symbol)[1];
+                                    try{
+                                        code = line.split(delimiter_symbol)[0];
+                                        word = line.split(delimiter_symbol)[1];
+                                    }catch(Exception e){
+                                        continue;
+                                    }
                                     try{
                                         // Simply ignore error and try to load score and basescore values
                                         source_score = Integer.parseInt(line.split(delimiter_symbol)[2]);
