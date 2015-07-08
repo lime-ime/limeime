@@ -478,7 +478,15 @@ public class LIMEService extends InputMethodService implements
 
         }
     }
-
+    /**
+     * Jeremy '15,7,8 to avoid candidateView shift up and down when it's not fixed.
+     */
+    @Override public void onComputeInsets(InputMethodService.Insets outInsets) {
+        super.onComputeInsets(outInsets);
+        if (!isFullscreenMode()) {
+            outInsets.visibleTopInsets = outInsets.contentTopInsets;
+        }
+    }
     /**
      * This is the main point where we do our initialization of the input method
      * to begin operating on an application. At this point we have been bound to
