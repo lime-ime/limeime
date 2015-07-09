@@ -31,7 +31,7 @@
     <color name="candidate_other">#FF101010</color>
     <color name="candidate_number">#CC5E5A80</color> 
     <color name="candidate_background">#FFFAFAFA</color>
-    <color name="candidate_container_background">#33FFFFFF</color>
+    <color name="candidate_container_background">#00FFFFFF</color>
     <!--composing text view-->
     <color name="composing_text">#FF818181</color>
     <color name="composing_background">#CCE1E1E1</color>

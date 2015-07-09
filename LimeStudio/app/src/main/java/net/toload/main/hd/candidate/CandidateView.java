@@ -798,7 +798,7 @@ public class CandidateView extends View implements View.OnClickListener {
         for (int i = 0; i < count; i++) {
             if(DEBUG)
             //	Log.i(TAG, "Candidateview:OnDraw():updating:" + i );
-            if (count != mCount || mSuggestions==null || mSuggestions.size() == 0)
+            if (count != mCount || mSuggestions==null || mSuggestions.size() == 0 || i >= mSuggestions.size())
                 return;  // mSuggestion is updated, force abort
             String suggestion = mSuggestions.get(i).getWord();
             if(mSuggestions.get(i).isComposingCodeRecord() && mSuggestions.size()>1
@@ -829,7 +829,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
 
         // Moved from above by jeremy '10 3, 29. Paint mselectedindex in highlight here
-        if (canvas != null && mCount>0 && mSelectedIndex >= 0) {
+        if (canvas != null && count>0 && mSelectedIndex >= 0) {
             canvas.translate(mWordX[mSelectedIndex], 0);
             mSelectionHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelectedIndex], height);
             mSelectionHighlight.draw(canvas);

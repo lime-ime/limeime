@@ -483,8 +483,15 @@ public class LIMEService extends InputMethodService implements
      */
     @Override public void onComputeInsets(InputMethodService.Insets outInsets) {
         super.onComputeInsets(outInsets);
-        if (!isFullscreenMode()) {
-            outInsets.visibleTopInsets = outInsets.contentTopInsets;
+        if(mCandidateView == null || mCandidateView == mCandidateViewInInputView ) return;
+
+        final int suggestionsHeight= mCandidateViewStandAlone.getHeight();
+        //outInsets.contentTopInsets=touchY;
+        outInsets.visibleTopInsets=  outInsets.contentTopInsets;
+        if(mCandidateViewStandAlone.isShown()) {
+            outInsets.touchableInsets = outInsets.TOUCHABLE_INSETS_FRAME;
+        }else{
+            outInsets.touchableInsets = outInsets.TOUCHABLE_INSETS_VISIBLE;
         }
     }
     /**
