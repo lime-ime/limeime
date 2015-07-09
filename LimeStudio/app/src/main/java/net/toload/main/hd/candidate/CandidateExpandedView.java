@@ -163,6 +163,9 @@ public class CandidateExpandedView extends CandidateView {
 
                     for (int j = 0; j < mRowSize[i]; j++) {
 
+                        if(mSuggestions == null || mSuggestions.get(index) == null){
+                            continue;
+                        }
                         String suggestion = mSuggestions.get(index).getWord();
                         index++;
 
