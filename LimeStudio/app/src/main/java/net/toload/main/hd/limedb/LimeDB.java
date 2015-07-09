@@ -3317,7 +3317,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     } else if (table.equals("hs")) {
                         kobj = getKeyboardObj("hs");
                     } else if (kobj == null) {    //Jeremy '12,5,21 chose english with number keyboard if the optione is on for default keyboard.
-                        if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
+                        if (mLIMEPref.getParameterBoolean("number_row_in_english", true)) {
                             kobj = getKeyboardObj("limenum");
                         } else {
                             kobj = getKeyboardObj("lime");
