@@ -24,11 +24,6 @@
 
 package net.toload.main.hd.candidate;
 
-import java.util.List;
-
-import net.toload.main.hd.R;
-import net.toload.main.hd.data.Mapping;
-
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -38,6 +33,11 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.ScrollView;
+
+import net.toload.main.hd.R;
+import net.toload.main.hd.data.Mapping;
+
+import java.util.List;
 
 
 public class CandidateExpandedView extends CandidateView {
@@ -155,44 +155,49 @@ public class CandidateExpandedView extends CandidateView {
                 e.printStackTrace();
             }
 
-            int y = (int) (((height - mPaint.getTextSize()) / 2) - mPaint.ascent());
-            int index = 0; //index in mSuggestions
-            for (int i = 0; i < mRows; i++) {
-                if (i != 0) y += height + mVerticalPadding;
+            try {
+                int y = (int) (((height - mPaint.getTextSize()) / 2) - mPaint.ascent());
+                int index = 0; //index in mSuggestions
+                for (int i = 0; i < mRows; i++) {
+                    if (i != 0) y += height + mVerticalPadding;
 
-                for (int j = 0; j < mRowSize[i]; j++) {
+                    for (int j = 0; j < mRowSize[i]; j++) {
 
-                    String suggestion = mSuggestions.get(index).getWord();
-                    index++;
+                        String suggestion = mSuggestions.get(index).getWord();
+                        index++;
 
-                    //if(DEBUG)
-                    //	Log.i(TAG, "Candidateview:OnDraw():index:" + index + "  Drawing:" + suggestion );
+                        //if(DEBUG)
+                        //	Log.i(TAG, "Candidateview:OnDraw():index:" + index + "  Drawing:" + suggestion );
 
-                    switch (mSuggestions.get(i).getRecordType()) {
-                        case Mapping.RECORD_EXACT_MATCH_TO_CODE:
-                        case Mapping.RECORD_PARTIAL_MATCH_TO_CODE:
-                        case Mapping.RECORD_COMPOSING_CODE:
-                            npaint.setColor(mColorOther);
-                            if (i == 0 && j==0) {
-                                if (mSelectedIndex == 0) paint.setColor(mColorInverted);
-                                else paint.setColor(mColorRecommended);
-                            } else {
-                                paint.setColor(mColorOther);
-                            }
-                            break;
-                        default:
-                            //npaint.setColor(mColorRecommended);
-                            paint.setColor(mColorDictionary);
+                        switch (mSuggestions.get(i).getRecordType()) {
+                            case Mapping.RECORD_EXACT_MATCH_TO_CODE:
+                            case Mapping.RECORD_PARTIAL_MATCH_TO_CODE:
+                            case Mapping.RECORD_COMPOSING_CODE:
+                                npaint.setColor(mColorOther);
+                                if (i == 0 && j == 0) {
+                                    if (mSelectedIndex == 0) paint.setColor(mColorInverted);
+                                    else paint.setColor(mColorRecommended);
+                                } else {
+                                    paint.setColor(mColorOther);
+                                }
+                                break;
+                            default:
+                                //npaint.setColor(mColorRecommended);
+                                paint.setColor(mColorDictionary);
+                        }
+                        canvas.drawText(suggestion, mWordX[i][j] + X_GAP, y, paint);
+
+
+                        paint.setColor(mColorOther);
+                        float lineX = mWordX[i][j] + mWordWidth[i][j] + 0.5f;
+                        canvas.drawLine(lineX, bgPadding.top + (height + mVerticalPadding) * i, lineX,
+                                (height + mVerticalPadding) * (i + 1) - mVerticalPadding + 1, paint);
+                        paint.setFakeBoldText(false);
                     }
-                    canvas.drawText(suggestion, mWordX[i][j] + X_GAP, y, paint);
-
-
-                    paint.setColor(mColorOther);
-                    float lineX = mWordX[i][j] + mWordWidth[i][j] + 0.5f;
-                    canvas.drawLine(lineX, bgPadding.top + (height + mVerticalPadding) * i, lineX,
-                            (height + mVerticalPadding) * (i + 1) - mVerticalPadding + 1, paint);
-                    paint.setFakeBoldText(false);
                 }
+            }catch(Exception e){
+                e.printStackTrace();
+                // ignore error
             }
 
 
