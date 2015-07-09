@@ -184,6 +184,14 @@ public class LIMEPreferenceManager {
 	
 	public boolean getFixedCandidateViewDisplay(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+
+		// force user to checked the fixed_candidate_view_display setting
+		boolean forceactive = sp.getBoolean("fixed_candidate_view_display_force", true);
+		if(forceactive){
+			sp.edit().putBoolean("fixed_candidate_view_display_force", false).commit();
+			sp.edit().putBoolean("fixed_candidate_view_display", true).commit();
+		}
+
 		return sp.getBoolean("fixed_candidate_view_display", true);  //Jeremy '15,6,4 set default to  true.
 	}
 

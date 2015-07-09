@@ -2228,8 +2228,12 @@ public class LIMEService extends InputMethodService implements
                     if (ic == null) return;
                     boolean after = false;
                     try {
-                        char c = ic.getTextAfterCursor(1, 1).charAt(0);
-                        if (!Character.isLetterOrDigit(c)) {
+                        if( ic.getTextAfterCursor(1, 1).length() > 0){
+                            char c = ic.getTextAfterCursor(1, 1).charAt(0);
+                            if (!Character.isLetterOrDigit(c)) {
+                                after = true;
+                            }
+                        }else{
                             after = true;
                         }
                     } catch (StringIndexOutOfBoundsException e) {
@@ -2619,8 +2623,20 @@ public class LIMEService extends InputMethodService implements
         if (mCapsLock)
             toggleCapsLock();
 
+        // Auto commit the text when user switch the keyboard from chi -> eng
+        try {
+            if (mComposing != null && mComposing.length() > 0) {
+                getCurrentInputConnection().commitText(mComposing, 1);
+                finishComposing();
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+            // ignore all possible error
+        }
+
         clearComposing(false);
         hideCandidateView();
+
 
         if (primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE) { //Symbol keyboard
             mEnglishOnly = true;
