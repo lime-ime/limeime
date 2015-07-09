@@ -1532,6 +1532,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         sortClause = "( exactmatch = 1 and ( score > 0 or  basescore >0) and length(word)=1) desc, exactmatch desc,"
                               + " (length("+codeCol+") >= " +  codeLen + " ) desc, "
                               +  "(length("+codeCol+") <= " + ( (codeLen>5)?5:codeLen) + " )*length("+codeCol+") desc, ";
+
+
                         if(sort) sortClause += " score desc, basescore desc, ";
                         sortClause += "_id asc";
 
