@@ -2616,7 +2616,6 @@ public class LIMEService extends InputMethodService implements
         if (mCapsLock)
             toggleCapsLock();
 
-
         // Auto commit the text when user switch the keyboard from chi -> eng
         try {
             if (mComposing != null && mComposing.length() > 0) {
