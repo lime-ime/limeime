@@ -829,7 +829,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
 
         // Moved from above by jeremy '10 3, 29. Paint mselectedindex in highlight here
-        if (canvas != null && mSelectedIndex >= 0) {
+        if (canvas != null && mCount>0 && mSelectedIndex >= 0) {
             canvas.translate(mWordX[mSelectedIndex], 0);
             mSelectionHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelectedIndex], height);
             mSelectionHighlight.draw(canvas);
