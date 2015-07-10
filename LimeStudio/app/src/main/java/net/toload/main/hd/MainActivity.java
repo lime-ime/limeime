@@ -30,20 +30,24 @@ import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.ServiceConnection;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.provider.MediaStore;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -68,6 +72,10 @@ import net.toload.main.hd.ui.ShareRelatedTxtRunnable;
 import net.toload.main.hd.ui.ShareTxtRunnable;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -225,7 +233,6 @@ public class MainActivity extends ActionBarActivity
 
         setContentView(R.layout.activity_main);
 
-        activity = this.activity;
 
         handler = new MainActivityHandler(this);
 
@@ -258,14 +265,37 @@ public class MainActivity extends ActionBarActivity
         }
 
         // Handle Import Text from other application
-        String action = getIntent().getAction();
+        Intent intent = getIntent();
+        String action = intent.getAction();
         String type = getIntent().getType();
         if (Intent.ACTION_SEND.equals(action) && type != null) {
             if ("text/plain".equals(type)) {
                 handleSendText(getIntent());
             }
-        }
+        }else if (Intent.ACTION_VIEW.equals(action) && type != null) {
+            String scheme = intent.getScheme();
+            ContentResolver resolver = getContentResolver();
 
+            if (ContentResolver.SCHEME_CONTENT.equals(scheme)
+                    || ContentResolver.SCHEME_FILE.equals(scheme)
+                    || scheme.equals("http") || scheme.equals("https") ||scheme.equals("ftp")) {
+                Uri uri = intent.getData();
+                String fileName = getContentName(resolver, uri);
+                if(fileName==null) {
+                    uri.getLastPathSegment();
+                }
+                InputStream input = null;
+                try {
+                    input = resolver.openInputStream(uri);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                String importFilepath = Lime.DATABASE_FOLDER_EXTERNAL + fileName;
+                InputStreamToFile(input, importFilepath);
+                showToastMessage("Got file " + importFilepath, Toast.LENGTH_SHORT);
+            }
+
+        }
         // Download Message from the server
        /* new Thread(new Runnable() {
 
@@ -308,6 +338,35 @@ public class MainActivity extends ActionBarActivity
 
     }
 
+    private String getContentName(ContentResolver resolver, Uri uri){
+        Cursor cursor = resolver.query(uri, null, null, null, null);
+        if(cursor==null) return null;
+        cursor.moveToFirst();
+        int nameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+        if (nameIndex >= 0) {
+            return cursor.getString(nameIndex);
+        } else {
+            return null;
+        }
+    }
+
+    private void InputStreamToFile(InputStream in, String file) {
+        try {
+            OutputStream out = new FileOutputStream(new File(file));
+
+            int size = 0;
+            byte[] buffer = new byte[102400];
+
+            while ((size = in.read(buffer)) != -1) {
+                out.write(buffer, 0, size);
+            }
+
+            out.close();
+        }
+        catch (Exception e) {
+            Log.e("MainActivity", "InputStreamToFile exception: " + e.getMessage());
+        }
+    }
 
     void handleSendText(Intent intent) {
         String importtext = intent.getStringExtra(Intent.EXTRA_TEXT);
