@@ -52,9 +52,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Created by Art Hung on 2015/4/26.
- */
 public class SetupImLoadRunnable implements Runnable{
     private static boolean DEBUG = true;
     private static String TAG = "SetupImLoadRunnable";
@@ -126,17 +123,18 @@ public class SetupImLoadRunnable implements Runnable{
 
                 try {
                     // Load backuptable records
-                    Cursor cursorsource = datasource.rawQuery("select * from " + imtype);
-                    List<Word> clist = Word.getList(cursorsource);
-                    cursorsource.close();
+                                /*
+                                Cursor cursorsource = datasource.rawQuery("select * from " + imtype);
+                                List<Word> clist = Word.getList(cursorsource);
+                                cursorsource.close();
 
-                    HashMap<String, Word> wordcheck = new HashMap<String, Word>();
-                    for(Word w : clist){
-                        String key = w.getCode() + w.getWord();
-                        wordcheck.put(key, w);
-                    }
-                    handler.updateProgress(20);
-
+                                HashMap<String, Word> wordcheck = new HashMap<String, Word>();
+                                for(Word w : clist){
+                                    String key = w.getCode() + w.getWord();
+                                    wordcheck.put(key, w);
+                                }
+                                handler.updateProgress(20);
+                                */
                     Cursor cursorbackup = datasource.rawQuery("select * from " + backupTableName);
                     List<Word> backuplist = Word.getList(cursorbackup);
                     cursorbackup.close();
@@ -149,30 +147,32 @@ public class SetupImLoadRunnable implements Runnable{
 
                         recordcount++;
 
-                        // update record
-                        String key = w.getCode() + w.getWord();
+                        datasource.addOrUpdateMappingRecord(imtype,w.getCode(),w.getWord(),w.getScore());
+                                    /*
+                                    // update record
+                                    String key = w.getCode() + w.getWord();
 
-                        if(wordcheck.containsKey(key)){
-                            try{
-                                datasource.execSQL("update " + imtype + " set " + Lime.DB_COLUMN_SCORE + " = " + w.getScore()
-                                                + " WHERE " + Lime.DB_COLUMN_CODE + " = '" + w.getCode() + "'"
-                                                + " AND " + Lime.DB_COLUMN_WORD + " = '" + w.getWord() + "'"
-                                );
-                            }catch(Exception e){
-                                e.printStackTrace();
-                            }
-                        }else{
-                            try{
-                                Word temp = wordcheck.get(key);
-                                String insertsql = Word.getInsertQuery(imtype, temp);
-                                datasource.execSQL(insertsql);
-                            }catch(Exception e){
-                                e.printStackTrace();
-                            }
-                        }
-
+                                    if(wordcheck.containsKey(key)){
+                                        try{
+                                            datasource.execSQL("update " + imtype + " set " + Lime.DB_COLUMN_SCORE + " = " + w.getScore()
+                                                            + " WHERE " + Lime.DB_COLUMN_CODE + " = '" + w.getCode() + "'"
+                                                            + " AND " + Lime.DB_COLUMN_WORD + " = '" + w.getWord() + "'"
+                                            );
+                                        }catch(Exception e){
+                                            e.printStackTrace();
+                                        }
+                                    }else{
+                                        try{
+                                            Word temp = wordcheck.get(key);
+                                            String insertsql = Word.getInsertQuery(imtype, temp);
+                                            datasource.execSQL(insertsql);
+                                        }catch(Exception e){
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                    */
                         // Update Progress
-                        double progress = (((recordcount / recordtotal) * 0.7) * 100) + 20;
+                        int progress =(int) ((double)recordcount / recordtotal   * 90 +10 ) ;
 
                         if((int)progress != progressvalue){
                             progressvalue = (int)progress;
@@ -181,13 +181,13 @@ public class SetupImLoadRunnable implements Runnable{
 
                     }
 
-                    wordcheck.clear();
+                    //   wordcheck.clear();
 
                 }catch(Exception e){
                     e.printStackTrace();
                 }
 
-                datasource.restoreUserRecordsStep2(imtype);
+               // datasource.restoreUserRecordsStep2(imtype);
                 handler.updateProgress(100);
             }
         }

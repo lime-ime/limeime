@@ -838,6 +838,7 @@ public class SetupImLoadDialog extends DialogFragment {
 
                             try {
                                 // Load backuptable records
+                                /*
                                 Cursor cursorsource = datasource.rawQuery("select * from " + imtype);
                                 List<Word> clist = Word.getList(cursorsource);
                                 cursorsource.close();
@@ -848,7 +849,7 @@ public class SetupImLoadDialog extends DialogFragment {
                                     wordcheck.put(key, w);
                                 }
                                 handler.updateProgress(20);
-
+                                */
                                 Cursor cursorbackup = datasource.rawQuery("select * from " + backupTableName);
                                 List<Word> backuplist = Word.getList(cursorbackup);
                                 cursorbackup.close();
@@ -861,6 +862,8 @@ public class SetupImLoadDialog extends DialogFragment {
 
                                     recordcount++;
 
+                                    datasource.addOrUpdateMappingRecord(imtype,w.getCode(),w.getWord(),w.getScore());
+                                    /*
                                     // update record
                                     String key = w.getCode() + w.getWord();
 
@@ -882,9 +885,9 @@ public class SetupImLoadDialog extends DialogFragment {
                                             e.printStackTrace();
                                         }
                                     }
-
+                                    */
                                     // Update Progress
-                                    double progress = (((recordcount / recordtotal) * 0.7) * 100) + 20;
+                                    int progress =(int) ((double)recordcount / recordtotal   * 90 +10 ) ;
 
                                     if((int)progress != progressvalue){
                                         progressvalue = (int)progress;
@@ -893,13 +896,13 @@ public class SetupImLoadDialog extends DialogFragment {
 
                                 }
 
-                                wordcheck.clear();
+                             //   wordcheck.clear();
 
                             }catch(Exception e){
                                 e.printStackTrace();
                             }
 
-                            datasource.restoreUserRecordsStep2(imtype);
+                            //datasource.restoreUserRecordsStep2(imtype);
                             handler.updateProgress(100);
                         }
                     }

@@ -1376,7 +1376,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             return code;
 
         } else {
-            if (composingText && 
+            if (composingText &&
                     (lastValidDualCodeList != null)) //Jeremy '11,10,6 bug fixed on rmapping returning orignal code.
                 code = lastValidDualCodeList;
             if (DEBUG)
@@ -2731,6 +2731,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         }
     }*/
 
+
+    @Deprecated
     public void restoreUserRecordsStep2(final String table) {
 
         if (!checkDBConnection()) return;
@@ -2916,7 +2918,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
 
 
-                HashSet<String> codeList = new HashSet<>();
+                //HashSet<String> codeList = new HashSet<>();
 
                 //db = getSqliteDb(false);
 
@@ -3127,6 +3129,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                 }
 
                             } else {
+                                /*
                                 if (code.length() > 1) {
                                     int len = code.length();
                                     if (len > 5)
@@ -3136,7 +3139,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                         codeList.add(subCode);
                                     }
                                 }
-
+                                */
                                 count++;
                                 ContentValues cv = new ContentValues();
                                 cv.put(FIELD_CODE, code);
