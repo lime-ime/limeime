@@ -72,68 +72,37 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
             <intent-filter>
-            <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="application/octet-stream" />
-                <data android:scheme="content" />
-                <data android:scheme="file" />
-                <data android:host="*" />
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:mimeType="text/*"/>
+                <data android:pathPattern=".*\\.limedb" />
+                <data android:pathPattern=".*\\.lime" />
+                <data android:pathPattern=".*\\.cin" />
+                <data android:scheme="file"/>
             </intent-filter>
             <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="content" />
-                <data android:scheme="file" />
-                <data android:host="*" />
-                <data android:mimeType="*/*" />
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:pathPattern=".*\\.limedb" />
-                <data android:pathPattern=".*\\..*\\.limedb" />
-                <data android:pathPattern=".*\\..*\\..*\\.limedb" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.limedb" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.limedb" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.limedb" />
-                <data android:pathPattern=".*\\.cin" />
-                <data android:pathPattern=".*\\..*\\.cin" />
-                <data android:pathPattern=".*\\..*\\..*\\.cin" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.cin" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cin" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.cin" />
                 <data android:pathPattern=".*\\.lime" />
-                <data android:pathPattern=".*\\..*\\.lime" />
-                <data android:pathPattern=".*\\..*\\..*\\.lime" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.lime" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.lime" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.lime" />
+                <data android:pathPattern=".*\\.cin" />
+                <data android:scheme="file"/>
             </intent-filter>
             <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-                <data android:scheme="ftp" />
-                <data android:scheme="file" />
-                <data android:host="*" />
-                <data android:mimeType="*/*" />
-                <data android:pathPattern=".*\\.limedb" />
-                <data android:pathPattern=".*\\..*\\.limedb" />
-                <data android:pathPattern=".*\\..*\\..*\\.limedb" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.limedb" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.limedb" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.limedb" />
-                <data android:pathPattern=".*\\.cin" />
-                <data android:pathPattern=".*\\..*\\.cin" />
-                <data android:pathPattern=".*\\..*\\..*\\.cin" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.cin" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cin" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.cin" />
-                <data android:pathPattern=".*\\.lime" />
-                <data android:pathPattern=".*\\..*\\.lime" />
-                <data android:pathPattern=".*\\..*\\..*\\.lime" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.lime" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.lime" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.lime" />
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:host="gmail-ls" android:mimeType="application/octet-stream" android:scheme="content"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:host="gmail-ls" android:mimeType="text/*" android:scheme="content"/>
+            </intent-filter>
+
         </activity>
 
         <!-- LIME Services -->

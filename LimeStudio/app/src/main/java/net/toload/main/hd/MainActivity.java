@@ -282,7 +282,7 @@ public class MainActivity extends ActionBarActivity
                 Uri uri = intent.getData();
                 String fileName = getContentName(resolver, uri);
                 if(fileName==null) {
-                    uri.getLastPathSegment();
+                    fileName=uri.getLastPathSegment();
                 }
                 InputStream input = null;
                 try {
