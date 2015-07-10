@@ -103,8 +103,8 @@ public class ManageRelatedAdapter extends BaseAdapter {
 
             int freq = r.getBasescore();
 
-            if(text.length() > 6){
-                text = text.substring(0,6) + "...";
+            if(text.length() > 12){
+                text = text.substring(0,10) + "...";
             }
 
             holder.txtWord.setText(text);

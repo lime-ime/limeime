@@ -159,7 +159,7 @@ public abstract class LimeSQLiteOpenHelper {
 
         File destpath = new File(Lime.DATABASE_DEVICE_FOLDER + File.separator + Lime.DATABASE_NAME);
 
-        if (!destpath.exists() || destpath.length() < 1000) {
+        if (!destpath.exists() || destpath.length() < 10000) {
 
             InputStream from = null;
             if(!source_from_sdcard){

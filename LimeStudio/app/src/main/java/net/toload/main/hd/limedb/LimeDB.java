@@ -1532,6 +1532,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         sortClause = "( exactmatch = 1 and ( score > 0 or  basescore >0) and length(word)=1) desc, exactmatch desc,"
                               + " (length("+codeCol+") >= " +  codeLen + " ) desc, "
                               +  "(length("+codeCol+") <= " + ( (codeLen>5)?5:codeLen) + " )*length("+codeCol+") desc, ";
+
+
                         if(sort) sortClause += " score desc, basescore desc, ";
                         sortClause += "_id asc";
 
@@ -3317,7 +3319,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     } else if (table.equals("hs")) {
                         kobj = getKeyboardObj("hs");
                     } else if (kobj == null) {    //Jeremy '12,5,21 chose english with number keyboard if the optione is on for default keyboard.
-                        if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
+                        if (mLIMEPref.getParameterBoolean("number_row_in_english", true)) {
                             kobj = getKeyboardObj("limenum");
                         } else {
                             kobj = getKeyboardObj("lime");

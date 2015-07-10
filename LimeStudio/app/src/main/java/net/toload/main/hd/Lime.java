@@ -276,7 +276,7 @@ public class Lime {
 
     public static String format(int number){
         try {
-            DecimalFormat df = new DecimalFormat("##,##,##,##,##,##,##0");
+            DecimalFormat df = new DecimalFormat("###,###,###,###,###,###,##0");
             return df.format(number);
         }catch(Exception e){
             e.printStackTrace();

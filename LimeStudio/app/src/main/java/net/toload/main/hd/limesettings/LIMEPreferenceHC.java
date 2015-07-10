@@ -33,21 +33,30 @@ import android.os.Bundle;
 import android.os.RemoteException;
 import android.preference.PreferenceFragment;
 import android.util.Log;
-import android.view.KeyEvent;
 
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.R;
+import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 
 
 public class LIMEPreferenceHC extends Activity {
-	
 
+	private SearchServer SearchSrv = null;
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+
+		this.SearchSrv.initialCache();
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		this.SearchSrv = new SearchServer(this);
 
 		// Display the fragment as the main content.
 		getFragmentManager().beginTransaction().replace(android.R.id.content,

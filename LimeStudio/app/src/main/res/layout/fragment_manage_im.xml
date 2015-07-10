@@ -103,7 +103,8 @@
             android:verticalSpacing="2dp"
             android:horizontalSpacing="2dp"
             android:choiceMode="multipleChoice"
-            android:columnWidth="80dp">
+            android:columnWidth="150dp"
+            android:clickable="true">
 
         </GridView>
 

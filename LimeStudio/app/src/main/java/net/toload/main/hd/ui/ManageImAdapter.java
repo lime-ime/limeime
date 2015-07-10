@@ -98,8 +98,8 @@ public class ManageImAdapter extends BaseAdapter {
 					hwlist.get(position).setCheck(arg1);
 				}});*/
             String wordtext = w.getWord();
-            if(wordtext.length() > 4){
-                wordtext = wordtext.substring(0,3) + "...";
+            if(wordtext.length() > 12){
+                wordtext = wordtext.substring(0,10) + "...";
             }
             holder.txtCode.setText(w.getCode());
             holder.txtWord.setText(wordtext);
