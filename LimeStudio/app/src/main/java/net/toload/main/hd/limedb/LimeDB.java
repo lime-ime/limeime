@@ -1376,7 +1376,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             return code;
 
         } else {
-            if (composingText && codeDualMapped &&  //Jeremy '15,6,5 don't use valid code list if no dual code mapping is using
+            if (composingText && 
                     (lastValidDualCodeList != null)) //Jeremy '11,10,6 bug fixed on rmapping returning orignal code.
                 code = lastValidDualCodeList;
             if (DEBUG)
