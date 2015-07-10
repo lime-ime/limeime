@@ -1585,12 +1585,11 @@ public class LIMEService extends InputMethodService implements
         if (mLIMEPref.getEnglishPrediction()
                 && primaryCode != LIMEBaseKeyboard.KEYCODE_DELETE) {
 
-
-            // Chcek if input character not valid English Character then reset
+            // Check if input character not valid English Character then reset
             // temp english string
             if (!Character.isLetter(primaryCode) && mEnglishOnly) {
 
-                //Jeremy '11,6,10. Select english sugestion with shift+123457890
+                //Jeremy '11,6,10. Select english suggestion with shift+123457890
                 if (hasPhysicalKeyPressed && (mCandidateView != null && hasCandidatesShown)) { //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
                     if (handleSelkey(primaryCode)) {
                         return;
@@ -1632,7 +1631,7 @@ public class LIMEService extends InputMethodService implements
             handleOptions();
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_SPACE_LONGPRESS) {
             showIMPicker();
-        } else if (primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE && mInputView != null) {
+        } else if (primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE && mInputView != null) { //->symbol keyboard
             switchKeyboard(primaryCode);
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_NEXT_IM) {
             switchToNextActivatedIM(true);
@@ -1640,7 +1639,7 @@ public class LIMEService extends InputMethodService implements
             switchToNextActivatedIM(false);
         } else if (primaryCode == KEYBOARD_SWITCH_CODE && mInputView != null) { //chi->eng
             switchKeyboard(primaryCode);
-            // Jeremy '11,5,31 Rewrite softkeybaord enter/space and english sepeartor processing.
+            // Jeremy '11,5,31 Rewrite softkeybaord enter/space and english separator processing.
         } else if (primaryCode == KEYBOARD_SWITCH_IM_CODE && mInputView != null) { //eng -> chi
             switchKeyboard(primaryCode);
         } else if ( //Jeremy '12,7,1 bug fixed on enter not functioning in english mode
@@ -2467,7 +2466,8 @@ public class LIMEService extends InputMethodService implements
             );
 
 
-            if ((!mFixedCandidateViewOn || hasPhysicalKeyPressed) && mCandidateView != mCandidateViewStandAlone) {
+            if ((!mFixedCandidateViewOn || hasPhysicalKeyPressed)
+                    && mCandidateView != mCandidateViewStandAlone) {
                 mCandidateViewInInputView.clear();
                 mCandidateView = mCandidateViewStandAlone; //Jeremy '12,5,4 use standalone candidateView for physical keyboard (no soft keyboard shown)
                 forceHideCandidateView();
@@ -2641,6 +2641,9 @@ public class LIMEService extends InputMethodService implements
         if (primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE) { //Symbol keyboard
             mEnglishOnly = true;
             mKeyboardSwitcher.toggleSymbols();
+            if(mFixedCandidateViewOn) {
+                forceHideCandidateView();
+            }
         } else if (primaryCode == KEYBOARD_SWITCH_CODE) { //Chi --> Eng
             mEnglishOnly = true;
             mLIMEPref.setLanguageMode(true);
@@ -2649,7 +2652,7 @@ public class LIMEService extends InputMethodService implements
                 if (!mPredictionOn) {
                     forceHideCandidateView();
                 } else {
-                    mCandidateViewInInputView.setSuggestions(null, false);  // reset the candiate view if it's force hided before
+                    mCandidateViewInInputView.setSuggestions(null, false);  // reset the candidate view if it's force hided before
                 }
             }
         } else if (primaryCode == KEYBOARD_SWITCH_IM_CODE) { //Eng --> Chi moved from SwitchKeyboardIM by Jeremy '12,4,29
@@ -2921,7 +2924,7 @@ public class LIMEService extends InputMethodService implements
         if (DEBUG)
             Log.i(TAG, "handleCharacter():primaryCode:" + primaryCode
                     + ", metaState = " + mMetaState
-                    + ", hasphysicalKeyPressed = " + hasPhysicalKeyPressed
+                    + ", hasPhysicalKeyPressed = " + hasPhysicalKeyPressed
                     + ", currentSoftKeyboard=" + currentSoftKeyboard);
 
 
@@ -2946,7 +2949,7 @@ public class LIMEService extends InputMethodService implements
                         + " ic != null:" + (ic != null)
                         + " isValidLetter:" + isValidLetter(primaryCode)
                         + " isValidDigit:" + isValidDigit(primaryCode)
-                        + " isValideSymbol:" + isValidSymbol(primaryCode)
+                        + " isValidSymbol:" + isValidSymbol(primaryCode)
                         + " hasSymbolMapping:" + hasSymbolMapping
                         + " hasNumberMapping:" + hasNumberMapping
                         + " (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals(phonetic):" + (primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic"))
@@ -3036,7 +3039,7 @@ public class LIMEService extends InputMethodService implements
                 }
             }
 
-            if (mLIMEPref.getEnglishPrediction() && mPredictionOn
+            if (mLIMEPref.getEnglishPrediction() && mPredictionOn && !mKeyboardSwitcher.isSymbols()
                     && (!hasPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())
                     ) {
                 if (Character.isLetter((char) primaryCode)) {

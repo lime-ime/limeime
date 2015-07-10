@@ -479,7 +479,8 @@ public class LIMEKeyboardSwitcher {
     }
 
     public void toggleShift() {
-    	if(DEBUG) Log.i("LIMEKeyboardSwicher:toggeleshift()","KBMODE mode:"+mMode);
+    	if(DEBUG)
+			Log.i(TAG,"toggeleshift() KBMODE mode:"+mMode);
     	mIsShifted= !mIsShifted;
     	if(mIsChinese)
         	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);
