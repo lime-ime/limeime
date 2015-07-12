@@ -524,9 +524,9 @@
     <string name="l3_im_download_from_cj5_start">開始下載倉頡五代字根</string>
     <string name="l3_im_download_from_cj5_install">開始安裝倉頡五代字根</string>
 
-    <string name="l3_im_download_from_ecj">安裝速成字根</string>
-    <string name="l3_im_download_from_ecj_start">開始下載速成字根</string>
-    <string name="l3_im_download_from_ecj_install">開始安裝速成字根</string>
+    <string name="l3_im_download_from_ecj">安裝簡易速成</string>
+    <string name="l3_im_download_from_ecj_start">開始下載簡易速成字根</string>
+    <string name="l3_im_download_from_ecj_install">開始安裝簡易速成字根</string>
 
     <string name="l3_im_download_from_scj">安裝快倉字根</string>
     <string name="l3_im_download_from_scj_start">開始下載快倉字根</string>
@@ -543,7 +543,6 @@
     <string name="l3_im_download_from_ez">安裝輕鬆字根</string>
     <string name="l3_im_download_from_ez_start">開始下載輕鬆字根</string>
     <string name="l3_im_download_from_ez_install">開始安裝輕鬆字根</string>
-
 
     <string name="l3_im_download_from_cjk_phonetic">安裝注音字根</string>
     <string name="l3_im_download_from_cjk_phonetic_start">開始下載注音字根</string>
@@ -570,7 +569,7 @@
     <string name="l3_im_download_from_cjk_hk_cj_install">開始安裝倉頡香港字字根</string>
 
 
-    <string name="l3_im_download_from_pinyin_big5">安裝拼音字根BIG5字集版本</string>
+    <string name="l3_im_download_from_pinyin_big5">安裝拼音字根</string>
     <string name="l3_im_download_from_pinyin_big5_start">開始下載拼音字根BIG5字集版本</string>
     <string name="l3_im_download_from_pinyin_big5_install">開始安裝拼音字根BIG5字集版本</string>
 
