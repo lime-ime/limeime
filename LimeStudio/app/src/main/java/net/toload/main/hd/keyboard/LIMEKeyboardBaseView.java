@@ -449,7 +449,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     }
 
     public LIMEKeyboardBaseView(Context context, AttributeSet attrs) {
-        this(context, attrs, R.attr.appTheme);
+        this(context, attrs, R.attr.LIMEKeyboardViewStyle);
     }
 
     @TargetApi(8)
@@ -459,7 +459,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         //mLIMEPref = new LIMEPreferenceManager(context); //Jeremy '11,9,4
 
         TypedArray a = context.getTheme().obtainStyledAttributes(
-                attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEKeyboardBaseViewLight);
+                attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEKeyboardBaseView_Light);
         LayoutInflater inflate =
                 (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         int previewLayout = 0;

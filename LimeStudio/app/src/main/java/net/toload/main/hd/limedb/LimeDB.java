@@ -2386,7 +2386,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
             }
 
-            int ssize = mLIMEPref.getSimilarCodeCandidates();
+           // int ssize = mLIMEPref.getSimilarCodeCandidates();
             //Jeremy '11,6,1 The related field may have only one word and thus no "|" inside
             //Jeremy '11,6,11 allow multiple relatedlist from different codes.
             //Jeremy '15,6,3 not used in between search mode ---------------------------------------
@@ -3948,7 +3948,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return "";
     }
 
-    public List<String> getEnglishSuggesions(String word) {
+    public List<String> getEnglishSuggestions(String word) {
 
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (!checkDBConnection()) return null;
