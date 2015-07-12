@@ -544,15 +544,19 @@ public class SearchServer {
         }
     }
 
-
+    /*
+    * Jeremy '15,7,12 synchronized the method called from LIMEService only
+    */
     public synchronized List<Mapping> getMappingByCode(String code, boolean softkeyboard, boolean getAllRecords) throws RemoteException {
         return getMappingByCode(code, softkeyboard, getAllRecords, false);
     }
 
-    public synchronized List<Mapping> getMappingByCode(String code, boolean softkeyboard, boolean getAllRecords, boolean noRunTimeSuggestion) throws RemoteException {
+    public List<Mapping> getMappingByCode(String code, boolean softkeyboard, boolean getAllRecords, boolean prefetchCache)
+            throws RemoteException {
         if (DEBUG) Log.i(TAG, "getMappingByCode(): code=" + code);
         // Check if system need to reset cache
-        //check reset cache with local variable instead of reading from shared preference for better perfomance
+
+        //check reset cache with local variable instead of reading from shared preference for better performance
         if (mResetCache) {
             initialCache();
             mResetCache = false;
@@ -582,7 +586,7 @@ public class SearchServer {
 
 
             // make run-time suggestion '15, 6, 9 Jeremy.
-            if (!noRunTimeSuggestion && mLIMEPref.getSmartChineseInput()) {
+            if (!prefetchCache && mLIMEPref.getSmartChineseInput()) {
                 makeRunTimeSuggestion(code, resultList);
             }
 
@@ -662,7 +666,7 @@ public class SearchServer {
                 }
                 // }
 
-                if (resultlist != null && resultlist.size() > 0) {
+                if (resultlist.size() > 0) {
                     result.addAll(resultlist);
                     /*
                     int rsize = result.size();
@@ -689,10 +693,12 @@ public class SearchServer {
         if (DEBUG)
             Log.i(TAG, "getMappingByCode() code=" + code + " result.size()=" + result.size());
 
-        //  }
-
         return result;
+
     }
+
+
+
 
 	/*
     *   Get mapping list from cache or from db if it's not in cache. Separated from getMappingByCode() Jeremy '15,6,8
@@ -745,7 +751,9 @@ public class SearchServer {
             }
         }
         return cacheTemp;
-    }
+
+
+}
 
     /**
      * get real code length
@@ -927,8 +935,8 @@ public class SearchServer {
 
     }
 
-    // '11,8,1 renamed from updateuserdict()
-    List<Mapping> scorelistSnapshot = null;
+// '11,8,1 renamed from updateuserdict()
+List<Mapping> scorelistSnapshot = null;
 
     public void postFinishInput() throws RemoteException {
 
@@ -1213,9 +1221,9 @@ public class SearchServer {
                     Log.i(TAG, "updateSimilarCodeCache(): code not in cache. update to db only on code = '" + key + "'");
                 removeRemapedCodeCachedMappings(key);
             }
-            if(code.length()==1)// prefetch if code length ==1
+            if (code.length() == 1)// prefetch if code length ==1
                 try {
-                    getMappingByCode(code,!isPhysicalKeyboardPressed,false,true);
+                    getMappingByCode(code, !isPhysicalKeyboardPressed, false, true);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
