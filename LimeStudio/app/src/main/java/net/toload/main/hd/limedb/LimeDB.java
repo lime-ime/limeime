@@ -856,7 +856,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (!checkDBConnection()) return;
 
         try {
-            Mapping munit = isMappingExistOnDB(db, code, word);
+            Mapping munit = isMappingExistOnDB(db, table, code, word);
             ContentValues cv = new ContentValues();
 
             if (munit == null) {
@@ -3406,9 +3406,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return " ";
     }
 
-    /**
+   /* *//**
      * Check if the specific mapping exists in current table
-     */
+     *//*
     public Mapping isMappingExist(String code, String word) {
         if (!checkDBConnection()) return null;
         Mapping munit = null;
@@ -3422,9 +3422,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         return munit;
 
-    }
+    }*/
 
-    private Mapping isMappingExistOnDB(SQLiteDatabase db, String code, String word) throws RemoteException {
+    private Mapping isMappingExistOnDB(SQLiteDatabase db, String table, String code, String word) throws RemoteException {
         if (DEBUG)
             Log.i(TAG, "isMappingExistOnDB(), code = '" + code + "'");
         Mapping munit = null;
@@ -3435,10 +3435,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             // Process the escape characters of query
             code = code.replaceAll("'", "''");
             if (word == null || word.trim().length() == 0) {
-                cursor = db.query(tablename, null, FIELD_CODE + " = '"
+                cursor = db.query(table, null, FIELD_CODE + " = '"
                         + code + "'", null, null, null, null, null);
             } else {
-                cursor = db.query(tablename, null, FIELD_CODE + " = '"
+                cursor = db.query(table, null, FIELD_CODE + " = '"
                         + code + "'" + " AND " + FIELD_WORD + " = '"
                         + word + "'", null, null, null, null, null);
             }
