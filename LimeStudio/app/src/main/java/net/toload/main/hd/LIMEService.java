@@ -2746,7 +2746,7 @@ public class LIMEService extends InputMethodService implements
 
         // Check if mKeyboardSwitcher == null
         if (mKeyboardSwitcher == null) {
-            mKeyboardSwitcher = new LIMEKeyboardSwitcher(this);
+            mKeyboardSwitcher = new LIMEKeyboardSwitcher(this, mThemeContext);
             //makeyboardSwitcher.setInputView(mInputView);
         }
         mKeyboardSwitcher.setInputView(mInputView);

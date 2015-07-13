@@ -34,6 +34,7 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.keyboard.LIMEKeyboard;
 import net.toload.main.hd.keyboard.LIMEKeyboardView;
 
+import android.content.Context;
 import android.util.Log;
 
 public class LIMEKeyboardSwitcher {
@@ -66,7 +67,8 @@ public class LIMEKeyboardSwitcher {
     private static final int SYMBOLS_MODE_STATE_SYMBOL = 2;
 
     LIMEKeyboardView mInputView;
-    LIMEService mContext;
+    LIMEService mService;
+	Context mThemedContext;
 
     //private KeyboardId mCurrentId;
     private Map<KeyboardId, LIMEKeyboard> mKeyboards;
@@ -100,9 +102,11 @@ public class LIMEKeyboardSwitcher {
     private float mKeySizeScale=1;
     
 
-    public LIMEKeyboardSwitcher(LIMEService context) {
-        mContext = context;
-        mLIMEPref = new LIMEPreferenceManager(context);
+    public LIMEKeyboardSwitcher(LIMEService service, Context themedContext) {
+        mService = service;
+		mThemedContext = themedContext;
+
+        mLIMEPref = new LIMEPreferenceManager(service);
         mKeyboards = new HashMap<KeyboardId, LIMEKeyboard>();
         
         mKeySizeScale = mLIMEPref.getFontSize();
@@ -203,7 +207,7 @@ public class LIMEKeyboardSwitcher {
         // Configuration change is coming after the keyboard gets recreated. So don't rely on that.
         // If keyboards have already been made, check if we have a screen width change and 
         // create the keyboard layouts again at the correct orientation
-        int displayWidth = mContext.getMaxWidth();
+        int displayWidth = mService.getMaxWidth();
         if (displayWidth != mLastDisplayWidth) {
         	mLastDisplayWidth = displayWidth;
         	mKeyboards.clear();
@@ -255,7 +259,7 @@ public class LIMEKeyboardSwitcher {
 	    if(id != null){
 	        if (!mKeyboards.containsKey(id)) {
 	        	LIMEKeyboard keyboard = new LIMEKeyboard(
-	                mContext, id.mXml, id.mMode, mKeySizeScale, 
+						mThemedContext, id.mXml, id.mMode, mKeySizeScale,
 	                mLIMEPref.getShowArrowKeys(), //Jeremy '12,5,21 add the show arrow keys option
 	                mLIMEPref.getSplitKeyboard() //Jeremy '12,5,27 add the split keyboard option
 	                );
@@ -271,7 +275,7 @@ public class LIMEKeyboardSwitcher {
     }
     
     private int getKeyboardXMLID(String value){
-        int result = mContext.getResources().getIdentifier(value, "xml", mContext.getPackageName());
+        int result = mThemedContext.getResources().getIdentifier(value, "xml", mService.getPackageName());
         return result;
     }
     
@@ -451,7 +455,7 @@ public class LIMEKeyboardSwitcher {
 	        keyboard.setShifted(mIsShifted);
 	        mInputView.setKeyboard(mInputView.getKeyboard()); //instead of invalidateAllKeys();
 	        
-	        keyboard.setImeOptions(mContext.getResources(), mMode, imeOptions);
+	        keyboard.setImeOptions(mThemedContext.getResources(), mMode, imeOptions);
     	}
     }
  

@@ -257,9 +257,10 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
             }
             // Set the initial size of the preview icon
             if (mEnterKey.iconPreview != null) {
-                mEnterKey.iconPreview.setBounds(0, 0, 
-                        mEnterKey.iconPreview.getIntrinsicWidth(),
-                        mEnterKey.iconPreview.getIntrinsicHeight());
+                mEnterKey.iconPreview.setBounds(0, 0,
+                        mEnterKey.height *
+                                mEnterKey.iconPreview.getIntrinsicWidth()/ mEnterKey.iconPreview.getIntrinsicHeight(),
+                        mEnterKey.height);
             }
         }
         
@@ -345,9 +346,10 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         if (mSlidingSpaceBarIcon == null) {
             final int width = Math.max(mSpaceKey.width,
                     (int)(getMinWidth() * SPACEBAR_POPUP_MIN_RATIO));
-            final int height = mSpacePreviewIcon.getIntrinsicHeight();
+            final int height = mSpaceKey.height;// mSpacePreviewIcon.getIntrinsicHeight();
+
             mSlidingSpaceBarIcon = new SlidingSpaceBarDrawable(mSpacePreviewIcon,mSlidingLeftArrow,mSlidingRightArrow,mSlidingTextSize, width, height);
-            mSlidingSpaceBarIcon.setBounds(0, 0, width, height);
+            mSlidingSpaceBarIcon.setBounds(0, 0, width, height /2);
             mSpaceKey.iconPreview = mSlidingSpaceBarIcon;
         }
         mSlidingSpaceBarIcon.setDiff(diff);

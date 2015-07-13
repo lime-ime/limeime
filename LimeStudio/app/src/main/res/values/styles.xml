@@ -50,8 +50,9 @@
         <item name="spacebarSlidingTextSize">@dimen/spacebar_preview_text_size</item>
         <item name="spacebarSlidingLeftArrow">@drawable/ic_suggest_strip_scroll_left_arrow</item>
         <item name="spacebarSlidingRightArrow">@drawable/ic_suggest_strip_scroll_right_arrow</item>
-
     </style>
+
+
     <style name="LIMEKeyboardViewLayoutLight">
         <item name="android:background">@drawable/keyboard_background</item>
         <item name="android:keyBackground">@drawable/btn_keyboard_key</item>

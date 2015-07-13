@@ -1097,8 +1097,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     drawableX = 0;
                     drawableY = NUMBER_HINT_VERTICAL_ADJUSTMENT_PIXEL;
                 } else {
-                    drawableWidth = icon.getIntrinsicWidth();
-                    drawableHeight = icon.getIntrinsicHeight();
+
+                    drawableHeight = key.height; // icon.getIntrinsicHeight();
+                    drawableWidth = icon.getIntrinsicWidth() * drawableHeight / icon.getIntrinsicHeight()  ;
                     drawableX = (key.width + padding.left - padding.right - drawableWidth) / 2;
                     drawableY = (key.height + padding.top - padding.bottom - drawableHeight) / 2;
                 }
