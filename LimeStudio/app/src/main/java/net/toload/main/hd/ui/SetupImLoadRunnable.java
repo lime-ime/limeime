@@ -48,6 +48,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -499,6 +500,8 @@ public class SetupImLoadRunnable implements Runnable{
 
             return downloadedFile;
 
+        } catch(UnknownHostException e){
+            e.printStackTrace();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (MalformedURLException e) {
