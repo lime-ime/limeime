@@ -41,13 +41,25 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/SetupImFragment"
-        android:padding="10dp">
+        android:padding="5dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="0.0"
+            android:paddingRight="10dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:id="@+id/txtVersion"
+            android:layout_gravity="right" />
+
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:id="@+id/Setup_Wizard"
-        android:padding="10dp"
+        android:padding="5dp"
         android:layout_gravity="top">
         <TextView
             android:layout_width="wrap_content"
@@ -114,7 +126,7 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:id="@+id/SetupImList"
-        android:padding="10dp">
+        android:padding="5dp">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

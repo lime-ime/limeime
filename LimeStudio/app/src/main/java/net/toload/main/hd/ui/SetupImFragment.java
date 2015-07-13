@@ -30,6 +30,8 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
@@ -41,6 +43,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dropbox.client2.DropboxAPI;
@@ -141,6 +144,8 @@ public class SetupImFragment extends Fragment {
     private LIMEPreferenceManager mLIMEPref;
 
     List<Im> imlist;
+
+    TextView txtVersion;
 
     // Vpon
     //private RelativeLayout adBannerLayout;
@@ -380,6 +385,16 @@ public class SetupImFragment extends Fragment {
             AdView mAdView = (AdView) rootView.findViewById(R.id.adView);
             mAdView.setVisibility(View.GONE);
 
+        }
+
+        PackageInfo pInfo = null;
+        try {
+            pInfo = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
+            String versionstr = "v"+ pInfo.versionName + " - " + pInfo.versionCode;
+            txtVersion = (TextView) rootView.findViewById(R.id.txtVersion);
+            txtVersion.setText(versionstr);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
         }
 
         return rootView;

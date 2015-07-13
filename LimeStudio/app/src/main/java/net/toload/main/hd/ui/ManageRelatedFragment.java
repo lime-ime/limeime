@@ -437,8 +437,6 @@ public class ManageRelatedFragment extends Fragment {
 
     public void updateRelated(int id, String pword, String cword, int score) {
 
-        if(datasource.hasRelated(pword, cword) == 0){
-
             // remove from temp list
             for(int i = 0 ; i < total ; i++){
                 if(id== this.relatedlist.get(i).getId()){
@@ -462,10 +460,6 @@ public class ManageRelatedFragment extends Fragment {
             datasource.update(updatesql);
 
             searchrelated();
-
-        }else{
-            Toast.makeText(activity, R.string.manage_related_duplicated, Toast.LENGTH_SHORT).show();
-        }
 
     }
 

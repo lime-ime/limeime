@@ -284,15 +284,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     // Cache for Related Score
     private HashMap<String, Integer> relatedscore = new HashMap<>();
-
-
     private LimeHanConverter hanConverter;
-
-
-
-
-
-
 
     public void setFinish(boolean value) {
         this.finish = value;
