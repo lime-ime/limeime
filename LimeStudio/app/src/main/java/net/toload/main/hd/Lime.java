@@ -53,58 +53,82 @@ public class Lime {
 
     public static final String DATABASE_IM_TEMP = "temp.zip";
 
+    public static final String DATABASE_OPENFOUNDRY_URL_BASED = "https://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2F";
     public static final String DATABASE_CLOUD_URL_BASED = "https://github.com/lime-ime/limeime/raw/master/Database/";
+
     public static final String DATABASE_CLOUD_IM_WB = DATABASE_CLOUD_URL_BASED + "wb.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_WB = DATABASE_OPENFOUNDRY_URL_BASED + "wb.zip";
+
     public static final String DATABASE_CLOUD_IM_WB_KEYBOARD = "wb";
 
     public static final String DATABASE_CLOUD_IM_PINYINGB = DATABASE_CLOUD_URL_BASED + "pinyingb.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_PINYINGB = DATABASE_OPENFOUNDRY_URL_BASED + "pinyingb.zip";
     public static final String DATABASE_CLOUD_IM_PINYINGB_KEYBOARD = "lime";
 
     public static final String DATABASE_CLOUD_IM_PINYIN = DATABASE_CLOUD_URL_BASED + "pinyin.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_PINYIN = DATABASE_OPENFOUNDRY_URL_BASED + "pinyin.zip";
     public static final String DATABASE_CLOUD_IM_PINYIN_KEYBOARD = "lime";
 
     public static final String DATABASE_CLOUD_IM_PHONETICCOMPLETE = DATABASE_CLOUD_URL_BASED + "phoneticcomplete.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE = DATABASE_OPENFOUNDRY_URL_BASED + "phoneticcomplete.zip";
     public static final String DATABASE_CLOUD_IM_PHONETICCOMPLETE_KEYBOARD = "phonetic";
 
     public static final String DATABASE_CLOUD_IM_PHONETIC = DATABASE_CLOUD_URL_BASED + "phonetic.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_PHONETIC = DATABASE_OPENFOUNDRY_URL_BASED + "phonetic.zip";
     public static final String DATABASE_CLOUD_IM_PHONETIC_KEYBOARD = "phonetic";
 
     public static final String DATABASE_CLOUD_IM_EZ = DATABASE_CLOUD_URL_BASED + "ez.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_EZ = DATABASE_OPENFOUNDRY_URL_BASED + "ez.zip";
     public static final String DATABASE_CLOUD_IM_EZ_KEYBOARD = "ez";
 
     public static final String DATABASE_CLOUD_IM_ECJHK = DATABASE_CLOUD_URL_BASED + "ecjhk.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_ECJHK = DATABASE_OPENFOUNDRY_URL_BASED + "ecjhk.zip";
     public static final String DATABASE_CLOUD_IM_ECJHK_KEYBOARD = "cj";
 
     public static final String DATABASE_CLOUD_IM_ECJ = DATABASE_CLOUD_URL_BASED + "ecj.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_ECJ = DATABASE_OPENFOUNDRY_URL_BASED + "ecj.zip";
     public static final String DATABASE_CLOUD_IM_ECJ_KEYBOARD = "cj";
 
     public static final String DATABASE_CLOUD_IM_DAYI = DATABASE_CLOUD_URL_BASED + "dayi.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_DAYI = DATABASE_OPENFOUNDRY_URL_BASED + "dayi.zip";
     public static final String DATABASE_CLOUD_IM_DAYIUNI = DATABASE_CLOUD_URL_BASED + "dayiuni.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_DAYIUNI = DATABASE_OPENFOUNDRY_URL_BASED + "dayiuni.zip";
     public static final String DATABASE_CLOUD_IM_DAYIUNIP = DATABASE_CLOUD_URL_BASED + "dayiunip.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_DAYIUNIP = DATABASE_OPENFOUNDRY_URL_BASED + "dayiunip.zip";
     public static final String DATABASE_CLOUD_IM_DAYI_KEYBOARD = "dayisym";
 
     public static final String DATABASE_CLOUD_IM_CJHK = DATABASE_CLOUD_URL_BASED + "cjhk.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_CJHK = DATABASE_OPENFOUNDRY_URL_BASED + "cjhk.zip";
     public static final String DATABASE_CLOUD_IM_CJHK_KEYBOARD = "cj";
 
     public static final String DATABASE_CLOUD_IM_SCJ = DATABASE_CLOUD_URL_BASED + "scj.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_SCJ = DATABASE_OPENFOUNDRY_URL_BASED + "scj.zip";
     public static final String DATABASE_CLOUD_IM_SCJ_KEYBOARD = "limenum";
 
     public static final String DATABASE_CLOUD_IM_CJ5 = DATABASE_CLOUD_URL_BASED + "cj5.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_CJ5 = DATABASE_OPENFOUNDRY_URL_BASED + "cj5.zip";
     public static final String DATABASE_CLOUD_IM_CJ5_KEYBOARD = "cj";
 
     public static final String DATABASE_CLOUD_IM_CJ = DATABASE_CLOUD_URL_BASED + "cj.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_CJ = DATABASE_OPENFOUNDRY_URL_BASED + "cj.zip";
     public static final String DATABASE_CLOUD_IM_CJ_KEYBOARD = "cj";
 
     public static final String DATABASE_CLOUD_IM_ARRAY10 = DATABASE_CLOUD_URL_BASED + "array10.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_ARRAY10 = DATABASE_OPENFOUNDRY_URL_BASED + "array10.zip";
     public static final String DATABASE_CLOUD_IM_ARRAY10_KEYBOARD = "phonenum";
 
     public static final String DATABASE_CLOUD_IM_ARRAY = DATABASE_CLOUD_URL_BASED + "array.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_ARRAY = DATABASE_OPENFOUNDRY_URL_BASED + "array.zip";
     public static final String DATABASE_CLOUD_IM_ARRAY_KEYBOARD = "arraynum";
 
     public static final String DATABASE_CLOUD_IM_HS = DATABASE_CLOUD_URL_BASED + "hs.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_HS = DATABASE_OPENFOUNDRY_URL_BASED + "hs.zip";
     public static final String DATABASE_CLOUD_IM_HS_V1 = DATABASE_CLOUD_URL_BASED + "hs1.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_HS_V1 = DATABASE_OPENFOUNDRY_URL_BASED + "hs1.zip";
     public static final String DATABASE_CLOUD_IM_HS_V2 = DATABASE_CLOUD_URL_BASED + "hs2.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_HS_V2  = DATABASE_OPENFOUNDRY_URL_BASED + "hs2.zip";
     public static final String DATABASE_CLOUD_IM_HS_V3 = DATABASE_CLOUD_URL_BASED + "hs3.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_HS_V3 = DATABASE_OPENFOUNDRY_URL_BASED + "hs3.zip";
     public static final String DATABASE_CLOUD_IM_HS_KEYBOARD = "hs";
 
     // Database Tables and columns

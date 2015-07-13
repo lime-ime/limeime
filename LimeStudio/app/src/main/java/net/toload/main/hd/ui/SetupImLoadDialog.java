@@ -661,7 +661,7 @@ public class SetupImLoadDialog extends DialogFragment {
                 url = Lime.DATABASE_CLOUD_IM_HS_V3;
             }
 
-            loadthread = new Thread(new SetupImLoadRunnable(getActivity(), handler, code, url, restorelearning));
+            loadthread = new Thread(new SetupImLoadRunnable(getActivity(), handler, code, type, url, restorelearning));
             loadthread.start();
 
             dismiss();

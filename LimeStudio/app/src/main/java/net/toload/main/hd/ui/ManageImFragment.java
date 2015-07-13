@@ -495,6 +495,7 @@ public class ManageImFragment extends Fragment {
              obj.setWord(word);
              obj.setBasescore(0);
              obj.setScore(score);
+
         //Jeremy '15,6,6 the record may already exist, use original add or update mapping function in LIMEDB instead.
         // code3r information will also generated for phonetic table.
         datasource.addOrUpdateMappingRecord(this.table, code, word, score);
