@@ -28,7 +28,7 @@
         </style>
     <style name="LIMEKeyboardLight">
         <item name="spaceKeyIcon">@drawable/sym_keyboard_space</item>
-        <item name="spaceKeyPreviewIcon">@drawable/sym_keyboard_space</item>
+        <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space_hl</item>
         <item name="enterKeyIcon">@drawable/sym_keyboard_return</item>
         <item name="enterKeyPreviewIcon">@drawable/sym_keyboard_return</item>
         <item name="searchKeyIcon">@drawable/sym_keyboard_search</item>
@@ -41,7 +41,7 @@
     </style>
     <style name="LIMEKeyboardDark">
         <item name="spaceKeyIcon">@drawable/sym_keyboard_space</item>
-        <item name="spaceKeyPreviewIcon">@drawable/sym_keyboard_space</item>
+        <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space_hl</item>
         <item name="enterKeyIcon">@drawable/sym_keyboard_return</item>
         <item name="enterKeyPreviewIcon">@drawable/sym_keyboard_return</item>
         <item name="searchKeyIcon">@drawable/sym_keyboard_search</item>
@@ -71,6 +71,9 @@
         <item name="popupHint">@drawable/hint_popup</item>
         <item name="keyHysteresisDistance">@dimen/key_hysteresis_distance</item>
         <item name="verticalCorrection">@dimen/keyboard_vertical_correction</item>
+        <item name="spacePreviewTopPadding">@dimen/spacebar_preview_top_padding</item>
+        <item name="previewTopPadding">@dimen/preview_top_padding</item>
+
         <item name="shadowColor">#BB000000</item>
         <item name="shadowRadius">0</item>
         <item name="backgroundDimAmount">0.5</item>

@@ -32,9 +32,6 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 
-/**
- * @author Art Hung
- */
 public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 	static final boolean DEBUG = false;
 	static final String TAG = "LIMEKeyboardView";
@@ -70,19 +67,10 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 				+"; spaceDragDiff = " +((LIMEKeyboard) this.getKeyboard()).getSpaceDragDiff()
 				+"; key_height = " + mKeyHeight
 					);
-		if (key.codes[0] == LIMEBaseKeyboard.KEYCODE_CANCEL) {
-			getOnKeyboardActionListener().onKey(KEYCODE_OPTIONS, null,0,0);
-			return true;
-		}else if (key.codes[0] == LIMEKeyboard.KEYCODE_SPACE
+		if (key.codes[0] == LIMEKeyboard.KEYCODE_SPACE
 				&& Math.abs(((LIMEKeyboard) this.getKeyboard()).getSpaceDragDiff() ) < mKeyHeight/5){ //Jeremy '12,4,23 avoid small move blocking the long press.
 			getOnKeyboardActionListener().onKey(KEYCODE_SPACE_LONGPRESS, null,0,0);
 			return true;
-//		} else if (key.codes[0] == Keyboard.KEYCODE_SHIFT) {
-//            getOnKeyboardActionListener().onKey(KEYCODE_SHIFT_LONGPRESS, null,0,0);
-//            mLongPressProcessed = true;
-//            // invalidateAllKeys require API 4 (> 1.5). Use setkeyboard(getKeyboard()) instead, which will also invalidateAllKeys.
-//            //invalidateAllKeys();
-//            return true;
 		} else {
 			return super.onLongPress(key);
 		}
@@ -90,11 +78,7 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 	
 
 	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * android.inputmethodservice.KeyboardView#onTouchEvent(android.view.MotionEvent
-	 * )
+	 *
 	 */
 	@Override
 	public boolean onTouchEvent(@NonNull MotionEvent me) {
@@ -106,11 +90,11 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 		}
 
 		if (me.getAction() == MotionEvent.ACTION_UP) {
-			int spaceDrageDirection = keyboard.getSpaceDragDirection();
-			if(DEBUG) Log.i(TAG, "OnTouchEvent(), ACTION_UP, spaceDragDirection:" + spaceDrageDirection);
-			if (spaceDrageDirection != 0) {
+			int spaceDragDirection = keyboard.getSpaceDragDirection();
+			if(DEBUG) Log.i(TAG, "OnTouchEvent(), ACTION_UP, spaceDragDirection:" + spaceDragDirection);
+			if (spaceDragDirection != 0) {
 				getOnKeyboardActionListener().onKey(
-						spaceDrageDirection == 1 ? KEYCODE_NEXT_IM : KEYCODE_PREV_IM,
+						spaceDragDirection == 1 ? KEYCODE_NEXT_IM : KEYCODE_PREV_IM,
 								null,0,0);
 				me.setAction(MotionEvent.ACTION_CANCEL);
 				keyboard.keyReleased();
@@ -120,9 +104,5 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 		return super.onTouchEvent(me);
 	}
 	
-	
-//	  public void setPhoneKeyboard(Keyboard phoneKeyboard) {
-//	        mPhoneKeyboard = phoneKeyboard;
-//	    }
 
 }

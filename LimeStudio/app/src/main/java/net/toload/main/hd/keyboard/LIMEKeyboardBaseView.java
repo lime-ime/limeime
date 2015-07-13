@@ -184,6 +184,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private int mPreviewOffset;
     private int mPreviewHeight;
     private int mPopupLayout;
+    private int mSpacePreviewTopPadding;
+    private int mPreviewTopPadding;
 
     // Main keyboard
     private LIMEBaseKeyboard mKeyboard;
@@ -534,7 +536,12 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 case R.styleable.LIMEKeyboardBaseView_shadowRadius:
                     mShadowRadius = a.getFloat(attr, 0f);
                     break;
-                // TODO: Use Theme (android.R.styleable.Theme_backgroundDimAmount)
+                case R.styleable.LIMEKeyboardBaseView_spacePreviewTopPadding:  //Jeremy 15,7,13
+                    mSpacePreviewTopPadding = a.getDimensionPixelSize(attr, 10);
+                    break;
+                case R.styleable.LIMEKeyboardBaseView_previewTopPadding:  //Jeremy 15,7,13
+                    mPreviewTopPadding = a.getDimensionPixelSize(attr,0);
+                    break;
                 case R.styleable.LIMEKeyboardBaseView_backgroundDimAmount:
                     mBackgroundDimAmount = a.getFloat(attr, 0.5f);
                     break;
@@ -1181,6 +1188,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         } else {
             mPreviewText.setCompoundDrawables(null, null, null, null);
             mPreviewText.setText(adjustCase(tracker.getPreviewText(key)));
+
             if (key.label.length() > 1 && key.codes.length < 2) {
                 mPreviewText.setTextSize(TypedValue.COMPLEX_UNIT_PX, mKeyTextSize
                         * key.getLabelSizeScale() * mKeyboard.getKeySizeScale()); //Jeremy '12,6,7 scale the preview key text size
@@ -1191,11 +1199,16 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 mPreviewText.setTypeface(mKeyTextStyle);
             }
         }
+        mPreviewText.setPadding (mPreviewText.getPaddingLeft(),  //Jeremy '15,7,13
+                ((key.codes[0] == ' ') ? mSpacePreviewTopPadding : mPreviewTopPadding),
+                mPreviewText.getPaddingRight(), 0);
         mPreviewText.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
         int popupWidth = Math.max(mPreviewText.getMeasuredWidth(), key.width
                 + mPreviewText.getPaddingLeft() + mPreviewText.getPaddingRight());
-        final int popupHeight = (int) (mPreviewHeight * mKeyboard.getKeySizeScale()); //Jeremy '11,9,7
+        //Jeremy '15,7,13 minus key.height from popupHeight if it's space key for sliding IM switching preview
+        final int popupHeight = (int) (mPreviewHeight * mKeyboard.getKeySizeScale() - (( key.codes[0] == ' ')? key.height :0) ) ;
+
         LayoutParams lp = mPreviewText.getLayoutParams();
         if (lp != null) {
             lp.width = popupWidth;
@@ -1203,7 +1216,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         }
 
         int popupPreviewX = key.x - (popupWidth - key.width) / 2;
-        int popupPreviewY = (key.y +key.height - popupHeight + mPreviewOffset);
+        //Jeremy '15,7,13 add key.height to cover whole key if it's not space key
+        int popupPreviewY = (key.y +  (( key.codes[0] == ' ')?0: key.height) - popupHeight + mPreviewOffset);
 
        // mHandler.cancelDismissPreview();
         if (mOffsetInWindow == null) {

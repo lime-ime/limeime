@@ -85,7 +85,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     // Minimum width of space key preview (proportional to keyboard width)
     private static final float SPACEBAR_POPUP_MIN_RATIO = 0.4f;
     // Height in space key the language name will be drawn. (proportional to space key height)
-    private static final float SPACEBAR_IMNAME_BASELINE = 0.6f;
+    private static final float SPACEBAR_IMNAME_BASELINE = 0.7f;
     
     private static final int OPACITY_FULLY_OPAQUE = 255;
     
@@ -351,11 +351,11 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
             mSpaceKey.iconPreview = mSlidingSpaceBarIcon;
         }
         mSlidingSpaceBarIcon.setDiff(diff);
-        if (Math.abs(diff) == Integer.MAX_VALUE) {
-            mSpaceKey.iconPreview = mSpacePreviewIcon;
-        } else {
+        //if (Math.abs(diff) == Integer.MAX_VALUE) {
+        //    mSpaceKey.iconPreview = mSpacePreviewIcon;
+        //} else {
             mSpaceKey.iconPreview = mSlidingSpaceBarIcon;
-        }
+        //}
         mSpaceKey.iconPreview.invalidateSelf();
     }
 
@@ -439,9 +439,9 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         private final int mMiddleX;
         private final Drawable mLeftDrawable;
         private final Drawable mRightDrawable;
-        private final int mThreshold;
+        //private final int mThreshold;
         private int mDiff;
-        private boolean mHitThreshold;
+
         private String mCurrentKeyboard;
         private String mNextKeyboard;
         private String mPrevKeyboard;
@@ -466,20 +466,20 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
             mTextPaint.setAntiAlias(true);
             mMiddleX = (mWidth - mBackground.getIntrinsicWidth()) / 2;
 
-            mThreshold = ViewConfiguration.get(mContext).getScaledTouchSlop();
+            //mThreshold = ViewConfiguration.get(mContext).getScaledTouchSlop();
         }
 
         private void setDiff(int diff) {
         	if(DEBUG) Log.i(TAG, "setDiff()");
             if (diff == Integer.MAX_VALUE) {
-                mHitThreshold = false;
                 mCurrentKeyboard = null;
+                mDiff =0;
                 return;
             }
             mDiff = diff;
+
             if (mDiff > mWidth) mDiff = mWidth;
             if (mDiff < -mWidth) mDiff = -mWidth;
-            if (Math.abs(mDiff) > mThreshold) mHitThreshold = true;
             invalidateSelf();
         }
 
@@ -488,7 +488,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         @Override
         public void draw(Canvas canvas) {
             canvas.save();
-            if (mHitThreshold) {
+
                 Paint paint = mTextPaint;
                 final int width = mWidth;
                 final int height = mHeight;
@@ -512,14 +512,14 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                 paint.setTextSize(mSlidingTextSize);
                 canvas.drawText(mCurrentKeyboard, width / 2 + diff, baseline, paint);
                 canvas.drawText(mNextKeyboard, diff - width /5, baseline, paint);
-                canvas.drawText(mPrevKeyboard, diff + width + width/5, baseline, paint);
+                canvas.drawText(mPrevKeyboard, diff + width  + width/5, baseline, paint);
 
                 setDefaultBounds(lArrow);
                 rArrow.setBounds(width - rArrow.getIntrinsicWidth(), 0, width,
                         rArrow.getIntrinsicHeight());
                 lArrow.draw(canvas);
                 rArrow.draw(canvas);
-            }
+
             if (mBackground != null) {
                 canvas.translate(mMiddleX, 0);
                 mBackground.draw(canvas);
