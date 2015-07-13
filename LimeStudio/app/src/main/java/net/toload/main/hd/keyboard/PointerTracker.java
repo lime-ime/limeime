@@ -234,7 +234,7 @@ public class PointerTracker {
         Key key = getKey( keyIndex);
         if(key==null) return false;
         else
-            return key.isFunctionalKey() || isSpaceKey(keyIndex);
+            return key.isFunctionalKey() ;
     }
 
     public boolean isOnModifierKey(int x, int y) {
@@ -478,7 +478,9 @@ public class PointerTracker {
         // The modifier key, such as shift key, should not be shown as preview when multi-touch is
         // supported. On the other hand, if multi-touch is not supported, the modifier key should
         // be shown as preview.
-        if (mHasDistinctMultitouch && isFunctionalKey()){ // isModifier()) {   Jeremy '15,6,5 do not show preview on all functional keys.
+        //  Jeremy '15,6,5 do not show preview on all functional keys.
+        // '16,7,13 exclude space key in isFunctionalKey() for sliding IM preview.
+        if (mHasDistinctMultitouch && isFunctionalKey()){
             mProxy.showPreview(NOT_A_KEY, this);
         } else {
             mProxy.showPreview(keyIndex, this);

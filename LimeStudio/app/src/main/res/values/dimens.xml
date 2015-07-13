@@ -53,7 +53,9 @@
     <dimen name="mini_keyboard_fling_vertical_correction">-46dip</dimen>
     <dimen name="mini_keyboard_slide_allowance">0.553in</dimen>
     <dimen name="spacebar_preview_text_size">25sp</dimen>
-    <dimen name="key_preview_height">120dp</dimen>
+    <dimen name="spacebar_preview_top_padding">10dip</dimen>
+    <dimen name="preview_top_padding">0dip</dimen>
+    <dimen name="key_preview_height">110dp</dimen>
     <dimen name="key_preview_text_size_large">40sp</dimen>
     <dimen name="key_preview_offset">0.000in</dimen>
     <dimen name="key_bottom_gap">0.035in</dimen>

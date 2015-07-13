@@ -25,5 +25,5 @@
 
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:drawable="@drawable/sym_flat_keyboard_space" />
+        android:drawable="@drawable/sym_flat_keyboard_space_hl" />
 </selector>

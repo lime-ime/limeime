@@ -28,7 +28,7 @@
 
   </style>
 
-  <style name="LIMETheme" parent="Theme.AppCompat.Light.DarkActionBar">
+  <style name="LIMETheme" parent="Theme.AppCompat.Light">
 
   </style>
 
