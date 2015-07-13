@@ -1343,7 +1343,7 @@ List<Mapping> scorelistSnapshot = null;
             result.addAll(cacheTemp);
         } else {
             //loadDBAdapter(); openLimeDatabase();
-            List<String> tempResult = dbadapter.getEnglishSuggesions(word);
+            List<String> tempResult = dbadapter.getEnglishSuggestions(word);
             for (String u : tempResult) {
                 Mapping temp = new Mapping();
                 temp.setWord(u);

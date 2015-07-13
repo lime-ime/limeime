@@ -23,13 +23,9 @@
   -->
 
 <resources>
-    <!-- Default App Theme. -->
-    <declare-styleable name="AppTheme">
-        <!-- Default KeyboardView style. -->
-        <attr name="keyboardViewStyle" format="reference" />
-
-        <attr name="composingTextColor" format="color" />
-        <attr name="composingTextBackGroundColor" format="color" />
+    <declare-styleable name="KeyboardTheme">
+        <attr name="LIMEKeyboardViewStyle" format="reference" />
+        <attr name="LIMEKeyboardViewLayout" format="reference" />
     </declare-styleable>
 
     <declare-styleable name="LIMEKeyboardBaseView">
@@ -187,3 +183,4 @@
     </declare-styleable>
 
 </resources>
+

@@ -39,8 +39,10 @@ import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -119,6 +121,7 @@ public class LIMEService extends InputMethodService implements
     private int mHardkeyboardHidden;
     private boolean mPredicting;
 
+    private Context mThemeContext;
 
     private Mapping selectedCandidate; //Jeremy '12,5,7 renamed from firstMathed
     private int selectedIndex; //Jeremy '12,5,7 the index in resultList of selectedCandidate
@@ -1946,7 +1949,7 @@ public class LIMEService extends InputMethodService implements
 
                     public void onClick(DialogInterface di, int position) {
                         di.dismiss();
-                        handlHanConvertSelection(position);
+                        handleHanConvertSelection(position);
                     }
                 });
 
@@ -1963,7 +1966,7 @@ public class LIMEService extends InputMethodService implements
         mOptionsDialog.show();
     }
 
-    private void handlHanConvertSelection(int position) {
+    private void handleHanConvertSelection(int position) {
         mLIMEPref.setHanCovertOption(position);
 
     }
@@ -2709,10 +2712,15 @@ public class LIMEService extends InputMethodService implements
         if (DEBUG)
             Log.i(TAG, "initialViewAndSwitcher()");
 
+        if(mThemeContext==null ) {
+            mThemeContext = new ContextThemeWrapper(this, R.style.LIMETheme_Light);
+        }
+
         if (mFixedCandidateViewOn) { //Have candidateview in InputView
             //Create inputView if it's null 
             if (mCandidateInInputView == null || forceRecreate) {
-                mCandidateInInputView = (CandidateInInputViewContainer) getLayoutInflater().inflate(
+
+                mCandidateInInputView = (CandidateInInputViewContainer) LayoutInflater.from(mThemeContext).inflate(
                         R.layout.inputcandidate, null);
                 mInputView = (LIMEKeyboardView) mCandidateInInputView.findViewById(R.id.keyboard);
                 mInputView.setOnKeyboardActionListener(this);
@@ -2725,10 +2733,8 @@ public class LIMEService extends InputMethodService implements
                 mCandidateView = mCandidateViewInInputView;
 
         } else {
-            if (mInputView == null || forceRecreate //|| mLIMEPref.getFixedCandidateViewDisplay()!=mFixedCandidateViewOn
-                    ) {
-                mInputView = (LIMEKeyboardView) getLayoutInflater().inflate(
-                        R.layout.input, null);
+            if (mInputView == null || forceRecreate) {
+                mInputView = (LIMEKeyboardView) LayoutInflater.from(mThemeContext).inflate(R.layout.input, null);
                 mInputView.setOnKeyboardActionListener(this);
 
 
@@ -2738,7 +2744,7 @@ public class LIMEService extends InputMethodService implements
         }
 
 
-        // Checkif mKeyboardSwitcher == null
+        // Check if mKeyboardSwitcher == null
         if (mKeyboardSwitcher == null) {
             mKeyboardSwitcher = new LIMEKeyboardSwitcher(this);
             //makeyboardSwitcher.setInputView(mInputView);

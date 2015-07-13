@@ -66,6 +66,7 @@
                 <action android:name="com.google.android.apps.drive.DRIVE_OPEN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!--
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -102,7 +103,7 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:host="gmail-ls" android:mimeType="text/*" android:scheme="content"/>
             </intent-filter>
-
+            -->
         </activity>
 
         <!-- LIME Services -->
@@ -133,16 +134,6 @@
             android:name="com.google.android.gms.ads.AdActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:theme="@android:style/Theme.Translucent" />
-
-        <!--
-        <activity
-            android:name="com.vpadn.widget.VpadnActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|keyboard|screenLayout|uiMode|screenSize|smallestScreenSize"
-            android:theme="@android:style/Theme.Translucent"
-            android:hardwareAccelerated="true"
-            >
-        </activity>
-        -->
 
         <activity
             android:name="com.dropbox.client2.android.AuthActivity"
