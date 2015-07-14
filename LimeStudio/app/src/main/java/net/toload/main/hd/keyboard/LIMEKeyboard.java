@@ -38,7 +38,6 @@ import android.graphics.Paint.Align;
 import android.graphics.drawable.Drawable;
 import android.text.TextPaint;
 import android.util.Log;
-import android.view.ViewConfiguration;
 import android.view.inputmethod.EditorInfo;
 
 /**
@@ -61,13 +60,21 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     private static final float SPACEBAR_DRAG_THRESHOLD = 0.6f;
     
     private static SlidingSpaceBarDrawable mSlidingSpaceBarIcon;
-    
-    private static Drawable mSpacePreviewIcon;
 
-    private static Drawable mEnterIcon;
-    private static Drawable mEnterPreviewIcon;
-    private static Drawable mSearchIcon;
-    private static Drawable mSearchPreviewIcon;
+    private static boolean themedResourcesLoaded = false;
+    /**
+     * Drawable to override function key icons
+     */
+    private static Drawable mSpaceKeyIcon;
+    private static Drawable mSpaceKeyPreviewIcon;
+    private static Drawable mEnterKeyIcon;
+    private static Drawable mEnterKeyPreviewIcon;
+    private static Drawable mDeleteKeyIcon;
+    private static Drawable mShiftKeyIcon;
+    private static Drawable mDoneKeyIcon;
+
+    private static Drawable mSearchKeyIcon;
+    private static Drawable mSearchKeyPreviewIcon;
     private static Drawable mSlidingLeftArrow;
     private static Drawable mSlidingRightArrow;
     private static int mSlidingTextSize;
@@ -100,19 +107,27 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 
     public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, float keySizeScale, int showArrowKeys, int splitKeyboard ) {
         super(context, xmlLayoutResId, mode, keySizeScale, showArrowKeys, splitKeyboard);
-
-
         mContext = context;
         mRes = context.getResources();;
+
+
+
+    }	
+
+    private void loadThemedIcons(Context context){
 
         TypedArray a = context.getTheme().obtainStyledAttributes(//R.style.LIMEKeyboardLight, R.styleable.LIMEKeyboard);
                 null, R.styleable.LIMEKeyboard, R.attr.LIMEKeyboardStyle, R.style.LIMEKeyboardLight);
         mSpacebarVerticalCorrection = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spacebarVerticalCorrection, 0);
-        mSpacePreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyPreviewIcon);
-        mEnterIcon = a.getDrawable(R.styleable.LIMEKeyboard_enterKeyIcon);
-        mEnterPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_enterKeyPreviewIcon);
-        mSearchIcon = a.getDrawable(R.styleable.LIMEKeyboard_searchKeyIcon);
-        mSearchPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_searchKeyPreviewIcon);
+        mSpaceKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyIcon);
+        mSpaceKeyPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyPreviewIcon);
+        mEnterKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_enterKeyIcon);
+        mEnterKeyPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_enterKeyPreviewIcon);
+        mSearchKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_searchKeyIcon);
+        mSearchKeyPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_searchKeyPreviewIcon);
+        mDoneKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_doneKeyIcon);
+        mDeleteKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_deleteKeyIcon);
+        mShiftKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_shiftKeyIcon);
 
         // for sliding space bar
         mSlidingTextSize = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spacebarSlidingTextSize,25);
@@ -120,27 +135,42 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         mSlidingRightArrow = a.getDrawable(R.styleable.LIMEKeyboard_spacebarSlidingRightArrow);
 
         a.recycle();
-
-    }	
-   
+    }
 
 	@Override
-    protected Key createKeyFromXml(Resources res, Row parent, int x, int y, 
-            XmlResourceParser parser) {
-	        Key key = new LIMEKey(res, parent, x, y, parser);
-	        switch (key.codes[0]) {
-	        case KEYCODE_ENTER:
-	            mEnterKey = key;
-	            break;
-	        case KEYCODE_SPACE:
-	            mSpaceKey = key;
-	            break;
-	        }
-	        
-	        // 09/Aug 2011, by redraw the key to construct the customer icon set.
-	        // Getting Customer ICON SET
-	        // key.icon = new CustomDrawable("A");
-	        return key;
+    protected Key createKeyFromXml(Context context, Row parent, int x, int y, XmlResourceParser parser) {
+
+        //Load themed resources once  ///Jeremy 15,7,14
+        if (!themedResourcesLoaded) loadThemedIcons(context);
+
+        Key key = new LIMEKey(context.getResources(), parent, x, y, parser);
+        //Override function key icons from theme
+        switch (key.codes[0]) {
+            case KEYCODE_ENTER:
+                mEnterKey = key;
+                if (mEnterKey != null)
+                    key.icon = mEnterKeyIcon;
+                break;
+            case KEYCODE_SPACE:
+                mSpaceKey = key;
+                if (mSpaceKey != null)
+                    key.icon = mSpaceKeyIcon;
+                break;
+            case KEYCODE_DELETE:
+                if (mDeleteKeyIcon != null)
+                    key.icon = mDeleteKeyIcon;
+                break;
+            case KEYCODE_DONE:
+                if (mDoneKeyIcon != null)
+                    key.icon = mDoneKeyIcon;
+                break;
+            case KEYCODE_SHIFT:
+                if (mShiftKeyIcon != null)
+                    key.icon = mShiftKeyIcon;
+                break;
+        }
+
+        return key;
     }
     
     public void enableShiftLock() {
@@ -177,13 +207,13 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     	if(DEBUG) {Log.i("LIMEKeyboard", "setShifted: "+ shiftState);};
         boolean shiftChanged = false;
         if (mShiftKey != null) {
-            if (shiftState == false) {
+            if (!shiftState) {
                 shiftChanged = mShiftState != SHIFT_OFF;
                 mShiftState = SHIFT_OFF;
                 mShiftKey.on = false;
             } else {
                 if (mShiftState == SHIFT_OFF) {
-                    shiftChanged = mShiftState == SHIFT_OFF;
+                    shiftChanged = true;
                     mShiftState = SHIFT_ON;
                 }
             }
@@ -231,8 +261,8 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                     mEnterKey.label = res.getText(R.string.label_done_key);
                     break;
                 case EditorInfo.IME_ACTION_SEARCH:
-                    mEnterKey.iconPreview = mSearchPreviewIcon;
-                    mEnterKey.icon = mSearchIcon;
+                    mEnterKey.iconPreview = mSearchKeyPreviewIcon;
+                    mEnterKey.icon = mSearchKeyIcon;
                     mEnterKey.label = null;
                     break;
                 case EditorInfo.IME_ACTION_SEND:
@@ -250,8 +280,8 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                         mEnterKey.popupResId = R.xml.popup_smileys;
                     } else {
                     
-                        mEnterKey.iconPreview = mEnterPreviewIcon;
-                        mEnterKey.icon = mEnterIcon;
+                        mEnterKey.iconPreview = mEnterKeyPreviewIcon;
+                        mEnterKey.icon = mEnterKeyIcon;
                         mEnterKey.label = null;
                     }
                     break;
@@ -349,7 +379,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                     (int)(getMinWidth() * SPACEBAR_POPUP_MIN_RATIO));
             final int height = mSpaceKey.height;// mSpacePreviewIcon.getIntrinsicHeight();
 
-            mSlidingSpaceBarIcon = new SlidingSpaceBarDrawable(mSpacePreviewIcon,mSlidingLeftArrow,mSlidingRightArrow,mSlidingTextSize, width, height);
+            mSlidingSpaceBarIcon = new SlidingSpaceBarDrawable(mSpaceKeyPreviewIcon,mSlidingLeftArrow,mSlidingRightArrow,mSlidingTextSize, width, height);
             mSlidingSpaceBarIcon.setBounds(0, 0, width, height /2);
             mSpaceKey.iconPreview = mSlidingSpaceBarIcon;
         }
@@ -374,11 +404,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                 // If there is a keyboard with no keys specified in popupCharacters
                 popupResId = 0;
             }
-//            TypedArray a = res.obtainAttributes(Xml.asAttributeSet(parser), R.styleable.LIMEKey);
-//            CharSequence testAtttribute = a.getText(R.styleable.LIMEKey_testAttribute);
-//            a.recycle();
-//            if(testAtttribute!=null)
-//            	Log.i(TAG,"LIMEKey(): Got test attribute:" +testAtttribute );
+
         }
         
         @Override
@@ -406,7 +432,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 //                 if (code == KEYCODE_SHIFT) x += width / 6;
 //                 if (code == KEYCODE_DELETE) x -= width / 6;
 //             }
-//              if (code == KEYCODE_CANCEL) y  -= 10;
+//              if (code == KEYCODE_DONE) y  -= 10;
               
            
             return	LIMEKeyboard.this.isInside(this, x, y);

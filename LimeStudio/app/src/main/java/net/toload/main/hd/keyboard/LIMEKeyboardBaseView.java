@@ -540,7 +540,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     mSpacePreviewTopPadding = a.getDimensionPixelSize(attr, 10);
                     break;
                 case R.styleable.LIMEKeyboardBaseView_previewTopPadding:  //Jeremy 15,7,13
-                    mPreviewTopPadding = a.getDimensionPixelSize(attr,0);
+                    mPreviewTopPadding = a.getDimensionPixelSize(attr, 0);
                     break;
                 case R.styleable.LIMEKeyboardBaseView_backgroundDimAmount:
                     mBackgroundDimAmount = a.getFloat(attr, 0.5f);
@@ -1002,7 +1002,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 final int keyColor = key.isFunctionalKey()
                         ? (key.pressed ? mFunctionKeyTextColorPressed : mFunctionKeyTextColorNormal)
                         : (key.pressed ? mKeyTextColorPressed : mKeyTextColorNormal);
-                final int subKeyColor = key.pressed ? mKeySubLabelTextColorPressed : mKeySubLabelTextColorNormal;
+                final int subKeyColor = key.isFunctionalKey()
+                        ? (key.pressed ? mFunctionKeyTextColorPressed : mFunctionKeyTextColorNormal)
+                        :(key.pressed ? mKeySubLabelTextColorPressed : mKeySubLabelTextColorNormal);
 
                 float KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR = 0.55f;
                 float baseline = centerY
@@ -1182,14 +1184,13 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         if (key == null)
             return;
         // Should not draw hint icon in key preview
-        if (key.icon != null && !shouldDrawLabelAndIcon(key)) {
+        if (key.icon != null && !hasPopupKeyboard(key)  || key.codes[0]==' ' ) {
             mPreviewText.setCompoundDrawables(null,
                     key.iconPreview != null ? key.iconPreview : key.icon, null, null);
             mPreviewText.setText(null);
-        } else {
+        } else if(key.label !=null) {
             mPreviewText.setCompoundDrawables(null, null, null, null);
             mPreviewText.setText(adjustCase(tracker.getPreviewText(key)));
-
             if (key.label.length() > 1 && key.codes.length < 2) {
                 mPreviewText.setTextSize(TypedValue.COMPLEX_UNIT_PX, mKeyTextSize
                         * key.getLabelSizeScale() * mKeyboard.getKeySizeScale()); //Jeremy '12,6,7 scale the preview key text size
@@ -1498,14 +1499,12 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     }
 
     private boolean shouldDrawLabelAndIcon(Key key) {
-        return hasPopupKeyboard(key);
-        //return isNumberAtEdgeOfPopupChars(key) || isNonMicLatinF1Key(key);
-        //|| LIMEKeyboard.hasPuncOrSmileysPopup(key);
+        return hasPopupKeyboard(key) ||  key.icon != null;
 
     }
 
     private boolean hasPopupKeyboard(Key key) {
-        return key.popupResId != 0 && key.icon == null;
+        return key.popupResId != 0;
     }
 
     private static boolean isNumberAtLeftmostPopupChar(Key key) {

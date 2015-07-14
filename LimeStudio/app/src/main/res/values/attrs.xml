@@ -112,6 +112,9 @@
         <attr name="enterKeyPreviewIcon" format="reference" />
         <attr name="searchKeyIcon" format="reference" />
         <attr name="searchKeyPreviewIcon" format="reference" />
+        <attr name="doneKeyIcon" format="reference" />
+        <attr name="shiftKeyIcon" format="reference" />
+        <attr name="deleteKeyIcon" format="reference" />
         <attr name="spacebarVerticalCorrection" format="dimension" />
         <attr name="spacebarSlidingTextSize" format="dimension" />
         <attr name="spacebarSlidingLeftArrow" format="reference" />

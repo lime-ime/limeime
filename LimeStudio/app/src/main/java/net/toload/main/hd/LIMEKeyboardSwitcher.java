@@ -200,7 +200,7 @@ public class LIMEKeyboardSwitcher {
     	}
     }
     
-    public void makeKeyboards(boolean forceCreate) {
+    public void resetKeyboards(boolean forceCreate) {
     	if(DEBUG)
     		Log.i(TAG, "makekeyboards(): forcereCreate:" + forceCreate);
         if (forceCreate) mKeyboards.clear();
@@ -283,7 +283,7 @@ public class LIMEKeyboardSwitcher {
     	if(DEBUG){
     		Log.i(TAG,"KBMODE code:"+code);
     		Log.i(TAG,"KBMODE mode:"+mode);
-    		Log.i(TAG,"KBMODE imOphtions:"+imeOptions);
+    		Log.i(TAG,"KBMODE imOptions:"+imeOptions);
     		Log.i(TAG,"KBMODE isIM:"+isIm);
     		Log.i(TAG,"KBMODE isSymbol:"+isSymbol);
     		Log.i(TAG,"KBMODE isShift:"+isShift);

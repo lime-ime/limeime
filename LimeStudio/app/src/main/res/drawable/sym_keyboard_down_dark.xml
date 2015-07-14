@@ -25,7 +25,7 @@
 
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true"
-        android:drawable="@drawable/sym_flat_keyboard_down" />
+        android:drawable="@drawable/sym_flat_keyboard_down_hl" />
     <item
         android:drawable="@drawable/sym_flat_keyboard_down_hl" />
 

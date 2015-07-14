@@ -267,7 +267,7 @@ public class LIMEService extends InputMethodService implements
 
         initialViewAndSwitcher(false);
         initCandidateView(); //Force the oncreatedcandidate to be called
-        mKeyboardSwitcher.makeKeyboards(true);
+        mKeyboardSwitcher.resetKeyboards(true);
         super.onInitializeInterface();
 
     }
@@ -292,7 +292,7 @@ public class LIMEService extends InputMethodService implements
             mHardkeyboardHidden = conf.hardKeyboardHidden;
         }
         initialViewAndSwitcher(true);
-        mKeyboardSwitcher.makeKeyboards(true);
+        mKeyboardSwitcher.resetKeyboards(true);
         super.onConfigurationChanged(conf);
 
     }
@@ -535,15 +535,15 @@ public class LIMEService extends InputMethodService implements
         }
 
         //Jeremy '12,5,29 override the fixCanddiateMode setting in Landscape mode (in landscape mode the candidate bar is always not fixed).
-        boolean fixedCandiateMode = mLIMEPref.getFixedCandidateViewDisplay();
+        boolean fixedCandidateMode = mLIMEPref.getFixedCandidateViewDisplay();
         if (mOrientation == Configuration.ORIENTATION_LANDSCAPE)
-            fixedCandiateMode = false;
+            fixedCandidateMode = false;
 
         //jeremy '12,5,6 recreate inputview if fixedCandidateView setting is altered
-        if (mFixedCandidateViewOn != fixedCandiateMode) {
+        if (mFixedCandidateViewOn != fixedCandidateMode) {
             requestHideSelf(0);
             mInputView.closing();
-            mFixedCandidateViewOn = fixedCandiateMode;
+            mFixedCandidateViewOn = fixedCandidateMode;
             initialViewAndSwitcher(true);
 
             if (mFixedCandidateViewOn) {
@@ -569,7 +569,7 @@ public class LIMEService extends InputMethodService implements
         }
 
 
-        mKeyboardSwitcher.makeKeyboards(
+        mKeyboardSwitcher.resetKeyboards(
                 mShowArrowKeys != mLIMEPref.getShowArrowKeys() //Jeremy '12,5,22 recreate keyboard if the setting altered.
                         || mSplitKeyboard != mLIMEPref.getSplitKeyboard()); //Jeremy '12,5,26 recreate keyboard if the setting altered.
 
@@ -1621,7 +1621,7 @@ public class LIMEService extends InputMethodService implements
             if (DEBUG) Log.i(TAG, "OnKey():KEYCODE_SHIFT");
             if (!(!hasPhysicalKeyPressed && hasDistinctMultitouch))
                 handleShift();
-        } else if (primaryCode == LIMEBaseKeyboard.KEYCODE_CANCEL) {// long press on options and shift
+        } else if (primaryCode == LIMEBaseKeyboard.KEYCODE_DONE) {// long press on options and shift
             handleClose();
             // Jeremy '12,5,21 process the arrow keys on soft keyboard
         } else if (primaryCode == LIMEBaseKeyboard.KEYCODE_UP) {
@@ -1786,7 +1786,7 @@ public class LIMEService extends InputMethodService implements
                             }
 
                             handleClose();
-                            mKeyboardSwitcher.makeKeyboards(true);
+                            mKeyboardSwitcher.resetKeyboards(true);
                             break;
                         }
                     case POS_VOICEINPUT:
@@ -1903,7 +1903,7 @@ public class LIMEService extends InputMethodService implements
                 }
             }
         }
-        if (DEBUG) Log.i(TAG, "currene active IM:" + activeIM);
+        if (DEBUG) Log.i(TAG, "current active IM:" + activeIM);
         // check if the selected keybaord is in active keybaord list.
         boolean matched = false;
         for (int i = 0; i < activatedIMList.size(); i++) {
@@ -1917,7 +1917,7 @@ public class LIMEService extends InputMethodService implements
         if (!matched && SearchSrv != null) {
             // if the selected keyboard is not in the active keyboard list.
             // set the keyboard to the first active keyboard
-            //if(DEBUG) Log.i(TAG, "currene keyboard is not in active list, reset to :" +  keyboardListCodes.get(0));
+            //if(DEBUG) Log.i(TAG, "current keyboard is not in active list, reset to :" +  keyboardListCodes.get(0));
 
             try {
                 activeIM = activatedIMList.get(0);
@@ -2747,7 +2747,7 @@ public class LIMEService extends InputMethodService implements
         // Check if mKeyboardSwitcher == null
         if (mKeyboardSwitcher == null) {
             mKeyboardSwitcher = new LIMEKeyboardSwitcher(this, mThemeContext);
-            //makeyboardSwitcher.setInputView(mInputView);
+
         }
         mKeyboardSwitcher.setInputView(mInputView);
         buildActivatedIMList();
@@ -3351,5 +3351,20 @@ public class LIMEService extends InputMethodService implements
 
     }
 
+    static class KeyboardTheme {
+        public final String mName;
+        public final int mThemeId;
+        public final int mStyleId;
+        public KeyboardTheme(String name, int themeId, int styleId) {
+            mName = name;
+            mThemeId = themeId;
+            mStyleId = styleId;
+        }
+    }
+    private static final KeyboardTheme[] KEYBOARD_THEMES = {
+            new KeyboardTheme("Light",            0, R.style.LIMETheme_Light),
+            new KeyboardTheme("Dark",     1, R.style.LIMETheme_Dark),
+    };
 
+    private KeyboardTheme mKeyboardTheme = KEYBOARD_THEMES[0];
 }

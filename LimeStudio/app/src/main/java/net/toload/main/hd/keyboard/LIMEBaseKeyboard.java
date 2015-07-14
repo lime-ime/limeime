@@ -93,8 +93,8 @@ public class LIMEBaseKeyboard {
 
     public static final int KEYCODE_SHIFT = -1;
     public static final int KEYCODE_MODE_CHANGE = -2;
-    public static final int KEYCODE_CANCEL = -3;
-    public static final int KEYCODE_DONE = -4;
+    public static final int KEYCODE_DONE = -3;
+
     public static final int KEYCODE_DELETE = -5;
     public static final int KEYCODE_ALT = -6;
     public static final int KEYCODE_UP = -11;
@@ -113,10 +113,13 @@ public class LIMEBaseKeyboard {
      * Drawable for arrow keys
      */
 
-    private Drawable mDrawableArrowUp;
-    private Drawable mDrawableArrowDown;
-    private Drawable mDrawableArrowRight;
-    private Drawable mDrawableArrowLeft;
+    private static Drawable mDrawableArrowUp;
+    private static Drawable mDrawableArrowDown;
+    private static Drawable mDrawableArrowRight;
+    private static Drawable mDrawableArrowLeft;
+
+
+
 
     /**
      * orientation of the screen
@@ -1012,13 +1015,14 @@ public class LIMEBaseKeyboard {
         return new Row(res, this, parser);
     }
 
-    protected Key createKeyFromXml(Resources res, Row parent, int x, int y,
+    protected Key createKeyFromXml(Context context, Row parent, int x, int y,
                                    XmlResourceParser parser) {
-        return new Key(res, parent, x, y, parser);
+       return  new Key(context.getResources(), parent, x, y, parser);
+
     }
 
     /**
-     * createArrowKeyssRow() returns the total height of the row.
+     * createArrowKeysRow() returns the total height of the row.
      */
     final float ARROW_KEY_HEIGHT_FRACTION = 0.8f;
 
@@ -1177,7 +1181,7 @@ public class LIMEBaseKeyboard {
                     } else if (TAG_KEY.equals(tag)) {
 
                         inKey = true;
-                        key = createKeyFromXml(res, currentRow, x, y, parser);
+                        key = createKeyFromXml(context, currentRow, x, y, parser);
                         mKeys.add(key);
 
                         //Jeremy '12,5,26 shift the keys after separated threshold and 
