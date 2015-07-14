@@ -34,6 +34,14 @@
                 android:key="lime_keyboard"
                 android:title="@string/keyboard"
                 android:summary="">
+		<ListPreference
+			android:key="keyboard_theme"
+			android:title="@string/keyboard_themes"
+			android:entries="@array/keyboard_themes_options"
+			android:entryValues="@array/show_arrow_keys_values"
+			android:dialogTitle="@string/keyboard_themes"
+			android:defaultValue="0"/>
+		/>
        <!-- <net.toload.main.hd.limesettings.MultiListPreference
 				android:key="keyboard_state"
 				android:title="@string/keyboard_list"

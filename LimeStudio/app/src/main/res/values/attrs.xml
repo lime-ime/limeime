@@ -26,8 +26,10 @@
     <declare-styleable name="KeyboardTheme">
         <attr name="LIMEKeyboardStyle" format="reference" />
         <attr name="LIMEBaseKeyboardStyle" format="reference" />
-        <attr name="LIMEKeyboardViewLayout" format="reference" />
         <attr name="LIMEKeyboardBaseView" format="reference" />
+        <attr name="LIMEKeyboardLayout" format="reference" />
+        <attr name="LIMEPopupKeyboardLayout" format="reference" />
+
 
     </declare-styleable>
 
@@ -114,11 +116,12 @@
         <attr name="searchKeyPreviewIcon" format="reference" />
         <attr name="doneKeyIcon" format="reference" />
         <attr name="shiftKeyIcon" format="reference" />
+        <attr name="shiftKeyShiftedIcon" format="reference" />
         <attr name="deleteKeyIcon" format="reference" />
-        <attr name="spacebarVerticalCorrection" format="dimension" />
-        <attr name="spacebarSlidingTextSize" format="dimension" />
-        <attr name="spacebarSlidingLeftArrow" format="reference" />
-        <attr name="spacebarSlidingRightArrow" format="reference" />
+        <attr name="spaceKeyVerticalCorrection" format="dimension" />
+        <attr name="spaceKeySlidingTextSize" format="dimension" />
+        <attr name="spaceKeySlidingLeftArrow" format="reference" />
+        <attr name="spaceKeySlidingRightArrow" format="reference" />
 
     </declare-styleable>
 

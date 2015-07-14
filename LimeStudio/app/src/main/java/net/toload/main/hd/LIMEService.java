@@ -308,6 +308,9 @@ public class LIMEService extends InputMethodService implements
         if (DEBUG)
             Log.i(TAG, "OnCreateInputView()");
 
+
+        if(mInputView !=null) mInputView =null;
+
         initialViewAndSwitcher(true);  //Jeremy '12,4,29.  will do buildactivekeyboardlist in init startInput
 
         if (mFixedCandidateViewOn) {
@@ -539,11 +542,14 @@ public class LIMEService extends InputMethodService implements
         if (mOrientation == Configuration.ORIENTATION_LANDSCAPE)
             fixedCandidateMode = false;
 
-        //jeremy '12,5,6 recreate inputview if fixedCandidateView setting is altered
-        if (mFixedCandidateViewOn != fixedCandidateMode) {
+        //Jeremy '12,5,6 recreate inputView if fixedCandidateView setting is altered
+        //Jeremy '15,7,15 recreate inputView if keyboard theme changed
+        if (mFixedCandidateViewOn != fixedCandidateMode
+                || mKeyboardThemeIndex != mLIMEPref.getKeyboardTheme()) {
             requestHideSelf(0);
             mInputView.closing();
             mFixedCandidateViewOn = fixedCandidateMode;
+
             initialViewAndSwitcher(true);
 
             if (mFixedCandidateViewOn) {
@@ -572,6 +578,8 @@ public class LIMEService extends InputMethodService implements
         mKeyboardSwitcher.resetKeyboards(
                 mShowArrowKeys != mLIMEPref.getShowArrowKeys() //Jeremy '12,5,22 recreate keyboard if the setting altered.
                         || mSplitKeyboard != mLIMEPref.getSplitKeyboard()); //Jeremy '12,5,26 recreate keyboard if the setting altered.
+
+
 
         loadSettings();
         mImeOptions = attribute.imeOptions;
@@ -720,6 +728,7 @@ public class LIMEService extends InputMethodService implements
 
         auto_commit = mLIMEPref.getAutoCommitValue();
         currentSoftKeyboard = mKeyboardSwitcher.getImKeyboard(activeIM);
+
 
 
     }
@@ -2712,8 +2721,17 @@ public class LIMEService extends InputMethodService implements
         if (DEBUG)
             Log.i(TAG, "initialViewAndSwitcher()");
 
+        if(mKeyboardThemeIndex != mLIMEPref.getKeyboardTheme()) {
+            mKeyboardThemeIndex = mLIMEPref.getKeyboardTheme();
+            forceRecreate=true;
+            mThemeContext = null;
+            if(mKeyboardSwitcher!=null) mKeyboardSwitcher.resetKeyboards(true);
+        }
+
         if(mThemeContext==null ) {
-            mThemeContext = new ContextThemeWrapper(this, R.style.LIMETheme_Light);
+            mThemeContext = new ContextThemeWrapper(this, getKeyboardTheme());
+            if(mKeyboardSwitcher!=null) mKeyboardSwitcher.setThemedContext(mThemeContext);
+
         }
 
         if (mFixedCandidateViewOn) { //Have candidateview in InputView
@@ -2747,7 +2765,6 @@ public class LIMEService extends InputMethodService implements
         // Check if mKeyboardSwitcher == null
         if (mKeyboardSwitcher == null) {
             mKeyboardSwitcher = new LIMEKeyboardSwitcher(this, mThemeContext);
-
         }
         mKeyboardSwitcher.setInputView(mInputView);
         buildActivatedIMList();
@@ -3362,9 +3379,14 @@ public class LIMEService extends InputMethodService implements
         }
     }
     private static final KeyboardTheme[] KEYBOARD_THEMES = {
-            new KeyboardTheme("Light",            0, R.style.LIMETheme_Light),
-            new KeyboardTheme("Dark",     1, R.style.LIMETheme_Dark),
+            new KeyboardTheme("Light",  0, R.style.LIMETheme_Light),
+            new KeyboardTheme("Dark",   1, R.style.LIMETheme_Dark),
     };
 
-    private KeyboardTheme mKeyboardTheme = KEYBOARD_THEMES[0];
+    private int mKeyboardThemeIndex = -1;
+
+    private int getKeyboardTheme(){
+        return KEYBOARD_THEMES[mKeyboardThemeIndex].mStyleId;
+    }
+
 }

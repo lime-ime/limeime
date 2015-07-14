@@ -54,7 +54,7 @@
     <color name="limekeyboard_key_color_dark_hl">#FF4DB6AC</color>
     <color name="limekeyboard_function_key_color_light">#FF717171</color>
     <color name="limekeyboard_function_key_color_light_hl">#FF80CBC4</color>
-    <color name="limekeyboard_function_key_color_dark">#FF80CBC4</color>
+    <color name="limekeyboard_function_key_color_dark">#FF717171</color>
     <color name="limekeyboard_function_key_color_dark_hl">#FF80CBC4</color>f
     <color name="limekeyboard_subkey_color_light">#FF7D7D7D</color>
     <color name="limekeyboard_subkey_color_light_hl">#FF80CBC4</color>

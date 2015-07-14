@@ -111,6 +111,10 @@ public class LIMEKeyboardSwitcher {
         
         mKeySizeScale = mLIMEPref.getFontSize();
     }
+
+	public void setThemedContext(Context context){
+		mThemedContext = context;
+	}
     
     public int getKeyboardSize(){
     	if(kbHm != null){
@@ -484,7 +488,7 @@ public class LIMEKeyboardSwitcher {
 
     public void toggleShift() {
     	if(DEBUG)
-			Log.i(TAG,"toggeleshift() KBMODE mode:"+mMode);
+			Log.i(TAG,"toggleShift() KBMODE mode:"+mMode);
     	mIsShifted= !mIsShifted;
     	if(mIsChinese)
         	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);

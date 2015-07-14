@@ -154,6 +154,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         void swipeUp();
     }
 
+    //themed context
+    Context mContext;
+
     // Timing constants
     private final int mKeyRepeatInterval;
 
@@ -452,11 +455,14 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
     public LIMEKeyboardBaseView(Context context, AttributeSet attrs) {
         this(context, attrs, R.attr.LIMEKeyboardBaseView);
+        mContext = context;
     }
 
-    @TargetApi(8)
+
     public LIMEKeyboardBaseView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+
+        mContext = context;
 
         //mLIMEPref = new LIMEPreferenceManager(context); //Jeremy '11,9,4
 
@@ -1317,14 +1323,13 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
     private View inflateMiniKeyboardContainer(Key popupKey) {
         int popupKeyboardId = popupKey.popupResId;
-        LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(
-                Context.LAYOUT_INFLATER_SERVICE);
-        View container = inflater.inflate(mPopupLayout, null);
+        //LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View container = LayoutInflater.from(mContext).inflate(mPopupLayout, null);
         if (container == null)
             throw new NullPointerException();
 
         LIMEKeyboardBaseView miniKeyboard =
-                (LIMEKeyboardBaseView) container.findViewById(R.id.LIMEKeyboardBaseView);
+                (LIMEKeyboardBaseView) container.findViewById(R.id.LIMEPopupKeyboard);
         miniKeyboard.setOnKeyboardActionListener(new OnKeyboardActionListener() {
             public void onKey(int primaryCode, int[] keyCodes, int x, int y) {
                 mKeyboardActionListener.onKey(primaryCode, keyCodes, x, y);
@@ -1368,11 +1373,11 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
         LIMEBaseKeyboard keyboard;
         if (popupKey.popupCharacters != null) {
-            keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId, popupKey.popupCharacters,
+            keyboard = new LIMEBaseKeyboard(mContext, popupKeyboardId, popupKey.popupCharacters,
                     -1, getPaddingLeft() + getPaddingRight(),
                     LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale());
         } else {
-            keyboard = new LIMEBaseKeyboard(getContext(), popupKeyboardId
+            keyboard = new LIMEBaseKeyboard(mContext, popupKeyboardId
                     , LIMEKeyboardBaseView.this.mKeyboard.getKeySizeScale(), 0, 0); //Jeremy '12,5,21 never show arrow keys in popup keyboard
         }
         //mini keyboard in fling mode override with fling correction. Jeremy '12,5,27
@@ -1420,7 +1425,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             container = inflateMiniKeyboardContainer(popupKey);
             mMiniKeyboardCache.put(popupKey, container);
         }
-        mMiniKeyboard = (LIMEKeyboardBaseView) container.findViewById(R.id.LIMEKeyboardBaseView);
+        mMiniKeyboard = (LIMEKeyboardBaseView) container.findViewById(R.id.LIMEPopupKeyboard);
         if (mWindowOffset == null) {
             mWindowOffset = new int[2];
             getLocationInWindow(mWindowOffset);
@@ -1512,21 +1517,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 && isAsciiDigit(key.popupCharacters.charAt(0));
     }
 
-    /* private boolean isLatinF1Key(Key key) {
-        return false;
-        //return (mKeyboard instanceof LIMEKeyboard) && ((LIMEKeyboard)mKeyboard).isF1Key(key);
-    }
-
-    private boolean isNonMicLatinF1Key(Key key) {
-        return isLatinF1Key(key) && key.label != null;
-    }
-
-    private static boolean isNumberAtEdgeOfPopupChars(Key key) {
-        return isNumberAtLeftmostPopupChar(key) || isNumberAtRightmostPopupChar(key);
-    }
-
-     */
-    private static boolean isAsciiDigit(char c) {
+   private static boolean isAsciiDigit(char c) {
         return (c < 0x80) && Character.isDigit(c);
     }
 

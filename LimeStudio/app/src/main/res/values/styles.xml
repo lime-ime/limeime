@@ -36,15 +36,16 @@
         <item name ="doneKeyIcon">@drawable/sym_keyboard_done</item>
         <item name ="deleteKeyIcon">@drawable/sym_keyboard_delete</item>
         <item name ="shiftKeyIcon">@drawable/sym_keyboard_shift</item>
-        <item name="spacebarVerticalCorrection">@dimen/spacebar_vertical_correction</item>
-        <item name="spacebarSlidingTextSize">@dimen/spacebar_preview_text_size</item>
-        <item name="spacebarSlidingLeftArrow">@drawable/ic_suggest_strip_scroll_left_arrow</item>
-        <item name="spacebarSlidingRightArrow">@drawable/ic_suggest_strip_scroll_right_arrow</item>
+        <item name ="shiftKeyShiftedIcon">@drawable/sym_keyboard_shift_shifted</item>
+        <item name="spaceKeyVerticalCorrection">@dimen/spacebar_vertical_correction</item>
+        <item name="spaceKeySlidingTextSize">@dimen/spacebar_preview_text_size</item>
+        <item name="spaceKeySlidingLeftArrow">@drawable/ic_suggest_strip_scroll_left_arrow</item>
+        <item name="spaceKeySlidingRightArrow">@drawable/ic_suggest_strip_scroll_right_arrow</item>
 
     </style>
     <style name="LIMEKeyboardDark">
         <item name="spaceKeyIcon">@drawable/sym_keyboard_space_dark</item>
-        <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space_hl</item>
+        <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space</item>
         <item name="enterKeyIcon">@drawable/sym_keyboard_return_dark</item>
         <item name="enterKeyPreviewIcon">@drawable/sym_flat_keyboard_space_hl</item>
         <item name="searchKeyIcon">@drawable/sym_keyboard_search_dark</item>
@@ -52,21 +53,32 @@
         <item name ="doneKeyIcon">@drawable/sym_keyboard_done_dark</item>
         <item name ="deleteKeyIcon">@drawable/sym_keyboard_delete_dark</item>
         <item name ="shiftKeyIcon">@drawable/sym_keyboard_shift_dark</item>
-        <item name="spacebarVerticalCorrection">@dimen/spacebar_vertical_correction</item>
-        <item name="spacebarSlidingTextSize">@dimen/spacebar_preview_text_size</item>
-        <item name="spacebarSlidingLeftArrow">@drawable/ic_suggest_strip_scroll_left_arrow</item>
-        <item name="spacebarSlidingRightArrow">@drawable/ic_suggest_strip_scroll_right_arrow</item>
+        <item name ="shiftKeyShiftedIcon">@drawable/sym_keyboard_shift_shifted_dark</item>
+        <item name="spaceKeyVerticalCorrection">@dimen/spacebar_vertical_correction</item>
+        <item name="spaceKeySlidingTextSize">@dimen/spacebar_preview_text_size</item>
+        <item name="spaceKeySlidingLeftArrow">@drawable/ic_suggest_strip_scroll_left_arrow</item>
+        <item name="spaceKeySlidingRightArrow">@drawable/ic_suggest_strip_scroll_right_arrow</item>
     </style>
 
 
-    <style name="LIMEKeyboardViewLayoutLight">
+    <style name="LIMEKeyboardLayoutLight">
         <item name="android:background">@drawable/keyboard_background</item>
         <item name="android:keyBackground">@drawable/btn_keyboard_key</item>
     </style>
-    <style name="LIMEKeyboardViewLayoutDark">
+    <style name="LIMEKeyboardLayoutDark">
         <item name="android:background">@drawable/keyboard_background_dark</item>
         <item name="android:keyBackground">@drawable/btn_keyboard_key_dark</item>
     </style>
+
+    <style name="LIMEPopupKeyboardLayoutLight">
+        <item name="android:background">@drawable/keyboard_popup_panel_background</item>
+        <item name="android:keyBackground">@drawable/btn_keyboard_key</item>
+    </style>
+    <style name="LIMEPopupKeyboardLayoutDark">
+        <item name="android:background">@drawable/keyboard_popup_panel_background_dark</item>
+        <item name="android:keyBackground">@drawable/btn_keyboard_key_dark</item>
+    </style>
+
     <style name="LIMEKeyboardBaseView">
         <item name="keyPreviewLayout">@layout/key_preview</item>
         <item name="keyPreviewOffset">@dimen/key_preview_offset</item>
@@ -75,7 +87,6 @@
         <item name="subLabelTextSize">@dimen/sub_label_text_size</item>
         <item name="smallLabelTextSize">@dimen/small_label_text_size</item>
         <item name="popupLayout">@layout/keyboard_popup</item>
-        <item name="popupHint">@drawable/hint_popup</item>
         <item name="keyHysteresisDistance">@dimen/key_hysteresis_distance</item>
         <item name="verticalCorrection">@dimen/keyboard_vertical_correction</item>
         <item name="spacePreviewTopPadding">@dimen/spacebar_preview_top_padding</item>
@@ -90,6 +101,7 @@
         <item name="android:background">@drawable/keyboard_background</item>
         <item name="keyBackground">@drawable/btn_keyboard_key</item>
         <item name="keyTextSize">@dimen/key_text_size</item>
+        <item name="popupHint">@drawable/hint_popup</item>
 
         <item name="keyTextColorNormal">@color/limekeyboard_key_color_light</item>
         <item name="keyTextColorPressed">@color/limekeyboard_key_color_light_hl</item>
@@ -106,6 +118,7 @@
         <item name="android:background">@drawable/keyboard_background_dark</item>
         <item name="keyBackground">@drawable/btn_keyboard_key_dark</item>
         <item name="keyTextSize">@dimen/key_text_size</item>
+        <item name="popupHint">@drawable/hint_popup_dark</item>
 
         <item name="keyTextColorNormal">@color/limekeyboard_key_color_dark</item>
         <item name="keyTextColorPressed">@color/limekeyboard_key_color_dark_hl</item>

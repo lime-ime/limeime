@@ -71,15 +71,16 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     private static Drawable mEnterKeyPreviewIcon;
     private static Drawable mDeleteKeyIcon;
     private static Drawable mShiftKeyIcon;
+    private static Drawable mShiftKeyShiftedIcon;
     private static Drawable mDoneKeyIcon;
 
     private static Drawable mSearchKeyIcon;
     private static Drawable mSearchKeyPreviewIcon;
-    private static Drawable mSlidingLeftArrow;
-    private static Drawable mSlidingRightArrow;
-    private static int mSlidingTextSize;
+    private static Drawable mSpaceKeySlidingLeftArrow;
+    private static Drawable mSpaceKeySlidingRightArrow;
+    private static int mSpaceKeySlidingTextSize;
 
-    private static int mSpacebarVerticalCorrection;
+    private static int mSpaceKeyVerticalCorrection;
 
     
 
@@ -118,7 +119,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 
         TypedArray a = context.getTheme().obtainStyledAttributes(//R.style.LIMEKeyboardLight, R.styleable.LIMEKeyboard);
                 null, R.styleable.LIMEKeyboard, R.attr.LIMEKeyboardStyle, R.style.LIMEKeyboardLight);
-        mSpacebarVerticalCorrection = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spacebarVerticalCorrection, 0);
+
         mSpaceKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyIcon);
         mSpaceKeyPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyPreviewIcon);
         mEnterKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_enterKeyIcon);
@@ -128,11 +129,13 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         mDoneKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_doneKeyIcon);
         mDeleteKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_deleteKeyIcon);
         mShiftKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_shiftKeyIcon);
+        mShiftKeyShiftedIcon = a.getDrawable(R.styleable.LIMEKeyboard_shiftKeyShiftedIcon);
 
         // for sliding space bar
-        mSlidingTextSize = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spacebarSlidingTextSize,25);
-        mSlidingLeftArrow = a.getDrawable(R.styleable.LIMEKeyboard_spacebarSlidingLeftArrow);
-        mSlidingRightArrow = a.getDrawable(R.styleable.LIMEKeyboard_spacebarSlidingRightArrow);
+        mSpaceKeyVerticalCorrection = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spaceKeyVerticalCorrection, 0);
+        mSpaceKeySlidingTextSize = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spaceKeySlidingTextSize,25);
+        mSpaceKeySlidingLeftArrow = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeySlidingLeftArrow);
+        mSpaceKeySlidingRightArrow = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeySlidingRightArrow);
 
         a.recycle();
     }
@@ -165,8 +168,10 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                     key.icon = mDoneKeyIcon;
                 break;
             case KEYCODE_SHIFT:
-                if (mShiftKeyIcon != null)
-                    key.icon = mShiftKeyIcon;
+                if (mShiftKeyIcon != null) {
+                    key.icon = (isShifted())?mShiftKeyShiftedIcon:mShiftKeyIcon;
+                    mShiftKey = key;
+                }
                 break;
         }
 
@@ -174,14 +179,14 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     }
     
     public void enableShiftLock() {
-        int index = getShiftKeyIndex();
-        if (index >= 0) {
-            mShiftKey = getKeys().get(index);
-            if (mShiftKey instanceof LIMEKey) {
-                ((LIMEKey)mShiftKey).enableShiftLock();
-            }
-
+        //int index = getShiftKeyIndex();
+        //if (index >= 0) {
+            //mShiftKey = getKeys().get(index);
+        if (mShiftKey instanceof LIMEKey) {
+            ((LIMEKey) mShiftKey).enableShiftLock();
         }
+
+        //}
     }
 
     public void setShiftLocked(boolean shiftLocked) {
@@ -211,12 +216,15 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                 shiftChanged = mShiftState != SHIFT_OFF;
                 mShiftState = SHIFT_OFF;
                 mShiftKey.on = false;
+                mShiftKey.icon = mShiftKeyIcon;
             } else {
                 if (mShiftState == SHIFT_OFF) {
                     shiftChanged = true;
                     mShiftState = SHIFT_ON;
                 }
+                mShiftKey.icon = mShiftKeyShiftedIcon;
             }
+            mShiftKey.icon.invalidateSelf();
         } else {
             return super.setShifted(shiftState);
         }
@@ -312,7 +320,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
             if (code == KEYCODE_SHIFT) x += key.width / 6;
             if (code == KEYCODE_DELETE) x -= key.width / 6;
         } else if (code == KEYCODE_SPACE) {
-            y += LIMEKeyboard.mSpacebarVerticalCorrection;
+            y += LIMEKeyboard.mSpaceKeyVerticalCorrection;
             
                 if (mCurrentlyInSpace) {
                     int diff = x - mSpaceDragStartX;
@@ -379,7 +387,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                     (int)(getMinWidth() * SPACEBAR_POPUP_MIN_RATIO));
             final int height = mSpaceKey.height;// mSpacePreviewIcon.getIntrinsicHeight();
 
-            mSlidingSpaceBarIcon = new SlidingSpaceBarDrawable(mSpaceKeyPreviewIcon,mSlidingLeftArrow,mSlidingRightArrow,mSlidingTextSize, width, height);
+            mSlidingSpaceBarIcon = new SlidingSpaceBarDrawable(mSpaceKeyPreviewIcon, mSpaceKeySlidingLeftArrow, mSpaceKeySlidingRightArrow, mSpaceKeySlidingTextSize, width, height);
             mSlidingSpaceBarIcon.setBounds(0, 0, width, height /2);
             mSpaceKey.iconPreview = mSlidingSpaceBarIcon;
         }

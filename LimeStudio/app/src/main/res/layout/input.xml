@@ -32,7 +32,7 @@
     android:keyTextSize = "@dimen/key_text_size"
     android:labelTextSize = "@dimen/label_text_size"
     android:popupLayout="@layout/keyboard_popup"
-    style="?attr/LIMEKeyboardViewLayout"
+    style="?attr/LIMEKeyboardLayout"
 
 
     />

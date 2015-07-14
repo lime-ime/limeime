@@ -34,17 +34,17 @@
         
     <net.toload.main.hd.keyboard.LIMEKeyboardBaseView
             xmlns:limehd="http://schemas.android.com/apk/res/net.toload.main.hd"
-            android:id="@+id/LIMEKeyboardBaseView"
+            android:id="@+id/LIMEPopupKeyboard"
             android:layout_alignParentBottom="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/limekeyboard_transparent"
             android:keyTextSize = "@dimen/key_text_size"
         	android:labelTextSize = "@dimen/label_text_size"
-        	
-
-            limehd:keyBackground="@drawable/btn_keyboard_key_popup"
+            style="?attr/LIMEPopupKeyboardLayout"
             limehd:keyHysteresisDistance="0dip"
             limehd:verticalCorrection="@dimen/mini_keyboard_vertical_correction"
             />
+    <!--android:background="@color/limekeyboard_transparent"
+            limehd:keyBackground="@drawable/btn_keyboard_key_popup"-->
+
 </LinearLayout>

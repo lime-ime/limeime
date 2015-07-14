@@ -616,6 +616,19 @@
     </string-array>
 
 
+    <string name="keyboard_themes">鍵盤樣式</string>
+    <string-array name="keyboard_themes_options">
+        <item>淺色</item>
+        <item>深色</item>
+    </string-array>
+
+
+    <string-array name="keyboard_themes_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
+
     <string-array name="split_keyboard_options">
         <item>關閉</item>
         <item>開啟</item>
