@@ -790,7 +790,8 @@ public class LIMEBaseKeyboard {
 
         mLandScape = mDisplayWidth > mDisplayHeight;
 
-        TypedArray a = context.getTheme().obtainStyledAttributes(R.style.LIMEBaseKeyboardLight, R.styleable.LIMEBaseKeyboard);
+        TypedArray a = context.getTheme().obtainStyledAttributes(//R.style.LIMEBaseKeyboardLight, R.styleable.LIMEBaseKeyboard);
+                null, R.styleable.LIMEBaseKeyboard, R.attr.LIMEBaseKeyboardStyle, R.style.LIMEBaseKeyboardLight);
 
         mDrawableArrowUp = a.getDrawable(R.styleable.LIMEBaseKeyboard_drawableArrowUp);
         mDrawableArrowDown = a.getDrawable(R.styleable.LIMEBaseKeyboard_drawableArrowDown);

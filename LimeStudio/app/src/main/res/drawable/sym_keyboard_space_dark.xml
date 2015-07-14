@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <!--
   ~ /*
   ~  *
@@ -23,16 +22,11 @@
   ~  *
   ~  */
   -->
-<net.toload.main.hd.keyboard.LIMEKeyboardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/keyboard"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:layout_alignParentBottom="true"
-    android:keyTextSize = "@dimen/key_text_size"
-    android:labelTextSize = "@dimen/label_text_size"
-    android:popupLayout="@layout/keyboard_popup"
-    style="?attr/LIMEKeyboardViewLayout"
 
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true"
+        android:drawable="@drawable/sym_flat_keyboard_space" />
+    <item
+        android:drawable="@drawable/sym_flat_keyboard_space_hl" />
 
-    />
+</selector>

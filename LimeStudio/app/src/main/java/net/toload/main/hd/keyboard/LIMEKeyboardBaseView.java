@@ -451,7 +451,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     }
 
     public LIMEKeyboardBaseView(Context context, AttributeSet attrs) {
-        this(context, attrs, R.attr.LIMEKeyboardViewStyle);
+        this(context, attrs, R.attr.LIMEKeyboardBaseView);
     }
 
     @TargetApi(8)

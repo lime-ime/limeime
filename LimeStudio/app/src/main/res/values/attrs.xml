@@ -24,9 +24,10 @@
 
 <resources>
     <declare-styleable name="KeyboardTheme">
-        <attr name="LIMEKeyboardViewStyle" format="reference" />
+        <attr name="LIMEKeyboardStyle" format="reference" />
+        <attr name="LIMEBaseKeyboardStyle" format="reference" />
         <attr name="LIMEKeyboardViewLayout" format="reference" />
-        <attr name="LIMEBaseKeyboardKeyStyle" format="reference" />
+        <attr name="LIMEKeyboardBaseView" format="reference" />
 
     </declare-styleable>
 

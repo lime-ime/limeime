@@ -105,9 +105,10 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         mContext = context;
         mRes = context.getResources();;
 
-        TypedArray a = context.getTheme().obtainStyledAttributes(R.style.LIMEKeyboardLight, R.styleable.LIMEKeyboard);
+        TypedArray a = context.getTheme().obtainStyledAttributes(//R.style.LIMEKeyboardLight, R.styleable.LIMEKeyboard);
+                null, R.styleable.LIMEKeyboard, R.attr.LIMEKeyboardStyle, R.style.LIMEKeyboardLight);
         mSpacebarVerticalCorrection = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spacebarVerticalCorrection, 0);
-        mSpacePreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyIcon);
+        mSpacePreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyPreviewIcon);
         mEnterIcon = a.getDrawable(R.styleable.LIMEKeyboard_enterKeyIcon);
         mEnterPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_enterKeyPreviewIcon);
         mSearchIcon = a.getDrawable(R.styleable.LIMEKeyboard_searchKeyIcon);

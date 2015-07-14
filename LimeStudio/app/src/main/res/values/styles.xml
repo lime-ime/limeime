@@ -27,8 +27,8 @@
     <style name="LIMEAlertDialogTheme" parent="@android:style/Theme.Dialog">
         </style>
     <style name="LIMEKeyboardLight">
-        <item name="spaceKeyIcon">@drawable/sym_keyboard_space</item>
-        <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space_hl</item>
+        <item name="spaceKeyIcon">@drawable/sym_flat_keyboard_space</item>
+        <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space</item>
         <item name="enterKeyIcon">@drawable/sym_keyboard_return</item>
         <item name="enterKeyPreviewIcon">@drawable/sym_keyboard_return</item>
         <item name="searchKeyIcon">@drawable/sym_keyboard_search</item>
@@ -40,7 +40,7 @@
 
     </style>
     <style name="LIMEKeyboardDark">
-        <item name="spaceKeyIcon">@drawable/sym_keyboard_space</item>
+        <item name="spaceKeyIcon">@drawable/sym_flat_keyboard_space_hl</item>
         <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space_hl</item>
         <item name="enterKeyIcon">@drawable/sym_keyboard_return</item>
         <item name="enterKeyPreviewIcon">@drawable/sym_keyboard_return</item>
@@ -126,6 +126,13 @@
         <item name="drawableArrowDown">@drawable/sym_keyboard_down</item>
         <item name="drawableArrowRight">@drawable/sym_keyboard_right</item>
         <item name="drawableArrowLeft">@drawable/sym_keyboard_left</item>
+    </style>
+    <style name="LIMEBaseKeyboardDark">
+
+        <item name="drawableArrowUp">@drawable/sym_keyboard_up_dark</item>
+        <item name="drawableArrowDown">@drawable/sym_keyboard_down_dark</item>
+        <item name="drawableArrowRight">@drawable/sym_keyboard_right_dark</item>
+        <item name="drawableArrowLeft">@drawable/sym_keyboard_left_dark</item>
     </style>
 
     <style name="Theme.AppCompat.Transparent" parent="@style/Theme.AppCompat.Light">
