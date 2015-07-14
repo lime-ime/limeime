@@ -801,9 +801,7 @@ public class CandidateView extends View implements View.OnClickListener {
             if (count != mCount || mSuggestions==null || mSuggestions.size() == 0 || i >= mSuggestions.size())
                 return;  // mSuggestion is updated, force abort
             String suggestion = mSuggestions.get(i).getWord();
-            if(mSuggestions.get(i).isComposingCodeRecord() && mSuggestions.size()>1
-                    && (mSuggestions.get(i+1).isRuntimeBuiltPhraseRecord() || mSuggestions.get(i+1).isExactMatchToCodeRecord() )
-                    && suggestion.length() >8){
+            if( i==0 && mSuggestions.size()>1 && suggestion.length() >8){
                 suggestion = suggestion.substring(0, 2) + "..";
             }
             float textWidth = paint.measureText(suggestion);
