@@ -67,7 +67,10 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 				+"; spaceDragDiff = " +((LIMEKeyboard) this.getKeyboard()).getSpaceDragDiff()
 				+"; key_height = " + mKeyHeight
 					);
-		if (key.codes[0] == LIMEKeyboard.KEYCODE_SPACE
+		if (key.codes[0] == LIMEBaseKeyboard.KEYCODE_DONE) {
+			getOnKeyboardActionListener().onKey(KEYCODE_OPTIONS, null,0,0);
+			return true;
+		}else if (key.codes[0] == LIMEKeyboard.KEYCODE_SPACE
 				&& Math.abs(((LIMEKeyboard) this.getKeyboard()).getSpaceDragDiff() ) < mKeyHeight/5){ //Jeremy '12,4,23 avoid small move blocking the long press.
 			getOnKeyboardActionListener().onKey(KEYCODE_SPACE_LONGPRESS, null,0,0);
 			return true;
