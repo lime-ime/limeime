@@ -798,7 +798,8 @@ public class CandidateView extends View implements View.OnClickListener {
         for (int i = 0; i < count; i++) {
             if(DEBUG)
             //	Log.i(TAG, "Candidateview:OnDraw():updating:" + i );
-            if (count != mCount || mSuggestions==null || mSuggestions.size() == 0 || i >= mSuggestions.size())
+            if (count != mCount || mSuggestions==null ||count!=mSuggestions.size()
+                     || mSuggestions.size() == 0 || i >= mSuggestions.size())
                 return;  // mSuggestion is updated, force abort
             String suggestion = mSuggestions.get(i).getWord();
             if( i==0  && mSuggestions.size()>1 && mSuggestions.get(1).isRuntimeBuiltPhraseRecord() &&suggestion.length() >8){
@@ -838,7 +839,8 @@ public class CandidateView extends View implements View.OnClickListener {
         if (canvas != null) {
 
             for (int i = 0; i < count; i++) {
-                if (count != mCount || mSuggestions.size() == 0) break;
+                if (count != mCount || mSuggestions==null ||count!=mSuggestions.size()
+                        || mSuggestions.size() == 0 || i >= mSuggestions.size()) break;
 
                 String suggestion = mSuggestions.get(i).getWord();
                 if( i==0  && mSuggestions.size()>1 && mSuggestions.get(1).isRuntimeBuiltPhraseRecord() &&suggestion.length() >8){
