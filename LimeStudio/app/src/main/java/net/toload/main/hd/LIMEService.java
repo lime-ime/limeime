@@ -78,7 +78,7 @@ public class LIMEService extends InputMethodService implements
     private static final boolean DEBUG = false;
     private static final String TAG = "LIMEService";
 
-    private static Thread queryThread; // queryThread for no-blocking I/O  Jermy '16,6,1
+    private static Thread queryThread; // queryThread for no-blocking I/O  Jeremy '15,6,1
 
     static final int KEYBOARD_SWITCH_CODE = -9;
     static final int KEYBOARD_SWITCH_IM_CODE = -10;

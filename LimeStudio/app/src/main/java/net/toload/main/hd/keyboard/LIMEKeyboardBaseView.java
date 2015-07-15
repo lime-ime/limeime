@@ -1036,7 +1036,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     }
 
                     //portrait keyboard
-                    if (key.height > key.width || subLabel.length() >2) {
+                    if (key.height > key.width || subLabel.length() >2 || hasSecondSubLabel) {
                         baseline = (key.height + padding.top - padding.bottom) * 2 / 3
                                 + labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
                         float subBaseline = (key.height + padding.top - padding.bottom) / 4
