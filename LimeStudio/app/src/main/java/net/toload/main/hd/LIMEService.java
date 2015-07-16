@@ -1354,7 +1354,7 @@ public class LIMEService extends InputMethodService implements
             Log.i(TAG, "commitTyped()");
         try {
             if (mComposing.length() > 0   //denotes composing just finished
-                    || (selectedCandidate != null && !selectedCandidate.isComposingCodeRecord())) { // commit selected candidate if it is not the composing text. '15,6,4 Jeremy
+                    || (selectedCandidate != null && !selectedCandidate.isComposingCodeRecord() &&!selectedCandidate.isEnglishSuggestionRecord())) { // commit selected candidate if it is not the composing text. '15,6,4 Jeremy
 
                 if (!mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                     if (selectedCandidate != null && selectedCandidate.getWord() != null
@@ -1495,6 +1495,8 @@ public class LIMEService extends InputMethodService implements
                 }
 
 
+            }else if(selectedCandidate.isEnglishSuggestionRecord()){ //Jeremy '15,7,16
+                ic.commitText(selectedCandidate.getWord(), selectedCandidate.getWord().length()) ;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -2506,8 +2508,8 @@ public class LIMEService extends InputMethodService implements
                         selectedCandidate = suggestions.get(1);
                         selectedIndex = 1;
                         // this is for no exact match condition with code.  //do not set default suggestion for other record type like chinese punctuation symbols or related phrases. Jeremy '15,6,4
-                    } else if (suggestions.size() > 0
-                            && (suggestions.get(0).isComposingCodeRecord() || suggestions.get(0).isRuntimeBuiltPhraseRecord())) {
+                    } else if (suggestions.size() > 0) {
+                            //&& (suggestions.get(0).isComposingCodeRecord() || suggestions.get(0).isRuntimeBuiltPhraseRecord())) {
 /*
                         int seloption = mLIMEPref.getSelkeyOption();
                         if(seloption > 0 && suggestions.size() > seloption){

@@ -225,6 +225,18 @@ public class SearchServer {
     }
 
 
+    private void clearRunTimeSuggestion(boolean abandonSuggestion)
+    {
+        for (List<Pair<Mapping, String>> suggestList : suggestionLoL) {
+            suggestList.clear();
+        }
+        suggestionLoL.clear();
+        if (bestSuggestionStack != null) bestSuggestionStack.clear();
+        confirmedBestSuggestion = null;
+        lastConfirmedBestSuggestion = null;
+        abandonPhraseSuggestion =abandonSuggestion;
+    }
+
     private final static boolean dumpRunTimeSuggestion = false;
 
     private synchronized void makeRunTimeSuggestion(String code, List<Mapping> completeCodeResultList) {
@@ -234,13 +246,7 @@ public class SearchServer {
         if (suggestionLoL != null && !suggestionLoL.isEmpty()) {
             // code is start over, clear the stack.  The composition is start over.   Jeremy'15,6,4.
             if (code.length() == 1) {
-                for (List<Pair<Mapping, String>> suggestList : suggestionLoL) {
-                    suggestList.clear();
-                }
-                suggestionLoL.clear();
-                if (bestSuggestionStack != null) bestSuggestionStack.clear();
-                confirmedBestSuggestion = null;
-                lastConfirmedBestSuggestion = null;
+                clearRunTimeSuggestion(false);
 
             } else if (code.length() == lastCode.length() - 1) {  //user press backspace.
                 for (List<Pair<Mapping, String>> suggestList : suggestionLoL) {
@@ -551,6 +557,7 @@ public class SearchServer {
         return getMappingByCode(code, softkeyboard, getAllRecords, false);
     }
 
+    private static boolean  abandonPhraseSuggestion = false;
     public List<Mapping> getMappingByCode(String code, boolean softkeyboard, boolean getAllRecords, boolean prefetchCache)
             throws RemoteException {
         if (DEBUG) Log.i(TAG, "getMappingByCode(): code=" + code);
@@ -586,7 +593,7 @@ public class SearchServer {
 
 
             // make run-time suggestion '15, 6, 9 Jeremy.
-            if (!prefetchCache && mLIMEPref.getSmartChineseInput()) {
+            if (!abandonPhraseSuggestion && !prefetchCache && mLIMEPref.getSmartChineseInput()) {
                 makeRunTimeSuggestion(code, resultList);
             }
 
@@ -650,16 +657,32 @@ public class SearchServer {
                         if (bestSuggestionList != null && !bestSuggestionList.isEmpty()) {
                             bestSuggestion = bestSuggestionList.get(bestSuggestionList.size() - 1).first;
                         }*/
+
+                //Jeremy '15,7,16 check english suggestion if code length > maxCodeLength
+                Mapping englishSuggestion = null;
+                if(code.length() > maxCodeLength) {
+                    List<Mapping> englishSuggestions = getEnglishSuggestions(code);
+                    if(englishSuggestions!=null && !englishSuggestions.isEmpty()) englishSuggestion = englishSuggestions.get(0);
+                    englishSuggestion.setRuntimeBuiltPhraseRecord();
+                    englishSuggestion.setCode(code);
+                }
+
+
                 Mapping bestSuggestion = null;
                 if (bestSuggestionStack != null && !bestSuggestionStack.isEmpty()) {
                     bestSuggestion = bestSuggestionStack.lastElement().first;
                 }
+                int averageScore =(bestSuggestion==null)?0: (bestSuggestion.getBasescore()  / bestSuggestion.getWord().length());
+
                 if (bestSuggestion != null   // the last element is run-time built suggestion from remaining code query
                         && bestSuggestion.getWord().length() > 1
-                        && (bestSuggestion.getBasescore()
-                        / bestSuggestion.getWord().length()) > 120) {
+                        && ( (englishSuggestion==null && averageScore  > 120) || (englishSuggestion!=null && averageScore > 200 ))  ) {
                     result.add(self);
                     result.add(bestSuggestion);
+                } else if( englishSuggestion!=null && averageScore <= 200){
+                    clearRunTimeSuggestion(true);
+                    result.add(self);
+                    result.add(englishSuggestion);
                 } else {
                     // put self into the first mapping for mixed input.
                     result.add(self);
@@ -825,7 +848,7 @@ public class SearchServer {
                                 if (bestSuggestionList.get(j).first.getWord().length() > 8)
                                     break; //stop learning if word length > 8
                                 dbadapter.addOrUpdateMappingRecord(bestSuggestionList.get(j).second, bestSuggestionList.get(j).first.getWord());
-                                removeRemapedCodeCachedMappings(bestSuggestionList.get(j).second);
+                                removeRemappedCodeCachedMappings(bestSuggestionList.get(j).second);
                             }
 
                             if ((DEBUG || dumpRunTimeSuggestion))// dump best suggestion list
@@ -881,7 +904,7 @@ public class SearchServer {
                     && cachedList != null && !cachedList.isEmpty()) {
                 if (DEBUG) Log.i(TAG, "updateScoreCache(): updating related list");
                 if (cache.remove(cachekey) == null) {
-                    removeRemapedCodeCachedMappings(code);
+                    removeRemappedCodeCachedMappings(code);
                 }
                 // non null id denotes target is in exact match result list.
             } else if ((cachedMapping.getId() != null || cachedMapping.isExactMatchToCodeRecord()) //Jeremy '15,6,3 new record type to identify exact match
@@ -926,9 +949,9 @@ public class SearchServer {
                 updateSimilarCodeCache(code);
 
 
-            } else {//Jeremy '12,6,5 code not in cache do removeRemapedCodeCachedMappings and removed cached items of  ramped codes.
+            } else {//Jeremy '12,6,5 code not in cache do removeRemappedCodeCachedMappings and removed cached items of  ramped codes.
 
-                removeRemapedCodeCachedMappings(code);
+                removeRemappedCodeCachedMappings(code);
             }
         }
 
@@ -1095,7 +1118,7 @@ List<Mapping> scorelistSnapshot = null;
                         if (i + 1 < phraselist.size()) {
 
                             Mapping unit2 = phraselist.get((i + 1));
-                            if (unit2 == null || unit2.getWord().length() == 0 || unit2.isComposingCodeRecord()) //Jeremy 15,6,4 exclude composing code
+                            if (unit2 == null || unit2.getWord().length() == 0 || unit2.isComposingCodeRecord() || unit2.isEnglishSuggestionRecord()) //Jeremy 15,6,4 exclude composing code
                             //|| unit2.getCode().equals(unit2.getWord())) //Jeremy '12,6,13 avoid learning mixed mode english
                             {
                                 break;
@@ -1153,18 +1176,18 @@ List<Mapping> scorelistSnapshot = null;
                                     QPCode = QPCode.toLowerCase(Locale.US);
                                     if (LDCode.length() > 1) {
                                         dbadapter.addOrUpdateMappingRecord(LDCode, baseWord);
-                                        removeRemapedCodeCachedMappings(LDCode);
+                                        removeRemappedCodeCachedMappings(LDCode);
                                         updateSimilarCodeCache(LDCode);
                                     }
                                     if (QPCode.length() > 1) {
                                         dbadapter.addOrUpdateMappingRecord(QPCode, baseWord);
-                                        removeRemapedCodeCachedMappings(QPCode);
+                                        removeRemappedCodeCachedMappings(QPCode);
                                         updateSimilarCodeCache(QPCode);
                                     }
                                 } else if (baseCode.length() > 1) {
                                     baseCode = baseCode.toLowerCase(Locale.US);
                                     dbadapter.addOrUpdateMappingRecord(baseCode, baseWord);
-                                    removeRemapedCodeCachedMappings(baseCode);
+                                    removeRemappedCodeCachedMappings(baseCode);
                                     updateSimilarCodeCache(baseCode);
                                 }
                                 if (DEBUG)
@@ -1187,14 +1210,14 @@ List<Mapping> scorelistSnapshot = null;
     /**
      *
      */
-    private void removeRemapedCodeCachedMappings(String code) {
+    private void removeRemappedCodeCachedMappings(String code) {
         if (DEBUG)
-            Log.i(TAG, "removeRemapedCodeCachedMappings() on code ='" + code + "' coderemapcache.size=" + coderemapcache.size());
+            Log.i(TAG, "removeRemappedCodeCachedMappings() on code ='" + code + "' coderemapcache.size=" + coderemapcache.size());
         List<String> codelist = coderemapcache.get(cacheKey(code));
         if (codelist != null) {
             for (String entry : codelist) {
                 if (DEBUG)
-                    Log.i(TAG, "removeRemapedCodeCachedMappings() remove code= '" + entry + "' from cache.");
+                    Log.i(TAG, "removeRemappedCodeCachedMappings() remove code= '" + entry + "' from cache.");
                 cache.remove(cacheKey(entry));
             }
         } else
@@ -1219,7 +1242,7 @@ List<Mapping> scorelistSnapshot = null;
             } else {
                 if (DEBUG)
                     Log.i(TAG, "updateSimilarCodeCache(): code not in cache. update to db only on code = '" + key + "'");
-                removeRemapedCodeCachedMappings(key);
+                removeRemappedCodeCachedMappings(key);
             }
             if (code.length() == 1)// prefetch if code length ==1
                 try {
