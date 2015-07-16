@@ -662,9 +662,11 @@ public class SearchServer {
                 Mapping englishSuggestion = null;
                 if(code.length() > maxCodeLength) {
                     List<Mapping> englishSuggestions = getEnglishSuggestions(code);
-                    if(englishSuggestions!=null && !englishSuggestions.isEmpty()) englishSuggestion = englishSuggestions.get(0);
-                    englishSuggestion.setRuntimeBuiltPhraseRecord();
-                    englishSuggestion.setCode(code);
+                    if(englishSuggestions!=null && !englishSuggestions.isEmpty()) {
+                        englishSuggestion = englishSuggestions.get(0);
+                        englishSuggestion.setRuntimeBuiltPhraseRecord();
+                        englishSuggestion.setCode(code);
+                    }
                 }
 
 
