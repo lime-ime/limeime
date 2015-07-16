@@ -82,7 +82,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     //Jeremy '11,8,5
     //TODO: should set INITIAL_RESULT_LIMIT according to screen size.
     private final static String INITIAL_RESULT_LIMIT = "15";
-    private final static String FINAL_RESULT_LIMIT = "120";
+    private final static String FINAL_RESULT_LIMIT = "210";
     private final static int INITIAL_RELATED_LIMIT = 5;
     private final static int COMPOSING_CODE_LENGTH_LIMIT = 16; //Jeremy '12,5,30 changed from 12 to 16 because of improved performance using binary tree.
     private final static int DUALCODE_COMPOSING_LIMIT = 16; //Jeremy '12,5,30 changed from 7 to 16 because of improved performance using binary tree.
@@ -2308,7 +2308,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             int baseScoreColumn = cursor.getColumnIndex(FIELD_BASESCORE);
             int relatedColumn = cursor.getColumnIndex(FIELD_RELATED);
             int exactMatchColumn = cursor.getColumnIndex("exactmatch");
-            HashMap<String, String> relatedMap = new HashMap<>();
+            //HashMap<String, String> relatedMap = new HashMap<>();
+
+            int sLimit = mLIMEPref.getSimilarCodeCandidates();
+            int sCount=0;
+            if(DEBUG)
+                Log.i(TAG,"buildQueryResult(): code=" + query_code + ", similar code limit=" + sLimit );
 
             do {
                 String word = cursor.getString(wordColumn);
@@ -2370,8 +2375,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                 if (duplicateCheck.add(m.getWord())) {
                     result.add(m);
+
+                    if(m.isPartialMatchToCodeRecord()) {
+                        sCount ++;
+                        if(sCount >sLimit) break;
+                    }
                 }
                 rsize++;
+                if(DEBUG)
+                    Log.i(TAG,"buildQueryResult():  current code = " + m.getCode() + ", current word =" + m.getWord() +", similar code count=" + sCount + ", record counts" + rsize);
             } while (cursor.moveToNext());
 
 
@@ -2385,7 +2397,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
             }
 
-            // int ssize = mLIMEPref.getSimilarCodeCandidates();
+
             //Jeremy '11,6,1 The related field may have only one word and thus no "|" inside
             //Jeremy '11,6,11 allow multiple relatedlist from different codes.
             //Jeremy '15,6,3 not used in between search mode ---------------------------------------
