@@ -622,7 +622,17 @@
         <item>仅横向开启</item>
     </string-array>
 
+    <string name="keyboard_themes">键盘样式</string>
+        <string-array name="keyboard_themes_options">
+            <item>浅色</item>
+            <item>深色</item>
+        </string-array>
 
+
+        <string-array name="keyboard_themes_values">
+            <item>0</item>
+            <item>1</item>
+        </string-array>
 
 
     <!-- AD Message -->

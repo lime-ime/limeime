@@ -87,7 +87,6 @@ public class MainActivity extends ActionBarActivity
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
     private NavigationDrawerFragment mNavigationDrawerFragment;
-    private SearchServer SearchSrv = null;
 
 
     /**
@@ -223,7 +222,6 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onStop() {
         super.onStop();
-        this.SearchSrv.initialCache();
     }
 
     @Override
@@ -242,7 +240,6 @@ public class MainActivity extends ActionBarActivity
 
         connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 
-        this.SearchSrv = new SearchServer(this);
         this.mLIMEPref = new LIMEPreferenceManager(this);
 
         LIME.PACKAGE_NAME = getApplicationContext().getPackageName();

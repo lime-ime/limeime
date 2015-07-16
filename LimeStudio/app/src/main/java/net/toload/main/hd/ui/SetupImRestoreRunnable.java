@@ -40,6 +40,7 @@ import com.google.api.services.drive.Drive;
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
+import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 
@@ -58,6 +59,7 @@ public class SetupImRestoreRunnable implements Runnable {
     private String mType = null;
     private SetupImFragment mFragment = null;
     private LIMEPreferenceManager mLIMEPref;
+    private SearchServer SearchSrv = null;
 
     private SetupImHandler mHandler;
     //private GoogleAccountCredential credential;
@@ -72,6 +74,7 @@ public class SetupImRestoreRunnable implements Runnable {
         this.mType = type;
         this.mdbapi = mdbapi;
         this.mFragment = fragment;
+        this.SearchSrv = new SearchServer(this.mFragment.getActivity());
         this.mLIMEPref = new LIMEPreferenceManager(this.mFragment.getActivity());
     }
 
@@ -80,9 +83,10 @@ public class SetupImRestoreRunnable implements Runnable {
         super.finalize();
     }
 
-
     public void run() {
 
+        // Clean the cache before restore the data
+        this.SearchSrv.initialCache();
 
         switch (mType) {
             case Lime.LOCAL:
