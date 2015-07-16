@@ -1358,16 +1358,23 @@ List<Mapping> scorelistSnapshot = null;
         }
     }
 
+    private static String lastEnglishWord = null;
+    private static boolean noSuggestionsForLastEnglishWord = false;
 
-    public List<Mapping> getEnglishSuggestions(String word) throws RemoteException {
+    public synchronized List<Mapping> getEnglishSuggestions(String word) throws RemoteException {
 
         List<Mapping> result = new LinkedList<>();
+
+        //Jeremy '15,7,16 return zero result if last query returns no result
+        if(word.length()>1 &&lastEnglishWord!=null &&word.startsWith(lastEnglishWord) && noSuggestionsForLastEnglishWord)
+            return result;
+
+
         List<Mapping> cacheTemp = engcache.get(word);
 
         if (cacheTemp != null) {
             result.addAll(cacheTemp);
         } else {
-            //loadDBAdapter(); openLimeDatabase();
             List<String> tempResult = dbadapter.getEnglishSuggestions(word);
             for (String u : tempResult) {
                 Mapping temp = new Mapping();
@@ -1379,6 +1386,9 @@ List<Mapping> scorelistSnapshot = null;
                 engcache.put(word, result);
             }
         }
+
+        noSuggestionsForLastEnglishWord = result.isEmpty();
+        lastEnglishWord = word;
         return result;
 
     }

@@ -2153,7 +2153,7 @@ public class LIMEService extends InputMethodService implements
                         e.printStackTrace();
                     }
                     try {
-                        sleep(1);
+                        sleep(0);
                     } catch (InterruptedException ignored) {
                         ignored.printStackTrace();
                         return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
@@ -2184,7 +2184,7 @@ public class LIMEService extends InputMethodService implements
                         }
 
                         try {
-                            sleep(1);
+                            sleep(0);
                         } catch (InterruptedException ignored) {
                             ignored.printStackTrace();
                             return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
@@ -2206,7 +2206,7 @@ public class LIMEService extends InputMethodService implements
                                 && !keynameString.trim().equals("")
                                 ) {
                             try {
-                                sleep(1);
+                                sleep(0);
                             } catch (InterruptedException ignored) {
                                 ignored.printStackTrace();
                                 return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
@@ -2292,7 +2292,7 @@ public class LIMEService extends InputMethodService implements
                                     e.printStackTrace();
                                 }
                                 try {
-                                    sleep(1);
+                                    sleep(0);
                                 } catch (InterruptedException ignored) {
                                     ignored.printStackTrace();
                                     return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
@@ -2308,7 +2308,7 @@ public class LIMEService extends InputMethodService implements
                                         selkey = "";
                                     }
                                     try {
-                                        sleep(1);
+                                        sleep(0);
                                     } catch (InterruptedException ignored) {
                                         ignored.printStackTrace();
                                         return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
