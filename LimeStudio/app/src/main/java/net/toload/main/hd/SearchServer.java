@@ -627,8 +627,8 @@ public class SearchServer {
                 List<Mapping> resultlist = cacheTemp;
                 //List<Mapping> relatedtlist = cacheTemp.second;
 
-                if (DEBUG)
-                    Log.i(TAG, "getMappingByCode() code=" + code + " resultlist.size()=" + resultlist.size());
+                if (DEBUG || dumpRunTimeSuggestion)
+                    Log.i(TAG, "getMappingByCode() code=" + code + " resultlist.size()=" + resultlist.size() + ", abandonPhraseSuggestion:" + abandonPhraseSuggestion);
 
 
                 //if (i == 0) {
