@@ -406,8 +406,6 @@ public class ManageImFragment extends Fragment {
         }
     }
 
-
-
     public void updateGridView(List<Word> wordlist){
 
         this.wordlist = wordlist;
