@@ -49,7 +49,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class SearchServer {
 
-    private static final boolean DEBUG = false;
+    private static boolean DEBUG = false;
     private static final String TAG = "LIME.SearchServer";
     private static LimeDB dbadapter = null; //Jeremy '12,5,1 shared single LIMEDB object
     //Jeremy '12,4,6 Combine updatedb and quierydb into db,
@@ -237,11 +237,15 @@ public class SearchServer {
         abandonPhraseSuggestion =abandonSuggestion;
     }
 
-    private final static boolean dumpRunTimeSuggestion = false;
+    private static boolean dumpRunTimeSuggestion = false;
 
     private synchronized void makeRunTimeSuggestion(String code, List<Mapping> completeCodeResultList) {
-        if (DEBUG || dumpRunTimeSuggestion)
+
+        long startTime=0;
+        if (DEBUG || dumpRunTimeSuggestion) {
             Log.i(TAG, "makeRunTimeSuggestion() code = " + code);
+            startTime = System.currentTimeMillis();
+        }
         //check if the composing is start over or user pressed backspace
         if (suggestionLoL != null && !suggestionLoL.isEmpty()) {
             // code is start over, clear the stack.  The composition is start over.   Jeremy'15,6,4.
@@ -264,7 +268,12 @@ public class SearchServer {
         }
         lastCode = code;
 
-        //15,6,8  Jeremy. Do remaining code search and make suggestion mapping to be put in first of candidate lists..
+
+        if (DEBUG || dumpRunTimeSuggestion)
+            Log.i(TAG, "makeRunTimeSuggestion(): Finish checking for the composing is start over or user pressed backspace. Time elapsed  = " + (System.currentTimeMillis() - startTime) );
+
+
+            //15,6,8  Jeremy. Check exact match records first.
         if (completeCodeResultList != null && !completeCodeResultList.isEmpty() && completeCodeResultList.get(0).isExactMatchToCodeRecord()) {
             Mapping exactMatchMapping;
             int k = 0, highestScore = 0, initialSize = suggestionLoL.size(), highestScoreIndex = initialSize;
@@ -285,7 +294,8 @@ public class SearchServer {
                 if (DEBUG || dumpRunTimeSuggestion)
                     Log.i(TAG, "makeRunTimeSuggestion() complete code = " + code + "" +
                             ", got exact match  = " + exactMatchMapping.getWord()
-                            + " score =" + exactMatchMapping.getScore() + ", basescore=" + exactMatchMapping.getBasescore());
+                            + " score =" + exactMatchMapping.getScore() + ", bases core=" + exactMatchMapping.getBasescore()
+                            +", time elapsed  =" +(System.currentTimeMillis() - startTime));
 
 
                 //push the exact match mapping with current code into exact match stack. '15,6,2 Jeremy
@@ -327,8 +337,12 @@ public class SearchServer {
                     suggestionLoL.add(suggestionList);
                 }
                 k++;
-            }
-            while (completeCodeResultList.size() > k && completeCodeResultList.get(k).isExactMatchToCodeRecord() && k < 5); //process at most 5 exact match items.
+                if (DEBUG || dumpRunTimeSuggestion)
+                    Log.i(TAG, "makeRunTimeSuggestion(): Check  "+ k +"th exact match records. Time elapsed  = " + (System.currentTimeMillis() - startTime) );
+
+            }while (completeCodeResultList.size() > k && completeCodeResultList.get(k).isExactMatchToCodeRecord() && k < 5); //process at most 5 exact match items.
+
+
             // clear suggestLoLSnapshot if it's not empty
             if (suggestLoLSnapshot != null) {
                 for (List<Pair<Mapping, String>> lpm : suggestLoLSnapshot) {
@@ -342,10 +356,10 @@ public class SearchServer {
 
             }
 
-        } else if (!suggestionLoL.isEmpty()) {
+        } else if (!suggestionLoL.isEmpty()) {  // no exact match recoreds found. search remaining code
 
             if (DEBUG || dumpRunTimeSuggestion)
-                Log.i(TAG, "makeRunTimeSuggestion() no exact match on complete code = " + code);
+                Log.i(TAG, "makeRunTimeSuggestion() no exact match on complete code = " + code + ", time elapsed = " + (System.currentTimeMillis() - startTime));
 
             /*
             // if confirmed best suggestion found and contains last confirmed best suggestion (double confirm) remove all other list not start with last confirmed best suggestion
@@ -377,12 +391,16 @@ public class SearchServer {
                         if (DEBUG || dumpRunTimeSuggestion)
                             Log.i(TAG, "makeRunTimeSuggestion() working on previous exact match item = " + p.first.getWord() +
                                     " with base score = " + p.first.getBasescore() + ", average score = " + p.first.getBasescore() / p.first.getWord().length() +
-                                    ", remainingCode =" + remainingCode + " , highestScoreIndex = " + highestScoreIndex);
+                                    ", remainingCode =" + remainingCode + " , highestScoreIndex = " + highestScoreIndex + ", time elapsed =" + (System.currentTimeMillis() - startTime));
 
 
                         List<Mapping> resultList =  //do remaining code query
                                 getMappingByCodeFromCacheOrDB(remainingCode, false);
                         if (resultList == null) continue;
+
+                        if (DEBUG || dumpRunTimeSuggestion)
+                            Log.i(TAG, "makeRunTimeSuggestion() finish query on previous exact match item = " + p.first.getWord() +
+                                    " , time elapsed =" + (System.currentTimeMillis() - startTime));
 
                         if (resultList.size() > 0
                                 && resultList.get(0).isExactMatchToCodeRecord()) {  //remaining code search got exact match
@@ -404,7 +422,7 @@ public class SearchServer {
                             if (DEBUG || dumpRunTimeSuggestion)
                                 Log.i(TAG, "makeRunTimeSuggestion() remaining code = " + remainingCode + "" +
                                         ", got exact match  = " + remainingCodeExactMatchMapping.getWord() + " with base score = "
-                                        + remainingScore + " average score =" + averageScore + " , highestScoreIndex = " + highestScoreIndex);
+                                        + remainingScore + " average score =" + averageScore + " , highestScoreIndex = " + highestScoreIndex + ", time elapsed =" + (System.currentTimeMillis() - startTime));
 
                             //verify if the new phrase is in related table.
                             // check up to four characters phrase 1-3, 1-2 , 1-1
@@ -434,7 +452,7 @@ public class SearchServer {
                                 if (DEBUG || dumpRunTimeSuggestion)
                                     Log.i(TAG, "makeRunTimeSuggestion()  run-time suggest phrase verified from related table ="
                                             + phrase + ", basescore from related table = " + highestRelatedScore + " " +
-                                            ", new average score = " + highestScore + " , highestScoreIndex = " + highestScoreIndex);
+                                            ", new average score = " + highestScore + " , highestScoreIndex = " + highestScoreIndex+ ", time elapsed =" + (System.currentTimeMillis() - startTime));
                             } else if (//highestRelatedScore == 0 &&// no mapping is verified from related table
                                     averageScore > highestScore) {
                                 Mapping suggestMapping = new Mapping();
@@ -451,7 +469,7 @@ public class SearchServer {
 
                                 if (DEBUG || dumpRunTimeSuggestion)
                                     Log.i(TAG, "makeRunTimeSuggestion()  run-time suggest phrase =" + phrase
-                                            + ", new average score = " + highestScore + " , highestScoreIndex = " + highestScoreIndex);
+                                            + ", new average score = " + highestScore + " , highestScoreIndex = " + highestScoreIndex+ ", time elapsed =" + (System.currentTimeMillis() - startTime));
                             }
                         }
                     }
@@ -462,6 +480,8 @@ public class SearchServer {
                         Log.i(TAG, "makeRunTimeSuggestion()  no new suggestion list. add back the seed suggestion list to location 0 because of last run.");
                 }
                 i++;
+                if (DEBUG || dumpRunTimeSuggestion)
+                    Log.i(TAG, "makeRunTimeSuggestion() : remaing cod search +" + i +"th run.  time elapsed = " + (System.currentTimeMillis()-startTime));
             }
             if (!suggestionLoL.isEmpty() && highestScoreIndex != suggestionLoL.size() - 1) {//move bestSuggestionList to the last element
                 List<Pair<Mapping, String>> bestSuggestionList = suggestionLoL.remove(highestScoreIndex);
@@ -528,6 +548,8 @@ public class SearchServer {
                     }
                 }
             }
+
+            Log.i(TAG,"makeRunTimeSuggestion() time elapsed = " +  (System.currentTimeMillis()- startTime ) );
         }
     }
 
@@ -560,7 +582,8 @@ public class SearchServer {
     private static boolean  abandonPhraseSuggestion = false;
     public List<Mapping> getMappingByCode(String code, boolean softkeyboard, boolean getAllRecords, boolean prefetchCache)
             throws RemoteException {
-        if (DEBUG) Log.i(TAG, "getMappingByCode(): code=" + code);
+        if (DEBUG||dumpRunTimeSuggestion)
+            Log.i(TAG, "getMappingByCode(): code=" + code);
         // Check if system need to reset cache
 
         //check reset cache with local variable instead of reading from shared preference for better performance
@@ -679,7 +702,8 @@ public class SearchServer {
                 }
                 int averageScore =(bestSuggestion==null)?0: (bestSuggestion.getBasescore()  / bestSuggestion.getWord().length());
 
-                if (bestSuggestion != null   // the last element is run-time built suggestion from remaining code query
+                if (bestSuggestion != null    // the last element is run-time built suggestion from remaining code query
+                        && !abandonPhraseSuggestion
                         && bestSuggestion.getWord().length() > 1
                         && ( (englishSuggestion==null && averageScore  > 120) || (englishSuggestion!=null && averageScore > 200 ))  ) {
                     result.add(self);
@@ -1067,7 +1091,7 @@ List<Mapping> scorelistSnapshot = null;
                 if (phraselist.size() > 0 && phraselist.size() < 5) { //Jeremy '12,6,8 limit the phrase to have 4 chracters
 
 
-                    String baseCode, LDCode, QPCode = "", baseWord;
+                    String baseCode, LDCode="", QPCode = "", baseWord;
 
                     Mapping unit1 = phraselist.get(0);
 
@@ -1366,32 +1390,42 @@ List<Mapping> scorelistSnapshot = null;
 
     public synchronized List<Mapping> getEnglishSuggestions(String word) throws RemoteException {
 
+        long startTime=0;
+        if(DEBUG||dumpRunTimeSuggestion){
+            startTime = System.currentTimeMillis();
+            Log.i(TAG,"getEnglishSuggestions()");
+        }
+
         List<Mapping> result = new LinkedList<>();
 
         //Jeremy '15,7,16 return zero result if last query returns no result
-        if(word.length()>1 &&lastEnglishWord!=null &&word.startsWith(lastEnglishWord) && noSuggestionsForLastEnglishWord)
-            return result;
+        if(!( word.length()>1 &&lastEnglishWord!=null &&word.startsWith(lastEnglishWord) && noSuggestionsForLastEnglishWord  ) ) {
 
+            List<Mapping> cacheTemp = engcache.get(word);
 
-        List<Mapping> cacheTemp = engcache.get(word);
-
-        if (cacheTemp != null) {
-            result.addAll(cacheTemp);
-        } else {
-            List<String> tempResult = dbadapter.getEnglishSuggestions(word);
-            for (String u : tempResult) {
-                Mapping temp = new Mapping();
-                temp.setWord(u);
-                temp.setEnglishSuggestionRecord();
-                result.add(temp);
+            if (cacheTemp != null) {
+                result.addAll(cacheTemp);
+            } else {
+                List<String> tempResult = dbadapter.getEnglishSuggestions(word);
+                for (String u : tempResult) {
+                    Mapping temp = new Mapping();
+                    temp.setWord(u);
+                    temp.setEnglishSuggestionRecord();
+                    result.add(temp);
+                }
+                if (result.size() > 0) {
+                    engcache.put(word, result);
+                }
             }
-            if (result.size() > 0) {
-                engcache.put(word, result);
-            }
+
+            noSuggestionsForLastEnglishWord = result.isEmpty();
+            lastEnglishWord = word;
         }
 
-        noSuggestionsForLastEnglishWord = result.isEmpty();
-        lastEnglishWord = word;
+        if(DEBUG||dumpRunTimeSuggestion){
+            Log.i(TAG,"getEnglishSuggestions() time elapsed =" + (System.currentTimeMillis() - startTime));
+        }
+
         return result;
 
     }

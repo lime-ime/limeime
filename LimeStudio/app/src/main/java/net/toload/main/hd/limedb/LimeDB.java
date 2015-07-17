@@ -71,7 +71,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private static String TAG = "LIMEDB";
 
     private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier. Shared db instance for dbserver and searchserver
-    private final static int DATABASE_VERSION = 100;
+    private final static int DATABASE_VERSION = 101;
 
     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
 
@@ -395,89 +395,102 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         Log.i(TAG, "OnUpgrade() db old version = " + oldVersion + ", new version = " + newVersion);
 
-        if (oldVersion < 100) {
-
-
+        if (oldVersion < 101) {
             long startTime = System.currentTimeMillis();
-            Cursor cursor = dbin.query("sqlite_master", null, "type='index' and name = 'phonetic_idx_code3r'",
-                    null, null, null, null);
+            //create index on related (cword) for better perfomance when making run-time suggestion checking related phrases. Jeremy '15,7,17
 
-            if (cursor != null) {
-                if (cursor.moveToFirst()) {
-                    Log.i(TAG, "OnUpgrade(), NoToneCodeI index is exist!!");
-                } else {
-                    Log.i(TAG, "OnUpgrade()  creating phonetic code3r column and index.");
-                    execSQL(dbin, "alter table phonetic add column 'code3r'");
-                    execSQL(dbin, "create index 'phonetic_idx_code3r' on phonetic (code3r)");
-                }
-                cursor.close();
-            }
-            cursor = dbin.query("phonetic", null, "code3r='ru'", null, null, null, null);
-            if (cursor != null) {
-                if (cursor.moveToFirst()) {
-                    Log.i(TAG, "OnUpgrade(), NoToneCode column has valid data!!");
-                } else {
-                    Log.i(TAG, "OnUpgrade()  update phonetic code3r data from trimmed code.");
-                    execSQL(dbin, "update phonetic set code3r=trim(code,'3467')");
-                }
-                cursor.close();
-            }
-            long endTime = System.currentTimeMillis();
-            Log.i(TAG, "OnUpgrade() build phonetic code3r finished.  Elapsed time = " + (endTime - startTime) + "ms.");
+            try {
+                String CREATE_INDEX ="CREATE INDEX related_idx_cword "
+                        + "on " + Lime.DB_RELATED + " (" + Lime.DB_RELATED_COLUMN_CWORD + "); ";
 
-            // Update Related table
-            if (oldVersion > 78) {
-                try {
+                execSQL(dbin, CREATE_INDEX);
+            } catch (Exception ignored) {}
 
-                    String BACKUP_OLD_RELATED = "ALTER TABLE " + Lime.DB_RELATED + " RENAME TO " + Lime.DB_RELATED + "_old";
-                    execSQL(dbin, BACKUP_OLD_RELATED);
 
-                    String CREATE_NEW_TABLE = "";
+            if (oldVersion < 100) {
 
-                    CREATE_NEW_TABLE += "CREATE TABLE " + Lime.DB_RELATED + " ("
-                            + Lime.DB_COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                            + Lime.DB_RELATED_COLUMN_PWORD + " text, "
-                            + Lime.DB_RELATED_COLUMN_CWORD + " text, "
-                            + Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER, "
-                            + Lime.DB_RELATED_COLUMN_USERSCORE + " INTEGER DEFAULT 0  NOT NULL)";
 
-                    execSQL(dbin, CREATE_NEW_TABLE);
 
-                    try {
-                        String CREATE_INDEX = "";
-                        CREATE_INDEX += "CREATE INDEX related_idx_pword "
-                                + "ON " + Lime.DB_RELATED + "(" + Lime.DB_RELATED_COLUMN_PWORD + "); ";
+                Cursor cursor = dbin.query("sqlite_master", null, "type='index' and name = 'phonetic_idx_code3r'",
+                        null, null, null, null);
 
-                        execSQL(dbin, CREATE_INDEX);
-                    } catch (Exception e) {
-                        // ignore index creation error
+                if (cursor != null) {
+                    if (cursor.moveToFirst()) {
+                        Log.i(TAG, "OnUpgrade(), NoToneCodeI index is exist!!");
+                    } else {
+                        Log.i(TAG, "OnUpgrade()  creating phonetic code3r column and index.");
+                        execSQL(dbin, "alter table phonetic add column 'code3r'");
+                        execSQL(dbin, "create index 'phonetic_idx_code3r' on phonetic (code3r)");
                     }
-
-                    String MIGRATE_DATA = "";
-                    MIGRATE_DATA += "INSERT INTO " + Lime.DB_RELATED + "("
-                            + Lime.DB_RELATED_COLUMN_PWORD + ", "
-                            + Lime.DB_RELATED_COLUMN_CWORD + ", "
-                            + Lime.DB_RELATED_COLUMN_USERSCORE + ","
-                            + Lime.DB_RELATED_COLUMN_BASESCORE + ")";
-                    MIGRATE_DATA += "SELECT " + Lime.DB_RELATED_COLUMN_PWORD + ", "
-                            + Lime.DB_RELATED_COLUMN_CWORD + ", user_score, score  FROM " + Lime.DB_RELATED + "_old";
-
-                    execSQL(dbin, MIGRATE_DATA);
-
-                    String DROP_OLD_TABLE = "DROP TABLE " + Lime.DB_RELATED + "_old";
-                    execSQL(dbin, DROP_OLD_TABLE);
-
-                    // Download and restore related DB
-
-                } catch (SQLiteException e) {
-                    e.printStackTrace();
+                    cursor.close();
                 }
-            } else {
-                String add_column = "ALTER TABLE " + Lime.DB_RELATED + " ADD ";
-                add_column += Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER DEFAULT 0 ";
-                execSQL(dbin, add_column);
-            }
+                cursor = dbin.query("phonetic", null, "code3r='ru'", null, null, null, null);
+                if (cursor != null) {
+                    if (cursor.moveToFirst()) {
+                        Log.i(TAG, "OnUpgrade(), NoToneCode column has valid data!!");
+                    } else {
+                        Log.i(TAG, "OnUpgrade()  update phonetic code3r data from trimmed code.");
+                        execSQL(dbin, "update phonetic set code3r=trim(code,'3467')");
+                    }
+                    cursor.close();
+                }
+                long endTime = System.currentTimeMillis();
+                Log.i(TAG, "OnUpgrade() build phonetic code3r finished.  Elapsed time = " + (endTime - startTime) + "ms.");
 
+                // Update Related table
+                if (oldVersion > 78) {
+                    try {
+
+                        String BACKUP_OLD_RELATED = "ALTER TABLE " + Lime.DB_RELATED + " RENAME TO " + Lime.DB_RELATED + "_old";
+                        execSQL(dbin, BACKUP_OLD_RELATED);
+
+                        String CREATE_NEW_TABLE = "";
+
+                        CREATE_NEW_TABLE += "CREATE TABLE " + Lime.DB_RELATED + " ("
+                                + Lime.DB_COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                                + Lime.DB_RELATED_COLUMN_PWORD + " text, "
+                                + Lime.DB_RELATED_COLUMN_CWORD + " text, "
+                                + Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER, "
+                                + Lime.DB_RELATED_COLUMN_USERSCORE + " INTEGER DEFAULT 0  NOT NULL)";
+
+                        execSQL(dbin, CREATE_NEW_TABLE);
+
+                        try {
+                            String CREATE_INDEX = "";
+                            CREATE_INDEX += "CREATE INDEX related_idx_pword "
+                                    + "ON " + Lime.DB_RELATED + "(" + Lime.DB_RELATED_COLUMN_PWORD + "); ";
+
+                            execSQL(dbin, CREATE_INDEX);
+                        } catch (Exception e) {
+                            // ignore index creation error
+                        }
+
+                        String MIGRATE_DATA = "";
+                        MIGRATE_DATA += "INSERT INTO " + Lime.DB_RELATED + "("
+                                + Lime.DB_RELATED_COLUMN_PWORD + ", "
+                                + Lime.DB_RELATED_COLUMN_CWORD + ", "
+                                + Lime.DB_RELATED_COLUMN_USERSCORE + ","
+                                + Lime.DB_RELATED_COLUMN_BASESCORE + ")";
+                        MIGRATE_DATA += "SELECT " + Lime.DB_RELATED_COLUMN_PWORD + ", "
+                                + Lime.DB_RELATED_COLUMN_CWORD + ", user_score, score  FROM " + Lime.DB_RELATED + "_old";
+
+                        execSQL(dbin, MIGRATE_DATA);
+
+                        String DROP_OLD_TABLE = "DROP TABLE " + Lime.DB_RELATED + "_old";
+                        execSQL(dbin, DROP_OLD_TABLE);
+
+                        // Download and restore related DB
+
+                    } catch (SQLiteException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    String add_column = "ALTER TABLE " + Lime.DB_RELATED + " ADD ";
+                    add_column += Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER DEFAULT 0 ";
+                    execSQL(dbin, add_column);
+                }
+
+            }
         }
     }
 
@@ -1446,11 +1459,17 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     }
 
-
+    private static boolean probePerformance = false;
     /**
      * Retrieve matched records
      */
     public List<Mapping> getMappingByCode(String code, boolean softKeyboard, boolean getAllRecords) {
+
+        long startTime=0;
+        if (DEBUG||probePerformance) {
+            startTime = System.currentTimeMillis();
+            Log.i(TAG,"getMappingByCode(): code='" + code + ", table=" + tablename + ", getAllRecords=" + getAllRecords);
+        }
 
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (!checkDBConnection()) return null;
@@ -1460,8 +1479,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (softKeyboard) sort = mLIMEPref.getSortSuggestions();
         else sort = mLIMEPref.getPhysicalKeyboardSortSuggestions();
         isPhysicalKeyboardPressed = !softKeyboard;
-        if (DEBUG)
-            Log.i(TAG, "getMappingByCode(): code='" + code + ", table=" + tablename + ", getAllRecords=" + getAllRecords);
 
         // Add by Jeremy '10, 3, 27. Extension on multi table query.
         lastCode = code;
@@ -1569,6 +1586,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        if(DEBUG|| probePerformance){
+            Log.i(TAG,"getMappingByCode() time elapsed = " + (System.currentTimeMillis() - startTime));
+        }
+
         return result;
     }
 
@@ -2284,6 +2306,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      */
     private synchronized List<Mapping> buildQueryResult(String query_code, Cursor cursor, Boolean getAllRecords) {
 
+        long startTime =0;
+        if (DEBUG||probePerformance) {
+            startTime = System.currentTimeMillis();
+            Log.i(TAG, "buildQueryResult()");
+        }
+
 
         List<Mapping> result = new ArrayList<>();
 
@@ -2468,9 +2496,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (!getAllRecords && rsize == Integer.parseInt(INITIAL_RESULT_LIMIT))
             result.add(hasMore);
 
-        if (DEBUG)
+        if (DEBUG||probePerformance)
             Log.i(TAG, "buildQueryResult():query_code:" + query_code + " query_code.length:" + query_code.length()
-                    + " result.size=" + result.size() + " query size:" + rsize);
+                    + " result.size=" + result.size() + " query size:" + rsize + ", time elapsed = " + (System.currentTimeMillis()-startTime));
         return result;
     }
 
@@ -3574,6 +3602,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      */
     public Mapping isRelatedPhraseExist(String pword, String cword) {
 
+        long startTime=0;
+        if (DEBUG||probePerformance) {
+            startTime = System.currentTimeMillis();
+            Log.i(TAG,"isRelatedPhraseExist(): pword='" + pword + ", cword=" + cword );
+        }
         if (!checkDBConnection()) return null;
         Mapping munit = null;
 
@@ -3584,6 +3617,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         } catch (Exception e) {
 
             e.printStackTrace();
+        }
+
+        if (DEBUG||probePerformance) {
+
+            Log.i(TAG,"isRelatedPhraseExist(): time elapsed = " + (System.currentTimeMillis() - startTime) );
         }
 
         return munit;
