@@ -82,8 +82,17 @@
 
         <CheckBoxPreference
             android:defaultValue="true"
+            android:disableDependentsState="true"
             android:key="fixed_candidate_view_display"
             android:title="@string/fixed_candidate_view_display" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:dependency="fixed_candidate_view_display"
+            android:key="enable_transparent_candidate_view"
+            android:title="@string/enable_transparent_candidate_view" />
+
+
         <ListPreference
             android:defaultValue="1"
             android:dialogTitle="@string/keyboard_size"

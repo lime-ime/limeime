@@ -195,6 +195,11 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("fixed_candidate_view_display", true);  //Jeremy '15,6,4 set default to  true.
 	}
 
+	public boolean getEnableTransparentCandidateView(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("enable_transparent_candidate_view", false);
+	}
+
 	public boolean getDisableSoftwareKeyboard(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("disable_software_keyboard", false);

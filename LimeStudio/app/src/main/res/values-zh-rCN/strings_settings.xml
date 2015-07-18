@@ -83,6 +83,7 @@
     <string name="number_row_in_english_summary">在英文键盘显示数字列(5列键盘)</string>
     <string name="disable_software_keyboard">关闭软体键盘显示</string>
     <string name="fixed_candidate_view_display">选字列固定显示</string>
+    <string name="enable_transparent_candidate_view">选字列使用透明背景</string>
 
     <string name="three_rows_remapping">3排键盘重对应</string>
     <string name="three_rows_remapping_summary">对应 1234567890-;至 qwertyuiopv.</string>

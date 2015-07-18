@@ -27,8 +27,10 @@ package net.toload.main.hd.candidate;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
@@ -661,16 +663,20 @@ public class CandidateView extends View implements View.OnClickListener {
                     + ". mComposingTextPopup.isShowing()=" + mComposingTextPopup.isShowing());
 
 
-        if (mComposingTextPopup.isShowing()) {
-            mComposingTextPopup.update(mPopupComposingX, mPopupComposingY,
-                    popupWidth, popupHeight);
-        } else {
-            mComposingTextPopup.setWidth(popupWidth);
-            mComposingTextPopup.setHeight(popupHeight);
-            mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX,
-                    mPopupComposingY);
+        try {
+            if (mComposingTextPopup.isShowing()) {
+                mComposingTextPopup.update(mPopupComposingX, mPopupComposingY,
+                        popupWidth, popupHeight);
+            } else {
+                mComposingTextPopup.setWidth(popupWidth);
+                mComposingTextPopup.setHeight(popupHeight);
+                mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX,
+                        mPopupComposingY);
+            }
+        }catch(Exception e){
+            // ignore candidate construct error
+            e.printStackTrace();
         }
-
 
     }
 
@@ -837,6 +843,19 @@ public class CandidateView extends View implements View.OnClickListener {
         // Paint all the suggestions and lines.
         if (canvas != null) {
 
+            if(mLIMEPref.getEnableTransparentCandidateView() &&
+                    !mLIMEPref.getFixedCandidateViewDisplay() ){
+                canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+            }
+
+            /*Paint backgroundPaint = new Paint();
+            backgroundPaint.setColor(Color.RED);
+            backgroundPaint.setAlpha(33);
+            backgroundPaint.setStyle(Paint.Style.FILL);
+
+            canvas.drawRect(0.5f, bgPadding.top, mScreenWidth, height, backgroundPaint);*/
+
+
             for (int i = 0; i < count; i++) {
                 if (count != mCount || mSuggestions == null || count != mSuggestions.size()
                         || mSuggestions.size() == 0 || i >= mSuggestions.size()) break;
@@ -882,6 +901,7 @@ public class CandidateView extends View implements View.OnClickListener {
                 canvas.drawLine(mWordX[i] + mWordWidth[i] + 0.5f, bgPadding.top,
                         mWordX[i] + mWordWidth[i] + 0.5f, height + 1, candidatePaint);
                 candidatePaint.setFakeBoldText(false);
+
             }
 
             if (mTargetScrollX != getScrollX()) {
