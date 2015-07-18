@@ -113,8 +113,8 @@ public class CandidateExpandedView extends CandidateView {
 
         final int height = mHeight;
         final Rect bgPadding = mBgPadding;
-        final Paint paint = mPaint;
-        final Paint npaint = nPaint;
+        final Paint candidatePaint = mCandidatePaint;
+        final Paint selKeyPaint = mSelKeyPaint;
 
         // Update mSelectedIndex from touch x and y;
         if (mTouchX != OUT_OF_BOUNDS && mTouchY != OUT_OF_BOUNDS) {
@@ -156,7 +156,7 @@ public class CandidateExpandedView extends CandidateView {
             }
 
             try {
-                int y = (int) (((height - mPaint.getTextSize()) / 2) - mPaint.ascent());
+                int y = (int) (((height - mCandidatePaint.getTextSize()) / 2) - mCandidatePaint.ascent());
                 int index = 0; //index in mSuggestions
                 for (int i = 0; i < mRows; i++) {
                     if (i != 0) y += height + mVerticalPadding;
@@ -176,26 +176,26 @@ public class CandidateExpandedView extends CandidateView {
                             case Mapping.RECORD_EXACT_MATCH_TO_CODE:
                             case Mapping.RECORD_PARTIAL_MATCH_TO_CODE:
                             case Mapping.RECORD_COMPOSING_CODE:
-                                npaint.setColor(mColorOther);
+                                selKeyPaint.setColor(mColorSpacer);
                                 if (i == 0 && j == 0) {
-                                    if (mSelectedIndex == 0) paint.setColor(mColorInverted);
-                                    else paint.setColor(mColorRecommended);
+                                    if (mSelectedIndex == 0) candidatePaint.setColor(mColorInvertedText);
+                                    else candidatePaint.setColor(mColorRecommended);
                                 } else {
-                                    paint.setColor(mColorOther);
+                                    candidatePaint.setColor(mColorSpacer);
                                 }
                                 break;
                             default:
                                 //npaint.setColor(mColorRecommended);
-                                paint.setColor(mColorDictionary);
+                                candidatePaint.setColor(mColorDictionary);
                         }
-                        canvas.drawText(suggestion, mWordX[i][j] + X_GAP, y, paint);
+                        canvas.drawText(suggestion, mWordX[i][j] + X_GAP, y, candidatePaint);
 
 
-                        paint.setColor(mColorOther);
+                        candidatePaint.setColor(mColorSpacer);
                         float lineX = mWordX[i][j] + mWordWidth[i][j] + 0.5f;
                         canvas.drawLine(lineX, bgPadding.top + (height + mVerticalPadding) * i, lineX,
-                                (height + mVerticalPadding) * (i + 1) - mVerticalPadding + 1, paint);
-                        paint.setFakeBoldText(false);
+                                (height + mVerticalPadding) * (i + 1) - mVerticalPadding + 1, candidatePaint);
+                        candidatePaint.setFakeBoldText(false);
                     }
                 }
             }catch(Exception e){
@@ -226,7 +226,7 @@ public class CandidateExpandedView extends CandidateView {
         updateFontSize();
 
         final int height = mHeight;
-        final Paint paint = mPaint;
+        final Paint paint = mCandidatePaint;
         int x = 0;
         int row = 0;
         int indexInRow = 0;

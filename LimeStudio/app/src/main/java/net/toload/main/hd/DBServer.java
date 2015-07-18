@@ -193,14 +193,14 @@ public class  DBServer {
 		}
 
 		//backup shared preferences
-		File fileSharedPrefsBakup = new File(LIME.getLimeDataRootFolder(), LIME.SHARED_PREFS_BACKUP_NAME);
-		if(fileSharedPrefsBakup.exists())  fileSharedPrefsBakup.delete();
-		backupDefaultSharedPreference(fileSharedPrefsBakup);
+		File fileSharedPrefsBackup = new File(LIME.getLimeDataRootFolder(), LIME.SHARED_PREFS_BACKUP_NAME);
+		if(fileSharedPrefsBackup.exists())  fileSharedPrefsBackup.delete();
+		backupDefaultSharedPreference(fileSharedPrefsBackup);
 
 		// create backup file list.
 		List<String> backupFileList = new ArrayList<>();
-		backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator+ LIME.DATABASE_NAME);
-		backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator+LIME.DATABASE_JOURNAL);
+		backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator + LIME.DATABASE_NAME);
+		backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator + LIME.DATABASE_JOURNAL);
 		backupFileList.add(LIME.SHARED_PREFS_BACKUP_NAME);
 
 		// hold database connection and close database.
@@ -244,7 +244,7 @@ public class  DBServer {
 		datasource.openDBConnection(true);
 
 		//cleanup the shared preference backup file.
-		if( fileSharedPrefsBakup!=null && fileSharedPrefsBakup.exists() ) fileSharedPrefsBakup.delete();
+		if( fileSharedPrefsBackup!=null && fileSharedPrefsBackup.exists() ) fileSharedPrefsBackup.delete();
 
 
 	}

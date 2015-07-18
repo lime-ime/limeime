@@ -28,8 +28,6 @@ local.properties
 # PDT-specific
 .buildpath
 
-#android studio
-.idea/
 
 #################
 ## Visual Studio
@@ -217,3 +215,5 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+*.iml
+LimeStudio/.idea/

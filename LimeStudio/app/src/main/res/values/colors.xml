@@ -24,12 +24,12 @@
   ~  */
   -->
 <resources>
-    <color name="candidate_normal">#FF0F0F0F</color>
-    <color name="candidate_inverted">#FFFAFAFA</color>
+    <color name="candidate_normal_text">#FF0F0F0F</color>
+    <color name="candidate_inverted_text">#FFFAFAFA</color>
     <color name="candidate_dictionary">#FF101010</color>
-    <color name="candidate_recommended">#FFE35900</color>
-    <color name="candidate_other">#FF101010</color>
-    <color name="candidate_number">#CC5E5A80</color> 
+    <color name="candidate_recommended_text">#FFE35900</color>
+    <color name="candidate_spacer">#FF101010</color>
+    <color name="candidate_selection_keys">#CC5E5A80</color>
     <color name="candidate_background">#FFFAFAFA</color>
     <color name="candidate_container_background">#00FFFFFF</color>
     <!--composing text view-->

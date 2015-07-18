@@ -107,17 +107,17 @@ public class CandidateView extends View implements View.OnClickListener {
     protected int mHeight;
     private int configHeight;
     private int currentX;
-    protected final int mColorNormal;
-    protected final int mColorInverted;
+    protected final int mColorNormalText;
+    protected final int mColorInvertedText;
     protected final int mColorDictionary;
     protected final int mColorRecommended;
-    protected final int mColorOther;
-    protected final int mColorNumber;
+    protected final int mColorSpacer;
+    protected final int mColorSelKey;
     protected int mVerticalPadding;
     protected int mExpandButtonWidth;
 
-    protected Paint mPaint;
-    protected Paint nPaint;
+    protected Paint mCandidatePaint;
+    protected Paint mSelKeyPaint;
     //private Paint cPaint;
     private boolean mScrolled;
     protected int mTargetScrollX;
@@ -197,28 +197,28 @@ public class CandidateView extends View implements View.OnClickListener {
 
         //bgcolor = r.getColor(R.color.candidate_background);
 
-        mColorNormal = r.getColor(R.color.candidate_normal);
-        mColorInverted = r.getColor(R.color.candidate_inverted);
+        mColorNormalText = r.getColor(R.color.candidate_normal_text);
+        mColorInvertedText = r.getColor(R.color.candidate_inverted_text);
         mColorDictionary = r.getColor(R.color.candidate_dictionary);
-        mColorRecommended = r.getColor(R.color.candidate_recommended);
-        mColorOther = r.getColor(R.color.candidate_other);
-        mColorNumber = r.getColor(R.color.candidate_number);
+        mColorRecommended = r.getColor(R.color.candidate_recommended_text);
+        mColorSpacer = r.getColor(R.color.candidate_spacer);
+        mColorSelKey = r.getColor(R.color.candidate_selection_keys);
         mVerticalPadding = (int) (r.getDimensionPixelSize(R.dimen.candidate_vertical_padding) * mLIMEPref.getFontSize());
         configHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
         mHeight = configHeight;
         mExpandButtonWidth = r.getDimensionPixelSize(R.dimen.candidate_expand_button_width);// *mLIMEPref.getFontSize());
 
-        mPaint = new Paint();
-        mPaint.setColor(mColorNormal);
-        mPaint.setAntiAlias(true);
-        mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_size) * mLIMEPref.getFontSize());
-        mPaint.setStrokeWidth(0);
+        mCandidatePaint = new Paint();
+        mCandidatePaint.setColor(mColorNormalText);
+        mCandidatePaint.setAntiAlias(true);
+        mCandidatePaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_size) * mLIMEPref.getFontSize());
+        mCandidatePaint.setStrokeWidth(0);
 
-        nPaint = new Paint();
-        nPaint.setColor(mColorNumber);
-        nPaint.setAntiAlias(true);
-        nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_size) * mLIMEPref.getFontSize());
-        nPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        mSelKeyPaint = new Paint();
+        mSelKeyPaint.setColor(mColorSelKey);
+        mSelKeyPaint.setAntiAlias(true);
+        mSelKeyPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_size) * mLIMEPref.getFontSize());
+        mSelKeyPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
 
         //final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
@@ -280,9 +280,9 @@ public class CandidateView extends View implements View.OnClickListener {
     * New embedded composing view inside candidate container for floating candidate mode. Jeremy '15,6,14
     * (android 5.1 does not allow popup compsing go over candidate area).
      */
-    public void setEmbeddedComposingView(TextView composingView){
-        if(DEBUG)
-            Log.i(TAG,"setEmbeddedComposingView()");
+    public void setEmbeddedComposingView(TextView composingView) {
+        if (DEBUG)
+            Log.i(TAG, "setEmbeddedComposingView()");
         embeddedComposing = composingView;
     }
 
@@ -309,7 +309,7 @@ public class CandidateView extends View implements View.OnClickListener {
             if (DEBUG) Log.i(TAG, "UIHandler.handlMessage(): message:" + msg.what);
 
             CandidateView mCandiInstatnce = mCandidateViewWeakReference.get();
-            if(mCandiInstatnce==null) return;
+            if (mCandiInstatnce == null) return;
 
             switch (msg.what) {
                 case MSG_UPDATE_UI:
@@ -375,8 +375,8 @@ public class CandidateView extends View implements View.OnClickListener {
         if (DEBUG)
             Log.i(TAG, "doUpdateUI()");
 
-        if ((mSuggestions == null || mSuggestions.isEmpty() )
-                && (mCandidatePopupWindow != null && mCandidatePopupWindow.isShowing()))  {
+        if ((mSuggestions == null || mSuggestions.isEmpty())
+                && (mCandidatePopupWindow != null && mCandidatePopupWindow.isShowing())) {
             doHideCandidatePopup();
             return;
         }
@@ -401,8 +401,8 @@ public class CandidateView extends View implements View.OnClickListener {
         Resources r = mContext.getResources();
         float scaling = mLIMEPref.getFontSize();
         mVerticalPadding = (int) (r.getDimensionPixelSize(R.dimen.candidate_vertical_padding) * scaling);
-        mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_size) * scaling);
-        nPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_size) * scaling);
+        mCandidatePaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_size) * scaling);
+        mSelKeyPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_size) * scaling);
         configHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) * scaling);
         if (DEBUG)
             Log.i(TAG, "updateFontSize(), scaling=" + scaling + ", mVerticalPadding=" + mVerticalPadding);
@@ -420,6 +420,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
         doUpdateUI();
     }
+
     /*
     * Contains requestLayout() which can only call from UI thread
     */
@@ -453,7 +454,7 @@ public class CandidateView extends View implements View.OnClickListener {
             mCandidatePopupWindow = new PopupWindow(mContext);
             LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(
                     Context.LAYOUT_INFLATER_SERVICE);
-            mCandidatePopupContainer = inflater.inflate(R.layout.candidatepopup, (ViewGroup)this.getRootView(), false);
+            mCandidatePopupContainer = inflater.inflate(R.layout.candidatepopup, (ViewGroup) this.getRootView(), false);
 
             mCandidatePopupWindow.setContentView(mCandidatePopupContainer);
 
@@ -558,14 +559,14 @@ public class CandidateView extends View implements View.OnClickListener {
 
     public void doHideComposing() {
 
-        if(DEBUG)
+        if (DEBUG)
             Log.i(TAG, "doHideComposing()");
 
-        if(mComposingTextView==null) return;
+        if (mComposingTextView == null) return;
 
-        if (embeddedComposing!=null || // for embedded composing in floating candidateView
+        if (embeddedComposing != null || // for embedded composing in floating candidateView
                 (mComposingTextPopup != null  // for fixed candidate View
-                        && (mComposingTextPopup.isShowing()) || mComposingTextView.getVisibility() == VISIBLE )) {
+                        && (mComposingTextPopup.isShowing()) || mComposingTextView.getVisibility() == VISIBLE)) {
 
             mComposingTextView.setVisibility(INVISIBLE);
         }
@@ -578,7 +579,7 @@ public class CandidateView extends View implements View.OnClickListener {
     public void doSetComposing(String composingText) {
         if (DEBUG)
             Log.i(TAG, "doSetComposing():" + composingText + "; this.isShown()" + this.isShown() +
-                    "(mComposingTextView == null):"+(mComposingTextView == null)+
+                    "(mComposingTextView == null):" + (mComposingTextView == null) +
                     ";(embeddedComposing == null):" + (embeddedComposing != null));
 
         // Initialize mComposingTextView as embedding composing or popup window for fixed candidate mode. Jeremy '15,6,4
@@ -598,10 +599,9 @@ public class CandidateView extends View implements View.OnClickListener {
                 mComposingTextPopup.setContentView(mComposingPopupTextView);
                 mComposingTextPopup.setBackgroundDrawable(null);
             }
-            if( mComposingTextView!= mComposingPopupTextView )
+            if (mComposingTextView != mComposingPopupTextView)
                 mComposingTextView = mComposingPopupTextView;
         }
-
 
 
         if (composingText != null) {
@@ -619,7 +619,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
         //Jeremy '15,6, 4 bypass updating popup when composing view is embedded in candidate container
 
-        if(embeddedComposing==null)
+        if (embeddedComposing == null)
             doUpdateComposing();
 
     }
@@ -631,10 +631,11 @@ public class CandidateView extends View implements View.OnClickListener {
     public void doUpdateComposing() {
         if (DEBUG)
             Log.i(TAG, "doUpdateComposing(): this.isShown()" + this.isShown() +
-                    "; embeddedComposing is null:" + (embeddedComposing==null));
+                    "; embeddedComposing is null:" + (embeddedComposing == null));
 
 
-        if(embeddedComposing!=null) return ; //Jeremy '15,6, 4 bypass updating popup when composing view is embedded in candidate container
+        if (embeddedComposing != null)
+            return; //Jeremy '15,6, 4 bypass updating popup when composing view is embedded in candidate container
 
         mComposingTextView.measure(
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
@@ -660,16 +661,15 @@ public class CandidateView extends View implements View.OnClickListener {
                     + ". mComposingTextPopup.isShowing()=" + mComposingTextPopup.isShowing());
 
 
-            if (mComposingTextPopup.isShowing()) {
-                mComposingTextPopup.update(mPopupComposingX, mPopupComposingY,
-                        popupWidth, popupHeight);
-            } else {
-                mComposingTextPopup.setWidth(popupWidth);
-                mComposingTextPopup.setHeight(popupHeight);
-                mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX,
-                        mPopupComposingY);
-            }
-
+        if (mComposingTextPopup.isShowing()) {
+            mComposingTextPopup.update(mPopupComposingX, mPopupComposingY,
+                    popupWidth, popupHeight);
+        } else {
+            mComposingTextPopup.setWidth(popupWidth);
+            mComposingTextPopup.setHeight(popupHeight);
+            mComposingTextPopup.showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX,
+                    mPopupComposingY);
+        }
 
 
     }
@@ -686,7 +686,7 @@ public class CandidateView extends View implements View.OnClickListener {
     }
 
     public void hideComposing() {
-       if (DEBUG)
+        if (DEBUG)
             Log.i(TAG, "hidecomposing()");
         mHandler.dismissComposing(100); //Jeremy '12,6,3 the same delay as showComposing to avoid showed after hided
 
@@ -743,7 +743,7 @@ public class CandidateView extends View implements View.OnClickListener {
             Log.i(TAG, "onMeasure()");
         int measuredWidth = resolveSize(mTotalWidth, widthMeasureSpec);
 
-        final int desiredHeight = mHeight;//((int)mPaint.getTextSize());
+        final int desiredHeight = mHeight;//((int)mCandidatePaint.getTextSize());
 
         // Maximum possible width and desired height
         setMeasuredDimension(measuredWidth,
@@ -760,16 +760,16 @@ public class CandidateView extends View implements View.OnClickListener {
         doDraw(canvas);
     }
 
-    private void prepareLayout(){
+    private void prepareLayout() {
         doDraw(null);
     }
 
-    private void doDraw(Canvas canvas){
+    private void doDraw(Canvas canvas) {
 
 
         if (mSuggestions == null) return;
         if (DEBUG)
-            Log.i(TAG, "Candidateview:doDraw():Suggestion mCount:" + mCount + " mSuggestions.size:" + mSuggestions.size());
+            Log.i(TAG, "CandidateView:doDraw():Suggestion mCount:" + mCount + " mSuggestions.size:" + mSuggestions.size());
         mTotalWidth = 0;
 
         updateFontSize();
@@ -784,28 +784,27 @@ public class CandidateView extends View implements View.OnClickListener {
         //final int mCount = mSuggestions.size();
         final int height = mHeight;//= getHeight();
         final Rect bgPadding = mBgPadding;
-        final Paint paint = mPaint;
-        final Paint npaint = nPaint;
+        final Paint candidatePaint = mCandidatePaint;
+        final Paint selKeyPaint = mSelKeyPaint;
         final int touchX = mTouchX;
         final int scrollX = getScrollX();
         final boolean scrolled = mScrolled;
         //final boolean typedWordValid = mTypedWordValid;
-        final int y = (int) (((height - mPaint.getTextSize()) / 2) - mPaint.ascent());
+        final int y = (int) (((height - mCandidatePaint.getTextSize()) / 2) - mCandidatePaint.ascent());
 
         // Modified by jeremy '10, 3, 29.  Update mselectedindex if touched and build wordX[i] and wordwidth[i]
         int x = 0;
         final int count = mCount; //Cache count here '11,8,18
         for (int i = 0; i < count; i++) {
-            if(DEBUG)
-            //	Log.i(TAG, "Candidateview:OnDraw():updating:" + i );
-            if (count != mCount || mSuggestions==null ||count!=mSuggestions.size()
-                     || mSuggestions.size() == 0 || i >= mSuggestions.size())
+            if (count != mCount || mSuggestions == null || count != mSuggestions.size()
+                    || mSuggestions.size() == 0 || i >= mSuggestions.size())
                 return;  // mSuggestion is updated, force abort
+
             String suggestion = mSuggestions.get(i).getWord();
-            if( i==0  && mSuggestions.size()>1 && mSuggestions.get(1).isRuntimeBuiltPhraseRecord() &&suggestion.length() >8){
+            if (i == 0 && mSuggestions.size() > 1 && mSuggestions.get(1).isRuntimeBuiltPhraseRecord() && suggestion.length() > 8) {
                 suggestion = suggestion.substring(0, 2) + "..";
             }
-            float textWidth = paint.measureText(suggestion);
+            float textWidth = candidatePaint.measureText(suggestion);
             final int wordWidth = (int) textWidth + X_GAP * 2;
 
             mWordX[i] = x;
@@ -820,7 +819,7 @@ public class CandidateView extends View implements View.OnClickListener {
         mTotalWidth = x;
 
         if (DEBUG)
-            Log.i(TAG, "Candidateview:doDraw():mTotalWidth :" + mTotalWidth + "  this.getWidth():" + this.getWidth());
+            Log.i(TAG, "CandidateView:doDraw():mTotalWidth :" + mTotalWidth + "  this.getWidth():" + this.getWidth());
 
         //Jeremy '11,8,11. If the candidate list is within 1 page and has more records, get full records first.
         if (mTotalWidth < this.getWidth())
@@ -828,7 +827,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
 
         // Moved from above by jeremy '10 3, 29. Paint mselectedindex in highlight here
-        if (canvas != null && count>0 && mSelectedIndex >= 0) {
+        if (canvas != null && count > 0 && mSelectedIndex >= 0) {
             canvas.translate(mWordX[mSelectedIndex], 0);
             mSelectionHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelectedIndex], height);
             mSelectionHighlight.draw(canvas);
@@ -839,50 +838,55 @@ public class CandidateView extends View implements View.OnClickListener {
         if (canvas != null) {
 
             for (int i = 0; i < count; i++) {
-                if (count != mCount || mSuggestions==null ||count!=mSuggestions.size()
+                if (count != mCount || mSuggestions == null || count != mSuggestions.size()
                         || mSuggestions.size() == 0 || i >= mSuggestions.size()) break;
 
                 String suggestion = mSuggestions.get(i).getWord();
-                if( i==0  && mSuggestions.size()>1 && mSuggestions.get(1).isRuntimeBuiltPhraseRecord() &&suggestion.length() >8){
+                if (i == 0 && mSuggestions.size() > 1 && mSuggestions.get(1).isRuntimeBuiltPhraseRecord() && suggestion.length() > 8) {
                     suggestion = suggestion.substring(0, 2) + "..";
                 }
 
-                    int c = i + 1;
-                switch (mSuggestions.get(i).getRecordType()){
+                int c = i + 1;
+                switch (mSuggestions.get(i).getRecordType()) {
+                    case Mapping.RECORD_COMPOSING_CODE:
+                       if (mSelectedIndex == 0) candidatePaint.setColor(mColorInvertedText);
+                       else candidatePaint.setColor(mColorRecommended);
+                        break;
+                    case Mapping.RECORD_CHINESE_PUNCTUATION_SYMBOL:
+                    case Mapping.RECORD_RELATED_PHRASE:
+                        selKeyPaint.setColor(mColorRecommended);
+                        candidatePaint.setColor(mColorDictionary);
+                        break;
                     case Mapping.RECORD_EXACT_MATCH_TO_CODE:
                     case Mapping.RECORD_PARTIAL_MATCH_TO_CODE:
-                    case Mapping.RECORD_COMPOSING_CODE:
-                        npaint.setColor(mColorOther);
-                        if (i == 0) {
-                            if (mSelectedIndex == 0) paint.setColor(mColorInverted);
-                            else paint.setColor(mColorRecommended);
-                        } else {
-                            paint.setColor(mColorOther);
-                        }
-                        break;
+                    case Mapping.RECORD_RUNTIME_BUILT_PHRASE:
+                    case Mapping.RECORD_ENGLISH_SUGGESTION:
                     default:
-                        npaint.setColor(mColorRecommended);
-                        paint.setColor(mColorDictionary);
+                        selKeyPaint.setColor(mColorNormalText);
+                        candidatePaint.setColor(mColorNormalText);
+                        break;
+
+
                 }
-                canvas.drawText(suggestion, mWordX[i] + X_GAP, y, paint);
+                canvas.drawText(suggestion, mWordX[i] + X_GAP, y, candidatePaint);
                 if (mShowNumber) {
                     //Jeremy '11,6,17 changed from <=10 to mDisplaySekley length. The length maybe 11 or 12 if shifted with space.
                     if (c <= mDisplaySelkey.length()) {
                         //Jeremy '11,6,11 Drawing text using relative font dimensions.
                         canvas.drawText(mDisplaySelkey.substring(c - 1, c),
-                                mWordX[i] + mWordWidth[i] - height * 0.3f, height * 0.4f, npaint);
+                                mWordX[i] + mWordWidth[i] - height * 0.3f, height * 0.4f, selKeyPaint);
                     }
                 }
 
-                paint.setColor(mColorOther);
+                candidatePaint.setColor(mColorSpacer);
                 canvas.drawLine(mWordX[i] + mWordWidth[i] + 0.5f, bgPadding.top,
-                        mWordX[i] + mWordWidth[i] + 0.5f, height + 1, paint);
-                paint.setFakeBoldText(false);
+                        mWordX[i] + mWordWidth[i] + 0.5f, height + 1, candidatePaint);
+                candidatePaint.setFakeBoldText(false);
             }
 
             if (mTargetScrollX != getScrollX()) {
                 if (DEBUG)
-                    Log.i(TAG, "Candidateview:doDraw():mTargetScrollX :" + mTargetScrollX + "  getScrollX():" +  getScrollX());
+                    Log.i(TAG, "CandidateView:doDraw():mTargetScrollX :" + mTargetScrollX + "  getScrollX():" + getScrollX());
                 scrollToTarget();
             }
 
@@ -982,16 +986,16 @@ public class CandidateView extends View implements View.OnClickListener {
 
                 if (mCount > 1 && mSuggestions.get(1).isExactMatchToCodeRecord()) {
                     mSelectedIndex = 1;
-                } else if(mCount >0 && (mSuggestions.get(0).isComposingCodeRecord()|| mSuggestions.get(0).isRuntimeBuiltPhraseRecord() )){
+                } else if (mCount > 0 && (mSuggestions.get(0).isComposingCodeRecord() || mSuggestions.get(0).isRuntimeBuiltPhraseRecord())) {
 /*
                     int seloption = mLIMEPref.getSelkeyOption();
                     if(seloption > 0 && suggestions.size() > seloption){
                         mSelectedIndex = seloption;
                     }else{*/
-                        mSelectedIndex = 0;
+                    mSelectedIndex = 0;
                     //}
 
-                }else{
+                } else {
                     // no default selection for related phrase, chinese punctuation symbols and English suggestions  Jeremy '15,6,4
                     mSelectedIndex = -1;
                 }
@@ -1016,8 +1020,8 @@ public class CandidateView extends View implements View.OnClickListener {
     public void clear() {
         if (DEBUG) Log.i(TAG, "clear()");
         //mHeight =0; //Jeremy '12,5,6 hide candidate bar when candidateview is fixed.
-        if(mSuggestions!=null) mSuggestions.clear();
-        mCount=0;
+        if (mSuggestions != null) mSuggestions.clear();
+        mCount = 0;
         // Jeremy 11,8,14 close all popup on clear
         setComposingText("");
         mTargetScrollX = 0;
@@ -1036,8 +1040,8 @@ public class CandidateView extends View implements View.OnClickListener {
 
     //Jeremy '12,5,6 hide candidate bar when candidateView is fixed.
     public void forceHide() {
-        if(DEBUG)
-            Log.i(TAG,"forceHide()");
+        if (DEBUG)
+            Log.i(TAG, "forceHide()");
         mHeight = 0;
         //clear();
         //resetWidth();// will cause wrong thread exception. clear() will call updateUI() and will do resetWidth
