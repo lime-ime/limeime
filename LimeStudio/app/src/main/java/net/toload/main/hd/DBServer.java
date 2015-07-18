@@ -240,7 +240,7 @@ public class  DBServer {
 
 		// backup finished.  unhold the database connection and false reopen the database.
 		datasource.unHoldDBConnection(); //Jeremy '15,5,23
-		//mLIMEPref.holdDatabaseCoonection(false);
+		//mLIMEPref.holdDatabaseConnection(false);
 		datasource.openDBConnection(true);
 
 		//cleanup the shared preference backup file.

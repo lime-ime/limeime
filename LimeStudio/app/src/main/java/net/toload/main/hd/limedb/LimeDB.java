@@ -486,7 +486,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     }
                 } else {
                     String add_column = "ALTER TABLE " + Lime.DB_RELATED + " ADD ";
-                    add_column += Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER DEFAULT 0 ";
+                    add_column += Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER";
                     execSQL(dbin, add_column);
                 }
 
@@ -496,59 +496,46 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     public void checkAndUpdateRelatedTable() {
         // Check related table structure
-        String CHECK_RELATED = "SELECT score FROM " + Lime.DB_RELATED;
+        String CHECK_RELATED = "SELECT basescore FROM " + Lime.DB_RELATED;
 
-        try {
 
-            // If system can find the score field which is mean the table still use old schema
-            db.rawQuery(CHECK_RELATED, null);
-
+        // If system can find the score field which is mean the table still use old schema
+        Cursor cursor = db.rawQuery(CHECK_RELATED, null);
+        if (cursor == null || !cursor.moveToFirst()) {
             try {
 
-                String BACKUP_OLD_RELATED = "ALTER TABLE " + Lime.DB_RELATED + " RENAME TO " + Lime.DB_RELATED + "_old";
-                db.execSQL(BACKUP_OLD_RELATED);
+                String add_column = "ALTER TABLE " + Lime.DB_RELATED + " ADD ";
+                add_column += Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER";
 
-                String CREATE_NEW_TABLE = "";
-
-                CREATE_NEW_TABLE += "CREATE TABLE \"" + Lime.DB_RELATED + "\" ( ";
-                CREATE_NEW_TABLE += "        \"" + Lime.DB_COLUMN_ID + "\"  INTEGER PRIMARY KEY AUTOINCREMENT,";
-                CREATE_NEW_TABLE += "       \"" + Lime.DB_RELATED_COLUMN_PWORD + "\"  text,";
-                CREATE_NEW_TABLE += "        \"" + Lime.DB_RELATED_COLUMN_CWORD + "\"  text,";
-                CREATE_NEW_TABLE += "        \"" + Lime.DB_RELATED_COLUMN_BASESCORE + "\"  integer,";
-                CREATE_NEW_TABLE += "        \"" + Lime.DB_RELATED_COLUMN_USERSCORE + "\"  INTEGER DEFAULT 0";
-                CREATE_NEW_TABLE += ");";
-                db.execSQL(CREATE_NEW_TABLE);
-
-                try {
-                    String CREATE_INDEX = "";
-                    CREATE_INDEX += "CREATE INDEX \"related_idx_pword\" ";
-                    CREATE_INDEX += "ON \"" + Lime.DB_RELATED + "\" (\"" + Lime.DB_RELATED_COLUMN_PWORD + "\" ASC); ";
-
-                    db.execSQL(CREATE_INDEX);
-                } catch (Exception e) {
-                    // ignore index creation error
-                }
-
-                String MIGRATE_DATA = "";
-                MIGRATE_DATA += "INSERT INTO " + Lime.DB_RELATED + "(" + Lime.DB_RELATED_COLUMN_PWORD + ", " + Lime.DB_RELATED_COLUMN_CWORD + ", " + Lime.DB_RELATED_COLUMN_BASESCORE + ")";
-                MIGRATE_DATA += "SELECT " + Lime.DB_RELATED_COLUMN_PWORD + ", " + Lime.DB_RELATED_COLUMN_CWORD + ", score FROM " + Lime.DB_RELATED + "_old";
-
-                db.execSQL(MIGRATE_DATA);
-
-                String DROP_OLD_TABLE = "DROP TABLE " + Lime.DB_RELATED + "_old";
-                db.execSQL(DROP_OLD_TABLE);
+                db.execSQL(add_column);
 
                 // Download and restore related DB
             } catch (SQLiteException e) {
                 e.printStackTrace();
             }
-
-            db.rawQuery(CHECK_RELATED, null);
-        } catch (Exception e) {
-            Log.w(TAG, "Ignore all possible exceptions~");
         }
-    }
+        cursor = db.query("sqlite_master", null, "type='index' and name = 'related_idx_pword'", null, null, null, null);
+        if (cursor == null || !cursor.moveToFirst()) {
+            try {
+                db.execSQL("create index 'related_idx_pword' on related (pword)");
+            }catch (SQLiteException e){
+                e.printStackTrace();
+            }
 
+        }
+        cursor = db.query("sqlite_master", null, "type='index' and name = 'related_idx_cword'", null, null, null, null);
+        if (cursor == null || !cursor.moveToFirst()) {
+            try {
+                db.execSQL("create index 'related_idx_cword' on related (cword)");
+            }catch (SQLiteException e){
+                e.printStackTrace();
+            }
+
+        }
+
+
+    }
+    @Deprecated
     public void upgradeRelatedTable(SQLiteDatabase dbin) {
         try {
 
