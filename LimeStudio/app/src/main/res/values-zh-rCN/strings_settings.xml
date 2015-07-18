@@ -145,8 +145,11 @@
     <string name="accept_number_index_summary">允许使用数字为输入法字根</string>
     <string name="accept_symbol_index">启动符号对应</string>
     <string name="accept_symbol_index_summary">允许使用符号为输入法字根</string>
-    <string name="switch_english_mode">快速切换输入模式</string>
-    <string name="switch_english_mode_summary">[SHIFT]+[SPACE] 键切换输入模式 (实体键盘)</string>
+    <string name="switch_english_mode_1">快速切换输入模式1</string>
+    <string name="switch_english_mode_summary_1">[SHIFT]+[SPACE] 键切换输入模式 (实体键盘)</string>
+    <string name="switch_english_mode_2">快速切换输入模式2</string>
+    <string name="switch_english_mode_summary_2">单按 [SHIFT] 键切换输入模式 (实体键盘)</string>
+
 
     <!-- Changjei Keyboard, Standard Keyboard-->
     <string name="typing_mode_english">切换输入模式 / 英文</string>

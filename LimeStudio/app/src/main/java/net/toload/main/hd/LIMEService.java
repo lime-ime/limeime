@@ -554,12 +554,12 @@ public class LIMEService extends InputMethodService implements
 
             if (mFixedCandidateViewOn) {
                 if (DEBUG)
-                    Log.i(TAG, "Fixed candiateView in on, return nInputViewContainer ");
+                    Log.i(TAG, "Fixed candidateView in on, return nInputViewContainer ");
                 setInputView(mCandidateInInputView);
             } else {
                 setInputView(mInputView);
                 if (DEBUG)
-                    Log.i(TAG, "Fixed candiateView in off, return mInputView ");
+                    Log.i(TAG, "Fixed candidateView in off, return mInputView ");
             }
 
         }
@@ -1244,7 +1244,7 @@ public class LIMEService extends InputMethodService implements
             case KeyEvent.KEYCODE_SHIFT_RIGHT:
                 hasShiftPress = false;
                 mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState, keyCode, event);
-                // '11,8,28 Jeremy popup keyboard picker instaead of nextIM when onIM
+                // '11,8,28 Jeremy popup keyboard picker instead of nextIM when onIM
                 // '11,5,14 Jeremy ctrl-shift switch to next available keyboard; 
                 // '11,5,24 blocking switching if full-shape symbol 
                 if (!hasSymbolEntered && !mEnglishOnly && (hasMenuPress || hasCtrlPress)) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM  
@@ -1257,7 +1257,7 @@ public class LIMEService extends InputMethodService implements
                     mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
                     setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
                     return true;
-                } else if (onlyShiftPress) {
+                } else if (mLIMEPref.getShiftSwitchEnglishMode() && onlyShiftPress) {
                     this.switchChiEng();
                     return true;
                 }

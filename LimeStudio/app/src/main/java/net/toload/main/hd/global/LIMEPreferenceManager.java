@@ -486,6 +486,11 @@ public class LIMEPreferenceManager {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("switch_english_mode", false);
 	}
+
+	public boolean getShiftSwitchEnglishMode(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("switch_english_mode_shift", true);
+	}
 	
 	
 	public boolean getAutoHideSoftKeyboard(){
