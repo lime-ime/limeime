@@ -1355,6 +1355,7 @@ public class LIMEService extends InputMethodService implements
         return super.onKeyUp(keyCode, event);
     }
 
+
     /**
      * Helper function to commit any text being composed in to the editor.
      */
@@ -1362,8 +1363,11 @@ public class LIMEService extends InputMethodService implements
         if (DEBUG)
             Log.i(TAG, "commitTyped()");
         try {
-            if (mComposing.length() > 0   //denotes composing just finished
-                    || (selectedCandidate != null && !selectedCandidate.isComposingCodeRecord() &&!selectedCandidate.isEnglishSuggestionRecord())) { // commit selected candidate if it is not the composing text. '15,6,4 Jeremy
+            if (   (mComposing.length() > 0   //denotes composing just finished
+                    || (selectedCandidate != null && !selectedCandidate.isComposingCodeRecord() )) // commit selected candidate if it is not the composing text. '15,6,4 Jeremy
+                    && selectedCandidate!=null
+                    &&!selectedCandidate.isEnglishSuggestionRecord()
+                    &&!LIMEUtilities.isUnicodeSurrogate(selectedCandidate.getWord())  ) {   //check if it's surrogate characters (emoji) '15,7,19 Jeremy
 
                 if (!mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                     if (selectedCandidate != null && selectedCandidate.getWord() != null
@@ -1484,8 +1488,9 @@ public class LIMEService extends InputMethodService implements
                             clearComposing(false);
                             updateRelatedPhrase(false);
 
-                            SearchSrv.learnRelatedPhraseAndUpdateScore(committedCandidate);
+
                             if(committedCandidate != null && committedCandidate.getWord() != null){
+                                SearchSrv.learnRelatedPhraseAndUpdateScore(committedCandidate);
                                 SearchSrv.getCodeListStringFromWord(committedCandidate.getWord());  //do reverse lookup and display notification if required.
                             }
 
@@ -1504,8 +1509,14 @@ public class LIMEService extends InputMethodService implements
                 }
 
 
-            }else if(selectedCandidate.isEnglishSuggestionRecord()){ //Jeremy '15,7,16
-                ic.commitText(selectedCandidate.getWord(), selectedCandidate.getWord().length()) ;
+            }else if(selectedCandidate!=null
+                        && selectedCandidate.isEnglishSuggestionRecord() ){
+                ic.commitText(selectedCandidate.getWord(), selectedCandidate.getWord().length());
+                clearComposing(false);
+            }else if(selectedCandidate!=null &&
+                            LIMEUtilities.isUnicodeSurrogate(selectedCandidate.getWord())){ //Jeremy '15,7,16
+                ic.commitText(selectedCandidate.getWord(), 1);
+                clearComposing(false);
             }
         } catch (Exception e) {
             e.printStackTrace();

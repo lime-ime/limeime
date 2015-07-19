@@ -64,6 +64,15 @@ import java.util.zip.ZipOutputStream;
 public class LIMEUtilities {
 	static final String TAG = "LIMEUtilities";
 	static final boolean DEBUG = false;
+
+	public static boolean isUnicodeSurrogate(String word){  // emoji icons are within these surrogate areas
+		if(word!=null && word.length()==2 ){
+			char[] chArray = word.toCharArray();
+			return Character.isSurrogatePair(chArray[0],chArray[1]);
+		}
+		return false;
+
+	}
 	
 	public static File isFileNotExist(String filepath){
 		

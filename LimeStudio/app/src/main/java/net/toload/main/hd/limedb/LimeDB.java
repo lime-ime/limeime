@@ -2164,9 +2164,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     final boolean tonePresent = dualcode.matches(".+[3467 ].*"); // Tone symbols present in any locoation except the first character
                     final boolean toneNotLast = dualcode.matches(".+[3467 ].+"); // Tone symbols present in any locoation except the first and last character
 
-                    if (searchNoToneCode) { //noToneCode (phonetic comibnation without tones) is present
+                    if (searchNoToneCode) { //noToneCode (phonetic combination without tones) is present
                         if (tonePresent) {
-                            //LD phrase if tone symbols present but not in last character or in last character but the lenth > 4 (phonetic combinations never has length >4)
+                            //LD phrase if tone symbols present but not in last character or in last character but the length > 4 (phonetic combinations never has length >4)
                             if (toneNotLast || (dualcode.length() > 4))
                                 noToneCode = dualcode.replaceAll("[3467 ]", "");
 
