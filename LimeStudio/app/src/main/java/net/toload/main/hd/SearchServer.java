@@ -704,10 +704,12 @@ public class SearchServer {
 
                 if (bestSuggestion != null    // the last element is run-time built suggestion from remaining code query
                         && !abandonPhraseSuggestion
+                        && !bestSuggestion.isExactMatchToCodeRecord() //will be the first item of result list, dont' add duplicated item
                         && bestSuggestion.getWord().length() > 1
                         && ( (englishSuggestion==null && averageScore  > 120) || (englishSuggestion!=null && averageScore > 200 ))  ) {
                     result.add(self);
                     result.add(bestSuggestion);
+
                 } else if( englishSuggestion!=null && averageScore <= 200){
                     clearRunTimeSuggestion(true);
                     result.add(self);
