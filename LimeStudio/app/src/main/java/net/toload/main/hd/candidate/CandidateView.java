@@ -110,6 +110,7 @@ public class CandidateView extends View implements View.OnClickListener {
     private int configHeight;
     private int currentX;
     protected final int mColorNormalText;
+    protected final int mColorInvertedTextTransparent;
     protected final int mColorInvertedText;
     protected final int mColorDictionary;
     protected final int mColorRecommended;
@@ -149,6 +150,8 @@ public class CandidateView extends View implements View.OnClickListener {
     private boolean candidateExpanded = false;
 
     private boolean waitingForMoreRecords = false;
+
+    private boolean mTransparentCandidateView = false;
 
     //private Rect padding = null;
 
@@ -200,7 +203,10 @@ public class CandidateView extends View implements View.OnClickListener {
         //bgcolor = r.getColor(R.color.candidate_background);
 
         mColorNormalText = r.getColor(R.color.candidate_normal_text);
+
+        mColorInvertedTextTransparent = r.getColor(R.color.candidate_inverted_text_physical_keyboard);
         mColorInvertedText = r.getColor(R.color.candidate_inverted_text);
+
         mColorDictionary = r.getColor(R.color.candidate_dictionary);
         mColorRecommended = r.getColor(R.color.candidate_recommended_text);
         mColorSpacer = r.getColor(R.color.candidate_spacer);
@@ -731,6 +737,10 @@ public class CandidateView extends View implements View.OnClickListener {
         return mHasroomForExpanding;
     }
 
+    public void setTransparentCandidateView(boolean transparent){
+        mTransparentCandidateView = transparent;
+    }
+
     /**
      * A connection back to the service to communicate with the text field
      */
@@ -843,9 +853,15 @@ public class CandidateView extends View implements View.OnClickListener {
         // Paint all the suggestions and lines.
         if (canvas != null) {
 
-            if(mLIMEPref.getEnableTransparentCandidateView() &&
-                    !mLIMEPref.getFixedCandidateViewDisplay() ){
+            if(mTransparentCandidateView){
                 canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+
+                Paint backgroundPaint = new Paint();
+                backgroundPaint.setColor(getResources().getColor(R.color.candidate_background));
+                backgroundPaint.setAlpha(33);
+                backgroundPaint.setStyle(Paint.Style.FILL);
+
+                canvas.drawRect(0.5f, bgPadding.top, mScreenWidth, height, backgroundPaint);
             }
 
             /*Paint backgroundPaint = new Paint();
@@ -868,7 +884,14 @@ public class CandidateView extends View implements View.OnClickListener {
                 int c = i + 1;
                 switch (mSuggestions.get(i).getRecordType()) {
                     case Mapping.RECORD_COMPOSING_CODE:
-                       if (mSelectedIndex == 0) candidatePaint.setColor(mColorInvertedText);
+                       if (mSelectedIndex == 0) {
+
+                           if(mTransparentCandidateView){
+                               candidatePaint.setColor(mColorInvertedTextTransparent);
+                           }else{
+                               candidatePaint.setColor(mColorInvertedText);
+                           }
+                       }
                        else candidatePaint.setColor(mColorRecommended);
                         break;
                     case Mapping.RECORD_CHINESE_PUNCTUATION_SYMBOL:

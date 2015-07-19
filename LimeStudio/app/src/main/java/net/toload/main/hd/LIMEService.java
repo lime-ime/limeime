@@ -441,6 +441,8 @@ public class LIMEService extends InputMethodService implements
         if (DEBUG)
             Log.i(TAG, "clearComposing()");
 
+        //Log.i(TAG, "===========> clear composing");
+
         try {
             //Jeremy '11,8,14
             if (mComposing != null && mComposing.length() > 0)
@@ -539,8 +541,10 @@ public class LIMEService extends InputMethodService implements
 
         //Jeremy '12,5,29 override the fixCanddiateMode setting in Landscape mode (in landscape mode the candidate bar is always not fixed).
         boolean fixedCandidateMode = mLIMEPref.getFixedCandidateViewDisplay();
-        if (mOrientation == Configuration.ORIENTATION_LANDSCAPE)
-            fixedCandidateMode = false;
+
+        // Still show the fixed candidate view even in landscape mode
+       /* if (mOrientation == Configuration.ORIENTATION_LANDSCAPE)
+            fixedCandidateMode = false;*/
 
         //Jeremy '12,5,6 recreate inputView if fixedCandidateView setting is altered
         //Jeremy '15,7,15 recreate inputView if keyboard theme changed
@@ -816,6 +820,11 @@ public class LIMEService extends InputMethodService implements
 
 
         hasPhysicalKeyPressed = true;
+
+        // If user use the physical keyboard then not fixed the candidate view also use the tranparent background
+        mFixedCandidateViewOn = false;
+        mCandidateView.setTransparentCandidateView(hasPhysicalKeyPressed);
+
         //hide softkeyboard. Jeremy '12,5,8
         //Should not hide inputView or the candidateView cannot be shown in first stroke. Jeremy '15,6,1
         /*

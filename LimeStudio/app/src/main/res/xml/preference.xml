@@ -80,17 +80,22 @@
             android:title="@string/split_keyboard" />
         />
 
-        <CheckBoxPreference
+        <!--<CheckBoxPreference
             android:defaultValue="true"
             android:disableDependentsState="true"
             android:key="fixed_candidate_view_display"
-            android:title="@string/fixed_candidate_view_display" />
+            android:title="@string/fixed_candidate_view_display" />-->
 
-        <CheckBoxPreference
+        <!--<CheckBoxPreference
             android:defaultValue="false"
             android:dependency="fixed_candidate_view_display"
             android:key="enable_transparent_candidate_view"
-            android:title="@string/enable_transparent_candidate_view" />
+            android:title="@string/enable_transparent_candidate_view" />-->
+
+        <!--<CheckBoxPreference
+            android:defaultValue="false"
+            android:key="enable_transparent_candidate_view"
+            android:title="@string/enable_transparent_candidate_view" />-->
 
 
         <ListPreference
