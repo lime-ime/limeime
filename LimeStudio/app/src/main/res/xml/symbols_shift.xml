@@ -90,13 +90,14 @@
         <Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:isModifier="true" 
                 limehd:keyWidth="15%p" limehd:keyEdgeFlags="left" />
         <Key limehd:codes="-2" limehd:isModifier="true" limehd:keyLabel="EN" limehd:keyWidth="10%p" />
+        <Key limehd:codes="44" limehd:keyLabel="," limehd:keyWidth="10%p"/>
         <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space"
         	limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
-        	limehd:keyWidth="30%p" 
+        	limehd:keyWidth="30%p"
                 limehd:isRepeatable="true"/>
-        <Key limehd:codes="8230" limehd:keyLabel="…" limehd:keyWidth="15%p" />
+        <Key limehd:codes="8230" limehd:keyLabel="…" limehd:keyWidth="10%p" />
         <Key limehd:codes="-10" limehd:isModifier="true" limehd:keyLabel="中"  limehd:keyWidth="10%p" />
         <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true"
-                limehd:keyWidth="20%p" limehd:keyEdgeFlags="right" />
+                limehd:keyWidth="15%p" limehd:keyEdgeFlags="right" />
     </Row>
 </Keyboard>
