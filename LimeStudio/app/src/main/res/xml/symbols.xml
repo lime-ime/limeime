@@ -43,6 +43,19 @@
         <Key limehd:codes="57" limehd:keyLabel="9"/>
         <Key limehd:codes="48" limehd:keyLabel="0" limehd:keyEdgeFlags="right"/>
     </Row>
+
+    <Row>
+        <Key limehd:keyLabel=":-)" limehd:keyOutputText=":-) " limehd:keyEdgeFlags="left" />
+        <Key limehd:keyLabel=":-(" limehd:keyOutputText=":-( "/>
+        <Key limehd:keyLabel=";-)" limehd:keyOutputText=";-) "/>
+        <Key limehd:keyLabel=":-P" limehd:keyOutputText=":-P "/>
+        <Key limehd:keyLabel="=-O" limehd:keyOutputText="=-O "/>
+        <Key limehd:keyLabel=":-*" limehd:keyOutputText=":-* "/>
+        <Key limehd:keyLabel=":O" limehd:keyOutputText=":O "/>
+        <Key limehd:keyLabel="B-)" limehd:keyOutputText="B-) "/>
+        <Key limehd:keyLabel=":-$" limehd:keyOutputText=":-$ "/>
+        <Key limehd:keyLabel=":-!" limehd:keyOutputText=":-! " limehd:keyEdgeFlags="right" />
+    </Row>
     
     <Row>
         <Key limehd:codes="64" limehd:keyLabel="\@" limehd:keyEdgeFlags="left"/>
@@ -80,13 +93,13 @@
         <Key limehd:codes="44" limehd:keyLabel="," limehd:keyWidth="10%p" />
         <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space" 
         	 limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
-        	 limehd:keyWidth="25%p" limehd:isRepeatable="true"/>
+        	 limehd:keyWidth="30%p" limehd:isRepeatable="true"/>
         <Key limehd:codes="46" limehd:keyLabel="." 
         						 limehd:popupKeyboard="@xml/popup_punctuation" 
         						limehd:keyWidth="10%p"/>
         <Key limehd:codes="-10" limehd:isModifier="true" limehd:keyLabel="中"  limehd:keyWidth="10%p" />
         <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true"
-                limehd:keyWidth="20%p" limehd:keyEdgeFlags="right"
+                limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"
                 />
     </Row>
 </Keyboard>

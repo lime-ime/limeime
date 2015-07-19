@@ -32,6 +32,19 @@
     >
 
     <Row>
+        <Key limehd:codes="49" limehd:keyLabel="1" limehd:keyEdgeFlags="left"/>
+        <Key limehd:codes="50" limehd:keyLabel="2"/>
+        <Key limehd:codes="51" limehd:keyLabel="3"/>
+        <Key limehd:codes="52" limehd:keyLabel="4"/>
+        <Key limehd:codes="53" limehd:keyLabel="5"/>
+        <Key limehd:codes="54" limehd:keyLabel="6"/>
+        <Key limehd:codes="55" limehd:keyLabel="7"/>
+        <Key limehd:codes="56" limehd:keyLabel="8"/>
+        <Key limehd:codes="57" limehd:keyLabel="9"/>
+        <Key limehd:codes="48" limehd:keyLabel="0" limehd:keyEdgeFlags="right"/>
+    </Row>
+
+    <Row>
         <Key limehd:codes="126" limehd:keyLabel="~" limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="177" limehd:keyLabel="±"/>
         <Key limehd:codes="215" limehd:keyLabel="×"/>
@@ -77,13 +90,14 @@
         <Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:isModifier="true" 
                 limehd:keyWidth="15%p" limehd:keyEdgeFlags="left" />
         <Key limehd:codes="-2" limehd:isModifier="true" limehd:keyLabel="EN" limehd:keyWidth="10%p" />
+        <Key limehd:codes="44" limehd:keyLabel="," limehd:keyWidth="10%p"/>
         <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_keyboard_space"
         	limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
-        	limehd:keyWidth="30%p" 
+        	limehd:keyWidth="30%p"
                 limehd:isRepeatable="true"/>
-        <Key limehd:codes="8230" limehd:keyLabel="…" limehd:keyWidth="15%p" />
+        <Key limehd:codes="8230" limehd:keyLabel="…" limehd:keyWidth="10%p" />
         <Key limehd:codes="-10" limehd:isModifier="true" limehd:keyLabel="中"  limehd:keyWidth="10%p" />
         <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true"
-                limehd:keyWidth="20%p" limehd:keyEdgeFlags="right" />
+                limehd:keyWidth="15%p" limehd:keyEdgeFlags="right" />
     </Row>
 </Keyboard>
