@@ -59,8 +59,10 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.PopupWindow;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import net.toload.main.hd.R;
@@ -593,7 +595,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             mShowPreview = false;
         }
         mPreviewPopup.setTouchable(false);
-        //mPreviewPopup.setAnimationStyle(R.style.KeyPreviewAnimation);
+        mPreviewPopup.setAnimationStyle(R.style.KeyPreviewAnimation);
         mDelayBeforePreview = res.getInteger(R.integer.config_delay_before_preview);
         mDelayAfterPreview = res.getInteger(R.integer.config_delay_after_preview);
 
@@ -675,6 +677,17 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         }
     }
 
+    ViewGroup mPreviewPlacer;
+    private void addKeyPreview(TextView keyPreview) {
+        if (mPreviewPlacer == null) {
+            mPreviewPlacer = new RelativeLayout(getContext());
+            final ViewGroup windowContentView =
+                    (ViewGroup)getRootView().findViewById(android.R.id.content);
+            windowContentView.addView(mPreviewPlacer);
+        }
+        mPreviewPlacer.addView(
+                keyPreview, ViewLayoutUtils.newLayoutParam(mPreviewPlacer, 0, 0));
+    }
     /**
      * Returns the {@link OnKeyboardActionListener} object.
      *
@@ -1717,8 +1730,11 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     public void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         closing();
-    }
+        if (mPreviewPlacer != null) {
+            mPreviewPlacer.removeAllViews();
 
+        }
+    }
     private void dismissPopupKeyboard() {
         if (mMiniKeyboardPopup.isShowing()) {
             mMiniKeyboardPopup.dismiss();
