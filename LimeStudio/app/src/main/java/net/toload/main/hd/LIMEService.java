@@ -1362,14 +1362,15 @@ public class LIMEService extends InputMethodService implements
     private void commitTyped(InputConnection ic) {
         if (DEBUG)
             Log.i(TAG, "commitTyped()");
+        if(selectedCandidate==null)     return;
         try {
             if (   (mComposing.length() > 0   //denotes composing just finished
-                    || (selectedCandidate != null && !selectedCandidate.isComposingCodeRecord() )) // commit selected candidate if it is not the composing text. '15,6,4 Jeremy
-                    && selectedCandidate!=null
-                    &&!selectedCandidate.isEnglishSuggestionRecord()
+                    ||  !selectedCandidate.isComposingCodeRecord() ) // commit selected candidate if it is not the composing text. '15,6,4 Jeremy  (like related phrase or English suggestions)
                     &&!LIMEUtilities.isUnicodeSurrogate(selectedCandidate.getWord())  ) {   //check if it's surrogate characters (emoji) '15,7,19 Jeremy
 
-                if (!mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+                if (!mEnglishOnly
+                        || !selectedCandidate.isComposingCodeRecord()
+                        || !selectedCandidate.isEnglishSuggestionRecord() ) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                     if (selectedCandidate != null && selectedCandidate.getWord() != null
                             && !selectedCandidate.getWord().equals("")) {
 
@@ -1502,19 +1503,16 @@ public class LIMEService extends InputMethodService implements
                                 mComposing.length());
 
                     }
-                } else {  //English mode
-                    if (ic != null)
+                } else {  //English mode or composing code or English run-time suggestion
+                    if (ic != null) {
                         ic.commitText(mComposing, mComposing.length());
+                        if(!mEnglishOnly) clearComposing(false);
+                    }
 
                 }
 
 
-            }else if(selectedCandidate!=null
-                        && selectedCandidate.isEnglishSuggestionRecord() ){
-                ic.commitText(selectedCandidate.getWord(), selectedCandidate.getWord().length());
-                clearComposing(false);
-            }else if(selectedCandidate!=null &&
-                            LIMEUtilities.isUnicodeSurrogate(selectedCandidate.getWord())){ //Jeremy '15,7,16
+            }else if(LIMEUtilities.isUnicodeSurrogate(selectedCandidate.getWord())){ //Jeremy '15,7,16
                 ic.commitText(selectedCandidate.getWord(), 1);
                 clearComposing(false);
             }
