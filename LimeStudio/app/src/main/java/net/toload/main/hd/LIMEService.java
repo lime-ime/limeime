@@ -913,6 +913,7 @@ public class LIMEService extends InputMethodService implements
             Log.i(TAG, "OnKeyDown():keyCode:" + keyCode
                     + ", hasMenuPress = " + hasMenuPress
                     + ", hasCtrlPress = " + hasCtrlPress
+                    + ", isCtrlPressed = " + event.isCtrlPressed()
                     + ", hasShiftPress = " + hasShiftPress
                     + ", onlyShiftPress = " + onlyShiftPress
                     + ", hasWinPress = " + hasWinPress
@@ -1090,7 +1091,7 @@ public class LIMEService extends InputMethodService implements
                 // '11,6,18 Jeremy moved from on_KEY_UP
                 // '12,4,29 Jeremy add hasWinPress + space to switch chi/eng (earth key on zippy keyboard)
                 // '12,5,8  Jeremy add send the space key to onKey with translatekeydown for candidate processing if it's not switching chi/eng 
-                if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress || hasWinPress) {
+                if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress || hasWinPress || event.isCtrlPressed() ) {
                     if (!hasWinPress)
                         this.switchChiEng();  //Jeremy '12,5,20 move hasWinPress to winstartkey in onkeyUp()
                     if (hasMenuPress) hasMenuProcessed = true;
@@ -1120,7 +1121,7 @@ public class LIMEService extends InputMethodService implements
                         && mLIMEPref.getPhysicalKeyboardType().equals("milestone2")))
                     break;
             default:
-                if (!(hasCtrlPress || hasMenuPress)) {
+                if (!(hasCtrlPress ||  event.isCtrlPressed()  || hasMenuPress)) {
                     if (translateKeyDown(keyCode, event)) {
                         if (DEBUG) Log.i(TAG, "Onkeydown():tranlatekeydown:true");
                         return true;
