@@ -1733,7 +1733,7 @@ public class LIMEService extends InputMethodService implements
             Log.i(TAG, "handleOptions()");
         AlertDialog.Builder builder;
 
-        builder = new AlertDialog.Builder(this);
+        builder = new AlertDialog.Builder(this, R.style.LIMEAlertDialogTheme);
 
 
         builder.setCancelable(true);

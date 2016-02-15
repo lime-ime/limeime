@@ -230,7 +230,7 @@ public class SetupImFragment extends Fragment {
 
         if (progress.isShowing()) progress.dismiss();
 
-        progress = new ProgressDialog(activity);
+        progress = new ProgressDialog(activity, R.style.LIMEAlertDialogTheme);
         progress.setCancelable(false);
         progress.setProgressStyle(spinnerStyle ? ProgressDialog.STYLE_SPINNER : ProgressDialog.STYLE_HORIZONTAL);
         if(message!=null) progress.setMessage(message);
@@ -271,7 +271,7 @@ public class SetupImFragment extends Fragment {
 
         activity = getActivity();
 
-        progress = new ProgressDialog(activity);
+        progress = new ProgressDialog(activity, R.style.LIMEAlertDialogTheme);
         progress.setMax(100);
         progress.setCancelable(false);
 
@@ -704,7 +704,7 @@ public class SetupImFragment extends Fragment {
 
     public void showAlertDialog(final String action, final String type, String message){
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity, R.style.LIMEAlertDialogTheme);
         builder.setMessage(message);
         builder.setCancelable(false);
         builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),

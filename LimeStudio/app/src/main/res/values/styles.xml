@@ -24,8 +24,8 @@
 
 <resources>
 
-    <style name="LIMEAlertDialogTheme" parent="@android:style/Theme.Dialog">
-        </style>
+    <style name="LIMEAlertDialogTheme" parent="@android:style/Theme.DeviceDefault.Dialog">
+    </style>
     <style name="LIMEKeyboardLight">
         <item name="spaceKeyIcon">@drawable/sym_keyboard_space</item>
         <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space</item>

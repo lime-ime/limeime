@@ -398,7 +398,7 @@ public class ImportDialog extends DialogFragment {
 
 	public void confirmimportdialog(final String imtype){
 
-		AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
+		AlertDialog alertDialog = new AlertDialog.Builder(activity, R.style.LIMEAlertDialogTheme).create();
 
 		final EditText input = new EditText(activity);
 

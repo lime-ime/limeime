@@ -138,7 +138,7 @@ public class ManageRelatedFragment extends Fragment {
 
         this.handler = new ManageRelatedHandler(this);
 
-        this.progress = new ProgressDialog(this.activity);
+        this.progress = new ProgressDialog(this.activity,  R.style.LIMEAlertDialogTheme);
         this.progress.setCancelable(false);
         this.progress.setMessage(getResources().getString(R.string.manage_related_loading));
         mLIMEPref = new LIMEPreferenceManager(activity);

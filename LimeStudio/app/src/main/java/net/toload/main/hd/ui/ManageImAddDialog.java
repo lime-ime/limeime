@@ -154,7 +154,7 @@ public class ManageImAddDialog extends DialogFragment {
 		btnManageImWordSave.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
+				AlertDialog alertDialog = new AlertDialog.Builder(activity, R.style.LIMEAlertDialogTheme).create();
 				alertDialog.setTitle(activity.getResources().getString(R.string.manage_word_dialog_add));
 				alertDialog.setMessage(activity.getResources().getString(R.string.manage_word_dialog_add_message));
 				alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),

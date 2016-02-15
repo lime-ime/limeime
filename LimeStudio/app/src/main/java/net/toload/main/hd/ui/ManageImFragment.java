@@ -161,7 +161,7 @@ public class ManageImFragment extends Fragment {
               e.printStackTrace();
          }
 */
-        this.progress = new ProgressDialog(this.activity);
+        this.progress = new ProgressDialog(this.activity, R.style.LIMEAlertDialogTheme);
         this.progress.setCancelable(false);
         this.progress.setMessage(getResources().getString(R.string.manage_im_loading));
 

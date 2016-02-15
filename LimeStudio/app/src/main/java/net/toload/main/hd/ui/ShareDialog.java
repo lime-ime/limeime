@@ -391,7 +391,7 @@ public class ShareDialog extends DialogFragment {
 
 	public void confirmShareDialog(final String imtype){
 
-		AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
+		AlertDialog alertDialog = new AlertDialog.Builder(activity, R.style.LIMEAlertDialogTheme).create();
 
 		if(imtype.equalsIgnoreCase(Lime.DB_RELATED)) {
 			alertDialog.setTitle(activity.getResources().getString(R.string.share_dialog_related_title));

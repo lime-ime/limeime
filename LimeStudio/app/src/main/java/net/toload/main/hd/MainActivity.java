@@ -190,7 +190,7 @@ public class MainActivity extends ActionBarActivity
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if ((keyCode == KeyEvent.KEYCODE_BACK)) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.LIMEAlertDialogTheme);
             builder.setTitle(getResources().getString(R.string.global_exit_title));
             builder.setCancelable(false);
             builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
@@ -234,7 +234,7 @@ public class MainActivity extends ActionBarActivity
 
         handler = new MainActivityHandler(this);
 
-        progress = new ProgressDialog(this);
+        progress = new ProgressDialog(this,  R.style.LIMEAlertDialogTheme);
         progress.setMax(100);
         progress.setCancelable(false);
 
