@@ -43,19 +43,6 @@
         <Key limehd:codes="57" limehd:keyLabel="9"/>
         <Key limehd:codes="48" limehd:keyLabel="0" limehd:keyEdgeFlags="right"/>
     </Row>
-
-    <Row>
-        <Key limehd:keyLabel=":-)" limehd:keyOutputText=":-) " limehd:keyEdgeFlags="left" />
-        <Key limehd:keyLabel=":-(" limehd:keyOutputText=":-( "/>
-        <Key limehd:keyLabel=";-)" limehd:keyOutputText=";-) "/>
-        <Key limehd:keyLabel=":-P" limehd:keyOutputText=":-P "/>
-        <Key limehd:keyLabel="=-O" limehd:keyOutputText="=-O "/>
-        <Key limehd:keyLabel=":-*" limehd:keyOutputText=":-* "/>
-        <Key limehd:keyLabel=":O" limehd:keyOutputText=":O "/>
-        <Key limehd:keyLabel="B-)" limehd:keyOutputText="B-) "/>
-        <Key limehd:keyLabel=":-$" limehd:keyOutputText=":-$ "/>
-        <Key limehd:keyLabel=":-!" limehd:keyOutputText=":-! " limehd:keyEdgeFlags="right" />
-    </Row>
     
     <Row>
         <Key limehd:codes="64" limehd:keyLabel="\@" limehd:keyEdgeFlags="left"/>
