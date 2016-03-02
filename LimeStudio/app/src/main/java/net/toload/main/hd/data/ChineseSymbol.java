@@ -24,8 +24,6 @@
 
 package net.toload.main.hd.data;
 
-import net.toload.main.hd.data.Mapping;
-
 import java.util.LinkedList;
 import java.util.List;
 

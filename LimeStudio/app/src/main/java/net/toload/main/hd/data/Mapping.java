@@ -52,6 +52,7 @@ public class Mapping {
 	public static final int RECORD_EXACT_MATCH_TO_WORD = 9;
 	public static final int RECORD_PARTIAL_MATCH_TO_WORD = 10;
 	public static final int RECORD_COMPLETION_SUGGESTION_WORD = 11;
+	public static final int RECORD_EMOJI_WORD = 12;
 
 	// empty constructor
 	public Mapping(){}
@@ -106,6 +107,8 @@ public class Mapping {
 	public boolean isChinesePunctuationSymbolRecord(){ return recordType == RECORD_CHINESE_PUNCTUATION_SYMBOL;}
 	public boolean isHasMoreRecordsMarkRecord(){ return recordType == RECORD_HAS_MORE_RECORDS_MARK; }
 	public boolean isRuntimeBuiltPhraseRecord(){ return recordType == RECORD_RUNTIME_BUILT_PHRASE;	}
+	public boolean isEmojiRecord(){ return recordType == RECORD_EMOJI_WORD; }
+
 	// Identify exactly or partially match to the word queried ( reverse query codes by word)
 	public boolean isExactMatchToWordRecord(){ return recordType == RECORD_EXACT_MATCH_TO_WORD;	}
 	public boolean isPartialMatchToWordRecord(){return recordType == RECORD_PARTIAL_MATCH_TO_WORD;}
@@ -130,6 +133,8 @@ public class Mapping {
 		this.recordType = RECORD_PARTIAL_MATCH_TO_WORD;
 	}
 	public void setCompletionSuggestionRecord(){ this.recordType = RECORD_COMPLETION_SUGGESTION_WORD;	}
+	public void setEmojiRecord(){	this.recordType = RECORD_EMOJI_WORD;}
+
 
 
 	/**

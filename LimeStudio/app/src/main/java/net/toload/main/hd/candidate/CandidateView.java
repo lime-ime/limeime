@@ -222,6 +222,7 @@ public class CandidateView extends View implements View.OnClickListener {
         mCandidatePaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_size) * mLIMEPref.getFontSize());
         mCandidatePaint.setStrokeWidth(0);
 
+
         mSelKeyPaint = new Paint();
         mSelKeyPaint.setColor(mColorSelKey);
         mSelKeyPaint.setAntiAlias(true);
@@ -876,6 +877,7 @@ public class CandidateView extends View implements View.OnClickListener {
                 if (count != mCount || mSuggestions == null || count != mSuggestions.size()
                         || mSuggestions.size() == 0 || i >= mSuggestions.size()) break;
 
+                boolean isEmoji = mSuggestions.get(i).isEmojiRecord();
                 String suggestion = mSuggestions.get(i).getWord();
                 if (i == 0 && mSuggestions.size() > 1 && mSuggestions.get(1).isRuntimeBuiltPhraseRecord() && suggestion.length() > 8) {
                     suggestion = suggestion.substring(0, 2) + "..";
@@ -908,9 +910,13 @@ public class CandidateView extends View implements View.OnClickListener {
                         candidatePaint.setColor(mColorNormalText);
                         break;
 
-
                 }
-                canvas.drawText(suggestion, mWordX[i] + X_GAP, y, candidatePaint);
+
+                if(isEmoji){
+                    canvas.drawText(suggestion, mWordX[i] + X_GAP, Math.round(y*0.85), candidatePaint);
+                }else{
+                    canvas.drawText(suggestion, mWordX[i] + X_GAP, y, candidatePaint);
+                }
                 if (mShowNumber) {
                     //Jeremy '11,6,17 changed from <=10 to mDisplaySekley length. The length maybe 11 or 12 if shifted with space.
                     if (c <= mDisplaySelkey.length()) {

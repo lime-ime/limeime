@@ -117,10 +117,8 @@ public class SearchServer {
         mResetCache = resetCache;
     }
 
-
     public String hanConvert(String input) {
         return dbadapter.hanConvert(input, mLIMEPref.getHanCovertOption());
-
     }
 
     public String getTablename() {
@@ -580,6 +578,14 @@ public class SearchServer {
     }
 
     private static boolean  abandonPhraseSuggestion = false;
+
+    public List<Mapping> emojiConvert(String code, int type){
+        if(code != null){
+            return dbadapter.emojiConvert(code, type);
+        }
+        return null;
+    }
+
     public List<Mapping> getMappingByCode(String code, boolean softkeyboard, boolean getAllRecords, boolean prefetchCache)
             throws RemoteException {
         if (DEBUG||dumpRunTimeSuggestion)
@@ -632,7 +638,6 @@ public class SearchServer {
 
             if (cacheTemp != null) {
                 List<Mapping> resultlist = cacheTemp;
-
 
                 //if getAllRecords is true and result list or related list has has more mark in the end
                 // recall LimeDB.GetMappingByCode with getAllRecords true.
@@ -1046,17 +1051,26 @@ List<Mapping> scorelistSnapshot = null;
                             continue;
                         }
                         if (unit.getWord() != null && !unit.getWord().equals("")
+
                                 && unit2.getWord() != null && !unit2.getWord().equals("")
-                                && (unit.isExactMatchToCodeRecord() || unit.isPartialMatchToCodeRecord()
+
+                                &&
+                                (unit.isExactMatchToCodeRecord() || unit.isPartialMatchToCodeRecord()
                                 || unit.isRelatedPhraseRecord()) // use record type to identify records. Jeremy '15,6,4
-                                && (unit2.isExactMatchToCodeRecord() || unit2.isPartialMatchToCodeRecord()
-                                || unit.isRelatedPhraseRecord() || unit2.isChinesePunctuationSymbolRecord())  //allow unit2 to be chinese punctuation symbols.
-                            //&& !unit.getCode().equals(unit.getWord())//Jeremy '12,6,13 avoid learning mixed mode english
-                            //&& !unit2.getCode().equals(unit2.getWord())
-                            ///&& unit2.getId() !=null
+
+                                &&
+                                (unit2.isExactMatchToCodeRecord() || unit2.isPartialMatchToCodeRecord()
+                                || unit.isRelatedPhraseRecord() || unit2.isChinesePunctuationSymbolRecord()
+                                || unit.isEmojiRecord() || unit2.isEmojiRecord() )
+
+                                //allow unit2 to be chinese punctuation symbols.
+                                //&& !unit.getCode().equals(unit.getWord())//Jeremy '12,6,13 avoid learning mixed mode english
+                                //&& !unit2.getCode().equals(unit2.getWord())
+                                ///&& unit2.getId() !=null
                                 ) {
 
                             int score;
+
                             //if (unit.getId() != null && unit2.getId() != null) //Jeremy '12,7,2 eliminate learning english words.
                             score = dbadapter.addOrUpdateRelatedPhraseRecord(unit.getWord(), unit2.getWord());
                             if (DEBUG)

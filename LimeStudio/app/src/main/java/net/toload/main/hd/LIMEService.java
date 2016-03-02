@@ -67,6 +67,7 @@ import net.toload.main.hd.keyboard.LIMEMetaKeyKeyListener;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -1400,16 +1401,18 @@ public class LIMEService extends InputMethodService implements
                         if (DEBUG)
                             Log.i(TAG, "commitTyped() committed Length="
                                     + firstMatchedLength);
+
                         // Do hanConvert before commit
                         // '10, 4, 17 Jeremy
                         // inputConnection.setComposingText("", 1);
-                        if (ic != null) ic.commitText(
-                                SearchSrv.hanConvert(wordToCommit),
-                                firstMatchedLength);
-
+                        if(mLIMEPref.getHanCovertOption() == 0){
+                            if (ic != null) ic.commitText(wordToCommit, firstMatchedLength);
+                        }else{
+                            if (ic != null) ic.commitText(SearchSrv.hanConvert(wordToCommit), firstMatchedLength);
+                        }
 
                         // Art '30,Sep,2011 when show related then clear composing
-                        if (currentSoftKeyboard.contains("wb")) {
+                        if (currentSoftKeyboard.contains("wb") || selectedCandidate.isEmojiRecord() || selectedCandidate.isChinesePunctuationSymbolRecord()) {
                             clearComposing(true);
                         }
 
@@ -1488,7 +1491,6 @@ public class LIMEService extends InputMethodService implements
                             selectedCandidate = null;
                             clearComposing(false);
                             updateRelatedPhrase(false);
-
 
                             if(committedCandidate != null && committedCandidate.getWord() != null){
                                 SearchSrv.learnRelatedPhraseAndUpdateScore(committedCandidate);
@@ -2207,6 +2209,56 @@ public class LIMEService extends InputMethodService implements
                             ignored.printStackTrace();
                             return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                         }
+
+                        // Load Emoji Icon
+                        HashMap<String, String> emojicheck = new HashMap<String, String>();
+                        List<Mapping> emojilist = new LinkedList<Mapping>();
+
+                        if(list.size() > 0){
+
+                            List<Mapping> item1, item2, item3;
+                            int insertPosition = 1;
+                            if(list.size() > 1){
+                                insertPosition = 2;
+                            }
+
+                            item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
+                            if(item1.size() > 0){
+                                for(Mapping m: item1){
+                                    if(emojicheck.get(m.getWord()) == null){
+                                        emojilist.add(m);
+                                        emojicheck.put(m.getWord(), m.getWord());
+                                    }
+                                }
+                            }
+                            if(item1.size() == 0 && list.size() > 1){
+                                item2 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_TW);
+                                if(item2.size() > 0){
+                                    for(Mapping m: item2){
+                                        if(emojicheck.get(m.getWord()) == null){
+                                            emojilist.add(m);
+                                            emojicheck.put(m.getWord(), m.getWord());
+                                        }
+                                    }
+                                }
+                                if(item2.size() == 0){
+                                    item3 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_CN);
+                                    if(item3.size() > 0){
+                                        for(Mapping m: item3){
+                                            if(emojicheck.get(m.getWord()) == null){
+                                                emojilist.add(m);
+                                                emojicheck.put(m.getWord(), m.getWord());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            if(emojilist.size() > 0){
+                                list.addAll(insertPosition, emojilist);
+                            }
+                        }
+
                         setSuggestions(list, finalHasPhysicalKeyPressed, selkey);
 
                         if (DEBUG) Log.i(TAG, "updateCandidates(): display selkey:" + selkey
@@ -2246,6 +2298,7 @@ public class LIMEService extends InputMethodService implements
 	 * Update English suggestions view
 	 */
     private void updateEnglishPrediction() {
+
         hasChineseSymbolCandidatesShown = false;
         if (mPredictionOn && mLIMEPref.getEnglishPrediction()) {
 
@@ -2492,13 +2545,14 @@ public class LIMEService extends InputMethodService implements
 
 
     public synchronized void setSuggestions(List<Mapping> suggestions, boolean showNumber, String diplaySelkey) {
+
         if (suggestions != null && suggestions.size() > 0) {
+
             if (DEBUG)
                 Log.i(TAG, "setSuggestion():suggestions.size=" + suggestions.size()
                             + " mFixedCandidateViewOn:" + mFixedCandidateViewOn
                             + " hasPhysicalKeyPressed:" + hasPhysicalKeyPressed
             );
-
 
             if ((!mFixedCandidateViewOn || hasPhysicalKeyPressed)
                     && mCandidateView != mCandidateViewStandAlone) {

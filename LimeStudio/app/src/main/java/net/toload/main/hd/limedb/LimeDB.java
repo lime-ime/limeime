@@ -289,6 +289,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     // Cache for Related Score
     private HashMap<String, Integer> relatedscore = new HashMap<>();
     private LimeHanConverter hanConverter;
+    private EmojiConverter emojiConverter;
 
     public void setFinish(boolean value) {
         this.finish = value;
@@ -4026,14 +4027,17 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return result;
     }
 
+    public List<Mapping> emojiConvert(String source, int emoji){
+        checkEmojiDB();
+        return emojiConverter.convert(source, emoji);
+    }
+
     /**
      * Jeremy '11,9,8 moved from searchService
      */
-    public String hanConvert(String input, int hanConvertOption) {
+    public String hanConvert(String input, int hanOption) {
         checkHanDB();
-
-        return hanConverter.convert(input, hanConvertOption);
-
+        return hanConverter.convert(input, hanOption);
     }
 
     /**
@@ -4043,6 +4047,19 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         checkHanDB();
         return hanConverter.getBaseScore(input);
 
+    }
+
+    private void checkEmojiDB() {
+        if (emojiConverter == null) {
+
+            File emojiDBFile = LIMEUtilities.isFileNotExist(
+                    mContext.getFilesDir().getParentFile().getPath() + "/databases/emoji.db");
+
+            if (emojiDBFile != null)
+                LIMEUtilities.copyRAWFile(mContext.getResources().openRawResource(R.raw.emoji), emojiDBFile);
+
+            emojiConverter = new EmojiConverter(mContext);
+        }
     }
 
     private void checkHanDB() {

@@ -288,6 +288,15 @@ public class Lime {
 
     public static final String EXPORT_FILENAME_RELATED = "lime.related";
 
+    // Emoji Parameter
+
+    public static final int EMOJI_EN = 1;
+    public static final int EMOJI_TW = 2;
+    public static final int EMOJI_CN = 3;
+
+    public static final String EMOJI_FIELD_TAG= "tag";
+    public static final String EMOJI_FIELD_VALUE= "value";
+
     // AD
     public static final String VPON_BANNER_ID = "8a8081824cfe92fa014d3707f493630b";
 
