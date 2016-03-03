@@ -26,6 +26,7 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -34,7 +35,9 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.net.ConnectivityManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.RemoteException;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -60,6 +63,7 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 
@@ -126,6 +130,8 @@ public class SetupImFragment extends Fragment {
     Button btnSetupImHs;
     Button btnSetupImWb;
     Button btnSetupImPinyin;
+
+    Button btnDownloadOldVersion;
 
     // Backup Restore
     Button btnSetupImBackupLocal;
@@ -299,6 +305,7 @@ public class SetupImFragment extends Fragment {
         btnSetupImHs = (Button) rootView.findViewById(R.id.btnSetupImHs);
         btnSetupImWb = (Button) rootView.findViewById(R.id.btnSetupImWb);
         btnSetupImPinyin = (Button) rootView.findViewById(R.id.btnSetupImPinyin);
+        btnDownloadOldVersion = (Button) rootView.findViewById(R.id.btnDownloadOldVersion);
 
         // Backup and Restore Setting
         btnSetupImBackupLocal = (Button) rootView.findViewById(R.id.btnSetupImBackupLocal);
@@ -694,6 +701,43 @@ public class SetupImFragment extends Fragment {
                         dialog.show(ft, "loadimdialog");
                     }
                 });
+
+
+                btnDownloadOldVersion.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(activity, R.style.LIMEAlertDialogTheme);
+                        builder.setMessage(getResources().getString(R.string.setup_im_download_old_version_confirm));
+                        builder.setCancelable(false);
+                        builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        DownloadManager downloadManager = (DownloadManager) activity.getSystemService(activity.DOWNLOAD_SERVICE);
+
+                                        Uri uri = Uri.parse(Lime.LIME_OLD_VERSION_URL);
+                                        DownloadManager.Request request = new DownloadManager.Request(uri);
+                                        request.setTitle("LIMEHD 3.9.1");
+                                        request.setDescription(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+ File.separator+"limehd_3_9_1.apk");
+                                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "limehd_3_9_1.apk");
+                                        downloadManager.enqueue(request);
+
+                                        showToastMessage(getResources().getString(R.string.setup_im_download_old_version_hint)+
+                                                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator+"limehd_3_9_1.apk", Toast.LENGTH_LONG);
+
+                                    }
+                                });
+                        builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+
+                                    }
+                                });
+
+                        AlertDialog alert = builder.create();
+                        alert.show();
+                    }
+                });
+
 
             } catch (Exception e) {
                 e.printStackTrace();

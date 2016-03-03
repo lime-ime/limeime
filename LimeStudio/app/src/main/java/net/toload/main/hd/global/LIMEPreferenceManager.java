@@ -279,6 +279,11 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("enable_emoji", true);
 	}
 
+	public boolean getHanConvertNotify(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("han_convert_notify", true);
+	}
+
 	public boolean getPersistentLanguageMode(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("persistent_language_mode", false);

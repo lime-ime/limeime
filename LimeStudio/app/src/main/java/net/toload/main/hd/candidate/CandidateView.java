@@ -826,6 +826,8 @@ public class CandidateView extends View implements View.OnClickListener {
             }
             float textWidth = candidatePaint.measureText(suggestion);
             if( i == 0 && suggestion.length() <= 2){
+                if(suggestion != null && mSuggestions.get(i).getWord() != null &&
+                        mSuggestions.get(i).getWord().matches(".*?[a-zA-Z0-9\\p{Punct}]"))
                 textWidth += X_GAP;
                 x += X_GAP;
             }
@@ -926,11 +928,6 @@ public class CandidateView extends View implements View.OnClickListener {
                 if(isEmoji){
                     canvas.drawText(suggestion, mWordX[i] + X_GAP, Math.round(y*0.95), candidateEmojiPaint);
                 }else{
-                   /* if(i == 0 && suggestion.length() < 3){
-                        canvas.drawText(suggestion, mWordX[i] + X_GAP, y, candidatePaint);
-                    }else{
-                        canvas.drawText(suggestion, mWordX[i] + X_GAP, y, candidatePaint);
-                    }*/
                     canvas.drawText(suggestion, mWordX[i] + X_GAP, y, candidatePaint);
                 }
                 if (mShowNumber) {

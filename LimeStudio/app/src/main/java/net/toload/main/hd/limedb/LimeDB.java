@@ -4317,28 +4317,32 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     public int hasRelated(String pword, String cword) {
 
-        Cursor cursor;
+        try {
+            Cursor cursor;
 
-        String query = "";
-        if (pword != null && !pword.isEmpty() && cword != null && !cword.isEmpty()) {
-            query = Lime.DB_RELATED_COLUMN_PWORD + " = '" + pword + "' AND ";
-            query += Lime.DB_RELATED_COLUMN_CWORD + " = '" + cword + "'";
+            String query = "";
+            if (pword != null && !pword.isEmpty() && cword != null && !cword.isEmpty()) {
+                query = Lime.DB_RELATED_COLUMN_PWORD + " = '" + pword + "' AND ";
+                query += Lime.DB_RELATED_COLUMN_CWORD + " = '" + cword + "'";
+            }
+
+            cursor = db.query(Lime.DB_RELATED,
+                    null, query,
+                    null, null, null, null);
+
+            int id = 0;
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                Related r = Related.get(cursor);
+                id = r.getId();
+                cursor.moveToNext();
+            }
+            cursor.close();
+
+            return id;
+        }catch(SQLiteException sqe){
+            return 9999999;
         }
-
-        cursor = db.query(Lime.DB_RELATED,
-                null, query,
-                null, null, null, null);
-
-        int id = 0;
-        cursor.moveToFirst();
-        while (!cursor.isAfterLast()) {
-            Related r = Related.get(cursor);
-            id = r.getId();
-            cursor.moveToNext();
-        }
-        cursor.close();
-
-        return id;
     }
 
     public List<Related> loadRelated(String pword, int maximum, int offset) {

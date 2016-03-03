@@ -195,8 +195,33 @@ public class SetupImLoadDialog extends DialogFragment {
 
             getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_related_title));
 
-            btnSetupImDialogCustom.setText(getResources().getString(R.string.setup_im_related_custom));
+            btnSetupImDialogCustom.setText(getResources().getString(R.string.setup_im_import_related_default));
             btnSetupImDialogCustom.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    AlertDialog alertDialog = new AlertDialog.Builder(activity, R.style.LIMEAlertDialogTheme).create();
+                    alertDialog.setMessage(activity.getResources().getString(R.string.setup_im_import_related_default_confirm));
+                    alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    loadDefaultRelated();
+                                    handler.initialImButtons();
+                                    dismiss();
+                                }
+                            });
+                    alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
+                    alertDialog.show();
+                }
+            });
+
+
+            btnSetupImDialogLoad1.setText(getResources().getString(R.string.setup_im_import_related));
+            btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     selectMappingFile();
@@ -205,7 +230,7 @@ public class SetupImLoadDialog extends DialogFragment {
                 }
             });
 
-            btnSetupImDialogLoad1.setVisibility(View.GONE);
+            //btnSetupImDialogLoad1.setVisibility(View.GONE);
             btnSetupImDialogLoad2.setVisibility(View.GONE);
             btnSetupImDialogLoad3.setVisibility(View.GONE);
             btnSetupImDialogLoad4.setVisibility(View.GONE);
@@ -752,6 +777,32 @@ public class SetupImLoadDialog extends DialogFragment {
             return e2.getName().compareTo(e1.getName());
         }
     };
+
+    public void loadDefaultRelated() {
+
+        try {
+            File relateDBFile = LIMEUtilities.isFileExist(
+                    activity.getFilesDir().getParentFile().getPath() +
+                            "/databases/related.db");
+            if (relateDBFile != null)
+                relateDBFile.delete();
+
+            File relatedDbPath = LIMEUtilities.isFileNotExist(
+                    activity.getFilesDir().getParentFile().getPath() +
+                            "/databases/related.db");
+
+            if (relatedDbPath != null)
+                LIMEUtilities.copyRAWFile(activity.getResources().openRawResource(R.raw.lime), relatedDbPath);
+
+            DBSrv.importBackupRelatedDb(relatedDbPath);
+            relatedDbPath.deleteOnExit();
+            showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
+        } catch (Exception e) {
+            e.printStackTrace();
+            showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
+        }
+
+    }
 
     public void loadDbRelatedMapping(File unit) {
         try {

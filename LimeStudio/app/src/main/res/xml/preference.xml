@@ -202,6 +202,13 @@
             android:entryValues="@array/physical_keyboard_options_values"
             android:key="physical_keyboard_type"
             android:title="@string/physical_keyboard" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="han_convert_notify"
+            android:summary="@string/han_convert_notify_summary"
+            android:title="@string/han_convert_notify" />
+
         <ListPreference
             android:defaultValue="0"
             android:dialogTitle="@string/han_convert_option_list"

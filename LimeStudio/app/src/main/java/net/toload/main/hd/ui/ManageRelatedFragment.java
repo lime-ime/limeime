@@ -415,7 +415,8 @@ public class ManageRelatedFragment extends Fragment {
 
     public void addRelated(String pword, String cword, int score) {
 
-        if(datasource.hasRelated(pword, cword) == 0){
+        int hasRelatedCheck = datasource.hasRelated(pword, cword);
+        if(hasRelatedCheck == 0){
             // Add to database
             Related obj = new Related();
             obj.setPword(pword);
@@ -430,7 +431,11 @@ public class ManageRelatedFragment extends Fragment {
             searchrelated();
 
         }else{
-            Toast.makeText(activity, R.string.manage_related_duplicated, Toast.LENGTH_SHORT).show();
+            if(hasRelatedCheck == 9999999){
+                Toast.makeText(activity, R.string.manage_related_format_error, Toast.LENGTH_SHORT).show();
+            }else{
+                Toast.makeText(activity, R.string.manage_related_duplicated, Toast.LENGTH_SHORT).show();
+            }
         }
 
     }

@@ -46,6 +46,8 @@ public class Lime {
     // Input Method Editor Online Database Location
     // https://github.com/hosoyu/LimeStudio/raw/master/Database/array.zip
 
+    public static final String LIME_OLD_VERSION_URL = "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/limeime/LIMEHD_391_334.apk";
+
     public static final String LIME_NEWS_CONTENT = "lime_news_content";
     public static final String LIME_NEWS_CONTENT_URL = "https://github.com/lime-ime/limeime/raw/master/Resources/Message/content.html";
 

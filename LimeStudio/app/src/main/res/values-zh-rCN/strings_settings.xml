@@ -121,6 +121,10 @@
     <string name="hs_reverse_lookup_list">华象直觉字根反查</string>
     <string name="pinyin_reverse_lookup_list">拼音字根反查</string>
 
+    <string name="han_convert_ts">繁转简</string>
+    <string name="han_convert_st">简转繁</string>
+    <string name="han_convert_notify">中文简/繁体转换提示</string>
+    <string name="han_convert_notify_summary">输入间隔时间超过60秒时提示转换的设定</string>
     <string name="han_convert_option_list">中文简/繁体字码转换</string>
     <string name="selkey_option_list">设定选字键预选顺序</string>
 

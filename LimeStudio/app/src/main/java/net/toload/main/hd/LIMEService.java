@@ -67,6 +67,7 @@ import net.toload.main.hd.keyboard.LIMEMetaKeyKeyListener;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -1408,6 +1409,24 @@ public class LIMEService extends InputMethodService implements
                         if(mLIMEPref.getHanCovertOption() == 0){
                             if (ic != null) ic.commitText(wordToCommit, firstMatchedLength);
                         }else{
+                            if(mLIMEPref.getHanConvertNotify()){
+
+                                Calendar now = Calendar.getInstance();
+
+                                long nowvalue = now.getTimeInMillis();
+                                long storevalue = mLIMEPref.getParameterLong("han_notify_interval", 0);
+
+                                // 1 minute idle time
+                                if(nowvalue - storevalue > 60000){
+                                    if(mLIMEPref.getHanCovertOption() == 1){
+                                        Toast.makeText(this, R.string.han_convert_ts, Toast.LENGTH_SHORT).show();
+                                    }else if(mLIMEPref.getHanCovertOption() == 2){
+                                        Toast.makeText(this, R.string.han_convert_st, Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                                mLIMEPref.setParameter("han_notify_interval", now.getTimeInMillis());
+                            }
                             if (ic != null) ic.commitText(SearchSrv.hanConvert(wordToCommit), firstMatchedLength);
                         }
 
