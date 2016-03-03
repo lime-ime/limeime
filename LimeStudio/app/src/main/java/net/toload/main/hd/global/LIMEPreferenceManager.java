@@ -273,9 +273,13 @@ public class LIMEPreferenceManager {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("sound_on_keypress", false);
 	}
-	
+
+	public boolean getEmojiMode(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("enable_emoji", true);
+	}
+
 	public boolean getPersistentLanguageMode(){
-		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("persistent_language_mode", false);
 	}

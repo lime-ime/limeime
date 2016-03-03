@@ -2546,7 +2546,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     if (DEBUG)
                         Log.i(TAG, "getRelatedPhrase() selectString = " + selectString);
-                    cursor = db.rawQuery(selectString, null);
+
+                    try {
+                        cursor = db.rawQuery(selectString, null);
+                    }catch(SQLiteException sqe){
+                        if (DEBUG)
+                            sqe.getStackTrace();
+
+                        cursor = null;
+                    }
 
 
                 } else {

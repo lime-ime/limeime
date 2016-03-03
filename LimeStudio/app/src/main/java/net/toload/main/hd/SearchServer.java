@@ -538,16 +538,16 @@ public class SearchServer {
             for (int i = 0; i < suggestionLoL.size(); i++) {
                 if (suggestionLoL.get(i) != null && !suggestionLoL.get(i).isEmpty()) {
                     for (int j = 0; j < suggestionLoL.get(i).size(); j++) {
-                        Log.i(TAG, "makeRunTimeSuggestion() suggestionLoL(" + i + ")(" + j + "): word="
-                                + suggestionLoL.get(i).get(j).first.getWord() + ", code=" + suggestionLoL.get(i).get(j).second
-                                + ", base score=" + suggestionLoL.get(i).get(j).first.getBasescore()
-                                + ", average base score=" + suggestionLoL.get(i).get(j).first.getBasescore() / suggestionLoL.get(i).get(j).first.getWord().length()
-                                + ", score=" + suggestionLoL.get(i).get(j).first.getScore());
+                        //Log.i(TAG, "makeRunTimeSuggestion() suggestionLoL(" + i + ")(" + j + "): word="
+                        //        + suggestionLoL.get(i).get(j).first.getWord() + ", code=" + suggestionLoL.get(i).get(j).second
+                        //        + ", base score=" + suggestionLoL.get(i).get(j).first.getBasescore()
+                        //        + ", average base score=" + suggestionLoL.get(i).get(j).first.getBasescore() / suggestionLoL.get(i).get(j).first.getWord().length()
+                        //        + ", score=" + suggestionLoL.get(i).get(j).first.getScore());
                     }
                 }
             }
 
-            Log.i(TAG,"makeRunTimeSuggestion() time elapsed = " +  (System.currentTimeMillis()- startTime ) );
+            //Log.i(TAG,"makeRunTimeSuggestion() time elapsed = " +  (System.currentTimeMillis()- startTime ) );
         }
     }
 

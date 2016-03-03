@@ -802,6 +802,9 @@ public class CandidateView extends View implements View.OnClickListener {
         final int height = mHeight;//= getHeight();
         final Rect bgPadding = mBgPadding;
         final Paint candidatePaint = mCandidatePaint;
+        final Paint candidateEmojiPaint = mCandidatePaint;
+                    candidateEmojiPaint.setTextSize((float) (candidateEmojiPaint.getTextSize() * 0.9));
+
         final Paint selKeyPaint = mSelKeyPaint;
         final int touchX = mTouchX;
         final int scrollX = getScrollX();
@@ -822,10 +825,17 @@ public class CandidateView extends View implements View.OnClickListener {
                 suggestion = suggestion.substring(0, 2) + "..";
             }
             float textWidth = candidatePaint.measureText(suggestion);
+            if( i == 0 && suggestion.length() <= 2){
+                textWidth += X_GAP;
+                x += X_GAP;
+            }
+
             final int wordWidth = (int) textWidth + X_GAP * 2;
 
             mWordX[i] = x;
+
             mWordWidth[i] = wordWidth;
+
 
             if (touchX + scrollX >= x && touchX + scrollX < x + wordWidth && !scrolled) {
                 mSelectedIndex = i;
@@ -874,6 +884,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
 
             for (int i = 0; i < count; i++) {
+
                 if (count != mCount || mSuggestions == null || count != mSuggestions.size()
                         || mSuggestions.size() == 0 || i >= mSuggestions.size()) break;
 
@@ -913,8 +924,13 @@ public class CandidateView extends View implements View.OnClickListener {
                 }
 
                 if(isEmoji){
-                    canvas.drawText(suggestion, mWordX[i] + X_GAP, Math.round(y*0.85), candidatePaint);
+                    canvas.drawText(suggestion, mWordX[i] + X_GAP, Math.round(y*0.95), candidateEmojiPaint);
                 }else{
+                   /* if(i == 0 && suggestion.length() < 3){
+                        canvas.drawText(suggestion, mWordX[i] + X_GAP, y, candidatePaint);
+                    }else{
+                        canvas.drawText(suggestion, mWordX[i] + X_GAP, y, candidatePaint);
+                    }*/
                     canvas.drawText(suggestion, mWordX[i] + X_GAP, y, candidatePaint);
                 }
                 if (mShowNumber) {

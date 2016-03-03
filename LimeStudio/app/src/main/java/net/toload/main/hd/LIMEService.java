@@ -2210,52 +2210,56 @@ public class LIMEService extends InputMethodService implements
                             return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                         }
 
-                        // Load Emoji Icon
-                        HashMap<String, String> emojicheck = new HashMap<String, String>();
-                        List<Mapping> emojilist = new LinkedList<Mapping>();
 
-                        if(list.size() > 0){
+                        // Emoji Control
+                        // Check the Emoji parameter setting and load icons into the suggestions list
+                        if(mLIMEPref.getEmojiMode()){
+                            HashMap<String, String> emojicheck = new HashMap<String, String>();
+                            List<Mapping> emojilist = new LinkedList<Mapping>();
 
-                            List<Mapping> item1, item2, item3;
-                            int insertPosition = 1;
-                            if(list.size() > 1){
-                                insertPosition = 2;
-                            }
+                            if(list.size() > 0){
 
-                            item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
-                            if(item1.size() > 0){
-                                for(Mapping m: item1){
-                                    if(emojicheck.get(m.getWord()) == null){
-                                        emojilist.add(m);
-                                        emojicheck.put(m.getWord(), m.getWord());
-                                    }
+                                List<Mapping> item1, item2, item3;
+                                int insertPosition = 1;
+                                if(list.size() > 1){
+                                    insertPosition = 2;
                                 }
-                            }
-                            if(item1.size() == 0 && list.size() > 1){
-                                item2 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_TW);
-                                if(item2.size() > 0){
-                                    for(Mapping m: item2){
+
+                                item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
+                                if(item1.size() > 0){
+                                    for(Mapping m: item1){
                                         if(emojicheck.get(m.getWord()) == null){
                                             emojilist.add(m);
                                             emojicheck.put(m.getWord(), m.getWord());
                                         }
                                     }
                                 }
-                                if(item2.size() == 0){
-                                    item3 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_CN);
-                                    if(item3.size() > 0){
-                                        for(Mapping m: item3){
+                                if(item1.size() == 0 && list.size() > 1){
+                                    item2 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_TW);
+                                    if(item2.size() > 0){
+                                        for(Mapping m: item2){
                                             if(emojicheck.get(m.getWord()) == null){
                                                 emojilist.add(m);
                                                 emojicheck.put(m.getWord(), m.getWord());
                                             }
                                         }
                                     }
+                                    if(item2.size() == 0){
+                                        item3 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_CN);
+                                        if(item3.size() > 0){
+                                            for(Mapping m: item3){
+                                                if(emojicheck.get(m.getWord()) == null){
+                                                    emojilist.add(m);
+                                                    emojicheck.put(m.getWord(), m.getWord());
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
-                            }
 
-                            if(emojilist.size() > 0){
-                                list.addAll(insertPosition, emojilist);
+                                if(emojilist.size() > 0){
+                                    list.addAll(insertPosition, emojilist);
+                                }
                             }
                         }
 
@@ -2384,8 +2388,45 @@ public class LIMEService extends InputMethodService implements
                                         ignored.printStackTrace();
                                         return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                                     }
-                                    setSuggestions(list, finalHasPhysicalKeyPressed, selkey);
+
+
+                                    // Emoji Control
+                                    // Check the Emoji parameter setting and load icons into the suggestions list
+                                    if(mLIMEPref.getEmojiMode()){
+                                        HashMap<String, String> emojicheck = new HashMap<String, String>();
+                                        List<Mapping> emojilist = new LinkedList<Mapping>();
+
+                                        if(list.size() > 0){
+
+                                            List<Mapping> item1, item2, item3;
+                                            int insertPosition = 1;
+                                            if(list.size() > 1){
+                                                insertPosition = 2;
+                                            }
+
+                                            item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
+                                            if(item1.size() > 0){
+                                                for(Mapping m: item1){
+                                                    if(emojicheck.get(m.getWord()) == null){
+                                                        emojilist.add(m);
+                                                        emojicheck.put(m.getWord(), m.getWord());
+                                                    }
+                                                }
+                                            }
+
+                                            if(emojilist.size() > 0){
+                                                list.addAll(insertPosition, emojilist);
+                                            }
+                                        }
+                                    }
+
+
+                                    //Log.i("EMOJIbefore:", tempEnglishList.size() + "");
                                     tempEnglishList.addAll(list);
+                                    setSuggestions(list, finalHasPhysicalKeyPressed, selkey);
+
+                                    //Log.i("EMOJIafter:", tempEnglishList.size() + "");
+
                                 } else {
                                     //Jermy '11,8,14
                                     clearSuggestions();
@@ -2437,7 +2478,9 @@ public class LIMEService extends InputMethodService implements
                     if (committedCandidate != null && hasMappingList) {
                         if (queryThread != null && queryThread.isAlive()) queryThread.interrupt();
                         try {
-                            list.addAll(SearchSrv.getRelatedPhrase(committedCandidate.getWord(), getAllRecords));
+                            if(!committedCandidate.isEmojiRecord() && !committedCandidate.isChinesePunctuationSymbolRecord()){
+                                list.addAll(SearchSrv.getRelatedPhrase(committedCandidate.getWord(), getAllRecords));
+                            }
                         } catch (RemoteException e) {
                             e.printStackTrace();
                         }
@@ -3260,10 +3303,19 @@ public class LIMEService extends InputMethodService implements
         } else if (mLIMEPref.getEnglishPrediction() && tempEnglishList != null
                 && tempEnglishList.size() > 0) {  // user picked English prediction suggestions
 
-            if (ic != null) ic.commitText(
-                    this.tempEnglishList.get(index).getWord()
-                            .substring(tempEnglishWord.length())
-                            + " ", 0);
+
+            //Log.i("EMOJI-commit-index:", index + "");
+            //Log.i("EMOJI-commit:", tempEnglishList.size() + "");
+
+            if(this.tempEnglishList.get(index).isEmojiRecord()){
+                if (ic != null) ic.commitText(
+                        this.tempEnglishList.get(index).getWord() + " ", 0);
+            }else{
+                if (ic != null) ic.commitText(
+                        this.tempEnglishList.get(index).getWord()
+                                .substring(tempEnglishWord.length())
+                                + " ", 0);
+            }
 
             resetTempEnglishWord();
 

@@ -75,8 +75,10 @@
     <string name="Similiar">關聯字</string>
     <string name="mapping">對應表</string>
 
-    <string name="keyboard_list">LIME輸入法切換</string>
+    <string name="keyboard_list">LIME 輸入法切換</string>
 
+    <string name="enable_emoji">開啟 EMOJI 顯示</string>
+    <string name="enable_emoji_summary">依字根或中文組字顯示EMOJI圖示</string>
     <string name="persistent_language_mode">記憶中英模式</string>
     <string name="persistent_language_mode_summary">下次切換前保持中英模式</string>
     <string name="number_row_in_english">數字列英文鍵盤</string>
