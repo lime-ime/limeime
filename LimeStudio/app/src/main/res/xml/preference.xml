@@ -216,6 +216,13 @@
             android:entryValues="@array/han_convert_options_values"
             android:key="han_convert_option"
             android:title="@string/han_convert_option_list" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="reverse_lookup_notify"
+            android:title="@string/reverse_lookup_notify" />
+
+
         <ListPreference
             android:defaultValue="none"
             android:dialogTitle="@string/im_reverse_lookup_list"

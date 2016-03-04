@@ -1514,7 +1514,10 @@ public class LIMEService extends InputMethodService implements
 
                             if(committedCandidate != null && committedCandidate.getWord() != null){
                                 SearchSrv.learnRelatedPhraseAndUpdateScore(committedCandidate);
-                                SearchSrv.getCodeListStringFromWord(committedCandidate.getWord());  //do reverse lookup and display notification if required.
+
+                                //do reverse lookup and display notification if required.
+
+                                SearchSrv.getCodeListStringFromWord(committedCandidate.getWord());
                             }
 
                         }

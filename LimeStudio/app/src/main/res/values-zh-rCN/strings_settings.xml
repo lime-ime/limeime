@@ -121,6 +121,8 @@
     <string name="hs_reverse_lookup_list">华象直觉字根反查</string>
     <string name="pinyin_reverse_lookup_list">拼音字根反查</string>
 
+    <string name="reverse_lookup_notify">启用字根反查跳出提示</string>
+
     <string name="han_convert_ts">繁转简</string>
     <string name="han_convert_st">简转繁</string>
     <string name="han_convert_notify">中文简/繁体转换提示</string>

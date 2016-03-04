@@ -1063,7 +1063,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (DEBUG)
             Log.i(TAG, "getRmapping() Result:" + result);
 
-
         return result;
     }
 

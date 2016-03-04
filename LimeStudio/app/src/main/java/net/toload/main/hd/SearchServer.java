@@ -29,6 +29,7 @@ import android.content.Intent;
 import android.os.RemoteException;
 import android.util.Log;
 import android.util.Pair;
+import android.widget.Toast;
 
 import net.toload.main.hd.data.ImObj;
 import net.toload.main.hd.data.KeyboardObj;
@@ -189,16 +190,15 @@ public class SearchServer {
     //Add by jeremy '10, 4,1
     public void getCodeListStringFromWord(final String word) throws RemoteException {
 
-        Thread queryThread = new Thread() {
-            public void run() {
-                String result = dbadapter.getCodeListStringByWord(word);
-                if (result != null && !result.equals("")) {
-                    LIMEUtilities.showNotification(
-                            mContext, true, mContext.getText(R.string.ime_setting), result, new Intent(mContext, MainActivity.class));
-                }
+        String result = dbadapter.getCodeListStringByWord(word);
+        if (result != null && !result.equals("")) {
+            LIMEUtilities.showNotification(
+                    mContext, true, mContext.getText(R.string.ime_setting), result, new Intent(mContext, MainActivity.class));
+
+            if(mLIMEPref.getReverseLookupNotify()){
+                Toast.makeText(mContext, result, Toast.LENGTH_SHORT).show();
             }
-        };
-        queryThread.start();
+        }
 
     }
 
