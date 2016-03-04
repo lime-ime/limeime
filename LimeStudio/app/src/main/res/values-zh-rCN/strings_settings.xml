@@ -508,9 +508,13 @@
     <string name="l3_im_download_from_dayi_start">开始下载 OpenVanilla 大易字根</string>
     <string name="l3_im_download_from_dayi_install">开始安装 OpenVanilla 大易字根</string>
 
+    <string name="l3_im_download_from_phonetic_big5">安装 OpenVanilla 注音字根 (BIG5字集)</string>
+
     <string name="l3_im_download_from_phonetic">安装 OpenVanilla 注音字根</string>
     <string name="l3_im_download_from_phonetic_start">开始下载 OpenVanilla 注音字根</string>
     <string name="l3_im_download_from_phonetic_install">开始安装 OpenVanilla 注音字根</string>
+
+    <string name="l3_im_download_from_phonetic_adv_big5">安装注音连打字根 (BIG5字集)</string>
 
     <string name="l3_im_download_from_phonetic_adv">安装注音连打字根</string>
     <string name="l3_im_download_from_phonetic_adv_start">开始下载注音连打字根</string>

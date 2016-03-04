@@ -71,9 +71,14 @@ public class Lime {
     public static final String DATABASE_OPENFOUNDRY_IM_PINYIN = DATABASE_OPENFOUNDRY_URL_BASED + "pinyin.zip";
     public static final String DATABASE_CLOUD_IM_PINYIN_KEYBOARD = "lime";
 
+    public static final String DATABASE_CLOUD_IM_PHONETICCOMPLETE_BIG5 = DATABASE_CLOUD_URL_BASED + "phoneticcompletebig5.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "phoneticcompletebig5.zip";
+
     public static final String DATABASE_CLOUD_IM_PHONETICCOMPLETE = DATABASE_CLOUD_URL_BASED + "phoneticcomplete.zip";
     public static final String DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE = DATABASE_OPENFOUNDRY_URL_BASED + "phoneticcomplete.zip";
-    public static final String DATABASE_CLOUD_IM_PHONETICCOMPLETE_KEYBOARD = "phonetic";
+
+    public static final String DATABASE_CLOUD_IM_PHONETIC_BIG5 = DATABASE_CLOUD_URL_BASED + "phoneticbig5.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_PHONETIC_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "phoneticbig5.zip";
 
     public static final String DATABASE_CLOUD_IM_PHONETIC = DATABASE_CLOUD_URL_BASED + "phonetic.zip";
     public static final String DATABASE_OPENFOUNDRY_IM_PHONETIC = DATABASE_OPENFOUNDRY_URL_BASED + "phonetic.zip";
@@ -177,6 +182,8 @@ public class Lime {
     public static final String IM_HS_V3 = "hs3";
     public static final String IM_PHONETIC = "phonetic";
     public static final String IM_PHONETIC_ADV = "phoneticadv";
+    public static final String IM_PHONETIC_BIG5 = "phoneticbig5";
+    public static final String IM_PHONETIC_ADV_BIG5 = "phoneticadvbig5";
     public static final String IM_PINYIN = "pinyin";
     public static final String IM_PINYINGB = "pinyin";
     public static final String IM_SCJ = "scj";

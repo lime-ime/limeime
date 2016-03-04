@@ -306,22 +306,34 @@ public class SetupImLoadDialog extends DialogFragment {
 
                 if (imtype.equals(Lime.DB_TABLE_PHONETIC)) {
 
-                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_phonetic) + " (34,838)");
+                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_phonetic_big5) + " (34,838)");
                     btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            downloadAndLoadIm(Lime.DB_TABLE_PHONETIC, Lime.IM_PHONETIC);
+                            downloadAndLoadIm(Lime.DB_TABLE_PHONETIC, Lime.IM_PHONETIC_BIG5);
                         }
                     });
-                    btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_phonetic_adv) + " (95,029)");
+                    btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_phonetic) + " (34,838)");
                     btnSetupImDialogLoad2.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             downloadAndLoadIm(Lime.DB_TABLE_PHONETIC, Lime.IM_PHONETIC_ADV);
                         }
                     });
-                    btnSetupImDialogLoad3.setVisibility(View.GONE);
-                    btnSetupImDialogLoad4.setVisibility(View.GONE);
+                    btnSetupImDialogLoad3.setText(getResources().getString(R.string.l3_im_download_from_phonetic_adv_big5) + " (95,029)");
+                    btnSetupImDialogLoad3.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_PHONETIC, Lime.IM_PHONETIC_ADV_BIG5);
+                        }
+                    });
+                    btnSetupImDialogLoad4.setText(getResources().getString(R.string.l3_im_download_from_phonetic_adv) + " (95,029)");
+                    btnSetupImDialogLoad4.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_PHONETIC, Lime.IM_PHONETIC_ADV);
+                        }
+                    });
 
                 } else if (imtype.equals(Lime.DB_TABLE_CJ)) {
 
@@ -664,6 +676,10 @@ public class SetupImLoadDialog extends DialogFragment {
                 url = Lime.DATABASE_CLOUD_IM_ECJHK;
             }else if(type.equals(Lime.IM_EZ )){
                 url = Lime.DATABASE_CLOUD_IM_EZ;
+            }else if(type.equals(Lime.IM_PHONETIC_BIG5)){
+                url = Lime.DATABASE_CLOUD_IM_PHONETIC_BIG5;
+            }else if(type.equals(Lime.IM_PHONETIC_ADV_BIG5)){
+                url = Lime.DATABASE_CLOUD_IM_PHONETICCOMPLETE_BIG5;
             }else if(type.equals(Lime.IM_PHONETIC )){
                 url = Lime.DATABASE_CLOUD_IM_PHONETIC;
             }else if(type.equals(Lime.IM_PHONETIC_ADV )){
