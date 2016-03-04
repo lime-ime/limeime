@@ -530,6 +530,7 @@
     <string name="l3_im_download_from_cj_cns_start">開始下載倉頡CNS11643字根</string>
     <string name="l3_im_download_from_cj_cns_install">開始安裝倉頡CNS11643字根</string>
 
+    <string name="l3_im_download_from_cj_big5">安裝倉頡字根 (BIG5字集)</string>
     <string name="l3_im_download_from_cj">安裝倉頡字根</string>
     <string name="l3_im_download_from_cj_start">開始下載倉頡字根</string>
     <string name="l3_im_download_from_cj_install">開始安裝倉頡字根</string>

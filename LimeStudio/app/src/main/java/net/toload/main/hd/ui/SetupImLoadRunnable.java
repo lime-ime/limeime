@@ -105,6 +105,8 @@ public class SetupImLoadRunnable implements Runnable{
                 url = Lime.DATABASE_OPENFOUNDRY_IM_ARRAY;
             }else if(type.equals(Lime.IM_ARRAY10 )){
                 url = Lime.DATABASE_OPENFOUNDRY_IM_ARRAY10;
+            }else if(type.equals(Lime.IM_CJ_BIG5 )){
+                url = Lime.DATABASE_OPENFOUNDRY_IM_CJ_BIG5;
             }else if(type.equals(Lime.IM_CJ )){
                 url = Lime.DATABASE_OPENFOUNDRY_IM_CJ;
             }else if(type.equals(Lime.IM_CJHK )){
@@ -123,6 +125,10 @@ public class SetupImLoadRunnable implements Runnable{
                 url = Lime.DATABASE_OPENFOUNDRY_IM_ECJHK;
             }else if(type.equals(Lime.IM_EZ )){
                 url = Lime.DATABASE_OPENFOUNDRY_IM_EZ;
+            }else if(type.equals(Lime.IM_PHONETIC_BIG5 )){
+                url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETIC_BIG5;
+            }else if(type.equals(Lime.IM_PHONETIC_ADV_BIG5 )){
+                url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE_BIG5;
             }else if(type.equals(Lime.IM_PHONETIC )){
                 url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETIC;
             }else if(type.equals(Lime.IM_PHONETIC_ADV )){

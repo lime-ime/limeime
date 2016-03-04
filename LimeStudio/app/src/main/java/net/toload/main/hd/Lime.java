@@ -116,6 +116,9 @@ public class Lime {
     public static final String DATABASE_OPENFOUNDRY_IM_CJ5 = DATABASE_OPENFOUNDRY_URL_BASED + "cj5.zip";
     public static final String DATABASE_CLOUD_IM_CJ5_KEYBOARD = "cj";
 
+    public static final String DATABASE_CLOUD_IM_CJ_BIG5 = DATABASE_CLOUD_URL_BASED + "cjbig5.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_CJ_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "cjbig5.zip";
+
     public static final String DATABASE_CLOUD_IM_CJ = DATABASE_CLOUD_URL_BASED + "cj.zip";
     public static final String DATABASE_OPENFOUNDRY_IM_CJ = DATABASE_OPENFOUNDRY_URL_BASED + "cj.zip";
     public static final String DATABASE_CLOUD_IM_CJ_KEYBOARD = "cj";
@@ -166,6 +169,7 @@ public class Lime {
     
     public static final String IM_ARRAY = "array";
     public static final String IM_ARRAY10 = "array10";
+    public static final String IM_CJ_BIG5 = "cjbig5";
     public static final String IM_CJ = "cj";
     public static final String IM_CJHK = "cjhk";
     public static final String IM_CJ5 = "cj5";

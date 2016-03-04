@@ -530,6 +530,7 @@
     <string name="l3_im_download_from_cj_cns_start">开始下载仓颉CNS11643字根</string>
     <string name="l3_im_download_from_cj_cns_install">开始安装仓颉CNS11643字根</string>
 
+    <string name="l3_im_download_from_cj_big5">安装仓颉字根 (BIG5字集)</string>
     <string name="l3_im_download_from_cj">安装仓颉字根</string>
     <string name="l3_im_download_from_cj_start">开始下载仓颉字根</string>
     <string name="l3_im_download_from_cj_install">开始安装仓颉字根</string>

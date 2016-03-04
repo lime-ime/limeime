@@ -306,7 +306,7 @@ public class SetupImLoadDialog extends DialogFragment {
 
                 if (imtype.equals(Lime.DB_TABLE_PHONETIC)) {
 
-                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_phonetic_big5) + " (34,838)");
+                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_phonetic_big5) + " (15,945)");
                     btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -320,7 +320,7 @@ public class SetupImLoadDialog extends DialogFragment {
                             downloadAndLoadIm(Lime.DB_TABLE_PHONETIC, Lime.IM_PHONETIC_ADV);
                         }
                     });
-                    btnSetupImDialogLoad3.setText(getResources().getString(R.string.l3_im_download_from_phonetic_adv_big5) + " (95,029)");
+                    btnSetupImDialogLoad3.setText(getResources().getString(R.string.l3_im_download_from_phonetic_adv_big5) + " (76,122)");
                     btnSetupImDialogLoad3.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -337,21 +337,27 @@ public class SetupImLoadDialog extends DialogFragment {
 
                 } else if (imtype.equals(Lime.DB_TABLE_CJ)) {
 
-                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_cj) + " (28,596)");
+                    btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_cj_big5) + " (13,859)");
                     btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            downloadAndLoadIm(Lime.DB_TABLE_CJ, Lime.IM_CJ_BIG5);
+                        }
+                    });
+                    btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_cj) + " (28,596)");
+                    btnSetupImDialogLoad2.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             downloadAndLoadIm(Lime.DB_TABLE_CJ, Lime.IM_CJ);
                         }
                     });
-                    btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_cjk_hk_cj) + " (30,278)");
-                    btnSetupImDialogLoad2.setOnClickListener(new View.OnClickListener() {
+                    btnSetupImDialogLoad3.setText(getResources().getString(R.string.l3_im_download_from_cjk_hk_cj) + " (30,278)");
+                    btnSetupImDialogLoad3.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             downloadAndLoadIm(Lime.DB_TABLE_CJ, Lime.IM_CJHK);
                         }
                     });
-                    btnSetupImDialogLoad3.setVisibility(View.GONE);
                     btnSetupImDialogLoad4.setVisibility(View.GONE);
 
                 } else if (imtype.equals(Lime.DB_TABLE_CJ5)) {
@@ -658,6 +664,8 @@ public class SetupImLoadDialog extends DialogFragment {
                 url = Lime.DATABASE_CLOUD_IM_ARRAY;
             }else if(type.equals(Lime.IM_ARRAY10 )){
                 url = Lime.DATABASE_CLOUD_IM_ARRAY10;
+            }else if(type.equals(Lime.IM_CJ_BIG5 )){
+                url = Lime.DATABASE_CLOUD_IM_CJ_BIG5;
             }else if(type.equals(Lime.IM_CJ )){
                 url = Lime.DATABASE_CLOUD_IM_CJ;
             }else if(type.equals(Lime.IM_CJHK )){
