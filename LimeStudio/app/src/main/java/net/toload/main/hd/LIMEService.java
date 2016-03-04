@@ -1446,10 +1446,9 @@ public class LIMEService extends InputMethodService implements
                         if (DEBUG)
                             Log.i(TAG, "commitTyped(): committedCodeLength = " + committedCodeLength);
 
-                        if (mComposing.length() > selectedCandidate.getCode().length()) {
+                        if (mComposing.length() > selectedCandidate.getCode().length() && !currentSoftKeyboard.contains("phonetic")) {
                             composingNotFinish = true;
                         }
-
 
                         boolean shouldUpdateCandidates = false;
                         if (composingNotFinish) {
@@ -1516,12 +1515,9 @@ public class LIMEService extends InputMethodService implements
                                 SearchSrv.learnRelatedPhraseAndUpdateScore(committedCandidate);
 
                                 //do reverse lookup and display notification if required.
-
                                 SearchSrv.getCodeListStringFromWord(committedCandidate.getWord());
                             }
-
                         }
-
 
                     } else {
                         if (ic != null) ic.commitText(mComposing,

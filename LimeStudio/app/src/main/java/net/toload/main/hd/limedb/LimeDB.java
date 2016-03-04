@@ -1452,6 +1452,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      */
     public List<Mapping> getMappingByCode(String code, boolean softKeyboard, boolean getAllRecords) {
 
+        String codeorig = code;
+
         long startTime=0;
         if (DEBUG||probePerformance) {
             startTime = System.currentTimeMillis();
@@ -1562,7 +1564,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     // Jeremy '11,6,15 Using getMappingByCode with preprocessed code and extra getMappingByCode conditions.
 
                     if (cursor != null) {
-                        result = buildQueryResult(code, cursor, getAllRecords);
+                        result = buildQueryResult(code, codeorig, cursor, getAllRecords);
                         cursor.close();
                     }
 
@@ -2291,7 +2293,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Process search results
      */
-    private synchronized List<Mapping> buildQueryResult(String query_code, Cursor cursor, Boolean getAllRecords) {
+    private synchronized List<Mapping> buildQueryResult(String query_code, String codeorig, Cursor cursor, Boolean getAllRecords) {
 
         long startTime =0;
         if (DEBUG||probePerformance) {
@@ -2338,6 +2340,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 String code = cursor.getString(codeColumn);
                 Mapping m = new Mapping();
                 m.setCode(code);
+                m.setCodeorig(codeorig);
                 m.setWord(word);
                 m.setId(cursor.getString(idColumn));
                 m.setScore(cursor.getInt(scoreColumn));

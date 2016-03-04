@@ -30,7 +30,8 @@ package net.toload.main.hd.data;
 public class Mapping {
 
 	private String id;
-	private String code;;
+	private String code;
+	private String codeorig;
 	private String word;
 	private String pword;
 	//Jeremy '12,5,30 changed from string to boolean to indicate if it's from highLighted list or exact match result
@@ -63,6 +64,7 @@ public class Mapping {
 	public Mapping(Mapping mapping) {
 		this.setId(mapping.id);
 		this.setCode(mapping.code);
+		this.setCodeorig(mapping.codeorig);
 		this.setWord(mapping.word);
 		this.setPword(mapping.pword);
 		this.setScore(mapping.score);
@@ -158,12 +160,23 @@ public class Mapping {
 		}
 		return null;
 	}
+
+
 	/**
 	 * @param code the code to set
 	 */
 	public void setCode(String code) {
 		this.code = code;
 	}
+
+	public String getCodeorig() {
+		return codeorig;
+	}
+
+	public void setCodeorig(String codeorig) {
+		this.codeorig = codeorig;
+	}
+
 	/**
 	 * @return the word
 	 */
