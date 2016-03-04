@@ -115,7 +115,9 @@
     <string name="setup_im_restore_learning_data">还原输入法选字喜好</string>
     <string name="setup_im_restore_learning_data_message">请问您是否要还原输入法选字喜好?</string>
 
+    <!--<string name="setup_load_download_dayiuni_big5">安装 Unicode 3+4 码单字版 (BIG5字集)</string>-->
     <string name="setup_load_download_dayiuni">安装 Unicode 3+4 码单字版</string>
+    <!--<string name="setup_load_download_dayiunip_big5">安装 Unicode 3+4 码词库版 (BIG5字集)</string>-->
     <string name="setup_load_download_dayiunip">安装 Unicode 3+4 码词库版</string>
 
     <string name="setup_load_download">下载输入法文档</string>
@@ -231,7 +233,6 @@
 
     <string name="import_related_success">成功建立关联数据库</string>
     <string name="import_word_success">成功建立输入法字根</string>
-
 
     <string name="help_dialog_title">使用说明</string>
     <string name="help_dialog_detail">

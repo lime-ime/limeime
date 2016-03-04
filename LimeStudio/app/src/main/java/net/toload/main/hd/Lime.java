@@ -98,8 +98,16 @@ public class Lime {
 
     public static final String DATABASE_CLOUD_IM_DAYI = DATABASE_CLOUD_URL_BASED + "dayi.zip";
     public static final String DATABASE_OPENFOUNDRY_IM_DAYI = DATABASE_OPENFOUNDRY_URL_BASED + "dayi.zip";
+
+    public static final String DATABASE_CLOUD_IM_DAYIUNI_BIG5 = DATABASE_CLOUD_URL_BASED + "dayiunibig5.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_DAYIUNI_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "dayiunibig5.zip";
+
     public static final String DATABASE_CLOUD_IM_DAYIUNI = DATABASE_CLOUD_URL_BASED + "dayiuni.zip";
     public static final String DATABASE_OPENFOUNDRY_IM_DAYIUNI = DATABASE_OPENFOUNDRY_URL_BASED + "dayiuni.zip";
+
+    public static final String DATABASE_CLOUD_IM_DAYIUNIP_BIG5 = DATABASE_CLOUD_URL_BASED + "dayiunipbig5.zip";
+    public static final String DATABASE_OPENFOUNDRY_IM_DAYIUNIP_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "dayiunipbig5.zip";
+
     public static final String DATABASE_CLOUD_IM_DAYIUNIP = DATABASE_CLOUD_URL_BASED + "dayiunip.zip";
     public static final String DATABASE_OPENFOUNDRY_IM_DAYIUNIP = DATABASE_OPENFOUNDRY_URL_BASED + "dayiunip.zip";
     public static final String DATABASE_CLOUD_IM_DAYI_KEYBOARD = "dayisym";
@@ -176,7 +184,9 @@ public class Lime {
     public static final String IM_CUSTOM = "custom";
     public static final String IM_DAYI = "dayi";
     public static final String IM_DAYIUNI = "dayiuni";
+    public static final String IM_DAYIUNI_BIG5 = "dayiunibig5";
     public static final String IM_DAYIUNIP = "dayiunip";
+    public static final String IM_DAYIUNIP_BIG5 = "dayiunipbig5";
     public static final String IM_ECJ = "ecj";
     public static final String IM_ECJHK = "ecjhk";
     public static final String IM_EZ = "ez";

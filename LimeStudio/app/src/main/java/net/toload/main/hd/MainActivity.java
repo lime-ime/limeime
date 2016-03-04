@@ -36,6 +36,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.ServiceConnection;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.Uri;
@@ -62,6 +64,7 @@ import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
+import net.toload.main.hd.ui.HelpDialog;
 import net.toload.main.hd.ui.ImportDialog;
 import net.toload.main.hd.ui.ManageRelatedFragment;
 import net.toload.main.hd.ui.NewsDialog;
@@ -224,6 +227,8 @@ public class MainActivity extends ActionBarActivity
         super.onStop();
     }
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -293,6 +298,24 @@ public class MainActivity extends ActionBarActivity
             }
 
         }
+
+        String versionstr = "";
+        PackageInfo pInfo = null;
+        try {
+            pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            versionstr = "v"+ pInfo.versionName + " - " + pInfo.versionCode;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        String cversion = mLIMEPref.getParameterString("current_version", "");
+        if(cversion == null || cversion.isEmpty() || !cversion.equals(versionstr)){
+            android.support.v4.app.FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            HelpDialog dialog = HelpDialog.newInstance();
+            dialog.show(ft, "helpdialog");
+            mLIMEPref.setParameter("current_version", versionstr);
+        }
+
         // Download Message from the server
        /* new Thread(new Runnable() {
 

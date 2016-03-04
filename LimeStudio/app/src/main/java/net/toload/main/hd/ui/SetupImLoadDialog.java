@@ -83,6 +83,8 @@ public class SetupImLoadDialog extends DialogFragment {
     Button btnSetupImDialogLoad2;
     Button btnSetupImDialogLoad3;
     Button btnSetupImDialogLoad4;
+    Button btnSetupImDialogLoad5;
+    Button btnSetupImDialogLoad6;
     Button btnSetupImDialogCancel;
 
     CheckBox chkSetupImBackupLearning;
@@ -190,6 +192,8 @@ public class SetupImLoadDialog extends DialogFragment {
         btnSetupImDialogLoad2 = (Button) rootView.findViewById(R.id.btnSetupImDialogLoad2);
         btnSetupImDialogLoad3 = (Button) rootView.findViewById(R.id.btnSetupImDialogLoad3);
         btnSetupImDialogLoad4 = (Button) rootView.findViewById(R.id.btnSetupImDialogLoad4);
+        btnSetupImDialogLoad5 = (Button) rootView.findViewById(R.id.btnSetupImDialogLoad5);
+        btnSetupImDialogLoad6 = (Button) rootView.findViewById(R.id.btnSetupImDialogLoad6);
 
         if(imtype.equalsIgnoreCase(Lime.DB_RELATED)){
 
@@ -234,6 +238,8 @@ public class SetupImLoadDialog extends DialogFragment {
             btnSetupImDialogLoad2.setVisibility(View.GONE);
             btnSetupImDialogLoad3.setVisibility(View.GONE);
             btnSetupImDialogLoad4.setVisibility(View.GONE);
+            btnSetupImDialogLoad5.setVisibility(View.GONE);
+            btnSetupImDialogLoad6.setVisibility(View.GONE);
             chkSetupImBackupLearning.setVisibility(View.GONE);
             chkSetupImRestoreLearning.setVisibility(View.GONE);
 
@@ -278,6 +284,8 @@ public class SetupImLoadDialog extends DialogFragment {
                 btnSetupImDialogLoad2.setVisibility(View.GONE);
                 btnSetupImDialogLoad3.setVisibility(View.GONE);
                 btnSetupImDialogLoad4.setVisibility(View.GONE);
+                btnSetupImDialogLoad5.setVisibility(View.GONE);
+                btnSetupImDialogLoad6.setVisibility(View.GONE);
                 btnSetupImDialogCustom.setVisibility(View.GONE);
 
                 chkSetupImBackupLearning.setVisibility(View.VISIBLE);
@@ -335,6 +343,8 @@ public class SetupImLoadDialog extends DialogFragment {
                         }
                     });
 
+                    btnSetupImDialogLoad5.setVisibility(View.GONE);
+                    btnSetupImDialogLoad6.setVisibility(View.GONE);
                 } else if (imtype.equals(Lime.DB_TABLE_CJ)) {
 
                     btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_cj_big5) + " (13,859)");
@@ -359,6 +369,8 @@ public class SetupImLoadDialog extends DialogFragment {
                         }
                     });
                     btnSetupImDialogLoad4.setVisibility(View.GONE);
+                    btnSetupImDialogLoad5.setVisibility(View.GONE);
+                    btnSetupImDialogLoad6.setVisibility(View.GONE);
 
                 } else if (imtype.equals(Lime.DB_TABLE_CJ5)) {
 
@@ -372,6 +384,8 @@ public class SetupImLoadDialog extends DialogFragment {
                     btnSetupImDialogLoad2.setVisibility(View.GONE);
                     btnSetupImDialogLoad3.setVisibility(View.GONE);
                     btnSetupImDialogLoad4.setVisibility(View.GONE);
+                    btnSetupImDialogLoad5.setVisibility(View.GONE);
+                    btnSetupImDialogLoad6.setVisibility(View.GONE);
 
                 } else if (imtype.equals(Lime.DB_TABLE_SCJ)) {
 
@@ -385,6 +399,8 @@ public class SetupImLoadDialog extends DialogFragment {
                     btnSetupImDialogLoad2.setVisibility(View.GONE);
                     btnSetupImDialogLoad3.setVisibility(View.GONE);
                     btnSetupImDialogLoad4.setVisibility(View.GONE);
+                    btnSetupImDialogLoad5.setVisibility(View.GONE);
+                    btnSetupImDialogLoad6.setVisibility(View.GONE);
 
                 } else if (imtype.equals(Lime.DB_TABLE_ECJ)) {
 
@@ -404,6 +420,8 @@ public class SetupImLoadDialog extends DialogFragment {
                     });
                     btnSetupImDialogLoad3.setVisibility(View.GONE);
                     btnSetupImDialogLoad4.setVisibility(View.GONE);
+                    btnSetupImDialogLoad5.setVisibility(View.GONE);
+                    btnSetupImDialogLoad6.setVisibility(View.GONE);
 
                 } else if (imtype.equals(Lime.DB_TABLE_DAYI)) {
 
@@ -429,6 +447,8 @@ public class SetupImLoadDialog extends DialogFragment {
                         }
                     });
                     btnSetupImDialogLoad4.setVisibility(View.GONE);
+                    btnSetupImDialogLoad5.setVisibility(View.GONE);
+                    btnSetupImDialogLoad6.setVisibility(View.GONE);
 
                 } else if (imtype.equals(Lime.DB_TABLE_EZ)) {
 
@@ -442,6 +462,8 @@ public class SetupImLoadDialog extends DialogFragment {
                     btnSetupImDialogLoad2.setVisibility(View.GONE);
                     btnSetupImDialogLoad3.setVisibility(View.GONE);
                     btnSetupImDialogLoad4.setVisibility(View.GONE);
+                    btnSetupImDialogLoad5.setVisibility(View.GONE);
+                    btnSetupImDialogLoad6.setVisibility(View.GONE);
 
                 } else if (imtype.equals(Lime.DB_TABLE_ARRAY)) {
 
@@ -455,6 +477,8 @@ public class SetupImLoadDialog extends DialogFragment {
                     btnSetupImDialogLoad2.setVisibility(View.GONE);
                     btnSetupImDialogLoad3.setVisibility(View.GONE);
                     btnSetupImDialogLoad4.setVisibility(View.GONE);
+                    btnSetupImDialogLoad5.setVisibility(View.GONE);
+                    btnSetupImDialogLoad6.setVisibility(View.GONE);
 
                 } else if (imtype.equals(Lime.DB_TABLE_ARRAY10)) {
 
@@ -468,6 +492,8 @@ public class SetupImLoadDialog extends DialogFragment {
                     btnSetupImDialogLoad2.setVisibility(View.GONE);
                     btnSetupImDialogLoad3.setVisibility(View.GONE);
                     btnSetupImDialogLoad4.setVisibility(View.GONE);
+                    btnSetupImDialogLoad5.setVisibility(View.GONE);
+                    btnSetupImDialogLoad6.setVisibility(View.GONE);
 
                 } else if (imtype.equals(Lime.DB_TABLE_PINYIN)) {
 
@@ -488,6 +514,8 @@ public class SetupImLoadDialog extends DialogFragment {
                     btnSetupImDialogLoad2.setVisibility(View.GONE);
                     btnSetupImDialogLoad3.setVisibility(View.GONE);
                     btnSetupImDialogLoad4.setVisibility(View.GONE);
+                    btnSetupImDialogLoad5.setVisibility(View.GONE);
+                    btnSetupImDialogLoad6.setVisibility(View.GONE);
 
                 } else if (imtype.equals(Lime.DB_TABLE_WB)) {
 
@@ -501,6 +529,8 @@ public class SetupImLoadDialog extends DialogFragment {
                     btnSetupImDialogLoad2.setVisibility(View.GONE);
                     btnSetupImDialogLoad3.setVisibility(View.GONE);
                     btnSetupImDialogLoad4.setVisibility(View.GONE);
+                    btnSetupImDialogLoad5.setVisibility(View.GONE);
+                    btnSetupImDialogLoad6.setVisibility(View.GONE);
                 } else if (imtype.equals(Lime.DB_TABLE_HS)) {
 
                     btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_hs) + " (183,659)");
@@ -531,12 +561,16 @@ public class SetupImLoadDialog extends DialogFragment {
                             downloadAndLoadIm(Lime.DB_TABLE_HS, Lime.IM_HS_V3);
                         }
                     });
+                    btnSetupImDialogLoad5.setVisibility(View.GONE);
+                    btnSetupImDialogLoad6.setVisibility(View.GONE);
 
                 } else {
                     btnSetupImDialogLoad1.setVisibility(View.GONE);
                     btnSetupImDialogLoad2.setVisibility(View.GONE);
                     btnSetupImDialogLoad3.setVisibility(View.GONE);
                     btnSetupImDialogLoad4.setVisibility(View.GONE);
+                    btnSetupImDialogLoad5.setVisibility(View.GONE);
+                    btnSetupImDialogLoad6.setVisibility(View.GONE);
                 }
             }
         }
