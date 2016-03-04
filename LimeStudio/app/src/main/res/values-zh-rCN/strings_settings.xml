@@ -78,7 +78,8 @@
     <string name="keyboard_list">LIME输入法切换</string>
 
     <string name="enable_emoji">开启 EMOJI 显示</string>
-    <string name="enable_emoji_summary">依字根或中文组字显示EMOJI图示</string>
+    <string name="enable_emoji_summary">依字根或中文组字显示图示, 由于字型支援的差异所以部份图示可能无法正确显示</string>
+    <string name="enable_emoji_position">设定 EMOJI 候选列显示位置</string>
     <string name="persistent_language_mode">记忆中英模式</string>
     <string name="persistent_language_mode_summary">下次切换前保持中英模式</string>
     <string name="number_row_in_english">数字列英文键盘</string>
@@ -228,6 +229,18 @@
         <item>无</item>
         <item>繁转简</item>
         <item>简转繁</item>
+    </string-array>
+
+    <string-array name="emoji_display_position">
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
     </string-array>
 
     <string-array name="han_convert_options_values">

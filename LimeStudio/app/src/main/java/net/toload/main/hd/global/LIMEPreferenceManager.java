@@ -279,6 +279,11 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("enable_emoji", true);
 	}
 
+	public Integer getEmojiDisplayPosition(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return Integer.parseInt(sp.getString("enable_emoji_position", "3"));
+	}
+
 	public boolean getReverseLookupNotify(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("reverse_lookup_notify", true);

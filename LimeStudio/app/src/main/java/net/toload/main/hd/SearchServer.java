@@ -620,6 +620,8 @@ public class SearchServer {
             List<Mapping> resultList
                     = getMappingByCodeFromCacheOrDB(code, getAllRecords);
 
+
+
             //Jeremy '15,7,16 reset abandonPhraseSuggestion if code length ==1
             if(mLIMEPref.getSmartChineseInput() && abandonPhraseSuggestion && code.length()==1){
                 clearRunTimeSuggestion(false);

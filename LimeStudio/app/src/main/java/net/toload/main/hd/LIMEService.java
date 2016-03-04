@@ -2243,9 +2243,9 @@ public class LIMEService extends InputMethodService implements
                             if(list.size() > 0){
 
                                 List<Mapping> item1, item2, item3;
-                                int insertPosition = 1;
-                                if(list.size() > 1){
-                                    insertPosition = 2;
+                                int insertPosition = mLIMEPref.getEmojiDisplayPosition();
+                                if(list.size() <= insertPosition){
+                                    insertPosition = list.size();
                                 }
 
                                 item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
@@ -2421,10 +2421,10 @@ public class LIMEService extends InputMethodService implements
 
                                         if(list.size() > 0){
 
-                                            List<Mapping> item1, item2, item3;
-                                            int insertPosition = 1;
-                                            if(list.size() > 1){
-                                                insertPosition = 2;
+                                            List<Mapping> item1;
+                                            int insertPosition = mLIMEPref.getEmojiDisplayPosition();
+                                            if(list.size() <= insertPosition){
+                                                insertPosition = list.size();
                                             }
 
                                             item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
