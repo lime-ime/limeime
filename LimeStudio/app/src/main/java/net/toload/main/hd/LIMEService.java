@@ -1446,7 +1446,7 @@ public class LIMEService extends InputMethodService implements
                         if (DEBUG)
                             Log.i(TAG, "commitTyped(): committedCodeLength = " + committedCodeLength);
 
-                        if (mComposing.length() > selectedCandidate.getCode().length() && !currentSoftKeyboard.contains("phonetic")) {
+                        if (mComposing.length() > selectedCandidate.getCode().length()) {
                             composingNotFinish = true;
                         }
 
