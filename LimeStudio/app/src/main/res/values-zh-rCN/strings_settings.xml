@@ -80,6 +80,7 @@
     <string name="enable_emoji">开启 EMOJI 显示</string>
     <string name="enable_emoji_summary">依字根或中文组字显示图示, 由于字型支援的差异所以部份图示可能无法正确显示</string>
     <string name="enable_emoji_position">设定 EMOJI 候选列显示位置</string>
+    <string name="enable_emoji_position_dialog_title">设定显示位置</string>
     <string name="persistent_language_mode">记忆中英模式</string>
     <string name="persistent_language_mode_summary">下次切换前保持中英模式</string>
     <string name="number_row_in_english">数字列英文键盘</string>
@@ -229,6 +230,18 @@
         <item>无</item>
         <item>繁转简</item>
         <item>简转繁</item>
+    </string-array>
+
+    <string-array name="emoji_display_position_title">
+        <item>第 2 候选字后显示</item>
+        <item>第 3 候选字后显示</item>
+        <item>第 4 候选字后显示</item>
+        <item>第 5 候选字后显示</item>
+        <item>第 6 候选字后显示</item>
+        <item>第 7 候选字后显示</item>
+        <item>第 8 候选字后显示</item>
+        <item>第 9 候选字后显示</item>
+        <item>第 10候选字后显示</item>
     </string-array>
 
     <string-array name="emoji_display_position">

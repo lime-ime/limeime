@@ -4014,7 +4014,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 stemmer.add(c);
             }
             stemmer.stem();*/
-            String selectString = "SELECT word FROM dictionary WHERE word MATCH '" + word + "*' ORDER BY word ASC LIMIT " + ssize + ";";
+            String selectString = "SELECT word FROM dictionary WHERE word MATCH '" + word + "*' AND word <> '"+ word +"'ORDER BY word ASC LIMIT " + ssize + ";";
             //SQLiteDatabase db = this.getSqliteDb(true);
 
             Cursor cursor = db.rawQuery(selectString, null);
@@ -4030,7 +4030,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
                 cursor.close();
             }
-
         } catch (Exception ignored) {
         }
 
