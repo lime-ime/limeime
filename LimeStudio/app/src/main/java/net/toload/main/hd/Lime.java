@@ -46,8 +46,6 @@ public class Lime {
     // Input Method Editor Online Database Location
     // https://github.com/hosoyu/LimeStudio/raw/master/Database/array.zip
 
-    public static final String LIME_OLD_VERSION_URL = "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/limeime/LIMEHD_391_334.apk";
-
     public static final String LIME_NEWS_CONTENT = "lime_news_content";
     public static final String LIME_NEWS_CONTENT_URL = "https://github.com/lime-ime/limeime/raw/master/Resources/Message/content.html";
 
@@ -57,6 +55,11 @@ public class Lime {
 
     public static final String DATABASE_OPENFOUNDRY_URL_BASED = "https://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2F";
     public static final String DATABASE_CLOUD_URL_BASED = "https://github.com/lime-ime/limeime/raw/master/Database/";
+
+
+    public static final String LIME_OLD_VERSION_URL = DATABASE_OPENFOUNDRY_URL_BASED + "limehd_3_9_1.apk";
+    //public static final String LIME_OLD_VERSION_URL = "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/limeime/LIMEHD_391_334.apk";
+
 
     public static final String DATABASE_CLOUD_IM_WB = DATABASE_CLOUD_URL_BASED + "wb.zip";
     public static final String DATABASE_OPENFOUNDRY_IM_WB = DATABASE_OPENFOUNDRY_URL_BASED + "wb.zip";
