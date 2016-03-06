@@ -55,6 +55,7 @@
     <string name="sdcard_transfer_message">升级数据库并转移至装置空间</string>
 
     <string name="action_adfree">赞助开发团队</string>
+    <string name="action_reset">回复原始设定</string>
     <string name="action_news">最新消息</string>
     <string name="action_help">使用说明</string>
     <string name="action_preference">喜好设定</string>
@@ -125,7 +126,8 @@
     <string name="setup_load_migrate_import">汇入输入法字根</string>
     <string name="setup_load_migrate_rebuild_related">建立关连字根查询表</string>
     <string name="setup_load_import_finish">完成输入法字根汇入</string>
-
+    <string name="reset_dialog_title">回复原始资料与设定</string>
+    <string name="reset_dialog_confirm">请问您要移除所有汇入的输入法，关联字库，学习记录并还原至系统初始设定吗？重置完成后请您重新开启[莱姆输入法]</string>
     <string name="payment_dialog_title">赞助开发团队</string>
     <string name="payment_plan_1">USD 0.99 / 永久移除广告</string>
     <string name="payment_plan_2">USD 1.99 / 永久移除广告</string>

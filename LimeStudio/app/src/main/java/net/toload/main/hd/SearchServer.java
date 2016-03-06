@@ -52,7 +52,9 @@ public class SearchServer {
 
     private static boolean DEBUG = false;
     private static final String TAG = "LIME.SearchServer";
-    private static LimeDB dbadapter = null; //Jeremy '12,5,1 shared single LIMEDB object
+    private static LimeDB dbadapter = null;
+
+    //Jeremy '12,5,1 shared single LIMEDB object
     //Jeremy '12,4,6 Combine updatedb and quierydb into db,
     //Jeremy '12,4,7 move db open/close back to LimeDB
 

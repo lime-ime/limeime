@@ -55,6 +55,7 @@
     <string name="sdcard_transfer_message">升級資料庫並轉移至裝置空間</string>
 
     <string name="action_adfree">贊助開發團隊</string>
+    <string name="action_reset">回復原始設定</string>
     <string name="action_news">最新消息</string>
     <string name="action_help">使用說明</string>
     <string name="action_preference">喜好設定</string>
@@ -126,6 +127,8 @@
     <string name="setup_load_migrate_rebuild_related">建立關連字根查詢表</string>
     <string name="setup_load_import_finish">完成輸入法字根匯入</string>
 
+    <string name="reset_dialog_title">回復原始資料與設定</string>
+    <string name="reset_dialog_confirm">請問您要移除所有匯入的輸入法, 關聯字庫, 學習記錄並還原至系統初始設定嗎 ? 重置完成後請您重新開啟[萊姆輸入法]</string>
     <string name="payment_dialog_title">贊助開發團隊</string>
     <string name="payment_plan_1">USD 0.99 / 永久移除廣告</string>
     <string name="payment_plan_2">USD 1.99 / 永久移除廣告</string>

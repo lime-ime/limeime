@@ -67,7 +67,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class LimeDB extends LimeSQLiteOpenHelper {
 
-
     private static boolean DEBUG = false;
     private static String TAG = "LIMEDB";
 
@@ -289,6 +288,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     // Cache for Related Score
     private HashMap<String, Integer> relatedscore = new HashMap<>();
+
+    // Han and Emoji Databases
     private LimeHanConverter hanConverter;
     private EmojiConverter emojiConverter;
 
@@ -4586,6 +4587,39 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         } catch (Exception e) {
             Log.w(TAG, "Ignore all possible exceptions~");
         }
+    }
+
+    public void resetLimeSetting(){
+
+        if(db != null)
+            db.close();
+
+        File dbFile= new File(Lime.DATABASE_DEVICE_FOLDER + File.separator + Lime.DATABASE_NAME);
+             dbFile.deleteOnExit();
+        LIMEUtilities.copyRAWFile(mContext.getResources().openRawResource(R.raw.lime), dbFile);
+        openDBConnection(true);
+
+        if(emojiConverter != null)
+            emojiConverter.close();
+
+        emojiConverter = null;
+        File emojiDbFile = new File(mContext.getFilesDir().getParentFile().getPath() + "/databases/emoji.db");
+             emojiDbFile.deleteOnExit();
+        LIMEUtilities.copyRAWFile(mContext.getResources().openRawResource(R.raw.emoji), emojiDbFile);
+        emojiConverter = new EmojiConverter(mContext);
+
+        if(hanConverter != null)
+            hanConverter.close();
+
+        hanConverter = null;
+        File hanDBFile = new File(mContext.getFilesDir().getParentFile().getPath() + "/databases/hanconvert.db");
+             hanDBFile.deleteOnExit();
+        File hanDB2File = new File(mContext.getFilesDir().getParentFile().getPath() + "/databases/hanconvertv2.db");
+             hanDB2File.deleteOnExit();
+
+        LIMEUtilities.copyRAWFile(mContext.getResources().openRawResource(R.raw.hanconvertv2), hanDB2File);
+        hanConverter = new LimeHanConverter(mContext);
+
     }
 }
 

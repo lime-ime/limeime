@@ -49,9 +49,14 @@
         android:orderInCategory="200"
         app:showAsAction="never" />
     <item
+        android:id="@+id/action_reset"
+        android:title="@string/action_reset"
+        android:orderInCategory="300"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_adfree"
         android:title="@string/action_adfree"
-        android:orderInCategory="300"
+        android:orderInCategory="400"
         app:showAsAction="never" />
 </menu>
 <!-- From: file:/C:/Data/Development/Android/Studio/LIMEIMEAS/app/src/main/res/menu/main.xml -->

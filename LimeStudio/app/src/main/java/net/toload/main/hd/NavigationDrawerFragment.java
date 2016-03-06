@@ -25,7 +25,11 @@
 package net.toload.main.hd;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -99,6 +103,7 @@ public class NavigationDrawerFragment extends Fragment {
 
     private LimeDB datasource;
     private ArrayAdapter adapter;
+
 
     public NavigationDrawerFragment(){}
 
@@ -337,6 +342,33 @@ public class NavigationDrawerFragment extends Fragment {
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             HelpDialog dialog = HelpDialog.newInstance();
                          dialog.show(ft, "helpdialog");
+        }else if(item.getItemId() == R.id.action_reset){
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.LIMEAlertDialogTheme);
+            builder.setTitle(getResources().getString(R.string.reset_dialog_title));
+            builder.setMessage(getResources().getString(R.string.reset_dialog_confirm));
+            builder.setCancelable(false);
+            builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // Reset Lime preferences
+                            SharedPreferences settings = getActivity().getSharedPreferences(getActivity().getPackageName() + "_preferences", Context.MODE_PRIVATE);
+                                              settings.edit().clear().commit();
+
+                            // Reset Lime databases
+                            datasource.resetLimeSetting();
+                            System.exit(0);
+
+                        }
+                    });
+            builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                        }
+                    });
+
+            AlertDialog alert = builder.create();
+            alert.show();
+
         }else if(item.getItemId() == R.id.action_adfree){
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             PaymentDialog dialog = PaymentDialog.newInstance();

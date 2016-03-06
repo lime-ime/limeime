@@ -27,7 +27,6 @@ package net.toload.main.hd;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -248,6 +247,7 @@ public class  DBServer {
 
 
 	}
+
 /*
 	public static void restoreDatabase(File srcFile, Boolean removeSourceFile) throws RemoteException {
 
