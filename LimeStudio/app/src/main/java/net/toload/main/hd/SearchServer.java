@@ -1083,7 +1083,6 @@ List<Mapping> scorelistSnapshot = null;
                             if (score > 20 && mLIMEPref.getLearnPhrase()) {
                                 addLDPhrase(unit, false);
                                 addLDPhrase(unit2, true);
-
                             }
                         }
                     }

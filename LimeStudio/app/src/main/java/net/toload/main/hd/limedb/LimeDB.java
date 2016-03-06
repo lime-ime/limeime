@@ -39,6 +39,7 @@ import android.widget.Toast;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
+import net.toload.main.hd.data.ChineseSymbol;
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.data.ImObj;
 import net.toload.main.hd.data.Keyboard;
@@ -798,6 +799,44 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         // Jeremy '11,6,12
         // Return if not learing related words and cword is not null (recording word frequency in IM relatedlist field)
         if (!mLIMEPref.getLearnRelatedWord() && cword != null) return -1;
+
+        // Remove all the chinese symbols from the related words
+        if (mLIMEPref.getLearnRelatedWord()) {
+            try {
+                // Remove Punctutation
+                String chinesesymbols[] = ChineseSymbol.chineseSymbols.split("|");
+                for (String s : chinesesymbols) {
+                    cword = cword.replaceAll(s, "");
+                    if (cword == null || cword.isEmpty()) {
+                        return -1;
+                    }
+                }
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+        /*if (!mLIMEPref.getCandidateSuggestionPunctutation()){
+
+            // Remove Punctutation
+            String chinesesymbols[] = ChineseSymbol.chineseSymbols.split("|");
+            for(String s: chinesesymbols){
+                cword = cword.replaceAll(s, "");
+                if(cword == null || cword.isEmpty()){
+                    return -1;
+                }
+            }
+
+            String englishsymbols[] = {"!","@","#","$","%","^","&","*","(",")","{","}","[","]","\\","/","?",".",",","<",">",";",":","'"};
+            for(String s: englishsymbols){
+                cword = cword.replace(s, "");
+                cword = cword.replace(s, "");
+                cword = cword.replace(s, "");
+                if(cword == null || cword.isEmpty()){
+                    return -1;
+                }
+            }
+
+        }*/
 
         int dictotal = Integer.parseInt(mLIMEPref.getTotalUserdictRecords());
 

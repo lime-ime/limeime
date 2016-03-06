@@ -365,6 +365,11 @@
             android:key="candidate_suggestion"
             android:summary="@string/candidate_suggestion_summary"
             android:title="@string/candidate_suggestion" />
+        <!--<CheckBoxPreference
+            android:defaultValue="true"
+            android:dependency="candidate_suggestion"
+            android:key="candidate_suggestion_punctuation"
+            android:title="@string/candidate_suggestion_punctuation" />-->
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="learn_phrase"

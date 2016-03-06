@@ -211,7 +211,7 @@ public class LIMEPreferenceManager {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("candidate_suggestion", true);
 	}
-	
+
 	public boolean getLearnPhrase(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("learn_phrase", true);
@@ -241,6 +241,11 @@ public class LIMEPreferenceManager {
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("learning_switch", true);
+	}
+
+	public boolean getCandidateSuggestionPunctutation(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("candidate_suggestion_punctuation", true);
 	}
 	
 	public boolean getPhysicalKeyboardSortSuggestions(){

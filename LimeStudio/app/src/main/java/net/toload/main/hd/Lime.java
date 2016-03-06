@@ -57,7 +57,7 @@ public class Lime {
     public static final String DATABASE_CLOUD_URL_BASED = "https://github.com/lime-ime/limeime/raw/master/Database/";
 
 
-    public static final String LIME_OLD_VERSION_URL = DATABASE_OPENFOUNDRY_URL_BASED + "limehd_3_9_1.apk";
+    public static final String LIME_OLD_VERSION_URL = DATABASE_OPENFOUNDRY_URL_BASED +   "limehd_3_9_1.apk";
     //public static final String LIME_OLD_VERSION_URL = "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/limeime/LIMEHD_391_334.apk";
 
 

@@ -28,7 +28,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ChineseSymbol {
-	private final static String chineseSymbols = "，|。|、|？|！|：|；|（|）|「|」|『|』|【|】|" +
+	public final static String chineseSymbols = "，|。|、|？|！|：|；|（|）|「|」|『|』|【|】|" +
 			"／|＼|－|＿|＊|＆|︿|％|＄|＃|＠|～|｛|｝|［|］|＜|＞|＋|｜|‵|＂";	
 	
 	

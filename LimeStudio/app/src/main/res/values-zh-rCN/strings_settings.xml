@@ -144,6 +144,7 @@
     <string name="candidate_switch">滑动选取</string>
     <string name="candidate_switch_summary">滑动选取输入法建议文字</string>
     <string name="candidate_suggestion">启动自建关联字</string>
+    <string name="candidate_suggestion_punctuation">启动自建关联字记忆符号</string>
     <string name="candidate_suggestion_summary">依输入文字自动建立关联字</string>
     <string name="learn_phrase">自动学习新词</string>
     <string name="learn_phrase_summary">从常用关联字学习新词</string>
