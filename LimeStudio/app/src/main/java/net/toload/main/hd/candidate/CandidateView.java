@@ -824,14 +824,21 @@ public class CandidateView extends View implements View.OnClickListener {
             if (i == 0 && mSuggestions.size() > 1 && mSuggestions.get(1).isRuntimeBuiltPhraseRecord() && suggestion.length() > 8) {
                 suggestion = suggestion.substring(0, 2) + "..";
             }
+            float base = candidatePaint.measureText("。");
             float textWidth = candidatePaint.measureText(suggestion);
-            if( i == 0 && suggestion.length() <= 2){
-                if(suggestion != null && mSuggestions.get(i).getWord() != null &&
-                        mSuggestions.get(i).getWord().matches(".*?[a-zA-Z0-9\\p{Punct}]"))
-                textWidth += X_GAP;
-                x += X_GAP;
+
+            if( textWidth < base){
+                textWidth = base;
             }
 
+            /*if( i == 0 && suggestion.length() <= 2){
+                if(suggestion != null && mSuggestions.get(i).getWord() != null &&
+                        mSuggestions.get(i).getWord().matches(".*?[a-zA-Z0-9\\p{Punct}]")) {
+                    textWidth += X_GAP;
+                    x += X_GAP;
+                }
+            }
+*/
             final int wordWidth = (int) textWidth + X_GAP * 2;
 
             mWordX[i] = x;
