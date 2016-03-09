@@ -2238,40 +2238,48 @@ public class LIMEService extends InputMethodService implements
 
                             if(list.size() > 0){
 
-                                List<Mapping> item1, item2, item3;
+                                List<Mapping> item1 = null, item2, item3;
+
                                 int insertPosition = mLIMEPref.getEmojiDisplayPosition();
                                 if(list.size() <= insertPosition){
                                     insertPosition = list.size();
                                 }
 
-                                if(list.get(0).getWord().matches("[A-Za-z]+")){
+                                if( list.get(0).getWord().matches("[A-Za-z]+") ) {
+
                                     item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
-                                    if(item1.size() > 0){
-                                        for(Mapping m: item1){
-                                            if(emojicheck.get(m.getWord()) == null){
+                                    if (item1.size() > 0) {
+                                        for (Mapping m : item1) {
+                                            if (emojicheck.get(m.getWord()) == null) {
                                                 emojilist.add(m);
                                                 emojicheck.put(m.getWord(), m.getWord());
                                             }
                                         }
                                     }
-                                }else{
-                                    if(list != null && list.size() > 1 && list.get(1) != null &&
-                                            list.get(1).getWord() != null && list.get(1).getWord().length() < 4
-                                            ){
+
+                                }
+
+                                if(item1 == null || item1.size() == 0){
+
+                                    //Log.i("EMOJI Check:", ""+list.get(1).getWord().getBytes().length);
+                                    if (list.size() > 1 && list.get(1) != null && list.get(1).getWord() != null &&
+                                            list.get(1).getWord().getBytes().length > 1 &&
+                                            list.get(1).getWord().length() < 4
+                                            ) {
                                         item2 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_TW);
-                                        if(item2.size() > 0){
-                                            for(Mapping m: item2){
-                                                if(emojicheck.get(m.getWord()) == null){
+                                        if (item2.size() > 0) {
+                                            for (Mapping m : item2) {
+                                                if (emojicheck.get(m.getWord()) == null) {
                                                     emojilist.add(m);
                                                     emojicheck.put(m.getWord(), m.getWord());
                                                 }
                                             }
                                         }
-                                        if(item2.size() == 0){
+                                        if (item2.size() == 0) {
                                             item3 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_CN);
-                                            if(item3.size() > 0){
-                                                for(Mapping m: item3){
-                                                    if(emojicheck.get(m.getWord()) == null){
+                                            if (item3.size() > 0) {
+                                                for (Mapping m : item3) {
+                                                    if (emojicheck.get(m.getWord()) == null) {
                                                         emojilist.add(m);
                                                         emojicheck.put(m.getWord(), m.getWord());
                                                     }
