@@ -93,6 +93,7 @@ public class SearchServer {
 
     private static ConcurrentHashMap<String, List<Mapping>> cache = null;
     private static ConcurrentHashMap<String, List<Mapping>> engcache = null;
+    private static ConcurrentHashMap<String, List<Mapping>> emojicache = null;
     private static ConcurrentHashMap<String, String> keynamecache = null;
     /**
      * Store the mapping of typing code and mapped code from getMappingByCode on db  Jeremy '12,6,5
@@ -583,7 +584,18 @@ public class SearchServer {
 
     public List<Mapping> emojiConvert(String code, int type){
         if(code != null){
-            return dbadapter.emojiConvert(code, type);
+            if(emojicache == null){
+                emojicache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+            }
+            List<Mapping> results = emojicache.get(code);
+            if(emojicache.get(code) != null){
+                return results;
+            }else{
+                //Log.i("EMOJI :" , "Run search emoji ...");
+                results = dbadapter.emojiConvert(code, type);
+                emojicache.put(code, results);
+                return results;
+            }
         }
         return null;
     }
@@ -922,6 +934,7 @@ public class SearchServer {
         }
         cache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
         engcache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+        emojicache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
         keynamecache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
         coderemapcache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
 
@@ -1396,6 +1409,9 @@ List<Mapping> scorelistSnapshot = null;
         }
         if (engcache != null) {
             engcache.clear();
+        }
+        if (emojicache != null) {
+            emojicache.clear();
         }
         if (keynamecache != null) {
             keynamecache.clear();

@@ -2244,32 +2244,37 @@ public class LIMEService extends InputMethodService implements
                                     insertPosition = list.size();
                                 }
 
-                                item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
-                                if(item1.size() > 0){
-                                    for(Mapping m: item1){
-                                        if(emojicheck.get(m.getWord()) == null){
-                                            emojilist.add(m);
-                                            emojicheck.put(m.getWord(), m.getWord());
-                                        }
-                                    }
-                                }
-                                if(item1.size() == 0 && list.size() > 1){
-                                    item2 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_TW);
-                                    if(item2.size() > 0){
-                                        for(Mapping m: item2){
+                                if(list.get(0).getWord().matches("[A-Za-z]+")){
+                                    item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
+                                    if(item1.size() > 0){
+                                        for(Mapping m: item1){
                                             if(emojicheck.get(m.getWord()) == null){
                                                 emojilist.add(m);
                                                 emojicheck.put(m.getWord(), m.getWord());
                                             }
                                         }
                                     }
-                                    if(item2.size() == 0){
-                                        item3 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_CN);
-                                        if(item3.size() > 0){
-                                            for(Mapping m: item3){
+                                }else{
+                                    if(list.get(1) != null &&
+                                            list.get(1).getWord() != null && list.get(1).getWord().length() < 4
+                                            ){
+                                        item2 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_TW);
+                                        if(item2.size() > 0){
+                                            for(Mapping m: item2){
                                                 if(emojicheck.get(m.getWord()) == null){
                                                     emojilist.add(m);
                                                     emojicheck.put(m.getWord(), m.getWord());
+                                                }
+                                            }
+                                        }
+                                        if(item2.size() == 0){
+                                            item3 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_CN);
+                                            if(item3.size() > 0){
+                                                for(Mapping m: item3){
+                                                    if(emojicheck.get(m.getWord()) == null){
+                                                        emojilist.add(m);
+                                                        emojicheck.put(m.getWord(), m.getWord());
+                                                    }
                                                 }
                                             }
                                         }
