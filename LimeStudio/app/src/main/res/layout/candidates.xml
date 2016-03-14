@@ -66,7 +66,7 @@
             android:id="@+id/candidate_right"
             android:contentDescription="@string/more_cand"
             android:background="@drawable/ic_suggest_scroll_background"
-            android:src="@drawable/ic_suggest_expander" 
+            android:src="@drawable/ic_suggest_expander"
             android:layout_width="@dimen/candidate_expand_button_width"
             android:layout_height="fill_parent"
             android:clickable="true"

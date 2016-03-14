@@ -486,6 +486,10 @@ public class ManageImFragment extends Fragment {
 
     public void addWord(String code, int score, String word) {
 
+        if(word != null){
+            word = word.trim();
+        }
+
         // Add to database
         Word obj = new Word();
              obj.setCode(code);
@@ -517,6 +521,10 @@ public class ManageImFragment extends Fragment {
     }
 
     public void updateWord(int id, String code, int score, String word) {
+
+        if(word != null){
+            word = word.trim();
+        }
 
         // remove from temp list
         for(int i = 0 ; i < total ; i++){

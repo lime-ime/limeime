@@ -39,8 +39,9 @@
         <Key limehd:keyLabel="]" />
         <Key limehd:keyLabel="=" />
         <Key limehd:keyLabel="/" />
-        <Key limehd:keyLabel="\'"/> 
-        <Key limehd:keyLabel=":"
+        <Key limehd:keyLabel="\'"/>
+        <Key limehd:keyLabel=":"/>
+        <Key limehd:keyLabel="\@"
             limehd:keyEdgeFlags="right" />
     </Row>
     <Row limehd:rowEdgeFlags="bottom">
@@ -51,8 +52,9 @@
         <Key limehd:keyLabel="}" />
         <Key limehd:keyLabel="+" />
         <Key limehd:keyLabel="\?" />
-        <Key limehd:keyLabel="&quot;"/> 
-        <Key limehd:keyLabel=";"
+        <Key limehd:keyLabel="&quot;"/>
+        <Key limehd:keyLabel=";"/>
+        <Key limehd:keyLabel=","
             limehd:keyEdgeFlags="right" />
     </Row>
 </Keyboard>

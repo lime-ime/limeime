@@ -364,7 +364,7 @@ public class LIMEUtilities {
 		for (int i = 0; i < mInputMethodProperties.size(); i++) {
 			InputMethodInfo imi = mInputMethodProperties.get(i);
 			if(DEBUG) Log.i(TAG, "enabled IM " + i + ":" + imi.getId());
-			
+
 			if(imi.getId().equals("com.google.android.voicesearch/.ime.VoiceInputMethodService")){
 				return "com.google.android.voicesearch/.ime.VoiceInputMethodService";
 			}else if(imi.getId().equals("com.google.android.googlequicksearchbox/com.google.android.voicesearch.ime.VoiceInputMethodService")){

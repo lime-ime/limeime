@@ -209,6 +209,8 @@
     <!-- Accented characters related to "g" -->
     <string name="alternates_for_g"></string>
 
+    <string name="alternates_for_slash">,</string>
+
     <!-- Label for soft enter key when it performs DONE action.  Must be short to fit on key! -->
     <string name="label_done_key">Done</string>
     <!-- Label for "switch to symbols" key.  Must be short to fit on key! -->

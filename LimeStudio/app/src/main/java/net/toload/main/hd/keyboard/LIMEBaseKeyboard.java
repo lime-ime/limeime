@@ -31,20 +31,20 @@
 
 package net.toload.main.hd.keyboard;
 
-import net.toload.main.hd.R;
-
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.util.Xml;
-import android.util.DisplayMetrics;
+
+import net.toload.main.hd.R;
+
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
