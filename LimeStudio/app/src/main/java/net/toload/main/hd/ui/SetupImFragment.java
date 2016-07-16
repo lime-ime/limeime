@@ -441,6 +441,14 @@ public class SetupImFragment extends Fragment {
                             ) {  //LIME is activated, also the active Keyboard, and write storage permission is grated
                         btnSetupImSystemIMPicker.setVisibility(View.INVISIBLE);
                         rootView.findViewById(R.id.Setup_Wizard).setVisibility(View.GONE);
+                        btnSetupImBackupLocal.setEnabled(true);
+                        btnSetupImRestoreLocal.setEnabled(true);
+                        btnSetupImBackupGoogle.setEnabled(true);
+                        btnSetupImRestoreGoogle.setEnabled(true);
+                        btnSetupImBackupDropbox.setEnabled(true);
+                        btnSetupImRestoreDropbox.setEnabled(true);
+                        btnSetupImImportStandard.setEnabled(true);
+                        btnSetupImImportRelated.setEnabled(true);
                     }
                     else  //LIME is activated, but not active keyboard
                     {
