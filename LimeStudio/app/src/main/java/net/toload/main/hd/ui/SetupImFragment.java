@@ -24,6 +24,7 @@
 
 package net.toload.main.hd.ui;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
@@ -39,8 +40,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.RemoteException;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -99,6 +102,7 @@ public class SetupImFragment extends Fragment {
 
     private ProgressDialog progress;
 
+    private final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 0;
     // Google API
     /*private GoogleAccountCredential credential;
     static final int REQUEST_ACCOUNT_PICKER_BACKUP = 1;
@@ -112,6 +116,7 @@ public class SetupImFragment extends Fragment {
 
     Button btnSetupImSystemSettings;
     Button btnSetupImSystemIMPicker;
+    Button btnSetupImGrantPermission;
 
     // Custom Import
     Button btnSetupImImportStandard;
@@ -291,6 +296,7 @@ public class SetupImFragment extends Fragment {
 
         btnSetupImSystemSettings = (Button) rootView.findViewById(R.id.btnSetupImSystemSetting);
         btnSetupImSystemIMPicker = (Button) rootView.findViewById(R.id.btnSetupImSystemIMPicker);
+        btnSetupImGrantPermission = (Button) rootView.findViewById(R.id.btnSetupImGrantPermission);
         btnSetupImImportStandard = (Button) rootView.findViewById(R.id.btnSetupImImportStandard);
         btnSetupImImportRelated = (Button) rootView.findViewById(R.id.btnSetupImImportRelated);
         btnSetupImPhonetic = (Button) rootView.findViewById(R.id.btnSetupImPhonetic);
@@ -429,25 +435,75 @@ public class SetupImFragment extends Fragment {
                     btnSetupImSystemSettings.setVisibility(View.GONE);
                     rootView.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.GONE);
                     rootView.findViewById(R.id.SetupImList).setVisibility(View.VISIBLE);
-                    if(LIMEUtilities.isLIMEActive(getActivity().getApplicationContext())) {  //LIME is activated and also the active Keyboard
+                    if(LIMEUtilities.isLIMEActive(getActivity().getApplicationContext()) &&
+                            ContextCompat.checkSelfPermission(this.getActivity(),
+                                    Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+                            ) {  //LIME is activated, also the active Keyboard, and write storage permission is grated
                         btnSetupImSystemIMPicker.setVisibility(View.INVISIBLE);
-                        //rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
-                        //rootView.findViewById(R.id.setup_im_system_settings).setVisibility(View.GONE);
                         rootView.findViewById(R.id.Setup_Wizard).setVisibility(View.GONE);
                     }
-                    else  //LIME is activated, but not active keyboadd
+                    else  //LIME is activated, but not active keyboard
                     {
-                        btnSetupImSystemIMPicker.setVisibility(View.VISIBLE);
-                        rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.VISIBLE);
+                        if(LIMEUtilities.isLIMEActive(getActivity().getApplicationContext()))
+                        {
+                            btnSetupImSystemIMPicker.setVisibility(View.INVISIBLE);
+                            rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
+                        }
+                        else
+                        {
+                            btnSetupImSystemIMPicker.setVisibility(View.VISIBLE);
+                            rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.VISIBLE);
+                        }
+                        //Check permission for > API 23
+                        if (ContextCompat.checkSelfPermission(this.getActivity(),
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+                        {
+                            rootView.findViewById(R.id.setup_im_grant_permission).setVisibility((View.GONE));
+                            btnSetupImGrantPermission.setVisibility(View.INVISIBLE);
+                            btnSetupImBackupLocal.setEnabled(true);
+                            btnSetupImRestoreLocal.setEnabled(true);
+                            btnSetupImBackupGoogle.setEnabled(true);
+                            btnSetupImRestoreGoogle.setEnabled(true);
+                            btnSetupImBackupDropbox.setEnabled(true);
+                            btnSetupImRestoreDropbox.setEnabled(true);
+                            btnSetupImImportStandard.setEnabled(true);
+                            btnSetupImImportRelated.setEnabled(true);
+                        }
+                        else
+                        {
+                            rootView.findViewById(R.id.setup_im_grant_permission).setVisibility((View.VISIBLE));
+                            btnSetupImGrantPermission.setVisibility(View.VISIBLE);
+                            btnSetupImBackupLocal.setEnabled(false);
+                            btnSetupImRestoreLocal.setEnabled(false);
+                            btnSetupImBackupGoogle.setEnabled(false);
+                            btnSetupImRestoreGoogle.setEnabled(false);
+                            btnSetupImBackupDropbox.setEnabled(false);
+                            btnSetupImRestoreDropbox.setEnabled(false);
+                            btnSetupImImportStandard.setEnabled(false);
+                            btnSetupImImportRelated.setEnabled(false);
+                        }
 
                     }
                 }else {
                     btnSetupImSystemSettings.setVisibility(View.VISIBLE);
                     rootView.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.VISIBLE);
                     btnSetupImSystemIMPicker.setVisibility(View.INVISIBLE);
+                    rootView.findViewById(R.id.setup_im_grant_permission).setVisibility((View.GONE));
+                    btnSetupImGrantPermission.setVisibility(View.INVISIBLE);
                     rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
                     rootView.findViewById(R.id.SetupImList).setVisibility(View.GONE);
                 }
+
+
+
+                btnSetupImGrantPermission.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        ActivityCompat.requestPermissions(getActivity(),
+                                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+                    }
+                });
                 btnSetupImSystemSettings.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {

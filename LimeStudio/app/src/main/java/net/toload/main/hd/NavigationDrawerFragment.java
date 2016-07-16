@@ -37,8 +37,8 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -407,7 +407,7 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     private ActionBar getActionBar() {
-        return ((ActionBarActivity) getActivity()).getSupportActionBar();
+        return ((AppCompatActivity) getActivity()).getSupportActionBar();
     }
 
     public void updateMenuItems() {
@@ -415,17 +415,17 @@ public class NavigationDrawerFragment extends Fragment {
         if(mDrawerListView != null){
 
             List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
-            int menucount = imlist.size() + 2;
-            int checkcount = 2;
+            int menuCount = imlist.size() + 2;
+            int checkCount = 2;
 
-            menulist = new String[menucount];
+            menulist = new String[menuCount];
             menulist[0] = this.getResources().getString(R.string.default_menu_initial);
             menulist[1] = this.getResources().getString(R.string.default_menu_related);
 
             for(int i = 0; i < imlist.size() ; i++){
                 Im obj = imlist.get(i);
-                menulist[checkcount] = obj.getDesc();
-                checkcount++;
+                menulist[checkCount] = obj.getDesc();
+                checkCount++;
             }
 
             adapter = new ArrayAdapter<>(

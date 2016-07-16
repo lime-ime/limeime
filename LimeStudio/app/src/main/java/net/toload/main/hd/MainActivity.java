@@ -25,6 +25,7 @@
 package net.toload.main.hd;
 
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
@@ -45,10 +46,12 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -83,7 +86,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends ActionBarActivity
+public class MainActivity extends AppCompatActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks {
 
     /**
@@ -91,7 +94,7 @@ public class MainActivity extends ActionBarActivity
      */
     private NavigationDrawerFragment mNavigationDrawerFragment;
 
-
+    private final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE=0;
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
@@ -108,7 +111,7 @@ public class MainActivity extends ActionBarActivity
     private MainActivityHandler handler;
     private Thread sharethread;
 
-    private Activity activity;
+    //private Activity activity;
 
     //Admob
     InterstitialAd mInterstitialAd;
@@ -126,8 +129,8 @@ public class MainActivity extends ActionBarActivity
                                        IBinder service) {
             mService = IInAppBillingService.Stub.asInterface(service);
 
-            boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
-            if(!paymentflag) {
+            boolean paymentFlag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
+            if(!paymentFlag) {
                 try {
                     Bundle ownedItems = mService.getPurchases(3, getPackageName(), "inapp", null);
                     int response = ownedItems.getInt("RESPONSE_CODE");
@@ -300,7 +303,7 @@ public class MainActivity extends ActionBarActivity
         }
 
         String versionstr = "";
-        PackageInfo pInfo = null;
+        PackageInfo pInfo;
         try {
             pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             versionstr = "v"+ pInfo.versionName + " - " + pInfo.versionCode;
@@ -316,48 +319,31 @@ public class MainActivity extends ActionBarActivity
             mLIMEPref.setParameter("current_version", versionstr);
         }
 
-        // Download Message from the server
-       /* new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-
-                if (connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()) {
-
-                    String html_value = "";
-                    try {
-                        // Create a URL for the desired page
-                        URL url = new URL(Lime.LIME_NEWS_CONTENT_URL);
-
-                        // Read all the text returned by the server
-                        BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
-                        String str;
-                        while ((str = in.readLine()) != null) {
-                            html_value += str;
-                        }
-                        in.close();
-
-                        String tempcontent = mLIMEPref.getParameterString(Lime.LIME_NEWS_CONTENT, "");
-                        if( (tempcontent.isEmpty() && !html_value.isEmpty()) ||
-                                (!tempcontent.isEmpty() && !html_value.isEmpty() && !tempcontent.equals(html_value)) ){
-                            mLIMEPref.setParameter(Lime.LIME_NEWS_CONTENT, html_value);
-                            handler.showMessageBoard();
-                        }
-
-                    } catch (MalformedURLException e) {
-                    } catch (IOException e) {
-                    }
-
-                }
-            }
-        }).start();*/
-
-
-        // Initial Preference Setting
-        //handler.initialDefaultPreference();
-
     }
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
     private String getContentName(ContentResolver resolver, Uri uri){
         Cursor cursor = resolver.query(uri, null, null, null, null);
         if(cursor==null) return null;
@@ -366,6 +352,7 @@ public class MainActivity extends ActionBarActivity
         if (nameIndex >= 0) {
             return cursor.getString(nameIndex);
         } else {
+            cursor.close();
             return null;
         }
     }
@@ -374,7 +361,7 @@ public class MainActivity extends ActionBarActivity
         try {
             OutputStream out = new FileOutputStream(new File(file));
 
-            int size = 0;
+            int size;
             byte[] buffer = new byte[102400];
 
             while ((size = in.read(buffer)) != -1) {
@@ -487,7 +474,8 @@ public class MainActivity extends ActionBarActivity
     public void restoreActionBar() {
         ActionBar actionBar = getSupportActionBar();
         //actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD); //setNavigationMode is deprecated after API21 (v5.0).
-                    actionBar.setDisplayShowTitleEnabled(true);
+        if (actionBar == null) throw new AssertionError();
+        actionBar.setDisplayShowTitleEnabled(true);
                     actionBar.setTitle(mTitle);
     }
 
