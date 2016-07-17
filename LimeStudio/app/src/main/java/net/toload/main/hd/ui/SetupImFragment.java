@@ -439,7 +439,7 @@ public class SetupImFragment extends Fragment {
                             ContextCompat.checkSelfPermission(this.getActivity(),
                                     Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
                             ) {  //LIME is activated, also the active Keyboard, and write storage permission is grated
-                        btnSetupImSystemIMPicker.setVisibility(View.INVISIBLE);
+                        btnSetupImSystemIMPicker.setVisibility(View.GONE);
                         rootView.findViewById(R.id.Setup_Wizard).setVisibility(View.GONE);
                         btnSetupImBackupLocal.setEnabled(true);
                         btnSetupImRestoreLocal.setEnabled(true);
@@ -454,7 +454,7 @@ public class SetupImFragment extends Fragment {
                     {
                         if(LIMEUtilities.isLIMEActive(getActivity().getApplicationContext()))
                         {
-                            btnSetupImSystemIMPicker.setVisibility(View.INVISIBLE);
+                            btnSetupImSystemIMPicker.setVisibility(View.GONE);
                             rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
                         }
                         else
@@ -467,7 +467,7 @@ public class SetupImFragment extends Fragment {
                                 Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
                         {
                             rootView.findViewById(R.id.setup_im_grant_permission).setVisibility((View.GONE));
-                            btnSetupImGrantPermission.setVisibility(View.INVISIBLE);
+                            btnSetupImGrantPermission.setVisibility(View.GONE);
                             btnSetupImBackupLocal.setEnabled(true);
                             btnSetupImRestoreLocal.setEnabled(true);
                             btnSetupImBackupGoogle.setEnabled(true);
@@ -495,9 +495,9 @@ public class SetupImFragment extends Fragment {
                 }else {
                     btnSetupImSystemSettings.setVisibility(View.VISIBLE);
                     rootView.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.VISIBLE);
-                    btnSetupImSystemIMPicker.setVisibility(View.INVISIBLE);
+                    btnSetupImSystemIMPicker.setVisibility(View.GONE);
                     rootView.findViewById(R.id.setup_im_grant_permission).setVisibility((View.GONE));
-                    btnSetupImGrantPermission.setVisibility(View.INVISIBLE);
+                    btnSetupImGrantPermission.setVisibility(View.GONE);
                     rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
                     rootView.findViewById(R.id.SetupImList).setVisibility(View.GONE);
                 }
