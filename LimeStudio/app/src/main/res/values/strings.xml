@@ -71,6 +71,8 @@
     <string name="setup_im_backup_local">本地備份</string>
     <string name="setup_im_database">備份/還原資料庫</string>
     <string name="setup_im_database_description">備份完整資料庫至本地/雲端空間，或者由本地/雲端空間還原完整資料庫檔案</string>
+    <string name="setup_im_grant_permission">請授權儲存空間存取以啟用輸入法匯入與資料庫備份還原功能</string>
+    <string name="setup_im_grant_permission_button">授權儲存空間存取</string>
     <string name="setup_im_download">下載輸入法</string>
     <string name="setup_im_download_description">下載並匯入系統提供的輸入法，這一個操作需要連線網際網路，請啟用相關設定</string>
     <string name="setup_im_import">新增輸入法</string>

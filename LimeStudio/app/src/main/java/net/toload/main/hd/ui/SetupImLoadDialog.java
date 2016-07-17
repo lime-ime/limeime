@@ -24,15 +24,18 @@
 
 package net.toload.main.hd.ui;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -302,6 +305,13 @@ public class SetupImLoadDialog extends DialogFragment {
                 chkSetupImRestoreLearning.setVisibility(View.VISIBLE);
 
                 getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_dialog_title));
+
+                //Check permission for > API 23
+                if (ContextCompat.checkSelfPermission(this.getActivity(),
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+                    btnSetupImDialogCustom.setEnabled(false);
+                else
+                    btnSetupImDialogCustom.setEnabled(true);
 
                 btnSetupImDialogCustom.setOnClickListener(new View.OnClickListener() {
                     @Override

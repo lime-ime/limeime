@@ -203,15 +203,15 @@ public class CandidateView extends View implements View.OnClickListener {
 
         //bgcolor = r.getColor(R.color.candidate_background);
 
-        mColorNormalText = r.getColor(R.color.candidate_normal_text);
+        mColorNormalText = ContextCompat.getColor(context, R.color.candidate_normal_text);
 
-        mColorInvertedTextTransparent = r.getColor(R.color.candidate_inverted_text_physical_keyboard);
-        mColorInvertedText = r.getColor(R.color.candidate_inverted_text);
+        mColorInvertedTextTransparent =ContextCompat.getColor(context, R.color.candidate_inverted_text_physical_keyboard);
+        mColorInvertedText = ContextCompat.getColor(context, R.color.candidate_inverted_text);
 
-        mColorDictionary = r.getColor(R.color.candidate_dictionary);
-        mColorRecommended = r.getColor(R.color.candidate_recommended_text);
-        mColorSpacer = r.getColor(R.color.candidate_spacer);
-        mColorSelKey = r.getColor(R.color.candidate_selection_keys);
+        mColorDictionary = ContextCompat.getColor(context, R.color.candidate_dictionary);
+        mColorRecommended = ContextCompat.getColor(context, R.color.candidate_recommended_text);
+        mColorSpacer = ContextCompat.getColor(context, R.color.candidate_spacer);
+        mColorSelKey = ContextCompat.getColor(context, R.color.candidate_selection_keys);
         mVerticalPadding = (int) (r.getDimensionPixelSize(R.dimen.candidate_vertical_padding) * mLIMEPref.getFontSize());
         configHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
         mHeight = configHeight;
@@ -288,7 +288,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
     /*
     * New embedded composing view inside candidate container for floating candidate mode. Jeremy '15,6,14
-    * (android 5.1 does not allow popup compsing go over candidate area).
+    * (android 5.1 does not allow popup composing go over candidate area).
      */
     public void setEmbeddedComposingView(TextView composingView) {
         if (DEBUG)
@@ -605,7 +605,9 @@ public class CandidateView extends View implements View.OnClickListener {
                 if (mComposingTextPopup == null) {
                     mComposingTextPopup = new PopupWindow(mContext);
                 }
-                mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+                //mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);  //Deprecated in API 23. Jeremy '16,7,16
+                mComposingTextPopup.setWidth(LayoutParams.WRAP_CONTENT);
+                mComposingTextPopup.setHeight(LayoutParams.WRAP_CONTENT);
                 mComposingTextPopup.setContentView(mComposingPopupTextView);
                 mComposingTextPopup.setBackgroundDrawable(null);
             }
@@ -647,12 +649,15 @@ public class CandidateView extends View implements View.OnClickListener {
         if (embeddedComposing != null)
             return; //Jeremy '15,6, 4 bypass updating popup when composing view is embedded in candidate container
 
-        mComposingTextView.measure(
-                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-
-        final int popupWidth = mComposingTextView.getMeasuredWidth();  //Jeremy '12,6,2 use getWidth and getHeight instead
-        final int popupHeight = mComposingTextView.getMeasuredHeight();
+        //mComposingTextView.measure(
+                //MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+                //MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+        //final int popupWidth = mComposingTextView.getMeasuredWidth();  //Jeremy '12,6,2 use getWidth and getHeight instead
+        //final int popupHeight = mComposingTextView.getMeasuredHeight();
+        // getMeasuredWidth cannot get correct width of textVIEW in android 6 Jeremy '16,7,16
+        Paint.FontMetrics metrics = mComposingTextView.getPaint().getFontMetrics();
+        final int popupWidth = (int) mComposingTextView.getPaint().measureText(String.valueOf(mComposingTextView.getText()));
+        final int popupHeight = (int)(metrics.bottom - metrics.top);
 
 
         int[] offsetInWindow = new int[2];
@@ -701,7 +706,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
     public void hideComposing() {
         if (DEBUG)
-            Log.i(TAG, "hidecomposing()");
+            Log.i(TAG, "hideComposing()");
         mHandler.dismissComposing(100); //Jeremy '12,6,3 the same delay as showComposing to avoid showed after hided
 
     }
@@ -728,15 +733,15 @@ public class CandidateView extends View implements View.OnClickListener {
         return candidateExpanded;
     }
 
-    private boolean mHasroomForExpanding = true;
+    private boolean mHasRoomForExpanding = true;
 
     public boolean hasRoomForExpanding() {
         if (!mCandidatePopupWindow.isShowing()) {
             int[] offsetOnScreen = new int[2];
             this.getLocationOnScreen(offsetOnScreen);
-            mHasroomForExpanding = (mScreenHeight - offsetOnScreen[1]) > 2 * mHeight;
+            mHasRoomForExpanding = (mScreenHeight - offsetOnScreen[1]) > 2 * mHeight;
         }
-        return mHasroomForExpanding;
+        return mHasRoomForExpanding;
     }
 
     public void setTransparentCandidateView(boolean transparent){
@@ -878,7 +883,7 @@ public class CandidateView extends View implements View.OnClickListener {
                 canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
                 Paint backgroundPaint = new Paint();
-                backgroundPaint.setColor(getResources().getColor(R.color.candidate_background));
+                backgroundPaint.setColor(ContextCompat.getColor(mContext, R.color.candidate_background));
                 backgroundPaint.setAlpha(33);
                 backgroundPaint.setStyle(Paint.Style.FILL);
 

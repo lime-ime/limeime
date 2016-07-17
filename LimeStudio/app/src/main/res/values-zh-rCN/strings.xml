@@ -71,6 +71,8 @@
     <string name="setup_im_backup_local">本地备份</string>
     <string name="setup_im_database">备份/还原数据库</string>
     <string name="setup_im_database_description">备份完整数据库至本地/云端空间，或者由本地/云端空间还原完整数据库文档</string>
+    <string name="setup_im_grant_permission">请授权储存空间存取以启用输入法汇入与资料库备份还原功能</string>
+    <string name="setup_im_grant_permission_button">授权储存空间存取</string>
     <string name="setup_im_download">下载输入法</string>
     <string name="setup_im_download_description">下载并汇入系统提供的输入法，这一个操作需要连线网际网路，请启用相关设定</string>
     <string name="setup_im_import">新增输入法</string>
