@@ -35,6 +35,7 @@ android {
         targetSdkVersion 23
         versionCode 521
         versionName '5.1.1'
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -50,13 +51,17 @@ android {
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE.txt'
     }
+
+    lintOptions {
+        abortOnError false
+    }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:23.0.0'
     compile 'com.android.support:support-v4:23.0.1'
-    compile 'com.google.android.gms:play-services:7.0.0'
+    compile 'com.google.android.gms:play-services:9.0.2'
     compile files('libs/commons-logging-1.1.1.jar')
     compile files('libs/google-api-client-1.20.0.jar')
     compile files('libs/google-api-client-android-1.20.0.jar')

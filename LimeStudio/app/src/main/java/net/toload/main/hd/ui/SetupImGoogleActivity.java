@@ -24,12 +24,12 @@
 
 package net.toload.main.hd.ui;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -58,7 +58,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class SetupImGoogleActivity extends ActionBarActivity  implements
+public class SetupImGoogleActivity extends Activity implements
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = "SetupImGoogleActivity";

@@ -25,11 +25,9 @@
   <!-- Base application theme. -->
   <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
     <item name="android:alertDialogStyle">@style/LIMEAlertDialogTheme</item>
-
   </style>
 
   <style name="LIMETheme" parent="Theme.AppCompat.Light">
-
   </style>
 
   <style name="LIMETheme.Light">

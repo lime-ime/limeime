@@ -233,6 +233,7 @@ public class MultiListPreference extends DialogPreference {
 	}
 
 
+	@SuppressWarnings("ResourceType")
 	public MultiListPreference(Context context, AttributeSet attrs) {
 		super(context, attrs); 
 		if(DEBUG)
@@ -251,6 +252,7 @@ public class MultiListPreference extends DialogPreference {
 		);
 
 		this.entry = in.getTextArray(0);
+
 		this.defaultValue = in.getString(2);
 
 		if (this.entry == null) {
