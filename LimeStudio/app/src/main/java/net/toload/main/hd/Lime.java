@@ -51,7 +51,8 @@ public class Lime {
 
     public static final String separator = java.io.File.separator;
 
-    public static final String DATABASE_IM_TEMP = "temp.zip";
+    public static final String DATABASE_IM_TEMP = "temp";
+    public static final String DATABASE_IM_TEMP_EXT = "zip";
 
     public static final String DATABASE_OPENFOUNDRY_URL_BASED = "https://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2F";
     public static final String DATABASE_CLOUD_URL_BASED = "https://github.com/lime-ime/limeime/raw/master/Database/";
@@ -202,7 +203,7 @@ public class Lime {
     public static final String IM_PHONETIC_BIG5 = "phoneticbig5";
     public static final String IM_PHONETIC_ADV_BIG5 = "phoneticadvbig5";
     public static final String IM_PINYIN = "pinyin";
-    public static final String IM_PINYINGB = "pinyin";
+    public static final String IM_PINYINGB = "pinyingb";
     public static final String IM_SCJ = "scj";
     public static final String IM_WB = "wb";
 

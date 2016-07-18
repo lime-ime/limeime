@@ -26,6 +26,7 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Looper;
@@ -41,20 +42,16 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SetupImLoadRunnable implements Runnable{
-    private static boolean DEBUG = true;
-    private static String TAG = "SetupImLoadRunnable";
+    private final boolean DEBUG = true;
+    private final String TAG = "SetupImLoadRunnable";
 
     // Global
     private String url = null;
@@ -68,9 +65,10 @@ public class SetupImLoadRunnable implements Runnable{
     private LimeDB datasource;
     private LIMEPreferenceManager mLIMEPref;
 
-    private boolean restorepreference;
+    private Context mContext;
+    private boolean restorePreference;
 
-    public SetupImLoadRunnable(Activity activity, SetupImHandler handler, String imtype, String type, String url, boolean restorepreference) {
+    public SetupImLoadRunnable(Activity activity, SetupImHandler handler, String imtype, String type, String url, boolean restorePreference) {
         this.handler = handler;
         this.imtype = imtype;
         this.type = type;
@@ -79,7 +77,8 @@ public class SetupImLoadRunnable implements Runnable{
         this.dbsrv = new DBServer(activity);
         this.datasource = new LimeDB(activity);
         this.mLIMEPref = new LIMEPreferenceManager(activity);
-        this.restorepreference = restorepreference;
+        this.restorePreference = restorePreference;
+        this.mContext = activity.getBaseContext();
     }
 
     @Override
@@ -97,60 +96,85 @@ public class SetupImLoadRunnable implements Runnable{
 
         // Download DB File
         //handler.updateProgress(activity.getResources().getString(R.string.setup_load_download));
-        File tempfile = downloadRemoteFile(url);
+        File tempfile = downloadRemoteFile(mContext, url);
 
         if(tempfile == null || tempfile.length() < 100000){
 
-            if(type.equals(Lime.IM_ARRAY )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_ARRAY;
-            }else if(type.equals(Lime.IM_ARRAY10 )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_ARRAY10;
-            }else if(type.equals(Lime.IM_CJ_BIG5 )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_CJ_BIG5;
-            }else if(type.equals(Lime.IM_CJ )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_CJ;
-            }else if(type.equals(Lime.IM_CJHK )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_CJHK;
-            }else if(type.equals(Lime.IM_CJ5 )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_CJ5;
-            }else if(type.equals(Lime.IM_DAYI )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_DAYI;
-            }else if(type.equals(Lime.IM_DAYIUNI )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_DAYIUNI;
-            }else if(type.equals(Lime.IM_DAYIUNIP )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_DAYIUNIP;
-            }else if(type.equals(Lime.IM_ECJ )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_ECJ;
-            }else if(type.equals(Lime.IM_ECJHK )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_ECJHK;
-            }else if(type.equals(Lime.IM_EZ )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_EZ;
-            }else if(type.equals(Lime.IM_PHONETIC_BIG5 )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETIC_BIG5;
-            }else if(type.equals(Lime.IM_PHONETIC_ADV_BIG5 )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE_BIG5;
-            }else if(type.equals(Lime.IM_PHONETIC )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETIC;
-            }else if(type.equals(Lime.IM_PHONETIC_ADV )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE;
-            }else if(type.equals(Lime.IM_PINYIN )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_PINYIN;
-            }else if(type.equals(Lime.IM_PINYINGB )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_PINYINGB;
-            }else if(type.equals(Lime.IM_SCJ )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_SCJ;
-            }else if(type.equals(Lime.IM_WB )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_WB;
-            }else if(type.equals(Lime.IM_HS )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_HS;
-            }else if(type.equals(Lime.IM_HS_V1 )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_HS_V1;
-            }else if(type.equals(Lime.IM_HS_V2 )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_HS_V2;
-            }else if(type.equals(Lime.IM_HS_V3 )){
-                url = Lime.DATABASE_OPENFOUNDRY_IM_HS_V3;
+            switch (type) {
+                case Lime.IM_ARRAY:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_ARRAY;
+                    break;
+                case Lime.IM_ARRAY10:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_ARRAY10;
+                    break;
+                case Lime.IM_CJ_BIG5:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_CJ_BIG5;
+                    break;
+                case Lime.IM_CJ:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_CJ;
+                    break;
+                case Lime.IM_CJHK:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_CJHK;
+                    break;
+                case Lime.IM_CJ5:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_CJ5;
+                    break;
+                case Lime.IM_DAYI:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_DAYI;
+                    break;
+                case Lime.IM_DAYIUNI:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_DAYIUNI;
+                    break;
+                case Lime.IM_DAYIUNIP:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_DAYIUNIP;
+                    break;
+                case Lime.IM_ECJ:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_ECJ;
+                    break;
+                case Lime.IM_ECJHK:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_ECJHK;
+                    break;
+                case Lime.IM_EZ:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_EZ;
+                    break;
+                case Lime.IM_PHONETIC_BIG5:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETIC_BIG5;
+                    break;
+                case Lime.IM_PHONETIC_ADV_BIG5:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE_BIG5;
+                    break;
+                case Lime.IM_PHONETIC:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETIC;
+                    break;
+                case Lime.IM_PHONETIC_ADV:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE;
+                    break;
+                case Lime.IM_PINYIN:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_PINYIN;
+                    break;
+                case Lime.IM_PINYINGB:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_PINYINGB;
+                    break;
+                case Lime.IM_SCJ:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_SCJ;
+                    break;
+                case Lime.IM_WB:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_WB;
+                    break;
+                case Lime.IM_HS:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_HS;
+                    break;
+                case Lime.IM_HS_V1:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_HS_V1;
+                    break;
+                case Lime.IM_HS_V2:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_HS_V2;
+                    break;
+                case Lime.IM_HS_V3:
+                    url = Lime.DATABASE_OPENFOUNDRY_IM_HS_V3;
+                    break;
             }
-            tempfile = downloadRemoteFile(url);
+            tempfile = downloadRemoteFile(mContext, url);
         }
 
 
@@ -162,7 +186,7 @@ public class SetupImLoadRunnable implements Runnable{
         //mLIMEPref.setResetCacheFlag(true);
         DBServer.resetCache();
 
-        if(restorepreference){
+        if(restorePreference){
             handler.updateProgress(activity.getResources().getString(R.string.setup_im_restore_learning_data));
             handler.updateProgress(0);
             boolean check = datasource.checkBackuptable(imtype);
@@ -261,7 +285,8 @@ public class SetupImLoadRunnable implements Runnable{
 
         handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_load));
         DBServer.decompressFile(tempfile, Lime.DATABASE_FOLDER_EXTERNAL, imtype, true);
-        SQLiteDatabase sourcedb = SQLiteDatabase.openDatabase(sourcedbfile, null, SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+        SQLiteDatabase sourcedb = SQLiteDatabase.openDatabase(sourcedbfile, null, //SQLiteDatabase.OPEN_READWRITE |   //redundant
+                SQLiteDatabase.NO_LOCALIZED_COLLATORS);
         results = loadWord(sourcedb, imtype);
         sourcedb.close();
 
@@ -321,7 +346,7 @@ public class SetupImLoadRunnable implements Runnable{
         return result;
     }
 
-    public synchronized void setImInfo(String im, String field, String value) {
+    @Deprecated public synchronized void setImInfo(String im, String field, String value) {
 
         ContentValues cv = new ContentValues();
         cv.put("code", im);
@@ -370,7 +395,7 @@ public class SetupImLoadRunnable implements Runnable{
     }
 
 
-    public synchronized void setIMKeyboard(String im, String value,  String keyboard) {
+    @Deprecated public synchronized void setIMKeyboard(String im, String value,  String keyboard) {
         try{
             setIMKeyboardOnDB(im, value, keyboard);
         }catch (Exception e) {
@@ -386,7 +411,7 @@ public class SetupImLoadRunnable implements Runnable{
     }
 
 
-    public KeyboardObj getKeyboardObj(String keyboard){
+    @Deprecated public KeyboardObj getKeyboardObj(String keyboard){
 
         if( keyboard == null || keyboard.equals(""))
             return null;
@@ -458,7 +483,7 @@ public class SetupImLoadRunnable implements Runnable{
     /*
 	 * Download Remote File
 	 */
-    public File downloadRemoteFile(String url){
+    public File downloadRemoteFile(Context ctx, String url){
 
         try {
             URL downloadUrl = new URL(url);
@@ -467,7 +492,7 @@ public class SetupImLoadRunnable implements Runnable{
             InputStream is = conn.getInputStream();
 
             int size = conn.getContentLength();
-            int downloadsize = 0;
+            int downloadSize = 0;
 
             //long remoteFileSize = conn.getContentLength();
             //long downloadedSize = 0;
@@ -476,13 +501,15 @@ public class SetupImLoadRunnable implements Runnable{
                 throw new RuntimeException("stream is null");
             }
 
-            File downloadFolder = new File(Lime.DATABASE_FOLDER_EXTERNAL);
-            downloadFolder.mkdirs();
+            //File downloadFolder = new File(Lime.DATABASE_FOLDER_EXTERNAL);
+            //downloadFolder.mkdirs();
+            //File downloadedFile = new File(downloadFolder.getAbsolutePath() + File.separator + Lime.DATABASE_IM_TEMP);
 
-            File downloadedFile = new File(downloadFolder.getAbsolutePath() + File.separator + Lime.DATABASE_IM_TEMP);
-                 downloadedFile.deleteOnExit();
+            File downloadFolder = ctx.getCacheDir();
+            File downloadedFile = File.createTempFile(Lime.DATABASE_IM_TEMP, Lime.DATABASE_IM_TEMP_EXT, downloadFolder);
+            downloadedFile.deleteOnExit();
 
-            FileOutputStream fos = null;
+            FileOutputStream fos;
             fos = new FileOutputStream(downloadedFile);
 
 
@@ -492,8 +519,8 @@ public class SetupImLoadRunnable implements Runnable{
                 if(numread <=0){break;}
                 fos.write(buf, 0, numread);
                 if(size > 0){
-                    downloadsize += 4096;
-                    float percent = (float)downloadsize / (float)size;
+                    downloadSize += 4096;
+                    float percent = (float)downloadSize / (float)size;
                             percent *= 100;
                     handler.updateProgress((int)percent);
                 }
@@ -506,14 +533,6 @@ public class SetupImLoadRunnable implements Runnable{
 
             return downloadedFile;
 
-        } catch(UnknownHostException e){
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e){
-            e.printStackTrace();
         } catch (Exception e){
             e.printStackTrace();
         }

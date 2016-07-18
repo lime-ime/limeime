@@ -27,6 +27,7 @@ package net.toload.main.hd;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Environment;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -158,7 +159,7 @@ public class  DBServer {
 		//String sourcedbfile = LIME.LIME_SDCARD_FOLDER + imtype;
 		List<String> unzipFilePaths = new ArrayList<>();
 		try {
-			unzipFilePaths = LIMEUtilities.unzip(compressedSourceDB.getAbsolutePath(), LIME.LIME_SDCARD_FOLDER,true);
+			unzipFilePaths = LIMEUtilities.unzip(compressedSourceDB.getAbsolutePath(), ctx.getCacheDir().getAbsolutePath()+"limehd",true);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

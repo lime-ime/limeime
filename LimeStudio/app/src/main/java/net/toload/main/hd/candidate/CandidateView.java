@@ -604,6 +604,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
                 if (mComposingTextPopup == null) {
                     mComposingTextPopup = new PopupWindow(mContext);
+                    mComposingTextPopup.setTouchable(false);
                 }
                 //mComposingTextPopup.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);  //Deprecated in API 23. Jeremy '16,7,16
                 mComposingTextPopup.setWidth(LayoutParams.WRAP_CONTENT);
@@ -700,7 +701,7 @@ public class CandidateView extends View implements View.OnClickListener {
         //Jeremy '12,4,8 to avoid fc when hard keyboard is engaged and candidateview is not shown
         if (!this.isShown()) return;
 
-        mHandler.updateComposing(100); //Jeremy '12,6,3 dealy for 200ms after setcomposing
+        mHandler.updateComposing(50);
 
     }
 

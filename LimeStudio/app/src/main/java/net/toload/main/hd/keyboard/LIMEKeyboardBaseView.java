@@ -793,7 +793,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     public void setPopupOffset(int x, int y) {
         mPopupPreviewOffsetX = x;
         mPopupPreviewOffsetY = y;
-        mPreviewPopup.dismiss();
+        if (mPreviewPopup.isShowing()) {
+            mPreviewPopup.dismiss();
+        }
     }
 
     /**
@@ -1158,6 +1160,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
         int oldKeyIndex = mOldPreviewKeyIndex;
         mOldPreviewKeyIndex = keyIndex;
+        final PopupWindow previewPopup = mPreviewPopup;
 
         if(DEBUG)
             Log.i(TAG,"showPreview() keyindex =" + keyIndex + "oldKeyIndex = " + oldKeyIndex);
@@ -1170,9 +1173,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         // should hide the preview of the previous key.
         final boolean hidePreviewOrShowSpaceKeyPreview = (tracker == null) || tracker.isSpaceKey(keyIndex) || tracker.isSpaceKey(oldKeyIndex);
         // If key changed and preview is on or the key is space (language switch is enabled)
-        if (oldKeyIndex != keyIndex
-                && mShowPreview
-                || (hidePreviewOrShowSpaceKeyPreview)){// && isLanguageSwitchEnabled))) {
+        if (oldKeyIndex != keyIndex  && mShowPreview
+                || (hidePreviewOrShowSpaceKeyPreview)){
+
             if (keyIndex == NOT_A_KEY) {
                 //mHandler.cancelPopupPreview();
                 mHandler.dismissPreview(mDelayAfterPreview);
@@ -1184,7 +1187,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
     private void showKey(final int keyIndex, PointerTracker tracker) {
         if(DEBUG)
-            Log.i(TAG,"showKey() keyindex =" + keyIndex);
+            Log.i(TAG,"showKey() keyIndex =" + keyIndex);
+        final PopupWindow previewPopup = mPreviewPopup;
         Key key = tracker.getKey(keyIndex);
         if (key == null)
             return;
@@ -1254,12 +1258,12 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             popupPreviewY += popupHeight;
         }
 
-        if (mPreviewPopup.isShowing()) {
-            mPreviewPopup.update(popupPreviewX, popupPreviewY, popupWidth, popupHeight);
+        if (previewPopup.isShowing()) {
+            previewPopup.update(popupPreviewX, popupPreviewY, popupWidth, popupHeight);
         } else {
-            mPreviewPopup.setWidth(popupWidth);
-            mPreviewPopup.setHeight(popupHeight);
-            mPreviewPopup.showAtLocation(mMiniKeyboardParent, Gravity.NO_GRAVITY,
+            previewPopup.setWidth(popupWidth);
+            previewPopup.setHeight(popupHeight);
+            previewPopup.showAtLocation(mMiniKeyboardParent, Gravity.NO_GRAVITY,
                     popupPreviewX, popupPreviewY);
         }
         // Record popup preview position to display mini-keyboard later at the same positon
