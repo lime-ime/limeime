@@ -301,6 +301,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     if(DEBUG) Log.i(TAG, "handleMessage()  MSG_DISMISS_PREVIEW");
                     if(mPreviewPopup.isShowing())    //mPreviewPopup.dismiss();
                             mPreviewText.setVisibility(INVISIBLE);
+                            mPreviewPopup.dismiss();
                     break;
                 case MSG_REPEAT_KEY: {
                     if(DEBUG) Log.i(TAG, "handleMessage()  MSG_REPEAT_KEY");
@@ -1151,6 +1152,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
     // TODO: clean up this method.
     private void dismissKeyPreview() {
+        if(DEBUG)
+            Log.i(TAG,"dismissKeyPreview() ");
         for (PointerTracker tracker : mPointerTrackers)
             tracker.updateKey(NOT_A_KEY);
         showPreview(NOT_A_KEY, null);
@@ -1230,7 +1233,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         //Jeremy '15,7,13 add key.height to cover whole key if it's not space key
         int popupPreviewY = (key.y +  (( key.codes[0] == ' ')?0: key.height) - popupHeight + mPreviewOffset);
 
-       // mHandler.cancelDismissPreview();
+        mHandler.cancelDismissPreview();
         if (mOffsetInWindow == null) {
             mOffsetInWindow = new int[2];
             getLocationInWindow(mOffsetInWindow);
