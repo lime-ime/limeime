@@ -77,7 +77,7 @@ import java.util.Locale;
 public class LIMEService extends InputMethodService implements
         LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final String TAG = "LIMEService";
 
     private static Thread queryThread; // queryThread for no-blocking I/O  Jeremy '15,6,1
@@ -825,7 +825,7 @@ public class LIMEService extends InputMethodService implements
 
         // If user use the physical keyboard then not fixed the candidate view also use the tranparent background
         mFixedCandidateViewOn = false;
-        mCandidateView.setTransparentCandidateView(hasPhysicalKeyPressed);
+        mCandidateView.setTransparentCandidateView(false);
 
         //hide softkeyboard. Jeremy '12,5,8
         //Should not hide inputView or the candidateView cannot be shown in first stroke. Jeremy '15,6,1
@@ -911,6 +911,7 @@ public class LIMEService extends InputMethodService implements
         // Clean code by jeremy '11,8,22
         if (DEBUG)
             Log.i(TAG, "OnKeyDown():keyCode:" + keyCode
+                    + ", mComposing = " + mComposing
                     + ", hasMenuPress = " + hasMenuPress
                     + ", hasCtrlPress = " + hasCtrlPress
                     + ", isCtrlPressed = " + event.isCtrlPressed()
@@ -1226,6 +1227,7 @@ public class LIMEService extends InputMethodService implements
     public boolean onKeyUp(int keyCode, @NonNull KeyEvent event) {
         if (DEBUG)
             Log.i(TAG, "OnKeyUp():keyCode:" + keyCode
+                            + ", mComposing = " + mComposing
                             + ", hasCtrlPress:" + hasCtrlPress
                             + ", hasWinPress:" + hasWinPress
                             + ", hasShiftPress = " + hasShiftPress
@@ -2298,7 +2300,8 @@ public class LIMEService extends InputMethodService implements
                         setSuggestions(list, finalHasPhysicalKeyPressed, selkey);
 
                         if (DEBUG) Log.i(TAG, "updateCandidates(): display selkey:" + selkey
-                                + "list.size:" + list.size());
+                                + ", list.size:" + list.size()
+                                + ", mComposing = " + mComposing);
                     } else {
                         //Jeremy '11,8,14
                         clearSuggestions();
@@ -2581,6 +2584,8 @@ public class LIMEService extends InputMethodService implements
     }
 
     private void forceHideCandidateView() {
+        if (DEBUG) Log.i(TAG, "forceHideCandidateView()");
+
         if (mComposing != null && mComposing.length() > 0)
             mComposing.setLength(0);
 
@@ -2625,15 +2630,19 @@ public class LIMEService extends InputMethodService implements
 
             if (DEBUG)
                 Log.i(TAG, "setSuggestion():suggestions.size=" + suggestions.size()
-                            + " mFixedCandidateViewOn:" + mFixedCandidateViewOn
-                            + " hasPhysicalKeyPressed:" + hasPhysicalKeyPressed
+                            + ", mComposing = " + mComposing
+                            + ", mFixedCandidateViewOn:" + mFixedCandidateViewOn
+                            + ", hasPhysicalKeyPressed:" + hasPhysicalKeyPressed
             );
 
             if ((!mFixedCandidateViewOn || hasPhysicalKeyPressed)
                     && mCandidateView != mCandidateViewStandAlone) {
                 mCandidateViewInInputView.clear();
                 mCandidateView = mCandidateViewStandAlone; //Jeremy '12,5,4 use standalone candidateView for physical keyboard (no soft keyboard shown)
-                forceHideCandidateView();
+                //forceHideCandidateView(); //Jeremy '16,7,19 caused the first composing character missing typed with physical keyboard.
+                if (mFixedCandidateViewOn) {
+                    mCandidateViewInInputView.forceHide();
+                }
             } else if (mFixedCandidateViewOn && !hasPhysicalKeyPressed &&
                     mCandidateView != mCandidateViewInInputView) {
                 mCandidateViewStandAlone.clear();
@@ -2672,7 +2681,8 @@ public class LIMEService extends InputMethodService implements
                 }
                 mCandidateView.setSuggestions(suggestions, showNumber, diplaySelkey);
                 if (DEBUG)
-                    Log.i(TAG, "setSuggestion(): mCandidateList.size: " + mCandidateList.size());
+                    Log.i(TAG, "setSuggestion(): mCandidateList.size: " + mCandidateList.size()
+                            + ", mComposing = " + mComposing);
             }
         } else {
             if (DEBUG) Log.i(TAG, "setSuggestion() with list=null");
