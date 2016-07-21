@@ -77,7 +77,7 @@ import java.util.Locale;
 public class LIMEService extends InputMethodService implements
         LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final String TAG = "LIMEService";
 
     private static Thread queryThread; // queryThread for no-blocking I/O  Jeremy '15,6,1
@@ -91,6 +91,7 @@ public class LIMEService extends InputMethodService implements
     private CandidateView mCandidateView = null;
     private CandidateView mCandidateViewInInputView = null;
     private CandidateView mCandidateViewStandAlone = null;
+    private CandidateViewContainer mCandidateViewContainer = null;
     private CompletionInfo[] mCompletions;
 
     private StringBuilder mComposing = new StringBuilder();
@@ -338,8 +339,10 @@ public class LIMEService extends InputMethodService implements
             Log.i(TAG, "onCreateCandidatesView()");
 
 
-        CandidateViewContainer mCandidateViewContainer = (CandidateViewContainer) getLayoutInflater().inflate(R.layout.candidates, null);
-        mCandidateViewContainer.initViews();
+        CandidateViewContainer candidateViewContainer = (CandidateViewContainer) getLayoutInflater().inflate(R.layout.candidates, null);
+        candidateViewContainer.initViews();
+        mCandidateViewContainer = candidateViewContainer;
+
         mCandidateViewStandAlone = (CandidateView) mCandidateViewContainer.findViewById(R.id.candidates);
         mCandidateViewStandAlone.setService(this);
 
@@ -495,10 +498,9 @@ public class LIMEService extends InputMethodService implements
         super.onComputeInsets(outInsets);
         if(mCandidateView == null || mCandidateView == mCandidateViewInInputView ) return;
 
-        final int suggestionsHeight= mCandidateViewStandAlone.getHeight();
-        //outInsets.visibleTopInsets=  outInsets.contentTopInsets;
-        outInsets.contentTopInsets = suggestionsHeight;
-        outInsets.visibleTopInsets = suggestionsHeight;
+       // Jeremy '16,7,21 get space for candidate view for candidateView typing with physical keybaord
+        outInsets.contentTopInsets = mCandidateViewContainer.getHeight() - mCandidateViewStandAlone.getHeight();
+        outInsets.visibleTopInsets = mCandidateViewContainer.getHeight();
 
         if(mCandidateViewStandAlone.isShown()) {
             outInsets.touchableInsets = outInsets.TOUCHABLE_INSETS_FRAME;
