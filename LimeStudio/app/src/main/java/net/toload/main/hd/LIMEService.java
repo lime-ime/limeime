@@ -496,8 +496,10 @@ public class LIMEService extends InputMethodService implements
         if(mCandidateView == null || mCandidateView == mCandidateViewInInputView ) return;
 
         final int suggestionsHeight= mCandidateViewStandAlone.getHeight();
-        //outInsets.contentTopInsets=touchY;
-        outInsets.visibleTopInsets=  outInsets.contentTopInsets;
+        //outInsets.visibleTopInsets=  outInsets.contentTopInsets;
+        outInsets.contentTopInsets = suggestionsHeight;
+        outInsets.visibleTopInsets = suggestionsHeight;
+
         if(mCandidateViewStandAlone.isShown()) {
             outInsets.touchableInsets = outInsets.TOUCHABLE_INSETS_FRAME;
         }else{
