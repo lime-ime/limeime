@@ -24,6 +24,7 @@
 
 package net.toload.main.hd;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Service;
 import android.content.Context;
@@ -33,6 +34,7 @@ import android.content.res.Configuration;
 import android.inputmethodservice.InputMethodService;
 import android.media.AudioManager;
 import android.os.Handler;
+import android.os.Message;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.Vibrator;
@@ -66,6 +68,7 @@ import net.toload.main.hd.keyboard.LIMEKeyboardView;
 import net.toload.main.hd.keyboard.LIMEMetaKeyKeyListener;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -77,13 +80,16 @@ import java.util.Locale;
 public class LIMEService extends InputMethodService implements
         LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final String TAG = "LIMEService";
 
     private static Thread queryThread; // queryThread for no-blocking I/O  Jeremy '15,6,1
 
     static final int KEYBOARD_SWITCH_CODE = -9;
     static final int KEYBOARD_SWITCH_IM_CODE = -10;
+
+    //Jeremy '16,7,22 To control delayed hiding candidate view and avoid hide and show candidate view in short time.
+    private static final int DELAY_BEFORE_HIDE_CANDIDATE_VIEW = 200;
 
     private LIMEKeyboardView mInputView = null;
     private CandidateInInputViewContainer mCandidateInInputView = null;//Jeremy'12,5,3
@@ -126,8 +132,8 @@ public class LIMEService extends InputMethodService implements
 
     private Context mThemeContext;
 
-    private Mapping selectedCandidate; //Jeremy '12,5,7 renamed from firstMathed
-    private int selectedIndex; //Jeremy '12,5,7 the index in resultList of selectedCandidate
+    private Mapping selectedCandidate; //Jeremy '12,5,7 renamed from firstMacthed
+    //private int selectedIndex; //Jeremy '12,5,7 the index in resultList of selectedCandidate
     private Mapping committedCandidate; //Jeremy '12,5,7 renamed from tempMatched
 
     private StringBuffer tempEnglishWord;
@@ -339,6 +345,7 @@ public class LIMEService extends InputMethodService implements
             Log.i(TAG, "onCreateCandidatesView()");
 
 
+        @SuppressLint("InflateParams")
         CandidateViewContainer candidateViewContainer = (CandidateViewContainer) getLayoutInflater().inflate(R.layout.candidates, null);
         candidateViewContainer.initViews();
         mCandidateViewContainer = candidateViewContainer;
@@ -429,7 +436,7 @@ public class LIMEService extends InputMethodService implements
         if (ic != null) ic.finishComposingText();
 
         selectedCandidate = null;
-        selectedIndex = 0;
+        //selectedIndex = 0;
 
         if (mCandidateList != null)
             mCandidateList.clear();
@@ -461,7 +468,7 @@ public class LIMEService extends InputMethodService implements
             }
 
             selectedCandidate = null;
-            selectedIndex = 0;
+            //selectedIndex = 0;
 
             clearSuggestions();
         }catch(Exception e){
@@ -503,9 +510,9 @@ public class LIMEService extends InputMethodService implements
         outInsets.visibleTopInsets = mCandidateViewContainer.getHeight();
 
         if(mCandidateViewStandAlone.isShown()) {
-            outInsets.touchableInsets = outInsets.TOUCHABLE_INSETS_FRAME;
+            outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_CONTENT;
         }else{
-            outInsets.touchableInsets = outInsets.TOUCHABLE_INSETS_VISIBLE;
+            outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_VISIBLE;
         }
     }
     /**
@@ -1412,7 +1419,6 @@ public class LIMEService extends InputMethodService implements
 
                         // Do hanConvert before commit
                         // '10, 4, 17 Jeremy
-                        // inputConnection.setComposingText("", 1);
                         if(mLIMEPref.getHanCovertOption() == 0){
                             if (ic != null) ic.commitText(wordToCommit, firstMatchedLength);
                         }else{
@@ -1465,7 +1471,7 @@ public class LIMEService extends InputMethodService implements
                                     Log.i(TAG, "commitTyped():starting LD process, LDBuffer=" + LDComposingBuffer +
                                             ". just committed code= '" + selectedCandidate.getCode() + "'");
                                 SearchSrv.addLDPhrase(selectedCandidate, false);
-                            } else {//if(LDComposingBuffer.contains(mComposing.toString())){
+                            } else {
                                 //Continuous LD process
                                 if (DEBUG)
                                     Log.i(TAG, "commitTyped():Continuous LD process, LDBuffer='" + LDComposingBuffer +
@@ -1474,7 +1480,7 @@ public class LIMEService extends InputMethodService implements
                             }
                             mComposing = mComposing.delete(0, committedCodeLength);
                             if (DEBUG)
-                                Log.i(TAG, "commitTyped(): trimmed mCopmosing = '" + mComposing + "', " +
+                                Log.i(TAG, "commitTyped(): trimmed mComposing = '" + mComposing + "', " +
                                         "+ mComposing.length = " + mComposing.length());
 
                             if (!mComposing.toString().equals(" ")) {
@@ -1667,9 +1673,6 @@ public class LIMEService extends InputMethodService implements
         if (!mEnglishFlagShift
                 && (primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT)) {
             mEnglishFlagShift = true;
-            if (DEBUG) {
-                Log.i(TAG, "OnKey():mEnglishFlagShift:" + mEnglishFlagShift);
-            }
         }
         if (primaryCode == LIMEBaseKeyboard.KEYCODE_DELETE) {
             handleBackspace();
@@ -2239,8 +2242,8 @@ public class LIMEService extends InputMethodService implements
                         // Emoji Control
                         // Check the Emoji parameter setting and load icons into the suggestions list
                         if(mLIMEPref.getEmojiMode()){
-                            HashMap<String, String> emojicheck = new HashMap<String, String>();
-                            List<Mapping> emojilist = new LinkedList<Mapping>();
+                            HashMap<String, String> emojiCheck = new HashMap<>();
+                            List<Mapping> emojiList = new LinkedList<>();
 
                             if(list.size() > 0){
 
@@ -2256,9 +2259,9 @@ public class LIMEService extends InputMethodService implements
                                     item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
                                     if (item1.size() > 0) {
                                         for (Mapping m : item1) {
-                                            if (emojicheck.get(m.getWord()) == null) {
-                                                emojilist.add(m);
-                                                emojicheck.put(m.getWord(), m.getWord());
+                                            if (emojiCheck.get(m.getWord()) == null) {
+                                                emojiList.add(m);
+                                                emojiCheck.put(m.getWord(), m.getWord());
                                             }
                                         }
                                     }
@@ -2275,9 +2278,9 @@ public class LIMEService extends InputMethodService implements
                                         item2 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_TW);
                                         if (item2.size() > 0) {
                                             for (Mapping m : item2) {
-                                                if (emojicheck.get(m.getWord()) == null) {
-                                                    emojilist.add(m);
-                                                    emojicheck.put(m.getWord(), m.getWord());
+                                                if (emojiCheck.get(m.getWord()) == null) {
+                                                    emojiList.add(m);
+                                                    emojiCheck.put(m.getWord(), m.getWord());
                                                 }
                                             }
                                         }
@@ -2285,9 +2288,9 @@ public class LIMEService extends InputMethodService implements
                                             item3 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_CN);
                                             if (item3.size() > 0) {
                                                 for (Mapping m : item3) {
-                                                    if (emojicheck.get(m.getWord()) == null) {
-                                                        emojilist.add(m);
-                                                        emojicheck.put(m.getWord(), m.getWord());
+                                                    if (emojiCheck.get(m.getWord()) == null) {
+                                                        emojiList.add(m);
+                                                        emojiCheck.put(m.getWord(), m.getWord());
                                                     }
                                                 }
                                             }
@@ -2295,8 +2298,8 @@ public class LIMEService extends InputMethodService implements
                                     }
                                 }
 
-                                if(emojilist.size() > 0){
-                                    list.addAll(insertPosition, emojilist);
+                                if(emojiList.size() > 0){
+                                    list.addAll(insertPosition, emojiList);
                                 }
                             }
                         }
@@ -2432,8 +2435,8 @@ public class LIMEService extends InputMethodService implements
                                     // Emoji Control
                                     // Check the Emoji parameter setting and load icons into the suggestions list
                                     if(mLIMEPref.getEmojiMode()){
-                                        HashMap<String, String> emojicheck = new HashMap<String, String>();
-                                        List<Mapping> emojilist = new LinkedList<Mapping>();
+                                        HashMap<String, String> emojiCheck = new HashMap<>();
+                                        List<Mapping> emojiList = new LinkedList<>();
 
                                         if(list.size() > 0){
 
@@ -2446,15 +2449,15 @@ public class LIMEService extends InputMethodService implements
                                             item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
                                             if(item1.size() > 0){
                                                 for(Mapping m: item1){
-                                                    if(emojicheck.get(m.getWord()) == null){
-                                                        emojilist.add(m);
-                                                        emojicheck.put(m.getWord(), m.getWord());
+                                                    if(emojiCheck.get(m.getWord()) == null){
+                                                        emojiList.add(m);
+                                                        emojiCheck.put(m.getWord(), m.getWord());
                                                     }
                                                 }
                                             }
 
-                                            if(emojilist.size() > 0){
-                                                list.addAll(insertPosition, emojilist);
+                                            if(emojiList.size() > 0){
+                                                list.addAll(insertPosition, emojiList);
                                             }
                                         }
                                     }
@@ -2566,13 +2569,13 @@ public class LIMEService extends InputMethodService implements
     private void initCandidateView() {
         if (DEBUG) Log.i(TAG, "initCandidateView()");
 
-        mHandler.post(mShowCandidateView);
-        mHandler.post(mHideCandidateView);
+        mCandidateViewHandler.showCandidateView();
+        mCandidateViewHandler.hideCandidateView();
     }
 
     private void showCandidateView() {
         if (DEBUG) Log.i(TAG, "showCandidateView()");
-        mHandler.post(mShowCandidateView);
+        mCandidateViewHandler.showCandidateView();
     }
 
     private void hideCandidateView() {
@@ -2583,8 +2586,8 @@ public class LIMEService extends InputMethodService implements
         if (mCandidateViewStandAlone == null || (!mCandidateViewStandAlone.isShown()))
             return;  // escape if mCandidateViewStandAlone is not created or it's not shown '12,5,6, Jeremy 
 
+        mCandidateViewHandler.hideCandidateViewDelayed(DELAY_BEFORE_HIDE_CANDIDATE_VIEW);
 
-        mHandler.post(mHideCandidateView);
     }
 
     private void forceHideCandidateView() {
@@ -2594,7 +2597,7 @@ public class LIMEService extends InputMethodService implements
             mComposing.setLength(0);
 
         selectedCandidate = null;
-        selectedIndex = 0;
+        //selectedIndex = 0;
 
         if (mCandidateList != null)
             mCandidateList.clear();
@@ -2607,26 +2610,47 @@ public class LIMEService extends InputMethodService implements
     }
 
 
-    final Handler mHandler = new Handler();
-    // Create runnable for posting
-    final Runnable mShowCandidateView = new Runnable() {
-        public void run() {
-            if (DEBUG)
-                Log.i(TAG, "Runnable(): mShowCandidateView");
+    final CandidateViewHandler mCandidateViewHandler = new CandidateViewHandler(this);
 
-            setCandidatesViewShown(true);
+
+    private static class CandidateViewHandler extends Handler {
+
+        private final WeakReference<LIMEService> mLIMEService;
+        private final int MSG_SHOW_CANDIDATE_VIEW = 1;
+        private final int MSG_HIDE_CANDIDATE_VIEW = 2;
+
+        public CandidateViewHandler(LIMEService im){
+            mLIMEService = new WeakReference<>(im);
         }
-    };
-    final Runnable mHideCandidateView = new Runnable() {
-        public void run() {
-            //Jeremy '12,4,24 moved fixedcandidate here
-            if (DEBUG)
-                Log.i(TAG, "Runnable(): mHideCandidateView");
-            setCandidatesViewShown(false);
-
+        @Override
+        public void handleMessage(Message msg) {
+            if (DEBUG) Log.i(TAG, "CandidateViewHandler.handleMessage(): message:" + msg.what);
+            LIMEService mLIMEInstance = mLIMEService.get();
+            if(mLIMEInstance == null) return;
+            switch (msg.what) {
+                case MSG_SHOW_CANDIDATE_VIEW:
+                    mLIMEInstance.setCandidatesViewShown(true);
+                    break;
+                case MSG_HIDE_CANDIDATE_VIEW:
+                    mLIMEInstance.setCandidatesViewShown(false);
+                    break;
+            }
         }
-    };
+        public void showCandidateView()
+        {
+            removeMessages(MSG_HIDE_CANDIDATE_VIEW);  //cancel previous hide messages if any
+            sendMessage(obtainMessage(MSG_SHOW_CANDIDATE_VIEW));
+        }
+        public void hideCandidateView()
+        {
+            sendMessage(obtainMessage(MSG_HIDE_CANDIDATE_VIEW));
+        }
 
+        public void hideCandidateViewDelayed(int delay)
+        {
+            sendMessageDelayed(obtainMessage(MSG_HIDE_CANDIDATE_VIEW),delay);
+        }
+    }
 
     public synchronized void setSuggestions(List<Mapping> suggestions, boolean showNumber, String diplaySelkey) {
 
@@ -2644,8 +2668,15 @@ public class LIMEService extends InputMethodService implements
                 mCandidateViewInInputView.clear();
                 mCandidateView = mCandidateViewStandAlone; //Jeremy '12,5,4 use standalone candidateView for physical keyboard (no soft keyboard shown)
                 //forceHideCandidateView(); //Jeremy '16,7,19 caused the first composing character missing typed with physical keyboard.
-                if (mFixedCandidateViewOn) {
-                    mCandidateViewInInputView.forceHide();
+                if (hasPhysicalKeyPressed) {
+                    // cancel the current composing first before closing soft keyboard and switched to physical keyboarding typing.
+                    InputConnection ic = getCurrentInputConnection();
+                    if (ic != null) ic.setComposingText("", 0);
+                    mInputView.closing();
+                    requestHideSelf(0);
+                    // preserved the last character typed with physical keyboard in composing
+                    mComposing.delete(0, mComposing.length()-1);
+                    updateCandidates();
                 }
             } else if (mFixedCandidateViewOn && !hasPhysicalKeyPressed &&
                     mCandidateView != mCandidateViewInInputView) {
@@ -2666,7 +2697,7 @@ public class LIMEService extends InputMethodService implements
 
                     if (suggestions.size() > 1 && suggestions.get(1).isExactMatchToCodeRecord()) {
                         selectedCandidate = suggestions.get(1);
-                        selectedIndex = 1;
+                        //selectedIndex = 1;
                         // this is for no exact match condition with code.  //do not set default suggestion for other record type like chinese punctuation symbols or related phrases. Jeremy '15,6,4
                     } else if (suggestions.size() > 0) {
                             //&& (suggestions.get(0).isComposingCodeRecord() || suggestions.get(0).isRuntimeBuiltPhraseRecord())) {
@@ -2677,7 +2708,7 @@ public class LIMEService extends InputMethodService implements
                             selectedIndex = seloption;
                         }else{*/
                             selectedCandidate = suggestions.get(0);
-                            selectedIndex = 0;
+                            //selectedIndex = 0;
                         //}
                     }
                 } catch (Exception e) {
@@ -2747,7 +2778,7 @@ public class LIMEService extends InputMethodService implements
 
     }
 
-    public void setCandidatesViewShown(boolean shown) {
+    public void   setCandidatesViewShown(boolean shown) {
 
         if (DEBUG)
             Log.i(TAG, "setCandidateViewShown():" + shown);
@@ -2880,6 +2911,7 @@ public class LIMEService extends InputMethodService implements
     }
 
 
+    @SuppressLint("InflateParams")
     private void initialViewAndSwitcher(boolean forceRecreate) {
         if (DEBUG)
             Log.i(TAG, "initialViewAndSwitcher()");
@@ -3329,7 +3361,7 @@ public class LIMEService extends InputMethodService implements
 
         if (mCandidateList != null && mCandidateList.size() > 0) {
             selectedCandidate = mCandidateList.get(index);
-            selectedIndex = index;
+            //selectedIndex = index;
         }
 
         InputConnection ic = getCurrentInputConnection();

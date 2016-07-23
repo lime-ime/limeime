@@ -318,33 +318,33 @@ public class CandidateView extends View implements View.OnClickListener {
         public void handleMessage(Message msg) {
             if (DEBUG) Log.i(TAG, "UIHandler.handlMessage(): message:" + msg.what);
 
-            CandidateView mCandiInstatnce = mCandidateViewWeakReference.get();
-            if (mCandiInstatnce == null) return;
+            CandidateView mCandiInstance = mCandidateViewWeakReference.get();
+            if (mCandiInstance == null) return;
 
             switch (msg.what) {
                 case MSG_UPDATE_UI:
-                    mCandiInstatnce.doUpdateUI();
+                    mCandiInstance.doUpdateUI();
                     break;
                 case MSG_UPDATE_COMPOSING:
-                    mCandiInstatnce.doUpdateComposing();
+                    mCandiInstance.doUpdateComposing();
                     break;
                 case MSG_HIDE_COMPOSING: {
-                    mCandiInstatnce.doHideComposing();
+                    mCandiInstance.doHideComposing();
                     break;
                 }
                 case MSG_SHOW_CANDIDATE_POPUP: {
-                    mCandiInstatnce.doUpdateCandidatePopup();
+                    mCandiInstance.doUpdateCandidatePopup();
                     break;
                 }
                 case MSG_HIDE_CANDIDATE_POPUP: {
-                    mCandiInstatnce.doHideCandidatePopup();
+                    mCandiInstance.doHideCandidatePopup();
                     break;
                 }
                 case MSG_SET_COMPOSING: {
                     String composingText = (String) msg.obj;
                     if (DEBUG)
                         Log.i(TAG, "UIHandler.handleMessage(): composingText" + composingText);
-                    mCandiInstatnce.doSetComposing(composingText);
+                    mCandiInstance.doSetComposing(composingText);
                     break;
                 }
             }

@@ -65,6 +65,7 @@ import android.widget.TextView;
 import net.toload.main.hd.R;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -214,7 +215,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private PopupWindow mMiniKeyboardPopup;
     private LIMEKeyboardBaseView mMiniKeyboard;
     private View mMiniKeyboardParent;
-    private final WeakHashMap<Key, View> mMiniKeyboardCache = new WeakHashMap<Key, View>();
+    private final WeakHashMap<Key, View> mMiniKeyboardCache = new WeakHashMap<>();
     private int mMiniKeyboardOriginX;
     private int mMiniKeyboardOriginY;
     private long mMiniKeyboardPopupTime;
@@ -227,7 +228,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
      */
     private OnKeyboardActionListener mKeyboardActionListener;
 
-    private final ArrayList<PointerTracker> mPointerTrackers = new ArrayList<PointerTracker>();
+    private final ArrayList<PointerTracker> mPointerTrackers = new ArrayList<>();
 
     // TODO: Let the PointerTracker class manage this pointer queue
     private final PointerQueue mPointerQueue = new PointerQueue();
@@ -269,20 +270,20 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private final Rect mPadding;
     private final Rect mClipRegion = new Rect(0, 0, 0, 0);
     // This map caches key label text height in pixel as value and key label text size as map key.
-    private final HashMap<Integer, Integer> mTextHeightCache = new HashMap<Integer, Integer>();
-    private final HashMap<Integer, Integer> mTextWidthCache = new HashMap<Integer, Integer>();
+    private final HashMap<Integer, Integer> mTextHeightCache = new HashMap<>();
+    private final HashMap<Integer, Integer> mTextWidthCache = new HashMap<>();
 
     private Drawable mPopupHint;//Jeremy /11,8,11
 
     private boolean isLargeScreen; // Jeremy //11,8,8 used for disable fling selection on minipopup keyboard for larger screen
 
-    private final UIHandler mHandler = new UIHandler();
+    private final UIHandler mHandler = new UIHandler(this);
 
     private boolean isAPIpre8;
 
     //private LIMEPreferenceManager mLIMEPref;
 
-    class UIHandler extends Handler {
+    static class UIHandler extends Handler {
         private static final int MSG_POPUP_PREVIEW = 1;
         private static final int MSG_DISMISS_PREVIEW = 2;
         private static final int MSG_REPEAT_KEY = 3;
@@ -290,30 +291,38 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
         private boolean mInKeyRepeat;
 
+        private final WeakReference<LIMEKeyboardBaseView> mLIMEKeyboardBaseViewWeakReference;
+
+        public UIHandler(LIMEKeyboardBaseView keyboardBaseView){
+            mLIMEKeyboardBaseViewWeakReference = new WeakReference<LIMEKeyboardBaseView>(keyboardBaseView);
+        }
+
         @Override
         public void handleMessage(Message msg) {
+            LIMEKeyboardBaseView mLIMEKeyboardBaseView = mLIMEKeyboardBaseViewWeakReference.get();
+            if(mLIMEKeyboardBaseView == null) return;
             switch (msg.what) {
                 case MSG_POPUP_PREVIEW:
                     if(DEBUG) Log.i(TAG, "handleMessage()  MSG_POPUP_PREVIEW");
-                    showKey(msg.arg1, (PointerTracker) msg.obj);
+                    mLIMEKeyboardBaseView.showKey(msg.arg1, (PointerTracker) msg.obj);
                     break;
                 case MSG_DISMISS_PREVIEW:
                     if(DEBUG) Log.i(TAG, "handleMessage()  MSG_DISMISS_PREVIEW");
-                    if(mPreviewPopup.isShowing())    //mPreviewPopup.dismiss();
-                            mPreviewText.setVisibility(INVISIBLE);
-                            mPreviewPopup.dismiss();
+                    if(mLIMEKeyboardBaseView.mPreviewPopup.isShowing())    //mPreviewPopup.dismiss();
+                        mLIMEKeyboardBaseView.mPreviewText.setVisibility(INVISIBLE);
+                        mLIMEKeyboardBaseView.mPreviewPopup.dismiss();
                     break;
                 case MSG_REPEAT_KEY: {
                     if(DEBUG) Log.i(TAG, "handleMessage()  MSG_REPEAT_KEY");
                     final PointerTracker tracker = (PointerTracker) msg.obj;
                     tracker.repeatKey(msg.arg1);
-                    startKeyRepeatTimer(mKeyRepeatInterval, msg.arg1, tracker);
+                    startKeyRepeatTimer(mLIMEKeyboardBaseView.mKeyRepeatInterval, msg.arg1, tracker);
                     break;
                 }
                 case MSG_LONGPRESS_KEY: {
                     if(DEBUG) Log.i(TAG, "handleMessage()  MSG_LONGPRESS_KEY");
                     final PointerTracker tracker = (PointerTracker) msg.obj;
-                    openPopupIfRequired(msg.arg1, tracker);
+                    mLIMEKeyboardBaseView.openPopupIfRequired(msg.arg1, tracker);
                     break;
                 }
             }
@@ -321,11 +330,13 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
         public void popupPreview(long delay, int keyIndex, PointerTracker tracker) {
             if(DEBUG)
-                Log.i(TAG, "UIHandler.popupPreview() delay="+delay + "; keyindex = "+ keyIndex);
+                Log.i(TAG, "UIHandler.popupPreview() delay="+delay + "; keyIndex = "+ keyIndex);
+            LIMEKeyboardBaseView mLIMEKeyboardBaseView = mLIMEKeyboardBaseViewWeakReference.get();
+            if(mLIMEKeyboardBaseView == null) return;
             removeMessages(MSG_POPUP_PREVIEW);
-            if (mPreviewPopup.isShowing() && mPreviewText.getVisibility() == VISIBLE) {
+            if (mLIMEKeyboardBaseView.mPreviewPopup.isShowing() && mLIMEKeyboardBaseView.mPreviewText.getVisibility() == VISIBLE) {
                 // Show right away, if it's already visible and finger is moving around
-                showKey(keyIndex, tracker);
+                mLIMEKeyboardBaseView.showKey(keyIndex, tracker);
             } else {
                 sendMessageDelayed(obtainMessage(MSG_POPUP_PREVIEW, keyIndex, 0, tracker),
                         delay);
@@ -1062,12 +1073,12 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                         paint.setColor(subKeyColor);
                         //if (subLabel.length() > 2)  // draw sub keys as portrait keys in two rows.
                         //    paint.setTextSize(subLabelSize * 2 / 3);  //123 EN  in landscape is usually to wide.
-                        if (hasSecondSubLabel) {
-                            canvas.drawText(subLabel, centerX - subLabelWidth * 2, baseline, paint);
-                            paint.setColor(keyColor);
-                            canvas.drawText(secondSubLabel, centerX - subLabelWidth, baseline, paint);
-                        } else
-                            canvas.drawText(subLabel, centerX - subLabelWidth, baseline, paint);
+                        /*if (hasSecondSubLabel) {
+                                                    canvas.drawText(subLabel, centerX - subLabelWidth * 2, baseline, paint);
+                                                    paint.setColor(keyColor);
+                                                    canvas.drawText(secondSubLabel, centerX - subLabelWidth, baseline, paint);
+                                                } else*/
+                        canvas.drawText(subLabel, centerX - subLabelWidth, baseline, paint);
 
                         paint.setTextSize(labelSize);
                         paint.setTypeface(mKeyTextStyle);
@@ -1710,9 +1721,10 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     }
 
     public void closing() {
-        mPreviewPopup.dismiss();
-        mHandler.cancelAllMessages();
+        //mPreviewPopup.dismiss();
 
+        mHandler.cancelAllMessages();
+        dismissKeyPreview();
         dismissPopupKeyboard();
         mBuffer = null;
         mCanvas = null;
