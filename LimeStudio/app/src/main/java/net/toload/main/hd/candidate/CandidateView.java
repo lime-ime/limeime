@@ -201,7 +201,6 @@ public class CandidateView extends View implements View.OnClickListener {
             });
         }
 
-        //bgcolor = r.getColor(R.color.candidate_background);
 
         mColorNormalText = ContextCompat.getColor(context, R.color.candidate_normal_text);
 
@@ -232,7 +231,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
 
         //final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        //Jeremy '12,4,23 add mContext parameter.  The construstor without context is deprecated
+        //Jeremy '12,4,23 add mContext parameter.  The constructor without context is deprecated
         mGestureDetector = new GestureDetector(mContext, new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2,
@@ -436,9 +435,9 @@ public class CandidateView extends View implements View.OnClickListener {
     */
     private void resetWidth() {
         if (DEBUG)
-            Log.i(TAG, "resetWidth() mHieght:" + mHeight);
+            Log.i(TAG, "resetWidth() mHeight:" + mHeight);
         int candiWidth = mScreenWidth;
-        if (mTotalWidth > mScreenWidth) candiWidth -= mExpandButtonWidth;
+        if (mTotalWidth > mScreenWidth || isEmpty()) candiWidth -= mExpandButtonWidth;
         if (DEBUG)
             Log.i(TAG, "resetWidth() candiWidth:" + candiWidth);
         this.setLayoutParams(new LinearLayout.LayoutParams(candiWidth, mHeight));
@@ -1112,6 +1111,14 @@ public class CandidateView extends View implements View.OnClickListener {
         mHeight = (int) (mContext.getResources().getDimensionPixelSize(
                 R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize()); //restore the height Jeremy '12,5,24
 
+    }
+    public boolean isEmpty(){
+        return mCount ==0;
+    }
+
+    public void startVoiceInput(){
+        if(mService!=null)
+            mService.startVoiceInput();
     }
 
     //Jeremy '12,5,6 hide candidate bar when candidateView is fixed.

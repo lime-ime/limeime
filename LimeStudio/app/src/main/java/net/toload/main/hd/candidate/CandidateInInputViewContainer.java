@@ -27,11 +27,14 @@
 package net.toload.main.hd.candidate;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
 import net.toload.main.hd.R;
@@ -40,15 +43,22 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
 
 	private static final boolean DEBUG = false;
 	private static final String TAG = "CandiInputViewContainer";
-    private View mButtonExpand;
+    private ImageButton mRightButton;
     private View mButtonRightExpand;
     private CandidateView mCandidates;
-
+    private Drawable mExpandButtonDrawable;
+    private Drawable mVoiceInputButtonDrawable;
+    Context ctx;
     
     public CandidateInInputViewContainer(Context context, AttributeSet attrs) {
         super(context, attrs);
         if(DEBUG)
     		Log.i(TAG,"CandidateInInputViewContainer() constructor");
+
+        ctx = context;
+        mExpandButtonDrawable = ContextCompat.getDrawable(context, R.drawable.ic_suggest_expander);
+        mVoiceInputButtonDrawable = ContextCompat.getDrawable(context, R.drawable.sym_keyboard_voice_light);
+
     }
 
     public void initViews() {
@@ -56,9 +66,9 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
     		Log.i(TAG,"initViews()");
         if (mCandidates == null) {
             mButtonRightExpand = findViewById(R.id.candidate_right_parent);
-            mButtonExpand = findViewById(R.id.candidate_right);
-            if (mButtonExpand != null) {
-                mButtonExpand.setOnTouchListener(this);
+            mRightButton = (ImageButton) findViewById(R.id.candidate_right);
+            if (mRightButton != null) {
+                mRightButton.setOnTouchListener(this);
             }
             mCandidates = (CandidateView) findViewById(R.id.candidatesView);
             
@@ -78,12 +88,17 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
                 Log.i(TAG,"requestLayout() availableWidth:" + availableWidth+ " neededWidth:" + neededWidth);
 
 
-            boolean rightVisible =  availableWidth < neededWidth;
+            boolean showExpandButton =  availableWidth < neededWidth;
+            boolean showVoiceInputButton = mCandidates.isEmpty();
             if(mCandidates.isCandidateExpanded())
-            	rightVisible = false;
-            
-            if (mButtonRightExpand != null) {
-                mButtonRightExpand.setVisibility(rightVisible ? VISIBLE : GONE);
+            	showExpandButton = false;
+
+            if(mRightButton != null){
+                mRightButton.setImageResource(showVoiceInputButton ? R.drawable.sym_keyboard_voice_light : R.drawable.ic_suggest_expander );
+            }
+
+            if (mButtonRightExpand != null ) {
+                mButtonRightExpand.setVisibility( (showVoiceInputButton || showExpandButton ) ? VISIBLE : GONE);
             }
         }
         super.requestLayout();
@@ -91,8 +106,11 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
 
     public boolean onTouch(View v, MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            if (v == mButtonExpand) {
-              	mCandidates.showCandidatePopup();
+            if (v == mRightButton) {
+                if(mCandidates.isEmpty())
+                    mCandidates.startVoiceInput();
+                else
+                    mCandidates.showCandidatePopup();
             	
             }
         }
