@@ -46,8 +46,7 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
     private ImageButton mRightButton;
     private View mButtonRightExpand;
     private CandidateView mCandidates;
-    private Drawable mExpandButtonDrawable;
-    private Drawable mVoiceInputButtonDrawable;
+
     Context ctx;
     
     public CandidateInInputViewContainer(Context context, AttributeSet attrs) {
@@ -56,8 +55,6 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
     		Log.i(TAG,"CandidateInInputViewContainer() constructor");
 
         ctx = context;
-        mExpandButtonDrawable = ContextCompat.getDrawable(context, R.drawable.ic_suggest_expander);
-        mVoiceInputButtonDrawable = ContextCompat.getDrawable(context, R.drawable.sym_keyboard_voice_light);
 
     }
 

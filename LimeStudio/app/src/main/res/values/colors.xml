@@ -41,7 +41,7 @@
     <color name="preference_background">#bbffffff</color>
     <color name="preference_text">#ffffffff</color>
     <color name="preference_title">#FFE35900</color>
-     <color name="limekeyboard_transparent">#00000000</color>
+    <color name="limekeyboard_transparent">#00000000</color>
     <color name="limekeyboard_bar_im_shadow_white">#80000000</color>
     <color name="limekeyboard_bar_im_shadow_black">#80FFFFFF</color>
     <color name="limekeyboard_bar_im_text">#FF0F0F0F</color>
@@ -49,18 +49,28 @@
     <color name="limekeyboard_feedback_language_text">#FFFFFFFF</color>
     <color name="limekeyboard_key_color_white">#FFFFFFFF</color>
     <color name="limekeyboard_key_color_black">#FF000000</color>
-    <color name="limekeyboard_key_color_light">#FF0F0F0F</color>
-    <color name="limekeyboard_key_color_light_hl">#FF4DB6AC</color>
-    <color name="limekeyboard_key_color_dark">#FFF7F7F7</color>
-    <color name="limekeyboard_key_color_dark_hl">#FF4DB6AC</color>
+
+    <color name="limekeyboard_normal_key_color_light">#FF0F0F0F</color>
+    <color name="limekeyboard_normal_key_color_light_hl">#FF4DB6AC</color>
     <color name="limekeyboard_function_key_color_light">#FF717171</color>
     <color name="limekeyboard_function_key_color_light_hl">#FF80CBC4</color>
-    <color name="limekeyboard_function_key_color_dark">#FF717171</color>
-    <color name="limekeyboard_function_key_color_dark_hl">#FF80CBC4</color>f
     <color name="limekeyboard_subkey_color_light">#FF7D7D7D</color>
     <color name="limekeyboard_subkey_color_light_hl">#FF80CBC4</color>
+
+    <color name="limekeyboard_normal_key_color_dark">#FFF7F7F7</color>
+    <color name="limekeyboard_normal_key_color_dark_hl">#FF4DB6AC</color>
+    <color name="limekeyboard_function_key_color_dark">#FF717171</color>
+    <color name="limekeyboard_function_key_color_dark_hl">#FF80CBC4</color>f
     <color name="limekeyboard_subkey_color_dark">#FF6B6B6B</color>
     <color name="limekeyboard_subkey_color_dark_hl">#FF80CBC4</color>
+
+    <color name="limekeyboard_normal_key_color_pink">#FFFFFFFF</color>
+    <color name="limekeyboard_normal_key_color_pink_hl">#FFC74A72</color>
+    <color name="limekeyboard_function_key_color_pink">#FFFFFFFF</color>
+    <color name="limekeyboard_function_key_color_pink_hl">#FFC74A72</color>f
+    <color name="limekeyboard_subkey_color_pink">#FFC74A72</color>
+    <color name="limekeyboard_subkey_color_pink_hl">#FFFFFFFF</color>
+
 
     <color name="background_score">#88333333</color>
 

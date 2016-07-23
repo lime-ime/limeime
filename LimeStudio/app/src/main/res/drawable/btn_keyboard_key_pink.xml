@@ -27,16 +27,16 @@
 	<!-- Functional keys. -->
 
     <item android:state_single="true" android:state_pressed="true"
-          android:drawable="@drawable/btn_flat_keyboard_function_key_pressed_dark" />
+          android:drawable="@drawable/btn_flat_keyboard_function_key_pressed_pink" />
     <item android:state_single="true"
-          android:drawable="@drawable/btn_flat_keyboard_function_key_normal_dark"/>
+          android:drawable="@drawable/btn_flat_keyboard_function_key_normal_pink"/>
 
 
     <!-- Normal keys -->
 
     <item android:state_pressed="true"
-          android:drawable="@drawable/btn_flat_keyboard_normal_key_pressed_dark" />
+          android:drawable="@drawable/btn_flat_keyboard_normal_key_pressed_pink" />
     <item
-          android:drawable="@drawable/btn_flat_keyboard_normal_key_normal_dark" />
+          android:drawable="@drawable/btn_flat_keyboard_normal_key_normal_pink" />
           
 </selector>

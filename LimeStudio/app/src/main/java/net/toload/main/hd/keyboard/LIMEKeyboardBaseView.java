@@ -475,8 +475,6 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
         mContext = context;
 
-        //mLIMEPref = new LIMEPreferenceManager(context); //Jeremy '11,9,4
-
         TypedArray a = context.getTheme().obtainStyledAttributes(
                 attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEKeyboardBaseView_Light);
         LayoutInflater inflate =
@@ -587,9 +585,6 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
         isAPIpre8 = android.os.Build.VERSION.SDK_INT < 8;  //Jeremy '11,8,7 detect API level and disable multi-touch API for API leve 7
 
-		/*int screenLayout = res.getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
-        boolean large = screenLayout == Configuration.SCREENLAYOUT_SIZE_LARGE;
-        boolean xlarge = screenLayout == Configuration.SCREENLAYOUT_SIZE_XLARGE;*/
 
         isLargeScreen = true; //large || xlarge;  //Force turn off fling selection now.
 

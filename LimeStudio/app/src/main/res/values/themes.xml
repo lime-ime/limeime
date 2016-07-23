@@ -44,5 +44,12 @@
     <item name="LIMEKeyboardLayout">@style/LIMEKeyboardLayoutDark</item>
     <item name="LIMEPopupKeyboardLayout">@style/LIMEPopupKeyboardLayoutDark</item>
   </style>
-  
+  <style name="LIMETheme.Pink">
+    <item name="LIMEKeyboardStyle">@style/LIMEKeyboardPink</item>
+    <item name="LIMEBaseKeyboardStyle">@style/LIMEBaseKeyboardPink</item>
+    <item name="LIMEKeyboardBaseView">@style/LIMEKeyboardBaseView.Pink</item>
+    <item name="LIMEKeyboardLayout">@style/LIMEKeyboardLayoutPink</item>
+    <item name="LIMEPopupKeyboardLayout">@style/LIMEPopupKeyboardLayoutPink</item>
+  </style>
+
 </resources>

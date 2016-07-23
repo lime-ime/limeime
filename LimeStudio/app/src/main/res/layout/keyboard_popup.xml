@@ -28,7 +28,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="@drawable/keyboard_popup_panel_background">
+        android:background="@drawable/keyboard_popup_panel_background_light">
        <!--  android:paddingLeft="16dip"
         android:paddingRight="16dip" -->
         
@@ -45,6 +45,6 @@
             limehd:verticalCorrection="@dimen/mini_keyboard_vertical_correction"
             />
     <!--android:background="@color/limekeyboard_transparent"
-            limehd:keyBackground="@drawable/btn_keyboard_key_popup"-->
+            limehd:keyBackground="@drawable/btn_keyboard_key_popup_light"-->
 
 </LinearLayout>
