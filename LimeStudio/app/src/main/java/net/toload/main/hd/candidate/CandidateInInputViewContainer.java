@@ -27,7 +27,6 @@
 package net.toload.main.hd.candidate;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -45,7 +44,7 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
 	private static final String TAG = "CandiInputViewContainer";
     private ImageButton mRightButton;
     private View mButtonRightExpand;
-    private CandidateView mCandidates;
+    private CandidateView mCandidateView;
 
     Context ctx;
     
@@ -61,14 +60,16 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
     public void initViews() {
     	if(DEBUG)
     		Log.i(TAG,"initViews()");
-        if (mCandidates == null) {
+        if (mCandidateView == null) {
             mButtonRightExpand = findViewById(R.id.candidate_right_parent);
             mRightButton = (ImageButton) findViewById(R.id.candidate_right);
             if (mRightButton != null) {
                 mRightButton.setOnTouchListener(this);
             }
-            mCandidates = (CandidateView) findViewById(R.id.candidatesView);
-            
+            mCandidateView = (CandidateView) findViewById(R.id.candidatesView);
+
+            mCandidateView.setBackgroundColor(mCandidateView.mColorBackground);
+            mRightButton.setBackgroundColor(mCandidateView.mColorBackground);
         }
     }
 
@@ -77,21 +78,21 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
         if(DEBUG)
             Log.i(TAG,"requestLayout()");
 
-    	if (mCandidates != null) {
-            int availableWidth = mCandidates.getWidth();
-            int neededWidth = mCandidates.computeHorizontalScrollRange();
+    	if (mCandidateView != null) {
+            int availableWidth = mCandidateView.getWidth();
+            int neededWidth = mCandidateView.computeHorizontalScrollRange();
 
             if(DEBUG)
                 Log.i(TAG,"requestLayout() availableWidth:" + availableWidth+ " neededWidth:" + neededWidth);
 
 
             boolean showExpandButton =  availableWidth < neededWidth;
-            boolean showVoiceInputButton = mCandidates.isEmpty();
-            if(mCandidates.isCandidateExpanded())
+            boolean showVoiceInputButton = mCandidateView.isEmpty();
+            if(mCandidateView.isCandidateExpanded())
             	showExpandButton = false;
 
             if(mRightButton != null){
-                mRightButton.setImageResource(showVoiceInputButton ? R.drawable.sym_keyboard_voice_light : R.drawable.ic_suggest_expander );
+                mRightButton.setImageDrawable( showVoiceInputButton ? mCandidateView.mDrawableVoiceInput: mCandidateView.mDrawableExpandButton);
             }
 
             if (mButtonRightExpand != null ) {
@@ -104,10 +105,10 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
     public boolean onTouch(View v, MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             if (v == mRightButton) {
-                if(mCandidates.isEmpty())
-                    mCandidates.startVoiceInput();
+                if(mCandidateView.isEmpty())
+                    mCandidateView.startVoiceInput();
                 else
-                    mCandidates.showCandidatePopup();
+                    mCandidateView.showCandidatePopup();
             	
             }
         }

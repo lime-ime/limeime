@@ -80,7 +80,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     private static Drawable mSpaceKeySlidingLeftArrow;
     private static Drawable mSpaceKeySlidingRightArrow;
     private static int mSpaceKeySlidingTextSize;
-
+    private static int mSpaceKeyTextColor;
     private static int mSpaceKeyVerticalCorrection;
 
     
@@ -112,14 +112,14 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         mContext = context;
         mRes = context.getResources();;
 
+    }
 
 
-    }	
 
     private void loadThemedIcons(Context context){
 
         TypedArray a = context.getTheme().obtainStyledAttributes(//R.style.LIMEKeyboardLight, R.styleable.LIMEKeyboard);
-                null, R.styleable.LIMEKeyboard, R.attr.LIMEKeyboardStyle, R.style.LIMEKeyboardLight);
+                null, R.styleable.LIMEKeyboard, R.attr.LIMEKeyboardStyle, R.style.LIMEKeyboard);
 
         mSpaceKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyIcon);
         mSpaceKeyPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyPreviewIcon);
@@ -133,6 +133,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         mShiftKeyShiftedIcon = a.getDrawable(R.styleable.LIMEKeyboard_shiftKeyShiftedIcon);
 
         // for sliding space bar
+        mSpaceKeyTextColor = a.getColor(R.styleable.LIMEKeyboard_spaceKeyTextColor,0xFF000000);
         mSpaceKeyVerticalCorrection = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spaceKeyVerticalCorrection, 0);
         mSpaceKeySlidingTextSize = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spaceKeySlidingTextSize,25);
         mSpaceKeySlidingLeftArrow = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeySlidingLeftArrow);
@@ -461,8 +462,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     	mKeyboardSwitcher = keyboardswitcher;
     }
     
-    
-    
+
     /**
      * Animation to be displayed on the spacebar preview popup when switching 
      * IM by swiping the spacebar. It draws the current, previous and
@@ -498,8 +498,8 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 
             mTextPaint = new TextPaint();
             mTextPaint.setTextSize(mSlidingTextSize);
-            int color = mContext.getResources().getColor((R.color.limekeyboard_transparent));
-            mTextPaint.setColor(color);
+
+            mTextPaint.setColor(mSpaceKeyTextColor);
             mTextPaint.setTextAlign(Align.CENTER);
             mTextPaint.setAlpha(OPACITY_FULLY_OPAQUE);
             mTextPaint.setAntiAlias(true);
@@ -548,7 +548,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 
                 // Draw language text with shadow
                 final float baseline = mHeight * SPACEBAR_IMNAME_BASELINE - paint.descent();
-                paint.setColor(mRes.getColor(R.color.limekeyboard_key_color_black));
+                paint.setColor(mSpaceKeyTextColor);
                 paint.setTextSize(mSlidingTextSize);
                 canvas.drawText(mCurrentKeyboard, width / 2 + diff, baseline, paint);
                 canvas.drawText(mNextKeyboard, diff - width / 5, baseline, paint);

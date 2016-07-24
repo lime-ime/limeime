@@ -42,7 +42,7 @@
             android:layout_height="0dp"
             android:layout_weight="1.0"
             android:gravity="center_vertical" 
-            android:background="@color/candidate_background"/>
+            />
 			
         <LinearLayout
             android:id="@+id/candidate_right_parent"
@@ -58,7 +58,6 @@
                 android:contentDescription="@string/more_cand"
                 android:layout_width="@dimen/candidate_expand_button_width"
                 android:layout_height="fill_parent"
-                android:background="@drawable/ic_suggest_scroll_background"
                 android:clickable="true"
                 android:src="@drawable/ic_suggest_expander" />
             

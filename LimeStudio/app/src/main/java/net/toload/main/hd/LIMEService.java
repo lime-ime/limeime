@@ -114,14 +114,9 @@ public class LIMEService extends InputMethodService implements
     private int mShowArrowKeys; //Jeremy '12,5,22 force recreate keyboard if show arrow keys mode changes.
     private int mSplitKeyboard; //Jeremy '12,5,26 force recreate keyboard if split keyboard settings changes; 6/19 changed to int
 
-    // if getMappingByCode result has record then set to 'true'
     public boolean hasMappingList = false;
 
-    //private boolean keydown = false;
-
     private long mMetaState;
-    //private boolean mJustAccepted;
-    //private CharSequence mJustRevertedSeparator;
     private int mImeOptions;
 
     LIMEKeyboardSwitcher mKeyboardSwitcher;
@@ -293,7 +288,7 @@ public class LIMEService extends InputMethodService implements
 
         //Jeremy '12,4,7 add hardkeyboard hidden configuration changed event and clear composing to avoid fc.
         if (conf.orientation != mOrientation || conf.hardKeyboardHidden != mHardkeyboardHidden) {
-            //Jeremy '12,4,21 foce clear the composing buffer
+            //Jeremy '12,4,21 force clear the composing buffer
             clearComposing(true);
 
 
@@ -1767,7 +1762,7 @@ public class LIMEService extends InputMethodService implements
 
 
         builder.setCancelable(true);
-        builder.setIcon(R.drawable.sym_keyboard_done);
+        builder.setIcon(R.drawable.logobw);
         builder.setNegativeButton(android.R.string.cancel, null);
         builder.setTitle(getResources().getString(R.string.ime_name));
 
@@ -2675,7 +2670,8 @@ public class LIMEService extends InputMethodService implements
                     mInputView.closing();
                     requestHideSelf(0);
                     // preserved the last character typed with physical keyboard in composing
-                    mComposing.delete(0, mComposing.length()-1);
+                    if(mComposing.length() > 1)
+                        mComposing.delete(0, mComposing.length()-1);
                     updateCandidates();
                 }
             } else if (mFixedCandidateViewOn && !hasPhysicalKeyPressed &&

@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <!--
   ~ /*
   ~  *
@@ -24,14 +23,13 @@
   ~  */
   -->
 
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content" 
-    android:layout_height="wrap_content"
-    android:textSize="@dimen/composing_text_size"
-    android:minWidth="0dip"
-    android:gravity="top" 
-    />
-<!-- 
-	android:textColor="?android:attr/textColorPrimaryInverse"
-    android:background="@color/candidate_dictionary_background"
-     -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_pressed="false"
+        android:drawable="@color/limekeyboard_normal_key_color_light_hl" />
+
+    <item android:state_pressed="true"
+        android:drawable="@color/limekeyboard_function_key_color_light_hl" />
+
+
+</selector>

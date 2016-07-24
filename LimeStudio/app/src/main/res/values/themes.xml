@@ -31,25 +31,28 @@
   </style>
 
   <style name="LIMETheme.Light">
-    <item name="LIMEKeyboardStyle">@style/LIMEKeyboardLight</item>
-    <item name="LIMEBaseKeyboardStyle">@style/LIMEBaseKeyboardLight</item>
+    <item name="LIMEKeyboardStyle">@style/LIMEKeyboard.Light</item>
+    <item name="LIMEBaseKeyboardStyle">@style/LIMEBaseKeyboard.Light</item>
     <item name="LIMEKeyboardBaseView">@style/LIMEKeyboardBaseView.Light</item>
-    <item name="LIMEKeyboardLayout">@style/LIMEKeyboardLayoutLight</item>
-    <item name="LIMEPopupKeyboardLayout">@style/LIMEPopupKeyboardLayoutLight</item>
+    <item name="LIMEKeyboardLayout">@style/LIMEKeyboardLayout.Light</item>
+    <item name="LIMEPopupKeyboardLayout">@style/LIMEPopupKeyboardLayout.Light</item>
+    <item name="LIMECandidateView">@style/LIMECandidateView.Light</item>
   </style>
   <style name="LIMETheme.Dark">
-    <item name="LIMEKeyboardStyle">@style/LIMEKeyboardDark</item>
-    <item name="LIMEBaseKeyboardStyle">@style/LIMEBaseKeyboardDark</item>
+    <item name="LIMEKeyboardStyle">@style/LIMEKeyboard.Dark</item>
+    <item name="LIMEBaseKeyboardStyle">@style/LIMEBaseKeyboard.Dark</item>
     <item name="LIMEKeyboardBaseView">@style/LIMEKeyboardBaseView.Dark</item>
-    <item name="LIMEKeyboardLayout">@style/LIMEKeyboardLayoutDark</item>
-    <item name="LIMEPopupKeyboardLayout">@style/LIMEPopupKeyboardLayoutDark</item>
+    <item name="LIMEKeyboardLayout">@style/LIMEKeyboardLayout.Dark</item>
+    <item name="LIMEPopupKeyboardLayout">@style/LIMEPopupKeyboardLayout.Dark</item>
+    <item name="LIMECandidateView">@style/LIMECandidateView.Dark</item>
   </style>
   <style name="LIMETheme.Pink">
-    <item name="LIMEKeyboardStyle">@style/LIMEKeyboardPink</item>
-    <item name="LIMEBaseKeyboardStyle">@style/LIMEBaseKeyboardPink</item>
+    <item name="LIMEKeyboardStyle">@style/LIMEKeyboard.Pink</item>
+    <item name="LIMEBaseKeyboardStyle">@style/LIMEBaseKeyboard.Pink</item>
     <item name="LIMEKeyboardBaseView">@style/LIMEKeyboardBaseView.Pink</item>
-    <item name="LIMEKeyboardLayout">@style/LIMEKeyboardLayoutPink</item>
-    <item name="LIMEPopupKeyboardLayout">@style/LIMEPopupKeyboardLayoutPink</item>
+    <item name="LIMEKeyboardLayout">@style/LIMEKeyboardLayout.Pink</item>
+    <item name="LIMEPopupKeyboardLayout">@style/LIMEPopupKeyboardLayout.Pink</item>
+    <item name="LIMECandidateView">@style/LIMECandidateView.Pink</item>
   </style>
 
 </resources>

@@ -31,6 +31,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -38,7 +39,7 @@ import net.toload.main.hd.R;
 
 public class CandidateViewContainer extends LinearLayout implements OnTouchListener {
 
-    private View mButtonExpand;
+    private ImageButton mButtonExpand;
     private View mButtonExpandLayout;
     private CandidateView mCandidateView;
 
@@ -52,14 +53,17 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
     public void initViews() {
         if (mCandidateView == null) {
             mButtonExpandLayout = findViewById(R.id.candidate_right_parent);
-            mButtonExpand = findViewById(R.id.candidate_right);
+            mButtonExpand = (ImageButton) findViewById(R.id.candidate_right);
             if (mButtonExpand != null) {
                 mButtonExpand.setOnTouchListener(this);
             }
             mCandidateView = (CandidateView) findViewById(R.id.candidates);
             TextView mEmbeddedTextView = (TextView) findViewById(R.id.embeddedComposing);
+
             mCandidateView.setEmbeddedComposingView(mEmbeddedTextView);
-            
+            mCandidateView.setBackgroundColor(mCandidateView.mColorBackground);
+            mButtonExpand.setBackgroundColor(mCandidateView.mColorBackground);
+            mButtonExpand.setImageDrawable(mCandidateView.mDrawableExpandButton);
         }
     }
 

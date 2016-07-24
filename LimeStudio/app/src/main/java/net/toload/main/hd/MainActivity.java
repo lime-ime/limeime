@@ -24,9 +24,6 @@
 
 package net.toload.main.hd;
 
-
-import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
@@ -46,9 +43,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.provider.MediaStore;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.content.ContextCompat;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -62,6 +58,9 @@ import com.android.vending.billing.IInAppBillingService;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIME;
@@ -69,6 +68,7 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.ui.HelpDialog;
 import net.toload.main.hd.ui.ImportDialog;
+import net.toload.main.hd.ui.ManageImFragment;
 import net.toload.main.hd.ui.ManageRelatedFragment;
 import net.toload.main.hd.ui.NewsDialog;
 import net.toload.main.hd.ui.SetupImFragment;
@@ -93,8 +93,6 @@ public class MainActivity extends AppCompatActivity
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
     private NavigationDrawerFragment mNavigationDrawerFragment;
-
-    private final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE=0;
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
@@ -115,7 +113,7 @@ public class MainActivity extends AppCompatActivity
 
     //Admob
     InterstitialAd mInterstitialAd;
-    Boolean intersitialAdShowed=true;
+    Boolean intersitialAdShowed = true;
 
     IInAppBillingService mService;
     ServiceConnection mServiceConn = new ServiceConnection() {
@@ -130,19 +128,22 @@ public class MainActivity extends AppCompatActivity
             mService = IInAppBillingService.Stub.asInterface(service);
 
             boolean paymentFlag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
-            if(!paymentFlag) {
+            if (!paymentFlag) {
                 try {
                     Bundle ownedItems = mService.getPurchases(3, getPackageName(), "inapp", null);
                     int response = ownedItems.getInt("RESPONSE_CODE");
                     if (response == 0) {
-                        ArrayList<String> owned =  ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
-                        ArrayList<String>  purchaseDataList =  ownedItems.getStringArrayList("INAPP_PURCHASE_DATA_LIST");
-                        ArrayList<String>  signatureList =  ownedItems.getStringArrayList("INAPP_DATA_SIGNATURE_LIST");
+                        ArrayList<String> owned = ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
+                        ArrayList<String> purchaseDataList = ownedItems.getStringArrayList("INAPP_PURCHASE_DATA_LIST");
+                        ArrayList<String> signatureList = ownedItems.getStringArrayList("INAPP_DATA_SIGNATURE_LIST");
                         //String continuationToken = ownedItems.getString("INAPP_CONTINUATION_TOKEN");
 
+                        assert purchaseDataList != null;
                         for (int i = 0; i < purchaseDataList.size(); ++i) {
                             String purchaseData = purchaseDataList.get(i);
+                            assert signatureList != null;
                             String signature = signatureList.get(i);
+                            assert owned != null;
                             String sku = owned.get(i);
                             mLIMEPref.setParameter(Lime.PAYMENT_FLAG, true);
                             mLIMEPref.setParameter("purchanseData", purchaseData);
@@ -158,6 +159,11 @@ public class MainActivity extends AppCompatActivity
             }
         }
     };
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
    /* @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -185,11 +191,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void  onWindowFocusChanged(boolean hasFocus) {
+    public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        SetupImFragment ImFragment  = (SetupImFragment) getSupportFragmentManager().findFragmentByTag("SetupImFragment");
-        if(ImFragment == null) return;
-        if( hasFocus && ImFragment.isVisible()) ImFragment.initialbutton();
+        SetupImFragment ImFragment = (SetupImFragment) getSupportFragmentManager().findFragmentByTag("SetupImFragment");
+        if (ImFragment == null) return;
+        if (hasFocus && ImFragment.isVisible()) ImFragment.initialbutton();
 
     }
 
@@ -228,8 +234,23 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStop() {
         super.onStop();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://net.toload.main.hd/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.disconnect();
     }
-
 
 
     @Override
@@ -242,7 +263,7 @@ public class MainActivity extends AppCompatActivity
 
         handler = new MainActivityHandler(this);
 
-        progress = new ProgressDialog(this,  R.style.LIMEAlertDialogTheme);
+        progress = new ProgressDialog(this, R.style.LIMEAlertDialogTheme);
         progress.setMax(100);
         progress.setCancelable(false);
 
@@ -265,7 +286,7 @@ public class MainActivity extends AppCompatActivity
                 (DrawerLayout) findViewById(R.id.drawer_layout));
 
         boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
-        if(!paymentflag) {
+        if (!paymentflag) {
             purchaseVerification();
         }
 
@@ -277,17 +298,17 @@ public class MainActivity extends AppCompatActivity
             if ("text/plain".equals(type)) {
                 handleSendText(getIntent());
             }
-        }else if (Intent.ACTION_VIEW.equals(action) && type != null) {
+        } else if (Intent.ACTION_VIEW.equals(action) && type != null) {
             String scheme = intent.getScheme();
             ContentResolver resolver = getContentResolver();
 
             if (ContentResolver.SCHEME_CONTENT.equals(scheme)
                     || ContentResolver.SCHEME_FILE.equals(scheme)
-                    || scheme.equals("http") || scheme.equals("https") ||scheme.equals("ftp")) {
+                    || scheme.equals("http") || scheme.equals("https") || scheme.equals("ftp")) {
                 Uri uri = intent.getData();
                 String fileName = getContentName(resolver, uri);
-                if(fileName==null) {
-                    fileName=uri.getLastPathSegment();
+                if (fileName == null) {
+                    fileName = uri.getLastPathSegment();
                 }
                 InputStream input = null;
                 try {
@@ -306,47 +327,27 @@ public class MainActivity extends AppCompatActivity
         PackageInfo pInfo;
         try {
             pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            versionstr = "v"+ pInfo.versionName + " - " + pInfo.versionCode;
+            versionstr = "v" + pInfo.versionName + " - " + pInfo.versionCode;
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
 
         String cversion = mLIMEPref.getParameterString("current_version", "");
-        if(cversion == null || cversion.isEmpty() || !cversion.equals(versionstr)){
-            android.support.v4.app.FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        if (cversion == null || cversion.isEmpty() || !cversion.equals(versionstr)) {
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             HelpDialog dialog = HelpDialog.newInstance();
             dialog.show(ft, "helpdialog");
             mLIMEPref.setParameter("current_version", versionstr);
         }
 
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
-                return;
-            }
-
-            // other 'case' lines to check for other
-            // permissions this app might request
-        }
-    }
-    private String getContentName(ContentResolver resolver, Uri uri){
+    private String getContentName(ContentResolver resolver, Uri uri) {
         Cursor cursor = resolver.query(uri, null, null, null, null);
-        if(cursor==null) return null;
+        if (cursor == null) return null;
         cursor.moveToFirst();
         int nameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
         if (nameIndex >= 0) {
@@ -369,8 +370,7 @@ public class MainActivity extends AppCompatActivity
             }
 
             out.close();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Log.e("MainActivity", "InputStreamToFile exception: " + e.getMessage());
         }
     }
@@ -380,14 +380,14 @@ public class MainActivity extends AppCompatActivity
         if (importtext != null && !importtext.isEmpty()) {
             android.app.FragmentTransaction ft = getFragmentManager().beginTransaction();
             ImportDialog dialog = ImportDialog.newInstance(importtext);
-                         dialog.show(ft, "importdialog");
+            dialog.show(ft, "importdialog");
         }
     }
 
-    public void purchaseVerification(){
+    public void purchaseVerification() {
         Intent serviceIntent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
         serviceIntent.setPackage("com.android.vending");
-        mService =null;
+        mService = null;
         bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
 
         AdRequest adRequest = new AdRequest.Builder()
@@ -414,9 +414,9 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    public void initialImList(){
+    public void initialImList() {
 
-        if(datasource == null)
+        if (datasource == null)
             datasource = new LimeDB(this);
 
         imlist = new ArrayList<>();
@@ -439,19 +439,19 @@ public class MainActivity extends AppCompatActivity
             fragmentManager.beginTransaction()
                     .replace(R.id.container, SetupImFragment.newInstance(position), "SetupImFragment")
                     .addToBackStack("SetupImFragment")
-            .commit();
-        }else if (position == 1){
+                    .commit();
+        } else if (position == 1) {
             fragmentManager.beginTransaction()
                     .replace(R.id.container, ManageRelatedFragment.newInstance(position), "ManageRelatedFragment")
                     .addToBackStack("ManageRelatedFragment")
                     .commit();
-        }else{
+        } else {
 
             initialImList();
             int number = position - 2;
             String table = imlist.get(number).getCode();
             fragmentManager.beginTransaction()
-                    .replace(R.id.container, net.toload.main.hd.ui.ManageImFragment.newInstance(position, table), "ManageImFragment_" + table)
+                    .replace(R.id.container, ManageImFragment.newInstance(position, table), "ManageImFragment_" + table)
                     .addToBackStack("ManageImFragment_" + table)
                     .commit();
         }
@@ -461,7 +461,7 @@ public class MainActivity extends AppCompatActivity
         if (number == 0) {
             mTitle = this.getResources().getString(R.string.default_menu_initial);
             //mCode = "initial";
-        } else if (number == 1){
+        } else if (number == 1) {
             mTitle = this.getResources().getString(R.string.default_menu_related);
             //mCode = "related";
         } else {
@@ -476,7 +476,7 @@ public class MainActivity extends AppCompatActivity
         //actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD); //setNavigationMode is deprecated after API21 (v5.0).
         if (actionBar == null) throw new AssertionError();
         actionBar.setDisplayShowTitleEnabled(true);
-                    actionBar.setTitle(mTitle);
+        actionBar.setTitle(mTitle);
     }
 
 
@@ -508,37 +508,38 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    public void purchase(String productid){
+    public void purchase(String productid) {
 
         if (connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()) {
 
-            if(mService != null){
+            if (mService != null) {
 
                 Bundle buyIntentBundle;
                 try {
                     buyIntentBundle = mService.getBuyIntent(3, getPackageName(),
-                            productid, "inapp", "callback/"+productid);
+                            productid, "inapp", "callback/" + productid);
 
                     int status = buyIntentBundle.getInt("RESPONSE_CODE");
 
-                    if(status == 0){
+                    if (status == 0) {
                         PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
                         try {
+                            assert pendingIntent != null;
                             startIntentSenderForResult(pendingIntent.getIntentSender(),
                                     Lime.PAYMENT_REQUEST_CODE, new Intent(), 0, 0, 0);
                         } catch (IntentSender.SendIntentException e) {
                             e.printStackTrace();
                         }
-                    }else{
+                    } else {
                         showToastMessage(getResources().getString(R.string.payment_service_failed), Toast.LENGTH_LONG);
                     }
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
-            }else{
+            } else {
                 showToastMessage(getResources().getString(R.string.payment_service_failed), Toast.LENGTH_LONG);
             }
-        }else{
+        } else {
             showToastMessage(getResources().getString(R.string.error_network_failed), Toast.LENGTH_LONG);
         }
     }
@@ -548,22 +549,22 @@ public class MainActivity extends AppCompatActivity
         toast.show();
     }
 
-    public void initialShare(String imtype){
+    public void initialShare(String imtype) {
         sharethread = new Thread(new ShareTxtRunnable(this, imtype, handler));
         sharethread.start();
     }
 
-    public void initialShareDb(String imtype){
+    public void initialShareDb(String imtype) {
         sharethread = new Thread(new ShareDbRunnable(this, imtype, handler));
         sharethread.start();
     }
 
-    public void initialShareRelated(){
+    public void initialShareRelated() {
         sharethread = new Thread(new ShareRelatedTxtRunnable(this, handler));
         sharethread.start();
     }
 
-    public void initialShareRelatedDb(){
+    public void initialShareRelatedDb() {
         sharethread = new Thread(new ShareRelatedDbRunnable(this, handler));
         sharethread.start();
     }
@@ -574,37 +575,37 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void cancelProgress(){
-        if(progress.isShowing()){
+    public void cancelProgress() {
+        if (progress.isShowing()) {
             progress.dismiss();
         }
     }
 
-    public void updateProgress(int value){
-        if(!progress.isShowing()){
+    public void updateProgress(int value) {
+        if (!progress.isShowing()) {
             progress.setProgress(value);
         }
     }
 
-    public void updateProgress(String value){
-        if(progress.isShowing()){
+    public void updateProgress(String value) {
+        if (progress.isShowing()) {
             progress.setMessage(value);
         }
     }
 
-    public void shareTo(String filepath, String type){
-        Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+    public void shareTo(String filepath, String type) {
+        Intent sharingIntent = new Intent(Intent.ACTION_SEND);
         sharingIntent.setType(type);
 
         File target = new File(filepath);
         Uri targetfile = Uri.fromFile(target);
         sharingIntent.putExtra(Intent.EXTRA_STREAM, targetfile);
 
-        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, target.getName());
+        sharingIntent.putExtra(Intent.EXTRA_TEXT, target.getName());
         startActivity(Intent.createChooser(sharingIntent, target.getName()));
     }
 
-    public void initialDefaultPreference(){
+    public void initialDefaultPreference() {
 
         /*String keyboard_state = mLIMEPref.getParameterString("keyboard_state");
         if(keyboard_state.isEmpty()){
@@ -742,11 +743,31 @@ public class MainActivity extends AppCompatActivity
 
     public void showMessageBoard() {
         try {
-            android.support.v4.app.FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             NewsDialog dialog = NewsDialog.newInstance();
             dialog.show(ft, "newsdialog");
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://net.toload.main.hd/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
     }
 }

@@ -29,7 +29,7 @@
         <attr name="LIMEKeyboardBaseView" format="reference" />
         <attr name="LIMEKeyboardLayout" format="reference" />
         <attr name="LIMEPopupKeyboardLayout" format="reference" />
-
+        <attr name="LIMECandidateView" format="reference" />
 
     </declare-styleable>
 
@@ -118,6 +118,7 @@
         <attr name="shiftKeyIcon" format="reference" />
         <attr name="shiftKeyShiftedIcon" format="reference" />
         <attr name="deleteKeyIcon" format="reference" />
+        <attr name="spaceKeyTextColor" format="color" />
         <attr name="spaceKeyVerticalCorrection" format="dimension" />
         <attr name="spaceKeySlidingTextSize" format="dimension" />
         <attr name="spaceKeySlidingLeftArrow" format="reference" />
@@ -186,6 +187,32 @@
              requested keyboard mode, the key will be skipped. -->
         <attr name="keyboardMode" />
     </declare-styleable>
+
+    <declare-styleable name="LIMECandidateView">
+        <!-- drawable for current suggested candidate -->
+        <attr name="suggestHighlight" format="reference" />
+        <!-- drawable for voice input button in the right of empty candidate view   -->
+        <attr name="voiceInputIcon" format="reference" />
+        <attr name="ExpandButtonIcon" format="reference" />
+        <!-- drawable for expand button in the right of candidate view   -->
+        <attr name="closeButtonIcon" format="reference" />
+        <!-- color of  candidate view background  -->
+        <attr name="candidateBackground" format="color" />
+        <!-- color of  different types of candidates   -->
+        <attr name="candidateNormalTextColor" format="color" />
+        <attr name="candidateNormalTextHighlightColor" format="color" />
+        <attr name="composingCodeColor" format="color" />
+        <attr name="composingCodeHighlightColor" format="color" />
+        <!-- color of  spacer between candidate   -->
+        <attr name="spacerColor" format="color" />
+        <!-- color of  selection key display for physical keyboard   -->
+        <attr name="selKeyColor" format="color" />
+        <attr name="selKeyShiftedColor" format="color" />
+        <!-- color of  composing text view above candidate view   -->
+        <attr name="composingTextColor" format="color" />
+        <attr name="composingBackgroundColor" format="color" />
+    </declare-styleable>
+
 
 </resources>
 

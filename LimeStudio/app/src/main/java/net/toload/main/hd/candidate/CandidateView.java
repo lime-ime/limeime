@@ -26,6 +26,7 @@ package net.toload.main.hd.candidate;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -79,7 +80,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
     protected int mSelectedIndex;
     protected int mTouchX = OUT_OF_BOUNDS;
-    protected Drawable mSelectionHighlight;
+
     //private boolean mTypedWordValid;
     private boolean mShowNumber; //Jeremy '11,5,25 for showing physical keyboard number or not.
 
@@ -110,19 +111,37 @@ public class CandidateView extends View implements View.OnClickListener {
     protected int mHeight;
     private int configHeight;
     private int currentX;
-    protected final int mColorNormalText;
-    protected final int mColorInvertedTextTransparent;
-    protected final int mColorInvertedText;
-    protected final int mColorDictionary;
-    protected final int mColorRecommended;
-    protected final int mColorSpacer;
-    protected final int mColorSelKey;
+
+    protected int mColorBackground;
+    protected int mColorNormalText;
+    protected int mColorNormalTextHighlight;
+    protected int mColorInvertedTextTransparent;
+
+    protected int mColorComposingText;
+    protected int mColorComposingBackground;
+
+
+    protected int mColorComposingCodeHighlight;
+    protected int mColorComposingCode;
+
+    protected int mColorSpacer;
+
+    protected Drawable mDrawableSuggestHighlight;
+    protected Drawable mDrawableVoiceInput;
+    protected Drawable mDrawableExpandButton;
+    protected Drawable mDrawableCloseButton;
+
+    protected int mColorSelKey;
+    protected int mColorSelKeyShifted;
+    
     protected int mVerticalPadding;
     protected int mExpandButtonWidth;
 
     protected Paint mCandidatePaint;
     protected Paint mSelKeyPaint;
-    //private Paint cPaint;
+
+
+
     private boolean mScrolled;
     protected int mTargetScrollX;
     private String mDisplaySelkey = "1234567890";
@@ -160,27 +179,101 @@ public class CandidateView extends View implements View.OnClickListener {
      * Construct a CandidateView for showing suggested words for completion.
      */
 
-
     public CandidateView(Context context, AttributeSet attrs) {
+        this(context, attrs, R.attr.LIMECandidateView);
+    }
+    public CandidateView(Context context, AttributeSet attrs, int defStyle) {
 
-        super(context, attrs);
+        super(context, attrs, defStyle);
 
         mContext = context;
 
         mCandidateView = this;
         embeddedComposing = null;  // Jeremy '15,6,4 for embedded composing view in candidateView when floating candidateView (not fixed)
 
-
         mLIMEPref = new LIMEPreferenceManager(context);
 
-        Resources r = context.getResources();
+        TypedArray a = context.getTheme().obtainStyledAttributes(
+                attrs, R.styleable.LIMECandidateView, defStyle, R.style.LIMECandidateView);
 
+        int n = a.getIndexCount();
 
-        //Jeremy '15,5,28 remove isAndroid3 and isXlTablet.  There are no phones with keyboard today.
-        // For phones with bluetooth keyboard, we should still show select keys in the candidateView
-        //int screenLayout = r.getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
-        //isXlTablet =  (screenLayout == Configuration.SCREENLAYOUT_SIZE_XLARGE);
-        //isAndroid3 = android.os.Build.VERSION.SDK_INT > 11;
+        for (int i = 0; i < n; i++) {
+            int attr = a.getIndex(i);
+
+            switch (attr) {
+                case R.styleable.LIMECandidateView_suggestHighlight:
+                    mDrawableSuggestHighlight = a.getDrawable(attr);
+                    break;
+                case R.styleable.LIMECandidateView_voiceInputIcon:
+                    mDrawableVoiceInput = a.getDrawable(attr);
+                    break;
+                case R.styleable.LIMECandidateView_ExpandButtonIcon:
+                    mDrawableExpandButton = a.getDrawable(attr);
+                    break;
+                case R.styleable.LIMECandidateView_closeButtonIcon:
+                    mDrawableCloseButton = a.getDrawable(attr);
+                    break;
+                case R.styleable.LIMECandidateView_candidateBackground:
+                    mColorBackground = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_background));
+                    break;
+                case R.styleable.LIMECandidateView_composingTextColor:
+                    mColorComposingText = a.getColor(attr,  ContextCompat.getColor(context, R.color.composing_text));
+                    break;
+                case R.styleable.LIMECandidateView_composingBackgroundColor:
+                    mColorComposingBackground = a.getColor(attr,  ContextCompat.getColor(context, R.color.composing_background));
+                    break;
+                case R.styleable.LIMECandidateView_candidateNormalTextColor:
+                    mColorNormalText = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_normal_text));
+                    break;
+                case R.styleable.LIMECandidateView_candidateNormalTextHighlightColor:
+                    mColorNormalTextHighlight = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_normal_text));
+                    break;
+                case R.styleable.LIMECandidateView_composingCodeColor:
+                    mColorComposingCode = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_composing_code));
+                    break;
+                case R.styleable.LIMECandidateView_composingCodeHighlightColor:
+                    mColorComposingCodeHighlight = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_composing_code_highlight));
+                    break;
+                case R.styleable.LIMECandidateView_spacerColor:
+                    mColorSpacer = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_spacer));
+                    break;
+                case R.styleable.LIMECandidateView_selKeyColor:
+                    mColorSelKey = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_selection_keys));
+                    break;
+                case R.styleable.LIMECandidateView_selKeyShiftedColor:
+                    mColorSelKeyShifted = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_selection_keys_shifted));
+                    break;
+            }
+        }
+
+        /*
+
+        mColorInvertedTextTransparent = ContextCompat.getColor(context, R.color.candidate_inverted_text_physical_keyboard);
+
+        mDrawableSuggestHighlight = ContextCompat.getDrawable(context.getApplicationContext(),  R.drawable.ic_suggest_scroll_background_hl);
+        mDrawableVoiceInput = ContextCompat.getDrawable(context,  R.drawable.sym_keyboard_voice_light);
+        mDrawableExpandButton = ContextCompat.getDrawable(context,  R.drawable.ic_suggest_expander);
+        mDrawableCloseButton = ContextCompat.getDrawable(context,  R.drawable.btn_close);
+
+        mColorBackground = ContextCompat.getColor(context, R.color.candidate_background);
+
+        mColorComposingText = ContextCompat.getColor(context, R.color.composing_text);
+        mColorComposingBackground = ContextCompat.getColor(context, R.color.composing_background);
+
+        mColorNormalText = ContextCompat.getColor(context, R.color.candidate_normal_text);
+
+        mColorComposingCode = ContextCompat.getColor(context, R.color.candidate_composing_code);
+        mColorComposingCodeHighlight = ContextCompat.getColor(context, R.color.candidate_composing_code_highlight);
+
+        mColorSpacer = ContextCompat.getColor(context, R.color.candidate_spacer);
+
+        mColorSelKey = ContextCompat.getColor(context, R.color.candidate_selection_keys);
+        mColorSelKeyShifted = ContextCompat.getColor(context, R.color.candidate_selection_keys_shifted);
+
+*/
+
+        final Resources r = context.getResources();
 
         Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         Point screenSize = new Point();
@@ -188,29 +281,6 @@ public class CandidateView extends View implements View.OnClickListener {
         mScreenWidth = screenSize.x;
         mScreenHeight = screenSize.y;
 
-
-        mSelectionHighlight = ContextCompat.getDrawable(context.getApplicationContext(),
-                R.drawable.list_selector_background);
-
-        if (mSelectionHighlight != null) {
-            mSelectionHighlight.setState(new int[]{
-                    android.R.attr.state_enabled,
-                    android.R.attr.state_focused,
-                    android.R.attr.state_window_focused,
-                    android.R.attr.state_pressed
-            });
-        }
-
-
-        mColorNormalText = ContextCompat.getColor(context, R.color.candidate_normal_text);
-
-        mColorInvertedTextTransparent =ContextCompat.getColor(context, R.color.candidate_inverted_text_physical_keyboard);
-        mColorInvertedText = ContextCompat.getColor(context, R.color.candidate_inverted_text);
-
-        mColorDictionary = ContextCompat.getColor(context, R.color.candidate_dictionary);
-        mColorRecommended = ContextCompat.getColor(context, R.color.candidate_recommended_text);
-        mColorSpacer = ContextCompat.getColor(context, R.color.candidate_spacer);
-        mColorSelKey = ContextCompat.getColor(context, R.color.candidate_selection_keys);
         mVerticalPadding = (int) (r.getDimensionPixelSize(R.dimen.candidate_vertical_padding) * mLIMEPref.getFontSize());
         configHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
         mHeight = configHeight;
@@ -278,7 +348,6 @@ public class CandidateView extends View implements View.OnClickListener {
                     }
                 }
 
-                //invalidate();
                 return true;
             }
         });
@@ -467,13 +536,17 @@ public class CandidateView extends View implements View.OnClickListener {
 
             mCandidatePopupWindow.setContentView(mCandidatePopupContainer);
 
-            View closeButton = mCandidatePopupContainer.findViewById(R.id.closeButton);
-            if (closeButton != null) closeButton.setOnClickListener(this);
+           // View closeButton = mCandidatePopupContainer.findViewById(R.id.closeButton);
+            //if (closeButton != null) closeButton.setOnClickListener(this);
 
             ImageButton btnClose = (ImageButton) mCandidatePopupContainer.findViewById(R.id.closeButton);
-            btnClose.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-                    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-            mCloseButtonHeight = btnClose.getMeasuredHeight();
+            if (btnClose != null) {
+                btnClose.setOnClickListener(this);
+                btnClose.setImageDrawable(mDrawableCloseButton);
+                btnClose.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+                        MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+                mCloseButtonHeight = btnClose.getMeasuredHeight();
+            }
 
             mPopupScrollView = (ScrollView) mCandidatePopupContainer.findViewById(R.id.sv);
 
@@ -595,6 +668,11 @@ public class CandidateView extends View implements View.OnClickListener {
 
         if (embeddedComposing != null) {
             mComposingTextView = embeddedComposing;
+            if( mComposingTextView != embeddedComposing ) {
+                mComposingTextView.setBackgroundColor(mColorComposingBackground);
+                mComposingTextView.setTextColor(mColorComposingText);
+            }
+
         } else {
             if (mComposingPopupTextView == null) {
                 LayoutInflater inflater
@@ -611,8 +689,12 @@ public class CandidateView extends View implements View.OnClickListener {
                 mComposingTextPopup.setContentView(mComposingPopupTextView);
                 mComposingTextPopup.setBackgroundDrawable(null);
             }
-            if (mComposingTextView != mComposingPopupTextView)
+            if (mComposingTextView != mComposingPopupTextView) {
                 mComposingTextView = mComposingPopupTextView;
+                mComposingTextView.setBackgroundColor(mColorComposingBackground);
+                mComposingTextView.setTextColor(mColorComposingText);
+
+            }
         }
 
 
@@ -837,14 +919,7 @@ public class CandidateView extends View implements View.OnClickListener {
                 textWidth = base;
             }
 
-            /*if( i == 0 && suggestion.length() <= 2){
-                if(suggestion != null && mSuggestions.get(i).getWord() != null &&
-                        mSuggestions.get(i).getWord().matches(".*?[a-zA-Z0-9\\p{Punct}]")) {
-                    textWidth += X_GAP;
-                    x += X_GAP;
-                }
-            }
-*/
+
             final int wordWidth = (int) textWidth + X_GAP * 2;
 
             mWordX[i] = x;
@@ -868,17 +943,22 @@ public class CandidateView extends View implements View.OnClickListener {
             checkHasMoreRecords();
 
 
-        // Moved from above by jeremy '10 3, 29. Paint mselectedindex in highlight here
-        if (canvas != null && count > 0 && mSelectedIndex >= 0) {
-            canvas.translate(mWordX[mSelectedIndex], 0);
-            mSelectionHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelectedIndex], height);
-            mSelectionHighlight.draw(canvas);
-            canvas.translate(-mWordX[mSelectedIndex], 0);
-        }
+
 
         // Paint all the suggestions and lines.
         if (canvas != null) {
 
+            // Moved from above by jeremy '10 3, 29. Paint mSelectedindex in highlight here
+            if ( count > 0 && mSelectedIndex >= 0) {
+                //    candidatePaint.setColor(mColorComposingCode);
+                //    canvas.drawRect(mWordX[mSelectedIndex],bgPadding.top, mWordWidth[mSelectedIndex] , height, candidatePaint);
+
+                canvas.translate(mWordX[mSelectedIndex], 0);
+                mDrawableSuggestHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelectedIndex], height);
+                mDrawableSuggestHighlight.draw(canvas);
+                canvas.translate(-mWordX[mSelectedIndex], 0);
+
+            }
             if(mTransparentCandidateView){
                 canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
@@ -889,13 +969,6 @@ public class CandidateView extends View implements View.OnClickListener {
 
                 canvas.drawRect(0.5f, bgPadding.top, mScreenWidth, height, backgroundPaint);
             }
-
-            /*Paint backgroundPaint = new Paint();
-            backgroundPaint.setColor(Color.RED);
-            backgroundPaint.setAlpha(33);
-            backgroundPaint.setStyle(Paint.Style.FILL);
-
-            canvas.drawRect(0.5f, bgPadding.top, mScreenWidth, height, backgroundPaint);*/
 
 
             for (int i = 0; i < count; i++) {
@@ -917,23 +990,29 @@ public class CandidateView extends View implements View.OnClickListener {
                            if(mTransparentCandidateView){
                                candidatePaint.setColor(mColorInvertedTextTransparent);
                            }else{
-                               candidatePaint.setColor(mColorInvertedText);
+                               candidatePaint.setColor(mColorComposingCodeHighlight);
                            }
                        }
-                       else candidatePaint.setColor(mColorRecommended);
+                       else candidatePaint.setColor(mColorComposingCode);
                         break;
                     case Mapping.RECORD_CHINESE_PUNCTUATION_SYMBOL:
                     case Mapping.RECORD_RELATED_PHRASE:
-                        selKeyPaint.setColor(mColorRecommended);
-                        candidatePaint.setColor(mColorDictionary);
+                        selKeyPaint.setColor(mColorSelKeyShifted);
+                        if(i == mSelectedIndex)
+                            candidatePaint.setColor(mColorNormalTextHighlight);
+                        else
+                            candidatePaint.setColor(mColorNormalText);
                         break;
                     case Mapping.RECORD_EXACT_MATCH_TO_CODE:
                     case Mapping.RECORD_PARTIAL_MATCH_TO_CODE:
                     case Mapping.RECORD_RUNTIME_BUILT_PHRASE:
                     case Mapping.RECORD_ENGLISH_SUGGESTION:
                     default:
-                        selKeyPaint.setColor(mColorNormalText);
-                        candidatePaint.setColor(mColorNormalText);
+                        selKeyPaint.setColor(mColorSelKey);
+                        if(i == mSelectedIndex)
+                            candidatePaint.setColor(mColorNormalTextHighlight);
+                        else
+                            candidatePaint.setColor(mColorNormalText);
                         break;
 
                 }

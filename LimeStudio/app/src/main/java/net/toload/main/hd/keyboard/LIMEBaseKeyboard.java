@@ -254,6 +254,8 @@ public class LIMEBaseKeyboard {
      */
     private static float SEARCH_DISTANCE = 1.8f;
 
+
+
     /**
      * Container for keys in the keyboard. All keys in a row are at the same Y-coordinate.
      * Some of the key size defaults can be overridden per row from what the {@link LIMEBaseKeyboard}
@@ -794,7 +796,7 @@ public class LIMEBaseKeyboard {
         mLandScape = mDisplayWidth > mDisplayHeight;
 
         TypedArray a = context.getTheme().obtainStyledAttributes(//R.style.LIMEBaseKeyboardLight, R.styleable.LIMEBaseKeyboard);
-                null, R.styleable.LIMEBaseKeyboard, R.attr.LIMEBaseKeyboardStyle, R.style.LIMEBaseKeyboardLight);
+                null, R.styleable.LIMEBaseKeyboard, R.attr.LIMEBaseKeyboardStyle, R.style.LIMEBaseKeyboard);
 
         mDrawableArrowUp = a.getDrawable(R.styleable.LIMEBaseKeyboard_drawableArrowUp);
         mDrawableArrowDown = a.getDrawable(R.styleable.LIMEBaseKeyboard_drawableArrowDown);

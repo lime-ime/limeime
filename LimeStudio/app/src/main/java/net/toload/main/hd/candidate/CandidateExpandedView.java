@@ -32,6 +32,7 @@ import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.widget.ImageButton;
 import android.widget.ScrollView;
 
 import net.toload.main.hd.R;
@@ -62,21 +63,25 @@ public class CandidateExpandedView extends CandidateView {
     private int mRows = 0;
     private int mHeight; // built own mHeight and get from resources.
     private int mTotalHeight;
-    private ScrollView mParentScroolView;
+    private ScrollView mParentScrollView;
+
 
     public CandidateExpandedView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        //this.mGestureDetector = null;
-        //mVerticalPadding =(int)( context.getResources()
-        //		.getDimensionPixelSize(R.dimen.candidate_vertical_padding) *mLIMEPref.getFontSize());
+        this(context, attrs, R.attr.LIMECandidateView);
+    }
+
+    public CandidateExpandedView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+
         mHeight = (int) (context.getResources().
                 getDimensionPixelSize(R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
 
+        setBackgroundColor(mColorBackground);
 
     }
 
     public void setParentScrollView(ScrollView v) {
-        mParentScroolView = v;
+        mParentScrollView = v;
     }
 
 
@@ -147,8 +152,8 @@ public class CandidateExpandedView extends CandidateView {
             try {
                 if (mSelectedIndex >= 0) {
                     canvas.translate(mWordX[mSelRow][mSelCol], mSelRow * (height + mVerticalPadding));
-                    mSelectionHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelRow][mSelCol], height);
-                    mSelectionHighlight.draw(canvas);
+                    mDrawableSuggestHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelRow][mSelCol], height);
+                    mDrawableSuggestHighlight.draw(canvas);
                     canvas.translate(-mWordX[mSelRow][mSelCol], -mSelRow * (height + mVerticalPadding));
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
@@ -167,10 +172,6 @@ public class CandidateExpandedView extends CandidateView {
                             continue;
                         }
                         String suggestion = mSuggestions.get(index).getWord();
-                        index++;
-
-                        //if(DEBUG)
-                        //	Log.i(TAG, "Candidateview:OnDraw():index:" + index + "  Drawing:" + suggestion );
 
                         switch (mSuggestions.get(i).getRecordType()) {
                             case Mapping.RECORD_EXACT_MATCH_TO_CODE:
@@ -178,15 +179,21 @@ public class CandidateExpandedView extends CandidateView {
                             case Mapping.RECORD_COMPOSING_CODE:
                                 selKeyPaint.setColor(mColorSpacer);
                                 if (i == 0 && j == 0) {
-                                    if (mSelectedIndex == 0) candidatePaint.setColor(mColorInvertedText);
-                                    else candidatePaint.setColor(mColorRecommended);
+                                    if (mSelectedIndex == 0) candidatePaint.setColor(mColorComposingCodeHighlight);
+                                    else candidatePaint.setColor(mColorComposingCode);
                                 } else {
-                                    candidatePaint.setColor(mColorSpacer);
+                                    if(index == mSelectedIndex)
+                                        candidatePaint.setColor(mColorNormalTextHighlight);
+                                    else
+                                        candidatePaint.setColor(mColorNormalText);
                                 }
                                 break;
                             default:
-                                //npaint.setColor(mColorRecommended);
-                                candidatePaint.setColor(mColorDictionary);
+                                if(index == mSelectedIndex)
+                                    candidatePaint.setColor(mColorNormalTextHighlight);
+                                else
+                                    candidatePaint.setColor(mColorNormalText);
+                                break;
                         }
                         canvas.drawText(suggestion, mWordX[i][j] + X_GAP, y, candidatePaint);
 
@@ -196,6 +203,8 @@ public class CandidateExpandedView extends CandidateView {
                         canvas.drawLine(lineX, bgPadding.top + (height + mVerticalPadding) * i, lineX,
                                 (height + mVerticalPadding) * (i + 1) - mVerticalPadding + 1, candidatePaint);
                         candidatePaint.setFakeBoldText(false);
+                        index++;
+
                     }
                 }
             }catch(Exception e){
@@ -310,13 +319,13 @@ public class CandidateExpandedView extends CandidateView {
     public boolean onTouchEvent(@NonNull MotionEvent me) {
         if (DEBUG)
             Log.i(TAG, "onTouchEvent(): x =" + me.getX() + ", y=" + me.getY()
-                    + ", ScroolY=" + mParentScroolView.getScrollY());
+                    + ", ScroolY=" + mParentScrollView.getScrollY());
         int action = me.getAction();
         int x = (int) me.getX();
         int y = (int) me.getY();
         mTouchX = x;
         mTouchY = y;
-        //mScrollY = mParentScroolView.getScrollY();
+        //mScrollY = mParentScrollView.getScrollY();
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 if (DEBUG) Log.i(TAG, "onTouchEvent(), Action_DONW");
@@ -352,15 +361,15 @@ public class CandidateExpandedView extends CandidateView {
 
     private void scrollToRow(int row) {
         int selY = row * (mHeight + mVerticalPadding);
-        int scrollY = mParentScroolView.getScrollY();
-        int scrollHeight = mParentScroolView.getHeight();
+        int scrollY = mParentScrollView.getScrollY();
+        int scrollHeight = mParentScrollView.getHeight();
         if (DEBUG) Log.i(TAG, "scrollToRow(), row=" + row
                 + ", selected row y=" + selY
                 + ", ScrollViewHeight" + scrollHeight
                 + ", ScollY=" + scrollY);
 
         if (selY < scrollY || selY > (scrollY + scrollHeight))
-            mParentScroolView.scrollTo(0, row * ((mHeight + mVerticalPadding)));
+            mParentScrollView.scrollTo(0, row * ((mHeight + mVerticalPadding)));
 
     }
 

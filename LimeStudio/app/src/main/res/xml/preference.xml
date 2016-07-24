@@ -36,7 +36,7 @@
             android:defaultValue="0"
             android:dialogTitle="@string/keyboard_themes"
             android:entries="@array/keyboard_themes_options"
-            android:entryValues="@array/show_arrow_keys_values"
+            android:entryValues="@array/keyboard_themes_values"
             android:key="keyboard_theme"
             android:title="@string/keyboard_themes" />
         />

@@ -24,14 +24,19 @@
   ~  */
   -->
 <resources>
+    <!--candidate view-->
     <color name="candidate_normal_text">#FF0F0F0F</color>
-    <color name="candidate_inverted_text">#FFFAFAFA</color>
     <color name="candidate_inverted_text_physical_keyboard">#FFD05050</color>
-    <color name="candidate_dictionary">#FF101010</color>
-    <color name="candidate_recommended_text">#FFE35900</color>
+    <color name="candidate_composing_code">#FFE35900</color>
+    <color name="candidate_composing_code_highlight">#FFFAFAFA</color>
+    <color name="candidate_suggest_background">#FFFBB732</color>
+    <color name="candidate_suggest_background_hl">#FFF29238</color>
     <color name="candidate_spacer">#FF101010</color>
     <color name="candidate_selection_keys">#CC5E5A80</color>
+    <color name="candidate_selection_keys_shifted">#FFE35900</color>
     <color name="candidate_background">#FFFAFAFA</color>
+    <color name="candidate_background_hl">#FFF29238</color>
+    <!--fully transparent candidate container view-->
     <color name="candidate_container_background">#00FFFFFF</color>
     <!--composing text view-->
     <color name="composing_text">#FF818181</color>

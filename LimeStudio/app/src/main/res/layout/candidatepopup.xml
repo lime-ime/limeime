@@ -24,23 +24,18 @@
   -->
 
 <LinearLayout
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  android:baselineAligned="true" 
-  android:orientation="vertical" 
-  android:layout_width="match_parent" 
-  android:layout_height="wrap_content"
-  android:background="@drawable/keyboard_suggest_strip"> 
+  	xmlns:android="http://schemas.android.com/apk/res/android"
+  	android:baselineAligned="true"
+  	android:orientation="vertical"
+  	android:layout_width="match_parent"
+  	android:layout_height="wrap_content"
+	android:background="@color/candidate_background">
 
  <ScrollView 
 	android:id="@+id/sv"
 	android:layout_width="fill_parent"
 	android:layout_height="100dp"
 	>
-<!-- 	android:layout_x="0px"
-	android:layout_y="20px" 
-	
-	-->
-
     <view xmlns:android="http://schemas.android.com/apk/res/android"
 		    class="net.toload.main.hd.candidate.CandidateExpandedView"
 	        android:id="@+id/candidatePopup"

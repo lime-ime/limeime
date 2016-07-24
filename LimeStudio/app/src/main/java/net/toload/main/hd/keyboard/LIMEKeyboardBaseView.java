@@ -191,7 +191,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private int mPreviewTopPadding;
 
     // Main keyboard
-    private LIMEBaseKeyboard mKeyboard;
+    private LIMEKeyboard mKeyboard;
     private Key[] mKeys;
     // TODO this attribute should be gotten from Keyboard.
     private int mKeyboardVerticalGap;
@@ -476,7 +476,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         mContext = context;
 
         TypedArray a = context.getTheme().obtainStyledAttributes(
-                attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEKeyboardBaseView_Light);
+                attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEKeyboardBaseView);
         LayoutInflater inflate =
                 (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         int previewLayout = 0;
@@ -698,7 +698,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
      * @param keyboard the keyboard to display in this view
      * @see #getKeyboard()
      */
-    public void setKeyboard(LIMEBaseKeyboard keyboard) {
+    public void setKeyboard(LIMEKeyboard keyboard) {
         if (mKeyboard != null) {
             dismissKeyPreview();
         }
@@ -728,7 +728,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
      * @return the currently attached keyboard
      * //* @see #setKeyboard(Keyboard)
      */
-    public LIMEBaseKeyboard getKeyboard() {
+    public LIMEKeyboard getKeyboard() {
         return mKeyboard;
     }
 
@@ -1396,7 +1396,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         if (!isLargeScreen || keyboard.getKeys().size() == 1)
             miniKeyboard.mVerticalCorrection =
                     getResources().getDimension(R.dimen.mini_keyboard_fling_vertical_correction);
-        miniKeyboard.setKeyboard(keyboard);
+        miniKeyboard.setKeyboard((LIMEKeyboard)keyboard);
         miniKeyboard.setPopupParent(this);
 
         container.measure(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.AT_MOST),
