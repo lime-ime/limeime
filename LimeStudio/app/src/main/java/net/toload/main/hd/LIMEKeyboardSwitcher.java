@@ -107,7 +107,7 @@ public class LIMEKeyboardSwitcher {
 		mThemedContext = themedContext;
 
         mLIMEPref = new LIMEPreferenceManager(service);
-        mKeyboards = new HashMap<KeyboardId, LIMEKeyboard>();
+        mKeyboards = new HashMap<>();
         
         mKeySizeScale = mLIMEPref.getFontSize();
     }
@@ -124,8 +124,8 @@ public class LIMEKeyboardSwitcher {
     }
     
     public void setKeyboardList(List<KeyboardObj> list){
-    	if(list==null || (list!=null&& list.size()==0)) return; //Jeremy '12,4,10 avoid fc when database is locked.
-    	kbHm = new HashMap<String, KeyboardObj>();
+    	if(list==null || list.size()==0 ) return; //Jeremy '12,4,10 avoid fc when database is locked.
+    	kbHm = new HashMap<>();
     	for(KeyboardObj o : list){
     		kbHm.put(o.getCode(), o);
     	}    	
@@ -139,8 +139,8 @@ public class LIMEKeyboardSwitcher {
     }
     
     public void setImList(List<ImObj> list){
-    	if(list==null || (list!=null&& list.size()==0)) return; //Jeremy '12,4,10 avoid fc when database is locked.
-    	imHm = new HashMap<String, String>();  	
+    	if(list==null ||  list.size()==0) return; //Jeremy '12,4,10 avoid fc when database is locked.
+    	imHm = new HashMap<>();
     	for(ImObj o : list){
     		imHm.put(o.getCode(), o.getKeyboard());
     	}    	
@@ -279,8 +279,7 @@ public class LIMEKeyboardSwitcher {
     }
     
     private int getKeyboardXMLID(String value){
-        int result = mThemedContext.getResources().getIdentifier(value, "xml", mService.getPackageName());
-        return result;
+		return mThemedContext.getResources().getIdentifier(value, "xml", mService.getPackageName());
     }
     
     public void setKeyboardMode(String code, int mode, int imeOptions, boolean isIm, boolean isSymbol, boolean isShift) {
@@ -344,7 +343,7 @@ public class LIMEKeyboardSwitcher {
         	if(kbHm!=null) kobj=kbHm.get(imcode);
 		}
     	
-    	KeyboardId kid = null;
+    	KeyboardId kid;
     	
     	if(kobj != null){
 
@@ -454,8 +453,9 @@ public class LIMEKeyboardSwitcher {
 	
 	       // mCurrentId = kid;
 	        mInputView.setKeyboard(keyboard);
-	              
-	        keyboard.setShiftLocked(keyboard.isShiftLocked());
+
+			assert keyboard != null;
+			keyboard.setShiftLocked(keyboard.isShiftLocked());
 	        keyboard.setShifted(mIsShifted);
 	        mInputView.setKeyboard(mInputView.getKeyboard()); //instead of invalidateAllKeys();
 	        
@@ -522,11 +522,10 @@ public class LIMEKeyboardSwitcher {
     
    public void toggleSymbols() {
     	mIsSymbols = !mIsSymbols;
-    	mIsShifted = false;
     	if(mIsChinese)
-        	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);
+        	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, false);
     	else
-        	this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
+        	this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, false);
         if (mIsSymbols && !mPreferSymbols) {
             mSymbolsModeState = SYMBOLS_MODE_STATE_BEGIN;
         } else {

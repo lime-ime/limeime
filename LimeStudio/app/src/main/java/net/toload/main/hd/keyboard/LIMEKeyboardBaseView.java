@@ -61,6 +61,8 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import net.toload.main.hd.R;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
+
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -70,6 +72,7 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
     private static final String TAG = "LIMEKeyboardBaseView";
     private static final boolean DEBUG = false;
     private static final boolean mShowTouchPoints = false;
+
 
     /**
      * Listener for virtual keyboard events.
@@ -192,12 +195,9 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
 
     // Popup mini keyboard
 
-    private LIMEKeyboardBaseView mMiniKeyboard;
-
     private Map<Key,View> mMiniKeyboardCache;
 
     private PopupWindow mPopupKeyboard;
-    private View mMiniKeyboardContainer;
 
     private boolean mMiniKeyboardOnScreen;
     private View mPopupParent;
@@ -235,7 +235,7 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
     /**
      * Notes if the keyboard just changed, so that we could possibly reallocate the mBuffer.
      */
-    private boolean mKeyboardChanged;;
+    private boolean mKeyboardChanged;
     /**
      * The canvas for the above mutable keyboard bitmap
      */
@@ -246,10 +246,6 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
     private final HashMap<Integer, Integer> mTextWidthCache = new HashMap<>();
 
     private Drawable mPopupHint;//Jeremy /11,8,11
-
-    private boolean isLargeScreen; // Jeremy //11,8,8 used for disable fling selection on minipopup keyboard for larger screen
-
-
 
     /** The accessibility manager for accessibility support *
     private AccessibilityManager mAccessibilityManager;
@@ -264,11 +260,7 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
     private int mVerticalCorrection;
     private int mProximityThreshold;
 
-    private boolean mPreviewCentered = false;
-    private boolean mShowPreview = true;
-
-    private int mPopupPreviewX;
-    private int mPopupPreviewY;
+     private boolean mShowPreview = true;
 
     private int mLastX;
     private int mLastY;
@@ -313,33 +305,46 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
     private static final int MSG_LONGPRESS = 4;
 
     private static final int DEBOUNCE_TIME = 70;
-    private boolean isAPIpre8;
+
 
     //private LIMEPreferenceManager mLIMEPref;
 
-    Handler mHandler = new Handler() {
+    UIHandler mHandler = new UIHandler(this);
+    static class UIHandler extends  Handler {
+
+        public UIHandler(LIMEKeyboardBaseView keyboardBaseView){
+            mLIMEKeyboardBaseViewWeakReference = new WeakReference<>(keyboardBaseView);
+        }
+        private final WeakReference<LIMEKeyboardBaseView> mLIMEKeyboardBaseViewWeakReference;
         @Override
         public void handleMessage(Message msg) {
+            LIMEKeyboardBaseView mLIMEKeyboardBaseView = mLIMEKeyboardBaseViewWeakReference.get();
+            if(mLIMEKeyboardBaseView == null) return;
             switch (msg.what) {
                 case MSG_SHOW_PREVIEW:
-                    showKey(msg.arg1);
+                    if(DEBUG) Log.i(TAG, "handleMessage()  MSG_SHOW_PREVIEW");
+                    mLIMEKeyboardBaseView.showKey(msg.arg1);
                     break;
                 case MSG_REMOVE_PREVIEW:
-                    mPreviewText.setVisibility(INVISIBLE);
+                    if(DEBUG) Log.i(TAG, "handleMessage()  MSG_REMOVE_PREVIEW");
+                    if(mLIMEKeyboardBaseView.mPreviewPopup.isShowing())    //mPreviewPopup.dismiss();
+                        mLIMEKeyboardBaseView.mPreviewText.setVisibility(INVISIBLE);
+                    mLIMEKeyboardBaseView.mPreviewPopup.dismiss();
                     break;
                 case MSG_REPEAT:
-                    if (repeatKey()) {
+                    if(DEBUG) Log.i(TAG, "handleMessage()  MSG_REPEAT");
+                    if (mLIMEKeyboardBaseView.repeatKey()) {
                         Message repeat = Message.obtain(this, MSG_REPEAT);
                         sendMessageDelayed(repeat, REPEAT_INTERVAL);
                     }
                     break;
                 case MSG_LONGPRESS:
-                    openPopupIfRequired();
+                    if(DEBUG) Log.i(TAG, "handleMessage()  MSG_LONGPRESS");
+                    mLIMEKeyboardBaseView.openPopupIfRequired();
                     break;
             }
         }
-    };
-
+    }
 
 
     public LIMEKeyboardBaseView(Context context, AttributeSet attrs) {
@@ -457,12 +462,6 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
 
         final Resources res = getResources();
 
-        isAPIpre8 = android.os.Build.VERSION.SDK_INT < 8;  //Jeremy '11,8,7 detect API level and disable multi-touch API for API leve 7
-
-
-        isLargeScreen = true; //large || xlarge;  //Force turn off fling selection now.
-
-
         mPreviewPopup = new PopupWindow(context);
         if (previewLayout != 0) {
             mPreviewText = (TextView) inflate.inflate(previewLayout, null);
@@ -503,6 +502,9 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
         initGestureDetector();
     }
 
+    public int getmSymbolColorScheme() {
+        return mSymbolColorScheme;
+    }
 
     private void initGestureDetector() {
         mGestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
@@ -752,10 +754,11 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
     @Override
     public void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+        //TODO: LIMEKeyboard does not implement resize yet.
+        /*
         if (mKeyboard != null) {
-            //TODO: LIMEKeyboard does not implement resize yet.
             //mKeyboard.resize(w, h);
-        }
+        }*/
         // Release the buffer, if any and it will be reallocated on the next draw
         mBuffer = null;
     }
@@ -1225,6 +1228,7 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
             lp.width = popupWidth;
             lp.height = popupHeight;
         }
+        /*
         if (!mPreviewCentered) {
             mPopupPreviewX = key.x - mPreviewText.getPaddingLeft() + mPaddingLeft;
             mPopupPreviewY = key.y - popupHeight + mPreviewOffset;
@@ -1233,7 +1237,7 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
             mPopupPreviewX = 160 - mPreviewText.getMeasuredWidth() / 2;
             mPopupPreviewY = - mPreviewText.getMeasuredHeight();
         }
-
+        */
         mHandler.removeMessages(MSG_REMOVE_PREVIEW);
 
         int popupPreviewX = key.x - (popupWidth - key.width) / 2;
@@ -1349,7 +1353,8 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
         int popupKeyboardId = popupKey.popupResId;
 
         if (popupKeyboardId != 0) {
-            mMiniKeyboardContainer = mMiniKeyboardCache.get(popupKey);
+            View mMiniKeyboardContainer = mMiniKeyboardCache.get(popupKey);
+            LIMEKeyboardBaseView mMiniKeyboard;
             if (mMiniKeyboardContainer == null) {
                 LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(
                         Context.LAYOUT_INFLATER_SERVICE);
