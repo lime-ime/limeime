@@ -70,6 +70,7 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
 
             mCandidateView.setBackgroundColor(mCandidateView.mColorBackground);
             mRightButton.setBackgroundColor(mCandidateView.mColorBackground);
+            this.setBackgroundColor(mCandidateView.mColorBackground);
         }
     }
 

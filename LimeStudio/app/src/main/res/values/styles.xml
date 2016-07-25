@@ -233,7 +233,7 @@
     <style name="LIMECandidateView">
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl</item>
         <item name="voiceInputIcon">@drawable/sym_keyboard_voice_light</item>
-        <item name="ExpandButtonIcon">@drawable/ic_suggest_expander</item>
+        <item name="ExpandButtonIcon">@drawable/btn_expand_light</item>
         <item name="closeButtonIcon">@drawable/btn_close</item>
 
         <item name="candidateBackground">@color/candidate_background</item>
@@ -252,15 +252,15 @@
         <item name="composingBackgroundColor">@color/composing_background</item>
     </style>
     <style name="LIMECandidateView.Light"  parent = "LIMECandidateView">
-        <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl</item>
+        <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl_light</item>
         <item name="voiceInputIcon">@drawable/sym_keyboard_voice_light</item>
-        <item name="ExpandButtonIcon">@drawable/ic_suggest_expander</item>
+        <item name="ExpandButtonIcon">@drawable/btn_expand_light</item>
         <item name="closeButtonIcon">@drawable/btn_close</item>
 
         <item name="candidateBackground">@color/candidate_background</item>
         <!-- color of  different types of candidates   -->
-        <item name="candidateNormalTextColor">@color/limekeyboard_function_key_color_light</item>
-        <item name="candidateNormalTextHighlightColor">@color/candidate_normal_text</item>
+        <item name="candidateNormalTextColor">@color/candidate_normal_text</item>
+        <item name="candidateNormalTextHighlightColor">@color/candidate_composing_code_highlight</item>
         <item name="composingCodeColor">@color/limekeyboard_normal_key_color_light_hl</item>
         <item name="composingCodeHighlightColor">@color/candidate_composing_code_highlight</item>
         <!-- color of  spacer between candidate   -->
@@ -273,6 +273,23 @@
         <item name="composingBackgroundColor">@color/composing_background</item>
     </style>
     <style name="LIMECandidateView.Dark"  parent = "LIMECandidateView">
+        <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl_light</item>
+        <item name="voiceInputIcon">@drawable/sym_keyboard_voice_dark</item>
+        <item name="candidateBackground">@color/candidate_background_dark</item>
+        <item name="ExpandButtonIcon">@drawable/btn_expand_dark</item>
+        <!-- color of  different types of candidates   -->
+        <item name="candidateNormalTextColor">@color/candidate_normal_text_dark</item>
+        <item name="candidateNormalTextHighlightColor">@color/candidate_normal_text_dark</item>
+        <item name="composingCodeColor">@color/candidate_composing_code_highlight</item>
+        <item name="composingCodeHighlightColor">@color/candidate_composing_code_highlight</item>
+        <!-- color of  spacer between candidate   -->
+        <item name="spacerColor">@color/candidate_composing_code_highlight</item>
+        <!-- color of  selection key display for physical keyboard   -->
+        <item name="selKeyColor">@color/candidate_composing_code_highlight</item>
+        <item name="selKeyShiftedColor">@color/composing_background</item>
+        <!-- color of  composing text view above candidate view   -->
+        <item name="composingTextColor">@color/candidate_normal_text_dark</item>
+        <item name="composingBackgroundColor">@color/composing_background_dark</item>
     </style>
     <style name="LIMECandidateView.Pink"  parent = "LIMECandidateView">
     </style>

@@ -1762,7 +1762,7 @@ public class LIMEService extends InputMethodService implements
 
 
         builder.setCancelable(true);
-        builder.setIcon(R.drawable.logobw);
+        builder.setIcon(R.drawable.sym_keyboard_done_dark);
         builder.setNegativeButton(android.R.string.cancel, null);
         builder.setTitle(getResources().getString(R.string.ime_name));
 

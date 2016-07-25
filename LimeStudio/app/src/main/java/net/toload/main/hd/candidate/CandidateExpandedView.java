@@ -32,7 +32,6 @@ import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.widget.ImageButton;
 import android.widget.ScrollView;
 
 import net.toload.main.hd.R;
@@ -77,6 +76,7 @@ public class CandidateExpandedView extends CandidateView {
                 getDimensionPixelSize(R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
 
         setBackgroundColor(mColorBackground);
+
 
     }
 

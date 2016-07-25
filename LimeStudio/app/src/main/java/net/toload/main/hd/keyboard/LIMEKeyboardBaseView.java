@@ -191,7 +191,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private int mPreviewTopPadding;
 
     // Main keyboard
-    private LIMEKeyboard mKeyboard;
+    private LIMEBaseKeyboard mKeyboard;
     private Key[] mKeys;
     // TODO this attribute should be gotten from Keyboard.
     private int mKeyboardVerticalGap;
@@ -698,7 +698,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
      * @param keyboard the keyboard to display in this view
      * @see #getKeyboard()
      */
-    public void setKeyboard(LIMEKeyboard keyboard) {
+    public void setKeyboard(LIMEBaseKeyboard keyboard) {
         if (mKeyboard != null) {
             dismissKeyPreview();
         }
@@ -728,7 +728,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
      * @return the currently attached keyboard
      * //* @see #setKeyboard(Keyboard)
      */
-    public LIMEKeyboard getKeyboard() {
+    public LIMEBaseKeyboard getKeyboard() {
         return mKeyboard;
     }
 
@@ -1396,7 +1396,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         if (!isLargeScreen || keyboard.getKeys().size() == 1)
             miniKeyboard.mVerticalCorrection =
                     getResources().getDimension(R.dimen.mini_keyboard_fling_vertical_correction);
-        miniKeyboard.setKeyboard((LIMEKeyboard)keyboard);
+        miniKeyboard.setKeyboard(keyboard);
         miniKeyboard.setPopupParent(this);
 
         container.measure(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.AT_MOST),

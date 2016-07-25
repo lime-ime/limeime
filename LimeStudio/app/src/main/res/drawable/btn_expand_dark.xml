@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!--
   ~ /*
   ~  *
-  ~  **    Copyright 2015, The LimeIME Open Source Project
+  ~  **    Copyright 2016, The LimeIME Open Source Project
   ~  **
   ~  **    Project Url: http://github.com/lime-ime/limeime/
   ~  **                 http://android.toload.net/
@@ -22,21 +23,8 @@
   ~  *
   ~  */
   -->
-
-<resources>
-    <dimen name="key_height">36dip</dimen>
-    <dimen name="key_preview_height">95dp</dimen>
-    <dimen name="mini_keyboard_fling_vertical_correction">-36dip</dimen>
-    <dimen name="candidate_stripe_height">32sp</dimen>
-    <dimen name="candidate_vertical_padding">8sp</dimen>
-    <dimen name="candidate_font_size">28sp</dimen>
-    <dimen name="candidate_number_font_size">14sp</dimen>
-
-    <dimen name="composing_text_size">18sp</dimen>
-
-    <dimen name="spacebar_preview_top_padding">8dip</dimen>
-    <dimen name="preview_top_padding">0dip</dimen>
-    <!-- WB -->
-    <dimen name="wb_key_height">48dip</dimen>
-    
-</resources>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="false" android:state_focused="false" android:drawable="@drawable/ic_suggest_expander_gray"/>
+    <item android:state_pressed="true" android:drawable="@drawable/ic_suggest_expander_dark"/>
+    <item android:state_focused="true" android:drawable="@drawable/ic_suggest_expander_gray"/>
+</selector>

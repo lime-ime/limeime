@@ -193,6 +193,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
         mLIMEPref = new LIMEPreferenceManager(context);
 
+        //Jeremy '16,7,24 get themed objects
         TypedArray a = context.getTheme().obtainStyledAttributes(
                 attrs, R.styleable.LIMECandidateView, defStyle, R.style.LIMECandidateView);
 
@@ -247,33 +248,7 @@ public class CandidateView extends View implements View.OnClickListener {
             }
         }
 
-        /*
-
-        mColorInvertedTextTransparent = ContextCompat.getColor(context, R.color.candidate_inverted_text_physical_keyboard);
-
-        mDrawableSuggestHighlight = ContextCompat.getDrawable(context.getApplicationContext(),  R.drawable.ic_suggest_scroll_background_hl);
-        mDrawableVoiceInput = ContextCompat.getDrawable(context,  R.drawable.sym_keyboard_voice_light);
-        mDrawableExpandButton = ContextCompat.getDrawable(context,  R.drawable.ic_suggest_expander);
-        mDrawableCloseButton = ContextCompat.getDrawable(context,  R.drawable.btn_close);
-
-        mColorBackground = ContextCompat.getColor(context, R.color.candidate_background);
-
-        mColorComposingText = ContextCompat.getColor(context, R.color.composing_text);
-        mColorComposingBackground = ContextCompat.getColor(context, R.color.composing_background);
-
-        mColorNormalText = ContextCompat.getColor(context, R.color.candidate_normal_text);
-
-        mColorComposingCode = ContextCompat.getColor(context, R.color.candidate_composing_code);
-        mColorComposingCodeHighlight = ContextCompat.getColor(context, R.color.candidate_composing_code_highlight);
-
-        mColorSpacer = ContextCompat.getColor(context, R.color.candidate_spacer);
-
-        mColorSelKey = ContextCompat.getColor(context, R.color.candidate_selection_keys);
-        mColorSelKeyShifted = ContextCompat.getColor(context, R.color.candidate_selection_keys_shifted);
-
-*/
-
-        final Resources r = context.getResources();
+       final Resources r = context.getResources();
 
         Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         Point screenSize = new Point();
@@ -283,7 +258,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
         mVerticalPadding = (int) (r.getDimensionPixelSize(R.dimen.candidate_vertical_padding) * mLIMEPref.getFontSize());
         configHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
-        mHeight = configHeight;
+        mHeight = configHeight + mVerticalPadding;
         mExpandButtonWidth = r.getDimensionPixelSize(R.dimen.candidate_expand_button_width);// *mLIMEPref.getFontSize());
 
         mCandidatePaint = new Paint();
@@ -534,15 +509,15 @@ public class CandidateView extends View implements View.OnClickListener {
                     Context.LAYOUT_INFLATER_SERVICE);
             mCandidatePopupContainer = inflater.inflate(R.layout.candidatepopup, (ViewGroup) this.getRootView(), false);
 
-            mCandidatePopupWindow.setContentView(mCandidatePopupContainer);
+            mCandidatePopupContainer.setBackgroundColor(mColorBackground);
 
-           // View closeButton = mCandidatePopupContainer.findViewById(R.id.closeButton);
-            //if (closeButton != null) closeButton.setOnClickListener(this);
+            mCandidatePopupWindow.setContentView(mCandidatePopupContainer);
 
             ImageButton btnClose = (ImageButton) mCandidatePopupContainer.findViewById(R.id.closeButton);
             if (btnClose != null) {
                 btnClose.setOnClickListener(this);
                 btnClose.setImageDrawable(mDrawableCloseButton);
+                btnClose.setBackgroundColor(mColorBackground);
                 btnClose.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
                         MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
                 mCloseButtonHeight = btnClose.getMeasuredHeight();
@@ -667,10 +642,10 @@ public class CandidateView extends View implements View.OnClickListener {
         // Initialize mComposingTextView as embedding composing or popup window for fixed candidate mode. Jeremy '15,6,4
 
         if (embeddedComposing != null) {
-            mComposingTextView = embeddedComposing;
             if( mComposingTextView != embeddedComposing ) {
                 mComposingTextView.setBackgroundColor(mColorComposingBackground);
                 mComposingTextView.setTextColor(mColorComposingText);
+                mComposingTextView = embeddedComposing;
             }
 
         } else {
@@ -848,7 +823,7 @@ public class CandidateView extends View implements View.OnClickListener {
             Log.i(TAG, "onMeasure()");
         int measuredWidth = resolveSize(mTotalWidth, widthMeasureSpec);
 
-        final int desiredHeight = mHeight;//((int)mCandidatePaint.getTextSize());
+        final int desiredHeight = mHeight;
 
         // Maximum possible width and desired height
         setMeasuredDimension(measuredWidth,
@@ -886,8 +861,7 @@ public class CandidateView extends View implements View.OnClickListener {
             }
         }
 
-        //final int mCount = mSuggestions.size();
-        final int height = mHeight;//= getHeight();
+        final int height = mHeight;
         final Rect bgPadding = mBgPadding;
         final Paint candidatePaint = mCandidatePaint;
         final Paint candidateEmojiPaint = mCandidatePaint;
@@ -897,8 +871,8 @@ public class CandidateView extends View implements View.OnClickListener {
         final int touchX = mTouchX;
         final int scrollX = getScrollX();
         final boolean scrolled = mScrolled;
-        //final boolean typedWordValid = mTypedWordValid;
-        final int y = (int) (((height - mCandidatePaint.getTextSize()) / 2) - mCandidatePaint.ascent());
+
+        final int textBaseLine = (int) (((height - mCandidatePaint.getTextSize()) / 2) - mCandidatePaint.ascent());
 
         // Modified by jeremy '10, 3, 29.  Update mselectedindex if touched and build wordX[i] and wordwidth[i]
         int x = 0;
@@ -1018,22 +992,21 @@ public class CandidateView extends View implements View.OnClickListener {
                 }
 
                 if(isEmoji){
-                    canvas.drawText(suggestion, mWordX[i] + X_GAP, Math.round(y*0.95), candidateEmojiPaint);
+                    canvas.drawText(suggestion, mWordX[i] + X_GAP, Math.round(textBaseLine*0.95), candidateEmojiPaint);
                 }else{
-                    canvas.drawText(suggestion, mWordX[i] + X_GAP, y, candidatePaint);
+                    canvas.drawText(suggestion, mWordX[i] + X_GAP, textBaseLine, candidatePaint);
                 }
                 if (mShowNumber) {
-                    //Jeremy '11,6,17 changed from <=10 to mDisplaySekley length. The length maybe 11 or 12 if shifted with space.
+                    //Jeremy '11,6,17 changed from <=10 to mDisplaySelkey length. The length maybe 11 or 12 if shifted with space.
                     if (c <= mDisplaySelkey.length()) {
                         //Jeremy '11,6,11 Drawing text using relative font dimensions.
                         canvas.drawText(mDisplaySelkey.substring(c - 1, c),
                                 mWordX[i] + mWordWidth[i] - height * 0.3f, height * 0.4f, selKeyPaint);
                     }
                 }
-
+                //Draw spacer
                 candidatePaint.setColor(mColorSpacer);
-                canvas.drawLine(mWordX[i] + mWordWidth[i] + 0.5f, bgPadding.top,
-                        mWordX[i] + mWordWidth[i] + 0.5f, height + 1, candidatePaint);
+                canvas.drawLine(mWordX[i] + mWordWidth[i] + 0.5f, bgPadding.top + (mVerticalPadding/2), mWordX[i] + mWordWidth[i] + 0.5f, height - (mVerticalPadding/2), candidatePaint);
                 candidatePaint.setFakeBoldText(false);
 
             }
@@ -1108,7 +1081,11 @@ public class CandidateView extends View implements View.OnClickListener {
 
         Resources res = mContext.getResources();
 
-        mHeight = configHeight;
+        configHeight = (int) (res.getDimensionPixelSize(
+                R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
+        mVerticalPadding = (int) (res.getDimensionPixelSize(R.dimen.candidate_vertical_padding) * mLIMEPref.getFontSize());
+        mHeight = configHeight + mVerticalPadding;
+
         currentX = 0;
         mTouchX = OUT_OF_BOUNDS;
         mCount = 0;
@@ -1181,14 +1158,17 @@ public class CandidateView extends View implements View.OnClickListener {
         mTargetScrollX = 0;
         mTotalWidth = 0;
         hideComposing();
-        //hideCandidatePopup();
+
 
         prepareLayout();
-        //resetWidth();  // should do in updateUI or caused wrong thread exception.,
         mHandler.updateUI(0);
 
-        mHeight = (int) (mContext.getResources().getDimensionPixelSize(
-                R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize()); //restore the height Jeremy '12,5,24
+        Resources r = mContext.getResources();
+        configHeight = (int) (r.getDimensionPixelSize(
+                R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
+        mVerticalPadding = (int) (r.getDimensionPixelSize(R.dimen.candidate_vertical_padding) * mLIMEPref.getFontSize());
+        configHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
+        mHeight = configHeight + mVerticalPadding;
 
     }
     public boolean isEmpty(){
