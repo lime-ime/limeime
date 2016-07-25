@@ -3525,7 +3525,7 @@ public class LIMEService extends InputMethodService implements
 			mCandidateView.onUpdateCursor(newCursor);
 		super.onUpdateCursor(newCursor);
 	}
-*/
+
     @Override
     public void onCancel() {
         if (DEBUG)
@@ -3533,7 +3533,7 @@ public class LIMEService extends InputMethodService implements
         //clearComposing();  Jeremy '12,4,10 avoid clearcomposing when user slide outside the candidate area
 
     }
-
+*/
     //jeremy '11,9, 5 hideCanddiate when inputView is closed
     @Override
     public void updateInputViewShown() {

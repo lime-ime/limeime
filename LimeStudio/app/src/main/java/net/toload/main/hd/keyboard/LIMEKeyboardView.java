@@ -68,11 +68,11 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 				+"; key_height = " + mKeyHeight
 					);
 		if (key.codes[0] == LIMEBaseKeyboard.KEYCODE_DONE) {
-			getOnKeyboardActionListener().onKey(KEYCODE_OPTIONS, null,0,0);
+			getOnKeyboardActionListener().onKey(KEYCODE_OPTIONS, null);
 			return true;
 		}else if (key.codes[0] == LIMEKeyboard.KEYCODE_SPACE
 				&& Math.abs(((LIMEKeyboard) this.getKeyboard()).getSpaceDragDiff() ) < mKeyHeight/5){ //Jeremy '12,4,23 avoid small move blocking the long press.
-			getOnKeyboardActionListener().onKey(KEYCODE_SPACE_LONGPRESS, null,0,0);
+			getOnKeyboardActionListener().onKey(KEYCODE_SPACE_LONGPRESS, null);
 			return true;
 		} else {
 			return super.onLongPress(key);
@@ -98,7 +98,7 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 			if (spaceDragDirection != 0) {
 				getOnKeyboardActionListener().onKey(
 						spaceDragDirection == 1 ? KEYCODE_NEXT_IM : KEYCODE_PREV_IM,
-								null,0,0);
+								null);
 				me.setAction(MotionEvent.ACTION_CANCEL);
 				keyboard.keyReleased();
 				return super.onTouchEvent(me);
