@@ -50,8 +50,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SetupImLoadRunnable implements Runnable{
-    private final boolean DEBUG = true;
-    private final String TAG = "SetupImLoadRunnable";
+    private final static boolean DEBUG = false;
+    private final static String TAG = "SetupImLoadRunnable";
 
     // Global
     private String url = null;
@@ -254,8 +254,8 @@ public class SetupImLoadRunnable implements Runnable{
                         // Update Progress
                         int progress =(int) ((double)recordcount / recordtotal   * 90 +10 ) ;
 
-                        if((int)progress != progressvalue){
-                            progressvalue = (int)progress;
+                        if(progress != progressvalue){
+                            progressvalue = progress;
                             handler.updateProgress(progressvalue);
                         }
 
@@ -279,7 +279,7 @@ public class SetupImLoadRunnable implements Runnable{
 
     public int migrateDb(File tempfile, String imtype){
 
-        List<Word> results = null;
+        List<Word> results;
 
         String sourcedbfile = Lime.DATABASE_FOLDER_EXTERNAL + imtype;
 
@@ -309,28 +309,19 @@ public class SetupImLoadRunnable implements Runnable{
             String insert = Word.getInsertQuery(imtype, w);
             datasource.add(insert);
             if(c % 100 == 0){
-                int p = (int)(c * 100 / total);
+                int p = c * 100 / total;
                 handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_import) + " " + p + "%");
             }
         }
         datasource.endTransaction();
         return results.size();
 
-        //datasource.close();
-        /*
-        try {
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }*/
-
-        //return 0;
     }
 
     public List<Word> loadWord(SQLiteDatabase sourcedb, String code) {
-        List<Word> result = new ArrayList<Word>();
+        List<Word> result = new ArrayList<>();
         if(sourcedb != null && sourcedb.isOpen()){
-            Cursor cursor = null;
+            Cursor cursor;
             String order = Lime.DB_COLUMN_CODE + " ASC";
 
             cursor = sourcedb.query(code, null, null, null, null, null, order);

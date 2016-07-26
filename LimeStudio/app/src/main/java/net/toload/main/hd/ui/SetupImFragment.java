@@ -290,7 +290,7 @@ public class SetupImFragment extends Fragment {
         mLIMEPref = new LIMEPreferenceManager(activity);
 
         connManager = (ConnectivityManager) SetupImFragment.this.activity.getSystemService(
-                SetupImFragment.this.activity.CONNECTIVITY_SERVICE);
+                Context.CONNECTIVITY_SERVICE);
 
         rootView = inflater.inflate(R.layout.fragment_setup_im, container, false);
 
@@ -400,7 +400,7 @@ public class SetupImFragment extends Fragment {
 
         }
 
-        PackageInfo pInfo = null;
+        PackageInfo pInfo;
         try {
             pInfo = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
             String versionstr = "v"+ pInfo.versionName + " - " + pInfo.versionCode;
@@ -415,7 +415,7 @@ public class SetupImFragment extends Fragment {
 
     public void initialbutton(){
 
-        HashMap<String, String> check = new HashMap<String, String>();
+        HashMap<String, String> check = new HashMap<>();
 
         // Load Menu Item
         //if(!mLIMEPref.getDatabaseOnHold()){
@@ -776,7 +776,7 @@ public class SetupImFragment extends Fragment {
                         builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
                                 new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int id) {
-                                        DownloadManager downloadManager = (DownloadManager) activity.getSystemService(activity.DOWNLOAD_SERVICE);
+                                        DownloadManager downloadManager = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
 
                                         Uri uri = Uri.parse(Lime.LIME_OLD_VERSION_URL);
                                         DownloadManager.Request request = new DownloadManager.Request(uri);
@@ -854,8 +854,8 @@ public class SetupImFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(Context context) {
+        super.onAttach(context);
     }
 
 
@@ -867,7 +867,7 @@ public class SetupImFragment extends Fragment {
             //int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
             //String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
 
-            if (resultCode == this.getActivity().RESULT_OK) {
+            if (resultCode == Activity.RESULT_OK) {
                 mLIMEPref.setParameter(Lime.PAYMENT_FLAG, true);
                 showToastMessage(getResources().getString(R.string.payment_service_success), Toast.LENGTH_LONG);
                 //Log.i("LIME", "purchasing complete " + new Date() + " / " + purchaseData);
@@ -896,14 +896,14 @@ public class SetupImFragment extends Fragment {
 
         AppKeyPair appKeys = new AppKeyPair(Lime.DROPBOX_APP_KEY, Lime.DROPBOX_APP_SECRET);
         AndroidAuthSession session = new AndroidAuthSession(appKeys);
-        mdbapi = new DropboxAPI<AndroidAuthSession>(session);
+        mdbapi = new DropboxAPI<>(session);
 
         dropboxAccessToken = mLIMEPref.getParameterString(Lime.DROPBOX_ACCESS_TOKEN, null);
         if(dropboxAccessToken == null){
             mdbapi.getSession().startOAuth2Authentication(this.getActivity().getApplicationContext());
         }else{
 
-            mdbapi = new DropboxAPI<AndroidAuthSession>(new AndroidAuthSession(appKeys, dropboxAccessToken));
+            mdbapi = new DropboxAPI<>(new AndroidAuthSession(appKeys, dropboxAccessToken));
 
             if(mdbapi.getSession().isLinked()){
                 if(type != null && type.equals(Lime.BACKUP)){
