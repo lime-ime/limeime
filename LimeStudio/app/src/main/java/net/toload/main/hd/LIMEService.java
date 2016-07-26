@@ -106,7 +106,7 @@ public class LIMEService extends InputMethodService implements
     private boolean mCompletionOn;
     private boolean mCapsLock;
     private boolean mAutoCap;
-    private boolean mHasShift;
+    private boolean mShifted;
 
     private boolean mEnglishOnly;
     private boolean mEnglishFlagShift;
@@ -601,7 +601,7 @@ public class LIMEService extends InputMethodService implements
         mCompletionOn = false;
         mCompletions = null;
         mCapsLock = false;
-        mHasShift = false;
+        mShifted = false;
 
 
         tempEnglishWord = new StringBuffer();
@@ -1566,9 +1566,9 @@ public class LIMEService extends InputMethodService implements
             }
             mInputView.setShifted(mCapsLock || caps != 0);
         } else {
-            if (!mCapsLock && mHasShift) {
+            if (!mCapsLock && mShifted) {
                 mKeyboardSwitcher.toggleShift();
-                mHasShift = false;
+                mShifted = false;
             }
         }
 
@@ -1673,8 +1673,8 @@ public class LIMEService extends InputMethodService implements
             handleBackspace();
         } else if (primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT) {
             if (DEBUG) Log.i(TAG, "OnKey():KEYCODE_SHIFT");
-            if (!(!hasPhysicalKeyPressed && hasDistinctMultitouch))
-                handleShift();
+           // if (!(!hasPhysicalKeyPressed && hasDistinctMultitouch))
+            handleShift();
         } else if (primaryCode == LIMEBaseKeyboard.KEYCODE_DONE) {// long press on options and shift
             handleClose();
             // Jeremy '12,5,21 process the arrow keys on soft keyboard
@@ -2799,20 +2799,20 @@ public class LIMEService extends InputMethodService implements
             // Alphabet keyboard
             checkToggleCapsLock();
             mInputView.setShifted(mCapsLock || !mInputView.isShifted());
-            mHasShift = mCapsLock || !mInputView.isShifted();
-            if (mHasShift) {
+            mShifted = mCapsLock || !mInputView.isShifted();
+            if (mShifted) {
                 mKeyboardSwitcher.toggleShift();
             }
         } else {
             if (mCapsLock) {
                 toggleCapsLock();
-                mHasShift = false;
-            } else if (mHasShift) {
+                mShifted = false;
+            } else if (mShifted) {
                 toggleCapsLock();
-                mHasShift = true;
+                mShifted = true;
             } else {
                 mKeyboardSwitcher.toggleShift();
-                mHasShift = mKeyboardSwitcher.isShifted();
+                mShifted = mKeyboardSwitcher.isShifted();
 
             }
         }
@@ -2869,7 +2869,7 @@ public class LIMEService extends InputMethodService implements
         }
 
 
-        mHasShift = false;
+        mShifted = false;
         updateShiftKeyState(getCurrentInputEditorInfo());
 
         // Update keyboard xml information
@@ -3430,16 +3430,14 @@ public class LIMEService extends InputMethodService implements
     public void onPress(int primaryCode) {
         if (DEBUG)
             Log.i(TAG, "onPress(): code = " + primaryCode);
-        // Record key press time (press down)
-        //keyPressTime = System.currentTimeMillis();
-        // To identify the source of character (Software keyboard or physical
-        // keyboard)
+
+        // To identify the source of character (Software keyboard or physical keyboard)
         hasPhysicalKeyPressed = false;
 
         if (hasDistinctMultitouch && primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT) {
             hasShiftPress = true;
             hasShiftCombineKeyPressed = false;
-            handleShift();
+            //handleShift();  //Jeremy '16,7,27 move to onKey for new Lollipop LIMEBaseKeyboardView
         } else if (hasDistinctMultitouch && hasShiftPress) {
             hasShiftCombineKeyPressed = true;
         }

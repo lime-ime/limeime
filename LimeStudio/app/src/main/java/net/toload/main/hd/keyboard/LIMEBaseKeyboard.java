@@ -70,10 +70,6 @@ import java.util.StringTokenizer;
  * &lt;/Keyboard&gt;
  * </pre>
  *
- * @attr ref R.styleable#Keyboard_keyWidth
- * @attr ref R.styleable#Keyboard_keyHeight
- * @attr ref R.styleable#Keyboard_horizontalGap
- * @attr ref R.styleable#Keyboard_verticalGap
  */
 public class LIMEBaseKeyboard {
 
@@ -119,12 +115,6 @@ public class LIMEBaseKeyboard {
     private static Drawable mDrawableArrowLeft;
 
 
-
-
-    /**
-     * orientation of the screen
-     */
-    private boolean mLandScape;
     /** Keyboard label **/
     //private CharSequence mLabel;
 
@@ -159,15 +149,11 @@ public class LIMEBaseKeyboard {
      */
     private boolean mShifted;
 
-    /**
-     * Key instance for the shift key, if present
-     */
-    private Key mShiftKey;
+    /** Key instance for the shift key, if present */
+    private Key[] mShiftKeys = { null, null };
 
-    /**
-     * Key index for the shift key, if present
-     */
-    private int mShiftKeyIndex = -1;
+    /** Key index for the shift key, if present */
+    private int[] mShiftKeyIndices = {-1, -1};
 
     /** Current key width, while loading the keyboard */
     //private int mKeyWidth;
@@ -249,24 +235,14 @@ public class LIMEBaseKeyboard {
     private int mCellHeight;
     private int[][] mGridNeighbors;
     private int mProximityThreshold;
-    /**
-     * Number of key widths from current touch point to search for nearest keys.
-     */
-    private static float SEARCH_DISTANCE = 1.8f;
 
-
+    private ArrayList<Row> rows = new ArrayList<>();
 
     /**
      * Container for keys in the keyboard. All keys in a row are at the same Y-coordinate.
      * Some of the key size defaults can be overridden per row from what the {@link LIMEBaseKeyboard}
      * defines.
      *
-     * @attr ref R.styleable#Keyboard_keyWidth
-     * @attr ref R.styleable#Keyboard_keyHeight
-     * @attr ref R.styleable#Keyboard_horizontalGap
-     * @attr ref R.styleable#Keyboard_verticalGap
-     * @attr ref R.styleable#Keyboard_Row_rowEdgeFlags
-     * @attr ref R.styleable#Keyboard_Row_keyboardMode
      */
     public static class Row {
         /**
@@ -285,6 +261,9 @@ public class LIMEBaseKeyboard {
          * Vertical gap following this row.
          */
         public int verticalGap;
+
+        ArrayList<Key> mKeys = new ArrayList<>();
+
         /**
          * Edge flags for this row of keys. Possible values that can be assigned are
          * {@link LIMEBaseKeyboard#EDGE_TOP EDGE_TOP} and {@link LIMEBaseKeyboard#EDGE_BOTTOM EDGE_BOTTOM}
@@ -330,20 +309,6 @@ public class LIMEBaseKeyboard {
     /**
      * Class for describing the position and characteristics of a single key in the keyboard.
      *
-     * @attr ref R.styleable#Keyboard_keyWidth
-     * @attr ref R.styleable#Keyboard_keyHeight
-     * @attr ref R.styleable#Keyboard_horizontalGap
-     * @attr ref R.styleable#Keyboard_Key_codes
-     * @attr ref R.styleable#Keyboard_Key_keyIcon
-     * @attr ref R.styleable#Keyboard_Key_keyLabel
-     * @attr ref R.styleable#Keyboard_Key_iconPreview
-     * @attr ref R.styleable#Keyboard_Key_isSticky
-     * @attr ref R.styleable#Keyboard_Key_isRepeatable
-     * @attr ref R.styleable#Keyboard_Key_isModifier
-     * @attr ref R.styleable#Keyboard_Key_popupKeyboard
-     * @attr ref R.styleable#Keyboard_Key_popupCharacters
-     * @attr ref R.styleable#Keyboard_Key_keyOutputText
-     * @attr ref R.styleable#Keyboard_Key_keyEdgeFlags
      */
     public static class Key {
         /**
@@ -571,7 +536,7 @@ public class LIMEBaseKeyboard {
 
             width = getDimensionOrFraction(a,
                     R.styleable.LIMEBaseKeyboard_keyWidth,
-                    keyboard.mDisplayWidth, Math.round((float) (parent.defaultWidth * keyWidthScale))
+                    keyboard.mDisplayWidth, Math.round(parent.defaultWidth * keyWidthScale)
                     , keyWidthScale); //Jeremy '12,5,26
 
             height = getDimensionOrFraction(a,
@@ -692,14 +657,10 @@ public class LIMEBaseKeyboard {
             boolean rightEdge = (edgeFlags & EDGE_RIGHT) > 0;
             boolean topEdge = (edgeFlags & EDGE_TOP) > 0;
             boolean bottomEdge = (edgeFlags & EDGE_BOTTOM) > 0;
-            if ((x >= this.x || (leftEdge && x <= this.x + this.width))
+            return (x >= this.x || (leftEdge && x <= this.x + this.width))
                     && (x < this.x + this.width || (rightEdge && x >= this.x))
                     && (y >= this.y || (topEdge && y <= this.y + this.height))
-                    && (y < this.y + this.height || (bottomEdge && y >= this.y))) {
-                return true;
-            } else {
-                return false;
-            }
+                    && (y < this.y + this.height || (bottomEdge && y >= this.y));
         }
 
         /**
@@ -722,7 +683,7 @@ public class LIMEBaseKeyboard {
          * @see android.graphics.drawable.StateListDrawable#setState(int[])
          */
         public int[] getCurrentDrawableState() {
-            int[] states = KEY_STATE_NORMAL;
+            int[] states;
             if (sticky) {
                 if (on) {
                     if (pressed) {
@@ -786,14 +747,15 @@ public class LIMEBaseKeyboard {
         mDefaultHorizontalGap = 0;
         mDefaultWidth = mDisplayWidth / 10;
         mDefaultVerticalGap = 0;
-        mDefaultHeight = mDefaultWidth;
-        mKeys = new ArrayList<Key>();
-        mModifierKeys = new ArrayList<Key>();
+        mDefaultHeight = mDisplayWidth / 10;
+        mKeys = new ArrayList<>();
+        mModifierKeys = new ArrayList<>();
         mKeyboardMode = modeId;
         mKeySizeScale = keySizeScale;
         mShowArrowKeys = showArrowKeys;
 
-        mLandScape = mDisplayWidth > mDisplayHeight;
+
+        boolean mLandScape = mDisplayWidth > mDisplayHeight;
 
         TypedArray a = context.getTheme().obtainStyledAttributes(//R.style.LIMEBaseKeyboardLight, R.styleable.LIMEBaseKeyboard);
                 null, R.styleable.LIMEBaseKeyboard, R.attr.LIMEBaseKeyboardStyle, R.style.LIMEBaseKeyboard);
@@ -843,15 +805,14 @@ public class LIMEBaseKeyboard {
         row.defaultWidth = mDefaultWidth;
         row.defaultHorizontalGap = mDefaultHorizontalGap;
         row.verticalGap = (int) (mDefaultVerticalGap * mKeySizeScale);
-        ;
         row.rowEdgeFlags = EDGE_TOP | EDGE_BOTTOM;
         final int maxColumns = columns == -1 ? Integer.MAX_VALUE : columns;
 
         CharSequence labels = null;
         if (characters.toString().contains("\n")) {
             String[] charactersAndLabel = characters.toString().split("\n");
-            characters = new String(charactersAndLabel[0]);
-            labels = new String(charactersAndLabel[1]);
+            characters = charactersAndLabel[0];
+            labels = charactersAndLabel[1];
         }
 
         for (int i = 0; i < characters.length(); i++) {
@@ -876,12 +837,13 @@ public class LIMEBaseKeyboard {
             column++;
             x += key.width + key.gap;
             mKeys.add(key);
+            row.mKeys.add(key);
             if (x > mTotalWidth) {
                 mTotalWidth = x;
             }
         }
-        mTotalHeight = y + row.defaultHeight;//mDefaultHeight;
-
+        mTotalHeight = y + row.defaultHeight;
+        rows.add(row);
 
 
     }
@@ -948,8 +910,10 @@ public class LIMEBaseKeyboard {
     }
 
     public boolean setShifted(boolean shiftState) {
-        if (mShiftKey != null) {
-            mShiftKey.on = shiftState;
+        for (Key shiftKey : mShiftKeys) {
+            if (shiftKey != null) {
+                shiftKey.on = shiftState;
+            }
         }
         if (mShifted != shiftState) {
             mShifted = shiftState;
@@ -963,7 +927,7 @@ public class LIMEBaseKeyboard {
     }
 
     public int getShiftKeyIndex() {
-        return mShiftKeyIndex;
+        return mShiftKeyIndices[0];
     }
 
     private void computeNearestNeighbors() {
@@ -1035,10 +999,9 @@ public class LIMEBaseKeyboard {
         Row row = new Row(this);
 
         row.verticalGap = (int) (mDefaultVerticalGap * mKeySizeScale);
-        ;
         row.defaultHorizontalGap = mDefaultHorizontalGap;
         if (verticalLayout) {
-            row.defaultHeight = (int) (mTotalHeight - 3 * row.verticalGap) / 4;
+            row.defaultHeight = (mTotalHeight - 3 * row.verticalGap) / 4;
             row.defaultWidth = mSplitKeyWidth;
         } else {
             row.defaultHeight = (int) (mDefaultHeight * mKeySizeScale * ARROW_KEY_HEIGHT_FRACTION);
@@ -1148,7 +1111,7 @@ public class LIMEBaseKeyboard {
         Key key = null;
         Row currentRow = null;
         Resources res = context.getResources();
-        boolean skipRow = false;
+        boolean skipRow;
 
         /** Show arrow keys on top of the soft keyboard in portrait mode.*/
         boolean showArrowKeysOnTop = (mShowArrowKeys == 1) && (mDisplayWidth < mDisplayHeight);
@@ -1239,8 +1202,14 @@ public class LIMEBaseKeyboard {
 
 
                         if (key.codes[0] == KEYCODE_SHIFT) {
-                            mShiftKey = key;
-                            mShiftKeyIndex = mKeys.size() - 1;
+                            // Find available shift key slot and put this shift key in it
+                            for (int i = 0; i < mShiftKeys.length; i++) {
+                                if (mShiftKeys[i] == null) {
+                                    mShiftKeys[i] = key;
+                                    mShiftKeyIndices[i] = mKeys.size()-1;
+                                    break;
+                                }
+                            }
                             mModifierKeys.add(key);
                         } else if (key.codes[0] == KEYCODE_ALT) {
                             mModifierKeys.add(key);
@@ -1290,8 +1259,6 @@ public class LIMEBaseKeyboard {
                         y += currentRow.verticalGap;
                         y += currentRow.defaultHeight;
                         //row++;
-                    } else {
-                        // TODO: error or extend?
                     }
                 }
             }
@@ -1341,11 +1308,15 @@ public class LIMEBaseKeyboard {
         mDefaultVerticalGap = getDimensionOrFraction(a,
                 R.styleable.LIMEBaseKeyboard_verticalGap, //Jeremy '11,9,4
                 mDisplayHeight, 0, mKeySizeScale);
+        /*
+      Number of key widths from current touch point to search for nearest keys.
+     */
+        float SEARCH_DISTANCE = 1.8f;
         mProximityThreshold = (int) (mDefaultWidth * SEARCH_DISTANCE);
         mProximityThreshold = mProximityThreshold * mProximityThreshold; // Square it for comparison
 
         //Jeremy '12,5,26 for seperated keyboard in landscape with arrow keys
-        mReservedColumnsForSplitedKeyboard = (int) (res.getInteger(R.integer.reserved_columns_for_seperated_keyboard));
+        mReservedColumnsForSplitedKeyboard = res.getInteger(R.integer.reserved_columns_for_seperated_keyboard);
 
         mKeysInRow = Math.round(mDisplayWidth / mDefaultWidth);
         mSplitKeyWidth = Math.round(mDisplayWidth / (mKeysInRow + mReservedColumnsForSplitedKeyboard));
@@ -1377,5 +1348,36 @@ public class LIMEBaseKeyboard {
             return (int) (a.getFraction(index, base, base, defValue) * scale); //Jeremy '12,5,26 add scale. '12,5,27 use (int) instead of round to avoid rouding error
         }
         return defValue;
+    }
+
+    final void resize(int newWidth, int newHeight) {
+        int numRows = rows.size();
+        for (int rowIndex = 0; rowIndex < numRows; ++rowIndex) {
+            Row row = rows.get(rowIndex);
+            int numKeys = row.mKeys.size();
+            int totalGap = 0;
+            int totalWidth = 0;
+            for (int keyIndex = 0; keyIndex < numKeys; ++keyIndex) {
+                Key key = row.mKeys.get(keyIndex);
+                if (keyIndex > 0) {
+                    totalGap += key.gap;
+                }
+                totalWidth += key.width;
+            }
+            if (totalGap + totalWidth > newWidth) {
+                int x = 0;
+                float scaleFactor = (float)(newWidth - totalGap) / totalWidth;
+                for (int keyIndex = 0; keyIndex < numKeys; ++keyIndex) {
+                    Key key = row.mKeys.get(keyIndex);
+                    key.width *= scaleFactor;
+                    key.x = x;
+                    x += key.width + key.gap;
+                }
+            }
+        }
+        mTotalWidth = newWidth;
+        // TODO: This does not adjust the vertical placement according to the new size.
+        // The main problem in the previous code was horizontal placement/size, but we should
+        // also recalculate the vertical sizes/positions when we get this resize call.
     }
 }

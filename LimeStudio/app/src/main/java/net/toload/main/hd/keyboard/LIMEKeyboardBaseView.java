@@ -754,11 +754,10 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
     @Override
     public void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        //TODO: LIMEKeyboard does not implement resize yet.
-        /*
+
         if (mKeyboard != null) {
-            //mKeyboard.resize(w, h);
-        }*/
+            mKeyboard.resize(w, h);
+        }
         // Release the buffer, if any and it will be reallocated on the next draw
         mBuffer = null;
     }
