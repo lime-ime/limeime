@@ -308,6 +308,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     break;
                 case MSG_DISMISS_PREVIEW:
                     if(DEBUG) Log.i(TAG, "handleMessage()  MSG_DISMISS_PREVIEW");
+
                     if(mLIMEKeyboardBaseView.mPreviewPopup.isShowing())    //mPreviewPopup.dismiss();
                         mLIMEKeyboardBaseView.mPreviewText.setVisibility(INVISIBLE);
                         mLIMEKeyboardBaseView.mPreviewPopup.dismiss();
@@ -469,11 +470,19 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         mContext = context;
     }
 
+    public void setHardwareAcceleratedDrawingEnabled(final boolean enabled) {
+        if (!enabled) return;
+        // TODO: Should use LAYER_TYPE_SOFTWARE when hardware acceleration is off?
+        setLayerType(LAYER_TYPE_HARDWARE, null);
+    }
+
 
     public LIMEKeyboardBaseView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
         mContext = context;
+
+        setLayerType(LAYER_TYPE_HARDWARE, null);
 
         TypedArray a = context.getTheme().obtainStyledAttributes(
                 attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEKeyboardBaseView);

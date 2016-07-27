@@ -33,6 +33,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.inputmethodservice.InputMethodService;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
@@ -225,11 +226,14 @@ public class LIMEService extends InputMethodService implements
     private boolean hasChineseSymbolCandidatesShown = false;
     private boolean hasCandidatesShown = false;
 
-    // Note that {@link InputMethodService#enableHardwareAcceleration} has been introduced
-    // in API level 17 (Build.VERSION_CODES.JELLY_BEAN_MR1).
-    private static final Method METHOD_enableHardwareAcceleration =
-            CompatUtils.getMethod(InputMethodService.class, "enableHardwareAcceleration");
 
+    public LIMEService(){
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                mIsHardwareAcceleratedDrawingEnabled = this.enableHardwareAcceleration();
+            }
+
+        }
 
     /**
      * Main initialization of the input method component. Be sure to call to
@@ -257,8 +261,6 @@ public class LIMEService extends InputMethodService implements
 
         mLongPressKeyTimeout = getResources().getInteger(R.integer.config_long_press_key_timeout); // Jeremy '11,8,15 read longpress timeout from config resources.
 
-        mIsHardwareAcceleratedDrawingEnabled = (Boolean) CompatUtils.invoke(this, false,  METHOD_enableHardwareAcceleration);
-    
 
         // initial keyboard list
         activatedIMNameList = new ArrayList<>();
@@ -2949,6 +2951,7 @@ public class LIMEService extends InputMethodService implements
                 mCandidateInInputView.initViews();
                 mCandidateViewInInputView = (CandidateView) mCandidateInInputView.findViewById(R.id.candidatesView);
                 mCandidateViewInInputView.setService(this);
+
             }
             if (mCandidateView != mCandidateViewInInputView)
                 mCandidateView = mCandidateViewInInputView;
@@ -2957,7 +2960,7 @@ public class LIMEService extends InputMethodService implements
             if (mInputView == null || forceRecreate) {
                 mInputView = (LIMEKeyboardView) LayoutInflater.from(mThemeContext).inflate(R.layout.input, null);
                 mInputView.setOnKeyboardActionListener(this);
-
+                mInputView.setHardwareAcceleratedDrawingEnabled(mIsHardwareAcceleratedDrawingEnabled);
 
             }
             mCandidateView = mCandidateViewStandAlone;
