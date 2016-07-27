@@ -67,8 +67,10 @@ import net.toload.main.hd.keyboard.LIMEKeyboardBaseView;
 import net.toload.main.hd.keyboard.LIMEKeyboardView;
 import net.toload.main.hd.keyboard.LIMEMetaKeyKeyListener;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
+import net.toload.main.hd.compat.CompatUtils;
 
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -172,6 +174,8 @@ public class LIMEService extends InputMethodService implements
     private boolean hasKeyProcessed = false; // Jeremy '11,8,15 for long pressed key
     private int mLongPressKeyTimeout; //Jeremy '11,8, 15 read long press timeout from config
 
+    private boolean mIsHardwareAcceleratedDrawingEnabled = false;
+
     private boolean hasSymbolEntered = false; //Jeremy '11,5,24 
 
     // private boolean hasSpacePress = false;
@@ -221,6 +225,11 @@ public class LIMEService extends InputMethodService implements
     private boolean hasChineseSymbolCandidatesShown = false;
     private boolean hasCandidatesShown = false;
 
+    // Note that {@link InputMethodService#enableHardwareAcceleration} has been introduced
+    // in API level 17 (Build.VERSION_CODES.JELLY_BEAN_MR1).
+    private static final Method METHOD_enableHardwareAcceleration =
+            CompatUtils.getMethod(InputMethodService.class, "enableHardwareAcceleration");
+
 
     /**
      * Main initialization of the input method component. Be sure to call to
@@ -247,6 +256,9 @@ public class LIMEService extends InputMethodService implements
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
         mLongPressKeyTimeout = getResources().getInteger(R.integer.config_long_press_key_timeout); // Jeremy '11,8,15 read longpress timeout from config resources.
+
+        mIsHardwareAcceleratedDrawingEnabled = (Boolean) CompatUtils.invoke(this, false,  METHOD_enableHardwareAcceleration);
+    
 
         // initial keyboard list
         activatedIMNameList = new ArrayList<>();

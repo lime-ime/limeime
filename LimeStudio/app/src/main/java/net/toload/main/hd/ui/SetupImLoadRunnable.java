@@ -50,8 +50,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SetupImLoadRunnable implements Runnable{
-    private final boolean DEBUG = true;
-    private final String TAG = "SetupImLoadRunnable";
+    private final static boolean DEBUG = false;
+    private final static String TAG = "SetupImLoadRunnable";
 
     // Global
     private String url = null;
@@ -180,7 +180,7 @@ public class SetupImLoadRunnable implements Runnable{
 
         // Load DB
         handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_load));
-        int count = dbsrv.importMapping(tempfile, imtype);
+        dbsrv.importMapping(tempfile, imtype);
 
         mLIMEPref.setParameter("_table", "");
         //mLIMEPref.setResetCacheFlag(true);
@@ -254,8 +254,8 @@ public class SetupImLoadRunnable implements Runnable{
                         // Update Progress
                         int progress =(int) ((double)recordcount / recordtotal   * 90 +10 ) ;
 
-                        if((int)progress != progressvalue){
-                            progressvalue = (int)progress;
+                        if(progress != progressvalue){
+                            progressvalue = progress;
                             handler.updateProgress(progressvalue);
                         }
 
@@ -309,7 +309,7 @@ public class SetupImLoadRunnable implements Runnable{
             String insert = Word.getInsertQuery(imtype, w);
             datasource.add(insert);
             if(c % 100 == 0){
-                int p = (int)(c * 100 / total);
+                int p = (c * 100 / total);
                 handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_import) + " " + p + "%");
             }
         }
@@ -330,7 +330,7 @@ public class SetupImLoadRunnable implements Runnable{
     public List<Word> loadWord(SQLiteDatabase sourcedb, String code) {
         List<Word> result = new ArrayList<Word>();
         if(sourcedb != null && sourcedb.isOpen()){
-            Cursor cursor = null;
+            Cursor cursor;
             String order = Lime.DB_COLUMN_CODE + " ASC";
 
             cursor = sourcedb.query(code, null, null, null, null, null, order);
@@ -375,23 +375,13 @@ public class SetupImLoadRunnable implements Runnable{
         removeImInfoOnDB(im, "keyboard");
 
         datasource.insert("im", cv);
-       /* try {
-            datasource.open();
-            datasource.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }*/
+
     }
 
     private void removeImInfoOnDB(String im, String field) {
         String removeString = "DELETE FROM im WHERE code='"+im+"' AND title='"+field+"'";
         datasource.remove(removeString);
-       /* try {
-            datasource.open();
-            datasource.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }*/
+
     }
 
 

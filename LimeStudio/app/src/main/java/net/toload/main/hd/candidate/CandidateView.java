@@ -712,8 +712,12 @@ public class CandidateView extends View implements View.OnClickListener {
         //final int popupWidth = mComposingTextView.getMeasuredWidth();  //Jeremy '12,6,2 use getWidth and getHeight instead
         //final int popupHeight = mComposingTextView.getMeasuredHeight();
         // getMeasuredWidth cannot get correct width of textVIEW in android 6 Jeremy '16,7,16
-        Paint.FontMetrics metrics = mComposingTextView.getPaint().getFontMetrics();
-        final int popupWidth = (int) mComposingTextView.getPaint().measureText(String.valueOf(mComposingTextView.getText()));
+        String composingText =  String.valueOf(mComposingTextView.getText());
+        if(composingText == null) return;  // avoid measureText on null object.  Jeremy '16/7/26
+
+        Paint paint = mComposingTextView.getPaint();
+        Paint.FontMetrics metrics = paint.getFontMetrics();
+        final int popupWidth = (int) paint.measureText(composingText);
         final int popupHeight = (int)(metrics.bottom - metrics.top);
 
 
@@ -886,8 +890,8 @@ public class CandidateView extends View implements View.OnClickListener {
             if (i == 0 && mSuggestions.size() > 1 && mSuggestions.get(1).isRuntimeBuiltPhraseRecord() && suggestion.length() > 8) {
                 suggestion = suggestion.substring(0, 2) + "..";
             }
-            float base = candidatePaint.measureText("。");
-            float textWidth = candidatePaint.measureText(suggestion);
+            float base = (suggestion == null)? 0: candidatePaint.measureText("。");
+            float textWidth = (suggestion == null)? 0: candidatePaint.measureText(suggestion);
 
             if( textWidth < base){
                 textWidth = base;
