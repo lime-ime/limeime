@@ -217,3 +217,5 @@ pip-log.txt
 .mr.developer.cfg
 *.iml
 LimeStudio/.idea/
+LimeStudio/.idea/misc.xml
+LimeStudio/app/app.iml

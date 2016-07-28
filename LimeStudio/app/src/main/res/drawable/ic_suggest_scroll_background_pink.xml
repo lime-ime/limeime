@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <!--
   ~ /*
   ~  *
-  ~  **    Copyright 2016, The LimeIME Open Source Project
+  ~  **    Copyright 2015, The LimeIME Open Source Project
   ~  **
   ~  **    Project Url: http://github.com/lime-ime/limeime/
   ~  **                 http://android.toload.net/
@@ -23,8 +22,14 @@
   ~  *
   ~  */
   -->
+
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_pressed="false" android:state_focused="false" android:drawable="@drawable/ic_suggest_expander_dark"/>
-    <item android:state_pressed="true" android:drawable="@drawable/ic_suggest_expander_hl"/>
-    <item android:state_focused="true" android:drawable="@drawable/ic_suggest_expander_hl"/>
+
+    <item android:state_pressed="false"
+        android:drawable="@color/limekeyboard_normal_key_background_pink" />
+
+    <item android:state_pressed="true"
+        android:drawable="@color/limekeyboard_normal_key_color_pink_hl" />
+
+
 </selector>

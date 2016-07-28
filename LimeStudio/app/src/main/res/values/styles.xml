@@ -252,8 +252,8 @@
         <item name="composingBackgroundColor">@color/composing_background</item>
     </style>
     <style name="LIMECandidateView.Light"  parent = "LIMECandidateView">
-        <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl_light</item>
-        <item name="voiceInputIcon">@drawable/sym_keyboard_voice_light</item>
+        <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl</item>
+        <item name="voiceInputIcon">@drawable/btn_voice_light</item>
         <item name="ExpandButtonIcon">@drawable/btn_expand_light</item>
         <item name="closeButtonIcon">@drawable/btn_close</item>
 
@@ -273,8 +273,8 @@
         <item name="composingBackgroundColor">@color/composing_background</item>
     </style>
     <style name="LIMECandidateView.Dark"  parent = "LIMECandidateView">
-        <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl_light</item>
-        <item name="voiceInputIcon">@drawable/sym_keyboard_voice_dark</item>
+        <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl</item>
+        <item name="voiceInputIcon">@drawable/btn_voice_dark</item>
         <item name="candidateBackground">@color/candidate_background_dark</item>
         <item name="ExpandButtonIcon">@drawable/btn_expand_dark</item>
         <!-- color of  different types of candidates   -->
@@ -292,6 +292,23 @@
         <item name="composingBackgroundColor">@color/composing_background_dark</item>
     </style>
     <style name="LIMECandidateView.Pink"  parent = "LIMECandidateView">
+        <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_pink</item>
+        <item name="voiceInputIcon">@drawable/btn_voice_pink</item>
+        <item name="candidateBackground">@color/limekeyboard_candidate_background_pink</item>
+        <item name="ExpandButtonIcon">@drawable/btn_expand_pink</item>
+        <!-- color of  different types of candidates   -->
+        <item name="candidateNormalTextColor">@color/limekeyboard_key_color_black</item>
+        <item name="candidateNormalTextHighlightColor">@color/limekeyboard_key_color_white</item>
+        <item name="composingCodeColor">@color/limekeyboard_subkey_color_pink</item>
+        <item name="composingCodeHighlightColor">@color/limekeyboard_key_color_white</item>
+        <!-- color of  spacer between candidate   -->
+        <item name="spacerColor">@color/limekeyboard_subkey_color_pink</item>
+        <!-- color of  selection key display for physical keyboard   -->
+        <item name="selKeyColor">@color/limekeyboard_key_color_black</item>
+        <item name="selKeyShiftedColor">@color/limekeyboard_normal_key_color_pink_hl</item>
+        <!-- color of  composing text view above candidate view   -->
+        <item name="composingTextColor">@color/limekeyboard_normal_key_color_pink_hl</item>
+        <item name="composingBackgroundColor">@color/composing_background_pink</item>
     </style>
 
 

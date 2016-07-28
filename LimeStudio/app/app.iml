@@ -143,8 +143,6 @@
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/instant-run-support" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/jniLibs" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/manifests" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/multi-dex" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/pre-dexed" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/reload-dex" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/res" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/restart-dex" />
@@ -170,8 +168,8 @@
     <orderEntry type="library" exported="" name="firebase-storage-9.0.2" level="project" />
     <orderEntry type="library" exported="" name="play-services-drive-9.0.2" level="project" />
     <orderEntry type="library" exported="" name="support-v4-23.0.1" level="project" />
-    <orderEntry type="library" exported="" name="google-api-services-drive-v2-rev168-1.20.0" level="project" />
     <orderEntry type="library" exported="" name="google-http-client-gson-1.20.0" level="project" />
+    <orderEntry type="library" exported="" name="google-api-services-drive-v2-rev168-1.20.0" level="project" />
     <orderEntry type="library" exported="" name="play-services-tagmanager-api-9.0.2" level="project" />
     <orderEntry type="library" exported="" name="firebase-common-9.0.2" level="project" />
     <orderEntry type="library" exported="" name="firebase-iid-9.0.2" level="project" />
