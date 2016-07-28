@@ -70,7 +70,7 @@ import java.util.Map;
 
 public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
     private static final String TAG = "LIMEKeyboardBaseView";
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final boolean mShowTouchPoints = false;
 
 
@@ -140,6 +140,9 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
     private static final int[] KEY_DELETE = { Keyboard.KEYCODE_DELETE };
     private static final int[] LONG_PRESSABLE_STATE_SET = {android.R.attr.state_long_pressable};
     private static final int NUMBER_HINT_VERTICAL_ADJUSTMENT_PIXEL = -1;
+
+
+    private final NonDistinctMultitouchHelper mNonDistinctMultitouchHelper;
 
     //themed context
     private final Context mContext;
@@ -833,10 +836,8 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
                 // For characters, use large font. For labels like "Done", use small font.
                 final int labelSize;
 
-                if (DEBUG)
-                    Log.i(TAG, "onBufferDraw():" + label
-                            + " keySizeScale = " + mKeyboard.getKeySizeScale() + " "
-                            + " labelSizeScale = " + key.getLabelSizeScale());
+                //if (DEBUG)
+                //    Log.i(TAG, "onBufferDraw():" + label  + " keySizeScale = " + mKeyboard.getKeySizeScale()  + " labelSizeScale = " + key.getLabelSizeScale());
                 //Jeremy '11,8,11, Extended for sub-label display
                 //Jeremy '11,9,4 Scale label size
                 float keySizeScale = mKeyboard.getKeySizeScale();
@@ -1427,7 +1428,7 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
     }
 
 
-
+/*
     @Override
     public boolean onTouchEvent(MotionEvent me) {
         // Convert multi-pointer up/down events to single up/down events to
@@ -1437,8 +1438,11 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
         boolean result;
         final long now = me.getEventTime();
 
+        if(DEBUG)
+            Log.i(TAG,"onTouchEvent() pointerCount = " + pointerCount +", mOldPointerCount = "+ mOldPointerCount);
+
         if (pointerCount != mOldPointerCount) {
-            if (pointerCount == 1) {
+            if (pointerCount >= 1) {
                 // Send a down event for the latest pointer
                 MotionEvent down = MotionEvent.obtain(now, now, MotionEvent.ACTION_DOWN,
                         me.getX(), me.getY(), me.getMetaState());
@@ -1456,7 +1460,7 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
                 up.recycle();
             }
         } else {
-            if (pointerCount == 1) {
+            if (pointerCount >= 1) {
                 result = onModifiedTouchEvent(me, false);
                 mOldPointerX = me.getX();
                 mOldPointerY = me.getY();
@@ -1479,6 +1483,9 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
         final long eventTime = me.getEventTime();
         int keyIndex = getKeyIndices(touchX, touchY, null);
         mPossiblePoly = possiblePoly;
+
+        if(DEBUG)
+            Log.i(TAG,"onModifiedTouchEvent() touchX = " + touchX + ", touchY = " + touchY + ", keyIndex = "+ keyIndex);
 
         // Track the last few movements to look for spurious swipes.
         if (action == MotionEvent.ACTION_DOWN) mSwipeTracker.clear();
@@ -1505,6 +1512,8 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_POINTER_DOWN:
+                Log.i(TAG,"onModifiedTouchEvent() " + ((action == MotionEvent.ACTION_DOWN )? "ACTION_DOWN" : "ACTION_POINTER_DOWN" ));
                 mAbortKey = false;
                 mStartX = touchX;
                 mStartY = touchY;
@@ -1539,6 +1548,7 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
                 break;
 
             case MotionEvent.ACTION_MOVE:
+                Log.i(TAG,"onModifiedTouchEvent() ACTION_MOVE ");
                 boolean continueLongPress = false;
                 if (keyIndex != NOT_A_KEY) {
                     if (mCurrentKey == NOT_A_KEY) {
@@ -1574,6 +1584,8 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
                 break;
 
             case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_UP:
+                Log.i(TAG,"onModifiedTouchEvent() " + ((action == MotionEvent.ACTION_UP )? "ACTION_DOWN" : "ACTION_POINTER_UP" ));
                 removeMessages();
                 if (keyIndex == mCurrentKey) {
                     mCurrentKeyTime += eventTime - mLastMoveTime;
@@ -1600,6 +1612,7 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
                 mRepeatKeyIndex = NOT_A_KEY;
                 break;
             case MotionEvent.ACTION_CANCEL:
+                Log.i(TAG,"onModifiedTouchEvent() ACTION_CANCEL ");
                 removeMessages();
                 dismissPopupKeyboard();
                 mAbortKey = true;
@@ -1612,7 +1625,23 @@ public class LIMEKeyboardBaseView extends View implements View.OnClickListener {
         return true;
     }
 
-
+*/
+@Override
+public boolean onTouchEvent(final MotionEvent event) {
+    if (getKeyboard() == null) {
+        return false;
+    }
+    if (mNonDistinctMultitouchHelper != null) {
+        if (event.getPointerCount() > 1 && mTimerHandler.isInKeyRepeat()) {
+            // Key repeating timer will be canceled if 2 or more keys are in action.
+            mTimerHandler.cancelKeyRepeatTimers();
+        }
+        // Non distinct multitouch screen support
+        mNonDistinctMultitouchHelper.processMotionEvent(event, mKeyDetector);
+        return true;
+    }
+    return processMotionEvent(event);
+}
 
 
     private boolean shouldDrawIconFully(Key key) {

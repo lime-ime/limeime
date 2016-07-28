@@ -48,6 +48,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -715,6 +716,9 @@ public class LIMEBaseKeyboard {
             }
             return states;
         }
+        public int getCode() {
+            return codes[0];
+        }
     }
 
     /**
@@ -976,6 +980,24 @@ public class LIMEBaseKeyboard {
         }
         return new int[0];
     }
+
+    public List<Key> getNearestKeyList(final int x, final int y) {
+        if (mGridNeighbors == null) computeNearestNeighbors();
+        if (x >= 0 && x < getMinWidth() && y >= 0 && y < getHeight()) {
+            int index = (y / mCellHeight) * GRID_WIDTH + (x / mCellWidth);
+            if (index < GRID_SIZE) {
+                List<Key> nearstKeyList = new LinkedList();
+                for(int keyIndex: mGridNeighbors[index])
+                    nearstKeyList.add(mKeys.get(keyIndex));
+                return nearstKeyList;
+
+            }
+        }
+        List<Key> nearstKeyList = new LinkedList();
+        return nearstKeyList;
+    }
+
+
 
     protected Row createRowFromXml(Resources res, XmlResourceParser parser) {
         return new Row(res, this, parser);
