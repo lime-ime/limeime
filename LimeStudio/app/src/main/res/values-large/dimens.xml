@@ -35,15 +35,15 @@
     <dimen name="spacebar_vertical_correction">4dip</dimen>
     <dimen name="keyboard_bottom_padding">0.06in</dimen>
     <dimen name="key_text_size">26dp</dimen>
-    <dimen name="label_text_size">24dp</dimen>
-    <dimen name="sub_label_text_size">2dp</dimen>
+    <dimen name="label_text_size">26dp</dimen>
+    <dimen name="sub_label_text_size">22dp</dimen>
     <dimen name="small_label_text_size">24dp</dimen>
     <dimen name="composing_text_size">22sp</dimen>
     <dimen name="notice_text_size">20sp</dimen>
     <dimen name="keyboard_vertical_correction">-0.05in</dimen>
-    <dimen name="spacebar_preview_text_size">35sp</dimen>
+    <dimen name="spacebar_preview_text_size">28sp</dimen>
  	<dimen name="mini_keyboard_vertical_correction">-0.05in</dimen>
- 	
+    <dimen name="spacebar_preview_top_padding">14dip</dimen>
     <!-- WB -->
     <dimen name="wb_key_height">92dip</dimen>
     

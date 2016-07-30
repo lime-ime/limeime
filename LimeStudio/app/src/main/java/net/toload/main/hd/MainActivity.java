@@ -202,7 +202,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if ((keyCode == KeyEvent.KEYCODE_BACK)) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.LIMEAlertDialogTheme);
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle(getResources().getString(R.string.global_exit_title));
             builder.setCancelable(false);
             builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
@@ -263,7 +263,7 @@ public class MainActivity extends AppCompatActivity
 
         handler = new MainActivityHandler(this);
 
-        progress = new ProgressDialog(this, R.style.LIMEAlertDialogTheme);
+        progress = new ProgressDialog(this);
         progress.setMax(100);
         progress.setCancelable(false);
 

@@ -27,6 +27,7 @@ package net.toload.main.hd.global;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.preference.PreferenceManager;
 
 import net.toload.main.hd.Lime;
@@ -281,7 +282,8 @@ public class LIMEPreferenceManager {
 
 	public boolean getEmojiMode(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean("enable_emoji", true);
+		//Jeremy '16,7,30 Emoji support is limited before API 16
+		return sp.getBoolean("enable_emoji", (Build.VERSION.SDK_INT >= 16)?true:false);
 	}
 
 	public Integer getEmojiDisplayPosition(){

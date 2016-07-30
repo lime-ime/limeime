@@ -311,7 +311,7 @@ public class SetupImGoogleActivity extends Activity implements
 
     public void showProgress(String message) {
         if(progress == null){
-            progress = new ProgressDialog(this, R.style.LIMEAlertDialogTheme);
+            progress = new ProgressDialog(this);
             progress.setCancelable(false);
         }
 

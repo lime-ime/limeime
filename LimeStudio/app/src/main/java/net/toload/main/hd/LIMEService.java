@@ -1770,7 +1770,7 @@ public class LIMEService extends InputMethodService implements
             Log.i(TAG, "handleOptions()");
         AlertDialog.Builder builder;
 
-        builder = new AlertDialog.Builder(this, R.style.LIMEAlertDialogTheme);
+        builder = new AlertDialog.Builder(this);
 
 
         builder.setCancelable(true);
@@ -3595,7 +3595,8 @@ public class LIMEService extends InputMethodService implements
     private static final KeyboardTheme[] KEYBOARD_THEMES = {
             new KeyboardTheme("Light",  0, R.style.LIMETheme_Light),
             new KeyboardTheme("Dark",   1, R.style.LIMETheme_Dark),
-            new KeyboardTheme("Dark",   2, R.style.LIMETheme_Pink),
+            new KeyboardTheme("Pink",   2, R.style.LIMETheme_Pink),
+            new KeyboardTheme("TechBlue",   2, R.style.LIMETheme_TechBlue),
     };
 
     private int mKeyboardThemeIndex = -1;

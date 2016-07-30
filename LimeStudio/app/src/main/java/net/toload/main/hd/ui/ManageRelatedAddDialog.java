@@ -140,7 +140,7 @@ public class ManageRelatedAddDialog extends DialogFragment {
 		btnManageRelatedSave.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				AlertDialog alertDialog = new AlertDialog.Builder(activity, R.style.LIMEAlertDialogTheme).create();
+				AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
 				alertDialog.setTitle(activity.getResources().getString(R.string.manage_related_dialog_add));
 				alertDialog.setMessage(activity.getResources().getString(R.string.manage_related_dialog_add_message));
 				alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),

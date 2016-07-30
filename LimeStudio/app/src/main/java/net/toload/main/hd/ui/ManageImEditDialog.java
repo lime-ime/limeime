@@ -159,7 +159,7 @@ public class ManageImEditDialog extends DialogFragment {
 			@Override
 			public void onClick(View v) {
 
-				AlertDialog alertDialog = new AlertDialog.Builder(activity, R.style.LIMEAlertDialogTheme).create();
+				AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
 				alertDialog.setTitle(activity.getResources().getString(R.string.manage_word_dialog_delete));
 				alertDialog.setMessage(activity.getResources().getString(R.string.manage_word_dialog_delete_message));
 				//alertDialog.setIcon(R.drawable.);
@@ -185,7 +185,7 @@ public class ManageImEditDialog extends DialogFragment {
 		btnManageImWordUpdate.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				AlertDialog alertDialog = new AlertDialog.Builder(activity, R.style.LIMEAlertDialogTheme).create();
+				AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
 				alertDialog.setTitle(activity.getResources().getString(R.string.manage_word_dialog_edit));
 				alertDialog.setMessage(activity.getResources().getString(R.string.manage_word_dialog_message));
 				alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),

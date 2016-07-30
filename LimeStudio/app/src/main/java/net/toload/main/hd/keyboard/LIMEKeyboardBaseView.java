@@ -349,8 +349,6 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             if(DEBUG)
                 Log.i(TAG,"UIHandler.showPreview() delay = "+delay);
             LIMEKeyboardBaseView mLIMEKeyboardBaseView = mLIMEKeyboardBaseViewWeakReference.get();
-            if(mLIMEKeyboardBaseView!= null )
-                mLIMEKeyboardBaseView.mPreviewText.setVisibility(INVISIBLE);
             sendMessageDelayed(obtainMessage(MSG_SHOW_PREVIEW),delay);
         }
         public void popupPreview(long delay, int keyIndex, PointerTracker tracker) {
@@ -521,7 +519,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         setLayerType(LAYER_TYPE_HARDWARE, null);
 
         TypedArray a = context.getTheme().obtainStyledAttributes(
-                attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEKeyboardBaseView);
+                attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEBaseKeyboard);
         LayoutInflater inflate =
                 (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         int previewLayout = 0;

@@ -343,7 +343,7 @@ public class NavigationDrawerFragment extends Fragment {
             HelpDialog dialog = HelpDialog.newInstance();
                          dialog.show(ft, "helpdialog");
         }else if(item.getItemId() == R.id.action_reset){
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.LIMEAlertDialogTheme);
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
             builder.setTitle(getResources().getString(R.string.reset_dialog_title));
             builder.setMessage(getResources().getString(R.string.reset_dialog_confirm));
             builder.setCancelable(false);

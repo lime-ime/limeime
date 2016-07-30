@@ -673,6 +673,7 @@
             <item>浅色</item>
             <item>深色</item>
             <item>粉紅</item>
+            <item>科技蓝</item>
         </string-array>
 
 
@@ -680,6 +681,7 @@
             <item>0</item>
             <item>1</item>
             <item>2</item>
+            <item>3</item>
         </string-array>
 
 

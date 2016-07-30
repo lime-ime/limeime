@@ -206,7 +206,7 @@ public class SetupImLoadDialog extends DialogFragment {
             btnSetupImDialogCustom.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    AlertDialog alertDialog = new AlertDialog.Builder(activity, R.style.LIMEAlertDialogTheme).create();
+                    AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
                     alertDialog.setMessage(activity.getResources().getString(R.string.setup_im_import_related_default_confirm));
                     alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
                             new DialogInterface.OnClickListener() {
@@ -257,7 +257,7 @@ public class SetupImLoadDialog extends DialogFragment {
                 btnSetupImDialogLoad1.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        AlertDialog alertDialog = new AlertDialog.Builder(activity, R.style.LIMEAlertDialogTheme).create();
+                        AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
                         alertDialog.setMessage(activity.getResources().getString(R.string.setup_im_dialog_remove_confirm_message));
                         //alertDialog.setIcon(R.drawable.);
                         alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),

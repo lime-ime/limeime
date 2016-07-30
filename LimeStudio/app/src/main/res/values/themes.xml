@@ -24,7 +24,6 @@
 <resources>
   <!-- Base application theme. -->
   <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-    <item name="android:alertDialogStyle">@style/LIMEAlertDialogTheme</item>
   </style>
 
   <style name="LIMETheme" parent="Theme.AppCompat.Light">
@@ -53,6 +52,14 @@
     <item name="LIMEKeyboardLayout">@style/LIMEKeyboardLayout.Pink</item>
     <item name="LIMEPopupKeyboardLayout">@style/LIMEPopupKeyboardLayout.Pink</item>
     <item name="LIMECandidateView">@style/LIMECandidateView.Pink</item>
+  </style>
+  <style name="LIMETheme.TechBlue">
+    <item name="LIMEKeyboardStyle">@style/LIMEKeyboard.TechBlue</item>
+    <item name="LIMEBaseKeyboardStyle">@style/LIMEBaseKeyboard.TechBlue</item>
+    <item name="LIMEKeyboardBaseView">@style/LIMEKeyboardBaseView.TechBlue</item>
+    <item name="LIMEKeyboardLayout">@style/LIMEKeyboardLayout.TechBlue</item>
+    <item name="LIMEPopupKeyboardLayout">@style/LIMEPopupKeyboardLayout.TechBlue</item>
+    <item name="LIMECandidateView">@style/LIMECandidateView.TechBlue</item>
   </style>
 
 </resources>
