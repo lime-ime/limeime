@@ -152,7 +152,8 @@ public class SearchServer {
     private static Thread prefetchThread;
 
     private void prefetchCache(boolean numberMapping, boolean symbolMapping) {
-        Log.i(TAG, "prefetchCache() on table :" + tablename);
+        if(DEBUG)
+            Log.i(TAG, "prefetchCache() on table :" + tablename);
 
         String keys = "abcdefghijklmnoprstuvwxyz";
         if (numberMapping)

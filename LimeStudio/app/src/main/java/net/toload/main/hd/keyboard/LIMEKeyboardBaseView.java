@@ -1248,7 +1248,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         //Jeremy '15,7,13 add key.height to cover whole key if it's not space key
         int popupPreviewY = (key.y +  (( key.codes[0] == ' ')?0: key.height) - popupHeight + mPreviewOffset);
 
-        mHandler.cancelDismissPreview();
+        //mHandler.cancelDismissPreview();
         if (mOffsetInWindow == null) {
             mOffsetInWindow = new int[2];
             getLocationInWindow(mOffsetInWindow);

@@ -643,9 +643,9 @@ public class CandidateView extends View implements View.OnClickListener {
 
         if (embeddedComposing != null) {
             if( mComposingTextView != embeddedComposing ) {
+                mComposingTextView = embeddedComposing;
                 mComposingTextView.setBackgroundColor(mColorComposingBackground);
                 mComposingTextView.setTextColor(mColorComposingText);
-                mComposingTextView = embeddedComposing;
             }
 
         } else {

@@ -480,7 +480,7 @@ public class PointerTracker {
         // be shown as preview.
         //  Jeremy '15,6,5 do not show preview on all functional keys.
         // '16,7,13 exclude space key in isFunctionalKey() for sliding IM preview.
-        if (mHasDistinctMultitouch && isFunctionalKey()){
+        if (mHasDistinctMultitouch && isFunctionalKey() && !isSpaceKey(keyIndex)){
             mProxy.showPreview(NOT_A_KEY, this);
         } else {
             mProxy.showPreview(keyIndex, this);

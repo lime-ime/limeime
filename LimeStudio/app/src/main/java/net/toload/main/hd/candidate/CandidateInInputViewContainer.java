@@ -38,33 +38,34 @@ import android.widget.LinearLayout;
 
 import net.toload.main.hd.R;
 
-public class CandidateInInputViewContainer extends LinearLayout  implements OnTouchListener {
+public class CandidateInInputViewContainer extends LinearLayout  implements View.OnClickListener {
 
-	private static final boolean DEBUG = false;
-	private static final String TAG = "CandiInputViewContainer";
+    private static final boolean DEBUG = false;
+    private static final String TAG = "CandiInputViewContainer";
     private ImageButton mRightButton;
     private View mButtonRightExpand;
     private CandidateView mCandidateView;
 
     Context ctx;
-    
+
     public CandidateInInputViewContainer(Context context, AttributeSet attrs) {
         super(context, attrs);
-        if(DEBUG)
-    		Log.i(TAG,"CandidateInInputViewContainer() constructor");
+        if (DEBUG)
+            Log.i(TAG, "CandidateInInputViewContainer() constructor");
 
         ctx = context;
 
     }
 
     public void initViews() {
-    	if(DEBUG)
-    		Log.i(TAG,"initViews()");
+        if (DEBUG)
+            Log.i(TAG, "initViews()");
         if (mCandidateView == null) {
             mButtonRightExpand = findViewById(R.id.candidate_right_parent);
             mRightButton = (ImageButton) findViewById(R.id.candidate_right);
+
             if (mRightButton != null) {
-                mRightButton.setOnTouchListener(this);
+                mRightButton.setOnClickListener(this);
             }
             mCandidateView = (CandidateView) findViewById(R.id.candidatesView);
 
@@ -76,45 +77,41 @@ public class CandidateInInputViewContainer extends LinearLayout  implements OnTo
 
     @Override
     public void requestLayout() {
-        if(DEBUG)
-            Log.i(TAG,"requestLayout()");
+        if (DEBUG)
+            Log.i(TAG, "requestLayout()");
 
-    	if (mCandidateView != null) {
+        if (mCandidateView != null) {
             int availableWidth = mCandidateView.getWidth();
             int neededWidth = mCandidateView.computeHorizontalScrollRange();
 
-            if(DEBUG)
-                Log.i(TAG,"requestLayout() availableWidth:" + availableWidth+ " neededWidth:" + neededWidth);
+            if (DEBUG)
+                Log.i(TAG, "requestLayout() availableWidth:" + availableWidth + " neededWidth:" + neededWidth);
 
 
-            boolean showExpandButton =  availableWidth < neededWidth;
+            boolean showExpandButton = availableWidth < neededWidth;
             boolean showVoiceInputButton = mCandidateView.isEmpty();
-            if(mCandidateView.isCandidateExpanded())
-            	showExpandButton = false;
+            if (mCandidateView.isCandidateExpanded())
+                showExpandButton = true;
 
-            if(mRightButton != null){
-                mRightButton.setImageDrawable( showVoiceInputButton ? mCandidateView.mDrawableVoiceInput: mCandidateView.mDrawableExpandButton);
+            if (mRightButton != null) {
+                mRightButton.setImageDrawable(showVoiceInputButton ? mCandidateView.mDrawableVoiceInput : mCandidateView.mDrawableExpandButton);
             }
 
-            if (mButtonRightExpand != null ) {
-                mButtonRightExpand.setVisibility( (showVoiceInputButton || showExpandButton ) ? VISIBLE : GONE);
+            if (mButtonRightExpand != null) {
+                mButtonRightExpand.setVisibility((showVoiceInputButton || showExpandButton) ? VISIBLE : GONE);
             }
         }
         super.requestLayout();
     }
 
-    public boolean onTouch(View v, MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            if (v == mRightButton) {
-                if(mCandidateView.isEmpty())
-                    mCandidateView.startVoiceInput();
-                else
-                    mCandidateView.showCandidatePopup();
-            	
-            }
-        }
-        return false;
-    }
+    @Override
+    public void onClick(View v) {
 
-    
+        if (mCandidateView.isEmpty())
+            mCandidateView.startVoiceInput();
+        else
+            mCandidateView.showCandidatePopup();
+
+
+    }
 }

@@ -68,10 +68,8 @@ import net.toload.main.hd.keyboard.LIMEKeyboardBaseView;
 import net.toload.main.hd.keyboard.LIMEKeyboardView;
 import net.toload.main.hd.keyboard.LIMEMetaKeyKeyListener;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
-import net.toload.main.hd.compat.CompatUtils;
 
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
