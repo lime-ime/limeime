@@ -24,67 +24,53 @@
   ~  */
   -->
 <resources>
-
+    <!--common colors-->
     <color name="color_white">#FFFFFFFF</color>
     <color name="color_black">#FF000000</color>
+    <color name="color_transparent">#00FFFFFF</color>
+    <color name="color_common_green_hl">#FF4DB6AC</color>
+    <color name="color_common_light_green_hl">#FF80CBC4</color>
+    <color name="color_common_orange_hl">#FFFBB732</color>
+    <color name="color_common_light_orange_hl">#FFF29238</color>
+
+    <!-- colors for light theme -->
+
+    <color name="keyboard_background_light">#FFC8C8C8</color>
+    <color name="second_background_light">#FFE1E1E1</color>
+    <color name="second_background_light_fl">#FFFBFBFB</color>
+    <color name="third_background_light">#FFFAFAFA</color>
+    <color name="composing_background_light">#E0E1E1E1</color>
 
 
-    <!--candidate view-->
-    <color name="candidate_normal_text">#FF0F0F0F</color>
-    <color name="candidate_normal_text_dark">#FFCFD8DC</color>
-    <color name="candidate_inverted_text_physical_keyboard">#FFD05050</color>
-    <color name="candidate_composing_code">#FFE35900</color>
-    <color name="candidate_composing_code_highlight">#FFFAFAFA</color>
-    <color name="candidate_suggest_background">#FFFBB732</color>
-    <color name="candidate_suggest_background_hl">#FFF29238</color>
     <color name="candidate_spacer">#FF101010</color>
     <color name="candidate_selection_keys">#CC5E5A80</color>
-    <color name="candidate_selection_keys_shifted">#FFE35900</color>
-    <color name="candidate_background">#FFFAFAFA</color>
-    <color name="candidate_background_hl">#FFF29238</color>
-    <color name="candidate_background_dark">#FF141414</color>
-    <!--fully transparent candidate container view-->
-    <color name="candidate_container_background">#00FFFFFF</color>
-    <!--composing text view-->
-    <color name="composing_text">#FF717171</color>
-    <color name="composing_background">#E0E1E1E1</color>
+
+    <color name="foreground_light">#FF0F0F0F</color>
+    <color name="second_foreground_light">#FF717171</color>
+    <color name="third_foreground_light">#FF7D7D7D</color>
+
+
+    <!-- colors for dark theme -->
+    <color name="keyboard_background_dark">#FF373737</color>
+    <color name="background_dark">#FF141414</color>
+    <color name="second_background_dark">#FF212121</color>
     <color name="composing_background_dark">#E0141414</color>
 
+    <color name="foreground_dark">#FFF7F7F7</color>
+    <color name="candidate_foreground_dark">#FFCFD8DC</color>
+    <color name="second_foreground_dark">#FF6B6B6B</color>
+    <color name="third_foreground_dark">#FF717171</color>
 
-    <!-- Preference -->
-    <color name="preference_background">#bbffffff</color>
-    <color name="preference_text">#ffffffff</color>
-    <color name="preference_title">#FFE35900</color>
-    <color name="limekeyboard_transparent">#00000000</color>
-    <color name="limekeyboard_bar_im_shadow_white">#80000000</color>
-    <color name="limekeyboard_bar_im_shadow_black">#80FFFFFF</color>
-    <color name="limekeyboard_bar_im_text">#FF0F0F0F</color>
-    <color name="limekeyboard_extension_background">#A0000000</color>
-    <color name="limekeyboard_feedback_language_text">#FFFFFFFF</color>
 
-    <color name="limekeyboard_normal_key_color_light">#FF0F0F0F</color>
-    <color name="limekeyboard_normal_key_color_light_hl">#FF4DB6AC</color>
-    <color name="limekeyboard_function_key_color_light">#FF717171</color>
-    <color name="limekeyboard_function_key_color_light_hl">#FF80CBC4</color>
-    <color name="limekeyboard_subkey_color_light">#FF7D7D7D</color>
-    <color name="limekeyboard_subkey_color_light_hl">#FF80CBC4</color>
 
-    <color name="limekeyboard_normal_key_color_dark">#FFF7F7F7</color>
-    <color name="limekeyboard_normal_key_color_dark_hl">#FF4DB6AC</color>
-    <color name="limekeyboard_function_key_color_dark">#FF717171</color>
-    <color name="limekeyboard_function_key_color_dark_hl">#FF80CBC4</color>f
-    <color name="limekeyboard_subkey_color_dark">#FF6B6B6B</color>
-    <color name="limekeyboard_subkey_color_dark_hl">#FF80CBC4</color>
-
-    <color name="background_pink_hl">#FFC74A72</color>
-    <color name="limekeyboard_function_key_color_pink">#FFFFFFFF</color>
-
-    <color name="foreground_pink">#FFC74A72</color>
+    <!-- colors for pink theme -->
+    <color name="pink_hl">#FFC74A72</color>
     <color name="keyboard_background_pink">#FFFAD5E5</color>
     <color name="candidate_background_pink">#FFFEF3F7</color>
     <color name="composing_background_pink">#E0FAD5E5</color>
     <color name="second_background_pink">#FFF49AC1</color>
     <color name="second_background_pink_hl">#FFF173AC</color>
+
 
 
 

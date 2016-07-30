@@ -29,7 +29,7 @@
         android:drawable="@color/second_background_pink" />
 
     <item android:state_pressed="true"
-        android:drawable="@color/background_pink_hl" />
+        android:drawable="@color/pink_hl" />
 
 
 </selector>

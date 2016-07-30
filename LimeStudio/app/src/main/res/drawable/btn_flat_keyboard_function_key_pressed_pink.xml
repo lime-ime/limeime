@@ -27,7 +27,7 @@
         android:radius="3dp"
         />
     <solid
-        android:color="@color/background_pink_hl"
+        android:color="@color/pink_hl"
         />
     <padding
         android:left="1dp"

@@ -216,25 +216,25 @@ public class CandidateView extends View implements View.OnClickListener {
                     mDrawableCloseButton = a.getDrawable(attr);
                     break;
                 case R.styleable.LIMECandidateView_candidateBackground:
-                    mColorBackground = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_background));
+                    mColorBackground = a.getColor(attr,  ContextCompat.getColor(context, R.color.third_background_light));
                     break;
                 case R.styleable.LIMECandidateView_composingTextColor:
-                    mColorComposingText = a.getColor(attr,  ContextCompat.getColor(context, R.color.composing_text));
+                    mColorComposingText = a.getColor(attr,  ContextCompat.getColor(context, R.color.second_foreground_light));
                     break;
                 case R.styleable.LIMECandidateView_composingBackgroundColor:
-                    mColorComposingBackground = a.getColor(attr,  ContextCompat.getColor(context, R.color.composing_background));
+                    mColorComposingBackground = a.getColor(attr,  ContextCompat.getColor(context, R.color.composing_background_light));
                     break;
                 case R.styleable.LIMECandidateView_candidateNormalTextColor:
-                    mColorNormalText = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_normal_text));
+                    mColorNormalText = a.getColor(attr,  ContextCompat.getColor(context, R.color.foreground_light));
                     break;
                 case R.styleable.LIMECandidateView_candidateNormalTextHighlightColor:
-                    mColorNormalTextHighlight = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_normal_text));
+                    mColorNormalTextHighlight = a.getColor(attr,  ContextCompat.getColor(context, R.color.foreground_light));
                     break;
                 case R.styleable.LIMECandidateView_composingCodeColor:
-                    mColorComposingCode = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_composing_code));
+                    mColorComposingCode = a.getColor(attr,  ContextCompat.getColor(context, R.color.color_common_green_hl));
                     break;
                 case R.styleable.LIMECandidateView_composingCodeHighlightColor:
-                    mColorComposingCodeHighlight = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_composing_code_highlight));
+                    mColorComposingCodeHighlight = a.getColor(attr,  ContextCompat.getColor(context, R.color.third_background_light));
                     break;
                 case R.styleable.LIMECandidateView_spacerColor:
                     mColorSpacer = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_spacer));
@@ -243,7 +243,7 @@ public class CandidateView extends View implements View.OnClickListener {
                     mColorSelKey = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_selection_keys));
                     break;
                 case R.styleable.LIMECandidateView_selKeyShiftedColor:
-                    mColorSelKeyShifted = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_selection_keys_shifted));
+                    mColorSelKeyShifted = a.getColor(attr,  ContextCompat.getColor(context, R.color.color_common_green_hl));
                     break;
             }
         }
@@ -941,7 +941,7 @@ public class CandidateView extends View implements View.OnClickListener {
                 canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
                 Paint backgroundPaint = new Paint();
-                backgroundPaint.setColor(ContextCompat.getColor(mContext, R.color.candidate_background));
+                backgroundPaint.setColor(ContextCompat.getColor(mContext, R.color.third_background_light));
                 backgroundPaint.setAlpha(33);
                 backgroundPaint.setStyle(Paint.Style.FILL);
 

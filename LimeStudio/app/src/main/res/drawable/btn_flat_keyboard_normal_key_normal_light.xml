@@ -29,7 +29,7 @@
         android:radius="3dp"
         />
     <solid
-        android:color="#FFFAFAFA"
+        android:color="@color/third_background_light"
         />
     <padding
         android:left="1dp"
@@ -44,7 +44,7 @@
 
     <stroke
         android:width="2dp"
-        android:color="#FFC8C8C8"
+        android:color="@color/keyboard_background_light"
         />
 
 </shape>
