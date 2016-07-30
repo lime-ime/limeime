@@ -21,21 +21,9 @@
   ~  */
   -->
 
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle" >
-    <corners
-        android:radius="1.5dp"
-        />
-    <solid
-        android:color="@color/keyboard_background_pink"
-        />
-    <padding
-        android:left="1dp"
-        android:top="1dp"
-        android:right="1dp"
-        android:bottom="1dp"
-        />
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
 
-
-
-</shape>
+    <item android:state_pressed="true"
+          android:drawable="@drawable/btn_flat_keyboard_normal_key_pressed_tech_blue" />
+    <item android:drawable="@drawable/btn_flat_keyboard_normal_key_normal_tech_blue" />
+</selector>

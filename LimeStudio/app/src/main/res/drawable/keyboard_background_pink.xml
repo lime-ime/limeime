@@ -29,7 +29,7 @@
         android:radius="1.5dp"
         />
     <solid
-        android:color="#FFFAD5E5"
+        android:color="@color/keyboard_background_pink"
         />
     <padding
         android:left="1dp"

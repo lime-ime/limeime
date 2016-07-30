@@ -29,65 +29,57 @@
     <style name="LIMEKeyboard">
         <item name="spaceKeyVerticalCorrection">@dimen/spacebar_vertical_correction</item>
         <item name="spaceKeySlidingTextSize">@dimen/spacebar_preview_text_size</item>
-        <item name="spaceKeyIcon">@drawable/sym_keyboard_space</item>
+        <item name="spaceKeyIcon">@drawable/sym_keyboard_space_light</item>
         <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space</item>
-        <item name="enterKeyIcon">@drawable/sym_keyboard_return</item>
-        <item name="enterKeyPreviewIcon">@drawable/sym_keyboard_return</item>
-        <item name="searchKeyIcon">@drawable/sym_keyboard_search</item>
-        <item name="searchKeyPreviewIcon">@drawable/sym_keyboard_search</item>
-        <item name ="doneKeyIcon">@drawable/sym_keyboard_done</item>
-        <item name ="deleteKeyIcon">@drawable/sym_keyboard_delete</item>
+        <item name="enterKeyIcon">@drawable/sym_keyboard_return_light</item>
+        <item name="searchKeyIcon">@drawable/sym_keyboard_search_light</item>
+        <item name ="doneKeyIcon">@drawable/sym_keyboard_done_light</item>
+        <item name ="deleteKeyIcon">@drawable/sym_keyboard_delete_light</item>
         <item name ="shiftKeyIcon">@drawable/sym_keyboard_shift</item>
         <item name ="shiftKeyShiftedIcon">@drawable/sym_keyboard_shift_shifted</item>
         <item name="spaceKeyTextColor">@color/second_foreground_light</item>
-        <item name="spaceKeySlidingLeftArrow">@drawable/sym_keyboard_previous_light</item>
-        <item name="spaceKeySlidingRightArrow">@drawable/sym_keyboard_next_light</item>
+        <item name="spaceKeySlidingLeftArrow">@drawable/sym_keyboard_previous</item>
+        <item name="spaceKeySlidingRightArrow">@drawable/sym_keyboard_next</item>
     </style>
     <style name="LIMEKeyboard.Light" parent = "LIMEKeyboard">
-        <item name="spaceKeyIcon">@drawable/sym_keyboard_space</item>
+        <item name="spaceKeyIcon">@drawable/sym_keyboard_space_light</item>
         <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space</item>
-        <item name="enterKeyIcon">@drawable/sym_keyboard_return</item>
-        <item name="enterKeyPreviewIcon">@drawable/sym_keyboard_return</item>
-        <item name="searchKeyIcon">@drawable/sym_keyboard_search</item>
-        <item name="searchKeyPreviewIcon">@drawable/sym_keyboard_search</item>
-        <item name ="doneKeyIcon">@drawable/sym_keyboard_done</item>
-        <item name ="deleteKeyIcon">@drawable/sym_keyboard_delete</item>
+        <item name="enterKeyIcon">@drawable/sym_keyboard_return_light</item>
+        <item name="searchKeyIcon">@drawable/sym_keyboard_search_light</item>
+        <item name ="doneKeyIcon">@drawable/sym_keyboard_done_light</item>
+        <item name ="deleteKeyIcon">@drawable/sym_keyboard_delete_light</item>
         <item name ="shiftKeyIcon">@drawable/sym_keyboard_shift</item>
         <item name ="shiftKeyShiftedIcon">@drawable/sym_keyboard_shift_shifted</item>
         <item name="spaceKeyTextColor">@color/second_foreground_light</item>
-        <item name="spaceKeySlidingLeftArrow">@drawable/sym_keyboard_previous_light</item>
-        <item name="spaceKeySlidingRightArrow">@drawable/sym_keyboard_next_light</item>
+        <item name="spaceKeySlidingLeftArrow">@drawable/sym_keyboard_previous</item>
+        <item name="spaceKeySlidingRightArrow">@drawable/sym_keyboard_next</item>
     </style>
     <style name="LIMEKeyboard.Dark" parent = "LIMEKeyboard">
         <item name="spaceKeyIcon">@drawable/sym_keyboard_space_dark</item>
-        <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space</item>
+        <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space_dark</item>
         <item name="enterKeyIcon">@drawable/sym_keyboard_return_dark</item>
-        <item name="enterKeyPreviewIcon">@drawable/sym_flat_keyboard_space_hl</item>
         <item name="searchKeyIcon">@drawable/sym_keyboard_search_dark</item>
-        <item name="searchKeyPreviewIcon">@drawable/sym_keyboard_search</item>
         <item name ="doneKeyIcon">@drawable/sym_keyboard_done_dark</item>
         <item name ="deleteKeyIcon">@drawable/sym_keyboard_delete_dark</item>
         <item name ="shiftKeyIcon">@drawable/sym_keyboard_shift</item>
         <item name ="shiftKeyShiftedIcon">@drawable/sym_keyboard_shift_shifted</item>
         <item name="spaceKeyTextColor">@color/third_foreground_dark</item>
-        <item name="spaceKeySlidingLeftArrow">@drawable/sym_keyboard_previous_light</item>
-        <item name="spaceKeySlidingRightArrow">@drawable/sym_keyboard_next_light</item>
+        <item name="spaceKeySlidingLeftArrow">@drawable/sym_keyboard_previous</item>
+        <item name="spaceKeySlidingRightArrow">@drawable/sym_keyboard_next</item>
     </style>
 
     <style name="LIMEKeyboard.Pink" parent = "LIMEKeyboard">
         <item name="spaceKeyIcon">@drawable/sym_keyboard_space_pink</item>
         <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space_dark</item>
         <item name="enterKeyIcon">@drawable/sym_keyboard_return_pink</item>
-        <item name="enterKeyPreviewIcon">@drawable/sym_flat_keyboard_space_dark</item>
         <item name="searchKeyIcon">@drawable/sym_keyboard_search_pink</item>
-        <item name="searchKeyPreviewIcon">@drawable/sym_flat_keyboard_search_dark</item>
         <item name ="doneKeyIcon">@drawable/sym_keyboard_done_pink</item>
         <item name ="deleteKeyIcon">@drawable/sym_keyboard_delete_pink</item>
         <item name ="shiftKeyIcon">@drawable/sym_keyboard_shift_pink</item>
         <item name ="shiftKeyShiftedIcon">@drawable/sym_keyboard_shift_shifted_pink</item>
         <item name="spaceKeyTextColor">@color/color_white</item>
-        <item name="spaceKeySlidingLeftArrow">@drawable/sym_keyboard_previous_dark</item>
-        <item name="spaceKeySlidingRightArrow">@drawable/sym_keyboard_next_dark</item>
+        <item name="spaceKeySlidingLeftArrow">@drawable/sym_keyboard_previous_white</item>
+        <item name="spaceKeySlidingRightArrow">@drawable/sym_keyboard_next_white</item>
     </style>
 
     <style name="LIMEKeyboardLayout">
@@ -205,16 +197,16 @@
     </style>
 
     <style name="LIMEBaseKeyboard">
-        <item name="drawableArrowUp">@drawable/sym_keyboard_up</item>
-        <item name="drawableArrowDown">@drawable/sym_keyboard_down</item>
-        <item name="drawableArrowRight">@drawable/sym_keyboard_right</item>
-        <item name="drawableArrowLeft">@drawable/sym_keyboard_left</item>>
+        <item name="drawableArrowUp">@drawable/sym_keyboard_up_light</item>
+        <item name="drawableArrowDown">@drawable/sym_keyboard_down_light</item>
+        <item name="drawableArrowRight">@drawable/sym_keyboard_right_light</item>
+        <item name="drawableArrowLeft">@drawable/sym_keyboard_left_light</item>>
     </style>
     <style name="LIMEBaseKeyboard.Light" parent = "LIMEBaseKeyboard">
-        <item name="drawableArrowUp">@drawable/sym_keyboard_up</item>
-        <item name="drawableArrowDown">@drawable/sym_keyboard_down</item>
-        <item name="drawableArrowRight">@drawable/sym_keyboard_right</item>
-        <item name="drawableArrowLeft">@drawable/sym_keyboard_left</item>>
+        <item name="drawableArrowUp">@drawable/sym_keyboard_up_light</item>
+        <item name="drawableArrowDown">@drawable/sym_keyboard_down_light</item>
+        <item name="drawableArrowRight">@drawable/sym_keyboard_right_light</item>
+        <item name="drawableArrowLeft">@drawable/sym_keyboard_left_light</item>>
     </style>
     <style name="LIMEBaseKeyboard.Dark" parent = "LIMEBaseKeyboard">
 

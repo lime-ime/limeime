@@ -71,8 +71,15 @@
     <color name="second_background_pink">#FFF49AC1</color>
     <color name="second_background_pink_hl">#FFF173AC</color>
 
-
-
+    <!-- colors for tech blue theme -->
+    <color name="tech_blue_hl">#FF4167B0</color>
+    <color name="keyboard_background_tech_blue">#FFC5DBEC</color>
+    <color name="candidate_background_tech_blue">#FFD8E7F3</color>
+    <color name="composing_background_tech_blue">#E0B2CFE6</color>
+    <color name="second_background_tech_blue">#FF9BC5E4</color>
+    <color name="second_background_tech_blue_hl">#FF6699CC</color>
+    <color name="foreground_tech_blue">#FF314453</color>
+    <color name="second_foreground_tech_blue">#FF4E6677</color>
 
     <color name="background_score">#88333333</color>
 

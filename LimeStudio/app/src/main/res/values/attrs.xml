@@ -111,9 +111,7 @@
         <attr name="spaceKeyIcon" format="reference" />
         <attr name="spaceKeyPreviewIcon" format="reference" />
         <attr name="enterKeyIcon" format="reference" />
-        <attr name="enterKeyPreviewIcon" format="reference" />
         <attr name="searchKeyIcon" format="reference" />
-        <attr name="searchKeyPreviewIcon" format="reference" />
         <attr name="doneKeyIcon" format="reference" />
         <attr name="shiftKeyIcon" format="reference" />
         <attr name="shiftKeyShiftedIcon" format="reference" />

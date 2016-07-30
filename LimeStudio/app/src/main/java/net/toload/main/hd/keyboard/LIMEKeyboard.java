@@ -69,14 +69,12 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     private static Drawable mSpaceKeyIcon;
     private static Drawable mSpaceKeyPreviewIcon;
     private static Drawable mEnterKeyIcon;
-    private static Drawable mEnterKeyPreviewIcon;
     private static Drawable mDeleteKeyIcon;
     private static Drawable mShiftKeyIcon;
     private static Drawable mShiftKeyShiftedIcon;
     private static Drawable mDoneKeyIcon;
 
     private static Drawable mSearchKeyIcon;
-    private static Drawable mSearchKeyPreviewIcon;
     private static Drawable mSpaceKeySlidingLeftArrow;
     private static Drawable mSpaceKeySlidingRightArrow;
     private static int mSpaceKeySlidingTextSize;
@@ -124,9 +122,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         mSpaceKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyIcon);
         mSpaceKeyPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyPreviewIcon);
         mEnterKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_enterKeyIcon);
-        mEnterKeyPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_enterKeyPreviewIcon);
         mSearchKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_searchKeyIcon);
-        mSearchKeyPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_searchKeyPreviewIcon);
         mDoneKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_doneKeyIcon);
         mDeleteKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_deleteKeyIcon);
         mShiftKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_shiftKeyIcon);
@@ -271,7 +267,6 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                     mEnterKey.label = res.getText(R.string.label_done_key);
                     break;
                 case EditorInfo.IME_ACTION_SEARCH:
-                    mEnterKey.iconPreview = mSearchKeyPreviewIcon;
                     mEnterKey.icon = mSearchKeyIcon;
                     mEnterKey.label = null;
                     break;
@@ -284,13 +279,11 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                 	
                     if (mode == LIMEKeyboardSwitcher.MODE_IM) {
                         mEnterKey.icon = null;
-                        mEnterKey.iconPreview = null;
                         mEnterKey.label = ":-)";
                         //mEnterKey.text = ":-) ";
                         mEnterKey.popupResId = R.xml.popup_smileys;
                     } else {
-                    
-                        mEnterKey.iconPreview = mEnterKeyPreviewIcon;
+
                         mEnterKey.icon = mEnterKeyIcon;
                         mEnterKey.label = null;
                     }
