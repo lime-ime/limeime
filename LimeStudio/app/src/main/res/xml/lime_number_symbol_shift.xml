@@ -79,19 +79,19 @@
 		<Key limehd:codes="78" limehd:keyLabel="N" />
 		<Key limehd:codes="77" limehd:keyLabel="M" />
 		<Key limehd:codes="34" limehd:keyLabel="&quot;"/>
-		<Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true"
+		<Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete_light" limehd:isModifier="true"
 			 limehd:keyEdgeFlags="right"	limehd:isRepeatable="true" />
 	</Row>
 
 
 	<Row limehd:rowEdgeFlags="bottom">
-		<Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true"
+		<Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done_light" limehd:isModifier="true"
 			  	limehd:keyWidth="15%p" limehd:keyEdgeFlags="left" />
 		<Key limehd:codes="-9" 
 				limehd:keyLabel="EN" limehd:isModifier="true" 
 				limehd:keyWidth="10%p" 
 				/>
-		<Key limehd:codes="32" limehd:keyIcon="@drawable/sym_flat_keyboard_space" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"
+		<Key limehd:codes="32" limehd:keyIcon="@drawable/sym_flat_keyboard_space"
 				limehd:keyWidth="15%p" limehd:isRepeatable="true" />
 		<Key limehd:codes="60" limehd:keyLabel="&lt;" limehd:keyWidth="10%p" />
 		<Key limehd:codes="62" limehd:keyLabel="&gt;" 
@@ -100,7 +100,7 @@
 		<Key limehd:codes="63" limehd:keyLabel="\?" limehd:keyWidth="10%p" />
 		<Key limehd:codes="95" limehd:keyLabel="_" />
 		<Key limehd:codes="43" limehd:keyLabel="+" />
-		<Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true"
+		<Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return_light" limehd:isModifier="true"
 				limehd:keyEdgeFlags="right" />
 	</Row>
 </Keyboard>

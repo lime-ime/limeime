@@ -59,7 +59,7 @@
     </Row>
     
     <Row>
-        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift_shifted" limehd:iconPreview="@drawable/sym_keyboard_feedback_shift"  limehd:isModifier="true"
+        <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift_shifted"  limehd:isModifier="true"
                 limehd:keyWidth="15%p" 
                 limehd:isSticky="true" limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="90" limehd:keyLabel="Z\n重" />
@@ -69,22 +69,22 @@
 		<Key limehd:codes="66" limehd:keyLabel="B\n月" />
 		<Key limehd:codes="78" limehd:keyLabel="N\n弓" />
 		<Key limehd:codes="77" limehd:keyLabel="M\n一" />
-        <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete" limehd:iconPreview="@drawable/sym_keyboard_feedback_delete" limehd:isModifier="true" 
+        <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete_light" limehd:isModifier="true"
                 limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"
                 limehd:isRepeatable="true"/>
     </Row>
 
 	<Row limehd:rowEdgeFlags="bottom">
-        <Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done" limehd:iconPreview="@drawable/sym_keyboard_feedback_done" limehd:isModifier="true" limehd:keyWidth="15%p" limehd:keyEdgeFlags="left"/>                
+        <Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done_light" limehd:isModifier="true" limehd:keyWidth="15%p" limehd:keyEdgeFlags="left"/>
         <Key limehd:codes="-9" limehd:keyLabel="中" limehd:isModifier="true" limehd:keyWidth="15%p" />
         <Key limehd:codes="58" limehd:keyLabel=":"  limehd:keyWidth="10%p"/>
-        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_flat_keyboard_space" limehd:iconPreview="@drawable/sym_keyboard_feedback_space"  limehd:keyWidth="25%p" limehd:isRepeatable="true"/>
+        <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_flat_keyboard_space"  limehd:keyWidth="25%p" limehd:isRepeatable="true"/>
         <Key limehd:codes="59" 
         		limehd:keyLabel=";" 
         		limehd:popupKeyboard="@xml/popup_punctuation"  
         		limehd:keyWidth="10%p"/>
         <Key limehd:codes="-2" limehd:keyLabel="123" limehd:isModifier="true" />
-        <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return" limehd:iconPreview="@drawable/sym_keyboard_feedback_return" limehd:isModifier="true" limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"/>
+        <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return_light" limehd:isModifier="true" limehd:keyWidth="15%p" limehd:keyEdgeFlags="right"/>
     </Row>
     
     
