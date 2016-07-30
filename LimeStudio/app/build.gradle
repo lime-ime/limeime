@@ -31,17 +31,10 @@ android {
     buildToolsVersion '24.0.1'
     defaultConfig {
         applicationId "net.toload.main.hd"
-<<<<<<< HEAD
-        minSdkVersion 16
-        targetSdkVersion 23
-        versionCode 524
-        versionName '5.2.0'
-=======
         minSdkVersion 14
         targetSdkVersion 24
-        versionCode 523
-        versionName '5.1.2'
->>>>>>> origin/master
+        versionCode 524
+        versionName '5.2.0'
         multiDexEnabled true
     }
     buildTypes {
@@ -65,7 +58,7 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:24.0.+'
     compile 'com.android.support:support-v4:24.0.+'
     compile 'com.google.android.gms:play-services:9.2.1'
