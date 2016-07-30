@@ -2946,6 +2946,7 @@ public class LIMEService extends InputMethodService implements
                 mInputView = (LIMEKeyboardView) mCandidateInInputView.findViewById(R.id.keyboard);
                 mInputView.setOnKeyboardActionListener(this);
                 hasDistinctMultitouch = mInputView.hasDistinctMultitouch();
+                mInputView.setHardwareAcceleratedDrawingEnabled(mIsHardwareAcceleratedDrawingEnabled);
                 mCandidateInInputView.initViews();
                 mCandidateViewInInputView = (CandidateView) mCandidateInInputView.findViewById(R.id.candidatesView);
                 mCandidateViewInInputView.setService(this);

@@ -290,6 +290,8 @@ public class PointerTracker {
 
     public void onDownEvent(int x, int y, long eventTime) {
         if (DEBUG)
+            Log.i(TAG,"onDownEvent(): x = "+ x + ", y="+ y);
+        if (DEBUG_MOVE)
             debugLog("onDownEvent:", x, y);
         int keyIndex = mKeyState.onDownKey(x, y, eventTime);
         mKeyboardLayoutHasBeenChanged = false;
@@ -321,6 +323,8 @@ public class PointerTracker {
     }
 
     public void onMoveEvent(int x, int y, long eventTime) {
+        if (DEBUG)
+            Log.i(TAG,"onMoveEvent(): x = "+ x + ", y="+ y);
         if (DEBUG_MOVE)
             debugLog("onMoveEvent:", x, y);
         if (mKeyAlreadyProcessed)
@@ -382,6 +386,8 @@ public class PointerTracker {
 
     public void onUpEvent(int x, int y, long eventTime) {
         if (DEBUG)
+            Log.i(TAG,"onUpEvent(): x = "+ x + ", y="+ y);
+        if (DEBUG_MOVE)
             debugLog("onUpEvent  :", x, y);
         mHandler.cancelKeyTimers();
         //mHandler.cancelPopupPreview();
@@ -406,7 +412,9 @@ public class PointerTracker {
 
     public void onCancelEvent(int x, int y, long eventTime) {
         if (DEBUG)
-            debugLog("onCancelEvt:", x, y);
+            Log.i(TAG,"onCancelEvent(): x = "+ x + ", y="+ y);
+        if (DEBUG_MOVE)
+            debugLog("onCancelEvent(): ", x, y);
         mHandler.cancelKeyTimers();
         mHandler.cancelPopupPreview();
         showKeyPreviewAndUpdateKey(NOT_A_KEY);
@@ -473,7 +481,7 @@ public class PointerTracker {
 
     private void showKeyPreviewAndUpdateKey(int keyIndex) {
         if(DEBUG)
-            Log.i(TAG, "showKeyPreviewAndUpdateKey() keyIndex=" + keyIndex + "isModifier() = "+ isModifier() );
+            Log.i(TAG, "showKeyPreviewAndUpdateKey() keyIndex=" + keyIndex + ", isModifier() = "+ isModifier() );
         updateKey(keyIndex);
         // The modifier key, such as shift key, should not be shown as preview when multi-touch is
         // supported. On the other hand, if multi-touch is not supported, the modifier key should

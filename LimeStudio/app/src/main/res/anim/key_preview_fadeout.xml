@@ -27,8 +27,15 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:interpolator="@android:anim/accelerate_interpolator"
 >
-    <alpha
-        android:fromAlpha="1.0"
-        android:toAlpha="0.0"
-        android:duration="@integer/config_preview_fadeout_anim_time" />
+    <scale
+        android:duration="@integer/config_preview_fade_out_anim_time"
+        android:fromXScale="1.00"
+        android:toXScale="0.98"
+        android:fromYScale="1.00"
+        android:toYScale="0.98"
+        android:pivotX="50%p"
+        android:pivotY="100%p"
+        >
+
+    </scale>
 </set>

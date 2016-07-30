@@ -30,5 +30,5 @@
     <alpha
         android:fromAlpha="1.0"
         android:toAlpha="0.0"
-        android:duration="@integer/config_preview_fadeout_anim_time" />
+        android:duration="@integer/config_preview_fade_out_anim_time" />
 </set>
