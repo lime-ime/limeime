@@ -26,10 +26,10 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:state_pressed="false"
-        android:drawable="@color/limekeyboard_normal_key_background_pink" />
+        android:drawable="@color/second_background_pink" />
 
     <item android:state_pressed="true"
-        android:drawable="@color/limekeyboard_normal_key_color_pink_hl" />
+        android:drawable="@color/background_pink_hl" />
 
 
 </selector>

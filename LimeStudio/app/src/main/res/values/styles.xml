@@ -85,7 +85,7 @@
         <item name ="deleteKeyIcon">@drawable/sym_keyboard_delete_pink</item>
         <item name ="shiftKeyIcon">@drawable/sym_keyboard_shift_pink</item>
         <item name ="shiftKeyShiftedIcon">@drawable/sym_keyboard_shift_shifted_pink</item>
-        <item name="spaceKeyTextColor">@color/limekeyboard_function_key_color_pink</item>
+        <item name="spaceKeyTextColor">@color/color_white</item>
         <item name="spaceKeySlidingLeftArrow">@drawable/sym_keyboard_previous_dark</item>
         <item name="spaceKeySlidingRightArrow">@drawable/sym_keyboard_next_dark</item>
     </style>
@@ -166,14 +166,14 @@
         <item name="keyTextSize">@dimen/key_text_size</item>
         <item name="popupHint">@drawable/hint_popup_dark</item>
 
-        <item name="keyTextColorNormal">@color/limekeyboard_normal_key_color_pink</item>
-        <item name="keyTextColorPressed">@color/limekeyboard_normal_key_color_pink_hl</item>
+        <item name="keyTextColorNormal">@color/color_white</item>
+        <item name="keyTextColorPressed">@color/background_pink_hl</item>
 
-        <item name="functionKeyTextColorNormal">@color/limekeyboard_function_key_color_pink</item>
-        <item name="functionKeyTextColorPressed">@color/limekeyboard_function_key_color_pink_hl</item>
+        <item name="functionKeyTextColorNormal">@color/color_white</item>
+        <item name="functionKeyTextColorPressed">@color/background_pink_hl</item>
 
-        <item name="keySubLabelTextColorNormal">@color/limekeyboard_subkey_color_pink</item>
-        <item name="keySubLabelTextColorPressed">@color/limekeyboard_subkey_color_pink_hl</item>
+        <item name="keySubLabelTextColorNormal">@color/foreground_pink</item>
+        <item name="keySubLabelTextColorPressed">@color/color_white</item>
 
     </style>
 
@@ -294,20 +294,20 @@
     <style name="LIMECandidateView.Pink"  parent = "LIMECandidateView">
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_pink</item>
         <item name="voiceInputIcon">@drawable/btn_voice_pink</item>
-        <item name="candidateBackground">@color/limekeyboard_candidate_background_pink</item>
+        <item name="candidateBackground">@color/candidate_background_pink</item>
         <item name="ExpandButtonIcon">@drawable/btn_expand_pink</item>
         <!-- color of  different types of candidates   -->
-        <item name="candidateNormalTextColor">@color/limekeyboard_key_color_black</item>
-        <item name="candidateNormalTextHighlightColor">@color/limekeyboard_key_color_white</item>
-        <item name="composingCodeColor">@color/limekeyboard_subkey_color_pink</item>
-        <item name="composingCodeHighlightColor">@color/limekeyboard_key_color_white</item>
+        <item name="candidateNormalTextColor">@color/color_black</item>
+        <item name="candidateNormalTextHighlightColor">@color/color_white</item>
+        <item name="composingCodeColor">@color/foreground_pink</item>
+        <item name="composingCodeHighlightColor">@color/color_white</item>
         <!-- color of  spacer between candidate   -->
-        <item name="spacerColor">@color/limekeyboard_subkey_color_pink</item>
+        <item name="spacerColor">@color/foreground_pink</item>
         <!-- color of  selection key display for physical keyboard   -->
-        <item name="selKeyColor">@color/limekeyboard_key_color_black</item>
-        <item name="selKeyShiftedColor">@color/limekeyboard_normal_key_color_pink_hl</item>
+        <item name="selKeyColor">@color/color_black</item>
+        <item name="selKeyShiftedColor">@color/background_pink_hl</item>
         <!-- color of  composing text view above candidate view   -->
-        <item name="composingTextColor">@color/limekeyboard_normal_key_color_pink_hl</item>
+        <item name="composingTextColor">@color/background_pink_hl</item>
         <item name="composingBackgroundColor">@color/composing_background_pink</item>
     </style>
 

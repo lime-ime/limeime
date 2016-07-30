@@ -24,6 +24,11 @@
   ~  */
   -->
 <resources>
+
+    <color name="color_white">#FFFFFFFF</color>
+    <color name="color_black">#FF000000</color>
+
+
     <!--candidate view-->
     <color name="candidate_normal_text">#FF0F0F0F</color>
     <color name="candidate_normal_text_dark">#FFCFD8DC</color>
@@ -56,8 +61,6 @@
     <color name="limekeyboard_bar_im_text">#FF0F0F0F</color>
     <color name="limekeyboard_extension_background">#A0000000</color>
     <color name="limekeyboard_feedback_language_text">#FFFFFFFF</color>
-    <color name="limekeyboard_key_color_white">#FFFFFFFF</color>
-    <color name="limekeyboard_key_color_black">#FF000000</color>
 
     <color name="limekeyboard_normal_key_color_light">#FF0F0F0F</color>
     <color name="limekeyboard_normal_key_color_light_hl">#FF4DB6AC</color>
@@ -73,18 +76,16 @@
     <color name="limekeyboard_subkey_color_dark">#FF6B6B6B</color>
     <color name="limekeyboard_subkey_color_dark_hl">#FF80CBC4</color>
 
-    <color name="limekeyboard_normal_key_color_pink">#FFFFFFFF</color>
-    <color name="limekeyboard_normal_key_color_pink_hl">#FFC74A72</color>
+    <color name="background_pink_hl">#FFC74A72</color>
     <color name="limekeyboard_function_key_color_pink">#FFFFFFFF</color>
-    <color name="limekeyboard_function_key_color_pink_hl">#FFC74A72</color>f
-    <color name="limekeyboard_subkey_color_pink">#FFC74A72</color>
-    <color name="limekeyboard_background_pink">#FFFAD5E5</color>
-    <color name="limekeyboard_candidate_background_pink">#FFFEF3F7</color>
+
+    <color name="foreground_pink">#FFC74A72</color>
+    <color name="keyboard_background_pink">#FFFAD5E5</color>
+    <color name="candidate_background_pink">#FFFEF3F7</color>
     <color name="composing_background_pink">#E0FAD5E5</color>
-    <color name="limekeyboard_normal_key_background_pink">#FFF49AC1</color>
-    <color name="limekeyboard_function_key_background_pink">#FFF173AC</color>
-    <color name="limekeyboard_key_background_pink_hl">#FFF49AC1</color>
-    <color name="limekeyboard_subkey_color_pink_hl">#FFFFFFFF</color>
+    <color name="second_background_pink">#FFF49AC1</color>
+    <color name="second_background_pink_hl">#FFF173AC</color>
+
 
 
     <color name="background_score">#88333333</color>

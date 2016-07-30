@@ -33,7 +33,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal" 
-        android:background="@color/limekeyboard_key_color_white">
+        android:background="@color/color_white">
        
 
         <net.toload.main.hd.candidate.CandidateView
@@ -51,7 +51,7 @@
             android:layout_weight="1"
             android:clickable="true"
             android:orientation="horizontal" 
-            android:background="@color/limekeyboard_key_color_white">
+            android:background="@color/color_white">
             
             <ImageButton
                 android:id="@+id/candidate_right"

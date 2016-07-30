@@ -27,7 +27,7 @@
     android:layout_width="wrap_content"
     android:layout_height="120sp"
     android:textSize="40sp"
-    android:textColor="@color/limekeyboard_normal_key_color_pink"
+    android:textColor="@color/color_white"
     android:minWidth="32dip"
     android:gravity="center|top"
     android:background="@drawable/btn_flat_keyboard_key_preview_pink"
