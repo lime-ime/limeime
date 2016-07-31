@@ -449,6 +449,7 @@ public class SetupImFragment extends Fragment {
                         btnSetupImRestoreDropbox.setEnabled(true);
                         btnSetupImImportStandard.setEnabled(true);
                         btnSetupImImportRelated.setEnabled(true);
+                        btnDownloadOldVersion.setEnabled(true);
                     }
                     else  //LIME is activated, but not active keyboard
                     {
@@ -476,6 +477,7 @@ public class SetupImFragment extends Fragment {
                             btnSetupImRestoreDropbox.setEnabled(true);
                             btnSetupImImportStandard.setEnabled(true);
                             btnSetupImImportRelated.setEnabled(true);
+                            btnDownloadOldVersion.setEnabled(true);
                         }
                         else
                         {
@@ -489,6 +491,7 @@ public class SetupImFragment extends Fragment {
                             btnSetupImRestoreDropbox.setEnabled(false);
                             btnSetupImImportStandard.setEnabled(false);
                             btnSetupImImportRelated.setEnabled(false);
+                            btnDownloadOldVersion.setEnabled(false);
                         }
 
                     }
