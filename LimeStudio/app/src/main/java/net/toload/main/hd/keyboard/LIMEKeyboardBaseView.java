@@ -338,18 +338,21 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 }
                 case MSG_SHOW_PREVIEW: {
                     if(DEBUG) Log.i(TAG, "handleMessage()  MSG_SHOW_PREVIEW");
-                    mLIMEKeyboardBaseView.startKeyPreviewFadeInAnimation();
+                    final PointerTracker tracker = (PointerTracker) msg.obj;
+                    if(!tracker.isSpaceKey(msg.arg1))
+                        mLIMEKeyboardBaseView.startKeyPreviewFadeInAnimation();
                     mLIMEKeyboardBaseView.mPreviewText.setVisibility(VISIBLE);
                     break;
                 }
             }
         }
 
-        public void showPreview(long delay){
+        public void showPreview(long delay, int keyIndex, PointerTracker tracker){
             if(DEBUG)
                 Log.i(TAG,"UIHandler.showPreview() delay = "+delay);
             LIMEKeyboardBaseView mLIMEKeyboardBaseView = mLIMEKeyboardBaseViewWeakReference.get();
-            sendMessageDelayed(obtainMessage(MSG_SHOW_PREVIEW),delay);
+            sendMessageDelayed(obtainMessage(MSG_SHOW_PREVIEW, keyIndex, 0, tracker), delay);
+
         }
         public void popupPreview(long delay, int keyIndex, PointerTracker tracker) {
             if(DEBUG)
@@ -1318,8 +1321,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         }
         // Record popup preview position to display mini-keyboard later at the same positon
         mPopupPreviewDisplayedY = popupPreviewY;
-        //Jeremy '16, 7, 30 delay 5 second before show preview to avoid ghost image when moving last location to current.
-        mHandler.showPreview(mDelayBeforePreview);
+        //Jeremy '16, 7, 30 Add delay before show preview to avoid ghost image when moving last location to current.
+
+        mHandler.showPreview(mDelayBeforePreview, keyIndex, tracker);
 
     }
 

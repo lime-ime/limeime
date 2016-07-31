@@ -92,7 +92,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     // Minimum width of space key preview (proportional to keyboard width)
     private static final float SPACEBAR_POPUP_MIN_RATIO = 0.4f;
     // Height in space key the language name will be drawn. (proportional to space key height)
-    private static final float SPACEBAR_IMNAME_BASELINE = 0.5f;
+    private static final float SPACEBAR_IMNAME_BASELINE = 0.55f;
     
     private static final int OPACITY_FULLY_OPAQUE = 255;
     
