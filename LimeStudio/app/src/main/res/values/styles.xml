@@ -250,10 +250,10 @@
         <item name="popupHint">@drawable/hint_popup_dark</item>
 
         <item name="keyTextColorNormal">@color/color_white</item>
-        <item name="keyTextColorPressed">@color/pink_hl</item>
+        <item name="keyTextColorPressed">@color/color_white</item>
 
         <item name="functionKeyTextColorNormal">@color/color_white</item>
-        <item name="functionKeyTextColorPressed">@color/pink_hl</item>
+        <item name="functionKeyTextColorPressed">@color/color_white</item>
 
         <item name="keySubLabelTextColorNormal">@color/pink_hl</item>
         <item name="keySubLabelTextColorPressed">@color/color_white</item>
@@ -265,13 +265,13 @@
         <item name="popupHint">@drawable/hint_popup_dark</item>
 
         <item name="keyTextColorNormal">@color/foreground_tech_blue</item>
-        <item name="keyTextColorPressed">@color/tech_blue_hl</item>
+        <item name="keyTextColorPressed">@color/color_white</item>
 
         <item name="functionKeyTextColorNormal">@color/color_white</item>
-        <item name="functionKeyTextColorPressed">@color/tech_blue_hl</item>
+        <item name="functionKeyTextColorPressed">@color/color_white</item>
 
         <item name="keySubLabelTextColorNormal">@color/color_white</item>
-        <item name="keySubLabelTextColorPressed">@color/tech_blue_hl</item>
+        <item name="keySubLabelTextColorPressed">@color/color_white</item>
     </style>
 
     <style name="LIMEKeyboardBaseView.FashionPurple" parent = "LIMEKeyboardBaseView">
