@@ -676,8 +676,16 @@
             <item>科技蓝</item>
             <item>时尚紫</item>
             <item>放松绿</item>
-        </string-array>
+    </string-array>
 
+    <string-array name="keyboard_themes_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
 
 
     <!-- AD Message -->
