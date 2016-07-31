@@ -62,7 +62,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 
     private boolean mThemedIconLoaded = false;
     
-    private static SlidingSpaceBarDrawable mSlidingSpaceBarIcon;
+    private static SlidingSpaceBarDrawable mSlidingSpaceBarIcon = null;
 
     private static boolean themedResourcesLoaded = false;
     /**
@@ -98,7 +98,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     
     private static final int OPACITY_FULLY_OPAQUE = 255;
     
-    private final Context mContext;
+    private Context mContext;
     private final Resources mRes;
     //private final int mMode;
     private LIMEKeyboardSwitcher mKeyboardSwitcher;
@@ -111,7 +111,6 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         super(context, xmlLayoutResId, mode, keySizeScale, showArrowKeys, splitKeyboard);
         if(DEBUG)
             Log.i(TAG, "LIMEKeyboard()");
-        mContext = context;
         mRes = context.getResources();
     }
 
@@ -121,6 +120,8 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 
         if(DEBUG)
             Log.i(TAG, "loadThemedIcons()");
+
+        mContext = context;
 
         TypedArray a = context.getTheme().obtainStyledAttributes(//R.style.LIMEKeyboardLight, R.styleable.LIMEKeyboard);
                 null, R.styleable.LIMEKeyboard, R.attr.LIMEKeyboardStyle, R.style.LIMEKeyboard);
@@ -167,8 +168,14 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                 mSpaceKey = key;
                 if(mSpaceKeyIcon!=null)
                     key.icon = mSpaceKeyIcon;
-                if(mSpaceKeyPreviewIcon!=null)
+                if(mSpaceKeyPreviewIcon!=null) {
                     key.iconPreview = mSpaceKeyPreviewIcon;
+                    int width = key.width;
+                    int height = key.height;
+                    mSlidingSpaceBarIcon = new SlidingSpaceBarDrawable(mSpaceKeyPreviewIcon, mSpaceKeySlidingLeftArrow,
+                            mSpaceKeySlidingRightArrow, mSpaceKeySlidingTextSize, width, height);
+                    mSlidingSpaceBarIcon.setBounds(0, 0, width, height /2);
+                }
                 break;
             case KEYCODE_DELETE:
                 if (mDeleteKeyIcon != null)

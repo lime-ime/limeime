@@ -248,6 +248,8 @@ public class CandidateView extends View implements View.OnClickListener {
             }
         }
 
+        a.recycle();
+
        final Resources r = context.getResources();
 
         Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
