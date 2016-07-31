@@ -81,7 +81,7 @@
     <color name="foreground_tech_blue">#FF314453</color>
     <color name="second_foreground_tech_blue">#FF4E6677</color>
 
-    <!-- colors for fashin purple  theme -->
+    <!-- colors for fashion purple  theme -->
     <color name="fashion_purple_hl">#FF45196F</color>
     <color name="keyboard_background_fashion_purple">#FFB0ACD5</color>
     <color name="candidate_background_fashion_purple">#FFEFEDFF</color>
@@ -90,6 +90,16 @@
     <color name="second_background_fashion_purple_hl">#FF8F53A1</color>
     <color name="foreground_fashion_purple">#FFEEEEEE</color>
     <color name="second_foreground_fashion_purple">#FF45196F</color>
+
+    <!-- colors for relax green  theme -->
+    <color name="relax_green_hl">#FF006838</color>
+    <color name="keyboard_background_relax_green">#FF8DC63F</color>
+    <color name="candidate_background_relax_green">#FFF2F5D5</color>
+    <color name="composing_background_relax_green">#E0D7DF23</color>
+    <color name="second_background_relax_green">#FF39B54A</color>
+    <color name="second_background_relax_green_hl">#FF009444</color>
+    <color name="foreground_relax_green">#FF003A17</color>
+    <color name="second_foreground_relax_green">#FF009444</color>
 
 
     <color name="background_score">#88333333</color>
