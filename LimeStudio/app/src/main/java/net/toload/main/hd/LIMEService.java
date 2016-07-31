@@ -3597,6 +3597,7 @@ public class LIMEService extends InputMethodService implements
             new KeyboardTheme("Dark",   1, R.style.LIMETheme_Dark),
             new KeyboardTheme("Pink",   2, R.style.LIMETheme_Pink),
             new KeyboardTheme("TechBlue",   2, R.style.LIMETheme_TechBlue),
+            new KeyboardTheme("FashionPurple",   2, R.style.LIMETheme_FashionPurple),
     };
 
     private int mKeyboardThemeIndex = -1;

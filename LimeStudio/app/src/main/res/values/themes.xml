@@ -61,5 +61,12 @@
     <item name="LIMEPopupKeyboardLayout">@style/LIMEPopupKeyboardLayout.TechBlue</item>
     <item name="LIMECandidateView">@style/LIMECandidateView.TechBlue</item>
   </style>
-
+  <style name="LIMETheme.FashionPurple">
+    <item name="LIMEKeyboardStyle">@style/LIMEKeyboard.FashionPurple</item>
+    <item name="LIMEBaseKeyboardStyle">@style/LIMEBaseKeyboard.FashionPurple</item>
+    <item name="LIMEKeyboardBaseView">@style/LIMEKeyboardBaseView.FashionPurple</item>
+    <item name="LIMEKeyboardLayout">@style/LIMEKeyboardLayout.FashionPurple</item>
+    <item name="LIMEPopupKeyboardLayout">@style/LIMEPopupKeyboardLayout.FashionPurple</item>
+    <item name="LIMECandidateView">@style/LIMECandidateView.FashionPurple</item>
+  </style>
 </resources>

@@ -81,6 +81,17 @@
     <color name="foreground_tech_blue">#FF314453</color>
     <color name="second_foreground_tech_blue">#FF4E6677</color>
 
+    <!-- colors for fashin purple  theme -->
+    <color name="fashion_purple_hl">#FF45196F</color>
+    <color name="keyboard_background_fashion_purple">#FFB0ACD5</color>
+    <color name="candidate_background_fashion_purple">#FFEFEDFF</color>
+    <color name="composing_background_fashion_purple">#E0B0ACD4</color>
+    <color name="second_background_fashion_purple">#FFB28ABF</color>
+    <color name="second_background_fashion_purple_hl">#FF8F53A1</color>
+    <color name="foreground_fashion_purple">#FFEEEEEE</color>
+    <color name="second_foreground_fashion_purple">#FF45196F</color>
+
+
     <color name="background_score">#88333333</color>
 
 

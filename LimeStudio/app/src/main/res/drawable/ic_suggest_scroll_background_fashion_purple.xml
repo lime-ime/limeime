@@ -24,9 +24,12 @@
   -->
 
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_pressed="false"
+        android:drawable="@color/second_background_fashion_purple" />
+
     <item android:state_pressed="true"
-        android:drawable="@drawable/sym_flat_keyboard_up_white" />
-    <item
-        android:drawable="@drawable/sym_flat_keyboard_up_white" />
+        android:drawable="@color/fashion_purple_hl" />
+
 
 </selector>

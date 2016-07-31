@@ -27,7 +27,7 @@
     <item android:state_checkable="true" android:state_checked="true"
         android:drawable="@drawable/sym_flat_keyboard_shift_locked_tech_blue" />
     <item android:state_checkable="true" android:state_pressed="true"
-        android:drawable="@drawable/sym_flat_keyboard_shift_normal_unlocked_dark" />
+        android:drawable="@drawable/sym_flat_keyboard_shift_normal_unlocked_white" />
     <item android:state_checkable="true"
         android:drawable="@drawable/sym_flat_keyboard_shift_pressed_unlocked_tech_blue" />
 
