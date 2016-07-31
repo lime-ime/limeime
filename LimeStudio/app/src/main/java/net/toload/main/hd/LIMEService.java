@@ -555,9 +555,11 @@ public class LIMEService extends InputMethodService implements
             Log.i(TAG, "initOnStartInput(): attribute.inputType & EditorInfo.TYPE_MASK_CLASS: "
                     + (attribute.inputType & EditorInfo.TYPE_MASK_CLASS) + "; attribute.inputType & EditorInfo.TYPE_MASK_VARIATION: "
                     + (attribute.inputType & EditorInfo.TYPE_MASK_VARIATION));
+
         if (mInputView == null) {
             return;
         }
+
 
         //Jeremy '12,5,29 override the fixCanddiateMode setting in Landscape mode (in landscape mode the candidate bar is always not fixed).
         boolean fixedCandidateMode = mLIMEPref.getFixedCandidateViewDisplay();
@@ -2922,11 +2924,12 @@ public class LIMEService extends InputMethodService implements
     @SuppressLint("InflateParams")
     private void initialViewAndSwitcher(boolean forceRecreate) {
         if (DEBUG)
-            Log.i(TAG, "initialViewAndSwitcher()");
+            Log.i(TAG, "initialViewAndSwitcher() mKeyboardThemeIndex = " + mKeyboardThemeIndex + ", mLIMEPref.getKeyboardTheme() = " + mLIMEPref.getKeyboardTheme());
 
+        boolean mForceRecreate = forceRecreate;
         if(mKeyboardThemeIndex != mLIMEPref.getKeyboardTheme()) {
             mKeyboardThemeIndex = mLIMEPref.getKeyboardTheme();
-            forceRecreate=true;
+            mForceRecreate=true;
             mThemeContext = null;
             if(mKeyboardSwitcher!=null) mKeyboardSwitcher.resetKeyboards(true);
         }
@@ -2939,7 +2942,7 @@ public class LIMEService extends InputMethodService implements
 
         if (mFixedCandidateViewOn) { //Have candidateview in InputView
             //Create inputView if it's null 
-            if (mCandidateInInputView == null || forceRecreate) {
+            if (mCandidateInInputView == null || mForceRecreate) {
 
                 mCandidateInInputView = (CandidateInInputViewContainer) LayoutInflater.from(mThemeContext).inflate(
                         R.layout.inputcandidate, null);
@@ -3596,9 +3599,9 @@ public class LIMEService extends InputMethodService implements
             new KeyboardTheme("Light",  0, R.style.LIMETheme_Light),
             new KeyboardTheme("Dark",   1, R.style.LIMETheme_Dark),
             new KeyboardTheme("Pink",   2, R.style.LIMETheme_Pink),
-            new KeyboardTheme("TechBlue",   2, R.style.LIMETheme_TechBlue),
-            new KeyboardTheme("FashionPurple",   2, R.style.LIMETheme_FashionPurple),
-            new KeyboardTheme("RelaxGreen",   2, R.style.LIMETheme_RelaxGreen),
+            new KeyboardTheme("TechBlue",   3, R.style.LIMETheme_TechBlue),
+            new KeyboardTheme("FashionPurple",   4, R.style.LIMETheme_FashionPurple),
+            new KeyboardTheme("RelaxGreen",   5, R.style.LIMETheme_RelaxGreen),
     };
 
     private int mKeyboardThemeIndex = -1;

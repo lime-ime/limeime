@@ -59,6 +59,8 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     private int mShiftState = SHIFT_OFF;
 
     private static final float SPACEBAR_DRAG_THRESHOLD = 0.6f;
+
+    private boolean mThemedIconLoaded = false;
     
     private static SlidingSpaceBarDrawable mSlidingSpaceBarIcon;
 
@@ -107,14 +109,18 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 
     public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, float keySizeScale, int showArrowKeys, int splitKeyboard ) {
         super(context, xmlLayoutResId, mode, keySizeScale, showArrowKeys, splitKeyboard);
+        if(DEBUG)
+            Log.i(TAG, "LIMEKeyboard()");
         mContext = context;
         mRes = context.getResources();
-
     }
 
 
 
     private void loadThemedIcons(Context context){
+
+        if(DEBUG)
+            Log.i(TAG, "loadThemedIcons()");
 
         TypedArray a = context.getTheme().obtainStyledAttributes(//R.style.LIMEKeyboardLight, R.styleable.LIMEKeyboard);
                 null, R.styleable.LIMEKeyboard, R.attr.LIMEKeyboardStyle, R.style.LIMEKeyboard);
@@ -140,11 +146,13 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 
 	@Override
     protected Key createKeyFromXml(Context context, Row parent, int x, int y, XmlResourceParser parser) {
+        if(DEBUG)
+            Log.i(TAG, "createKeyFromXml() mThemedIconLoaded = " + mThemedIconLoaded);
 
-        //Load themed resources once  ///Jeremy 15,7,14
-        if (!themedResourcesLoaded) {
+        if(!mThemedIconLoaded) {
+            // createKeyFromXml called from constructor of super and will be earlier of anything in constructor of this..  Jeremy '16,7,31
             loadThemedIcons(context);
-            themedResourcesLoaded = true;
+            mThemedIconLoaded = true;
         }
 
         Key key = new LIMEKey(context.getResources(), parent, x, y, parser);
@@ -152,11 +160,14 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         switch (key.codes[0]) {
             case KEYCODE_ENTER:
                 mEnterKey = key;
-                key.icon = mEnterKeyIcon;
+                if(mEnterKeyIcon!=null)
+                    key.icon = mEnterKeyIcon;
                 break;
             case KEYCODE_SPACE:
                 mSpaceKey = key;
-                key.icon = mSpaceKeyIcon;
+                if(mSpaceKeyIcon!=null)
+                    key.icon = mSpaceKeyIcon;
+                if(mSpaceKeyPreviewIcon!=null)
                     key.iconPreview = mSpaceKeyPreviewIcon;
                 break;
             case KEYCODE_DELETE:

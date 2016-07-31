@@ -206,15 +206,15 @@ public class LIMEKeyboardSwitcher {
     
     public void resetKeyboards(boolean forceCreate) {
     	if(DEBUG)
-    		Log.i(TAG, "makekeyboards(): forcereCreate:" + forceCreate);
-        if (forceCreate) mKeyboards.clear();
+    		Log.i(TAG, "resetKeyboards(): forceCreate:" + forceCreate);
+        if (forceCreate) clearKeyboards();
         // Configuration change is coming after the keyboard gets recreated. So don't rely on that.
         // If keyboards have already been made, check if we have a screen width change and 
         // create the keyboard layouts again at the correct orientation
         int displayWidth = mService.getMaxWidth();
         if (displayWidth != mLastDisplayWidth) {
         	mLastDisplayWidth = displayWidth;
-        	mKeyboards.clear();
+			clearKeyboards();
         }
      }
 
@@ -262,6 +262,8 @@ public class LIMEKeyboardSwitcher {
     	}
 	    if(id != null){
 	        if (!mKeyboards.containsKey(id)) {
+				if(DEBUG)
+					Log.i(TAG,"getKeyboard() keyboard for id, " + id + ", is not exist. create one now.");
 	        	LIMEKeyboard keyboard = new LIMEKeyboard(
 						mThemedContext, id.mXml, id.mMode, mKeySizeScale,
 	                mLIMEPref.getShowArrowKeys(), //Jeremy '12,5,21 add the show arrow keys option
@@ -284,12 +286,8 @@ public class LIMEKeyboardSwitcher {
     
     public void setKeyboardMode(String code, int mode, int imeOptions, boolean isIm, boolean isSymbol, boolean isShift) {
     	if(DEBUG){
-    		Log.i(TAG,"KBMODE code:"+code);
-    		Log.i(TAG,"KBMODE mode:"+mode);
-    		Log.i(TAG,"KBMODE imOptions:"+imeOptions);
-    		Log.i(TAG,"KBMODE isIM:"+isIm);
-    		Log.i(TAG,"KBMODE isSymbol:"+isSymbol);
-    		Log.i(TAG,"KBMODE isShift:"+isShift);
+    		Log.i(TAG,"setKeyboardMode () code:"+code + ", mode:"+mode + ", imOptions:"+imeOptions+ "" +
+					", isIM:"+isIm + ", isSymbol:"+isSymbol +", isShift:"+isShift);
     	}
     	imtype = code;
     	
