@@ -108,7 +108,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, float keySizeScale, int showArrowKeys, int splitKeyboard ) {
         super(context, xmlLayoutResId, mode, keySizeScale, showArrowKeys, splitKeyboard);
         mContext = context;
-        mRes = context.getResources();;
+        mRes = context.getResources();
 
     }
 
@@ -142,20 +142,21 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     protected Key createKeyFromXml(Context context, Row parent, int x, int y, XmlResourceParser parser) {
 
         //Load themed resources once  ///Jeremy 15,7,14
-        if (!themedResourcesLoaded) loadThemedIcons(context);
+        if (!themedResourcesLoaded) {
+            loadThemedIcons(context);
+            themedResourcesLoaded = true;
+        }
 
         Key key = new LIMEKey(context.getResources(), parent, x, y, parser);
         //Override function key icons from theme
         switch (key.codes[0]) {
             case KEYCODE_ENTER:
                 mEnterKey = key;
-                if (mEnterKey != null)
-                    key.icon = mEnterKeyIcon;
+                key.icon = mEnterKeyIcon;
                 break;
             case KEYCODE_SPACE:
                 mSpaceKey = key;
-                if (mSpaceKey != null)
-                    key.icon = mSpaceKeyIcon;
+                key.icon = mSpaceKeyIcon;
                     key.iconPreview = mSpaceKeyPreviewIcon;
                 break;
             case KEYCODE_DELETE:
@@ -189,7 +190,8 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     }
 
     public void setShiftLocked(boolean shiftLocked) {
-    	if(DEBUG) {Log.i("LIMEKeyboard", "setShiftLocked: "+ shiftLocked);};
+    	if(DEBUG)
+            Log.i("LIMEKeyboard", "setShiftLocked: "+ shiftLocked);
         if (mShiftKey != null) {
             if (shiftLocked) {
                 mShiftKey.on = true;
@@ -208,7 +210,8 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     
     @Override
     public boolean setShifted(boolean shiftState) {
-    	if(DEBUG) {Log.i("LIMEKeyboard", "setShifted: "+ shiftState);};
+    	if(DEBUG)
+            Log.i("LIMEKeyboard", "setShifted: "+ shiftState);
         boolean shiftChanged = false;
         if (mShiftKey != null) {
             if (!shiftState) {
@@ -306,9 +309,9 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
      * switching input languages.
      */
     boolean isInside(LIMEKey key, int x, int y) {
-    	if(DEBUG) Log.i(TAG, "isInside(), keycode = " + key.codes[0] + ". x=" + x + ". y="+y + 
-    				". mSpaceDragStartX=" + mSpaceDragStartX +
-    				". mSpaceDragLastDiff=" + mSpaceDragLastDiff);
+        if (DEBUG) Log.i(TAG, "isInside(), keycode = " + key.codes[0] + ". x=" + x + ". y=" + y +
+                ". mSpaceDragStartX=" + mSpaceDragStartX +
+                ". mSpaceDragLastDiff=" + mSpaceDragLastDiff);
         final int code = key.codes[0];
         if (code == KEYCODE_SHIFT ||
                 code == KEYCODE_DELETE) {
@@ -317,31 +320,30 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
             if (code == KEYCODE_DELETE) x -= key.width / 6;
         } else if (code == KEYCODE_SPACE) {
             y += LIMEKeyboard.mSpaceKeyVerticalCorrection;
-            
-                if (mCurrentlyInSpace) {
-                    int diff = x - mSpaceDragStartX;
-                    if (Math.abs(diff - mSpaceDragLastDiff) > 0) {
-                        updateSpacebarDrag(diff);
-                    }
-                    mSpaceDragLastDiff = diff;
-                    return true;
-                } else {
-                    boolean insideSpace = key.isInsideSuper(x, y);
-                    if (insideSpace) {
-                        mCurrentlyInSpace = true;
-                        mSpaceDragStartX = x;
-                        updateSpacebarDrag(0);
-                    }
-                    return insideSpace;
+
+            if (mCurrentlyInSpace) {
+                int diff = x - mSpaceDragStartX;
+                if (Math.abs(diff - mSpaceDragLastDiff) > 0) {
+                    updateSpacebarDrag(diff);
                 }
-               
-           
-        } 
+                mSpaceDragLastDiff = diff;
+                return true;
+            } else {
+                boolean insideSpace = key.isInsideSuper(x, y);
+                if (insideSpace) {
+                    mCurrentlyInSpace = true;
+                    mSpaceDragStartX = x;
+                    updateSpacebarDrag(0);
+                }
+                return insideSpace;
+            }
+
+
+        }
 
         // Lock into the spacebar
-        if (mCurrentlyInSpace) return false;
+        return !mCurrentlyInSpace && key.isInsideSuper(x, y);
 
-        return key.isInsideSuper(x, y);
     }
     
     void keyReleased() {
