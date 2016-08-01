@@ -49,7 +49,7 @@
                  android:dialogTitle="@string/keyboard_list" />-->
 
         <CheckBoxPreference
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:key="enable_emoji"
             android:summary="@string/enable_emoji_summary"
             android:title="@string/enable_emoji" />
