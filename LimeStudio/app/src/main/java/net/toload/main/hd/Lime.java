@@ -295,7 +295,7 @@ public class Lime {
 
     //public static final String DROPBOX_APP_KEY = "1a85ahrq8uh60r7";
     //public static final String DROPBOX_APP_SECRET = "l3yyjll7ef3vfb3";
-    public static final String DROPBOX_ACCESS_TOKEN = "DROPBOX_ACCESS_TOKEN";
+    public static final String DROPBOX_ACCESS_TOKEN = "DROPBOX_ACCESS_TOKEN_V2";
     public static final String DROPBOX_REQUEST_FLAG = "DROPBOX_REQUEST_FLAG";
 
     public static final String DEVICE = "device";

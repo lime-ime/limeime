@@ -65,6 +65,7 @@ dependencies {
     compile 'com.android.support:support-v4:24.1.1'
     compile 'com.google.android.gms:play-services:9.2.1'
     compile 'com.android.support:multidex:1.0.1'
+    compile 'com.dropbox.core:dropbox-core-sdk:2.0.6'
     compile files('libs/commons-logging-1.1.1.jar')
     compile files('libs/google-api-client-1.22.0.jar')
     compile files('libs/google-api-client-android-1.22.0.jar')

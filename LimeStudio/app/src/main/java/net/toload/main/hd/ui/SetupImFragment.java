@@ -52,9 +52,16 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.dropbox.client2.DropboxAPI;
+import com.dropbox.core.android.Auth;
+import com.dropbox.core.DbxHost;
+import com.dropbox.core.DbxRequestConfig;
+import com.dropbox.core.http.OkHttp3Requestor;
+import com.dropbox.core.v2.DbxClientV2;
+/*import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.session.AppKeyPair;
+*/
+
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 
@@ -108,9 +115,11 @@ public class SetupImFragment extends Fragment {
     static final int REQUEST_ACCOUNT_PICKER_BACKUP = 1;
     static final int REQUEST_ACCOUNT_PICKER_RESTORE = 2;*/
 
-    // Dropbox
-    DropboxAPI<AndroidAuthSession> mdbapi;
-    String dropboxAccessToken;
+    // Dropbox deprecated v1
+    //DropboxAPI<AndroidAuthSession> mdbapi;
+
+    private static DbxClientV2 sDbxClient;
+    private static String dropboxAccessToken;
 
     //Activate LIME IM
 
@@ -204,11 +213,25 @@ public class SetupImFragment extends Fragment {
 
     @Override
     public void onResume() {
-
         super.onResume();
 
         boolean dropboxrequest = mLIMEPref.getParameterBoolean(Lime.DROPBOX_REQUEST_FLAG, false);
 
+        if(dropboxrequest) {
+            String accessToken = mLIMEPref.getParameterString(Lime.DROPBOX_ACCESS_TOKEN, null);
+            if (accessToken == null) {
+                accessToken = Auth.getOAuth2Token();
+                if (accessToken != null) {
+                    mLIMEPref.setParameter(Lime.DROPBOX_ACCESS_TOKEN, accessToken);
+                    initDropboxClient(accessToken);
+                }
+            } else {
+                initDropboxClient(accessToken);
+            }
+        }
+
+
+        /*
         if (dropboxrequest && mdbapi != null && mdbapi.getSession().authenticationSuccessful()) {
             try {
                 // Required to complete auth, sets the access token on the session
@@ -228,6 +251,7 @@ public class SetupImFragment extends Fragment {
                 Log.i("DbAuthLog", "Error authenticating", e);
             }
         }
+        */
 
         // Reset DropBox Request
         mLIMEPref.setParameter(Lime.DROPBOX_REQUEST_FLAG, false);
@@ -899,6 +923,27 @@ public class SetupImFragment extends Fragment {
         mLIMEPref.setParameter(Lime.DROPBOX_TYPE, type);
         mLIMEPref.setParameter(Lime.DROPBOX_REQUEST_FLAG, true);
 
+        String accessToken = mLIMEPref.getParameterString(Lime.DROPBOX_ACCESS_TOKEN, null);
+        if (accessToken == null) {
+            accessToken = Auth.getOAuth2Token();
+            if (accessToken != null) {
+                mLIMEPref.setParameter(Lime.DROPBOX_ACCESS_TOKEN,accessToken);
+                DropboxClientFactory.init(accessToken);
+            }
+        } else {
+            DropboxClientFactory.init(accessToken);
+        }
+        try {
+            sDbxClient = DropboxClientFactory.getClient();
+        }catch (IllegalStateException e)
+        {
+
+
+        }
+
+
+
+        /*
         AppKeyPair appKeys = new AppKeyPair(Lime.DROPBOX_APP_KEY, Lime.DROPBOX_APP_SECRET);
         AndroidAuthSession session = new AndroidAuthSession(appKeys);
         mdbapi = new DropboxAPI<>(session);
@@ -919,6 +964,16 @@ public class SetupImFragment extends Fragment {
             }else{
                 mdbapi.getSession().startOAuth2Authentication(this.getActivity().getApplicationContext());
             }
+        }*/
+    }
+
+    public static void initDropboxClient(String accessToken) {
+        if (sDbxClient == null) {
+            DbxRequestConfig requestConfig = DbxRequestConfig.newBuilder("LIME-HD")
+                    .withHttpRequestor(OkHttp3Requestor.INSTANCE)
+                    .build();
+
+            sDbxClient = new DbxClientV2(requestConfig, accessToken);
         }
     }
 
@@ -982,37 +1037,6 @@ public class SetupImFragment extends Fragment {
 
         cancelProgress();
 
-        /*boolean check = datasource.checkBackuptable(imtype);
-        if(check){
 
-            AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
-            alertDialog.setTitle(activity.getResources().getString(R.string.setup_im_restore_learning_data));
-            alertDialog.setMessage(activity.getResources().getString(R.string.setup_im_restore_learning_data_message));
-            alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-
-                            showProgress(true, activity.getResources().getString(R.string.setup_im_restore_learning_data));
-
-                            new Thread() {
-
-                                @Override
-                                public void run() {
-                                    datasource.restoreUserRecords(imtype);
-                                    cancelProgress();
-                                }
-                            }.start();
-                        }
-                    });
-            alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                        }
-                    });
-            alertDialog.show();
-        }else{
-            handler.cancelProgress();
-        }*/
     }
 }
