@@ -228,6 +228,17 @@ public class SetupImFragment extends Fragment {
             } else {
                 initDropboxClient(accessToken);
             }
+
+            String type = mLIMEPref.getParameterString(Lime.DROPBOX_TYPE, null);
+            sDbxClient = DropboxClientFactory.getClient();
+            if(sDbxClient!= null) {
+
+                if (type != null && type.equals(Lime.BACKUP)) {
+                    backupDropboxDrive(sDbxClient);
+                } else if (type != null && type.equals(Lime.RESTORE)) {
+                    restoreDropboxDrive(sDbxClient);
+                }
+            }
         }
 
 
@@ -933,15 +944,16 @@ public class SetupImFragment extends Fragment {
         } else {
             DropboxClientFactory.init(accessToken);
         }
-        try {
-            sDbxClient = DropboxClientFactory.getClient();
-        }catch (IllegalStateException e)
-        {
 
+        sDbxClient = DropboxClientFactory.getClient();
+        if(sDbxClient!= null) {
 
+            if (type != null && type.equals(Lime.BACKUP)) {
+                backupDropboxDrive(sDbxClient);
+            } else if (type != null && type.equals(Lime.RESTORE)) {
+                restoreDropboxDrive(sDbxClient);
+            }
         }
-
-
 
         /*
         AppKeyPair appKeys = new AppKeyPair(Lime.DROPBOX_APP_KEY, Lime.DROPBOX_APP_SECRET);
@@ -977,12 +989,12 @@ public class SetupImFragment extends Fragment {
         }
     }
 
-    public void backupDropboxDrive(DropboxAPI mdbapi){
-        initialThreadTask(Lime.BACKUP, Lime.DROPBOX, mdbapi);
+    public void backupDropboxDrive(DbxClientV2 sDbxClient){
+        initialThreadTask(Lime.BACKUP, Lime.DROPBOX, sDbxClient);
     }
 
-    public void restoreDropboxDrive(DropboxAPI mdbapi){
-        initialThreadTask(Lime.RESTORE, Lime.DROPBOX, mdbapi);
+    public void restoreDropboxDrive(DbxClientV2 sDbxClient){
+        initialThreadTask(Lime.RESTORE, Lime.DROPBOX, sDbxClient);
     }
 
     public void backupLocalDrive(){
@@ -993,7 +1005,7 @@ public class SetupImFragment extends Fragment {
         initialThreadTask(Lime.RESTORE, Lime.LOCAL, null);
     }
 
-    public void initialThreadTask(String action, String type, DropboxAPI mdbapi) {
+    public void initialThreadTask(String action, String type, DbxClientV2 sDbxClient) {
 
         // Default Setting
         mLIMEPref.setParameter("dbtarget", Lime.DEVICE);
@@ -1002,13 +1014,13 @@ public class SetupImFragment extends Fragment {
             if(backupthread != null && backupthread.isAlive()){
                 handler.removeCallbacks(backupthread);
             }
-            backupthread = new Thread(new SetupImBackupRunnable(this, handler, type, mdbapi));
+            backupthread = new Thread(new SetupImBackupRunnable(this, handler, type, sDbxClient));
             backupthread.start();
         }else if(action.equals(Lime.RESTORE)){
             if(restorethread != null && restorethread.isAlive()){
                 handler.removeCallbacks(restorethread);
             }
-            restorethread = new Thread(new SetupImRestoreRunnable(this, handler, type, mdbapi));
+            restorethread = new Thread(new SetupImRestoreRunnable(this, handler, type, sDbxClient));
             restorethread.start();
         }
     }

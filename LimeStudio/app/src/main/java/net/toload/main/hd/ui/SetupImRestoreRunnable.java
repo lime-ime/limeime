@@ -33,6 +33,7 @@ import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.exception.DropboxException;
 import com.dropbox.client2.exception.DropboxServerException;
 import com.dropbox.client2.exception.DropboxUnlinkedException;
+import com.dropbox.core.v2.DbxClientV2;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.services.drive.Drive;
@@ -65,14 +66,14 @@ public class SetupImRestoreRunnable implements Runnable {
     //private GoogleAccountCredential credential;
 
     // Dropbox
-    private DropboxAPI<AndroidAuthSession> mdbapi;
+    private DbxClientV2 sDbxClient;
     private FileOutputStream mFos;
     private boolean mCanceled;
 
-    public SetupImRestoreRunnable(SetupImFragment fragment, SetupImHandler handler, String type, DropboxAPI mdbapi) {
+    public SetupImRestoreRunnable(SetupImFragment fragment, SetupImHandler handler, String type, DbxClientV2 sDbxClient)  {
         this.mHandler = handler;
         this.mType = type;
-        this.mdbapi = mdbapi;
+        this.sDbxClient = sDbxClient;
         this.mFragment = fragment;
         this.SearchSrv = new SearchServer(this.mFragment.getActivity());
         this.mLIMEPref = new LIMEPreferenceManager(this.mFragment.getActivity());
@@ -107,7 +108,7 @@ public class SetupImRestoreRunnable implements Runnable {
                 File tempFile = new File(LIME.LIME_SDCARD_FOLDER + File.separator + LIME.DATABASE_CLOUD_TEMP);
                 tempFile.deleteOnExit();
 
-                restoreFromDropbox download = new restoreFromDropbox(mHandler, mFragment, mdbapi, LIME.DATABASE_BACKUP_NAME, tempFile);
+                restoreFromDropbox download = new restoreFromDropbox(mHandler, mFragment, sDbxClient, LIME.DATABASE_BACKUP_NAME, tempFile);
                 download.execute();
                 break;
         }
@@ -222,7 +223,7 @@ public class SetupImRestoreRunnable implements Runnable {
 
         private SetupImHandler mHandler;
         private SetupImFragment mFragment;
-        private DropboxAPI<?> mApi;
+        private DbxClientV2 mDbxClient;
         private String mPath;
         private File mFile;
 
@@ -230,12 +231,12 @@ public class SetupImRestoreRunnable implements Runnable {
         private String mErrorMsg;
 
 
-        public restoreFromDropbox(SetupImHandler handler, SetupImFragment fragment, DropboxAPI<?> api, String backupFile, File tempfile) {
+        public restoreFromDropbox(SetupImHandler handler, SetupImFragment fragment, DbxClientV2 mDbxClient, String backupFile, File tempfile) {
             // We set the context this way so we don't accidentally leak activities
 
             mHandler =handler;
             mFragment = fragment;
-            mApi = api;
+            mDbxClient = mDbxClient;
             mPath = backupFile;
             mFile = tempfile;
 
@@ -253,6 +254,7 @@ public class SetupImRestoreRunnable implements Runnable {
                 // mOutputStream is class level field.
                 mFos = new FileOutputStream(mFile);
                 //DropboxFileInfo info =
+                /*
                 mApi.getFile(mPath, null, mFos, new ProgressListener() {
 
                     @Override
@@ -270,7 +272,7 @@ public class SetupImRestoreRunnable implements Runnable {
                         }
                     }
                 });
-
+*/
 
             } catch (FileNotFoundException e) {
                 //Log.e("DbExampleLog", "File not found.");

@@ -35,6 +35,11 @@ import com.dropbox.client2.exception.DropboxFileSizeException;
 import com.dropbox.client2.exception.DropboxPartialFileException;
 import com.dropbox.client2.exception.DropboxServerException;
 import com.dropbox.client2.exception.DropboxUnlinkedException;
+import com.dropbox.core.DbxException;
+import com.dropbox.core.v2.DbxClientV2;
+import com.dropbox.core.v2.files.FileMetadata;
+import com.dropbox.core.v2.files.UploadErrorException;
+import com.dropbox.core.v2.files.WriteMode;
 
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
@@ -43,6 +48,7 @@ import net.toload.main.hd.R;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class SetupImBackupRunnable implements Runnable {
 
@@ -54,14 +60,14 @@ public class SetupImBackupRunnable implements Runnable {
     //private GoogleAccountCredential mCredential;
 
     // Dropbox
-    private DropboxAPI mdbapi;
+    private DbxClientV2 sDbxClient;
     private DropboxAPI.UploadRequest mRequest;
 
-    public SetupImBackupRunnable(SetupImFragment fragment, SetupImHandler handler, String type, DropboxAPI mdbapi) {
+    public SetupImBackupRunnable(SetupImFragment fragment, SetupImHandler handler, String type, DbxClientV2 sDbxClient) {
         //this.mCredential = credential;
         this.mHandler = handler;
         this.mType = type;
-        this.mdbapi = mdbapi;
+        this.sDbxClient = sDbxClient;
         this.mFragment = fragment;
     }
 
@@ -92,7 +98,7 @@ public class SetupImBackupRunnable implements Runnable {
 
                 File sourcefile = new File(Lime.DATABASE_FOLDER_EXTERNAL + Lime.DATABASE_BACKUP_NAME);
                 mHandler.setProgressIndeterminate(false);
-                backupToDropbox upload = new backupToDropbox(mHandler, mFragment, mdbapi, "", sourcefile);
+                backupToDropbox upload = new backupToDropbox(mHandler, mFragment, sDbxClient, "", sourcefile);
                 upload.execute();
                 break;
             }
@@ -106,7 +112,7 @@ public class SetupImBackupRunnable implements Runnable {
 
     private class backupToDropbox extends AsyncTask< Void, Long, Boolean> {
 
-        private DropboxAPI<?> mApi;
+        private DbxClientV2 mDbxClient;
         private String mPath;
         private File mFile;
 
@@ -119,11 +125,11 @@ public class SetupImBackupRunnable implements Runnable {
 
 
 
-        public backupToDropbox(SetupImHandler handler, SetupImFragment fragment, DropboxAPI<?> api, String dropboxPath, File file) {
+        public backupToDropbox(SetupImHandler handler, SetupImFragment fragment, DbxClientV2 sDbxClient, String dropboxPath, File file) {
 
 
             mFileLen = file.length();
-            mApi = api;
+            mDbxClient = sDbxClient;
             mPath = dropboxPath;
             mFile = file;
             mHandler = handler;
@@ -141,59 +147,19 @@ public class SetupImBackupRunnable implements Runnable {
                 // so we can cancel it later if we want to
                 FileInputStream fis = new FileInputStream(mFile);
                 String path = mPath + mFile.getName();
-                mRequest = mApi.putFileOverwriteRequest(path, fis, mFile.length(),
-                        new ProgressListener() {
+                //mRequest = mApi.putFileOverwriteRequest(path, fis, mFile.length(),
+                FileMetadata metaData = mDbxClient.files().uploadBuilder(path)
+                        .withMode(WriteMode.OVERWRITE)
+                        .uploadAndFinish(fis);
 
-                            @Override
-                            public void onProgress(long bytes, long total) {
-                                publishProgress(bytes);
-                            }
-                        });
-
-                if (mRequest != null) {
-                    mRequest.upload();
+                if (metaData != null) {
                     return true;
                 }
 
-            } catch (DropboxUnlinkedException e) {
-                // This session wasn't authenticated properly or user unlinked
-                //mErrorMsg = "This app wasn't authenticated properly.";
-                //mErrorMsg = mContext.getText(R.string.l3_initial_dropbox_authetication_failed).toString();
-                mHandler.showToastMessage(mFragment.getText(R.string.l3_initial_dropbox_authetication_failed).toString(), Toast.LENGTH_LONG);
-            } catch (DropboxFileSizeException e) {
-                // File size too big to upload via the API
-                //mErrorMsg = "This file is too big to upload";
-                mHandler.showToastMessage(mFragment.getText(R.string.l3_initial_dropbox_large).toString(), Toast.LENGTH_LONG);
-
-            } catch (DropboxPartialFileException e) {
-                // We canceled the operation
-                mErrorMsg = "Upload canceled";
-
-            } catch (DropboxServerException e) {
-                // Server-side exception.  These are examples of what could happen,
-                // but we don't do anything special with them here.
-                //if (e.error == DropboxServerException._401_UNAUTHORIZED) {
-                    // Unauthorized, so we should unlink them.  You may want to
-                    // automatically log the user out in this case.
-                //} else if (e.error == DropboxServerException._403_FORBIDDEN) {
-                    // Not allowed to access this
-                //} else if (e.error == DropboxServerException._404_NOT_FOUND) {
-                    // path not found (or if it was the thumbnail, can't be
-                    // thumbnailed)
-                //} else if (e.error == DropboxServerException._507_INSUFFICIENT_STORAGE) {
-                    // user is over quota
-                //} else {
-                    // Something else
-                //}
-                // This gets the Dropbox error, translated into the user's language
-                mErrorMsg = e.body.userError;
-                if (mErrorMsg == null) {
-                    mErrorMsg = e.body.error;
-                }
-            } catch (DropboxException | FileNotFoundException e) {
-                // Unknown error
-                //mErrorMsg = "Unknown error.  Try again.";
+            } catch (DbxException | IOException e) {
                 mErrorMsg = mFragment.getText(R.string.l3_initial_dropbox_failed).toString();
+                e.printStackTrace();
+
             }
             return false;
         }
