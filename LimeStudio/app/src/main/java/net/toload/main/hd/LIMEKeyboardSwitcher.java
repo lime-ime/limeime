@@ -62,9 +62,9 @@ public class LIMEKeyboardSwitcher {
     public static final int IM_KEYBOARD = 0;
     
 
-    private static final int SYMBOLS_MODE_STATE_NONE = 0;
-    private static final int SYMBOLS_MODE_STATE_BEGIN = 1;
-    private static final int SYMBOLS_MODE_STATE_SYMBOL = 2;
+    private static final int SYMBOLS_KEYBOARD_1 = 1;
+    private static final int SYMBOLS_KEYBOARD_2 = 2;
+    private static final int SYMBOLS_KEYBOARD_3 = 3;
 
     LIMEKeyboardView mInputView;
     LIMEService mService;
@@ -86,7 +86,7 @@ public class LIMEKeyboardSwitcher {
     private boolean mIsChinese=true;
     private boolean mIsAlphabet=false;
     private boolean mPreferSymbols;
-    private int mSymbolsModeState = SYMBOLS_MODE_STATE_NONE;
+    private int mCurrentSymbolsKeyboard = SYMBOLS_KEYBOARD_1;
 
     private int mLastDisplayWidth;
     
@@ -321,8 +321,6 @@ public class LIMEKeyboardSwitcher {
 			kobj.setImshiftkb("lime_wb");
 			kobj.setEngkb("lime_abc");
 			kobj.setEngshiftkb("lime_abc_shift");
-			kobj.setSymbolkb("symbols");
-			kobj.setSymbolshiftkb("symbols_shift");
 		}else if(imcode.equals("hs")){
     		// Art 7/Feb/2012 HS Input Method
     		kobj = new KeyboardObj();
@@ -335,9 +333,7 @@ public class LIMEKeyboardSwitcher {
 			kobj.setImshiftkb("lime_hs_shift");
 			kobj.setEngkb("lime_abc");
 			kobj.setEngshiftkb("lime_abc_shift");
-			kobj.setSymbolkb("symbols");
-			kobj.setSymbolshiftkb("symbols_shift");
-		}else{
+			}else{
         	if(kbHm!=null) kobj=kbHm.get(imcode);
 		}
     	
@@ -347,13 +343,19 @@ public class LIMEKeyboardSwitcher {
 
             mIsChinese = false;
             if(isSymbol){
-        		if(isShift){
-	            	//Log.i("ART","KBMODE ->: " + kobj.getExtendedshiftkb());
-                	kid = new KeyboardId(getKeyboardXMLID(kobj.getSymbolshiftkb()), 0, true );
-        		}else{
-	            	//Log.i("ART","KBMODE ->: " + kobj.getExtendedkb());
-                	kid = new KeyboardId(getKeyboardXMLID(kobj.getSymbolkb()), 0, true );
-        		}
+				switch(mCurrentSymbolsKeyboard) {
+					case SYMBOLS_KEYBOARD_1:
+					default:
+						kid = new KeyboardId(getKeyboardXMLID("symbols1"));
+						break;
+					case SYMBOLS_KEYBOARD_2:
+						kid = new KeyboardId(getKeyboardXMLID("symbols2"));
+						break;
+					case SYMBOLS_KEYBOARD_3:
+						kid = new KeyboardId(getKeyboardXMLID("symbols3"));
+						break;
+				}
+
             }else{
             	switch (mode) {
 	            case MODE_PHONE:
@@ -521,16 +523,36 @@ public class LIMEKeyboardSwitcher {
    public void toggleSymbols() {
     	mIsSymbols = !mIsSymbols;
 
+	   if(mIsSymbols)
+		   mCurrentSymbolsKeyboard = SYMBOLS_KEYBOARD_1; // reset to first  symbol keyboard
+
     	if(mIsChinese)
         	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, false);
     	else
         	this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, false);
-        if (mIsSymbols && !mPreferSymbols) {
-            mSymbolsModeState = SYMBOLS_MODE_STATE_BEGIN;
-        } else {
-            mSymbolsModeState = SYMBOLS_MODE_STATE_NONE;
-        }
+
     }
+	public void switchSymbols() {
+		switch (mCurrentSymbolsKeyboard){
+			case SYMBOLS_KEYBOARD_1:
+			default:
+				mCurrentSymbolsKeyboard = SYMBOLS_KEYBOARD_2;
+				break;
+			case SYMBOLS_KEYBOARD_2:
+				mCurrentSymbolsKeyboard = SYMBOLS_KEYBOARD_3;
+				break;
+			case SYMBOLS_KEYBOARD_3:
+				mCurrentSymbolsKeyboard = SYMBOLS_KEYBOARD_1;
+				break;
+
+		}
+		if(mIsChinese)
+			this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, false);
+		else
+			this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, false);
+
+
+	}
     public boolean isChinese(){
     	return mIsChinese;
     }
@@ -540,25 +562,7 @@ public class LIMEKeyboardSwitcher {
     public boolean isShifted(){
     	return mIsShifted;
     }
-    /**
-     * Updates state machine to figure out when to automatically switch back to alpha mode.
-     * Returns true if the keyboard needs to switch back 
-     */
-    public boolean onKey(int key) {
-        // Switch back to alpha mode if user types one or more non-space/enter characters
-        // followed by a space/enter
-        switch (mSymbolsModeState) {
-            case SYMBOLS_MODE_STATE_BEGIN:
-                if (key != LIMEService.MY_KEYCODE_SPACE && key != LIMEService.MY_KEYCODE_ENTER && key > 0) {
-                    mSymbolsModeState = SYMBOLS_MODE_STATE_SYMBOL;
-                }
-                break;
-            case SYMBOLS_MODE_STATE_SYMBOL:
-                if (key == LIMEService.MY_KEYCODE_ENTER || key == LIMEService.MY_KEYCODE_SPACE) return true;
-                break;
-        }
-        return false;
-    }
+
 
 	public static LIMEKeyboardSwitcher getInstance() {
 		// TODO Auto-generated method stub

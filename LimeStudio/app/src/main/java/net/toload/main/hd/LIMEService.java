@@ -86,8 +86,10 @@ public class LIMEService extends InputMethodService implements
 
     private static Thread queryThread; // queryThread for no-blocking I/O  Jeremy '15,6,1
 
-    static final int KEYBOARD_SWITCH_CODE = -9;
-    static final int KEYBOARD_SWITCH_IM_CODE = -10;
+    static final int KEYCODE_SWITCH_TO_SYMBOL_MODE = -2;
+    static final int KEYCODE_SWITCH_TO_ENGLISH_MODE = -9;
+    static final int KEYCODE_SWITCH_TO_IM_MODE = -10;
+    static final int KEYCODE_SWITCH_SYMBOL_KEYBOARD = -15;
 
     //Jeremy '16,7,22 To control delayed hiding candidate view and avoid hide and show candidate view in short time.
     private static final int DELAY_BEFORE_HIDE_CANDIDATE_VIEW = 200;
@@ -1194,7 +1196,7 @@ public class LIMEService extends InputMethodService implements
                 }
             }
             if ((mComposing == null || mComposing.length() == 0)) {
-                // Jeremy '11,8,21.  Ctrl-/ to fetch full-shaped chinese symbols in candidateview.
+                // Jeremy '11,8,21.  Ctrl-/ to fetch full-shaped chinese symbols1 in candidateview.
                 if (t == '/') {
                     if (hasMenuPress) hasMenuProcessed = true;
                     updateChineseSymbol();
@@ -1498,7 +1500,7 @@ public class LIMEService extends InputMethodService implements
                                 if (DEBUG)
                                     Log.i(TAG, "commitTyped(): new mComposing:'" + mComposing + "'");
                                 if (mComposing.length() > 0) { //Jeremy '12,7,11 only fetch remaining composing when length >0
-                                    if (ic != null) ic.setComposingText(mComposing, 1);
+                                    if (ic != null && mPredictionOn) ic.setComposingText(mComposing, 1);
                                     shouldUpdateCandidates = true;
                                 }
                             }
@@ -1704,16 +1706,18 @@ public class LIMEService extends InputMethodService implements
             handleOptions();
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_SPACE_LONGPRESS) {
             showIMPicker();
-        } else if (primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE && mInputView != null) { //->symbol keyboard
+        } else if (primaryCode == KEYCODE_SWITCH_TO_SYMBOL_MODE && mInputView != null) { //->symbol keyboard
+            switchKeyboard(primaryCode);
+        } else if (primaryCode == KEYCODE_SWITCH_SYMBOL_KEYBOARD && mInputView != null) { //->switch symbols1 keyboards
             switchKeyboard(primaryCode);
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_NEXT_IM) {
             switchToNextActivatedIM(true);
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_PREV_IM) {
             switchToNextActivatedIM(false);
-        } else if (primaryCode == KEYBOARD_SWITCH_CODE && mInputView != null) { //chi->eng
+        } else if (primaryCode == KEYCODE_SWITCH_TO_ENGLISH_MODE && mInputView != null) { //chi->eng
             switchKeyboard(primaryCode);
             // Jeremy '11,5,31 Rewrite softkeybaord enter/space and english separator processing.
-        } else if (primaryCode == KEYBOARD_SWITCH_IM_CODE && mInputView != null) { //eng -> chi
+        } else if (primaryCode == KEYCODE_SWITCH_TO_IM_MODE && mInputView != null) { //eng -> chi
             switchKeyboard(primaryCode);
         } else if ( //Jeremy '12,7,1 bug fixed on enter not functioning in english mode
                 ((primaryCode == MY_KEYCODE_SPACE && !mEnglishOnly && !activeIM.equals("phonetic"))
@@ -2193,7 +2197,7 @@ public class LIMEService extends InputMethodService implements
                     mComposing = new StringBuilder();
                     mComposing.append(keyString);
                     InputConnection ic = getCurrentInputConnection();
-                    ic.setComposingText(keyString, 1);
+                    if(ic!=null && mPredictionOn) ic.setComposingText(keyString, 1);
                 }
             }
 
@@ -2680,7 +2684,7 @@ public class LIMEService extends InputMethodService implements
                 if (hasPhysicalKeyPressed) {
                     // cancel the current composing first before closing soft keyboard and switched to physical keyboarding typing.
                     InputConnection ic = getCurrentInputConnection();
-                    if (ic != null) ic.setComposingText("", 0);
+                    if (ic != null && mPredictionOn) ic.setComposingText("", 0);
                     mInputView.closing();
                     requestHideSelf(0);
                     // preserved the last character typed with physical keyboard in composing
@@ -2688,7 +2692,7 @@ public class LIMEService extends InputMethodService implements
                         mComposing.delete(0, mComposing.length()-1);
                     updateCandidates();
                 }
-            } else if (mFixedCandidateViewOn && !hasPhysicalKeyPressed &&
+            } else if((mFixedCandidateViewOn || !hasPhysicalKeyPressed ) &&
                     mCandidateView != mCandidateViewInInputView) {
                 mCandidateViewStandAlone.clear();
                 hideCandidateView();
@@ -2708,18 +2712,10 @@ public class LIMEService extends InputMethodService implements
                     if (suggestions.size() > 1 && suggestions.get(1).isExactMatchToCodeRecord()) {
                         selectedCandidate = suggestions.get(1);
                         //selectedIndex = 1;
-                        // this is for no exact match condition with code.  //do not set default suggestion for other record type like chinese punctuation symbols or related phrases. Jeremy '15,6,4
+                        // this is for no exact match condition with code.  //do not set default suggestion for other record type like chinese punctuation symbols1 or related phrases. Jeremy '15,6,4
                     } else if (suggestions.size() > 0) {
-                            //&& (suggestions.get(0).isComposingCodeRecord() || suggestions.get(0).isRuntimeBuiltPhraseRecord())) {
-/*
-                        int seloption = mLIMEPref.getSelkeyOption();
-                        if(seloption > 0 && suggestions.size() > seloption){
-                            selectedCandidate = suggestions.get(seloption);
-                            selectedIndex = seloption;
-                        }else{*/
                             selectedCandidate = suggestions.get(0);
-                            //selectedIndex = 0;
-                        //}
+
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -2748,7 +2744,7 @@ public class LIMEService extends InputMethodService implements
         InputConnection ic = getCurrentInputConnection();
         if (length > 1) {
             mComposing.delete(length - 1, length);
-            if (ic != null) ic.setComposingText(mComposing, 1);
+            if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
             updateCandidates();
         } else if (length == 1) {
             //Jeremy '12,4, 21 force clear the last characacter in composing
@@ -2856,13 +2852,20 @@ public class LIMEService extends InputMethodService implements
         hideCandidateView();
 
 
-        if (primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE) { //Symbol keyboard
+        if (primaryCode == KEYCODE_SWITCH_TO_SYMBOL_MODE) { //Symbol keyboard
             mEnglishOnly = true;
             mKeyboardSwitcher.toggleSymbols();
-            if(mFixedCandidateViewOn) {
+            if (mFixedCandidateViewOn) {
                 forceHideCandidateView();
             }
-        } else if (primaryCode == KEYBOARD_SWITCH_CODE) { //Chi --> Eng
+        }
+        else if (primaryCode == KEYCODE_SWITCH_SYMBOL_KEYBOARD) { //Symbol keyboard
+                mEnglishOnly = true;
+                mKeyboardSwitcher.switchSymbols();
+                if(mFixedCandidateViewOn) {
+                    forceHideCandidateView();
+                }
+        } else if (primaryCode == KEYCODE_SWITCH_TO_ENGLISH_MODE) { //Chi --> Eng
             mEnglishOnly = true;
             mLIMEPref.setLanguageMode(true);
             mKeyboardSwitcher.toggleChinese();
@@ -2873,7 +2876,7 @@ public class LIMEService extends InputMethodService implements
                     mCandidateViewInInputView.setSuggestions(null, false);  // reset the candidate view if it's force hided before
                 }
             }
-        } else if (primaryCode == KEYBOARD_SWITCH_IM_CODE) { //Eng --> Chi moved from SwitchKeyboardIM by Jeremy '12,4,29
+        } else if (primaryCode == KEYCODE_SWITCH_TO_IM_MODE) { //Eng --> Chi moved from SwitchKeyboardIM by Jeremy '12,4,29
             mEnglishOnly = false;
             mLIMEPref.setLanguageMode(false);
             initialIMKeyboard();
@@ -3039,7 +3042,7 @@ public class LIMEService extends InputMethodService implements
                         LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
                 break;
             case "array":
-                hasNumberMapping = true; //Jeremy '12,4,28 array 30 actually use number combination keys to enter symbols
+                hasNumberMapping = true; //Jeremy '12,4,28 array 30 actually use number combination keys to enter symbols1
 
                 hasSymbolMapping = true;
                 mKeyboardSwitcher.setKeyboardMode(activeIM,
@@ -3192,7 +3195,7 @@ public class LIMEService extends InputMethodService implements
             if ((!hasSymbolMapping) && (primaryCode == ',' || primaryCode == '.')) { // Chinese , and . processing //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                 mComposing.append((char) primaryCode);
                 //InputConnection ic=getCurrentInputConnection();
-                if (ic != null) ic.setComposingText(mComposing, 1);
+                if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
                 updateCandidates();
                 //misMatched = mComposing.toString();
             } else if (!hasSymbolMapping && !hasNumberMapping  //Jeremy '11,10.19 fixed to bypass number key in et26 and hsu
@@ -3202,7 +3205,7 @@ public class LIMEService extends InputMethodService implements
                 //Log.i(TAG,"handlecharacter(), onIM and no number and no symbol mapping");
                 mComposing.append((char) primaryCode);
                 //InputConnection ic=getCurrentInputConnection();
-                if (ic != null) ic.setComposingText(mComposing, 1);
+                if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
                 updateCandidates();
                 //misMatched = mComposing.toString();
             } else if (!hasSymbolMapping
@@ -3211,7 +3214,7 @@ public class LIMEService extends InputMethodService implements
                     && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                 mComposing.append((char) primaryCode);
                 //InputConnection ic=getCurrentInputConnection();
-                if (ic != null) ic.setComposingText(mComposing, 1);
+                if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
                 updateCandidates();
                 //misMatched = mComposing.toString();
             } else if (hasSymbolMapping
@@ -3221,7 +3224,7 @@ public class LIMEService extends InputMethodService implements
                     && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                 mComposing.append((char) primaryCode);
                 //InputConnection ic=getCurrentInputConnection();
-                if (ic != null) ic.setComposingText(mComposing, 1);
+                if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
                 updateCandidates();
                 //misMatched = mComposing.toString();
             } else if (hasSymbolMapping && !hasNumberMapping && activeIM.equals("array")
@@ -3233,7 +3236,7 @@ public class LIMEService extends InputMethodService implements
                 // if first previous character is w and second char is number then enable im mode.
                 mComposing.append((char) primaryCode);
                 //InputConnection ic=getCurrentInputConnection();
-                if (ic != null) ic.setComposingText(mComposing, 1);
+                if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
                 updateCandidates();
                 //misMatched = mComposing.toString();
             } else if (hasSymbolMapping
@@ -3243,7 +3246,7 @@ public class LIMEService extends InputMethodService implements
                     || isValidLetter(primaryCode) || isValidDigit(primaryCode)) && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                 mComposing.append((char) primaryCode);
                 //InputConnection ic=getCurrentInputConnection();
-                if (ic != null) ic.setComposingText(mComposing, 1);
+                if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
                 updateCandidates();
                 //misMatched = mComposing.toString();
 
@@ -3415,9 +3418,7 @@ public class LIMEService extends InputMethodService implements
         }
 
         if (currentSoftKeyboard.contains("wb")) {
-            if (ic != null) {
-                ic.setComposingText("", 0);
-            }
+            if(ic!=null && mPredictionOn)   ic.setComposingText("", 0);
         }
 
     }

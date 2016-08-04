@@ -449,9 +449,7 @@ public class SetupImLoadRunnable implements Runnable{
             kobj.setImshiftkb("lime_wb");
             kobj.setEngkb("lime_abc");
             kobj.setEngshiftkb("lime_abc_shift");
-            kobj.setSymbolkb("symbols");
-            kobj.setSymbolshiftkb("symbols_shift");
-        }else if(keyboard.equals("hs")){
+         }else if(keyboard.equals("hs")){
             kobj = new KeyboardObj();
             kobj.setCode("hs");
             kobj.setName("華象直覺");
@@ -462,9 +460,7 @@ public class SetupImLoadRunnable implements Runnable{
             kobj.setImshiftkb("lime_hs_shift");
             kobj.setEngkb("lime_abc");
             kobj.setEngshiftkb("lime_abc_shift");
-            kobj.setSymbolkb("symbols");
-            kobj.setSymbolshiftkb("symbols_shift");
-        }
+         }
 
         return kobj;
     }

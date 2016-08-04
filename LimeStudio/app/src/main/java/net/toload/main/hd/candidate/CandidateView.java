@@ -1133,7 +1133,7 @@ public class CandidateView extends View implements View.OnClickListener {
                     //}
 
                 } else {
-                    // no default selection for related phrase, chinese punctuation symbols and English suggestions  Jeremy '15,6,4
+                    // no default selection for related phrase, chinese punctuation symbols1 and English suggestions  Jeremy '15,6,4
                     mSelectedIndex = -1;
                 }
             } else {
