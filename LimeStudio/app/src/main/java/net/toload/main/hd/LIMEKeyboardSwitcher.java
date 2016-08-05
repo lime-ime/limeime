@@ -293,6 +293,8 @@ public class LIMEKeyboardSwitcher {
     	
     	// Jeremy '11,6,2.  Has to preserve these options for toggle keyboard controls.
     	mImeOptions = imeOptions;
+		if(isSymbol && !mIsSymbols)
+			mCurrentSymbolsKeyboard = SYMBOLS_KEYBOARD_1;  //reset the symbol keyboard to first one if it's switching from non-symbol keyboards
     	mIsSymbols = isSymbol;
     	mIsShifted = isShift;
     	if(mode!=0) mMode = mode;
@@ -521,15 +523,11 @@ public class LIMEKeyboardSwitcher {
     }
     
    public void toggleSymbols() {
-    	mIsSymbols = !mIsSymbols;
-
-	   if(mIsSymbols)
-		   mCurrentSymbolsKeyboard = SYMBOLS_KEYBOARD_1; // reset to first  symbol keyboard
 
     	if(mIsChinese)
-        	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, false);
+        	this.setKeyboardMode(imtype, 0, mImeOptions, true, !mIsSymbols, false);
     	else
-        	this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, false);
+        	this.setKeyboardMode(imtype, mMode, mImeOptions, false, !mIsSymbols, false);
 
     }
 	public void switchSymbols() {
