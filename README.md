@@ -11,8 +11,12 @@ LIME中文輸入法Facebook粉絲專頁 http://facebook.com/limeime/
 LIME 使用與操作說明 http://netkidz.net/blog/ http://goo.gl/vtW1F
 
 Core Development Team
+
 jrywjwu@gmail.com - Jeremy Wu
-
 netkidz@gmail.com - Julian Chen
-
 hosoyu@gmail.com - Art Hung
+
+隱私權與安全性
+
+LIMEIME 提供 Google 空間雲端備份所以於應用程式中含有 android.permission.GET_ACCOUNTS 權限, 此為存取雲端空間的必要權限。本應用程式並不會搜集或分享使用者的個人資訊或應用為其他的目地。
+
