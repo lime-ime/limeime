@@ -230,7 +230,7 @@ public class LIMEService extends InputMethodService implements
     public LIMEService(){
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                mIsHardwareAcceleratedDrawingEnabled = this.enableHardwareAcceleration();
+                mIsHardwareAcceleratedDrawingEnabled = true;// this.enableHardwareAcceleration();
             }
 
         }
@@ -1345,7 +1345,7 @@ public class LIMEService extends InputMethodService implements
                     setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
                     return true;
                     // Long press physical @ key to swtich chn/eng 
-                } else if (((mEnglishOnly && mPredictionOn) || (!mEnglishOnly))
+                } else if ((!mEnglishOnly || mPredictionOn)
                         && translateKeyDown(keyCode, event)) {
                     return true;
                 } else {
@@ -1355,7 +1355,7 @@ public class LIMEService extends InputMethodService implements
                 break;
 
             case KeyEvent.KEYCODE_SPACE:
-                //Jeremy move the chi/eng swithcing to on_KEY_UP '11,6,18
+                //Jeremy move the chi/eng switching to on_KEY_UP '11,6,18
 
                 if (!spaceKeyPress && lastKeyCtrl) { //missing space down event when ctrl-space is pressed
                     this.switchChiEng();
@@ -1871,6 +1871,7 @@ public class LIMEService extends InputMethodService implements
 
         mOptionsDialog = builder.create();
         Window window = mOptionsDialog.getWindow();
+        assert window != null;
         WindowManager.LayoutParams lp = window.getAttributes();
         lp.token = mInputView.getWindowToken();
         lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
@@ -2430,6 +2431,7 @@ public class LIMEService extends InputMethodService implements
 
                                 if ((suggestions != null ? suggestions.size() : 0) > 0) {
                                     list.add(self);
+                                    assert suggestions != null;
                                     list.addAll(suggestions);
 
                                     // Setup sel key display if
@@ -2632,7 +2634,7 @@ public class LIMEService extends InputMethodService implements
         private final int MSG_SHOW_CANDIDATE_VIEW = 1;
         private final int MSG_HIDE_CANDIDATE_VIEW = 2;
 
-        public CandidateViewHandler(LIMEService im){
+        CandidateViewHandler(LIMEService im){
             mLIMEService = new WeakReference<>(im);
         }
         @Override
@@ -2649,17 +2651,17 @@ public class LIMEService extends InputMethodService implements
                     break;
             }
         }
-        public void showCandidateView()
+        void showCandidateView()
         {
             removeMessages(MSG_HIDE_CANDIDATE_VIEW);  //cancel previous hide messages if any
             sendMessage(obtainMessage(MSG_SHOW_CANDIDATE_VIEW));
         }
-        public void hideCandidateView()
+        void hideCandidateView()
         {
             sendMessage(obtainMessage(MSG_HIDE_CANDIDATE_VIEW));
         }
 
-        public void hideCandidateViewDelayed(int delay)
+        void hideCandidateViewDelayed(int delay)
         {
             sendMessageDelayed(obtainMessage(MSG_HIDE_CANDIDATE_VIEW),delay);
         }
@@ -3586,11 +3588,11 @@ public class LIMEService extends InputMethodService implements
 
     }
 
-    static class KeyboardTheme {
-        public final String mName;
-        public final int mThemeId;
-        public final int mStyleId;
-        public KeyboardTheme(String name, int themeId, int styleId) {
+    private static class KeyboardTheme {
+        final String mName;
+        final int mThemeId;
+        final int mStyleId;
+        KeyboardTheme(String name, int themeId, int styleId) {
             mName = name;
             mThemeId = themeId;
             mStyleId = styleId;
