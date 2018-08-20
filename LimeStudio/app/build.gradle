@@ -27,14 +27,14 @@ apply plugin: 'com.android.application'
 android {
     signingConfigs {
     }
-    compileSdkVersion 24
-    buildToolsVersion '25.0.0'
+    compileSdkVersion 27
+    buildToolsVersion '25.0.2'
     defaultConfig {
         applicationId "net.toload.main.hd"
 
         minSdkVersion 14
-        targetSdkVersion 24
-        versionCode 526
+        targetSdkVersion 27
+        versionCode 528
         versionName '5.2.1'
 
         multiDexEnabled true
@@ -61,9 +61,10 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:appcompat-v7:24.1.1'
-    compile 'com.android.support:support-v4:24.1.1'
+    //compile 'com.google.android.gms:play-services-ads:12.0.1'
     compile 'com.google.android.gms:play-services:9.2.1'
+    compile 'com.android.support:support-v4:27.1.1'
+    compile 'com.android.support:appcompat-v7:27.1.1'
     compile 'com.android.support:multidex:1.0.1'
     compile files('libs/commons-logging-1.1.1.jar')
     compile files('libs/google-api-client-1.22.0.jar')
