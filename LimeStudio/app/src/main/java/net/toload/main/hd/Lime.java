@@ -55,7 +55,7 @@ public class Lime {
     public static final String DATABASE_IM_TEMP_EXT = "zip";
 
     public static final String DATABASE_OPENFOUNDRY_URL_BASED = "https://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2F";
-    public static final String DATABASE_CLOUD_URL_BASED = "https://github.com/lime-ime/limeime/raw/master/Database/";
+    public static final String DATABASE_CLOUD_URL_BASED = "https://s3-ap-northeast-1.amazonaws.com/readmoo-cf-production/download/mooInk/IME_DATABASE/";
 
 
     public static final String LIME_OLD_VERSION_URL = DATABASE_OPENFOUNDRY_URL_BASED +   "limehd_3_9_1.apk";
