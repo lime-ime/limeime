@@ -110,6 +110,8 @@ public class  DBServer {
 	}
 
 	public void loadMapping(File sourcefile, String tablename, LIMEProgressListener progressListener) throws RemoteException {
+		Log.d(TAG, "[loadMapping]" + sourcefile.getAbsolutePath()
+							+ ", tableName= " + tablename);
 		if (DEBUG)
 			Log.i(TAG, "loadMapping() on " + loadingTablename);
 

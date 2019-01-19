@@ -159,6 +159,14 @@
             android:label="@string/title_activity_setup_im_google"
             android:theme="@style/Theme.AppCompat.Transparent" >
         </activity>
+
+        <service android:name=".readmoo.MooService"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="readmoo.ACTION_MOO_DOWNLOAD_IME" />
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>

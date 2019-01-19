@@ -36,6 +36,7 @@ import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -199,7 +200,6 @@ public class SetupImLoadDialog extends DialogFragment {
         btnSetupImDialogLoad6 = (Button) rootView.findViewById(R.id.btnSetupImDialogLoad6);
 
         if(imtype.equalsIgnoreCase(Lime.DB_RELATED)){
-
             getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_related_title));
 
             btnSetupImDialogCustom.setText(getResources().getString(R.string.setup_im_import_related_default));
@@ -297,6 +297,7 @@ public class SetupImLoadDialog extends DialogFragment {
             } else {
 
                 // Display Import IM dialog
+                Log.d(TAG, "~~~~~~~~~~~~~~");
 
                 // Remove Backup Learning Data Checkbox
                 chkSetupImBackupLearning.setVisibility(View.GONE);
@@ -754,6 +755,8 @@ public class SetupImLoadDialog extends DialogFragment {
                 url = Lime.DATABASE_CLOUD_IM_HS_V3;
             }
 
+            Log.d(TAG, "[downloadAndLoadIm] code= " + code
+                    + ", type= " + type + ", url= " + url);
             loadthread = new Thread(new SetupImLoadRunnable(getActivity(), handler, code, type, url, restorelearning));
             loadthread.start();
 
