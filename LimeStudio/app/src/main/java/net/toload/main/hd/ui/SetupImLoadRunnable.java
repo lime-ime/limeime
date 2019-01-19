@@ -36,6 +36,7 @@ import android.util.Log;
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
+import net.toload.main.hd.data.Im;
 import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.LIMEPreferenceManager;
@@ -307,8 +308,14 @@ public class SetupImLoadRunnable implements Runnable{
             handler.initialImButtons();
         }
 
-        if (m_callback !=  null)
+        if (m_callback !=  null) {
+            List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+
+            // Update IM pick up list items
+            mLIMEPref.syncIMActivatedState(imlist);
+
             m_callback.onFinish(true, type);
+        }
     }
 
     public int migrateDb(File tempfile, String imtype){
