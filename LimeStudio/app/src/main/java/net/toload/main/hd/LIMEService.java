@@ -81,7 +81,7 @@ import java.util.Locale;
 public class LIMEService extends InputMethodService implements
         LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final String TAG = "LIMEService";
 
     private static Thread queryThread; // queryThread for no-blocking I/O  Jeremy '15,6,1
@@ -1703,7 +1703,8 @@ public class LIMEService extends InputMethodService implements
         } else if (primaryCode == LIMEBaseKeyboard.KEYCODE_LEFT) {
             keyDownUp(KeyEvent.KEYCODE_DPAD_LEFT, hasCandidatesShown);
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_OPTIONS) {
-            handleOptions();
+//            handleOptions();
+            showIMPicker();
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_SPACE_LONGPRESS) {
             showIMPicker();
         } else if (primaryCode == KEYCODE_SWITCH_TO_SYMBOL_MODE && mInputView != null) { //->symbol keyboard
