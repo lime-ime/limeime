@@ -36,7 +36,6 @@ import android.util.Log;
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.Im;
 import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.LIMEPreferenceManager;
@@ -69,35 +68,17 @@ public class SetupImLoadRunnable implements Runnable{
     private Context mContext;
     private boolean restorePreference;
 
-    private OnSetupLoadCallback m_callback;
-
-    public interface OnSetupLoadCallback {
-        void onFinish(boolean result, String type);
-    }
-
-    public SetupImLoadRunnable(Context context, String imtype, String type, String url,
-                               boolean restorePreference, OnSetupLoadCallback callback) {
-        this(context, null, imtype, type, url, restorePreference);
-        m_callback = callback;
-    }
-
-    public SetupImLoadRunnable(Context context, SetupImHandler handler, String imtype, String type, String url, boolean restorePreference) {
+    public SetupImLoadRunnable(Activity activity, SetupImHandler handler, String imtype, String type, String url, boolean restorePreference) {
         this.handler = handler;
         this.imtype = imtype;
         this.type = type;
         this.url = url;
-//        this.activity = context;
-        this.dbsrv = new DBServer(context);
-        this.datasource = new LimeDB(context);
-        this.mLIMEPref = new LIMEPreferenceManager(context);
+        this.activity = activity;
+        this.dbsrv = new DBServer(activity);
+        this.datasource = new LimeDB(activity);
+        this.mLIMEPref = new LIMEPreferenceManager(activity);
         this.restorePreference = restorePreference;
-        if (context instanceof Activity) {
-            this.activity = (Activity) context;
-            this.mContext = this.activity.getBaseContext();
-        }
-        else {
-            this.mContext = context;
-        }
+        this.mContext = activity.getBaseContext();
     }
 
     @Override
@@ -110,13 +91,11 @@ public class SetupImLoadRunnable implements Runnable{
 
         Looper.prepare();
 
-//        //Log.i("LIME", "showProgress Runnable:");
-        if (handler != null && activity != null)
-            handler.showProgress(false, activity.getResources().getString(R.string.setup_load_download));
+        //Log.i("LIME", "showProgress Runnable:");
+        handler.showProgress(false, activity.getResources().getString(R.string.setup_load_download));
 
         // Download DB File
-        if (handler != null && activity != null)
-            handler.updateProgress(activity.getResources().getString(R.string.setup_load_download));
+        //handler.updateProgress(activity.getResources().getString(R.string.setup_load_download));
         File tempfile = downloadRemoteFile(mContext, url);
 
         if(tempfile == null || tempfile.length() < 100000){
@@ -200,8 +179,7 @@ public class SetupImLoadRunnable implements Runnable{
 
 
         // Load DB
-        if (handler != null && activity != null)
-            handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_load));
+        handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_load));
         dbsrv.importMapping(tempfile, imtype);
 
         mLIMEPref.setParameter("_table", "");
@@ -209,15 +187,10 @@ public class SetupImLoadRunnable implements Runnable{
         DBServer.resetCache();
 
         if(restorePreference){
-            if (handler != null && activity != null) {
-                handler.updateProgress(activity.getResources().getString(R.string.setup_im_restore_learning_data));
-                handler.updateProgress(0);
-            }
-
+            handler.updateProgress(activity.getResources().getString(R.string.setup_im_restore_learning_data));
+            handler.updateProgress(0);
             boolean check = datasource.checkBackuptable(imtype);
-
-            if (handler != null)
-                handler.updateProgress(5);
+            handler.updateProgress(5);
 
             if(check){
 
@@ -225,8 +198,7 @@ public class SetupImLoadRunnable implements Runnable{
 
                 // check if user data backup table is present and have valid records
                 int userRecordsCount = datasource.countMapping(backupTableName);
-                if (handler != null)
-                    handler.updateProgress(10);
+                handler.updateProgress(10);
                 if (userRecordsCount == 0) return;
 
                 try {
@@ -284,8 +256,7 @@ public class SetupImLoadRunnable implements Runnable{
 
                         if(progress != progressvalue){
                             progressvalue = progress;
-                            if (handler != null)
-                                handler.updateProgress(progressvalue);
+                            handler.updateProgress(progressvalue);
                         }
 
                     }
@@ -296,26 +267,14 @@ public class SetupImLoadRunnable implements Runnable{
                     e.printStackTrace();
                 }
 
-               // datasource.restoreUserRecordsStep2(imtype);
-
-                if (handler != null)
-                 handler.updateProgress(100);
+                // datasource.restoreUserRecordsStep2(imtype);
+                handler.updateProgress(100);
             }
         }
 
-        if (handler != null) {
-            handler.finishLoading(imtype);
-            handler.initialImButtons();
-        }
+        handler.finishLoading(imtype);
+        handler.initialImButtons();
 
-        if (m_callback !=  null) {
-            List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
-
-            // Update IM pick up list items
-            mLIMEPref.syncIMActivatedState(imlist);
-
-            m_callback.onFinish(true, type);
-        }
     }
 
     public int migrateDb(File tempfile, String imtype){
@@ -324,7 +283,7 @@ public class SetupImLoadRunnable implements Runnable{
 
         String sourcedbfile = Lime.DATABASE_FOLDER_EXTERNAL + imtype;
 
-//        handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_load));
+        handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_load));
         DBServer.decompressFile(tempfile, Lime.DATABASE_FOLDER_EXTERNAL, imtype, true);
         SQLiteDatabase sourcedb = SQLiteDatabase.openDatabase(sourcedbfile, null, //SQLiteDatabase.OPEN_READWRITE |   //redundant
                 SQLiteDatabase.NO_LOCALIZED_COLLATORS);
@@ -351,9 +310,7 @@ public class SetupImLoadRunnable implements Runnable{
             datasource.add(insert);
             if(c % 100 == 0){
                 int p = (c * 100 / total);
-
-                if (handler != null && activity != null)
-                    handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_import) + " " + p + "%");
+                handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_import) + " " + p + "%");
             }
         }
         datasource.endTransaction();
@@ -455,7 +412,7 @@ public class SetupImLoadRunnable implements Runnable{
                 //SQLiteDatabase db = this.getSqliteDb(true);
 
 
-               // datasource.open();
+                // datasource.open();
                 Cursor cursor = datasource.query("keyboard", "code" +" = '"+keyboard+"'");
                 if (cursor.moveToFirst()) {
                     kobj = new KeyboardObj();
@@ -492,7 +449,7 @@ public class SetupImLoadRunnable implements Runnable{
             kobj.setImshiftkb("lime_wb");
             kobj.setEngkb("lime_abc");
             kobj.setEngshiftkb("lime_abc_shift");
-         }else if(keyboard.equals("hs")){
+        }else if(keyboard.equals("hs")){
             kobj = new KeyboardObj();
             kobj.setCode("hs");
             kobj.setName("華象直覺");
@@ -503,15 +460,15 @@ public class SetupImLoadRunnable implements Runnable{
             kobj.setImshiftkb("lime_hs_shift");
             kobj.setEngkb("lime_abc");
             kobj.setEngshiftkb("lime_abc_shift");
-         }
+        }
 
         return kobj;
     }
 
 
     /*
-	 * Download Remote File
-	 */
+     * Download Remote File
+     */
     public File downloadRemoteFile(Context ctx, String url){
 
         try {
@@ -550,10 +507,8 @@ public class SetupImLoadRunnable implements Runnable{
                 if(size > 0){
                     downloadSize += 4096;
                     float percent = (float)downloadSize / (float)size;
-                            percent *= 100;
-
-                    if (handler != null)
-                        handler.updateProgress((int)percent);
+                    percent *= 100;
+                    handler.updateProgress((int)percent);
                 }
                 if(DEBUG)
                     Log.i(TAG, numread +  "bytes download.");
@@ -561,7 +516,7 @@ public class SetupImLoadRunnable implements Runnable{
             }while(true);
 
             is.close();
-            Log.d(TAG, "[downloadRemoteFile] done" + downloadedFile.getAbsolutePath());
+
             return downloadedFile;
 
         } catch (Exception e){

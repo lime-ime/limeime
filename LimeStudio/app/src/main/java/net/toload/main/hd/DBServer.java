@@ -110,8 +110,6 @@ public class  DBServer {
 	}
 
 	public void loadMapping(File sourcefile, String tablename, LIMEProgressListener progressListener) throws RemoteException {
-		Log.d(TAG, "[loadMapping]" + sourcefile.getAbsolutePath()
-							+ ", tableName= " + tablename);
 		if (DEBUG)
 			Log.i(TAG, "loadMapping() on " + loadingTablename);
 
@@ -251,24 +249,24 @@ public class  DBServer {
 
 	}
 
-/*
-	public static void restoreDatabase(File srcFile, Boolean removeSourceFile) throws RemoteException {
+	/*
+        public static void restoreDatabase(File srcFile, Boolean removeSourceFile) throws RemoteException {
 
-		mLIMEPref.holdDatabaseCoonection(true);
-		closeDatabse();
+            mLIMEPref.holdDatabaseCoonection(true);
+            closeDatabse();
 
-		String dbtarget = mLIMEPref.getParameterString("dbtarget");
-			if (dbtarget.equals("device")) {
-				decompressFile(srcFile, LIME.getLIMEDatabaseFolder(), LIME.DATABASE_NAME, removeSourceFile);
-			} else {decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME, removeSourceFile);
-			}
+            String dbtarget = mLIMEPref.getParameterString("dbtarget");
+                if (dbtarget.equals("device")) {
+                    decompressFile(srcFile, LIME.getLIMEDatabaseFolder(), LIME.DATABASE_NAME, removeSourceFile);
+                } else {decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME, removeSourceFile);
+                }
 
 
-		mLIMEPref.holdDatabaseCoonection(false);
+            mLIMEPref.holdDatabaseCoonection(false);
 
-		datasource.openDBConnection(true);
-	}
-*/
+            datasource.openDBConnection(true);
+        }
+    */
 	public static void restoreDatabase() throws RemoteException {
 		restoreDatabase(LIME.LIME_SDCARD_FOLDER + LIME.DATABASE_BACKUP_NAME);
 	}

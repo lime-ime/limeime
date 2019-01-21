@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="ime_code">
+        <item>phonetic</item>    <!-- 注音 -->
+        <item>cj</item>          <!-- 倉頡 -->
+        <item>ecj</item>         <!-- 速成 -->
+        <item>pinyin</item>      <!-- 拼音 -->
+    </string-array>
+    <string-array name="ime_path">
+        <item>/data/data/net.toload.main.hd/files/phoneticcomplete.zip</item>
+        <item>/data/data/net.toload.main.hd/files/cj.zip</item>
+        <item>/data/data/net.toload.main.hd/files/ecj.zip</item>
+        <item>/data/data/net.toload.main.hd/files/pinyin.zip</item>
+    </string-array>
+</resources>
