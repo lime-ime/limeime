@@ -1178,7 +1178,8 @@ public class CandidateView extends View implements View.OnClickListener {
 
     }
     public boolean isEmpty(){
-        return mCount ==0;
+        return false;
+//        return mCount ==0;
     }
 
     public void startVoiceInput(){
