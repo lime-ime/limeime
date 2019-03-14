@@ -176,6 +176,30 @@ public class  DBServer {
 		}
 	}
 
+	public int importMapping(InputStream compressedSourceDB, String imtype) {
+
+		List<Word> results = null;
+
+		//String sourcedbfile = LIME.LIME_SDCARD_FOLDER + imtype;
+		List<String> unzipFilePaths = new ArrayList<>();
+		try {
+			File targetFolder = new File(ctx.getCacheDir().getAbsolutePath()+"limehd");
+			unzipFilePaths = LIMEUtilities.unzip(compressedSourceDB, targetFolder,true);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		//decompressFile(compressedSourceDB, LIME.LIME_SDCARD_FOLDER, imtype, true);
+		if(unzipFilePaths.size()!=1){
+			//TODO: Process exception here.
+			return -1;
+		}
+		else {
+			int count = datasource.importDb(unzipFilePaths.get(0), imtype);
+			//mLIMEPref.setResetCacheFlag(true);
+			resetCache();
+			return count;
+		}
+	}
 
 	public int getLoadingMappingCount() {
 		return datasource.getCount();

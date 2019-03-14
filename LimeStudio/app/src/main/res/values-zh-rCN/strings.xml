@@ -287,4 +287,9 @@
     <string name="preference_smart_chinese_input">开启中文智慧选字</string>
     <string name="preference_smart_chinese_input_message">部份输入法可能会影响中英混打功能</string>
 
+    <!-- Readmoo -->
+    <string name="close">关闭</string>
+    <string name="imeInstallation">安装输入法...</string>
+    <string name="imeInstallationError">安装输入法错误...</string>
+
 </resources>

@@ -290,4 +290,9 @@
     <string name="preference_smart_chinese_input">開啟中文智慧選字</string>
     <string name="preference_smart_chinese_input_message">部份輸入法可能會影響中英混打功能</string>
 
+    <!-- Readmoo -->
+    <string name="close">關閉</string>
+    <string name="imeInstallation">安裝輸入法...</string>
+    <string name="imeInstallationError">安裝輸入法錯誤...</string>
+
 </resources>

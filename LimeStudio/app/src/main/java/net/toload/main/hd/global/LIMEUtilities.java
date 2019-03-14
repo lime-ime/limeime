@@ -212,8 +212,11 @@ public class LIMEUtilities {
 	}
 
 	public static List<String> unzip(File zipFile, File targetDirectory, Boolean OverWrite) throws IOException {
-		ZipInputStream zis = new ZipInputStream(
-				new BufferedInputStream(new FileInputStream(zipFile)));
+		return unzip(new FileInputStream(zipFile), targetDirectory, OverWrite);
+	}
+
+	public static List<String> unzip(InputStream zipFileStream,File targetDirectory, Boolean OverWrite) throws IOException {
+		ZipInputStream zis = new ZipInputStream(new BufferedInputStream(zipFileStream));
 		List<String> returnFilePaths = new ArrayList<>();
 		try {
 			ZipEntry ze;
@@ -261,6 +264,7 @@ public class LIMEUtilities {
 		}
 		return returnFilePaths;
 	}
+
 	public static boolean copyFile(String sourceFilePath, String targetFilePath, Boolean overWrite) {
 		File sourceFile = isFileExist(sourceFilePath);
 		if(sourceFilePath == null || sourceFile == null || targetFilePath == null) return false;

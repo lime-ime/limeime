@@ -7,9 +7,9 @@
         <item>pinyin</item>      <!-- 拼音 -->
     </string-array>
     <string-array name="ime_path">
-        <item>/data/data/net.toload.main.hd/files/phoneticcomplete.zip</item>
-        <item>/data/data/net.toload.main.hd/files/cj.zip</item>
-        <item>/data/data/net.toload.main.hd/files/ecj.zip</item>
-        <item>/data/data/net.toload.main.hd/files/pinyin.zip</item>
+        <item>phoneticcomplete.zip</item>
+        <item>cj.zip</item>
+        <item>ecj.zip</item>
+        <item>pinyin.zip</item>
     </string-array>
 </resources>
