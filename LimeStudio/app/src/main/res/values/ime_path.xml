@@ -7,8 +7,8 @@
         <item>pinyin</item>      <!-- 拼音 -->
     </string-array>
     <string-array name="ime_path">
-        <item>phoneticcomplete.zip</item>
-        <item>cj.zip</item>
+        <item>phoneticcompletebig5.zip</item>
+        <item>cjbig5.zip</item>
         <item>ecj.zip</item>
         <item>pinyin.zip</item>
     </string-array>
