@@ -164,11 +164,11 @@
             android:theme="@style/Theme.AppCompat.Transparent" >
         </activity>
 
-        <!--<receiver android:name=".readmoo.BootBroadcastReceiver">-->
-            <!--<intent-filter>-->
-                <!--<action android:name="android.intent.action.BOOT_COMPLETED" />-->
-            <!--</intent-filter>-->
-        <!--</receiver>-->
+        <receiver android:name=".readmoo.BootBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <service android:name=".readmoo.MooService"
             android:enabled="true">
