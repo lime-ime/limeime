@@ -263,13 +263,13 @@ public class LIMEPreferenceManager {
 	public boolean getSelectDefaultOnSliding(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean("candidate_switch", true);
+		return sp.getBoolean("candidate_switch", false);
 	}
 	
 	public boolean getVibrateOnKeyPressed(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean("vibrate_on_keypress", true);
+		return sp.getBoolean("vibrate_on_keypress", false);
 	}
 	
 	
@@ -283,7 +283,7 @@ public class LIMEPreferenceManager {
 	public boolean getEmojiMode(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		//Jeremy '16,7,30 Emoji support is limited before API 16
-		return sp.getBoolean("enable_emoji", (Build.VERSION.SDK_INT >= 16)?true:false);
+		return sp.getBoolean("enable_emoji", false);
 	}
 
 	public Integer getEmojiDisplayPosition(){

@@ -128,7 +128,7 @@
             android:key="font_size"
             android:title="@string/font_size" />
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="vibrate_on_keypress"
             android:title="@string/vibrate_on_keypress" />
         <ListPreference
@@ -356,7 +356,7 @@
             android:summary="@string/enable_english_dictionary_physical_keyboard_summary"
             android:title="@string/enable_english_dictionary_physical_keyboard" />
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="candidate_switch"
             android:summary="@string/candidate_switch_summary"
             android:title="@string/candidate_switch" />
