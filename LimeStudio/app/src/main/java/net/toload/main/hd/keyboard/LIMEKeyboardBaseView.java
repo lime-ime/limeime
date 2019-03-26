@@ -207,7 +207,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private int mPreviewTextSizeLarge;
     private int[] mOffsetInWindow;
     private int mOldPreviewKeyIndex = NOT_A_KEY;
-    private boolean mShowPreview = true;
+    private boolean mShowPreview = false;
     private boolean mShowTouchPoints = true;
     private int mPopupPreviewOffsetX;
     private int mPopupPreviewOffsetY;
