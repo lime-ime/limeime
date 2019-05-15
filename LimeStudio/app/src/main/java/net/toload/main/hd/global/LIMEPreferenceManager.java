@@ -31,6 +31,7 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 
 import net.toload.main.hd.Lime;
+import net.toload.main.hd.R;
 import net.toload.main.hd.data.Im;
 
 import java.util.HashMap;
@@ -467,14 +468,15 @@ public class LIMEPreferenceManager {
 	}
 	
 	public float getFontSize(){
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return Float.parseFloat(sp.getString("font_size", "1"));
-		
+		return Float.parseFloat(ctx.getString(R.string.default_font_size));
+//		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+//		return Float.parseFloat(sp.getString("font_size", "1"));
 	}
 	
 	public float getKeyboardSize(){
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return Float.parseFloat(sp.getString("keyboard_size", "1"));
+		return Float.parseFloat(ctx.getString(R.string.default_keyboard_size));
+//		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+//		return Float.parseFloat(sp.getString("keyboard_size", "1"));
 		
 	}
 

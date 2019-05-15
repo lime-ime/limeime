@@ -38,6 +38,11 @@ android {
         versionName '5.2.1'
 
         multiDexEnabled true
+
+
+        // value: 1.2, 1.1, 1, 0.9, 0.8
+        resValue "string", "default_keyboard_size", "1"
+        resValue "string", "default_font_size", "1"
     }
     buildTypes {
         release {
@@ -45,7 +50,23 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    flavorDimensions "default"
+
     productFlavors {
+        mooink {
+            dimension "default"
+        }
+
+        mooinkPlus {
+            dimension "default"
+        }
+
+        mooinkPro {
+            dimension "default"
+            resValue "string", "default_keyboard_size", "1.2"
+            resValue "string", "default_font_size", "1.2"
+        }
     }
     packagingOptions {
         exclude 'META-INF/LICENSE'
