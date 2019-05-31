@@ -35,13 +35,13 @@
  <ScrollView 
 	android:id="@+id/sv"
 	android:layout_width="fill_parent"
-	android:layout_height="100dp"
+	android:layout_height="@dimen/candidatepopup_scrollview_height"
 	>
     <view xmlns:android="http://schemas.android.com/apk/res/android"
 		    class="net.toload.main.hd.candidate.CandidateExpandedView"
 	        android:id="@+id/candidatePopup"
 	        android:layout_width="wrap_content"
-	        android:layout_height="100dp"
+	        android:layout_height="@dimen/candidatepopup_scrollview_height"
 			/>
 
 </ScrollView>

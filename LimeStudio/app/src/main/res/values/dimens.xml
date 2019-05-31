@@ -62,6 +62,8 @@
     <dimen name="key_horizontal_gap">0dp</dimen>
     <dimen name="key_vertical_gap">0dp</dimen>
 
+    <dimen name="candidatepopup_scrollview_height">100dp</dimen>
+
     <!-- WB -->
     <dimen name="wb_key_height">66dip</dimen>
 </resources>

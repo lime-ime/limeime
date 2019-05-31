@@ -163,7 +163,10 @@ public class CandidateExpandedView extends CandidateView {
             try {
                 int y = (int) (((height - mCandidatePaint.getTextSize()) / 2) - mCandidatePaint.ascent());
                 int index = 0; //index in mSuggestions
+                y -= mVerticalPadding * 2;
+
                 for (int i = 0; i < mRows; i++) {
+
                     if (i != 0) y += height + mVerticalPadding;
 
                     for (int j = 0; j < mRowSize[i]; j++) {
@@ -195,14 +198,19 @@ public class CandidateExpandedView extends CandidateView {
                                     candidatePaint.setColor(mColorNormalText);
                                 break;
                         }
-                        canvas.drawText(suggestion, mWordX[i][j] + X_GAP, y, candidatePaint);
+                        float lineStartY = bgPadding.top + (height + mVerticalPadding) * i;
+                        float lineStopY = (height + mVerticalPadding) * (i + 1) - mVerticalPadding + 1;
+                        float textY = lineStartY + (lineStopY - lineStartY - mCandidatePaint.getTextSize()) / 2;
+                        canvas.drawText(suggestion, mWordX[i][j] + X_GAP, textY/*y*/, candidatePaint);
 
 
                         candidatePaint.setColor(mColorSpacer);
                         float lineX = mWordX[i][j] + mWordWidth[i][j] + 0.5f;
-                        canvas.drawLine(lineX, bgPadding.top + (height + mVerticalPadding) * i, lineX,
-                                (height + mVerticalPadding) * (i + 1) - mVerticalPadding + 1, candidatePaint);
+                        canvas.drawLine(lineX, lineStartY, lineX, lineStopY, candidatePaint);
                         candidatePaint.setFakeBoldText(false);
+                        if (DEBUG)
+                            Log.d(TAG, "drawText y= " + y + ", line: startY= " + lineStartY
+                                     + ", stopY= " + lineStopY);
                         index++;
 
                     }
