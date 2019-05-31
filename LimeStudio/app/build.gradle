@@ -54,18 +54,18 @@ android {
     flavorDimensions "default"
 
     productFlavors {
-        mooink {
+        mooInk {
             dimension "default"
         }
 
-        mooinkPlus {
+        mooInkPlus {
             dimension "default"
         }
 
-        mooinkPro {
+        mooInkPro {
             dimension "default"
-            resValue "string", "default_keyboard_size", "1.2"
-            resValue "string", "default_font_size", "1.2"
+            resValue "string", "default_keyboard_size", "1.5"
+            resValue "string", "default_font_size", "1.5"
         }
     }
     packagingOptions {

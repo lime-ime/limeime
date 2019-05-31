@@ -2,6 +2,7 @@ package net.toload.main.hd.readmoo;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.util.Log;
 
@@ -52,6 +53,19 @@ public class MooService extends IntentService {
         final String[] codeList = getResources().getStringArray(R.array.ime_code);
         final String[] pathList = getResources().getStringArray(R.array.ime_path);
 
+
+        // if screen lock is on, HAVE TO wait util system fully ready
+        PackageManager pm = getPackageManager();
+        try {
+            pm.getApplicationInfo("com.readmoo.mooreader.eink",
+                    PackageManager.MATCH_SYSTEM_ONLY);
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "may not ready yet ?");
+            e.printStackTrace();
+            return;
+        }
+        //
+
         if (pathList == null || codeList == null) {
             notifyState(State.Error, "path or code NULL");
             return;
@@ -59,8 +73,11 @@ public class MooService extends IntentService {
 
         // figure out installed ime
         List<Im> imlist = m_datasource.getIm(null, Lime.IM_TYPE_NAME);
-//        for (Im im : imlist)
-//            Log.d(TAG, "[imlist] code= " + im.getCode());
+        for (Im im : imlist)
+            Log.d(TAG, "[imlist] code= " + im.getCode());
+        for (String c : codeList)
+            Log.d(TAG, "[codeList] code= " + c);
+
 
         List<Integer> installCandidates = new ArrayList<>();
         for (int i = 0; i < codeList.length; i++) {
