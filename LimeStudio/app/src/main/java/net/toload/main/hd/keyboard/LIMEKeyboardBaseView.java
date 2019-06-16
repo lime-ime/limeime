@@ -43,13 +43,11 @@ import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
-import android.graphics.Region.Op;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -946,7 +944,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             mKeyboardChanged = false;
         }
         final Canvas canvas = mCanvas;
-        canvas.clipRect(mDirtyRect, Op.REPLACE);
+        canvas.clipRect(mDirtyRect);//, Op.REPLACE);
 
         if (mKeyboard == null) return;
 
@@ -1639,7 +1637,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
 
     @Override
-    public boolean onTouchEvent(@NonNull MotionEvent me) {
+    public boolean onTouchEvent( MotionEvent me) {
         if(DEBUG)
             Log.i(TAG,"onTouchEvent()");
         final int action = (isAPIpre8) ? me.getAction() : me.getActionMasked();

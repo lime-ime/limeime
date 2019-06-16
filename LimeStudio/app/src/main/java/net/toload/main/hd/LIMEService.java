@@ -39,7 +39,6 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.Vibrator;
-import android.support.annotation.NonNull;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
@@ -929,7 +928,7 @@ public class LIMEService extends InputMethodService implements
      * resume them or let them continue to the app.
      */
     @Override
-    public boolean onKeyDown(int keyCode, @NonNull KeyEvent event) {
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
         // Clean code by jeremy '11,8,22
         if (DEBUG)
             Log.i(TAG, "OnKeyDown():keyCode:" + keyCode
@@ -1246,7 +1245,7 @@ public class LIMEService extends InputMethodService implements
      * the app.
      */
     @Override
-    public boolean onKeyUp(int keyCode, @NonNull KeyEvent event) {
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (DEBUG)
             Log.i(TAG, "OnKeyUp():keyCode:" + keyCode
                             + ", mComposing = " + mComposing
