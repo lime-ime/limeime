@@ -2056,12 +2056,14 @@ public class LIMEService extends InputMethodService implements
 
         AlertDialog.Builder builder;
 
-        builder = new AlertDialog.Builder(this);
+        builder = new AlertDialog.Builder(this, R.style.MooDialog/*new ContextThemeWrapper(this, R.style.AppCompatDialog)*/);
 
         builder.setCancelable(true);
-        builder.setIcon(R.drawable.sym_keyboard_done_light);
+//        builder.setIcon(R.drawable.sym_keyboard_done_light);
         builder.setNegativeButton(android.R.string.cancel, null);
-        builder.setTitle(getResources().getString(R.string.keyboard_list));
+//        builder.setTitle(getResources().getString(R.string.keyboard_list));
+        View titleView = LayoutInflater.from(this).inflate(R.layout.dialog_me_picker_title, null);
+        builder.setCustomTitle(titleView);
 
         CharSequence[] items = new CharSequence[activatedIMNameList.size()];// =
         // getResources().getStringArray(R.array.keyboard);
@@ -2088,7 +2090,7 @@ public class LIMEService extends InputMethodService implements
         if (!(window == null)) {
             WindowManager.LayoutParams lp = window.getAttributes();
             // Jeremy '11,8,28 Use candidate instead of mInputview because mInputView may not present when using physical keyboard
-            lp.token = mCandidateViewStandAlone.getWindowToken();  //always there Jeremy '12,5,4 
+            lp.token = mCandidateViewStandAlone.getWindowToken();  //always there Jeremy '12,5,4
             lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
             window.setAttributes(lp);
             window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);

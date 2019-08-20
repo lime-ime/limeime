@@ -1,11 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <dimen name="dialog_width">424dp</dimen>
     <dimen name="dialog_padding">24dp</dimen>
-
-    <style name="Body1">
-        <item name="android:textSize">42sp</item>
-        <item name="android:textColor">@android:color/black</item>
-    </style>
 </resources>

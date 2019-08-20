@@ -21,7 +21,7 @@ public class IMEInstallationDialog extends AppCompatDialog {
     private Context m_context;
 
     public IMEInstallationDialog(Context context) {
-        super(context, R.style.AppCompatDialog);
+        super(context, R.style.MooDialog);
         m_context = context;
         init(context);
     }

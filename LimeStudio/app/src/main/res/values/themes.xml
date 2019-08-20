@@ -23,7 +23,9 @@
 
 <resources>
   <!-- Base application theme. -->
-  <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+  <style name="AppTheme" parent="Theme.AppCompat.Light">
+    <item name="android:includeFontPadding">false</item>
+    <item name="android:dialogTheme">@style/MooDialog</item>
   </style>
 
   <style name="LIMETheme" parent="Theme.AppCompat.Light">
