@@ -1,7 +1,10 @@
 package net.toload.main.hd.readmoo;
 
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.os.Bundle;
 import android.support.v7.app.AppCompatDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,7 +15,7 @@ import android.widget.TextView;
 import net.toload.main.hd.R;
 
 
-public class IMEInstallationDialog extends AppCompatDialog {
+public class IMEInstallationDialog extends AlertDialog {
     private final static String TAG = "[IMEInstallationDialog]";
 
 
@@ -23,7 +26,13 @@ public class IMEInstallationDialog extends AppCompatDialog {
     public IMEInstallationDialog(Context context) {
         super(context, R.style.MooDialog);
         m_context = context;
-        init(context);
+//        init(context);
+    }
+
+    @Override
+    public void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
+        init(m_context);
     }
 
     private void init(Context context) {
