@@ -136,6 +136,7 @@ public class CandidateView extends View implements View.OnClickListener {
     
     protected int mVerticalPadding;
     protected int mExpandButtonWidth;
+    protected int mVerticalExtrasPadding;
 
     protected Paint mCandidatePaint;
     protected Paint mSelKeyPaint;
@@ -259,6 +260,8 @@ public class CandidateView extends View implements View.OnClickListener {
         mScreenHeight = screenSize.y;
 
         mVerticalPadding = (int) (r.getDimensionPixelSize(R.dimen.candidate_vertical_padding) * mLIMEPref.getFontSize());
+        mVerticalExtrasPadding = r.getDimensionPixelSize(R.dimen.candidate_vertical_extras_padding);
+
         configHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
         mHeight = configHeight + mVerticalPadding;
         mExpandButtonWidth = r.getDimensionPixelSize(R.dimen.candidate_expand_button_width);// *mLIMEPref.getFontSize());
@@ -878,7 +881,7 @@ public class CandidateView extends View implements View.OnClickListener {
         final int scrollX = getScrollX();
         final boolean scrolled = mScrolled;
 
-        final int textBaseLine = (int) (((height - mCandidatePaint.getTextSize()) / 2) - mCandidatePaint.ascent());
+        final int textBaseLine = (int) (((height - mCandidatePaint.getTextSize()) / 2) - mCandidatePaint.ascent()) - mVerticalExtrasPadding * 2;
 
         // Modified by jeremy '10, 3, 29.  Update mselectedindex if touched and build wordX[i] and wordwidth[i]
         int x = 0;
@@ -1007,7 +1010,7 @@ public class CandidateView extends View implements View.OnClickListener {
                     if (c <= mDisplaySelkey.length()) {
                         //Jeremy '11,6,11 Drawing text using relative font dimensions.
                         canvas.drawText(mDisplaySelkey.substring(c - 1, c),
-                                mWordX[i] + mWordWidth[i] - height * 0.3f, height * 0.4f, selKeyPaint);
+                                mWordX[i] + mWordWidth[i] - height * 0.3f, height * 0.2f, selKeyPaint);
                     }
                 }
                 //Draw spacer

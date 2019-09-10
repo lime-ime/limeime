@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="candidate_stripe_height">60sp</dimen>
+    <dimen name="candidate_font_size">50sp</dimen>
+    <dimen name="candidate_expand_button_width">96sp</dimen>
+    <dimen name="candidate_vertical_padding">8sp</dimen>
+    <dimen name="candidate_vertical_extras_padding">8sp</dimen>
+    <dimen name="candidatepopup_scrollview_height">200dp</dimen>
+
+    <integer name="orbit">3</integer>
+
+</resources>
