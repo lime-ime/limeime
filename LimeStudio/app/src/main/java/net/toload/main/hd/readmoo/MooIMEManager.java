@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
@@ -49,7 +50,9 @@ public class MooIMEManager extends BroadcastReceiver {
 
                 m_imeDialog = new IMEInstallationDialog(m_context);
                 m_imeDialog.getWindow().setGravity(Gravity.CENTER);
-                m_imeDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+                m_imeDialog.getWindow().setType(Build.VERSION.SDK_INT >= 26 // Android 8.0
+                        ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                        : WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
                 m_imeDialog.getWindow().setLayout(WindowManager.LayoutParams.WRAP_CONTENT,
                         WindowManager.LayoutParams.WRAP_CONTENT);
                 m_imeDialog.show();

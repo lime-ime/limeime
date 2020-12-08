@@ -44,6 +44,16 @@ android {
         resValue "string", "default_keyboard_size", "1"
         resValue "string", "default_font_size", "1"
     }
+
+    signingConfigs {
+        releaseC {
+            storeFile = file('../ntx_platform')
+            storePassword = 'ntx'
+            keyAlias = 'platform'
+            keyPassword = 'ntx'
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -66,6 +76,11 @@ android {
             dimension "default"
             resValue "string", "default_keyboard_size", "1.5"
             resValue "string", "default_font_size", "1.5"
+        }
+
+        mooInkC {
+            dimension "default"
+            signingConfig signingConfigs.releaseC
         }
     }
     packagingOptions {

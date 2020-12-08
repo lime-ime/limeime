@@ -2,4 +2,5 @@
 <resources>
     <dimen name="dialog_width">424dp</dimen>
     <dimen name="dialog_padding">24dp</dimen>
+    <dimen name="dialog_text_size">44sp</dimen>
 </resources>

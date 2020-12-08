@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="dialog_width">852dp</dimen>
+    <dimen name="dialog_padding">40dp</dimen>
+    <dimen name="dialog_text_size">36sp</dimen>
+
+    <!-- mooInkC 的 dialog 的寬需要夠大 setGravity(CENTER) 才有用 -->
+    <!-- 所以另外定義 dialog_ime 來處理 -->
+    <dimen name="dialog_width_root">800dp</dimen>
+
+
+    <style name="H3">
+        <item name="android:textSize">36sp</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources>
