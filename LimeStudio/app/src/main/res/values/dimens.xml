@@ -67,5 +67,7 @@
 
     <!-- WB -->
     <dimen name="wb_key_height">66dip</dimen>
-    <integer name="orbit">1</integer>
+
+    <dimen name="dialog_width_root">-2</dimen>
+
 </resources>

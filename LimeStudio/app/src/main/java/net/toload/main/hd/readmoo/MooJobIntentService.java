@@ -1,0 +1,138 @@
+package net.toload.main.hd.readmoo;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
+import android.support.annotation.NonNull;
+import android.support.v4.app.JobIntentService;
+import android.util.Log;
+
+import net.toload.main.hd.DBServer;
+import net.toload.main.hd.Lime;
+import net.toload.main.hd.R;
+import net.toload.main.hd.data.Im;
+import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.limedb.LimeDB;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+public class MooJobIntentService extends JobIntentService {
+    private final static String TAG = "[MooJobIntentService]";
+    public static final int JOB_ID = 0xa0;
+
+    private DBServer m_dbsrv;
+    private LimeDB m_datasource;
+    private LIMEPreferenceManager m_limePref;
+
+    private MooIMEManager m_mooIMEManager;
+
+    public static void enqueueWork(Context context, Intent work) {
+        enqueueWork(context, MooJobIntentService.class, JOB_ID, work);
+    }
+
+    public void onCreate() {
+        super.onCreate();
+        Log.d(TAG, "[onCreate]");
+        m_dbsrv = new DBServer(this);
+        m_datasource = new LimeDB(this);
+        m_limePref = new LIMEPreferenceManager(this);
+        m_mooIMEManager = new MooIMEManager(this);
+    }
+
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "[onDestroy]");
+        m_mooIMEManager.release();
+    }
+
+    @Override
+    protected void onHandleWork(@NonNull Intent intent) {
+        final String[] codeList = getResources().getStringArray(R.array.ime_code);
+        final String[] pathList = getResources().getStringArray(R.array.ime_path);
+
+
+        // if screen lock is on, HAVE TO wait util system fully ready
+        PackageManager pm = getPackageManager();
+        try {
+            pm.getApplicationInfo("com.readmoo.mooreader.eink",
+                    PackageManager.MATCH_SYSTEM_ONLY);
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "may not ready yet ?");
+            e.printStackTrace();
+            return;
+        }
+        //
+
+        if (pathList == null || codeList == null) {
+            notifyState(State.Error, "path or code NULL");
+            return;
+        }
+
+        // figure out installed ime
+        List<Im> imlist = m_datasource.getIm(null, Lime.IM_TYPE_NAME);
+        for (Im im : imlist)
+            Log.d(TAG, "[imlist] code= " + im.getCode());
+        for (String c : codeList)
+            Log.d(TAG, "[codeList] code= " + c);
+
+
+        List<Integer> installCandidates = new ArrayList<>();
+        for (int i = 0; i < codeList.length; i++) {
+            boolean installed = false;
+            for (Im im : imlist) {
+                if (codeList[i].equalsIgnoreCase(im.getCode())) {
+                    installed = true;
+                    break;
+                }
+            }
+            if (!installed)
+                installCandidates.add(i);
+        }
+
+        if (installCandidates.size() > 0)
+            m_mooIMEManager.show();
+
+        for (Integer index : installCandidates) {
+            String code = codeList[index];
+            String path = pathList[index];
+            try {
+                install(code, path);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                notifyState(State.Error, code);
+                return;
+            }
+        }
+
+        notifyState(State.Done, null);
+    }
+
+    private void install(String imtype, String path) throws IOException {
+        Log.d(TAG, "[install] " + imtype);
+        AssetManager am = getAssets();
+        InputStream in = am.open(path);
+        m_dbsrv.importMapping(in, imtype);
+
+        m_limePref.setParameter("_table", "");
+        //mLIMEPref.setResetCacheFlag(true);
+        DBServer.resetCache();
+
+
+        List<Im> imlist = m_datasource.getIm(null, Lime.IM_TYPE_NAME);
+
+        // Update IM pick up list items
+        m_limePref.syncIMActivatedState(imlist);
+    }
+
+    private void notifyState(State result, String code) {
+        Intent intent = new Intent("readmoo.ACTION_MOO_INSTALL_IME_STATE");
+        intent.putExtra("code", code);
+        intent.putExtra("state", result.ordinal());
+        sendBroadcast(intent);
+    }
+}

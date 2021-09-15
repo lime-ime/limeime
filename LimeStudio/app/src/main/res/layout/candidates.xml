@@ -26,6 +26,7 @@
 <net.toload.main.hd.candidate.CandidateViewContainer
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:orientation="vertical"
+	    android:id="@+id/root_candidates"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:background="@color/color_transparent"

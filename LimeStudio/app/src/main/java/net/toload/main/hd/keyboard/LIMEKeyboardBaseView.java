@@ -43,9 +43,10 @@ import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
-import android.graphics.Region.Op;
+import android.graphics.Region;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
@@ -946,7 +947,11 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             mKeyboardChanged = false;
         }
         final Canvas canvas = mCanvas;
-        canvas.clipRect(mDirtyRect, Op.REPLACE);
+        if(Build.VERSION.SDK_INT >= 26){
+            canvas.clipRect(mDirtyRect);
+        }else {
+            canvas.clipRect(mDirtyRect, Region.Op.REPLACE);
+        }
 
         if (mKeyboard == null) return;
 

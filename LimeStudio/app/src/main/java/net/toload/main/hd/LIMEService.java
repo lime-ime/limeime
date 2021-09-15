@@ -27,6 +27,7 @@ package net.toload.main.hd;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Service;
+import android.arch.core.BuildConfig;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -1875,7 +1876,12 @@ public class LIMEService extends InputMethodService implements
         assert window != null;
         WindowManager.LayoutParams lp = window.getAttributes();
         lp.token = mInputView.getWindowToken();
-        lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+        }
+        window.setAttributes(lp);
         window.setAttributes(lp);
         window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
         mOptionsDialog.show();
@@ -2032,7 +2038,11 @@ public class LIMEService extends InputMethodService implements
         if (!(window == null)) {
             WindowManager.LayoutParams lp = window.getAttributes();
             lp.token = mCandidateViewStandAlone.getWindowToken();  //Jeremy 12,5,4 it's always there 
-            lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+            } else {
+                lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+            }
             window.setAttributes(lp);
             window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
 
@@ -2065,13 +2075,19 @@ public class LIMEService extends InputMethodService implements
         View titleView = LayoutInflater.from(this).inflate(R.layout.dialog_me_picker_title, null);
         builder.setCustomTitle(titleView);
 
-        CharSequence[] items = new CharSequence[activatedIMNameList.size()];// =
+        int expandSize = BuildConfig.FLAVOR.equals("mooInkPro2") ? 1 : 0;
+        CharSequence[] items = new CharSequence[activatedIMNameList.size() + expandSize];
         // getResources().getStringArray(R.array.keyboard);
         int curKB = 0;
         for (int i = 0; i < activatedIMNameList.size(); i++) {
             items[i] = activatedIMNameList.get(i);
             if (activeIM.equals(activatedIMList.get(i)))
                 curKB = i;
+        }
+
+        if (BuildConfig.FLAVOR.equals("mooInkPro2")) {
+            // "com.eink.einkime/.tcime.HandWriteIME";
+            items[items.length - 1] = "手寫輸入法";
         }
 
         builder.setSingleChoiceItems(items, curKB,
@@ -2090,8 +2106,12 @@ public class LIMEService extends InputMethodService implements
         if (!(window == null)) {
             WindowManager.LayoutParams lp = window.getAttributes();
             // Jeremy '11,8,28 Use candidate instead of mInputview because mInputView may not present when using physical keyboard
-            lp.token = mCandidateViewStandAlone.getWindowToken();  //always there Jeremy '12,5,4
-            lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+            lp.token = mInputView.getWindowToken();  //always there Jeremy '12,5,4
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+            } else {
+                lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+            }
             window.setAttributes(lp);
             window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
 
@@ -2103,31 +2123,34 @@ public class LIMEService extends InputMethodService implements
     private void handleIMSelection(int position) {
         if (DEBUG) Log.i(TAG, "handleIMSelection() position = " + position);
 
-        activeIM = activatedIMList.get(position);
-
-        mLIMEPref.setActiveIM(activeIM);
-        //spe.putString("keyboard_list", keyboardSelection);
-        //spe.commit();
-
-
-        //Jeremy '12,4,21 foce clear when switch to selected keybaord
-        if (!mEnglishOnly) clearComposing(true);
-
-        mEnglishOnly = false;//Jeremy '12,5,24 force to switch to Chinese mode if it's choosing in english mode.
-        initialIMKeyboard();
-
         try {
-            mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
-            mKeyboardSwitcher.setImList(SearchSrv.getImList());
-            //mKeyboardSwitcher.clearKeyboards();
+            activeIM = activatedIMList.get(position);
 
-            // Update soft keybaord information
-            currentSoftKeyboard = mKeyboardSwitcher.getImKeyboard(activeIM);
+            mLIMEPref.setActiveIM(activeIM);
+            //spe.putString("keyboard_list", keyboardSelection);
+            //spe.commit();
 
-        } catch (RemoteException e) {
-            e.printStackTrace();
+
+            //Jeremy '12,4,21 foce clear when switch to selected keybaord
+            if (!mEnglishOnly) clearComposing(true);
+
+            mEnglishOnly = false;//Jeremy '12,5,24 force to switch to Chinese mode if it's choosing in english mode.
+            initialIMKeyboard();
+
+            try {
+                mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
+                mKeyboardSwitcher.setImList(SearchSrv.getImList());
+                //mKeyboardSwitcher.clearKeyboards();
+
+                // Update soft keybaord information
+                currentSoftKeyboard = mKeyboardSwitcher.getImKeyboard(activeIM);
+
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            switchInputMethod("com.eink.einkime/.tcime.HandWriteIME");
         }
-
     }
 
     public void onText(CharSequence text) {
@@ -3578,7 +3601,7 @@ public class LIMEService extends InputMethodService implements
     }
 
     /**
-     *  start voice input
+     * start voice input
      */
     public void startVoiceInput() {
         if (DEBUG)
@@ -3595,6 +3618,7 @@ public class LIMEService extends InputMethodService implements
         final String mName;
         final int mThemeId;
         final int mStyleId;
+
         KeyboardTheme(String name, int themeId, int styleId) {
             mName = name;
             mThemeId = themeId;
