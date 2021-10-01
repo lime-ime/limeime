@@ -68,6 +68,6 @@
     <!-- WB -->
     <dimen name="wb_key_height">66dip</dimen>
 
-    <dimen name="dialog_width_root">-2</dimen>
+    <dimen name="dialog_width_root">-2dp</dimen>
 
 </resources>
