@@ -35,4 +35,6 @@
     <integer name="config_long_press_key_timeout">400</integer>
     <integer name="config_multi_tap_key_timeout">800</integer>
     <integer name="reserved_columns_for_seperated_keyboard">2</integer>
+    <bool name="support_eink_handwrite_ime">false</bool>
+
 </resources>

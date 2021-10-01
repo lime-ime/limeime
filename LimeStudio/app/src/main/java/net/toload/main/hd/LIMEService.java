@@ -227,14 +227,13 @@ public class LIMEService extends InputMethodService implements
     private boolean hasChineseSymbolCandidatesShown = false;
     private boolean hasCandidatesShown = false;
 
+    private boolean mSupportEInkHandwriteIme;
 
     public LIMEService(){
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                mIsHardwareAcceleratedDrawingEnabled = true;// this.enableHardwareAcceleration();
-            }
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            mIsHardwareAcceleratedDrawingEnabled = true;// this.enableHardwareAcceleration();
         }
+    }
 
     /**
      * Main initialization of the input method component. Be sure to call to
@@ -264,13 +263,12 @@ public class LIMEService extends InputMethodService implements
 
 
         // initial keyboard list
+        mSupportEInkHandwriteIme = getResources().getBoolean(R.bool.support_eink_handwrite_ime);
         activatedIMNameList = new ArrayList<>();
         activatedIMList = new ArrayList<>();
         activatedIMShortNameList = new ArrayList<>();
         activeIM = mLIMEPref.getActiveIM();
         buildActivatedIMList();
-
-
     }
 
 
@@ -2075,7 +2073,7 @@ public class LIMEService extends InputMethodService implements
         View titleView = LayoutInflater.from(this).inflate(R.layout.dialog_me_picker_title, null);
         builder.setCustomTitle(titleView);
 
-        int expandSize = BuildConfig.FLAVOR.equals("mooInkPro2") ? 1 : 0;
+        int expandSize = mSupportEInkHandwriteIme ? 1 : 0;
         CharSequence[] items = new CharSequence[activatedIMNameList.size() + expandSize];
         // getResources().getStringArray(R.array.keyboard);
         int curKB = 0;
@@ -2085,7 +2083,7 @@ public class LIMEService extends InputMethodService implements
                 curKB = i;
         }
 
-        if (BuildConfig.FLAVOR.equals("mooInkPro2")) {
+        if (mSupportEInkHandwriteIme) {
             // "com.eink.einkime/.tcime.HandWriteIME";
             items[items.length - 1] = "手寫輸入法";
         }
