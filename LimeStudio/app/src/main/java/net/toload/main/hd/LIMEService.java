@@ -1282,7 +1282,9 @@ public class LIMEService extends InputMethodService implements
                 // '11,8,28 Jeremy popup keyboard picker instead of nextIM when onIM
                 // '11,5,14 Jeremy ctrl-shift switch to next available keyboard; 
                 // '11,5,24 blocking switching if full-shape symbol 
-                if (!hasSymbolEntered && !mEnglishOnly && (hasMenuPress || hasCtrlPress)) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM  
+
+                // 不顯示輸入法清單 dialog, 避免打字 flutter  處理 keyevent 發生問題
+                /*if (!hasSymbolEntered && !mEnglishOnly && (hasMenuPress || hasCtrlPress)) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                     //nextActiveKeyboard(true);
                     showIMPicker(); //Jeremy '11,8,28
                     if (hasMenuPress) {
@@ -1292,7 +1294,7 @@ public class LIMEService extends InputMethodService implements
                     mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
                     setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
                     return true;
-                } else if (mLIMEPref.getShiftSwitchEnglishMode() && onlyShiftPress) {
+                } else */if (mLIMEPref.getShiftSwitchEnglishMode() && onlyShiftPress) {
                     this.switchChiEng();
                     return true;
                 }
