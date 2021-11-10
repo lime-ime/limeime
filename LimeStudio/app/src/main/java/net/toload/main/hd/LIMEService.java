@@ -1490,7 +1490,9 @@ public class LIMEService extends InputMethodService implements
                                             "'. just committed code=" + selectedCandidate.getCode());
                                 SearchSrv.addLDPhrase(selectedCandidate, false);
                             }
-                            mComposing = mComposing.delete(0, committedCodeLength);
+
+                            // 選擇字詞後清空剩餘字元
+                            mComposing = mComposing.delete(0, mComposing.length()/*committedCodeLength*/);
                             if (DEBUG)
                                 Log.i(TAG, "commitTyped(): trimmed mComposing = '" + mComposing + "', " +
                                         "+ mComposing.length = " + mComposing.length());
