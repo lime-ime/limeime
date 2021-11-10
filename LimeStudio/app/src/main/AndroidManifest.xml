@@ -54,6 +54,8 @@
         android:allowBackup="true"
         android:name="android.support.multidex.MultiDexApplication"
         android:backupAgent=".LIMEBackupAgent"
+        android:directBootAware="true"
+        android:defaultToDeviceProtectedStorage="true"
         android:icon="@drawable/logo"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
