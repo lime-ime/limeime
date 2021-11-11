@@ -1511,7 +1511,7 @@ List<Mapping> scorelistSnapshot = null;
                 } else if (hasNumberMapping) {
                     selkey = "'[]-\\^&*()";
                 } else {
-                    selkey = "1234567890";
+                    selkey = "'1234567890";
                 }
             }
             if (DEBUG)
