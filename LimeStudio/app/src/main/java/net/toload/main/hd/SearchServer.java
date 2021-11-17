@@ -1501,7 +1501,7 @@ List<Mapping> scorelistSnapshot = null;
                 validSelkey = false;
             //Jeremy '11,6,19 Rewrite for IM has symbol mapping like ETEN
             if (!validSelkey || tablename.equals("phonetic")) {
-                if (hasNumberMapping && hasSymbolMapping) {
+                /*if (hasNumberMapping && hasSymbolMapping) {
                     if (tablename.equals("dayi")
                             || (tablename.equals("phonetic") && mLIMEPref.getPhoneticKeyboardType().equals("standard"))) {
                         selkey = "'[]-\\^&*()";
@@ -1510,7 +1510,7 @@ List<Mapping> scorelistSnapshot = null;
                     }
                 } else if (hasNumberMapping) {
                     selkey = "'[]-\\^&*()";
-                } else {
+                } else*/ {
                     selkey = "'1234567890";
                 }
             }
