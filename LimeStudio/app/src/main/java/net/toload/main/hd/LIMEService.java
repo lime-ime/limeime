@@ -2088,7 +2088,7 @@ public class LIMEService extends InputMethodService implements
         }
 
         if (mSupportEInkHandwriteIme) {
-            // "com.eink.einkime/.tcime.HandWriteIME";
+            // "com.eink.einkime/.tcime.ZhTwHandWriteIME";
             items[items.length - 1] = "手寫輸入法";
         }
 
@@ -2151,7 +2151,7 @@ public class LIMEService extends InputMethodService implements
                 e.printStackTrace();
             }
         } catch (Exception e) {
-            switchInputMethod("com.eink.einkime/.tcime.HandWriteIME");
+            switchInputMethod("com.eink.einkime/.tcime.ZhTwHandWriteIME");
         }
     }
 
