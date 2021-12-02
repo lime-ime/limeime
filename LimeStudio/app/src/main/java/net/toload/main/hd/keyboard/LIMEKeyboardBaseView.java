@@ -1078,7 +1078,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     final int subLabelSize = (int) (mSubLabelTextSize * keySizeScale * labelSizeScale);
                     final int subLabelHeight;
                     final int subLabelWidth;
-                    paint.setTypeface(Typeface.DEFAULT_BOLD);
+                    paint.setTypeface(Typeface.DEFAULT);
 
                     paint.setTextSize(subLabelSize);
                     if (mTextHeightCache.get(subLabelSize) != null) {

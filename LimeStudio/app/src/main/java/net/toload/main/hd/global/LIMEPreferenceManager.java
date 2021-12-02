@@ -553,7 +553,7 @@ public class LIMEPreferenceManager {
 
 	public int getKeyboardTheme(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return Integer.parseInt(sp.getString("keyboard_theme", "0"));
+		return Integer.parseInt(sp.getString("keyboard_theme", "6"));
 	}
 	
 	public void setSplitKeyboard(int mode){

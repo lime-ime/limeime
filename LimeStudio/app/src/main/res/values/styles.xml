@@ -39,6 +39,19 @@
         <item name="spaceKeySlidingLeftArrow">@drawable/sym_keyboard_previous</item>
         <item name="spaceKeySlidingRightArrow">@drawable/sym_keyboard_next</item>
     </style>
+    <style name="LIMEKeyboard.Readmoo" parent = "LIMEKeyboard">
+        <item name="spaceKeyIcon">@null</item>
+        <item name="spaceKeyPreviewIcon">@null</item>
+        <item name="enterKeyIcon">@drawable/sym_keyboard_return_light</item>
+        <item name="searchKeyIcon">@drawable/sym_keyboard_search_light</item>
+        <item name="doneKeyIcon">@drawable/sym_keyboard_done_readmoo</item>
+        <item name="deleteKeyIcon">@drawable/sym_keyboard_delete_readmoo</item>
+        <item name="shiftKeyIcon">@drawable/sym_keyboard_shift_readmoo</item>
+        <item name="shiftKeyShiftedIcon">@drawable/sym_keyboard_shift_shifted_readmoo</item>
+        <item name="spaceKeyTextColor">@android:color/black</item>
+        <item name="spaceKeySlidingLeftArrow">@drawable/mo_arrowsmall_left</item>
+        <item name="spaceKeySlidingRightArrow">@drawable/mo_arrowsmall_right</item>
+    </style>
     <style name="LIMEKeyboard.Light" parent = "LIMEKeyboard">
         <item name="spaceKeyIcon">@drawable/sym_keyboard_space_light</item>
         <item name="spaceKeyPreviewIcon">@drawable/sym_flat_keyboard_space</item>
@@ -127,6 +140,10 @@
         <item name="android:background">@drawable/keyboard_background_light</item>
         <item name="android:keyBackground">@drawable/btn_keyboard_key_light</item>
     </style>
+    <style name="LIMEKeyboardLayout.Readmoo" parent = "LIMEKeyboardLayout">
+        <item name="android:background">@drawable/keyboard_background_readmoo</item>
+        <item name="android:keyBackground">@drawable/btn_keyboard_key_readmoo</item>
+    </style>
     <style name="LIMEKeyboardLayout.Light" parent = "LIMEKeyboardLayout">
         <item name="android:background">@drawable/keyboard_background_light</item>
         <item name="android:keyBackground">@drawable/btn_keyboard_key_light</item>
@@ -155,6 +172,10 @@
     <style name="LIMEPopupKeyboardLayout">
         <item name="android:background">@drawable/keyboard_popup_panel_background_light</item>
         <item name="android:keyBackground">@drawable/btn_keyboard_key_light</item>
+    </style>
+    <style name="LIMEPopupKeyboardLayout.Readmoo" parent = "LIMEPopupKeyboardLayout">
+        <item name="android:background">@drawable/keyboard_popup_panel_background_readmoo</item>
+        <item name="android:keyBackground">@drawable/btn_keyboard_key_readmoo</item>
     </style>
     <style name="LIMEPopupKeyboardLayout.Light" parent = "LIMEPopupKeyboardLayout">
         <item name="android:background">@drawable/keyboard_popup_panel_background_light</item>
@@ -213,6 +234,22 @@
         <item name="backgroundDimAmount">0.5</item>
         <item name="symbolColorScheme">white</item>
     </style>
+
+    <style name="LIMEKeyboardBaseView.Readmoo" parent = "LIMEKeyboardBaseView">
+        <item name="keyPreviewLayout">@layout/key_preview_light</item> <!-- disable preview -->
+        <item name="keyBackground">@drawable/btn_keyboard_key_readmoo</item>
+        <item name="popupHint">@drawable/hint_popup_readmoo</item>
+<!--        <item name="popupLayout">@null</item>-->
+        <item name="keyTextColorNormal">@color/foreground_light</item>
+        <item name="keyTextColorPressed">@color/foreground_light</item>
+
+        <item name="functionKeyTextColorNormal">@color/second_foreground_readmoo</item>
+        <item name="functionKeyTextColorPressed">@color/second_foreground_readmoo</item>
+
+        <item name="keySubLabelTextColorNormal">@color/third_foreground_readmoo</item>
+        <item name="keySubLabelTextColorPressed">@color/third_foreground_readmoo</item>
+    </style>
+
     <style name="LIMEKeyboardBaseView.Light" parent = "LIMEKeyboardBaseView">
         <item name="keyPreviewLayout">@layout/key_preview_light</item>
         <item name="keyBackground">@drawable/btn_keyboard_key_light</item>
@@ -310,6 +347,12 @@
     </style>
 
     <style name="LIMEBaseKeyboard">
+        <item name="drawableArrowUp">@drawable/sym_keyboard_up_light</item>
+        <item name="drawableArrowDown">@drawable/sym_keyboard_down_light</item>
+        <item name="drawableArrowRight">@drawable/sym_keyboard_right_light</item>
+        <item name="drawableArrowLeft">@drawable/sym_keyboard_left_light</item>>
+    </style>
+    <style name="LIMEBaseKeyboard.Readmoo" parent = "LIMEBaseKeyboard">
         <item name="drawableArrowUp">@drawable/sym_keyboard_up_light</item>
         <item name="drawableArrowDown">@drawable/sym_keyboard_down_light</item>
         <item name="drawableArrowRight">@drawable/sym_keyboard_right_light</item>

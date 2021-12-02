@@ -166,8 +166,13 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                 break;
             case KEYCODE_SPACE:
                 mSpaceKey = key;
-                if(mSpaceKeyIcon!=null)
+                if(mSpaceKeyIcon!=null) {
                     key.icon = mSpaceKeyIcon;
+                }
+                else {
+                    key.label = "Space";
+                    key.icon = null;
+                }
                 if(mSpaceKeyPreviewIcon!=null) {
                     key.iconPreview = mSpaceKeyPreviewIcon;
                     int width = key.width;
@@ -398,7 +403,11 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     
     private void updateSpacebarDrag(int diff) {
     	if(DEBUG) Log.i(TAG, "updateSpacebarDrag(), deff=" + diff);
-        if (mSlidingSpaceBarIcon == null) {
+        if (mSpaceKey.icon == null) {
+            if(DEBUG) Log.i(TAG, "updateSpacebarDrag(), space icon is null");
+            return;
+        }
+    	if (mSlidingSpaceBarIcon == null) {
             final int width = Math.max(mSpaceKey.width,
                     (int)(getMinWidth() * SPACEBAR_POPUP_MIN_RATIO));
             final int height = mSpaceKey.height;// mSpacePreviewIcon.getIntrinsicHeight();

@@ -33,6 +33,21 @@
     <color name="color_common_orange_hl">#FFFBB732</color>
     <color name="color_common_light_orange_hl">#FFF29238</color>
 
+    <!-- colors for readmoo theme -->
+    <color name="keyboard_background_readmoo">#FFFFFF</color>
+    <color name="second_background_readmoo">#FFFFFF</color>
+    <color name="second_background_readmoo_fl">#FFFFFF</color>
+    <color name="third_background_readmoo">#FFFFFF</color>
+    <color name="composing_background_readmoo">#FFFFFF</color>
+
+
+    <color name="candidate_spacer_readmoo">#FF101010</color>
+    <color name="candidate_selection_keys_readmoo">#FF000000</color>
+
+    <color name="foreground_readmoo">#FFFFFF</color>
+    <color name="second_foreground_readmoo">#FF000000</color>
+    <color name="third_foreground_readmoo">#FF000000</color>
+
     <!-- colors for light theme -->
 
     <color name="keyboard_background_light">#FFC8C8C8</color>

@@ -33,7 +33,7 @@
         android:summary=""
         android:title="@string/keyboard">
         <ListPreference
-            android:defaultValue="0"
+            android:defaultValue="6"
             android:dialogTitle="@string/keyboard_themes"
             android:entries="@array/keyboard_themes_options"
             android:entryValues="@array/keyboard_themes_values"

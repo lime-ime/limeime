@@ -31,6 +31,14 @@
   <style name="LIMETheme" parent="Theme.AppCompat.Light">
   </style>
 
+  <style name="LIMETheme.Readmoo">
+    <item name="LIMEKeyboardStyle">@style/LIMEKeyboard.Readmoo</item>
+    <item name="LIMEBaseKeyboardStyle">@style/LIMEBaseKeyboard.Readmoo</item>
+    <item name="LIMEKeyboardBaseView">@style/LIMEKeyboardBaseView.Readmoo</item>
+    <item name="LIMEKeyboardLayout">@style/LIMEKeyboardLayout.Readmoo</item>
+    <item name="LIMEPopupKeyboardLayout">@style/LIMEPopupKeyboardLayout.Light</item>
+    <item name="LIMECandidateView">@style/LIMECandidateView.Light</item>
+  </style>
   <style name="LIMETheme.Light">
     <item name="LIMEKeyboardStyle">@style/LIMEKeyboard.Light</item>
     <item name="LIMEBaseKeyboardStyle">@style/LIMEBaseKeyboard.Light</item>
