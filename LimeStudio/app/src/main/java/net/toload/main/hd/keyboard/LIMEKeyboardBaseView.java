@@ -209,7 +209,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private int[] mOffsetInWindow;
     private int mOldPreviewKeyIndex = NOT_A_KEY;
     private boolean mShowPreview = false;
-    private boolean mShowTouchPoints = true;
+    private boolean mShowTouchPoints = false;
     private int mPopupPreviewOffsetX;
     private int mPopupPreviewOffsetY;
     private int mWindowY;
@@ -647,7 +647,6 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             mPreviewTextSizeLarge = (int) res.getDimension(R.dimen.key_preview_text_size_large);
             mPreviewPopup.setContentView(mPreviewText);
             mPreviewPopup.setBackgroundDrawable(null);
-
         } else {
             mShowPreview = false;
         }
