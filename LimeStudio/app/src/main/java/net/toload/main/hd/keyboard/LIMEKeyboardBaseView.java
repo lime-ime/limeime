@@ -352,14 +352,18 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             if(DEBUG)
                 Log.i(TAG,"UIHandler.showPreview() delay = "+delay);
             LIMEKeyboardBaseView mLIMEKeyboardBaseView = mLIMEKeyboardBaseViewWeakReference.get();
-            sendMessageDelayed(obtainMessage(MSG_SHOW_PREVIEW, keyIndex, 0, tracker), delay);
+            if (mLIMEKeyboardBaseView == null) return;
+            if (!mLIMEKeyboardBaseView.mShowPreview) return;
 
+            sendMessageDelayed(obtainMessage(MSG_SHOW_PREVIEW, keyIndex, 0, tracker), delay);
         }
         public void popupPreview(long delay, int keyIndex, PointerTracker tracker) {
             if(DEBUG)
                 Log.i(TAG, "UIHandler.popupPreview() delay="+delay + "; keyIndex = "+ keyIndex);
             LIMEKeyboardBaseView mLIMEKeyboardBaseView = mLIMEKeyboardBaseViewWeakReference.get();
-            if(mLIMEKeyboardBaseView == null) return;
+            if (mLIMEKeyboardBaseView == null) return;
+            if (!mLIMEKeyboardBaseView.mShowPreview) return;
+
             removeMessages(MSG_POPUP_PREVIEW);
             if (mLIMEKeyboardBaseView.mPreviewPopup.isShowing() && mLIMEKeyboardBaseView.mPreviewText.getVisibility() == VISIBLE) {
                 // Show right away, if it's already visible and finger is moving around
@@ -379,7 +383,10 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             if(DEBUG)
                 Log.i(TAG, "UIHandler.dismissPreview() delay=" + delay);
             LIMEKeyboardBaseView mLIMEKeyboardBaseView = mLIMEKeyboardBaseViewWeakReference.get();
-            if(mLIMEKeyboardBaseView != null) mLIMEKeyboardBaseView.startKeyPreviewFadeOutAnimation();
+            if (mLIMEKeyboardBaseView == null) return;
+            if (!mLIMEKeyboardBaseView.mShowPreview) return;
+
+            mLIMEKeyboardBaseView.startKeyPreviewFadeOutAnimation();
             sendMessageDelayed(obtainMessage(MSG_DISMISS_PREVIEW), delay);
 
         }
@@ -1217,6 +1224,11 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     }
 
     public void showPreview(int keyIndex, PointerTracker tracker) {
+        if (!mShowPreview) {
+            if(DEBUG)
+                Log.i(TAG,"showPreview(): preview is disable");
+            return;
+        }
 
         int oldKeyIndex = mOldPreviewKeyIndex;
         mOldPreviewKeyIndex = keyIndex;
