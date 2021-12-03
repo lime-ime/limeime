@@ -82,6 +82,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
     public static final int NOT_A_TOUCH_COORDINATE = -1;
 
+    private boolean mShowMiniKeyboard = false;
     public interface OnKeyboardActionListener {
 
         /**
@@ -1487,6 +1488,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     protected boolean onLongPress(Key popupKey) {
         // TODO if popupKey.popupCharacters has only one letter, send it as key without opening
         // mini keyboard.
+        if (!mShowMiniKeyboard)
+            return false;
 
         if (popupKey.popupResId == 0)
             return false;
@@ -1547,7 +1550,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         mMiniKeyboardPopup.setContentView(container);
         mMiniKeyboardPopup.setWidth(container.getMeasuredWidth());
         mMiniKeyboardPopup.setHeight(container.getMeasuredHeight());
-        mMiniKeyboardPopup.showAtLocation(this, Gravity.NO_GRAVITY, x, y);
+//        mMiniKeyboardPopup.showAtLocation(this, Gravity.NO_GRAVITY, x, y);
 
         // Inject down event on the key to mini keyboard.
         long eventTime = SystemClock.uptimeMillis();
