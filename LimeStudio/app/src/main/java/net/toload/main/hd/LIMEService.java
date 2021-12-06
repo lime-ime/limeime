@@ -470,6 +470,7 @@ public class LIMEService extends InputMethodService implements
             if (mCandidateList != null)
                 mCandidateList.clear();
 
+            mCandidateInInputView.clear();
             if (forceClearComposing) {
                 InputConnection ic = getCurrentInputConnection();
                 if (ic != null) ic.commitText("", 0);
@@ -2214,6 +2215,7 @@ public class LIMEService extends InputMethodService implements
         hasChineseSymbolCandidatesShown = false;
 
         if (mComposing.length() > 0) {
+            mCandidateInInputView.showBackground();
 
             final LinkedList<Mapping> list = new LinkedList<>();
 
@@ -2698,7 +2700,6 @@ public class LIMEService extends InputMethodService implements
     public synchronized void setSuggestions(List<Mapping> suggestions, boolean showNumber, String diplaySelkey) {
 
         if (suggestions != null && suggestions.size() > 0) {
-
             if (DEBUG)
                 Log.i(TAG, "setSuggestion():suggestions.size=" + suggestions.size()
                             + ", mComposing = " + mComposing
