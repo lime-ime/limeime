@@ -29,7 +29,9 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
@@ -140,6 +142,9 @@ public class CandidateView extends View implements View.OnClickListener {
 
     protected Paint mCandidatePaint;
     protected Paint mSelKeyPaint;
+
+    protected Paint mDashLinePaint;
+    protected Path mDashLinePath;
 
 
 
@@ -279,6 +284,13 @@ public class CandidateView extends View implements View.OnClickListener {
         mSelKeyPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_number_font_size) * mLIMEPref.getFontSize());
         mSelKeyPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
+        mDashLinePaint = new Paint();
+        mDashLinePaint.setStyle(Paint.Style.STROKE);
+        mDashLinePaint.setColor(Color.BLACK);
+        mDashLinePaint.setStrokeWidth(1);
+        mDashLinePaint.setPathEffect(new DashPathEffect(new float[]{2f, 4f}, 0));
+
+        mDashLinePath = new Path();
 
         //final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         //Jeremy '12,4,23 add mContext parameter.  The constructor without context is deprecated
@@ -672,6 +684,7 @@ public class CandidateView extends View implements View.OnClickListener {
             if (mComposingTextView != mComposingPopupTextView) {
                 mComposingTextView = mComposingPopupTextView;
                 mComposingTextView.setBackgroundColor(mColorComposingBackground);
+                mComposingTextView.setBackgroundResource(R.drawable.background_outline_rect);
                 mComposingTextView.setTextColor(mColorComposingText);
 
             }
@@ -1015,7 +1028,13 @@ public class CandidateView extends View implements View.OnClickListener {
                 }
                 //Draw spacer
                 candidatePaint.setColor(mColorSpacer);
-                canvas.drawLine(mWordX[i] + mWordWidth[i] + 0.5f, bgPadding.top + (mVerticalPadding/2), mWordX[i] + mWordWidth[i] + 0.5f, height - (mVerticalPadding/2), candidatePaint);
+//                canvas.drawLine(mWordX[i] + mWordWidth[i] + 0.5f, bgPadding.top + (mVerticalPadding/2), mWordX[i] + mWordWidth[i] + 0.5f, height - (mVerticalPadding/2), candidatePaint);
+                float lineX = mWordX[i] + mWordWidth[i] + 0.5f;
+                mDashLinePath.reset();
+                mDashLinePath.moveTo(lineX, bgPadding.top + (mVerticalPadding/2f));
+                mDashLinePath.lineTo(lineX, height - (mVerticalPadding/2f));
+                canvas.drawPath(mDashLinePath , mDashLinePaint);
+
                 candidatePaint.setFakeBoldText(false);
 
             }

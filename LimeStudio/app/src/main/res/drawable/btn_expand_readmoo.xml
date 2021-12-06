@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!--
   ~ /*
   ~  *
-  ~  **    Copyright 2015, The LimeIME Open Source Project
+  ~  **    Copyright 2016, The LimeIME Open Source Project
   ~  **
   ~  **    Project Url: http://github.com/lime-ime/limeime/
   ~  **                 http://android.toload.net/
@@ -24,12 +25,5 @@
   -->
 
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <item android:state_pressed="false"
-        android:drawable="@color/color_white" />
-
-    <item android:state_pressed="true"
-        android:drawable="@drawable/btn_keyboard_key_pressed_2" />
-
-
+    <item android:drawable="@drawable/mo_arrowsmall_down"/>
 </selector>

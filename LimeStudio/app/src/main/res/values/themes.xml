@@ -37,7 +37,7 @@
     <item name="LIMEKeyboardBaseView">@style/LIMEKeyboardBaseView.Readmoo</item>
     <item name="LIMEKeyboardLayout">@style/LIMEKeyboardLayout.Readmoo</item>
     <item name="LIMEPopupKeyboardLayout">@style/LIMEPopupKeyboardLayout.Light</item>
-    <item name="LIMECandidateView">@style/LIMECandidateView.Light</item>
+    <item name="LIMECandidateView">@style/LIMECandidateView.Readmoo</item>
   </style>
   <style name="LIMETheme.Light">
     <item name="LIMEKeyboardStyle">@style/LIMEKeyboard.Light</item>

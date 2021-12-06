@@ -37,11 +37,11 @@
     <color name="keyboard_background_readmoo">#FFFFFF</color>
     <color name="second_background_readmoo">#FFFFFF</color>
     <color name="second_background_readmoo_fl">#FFFFFF</color>
-    <color name="third_background_readmoo">#FFFFFF</color>
+    <color name="third_background_readmoo">#000000</color>
     <color name="composing_background_readmoo">#FFFFFF</color>
 
 
-    <color name="candidate_spacer_readmoo">#FF101010</color>
+    <color name="candidate_spacer_readmoo">#FF000000</color>
     <color name="candidate_selection_keys_readmoo">#FF000000</color>
 
     <color name="foreground_readmoo">#FFFFFF</color>

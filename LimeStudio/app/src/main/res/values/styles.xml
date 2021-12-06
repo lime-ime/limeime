@@ -421,6 +421,27 @@
         <item name="composingTextColor">@color/second_foreground_light</item>
         <item name="composingBackgroundColor">@color/composing_background_light</item>
     </style>
+    <style name="LIMECandidateView.Readmoo"  parent = "LIMECandidateView">
+        <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl</item>
+        <item name="voiceInputIcon">@drawable/btn_voice_light</item>
+        <item name="ExpandButtonIcon">@drawable/btn_expand_readmoo</item>
+        <item name="closeButtonIcon">@drawable/btn_close_readmoo</item>
+
+        <item name="candidateBackground">@color/third_background_light</item>
+        <!-- color of  different types of candidates   -->
+        <item name="candidateNormalTextColor">@color/foreground_light</item>
+        <item name="candidateNormalTextHighlightColor">@color/third_background_readmoo</item>
+        <item name="composingCodeColor">@color/color_common_green_hl</item>
+        <item name="composingCodeHighlightColor">@color/third_background_light</item>
+        <!-- color of  spacer between candidate   -->
+        <item name="spacerColor">@color/candidate_spacer_readmoo</item>
+        <!-- color of  selection key display for physical keyboard   -->
+        <item name="selKeyColor">@color/foreground_light</item>
+        <item name="selKeyShiftedColor">@color/color_black</item>
+        <!-- color of  composing text view above candidate view   -->
+        <item name="composingTextColor">@color/color_black</item>
+        <item name="composingBackgroundColor">@color/color_white</item>
+    </style>
     <style name="LIMECandidateView.Light"  parent = "LIMECandidateView">
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl</item>
         <item name="voiceInputIcon">@drawable/btn_voice_light</item>

@@ -42,10 +42,10 @@ import java.util.List;
 
 public class CandidateExpandedView extends CandidateView {
 
-    private final static boolean DEBUG = false;
+    private final static boolean DEBUG = true;
     private final static String TAG = "CandidateExpandedView";
 
-    private static final int MAX_SUGGESTIONS = 200;
+    private static final int MAX_SUGGESTIONS = 50;
 
     private CandidateView mCandidateView;
     private List<Mapping> mSuggestions;
@@ -113,7 +113,7 @@ public class CandidateExpandedView extends CandidateView {
 
 
         if (DEBUG)
-            Log.i(TAG, "OnDraw():mBgPadding.Top=" + mBgPadding.top
+            Log.i(TAG, "OnDraw():cp=" + mBgPadding.top
                     + ", mBgPadding.Right=" + mBgPadding.right);
 
         final int height = mHeight;
@@ -166,6 +166,8 @@ public class CandidateExpandedView extends CandidateView {
                 for (int i = 0; i < mRows; i++) {
                     if (i != 0) y += height + mVerticalPadding;
 
+                    int verticalLineStartY = 0;
+                    int verticalLineStopY = 0;
                     for (int j = 0; j < mRowSize[i]; j++) {
 
                         if(mSuggestions == null || mSuggestions.size() == 0 || mSuggestions.get(index) == null){
@@ -199,13 +201,26 @@ public class CandidateExpandedView extends CandidateView {
                         canvas.drawText(suggestion, mWordX[i][j] + X_GAP, y - mVerticalExtrasPadding * 2, candidatePaint);
 
                         candidatePaint.setColor(mColorSpacer);
+
+                        // 垂直分隔線
                         float lineX = mWordX[i][j] + mWordWidth[i][j] + 0.5f;
-                        canvas.drawLine(lineX, bgPadding.top + (height + mVerticalPadding) * i, lineX,
-                                (height + mVerticalPadding) * (i + 1) - mVerticalPadding + 1, candidatePaint);
+                        verticalLineStartY = bgPadding.top + (height + mVerticalPadding) * i - mVerticalPadding + 1;
+                        verticalLineStopY =(height + mVerticalPadding) * (i + 1) - mVerticalPadding + 1;
+
+                        mDashLinePath.reset();
+                        mDashLinePath.moveTo(lineX, verticalLineStartY);
+                        mDashLinePath.lineTo(lineX, verticalLineStopY);
+                        canvas.drawPath(mDashLinePath , mDashLinePaint);
                         candidatePaint.setFakeBoldText(false);
                         index++;
-
                     }
+
+                    // 水平分隔線
+                    int _startX = 0;
+                    int _startY = verticalLineStopY; // bgPadding.top + (height + mVerticalPadding) * i;
+                    int _endX = getWidth();
+                    int _endY = _startY;
+                    canvas.drawLine(_startX, _startY, _endX, _endY, candidatePaint);
                 }
             }catch(Exception e){
                 e.printStackTrace();
