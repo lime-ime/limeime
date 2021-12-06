@@ -744,7 +744,7 @@ public class CandidateView extends View implements View.OnClickListener {
         int mPopupComposingY = offsetInWindow[1];
         int mPopupComposingX = 0;
 
-        mPopupComposingY -= popupHeight;
+        mPopupComposingY -= mComposingTextView.getHeight();//popupHeight;
 
 
         if (DEBUG)
@@ -1031,8 +1031,8 @@ public class CandidateView extends View implements View.OnClickListener {
 //                canvas.drawLine(mWordX[i] + mWordWidth[i] + 0.5f, bgPadding.top + (mVerticalPadding/2), mWordX[i] + mWordWidth[i] + 0.5f, height - (mVerticalPadding/2), candidatePaint);
                 float lineX = mWordX[i] + mWordWidth[i] + 0.5f;
                 mDashLinePath.reset();
-                mDashLinePath.moveTo(lineX, bgPadding.top + (mVerticalPadding/2f));
-                mDashLinePath.lineTo(lineX, height - (mVerticalPadding/2f));
+                mDashLinePath.moveTo(lineX, bgPadding.top /*+ (mVerticalPadding/2f)*/);
+                mDashLinePath.lineTo(lineX, height /*- (mVerticalPadding/2f)*/);
                 canvas.drawPath(mDashLinePath , mDashLinePaint);
 
                 candidatePaint.setFakeBoldText(false);

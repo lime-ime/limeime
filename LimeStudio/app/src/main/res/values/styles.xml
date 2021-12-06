@@ -429,10 +429,10 @@
 
         <item name="candidateBackground">@color/third_background_light</item>
         <!-- color of  different types of candidates   -->
-        <item name="candidateNormalTextColor">@color/foreground_light</item>
+        <item name="candidateNormalTextColor">@color/foreground_readmoo</item>
         <item name="candidateNormalTextHighlightColor">@color/third_background_readmoo</item>
-        <item name="composingCodeColor">@color/color_common_green_hl</item>
-        <item name="composingCodeHighlightColor">@color/third_background_light</item>
+        <item name="composingCodeColor">@android:color/holo_red_dark</item>
+        <item name="composingCodeHighlightColor">@android:color/holo_red_dark</item>
         <!-- color of  spacer between candidate   -->
         <item name="spacerColor">@color/candidate_spacer_readmoo</item>
         <!-- color of  selection key display for physical keyboard   -->
@@ -440,7 +440,7 @@
         <item name="selKeyShiftedColor">@color/color_black</item>
         <!-- color of  composing text view above candidate view   -->
         <item name="composingTextColor">@color/color_black</item>
-        <item name="composingBackgroundColor">@color/color_white</item>
+        <item name="composingBackgroundColor">@android:color/holo_orange_light</item>
     </style>
     <style name="LIMECandidateView.Light"  parent = "LIMECandidateView">
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl</item>

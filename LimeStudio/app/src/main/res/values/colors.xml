@@ -44,7 +44,7 @@
     <color name="candidate_spacer_readmoo">#FF000000</color>
     <color name="candidate_selection_keys_readmoo">#FF000000</color>
 
-    <color name="foreground_readmoo">#FFFFFF</color>
+    <color name="foreground_readmoo">#000000</color>
     <color name="second_foreground_readmoo">#FF000000</color>
     <color name="third_foreground_readmoo">#FF000000</color>
 

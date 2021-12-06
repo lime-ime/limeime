@@ -45,6 +45,7 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
     private ImageButton mRightButton;
     private View mButtonRightExpand;
     private CandidateView mCandidateView;
+    private View mCandidatesContainer;
 
     Context ctx;
 
@@ -61,6 +62,7 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
         if (DEBUG)
             Log.i(TAG, "initViews()");
         if (mCandidateView == null) {
+            mCandidatesContainer = findViewById(R.id.candidates_container);
             mButtonRightExpand = findViewById(R.id.candidate_right_parent);
             mRightButton = (ImageButton) findViewById(R.id.candidate_right);
 
@@ -113,5 +115,13 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
             mCandidateView.showCandidatePopup();
 
 
+    }
+
+    public void showBackground() {
+        mCandidatesContainer.setBackgroundResource(R.drawable.bg_top_line);
+    }
+
+    public void clear() {
+        mCandidatesContainer.setBackgroundResource(0);
     }
 }
