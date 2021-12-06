@@ -436,7 +436,7 @@
         <!-- color of  spacer between candidate   -->
         <item name="spacerColor">@color/candidate_spacer_readmoo</item>
         <!-- color of  selection key display for physical keyboard   -->
-        <item name="selKeyColor">@color/foreground_light</item>
+        <item name="selKeyColor">@color/color_black</item>
         <item name="selKeyShiftedColor">@color/color_black</item>
         <!-- color of  composing text view above candidate view   -->
         <item name="composingTextColor">@color/color_black</item>

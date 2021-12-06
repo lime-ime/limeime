@@ -595,14 +595,19 @@ public class CandidateView extends View implements View.OnClickListener {
             );
 
 
+
+
         if (mCandidatePopupWindow.isShowing()) {
             if (DEBUG)
                 Log.i(TAG, "doUpdateCandidatePopup(),mCandidatePopup.isShowing ");
             mCandidatePopupWindow.update(mScreenWidth, popHeight);
         } else {
+            int paddingTop = 2;
             mCandidatePopupWindow.setWidth(mScreenWidth);
-            mCandidatePopupWindow.setHeight(popHeight);
-            mCandidatePopupWindow.showAsDropDown(this, 0, -getHeight());
+            mCandidatePopupWindow.setHeight(popHeight + paddingTop);
+
+            // 向上移 2dp 避免顯示跟 CandidateInInputViewContainer (candidates_container) 的 1dp padding
+            mCandidatePopupWindow.showAsDropDown(this, 0, -getHeight() - paddingTop);
             mPopupScrollView.scrollTo(0, 0);
         }
 
@@ -613,7 +618,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
         mPopupScrollView.setLayoutParams(
                 new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT
-                        , popHeight - mCloseButtonHeight));
+                        , popHeight - mCloseButtonHeight ));
 
 
     }

@@ -216,11 +216,13 @@ public class CandidateExpandedView extends CandidateView {
                     }
 
                     // 水平分隔線
-                    int _startX = 0;
-                    int _startY = verticalLineStopY; // bgPadding.top + (height + mVerticalPadding) * i;
-                    int _endX = getWidth();
-                    int _endY = _startY;
-                    canvas.drawLine(_startX, _startY, _endX, _endY, candidatePaint);
+                    if (i < mRows - 1) {
+                        int _startX = 0;
+                        int _startY = verticalLineStopY; // bgPadding.top + (height + mVerticalPadding) * i;
+                        int _endX = getWidth();
+                        int _endY = _startY;
+                        canvas.drawLine(_startX, _startY, _endX, _endY, candidatePaint);
+                    }
                 }
             }catch(Exception e){
                 e.printStackTrace();

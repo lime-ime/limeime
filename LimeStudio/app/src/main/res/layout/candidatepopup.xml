@@ -30,10 +30,8 @@
   	android:orientation="vertical"
   	android:layout_width="match_parent"
   	android:layout_height="wrap_content"
-	android:background="@color/color_black">
-	<View android:layout_width="match_parent"
-		android:layout_height="1dp"
-		android:background="@android:color/black" />
+	android:background="@color/color_white">
+
 	 <ScrollView
 		android:id="@+id/sv"
 		android:layout_width="fill_parent"
@@ -49,16 +47,28 @@
 	<View android:layout_width="match_parent"
 		android:layout_height="1dp"
 		android:background="@android:color/black" />
-	<ImageButton android:id="@+id/closeButton"
-			android:background="@android:color/black"
-			android:contentDescription="@string/close_cand"
-			android:src="@drawable/btn_close"
-			android:layout_width="wrap_content"
-			android:layout_height="fill_parent"
-			android:layout_marginTop="18dp"
-			android:layout_marginBottom="18dp"
-			android:layout_marginLeft="8dp"
-			android:layout_marginStart="8dp"
-			android:clickable="true"
-			android:layout_gravity="bottom|end"/>
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
+
+		<!-- workaround: dummy view to avoid transparent background when
+		     touch event ACTION_DOWN occurs -->
+		<View android:layout_width="0dp"
+				android:layout_height="match_parent"
+				android:layout_weight="1"
+				android:background="@android:color/white"/>
+
+		<ImageButton android:id="@+id/closeButton"
+				android:background="@android:color/black"
+				android:contentDescription="@string/close_cand"
+				android:src="@drawable/btn_close"
+				android:layout_width="wrap_content"
+				android:layout_height="fill_parent"
+				android:paddingTop="18dp"
+				android:paddingBottom="18dp"
+				android:paddingLeft="8dp"
+				android:paddingRight="8dp"
+				android:clickable="true"
+				android:layout_gravity="bottom|end"/>
+	</LinearLayout>
 </LinearLayout>
