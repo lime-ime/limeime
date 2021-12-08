@@ -26,10 +26,10 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:state_pressed="false"
-        android:drawable="@color/color_common_green_hl" />
+        android:drawable="@drawable/btn_keyboard_key_pressed_2" />
 
     <item android:state_pressed="true"
-        android:drawable="@color/color_common_light_green_hl" />
+        android:drawable="@drawable/btn_keyboard_key_pressed_2" />
 
 
 </selector>

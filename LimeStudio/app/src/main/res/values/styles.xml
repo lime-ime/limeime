@@ -422,7 +422,7 @@
         <item name="composingBackgroundColor">@color/composing_background_light</item>
     </style>
     <style name="LIMECandidateView.Readmoo"  parent = "LIMECandidateView">
-        <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl</item>
+        <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_readmoo</item>
         <item name="voiceInputIcon">@drawable/btn_voice_light</item>
         <item name="ExpandButtonIcon">@drawable/btn_expand_readmoo</item>
         <item name="closeButtonIcon">@drawable/btn_close_readmoo</item>

@@ -151,10 +151,13 @@ public class CandidateExpandedView extends CandidateView {
             // 29/Aug/2011, Art just ignore if there is an error.
             try {
                 if (mSelectedIndex >= 0) {
-                    canvas.translate(mWordX[mSelRow][mSelCol], mSelRow * (height + mVerticalPadding));
-                    mDrawableSuggestHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelRow][mSelCol], height);
+                    float dy = mSelRow == 0 ? mSelRow * (height + mVerticalPadding)
+                                    : mSelRow * (height + mVerticalPadding) - mVerticalPadding;
+                    int hh = mSelRow == 0 ? height : height + mVerticalPadding;
+                    canvas.translate(mWordX[mSelRow][mSelCol], dy);
+                    mDrawableSuggestHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelRow][mSelCol], hh);
                     mDrawableSuggestHighlight.draw(canvas);
-                    canvas.translate(-mWordX[mSelRow][mSelCol], -mSelRow * (height + mVerticalPadding));
+                    canvas.translate(-mWordX[mSelRow][mSelCol], -dy);
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
                 e.printStackTrace();
