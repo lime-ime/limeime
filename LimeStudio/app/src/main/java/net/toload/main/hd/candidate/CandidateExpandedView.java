@@ -304,7 +304,7 @@ public class CandidateExpandedView extends CandidateView {
         }
         //mTotalWidth = x;
         mRows = row + 1;
-        mTotalHeight = (height + mVerticalPadding) * (mRows);
+        mTotalHeight = (height + mVerticalPadding) * (mRows) - mVerticalPadding;
         if (DEBUG)
             Log.i(TAG, "prepareLayout(): mRows=" + mRows + ", mTotalHeight=" + mTotalHeight);
     }
