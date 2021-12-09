@@ -439,7 +439,7 @@ public class LIMEPreferenceManager {
 	public boolean getDisablePhysicalSelkey(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean("disable_physical_selkey", false);
+		return sp.getBoolean("disable_physical_selkey", true);
 	}
 	
 	
