@@ -1361,8 +1361,11 @@ public class CandidateView extends View implements View.OnClickListener {
         } else {
             if (mSelectedIndex < mCount - 1) {
                 mSelectedIndex++;
-                if (mWordX[mSelectedIndex] + mWordWidth[mSelectedIndex] > currentX + getWidth())
-                    scrollNext();
+                if (mWordX[mSelectedIndex] + mWordWidth[mSelectedIndex] > currentX + getWidth()) {
+                    // 實體鍵盤方向鍵向右選字, 改為展開選字列表
+                    showCandidatePopup();//scrollNext();
+                    mSelectedIndex--;
+                }
                 //Jeremy '12,7,6 if the selected index is not in current visible area, set the selected index to the fist item visible
                 int rightEdge = currentX + getWidth();
                 if (mWordX[mSelectedIndex] < currentX ||
