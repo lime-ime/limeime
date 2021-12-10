@@ -29,8 +29,7 @@
 	    android:id="@+id/root_candidates"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="@color/color_transparent"
-			>
+        android:background="@color/color_white">
 
     <TextView xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/embeddedComposing"
@@ -42,36 +41,45 @@
         android:minWidth="0dip"
         android:gravity="top"
         />
-    <LinearLayout
-        android:layout_height="wrap_content"
-        android:layout_width="fill_parent"
-        android:background="@color/third_background_light">
+	<LinearLayout
+		android:id="@+id/candidates_container"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:paddingTop="1.3dp"
+		android:orientation="horizontal"
+		android:background="@drawable/bg_top_line">
 
-    <view xmlns:android="http://schemas.android.com/apk/res/android"
-		    class="net.toload.main.hd.candidate.CandidateView"
-	        android:id="@+id/candidates"
-	        android:layout_width="0dp"
-	        android:layout_height="@dimen/candidate_stripe_height"
-	        android:layout_weight="1"
-	        android:background="@color/third_background_light"
-			/>
+		<view xmlns:android="http://schemas.android.com/apk/res/android"
+				class="net.toload.main.hd.candidate.CandidateView"
+				android:id="@+id/candidates"
+				android:layout_width="0dp"
+				android:layout_height="@dimen/candidate_stripe_height"
+				android:layout_weight="1"
+				android:background="@color/third_background_light"
+				/>
 
-     <LinearLayout
-            android:id="@+id/candidate_right_parent"
-            android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:clickable="true"
-            android:orientation="horizontal">
+		<LinearLayout
+			android:id="@+id/candidate_right_parent"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:clickable="true"
+			android:orientation="horizontal">
 
-        <ImageButton
-            android:id="@+id/candidate_right"
-            android:contentDescription="@string/more_cand"
-            android:src="@drawable/ic_suggest_expander"
-            android:layout_width="@dimen/candidate_expand_button_width"
-            android:layout_height="fill_parent"
-            android:clickable="true"
-            />
+			<ImageButton
+				android:id="@+id/candidate_right"
+				android:contentDescription="@string/more_cand"
+				android:src="@drawable/ic_suggest_expander"
+				android:layout_width="@dimen/candidate_expand_button_width"
+				android:layout_height="wrap_content"
+				android:clickable="true"
+				/>
+		</LinearLayout>
     </LinearLayout>
-    </LinearLayout>
-    
+	<View
+		android:id="@+id/dummy_view"
+		android:layout_width="match_parent"
+		android:layout_height="626dp"
+		android:background="@drawable/bg_top_line"
+		android:visibility="visible"/>
+
 </net.toload.main.hd.candidate.CandidateViewContainer>

@@ -200,8 +200,9 @@ public class CandidateView extends View implements View.OnClickListener {
         mLIMEPref = new LIMEPreferenceManager(context);
 
         //Jeremy '16,7,24 get themed objects
+        // 實體鍵盤無法套用 theme (WHY????), 強制改為 readmoo theme
         TypedArray a = context.getTheme().obtainStyledAttributes(
-                attrs, R.styleable.LIMECandidateView, defStyle, R.style.LIMECandidateView);
+                attrs, R.styleable.LIMECandidateView, defStyle, R.style.LIMECandidateView_Readmoo);
 
         int n = a.getIndexCount();
 
@@ -663,15 +664,16 @@ public class CandidateView extends View implements View.OnClickListener {
 
         // Initialize mComposingTextView as embedding composing or popup window for fixed candidate mode. Jeremy '15,6,4
 
-        if (embeddedComposing != null) {
+        if (embeddedComposing != null) { // 實體鍵盤, 無法靠 style 設定相關 attr WHYYYY????
             if( mComposingTextView != embeddedComposing ) {
                 mComposingTextView = embeddedComposing;
                 mComposingTextView.setBackgroundColor(mColorComposingBackground);
                 mComposingTextView.setTextColor(mColorComposingText);
+                mComposingTextView.setBackgroundResource(R.drawable.background_outline_rect);
             }
 
         } else {
-            if (mComposingPopupTextView == null) {
+            if (mComposingPopupTextView == null) { // 一般鍵盤
                 LayoutInflater inflater
                         = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 mComposingPopupTextView = (TextView) inflater.inflate(R.layout.composingtext, (ViewGroup) getRootView(), false);

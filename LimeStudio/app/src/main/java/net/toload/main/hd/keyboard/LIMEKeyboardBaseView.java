@@ -530,8 +530,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
         setLayerType(LAYER_TYPE_HARDWARE, null);
 
+        // 實體鍵盤無法套用 theme (WHYY????), 強制改為 readmoo theme
         TypedArray a = context.getTheme().obtainStyledAttributes(
-                attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEBaseKeyboard);
+                attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEBaseKeyboard_Readmoo);
         LayoutInflater inflate =
                 (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         int previewLayout = 0;
