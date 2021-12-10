@@ -42,7 +42,7 @@
     <style name="LIMEKeyboard.Readmoo" parent = "LIMEKeyboard">
         <item name="spaceKeyIcon">@null</item>
         <item name="spaceKeyPreviewIcon">@null</item>
-        <item name="enterKeyIcon">@drawable/sym_keyboard_return_light</item>
+        <item name="enterKeyIcon">@drawable/sym_keyboard_return_readmoo</item>
         <item name="searchKeyIcon">@drawable/sym_keyboard_search_light</item>
         <item name="doneKeyIcon">@drawable/sym_keyboard_done_readmoo</item>
         <item name="deleteKeyIcon">@drawable/sym_keyboard_delete_readmoo</item>
