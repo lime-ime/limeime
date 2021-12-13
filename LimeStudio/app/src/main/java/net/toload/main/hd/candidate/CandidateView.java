@@ -528,6 +528,9 @@ public class CandidateView extends View implements View.OnClickListener {
             mCandidatePopupContainer = inflater.inflate(R.layout.candidatepopup, (ViewGroup) this.getRootView(), false);
 
             mCandidatePopupContainer.setBackgroundColor(mColorBackground);
+            // remove background shadow, setElevation not work, WHY????
+            mCandidatePopupWindow.setBackgroundDrawable(null);
+//            mCandidatePopupWindow.setBackgroundDrawable(CompactC);
 
             mCandidatePopupWindow.setContentView(mCandidatePopupContainer);
 
@@ -962,16 +965,17 @@ public class CandidateView extends View implements View.OnClickListener {
                 canvas.translate(-mWordX[mSelectedIndex], 0);
 
             }
-            if(mTransparentCandidateView){
-                canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-
-                Paint backgroundPaint = new Paint();
-                backgroundPaint.setColor(ContextCompat.getColor(mContext, R.color.third_background_light));
-                backgroundPaint.setAlpha(33);
-                backgroundPaint.setStyle(Paint.Style.FILL);
-
-                canvas.drawRect(0.5f, bgPadding.top, mScreenWidth, height, backgroundPaint);
-            }
+//            if(mTransparentCandidateView){
+//                Log.d(TAG, "mTransparentCandidateView....");
+//                canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+//
+//                Paint backgroundPaint = new Paint();
+//                backgroundPaint.setColor(ContextCompat.getColor(mContext, R.color.third_background_light));
+//                backgroundPaint.setAlpha(33);
+//                backgroundPaint.setStyle(Paint.Style.FILL);
+//
+//                canvas.drawRect(0.5f, bgPadding.top, mScreenWidth, height, backgroundPaint);
+//            }
 
 
             for (int i = 0; i < count; i++) {

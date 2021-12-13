@@ -427,7 +427,7 @@
         <item name="ExpandButtonIcon">@drawable/btn_expand_readmoo</item>
         <item name="closeButtonIcon">@drawable/btn_close_readmoo</item>
 
-        <item name="candidateBackground">@color/third_background_light</item>
+        <item name="candidateBackground">@color/second_background_readmoo</item>
         <!-- color of  different types of candidates   -->
         <item name="candidateNormalTextColor">@color/foreground_readmoo</item>
         <item name="candidateNormalTextHighlightColor">@color/third_background_readmoo</item>

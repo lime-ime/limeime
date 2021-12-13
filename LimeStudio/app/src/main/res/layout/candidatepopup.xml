@@ -29,14 +29,14 @@
   	android:baselineAligned="true"
   	android:orientation="vertical"
   	android:layout_width="match_parent"
-  	android:layout_height="wrap_content"
-	android:background="@color/color_white">
-
-	 <ScrollView
+  	android:layout_height="wrap_content">
+	<View android:layout_width="match_parent"
+		android:layout_height="1dp"
+		android:background="@android:color/black"/>
+	<ScrollView
 		android:id="@+id/sv"
 		android:layout_width="fill_parent"
-		android:layout_height="@dimen/candidatepopup_scrollview_height"
-		>
+		android:layout_height="@dimen/candidatepopup_scrollview_height">
 		<view xmlns:android="http://schemas.android.com/apk/res/android"
 				class="net.toload.main.hd.candidate.CandidateExpandedView"
 				android:id="@+id/candidatePopup"
@@ -49,7 +49,9 @@
 		android:background="@android:color/black" />
 	<LinearLayout
 		android:layout_width="match_parent"
-		android:layout_height="wrap_content">
+		android:layout_height="wrap_content"
+		android:paddingBottom="1dp"
+		android:background="@drawable/bg_bottom_line">
 
 		<!-- workaround: dummy view to avoid transparent background when
 		     touch event ACTION_DOWN occurs -->
@@ -59,7 +61,6 @@
 				android:background="@android:color/white"/>
 
 		<ImageButton android:id="@+id/closeButton"
-				android:background="@android:color/black"
 				android:contentDescription="@string/close_cand"
 				android:src="@drawable/btn_close"
 				android:layout_width="wrap_content"
