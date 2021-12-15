@@ -44,7 +44,7 @@
     <dimen name="small_label_text_size">36dp</dimen>
     <dimen name="composing_text_size">28sp</dimen>
     <dimen name="notice_text_size">20sp</dimen>
-    <dimen name="keyboard_vertical_correction">-0.05in</dimen>
+    <dimen name="keyboard_vertical_correction">0in</dimen>
 
  	<dimen name="mini_keyboard_vertical_correction">-0.05in</dimen>
  	
