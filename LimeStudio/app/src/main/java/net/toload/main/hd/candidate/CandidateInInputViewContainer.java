@@ -121,7 +121,7 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
         mCandidatesContainer.setBackgroundResource(R.drawable.bg_top_line);
     }
 
-    public void clear() {
+    public void hideBackground() {
         mCandidatesContainer.setBackgroundResource(0);
     }
 }

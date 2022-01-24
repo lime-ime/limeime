@@ -470,7 +470,6 @@ public class LIMEService extends InputMethodService implements
             if (mCandidateList != null)
                 mCandidateList.clear();
 
-            mCandidateInInputView.clear();
             if (forceClearComposing) {
                 InputConnection ic = getCurrentInputConnection();
                 if (ic != null) ic.commitText("", 0);
@@ -495,7 +494,11 @@ public class LIMEService extends InputMethodService implements
                 Log.i(TAG, "clearSuggestions(): "
                         + ", hasCandidatesShown:" + hasCandidatesShown);
 
-            if (!mEnglishOnly && mLIMEPref.getAutoChineseSymbol() //Jeremy '12,4,29 use mEnglishOnly instead of onIM 
+            if (!hasCandidatesShown && mCandidateInInputView != null) {
+                hideCandidateInputViewBackground();
+            }
+
+            if (!mEnglishOnly && mLIMEPref.getAutoChineseSymbol() //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                     && (hasCandidatesShown || mFixedCandidateViewOn)) {   // Change isCandiateShown() to hasCandiatesShown
                 mCandidateView.clear();
                 if (hasCandidatesShown)
@@ -2215,7 +2218,7 @@ public class LIMEService extends InputMethodService implements
         hasChineseSymbolCandidatesShown = false;
 
         if (mComposing.length() > 0) {
-            mCandidateInInputView.showBackground();
+            showCandidateInputViewBackground();
 
             final LinkedList<Mapping> list = new LinkedList<>();
 
@@ -2618,9 +2621,20 @@ public class LIMEService extends InputMethodService implements
         mCandidateViewHandler.hideCandidateView();
     }
 
+    private void showCandidateInputViewBackground() {
+        if (DEBUG) Log.i(TAG, "showCandidateInputViewBackground()");
+        mCandidateViewHandler.showCandidateInputViewBackground();
+    }
+
+    private void hideCandidateInputViewBackground() {
+        if (DEBUG) Log.i(TAG, "showCandidateInputViewBackground()");
+        mCandidateViewHandler.hideCandidateInputViewBackground();
+    }
+
     private void showCandidateView() {
         if (DEBUG) Log.i(TAG, "showCandidateView()");
         mCandidateViewHandler.showCandidateView();
+        hideCandidateInputViewBackground();
     }
 
     private void hideCandidateView() {
@@ -2628,11 +2642,12 @@ public class LIMEService extends InputMethodService implements
         if (mCandidateView != null) mCandidateView.clear();
         hasCandidatesShown = false;
         hasChineseSymbolCandidatesShown = false;
-        if (mCandidateViewStandAlone == null || (!mCandidateViewStandAlone.isShown()))
-            return;  // escape if mCandidateViewStandAlone is not created or it's not shown '12,5,6, Jeremy 
+        if (mCandidateViewStandAlone == null || (!mCandidateViewStandAlone.isShown())) {
+            return;  // escape if mCandidateViewStandAlone is not created or it's not shown '12,5,6, Jeremy
+        }
 
         mCandidateViewHandler.hideCandidateViewDelayed(DELAY_BEFORE_HIDE_CANDIDATE_VIEW);
-
+        hideCandidateInputViewBackground();
     }
 
     private void forceHideCandidateView() {
@@ -2663,6 +2678,8 @@ public class LIMEService extends InputMethodService implements
         private final WeakReference<LIMEService> mLIMEService;
         private final int MSG_SHOW_CANDIDATE_VIEW = 1;
         private final int MSG_HIDE_CANDIDATE_VIEW = 2;
+        private final int MSG_SHOW_CANDIDATE_INPUT_VIEW_BACKGROUND = 3;
+        private final int MSG_HIDE_CANDIDATE_INPUT_VIEW_BACKGROUND = 4;
 
         CandidateViewHandler(LIMEService im){
             mLIMEService = new WeakReference<>(im);
@@ -2679,7 +2696,23 @@ public class LIMEService extends InputMethodService implements
                 case MSG_HIDE_CANDIDATE_VIEW:
                     mLIMEInstance.setCandidatesViewShown(false);
                     break;
+                case MSG_SHOW_CANDIDATE_INPUT_VIEW_BACKGROUND:
+                    mLIMEInstance.setCandidatesInputViewBackgroundShown(true);
+                    break;
+                case MSG_HIDE_CANDIDATE_INPUT_VIEW_BACKGROUND:
+                    mLIMEInstance.setCandidatesInputViewBackgroundShown(false);
+                    break;
             }
+        }
+        void showCandidateInputViewBackground()
+        {
+            removeMessages(MSG_SHOW_CANDIDATE_INPUT_VIEW_BACKGROUND);  //cancel previous hide messages if any
+            sendMessage(obtainMessage(MSG_SHOW_CANDIDATE_INPUT_VIEW_BACKGROUND));
+        }
+        void hideCandidateInputViewBackground()
+        {
+            removeMessages(MSG_HIDE_CANDIDATE_INPUT_VIEW_BACKGROUND);  //cancel previous hide messages if any
+            sendMessage(obtainMessage(MSG_HIDE_CANDIDATE_INPUT_VIEW_BACKGROUND));
         }
         void showCandidateView()
         {
@@ -2829,6 +2862,14 @@ public class LIMEService extends InputMethodService implements
 
     }
 
+    public void setCandidatesInputViewBackgroundShown(boolean shown) {
+        if (mCandidateInInputView != null) {
+            if (shown)
+                mCandidateInInputView.showBackground();
+            else
+                mCandidateInInputView.hideBackground();
+        }
+    }
 
     private void handleShift() {
         if (DEBUG) Log.i(TAG, "handleShift()");
