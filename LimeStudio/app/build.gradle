@@ -97,6 +97,11 @@ android {
             resValue "string", "default_font_size", "1.5"
         }
 
+        mooInkPlus2 {
+            dimension "default"
+        }
+
+
     }
     packagingOptions {
         exclude 'META-INF/LICENSE'
