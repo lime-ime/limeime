@@ -44,10 +44,25 @@ android {
     }
 
     signingConfigs {
-        releaseC {
-            storeFile = file('../ntx_platform')
+        eng {
+            storeFile = file('../mooInk-eng.keystore')
+            storePassword = 'android'
+            keyAlias = 'android-platform'
+            keyPassword = 'android'
+        }
+        engC {
+            // 使用 aosp 的 key
+            storeFile = file('../ntx_platform.keystore')
             storePassword = 'ntx'
             keyAlias = 'platform'
+            keyPassword = 'ntx'
+        }
+
+        engS {
+            // 使用 release 版的 key
+            storeFile = file('../ntx_platform.keystore')
+            storePassword = 'ntx'
+            keyAlias = 'platform_s'
             keyPassword = 'ntx'
         }
 
@@ -65,7 +80,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
-            signingConfig signingConfigs.engPro2
+            signingConfig signingConfigs.eng
         }
     }
 
@@ -88,7 +103,6 @@ android {
 
         mooInkC {
             dimension "default"
-            signingConfig signingConfigs.releaseC
         }
 
         mooInkPro2 {
