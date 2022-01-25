@@ -431,8 +431,8 @@
         <!-- color of  different types of candidates   -->
         <item name="candidateNormalTextColor">@color/foreground_readmoo</item>
         <item name="candidateNormalTextHighlightColor">@color/third_background_readmoo</item>
-        <item name="composingCodeColor">@android:color/holo_red_dark</item>
-        <item name="composingCodeHighlightColor">@android:color/holo_red_dark</item>
+        <item name="composingCodeColor">@color/composing_readmoo</item>
+        <item name="composingCodeHighlightColor">@color/composing_readmoo</item>
         <!-- color of  spacer between candidate   -->
         <item name="spacerColor">@color/candidate_spacer_readmoo</item>
         <!-- color of  selection key display for physical keyboard   -->

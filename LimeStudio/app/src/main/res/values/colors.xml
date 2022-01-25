@@ -47,6 +47,7 @@
     <color name="foreground_readmoo">#000000</color>
     <color name="second_foreground_readmoo">#FF000000</color>
     <color name="third_foreground_readmoo">#FF000000</color>
+    <color name="composing_readmoo">#FF3C3C3C</color>
 
     <!-- colors for light theme -->
 
