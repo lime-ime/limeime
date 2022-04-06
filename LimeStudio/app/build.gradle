@@ -72,6 +72,16 @@ android {
             keyAlias = 'platform'
             keyPassword = 'android'
         }
+
+        engPlus2 {
+            v1SigningEnabled true
+            v2SigningEnabled true
+            storeFile = file('../mooInkPlus2-eng.keystore')
+            storePassword =  'android'
+            keyAlias = 'platform'
+            keyPassword = 'android'
+        }
+
     }
 
     buildTypes {
@@ -80,7 +90,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
-            signingConfig signingConfigs.eng
+            signingConfig signingConfigs.engPlus2
         }
     }
 
