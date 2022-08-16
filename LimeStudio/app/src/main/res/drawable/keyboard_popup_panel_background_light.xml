@@ -38,6 +38,9 @@
         android:bottom="1dp"
         />
 
-
+    <stroke
+        android:width="6dp"
+        android:color="@color/color_black"
+        />
 
 </shape>

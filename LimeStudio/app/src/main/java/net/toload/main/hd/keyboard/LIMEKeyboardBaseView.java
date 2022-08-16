@@ -39,6 +39,8 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.PorterDuff;
@@ -1188,8 +1190,14 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         mInvalidatedKey = null;
         // Overlay a dark rectangle to dim the keyboard
         if (mMiniKeyboard != null) {
-            paint.setColor((int) (mBackgroundDimAmount * 0xFF) << 24);
-            canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
+//          paint.setColor((int) (mBackgroundDimAmount * 0xFF) << 24);
+            Paint dotPaint = new Paint();
+            dotPaint.setColor(Color.BLACK);
+            dotPaint.setStyle(Paint.Style.STROKE);
+            dotPaint.setPathEffect(new DashPathEffect(new float[]{2f, 4f}, 0));
+            for (int i = 0; i < getHeight(); i = i + 6) {
+                canvas.drawLine(0, i, getWidth(), i, dotPaint);
+            }
         }
 
         if (DEBUG) {
