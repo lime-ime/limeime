@@ -39,6 +39,8 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.PorterDuff;
@@ -66,6 +68,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import net.toload.main.hd.R;
+import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 
 import java.lang.ref.WeakReference;
@@ -73,6 +76,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.WeakHashMap;
 
 @SuppressLint("UseSparseArrays")
@@ -82,7 +86,6 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
     public static final int NOT_A_TOUCH_COORDINATE = -1;
 
-    private boolean mShowMiniKeyboard = false;
     public interface OnKeyboardActionListener {
 
         /**
@@ -160,6 +163,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
     //themed context
     Context mContext;
+
+    private LIMEPreferenceManager mLIMEPref;
 
     // Timing constants
     private final int mKeyRepeatInterval;
@@ -529,6 +534,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         mContext = context;
 
         setLayerType(LAYER_TYPE_HARDWARE, null);
+
+        mLIMEPref = new LIMEPreferenceManager(mContext);
 
         // 實體鍵盤無法套用 theme (WHYY????), 強制改為 readmoo theme
         TypedArray a = context.getTheme().obtainStyledAttributes(
@@ -1189,8 +1196,14 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         mInvalidatedKey = null;
         // Overlay a dark rectangle to dim the keyboard
         if (mMiniKeyboard != null) {
-            paint.setColor((int) (mBackgroundDimAmount * 0xFF) << 24);
-            canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
+//          paint.setColor((int) (mBackgroundDimAmount * 0xFF) << 24);
+            Paint dotPaint = new Paint();
+            dotPaint.setColor(Color.BLACK);
+            dotPaint.setStyle(Paint.Style.STROKE);
+            dotPaint.setPathEffect(new DashPathEffect(new float[]{2f, 4f}, 0));
+            for (int i = 0; i < getHeight(); i = i + 6) {
+                canvas.drawLine(0, i, getWidth(), i, dotPaint);
+            }
         }
 
         if (DEBUG) {
@@ -1489,10 +1502,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     protected boolean onLongPress(Key popupKey) {
         // TODO if popupKey.popupCharacters has only one letter, send it as key without opening
         // mini keyboard.
-        if (!mShowMiniKeyboard)
-            return false;
-
-        if (popupKey.popupResId == 0)
+        if (!(Objects.equals(mLIMEPref.getActiveIM(), "phonetic") && !mLIMEPref.getLanguageMode()
+                && popupKey.codes[0] == 46))// 只處理注音輸入法模式下的注音鍵盤時長按 . 出現的全形符號選單 (前次修改是為了阻擋純英鍵盤長按出現的德文西文等字母)
             return false;
 
         View container = mMiniKeyboardCache.get(popupKey);
@@ -1551,7 +1562,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         mMiniKeyboardPopup.setContentView(container);
         mMiniKeyboardPopup.setWidth(container.getMeasuredWidth());
         mMiniKeyboardPopup.setHeight(container.getMeasuredHeight());
-//        mMiniKeyboardPopup.showAtLocation(this, Gravity.NO_GRAVITY, x, y);
+        mMiniKeyboardPopup.showAtLocation(this, Gravity.NO_GRAVITY, x, y);
 
         // Inject down event on the key to mini keyboard.
         long eventTime = SystemClock.uptimeMillis();
