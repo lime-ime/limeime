@@ -164,6 +164,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     //themed context
     Context mContext;
 
+    private LIMEPreferenceManager mLIMEPref;
+
     // Timing constants
     private final int mKeyRepeatInterval;
 
@@ -532,6 +534,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         mContext = context;
 
         setLayerType(LAYER_TYPE_HARDWARE, null);
+
+        mLIMEPref = new LIMEPreferenceManager(mContext);
 
         // 實體鍵盤無法套用 theme (WHYY????), 強制改為 readmoo theme
         TypedArray a = context.getTheme().obtainStyledAttributes(
@@ -1498,7 +1502,6 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     protected boolean onLongPress(Key popupKey) {
         // TODO if popupKey.popupCharacters has only one letter, send it as key without opening
         // mini keyboard.
-        LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(mContext);
         if (!(Objects.equals(mLIMEPref.getActiveIM(), "phonetic") && !mLIMEPref.getLanguageMode()
                 && popupKey.codes[0] == 46))// 只處理注音輸入法模式下的注音鍵盤時長按 . 出現的全形符號選單 (前次修改是為了阻擋純英鍵盤長按出現的德文西文等字母)
             return false;
