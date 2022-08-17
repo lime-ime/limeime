@@ -68,6 +68,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import net.toload.main.hd.R;
+import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 
 import java.lang.ref.WeakReference;
@@ -75,6 +76,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.WeakHashMap;
 
 @SuppressLint("UseSparseArrays")
@@ -1496,7 +1498,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     protected boolean onLongPress(Key popupKey) {
         // TODO if popupKey.popupCharacters has only one letter, send it as key without opening
         // mini keyboard.
-        if (popupKey.popupResId != 2131820589)// 只處理長按 . 出現的全形符號選單 (前次修改是為了阻擋純英鍵盤長按出現的德文西文等字母)
+        LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(mContext);
+        if (!(Objects.equals(mLIMEPref.getActiveIM(), "phonetic") && !mLIMEPref.getLanguageMode()
+                && popupKey.codes[0] == 46))// 只處理注音輸入法模式下的注音鍵盤時長按 . 出現的全形符號選單 (前次修改是為了阻擋純英鍵盤長按出現的德文西文等字母)
             return false;
 
         View container = mMiniKeyboardCache.get(popupKey);
