@@ -206,6 +206,7 @@ public class Lime {
     public static final String IM_PINYINGB = "pinyingb";
     public static final String IM_SCJ = "scj";
     public static final String IM_WB = "wb";
+    public static final String IM_TABLE2 = "imtable2";
 
 
     public static final String DB_COLUMN_ID = "_id";

@@ -308,6 +308,7 @@
         <item>筆順五碼</item>
         <item>華象直覺</item>
         <item>拼音</item>
+        <item>簡體拼音</item>
     </string-array>
     <string-array name="im_reverse_lookup_codes">
         <item>none</item>
@@ -324,6 +325,7 @@
         <item>wb</item>
         <item>hs</item>
         <item>pinyin</item>
+        <item>imtable2</item>
     </string-array>
     <!-- Keyboard Selection List -->
     <string-array name="keyboard">
@@ -340,6 +342,7 @@
         <item>筆順五碼輸入法</item>
         <item>華象直覺輸入法</item>
         <item>拼音輸入法</item>
+        <item>簡體漢語拼音輸入法</item>
     </string-array>
     <!-- Keyboard short name List -->
     <string-array name="keyboardShortname">
@@ -356,8 +359,10 @@
         <item>筆順五碼</item>
        <item>華象直覺</item>
         <item>拼音</item>
+        <item>簡體拼音</item>
     </string-array>
     <string-array name="keyboard_defaultstate">
+        <item>true</item>
         <item>true</item>
         <item>true</item>
         <item>true</item>
@@ -386,6 +391,7 @@
         <item>wb</item>
         <item>hs</item>
         <item>pinyin</item>
+        <item>imtable2</item>
     </string-array>
     <string-array name="table_codes">
         <item>custom</item>
@@ -403,6 +409,7 @@
         <item>pinyin</item>
         <item>related</item>
         <item>dictionary</item>
+        <item>imtable2</item>
     </string-array>
 
     <string-array name="similiar_codes">
@@ -431,6 +438,7 @@
         <item>拼音</item>
         <item>預載關聯字</item>
         <item>英文字典</item>
+        <item>簡體拼音</item>
     </string-array>
 
     <!-- Version 3 String Set -->

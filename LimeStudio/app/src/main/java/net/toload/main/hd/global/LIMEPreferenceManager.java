@@ -371,13 +371,17 @@ public class LIMEPreferenceManager {
 			if(!state.equals("")){state += ";";}
 			state += "12";
 		}
+		if(imhm.get(Lime.IM_TABLE2) != null){
+			if(!state.equals("")){state += ";";}
+			state += "13";
+		}
 
 		setIMActivatedState(state);
 	}
 	
 	public String getIMActivatedState(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getString("keyboard_state", "0;1;2;3;4;5;6;7;8;9;10;11;12");
+		return sp.getString("keyboard_state", "0;1;2;3;4;5;6;7;8;9;10;11;12;13");
 	}
 	public void setIMActivatedState(String state){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);

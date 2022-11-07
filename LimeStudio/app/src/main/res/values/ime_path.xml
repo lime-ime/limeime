@@ -6,12 +6,23 @@
         <item>phonetic</item>    <!-- 注音 -->
         <item>cj</item>          <!-- 倉頡 -->
         <item>ecj</item>         <!-- 速成 -->
-        <item>pinyin</item>      <!-- 拼音 -->
+        <item>pinyin</item>      <!-- 拼音繁體 -->
+        <item>imtable2</item>    <!-- 拼音簡體 -->
     </string-array>
     <string-array name="ime_path">
         <item>phoneticcompletebig5.zip</item>
         <item>cjbig5.zip</item>
         <item>ecj.zip</item>
         <item>pinyin.zip</item>
+        <item>pinyingb.zip</item>
     </string-array>
+
+    <!-- 若需要更新字根檔, version 需大於目前版本 -->
+    <integer-array name="ime_file_ver">
+        <item>0</item>    <!-- phonetic/注音 -->
+        <item>0</item>    <!-- cj/倉頡 -->
+        <item>0</item>    <!-- ecj/速成 -->
+        <item>2</item>    <!-- pinyin/拼音繁體 -->
+        <item>0</item>    <!-- imtable2/拼音簡體 -->
+    </integer-array>
 </resources>
