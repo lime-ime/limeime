@@ -307,7 +307,7 @@
         <item>行列10</item>
         <item>筆順五碼</item>
         <item>華象直覺</item>
-        <item>拼音</item>
+        <item>繁體拼音</item>
         <item>簡體拼音</item>
     </string-array>
     <string-array name="im_reverse_lookup_codes">
@@ -341,8 +341,8 @@
         <item>行列10輸入法</item>
         <item>筆順五碼輸入法</item>
         <item>華象直覺輸入法</item>
-        <item>拼音輸入法</item>
-        <item>簡體漢語拼音輸入法</item>
+        <item>繁體拼音輸入法</item>
+        <item>簡體拼音輸入法</item>
     </string-array>
     <!-- Keyboard short name List -->
     <string-array name="keyboardShortname">
@@ -357,8 +357,8 @@
         <item>行列</item>
         <item>行列10</item>
         <item>筆順五碼</item>
-       <item>華象直覺</item>
-        <item>拼音</item>
+        <item>華象直覺</item>
+        <item>繁體拼音</item>
         <item>簡體拼音</item>
     </string-array>
     <string-array name="keyboard_defaultstate">
@@ -435,7 +435,7 @@
         <item>行列10</item>
         <item>筆順五碼</item>
         <item>華象直覺</item>
-        <item>拼音</item>
+        <item>繁體拼音</item>
         <item>預載關聯字</item>
         <item>英文字典</item>
         <item>簡體拼音</item>
