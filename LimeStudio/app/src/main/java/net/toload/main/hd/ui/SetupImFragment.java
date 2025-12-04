@@ -24,66 +24,55 @@
 
 package net.toload.main.hd.ui;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
-import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.RemoteException;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
-import android.util.Log;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.dropbox.client2.DropboxAPI;
-import com.dropbox.client2.android.AndroidAuthSession;
-import com.dropbox.client2.session.AppKeyPair;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
 
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Im;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
-//admob
-//google drive
-/*  vpon import
-import com.vpadn.ads.VpadnAdRequest;
-import com.vpadn.ads.VpadnAdSize;
-import com.vpadn.ads.VpadnBanner;
-*/
-// admob import
 
-/**
- * Fragment used for managing interactions for and presentation of a navigation drawer.
- * See the <a href="https://developer.android.com/design/patterns/navigation-drawer.html#Interaction">
- * design guidelines</a> for a complete explanation of the behaviors implemented here.
- */
 /**
  * A placeholder fragment containing a simple rootView.
  */
@@ -100,23 +89,17 @@ public class SetupImFragment extends Fragment {
     private Thread backupthread;
     private Thread restorethread;
 
-    private ProgressDialog progress;
+    // UI for Progress
+    private View progressContainer;
+    private ProgressBar progressBar;
+    private TextView progressText;
 
-    private final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 0;
-    // Google API
-    /*private GoogleAccountCredential credential;
-    static final int REQUEST_ACCOUNT_PICKER_BACKUP = 1;
-    static final int REQUEST_ACCOUNT_PICKER_RESTORE = 2;*/
-
-    // Dropbox
-    DropboxAPI<AndroidAuthSession> mdbapi;
-    String dropboxAccessToken;
 
     //Activate LIME IM
 
     Button btnSetupImSystemSettings;
     Button btnSetupImSystemIMPicker;
-    Button btnSetupImGrantPermission;
+
 
     // Custom Import
     Button btnSetupImImportStandard;
@@ -136,17 +119,10 @@ public class SetupImFragment extends Fragment {
     Button btnSetupImWb;
     Button btnSetupImPinyin;
 
-    Button btnDownloadOldVersion;
-
     // Backup Restore
     Button btnSetupImBackupLocal;
     Button btnSetupImRestoreLocal;
-    Button btnSetupImBackupGoogle;
-    Button btnSetupImRestoreGoogle;
-    Button btnSetupImBackupDropbox;
-    Button btnSetupImRestoreDropbox;
 
-    private ConnectivityManager connManager;
 
     private View rootView;
     private LimeDB datasource;
@@ -158,17 +134,47 @@ public class SetupImFragment extends Fragment {
 
     TextView txtVersion;
 
-    // Vpon
-    //private RelativeLayout adBannerLayout;
-    // private VpadnBanner vpadnBanner = null;
+    // Activity Result Launchers
+    private ActivityResultLauncher<Intent> backupLauncher;
+    private ActivityResultLauncher<Intent> restoreLauncher;
 
+
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Initialize ActivityResultLaunchers
+        backupLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        Uri uri = result.getData().getData();
+                        if (uri != null) {
+                            performBackup(uri);
+                        }
+                    }
+                });
+
+        restoreLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        Uri uri = result.getData().getData();
+                        if (uri != null) {
+                            performRestore(uri);
+                        }
+                    }
+                });
+
+    }
 
     @Override
     public void onPause() {
         super.onPause();
 
         // Update IM pick up list items
-        if(imlist != null && imlist.size() > 0){
+        if(imlist != null && !imlist.isEmpty()){
             mLIMEPref.syncIMActivatedState(imlist);
         }
 
@@ -195,11 +201,7 @@ public class SetupImFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        /*
-        if(vpadnBanner != null){
-            vpadnBanner.destroy();
-            vpadnBanner = null;
-        }*/
+
     }
 
     @Override
@@ -207,68 +209,45 @@ public class SetupImFragment extends Fragment {
 
         super.onResume();
 
-        boolean dropboxrequest = mLIMEPref.getParameterBoolean(Lime.DROPBOX_REQUEST_FLAG, false);
-
-        if (dropboxrequest && mdbapi != null && mdbapi.getSession().authenticationSuccessful()) {
-            try {
-                // Required to complete auth, sets the access token on the session
-                mdbapi.getSession().finishAuthentication();
-                dropboxAccessToken = mdbapi.getSession().getOAuth2AccessToken();
-
-                mLIMEPref.setParameter(Lime.DROPBOX_ACCESS_TOKEN, dropboxAccessToken);
-                String type = mLIMEPref.getParameterString(Lime.DROPBOX_TYPE, null);
-
-                if(type != null && type.equals(Lime.BACKUP)){
-                    backupDropboxDrive(mdbapi);
-                }else if(type != null && type.equals(Lime.RESTORE)){
-                    restoreDropboxDrive(mdbapi);
-                }
-
-            } catch (IllegalStateException e) {
-                Log.i("DbAuthLog", "Error authenticating", e);
-            }
-        }
-
-        // Reset DropBox Request
-        mLIMEPref.setParameter(Lime.DROPBOX_REQUEST_FLAG, false);
 
         initialbutton();
 
     }
 
     public void showProgress(boolean spinnerStyle, String message) {
-
-
-        if (progress.isShowing()) progress.dismiss();
-
-        progress = new ProgressDialog(activity);
-        progress.setCancelable(false);
-        progress.setProgressStyle(spinnerStyle ? ProgressDialog.STYLE_SPINNER : ProgressDialog.STYLE_HORIZONTAL);
-        if(message!=null) progress.setMessage(message);
-        if(!spinnerStyle) progress.setProgress(0);
-
-        progress.show();
-
-    }
-
-    public void cancelProgress(){
-        if(progress.isShowing()){
-            progress.dismiss();
-            handler.initialImButtons();
+        if (progressContainer != null) {
+            progressContainer.setVisibility(View.VISIBLE);
+        }
+        if (progressBar != null) {
+            progressBar.setIndeterminate(spinnerStyle);
+        }
+        if (progressText != null) {
+            progressText.setText(message);
         }
     }
 
+    public void cancelProgress(){
+        if (progressContainer != null) {
+            progressContainer.setVisibility(View.GONE);
+        }
+        handler.initialImButtons();
+    }
+
     public void setProgressIndeterminate(boolean flag){
-        progress.setIndeterminate(flag);
+        if (progressBar != null) {
+            progressBar.setIndeterminate(flag);
+        }
     }
 
     public void updateProgress(int value){
-          progress.setProgress(value);
+        if (progressBar != null) {
+            progressBar.setProgress(value);
+        }
     }
 
     public void updateProgress(String value){
-        if(progress != null){
-            progress.setMessage(value);
+        if (progressText != null) {
+            progressText.setText(value);
         }
     }
 
@@ -282,129 +261,51 @@ public class SetupImFragment extends Fragment {
 
         activity = getActivity();
 
-        progress = new ProgressDialog(activity);
-        progress.setMax(100);
-        progress.setCancelable(false);
-
         DBSrv = new DBServer(activity);
         mLIMEPref = new LIMEPreferenceManager(activity);
 
-        connManager = (ConnectivityManager) SetupImFragment.this.activity.getSystemService(
-                Context.CONNECTIVITY_SERVICE);
-
         rootView = inflater.inflate(R.layout.fragment_setup_im, container, false);
 
-        btnSetupImSystemSettings = (Button) rootView.findViewById(R.id.btnSetupImSystemSetting);
-        btnSetupImSystemIMPicker = (Button) rootView.findViewById(R.id.btnSetupImSystemIMPicker);
-        btnSetupImGrantPermission = (Button) rootView.findViewById(R.id.btnSetupImGrantPermission);
-        btnSetupImImportStandard = (Button) rootView.findViewById(R.id.btnSetupImImportStandard);
-        btnSetupImImportRelated = (Button) rootView.findViewById(R.id.btnSetupImImportRelated);
-        btnSetupImPhonetic = (Button) rootView.findViewById(R.id.btnSetupImPhonetic);
-        btnSetupImCj = (Button) rootView.findViewById(R.id.btnSetupImCj);
-        btnSetupImCj5 = (Button) rootView.findViewById(R.id.btnSetupImCj5);
-        btnSetupImScj = (Button) rootView.findViewById(R.id.btnSetupImScj);
-        btnSetupImEcj = (Button) rootView.findViewById(R.id.btnSetupImEcj);
-        btnSetupImDayi = (Button) rootView.findViewById(R.id.btnSetupImDayi);
-        btnSetupImEz = (Button) rootView.findViewById(R.id.btnSetupImEz);
-        btnSetupImArray = (Button) rootView.findViewById(R.id.btnSetupImArray);
-        btnSetupImArray10 = (Button) rootView.findViewById(R.id.btnSetupImArray10);
-        btnSetupImHs = (Button) rootView.findViewById(R.id.btnSetupImHs);
-        btnSetupImWb = (Button) rootView.findViewById(R.id.btnSetupImWb);
-        btnSetupImPinyin = (Button) rootView.findViewById(R.id.btnSetupImPinyin);
-        btnDownloadOldVersion = (Button) rootView.findViewById(R.id.btnDownloadOldVersion);
+        // Progress UI
+        progressContainer = rootView.findViewById(R.id.progress_container);
+        progressBar = rootView.findViewById(R.id.progress_bar);
+        progressText = rootView.findViewById(R.id.progress_text);
+
+        btnSetupImSystemSettings = rootView.findViewById(R.id.btnSetupImSystemSetting);
+        btnSetupImSystemIMPicker = rootView.findViewById(R.id.btnSetupImSystemIMPicker);
+
+        btnSetupImImportStandard = rootView.findViewById(R.id.btnSetupImImportStandard);
+        btnSetupImImportRelated = rootView.findViewById(R.id.btnSetupImImportRelated);
+        btnSetupImPhonetic = rootView.findViewById(R.id.btnSetupImPhonetic);
+        btnSetupImCj = rootView.findViewById(R.id.btnSetupImCj);
+        btnSetupImCj5 = rootView.findViewById(R.id.btnSetupImCj5);
+        btnSetupImScj = rootView.findViewById(R.id.btnSetupImScj);
+        btnSetupImEcj = rootView.findViewById(R.id.btnSetupImEcj);
+        btnSetupImDayi = rootView.findViewById(R.id.btnSetupImDayi);
+        btnSetupImEz = rootView.findViewById(R.id.btnSetupImEz);
+        btnSetupImArray = rootView.findViewById(R.id.btnSetupImArray);
+        btnSetupImArray10 = rootView.findViewById(R.id.btnSetupImArray10);
+        btnSetupImHs = rootView.findViewById(R.id.btnSetupImHs);
+        btnSetupImWb = rootView.findViewById(R.id.btnSetupImWb);
+        btnSetupImPinyin = rootView.findViewById(R.id.btnSetupImPinyin);
 
         // Backup and Restore Setting
-        btnSetupImBackupLocal = (Button) rootView.findViewById(R.id.btnSetupImBackupLocal);
-        btnSetupImRestoreLocal = (Button) rootView.findViewById(R.id.btnSetupImRestoreLocal);
-        btnSetupImBackupGoogle = (Button) rootView.findViewById(R.id.btnSetupImBackupGoogle);
-        btnSetupImRestoreGoogle = (Button) rootView.findViewById(R.id.btnSetupImRestoreGoogle);
-        btnSetupImBackupDropbox = (Button) rootView.findViewById(R.id.btnSetupImBackupDropbox);
-        btnSetupImRestoreDropbox = (Button) rootView.findViewById(R.id.btnSetupImRestoreDropbox);
+        btnSetupImBackupLocal = rootView.findViewById(R.id.btnSetupImBackupLocal);
+        btnSetupImRestoreLocal = rootView.findViewById(R.id.btnSetupImRestoreLocal);
 
-        btnSetupImBackupLocal.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showAlertDialog(Lime.BACKUP, Lime.LOCAL, getResources().getString(R.string.l3_initial_backup_confirm));
-            }
-        });
+        btnSetupImBackupLocal.setOnClickListener(v -> showAlertDialog(Lime.BACKUP, Lime.LOCAL, getResources().getString(R.string.l3_initial_backup_confirm)));
 
-        btnSetupImRestoreLocal.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showAlertDialog(Lime.RESTORE, Lime.LOCAL, getResources().getString(R.string.l3_initial_restore_confirm));
-            }
-        });
-
-        btnSetupImBackupGoogle.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()) {
-                    showAlertDialog(Lime.BACKUP, Lime.GOOGLE, getResources().getString(R.string.l3_initial_cloud_backup_confirm));
-                }
-            }
-        });
-
-        btnSetupImRestoreGoogle.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()) {
-                    showAlertDialog(Lime.RESTORE, Lime.GOOGLE, getResources().getString(R.string.l3_initial_cloud_restore_confirm));
-                }
-            }
-        });
-        btnSetupImBackupDropbox.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()) {
-                    showAlertDialog(Lime.BACKUP, Lime.DROPBOX, getResources().getString(R.string.l3_initial_dropbox_backup_confirm));
-                }
-            }
-        });
-
-        btnSetupImRestoreDropbox.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()) {
-                    showAlertDialog(Lime.RESTORE, Lime.DROPBOX, getResources().getString(R.string.l3_initial_dropbox_restore_confirm));
-                }
-            }
-        });
-
-        // Handle AD Display
-        boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
+        btnSetupImRestoreLocal.setOnClickListener(v -> showAlertDialog(Lime.RESTORE, Lime.LOCAL, getResources().getString(R.string.l3_initial_restore_confirm)));
 
 
-        if(!paymentflag){
-
-            AdRequest adRequest = new AdRequest.Builder()
-                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                    .build();
 
 
-            AdView mAdView = (AdView)  rootView.findViewById(R.id.adView);
-            mAdView.loadAd(adRequest);
-
-
-            /*
-            adBannerLayout = (RelativeLayout) rootView.findViewById(R.id.adLayout);
-            vpadnBanner = new VpadnBanner(getActivity(), Lime.VPON_BANNER_ID, VpadnAdSize.SMART_BANNER, "TW");
-            VpadnAdRequest adRequest = new VpadnAdRequest();
-            adRequest.setEnableAutoRefresh(true);
-            vpadnBanner.loadAd(adRequest);
-            adBannerLayout.addView(vpadnBanner);
-            */
-        }
-        else{
-            AdView mAdView = (AdView) rootView.findViewById(R.id.adView);
-            mAdView.setVisibility(View.GONE);
-
-        }
 
         PackageInfo pInfo;
         try {
-            pInfo = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
+            pInfo = Objects.requireNonNull(getActivity()).getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
             String versionstr = "v"+ pInfo.versionName + " - " + pInfo.versionCode;
-            txtVersion = (TextView) rootView.findViewById(R.id.txtVersion);
+            txtVersion = rootView.findViewById(R.id.txtVersion);
             txtVersion.setText(versionstr);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
@@ -430,104 +331,43 @@ public class SetupImFragment extends Fragment {
                 // Update IM pick up list items
                 mLIMEPref.syncIMActivatedState(imlist);
 
-                Context ctx = getActivity().getApplicationContext();
-                if(LIMEUtilities.isLIMEEnabled(getActivity().getApplicationContext())){  //LIME is activated in system
+                if(LIMEUtilities.isLIMEEnabled(Objects.requireNonNull(getActivity()).getApplicationContext())){  //LIME is activated in system
                     btnSetupImSystemSettings.setVisibility(View.GONE);
                     rootView.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.GONE);
                     rootView.findViewById(R.id.SetupImList).setVisibility(View.VISIBLE);
-                    if(LIMEUtilities.isLIMEActive(getActivity().getApplicationContext()) &&
-                            ContextCompat.checkSelfPermission(this.getActivity(),
-                                    Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
-                            ) {  //LIME is activated, also the active Keyboard, and write storage permission is grated
+                    //LIME is activated, also the active Keyboard
+                    if(LIMEUtilities.isLIMEActive(getActivity().getApplicationContext())) {
                         btnSetupImSystemIMPicker.setVisibility(View.GONE);
                         rootView.findViewById(R.id.Setup_Wizard).setVisibility(View.GONE);
-                        btnSetupImBackupLocal.setEnabled(true);
-                        btnSetupImRestoreLocal.setEnabled(true);
-                        btnSetupImBackupGoogle.setEnabled(true);
-                        btnSetupImRestoreGoogle.setEnabled(true);
-                        btnSetupImBackupDropbox.setEnabled(true);
-                        btnSetupImRestoreDropbox.setEnabled(true);
-                        btnSetupImImportStandard.setEnabled(true);
-                        btnSetupImImportRelated.setEnabled(true);
-                        btnDownloadOldVersion.setEnabled(true);
-                    }
-                    else  //LIME is activated, but not active keyboard
-                    {
-                        if(LIMEUtilities.isLIMEActive(getActivity().getApplicationContext()))
-                        {
-                            btnSetupImSystemIMPicker.setVisibility(View.GONE);
-                            rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
-                        }
-                        else
-                        {
-                            btnSetupImSystemIMPicker.setVisibility(View.VISIBLE);
-                            rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.VISIBLE);
-                        }
-                        //Check permission for > API 23
-                        if (ContextCompat.checkSelfPermission(this.getActivity(),
-                                Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
-                        {
-                            rootView.findViewById(R.id.setup_im_grant_permission).setVisibility((View.GONE));
-                            btnSetupImGrantPermission.setVisibility(View.GONE);
-                            btnSetupImBackupLocal.setEnabled(true);
-                            btnSetupImRestoreLocal.setEnabled(true);
-                            btnSetupImBackupGoogle.setEnabled(true);
-                            btnSetupImRestoreGoogle.setEnabled(true);
-                            btnSetupImBackupDropbox.setEnabled(true);
-                            btnSetupImRestoreDropbox.setEnabled(true);
-                            btnSetupImImportStandard.setEnabled(true);
-                            btnSetupImImportRelated.setEnabled(true);
-                            btnDownloadOldVersion.setEnabled(true);
-                        }
-                        else
-                        {
-                            rootView.findViewById(R.id.setup_im_grant_permission).setVisibility((View.VISIBLE));
-                            btnSetupImGrantPermission.setVisibility(View.VISIBLE);
-                            btnSetupImBackupLocal.setEnabled(false);
-                            btnSetupImRestoreLocal.setEnabled(false);
-                            btnSetupImBackupGoogle.setEnabled(false);
-                            btnSetupImRestoreGoogle.setEnabled(false);
-                            btnSetupImBackupDropbox.setEnabled(false);
-                            btnSetupImRestoreDropbox.setEnabled(false);
-                            btnSetupImImportStandard.setEnabled(false);
-                            btnSetupImImportRelated.setEnabled(false);
-                            btnDownloadOldVersion.setEnabled(false);
-                        }
 
                     }
+                    //LIME is activated, but not active keyboard
+                    else
+                    {
+
+                        btnSetupImSystemIMPicker.setVisibility(View.VISIBLE);
+                        rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.VISIBLE);
+
+                    }
+                    btnSetupImBackupLocal.setEnabled(true);
+                    btnSetupImRestoreLocal.setEnabled(true);
+                    btnSetupImImportStandard.setEnabled(true);
+                    btnSetupImImportRelated.setEnabled(true);
+
                 }else {
                     btnSetupImSystemSettings.setVisibility(View.VISIBLE);
                     rootView.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.VISIBLE);
                     btnSetupImSystemIMPicker.setVisibility(View.GONE);
-                    rootView.findViewById(R.id.setup_im_grant_permission).setVisibility((View.GONE));
-                    btnSetupImGrantPermission.setVisibility(View.GONE);
                     rootView.findViewById(R.id.setup_im_system_impicker_description).setVisibility(View.GONE);
                     rootView.findViewById(R.id.SetupImList).setVisibility(View.GONE);
                 }
 
 
+                btnSetupImSystemSettings.setOnClickListener(v -> LIMEUtilities.showInputMethodSettingsPage(getActivity().getApplicationContext()));
 
-                btnSetupImGrantPermission.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        ActivityCompat.requestPermissions(getActivity(),
-                                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                                MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
-                    }
-                });
-                btnSetupImSystemSettings.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        LIMEUtilities.showInputMethodSettingsPage(getActivity().getApplicationContext());
-                    }
-                });
-
-                btnSetupImSystemIMPicker.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        LIMEUtilities.showInputMethodPicker(getActivity().getApplicationContext());
-                        rootView.invalidate();
-                    }
+                btnSetupImSystemIMPicker.setOnClickListener(v -> {
+                    LIMEUtilities.showInputMethodPicker(getActivity().getApplicationContext());
+                    rootView.invalidate();
                 });
 
                 if(check.get(Lime.DB_TABLE_CUSTOM) != null){
@@ -541,25 +381,19 @@ public class SetupImFragment extends Fragment {
 
 
 
-                btnSetupImImportStandard.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CUSTOM, handler);
-                        dialog.show(ft, "loadimdialog");
+                btnSetupImImportStandard.setOnClickListener(v -> {
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CUSTOM, handler);
+                    dialog.show(ft, "loadimdialog");
 
-                    }
                 });
 
                 // User can always load new related table ...
-                btnSetupImImportRelated.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_RELATED, handler);
-                        dialog.show(ft, "loadimdialog");
+                btnSetupImImportRelated.setOnClickListener(v -> {
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_RELATED, handler);
+                    dialog.show(ft, "loadimdialog");
 
-                    }
                 });
 
                 if(check.get(Lime.DB_TABLE_PHONETIC) != null){
@@ -570,13 +404,10 @@ public class SetupImFragment extends Fragment {
                     btnSetupImPhonetic.setTypeface(null, Typeface.BOLD);
                 }
 
-                btnSetupImPhonetic.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_PHONETIC, handler);
-                        dialog.show(ft, "loadimdialog");
-                    }
+                btnSetupImPhonetic.setOnClickListener(v -> {
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_PHONETIC, handler);
+                    dialog.show(ft, "loadimdialog");
                 });
 
 
@@ -588,13 +419,10 @@ public class SetupImFragment extends Fragment {
                     btnSetupImCj.setTypeface(null, Typeface.BOLD);
                 }
 
-                btnSetupImCj.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CJ, handler);
-                        dialog.show(ft, "loadimdialog");
-                    }
+                btnSetupImCj.setOnClickListener(v -> {
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CJ, handler);
+                    dialog.show(ft, "loadimdialog");
                 });
 
 
@@ -607,13 +435,10 @@ public class SetupImFragment extends Fragment {
                     btnSetupImCj5.setTypeface(null, Typeface.BOLD);
                 }
 
-                btnSetupImCj5.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CJ5, handler);
-                        dialog.show(ft, "loadimdialog");
-                    }
+                btnSetupImCj5.setOnClickListener(v -> {
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CJ5, handler);
+                    dialog.show(ft, "loadimdialog");
                 });
 
                 if(check.get(Lime.DB_TABLE_SCJ) != null){
@@ -623,13 +448,10 @@ public class SetupImFragment extends Fragment {
                     btnSetupImScj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
                     btnSetupImScj.setTypeface(null, Typeface.BOLD);
                 }
-                btnSetupImScj.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_SCJ, handler);
-                        dialog.show(ft, "loadimdialog");
-                    }
+                btnSetupImScj.setOnClickListener(v -> {
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_SCJ, handler);
+                    dialog.show(ft, "loadimdialog");
                 });
 
                 if(check.get(Lime.DB_TABLE_ECJ) != null){
@@ -640,13 +462,10 @@ public class SetupImFragment extends Fragment {
                     btnSetupImEcj.setTypeface(null, Typeface.BOLD);
                 }
 
-                btnSetupImEcj.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ECJ, handler);
-                        dialog.show(ft, "loadimdialog");
-                    }
+                btnSetupImEcj.setOnClickListener(v -> {
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ECJ, handler);
+                    dialog.show(ft, "loadimdialog");
                 });
 
                 if(check.get(Lime.DB_TABLE_DAYI) != null){
@@ -657,13 +476,10 @@ public class SetupImFragment extends Fragment {
                     btnSetupImDayi.setTypeface(null, Typeface.BOLD);
                 }
 
-                btnSetupImDayi.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_DAYI, handler);
-                        dialog.show(ft, "loadimdialog");
-                    }
+                btnSetupImDayi.setOnClickListener(v -> {
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_DAYI, handler);
+                    dialog.show(ft, "loadimdialog");
                 });
 
                 if(check.get(Lime.DB_TABLE_EZ) != null){
@@ -674,13 +490,10 @@ public class SetupImFragment extends Fragment {
                     btnSetupImEz.setTypeface(null, Typeface.BOLD);
                 }
 
-                btnSetupImEz.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_EZ, handler);
-                        dialog.show(ft, "loadimdialog");
-                    }
+                btnSetupImEz.setOnClickListener(v -> {
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_EZ, handler);
+                    dialog.show(ft, "loadimdialog");
                 });
 
                 if(check.get(Lime.DB_TABLE_ARRAY) != null){
@@ -691,13 +504,10 @@ public class SetupImFragment extends Fragment {
                     btnSetupImArray.setTypeface(null, Typeface.BOLD);
                 }
 
-                btnSetupImArray.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ARRAY, handler);
-                        dialog.show(ft, "loadimdialog");
-                    }
+                btnSetupImArray.setOnClickListener(v -> {
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ARRAY, handler);
+                    dialog.show(ft, "loadimdialog");
                 });
 
                 if(check.get(Lime.DB_TABLE_ARRAY10) != null){
@@ -708,13 +518,10 @@ public class SetupImFragment extends Fragment {
                     btnSetupImArray10.setTypeface(null, Typeface.BOLD);
                 }
 
-                btnSetupImArray10.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ARRAY10, handler);
-                        dialog.show(ft, "loadimdialog");
-                    }
+                btnSetupImArray10.setOnClickListener(v -> {
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ARRAY10, handler);
+                    dialog.show(ft, "loadimdialog");
                 });
 
 
@@ -726,13 +533,10 @@ public class SetupImFragment extends Fragment {
                     btnSetupImHs.setTypeface(null, Typeface.BOLD);
                 }
 
-                btnSetupImHs.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_HS, handler);
-                        dialog.show(ft, "loadimdialog");
-                    }
+                btnSetupImHs.setOnClickListener(v -> {
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_HS, handler);
+                    dialog.show(ft, "loadimdialog");
                 });
 
                 if(check.get(Lime.DB_TABLE_WB) != null){
@@ -743,13 +547,10 @@ public class SetupImFragment extends Fragment {
                     btnSetupImWb.setTypeface(null, Typeface.BOLD);
                 }
 
-                btnSetupImWb.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_WB, handler);
-                        dialog.show(ft, "loadimdialog");
-                    }
+                btnSetupImWb.setOnClickListener(v -> {
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_WB, handler);
+                    dialog.show(ft, "loadimdialog");
                 });
 
                 if(check.get(Lime.DB_TABLE_PINYIN) != null){
@@ -760,51 +561,13 @@ public class SetupImFragment extends Fragment {
                     btnSetupImPinyin.setTypeface(null, Typeface.BOLD);
                 }
 
-                btnSetupImPinyin.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_PINYIN, handler);
-                        dialog.show(ft, "loadimdialog");
-                    }
+                btnSetupImPinyin.setOnClickListener(v -> {
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_PINYIN, handler);
+                    dialog.show(ft, "loadimdialog");
                 });
 
 
-                btnDownloadOldVersion.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-                        builder.setMessage(getResources().getString(R.string.setup_im_download_old_version_confirm));
-                        builder.setCancelable(false);
-                        builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        DownloadManager downloadManager = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
-
-                                        Uri uri = Uri.parse(Lime.LIME_OLD_VERSION_URL);
-                                        DownloadManager.Request request = new DownloadManager.Request(uri);
-                                        request.setTitle("LIMEHD 3.9.1");
-                                        request.setDescription(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+ File.separator+"limehd_3_9_1.apk");
-                                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "limehd_3_9_1.apk");
-                                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                                        downloadManager.enqueue(request);
-
-                                        showToastMessage(getResources().getString(R.string.setup_im_download_old_version_hint)+
-                                                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator+"limehd_3_9_1.apk", Toast.LENGTH_LONG);
-
-                                    }
-                                });
-                        builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-
-                                    }
-                                });
-
-                        AlertDialog alert = builder.create();
-                        alert.show();
-                    }
-                });
 
 
             } catch (Exception e) {
@@ -820,37 +583,21 @@ public class SetupImFragment extends Fragment {
         builder.setMessage(message);
         builder.setCancelable(false);
         builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        if(action != null){
-                            if(action.equalsIgnoreCase(Lime.BACKUP)) {
+                (dialog, id) -> {
+                    if (action != null) {
+                        if (action.equalsIgnoreCase(Lime.BACKUP)) {
 
-                                if(type.equalsIgnoreCase(Lime.LOCAL)){
-                                    backupLocalDrive();
-                                }else if(type.equalsIgnoreCase(Lime.GOOGLE)){
-                                    requestGoogleDrive(Lime.BACKUP);
-                                }else if(type.equalsIgnoreCase(Lime.DROPBOX)){
-                                    requestDropboxDrive(Lime.BACKUP);
-                                }
-
-                            }else if(action.equalsIgnoreCase(Lime.RESTORE)){
-
-                                if(type.equalsIgnoreCase(Lime.LOCAL)){
-                                    restoreLocalDrive();
-                                }else if(type.equalsIgnoreCase(Lime.GOOGLE)){
-                                    requestGoogleDrive(Lime.RESTORE);
-                                }else if(type.equalsIgnoreCase(Lime.DROPBOX)){
-                                    requestDropboxDrive(Lime.RESTORE);
-                                }
-
+                            if (type.equalsIgnoreCase(Lime.LOCAL)) {
+                                backupLocalDrive();
                             }
+
+                        } else if (type.equalsIgnoreCase(Lime.LOCAL) && action.equalsIgnoreCase(Lime.RESTORE)) {
+                                restoreLocalDrive();
                         }
                     }
                 });
         builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                    }
+                (dialog, id) -> {
                 });
 
         AlertDialog alert = builder.create();
@@ -858,102 +605,153 @@ public class SetupImFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
     }
 
+    private void performBackup(Uri uri) {
+        showProgress(true, this.getResources().getString(R.string.setup_im_backup_message));
 
+        new Thread(() -> {
+            File tempZip = new File(activity.getCacheDir(), "backup_temp.zip");
+            if (tempZip.exists()) tempZip.delete();
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data){
-        if (requestCode == Lime.PAYMENT_REQUEST_CODE) {
-            String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
-            //int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
-            //String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
+            OutputStream outputStream = null;
+            FileInputStream inputStream = null;
+            File fileSharedPrefsBackup = null;
+            try {
+                // Backup logic duplicated from DBServer.backupDatabase to avoid hardcoded save location
+                fileSharedPrefsBackup = new File(LIME.getLimeDataRootFolder(), LIME.SHARED_PREFS_BACKUP_NAME);
+                if (fileSharedPrefsBackup.exists()) fileSharedPrefsBackup.delete();
+                DBServer.backupDefaultSharedPreference(fileSharedPrefsBackup);
 
-            this.getActivity();
-            if (resultCode == Activity.RESULT_OK) {
-                mLIMEPref.setParameter(Lime.PAYMENT_FLAG, true);
-                showToastMessage(getResources().getString(R.string.payment_service_success), Toast.LENGTH_LONG);
-                //Log.i("LIME", "purchasing complete " + new Date() + " / " + purchaseData);
-            }
-        }
+                List<String> backupFileList = new ArrayList<>();
+                backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator + LIME.DATABASE_NAME);
+                backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator + LIME.DATABASE_JOURNAL);
+                backupFileList.add(LIME.SHARED_PREFS_BACKUP_NAME);
 
-    }
+                // Close database before zipping to ensure file integrity
+                DBServer.closeDatabse();
 
-    public void requestGoogleDrive(String type){
+                LIMEUtilities.zip(tempZip.getAbsolutePath(), backupFileList, LIME.getLimeDataRootFolder(), true);
 
-        if(type != null && type.equals(Lime.BACKUP)) {
-            Intent intent = new Intent().setClass(this.getActivity(), SetupImGoogleActivity.class);
-                    intent.putExtra("actiontype", Lime.BACKUP);
-            startActivity(intent);
-        }else{
-            Intent intent = new Intent().setClass(this.getActivity(), SetupImGoogleActivity.class);
-                    intent.putExtra("actiontype", Lime.RESTORE);
-            startActivity(intent);
-        }
-    }
-
-    public void requestDropboxDrive(String type){
-
-        mLIMEPref.setParameter(Lime.DROPBOX_TYPE, type);
-        mLIMEPref.setParameter(Lime.DROPBOX_REQUEST_FLAG, true);
-
-        AppKeyPair appKeys = new AppKeyPair(Lime.DROPBOX_APP_KEY, Lime.DROPBOX_APP_SECRET);
-        AndroidAuthSession session = new AndroidAuthSession(appKeys);
-        mdbapi = new DropboxAPI<>(session);
-
-        dropboxAccessToken = mLIMEPref.getParameterString(Lime.DROPBOX_ACCESS_TOKEN, null);
-        if(dropboxAccessToken == null){
-            mdbapi.getSession().startOAuth2Authentication(this.getActivity().getApplicationContext());
-        }else{
-
-            mdbapi = new DropboxAPI<>(new AndroidAuthSession(appKeys, dropboxAccessToken));
-
-            if(mdbapi.getSession().isLinked()){
-                if(type != null && type.equals(Lime.BACKUP)){
-                    backupDropboxDrive(mdbapi);
-                }else if(type != null && type.equals(Lime.RESTORE)){
-                    restoreDropboxDrive(mdbapi);
+                // Copy temp zip to the User selected URI
+                inputStream = new FileInputStream(tempZip);
+                outputStream = activity.getContentResolver().openOutputStream(uri);
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
                 }
-            }else{
-                mdbapi.getSession().startOAuth2Authentication(this.getActivity().getApplicationContext());
+
+                activity.runOnUiThread(() -> showToastMessage(activity.getString(R.string.l3_initial_backup_end), Toast.LENGTH_LONG));
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                activity.runOnUiThread(() -> showToastMessage(activity.getString(R.string.l3_initial_backup_error), Toast.LENGTH_LONG));
+
+            } finally {
+                try {
+                    if (outputStream != null) outputStream.close();
+                    if (inputStream != null) inputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                // Reopen DB
+                if (datasource != null) {
+                    datasource.openDBConnection(true);
+                }
+                if (fileSharedPrefsBackup != null && fileSharedPrefsBackup.exists()) fileSharedPrefsBackup.delete();
+                if (tempZip.exists()) tempZip.delete();
+                if (handler != null) {
+                    handler.cancelProgress();
+                }
             }
-        }
+        }).start();
     }
 
-    public void backupDropboxDrive(DropboxAPI mdbapi){
-        initialThreadTask(Lime.BACKUP, Lime.DROPBOX, mdbapi);
+    private void performRestore(Uri uri) {
+        showProgress(true, this.getResources().getString(R.string.setup_im_restore_message));
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // Create a temp file
+                    File tempFile = File.createTempFile("restore_backup", ".zip", activity.getCacheDir());
+                    tempFile.deleteOnExit();
+
+                    // Copy from URI to temp file
+                    InputStream inputStream = activity.getContentResolver().openInputStream(uri);
+                    FileOutputStream outputStream = new FileOutputStream(tempFile);
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                    outputStream.close();
+                    inputStream.close();
+
+                    // Perform restore
+                    DBServer.restoreDatabase(tempFile.getAbsolutePath());
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    activity.runOnUiThread(new Runnable() {
+                        public void run() {
+                            showToastMessage(activity.getString(R.string.l3_initial_restore_error), Toast.LENGTH_LONG);
+                        }
+                    });
+                } finally {
+                    if (handler != null) {
+                        handler.cancelProgress();
+                    }
+                }
+            }
+        }).start();
     }
 
-    public void restoreDropboxDrive(DropboxAPI mdbapi){
-        initialThreadTask(Lime.RESTORE, Lime.DROPBOX, mdbapi);
-    }
+
+
 
     public void backupLocalDrive(){
-        initialThreadTask(Lime.BACKUP, Lime.LOCAL, null);
+        // Launch file picker for saving backup
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/zip");
+        intent.putExtra(Intent.EXTRA_TITLE, "limeBackup.zip");
+
+        // Replace startActivityForResult with the new launcher
+        backupLauncher.launch(intent);
     }
 
     public void restoreLocalDrive(){
-        initialThreadTask(Lime.RESTORE, Lime.LOCAL, null);
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("application/zip");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        // Replace startActivityForResult with the new launcher
+        restoreLauncher.launch(Intent.createChooser(intent, "Select Backup"));
     }
 
-    public void initialThreadTask(String action, String type, DropboxAPI mdbapi) {
+    public void initialThreadTask(String action, String type) {
 
         // Default Setting
         mLIMEPref.setParameter("dbtarget", Lime.DEVICE);
 
         if (action.equals(Lime.BACKUP)) {
-            if(backupthread != null && backupthread.isAlive()){
-                handler.removeCallbacks(backupthread);
+            // The local backup is now handled by onActivityResult, not a direct runnable here.
+            if(!type.equals(Lime.LOCAL)) {
+                if (backupthread != null && backupthread.isAlive()) {
+                    handler.removeCallbacks(backupthread);
+                }
+                backupthread = new Thread(new SetupImBackupRunnable(this, handler, type));
+                backupthread.start();
             }
-            backupthread = new Thread(new SetupImBackupRunnable(this, handler, type, mdbapi));
-            backupthread.start();
         }else if(action.equals(Lime.RESTORE)){
             if(restorethread != null && restorethread.isAlive()){
                 handler.removeCallbacks(restorethread);
             }
-            restorethread = new Thread(new SetupImRestoreRunnable(this, handler, type, mdbapi));
+            restorethread = new Thread(new SetupImRestoreRunnable(this, handler, type));
             restorethread.start();
         }
     }
@@ -978,41 +776,9 @@ public class SetupImFragment extends Fragment {
         }
     }
 
-    public void finishProgress(final String imtype) {
+    public void finishProgress() {
 
         cancelProgress();
 
-        /*boolean check = datasource.checkBackuptable(imtype);
-        if(check){
-
-            AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
-            alertDialog.setTitle(activity.getResources().getString(R.string.setup_im_restore_learning_data));
-            alertDialog.setMessage(activity.getResources().getString(R.string.setup_im_restore_learning_data_message));
-            alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-
-                            showProgress(true, activity.getResources().getString(R.string.setup_im_restore_learning_data));
-
-                            new Thread() {
-
-                                @Override
-                                public void run() {
-                                    datasource.restoreUserRecords(imtype);
-                                    cancelProgress();
-                                }
-                            }.start();
-                        }
-                    });
-            alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                        }
-                    });
-            alertDialog.show();
-        }else{
-            handler.cancelProgress();
-        }*/
     }
 }

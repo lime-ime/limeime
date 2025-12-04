@@ -28,7 +28,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -55,12 +55,12 @@ public class CandidateExpandedView extends CandidateView {
     private int mSelRow; //Jeremy '11,8,28
     private int mSelCol; //Jeremy '11,8,28
     //private int mScrollY;
-    private int[][] mWordX = new int[MAX_SUGGESTIONS][MAX_SUGGESTIONS];
-    private int[][] mWordWidth = new int[MAX_SUGGESTIONS][MAX_SUGGESTIONS];
-    private int[] mRowSize = new int[MAX_SUGGESTIONS];
-    private int[] mRowStartingIndex = new int[MAX_SUGGESTIONS];
+    private final int[][] mWordX = new int[MAX_SUGGESTIONS][MAX_SUGGESTIONS];
+    private final int[][] mWordWidth = new int[MAX_SUGGESTIONS][MAX_SUGGESTIONS];
+    private final int[] mRowSize = new int[MAX_SUGGESTIONS];
+    private final int[] mRowStartingIndex = new int[MAX_SUGGESTIONS];
     private int mRows = 0;
-    private int mHeight; // built own mHeight and get from resources.
+    private final int mHeight; // built own mHeight and get from resources.
     private int mTotalHeight;
     private ScrollView mParentScrollView;
 

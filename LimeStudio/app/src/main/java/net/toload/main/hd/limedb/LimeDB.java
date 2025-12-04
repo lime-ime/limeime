@@ -67,7 +67,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class LimeDB extends LimeSQLiteOpenHelper {
 
-    private static boolean DEBUG = false;
+    private static final boolean DEBUG = false;
     private static String TAG = "LIMEDB";
 
     private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier. Shared db instance for dbserver and searchserver
@@ -2612,13 +2612,35 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         int rsize = 0;
                         do {
                             Mapping munit = new Mapping();
-                            munit.setId(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_ID)));
-                            munit.setPword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_PWORD)));
-                            munit.setCode("");
-                            munit.setWord(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD)));
-                            munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
-                            munit.setBasescore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_BASESCORE)));
-                            munit.setRelatedPhraseRecord();
+                            //munit.setId(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_ID)));
+                            //munit.setPword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_PWORD)));
+                            //munit.setCode("");
+                            //munit.setWord(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD)));
+                            //munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
+                            //munit.setBasescore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_BASESCORE)));
+                            // Before the loop (e.g., right after the query is executed)
+                            int idColIndex = cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_ID);
+                            int pwordColIndex = cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_PWORD);
+                            int cwordColIndex = cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD);
+                            int userScoreColIndex = cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE);
+                            int baseScoreColIndex = cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_BASESCORE);
+
+                            if (idColIndex != -1) {
+                                munit.setId(cursor.getString(idColIndex));
+                            }
+                            if (pwordColIndex != -1) {
+                                munit.setPword(cursor.getString(pwordColIndex));
+                            }
+                            if (cwordColIndex != -1) {
+                                munit.setWord(cursor.getString(cwordColIndex));
+                            }
+                            if (userScoreColIndex != -1) {
+                                munit.setScore(cursor.getInt(userScoreColIndex));
+                            }
+                            if (baseScoreColIndex != -1) {
+                                munit.setBasescore(cursor.getInt(baseScoreColIndex));
+                            }
+                            munit.setCode("");  munit.setRelatedPhraseRecord();
                             result.add(munit);
                             rsize++;
                         } while (cursor.moveToNext());
@@ -2910,7 +2932,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             Log.i(TAG, "loadFileV2()");
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (!checkDBConnection()) {
-            progressListener.onError(-1, "Database is not avaiable. Please try to do it later");
+            progressListener.onError(-1, "Database is not available. Please try to do it later");
             return;
         }
 

@@ -31,6 +31,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteException;
+import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -98,18 +99,21 @@ public abstract class LimeSQLiteOpenHelper {
     }
 
 	private String getDBPath(String dbTarget){
-
-        File destpath = new File(Lime.DATABASE_DEVICE_FOLDER + File.separator + Lime.DATABASE_NAME);
-
-        if(dbTarget.equalsIgnoreCase("sdcard")){
-            destpath = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD);
-        }
-
-		/*String dbLocationPrefix = (dbTarget.equals("sdcard"))
-				?LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD:LIME.DATABASE_FOLDER;*/
-		
+		File destpath;
+		if (dbTarget.equalsIgnoreCase("sdcard")) {
+			// This path is for legacy migration and may not be accessible on newer Android versions.
+			File externalFilesDir = mContext.getExternalFilesDir(null);
+			if (externalFilesDir != null) {
+				destpath = new File(externalFilesDir, "limehd/databases/" + mName);
+			} else {
+				destpath = mContext.getDatabasePath(mName); // Fallback
+			}
+		} else {
+			destpath = mContext.getDatabasePath(mName);
+		}
 		return destpath.getAbsolutePath();
 	}
+
 	private String getDBPath(){
 		String dbtarget = mLIMEPref.getParameterString("dbtarget");
 		if(DEBUG)
@@ -146,7 +150,8 @@ public abstract class LimeSQLiteOpenHelper {
         File sdtarget = null;
         if(checktarget.equalsIgnoreCase("sdcard")){
             mLIMEPref.setParameter("dbtarget", "device");
-            sdtarget = new File(Lime.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + Lime.DATABASE_NAME);
+            // Migration from legacy external storage. May not work on API 30+ without special permissions.
+            sdtarget = new File(Environment.getExternalStorageDirectory(), "limehd/databases/" + mName);
             if(sdtarget.exists() && sdtarget.length() > (1024 * 1024)){
                 source_from_sdcard = true;
             }
@@ -154,10 +159,11 @@ public abstract class LimeSQLiteOpenHelper {
 
         // Initial Database
         // Copy DB file from Raw Dir to Database Dir
-        File destdir = new File(Lime.DATABASE_DEVICE_FOLDER + File.separator);
-        destdir.mkdirs();
-
-        File destpath = new File(Lime.DATABASE_DEVICE_FOLDER + File.separator + Lime.DATABASE_NAME);
+        File destpath = mContext.getDatabasePath(mName);
+        File destdir = destpath.getParentFile();
+        if (destdir != null) {
+            destdir.mkdirs();
+        }
 
         if (!destpath.exists() || destpath.length() < 10000) {
 
@@ -245,8 +251,7 @@ public abstract class LimeSQLiteOpenHelper {
         } finally {
             mIsInitializing = false;
             if (success) {
-            	if(DEBUG)
-            		Log.i(TAG,"getWritableDatabse(), success in finally section");
+            	if(DEBUG) Log.i(TAG,"getWritableDatabse(), success in finally section");
                 mDatabase = db;
                 return db;
             } else {

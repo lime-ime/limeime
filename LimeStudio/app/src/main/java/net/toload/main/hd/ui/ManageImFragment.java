@@ -28,8 +28,8 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,15 +42,6 @@ import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
-
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-
-/* Vpon
-import com.vpadn.ads.VpadnAdRequest;
-import com.vpadn.ads.VpadnAdSize;
-import com.vpadn.ads.VpadnBanner;
-*/
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
@@ -64,15 +55,7 @@ import net.toload.main.hd.limedb.LimeDB;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Fragment used for managing interactions for and presentation of a navigation drawer.
- * See the <a href="https://developer.android.com/design/patterns/navigation-drawer.html#Interaction">
- * design guidelines</a> for a complete explanation of the behaviors implemented here.
- */
-
-/**
- * A placeholder fragment containing a simple view.
- */
+/// A placeholder fragment containing a simple view.
 public class ManageImFragment extends Fragment {
 
     /**
@@ -85,9 +68,6 @@ public class ManageImFragment extends Fragment {
     private SearchServer SearchSrv = null;
     private GridView gridManageIm;
 
-    private ToggleButton toggleManageIm;
-
-    private Button btnManageImAdd;
     private Button btnManageImKeyboard;
     private Button btnManageImSearch;
     private Button btnManageImPrevious;
@@ -96,7 +76,6 @@ public class ManageImFragment extends Fragment {
     private EditText edtManageImSearch;
     private TextView txtNavigationInfo;
 
-    private List<Im> imkeyboardlist;
     private List<Word> wordlist;
     private List<Keyboard> keyboardlist;
 
@@ -117,11 +96,6 @@ public class ManageImFragment extends Fragment {
     private LimeDB datasource;
 
     private ProgressDialog progress;
-    private LIMEPreferenceManager mLIMEPref;
-
-    // Vpon AD
-    //private RelativeLayout adBannerLayout;
-    //private VpadnBanner vpadnBanner = null;
 
     /**
      * Returns a new instance of this fragment for the given section
@@ -149,18 +123,12 @@ public class ManageImFragment extends Fragment {
         this.SearchSrv = new SearchServer(this.activity);
 
         this.handler = new ManageImHandler(this);
-        this.mLIMEPref = new LIMEPreferenceManager(activity);
+        LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(activity);
 
         // initial imlist
-        imkeyboardlist = new ArrayList<Im>();
+        List<Im> imkeyboardlist = new ArrayList<Im>();
         imkeyboardlist = datasource.getIm(null, Lime.IM_TYPE_KEYBOARD);
-        /* try {
-               datasource.open();
-               datasource.close();
-         } catch (SQLException e) {
-              e.printStackTrace();
-         }
-*/
+
         this.progress = new ProgressDialog(this.activity);
         this.progress.setCancelable(false);
         this.progress.setMessage(getResources().getString(R.string.manage_im_loading));
@@ -185,8 +153,8 @@ public class ManageImFragment extends Fragment {
             }
         });
 
-        this.btnManageImAdd = (Button) rootView.findViewById(R.id.btnManageImAdd);
-        this.btnManageImAdd.setOnClickListener(new View.OnClickListener() {
+        Button btnManageImAdd = (Button) rootView.findViewById(R.id.btnManageImAdd);
+        btnManageImAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 FragmentTransaction ft = getFragmentManager().beginTransaction();
@@ -211,8 +179,8 @@ public class ManageImFragment extends Fragment {
             });
         }
 
-        this.toggleManageIm = (ToggleButton) rootView.findViewById(R.id.toggleManageIm);
-        this.toggleManageIm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        ToggleButton toggleManageIm = (ToggleButton) rootView.findViewById(R.id.toggleManageIm);
+        toggleManageIm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
@@ -311,35 +279,6 @@ public class ManageImFragment extends Fragment {
         }
 
         searchword(null);
-
-        // Handle AD Display
-        boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
-        if(!paymentflag) {
-            /* Vpon
-            adBannerLayout = (RelativeLayout) root.findViewById(R.id.adLayout);
-            vpadnBanner = new VpadnBanner(getActivity(), Lime.VPON_BANNER_ID, VpadnAdSize.SMART_BANNER, "TW");
-
-            VpadnAdRequest adRequest = new VpadnAdRequest();
-            adRequest.setEnableAutoRefresh(true);
-            vpadnBanner.loadAd(adRequest);
-
-            adBannerLayout.addView(vpadnBanner);
-            */
-            AdRequest adRequest = new AdRequest.Builder()
-                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                    .build();
-
-
-            AdView mAdView = (AdView) rootView.findViewById(R.id.adView);
-            mAdView.loadAd(adRequest);
-
-
-        }
-        else{
-            AdView mAdView = (AdView) rootView.findViewById(R.id.adView);
-            mAdView.setVisibility(View.GONE);
-
-        }
 
         return rootView;
     }

@@ -25,42 +25,30 @@
 package net.toload.main.hd;
 
 import android.app.AlertDialog;
-import android.app.PendingIntent;
 import android.app.ProgressDialog;
-import android.content.ComponentName;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentSender;
-import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.os.RemoteException;
 import android.provider.MediaStore;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.android.vending.billing.IInAppBillingService;
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.InterstitialAd;
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.common.api.GoogleApiClient;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
+
 
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIME;
@@ -112,10 +100,10 @@ public class MainActivity extends AppCompatActivity
     //private Activity activity;
 
     //Admob
-    InterstitialAd mInterstitialAd;
+    //InterstitialAd mInterstitialAd;
     Boolean intersitialAdShowed = true;
 
-    IInAppBillingService mService;
+    /*IInAppBillingService mService;
     ServiceConnection mServiceConn = new ServiceConnection() {
         @Override
         public void onServiceDisconnected(ComponentName name) {
@@ -158,12 +146,7 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         }
-    };
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    private GoogleApiClient client;
+    };*/
 
    /* @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -185,9 +168,9 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (mService != null) {
+        /*if (mService != null) {
             unbindService(mServiceConn);
-        }
+        }*/
     }
 
     @Override
@@ -234,22 +217,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStop() {
         super.onStop();
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "Main Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app URL is correct.
-                Uri.parse("android-app://net.toload.main.hd/http/host/path")
-        );
-        AppIndex.AppIndexApi.end(client, viewAction);
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.disconnect();
     }
 
 
@@ -281,14 +248,15 @@ public class MainActivity extends AppCompatActivity
         //mTitle = getTitle();
 
         // Set up the drawer.
+        assert mNavigationDrawerFragment != null;
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
 
-        boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
+        /*boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
         if (!paymentflag) {
             purchaseVerification();
-        }
+        }*/
 
         // Handle Import Text from other application
         Intent intent = getIntent();
@@ -316,7 +284,11 @@ public class MainActivity extends AppCompatActivity
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
-                String importFilepath = Lime.DATABASE_FOLDER_EXTERNAL + fileName;
+
+                File importDir = new File(getCacheDir(), "imports");
+                importDir.mkdirs();
+                File importFile = new File(importDir, fileName);
+                String importFilepath = importFile.getAbsolutePath();
                 InputStreamToFile(input, importFilepath);
                 showToastMessage("Got file " + importFilepath, Toast.LENGTH_SHORT);
             }
@@ -340,9 +312,6 @@ public class MainActivity extends AppCompatActivity
             mLIMEPref.setParameter("current_version", versionstr);
         }
 
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     private String getContentName(ContentResolver resolver, Uri uri) {
@@ -384,7 +353,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void purchaseVerification() {
+    /*public void purchaseVerification() {
         Intent serviceIntent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
         serviceIntent.setPackage("com.android.vending");
         mService = null;
@@ -412,7 +381,7 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
-    }
+    }*/
 
     public void initialImList() {
 
@@ -508,7 +477,7 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    public void purchase(String productid) {
+    /*public void purchase(String productid) {
 
         if (connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()) {
 
@@ -542,7 +511,7 @@ public class MainActivity extends AppCompatActivity
         } else {
             showToastMessage(getResources().getString(R.string.error_network_failed), Toast.LENGTH_LONG);
         }
-    }
+    }*/
 
     public void showToastMessage(String msg, int length) {
         Toast toast = Toast.makeText(this, msg, length);
@@ -630,7 +599,7 @@ public class MainActivity extends AppCompatActivity
         Boolean fixed_candidate_view_display = mLIMEPref.getParameterBoolean("fixed_candidate_view_display", true);
         mLIMEPref.setParameter("fixed_candidate_view_display", fixed_candidate_view_display);
 
-        String keyboard_size = mLIMEPref.getParameterString("keyboard_size", "1");
+        String keyboard_.size = mLIMEPref.getParameterString("keyboard_size", "1");
         mLIMEPref.setParameter("keyboard_size", keyboard_size);
 
         String font_size = mLIMEPref.getParameterString("font_size", "1");
@@ -754,20 +723,5 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onStart() {
         super.onStart();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.connect();
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "Main Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app URL is correct.
-                Uri.parse("android-app://net.toload.main.hd/http/host/path")
-        );
-        AppIndex.AppIndexApi.start(client, viewAction);
     }
 }

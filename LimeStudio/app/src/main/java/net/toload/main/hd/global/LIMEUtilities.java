@@ -25,6 +25,7 @@
 package net.toload.main.hd.global;
 
 import android.annotation.TargetApi;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -34,7 +35,7 @@ import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.Settings;
-import android.support.v4.app.NotificationCompat;
+import androidx.core.app.NotificationCompat;
 import android.util.Log;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -51,6 +52,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -76,8 +78,6 @@ public class LIMEUtilities {
 
 	/**
 	 * Return the filepath if the file not exist in the target path
-	 * @param filepath
-	 * @return
 	 */
 	public static File isFileNotExist(String filepath){
 		
@@ -145,7 +145,7 @@ public class LIMEUtilities {
 		for(String item : sourceFiles) {
 			String itemName = (item.startsWith(File.separator) || baseFolderPath.endsWith(File.separator) )?item:(File.separator + item) ;
 
-			if(baseFolderPath.equals("")) //absolute path
+			if(baseFolderPath.isEmpty()) //absolute path
 				addFileToZip(baseFolderPath + itemName, zos);
 			else  //relative path
 				addFileToZip(baseFolderPath + itemName, baseFolderPath, zos);
@@ -167,7 +167,7 @@ public class LIMEUtilities {
 	private static void addFileToZip(String sourceFolderPath, String sourceFilePath, String baseFolderPath, ZipOutputStream zos) throws Exception {
 
 		File item = new File(sourceFilePath);
-		if( item==null || !item.exists()) return; //skip if the file is not exist
+        //if( item==null || !item.exists()) return; //skip if the file is not exist
 		if (isSymLink(item)) return ; // do nothing to symbolic links.
 
 		if(baseFolderPath == null) baseFolderPath = "";
@@ -180,12 +180,19 @@ public class LIMEUtilities {
 			byte[] buf = new byte[102400]; //100k buffer
 			int len;
 			FileInputStream inStream = new FileInputStream(sourceFilePath);
-			if(baseFolderPath.equals(""))  //sourceFiles in absolute path, zip the file with absolute path
-				zos.putNextEntry(new ZipEntry(sourceFilePath));
-			else {//relative path
-				String relativePath = sourceFilePath.substring(baseFolderPath.length() );
-				zos.putNextEntry(new ZipEntry(relativePath));
+
+			String entryPath;
+			if(baseFolderPath.isEmpty()) {
+				entryPath = sourceFilePath;
+			} else {
+				entryPath = sourceFilePath.substring(baseFolderPath.length());
 			}
+			
+			if (entryPath.startsWith(File.separator)) {
+				entryPath = entryPath.substring(1);
+			}
+			
+			zos.putNextEntry(new ZipEntry(entryPath));
 
 			while ((len = inStream.read(buf)) > 0) {
 				zos.write(buf, 0, len);
@@ -201,7 +208,7 @@ public class LIMEUtilities {
 		if (filePath.getParent() == null) {
 			canonical = filePath;
 		} else {
-			File canonDir = filePath.getParentFile().getCanonicalFile();
+			File canonDir = Objects.requireNonNull(filePath.getParentFile()).getCanonicalFile();
 			canonical = new File(canonDir, filePath.getName());
 		}
 		return !canonical.getCanonicalFile().equals(canonical.getAbsoluteFile());
@@ -222,8 +229,8 @@ public class LIMEUtilities {
 			while ((ze = zis.getNextEntry()) != null) {
 				String itemName = ze.getName();
 				File targetFile = null;
-
-				if(itemName.startsWith("/sdcard/") || itemName.startsWith(String.valueOf(Environment.getExternalStorageDirectory())+File.separator)){
+                //itemName.startsWith("/sdcard/") ||
+				if(itemName.startsWith(String.valueOf(Environment.getExternalStorageDirectory())+File.separator)){
 					targetFile = new File(ze.getName());  //target is zipped with absolute path on /sdcard
 				}
 				else if(itemName.startsWith("/data/") || itemName.startsWith(String.valueOf(Environment.getDataDirectory())+File.separator)){
@@ -313,11 +320,20 @@ public class LIMEUtilities {
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 	public static void showNotification(Context context, Boolean autoCancel,  CharSequence title, CharSequence message, Intent intent){
 
-		//Intent resultIntent = new Intent(context, MainActivity.class);
-		//PendingIntent pi = PendingIntent.getActivity(context, 0, resultIntent, 0);
+		NotificationManager mNotificationManager =
+				(NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+		String channelId = "lime_notification_channel";
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			NotificationChannel channel = new NotificationChannel(
+					channelId,
+					"LIME Notifications",
+					NotificationManager.IMPORTANCE_DEFAULT);
+			mNotificationManager.createNotificationChannel(channel);
+		}
 
 		NotificationCompat.Builder mBuilder =
-				new NotificationCompat.Builder(context)
+				new NotificationCompat.Builder(context, channelId) // Pass channel ID here
 						.setLargeIcon(getNotificationIconBitmap(context))
 						.setContentTitle(title)
 						.setAutoCancel(autoCancel)
@@ -330,9 +346,6 @@ public class LIMEUtilities {
 		}else{
 			mBuilder.setSmallIcon(R.drawable.logo);
 		}
-
-		NotificationManager mNotificationManager =
-						(NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
 		mNotificationManager.notify(501, mBuilder.build());
 	}

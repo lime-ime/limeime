@@ -85,7 +85,7 @@ public class SetupImHandler extends Handler {
             fragment.resetImTable(imtype, backuplearning);
         }else if(action != null && action.equalsIgnoreCase("finish")){
             String imtype = msg.getData().getString("im");
-            fragment.finishProgress(imtype);
+            fragment.finishProgress();
         }
 
     }

@@ -68,7 +68,7 @@
     <string name="setup_im_backup_dropbox">Dropbox 備份</string>
     <string name="setup_im_backup_dropbox_error_507">Dropbox 已沒有足夠的空間進行備份，請檢查</string>
     <string name="setup_im_backup_google">Google 備份</string>
-    <string name="setup_im_backup_local">本地備份</string>
+    <string name="setup_im_backup_local">備份</string>
     <string name="setup_im_database">備份/還原資料庫</string>
     <string name="setup_im_database_description">備份完整資料庫至本地/雲端空間，或者由本地/雲端空間還原完整資料庫檔案</string>
     <string name="setup_im_grant_permission">請授權儲存空間存取以啟用輸入法匯入與資料庫備份還原功能</string>
@@ -94,7 +94,7 @@
     <string name="setup_im_download_old_version">下載 LIMEHD v3.9.1</string>
     <string name="setup_im_download_old_version_confirm">請問您要下載 LIMEHD 3.9.1 版嗎?</string>
     <string name="setup_im_download_old_version_hint">檔案下載路徑 :</string>
-    <string name="setup_im_restore_local">本地還原</string>
+    <string name="setup_im_restore_local">還原</string>
 
     <string name="setup_im_load_custom">自定字根表</string>
 

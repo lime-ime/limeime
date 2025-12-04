@@ -28,8 +28,8 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,8 +41,6 @@ import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.MainActivity;
@@ -248,35 +246,6 @@ public class ManageRelatedFragment extends Fragment {
         this.txtNavigationInfo = (TextView) rootView.findViewById(R.id.txtNavigationInfo);
 
         searchrelated(null);
-
-
-        // Handle AD Display
-        boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
-        if(!paymentflag) {
-            /*VPon add.
-            adBannerLayout = (RelativeLayout) rootView.findViewById(R.id.adLayout);
-            vpadnBanner = new VpadnBanner(getActivity(), Lime.VPON_BANNER_ID, VpadnAdSize.SMART_BANNER, "TW");
-
-            VpadnAdRequest adRequest = new VpadnAdRequest();
-            adRequest.setEnableAutoRefresh(true);
-            vpadnBanner.loadAd(adRequest);
-
-            adBannerLayout.addView(vpadnBanner);
-            */
-            AdRequest adRequest = new AdRequest.Builder()
-                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                    .build();
-
-
-            AdView mAdView = (AdView) rootView.findViewById(R.id.adView);
-            mAdView.loadAd(adRequest);
-
-        }
-        else{
-            AdView mAdView = (AdView) rootView.findViewById(R.id.adView);
-            mAdView.setVisibility(View.GONE);
-
-        }
 
         return rootView;
     }

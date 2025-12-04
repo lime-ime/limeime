@@ -30,11 +30,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.graphics.Paint;
-import android.util.Log;
 
 import net.toload.main.hd.Lime;
-import net.toload.main.hd.R;
 import net.toload.main.hd.data.Mapping;
 
 import java.util.LinkedList;

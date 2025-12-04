@@ -33,13 +33,13 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.inputmethodservice.InputMethodService;
 import android.media.AudioManager;
-import android.os.Build;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.Vibrator;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
@@ -227,13 +227,6 @@ public class LIMEService extends InputMethodService implements
     private boolean hasCandidatesShown = false;
 
 
-    public LIMEService(){
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                mIsHardwareAcceleratedDrawingEnabled = true;// this.enableHardwareAcceleration();
-            }
-
-        }
 
     /**
      * Main initialization of the input method component. Be sure to call to
@@ -246,6 +239,10 @@ public class LIMEService extends InputMethodService implements
 
         super.onCreate();
 
+
+        mIsHardwareAcceleratedDrawingEnabled = true;// this.enableHardwareAcceleration();
+
+
         SearchSrv = new SearchServer(this);
         mEnglishOnly = false;
         mEnglishFlagShift = false;
@@ -255,9 +252,6 @@ public class LIMEService extends InputMethodService implements
         mLIMEPref = new LIMEPreferenceManager(this);
 
         mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
-
-        mVibrator = (Vibrator) getSystemService(Service.VIBRATOR_SERVICE);
-        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
         mLongPressKeyTimeout = getResources().getInteger(R.integer.config_long_press_key_timeout); // Jeremy '11,8,15 read longpress timeout from config resources.
 
@@ -359,7 +353,7 @@ public class LIMEService extends InputMethodService implements
         candidateViewContainer.initViews();
         mCandidateViewContainer = candidateViewContainer;
 
-        mCandidateViewStandAlone = (CandidateView) mCandidateViewContainer.findViewById(R.id.candidates);
+        mCandidateViewStandAlone = mCandidateViewContainer.findViewById(R.id.candidates);
         mCandidateViewStandAlone.setService(this);
 
 
@@ -407,11 +401,11 @@ public class LIMEService extends InputMethodService implements
             mInputView.closing();
         }
         try {
-            if (LDComposingBuffer.length() > 0) { // Force interrupt the LD process
+            if (!LDComposingBuffer.isEmpty()) { // Force interrupt the LD process
                 LDComposingBuffer = "";
                 SearchSrv.addLDPhrase(null, true);
             }
-            // Jeremy '11,8,1 do postfinishinput in searchSrv (learn userdic and LDPhrase). 
+            // Jeremy '11,8,1 do postfinishinput in searchSrv (learn userdic and LDPhrase).
             SearchSrv.postFinishInput();
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -846,8 +840,10 @@ public class LIMEService extends InputMethodService implements
         hasPhysicalKeyPressed = true;
 
         // If user use the physical keyboard then not fixed the candidate view also use the tranparent background
-        mFixedCandidateViewOn = false;
-        mCandidateView.setTransparentCandidateView(false);
+        if(mCandidateView!=null) {
+            mFixedCandidateViewOn = false;
+            mCandidateView.setTransparentCandidateView(false);
+        }
 
         //hide softkeyboard. Jeremy '12,5,8
         //Should not hide inputView or the candidateView cannot be shown in first stroke. Jeremy '15,6,1
@@ -1160,7 +1156,7 @@ public class LIMEService extends InputMethodService implements
 
 
             if (hasCtrlPress &&  //Only working with ctrl Jeremy '11,8,22
-                    mCandidateList != null && mCandidateList.size() > 0
+                    mCandidateList != null && !mCandidateList.isEmpty()
                     && mCandidateView != null && hasCandidatesShown) {
                 switch (keyCode) {
                     case 8:
@@ -1399,12 +1395,12 @@ public class LIMEService extends InputMethodService implements
                         || !selectedCandidate.isComposingCodeRecord()
                         || !selectedCandidate.isEnglishSuggestionRecord() ) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                     if (selectedCandidate != null && selectedCandidate.getWord() != null
-                            && !selectedCandidate.getWord().equals("")) {
+                            && !selectedCandidate.getWord().isEmpty()) {
 
                         int firstMatchedLength = 1;
 
                         if (selectedCandidate.getCode() == null
-                                || selectedCandidate.getCode().equals("")) {
+                                || selectedCandidate.getCode().isEmpty()) {
                             firstMatchedLength = 1;
                         }
 
@@ -1475,7 +1471,7 @@ public class LIMEService extends InputMethodService implements
 
                         boolean shouldUpdateCandidates = false;
                         if (composingNotFinish) {
-                            if (LDComposingBuffer.length() == 0) {
+                            if (LDComposingBuffer.isEmpty()) {
                                 //starting LD process
                                 LDComposingBuffer = mComposing.toString();
                                 if (DEBUG)
@@ -1506,7 +1502,7 @@ public class LIMEService extends InputMethodService implements
                             }
                         } else {
 
-                            if (LDComposingBuffer.length() > 0) {// && LDComposingBuffer.contains(mComposing.toString())){
+                            if (!LDComposingBuffer.isEmpty()) {// && LDComposingBuffer.contains(mComposing.toString())){
                                 //Ending continuous LD process (last of LD process)
                                 if (DEBUG)
                                     Log.i(TAG, "commitTyped():Ending LD process, LDBuffer=" + LDComposingBuffer +
@@ -1721,8 +1717,6 @@ public class LIMEService extends InputMethodService implements
             switchKeyboard(primaryCode);
         } else if ( //Jeremy '12,7,1 bug fixed on enter not functioning in english mode
                 ((primaryCode == MY_KEYCODE_SPACE && !mEnglishOnly && !activeIM.equals("phonetic"))
-                        //||(primaryCode== MY_KEYCODE_SPACE &&  !mEnglishOnly &&
-                        //		activeIM.equals("phonetic") //&& !mLIMEPref.getParameterBoolean("doLDPhonetic", true) 	
                         || (primaryCode == MY_KEYCODE_SPACE && !mEnglishOnly &&
                         activeIM.equals("phonetic") && (mComposing.toString().endsWith(" ") || mComposing.length() == 0))
                         || primaryCode == MY_KEYCODE_ENTER)) {
@@ -1950,7 +1944,7 @@ public class LIMEService extends InputMethodService implements
             return;
         }
 
-        if (!(mIMActivatedState.length() > 0 && mIMActivatedState.equals(pIMActiveState))) {
+        if (!(!mIMActivatedState.isEmpty() && mIMActivatedState.equals(pIMActiveState))) {
 
             mIMActivatedState = pIMActiveState;
 
@@ -2018,12 +2012,9 @@ public class LIMEService extends InputMethodService implements
         builder.setTitle(getResources().getString(R.string.han_convert_option_list));
         CharSequence[] items = getResources().getStringArray(R.array.han_convert_options);
         builder.setSingleChoiceItems(items, mLIMEPref.getHanCovertOption(),
-                new DialogInterface.OnClickListener() {
-
-                    public void onClick(DialogInterface di, int position) {
-                        di.dismiss();
-                        handleHanConvertSelection(position);
-                    }
+                (di, position) -> {
+                    di.dismiss();
+                    handleHanConvertSelection(position);
                 });
 
         mOptionsDialog = builder.create();
@@ -2072,12 +2063,9 @@ public class LIMEService extends InputMethodService implements
         }
 
         builder.setSingleChoiceItems(items, curKB,
-                new DialogInterface.OnClickListener() {
-
-                    public void onClick(DialogInterface di, int position) {
-                        di.dismiss();
-                        handleIMSelection(position);
-                    }
+                (di, position) -> {
+                    di.dismiss();
+                    handleIMSelection(position);
                 });
 
         mOptionsDialog = builder.create();
@@ -2087,7 +2075,7 @@ public class LIMEService extends InputMethodService implements
         if (!(window == null)) {
             WindowManager.LayoutParams lp = window.getAttributes();
             // Jeremy '11,8,28 Use candidate instead of mInputview because mInputView may not present when using physical keyboard
-            lp.token = mCandidateViewStandAlone.getWindowToken();  //always there Jeremy '12,5,4 
+            lp.token = mInputView.getWindowToken();  //always there Jeremy '12,5,4
             lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
             window.setAttributes(lp);
             window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
@@ -2158,7 +2146,7 @@ public class LIMEService extends InputMethodService implements
         //ChineseSymbol chineseSym = new ChineseSymbol();
         hasChineseSymbolCandidatesShown = true;
         List<Mapping> list = ChineseSymbol.getChineseSymoblList();
-        if (list.size() > 0) {
+        if (!list.isEmpty()) {
 
             // Setup sel key display if 
             String selkey = "1234567890";
@@ -2221,7 +2209,7 @@ public class LIMEService extends InputMethodService implements
                         return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                     }
                     //Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
-                    if (list.size() > 0) {
+                    if (!list.isEmpty()) {
                         // Setup sel key display if
                         String selkey = null;
                         if (disable_physical_selection && finalHasPhysicalKeyPressed) {
@@ -2259,7 +2247,7 @@ public class LIMEService extends InputMethodService implements
                             HashMap<String, String> emojiCheck = new HashMap<>();
                             List<Mapping> emojiList = new LinkedList<>();
 
-                            if(list.size() > 0){
+                            if(!list.isEmpty()){
 
                                 List<Mapping> item1 = null, item2, item3;
 
@@ -2271,7 +2259,7 @@ public class LIMEService extends InputMethodService implements
                                 if( list.get(0).getWord().matches("[A-Za-z]+") ) {
 
                                     item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
-                                    if (item1.size() > 0) {
+                                    if (!item1.isEmpty()) {
                                         for (Mapping m : item1) {
                                             if (emojiCheck.get(m.getWord()) == null) {
                                                 emojiList.add(m);
@@ -2282,7 +2270,7 @@ public class LIMEService extends InputMethodService implements
 
                                 }
 
-                                if(item1 == null || item1.size() == 0){
+                                if(item1 == null || item1.isEmpty()){
 
                                     //Log.i("EMOJI Check:", ""+list.get(1).getWord().getBytes().length);
                                     if (list.size() > 1 && list.get(1) != null && list.get(1).getWord() != null &&
@@ -2290,7 +2278,7 @@ public class LIMEService extends InputMethodService implements
                                             list.get(1).getWord().length() < 4
                                             ) {
                                         item2 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_TW);
-                                        if (item2.size() > 0) {
+                                        if (!item2.isEmpty()) {
                                             for (Mapping m : item2) {
                                                 if (emojiCheck.get(m.getWord()) == null) {
                                                     emojiList.add(m);
@@ -2298,9 +2286,9 @@ public class LIMEService extends InputMethodService implements
                                                 }
                                             }
                                         }
-                                        if (item2.size() == 0) {
+                                        if (item2.isEmpty()) {
                                             item3 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_CN);
-                                            if (item3.size() > 0) {
+                                            if (!item3.isEmpty()) {
                                                 for (Mapping m : item3) {
                                                     if (emojiCheck.get(m.getWord()) == null) {
                                                         emojiList.add(m);
@@ -2312,7 +2300,7 @@ public class LIMEService extends InputMethodService implements
                                     }
                                 }
 
-                                if(emojiList.size() > 0){
+                                if(!emojiList.isEmpty()){
                                     list.addAll(insertPosition, emojiList);
                                 }
                             }
@@ -2333,7 +2321,7 @@ public class LIMEService extends InputMethodService implements
                         String keynameString = SearchSrv.keyToKeyname(finalKeyString); //.toLowerCase(Locale.US)); moved to LimeDB
                         if (mCandidateView != null
                                 && !keynameString.toUpperCase(Locale.US).equals(finalKeyString.toUpperCase(Locale.US))
-                                && !keynameString.trim().equals("")
+                                && !keynameString.trim().isEmpty()
                                 ) {
                             try {
                                 sleep(0);
@@ -2431,7 +2419,6 @@ public class LIMEService extends InputMethodService implements
 
                                 if ((suggestions != null ? suggestions.size() : 0) > 0) {
                                     list.add(self);
-                                    assert suggestions != null;
                                     list.addAll(suggestions);
 
                                     // Setup sel key display if
@@ -2453,7 +2440,7 @@ public class LIMEService extends InputMethodService implements
                                         HashMap<String, String> emojiCheck = new HashMap<>();
                                         List<Mapping> emojiList = new LinkedList<>();
 
-                                        if(list.size() > 0){
+                                        if(!list.isEmpty()){
 
                                             List<Mapping> item1;
                                             int insertPosition = mLIMEPref.getEmojiDisplayPosition();
@@ -2462,7 +2449,7 @@ public class LIMEService extends InputMethodService implements
                                             }
 
                                             item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
-                                            if(item1.size() > 0){
+                                            if(!item1.isEmpty()){
                                                 for(Mapping m: item1){
                                                     if(emojiCheck.get(m.getWord()) == null){
                                                         emojiList.add(m);
@@ -2471,7 +2458,7 @@ public class LIMEService extends InputMethodService implements
                                                 }
                                             }
 
-                                            if(emojiList.size() > 0){
+                                            if(!emojiList.isEmpty()){
                                                 list.addAll(insertPosition, emojiList);
                                             }
                                         }
@@ -2517,7 +2504,7 @@ public class LIMEService extends InputMethodService implements
         // if( tempMatched != null && tempMatched.getCode() != null &&
         // !tempMatched.getCode().equals("")){
         if (committedCandidate != null && committedCandidate.getWord() != null
-                && !committedCandidate.getWord().equals("")) {
+                && !committedCandidate.getWord().isEmpty()) {
 
             final boolean finalHasPhysicalKeyPressed = hasPhysicalKeyPressed;
             if (queryThread != null && queryThread.isAlive()) queryThread.interrupt();
@@ -2542,7 +2529,7 @@ public class LIMEService extends InputMethodService implements
                             e.printStackTrace();
                         }
 
-                        if (list.size() > 0) {
+                        if (!list.isEmpty()) {
 
 
                             // Setup sel key display if
@@ -2601,7 +2588,7 @@ public class LIMEService extends InputMethodService implements
         if (mCandidateViewStandAlone == null || (!mCandidateViewStandAlone.isShown()))
             return;  // escape if mCandidateViewStandAlone is not created or it's not shown '12,5,6, Jeremy 
 
-        mCandidateViewHandler.hideCandidateViewDelayed(DELAY_BEFORE_HIDE_CANDIDATE_VIEW);
+        mCandidateViewHandler.hideCandidateViewDelayed();
 
     }
 
@@ -2635,6 +2622,7 @@ public class LIMEService extends InputMethodService implements
         private final int MSG_HIDE_CANDIDATE_VIEW = 2;
 
         CandidateViewHandler(LIMEService im){
+            super(Looper.getMainLooper());
             mLIMEService = new WeakReference<>(im);
         }
         @Override
@@ -2661,15 +2649,15 @@ public class LIMEService extends InputMethodService implements
             sendMessage(obtainMessage(MSG_HIDE_CANDIDATE_VIEW));
         }
 
-        void hideCandidateViewDelayed(int delay)
+        void hideCandidateViewDelayed()
         {
-            sendMessageDelayed(obtainMessage(MSG_HIDE_CANDIDATE_VIEW),delay);
+            sendMessageDelayed(obtainMessage(MSG_HIDE_CANDIDATE_VIEW), LIMEService.DELAY_BEFORE_HIDE_CANDIDATE_VIEW);
         }
     }
 
     public synchronized void setSuggestions(List<Mapping> suggestions, boolean showNumber, String diplaySelkey) {
 
-        if (suggestions != null && suggestions.size() > 0) {
+        if (suggestions != null && !suggestions.isEmpty()) {
 
             if (DEBUG)
                 Log.i(TAG, "setSuggestion():suggestions.size=" + suggestions.size()
@@ -2715,7 +2703,7 @@ public class LIMEService extends InputMethodService implements
                         selectedCandidate = suggestions.get(1);
                         //selectedIndex = 1;
                         // this is for no exact match condition with code.  //do not set default suggestion for other record type like chinese punctuation symbols1 or related phrases. Jeremy '15,6,4
-                    } else if (suggestions.size() > 0) {
+                    } else if (!suggestions.isEmpty()) {
                             selectedCandidate = suggestions.get(0);
 
                     }
@@ -2790,10 +2778,7 @@ public class LIMEService extends InputMethodService implements
 
         if (DEBUG)
             Log.i(TAG, "setCandidateViewShown():" + shown);
-        if (shown)
-            super.setCandidatesViewShown(true);
-        else
-            super.setCandidatesViewShown(false);
+        super.setCandidatesViewShown(shown);
 
         if (DEBUG)
             Log.i(TAG, "isCandidateViewShown:" + mCandidateViewStandAlone.isShown());
@@ -2951,12 +2936,12 @@ public class LIMEService extends InputMethodService implements
 
                 mCandidateInInputView = (CandidateInInputViewContainer) LayoutInflater.from(mThemeContext).inflate(
                         R.layout.inputcandidate, null);
-                mInputView = (LIMEKeyboardView) mCandidateInInputView.findViewById(R.id.keyboard);
+                mInputView =  mCandidateInInputView.findViewById(R.id.keyboard);
                 mInputView.setOnKeyboardActionListener(this);
                 hasDistinctMultitouch = mInputView.hasDistinctMultitouch();
                 mInputView.setHardwareAcceleratedDrawingEnabled(mIsHardwareAcceleratedDrawingEnabled);
                 mCandidateInInputView.initViews();
-                mCandidateViewInInputView = (CandidateView) mCandidateInInputView.findViewById(R.id.candidatesView);
+                mCandidateViewInInputView =  mCandidateInInputView.findViewById(R.id.candidatesView);
                 mCandidateViewInInputView.setService(this);
 
             }
@@ -3127,7 +3112,7 @@ public class LIMEService extends InputMethodService implements
                 i = selkey.indexOf((char) primaryCode);
 
                 //Jeremy '12,7,11 bypass space as first tone for phonetic 
-                if (i >= 0 && selkey.substring(i, i + 1).equals(" ")
+                if (i >= 0 && selkey.charAt(i) == ' '
                         && primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic")
                         //&& mLIMEPref.getParameterBoolean("doLDPhonetic", true) 
                         && !(mComposing.toString().endsWith(" ") || mComposing.length() == 0)) {
@@ -3270,7 +3255,7 @@ public class LIMEService extends InputMethodService implements
 			 */
             if (DEBUG)
                 Log.i(TAG, "handleCharacter() english only mode without prediction, committext = "
-                        + String.valueOf((char) primaryCode));
+                        + (char) primaryCode);
             if (isInputViewShown()) {
                 if (mInputView.isShifted()) {
                     primaryCode = Character.toUpperCase(primaryCode);
@@ -3377,7 +3362,7 @@ public class LIMEService extends InputMethodService implements
         }
 
 
-        if (mCandidateList != null && mCandidateList.size() > 0) {
+        if (mCandidateList != null && !mCandidateList.isEmpty()) {
             selectedCandidate = mCandidateList.get(index);
             //selectedIndex = index;
         }
@@ -3397,7 +3382,7 @@ public class LIMEService extends InputMethodService implements
             //Jeremy '12,4,29 use mEnglishOnly instead of onIM
             commitTyped(ic);
         } else if (mLIMEPref.getEnglishPrediction() && tempEnglishList != null
-                && tempEnglishList.size() > 0) {  // user picked English prediction suggestions
+                && !tempEnglishList.isEmpty()) {  // user picked English prediction suggestions
 
 
             //Log.i("EMOJI-commit-index:", index + "");
@@ -3470,6 +3455,14 @@ public class LIMEService extends InputMethodService implements
 
     public void doVibrateSound(int primaryCode) {
         if (DEBUG) Log.i(TAG, "doVibrateSound()");
+        
+        if (mVibrator == null) {
+            mVibrator = (Vibrator) getSystemService(Service.VIBRATOR_SERVICE);
+        }
+        if (mAudioManager == null) {
+            mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        }
+        
         if (hasVibration) {
             //Jeremy '11,9,1 add preference on vibrate level
             mVibrator.vibrate(mLIMEPref.getVibrateLevel());

@@ -24,15 +24,19 @@
 
 package net.toload.main.hd;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.RemoteException;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import net.toload.main.hd.data.KeyboardObj;
-import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;
@@ -49,6 +53,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -66,9 +71,13 @@ public class  DBServer {
 	//private NotificationManager notificationMgr;
 
 	protected static LimeDB datasource = null;  //static LIMEDB for shared LIMEDB between DBServer instances
-	protected static LIMEPreferenceManager mLIMEPref = null;
+	protected static LIMEPreferenceManager mLIMEPref;
 
-	private static boolean remoteFileDownloading = false;
+    static {
+        mLIMEPref = null;
+    }
+
+    private static boolean remoteFileDownloading = false;
 
 	private static String loadingTablename = "";  //Jeremy '12,6,2 change all variable to static for all instances to share these variables
 	private static boolean abortDownload = false;
@@ -76,19 +85,7 @@ public class  DBServer {
 
 	protected static Context ctx = null;
 
-	// Monitoring thread.
-	//	private Thread thread = null;
 
-	//	public class DBServiceImpl extends IDBService.Stub {
-	//
-	//		Context ctx = null;
-	//		//private Thread thread = null;
-	//
-	//		DBServiceImpl(Context ctx) {
-	//			this.ctx = ctx;
-	//			mLIMEPref = new LIMEPreferenceManager(ctx);
-	//			loadLimeDB();
-	//		}
 	public DBServer(Context context) {
 		DBServer.ctx = context;
 		mLIMEPref = new LIMEPreferenceManager(ctx);
@@ -96,12 +93,6 @@ public class  DBServer {
 		if (datasource == null)
 			datasource = new LimeDB(ctx);
 	}
-/* deprecated by jeremy '12,5,2
-	public void loadLimeDB(){	
-		if(datasource==null)
-			datasource = new LimeDB(ctx); 
-	}
-*/
 
 	public void loadMapping(String filename, String tablename, LIMEProgressListener progressListener) throws RemoteException {
 
@@ -144,36 +135,34 @@ public class  DBServer {
 		SearchServer.resetCache(true);
 	}
 
-	public boolean importBackupRelatedDb(File sourcedb){
-		return datasource.importBackupRelatedDb(sourcedb);
-	}
+	public void importBackupRelatedDb(File sourcedb){
+        datasource.importBackupRelatedDb(sourcedb);
+    }
 
-	public boolean importBackupDb(File sourcedb, String imtype) {
-		return datasource.importBackupDb(sourcedb, imtype);
-	}
+	public void importBackupDb(File sourcedb, String imtype) {
+        datasource.importBackupDb(sourcedb, imtype);
+    }
 
-	public int importMapping(File compressedSourceDB, String imtype) {
+	public void importMapping(File compressedSourceDB, String imtype) {
 
-		List<Word> results = null;
 
 		//String sourcedbfile = LIME.LIME_SDCARD_FOLDER + imtype;
 		List<String> unzipFilePaths = new ArrayList<>();
 		try {
-			unzipFilePaths = LIMEUtilities.unzip(compressedSourceDB.getAbsolutePath(), ctx.getCacheDir().getAbsolutePath()+"limehd",true);
+			File unzipTargetDir = new File(ctx.getCacheDir(), "limehd");
+			unzipFilePaths = LIMEUtilities.unzip(compressedSourceDB.getAbsolutePath(), unzipTargetDir.getAbsolutePath(),true);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		//decompressFile(compressedSourceDB, LIME.LIME_SDCARD_FOLDER, imtype, true);
 		if(unzipFilePaths.size()!=1){
 			//TODO: Process exception here.
-			return -1;
-		}
+        }
 		else {
 			int count = datasource.importDb(unzipFilePaths.get(0), imtype);
 			//mLIMEPref.setResetCacheFlag(true);
 			resetCache();
-			return count;
-		}
+        }
 	}
 
 
@@ -186,11 +175,6 @@ public class  DBServer {
 		if (DEBUG)
 			Log.i(TAG, "backupDatabase()");
 		//showNotificationMessage(ctx.getText(R.string.l3_initial_backup_start) + "");
-
-		File limedir = new File(LIME.LIME_SDCARD_FOLDER + File.separator);
-		if (!limedir.exists()) {
-			limedir.mkdirs();
-		}
 
 		//backup shared preferences
 		File fileSharedPrefsBackup = new File(LIME.getLimeDataRootFolder(), LIME.SHARED_PREFS_BACKUP_NAME);
@@ -209,13 +193,18 @@ public class  DBServer {
 		closeDatabse();
 
 		//ready to zip backup file list
+		File tempZip = new File(ctx.getCacheDir(), LIME.DATABASE_BACKUP_NAME);
+		if(tempZip.exists()) tempZip.delete();
+
 		try {
-			LIMEUtilities.zip(LIME.LIME_SDCARD_FOLDER+ LIME.DATABASE_BACKUP_NAME, backupFileList, LIME.getLimeDataRootFolder() , true);
+			LIMEUtilities.zip(tempZip.getAbsolutePath(), backupFileList, LIME.getLimeDataRootFolder() , true);
+			saveFileToDownloads(tempZip);
 		} catch (Exception e) {
 			e.printStackTrace();
 			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_error) + "");
 		} finally {
 			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end) + "");
+			if(tempZip.exists()) tempZip.delete();
 		}
 
 
@@ -249,6 +238,40 @@ public class  DBServer {
 
 	}
 
+	private static void saveFileToDownloads(File file) throws IOException {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+			ContentValues values = new ContentValues();
+			values.put(MediaStore.MediaColumns.DISPLAY_NAME, LIME.DATABASE_BACKUP_NAME);
+			values.put(MediaStore.MediaColumns.MIME_TYPE, "application/zip");
+			values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+
+			ContentResolver resolver = ctx.getContentResolver();
+			Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+
+			if (uri != null) {
+				try (OutputStream outputStream = resolver.openOutputStream(uri);
+					 FileInputStream inputStream = new FileInputStream(file)) {
+					byte[] buffer = new byte[4096];
+					int bytesRead;
+					while ((bytesRead = inputStream.read(buffer)) != -1) {
+						outputStream.write(buffer, 0, bytesRead);
+					}
+				}
+			}
+		} else {
+			File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+			File destFile = new File(downloadsDir, LIME.DATABASE_BACKUP_NAME);
+			try (FileInputStream inputStream = new FileInputStream(file);
+				 FileOutputStream outputStream = new FileOutputStream(destFile)) {
+				byte[] buffer = new byte[4096];
+				int bytesRead;
+				while ((bytesRead = inputStream.read(buffer)) != -1) {
+					outputStream.write(buffer, 0, bytesRead);
+				}
+			}
+		}
+	}
+
 /*
 	public static void restoreDatabase(File srcFile, Boolean removeSourceFile) throws RemoteException {
 
@@ -268,7 +291,8 @@ public class  DBServer {
 	}
 */
 	public static void restoreDatabase() throws RemoteException {
-		restoreDatabase(LIME.LIME_SDCARD_FOLDER + LIME.DATABASE_BACKUP_NAME);
+		File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+		restoreDatabase(new File(downloadsDir, LIME.DATABASE_BACKUP_NAME).getAbsolutePath());
 	}
 	public static void restoreDatabase(String srcFilePath) throws RemoteException {
 

@@ -27,7 +27,7 @@ package net.toload.main.hd.keyboard;
 import net.toload.main.hd.R;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 import android.content.Context;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;

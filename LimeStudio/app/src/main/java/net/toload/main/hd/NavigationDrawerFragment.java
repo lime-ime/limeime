@@ -32,13 +32,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -55,7 +55,6 @@ import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 import net.toload.main.hd.ui.HelpDialog;
-import net.toload.main.hd.ui.PaymentDialog;
 import net.toload.main.hd.ui.ShareDialog;
 
 import java.util.List;
@@ -327,8 +326,10 @@ public class NavigationDrawerFragment extends Fragment {
 
         if(item.getItemId() == R.id.action_share){
             FragmentTransaction ft = getFragmentManager().beginTransaction();
+            // Pass the required String arguments for the dialog title and share message.
             ShareDialog dialog = ShareDialog.newInstance();
-            dialog.show(ft, "sharedialog");
+            dialog.show(ft, "share_dialog"); // Corrected the dialog tag as well
+
         }else if(item.getItemId() == R.id.action_preference){
             /*  Targeting at SDK level > 16 now.
             if(android.os.Build.VERSION.SDK_INT < 11){  //Jeremy '12,4,30 Add for deprecated preferenceActivity after API 11 (HC)
@@ -369,10 +370,6 @@ public class NavigationDrawerFragment extends Fragment {
             AlertDialog alert = builder.create();
             alert.show();
 
-        }else if(item.getItemId() == R.id.action_adfree){
-            FragmentTransaction ft = getFragmentManager().beginTransaction();
-            PaymentDialog dialog = PaymentDialog.newInstance();
-            dialog.show(ft, "paymentdialog");
         }
 
         /*else if(item.getItemId() == R.id.action_news){

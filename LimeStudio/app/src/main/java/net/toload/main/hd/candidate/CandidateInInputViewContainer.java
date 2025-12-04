@@ -27,12 +27,9 @@
 package net.toload.main.hd.candidate;
 
 import android.content.Context;
-import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnTouchListener;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
@@ -62,12 +59,12 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
             Log.i(TAG, "initViews()");
         if (mCandidateView == null) {
             mButtonRightExpand = findViewById(R.id.candidate_right_parent);
-            mRightButton = (ImageButton) findViewById(R.id.candidate_right);
+            mRightButton = findViewById(R.id.candidate_right);
 
             if (mRightButton != null) {
                 mRightButton.setOnClickListener(this);
             }
-            mCandidateView = (CandidateView) findViewById(R.id.candidatesView);
+            mCandidateView = findViewById(R.id.candidatesView);
 
             mCandidateView.setBackgroundColor(mCandidateView.mColorBackground);
             mRightButton.setBackgroundColor(mCandidateView.mColorBackground);

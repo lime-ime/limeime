@@ -22,18 +22,16 @@
   ~  */
   -->
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:ads="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context="net.toload.main.hd.ManageRelatedFragment">
+    tools:context="net.toload.main.hd.ui.ManageRelatedFragment">
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
         android:id="@+id/scrollView">
 
     <LinearLayout
@@ -119,30 +117,13 @@
                     android:layout_marginLeft="10dp" />
             </TableRow>
         </TableLayout>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="@string/setup_im_grant_permission"
-            android:id="@+id/setup_im_grant_permission"
-            android:layout_marginBottom="5dp" />
+
         <TableLayout
             android:layout_width="fill_parent"
             android:layout_height="fill_parent">
         <TableRow
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent">
-            <Button
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="@string/setup_im_grant_permission_button"
-                android:id="@+id/btnSetupImGrantPermission"
-                android:layout_gravity="center_horizontal"
-                android:layout_weight="1"
-                android:padding="5dp"
-                android:layout_marginRight="10dp"
-                android:layout_marginLeft="10dp" />
-        </TableRow>
+            android:layout_height="fill_parent"/>
     </TableLayout>
     </LinearLayout>
     <LinearLayout
@@ -201,58 +182,7 @@
 
             </TableRow>
 
-            <TableRow
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:layout_marginBottom="5dp">
-
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_im_backup_google"
-                    android:id="@+id/btnSetupImBackupGoogle"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_weight="1"
-                    android:padding="5dp"
-                    android:layout_marginRight="10dp"
-                    android:layout_marginLeft="10dp" />
-
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_im_restore_google"
-                    android:id="@+id/btnSetupImRestoreGoogle"
-                    android:layout_weight="1"
-                    android:padding="5dp"
-                    android:layout_marginLeft="10dp"
-                    android:layout_marginRight="10dp" />
-            </TableRow>
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginBottom="5dp">
-
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_im_backup_dropbox"
-                    android:id="@+id/btnSetupImBackupDropbox"
-                    android:layout_weight="1"
-                    android:padding="5dp"
-                    android:layout_marginRight="10dp"
-                    android:layout_marginLeft="10dp" />
-
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_im_restore_dropbox"
-                    android:id="@+id/btnSetupImRestoreDropbox"
-                    android:layout_weight="1"
-                    android:padding="5dp"
-                    android:layout_marginLeft="10dp"
-                    android:layout_marginRight="10dp" />
-            </TableRow>
+            <!-- Dropbox buttons removed -->
         </TableLayout>
         <Space
             android:layout_width="match_parent"
@@ -499,68 +429,36 @@
             </TableRow>
         </TableLayout>
 
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="@string/setup_im_download_old"
-            android:id="@+id/textView55" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="@string/setup_im_download_old_summary"
-            android:id="@+id/textView53"
-            android:layout_marginBottom="5dp" />
 
-        <TableLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TableRow
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:layout_marginBottom="5dp">
-
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_im_download_old_version"
-                    android:id="@+id/btnDownloadOldVersion"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_weight="1"
-                    android:padding="10dp"
-                    android:layout_marginRight="10dp"
-                    android:layout_marginLeft="10dp" />
-
-            </TableRow>
-        </TableLayout>
 
     </LinearLayout>
     </LinearLayout>
     </ScrollView>
 
-    <!--RelativeLayout
-    android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/adLayout">
-    </RelativeLayout-->
+    <LinearLayout
+        android:id="@+id/progress_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="#80000000"
+        android:visibility="gone">
 
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true"
-        ads:adSize="SMART_BANNER"
-        ads:adUnitId="@string/ad_unit_banner">
-    </com.google.android.gms.ads.AdView>
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/progress_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@android:color/white"
+            android:text="Loading..." />
+    </LinearLayout>
 
 
-</LinearLayout>
+</FrameLayout>

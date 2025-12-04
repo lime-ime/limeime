@@ -24,13 +24,6 @@
 
 package net.toload.main.hd.global;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.entity.HttpEntityWrapper;
-
-import java.io.FilterOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-
 /**
  * Created by Jeremy on 2015/5/23.
  */
