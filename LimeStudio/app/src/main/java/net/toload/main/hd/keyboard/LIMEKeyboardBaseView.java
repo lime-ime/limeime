@@ -78,7 +78,7 @@ import java.util.WeakHashMap;
 @SuppressLint("UseSparseArrays")
 public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy {
     private static final String TAG = "LIMEKeyboardBaseView";
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     public static final int NOT_A_TOUCH_COORDINATE = -1;
 
@@ -975,10 +975,10 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     // For characters, use large font. For labels like "Done", use small font.
                     final int labelSize;
 
-                    if (DEBUG)
-                        Log.i(TAG, "onBufferDraw():" + label
-                                + " keySizeScale = " + mKeyboard.getKeySizeScale() + " "
-                                + " labelSizeScale = " + key.getLabelSizeScale());
+//                    if (DEBUG)
+//                        Log.i(TAG, "onBufferDraw():" + label
+//                                + " keySizeScale = " + mKeyboard.getKeySizeScale() + " "
+//                                + " labelSizeScale = " + key.getLabelSizeScale());
                     //Jeremy '11,8,11, Extended for sub-label display
                     //Jeremy '11,9,4 Scale label size
                     float keySizeScale = mKeyboard.getKeySizeScale();

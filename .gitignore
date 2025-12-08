@@ -47,6 +47,10 @@ local.properties
 #[Rr]elease/
 x64/
 build/
+android-profile/
+baselineProfiles/
+*.dm
+reports/
 [Bb]in/
 [Oo]bj/
 
@@ -221,3 +225,5 @@ LimeStudio/.idea/misc.xml
 LimeStudio/app/app.iml
 LimeStudio/app/app.iml
 LimeStudio/app/app.iml
+LimeStudio/app/release/baselineProfiles/0/LIMEHD-release-6.0.0.dm
+LimeStudio/app/release/baselineProfiles/1/LIMEHD-release-6.0.0.dm
