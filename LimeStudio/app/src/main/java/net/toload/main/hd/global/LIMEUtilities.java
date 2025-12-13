@@ -39,13 +39,14 @@ import android.util.Log;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.FileHeader;
 import net.toload.main.hd.LIMEService;
 import net.toload.main.hd.R;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,7 +54,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 //
@@ -97,7 +97,7 @@ public class LIMEUtilities {
 	}
 
 	/*
-*   Zip singl file into single zip.
+*   Zip single file into single zip.
 *   sourceFile should be assigned with absolute path.
 *
  */
@@ -214,59 +214,92 @@ public class LIMEUtilities {
 		return !canonical.getCanonicalFile().equals(canonical.getAbsoluteFile());
 	}
 
-	public static List<String> unzip(String zipFilePath, String targetFolder, Boolean OverWrite) throws IOException {
+	public static List<String> unzip(String zipFilePath, String targetFolder, Boolean OverWrite) throws ZipException, IOException {
 		return unzip(new File(zipFilePath), new File(targetFolder), OverWrite);
 	}
 
-	public static List<String> unzip(File zipFile, File targetDirectory, Boolean OverWrite) throws IOException {
-		ZipInputStream zis = new ZipInputStream(
-				new BufferedInputStream(new FileInputStream(zipFile)));
-		List<String> returnFilePaths = new ArrayList<>();
-		try {
-			ZipEntry ze;
-			int count;
-			byte[] buffer = new byte[102400];
-			while ((ze = zis.getNextEntry()) != null) {
-				String itemName = ze.getName();
-				File targetFile;
-                //itemName.startsWith("/sdcard/") ||
-//				if(itemName.startsWith(Environment.getExternalStorageDirectory() +File.separator)){
-//					targetFile = new File(ze.getName());  //target is zipped with absolute path on /sdcard
-//				}
-//				else
-                    if(itemName.startsWith("/data/") || itemName.startsWith(Environment.getDataDirectory() +File.separator)){
-					//target is zipped with absolute path on /data, we need to confirm the targetfolder is within our package.
-					String packageRoot = LIME.getLimeDataRootFolder();
-					if(!itemName.startsWith(packageRoot))  //skip if the target path is not under our package root
-						continue;
-					targetFile = new File(ze.getName());  //target is zipped with absolute path on /sdcard
-				}
-				else {
-					targetFile = new File(targetDirectory, ze.getName());
-				}
+    public static List<String> unzip(File zipFile,
+                                     File targetDirectory,
+                                     boolean overWrite) throws ZipException, IOException {
+        List<String> returnFilePaths = new ArrayList<>();
 
-				File dir = ze.isDirectory() ? targetFile : targetFile.getParentFile();
-				if (dir!=null && !dir.isDirectory() && !dir.mkdirs())
-					throw new FileNotFoundException("Failed to ensure target directory: " +	dir.getAbsolutePath());
-				if (ze.isDirectory())
-					continue;
-				if(targetFile.exists() && OverWrite)
-					targetFile.delete();
-                try (FileOutputStream outStream = new FileOutputStream(targetFile)) {
-                    while ((count = zis.read(buffer)) != -1)
-                        outStream.write(buffer, 0, count);
-                } catch (IOException e) {
-                    e.printStackTrace();
+        if (!targetDirectory.exists() && !targetDirectory.mkdirs()) {
+            throw new IOException("Failed to create target dir: " + targetDirectory.getAbsolutePath());
+        }
+
+        ZipFile zip4jFile = new ZipFile(zipFile);
+        List<FileHeader> fileHeaders = zip4jFile.getFileHeaders();
+
+        for (FileHeader fileHeader : fileHeaders) {
+            String itemName = fileHeader.getFileName();
+
+            if (itemName == null || itemName.isEmpty()) {
+                continue;
+            }
+
+            File targetFile;
+
+            // Handle absolute /data/ paths: only restore into our package root
+            if (itemName.startsWith("/data/")
+                    || itemName.startsWith(Environment.getDataDirectory() + File.separator)) {
+
+                String packageRoot = LIME.getLimeDataRootFolder(); // e.g. /data/user/0/your.pkg
+                File abs = new File(itemName).getCanonicalFile();
+                String root = new File(packageRoot).getCanonicalPath() + File.separator;
+
+                // Skip if not under our package root
+                if (!abs.getPath().startsWith(root)) {
+                    continue;
                 }
 
-				returnFilePaths.add(targetFile.getAbsolutePath());
-			}
-		} finally {
-			zis.close();
-		}
-		return returnFilePaths;
-	}
-	public static boolean copyFile(String sourceFilePath, String targetFilePath, Boolean overWrite) {
+                targetFile = abs;
+            } else {
+                // Normal relative entry under targetDirectory
+                File out = new File(targetDirectory, itemName).getCanonicalFile();
+                String destRoot = targetDirectory.getCanonicalPath() + File.separator;
+
+                // Zip‑Slip guard: keep inside targetDirectory
+                if (!out.getPath().startsWith(destRoot)) {
+                    continue;
+                }
+
+                targetFile = out;
+            }
+
+            // Create parent directories if they don't exist
+            File parentDir = targetFile.getParentFile();
+            if (parentDir != null && !parentDir.isDirectory() && !parentDir.mkdirs()) {
+                throw new IOException("Failed to ensure parent directory: " + parentDir.getAbsolutePath());
+            }
+
+            if (fileHeader.isDirectory()) {
+                if (!targetFile.isDirectory() && !targetFile.mkdirs()) {
+                    throw new IOException("Failed to create directory: " + targetFile.getAbsolutePath());
+                }
+                returnFilePaths.add(targetFile.getAbsolutePath());
+                continue;
+            }
+
+            if (targetFile.exists()) {
+                if (!overWrite) {
+                    returnFilePaths.add(targetFile.getAbsolutePath());
+                    continue;
+                }
+                if (!targetFile.delete()) {
+                    throw new IOException("Failed to delete existing file: " + targetFile);
+                }
+            }
+
+            // Extract the file using Zip4j
+            zip4jFile.extractFile(fileHeader, targetDirectory.getAbsolutePath());
+            returnFilePaths.add(targetFile.getAbsolutePath());
+        }
+
+        return returnFilePaths;
+    }
+
+
+    public static boolean copyFile(String sourceFilePath, String targetFilePath, Boolean overWrite) {
 		File sourceFile = isFileExist(sourceFilePath);
 		if(sourceFilePath == null || sourceFile == null || targetFilePath == null) return false;
 		File targetFile = isFileExist(targetFilePath);

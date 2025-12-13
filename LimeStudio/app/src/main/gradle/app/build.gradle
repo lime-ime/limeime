@@ -81,7 +81,7 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'androidx.preference:preference:1.2.1'
-    implementation 'net.lingala.zip4j:zip4j:2.11.5'
+
     
     implementation(platform('org.jetbrains.kotlin:kotlin-bom:2.2.21'))
 
@@ -91,4 +91,7 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'androidx.test:rules:1.6.1'
     androidTestImplementation 'androidx.test:monitor:1.8.0'
+
+    // Zip4j for unzipping operations
+    implementation 'net.lingala.zip4j:zip4j:2.11.5'
 }

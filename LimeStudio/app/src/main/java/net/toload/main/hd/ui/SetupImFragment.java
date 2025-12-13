@@ -623,24 +623,7 @@ public class SetupImFragment extends Fragment {
 
         new Thread(() -> {
             try {
-                // Create a temp file
-                File tempFile = File.createTempFile("restore_backup", ".zip", activity.getCacheDir());
-                tempFile.deleteOnExit();
-
-                // Copy from URI to temp file
-                InputStream inputStream = activity.getContentResolver().openInputStream(uri);
-                FileOutputStream outputStream = new FileOutputStream(tempFile);
-                byte[] buffer = new byte[4096];
-                int bytesRead;
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-                outputStream.close();
-                inputStream.close();
-
-                // Perform restore
-                DBServer.restoreDatabase(tempFile.getAbsolutePath());
-
+                DBSrv.restoreDatabase(uri);
             } catch (Exception e) {
                 e.printStackTrace();
                 activity.runOnUiThread(() -> showToastMessage(activity.getString(R.string.l3_initial_restore_error), Toast.LENGTH_LONG));
