@@ -1031,14 +1031,14 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                         if (cachedHeight != null && cachedWidth != null) {
                             labelHeight = cachedHeight;
                             labelWidth = cachedWidth;
-                        } else {
-                            Rect textBounds = new Rect();
-                            paint.getTextBounds(KEY_LABEL_HEIGHT_REFERENCE_CHAR, 0, 1, textBounds);
-                            labelHeight = textBounds.height();
-                            labelWidth = textBounds.width();
-                            mTextHeightCache.put(labelSize, labelHeight);
-                            mTextWidthCache.put(labelSize, labelWidth);
                         }
+                    } else {
+                        Rect textBounds = new Rect();
+                        paint.getTextBounds(KEY_LABEL_HEIGHT_REFERENCE_CHAR, 0, 1, textBounds);
+                        labelHeight = textBounds.height();
+                        labelWidth = textBounds.width();
+                        mTextHeightCache.put(labelSize, labelHeight);
+                        mTextWidthCache.put(labelSize, labelWidth);
                     }
 
                     // Draw a drop shadow for the text
@@ -1052,7 +1052,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                             ? (key.pressed ? mFunctionKeyTextColorPressed : mFunctionKeyTextColorNormal)
                             : (key.pressed ? mKeySubLabelTextColorPressed : mKeySubLabelTextColorNormal);
 
-                    float KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR = 0.45f;
+                    float KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR = 0.55f;
                     float baseline = centerY
                             + labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
                     if (hasSubLabel) {
@@ -1079,9 +1079,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
                         //portrait keyboard
                         if (key.height > key.width || subLabel.length() > 2 || hasSecondSubLabel) {
-                            baseline = (float) ((key.height + padding.top - padding.bottom) * 0.8f)
+                            baseline = (float) ((key.height + padding.top - padding.bottom) * 2/3)
                                     + labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
-                            float subBaseline = (float) (key.height + padding.top - padding.bottom) * 0.25f
+                            float subBaseline = (float) (key.height + padding.top - padding.bottom) /3
                                     + subLabelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
                             paint.setColor(subKeyColor);
 
