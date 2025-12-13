@@ -4,7 +4,7 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "net.toload.main.hd",
+  "applicationId": "net.toload.main.hd2025",
   "variantName": "release",
   "elements": [
     {
@@ -13,7 +13,7 @@
       "attributes": [],
       "versionCode": 2025,
       "versionName": "6.0.0",
-      "outputFile": "LIMEHD-release-6.0.0.apk"
+      "outputFile": "LIMEHD2025-6.0.0.apk"
     }
   ],
   "elementType": "File",
@@ -22,14 +22,14 @@
       "minApi": 28,
       "maxApi": 30,
       "baselineProfiles": [
-        "baselineProfiles/1/LIMEHD-release-6.0.0.dm"
+        "baselineProfiles/1/LIMEHD2025-6.0.0.dm"
       ]
     },
     {
       "minApi": 31,
       "maxApi": 2147483647,
       "baselineProfiles": [
-        "baselineProfiles/0/LIMEHD-release-6.0.0.dm"
+        "baselineProfiles/0/LIMEHD2025-6.0.0.dm"
       ]
     }
   ],

@@ -30,7 +30,7 @@ android {
     }
     compileSdkVersion  34
     defaultConfig {
-        applicationId = "net.toload.main.hd"
+        applicationId = "net.toload.main.hd2025"
 
         minSdkVersion  21
         targetSdkVersion  34
@@ -53,7 +53,7 @@ android {
     }
     applicationVariants.all { variant ->
         variant.outputs.all {
-            outputFileName = "LIMEHD-${variant.name}-${variant.versionName}.apk"
+            outputFileName = "LIMEHD2025-${variant.versionName}.apk"
         }
     }
     productFlavors {
