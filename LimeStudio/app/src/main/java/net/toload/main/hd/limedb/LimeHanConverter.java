@@ -59,7 +59,7 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 	}
 	/**
 	 * Count total amount of specific table
-	 *
+
 
 	public int countMapping(String table) {
 		if(DEBUG)
@@ -101,7 +101,7 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 		if(DEBUG)
 			Log.i(TAG, "getBaseScore()");
 		int score = 0;
-		if(input!=null && !input.equals("")) {
+		if(input!=null && !input.isEmpty()) {
 			Cursor cursor;
 			
 			try {
@@ -126,9 +126,9 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 	}
 	
 	public String convert(String input, Integer hanConvertOption){
-		String output=input;
+		StringBuilder output= new StringBuilder(input);
 		//Log.i("LimeHanConverter.convert()","hanConvertOption:"+hanConvertOption);
-		if(input!=null && !input.equals("") && hanConvertOption != 0){
+		if(!input.isEmpty() && hanConvertOption != 0){
 			String tablename = "";
 			Cursor cursor = null;
 			if(hanConvertOption == 1 ) { //TC to SC
@@ -139,32 +139,30 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 			try {
 				SQLiteDatabase db = this.getReadableDatabase();
 				
-				output = "";
+				output = new StringBuilder();
 				for(int i=0;i<input.length();i++){
 					
-					cursor = db.query(tablename, null, FIELD_CODE + " = '" + input.substring(i,i+1) + "' "
+					cursor = db.query(tablename, null, FIELD_CODE + " = '" + input.charAt(i) + "' "
 							, null, null, null, null, null);
 				
 					if (cursor.moveToFirst()) {
 						//int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 						int wordColumn = cursor.getColumnIndex(FIELD_WORD);
 						String word = cursor.getString(wordColumn);
-						output += word; 
+						output.append(word);
 							
 					}else
-						output += input.substring(i,i+1);
+						output.append(input.charAt(i));
 						
 				}
-					
-				if (cursor != null) {
-					//cursor.deactivate();
-					cursor.close();
-				}
-			} catch (Exception e) {
+
+                //cursor.deactivate();
+                cursor.close();
+            } catch (Exception e) {
 				e.printStackTrace();
 			}
 					
 		}
-		return output;
+		return output.toString();
 	}
 }

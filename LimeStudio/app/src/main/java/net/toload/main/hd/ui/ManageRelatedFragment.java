@@ -25,7 +25,6 @@
 package net.toload.main.hd.ui;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
@@ -38,6 +37,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -59,7 +59,7 @@ import com.vpadn.ads.VpadnAdSize;
 import com.vpadn.ads.VpadnBanner;
 */
 
-/**
+/*
  * Fragment used for managing interactions for and presentation of a navigation drawer.
  * See the <a href="https://developer.android.com/design/patterns/navigation-drawer.html#Interaction">
  * design guidelines</a> for a complete explanation of the behaviors implemented here.
@@ -79,7 +79,6 @@ public class ManageRelatedFragment extends Fragment {
     private SearchServer SearchSrv = null;
     private GridView gridManageRelated;
 
-    private Button btnManageRelatedAdd;
     private Button btnManageRelatedSearch;
     private Button btnManageRelatedPrevious;
     private Button btnManageRelatedNext;
@@ -103,7 +102,7 @@ public class ManageRelatedFragment extends Fragment {
 
     private LimeDB datasource;
 
-    private ProgressDialog progress;
+    private ProgressBar progressBar;
     private LIMEPreferenceManager mLIMEPref;
 
     // AD
@@ -136,9 +135,7 @@ public class ManageRelatedFragment extends Fragment {
 
         this.handler = new ManageRelatedHandler(this);
 
-        this.progress = new ProgressDialog(this.activity);
-        this.progress.setCancelable(false);
-        this.progress.setMessage(getResources().getString(R.string.manage_related_loading));
+        this.progressBar = rootView.findViewById(R.id.loading_spinner);
         mLIMEPref = new LIMEPreferenceManager(activity);
 
         this.gridManageRelated = (GridView) rootView.findViewById(R.id.gridManageRelated);
@@ -149,7 +146,7 @@ public class ManageRelatedFragment extends Fragment {
                     //datasource.open();
                     Related w = datasource.getRelated(id);
                     //datasource.close();
-                    FragmentTransaction ft = getFragmentManager().beginTransaction();
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
 
                     // Create and show the dialog.
                     ManageRelatedEditDialog dialog = ManageRelatedEditDialog.newInstance();
@@ -161,11 +158,11 @@ public class ManageRelatedFragment extends Fragment {
             }
         });
 
-        this.btnManageRelatedAdd = (Button) rootView.findViewById(R.id.btnManageRelatedAdd);
-        this.btnManageRelatedAdd.setOnClickListener(new View.OnClickListener() {
+        Button btnManageRelatedAdd = (Button) rootView.findViewById(R.id.btnManageRelatedAdd);
+        btnManageRelatedAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                FragmentTransaction ft = getParentFragmentManager().beginTransaction();
                 ManageRelatedAddDialog dialog = ManageRelatedAddDialog.newInstance();
                 dialog.setHandler(handler);
                 dialog.show(ft, "adddialog");
@@ -278,8 +275,9 @@ public class ManageRelatedFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        Activity activity = (Activity) context;
         ((MainActivity) activity).onSectionAttached(
                 getArguments().getInt(ARG_SECTION_NUMBER));
     }
@@ -290,22 +288,22 @@ public class ManageRelatedFragment extends Fragment {
         if(this.ManageRelatedthread != null){
             this.handler.removeCallbacks(ManageRelatedthread);
         }
-        if(this.progress.isShowing()){
-            this.progress.cancel();
+        if(this.progressBar != null && this.progressBar.getVisibility() == View.VISIBLE){
+            this.progressBar.setVisibility(View.GONE);
         }
         this.relatedlist = null;
         this.SearchSrv.initialCache();
     }
 
     public void showProgress(){
-        if(!this.progress.isShowing()){
-            this.progress.show();
+        if(this.progressBar != null && this.progressBar.getVisibility() != View.VISIBLE){
+            this.progressBar.setVisibility(View.VISIBLE);
         }
     }
 
     public void cancelProgress(){
-        if(this.progress.isShowing()){
-            this.progress.cancel();
+        if(this.progressBar != null && this.progressBar.getVisibility() == View.VISIBLE){
+            this.progressBar.setVisibility(View.GONE);
         }
     }
 
@@ -339,7 +337,7 @@ public class ManageRelatedFragment extends Fragment {
                 this.gridManageRelated.setSelection(0);
             }
         }else{
-            this.adapter.setList(new ArrayList());
+            this.adapter.setList(new ArrayList<>());
             this.adapter.notifyDataSetChanged();
             this.gridManageRelated.setSelection(0);
             Toast.makeText(activity, R.string.no_search_result, Toast.LENGTH_SHORT).show();
@@ -402,7 +400,8 @@ public class ManageRelatedFragment extends Fragment {
         }else{
             if(hasRelatedCheck == 9999999){
                 Toast.makeText(activity, R.string.manage_related_format_error, Toast.LENGTH_SHORT).show();
-            }else{
+            }
+            else{
                 Toast.makeText(activity, R.string.manage_related_duplicated, Toast.LENGTH_SHORT).show();
             }
         }

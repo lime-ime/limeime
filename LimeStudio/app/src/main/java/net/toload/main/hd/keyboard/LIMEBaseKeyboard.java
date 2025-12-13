@@ -22,7 +22,7 @@
  *
  */
 
-/**
+/*
  * Derived from Gingerbread inputmethodservice Keyboard.java.
  * Add mKeySizeScale to scale keyboard in vertical direction (height and gap).
  * Jeremy '11,9,4
@@ -119,13 +119,6 @@ public class LIMEBaseKeyboard {
     private static Drawable mDrawableArrowLeft;
 
 
-
-
-    /**
-     * orientation of the screen
-     */
-    private boolean mLandScape;
-    /** Keyboard label **/
     //private CharSequence mLabel;
 
     /**
@@ -169,10 +162,10 @@ public class LIMEBaseKeyboard {
      */
     private int mShiftKeyIndex = -1;
 
-    /** Current key width, while loading the keyboard */
+    /* Current key width, while loading the keyboard */
     //private int mKeyWidth;
 
-    /** Current key height, while loading the keyboard */
+    /* Current key height, while loading the keyboard */
     //private int mKeyHeight;
 
     /**
@@ -189,27 +182,27 @@ public class LIMEBaseKeyboard {
     /**
      * List of keys in this keyboard
      */
-    private List<Key> mKeys;
+    private final List<Key> mKeys;
 
     /**
      * List of modifier keys such as Shift & Alt, if any
      */
-    private List<Key> mModifierKeys;
+    private final List<Key> mModifierKeys;
 
     /**
      * Width of the screen available to fit the keyboard
      */
-    private int mDisplayWidth;
+    private final int mDisplayWidth;
 
     /**
      * Height of the screen
      */
-    private int mDisplayHeight;
+    private final int mDisplayHeight;
 
     /**
      * Keyboard mode, or zero, if none.
      */
-    private int mKeyboardMode;
+    private final int mKeyboardMode;
 
     /**
      * Show arrow keys on keyboard or not.
@@ -249,11 +242,6 @@ public class LIMEBaseKeyboard {
     private int mCellHeight;
     private int[][] mGridNeighbors;
     private int mProximityThreshold;
-    /**
-     * Number of key widths from current touch point to search for nearest keys.
-     */
-    private static float SEARCH_DISTANCE = 1.8f;
-
 
 
     /**
@@ -296,7 +284,7 @@ public class LIMEBaseKeyboard {
          */
         public int mode;
 
-        private LIMEBaseKeyboard parent;
+        private final LIMEBaseKeyboard parent;
 
         public Row(LIMEBaseKeyboard parent) {
             this.parent = parent;
@@ -446,7 +434,7 @@ public class LIMEBaseKeyboard {
         /**
          * The keyboard that this key belongs to
          */
-        private LIMEBaseKeyboard keyboard;
+        private final LIMEBaseKeyboard keyboard;
         /**
          * If this key pops up a mini keyboard, this is the resource id for the XML layout for that
          * keyboard.
@@ -659,7 +647,7 @@ public class LIMEBaseKeyboard {
         int[] parseCSV(String value) {
             int count = 0;
             int lastIndex = 0;
-            if (value.length() > 0) {
+            if (!value.isEmpty()) {
                 count++;
                 while ((lastIndex = value.indexOf(",", lastIndex + 1)) > 0) {
                     count++;
@@ -692,14 +680,10 @@ public class LIMEBaseKeyboard {
             boolean rightEdge = (edgeFlags & EDGE_RIGHT) > 0;
             boolean topEdge = (edgeFlags & EDGE_TOP) > 0;
             boolean bottomEdge = (edgeFlags & EDGE_BOTTOM) > 0;
-            if ((x >= this.x || (leftEdge && x <= this.x + this.width))
+            return (x >= this.x || (leftEdge && x <= this.x + this.width))
                     && (x < this.x + this.width || (rightEdge && x >= this.x))
                     && (y >= this.y || (topEdge && y <= this.y + this.height))
-                    && (y < this.y + this.height || (bottomEdge && y >= this.y))) {
-                return true;
-            } else {
-                return false;
-            }
+                    && (y < this.y + this.height || (bottomEdge && y >= this.y));
         }
 
         /**
@@ -793,7 +777,7 @@ public class LIMEBaseKeyboard {
         mKeySizeScale = keySizeScale;
         mShowArrowKeys = showArrowKeys;
 
-        mLandScape = mDisplayWidth > mDisplayHeight;
+        boolean mLandScape = mDisplayWidth > mDisplayHeight;
 
         TypedArray a = context.getTheme().obtainStyledAttributes(//R.style.LIMEBaseKeyboardLight, R.styleable.LIMEBaseKeyboard);
                 null, R.styleable.LIMEBaseKeyboard, R.attr.LIMEBaseKeyboardStyle, R.style.LIMEBaseKeyboard);
@@ -850,8 +834,8 @@ public class LIMEBaseKeyboard {
         CharSequence labels = null;
         if (characters.toString().contains("\n")) {
             String[] charactersAndLabel = characters.toString().split("\n");
-            characters = new String(charactersAndLabel[0]);
-            labels = new String(charactersAndLabel[1]);
+            characters = charactersAndLabel[0];
+            labels = charactersAndLabel[1];
         }
 
         for (int i = 0; i < characters.length(); i++) {
@@ -1042,7 +1026,7 @@ public class LIMEBaseKeyboard {
             row.defaultWidth = mSplitKeyWidth;
         } else {
             row.defaultHeight = (int) (mDefaultHeight * mKeySizeScale * ARROW_KEY_HEIGHT_FRACTION);
-            row.defaultWidth = Math.round((mDisplayWidth - 3 * mDefaultHorizontalGap) / 4);
+            row.defaultWidth = Math.round((float) (mDisplayWidth - 3 * mDefaultHorizontalGap) / 4);
             row.rowEdgeFlags = EDGE_TOP | EDGE_BOTTOM;
         }
 
@@ -1150,17 +1134,17 @@ public class LIMEBaseKeyboard {
         Resources res = context.getResources();
         boolean skipRow = false;
 
-        /** Show arrow keys on top of the soft keyboard in portrait mode.*/
+        /* Show arrow keys on top of the soft keyboard in portrait mode.*/
         boolean showArrowKeysOnTop = (mShowArrowKeys == 1) && (mDisplayWidth < mDisplayHeight);
-        /** Show arrow keys on bottom of the soft keyboard in portrait mode.*/
+        /* Show arrow keys on bottom of the soft keyboard in portrait mode.*/
         boolean showArrowKeysOnBottom = (mShowArrowKeys == 2) && (mDisplayWidth < mDisplayHeight);
-        /** The left bound of the center blank area on split keyboard. */
+        /* The left bound of the center blank area on split keyboard. */
         int leftSplitBorder = 0;
-        /** The distance to be shifted for right side keyboard */
+        /* The distance to be shifted for right side keyboard */
         int splitDistance = 0;
-        /** The centerLine of current screen in horizontal direction. */
+        /* The centerLine of current screen in horizontal direction. */
         int centerLine = mDisplayWidth / 2;
-        /** Reserved center space for arrow keys on right or left of the center line. */
+        /* Reserved center space for arrow keys on right or left of the center line. */
         int reservedCenterSpace = 0;
 
         try {
@@ -1228,6 +1212,7 @@ public class LIMEBaseKeyboard {
                             // add space key in right side split keyboard Jeremy '12,5,26
                             if (keyRightBound > centerLine + key.gap + mSplitKeyWidth + reservedCenterSpace) {
                                 key.width = centerLine - key.x - key.gap - reservedCenterSpace;
+                                assert currentRow != null;
                                 final Key rightKey = new Key(currentRow, key); //clone the space key for the space key on right keyboard.
                                 rightKey.x = centerLine + key.gap + reservedCenterSpace;
                                 rightKey.width = keyRightBound - rightKey.x;
@@ -1290,16 +1275,15 @@ public class LIMEBaseKeyboard {
                         y += currentRow.verticalGap;
                         y += currentRow.defaultHeight;
                         //row++;
-                    } else {
-                        // TODO: error or extend?
                     }
+                    //else {// TODO: error or extend?}
                 }
             }
         } catch (Exception e) {
             Log.e(TAG, "Parse error:" + e);
             e.printStackTrace();
         }
-        /** Add arrow keys row if mShowArrowKeys is on */  //Add by Jeremy '12,5,21
+        /* Add arrow keys row if mShowArrowKeys is on */  //Add by Jeremy '12,5,21
         if (showArrowKeysOnBottom)
             y += createArrowKeys(res, 0, y, false);
 
@@ -1341,14 +1325,18 @@ public class LIMEBaseKeyboard {
         mDefaultVerticalGap = getDimensionOrFraction(a,
                 R.styleable.LIMEBaseKeyboard_verticalGap, //Jeremy '11,9,4
                 mDisplayHeight, 0, mKeySizeScale);
+        /*
+         * Number of key widths from current touch point to search for nearest keys.
+         */
+        float SEARCH_DISTANCE = 1.8f;
         mProximityThreshold = (int) (mDefaultWidth * SEARCH_DISTANCE);
         mProximityThreshold = mProximityThreshold * mProximityThreshold; // Square it for comparison
 
         //Jeremy '12,5,26 for seperated keyboard in landscape with arrow keys
         mReservedColumnsForSplitedKeyboard = (int) (res.getInteger(R.integer.reserved_columns_for_seperated_keyboard));
 
-        mKeysInRow = Math.round(mDisplayWidth / mDefaultWidth);
-        mSplitKeyWidth = Math.round(mDisplayWidth / (mKeysInRow + mReservedColumnsForSplitedKeyboard));
+        mKeysInRow = Math.round((float) mDisplayWidth / mDefaultWidth);
+        mSplitKeyWidth = Math.round((float) mDisplayWidth / (mKeysInRow + mReservedColumnsForSplitedKeyboard));
         mSplitedKeyWidthScale = (float) (mSplitKeyWidth) / (float) (mDefaultWidth);
         if (DEBUG)
             Log.i(TAG, "mKeysInRow = " + mKeysInRow

@@ -92,7 +92,7 @@ public class CandidateView extends View implements View.OnClickListener {
     private static final int SCROLL_PIXELS = 20;
 
     // Add by Jeremy '10, 3, 29.
-    // Suggestions size. Set to MAX_GUGGESTIONS if larger then it.
+    // Suggestions size. Set to MAX_SUGGESTIONS if larger then it.
     protected int mCount = 0;
     //Composing view
     private TextView mComposingTextView;
@@ -183,6 +183,7 @@ public class CandidateView extends View implements View.OnClickListener {
     public CandidateView(Context context, AttributeSet attrs) {
         this(context, attrs, R.attr.LIMECandidateView);
     }
+    @SuppressWarnings("deprecation")
     public CandidateView(Context context, AttributeSet attrs, int defStyle) {
 
         super(context, attrs, defStyle);
@@ -237,12 +238,21 @@ public class CandidateView extends View implements View.OnClickListener {
         a.recycle();
 
        final Resources r = context.getResources();
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
 
-        Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        Point screenSize = new Point();
-        display.getSize(screenSize);
-        mScreenWidth = screenSize.x;
-        mScreenHeight = screenSize.y;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            // API 30+ approach
+            android.view.WindowMetrics metrics = wm.getCurrentWindowMetrics();
+            mScreenWidth = metrics.getBounds().width();
+            mScreenHeight = metrics.getBounds().height();
+        } else {
+            // API < 30 approach
+            Display display = wm.getDefaultDisplay();
+            Point screenSize = new Point();
+            display.getSize(screenSize);
+            mScreenWidth = screenSize.x;
+            mScreenHeight = screenSize.y;
+        }
 
         mVerticalPadding = (int) (r.getDimensionPixelSize(R.dimen.candidate_vertical_padding) * mLIMEPref.getFontSize());
         configHeight = (int) (r.getDimensionPixelSize(R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
@@ -313,7 +323,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
                 return true;
             }
-        });
+        }, new Handler(Looper.getMainLooper()));
 
     }
 
@@ -871,8 +881,8 @@ public class CandidateView extends View implements View.OnClickListener {
         int x = 0;
         final int count = mCount; //Cache count here '11,8,18
         for (int i = 0; i < count; i++) {
-            if (count != mCount || mSuggestions == null || count != mSuggestions.size()
-                    || mSuggestions.isEmpty()|| i >= mSuggestions.size())
+            if (count != mCount || mSuggestions == null || count != mSuggestions.size())
+                    //|| mSuggestions.isEmpty()|| i >= mSuggestions.size()) //redundant check
                 return;  // mSuggestion is updated, force abort
 
             String suggestion = mSuggestions.get(i).getWord();
@@ -940,8 +950,9 @@ public class CandidateView extends View implements View.OnClickListener {
 
             for (int i = 0; i < count; i++) {
 
-                if (count != mCount || mSuggestions == null || count != mSuggestions.size()
-                        || mSuggestions.isEmpty() || i >= mSuggestions.size()) break;
+                if (count != mCount || mSuggestions == null || count != mSuggestions.size())
+                    //    || mSuggestions.isEmpty() || i >= mSuggestions.size()) //redundant check
+                    break;
 
                 boolean isEmoji = mSuggestions.get(i).isEmojiRecord();
                 String suggestion = mSuggestions.get(i).getWord();
@@ -1191,14 +1202,14 @@ public class CandidateView extends View implements View.OnClickListener {
     @Override
     public boolean onTouchEvent(@NonNull MotionEvent me) {
         if (DEBUG)
-            Log.i(TAG, "OnTouchEvent() action = " + me.getAction());
+            Log.i(TAG, "OnTouchEvent() action = " + me.getActionMasked());
         if (mGestureDetector != null && mGestureDetector.onTouchEvent(me)) {
             if (DEBUG)
                 Log.i(TAG, "OnTouchEvent() event processed by mGestureDetector");
             return true;
         }
 
-        int action = me.getAction();
+        int action = me.getActionMasked();
         int x = (int) me.getX();
         int y = (int) me.getY();
         mTouchX = x;
@@ -1348,11 +1359,14 @@ public class CandidateView extends View implements View.OnClickListener {
             if (mSelectedIndex == -1 ||
                     mWordX[mSelectedIndex] < currentX ||
                     mWordX[mSelectedIndex] + mWordWidth[mSelectedIndex] > rightEdge) {
-                for (int i = mCount - 2; i < mCount - 1; i--)
+                int i = mCount - 2;
+                while (i >=0) {//< mCount - 1) {  Jeremy '25/12/10 fixed for infinite loop risk
                     if (mWordX[i] + mWordWidth[i] <= rightEdge) {
                         mSelectedIndex = i;
                         break;
                     }
+                    i--;
+                }
             }
             invalidate();
         }

@@ -26,7 +26,8 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.DialogFragment;
+import androidx.fragment.app.DialogFragment;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -91,8 +92,8 @@ public class ImportDialog extends DialogFragment {
 	}
 
 	@Override
-	public void onAttach(Activity act) {
-		super.onAttach(act);
+	public void onAttach(Context context) {
+		super.onAttach(context);
 		importtext = getArguments().getString(Lime.IMPORT_TEXT);
 	}
 

@@ -38,10 +38,10 @@ public class Lime {
     final public static String DATABASE_NAME = "lime.db";
     final public static String DATABASE_EXT = ".db";
     final public static String DATABASE_DEVICE_FOLDER =  Environment.getDataDirectory() + "/data/net.toload.main.hd/databases";
-    final public static String DATABASE_DECOMPRESS_FOLDER_SDCARD = Environment.getExternalStorageDirectory() + "/limehd/databases";
+    //final public static String DATABASE_DECOMPRESS_FOLDER_SDCARD = Environment.getExternalStorageDirectory() + "/limehd/databases";
     final public static String DATABASE_FOLDER_EXTERNAL = Environment.getExternalStorageDirectory() + "/limehd/";
-    final public static String DATABASE_BACKUP_NAME = "backup.zip";
-    final public static String DATABASE_CLOUD_TEMP = "cloudtemp.zip";
+    //final public static String DATABASE_BACKUP_NAME = "backup.zip";
+    //final public static String DATABASE_CLOUD_TEMP = "cloudtemp.zip";
 
     // Input Method Editor Online Database Location
     // https://github.com/hosoyu/LimeStudio/raw/master/Database/array.zip

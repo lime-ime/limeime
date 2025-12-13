@@ -25,8 +25,10 @@
 package net.toload.main.hd.ui;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -71,8 +73,8 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 	}
 
 	@Override
-	public void onAttach(Activity act) {
-		super.onAttach(act);
+	public void onAttach(Context context) {
+		super.onAttach(context);
 	}
 
 	@Override
@@ -121,8 +123,8 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 	}
 
 	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {
-		super.onActivityCreated(savedInstanceState);
+	public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
 
 		String[] listitems = new String[]{};
 

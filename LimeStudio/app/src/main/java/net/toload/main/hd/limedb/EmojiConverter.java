@@ -77,7 +77,7 @@ public class EmojiConverter extends SQLiteOpenHelper {
 
 		List<Mapping> output = new LinkedList<Mapping>();
 
-		if(tag!=null && !tag.equals("")){
+		if(tag!=null && !tag.isEmpty()){
 			String tablename = "";
 			Cursor cursor = null;
 			if(emoji == Lime.EMOJI_CN ) {

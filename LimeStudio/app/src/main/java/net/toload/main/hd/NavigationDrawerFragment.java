@@ -32,6 +32,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.core.view.GravityCompat;
@@ -39,6 +41,8 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Lifecycle;
+
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -58,6 +62,7 @@ import net.toload.main.hd.ui.HelpDialog;
 import net.toload.main.hd.ui.ShareDialog;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
@@ -92,7 +97,6 @@ public class NavigationDrawerFragment extends Fragment {
     private View mFragmentContainerView;
 
     private int mCurrentSelectedPosition = 0;
-    private boolean mFromSavedInstanceState;
     private boolean mUserLearnedDrawer;
 
 
@@ -101,7 +105,7 @@ public class NavigationDrawerFragment extends Fragment {
     private String[] menulist;
 
     private LimeDB datasource;
-    private ArrayAdapter adapter;
+    private ArrayAdapter<String> adapter;
 
 
     public NavigationDrawerFragment(){}
@@ -115,7 +119,7 @@ public class NavigationDrawerFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        
         // Construct Preference Manager object
         mLIMEPref = new LIMEPreferenceManager(getActivity());
 
@@ -126,18 +130,11 @@ public class NavigationDrawerFragment extends Fragment {
 
         if (savedInstanceState != null) {
             mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
-            mFromSavedInstanceState = true;
+            boolean mFromSavedInstanceState = true;
         }
 
         // Select either the default item (0) or the last selected item.
         selectItem(mCurrentSelectedPosition);
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        // Indicate that this fragment would like to influence the set of actions in the action bar.
-        setHasOptionsMenu(true);
     }
 
     @Override
@@ -178,6 +175,79 @@ public class NavigationDrawerFragment extends Fragment {
 
         mDrawerListView.setAdapter(adapter);
         mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
+
+        // Add MenuProvider to handle menu creation and selection
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                // If the drawer is open, show the global app actions in the action bar. See also
+                // showGlobalContextActionBar, which controls the top-left area of the action bar.
+                if (mDrawerLayout != null && isDrawerOpen()) {
+                    menuInflater.inflate(R.menu.global, menu);
+                    showGlobalContextActionBar();
+                }
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                if (mDrawerToggle.onOptionsItemSelected(menuItem)) {
+                    return true;
+                }
+
+                if(menuItem.getItemId() == R.id.action_share){
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    // Pass the required String arguments for the dialog title and share message.
+                    ShareDialog dialog = ShareDialog.newInstance();
+                    dialog.show(ft, "share_dialog"); // Corrected the dialog tag as well
+                    return true;
+                }else if(menuItem.getItemId() == R.id.action_preference){
+            /*  Targeting at SDK level > 16 now.
+            if(android.os.Build.VERSION.SDK_INT < 11){  //Jeremy '12,4,30 Add for deprecated preferenceActivity after API 11 (HC)
+                Intent setting = new Intent(this.getActivity(), LIMEPreference.class);
+                startActivity(setting);
+            }else {*/
+                    Intent setting = new Intent(getActivity(), LIMEPreferenceHC.class);
+                    startActivity(setting);
+                    return true;
+                    //}
+                }else if(menuItem.getItemId() == R.id.action_help){
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                    HelpDialog dialog = HelpDialog.newInstance();
+                    dialog.show(ft, "helpdialog");
+                    return true;
+                }else if(menuItem.getItemId() == R.id.action_reset){
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                    builder.setTitle(getResources().getString(R.string.reset_dialog_title));
+                    builder.setMessage(getResources().getString(R.string.reset_dialog_confirm));
+                    builder.setCancelable(false);
+                    builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    // Reset Lime preferences
+                                    SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences(getActivity().getPackageName() + "_preferences", Context.MODE_PRIVATE);
+                                    settings.edit().clear().commit();
+
+                                    // Reset Lime databases
+                                    datasource.resetLimeSetting();
+                                    System.exit(0);
+
+                                }
+                            });
+                    builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                }
+                            });
+
+                    AlertDialog alert = builder.create();
+                    alert.show();
+                    return true;
+                }
+
+                return false;
+            }
+        }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+
         return mDrawerListView;
     }
 
@@ -221,7 +291,7 @@ public class NavigationDrawerFragment extends Fragment {
                     return;
                 }
 
-                getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+                getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
             }
 
             @Override
@@ -242,7 +312,7 @@ public class NavigationDrawerFragment extends Fragment {
                     mLIMEPref.setParameter(PREF_USER_LEARNED_DRAWER, true);
                 }
 
-                getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+                getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
             }
         };
 
@@ -262,7 +332,7 @@ public class NavigationDrawerFragment extends Fragment {
             }
         });
 
-        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        mDrawerLayout.addDrawerListener(mDrawerToggle);
     }
 
     private void selectItem(int position) {
@@ -279,8 +349,9 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        Activity activity = (Activity) context;
         try {
             mCallbacks = (NavigationDrawerCallbacks) activity;
         } catch (ClassCastException e) {
@@ -305,91 +376,6 @@ public class NavigationDrawerFragment extends Fragment {
         super.onConfigurationChanged(newConfig);
         // Forward the new configuration the drawer toggle component.
         mDrawerToggle.onConfigurationChanged(newConfig);
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        // If the drawer is open, show the global app actions in the action bar. See also
-        // showGlobalContextActionBar, which controls the top-left area of the action bar.
-        if (mDrawerLayout != null && isDrawerOpen()) {
-            inflater.inflate(R.menu.global, menu);
-            showGlobalContextActionBar();
-        }
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (mDrawerToggle.onOptionsItemSelected(item)) {
-            return true;
-        }
-
-        if(item.getItemId() == R.id.action_share){
-            FragmentTransaction ft = getFragmentManager().beginTransaction();
-            // Pass the required String arguments for the dialog title and share message.
-            ShareDialog dialog = ShareDialog.newInstance();
-            dialog.show(ft, "share_dialog"); // Corrected the dialog tag as well
-
-        }else if(item.getItemId() == R.id.action_preference){
-            /*  Targeting at SDK level > 16 now.
-            if(android.os.Build.VERSION.SDK_INT < 11){  //Jeremy '12,4,30 Add for deprecated preferenceActivity after API 11 (HC)
-                Intent setting = new Intent(this.getActivity(), LIMEPreference.class);
-                startActivity(setting);
-            }else {*/
-            Intent setting = new Intent(this.getActivity(), LIMEPreferenceHC.class);
-            startActivity(setting);
-            //}
-        }else if(item.getItemId() == R.id.action_help){
-            FragmentTransaction ft = getFragmentManager().beginTransaction();
-            HelpDialog dialog = HelpDialog.newInstance();
-                         dialog.show(ft, "helpdialog");
-        }else if(item.getItemId() == R.id.action_reset){
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setTitle(getResources().getString(R.string.reset_dialog_title));
-            builder.setMessage(getResources().getString(R.string.reset_dialog_confirm));
-            builder.setCancelable(false);
-            builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            // Reset Lime preferences
-                            SharedPreferences settings = getActivity().getSharedPreferences(getActivity().getPackageName() + "_preferences", Context.MODE_PRIVATE);
-                                              settings.edit().clear().commit();
-
-                            // Reset Lime databases
-                            datasource.resetLimeSetting();
-                            System.exit(0);
-
-                        }
-                    });
-            builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                        }
-                    });
-
-            AlertDialog alert = builder.create();
-            alert.show();
-
-        }
-
-        /*else if(item.getItemId() == R.id.action_news){
-            FragmentTransaction ft = getFragmentManager().beginTransaction();
-            NewsDialog dialog = NewsDialog.newInstance();
-            dialog.show(ft, "newsdialog");
-        }*/
-        /**
-         *
-         Intent download = new Intent(v.getContext(), DownloadActivity.class);
-         download.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-         startActivity(download);
-         */
-
-        /*if (item.getItemId() == R.id.action_example) {
-            Toast.makeText(getActivity(), "Example action.", Toast.LENGTH_SHORT).show();
-            return true;
-        }*/
-
-        return super.onOptionsItemSelected(item);
     }
 
     /**

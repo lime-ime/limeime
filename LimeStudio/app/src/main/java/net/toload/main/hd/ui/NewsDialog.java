@@ -26,6 +26,7 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import androidx.fragment.app.DialogFragment ;
@@ -61,8 +62,8 @@ public class NewsDialog extends DialogFragment {
 	}
 
 	@Override
-	public void onAttach(Activity act) {
-		super.onAttach(act);
+	public void onAttach(Context context) {
+		super.onAttach(context);
 	}
 
 	@Override

@@ -28,7 +28,6 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Service;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.inputmethodservice.InputMethodService;
@@ -175,7 +174,7 @@ public class LIMEService extends InputMethodService implements
     private boolean hasKeyProcessed = false; // Jeremy '11,8,15 for long pressed key
     private int mLongPressKeyTimeout; //Jeremy '11,8, 15 read long press timeout from config
 
-    private boolean mIsHardwareAcceleratedDrawingEnabled = false;
+    private boolean mIsHardwareAcceleratedDrawingEnabled = true;
 
     private boolean hasSymbolEntered = false; //Jeremy '11,5,24 
 
@@ -188,8 +187,8 @@ public class LIMEService extends InputMethodService implements
     public String activeIM;  //Jeremy '12,4,30 renamed from keyboardSelection
     private List<String> activatedIMNameList; //Jeremy '12,4,30 renamed from keyboardList
     private List<String> activatedIMShortNameList; //Jeremy '12,4,30 renamed from keyboardShortname
-    private List<String> activatedIMList; //jerem '12,4,30 reanmed from keybaordCodeList
-    private String currentSoftKeyboard = "";  //Jeremy '12,4,30 reanmed from keybaord_xml;
+    private List<String> activatedIMList; //Jeremy '12,4,30 renamed from keybaordCodeList
+    private String currentSoftKeyboard = "";  //Jeremy '12,4,30 renamed from keybaord_xml;
 
     // To keep key press time
     //private long keyPressTime = 0;
@@ -239,10 +238,6 @@ public class LIMEService extends InputMethodService implements
 
         super.onCreate();
 
-
-        mIsHardwareAcceleratedDrawingEnabled = true;// this.enableHardwareAcceleration();
-
-
         SearchSrv = new SearchServer(this);
         mEnglishOnly = false;
         mEnglishFlagShift = false;
@@ -285,6 +280,23 @@ public class LIMEService extends InputMethodService implements
     }
 
     /**
+     * Override show_ime_with_hard_keyboard=0 which  prevent inputView shown
+     * @return always true
+     */
+    @Override
+    public boolean onEvaluateInputViewShown() {
+        boolean result = super.onEvaluateInputViewShown();
+        Configuration config = getResources().getConfiguration();
+        if(DEBUG)
+            Log.i(TAG,"onEvaluateInputViewShown():" + result
+                    + " config.keyboard :" + config.keyboard
+                    + " config.hardKeyboardHidden :" + config.hardKeyboardHidden);
+        return true;
+//        return result;
+//        return config.keyboard == Configuration.KEYBOARD_NOKEYS
+//                || config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES;
+    }
+    /**
      * Called by the system when the device configuration changes while your activity is running.
      */
     @Override
@@ -294,7 +306,7 @@ public class LIMEService extends InputMethodService implements
             Log.i(TAG, "LIMEService:OnConfigurationChanged()");
 
 
-        //Jeremy '12,4,7 add hardkeyboard hidden configuration changed event and clear composing to avoid fc.
+        //Jeremy '12,4,7 add hard keyboard hidden configuration changed event and clear composing to avoid fc.
         if (conf.orientation != mOrientation || conf.hardKeyboardHidden != mHardkeyboardHidden) {
             //Jeremy '12,4,21 force clear the composing buffer
             clearComposing(true);
@@ -327,7 +339,7 @@ public class LIMEService extends InputMethodService implements
 
         if (mFixedCandidateViewOn) {
             if (DEBUG)
-                Log.i(TAG, "Fixed candiateView in on, return nInputViewContainer ");
+                Log.i(TAG, "Fixed candidateView in on, return nInputViewContainer ");
             return mCandidateInInputView;
         } else
             return mInputView;
@@ -370,7 +382,6 @@ public class LIMEService extends InputMethodService implements
      * Jeremy '11,5,31
      * Override fullscreen editing mode settings for larger screen  (>1.4in)
      */
-
     @Override
     public boolean onEvaluateFullscreenMode() {
         DisplayMetrics dm = getResources().getDisplayMetrics();
@@ -1399,26 +1410,26 @@ public class LIMEService extends InputMethodService implements
 
                         int firstMatchedLength = 1;
 
-                        if (selectedCandidate.getCode() == null
-                                || selectedCandidate.getCode().isEmpty()) {
-                            firstMatchedLength = 1;
-                        }
+//                        if (selectedCandidate.getCode() == null
+//                                || selectedCandidate.getCode().isEmpty()) {
+//                            firstMatchedLength = 1;
+//                        }
 
                         String wordToCommit = selectedCandidate.getWord();
 
-                        if (selectedCandidate != null
-                                && selectedCandidate.getCode() != null
-                                && selectedCandidate.getWord() != null) {
-                            if (selectedCandidate
-                                    .getCode()
-                                    .toLowerCase(Locale.US)
-                                    .equals(selectedCandidate.getWord()
-                                            .toLowerCase(Locale.US))) {
-                                firstMatchedLength = 1;
-
-
-                            }
-                        }
+//                        if (selectedCandidate != null
+//                                && selectedCandidate.getCode() != null
+//                                && selectedCandidate.getWord() != null) {
+//                            if (selectedCandidate
+//                                    .getCode()
+//                                    .toLowerCase(Locale.US)
+//                                    .equals(selectedCandidate.getWord()
+//                                            .toLowerCase(Locale.US))) {
+//                                firstMatchedLength = 1;
+//
+//
+//                            }
+//                        }
 
                         if (DEBUG)
                             Log.i(TAG, "commitTyped() committed Length="
@@ -1509,7 +1520,7 @@ public class LIMEService extends InputMethodService implements
                                             ". just committed code=" + selectedCandidate.getCode());
                                 LDComposingBuffer = "";
                                 SearchSrv.addLDPhrase(selectedCandidate, true);
-                            } else if (LDComposingBuffer.length() > 0) {
+                            } else {
                                 //LD process interrupted.
                                 if (DEBUG)
                                     Log.i(TAG, "commitTyped():LD process interrupted, LDBuffer=" + LDComposingBuffer +
@@ -1718,11 +1729,12 @@ public class LIMEService extends InputMethodService implements
         } else if ( //Jeremy '12,7,1 bug fixed on enter not functioning in english mode
                 ((primaryCode == MY_KEYCODE_SPACE && !mEnglishOnly && !activeIM.equals("phonetic"))
                         || (primaryCode == MY_KEYCODE_SPACE && !mEnglishOnly &&
-                        activeIM.equals("phonetic") && (mComposing.toString().endsWith(" ") || mComposing.length() == 0))
+                        //activeIM.equals("phonetic") && //redundant
+                        (mComposing.toString().endsWith(" ") || mComposing.length() == 0))
                         || primaryCode == MY_KEYCODE_ENTER)) {
 
             if (hasCandidatesShown) { //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
-                if (!pickHighlightedCandidate()) {//Jeremy '12,5,11 fixed for not sedning related.
+                if (!pickHighlightedCandidate()) {//Jeremy '12,5,11 fixed for not sending related.
                     if (mComposing.length() == 0)
                         hideCandidateView();
                     sendKeyChar((char) primaryCode);
@@ -1814,52 +1826,49 @@ public class LIMEService extends InputMethodService implements
         }
 
 
-        builder.setItems(options, new DialogInterface.OnClickListener() {
+        builder.setItems(options, (di, position) -> {
+            di.dismiss();
+            switch (position) {
 
-            public void onClick(DialogInterface di, int position) {
-                di.dismiss();
-                switch (position) {
-
-                    case POS_SETTINGS:
-                        launchSettings();
-                        break;
-                    case POS_HANCONVERT:  //Jeremy '11,9,17
-                        showHanConvertPicker();
-                        break;
-                    case POS_KEYBOARD:
-                        showIMPicker();
-                        break;
-                    case POS_METHOD:
-                        ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).showInputMethodPicker();
-                        break;
-                    case POS_SPLIT_KEYBOARD: //Jeremy '12,5,27 new option to split keyboard; '12,6,9 add orientation consideration on split keyboard
-                        if (hasSplitOption) {
-                            if (mSplitKeyboard == LIMEKeyboard.SPLIT_KEYBOARD_NEVER) {
-                                if (isLandScape)
-                                    mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY);
-                                else
-                                    mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS);
-                            } else if (mSplitKeyboard == LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS) {
-                                if (isLandScape)
-                                    mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_NEVER);
-                                else
-                                    mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY);
-                            } else {// LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY
-                                if (isLandScape)
-                                    mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_NEVER);
-                                else
-                                    mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS);
-                            }
-
-                            handleClose();
-                            mKeyboardSwitcher.resetKeyboards(true);
-                            break;
+                case POS_SETTINGS:
+                    launchSettings();
+                    break;
+                case POS_HANCONVERT:  //Jeremy '11,9,17
+                    showHanConvertPicker();
+                    break;
+                case POS_KEYBOARD:
+                    showIMPicker();
+                    break;
+                case POS_METHOD:
+                    ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).showInputMethodPicker();
+                    break;
+                case POS_SPLIT_KEYBOARD: //Jeremy '12,5,27 new option to split keyboard; '12,6,9 add orientation consideration on split keyboard
+                    if (hasSplitOption) {
+                        if (mSplitKeyboard == LIMEKeyboard.SPLIT_KEYBOARD_NEVER) {
+                            if (isLandScape)
+                                mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY);
+                            else
+                                mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS);
+                        } else if (mSplitKeyboard == LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS) {
+                            if (isLandScape)
+                                mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_NEVER);
+                            else
+                                mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY);
+                        } else {// LIMEKeyboard.SPLIT_KEYBOARD_LANDSCAPD_ONLY
+                            if (isLandScape)
+                                mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_NEVER);
+                            else
+                                mLIMEPref.setSplitKeyboard(LIMEKeyboard.SPLIT_KEYBOARD_ALWAYS);
                         }
-                    case POS_VOICEINPUT:
-                        startVoiceInput();
-                        break;
 
-                }
+                        handleClose();
+                        mKeyboardSwitcher.resetKeyboards(true);
+                        break;
+                    }
+                case POS_VOICEINPUT:
+                    startVoiceInput();
+                    break;
+
             }
         });
 
@@ -2668,7 +2677,8 @@ public class LIMEService extends InputMethodService implements
 
             if ((!mFixedCandidateViewOn || hasPhysicalKeyPressed)
                     && mCandidateView != mCandidateViewStandAlone) {
-                mCandidateViewInInputView.clear();
+                if(mCandidateViewInInputView!=null)
+                    mCandidateViewInInputView.clear();
                 mCandidateView = mCandidateViewStandAlone; //Jeremy '12,5,4 use standalone candidateView for physical keyboard (no soft keyboard shown)
                 //forceHideCandidateView(); //Jeremy '16,7,19 caused the first composing character missing typed with physical keyboard.
                 if (hasPhysicalKeyPressed) {
@@ -3452,12 +3462,20 @@ public class LIMEService extends InputMethodService implements
 
 
     }
-
+    @SuppressWarnings("deprecation")
     public void doVibrateSound(int primaryCode) {
         if (DEBUG) Log.i(TAG, "doVibrateSound()");
         
         if (mVibrator == null) {
-            mVibrator = (Vibrator) getSystemService(Service.VIBRATOR_SERVICE);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                // API 31+ approach
+                android.os.VibratorManager vibratorManager = (android.os.VibratorManager) getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
+                mVibrator = vibratorManager.getDefaultVibrator();
+            } else {
+                // API < 31 approach
+                Vibrator vibrator = (Vibrator) getSystemService(Service.VIBRATOR_SERVICE);
+                mVibrator = vibrator;
+            }
         }
         if (mAudioManager == null) {
             mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
@@ -3465,7 +3483,16 @@ public class LIMEService extends InputMethodService implements
         
         if (hasVibration) {
             //Jeremy '11,9,1 add preference on vibrate level
-            mVibrator.vibrate(mLIMEPref.getVibrateLevel());
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                // API 26+ approach
+                android.os.VibrationEffect effect = android.os.VibrationEffect.createOneShot(mLIMEPref.getVibrateLevel(), android.os.VibrationEffect.DEFAULT_AMPLITUDE);
+                mVibrator.vibrate(effect);
+            } else {
+                // API < 26 approach
+
+                Vibrator vibrator = mVibrator;
+                vibrator.vibrate(mLIMEPref.getVibrateLevel());
+            }
         }
         if (hasSound) {
             int sound = AudioManager.FX_KEYPRESS_STANDARD;

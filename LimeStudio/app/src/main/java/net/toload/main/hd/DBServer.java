@@ -159,7 +159,7 @@ public class  DBServer {
 			//TODO: Process exception here.
         }
 		else {
-			int count = datasource.importDb(unzipFilePaths.get(0), imtype);
+			datasource.importDb(unzipFilePaths.get(0), imtype);
 			//mLIMEPref.setResetCacheFlag(true);
 			resetCache();
         }
@@ -171,72 +171,6 @@ public class  DBServer {
 	}
 
 
-	public static void backupDatabase() throws RemoteException {
-		if (DEBUG)
-			Log.i(TAG, "backupDatabase()");
-		//showNotificationMessage(ctx.getText(R.string.l3_initial_backup_start) + "");
-
-		//backup shared preferences
-		File fileSharedPrefsBackup = new File(LIME.getLimeDataRootFolder(), LIME.SHARED_PREFS_BACKUP_NAME);
-		if(fileSharedPrefsBackup.exists())  fileSharedPrefsBackup.delete();
-		backupDefaultSharedPreference(fileSharedPrefsBackup);
-
-		// create backup file list.
-		List<String> backupFileList = new ArrayList<>();
-		backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator + LIME.DATABASE_NAME);
-		backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator + LIME.DATABASE_JOURNAL);
-		backupFileList.add(LIME.SHARED_PREFS_BACKUP_NAME);
-
-		// hold database connection and close database.
-		//mLIMEPref.holdDatabaseCoonection(true);
-		datasource.holdDBConnection(); //Jeremy '15,5,23
-		closeDatabse();
-
-		//ready to zip backup file list
-		File tempZip = new File(ctx.getCacheDir(), LIME.DATABASE_BACKUP_NAME);
-		if(tempZip.exists()) tempZip.delete();
-
-		try {
-			LIMEUtilities.zip(tempZip.getAbsolutePath(), backupFileList, LIME.getLimeDataRootFolder() , true);
-			saveFileToDownloads(tempZip);
-		} catch (Exception e) {
-			e.printStackTrace();
-			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_error) + "");
-		} finally {
-			showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end) + "");
-			if(tempZip.exists()) tempZip.delete();
-		}
-
-
-		/*
-		File dbFile=null, jounralFilel=null;
-		String dbtarget = mLIMEPref.getParameterString("dbtarget");
-		//try {
-			if (dbtarget.equals("device")) {
-
-				//LIMEUtilities.zipFolder(LIME.LIME_SDCARD_FOLDER + LIME.DATABASE_BACKUP_NAME, LIME.getLIMEDatabaseFolder(), true);
-				dbFile = new File(LIME.getLIMEDatabaseFolder() + File.separator + LIME.DATABASE_NAME);
-				jounralFilel = new File(LIME.getLIMEDatabaseFolder() + File.separator + LIME.DATABASE_JOURNAL);
-			} else {
-				//LIMEUtilities.zipFolder(LIME.LIME_SDCARD_FOLDER + LIME.DATABASE_BACKUP_NAME, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, true);
-				dbFile = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_NAME);
-				jounralFilel = new File(LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD + File.separator + LIME.DATABASE_JOURNAL);
-			}
-		//} catch (Exception e) {			e.printStackTrace();		}
-		compressFile(dbFile, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_BACKUP_NAME);
-		compressFile(jounralFilel, LIME.LIME_SDCARD_FOLDER, LIME.DATABASE_JOURNAL_BACKUP_NAME);
-		*/
-
-		// backup finished.  unhold the database connection and false reopen the database.
-		datasource.unHoldDBConnection(); //Jeremy '15,5,23
-		//mLIMEPref.holdDatabaseConnection(false);
-		datasource.openDBConnection(true);
-
-		//cleanup the shared preference backup file.
-		if( fileSharedPrefsBackup!=null && fileSharedPrefsBackup.exists() ) fileSharedPrefsBackup.delete();
-
-
-	}
 
 	private static void saveFileToDownloads(File file) throws IOException {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -272,41 +206,102 @@ public class  DBServer {
 		}
 	}
 
-/*
-	public static void restoreDatabase(File srcFile, Boolean removeSourceFile) throws RemoteException {
 
-		mLIMEPref.holdDatabaseCoonection(true);
-		closeDatabse();
+    public static void backupDatabase(Uri uri) throws RemoteException {
+        if (DEBUG)
+            Log.i(TAG, "backupDatabase()");
 
-		String dbtarget = mLIMEPref.getParameterString("dbtarget");
-			if (dbtarget.equals("device")) {
-				decompressFile(srcFile, LIME.getLIMEDatabaseFolder(), LIME.DATABASE_NAME, removeSourceFile);
-			} else {decompressFile(srcFile, LIME.DATABASE_DECOMPRESS_FOLDER_SDCARD, LIME.DATABASE_NAME, removeSourceFile);
-			}
+        String dataDir = ctx.getDataDir().getAbsolutePath();
+        //backup shared preferences
+
+        File fileSharedPrefsBackup = new File(dataDir, LIME.SHARED_PREFS_BACKUP_NAME);
+        if(fileSharedPrefsBackup.exists())  fileSharedPrefsBackup.delete();
+        backupDefaultSharedPreference(fileSharedPrefsBackup);
+
+        // create backup file list.
+        String limeDBPath = ctx.getDatabasePath(LIME.DATABASE_NAME).getAbsolutePath();
+        String limeDBJournalPath = ctx.getDatabasePath(LIME.DATABASE_JOURNAL).getAbsolutePath();
+        if (limeDBPath.startsWith(dataDir)) {
+            limeDBPath = limeDBPath.substring(dataDir.length());
+        }
+        if (limeDBJournalPath.startsWith(dataDir)) {
+            limeDBJournalPath = limeDBJournalPath.substring(dataDir.length());
+        }
+        List<String> backupFileList = new ArrayList<>();
+        //backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator + LIME.DATABASE_NAME);
+        //backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator + LIME.DATABASE_JOURNAL);
+        backupFileList.add(limeDBPath);
+        backupFileList.add(limeDBJournalPath);
+        backupFileList.add(LIME.SHARED_PREFS_BACKUP_NAME);
+
+        // hold database connection and close database.
+        datasource.holdDBConnection(); //Jeremy '15,5,23
+        closeDatabse();
+
+        //ready to zip backup file list
+        File tempZip = new File(ctx.getCacheDir(), LIME.DATABASE_BACKUP_NAME);
+        if(tempZip.exists()) tempZip.delete();
+        OutputStream outputStream = null;
+        FileInputStream inputStream = null;
+
+        try {
+            LIMEUtilities.zip(tempZip.getAbsolutePath(), backupFileList, dataDir , true);
+            //saveFileToDownloads(tempZip);
+            // Copy temp zip to the User selected URI
+            inputStream = new FileInputStream(tempZip);
+            outputStream = ctx.getContentResolver().openOutputStream(uri);
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            showNotificationMessage(ctx.getText(R.string.l3_initial_backup_error) + "");
+        } finally {
+            try {
+                if (outputStream != null) outputStream.close();
+                if (inputStream != null) inputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            // Reopen DB
+            if (datasource != null) {
+                datasource.openDBConnection(true);
+            }
+            if (fileSharedPrefsBackup.exists()) fileSharedPrefsBackup.delete();
+            if (tempZip.exists()) tempZip.delete();
+
+            showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end) + "");
+            if(tempZip.exists()) tempZip.delete();
+        }
 
 
-		mLIMEPref.holdDatabaseCoonection(false);
 
-		datasource.openDBConnection(true);
-	}
-*/
-	public static void restoreDatabase() throws RemoteException {
-		File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-		restoreDatabase(new File(downloadsDir, LIME.DATABASE_BACKUP_NAME).getAbsolutePath());
-	}
+        // backup finished.  unhold the database connection and false reopen the database.
+        datasource.unHoldDBConnection(); //Jeremy '15,5,23
+        //mLIMEPref.holdDatabaseConnection(false);
+        datasource.openDBConnection(true);
+
+        //cleanup the shared preference backup file.
+        if(fileSharedPrefsBackup.exists()) fileSharedPrefsBackup.delete();
+
+
+    }
 	public static void restoreDatabase(String srcFilePath) throws RemoteException {
 
 		File check = new File(srcFilePath);
+        String dataDir = ctx.getDataDir().getAbsolutePath();
 
 		if(check.exists()){
 
-			//showNotificationMessage(ctx.getText(R.string.l3_initial_restore_start) + "");
-			//mLIMEPref.holdDatabaseCoonection(true);
 			datasource.holdDBConnection(); //Jeremy '15,5,23
 			closeDatabse();
 
 			try {
-				LIMEUtilities.unzip(srcFilePath, LIME.getLimeDataRootFolder(), true);
+				LIMEUtilities.unzip(srcFilePath, dataDir, true);
 			} catch (Exception e) {
 				e.printStackTrace();
 				showNotificationMessage(ctx.getText(R.string.l3_initial_restore_error) + "");
@@ -319,7 +314,7 @@ public class  DBServer {
 			datasource.openDBConnection(true);
 
 			//restore shared preference
-			File checkpref = new File(LIME.getLimeDataRootFolder(), LIME.SHARED_PREFS_BACKUP_NAME);
+			File checkpref = new File(dataDir, LIME.SHARED_PREFS_BACKUP_NAME);
 			if(checkpref.exists()){
 				restoreDefaultSharedPreference(checkpref);
 			}
@@ -347,8 +342,6 @@ public class  DBServer {
 			SharedPreferences pref = ctx.getSharedPreferences(ctx.getPackageName() + "_preferences", Context.MODE_PRIVATE);
 			output.writeObject(pref.getAll());
 
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -364,7 +357,7 @@ public class  DBServer {
 
 	}
 
-
+    @SuppressWarnings("unchecked")
 	public static void restoreDefaultSharedPreference(File sharePrefs )
 	{
 		ObjectInputStream inputStream = null;
@@ -393,13 +386,9 @@ public class  DBServer {
 			}
 			prefEdit.commit();
 
-		} catch (FileNotFoundException e) {
+		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}finally {
+		} finally {
 			try {
 				if (inputStream != null) {
 					inputStream.close();
@@ -730,8 +719,8 @@ public class  DBServer {
 
 	/**
 	 * Jeremy '12,7,6 get keyboard object from table name
-	 * @param table
-	 * @return
+	 * @param table table
+	 * @return KeyboardObj
 	 */
 	public KeyboardObj getKeyboardObj(String table){
 		KeyboardObj kobj = null;

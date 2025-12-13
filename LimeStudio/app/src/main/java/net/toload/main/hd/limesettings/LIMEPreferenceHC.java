@@ -24,15 +24,16 @@
 
 package net.toload.main.hd.limesettings;
 
-import android.app.Activity;
 import android.app.backup.BackupManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.preference.PreferenceFragment;
 import android.util.Log;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.PreferenceFragmentCompat;
 
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.R;
@@ -40,8 +41,10 @@ import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 
+import java.util.Objects;
 
-public class LIMEPreferenceHC extends Activity {
+
+public class LIMEPreferenceHC extends AppCompatActivity {
 
 	private SearchServer SearchSrv = null;
 
@@ -59,55 +62,43 @@ public class LIMEPreferenceHC extends Activity {
 		this.SearchSrv = new SearchServer(this);
 
 		// Display the fragment as the main content.
-		getFragmentManager().beginTransaction().replace(android.R.id.content,
+		getSupportFragmentManager().beginTransaction().replace(android.R.id.content,
 				new PrefsFragment()).commit();
 
 	}
 
-	public static class PrefsFragment extends PreferenceFragment implements OnSharedPreferenceChangeListener{ 
+	public static class PrefsFragment extends PreferenceFragmentCompat implements OnSharedPreferenceChangeListener{
 		private final boolean DEBUG = false;
 		private final String TAG = "LIMEPreferenceHC";
 		private Context ctx = null;
 		private DBServer DBSrv = null;
 		private LIMEPreferenceManager mLIMEPref = null;
 		@Override
-		public void onCreate(Bundle savedInstanceState) {
-			super.onCreate(savedInstanceState);
-
+		public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 			// Load the preferences from an XML resource
 			addPreferencesFromResource(R.xml.preference);
 
 			if (ctx == null) {
-				ctx = getActivity().getApplicationContext();
+				ctx = Objects.requireNonNull(getActivity()).getApplicationContext();
 			}
 			mLIMEPref = new LIMEPreferenceManager(ctx);
 			DBSrv = new DBServer(ctx);
-			//-----------------------
-//			// Startup Search Service
-//			if (DBSrv == null) {
-//				try {
-//					ctx.bindService(new Intent(IDBService.class.getName()),
-//							serConn, Context.BIND_AUTO_CREATE);
-//				} catch (Exception e) {
-//					Log.i(TAG, "Failed to connect Search Service");
-//				}
-//			}
 		}
 
 		@Override
 		public void onResume() {
 			super.onResume();
 
-			// Set up a listener whenever a key changes            
-			getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+			// Set up a listener whenever a key changes
+			Objects.requireNonNull(getPreferenceScreen().getSharedPreferences()).registerOnSharedPreferenceChangeListener(this);
 		}
 
 		@Override
 		public void onPause() {
 			super.onPause();
 
-			// Unregister the listener whenever a key changes            
-			getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+			// Unregister the listener whenever a key changes
+			Objects.requireNonNull(getPreferenceScreen().getSharedPreferences()).unregisterOnSharedPreferenceChangeListener(this);
 
 		}
 
@@ -115,7 +106,7 @@ public class LIMEPreferenceHC extends Activity {
 
 		@Override
 		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-			if(DEBUG) 
+			if(DEBUG)
 				Log.i(TAG,"onSharedPreferenceChanged(), key:" + key);
 
 			if(key.equals("phonetic_keyboard_type")){
@@ -124,28 +115,35 @@ public class LIMEPreferenceHC extends Activity {
 				try {
 
 					KeyboardObj kobj = DBSrv.getKeyboardObj("phonetic");
-					
-					if(selectedPhoneticKeyboardType.equals("standard")){
-						kobj = 	DBSrv.getKeyboardObj("phonetic");
-					}else if(selectedPhoneticKeyboardType.equals("eten")){
-						kobj = 	DBSrv.getKeyboardObj("phoneticet41");
-					}else if(selectedPhoneticKeyboardType.equals("eten26")){		
-						if(mLIMEPref.getParameterBoolean("number_row_in_english", false)){ 
-							kobj = 	DBSrv.getKeyboardObj("limenum");
-						}else{
-							kobj = 	DBSrv.getKeyboardObj("lime");
-						}
-					}else if(selectedPhoneticKeyboardType.equals("eten26_symbol")){
-						kobj = 	DBSrv.getKeyboardObj("et26");
-					}else if(selectedPhoneticKeyboardType.equals("hsu")){ //Jeremy '12,7,6 Add HSU english keyboard support
-						if(mLIMEPref.getParameterBoolean("number_row_in_english", false)){ 
-							kobj = 	DBSrv.getKeyboardObj("limenum");
-						}else{
-							kobj = 	DBSrv.getKeyboardObj("lime");
-						}
-					}else if(selectedPhoneticKeyboardType.equals("hsu_symbol")){
-						kobj = 	DBSrv.getKeyboardObj("hsu");
-					}
+
+                    switch (selectedPhoneticKeyboardType) {
+                        case "standard":
+                            kobj = DBSrv.getKeyboardObj("phonetic");
+                            break;
+                        case "eten":
+                            kobj = DBSrv.getKeyboardObj("phoneticet41");
+                            break;
+                        case "eten26":
+                            if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
+                                kobj = DBSrv.getKeyboardObj("limenum");
+                            } else {
+                                kobj = DBSrv.getKeyboardObj("lime");
+                            }
+                            break;
+                        case "eten26_symbol":
+                            kobj = DBSrv.getKeyboardObj("et26");
+                            break;
+                        case "hsu":  //Jeremy '12,7,6 Add HSU english keyboard support
+                            if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
+                                kobj = DBSrv.getKeyboardObj("limenum");
+                            } else {
+                                kobj = DBSrv.getKeyboardObj("lime");
+                            }
+                            break;
+                        case "hsu_symbol":
+                            kobj = DBSrv.getKeyboardObj("hsu");
+                            break;
+                    }
 					DBSrv.setIMKeyboard("phonetic", kobj.getDescription(), kobj.getCode());
 					/*
 					DBSrv.setIMKeyboard("phonetic", kobj.getDescription(), kobj.getCode());

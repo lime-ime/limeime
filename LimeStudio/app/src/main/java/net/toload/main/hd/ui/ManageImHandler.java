@@ -25,6 +25,7 @@
 package net.toload.main.hd.ui;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 
 import net.toload.main.hd.data.Word;
@@ -38,6 +39,7 @@ public class ManageImHandler extends Handler {
     private ManageImFragment fragment = null;
 
     public ManageImHandler(ManageImFragment fragment) {
+        super(Looper.getMainLooper());
         this.fragment = fragment;
     }
 

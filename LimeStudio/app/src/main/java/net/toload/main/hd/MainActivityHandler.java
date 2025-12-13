@@ -25,29 +25,34 @@
 package net.toload.main.hd;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
+
+import java.lang.ref.WeakReference;
+import java.util.Objects;
 
 /**
  * Created by Art Hung on 2015/4/26.
  */
 public class MainActivityHandler extends Handler {
-
-    private MainActivity activity = null;
+    private final WeakReference<MainActivity> activityReference;
 
     public MainActivityHandler(MainActivity activity) {
-        this.activity = activity;
+        // Use Looper.getMainLooper() to ensure this runs on the UI thread
+        super(Looper.getMainLooper());
+        this.activityReference = new WeakReference<>(activity);
     }
 
     @Override
     public void handleMessage(Message msg) {
-
+        MainActivity activity = activityReference.get();
         String action = msg.getData().getString("action");
         String type = msg.getData().getString("type");
 
         if(action != null && action.equalsIgnoreCase("progress")){
             if(type != null){
                 if(type.equalsIgnoreCase("show")){
-                    activity.showProgress();;
+                    activity.showProgress();
                 }else if(type.equalsIgnoreCase("cancel")){
                     activity.cancelProgress();
                 }else if(type.equalsIgnoreCase("update")){
@@ -62,13 +67,9 @@ public class MainActivityHandler extends Handler {
             String message = msg.getData().getString("message");
             int length = msg.getData().getInt("length");
 
-            if(message != null){
-                activity.showToastMessage(message, length);
-            }else{
-                activity.showToastMessage("Error", length);
-            }
+            activity.showToastMessage(Objects.requireNonNullElse(message, "Error"), length);
 
-        }else if(action != null && action.equalsIgnoreCase("sharezip")){
+        }else if(action != null && action.equalsIgnoreCase("sharedb")){
             String filepath = msg.getData().getString("filepath");
             activity.shareTo(filepath, Lime.SHARE_TYPE_ZIP);
         }else if(action != null && action.equalsIgnoreCase("sharetxt")){
@@ -96,27 +97,19 @@ public class MainActivityHandler extends Handler {
         this.sendMessageDelayed(m, 1);
     }
 
-    public void updateProgress(int value) {
-        Message m = new Message();
-        m.getData().putString("action", "progress");
-        m.getData().putString("type", "update");
-        m.getData().putInt("value", value);
-        this.sendMessageDelayed(m, 1);
-    }
+//    public void updateProgress(int value) {
+//        Message m = new Message();
+//        m.getData().putString("action", "progress");
+//        m.getData().putString("type", "update");
+//        m.getData().putInt("value", value);
+//        this.sendMessageDelayed(m, 1);
+//    }
 
     public void updateProgress(String message) {
         Message m = new Message();
         m.getData().putString("action", "progress");
         m.getData().putString("type", "message");
         m.getData().putString("message", message);
-        this.sendMessageDelayed(m, 1);
-    }
-
-    public void showToastMessage(String message, int length){
-        Message m = new Message();
-                m.getData().putString("action", "toast");
-                m.getData().putString("message", message);
-                m.getData().putInt("length", length);
         this.sendMessageDelayed(m, 1);
     }
 
@@ -127,22 +120,11 @@ public class MainActivityHandler extends Handler {
         this.sendMessageDelayed(m, 1);
     }
 
-    public void shareZipTo(String filepath){
+    public void shareDBTo(String filepath){
         Message m = new Message();
-        m.getData().putString("action", "sharezip");
+        m.getData().putString("action", "sharedb");
         m.getData().putString("filepath", filepath);
         this.sendMessageDelayed(m, 1);
     }
 
-    public void initialDefaultPreference(){
-        Message m = new Message();
-        m.getData().putString("action", "initialpreference");
-        this.sendMessageDelayed(m, 1000);
-    }
-
-    public void showMessageBoard() {
-        Message m = new Message();
-        m.getData().putString("action", "showmessageboard");
-        this.sendMessageDelayed(m, 1);
-    }
 }

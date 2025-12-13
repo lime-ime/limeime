@@ -29,21 +29,16 @@ package net.toload.main.hd.limedb;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteException;
-import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
-import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,80 +49,33 @@ public abstract class LimeSQLiteOpenHelper {
 
 	private final static boolean DEBUG = false;
 	private final static String TAG = "LimeSQLiteOpenHelper";
-	
-	private LIMEPreferenceManager mLIMEPref;
 
     private final String mName;
    // private final CursorFactory mFactory;
     private final int mNewVersion;
 
-    private Context mContext;
+    private final Context mContext;
 
     private static SQLiteDatabase mDatabase = null;
     private boolean mIsInitializing = false;
-   // private final DatabaseErrorHandler mErrorHandler;
-
-    /**
-     * Create a helper object to create, open, and/or manage a database.
-     * This method always returns very quickly.  The database is not actually
-     * created or opened until one of {@link #getWritableDatabase} or
-     * {@link #getReadableDatabase} is called.
-     *
-     * @param context to use to open or create the database
-     * @param name of the database file, or null for an in-memory database
-     * @param factory to use for creating cursor objects, or null for the default
-     * @param version number of the database (starting at 1); if the database is older,
-     *     {@link #onUpgrade} will be used to upgrade the database; if the database is
-     */
+    //private LIMEPreferenceManager mLIMEPref;
 
 
-    public LimeSQLiteOpenHelper(Context context, String name, CursorFactory factory, int version) {
+
+
+
+    public LimeSQLiteOpenHelper(Context context, String name, int version) {
         
         if (version < 1) throw new IllegalArgumentException("Version must be >= 1, was " + version);
-        //if (errorHandler == null) {
-        //    throw new IllegalArgumentException("DatabaseErrorHandler param value can't be null.");
-        //}
 
         mContext = context;
         mName = name;
         //mFactory = factory;
         mNewVersion = version;
         //mErrorHandler = errorHandler;
-        
-        mLIMEPref = new LIMEPreferenceManager(context.getApplicationContext());
 
-    }
+        //LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(context.getApplicationContext());
 
-	private String getDBPath(String dbTarget){
-		File destpath;
-		if (dbTarget.equalsIgnoreCase("sdcard")) {
-			// This path is for legacy migration and may not be accessible on newer Android versions.
-			File externalFilesDir = mContext.getExternalFilesDir(null);
-			if (externalFilesDir != null) {
-				destpath = new File(externalFilesDir, "limehd/databases/" + mName);
-			} else {
-				destpath = mContext.getDatabasePath(mName); // Fallback
-			}
-		} else {
-			destpath = mContext.getDatabasePath(mName);
-		}
-		return destpath.getAbsolutePath();
-	}
-
-	private String getDBPath(){
-		String dbtarget = mLIMEPref.getParameterString("dbtarget");
-		if(DEBUG)
-			Log.i(TAG, "getDBPath(): " + getDBPath(dbtarget));			
-		return getDBPath(dbtarget);
-		
-	}
-	
-    /**
-     * Return the name of the SQLite database being opened, as given tp
-     * the constructor.
-     */
-    public String getDatabaseName() {
-        return mName;
     }
 
 
@@ -144,43 +92,24 @@ public abstract class LimeSQLiteOpenHelper {
             }
         }
 
-        // Correct dbtarget setting move database from sdcard to device
-        String checktarget = mLIMEPref.getParameterString("dbtarget");
-        boolean source_from_sdcard = false;
-        File sdtarget = null;
-        if(checktarget.equalsIgnoreCase("sdcard")){
-            mLIMEPref.setParameter("dbtarget", "device");
-            // Migration from legacy external storage. May not work on API 30+ without special permissions.
-            sdtarget = new File(Environment.getExternalStorageDirectory(), "limehd/databases/" + mName);
-            if(sdtarget.exists() && sdtarget.length() > (1024 * 1024)){
-                source_from_sdcard = true;
-            }
-        }
+        // Jeremy '12,5,1. No longer support db on sdcard for modern android.
+        
 
         // Initial Database
         // Copy DB file from Raw Dir to Database Dir
-        File destpath = mContext.getDatabasePath(mName);
-        File destdir = destpath.getParentFile();
+        File dbPath = mContext.getDatabasePath(mName);
+        File destdir = dbPath.getParentFile();
         if (destdir != null) {
             destdir.mkdirs();
         }
 
-        if (!destpath.exists() || destpath.length() < 10000) {
+        if (!dbPath.exists() || dbPath.length() < 10000) {
 
-            InputStream from = null;
-            if(!source_from_sdcard){
-                from = mContext.getResources().openRawResource( R.raw.lime);
-            } else {
-                try {
-                    showToastMessage(mContext, mContext.getResources().getString(R.string.sdcard_transfer_message), Toast.LENGTH_LONG);
-                    from = new FileInputStream(sdtarget);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
-            }
+            InputStream from =  mContext.getResources().openRawResource( R.raw.lime);
+            
 
             try {
-                FileOutputStream to = new FileOutputStream(destpath);
+                FileOutputStream to = new FileOutputStream(dbPath);
                 byte[] buffer = new byte[4096];
                 int bytes_read;
                 if (from != null) {
@@ -194,14 +123,18 @@ public abstract class LimeSQLiteOpenHelper {
                 to.close();
 
                 // The preloaded database has new column user_score in the table related
+
+                LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(mContext.getApplicationContext());
+
                 mLIMEPref.setParameter(Lime.DB_CHECK_RELATED_USERSCORE, true);
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        
-        if(LIMEUtilities.isFileExist(destpath.getAbsolutePath())==null) return null; //database file is not exist. return null Jeremy '12,5,1
+        //File dbPath = mContext.getDatabasePath(mName);
+
+        if(LIMEUtilities.isFileExist(dbPath.getAbsolutePath())==null) return null; //database file is not exist. return null Jeremy '12,5,1
 
         if (mIsInitializing) {
             throw new IllegalStateException("getWritableDatabase called recursively");
@@ -218,11 +151,11 @@ public abstract class LimeSQLiteOpenHelper {
         //if (mDatabase != null) mDatabase. .lock();
         try {
 
-        	db = SQLiteDatabase.openDatabase(destpath.getAbsolutePath(), null, SQLiteDatabase.OPEN_READWRITE
+        	db = SQLiteDatabase.openDatabase(dbPath.getAbsolutePath(), null, SQLiteDatabase.OPEN_READWRITE
         			| SQLiteDatabase.NO_LOCALIZED_COLLATORS);
         }catch(Exception e){
 
-            File ch = new File(destpath.getAbsolutePath());
+            File ch = new File(dbPath.getAbsolutePath());
             Log.i("LIME", ch.getAbsolutePath());
             Log.i("LIME", ch.length()+"");
 
@@ -251,83 +184,20 @@ public abstract class LimeSQLiteOpenHelper {
         } finally {
             mIsInitializing = false;
             if (success) {
-            	if(DEBUG) Log.i(TAG,"getWritableDatabse(), success in finally section");
+            	if(DEBUG)
+                    Log.i(TAG,"getWritableDatabse(), success in finally section");
                 mDatabase = db;
-                return db;
+                //return db;
             } else {
             	Log.i(TAG,"getWritableDatabse(), not success in finally section and db closed");
 
-                if (db != null) db.close();
+                if (db != null  && db.isOpen())
+                    db.close();
             }
         }
 
     }
 
-    /**
-     * Create and/or open a database.  This will be the same object returned by
-     * {@link #getWritableDatabase} unless some problem, such as a full disk,
-     * requires the database to be opened read-only.  In that case, a read-only
-     * database object will be returned.  If the problem is fixed, a future call
-     * to {@link #getWritableDatabase} may succeed, in which case the read-only
-     * database object will be closed and the read/write object will be returned
-     * in the future.
-     *
-     * <p class="caution">Like {@link #getWritableDatabase}, this method may
-     * take a long time to return, so you should not call it from the
-     * application main thread, including from
-     * {@link android.content.ContentProvider#onCreate ContentProvider.onCreate()}.
-     *
-     * @throws SQLiteException if the database cannot be opened
-     * @return a database object valid until {@link #getWritableDatabase}
-     *     or {@link #close} is called.
-     */
-    public synchronized SQLiteDatabase getReadableDatabase() {
-        if (mDatabase != null) {
-            if (!mDatabase.isOpen()) {
-                // darn! the user closed the database by calling mDatabase.close()
-                mDatabase = null;
-            } else {
-                return mDatabase;  // The database is already open for business
-            }
-        }
-
-        if(LIMEUtilities.isFileExist(getDBPath())==null) return null; //database file is not exist. return null Jeremy '12,5,1
-
-        
-        if (mIsInitializing) {
-            throw new IllegalStateException("getReadableDatabase called recursively");
-        }
-
-        try {
-            return getWritableDatabase();
-        } catch (SQLiteException e) {
-            if (mName == null) throw e;  // Can't open a temp database read-only!
-            Log.e(TAG, "Couldn't open " + mName + " for writing (will try read-only):", e);
-        }
-
-        SQLiteDatabase db = null;
-        try {
-        	db = SQLiteDatabase.openDatabase(getDBPath(), null, SQLiteDatabase.OPEN_READONLY
-					| SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-        }catch(Exception e){
-        	return null;  //return null if db opened failed.
-        }
-        try {
-            mIsInitializing = true;
-            if (db.getVersion() != mNewVersion) {
-                throw new SQLiteException("Can't upgrade read-only database from version " +
-                        db.getVersion() + " to " + mNewVersion + ": " + getDBPath());
-            }
-
-            onOpen(db);
-            Log.w(TAG, "Opened " + mName + " in read-only mode");
-            mDatabase = db;
-            return mDatabase;
-        } finally {
-            mIsInitializing = false;
-            if (db != null && db != mDatabase) db.close();
-        }
-    }
 
     /**
      * Close any open database object.
@@ -342,14 +212,6 @@ public abstract class LimeSQLiteOpenHelper {
             mDatabase = null;
         }
     }
-
-    /**
-     * Called when the database is created for the first time. This is where the
-     * creation of tables and the initial population of the tables should happen.
-     *
-     * @param db The database.
-     */
-    //public abstract void onCreate(SQLiteDatabase db);  //Jeremy '12,4,7 We do not need onCreate()
 
     /**
      * Called when the database needs to be upgraded. The implementation
@@ -368,21 +230,7 @@ public abstract class LimeSQLiteOpenHelper {
      */
     public abstract void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
 
-    /**
-     * Called when the database needs to be downgraded. This is stricly similar to
-     * onUpgrade() method, but is called whenever current version is newer than requested one.
-     * However, this method is not abstract, so it is not mandatory for a customer to
-     * implement it. If not overridden, default implementation will reject downgrade and
-     * throws SQLiteException
-     *
-     * @param db The database.
-     * @param oldVersion The old database version.
-     * @param newVersion The new database version.
-     */
-    //public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-    //    throw new SQLiteException("Can't downgrade database from version " +
-   //             oldVersion + " to " + newVersion);
-    //}
+
 
     /**
      * Called when the database has been opened.  The implementation

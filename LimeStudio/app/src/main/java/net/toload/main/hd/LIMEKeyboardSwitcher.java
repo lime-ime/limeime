@@ -71,20 +71,18 @@ public class LIMEKeyboardSwitcher {
 	Context mThemedContext;
 
     //private KeyboardId mCurrentId;
-    private Map<KeyboardId, LIMEKeyboard> mKeyboards;
+    private final Map<KeyboardId, LIMEKeyboard> mKeyboards;
     
     private int mMode = KEYBOARDMODE_NORMAL;
     //private int mChnMode = MODE_TEXT_DEFAULT;
     //private int mEngMode = MODE_TEXT;
     private int mImeOptions;
-    private int mTextMode = MODE_TEXT_QWERTY;
-    
-    private LIMEPreferenceManager mLIMEPref;
+
+    private final LIMEPreferenceManager mLIMEPref;
     
     private boolean mIsShifted;
     private boolean mIsSymbols;
     private boolean mIsChinese=true;
-    private boolean mIsAlphabet=false;
     private boolean mPreferSymbols;
     private int mCurrentSymbolsKeyboard = SYMBOLS_KEYBOARD_1;
 
@@ -124,7 +122,7 @@ public class LIMEKeyboardSwitcher {
     }
     
     public void setKeyboardList(List<KeyboardObj> list){
-    	if(list==null || ( list.size()==0)) return; //Jeremy '12,4,10 avoid fc when database is locked.
+    	if(list==null || (list.isEmpty())) return; //Jeremy '12,4,10 avoid fc when database is locked.
     	kbHm = new HashMap<>();
     	for(KeyboardObj o : list){
     		kbHm.put(o.getCode(), o);
@@ -139,7 +137,7 @@ public class LIMEKeyboardSwitcher {
     }
     
     public void setImList(List<ImObj> list){
-    	if(list==null || list.size()==0) return; //Jeremy '12,4,10 avoid fc when database is locked.
+    	if(list==null || list.isEmpty()) return; //Jeremy '12,4,10 avoid fc when database is locked.
     	imHm = new HashMap<>();
     	for(ImObj o : list){
     		imHm.put(o.getCode(), o.getKeyboard());
@@ -286,7 +284,7 @@ public class LIMEKeyboardSwitcher {
     
     public void setKeyboardMode(String code, int mode, int imeOptions, boolean isIm, boolean isSymbol, boolean isShift) {
     	if(DEBUG){
-    		Log.i(TAG,"setKeyboardMode () code:"+code + ", mode:"+mode + ", imOptions:"+imeOptions+ "" +
+    		Log.i(TAG, "setKeyboardMode () code:"+code + ", mode:"+mode + ", imOptions:"+imeOptions+
 					", isIM:"+isIm + ", isSymbol:"+isSymbol +", isShift:"+isShift);
     	}
     	imtype = code;
@@ -308,7 +306,7 @@ public class LIMEKeyboardSwitcher {
 
     	KeyboardObj kobj=null;
     	
-    	if(imcode == null || imcode.equals("")|| imcode.equals("custom")){
+    	if(imcode == null || imcode.isEmpty() || imcode.equals("custom")){
     		imcode = "lime";
         	if(kbHm!=null) kobj=kbHm.get(imcode);
     	}else if(imcode.equals("wb")){
@@ -346,16 +344,16 @@ public class LIMEKeyboardSwitcher {
             mIsChinese = false;
             if(isSymbol){
 				switch(mCurrentSymbolsKeyboard) {
-					case SYMBOLS_KEYBOARD_1:
-					default:
-						kid = new KeyboardId(getKeyboardXMLID("symbols1"));
-						break;
 					case SYMBOLS_KEYBOARD_2:
 						kid = new KeyboardId(getKeyboardXMLID("symbols2"));
 						break;
 					case SYMBOLS_KEYBOARD_3:
 						kid = new KeyboardId(getKeyboardXMLID("symbols3"));
 						break;
+                    case SYMBOLS_KEYBOARD_1:
+                    default:
+                        kid = new KeyboardId(getKeyboardXMLID("symbols1"));
+                        break;
 				}
 
             }else{
@@ -476,7 +474,7 @@ public class LIMEKeyboardSwitcher {
     }
     
     public int getTextMode() {
-        return mTextMode;
+        return MODE_TEXT_QWERTY;
     }
     
 
@@ -485,7 +483,7 @@ public class LIMEKeyboardSwitcher {
     }
 
     public boolean isAlphabetMode() {
-    	return mIsAlphabet;
+        return false;
     }
 
     public void toggleShift() {
@@ -532,16 +530,16 @@ public class LIMEKeyboardSwitcher {
     }
 	public void switchSymbols() {
 		switch (mCurrentSymbolsKeyboard){
-			case SYMBOLS_KEYBOARD_1:
-			default:
-				mCurrentSymbolsKeyboard = SYMBOLS_KEYBOARD_2;
-				break;
 			case SYMBOLS_KEYBOARD_2:
 				mCurrentSymbolsKeyboard = SYMBOLS_KEYBOARD_3;
 				break;
 			case SYMBOLS_KEYBOARD_3:
 				mCurrentSymbolsKeyboard = SYMBOLS_KEYBOARD_1;
 				break;
+            case SYMBOLS_KEYBOARD_1:
+            default:
+                mCurrentSymbolsKeyboard = SYMBOLS_KEYBOARD_2;
+                break;
 
 		}
 		if(mIsChinese)

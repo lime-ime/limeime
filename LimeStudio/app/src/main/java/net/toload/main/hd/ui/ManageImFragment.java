@@ -25,7 +25,6 @@
 package net.toload.main.hd.ui;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
@@ -39,6 +38,7 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -95,7 +95,7 @@ public class ManageImFragment extends Fragment {
 
     private LimeDB datasource;
 
-    private ProgressDialog progress;
+    private ProgressBar progressBar;
 
     /**
      * Returns a new instance of this fragment for the given section
@@ -129,9 +129,7 @@ public class ManageImFragment extends Fragment {
         List<Im> imkeyboardlist = new ArrayList<Im>();
         imkeyboardlist = datasource.getIm(null, Lime.IM_TYPE_KEYBOARD);
 
-        this.progress = new ProgressDialog(this.activity);
-        this.progress.setCancelable(false);
-        this.progress.setMessage(getResources().getString(R.string.manage_im_loading));
+        this.progressBar = rootView.findViewById(R.id.loading_spinner);
 
         this.gridManageIm = (GridView) rootView.findViewById(R.id.gridManageIm);
         this.gridManageIm.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -141,7 +139,7 @@ public class ManageImFragment extends Fragment {
                 //datasource.open();
                 Word w = datasource.getWord(table, id);
                 //datasource.close();
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                FragmentTransaction ft = getParentFragmentManager().beginTransaction();
 
                 // Create and show the dialog.
                 ManageImEditDialog dialog = ManageImEditDialog.newInstance(table);
@@ -157,7 +155,7 @@ public class ManageImFragment extends Fragment {
         btnManageImAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                FragmentTransaction ft = getParentFragmentManager().beginTransaction();
                 ManageImAddDialog dialog = ManageImAddDialog.newInstance(table);
                                     dialog.setHandler(handler);
                 dialog.show(ft, "adddialog");
@@ -171,7 +169,7 @@ public class ManageImFragment extends Fragment {
             this.btnManageImKeyboard.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    FragmentTransaction ft = getFragmentManager().beginTransaction();
+                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
                     ManageImKeyboardDialog dialog = ManageImKeyboardDialog.newInstance();
                     dialog.setHandler(handler, table);
                     dialog.show(ft, "keyboarddialog");
@@ -311,8 +309,9 @@ public class ManageImFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        Activity activity = (Activity) context;
         ((MainActivity) activity).onSectionAttached(
                 getArguments().getInt(ARG_SECTION_NUMBER));
 
@@ -326,22 +325,22 @@ public class ManageImFragment extends Fragment {
         if(this.manageimthread != null){
             this.handler.removeCallbacks(manageimthread);
         }
-        if(this.progress.isShowing()){
-            this.progress.cancel();
+        if(this.progressBar != null && this.progressBar.getVisibility() == View.VISIBLE){
+            this.progressBar.setVisibility(View.GONE);
         }
         this.wordlist = null;
         this.SearchSrv.initialCache();
     }
 
     public void showProgress(){
-        if(!this.progress.isShowing()){
-            this.progress.show();
+        if(this.progressBar != null && this.progressBar.getVisibility() != View.VISIBLE){
+            this.progressBar.setVisibility(View.VISIBLE);
         }
     }
 
     public void cancelProgress(){
-        if(this.progress.isShowing()){
-            this.progress.cancel();
+        if(this.progressBar != null && this.progressBar.getVisibility() == View.VISIBLE){
+            this.progressBar.setVisibility(View.GONE);
         }
     }
 
@@ -376,10 +375,9 @@ public class ManageImFragment extends Fragment {
             }
         }else{
             if(this.adapter == null){
-                this.adapter = new ManageImAdapter(this.activity, new ArrayList());
-            }else{
-                this.adapter.setList(new ArrayList());
+                this.adapter = new ManageImAdapter(this.activity, new ArrayList<>());
             }
+            this.adapter.setList(new ArrayList<>());
             this.adapter.notifyDataSetChanged();
             this.gridManageIm.setSelection(0);
             Toast.makeText(activity, R.string.no_search_result, Toast.LENGTH_SHORT).show();

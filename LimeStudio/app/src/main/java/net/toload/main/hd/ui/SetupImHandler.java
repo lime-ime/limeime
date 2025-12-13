@@ -25,6 +25,7 @@
 package net.toload.main.hd.ui;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 
 public class SetupImHandler extends Handler {
@@ -32,6 +33,7 @@ public class SetupImHandler extends Handler {
     private SetupImFragment fragment = null;
 
     public SetupImHandler(SetupImFragment fragment) {
+        super(Looper.getMainLooper());
         this.fragment = fragment;
     }
 
@@ -61,7 +63,7 @@ public class SetupImHandler extends Handler {
                     String message = msg.getData().getString("message");
                     fragment.updateProgress(message);
                 }else if(type.equalsIgnoreCase("indeterminate")){
-                    Boolean flag = msg.getData().getBoolean("flag");
+                    boolean flag = msg.getData().getBoolean("flag");
                     fragment.setProgressIndeterminate(flag);
                 }
             }
@@ -69,11 +71,7 @@ public class SetupImHandler extends Handler {
             String message = msg.getData().getString("message");
             int length = msg.getData().getInt("length");
 
-            if(message != null){
-                fragment.showToastMessage(message, length);
-            }else{
-                fragment.showToastMessage("Error", length);
-            }
+            fragment.showToastMessage((message != null) ? message : "Error", length);
 
         }else if(action != null && action.equalsIgnoreCase("initialbutton")){
             fragment.initialbutton();

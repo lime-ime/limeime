@@ -26,7 +26,6 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -34,7 +33,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.RemoteException;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -56,21 +54,15 @@ import net.toload.main.hd.DBServer;
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Im;
-import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 
 /**
@@ -303,8 +295,9 @@ public class SetupImFragment extends Fragment {
 
         PackageInfo pInfo;
         try {
-            pInfo = Objects.requireNonNull(getActivity()).getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
-            String versionstr = "v"+ pInfo.versionName + " - " + pInfo.versionCode;
+            pInfo = requireActivity().getPackageManager().getPackageInfo(requireActivity().getPackageName(), 0);
+            long versionCode = pInfo.getLongVersionCode();
+            String versionstr = "v"+ pInfo.versionName + " - " + versionCode;
             txtVersion = rootView.findViewById(R.id.txtVersion);
             txtVersion.setText(versionstr);
         } catch (PackageManager.NameNotFoundException e) {
@@ -331,12 +324,12 @@ public class SetupImFragment extends Fragment {
                 // Update IM pick up list items
                 mLIMEPref.syncIMActivatedState(imlist);
 
-                if(LIMEUtilities.isLIMEEnabled(Objects.requireNonNull(getActivity()).getApplicationContext())){  //LIME is activated in system
+                if(LIMEUtilities.isLIMEEnabled(requireActivity().getApplicationContext())){  //LIME is activated in system
                     btnSetupImSystemSettings.setVisibility(View.GONE);
                     rootView.findViewById(R.id.setup_im_system_settings_description).setVisibility(View.GONE);
                     rootView.findViewById(R.id.SetupImList).setVisibility(View.VISIBLE);
                     //LIME is activated, also the active Keyboard
-                    if(LIMEUtilities.isLIMEActive(getActivity().getApplicationContext())) {
+                    if(LIMEUtilities.isLIMEActive(requireActivity().getApplicationContext())) {
                         btnSetupImSystemIMPicker.setVisibility(View.GONE);
                         rootView.findViewById(R.id.Setup_Wizard).setVisibility(View.GONE);
 
@@ -363,10 +356,10 @@ public class SetupImFragment extends Fragment {
                 }
 
 
-                btnSetupImSystemSettings.setOnClickListener(v -> LIMEUtilities.showInputMethodSettingsPage(getActivity().getApplicationContext()));
+                btnSetupImSystemSettings.setOnClickListener(v -> LIMEUtilities.showInputMethodSettingsPage(requireActivity().getApplicationContext()));
 
                 btnSetupImSystemIMPicker.setOnClickListener(v -> {
-                    LIMEUtilities.showInputMethodPicker(getActivity().getApplicationContext());
+                    LIMEUtilities.showInputMethodPicker(requireActivity().getApplicationContext());
                     rootView.invalidate();
                 });
 
@@ -613,56 +606,11 @@ public class SetupImFragment extends Fragment {
         showProgress(true, this.getResources().getString(R.string.setup_im_backup_message));
 
         new Thread(() -> {
-            File tempZip = new File(activity.getCacheDir(), "backup_temp.zip");
-            if (tempZip.exists()) tempZip.delete();
-
-            OutputStream outputStream = null;
-            FileInputStream inputStream = null;
-            File fileSharedPrefsBackup = null;
             try {
-                // Backup logic duplicated from DBServer.backupDatabase to avoid hardcoded save location
-                fileSharedPrefsBackup = new File(LIME.getLimeDataRootFolder(), LIME.SHARED_PREFS_BACKUP_NAME);
-                if (fileSharedPrefsBackup.exists()) fileSharedPrefsBackup.delete();
-                DBServer.backupDefaultSharedPreference(fileSharedPrefsBackup);
-
-                List<String> backupFileList = new ArrayList<>();
-                backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator + LIME.DATABASE_NAME);
-                backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator + LIME.DATABASE_JOURNAL);
-                backupFileList.add(LIME.SHARED_PREFS_BACKUP_NAME);
-
-                // Close database before zipping to ensure file integrity
-                DBServer.closeDatabse();
-
-                LIMEUtilities.zip(tempZip.getAbsolutePath(), backupFileList, LIME.getLimeDataRootFolder(), true);
-
-                // Copy temp zip to the User selected URI
-                inputStream = new FileInputStream(tempZip);
-                outputStream = activity.getContentResolver().openOutputStream(uri);
-                byte[] buffer = new byte[4096];
-                int bytesRead;
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-
-                activity.runOnUiThread(() -> showToastMessage(activity.getString(R.string.l3_initial_backup_end), Toast.LENGTH_LONG));
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                activity.runOnUiThread(() -> showToastMessage(activity.getString(R.string.l3_initial_backup_error), Toast.LENGTH_LONG));
-
-            } finally {
-                try {
-                    if (outputStream != null) outputStream.close();
-                    if (inputStream != null) inputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                // Reopen DB
-                if (datasource != null) {
-                    datasource.openDBConnection(true);
-                }
-                if (fileSharedPrefsBackup != null && fileSharedPrefsBackup.exists()) fileSharedPrefsBackup.delete();
-                if (tempZip.exists()) tempZip.delete();
+                DBServer.backupDatabase(uri);
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }finally {
                 if (handler != null) {
                     handler.cancelProgress();
                 }
@@ -673,39 +621,32 @@ public class SetupImFragment extends Fragment {
     private void performRestore(Uri uri) {
         showProgress(true, this.getResources().getString(R.string.setup_im_restore_message));
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    // Create a temp file
-                    File tempFile = File.createTempFile("restore_backup", ".zip", activity.getCacheDir());
-                    tempFile.deleteOnExit();
+        new Thread(() -> {
+            try {
+                // Create a temp file
+                File tempFile = File.createTempFile("restore_backup", ".zip", activity.getCacheDir());
+                tempFile.deleteOnExit();
 
-                    // Copy from URI to temp file
-                    InputStream inputStream = activity.getContentResolver().openInputStream(uri);
-                    FileOutputStream outputStream = new FileOutputStream(tempFile);
-                    byte[] buffer = new byte[4096];
-                    int bytesRead;
-                    while ((bytesRead = inputStream.read(buffer)) != -1) {
-                        outputStream.write(buffer, 0, bytesRead);
-                    }
-                    outputStream.close();
-                    inputStream.close();
+                // Copy from URI to temp file
+                InputStream inputStream = activity.getContentResolver().openInputStream(uri);
+                FileOutputStream outputStream = new FileOutputStream(tempFile);
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+                outputStream.close();
+                inputStream.close();
 
-                    // Perform restore
-                    DBServer.restoreDatabase(tempFile.getAbsolutePath());
+                // Perform restore
+                DBServer.restoreDatabase(tempFile.getAbsolutePath());
 
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    activity.runOnUiThread(new Runnable() {
-                        public void run() {
-                            showToastMessage(activity.getString(R.string.l3_initial_restore_error), Toast.LENGTH_LONG);
-                        }
-                    });
-                } finally {
-                    if (handler != null) {
-                        handler.cancelProgress();
-                    }
+            } catch (Exception e) {
+                e.printStackTrace();
+                activity.runOnUiThread(() -> showToastMessage(activity.getString(R.string.l3_initial_restore_error), Toast.LENGTH_LONG));
+            } finally {
+                if (handler != null) {
+                    handler.cancelProgress();
                 }
             }
         }).start();
@@ -733,28 +674,28 @@ public class SetupImFragment extends Fragment {
         restoreLauncher.launch(Intent.createChooser(intent, "Select Backup"));
     }
 
-    public void initialThreadTask(String action, String type) {
-
-        // Default Setting
-        mLIMEPref.setParameter("dbtarget", Lime.DEVICE);
-
-        if (action.equals(Lime.BACKUP)) {
-            // The local backup is now handled by onActivityResult, not a direct runnable here.
-            if(!type.equals(Lime.LOCAL)) {
-                if (backupthread != null && backupthread.isAlive()) {
-                    handler.removeCallbacks(backupthread);
-                }
-                backupthread = new Thread(new SetupImBackupRunnable(this, handler, type));
-                backupthread.start();
-            }
-        }else if(action.equals(Lime.RESTORE)){
-            if(restorethread != null && restorethread.isAlive()){
-                handler.removeCallbacks(restorethread);
-            }
-            restorethread = new Thread(new SetupImRestoreRunnable(this, handler, type));
-            restorethread.start();
-        }
-    }
+//    public void initialThreadTask(String action, String type) {
+//
+//        // Default Setting
+//        mLIMEPref.setParameter("dbtarget", Lime.DEVICE);
+//
+//        if (action.equals(Lime.BACKUP)) {
+//            // The local backup is now handled by onActivityResult, not a direct runnable here.
+//            if(!type.equals(Lime.LOCAL)) {
+//                if (backupthread != null && backupthread.isAlive()) {
+//                    handler.removeCallbacks(backupthread);
+//                }
+//                backupthread = new Thread(new SetupImBackupRunnable(this, handler, type));
+//                backupthread.start();
+//            }
+//        }else if(action.equals(Lime.RESTORE)){
+//            if(restorethread != null && restorethread.isAlive()){
+//                handler.removeCallbacks(restorethread);
+//            }
+//            restorethread = new Thread(new SetupImRestoreRunnable(this, handler, type));
+//            restorethread.start();
+//        }
+//    }
 
     public void showToastMessage(String msg, int length) {
         Toast toast = Toast.makeText(activity, msg, length);

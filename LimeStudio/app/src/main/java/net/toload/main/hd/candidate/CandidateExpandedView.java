@@ -168,7 +168,7 @@ public class CandidateExpandedView extends CandidateView {
 
                     for (int j = 0; j < mRowSize[i]; j++) {
 
-                        if(mSuggestions == null || mSuggestions.size() == 0 || mSuggestions.get(index) == null){
+                        if(mSuggestions == null || mSuggestions.isEmpty() || mSuggestions.get(index) == null){
                             continue;
                         }
                         String suggestion = mSuggestions.get(index).getWord();
@@ -227,14 +227,13 @@ public class CandidateExpandedView extends CandidateView {
         if (DEBUG)
             Log.i(TAG, "prepareLayout()");
 
-        if (mSuggestions == null || mSuggestions.size() == 0) return;
+        if (mSuggestions == null || mSuggestions.isEmpty()) return;
 
         if (DEBUG)
             Log.i(TAG, "prepareLayout():mSuggestions.size()" + mSuggestions.size());
 
         updateFontSize();
 
-        final int height = mHeight;
         final Paint paint = mCandidatePaint;
         int x = 0;
         int row = 0;
@@ -284,7 +283,7 @@ public class CandidateExpandedView extends CandidateView {
         }
         //mTotalWidth = x;
         mRows = row + 1;
-        mTotalHeight = (height + mVerticalPadding) * (mRows);
+        mTotalHeight = (mHeight + mVerticalPadding) * (mRows);
         if (DEBUG)
             Log.i(TAG, "prepareLayout(): mRows=" + mRows + ", mTotalHeight=" + mTotalHeight);
     }
@@ -320,7 +319,7 @@ public class CandidateExpandedView extends CandidateView {
         if (DEBUG)
             Log.i(TAG, "onTouchEvent(): x =" + me.getX() + ", y=" + me.getY()
                     + ", ScroolY=" + mParentScrollView.getScrollY());
-        int action = me.getAction();
+        int action = me.getActionMasked();
         int x = (int) me.getX();
         int y = (int) me.getY();
         mTouchX = x;

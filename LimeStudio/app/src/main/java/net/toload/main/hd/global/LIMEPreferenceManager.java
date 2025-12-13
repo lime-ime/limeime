@@ -27,8 +27,8 @@ package net.toload.main.hd.global;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Build;
-import android.preference.PreferenceManager;
+
+import androidx.preference.PreferenceManager;
 
 import net.toload.main.hd.Lime;
 import net.toload.main.hd.data.Im;
@@ -38,7 +38,7 @@ import java.util.List;
 
 public class LIMEPreferenceManager {
 	
-	private Context ctx; 
+	private final Context ctx;
 	
 	public LIMEPreferenceManager(Context context){		
 		this.ctx = context;
@@ -50,10 +50,10 @@ public class LIMEPreferenceManager {
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		String records = sp.getString(table + "total_record", "");
-		if(records.equals("")){
-			SharedPreferences ssp = ctx.getSharedPreferences(table + "total_record", 0);
+		if(records.isEmpty()){
+			SharedPreferences ssp = ctx.getSharedPreferences(table + "total_record", Context.MODE_PRIVATE);
 			records = ssp.getString(table + "total_record", "");
-			if(!records.equals("")) setTableTotalRecords(table, records);
+			if(!records.isEmpty()) setTableTotalRecords(table, records);
 		}
 		return records;
 	}
@@ -61,7 +61,7 @@ public class LIMEPreferenceManager {
 		table = preProcessTableName(table);
 		//SharedPreferences sp = ctx.getSharedPreferences(table + "total_record", 0);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString(table + "total_record", records).commit();	
+		sp.edit().putString(table + "total_record", records).apply();	
 	}
 	
 	
@@ -72,10 +72,10 @@ public class LIMEPreferenceManager {
 		SharedPreferences sdp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		String version = sdp.getString(table + "mapping_version", "");
 		// retain mapping_version saved in shared Preference and saved to default reference
-		if(version.equals("")){
-			SharedPreferences ssp = ctx.getSharedPreferences(table + "mapping_version", 0);
+		if(version.isEmpty()){
+			SharedPreferences ssp = ctx.getSharedPreferences(table + "mapping_version", Context.MODE_PRIVATE);
 			version = ssp.getString(table + "mapping_version", "");
-			if(!version.equals("")) setTableVersion(table, version);
+			if(!version.isEmpty()) setTableVersion(table, version);
 		}
 		return version;
 	}
@@ -83,7 +83,7 @@ public class LIMEPreferenceManager {
 		table = preProcessTableName(table);
 		//SharedPreferences sp = ctx.getSharedPreferences(table + "mapping_version", 0);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString(table + "mapping_version", version).commit();	
+		sp.edit().putString(table + "mapping_version", version).apply();	
 	}
 	
 	public String getTableMappingFilename(String table){
@@ -97,7 +97,7 @@ public class LIMEPreferenceManager {
 		table = preProcessTableName(table);
 		//SharedPreferences sp = ctx.getSharedPreferences(table + "mapping_file", 0);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString(table + "mapping_file", filename).commit();	
+		sp.edit().putString(table + "mapping_file", filename).apply();	
 	}
 	
 	public String getTableMappingTempFilename(String table){
@@ -111,7 +111,7 @@ public class LIMEPreferenceManager {
 		table = preProcessTableName(table);
 		//SharedPreferences sp = ctx.getSharedPreferences(table + "mapping_file_temp", 0);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString(table + "mapping_file_temp", filename).commit();	
+		sp.edit().putString(table + "mapping_file_temp", filename).apply();	
 	}
 	
 	
@@ -121,9 +121,9 @@ public class LIMEPreferenceManager {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		String records = sp.getString("total_userdict_record", "0");
 		if(records.equals("0") ){
-			SharedPreferences ssp = ctx.getSharedPreferences("total_userdict_record", 0);
+			SharedPreferences ssp = ctx.getSharedPreferences("total_userdict_record", Context.MODE_PRIVATE);
 			records = ssp.getString("total_userdict_record", "0");
-			if(records.equals("0")) setTotalUserdictRecords(String.valueOf(records));
+			if(records.equals("0")) setTotalUserdictRecords(records);
 		}
 		return records;
 			
@@ -131,7 +131,7 @@ public class LIMEPreferenceManager {
 	public void setTotalUserdictRecords(String records){
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString("total_userdict_record", records).commit();	
+		sp.edit().putString("total_userdict_record", records).apply();	
 	}
 	@Deprecated
 	public boolean getDatabaseOnHold(){
@@ -144,7 +144,7 @@ public class LIMEPreferenceManager {
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		String loadingStatus = loading?"yes":"no";	
-		sp.edit().putString("mapping_loadg",loadingStatus).commit();
+		sp.edit().putString("mapping_loadg",loadingStatus).apply();
 		
 	}
 	
@@ -158,7 +158,7 @@ public class LIMEPreferenceManager {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		String loadingStatus = englishOnly?"yes":"no";
 		
-		sp.edit().putString("language_mode",loadingStatus).commit();
+		sp.edit().putString("language_mode",loadingStatus).apply();
 		
 	}
 	
@@ -169,7 +169,7 @@ public class LIMEPreferenceManager {
 	}
 	public void setMappingFileImportLines(int lines){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString( "mapping_import_line", String.valueOf(lines)).commit();	
+		sp.edit().putString( "mapping_import_line", String.valueOf(lines)).apply();	
 	}
 	
 	public String getRerverseLookupTable(String table){
@@ -191,8 +191,8 @@ public class LIMEPreferenceManager {
 		// force user to checked the fixed_candidate_view_display setting
 		boolean forceactive = sp.getBoolean("fixed_candidate_view_display_force", true);
 		if(forceactive){
-			sp.edit().putBoolean("fixed_candidate_view_display_force", false).commit();
-			sp.edit().putBoolean("fixed_candidate_view_display", true).commit();
+			sp.edit().putBoolean("fixed_candidate_view_display_force", false).apply();
+			sp.edit().putBoolean("fixed_candidate_view_display", true).apply();
 		}
 
 		return sp.getBoolean("fixed_candidate_view_display", true);  //Jeremy '15,6,4 set default to  true.*/
@@ -283,7 +283,7 @@ public class LIMEPreferenceManager {
 	public boolean getEmojiMode(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		//Jeremy '16,7,30 Emoji support is limited before API 16
-		return sp.getBoolean("enable_emoji", (Build.VERSION.SDK_INT >= 16)?true:false);
+		return sp.getBoolean("enable_emoji", true);
 	}
 
 	public Integer getEmojiDisplayPosition(){
@@ -313,7 +313,7 @@ public class LIMEPreferenceManager {
 	}
 	public void syncIMActivatedState(List<Im> imlist){
 		String state = "";
-		HashMap<String, String> imhm = new HashMap<String, String>();
+		HashMap<String, String> imhm = new HashMap<>();
 		for(Im i :imlist){
 			imhm.put(i.getCode(), i.getCode());
 		}
@@ -323,51 +323,51 @@ public class LIMEPreferenceManager {
 		}
 
 		if(imhm.get(Lime.IM_CJ) != null){
-			if(!state.equals("")){state += ";";}
+			if(!state.isEmpty()){state += ";";}
 			state += "1";
 		}
 		if(imhm.get(Lime.IM_SCJ) != null){
-			if(!state.equals("")){state += ";";}
+			if(!state.isEmpty()){state += ";";}
 			state += "2";
 		}
 		if(imhm.get(Lime.IM_CJ5) != null){
-			if(!state.equals("")){state += ";";}
+			if(!state.isEmpty()){state += ";";}
 			state += "3";
 		}
 		if(imhm.get(Lime.IM_ECJ) != null){
-			if(!state.equals("")){state += ";";}
+			if(!state.isEmpty()){state += ";";}
 			state += "4";
 		}
 		if(imhm.get(Lime.IM_DAYI) != null){
-			if(!state.equals("")){state += ";";}
+			if(!state.isEmpty()){state += ";";}
 			state += "5";
 		}
 		if(imhm.get(Lime.IM_PHONETIC) != null){
-			if(!state.equals("")){state += ";";}
+			if(!state.isEmpty()){state += ";";}
 			state += "6";
 		}
 		if(imhm.get(Lime.IM_EZ) != null){
-			if(!state.equals("")){state += ";";}
+			if(!state.isEmpty()){state += ";";}
 			state += "7";
 		}
 		if(imhm.get(Lime.IM_ARRAY) != null){
-			if(!state.equals("")){state += ";";}
+			if(!state.isEmpty()){state += ";";}
 			state += "8";
 		}
 		if(imhm.get(Lime.IM_ARRAY10) != null){
-			if(!state.equals("")){state += ";";}
+			if(!state.isEmpty()){state += ";";}
 			state += "9";
 		}
 		if(imhm.get(Lime.IM_WB) != null){
-			if(!state.equals("")){state += ";";}
+			if(!state.isEmpty()){state += ";";}
 			state += "10";
 		}
 		if(imhm.get(Lime.IM_HS) != null){
-			if(!state.equals("")){state += ";";}
+			if(!state.isEmpty()){state += ";";}
 			state += "11";
 		}
 		if(imhm.get(Lime.IM_PINYIN) != null){
-			if(!state.equals("")){state += ";";}
+			if(!state.isEmpty()){state += ";";}
 			state += "12";
 		}
 
@@ -380,7 +380,7 @@ public class LIMEPreferenceManager {
 	}
 	public void setIMActivatedState(String state){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString( "keyboard_state", String.valueOf(state)).commit();	
+		sp.edit().putString( "keyboard_state", String.valueOf(state)).apply();	
 	}
 	
 	public String getActiveIM(){
@@ -391,7 +391,7 @@ public class LIMEPreferenceManager {
 	
 	public void setActiveIM(String activeIM){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString( "keyboard_list", String.valueOf(activeIM)).commit();	
+		sp.edit().putString( "keyboard_list", String.valueOf(activeIM)).apply();	
 	}
 	
 	public boolean getThreerowRemapping(){
@@ -451,7 +451,7 @@ public class LIMEPreferenceManager {
 	public void setHanCovertOption(int value){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString( "han_convert_option", String.valueOf(value)).commit();	
+		sp.edit().putString( "han_convert_option", String.valueOf(value)).apply();	
 		
 	}
 	
@@ -540,7 +540,7 @@ public class LIMEPreferenceManager {
 	
 	public void setShowArrowKeys(int mode){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString("show_arrow_key", Integer.toString(mode)).commit();	
+		sp.edit().putString("show_arrow_key", Integer.toString(mode)).apply();	
 		
 	}
 	
@@ -556,7 +556,7 @@ public class LIMEPreferenceManager {
 	
 	public void setSplitKeyboard(int mode){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString("split_keyboard_mode", Integer.toString(mode)).commit();	
+		sp.edit().putString("split_keyboard_mode", Integer.toString(mode)).apply();	
 		
 	}
 	
@@ -569,7 +569,7 @@ public class LIMEPreferenceManager {
 	
 	public void setResetCacheFlag(boolean value){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putBoolean("searchsrv_reset_cache", value).commit();	
+		sp.edit().putBoolean("searchsrv_reset_cache", value).apply();	
 	}
 	
 	
@@ -579,7 +579,7 @@ public class LIMEPreferenceManager {
 	 */
 	public void setParameter(String label, int value){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putInt(label, value).commit();	
+		sp.edit().putInt(label, value).apply();	
 	}
 	public int getParameterInt(String label){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -606,7 +606,7 @@ public class LIMEPreferenceManager {
 	
 	public void setParameter(String label, long value){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putLong(label, value).commit();	
+		sp.edit().putLong(label, value).apply();	
 	}
 	
 	/*
@@ -614,7 +614,7 @@ public class LIMEPreferenceManager {
 	 */
 	public void setParameter(String label, String value){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString(label, value).commit();	
+		sp.edit().putString(label, value).apply();	
 	}
 	public String getParameterString(String label){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -632,7 +632,7 @@ public class LIMEPreferenceManager {
 	 */
 	public void setParameter(String label, boolean value){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putBoolean(label, value).commit();	
+		sp.edit().putBoolean(label, value).apply();	
 	}
 	public boolean getParameterBoolean(String label){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -648,7 +648,7 @@ public class LIMEPreferenceManager {
 	}
 	
 	private String preProcessTableName(String table){
-		if(table.endsWith("_")|| table.equals("")){ 
+		if(table.endsWith("_")|| table.isEmpty()){
 			return table; // processed already.
 		}else if(table.equals("phonetic")) {
 			return "bpmf_";

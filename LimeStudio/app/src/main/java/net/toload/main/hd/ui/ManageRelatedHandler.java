@@ -25,6 +25,7 @@
 package net.toload.main.hd.ui;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 
 import net.toload.main.hd.data.Related;
@@ -37,6 +38,7 @@ public class ManageRelatedHandler extends Handler {
     private ManageRelatedFragment mFragment = null;
 
     public ManageRelatedHandler(ManageRelatedFragment fragment) {
+        super(Looper.getMainLooper());
         mFragment = fragment;
     }
 

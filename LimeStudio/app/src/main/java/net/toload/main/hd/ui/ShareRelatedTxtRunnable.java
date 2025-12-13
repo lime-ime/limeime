@@ -87,14 +87,18 @@ public class ShareRelatedTxtRunnable implements Runnable{
             cursor.moveToNext();
         }
 
-        String targetfile = Lime.DATABASE_FOLDER_EXTERNAL + Lime.EXPORT_FILENAME_RELATED;
+        File cacheDir = activity.getExternalCacheDir();
+        if (cacheDir == null) {
+            cacheDir = activity.getCacheDir();
+        }
+        File target = new File(cacheDir, Lime.EXPORT_FILENAME_RELATED);
+        if(target.exists()){
+            target.delete();
+        }
 
         handler.updateProgress(activity.getResources().getString(R.string.share_step_write));
 
         try {
-
-            File target = new File(targetfile);
-                 target.deleteOnExit();
 
             Writer writer = new OutputStreamWriter( new FileOutputStream(target), "UTF-8");
             BufferedWriter fout = new BufferedWriter(writer);
@@ -113,7 +117,7 @@ public class ShareRelatedTxtRunnable implements Runnable{
         }
 
         handler.cancelProgress();
-        handler.shareTxtTo(targetfile);
+        handler.shareTxtTo(target.getAbsolutePath());
     }
 
 }

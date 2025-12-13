@@ -91,7 +91,7 @@ public class LIME {
 	public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://limeime.googlecode.com/svn/branches/database/phoneticonly1207.zip";
 	//public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://limeime.googlecode.com/svn/branches/database/phonetichs1207.zip";
 	
-	public static final String LIME_SDCARD_FOLDER = Environment.getExternalStorageDirectory() + "/limehd/";
+	//public static final String LIME_SDCARD_FOLDER = Environment.getExternalStorageDirectory() + "/limehd/";
 	public static String getLimeDataRootFolder(){ return Environment.getDataDirectory() + "/data/"+LIME.PACKAGE_NAME; }
 	public static final String DOWNLOAD_START = "download_start";
 	public static final String DATABASE_DOWNLOAD_STATUS = "database_download_status";
@@ -117,11 +117,12 @@ public class LIME {
 	public static final String DATABASE_SOURCE_PHONETIC_LIME = "phonetic_CJK.lime";
 	public static final String DATABASE_SOURCE_FILENAME = "lime.zip";
 	public static final String DATABASE_SOURCE_FILENAME_EMPTY = "empty.zip";
-	public static final String DATABASE_RELATIVE_FOLDER = "/databases";
-	public static String getLIMEDatabaseFolder(){ return  Environment.getDataDirectory() + "/data/"+LIME.PACKAGE_NAME + LIME.DATABASE_RELATIVE_FOLDER;};
+	//public static final String DATABASE_RELATIVE_FOLDER = "/databases";
+
+    //public static String getLIMEDatabaseFolder(){ return  Environment.getDataDirectory() + "/data/"+LIME.PACKAGE_NAME + LIME.DATABASE_RELATIVE_FOLDER;};
 	public static final String DATABASE_NAME = "lime.db";
 	public static final String DATABASE_JOURNAL = "lime.db-journal";
-	public static final String DATABASE_DECOMPRESS_FOLDER_SDCARD = Environment.getExternalStorageDirectory() + "/limehd";
+	//public static final String DATABASE_DECOMPRESS_FOLDER_SDCARD = Environment.getExternalStorageDirectory() + "/limehd";
 	public static final String DATABASE_BACKUP_NAME = "backup.zip";
 	public static final String DATABASE_JOURNAL_BACKUP_NAME = "backupJournal.zip";
 	public static final String SHARED_PREFS_BACKUP_NAME=  "shared_prefs.bak";

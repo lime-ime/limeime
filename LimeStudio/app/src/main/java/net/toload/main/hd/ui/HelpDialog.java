@@ -25,6 +25,7 @@
 package net.toload.main.hd.ui;
 
 import android.app.Activity;
+import android.content.Context;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -56,8 +57,8 @@ public class HelpDialog extends DialogFragment {
 	}
 
 	@Override
-	public void onAttach(Activity act) {
-		super.onAttach(act);
+	public void onAttach(Context context) {
+		super.onAttach(context);
 	}
 
 	@Override

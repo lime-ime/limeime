@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class SearchServer {
 
-    private static boolean DEBUG = false;
+    private static final boolean DEBUG = false;
     private static final String TAG = "LIME.SearchServer";
     private static LimeDB dbadapter = null;
 
@@ -68,7 +68,6 @@ public class SearchServer {
     private static Stack<Pair<Mapping, String>> bestSuggestionStack;
     private static String lastCode; // preserved the last code queried from LIMEService
 
-    private static String confirmedBestSuggestion = null;
     private static String lastConfirmedBestSuggestion = null;
 
     //Jeremy '15,6,21
@@ -234,7 +233,7 @@ public class SearchServer {
         }
         suggestionLoL.clear();
         if (bestSuggestionStack != null) bestSuggestionStack.clear();
-        confirmedBestSuggestion = null;
+        String confirmedBestSuggestion = null;
         lastConfirmedBestSuggestion = null;
         abandonPhraseSuggestion =abandonSuggestion;
     }

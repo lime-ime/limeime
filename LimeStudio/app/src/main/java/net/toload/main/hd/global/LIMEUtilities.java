@@ -24,7 +24,6 @@
 
 package net.toload.main.hd.global;
 
-import android.annotation.TargetApi;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.ComponentName;
@@ -125,7 +124,7 @@ public class LIMEUtilities {
 		zip(zipFilePath, sourceFiles, "", OverWrite);
 	}
 	/*
-	*   Zip multile files into single zip.
+	*   Zip multiple files into single zip.
 	*   sourceFiles is specify relative to the baseFolderPath.
 	*   sourceFiles should be assigned with absolute path if baseFolderPath is null of empty
 	*
@@ -135,8 +134,8 @@ public class LIMEUtilities {
 		if( zipFile.exists() && !OverWrite) return;
 		else if(zipFile.exists() && OverWrite) zipFile.delete();
 
-		ZipOutputStream zos = null;
-		FileOutputStream outStream = null;
+		ZipOutputStream zos;
+		FileOutputStream outStream;
 		outStream = new FileOutputStream(zipFile);
 		zos = new ZipOutputStream(outStream);
 
@@ -173,32 +172,33 @@ public class LIMEUtilities {
 		if(baseFolderPath == null) baseFolderPath = "";
 
 		if (item.isDirectory()) {
-			for (String subItem : item.list()) {
+			for (String subItem : Objects.requireNonNull(item.list())) {
 				addFileToZip(sourceFolderPath + File.separator + item.getName(), sourceFilePath + File.separator  + subItem, baseFolderPath, zos);
 			}
 		} else {
 			byte[] buf = new byte[102400]; //100k buffer
 			int len;
-			FileInputStream inStream = new FileInputStream(sourceFilePath);
+            try (FileInputStream inStream = new FileInputStream(sourceFilePath)) {
 
-			String entryPath;
-			if(baseFolderPath.isEmpty()) {
-				entryPath = sourceFilePath;
-			} else {
-				entryPath = sourceFilePath.substring(baseFolderPath.length());
-			}
-			
-			if (entryPath.startsWith(File.separator)) {
-				entryPath = entryPath.substring(1);
-			}
-			
-			zos.putNextEntry(new ZipEntry(entryPath));
+                String entryPath;
+                if (baseFolderPath.isEmpty()) {
+                    entryPath = sourceFilePath;
+                } else {
+                    entryPath = sourceFilePath.substring(baseFolderPath.length());
+                }
 
-			while ((len = inStream.read(buf)) > 0) {
-				zos.write(buf, 0, len);
-			}
+                if (entryPath.startsWith(File.separator)) {
+                    entryPath = entryPath.substring(1);
+                }
 
-		}
+                zos.putNextEntry(new ZipEntry(entryPath));
+
+                while ((len = inStream.read(buf)) > 0) {
+                    zos.write(buf, 0, len);
+                }
+            }
+
+        }
 	}
 
 	public static boolean isSymLink(File filePath) throws IOException {
@@ -228,12 +228,13 @@ public class LIMEUtilities {
 			byte[] buffer = new byte[102400];
 			while ((ze = zis.getNextEntry()) != null) {
 				String itemName = ze.getName();
-				File targetFile = null;
+				File targetFile;
                 //itemName.startsWith("/sdcard/") ||
-				if(itemName.startsWith(String.valueOf(Environment.getExternalStorageDirectory())+File.separator)){
-					targetFile = new File(ze.getName());  //target is zipped with absolute path on /sdcard
-				}
-				else if(itemName.startsWith("/data/") || itemName.startsWith(String.valueOf(Environment.getDataDirectory())+File.separator)){
+//				if(itemName.startsWith(Environment.getExternalStorageDirectory() +File.separator)){
+//					targetFile = new File(ze.getName());  //target is zipped with absolute path on /sdcard
+//				}
+//				else
+                    if(itemName.startsWith("/data/") || itemName.startsWith(Environment.getDataDirectory() +File.separator)){
 					//target is zipped with absolute path on /data, we need to confirm the targetfolder is within our package.
 					String packageRoot = LIME.getLimeDataRootFolder();
 					if(!itemName.startsWith(packageRoot))  //skip if the target path is not under our package root
@@ -245,21 +246,18 @@ public class LIMEUtilities {
 				}
 
 				File dir = ze.isDirectory() ? targetFile : targetFile.getParentFile();
-				if (!dir.isDirectory() && !dir.mkdirs())
+				if (dir!=null && !dir.isDirectory() && !dir.mkdirs())
 					throw new FileNotFoundException("Failed to ensure target directory: " +	dir.getAbsolutePath());
 				if (ze.isDirectory())
 					continue;
 				if(targetFile.exists() && OverWrite)
 					targetFile.delete();
-				FileOutputStream outStream = new FileOutputStream(targetFile);
-				try {
-					while ((count = zis.read(buffer)) != -1)
-						outStream.write(buffer, 0, count);
-				} catch (IOException e){
-					e.printStackTrace();
-				} finally {
-					outStream.close();
-				}
+                try (FileOutputStream outStream = new FileOutputStream(targetFile)) {
+                    while ((count = zis.read(buffer)) != -1)
+                        outStream.write(buffer, 0, count);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
 				returnFilePaths.add(targetFile.getAbsolutePath());
 			}
@@ -297,7 +295,7 @@ public class LIMEUtilities {
 	}
 	public static void copyRAWFile(InputStream	inStream, FileOutputStream outStream){
 	    	try{
-	    		int bytesum=0, byteread=0;
+	    		int bytesum=0, byteread;
 
 	            byte[] buffer  = new byte[102400]; //100k buffer
 	            while((byteread = inStream.read(buffer))!=-1){   
@@ -317,7 +315,7 @@ public class LIMEUtilities {
 	/** Add by Jeremy '12,4,23 Show notification with notification builder in compatibility package replacing the deprecated alert dialog creation 
 
 	 */
-	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+
 	public static void showNotification(Context context, Boolean autoCancel,  CharSequence title, CharSequence message, Intent intent){
 
 		NotificationManager mNotificationManager =
@@ -340,30 +338,21 @@ public class LIMEUtilities {
 						.setTicker(message)
 						.setContentText(message);
 
-		boolean lollipop = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
-		if(lollipop){
-			mBuilder.setSmallIcon(R.drawable.logobw);
-		}else{
-			mBuilder.setSmallIcon(R.drawable.logo);
-		}
+
+        mBuilder.setSmallIcon(R.drawable.logobw);
+
 
 		mNotificationManager.notify(501, mBuilder.build());
 	}
 
 	private static int getNotificationIcon() {
-		boolean whiteIcon = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
-		return whiteIcon ? R.drawable.logobw : R.drawable.logo;
+		//boolean whiteIcon = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
+		return R.drawable.logobw ;
 	}
 
 	private static Bitmap getNotificationIconBitmap(Context context) {
-		boolean whiteIcon = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
-		Bitmap bm = null;
-		if(whiteIcon){
-			bm = BitmapFactory.decodeResource(context.getResources(), R.drawable.logo);
-		}else{
-			bm = BitmapFactory.decodeResource(context.getResources(), R.drawable.logo);
-		}
-		return bm;
+
+		return BitmapFactory.decodeResource(context.getResources(), R.drawable.logo);
 	}
 
 	
@@ -437,7 +426,11 @@ public class LIMEUtilities {
 	public static void showInputMethodPicker(Context context){
 		((InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE)).showInputMethodPicker();
 	}
-	
-	
+
+    File getDbFolder(Context ctx)
+    {
+        return ctx.getDatabasePath(LIME.DATABASE_NAME).getParentFile();
+    }
+
 
 }

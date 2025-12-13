@@ -77,14 +77,19 @@ public class ShareDbRunnable implements Runnable{
 
         handler.showProgress();
 
-        File targetfile = new File(Lime.DATABASE_FOLDER_EXTERNAL + imtype + Lime.DATABASE_EXT);
-        if(targetfile.exists()){
-            targetfile.deleteOnExit();
+        File cacheDir = activity.getExternalCacheDir();
+        if (cacheDir == null) {
+            cacheDir = activity.getCacheDir();
         }
 
-        File targetfilezip = new File(Lime.DATABASE_FOLDER_EXTERNAL + imtype + ".limedb");
+        File targetfile = new File(cacheDir, imtype + Lime.DATABASE_EXT);
+        if(targetfile.exists()){
+            targetfile.delete();
+        }
+
+        File targetfilezip = new File(cacheDir, imtype + ".limedb");
         if(targetfilezip.exists()){
-            targetfilezip.deleteOnExit();
+            targetfilezip.delete();
         }
 
         // Prepare database file
@@ -117,13 +122,13 @@ public class ShareDbRunnable implements Runnable{
             List<String> backupFileList = new ArrayList<>();
             backupFileList.add(targetfile.getAbsolutePath());
             LIMEUtilities.zip(targetfilezip.getAbsolutePath(), targetfile.getAbsolutePath(), true);
-            targetfile.deleteOnExit();
+            targetfile.delete();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         handler.cancelProgress();
-        handler.shareZipTo(targetfilezip.getAbsolutePath());
+        handler.shareDBTo(targetfilezip.getAbsolutePath());
     }
 
 }

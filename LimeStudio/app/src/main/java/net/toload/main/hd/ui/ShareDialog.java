@@ -27,6 +27,7 @@ package net.toload.main.hd.ui;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -83,8 +84,8 @@ public class ShareDialog extends DialogFragment {
 	}
 
 	@Override
-	public void onAttach(Activity act) {
-		super.onAttach(act);
+	public void onAttach(Context context) {
+		super.onAttach(context);
 	}
 
 	@Override

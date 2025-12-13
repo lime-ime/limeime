@@ -40,8 +40,8 @@ import android.widget.TextView;
 public class LIMESelectFileAdapter extends BaseAdapter {
 
 	//private File currentdir;
-	private List<File> list;
-	private LayoutInflater mInflater;
+	private final List<File> list;
+	private final LayoutInflater mInflater;
 	//private Context mContext;
 	//private BaseAdapter adapter;
 	

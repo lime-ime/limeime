@@ -37,15 +37,14 @@ public abstract class LIMEProgressListener {
     }
 
     public void onError(int code, String source){
-        return;
+
     }
     public void onPreExecute(){
-        return;
     }
     public void onPostExecute(boolean success, String status, int code){
-        return;
+
     }
     public void onStatusUpdate(String status){
-        return;
+
     }
 }

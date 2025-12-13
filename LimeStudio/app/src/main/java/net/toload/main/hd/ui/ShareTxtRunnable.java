@@ -90,7 +90,16 @@ public class ShareTxtRunnable implements Runnable{
             cursor.moveToNext();
         }
 
-        String targetfile = Lime.DATABASE_FOLDER_EXTERNAL + imtype + ".lime";
+        File cacheDir = activity.getExternalCacheDir();
+        if (cacheDir == null) {
+            cacheDir = activity.getCacheDir();
+        }
+        File target = new File(cacheDir, imtype + ".lime");
+        if(target.exists()){
+            target.delete();
+        }
+        
+        String targetfile = target.getAbsolutePath();
 
         List<Im> iminfo = datasource.getImList(imtype);
 
@@ -99,9 +108,6 @@ public class ShareTxtRunnable implements Runnable{
             handler.updateProgress(activity.getResources().getString(R.string.share_step_write));
 
             try {
-
-                File target = new File(targetfile);
-                     target.deleteOnExit();
 
                 Writer writer = new OutputStreamWriter( new FileOutputStream(target), "UTF-8");
                 BufferedWriter fout = new BufferedWriter(writer);

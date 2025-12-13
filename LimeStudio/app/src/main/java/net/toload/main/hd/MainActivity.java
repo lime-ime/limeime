@@ -25,7 +25,6 @@
 package net.toload.main.hd;
 
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -38,8 +37,12 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
@@ -93,84 +96,13 @@ public class MainActivity extends AppCompatActivity
     private ConnectivityManager connManager;
     private LIMEPreferenceManager mLIMEPref;
 
-    private ProgressDialog progress;
+    private AlertDialog progress;
     private MainActivityHandler handler;
     private Thread sharethread;
-
-    //private Activity activity;
-
-    //Admob
-    //InterstitialAd mInterstitialAd;
-    Boolean intersitialAdShowed = true;
-
-    /*IInAppBillingService mService;
-    ServiceConnection mServiceConn = new ServiceConnection() {
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            mService = null;
-        }
-
-        @Override
-        public void onServiceConnected(ComponentName name,
-                                       IBinder service) {
-            mService = IInAppBillingService.Stub.asInterface(service);
-
-            boolean paymentFlag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
-            if (!paymentFlag) {
-                try {
-                    Bundle ownedItems = mService.getPurchases(3, getPackageName(), "inapp", null);
-                    int response = ownedItems.getInt("RESPONSE_CODE");
-                    if (response == 0) {
-                        ArrayList<String> owned = ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
-                        ArrayList<String> purchaseDataList = ownedItems.getStringArrayList("INAPP_PURCHASE_DATA_LIST");
-                        ArrayList<String> signatureList = ownedItems.getStringArrayList("INAPP_DATA_SIGNATURE_LIST");
-                        //String continuationToken = ownedItems.getString("INAPP_CONTINUATION_TOKEN");
-
-                        assert purchaseDataList != null;
-                        for (int i = 0; i < purchaseDataList.size(); ++i) {
-                            String purchaseData = purchaseDataList.get(i);
-                            assert signatureList != null;
-                            String signature = signatureList.get(i);
-                            assert owned != null;
-                            String sku = owned.get(i);
-                            mLIMEPref.setParameter(Lime.PAYMENT_FLAG, true);
-                            mLIMEPref.setParameter("purchanseData", purchaseData);
-                            mLIMEPref.setParameter("signature", signature);
-                            mLIMEPref.setParameter("sku", sku);
-                        }
-
-                    }
-
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    };*/
-
-   /* @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-         if (requestCode == 1001) {
-             String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
-            //int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
-            //String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
-
-            if (resultCode == RESULT_OK) {
-                mLIMEPref.setParameter(Lime.PAYMENT_FLAG, true);
-                showToastMessage(getResources().getString(R.string.payment_service_success), Toast.LENGTH_LONG);
-                //Log.i("LIME", "purchasing complete " + new Date() + " / " + purchaseData);
-            }
-         }
-
-    }*/
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        /*if (mService != null) {
-            unbindService(mServiceConn);
-        }*/
     }
 
     @Override
@@ -219,7 +151,7 @@ public class MainActivity extends AppCompatActivity
         super.onStop();
     }
 
-
+    @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -229,10 +161,6 @@ public class MainActivity extends AppCompatActivity
 
 
         handler = new MainActivityHandler(this);
-
-        progress = new ProgressDialog(this);
-        progress.setMax(100);
-        progress.setCancelable(false);
 
         connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 
@@ -253,10 +181,7 @@ public class MainActivity extends AppCompatActivity
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
 
-        /*boolean paymentflag = mLIMEPref.getParameterBoolean(Lime.PAYMENT_FLAG, false);
-        if (!paymentflag) {
-            purchaseVerification();
-        }*/
+        
 
         // Handle Import Text from other application
         Intent intent = getIntent();
@@ -299,7 +224,15 @@ public class MainActivity extends AppCompatActivity
         PackageInfo pInfo;
         try {
             pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            versionstr = "v" + pInfo.versionName + " - " + pInfo.versionCode;
+            //long versionCode = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU
+            //        ? pInfo.getLongVersionCode() : pInfo.versionCode;
+            long versionCode;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                versionCode = pInfo.getLongVersionCode();
+            } else {
+                versionCode = pInfo.versionCode;
+            }
+            versionstr = "v" + pInfo.versionName + " - " + versionCode;
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
@@ -347,41 +280,11 @@ public class MainActivity extends AppCompatActivity
     void handleSendText(Intent intent) {
         String importtext = intent.getStringExtra(Intent.EXTRA_TEXT);
         if (importtext != null && !importtext.isEmpty()) {
-            android.app.FragmentTransaction ft = getFragmentManager().beginTransaction();
+            androidx.fragment.app.FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             ImportDialog dialog = ImportDialog.newInstance(importtext);
             dialog.show(ft, "importdialog");
         }
     }
-
-    /*public void purchaseVerification() {
-        Intent serviceIntent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
-        serviceIntent.setPackage("com.android.vending");
-        mService = null;
-        bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
-
-        AdRequest adRequest = new AdRequest.Builder()
-                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                .build();
-
-        //Admob IntersitialAD
-        //Only show intersitialAd for one time.  It's quite annoying
-        mInterstitialAd = new InterstitialAd(this);
-        mInterstitialAd.setAdUnitId(LIME.publisher);
-
-        mInterstitialAd.loadAd(adRequest);
-
-        mInterstitialAd.setAdListener(new AdListener() {
-            public void onAdLoaded() {
-                if (intersitialAdShowed) return;
-                if (mInterstitialAd.isLoaded()) {
-                    mInterstitialAd.show();
-                    intersitialAdShowed = true;
-                    mInterstitialAd.setAdListener(null);
-                    mInterstitialAd = null; //destroy mintersitialAd
-                }
-            }
-        });
-    }*/
 
     public void initialImList() {
 
@@ -390,12 +293,6 @@ public class MainActivity extends AppCompatActivity
 
         imlist = new ArrayList<>();
         imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
-       /* try {
-            //datasource.open();
-            //datasource.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }*/
     }
 
     @Override
@@ -464,54 +361,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        //int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-       /* if (id == R.id.action_settings) {
-            return true;
-        }*/
-
         return super.onOptionsItemSelected(item);
     }
-
-    /*public void purchase(String productid) {
-
-        if (connManager.getActiveNetworkInfo() != null && connManager.getActiveNetworkInfo().isConnected()) {
-
-            if (mService != null) {
-
-                Bundle buyIntentBundle;
-                try {
-                    buyIntentBundle = mService.getBuyIntent(3, getPackageName(),
-                            productid, "inapp", "callback/" + productid);
-
-                    int status = buyIntentBundle.getInt("RESPONSE_CODE");
-
-                    if (status == 0) {
-                        PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
-                        try {
-                            assert pendingIntent != null;
-                            startIntentSenderForResult(pendingIntent.getIntentSender(),
-                                    Lime.PAYMENT_REQUEST_CODE, new Intent(), 0, 0, 0);
-                        } catch (IntentSender.SendIntentException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        showToastMessage(getResources().getString(R.string.payment_service_failed), Toast.LENGTH_LONG);
-                    }
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                showToastMessage(getResources().getString(R.string.payment_service_failed), Toast.LENGTH_LONG);
-            }
-        } else {
-            showToastMessage(getResources().getString(R.string.error_network_failed), Toast.LENGTH_LONG);
-        }
-    }*/
 
     public void showToastMessage(String msg, int length) {
         Toast toast = Toast.makeText(this, msg, length);
@@ -539,26 +390,40 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void showProgress() {
+        if (progress == null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setCancelable(false);
+            View view = LayoutInflater.from(this).inflate(R.layout.progress, null);
+            builder.setView(view);
+            progress = builder.create();
+        }
         if (!progress.isShowing()) {
             progress.show();
         }
     }
 
     public void cancelProgress() {
-        if (progress.isShowing()) {
+        if (progress != null && progress.isShowing()) {
             progress.dismiss();
         }
+        progress = null;
     }
 
     public void updateProgress(int value) {
-        if (!progress.isShowing()) {
-            progress.setProgress(value);
+        if (progress != null && progress.isShowing()) {
+            ProgressBar pb = progress.findViewById(R.id.progress_bar);
+            if(pb != null){
+                pb.setProgress(value);
+            }
         }
     }
 
     public void updateProgress(String value) {
-        if (progress.isShowing()) {
-            progress.setMessage(value);
+        if (progress != null && progress.isShowing()) {
+            TextView tv = progress.findViewById(R.id.progress_text);
+            if(tv != null){
+                tv.setText(value);
+            }
         }
     }
 
@@ -567,8 +432,10 @@ public class MainActivity extends AppCompatActivity
         sharingIntent.setType(type);
 
         File target = new File(filepath);
-        Uri targetfile = Uri.fromFile(target);
+        
+        Uri targetfile = androidx.core.content.FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".fileprovider", target);
         sharingIntent.putExtra(Intent.EXTRA_STREAM, targetfile);
+        sharingIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         sharingIntent.putExtra(Intent.EXTRA_TEXT, target.getName());
         startActivity(Intent.createChooser(sharingIntent, target.getName()));
@@ -576,137 +443,6 @@ public class MainActivity extends AppCompatActivity
 
     public void initialDefaultPreference() {
 
-        /*String keyboard_state = mLIMEPref.getParameterString("keyboard_state");
-        if(keyboard_state.isEmpty()){
-            mLIMEPref.setParameter("keyboard_state", "0;1;2;3;4;5;6;7;8;9;10;11");
-        }
-
-        Boolean persistent_language_mode = mLIMEPref.getParameterBoolean("persistent_language_mode", false);
-        mLIMEPref.setParameter("persistent_language_mode", persistent_language_mode);
-
-        Boolean number_row_in_english = mLIMEPref.getParameterBoolean("number_row_in_english", true);
-        mLIMEPref.setParameter("number_row_in_english", number_row_in_english);
-
-        Boolean hide_software_keyboard_typing_with_physical = mLIMEPref.getParameterBoolean("hide_software_keyboard_typing_with_physical", true);
-        mLIMEPref.setParameter("hide_software_keyboard_typing_with_physical", hide_software_keyboard_typing_with_physical);
-
-        Boolean show_arrow_key = mLIMEPref.getParameterBoolean("show_arrow_key", false);
-        mLIMEPref.setParameter("hide_software_keyboard_typing_with_physical", show_arrow_key);
-
-        String split_keyboard_mode = mLIMEPref.getParameterString("split_keyboard_mode", "0");
-        mLIMEPref.setParameter("split_keyboard_mode", split_keyboard_mode);
-
-        Boolean fixed_candidate_view_display = mLIMEPref.getParameterBoolean("fixed_candidate_view_display", true);
-        mLIMEPref.setParameter("fixed_candidate_view_display", fixed_candidate_view_display);
-
-        String keyboard_.size = mLIMEPref.getParameterString("keyboard_size", "1");
-        mLIMEPref.setParameter("keyboard_size", keyboard_size);
-
-        String font_size = mLIMEPref.getParameterString("font_size", "1");
-        mLIMEPref.setParameter("font_size", font_size);
-
-        Boolean vibrate_on_keypress = mLIMEPref.getParameterBoolean("vibrate_on_keypress", false);
-        mLIMEPref.setParameter("vibrate_on_keypress", vibrate_on_keypress);
-
-        String vibrate_level = mLIMEPref.getParameterString("vibrate_level", "40");
-        mLIMEPref.setParameter("vibrate_level", vibrate_level);
-
-        Boolean sound_on_keypress = mLIMEPref.getParameterBoolean("sound_on_keypress", false);
-        mLIMEPref.setParameter("sound_on_keypress", sound_on_keypress);
-
-        Boolean auto_chinese_symbol = mLIMEPref.getParameterBoolean("auto_chinese_symbol", false);
-        mLIMEPref.setParameter("auto_chinese_symbol", auto_chinese_symbol);
-
-        Boolean disable_physical_selkey = mLIMEPref.getParameterBoolean("disable_physical_selkey", false);
-        mLIMEPref.setParameter("disable_physical_selkey", disable_physical_selkey);
-
-        String auto_commit = mLIMEPref.getParameterString("auto_commit", "0");
-        mLIMEPref.setParameter("auto_commit", auto_commit);
-
-        String selkey_option = mLIMEPref.getParameterString("selkey_option", "0");
-        mLIMEPref.setParameter("selkey_option", selkey_option);
-
-        String phonetic_keyboard_type = mLIMEPref.getParameterString("phonetic_keyboard_type", "standard");
-        mLIMEPref.setParameter("phonetic_keyboard_type", phonetic_keyboard_type);
-
-        String physical_keyboard_type = mLIMEPref.getParameterString("physical_keyboard_type", "normal_keyboard");
-        mLIMEPref.setParameter("physical_keyboard_type", physical_keyboard_type);
-
-        String han_convert_option = mLIMEPref.getParameterString("han_convert_option", "0");
-        mLIMEPref.setParameter("han_convert_option", han_convert_option);
-
-        String custom_im_reverselookup = mLIMEPref.getParameterString("custom_im_reverselookup", "none");
-        mLIMEPref.setParameter("custom_im_reverselookup", custom_im_reverselookup);
-
-        String cj_im_reverselookup = mLIMEPref.getParameterString("cj_im_reverselookup", "none");
-        mLIMEPref.setParameter("cj_im_reverselookup", cj_im_reverselookup);
-
-        String scj_im_reverselookup = mLIMEPref.getParameterString("scj_im_reverselookup", "none");
-        mLIMEPref.setParameter("scj_im_reverselookup", scj_im_reverselookup);
-
-        String cj5_im_reverselookup = mLIMEPref.getParameterString("cj5_im_reverselookup", "none");
-        mLIMEPref.setParameter("cj5_im_reverselookup", cj5_im_reverselookup);
-
-        String ecj_im_reverselookup = mLIMEPref.getParameterString("ecj_im_reverselookup", "none");
-        mLIMEPref.setParameter("ecj_im_reverselookup", ecj_im_reverselookup);
-
-        String dayi_im_reverselookup = mLIMEPref.getParameterString("dayi_im_reverselookup", "none");
-        mLIMEPref.setParameter("dayi_im_reverselookup", dayi_im_reverselookup);
-
-        String bpmf_im_reverselookup = mLIMEPref.getParameterString("bpmf_im_reverselookup", "none");
-        mLIMEPref.setParameter("bpmf_im_reverselookup", bpmf_im_reverselookup);
-
-        String ez_im_reverselookup = mLIMEPref.getParameterString("ez_im_reverselookup", "none");
-        mLIMEPref.setParameter("ez_im_reverselookup", ez_im_reverselookup);
-
-        String array_im_reverselookup = mLIMEPref.getParameterString("array_im_reverselookup", "none");
-        mLIMEPref.setParameter("array_im_reverselookup", array_im_reverselookup);
-
-        String array10_im_reverselookup = mLIMEPref.getParameterString("array10_im_reverselookup", "none");
-        mLIMEPref.setParameter("array10_im_reverselookup", array10_im_reverselookup);
-
-        String wb_im_reverselookup = mLIMEPref.getParameterString("wb_im_reverselookup", "none");
-        mLIMEPref.setParameter("wb_im_reverselookup", wb_im_reverselookup);
-
-        String pinyin_im_reverselookup = mLIMEPref.getParameterString("pinyin_im_reverselookup", "none");
-        mLIMEPref.setParameter("pinyin_im_reverselookup", pinyin_im_reverselookup);
-
-        String similiar_list = mLIMEPref.getParameterString("similiar_list", "20");
-        mLIMEPref.setParameter("similiar_list", similiar_list);
-
-        Boolean similiar_enable = mLIMEPref.getParameterBoolean("similiar_enable", true);
-        mLIMEPref.setParameter("similiar_enable", similiar_enable);
-
-        Boolean english_dictionary_enable = mLIMEPref.getParameterBoolean("english_dictionary_enable", true);
-        mLIMEPref.setParameter("english_dictionary_enable", english_dictionary_enable);
-
-        Boolean english_dictionary_physical_keyboard = mLIMEPref.getParameterBoolean("english_dictionary_physical_keyboard", false);
-        mLIMEPref.setParameter("similiar_enable", english_dictionary_physical_keyboard);
-
-        Boolean candidate_switch = mLIMEPref.getParameterBoolean("candidate_switch", true);
-        mLIMEPref.setParameter("candidate_switch", candidate_switch);
-
-        Boolean candidate_suggestion = mLIMEPref.getParameterBoolean("candidate_suggestion", true);
-        mLIMEPref.setParameter("candidate_suggestion", candidate_suggestion);
-
-        Boolean learn_phrase = mLIMEPref.getParameterBoolean("learn_phrase", true);
-        mLIMEPref.setParameter("learn_phrase", learn_phrase);
-
-        Boolean learning_switch = mLIMEPref.getParameterBoolean("learning_switch", true);
-        mLIMEPref.setParameter("learning_switch", learning_switch);
-
-        Boolean physical_keyboard_sort = mLIMEPref.getParameterBoolean("physical_keyboard_sort", true);
-        mLIMEPref.setParameter("physical_keyboard_sort", physical_keyboard_sort);
-
-        Boolean accept_number_index = mLIMEPref.getParameterBoolean("accept_number_index", false);
-        mLIMEPref.setParameter("accept_number_index", accept_number_index);
-
-        Boolean accept_symbol_index = mLIMEPref.getParameterBoolean("accept_symbol_index", false);
-        mLIMEPref.setParameter("accept_symbol_index", accept_symbol_index);
-
-        Boolean switch_english_mode = mLIMEPref.getParameterBoolean("switch_english_mode", false);
-        mLIMEPref.setParameter("switch_english_mode", switch_english_mode);
-*/
 
     }
 

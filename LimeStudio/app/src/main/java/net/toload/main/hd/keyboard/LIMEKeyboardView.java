@@ -85,14 +85,14 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 	 */
 	@Override
 	public boolean onTouchEvent(@NonNull MotionEvent me) {
-		if(DEBUG) Log.i(TAG, "OnTouchEvent(), me.getAction() =" + me.getAction());
+		if(DEBUG) Log.i(TAG, "OnTouchEvent(), me.getActionMasked() =" + me.getActionMasked());
 		LIMEKeyboard keyboard = (LIMEKeyboard) getKeyboard();
-		if (me.getAction() == MotionEvent.ACTION_DOWN) {
+		if (me.getActionMasked() == MotionEvent.ACTION_DOWN) {
 			if(DEBUG) Log.i(TAG, "OnTouchEvent(), ACTION_DOWN");
 			keyboard.keyReleased();
 		}
 
-		if (me.getAction() == MotionEvent.ACTION_UP) {
+		if (me.getActionMasked() == MotionEvent.ACTION_UP) {
 			int spaceDragDirection = keyboard.getSpaceDragDirection();
 			if(DEBUG) Log.i(TAG, "OnTouchEvent(), ACTION_UP, spaceDragDirection:" + spaceDragDirection);
 			if (spaceDragDirection != 0) {

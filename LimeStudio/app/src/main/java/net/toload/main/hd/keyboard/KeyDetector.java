@@ -90,8 +90,7 @@ abstract class KeyDetector {
      *
      * @return Allocates and returns an array that can hold all key indices returned by
      *         {@link #getKeyIndexAndNearbyCodes} method. All elements in the returned array are
-     *         initialized by {@link com.android.inputmethod.latin.LatinKeyboardView.NOT_A_KEY}
-     *         value.
+     *         initialized to {@link LIMEKeyboardBaseView#NOT_A_KEY} *         value.
      */
     public int[] newCodeArray() {
         int[] codes = new int[getMaxNearbyKeys()];

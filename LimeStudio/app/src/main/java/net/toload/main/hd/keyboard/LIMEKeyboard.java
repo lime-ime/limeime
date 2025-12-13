@@ -64,7 +64,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     
     private static SlidingSpaceBarDrawable mSlidingSpaceBarIcon = null;
 
-    private static boolean themedResourcesLoaded = false;
+    //private static boolean themedResourcesLoaded = false;
     /**
      * Drawable to override function key icons
      */
@@ -99,7 +99,6 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     private static final int OPACITY_FULLY_OPAQUE = 255;
     
     private Context mContext;
-    private final Resources mRes;
     //private final int mMode;
     private LIMEKeyboardSwitcher mKeyboardSwitcher;
     
@@ -111,7 +110,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         super(context, xmlLayoutResId, mode, keySizeScale, showArrowKeys, splitKeyboard);
         if(DEBUG)
             Log.i(TAG, "LIMEKeyboard()");
-        mRes = context.getResources();
+        //Resources mRes = context.getResources();
     }
 
 
@@ -208,7 +207,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     }
 
     public void setShiftLocked(boolean shiftLocked) {
-    	if(DEBUG)
+        if(DEBUG)
             Log.i("LIMEKeyboard", "setShiftLocked: "+ shiftLocked);
         if (mShiftKey != null) {
             if (shiftLocked) {
@@ -498,7 +497,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         private String mCurrentKeyboard;
         private String mNextKeyboard;
         private String mPrevKeyboard;
-        private int mSlidingTextSize;
+        private final int mSlidingTextSize;
 
         public SlidingSpaceBarDrawable(Drawable background, Drawable leftArrow, Drawable rightArrow, int slidingTextSize, int width, int height) {
             mBackground = background;
@@ -545,11 +544,10 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
             if (mHitThreshold) {
                 Paint paint = mTextPaint;
                 final int width = mWidth;
-                final int height = mHeight;
                 final int diff = mDiff;
                 final Drawable lArrow = mLeftDrawable;
                 final Drawable rArrow = mRightDrawable;
-                canvas.clipRect(0, 0, width, height);
+                canvas.clipRect(0, 0, width, mHeight);
                 if (mCurrentKeyboard == null) {
                     mCurrentKeyboard = mKeyboardSwitcher.getActiveIMShortname();
                     mNextKeyboard = mKeyboardSwitcher.getNextActivatedIMShortname();
@@ -564,9 +562,9 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
                 final float baseline = mHeight * SPACEBAR_IMNAME_BASELINE - paint.descent();
                 paint.setColor(mSpaceKeyTextColor);
                 paint.setTextSize(mSlidingTextSize);
-                canvas.drawText(mCurrentKeyboard, width / 2 + diff, baseline, paint);
-                canvas.drawText(mNextKeyboard, diff - width / 5, baseline, paint);
-                canvas.drawText(mPrevKeyboard, diff + width + width / 5, baseline, paint);
+                canvas.drawText(mCurrentKeyboard, (float) width / 2 + diff, baseline, paint);
+                canvas.drawText(mNextKeyboard, diff - (float) width / 5, baseline, paint);
+                canvas.drawText(mPrevKeyboard, diff + width + (float) width / 5, baseline, paint);
 
                 setDefaultBounds(lArrow);
                 rArrow.setBounds(width - rArrow.getIntrinsicWidth(), 0, width,
@@ -583,6 +581,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         
         
         @Override
+        @SuppressWarnings("deprecation")
         public int getOpacity() {
             return PixelFormat.TRANSLUCENT;
         }
