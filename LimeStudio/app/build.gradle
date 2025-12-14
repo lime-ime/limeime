@@ -28,12 +28,12 @@ android {
     namespace = 'net.toload.main.hd'
     signingConfigs {
     }
-    compileSdkVersion  34
+    compileSdkVersion  36
     defaultConfig {
         applicationId = "net.toload.main.hd2025"
 
         minSdkVersion  21
-        targetSdkVersion  34
+        targetSdkVersion  36
         versionCode = 2025
         versionName = '6.0.0'
 
