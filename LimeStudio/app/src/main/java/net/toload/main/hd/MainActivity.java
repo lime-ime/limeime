@@ -26,12 +26,10 @@ package net.toload.main.hd;
 
 import android.app.AlertDialog;
 import android.content.ContentResolver;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -47,7 +45,11 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.core.content.pm.PackageInfoCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -76,10 +78,10 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class MainActivity extends AppCompatActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks {
 
+    final String TAG = "MainActivity";
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
@@ -92,9 +94,6 @@ public class MainActivity extends AppCompatActivity
 
     private LimeDB datasource;
     private List<Im> imlist;
-
-    private ConnectivityManager connManager;
-    private LIMEPreferenceManager mLIMEPref;
 
     private AlertDialog progress;
     private MainActivityHandler handler;
@@ -121,17 +120,13 @@ public class MainActivity extends AppCompatActivity
             builder.setTitle(getResources().getString(R.string.global_exit_title));
             builder.setCancelable(false);
             builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            // Kill and stop my activity
-                            //android.os.Process.killProcess(android.os.Process.myPid());
-                            System.exit(0);
-                        }
+                    (dialog, id) -> {
+                        // Kill and stop my activity
+                        //android.os.Process.killProcess(android.os.Process.myPid());
+                        System.exit(0);
                     });
             builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                        }
+                    (dialog, id) -> {
                     });
 
             AlertDialog alert = builder.create();
@@ -151,20 +146,33 @@ public class MainActivity extends AppCompatActivity
         super.onStop();
     }
 
-    @SuppressWarnings("deprecation")
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
 
+        // Enable edge-to-edge display for API 35+ (Android 15+)
+        // API 35 is required for edge-to-edge, but we enable it for all API levels for consistency
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
         setContentView(R.layout.activity_main);
+
+        // Ensure ActionBar title is displayed
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayShowTitleEnabled(true);
+        }
+
+        // Handle window insets for edge-to-edge display
+        setupEdgeToEdge();
 
 
         handler = new MainActivityHandler(this);
 
-        connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        //ConnectivityManager connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 
-        this.mLIMEPref = new LIMEPreferenceManager(this);
+        LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(this);
 
         LIME.PACKAGE_NAME = getApplicationContext().getPackageName();
 
@@ -179,7 +187,7 @@ public class MainActivity extends AppCompatActivity
         assert mNavigationDrawerFragment != null;
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
-                (DrawerLayout) findViewById(R.id.drawer_layout));
+                findViewById(R.id.drawer_layout));
 
         
 
@@ -211,7 +219,7 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 File importDir = new File(getCacheDir(), "imports");
-                importDir.mkdirs();
+                if(!importDir.mkdirs()) Log.w(TAG,"Failed to create import dir");
                 File importFile = new File(importDir, fileName);
                 String importFilepath = importFile.getAbsolutePath();
                 InputStreamToFile(input, importFilepath);
@@ -224,14 +232,7 @@ public class MainActivity extends AppCompatActivity
         PackageInfo pInfo;
         try {
             pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            //long versionCode = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU
-            //        ? pInfo.getLongVersionCode() : pInfo.versionCode;
-            long versionCode;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                versionCode = pInfo.getLongVersionCode();
-            } else {
-                versionCode = pInfo.versionCode;
-            }
+            long versionCode = PackageInfoCompat.getLongVersionCode(pInfo);
             versionstr = "v" + pInfo.versionName + " - " + versionCode;
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
@@ -262,7 +263,7 @@ public class MainActivity extends AppCompatActivity
 
     private void InputStreamToFile(InputStream in, String file) {
         try {
-            OutputStream out = new FileOutputStream(new File(file));
+            OutputStream out = new FileOutputStream(file);
 
             int size;
             byte[] buffer = new byte[102400];
@@ -453,6 +454,70 @@ public class MainActivity extends AppCompatActivity
             dialog.show(ft, "newsdialog");
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Setup edge-to-edge display with proper window insets handling.
+     * This ensures UI elements are not obscured by system bars on API 35+.
+     */
+    @SuppressWarnings("deprecation")
+    private void setupEdgeToEdge() {
+        // Apply window insets to the main content container (FrameLayout)
+        // ActionBar already handles its own space, so we only need to account for status bar
+        View container = findViewById(R.id.container);
+        if (container != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(container, (v, insets) -> {
+                int systemBarsType = WindowInsetsCompat.Type.systemBars();
+                int topInset = insets.getInsets(systemBarsType).top;
+                int bottomInset = insets.getInsets(systemBarsType).bottom;
+                int leftInset = insets.getInsets(systemBarsType).left;
+                int rightInset = insets.getInsets(systemBarsType).right;
+                
+                // Apply padding: top = status bar only (ActionBar handles its own space),
+                // left/right/bottom = system bars
+                v.setPadding(leftInset, topInset, rightInset, bottomInset);
+
+                return insets;
+            });
+        }
+        
+        // DrawerLayout extends to edges - no padding needed on DrawerLayout itself
+        // The drawer fragment's ListView will handle its own content insets if needed
+
+        // Set status bar and navigation bar to transparent for edge-to-edge effect
+        // This works on all API levels, but is required for API 35+
+        // Note: setStatusBarColor and setNavigationBarColor are deprecated in API 35+,
+        // but we use them with suppression for backward compatibility
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            @SuppressWarnings("deprecation")
+            android.view.Window window = getWindow();
+            window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
+            window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+        }
+        
+        // Set status bar icon appearance to dark (black icons) for better visibility
+        // Since status bar is transparent and content behind may be light, use dark icons
+        View decorView = getWindow().getDecorView();
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            // API 23+ (Marshmallow+): Use WindowInsetsControllerCompat
+            WindowInsetsControllerCompat windowInsetsController = ViewCompat.getWindowInsetsController(decorView);
+            if (windowInsetsController != null) {
+                // Use dark status bar icons (black) for visibility on light backgrounds
+                // setAppearanceLightStatusBars(true) = light status bar appearance = dark icons
+                windowInsetsController.setAppearanceLightStatusBars(true);
+                // Use dark navigation bar icons for consistency
+                windowInsetsController.setAppearanceLightNavigationBars(true);
+            }
+        } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            // API 21-22: SYSTEM_UI_FLAG_LIGHT_STATUS_BAR is not available (introduced in API 23)
+            // On API 21-22, we cannot change icon color programmatically
+            // Set a dark status bar so white icons are visible (compromise for API 21-22)
+            @SuppressWarnings("deprecation")
+            android.view.Window window = getWindow();
+            // Use a dark color so white icons are visible
+            // This maintains some edge-to-edge while ensuring icons are visible
+            window.setStatusBarColor(0xFF000000); // Solid black
         }
     }
 

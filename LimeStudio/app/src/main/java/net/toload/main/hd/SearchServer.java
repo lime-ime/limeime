@@ -80,7 +80,7 @@ public class SearchServer {
 
     private static String tablename = "";
 
-    private LIMEPreferenceManager mLIMEPref;
+    private final LIMEPreferenceManager mLIMEPref;
 
     private static boolean isPhysicalKeyboardPressed; // Sync to LIMEService and LIMEDB
     //Jeremy '11,6,10
@@ -88,7 +88,7 @@ public class SearchServer {
     private static boolean hasSymbolMapping;
 
     //Jeremy '11,6,6
-    private HashMap<String, String> selKeyMap = new HashMap<>();
+    private final HashMap<String, String> selKeyMap = new HashMap<>();
 
     private static ConcurrentHashMap<String, List<Mapping>> cache = null;
     private static ConcurrentHashMap<String, List<Mapping>> engcache = null;
@@ -99,7 +99,7 @@ public class SearchServer {
      */
     private static ConcurrentHashMap<String, List<String>> coderemapcache = null;
 
-    private Context mContext = null;
+    private final Context mContext;
 
     // deprecated and using exact match stack to get real code length now. Jerey '15,6,2
     //private static List<Pair<Integer, Integer>> codeLengthMap = new LinkedList<>();
@@ -191,10 +191,10 @@ public class SearchServer {
     }
 
     //Add by jeremy '10, 4,1
-    public void getCodeListStringFromWord(final String word) throws RemoteException {
+    public void getCodeListStringFromWord(final String word) {
 
         String result = dbadapter.getCodeListStringByWord(word);
-        if (result != null && !result.equals("")) {
+        if (result != null && !result.isEmpty()) {
             LIMEUtilities.showNotification(
                     mContext, true, mContext.getText(R.string.ime_setting), result, new Intent(mContext, MainActivity.class));
 
@@ -233,12 +233,11 @@ public class SearchServer {
         }
         suggestionLoL.clear();
         if (bestSuggestionStack != null) bestSuggestionStack.clear();
-        String confirmedBestSuggestion = null;
         lastConfirmedBestSuggestion = null;
         abandonPhraseSuggestion =abandonSuggestion;
     }
 
-    private static boolean dumpRunTimeSuggestion = false;
+    private static final boolean dumpRunTimeSuggestion = false;
 
     private synchronized void makeRunTimeSuggestion(String code, List<Mapping> completeCodeResultList) {
 
@@ -293,7 +292,7 @@ public class SearchServer {
                 exactMatchMapping.setBasescore(newScore * exactMatchMapping.getWord().length());
 
                 if (DEBUG || dumpRunTimeSuggestion)
-                    Log.i(TAG, "makeRunTimeSuggestion() complete code = " + code + "" +
+                    Log.i(TAG, "makeRunTimeSuggestion() complete code = " + code +
                             ", got exact match  = " + exactMatchMapping.getWord()
                             + " score =" + exactMatchMapping.getScore() + ", bases core=" + exactMatchMapping.getBasescore()
                             +", time elapsed  =" +(System.currentTimeMillis() - startTime));
@@ -357,138 +356,141 @@ public class SearchServer {
 
             }
 
-        } else if (!suggestionLoL.isEmpty()) {  // no exact match recoreds found. search remaining code
+        } else {
+            assert suggestionLoL != null;
+            if (!suggestionLoL.isEmpty()) {  // no exact match recoreds found. search remaining code
 
-            if (DEBUG || dumpRunTimeSuggestion)
-                Log.i(TAG, "makeRunTimeSuggestion() no exact match on complete code = " + code + ", time elapsed = " + (System.currentTimeMillis() - startTime));
+                if (DEBUG || dumpRunTimeSuggestion)
+                    Log.i(TAG, "makeRunTimeSuggestion() no exact match on complete code = " + code + ", time elapsed = " + (System.currentTimeMillis() - startTime));
 
-            /*
-            // if confirmed best suggestion found and contains last confirmed best suggestion (double confirm) remove all other list not start with last confirmed best suggestion
-            if( lastConfirmedBestSuggestion!=null && confirmedBestSuggestion!=null
-                    &&lastConfirmedBestSuggestion.length()>1 && confirmedBestSuggestion.startsWith(lastConfirmedBestSuggestion)){
-                Iterator<List<Pair<Mapping,String>>> it = suggestionLoL.iterator();
-                while (it.hasNext()) {
-                     List<Pair<Mapping,String>> item = it.next();
-                    if(item.isEmpty()|| !item.get(item.size()-1).first.getWord().startsWith(lastConfirmedBestSuggestion)){
-                        it.remove();
-                    }
-                }
-            }
-            */
-
-
-            int highestScore = 0, highestRelatedScore = 0, i = 0, highestScoreIndex = 0;
-            //iterate all previous exact match mapping and check for exact match on remaining code.
-            List<List<Pair<Mapping, String>>> suggestionLoLSnapShot = new LinkedList<>(suggestionLoL);
-            for (List<Pair<Mapping, String>> suggestionList : suggestionLoLSnapShot) {
-                List<Pair<Mapping, String>> seedSuggestionList = suggestionLoL.remove(0);
-                if (highestScoreIndex > 0) highestScoreIndex--;
-                int lolSize = suggestionLoL.size();
-
-                for (Pair<Mapping, String> p : suggestionList) {
-                    String pCode = p.second;
-                    if (pCode.length() < code.length() && code.startsWith(pCode) && code.length() - pCode.length() <= maxCodeLength) {
-                        String remainingCode = code.substring(pCode.length(), code.length());
-                        if (DEBUG || dumpRunTimeSuggestion)
-                            Log.i(TAG, "makeRunTimeSuggestion() working on previous exact match item = " + p.first.getWord() +
-                                    " with base score = " + p.first.getBasescore() + ", average score = " + p.first.getBasescore() / p.first.getWord().length() +
-                                    ", remainingCode =" + remainingCode + " , highestScoreIndex = " + highestScoreIndex + ", time elapsed =" + (System.currentTimeMillis() - startTime));
-
-
-                        List<Mapping> resultList =  //do remaining code query
-                                getMappingByCodeFromCacheOrDB(remainingCode, false);
-                        if (resultList == null) continue;
-
-                        if (DEBUG || dumpRunTimeSuggestion)
-                            Log.i(TAG, "makeRunTimeSuggestion() finish query on previous exact match item = " + p.first.getWord() +
-                                    " , time elapsed =" + (System.currentTimeMillis() - startTime));
-
-                        if (resultList.size() > 0
-                                && resultList.get(0).isExactMatchToCodeRecord()) {  //remaining code search got exact match
-                            Mapping remainingCodeExactMatchMapping = resultList.get(0);
-                            Mapping previousMapping = p.first;
-                            String phrase = previousMapping.getWord() + remainingCodeExactMatchMapping.getWord();
-                            int phraseLen = phrase.length();
-                            if (phraseLen < 2 || remainingCodeExactMatchMapping.getBasescore() < 2)
-                                continue;
-                            int remainingScore = remainingCodeExactMatchMapping.getBasescore();
-                            int codeLenBonus = remainingCodeExactMatchMapping.getCode().length() /
-                                    remainingCodeExactMatchMapping.getWord().length() * 30;
-                            if (remainingScore > 120) remainingScore = 120;
-                            remainingScore = remainingScore / remainingCodeExactMatchMapping.getWord().length() + codeLenBonus;
-
-                            int previousScore = previousMapping.getBasescore() / previousMapping.getWord().length();
-                            int averageScore = (previousScore + remainingScore) / 2;
-
-                            if (DEBUG || dumpRunTimeSuggestion)
-                                Log.i(TAG, "makeRunTimeSuggestion() remaining code = " + remainingCode + "" +
-                                        ", got exact match  = " + remainingCodeExactMatchMapping.getWord() + " with base score = "
-                                        + remainingScore + " average score =" + averageScore + " , highestScoreIndex = " + highestScoreIndex + ", time elapsed =" + (System.currentTimeMillis() - startTime));
-
-                            //verify if the new phrase is in related table.
-                            // check up to four characters phrase 1-3, 1-2 , 1-1
-                            Mapping relatedMapping = null;
-                            for (int k = ((phraseLen < 4) ? phraseLen - 1 : 3); k > 0; k--) {
-                                String pword = phrase.substring(phraseLen - k - 1, phraseLen - k);
-                                String cword = phrase.substring(phraseLen - k, phraseLen);
-                                relatedMapping = dbadapter.isRelatedPhraseExist(pword, cword);
-                                if (relatedMapping != null) break;
-                            }
-                            if (relatedMapping != null
-                                    && relatedMapping.getBasescore() >= highestRelatedScore
-                                    && (averageScore + 50) > highestScore
-                                    ) {
-                                Mapping suggestMapping = new Mapping();
-                                suggestMapping.setRuntimeBuiltPhraseRecord();
-                                suggestMapping.setCode(code);
-                                suggestMapping.setWord(phrase);
-                                highestRelatedScore = relatedMapping.getBasescore();
-                                suggestMapping.setScore(highestRelatedScore);
-                                highestScore = (averageScore + 50);
-                                suggestMapping.setBasescore(highestScore * phraseLen);
-                                List<Pair<Mapping, String>> newSuggestionList = new LinkedList<>(seedSuggestionList);
-                                newSuggestionList.add(new Pair<>(suggestMapping, code));
-                                suggestionLoL.add(newSuggestionList);
-                                highestScoreIndex = suggestionLoL.size() - 1;
-                                if (DEBUG || dumpRunTimeSuggestion)
-                                    Log.i(TAG, "makeRunTimeSuggestion()  run-time suggest phrase verified from related table ="
-                                            + phrase + ", basescore from related table = " + highestRelatedScore + " " +
-                                            ", new average score = " + highestScore + " , highestScoreIndex = " + highestScoreIndex+ ", time elapsed =" + (System.currentTimeMillis() - startTime));
-                            } else if (//highestRelatedScore == 0 &&// no mapping is verified from related table
-                                    averageScore > highestScore) {
-                                Mapping suggestMapping = new Mapping();
-                                suggestMapping.setRuntimeBuiltPhraseRecord();
-                                suggestMapping.setCode(code);
-                                suggestMapping.setWord(phrase);
-                                highestScore = averageScore;
-                                suggestMapping.setBasescore(highestScore * phraseLen);
-
-                                List<Pair<Mapping, String>> newSuggestionList = new LinkedList<>(seedSuggestionList);
-                                newSuggestionList.add(new Pair<>(suggestMapping, code));
-                                suggestionLoL.add(newSuggestionList);
-                                highestScoreIndex = suggestionLoL.size() - 1;
-
-                                if (DEBUG || dumpRunTimeSuggestion)
-                                    Log.i(TAG, "makeRunTimeSuggestion()  run-time suggest phrase =" + phrase
-                                            + ", new average score = " + highestScore + " , highestScoreIndex = " + highestScoreIndex+ ", time elapsed =" + (System.currentTimeMillis() - startTime));
-                            }
+                /*
+                // if confirmed best suggestion found and contains last confirmed best suggestion (double confirm) remove all other list not start with last confirmed best suggestion
+                if( lastConfirmedBestSuggestion!=null && confirmedBestSuggestion!=null
+                        &&lastConfirmedBestSuggestion.length()>1 && confirmedBestSuggestion.startsWith(lastConfirmedBestSuggestion)){
+                    Iterator<List<Pair<Mapping,String>>> it = suggestionLoL.iterator();
+                    while (it.hasNext()) {
+                         List<Pair<Mapping,String>> item = it.next();
+                        if(item.isEmpty()|| !item.get(item.size()-1).first.getWord().startsWith(lastConfirmedBestSuggestion)){
+                            it.remove();
                         }
                     }
                 }
-                if (lolSize == suggestionLoL.size()) {
-                    suggestionLoL.add(seedSuggestionList);
-                    if (DEBUG || dumpRunTimeSuggestion)
-                        Log.i(TAG, "makeRunTimeSuggestion()  no new suggestion list. add back the seed suggestion list to location 0 because of last run.");
-                }
-                i++;
-                if (DEBUG || dumpRunTimeSuggestion)
-                    Log.i(TAG, "makeRunTimeSuggestion() : remaing cod search +" + i +"th run.  time elapsed = " + (System.currentTimeMillis()-startTime));
-            }
-            if (!suggestionLoL.isEmpty() && highestScoreIndex != suggestionLoL.size() - 1) {//move bestSuggestionList to the last element
-                List<Pair<Mapping, String>> bestSuggestionList = suggestionLoL.remove(highestScoreIndex);
-                suggestionLoL.add(bestSuggestionList);
-            }
+                */
 
+
+                int highestScore = 0, highestRelatedScore = 0, i = 0, highestScoreIndex = 0;
+                //iterate all previous exact match mapping and check for exact match on remaining code.
+                List<List<Pair<Mapping, String>>> suggestionLoLSnapShot = new LinkedList<>(suggestionLoL);
+                for (List<Pair<Mapping, String>> suggestionList : suggestionLoLSnapShot) {
+                    List<Pair<Mapping, String>> seedSuggestionList = suggestionLoL.remove(0);
+                    if (highestScoreIndex > 0) highestScoreIndex--;
+                    int lolSize = suggestionLoL.size();
+
+                    for (Pair<Mapping, String> p : suggestionList) {
+                        String pCode = p.second;
+                        if (pCode.length() < code.length() && code.startsWith(pCode) && code.length() - pCode.length() <= maxCodeLength) {
+                            String remainingCode = code.substring(pCode.length(), code.length());
+                            if (DEBUG || dumpRunTimeSuggestion)
+                                Log.i(TAG, "makeRunTimeSuggestion() working on previous exact match item = " + p.first.getWord() +
+                                        " with base score = " + p.first.getBasescore() + ", average score = " + p.first.getBasescore() / p.first.getWord().length() +
+                                        ", remainingCode =" + remainingCode + " , highestScoreIndex = " + highestScoreIndex + ", time elapsed =" + (System.currentTimeMillis() - startTime));
+
+
+                            List<Mapping> resultList =  //do remaining code query
+                                    getMappingByCodeFromCacheOrDB(remainingCode, false);
+                            if (resultList == null) continue;
+
+                            if (DEBUG || dumpRunTimeSuggestion)
+                                Log.i(TAG, "makeRunTimeSuggestion() finish query on previous exact match item = " + p.first.getWord() +
+                                        " , time elapsed =" + (System.currentTimeMillis() - startTime));
+
+                            if (!resultList.isEmpty()
+                                    && resultList.get(0).isExactMatchToCodeRecord()) {  //remaining code search got exact match
+                                Mapping remainingCodeExactMatchMapping = resultList.get(0);
+                                Mapping previousMapping = p.first;
+                                String phrase = previousMapping.getWord() + remainingCodeExactMatchMapping.getWord();
+                                int phraseLen = phrase.length();
+                                if (phraseLen < 2 || remainingCodeExactMatchMapping.getBasescore() < 2)
+                                    continue;
+                                int remainingScore = remainingCodeExactMatchMapping.getBasescore();
+                                int codeLenBonus = remainingCodeExactMatchMapping.getCode().length() /
+                                        remainingCodeExactMatchMapping.getWord().length() * 30;
+                                if (remainingScore > 120) remainingScore = 120;
+                                remainingScore = remainingScore / remainingCodeExactMatchMapping.getWord().length() + codeLenBonus;
+
+                                int previousScore = previousMapping.getBasescore() / previousMapping.getWord().length();
+                                int averageScore = (previousScore + remainingScore) / 2;
+
+                                if (DEBUG || dumpRunTimeSuggestion)
+                                    Log.i(TAG, "makeRunTimeSuggestion() remaining code = " + remainingCode +
+                                            ", got exact match  = " + remainingCodeExactMatchMapping.getWord() + " with base score = "
+                                            + remainingScore + " average score =" + averageScore + " , highestScoreIndex = " + highestScoreIndex + ", time elapsed =" + (System.currentTimeMillis() - startTime));
+
+                                //verify if the new phrase is in related table.
+                                // check up to four characters phrase 1-3, 1-2 , 1-1
+                                Mapping relatedMapping = null;
+                                for (int k = ((phraseLen < 4) ? phraseLen - 1 : 3); k > 0; k--) {
+                                    String pword = phrase.substring(phraseLen - k - 1, phraseLen - k);
+                                    String cword = phrase.substring(phraseLen - k, phraseLen);
+                                    relatedMapping = dbadapter.isRelatedPhraseExist(pword, cword);
+                                    if (relatedMapping != null) break;
+                                }
+                                if (relatedMapping != null
+                                        && relatedMapping.getBasescore() >= highestRelatedScore
+                                        && (averageScore + 50) > highestScore
+                                        ) {
+                                    Mapping suggestMapping = new Mapping();
+                                    suggestMapping.setRuntimeBuiltPhraseRecord();
+                                    suggestMapping.setCode(code);
+                                    suggestMapping.setWord(phrase);
+                                    highestRelatedScore = relatedMapping.getBasescore();
+                                    suggestMapping.setScore(highestRelatedScore);
+                                    highestScore = (averageScore + 50);
+                                    suggestMapping.setBasescore(highestScore * phraseLen);
+                                    List<Pair<Mapping, String>> newSuggestionList = new LinkedList<>(seedSuggestionList);
+                                    newSuggestionList.add(new Pair<>(suggestMapping, code));
+                                    suggestionLoL.add(newSuggestionList);
+                                    highestScoreIndex = suggestionLoL.size() - 1;
+                                    if (DEBUG || dumpRunTimeSuggestion)
+                                        Log.i(TAG, "makeRunTimeSuggestion()  run-time suggest phrase verified from related table ="
+                                                + phrase + ", basescore from related table = " + highestRelatedScore + " " +
+                                                ", new average score = " + highestScore + " , highestScoreIndex = " + highestScoreIndex+ ", time elapsed =" + (System.currentTimeMillis() - startTime));
+                                } else if (//highestRelatedScore == 0 &&// no mapping is verified from related table
+                                        averageScore > highestScore) {
+                                    Mapping suggestMapping = new Mapping();
+                                    suggestMapping.setRuntimeBuiltPhraseRecord();
+                                    suggestMapping.setCode(code);
+                                    suggestMapping.setWord(phrase);
+                                    highestScore = averageScore;
+                                    suggestMapping.setBasescore(highestScore * phraseLen);
+
+                                    List<Pair<Mapping, String>> newSuggestionList = new LinkedList<>(seedSuggestionList);
+                                    newSuggestionList.add(new Pair<>(suggestMapping, code));
+                                    suggestionLoL.add(newSuggestionList);
+                                    highestScoreIndex = suggestionLoL.size() - 1;
+
+                                    if (DEBUG || dumpRunTimeSuggestion)
+                                        Log.i(TAG, "makeRunTimeSuggestion()  run-time suggest phrase =" + phrase
+                                                + ", new average score = " + highestScore + " , highestScoreIndex = " + highestScoreIndex+ ", time elapsed =" + (System.currentTimeMillis() - startTime));
+                                }
+                            }
+                        }
+                    }
+                    if (lolSize == suggestionLoL.size()) {
+                        suggestionLoL.add(seedSuggestionList);
+                        if (DEBUG || dumpRunTimeSuggestion)
+                            Log.i(TAG, "makeRunTimeSuggestion()  no new suggestion list. add back the seed suggestion list to location 0 because of last run.");
+                    }
+                    i++;
+                    if (DEBUG || dumpRunTimeSuggestion)
+                        Log.i(TAG, "makeRunTimeSuggestion() : remaing cod search +" + i +"th run.  time elapsed = " + (System.currentTimeMillis()-startTime));
+                }
+                if (!suggestionLoL.isEmpty() && highestScoreIndex != suggestionLoL.size() - 1) {//move bestSuggestionList to the last element
+                    List<Pair<Mapping, String>> bestSuggestionList = suggestionLoL.remove(highestScoreIndex);
+                    suggestionLoL.add(bestSuggestionList);
+                }
+
+            }
         }
 
         //push best suggestion to stack
@@ -536,22 +538,22 @@ public class SearchServer {
         */
 
         // dump suggestion list of list
-        if ((DEBUG || dumpRunTimeSuggestion) &&
-                suggestionLoL != null && !suggestionLoL.isEmpty()) {
-            for (int i = 0; i < suggestionLoL.size(); i++) {
-                if (suggestionLoL.get(i) != null && !suggestionLoL.get(i).isEmpty()) {
-                    for (int j = 0; j < suggestionLoL.get(i).size(); j++) {
+        //if ((DEBUG || dumpRunTimeSuggestion) &&
+            //    suggestionLoL != null && !suggestionLoL.isEmpty()) {
+            //for (int i = 0; i < suggestionLoL.size(); i++) {
+                //if (suggestionLoL.get(i) != null && !suggestionLoL.get(i).isEmpty()) {
+                    //for (int j = 0; j < suggestionLoL.get(i).size(); j++) {
                         //Log.i(TAG, "makeRunTimeSuggestion() suggestionLoL(" + i + ")(" + j + "): word="
                         //        + suggestionLoL.get(i).get(j).first.getWord() + ", code=" + suggestionLoL.get(i).get(j).second
                         //        + ", base score=" + suggestionLoL.get(i).get(j).first.getBasescore()
                         //        + ", average base score=" + suggestionLoL.get(i).get(j).first.getBasescore() / suggestionLoL.get(i).get(j).first.getWord().length()
                         //        + ", score=" + suggestionLoL.get(i).get(j).first.getScore());
-                    }
-                }
-            }
+                    //}
+                //}
+           // }
 
             //Log.i(TAG,"makeRunTimeSuggestion() time elapsed = " +  (System.currentTimeMillis()- startTime ) );
-        }
+        //}
     }
 
     /*
@@ -588,14 +590,11 @@ public class SearchServer {
                 emojicache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
             }
             List<Mapping> results = emojicache.get(code);
-            if(emojicache.get(code) != null){
-                return results;
-            }else{
-                //Log.i("EMOJI :" , "Run search emoji ...");
+            if (emojicache.get(code) == null) {
                 results = dbadapter.emojiConvert(code, type);
                 emojicache.put(code, results);
-                return results;
             }
+            return results;
         }
         return null;
     }
@@ -679,7 +678,7 @@ public class SearchServer {
 
 
                 //if (i == 0) {
-                if (resultlist.size() == 0 && code.length() > 1) {
+                if (resultlist.isEmpty() && code.length() > 1) {
                     //If the result list is empty we need to go back to last result list with nonzero result list
                     String wayBackCode = code;
                     do {
@@ -687,7 +686,7 @@ public class SearchServer {
                         cacheTemp = cache.get(cacheKey(wayBackCode));
                         if (cacheTemp != null)
                             resultlist = cacheTemp;
-                    } while (resultlist.size() == 0 && wayBackCode.length() > 1);
+                    } while (resultlist.isEmpty() && wayBackCode.length() > 1);
                 }
 
 
@@ -741,7 +740,7 @@ public class SearchServer {
                 }
                 // }
 
-                if (resultlist.size() > 0) {
+                if (!resultlist.isEmpty()) {
                     result.addAll(resultlist);
                     /*
                     int rsize = result.size();
@@ -793,8 +792,8 @@ public class SearchServer {
                 cacheTemp = dbadapter.getMappingByCode(queryCode, !isPhysicalKeyboardPressed, getAllRecords);
                 if (cacheTemp != null) cache.put(cacheKey, cacheTemp);
                 //Jeremy '12,6,5 check if need to update code remap cache
-                if (cacheTemp != null && cacheTemp != null
-                        && cacheTemp.size() > 0 && cacheTemp.get(0) != null
+                if (cacheTemp != null
+                        && !cacheTemp.isEmpty() && cacheTemp.get(0) != null
                         && cacheTemp.get(0).isExactMatchToCodeRecord()) {
                     String remappedCode = cacheTemp.get(0).getCode();
                     if (!queryCode.equals(remappedCode)) {
@@ -884,8 +883,7 @@ public class SearchServer {
         }
 
         // learn ld phrase if the select mapping is run-time suggestion
-        if (selectedMapping != null && selectedMapping.isRuntimeBuiltPhraseRecord() &&
-                suggestionLoL != null && !suggestionLoL.isEmpty()) {
+        if (selectedMapping.isRuntimeBuiltPhraseRecord() && suggestionLoL != null && !suggestionLoL.isEmpty()) {
 
             final List<Pair<Mapping, String>> bestSuggestionList = new LinkedList<>(suggestionLoL.get(suggestionLoL.size() - 1));
             final String selectedWord = selectedMapping.getWord();
@@ -1067,9 +1065,9 @@ List<Mapping> scorelistSnapshot = null;
                         if (unit2 == null) {
                             continue;
                         }
-                        if (unit.getWord() != null && !unit.getWord().equals("")
+                        if (unit.getWord() != null && !unit.getWord().isEmpty()
 
-                                && unit2.getWord() != null && !unit2.getWord().equals("")
+                                && unit2.getWord() != null && !unit2.getWord().isEmpty()
 
                                 &&
                                 (unit.isExactMatchToCodeRecord() || unit.isPartialMatchToCodeRecord()
@@ -1112,7 +1110,7 @@ List<Mapping> scorelistSnapshot = null;
         if (DEBUG)
             Log.i(TAG, "learnLDPhrase()");
 
-        if (localLDPhraseListArray != null && localLDPhraseListArray.size() > 0) {
+        if (localLDPhraseListArray != null && !localLDPhraseListArray.isEmpty()) {
             if (DEBUG)
                 Log.i(TAG, "learnLDPhrase(): LDPhrase learning, arraysize =" + localLDPhraseListArray.size());
 
@@ -1120,7 +1118,7 @@ List<Mapping> scorelistSnapshot = null;
             for (List<Mapping> phraselist : localLDPhraseListArray) {
                 if (DEBUG)
                     Log.i(TAG, "learnLDPhrase(): LDPhrase learning, current list size =" + phraselist.size());
-                if (phraselist.size() > 0 && phraselist.size() < 5) { //Jeremy '12,6,8 limit the phrase to have 4 chracters
+                if (!phraselist.isEmpty() && phraselist.size() < 5) { //Jeremy '12,6,8 limit the phrase to have 4 chracters
 
 
                     String baseCode, LDCode="", QPCode = "", baseWord;
@@ -1132,7 +1130,7 @@ List<Mapping> scorelistSnapshot = null;
                                 + ", unit1.getCode() =" + unit1.getCode()
                                 + ", unit1.getWord() =" + unit1.getWord());
 
-                    if (unit1 == null || unit1.getWord().length() == 0
+                    if (unit1 == null || unit1.getWord().isEmpty()
                             || unit1.getCode().equals(unit1.getWord())) //Jeremy '12,6,13 avoid learning mixed mode english
                     {
                         break;
@@ -1145,15 +1143,15 @@ List<Mapping> scorelistSnapshot = null;
                         if (unit1.getId() == null //Jeremy '12,6,7 break if id is null (selected from related list)
                                 || unit1.isPartialMatchToCodeRecord() //Jeremy '15,6,3 new record identification
                                 || unit1.getCode() == null //Jeremy '12,6,7 break if code is null (selected from related phrase)
-                                || unit1.getCode().length() == 0
+                                || unit1.getCode().isEmpty()
                                 || unit1.isRelatedPhraseRecord()) {
                             List<Mapping> rMappingList = dbadapter.getMappingByWord(baseWord, tablename);
-                            if (rMappingList.size() > 0)
+                            if (!rMappingList.isEmpty())
                                 baseCode = rMappingList.get(0).getCode();
                             else
                                 break; //look-up failed, abandon.
                         }
-                        if (baseCode != null && baseCode.length() > 0)
+                        if (baseCode != null && !baseCode.isEmpty())
                             QPCode += baseCode.substring(0, 1);
                         else
                             break;//abandon the phrase learning process;
@@ -1164,7 +1162,7 @@ List<Mapping> scorelistSnapshot = null;
                         for (int i = 0; i < baseWord.length(); i++) {
                             String c = baseWord.substring(i, i + 1);
                             List<Mapping> rMappingList = dbadapter.getMappingByWord(c, tablename);
-                            if (rMappingList.size() > 0) {
+                            if (!rMappingList.isEmpty()) {
                                 baseCode += rMappingList.get(0).getCode();
                                 QPCode += rMappingList.get(0).getCode().substring(0, 1);
                             } else {
@@ -1179,7 +1177,7 @@ List<Mapping> scorelistSnapshot = null;
                         if (i + 1 < phraselist.size()) {
 
                             Mapping unit2 = phraselist.get((i + 1));
-                            if (unit2 == null || unit2.getWord().length() == 0 || unit2.isComposingCodeRecord() || unit2.isEnglishSuggestionRecord()) //Jeremy 15,6,4 exclude composing code
+                            if (unit2 == null || unit2.getWord().isEmpty() || unit2.isComposingCodeRecord() || unit2.isEnglishSuggestionRecord()) //Jeremy 15,6,4 exclude composing code
                             //|| unit2.getCode().equals(unit2.getWord())) //Jeremy '12,6,13 avoid learning mixed mode english
                             {
                                 break;
@@ -1193,15 +1191,15 @@ List<Mapping> scorelistSnapshot = null;
                                 if (unit2.getId() == null //Jeremy '12,6,7 break if id is null (selected from related phrase)
                                         || unit2.isPartialMatchToCodeRecord() //Jeremy '15,6,3 new record identification
                                         || code2 == null //Jeremy '12,6,7 break if code is null (selected from relatedphrase)
-                                        || code2.length() == 0
+                                        || code2.isEmpty()
                                         || unit2.isRelatedPhraseRecord()) {
                                     List<Mapping> rMappingList = dbadapter.getMappingByWord(word2, tablename);
-                                    if (rMappingList.size() > 0)
+                                    if (!rMappingList.isEmpty())
                                         code2 = rMappingList.get(0).getCode();
                                     else
                                         break;
                                 }
-                                if (code2 != null && code2.length() > 0) {
+                                if (code2 != null && !code2.isEmpty()) {
                                     baseCode += code2;
                                     QPCode += code2.substring(0, 1);
                                 } else
@@ -1212,7 +1210,7 @@ List<Mapping> scorelistSnapshot = null;
                                 for (int j = 0; j < word2.length(); j++) {
                                     String c = word2.substring(j, j + 1);
                                     List<Mapping> rMappingList = dbadapter.getMappingByWord(c, tablename);
-                                    if (rMappingList.size() > 0) {
+                                    if (!rMappingList.isEmpty()) {
                                         baseCode += rMappingList.get(0).getCode();
                                         QPCode += rMappingList.get(0).getCode().substring(0, 1);
                                     } else //r-lookup failed. abandon the phrase learning
@@ -1305,12 +1303,14 @@ List<Mapping> scorelistSnapshot = null;
                     Log.i(TAG, "updateSimilarCodeCache(): code not in cache. update to db only on code = '" + key + "'");
                 removeRemappedCodeCachedMappings(key);
             }
-            if (code.length() == 1)// prefetch if code length ==1
-                try {
-                    getMappingByCode(code, !isPhysicalKeyboardPressed, false, true);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
+        }
+        // Prefetch if code length == 1 (moved outside loop since loop doesn't execute when code.length() == 1)
+        if (code.length() == 1) {
+            try {
+                getMappingByCode(code, !isPhysicalKeyboardPressed, false, true);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -1336,7 +1336,7 @@ List<Mapping> scorelistSnapshot = null;
     public void learnRelatedPhraseAndUpdateScore(Mapping updateMapping)
     //String id, String code, String word,
     //String pword, int score, boolean isDictionary)
-            throws RemoteException {
+    {
         if (DEBUG) Log.i(TAG, "learnRelatedPhraseAndUpdateScore() ");
 
         if (scorelist == null) {
@@ -1399,9 +1399,6 @@ List<Mapping> scorelistSnapshot = null;
         if (scorelist != null) {
             scorelist.clear();
         }
-        if (scorelist != null) {
-            scorelist.clear();
-        }
         if (cache != null) {
             cache.clear();
         }
@@ -1448,7 +1445,7 @@ List<Mapping> scorelistSnapshot = null;
                     temp.setEnglishSuggestionRecord();
                     result.add(temp);
                 }
-                if (result.size() > 0) {
+                if (!result.isEmpty()) {
                     engcache.put(word, result);
                 }
             }
@@ -1483,7 +1480,7 @@ List<Mapping> scorelistSnapshot = null;
         if (tablename.equals("phonetic")) {
             table = tablename + mLIMEPref.getPhoneticKeyboardType();
         }
-        if (selKeyMap.get(table) == null || selKeyMap.size() == 0) {
+        if (selKeyMap.get(table) == null || selKeyMap.isEmpty()) {
             //if(dbadapter == null){dbadapter = new LimeDB(ctx);}
             selkey = dbadapter.getImInfo(tablename, "selkey");
             if (DEBUG)

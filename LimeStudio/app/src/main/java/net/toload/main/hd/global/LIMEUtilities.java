@@ -40,7 +40,6 @@ import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 
 import net.lingala.zip4j.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
 import net.toload.main.hd.LIMEService;
 import net.toload.main.hd.R;
@@ -132,7 +131,7 @@ public class LIMEUtilities {
 	public static void zip(String zipFilePath, List<String> sourceFiles, String baseFolderPath, Boolean OverWrite) 	throws Exception {
 		File zipFile = new File(zipFilePath);
 		if( zipFile.exists() && !OverWrite) return;
-		else if(zipFile.exists() && OverWrite) zipFile.delete();
+		else if(zipFile.exists() && OverWrite && !zipFile.delete()) Log.w(TAG,"Failed to delete existing zip file");
 
 		ZipOutputStream zos;
 		FileOutputStream outStream;
@@ -214,85 +213,86 @@ public class LIMEUtilities {
 		return !canonical.getCanonicalFile().equals(canonical.getAbsoluteFile());
 	}
 
-	public static List<String> unzip(String zipFilePath, String targetFolder, Boolean OverWrite) throws ZipException, IOException {
+	public static List<String> unzip(String zipFilePath, String targetFolder, Boolean OverWrite) throws IOException {
 		return unzip(new File(zipFilePath), new File(targetFolder), OverWrite);
 	}
 
     public static List<String> unzip(File zipFile,
                                      File targetDirectory,
-                                     boolean overWrite) throws ZipException, IOException {
+                                     boolean overWrite) throws IOException {
         List<String> returnFilePaths = new ArrayList<>();
 
         if (!targetDirectory.exists() && !targetDirectory.mkdirs()) {
             throw new IOException("Failed to create target dir: " + targetDirectory.getAbsolutePath());
         }
 
-        ZipFile zip4jFile = new ZipFile(zipFile);
-        List<FileHeader> fileHeaders = zip4jFile.getFileHeaders();
+        try (ZipFile zip4jFile = new ZipFile(zipFile)) {
+            List<FileHeader> fileHeaders = zip4jFile.getFileHeaders();
 
-        for (FileHeader fileHeader : fileHeaders) {
-            String itemName = fileHeader.getFileName();
+            for (FileHeader fileHeader : fileHeaders) {
+                String itemName = fileHeader.getFileName();
 
-            if (itemName == null || itemName.isEmpty()) {
-                continue;
-            }
-
-            File targetFile;
-
-            // Handle absolute /data/ paths: only restore into our package root
-            if (itemName.startsWith("/data/")
-                    || itemName.startsWith(Environment.getDataDirectory() + File.separator)) {
-
-                String packageRoot = LIME.getLimeDataRootFolder(); // e.g. /data/user/0/your.pkg
-                File abs = new File(itemName).getCanonicalFile();
-                String root = new File(packageRoot).getCanonicalPath() + File.separator;
-
-                // Skip if not under our package root
-                if (!abs.getPath().startsWith(root)) {
+                if (itemName == null || itemName.isEmpty()) {
                     continue;
                 }
 
-                targetFile = abs;
-            } else {
-                // Normal relative entry under targetDirectory
-                File out = new File(targetDirectory, itemName).getCanonicalFile();
-                String destRoot = targetDirectory.getCanonicalPath() + File.separator;
+                File targetFile;
 
-                // Zip‑Slip guard: keep inside targetDirectory
-                if (!out.getPath().startsWith(destRoot)) {
-                    continue;
+                // Handle absolute /data/ paths: only restore into our package root
+                if (itemName.startsWith("/data/")
+                        || itemName.startsWith(Environment.getDataDirectory() + File.separator)) {
+
+                    String packageRoot = LIME.getLimeDataRootFolder(); // e.g. /data/user/0/your.pkg
+                    File abs = new File(itemName).getCanonicalFile();
+                    String root = new File(packageRoot).getCanonicalPath() + File.separator;
+
+                    // Skip if not under our package root
+                    if (!abs.getPath().startsWith(root)) {
+                        continue;
+                    }
+
+                    targetFile = abs;
+                } else {
+                    // Normal relative entry under targetDirectory
+                    File out = new File(targetDirectory, itemName).getCanonicalFile();
+                    String destRoot = targetDirectory.getCanonicalPath() + File.separator;
+
+                    // Zip‑Slip guard: keep inside targetDirectory
+                    if (!out.getPath().startsWith(destRoot)) {
+                        continue;
+                    }
+
+                    targetFile = out;
                 }
 
-                targetFile = out;
-            }
-
-            // Create parent directories if they don't exist
-            File parentDir = targetFile.getParentFile();
-            if (parentDir != null && !parentDir.isDirectory() && !parentDir.mkdirs()) {
-                throw new IOException("Failed to ensure parent directory: " + parentDir.getAbsolutePath());
-            }
-
-            if (fileHeader.isDirectory()) {
-                if (!targetFile.isDirectory() && !targetFile.mkdirs()) {
-                    throw new IOException("Failed to create directory: " + targetFile.getAbsolutePath());
+                // Create parent directories if they don't exist
+                File parentDir = targetFile.getParentFile();
+                if (parentDir != null && !parentDir.isDirectory() && !parentDir.mkdirs()) {
+                    throw new IOException("Failed to ensure parent directory: " + parentDir.getAbsolutePath());
                 }
-                returnFilePaths.add(targetFile.getAbsolutePath());
-                continue;
-            }
 
-            if (targetFile.exists()) {
-                if (!overWrite) {
+                if (fileHeader.isDirectory()) {
+                    if (!targetFile.isDirectory() && !targetFile.mkdirs()) {
+                        throw new IOException("Failed to create directory: " + targetFile.getAbsolutePath());
+                    }
                     returnFilePaths.add(targetFile.getAbsolutePath());
                     continue;
                 }
-                if (!targetFile.delete()) {
-                    throw new IOException("Failed to delete existing file: " + targetFile);
-                }
-            }
 
-            // Extract the file using Zip4j
-            zip4jFile.extractFile(fileHeader, targetDirectory.getAbsolutePath());
-            returnFilePaths.add(targetFile.getAbsolutePath());
+                if (targetFile.exists()) {
+                    if (!overWrite) {
+                        returnFilePaths.add(targetFile.getAbsolutePath());
+                        continue;
+                    }
+                    if (!targetFile.delete()) {
+                        throw new IOException("Failed to delete existing file: " + targetFile);
+                    }
+                }
+
+                // Extract the file using Zip4j
+                zip4jFile.extractFile(fileHeader, targetDirectory.getAbsolutePath());
+                returnFilePaths.add(targetFile.getAbsolutePath());
+            }
         }
 
         return returnFilePaths;
@@ -443,9 +443,9 @@ public class LIMEUtilities {
 	
 	public static String getVoiceSearchIMId(Context context){
 		ComponentName voiceInputComponent = 
-				new ComponentName("com.google.android.voicesearch", "com.google.android.voicesearch.ime.VoceInputMethdServce");
+				new ComponentName("com.google.android.voiceSearch", "com.google.android.voicesearch.ime.VoceInputMethdServce");
 		if(DEBUG)
-			Log.i(TAG, "getVoiceSearchIMId(), Comonent name = " 
+			Log.i(TAG, "getVoiceSearchIMId(), Comment name = "
 					+ voiceInputComponent.flattenToString() + ", id = " 
 					+ voiceInputComponent.flattenToShortString());
 		return voiceInputComponent.flattenToShortString();

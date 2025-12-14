@@ -27,13 +27,14 @@ package net.toload.main.hd;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.core.view.MenuProvider;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.core.view.GravityCompat;
@@ -49,7 +50,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -130,7 +130,7 @@ public class NavigationDrawerFragment extends Fragment {
 
         if (savedInstanceState != null) {
             mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
-            boolean mFromSavedInstanceState = true;
+            //boolean mFromSavedInstanceState = true;
         }
 
         // Select either the default item (0) or the last selected item.
@@ -138,19 +138,17 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         datasource = new LimeDB(this.getActivity());
 
         mDrawerListView = (ListView) inflater.inflate(
                 R.layout.fragment_navigation_drawer, container, false);
-        mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectItem(position);
-            }
-        });
+        mDrawerListView.setOnItemClickListener((parent, view, position, id) -> selectItem(position));
+        
+        // Handle window insets for edge-to-edge - drawer should account for ActionBar + status bar
+        setupDrawerInsets();
 
 
         // Load Menu Item
@@ -221,22 +219,18 @@ public class NavigationDrawerFragment extends Fragment {
                     builder.setMessage(getResources().getString(R.string.reset_dialog_confirm));
                     builder.setCancelable(false);
                     builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    // Reset Lime preferences
-                                    SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences(getActivity().getPackageName() + "_preferences", Context.MODE_PRIVATE);
-                                    settings.edit().clear().commit();
+                            (dialog, id) -> {
+                                // Reset Lime preferences
+                                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences(getActivity().getPackageName() + "_preferences", Context.MODE_PRIVATE);
+                                settings.edit().clear().commit();
 
-                                    // Reset Lime databases
-                                    datasource.resetLimeSetting();
-                                    System.exit(0);
+                                // Reset Lime databases
+                                datasource.resetLimeSetting();
+                                System.exit(0);
 
-                                }
                             });
                     builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                }
+                            (dialog, id) -> {
                             });
 
                     AlertDialog alert = builder.create();
@@ -263,7 +257,7 @@ public class NavigationDrawerFragment extends Fragment {
      */
     public void setUp(int fragmentId, DrawerLayout drawerLayout) {
 
-        mFragmentContainerView = getActivity().findViewById(fragmentId);
+        mFragmentContainerView = Objects.requireNonNull(getActivity()).findViewById(fragmentId);
         mDrawerLayout = drawerLayout;
 
         // set a custom shadow that overlays the main content when the drawer opens
@@ -291,7 +285,7 @@ public class NavigationDrawerFragment extends Fragment {
                     return;
                 }
 
-                getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+                Objects.requireNonNull(getActivity()).invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
             }
 
             @Override
@@ -312,25 +306,20 @@ public class NavigationDrawerFragment extends Fragment {
                     mLIMEPref.setParameter(PREF_USER_LEARNED_DRAWER, true);
                 }
 
-                getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+                Objects.requireNonNull(getActivity()).invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
             }
         };
 
         // If the user hasn't 'learned' about the drawer, open it to introduce them to the drawer,
         // per the navigation drawer design guidelines.
         // If LIME is not enabled, the setup wizard will be launched and thus don't open the drawer
-        if (LIMEUtilities.isLIMEEnabled(this.getActivity() ) && !mUserLearnedDrawer) {
+        if (LIMEUtilities.isLIMEEnabled(Objects.requireNonNull(this.getActivity())) && !mUserLearnedDrawer) {
                 //( !mUserLearnedDrawer && !mFromSavedInstanceState) ){
             mDrawerLayout.openDrawer(mFragmentContainerView);
         }
 
         // Defer code dependent on restoration of previous instance state.
-        mDrawerLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                mDrawerToggle.syncState();
-            }
-        });
+        mDrawerLayout.post(() -> mDrawerToggle.syncState());
 
         mDrawerLayout.addDrawerListener(mDrawerToggle);
     }
@@ -349,7 +338,7 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         Activity activity = (Activity) context;
         try {
@@ -366,13 +355,13 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
     }
 
     @Override
-    public void onConfigurationChanged(Configuration newConfig) {
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         // Forward the new configuration the drawer toggle component.
         mDrawerToggle.onConfigurationChanged(newConfig);
@@ -390,7 +379,7 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     private ActionBar getActionBar() {
-        return ((AppCompatActivity) getActivity()).getSupportActionBar();
+        return ((AppCompatActivity) Objects.requireNonNull(getActivity())).getSupportActionBar();
     }
 
     public void updateMenuItems() {
@@ -419,6 +408,39 @@ public class NavigationDrawerFragment extends Fragment {
             mDrawerListView.setAdapter(adapter);
             adapter.setNotifyOnChange(true);
 
+        }
+    }
+
+    /**
+     * Setup window insets for the drawer ListView to account for ActionBar and status bar.
+     * This ensures drawer content is not obscured by the ActionBar in edge-to-edge mode.
+     */
+    private void setupDrawerInsets() {
+        if (mDrawerListView != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(mDrawerListView, (v, insets) -> {
+                int systemBarsType = WindowInsetsCompat.Type.systemBars();
+                int topInset = insets.getInsets(systemBarsType).top;
+                int bottomInset = insets.getInsets(systemBarsType).bottom;
+                
+                // Get ActionBar height to add to top padding
+                int actionBarHeight = 0;
+                ActionBar actionBar = getActionBar();
+                if (actionBar != null) {
+                    android.util.TypedValue tv = new android.util.TypedValue();
+                    if (getActivity() != null && getActivity().getTheme().resolveAttribute(
+                            android.R.attr.actionBarSize, tv, true)) {
+                        actionBarHeight = android.util.TypedValue.complexToDimensionPixelSize(
+                            tv.data, getResources().getDisplayMetrics());
+                    }
+                }
+                
+                // Apply top padding = status bar + ActionBar (drawer needs to account for ActionBar),
+                // bottom padding = navigation bar
+                // Left and right should extend to edges
+                v.setPadding(0, topInset + actionBarHeight, 0, bottomInset);
+                
+                return insets;
+            });
         }
     }
 

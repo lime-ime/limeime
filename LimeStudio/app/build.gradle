@@ -49,6 +49,7 @@ android {
         release {
             minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            enableAndroidTestCoverage = true
         }
     }
     applicationVariants.all { variant ->
@@ -78,6 +79,7 @@ dependencies {
 
 
     implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'androidx.core:core:1.15.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'androidx.preference:preference:1.2.1'

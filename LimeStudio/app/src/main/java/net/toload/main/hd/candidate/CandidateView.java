@@ -246,7 +246,9 @@ public class CandidateView extends View implements View.OnClickListener {
             mScreenWidth = metrics.getBounds().width();
             mScreenHeight = metrics.getBounds().height();
         } else {
-            // API < 30 approach
+            // API < 30 approach - use deprecated APIs with proper suppression
+            // Both getDefaultDisplay() and getSize() are deprecated but necessary for API < 30
+            @SuppressWarnings("deprecation")
             Display display = wm.getDefaultDisplay();
             Point screenSize = new Point();
             display.getSize(screenSize);

@@ -34,7 +34,9 @@ import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.provider.OpenableColumns;
@@ -42,6 +44,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.fragment.app.DialogFragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -375,21 +378,29 @@ public class SetupImLoadDialog extends DialogFragment {
         intent.setType("*/*");
         filePickerLauncher.launch(intent);
     }
-
+    @SuppressWarnings("deprecation")
     public boolean isNetworkAvailable(Context context) {
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connectivityManager == null) {
             return false;
         }
-        Network network = connectivityManager.getActiveNetwork();
-        if (network == null) return false;
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Use modern API for API 23+
+            Network network = connectivityManager.getActiveNetwork();
+            if (network == null) return false;
 
-        NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
-        return capabilities != null && (
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-        );
+            NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
+            return capabilities != null && (
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+            );
+        } else {
+            // Use deprecated API for API < 23
+            NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+            return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        }
     }
 
     public void downloadAndLoadIm(String code, String type) {
@@ -531,7 +542,7 @@ public class SetupImLoadDialog extends DialogFragment {
     public void loadDefaultRelated() {
         try {
             File relateDBFile = LIMEUtilities.isFileExist(activity.getDatabasePath("related.db").getAbsolutePath());
-            if (relateDBFile != null) relateDBFile.delete();
+            if (relateDBFile != null && !relateDBFile.delete()) Log.w(TAG,"Failed to delete related.db");
             File relatedDbPath = LIMEUtilities.isFileNotExist(activity.getDatabasePath("related.db").getAbsolutePath());
             if (relatedDbPath != null) LIMEUtilities.copyRAWFile(activity.getResources().openRawResource(R.raw.lime), relatedDbPath);
             DBSrv.importBackupRelatedDb(relatedDbPath);

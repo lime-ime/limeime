@@ -97,7 +97,7 @@ public class LIMEKeyboardSwitcher {
     //private static List<String> mActiveKeyboardNames;
     private static List<String> mActivatedIMShortnameList;
     
-    private float mKeySizeScale=1;
+    private float mKeySizeScale;
     
 
     public LIMEKeyboardSwitcher(LIMEService service, Context themedContext) {

@@ -31,8 +31,13 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.Log;
+import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.preference.PreferenceFragmentCompat;
 
 import net.toload.main.hd.DBServer;
@@ -59,12 +64,79 @@ public class LIMEPreferenceHC extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		// Enable edge-to-edge display for API 35+ (Android 15+)
+		WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
 		this.SearchSrv = new SearchServer(this);
 
 		// Display the fragment as the main content.
 		getSupportFragmentManager().beginTransaction().replace(android.R.id.content,
 				new PrefsFragment()).commit();
 
+		// Ensure ActionBar title is displayed
+		androidx.appcompat.app.ActionBar actionBar = getSupportActionBar();
+		if (actionBar != null) {
+			actionBar.setDisplayShowTitleEnabled(true);
+		}
+
+		// Handle window insets for edge-to-edge display
+		setupEdgeToEdge();
+	}
+
+	/**
+	 * Setup edge-to-edge display with proper window insets handling.
+	 * This ensures UI elements are not obscured by system bars on API 35+.
+	 */
+	private void setupEdgeToEdge() {
+		// Apply window insets to the content view (where PreferenceFragment is displayed)
+		View contentView = findViewById(android.R.id.content);
+		if (contentView != null) {
+			ViewCompat.setOnApplyWindowInsetsListener(contentView, (v, insets) -> {
+				int systemBarsType = WindowInsetsCompat.Type.systemBars();
+				int topInset = insets.getInsets(systemBarsType).top;
+				int bottomInset = insets.getInsets(systemBarsType).bottom;
+				int leftInset = insets.getInsets(systemBarsType).left;
+				int rightInset = insets.getInsets(systemBarsType).right;
+
+				// Apply padding: top = status bar only (ActionBar handles its own space),
+				// left/right/bottom = system bars
+				v.setPadding(leftInset, topInset, rightInset, bottomInset);
+
+				return insets;
+			});
+		}
+
+		// Set status bar and navigation bar to transparent for edge-to-edge effect
+		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+			@SuppressWarnings("deprecation")
+			android.view.Window window = getWindow();
+			window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
+			window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+		}
+		
+		// Set status bar icon appearance to dark (black icons) for better visibility
+		// Since status bar is transparent and content behind may be light, use dark icons
+		View decorView = getWindow().getDecorView();
+		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+			// API 23+ (Marshmallow+): Use WindowInsetsControllerCompat
+			WindowInsetsControllerCompat windowInsetsController = ViewCompat.getWindowInsetsController(decorView);
+			if (windowInsetsController != null) {
+				// Use dark status bar icons (black) for visibility on light backgrounds
+				// setAppearanceLightStatusBars(true) = light status bar appearance = dark icons
+				windowInsetsController.setAppearanceLightStatusBars(true);
+				// Use dark navigation bar icons for consistency
+				windowInsetsController.setAppearanceLightNavigationBars(true);
+			}
+		} else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+			// API 21-22: SYSTEM_UI_FLAG_LIGHT_STATUS_BAR is not available (introduced in API 23)
+			// On API 21-22, we cannot change icon color programmatically
+			// Set a dark status bar so white icons are visible (compromise for API 21-22)
+			@SuppressWarnings("deprecation")
+			android.view.Window window = getWindow();
+			// Use a dark color so white icons are visible
+			// This maintains some edge-to-edge while ensuring icons are visible
+			window.setStatusBarColor(0xFF000000); // Solid black
+		}
 	}
 
 	public static class PrefsFragment extends PreferenceFragmentCompat implements OnSharedPreferenceChangeListener{

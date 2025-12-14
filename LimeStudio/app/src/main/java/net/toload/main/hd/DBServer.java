@@ -31,6 +31,8 @@ import android.net.Uri;
 import android.os.RemoteException;
 import android.util.Log;
 
+import androidx.core.content.ContextCompat;
+
 import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
@@ -162,6 +164,15 @@ public class  DBServer {
 		return datasource.getCount();
 	}
 
+	/**
+	 * Get the data directory path, compatible with all API levels.
+	 * Uses ContextCompat.getDataDir() which handles API level differences automatically.
+	 */
+	private static String getDataDirPath(Context context) {
+		File dataDir = ContextCompat.getDataDir(context);
+		return dataDir != null ? dataDir.getAbsolutePath() : context.getFilesDir().getParent();
+	}
+
 
 
 
@@ -170,7 +181,7 @@ public class  DBServer {
         if (DEBUG)
             Log.i(TAG, "backupDatabase()");
 
-        String dataDir = ctx.getDataDir().getAbsolutePath();
+        String dataDir = getDataDirPath(ctx);
         //backup shared preferences
 
         File fileSharedPrefsBackup = new File(dataDir, LIME.SHARED_PREFS_BACKUP_NAME);
@@ -290,7 +301,7 @@ public class  DBServer {
 	public static void restoreDatabase(String srcFilePath) {
 
 		File check = new File(srcFilePath);
-        String dataDir = ctx.getDataDir().getAbsolutePath();
+        String dataDir = getDataDirPath(ctx);
 
 		if(check.exists()){
 

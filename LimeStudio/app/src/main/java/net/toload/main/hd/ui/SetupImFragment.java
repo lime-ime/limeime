@@ -38,6 +38,7 @@ import android.os.RemoteException;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.core.content.pm.PackageInfoCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -58,9 +59,6 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 
@@ -78,8 +76,6 @@ public class SetupImFragment extends Fragment {
 
     // Basic
     private SetupImHandler handler;
-    private Thread backupthread;
-    private Thread restorethread;
 
     // UI for Progress
     private View progressContainer;
@@ -296,7 +292,7 @@ public class SetupImFragment extends Fragment {
         PackageInfo pInfo;
         try {
             pInfo = requireActivity().getPackageManager().getPackageInfo(requireActivity().getPackageName(), 0);
-            long versionCode = pInfo.getLongVersionCode();
+            long versionCode = PackageInfoCompat.getLongVersionCode(pInfo);
             String versionstr = "v"+ pInfo.versionName + " - " + versionCode;
             txtVersion = rootView.findViewById(R.id.txtVersion);
             txtVersion.setText(versionstr);
@@ -623,7 +619,7 @@ public class SetupImFragment extends Fragment {
 
         new Thread(() -> {
             try {
-                DBSrv.restoreDatabase(uri);
+                DBServer.restoreDatabase(uri);
             } catch (Exception e) {
                 e.printStackTrace();
                 activity.runOnUiThread(() -> showToastMessage(activity.getString(R.string.l3_initial_restore_error), Toast.LENGTH_LONG));

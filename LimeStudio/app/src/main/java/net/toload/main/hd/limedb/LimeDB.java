@@ -109,7 +109,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     public final static String FIELD_DIC_pword = "pword";
     //public final static String FIELD_DIC_ccode = "ccode";
     public final static String FIELD_DIC_cword = "cword";
-    public final static String FIELD_DIC_score = "score";
+    //public final static String FIELD_DIC_score = "score";
     //public final static String FIELD_DIC_is = "isDictionary";
 
     // for keyToChar
@@ -409,7 +409,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 	 */
 
     /**
-     * Jeremy '15,6,6 left only oldVersion <80
+     * Jeremy '25,12,14 remove all db upgrade code.
      * Do upgrade here if db version is not up to date.
      */
     @Override
@@ -417,109 +417,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         Log.i(TAG, "OnUpgrade() db old version = " + oldVersion + ", new version = " + newVersion);
 
-        if (oldVersion < 101) {
-            long startTime = System.currentTimeMillis();
-            //create index on related (cword) for better perfomance when making run-time suggestion checking related phrases. Jeremy '15,7,17
 
-            try {
-                String CREATE_INDEX ="CREATE INDEX related_idx_cword "
-                        + "on " + Lime.DB_RELATED + " (" + Lime.DB_RELATED_COLUMN_CWORD + "); ";
-
-                execSQL(dbin, CREATE_INDEX);
-            } catch (Exception ignored) {}
-
-
-            if (oldVersion < 100) {
-
-
-
-                Cursor cursor = dbin.query("sqlite_master", null, "type='index' and name = 'phonetic_idx_code3r'",
-                        null, null, null, null);
-
-                if (cursor != null) {
-                    if (cursor.moveToFirst()) {
-                        Log.i(TAG, "OnUpgrade(), NoToneCodeI index is exist!!");
-                    } else {
-                        Log.i(TAG, "OnUpgrade()  creating phonetic code3r column and index.");
-                        execSQL(dbin, "alter table phonetic add column 'code3r'");
-                        execSQL(dbin, "create index 'phonetic_idx_code3r' on phonetic (code3r)");
-                    }
-                    cursor.close();
-                }
-                cursor = dbin.query("phonetic", null, "code3r='ru'", null, null, null, null);
-                if (cursor != null) {
-                    if (cursor.moveToFirst()) {
-                        Log.i(TAG, "OnUpgrade(), NoToneCode column has valid data!!");
-                    } else {
-                        Log.i(TAG, "OnUpgrade()  update phonetic code3r data from trimmed code.");
-                        execSQL(dbin, "update phonetic set code3r=trim(code,'3467')");
-                    }
-                    cursor.close();
-                }
-                long endTime = System.currentTimeMillis();
-                Log.i(TAG, "OnUpgrade() build phonetic code3r finished.  Elapsed time = " + (endTime - startTime) + "ms.");
-
-                // Update Related table
-                if (oldVersion > 78) {
-                    try {
-
-                        String BACKUP_OLD_RELATED = "ALTER TABLE " + Lime.DB_RELATED + " RENAME TO " + Lime.DB_RELATED + "_old";
-                        execSQL(dbin, BACKUP_OLD_RELATED);
-
-                        String CREATE_NEW_TABLE = "";
-
-                        CREATE_NEW_TABLE += "CREATE TABLE " + Lime.DB_RELATED + " ("
-                                + Lime.DB_COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                                + Lime.DB_RELATED_COLUMN_PWORD + " text, "
-                                + Lime.DB_RELATED_COLUMN_CWORD + " text, "
-                                + Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER, "
-                                + Lime.DB_RELATED_COLUMN_USERSCORE + " INTEGER DEFAULT 0  NOT NULL)";
-
-                        execSQL(dbin, CREATE_NEW_TABLE);
-
-                        try {
-                            String CREATE_INDEX = "";
-                            CREATE_INDEX += "CREATE INDEX related_idx_pword "
-                                    + "ON " + Lime.DB_RELATED + "(" + Lime.DB_RELATED_COLUMN_PWORD + "); ";
-
-                            execSQL(dbin, CREATE_INDEX);
-                        } catch (Exception e) {
-                            // ignore index creation error
-                        }
-
-                        String MIGRATE_DATA = getString();
-
-                        execSQL(dbin, MIGRATE_DATA);
-
-                        String DROP_OLD_TABLE = "DROP TABLE " + Lime.DB_RELATED + "_old";
-                        execSQL(dbin, DROP_OLD_TABLE);
-
-                        // Download and restore related DB
-
-                    } catch (SQLiteException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    String add_column = "ALTER TABLE " + Lime.DB_RELATED + " ADD ";
-                    add_column += Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER";
-                    execSQL(dbin, add_column);
-                }
-
-            }
-        }
     }
 
-    private static String getString() {
-        String MIGRATE_DATA = "";
-        MIGRATE_DATA += "INSERT INTO " + Lime.DB_RELATED + "("
-                + Lime.DB_RELATED_COLUMN_PWORD + ", "
-                + Lime.DB_RELATED_COLUMN_CWORD + ", "
-                + Lime.DB_RELATED_COLUMN_USERSCORE + ","
-                + Lime.DB_RELATED_COLUMN_BASESCORE + ")";
-        MIGRATE_DATA += "SELECT " + Lime.DB_RELATED_COLUMN_PWORD + ", "
-                + Lime.DB_RELATED_COLUMN_CWORD + ", user_score, score  FROM " + Lime.DB_RELATED + "_old";
-        return MIGRATE_DATA;
-    }
+
 
     public void checkAndUpdateRelatedTable() {
         // Check related table structure
@@ -562,46 +463,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
     }
-    @Deprecated
-    public void upgradeRelatedTable(SQLiteDatabase dbin) {
-        try {
 
-            String BACKUP_OLD_RELATED = "ALTER " + Lime.DB_RELATED + " RENAME TO " + Lime.DB_RELATED + "_old";
-            execSQL(dbin, BACKUP_OLD_RELATED);
-
-            String CREATE_NEW_TABLE = "";
-
-            CREATE_NEW_TABLE += "CREATE TABLE \"" + Lime.DB_RELATED + "\" ( ";
-            CREATE_NEW_TABLE += "        \"" + Lime.DB_COLUMN_ID + "\"  INTEGER PRIMARY KEY AUTOINCREMENT,";
-            CREATE_NEW_TABLE += "       \"" + Lime.DB_RELATED_COLUMN_PWORD + "\"  text,";
-            CREATE_NEW_TABLE += "        \"" + Lime.DB_RELATED_COLUMN_CWORD + "\"  text,";
-            CREATE_NEW_TABLE += "        \"" + Lime.DB_RELATED_COLUMN_BASESCORE + "\"  integer,";
-            CREATE_NEW_TABLE += "        \"" + Lime.DB_RELATED_COLUMN_USERSCORE + "\"  INTEGER DEFAULT 0";
-            CREATE_NEW_TABLE += ");";
-
-            execSQL(dbin, CREATE_NEW_TABLE);
-
-            String CREATE_INDEX = "";
-            CREATE_INDEX += "CREATE INDEX \"" + Lime.DB_RELATED + "\".\"related_idx_pword\" ";
-            CREATE_INDEX += "ON \"" + Lime.DB_RELATED + "\" (\"" + Lime.DB_RELATED_COLUMN_PWORD + "\" ASC); ";
-
-            execSQL(dbin, CREATE_INDEX);
-
-            String MIGRATE_DATA = "";
-            MIGRATE_DATA += "INSERT INTO " + Lime.DB_RELATED + "(" + Lime.DB_RELATED_COLUMN_PWORD + ", " + Lime.DB_RELATED_COLUMN_CWORD + ", " + Lime.DB_RELATED_COLUMN_BASESCORE + ")";
-            MIGRATE_DATA += "SELECT " + Lime.DB_RELATED_COLUMN_PWORD + ", " + Lime.DB_RELATED_COLUMN_CWORD + ", score FROM " + Lime.DB_RELATED + "_old";
-
-            execSQL(dbin, MIGRATE_DATA);
-
-            String DROP_OLD_TABLE = "DROP TABLE " + Lime.DB_RELATED + "_old";
-            execSQL(dbin, DROP_OLD_TABLE);
-
-            // Download and restore related DB
-
-        } catch (SQLiteException e) {
-            e.printStackTrace();
-        }
-    }
 
     /**
      * Check the consistency of phonetic keyboard setting in preference and db.
@@ -829,7 +691,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (mLIMEPref.getLearnRelatedWord()) {
             try {
                 // Remove Punctutation
-                String[] chinesesymbols = ChineseSymbol.chineseSymbols.split("|");
+                String[] chinesesymbols = ChineseSymbol.chineseSymbols.split("\\|");
                 for (String s : chinesesymbols) {
                     assert cword != null;
                     cword = cword.replaceAll(s, "");
@@ -886,11 +748,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 if (DEBUG)
                     Log.i(TAG, "addOrUpdateRelatedPhraseRecord(): new record, dictotal:" + dictotal);
             } else {//the item exist in preload related database.
-                if (relatedscore.get(munit.getId()) == null) {
+                Integer existingScore = relatedscore.get(munit.getId());
+                if (existingScore == null) {
                     score = munit.getScore() + 1;
                     relatedscore.put(munit.getId(), score);
                 } else {
-                    score = relatedscore.get(munit.getId()) + 1;
+                    score = existingScore + 1;
                     relatedscore.put(munit.getId(), score);
                 }
                 cv.put(Lime.DB_RELATED_COLUMN_USERSCORE, score);
@@ -983,11 +846,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 if (srcunit.isRelatedPhraseRecord()) {
 
                     int score;
-                    if (relatedscore.get(srcunit.getId()) == null) {
+                    Integer existingScore = relatedscore.get(srcunit.getId());
+                    if (existingScore == null) {
                         score = srcunit.getScore() + 1;
                         relatedscore.put(srcunit.getId(), score);
                     } else {
-                        score = relatedscore.get(srcunit.getId()) + 1;
+                        score = existingScore + 1;
                         relatedscore.put(srcunit.getId(), score);
                     }
 
@@ -2057,17 +1921,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                         } else if (codeDualMap.get(c) != null && !Objects.equals(codeDualMap.get(c), c)) {
                             n = codeDualMap.get(c);
-                            String newCode;
-
-                            if (entry.length() == 1)
-                                newCode = n;
-                            else if (i == 0)
-                                newCode = n + entry.substring(1);
-                            else if (i == entry.length() - 1)
-                                newCode = entry.substring(0, entry.length() - 1) + n;
-                            else
-                                newCode = entry.substring(0, i) + n
-                                        + entry.substring(i + 1);
+                            String newCode = getNewCode(entry, n, i);
                             if (DEBUG) {
                                 assert newCode != null;
                                 Log.i(TAG, "buildDualCodeList() newCode = '" + newCode
@@ -2152,6 +2006,21 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return treeDualCodeList;
 
 
+    }
+
+    private static String getNewCode(String entry, String n, int i) {
+        String newCode;
+
+        if (entry.length() == 1)
+            newCode = n;
+        else if (i == 0)
+            newCode = n + entry.substring(1);
+        else if (i == entry.length() - 1)
+            newCode = entry.substring(0, entry.length() - 1) + n;
+        else
+            newCode = entry.substring(0, i) + n
+                    + entry.substring(i + 1);
+        return newCode;
     }
 
     /**
@@ -2476,12 +2345,19 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
             //Jeremy '11,8,26 build valid code map
             if (buildValidCodeList && !validCodeMap.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                boolean first = true;
                 for (String validCode : validCodeMap) {
                     if (DEBUG)
                         Log.i(TAG, "buildQueryResult(): buildValidCodeList: valicode=" + validCode);
-                    if (lastValidDualCodeList == null) lastValidDualCodeList = validCode;
-                    else lastValidDualCodeList = lastValidDualCodeList + "|" + validCode;
+                    if (first) {
+                        sb.append(validCode);
+                        first = false;
+                    } else {
+                        sb.append("|").append(validCode);
+                    }
                 }
+                lastValidDualCodeList = sb.toString();
             }
 
 
@@ -3138,9 +3014,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             firstline = false;
                         } else if (line.trim().isEmpty()) {
                             continue;
-                        } else {
-                            line.length();
                         }
+                        //else { line.length() }
 
                         try {
 
@@ -4151,8 +4026,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             //Jeremy '11,9,8 update handconverdb to v2 with base score in TCSC table
             File hanDBFile = LIMEUtilities.isFileExist(
                     mContext.getDatabasePath("hanconvert.db").getAbsolutePath());
-            if (hanDBFile != null)
-                hanDBFile.delete();
+            if (hanDBFile != null &&
+                !hanDBFile.delete())
+                    Log.w(TAG,"hanconvert.db file delete failed");
             File hanDBV2File = LIMEUtilities.isFileNotExist(
                     mContext.getDatabasePath("hanconvertv2.db").getAbsolutePath());
 
