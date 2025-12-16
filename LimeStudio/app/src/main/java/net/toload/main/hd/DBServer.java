@@ -307,8 +307,12 @@ public class  DBServer {
 
 			datasource.holdDBConnection(); //Jeremy '15,5,23
 			closeDatabse();
+            //restore shared preference
+            File checkpref = new File(dataDir, LIME.SHARED_PREFS_BACKUP_NAME);
+            if(checkpref.exists() && !checkpref.delete()) Log.w(TAG, "Failed to delete shared preferences backup file after restore");
 
-			try {
+
+            try {
 				LIMEUtilities.unzip(srcFilePath, dataDir, true);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -321,9 +325,6 @@ public class  DBServer {
 			datasource.unHoldDBConnection(); //Jeremy '15,5,23
 			datasource.openDBConnection(true);
 
-			//restore shared preference
-			File checkpref = new File(dataDir, LIME.SHARED_PREFS_BACKUP_NAME);
-			if(checkpref.exists() && !checkpref.delete()) Log.w(TAG, "Failed to delete shared preferences backup file after restore");
 
 			restoreDefaultSharedPreference(checkpref);
 
