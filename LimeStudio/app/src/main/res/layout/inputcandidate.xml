@@ -27,13 +27,18 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical" >
+    android:orientation="vertical"
+    android:paddingTop="0dp"
+    android:paddingBottom="0dp"
+    android:background="@android:color/transparent">
 
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal" 
-        android:background="@color/color_white">
+        android:background="@color/color_white"
+        android:paddingTop="0dp"
+        android:paddingBottom="0dp">
        
 
         <net.toload.main.hd.candidate.CandidateView
@@ -41,17 +46,26 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="1.0"
-            android:gravity="center_vertical" 
-            />
+            android:gravity="center_vertical"
+            android:layout_marginEnd="0dp" />
 			
         <LinearLayout
             android:id="@+id/candidate_right_parent"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="fill_parent"
-            android:layout_weight="1"
             android:clickable="true"
             android:orientation="horizontal" 
-            android:background="@color/color_white">
+            android:background="@color/color_white"
+            android:layout_marginStart="0dp">
+            
+            <ImageButton
+                android:id="@+id/candidate_keyboard"
+                android:contentDescription="@string/show_keyboard"
+                android:layout_width="@dimen/candidate_expand_button_width"
+                android:layout_height="fill_parent"
+                android:clickable="true"
+                android:src="@drawable/sym_keyboard_show_light"
+                android:visibility="visible" />
             
             <ImageButton
                 android:id="@+id/candidate_right"
@@ -59,7 +73,8 @@
                 android:layout_width="@dimen/candidate_expand_button_width"
                 android:layout_height="fill_parent"
                 android:clickable="true"
-                android:src="@drawable/ic_suggest_expander" />
+                android:src="@drawable/ic_suggest_expander_down"
+                android:visibility="visible" />
             
         </LinearLayout>
     </LinearLayout>

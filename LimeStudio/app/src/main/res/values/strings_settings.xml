@@ -28,6 +28,7 @@
     <!-- Image button description  -->
     <string name="more_cand">Click for more candidates.</string>
     <string name="close_cand">Close the popup candiates view.</string>
+    <string name="show_keyboard">Show keyboard</string>
 
     <!-- Title for Latin keyboard  -->
     <string name="ime_name">LIME-HD</string>
@@ -485,11 +486,11 @@
     <string name="l3_initial_backup_database">備份資料庫</string>
     <string name="l3_initial_backup_start">開始備份資料庫</string>
     <string name="l3_initial_backup_end">資料庫備份完成</string>
-    <string name="l3_initial_backup_confirm">您是否要備份資料庫?</string>
+    <string name="l3_initial_backup_confirm">請在按確認後選擇備份位置</string>
     <string name="l3_initial_backup_error">資料庫備份失敗</string>
     <string name="l3_initial_restore_database">還原資料庫</string>
     <string name="l3_initial_restore_error">還原失敗, 請確定備份檔案存在.</string>
-    <string name="l3_initial_restore_confirm">請在按確認後點選之前備份的limeBackup.zip檔案</string>
+    <string name="l3_initial_restore_confirm">請在按確認後點選將還原之備份檔</string>
     <string name="l3_initial_restore_start">開始還原資料庫</string>
     <string name="l3_initial_restore_end">資料庫還原完成</string>
 

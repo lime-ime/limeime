@@ -101,6 +101,15 @@
             android:label="@string/ime_setting" >
         </activity>
 
+        <!-- Helper Activity for voice input (needed for API 35+) -->
+        <activity
+            android:name=".VoiceInputActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask" >
+        </activity>
+
     </application>
 
 </manifest>

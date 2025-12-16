@@ -51,6 +51,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             enableAndroidTestCoverage = true
         }
+        debug {
+            enableAndroidTestCoverage = true
+        }
     }
     applicationVariants.all { variant ->
         variant.outputs.all {

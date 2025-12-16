@@ -60,7 +60,7 @@ public class CandidateExpandedView extends CandidateView {
     private final int[] mRowSize = new int[MAX_SUGGESTIONS];
     private final int[] mRowStartingIndex = new int[MAX_SUGGESTIONS];
     private int mRows = 0;
-    private final int mHeight; // built own mHeight and get from resources.
+    private int mHeight; // Row height (configHeight + mVerticalPadding), updated in updateFontSize()
     private int mTotalHeight;
     private ScrollView mParentScrollView;
 
@@ -72,6 +72,8 @@ public class CandidateExpandedView extends CandidateView {
     public CandidateExpandedView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
+        // mHeight will be set in updateFontSize() to match parent's mHeight (configHeight + mVerticalPadding)
+        // Initialize with a default value
         mHeight = (int) (context.getResources().
                 getDimensionPixelSize(R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
 
@@ -233,6 +235,10 @@ public class CandidateExpandedView extends CandidateView {
             Log.i(TAG, "prepareLayout():mSuggestions.size()" + mSuggestions.size());
 
         updateFontSize();
+        
+        // Update mHeight to configHeight (content height without padding)
+        // Row height is mHeight + mVerticalPadding, which matches parent's mHeight
+        mHeight = configHeight;
 
         final Paint paint = mCandidatePaint;
         int x = 0;

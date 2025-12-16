@@ -293,7 +293,14 @@ public class MainActivity extends AppCompatActivity
             datasource = new LimeDB(this);
 
         imlist = new ArrayList<>();
-        imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+        List<Im> result = datasource.getIm(null, Lime.IM_TYPE_NAME);
+        if (result != null) {
+            imlist = result;
+        }
+        // Ensure imlist is never null to prevent NullPointerException
+        if (imlist == null) {
+            imlist = new ArrayList<>();
+        }
     }
 
     @Override
@@ -316,6 +323,11 @@ public class MainActivity extends AppCompatActivity
 
             initialImList();
             int number = position - 2;
+            // Check if imlist is null or empty before accessing
+            if (imlist == null || imlist.isEmpty() || number < 0 || number >= imlist.size()) {
+                // Handle error case - show error message or return early
+                return;
+            }
             String table = imlist.get(number).getCode();
             fragmentManager.beginTransaction()
                     .replace(R.id.container, ManageImFragment.newInstance(position, table), "ManageImFragment_" + table)
@@ -333,8 +345,14 @@ public class MainActivity extends AppCompatActivity
             //mCode = "related";
         } else {
             int position = number - 2;
-            mTitle = imlist.get(position).getDesc();
-            //mCode = imlist.get(position).getCode();
+            // Check if imlist is null or empty before accessing
+            if (imlist != null && !imlist.isEmpty() && position >= 0 && position < imlist.size()) {
+                mTitle = imlist.get(position).getDesc();
+                //mCode = imlist.get(position).getCode();
+            } else {
+                // Fallback to default title if imlist is not available
+                mTitle = this.getResources().getString(R.string.default_menu_initial);
+            }
         }
     }
 

@@ -63,7 +63,7 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
             mCandidateView.setEmbeddedComposingView(mEmbeddedTextView);
             mCandidateView.setBackgroundColor(mCandidateView.mColorBackground);
             mButtonExpand.setBackgroundColor(mCandidateView.mColorBackground);
-            mButtonExpand.setImageDrawable(mCandidateView.mDrawableExpandButton);
+            mButtonExpand.setImageDrawable(mCandidateView.mDrawableExpandDownButton);
         }
     }
 

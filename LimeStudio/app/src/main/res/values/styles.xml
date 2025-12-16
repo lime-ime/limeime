@@ -360,8 +360,10 @@
     <style name="LIMECandidateView">
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl</item>
         <item name="voiceInputIcon">@drawable/sym_keyboard_voice_light</item>
-        <item name="ExpandButtonIcon">@drawable/btn_expand_light</item>
+        <item name="ExpandDownButtonIcon">@drawable/btn_expand_down_light</item>
+        <item name="ExpandUpButtonIcon">@drawable/btn_expand_up_light</item>
         <item name="closeButtonIcon">@drawable/btn_close</item>
+        <item name="keyboardShowIcon">@drawable/sym_keyboard_show_light</item>
 
         <item name="candidateBackground">@color/third_background_light</item>
         <!-- color of  different types of candidates   -->
@@ -381,8 +383,10 @@
     <style name="LIMECandidateView.Light"  parent = "LIMECandidateView">
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl</item>
         <item name="voiceInputIcon">@drawable/btn_voice_light</item>
-        <item name="ExpandButtonIcon">@drawable/btn_expand_light</item>
+        <item name="ExpandDownButtonIcon">@drawable/btn_expand_down_light</item>
+        <item name="ExpandUpButtonIcon">@drawable/btn_expand_up_light</item>
         <item name="closeButtonIcon">@drawable/btn_close</item>
+        <item name="keyboardShowIcon">@drawable/sym_keyboard_show_light</item>
 
         <item name="candidateBackground">@color/third_background_light</item>
         <!-- color of  different types of candidates   -->
@@ -403,7 +407,9 @@
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl</item>
         <item name="voiceInputIcon">@drawable/btn_voice_dark</item>
         <item name="candidateBackground">@color/background_dark</item>
-        <item name="ExpandButtonIcon">@drawable/btn_expand_dark</item>
+        <item name="ExpandDownButtonIcon">@drawable/btn_expand_down_dark</item>
+        <item name="ExpandUpButtonIcon">@drawable/btn_expand_up_dark</item>
+        <item name="keyboardShowIcon">@drawable/sym_keyboard_show_dark</item>
         <!-- color of  different types of candidates   -->
         <item name="candidateNormalTextColor">@color/candidate_foreground_dark</item>
         <item name="candidateNormalTextHighlightColor">@color/candidate_foreground_dark</item>
@@ -422,7 +428,9 @@
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_pink</item>
         <item name="voiceInputIcon">@drawable/btn_voice_pink</item>
         <item name="candidateBackground">@color/candidate_background_pink</item>
-        <item name="ExpandButtonIcon">@drawable/btn_expand_pink</item>
+        <item name="ExpandDownButtonIcon">@drawable/btn_expand_down_pink</item>
+        <item name="ExpandUpButtonIcon">@drawable/btn_expand_up_pink</item>
+        <item name="keyboardShowIcon">@drawable/sym_keyboard_show_pink</item>
         <!-- color of  different types of candidates   -->
         <item name="candidateNormalTextColor">@color/color_black</item>
         <item name="candidateNormalTextHighlightColor">@color/color_white</item>
@@ -442,7 +450,9 @@
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_tech_blue</item>
         <item name="voiceInputIcon">@drawable/btn_voice_tech_blue</item>
         <item name="candidateBackground">@color/candidate_background_tech_blue</item>
-        <item name="ExpandButtonIcon">@drawable/btn_expand_tech_blue</item>
+        <item name="ExpandDownButtonIcon">@drawable/btn_expand_down_tech_blue</item>
+        <item name="ExpandUpButtonIcon">@drawable/btn_expand_up_tech_blue</item>
+        <item name="keyboardShowIcon">@drawable/sym_keyboard_show_tech_blue</item>
         <!-- color of  different types of candidates   -->
         <item name="candidateNormalTextColor">@color/color_black</item>
         <item name="candidateNormalTextHighlightColor">@color/color_white</item>
@@ -462,7 +472,9 @@
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_relax_green</item>
         <item name="voiceInputIcon">@drawable/btn_voice_relax_green</item>
         <item name="candidateBackground">@color/candidate_background_relax_green</item>
-        <item name="ExpandButtonIcon">@drawable/btn_expand_relax_green</item>
+        <item name="ExpandDownButtonIcon">@drawable/btn_expand_down_relax_green</item>
+        <item name="ExpandUpButtonIcon">@drawable/btn_expand_up_relax_green</item>
+        <item name="keyboardShowIcon">@drawable/sym_keyboard_show_relax_green</item>
         <!-- color of  different types of candidates   -->
         <item name="candidateNormalTextColor">@color/color_black</item>
         <item name="candidateNormalTextHighlightColor">@color/color_white</item>
@@ -482,7 +494,9 @@
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_fashion_purple</item>
         <item name="voiceInputIcon">@drawable/btn_voice_fashion_purple</item>
         <item name="candidateBackground">@color/candidate_background_fashion_purple</item>
-        <item name="ExpandButtonIcon">@drawable/btn_expand_fashion_purple</item>
+        <item name="ExpandDownButtonIcon">@drawable/btn_expand_down_fashion_purple</item>
+        <item name="ExpandUpButtonIcon">@drawable/btn_expand_up_fashion_purple</item>
+        <item name="keyboardShowIcon">@drawable/sym_keyboard_show_fashion_purple</item>
         <!-- color of  different types of candidates   -->
         <item name="candidateNormalTextColor">@color/color_black</item>
         <item name="candidateNormalTextHighlightColor">@color/color_white</item>

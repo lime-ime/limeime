@@ -34,6 +34,7 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.util.Log;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -635,22 +636,64 @@ public class SetupImFragment extends Fragment {
 
 
     public void backupLocalDrive(){
-        // Launch file picker for saving backup
-        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("application/zip");
-        intent.putExtra(Intent.EXTRA_TITLE, "limeBackup.zip");
+        // Check if launcher is initialized
+        if (backupLauncher == null) {
+            if (DEBUG) Log.e(TAG, "backupLauncher is null, onCreate() may not have been called");
+            showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT);
+            return;
+        }
 
-        // Replace startActivityForResult with the new launcher
-        backupLauncher.launch(intent);
+        try {
+            // Launch file picker for saving backup
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/zip");
+            intent.putExtra(Intent.EXTRA_TITLE, "limeBackup.zip");
+
+            // Check if intent can be resolved (some tablets may not support Storage Access Framework)
+            if (intent.resolveActivity(requireActivity().getPackageManager()) == null) {
+                if (DEBUG) Log.e(TAG, "No activity found to handle ACTION_CREATE_DOCUMENT");
+                showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT);
+                return;
+            }
+
+            // Replace startActivityForResult with the new launcher
+            backupLauncher.launch(intent);
+        } catch (Exception e) {
+            if (DEBUG) Log.e(TAG, "Error launching backup file picker: " + e.getMessage(), e);
+            e.printStackTrace();
+            showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT);
+        }
     }
 
     public void restoreLocalDrive(){
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("application/zip");
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        // Replace startActivityForResult with the new launcher
-        restoreLauncher.launch(Intent.createChooser(intent, "Select Backup"));
+        // Check if launcher is initialized
+        if (restoreLauncher == null) {
+            if (DEBUG) Log.e(TAG, "restoreLauncher is null, onCreate() may not have been called");
+            showToastMessage(getString(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT);
+            return;
+        }
+
+        try {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("application/zip");
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+            // Check if intent can be resolved (some tablets may not support file picker)
+            Intent chooserIntent = Intent.createChooser(intent, "Select Backup");
+            if (chooserIntent.resolveActivity(requireActivity().getPackageManager()) == null) {
+                if (DEBUG) Log.e(TAG, "No activity found to handle ACTION_GET_CONTENT");
+                showToastMessage(getString(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT);
+                return;
+            }
+
+            // Replace startActivityForResult with the new launcher
+            restoreLauncher.launch(chooserIntent);
+        } catch (Exception e) {
+            if (DEBUG) Log.e(TAG, "Error launching restore file picker: " + e.getMessage(), e);
+            e.printStackTrace();
+            showToastMessage(getString(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT);
+        }
     }
 
 //    public void initialThreadTask(String action, String type) {

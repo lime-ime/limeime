@@ -5,7 +5,7 @@ This document reviews the project's edge-to-edge display compatibility for Andro
 
 **Current Configuration:**
 - `minSdkVersion`: 21 (Android 5.0 Lollipop)
-- `targetSdkVersion`: 36 (Android 15)
+- `targetSdkVersion`: 36 (Android 16)
 - `compileSdkVersion`: 36
 
 ## ✅ Edge-to-Edge Implementation Status
@@ -128,7 +128,8 @@ The app uses `WindowInsetsCompat` to handle system bars properly:
 | API Level | Android Version | Edge-to-Edge Status |
 |-----------|----------------|---------------------|
 | 21-34 | Lollipop - Android 14 | ✅ Supported (optional) |
-| 35-36 | Android 15 | ✅ Required & Implemented |
+| 35 | Android 15 | ✅ Required & Implemented |
+| 36 | Android 16 | ✅ Required & Implemented |
 
 ## 🎯 Testing Recommendations
 
