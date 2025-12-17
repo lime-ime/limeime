@@ -486,8 +486,8 @@
     <string name="l3_initial_backup_database">備份資料庫</string>
     <string name="l3_initial_backup_start">開始備份資料庫</string>
     <string name="l3_initial_backup_end">資料庫備份完成</string>
-    <string name="l3_initial_backup_confirm">請在按確認後選擇備份位置</string>
-    <string name="l3_initial_backup_confirm_downloads">備份檔案將儲存至下載資料夾</string>
+    <string name="l3_initial_backup_confirm">請在按確認後選擇備份備儲存位置</string>
+    <string name="l3_initial_backup_confirm_downloads">備份檔案將儲存至下載項目資料夾</string>
     <string name="l3_initial_backup_error">資料庫備份失敗</string>
     <string name="l3_initial_restore_database">還原資料庫</string>
     <string name="l3_initial_restore_error">還原失敗, 請確定備份檔案存在.</string>

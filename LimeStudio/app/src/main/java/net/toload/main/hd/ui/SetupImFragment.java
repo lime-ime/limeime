@@ -288,7 +288,7 @@ public class SetupImFragment extends Fragment {
 
         btnSetupImBackupLocal.setOnClickListener(v -> backupLocalDrive());
 
-        btnSetupImRestoreLocal.setOnClickListener(v -> showAlertDialog(Lime.RESTORE, Lime.LOCAL, getResources().getString(R.string.l3_initial_restore_confirm)));
+        btnSetupImRestoreLocal.setOnClickListener(v -> restoreLocalDrive());
 
 
 
@@ -593,7 +593,8 @@ public class SetupImFragment extends Fragment {
                             }
 
                         } else if (type.equalsIgnoreCase(Lime.LOCAL) && action.equalsIgnoreCase(Lime.RESTORE)) {
-                                restoreLocalDrive();
+                                // Launch file picker to select backup file
+                                launchRestoreFilePicker();
                         }
                     }
                 });
@@ -796,19 +797,55 @@ public class SetupImFragment extends Fragment {
         }
 
         try {
+            // Launch file picker for selecting backup file
+            // Use ACTION_GET_CONTENT (Storage Access Framework) for API 19+
             Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
             intent.setType("application/zip");
             intent.addCategory(Intent.CATEGORY_OPENABLE);
 
-            // Check if intent can be resolved (some tablets may not support file picker)
+            // Wrap in createChooser() for better compatibility
+            // createChooser can work even when queryIntentActivities returns empty
             Intent chooserIntent = Intent.createChooser(intent, "Select Backup");
+            
+            // Check if chooser intent can be resolved
+            // This is more reliable than queryIntentActivities which may not return system activities
             if (chooserIntent.resolveActivity(requireActivity().getPackageManager()) == null) {
-                if (DEBUG) Log.e(TAG, "No activity found to handle ACTION_GET_CONTENT");
+                if (DEBUG) Log.e(TAG, "Chooser intent cannot be resolved");
                 showToastMessage(getString(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT);
                 return;
             }
 
-            // Replace startActivityForResult with the new launcher
+            // Show confirmation dialog before launching file picker to select backup file
+            showAlertDialog(Lime.RESTORE, Lime.LOCAL, 
+                getResources().getString(R.string.l3_initial_restore_confirm));
+        } catch (Exception e) {
+            if (DEBUG) Log.e(TAG, "Error checking restore options: " + e.getMessage(), e);
+            e.printStackTrace();
+            showToastMessage(getString(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT);
+        }
+    }
+    
+    /**
+     * Actually launch the restore file picker after user confirms.
+     * Called from showAlertDialog when user clicks confirm.
+     */
+    private void launchRestoreFilePicker() {
+        try {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("application/zip");
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+            // Wrap in createChooser() for better compatibility on tablets
+            Intent chooserIntent = Intent.createChooser(intent, "Select Backup");
+            
+            // Double-check that chooser can be resolved
+            if (chooserIntent.resolveActivity(requireActivity().getPackageManager()) == null) {
+                if (DEBUG) Log.e(TAG, "Chooser intent cannot be resolved");
+                showToastMessage(getString(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT);
+                return;
+            }
+
+            // Launch the file picker
             restoreLauncher.launch(chooserIntent);
         } catch (Exception e) {
             if (DEBUG) Log.e(TAG, "Error launching restore file picker: " + e.getMessage(), e);
