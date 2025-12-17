@@ -26,11 +26,33 @@ package net.toload.main.hd.global;
 
 import android.os.Environment;
 
+import java.text.DecimalFormat;
+
+/**
+ * Global constants and utility methods for LimeIME.
+ * Merged from Lime.java and LIME.java.
+ */
 public class LIME {
 	public static String PACKAGE_NAME;
 	
+	// Database Settings
+	public static final String DATABASE_NAME = "lime.db";
+	public static final String DATABASE_EXT = ".db";
+	public static final String DATABASE_JOURNAL = "lime.db-journal";
+	public static final String DATABASE_BACKUP_NAME = "backup.zip";
+	public static final String DATABASE_JOURNAL_BACKUP_NAME = "backupJournal.zip";
+	public static final String SHARED_PREFS_BACKUP_NAME = "shared_prefs.bak";
+	public static final String DATABASE_CLOUD_TEMP = "cloudtemp.zip";
+	
+	public static String getLimeDataRootFolder() {
+		return Environment.getDataDirectory() + "/data/" + LIME.PACKAGE_NAME;
+	}
+	
+	// Download URLs - OpenFoundry
+	public static final String DATABASE_OPENFOUNDRY_URL_BASED = "https://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2F";
+	public static final String DATABASE_CLOUD_URL_BASED = "https://github.com/lime-ime/limeime/raw/master/Database/";
+	
 	// Special Version CJK Mapping Table Provided By Julian
-	//OpenFoundry
 	public static final String CJK_CJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fcj_CJK.lime.zip";
 	public static final String CJK_ECJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fecj_CJK.lime.zip";
 	public static final String CJK_PHONETIC_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphonetic_CJK.lime.zip";
@@ -38,7 +60,8 @@ public class LIME {
 	public static final String CJK_PINYIN_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fpinyin_CJK.cin.zip";
 	public static final String CJK_HK_CJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fcj_CJK_HKSCS.lime.zip";
 	public static final String CJK_HK_ECJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fecj_CJK_HKSCS.lime.zip";
-	//Google
+	
+	// Google Code URLs
 	public static final String G_CJK_CJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj_CJK.lime";
 	public static final String G_CJK_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj_CJK.lime";
 	public static final String G_CJK_PHONETIC_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic_CJK.lime";
@@ -52,7 +75,7 @@ public class LIME {
 	public static final String PINYI_TW_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/pinyinbig5.cin";
 	public static final String PINYI_CN_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/pinyin.cin";
 	
-	// OpenFoundary
+	// OpenFoundry Download URLs
 	public static final String CJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fcj.zip";
 	public static final String SCJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fscj.zip";
 	public static final String ARRAY_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Farray.zip";
@@ -63,16 +86,8 @@ public class LIME {
 	public static final String CJ5_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fcj5.zip";
 	public static final String ECJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fecj.zip";
 	public static final String WB_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fwb.zip";
-	//public static final String HS_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/hs.cin";
-	//public static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime1206.zip";
-	public static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Flime1207.zip";
-	public static final String IM_DOWNLOAD_TARGET_EMPTY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fempty1109.zip";
-	public static final String IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphoneticonly1207.zip";
-	//public static final String IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://limeime.googlecode.com/svn/branches/database/phoneticonly1206.zip";
-	//public static final String IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://limeime.googlecode.com/svn/branches/database/phonetichs1206.zip";
-	public static final String IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphonetichs1207.zip";
 	
-	// Google Code
+	// Google Code Download URLs
 	public static final String G_CJ_11643_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cangjie.cin";
 	public static final String G_PHONETIC_11643_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/bopomofo.cin";
 	public static final String G_CJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj.zip";
@@ -85,16 +100,17 @@ public class LIME {
 	public static final String G_CJ5_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj5.zip";
 	public static final String G_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj.zip";
 	public static final String G_WB_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/wb.zip";
-	//public static final String G_HS_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/hs.cin";
+	
+	// Database Download Targets
+	public static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Flime1207.zip";
+	public static final String IM_DOWNLOAD_TARGET_EMPTY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fempty1109.zip";
+	public static final String IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphoneticonly1207.zip";
+	public static final String IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphonetichs1207.zip";
 	public static final String G_IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime1207.zip";
 	public static final String G_IM_DOWNLOAD_TARGET_EMPTY = "http://limeime.googlecode.com/svn/branches/database/empty1109.zip";
 	public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://limeime.googlecode.com/svn/branches/database/phoneticonly1207.zip";
-	//public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://limeime.googlecode.com/svn/branches/database/phonetichs1207.zip";
 	
-	//public static final String LIME_SDCARD_FOLDER = Environment.getExternalStorageDirectory() + "/limehd/";
-	public static String getLimeDataRootFolder(){ return Environment.getDataDirectory() + "/data/"+LIME.PACKAGE_NAME; }
-	public static final String DOWNLOAD_START = "download_start";
-	public static final String DATABASE_DOWNLOAD_STATUS = "database_download_status";
+	// Database Source File Names
 	public static final String DATABASE_SOURCE_DAYI = "dayi.cin";
 	public static final String DATABASE_SOURCE_PHONETIC = "phonetic.lime";
 	public static final String DATABASE_SOURCE_PHONETIC_CNS = "bopomofo.cin";
@@ -106,7 +122,6 @@ public class LIME {
 	public static final String DATABASE_SOURCE_SCJ = "scj.lime";
 	public static final String DATABASE_SOURCE_ARRAY = "array.lime";
 	public static final String DATABASE_SOURCE_ARRAY10 = "array10.lime";
-	//public static final String DATABASE_SOURCE_HS = "hs.lime";
 	public static final String DATABASE_SOURCE_WB = "stroke5.cin";
 	public static final String DATABASE_SOURCE_EZ = "ez.lime";
 	public static final String DATABASE_SOURCE_PINYIN_BIG5 = "pinyinbig5.cin";
@@ -117,40 +132,288 @@ public class LIME {
 	public static final String DATABASE_SOURCE_PHONETIC_LIME = "phonetic_CJK.lime";
 	public static final String DATABASE_SOURCE_FILENAME = "lime.zip";
 	public static final String DATABASE_SOURCE_FILENAME_EMPTY = "empty.zip";
-	//public static final String DATABASE_RELATIVE_FOLDER = "/databases";
-
-    //public static String getLIMEDatabaseFolder(){ return  Environment.getDataDirectory() + "/data/"+LIME.PACKAGE_NAME + LIME.DATABASE_RELATIVE_FOLDER;};
-	public static final String DATABASE_NAME = "lime.db";
-	public static final String DATABASE_JOURNAL = "lime.db-journal";
-	//public static final String DATABASE_DECOMPRESS_FOLDER_SDCARD = Environment.getExternalStorageDirectory() + "/limehd";
-	public static final String DATABASE_BACKUP_NAME = "backup.zip";
-	public static final String DATABASE_JOURNAL_BACKUP_NAME = "backupJournal.zip";
-	public static final String SHARED_PREFS_BACKUP_NAME=  "shared_prefs.bak";
-	public static final String DATABASE_CLOUD_TEMP = "cloudtemp.zip";
+	
+	// Database Cloud URLs
+	public static final String LIME_OLD_VERSION_URL = DATABASE_OPENFOUNDRY_URL_BASED + "limehd_3_9_1.apk";
+	public static final String DATABASE_CLOUD_IM_WB = DATABASE_CLOUD_URL_BASED + "wb.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_WB = DATABASE_OPENFOUNDRY_URL_BASED + "wb.zip";
+	public static final String DATABASE_CLOUD_IM_WB_KEYBOARD = "wb";
+	public static final String DATABASE_CLOUD_IM_PINYINGB = DATABASE_CLOUD_URL_BASED + "pinyingb.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_PINYINGB = DATABASE_OPENFOUNDRY_URL_BASED + "pinyingb.zip";
+	public static final String DATABASE_CLOUD_IM_PINYINGB_KEYBOARD = "lime";
+	public static final String DATABASE_CLOUD_IM_PINYIN = DATABASE_CLOUD_URL_BASED + "pinyin.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_PINYIN = DATABASE_OPENFOUNDRY_URL_BASED + "pinyin.zip";
+	public static final String DATABASE_CLOUD_IM_PINYIN_KEYBOARD = "lime";
+	public static final String DATABASE_CLOUD_IM_PHONETICCOMPLETE_BIG5 = DATABASE_CLOUD_URL_BASED + "phoneticcompletebig5.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "phoneticcompletebig5.zip";
+	public static final String DATABASE_CLOUD_IM_PHONETICCOMPLETE = DATABASE_CLOUD_URL_BASED + "phoneticcomplete.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE = DATABASE_OPENFOUNDRY_URL_BASED + "phoneticcomplete.zip";
+	public static final String DATABASE_CLOUD_IM_PHONETIC_BIG5 = DATABASE_CLOUD_URL_BASED + "phoneticbig5.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_PHONETIC_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "phoneticbig5.zip";
+	public static final String DATABASE_CLOUD_IM_PHONETIC = DATABASE_CLOUD_URL_BASED + "phonetic.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_PHONETIC = DATABASE_OPENFOUNDRY_URL_BASED + "phonetic.zip";
+	public static final String DATABASE_CLOUD_IM_PHONETIC_KEYBOARD = "phonetic";
+	public static final String DATABASE_CLOUD_IM_EZ = DATABASE_CLOUD_URL_BASED + "ez.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_EZ = DATABASE_OPENFOUNDRY_URL_BASED + "ez.zip";
+	public static final String DATABASE_CLOUD_IM_EZ_KEYBOARD = "ez";
+	public static final String DATABASE_CLOUD_IM_ECJHK = DATABASE_CLOUD_URL_BASED + "ecjhk.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_ECJHK = DATABASE_OPENFOUNDRY_URL_BASED + "ecjhk.zip";
+	public static final String DATABASE_CLOUD_IM_ECJHK_KEYBOARD = "cj";
+	public static final String DATABASE_CLOUD_IM_ECJ = DATABASE_CLOUD_URL_BASED + "ecj.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_ECJ = DATABASE_OPENFOUNDRY_URL_BASED + "ecj.zip";
+	public static final String DATABASE_CLOUD_IM_ECJ_KEYBOARD = "cj";
+	public static final String DATABASE_CLOUD_IM_DAYI = DATABASE_CLOUD_URL_BASED + "dayi.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_DAYI = DATABASE_OPENFOUNDRY_URL_BASED + "dayi.zip";
+	public static final String DATABASE_CLOUD_IM_DAYIUNI_BIG5 = DATABASE_CLOUD_URL_BASED + "dayiunibig5.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_DAYIUNI_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "dayiunibig5.zip";
+	public static final String DATABASE_CLOUD_IM_DAYIUNI = DATABASE_CLOUD_URL_BASED + "dayiuni.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_DAYIUNI = DATABASE_OPENFOUNDRY_URL_BASED + "dayiuni.zip";
+	public static final String DATABASE_CLOUD_IM_DAYIUNIP_BIG5 = DATABASE_CLOUD_URL_BASED + "dayiunipbig5.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_DAYIUNIP_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "dayiunipbig5.zip";
+	public static final String DATABASE_CLOUD_IM_DAYIUNIP = DATABASE_CLOUD_URL_BASED + "dayiunip.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_DAYIUNIP = DATABASE_OPENFOUNDRY_URL_BASED + "dayiunip.zip";
+	public static final String DATABASE_CLOUD_IM_DAYI_KEYBOARD = "dayisym";
+	public static final String DATABASE_CLOUD_IM_CJHK = DATABASE_CLOUD_URL_BASED + "cjhk.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_CJHK = DATABASE_OPENFOUNDRY_URL_BASED + "cjhk.zip";
+	public static final String DATABASE_CLOUD_IM_CJHK_KEYBOARD = "cj";
+	public static final String DATABASE_CLOUD_IM_SCJ = DATABASE_CLOUD_URL_BASED + "scj.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_SCJ = DATABASE_OPENFOUNDRY_URL_BASED + "scj.zip";
+	public static final String DATABASE_CLOUD_IM_SCJ_KEYBOARD = "limenum";
+	public static final String DATABASE_CLOUD_IM_CJ5 = DATABASE_CLOUD_URL_BASED + "cj5.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_CJ5 = DATABASE_OPENFOUNDRY_URL_BASED + "cj5.zip";
+	public static final String DATABASE_CLOUD_IM_CJ5_KEYBOARD = "cj";
+	public static final String DATABASE_CLOUD_IM_CJ_BIG5 = DATABASE_CLOUD_URL_BASED + "cjbig5.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_CJ_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "cjbig5.zip";
+	public static final String DATABASE_CLOUD_IM_CJ = DATABASE_CLOUD_URL_BASED + "cj.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_CJ = DATABASE_OPENFOUNDRY_URL_BASED + "cj.zip";
+	public static final String DATABASE_CLOUD_IM_CJ_KEYBOARD = "cj";
+	public static final String DATABASE_CLOUD_IM_ARRAY10 = DATABASE_CLOUD_URL_BASED + "array10.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_ARRAY10 = DATABASE_OPENFOUNDRY_URL_BASED + "array10.zip";
+	public static final String DATABASE_CLOUD_IM_ARRAY10_KEYBOARD = "phonenum";
+	public static final String DATABASE_CLOUD_IM_ARRAY = DATABASE_CLOUD_URL_BASED + "array.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_ARRAY = DATABASE_OPENFOUNDRY_URL_BASED + "array.zip";
+	public static final String DATABASE_CLOUD_IM_ARRAY_KEYBOARD = "arraynum";
+	public static final String DATABASE_CLOUD_IM_HS = DATABASE_CLOUD_URL_BASED + "hs.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_HS = DATABASE_OPENFOUNDRY_URL_BASED + "hs.zip";
+	public static final String DATABASE_CLOUD_IM_HS_V1 = DATABASE_CLOUD_URL_BASED + "hs1.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_HS_V1 = DATABASE_OPENFOUNDRY_URL_BASED + "hs1.zip";
+	public static final String DATABASE_CLOUD_IM_HS_V2 = DATABASE_CLOUD_URL_BASED + "hs2.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_HS_V2 = DATABASE_OPENFOUNDRY_URL_BASED + "hs2.zip";
+	public static final String DATABASE_CLOUD_IM_HS_V3 = DATABASE_CLOUD_URL_BASED + "hs3.zip";
+	public static final String DATABASE_OPENFOUNDRY_IM_HS_V3 = DATABASE_OPENFOUNDRY_URL_BASED + "hs3.zip";
+	public static final String DATABASE_CLOUD_IM_HS_KEYBOARD = "hs";
+	
+	// Database Tables
+	public static final String DB_TABLE_IMTABLE2 = "imtable2";
+	public static final String DB_TABLE_IMTABLE3 = "imtable3";
+	public static final String DB_TABLE_IMTABLE4 = "imtable4";
+	public static final String DB_TABLE_IMTABLE5 = "imtable5";
+	public static final String DB_TABLE_IMTABLE6 = "imtable6";
+	public static final String DB_TABLE_IMTABLE7 = "imtable7";
+	public static final String DB_TABLE_IMTABLE8 = "imtable8";
+	public static final String DB_TABLE_IMTABLE9 = "imtable9";
+	public static final String DB_TABLE_IMTABLE10 = "imtable10";
+	public static final String DB_TABLE_ARRAY = "array";
+	public static final String DB_TABLE_ARRAY10 = "array10";
+	public static final String DB_TABLE_CJ = "cj";
+	public static final String DB_TABLE_CJ5 = "cj5";
+	public static final String DB_TABLE_CUSTOM = "custom";
+	public static final String DB_TABLE_DAYI = "dayi";
+	public static final String DB_TABLE_ECJ = "ecj";
+	public static final String DB_TABLE_EZ = "ez";
+	public static final String DB_TABLE_HS = "hs";
+	public static final String DB_TABLE_PHONETIC = "phonetic";
+	public static final String DB_TABLE_PINYIN = "pinyin";
+	public static final String DB_TABLE_SCJ = "scj";
+	public static final String DB_TABLE_WB = "wb";
+	
+	// Input Method Types
+	public static final String IM_ARRAY = "array";
+	public static final String IM_ARRAY10 = "array10";
+	public static final String IM_CJ_BIG5 = "cjbig5";
+	public static final String IM_CJ = "cj";
+	public static final String IM_CJHK = "cjhk";
+	public static final String IM_CJ5 = "cj5";
+	public static final String IM_CUSTOM = "custom";
+	public static final String IM_DAYI = "dayi";
+	public static final String IM_DAYIUNI = "dayiuni";
+	public static final String IM_DAYIUNI_BIG5 = "dayiunibig5";
+	public static final String IM_DAYIUNIP = "dayiunip";
+	public static final String IM_DAYIUNIP_BIG5 = "dayiunipbig5";
+	public static final String IM_ECJ = "ecj";
+	public static final String IM_ECJHK = "ecjhk";
+	public static final String IM_EZ = "ez";
+	public static final String IM_HS = "hs";
+	public static final String IM_HS_V1 = "hs1";
+	public static final String IM_HS_V2 = "hs2";
+	public static final String IM_HS_V3 = "hs3";
+	public static final String IM_PHONETIC = "phonetic";
+	public static final String IM_PHONETIC_ADV = "phoneticadv";
+	public static final String IM_PHONETIC_BIG5 = "phoneticbig5";
+	public static final String IM_PHONETIC_ADV_BIG5 = "phoneticadvbig5";
+	public static final String IM_PINYIN = "pinyin";
+	public static final String IM_PINYINGB = "pinyingb";
+	public static final String IM_SCJ = "scj";
+	public static final String IM_WB = "wb";
+	
+	// Database Columns
+	public static final String DB_COLUMN_ID = "_id";
+	public static final String DB_COLUMN_CODE = "code";
+	public static final String DB_COLUMN_CODE3R = "code3r";
+	public static final String DB_COLUMN_WORD = "word";
+	public static final String DB_COLUMN_RELATED = "related";
+	public static final String DB_COLUMN_SCORE = "score";
+	public static final String DB_COLUMN_BASESCORE = "basescore";
+	
+	// IM Table Columns
+	public static final String DB_IM = "im";
+	public static final String DB_IM_COLUMN_ID = "_id";
+	public static final String DB_IM_COLUMN_CODE = "code";
+	public static final String DB_IM_COLUMN_TITLE = "title";
+	public static final String DB_IM_COLUMN_DESC = "desc";
+	public static final String DB_IM_COLUMN_KEYBOARD = "keyboard";
+	public static final String DB_IM_COLUMN_DISABLE = "disable";
+	public static final String DB_IM_COLUMN_SELKEY = "selkey";
+	public static final String DB_IM_COLUMN_ENDKEY = "endkey";
+	public static final String DB_IM_COLUMN_SPACESTYLE = "spacestyle";
+	
+	// Related Table Columns
+	public static final String DB_RELATED = "related";
+	public static final String DB_RELATED_COLUMN_ID = "_id";
+	public static final String DB_RELATED_COLUMN_PWORD = "pword";
+	public static final String DB_RELATED_COLUMN_CWORD = "cword";
+	public static final String DB_RELATED_COLUMN_BASESCORE = "basescore";
+	public static final String DB_RELATED_COLUMN_USERSCORE = "score";
+	
+	// Keyboard Table Columns
+	public static final String DB_KEYBOARD = "keyboard";
+	public static final String DB_KEYBOARD_COLUMN_ID = "_id";
+	public static final String DB_KEYBOARD_COLUMN_CODE = "code";
+	public static final String DB_KEYBOARD_COLUMN_NAME = "name";
+	public static final String DB_KEYBOARD_COLUMN_DESC = "desc";
+	public static final String DB_KEYBOARD_COLUMN_TYPE = "type";
+	public static final String DB_KEYBOARD_COLUMN_IMAGE = "image";
+	public static final String DB_KEYBOARD_COLUMN_IMKB = "imkb";
+	public static final String DB_KEYBOARD_COLUMN_IMSHIFTKB = "imshiftkb";
+	public static final String DB_KEYBOARD_COLUMN_ENGKB = "engkb";
+	public static final String DB_KEYBOARD_COLUMN_ENGSHIFTKB = "engshiftkb";
+	public static final String DB_KEYBOARD_COLUMN_SYMBOLKB = "symbolkb";
+	public static final String DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB = "symbolshiftkb";
+	public static final String DB_KEYBOARD_COLUMN_DEFAULTKB = "defaultkb";
+	public static final String DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB = "defaultshiftkb";
+	public static final String DB_KEYBOARD_COLUMN_EXTENDEDKB = "extendedkb";
+	public static final String DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB = "extendedshiftkb";
+	public static final String DB_KEYBOARD_COLUMN_DISABLE = "disable";
+	public static final String DB_TOTAL_COUNT = "count";
+	
+	// IM Type Fields
+	public static final String IM_TYPE_NAME = "name";
+	public static final String IM_TYPE_SOURCE = "source";
+	public static final String IM_TYPE_AMOUNT = "amount";
+	public static final String IM_TYPE_IMPORT = "import";
+	public static final String IM_TYPE_KEYBOARD = "keyboard";
+	public static final String IM_TYPE_SELKEY = "selkey";
+	public static final String IM_TYPE_ENDKEY = "endkey";
+	public static final String IM_TYPE_SPACESTYLE = "spacestyle";
+	
+	// Database and IM Status
+	public static final int IM_MANAGE_DISPLAY_AMOUNT = 100;
+	public static final String DB_CHECK_RELATED_USERSCORE = "db_user_score_check";
+	public static final String DATABASE_DOWNLOAD_STATUS = "database_download_status";
+	public static final String DOWNLOAD_START = "download_start";
 	public static final String IM_CJ_STATUS = "im_cj_status";
 	public static final String IM_SCJ_STATUS = "im_scj_status";
 	public static final String IM_PHONETIC_STATUS = "im_phonetic_status";
 	public static final String IM_DAYI_STATUS = "im_dayi_status";
 	public static final String IM_CUSTOM_STATUS = "im_custom_status";
 	public static final String IM_EZ_STATUS = "im_ez_status";
-	
 	public static final String IM_MAPPING_FILENAME = "im_mapping_filename";
 	public static final String IM_MAPPING_VERSION = "im_mapping_version";
 	public static final String IM_MAPPING_TOTAL = "im_mapping_total";
 	public static final String IM_MAPPING_DATE = "im_mapping_date";
-
 	public static final String CANDIDATE_SUGGESTION = "candidate_suggestion";
 	public static final String TOTAL_USERDICT_RECORD = "total_userdict_record";
 	public static final String LEARNING_SWITCH = "learning_switch";
-
 	
-
-
-	//public final static String SEARCHSRV_RESET_CACHE = "searchsrv_reset_cache";
+	// Cache Settings
 	public final static int SEARCHSRV_RESET_CACHE_SIZE = 256;
 	public final static int LIMEDB_CACHE_SIZE = 1024;
-
-	// ADMOB
+	
+	// News and Content
+	public static final String LIME_NEWS_CONTENT = "lime_news_content";
+	public static final String LIME_NEWS_CONTENT_URL = "https://github.com/lime-ime/limeime/raw/master/Resources/Message/content.html";
+	
+	// File System
+	public static final String separator = java.io.File.separator;
+	public static final String DATABASE_IM_TEMP = "temp";
+	public static final String DATABASE_IM_TEMP_EXT = "zip";
+	
+	// Cloud Backup/Restore
+	public final static String ACCOUNT_PREFS_NAME = "prefs";
+	public final static String ACCESS_KEY_NAME = "ACCESS_KEY";
+	public final static String ACCESS_SECRET_NAME = "ACCESS_SECRET";
+	public static final String BACKUP = "backup";
+	public static final String RESTORE = "restore";
+	public static final String GOOGLE = "GOOGLE";
+	public static final String GOOGLE_ACCOUNT_NAME = "GOOGLE_ACCOUNT_NAME";
+	public static final String GOOGLE_BACKUP_FILENAME = "limedatabasebackup.zip";
+	public static final String LOCAL = "LOCAL";
+	public static final String DROPBOX = "DROPBOX";
+	public static final String DROPBOX_TYPE = "DROPBOX_TYPE";
+	public final static String DROPBOX_APP_KEY = "keuuzhfc6efjf6t";
+	public final static String DROPBOX_APP_SECRET = "4y8fy4rqk8rofd8";
+	public static final String DROPBOX_ACCESS_TOKEN = "DROPBOX_ACCESS_TOKEN";
+	public static final String DROPBOX_REQUEST_FLAG = "DROPBOX_REQUEST_FLAG";
+	public static final String DEVICE = "device";
+	public static final int GOOGLE_RETRIEVE_MAXIMUM = 500;
+	
+	// UI Constants
+	public static final float HALF_ALPHA_VALUE = .5f;
+	public static final float NORMAL_ALPHA_VALUE = 1f;
+	
+	// Share and Import
+	public static final String SHARE_TYPE_TXT = "text/plain";
+	public static final String SHARE_TYPE_ZIP = "application/zip";
+	public static final String IMPORT_TEXT = "import_text";
+	public static final String SUPPORT_FILE_EXT_TXT = "txt";
+	public static final String SUPPORT_FILE_EXT_LIME = "lime";
+	public static final String SUPPORT_FILE_EXT_LIMEDB = "limedb";
+	public static final String SUPPORT_FILE_EXT_CIN = "cin";
+	public static final String EXPORT_FILENAME_RELATED = "lime.related";
+	
+	// Emoji Parameters
+	public static final int EMOJI_EN = 1;
+	public static final int EMOJI_TW = 2;
+	public static final int EMOJI_CN = 3;
+	public static final String EMOJI_FIELD_TAG = "tag";
+	public static final String EMOJI_FIELD_VALUE = "value";
+	
+	// AdMob
 	public final static String publisher = "ca-app-pub-6429718170873338/7028669804";
-
+	public static final String VPON_BANNER_ID = "8a8081824cfe92fa014d3707f493630b";
+	
+	// Payment
+	public static final String PAYMENT_FLAG = "PAYMENT_FLAG";
+	public static final int PAYMENT_REQUEST_CODE = 1001;
+	
+	// Global Utility Methods
+	public static String format(int number) {
+		try {
+			DecimalFormat df = new DecimalFormat("###,###,###,###,###,###,##0");
+			return df.format(number);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "0";
+		}
+	}
+	
+	public static String formatSqlValue(String value) {
+		if (value != null) {
+			value = value.replaceAll("\"", "\"\"");
+			value = value.replaceAll("'", "\\\'");
+			return value;
+		} else {
+			return "";
+		}
+	}
 }

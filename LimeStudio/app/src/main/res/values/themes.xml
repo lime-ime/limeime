@@ -23,7 +23,13 @@
 
 <resources>
   <!-- Base application theme. -->
-  <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+  <style name="AppTheme" parent="Theme.AppCompat.Light">
+    <!-- White actionbar background -->
+    <item name="colorPrimary">#FFFFFF</item>
+    <item name="colorPrimaryDark">#FFFFFF</item>
+    <!-- Dark text/icons on white actionbar for visibility -->
+    <item name="android:textColorPrimary">#000000</item>
+    <item name="android:textColorSecondary">#666666</item>
   </style>
 
   <style name="LIMETheme" parent="Theme.AppCompat.Light">

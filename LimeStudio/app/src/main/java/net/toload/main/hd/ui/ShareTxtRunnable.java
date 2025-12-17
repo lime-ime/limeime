@@ -27,7 +27,7 @@ package net.toload.main.hd.ui;
 import android.app.Activity;
 import android.database.Cursor;
 
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivityHandler;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Im;
@@ -114,22 +114,22 @@ public class ShareTxtRunnable implements Runnable{
 
                 for(Im i: iminfo){
 
-                    if(i.getTitle().equals(Lime.IM_TYPE_NAME)){
+                    if(i.getTitle().equals(LIME.IM_TYPE_NAME)){
                         String s = "@version@|"+i.getDesc();
                         fout.write(s);
                         fout.newLine();
                     }
-                    if(i.getTitle().equals(Lime.IM_TYPE_SELKEY)){
+                    if(i.getTitle().equals(LIME.IM_TYPE_SELKEY)){
                         String s = "@selkey@|"+i.getDesc();
                         fout.write(s);
                         fout.newLine();
                     }
-                    if(i.getTitle().equals(Lime.IM_TYPE_ENDKEY)){
+                    if(i.getTitle().equals(LIME.IM_TYPE_ENDKEY)){
                         String s = "@endkey@|"+i.getDesc();
                         fout.write(s);
                         fout.newLine();
                     }
-                    if(i.getTitle().equals(Lime.IM_TYPE_SPACESTYLE)){
+                    if(i.getTitle().equals(LIME.IM_TYPE_SPACESTYLE)){
                         String s = "@spacestyle@|"+i.getDesc();
                         fout.write(s);
                         fout.newLine();

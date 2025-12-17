@@ -36,7 +36,7 @@ import android.util.Pair;
 import android.util.SparseArray;
 import android.widget.Toast;
 
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.ChineseSymbol;
 import net.toload.main.hd.data.Im;
@@ -97,7 +97,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     public final static String FIELD_ID = "_id";
     public final static String FIELD_CODE = "code";
     public final static String FIELD_WORD = "word";
-    public final static String FIELD_RELATED = Lime.DB_RELATED;
+    public final static String FIELD_RELATED = LIME.DB_RELATED;
     public final static String FIELD_SCORE = "score";
     public final static String FIELD_BASESCORE = "basescore"; //jeremy '11,9,8 base frequency got from han converter when table loading.
     public final static String FIELD_NO_TONE_CODE = "code3r";
@@ -424,7 +424,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     public void checkAndUpdateRelatedTable() {
         // Check related table structure
-        String CHECK_RELATED = "SELECT basescore FROM " + Lime.DB_RELATED;
+        String CHECK_RELATED = "SELECT basescore FROM " + LIME.DB_RELATED;
 
 
         // If system can find the score field which is mean the table still use old schema
@@ -432,8 +432,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (cursor == null || !cursor.moveToFirst()) {
             try {
 
-                String add_column = "ALTER TABLE " + Lime.DB_RELATED + " ADD ";
-                add_column += Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER";
+                String add_column = "ALTER TABLE " + LIME.DB_RELATED + " ADD ";
+                add_column += LIME.DB_RELATED_COLUMN_BASESCORE + " INTEGER";
 
                 db.execSQL(add_column);
 
@@ -614,7 +614,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 //        mLIMEPref.setTotalUserdictRecords("0");
 //        // -------------------------------------------------------------------------
 //        //SQLiteDatabase db = this.getSqliteDb(false);
-//        db.delete(Lime.DB_RELATED, FIELD_DIC_score + " > 0", null);
+//        db.delete(LIME.DB_RELATED, FIELD_DIC_score + " > 0", null);
 //
 //    }
 
@@ -738,11 +738,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             Mapping munit = this.isRelatedPhraseExistOnDB(db, pword, cword);
 
             if (munit == null) {
-                cv.put(Lime.DB_RELATED_COLUMN_PWORD, pword);
-                cv.put(Lime.DB_RELATED_COLUMN_CWORD, cword);
-                //cv.put(Lime.DB_RELATED_COLUMN_SCORE, score);  leave this field null so as we can distinguish records learned from user.  Jeremy '15,6,3
-                cv.put(Lime.DB_RELATED_COLUMN_USERSCORE, score);
-                db.insert(Lime.DB_RELATED, null, cv);
+                cv.put(LIME.DB_RELATED_COLUMN_PWORD, pword);
+                cv.put(LIME.DB_RELATED_COLUMN_CWORD, cword);
+                //cv.put(LIME.DB_RELATED_COLUMN_SCORE, score);  leave this field null so as we can distinguish records learned from user.  Jeremy '15,6,3
+                cv.put(LIME.DB_RELATED_COLUMN_USERSCORE, score);
+                db.insert(LIME.DB_RELATED, null, cv);
                 dictotal++;
                 mLIMEPref.setTotalUserdictRecords(String.valueOf(dictotal));
                 if (DEBUG)
@@ -756,8 +756,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     score = existingScore + 1;
                     relatedscore.put(munit.getId(), score);
                 }
-                cv.put(Lime.DB_RELATED_COLUMN_USERSCORE, score);
-                db.update(Lime.DB_RELATED, cv, FIELD_ID + " = " + munit.getId(), null);
+                cv.put(LIME.DB_RELATED_COLUMN_USERSCORE, score);
+                db.update(LIME.DB_RELATED, cv, FIELD_ID + " = " + munit.getId(), null);
 
                 //Log.i("TAG RELATED A", munit.getId() + " : Related ADD Score :" + score);
 
@@ -856,8 +856,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     }
 
                     ContentValues cv = new ContentValues();
-                    cv.put(Lime.DB_RELATED_COLUMN_USERSCORE, score);
-                    db.update(Lime.DB_RELATED, cv, FIELD_ID + " = " + srcunit.getId(), null);
+                    cv.put(LIME.DB_RELATED_COLUMN_USERSCORE, score);
+                    db.update(LIME.DB_RELATED, cv, FIELD_ID + " = " + srcunit.getId(), null);
 
                     //Log.i("TAG RELATED B", srcunit.getId() + " : Related ADD Score :" + score);
 
@@ -2481,13 +2481,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     String selectString =
                             "SELECT " + FIELD_ID + ", " + FIELD_DIC_pword + ", " + FIELD_DIC_cword + ", "
-                                    + Lime.DB_RELATED_COLUMN_BASESCORE + ", " + Lime.DB_RELATED_COLUMN_USERSCORE
-                                    + ", length(" + FIELD_DIC_pword + ") as len FROM " + Lime.DB_RELATED + " where "
+                                    + LIME.DB_RELATED_COLUMN_BASESCORE + ", " + LIME.DB_RELATED_COLUMN_USERSCORE
+                                    + ", length(" + FIELD_DIC_pword + ") as len FROM " + LIME.DB_RELATED + " where "
                                     + FIELD_DIC_pword + " = '" + pword
                                     + "' or " + FIELD_DIC_pword + " = '" + last
                                     + "' and " + FIELD_DIC_cword + " is not null"
-                                    + " order by len desc, " + Lime.DB_RELATED_COLUMN_USERSCORE + " desc, "
-                                    + Lime.DB_RELATED_COLUMN_BASESCORE + " desc ";
+                                    + " order by len desc, " + LIME.DB_RELATED_COLUMN_USERSCORE + " desc, "
+                                    + LIME.DB_RELATED_COLUMN_BASESCORE + " desc ";
 
                     selectString += " limit " + limitClause;
 
@@ -2505,10 +2505,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
                 } else {
-                    cursor = db.query(Lime.DB_RELATED, null, FIELD_DIC_pword + " = '" + pword
+                    cursor = db.query(LIME.DB_RELATED, null, FIELD_DIC_pword + " = '" + pword
                             + "' and " + FIELD_DIC_cword + " is not null "
-                            , null, null, null, Lime.DB_RELATED_COLUMN_USERSCORE + " DESC, "
-                            + Lime.DB_RELATED_COLUMN_BASESCORE + " DESC", limitClause);
+                            , null, null, null, LIME.DB_RELATED_COLUMN_USERSCORE + " DESC, "
+                            + LIME.DB_RELATED_COLUMN_BASESCORE + " DESC", limitClause);
                 }
                 if (cursor != null) {
 
@@ -2517,25 +2517,25 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         int rsize = 0;
                         do {
                             Mapping munit = new Mapping();
-                            //munit.setId(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_ID)));
-                            //munit.setPword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_PWORD)));
+                            //munit.setId(cursor.getString(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_ID)));
+                            //munit.setPword(cursor.getString(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_PWORD)));
                             //munit.setCode("");
-                            //munit.setWord(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD)));
-                            //munit.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
-                            //munit.setBasescore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_BASESCORE)));
+                            //munit.setWord(cursor.getString(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_CWORD)));
+                            //munit.setScore(cursor.getInt(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_USERSCORE)));
+                            //munit.setBasescore(cursor.getInt(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_BASESCORE)));
                             // Before the loop (e.g., right after the query is executed)
-                            //int idColIndex = cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_ID);
-                            //int pwordColIndex = cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_PWORD);
-                            //int cwordColIndex = cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD);
-                            //int userScoreColIndex = cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE);
-                            //int baseScoreColIndex = cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_BASESCORE);
+                            //int idColIndex = cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_ID);
+                            //int pwordColIndex = cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_PWORD);
+                            //int cwordColIndex = cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_CWORD);
+                            //int userScoreColIndex = cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_USERSCORE);
+                            //int baseScoreColIndex = cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_BASESCORE);
 
 
-                            munit.setId(getCursorString(cursor, Lime.DB_RELATED_COLUMN_ID));
-                            munit.setPword(getCursorString(cursor, Lime.DB_RELATED_COLUMN_PWORD));
-                            munit.setWord(getCursorString(cursor, Lime.DB_RELATED_COLUMN_CWORD));
-                            munit.setScore(getCursorInt(cursor, Lime.DB_RELATED_COLUMN_USERSCORE));
-                            munit.setBasescore(getCursorInt(cursor, Lime.DB_RELATED_COLUMN_BASESCORE));
+                            munit.setId(getCursorString(cursor, LIME.DB_RELATED_COLUMN_ID));
+                            munit.setPword(getCursorString(cursor, LIME.DB_RELATED_COLUMN_PWORD));
+                            munit.setWord(getCursorString(cursor, LIME.DB_RELATED_COLUMN_CWORD));
+                            munit.setScore(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_USERSCORE));
+                            munit.setBasescore(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_BASESCORE));
                             munit.setCode("");  munit.setRelatedPhraseRecord();
                             result.add(munit);
                             rsize++;
@@ -2560,7 +2560,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         holdDBConnection();
         db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
-        db.execSQL("insert into sourceDB." + Lime.DB_RELATED + " select * from " + Lime.DB_RELATED);
+        db.execSQL("insert into sourceDB." + LIME.DB_RELATED + " select * from " + LIME.DB_RELATED);
         db.execSQL("detach database sourceDB");
         unHoldDBConnection();
     }
@@ -2570,9 +2570,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         holdDBConnection();
         db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
-        db.execSQL("insert into sourceDB." + Lime.DB_TABLE_CUSTOM + " select * from " + sourcetable);
-        db.execSQL("insert into sourceDB." + Lime.DB_IM + " select * from " + Lime.DB_IM + " WHERE code='" + sourcetable + "'");
-        db.execSQL("update sourceDB." + Lime.DB_IM + " set " + Lime.DB_IM_COLUMN_CODE + "='" + sourcetable + "'");
+        db.execSQL("insert into sourceDB." + LIME.DB_TABLE_CUSTOM + " select * from " + sourcetable);
+        db.execSQL("insert into sourceDB." + LIME.DB_IM + " select * from " + LIME.DB_IM + " WHERE code='" + sourcetable + "'");
+        db.execSQL("update sourceDB." + LIME.DB_IM + " set " + LIME.DB_IM_COLUMN_CODE + "='" + sourcetable + "'");
         db.execSQL("detach database sourceDB");
         unHoldDBConnection();
     }
@@ -2581,13 +2581,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (checkDBConnection()) return;
 
         // Reset IM Info
-        deleteAll(Lime.DB_RELATED);
+        deleteAll(LIME.DB_RELATED);
 
         holdDBConnection();
 
         // Load data from DB File
         db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
-        db.execSQL("insert into " + Lime.DB_RELATED + " select * from sourceDB." + Lime.DB_RELATED);
+        db.execSQL("insert into " + LIME.DB_RELATED + " select * from sourceDB." + LIME.DB_RELATED);
         db.execSQL("detach database sourceDB");
         unHoldDBConnection();
     }
@@ -2597,15 +2597,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         // Reset IM Info
         deleteAll(imtype);
-        db.execSQL("delete from " + Lime.DB_IM + " where " + Lime.DB_IM_COLUMN_CODE + "='" + imtype + "'");
+        db.execSQL("delete from " + LIME.DB_IM + " where " + LIME.DB_IM_COLUMN_CODE + "='" + imtype + "'");
 
         holdDBConnection();
 
         // Load data from DB File
         db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
-        db.execSQL("insert into " + imtype + " select * from sourceDB." + Lime.DB_TABLE_CUSTOM);
-        db.execSQL("update sourceDB." + Lime.DB_IM + " set " + Lime.DB_IM_COLUMN_CODE + "='" + imtype + "'");
-        db.execSQL("insert into " + Lime.DB_IM + " select * from sourceDB." + Lime.DB_IM);
+        db.execSQL("insert into " + imtype + " select * from sourceDB." + LIME.DB_TABLE_CUSTOM);
+        db.execSQL("update sourceDB." + LIME.DB_IM + " set " + LIME.DB_IM_COLUMN_CODE + "='" + imtype + "'");
+        db.execSQL("insert into " + LIME.DB_IM + " select * from sourceDB." + LIME.DB_IM);
         db.execSQL("detach database sourceDB");
         unHoldDBConnection();
     }
@@ -2617,7 +2617,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         holdDBConnection();
         db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
         db.execSQL("insert into " + imtype + " select * from sourceDB." + imtype);
-        db.execSQL("insert into " + Lime.DB_IM + " select * from sourceDB." + Lime.DB_IM);
+        db.execSQL("insert into " + LIME.DB_IM + " select * from sourceDB." + LIME.DB_IM);
         db.execSQL("detach database sourceDB");
         unHoldDBConnection();
 
@@ -2692,9 +2692,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                 if(check.containsKey(key)){
                     try{
-                        db.execSQL("update " + table + " set " + Lime.DB_COLUMN_SCORE + " = " + w.getScore()
-                                        + " WHERE " + Lime.DB_COLUMN_CODE + " = '" + w.getCode() + "'"
-                                        + " AND " + Lime.DB_COLUMN_WORD + " = '" + w.getWord() + "'"
+                        db.execSQL("update " + table + " set " + LIME.DB_COLUMN_SCORE + " = " + w.getScore()
+                                        + " WHERE " + LIME.DB_COLUMN_CODE + " = '" + w.getCode() + "'"
+                                        + " AND " + LIME.DB_COLUMN_WORD + " = '" + w.getWord() + "'"
                         );
                     }catch(Exception e){
                         e.printStackTrace();
@@ -3584,22 +3584,22 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             Cursor cursor;
 
             if (cword == null || cword.trim().isEmpty()) {
-                cursor = db.query(Lime.DB_RELATED, null, FIELD_DIC_pword + " = '"
+                cursor = db.query(LIME.DB_RELATED, null, FIELD_DIC_pword + " = '"
                         + pword + "'" + " AND " + FIELD_DIC_cword + " IS NULL"
                         , null, null, null, null, null);
             } else {
-                cursor = db.query(Lime.DB_RELATED, null, FIELD_DIC_pword + " = '"
+                cursor = db.query(LIME.DB_RELATED, null, FIELD_DIC_pword + " = '"
                         + pword + "'" + " AND " + FIELD_DIC_cword + " = '"
                         + cword + "'", null, null, null, null, null);
             }
 
             if (cursor.moveToFirst()) {
                 munit = new Mapping();
-                munit.setId(getCursorString(cursor, Lime.DB_RELATED_COLUMN_ID));
-                munit.setPword(getCursorString(cursor, Lime.DB_RELATED_COLUMN_PWORD));
-                munit.setWord(getCursorString(cursor, Lime.DB_RELATED_COLUMN_CWORD));
-                munit.setBasescore(getCursorInt(cursor, Lime.DB_RELATED_COLUMN_BASESCORE));
-                munit.setScore(getCursorInt(cursor, Lime.DB_RELATED_COLUMN_USERSCORE));
+                munit.setId(getCursorString(cursor, LIME.DB_RELATED_COLUMN_ID));
+                munit.setPword(getCursorString(cursor, LIME.DB_RELATED_COLUMN_PWORD));
+                munit.setWord(getCursorString(cursor, LIME.DB_RELATED_COLUMN_CWORD));
+                munit.setBasescore(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_BASESCORE));
+                munit.setScore(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_USERSCORE));
                 munit.setRelatedPhraseRecord();
 
             }
@@ -3698,7 +3698,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         List<Im> result = null;
         try {
             //SQLiteDatabase db = this.getSqliteDb(true);
-            Cursor cursor = db.query("im", null, Lime.DB_IM_COLUMN_CODE + " = '" + code + "'", null, null, null, "code ASC", null);
+            Cursor cursor = db.query("im", null, LIME.DB_IM_COLUMN_CODE + " = '" + code + "'", null, null, null, "code ASC", null);
             result = Im.getList(cursor);
             cursor.close();
         } catch (Exception e) {
@@ -4135,8 +4135,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         List<Keyboard> result = new ArrayList<>();
         if (checkDBConnection()) return result;
 
-        Cursor cursor = db.query(Lime.DB_KEYBOARD, null, null,
-                null, null, null, Lime.DB_KEYBOARD_COLUMN_NAME + " ASC");
+        Cursor cursor = db.query(LIME.DB_KEYBOARD, null, null,
+                null, null, null, LIME.DB_KEYBOARD_COLUMN_NAME + " ASC");
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
             Keyboard r = Keyboard.get(cursor);
@@ -4156,7 +4156,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         Cursor cursor;
         String query = null;
         if (code != null && code.length() > 1) {
-            query = Lime.DB_IM_COLUMN_CODE + "='" + code + "'";
+            query = LIME.DB_IM_COLUMN_CODE + "='" + code + "'";
         }
         if (type != null && type.length() > 1) {
             if (query != null) {
@@ -4165,12 +4165,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 query = "";
             }
 
-            query += " " + Lime.DB_IM_COLUMN_TITLE + "='" + type + "'";
+            query += " " + LIME.DB_IM_COLUMN_TITLE + "='" + type + "'";
         }
 
-        cursor = db.query(Lime.DB_IM,
+        cursor = db.query(LIME.DB_IM,
                 null, query,
-                null, null, null, Lime.DB_IM_COLUMN_DESC + " ASC");
+                null, null, null, LIME.DB_IM_COLUMN_DESC + " ASC");
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
             Im r = Im.get(cursor);
@@ -4189,20 +4189,20 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         Cursor cursor;
         if (query != null && !query.isEmpty()) {
             if (searchroot) {
-                query = Lime.DB_COLUMN_CODE + " LIKE '" + query + "%' AND ifnull(" + Lime.DB_COLUMN_WORD + ", '') <> ''";
+                query = LIME.DB_COLUMN_CODE + " LIKE '" + query + "%' AND ifnull(" + LIME.DB_COLUMN_WORD + ", '') <> ''";
             } else {
-                query = Lime.DB_COLUMN_WORD + " LIKE '%" + query + "%' AND ifnull(" + Lime.DB_COLUMN_WORD + ", '') <> ''";
+                query = LIME.DB_COLUMN_WORD + " LIKE '%" + query + "%' AND ifnull(" + LIME.DB_COLUMN_WORD + ", '') <> ''";
             }
         } else {
-            query = "ifnull(" + Lime.DB_COLUMN_WORD + ", '') <> ''";
+            query = "ifnull(" + LIME.DB_COLUMN_WORD + ", '') <> ''";
         }
 
         String order;
 
         if (searchroot) {
-            order = Lime.DB_COLUMN_CODE + " ASC";
+            order = LIME.DB_COLUMN_CODE + " ASC";
         } else {
-            order = Lime.DB_COLUMN_WORD + " ASC";
+            order = LIME.DB_COLUMN_WORD + " ASC";
         }
 
         if (maximum > 0) {
@@ -4230,7 +4230,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         Word w;
         Cursor cursor;
 
-        String query = Lime.DB_COLUMN_ID + " = '" + id + "' ";
+        String query = LIME.DB_COLUMN_ID + " = '" + id + "' ";
 
         cursor = db.query(code,
                 null, query,
@@ -4245,14 +4245,14 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     public void setImKeyboard(String code, Keyboard keyboard) {
         if (checkDBConnection()) return;
 
-        String removesql = "DELETE FROM " + Lime.DB_IM + " WHERE " + Lime.DB_IM_COLUMN_CODE + " = '" + code + "'";
-        removesql += " AND " + Lime.DB_IM_COLUMN_TITLE + " = '" + Lime.IM_TYPE_KEYBOARD + "'";
+        String removesql = "DELETE FROM " + LIME.DB_IM + " WHERE " + LIME.DB_IM_COLUMN_CODE + " = '" + code + "'";
+        removesql += " AND " + LIME.DB_IM_COLUMN_TITLE + " = '" + LIME.IM_TYPE_KEYBOARD + "'";
         db.execSQL(removesql);
 
         Im im = new Im();
         im.setCode(code);
         im.setKeyboard(keyboard.getCode());
-        im.setTitle(Lime.IM_TYPE_KEYBOARD);
+        im.setTitle(LIME.IM_TYPE_KEYBOARD);
         im.setDesc(keyboard.getDesc());
 
         String addsql = Im.getInsertQuery(im);
@@ -4267,11 +4267,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
             String query = "";
             if (pword != null && !pword.isEmpty() && cword != null && !cword.isEmpty()) {
-                query = Lime.DB_RELATED_COLUMN_PWORD + " = '" + pword + "' AND ";
-                query += Lime.DB_RELATED_COLUMN_CWORD + " = '" + cword + "'";
+                query = LIME.DB_RELATED_COLUMN_PWORD + " = '" + pword + "' AND ";
+                query += LIME.DB_RELATED_COLUMN_CWORD + " = '" + cword + "'";
             }
 
-            cursor = db.query(Lime.DB_RELATED,
+            cursor = db.query(LIME.DB_RELATED,
                     null, query,
                     null, null, null, null);
 
@@ -4305,23 +4305,23 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             pword = pword.substring(0, 1);
         }
         if (pword != null && !pword.isEmpty()) {
-            query = Lime.DB_RELATED_COLUMN_PWORD + " = '" + pword +
+            query = LIME.DB_RELATED_COLUMN_PWORD + " = '" + pword +
                     "' AND ";
         }
         if (!cword.isEmpty()) {
-            query += Lime.DB_RELATED_COLUMN_CWORD + " LIKE '" + cword +
+            query += LIME.DB_RELATED_COLUMN_CWORD + " LIKE '" + cword +
                     "%' AND ";
         }
 
-        query += "ifnull(" + Lime.DB_RELATED_COLUMN_CWORD + ", '') <> ''";
+        query += "ifnull(" + LIME.DB_RELATED_COLUMN_CWORD + ", '') <> ''";
 
-        String order = Lime.DB_RELATED_COLUMN_USERSCORE + " desc," + Lime.DB_RELATED_COLUMN_BASESCORE + " desc";
+        String order = LIME.DB_RELATED_COLUMN_USERSCORE + " desc," + LIME.DB_RELATED_COLUMN_BASESCORE + " desc";
 
         if (maximum > 0) {
             order += " LIMIT " + maximum + " OFFSET " + offset;
         }
 
-        cursor = db.query(Lime.DB_RELATED,
+        cursor = db.query(LIME.DB_RELATED,
                 null, query,
                 null, null, null, order);
 
@@ -4341,9 +4341,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         Related w;
         Cursor cursor;
 
-        String query = Lime.DB_RELATED_COLUMN_ID + " = '" + id + "' ";
+        String query = LIME.DB_RELATED_COLUMN_ID + " = '" + id + "' ";
 
-        cursor = db.query(Lime.DB_RELATED,
+        cursor = db.query(LIME.DB_RELATED,
                 null, query,
                 null, null, null, null);
 
@@ -4364,7 +4364,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         String query = "SELECT COUNT(*) as count FROM " + table;
         cursor = db.rawQuery(query, null);
         cursor.moveToFirst();
-        total = getCursorInt(cursor, Lime.DB_TOTAL_COUNT);
+        total = getCursorInt(cursor, LIME.DB_TOTAL_COUNT);
         cursor.close();
 
         return total;
@@ -4383,18 +4383,18 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         if (curquery != null && !curquery.isEmpty()) {
             if (searchroot) {
-                query += Lime.DB_COLUMN_CODE + " LIKE '" + curquery + "%' AND ifnull(" + Lime.DB_COLUMN_WORD + ", '') <> ''";
+                query += LIME.DB_COLUMN_CODE + " LIKE '" + curquery + "%' AND ifnull(" + LIME.DB_COLUMN_WORD + ", '') <> ''";
             } else {
-                query += Lime.DB_COLUMN_WORD + " LIKE '%" + curquery + "%' AND ifnull(" + Lime.DB_COLUMN_WORD + ", '') <> ''";
+                query += LIME.DB_COLUMN_WORD + " LIKE '%" + curquery + "%' AND ifnull(" + LIME.DB_COLUMN_WORD + ", '') <> ''";
             }
         } else {
-            query += " ifnull(" + Lime.DB_COLUMN_WORD + ", '') <> ''";
+            query += " ifnull(" + LIME.DB_COLUMN_WORD + ", '') <> ''";
         }
 
         cursor = db.rawQuery(query, null);
 
         cursor.moveToFirst();
-        total = getCursorInt(cursor, Lime.DB_TOTAL_COUNT);
+        total = getCursorInt(cursor, LIME.DB_TOTAL_COUNT);
         cursor.close();
         return total;
 
@@ -4408,7 +4408,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         Cursor cursor;
 
-        String query = "SELECT COUNT(*) as count FROM " + Lime.DB_RELATED + " WHERE ";
+        String query = "SELECT COUNT(*) as count FROM " + LIME.DB_RELATED + " WHERE ";
 
         String cword = "";
         if (pword != null && !pword.isEmpty()) {
@@ -4417,19 +4417,19 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         }
 
         if (pword != null && !pword.isEmpty()) {
-            query += Lime.DB_RELATED_COLUMN_PWORD + " = '" + pword +
+            query += LIME.DB_RELATED_COLUMN_PWORD + " = '" + pword +
                     "' AND ";
         }
         if (!cword.isEmpty()) {
-            query += Lime.DB_RELATED_COLUMN_CWORD + " LIKE '" + cword + "%' AND ";
+            query += LIME.DB_RELATED_COLUMN_CWORD + " LIKE '" + cword + "%' AND ";
         }
 
-        query += "ifnull(" + Lime.DB_RELATED_COLUMN_CWORD + ", '') <> ''";
+        query += "ifnull(" + LIME.DB_RELATED_COLUMN_CWORD + ", '') <> ''";
 
         cursor = db.rawQuery(query, null);
 
         cursor.moveToFirst();
-        total = getCursorInt(cursor, Lime.DB_TOTAL_COUNT);
+        total = getCursorInt(cursor, LIME.DB_TOTAL_COUNT);
         cursor.close();
 
         return total;
@@ -4497,7 +4497,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if(db != null)
             db.close();
 
-        File dbFile= mContext.getDatabasePath(Lime.DATABASE_NAME);
+        File dbFile= mContext.getDatabasePath(LIME.DATABASE_NAME);
              dbFile.deleteOnExit();
         LIMEUtilities.copyRAWFile(mContext.getResources().openRawResource(R.raw.lime), dbFile);
         openDBConnection(true);

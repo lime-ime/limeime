@@ -27,7 +27,7 @@ package net.toload.main.hd.ui;
 import android.app.Activity;
 
 import net.toload.main.hd.DBServer;
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivityHandler;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEUtilities;
@@ -78,12 +78,12 @@ public class ShareRelatedDbRunnable implements Runnable{
             cacheDir = activity.getCacheDir();
         }
 
-        File targetfile = new File(cacheDir, Lime.DB_RELATED + Lime.DATABASE_EXT);
+        File targetfile = new File(cacheDir, LIME.DB_RELATED + LIME.DATABASE_EXT);
         if(targetfile.exists()){
             targetfile.delete();
         }
 
-        File targetfilezip = new File(cacheDir, Lime.DB_RELATED + ".limedb");
+        File targetfilezip = new File(cacheDir, LIME.DB_RELATED + ".limedb");
         if(targetfilezip.exists()){
             targetfilezip.delete();
         }

@@ -31,7 +31,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.data.Mapping;
 
 import java.util.LinkedList;
@@ -80,22 +80,22 @@ public class EmojiConverter extends SQLiteOpenHelper {
 		if(tag!=null && !tag.isEmpty()){
 			String tablename = "";
 			Cursor cursor = null;
-			if(emoji == Lime.EMOJI_CN ) {
+			if(emoji == LIME.EMOJI_CN ) {
 				tablename = "cn";
-			}else if(emoji == Lime.EMOJI_EN ) {//
+			}else if(emoji == LIME.EMOJI_EN ) {//
 				tablename = "en";
-			}else if(emoji == Lime.EMOJI_TW ) {//
+			}else if(emoji == LIME.EMOJI_TW ) {//
 				tablename = "tw";
 			}
 
 			try {
 				SQLiteDatabase db = this.getReadableDatabase();
 
-				cursor = db.query(tablename, null, Lime.EMOJI_FIELD_TAG + " = '" + tag + "' "
+				cursor = db.query(tablename, null, LIME.EMOJI_FIELD_TAG + " = '" + tag + "' "
 							, null, null, null, null, null);
 				
 				if (cursor.moveToFirst()) {
-					int wordColumn = cursor.getColumnIndex(Lime.EMOJI_FIELD_VALUE);
+					int wordColumn = cursor.getColumnIndex(LIME.EMOJI_FIELD_VALUE);
 					while (!cursor.isAfterLast()) {
 						String word = cursor.getString(wordColumn);
 						if(word != null && !word.isEmpty() && !word.equals(" ")){

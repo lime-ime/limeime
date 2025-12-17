@@ -26,7 +26,7 @@ package net.toload.main.hd.data;
 
 import android.database.Cursor;
 
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,23 +54,23 @@ public class Keyboard {
 
 	public static Keyboard get(Cursor cursor){
 		Keyboard record = new Keyboard();
-				record.setId(cursor.getInt(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_ID)));
-				record.setCode(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_CODE)));
-				record.setName(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_NAME)));
-				record.setDesc(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_DESC)));
-				record.setType(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_TYPE)));
-				record.setImage(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_IMAGE)));
-				record.setImkb(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_IMKB)));
-				record.setImshiftkb(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_IMSHIFTKB)));
-				record.setEngkb(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_ENGKB)));
-				record.setEngshiftkb(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_ENGSHIFTKB)));
-				record.setSymbolkb(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_SYMBOLKB)));
-				record.setSymbolshiftkb(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB)));
-				record.setDefaultkb(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_DEFAULTKB)));
-				record.setDefaultshiftkb(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB)));
-				record.setExtendedkb(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_EXTENDEDKB)));
-				record.setExtendedshiftkb(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB)));
-				record.setDisable(Boolean.getBoolean(cursor.getString(cursor.getColumnIndex(Lime.DB_KEYBOARD_COLUMN_DISABLE))));
+				record.setId(cursor.getInt(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_ID)));
+				record.setCode(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_CODE)));
+				record.setName(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_NAME)));
+				record.setDesc(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_DESC)));
+				record.setType(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_TYPE)));
+				record.setImage(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_IMAGE)));
+				record.setImkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_IMKB)));
+				record.setImshiftkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB)));
+				record.setEngkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_ENGKB)));
+				record.setEngshiftkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB)));
+				record.setSymbolkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_SYMBOLKB)));
+				record.setSymbolshiftkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB)));
+				record.setDefaultkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_DEFAULTKB)));
+				record.setDefaultshiftkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB)));
+				record.setExtendedkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_EXTENDEDKB)));
+				record.setExtendedshiftkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB)));
+				record.setDisable(Boolean.getBoolean(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_DISABLE))));
 		return record;
 	}
 
@@ -88,24 +88,24 @@ public class Keyboard {
 
 	public static String getInsertQuery(Keyboard record){
 		StringBuffer sb = new StringBuffer();
-		sb.append("INSERT INTO " + Lime.DB_KEYBOARD + "(");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_ID +", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_CODE+", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_NAME+", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_DESC +", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_TYPE +", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_IMAGE+", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_IMKB +", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_IMSHIFTKB+", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_ENGKB +", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_ENGSHIFTKB+", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_SYMBOLKB +", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB +", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_DEFAULTKB +", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB +", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_EXTENDEDKB +", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB +", ");
-		sb.append(Lime.DB_KEYBOARD_COLUMN_DISABLE +") VALUES(");
+		sb.append("INSERT INTO " + LIME.DB_KEYBOARD + "(");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_ID +", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_CODE+", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_NAME+", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_DESC +", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_TYPE +", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_IMAGE+", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_IMKB +", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB+", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_ENGKB +", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB+", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_SYMBOLKB +", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB +", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_DEFAULTKB +", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB +", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_EXTENDEDKB +", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB +", ");
+		sb.append(LIME.DB_KEYBOARD_COLUMN_DISABLE +") VALUES(");
 		sb.append("\""+record.getId()+"\",");
 		sb.append("\""+record.getCode()+"\",");
 		sb.append("\""+record.getName()+"\",");

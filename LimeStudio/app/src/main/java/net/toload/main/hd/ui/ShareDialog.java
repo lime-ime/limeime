@@ -37,7 +37,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Im;
@@ -166,216 +166,216 @@ public class ShareDialog extends DialogFragment {
 
 		HashMap<String, String> check = new HashMap<String, String>();
 
-		List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+		List<Im> imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
 		for(int i = 0; i < imlist.size() ; i++){
 			check.put(imlist.get(i).getCode(), imlist.get(i).getDesc());
 		}
 
-		if(check.get(Lime.DB_TABLE_CUSTOM) == null){
-			btnShareCustom.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_CUSTOM) == null){
+			btnShareCustom.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnShareCustom.setTypeface(null, Typeface.ITALIC);
 			btnShareCustom.setEnabled(false);
 		}else {
-			btnShareCustom.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnShareCustom.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareCustom.setTypeface(null, Typeface.BOLD);
 
 			btnShareCustom.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmShareDialog(Lime.IM_CUSTOM);
+					confirmShareDialog(LIME.IM_CUSTOM);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_PHONETIC) == null){
-			btnSharePhonetic.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_PHONETIC) == null){
+			btnSharePhonetic.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnSharePhonetic.setTypeface(null, Typeface.ITALIC);
 			btnSharePhonetic.setEnabled(false);
 		}else {
-			btnSharePhonetic.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnSharePhonetic.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnSharePhonetic.setTypeface(null, Typeface.BOLD);
 
 			btnSharePhonetic.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmShareDialog(Lime.IM_PHONETIC);
+					confirmShareDialog(LIME.IM_PHONETIC);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_CJ) == null){
-			btnShareCj.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_CJ) == null){
+			btnShareCj.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnShareCj.setTypeface(null, Typeface.ITALIC);
 			btnShareCj.setEnabled(false);
 		}else {
-			btnShareCj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnShareCj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareCj.setTypeface(null, Typeface.BOLD);
 
 			btnShareCj.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmShareDialog(Lime.IM_CJ);
+					confirmShareDialog(LIME.IM_CJ);
 				}
 			});
 		}
 
 
 
-		if(check.get(Lime.DB_TABLE_CJ5) == null){
-			btnShareCj5.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_CJ5) == null){
+			btnShareCj5.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnShareCj5.setTypeface(null, Typeface.ITALIC);
 			btnShareCj5.setEnabled(false);
 		}else {
-			btnShareCj5.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnShareCj5.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareCj5.setTypeface(null, Typeface.BOLD);
 
 			btnShareCj5.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmShareDialog(Lime.IM_CJ5);
+					confirmShareDialog(LIME.IM_CJ5);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_SCJ) == null){
-			btnShareScj.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_SCJ) == null){
+			btnShareScj.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnShareScj.setTypeface(null, Typeface.ITALIC);
 			btnShareScj.setEnabled(false);
 		}else {
-			btnShareScj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnShareScj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareScj.setTypeface(null, Typeface.BOLD);
 			btnShareScj.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmShareDialog(Lime.IM_SCJ);
+					confirmShareDialog(LIME.IM_SCJ);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_ECJ) == null){
-			btnShareEcj.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_ECJ) == null){
+			btnShareEcj.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnShareEcj.setTypeface(null, Typeface.ITALIC);
 			btnShareEcj.setEnabled(false);
 		}else {
-			btnShareEcj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnShareEcj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareEcj.setTypeface(null, Typeface.BOLD);
 
 			btnShareEcj.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmShareDialog(Lime.IM_ECJ);
+					confirmShareDialog(LIME.IM_ECJ);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_DAYI) == null){
-			btnShareDayi.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_DAYI) == null){
+			btnShareDayi.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnShareDayi.setTypeface(null, Typeface.ITALIC);
 			btnShareDayi.setEnabled(false);
 		}else {
-			btnShareDayi.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnShareDayi.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareDayi.setTypeface(null, Typeface.BOLD);
 
 			btnShareDayi.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmShareDialog(Lime.IM_DAYI);
+					confirmShareDialog(LIME.IM_DAYI);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_EZ) == null){
-			btnShareEz.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_EZ) == null){
+			btnShareEz.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnShareEz.setTypeface(null, Typeface.ITALIC);
 			btnShareEz.setEnabled(false);
 		}else {
-			btnShareEz.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnShareEz.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareEz.setTypeface(null, Typeface.BOLD);
 
 			btnShareEz.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmShareDialog(Lime.IM_EZ);
+					confirmShareDialog(LIME.IM_EZ);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_ARRAY) == null){
-			btnShareArray.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_ARRAY) == null){
+			btnShareArray.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnShareArray.setTypeface(null, Typeface.ITALIC);
 			btnShareArray.setEnabled(false);
 		}else {
-			btnShareArray.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnShareArray.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareArray.setTypeface(null, Typeface.BOLD);
 
 			btnShareArray.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmShareDialog(Lime.IM_ARRAY);
+					confirmShareDialog(LIME.IM_ARRAY);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_ARRAY10) == null){
-			btnShareArray10.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_ARRAY10) == null){
+			btnShareArray10.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnShareArray10.setTypeface(null, Typeface.ITALIC);
 			btnShareArray10.setEnabled(false);
 		}else {
-			btnShareArray10.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnShareArray10.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareArray10.setTypeface(null, Typeface.BOLD);
 
 			btnShareArray10.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmShareDialog(Lime.IM_ARRAY10);
+					confirmShareDialog(LIME.IM_ARRAY10);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_HS) == null){
-			btnShareHs.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_HS) == null){
+			btnShareHs.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnShareHs.setTypeface(null, Typeface.ITALIC);
 			btnShareHs.setEnabled(false);
 		}else {
-			btnShareHs.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnShareHs.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareHs.setTypeface(null, Typeface.BOLD);
 
 			btnShareHs.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmShareDialog(Lime.IM_HS);
+					confirmShareDialog(LIME.IM_HS);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_WB) == null){
-			btnShareWb.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_WB) == null){
+			btnShareWb.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnShareWb.setTypeface(null, Typeface.ITALIC);
 			btnShareWb.setEnabled(false);
 		}else {
-			btnShareWb.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnShareWb.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareWb.setTypeface(null, Typeface.BOLD);
 
 			btnShareWb.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmShareDialog(Lime.IM_WB);
+					confirmShareDialog(LIME.IM_WB);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_PINYIN) == null){
-			btnSharePinyin.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_PINYIN) == null){
+			btnSharePinyin.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnSharePinyin.setTypeface(null, Typeface.ITALIC);
 			btnSharePinyin.setEnabled(false);
 		}else {
-			btnSharePinyin.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnSharePinyin.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnSharePinyin.setTypeface(null, Typeface.BOLD);
 
 			btnSharePinyin.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmShareDialog(Lime.IM_PINYIN);
+					confirmShareDialog(LIME.IM_PINYIN);
 				}
 			});
 		}
@@ -383,7 +383,7 @@ public class ShareDialog extends DialogFragment {
 		btnShareRelated.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				confirmShareDialog(Lime.DB_RELATED);
+				confirmShareDialog(LIME.DB_RELATED);
 			}
 		});
 
@@ -394,18 +394,18 @@ public class ShareDialog extends DialogFragment {
 
 		AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
 
-		if(imtype.equalsIgnoreCase(Lime.DB_RELATED)) {
+		if(imtype.equalsIgnoreCase(LIME.DB_RELATED)) {
 			alertDialog.setTitle(activity.getResources().getString(R.string.share_dialog_related_title));
 			alertDialog.setMessage(activity.getResources().getString(R.string.share_dialog_related_title_message));
 		}else{
 			alertDialog.setTitle(activity.getResources().getString(R.string.share_dialog_title));
 			alertDialog.setMessage(activity.getResources().getString(R.string.share_dialog_title_message));
 		}
-		if(!imtype.equalsIgnoreCase(Lime.DB_RELATED)){
+		if(!imtype.equalsIgnoreCase(LIME.DB_RELATED)){
 			alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.share_lime_cin),
 					new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int which) {
-							if(imtype.equals(Lime.DB_RELATED)){
+							if(imtype.equals(LIME.DB_RELATED)){
 								// Call Share IM Processes
 								((MainActivity) activity).initialShareRelated();
 								dismiss();
@@ -423,7 +423,7 @@ public class ShareDialog extends DialogFragment {
 		alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL, activity.getResources().getString(R.string.share_lime_db),
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						if(imtype.equals(Lime.DB_RELATED)){
+						if(imtype.equals(LIME.DB_RELATED)){
 							((MainActivity) activity).initialShareRelatedDb();
 							dismiss();
 							sharedialog.dismiss();

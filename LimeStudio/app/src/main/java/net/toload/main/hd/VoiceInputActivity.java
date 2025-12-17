@@ -23,13 +23,17 @@
  */
 package net.toload.main.hd;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
+
+import androidx.activity.ComponentActivity;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -38,11 +42,12 @@ import java.util.Locale;
  * Helper Activity to launch RecognizerIntent and return results
  * This is needed because InputMethodService cannot launch activities on API 35+
  */
-public class VoiceInputActivity extends Activity {
+public class VoiceInputActivity extends ComponentActivity {
     private static final String TAG = "VoiceInputActivity";
-    private static final int REQUEST_CODE_VOICE_INPUT = 1001;
     public static final String ACTION_VOICE_RESULT = "net.toload.main.hd.VOICE_INPUT_RESULT";
     public static final String EXTRA_RECOGNIZED_TEXT = "recognized_text";
+    
+    private ActivityResultLauncher<Intent> voiceInputLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,11 +55,18 @@ public class VoiceInputActivity extends Activity {
         
         // Make activity transparent
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        // FLAG_FULLSCREEN is deprecated in API 30+, but necessary for older APIs
+        @SuppressWarnings("deprecation")
+        int flagFullscreen = WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        getWindow().setFlags(flagFullscreen, flagFullscreen);
         getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         
         Log.i(TAG, "onCreate(): Starting voice input");
+        
+        // Register ActivityResultLauncher for voice input
+        voiceInputLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                this::handleVoiceInputResult);
         
         // Launch RecognizerIntent
         Intent voiceIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -73,7 +85,7 @@ public class VoiceInputActivity extends Activity {
         }
         
         try {
-            startActivityForResult(voiceIntent, REQUEST_CODE_VOICE_INPUT);
+            voiceInputLauncher.launch(voiceIntent);
             Log.i(TAG, "onCreate(): Launched RecognizerIntent: " + componentName.getPackageName() + "/" + componentName.getClassName());
         } catch (android.content.ActivityNotFoundException e) {
             Log.e(TAG, "onCreate(): ActivityNotFoundException launching RecognizerIntent: " + e.getMessage(), e);
@@ -85,31 +97,30 @@ public class VoiceInputActivity extends Activity {
             finish();
         }
     }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        
-        if (requestCode == REQUEST_CODE_VOICE_INPUT) {
-            if (resultCode == RESULT_OK && data != null) {
-                ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-                if (results != null && !results.isEmpty()) {
-                    String recognizedText = results.get(0);
-                    Log.i(TAG, "onActivityResult(): Recognized text: " + recognizedText);
-                    
-                    // Send result back to LIMEService via broadcast
-                    Intent resultIntent = new Intent(ACTION_VOICE_RESULT);
-                    resultIntent.putExtra(EXTRA_RECOGNIZED_TEXT, recognizedText);
-                    sendBroadcast(resultIntent);
-                    Log.i(TAG, "onActivityResult(): Sent broadcast with recognized text");
-                } else {
-                    Log.w(TAG, "onActivityResult(): No results in data");
-                }
+    
+    /**
+     * Handle the result from voice input activity using Activity Result API.
+     */
+    private void handleVoiceInputResult(ActivityResult result) {
+        if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+            Intent data = result.getData();
+            ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            if (results != null && !results.isEmpty()) {
+                String recognizedText = results.get(0);
+                Log.i(TAG, "handleVoiceInputResult(): Recognized text: " + recognizedText);
+                
+                // Send result back to LIMEService via broadcast
+                Intent resultIntent = new Intent(ACTION_VOICE_RESULT);
+                resultIntent.putExtra(EXTRA_RECOGNIZED_TEXT, recognizedText);
+                sendBroadcast(resultIntent);
+                Log.i(TAG, "handleVoiceInputResult(): Sent broadcast with recognized text");
             } else {
-                Log.w(TAG, "onActivityResult(): Voice recognition cancelled or failed, resultCode: " + resultCode);
+                Log.w(TAG, "handleVoiceInputResult(): No results in data");
             }
-            finish();
+        } else {
+            Log.w(TAG, "handleVoiceInputResult(): Voice recognition cancelled or failed, resultCode: " + result.getResultCode());
         }
+        finish();
     }
 
     @Override

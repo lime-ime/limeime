@@ -31,6 +31,8 @@ import android.os.Message;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 
+import net.toload.main.hd.global.LIME;
+
 /**
  * Created by Art Hung on 2015/4/26.
  */
@@ -71,10 +73,10 @@ public class MainActivityHandler extends Handler {
 
         }else if(action != null && action.equalsIgnoreCase("sharedb")){
             String filepath = msg.getData().getString("filepath");
-            activity.shareTo(filepath, Lime.SHARE_TYPE_ZIP);
+            activity.shareTo(filepath, LIME.SHARE_TYPE_ZIP);
         }else if(action != null && action.equalsIgnoreCase("sharetxt")){
             String filepath = msg.getData().getString("filepath");
-            activity.shareTo(filepath, Lime.SHARE_TYPE_TXT);
+            activity.shareTo(filepath, LIME.SHARE_TYPE_TXT);
         }else if(action != null && action.equalsIgnoreCase("initialpreference")){
             activity.initialDefaultPreference();
         }else if(action != null && action.equalsIgnoreCase("showmessageboard")){

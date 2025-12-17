@@ -54,6 +54,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import net.toload.main.hd.data.Im;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
@@ -152,7 +153,7 @@ public class NavigationDrawerFragment extends Fragment {
 
 
         // Load Menu Item
-        List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+        List<Im> imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
         int menucount = imlist.size() + 2;
         int checkcount = 2;
 
@@ -181,7 +182,7 @@ public class NavigationDrawerFragment extends Fragment {
                 // If the drawer is open, show the global app actions in the action bar. See also
                 // showGlobalContextActionBar, which controls the top-left area of the action bar.
                 if (mDrawerLayout != null && isDrawerOpen()) {
-                    menuInflater.inflate(R.menu.global, menu);
+                    menuInflater.inflate(R.menu.main, menu);
                     showGlobalContextActionBar();
                 }
             }
@@ -226,7 +227,12 @@ public class NavigationDrawerFragment extends Fragment {
 
                                 // Reset Lime databases
                                 datasource.resetLimeSetting();
-                                System.exit(0);
+                                
+                                // Close all activities in the task and let Android manage process lifecycle
+                                Activity activity = getActivity();
+                                if (activity != null) {
+                                    activity.finishAffinity();
+                                }
 
                             });
                     builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
@@ -386,7 +392,7 @@ public class NavigationDrawerFragment extends Fragment {
 
         if(mDrawerListView != null){
 
-            List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+            List<Im> imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
             int menuCount = imlist.size() + 2;
             int checkCount = 2;
 

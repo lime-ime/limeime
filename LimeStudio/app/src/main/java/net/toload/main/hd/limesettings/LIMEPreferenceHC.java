@@ -87,6 +87,7 @@ public class LIMEPreferenceHC extends AppCompatActivity {
 	 * Setup edge-to-edge display with proper window insets handling.
 	 * This ensures UI elements are not obscured by system bars on API 35+.
 	 */
+    @SuppressWarnings("deprecation")
 	private void setupEdgeToEdge() {
 		// Apply window insets to the content view (where PreferenceFragment is displayed)
 		View contentView = findViewById(android.R.id.content);
@@ -107,6 +108,8 @@ public class LIMEPreferenceHC extends AppCompatActivity {
 		}
 
 		// Set status bar and navigation bar to transparent for edge-to-edge effect
+		// Note: setStatusBarColor and setNavigationBarColor are deprecated in API 35+,
+		// but we use them with suppression for backward compatibility
 		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
 			@SuppressWarnings("deprecation")
 			android.view.Window window = getWindow();
@@ -119,6 +122,8 @@ public class LIMEPreferenceHC extends AppCompatActivity {
 		View decorView = getWindow().getDecorView();
 		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
 			// API 23+ (Marshmallow+): Use WindowInsetsControllerCompat
+			// Note: getWindowInsetsController() is deprecated in API 35+, but necessary for API 23-34
+			@SuppressWarnings("deprecation")
 			WindowInsetsControllerCompat windowInsetsController = ViewCompat.getWindowInsetsController(decorView);
 			if (windowInsetsController != null) {
 				// Use dark status bar icons (black) for visibility on light backgrounds

@@ -68,6 +68,7 @@ import net.toload.main.hd.candidate.CandidateView;
 import net.toload.main.hd.candidate.CandidateViewContainer;
 import net.toload.main.hd.data.ChineseSymbol;
 import net.toload.main.hd.data.Mapping;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard;
@@ -1905,7 +1906,7 @@ public class LIMEService extends InputMethodService implements
 
 
         builder.setCancelable(true);
-        builder.setIcon(R.drawable.sym_keyboard_done_dark);
+        builder.setIcon(R.drawable.logo);
         builder.setNegativeButton(android.R.string.cancel, null);
         builder.setTitle(getResources().getString(R.string.ime_name));
 
@@ -2135,7 +2136,7 @@ public class LIMEService extends InputMethodService implements
         builder = new AlertDialog.Builder(this);
 
         builder.setCancelable(true);
-        builder.setIcon(R.drawable.sym_keyboard_done_light);
+        builder.setIcon(R.drawable.logo);
         builder.setNegativeButton(android.R.string.cancel, null);
         builder.setTitle(getResources().getString(R.string.han_convert_option_list));
         CharSequence[] items = getResources().getStringArray(R.array.han_convert_options);
@@ -2180,7 +2181,7 @@ public class LIMEService extends InputMethodService implements
         builder = new AlertDialog.Builder(this);
 
         builder.setCancelable(true);
-        builder.setIcon(R.drawable.sym_keyboard_done_light);
+        builder.setIcon(R.drawable.logo);
         builder.setNegativeButton(android.R.string.cancel, null);
         builder.setTitle(getResources().getString(R.string.keyboard_list));
 
@@ -2389,7 +2390,7 @@ public class LIMEService extends InputMethodService implements
 
                                 if( list.get(0).getWord().matches("[A-Za-z]+") ) {
 
-                                    item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
+                                    item1 = SearchSrv.emojiConvert(list.get(0).getWord(), LIME.EMOJI_EN);
                                     if (!item1.isEmpty()) {
                                         for (Mapping m : item1) {
                                             if (emojiCheck.get(m.getWord()) == null) {
@@ -2408,7 +2409,7 @@ public class LIMEService extends InputMethodService implements
                                             list.get(1).getWord().getBytes().length > 1 &&
                                             list.get(1).getWord().length() < 4
                                     ) {
-                                        item2 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_TW);
+                                        item2 = SearchSrv.emojiConvert(list.get(1).getWord(), LIME.EMOJI_TW);
                                         if (!item2.isEmpty()) {
                                             for (Mapping m : item2) {
                                                 if (emojiCheck.get(m.getWord()) == null) {
@@ -2418,7 +2419,7 @@ public class LIMEService extends InputMethodService implements
                                             }
                                         }
                                         if (item2.isEmpty()) {
-                                            item3 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_CN);
+                                            item3 = SearchSrv.emojiConvert(list.get(1).getWord(), LIME.EMOJI_CN);
                                             if (!item3.isEmpty()) {
                                                 for (Mapping m : item3) {
                                                     if (emojiCheck.get(m.getWord()) == null) {
@@ -2580,7 +2581,7 @@ public class LIMEService extends InputMethodService implements
                                                 insertPosition = list.size();
                                             }
 
-                                            item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
+                                            item1 = SearchSrv.emojiConvert(list.get(0).getWord(), LIME.EMOJI_EN);
                                             if(!item1.isEmpty()){
                                                 for(Mapping m: item1){
                                                     if(emojiCheck.get(m.getWord()) == null){

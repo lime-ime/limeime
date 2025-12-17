@@ -119,11 +119,10 @@ public class MainActivity extends AppCompatActivity
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle(getResources().getString(R.string.global_exit_title));
             builder.setCancelable(false);
-            builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
+                    builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
                     (dialog, id) -> {
-                        // Kill and stop my activity
-                        //android.os.Process.killProcess(android.os.Process.myPid());
-                        System.exit(0);
+                        // Close all activities in the task and let Android manage process lifecycle
+                        finishAffinity();
                     });
             builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
                     (dialog, id) -> {
@@ -158,10 +157,16 @@ public class MainActivity extends AppCompatActivity
 
         setContentView(R.layout.activity_main);
 
-        // Ensure ActionBar title is displayed
+        // Ensure ActionBar title is displayed with white background
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayShowTitleEnabled(true);
+            // Set white background for actionbar
+            actionBar.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.WHITE));
+            // Remove elevation/shadow for cleaner look
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                actionBar.setElevation(0);
+            }
         }
 
         // Handle window insets for edge-to-edge display
@@ -233,7 +238,7 @@ public class MainActivity extends AppCompatActivity
         try {
             pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             long versionCode = PackageInfoCompat.getLongVersionCode(pInfo);
-            versionstr = "v" + pInfo.versionName + " - " + versionCode;
+            versionstr = getString(R.string.version_format, pInfo.versionName, versionCode);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
@@ -293,7 +298,7 @@ public class MainActivity extends AppCompatActivity
             datasource = new LimeDB(this);
 
         imlist = new ArrayList<>();
-        List<Im> result = datasource.getIm(null, Lime.IM_TYPE_NAME);
+        List<Im> result = datasource.getIm(null, LIME.IM_TYPE_NAME);
         if (result != null) {
             imlist = result;
         }

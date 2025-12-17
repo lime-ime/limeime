@@ -39,7 +39,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.data.Related;
@@ -80,7 +80,7 @@ public class ImportDialog extends DialogFragment {
 	public static ImportDialog newInstance(String importtext) {
 		ImportDialog btd = new ImportDialog();
 		Bundle args = new Bundle();
-			   args.putString(Lime.IMPORT_TEXT, importtext);
+			   args.putString(LIME.IMPORT_TEXT, importtext);
 			   btd.setArguments(args);
 			   btd.setCancelable(true);
 		return btd;
@@ -94,7 +94,7 @@ public class ImportDialog extends DialogFragment {
 	@Override
 	public void onAttach(Context context) {
 		super.onAttach(context);
-		importtext = getArguments().getString(Lime.IMPORT_TEXT);
+		importtext = getArguments().getString(LIME.IMPORT_TEXT);
 	}
 
 	@Override
@@ -167,216 +167,216 @@ public class ImportDialog extends DialogFragment {
 
 		HashMap<String, String> check = new HashMap<String, String>();
 
-		List<Im> imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+		List<Im> imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
 		for(int i = 0; i < imlist.size() ; i++){
 			check.put(imlist.get(i).getCode(), imlist.get(i).getDesc());
 		}
 
-		if(check.get(Lime.DB_TABLE_CUSTOM) == null){
-			btnImportCustom.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_CUSTOM) == null){
+			btnImportCustom.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportCustom.setTypeface(null, Typeface.ITALIC);
 			btnImportCustom.setEnabled(false);
 		}else {
-			btnImportCustom.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnImportCustom.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportCustom.setTypeface(null, Typeface.BOLD);
 
 			btnImportCustom.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmimportdialog(Lime.IM_CUSTOM);
+					confirmimportdialog(LIME.IM_CUSTOM);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_PHONETIC) == null){
-			btnImportPhonetic.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_PHONETIC) == null){
+			btnImportPhonetic.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportPhonetic.setTypeface(null, Typeface.ITALIC);
 			btnImportPhonetic.setEnabled(false);
 		}else {
-			btnImportPhonetic.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnImportPhonetic.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportPhonetic.setTypeface(null, Typeface.BOLD);
 
 			btnImportPhonetic.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmimportdialog(Lime.IM_PHONETIC);
+					confirmimportdialog(LIME.IM_PHONETIC);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_CJ) == null){
-			btnImportCj.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_CJ) == null){
+			btnImportCj.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportCj.setTypeface(null, Typeface.ITALIC);
 			btnImportCj.setEnabled(false);
 		}else {
-			btnImportCj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnImportCj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportCj.setTypeface(null, Typeface.BOLD);
 
 			btnImportCj.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmimportdialog(Lime.IM_CJ);
+					confirmimportdialog(LIME.IM_CJ);
 				}
 			});
 		}
 
 
 
-		if(check.get(Lime.DB_TABLE_CJ5) == null){
-			btnImportCj5.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_CJ5) == null){
+			btnImportCj5.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportCj5.setTypeface(null, Typeface.ITALIC);
 			btnImportCj5.setEnabled(false);
 		}else {
-			btnImportCj5.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnImportCj5.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportCj5.setTypeface(null, Typeface.BOLD);
 
 			btnImportCj5.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmimportdialog(Lime.IM_CJ5);
+					confirmimportdialog(LIME.IM_CJ5);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_SCJ) == null){
-			btnImportScj.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_SCJ) == null){
+			btnImportScj.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportScj.setTypeface(null, Typeface.ITALIC);
 			btnImportScj.setEnabled(false);
 		}else {
-			btnImportScj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnImportScj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportScj.setTypeface(null, Typeface.BOLD);
 			btnImportScj.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmimportdialog(Lime.IM_SCJ);
+					confirmimportdialog(LIME.IM_SCJ);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_ECJ) == null){
-			btnImportEcj.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_ECJ) == null){
+			btnImportEcj.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportEcj.setTypeface(null, Typeface.ITALIC);
 			btnImportEcj.setEnabled(false);
 		}else {
-			btnImportEcj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnImportEcj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportEcj.setTypeface(null, Typeface.BOLD);
 
 			btnImportEcj.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmimportdialog(Lime.IM_ECJ);
+					confirmimportdialog(LIME.IM_ECJ);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_DAYI) == null){
-			btnImportDayi.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_DAYI) == null){
+			btnImportDayi.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportDayi.setTypeface(null, Typeface.ITALIC);
 			btnImportDayi.setEnabled(false);
 		}else {
-			btnImportDayi.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnImportDayi.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportDayi.setTypeface(null, Typeface.BOLD);
 
 			btnImportDayi.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmimportdialog(Lime.IM_DAYI);
+					confirmimportdialog(LIME.IM_DAYI);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_EZ) == null){
-			btnImportEz.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_EZ) == null){
+			btnImportEz.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportEz.setTypeface(null, Typeface.ITALIC);
 			btnImportEz.setEnabled(false);
 		}else {
-			btnImportEz.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnImportEz.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportEz.setTypeface(null, Typeface.BOLD);
 
 			btnImportEz.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmimportdialog(Lime.IM_EZ);
+					confirmimportdialog(LIME.IM_EZ);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_ARRAY) == null){
-			btnImportArray.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_ARRAY) == null){
+			btnImportArray.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportArray.setTypeface(null, Typeface.ITALIC);
 			btnImportArray.setEnabled(false);
 		}else {
-			btnImportArray.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnImportArray.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportArray.setTypeface(null, Typeface.BOLD);
 
 			btnImportArray.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmimportdialog(Lime.IM_ARRAY);
+					confirmimportdialog(LIME.IM_ARRAY);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_ARRAY10) == null){
-			btnImportArray10.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_ARRAY10) == null){
+			btnImportArray10.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportArray10.setTypeface(null, Typeface.ITALIC);
 			btnImportArray10.setEnabled(false);
 		}else {
-			btnImportArray10.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnImportArray10.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportArray10.setTypeface(null, Typeface.BOLD);
 
 			btnImportArray10.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmimportdialog(Lime.IM_ARRAY10);
+					confirmimportdialog(LIME.IM_ARRAY10);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_HS) == null){
-			btnImportHs.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_HS) == null){
+			btnImportHs.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportHs.setTypeface(null, Typeface.ITALIC);
 			btnImportHs.setEnabled(false);
 		}else {
-			btnImportHs.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnImportHs.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportHs.setTypeface(null, Typeface.BOLD);
 
 			btnImportHs.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmimportdialog(Lime.IM_HS);
+					confirmimportdialog(LIME.IM_HS);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_WB) == null){
-			btnImportWb.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_WB) == null){
+			btnImportWb.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportWb.setTypeface(null, Typeface.ITALIC);
 			btnImportWb.setEnabled(false);
 		}else {
-			btnImportWb.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnImportWb.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportWb.setTypeface(null, Typeface.BOLD);
 
 			btnImportWb.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmimportdialog(Lime.IM_WB);
+					confirmimportdialog(LIME.IM_WB);
 				}
 			});
 		}
 
-		if(check.get(Lime.DB_TABLE_PINYIN) == null){
-			btnImportPinyin.setAlpha(Lime.HALF_ALPHA_VALUE);
+		if(check.get(LIME.DB_TABLE_PINYIN) == null){
+			btnImportPinyin.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportPinyin.setTypeface(null, Typeface.ITALIC);
 			btnImportPinyin.setEnabled(false);
 		}else {
-			btnImportPinyin.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+			btnImportPinyin.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportPinyin.setTypeface(null, Typeface.BOLD);
 
 			btnImportPinyin.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmimportdialog(Lime.IM_PINYIN);
+					confirmimportdialog(LIME.IM_PINYIN);
 				}
 			});
 		}
@@ -385,11 +385,11 @@ public class ImportDialog extends DialogFragment {
 			btnImportRelated.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					confirmimportdialog(Lime.DB_RELATED);
+					confirmimportdialog(LIME.DB_RELATED);
 				}
 			});
 		}else{
-			btnImportRelated.setAlpha(Lime.HALF_ALPHA_VALUE);
+			btnImportRelated.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportRelated.setTypeface(null, Typeface.ITALIC);
 			btnImportRelated.setEnabled(false);
 		}
@@ -403,7 +403,7 @@ public class ImportDialog extends DialogFragment {
 
 		final EditText input = new EditText(activity);
 
-		if(imtype.equalsIgnoreCase(Lime.DB_RELATED)) {
+		if(imtype.equalsIgnoreCase(LIME.DB_RELATED)) {
 			alertDialog.setTitle(activity.getResources().getString(R.string.import_dialog_related_title));
 			alertDialog.setMessage(importtext);
 		}else{
@@ -421,7 +421,7 @@ public class ImportDialog extends DialogFragment {
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 
-						if(imtype.equals(Lime.DB_RELATED)){
+						if(imtype.equals(LIME.DB_RELATED)){
 							importToRelatedTable();
 							dismiss();
 							importdialog.dismiss();

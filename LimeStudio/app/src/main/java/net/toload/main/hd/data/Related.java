@@ -26,7 +26,7 @@ package net.toload.main.hd.data;
 
 import android.database.Cursor;
 
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,11 +77,11 @@ public class Related {
 
 	public static Related get(Cursor cursor){
 		Related record = new Related();
-				record.setId(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_ID)));
-				record.setPword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_PWORD)));
-				record.setCword(cursor.getString(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_CWORD)));
-				record.setUserscore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_USERSCORE)));
-				record.setBasescore(cursor.getInt(cursor.getColumnIndex(Lime.DB_RELATED_COLUMN_BASESCORE)));
+				record.setId(cursor.getInt(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_ID)));
+				record.setPword(cursor.getString(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_PWORD)));
+				record.setCword(cursor.getString(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_CWORD)));
+				record.setUserscore(cursor.getInt(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_USERSCORE)));
+				record.setBasescore(cursor.getInt(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_BASESCORE)));
 		return record;
 	}
 
@@ -98,11 +98,11 @@ public class Related {
 
 	public static String getInsertQuery(Related record){
 		StringBuffer sb = new StringBuffer();
-		sb.append("INSERT INTO " + Lime.DB_RELATED + "(");
-		sb.append(Lime.DB_RELATED_COLUMN_PWORD +", ");
-		sb.append(Lime.DB_RELATED_COLUMN_CWORD +", ");
-		sb.append(Lime.DB_RELATED_COLUMN_USERSCORE +", ");
-		sb.append(Lime.DB_RELATED_COLUMN_BASESCORE +") VALUES(");
+		sb.append("INSERT INTO " + LIME.DB_RELATED + "(");
+		sb.append(LIME.DB_RELATED_COLUMN_PWORD +", ");
+		sb.append(LIME.DB_RELATED_COLUMN_CWORD +", ");
+		sb.append(LIME.DB_RELATED_COLUMN_USERSCORE +", ");
+		sb.append(LIME.DB_RELATED_COLUMN_BASESCORE +") VALUES(");
 		sb.append("\""+record.getPword()+"\",");
 		sb.append("\""+record.getCword()+"\",");
 		sb.append("\""+record.getUserscore()+"\",");

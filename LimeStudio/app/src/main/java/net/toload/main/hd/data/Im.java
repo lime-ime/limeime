@@ -26,7 +26,7 @@ package net.toload.main.hd.data;
 
 import android.database.Cursor;
 
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -118,15 +118,15 @@ public class Im {
 
 	public static Im get(Cursor cursor){
 		Im record = new Im();
-			record.setId(cursor.getInt(cursor.getColumnIndex(Lime.DB_IM_COLUMN_ID)));
-			record.setCode(cursor.getString(cursor.getColumnIndex(Lime.DB_IM_COLUMN_CODE)));
-			record.setTitle(cursor.getString(cursor.getColumnIndex(Lime.DB_IM_COLUMN_TITLE)));
-			record.setDesc(cursor.getString(cursor.getColumnIndex(Lime.DB_IM_COLUMN_DESC)));
-			record.setKeyboard(cursor.getString(cursor.getColumnIndex(Lime.DB_IM_COLUMN_KEYBOARD)));
-			record.setDisable(Boolean.getBoolean(cursor.getString(cursor.getColumnIndex(Lime.DB_IM_COLUMN_DISABLE))));
-			record.setSelkey(cursor.getString(cursor.getColumnIndex(Lime.DB_IM_COLUMN_SELKEY)));
-			record.setEndkey(cursor.getString(cursor.getColumnIndex(Lime.DB_IM_COLUMN_ENDKEY)));
-			record.setSpacestyle(cursor.getString(cursor.getColumnIndex(Lime.DB_IM_COLUMN_SPACESTYLE)));
+			record.setId(cursor.getInt(cursor.getColumnIndex(LIME.DB_IM_COLUMN_ID)));
+			record.setCode(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_CODE)));
+			record.setTitle(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_TITLE)));
+			record.setDesc(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_DESC)));
+			record.setKeyboard(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_KEYBOARD)));
+			record.setDisable(Boolean.getBoolean(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_DISABLE))));
+			record.setSelkey(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_SELKEY)));
+			record.setEndkey(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_ENDKEY)));
+			record.setSpacestyle(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_SPACESTYLE)));
 		return record;
 	}
 
@@ -144,15 +144,15 @@ public class Im {
 		
 	public static String getInsertQuery(Im record){
 		StringBuffer sb = new StringBuffer();
-					 sb.append("INSERT INTO " + Lime.DB_IM + "(");
-					 sb.append(Lime.DB_IM_COLUMN_CODE +", ");
-					 sb.append(Lime.DB_IM_COLUMN_TITLE +", ");
-					 sb.append(Lime.DB_IM_COLUMN_DESC +", ");
-					 sb.append(Lime.DB_IM_COLUMN_KEYBOARD +", ");
-					 sb.append(Lime.DB_IM_COLUMN_DISABLE +", ");
-					 sb.append(Lime.DB_IM_COLUMN_SELKEY +", ");
-					 sb.append(Lime.DB_IM_COLUMN_ENDKEY +", ");
-					 sb.append(Lime.DB_IM_COLUMN_SPACESTYLE +") VALUES(");
+					 sb.append("INSERT INTO " + LIME.DB_IM + "(");
+					 sb.append(LIME.DB_IM_COLUMN_CODE +", ");
+					 sb.append(LIME.DB_IM_COLUMN_TITLE +", ");
+					 sb.append(LIME.DB_IM_COLUMN_DESC +", ");
+					 sb.append(LIME.DB_IM_COLUMN_KEYBOARD +", ");
+					 sb.append(LIME.DB_IM_COLUMN_DISABLE +", ");
+					 sb.append(LIME.DB_IM_COLUMN_SELKEY +", ");
+					 sb.append(LIME.DB_IM_COLUMN_ENDKEY +", ");
+					 sb.append(LIME.DB_IM_COLUMN_SPACESTYLE +") VALUES(");
 					 sb.append("\""+record.getCode()+"\",");
 					 sb.append("\""+record.getTitle()+"\",");
 					 sb.append("\""+record.getDesc()+"\",");

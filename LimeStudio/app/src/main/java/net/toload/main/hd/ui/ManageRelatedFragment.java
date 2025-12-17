@@ -42,7 +42,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
 import net.toload.main.hd.SearchServer;
@@ -175,7 +175,7 @@ public class ManageRelatedFragment extends Fragment {
         this.btnManageRelatedNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int checkrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
+                int checkrecord = LIME.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
                 if (checkrecord < total) {
                     page++;
                 }
@@ -253,7 +253,7 @@ public class ManageRelatedFragment extends Fragment {
 
     public void searchrelated(String curquery){
 
-        int offset = Lime.IM_MANAGE_DISPLAY_AMOUNT * page;
+        int offset = LIME.IM_MANAGE_DISPLAY_AMOUNT * page;
 
         if((curquery == null && total == 0) || curquery != prequery ){
             total = datasource.getRelatedSize(curquery);
@@ -269,7 +269,7 @@ public class ManageRelatedFragment extends Fragment {
             handler.removeCallbacks(ManageRelatedthread);
         }
         ManageRelatedthread = new Thread(new ManageRelatedRunnable(handler, activity, curquery,
-                                                                Lime.IM_MANAGE_DISPLAY_AMOUNT, offset));
+                                                                LIME.IM_MANAGE_DISPLAY_AMOUNT, offset));
         ManageRelatedthread.start();
         prequery = curquery;
     }
@@ -311,8 +311,8 @@ public class ManageRelatedFragment extends Fragment {
 
         this.relatedlist = relatedlist;
 
-        int startrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * page;
-        int endrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
+        int startrecord = LIME.IM_MANAGE_DISPLAY_AMOUNT * page;
+        int endrecord = LIME.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
 
         if(page > 0){
             this.btnManageRelatedPrevious.setEnabled(true);
@@ -346,8 +346,8 @@ public class ManageRelatedFragment extends Fragment {
         String nav = "0";
 
         if(total > 0){
-            nav = Lime.format(startrecord + 1) + "-" + Lime.format(endrecord);
-            nav += " of " + Lime.format(total);
+            nav = LIME.format(startrecord + 1) + "-" + LIME.format(endrecord);
+            nav += " of " + LIME.format(total);
         }
 
         this.txtNavigationInfo.setText(nav);
@@ -366,7 +366,7 @@ public class ManageRelatedFragment extends Fragment {
         }
 
         // Remove from the database
-        String removesql = "DELETE FROM " + Lime.DB_RELATED + " WHERE " + Lime.DB_COLUMN_ID + " = '" + id + "'";
+        String removesql = "DELETE FROM " + LIME.DB_RELATED + " WHERE " + LIME.DB_COLUMN_ID + " = '" + id + "'";
 
         datasource.remove(removesql);
         /*try {
@@ -424,11 +424,11 @@ public class ManageRelatedFragment extends Fragment {
             }
 
             // Update record in the database
-            String updatesql = "UPDATE " + Lime.DB_RELATED + " SET ";
-            updatesql += Lime.DB_RELATED_COLUMN_PWORD + " = \"" + Lime.formatSqlValue(pword) + "\", ";
-            updatesql += Lime.DB_RELATED_COLUMN_CWORD + " = \"" + Lime.formatSqlValue(cword) + "\", ";
-            updatesql += Lime.DB_RELATED_COLUMN_BASESCORE + " = \"" + score + "\" ";
-            updatesql += " WHERE " + Lime.DB_RELATED_COLUMN_ID + " = \"" + id + "\"";
+            String updatesql = "UPDATE " + LIME.DB_RELATED + " SET ";
+            updatesql += LIME.DB_RELATED_COLUMN_PWORD + " = \"" + LIME.formatSqlValue(pword) + "\", ";
+            updatesql += LIME.DB_RELATED_COLUMN_CWORD + " = \"" + LIME.formatSqlValue(cword) + "\", ";
+            updatesql += LIME.DB_RELATED_COLUMN_BASESCORE + " = \"" + score + "\" ";
+            updatesql += " WHERE " + LIME.DB_RELATED_COLUMN_ID + " = \"" + id + "\"";
 
             datasource.update(updatesql);
 

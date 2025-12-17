@@ -108,7 +108,7 @@ public class ManageRelatedAdapter extends BaseAdapter {
             }
 
             holder.txtWord.setText(text);
-            holder.txtFreq.setText(freq+"");
+            holder.txtFreq.setText(activity.getString(R.string.number_format, freq));
         }
 
         return convertView;

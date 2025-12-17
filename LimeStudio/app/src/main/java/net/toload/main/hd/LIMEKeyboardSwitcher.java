@@ -163,7 +163,8 @@ public class LIMEKeyboardSwitcher {
     	if(DEBUG) Log.i(TAG,"getCurrentActiveKeyboardShortName() current IM:"+ imtype);
     	for (int i = 0; i < mActivatedIMList.size(); i++) {
 			if (imtype.equals(mActivatedIMList.get(i))) {
-				if(DEBUG)Log.i(TAG,"getCurrentActiveKeyboardShortName()="+ mActivatedIMShortnameList.get(i));
+				if(DEBUG)
+                    Log.i(TAG,"getCurrentActiveKeyboardShortName()="+ mActivatedIMShortnameList.get(i));
     			return mActivatedIMShortnameList.get(i);
     		}
     	}
@@ -278,8 +279,156 @@ public class LIMEKeyboardSwitcher {
 	    return null;
     }
     
+    /**
+     * Get XML resource ID for keyboard layout.
+     * Uses direct R.xml references for all keyboard layouts (more efficient and compile-time verified).
+     */
     private int getKeyboardXMLID(String value){
-		return mThemedContext.getResources().getIdentifier(value, "xml", mService.getPackageName());
+		if (value == null || value.isEmpty()) {
+			return 0;
+		}
+		
+		// Use direct R.xml references for all keyboard layouts (compile-time verified, more efficient)
+		switch (value) {
+			// Symbol keyboards
+			case "symbols1":
+				return R.xml.symbols1;
+			case "symbols2":
+				return R.xml.symbols2;
+			case "symbols3":
+				return R.xml.symbols3;
+			case "symbols":
+				return R.xml.symbols1; // Default to symbols1
+			case "symbols_shift":
+				return R.xml.symbols1; // Default to symbols1
+			
+			// Phone keyboards
+			case "phone_number":
+				return R.xml.phone_number;
+			case "phone":
+				return R.xml.phone;
+			case "phone_shift":
+				return R.xml.phone_shift;
+			case "phone_simple":
+				return R.xml.phone_simple;
+			
+			// English keyboards
+			case "lime_english_number_shift":
+				return R.xml.lime_english_number_shift;
+			case "lime_english_number":
+				return R.xml.lime_english_number;
+			case "lime_english_shift":
+				return R.xml.lime_english_shift;
+			case "lime_english":
+				return R.xml.lime_english;
+			
+			// ABC keyboards
+			case "lime_abc_shift":
+				return R.xml.lime_abc_shift;
+			case "lime_abc":
+				return R.xml.lime_abc;
+			
+			// Chinese input method keyboards
+			case "lime":
+				return R.xml.lime;
+			case "lime_shift":
+				return R.xml.lime_shift;
+			
+			// Cangjie keyboards
+			case "lime_cj":
+				return R.xml.lime_cj;
+			case "lime_cj_shift":
+				return R.xml.lime_cj_shift;
+			case "lime_cj_number":
+				return R.xml.lime_cj_number;
+			case "lime_cj_number_shift":
+				return R.xml.lime_cj_number_shift;
+			
+			// Dayi keyboards
+			case "lime_dayi":
+				return R.xml.lime_dayi;
+			case "lime_dayi_shift":
+				return R.xml.lime_dayi_shift;
+			case "lime_dayi_sym":
+				return R.xml.lime_dayi_sym;
+			case "lime_dayi_sym_shift":
+				return R.xml.lime_dayi_sym_shift;
+			
+			// EZ keyboards
+			case "lime_ez":
+				return R.xml.lime_ez;
+			case "lime_ez_shift":
+				return R.xml.lime_ez_shift;
+			
+			// Array keyboards
+			case "lime_array":
+				return R.xml.lime_array;
+			case "lime_array_shift":
+				return R.xml.lime_array_shift;
+			case "lime_array_number":
+				return R.xml.lime_array_number;
+			case "lime_array_number_shift":
+				return R.xml.lime_array_number_shift;
+			
+			// Phonetic keyboards
+			case "lime_phonetic":
+				return R.xml.lime_phonetic;
+			case "lime_phonetic_shift":
+				return R.xml.lime_phonetic_shift;
+			
+			// HS keyboards
+			case "lime_hs":
+				return R.xml.lime_hs;
+			case "lime_hs_shift":
+				return R.xml.lime_hs_shift;
+			
+			// HSU keyboards
+			case "lime_hsu":
+				return R.xml.lime_hsu;
+			case "lime_hsu_shift":
+				return R.xml.lime_hsu_shift;
+			
+			// WB keyboards
+			case "lime_wb":
+				return R.xml.lime_wb;
+			case "lime_wb_shift":
+				return R.xml.lime_wb_shift;
+			
+			// ET26 keyboards
+			case "lime_et26":
+				return R.xml.lime_et26;
+			case "lime_et26_shift":
+				return R.xml.lime_et26_shift;
+			
+			// ET41 keyboards
+			case "lime_et_41":
+				return R.xml.lime_et_41;
+			case "lime_et_41_shift":
+				return R.xml.lime_et_41_shift;
+			
+			// Number keyboards
+			case "lime_number":
+				return R.xml.lime_number;
+			case "lime_number_shift":
+				return R.xml.lime_number_shift;
+			case "lime_number_symbol":
+				return R.xml.lime_number_symbol;
+			case "lime_number_symbol_shift":
+				return R.xml.lime_number_symbol_shift;
+			
+			// Special keyboards
+			case "lime_url":
+				return R.xml.lime_url;
+			case "lime_email":
+				return R.xml.lime_email;
+			
+			default:
+				// Return 0 for unknown keyboard layouts (should not happen with valid database entries)
+				if (DEBUG) {
+					Log.w(TAG, "Unknown keyboard layout: " + value);
+				}
+				return 0;
+		}
     }
     
     public void setKeyboardMode(String code, int mode, int imeOptions, boolean isIm, boolean isSymbol, boolean isShift) {

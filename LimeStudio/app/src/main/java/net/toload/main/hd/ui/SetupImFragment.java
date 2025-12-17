@@ -56,7 +56,7 @@ import android.widget.Toast;
 
 
 import net.toload.main.hd.DBServer;
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIMEPreferenceManager;
@@ -72,6 +72,15 @@ import java.util.List;
  * A placeholder fragment containing a simple rootView.
  */
 public class SetupImFragment extends Fragment {
+
+    /**
+     * Simple enum for backup/restore dialog types.
+     */
+    public enum BackupRestoreType {
+        RESTORE,
+        BACKUP,
+        BACKUP_TO_DOWNLOADS
+    }
 
     // IM Log Tag
     private final String TAG = "SetupImFragment";
@@ -298,9 +307,8 @@ public class SetupImFragment extends Fragment {
         try {
             pInfo = requireActivity().getPackageManager().getPackageInfo(requireActivity().getPackageName(), 0);
             long versionCode = PackageInfoCompat.getLongVersionCode(pInfo);
-            String versionstr = "v"+ pInfo.versionName + " - " + versionCode;
             txtVersion = rootView.findViewById(R.id.txtVersion);
-            txtVersion.setText(versionstr);
+            txtVersion.setText(getString(R.string.version_format, pInfo.versionName, versionCode));
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
@@ -317,7 +325,7 @@ public class SetupImFragment extends Fragment {
         if(!DBSrv.isDatabseOnHold()){
             try {
                 //datasource.open();
-                imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+                imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
                 for(int i = 0; i < imlist.size() ; i++){
                     check.put(imlist.get(i).getCode(), imlist.get(i).getDesc());
                 }
@@ -364,12 +372,12 @@ public class SetupImFragment extends Fragment {
                     rootView.invalidate();
                 });
 
-                if(check.get(Lime.DB_TABLE_CUSTOM) != null){
-                    btnSetupImImportStandard.setAlpha(Lime.HALF_ALPHA_VALUE);
-                    btnSetupImImportStandard.setText(check.get(Lime.DB_TABLE_CUSTOM));
+                if(check.get(LIME.DB_TABLE_CUSTOM) != null){
+                    btnSetupImImportStandard.setAlpha(LIME.HALF_ALPHA_VALUE);
+                    btnSetupImImportStandard.setText(check.get(LIME.DB_TABLE_CUSTOM));
                     btnSetupImImportStandard.setTypeface(null, Typeface.ITALIC);
                 }else {
-                    btnSetupImImportStandard.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+                    btnSetupImImportStandard.setAlpha(LIME.NORMAL_ALPHA_VALUE);
                     btnSetupImImportStandard.setTypeface(null, Typeface.BOLD);
                 }
 
@@ -377,7 +385,7 @@ public class SetupImFragment extends Fragment {
 
                 btnSetupImImportStandard.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CUSTOM, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_CUSTOM, handler);
                     dialog.show(ft, "loadimdialog");
 
                 });
@@ -385,179 +393,179 @@ public class SetupImFragment extends Fragment {
                 // User can always load new related table ...
                 btnSetupImImportRelated.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_RELATED, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_RELATED, handler);
                     dialog.show(ft, "loadimdialog");
 
                 });
 
-                if(check.get(Lime.DB_TABLE_PHONETIC) != null){
-                    btnSetupImPhonetic.setAlpha(Lime.HALF_ALPHA_VALUE);
+                if(check.get(LIME.DB_TABLE_PHONETIC) != null){
+                    btnSetupImPhonetic.setAlpha(LIME.HALF_ALPHA_VALUE);
                     btnSetupImPhonetic.setTypeface(null, Typeface.ITALIC);
                 }else {
-                    btnSetupImPhonetic.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+                    btnSetupImPhonetic.setAlpha(LIME.NORMAL_ALPHA_VALUE);
                     btnSetupImPhonetic.setTypeface(null, Typeface.BOLD);
                 }
 
                 btnSetupImPhonetic.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_PHONETIC, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_PHONETIC, handler);
                     dialog.show(ft, "loadimdialog");
                 });
 
 
-                if(check.get(Lime.DB_TABLE_CJ) != null){
-                    btnSetupImCj.setAlpha(Lime.HALF_ALPHA_VALUE);
+                if(check.get(LIME.DB_TABLE_CJ) != null){
+                    btnSetupImCj.setAlpha(LIME.HALF_ALPHA_VALUE);
                     btnSetupImCj.setTypeface(null, Typeface.ITALIC);
                 }else {
-                    btnSetupImCj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+                    btnSetupImCj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
                     btnSetupImCj.setTypeface(null, Typeface.BOLD);
                 }
 
                 btnSetupImCj.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CJ, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_CJ, handler);
                     dialog.show(ft, "loadimdialog");
                 });
 
 
 
-                if(check.get(Lime.DB_TABLE_CJ5) != null){
-                    btnSetupImCj5.setAlpha(Lime.HALF_ALPHA_VALUE);
+                if(check.get(LIME.DB_TABLE_CJ5) != null){
+                    btnSetupImCj5.setAlpha(LIME.HALF_ALPHA_VALUE);
                     btnSetupImCj5.setTypeface(null, Typeface.ITALIC);
                 }else {
-                    btnSetupImCj5.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+                    btnSetupImCj5.setAlpha(LIME.NORMAL_ALPHA_VALUE);
                     btnSetupImCj5.setTypeface(null, Typeface.BOLD);
                 }
 
                 btnSetupImCj5.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_CJ5, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_CJ5, handler);
                     dialog.show(ft, "loadimdialog");
                 });
 
-                if(check.get(Lime.DB_TABLE_SCJ) != null){
-                    btnSetupImScj.setAlpha(Lime.HALF_ALPHA_VALUE);
+                if(check.get(LIME.DB_TABLE_SCJ) != null){
+                    btnSetupImScj.setAlpha(LIME.HALF_ALPHA_VALUE);
                     btnSetupImScj.setTypeface(null, Typeface.ITALIC);
                 }else {
-                    btnSetupImScj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+                    btnSetupImScj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
                     btnSetupImScj.setTypeface(null, Typeface.BOLD);
                 }
                 btnSetupImScj.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_SCJ, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_SCJ, handler);
                     dialog.show(ft, "loadimdialog");
                 });
 
-                if(check.get(Lime.DB_TABLE_ECJ) != null){
-                    btnSetupImEcj.setAlpha(Lime.HALF_ALPHA_VALUE);
+                if(check.get(LIME.DB_TABLE_ECJ) != null){
+                    btnSetupImEcj.setAlpha(LIME.HALF_ALPHA_VALUE);
                     btnSetupImEcj.setTypeface(null, Typeface.ITALIC);
                 }else {
-                    btnSetupImEcj.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+                    btnSetupImEcj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
                     btnSetupImEcj.setTypeface(null, Typeface.BOLD);
                 }
 
                 btnSetupImEcj.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ECJ, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_ECJ, handler);
                     dialog.show(ft, "loadimdialog");
                 });
 
-                if(check.get(Lime.DB_TABLE_DAYI) != null){
-                    btnSetupImDayi.setAlpha(Lime.HALF_ALPHA_VALUE);
+                if(check.get(LIME.DB_TABLE_DAYI) != null){
+                    btnSetupImDayi.setAlpha(LIME.HALF_ALPHA_VALUE);
                     btnSetupImDayi.setTypeface(null, Typeface.ITALIC);
                 }else {
-                    btnSetupImDayi.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+                    btnSetupImDayi.setAlpha(LIME.NORMAL_ALPHA_VALUE);
                     btnSetupImDayi.setTypeface(null, Typeface.BOLD);
                 }
 
                 btnSetupImDayi.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_DAYI, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_DAYI, handler);
                     dialog.show(ft, "loadimdialog");
                 });
 
-                if(check.get(Lime.DB_TABLE_EZ) != null){
-                    btnSetupImEz.setAlpha(Lime.HALF_ALPHA_VALUE);
+                if(check.get(LIME.DB_TABLE_EZ) != null){
+                    btnSetupImEz.setAlpha(LIME.HALF_ALPHA_VALUE);
                     btnSetupImEz.setTypeface(null, Typeface.ITALIC);
                 }else {
-                    btnSetupImEz.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+                    btnSetupImEz.setAlpha(LIME.NORMAL_ALPHA_VALUE);
                     btnSetupImEz.setTypeface(null, Typeface.BOLD);
                 }
 
                 btnSetupImEz.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_EZ, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_EZ, handler);
                     dialog.show(ft, "loadimdialog");
                 });
 
-                if(check.get(Lime.DB_TABLE_ARRAY) != null){
-                    btnSetupImArray.setAlpha(Lime.HALF_ALPHA_VALUE);
+                if(check.get(LIME.DB_TABLE_ARRAY) != null){
+                    btnSetupImArray.setAlpha(LIME.HALF_ALPHA_VALUE);
                     btnSetupImArray.setTypeface(null, Typeface.ITALIC);
                 }else {
-                    btnSetupImArray.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+                    btnSetupImArray.setAlpha(LIME.NORMAL_ALPHA_VALUE);
                     btnSetupImArray.setTypeface(null, Typeface.BOLD);
                 }
 
                 btnSetupImArray.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ARRAY, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_ARRAY, handler);
                     dialog.show(ft, "loadimdialog");
                 });
 
-                if(check.get(Lime.DB_TABLE_ARRAY10) != null){
-                    btnSetupImArray10.setAlpha(Lime.HALF_ALPHA_VALUE);
+                if(check.get(LIME.DB_TABLE_ARRAY10) != null){
+                    btnSetupImArray10.setAlpha(LIME.HALF_ALPHA_VALUE);
                     btnSetupImArray10.setTypeface(null, Typeface.ITALIC);
                 }else {
-                    btnSetupImArray10.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+                    btnSetupImArray10.setAlpha(LIME.NORMAL_ALPHA_VALUE);
                     btnSetupImArray10.setTypeface(null, Typeface.BOLD);
                 }
 
                 btnSetupImArray10.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_ARRAY10, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_ARRAY10, handler);
                     dialog.show(ft, "loadimdialog");
                 });
 
 
-                if(check.get(Lime.DB_TABLE_HS) != null){
-                    btnSetupImHs.setAlpha(Lime.HALF_ALPHA_VALUE);
+                if(check.get(LIME.DB_TABLE_HS) != null){
+                    btnSetupImHs.setAlpha(LIME.HALF_ALPHA_VALUE);
                     btnSetupImHs.setTypeface(null, Typeface.ITALIC);
                 }else {
-                    btnSetupImHs.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+                    btnSetupImHs.setAlpha(LIME.NORMAL_ALPHA_VALUE);
                     btnSetupImHs.setTypeface(null, Typeface.BOLD);
                 }
 
                 btnSetupImHs.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_HS, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_HS, handler);
                     dialog.show(ft, "loadimdialog");
                 });
 
-                if(check.get(Lime.DB_TABLE_WB) != null){
-                    btnSetupImWb.setAlpha(Lime.HALF_ALPHA_VALUE);
+                if(check.get(LIME.DB_TABLE_WB) != null){
+                    btnSetupImWb.setAlpha(LIME.HALF_ALPHA_VALUE);
                     btnSetupImWb.setTypeface(null, Typeface.ITALIC);
                 }else {
-                    btnSetupImWb.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+                    btnSetupImWb.setAlpha(LIME.NORMAL_ALPHA_VALUE);
                     btnSetupImWb.setTypeface(null, Typeface.BOLD);
                 }
 
                 btnSetupImWb.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_WB, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_WB, handler);
                     dialog.show(ft, "loadimdialog");
                 });
 
-                if(check.get(Lime.DB_TABLE_PINYIN) != null){
-                    btnSetupImPinyin.setAlpha(Lime.HALF_ALPHA_VALUE);
+                if(check.get(LIME.DB_TABLE_PINYIN) != null){
+                    btnSetupImPinyin.setAlpha(LIME.HALF_ALPHA_VALUE);
                     btnSetupImPinyin.setTypeface(null, Typeface.ITALIC);
                 }else {
-                    btnSetupImPinyin.setAlpha(Lime.NORMAL_ALPHA_VALUE);
+                    btnSetupImPinyin.setAlpha(LIME.NORMAL_ALPHA_VALUE);
                     btnSetupImPinyin.setTypeface(null, Typeface.BOLD);
                 }
 
                 btnSetupImPinyin.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(Lime.DB_TABLE_PINYIN, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_PINYIN, handler);
                     dialog.show(ft, "loadimdialog");
                 });
 
@@ -571,36 +579,34 @@ public class SetupImFragment extends Fragment {
         
     }
 
-    public void showAlertDialog(final String action, final String type, String message){
+    public void showAlertDialog(BackupRestoreType type){
+        int messageResId;
+        Runnable onConfirm;
+
+        switch (type) {
+            case RESTORE:
+                messageResId = R.string.l3_initial_restore_confirm;
+                onConfirm = this::launchRestoreFilePicker;
+                break;
+            case BACKUP:
+                messageResId = R.string.l3_initial_backup_confirm;
+                onConfirm = this::launchBackupFilePicker;
+                break;
+            case BACKUP_TO_DOWNLOADS:
+                messageResId = R.string.l3_initial_backup_confirm_downloads;
+                onConfirm = this::saveBackupToDownloads;
+                break;
+            default:
+                return;
+        }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setMessage(message);
+        builder.setMessage(getResources().getString(messageResId));
         builder.setCancelable(false);
         builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
-                (dialog, id) -> {
-                    if (action != null) {
-                        if (action.equalsIgnoreCase(Lime.BACKUP)) {
-
-                            if (type.equalsIgnoreCase(Lime.LOCAL)) {
-                                // Check if this is the Downloads fallback message
-                                if (message.equals(getResources().getString(R.string.l3_initial_backup_confirm_downloads))) {
-                                    // Save directly to Downloads folder
-                                    saveBackupToDownloads();
-                                } else {
-                                    // Launch file picker to choose location
-                                    launchBackupFilePicker();
-                                }
-                            }
-
-                        } else if (type.equalsIgnoreCase(Lime.LOCAL) && action.equalsIgnoreCase(Lime.RESTORE)) {
-                                // Launch file picker to select backup file
-                                launchRestoreFilePicker();
-                        }
-                    }
-                });
+                (dialog, id) -> onConfirm.run());
         builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
-                (dialog, id) -> {
-                });
+                (dialog, id) -> {});
 
         AlertDialog alert = builder.create();
         alert.show();
@@ -663,23 +669,29 @@ public class SetupImFragment extends Fragment {
             intent.setType("application/zip");
             intent.putExtra(Intent.EXTRA_TITLE, "limeBackup.zip");
 
-            // Wrap in createChooser() for better compatibility
-            // createChooser can work even when queryIntentActivities returns empty
-            Intent chooserIntent = Intent.createChooser(intent, "Save Backup");
+            PackageManager pm = requireActivity().getPackageManager();
             
-            // Check if chooser intent can be resolved
-            // This is more reliable than queryIntentActivities which may not return system activities
-            if (chooserIntent.resolveActivity(requireActivity().getPackageManager()) == null) {
-                if (DEBUG) Log.w(TAG, "Chooser intent cannot be resolved, using fallback to Downloads folder");
+            // Check if intent can be resolved
+            if (intent.resolveActivity(pm) == null) {
+                if (DEBUG) Log.w(TAG, "Intent cannot be resolved, using fallback to Downloads folder");
                 // Fallback: Show confirmation dialog for saving to Downloads folder
-                showAlertDialog(Lime.BACKUP, Lime.LOCAL, 
-                    getResources().getString(R.string.l3_initial_backup_confirm_downloads));
+                showAlertDialog(BackupRestoreType.BACKUP_TO_DOWNLOADS);
+                return;
+            }
+
+            // Also check queryIntentActivities to see if there are actually any activities
+            // On some tablets, resolveActivity() returns non-null but queryIntentActivities() returns empty
+            // which means the chooser will show an empty list
+            List<android.content.pm.ResolveInfo> activities = pm.queryIntentActivities(intent, 0);
+            if (activities == null || activities.isEmpty()) {
+                if (DEBUG) Log.w(TAG, "No activities found for ACTION_CREATE_DOCUMENT, using fallback to Downloads folder");
+                // Fallback: Show confirmation dialog for saving to Downloads folder
+                showAlertDialog(BackupRestoreType.BACKUP_TO_DOWNLOADS);
                 return;
             }
 
             // Show confirmation dialog before launching file picker to choose location
-            showAlertDialog(Lime.BACKUP, Lime.LOCAL, 
-                getResources().getString(R.string.l3_initial_backup_confirm));
+            showAlertDialog(BackupRestoreType.BACKUP);
         } catch (Exception e) {
             if (DEBUG) Log.e(TAG, "Error checking backup options: " + e.getMessage(), e);
             e.printStackTrace();
@@ -698,22 +710,35 @@ public class SetupImFragment extends Fragment {
             intent.setType("application/zip");
             intent.putExtra(Intent.EXTRA_TITLE, "limeBackup.zip");
 
-            // Wrap in createChooser() for better compatibility on tablets
-            Intent chooserIntent = Intent.createChooser(intent, "Save Backup");
+            PackageManager pm = requireActivity().getPackageManager();
             
-            // Double-check that chooser can be resolved
-            if (chooserIntent.resolveActivity(requireActivity().getPackageManager()) == null) {
-                if (DEBUG) Log.e(TAG, "Chooser intent cannot be resolved");
-                showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT);
+            // Double-check that intent can be resolved
+            if (intent.resolveActivity(pm) == null) {
+                if (DEBUG) Log.w(TAG, "Intent cannot be resolved, falling back to Downloads");
+                // Fallback to Downloads folder
+                saveBackupToDownloads();
                 return;
             }
+
+            // Also check queryIntentActivities to see if there are actually any activities
+            List<android.content.pm.ResolveInfo> activities = pm.queryIntentActivities(intent, 0);
+            if (activities == null || activities.isEmpty()) {
+                if (DEBUG) Log.w(TAG, "No activities found, falling back to Downloads");
+                // Fallback to Downloads folder
+                saveBackupToDownloads();
+                return;
+            }
+
+            // Wrap in createChooser() for better compatibility on tablets
+            Intent chooserIntent = Intent.createChooser(intent, "Save Backup");
 
             // Launch the file picker
             backupLauncher.launch(chooserIntent);
         } catch (Exception e) {
             if (DEBUG) Log.e(TAG, "Error launching backup file picker: " + e.getMessage(), e);
             e.printStackTrace();
-            showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT);
+            // On error, try fallback to Downloads
+            saveBackupToDownloads();
         }
     }
 
@@ -766,7 +791,11 @@ public class SetupImFragment extends Fragment {
                         counter++;
                     }
                     
-                    backupUri = Uri.fromFile(backupFile);
+                    // Use FileProvider instead of deprecated Uri.fromFile()
+                    backupUri = androidx.core.content.FileProvider.getUriForFile(
+                        activity,
+                        activity.getApplicationContext().getPackageName() + ".fileprovider",
+                        backupFile);
                 }
 
                 if (backupUri != null) {
@@ -816,8 +845,7 @@ public class SetupImFragment extends Fragment {
             }
 
             // Show confirmation dialog before launching file picker to select backup file
-            showAlertDialog(Lime.RESTORE, Lime.LOCAL, 
-                getResources().getString(R.string.l3_initial_restore_confirm));
+            showAlertDialog(BackupRestoreType.RESTORE);
         } catch (Exception e) {
             if (DEBUG) Log.e(TAG, "Error checking restore options: " + e.getMessage(), e);
             e.printStackTrace();
@@ -857,18 +885,18 @@ public class SetupImFragment extends Fragment {
 //    public void initialThreadTask(String action, String type) {
 //
 //        // Default Setting
-//        mLIMEPref.setParameter("dbtarget", Lime.DEVICE);
+//        mLIMEPref.setParameter("dbtarget", LIME.DEVICE);
 //
-//        if (action.equals(Lime.BACKUP)) {
+//        if (action.equals(LIME.BACKUP)) {
 //            // The local backup is now handled by onActivityResult, not a direct runnable here.
-//            if(!type.equals(Lime.LOCAL)) {
+//            if(!type.equals(LIME.LOCAL)) {
 //                if (backupthread != null && backupthread.isAlive()) {
 //                    handler.removeCallbacks(backupthread);
 //                }
 //                backupthread = new Thread(new SetupImBackupRunnable(this, handler, type));
 //                backupthread.start();
 //            }
-//        }else if(action.equals(Lime.RESTORE)){
+//        }else if(action.equals(LIME.RESTORE)){
 //            if(restorethread != null && restorethread.isAlive()){
 //                handler.removeCallbacks(restorethread);
 //            }
