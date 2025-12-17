@@ -43,9 +43,7 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
     private static final String TAG = "CandiInputViewContainer";
     private ImageButton mRightButton;
     private ImageButton mKeyboardButton;
-    private View mButtonRightExpand;
     private CandidateView mCandidateView;
-    private View mKeyboardView;
     private LIMEService mService;
 
     Context ctx;
@@ -66,9 +64,9 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
         if (DEBUG)
             Log.i(TAG, "initViews()");
         if (mCandidateView == null) {
-            mButtonRightExpand = findViewById(R.id.candidate_right_parent);
+            View mButtonRightExpand = findViewById(R.id.candidate_right_parent);
             // Ensure buttons are laid out in correct order
-            if (mButtonRightExpand != null && mButtonRightExpand instanceof android.view.ViewGroup) {
+            if (mButtonRightExpand instanceof ViewGroup) {
                 android.view.ViewGroup vg = (android.view.ViewGroup) mButtonRightExpand;
                 vg.setClipChildren(false);
                 vg.setClipToPadding(false);
@@ -90,7 +88,7 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
                 }
             }
             mCandidateView = findViewById(R.id.candidatesView);
-            mKeyboardView = findViewById(R.id.keyboard);
+            //View mKeyboardView = findViewById(R.id.keyboard);
 
             assert mCandidateView != null;
             mCandidateView.setBackgroundColor(mCandidateView.mColorBackground);

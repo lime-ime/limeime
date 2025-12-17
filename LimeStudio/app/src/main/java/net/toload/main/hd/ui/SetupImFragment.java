@@ -651,16 +651,13 @@ public class SetupImFragment extends Fragment {
             intent.setType("application/zip");
             intent.putExtra(Intent.EXTRA_TITLE, "limeBackup.zip");
 
-            // Check if intent can be resolved (some tablets may not support Storage Access Framework)
-            if (intent.resolveActivity(requireActivity().getPackageManager()) == null) {
-                if (DEBUG) Log.e(TAG, "No activity found to handle ACTION_CREATE_DOCUMENT");
-                showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT);
-                return;
-            }
-
             // Wrap in createChooser() for better compatibility on tablets
+            // createChooser can work even when the base intent doesn't resolve directly
             // This provides a fallback mechanism similar to restoreLocalDrive()
             Intent chooserIntent = Intent.createChooser(intent, "Save Backup");
+            
+            // Check if chooser intent can be resolved
+            // Note: createChooser may succeed even if base intent doesn't resolve
             if (chooserIntent.resolveActivity(requireActivity().getPackageManager()) == null) {
                 if (DEBUG) Log.e(TAG, "No activity found to handle chooser for ACTION_CREATE_DOCUMENT");
                 showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT);

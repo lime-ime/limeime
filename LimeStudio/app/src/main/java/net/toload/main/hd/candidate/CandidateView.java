@@ -838,10 +838,6 @@ public class CandidateView extends View implements View.OnClickListener {
 
     private boolean mHasRoomForExpanding = true;
 
-    public boolean hasRoomForExpanding() {
-        // Default to checking downward expansion (original behavior)
-        return hasRoomForExpanding(false);
-    }
     
     /**
      * Check if there's room for expanding the popup in the specified direction.
@@ -866,7 +862,7 @@ public class CandidateView extends View implements View.OnClickListener {
         }
         return mHasRoomForExpanding;
     }
-
+    @Deprecated
     public void setTransparentCandidateView(boolean transparent){
         mTransparentCandidateView = transparent;
     }

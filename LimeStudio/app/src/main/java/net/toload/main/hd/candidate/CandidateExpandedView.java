@@ -423,7 +423,7 @@ public class CandidateExpandedView extends CandidateView {
                 Log.i(TAG, "selectNextRow(): newRow=" + mSelRow
                         + ", mSelCol=" + mSelCol
                         + ", mRowStartingIndex[mSelRow]=" + mRowStartingIndex[mSelRow]
-                        + ", + mRowSize[mSelRow]" + +mRowSize[mSelRow]);
+                        + ", + mRowSize[mSelRow]" + mRowSize[mSelRow]);
             if (mSelCol > mRowSize[mSelRow] - 1)
                 mSelCol = mRowSize[mSelRow] - 1;
             else if (mSelCol == -1)
