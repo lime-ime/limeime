@@ -2,7 +2,7 @@
 <!--
   ~ /*
   ~  *
-  ~  **    Copyright 2015, The LimeIME Open Source Project
+  ~  **    Copyright 2025, The LimeIME Open Source Project
   ~  **
   ~  **    Project Url: http://github.com/lime-ime/limeime/
   ~  **                 http://android.toload.net/
@@ -24,6 +24,21 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Queries declaration for Android 11+ (API 30+) package visibility -->
+    <!-- Required for querying activities that can handle Storage Access Framework intents -->
+    <queries>
+        <!-- Intent for creating/saving files (backup) -->
+        <intent>
+            <action android:name="android.intent.action.CREATE_DOCUMENT" />
+            <data android:mimeType="application/zip" />
+        </intent>
+        <!-- Intent for opening/selecting files (restore) -->
+        <intent>
+            <action android:name="android.intent.action.GET_CONTENT" />
+            <data android:mimeType="application/zip" />
+        </intent>
+    </queries>
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -99,6 +114,15 @@
             android:name=".limesettings.LIMEPreferenceHC"
             android:configChanges="keyboard|keyboardHidden|orientation"
             android:label="@string/ime_setting" >
+        </activity>
+
+        <!-- Helper Activity for voice input (needed for API 35+) -->
+        <activity
+            android:name=".VoiceInputActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask" >
         </activity>
 
     </application>

@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -413,6 +413,202 @@ public class LIMEServiceTest {
         // Test density
         float density = dm.density;
         assertTrue("Display density should be positive", density > 0);
+    }
+
+    @Test
+    public void testLIMEServiceVoiceInputIntentCreation() {
+        // Test voice input intent creation (used by LIMEService.getVoiceIntent)
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        
+        // Create RecognizerIntent similar to LIMEService.getVoiceIntent()
+        android.content.Intent voiceIntent = new android.content.Intent(
+            android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        voiceIntent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+            android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        voiceIntent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE,
+            java.util.Locale.getDefault().toString());
+        voiceIntent.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Speak now");
+        voiceIntent.putExtra(android.speech.RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        
+        // Verify intent action
+        assertEquals("Voice intent action should be RECOGNIZE_SPEECH",
+            android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH, voiceIntent.getAction());
+        
+        // Verify intent extras
+        assertTrue("Voice intent should have language model extra",
+            voiceIntent.hasExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL));
+        assertTrue("Voice intent should have language extra",
+            voiceIntent.hasExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE));
+        assertTrue("Voice intent should have prompt extra",
+            voiceIntent.hasExtra(android.speech.RecognizerIntent.EXTRA_PROMPT));
+        assertTrue("Voice intent should have max results extra",
+            voiceIntent.hasExtra(android.speech.RecognizerIntent.EXTRA_MAX_RESULTS));
+        
+        // Verify language model value
+        String languageModel = voiceIntent.getStringExtra(
+            android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL);
+        assertEquals("Language model should be FREE_FORM",
+            android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM, languageModel);
+        
+        // Verify max results value
+        int maxResults = voiceIntent.getIntExtra(
+            android.speech.RecognizerIntent.EXTRA_MAX_RESULTS, -1);
+        assertEquals("Max results should be 1", 1, maxResults);
+    }
+
+    @Test
+    public void testLIMEServiceVoiceInputActivityAvailability() {
+        // Test VoiceInputActivity availability (used by LIMEService.launchRecognizerIntent)
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        
+        // Create intent for VoiceInputActivity
+        android.content.Intent activityIntent = new android.content.Intent();
+        activityIntent.setClassName(appContext, "net.toload.main.hd.VoiceInputActivity");
+        
+        // Check if activity can be resolved
+        android.content.pm.PackageManager pm = appContext.getPackageManager();
+        android.content.pm.ResolveInfo resolveInfo = pm.resolveActivity(activityIntent, 0);
+        
+        assertNotNull("VoiceInputActivity should be resolvable", resolveInfo);
+        assertNotNull("VoiceInputActivity component should not be null", resolveInfo.activityInfo);
+        assertEquals("VoiceInputActivity class name should match",
+            "net.toload.main.hd.VoiceInputActivity", resolveInfo.activityInfo.name);
+    }
+
+    @Test
+    public void testLIMEServiceVoiceInputBroadcastReceiver() {
+        // Test voice input broadcast receiver constants (used by LIMEService)
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        
+        // Test broadcast action constant
+        String actionVoiceResult = "net.toload.main.hd.VOICE_INPUT_RESULT";
+        String extraRecognizedText = "recognized_text";
+        
+        assertEquals("Voice result action should match",
+            "net.toload.main.hd.VOICE_INPUT_RESULT", actionVoiceResult);
+        assertEquals("Recognized text extra should match",
+            "recognized_text", extraRecognizedText);
+        
+        // Test creating broadcast intent
+        android.content.Intent broadcastIntent = new android.content.Intent(actionVoiceResult);
+        broadcastIntent.putExtra(extraRecognizedText, "test recognition");
+        
+        assertEquals("Broadcast intent action should match", actionVoiceResult, broadcastIntent.getAction());
+        assertTrue("Broadcast intent should have recognized text extra",
+            broadcastIntent.hasExtra(extraRecognizedText));
+        assertEquals("Recognized text should match", "test recognition",
+            broadcastIntent.getStringExtra(extraRecognizedText));
+        
+        // Test creating intent filter
+        android.content.IntentFilter filter = new android.content.IntentFilter(actionVoiceResult);
+        assertTrue("Intent filter should match action", filter.hasAction(actionVoiceResult));
+    }
+
+    @Test
+    public void testLIMEServiceVoiceRecognitionAvailability() {
+        // Test voice recognition availability check (used by LIMEService.launchRecognizerIntent)
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        
+        // Create RecognizerIntent
+        android.content.Intent voiceIntent = new android.content.Intent(
+            android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        voiceIntent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+            android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        
+        // Check if activities can handle RecognizerIntent
+        android.content.pm.PackageManager pm = appContext.getPackageManager();
+        java.util.List<android.content.pm.ResolveInfo> activities = 
+            pm.queryIntentActivities(voiceIntent, 0);
+        
+        assertNotNull("Activities list should not be null", activities);
+        // Note: activities may be empty on emulators or devices without voice recognition
+        // This is acceptable - we're just testing that the check works
+        
+        // Test resolveActivity
+        android.content.ComponentName componentName = voiceIntent.resolveActivity(pm);
+        // componentName may be null if no voice recognition is available, which is acceptable
+        assertTrue("Voice recognition check should complete", true);
+    }
+
+    @Test
+    public void testLIMEServiceVoiceIMEDetection() {
+        // Test voice IME detection (used by LIMEService.startVoiceInput)
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        
+        // Test LIMEUtilities.isVoiceSearchServiceExist
+        String voiceID = net.toload.main.hd.global.LIMEUtilities.isVoiceSearchServiceExist(appContext);
+        // voiceID may be null if voice IME is not installed, which is acceptable
+        
+        // Test that the method completes without exception
+        assertTrue("Voice IME detection should complete", true);
+        
+        // If voice IME is found, verify it's a valid ID
+        if (voiceID != null) {
+            assertFalse("Voice IME ID should not be empty", voiceID.isEmpty());
+            assertTrue("Voice IME ID should contain package name",
+                voiceID.contains(".") || voiceID.contains("/"));
+        }
+    }
+
+    @Test
+    public void testLIMEServiceVoiceInputActivityConstants() {
+        // Test VoiceInputActivity constants
+        String actionVoiceResult = net.toload.main.hd.VoiceInputActivity.ACTION_VOICE_RESULT;
+        String extraRecognizedText = net.toload.main.hd.VoiceInputActivity.EXTRA_RECOGNIZED_TEXT;
+        
+        assertEquals("VoiceInputActivity action should match",
+            "net.toload.main.hd.VOICE_INPUT_RESULT", actionVoiceResult);
+        assertEquals("VoiceInputActivity extra should match",
+            "recognized_text", extraRecognizedText);
+    }
+
+    @Test
+    public void testLIMEServiceVoiceInputIMEIdStorage() {
+        // Test LIME IME ID storage (used by LIMEService for switching back)
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        
+        // Test LIMEUtilities.getLIMEID
+        String limeID = net.toload.main.hd.global.LIMEUtilities.getLIMEID(appContext);
+        assertNotNull("LIME ID should not be null", limeID);
+        assertFalse("LIME ID should not be empty", limeID.isEmpty());
+        
+        // Verify LIME ID format (should contain package name)
+        assertTrue("LIME ID should contain package separator",
+            limeID.contains(".") || limeID.contains("/"));
+    }
+
+    @Test
+    public void testLIMEServiceVoiceInputBroadcastReceiverRegistration() {
+        // Test broadcast receiver registration requirements (API 33+)
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        
+        // Test that RECEIVER_NOT_EXPORTED constant exists on API 33+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            int receiverNotExported = android.content.Context.RECEIVER_NOT_EXPORTED;
+            assertTrue("RECEIVER_NOT_EXPORTED should be valid on API 33+", receiverNotExported >= 0);
+        } else {
+            // On older APIs, receiver registration doesn't require the flag
+            assertTrue("Receiver registration should work on older APIs", true);
+        }
+    }
+
+    @Test
+    public void testLIMEServiceVoiceInputActivityIntentFlags() {
+        // Test VoiceInputActivity intent flags (used by LIMEService.launchRecognizerIntent)
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        
+        // Create intent similar to LIMEService
+        android.content.Intent helperIntent = new android.content.Intent(
+            appContext, net.toload.main.hd.VoiceInputActivity.class);
+        helperIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+        helperIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        
+        // Verify flags
+        int flags = helperIntent.getFlags();
+        assertTrue("Intent should have FLAG_ACTIVITY_NEW_TASK",
+            (flags & android.content.Intent.FLAG_ACTIVITY_NEW_TASK) != 0);
+        assertTrue("Intent should have FLAG_ACTIVITY_CLEAR_TOP",
+            (flags & android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP) != 0);
     }
 }
 

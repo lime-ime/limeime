@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -27,7 +27,7 @@ package net.toload.main.hd.ui;
 import android.app.Activity;
 import android.database.Cursor;
 
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivityHandler;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Related;
@@ -79,7 +79,7 @@ public class ShareRelatedTxtRunnable implements Runnable{
 
         // Load
         List<Related> relatedlist = new ArrayList<Related>();
-        Cursor cursor = datasource.list(Lime.DB_RELATED);
+        Cursor cursor = datasource.list(LIME.DB_RELATED);
         cursor.moveToFirst();
         while(!cursor.isAfterLast()){
             Related r = Related.get(cursor);
@@ -91,7 +91,7 @@ public class ShareRelatedTxtRunnable implements Runnable{
         if (cacheDir == null) {
             cacheDir = activity.getCacheDir();
         }
-        File target = new File(cacheDir, Lime.EXPORT_FILENAME_RELATED);
+        File target = new File(cacheDir, LIME.EXPORT_FILENAME_RELATED);
         if(target.exists()){
             target.delete();
         }

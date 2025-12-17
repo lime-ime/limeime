@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -110,7 +110,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
 
     protected int mHeight;
-    private int configHeight;
+    protected int configHeight;
     private int currentX;
 
     protected int mColorBackground;
@@ -129,8 +129,10 @@ public class CandidateView extends View implements View.OnClickListener {
 
     protected Drawable mDrawableSuggestHighlight;
     protected Drawable mDrawableVoiceInput;
-    protected Drawable mDrawableExpandButton;
+    protected Drawable mDrawableExpandDownButton;
+    protected Drawable mDrawableExpandUpButton;
     protected Drawable mDrawableCloseButton;
+    protected Drawable mDrawableKeyboardShow;
 
     protected int mColorSelKey;
     protected int mColorSelKeyShifted;
@@ -196,46 +198,49 @@ public class CandidateView extends View implements View.OnClickListener {
         mLIMEPref = new LIMEPreferenceManager(context);
 
         //Jeremy '16,7,24 get themed objects
-        TypedArray a = context.getTheme().obtainStyledAttributes(
-                attrs, R.styleable.LIMECandidateView, defStyle, R.style.LIMECandidateView);
+        try (TypedArray a = context.getTheme().obtainStyledAttributes(
+                attrs, R.styleable.LIMECandidateView, defStyle, R.style.LIMECandidateView)) {
 
-        int n = a.getIndexCount();
+            int n = a.getIndexCount();
 
-        for (int i = 0; i < n; i++) {
-            int attr = a.getIndex(i);
+            for (int i = 0; i < n; i++) {
+                int attr = a.getIndex(i);
 
-            if (attr == R.styleable.LIMECandidateView_suggestHighlight) {
-                    mDrawableSuggestHighlight = a.getDrawable(attr);
-            } else if (attr == R.styleable.LIMECandidateView_voiceInputIcon) {
-                    mDrawableVoiceInput = a.getDrawable(attr);
-            } else if (attr == R.styleable.LIMECandidateView_ExpandButtonIcon) {
-                    mDrawableExpandButton = a.getDrawable(attr);
-            } else if (attr == R.styleable.LIMECandidateView_closeButtonIcon) {
-                    mDrawableCloseButton = a.getDrawable(attr);
-            } else if (attr == R.styleable.LIMECandidateView_candidateBackground) {
-                    mColorBackground = a.getColor(attr,  ContextCompat.getColor(context, R.color.third_background_light));
-            } else if (attr == R.styleable.LIMECandidateView_composingTextColor) {
-                    mColorComposingText = a.getColor(attr,  ContextCompat.getColor(context, R.color.second_foreground_light));
-            } else if (attr == R.styleable.LIMECandidateView_composingBackgroundColor) {
-                    mColorComposingBackground = a.getColor(attr,  ContextCompat.getColor(context, R.color.composing_background_light));
-            } else if (attr == R.styleable.LIMECandidateView_candidateNormalTextColor) {
-                    mColorNormalText = a.getColor(attr,  ContextCompat.getColor(context, R.color.foreground_light));
-            } else if (attr == R.styleable.LIMECandidateView_candidateNormalTextHighlightColor) {
-                    mColorNormalTextHighlight = a.getColor(attr,  ContextCompat.getColor(context, R.color.foreground_light));
-            } else if (attr == R.styleable.LIMECandidateView_composingCodeColor) {
-                    mColorComposingCode = a.getColor(attr,  ContextCompat.getColor(context, R.color.color_common_green_hl));
-            } else if (attr == R.styleable.LIMECandidateView_composingCodeHighlightColor) {
-                    mColorComposingCodeHighlight = a.getColor(attr,  ContextCompat.getColor(context, R.color.third_background_light));
-            } else if (attr == R.styleable.LIMECandidateView_spacerColor) {
-                    mColorSpacer = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_spacer));
-            } else if (attr == R.styleable.LIMECandidateView_selKeyColor) {
-                    mColorSelKey = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_selection_keys));
-            } else if (attr == R.styleable.LIMECandidateView_selKeyShiftedColor) {
-                    mColorSelKeyShifted = a.getColor(attr,  ContextCompat.getColor(context, R.color.color_common_green_hl));
+                if (attr == R.styleable.LIMECandidateView_suggestHighlight) {
+                        mDrawableSuggestHighlight = a.getDrawable(attr);
+                } else if (attr == R.styleable.LIMECandidateView_voiceInputIcon) {
+                        mDrawableVoiceInput = a.getDrawable(attr);
+                } else if (attr == R.styleable.LIMECandidateView_ExpandDownButtonIcon) {
+                        mDrawableExpandDownButton = a.getDrawable(attr);
+                } else if (attr == R.styleable.LIMECandidateView_ExpandUpButtonIcon) {
+                        mDrawableExpandUpButton = a.getDrawable(attr);
+                } else if (attr == R.styleable.LIMECandidateView_closeButtonIcon) {
+                        mDrawableCloseButton = a.getDrawable(attr);
+                } else if (attr == R.styleable.LIMECandidateView_keyboardShowIcon) {
+                        mDrawableKeyboardShow = a.getDrawable(attr);
+                } else if (attr == R.styleable.LIMECandidateView_candidateBackground) {
+                        mColorBackground = a.getColor(attr,  ContextCompat.getColor(context, R.color.third_background_light));
+                } else if (attr == R.styleable.LIMECandidateView_composingTextColor) {
+                        mColorComposingText = a.getColor(attr,  ContextCompat.getColor(context, R.color.second_foreground_light));
+                } else if (attr == R.styleable.LIMECandidateView_composingBackgroundColor) {
+                        mColorComposingBackground = a.getColor(attr,  ContextCompat.getColor(context, R.color.composing_background_light));
+                } else if (attr == R.styleable.LIMECandidateView_candidateNormalTextColor) {
+                        mColorNormalText = a.getColor(attr,  ContextCompat.getColor(context, R.color.foreground_light));
+                } else if (attr == R.styleable.LIMECandidateView_candidateNormalTextHighlightColor) {
+                        mColorNormalTextHighlight = a.getColor(attr,  ContextCompat.getColor(context, R.color.foreground_light));
+                } else if (attr == R.styleable.LIMECandidateView_composingCodeColor) {
+                        mColorComposingCode = a.getColor(attr,  ContextCompat.getColor(context, R.color.color_common_green_hl));
+                } else if (attr == R.styleable.LIMECandidateView_composingCodeHighlightColor) {
+                        mColorComposingCodeHighlight = a.getColor(attr,  ContextCompat.getColor(context, R.color.third_background_light));
+                } else if (attr == R.styleable.LIMECandidateView_spacerColor) {
+                        mColorSpacer = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_spacer));
+                } else if (attr == R.styleable.LIMECandidateView_selKeyColor) {
+                        mColorSelKey = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_selection_keys));
+                } else if (attr == R.styleable.LIMECandidateView_selKeyShiftedColor) {
+                        mColorSelKeyShifted = a.getColor(attr,  ContextCompat.getColor(context, R.color.color_common_green_hl));
+                }
             }
         }
-
-        a.recycle();
 
        final Resources r = context.getResources();
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
@@ -473,6 +478,11 @@ public class CandidateView extends View implements View.OnClickListener {
         candidateExpanded = false;
 
         doUpdateUI();
+        
+        // Update CandidateView width constraint when popup is closed
+        if (mService != null) {
+            mService.updateCandidateViewWidthConstraint();
+        }
     }
 
     /*
@@ -506,6 +516,8 @@ public class CandidateView extends View implements View.OnClickListener {
         if (mCandidatePopupWindow == null) {
 
             mCandidatePopupWindow = new PopupWindow(mContext);
+            // Allow popup to extend beyond window bounds when expanding upward
+            mCandidatePopupWindow.setClippingEnabled(false);
             LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(
                     Context.LAYOUT_INFLATER_SERVICE);
             mCandidatePopupContainer = inflater.inflate(R.layout.candidatepopup, (ViewGroup) this.getRootView(), false);
@@ -543,6 +555,12 @@ public class CandidateView extends View implements View.OnClickListener {
         mCandidatePopupWindow.setContentView(mCandidatePopupContainer);
         int[] offsetOnScreen = new int[2];
         this.getLocationOnScreen(offsetOnScreen);
+        
+        // Determine expansion direction based on keyboard visibility
+        boolean expandUpward = (mService != null) && mService.isKeyboardViewHidden();
+        int candidateViewHeight = getHeight();
+        int availableSpaceAbove = offsetOnScreen[1];
+        int availableSpaceBelow = mScreenHeight - offsetOnScreen[1] - candidateViewHeight;
 
         mPopupCandidateView.setSuggestions(mSuggestions);
         mPopupCandidateView.prepareLayout();
@@ -550,11 +568,26 @@ public class CandidateView extends View implements View.OnClickListener {
         mPopupCandidateView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
 
-        int popHeight = mScreenHeight - offsetOnScreen[1];
-        if (mPopupCandidateView.getMeasuredHeight() + mCloseButtonHeight < popHeight)
-            popHeight = mPopupCandidateView.getMeasuredHeight() + mCloseButtonHeight;
+        int popHeight;
+        int popupYOffset;
+        int myHeight = getHeight();
+        if (expandUpward) {
+            // Expand upward: calculate height based on available space above
+            popHeight = availableSpaceAbove;
+            if (mPopupCandidateView.getMeasuredHeight() + mCloseButtonHeight < popHeight)
+                popHeight = mPopupCandidateView.getMeasuredHeight() + mCloseButtonHeight;
+            // Offset to align popup bottom with CandidateView bottom
+            popupYOffset = -(popHeight);
+        } else {
+            // Expand downward: original behavior
+            popHeight = availableSpaceBelow;
+            if (mPopupCandidateView.getMeasuredHeight() + mCloseButtonHeight < popHeight)
+                popHeight = mPopupCandidateView.getMeasuredHeight() + mCloseButtonHeight;
+            // Original offset: show above CandidateView
+            popupYOffset = -myHeight;
+        }
 
-        if (!hasRoomForExpanding()) {
+        if (!hasRoomForExpanding(expandUpward)) {
             popHeight = 3 * (configHeight + mVerticalPadding) + mCloseButtonHeight;
 
             if (DEBUG)
@@ -568,25 +601,33 @@ public class CandidateView extends View implements View.OnClickListener {
         }
 
         if (DEBUG)
-            Log.i(TAG, "doUpdateCandidatePopup(), mHeight=" + mHeight
+            Log.i(TAG, "doUpdateCandidatePopup(), expandUpward=" + expandUpward
+                            + ", mHeight=" + mHeight
                             + ", getHeight() = " + getHeight()
                             + ", mPopupCandidateView.getHeight() = " + mPopupCandidateView.getHeight()
                             + ", mPopupScrollView.getHeight() = " + mPopupScrollView.getHeight()
                             + ", offsetOnScreen[1] = " + offsetOnScreen[1]
+                            + ", availableSpaceAbove = " + availableSpaceAbove
+                            + ", availableSpaceBelow = " + availableSpaceBelow
                             + ", popHeight = " + popHeight
+                            + ", popupYOffset = " + popupYOffset
                             + ", CandidateExpandedView.measureHeight = " + mPopupCandidateView.getMeasuredHeight()
                             + ", btnClose.getMeasuredHeight() = " + mCloseButtonHeight
             );
 
 
+        
         if (mCandidatePopupWindow.isShowing()) {
             if (DEBUG)
                 Log.i(TAG, "doUpdateCandidatePopup(),mCandidatePopup.isShowing ");
-            mCandidatePopupWindow.update(mScreenWidth, popHeight);
+            // Update size only, position is controlled by showAsDropDown offsetY
+            // Update both size and y-offset (location) to reflect new popHeight
+            mCandidatePopupWindow.update(this, 0, popupYOffset, mScreenWidth, popHeight);
         } else {
             mCandidatePopupWindow.setWidth(mScreenWidth);
             mCandidatePopupWindow.setHeight(popHeight);
-            mCandidatePopupWindow.showAsDropDown(this, 0, -getHeight());
+            // Use offsetY to position popup: negative value shows above, aligns bottom when expanding upward
+            mCandidatePopupWindow.showAsDropDown(this, 0, popupYOffset);
             mPopupScrollView.scrollTo(0, 0);
         }
 
@@ -676,7 +717,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
         if (composingText != null) {
             mComposingTextView.setText(composingText);
-            //The textsize got is coverted into PX already. Thus force setup the setTextSize in unit of PX.
+            //The text size got is converted into PX already. Thus force setup the setTextSize in unit of PX.
             float scaledTextSize =
                     mContext.getResources().getDimensionPixelSize(R.dimen.composing_text_size) * mLIMEPref.getFontSize();
             mComposingTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, scaledTextSize);
@@ -797,15 +838,31 @@ public class CandidateView extends View implements View.OnClickListener {
 
     private boolean mHasRoomForExpanding = true;
 
-    public boolean hasRoomForExpanding() {
+    
+    /**
+     * Check if there's room for expanding the popup in the specified direction.
+     * @param expandUpward true to check space above CandidateView, false to check space below
+     * @return true if there's enough room (more than 2 * mHeight)
+     */
+    public boolean hasRoomForExpanding(boolean expandUpward) {
         if (!mCandidatePopupWindow.isShowing()) {
             int[] offsetOnScreen = new int[2];
             this.getLocationOnScreen(offsetOnScreen);
-            mHasRoomForExpanding = (mScreenHeight - offsetOnScreen[1]) > 2 * mHeight;
+            int candidateViewHeight = getHeight();
+            
+            if (expandUpward) {
+                // Check space above CandidateView
+                int availableSpaceAbove = offsetOnScreen[1];
+                mHasRoomForExpanding = availableSpaceAbove > 2 * mHeight;
+            } else {
+                // Check space below CandidateView
+                int availableSpaceBelow = mScreenHeight - offsetOnScreen[1] - candidateViewHeight;
+                mHasRoomForExpanding = availableSpaceBelow > 2 * mHeight;
+            }
         }
         return mHasRoomForExpanding;
     }
-
+    @Deprecated
     public void setTransparentCandidateView(boolean transparent){
         mTransparentCandidateView = transparent;
     }

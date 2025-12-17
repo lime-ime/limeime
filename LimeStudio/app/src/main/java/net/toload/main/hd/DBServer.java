@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -307,8 +307,10 @@ public class  DBServer {
 
 			datasource.holdDBConnection(); //Jeremy '15,5,23
 			closeDatabse();
+            //restore shared preference
+            File sharedPref = new File(dataDir, LIME.SHARED_PREFS_BACKUP_NAME);
 
-			try {
+            try {
 				LIMEUtilities.unzip(srcFilePath, dataDir, true);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -321,12 +323,10 @@ public class  DBServer {
 			datasource.unHoldDBConnection(); //Jeremy '15,5,23
 			datasource.openDBConnection(true);
 
-			//restore shared preference
-			File checkpref = new File(dataDir, LIME.SHARED_PREFS_BACKUP_NAME);
-			if(checkpref.exists() && !checkpref.delete()) Log.w(TAG, "Failed to delete shared preferences backup file after restore");
 
-			restoreDefaultSharedPreference(checkpref);
-
+			restoreDefaultSharedPreference(sharedPref);
+            //Delete the shared preference backup file after restored.
+            if(sharedPref.exists() && !sharedPref.delete()) Log.w(TAG, "Failed to delete shared preferences backup file after restore");
 			//mLIMEPref.setResetCacheFlag(true);
 			resetCache();
 

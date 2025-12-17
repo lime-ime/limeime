@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -119,11 +119,10 @@ public class MainActivity extends AppCompatActivity
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle(getResources().getString(R.string.global_exit_title));
             builder.setCancelable(false);
-            builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
+                    builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
                     (dialog, id) -> {
-                        // Kill and stop my activity
-                        //android.os.Process.killProcess(android.os.Process.myPid());
-                        System.exit(0);
+                        // Close all activities in the task and let Android manage process lifecycle
+                        finishAffinity();
                     });
             builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
                     (dialog, id) -> {
@@ -158,10 +157,16 @@ public class MainActivity extends AppCompatActivity
 
         setContentView(R.layout.activity_main);
 
-        // Ensure ActionBar title is displayed
+        // Ensure ActionBar title is displayed with white background
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayShowTitleEnabled(true);
+            // Set white background for actionbar
+            actionBar.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.WHITE));
+            // Remove elevation/shadow for cleaner look
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                actionBar.setElevation(0);
+            }
         }
 
         // Handle window insets for edge-to-edge display
@@ -233,7 +238,7 @@ public class MainActivity extends AppCompatActivity
         try {
             pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             long versionCode = PackageInfoCompat.getLongVersionCode(pInfo);
-            versionstr = "v" + pInfo.versionName + " - " + versionCode;
+            versionstr = getString(R.string.version_format, pInfo.versionName, versionCode);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
@@ -293,7 +298,14 @@ public class MainActivity extends AppCompatActivity
             datasource = new LimeDB(this);
 
         imlist = new ArrayList<>();
-        imlist = datasource.getIm(null, Lime.IM_TYPE_NAME);
+        List<Im> result = datasource.getIm(null, LIME.IM_TYPE_NAME);
+        if (result != null) {
+            imlist = result;
+        }
+        // Ensure imlist is never null to prevent NullPointerException
+        if (imlist == null) {
+            imlist = new ArrayList<>();
+        }
     }
 
     @Override
@@ -316,6 +328,11 @@ public class MainActivity extends AppCompatActivity
 
             initialImList();
             int number = position - 2;
+            // Check if imlist is null or empty before accessing
+            if (imlist == null || imlist.isEmpty() || number < 0 || number >= imlist.size()) {
+                // Handle error case - show error message or return early
+                return;
+            }
             String table = imlist.get(number).getCode();
             fragmentManager.beginTransaction()
                     .replace(R.id.container, ManageImFragment.newInstance(position, table), "ManageImFragment_" + table)
@@ -333,8 +350,14 @@ public class MainActivity extends AppCompatActivity
             //mCode = "related";
         } else {
             int position = number - 2;
-            mTitle = imlist.get(position).getDesc();
-            //mCode = imlist.get(position).getCode();
+            // Check if imlist is null or empty before accessing
+            if (imlist != null && !imlist.isEmpty() && position >= 0 && position < imlist.size()) {
+                mTitle = imlist.get(position).getDesc();
+                //mCode = imlist.get(position).getCode();
+            } else {
+                // Fallback to default title if imlist is not available
+                mTitle = this.getResources().getString(R.string.default_menu_initial);
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -27,7 +27,7 @@ package net.toload.main.hd.ui;
 import android.app.Activity;
 
 import net.toload.main.hd.DBServer;
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivityHandler;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEUtilities;
@@ -82,7 +82,7 @@ public class ShareDbRunnable implements Runnable{
             cacheDir = activity.getCacheDir();
         }
 
-        File targetfile = new File(cacheDir, imtype + Lime.DATABASE_EXT);
+        File targetfile = new File(cacheDir, imtype + LIME.DATABASE_EXT);
         if(targetfile.exists()){
             targetfile.delete();
         }

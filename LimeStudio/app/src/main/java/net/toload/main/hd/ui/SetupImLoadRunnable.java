@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -34,7 +34,7 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import net.toload.main.hd.DBServer;
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.data.Word;
@@ -101,77 +101,77 @@ public class SetupImLoadRunnable implements Runnable{
         if(tempfile == null || tempfile.length() < 100000){
 
             switch (type) {
-                case Lime.IM_ARRAY:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_ARRAY;
+                case LIME.IM_ARRAY:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_ARRAY;
                     break;
-                case Lime.IM_ARRAY10:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_ARRAY10;
+                case LIME.IM_ARRAY10:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_ARRAY10;
                     break;
-                case Lime.IM_CJ_BIG5:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_CJ_BIG5;
+                case LIME.IM_CJ_BIG5:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_CJ_BIG5;
                     break;
-                case Lime.IM_CJ:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_CJ;
+                case LIME.IM_CJ:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_CJ;
                     break;
-                case Lime.IM_CJHK:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_CJHK;
+                case LIME.IM_CJHK:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_CJHK;
                     break;
-                case Lime.IM_CJ5:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_CJ5;
+                case LIME.IM_CJ5:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_CJ5;
                     break;
-                case Lime.IM_DAYI:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_DAYI;
+                case LIME.IM_DAYI:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_DAYI;
                     break;
-                case Lime.IM_DAYIUNI:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_DAYIUNI;
+                case LIME.IM_DAYIUNI:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_DAYIUNI;
                     break;
-                case Lime.IM_DAYIUNIP:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_DAYIUNIP;
+                case LIME.IM_DAYIUNIP:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_DAYIUNIP;
                     break;
-                case Lime.IM_ECJ:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_ECJ;
+                case LIME.IM_ECJ:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_ECJ;
                     break;
-                case Lime.IM_ECJHK:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_ECJHK;
+                case LIME.IM_ECJHK:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_ECJHK;
                     break;
-                case Lime.IM_EZ:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_EZ;
+                case LIME.IM_EZ:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_EZ;
                     break;
-                case Lime.IM_PHONETIC_BIG5:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETIC_BIG5;
+                case LIME.IM_PHONETIC_BIG5:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_PHONETIC_BIG5;
                     break;
-                case Lime.IM_PHONETIC_ADV_BIG5:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE_BIG5;
+                case LIME.IM_PHONETIC_ADV_BIG5:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE_BIG5;
                     break;
-                case Lime.IM_PHONETIC:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETIC;
+                case LIME.IM_PHONETIC:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_PHONETIC;
                     break;
-                case Lime.IM_PHONETIC_ADV:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE;
+                case LIME.IM_PHONETIC_ADV:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE;
                     break;
-                case Lime.IM_PINYIN:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_PINYIN;
+                case LIME.IM_PINYIN:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_PINYIN;
                     break;
-                case Lime.IM_PINYINGB:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_PINYINGB;
+                case LIME.IM_PINYINGB:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_PINYINGB;
                     break;
-                case Lime.IM_SCJ:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_SCJ;
+                case LIME.IM_SCJ:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_SCJ;
                     break;
-                case Lime.IM_WB:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_WB;
+                case LIME.IM_WB:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_WB;
                     break;
-                case Lime.IM_HS:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_HS;
+                case LIME.IM_HS:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_HS;
                     break;
-                case Lime.IM_HS_V1:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_HS_V1;
+                case LIME.IM_HS_V1:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_HS_V1;
                     break;
-                case Lime.IM_HS_V2:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_HS_V2;
+                case LIME.IM_HS_V2:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_HS_V2;
                     break;
-                case Lime.IM_HS_V3:
-                    url = Lime.DATABASE_OPENFOUNDRY_IM_HS_V3;
+                case LIME.IM_HS_V3:
+                    url = LIME.DATABASE_OPENFOUNDRY_IM_HS_V3;
                     break;
             }
             tempfile = downloadRemoteFile(mContext, url);
@@ -234,9 +234,9 @@ public class SetupImLoadRunnable implements Runnable{
 
                                     if(wordcheck.containsKey(key)){
                                         try{
-                                            datasource.execSQL("update " + imtype + " set " + Lime.DB_COLUMN_SCORE + " = " + w.getScore()
-                                                            + " WHERE " + Lime.DB_COLUMN_CODE + " = '" + w.getCode() + "'"
-                                                            + " AND " + Lime.DB_COLUMN_WORD + " = '" + w.getWord() + "'"
+                                            datasource.execSQL("update " + imtype + " set " + LIME.DB_COLUMN_SCORE + " = " + w.getScore()
+                                                            + " WHERE " + LIME.DB_COLUMN_CODE + " = '" + w.getCode() + "'"
+                                                            + " AND " + LIME.DB_COLUMN_WORD + " = '" + w.getWord() + "'"
                                             );
                                         }catch(Exception e){
                                             e.printStackTrace();
@@ -277,61 +277,12 @@ public class SetupImLoadRunnable implements Runnable{
 
     }
 
-    public int migrateDb(File tempfile, String imtype){
-
-        List<Word> results = null;
-
-        String sourcedbfile = Lime.DATABASE_FOLDER_EXTERNAL + imtype;
-
-        handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_load));
-        DBServer.decompressFile(tempfile, Lime.DATABASE_FOLDER_EXTERNAL, imtype, true);
-        SQLiteDatabase sourcedb = SQLiteDatabase.openDatabase(sourcedbfile, null, //SQLiteDatabase.OPEN_READWRITE |   //redundant
-                SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-        results = loadWord(sourcedb, imtype);
-        sourcedb.close();
-
-
-        // Remove Imtype and related info
-        try {
-            dbsrv.resetMapping(imtype);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-
-        int total = results.size();
-        int c = 0;
-
-        //datasource.open();
-        datasource.beginTransaction();
-
-        for(Word w: results){
-            c++;
-            String insert = Word.getInsertQuery(imtype, w);
-            datasource.add(insert);
-            if(c % 100 == 0){
-                int p = (c * 100 / total);
-                handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_import) + " " + p + "%");
-            }
-        }
-        datasource.endTransaction();
-        return results.size();
-
-        //datasource.close();
-        /*
-        try {
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }*/
-
-        //return 0;
-    }
 
     public List<Word> loadWord(SQLiteDatabase sourcedb, String code) {
         List<Word> result = new ArrayList<Word>();
         if(sourcedb != null && sourcedb.isOpen()){
             Cursor cursor;
-            String order = Lime.DB_COLUMN_CODE + " ASC";
+            String order = LIME.DB_COLUMN_CODE + " ASC";
 
             cursor = sourcedb.query(code, null, null, null, null, null, order);
 
@@ -487,12 +438,12 @@ public class SetupImLoadRunnable implements Runnable{
                 throw new RuntimeException("stream is null");
             }
 
-            //File downloadFolder = new File(Lime.DATABASE_FOLDER_EXTERNAL);
+            //File downloadFolder = new File(LIME.DATABASE_FOLDER_EXTERNAL);
             //downloadFolder.mkdirs();
-            //File downloadedFile = new File(downloadFolder.getAbsolutePath() + File.separator + Lime.DATABASE_IM_TEMP);
+            //File downloadedFile = new File(downloadFolder.getAbsolutePath() + File.separator + LIME.DATABASE_IM_TEMP);
 
             File downloadFolder = ctx.getCacheDir();
-            File downloadedFile = File.createTempFile(Lime.DATABASE_IM_TEMP, Lime.DATABASE_IM_TEMP_EXT, downloadFolder);
+            File downloadedFile = File.createTempFile(LIME.DATABASE_IM_TEMP, LIME.DATABASE_IM_TEMP_EXT, downloadFolder);
             downloadedFile.deleteOnExit();
 
             FileOutputStream fos;

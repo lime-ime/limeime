@@ -2,7 +2,7 @@
 <!--
   ~ /*
   ~  *
-  ~  **    Copyright 2015, The LimeIME Open Source Project
+  ~  **    Copyright 2025, The LimeIME Open Source Project
   ~  **
   ~  **    Project Url: http://github.com/lime-ime/limeime/
   ~  **                 http://android.toload.net/
@@ -65,7 +65,7 @@
         <ImageButton
             android:id="@+id/candidate_right"
             android:contentDescription="@string/more_cand"
-            android:src="@drawable/ic_suggest_expander"
+            android:src="@drawable/ic_suggest_expander_down"
             android:layout_width="@dimen/candidate_expand_button_width"
             android:layout_height="fill_parent"
             android:clickable="true"

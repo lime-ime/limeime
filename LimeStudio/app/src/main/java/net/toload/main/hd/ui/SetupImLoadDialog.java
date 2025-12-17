@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -53,7 +53,7 @@ import android.widget.CheckBox;
 import android.widget.Toast;
 
 import net.toload.main.hd.DBServer;
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.LIMEProgressListener;
@@ -124,16 +124,16 @@ public class SetupImLoadDialog extends DialogFragment {
                             if (uri != null) {
                                 File file = saveUriToFile(uri);
                                 if (file != null) {
-                                    if (imtype.equalsIgnoreCase(Lime.DB_RELATED)) {
+                                    if (imtype.equalsIgnoreCase(LIME.DB_RELATED)) {
                                         loadDbRelatedMapping(file);
                                         dismiss();
                                     } else {
-                                        if (file.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_TXT) ||
-                                                file.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIME) ||
-                                                file.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_CIN)) {
+                                        if (file.getName().toLowerCase().endsWith(LIME.SUPPORT_FILE_EXT_TXT) ||
+                                                file.getName().toLowerCase().endsWith(LIME.SUPPORT_FILE_EXT_LIME) ||
+                                                file.getName().toLowerCase().endsWith(LIME.SUPPORT_FILE_EXT_CIN)) {
                                             loadMapping(file);
                                             dismiss();
-                                        } else if( file.getName().toLowerCase().endsWith(Lime.SUPPORT_FILE_EXT_LIMEDB)) {
+                                        } else if( file.getName().toLowerCase().endsWith(LIME.SUPPORT_FILE_EXT_LIMEDB)) {
                                             loadDbMapping(file);
                                             dismiss();
                                         }
@@ -166,7 +166,7 @@ public class SetupImLoadDialog extends DialogFragment {
         Button btnSetupImDialogLoad5 = rootView.findViewById(R.id.btnSetupImDialogLoad5);
         Button btnSetupImDialogLoad6 = rootView.findViewById(R.id.btnSetupImDialogLoad6);
 
-        if (imtype.equalsIgnoreCase(Lime.DB_RELATED)) {
+        if (imtype.equalsIgnoreCase(LIME.DB_RELATED)) {
             assert getDialog() != null;
             getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_related_title));
 
@@ -208,7 +208,7 @@ public class SetupImLoadDialog extends DialogFragment {
                             (dialog, which) -> {
                                 boolean backuplearning = chkSetupImBackupLearning.isChecked();
                                 handler.resetImTable(imtype, backuplearning);
-                                if (imtype.equals(Lime.DB_TABLE_CUSTOM)) {
+                                if (imtype.equals(LIME.DB_TABLE_CUSTOM)) {
                                     handler.updateCustomButton();
                                 }
                                 handler.initialImButtons();
@@ -235,122 +235,122 @@ public class SetupImLoadDialog extends DialogFragment {
                 btnSetupImDialogCustom.setOnClickListener(v -> selectMappingFile());
 
                 switch (imtype) {
-                    case Lime.DB_TABLE_PHONETIC:
-                        btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_phonetic_big5) + " (15,945)");
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_PHONETIC, Lime.IM_PHONETIC_BIG5));
-                        btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_phonetic) + " (34,838)");
-                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_PHONETIC, Lime.IM_PHONETIC_ADV));
-                        btnSetupImDialogLoad3.setText(getResources().getString(R.string.l3_im_download_from_phonetic_adv_big5) + " (76,122)");
-                        btnSetupImDialogLoad3.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_PHONETIC, Lime.IM_PHONETIC_ADV_BIG5));
-                        btnSetupImDialogLoad4.setText(getResources().getString(R.string.l3_im_download_from_phonetic_adv) + " (95,029)");
-                        btnSetupImDialogLoad4.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_PHONETIC, Lime.IM_PHONETIC_ADV));
+                    case LIME.DB_TABLE_PHONETIC:
+                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_phonetic_big5), "15,945"));
+                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_PHONETIC, LIME.IM_PHONETIC_BIG5));
+                        btnSetupImDialogLoad2.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_phonetic), "34,838"));
+                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_PHONETIC, LIME.IM_PHONETIC_ADV));
+                        btnSetupImDialogLoad3.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_phonetic_adv_big5), "76,122"));
+                        btnSetupImDialogLoad3.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_PHONETIC, LIME.IM_PHONETIC_ADV_BIG5));
+                        btnSetupImDialogLoad4.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_phonetic_adv), "95,029"));
+                        btnSetupImDialogLoad4.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_PHONETIC, LIME.IM_PHONETIC_ADV));
                         btnSetupImDialogLoad5.setVisibility(View.GONE);
                         btnSetupImDialogLoad6.setVisibility(View.GONE);
                         break;
-                    case Lime.DB_TABLE_CJ:
-                        btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_cj_big5) + " (13,859)");
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_CJ, Lime.IM_CJ_BIG5));
-                        btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_cj) + " (28,596)");
-                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_CJ, Lime.IM_CJ));
-                        btnSetupImDialogLoad3.setText(getResources().getString(R.string.l3_im_download_from_cjk_hk_cj) + " (30,278)");
-                        btnSetupImDialogLoad3.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_CJ, Lime.IM_CJHK));
+                    case LIME.DB_TABLE_CJ:
+                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_cj_big5), "13,859"));
+                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_CJ, LIME.IM_CJ_BIG5));
+                        btnSetupImDialogLoad2.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_cj), "28,596"));
+                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_CJ, LIME.IM_CJ));
+                        btnSetupImDialogLoad3.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_cjk_hk_cj), "30,278"));
+                        btnSetupImDialogLoad3.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_CJ, LIME.IM_CJHK));
                         btnSetupImDialogLoad4.setVisibility(View.GONE);
                         btnSetupImDialogLoad5.setVisibility(View.GONE);
                         btnSetupImDialogLoad6.setVisibility(View.GONE);
                         break;
-                    case Lime.DB_TABLE_CJ5:
-                        btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_cj5) + " (24,004)");
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_CJ5, Lime.IM_CJ5));
+                    case LIME.DB_TABLE_CJ5:
+                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_cj5), "24,004"));
+                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_CJ5, LIME.IM_CJ5));
                         btnSetupImDialogLoad2.setVisibility(View.GONE);
                         btnSetupImDialogLoad3.setVisibility(View.GONE);
                         btnSetupImDialogLoad4.setVisibility(View.GONE);
                         btnSetupImDialogLoad5.setVisibility(View.GONE);
                         btnSetupImDialogLoad6.setVisibility(View.GONE);
                         break;
-                    case Lime.DB_TABLE_SCJ:
-                        btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_scj) + " (74,250)");
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_SCJ, Lime.IM_SCJ));
+                    case LIME.DB_TABLE_SCJ:
+                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_scj), "74,250"));
+                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_SCJ, LIME.IM_SCJ));
                         btnSetupImDialogLoad2.setVisibility(View.GONE);
                         btnSetupImDialogLoad3.setVisibility(View.GONE);
                         btnSetupImDialogLoad4.setVisibility(View.GONE);
                         btnSetupImDialogLoad5.setVisibility(View.GONE);
                         btnSetupImDialogLoad6.setVisibility(View.GONE);
                         break;
-                    case Lime.DB_TABLE_ECJ:
-                        btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_ecj) + " (13,119)");
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_ECJ, Lime.IM_ECJ));
-                        btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_cjk_hk_ecj) + " (27,853)");
-                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_ECJ, Lime.IM_ECJHK));
+                    case LIME.DB_TABLE_ECJ:
+                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_ecj), "13,119"));
+                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_ECJ, LIME.IM_ECJ));
+                        btnSetupImDialogLoad2.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_cjk_hk_ecj), "27,853"));
+                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_ECJ, LIME.IM_ECJHK));
                         btnSetupImDialogLoad3.setVisibility(View.GONE);
                         btnSetupImDialogLoad4.setVisibility(View.GONE);
                         btnSetupImDialogLoad5.setVisibility(View.GONE);
                         btnSetupImDialogLoad6.setVisibility(View.GONE);
                         break;
-                    case Lime.DB_TABLE_DAYI:
-                        btnSetupImDialogLoad1.setText(getResources().getString(R.string.setup_load_download_dayiuni) + " (27,198)");
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_DAYI, Lime.IM_DAYIUNI));
-                        btnSetupImDialogLoad2.setText(getResources().getString(R.string.setup_load_download_dayiunip) + " (117,766)");
-                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_DAYI, Lime.IM_DAYIUNIP));
-                        btnSetupImDialogLoad3.setText(getResources().getString(R.string.l3_im_download_from_dayi) + " (18,638)");
-                        btnSetupImDialogLoad3.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_DAYI, Lime.IM_DAYI));
+                    case LIME.DB_TABLE_DAYI:
+                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.setup_load_download_dayiuni), "27,198"));
+                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_DAYI, LIME.IM_DAYIUNI));
+                        btnSetupImDialogLoad2.setText(getString(R.string.download_button_with_count, getString(R.string.setup_load_download_dayiunip), "117,766"));
+                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_DAYI, LIME.IM_DAYIUNIP));
+                        btnSetupImDialogLoad3.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_dayi), "18,638"));
+                        btnSetupImDialogLoad3.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_DAYI, LIME.IM_DAYI));
                         btnSetupImDialogLoad4.setVisibility(View.GONE);
                         btnSetupImDialogLoad5.setVisibility(View.GONE);
                         btnSetupImDialogLoad6.setVisibility(View.GONE);
                         break;
-                    case Lime.DB_TABLE_EZ:
-                        btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_ez) + " (14,422)");
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_EZ, Lime.IM_EZ));
+                    case LIME.DB_TABLE_EZ:
+                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_ez), "14,422"));
+                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_EZ, LIME.IM_EZ));
                         btnSetupImDialogLoad2.setVisibility(View.GONE);
                         btnSetupImDialogLoad3.setVisibility(View.GONE);
                         btnSetupImDialogLoad4.setVisibility(View.GONE);
                         btnSetupImDialogLoad5.setVisibility(View.GONE);
                         btnSetupImDialogLoad6.setVisibility(View.GONE);
                         break;
-                    case Lime.DB_TABLE_ARRAY:
-                        btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_array) + " (31,999)");
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_ARRAY, Lime.IM_ARRAY));
+                    case LIME.DB_TABLE_ARRAY:
+                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_array), "31,999"));
+                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_ARRAY, LIME.IM_ARRAY));
                         btnSetupImDialogLoad2.setVisibility(View.GONE);
                         btnSetupImDialogLoad3.setVisibility(View.GONE);
                         btnSetupImDialogLoad4.setVisibility(View.GONE);
                         btnSetupImDialogLoad5.setVisibility(View.GONE);
                         btnSetupImDialogLoad6.setVisibility(View.GONE);
                         break;
-                    case Lime.DB_TABLE_ARRAY10:
-                        btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_array10) + " (31,700)");
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_ARRAY10, Lime.IM_ARRAY10));
+                    case LIME.DB_TABLE_ARRAY10:
+                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_array10), "31,700"));
+                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_ARRAY10, LIME.IM_ARRAY10));
                         btnSetupImDialogLoad2.setVisibility(View.GONE);
                         btnSetupImDialogLoad3.setVisibility(View.GONE);
                         btnSetupImDialogLoad4.setVisibility(View.GONE);
                         btnSetupImDialogLoad5.setVisibility(View.GONE);
                         btnSetupImDialogLoad6.setVisibility(View.GONE);
                         break;
-                    case Lime.DB_TABLE_PINYIN:
-                        btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_pinyin_big5) + " (34,753)");
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_PINYIN, Lime.IM_PINYIN));
+                    case LIME.DB_TABLE_PINYIN:
+                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_pinyin_big5), "34,753"));
+                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_PINYIN, LIME.IM_PINYIN));
                         btnSetupImDialogLoad2.setVisibility(View.GONE);
                         btnSetupImDialogLoad3.setVisibility(View.GONE);
                         btnSetupImDialogLoad4.setVisibility(View.GONE);
                         btnSetupImDialogLoad5.setVisibility(View.GONE);
                         btnSetupImDialogLoad6.setVisibility(View.GONE);
                         break;
-                    case Lime.DB_TABLE_WB:
-                        btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_wb) + " (26,378)");
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_WB, Lime.IM_WB));
+                    case LIME.DB_TABLE_WB:
+                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_wb), "26,378"));
+                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_WB, LIME.IM_WB));
                         btnSetupImDialogLoad2.setVisibility(View.GONE);
                         btnSetupImDialogLoad3.setVisibility(View.GONE);
                         btnSetupImDialogLoad4.setVisibility(View.GONE);
                         btnSetupImDialogLoad5.setVisibility(View.GONE);
                         btnSetupImDialogLoad6.setVisibility(View.GONE);
                         break;
-                    case Lime.DB_TABLE_HS:
-                        btnSetupImDialogLoad1.setText(getResources().getString(R.string.l3_im_download_from_hs) + " (183,659)");
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_HS, Lime.IM_HS));
-                        btnSetupImDialogLoad2.setText(getResources().getString(R.string.l3_im_download_from_hs_v1) + " (50,845)");
-                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_HS, Lime.IM_HS_V1));
-                        btnSetupImDialogLoad3.setText(getResources().getString(R.string.l3_im_download_from_hs_v2) + " (50,838)");
-                        btnSetupImDialogLoad3.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_HS, Lime.IM_HS_V2));
-                        btnSetupImDialogLoad4.setText(getResources().getString(R.string.l3_im_download_from_hs_v3) + " (64,324)");
-                        btnSetupImDialogLoad4.setOnClickListener(v -> downloadAndLoadIm(Lime.DB_TABLE_HS, Lime.IM_HS_V3));
+                    case LIME.DB_TABLE_HS:
+                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_hs), "183,659"));
+                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_HS, LIME.IM_HS));
+                        btnSetupImDialogLoad2.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_hs_v1), "50,845"));
+                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_HS, LIME.IM_HS_V1));
+                        btnSetupImDialogLoad3.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_hs_v2), "50,838"));
+                        btnSetupImDialogLoad3.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_HS, LIME.IM_HS_V2));
+                        btnSetupImDialogLoad4.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_hs_v3), "64,324"));
+                        btnSetupImDialogLoad4.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_HS, LIME.IM_HS_V3));
                         btnSetupImDialogLoad5.setVisibility(View.GONE);
                         btnSetupImDialogLoad6.setVisibility(View.GONE);
                         break;
@@ -378,7 +378,6 @@ public class SetupImLoadDialog extends DialogFragment {
         intent.setType("*/*");
         filePickerLauncher.launch(intent);
     }
-    @SuppressWarnings("deprecation")
     public boolean isNetworkAvailable(Context context) {
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connectivityManager == null) {
@@ -386,7 +385,7 @@ public class SetupImLoadDialog extends DialogFragment {
         }
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            // Use modern API for API 23+
+            // Use modern API for API 23+ (getActiveNetwork() + getNetworkCapabilities())
             Network network = connectivityManager.getActiveNetwork();
             if (network == null) return false;
 
@@ -397,9 +396,16 @@ public class SetupImLoadDialog extends DialogFragment {
                             capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
             );
         } else {
-            // Use deprecated API for API < 23
+            // Use deprecated API for API < 23 (minSdk is 21, so we need this for API 21-22)
+            // getActiveNetworkInfo() is deprecated in API 29+, but we only use it for API < 23
+            @SuppressWarnings("deprecation")
             NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-            return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+            if (activeNetworkInfo != null) {
+                @SuppressWarnings("deprecation")
+                boolean isConnected = activeNetworkInfo.isConnected();
+                return isConnected;
+            }
+            return false;
         }
     }
 
@@ -408,77 +414,77 @@ public class SetupImLoadDialog extends DialogFragment {
         if (isNetworkAvailable(activity)) {
             String url = null;
             switch (type) {
-                case Lime.IM_ARRAY:
-                    url = Lime.DATABASE_CLOUD_IM_ARRAY;
+                case LIME.IM_ARRAY:
+                    url = LIME.DATABASE_CLOUD_IM_ARRAY;
                     break;
-                case Lime.IM_ARRAY10:
-                    url = Lime.DATABASE_CLOUD_IM_ARRAY10;
+                case LIME.IM_ARRAY10:
+                    url = LIME.DATABASE_CLOUD_IM_ARRAY10;
                     break;
-                case Lime.IM_CJ_BIG5:
-                    url = Lime.DATABASE_CLOUD_IM_CJ_BIG5;
+                case LIME.IM_CJ_BIG5:
+                    url = LIME.DATABASE_CLOUD_IM_CJ_BIG5;
                     break;
-                case Lime.IM_CJ:
-                    url = Lime.DATABASE_CLOUD_IM_CJ;
+                case LIME.IM_CJ:
+                    url = LIME.DATABASE_CLOUD_IM_CJ;
                     break;
-                case Lime.IM_CJHK:
-                    url = Lime.DATABASE_CLOUD_IM_CJHK;
+                case LIME.IM_CJHK:
+                    url = LIME.DATABASE_CLOUD_IM_CJHK;
                     break;
-                case Lime.IM_CJ5:
-                    url = Lime.DATABASE_CLOUD_IM_CJ5;
+                case LIME.IM_CJ5:
+                    url = LIME.DATABASE_CLOUD_IM_CJ5;
                     break;
-                case Lime.IM_DAYI:
-                    url = Lime.DATABASE_CLOUD_IM_DAYI;
+                case LIME.IM_DAYI:
+                    url = LIME.DATABASE_CLOUD_IM_DAYI;
                     break;
-                case Lime.IM_DAYIUNI:
-                    url = Lime.DATABASE_CLOUD_IM_DAYIUNI;
+                case LIME.IM_DAYIUNI:
+                    url = LIME.DATABASE_CLOUD_IM_DAYIUNI;
                     break;
-                case Lime.IM_DAYIUNIP:
-                    url = Lime.DATABASE_CLOUD_IM_DAYIUNIP;
+                case LIME.IM_DAYIUNIP:
+                    url = LIME.DATABASE_CLOUD_IM_DAYIUNIP;
                     break;
-                case Lime.IM_ECJ:
-                    url = Lime.DATABASE_CLOUD_IM_ECJ;
+                case LIME.IM_ECJ:
+                    url = LIME.DATABASE_CLOUD_IM_ECJ;
                     break;
-                case Lime.IM_ECJHK:
-                    url = Lime.DATABASE_CLOUD_IM_ECJHK;
+                case LIME.IM_ECJHK:
+                    url = LIME.DATABASE_CLOUD_IM_ECJHK;
                     break;
-                case Lime.IM_EZ:
-                    url = Lime.DATABASE_CLOUD_IM_EZ;
+                case LIME.IM_EZ:
+                    url = LIME.DATABASE_CLOUD_IM_EZ;
                     break;
-                case Lime.IM_PHONETIC_BIG5:
-                    url = Lime.DATABASE_CLOUD_IM_PHONETIC_BIG5;
+                case LIME.IM_PHONETIC_BIG5:
+                    url = LIME.DATABASE_CLOUD_IM_PHONETIC_BIG5;
                     break;
-                case Lime.IM_PHONETIC_ADV_BIG5:
-                    url = Lime.DATABASE_CLOUD_IM_PHONETICCOMPLETE_BIG5;
+                case LIME.IM_PHONETIC_ADV_BIG5:
+                    url = LIME.DATABASE_CLOUD_IM_PHONETICCOMPLETE_BIG5;
                     break;
-                case Lime.IM_PHONETIC:
-                    url = Lime.DATABASE_CLOUD_IM_PHONETIC;
+                case LIME.IM_PHONETIC:
+                    url = LIME.DATABASE_CLOUD_IM_PHONETIC;
                     break;
-                case Lime.IM_PHONETIC_ADV:
-                    url = Lime.DATABASE_CLOUD_IM_PHONETICCOMPLETE;
+                case LIME.IM_PHONETIC_ADV:
+                    url = LIME.DATABASE_CLOUD_IM_PHONETICCOMPLETE;
                     break;
-                case Lime.IM_PINYIN:
-                    url = Lime.DATABASE_CLOUD_IM_PINYIN;
+                case LIME.IM_PINYIN:
+                    url = LIME.DATABASE_CLOUD_IM_PINYIN;
                     break;
-                case Lime.IM_PINYINGB:
-                    url = Lime.DATABASE_CLOUD_IM_PINYINGB;
+                case LIME.IM_PINYINGB:
+                    url = LIME.DATABASE_CLOUD_IM_PINYINGB;
                     break;
-                case Lime.IM_SCJ:
-                    url = Lime.DATABASE_CLOUD_IM_SCJ;
+                case LIME.IM_SCJ:
+                    url = LIME.DATABASE_CLOUD_IM_SCJ;
                     break;
-                case Lime.IM_WB:
-                    url = Lime.DATABASE_CLOUD_IM_WB;
+                case LIME.IM_WB:
+                    url = LIME.DATABASE_CLOUD_IM_WB;
                     break;
-                case Lime.IM_HS:
-                    url = Lime.DATABASE_CLOUD_IM_HS;
+                case LIME.IM_HS:
+                    url = LIME.DATABASE_CLOUD_IM_HS;
                     break;
-                case Lime.IM_HS_V1:
-                    url = Lime.DATABASE_CLOUD_IM_HS_V1;
+                case LIME.IM_HS_V1:
+                    url = LIME.DATABASE_CLOUD_IM_HS_V1;
                     break;
-                case Lime.IM_HS_V2:
-                    url = Lime.DATABASE_CLOUD_IM_HS_V2;
+                case LIME.IM_HS_V2:
+                    url = LIME.DATABASE_CLOUD_IM_HS_V2;
                     break;
-                case Lime.IM_HS_V3:
-                    url = Lime.DATABASE_CLOUD_IM_HS_V3;
+                case LIME.IM_HS_V3:
+                    url = LIME.DATABASE_CLOUD_IM_HS_V3;
                     break;
             }
 

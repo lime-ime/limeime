@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -33,7 +33,7 @@ import android.database.sqlite.SQLiteException;
 import android.util.Log;
 import android.widget.Toast;
 
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
@@ -126,7 +126,7 @@ public abstract class LimeSQLiteOpenHelper {
 
                 LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(mContext.getApplicationContext());
 
-                mLIMEPref.setParameter(Lime.DB_CHECK_RELATED_USERSCORE, true);
+                mLIMEPref.setParameter(LIME.DB_CHECK_RELATED_USERSCORE, true);
 
             } catch (IOException e) {
                 e.printStackTrace();

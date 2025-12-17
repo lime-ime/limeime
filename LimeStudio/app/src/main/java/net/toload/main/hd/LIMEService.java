@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -26,17 +26,23 @@ package net.toload.main.hd;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
+import android.database.ContentObserver;
 import android.inputmethodservice.InputMethodService;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.Vibrator;
+import android.provider.Settings;
+import android.speech.RecognizerIntent;
 import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -62,6 +68,7 @@ import net.toload.main.hd.candidate.CandidateView;
 import net.toload.main.hd.candidate.CandidateViewContainer;
 import net.toload.main.hd.data.ChineseSymbol;
 import net.toload.main.hd.data.Mapping;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard;
@@ -84,7 +91,7 @@ import java.util.Objects;
 public class LIMEService extends InputMethodService implements
         LIMEKeyboardBaseView.OnKeyboardActionListener {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final String TAG = "LIMEService";
 
     private static Thread queryThread; // queryThread for no-blocking I/O  Jeremy '15,6,1
@@ -99,11 +106,9 @@ public class LIMEService extends InputMethodService implements
 
     private LIMEKeyboardView mInputView = null;
     private CandidateInInputViewContainer mCandidateInInputView = null;//Jeremy'12,5,3
-    private boolean mFixedCandidateViewOn; //Jeremy'12,5,3
+    //private final boolean mFixedCandidateViewOn = true; //Jeremy'12,5,3 - Always true, kept for backward compatibility
     private CandidateView mCandidateView = null;
     private CandidateView mCandidateViewInInputView = null;
-    private CandidateView mCandidateViewStandAlone = null;
-    private CandidateViewContainer mCandidateViewContainer = null;
     private CompletionInfo[] mCompletions;
 
     private StringBuilder mComposing = new StringBuilder();
@@ -142,6 +147,14 @@ public class LIMEService extends InputMethodService implements
 
     private boolean hasPhysicalKeyPressed;
 
+    // Voice input monitoring
+    private ContentObserver mInputMethodObserver = null;
+    private boolean mIsVoiceInputActive = false;
+    private String mLIMEId = null;
+    private BroadcastReceiver mVoiceInputReceiver = null;
+    private static final String ACTION_VOICE_RESULT = "net.toload.main.hd.VOICE_INPUT_RESULT";
+    private static final String EXTRA_RECOGNIZED_TEXT = "recognized_text";
+
     //private String mWordSeparators;
     //private String misMatched;  //Removed by Jeremy '13,1,10
 
@@ -166,7 +179,7 @@ public class LIMEService extends InputMethodService implements
     private boolean spaceKeyPress = false; // Jeremy '15,5,30 for process physical keyboard ctrl-space with missing space down event
     private boolean hasWinPress = false; // Jeremy '12,4,29 windows start key on standard windows keyboard
     //private boolean hasCtrlProcessed = false; // Jeremy '11,6.18
-    private boolean hasDistinctMultitouch;// Jeremy '11,8,3 
+    private boolean hasDistinctMultitouch;// Jeremy '11,8,3
     private boolean hasShiftCombineKeyPressed = false; //Jeremy ,11,8, 3
     private boolean hasMenuPress = false; // Jeremy '11,5,29
     private boolean hasMenuProcessed = false; // Jeremy '11,5,29
@@ -226,6 +239,10 @@ public class LIMEService extends InputMethodService implements
 
     private boolean hasChineseSymbolCandidatesShown = false;
     private boolean hasCandidatesShown = false;
+    
+    // Track last known good bottom padding for older APIs (21-25) where window insets
+    // might incorrectly include keyboard height when keyboard is restored
+    private int mLastKnownBottomPadding = -1;
 
 
 
@@ -248,7 +265,8 @@ public class LIMEService extends InputMethodService implements
         // Construct Preference Access Tool
         mLIMEPref = new LIMEPreferenceManager(this);
 
-        mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
+        // mFixedCandidateViewOn is always true, so we can remove the variable
+        // mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
 
         mLongPressKeyTimeout = getResources().getInteger(R.integer.config_long_press_key_timeout); // Jeremy '11,8,15 read longpress timeout from config resources.
 
@@ -259,7 +277,9 @@ public class LIMEService extends InputMethodService implements
         activatedIMShortNameList = new ArrayList<>();
         activeIM = mLIMEPref.getActiveIM();
         buildActivatedIMList();
-
+        
+        // Register receiver for voice input results
+        registerVoiceInputReceiver();
 
     }
 
@@ -340,31 +360,34 @@ public class LIMEService extends InputMethodService implements
         initialViewAndSwitcher(true);  //Jeremy '12,4,29.  will do buildactivekeyboardlist in init startInput
 
         View inputView;
-        if (mFixedCandidateViewOn) {
-            if (DEBUG)
-                Log.i(TAG, "Fixed candidateView in on, return nInputViewContainer ");
-            inputView = mCandidateInInputView;
-        } else {
-            inputView = mInputView;
-        }
+        // mFixedCandidateViewOn is always true
+        if (DEBUG)
+            Log.i(TAG, "Fixed candidateView in on, return nInputViewContainer ");
+        inputView = mCandidateInInputView;
 
-        // Apply window insets to prevent overlap with system gesture navigation bar
-        if (inputView != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(inputView, (v, insets) -> {
+        // For API 35+, apply window insets to prevent overlap with system gesture navigation bar
+        // Apply padding to the entire container to ensure both candidate view and keyboard view
+        // have proper spacing from the navigation bar
+        if (inputView != null && android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            ViewCompat.setOnApplyWindowInsetsListener(mCandidateInInputView, (v, insets) -> {
                 int systemBarsType = WindowInsetsCompat.Type.systemBars();
                 int bottomInset = insets.getInsets(systemBarsType).bottom;
-                
-                // Apply bottom padding to account for navigation bar
-                v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), 
-                            v.getPaddingRight(), bottomInset);
-                
+                v.setPadding(v.getPaddingLeft(), 0,
+                        v.getPaddingRight(), bottomInset);
+
                 if (DEBUG) {
-                    Log.i(TAG, "Applied window insets - bottom: " + bottomInset);
+                    Log.i(TAG, "Applied window insets to InputView container - bottom: " + bottomInset
+                            + ", API: " + android.os.Build.VERSION.SDK_INT
+                            + ", keyboard visible: " + (mInputView != null && mInputView.getVisibility() == View.VISIBLE)
+                            + ", saved: " + mLastKnownBottomPadding);
                 }
-                
+
+                // Return insets to allow proper layout measurement
                 return insets;
             });
         }
+        
+        // Touch listeners will be set up in onStartInputView() after views are fully initialized
 
         // Set navigation bar icons to dark when keyboard is shown
         setNavigationBarIconsDark();
@@ -389,16 +412,8 @@ public class LIMEService extends InputMethodService implements
         @SuppressLint("InflateParams")
         CandidateViewContainer candidateViewContainer = (CandidateViewContainer) getLayoutInflater().inflate(R.layout.candidates, null);
         candidateViewContainer.initViews();
-        mCandidateViewContainer = candidateViewContainer;
 
-        mCandidateViewStandAlone = mCandidateViewContainer.findViewById(R.id.candidates);
-        mCandidateViewStandAlone.setService(this);
-
-
-        if (!mFixedCandidateViewOn)
-            mCandidateView = mCandidateViewStandAlone;
-
-        return mCandidateViewContainer;
+        return candidateViewContainer;
 
 
     }
@@ -432,11 +447,16 @@ public class LIMEService extends InputMethodService implements
         if (DEBUG) {
             Log.i(TAG, "onFinishInput()");
         }
+        // Stop monitoring IME changes when input finishes
+        stopMonitoringIMEChanges();
+        // Unregister voice input receiver
+        unregisterVoiceInputReceiver();
         super.onFinishInput();
 
-        if (!mFixedCandidateViewOn && mInputView != null) {
-            mInputView.closing();
-        }
+        // mFixedCandidateViewOn is always true, so this branch is never executed
+        // if (!mFixedCandidateViewOn && mInputView != null) {
+        //     mInputView.closing();
+        // }
         try {
             if (!LDComposingBuffer.isEmpty()) { // Force interrupt the LD process
                 LDComposingBuffer = "";
@@ -448,7 +468,7 @@ public class LIMEService extends InputMethodService implements
             e.printStackTrace();
         }
         // Clear current composing text and candidates.
-        //Jeremy '12,5,21 
+        //Jeremy '12,5,21
         finishComposing();
 
         // -> 26.May.2011 by Art : Update keyboard list when user click the keyboard.
@@ -526,14 +546,19 @@ public class LIMEService extends InputMethodService implements
                 Log.i(TAG, "clearSuggestions(): "
                         + ", hasCandidatesShown:" + hasCandidatesShown);
 
-            if (!mEnglishOnly && mLIMEPref.getAutoChineseSymbol() //Jeremy '12,4,29 use mEnglishOnly instead of onIM 
-                    && (hasCandidatesShown || mFixedCandidateViewOn)) {   // Change isCandiateShown() to hasCandiatesShown
+            // mFixedCandidateViewOn is always true, so (hasCandidatesShown || mFixedCandidateViewOn) is always true
+            if (!mEnglishOnly && mLIMEPref.getAutoChineseSymbol()) {   // Change isCandiateShown() to hasCandiatesShown
                 mCandidateView.clear();
                 if (hasCandidatesShown)
                     updateChineseSymbol(); // Jeremy '12.5,23 do not show chinesesymbol when init for fixed candidate view.
             } else {
                 mCandidateView.clear();
                 hideCandidateView();
+            }
+            
+            // Update CandidateView width constraint after clearing suggestions
+            if (mCandidateInInputView != null) {
+                mCandidateInInputView.updateCandidateViewWidthConstraint();
             }
 
         }
@@ -543,17 +568,8 @@ public class LIMEService extends InputMethodService implements
      */
     @Override public void onComputeInsets(InputMethodService.Insets outInsets) {
         super.onComputeInsets(outInsets);
-        if(mCandidateView == null || mCandidateView == mCandidateViewInInputView ) return;
-
-       // Jeremy '16,7,21 get space for candidate view for candidateView typing with physical keybaord
-        outInsets.contentTopInsets = mCandidateViewContainer.getHeight() - mCandidateViewStandAlone.getHeight();
-        outInsets.visibleTopInsets = mCandidateViewContainer.getHeight();
-
-        if(mCandidateViewStandAlone.isShown()) {
-            outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_CONTENT;
-        }else{
-            outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_VISIBLE;
-        }
+        // Always use embedded candidate view in InputView, so no need to compute insets
+        // The embedded candidate view is part of the inputView, so insets are handled automatically
     }
     /**
      * This is the main point where we do our initialization of the input method
@@ -567,6 +583,9 @@ public class LIMEService extends InputMethodService implements
             Log.i(TAG, "onStartInput()");
         super.onStartInputView(attribute, restarting);
         initOnStartInput(attribute);
+        
+        // Don't restore keyboard view here - only restore when user explicitly touches
+        // the soft keyboard area (candidate view or InputView container)
     }
 
     @Override
@@ -574,8 +593,49 @@ public class LIMEService extends InputMethodService implements
         if (DEBUG)
             Log.i(TAG, "onStartInputView()");
         super.onStartInputView(attribute, restarting);
+        
+        // Ensure InputView container is visible
+        if (mCandidateInInputView != null) {
+            mCandidateInInputView.setVisibility(View.VISIBLE);
+        }
+        
+        // Save composing text before initOnStartInput() in case it clears state
+        String savedComposing = (mComposing != null && mComposing.length() > 0) ? mComposing.toString() : null;
+        // Save hasPhysicalKeyPressed state before initOnStartInput()
+        boolean savedHasPhysicalKeyPressed = hasPhysicalKeyPressed;
+        
         initOnStartInput(attribute);
         
+        // Restore composing text if it was set by a physical key press before InputView was shown
+        if (savedComposing != null && savedHasPhysicalKeyPressed) {
+            // Restore hasPhysicalKeyPressed state and composing text
+            hasPhysicalKeyPressed = savedHasPhysicalKeyPressed;
+            mComposing.setLength(0);
+            mComposing.append(savedComposing);
+            InputConnection ic = getCurrentInputConnection();
+            if (ic != null && mPredictionOn) {
+                ic.setComposingText(mComposing, 1);
+            }
+            // Update candidates to show the composing text and candidates for the first key
+            updateCandidates();
+            // Ensure candidate view is shown
+            hasCandidatesShown = true;
+            // Hide keyboard view when physical key was pressed
+            if (mInputView != null) {
+                mInputView.setVisibility(View.GONE);
+            }
+        } else {
+            // No composing text to preserve, reset hasPhysicalKeyPressed and show keyboard view
+            hasPhysicalKeyPressed = false;
+            if (mInputView != null) {
+                mInputView.setVisibility(View.VISIBLE);
+            }
+        }
+        
+        // Don't restore keyboard view here - only restore when user explicitly touches
+        // the soft keyboard area (candidate view or InputView container)
+        // This prevents restoring when InputView is shown but user is still using physical keyboard
+
         // Set navigation bar icons to dark when keyboard is shown
         setNavigationBarIconsDark();
     }
@@ -594,34 +654,41 @@ public class LIMEService extends InputMethodService implements
 
 
         //Jeremy '12,5,29 override the fixCandidateMode setting in Landscape mode (in landscape mode the candidate bar is always not fixed).
-        boolean fixedCandidateMode = mLIMEPref.getFixedCandidateViewDisplay();
-
-        //Jeremy '12,5,6 recreate inputView if fixedCandidateView setting is altered
+        // mFixedCandidateViewOn is always true, so we don't need to check fixedCandidateMode
+        //Jeremy '12,5,6 recreate inputView if fixedCandidateView setting is altered - REMOVED: always true now
         //Jeremy '15,7,15 recreate inputView if keyboard theme changed
-        if (mFixedCandidateViewOn != fixedCandidateMode
-                || mKeyboardThemeIndex != mLIMEPref.getKeyboardTheme()) {
+        // mFixedCandidateViewOn is always true, so mFixedCandidateViewOn != fixedCandidateMode is always false
+        if (mKeyboardThemeIndex != mLIMEPref.getKeyboardTheme()) {
             requestHideSelf(0);
             mInputView.closing();
-            mFixedCandidateViewOn = fixedCandidateMode;
-
             initialViewAndSwitcher(true);
 
-            if (mFixedCandidateViewOn) {
-                if (DEBUG)
-                    Log.i(TAG, "Fixed candidateView in on, return nInputViewContainer ");
-                if(mCandidateInInputView!=null)
-                    setInputView(mCandidateInInputView);
-            } else {
-                if(mInputView!=null)
-                    setInputView(mInputView);
-                if (DEBUG)
-                    Log.i(TAG, "Fixed candidateView in off, return mInputView ");
-            }
+            // mFixedCandidateViewOn is always true
+            if (DEBUG)
+                Log.i(TAG, "Fixed candidateView in on, return nInputViewContainer ");
+            if(mCandidateInInputView!=null)
+                setInputView(mCandidateInInputView);
 
         }
 
-        hasPhysicalKeyPressed = false;  //Jeremy '11,9,6 reset phsycalkeyflag
-        hasCandidatesShown = false;
+        // Don't reset hasPhysicalKeyPressed if it was just set by a physical key press
+        // This prevents losing the first key when InputView is shown after physical key press
+        if (!hasPhysicalKeyPressed) {
+            // Show keyboard view when hasPhysicalKeyPressed is false
+            if (mInputView != null) {
+                mInputView.setVisibility(View.VISIBLE);
+            }
+        } else {
+            // Hide keyboard view when hasPhysicalKeyPressed is true
+            if (mInputView != null) {
+                mInputView.setVisibility(View.GONE);
+            }
+        }
+        // Don't reset hasCandidatesShown if a physical key was just pressed and composing text exists
+        // This prevents losing the first key when InputView is shown after physical key press
+        if (!hasPhysicalKeyPressed || (mComposing == null || mComposing.length() == 0)) {
+            hasCandidatesShown = false;
+        }
 
         // Reset the IM softkeyboard settings. Jeremy '11,6,19
         try {
@@ -750,8 +817,8 @@ public class LIMEService extends InputMethodService implements
         }
 
 
-        if (mEnglishOnly && !mPredictionOn) //Jeremy '12,5,20 Only hide candidateview when prediction mode is not on. 
-            //Jeremy '12,5,6 clear internal composing buffer in forceHideCandiateView 
+        if (mEnglishOnly && !mPredictionOn) //Jeremy '12,5,20 Only hide candidateview when prediction mode is not on.
+            //Jeremy '12,5,6 clear internal composing buffer in forceHideCandiateView
             forceHideCandidateView();  //Jeremy '12,5,6 zero the canidateView height to force hide it for eng/numeric keyboard
         else {
             clearComposing(false);//Jeremy '12,5,24 clear the suggesions and also restore the height of fixed candaiteview if it's hide before
@@ -762,7 +829,7 @@ public class LIMEService extends InputMethodService implements
         updateShiftKeyState(getCurrentInputEditorInfo());
 
 
-        //initCandidateView(); //Force the oncreatedcandidate to be called   
+        //initCandidateView(); //Force the oncreatedcandidate to be called
         //clearComposing(false);
 
     }
@@ -808,9 +875,9 @@ public class LIMEService extends InputMethodService implements
         InputConnection ic = getCurrentInputConnection();
 
         if (mComposing.length() > 0
-                && !(candidatesEnd == candidatesStart) //Jeremy '12,7,2 bug fixed on composition being clear after second word in chrome 
-                && candidatesStart >= 0 && candidatesEnd > 0 // in composing  
-                ) {
+                && !(candidatesEnd == candidatesStart) //Jeremy '12,7,2 bug fixed on composition being clear after second word in chrome
+                && candidatesStart >= 0 && candidatesEnd > 0 // in composing
+        ) {
             if (newSelStart < candidatesStart || newSelStart > candidatesEnd) { // cursor is moved before or after composing area
 
                 if (mCandidateList != null) mCandidateList.clear();
@@ -866,6 +933,19 @@ public class LIMEService extends InputMethodService implements
     private boolean translateKeyDown(int keyCode, KeyEvent event) {
 
         hasPhysicalKeyPressed = true;
+        // Hide keyboard view when physical key is pressed
+        if (mInputView != null) {
+            mInputView.setVisibility(View.GONE);
+        }
+        
+        // Request layout update for candidate view container to show buttons
+        if (mCandidateInInputView != null) {
+            mCandidateInInputView.post(mCandidateInInputView::requestLayout);
+        }
+        
+        // Show InputView when physical key is pressed to display embedded candidate view
+        // Store flag to show InputView after key is processed to avoid losing the first key
+        final boolean needToShowInputView = !isInputViewShown();
 
         //Jeremy '25/12/14 Always use fix candidateView even for physical keyboard. (API 34+ cannot shown candidateView well)
         // If user use the physical keyboard then not fixed the candidate view also use the transparent background
@@ -894,7 +974,7 @@ public class LIMEService extends InputMethodService implements
 
         InputConnection ic = getCurrentInputConnection();
 
-        /// Jeremy '12,4,1 XPERIA Pro force translating special keys 
+        /// Jeremy '12,4,1 XPERIA Pro force translating special keys
         if (mLIMEPref.getPhysicalKeyboardType().equals("xperiapro")) {
             boolean isShift = LIMEMetaKeyKeyListener.getMetaState(mMetaState,
                     LIMEMetaKeyKeyListener.META_SHIFT_ON) > 0;
@@ -934,7 +1014,35 @@ public class LIMEService extends InputMethodService implements
         if (c != -1 && (c & KeyCharacterMap.COMBINING_ACCENT) != 0) {
             c = c & KeyCharacterMap.COMBINING_ACCENT_MASK;
         }
+        
+        // Process the key first to ensure it's added to composing
         onKey(c, null);
+        
+        // Show InputView after key is processed to avoid losing the first key
+        // Note: We manage InputView visibility directly via mInputView.setVisibility()
+        // instead of using requestShowSelf() which causes IllegalAccessError on some Android versions
+        if (needToShowInputView) {
+            // Use post() to ensure onKey() completes first, then verify composing text is set
+            new Handler(Looper.getMainLooper()).post(() -> {
+                // Ensure composing text is set in InputConnection before showing InputView
+                if (mComposing != null && mComposing.length() > 0) {
+                    InputConnection inputConn = getCurrentInputConnection();
+                    if (inputConn != null && mPredictionOn) {
+                        // Explicitly set composing text to ensure it's committed before showing InputView
+                        inputConn.setComposingText(mComposing, 1);
+                    }
+                }
+                // Show InputView directly by setting visibility
+                // The system will show the IME when InputView becomes visible
+                if (mInputView != null && mInputView.getVisibility() != View.VISIBLE) {
+                    mInputView.setVisibility(View.VISIBLE);
+                    if (mCandidateInInputView != null) {
+                        mCandidateInInputView.setVisibility(View.VISIBLE);
+                    }
+                }
+            });
+        }
+        
         return true;
     }
 
@@ -960,6 +1068,11 @@ public class LIMEService extends InputMethodService implements
                     + ", event.getRepeatCount()" + event.getRepeatCount()
                     + ", event.getMetaState()" + Integer.toHexString(event.getMetaState()));
 
+        // Show InputView when physical key is pressed to display embedded candidate view
+        // This ensures candidates are visible even when using physical keyboard
+        // if (mInputView != null && !isInputViewShown()) {
+        //     requestShowSelf(0);
+        // }
 
         mKeydownEvent = new KeyEvent(event);
         // Record key pressed time and set key processed flags(key down, for physical keys)
@@ -997,7 +1110,7 @@ public class LIMEService extends InputMethodService implements
                     return true;
                 }
                 break;
-            //Jeremy '11,8,28 for expanded canddiateviewi
+            //Jeremy '11,8,28 for expanded candidateView
             case KeyEvent.KEYCODE_DPAD_UP:
                 if (hasCandidatesShown) { //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
                     mCandidateView.selectPrevRow();
@@ -1075,6 +1188,10 @@ public class LIMEService extends InputMethodService implements
                 // composing text for the user, we want to modify that instead
                 // of let the application to the delete itself.
                 hasPhysicalKeyPressed = true;
+                // Hide keyboard view when physical key is pressed
+                if (mInputView != null) {
+                    mInputView.setVisibility(View.GONE);
+                }
                 onKey(LIMEBaseKeyboard.KEYCODE_DELETE, null);
                 return true;
 
@@ -1090,7 +1207,7 @@ public class LIMEService extends InputMethodService implements
                 if (!mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                     if (hasCandidatesShown) { //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
                         // To block a real enter after suggestion selection. We have to
-                        // return true in OnKeyUp();					
+                        // return true in OnKeyUp();
                         if (pickHighlightedCandidate()) {
                             hasEnterProcessed = true;
                             return true;
@@ -1099,7 +1216,7 @@ public class LIMEService extends InputMethodService implements
                             break;
                         }
                     }
-                } else if (//mLIMEPref.getEnglishPrediction() && 
+                } else if (//mLIMEPref.getEnglishPrediction() &&
                         mPredictionOn && mLIMEPref.getEnglishPredictionOnPhysicalKeyboard()) {
                     resetTempEnglishWord();
                     this.updateEnglishPrediction();
@@ -1123,7 +1240,7 @@ public class LIMEService extends InputMethodService implements
                 // '11,5,13 Jeremy added Ctrl-space switch chi/eng
                 // '11,6,18 Jeremy moved from on_KEY_UP
                 // '12,4,29 Jeremy add hasWinPress + space to switch chi/eng (earth key on zippy keyboard)
-                // '12,5,8  Jeremy add send the space key to onKey with translatekeydown for candidate processing if it's not switching chi/eng 
+                // '12,5,8  Jeremy add send the space key to onKey with translatekeydown for candidate processing if it's not switching chi/eng
                 if ((hasQuickSwitch && hasShiftPress) || hasCtrlPress || hasMenuPress || hasWinPress || event.isCtrlPressed() ) {
                     if (!hasWinPress)
                         this.switchChiEng();  //Jeremy '12,5,20 move hasWinPress to winstartkey in onkeyUp()
@@ -1259,11 +1376,11 @@ public class LIMEService extends InputMethodService implements
     public boolean onKeyUp(int keyCode, @NonNull KeyEvent event) {
         if (DEBUG)
             Log.i(TAG, "OnKeyUp():keyCode:" + keyCode
-                            + ", mComposing = " + mComposing
-                            + ", hasCtrlPress:" + hasCtrlPress
-                            + ", hasWinPress:" + hasWinPress
-                            + ", hasShiftPress = " + hasShiftPress
-                            + ", event.getEventTime() -  event.getDownTime()" + (event.getEventTime() - event.getDownTime())
+                    + ", mComposing = " + mComposing
+                    + ", hasCtrlPress:" + hasCtrlPress
+                    + ", hasWinPress:" + hasWinPress
+                    + ", hasShiftPress = " + hasShiftPress
+                    + ", event.getEventTime() -  event.getDownTime()" + (event.getEventTime() - event.getDownTime())
 
             );
 
@@ -1291,9 +1408,9 @@ public class LIMEService extends InputMethodService implements
                 hasShiftPress = false;
                 mMetaState = LIMEMetaKeyKeyListener.handleKeyUp(mMetaState, keyCode, event);
                 // '11,8,28 Jeremy popup keyboard picker instead of nextIM when onIM
-                // '11,5,14 Jeremy ctrl-shift switch to next available keyboard; 
-                // '11,5,24 blocking switching if full-shape symbol 
-                if (!hasSymbolEntered && !mEnglishOnly && (hasMenuPress || hasCtrlPress)) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM  
+                // '11,5,14 Jeremy ctrl-shift switch to next available keyboard;
+                // '11,5,24 blocking switching if full-shape symbol
+                if (!hasSymbolEntered && !mEnglishOnly && (hasMenuPress || hasCtrlPress)) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                     //nextActiveKeyboard(true);
                     showIMPicker(); //Jeremy '11,8,28
                     if (hasMenuPress) {
@@ -1354,7 +1471,7 @@ public class LIMEService extends InputMethodService implements
                     mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
                     setInputConnectionMetaStateAsCurrentMetaKeyKeyListenerState();
                     return true;
-                    // Long press physical @ key to swtich chn/eng 
+                    // Long press physical @ key to swtich chn/eng
                 } else if ((!mEnglishOnly || mPredictionOn)
                         && translateKeyDown(keyCode, event)) {
                     return true;
@@ -1382,10 +1499,10 @@ public class LIMEService extends InputMethodService implements
 
         if (DEBUG)
             Log.i(TAG, "OnKeyUp():keyCode:" + keyCode
-                            + ";hasCtrlPress:" + hasCtrlPress
-                            + ";hasWinPress:" + hasWinPress
-                            + ", event.getEventTime() -  event.getDownTime()" + (event.getEventTime() - event.getDownTime())
-                            + " call super.onKeyUp()"
+                    + ";hasCtrlPress:" + hasCtrlPress
+                    + ";hasWinPress:" + hasWinPress
+                    + ", event.getEventTime() -  event.getDownTime()" + (event.getEventTime() - event.getDownTime())
+                    + " call super.onKeyUp()"
             );
 
 
@@ -1470,7 +1587,7 @@ public class LIMEService extends InputMethodService implements
                         }
 
 
-                        // Jeremy '11,7,28 for continuous typing (LD) 
+                        // Jeremy '11,7,28 for continuous typing (LD)
                         // Jeremy '12,6,2 get real committed code length from searchserver
                         boolean composingNotFinish = false;
                         //Jeremy '15,6,2 retrieve real code length with selectedCandidate using exact code match stack in search server
@@ -1789,7 +1906,7 @@ public class LIMEService extends InputMethodService implements
 
 
         builder.setCancelable(true);
-        builder.setIcon(R.drawable.sym_keyboard_done_dark);
+        builder.setIcon(R.drawable.logo);
         builder.setNegativeButton(android.R.string.cancel, null);
         builder.setTitle(getResources().getString(R.string.ime_name));
 
@@ -2019,7 +2136,7 @@ public class LIMEService extends InputMethodService implements
         builder = new AlertDialog.Builder(this);
 
         builder.setCancelable(true);
-        builder.setIcon(R.drawable.sym_keyboard_done_light);
+        builder.setIcon(R.drawable.logo);
         builder.setNegativeButton(android.R.string.cancel, null);
         builder.setTitle(getResources().getString(R.string.han_convert_option_list));
         CharSequence[] items = getResources().getStringArray(R.array.han_convert_options);
@@ -2033,7 +2150,10 @@ public class LIMEService extends InputMethodService implements
         Window window = mOptionsDialog.getWindow();
         if (!(window == null)) {
             WindowManager.LayoutParams lp = window.getAttributes();
-            lp.token = mCandidateViewStandAlone.getWindowToken();  //Jeremy 12,5,4 it's always there 
+            // Use InputView window token since we always use embedded candidate view now
+            if (mInputView != null) {
+                lp.token = mInputView.getWindowToken();
+            }
             lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
             window.setAttributes(lp);
             window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
@@ -2061,7 +2181,7 @@ public class LIMEService extends InputMethodService implements
         builder = new AlertDialog.Builder(this);
 
         builder.setCancelable(true);
-        builder.setIcon(R.drawable.sym_keyboard_done_light);
+        builder.setIcon(R.drawable.logo);
         builder.setNegativeButton(android.R.string.cancel, null);
         builder.setTitle(getResources().getString(R.string.keyboard_list));
 
@@ -2160,7 +2280,7 @@ public class LIMEService extends InputMethodService implements
         List<Mapping> list = ChineseSymbol.getChineseSymoblList();
         if (!list.isEmpty()) {
 
-            // Setup sel key display if 
+            // Setup sel key display if
             String selkey = "1234567890";
             if (disable_physical_selection && hasPhysicalKeyPressed) {
                 selkey = "";
@@ -2270,7 +2390,7 @@ public class LIMEService extends InputMethodService implements
 
                                 if( list.get(0).getWord().matches("[A-Za-z]+") ) {
 
-                                    item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
+                                    item1 = SearchSrv.emojiConvert(list.get(0).getWord(), LIME.EMOJI_EN);
                                     if (!item1.isEmpty()) {
                                         for (Mapping m : item1) {
                                             if (emojiCheck.get(m.getWord()) == null) {
@@ -2288,8 +2408,8 @@ public class LIMEService extends InputMethodService implements
                                     if (list.size() > 1 && list.get(1) != null && list.get(1).getWord() != null &&
                                             list.get(1).getWord().getBytes().length > 1 &&
                                             list.get(1).getWord().length() < 4
-                                            ) {
-                                        item2 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_TW);
+                                    ) {
+                                        item2 = SearchSrv.emojiConvert(list.get(1).getWord(), LIME.EMOJI_TW);
                                         if (!item2.isEmpty()) {
                                             for (Mapping m : item2) {
                                                 if (emojiCheck.get(m.getWord()) == null) {
@@ -2299,7 +2419,7 @@ public class LIMEService extends InputMethodService implements
                                             }
                                         }
                                         if (item2.isEmpty()) {
-                                            item3 = SearchSrv.emojiConvert(list.get(1).getWord(), Lime.EMOJI_CN);
+                                            item3 = SearchSrv.emojiConvert(list.get(1).getWord(), LIME.EMOJI_CN);
                                             if (!item3.isEmpty()) {
                                                 for (Mapping m : item3) {
                                                     if (emojiCheck.get(m.getWord()) == null) {
@@ -2334,12 +2454,13 @@ public class LIMEService extends InputMethodService implements
                         if (mCandidateView != null
                                 && !keynameString.toUpperCase(Locale.US).equals(finalKeyString.toUpperCase(Locale.US))
                                 && !keynameString.trim().isEmpty()
-                                ) {
+                        ) {
                             try {
                                 sleep(0);
                             } catch (InterruptedException e) {
-                                e.printStackTrace();
-                                return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
+                                //e.printStackTrace();
+                                // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
+                                return;
                             }
                             mCandidateView.setComposingText(keynameString);
                         }
@@ -2355,8 +2476,8 @@ public class LIMEService extends InputMethodService implements
     }
 
     /*
-	 * Update English suggestions view
-	 */
+     * Update English suggestions view
+     */
     private void updateEnglishPrediction() {
 
         hasChineseSymbolCandidatesShown = false;
@@ -2394,8 +2515,8 @@ public class LIMEService extends InputMethodService implements
                             if (tempEnglishWord.toString()
                                     .equalsIgnoreCase(
                                             ic.getTextBeforeCursor(
-                                                    tempEnglishWord.toString()
-                                                            .length(), 1)
+                                                            tempEnglishWord.toString()
+                                                                    .length(), 1)
                                                     .toString())) {
                                 matchedtemp = true;
                             }
@@ -2460,7 +2581,7 @@ public class LIMEService extends InputMethodService implements
                                                 insertPosition = list.size();
                                             }
 
-                                            item1 = SearchSrv.emojiConvert(list.get(0).getWord(), Lime.EMOJI_EN);
+                                            item1 = SearchSrv.emojiConvert(list.get(0).getWord(), LIME.EMOJI_EN);
                                             if(!item1.isEmpty()){
                                                 for(Mapping m: item1){
                                                     if(emojiCheck.get(m.getWord()) == null){
@@ -2484,7 +2605,7 @@ public class LIMEService extends InputMethodService implements
                                     //Log.i("EMOJIafter:", tempEnglishList.size() + "");
 
                                 } else {
-                                    //Jermy '11,8,14
+                                    //Jeremy '11,8,14
                                     clearSuggestions();
                                 }
                             }
@@ -2502,8 +2623,8 @@ public class LIMEService extends InputMethodService implements
     }
 
     /*
-	 * Update dictionary view
-	 */
+     * Update dictionary view
+     */
     private void updateRelatedPhrase(final boolean getAllRecords) {
         if (DEBUG)
             Log.i(TAG, "updateRelatedPhrase()");
@@ -2578,6 +2699,64 @@ public class LIMEService extends InputMethodService implements
         }
         return list;
     }
+    
+    /**
+     * Check if the keyboard view is currently hidden.
+     * @return true if keyboard view is hidden (GONE), false otherwise
+     */
+    public boolean isKeyboardViewHidden() {
+        return mInputView != null && mInputView.getVisibility() == View.GONE;
+    }
+
+    
+    /**
+     * Restore keyboard view if it's hidden.
+     * @param forceRestore If true, restore even if there's active composing text (e.g., when user explicitly clicks keyboard button)
+     */
+    public void restoreKeyboardViewIfHidden(boolean forceRestore) {
+        // Only restore if:
+        // 1. hasPhysicalKeyPressed is true (user was using physical keys)
+        // 2. keyboard view is actually hidden
+        // 3. Either forceRestore is true OR there's no active composing text (to avoid restoring during composition when not explicitly requested)
+        if (hasPhysicalKeyPressed && mInputView != null && mInputView.getVisibility() == View.GONE) {
+            // If forceRestore is true (user explicitly clicked keyboard button), restore regardless of composing text
+            // Otherwise, only restore if there's no active composing text
+            if (forceRestore || (mComposing == null || mComposing.length() == 0)) {
+                hasPhysicalKeyPressed = false;
+                mInputView.setVisibility(View.VISIBLE);
+                
+                // Ensure candidate view container remains visible when keyboard is restored
+                if (mCandidateInInputView != null) {
+                    mCandidateInInputView.setVisibility(View.VISIBLE);
+                    // Ensure candidate view itself is visible
+                    if (mCandidateViewInInputView != null) {
+                        mCandidateViewInInputView.setVisibility(View.VISIBLE);
+                    }
+                    
+                    // Explicitly show candidate view using the handler
+                    showCandidateView();
+                    
+                    // Request layout update and re-apply window insets
+                    mCandidateInInputView.post(() -> {
+                        mCandidateInInputView.setVisibility(View.VISIBLE);
+                        if (mCandidateViewInInputView != null) {
+                            mCandidateViewInInputView.setVisibility(View.VISIBLE);
+                        }
+                        // Clear popup expansion state when keyboard is restored (popup should expand downward now)
+                        mCandidateInInputView.requestApplyInsets();
+                        mCandidateInInputView.requestLayout();
+                        // Update width constraint when keyboard is restored (button visibility changes)
+                        mCandidateInInputView.updateCandidateViewWidthConstraint();
+                    });
+                }
+                
+                if (DEBUG) {
+                    Log.i(TAG, "Restored keyboard view on touch/click event" + (forceRestore ? " (forced)" : ""));
+                }
+            }
+        }
+    }
+
 
 
     private void initCandidateView() {
@@ -2597,8 +2776,9 @@ public class LIMEService extends InputMethodService implements
         if (mCandidateView != null) mCandidateView.clear();
         hasCandidatesShown = false;
         hasChineseSymbolCandidatesShown = false;
-        if (mCandidateViewStandAlone == null || (!mCandidateViewStandAlone.isShown()))
-            return;  // escape if mCandidateViewStandAlone is not created or it's not shown '12,5,6, Jeremy 
+        // Always use embedded candidate view in InputView, regardless of physical or soft keyboard
+        if (mCandidateViewInInputView == null)
+            return;
 
         mCandidateViewHandler.hideCandidateViewDelayed();
 
@@ -2616,11 +2796,8 @@ public class LIMEService extends InputMethodService implements
         if (mCandidateList != null)
             mCandidateList.clear();
 
-        if (mFixedCandidateViewOn) {
-            mCandidateViewInInputView.forceHide();
-        } else {
-            hideCandidateView();
-        }
+        // mFixedCandidateViewOn is always true
+        mCandidateViewInInputView.forceHide();
     }
 
 
@@ -2673,37 +2850,10 @@ public class LIMEService extends InputMethodService implements
 
             if (DEBUG)
                 Log.i(TAG, "setSuggestion():suggestions.size=" + suggestions.size()
-                            + ", mComposing = " + mComposing
-                            + ", mFixedCandidateViewOn:" + mFixedCandidateViewOn
-                            + ", hasPhysicalKeyPressed:" + hasPhysicalKeyPressed
-            );
+                        + ", mComposing = " + mComposing
+                        + ", hasPhysicalKeyPressed:" + hasPhysicalKeyPressed
+                );
 
-            if ((!mFixedCandidateViewOn || hasPhysicalKeyPressed)
-                    && mCandidateView != mCandidateViewStandAlone) {
-                if(mCandidateViewInInputView!=null)
-                    mCandidateViewInInputView.clear();
-                mCandidateView = mCandidateViewStandAlone; //Jeremy '12,5,4 use standalone candidateView for physical keyboard (no soft keyboard shown)
-                //forceHideCandidateView(); //Jeremy '16,7,19 caused the first composing character missing typed with physical keyboard.
-                if (hasPhysicalKeyPressed) {
-                    // cancel the current composing first before closing soft keyboard and switched to physical keyboarding typing.
-                    InputConnection ic = getCurrentInputConnection();
-                    if (ic != null && mPredictionOn) ic.setComposingText("", 0);
-                    mInputView.closing();
-                    requestHideSelf(0);
-                    // preserved the last character typed with physical keyboard in composing
-                    if(mComposing.length() > 1)
-                        mComposing.delete(0, mComposing.length()-1);
-                    updateCandidates();
-                }
-            } else if((mFixedCandidateViewOn || !hasPhysicalKeyPressed ) &&
-                    mCandidateView != mCandidateViewInInputView) {
-                mCandidateViewStandAlone.clear();
-                hideCandidateView();
-                mCandidateView = mCandidateViewInInputView;
-                if(mCandidateViewStandAlone!=null) mCandidateViewStandAlone.setEmbeddedComposingView(null);
-            }
-            if (!mFixedCandidateViewOn || (hasPhysicalKeyPressed))
-                showCandidateView();
 
             hasCandidatesShown = true; //Jeremy '15,6,1 move after hideCandidateView if candidateView is fixed.
             hasMappingList = true;
@@ -2717,7 +2867,7 @@ public class LIMEService extends InputMethodService implements
                         //selectedIndex = 1;
                         // this is for no exact match condition with code.  //do not set default suggestion for other record type like chinese punctuation symbols1 or related phrases. Jeremy '15,6,4
                     } else if (!suggestions.isEmpty()) {
-                            selectedCandidate = suggestions.get(0);
+                        selectedCandidate = suggestions.get(0);
 
                     }
                 } catch (Exception e) {
@@ -2727,6 +2877,10 @@ public class LIMEService extends InputMethodService implements
                 if (DEBUG)
                     Log.i(TAG, "setSuggestion(): mCandidateList.size: " + mCandidateList.size()
                             + ", mComposing = " + mComposing);
+            }
+            // Update CandidateView width constraint after setting suggestions
+            if (mCandidateInInputView != null) {
+                mCandidateInInputView.updateCandidateViewWidthConstraint();
             }
         } else {
             if (DEBUG) Log.i(TAG, "setSuggestion() with list=null");
@@ -2738,6 +2892,17 @@ public class LIMEService extends InputMethodService implements
         }
 
     }
+
+    /**
+     * Public method to update CandidateView width constraint.
+     * Called by CandidateView when the expanded popup is closed.
+     */
+    public void updateCandidateViewWidthConstraint() {
+        if (mCandidateInInputView != null) {
+            mCandidateInInputView.updateCandidateViewWidthConstraint();
+        }
+    }
+    
 
 
     private void handleBackspace() {
@@ -2757,12 +2922,12 @@ public class LIMEService extends InputMethodService implements
                 && (hasCandidatesShown)// repalce isCandaiteShwon() with hasCandidatesShwn by Jeremy '12,5,6
                 //&& mLIMEPref.getAutoChineseSymbol()
                 && !hasChineseSymbolCandidatesShown) {
-            clearComposing(false);  //Jeremy '12,4,21 composing length 0, no need to force commit again. 
+            clearComposing(false);  //Jeremy '12,4,21 composing length 0, no need to force commit again.
         } else if (!mEnglishOnly
-                //&& mCandidateView !=null && isCandidateShown() 
+                //&& mCandidateView !=null && isCandidateShown()
                 && hasCandidatesShown //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
             //&& !mFixedCandidateViewOn //Jeremy '12,5,23 clear the chinese symbol list for arrow keys to do navigation inside document
-                ) {
+        ) {
             hideCandidateView();  //Jeremy '11,9,8
         } else {
             //Jeremy '11,8,15
@@ -2770,7 +2935,7 @@ public class LIMEService extends InputMethodService implements
             try {
                 if (mEnglishOnly && mLIMEPref.getEnglishPrediction() && mPredictionOn
                         && (!hasPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())//mPredictionOnPhysicalKeyboard)
-                        ) {
+                ) {
                     if (tempEnglishWord != null && tempEnglishWord.length() > 0) {
                         tempEnglishWord.deleteCharAt(tempEnglishWord.length() - 1);
                         updateEnglishPrediction();
@@ -2793,8 +2958,11 @@ public class LIMEService extends InputMethodService implements
             Log.i(TAG, "setCandidateViewShown():" + shown);
         super.setCandidatesViewShown(shown);
 
-        if (DEBUG)
-            Log.i(TAG, "isCandidateViewShown:" + mCandidateViewStandAlone.isShown());
+        if (DEBUG) {
+            if (mCandidateViewInInputView != null) {
+                Log.i(TAG, "isCandidateViewShown (embedded):" + mCandidateViewInInputView.isShown());
+            }
+        }
 
     }
 
@@ -2855,34 +3023,30 @@ public class LIMEService extends InputMethodService implements
         if (primaryCode == KEYCODE_SWITCH_TO_SYMBOL_MODE) { //Symbol keyboard
             mEnglishOnly = true;
             mKeyboardSwitcher.toggleSymbols();
-            if (mFixedCandidateViewOn) {
-                forceHideCandidateView();
-            }
+            // mFixedCandidateViewOn is always true
+            forceHideCandidateView();
         }
         else if (primaryCode == KEYCODE_SWITCH_SYMBOL_KEYBOARD) { //Symbol keyboard
-                mEnglishOnly = true;
-                mKeyboardSwitcher.switchSymbols();
-                if(mFixedCandidateViewOn) {
-                    forceHideCandidateView();
-                }
+            mEnglishOnly = true;
+            mKeyboardSwitcher.switchSymbols();
+            // mFixedCandidateViewOn is always true
+            forceHideCandidateView();
         } else if (primaryCode == KEYCODE_SWITCH_TO_ENGLISH_MODE) { //Chi --> Eng
             mEnglishOnly = true;
             mLIMEPref.setLanguageMode(true);
             mKeyboardSwitcher.toggleChinese();
-            if(mFixedCandidateViewOn) {
-                if (!mPredictionOn) {
-                    forceHideCandidateView();
-                } else {
-                    mCandidateViewInInputView.setSuggestions(null, false);  // reset the candidate view if it's force hided before
-                }
+            // mFixedCandidateViewOn is always true
+            if (!mPredictionOn) {
+                forceHideCandidateView();
+            } else {
+                mCandidateViewInInputView.setSuggestions(null, false);  // reset the candidate view if it's force hided before
             }
         } else if (primaryCode == KEYCODE_SWITCH_TO_IM_MODE) { //Eng --> Chi moved from SwitchKeyboardIM by Jeremy '12,4,29
             mEnglishOnly = false;
             mLIMEPref.setLanguageMode(false);
             initialIMKeyboard();
-            if (mFixedCandidateViewOn) {
-                mCandidateViewInInputView.setSuggestions(null,false);  // reset the candiate view if it's force hided before
-            }
+            // mFixedCandidateViewOn is always true
+            mCandidateViewInInputView.setSuggestions(null,false);  // reset the candiate view if it's force hided before
         }
 
 
@@ -2944,614 +3108,604 @@ public class LIMEService extends InputMethodService implements
         }
 
         boolean mIsHardwareAcceleratedDrawingEnabled = true;
-        if (mFixedCandidateViewOn) { //Have candidateView in InputView
-            //Create inputView if it's null 
-            if (mCandidateInInputView == null || mForceRecreate) {
+        // mFixedCandidateViewOn is always true - Have candidateView in InputView
+        //Create inputView if it's null
+        if (mCandidateInInputView == null || mForceRecreate) {
 
-                mCandidateInInputView = (CandidateInInputViewContainer) LayoutInflater.from(mThemeContext).inflate(
-                        R.layout.inputcandidate, null);
-                mInputView =  mCandidateInInputView.findViewById(R.id.keyboard);
-                mInputView.setOnKeyboardActionListener(this);
-                hasDistinctMultitouch = mInputView.hasDistinctMultitouch();
-                mInputView.setHardwareAcceleratedDrawingEnabled(mIsHardwareAcceleratedDrawingEnabled);
-                mCandidateInInputView.initViews();
-                mCandidateViewInInputView =  mCandidateInInputView.findViewById(R.id.candidatesView);
-                mCandidateViewInInputView.setService(this);
-
-            }
-            if (mCandidateView != mCandidateViewInInputView)
-                mCandidateView = mCandidateViewInInputView;
-
-        } else {
-            if (mInputView == null || forceRecreate) {
-                mInputView = (LIMEKeyboardView) LayoutInflater.from(mThemeContext).inflate(R.layout.input, null);
-                mInputView.setOnKeyboardActionListener(this);
-                mInputView.setHardwareAcceleratedDrawingEnabled(mIsHardwareAcceleratedDrawingEnabled);
-
-            }
-            mCandidateView = mCandidateViewStandAlone;
+            mCandidateInInputView = (CandidateInInputViewContainer) LayoutInflater.from(mThemeContext).inflate(
+                    R.layout.inputcandidate, null);
+            mInputView =  mCandidateInInputView.findViewById(R.id.keyboard);
+            mInputView.setOnKeyboardActionListener(this);
+            hasDistinctMultitouch = mInputView.hasDistinctMultitouch();
+            mInputView.setHardwareAcceleratedDrawingEnabled(mIsHardwareAcceleratedDrawingEnabled);
+            mCandidateInInputView.initViews();
+            mCandidateViewInInputView =  mCandidateInInputView.findViewById(R.id.candidatesView);
+            mCandidateViewInInputView.setService(this);
+            mCandidateInInputView.setService(this);
 
         }
+        if (mCandidateView != mCandidateViewInInputView)
+            mCandidateView = mCandidateViewInInputView;
 
 
-        // Check if mKeyboardSwitcher == null
+    // Check if mKeyboardSwitcher == null
         if (mKeyboardSwitcher == null) {
-            mKeyboardSwitcher = new LIMEKeyboardSwitcher(this, mThemeContext);
-        }
+        mKeyboardSwitcher = new LIMEKeyboardSwitcher(this, mThemeContext);
+    }
         mKeyboardSwitcher.setInputView(mInputView);
-        buildActivatedIMList();
+    buildActivatedIMList();
         mKeyboardSwitcher.setActivatedIMList(activatedIMList, activatedIMNameList, activatedIMShortNameList);
 
         if (mKeyboardSwitcher.getKeyboardSize() == 0 && SearchSrv != null) {
+        try {
+            mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
+            mKeyboardSwitcher.setImList(SearchSrv.getImList());
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+}
+
+/**
+ * For initializing Chinese IM and corresponding soft keyboards.
+ */
+private void initialIMKeyboard() {
+    if (DEBUG)
+        Log.i(TAG, "initalizeIMKeyboard(): keyboardSelection:" + activeIM);
+    //mEnglishOnly = false;
+    //super.setCandidatesViewShown(false);
+
+    switch (activeIM) {
+        case "custom":
+            mKeyboardSwitcher.setKeyboardMode(activeIM,
+                    LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+
+            hasNumberMapping = mLIMEPref.getAllowNumberMapping();
+            hasSymbolMapping = mLIMEPref.getAllowSymoblMapping();
+            break;
+        case "cj":
+        case "scj":
+        case "cj5":
+        case "ecj":
+            mKeyboardSwitcher.setKeyboardMode(activeIM,
+                    LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+            hasNumberMapping = false;
+            hasSymbolMapping = false;
+            break;
+        case "phonetic":
+            mKeyboardSwitcher.setKeyboardMode(activeIM,
+                    LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+            //Jeremy '11,6,18 ETEN 26 has no number mapping
+            boolean standardPhonetic = !(mLIMEPref.getPhoneticKeyboardType().equals("eten26")
+                    || mLIMEPref.getPhoneticKeyboardType().equals("hsu"));
+            hasNumberMapping = standardPhonetic;
+            hasSymbolMapping = standardPhonetic;
+            break;
+        case "ez":
+        case "dayi":
+            mKeyboardSwitcher.setKeyboardMode(activeIM,
+                    LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+            hasNumberMapping = true;
+            hasSymbolMapping = true;
+            break;
+        case "array10":
+        case "pinyin":
+            hasNumberMapping = true;
+            hasSymbolMapping = false;
+            mKeyboardSwitcher.setKeyboardMode(activeIM,
+                    LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+            break;
+        case "array":
+            hasNumberMapping = true; //Jeremy '12,4,28 array 30 actually use number combination keys to enter symbols1
+
+            hasSymbolMapping = true;
+            mKeyboardSwitcher.setKeyboardMode(activeIM,
+                    LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+            break;
+        case "wb":
+            hasNumberMapping = false;
+            hasSymbolMapping = true;
+            mKeyboardSwitcher.setKeyboardMode(activeIM,
+                    LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+            break;
+        case "hs":
+            hasNumberMapping = true;
+            hasSymbolMapping = true;
+            mKeyboardSwitcher.setKeyboardMode(activeIM,
+                    LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+            break;
+        default:
+            mKeyboardSwitcher.setKeyboardMode(activeIM,
+                    LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
+            break;
+    }
+    //Jeremy '11,9,3 for phone numeric key direct input on chacha
+    if (mLIMEPref.getPhysicalKeyboardType().equals("chacha")) hasNumberMapping = false;
+    String tablename = activeIM;
+    if (tablename.equals("custom") || tablename.equals("phone")) {
+        tablename = "custom";
+    }
+    //Jeremy '11,6,10 pass hasnumbermapping and hassymbolmapping to searchservice for selkey validation.
+    if (DEBUG)
+        Log.i(TAG, "switchKeyboard() current keyboard:" +
+                tablename + " hasnumbermapping:" + hasNumberMapping + " hasSymbolMapping:" + hasSymbolMapping);
+    SearchSrv.setTablename(tablename, hasNumberMapping, hasSymbolMapping);
+}
+
+private boolean handleSelkey(int primaryCode) {
+    if (DEBUG)
+        Log.i(TAG, "handleSelKey()");
+    // Jeremy '12,4,1 only do selkey on starndard keyboard
+
+    // Check if disable physical key option is open
+    if ((disable_physical_selection && hasPhysicalKeyPressed)
+            || !mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")) {
+        return false;
+    }
+
+    if (DEBUG) Log.i(TAG, "handleSelkey():primarycode:" + primaryCode);
+
+    int i = -1;
+    if (mComposing.length() > 0 && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+        String selkey = "";
+
+        // Jeremy '12,7,5 rewrite the selkey processing
+        if (!(disable_physical_selection && hasPhysicalKeyPressed)) {
             try {
-                mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
-                mKeyboardSwitcher.setImList(SearchSrv.getImList());
+                selkey = SearchSrv.getSelkey();
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
+
+            String mixedModeSelkey = "`";
+            if (hasSymbolMapping && !activeIM.equals("dayi")
+                    && !(activeIM.equals("phonetic")
+                    && mLIMEPref.getPhoneticKeyboardType().equals("standard"))) {
+                mixedModeSelkey = " ";
+            }
+
+
+            int selkeyOption = mLIMEPref.getSelkeyOption();
+            if (selkeyOption == 1) selkey = mixedModeSelkey + selkey;
+            else if (selkeyOption == 2) selkey = mixedModeSelkey + " " + selkey;
+
+
+            i = selkey.indexOf((char) primaryCode);
+
+            //Jeremy '12,7,11 bypass space as first tone for phonetic
+            if (i >= 0 && selkey.charAt(i) == ' '
+                    && primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic")
+                    //&& mLIMEPref.getParameterBoolean("doLDPhonetic", true)
+                    && !(mComposing.toString().endsWith(" ") || mComposing.length() == 0)) {
+                return false;
+            }
+
+
         }
 
-
+        //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+    } else if (mEnglishOnly || (mComposing.length() == 0)) {
+        // related candidates view
+        String relatedSelkey = "!@#$%^&*()";
+        i = relatedSelkey.indexOf(primaryCode);
     }
 
-    /**
-     * For initializing Chinese IM and corresponding soft keyboards.
-     */
-    private void initialIMKeyboard() {
-        if (DEBUG)
-            Log.i(TAG, "initalizeIMKeyboard(): keyboardSelection:" + activeIM);
-        //mEnglishOnly = false;
-        //super.setCandidatesViewShown(false);
 
-        switch (activeIM) {
-            case "custom":
-                mKeyboardSwitcher.setKeyboardMode(activeIM,
-                        LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
-
-                hasNumberMapping = mLIMEPref.getAllowNumberMapping();
-                hasSymbolMapping = mLIMEPref.getAllowSymoblMapping();
-                break;
-            case "cj":
-            case "scj":
-            case "cj5":
-            case "ecj":
-                mKeyboardSwitcher.setKeyboardMode(activeIM,
-                        LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
-                hasNumberMapping = false;
-                hasSymbolMapping = false;
-                break;
-            case "phonetic":
-                mKeyboardSwitcher.setKeyboardMode(activeIM,
-                        LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
-                //Jeremy '11,6,18 ETEN 26 has no number mapping
-                boolean standardPhonetic = !(mLIMEPref.getPhoneticKeyboardType().equals("eten26")
-                        || mLIMEPref.getPhoneticKeyboardType().equals("hsu"));
-                hasNumberMapping = standardPhonetic;
-                hasSymbolMapping = standardPhonetic;
-                break;
-            case "ez":
-            case "dayi":
-                mKeyboardSwitcher.setKeyboardMode(activeIM,
-                        LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
-                hasNumberMapping = true;
-                hasSymbolMapping = true;
-                break;
-            case "array10":
-            case "pinyin":
-                hasNumberMapping = true;
-                hasSymbolMapping = false;
-                mKeyboardSwitcher.setKeyboardMode(activeIM,
-                        LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
-                break;
-            case "array":
-                hasNumberMapping = true; //Jeremy '12,4,28 array 30 actually use number combination keys to enter symbols1
-
-                hasSymbolMapping = true;
-                mKeyboardSwitcher.setKeyboardMode(activeIM,
-                        LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
-                break;
-            case "wb":
-                hasNumberMapping = false;
-                hasSymbolMapping = true;
-                mKeyboardSwitcher.setKeyboardMode(activeIM,
-                        LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
-                break;
-            case "hs":
-                hasNumberMapping = true;
-                hasSymbolMapping = true;
-                mKeyboardSwitcher.setKeyboardMode(activeIM,
-                        LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
-                break;
-            default:
-                mKeyboardSwitcher.setKeyboardMode(activeIM,
-                        LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
-                break;
-        }
-        //Jeremy '11,9,3 for phone numeric key direct input on chacha
-        if (mLIMEPref.getPhysicalKeyboardType().equals("chacha")) hasNumberMapping = false;
-        String tablename = activeIM;
-        if (tablename.equals("custom") || tablename.equals("phone")) {
-            tablename = "custom";
-        }
-        //Jeremy '11,6,10 pass hasnumbermapping and hassymbolmapping to searchservice for selkey validation.
-        if (DEBUG)
-            Log.i(TAG, "switchKeyboard() current keyboard:" +
-                    tablename + " hasnumbermapping:" + hasNumberMapping + " hasSymbolMapping:" + hasSymbolMapping);
-        SearchSrv.setTablename(tablename, hasNumberMapping, hasSymbolMapping);
+    if (i < 0 || i >= mCandidateList.size()) {
+        return false;
+    } else {
+        pickCandidateManually(i);
+        return true;
     }
 
-    private boolean handleSelkey(int primaryCode) {
-        if (DEBUG)
-            Log.i(TAG, "handleSelKey()");
-        // Jeremy '12,4,1 only do selkey on starndard keyboard
+}
 
-        // Check if disable physical key option is open
-        if ((disable_physical_selection && hasPhysicalKeyPressed)
-                || !mLIMEPref.getPhysicalKeyboardType().equals("normal_keyboard")) {
-            return false;
-        }
-
-        if (DEBUG) Log.i(TAG, "handleSelkey():primarycode:" + primaryCode);
-
-        int i = -1;
-        if (mComposing.length() > 0 && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-            String selkey = "";
-
-            // Jeremy '12,7,5 rewrite the selkey processing
-            if (!(disable_physical_selection && hasPhysicalKeyPressed)) {
-                try {
-                    selkey = SearchSrv.getSelkey();
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-
-                String mixedModeSelkey = "`";
-                if (hasSymbolMapping && !activeIM.equals("dayi")
-                        && !(activeIM.equals("phonetic")
-                        && mLIMEPref.getPhoneticKeyboardType().equals("standard"))) {
-                    mixedModeSelkey = " ";
-                }
+/**
+ * This method construct candidate view and add key code to composing object
+ */
+private void handleCharacter(int primaryCode) {
+    //Jeremy '11,6,9 Cleaned code!!
+    if (DEBUG)
+        Log.i(TAG, "handleCharacter():primaryCode:" + primaryCode
+                + ", metaState = " + mMetaState
+                + ", hasPhysicalKeyPressed = " + hasPhysicalKeyPressed
+                + ", currentSoftKeyboard=" + currentSoftKeyboard);
 
 
-                int selkeyOption = mLIMEPref.getSelkeyOption();
-                if (selkeyOption == 1) selkey = mixedModeSelkey + selkey;
-                else if (selkeyOption == 2) selkey = mixedModeSelkey + " " + selkey;
-
-
-                i = selkey.indexOf((char) primaryCode);
-
-                //Jeremy '12,7,11 bypass space as first tone for phonetic 
-                if (i >= 0 && selkey.charAt(i) == ' '
-                        && primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic")
-                        //&& mLIMEPref.getParameterBoolean("doLDPhonetic", true) 
-                        && !(mComposing.toString().endsWith(" ") || mComposing.length() == 0)) {
-                    return false;
-                }
-
-
-            }
-
-            //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-        } else if (mEnglishOnly || (mComposing.length() == 0)) {
-            // related candidates view
-            String relatedSelkey = "!@#$%^&*()";
-            i = relatedSelkey.indexOf(primaryCode);
-        }
-
-
-        if (i < 0 || i >= mCandidateList.size()) {
-            return false;
-        } else {
-            pickCandidateManually(i);
-            return true;
-        }
-
-    }
-
-    /**
-     * This method construct candidate view and add key code to composing object
-     */
-    private void handleCharacter(int primaryCode) {
-        //Jeremy '11,6,9 Cleaned code!!
-        if (DEBUG)
-            Log.i(TAG, "handleCharacter():primaryCode:" + primaryCode
-                    + ", metaState = " + mMetaState
-                    + ", hasPhysicalKeyPressed = " + hasPhysicalKeyPressed
-                    + ", currentSoftKeyboard=" + currentSoftKeyboard);
-
-
-        //Jeremy '11,6,6 processing physical keyboard selkeys.
-        //Move here '11,6,9 to have lower priority than hasnumbermapping
-        if (hasPhysicalKeyPressed && (mCandidateView != null && hasCandidatesShown)) { //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
-            if (handleSelkey(primaryCode)) {
-                updateShiftKeyState(getCurrentInputEditorInfo());
-                if (DEBUG)
-                    Log.i(TAG, "handleCharacter() sel key found return now");
-                return;
-            }
-        }
-
-
-        if (!mEnglishOnly) {
-
-            InputConnection ic = getCurrentInputConnection();
-
-            if (DEBUG)
-                Log.i(TAG, "HandleCharacter():"
-                        + " ic != null:" + (ic != null)
-                        + " isValidLetter:" + isValidLetter(primaryCode)
-                        + " isValidDigit:" + isValidDigit(primaryCode)
-                        + " isValidSymbol:" + isValidSymbol(primaryCode)
-                        + " hasSymbolMapping:" + hasSymbolMapping
-                        + " hasNumberMapping:" + hasNumberMapping
-                        + " (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals(phonetic):" + (primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic"))
-                        + " mEnglishOnly:" + mEnglishOnly);
-
-
-            if ((!hasSymbolMapping) && (primaryCode == ',' || primaryCode == '.')) { // Chinese , and . processing //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-                mComposing.append((char) primaryCode);
-                //InputConnection ic=getCurrentInputConnection();
-                if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
-                updateCandidates();
-                //misMatched = mComposing.toString();
-            } else if (!hasSymbolMapping && !hasNumberMapping  //Jeremy '11,10.19 fixed to bypass number key in et26 and hsu
-                    && (isValidLetter(primaryCode)
-                    || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic"))) //Jeremy '11,9,6 for et26 and hsu
-                    && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-                //Log.i(TAG,"handlecharacter(), onIM and no number and no symbol mapping");
-                mComposing.append((char) primaryCode);
-                //InputConnection ic=getCurrentInputConnection();
-                if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
-                updateCandidates();
-                //misMatched = mComposing.toString();
-            } else if (!hasSymbolMapping
-                    && hasNumberMapping
-                    && (isValidLetter(primaryCode) || isValidDigit(primaryCode))
-                    && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-                mComposing.append((char) primaryCode);
-                //InputConnection ic=getCurrentInputConnection();
-                if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
-                updateCandidates();
-                //misMatched = mComposing.toString();
-            } else if (hasSymbolMapping
-                    && !hasNumberMapping
-                    && (isValidLetter(primaryCode) || isValidSymbol(primaryCode)
-                    || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic"))) //Jeremy '11,9,6 for chacha
-                    && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-                mComposing.append((char) primaryCode);
-                //InputConnection ic=getCurrentInputConnection();
-                if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
-                updateCandidates();
-                //misMatched = mComposing.toString();
-            } else if (hasSymbolMapping && !hasNumberMapping && activeIM.equals("array")
-                    && mComposing != null && mComposing.length() >= 1
-                    && getCurrentInputConnection().getTextBeforeCursor(1, 1).charAt(0) == 'w'
-                    && Character.isDigit((char) primaryCode)
-                    && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-                // 27.May.2011 Art : This is the method to check user input type
-                // if first previous character is w and second char is number then enable im mode.
-                mComposing.append((char) primaryCode);
-                //InputConnection ic=getCurrentInputConnection();
-                if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
-                updateCandidates();
-                //misMatched = mComposing.toString();
-            } else if (hasSymbolMapping
-                    && hasNumberMapping
-                    && (isValidSymbol(primaryCode)
-                    || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic"))
-                    || isValidLetter(primaryCode) || isValidDigit(primaryCode)) && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-                mComposing.append((char) primaryCode);
-                //InputConnection ic=getCurrentInputConnection();
-                if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
-                updateCandidates();
-                //misMatched = mComposing.toString();
-
-            } else {
-
-
-                pickHighlightedCandidate();  // check here.
-
-                if (ic != null) ic.commitText(String.valueOf((char) primaryCode), 1);
-                //Jeremy '12,4,21
-                finishComposing();
-
-
-            }
-
-        } else {
-			/*
-			 * Handle when user input English Characters
-			 */
-            if (DEBUG)
-                Log.i(TAG, "handleCharacter() english only mode without prediction, committext = "
-                        + (char) primaryCode);
-            if (isInputViewShown()) {
-                if (mInputView.isShifted()) {
-                    primaryCode = Character.toUpperCase(primaryCode);
-                }
-            }
-
-            if (mLIMEPref.getEnglishPrediction() && mPredictionOn && !mKeyboardSwitcher.isSymbols()
-                    && (!hasPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())
-                    ) {
-                if (Character.isLetter((char) primaryCode)) {
-                    this.tempEnglishWord.append((char) primaryCode);
-                    this.updateEnglishPrediction();
-                } else {
-                    resetTempEnglishWord();
-                    this.updateEnglishPrediction();
-                }
-
-            }
-
-            getCurrentInputConnection().commitText(
-                    String.valueOf((char) primaryCode), 1);
-        }
-
-        if (!(!hasPhysicalKeyPressed && hasDistinctMultitouch))
+    //Jeremy '11,6,6 processing physical keyboard selkeys.
+    //Move here '11,6,9 to have lower priority than hasnumbermapping
+    if (hasPhysicalKeyPressed && (mCandidateView != null && hasCandidatesShown)) { //Replace isCandidateShown() with hasCandidatesShown by Jeremy '12,5,6
+        if (handleSelkey(primaryCode)) {
             updateShiftKeyState(getCurrentInputEditorInfo());
-    }
-
-    private void handleClose() {
-        if (DEBUG) Log.i(TAG, "handleClose()");
-        // cancel candidate view if it's shown
-
-        //Jeremy '12,4,23 need to check here.
-        finishComposing();
-
-        requestHideSelf(0);
-        mInputView.closing();
-    }
-
-    private void checkToggleCapsLock() {
-
-        if (mInputView.getKeyboard().isShifted()) {
-            toggleCapsLock();
-        }
-
-    }
-
-    private void toggleCapsLock() {
-        mCapsLock = !mCapsLock;
-        if (mKeyboardSwitcher.isAlphabetMode()) {
-            ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(mCapsLock);
-        } else {
-            if (mCapsLock) {
-                if (DEBUG) {
-                    Log.i(TAG, "toggleCapsLock():mCapsLock:true");
-                }
-                if (!mKeyboardSwitcher.isShifted())
-                    mKeyboardSwitcher.toggleShift();
-                ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(true);
-            } else {
-                if (DEBUG) {
-                    Log.i(TAG, "toggleCapsLock():mCapsLock:false");
-                }
-                ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(false);
-                if (mKeyboardSwitcher.isShifted())
-                    mKeyboardSwitcher.toggleShift();
-
-
-            }
-        }
-    }
-
-    /*
-        public boolean isWordSeparator(int code) {
-            //Jeremy '11,5,31
-            String separators = getResources().getString(R.string.word_separators);
-            return separators.contains(String.valueOf((char) code));
-
-        }
-    */
-    //Jeremy '12,5,11 add return value from mCandidate.takeselectedsuggestion()
-    public boolean pickHighlightedCandidate() {
-        return mCandidateView != null && mCandidateView.takeSelectedSuggestion();
-    }
-
-    public void requestFullRecords(boolean isRelatedPhrase) {
-        if (DEBUG)
-            Log.i(TAG, "requestFullRecords()");
-
-        if (isRelatedPhrase)
-            this.updateRelatedPhrase(true);
-        else
-            this.updateCandidates(true);
-
-    }
-
-    public void pickCandidateManually(int index) {
-        if (DEBUG)
-            Log.i(TAG, "pickCandidateManually():"
-                    + "Pick up candidate at index : " + index);
-
-        // This is to prevent if user select the index more than the list
-        if (mCandidateList != null && index >= mCandidateList.size()) {
+            if (DEBUG)
+                Log.i(TAG, "handleCharacter() sel key found return now");
             return;
         }
+    }
 
 
-        if (mCandidateList != null && !mCandidateList.isEmpty()) {
-            selectedCandidate = mCandidateList.get(index);
-            //selectedIndex = index;
-        }
+    if (!mEnglishOnly) {
 
         InputConnection ic = getCurrentInputConnection();
 
-        if (mCompletionOn && mCompletions != null && index >= 0
-                && selectedCandidate.isPartialMatchToCodeRecord()
-                && index < mCompletions.length) {  // user picked the completion suggestion item.
-            CompletionInfo ci = mCompletions[index];
-            if (ic != null) ic.commitCompletion(ci);
-            if (DEBUG)
-                Log.i(TAG, "pickSuggestionManually():mCompletionOn:" + mCompletionOn);
-
-        } else if ((mComposing.length() > 0 || (selectedCandidate != null && !selectedCandidate.isComposingCodeRecord()))
-                && !mEnglishOnly) {  // user picked candidates from composing candidate or related phrase candidates
-            //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-            commitTyped(ic);
-        } else if (mLIMEPref.getEnglishPrediction() && tempEnglishList != null
-                && !tempEnglishList.isEmpty()) {  // user picked English prediction suggestions
-
-
-            //Log.i("EMOJI-commit-index:", index + "");
-            //Log.i("EMOJI-commit:", tempEnglishList.size() + "");
-
-            if(this.tempEnglishList.get(index).isEmojiRecord()){
-                if (ic != null) ic.commitText(
-                        this.tempEnglishList.get(index).getWord() + " ", 0);
-            }else{
-                if (ic != null) ic.commitText(
-                        this.tempEnglishList.get(index).getWord()
-                                .substring(tempEnglishWord.length())
-                                + " ", 0);
-            }
-
-            resetTempEnglishWord();
-
-            clearSuggestions();
-
-        }
-
-        if (currentSoftKeyboard.contains("wb")) {
-            if(ic!=null && mPredictionOn)   ic.setComposingText("", 0);
-        }
-
-    }
-
-
-    public void swipeRight() {
-        //if (mCompletionOn) {
-        pickHighlightedCandidate();
-        //}
-    }
-
-    public void swipeLeft() {
-        handleBackspace();
-    }
-
-    public void swipeDown() {
-        handleClose();
-    }
-
-    public void swipeUp() {
-        handleOptions();
-    }
-
-    /**
-     * First method to call after key press
-     */
-    public void onPress(int primaryCode) {
         if (DEBUG)
-            Log.i(TAG, "onPress(): code = " + primaryCode);
-        // Record key press time (press down)
-        //keyPressTime = System.currentTimeMillis();
-        // To identify the source of character (Software keyboard or physical
-        // keyboard)
-        hasPhysicalKeyPressed = false;
-
-        if (hasDistinctMultitouch && primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT) {
-            hasShiftPress = true;
-            hasShiftCombineKeyPressed = false;
-            handleShift();
-        } else if (hasDistinctMultitouch && hasShiftPress) {
-            hasShiftCombineKeyPressed = true;
-        }
-        doVibrateSound(primaryCode);
+            Log.i(TAG, "HandleCharacter():"
+                    + " ic != null:" + (ic != null)
+                    + " isValidLetter:" + isValidLetter(primaryCode)
+                    + " isValidDigit:" + isValidDigit(primaryCode)
+                    + " isValidSymbol:" + isValidSymbol(primaryCode)
+                    + " hasSymbolMapping:" + hasSymbolMapping
+                    + " hasNumberMapping:" + hasNumberMapping
+                    + " (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals(phonetic):" + (primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic"))
+                    + " mEnglishOnly:" + mEnglishOnly);
 
 
-    }
+        if ((!hasSymbolMapping) && (primaryCode == ',' || primaryCode == '.')) { // Chinese , and . processing //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+            mComposing.append((char) primaryCode);
+            //InputConnection ic=getCurrentInputConnection();
+            if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
+            updateCandidates();
+            //misMatched = mComposing.toString();
+        } else if (!hasSymbolMapping && !hasNumberMapping  //Jeremy '11,10.19 fixed to bypass number key in et26 and hsu
+                && (isValidLetter(primaryCode)
+                || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic"))) //Jeremy '11,9,6 for et26 and hsu
+                && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+            //Log.i(TAG,"handlecharacter(), onIM and no number and no symbol mapping");
+            mComposing.append((char) primaryCode);
+            //InputConnection ic=getCurrentInputConnection();
+            if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
+            updateCandidates();
+            //misMatched = mComposing.toString();
+        } else if (!hasSymbolMapping
+                && hasNumberMapping
+                && (isValidLetter(primaryCode) || isValidDigit(primaryCode))
+                && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+            mComposing.append((char) primaryCode);
+            //InputConnection ic=getCurrentInputConnection();
+            if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
+            updateCandidates();
+            //misMatched = mComposing.toString();
+        } else if (hasSymbolMapping
+                && !hasNumberMapping
+                && (isValidLetter(primaryCode) || isValidSymbol(primaryCode)
+                || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic"))) //Jeremy '11,9,6 for chacha
+                && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+            mComposing.append((char) primaryCode);
+            //InputConnection ic=getCurrentInputConnection();
+            if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
+            updateCandidates();
+            //misMatched = mComposing.toString();
+        } else if (hasSymbolMapping && !hasNumberMapping && activeIM.equals("array")
+                && mComposing != null && mComposing.length() >= 1
+                && getCurrentInputConnection().getTextBeforeCursor(1, 1).charAt(0) == 'w'
+                && Character.isDigit((char) primaryCode)
+                && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+            // 27.May.2011 Art : This is the method to check user input type
+            // if first previous character is w and second char is number then enable im mode.
+            mComposing.append((char) primaryCode);
+            //InputConnection ic=getCurrentInputConnection();
+            if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
+            updateCandidates();
+            //misMatched = mComposing.toString();
+        } else if (hasSymbolMapping
+                && hasNumberMapping
+                && (isValidSymbol(primaryCode)
+                || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic"))
+                || isValidLetter(primaryCode) || isValidDigit(primaryCode)) && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+            mComposing.append((char) primaryCode);
+            //InputConnection ic=getCurrentInputConnection();
+            if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
+            updateCandidates();
+            //misMatched = mComposing.toString();
 
-    /**
-     * Get Vibrator instance compatible with all API levels.
-     * For API 31+, uses VibratorManager. For older versions, uses VIBRATOR_SERVICE.
-     */
-    @SuppressWarnings("deprecation")
-    private Vibrator getVibrator() {
-        if (mVibrator == null) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                // API 31+ approach
-                android.os.VibratorManager vibratorManager = (android.os.VibratorManager) getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
-                if (vibratorManager != null) {
-                    mVibrator = vibratorManager.getDefaultVibrator();
-                }
-            } else {
-                // API < 31 approach
-                mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-            }
-        }
-        return mVibrator;
-    }
-
-    /**
-     * Vibrate with specified duration, compatible with all API levels.
-     * For API 26+, uses VibrationEffect. For older versions, uses deprecated vibrate(long).
-     */
-    @SuppressWarnings("deprecation")
-    private void vibrate(long duration) {
-        Vibrator vibrator = getVibrator();
-        if (vibrator == null) {
-            return;
-        }
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            // API 26+ approach
-            android.os.VibrationEffect effect = android.os.VibrationEffect.createOneShot(duration, android.os.VibrationEffect.DEFAULT_AMPLITUDE);
-            vibrator.vibrate(effect);
         } else {
-            // API < 26 approach
-            vibrator.vibrate(duration);
-        }
-    }
 
-    @SuppressWarnings("deprecation")
-    public void doVibrateSound(int primaryCode) {
-        if (DEBUG) Log.i(TAG, "doVibrateSound()");
-        
-        if (mAudioManager == null) {
-            mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        }
-        
-        if (hasVibration) {
-            //Jeremy '11,9,1 add preference on vibrate level
-            vibrate(mLIMEPref.getVibrateLevel());
-        }
-        if (hasSound) {
-            int sound = AudioManager.FX_KEYPRESS_STANDARD;
-            switch (primaryCode) {
-                case LIMEBaseKeyboard.KEYCODE_DELETE:
-                    sound = AudioManager.FX_KEYPRESS_DELETE;
-                    break;
-                case MY_KEYCODE_ENTER:
-                    sound = AudioManager.FX_KEYPRESS_RETURN;
-                    break;
-                case MY_KEYCODE_SPACE:
-                    sound = AudioManager.FX_KEYPRESS_SPACEBAR;
-                    break;
-            }
-            float FX_VOLUME = 1.0f;
-            assert mAudioManager != null;
-            mAudioManager.playSoundEffect(sound, FX_VOLUME);
-        }
-    }
 
-    /**
-     * Last method to execute when key release
-     */
-    public void onRelease(int primaryCode) {
+            pickHighlightedCandidate();  // check here.
+
+            if (ic != null) ic.commitText(String.valueOf((char) primaryCode), 1);
+            //Jeremy '12,4,21
+            finishComposing();
+
+
+        }
+
+    } else {
+        /*
+         * Handle when user input English Characters
+         */
         if (DEBUG)
-            Log.i(TAG, "onRelease(): code = " + primaryCode);
-        if (hasDistinctMultitouch && primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT) {
-            hasShiftPress = false;
-            if (hasShiftCombineKeyPressed) {
-                hasShiftCombineKeyPressed = false;
-                updateShiftKeyState(getCurrentInputEditorInfo());
+            Log.i(TAG, "handleCharacter() english only mode without prediction, committext = "
+                    + (char) primaryCode);
+        if (isInputViewShown()) {
+            if (mInputView.isShifted()) {
+                primaryCode = Character.toUpperCase(primaryCode);
             }
-        } else if (hasDistinctMultitouch && !hasShiftPress) {
-            updateShiftKeyState(getCurrentInputEditorInfo());
+        }
+
+        if (mLIMEPref.getEnglishPrediction() && mPredictionOn && !mKeyboardSwitcher.isSymbols()
+                && (!hasPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())
+        ) {
+            if (Character.isLetter((char) primaryCode)) {
+                this.tempEnglishWord.append((char) primaryCode);
+                this.updateEnglishPrediction();
+            } else {
+                resetTempEnglishWord();
+                this.updateEnglishPrediction();
+            }
+
+        }
+
+        getCurrentInputConnection().commitText(
+                String.valueOf((char) primaryCode), 1);
+    }
+
+    if (!(!hasPhysicalKeyPressed && hasDistinctMultitouch))
+        updateShiftKeyState(getCurrentInputEditorInfo());
+}
+
+private void handleClose() {
+    if (DEBUG) Log.i(TAG, "handleClose()");
+    // cancel candidate view if it's shown
+
+    //Jeremy '12,4,23 need to check here.
+    finishComposing();
+
+    requestHideSelf(0);
+    mInputView.closing();
+}
+
+private void checkToggleCapsLock() {
+
+    if (mInputView.getKeyboard().isShifted()) {
+        toggleCapsLock();
+    }
+
+}
+
+private void toggleCapsLock() {
+    mCapsLock = !mCapsLock;
+    if (mKeyboardSwitcher.isAlphabetMode()) {
+        ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(mCapsLock);
+    } else {
+        if (mCapsLock) {
+            if (DEBUG) {
+                Log.i(TAG, "toggleCapsLock():mCapsLock:true");
+            }
+            if (!mKeyboardSwitcher.isShifted())
+                mKeyboardSwitcher.toggleShift();
+            ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(true);
+        } else {
+            if (DEBUG) {
+                Log.i(TAG, "toggleCapsLock():mCapsLock:false");
+            }
+            ((LIMEKeyboard) mInputView.getKeyboard()).setShiftLocked(false);
+            if (mKeyboardSwitcher.isShifted())
+                mKeyboardSwitcher.toggleShift();
+
 
         }
     }
+}
+
+/*
+    public boolean isWordSeparator(int code) {
+        //Jeremy '11,5,31
+        String separators = getResources().getString(R.string.word_separators);
+        return separators.contains(String.valueOf((char) code));
+
+    }
+*/
+//Jeremy '12,5,11 add return value from mCandidate.takeselectedsuggestion()
+public boolean pickHighlightedCandidate() {
+    return mCandidateView != null && mCandidateView.takeSelectedSuggestion();
+}
+
+public void requestFullRecords(boolean isRelatedPhrase) {
+    if (DEBUG)
+        Log.i(TAG, "requestFullRecords()");
+
+    if (isRelatedPhrase)
+        this.updateRelatedPhrase(true);
+    else
+        this.updateCandidates(true);
+
+}
+
+public void pickCandidateManually(int index) {
+    if (DEBUG)
+        Log.i(TAG, "pickCandidateManually():"
+                + "Pick up candidate at index : " + index);
+
+    // This is to prevent if user select the index more than the list
+    if (mCandidateList != null && index >= mCandidateList.size()) {
+        return;
+    }
+
+
+    if (mCandidateList != null && !mCandidateList.isEmpty()) {
+        selectedCandidate = mCandidateList.get(index);
+        //selectedIndex = index;
+    }
+
+    InputConnection ic = getCurrentInputConnection();
+
+    if (mCompletionOn && mCompletions != null && index >= 0
+            && selectedCandidate.isPartialMatchToCodeRecord()
+            && index < mCompletions.length) {  // user picked the completion suggestion item.
+        CompletionInfo ci = mCompletions[index];
+        if (ic != null) ic.commitCompletion(ci);
+        if (DEBUG)
+            Log.i(TAG, "pickSuggestionManually():mCompletionOn:" + mCompletionOn);
+
+    } else if ((mComposing.length() > 0 || (selectedCandidate != null && !selectedCandidate.isComposingCodeRecord()))
+            && !mEnglishOnly) {  // user picked candidates from composing candidate or related phrase candidates
+        //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+        commitTyped(ic);
+    } else if (mLIMEPref.getEnglishPrediction() && tempEnglishList != null
+            && !tempEnglishList.isEmpty()) {  // user picked English prediction suggestions
+
+
+        //Log.i("EMOJI-commit-index:", index + "");
+        //Log.i("EMOJI-commit:", tempEnglishList.size() + "");
+
+        if(this.tempEnglishList.get(index).isEmojiRecord()){
+            if (ic != null) ic.commitText(
+                    this.tempEnglishList.get(index).getWord() + " ", 0);
+        }else{
+            if (ic != null) ic.commitText(
+                    this.tempEnglishList.get(index).getWord()
+                            .substring(tempEnglishWord.length())
+                            + " ", 0);
+        }
+
+        resetTempEnglishWord();
+
+        clearSuggestions();
+
+    }
+
+    if (currentSoftKeyboard.contains("wb")) {
+        if(ic!=null && mPredictionOn)   ic.setComposingText("", 0);
+    }
+
+}
+
+
+public void swipeRight() {
+    //if (mCompletionOn) {
+    pickHighlightedCandidate();
+    //}
+}
+
+public void swipeLeft() {
+    handleBackspace();
+}
+
+public void swipeDown() {
+    handleClose();
+}
+
+public void swipeUp() {
+    handleOptions();
+}
+
+/**
+ * First method to call after key press
+ */
+public void onPress(int primaryCode) {
+    if (DEBUG)
+        Log.i(TAG, "onPress(): code = " + primaryCode);
+    // Record key press time (press down)
+    //keyPressTime = System.currentTimeMillis();
+    // To identify the source of character (Software keyboard or physical keyboard)
+    // onPress() is only called from soft keyboard, so reset hasPhysicalKeyPressed
+    hasPhysicalKeyPressed = false;
+
+    if (hasDistinctMultitouch && primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT) {
+        hasShiftPress = true;
+        hasShiftCombineKeyPressed = false;
+        handleShift();
+    } else if (hasDistinctMultitouch && hasShiftPress) {
+        hasShiftCombineKeyPressed = true;
+    }
+    doVibrateSound(primaryCode);
+
+
+}
+
+/**
+ * Get Vibrator instance compatible with all API levels.
+ * For API 31+, uses VibratorManager. For older versions, uses VIBRATOR_SERVICE.
+ */
+@SuppressWarnings("deprecation")
+private Vibrator getVibrator() {
+    if (mVibrator == null) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            // API 31+ approach
+            android.os.VibratorManager vibratorManager = (android.os.VibratorManager) getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
+            if (vibratorManager != null) {
+                mVibrator = vibratorManager.getDefaultVibrator();
+            }
+        } else {
+            // API < 31 approach
+            mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        }
+    }
+    return mVibrator;
+}
+
+/**
+ * Vibrate with specified duration, compatible with all API levels.
+ * For API 26+, uses VibrationEffect. For older versions, uses deprecated vibrate(long).
+ */
+@SuppressWarnings("deprecation")
+private void vibrate(long duration) {
+    Vibrator vibrator = getVibrator();
+    if (vibrator == null) {
+        return;
+    }
+
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+        // API 26+ approach
+        android.os.VibrationEffect effect = android.os.VibrationEffect.createOneShot(duration, android.os.VibrationEffect.DEFAULT_AMPLITUDE);
+        vibrator.vibrate(effect);
+    } else {
+        // API < 26 approach
+        vibrator.vibrate(duration);
+    }
+}
+
+@SuppressWarnings("deprecation")
+public void doVibrateSound(int primaryCode) {
+    if (DEBUG) Log.i(TAG, "doVibrateSound()");
+
+    if (mAudioManager == null) {
+        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+    }
+
+    if (hasVibration) {
+        //Jeremy '11,9,1 add preference on vibrate level
+        vibrate(mLIMEPref.getVibrateLevel());
+    }
+    if (hasSound) {
+        int sound = AudioManager.FX_KEYPRESS_STANDARD;
+        switch (primaryCode) {
+            case LIMEBaseKeyboard.KEYCODE_DELETE:
+                sound = AudioManager.FX_KEYPRESS_DELETE;
+                break;
+            case MY_KEYCODE_ENTER:
+                sound = AudioManager.FX_KEYPRESS_RETURN;
+                break;
+            case MY_KEYCODE_SPACE:
+                sound = AudioManager.FX_KEYPRESS_SPACEBAR;
+                break;
+        }
+        float FX_VOLUME = 1.0f;
+        assert mAudioManager != null;
+        mAudioManager.playSoundEffect(sound, FX_VOLUME);
+    }
+}
+
+/**
+ * Last method to execute when key release
+ */
+public void onRelease(int primaryCode) {
+    if (DEBUG)
+        Log.i(TAG, "onRelease(): code = " + primaryCode);
+    if (hasDistinctMultitouch && primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT) {
+        hasShiftPress = false;
+        if (hasShiftCombineKeyPressed) {
+            hasShiftCombineKeyPressed = false;
+            updateShiftKeyState(getCurrentInputEditorInfo());
+        }
+    } else if (hasDistinctMultitouch && !hasShiftPress) {
+        updateShiftKeyState(getCurrentInputEditorInfo());
+
+    }
+}
 /*
     public boolean isValidTime(Date target) {
         Calendar srcCal = Calendar.getInstance();
@@ -3564,128 +3718,466 @@ public class LIMEService extends InputMethodService implements
     }
 */
 
-    @Override
-    public void onDestroy() {
-        if (DEBUG)
-            Log.i(TAG, "onDestroy()");
+@Override
+public void onDestroy() {
+    if (DEBUG)
+        Log.i(TAG, "onDestroy()");
 
-        //jeremy 12,4,21 need to check again---
-        //clearComposing(true); see no need to do this '12,4,21
-        super.onDestroy();
+    // Stop monitoring IME changes when service is destroyed
+    stopMonitoringIMEChanges();
 
-    }
+    //jeremy 12,4,21 need to check again---
+    //clearComposing(true); see no need to do this '12,4,21
+    super.onDestroy();
 
-    /*
-	@Override
-	public void onUpdateCursor(Rect newCursor) {
-		if(DEBUG) 
-			Log.i(TAG, "onUpdateCursor(): Top:" 
-				+ newCursor.top + ". Right:" + newCursor.right
-				+ ". bottom:" + newCursor.bottom + ". left:" + newCursor.left );
-		
-		
-		if(mCandidateView!=null)
-			mCandidateView.onUpdateCursor(newCursor);
-		super.onUpdateCursor(newCursor);
-	}
+}
+
+/*
+@Override
+public void onUpdateCursor(Rect newCursor) {
+    if(DEBUG)
+        Log.i(TAG, "onUpdateCursor(): Top:"
+            + newCursor.top + ". Right:" + newCursor.right
+            + ". bottom:" + newCursor.bottom + ". left:" + newCursor.left );
+
+
+    if(mCandidateView!=null)
+        mCandidateView.onUpdateCursor(newCursor);
+    super.onUpdateCursor(newCursor);
+}
 */
-    @Override
-    public void onCancel() {
-        if (DEBUG)
-            Log.i(TAG, "onCancel()");
-        //clearComposing();  Jeremy '12,4,10 avoid clearcomposing when user slide outside the candidate area
+@Override
+public void onCancel() {
+    if (DEBUG)
+        Log.i(TAG, "onCancel()");
+    //clearComposing();  Jeremy '12,4,10 avoid clearcomposing when user slide outside the candidate area
 
-    }
+}
 
-    //jeremy '11,9, 5 hideCandidate when inputView is closed
-    @Override
-    public void updateInputViewShown() {
-        if (mInputView == null) return;
-        if (DEBUG)
-            Log.i(TAG, "updateInputViewShown(): mInputView.isShown(): " + mInputView.isShown());
-        super.updateInputViewShown();
-        if (!mInputView.isShown() && !hasPhysicalKeyPressed)
-            hideCandidateView();
-    }
-
-
-    @Override
-    public void onFinishInputView(boolean finishingInput) {
-        if (DEBUG)
-            Log.i(TAG, "onFinishInputView()");
-        super.onFinishInputView(finishingInput);
-        hideCandidateView(); //Jeremy '12,5,7 hideCandiate when inputview is closed but not yet leave the original field (onfinishinput() will not called). 
-    }
-
-    /**
-     *  start voice input
-     */
-    public void startVoiceInput() {
-        if (DEBUG)
-            Log.i(TAG, "startVoiceInput()");
-
-        String voiceID = LIMEUtilities.isVoiceSearchServiceExist(getBaseContext());
-        if (voiceID != null)
-            this.switchInputMethod(voiceID);
+//jeremy '11,9, 5 hideCandidate when inputView is closed
+@Override
+public void updateInputViewShown() {
+    if (mInputView == null) return;
+    if (DEBUG)
+        Log.i(TAG, "updateInputViewShown(): mInputView.isShown(): " + mInputView.isShown());
+    super.updateInputViewShown();
+    
+    // Don't restore keyboard view here - only restore when user explicitly touches
+    // the soft keyboard area (candidate view or InputView container)
+    // This prevents restoring when InputView visibility changes but user is still using physical keyboard
+    
+    if (!mInputView.isShown() && !hasPhysicalKeyPressed)
+        hideCandidateView();
+}
 
 
-    }
+@Override
+public void onFinishInputView(boolean finishingInput) {
+    if (DEBUG)
+        Log.i(TAG, "onFinishInputView()");
+    super.onFinishInputView(finishingInput);
+    hideCandidateView(); //Jeremy '12,5,7 hideCandiate when inputview is closed but not yet leave the original field (onfinishinput() will not called).
+}
 
-    private static class KeyboardTheme {
-        final String mName;
-        final int mThemeId;
-        final int mStyleId;
-        KeyboardTheme(String name, int themeId, int styleId) {
-            mName = name;
-            mThemeId = themeId;
-            mStyleId = styleId;
+/**
+ *  start voice input
+ *  Launches voice recognition directly using RecognizerIntent
+ *  Voice recognition inserts text directly into the input field without switching IMEs
+ */
+public void startVoiceInput() {
+    if(DEBUG)
+        Log.i(TAG, "startVoiceInput(): API level: " + android.os.Build.VERSION.SDK_INT);
+
+    // Check if voice recognition is available
+    Intent voiceIntent = getVoiceIntent();
+
+    // Optional: Set prompt text (if available in strings.xml)
+    // voiceIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, getString(R.string.voice_input_prompt));
+    
+    // Try to switch to voice IME first (preferred method)
+    String voiceID = LIMEUtilities.isVoiceSearchServiceExist(getBaseContext());
+
+    if (voiceID != null) {
+        if(DEBUG)
+            Log.i(TAG, "startVoiceInput(): Found voice IME: " + voiceID);
+        
+        // Get LIME IME ID for switching back
+        if (mLIMEId == null) {
+            mLIMEId = LIMEUtilities.getLIMEID(getBaseContext());
+        }
+
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            // Start monitoring IME changes to switch back when voice input ends
+            startMonitoringIMEChanges();
+
+            // Try to switch to voice IME using InputMethodService.switchInputMethod()
+            // This is the recommended method for IMEs and works on all API levels (21-36)
+            // setInputMethod() is deprecated on API 28+ and doesn't work on API 36
+            try {
+                this.switchInputMethod(voiceID);
+                if (DEBUG)
+                    Log.i(TAG, "startVoiceInput(): Called switchInputMethod(" + voiceID + ")");
+                
+                // Verify the switch worked by checking IME after a short delay
+                // If it didn't work, fall back to RecognizerIntent immediately
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    String currentIME = Settings.Secure.getString(
+                        getContentResolver(),
+                        Settings.Secure.DEFAULT_INPUT_METHOD
+                    );
+                    if (DEBUG)
+                        Log.i(TAG, "startVoiceInput(): Current IME after switch: " + currentIME + " (expected: " + voiceID + ")");
+                    
+                    if (voiceID.equals(currentIME)) {
+                        mIsVoiceInputActive = true;
+                        if (DEBUG)
+                            Log.i(TAG, "startVoiceInput(): Successfully switched to voice IME");
+                    } else {
+                        if (DEBUG)
+                            Log.w(TAG, "startVoiceInput(): switchInputMethod() didn't work (still on " + currentIME + "), falling back to RecognizerIntent");
+                        stopMonitoringIMEChanges();
+                        // Fall back to RecognizerIntent
+                        launchRecognizerIntent(voiceIntent);
+                    }
+                }, 200); // 200ms delay to check if switch worked - short enough for quick fallback
+                
+                return; // Assume success, will fall back if verification fails
+            } catch (SecurityException e) {
+                if (DEBUG)
+                    Log.e(TAG, "startVoiceInput(): SecurityException switching to voice IME: " + e.getMessage(), e);
+                stopMonitoringIMEChanges();
+                // Fall through to try RecognizerIntent
+            } catch (Exception e) {
+                if (DEBUG)
+                    Log.e(TAG, "startVoiceInput(): Exception switching to voice IME: " + e.getMessage(), e);
+                stopMonitoringIMEChanges();
+                // Fall through to try RecognizerIntent
+            }
+        } else {
+            if (DEBUG)
+                Log.e(TAG, "startVoiceInput(): InputMethodManager is null");
         }
     }
-    private static final KeyboardTheme[] KEYBOARD_THEMES = {
-            new KeyboardTheme("Light",  0, R.style.LIMETheme_Light),
-            new KeyboardTheme("Dark",   1, R.style.LIMETheme_Dark),
-            new KeyboardTheme("Pink",   2, R.style.LIMETheme_Pink),
-            new KeyboardTheme("TechBlue",   3, R.style.LIMETheme_TechBlue),
-            new KeyboardTheme("FashionPurple",   4, R.style.LIMETheme_FashionPurple),
-            new KeyboardTheme("RelaxGreen",   5, R.style.LIMETheme_RelaxGreen),
-    };
+    else {
+        //  Voice IME not found (voiceID is null), using RecognizerIntent");
+        if (DEBUG)
+            Log.i(TAG, "startVoiceInput(): About to call launchRecognizerIntent() - voiceID was null");
+        // Fallback: Use RecognizerIntent directly if voice IME switching fails or is not available
+        // This path is taken when voiceID is null (e.g., on API 35)
+        try {
+            launchRecognizerIntent(voiceIntent);
+            if (DEBUG)
+                Log.i(TAG, "startVoiceInput(): launchRecognizerIntent() returned successfully");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
 
-    private int mKeyboardThemeIndex = -1;
+    private static Intent getVoiceIntent() {
+        Intent voiceIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
 
-    private int getKeyboardTheme(){
-        return KEYBOARD_THEMES[mKeyboardThemeIndex].mStyleId;
+        // Set language to current locale
+        voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toString());
+
+        // Add prompt text
+        voiceIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now");
+
+        // Ensure we get results back
+        voiceIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        return voiceIntent;
     }
 
     /**
-     * Set navigation bar (gesture bar) icons to dark when keyboard is shown.
-     * This ensures navigation bar icons are visible on light backgrounds.
-     */
-    @SuppressWarnings("deprecation")
-    private void setNavigationBarIconsDark() {
-        // In InputMethodService, getWindow() returns a Dialog, not a Window
-        // We need to get the window from the Dialog
-        android.app.Dialog dialog = getWindow();
-        if (dialog != null) {
-            android.view.Window window = dialog.getWindow();
-            if (window != null) {
-                View decorView = window.getDecorView();
-                if (decorView != null) {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                        // API 23+ (Marshmallow+): Use WindowInsetsControllerCompat
-                        WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(window, decorView);
-                        // Use dark navigation bar icons (black) for visibility on light backgrounds
-                        // setAppearanceLightNavigationBars(true) = light navigation bar appearance = dark icons
-                        windowInsetsController.setAppearanceLightNavigationBars(true);
-                    } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                        // API 21-22: Cannot programmatically change navigation bar icon color
-                        // Set a light navigation bar color to encourage dark icons (system behavior)
-                        @SuppressWarnings("deprecation")
-                        android.view.Window win = window;
-                        win.setNavigationBarColor(0xFFFFFFFF); // Solid white
+ * Launch RecognizerIntent as fallback for voice input
+ */
+private void launchRecognizerIntent(Intent voiceIntent) {
+    if(DEBUG)
+        Log.i(TAG, "launchRecognizerIntent(): Intent action: " + voiceIntent.getAction() +
+                "launchRecognizerIntent(): Intent extras: " + voiceIntent.getExtras() +
+                "launchRecognizerIntent(): API level: " + android.os.Build.VERSION.SDK_INT);
+    
+    // Check if voice recognition activity is available
+    // On API 35+, resolveActivity() might return null even if activities exist
+    // Try queryIntentActivities as an alternative check
+    java.util.List<android.content.pm.ResolveInfo> activities = getPackageManager().queryIntentActivities(voiceIntent, 0);
+
+    if (activities.isEmpty()) {
+        Toast.makeText(getApplicationContext(), "Voice recognition not available on this device", Toast.LENGTH_LONG).show();
+        return;
+    }
+    
+    android.content.ComponentName componentName = voiceIntent.resolveActivity(getPackageManager());
+
+    // Use helper Activity to launch RecognizerIntent for all API levels
+    // InputMethodService cannot receive onActivityResult, so we need VoiceInputActivity
+    // to handle the result and broadcast it back to LIMEService
+
+    try {
+        Intent helperIntent = new Intent(this, VoiceInputActivity.class);
+        helperIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        helperIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(helperIntent);
+        mIsVoiceInputActive = true;
+
+    } catch (android.content.ActivityNotFoundException e) {
+        Log.e(TAG, "launchRecognizerIntent(): VoiceInputActivity not found: " + e.getMessage(), e);
+        Toast.makeText(getApplicationContext(), "Voice input activity not found", Toast.LENGTH_SHORT).show();
+    } catch (SecurityException e) {
+        Log.e(TAG, "launchRecognizerIntent(): SecurityException launching VoiceInputActivity: " + e.getMessage(), e);
+        Toast.makeText(getApplicationContext(), "Cannot launch voice input (security restriction)", Toast.LENGTH_SHORT).show();
+    } catch (Exception e) {
+        Log.e(TAG, "launchRecognizerIntent(): Failed to launch VoiceInputActivity: " + e.getMessage(), e);
+        e.printStackTrace();
+        Toast.makeText(getApplicationContext(), "Voice input unavailable: " + e.getMessage(), Toast.LENGTH_LONG).show();
+    }
+}
+
+
+/**
+ * Start monitoring IME changes to switch back to LIME when voice input ends
+ */
+private void startMonitoringIMEChanges() {
+    if (mInputMethodObserver != null) {
+        return; // Already monitoring
+    }
+
+    mInputMethodObserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
+        @Override
+        public void onChange(boolean selfChange) {
+            if (!mIsVoiceInputActive) {
+                return;
+            }
+
+            String currentIME = Settings.Secure.getString(
+                getContentResolver(),
+                Settings.Secure.DEFAULT_INPUT_METHOD
+            );
+
+            if (DEBUG)
+                Log.d(TAG, "IME changed to: " + currentIME + ", LIME ID: " + mLIMEId);
+
+            // If we're back on LIME, stop monitoring
+            if (mLIMEId != null && mLIMEId.equals(currentIME)) {
+                stopMonitoringIMEChanges();
+                return;
+            }
+
+            // Check if it's a voice IME - if so, wait
+            String voiceID = LIMEUtilities.isVoiceSearchServiceExist(getBaseContext());
+            if (voiceID != null && voiceID.equals(currentIME)) {
+                // Still on voice IME, wait
+                return;
+            }
+
+            // IME changed to something else (not voice, not LIME), switch back to LIME
+            // This handles the case where voice recognition ends and IME might have changed
+            if (mLIMEId != null && !mLIMEId.equals(currentIME)) {
+                // Delay slightly to allow voice recognition to complete
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    String checkIME = Settings.Secure.getString(
+                        getContentResolver(),
+                        Settings.Secure.DEFAULT_INPUT_METHOD
+                    );
+                    if (mLIMEId != null && !mLIMEId.equals(checkIME)) {
+                        switchBackToLIME();
                     }
+                }, 500); // 500ms delay
+            }
+        }
+    };
+
+    // Register observer
+    getContentResolver().registerContentObserver(
+        Settings.Secure.getUriFor(Settings.Secure.DEFAULT_INPUT_METHOD),
+        false,
+        mInputMethodObserver
+    );
+
+    // Also set up a timeout handler to switch back after a reasonable time
+    // This handles cases where IME doesn't change but voice recognition completes
+    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+        if (mIsVoiceInputActive) {
+            String currentIME = Settings.Secure.getString(
+                getContentResolver(),
+                Settings.Secure.DEFAULT_INPUT_METHOD
+            );
+            if (mLIMEId != null && !mLIMEId.equals(currentIME)) {
+                switchBackToLIME();
+            } else {
+                // Already back on LIME, just stop monitoring
+                stopMonitoringIMEChanges();
+            }
+        }
+    }, 30000); // 30 second timeout
+
+    if (DEBUG)
+        Log.i(TAG, "startMonitoringIMEChanges(): Started monitoring IME changes");
+}
+
+/**
+ * Stop monitoring IME changes
+ */
+private void stopMonitoringIMEChanges() {
+    if (mInputMethodObserver != null) {
+        getContentResolver().unregisterContentObserver(mInputMethodObserver);
+        mInputMethodObserver = null;
+        mIsVoiceInputActive = false;
+        if (DEBUG)
+            Log.i(TAG, "stopMonitoringIMEChanges(): Stopped monitoring IME changes");
+    }
+}
+
+/**
+ * Switch back to LIME IME
+ */
+private void switchBackToLIME() {
+    if (mLIMEId == null) {
+        mLIMEId = LIMEUtilities.getLIMEID(getBaseContext());
+    }
+
+    if (mLIMEId == null) {
+        if (DEBUG)
+            Log.e(TAG, "switchBackToLIME(): LIME ID is null");
+        stopMonitoringIMEChanges();
+        return;
+    }
+
+    InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+    if (imm == null) {
+        if (DEBUG)
+            Log.e(TAG, "switchBackToLIME(): InputMethodManager is null");
+        stopMonitoringIMEChanges();
+        return;
+    }
+
+    // Try to switch back to LIME using InputMethodService.switchInputMethod()
+    // This is the recommended method for IMEs and works on all API levels (21-36)
+    // setInputMethod() is deprecated on API 28+ and doesn't work on API 36
+    try {
+        this.switchInputMethod(mLIMEId);
+        if (DEBUG)
+            Log.i(TAG, "switchBackToLIME(): Switched back to LIME IME using switchInputMethod()");
+    } catch (Exception e) {
+        if (DEBUG)
+            Log.e(TAG, "switchBackToLIME(): Failed to switch back: " + e.getMessage());
+    }
+
+    // Stop monitoring after switching back
+    stopMonitoringIMEChanges();
+}
+
+/**
+ * Register BroadcastReceiver to receive voice input results from VoiceInputActivity
+ */
+private void registerVoiceInputReceiver() {
+    if (mVoiceInputReceiver != null) {
+        return; // Already registered
+    }
+    
+    mVoiceInputReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (ACTION_VOICE_RESULT.equals(intent.getAction())) {
+                String recognizedText = intent.getStringExtra(EXTRA_RECOGNIZED_TEXT);
+                if (recognizedText != null && !recognizedText.isEmpty()) {
+                    Log.i(TAG, "registerVoiceInputReceiver(): Received recognized text: " + recognizedText);
+                    // Insert the recognized text into the input field
+                    android.view.inputmethod.InputConnection ic = getCurrentInputConnection();
+                    if (ic != null) {
+                        ic.commitText(recognizedText, 1);
+                        Log.i(TAG, "registerVoiceInputReceiver(): Inserted text into input field");
+                    } else {
+                        Log.w(TAG, "registerVoiceInputReceiver(): InputConnection is null");
+                    }
+                }
+                mIsVoiceInputActive = false;
+            }
+        }
+    };
+    
+    IntentFilter filter = new IntentFilter(ACTION_VOICE_RESULT);
+    // On API 33+, must specify RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        registerReceiver(mVoiceInputReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED);
+    } else {
+        registerReceiver(mVoiceInputReceiver, filter);
+    }
+    Log.i(TAG, "registerVoiceInputReceiver(): Registered receiver");
+}
+
+/**
+ * Unregister BroadcastReceiver for voice input results
+ */
+private void unregisterVoiceInputReceiver() {
+    if (mVoiceInputReceiver != null) {
+        try {
+            unregisterReceiver(mVoiceInputReceiver);
+            mVoiceInputReceiver = null;
+            Log.i(TAG, "unregisterVoiceInputReceiver(): Unregistered receiver");
+        } catch (Exception e) {
+            Log.w(TAG, "unregisterVoiceInputReceiver(): Failed to unregister: " + e.getMessage());
+        }
+    }
+}
+
+private static class KeyboardTheme {
+    final String mName;
+    final int mThemeId;
+    final int mStyleId;
+    KeyboardTheme(String name, int themeId, int styleId) {
+        mName = name;
+        mThemeId = themeId;
+        mStyleId = styleId;
+    }
+}
+private static final KeyboardTheme[] KEYBOARD_THEMES = {
+        new KeyboardTheme("Light",  0, R.style.LIMETheme_Light),
+        new KeyboardTheme("Dark",   1, R.style.LIMETheme_Dark),
+        new KeyboardTheme("Pink",   2, R.style.LIMETheme_Pink),
+        new KeyboardTheme("TechBlue",   3, R.style.LIMETheme_TechBlue),
+        new KeyboardTheme("FashionPurple",   4, R.style.LIMETheme_FashionPurple),
+        new KeyboardTheme("RelaxGreen",   5, R.style.LIMETheme_RelaxGreen),
+};
+
+private int mKeyboardThemeIndex = -1;
+
+private int getKeyboardTheme(){
+    return KEYBOARD_THEMES[mKeyboardThemeIndex].mStyleId;
+}
+
+/**
+ * Set navigation bar (gesture bar) icons to dark when keyboard is shown.
+ * This ensures navigation bar icons are visible on light backgrounds.
+ */
+@SuppressWarnings("deprecation")
+private void setNavigationBarIconsDark() {
+    // In InputMethodService, getWindow() returns a Dialog, not a Window
+    // We need to get the window from the Dialog
+    android.app.Dialog dialog = getWindow();
+    if (dialog != null) {
+        android.view.Window window = dialog.getWindow();
+        if (window != null) {
+            View decorView = window.getDecorView();
+            if (decorView != null) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                    // API 23+ (Marshmallow+): Use WindowInsetsControllerCompat
+                    WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(window, decorView);
+                    // Use dark navigation bar icons (black) for visibility on light backgrounds
+                    // setAppearanceLightNavigationBars(true) = light navigation bar appearance = dark icons
+                    windowInsetsController.setAppearanceLightNavigationBars(true);
+                } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    // API 21-22: Cannot programmatically change navigation bar icon color
+                    // Set a light navigation bar color to encourage dark icons (system behavior)
+                    @SuppressWarnings("deprecation")
+                    android.view.Window win = window;
+                    win.setNavigationBarColor(0xFFFFFFFF); // Solid white
                 }
             }
         }
     }
+}
 
 }

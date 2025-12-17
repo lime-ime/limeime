@@ -1,12 +1,16 @@
 # API Compatibility Review (API 21-36)
 
+**Last Updated**: 2025-01-XX  
+**Review Status**: ✅ Current and Verified
+
 ## Summary
 This document reviews the project's compatibility across Android API levels 21-36.
 
 **Current Configuration:**
 - `minSdkVersion`: 21 (Android 5.0 Lollipop)
-- `targetSdkVersion`: 36 (Android 15)
+- `targetSdkVersion`: 36 (Android 16)
 - `compileSdkVersion`: 36
+- `Java Version`: 11 (sourceCompatibility & targetCompatibility)
 
 ## ✅ Properly Handled APIs
 
@@ -97,12 +101,22 @@ This document reviews the project's compatibility across Android API levels 21-3
 - **Compatibility**: Works on API 21-36 (required for API 35+)
 
 ### 10. **Window.setStatusBarColor() and setNavigationBarColor()** ⚠️
-- **Locations**: `MainActivity.java`, `LIMEPreferenceHC.java`
+- **Locations**: `MainActivity.java`, `LIMEPreferenceHC.java`, `LIMEService.java`
 - **Status**: ⚠️ Properly Suppressed
 - **Implementation**: 
   - Methods are deprecated in API 35+ but still used for backward compatibility
   - Wrapped with `@SuppressWarnings("deprecation")` and API level check (LOLLIPOP+)
   - Used to set transparent colors for edge-to-edge display
+  - `LIMEService.java` uses `setNavigationBarColor()` for API 21-22 compatibility
+- **Compatibility**: Works on API 21-36
+
+### 11. **WindowInsetsControllerCompat for Navigation Bar Appearance** ✅
+- **Location**: `LIMEService.java`
+- **Status**: ✅ Properly Handled
+- **Implementation**:
+  - API 23+: Uses `WindowInsetsControllerCompat.setAppearanceLightNavigationBars()`
+  - API 21-22: Uses deprecated `setNavigationBarColor()` with `@SuppressWarnings("deprecation")`
+  - Properly handles navigation bar icon appearance across all API levels
 - **Compatibility**: Works on API 21-36
 
 ## ⚠️ Deprecated APIs (Properly Suppressed)
@@ -114,7 +128,37 @@ This document reviews the project's compatibility across Android API levels 21-3
 - **Note**: No alternative available - this method is part of the Drawable interface contract
 - **Compatibility**: Works on API 21-36
 
-### 2. **android.R.attr.state_long_pressable** ℹ️
+### 2. **Display.getDefaultDisplay() and Display.getSize()** ✅
+- **Location**: `CandidateView.java` (lines 253-256)
+- **Status**: ✅ Properly Suppressed
+- **Implementation**: 
+  - Deprecated in API 30+, but necessary for API < 30
+  - Wrapped with `@SuppressWarnings("deprecation")`
+  - Only used when `SDK_INT < VERSION_CODES.R` (API 30)
+  - Modern API uses `WindowManager.getCurrentWindowMetrics()` for API 30+
+- **Compatibility**: Works on API 21-36
+
+### 3. **Vibrator.vibrate(long)** ✅
+- **Location**: `LIMEService.java` (line 3630)
+- **Status**: ✅ Properly Suppressed
+- **Implementation**: 
+  - Deprecated in API 26+, but necessary for API < 26
+  - Wrapped with `@SuppressWarnings("deprecation")`
+  - Only used when `SDK_INT < VERSION_CODES.O` (API 26)
+  - Modern API uses `VibrationEffect.createOneShot()` for API 26+
+- **Compatibility**: Works on API 21-36
+
+### 4. **Window.setNavigationBarColor()** ✅
+- **Location**: `LIMEService.java` (line 3825)
+- **Status**: ✅ Properly Suppressed
+- **Implementation**: 
+  - Deprecated in API 35+, but necessary for API 21-22
+  - Wrapped with `@SuppressWarnings("deprecation")`
+  - Only used when `SDK_INT < VERSION_CODES.M` (API 23)
+  - Modern API uses `WindowInsetsControllerCompat` for API 23+
+- **Compatibility**: Works on API 21-36
+
+### 5. **android.R.attr.state_long_pressable** ℹ️
 - **Location**: Not currently used in codebase
 - **Status**: ℹ️ Not Used
 - **Note**: This deprecated attribute is not referenced anywhere in the codebase. If needed in the future for drawable state selectors, it should be used with `@SuppressWarnings("deprecation")` or avoided if possible.
@@ -123,13 +167,22 @@ This document reviews the project's compatibility across Android API levels 21-3
 ## 📋 Dependencies Review
 
 ### AndroidX Libraries
-- ✅ `androidx.appcompat:appcompat:1.7.1` - Supports API 14+
-- ✅ `androidx.core:core:1.15.0` - Supports API 21+ (provides compatibility methods)
-- ✅ `androidx.preference:preference:1.2.1` - Supports API 14+
-- ✅ `androidx.multidex:multidex:2.0.1` - Supports API 14+
+- ✅ `androidx.appcompat:appcompat:1.7.1` - Supports API 14+ (compatible with minSdk 21)
+- ✅ `androidx.core:core:1.15.0` - Supports API 21+ (provides compatibility methods like ContextCompat, WindowInsetsCompat)
+- ✅ `androidx.legacy:legacy-support-v4:1.0.0` - Legacy support library (for backward compatibility)
+- ✅ `androidx.preference:preference:1.2.1` - Supports API 14+ (compatible with minSdk 21)
+- ✅ `androidx.multidex:multidex:2.0.1` - Supports API 14+ (required for multidex support)
 
 ### Third-Party Libraries
 - ✅ `net.lingala.zip4j:zip4j:2.11.5` - Java library, no Android API dependencies
+- ✅ `org.jetbrains.kotlin:kotlin-bom:2.2.21` - Kotlin BOM (for dependency management, though project uses Java)
+
+### Test Dependencies
+- ✅ `junit:junit:4.13.2` - JUnit 4 testing framework
+- ✅ `androidx.test.ext:junit:1.2.1` - AndroidX JUnit extensions
+- ✅ `androidx.test:runner:1.6.2` - Android test runner
+- ✅ `androidx.test:rules:1.6.1` - Android test rules
+- ✅ `androidx.test:monitor:1.8.0` - Android test monitor
 
 ## 🔍 Potential Issues to Monitor
 
@@ -148,10 +201,28 @@ This document reviews the project's compatibility across Android API levels 21-3
 - **Status**: ✅ Safe
 - **Note**: Properly checked with `Build.VERSION.SDK_INT >= Build.VERSION_CODES.O`
 
+### 4. **WindowManager.getCurrentWindowMetrics()**
+- **Location**: `CandidateView.java`
+- **Status**: ✅ Safe
+- **Note**: Available since API 30 (R), properly checked with `SDK_INT >= VERSION_CODES.R`
+- **Fallback**: Uses deprecated `Display.getDefaultDisplay()` and `Display.getSize()` for API < 30 with proper suppression
+
+### 5. **VibratorManager**
+- **Location**: `LIMEService.java`
+- **Status**: ✅ Safe
+- **Note**: Available since API 31 (S), properly checked with `SDK_INT >= VERSION_CODES.S`
+- **Fallback**: Uses deprecated `Vibrator` service for API < 31
+
+### 6. **WindowInsetsControllerCompat**
+- **Location**: `LIMEService.java`
+- **Status**: ✅ Safe
+- **Note**: Part of AndroidX Core library, supports API 21+
+- **Fallback**: Uses deprecated `setNavigationBarColor()` for API 21-22 with proper suppression
+
 ## ✅ Code Quality Improvements Made
 
 1. ✅ Fixed String concatenation in loops (StringBuilder usage)
-2. ✅ Fixed resource leaks (try-with-resources for ZipFile)
+2. ✅ Fixed resource leaks (try-with-resources for ZipFile, TypedArray)
 3. ✅ Fixed unboxing NullPointerException risks
 4. ✅ Fixed unreachable code conditions
 5. ✅ Fixed catch parameter naming issues
@@ -160,6 +231,9 @@ This document reviews the project's compatibility across Android API levels 21-3
 8. ✅ Fixed ActionBar and content overlap issues with proper window insets handling
 9. ✅ Fixed drawer menu overlap with ActionBar
 10. ✅ Fixed LIMEPreferenceHC ActionBar overlap with preference content
+11. ✅ All deprecated APIs properly suppressed with `@SuppressWarnings("deprecation")`
+12. ✅ All API level checks use proper version code constants (`VERSION_CODES.*`)
+13. ✅ Modern APIs used when available with proper fallbacks for older versions
 
 ## 📊 API Level Coverage
 
@@ -176,7 +250,8 @@ This document reviews the project's compatibility across Android API levels 21-3
 | 31 | Android 12 | ✅ Supported |
 | 32-33 | Android 12L-13 | ✅ Supported |
 | 34 | Android 14 | ✅ Supported |
-| 35-36 | Android 15 | ✅ Supported |
+| 35 | Android 15 | ✅ Supported |
+| 36 | Android 16 | ✅ Supported |
 
 ## 🎯 Recommendations
 
@@ -184,6 +259,10 @@ This document reviews the project's compatibility across Android API levels 21-3
 2. **Test on Multiple Devices**: Test on devices running API 21, 26, 30, and 36
 3. **Update Dependencies**: Regularly update AndroidX libraries for latest compatibility fixes
 4. **Code Reviews**: Continue reviewing new code for API compatibility
+5. **API Level Checks**: Always use `Build.VERSION_CODES.*` constants instead of magic numbers
+6. **Deprecation Suppression**: Always add `@SuppressWarnings("deprecation")` when using deprecated APIs with proper API level checks
+7. **Modern API Migration**: When new APIs become available, migrate gradually with proper fallbacks for older versions
+8. **Documentation**: Update this document when adding new API level checks or handling deprecated APIs
 
 ## ✅ Edge-to-Edge Compliance (API 35+)
 
@@ -224,11 +303,20 @@ For detailed edge-to-edge implementation, see `EDGE_TO_EDGE_REVIEW.md`.
 ## ✅ Conclusion
 
 The project is **fully prepared** for API levels 21-36. All critical APIs have been:
-- ✅ Wrapped with compatibility methods (ContextCompat, PackageInfoCompat)
-- ✅ Protected with API level checks where needed
-- ✅ Properly suppressed with `@SuppressWarnings` where no alternatives exist
+- ✅ Wrapped with compatibility methods (ContextCompat, PackageInfoCompat, WindowInsetsCompat)
+- ✅ Protected with API level checks where needed (using `Build.VERSION_CODES.*` constants)
+- ✅ Properly suppressed with `@SuppressWarnings("deprecation")` where no alternatives exist
 - ✅ Using AndroidX libraries for backward compatibility
 - ✅ **Edge-to-edge compliant for API 35+** (required for Android 15+)
+- ✅ Modern APIs used when available (WindowMetrics, VibratorManager, WindowInsetsControllerCompat)
+- ✅ Proper fallbacks implemented for older API levels
 
-The codebase follows Android best practices for multi-API-level support and meets all requirements for API 35+ edge-to-edge display.
+### Verification Summary
+- ✅ **Build Configuration**: Verified `minSdkVersion=21`, `targetSdkVersion=36`, `compileSdkVersion=36`
+- ✅ **API Level Checks**: All checks use proper `VERSION_CODES` constants
+- ✅ **Deprecated APIs**: All properly suppressed with annotations and API level guards
+- ✅ **Compatibility Methods**: Using AndroidX compatibility libraries where available
+- ✅ **Modern APIs**: Using latest APIs with proper fallbacks for older versions
+
+The codebase follows Android best practices for multi-API-level support and meets all requirements for API 35+ edge-to-edge display. All API usage has been reviewed and verified for compatibility across the entire API range (21-36).
 

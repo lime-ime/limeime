@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -220,7 +220,7 @@ public class ManageImAddDialog extends DialogFragment {
 
 		//txtManageImWordCode3r = (TextView) view.findViewById(R.id.txtManageImWordCode3r);
 
-		/*if(!imtype.equals(Lime.DB_TABLE_DAYI)){
+		/*if(!imtype.equals(LIME.DB_TABLE_DAYI)){
 			edtManageImWordCode3r.setVisibility(View.GONE);
 			txtManageImWordCode3r.setVisibility(View.GONE);
 		}*/

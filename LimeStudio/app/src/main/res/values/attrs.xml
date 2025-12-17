@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?><!--
   ~ /*
   ~  *
-  ~  **    Copyright 2015, The LimeIME Open Source Project
+  ~  **    Copyright 2025, The LimeIME Open Source Project
   ~  **
   ~  **    Project Url: http://github.com/lime-ime/limeime/
   ~  **                 http://android.toload.net/
@@ -191,9 +191,13 @@
         <attr name="suggestHighlight" format="reference" />
         <!-- drawable for voice input button in the right of empty candidate view   -->
         <attr name="voiceInputIcon" format="reference" />
-        <attr name="ExpandButtonIcon" format="reference" />
-        <!-- drawable for expand button in the right of candidate view   -->
+        <attr name="ExpandDownButtonIcon" format="reference" />
+        <!-- drawable for expand down button in the right of candidate view   -->
+        <attr name="ExpandUpButtonIcon" format="reference" />
+        <!-- drawable for expand up button in the right of candidate view   -->
         <attr name="closeButtonIcon" format="reference" />
+        <!-- drawable for keyboard show button in the right of candidate view   -->
+        <attr name="keyboardShowIcon" format="reference" />
         <!-- color of  candidate view background  -->
         <attr name="candidateBackground" format="color" />
         <!-- color of  different types of candidates   -->

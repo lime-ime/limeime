@@ -1,7 +1,7 @@
 <!--
   ~ /*
   ~  *
-  ~  **    Copyright 2015, The LimeIME Open Source Project
+  ~  **    Copyright 2025, The LimeIME Open Source Project
   ~  **
   ~  **    Project Url: http://github.com/lime-ime/limeime/
   ~  **                 http://android.toload.net/
@@ -261,5 +261,11 @@
     <string name="smart_chinese_input">smart_chinese_input</string>
     <string name="preference_smart_chinese_input">開啟中文智慧選字</string>
     <string name="preference_smart_chinese_input_message">部份輸入法可能會影響中英混打功能</string>
+
+    <!-- String formatting templates -->
+    <string name="download_button_with_count">%1$s (%2$s)</string>
+    <string name="version_format">v%1$s - %2$d</string>
+    <string name="related_word_format">%1$s%2$s</string>
+    <string name="number_format">%1$d</string>
 
 </resources>

@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -36,7 +36,7 @@ import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.Button;
 
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 
@@ -119,7 +119,7 @@ public class NewsDialog extends DialogFragment {
 
 		view = inflater.inflate(R.layout.fragment_dialog_news, container, false);
 
-		String html_value = mLIMEPref.getParameterString(Lime.LIME_NEWS_CONTENT, "");
+		String html_value = mLIMEPref.getParameterString(LIME.LIME_NEWS_CONTENT, "");
 		if(!html_value.isEmpty()){
 			WebView newsContentArea = (WebView) view.findViewById(R.id.newsContentArea);
 			newsContentArea.getSettings().setJavaScriptEnabled(true);

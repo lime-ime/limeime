@@ -3,7 +3,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -63,7 +63,7 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
             mCandidateView.setEmbeddedComposingView(mEmbeddedTextView);
             mCandidateView.setBackgroundColor(mCandidateView.mColorBackground);
             mButtonExpand.setBackgroundColor(mCandidateView.mColorBackground);
-            mButtonExpand.setImageDrawable(mCandidateView.mDrawableExpandButton);
+            mButtonExpand.setImageDrawable(mCandidateView.mDrawableExpandDownButton);
         }
     }
 

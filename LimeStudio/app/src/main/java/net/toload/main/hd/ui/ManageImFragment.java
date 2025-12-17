@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -42,7 +42,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
 import net.toload.main.hd.SearchServer;
@@ -127,7 +127,7 @@ public class ManageImFragment extends Fragment {
 
         // initial imlist
         List<Im> imkeyboardlist = new ArrayList<Im>();
-        imkeyboardlist = datasource.getIm(null, Lime.IM_TYPE_KEYBOARD);
+        imkeyboardlist = datasource.getIm(null, LIME.IM_TYPE_KEYBOARD);
 
         this.progressBar = rootView.findViewById(R.id.loading_spinner);
 
@@ -163,7 +163,7 @@ public class ManageImFragment extends Fragment {
         });
 
         this.btnManageImKeyboard = (Button) rootView.findViewById(R.id.btnManageImKeyboard);
-        if(table != null && table.equals(Lime.IM_HS)){
+        if(table != null && table.equals(LIME.IM_HS)){
             this.btnManageImKeyboard.setEnabled(false);
         }else{
             this.btnManageImKeyboard.setOnClickListener(new View.OnClickListener() {
@@ -200,7 +200,7 @@ public class ManageImFragment extends Fragment {
         this.btnManageImNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int checkrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
+                int checkrecord = LIME.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
                 if (checkrecord < total) {
                     page++;
                 }
@@ -287,7 +287,7 @@ public class ManageImFragment extends Fragment {
 
     public void searchword(String curquery){
 
-        int offset = Lime.IM_MANAGE_DISPLAY_AMOUNT * page;
+        int offset = LIME.IM_MANAGE_DISPLAY_AMOUNT * page;
 
         if((curquery == null && total == 0) || curquery != prequery ){
             total = datasource.getWordSize(table, curquery, searchroot);
@@ -303,7 +303,7 @@ public class ManageImFragment extends Fragment {
             handler.removeCallbacks(manageimthread);
         }
         manageimthread = new Thread(new ManageImRunnable(handler, activity, table, curquery, searchroot,
-                                                                            Lime.IM_MANAGE_DISPLAY_AMOUNT, offset));
+                                                                            LIME.IM_MANAGE_DISPLAY_AMOUNT, offset));
         manageimthread.start();
         prequery = curquery;
     }
@@ -348,8 +348,8 @@ public class ManageImFragment extends Fragment {
 
         this.wordlist = wordlist;
 
-        int startrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * page;
-        int endrecord = Lime.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
+        int startrecord = LIME.IM_MANAGE_DISPLAY_AMOUNT * page;
+        int endrecord = LIME.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
 
         if(page > 0){
             this.btnManageImPrevious.setEnabled(true);
@@ -386,8 +386,8 @@ public class ManageImFragment extends Fragment {
         String nav = "0";
 
         if(total > 0){
-            nav = Lime.format(startrecord + 1) + "-" + Lime.format(endrecord);
-            nav += " of " + Lime.format(total);
+            nav = LIME.format(startrecord + 1) + "-" + LIME.format(endrecord);
+            nav += " of " + LIME.format(total);
         }
 
         this.txtNavigationInfo.setText(nav);
@@ -406,7 +406,7 @@ public class ManageImFragment extends Fragment {
         }
 
         // Remove from the database
-        String removesql = "DELETE FROM " + this.table + " WHERE " + Lime.DB_COLUMN_ID + " = '" + id + "'";
+        String removesql = "DELETE FROM " + this.table + " WHERE " + LIME.DB_COLUMN_ID + " = '" + id + "'";
 
         datasource.remove(removesql);
         /*try {
@@ -483,12 +483,12 @@ public class ManageImFragment extends Fragment {
 /*
         // Update record in the database
         String updatesql = "UPDATE " + this.table + " SET ";
-                updatesql += Lime.DB_COLUMN_CODE + " = \"" + Lime.formatSqlValue(code) + "\", ";
+                updatesql += LIME.DB_COLUMN_CODE + " = \"" + LIME.formatSqlValue(code) + "\", ";
                 if(this.table.equals("phonetic"))  //Jeremy '15,6,6 add no tone code (code3r) with code ripped 3467
-                    updatesql += Lime.DB_COLUMN_CODE3R + " = \"" + Lime.formatSqlValue(code.replaceAll("[3467 ]", "")) + "\", ";
-                updatesql += Lime.DB_COLUMN_SCORE + " = \"" + score + "\", ";
-                updatesql += Lime.DB_COLUMN_WORD + " = \"" + Lime.formatSqlValue(word) + "\" ";
-                updatesql += " WHERE " + Lime.DB_COLUMN_ID + " = \"" + id + "\"";
+                    updatesql += LIME.DB_COLUMN_CODE3R + " = \"" + LIME.formatSqlValue(code.replaceAll("[3467 ]", "")) + "\", ";
+                updatesql += LIME.DB_COLUMN_SCORE + " = \"" + score + "\", ";
+                updatesql += LIME.DB_COLUMN_WORD + " = \"" + LIME.formatSqlValue(word) + "\" ";
+                updatesql += " WHERE " + LIME.DB_COLUMN_ID + " = \"" + id + "\"";
 
         //datasource.update(updatesql);
       */

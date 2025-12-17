@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -26,7 +26,7 @@ package net.toload.main.hd.data;
 
 import android.database.Cursor;
 
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,13 +100,13 @@ public class Word {
 
 	public static Word get(Cursor cursor){
 		Word record = new Word();
-			record.setId(cursor.getInt(cursor.getColumnIndex(Lime.DB_COLUMN_ID)));
-			record.setCode(cursor.getString(cursor.getColumnIndex(Lime.DB_COLUMN_CODE)));
-			//record.setCode3r(cursor.getString(cursor.getColumnIndex(Lime.DB_COLUMN_CODE3R)));  Jeremy '15,6,6 may not present in old db.
-			record.setWord(cursor.getString(cursor.getColumnIndex(Lime.DB_COLUMN_WORD)));
-			record.setRelated(cursor.getString(cursor.getColumnIndex(Lime.DB_COLUMN_RELATED)));
-			record.setScore(cursor.getInt(cursor.getColumnIndex(Lime.DB_COLUMN_SCORE)));
-			record.setBasescore(cursor.getInt(cursor.getColumnIndex(Lime.DB_COLUMN_BASESCORE)));
+			record.setId(cursor.getInt(cursor.getColumnIndex(LIME.DB_COLUMN_ID)));
+			record.setCode(cursor.getString(cursor.getColumnIndex(LIME.DB_COLUMN_CODE)));
+			//record.setCode3r(cursor.getString(cursor.getColumnIndex(LIME.DB_COLUMN_CODE3R)));  Jeremy '15,6,6 may not present in old db.
+			record.setWord(cursor.getString(cursor.getColumnIndex(LIME.DB_COLUMN_WORD)));
+			record.setRelated(cursor.getString(cursor.getColumnIndex(LIME.DB_COLUMN_RELATED)));
+			record.setScore(cursor.getInt(cursor.getColumnIndex(LIME.DB_COLUMN_SCORE)));
+			record.setBasescore(cursor.getInt(cursor.getColumnIndex(LIME.DB_COLUMN_BASESCORE)));
 		return record;
 	}
 	
@@ -124,16 +124,16 @@ public class Word {
 	public static String getInsertQuery(String table, Word record){
 		StringBuffer sb = new StringBuffer();
 		sb.append("INSERT INTO " + table + "(");
-		sb.append(Lime.DB_COLUMN_CODE + ", ");
-		if(table.equals("phonetic"))  sb.append(Lime.DB_COLUMN_CODE3R +", ");
-		sb.append(Lime.DB_COLUMN_WORD +", ");
-		sb.append(Lime.DB_COLUMN_RELATED +", ");
-		sb.append(Lime.DB_COLUMN_SCORE +", ");
-		sb.append(Lime.DB_COLUMN_BASESCORE +") VALUES(");
-		sb.append("\""+Lime.formatSqlValue(record.getCode())+"\",");
-		if(table.equals("phonetic")) sb.append("\""+Lime.formatSqlValue(record.getCode().replaceAll("[ 3467]", ""))+"\","); //Jeremy '15,6,6. remove 3467 tone keys from code as code3r
-		sb.append("\""+Lime.formatSqlValue(record.getWord())+"\",");
-		sb.append("\""+Lime.formatSqlValue(record.getRelated())+"\",");
+		sb.append(LIME.DB_COLUMN_CODE + ", ");
+		if(table.equals("phonetic"))  sb.append(LIME.DB_COLUMN_CODE3R +", ");
+		sb.append(LIME.DB_COLUMN_WORD +", ");
+		sb.append(LIME.DB_COLUMN_RELATED +", ");
+		sb.append(LIME.DB_COLUMN_SCORE +", ");
+		sb.append(LIME.DB_COLUMN_BASESCORE +") VALUES(");
+		sb.append("\""+LIME.formatSqlValue(record.getCode())+"\",");
+		if(table.equals("phonetic")) sb.append("\""+LIME.formatSqlValue(record.getCode().replaceAll("[ 3467]", ""))+"\","); //Jeremy '15,6,6. remove 3467 tone keys from code as code3r
+		sb.append("\""+LIME.formatSqlValue(record.getWord())+"\",");
+		sb.append("\""+LIME.formatSqlValue(record.getRelated())+"\",");
 		sb.append("\""+record.getScore()+"\",");
 		sb.append("\""+record.getBasescore()+"\"");;
 		sb.append(")");
@@ -143,11 +143,11 @@ public class Word {
 	public static String getUpdateScoreQuery(String table, Word w){
 		StringBuffer sb = new StringBuffer();
 		sb.append("UPDATE " + table + " SET ");
-		sb.append(Lime.DB_COLUMN_SCORE +"='");
+		sb.append(LIME.DB_COLUMN_SCORE +"='");
 		sb.append(w.getScore() +"', ");
-		sb.append(Lime.DB_COLUMN_BASESCORE +"='");
+		sb.append(LIME.DB_COLUMN_BASESCORE +"='");
 		sb.append(w.getBasescore() +"' ");
-		sb.append(" WHERE " + Lime.DB_COLUMN_ID + " ='");
+		sb.append(" WHERE " + LIME.DB_COLUMN_ID + " ='");
 		sb.append(w.getId() + "'");
 		return sb.toString();
 	}

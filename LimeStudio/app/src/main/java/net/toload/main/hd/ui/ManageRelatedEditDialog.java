@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -239,14 +239,14 @@ public class ManageRelatedEditDialog extends DialogFragment {
 
 		edtManageRelatedScore = (TextView) view.findViewById(R.id.edtManageRelatedScore);
 
-		edtManageRelatedWord.setText(related.getPword() + related.getCword());
+		edtManageRelatedWord.setText(getString(R.string.related_word_format, related.getPword(), related.getCword()));
 		edtManageRelatedWord.setOnFocusChangeListener(new View.OnFocusChangeListener() {
 			@Override
 			public void onFocusChange(View v, boolean hasFocus) {
 
 			}
 		});
-		edtManageRelatedScore.setText(related.getBasescore() + "");
+		edtManageRelatedScore.setText(getString(R.string.number_format, related.getBasescore()));
 		
 		return view;
 	}
