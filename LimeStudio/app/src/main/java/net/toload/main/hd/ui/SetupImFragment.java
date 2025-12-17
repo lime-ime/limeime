@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -32,8 +32,11 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.RemoteException;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -60,6 +63,7 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 
@@ -282,7 +286,7 @@ public class SetupImFragment extends Fragment {
         btnSetupImBackupLocal = rootView.findViewById(R.id.btnSetupImBackupLocal);
         btnSetupImRestoreLocal = rootView.findViewById(R.id.btnSetupImRestoreLocal);
 
-        btnSetupImBackupLocal.setOnClickListener(v -> showAlertDialog(Lime.BACKUP, Lime.LOCAL, getResources().getString(R.string.l3_initial_backup_confirm)));
+        btnSetupImBackupLocal.setOnClickListener(v -> backupLocalDrive());
 
         btnSetupImRestoreLocal.setOnClickListener(v -> showAlertDialog(Lime.RESTORE, Lime.LOCAL, getResources().getString(R.string.l3_initial_restore_confirm)));
 
@@ -578,7 +582,14 @@ public class SetupImFragment extends Fragment {
                         if (action.equalsIgnoreCase(Lime.BACKUP)) {
 
                             if (type.equalsIgnoreCase(Lime.LOCAL)) {
-                                backupLocalDrive();
+                                // Check if this is the Downloads fallback message
+                                if (message.equals(getResources().getString(R.string.l3_initial_backup_confirm_downloads))) {
+                                    // Save directly to Downloads folder
+                                    saveBackupToDownloads();
+                                } else {
+                                    // Launch file picker to choose location
+                                    launchBackupFilePicker();
+                                }
                             }
 
                         } else if (type.equalsIgnoreCase(Lime.LOCAL) && action.equalsIgnoreCase(Lime.RESTORE)) {
@@ -651,26 +662,129 @@ public class SetupImFragment extends Fragment {
             intent.setType("application/zip");
             intent.putExtra(Intent.EXTRA_TITLE, "limeBackup.zip");
 
-            // Wrap in createChooser() for better compatibility on tablets
-            // createChooser can work even when the base intent doesn't resolve directly
-            // This provides a fallback mechanism similar to restoreLocalDrive()
+            // Wrap in createChooser() for better compatibility
+            // createChooser can work even when queryIntentActivities returns empty
             Intent chooserIntent = Intent.createChooser(intent, "Save Backup");
             
             // Check if chooser intent can be resolved
-            // Note: createChooser may succeed even if base intent doesn't resolve
+            // This is more reliable than queryIntentActivities which may not return system activities
             if (chooserIntent.resolveActivity(requireActivity().getPackageManager()) == null) {
-                if (DEBUG) Log.e(TAG, "No activity found to handle chooser for ACTION_CREATE_DOCUMENT");
+                if (DEBUG) Log.w(TAG, "Chooser intent cannot be resolved, using fallback to Downloads folder");
+                // Fallback: Show confirmation dialog for saving to Downloads folder
+                showAlertDialog(Lime.BACKUP, Lime.LOCAL, 
+                    getResources().getString(R.string.l3_initial_backup_confirm_downloads));
+                return;
+            }
+
+            // Show confirmation dialog before launching file picker to choose location
+            showAlertDialog(Lime.BACKUP, Lime.LOCAL, 
+                getResources().getString(R.string.l3_initial_backup_confirm));
+        } catch (Exception e) {
+            if (DEBUG) Log.e(TAG, "Error checking backup options: " + e.getMessage(), e);
+            e.printStackTrace();
+            showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT);
+        }
+    }
+    
+    /**
+     * Actually launch the backup file picker after user confirms.
+     * Called from showAlertDialog when user clicks confirm.
+     */
+    private void launchBackupFilePicker() {
+        try {
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/zip");
+            intent.putExtra(Intent.EXTRA_TITLE, "limeBackup.zip");
+
+            // Wrap in createChooser() for better compatibility on tablets
+            Intent chooserIntent = Intent.createChooser(intent, "Save Backup");
+            
+            // Double-check that chooser can be resolved
+            if (chooserIntent.resolveActivity(requireActivity().getPackageManager()) == null) {
+                if (DEBUG) Log.e(TAG, "Chooser intent cannot be resolved");
                 showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT);
                 return;
             }
 
-            // Replace startActivityForResult with the new launcher
+            // Launch the file picker
             backupLauncher.launch(chooserIntent);
         } catch (Exception e) {
             if (DEBUG) Log.e(TAG, "Error launching backup file picker: " + e.getMessage(), e);
             e.printStackTrace();
             showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT);
         }
+    }
+
+    /**
+     * Fallback method to save backup directly to Downloads folder when ACTION_CREATE_DOCUMENT is not available.
+     * Uses MediaStore API for API 29+ or direct file access for older APIs.
+     */
+    private void saveBackupToDownloads() {
+        new Thread(() -> {
+            try {
+                Uri backupUri;
+                String fileName = "limeBackup.zip";
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    // API 29+: Use MediaStore API
+                    android.content.ContentValues values = new android.content.ContentValues();
+                    values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+                    values.put(MediaStore.Downloads.MIME_TYPE, "application/zip");
+                    values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+
+                    backupUri = requireActivity().getContentResolver().insert(
+                        MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                    
+                    if (backupUri == null) {
+                        activity.runOnUiThread(() -> showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT));
+                        return;
+                    }
+                } else {
+                    // API < 29: Use direct file access (deprecated but works)
+                    @SuppressWarnings("deprecation")
+                    File downloadsDir = Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS);
+                    
+                    if (downloadsDir == null) {
+                        activity.runOnUiThread(() -> showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT));
+                        return;
+                    }
+                    
+                    if (!downloadsDir.exists() && !downloadsDir.mkdirs()) {
+                        activity.runOnUiThread(() -> showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT));
+                        return;
+                    }
+
+                    File backupFile = new File(downloadsDir, fileName);
+                    // Handle duplicate file names
+                    int counter = 1;
+                    while (backupFile.exists()) {
+                        backupFile = new File(downloadsDir, 
+                            "limeBackup(" + counter + ").zip");
+                        counter++;
+                    }
+                    
+                    backupUri = Uri.fromFile(backupFile);
+                }
+
+                if (backupUri != null) {
+                    final Uri finalUri = backupUri;
+                    activity.runOnUiThread(() -> {
+                        performBackup(finalUri);
+                        String message = getString(R.string.setup_im_backup_message) + 
+                            "\nSaved to: Downloads/" + fileName;
+                        showToastMessage(message, Toast.LENGTH_LONG);
+                    });
+                } else {
+                    activity.runOnUiThread(() -> showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT));
+                }
+            } catch (Exception e) {
+                if (DEBUG) Log.e(TAG, "Error saving backup to Downloads: " + e.getMessage(), e);
+                e.printStackTrace();
+                activity.runOnUiThread(() -> showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT));
+            }
+        }).start();
     }
 
     public void restoreLocalDrive(){

@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  **    Copyright 2015, The LimeIME Open Source Project
+ *  **    Copyright 2025, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
  *  **                 http://android.toload.net/
@@ -42,6 +42,8 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         tasks.withType(JavaCompile).configureEach {
             options.compilerArgs += ["-Xlint:deprecation"]
+
+
             options.compilerArgs += ["-Xlint:unchecked"]
         }
     }
@@ -49,10 +51,10 @@ android {
         release {
             minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            enableAndroidTestCoverage = true
+            testCoverageEnabled = true
         }
         debug {
-            enableAndroidTestCoverage = true
+            testCoverageEnabled = true
         }
     }
     applicationVariants.all { variant ->
@@ -74,6 +76,34 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    sourceSets {
+        main {
+            java {
+                srcDirs = ['src/main/java']
+            }
+            res {
+                srcDirs = ['src/main/res']
+            }
+            assets {
+                srcDirs = ['src/main/assets']
+            }
+            aidl {
+                srcDirs = ['src/main/aidl']
+            }
+            manifest {
+                srcFile 'src/main/AndroidManifest.xml'
+            }
+        }
+        androidTest {
+            java {
+                srcDirs = ['src/androidTest/java']
+            }
+            manifest {
+                srcFile 'src/androidTest/AndroidManifest.xml'
+            }
+        }
     }
 }
 
