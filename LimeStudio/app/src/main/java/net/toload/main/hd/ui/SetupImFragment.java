@@ -645,6 +645,7 @@ public class SetupImFragment extends Fragment {
 
         try {
             // Launch file picker for saving backup
+            // Use ACTION_CREATE_DOCUMENT (Storage Access Framework) for API 19+
             Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("application/zip");
@@ -657,8 +658,17 @@ public class SetupImFragment extends Fragment {
                 return;
             }
 
+            // Wrap in createChooser() for better compatibility on tablets
+            // This provides a fallback mechanism similar to restoreLocalDrive()
+            Intent chooserIntent = Intent.createChooser(intent, "Save Backup");
+            if (chooserIntent.resolveActivity(requireActivity().getPackageManager()) == null) {
+                if (DEBUG) Log.e(TAG, "No activity found to handle chooser for ACTION_CREATE_DOCUMENT");
+                showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT);
+                return;
+            }
+
             // Replace startActivityForResult with the new launcher
-            backupLauncher.launch(intent);
+            backupLauncher.launch(chooserIntent);
         } catch (Exception e) {
             if (DEBUG) Log.e(TAG, "Error launching backup file picker: " + e.getMessage(), e);
             e.printStackTrace();
