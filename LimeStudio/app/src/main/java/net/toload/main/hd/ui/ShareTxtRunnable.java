@@ -26,13 +26,13 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.database.Cursor;
+import android.util.Log;
 
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivityHandler;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.data.Word;
-import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 
 import java.io.BufferedWriter;
@@ -41,6 +41,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,23 +50,22 @@ import java.util.List;
  */
 public class ShareTxtRunnable implements Runnable{
 
-    private static boolean DEBUG = true;
-    private static String TAG = "ShareRunnable";
+    private static final boolean DEBUG = true;
+    private static final String TAG = "ShareRunnable";
 
     // Global
-    private String imtype = null;
-    private Activity activity;
-    private MainActivityHandler handler;
+    private final String imtype;
+    private final Activity activity;
+    private final MainActivityHandler handler;
 
-    private LimeDB datasource;
-    private LIMEPreferenceManager mLIMEPref;
+    private final LimeDB datasource;
 
     public ShareTxtRunnable(Activity activity, String imtype, MainActivityHandler handler) {
         this.handler = handler;
         this.imtype = imtype;
         this.activity = activity;
         this.datasource = new LimeDB(activity);
-        this.mLIMEPref = new LIMEPreferenceManager(activity);
+        //LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(activity);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class ShareTxtRunnable implements Runnable{
         handler.updateProgress(activity.getResources().getString(R.string.share_step_initial));
 
         // Load
-        List<Word> wordlist = new ArrayList<Word>();
+        List<Word> wordlist = new ArrayList<>();
         Cursor cursor = datasource.list(imtype);
         cursor.moveToFirst();
         while(!cursor.isAfterLast()){
@@ -95,64 +95,70 @@ public class ShareTxtRunnable implements Runnable{
             cacheDir = activity.getCacheDir();
         }
         File target = new File(cacheDir, imtype + ".lime");
-        if(target.exists()){
-            target.delete();
+        if(target.exists() && !target.delete()){
+            Log.e(TAG, "Error in file deletion");
         }
+
         
         String targetfile = target.getAbsolutePath();
 
         List<Im> iminfo = datasource.getImList(imtype);
 
-        if(iminfo != null && iminfo.size() > 0 && wordlist.size() > 0){
+        if(iminfo != null && !iminfo.isEmpty() && !wordlist.isEmpty()){
 
             handler.updateProgress(activity.getResources().getString(R.string.share_step_write));
 
             try {
 
-                Writer writer = new OutputStreamWriter( new FileOutputStream(target), "UTF-8");
-                BufferedWriter fout = new BufferedWriter(writer);
-
-                for(Im i: iminfo){
-
-                    if(i.getTitle().equals(LIME.IM_TYPE_NAME)){
-                        String s = "@version@|"+i.getDesc();
-                        fout.write(s);
-                        fout.newLine();
-                    }
-                    if(i.getTitle().equals(LIME.IM_TYPE_SELKEY)){
-                        String s = "@selkey@|"+i.getDesc();
-                        fout.write(s);
-                        fout.newLine();
-                    }
-                    if(i.getTitle().equals(LIME.IM_TYPE_ENDKEY)){
-                        String s = "@endkey@|"+i.getDesc();
-                        fout.write(s);
-                        fout.newLine();
-                    }
-                    if(i.getTitle().equals(LIME.IM_TYPE_SPACESTYLE)){
-                        String s = "@spacestyle@|"+i.getDesc();
-                        fout.write(s);
-                        fout.newLine();
-                    }
-
-                }
-
-                for(Word w: wordlist){
-                    if(w.getWord() == null || w.getWord().equals("null")){continue;}
-                    String s = w.getCode()+"|"+w.getWord()+"|"+w.getScore()+"|"+w.getBasescore();
-                    fout.write(s);
-                    fout.newLine();
-                }
+                BufferedWriter fout = getBufferedWriter(target, iminfo, wordlist);
 
                 fout.close();
 
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error in operation", e);
             }
         }
 
         handler.cancelProgress();
         handler.shareTxtTo(targetfile);
+    }
+
+    private static BufferedWriter getBufferedWriter(File target, List<Im> iminfo, List<Word> wordlist) throws IOException {
+        Writer writer = new OutputStreamWriter( new FileOutputStream(target), StandardCharsets.UTF_8);
+        BufferedWriter fout = new BufferedWriter(writer);
+
+        for(Im i: iminfo){
+
+            if(i.getTitle().equals(LIME.IM_TYPE_NAME)){
+                String s = "@version@|"+i.getDesc();
+                fout.write(s);
+                fout.newLine();
+            }
+            if(i.getTitle().equals(LIME.IM_TYPE_SELKEY)){
+                String s = "@selkey@|"+i.getDesc();
+                fout.write(s);
+                fout.newLine();
+            }
+            if(i.getTitle().equals(LIME.IM_TYPE_ENDKEY)){
+                String s = "@endkey@|"+i.getDesc();
+                fout.write(s);
+                fout.newLine();
+            }
+            if(i.getTitle().equals(LIME.IM_TYPE_SPACESTYLE)){
+                String s = "@spacestyle@|"+i.getDesc();
+                fout.write(s);
+                fout.newLine();
+            }
+
+        }
+
+        for(Word w: wordlist){
+            if(w.getWord() == null || w.getWord().equals("null")){continue;}
+            String s = w.getCode()+"|"+w.getWord()+"|"+w.getScore()+"|"+w.getBasescore();
+            fout.write(s);
+            fout.newLine();
+        }
+        return fout;
     }
 
 }

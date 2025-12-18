@@ -29,6 +29,7 @@ import java.util.List;
 
 import net.toload.main.hd.R;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -65,14 +66,15 @@ public class LIMESelectFileAdapter extends BaseAdapter {
 		return arg0;
 	}
 
-	public View getView(final int position, View convertView, ViewGroup parent) {
+	@SuppressLint("InflateParams")
+    public View getView(final int position, View convertView, ViewGroup parent) {
 
 		final ViewHolder holder;
 		if (convertView == null) {
 			convertView = mInflater.inflate(R.layout.imgstring, null);
 			holder = new ViewHolder();
-			holder.image = (ImageView)convertView.findViewById(R.id.img_function_icon);
-			holder.filename = (TextView)convertView.findViewById(R.id.txt_function_name);
+			holder.image = convertView.findViewById(R.id.img_function_icon);
+			holder.filename = convertView.findViewById(R.id.txt_function_name);
 			convertView.setTag(holder);
 		} else {
 			holder = (ViewHolder) convertView.getTag();

@@ -30,7 +30,11 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,26 +48,17 @@ import net.toload.main.hd.data.Word;
 
 public class ManageImEditDialog extends DialogFragment {
 
+    private final String TAG="ManageImEditDialog";
 	private Activity activity;
-	private View view;
 
-	private String imtype;
-
-	//Button btnQuizExitConfirm;
+    //Button btnQuizExitConfirm;
 	//Button btnQuizExitCancel;
 
 	private ManageImHandler handler;
 
 	private Word word;
 
-	private Button btnManageImWordCancel;
-	private Button btnManageImWordRemove;
-	private Button btnManageImWordUpdate;
-
-	private Button btnManageMinusScore;
-	private Button btnManageAddScore;
-
-	private TextView edtManageImWordScore;
+    private TextView edtManageImWordScore;
 
 	private EditText edtManageImWordCode;
 	private EditText edtManageImWordWord;
@@ -90,12 +85,12 @@ public class ManageImEditDialog extends DialogFragment {
 	}
 
 	@Override
-	public void onAttach(Context context) {
+	public void onAttach(@NonNull Context context) {
 		super.onAttach(context);
 	}
 
 	@Override
-	public void onCancel(DialogInterface dialog) {
+	public void onCancel(@NonNull DialogInterface dialog) {
 		super.onCancel(dialog);
 	}
 
@@ -119,19 +114,16 @@ public class ManageImEditDialog extends DialogFragment {
 	public void onResume() {
 		super.onResume();
 
-		getDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
-			@Override
-			public boolean onKey(android.content.DialogInterface dialog,
-								 int keyCode, android.view.KeyEvent event) {
-				if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
-					// To dismiss the fragment when the back-button is pressed.
-					dismiss();
-					return true;
-				}
-				// Otherwise, do nothing else
-				else return false;
-			}
-		});
+        assert getDialog() != null;
+        getDialog().setOnKeyListener((dialog, keyCode, event) -> {
+            if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
+                // To dismiss the fragment when the back-button is pressed.
+                dismiss();
+                return true;
+            }
+            // Otherwise, do nothing else
+            else return false;
+        });
 	}
 
 	public void cancelDialog(){
@@ -140,113 +132,90 @@ public class ManageImEditDialog extends DialogFragment {
 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 
-		getDialog().getWindow().setTitle(getResources().getString(R.string.manage_word_dialog_edit));
+        assert getDialog() != null;
+        getDialog().getWindow().setTitle(getResources().getString(R.string.manage_word_dialog_edit));
 
-		imtype = getArguments().getString("imtype");
+        assert getArguments() != null;
+        //String imtype = getArguments().getString("imtype");
 
 		activity = getActivity();
-		view = inflater.inflate(R.layout.fragment_dialog_edit, container, false);
+        View view = inflater.inflate(R.layout.fragment_dialog_edit, container, false);
 
-		btnManageImWordCancel = (Button) view.findViewById(R.id.btnManageImWordCancel);
-		btnManageImWordCancel.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				cancelDialog();
-			}
-		});
+        Button btnManageImWordCancel = view.findViewById(R.id.btnManageImWordCancel);
+		btnManageImWordCancel.setOnClickListener(v -> cancelDialog());
 
-		btnManageImWordRemove = (Button) view.findViewById(R.id.btnManageImWordRemove);
-		btnManageImWordRemove.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
+        Button btnManageImWordRemove = view.findViewById(R.id.btnManageImWordRemove);
+		btnManageImWordRemove.setOnClickListener(v -> {
 
-				AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
-				alertDialog.setTitle(activity.getResources().getString(R.string.manage_word_dialog_delete));
-				alertDialog.setMessage(activity.getResources().getString(R.string.manage_word_dialog_delete_message));
-				//alertDialog.setIcon(R.drawable.);
-				alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
-						new DialogInterface.OnClickListener() {
-							public void onClick(DialogInterface dialog, int which) {
-								handler.removeWord(word.getId());
-								dialog.dismiss();
-								cancelDialog();
-							}
-						});
-				alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
-						new DialogInterface.OnClickListener() {
-							public void onClick(DialogInterface dialog, int which) {
-								dialog.dismiss();
-							}
-						});
-				alertDialog.show();
-			}
-		});
+            AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
+            alertDialog.setTitle(activity.getResources().getString(R.string.manage_word_dialog_delete));
+            alertDialog.setMessage(activity.getResources().getString(R.string.manage_word_dialog_delete_message));
+            //alertDialog.setIcon(R.drawable.);
+            alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
+                    (dialog, which) -> {
+                        handler.removeWord(word.getId());
+                        dialog.dismiss();
+                        cancelDialog();
+                    });
+            alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
+                    (dialog, which) -> dialog.dismiss());
+            alertDialog.show();
+        });
 
-		btnManageImWordUpdate = (Button) view.findViewById(R.id.btnManageImWordUpdate);
-		btnManageImWordUpdate.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
-				alertDialog.setTitle(activity.getResources().getString(R.string.manage_word_dialog_edit));
-				alertDialog.setMessage(activity.getResources().getString(R.string.manage_word_dialog_message));
-				alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
-						new DialogInterface.OnClickListener() {
-							public void onClick(DialogInterface dialog, int which) {
-								String code = edtManageImWordCode.getText().toString();
-								String text = edtManageImWordWord.getText().toString();
-								if(!code.isEmpty() && !text.isEmpty()) {
+        Button btnManageImWordUpdate = view.findViewById(R.id.btnManageImWordUpdate);
+		btnManageImWordUpdate.setOnClickListener(v -> {
+            AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
+            alertDialog.setTitle(activity.getResources().getString(R.string.manage_word_dialog_edit));
+            alertDialog.setMessage(activity.getResources().getString(R.string.manage_word_dialog_message));
+            alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
+                    (dialog, which) -> {
+                        String code = edtManageImWordCode.getText().toString();
+                        String text = edtManageImWordWord.getText().toString();
+                        if(!code.isEmpty() && !text.isEmpty()) {
 
-									int value = Integer.parseInt(edtManageImWordScore.getText().toString());
-									handler.updateWord(word.getId(), code, value, text);
-									handler.updateRelated(code);
-									dialog.dismiss();
-									cancelDialog();
-								}else{
-									Toast.makeText(activity, R.string.update_error, Toast.LENGTH_SHORT).show();
-								}
-							}
-						});
-				alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
-						new DialogInterface.OnClickListener() {
-							public void onClick(DialogInterface dialog, int which) {
-								dialog.dismiss();
-							}
-						});
-				alertDialog.show();
-			}
-		});
+                            int value = Integer.parseInt(edtManageImWordScore.getText().toString());
+                            handler.updateWord(word.getId(), code, value, text);
+                            handler.updateRelated(code);
+                            dialog.dismiss();
+                            cancelDialog();
+                        }else{
+                            Toast.makeText(activity, R.string.update_error, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+            alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
+                    (dialog, which) -> dialog.dismiss());
+            alertDialog.show();
+        });
 
-		btnManageMinusScore = (Button) view.findViewById(R.id.btnManageMinusScore);
-		btnManageMinusScore.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				try{
-					int value = Integer.parseInt(edtManageImWordScore.getText().toString());
-					if(value > 0){
-						value = value -1 ;
-						edtManageImWordScore.setText(String.valueOf(value));
-					}
-				}catch(Exception e){}
-			}
-		});
+        Button btnManageMinusScore = view.findViewById(R.id.btnManageMinusScore);
+		btnManageMinusScore.setOnClickListener(v -> {
+            try{
+                int value = Integer.parseInt(edtManageImWordScore.getText().toString());
+                if(value > 0){
+                    value = value -1 ;
+                    edtManageImWordScore.setText(String.valueOf(value));
+                }
+            }catch(Exception e){
+                Log.e(TAG, "Error in operation", e);
+            }
+        });
 
-		btnManageAddScore = (Button) view.findViewById(R.id.btnManageAddScore);
-		btnManageAddScore.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				try{
-					int value = Integer.parseInt(edtManageImWordScore.getText().toString());
-					value = value + 1 ;
-					edtManageImWordScore.setText(String.valueOf(value));
-				}catch(Exception e){}
-			}
-		});
+        Button btnManageAddScore = view.findViewById(R.id.btnManageAddScore);
+		btnManageAddScore.setOnClickListener(v -> {
+            try{
+                int value = Integer.parseInt(edtManageImWordScore.getText().toString());
+                value = value + 1 ;
+                edtManageImWordScore.setText(String.valueOf(value));
+            }catch(Exception e){
+                Log.e(TAG, "Error in operation", e);
+            }
+        });
 
-		edtManageImWordScore = (TextView) view.findViewById(R.id.edtManageImWordScore);
+		edtManageImWordScore = view.findViewById(R.id.edtManageImWordScore);
 
 
-		edtManageImWordCode = (EditText) view.findViewById(R.id.edtManageImWordCode);
-		edtManageImWordWord = (EditText) view.findViewById(R.id.edtManageImWordWord);
+		edtManageImWordCode = view.findViewById(R.id.edtManageImWordCode);
+		edtManageImWordWord = view.findViewById(R.id.edtManageImWordWord);
 
 		edtManageImWordCode.setText(word.getCode());
 		edtManageImWordScore.setText(String.valueOf(word.getScore()));
@@ -263,7 +232,7 @@ public class ManageImEditDialog extends DialogFragment {
 	}
 
 	@Override
-	public void onSaveInstanceState(Bundle icicle) {
+	public void onSaveInstanceState(@NonNull Bundle icicle) {
 		super.onSaveInstanceState(icicle);
 	}
 

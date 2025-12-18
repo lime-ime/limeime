@@ -26,9 +26,11 @@ package net.toload.main.hd.keyboard;
 
 import android.view.MotionEvent;
 
+import net.toload.main.hd.global.LIME;
+
 public class SwipeTracker {
     private static final int NUM_PAST = 4;
-    private static final int LONGEST_PAST_TIME = 200;
+    private static final int LONGEST_PAST_TIME = LIME.LONGEST_PAST_TIME_MS;
 
     final EventRingBuffer mBuffer = new EventRingBuffer(NUM_PAST);
 
@@ -101,9 +103,9 @@ public class SwipeTracker {
 
     public static class EventRingBuffer {
         private final int bufSize;
-        private final float xBuf[];
-        private final float yBuf[];
-        private final long timeBuf[];
+        private final float[] xBuf;
+        private final float[] yBuf;
+        private final long[] timeBuf;
         private int top;  // points new event
         private int end;  // points oldest event
         private int count; // the number of valid data

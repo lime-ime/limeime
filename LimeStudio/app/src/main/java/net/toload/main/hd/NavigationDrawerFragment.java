@@ -222,8 +222,8 @@ public class NavigationDrawerFragment extends Fragment {
                     builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
                             (dialog, id) -> {
                                 // Reset Lime preferences
-                                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences(getActivity().getPackageName() + "_preferences", Context.MODE_PRIVATE);
-                                settings.edit().clear().commit();
+                                SharedPreferences settings = requireActivity().getSharedPreferences(requireActivity().getPackageName() + "_preferences", Context.MODE_PRIVATE);
+                                settings.edit().clear().apply();
 
                                 // Reset Lime databases
                                 datasource.resetLimeSetting();
@@ -263,7 +263,7 @@ public class NavigationDrawerFragment extends Fragment {
      */
     public void setUp(int fragmentId, DrawerLayout drawerLayout) {
 
-        mFragmentContainerView = Objects.requireNonNull(getActivity()).findViewById(fragmentId);
+        mFragmentContainerView = requireActivity().findViewById(fragmentId);
         mDrawerLayout = drawerLayout;
 
         // set a custom shadow that overlays the main content when the drawer opens
@@ -291,7 +291,7 @@ public class NavigationDrawerFragment extends Fragment {
                     return;
                 }
 
-                Objects.requireNonNull(getActivity()).invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+                requireActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
             }
 
             @Override
@@ -312,14 +312,14 @@ public class NavigationDrawerFragment extends Fragment {
                     mLIMEPref.setParameter(PREF_USER_LEARNED_DRAWER, true);
                 }
 
-                Objects.requireNonNull(getActivity()).invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+                requireActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
             }
         };
 
         // If the user hasn't 'learned' about the drawer, open it to introduce them to the drawer,
         // per the navigation drawer design guidelines.
         // If LIME is not enabled, the setup wizard will be launched and thus don't open the drawer
-        if (LIMEUtilities.isLIMEEnabled(Objects.requireNonNull(this.getActivity())) && !mUserLearnedDrawer) {
+        if (LIMEUtilities.isLIMEEnabled(this.requireActivity()) && !mUserLearnedDrawer) {
                 //( !mUserLearnedDrawer && !mFromSavedInstanceState) ){
             mDrawerLayout.openDrawer(mFragmentContainerView);
         }
@@ -385,7 +385,7 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     private ActionBar getActionBar() {
-        return ((AppCompatActivity) Objects.requireNonNull(getActivity())).getSupportActionBar();
+        return ((AppCompatActivity) requireActivity()).getSupportActionBar();
     }
 
     public void updateMenuItems() {

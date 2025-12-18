@@ -76,7 +76,7 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 					Log.i(TAG, "countMapping" + "Table," + table + ": " + total);
 			return total;
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.e(TAG, "Error in Han conversion", e);
 		}
 		return 0;
 	}
@@ -97,33 +97,36 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 		
 	}
 	
-	public int getBaseScore(String input){
-		if(DEBUG)
-			Log.i(TAG, "getBaseScore()");
-		int score = 0;
-		if(input!=null && !input.isEmpty()) {
-			Cursor cursor;
-			
-			try {
-				SQLiteDatabase db = this.getReadableDatabase();
-				
-				cursor = db.query("TCSC", null, FIELD_CODE + " = '" + input + "' "
-							, null, null, null, null, null);		
-					if (cursor.moveToFirst()) {
-						int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
-						score = cursor.getInt(scoreColumn);
-					}else if(input.length()>1)
-						score = 1;  //phase has default score = 1
+	public int getBaseScore(String input) {
+        if (DEBUG)
+            Log.i(TAG, "getBaseScore()");
+        int score = 0;
+        if (input != null && !input.isEmpty()) {
+            Cursor cursor = null;
 
-				//cursor.deactivate();
-				cursor.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		
-		return score;
-	}
+            try {
+                SQLiteDatabase db = this.getReadableDatabase();
+
+                // Use parameterized query to prevent SQL injection
+                cursor = db.query("TCSC", null, FIELD_CODE + " = ?"
+                        , new String[]{input}, null, null, null, null);
+                if (cursor != null && cursor.moveToFirst()) {
+                    int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
+                    score = cursor.getInt(scoreColumn);
+                } else if (input.length() > 1)
+                    score = 1;  //phase has default score = 1
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error in Han conversion", e);
+            } finally {
+                // Ensure cursor is closed even if exception occurs
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
+        return score;
+    }
 	
 	public String convert(String input, Integer hanConvertOption){
 		StringBuilder output= new StringBuilder(input);
@@ -141,25 +144,38 @@ public class LimeHanConverter extends SQLiteOpenHelper {
 				
 				output = new StringBuilder();
 				for(int i=0;i<input.length();i++){
-					
-					cursor = db.query(tablename, null, FIELD_CODE + " = '" + input.charAt(i) + "' "
-							, null, null, null, null, null);
+					// Validate table name to prevent SQL injection
+					if (!tablename.equals("TCSC") && !tablename.equals("SCTC")) {
+						Log.e(TAG, "convert(): Invalid table name: " + tablename);
+						break;
+					}
+					// Use parameterized query to prevent SQL injection
+					String charStr = String.valueOf(input.charAt(i));
+					cursor = db.query(tablename, null, FIELD_CODE + " = ?"
+							, new String[]{charStr}, null, null, null, null);
 				
-					if (cursor.moveToFirst()) {
+					if (cursor != null && cursor.moveToFirst()) {
 						//int codeColumn = cursor.getColumnIndex(FIELD_CODE);
 						int wordColumn = cursor.getColumnIndex(FIELD_WORD);
 						String word = cursor.getString(wordColumn);
 						output.append(word);
-							
-					}else
+					} else {
 						output.append(input.charAt(i));
-						
+					}
+					
+					// Close cursor after each iteration to prevent resource leak
+					if (cursor != null) {
+						cursor.close();
+						cursor = null;
+					}
 				}
-
-                //cursor.deactivate();
-                cursor.close();
             } catch (Exception e) {
-				e.printStackTrace();
+				Log.e(TAG, "Error in Han conversion", e);
+			} finally {
+				// Ensure cursor is closed even if exception occurs
+				if (cursor != null) {
+					cursor.close();
+				}
 			}
 					
 		}

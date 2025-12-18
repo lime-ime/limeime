@@ -28,6 +28,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
+import net.toload.main.hd.global.LIME;
+
 import net.toload.main.hd.data.Related;
 
 import java.util.List;
@@ -35,7 +37,7 @@ import java.util.List;
 public class ManageRelatedHandler extends Handler {
 
     private List<Related> relatedlist;
-    private ManageRelatedFragment mFragment = null;
+    private ManageRelatedFragment mFragment;
 
     public ManageRelatedHandler(ManageRelatedFragment fragment) {
         super(Looper.getMainLooper());
@@ -78,21 +80,21 @@ public class ManageRelatedHandler extends Handler {
     public void showProgress() {
         Message m = new Message();
                 m.getData().putString("action", "progress");
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
     public void updateGridView(List<Related> related) {
         this.relatedlist = related;
         Message m = new Message();
                 m.getData().putString("action", "display");
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
     public void removeRelated(int id) {
         Message m = new Message();
         m.getData().putString("action", "remove");
         m.getData().putInt("id", id);
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
     public void updateRelated(int id, String pword, String cword, int score) {
@@ -102,7 +104,7 @@ public class ManageRelatedHandler extends Handler {
         m.getData().putString("pword", pword);
         m.getData().putString("cword", cword);
         m.getData().putInt("score", score);
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
     public void addRelated(String pword, String cword, int score) {
@@ -111,7 +113,7 @@ public class ManageRelatedHandler extends Handler {
         m.getData().putString("pword", pword);
         m.getData().putString("cword", cword);
         m.getData().putInt("score", score);
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
 }

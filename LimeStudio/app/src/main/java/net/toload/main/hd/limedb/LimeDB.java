@@ -46,7 +46,6 @@ import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.data.Related;
 import net.toload.main.hd.data.Word;
-import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;
 import net.toload.main.hd.global.LIMEUtilities;
@@ -318,7 +317,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     // Helper to safely get a String
-    private String getCursorString(Cursor cursor, String columnName) {
+    public String getCursorString(Cursor cursor, String columnName) {
         int index = cursor.getColumnIndex(columnName);
         if (index != -1) {
             return cursor.getString(index);
@@ -327,7 +326,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     // Helper to safely get an Int
-    private int getCursorInt(Cursor cursor, String columnName) {
+    public int getCursorInt(Cursor cursor, String columnName) {
         int index = cursor.getColumnIndex(columnName);
         if (index != -1) {
             return cursor.getInt(index);
@@ -335,39 +334,83 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return 0; // Return 0 if column is missing
     }
 
-    /*
-
-    private void checkLengthColumn(String table){
-        if (!getImInfo(table, "lengthcolumns").equals("present")) {
-            if (!checkDBConnection()) {
-                checkCodeColumnPending = true;
-                return;
-            }
-            Toast.makeText(mContext, mContext.getText(R.string.l3_database_upgrade), Toast.LENGTH_SHORT).show();
-
-
-            Log.i(TAG, "checkLengthColumn(); create code length columns and index on table:" + table);
-            long startTime = System.currentTimeMillis();
-            holdDBConnection();
-            db.execSQL("alter table " + table + " add 'codelen'");
-            db.execSQL("alter table " + table + " add 'wordlen'");
-            db.execSQL("create index " + table + "_idx_code_len on " + table + " (codelen)");
-            db.execSQL("create index " + table + "_idx_word_len on " + table + " (wordlen)");
-            if (table.equals("phonetic")) {
-                db.execSQL("alter table " + table + " add 'code3rlen'");
-                db.execSQL("create index " + table + "_idx_code3r_len on " + table + " (code3rlen)");
-                db.execSQL("update " + table + " set codelen=length(code), code3rlen=length(code3r), wordlen=length(word)");
-            } else {
-                db.execSQL("update " + table + " set codelen=length(code), wordlen=length(word)");
-            }
-            Log.i(TAG, "checkLengthColumn() create code length columns and index on table:" + table
-                    + ". Elapsed time = " + (System.currentTimeMillis() - startTime));
-            unHoldDBConnection();
-            setImInfo(table, "lengthcolumns", "present");
+    /**
+     * Validates table name against whitelist to prevent SQL injection.
+     * @param tableName The table name to validate
+     * @return true if table name is valid, false otherwise
+     */
+    private boolean isValidTableName(String tableName) {
+        if (tableName == null || tableName.isEmpty()) {
+            return false;
         }
-
+        // Whitelist of valid table names
+        String[] validTables = {
+            LIME.DB_TABLE_ARRAY, LIME.DB_TABLE_ARRAY10,
+            LIME.DB_TABLE_CJ, LIME.DB_TABLE_CJ5, LIME.DB_TABLE_CUSTOM,
+            LIME.DB_TABLE_DAYI, LIME.DB_TABLE_ECJ, LIME.DB_TABLE_EZ,
+            LIME.DB_TABLE_HS, LIME.DB_TABLE_PHONETIC, LIME.DB_TABLE_PINYIN,
+            LIME.DB_TABLE_SCJ, LIME.DB_TABLE_WB,
+            LIME.DB_TABLE_IMTABLE2, LIME.DB_TABLE_IMTABLE3, LIME.DB_TABLE_IMTABLE4,
+            LIME.DB_TABLE_IMTABLE5, LIME.DB_TABLE_IMTABLE6, LIME.DB_TABLE_IMTABLE7,
+            LIME.DB_TABLE_IMTABLE8, LIME.DB_TABLE_IMTABLE9, LIME.DB_TABLE_IMTABLE10,
+            LIME.DB_RELATED, LIME.DB_IM, LIME.DB_KEYBOARD,
+            "keyboard", "related", "im", "TCSC", "SCTC"
+        };
+        // Check exact match
+        for (String validTable : validTables) {
+            if (validTable.equals(tableName)) {
+                return true;
+            }
+        }
+        // Check for backup table pattern: "imtype_user" where imtype is valid
+        if (tableName.endsWith("_user")) {
+            String baseTable = tableName.substring(0, tableName.length() - 5);
+            for (String validTable : validTables) {
+                if (validTable.equals(baseTable)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
-    */
+//
+//    private void checkLengthColumn(String table){
+//        // Validate table name to prevent SQL injection
+//        if (isValidTableName(table)) {
+//            Log.e(TAG, "checkLengthColumn(): Invalid table name: " + table);
+//            return;
+//        }
+//
+//        if (!getImInfo(table, "lengthcolumns").equals("present")) {
+//            if (!checkDBConnection()) {
+//                return;
+//            }
+//            Toast.makeText(mContext, mContext.getText(R.string.l3_database_upgrade), Toast.LENGTH_SHORT).show();
+//
+//
+//            Log.i(TAG, "checkLengthColumn(); create code length columns and index on table:" + table);
+//            long startTime = System.currentTimeMillis();
+//            holdDBConnection();
+//            // Table name is validated, safe to use in SQL
+//            db.execSQL("alter table " + table + " add 'codelen'");
+//            db.execSQL("alter table " + table + " add 'wordlen'");
+//            db.execSQL("create index " + table + "_idx_code_len on " + table + " (codelen)");
+//            db.execSQL("create index " + table + "_idx_word_len on " + table + " (wordlen)");
+//            if (table.equals("phonetic")) {
+//                db.execSQL("alter table " + table + " add 'code3rlen'");
+//                db.execSQL("create index " + table + "_idx_code3r_len on " + table + " (code3rlen)");
+//                db.execSQL("update " + table + " set codelen=length(code), code3rlen=length(code3r), wordlen=length(word)");
+//            } else {
+//                db.execSQL("update " + table + " set codelen=length(code), wordlen=length(word)");
+//            }
+//            Log.i(TAG, "checkLengthColumn() create code length columns and index on table:" + table
+//                    + ". Elapsed time = " + (System.currentTimeMillis() - startTime));
+//            unHoldDBConnection();
+//            setImInfo(table, "lengthcolumns", "present");
+//        }
+//
+//    }
+
     public String getTablename() {
         return this.tablename;
     }
@@ -428,37 +471,40 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
         // If system can find the score field which is mean the table still use old schema
-        Cursor cursor = db.rawQuery(CHECK_RELATED, null);
-        if (cursor == null || !cursor.moveToFirst()) {
-            try {
+        try (Cursor cursor = rawQuery(CHECK_RELATED)) {
+            if (cursor == null || !cursor.moveToFirst()) {
+                try {
 
-                String add_column = "ALTER TABLE " + LIME.DB_RELATED + " ADD ";
-                add_column += LIME.DB_RELATED_COLUMN_BASESCORE + " INTEGER";
+                    String add_column = "ALTER TABLE " + LIME.DB_RELATED + " ADD ";
+                    add_column += LIME.DB_RELATED_COLUMN_BASESCORE + " INTEGER";
 
-                db.execSQL(add_column);
+                    db.execSQL(add_column);
 
-                // Download and restore related DB
-            } catch (SQLiteException e) {
-                e.printStackTrace();
+                    // Download and restore related DB
+                } catch (SQLiteException e) {
+                    Log.e(TAG, "Error in database operation", e);
+                }
             }
         }
-        cursor = db.query("sqlite_master", null, "type='index' and name = 'related_idx_pword'", null, null, null, null);
-        if (cursor == null || !cursor.moveToFirst()) {
-            try {
-                db.execSQL("create index 'related_idx_pword' on related (pword)");
-            }catch (SQLiteException e){
-                e.printStackTrace();
-            }
+        try (Cursor cursor = db.query("sqlite_master", null, "type='index' and name = 'related_idx_pword'", null, null, null, null)) {
+            if (cursor == null || !cursor.moveToFirst()) {
+                try {
+                    db.execSQL("create index 'related_idx_pword' on related (pword)");
+                }catch (SQLiteException e){
+                    Log.e(TAG, "Error in database operation", e);
+                }
 
+            }
         }
-        cursor = db.query("sqlite_master", null, "type='index' and name = 'related_idx_cword'", null, null, null, null);
-        if (cursor == null || !cursor.moveToFirst()) {
-            try {
-                db.execSQL("create index 'related_idx_cword' on related (cword)");
-            }catch (SQLiteException e){
-                e.printStackTrace();
-            }
+        try (Cursor cursor = db.query("sqlite_master", null, "type='index' and name = 'related_idx_cword'", null, null, null, null)) {
+            if (cursor == null || !cursor.moveToFirst()) {
+                try {
+                    db.execSQL("create index 'related_idx_cword' on related (cword)");
+                }catch (SQLiteException e){
+                    Log.e(TAG, "Error in database operation", e);
+                }
 
+            }
         }
 
 
@@ -474,7 +520,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         try {
             checkPhoneticKeyboardSettingOnDB(db);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
 
 
@@ -518,7 +564,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             dbin.execSQL(command);
 
         } catch (Exception e) {
-            Log.w(TAG, "Ignore all possible exceptions~");
+            Log.e(TAG, "Error executing SQL command", e);
         }
     }
 
@@ -544,7 +590,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         db.close();
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Error in database operation", e);
                 }
             }
             db = this.getWritableDatabase();
@@ -589,7 +635,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             threadAborted = true;
             while (loadingMappingThread.isAlive()) {
                 Log.d(TAG, "deleteAll():waiting for loadingMappingThread stopped...");
-                SystemClock.sleep(1000);
+                SystemClock.sleep(LIME.SLEEP_DELAY_1_SECOND_MS);
             }
         }
 
@@ -639,7 +685,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 Log.i(TAG, "countMapping" + "Table," + table + ": " + total);
             return total;
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
         return 0;
     }
@@ -668,7 +714,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 //                    null).getCount();
 //
 //        } catch (Exception e) {
-//            e.printStackTrace();
+//            Log.e(TAG, "Error in database operation", e);
 //        }
 //        return total;
 //    }
@@ -700,7 +746,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     }
                 }
             }catch(Exception e){
-                e.printStackTrace();
+                Log.e(TAG, "Error in database operation", e);
             }
         }
         /*if (!mLIMEPref.getCandidateSuggestionPunctutation()){
@@ -765,7 +811,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     Log.i(TAG, "addOrUpdateRelatedPhraseRecord():update score on existing record; score:" + score);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
 
         return score;
@@ -820,7 +866,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     Log.i(TAG, "addOrUpdateMappingRecord(): mapping exist, update score on existing record; score:" + score);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
 
     }
@@ -869,7 +915,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
     }
 
@@ -923,7 +969,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     cursor.close();
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            Log.e(TAG, "Error in getMappingByWord()", e);
         }
 
         if (DEBUG)
@@ -962,21 +1009,21 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 if (cursor != null) {
 
                     if (cursor.moveToFirst()) {
-                        int codeColumn = cursor.getColumnIndex(FIELD_CODE);
-                        int wordColumn = cursor.getColumnIndex(FIELD_WORD);
-                        result = new StringBuilder(cursor.getString(wordColumn) + "="
-                                + keyToKeyname(cursor.getString(codeColumn), table, false));
+                        // Use helper methods to safely get column values (validates column index >= 0)
+                        String word = getCursorString(cursor, FIELD_WORD);
+                        String code = getCursorString(cursor, FIELD_CODE);
+                        result = new StringBuilder(word + "="
+                                + keyToKeyname(code, table, false));
                         if (DEBUG)
-                            Log.i(TAG, "getRmapping():Code:"
-                                    + cursor.getString(codeColumn));
+                            Log.i(TAG, "getRmapping():Code:" + code);
 
 
                         while (cursor.moveToNext()) {
-                            result.append("; ").append(keyToKeyname(cursor.getString(codeColumn),
+                            result.append("; ").append(keyToKeyname(getCursorString(cursor,FIELD_CODE),
                                     table, false));
                             if (DEBUG)
                                 Log.i(TAG, "getRmapping():Code:"
-                                        + cursor.getString(codeColumn));
+                                        + getCursorString(cursor,FIELD_CODE));
 
                         }
                     }
@@ -984,7 +1031,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     cursor.close();
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            Log.e(TAG, "Error in getRmapping()", e);
         }
 
         if (DEBUG)
@@ -1021,14 +1069,14 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                 //int idColumn = cursor.getColumnIndex(FIELD_ID);
                 //int codeColumn = cursor.getColumnIndex(FIELD_CODE);
-                int wordColumn = cursor.getColumnIndex(FIELD_WORD);
+                // Use helper method to safely get column value (validates column index >= 0)
                 //int scoreColumn = cursor.getColumnIndex(FIELD_SCORE);
                 do {
 
                     Mapping munit = new Mapping();
                     munit.setCode(code);
                     munit.setPartialMatchToCodeRecord();
-                    munit.setWord(cursor.getString(wordColumn));
+                    munit.setWord(getCursorString(cursor, FIELD_WORD));
                     munit.setId(null);
                     munit.setScore(0);
 
@@ -1277,7 +1325,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         if (finalKeyMap != null)
                             finalKeyMap.put(keyString.substring(i, i + 1), finalCharlist[i]);
                     }
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    Log.e(TAG, "Error parsing key mapping", e);
                 }
 
                 keyMap.put("|", "|"); //put the seperator for multi-code display
@@ -1467,13 +1516,14 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             + "(length(" + codeCol + ") <= " + (Math.min(codeLen, 5)) + " )*length(" + codeCol + ") desc, ";
 
 
-                    if (sort) sortClause += " score desc, basescore desc, ";
-                    sortClause += "_id asc";
+                    StringBuilder sortClauseBuilder = new StringBuilder(sortClause);
+                    if (sort) sortClauseBuilder.append(" score desc, basescore desc, ");
+                    sortClauseBuilder.append("_id asc");
+                    String finalSortClause = sortClauseBuilder.toString();
 
-                    String selectString = "select _id, code, code3r, word, score, basescore, " + exactMatchCondition + " as exactmatch  ";
-
-                    selectString += " from " + tablename + " where word is not null and " + selectClause + " order by " + sortClause
-                            + " limit " + limitClause;
+                    String selectString = "select _id, code, code3r, word, score, basescore, " + exactMatchCondition + " as exactmatch  " +
+                            " from " + tablename + " where word is not null and " + selectClause +
+                            " order by " + finalSortClause + " limit " + limitClause;
                     cursor = db.rawQuery(selectString, null);
 
                     if (DEBUG)
@@ -1501,11 +1551,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     }
 
                 } catch (SQLiteException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Error in database operation", e);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
 
         if(DEBUG|| probePerformance){
@@ -2202,7 +2252,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Error in database operation", e);
                 }
 
             }
@@ -2316,7 +2366,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             continue;
                         }
                     }
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    Log.e(TAG, "Error checking keyToKeyname", e);
                 }
 
                 //related list always null in between search mode. Jeremy '15,6,3----------------
@@ -2489,7 +2540,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                     + " order by len desc, " + LIME.DB_RELATED_COLUMN_USERSCORE + " desc, "
                                     + LIME.DB_RELATED_COLUMN_BASESCORE + " desc ";
 
-                    selectString += " limit " + limitClause;
+                    selectString = selectString + " limit " + limitClause;
 
                     if (DEBUG)
                         Log.i(TAG, "getRelatedPhrase() selectString = " + selectString);
@@ -2498,7 +2549,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         cursor = db.rawQuery(selectString, null);
                     }catch(SQLiteException sqe){
                         if (DEBUG)
-                            sqe.getStackTrace();
+                            Log.e(TAG, "Error in database operation", sqe);
 
                         cursor = null;
                     }
@@ -2642,7 +2693,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             try {
                 db.execSQL("drop table " + backupTableName);
             } catch (Exception e) {
-                Log.i(TAG, "Remove the table " + backupTableName);
+                Log.e(TAG, "Error removing table " + backupTableName, e);
             }
             db.execSQL("create table " + backupTableName + " as " + selectString);
         }
@@ -2697,7 +2748,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                         + " AND " + LIME.DB_COLUMN_WORD + " = '" + w.getWord() + "'"
                         );
                     }catch(Exception e){
-                        e.printStackTrace();
+                        Log.e(TAG, "Error in database operation", e);
                     }
                 }else{
                     try{
@@ -2705,12 +2756,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         String insertsql = Word.getInsertQuery(table, temp);
                         db.execSQL(insertsql);
                     }catch(Exception e){
-                        e.printStackTrace();
+                        Log.e(TAG, "Error in database operation", e);
                     }
                 }
 
                 // Update Progress
-                double progress = (((count / total) * 0.8) * 100) + 10;
+                double progress = (((count / total) * LIME.PROGRESS_PHASE_MULTIPLIER) * LIME.PROGRESS_COMPLETE_PERCENT) + LIME.PROGRESS_PHASE_OFFSET;
 
 
             }
@@ -2718,7 +2769,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             check.clear();
 
         }catch(Exception e){
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
     }*/
 
@@ -2770,14 +2821,14 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                 updateSimilarCodeListInRelatedColumnOnDB(db, table, entry);
 
                             } catch (Exception e2) {
-                                Log.i(TAG, "restoreUserData():create related field error on code =" + entry);
+                                Log.e(TAG, "restoreUserData():create related field error on code =" + entry, e2);
                             }
 
                         }
                         codeList.clear();
                         db.setTransactionSuccessful();
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "Error in database operation", e);
                     } finally {
                         if (DEBUG)
                             Log.i(TAG, "restoreUserData():  related list buiding loop final section");
@@ -2789,7 +2840,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 cursor.close();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
     }
 
@@ -2810,6 +2861,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 return false;
             }
         } catch (SQLiteException s) {
+            Log.e(TAG, "Error checking database table existence", s);
             return false;
         }
     }
@@ -2835,7 +2887,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             //threadAborted = true;
             while (loadingMappingThread.isAlive()) {
                 Log.d(TAG, "loadFile():waiting for last loading loadingMappingThread stopped...");
-                SystemClock.sleep(1000);
+                SystemClock.sleep(LIME.SLEEP_DELAY_1_SECOND_MS);
             }
             loadingMappingThread = null;
         }
@@ -2862,7 +2914,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     }
                 } catch (Exception e1) {
-                    e1.printStackTrace();
+                    Log.e(TAG, "Error in database operation", e1);
 
                 }
 
@@ -2894,7 +2946,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     while ((line = buf.readLine()) != null
                             && !isCinFormat) {
                         templist.add(line);
-                        if (i >= 100) {
+                        if (i >= LIME.MAX_LINES_TO_PROCESS) {
                             break;
                         } else {
                             i++;
@@ -2904,7 +2956,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     templist.clear();
                     buf.close();
                     fr.close();
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    Log.e(TAG, "Source file reading error", e);
                     progressListener.onError(-1, "Source file reading error.");
                 }
 
@@ -2933,7 +2986,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     while ((line = buf.readLine()) != null && !threadAborted) {
                         processedLength += line.getBytes().length + 2; // +2 for the eol mark.
-                        progressPercentageDone = (int) ((float) processedLength / (float) fileLength * 100);
+                        progressPercentageDone = (int) ((float) processedLength / (float) fileLength * LIME.PROGRESS_COMPLETE_PERCENT);
 
                         //Log.i(TAG, line + " / " + delimiter_symbol.equals(" ") + " / " + line.indexOf(delimiter_symbol));
                         //if(DEBUG)
@@ -3027,26 +3080,30 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                         code = line.split("\t")[0];
                                         word = line.split("\t")[1];
                                     } catch (Exception e) {
+                                        if (DEBUG) Log.e(TAG, "Error parsing line with tab delimiter: " + line, e);
                                         continue;
                                     }
                                     try {
                                         // Simply ignore error and try to load score and basescore values
                                         source_score = Integer.parseInt(line.split("\t")[2]);
                                         source_basescore = Integer.parseInt(line.split("\t")[3]);
-                                    } catch (Exception ignored) {
+                                    } catch (Exception e) {
+                                        if (DEBUG) Log.e(TAG, "Error parsing score values from line: " + line, e);
                                     }
                                 } else if (line.contains(" ")) {
                                     try {
                                         code = line.split(" ")[0];
                                         word = line.split(" ")[1];
                                     } catch (Exception e) {
+                                        if (DEBUG) Log.e(TAG, "Error parsing line with space delimiter: " + line, e);
                                         continue;
                                     }
                                     try {
                                         // Simply ignore error and try to load score and basescore values
                                         source_score = Integer.parseInt(line.split(" ")[2]);
                                         source_basescore = Integer.parseInt(line.split(" ")[3]);
-                                    } catch (Exception ignored) {
+                                    } catch (Exception e) {
+                                        if (DEBUG) Log.e(TAG, "Error parsing score values from line: " + line, e);
                                     }
                                 }
                             } else {
@@ -3055,26 +3112,30 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                         code = line.split("\\|")[0];
                                         word = line.split("\\|")[1];
                                     } catch (Exception e) {
+                                        if (DEBUG) Log.e(TAG, "Error parsing line with pipe delimiter: " + line, e);
                                         continue;
                                     }
                                     try {
                                         // Simply ignore error and try to load score and basescore values
                                         source_score = Integer.parseInt(line.split("\\|")[2]);
                                         source_basescore = Integer.parseInt(line.split("\\|")[3]);
-                                    } catch (Exception ignored) {
+                                    } catch (Exception e) {
+                                        if (DEBUG) Log.e(TAG, "Error parsing score values from line: " + line, e);
                                     }
                                 } else {
                                     try {
                                         code = line.split(delimiter_symbol)[0];
                                         word = line.split(delimiter_symbol)[1];
                                     } catch (Exception e) {
+                                        if (DEBUG) Log.e(TAG, "Error parsing line with delimiter: " + line, e);
                                         continue;
                                     }
                                     try {
                                         // Simply ignore error and try to load score and basescore values
                                         source_score = Integer.parseInt(line.split(delimiter_symbol)[2]);
                                         source_basescore = Integer.parseInt(line.split(delimiter_symbol)[3]);
-                                    } catch (Exception ignored) {
+                                    } catch (Exception e) {
+                                        if (DEBUG) Log.e(TAG, "Error parsing score values from line: " + line, e);
                                     }
                                 }
 
@@ -3149,7 +3210,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                 db.insert(table, null, cv);
                             }
 
-                        } catch (StringIndexOutOfBoundsException ignored) {
+                        } catch (StringIndexOutOfBoundsException e) {
+                            if (DEBUG) Log.e(TAG, "String index out of bounds", e);
                         }
                     }
 
@@ -3158,11 +3220,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     db.setTransactionSuccessful();
                 } catch (Exception e) {
-
-                    Log.i(TAG, "Error : " + e);
                     setImInfo(table, "amount", "0");
                     setImInfo(table, "source", "Failed!!!");
-                    e.printStackTrace();
+                    Log.e(TAG, "Error in database operation", e);
                     progressListener.onError(-1, "Table file import failed!");
                 } finally {
                     if (DEBUG) Log.i(TAG, "loadfile(): main import loop final section");
@@ -3188,15 +3248,14 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                         for (String entry : codeList) {
                             if (threadAborted) break;
-                            progressPercentageDone = (int) ((float) (i++) / (float) entrySize * 50 + 50);
-                            if (progressPercentageDone > 99) progressPercentageDone = 99;
+                            progressPercentageDone = (int) ((float) (i++) / (float) entrySize * LIME.PROGRESS_PARTIAL_PERCENT + LIME.PROGRESS_PARTIAL_PERCENT);
+                            if (progressPercentageDone > LIME.PROGRESS_MAX_DISPLAY_PERCENT) progressPercentageDone = LIME.PROGRESS_MAX_DISPLAY_PERCENT;
 
                             try {
                                 updateSimilarCodeListInRelatedColumnOnDB(db, table, entry);
 
                             } catch (Exception e2) {
-
-                                Log.i(TAG, "loadfile():create related field error on code =" + entry);
+                                Log.e(TAG, "loadfile():create related field error on code =" + entry, e2);
                             }
 
                         }
@@ -3205,8 +3264,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     } catch (Exception e) {
                         setImInfo(table, "amount", "0");
                         setImInfo(table, "source", "Failed!!!");
+                        Log.e(TAG, "Error creating related field", e);
                         progressListener.onError(-1, "Create related field error");
-                        e.printStackTrace();
+                        Log.e(TAG, "Error in database operation", e);
                     } finally {
                         if (DEBUG)
                             Log.i(TAG, "loadfile(): related list buiding loop final section");
@@ -3220,7 +3280,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                 // Fill IM information into the IM Table
                 if (!threadAborted) {
-                    progressPercentageDone = 100;
+                    progressPercentageDone = LIME.PROGRESS_COMPLETE_PERCENT;
                     finish = true;
 
                     mLIMEPref.setParameter("_table", "");
@@ -3359,7 +3419,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 				cv.put(FIELD_SCORE, 0);
 				return cv;
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.e(TAG, "Error in database operation", e);
 		}
 		return null;
 	}
@@ -3414,7 +3474,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         try {
             munit = isMappingExistOnDB(db, code, word);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
 
         }
 
@@ -3481,7 +3541,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 //                highestScore = getHighestScoreOnDB(db, word);
 //
 //            } catch (Exception e) {
-//                e.printStackTrace();
+//                Log.e(TAG, "Error in database operation", e);
 //            }
 //        }
 //        return highestScore;
@@ -3563,7 +3623,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         } catch (Exception e) {
 
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
 
         if (DEBUG||probePerformance) {
@@ -3643,7 +3703,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
         return iminfo;
     }
@@ -3657,7 +3717,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         try {
             removeImInfoOnDB(db, im, field);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
     }
 
@@ -3702,7 +3762,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             result = Im.getList(cursor);
             cursor.close();
         } catch (Exception e) {
-            Log.i(TAG, "getIm(): Cannot get IM : " + e);
+            Log.e(TAG, "getIm(): Cannot get IM", e);
         }
         return result;
     }
@@ -3736,7 +3796,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             }
 
         } catch (Exception e) {
-            Log.i(TAG, "getImList(): Cannot get IM List : " + e);
+            Log.e(TAG, "getImList(): Cannot get IM List", e);
         }
         return result;
     }
@@ -3777,7 +3837,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error in database operation", e);
             }
         } else if (keyboard.equals("wb")) {
             kobj = new KeyboardObj();
@@ -3818,7 +3878,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         try {
             info = getKeyboardInfoOnDB(db, keyboardCode, field);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
         return info;
 
@@ -3884,7 +3944,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
         return result;
     }
@@ -3897,7 +3957,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         try {
             setIMKeyboardOnDB(db, im, value, keyboard);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
 
 
@@ -3942,7 +4002,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 cursor.close();
             }
 
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting keyboard from IM", e);
         }
         return "";
     }
@@ -3979,7 +4040,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
                 cursor.close();
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting word list", e);
         }
 
         return result;
@@ -4059,7 +4121,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             //ALTER TABLE foo RENAME TO bar
             db.execSQL("ALTER TABLE " + source + " RENAME TO " + target);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         }
     }
 
@@ -4154,19 +4216,17 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (checkDBConnection()) return result;
 
         Cursor cursor;
-        String query = null;
+        StringBuilder queryBuilder = new StringBuilder();
         if (code != null && code.length() > 1) {
-            query = LIME.DB_IM_COLUMN_CODE + "='" + code + "'";
+            queryBuilder.append(LIME.DB_IM_COLUMN_CODE).append("='").append(code).append("'");
         }
         if (type != null && type.length() > 1) {
-            if (query != null) {
-                query += " AND ";
-            } else {
-                query = "";
+            if (queryBuilder.length() > 0) {
+                queryBuilder.append(" AND ");
             }
-
-            query += " " + LIME.DB_IM_COLUMN_TITLE + "='" + type + "'";
+            queryBuilder.append(" ").append(LIME.DB_IM_COLUMN_TITLE).append("='").append(type).append("'");
         }
+        String query = queryBuilder.length() > 0 ? queryBuilder.toString() : null;
 
         cursor = db.query(LIME.DB_IM,
                 null, query,
@@ -4245,8 +4305,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     public void setImKeyboard(String code, Keyboard keyboard) {
         if (checkDBConnection()) return;
 
-        String removesql = "DELETE FROM " + LIME.DB_IM + " WHERE " + LIME.DB_IM_COLUMN_CODE + " = '" + code + "'";
-        removesql += " AND " + LIME.DB_IM_COLUMN_TITLE + " = '" + LIME.IM_TYPE_KEYBOARD + "'";
+        String removesql = "DELETE FROM " + LIME.DB_IM + " WHERE " + LIME.DB_IM_COLUMN_CODE + " = '" + code + "'" +
+                " AND " + LIME.DB_IM_COLUMN_TITLE + " = '" + LIME.IM_TYPE_KEYBOARD + "'";
         db.execSQL(removesql);
 
         Im im = new Im();
@@ -4286,6 +4346,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
             return id;
         }catch(SQLiteException sqe){
+            Log.e(TAG, "Error getting related ID", sqe);
             return 9999999;
         }
     }
@@ -4297,7 +4358,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         Cursor cursor;
 
-        String query = "";
+        StringBuilder queryBuilder = new StringBuilder();
         String cword = "";
 
         if (pword != null && pword.length() > 1) {
@@ -4305,21 +4366,22 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             pword = pword.substring(0, 1);
         }
         if (pword != null && !pword.isEmpty()) {
-            query = LIME.DB_RELATED_COLUMN_PWORD + " = '" + pword +
-                    "' AND ";
+            queryBuilder.append(LIME.DB_RELATED_COLUMN_PWORD).append(" = '").append(pword).append("' AND ");
         }
         if (!cword.isEmpty()) {
-            query += LIME.DB_RELATED_COLUMN_CWORD + " LIKE '" + cword +
-                    "%' AND ";
+            queryBuilder.append(LIME.DB_RELATED_COLUMN_CWORD).append(" LIKE '").append(cword).append("%' AND ");
         }
 
-        query += "ifnull(" + LIME.DB_RELATED_COLUMN_CWORD + ", '') <> ''";
+        queryBuilder.append("ifnull(").append(LIME.DB_RELATED_COLUMN_CWORD).append(", '') <> ''");
+        String query = queryBuilder.toString();
 
-        String order = LIME.DB_RELATED_COLUMN_USERSCORE + " desc," + LIME.DB_RELATED_COLUMN_BASESCORE + " desc";
+        StringBuilder orderBuilder = new StringBuilder(LIME.DB_RELATED_COLUMN_USERSCORE);
+        orderBuilder.append(" desc,").append(LIME.DB_RELATED_COLUMN_BASESCORE).append(" desc");
 
         if (maximum > 0) {
-            order += " LIMIT " + maximum + " OFFSET " + offset;
+            orderBuilder.append(" LIMIT ").append(maximum).append(" OFFSET ").append(offset);
         }
+        String order = orderBuilder.toString();
 
         cursor = db.query(LIME.DB_RELATED,
                 null, query,
@@ -4379,17 +4441,19 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         Cursor cursor;
 
-        String query = "SELECT COUNT(*) as count FROM " + table + " WHERE ";
+        StringBuilder queryBuilder = new StringBuilder("SELECT COUNT(*) as count FROM ");
+        queryBuilder.append(table).append(" WHERE ");
 
         if (curquery != null && !curquery.isEmpty()) {
             if (searchroot) {
-                query += LIME.DB_COLUMN_CODE + " LIKE '" + curquery + "%' AND ifnull(" + LIME.DB_COLUMN_WORD + ", '') <> ''";
+                queryBuilder.append(LIME.DB_COLUMN_CODE).append(" LIKE '").append(curquery).append("%' AND ifnull(").append(LIME.DB_COLUMN_WORD).append(", '') <> ''");
             } else {
-                query += LIME.DB_COLUMN_WORD + " LIKE '%" + curquery + "%' AND ifnull(" + LIME.DB_COLUMN_WORD + ", '') <> ''";
+                queryBuilder.append(LIME.DB_COLUMN_WORD).append(" LIKE '%").append(curquery).append("%' AND ifnull(").append(LIME.DB_COLUMN_WORD).append(", '') <> ''");
             }
         } else {
-            query += " ifnull(" + LIME.DB_COLUMN_WORD + ", '') <> ''";
+            queryBuilder.append(" ifnull(").append(LIME.DB_COLUMN_WORD).append(", '') <> ''");
         }
+        String query = queryBuilder.toString();
 
         cursor = db.rawQuery(query, null);
 
@@ -4408,7 +4472,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         Cursor cursor;
 
-        String query = "SELECT COUNT(*) as count FROM " + LIME.DB_RELATED + " WHERE ";
+        StringBuilder queryBuilder = new StringBuilder("SELECT COUNT(*) as count FROM ");
+        queryBuilder.append(LIME.DB_RELATED).append(" WHERE ");
 
         String cword = "";
         if (pword != null && !pword.isEmpty()) {
@@ -4417,14 +4482,14 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         }
 
         if (pword != null && !pword.isEmpty()) {
-            query += LIME.DB_RELATED_COLUMN_PWORD + " = '" + pword +
-                    "' AND ";
+            queryBuilder.append(LIME.DB_RELATED_COLUMN_PWORD).append(" = '").append(pword).append("' AND ");
         }
         if (!cword.isEmpty()) {
-            query += LIME.DB_RELATED_COLUMN_CWORD + " LIKE '" + cword + "%' AND ";
+            queryBuilder.append(LIME.DB_RELATED_COLUMN_CWORD).append(" LIKE '").append(cword).append("%' AND ");
         }
 
-        query += "ifnull(" + LIME.DB_RELATED_COLUMN_CWORD + ", '') <> ''";
+        queryBuilder.append("ifnull(").append(LIME.DB_RELATED_COLUMN_CWORD).append(", '') <> ''");
+        String query = queryBuilder.toString();
 
         cursor = db.rawQuery(query, null);
 
@@ -4440,14 +4505,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         db.insert(table, null, cv);
 
     }
-
-    public Cursor query(String table, String where) {
-        if (checkDBConnection()) return null;
-
-        return db.query(table, null, where, null, null, null, null, null);
-
-    }
-
 
     // Hold database connection to prevent further transactions when database is in maintenance. Jeremy '15,5,23
     public void holdDBConnection() {
@@ -4473,12 +4530,40 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 //        db.setTransactionSuccessful();
 //    }
 
+    /**
+     * Execute raw SQL query. Use with caution - table names should be validated.
+     * For SELECT queries with table names, validate table name before calling.
+     * @param query Raw SQL query string
+     * @return Cursor or null if error
+     */
     public Cursor rawQuery(String query) {
         if (checkDBConnection()) return null;
+        
+        // Basic validation: check if query contains potentially dangerous patterns
+        if (query != null && query.toLowerCase().contains("select")) {
+            // Extract table name from SELECT query for validation
+            // Simple pattern: "select * from tablename" or "SELECT * FROM tablename"
+            String lowerQuery = query.toLowerCase().trim();
+            if (lowerQuery.startsWith("select")) {
+                // Try to extract table name (simplified - may not catch all cases)
+                // For production, consider more robust parsing or requiring table name as separate parameter
+                String[] parts = query.split("(?i)\\s+from\\s+");
+                if (parts.length > 1) {
+                    String tablePart = parts[1].trim().split("\\s+")[0].trim();
+                    // Remove any trailing characters like WHERE, etc.
+                    tablePart = tablePart.split("\\s+")[0];
+                    if (!isValidTableName(tablePart)) {
+                        Log.e(TAG, "rawQuery(): Invalid table name in query: " + tablePart);
+                        return null;
+                    }
+                }
+            }
+        }
+        
         try {
             return db.rawQuery(query, null);
         } catch (Exception e) {
-            Log.w(TAG, "Ignore all possible exceptions~");
+            Log.e(TAG, "Error executing raw query", e);
         }
         return null;
     }

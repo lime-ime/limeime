@@ -68,8 +68,6 @@ public class SearchServer {
     private static Stack<Pair<Mapping, String>> bestSuggestionStack;
     private static String lastCode; // preserved the last code queried from LIMEService
 
-    private static String lastConfirmedBestSuggestion = null;
-
     //Jeremy '15,6,21
     private static int maxCodeLength = 4;
 
@@ -154,12 +152,12 @@ public class SearchServer {
         if(DEBUG)
             Log.i(TAG, "prefetchCache() on table :" + tablename);
 
-        String keys = "abcdefghijklmnoprstuvwxyz";
+        StringBuilder keysBuilder = new StringBuilder("abcdefghijklmnoprstuvwxyz");
         if (numberMapping)
-            keys += "01234567890";
+            keysBuilder.append("01234567890");
         if (symbolMapping)
-            keys += ",./;";
-        final String finalKeys = keys;
+            keysBuilder.append(",./;");
+        final String finalKeys = keysBuilder.toString();
 
         if (prefetchThread != null && prefetchThread.isAlive()) return;
 
@@ -172,7 +170,7 @@ public class SearchServer {
                         //bypass run-time suggestion for prefetch queries
                         getMappingByCode(key, true, false, true);
                     } catch (RemoteException e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "Error in search operation", e);
                     }
                 }
                 Log.i(TAG, "prefetchCache() on table :" + tablename + " finished.  Elapsed time = "
@@ -233,7 +231,7 @@ public class SearchServer {
         }
         suggestionLoL.clear();
         if (bestSuggestionStack != null) bestSuggestionStack.clear();
-        lastConfirmedBestSuggestion = null;
+        String lastConfirmedBestSuggestion = null;
         abandonPhraseSuggestion =abandonSuggestion;
     }
 
@@ -281,12 +279,12 @@ public class SearchServer {
             do {
                 exactMatchMapping = completeCodeResultList.get(k);
                 int score = exactMatchMapping.getBasescore();
-                if (score < 120) {
-                    score = 120;
-                } else if (score > 200) {
-                    score = 200;
+                if (score < LIME.MIN_SCORE_THRESHOLD) {
+                    score = LIME.MIN_SCORE_THRESHOLD;
+                } else if (score > LIME.MAX_SCORE_THRESHOLD) {
+                    score = LIME.MAX_SCORE_THRESHOLD;
                 }
-                int codeLenBonus = exactMatchMapping.getCode().length() / exactMatchMapping.getWord().length() * 30;
+                int codeLenBonus = exactMatchMapping.getCode().length() / exactMatchMapping.getWord().length() * LIME.CODE_LENGTH_BONUS_MULTIPLIER;
                 int newScore = score + codeLenBonus;
 
                 exactMatchMapping.setBasescore(newScore * exactMatchMapping.getWord().length());
@@ -414,8 +412,8 @@ public class SearchServer {
                                     continue;
                                 int remainingScore = remainingCodeExactMatchMapping.getBasescore();
                                 int codeLenBonus = remainingCodeExactMatchMapping.getCode().length() /
-                                        remainingCodeExactMatchMapping.getWord().length() * 30;
-                                if (remainingScore > 120) remainingScore = 120;
+                                        remainingCodeExactMatchMapping.getWord().length() * LIME.CODE_LENGTH_BONUS_MULTIPLIER;
+                                if (remainingScore > LIME.MIN_SCORE_THRESHOLD) remainingScore = LIME.MIN_SCORE_THRESHOLD;
                                 remainingScore = remainingScore / remainingCodeExactMatchMapping.getWord().length() + codeLenBonus;
 
                                 int previousScore = previousMapping.getBasescore() / previousMapping.getWord().length();
@@ -437,7 +435,7 @@ public class SearchServer {
                                 }
                                 if (relatedMapping != null
                                         && relatedMapping.getBasescore() >= highestRelatedScore
-                                        && (averageScore + 50) > highestScore
+                                        && (averageScore + LIME.SCORE_ADJUSTMENT_INCREMENT) > highestScore
                                         ) {
                                     Mapping suggestMapping = new Mapping();
                                     suggestMapping.setRuntimeBuiltPhraseRecord();
@@ -445,7 +443,7 @@ public class SearchServer {
                                     suggestMapping.setWord(phrase);
                                     highestRelatedScore = relatedMapping.getBasescore();
                                     suggestMapping.setScore(highestRelatedScore);
-                                    highestScore = (averageScore + 50);
+                                    highestScore = (averageScore + LIME.SCORE_ADJUSTMENT_INCREMENT);
                                     suggestMapping.setBasescore(highestScore * phraseLen);
                                     List<Pair<Mapping, String>> newSuggestionList = new LinkedList<>(seedSuggestionList);
                                     newSuggestionList.add(new Pair<>(suggestMapping, code));
@@ -663,7 +661,7 @@ public class SearchServer {
                         cache.remove(cacheKey);
                         cache.put(cacheKey, cacheTemp);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "Error in search operation", e);
                     }
 
                 }
@@ -726,11 +724,11 @@ public class SearchServer {
                         && !abandonPhraseSuggestion
                         && !bestSuggestion.isExactMatchToCodeRecord() //will be the first item of result list, dont' add duplicated item
                         && bestSuggestion.getWord().length() > 1
-                        && ( (englishSuggestion==null && averageScore  > 120) || (englishSuggestion!=null && averageScore > 200 ))  ) {
+                        && ( (englishSuggestion==null && averageScore  > LIME.MIN_SCORE_THRESHOLD) || (englishSuggestion!=null && averageScore > LIME.MAX_SCORE_THRESHOLD ))  ) {
                     result.add(self);
                     result.add(bestSuggestion);
 
-                } else if( englishSuggestion!=null && averageScore <= 200){
+                } else if( englishSuggestion!=null && averageScore <= LIME.MAX_SCORE_THRESHOLD){
                     clearRunTimeSuggestion(true);
                     result.add(self);
                     result.add(englishSuggestion);
@@ -821,7 +819,7 @@ public class SearchServer {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error in search operation", e);
             }
         }
         return cacheTemp;
@@ -926,7 +924,7 @@ public class SearchServer {
         try {
             clear();
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in search operation", e);
         }
         cache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
         engcache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
@@ -1309,7 +1307,7 @@ List<Mapping> scorelistSnapshot = null;
             try {
                 getMappingByCode(code, !isPhysicalKeyboardPressed, false, true);
             } catch (RemoteException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error in search operation", e);
             }
         }
     }
@@ -1534,12 +1532,12 @@ List<Mapping> scorelistSnapshot = null;
             do {
                 exactMatchMapping = completeCodeResultList.get(i);
                 int score = exactMatchMapping.getBasescore();
-                if (score < 120) {
-                    score = 120;
-                } else if (score > 200) {
-                    score = 200;
+                if (score < LIME.MIN_SCORE_THRESHOLD) {
+                    score = LIME.MIN_SCORE_THRESHOLD;
+                } else if (score > LIME.MAX_SCORE_THRESHOLD) {
+                    score = LIME.MAX_SCORE_THRESHOLD;
                 }
-                int codeLenBonus = exactMatchMapping.getCode().length() / exactMatchMapping.getWord().length() * 30;
+                int codeLenBonus = exactMatchMapping.getCode().length() / exactMatchMapping.getWord().length() * LIME.CODE_LENGTH_BONUS_MULTIPLIER;
                 exactMatchMapping.setBasescore((score + codeLenBonus) * exactMatchMapping.getWord().length());
 
                 if (DEBUG || dumpRunTimeSuggestion)
@@ -1622,7 +1620,7 @@ List<Mapping> scorelistSnapshot = null;
                                 highestRelatedScore = relatedMapping.getBasescore();
                                 suggestMapping.setScore(highestRelatedScore);
 
-                                suggestMapping.setBasescore((averageScore + 50) * phraseLen);
+                                suggestMapping.setBasescore((averageScore + LIME.SCORE_ADJUSTMENT_INCREMENT) * phraseLen);
                                 suggestionList.add(new Pair<>(suggestMapping, code));
                                 if (DEBUG || dumpRunTimeSuggestion)
                                     Log.i(TAG, "makeRunTimeSuggestion()  run-time suggest phrase verified from related table ="

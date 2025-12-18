@@ -253,6 +253,47 @@ public class SetupImFragment extends Fragment {
         }
     }
 
+    /**
+     * Helper method to configure an input method button with consistent styling and click handler.
+     * Reduces code duplication by centralizing the logic for setting alpha, typeface, and click listener.
+     * 
+     * @param button The button to configure
+     * @param tableName The database table name constant (e.g., LIME.DB_TABLE_PHONETIC)
+     * @param check HashMap containing loaded table names
+     * @param setText If true, also set button text from check HashMap (for custom table)
+     */
+    private void setupInputMethodButton(Button button, String tableName, HashMap<String, String> check, boolean setText) {
+        if (button == null) return;
+        
+        String tableValue = check.get(tableName);
+        if (tableValue != null) {
+            // Table is loaded - show as half alpha and italic
+            button.setAlpha(LIME.HALF_ALPHA_VALUE);
+            button.setTypeface(null, Typeface.ITALIC);
+            if (setText) {
+                button.setText(tableValue);
+            }
+        } else {
+            // Table is not loaded - show as normal alpha and bold
+            button.setAlpha(LIME.NORMAL_ALPHA_VALUE);
+            button.setTypeface(null, Typeface.BOLD);
+        }
+        
+        // Set click listener to show SetupImLoadDialog
+        button.setOnClickListener(v -> {
+            FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+            SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(tableName, handler);
+            dialog.show(ft, "loadimdialog");
+        });
+    }
+
+    /**
+     * Overloaded helper method without setText parameter (defaults to false).
+     */
+    private void setupInputMethodButton(Button button, String tableName, HashMap<String, String> check) {
+        setupInputMethodButton(button, tableName, check, false);
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -263,7 +304,8 @@ public class SetupImFragment extends Fragment {
 
         activity = getActivity();
 
-        DBSrv = new DBServer(activity);
+        assert activity != null;
+        DBSrv = DBServer.getInstance(activity);
         mLIMEPref = new LIMEPreferenceManager(activity);
 
         rootView = inflater.inflate(R.layout.fragment_setup_im, container, false);
@@ -310,7 +352,7 @@ public class SetupImFragment extends Fragment {
             txtVersion = rootView.findViewById(R.id.txtVersion);
             txtVersion.setText(getString(R.string.version_format, pInfo.versionName, versionCode));
         } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
         }
 
         return rootView;
@@ -372,23 +414,8 @@ public class SetupImFragment extends Fragment {
                     rootView.invalidate();
                 });
 
-                if(check.get(LIME.DB_TABLE_CUSTOM) != null){
-                    btnSetupImImportStandard.setAlpha(LIME.HALF_ALPHA_VALUE);
-                    btnSetupImImportStandard.setText(check.get(LIME.DB_TABLE_CUSTOM));
-                    btnSetupImImportStandard.setTypeface(null, Typeface.ITALIC);
-                }else {
-                    btnSetupImImportStandard.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-                    btnSetupImImportStandard.setTypeface(null, Typeface.BOLD);
-                }
-
-
-
-                btnSetupImImportStandard.setOnClickListener(v -> {
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_CUSTOM, handler);
-                    dialog.show(ft, "loadimdialog");
-
-                });
+                // Setup custom import button (with text display)
+                setupInputMethodButton(btnSetupImImportStandard, LIME.DB_TABLE_CUSTOM, check, true);
 
                 // User can always load new related table ...
                 btnSetupImImportRelated.setOnClickListener(v -> {
@@ -398,182 +425,25 @@ public class SetupImFragment extends Fragment {
 
                 });
 
-                if(check.get(LIME.DB_TABLE_PHONETIC) != null){
-                    btnSetupImPhonetic.setAlpha(LIME.HALF_ALPHA_VALUE);
-                    btnSetupImPhonetic.setTypeface(null, Typeface.ITALIC);
-                }else {
-                    btnSetupImPhonetic.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-                    btnSetupImPhonetic.setTypeface(null, Typeface.BOLD);
-                }
-
-                btnSetupImPhonetic.setOnClickListener(v -> {
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_PHONETIC, handler);
-                    dialog.show(ft, "loadimdialog");
-                });
-
-
-                if(check.get(LIME.DB_TABLE_CJ) != null){
-                    btnSetupImCj.setAlpha(LIME.HALF_ALPHA_VALUE);
-                    btnSetupImCj.setTypeface(null, Typeface.ITALIC);
-                }else {
-                    btnSetupImCj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-                    btnSetupImCj.setTypeface(null, Typeface.BOLD);
-                }
-
-                btnSetupImCj.setOnClickListener(v -> {
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_CJ, handler);
-                    dialog.show(ft, "loadimdialog");
-                });
-
-
-
-                if(check.get(LIME.DB_TABLE_CJ5) != null){
-                    btnSetupImCj5.setAlpha(LIME.HALF_ALPHA_VALUE);
-                    btnSetupImCj5.setTypeface(null, Typeface.ITALIC);
-                }else {
-                    btnSetupImCj5.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-                    btnSetupImCj5.setTypeface(null, Typeface.BOLD);
-                }
-
-                btnSetupImCj5.setOnClickListener(v -> {
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_CJ5, handler);
-                    dialog.show(ft, "loadimdialog");
-                });
-
-                if(check.get(LIME.DB_TABLE_SCJ) != null){
-                    btnSetupImScj.setAlpha(LIME.HALF_ALPHA_VALUE);
-                    btnSetupImScj.setTypeface(null, Typeface.ITALIC);
-                }else {
-                    btnSetupImScj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-                    btnSetupImScj.setTypeface(null, Typeface.BOLD);
-                }
-                btnSetupImScj.setOnClickListener(v -> {
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_SCJ, handler);
-                    dialog.show(ft, "loadimdialog");
-                });
-
-                if(check.get(LIME.DB_TABLE_ECJ) != null){
-                    btnSetupImEcj.setAlpha(LIME.HALF_ALPHA_VALUE);
-                    btnSetupImEcj.setTypeface(null, Typeface.ITALIC);
-                }else {
-                    btnSetupImEcj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-                    btnSetupImEcj.setTypeface(null, Typeface.BOLD);
-                }
-
-                btnSetupImEcj.setOnClickListener(v -> {
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_ECJ, handler);
-                    dialog.show(ft, "loadimdialog");
-                });
-
-                if(check.get(LIME.DB_TABLE_DAYI) != null){
-                    btnSetupImDayi.setAlpha(LIME.HALF_ALPHA_VALUE);
-                    btnSetupImDayi.setTypeface(null, Typeface.ITALIC);
-                }else {
-                    btnSetupImDayi.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-                    btnSetupImDayi.setTypeface(null, Typeface.BOLD);
-                }
-
-                btnSetupImDayi.setOnClickListener(v -> {
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_DAYI, handler);
-                    dialog.show(ft, "loadimdialog");
-                });
-
-                if(check.get(LIME.DB_TABLE_EZ) != null){
-                    btnSetupImEz.setAlpha(LIME.HALF_ALPHA_VALUE);
-                    btnSetupImEz.setTypeface(null, Typeface.ITALIC);
-                }else {
-                    btnSetupImEz.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-                    btnSetupImEz.setTypeface(null, Typeface.BOLD);
-                }
-
-                btnSetupImEz.setOnClickListener(v -> {
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_EZ, handler);
-                    dialog.show(ft, "loadimdialog");
-                });
-
-                if(check.get(LIME.DB_TABLE_ARRAY) != null){
-                    btnSetupImArray.setAlpha(LIME.HALF_ALPHA_VALUE);
-                    btnSetupImArray.setTypeface(null, Typeface.ITALIC);
-                }else {
-                    btnSetupImArray.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-                    btnSetupImArray.setTypeface(null, Typeface.BOLD);
-                }
-
-                btnSetupImArray.setOnClickListener(v -> {
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_ARRAY, handler);
-                    dialog.show(ft, "loadimdialog");
-                });
-
-                if(check.get(LIME.DB_TABLE_ARRAY10) != null){
-                    btnSetupImArray10.setAlpha(LIME.HALF_ALPHA_VALUE);
-                    btnSetupImArray10.setTypeface(null, Typeface.ITALIC);
-                }else {
-                    btnSetupImArray10.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-                    btnSetupImArray10.setTypeface(null, Typeface.BOLD);
-                }
-
-                btnSetupImArray10.setOnClickListener(v -> {
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_ARRAY10, handler);
-                    dialog.show(ft, "loadimdialog");
-                });
-
-
-                if(check.get(LIME.DB_TABLE_HS) != null){
-                    btnSetupImHs.setAlpha(LIME.HALF_ALPHA_VALUE);
-                    btnSetupImHs.setTypeface(null, Typeface.ITALIC);
-                }else {
-                    btnSetupImHs.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-                    btnSetupImHs.setTypeface(null, Typeface.BOLD);
-                }
-
-                btnSetupImHs.setOnClickListener(v -> {
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_HS, handler);
-                    dialog.show(ft, "loadimdialog");
-                });
-
-                if(check.get(LIME.DB_TABLE_WB) != null){
-                    btnSetupImWb.setAlpha(LIME.HALF_ALPHA_VALUE);
-                    btnSetupImWb.setTypeface(null, Typeface.ITALIC);
-                }else {
-                    btnSetupImWb.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-                    btnSetupImWb.setTypeface(null, Typeface.BOLD);
-                }
-
-                btnSetupImWb.setOnClickListener(v -> {
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_WB, handler);
-                    dialog.show(ft, "loadimdialog");
-                });
-
-                if(check.get(LIME.DB_TABLE_PINYIN) != null){
-                    btnSetupImPinyin.setAlpha(LIME.HALF_ALPHA_VALUE);
-                    btnSetupImPinyin.setTypeface(null, Typeface.ITALIC);
-                }else {
-                    btnSetupImPinyin.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-                    btnSetupImPinyin.setTypeface(null, Typeface.BOLD);
-                }
-
-                btnSetupImPinyin.setOnClickListener(v -> {
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_PINYIN, handler);
-                    dialog.show(ft, "loadimdialog");
-                });
+                // Setup all input method buttons using helper method
+                setupInputMethodButton(btnSetupImPhonetic, LIME.DB_TABLE_PHONETIC, check);
+                setupInputMethodButton(btnSetupImCj, LIME.DB_TABLE_CJ, check);
+                setupInputMethodButton(btnSetupImCj5, LIME.DB_TABLE_CJ5, check);
+                setupInputMethodButton(btnSetupImScj, LIME.DB_TABLE_SCJ, check);
+                setupInputMethodButton(btnSetupImEcj, LIME.DB_TABLE_ECJ, check);
+                setupInputMethodButton(btnSetupImDayi, LIME.DB_TABLE_DAYI, check);
+                setupInputMethodButton(btnSetupImEz, LIME.DB_TABLE_EZ, check);
+                setupInputMethodButton(btnSetupImArray, LIME.DB_TABLE_ARRAY, check);
+                setupInputMethodButton(btnSetupImArray10, LIME.DB_TABLE_ARRAY10, check);
+                setupInputMethodButton(btnSetupImHs, LIME.DB_TABLE_HS, check);
+                setupInputMethodButton(btnSetupImWb, LIME.DB_TABLE_WB, check);
+                setupInputMethodButton(btnSetupImPinyin, LIME.DB_TABLE_PINYIN, check);
 
 
 
 
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error in operation", e);
             }
         }
         
@@ -622,7 +492,7 @@ public class SetupImFragment extends Fragment {
 
         new Thread(() -> {
             try {
-                DBServer.backupDatabase(uri);
+                DBSrv.backupDatabase(uri);
             } catch (RemoteException e) {
                 throw new RuntimeException(e);
             }finally {
@@ -638,9 +508,9 @@ public class SetupImFragment extends Fragment {
 
         new Thread(() -> {
             try {
-                DBServer.restoreDatabase(uri);
+                DBSrv.restoreDatabase(uri);
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error in operation", e);
                 activity.runOnUiThread(() -> showToastMessage(activity.getString(R.string.l3_initial_restore_error), Toast.LENGTH_LONG));
             } finally {
                 if (handler != null) {
@@ -694,7 +564,7 @@ public class SetupImFragment extends Fragment {
             showAlertDialog(BackupRestoreType.BACKUP);
         } catch (Exception e) {
             if (DEBUG) Log.e(TAG, "Error checking backup options: " + e.getMessage(), e);
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
             showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT);
         }
     }
@@ -736,7 +606,7 @@ public class SetupImFragment extends Fragment {
             backupLauncher.launch(chooserIntent);
         } catch (Exception e) {
             if (DEBUG) Log.e(TAG, "Error launching backup file picker: " + e.getMessage(), e);
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
             // On error, try fallback to Downloads
             saveBackupToDownloads();
         }
@@ -811,7 +681,7 @@ public class SetupImFragment extends Fragment {
                 }
             } catch (Exception e) {
                 if (DEBUG) Log.e(TAG, "Error saving backup to Downloads: " + e.getMessage(), e);
-                e.printStackTrace();
+                Log.e(TAG, "Error in operation", e);
                 activity.runOnUiThread(() -> showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT));
             }
         }).start();
@@ -848,7 +718,7 @@ public class SetupImFragment extends Fragment {
             showAlertDialog(BackupRestoreType.RESTORE);
         } catch (Exception e) {
             if (DEBUG) Log.e(TAG, "Error checking restore options: " + e.getMessage(), e);
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
             showToastMessage(getString(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT);
         }
     }
@@ -877,7 +747,7 @@ public class SetupImFragment extends Fragment {
             restoreLauncher.launch(chooserIntent);
         } catch (Exception e) {
             if (DEBUG) Log.e(TAG, "Error launching restore file picker: " + e.getMessage(), e);
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
             showToastMessage(getString(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT);
         }
     }
@@ -921,7 +791,7 @@ public class SetupImFragment extends Fragment {
             }
             DBSrv.resetMapping(imtable);
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
         }
     }
 

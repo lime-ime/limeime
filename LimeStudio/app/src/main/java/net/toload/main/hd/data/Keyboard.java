@@ -52,25 +52,45 @@ public class Keyboard {
 
 	private boolean disable;
 
+	// Helper to safely get a String from cursor (validates column index >= 0)
+	private static String getCursorString(Cursor cursor, String columnName) {
+		int index = cursor.getColumnIndex(columnName);
+		if (index >= 0) {
+			return cursor.getString(index);
+		}
+		return ""; // Return empty string if column is missing
+	}
+
+	// Helper to safely get an Int from cursor (validates column index >= 0)
+	private static int getCursorInt(Cursor cursor, String columnName) {
+		int index = cursor.getColumnIndex(columnName);
+		if (index >= 0) {
+			return cursor.getInt(index);
+		}
+		return 0; // Return 0 if column is missing
+	}
+
 	public static Keyboard get(Cursor cursor){
 		Keyboard record = new Keyboard();
-				record.setId(cursor.getInt(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_ID)));
-				record.setCode(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_CODE)));
-				record.setName(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_NAME)));
-				record.setDesc(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_DESC)));
-				record.setType(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_TYPE)));
-				record.setImage(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_IMAGE)));
-				record.setImkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_IMKB)));
-				record.setImshiftkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB)));
-				record.setEngkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_ENGKB)));
-				record.setEngshiftkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB)));
-				record.setSymbolkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_SYMBOLKB)));
-				record.setSymbolshiftkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB)));
-				record.setDefaultkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_DEFAULTKB)));
-				record.setDefaultshiftkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB)));
-				record.setExtendedkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_EXTENDEDKB)));
-				record.setExtendedshiftkb(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB)));
-				record.setDisable(Boolean.getBoolean(cursor.getString(cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_DISABLE))));
+			// Use helper methods to safely get column values (validates column index >= 0)
+			record.setId(getCursorInt(cursor, LIME.DB_KEYBOARD_COLUMN_ID));
+			record.setCode(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_CODE));
+			record.setName(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_NAME));
+			record.setDesc(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DESC));
+			record.setType(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_TYPE));
+			record.setImage(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMAGE));
+			record.setImkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMKB));
+			record.setImshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB));
+			record.setEngkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_ENGKB));
+			record.setEngshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB));
+			record.setSymbolkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_SYMBOLKB));
+			record.setSymbolshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB));
+			record.setDefaultkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DEFAULTKB));
+			record.setDefaultshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB));
+			record.setExtendedkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_EXTENDEDKB));
+			record.setExtendedshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB));
+			String disableStr = getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DISABLE);
+			record.setDisable(Boolean.getBoolean(disableStr));
 		return record;
 	}
 

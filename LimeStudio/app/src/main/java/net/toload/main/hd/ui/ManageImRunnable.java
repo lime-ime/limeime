@@ -29,7 +29,6 @@ import android.app.Activity;
 import net.toload.main.hd.data.Word;
 import net.toload.main.hd.limedb.LimeDB;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,14 +37,13 @@ import java.util.List;
 public class ManageImRunnable implements Runnable{
 
 
-    private ManageImHandler handler;
-    private Activity activity;
-    private LimeDB datasource;
-    private String table;
-    private String query;
-    private boolean searchRoot;
-    private int maximum;
-    private int offset;
+    private final ManageImHandler handler;
+    private final LimeDB datasource;
+    private final String table;
+    private final String query;
+    private final boolean searchRoot;
+    private final int maximum;
+    private final int offset;
 
     @Override
     protected void finalize() throws Throwable {
@@ -55,14 +53,13 @@ public class ManageImRunnable implements Runnable{
     public ManageImRunnable(ManageImHandler handler, Activity activity, String table, String query,
                             boolean searchRoot, int maximum, int offset) {
         this.handler = handler;
-        this.activity = activity;
         this.table = table;
         this.query = query;
         this.searchRoot = searchRoot;
         this.maximum = maximum;
         this.offset = offset;
 
-        datasource = new LimeDB(this.activity);
+        datasource = new LimeDB(activity);
     }
 
     public void run() {
@@ -78,14 +75,14 @@ public class ManageImRunnable implements Runnable{
     }
 
     private List<Word> loadImWord(String table, String query, int maximum, int offset){
-        List<Word> results = new ArrayList<>();
+        List<Word> results;
 
         results = datasource.loadWord(table, query, this.searchRoot, maximum, offset);
         /*try {
             datasource.open();
             datasource.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
         }*/
         return results;
     }

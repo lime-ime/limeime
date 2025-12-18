@@ -34,7 +34,7 @@ import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.data.Word;
 import net.toload.main.hd.data.Related;
-import net.toload.main.hd.Lime;
+import net.toload.main.hd.global.LIME;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -112,7 +112,7 @@ public class LimeDBTest {
         assertTrue("Count should be non-negative", count >= 0);
         
         // Test counting on related table
-        int relatedCount = limeDB.count(Lime.DB_RELATED);
+        int relatedCount = limeDB.count(LIME.DB_RELATED);
         assertTrue("Related count should be non-negative", relatedCount >= 0);
     }
 
@@ -327,29 +327,7 @@ public class LimeDBTest {
         assertTrue("Transaction operations should complete", true);
     }
 
-    @Test
-    public void testLimeDBQueryOperations() {
-        // Test query operations
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // Test raw query
-        android.database.Cursor cursor = limeDB.rawQuery("SELECT COUNT(*) FROM " + Lime.DB_RELATED);
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                int count = cursor.getInt(0);
-                assertTrue("Count should be non-negative", count >= 0);
-            }
-            cursor.close();
-        }
-        
-        // Test query with table and where clause
-        android.database.Cursor queryCursor = limeDB.query(Lime.DB_RELATED, "1=1");
-        if (queryCursor != null) {
-            // Cursor might be empty, which is acceptable
-            queryCursor.close();
-        }
-    }
+
 
     @Test
     public void testLimeDBImListOperations() {
@@ -666,7 +644,7 @@ public class LimeDBTest {
         LimeDB limeDB = new LimeDB(appContext);
         
         // Test listing records from a table
-        android.database.Cursor cursor = limeDB.list(Lime.DB_RELATED);
+        android.database.Cursor cursor = limeDB.list(LIME.DB_RELATED);
         if (cursor != null) {
             // Cursor might be empty, which is acceptable
             cursor.close();
@@ -682,10 +660,10 @@ public class LimeDBTest {
         
         // Test inserting with SQL string - use correct column name 'score' (not 'userscore')
         String testCode = "test_insert_" + System.currentTimeMillis();
-        String insertSQL = "INSERT INTO " + Lime.DB_RELATED + " (" + 
-                Lime.DB_RELATED_COLUMN_PWORD + ", " + 
-                Lime.DB_RELATED_COLUMN_CWORD + ", " + 
-                Lime.DB_RELATED_COLUMN_USERSCORE + ") VALUES ('測試插入', '詞彙插入', 1)";
+        String insertSQL = "INSERT INTO " + LIME.DB_RELATED + " (" + 
+                LIME.DB_RELATED_COLUMN_PWORD + ", " + 
+                LIME.DB_RELATED_COLUMN_CWORD + ", " + 
+                LIME.DB_RELATED_COLUMN_USERSCORE + ") VALUES ('測試插入', '詞彙插入', 1)";
         limeDB.insert(insertSQL);
         
         // Verify insert completed (check if record exists)
@@ -702,10 +680,10 @@ public class LimeDBTest {
         
         // Test inserting with ContentValues - use correct column constants
         android.content.ContentValues cv = new android.content.ContentValues();
-        cv.put(Lime.DB_RELATED_COLUMN_PWORD, "測試內容");
-        cv.put(Lime.DB_RELATED_COLUMN_CWORD, "詞彙內容");
-        cv.put(Lime.DB_RELATED_COLUMN_USERSCORE, 1);
-        limeDB.insert(Lime.DB_RELATED, cv);
+        cv.put(LIME.DB_RELATED_COLUMN_PWORD, "測試內容");
+        cv.put(LIME.DB_RELATED_COLUMN_CWORD, "詞彙內容");
+        cv.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1);
+        limeDB.insert(LIME.DB_RELATED, cv);
         
         // Verify insert completed
         assertTrue("insert with ContentValues should complete", true);
@@ -718,10 +696,10 @@ public class LimeDBTest {
         LimeDB limeDB = new LimeDB(appContext);
         
         // Test adding with SQL string - use correct column name 'score' (not 'userscore')
-        String addSQL = "INSERT INTO " + Lime.DB_RELATED + " (" + 
-                Lime.DB_RELATED_COLUMN_PWORD + ", " + 
-                Lime.DB_RELATED_COLUMN_CWORD + ", " + 
-                Lime.DB_RELATED_COLUMN_USERSCORE + ") VALUES ('測試2', '詞彙2', 1)";
+        String addSQL = "INSERT INTO " + LIME.DB_RELATED + " (" + 
+                LIME.DB_RELATED_COLUMN_PWORD + ", " + 
+                LIME.DB_RELATED_COLUMN_CWORD + ", " + 
+                LIME.DB_RELATED_COLUMN_USERSCORE + ") VALUES ('測試2', '詞彙2', 1)";
         limeDB.add(addSQL);
         
         // Verify add completed
@@ -736,15 +714,15 @@ public class LimeDBTest {
         
         // First, add a test record using the correct column constants
         android.content.ContentValues cv = new android.content.ContentValues();
-        cv.put(Lime.DB_RELATED_COLUMN_PWORD, "測試刪除");
-        cv.put(Lime.DB_RELATED_COLUMN_CWORD, "詞彙刪除");
-        cv.put(Lime.DB_RELATED_COLUMN_USERSCORE, 1);
-        limeDB.insert(Lime.DB_RELATED, cv);
+        cv.put(LIME.DB_RELATED_COLUMN_PWORD, "測試刪除");
+        cv.put(LIME.DB_RELATED_COLUMN_CWORD, "詞彙刪除");
+        cv.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1);
+        limeDB.insert(LIME.DB_RELATED, cv);
         
         // Test removing with SQL string
-        String removeSQL = "DELETE FROM " + Lime.DB_RELATED + " WHERE " + 
-                Lime.DB_RELATED_COLUMN_PWORD + " = '測試刪除' AND " + 
-                Lime.DB_RELATED_COLUMN_CWORD + " = '詞彙刪除'";
+        String removeSQL = "DELETE FROM " + LIME.DB_RELATED + " WHERE " + 
+                LIME.DB_RELATED_COLUMN_PWORD + " = '測試刪除' AND " + 
+                LIME.DB_RELATED_COLUMN_CWORD + " = '詞彙刪除'";
         limeDB.remove(removeSQL);
         
         // Verify remove completed
@@ -759,15 +737,15 @@ public class LimeDBTest {
         
         // First, add a test record using the correct column constants
         android.content.ContentValues cv = new android.content.ContentValues();
-        cv.put(Lime.DB_RELATED_COLUMN_PWORD, "測試更新");
-        cv.put(Lime.DB_RELATED_COLUMN_CWORD, "詞彙更新");
-        cv.put(Lime.DB_RELATED_COLUMN_USERSCORE, 1);
-        limeDB.insert(Lime.DB_RELATED, cv);
+        cv.put(LIME.DB_RELATED_COLUMN_PWORD, "測試更新");
+        cv.put(LIME.DB_RELATED_COLUMN_CWORD, "詞彙更新");
+        cv.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1);
+        limeDB.insert(LIME.DB_RELATED, cv);
         
         // Test updating with SQL string - use correct column name 'score' (not 'userscore')
-        String updateSQL = "UPDATE " + Lime.DB_RELATED + " SET " + 
-                Lime.DB_RELATED_COLUMN_USERSCORE + " = 2 WHERE " + 
-                Lime.DB_RELATED_COLUMN_PWORD + " = '測試更新'";
+        String updateSQL = "UPDATE " + LIME.DB_RELATED + " SET " + 
+                LIME.DB_RELATED_COLUMN_USERSCORE + " = 2 WHERE " + 
+                LIME.DB_RELATED_COLUMN_PWORD + " = '測試更新'";
         limeDB.update(updateSQL);
         
         // Verify update completed

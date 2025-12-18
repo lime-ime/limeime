@@ -75,13 +75,32 @@ public class Related {
 
 	public void setUserscore(int userscore) {this.userscore = userscore;}
 
+	// Helper to safely get a String from cursor (validates column index >= 0)
+	private static String getCursorString(Cursor cursor, String columnName) {
+		int index = cursor.getColumnIndex(columnName);
+		if (index >= 0) {
+			return cursor.getString(index);
+		}
+		return ""; // Return empty string if column is missing
+	}
+
+	// Helper to safely get an Int from cursor (validates column index >= 0)
+	private static int getCursorInt(Cursor cursor, String columnName) {
+		int index = cursor.getColumnIndex(columnName);
+		if (index >= 0) {
+			return cursor.getInt(index);
+		}
+		return 0; // Return 0 if column is missing
+	}
+
 	public static Related get(Cursor cursor){
 		Related record = new Related();
-				record.setId(cursor.getInt(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_ID)));
-				record.setPword(cursor.getString(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_PWORD)));
-				record.setCword(cursor.getString(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_CWORD)));
-				record.setUserscore(cursor.getInt(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_USERSCORE)));
-				record.setBasescore(cursor.getInt(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_BASESCORE)));
+			// Use helper methods to safely get column values (validates column index >= 0)
+			record.setId(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_ID));
+			record.setPword(getCursorString(cursor, LIME.DB_RELATED_COLUMN_PWORD));
+			record.setCword(getCursorString(cursor, LIME.DB_RELATED_COLUMN_CWORD));
+			record.setUserscore(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_USERSCORE));
+			record.setBasescore(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_BASESCORE));
 		return record;
 	}
 

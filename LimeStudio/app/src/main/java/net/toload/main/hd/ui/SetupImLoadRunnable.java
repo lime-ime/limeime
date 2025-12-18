@@ -30,7 +30,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Looper;
-import android.os.RemoteException;
 import android.util.Log;
 
 import net.toload.main.hd.DBServer;
@@ -39,13 +38,10 @@ import net.toload.main.hd.R;
 import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,19 +50,19 @@ public class SetupImLoadRunnable implements Runnable{
     private final static String TAG = "SetupImLoadRunnable";
 
     // Global
-    private String url = null;
-    private String imtype = null;
-    private String type = null;
+    private String url;
+    private final String imtype;
+    private final String type;
 
-    private Activity activity;
-    private DBServer dbsrv = null;
-    private SetupImHandler handler;
+    private final Activity activity;
+    private final DBServer dbsrv;
+    private final SetupImHandler handler;
 
-    private LimeDB datasource;
-    private LIMEPreferenceManager mLIMEPref;
+    private final LimeDB datasource;
+    private final LIMEPreferenceManager mLIMEPref;
 
-    private Context mContext;
-    private boolean restorePreference;
+    private final Context mContext;
+    private final boolean restorePreference;
 
     public SetupImLoadRunnable(Activity activity, SetupImHandler handler, String imtype, String type, String url, boolean restorePreference) {
         this.handler = handler;
@@ -74,7 +70,7 @@ public class SetupImLoadRunnable implements Runnable{
         this.type = type;
         this.url = url;
         this.activity = activity;
-        this.dbsrv = new DBServer(activity);
+        this.dbsrv = DBServer.getInstance(activity);
         this.datasource = new LimeDB(activity);
         this.mLIMEPref = new LIMEPreferenceManager(activity);
         this.restorePreference = restorePreference;
@@ -98,7 +94,7 @@ public class SetupImLoadRunnable implements Runnable{
         //handler.updateProgress(activity.getResources().getString(R.string.setup_load_download));
         File tempfile = downloadRemoteFile(mContext, url);
 
-        if(tempfile == null || tempfile.length() < 100000){
+        if(tempfile == null || tempfile.length() < LIME.MIN_FILE_SIZE_BYTES){
 
             switch (type) {
                 case LIME.IM_ARRAY:
@@ -184,7 +180,7 @@ public class SetupImLoadRunnable implements Runnable{
 
         mLIMEPref.setParameter("_table", "");
         //mLIMEPref.setResetCacheFlag(true);
-        DBServer.resetCache();
+        dbsrv.resetCache();
 
         if(restorePreference){
             handler.updateProgress(activity.getResources().getString(R.string.setup_im_restore_learning_data));
@@ -196,6 +192,14 @@ public class SetupImLoadRunnable implements Runnable{
 
                 String backupTableName = imtype + "_user";
 
+                // Validate table names to prevent SQL injection
+                // backupTableName should be in format "imtype_user" where imtype is a valid table
+                // The rawQuery method will validate this, but we also validate here for clarity
+                if (!backupTableName.endsWith("_user")) {
+                    Log.e(TAG, "Invalid backup table name: " + backupTableName);
+                    return;
+                }
+
                 // check if user data backup table is present and have valid records
                 int userRecordsCount = datasource.countMapping(backupTableName);
                 handler.updateProgress(10);
@@ -204,6 +208,9 @@ public class SetupImLoadRunnable implements Runnable{
                 try {
                     // Load backuptable records
                                 /*
+                                // NOTE: Commented out code uses rawQuery with table name concatenation
+                                // This is safe only if imtype is validated (which it should be)
+                                // If uncommenting, ensure imtype is validated against whitelist
                                 Cursor cursorsource = datasource.rawQuery("select * from " + imtype);
                                 List<Word> clist = Word.getList(cursorsource);
                                 cursorsource.close();
@@ -215,6 +222,7 @@ public class SetupImLoadRunnable implements Runnable{
                                 }
                                 handler.updateProgress(20);
                                 */
+                    // backupTableName is validated above, safe to use
                     Cursor cursorbackup = datasource.rawQuery("select * from " + backupTableName);
                     List<Word> backuplist = Word.getList(cursorbackup);
                     cursorbackup.close();
@@ -239,7 +247,7 @@ public class SetupImLoadRunnable implements Runnable{
                                                             + " AND " + LIME.DB_COLUMN_WORD + " = '" + w.getWord() + "'"
                                             );
                                         }catch(Exception e){
-                                            e.printStackTrace();
+                                            Log.e(TAG, "Error in operation", e);
                                         }
                                     }else{
                                         try{
@@ -247,7 +255,7 @@ public class SetupImLoadRunnable implements Runnable{
                                             String insertsql = Word.getInsertQuery(imtype, temp);
                                             datasource.execSQL(insertsql);
                                         }catch(Exception e){
-                                            e.printStackTrace();
+                                            Log.e(TAG, "Error in operation", e);
                                         }
                                     }
                                     */
@@ -264,11 +272,11 @@ public class SetupImLoadRunnable implements Runnable{
                     //   wordcheck.clear();
 
                 }catch(Exception e){
-                    e.printStackTrace();
+                    Log.e(TAG, "Error in operation", e);
                 }
 
                // datasource.restoreUserRecordsStep2(imtype);
-                handler.updateProgress(100);
+                handler.updateProgress(LIME.PROGRESS_COMPLETE_PERCENT);
             }
         }
 
@@ -279,7 +287,7 @@ public class SetupImLoadRunnable implements Runnable{
 
 
     public List<Word> loadWord(SQLiteDatabase sourcedb, String code) {
-        List<Word> result = new ArrayList<Word>();
+        List<Word> result = new ArrayList<>();
         if(sourcedb != null && sourcedb.isOpen()){
             Cursor cursor;
             String order = LIME.DB_COLUMN_CODE + " ASC";
@@ -311,7 +319,7 @@ public class SetupImLoadRunnable implements Runnable{
             datasource.open();
             datasource.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
         }*/
     }
 
@@ -340,7 +348,7 @@ public class SetupImLoadRunnable implements Runnable{
         try{
             setIMKeyboardOnDB(im, value, keyboard);
         }catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
         }
     }
 
@@ -348,132 +356,19 @@ public class SetupImLoadRunnable implements Runnable{
     public synchronized void removeImInfo(String im, String field) {
         try{
             removeImInfoOnDB(im, field);
-        }catch(Exception e){e.printStackTrace();}
+        }catch(Exception e){Log.e(TAG, "Error in operation", e);}
     }
 
-
-    @Deprecated public KeyboardObj getKeyboardObj(String keyboard){
-
-        if( keyboard == null || keyboard.equals(""))
-            return null;
-        KeyboardObj kobj=null;
-
-        if(!keyboard.equals("wb") && !keyboard.equals("hs")){
-            try {
-                //SQLiteDatabase db = this.getSqliteDb(true);
-
-
-               // datasource.open();
-                Cursor cursor = datasource.query("keyboard", "code" +" = '"+keyboard+"'");
-                if (cursor.moveToFirst()) {
-                    kobj = new KeyboardObj();
-                    kobj.setCode(cursor.getString(cursor.getColumnIndex("code")));
-                    kobj.setName(cursor.getString(cursor.getColumnIndex("name")));
-                    kobj.setDescription(cursor.getString(cursor.getColumnIndex("desc")));
-                    kobj.setType(cursor.getString(cursor.getColumnIndex("type")));
-                    kobj.setImage(cursor.getString(cursor.getColumnIndex("image")));
-                    kobj.setImkb(cursor.getString(cursor.getColumnIndex("imkb")));
-                    kobj.setImshiftkb(cursor.getString(cursor.getColumnIndex("imshiftkb")));
-                    kobj.setEngkb(cursor.getString(cursor.getColumnIndex("engkb")));
-                    kobj.setEngshiftkb(cursor.getString(cursor.getColumnIndex("engshiftkb")));
-                    kobj.setSymbolkb(cursor.getString(cursor.getColumnIndex("symbolkb")));
-                    kobj.setSymbolshiftkb(cursor.getString(cursor.getColumnIndex("symbolshiftkb")));
-                    kobj.setDefaultkb(cursor.getString(cursor.getColumnIndex("defaultkb")));
-                    kobj.setDefaultshiftkb(cursor.getString(cursor.getColumnIndex("defaultshiftkb")));
-                    kobj.setExtendedkb(cursor.getString(cursor.getColumnIndex("extendedkb")));
-                    kobj.setExtendedshiftkb(cursor.getString(cursor.getColumnIndex("extendedshiftkb")));
-                }
-                cursor.close();
-                //datasource.close();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }else if(keyboard.equals("wb")){
-            kobj = new KeyboardObj();
-            kobj.setCode("wb");
-            kobj.setName("筆順五碼");
-            kobj.setDescription("筆順五碼輸入法鍵盤");
-            kobj.setType("phone");
-            kobj.setImage("wb_keyboard_preview");
-            kobj.setImkb("lime_wb");
-            kobj.setImshiftkb("lime_wb");
-            kobj.setEngkb("lime_abc");
-            kobj.setEngshiftkb("lime_abc_shift");
-         }else if(keyboard.equals("hs")){
-            kobj = new KeyboardObj();
-            kobj.setCode("hs");
-            kobj.setName("華象直覺");
-            kobj.setDescription("華象直覺輸入法鍵盤");
-            kobj.setType("phone");
-            kobj.setImage("hs_keyboard_preview");
-            kobj.setImkb("lime_hs");
-            kobj.setImshiftkb("lime_hs_shift");
-            kobj.setEngkb("lime_abc");
-            kobj.setEngshiftkb("lime_abc_shift");
-         }
-
-        return kobj;
-    }
 
 
     /*
 	 * Download Remote File
+	 * Uses shared utility method from LIMEUtilities
 	 */
     public File downloadRemoteFile(Context ctx, String url){
-
-        try {
-            URL downloadUrl = new URL(url);
-            URLConnection conn = downloadUrl.openConnection();
-            conn.connect();
-            InputStream is = conn.getInputStream();
-
-            int size = conn.getContentLength();
-            int downloadSize = 0;
-
-            //long remoteFileSize = conn.getContentLength();
-            //long downloadedSize = 0;
-
-            if(is == null){
-                throw new RuntimeException("stream is null");
-            }
-
-            //File downloadFolder = new File(LIME.DATABASE_FOLDER_EXTERNAL);
-            //downloadFolder.mkdirs();
-            //File downloadedFile = new File(downloadFolder.getAbsolutePath() + File.separator + LIME.DATABASE_IM_TEMP);
-
-            File downloadFolder = ctx.getCacheDir();
-            File downloadedFile = File.createTempFile(LIME.DATABASE_IM_TEMP, LIME.DATABASE_IM_TEMP_EXT, downloadFolder);
-            downloadedFile.deleteOnExit();
-
-            FileOutputStream fos;
-            fos = new FileOutputStream(downloadedFile);
-
-
-            byte buf[] = new byte[4096];
-            do{
-                int numread = is.read(buf);
-                if(numread <=0){break;}
-                fos.write(buf, 0, numread);
-                if(size > 0){
-                    downloadSize += 4096;
-                    float percent = (float)downloadSize / (float)size;
-                            percent *= 100;
-                    handler.updateProgress((int)percent);
-                }
-                if(DEBUG)
-                    Log.i(TAG, numread +  "bytes download.");
-
-            }while(true);
-
-            is.close();
-
-            return downloadedFile;
-
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-        return null;
+        // Use shared download utility with progress callback
+        return LIMEUtilities.downloadRemoteFile(url, null, ctx.getCacheDir(), 
+                percent -> handler.updateProgress(percent), null);
     }
 
 

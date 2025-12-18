@@ -24,11 +24,13 @@
 
 package net.toload.main.hd.ui;
 
-import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment ;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,15 +44,13 @@ import net.toload.main.hd.global.LIMEPreferenceManager;
 
 public class NewsDialog extends DialogFragment {
 
-	Activity activity;
+	//Activity activity;
 	View view;
 
 	Button btnHelpDialog;
 
-	private LIMEPreferenceManager mLIMEPref;
 
-
-	public static NewsDialog newInstance() {
+    public static NewsDialog newInstance() {
 		NewsDialog btd = new NewsDialog();
 		btd.setCancelable(true);
 		return btd;
@@ -62,12 +62,12 @@ public class NewsDialog extends DialogFragment {
 	}
 
 	@Override
-	public void onAttach(Context context) {
+	public void onAttach(@NonNull Context context) {
 		super.onAttach(context);
 	}
 
 	@Override
-	public void onCancel(DialogInterface dialog) {
+	public void onCancel(@NonNull DialogInterface dialog) {
 		super.onCancel(dialog);
 	}
 
@@ -92,54 +92,48 @@ public class NewsDialog extends DialogFragment {
 	public void onResume() {
 		super.onResume();
 
-		getDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
-			@Override
-			public boolean onKey(DialogInterface dialog,
-								 int keyCode, android.view.KeyEvent event) {
-				if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
-					// To dismiss the fragment when the back-button is pressed.
-					dismiss();
-					return true;
-				}
-				// Otherwise, do nothing else
-				else return false;
-			}
-		});
+        assert getDialog() != null;
+        getDialog().setOnKeyListener((dialog, keyCode, event) -> {
+            if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
+                // To dismiss the fragment when the back-button is pressed.
+                dismiss();
+                return true;
+            }
+            // Otherwise, do nothing else
+            else return false;
+        });
 	}
 
 	public void cancelDialog(){
 		this.dismiss();
 	}
 
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
+	@SuppressLint("SetJavaScriptEnabled")
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 
-		getDialog().getWindow().setTitle(getResources().getString(R.string.action_news));
+        assert getDialog() != null;
+        getDialog().getWindow().setTitle(getResources().getString(R.string.action_news));
 
-		mLIMEPref = new LIMEPreferenceManager(getActivity());
+        LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(getActivity());
 
 		view = inflater.inflate(R.layout.fragment_dialog_news, container, false);
 
 		String html_value = mLIMEPref.getParameterString(LIME.LIME_NEWS_CONTENT, "");
 		if(!html_value.isEmpty()){
-			WebView newsContentArea = (WebView) view.findViewById(R.id.newsContentArea);
+			WebView newsContentArea = view.findViewById(R.id.newsContentArea);
 			newsContentArea.getSettings().setJavaScriptEnabled(true);
 			newsContentArea.loadData(html_value, "text/html", "UTF-8");
 		}
 
-		btnHelpDialog = (Button) view.findViewById(R.id.btnNewsDialog);
-		btnHelpDialog.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				dismiss();
-			}
-		});
+		btnHelpDialog = view.findViewById(R.id.btnNewsDialog);
+		btnHelpDialog.setOnClickListener(v -> dismiss());
 
 		return view;
 
 	}
 
 	@Override
-	public void onSaveInstanceState(Bundle icicle) {
+	public void onSaveInstanceState(@NonNull Bundle icicle) {
 		super.onSaveInstanceState(icicle);
 	}
 

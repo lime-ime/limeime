@@ -60,6 +60,7 @@ import android.widget.TextView;
 import net.toload.main.hd.LIMEService;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Mapping;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 
 import java.lang.ref.WeakReference;
@@ -791,7 +792,7 @@ public class CandidateView extends View implements View.OnClickListener {
             }
         }catch(Exception e){
             // ignore candidate construct error
-            e.printStackTrace();
+            Log.e(TAG, "Error in candidate view", e);
         }
 
     }
@@ -803,14 +804,14 @@ public class CandidateView extends View implements View.OnClickListener {
         //Jeremy '12,4,8 to avoid fc when hard keyboard is engaged and candidateview is not shown
         if (!this.isShown()) return;
 
-        mHandler.updateComposing(50);
+        mHandler.updateComposing(LIME.COMPOSING_SHOW_DELAY_MS);
 
     }
 
     public void hideComposing() {
         if (DEBUG)
             Log.i(TAG, "hideComposing()");
-        mHandler.dismissComposing(100); //Jeremy '12,6,3 the same delay as showComposing to avoid showed after hided
+        mHandler.dismissComposing(LIME.COMPOSING_DISMISS_DELAY_MS); //Jeremy '12,6,3 the same delay as showComposing to avoid showed after hided
 
     }
 

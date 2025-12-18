@@ -26,6 +26,8 @@ package net.toload.main.hd.keyboard;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
+
+import android.annotation.SuppressLint;
 import android.content.Context;
 import androidx.annotation.NonNull;
 import android.util.AttributeSet;
@@ -48,7 +50,7 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 	
    // private Keyboard mPhoneKeyboard;
   
-    private int mKeyHeight=0;
+    private final int mKeyHeight;
 
 	public LIMEKeyboardView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -83,7 +85,8 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 	/*
 	 *
 	 */
-	@Override
+	@SuppressLint("ClickableViewAccessibility")
+    @Override
 	public boolean onTouchEvent(@NonNull MotionEvent me) {
 		if(DEBUG) Log.i(TAG, "OnTouchEvent(), me.getActionMasked() =" + me.getActionMasked());
 		LIMEKeyboard keyboard = (LIMEKeyboard) getKeyboard();

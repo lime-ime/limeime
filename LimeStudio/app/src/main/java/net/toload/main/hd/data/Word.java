@@ -98,15 +98,34 @@ public class Word {
 	}
 
 
+	// Helper to safely get a String from cursor (validates column index >= 0)
+	private static String getCursorString(Cursor cursor, String columnName) {
+		int index = cursor.getColumnIndex(columnName);
+		if (index >= 0) {
+			return cursor.getString(index);
+		}
+		return ""; // Return empty string if column is missing
+	}
+
+	// Helper to safely get an Int from cursor (validates column index >= 0)
+	private static int getCursorInt(Cursor cursor, String columnName) {
+		int index = cursor.getColumnIndex(columnName);
+		if (index >= 0) {
+			return cursor.getInt(index);
+		}
+		return 0; // Return 0 if column is missing
+	}
+
 	public static Word get(Cursor cursor){
 		Word record = new Word();
-			record.setId(cursor.getInt(cursor.getColumnIndex(LIME.DB_COLUMN_ID)));
-			record.setCode(cursor.getString(cursor.getColumnIndex(LIME.DB_COLUMN_CODE)));
+			// Use helper methods to safely get column values (validates column index >= 0)
+			record.setId(getCursorInt(cursor, LIME.DB_COLUMN_ID));
+			record.setCode(getCursorString(cursor, LIME.DB_COLUMN_CODE));
 			//record.setCode3r(cursor.getString(cursor.getColumnIndex(LIME.DB_COLUMN_CODE3R)));  Jeremy '15,6,6 may not present in old db.
-			record.setWord(cursor.getString(cursor.getColumnIndex(LIME.DB_COLUMN_WORD)));
-			record.setRelated(cursor.getString(cursor.getColumnIndex(LIME.DB_COLUMN_RELATED)));
-			record.setScore(cursor.getInt(cursor.getColumnIndex(LIME.DB_COLUMN_SCORE)));
-			record.setBasescore(cursor.getInt(cursor.getColumnIndex(LIME.DB_COLUMN_BASESCORE)));
+			record.setWord(getCursorString(cursor, LIME.DB_COLUMN_WORD));
+			record.setRelated(getCursorString(cursor, LIME.DB_COLUMN_RELATED));
+			record.setScore(getCursorInt(cursor, LIME.DB_COLUMN_SCORE));
+			record.setBasescore(getCursorInt(cursor, LIME.DB_COLUMN_BASESCORE));
 		return record;
 	}
 	

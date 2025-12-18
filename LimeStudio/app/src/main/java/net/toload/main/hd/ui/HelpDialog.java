@@ -29,6 +29,8 @@ import android.content.Context;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -57,12 +59,12 @@ public class HelpDialog extends DialogFragment {
 	}
 
 	@Override
-	public void onAttach(Context context) {
+	public void onAttach(@NonNull Context context) {
 		super.onAttach(context);
 	}
 
 	@Override
-	public void onCancel(DialogInterface dialog) {
+	public void onCancel(@NonNull DialogInterface dialog) {
 		super.onCancel(dialog);
 	}
 
@@ -87,19 +89,16 @@ public class HelpDialog extends DialogFragment {
 	public void onResume() {
 		super.onResume();
 
-		getDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
-			@Override
-			public boolean onKey(android.content.DialogInterface dialog,
-								 int keyCode, android.view.KeyEvent event) {
-				if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
-					// To dismiss the fragment when the back-button is pressed.
-					dismiss();
-					return true;
-				}
-				// Otherwise, do nothing else
-				else return false;
-			}
-		});
+        assert getDialog() != null;
+        getDialog().setOnKeyListener((dialog, keyCode, event) -> {
+            if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
+                // To dismiss the fragment when the back-button is pressed.
+                dismiss();
+                return true;
+            }
+            // Otherwise, do nothing else
+            else return false;
+        });
 	}
 
 	public void cancelDialog(){
@@ -108,22 +107,18 @@ public class HelpDialog extends DialogFragment {
 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 
-		getDialog().getWindow().setTitle(getResources().getString(R.string.help_dialog_title));
+        assert getDialog() != null;
+        getDialog().getWindow().setTitle(getResources().getString(R.string.help_dialog_title));
 
 		view = inflater.inflate(R.layout.fragment_dialog_help, container, false);
 
-		btnHelpDialog = (Button) view.findViewById(R.id.btnHelpDialog);
-		btnHelpDialog.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				dismiss();
-			}
-		});
+		btnHelpDialog = view.findViewById(R.id.btnHelpDialog);
+		btnHelpDialog.setOnClickListener(v -> dismiss());
 		return view;
 	}
 
 	@Override
-	public void onSaveInstanceState(Bundle icicle) {
+	public void onSaveInstanceState(@NonNull Bundle icicle) {
 		super.onSaveInstanceState(icicle);
 	}
 

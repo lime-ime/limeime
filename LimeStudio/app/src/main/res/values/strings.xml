@@ -65,8 +65,6 @@
     <string name="setup_im_backup_message">資料庫備份中，請耐心等候 ...</string>
     <string name="setup_im_restore_message">資料庫還原中，請耐心等候 ...</string>
     <string name="setup_im_import_complete">資料庫匯入完成</string>
-    <string name="setup_im_backup_dropbox">Dropbox 備份</string>
-    <string name="setup_im_backup_dropbox_error_507">Dropbox 已沒有足夠的空間進行備份，請檢查</string>
     <string name="setup_im_backup_google">Google 備份</string>
     <string name="setup_im_backup_local">備份</string>
     <string name="setup_im_database">備份/還原資料庫</string>
@@ -87,7 +85,6 @@
     <string name="setup_im_import_related">匯入關聯字庫</string>
     <string name="setup_im_import_related_default">匯入預設字庫</string>
     <string name="setup_im_import_related_default_confirm">請問您要匯入預設關聯字庫嗎?</string>
-    <string name="setup_im_restore_dropbox">Dropbox 還原</string>
     <string name="setup_im_restore_google">Google 還原</string>
     <string name="setup_im_download_old">下載舊版程式</string>
     <string name="setup_im_download_old_summary">舊版程式與新版不相容, 請您下載完成後移除目前安裝的版本, 再至下載目錄取得並安裝舊版程式</string>

@@ -26,6 +26,8 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -92,13 +94,14 @@ public class ImportDialog extends DialogFragment {
 	}
 
 	@Override
-	public void onAttach(Context context) {
+	public void onAttach(@NonNull Context context) {
 		super.onAttach(context);
-		importtext = getArguments().getString(LIME.IMPORT_TEXT);
+        assert getArguments() != null;
+        importtext = getArguments().getString(LIME.IMPORT_TEXT);
 	}
 
 	@Override
-	public void onCancel(DialogInterface dialog) {
+	public void onCancel(@NonNull DialogInterface dialog) {
 		super.onCancel(dialog);
 	}
 
@@ -113,19 +116,16 @@ public class ImportDialog extends DialogFragment {
 	public void onResume() {
 		super.onResume();
 
-		getDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
-			@Override
-			public boolean onKey(android.content.DialogInterface dialog,
-								 int keyCode, android.view.KeyEvent event) {
-				if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
-					// To dismiss the fragment when the back-button is pressed.
-					dismiss();
-					return true;
-				}
-				// Otherwise, do nothing else
-				else return false;
-			}
-		});
+        assert getDialog() != null;
+        getDialog().setOnKeyListener((dialog, keyCode, event) -> {
+            if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
+                // To dismiss the fragment when the back-button is pressed.
+                dismiss();
+                return true;
+            }
+            // Otherwise, do nothing else
+            else return false;
+        });
 	}
 
 	public void cancelDialog(){
@@ -134,38 +134,34 @@ public class ImportDialog extends DialogFragment {
 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 
-		getDialog().getWindow().setTitle(getResources().getString(R.string.import_dialog_title));
+        assert getDialog() != null;
+        getDialog().getWindow().setTitle(getResources().getString(R.string.import_dialog_title));
 		datasource = new LimeDB(getActivity());
 		importdialog = this;
 
 		activity = getActivity();
 		view = inflater.inflate(R.layout.fragment_dialog_import, container, false);
 
-		btnImportCustom = (Button) view.findViewById(R.id.btnImportCustom);
-		btnImportArray = (Button) view.findViewById(R.id.btnImportArray);
-		btnImportArray10 = (Button) view.findViewById(R.id.btnImportArray10);
-		btnImportCj = (Button) view.findViewById(R.id.btnImportCj);
-		btnImportCj5 = (Button) view.findViewById(R.id.btnImportCj5);
-		btnImportDayi = (Button) view.findViewById(R.id.btnImportDayi);
-		btnImportEcj = (Button) view.findViewById(R.id.btnImportEcj);
-		btnImportEz = (Button) view.findViewById(R.id.btnImportEz);
-		btnImportPhonetic = (Button) view.findViewById(R.id.btnImportPhonetic);
-		btnImportPinyin = (Button) view.findViewById(R.id.btnImportPinyin);
-		btnImportScj = (Button) view.findViewById(R.id.btnImportScj);
-		btnImportWb = (Button) view.findViewById(R.id.btnImportWb);
-		btnImportHs = (Button) view.findViewById(R.id.btnImportHs);
+		btnImportCustom = view.findViewById(R.id.btnImportCustom);
+		btnImportArray = view.findViewById(R.id.btnImportArray);
+		btnImportArray10 = view.findViewById(R.id.btnImportArray10);
+		btnImportCj = view.findViewById(R.id.btnImportCj);
+		btnImportCj5 = view.findViewById(R.id.btnImportCj5);
+		btnImportDayi = view.findViewById(R.id.btnImportDayi);
+		btnImportEcj = view.findViewById(R.id.btnImportEcj);
+		btnImportEz = view.findViewById(R.id.btnImportEz);
+		btnImportPhonetic = view.findViewById(R.id.btnImportPhonetic);
+		btnImportPinyin = view.findViewById(R.id.btnImportPinyin);
+		btnImportScj = view.findViewById(R.id.btnImportScj);
+		btnImportWb = view.findViewById(R.id.btnImportWb);
+		btnImportHs = view.findViewById(R.id.btnImportHs);
 
-		btnImportRelated = (Button) view.findViewById(R.id.btnImportRelated);
+		btnImportRelated = view.findViewById(R.id.btnImportRelated);
 		
-		btnImportCancel = (Button) view.findViewById(R.id.btnImportCancel);
-		btnImportCancel.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				dismiss();
-			}
-		});
+		btnImportCancel = view.findViewById(R.id.btnImportCancel);
+		btnImportCancel.setOnClickListener(v -> dismiss());
 
-		HashMap<String, String> check = new HashMap<String, String>();
+		HashMap<String, String> check = new HashMap<>();
 
 		List<Im> imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
 		for(int i = 0; i < imlist.size() ; i++){
@@ -180,12 +176,7 @@ public class ImportDialog extends DialogFragment {
 			btnImportCustom.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportCustom.setTypeface(null, Typeface.BOLD);
 
-			btnImportCustom.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmimportdialog(LIME.IM_CUSTOM);
-				}
-			});
+			btnImportCustom.setOnClickListener(v -> confirmimportdialog(LIME.IM_CUSTOM));
 		}
 
 		if(check.get(LIME.DB_TABLE_PHONETIC) == null){
@@ -196,12 +187,7 @@ public class ImportDialog extends DialogFragment {
 			btnImportPhonetic.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportPhonetic.setTypeface(null, Typeface.BOLD);
 
-			btnImportPhonetic.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmimportdialog(LIME.IM_PHONETIC);
-				}
-			});
+			btnImportPhonetic.setOnClickListener(v -> confirmimportdialog(LIME.IM_PHONETIC));
 		}
 
 		if(check.get(LIME.DB_TABLE_CJ) == null){
@@ -212,12 +198,7 @@ public class ImportDialog extends DialogFragment {
 			btnImportCj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportCj.setTypeface(null, Typeface.BOLD);
 
-			btnImportCj.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmimportdialog(LIME.IM_CJ);
-				}
-			});
+			btnImportCj.setOnClickListener(v -> confirmimportdialog(LIME.IM_CJ));
 		}
 
 
@@ -230,12 +211,7 @@ public class ImportDialog extends DialogFragment {
 			btnImportCj5.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportCj5.setTypeface(null, Typeface.BOLD);
 
-			btnImportCj5.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmimportdialog(LIME.IM_CJ5);
-				}
-			});
+			btnImportCj5.setOnClickListener(v -> confirmimportdialog(LIME.IM_CJ5));
 		}
 
 		if(check.get(LIME.DB_TABLE_SCJ) == null){
@@ -245,12 +221,7 @@ public class ImportDialog extends DialogFragment {
 		}else {
 			btnImportScj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportScj.setTypeface(null, Typeface.BOLD);
-			btnImportScj.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmimportdialog(LIME.IM_SCJ);
-				}
-			});
+			btnImportScj.setOnClickListener(v -> confirmimportdialog(LIME.IM_SCJ));
 		}
 
 		if(check.get(LIME.DB_TABLE_ECJ) == null){
@@ -261,12 +232,7 @@ public class ImportDialog extends DialogFragment {
 			btnImportEcj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportEcj.setTypeface(null, Typeface.BOLD);
 
-			btnImportEcj.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmimportdialog(LIME.IM_ECJ);
-				}
-			});
+			btnImportEcj.setOnClickListener(v -> confirmimportdialog(LIME.IM_ECJ));
 		}
 
 		if(check.get(LIME.DB_TABLE_DAYI) == null){
@@ -277,12 +243,7 @@ public class ImportDialog extends DialogFragment {
 			btnImportDayi.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportDayi.setTypeface(null, Typeface.BOLD);
 
-			btnImportDayi.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmimportdialog(LIME.IM_DAYI);
-				}
-			});
+			btnImportDayi.setOnClickListener(v -> confirmimportdialog(LIME.IM_DAYI));
 		}
 
 		if(check.get(LIME.DB_TABLE_EZ) == null){
@@ -293,12 +254,7 @@ public class ImportDialog extends DialogFragment {
 			btnImportEz.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportEz.setTypeface(null, Typeface.BOLD);
 
-			btnImportEz.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmimportdialog(LIME.IM_EZ);
-				}
-			});
+			btnImportEz.setOnClickListener(v -> confirmimportdialog(LIME.IM_EZ));
 		}
 
 		if(check.get(LIME.DB_TABLE_ARRAY) == null){
@@ -309,12 +265,7 @@ public class ImportDialog extends DialogFragment {
 			btnImportArray.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportArray.setTypeface(null, Typeface.BOLD);
 
-			btnImportArray.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmimportdialog(LIME.IM_ARRAY);
-				}
-			});
+			btnImportArray.setOnClickListener(v -> confirmimportdialog(LIME.IM_ARRAY));
 		}
 
 		if(check.get(LIME.DB_TABLE_ARRAY10) == null){
@@ -325,12 +276,7 @@ public class ImportDialog extends DialogFragment {
 			btnImportArray10.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportArray10.setTypeface(null, Typeface.BOLD);
 
-			btnImportArray10.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmimportdialog(LIME.IM_ARRAY10);
-				}
-			});
+			btnImportArray10.setOnClickListener(v -> confirmimportdialog(LIME.IM_ARRAY10));
 		}
 
 		if(check.get(LIME.DB_TABLE_HS) == null){
@@ -341,12 +287,7 @@ public class ImportDialog extends DialogFragment {
 			btnImportHs.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportHs.setTypeface(null, Typeface.BOLD);
 
-			btnImportHs.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmimportdialog(LIME.IM_HS);
-				}
-			});
+			btnImportHs.setOnClickListener(v -> confirmimportdialog(LIME.IM_HS));
 		}
 
 		if(check.get(LIME.DB_TABLE_WB) == null){
@@ -357,12 +298,7 @@ public class ImportDialog extends DialogFragment {
 			btnImportWb.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportWb.setTypeface(null, Typeface.BOLD);
 
-			btnImportWb.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmimportdialog(LIME.IM_WB);
-				}
-			});
+			btnImportWb.setOnClickListener(v -> confirmimportdialog(LIME.IM_WB));
 		}
 
 		if(check.get(LIME.DB_TABLE_PINYIN) == null){
@@ -373,21 +309,11 @@ public class ImportDialog extends DialogFragment {
 			btnImportPinyin.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnImportPinyin.setTypeface(null, Typeface.BOLD);
 
-			btnImportPinyin.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmimportdialog(LIME.IM_PINYIN);
-				}
-			});
+			btnImportPinyin.setOnClickListener(v -> confirmimportdialog(LIME.IM_PINYIN));
 		}
 
 		if(importtext.length() > 1) {
-			btnImportRelated.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmimportdialog(LIME.DB_RELATED);
-				}
-			});
+			btnImportRelated.setOnClickListener(v -> confirmimportdialog(LIME.DB_RELATED));
 		}else{
 			btnImportRelated.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportRelated.setTypeface(null, Typeface.ITALIC);
@@ -418,35 +344,29 @@ public class ImportDialog extends DialogFragment {
 		}
 
 		alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
+                (dialog, which) -> {
 
-						if(imtype.equals(LIME.DB_RELATED)){
-							importToRelatedTable();
-							dismiss();
-							importdialog.dismiss();
-						}else{
-							if(input.getText() != null && !input.getText().toString().isEmpty()){
-								importToImTable(imtype, input.getText().toString());
-								dismiss();
-								importdialog.dismiss();
-							}else{
-								Toast.makeText(activity, getResources().getString(R.string.import_code_empty), Toast.LENGTH_SHORT).show();
-							}
-						}
-					}
-				});
+                    if(imtype.equals(LIME.DB_RELATED)){
+                        importToRelatedTable();
+                        dismiss();
+                        importdialog.dismiss();
+                    }else{
+                        if(input.getText() != null && !input.getText().toString().isEmpty()){
+                            importToImTable(imtype, input.getText().toString());
+                            dismiss();
+                            importdialog.dismiss();
+                        }else{
+                            Toast.makeText(activity, getResources().getString(R.string.import_code_empty), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
 		alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				});
+                (dialog, which) -> dialog.dismiss());
 		alertDialog.show();
 	}
 
 	@Override
-	public void onSaveInstanceState(Bundle icicle) {
+	public void onSaveInstanceState(@NonNull Bundle icicle) {
 		super.onSaveInstanceState(icicle);
 	}
 

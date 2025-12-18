@@ -38,12 +38,11 @@ import java.util.List;
 public class ManageRelatedRunnable implements Runnable{
 
 
-    private ManageRelatedHandler handler;
-    private Activity activity;
-    private LimeDB datasource;
-    private String query;
-    private int maximum;
-    private int offset;
+    private final ManageRelatedHandler handler;
+    private final LimeDB datasource;
+    private final String query;
+    private final int maximum;
+    private final int offset;
 
     @Override
     protected void finalize() throws Throwable {
@@ -52,12 +51,11 @@ public class ManageRelatedRunnable implements Runnable{
 
     public ManageRelatedRunnable(ManageRelatedHandler handler, Activity activity, String query, int maximum, int offset) {
         this.handler = handler;
-        this.activity = activity;
         this.query = query;
         this.maximum = maximum;
         this.offset = offset;
 
-        datasource = new LimeDB(this.activity);
+        datasource = new LimeDB(activity);
     }
 
     public void run() {
@@ -80,7 +78,7 @@ public class ManageRelatedRunnable implements Runnable{
             datasource.open();
             datasource.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
         }*/
         return results;
     }

@@ -26,6 +26,7 @@ package net.toload.main.hd.keyboard;
 
 import net.toload.main.hd.LIMEKeyboardSwitcher;
 import net.toload.main.hd.R;
+import net.toload.main.hd.global.LIME;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -122,26 +123,25 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 
         mContext = context;
 
-        TypedArray a = context.getTheme().obtainStyledAttributes(//R.style.LIMEKeyboardLight, R.styleable.LIMEKeyboard);
-                null, R.styleable.LIMEKeyboard, R.attr.LIMEKeyboardStyle, R.style.LIMEKeyboard);
+        try (TypedArray a = context.getTheme().obtainStyledAttributes(
+                null, R.styleable.LIMEKeyboard, R.attr.LIMEKeyboardStyle, R.style.LIMEKeyboard)) {
 
-        mSpaceKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyIcon);
-        mSpaceKeyPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyPreviewIcon);
-        mEnterKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_enterKeyIcon);
-        mSearchKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_searchKeyIcon);
-        mDoneKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_doneKeyIcon);
-        mDeleteKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_deleteKeyIcon);
-        mShiftKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_shiftKeyIcon);
-        mShiftKeyShiftedIcon = a.getDrawable(R.styleable.LIMEKeyboard_shiftKeyShiftedIcon);
+            mSpaceKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyIcon);
+            mSpaceKeyPreviewIcon = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeyPreviewIcon);
+            mEnterKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_enterKeyIcon);
+            mSearchKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_searchKeyIcon);
+            mDoneKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_doneKeyIcon);
+            mDeleteKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_deleteKeyIcon);
+            mShiftKeyIcon = a.getDrawable(R.styleable.LIMEKeyboard_shiftKeyIcon);
+            mShiftKeyShiftedIcon = a.getDrawable(R.styleable.LIMEKeyboard_shiftKeyShiftedIcon);
 
-        // for sliding space bar
-        mSpaceKeyTextColor = a.getColor(R.styleable.LIMEKeyboard_spaceKeyTextColor,0xFF000000);
-        mSpaceKeyVerticalCorrection = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spaceKeyVerticalCorrection, 0);
-        mSpaceKeySlidingTextSize = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spaceKeySlidingTextSize,25);
-        mSpaceKeySlidingLeftArrow = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeySlidingLeftArrow);
-        mSpaceKeySlidingRightArrow = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeySlidingRightArrow);
-
-        a.recycle();
+            // for sliding space bar
+            mSpaceKeyTextColor = a.getColor(R.styleable.LIMEKeyboard_spaceKeyTextColor,0xFF000000);
+            mSpaceKeyVerticalCorrection = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spaceKeyVerticalCorrection, 0);
+            mSpaceKeySlidingTextSize = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spaceKeySlidingTextSize, LIME.DEFAULT_SPACE_KEY_TEXT_SIZE_SP);
+            mSpaceKeySlidingLeftArrow = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeySlidingLeftArrow);
+            mSpaceKeySlidingRightArrow = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeySlidingRightArrow);
+        }
     }
 
 	@Override
@@ -332,7 +332,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         final int code = key.codes[0];
         if (code == KEYCODE_SHIFT ||
                 code == KEYCODE_DELETE) {
-            y -= key.height / 10;
+            y -= key.height / LIME.KEY_POSITION_ADJUSTMENT_DIVISOR;
             if (code == KEYCODE_SHIFT) x += key.width / 6;
             if (code == KEYCODE_DELETE) x -= key.width / 6;
         } else if (code == KEYCODE_SPACE) {
@@ -377,10 +377,8 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
      	return mSpaceDragLastDiff;
         }
     public int getSpaceDragDirection() {
-    	if(DEBUG) Log.i(TAG, "getSpaceDragDirection(): mSpaceDragLastDiff= " + 
-    			mSpaceDragLastDiff + ". mSpaceKey.width=" + mSpaceKey.width);
-        if (mSpaceKey == null 
-                || Math.abs(mSpaceDragLastDiff) < mSpaceKey.width * SPACEBAR_DRAG_THRESHOLD ) {
+    	if(DEBUG) Log.i(TAG, "getSpaceDragDirection(): mSpaceDragLastDiff= " + mSpaceDragLastDiff + ". mSpaceKey.width=" + mSpaceKey.width);
+        if (mSpaceKey == null || Math.abs(mSpaceDragLastDiff) < mSpaceKey.width * SPACEBAR_DRAG_THRESHOLD ) {
             return 0; // No change
         }
         return mSpaceDragLastDiff > 0 ? 1 : -1;

@@ -297,66 +297,66 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("number_row_in_english", true);
 	}
 	public void syncIMActivatedState(List<Im> imlist){
-		String state = "";
+		StringBuilder state = new StringBuilder();
 		HashMap<String, String> imhm = new HashMap<>();
 		for(Im i :imlist){
 			imhm.put(i.getCode(), i.getCode());
 		}
 
 		if(imhm.get(LIME.IM_CUSTOM) != null){
-			state += "0";
+			state.append("0");
 		}
 
 		if(imhm.get(LIME.IM_CJ) != null){
-			if(!state.isEmpty()){state += ";";}
-			state += "1";
+			if(state.length() > 0){state.append(";");}
+			state.append("1");
 		}
 		if(imhm.get(LIME.IM_SCJ) != null){
-			if(!state.isEmpty()){state += ";";}
-			state += "2";
+			if(state.length() > 0){state.append(";");}
+			state.append("2");
 		}
 		if(imhm.get(LIME.IM_CJ5) != null){
-			if(!state.isEmpty()){state += ";";}
-			state += "3";
+			if(state.length() > 0){state.append(";");}
+			state.append("3");
 		}
 		if(imhm.get(LIME.IM_ECJ) != null){
-			if(!state.isEmpty()){state += ";";}
-			state += "4";
+			if(state.length() > 0){state.append(";");}
+			state.append("4");
 		}
 		if(imhm.get(LIME.IM_DAYI) != null){
-			if(!state.isEmpty()){state += ";";}
-			state += "5";
+			if(state.length() > 0){state.append(";");}
+			state.append("5");
 		}
 		if(imhm.get(LIME.IM_PHONETIC) != null){
-			if(!state.isEmpty()){state += ";";}
-			state += "6";
+			if(state.length() > 0){state.append(";");}
+			state.append("6");
 		}
 		if(imhm.get(LIME.IM_EZ) != null){
-			if(!state.isEmpty()){state += ";";}
-			state += "7";
+			if(state.length() > 0){state.append(";");}
+			state.append("7");
 		}
 		if(imhm.get(LIME.IM_ARRAY) != null){
-			if(!state.isEmpty()){state += ";";}
-			state += "8";
+			if(state.length() > 0){state.append(";");}
+			state.append("8");
 		}
 		if(imhm.get(LIME.IM_ARRAY10) != null){
-			if(!state.isEmpty()){state += ";";}
-			state += "9";
+			if(state.length() > 0){state.append(";");}
+			state.append("9");
 		}
 		if(imhm.get(LIME.IM_WB) != null){
-			if(!state.isEmpty()){state += ";";}
-			state += "10";
+			if(state.length() > 0){state.append(";");}
+			state.append("10");
 		}
 		if(imhm.get(LIME.IM_HS) != null){
-			if(!state.isEmpty()){state += ";";}
-			state += "11";
+			if(state.length() > 0){state.append(";");}
+			state.append("11");
 		}
 		if(imhm.get(LIME.IM_PINYIN) != null){
-			if(!state.isEmpty()){state += ";";}
-			state += "12";
+			if(state.length() > 0){state.append(";");}
+			state.append("12");
 		}
 
-		setIMActivatedState(state);
+		setIMActivatedState(state.toString());
 	}
 	
 	public String getIMActivatedState(){

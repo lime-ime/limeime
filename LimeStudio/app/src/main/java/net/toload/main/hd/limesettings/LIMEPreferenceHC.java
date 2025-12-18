@@ -110,12 +110,10 @@ public class LIMEPreferenceHC extends AppCompatActivity {
 		// Set status bar and navigation bar to transparent for edge-to-edge effect
 		// Note: setStatusBarColor and setNavigationBarColor are deprecated in API 35+,
 		// but we use them with suppression for backward compatibility
-		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-			@SuppressWarnings("deprecation")
-			android.view.Window window = getWindow();
-			window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
-			window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
-		}
+        android.view.Window window = getWindow();
+        window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
+        window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+
 		
 		// Set status bar icon appearance to dark (black icons) for better visibility
 		// Since status bar is transparent and content behind may be light, use dark icons
@@ -132,12 +130,12 @@ public class LIMEPreferenceHC extends AppCompatActivity {
 				// Use dark navigation bar icons for consistency
 				windowInsetsController.setAppearanceLightNavigationBars(true);
 			}
-		} else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+		} else {
 			// API 21-22: SYSTEM_UI_FLAG_LIGHT_STATUS_BAR is not available (introduced in API 23)
 			// On API 21-22, we cannot change icon color programmatically
 			// Set a dark status bar so white icons are visible (compromise for API 21-22)
-			@SuppressWarnings("deprecation")
-			android.view.Window window = getWindow();
+			//@SuppressWarnings("deprecation")
+			//android.view.Window window = getWindow();
 			// Use a dark color so white icons are visible
 			// This maintains some edge-to-edge while ensuring icons are visible
 			window.setStatusBarColor(0xFF000000); // Solid black
@@ -156,10 +154,10 @@ public class LIMEPreferenceHC extends AppCompatActivity {
 			addPreferencesFromResource(R.xml.preference);
 
 			if (ctx == null) {
-				ctx = Objects.requireNonNull(getActivity()).getApplicationContext();
+				ctx = requireActivity().getApplicationContext();
 			}
 			mLIMEPref = new LIMEPreferenceManager(ctx);
-			DBSrv = new DBServer(ctx);
+			DBSrv = DBServer.getInstance(ctx);
 		}
 
 		@Override
@@ -190,6 +188,13 @@ public class LIMEPreferenceHC extends AppCompatActivity {
 				String selectedPhoneticKeyboardType = mLIMEPref.getPhoneticKeyboardType();
 				//PreferenceManager.getDefaultSharedPreferences(ctx).getString("phonetic_keyboard_type", "");
 				try {
+					// Ensure DBServer instance is initialized
+					if (DBSrv == null) {
+						if (ctx == null) {
+							ctx = requireActivity().getApplicationContext();
+						}
+						DBSrv = DBServer.getInstance(ctx);
+					}
 
 					KeyboardObj kobj = DBSrv.getKeyboardObj("phonetic");
 
@@ -242,7 +247,7 @@ public class LIMEPreferenceHC extends AppCompatActivity {
 							DBSrv.getImInfo("phonetic", "keyboard"));	
 				} catch (RemoteException e) {
 					Log.i(TAG, "onSharedPreferenceChanged(), WriteIMinfo for selected phonetic keyboard failed!!");
-					e.printStackTrace();
+					Log.e(TAG, "Error in operation", e);
 				}
 
 			}

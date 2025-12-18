@@ -26,6 +26,7 @@
 
 package net.toload.main.hd.candidate;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -50,6 +51,7 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
         
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     public void initViews() {
         if (mCandidateView == null) {
             mButtonExpandLayout = findViewById(R.id.candidate_right_parent);

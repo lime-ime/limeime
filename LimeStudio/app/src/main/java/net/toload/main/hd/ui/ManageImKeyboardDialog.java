@@ -46,11 +46,8 @@ import java.util.List;
 public class ManageImKeyboardDialog extends DialogFragment implements
 		AdapterView.OnItemClickListener {
 
-	private Activity activity;
-	private View view;
 
-
-	private List<Keyboard> keyboardlist;
+    private List<Keyboard> keyboardlist;
 	private ListView listSelectKeyboard;
 
 	private LimeDB datasource;
@@ -73,12 +70,12 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 	}
 
 	@Override
-	public void onAttach(Context context) {
+	public void onAttach(@NonNull Context context) {
 		super.onAttach(context);
 	}
 
 	@Override
-	public void onCancel(DialogInterface dialog) {
+	public void onCancel(@NonNull DialogInterface dialog) {
 		super.onCancel(dialog);
 	}
 
@@ -93,31 +90,29 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 	public void onResume() {
 		super.onResume();
 
-		getDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
-			@Override
-			public boolean onKey(android.content.DialogInterface dialog,
-								 int keyCode, android.view.KeyEvent event) {
-				if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
-					// To dismiss the fragment when the back-button is pressed.
-					dismiss();
-					return true;
-				}
-				// Otherwise, do nothing else
-				else return false;
-			}
-		});
+        assert getDialog() != null;
+        getDialog().setOnKeyListener((dialog, keyCode, event) -> {
+            if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
+                // To dismiss the fragment when the back-button is pressed.
+                dismiss();
+                return true;
+            }
+            // Otherwise, do nothing else
+            else return false;
+        });
 	}
 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 
-		getDialog().getWindow().setTitle(getResources().getString(R.string.manage_select_keyboard));
+        assert getDialog() != null;
+        getDialog().getWindow().setTitle(getResources().getString(R.string.manage_select_keyboard));
 
-		activity = getActivity();
-		datasource = new LimeDB(this.activity);
+        Activity activity = getActivity();
+		datasource = new LimeDB(activity);
 
-		view = inflater.inflate(R.layout.fragment_dialog_keyboard, container, false);
+        View view = inflater.inflate(R.layout.fragment_dialog_keyboard, container, false);
 
-		listSelectKeyboard = (ListView) view.findViewById(R.id.listSelectKeyboard);
+		listSelectKeyboard = view.findViewById(R.id.listSelectKeyboard);
 		
 		return view;
 	}
@@ -126,7 +121,7 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 	public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 
-		String[] listitems = new String[]{};
+		String[] listitems;
 
 			//datasource.open();
 			keyboardlist = datasource.getKeyboard();
@@ -137,8 +132,8 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 				listitems[i] = keyboardlist.get(i).getDesc();
 			}
 
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
-				android.R.layout.simple_list_item_1, listitems);
+		ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(),
+                android.R.layout.simple_list_item_1, listitems);
 
 		listSelectKeyboard.setAdapter(adapter);
 		listSelectKeyboard.setOnItemClickListener(this);
@@ -146,7 +141,7 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 	}
 
 	@Override
-	public void onSaveInstanceState(Bundle icicle) {
+	public void onSaveInstanceState(@NonNull Bundle icicle) {
 		super.onSaveInstanceState(icicle);
 	}
 
@@ -160,7 +155,7 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 			//datasource.open();
 			//datasource.close();
 		/*} catch (SQLException e) {
-			e.printStackTrace();
+			Log.e(TAG, "Error in operation", e);
 		}*/
 
 		handler.updateKeyboardButton(keyboard.getCode());

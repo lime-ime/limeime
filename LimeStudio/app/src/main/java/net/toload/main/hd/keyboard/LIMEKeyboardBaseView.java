@@ -66,6 +66,7 @@ import android.widget.TextView;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Keyboard;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 
 import java.lang.ref.WeakReference;
@@ -525,82 +526,83 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
         setLayerType(LAYER_TYPE_HARDWARE, null);
 
-        TypedArray a = context.getTheme().obtainStyledAttributes(
-                attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEBaseKeyboard);
         LayoutInflater inflate =
                 (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         int previewLayout = 0;
         int keyTextSize = 0;
 
+        try (TypedArray a = context.getTheme().obtainStyledAttributes(
+                attrs, R.styleable.LIMEKeyboardBaseView, defStyle, R.style.LIMEBaseKeyboard)) {
 
-        int n = a.getIndexCount();
+            int n = a.getIndexCount();
 
-        for (int i = 0; i < n; i++) {
-            int attr = a.getIndex(i);
+            for (int i = 0; i < n; i++) {
+                int attr = a.getIndex(i);
 
-            if(attr == R.styleable.LIMEKeyboardBaseView_keyBackground)
-                mKeyBackground = a.getDrawable(attr);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_keyHysteresisDistance)
-                mKeyHysteresisDistance = a.getDimensionPixelOffset(attr, 0);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_verticalCorrection)
-                mVerticalCorrection = a.getDimensionPixelOffset(attr, 0);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_keyPreviewLayout)
-                previewLayout = a.getResourceId(attr, 0);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_keyPreviewOffset)
-                mPreviewOffset = a.getDimensionPixelOffset(attr, 0);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_keyPreviewHeight)
-                mPreviewHeight = a.getDimensionPixelSize(attr, 80);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_keyTextSize)
-                mKeyTextSize = a.getDimensionPixelSize(attr, 18);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_functionKeyTextColorNormal)
-                mFunctionKeyTextColorNormal = a.getColor(attr, 0xFF000000);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_functionKeyTextColorPressed)
-                mFunctionKeyTextColorPressed = a.getColor(attr, 0xFF000000);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_keyTextColorNormal)
-                mKeyTextColorNormal = a.getColor(attr, 0xFF000000);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_keyTextColorPressed)
-                mKeyTextColorPressed = a.getColor(attr, 0xFF000000);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_keySubLabelTextColorNormal)
-                mKeySubLabelTextColorNormal = a.getColor(attr, 0xFF000000);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_keySubLabelTextColorPressed)
-                mKeySubLabelTextColorPressed = a.getColor(attr, 0xFF000000);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_labelTextSize)
-                mLabelTextSize = a.getDimensionPixelSize(attr, 14);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_smallLabelTextSize)
-                mSmallLabelTextSize = a.getDimensionPixelSize(attr, 14);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_subLabelTextSize)
-                mSubLabelTextSize = a.getDimensionPixelSize(attr, 14);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_popupLayout)
-                mPopupLayout = a.getResourceId(attr, 0);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_popupHint)
-                mPopupHint = a.getDrawable(attr);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_shadowColor)
-                mShadowColor = a.getColor(attr, 0);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_shadowRadius)
-                mShadowRadius = a.getFloat(attr, 0f);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_spacePreviewTopPadding)
-                mSpacePreviewTopPadding = a.getDimensionPixelSize(attr, 10);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_previewTopPadding)
-                mPreviewTopPadding = a.getDimensionPixelSize(attr, 0);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_backgroundDimAmount)
-                mBackgroundDimAmount = a.getFloat(attr, 0.5f);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_symbolColorScheme)
-                mSymbolColorScheme = a.getInt(attr, 0);
-            else if(attr == R.styleable.LIMEKeyboardBaseView_keyTextStyle) {
-                int textStyle = a.getInt(attr, 0);
-                switch (textStyle) {
-                    case 0:
-                        mKeyTextStyle = Typeface.DEFAULT;
-                        break;
-                    case 1:
-                        mKeyTextStyle = Typeface.DEFAULT_BOLD;
-                        break;
-                    default:
-                        mKeyTextStyle = Typeface.defaultFromStyle(textStyle);
-                        break;
+                if(attr == R.styleable.LIMEKeyboardBaseView_keyBackground)
+                    mKeyBackground = a.getDrawable(attr);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_keyHysteresisDistance)
+                    mKeyHysteresisDistance = a.getDimensionPixelOffset(attr, 0);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_verticalCorrection)
+                    mVerticalCorrection = a.getDimensionPixelOffset(attr, 0);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_keyPreviewLayout)
+                    previewLayout = a.getResourceId(attr, 0);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_keyPreviewOffset)
+                    mPreviewOffset = a.getDimensionPixelOffset(attr, 0);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_keyPreviewHeight)
+                    mPreviewHeight = a.getDimensionPixelSize(attr, LIME.DEFAULT_PREVIEW_HEIGHT_PX);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_keyTextSize)
+                    mKeyTextSize = a.getDimensionPixelSize(attr, LIME.DEFAULT_KEY_TEXT_SIZE_SP);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_functionKeyTextColorNormal)
+                    mFunctionKeyTextColorNormal = a.getColor(attr, 0xFF000000);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_functionKeyTextColorPressed)
+                    mFunctionKeyTextColorPressed = a.getColor(attr, 0xFF000000);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_keyTextColorNormal)
+                    mKeyTextColorNormal = a.getColor(attr, 0xFF000000);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_keyTextColorPressed)
+                    mKeyTextColorPressed = a.getColor(attr, 0xFF000000);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_keySubLabelTextColorNormal)
+                    mKeySubLabelTextColorNormal = a.getColor(attr, 0xFF000000);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_keySubLabelTextColorPressed)
+                    mKeySubLabelTextColorPressed = a.getColor(attr, 0xFF000000);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_labelTextSize)
+                    mLabelTextSize = a.getDimensionPixelSize(attr, LIME.DEFAULT_LABEL_TEXT_SIZE_SP);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_smallLabelTextSize)
+                    mSmallLabelTextSize = a.getDimensionPixelSize(attr, LIME.DEFAULT_LABEL_TEXT_SIZE_SP);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_subLabelTextSize)
+                    mSubLabelTextSize = a.getDimensionPixelSize(attr, LIME.DEFAULT_LABEL_TEXT_SIZE_SP);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_popupLayout)
+                    mPopupLayout = a.getResourceId(attr, 0);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_popupHint)
+                    mPopupHint = a.getDrawable(attr);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_shadowColor)
+                    mShadowColor = a.getColor(attr, 0);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_shadowRadius)
+                    mShadowRadius = a.getFloat(attr, 0f);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_spacePreviewTopPadding)
+                    mSpacePreviewTopPadding = a.getDimensionPixelSize(attr, LIME.DEFAULT_PREVIEW_TOP_PADDING_PX);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_previewTopPadding)
+                    mPreviewTopPadding = a.getDimensionPixelSize(attr, 0);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_backgroundDimAmount)
+                    mBackgroundDimAmount = a.getFloat(attr, 0.5f);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_symbolColorScheme)
+                    mSymbolColorScheme = a.getInt(attr, 0);
+                else if(attr == R.styleable.LIMEKeyboardBaseView_keyTextStyle) {
+                    int textStyle = a.getInt(attr, 0);
+                    switch (textStyle) {
+                        case 0:
+                            mKeyTextStyle = Typeface.DEFAULT;
+                            break;
+                        case 1:
+                            mKeyTextStyle = Typeface.DEFAULT_BOLD;
+                            break;
+                        default:
+                            mKeyTextStyle = Typeface.defaultFromStyle(textStyle);
+                            break;
+                    }
                 }
-            }
 
+            }
         }
 
         final Resources res = getResources();
@@ -644,7 +646,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             mKeyBackground.getPadding(mPadding);
         }
 
-        mSwipeThreshold = (int) (500 * res.getDisplayMetrics().density);
+        mSwipeThreshold = (int) (LIME.SWIPE_THRESHOLD_BASE_DP * res.getDisplayMetrics().density);
         // TODO: Refer frameworks/base/core/res/res/values/config.xml
         mDisambiguateSwipe = res.getBoolean(R.bool.config_swipeDisambiguation);
         mMiniKeyboardSlideAllowance = res.getDimension(R.dimen.mini_keyboard_slide_allowance);
@@ -660,7 +662,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                         float deltaY = me2.getY() - me1.getY();
                         int travelX = getWidth() / 2; // Half the keyboard width
                         int travelY = getHeight() / 2; // Half the keyboard height
-                        mSwipeTracker.computeCurrentVelocity(1000);
+                        mSwipeTracker.computeCurrentVelocity(LIME.SWIPE_VELOCITY_UNITS_PER_SECOND);
                         final float endingVelocityX = mSwipeTracker.getXVelocity();
                         final float endingVelocityY = mSwipeTracker.getYVelocity();
                         if (velocityX > mSwipeThreshold && absY < absX && deltaX > travelX) {
@@ -862,7 +864,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     getPaddingLeft() + getPaddingRight(), getPaddingTop() + getPaddingBottom());
         } else {
             int width = mKeyboard.getMinWidth() + getPaddingLeft() + getPaddingRight();
-            if (MeasureSpec.getSize(widthMeasureSpec) < width + 10) {
+            if (MeasureSpec.getSize(widthMeasureSpec) < width + LIME.DEFAULT_PREVIEW_TOP_PADDING_PX) {
                 width = MeasureSpec.getSize(widthMeasureSpec);
             }
             Log.i(TAG,"Width = " + width + "  height = " + mKeyboard.getHeight() + getPaddingTop() + getPaddingBottom() + ".");
@@ -1628,6 +1630,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     }
 
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(@NonNull MotionEvent me) {
         if(DEBUG)

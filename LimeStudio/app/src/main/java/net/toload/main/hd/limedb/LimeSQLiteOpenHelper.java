@@ -29,7 +29,6 @@ package net.toload.main.hd.limedb;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteException;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -99,18 +98,18 @@ public abstract class LimeSQLiteOpenHelper {
         // Copy DB file from Raw Dir to Database Dir
         File dbPath = mContext.getDatabasePath(mName);
         File destdir = dbPath.getParentFile();
-        if (destdir != null) {
-            destdir.mkdirs();
+        if (destdir != null && !destdir.mkdirs()){
+            Log.e(TAG, "Error in creating database directory");
         }
 
-        if (!dbPath.exists() || dbPath.length() < 10000) {
+        if (!dbPath.exists() || dbPath.length() < LIME.MIN_DATABASE_SIZE_BYTES) {
 
             InputStream from =  mContext.getResources().openRawResource( R.raw.lime);
             
 
             try {
                 FileOutputStream to = new FileOutputStream(dbPath);
-                byte[] buffer = new byte[4096];
+                byte[] buffer = new byte[LIME.BUFFER_SIZE_4KB];
                 int bytes_read;
                 if (from != null) {
                     while ((bytes_read = from.read(buffer)) != -1) {
@@ -129,7 +128,7 @@ public abstract class LimeSQLiteOpenHelper {
                 mLIMEPref.setParameter(LIME.DB_CHECK_RELATED_USERSCORE, true);
 
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error in database operation", e);
             }
         }
         //File dbPath = mContext.getDatabasePath(mName);
@@ -159,7 +158,7 @@ public abstract class LimeSQLiteOpenHelper {
             Log.i("LIME", ch.getAbsolutePath());
             Log.i("LIME", ch.length()+"");
 
-            e.printStackTrace();
+            Log.e(TAG, "Error in database operation", e);
         	return null; //return null if db opened failed.
         }
         try {
@@ -184,8 +183,7 @@ public abstract class LimeSQLiteOpenHelper {
         } finally {
             mIsInitializing = false;
             if (success) {
-            	if(DEBUG)
-                    Log.i(TAG,"getWritableDatabse(), success in finally section");
+            	if(DEBUG) Log.i(TAG,"getWritableDatabse(), success in finally section");
                 mDatabase = db;
                 //return db;
             } else {

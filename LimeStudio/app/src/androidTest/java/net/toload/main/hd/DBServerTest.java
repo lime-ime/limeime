@@ -32,15 +32,14 @@ import androidx.core.content.ContextCompat;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import net.toload.main.hd.DBServer;
-import net.toload.main.hd.Lime;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
 
 import static org.junit.Assert.*;
+
+import net.toload.main.hd.global.LIME;
 
 /**
  * Test cases for DBServer database operations and file management.
@@ -50,39 +49,33 @@ public class DBServerTest {
 
     @Test
     public void testDBServerInitialization() {
-        // Test DBServer initialization
+        // Test DBServer singleton initialization
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         assertNotNull("DBServer instance should not be null", dbServer);
+        
+        // Verify singleton pattern - second call should return same instance
+        DBServer dbServer2 = DBServer.getInstance(appContext);
+        assertSame("getInstance should return the same singleton instance", dbServer, dbServer2);
     }
 
     @Test
     public void testDBServerGetLoadingMappingCount() {
         // Test getLoadingMappingCount
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         int count = dbServer.getLoadingMappingCount();
         assertTrue("Loading mapping count should be non-negative", count >= 0);
     }
 
-    @Test
-    public void testDBServerGetLoadingMappingPercentageDone() {
-        // Test getLoadingMappingPercentageDone
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
-        
-        int percentage = dbServer.getLoadingMappingPercentageDone();
-        assertTrue("Loading mapping percentage should be between 0 and 100", 
-                  percentage >= 0 && percentage <= 100);
-    }
 
     @Test
     public void testDBServerIsDatabaseOnHold() {
         // Test isDatabseOnHold
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         boolean onHold = dbServer.isDatabseOnHold();
         // Database might or might not be on hold depending on state
@@ -91,12 +84,12 @@ public class DBServerTest {
 
     @Test
     public void testDBServerResetCache() {
-        // Test resetCache static method
+        // Test resetCache instance method
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
-        // resetCache is static and calls SearchServer.resetCache
-        DBServer.resetCache();
+        // resetCache is an instance method that calls SearchServer.resetCache
+        dbServer.resetCache();
         
         // Verify no exception thrown
         assertTrue("resetCache should complete without exception", true);
@@ -106,7 +99,7 @@ public class DBServerTest {
     public void testDBServerImInfoOperations() {
         // Test IM info operations
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         // Test setting IM info
         String testIm = "test_im_" + System.currentTimeMillis();
@@ -134,7 +127,7 @@ public class DBServerTest {
     public void testDBServerResetImInfo() {
         // Test resetImInfo
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         String testIm = "test_reset_" + System.currentTimeMillis();
         
@@ -159,7 +152,7 @@ public class DBServerTest {
     public void testDBServerKeyboardOperations() {
         // Test keyboard operations
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         // Test getting keyboard code
         String keyboardCode = dbServer.getKeyboardCode("phonetic");
@@ -178,7 +171,7 @@ public class DBServerTest {
     public void testDBServerSetIMKeyboard() {
         // Test setIMKeyboard
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         try {
             dbServer.setIMKeyboard("test_im", "Test Keyboard", "lime");
@@ -195,7 +188,7 @@ public class DBServerTest {
     public void testDBServerRenameTableName() {
         // Test renameTableName
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         // Note: This test should be careful not to rename existing tables
         // We'll just verify the method exists and can be called
@@ -209,7 +202,7 @@ public class DBServerTest {
     public void testDBServerCheckPhoneticKeyboardSetting() {
         // Test checkPhoneticKeyboardSetting
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         // This method checks consistency of phonetic keyboard setting
         dbServer.checkPhoneticKeyboardSetting();
@@ -220,22 +213,22 @@ public class DBServerTest {
 
     @Test
     public void testDBServerCloseDatabase() {
-        // Test closeDatabse static method
+        // Test closeDatabase instance method
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
-        // closeDatabse is static
-        DBServer.closeDatabse();
+        // closeDatabase is an instance method
+        dbServer.closeDatabase();
         
         // Verify no exception thrown
-        assertTrue("closeDatabse should complete", true);
+        assertTrue("closeDatabase should complete", true);
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
     public void testDBServerImportBackupRelatedDb() {
         // Test importBackupRelatedDb
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         // Ensure database is not on hold before testing
         // checkDBConnection() calls Looper.loop() which blocks forever if databaseOnHold is true
@@ -250,18 +243,18 @@ public class DBServerTest {
         SQLiteDatabase testDb = null;
         try {
             // Delete existing file if present
-            if (testBackup.exists()) {
-                testBackup.delete();
+            if (testBackup.exists() && !testBackup.delete()){
+                Log.e(TAG, "Failed to delete existing test backup file");
             }
             
             // Create a valid SQLite database with the related table structure
             testDb = SQLiteDatabase.openOrCreateDatabase(testBackup, null);
-            testDb.execSQL("CREATE TABLE IF NOT EXISTS " + Lime.DB_RELATED + " (" +
-                    Lime.DB_RELATED_COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    Lime.DB_RELATED_COLUMN_PWORD + " TEXT, " +
-                    Lime.DB_RELATED_COLUMN_CWORD + " TEXT, " +
-                    Lime.DB_RELATED_COLUMN_BASESCORE + " INTEGER, " +
-                    Lime.DB_RELATED_COLUMN_USERSCORE + " INTEGER)");
+            testDb.execSQL("CREATE TABLE IF NOT EXISTS " + LIME.DB_RELATED + " (" +
+                    LIME.DB_RELATED_COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    LIME.DB_RELATED_COLUMN_PWORD + " TEXT, " +
+                    LIME.DB_RELATED_COLUMN_CWORD + " TEXT, " +
+                    LIME.DB_RELATED_COLUMN_BASESCORE + " INTEGER, " +
+                    LIME.DB_RELATED_COLUMN_USERSCORE + " INTEGER)");
             testDb.close();
             testDb = null;
             
@@ -271,8 +264,8 @@ public class DBServerTest {
             dbServer.importBackupRelatedDb(testBackup);
             
             // Clean up
-            if (testBackup.exists()) {
-                testBackup.delete();
+            if (testBackup.exists() && !testBackup.delete()){
+                Log.e(TAG, "Failed to delete test backup file");
             }
         } catch (Exception e) {
             // Import may fail for various reasons (invalid file, database locked, etc.)
@@ -280,8 +273,8 @@ public class DBServerTest {
             if (testDb != null && testDb.isOpen()) {
                 testDb.close();
             }
-            if (testBackup.exists()) {
-                testBackup.delete();
+            if (testBackup.exists() && !testBackup.delete()){
+                Log.e(TAG, "Failed to delete test backup file");
             }
         }
         
@@ -292,7 +285,7 @@ public class DBServerTest {
     public void testDBServerImportBackupDb() {
         // Test importBackupDb
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         // Create a test backup file (empty for testing)
         File testBackup = new File(appContext.getCacheDir(), "test_backup.db");
@@ -303,13 +296,13 @@ public class DBServerTest {
             dbServer.importBackupDb(testBackup, "custom");
             
             // Clean up
-            if (testBackup.exists()) {
-                testBackup.delete();
+            if (testBackup.exists() && !testBackup.delete()){
+                Log.e(TAG, "Failed to delete test backup file");
             }
         } catch (Exception e) {
             // Import may fail with invalid file, which is acceptable for testing
-            if (testBackup.exists()) {
-                testBackup.delete();
+            if (testBackup.exists() && !testBackup.delete()){
+                Log.e(TAG, "Failed to delete test backup file");
             }
         }
         
@@ -320,7 +313,7 @@ public class DBServerTest {
     public void testDBServerImportMapping() {
         // Test importMapping
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         // Create a test compressed file (empty for testing)
         File testCompressed = new File(appContext.getCacheDir(), "test_mapping.zip");
@@ -331,13 +324,13 @@ public class DBServerTest {
             dbServer.importMapping(testCompressed, "custom");
             
             // Clean up
-            if (testCompressed.exists()) {
-                testCompressed.delete();
+            if (testCompressed.exists() && !testCompressed.delete()){
+                Log.e(TAG, "Failed to delete test compressed file");
             }
         } catch (Exception e) {
             // Import may fail with invalid file, which is acceptable for testing
-            if (testCompressed.exists()) {
-                testCompressed.delete();
+            if (testCompressed.exists() && !testCompressed.delete()){
+                Log.e(TAG, "Failed to delete test compressed file");
             }
         }
         
@@ -348,7 +341,7 @@ public class DBServerTest {
     public void testDBServerResetMapping() {
         // Test resetMapping
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         // Note: resetMapping deletes all records in a table
         // We'll test on a non-critical scenario or verify the method exists
@@ -368,7 +361,7 @@ public class DBServerTest {
     public void testDBServerCompressFile() {
         // Test compressFile
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         // Create a test source file
         File testSource = new File(appContext.getCacheDir(), "test_source.txt");
@@ -389,13 +382,21 @@ public class DBServerTest {
             // File might not exist if compression failed, which is acceptable
             
             // Clean up
-            if (testSource.exists()) testSource.delete();
-            if (compressedFile.exists()) compressedFile.delete();
+            if (testSource.exists() && !testSource.delete()){
+                Log.e(TAG, "Failed to delete test source file");
+            }
+            if (compressedFile.exists() && !compressedFile.delete()){
+                Log.e(TAG, "Failed to delete test compressed file");
+            }
         } catch (Exception e) {
             // Compression may fail, which is acceptable for testing
-            if (testSource.exists()) testSource.delete();
+            if (testSource.exists() && !testSource.delete()){
+                Log.e(TAG, "Failed to delete test source file");
+            }
             File compressedFile = new File(testTargetDir, testTargetFile);
-            if (compressedFile.exists()) compressedFile.delete();
+            if (compressedFile.exists() && !compressedFile.delete()){
+                Log.e(TAG, "Failed to delete test compressed file");
+            }
         }
         
         assertTrue("compressFile should handle file operations", true);
@@ -403,9 +404,9 @@ public class DBServerTest {
 
     @Test
     public void testDBServerDecompressFile() {
-        // Test decompressFile static method
+        // Test decompressFile instance method
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         // Create a test zip file (empty for testing)
         File testZip = new File(appContext.getCacheDir(), "test_decompress.zip");
@@ -414,23 +415,29 @@ public class DBServerTest {
         
         try {
             testZip.createNewFile();
-            if (!testTargetDir.exists()) {
-                testTargetDir.mkdirs();
+            if (!testTargetDir.exists()&& !testTargetDir.mkdirs()){
+                Log.e(TAG, "Failed to create test target directory");
             }
             
             // Test decompression (may fail if file format is invalid, which is acceptable)
-            DBServer.decompressFile(testZip, testTargetDir.getAbsolutePath(), testTargetFile, true);
+            dbServer.decompressFile(testZip, testTargetDir.getAbsolutePath(), testTargetFile, true);
             
             // Clean up
-            if (testZip.exists()) testZip.delete();
+            if (testZip.exists() && !testZip.delete()){
+                Log.e(TAG, "Failed to delete test zip file");
+            }
             if (testTargetDir.exists()) {
                 File[] files = testTargetDir.listFiles();
                 if (files != null) {
                     for (File file : files) {
-                        file.delete();
+                        if (file.exists() && !file.delete()){
+                            Log.e(TAG, "Failed to delete test target file");
+                        }
                     }
                 }
-                testTargetDir.delete();
+                if (testTargetDir.exists() && !testTargetDir.delete()){
+                    Log.e(TAG, "Failed to delete test target directory");
+                }
             }
         } catch (Exception e) {
             // Decompression may fail with invalid file, which is acceptable
@@ -439,10 +446,14 @@ public class DBServerTest {
                 File[] files = testTargetDir.listFiles();
                 if (files != null) {
                     for (File file : files) {
-                        file.delete();
+                        if (file.exists() && !file.delete()){
+                            Log.e(TAG, "Failed to delete test target file");
+                        }
                     }
                 }
-                testTargetDir.delete();
+                if (testTargetDir.exists() && !testTargetDir.delete()){
+                    Log.e(TAG, "Failed to delete test target directory");
+                }
             }
         }
         
@@ -451,47 +462,51 @@ public class DBServerTest {
 
     @Test
     public void testDBServerBackupDefaultSharedPreference() {
-        // Test backupDefaultSharedPreference static method
+        // Test backupDefaultSharedPreference instance method
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         File testBackup = new File(appContext.getCacheDir(), "test_shared_prefs_backup");
         
         try {
             // Test backup
-            DBServer.backupDefaultSharedPreference(testBackup);
+            dbServer.backupDefaultSharedPreference(testBackup);
             
             // Verify backup file exists
             assertTrue("Shared preferences backup file should exist", testBackup.exists());
             
             // Clean up
             if (testBackup.exists()) {
-                testBackup.delete();
+                if (testBackup.exists() && !testBackup.delete()){
+                    Log.e(TAG, "Failed to delete test backup file");
+                }
             }
         } catch (Exception e) {
             // Backup may fail, which is acceptable for testing
             if (testBackup.exists()) {
-                testBackup.delete();
+                if (testBackup.exists() && !testBackup.delete()){
+                    Log.e(TAG, "Failed to delete test backup file");
+                }
             }
         }
     }
 
     @Test
     public void testDBServerRestoreDefaultSharedPreference() {
-        // Test restoreDefaultSharedPreference static method
+        // Test restoreDefaultSharedPreference instance method
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         // First create a backup
         File testBackup = new File(appContext.getCacheDir(), "test_shared_prefs_restore");
         
         try {
             // Create backup first
-            DBServer.backupDefaultSharedPreference(testBackup);
+            dbServer.backupDefaultSharedPreference(testBackup);
             
             if (testBackup.exists()) {
                 // Test restore
-                DBServer.restoreDefaultSharedPreference(testBackup);
+                dbServer.restoreDefaultSharedPreference(testBackup);
                 
                 // Verify no exception thrown
                 assertTrue("restoreDefaultSharedPreference should complete", true);
@@ -499,24 +514,28 @@ public class DBServerTest {
             
             // Clean up
             if (testBackup.exists()) {
-                testBackup.delete();
+                if (testBackup.exists() && !testBackup.delete()){
+                    Log.e(TAG, "Failed to delete test backup file");
+                }
             }
         } catch (Exception e) {
             // Restore may fail, which is acceptable for testing
             if (testBackup.exists()) {
-                testBackup.delete();
+                if (testBackup.exists() && !testBackup.delete()){
+                    Log.e(TAG, "Failed to delete test backup file");
+                }
             }
         }
     }
 
     @Test
     public void testDBServerShowNotificationMessage() {
-        // Test showNotificationMessage static method
+        // Test showNotificationMessage instance method
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         // Test showing notification
-        DBServer.showNotificationMessage("Test notification message");
+        dbServer.showNotificationMessage("Test notification message");
         
         // Verify no exception thrown
         assertTrue("showNotificationMessage should complete", true);
@@ -526,7 +545,7 @@ public class DBServerTest {
     public void testDBServerGetDataDirPath() {
         // Test getDataDirPath helper method (private, but tested indirectly)
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DBServer dbServer = new DBServer(appContext);
+        DBServer dbServer = DBServer.getInstance(appContext);
         
         // The getDataDirPath method is private, but we can test it indirectly
         // through backupDatabase which uses it

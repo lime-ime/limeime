@@ -28,9 +28,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
+import net.toload.main.hd.global.LIME;
+
 public class SetupImHandler extends Handler {
 
-    private SetupImFragment fragment = null;
+    private final SetupImFragment fragment;
 
     public SetupImHandler(SetupImFragment fragment) {
         super(Looper.getMainLooper());
@@ -82,7 +84,7 @@ public class SetupImHandler extends Handler {
             boolean backuplearning = msg.getData().getBoolean("backup");
             fragment.resetImTable(imtype, backuplearning);
         }else if(action != null && action.equalsIgnoreCase("finish")){
-            String imtype = msg.getData().getString("im");
+            //String imtype = msg.getData().getString("im");
             fragment.finishProgress();
         }
 
@@ -92,7 +94,7 @@ public class SetupImHandler extends Handler {
         Message m = new Message();
         m.getData().putString("action", "progress");
         m.getData().putString("type", "cancel");
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
 
@@ -109,7 +111,7 @@ public class SetupImHandler extends Handler {
             m.getData().putString("type", "showSpinner");
         else
             m.getData().putString("type", "showHorizontal");
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
     public void setProgressIndeterminate(boolean flag){
@@ -117,7 +119,7 @@ public class SetupImHandler extends Handler {
         m.getData().putString("action", "progress");
         m.getData().putString("type", "indeterminate");
         m.getData().putBoolean("flag", flag);
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
     public void updateProgress(int value) {
@@ -125,7 +127,7 @@ public class SetupImHandler extends Handler {
         m.getData().putString("action", "progress");
         m.getData().putString("type", "update");
         m.getData().putInt("value", value);
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
     public void updateProgress(String message) {
@@ -133,7 +135,7 @@ public class SetupImHandler extends Handler {
         m.getData().putString("action", "progress");
         m.getData().putString("type", "message");
         m.getData().putString("message", message);
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
     public void showToastMessage(String message, int length){
@@ -141,26 +143,26 @@ public class SetupImHandler extends Handler {
                 m.getData().putString("action", "toast");
                 m.getData().putString("message", message);
                 m.getData().putInt("length", length);
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
     public void initialImButtons() {
         Message m = new Message();
                 m.getData().putString("action", "initialbutton");
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
    /* @Deprecated
     public void startLoadingWindow(String imtype) {
         Message m = new Message();
                 m.getData().putString("action", "startloadingwindow");
                 m.getData().putString("value", imtype);
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }*/
 
     public void updateCustomButton() {
         Message m = new Message();
         m.getData().putString("action", "updatecustombutton");
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
     public void resetImTable(String imtype, Boolean backuplearning) {
@@ -168,7 +170,7 @@ public class SetupImHandler extends Handler {
         m.getData().putString("action", "reset");
         m.getData().putString("im", imtype);
         m.getData().putBoolean("backup", backuplearning);
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
 
@@ -176,6 +178,6 @@ public class SetupImHandler extends Handler {
         Message m = new Message();
         m.getData().putString("action", "finish");
         m.getData().putString("im", imtype);
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 }

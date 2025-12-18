@@ -27,15 +27,15 @@ package net.toload.main.hd.ui;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ProgressBar;
@@ -49,11 +49,11 @@ import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.data.Word;
-import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /// A placeholder fragment containing a simple view.
 public class ManageImFragment extends Fragment {
@@ -114,7 +114,7 @@ public class ManageImFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_manage_im, container, false);
 
@@ -123,150 +123,118 @@ public class ManageImFragment extends Fragment {
         this.SearchSrv = new SearchServer(this.activity);
 
         this.handler = new ManageImHandler(this);
-        LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(activity);
+        //LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(activity);
 
         // initial imlist
-        List<Im> imkeyboardlist = new ArrayList<Im>();
+        List<Im> imkeyboardlist;
         imkeyboardlist = datasource.getIm(null, LIME.IM_TYPE_KEYBOARD);
 
         this.progressBar = rootView.findViewById(R.id.loading_spinner);
 
-        this.gridManageIm = (GridView) rootView.findViewById(R.id.gridManageIm);
-        this.gridManageIm.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                //try {
-                //datasource.open();
-                Word w = datasource.getWord(table, id);
-                //datasource.close();
-                FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+        this.gridManageIm = rootView.findViewById(R.id.gridManageIm);
+        this.gridManageIm.setOnItemClickListener((parent, view, position, id) -> {
+            //try {
+            //datasource.open();
+            Word w = datasource.getWord(table, id);
+            //datasource.close();
+            FragmentTransaction ft = getParentFragmentManager().beginTransaction();
 
-                // Create and show the dialog.
-                ManageImEditDialog dialog = ManageImEditDialog.newInstance(table);
-                dialog.setHandler(handler, w);
-                dialog.show(ft, "editdialog");
-                //} catch (SQLException e) {
-                //    e.printStackTrace();
-                //}
-            }
+            // Create and show the dialog.
+            ManageImEditDialog dialog = ManageImEditDialog.newInstance(table);
+            dialog.setHandler(handler, w);
+            dialog.show(ft, "editdialog");
+            //} catch (SQLException e) {
+            //    e.printStackTrace();
+            //}
         });
 
-        Button btnManageImAdd = (Button) rootView.findViewById(R.id.btnManageImAdd);
-        btnManageImAdd.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                ManageImAddDialog dialog = ManageImAddDialog.newInstance(table);
-                                    dialog.setHandler(handler);
-                dialog.show(ft, "adddialog");
-            }
+        Button btnManageImAdd = rootView.findViewById(R.id.btnManageImAdd);
+        btnManageImAdd.setOnClickListener(v -> {
+            FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+            ManageImAddDialog dialog = ManageImAddDialog.newInstance(table);
+                                dialog.setHandler(handler);
+            dialog.show(ft, "adddialog");
         });
 
-        this.btnManageImKeyboard = (Button) rootView.findViewById(R.id.btnManageImKeyboard);
+        this.btnManageImKeyboard = rootView.findViewById(R.id.btnManageImKeyboard);
         if(table != null && table.equals(LIME.IM_HS)){
             this.btnManageImKeyboard.setEnabled(false);
         }else{
-            this.btnManageImKeyboard.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    ManageImKeyboardDialog dialog = ManageImKeyboardDialog.newInstance();
-                    dialog.setHandler(handler, table);
-                    dialog.show(ft, "keyboarddialog");
-                }
+            this.btnManageImKeyboard.setOnClickListener(v -> {
+                FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                ManageImKeyboardDialog dialog = ManageImKeyboardDialog.newInstance();
+                dialog.setHandler(handler, table);
+                dialog.show(ft, "keyboarddialog");
             });
         }
 
-        ToggleButton toggleManageIm = (ToggleButton) rootView.findViewById(R.id.toggleManageIm);
-        toggleManageIm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    searchroot = false;
-                } else {
-                    searchroot = true;
-                }
-                total = 0;
-                prequery = "";
-                edtManageImSearch.setText("");
-                searchword(null);
-                searchreset = false;
-                btnManageImSearch.setText(getResources().getText(R.string.manage_im_search));
-            }
+        ToggleButton toggleManageIm = rootView.findViewById(R.id.toggleManageIm);
+        toggleManageIm.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            searchroot = !isChecked;
+            total = 0;
+            prequery = "";
+            edtManageImSearch.setText("");
+            searchword(null);
+            searchreset = false;
+            btnManageImSearch.setText(getResources().getText(R.string.manage_im_search));
         });
 
-        this.btnManageImNext = (Button) rootView.findViewById(R.id.btnManageImNext);
+        this.btnManageImNext = rootView.findViewById(R.id.btnManageImNext);
         this.btnManageImNext.setEnabled(false);
-        this.btnManageImNext.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int checkrecord = LIME.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
-                if (checkrecord < total) {
-                    page++;
-                }
-                searchword();
-                //updateGridView(wordlist);
+        this.btnManageImNext.setOnClickListener(v -> {
+            int checkrecord = LIME.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
+            if (checkrecord < total) {
+                page++;
             }
+            searchword();
+            //updateGridView(wordlist);
         });
-        this.btnManageImPrevious = (Button) rootView.findViewById(R.id.btnManageImPrevious);
+        this.btnManageImPrevious = rootView.findViewById(R.id.btnManageImPrevious);
         this.btnManageImPrevious.setEnabled(false);
-        this.btnManageImPrevious.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (page > 0) {
-                    page--;
-                }
-                searchword();
-                //updateGridView(wordlist);
+        this.btnManageImPrevious.setOnClickListener(v -> {
+            if (page > 0) {
+                page--;
+            }
+            searchword();
+            //updateGridView(wordlist);
+        });
+
+        this.edtManageImSearch = rootView.findViewById(R.id.edtManageImSearch);
+        this.edtManageImSearch.setOnClickListener(v -> {
+            searchreset = false;
+            btnManageImSearch.setText(getResources().getText(R.string.manage_im_search));
+        });
+        this.edtManageImSearch.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(edtManageImSearch.getWindowToken(), 0);
             }
         });
 
-        this.edtManageImSearch = (EditText) rootView.findViewById(R.id.edtManageImSearch);
-        this.edtManageImSearch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        this.btnManageImSearch = rootView.findViewById(R.id.btnManageImSearch);
+        this.btnManageImSearch.setOnClickListener(v -> {
+            if (!searchreset) {
+                String query = edtManageImSearch.getText().toString();
+                // hide the soft keyboard before search Jeremy 15,6,4
+                InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(edtManageImSearch.getWindowToken(), 0);
+                if (!query.isEmpty() && (prequery == null || !prequery.equals(query) || !searchreset)) {
+                    query = query.trim();
+                    searchword(query);
+
+                }
+                searchreset = true;
+                btnManageImSearch.setText(getResources().getText(R.string.manage_im_reset));
+            } else {
+                total = 0;
+                searchword(null);
+                edtManageImSearch.setText("");
                 searchreset = false;
                 btnManageImSearch.setText(getResources().getText(R.string.manage_im_search));
             }
         });
-        this.edtManageImSearch.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (!hasFocus) {
-                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(edtManageImSearch.getWindowToken(), 0);
-                }
-            }
-        });
 
-        this.btnManageImSearch = (Button) rootView.findViewById(R.id.btnManageImSearch);
-        this.btnManageImSearch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!searchreset) {
-                    String query = edtManageImSearch.getText().toString();
-                    // hide the soft keyboard before search Jeremy 15,6,4
-                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(edtManageImSearch.getWindowToken(), 0);
-                    if (query != null && query.length() > 0 &&
-                            ( prequery == null || !prequery.equals(query) || !searchreset) ) {
-                        query = query.trim();
-                        searchword(query);
-
-                    }
-                    searchreset = true;
-                    btnManageImSearch.setText(getResources().getText(R.string.manage_im_reset));
-                } else {
-                    total = 0;
-                    searchword(null);
-                    edtManageImSearch.setText("");
-                    searchreset = false;
-                    btnManageImSearch.setText(getResources().getText(R.string.manage_im_search));
-                }
-            }
-        });
-
-        this.txtNavigationInfo = (TextView) rootView.findViewById(R.id.txtNavigationInfo);
+        this.txtNavigationInfo = rootView.findViewById(R.id.txtNavigationInfo);
 
         // UpdateKeyboard display
         for(Im obj : imkeyboardlist){
@@ -289,14 +257,14 @@ public class ManageImFragment extends Fragment {
 
         int offset = LIME.IM_MANAGE_DISPLAY_AMOUNT * page;
 
-        if((curquery == null && total == 0) || curquery != prequery ){
+        if((curquery == null && total == 0) || !Objects.equals(curquery, prequery)){
             total = datasource.getWordSize(table, curquery, searchroot);
             page = 0;
            /* try {
                 datasource.open();
                 datasource.close();
             } catch (SQLException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error in operation", e);
             }*/
         }
         if(manageimthread != null && manageimthread.isAlive()){
@@ -309,9 +277,10 @@ public class ManageImFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         Activity activity = (Activity) context;
+        assert getArguments() != null;
         ((MainActivity) activity).onSectionAttached(
                 getArguments().getInt(ARG_SECTION_NUMBER));
 
@@ -351,11 +320,7 @@ public class ManageImFragment extends Fragment {
         int startrecord = LIME.IM_MANAGE_DISPLAY_AMOUNT * page;
         int endrecord = LIME.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
 
-        if(page > 0){
-            this.btnManageImPrevious.setEnabled(true);
-        }else{
-            this.btnManageImPrevious.setEnabled(false);
-        }
+        this.btnManageImPrevious.setEnabled(page > 0);
 
         if(endrecord <= total){
             this.btnManageImNext.setEnabled(true);
@@ -387,7 +352,7 @@ public class ManageImFragment extends Fragment {
 
         if(total > 0){
             nav = LIME.format(startrecord + 1) + "-" + LIME.format(endrecord);
-            nav += " of " + LIME.format(total);
+            nav = nav + " of " + LIME.format(total);
         }
 
         this.txtNavigationInfo.setText(nav);
@@ -413,7 +378,7 @@ public class ManageImFragment extends Fragment {
             datasource.open();
             datasource.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
         }*/
 
         total--;
@@ -446,7 +411,7 @@ public class ManageImFragment extends Fragment {
             datasource.open();
             datasource.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
         }*/
 
         total++;
@@ -488,7 +453,9 @@ public class ManageImFragment extends Fragment {
                     updatesql += LIME.DB_COLUMN_CODE3R + " = \"" + LIME.formatSqlValue(code.replaceAll("[3467 ]", "")) + "\", ";
                 updatesql += LIME.DB_COLUMN_SCORE + " = \"" + score + "\", ";
                 updatesql += LIME.DB_COLUMN_WORD + " = \"" + LIME.formatSqlValue(word) + "\" ";
-                updatesql += " WHERE " + LIME.DB_COLUMN_ID + " = \"" + id + "\"";
+                StringBuilder updatesqlBuilder = new StringBuilder(updatesql);
+                updatesqlBuilder.append(" WHERE ").append(LIME.DB_COLUMN_ID).append(" = \"").append(id).append("\"");
+                updatesql = updatesqlBuilder.toString();
 
         //datasource.update(updatesql);
       */
@@ -496,7 +463,7 @@ public class ManageImFragment extends Fragment {
             datasource.open();
             datasource.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
         }*/
         searchword();
         //updateGridView(this.wordlist);
@@ -510,7 +477,7 @@ public class ManageImFragment extends Fragment {
                 datasource.open();
                 datasource.close();
             } catch (SQLException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error in operation", e);
             }*/
         }
         for(Keyboard k: keyboardlist){
@@ -521,7 +488,7 @@ public class ManageImFragment extends Fragment {
                     datasource.open();
                     datasource.close();
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Error in operation", e);
                 }*/
             }
         }

@@ -25,6 +25,7 @@
 package net.toload.main.hd.ui;
 
 import android.app.Activity;
+import android.util.Log;
 
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.global.LIME;
@@ -34,35 +35,31 @@ import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Art Hung on 2015/4/26.
  */
 public class ShareDbRunnable implements Runnable{
 
-    private static boolean DEBUG = true;
-    private static String TAG = "ShareDbRunnable";
+    private static final boolean DEBUG = true;
+    private static final String TAG = "ShareDbRunnable";
 
     // Global
-    private String imtype = null;
-    private Activity activity;
-    private MainActivityHandler handler;
+    private final String imtype;
+    private final Activity activity;
+    private final MainActivityHandler handler;
 
-    private LimeDB datasource;
-    private DBServer dbsrv = null;
+    private final LimeDB datasource;
     //private LIMEPreferenceManager mLIMEPref;
 
     public ShareDbRunnable(Activity activity, String imtype, MainActivityHandler handler) {
         this.handler = handler;
         this.imtype = imtype;
         this.activity = activity;
-        this.dbsrv = new DBServer(activity);
+        DBServer dbsrv = DBServer.getInstance(activity);
         this.datasource = new LimeDB(activity);
         //this.mLIMEPref = new LIMEPreferenceManager(activity);
     }
@@ -83,13 +80,13 @@ public class ShareDbRunnable implements Runnable{
         }
 
         File targetfile = new File(cacheDir, imtype + LIME.DATABASE_EXT);
-        if(targetfile.exists()){
-            targetfile.delete();
+        if(targetfile.exists() && !targetfile.delete()){
+            Log.e(TAG, "Error in file deletion");
         }
 
         File targetfilezip = new File(cacheDir, imtype + ".limedb");
-        if(targetfilezip.exists()){
-            targetfilezip.delete();
+        if(targetfilezip.exists() && !targetfilezip.delete()){
+            Log.e(TAG, "Error in file deletion");
         }
 
         // Prepare database file
@@ -100,17 +97,15 @@ public class ShareDbRunnable implements Runnable{
         try {
             InputStream from = activity.getResources().openRawResource( R.raw.blank );
             FileOutputStream to = new FileOutputStream(targetfile);
-            byte[] buffer = new byte[4096];
+            byte[] buffer = new byte[LIME.BUFFER_SIZE_4KB];
             int bytes_read;
             while ((bytes_read = from.read(buffer)) != -1) {
                 to.write(buffer, 0, bytes_read);
             }
-            if (from != null) {from.close();}
-            if (to != null) {to.close();}
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            from.close();
+            to.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
         }
 
         // Open Database File
@@ -119,12 +114,12 @@ public class ShareDbRunnable implements Runnable{
 
         //ready to zip backup file list
         try {
-            List<String> backupFileList = new ArrayList<>();
-            backupFileList.add(targetfile.getAbsolutePath());
+
             LIMEUtilities.zip(targetfilezip.getAbsolutePath(), targetfile.getAbsolutePath(), true);
-            targetfile.delete();
+            if(targetfilezip.exists() && !targetfile.delete())
+                Log.e(TAG, "Error in file deletion");
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
         }
 
         handler.cancelProgress();

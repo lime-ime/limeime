@@ -242,7 +242,7 @@ public class LIMEService extends InputMethodService implements
     
     // Track last known good bottom padding for older APIs (21-25) where window insets
     // might incorrectly include keyboard height when keyboard is restored
-    private int mLastKnownBottomPadding = -1;
+    private final int mLastKnownBottomPadding = -1;
 
 
 
@@ -465,7 +465,7 @@ public class LIMEService extends InputMethodService implements
             // Jeremy '11,8,1 do postfinishinput in searchSrv (learn userdic and LDPhrase).
             SearchSrv.postFinishInput();
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in postFinishInput", e);
         }
         // Clear current composing text and candidates.
         //Jeremy '12,5,21
@@ -476,7 +476,7 @@ public class LIMEService extends InputMethodService implements
             mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
             mKeyboardSwitcher.setImList(SearchSrv.getImList());
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error setting keyboard/IM list in onFinishInput", e);
         }
 
     }
@@ -532,7 +532,7 @@ public class LIMEService extends InputMethodService implements
 
             clearSuggestions();
         }catch(Exception e){
-            e.printStackTrace();
+            Log.e(TAG, "Error clearing candidates", e);
             // ignore candidate clear error
         }
     }
@@ -609,7 +609,7 @@ public class LIMEService extends InputMethodService implements
         // Restore composing text if it was set by a physical key press before InputView was shown
         if (savedComposing != null && savedHasPhysicalKeyPressed) {
             // Restore hasPhysicalKeyPressed state and composing text
-            hasPhysicalKeyPressed = savedHasPhysicalKeyPressed;
+            hasPhysicalKeyPressed = true;
             mComposing.setLength(0);
             mComposing.append(savedComposing);
             InputConnection ic = getCurrentInputConnection();
@@ -694,7 +694,7 @@ public class LIMEService extends InputMethodService implements
         try {
             mKeyboardSwitcher.setImList(SearchSrv.getImList());
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error setting IM list on keyboard reset", e);
         }
 
 
@@ -1688,7 +1688,7 @@ public class LIMEService extends InputMethodService implements
                 clearComposing(false);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in keyboard handling", e);
         }
     }
 
@@ -2049,7 +2049,7 @@ public class LIMEService extends InputMethodService implements
             mKeyboardSwitcher.setImList(SearchSrv.getImList());
             //mKeyboardSwitcher.clearKeyboards();
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error setting IM list during initialization", e);
         }
 
         // Update keyboard xml information
@@ -2118,7 +2118,7 @@ public class LIMEService extends InputMethodService implements
             try {
                 activeIM = activatedIMList.get(0);
             } catch (IndexOutOfBoundsException e) {
-                e.printStackTrace();
+                Log.e(TAG, "IndexOutOfBoundsException getting active IM", e);
                 //Toast.makeText(this, getResources().getString(R.string.error_set_active_im), Toast.LENGTH_LONG).show();
             }
             //initializeIMKeyboard();
@@ -2242,7 +2242,7 @@ public class LIMEService extends InputMethodService implements
             currentSoftKeyboard = mKeyboardSwitcher.getImKeyboard(activeIM);
 
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error getting keyboard for active IM", e);
         }
 
     }
@@ -2332,12 +2332,12 @@ public class LIMEService extends InputMethodService implements
                     try {
                         list.addAll(SearchSrv.getMappingByCode(finalKeyString, !finalHasPhysicalKeyPressed, getAllRecords));
                     } catch (RemoteException e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "Error in suggestion processing", e);
                     }
                     try {
-                        sleep(0);
+                        sleep(LIME.THREAD_YIELD_DELAY_MS);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "Error in suggestion processing", e);
                         return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                     }
                     //Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
@@ -2350,7 +2350,7 @@ public class LIMEService extends InputMethodService implements
                             try {
                                 selkey = SearchSrv.getSelkey();
                             } catch (RemoteException e) {
-                                e.printStackTrace();
+                                Log.e(TAG, "Error in suggestion processing", e);
                             }
                             String mixedModeSelkey = "`";
                             if (hasSymbolMapping && !activeIM.equals("dayi")
@@ -2366,9 +2366,9 @@ public class LIMEService extends InputMethodService implements
                         }
 
                         try {
-                            sleep(0);
+                            sleep(LIME.THREAD_YIELD_DELAY_MS);
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            Log.e(TAG, "Error in suggestion processing", e);
                             return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                         }
 
@@ -2456,9 +2456,9 @@ public class LIMEService extends InputMethodService implements
                                 && !keynameString.trim().isEmpty()
                         ) {
                             try {
-                                sleep(0);
+                                sleep(LIME.THREAD_YIELD_DELAY_MS);
                             } catch (InterruptedException e) {
-                                //e.printStackTrace();
+                                Log.e(TAG, "Error in suggestion processing", e);
                                 // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                                 return;
                             }
@@ -2504,7 +2504,7 @@ public class LIMEService extends InputMethodService implements
                             after = true;
                         }
                     } catch (StringIndexOutOfBoundsException e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "Error in suggestion processing", e);
                         after = true;
                     }
 
@@ -2521,7 +2521,7 @@ public class LIMEService extends InputMethodService implements
                                 matchedtemp = true;
                             }
                         } catch (StringIndexOutOfBoundsException e) {
-                            e.printStackTrace();
+                            Log.e(TAG, "Error in suggestion processing", e);
                         }
                     }
 
@@ -2541,12 +2541,12 @@ public class LIMEService extends InputMethodService implements
                                 try {
                                     suggestions = SearchSrv.getEnglishSuggestions(tempEnglishWord.toString());
                                 } catch (RemoteException e) {
-                                    e.printStackTrace();
+                                    Log.e(TAG, "Error in suggestion processing", e);
                                 }
                                 try {
-                                    sleep(0);
+                                    sleep(LIME.THREAD_YIELD_DELAY_MS);
                                 } catch (InterruptedException e) {
-                                    e.printStackTrace();
+                                    Log.e(TAG, "Error in suggestion processing", e);
                                     return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                                 }
 
@@ -2560,9 +2560,9 @@ public class LIMEService extends InputMethodService implements
                                         selkey = "";
                                     }
                                     try {
-                                        sleep(0);
+                                        sleep(LIME.THREAD_YIELD_DELAY_MS);
                                     } catch (InterruptedException e) {
-                                        e.printStackTrace();
+                                        Log.e(TAG, "Error in suggestion processing", e);
                                         return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                                     }
 
@@ -2616,8 +2616,8 @@ public class LIMEService extends InputMethodService implements
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
-                Log.i("ART", "Error to update English predication");
+                Log.e(TAG, "Error updating English prediction", e);
+  
             }
         }
     }
@@ -2659,7 +2659,7 @@ public class LIMEService extends InputMethodService implements
                                 list.addAll(SearchSrv.getRelatedPhrase(committedCandidate.getWord(), getAllRecords));
                             }
                         } catch (RemoteException e) {
-                            e.printStackTrace();
+                            Log.e(TAG, "Error in suggestion processing", e);
                         }
 
                         if (!list.isEmpty()) {
@@ -2871,7 +2871,7 @@ public class LIMEService extends InputMethodService implements
 
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Error in suggestion processing", e);
                 }
                 mCandidateView.setSuggestions(suggestions, showNumber, diplaySelkey);
                 if (DEBUG)
@@ -2945,8 +2945,8 @@ public class LIMEService extends InputMethodService implements
                 keyDownUp(KeyEvent.KEYCODE_DEL, false);
 
             } catch (Exception e) {
-                e.printStackTrace();
-                Log.i(TAG, "->" + e);
+                Log.e(TAG, "Error in key handling", e);
+
             }
         }
 
@@ -3012,7 +3012,7 @@ public class LIMEService extends InputMethodService implements
                 finishComposing();
             }
         }catch(Exception e){
-            e.printStackTrace();
+            Log.e(TAG, "Error in composing finish", e);
             // ignore all possible error
         }
 
@@ -3141,7 +3141,7 @@ public class LIMEService extends InputMethodService implements
             mKeyboardSwitcher.setKeyboardList(SearchSrv.getKeyboardList());
             mKeyboardSwitcher.setImList(SearchSrv.getImList());
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error setting keyboard/IM list", e);
         }
     }
 
@@ -3256,7 +3256,7 @@ private boolean handleSelkey(int primaryCode) {
             try {
                 selkey = SearchSrv.getSelkey();
             } catch (RemoteException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error getting selkey", e);
             }
 
             String mixedModeSelkey = "`";
@@ -3840,8 +3840,8 @@ public void startVoiceInput() {
                         // Fall back to RecognizerIntent
                         launchRecognizerIntent(voiceIntent);
                     }
-                }, 200); // 200ms delay to check if switch worked - short enough for quick fallback
-                
+                }, LIME.IME_SWITCH_VERIFY_DELAY_MS); // Delay to check if switch worked - short enough for quick fallback
+
                 return; // Assume success, will fall back if verification fails
             } catch (SecurityException e) {
                 if (DEBUG)
@@ -3870,7 +3870,7 @@ public void startVoiceInput() {
             if (DEBUG)
                 Log.i(TAG, "startVoiceInput(): launchRecognizerIntent() returned successfully");
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error launching recognizer intent", e);
         }
     }
 }
@@ -3930,7 +3930,6 @@ private void launchRecognizerIntent(Intent voiceIntent) {
         Toast.makeText(getApplicationContext(), "Cannot launch voice input (security restriction)", Toast.LENGTH_SHORT).show();
     } catch (Exception e) {
         Log.e(TAG, "launchRecognizerIntent(): Failed to launch VoiceInputActivity: " + e.getMessage(), e);
-        e.printStackTrace();
         Toast.makeText(getApplicationContext(), "Voice input unavailable: " + e.getMessage(), Toast.LENGTH_LONG).show();
     }
 }
@@ -3984,7 +3983,7 @@ private void startMonitoringIMEChanges() {
                     if (mLIMEId != null && !mLIMEId.equals(checkIME)) {
                         switchBackToLIME();
                     }
-                }, 500); // 500ms delay
+                }, LIME.IME_SWITCH_BACK_DELAY_MS); // Delay to allow voice recognition to complete
             }
         }
     };
@@ -4062,7 +4061,7 @@ private void switchBackToLIME() {
             Log.i(TAG, "switchBackToLIME(): Switched back to LIME IME using switchInputMethod()");
     } catch (Exception e) {
         if (DEBUG)
-            Log.e(TAG, "switchBackToLIME(): Failed to switch back: " + e.getMessage());
+            Log.e(TAG, "switchBackToLIME(): Failed to switch back: " + e);
     }
 
     // Stop monitoring after switching back
@@ -4071,7 +4070,9 @@ private void switchBackToLIME() {
 
 /**
  * Register BroadcastReceiver to receive voice input results from VoiceInputActivity
+ * Note: RECEIVER_NOT_EXPORTED flag is only available on API 33+, so we use conditional registration
  */
+@SuppressLint({"UnspecifiedRegisterReceiverFlag", "RegisterReceiverFlag"})
 private void registerVoiceInputReceiver() {
     if (mVoiceInputReceiver != null) {
         return; // Already registered
@@ -4099,10 +4100,16 @@ private void registerVoiceInputReceiver() {
     };
     
     IntentFilter filter = new IntentFilter(ACTION_VOICE_RESULT);
-    // On API 33+, must specify RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED
-    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-        registerReceiver(mVoiceInputReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED);
+    // On API 33+ (TIRAMISU), must specify RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED
+    // This receiver is for internal app communication only, so use RECEIVER_NOT_EXPORTED
+    // For API < 33, the flag doesn't exist, so we register without it (lint warning suppressed above)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        registerReceiver(mVoiceInputReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
     } else {
+        // RECEIVER_NOT_EXPORTED flag is not available on API < 33
+        // This is safe because the broadcast is internal to the app only
+        // Lint warning suppressed at method level with @SuppressLint
+        // noinspection UnspecifiedRegisterReceiverFlag
         registerReceiver(mVoiceInputReceiver, filter);
     }
     Log.i(TAG, "registerVoiceInputReceiver(): Registered receiver");
@@ -4168,11 +4175,11 @@ private void setNavigationBarIconsDark() {
                     // Use dark navigation bar icons (black) for visibility on light backgrounds
                     // setAppearanceLightNavigationBars(true) = light navigation bar appearance = dark icons
                     windowInsetsController.setAppearanceLightNavigationBars(true);
-                } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                } else {
                     // API 21-22: Cannot programmatically change navigation bar icon color
                     // Set a light navigation bar color to encourage dark icons (system behavior)
                     @SuppressWarnings("deprecation")
-                    android.view.Window win = window;
+                    Window win = window;
                     win.setNavigationBarColor(0xFFFFFFFF); // Solid white
                 }
             }

@@ -159,7 +159,7 @@ public class CandidateExpandedView extends CandidateView {
                     canvas.translate(-mWordX[mSelRow][mSelCol], -mSelRow * (height + mVerticalPadding));
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error in candidate expanded view", e);
             }
 
             try {
@@ -210,7 +210,7 @@ public class CandidateExpandedView extends CandidateView {
                     }
                 }
             }catch(Exception e){
-                e.printStackTrace();
+                Log.e(TAG, "Error in candidate expanded view", e);
                 // ignore error
             }
 

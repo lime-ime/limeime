@@ -48,6 +48,11 @@ public class MainActivityHandler extends Handler {
     @Override
     public void handleMessage(Message msg) {
         MainActivity activity = activityReference.get();
+        // Early return if activity has been garbage collected to prevent NPE
+        if (activity == null) {
+            return;
+        }
+        
         String action = msg.getData().getString("action");
         String type = msg.getData().getString("type");
 
@@ -89,14 +94,14 @@ public class MainActivityHandler extends Handler {
         Message m = new Message();
         m.getData().putString("action", "progress");
         m.getData().putString("type", "cancel");
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
     public void showProgress() {
         Message m = new Message();
         m.getData().putString("action", "progress");
         m.getData().putString("type", "show");
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
 //    public void updateProgress(int value) {
@@ -104,7 +109,7 @@ public class MainActivityHandler extends Handler {
 //        m.getData().putString("action", "progress");
 //        m.getData().putString("type", "update");
 //        m.getData().putInt("value", value);
-//        this.sendMessageDelayed(m, 1);
+//        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
 //    }
 
     public void updateProgress(String message) {
@@ -112,21 +117,21 @@ public class MainActivityHandler extends Handler {
         m.getData().putString("action", "progress");
         m.getData().putString("type", "message");
         m.getData().putString("message", message);
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
     public void shareTxtTo(String filepath){
         Message m = new Message();
         m.getData().putString("action", "sharetxt");
         m.getData().putString("filepath", filepath);
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
     public void shareDBTo(String filepath){
         Message m = new Message();
         m.getData().putString("action", "sharedb");
         m.getData().putString("filepath", filepath);
-        this.sendMessageDelayed(m, 1);
+        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
 }

@@ -26,6 +26,7 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 import android.database.Cursor;
+import android.util.Log;
 
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivityHandler;
@@ -40,6 +41,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,21 +50,20 @@ import java.util.List;
  */
 public class ShareRelatedTxtRunnable implements Runnable{
 
-    private static boolean DEBUG = true;
-    private static String TAG = "ShareRelatedTxtRunnable";
+    private static final boolean DEBUG = true;
+    private static final String TAG = "ShareRelatedTxtRunnable";
 
     // Global
-    private Activity activity;
-    private MainActivityHandler handler;
+    private final Activity activity;
+    private final MainActivityHandler handler;
 
-    private LimeDB datasource;
-    private LIMEPreferenceManager mLIMEPref;
+    private final LimeDB datasource;
 
     public ShareRelatedTxtRunnable(Activity activity, MainActivityHandler handler) {
         this.handler = handler;
         this.activity = activity;
         this.datasource = new LimeDB(activity);
-        this.mLIMEPref = new LIMEPreferenceManager(activity);
+        //LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(activity);
     }
 
     @Override
@@ -78,7 +79,7 @@ public class ShareRelatedTxtRunnable implements Runnable{
         handler.updateProgress(activity.getResources().getString(R.string.share_step_initial));
 
         // Load
-        List<Related> relatedlist = new ArrayList<Related>();
+        List<Related> relatedlist = new ArrayList<>();
         Cursor cursor = datasource.list(LIME.DB_RELATED);
         cursor.moveToFirst();
         while(!cursor.isAfterLast()){
@@ -92,15 +93,15 @@ public class ShareRelatedTxtRunnable implements Runnable{
             cacheDir = activity.getCacheDir();
         }
         File target = new File(cacheDir, LIME.EXPORT_FILENAME_RELATED);
-        if(target.exists()){
-            target.delete();
+        if(target.exists() && !target.delete()){
+            Log.e(TAG, "Error in file deletion");
         }
 
         handler.updateProgress(activity.getResources().getString(R.string.share_step_write));
 
         try {
 
-            Writer writer = new OutputStreamWriter( new FileOutputStream(target), "UTF-8");
+            Writer writer = new OutputStreamWriter( new FileOutputStream(target), StandardCharsets.UTF_8);
             BufferedWriter fout = new BufferedWriter(writer);
 
             for(Related w: relatedlist){
@@ -113,7 +114,7 @@ public class ShareRelatedTxtRunnable implements Runnable{
             fout.close();
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
         }
 
         handler.cancelProgress();

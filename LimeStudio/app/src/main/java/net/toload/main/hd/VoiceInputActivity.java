@@ -46,8 +46,6 @@ public class VoiceInputActivity extends ComponentActivity {
     private static final String TAG = "VoiceInputActivity";
     public static final String ACTION_VOICE_RESULT = "net.toload.main.hd.VOICE_INPUT_RESULT";
     public static final String EXTRA_RECOGNIZED_TEXT = "recognized_text";
-    
-    private ActivityResultLauncher<Intent> voiceInputLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +62,7 @@ public class VoiceInputActivity extends ComponentActivity {
         Log.i(TAG, "onCreate(): Starting voice input");
         
         // Register ActivityResultLauncher for voice input
-        voiceInputLauncher = registerForActivityResult(
+        ActivityResultLauncher<Intent> voiceInputLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 this::handleVoiceInputResult);
         

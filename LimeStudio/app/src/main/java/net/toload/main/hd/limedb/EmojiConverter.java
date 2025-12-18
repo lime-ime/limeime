@@ -30,6 +30,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.data.Mapping;
@@ -75,11 +76,11 @@ public class EmojiConverter extends SQLiteOpenHelper {
 
 	public List<Mapping> convert(String tag, Integer emoji){
 
-		List<Mapping> output = new LinkedList<Mapping>();
+		List<Mapping> output = new LinkedList<>();
 
 		if(tag!=null && !tag.isEmpty()){
 			String tablename = "";
-			Cursor cursor = null;
+			Cursor cursor;
 			if(emoji == LIME.EMOJI_CN ) {
 				tablename = "cn";
 			}else if(emoji == LIME.EMOJI_EN ) {//
@@ -96,24 +97,25 @@ public class EmojiConverter extends SQLiteOpenHelper {
 				
 				if (cursor.moveToFirst()) {
 					int wordColumn = cursor.getColumnIndex(LIME.EMOJI_FIELD_VALUE);
-					while (!cursor.isAfterLast()) {
-						String word = cursor.getString(wordColumn);
-						if(word != null && !word.isEmpty() && !word.equals(" ")){
-							Mapping mapping = new Mapping();
-									mapping.setCode("");
-									mapping.setWord(word);
-									mapping.setEmojiRecord();
+					if (wordColumn >= 0) {
+						while (!cursor.isAfterLast()) {
+							String word = cursor.getString(wordColumn);
+							if(word != null && !word.isEmpty() && !word.equals(" ")){
+								Mapping mapping = new Mapping();
+								mapping.setCode("");
+								mapping.setWord(word);
+								mapping.setEmojiRecord();
 
-							output.add(mapping);
-
+								output.add(mapping);
+							}
+							cursor.moveToNext();
 						}
-						cursor.moveToNext();
 					}
 				}
-					
-				if (cursor != null) {cursor.close();}
-			} catch (Exception e) {
-				e.printStackTrace();
+
+                cursor.close();
+            } catch (Exception e) {
+				Log.e(TAG, "Error in emoji conversion", e);
 			}
 		}
 		return output;

@@ -25,6 +25,7 @@
 package net.toload.main.hd.global;
 
 import android.os.Environment;
+import android.util.Log;
 
 import java.text.DecimalFormat;
 
@@ -358,18 +359,65 @@ public class LIME {
 	public static final String GOOGLE_ACCOUNT_NAME = "GOOGLE_ACCOUNT_NAME";
 	public static final String GOOGLE_BACKUP_FILENAME = "limedatabasebackup.zip";
 	public static final String LOCAL = "LOCAL";
-	public static final String DROPBOX = "DROPBOX";
-	public static final String DROPBOX_TYPE = "DROPBOX_TYPE";
-	public final static String DROPBOX_APP_KEY = "keuuzhfc6efjf6t";
-	public final static String DROPBOX_APP_SECRET = "4y8fy4rqk8rofd8";
-	public static final String DROPBOX_ACCESS_TOKEN = "DROPBOX_ACCESS_TOKEN";
-	public static final String DROPBOX_REQUEST_FLAG = "DROPBOX_REQUEST_FLAG";
 	public static final String DEVICE = "device";
 	public static final int GOOGLE_RETRIEVE_MAXIMUM = 500;
 	
 	// UI Constants
 	public static final float HALF_ALPHA_VALUE = .5f;
 	public static final float NORMAL_ALPHA_VALUE = 1f;
+	
+	// Buffer Sizes (in bytes)
+	public static final int BUFFER_SIZE_1KB = 1024;
+	public static final int BUFFER_SIZE_2KB = 2048;
+	public static final int BUFFER_SIZE_4KB = 4096;
+	public static final int BUFFER_SIZE_100KB = 102400;
+	public static final int BUFFER_SIZE_128KB = 128000;
+	
+	// Sleep/Delay Constants (in milliseconds)
+	public static final int SLEEP_DELAY_1_SECOND_MS = 1000;
+	public static final int THREAD_YIELD_DELAY_MS = 0;
+	public static final int IME_SWITCH_VERIFY_DELAY_MS = 200;
+	public static final int IME_SWITCH_BACK_DELAY_MS = 500;
+	public static final int HANDLER_DELAY_MINIMAL_MS = 1; // Minimal delay for handler messages
+	public static final int COMPOSING_SHOW_DELAY_MS = 50; // Delay before showing composing text
+	public static final int COMPOSING_DISMISS_DELAY_MS = 100; // Delay before dismissing composing text
+	
+	// File Size Thresholds (in bytes)
+	public static final int MIN_FILE_SIZE_BYTES = 100000;
+	public static final int MIN_DATABASE_SIZE_BYTES = 10000; // Minimum valid database file size
+	
+	// UI Dimension Constants (in pixels/dp)
+	public static final int DEFAULT_KEY_HEIGHT_PX = 50; // Default keyboard key height
+	public static final int DEFAULT_PREVIEW_HEIGHT_PX = 80; // Default key preview height
+	public static final int DEFAULT_KEY_TEXT_SIZE_SP = 18; // Default key text size
+	public static final int DEFAULT_SPACE_KEY_TEXT_SIZE_SP = 25; // Default space key sliding text size
+	public static final int DEFAULT_LABEL_TEXT_SIZE_SP = 14; // Default label text size (for sub-labels, small labels)
+	public static final int DEFAULT_PREVIEW_TOP_PADDING_PX = 10; // Default preview top padding
+	public static final int DEFAULT_KEYBOARD_COLUMNS = 10; // Default number of keys per row
+	public static final int KEYBOARD_GRID_WIDTH = 10; // Grid width for proximity calculation
+	public static final int KEYBOARD_GRID_HEIGHT = 5; // Grid height for proximity calculation
+	public static final int KEY_POSITION_ADJUSTMENT_DIVISOR = 10; // Divisor for key position adjustments
+	public static final int SWIPE_VELOCITY_UNITS_PER_SECOND = 1000; // Velocity calculation units
+	
+	// Score Thresholds
+	public static final int MIN_SCORE_THRESHOLD = 120; // Minimum score threshold for search results
+	public static final int MAX_SCORE_THRESHOLD = 200; // Maximum score threshold for search results
+	public static final int SCORE_ADJUSTMENT_INCREMENT = 50; // Score adjustment increment
+	public static final int CODE_LENGTH_BONUS_MULTIPLIER = 30; // Multiplier for code length bonus calculation
+	
+	// Swipe/Touch Constants
+	public static final int SWIPE_THRESHOLD_BASE_DP = 500; // Base swipe threshold in density-independent pixels
+	public static final int LONGEST_PAST_TIME_MS = 200; // Longest past time for swipe tracking
+	
+	// Progress Percentage Constants
+	public static final int PROGRESS_COMPLETE_PERCENT = 100; // 100% progress
+	public static final int PROGRESS_PARTIAL_PERCENT = 50; // 50% progress
+	public static final int PROGRESS_MAX_DISPLAY_PERCENT = 99; // Maximum progress to display (99%)
+	public static final double PROGRESS_PHASE_MULTIPLIER = 0.8; // Progress phase multiplier (80%)
+	public static final int PROGRESS_PHASE_OFFSET = 10; // Progress phase offset (10%)
+	
+	// Database Processing Constants
+	public static final int MAX_LINES_TO_PROCESS = 100; // Maximum lines to process in a batch
 	
 	// Share and Import
 	public static final String SHARE_TYPE_TXT = "text/plain";
@@ -402,7 +450,7 @@ public class LIME {
 			DecimalFormat df = new DecimalFormat("###,###,###,###,###,###,##0");
 			return df.format(number);
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.e("LIME", "Error formatting number", e);
 			return "0";
 		}
 	}

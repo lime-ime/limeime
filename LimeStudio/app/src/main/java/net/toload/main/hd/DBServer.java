@@ -24,6 +24,7 @@
 
 package net.toload.main.hd;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -51,9 +52,6 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -62,33 +60,81 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 //Jeremy '12,5,1 renamed from DBServer and change from service to ordinary class.
+// Singleton pattern: Ensures only one instance exists and safely manages Application Context
 public class  DBServer {
 	private static final boolean DEBUG = false;
 	private static final String TAG = "LIME.DBServer";
-	//private NotificationManager notificationMgr;
+	
+	// Singleton instance
+	@SuppressLint("StaticFieldLeak")
+    private static volatile DBServer instance = null;
+	
+	// Application Context - safe to store as static since ApplicationContext lives for app lifetime
+	private final Context appContext;
+	
+	// Static context accessor for backward compatibility with static methods
+	// Safe to store ApplicationContext in static field - it lives for app lifetime
+	protected Context ctx = null;
+	
+	protected LimeDB datasource = null;  // LIMEDB for shared LIMEDB between DBServer instances
+	protected LIMEPreferenceManager mLIMEPref;
+	private String loadingTablename = "";  //Jeremy '12,6,2 change all variable to static for all instances to share these variables
 
-	protected static LimeDB datasource = null;  //static LIMEDB for shared LIMEDB between DBServer instances
-	protected static LIMEPreferenceManager mLIMEPref;
+	/**
+	 * Private constructor to prevent direct instantiation.
+	 * Use getInstance() instead.
+	 * 
+	 * @param context Context (will be converted to ApplicationContext)
+	 */
+	private DBServer(Context context) {
+		// Always use ApplicationContext to prevent memory leaks
+		// ApplicationContext lives for the app lifetime, matching singleton lifetime
+		this.appContext = context.getApplicationContext();
+		
+		if (ctx == null) {
+			ctx = this.appContext;
+			mLIMEPref = new LIMEPreferenceManager(this.appContext);
+			if (datasource == null) {
+				datasource = new LimeDB(this.appContext);
+			}
+		}
+	}
 
-    static {
-        mLIMEPref = null;
-    }
+	/**
+	 * Get the singleton instance of DBServer.
+	 * Thread-safe implementation using double-checked locking.
+	 * 
+	 * @param context Context (will be converted to ApplicationContext on first call)
+	 * @return The singleton DBServer instance
+	 */
+	public static DBServer getInstance(Context context) {
+		if (instance == null) {
+			synchronized (DBServer.class) {
+				if (instance == null) {
+					instance = new DBServer(context);
+				}
+			}
+		}
+		return instance;
+	}
 
-    private static boolean remoteFileDownloading = false;
+	/**
+	 * Get the singleton instance if already initialized.
+	 * Use this when you're certain the instance has been created.
+	 * 
+	 * @return The singleton DBServer instance, or null if not initialized
+	 */
+	public static DBServer getInstance() {
+		return instance;
+	}
 
-	private static String loadingTablename = "";  //Jeremy '12,6,2 change all variable to static for all instances to share these variables
-	private static boolean abortDownload = false;
-
-
-	protected static Context ctx = null;
-
-
-	public DBServer(Context context) {
-		DBServer.ctx = context;
-		mLIMEPref = new LIMEPreferenceManager(ctx);
-		//loadLimeDB();
-		if (datasource == null)
-			datasource = new LimeDB(ctx);
+	/**
+	 * Get the Application Context used by this singleton.
+	 * 
+	 * @return Application Context
+	 */
+	public Context getContext() {
+		return appContext;
 	}
 
 	public void loadMapping(String filename, String tablename, LIMEProgressListener progressListener) throws RemoteException {
@@ -128,7 +174,7 @@ public class  DBServer {
 		//mLIMEPref.setResetCacheFlag(true);
 		resetCache();
 	}
-	public static void resetCache(){
+	public void resetCache(){
 		SearchServer.resetCache(true);
 	}
 
@@ -146,14 +192,13 @@ public class  DBServer {
 		//String sourcedbfile = LIME.LIME_SDCARD_FOLDER + imtype;
 		List<String> unzipFilePaths = new ArrayList<>();
 		try {
-			File unzipTargetDir = new File(ctx.getCacheDir(), "limehd");
+			File unzipTargetDir = new File(appContext.getCacheDir(), "limehd");
 			unzipFilePaths = LIMEUtilities.unzip(compressedSourceDB.getAbsolutePath(), unzipTargetDir.getAbsolutePath(),true);
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.e(TAG, "Error unzipping compressed database", e);
 		}
 		if(unzipFilePaths.size() == 1){
-        //}
-		//else {
+
             datasource.importDb(unzipFilePaths.get(0), imtype);
 			resetCache();
         }
@@ -168,20 +213,20 @@ public class  DBServer {
 	 * Get the data directory path, compatible with all API levels.
 	 * Uses ContextCompat.getDataDir() which handles API level differences automatically.
 	 */
-	private static String getDataDirPath(Context context) {
-		File dataDir = ContextCompat.getDataDir(context);
-		return dataDir != null ? dataDir.getAbsolutePath() : context.getFilesDir().getParent();
+	private String getDataDirPath() {
+		File dataDir = ContextCompat.getDataDir(appContext);
+		return dataDir != null ? dataDir.getAbsolutePath() : appContext.getFilesDir().getParent();
 	}
 
 
 
 
 
-    public static void backupDatabase(Uri uri) throws RemoteException {
+    public void backupDatabase(Uri uri) throws RemoteException {
         if (DEBUG)
             Log.i(TAG, "backupDatabase()");
 
-        String dataDir = getDataDirPath(ctx);
+        String dataDir = getDataDirPath();
         //backup shared preferences
 
         File fileSharedPrefsBackup = new File(dataDir, LIME.SHARED_PREFS_BACKUP_NAME);
@@ -206,10 +251,10 @@ public class  DBServer {
 
         // hold database connection and close database.
         datasource.holdDBConnection(); //Jeremy '15,5,23
-        closeDatabse();
+        closeDatabase();
 
         //ready to zip backup file list
-        File tempZip = new File(ctx.getCacheDir(), LIME.DATABASE_BACKUP_NAME);
+        File tempZip = new File(appContext.getCacheDir(), LIME.DATABASE_BACKUP_NAME);
         if(tempZip.exists() && !tempZip.delete()) Log.w(TAG, "Failed to delete existing temp zip file");
         OutputStream outputStream = null;
         FileInputStream inputStream = null;
@@ -219,23 +264,23 @@ public class  DBServer {
             //saveFileToDownloads(tempZip);
             // Copy temp zip to the User selected URI
             inputStream = new FileInputStream(tempZip);
-            outputStream = ctx.getContentResolver().openOutputStream(uri);
+            outputStream = appContext.getContentResolver().openOutputStream(uri);
 
-            byte[] buffer = new byte[4096];
+            byte[] buffer = new byte[LIME.BUFFER_SIZE_4KB];
             int bytesRead;
             while ((bytesRead = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, bytesRead);
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
-            showNotificationMessage(ctx.getText(R.string.l3_initial_backup_error) + "");
+            Log.e(TAG, "Error backing up database", e);
+            showNotificationMessage(appContext.getText(R.string.l3_initial_backup_error) + "");
         } finally {
             try {
                 if (outputStream != null) outputStream.close();
                 if (inputStream != null) inputStream.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error closing streams during backup", e);
             }
             // Reopen DB
             if (datasource != null) {
@@ -244,7 +289,7 @@ public class  DBServer {
             if (fileSharedPrefsBackup.exists() && !fileSharedPrefsBackup.delete()) Log.w(TAG, "Failed to delete shared preferences backup file in finally");
             if (tempZip.exists() && !tempZip.delete()) Log.w(TAG, "Failed to delete temp zip file in finally");
 
-            showNotificationMessage(ctx.getText(R.string.l3_initial_backup_end) + "");
+            showNotificationMessage(appContext.getText(R.string.l3_initial_backup_end) + "");
         }
 
 
@@ -260,23 +305,23 @@ public class  DBServer {
 
     }
 
-    public static void restoreDatabase(Uri uri) {
+    public void restoreDatabase(Uri uri) {
         if (DEBUG)
             Log.i(TAG, "restoreDatabase(Uri) Starting....");
 
-        File tempZip = new File(ctx.getCacheDir(), LIME.DATABASE_BACKUP_NAME);
+        File tempZip = new File(appContext.getCacheDir(), LIME.DATABASE_BACKUP_NAME);
         if(tempZip.exists() && tempZip.delete()) Log.w(TAG, "Failed to delete shared preferences backup file after restore");
 
         InputStream inputStream = null;
         FileOutputStream outputStream = null;
         try {
-            inputStream = ctx.getContentResolver().openInputStream(uri);
+            inputStream = appContext.getContentResolver().openInputStream(uri);
             if (inputStream == null) {
                 throw new FileNotFoundException("Could not open input stream for URI: " + uri);
             }
             outputStream = new FileOutputStream(tempZip);
 
-            byte[] buffer = new byte[4096];
+            byte[] buffer = new byte[LIME.BUFFER_SIZE_4KB];
             int bytesRead;
             while ((bytesRead = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, bytesRead);
@@ -285,39 +330,38 @@ public class  DBServer {
             restoreDatabase(tempZip.getAbsolutePath());
 
         } catch (Exception e) {
-            e.printStackTrace();
-            showNotificationMessage(ctx.getText(R.string.l3_initial_restore_error) + "");
+            Log.e(TAG, "Error restoring database", e);
+            showNotificationMessage(appContext.getText(R.string.l3_initial_restore_error) + "");
         } finally {
             try {
                 if (inputStream != null) inputStream.close();
                 if (outputStream != null) outputStream.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error closing streams during restore", e);
             }
             if (tempZip.exists() && tempZip.delete())Log.w(TAG, "Failed to delete shared preferences backup file after restore");
         }
     }
 
-	public static void restoreDatabase(String srcFilePath) {
-
+	public void restoreDatabase(String srcFilePath) {
 		File check = new File(srcFilePath);
-        String dataDir = getDataDirPath(ctx);
+        String dataDir = getDataDirPath();
 
 		if(check.exists()){
 
 			datasource.holdDBConnection(); //Jeremy '15,5,23
-			closeDatabse();
+			closeDatabase();
             //restore shared preference
             File sharedPref = new File(dataDir, LIME.SHARED_PREFS_BACKUP_NAME);
 
             try {
 				LIMEUtilities.unzip(srcFilePath, dataDir, true);
 			} catch (Exception e) {
-				e.printStackTrace();
-				showNotificationMessage(ctx.getText(R.string.l3_initial_restore_error) + "");
+				Log.e(TAG, "Error unzipping restore file", e);
+				showNotificationMessage(appContext.getText(R.string.l3_initial_restore_error) + "");
 			}
 			finally {
-				showNotificationMessage(ctx.getText(R.string.l3_initial_restore_end) + "");
+				showNotificationMessage(appContext.getText(R.string.l3_initial_restore_end) + "");
 			}
 
 			datasource.unHoldDBConnection(); //Jeremy '15,5,23
@@ -334,24 +378,23 @@ public class  DBServer {
 			datasource.checkAndUpdateRelatedTable();
 
 		}else{
-			showNotificationMessage(ctx.getText(R.string.error_restore_not_found) + "");
+			showNotificationMessage(appContext.getText(R.string.error_restore_not_found) + "");
 
 		}
 
 	}
 
-	public static void backupDefaultSharedPreference(File sharePrefs) {
-
+	public void backupDefaultSharedPreference(File sharePrefs) {
 		if(sharePrefs.exists() && !sharePrefs.delete()) Log.w(TAG, "Failed to delete existing shared preferences backup file");
 
 		ObjectOutputStream output = null;
 		try {
 			output = new ObjectOutputStream(new FileOutputStream(sharePrefs));
-			SharedPreferences pref = ctx.getSharedPreferences(ctx.getPackageName() + "_preferences", Context.MODE_PRIVATE);
+			SharedPreferences pref = appContext.getSharedPreferences(appContext.getPackageName() + "_preferences", Context.MODE_PRIVATE);
 			output.writeObject(pref.getAll());
 
 		} catch (IOException e) {
-			e.printStackTrace();
+			Log.e(TAG, "Error backing up shared preferences", e);
 		} finally {
 			try {
 				if (output != null) {
@@ -359,19 +402,18 @@ public class  DBServer {
 					output.close();
 				}
 			} catch (IOException ex) {
-				ex.printStackTrace();
+				Log.e(TAG, "Error closing shared preferences backup stream", ex);
 			}
 		}
 
 	}
 
     @SuppressWarnings("unchecked")
-	public static void restoreDefaultSharedPreference(File sharePrefs )
+	public void restoreDefaultSharedPreference(File sharePrefs )
 	{
-
         try (ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(sharePrefs))) {
             try {
-                SharedPreferences.Editor prefEdit = ctx.getSharedPreferences(ctx.getPackageName() + "_preferences", Context.MODE_PRIVATE).edit();
+                SharedPreferences.Editor prefEdit = appContext.getSharedPreferences(appContext.getPackageName() + "_preferences", Context.MODE_PRIVATE).edit();
                 prefEdit.clear();
                 Map<String, ?> entries = (Map<String, ?>) inputStream.readObject();
                 for (Map.Entry<String, ?> entry : entries.entrySet()) {
@@ -391,13 +433,13 @@ public class  DBServer {
                             prefEdit.putString(key, ((String) v));
                     }
                 }
-                prefEdit.commit();
+                prefEdit.apply();
 
             } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error restoring shared preferences", e);
             }
         } catch (IOException ex) {
-            ex.printStackTrace();
+            Log.e(TAG, "Error reading shared preferences backup file", ex);
         }
 	}
 
@@ -436,7 +478,7 @@ public class  DBServer {
 
 
 
-	public static void closeDatabse() {
+	public void closeDatabase() {
 		Log.i(TAG,"closeDatabase()");
 		if (datasource != null) {
 			datasource.close();
@@ -460,103 +502,9 @@ public class  DBServer {
 
 
 	/*
-	 * Select Remote File to download
-	 */
-	public File downloadRemoteFile(String backup_url, String url, String folder, String filename){
-
-		File olddbfile = new File(folder + filename);
-		if(olddbfile.exists() && !olddbfile.delete()) Log.w(TAG, "Failed to delete existing olddbfile");
-
-		//mLIMEPref.setParameter("reload_database", true);
-		abortDownload = false;
-		remoteFileDownloading = true;
-		File target = downloadRemoteFile(url, folder, filename);
-		if(!target.exists() || target.length() == 0){
-			target = downloadRemoteFile(backup_url, folder, filename);
-		}
-		remoteFileDownloading = false;
-		return target;
-	}
-
-	/*
-	 * Download Remote File
-	 */	public File downloadRemoteFile(String url, String folder, String filename){
-
-		if(DEBUG)
-			Log.i(TAG,"downloadRemoteFile() Starting....");
-
-		try {
-			URL downloadUrl = new URL(url);
-			URLConnection conn = downloadUrl.openConnection();
-			conn.connect();
-			InputStream is = conn.getInputStream();
-			long remoteFileSize = conn.getContentLength();
-			long downloadedSize = 0;
-
-			if(DEBUG)
-				Log.i(TAG, "downloadRemoteFile() contentLength:");
-
-			if(is == null){
-				throw new RuntimeException("stream is null");
-			}
-
-			File downloadFolder = new File(folder);
-            if(!downloadFolder.exists() &&
-                    downloadFolder.mkdirs()) {
-                Log.w(TAG, "Failed to create target folder");
-            }
-
-			File downloadedFile = new File(downloadFolder.getAbsolutePath() + File.separator + filename);
-			if(downloadedFile.exists() && !downloadedFile.delete()) Log.w(TAG, "Failed to delete existing downloadedFile");
-
-			FileOutputStream fos;
-			fos = new FileOutputStream(downloadedFile);
-			// '04,12,27 Jeremy modified buf size from 128 to 128k and dramatically speed-up downloading speed on modern devices
-			byte[] buf = new byte[128000];
-			do{
-				Thread.yield();
-				int numread = is.read(buf);
-				downloadedSize += numread;
-
-				if(DEBUG)
-					Log.i(TAG, "downloadRemoteFile(), contentLength:"
-							+ remoteFileSize+ ". downloadedSize:" + downloadedSize);
-
-				if(numread <=0){break;}
-				fos.write(buf, 0, numread);
-			}while(!abortDownload);
-			fos.close();
-			is.close();
-
-			return downloadedFile;
-
-		} catch (FileNotFoundException e) {
-			Log.d(TAG,"downloadRemoteFile(); can't open temp file on sdcard for writing.");
-			showNotificationMessage(ctx.getText(R.string.l3_initial_download_write_sdcard_failed)+ "");
-			e.printStackTrace();
-
-		} catch (MalformedURLException e) {
-			Log.d(TAG, "downloadRemoteFile() MalformedURLException....");
-			showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "");
-			e.printStackTrace();
-		} catch (IOException e){
-			Log.d(TAG, "downloadRemoteFile() IOException....");
-			showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "");
-			e.printStackTrace();
-		} catch (Exception e){
-			Log.d(TAG, "downloadRemoteFile() Others....");
-			showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "");
-			e.printStackTrace();
-		}
-		if(DEBUG)
-			Log.i(TAG, "downloadRemoteFile() failed.");
-		return null;
-	}
-
-	/*
 	 * Decompress retrieved file to target folder
 	 */
-	public static void decompressFile(File sourceFile, String targetFolder, String targetFile, boolean removeOriginal){
+	public void decompressFile(File sourceFile, String targetFolder, String targetFile, boolean removeOriginal){
 		if(DEBUG)
 			Log.i(TAG, "decompressFile(), souce = " + sourceFile.toString() +	", target = " + targetFolder + "/" + targetFile);
 
@@ -564,40 +512,42 @@ public class  DBServer {
 
 			File targetFolderObj = new File(targetFolder);
 			if(!targetFolderObj.exists() &&
-				targetFolderObj.mkdirs()) {
+				!targetFolderObj.mkdirs()) {
 				Log.w(TAG, "Failed to create target folder");
 			}
 
-			FileInputStream fis = new FileInputStream(sourceFile);
-            ZipInputStream zis = getZipInputStream(targetFile, fis, targetFolderObj);
-            zis.close();
-			fis.close();
+			// Use try-with-resources to ensure streams are closed even if exceptions occur
+			try (FileInputStream fis = new FileInputStream(sourceFile)) {
+				ZipInputStream zis = getZipInputStream(targetFile, fis, targetFolderObj);
+				zis.close();
+			}
 
 			if(removeOriginal && !sourceFile.delete()) Log.w(TAG, "Failed to delete original source file");
         } catch (Exception e) {
-			showNotificationMessage(ctx.getText(R.string.l3_initial_download_failed)+ "");
-			e.printStackTrace();
+			showNotificationMessage(appContext.getText(R.string.l3_initial_download_failed)+ "");
+			Log.e(TAG, "Error compressing file", e);
 		}
     }
 
-    private static ZipInputStream getZipInputStream(String targetFile, FileInputStream fis, File targetFolderObj) throws IOException {
+    private ZipInputStream getZipInputStream(String targetFile, FileInputStream fis, File targetFolderObj) throws IOException {
         ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fis));
         //ZipEntry entry;
         while (( zis.getNextEntry()) != null) {
 
             int size;
-            byte[] buffer = new byte[2048];
+            byte[] buffer = new byte[LIME.BUFFER_SIZE_2KB];
 
             File OutputFile = new File(targetFolderObj.getAbsolutePath() + File.separator + targetFile);
             if(OutputFile.exists() && !OutputFile.delete()) Log.w(TAG, "Failed to delete existing output file");
 
-            FileOutputStream fos = new FileOutputStream(OutputFile);
-            BufferedOutputStream bos = new BufferedOutputStream(fos, buffer.length);
-            while ((size = zis.read(buffer, 0, buffer.length)) != -1) {
-                bos.write(buffer, 0, size);
+            // Use try-with-resources to ensure streams are closed even if exceptions occur
+            try (FileOutputStream fos = new FileOutputStream(OutputFile);
+                 BufferedOutputStream bos = new BufferedOutputStream(fos, buffer.length)) {
+                while ((size = zis.read(buffer, 0, buffer.length)) != -1) {
+                    bos.write(buffer, 0, size);
+                }
+                bos.flush();
             }
-            bos.flush();
-            bos.close();
 
             //Log.i("ART","uncompress Output File:"+OutputFile.getAbsolutePath() + " / " + OutputFile.length());
 
@@ -610,7 +560,7 @@ public class  DBServer {
 			Log.i(TAG, "compressFile(), srouce = " + sourceFile.toString() +
 					", target = " + targetFolder + "/" + targetFile);
 		try{
-			final int BUFFER = 2048;
+			final int BUFFER = LIME.BUFFER_SIZE_2KB;
 
 			File targetFolderObj = new File(targetFolder);
 			if(!targetFolderObj.exists()&&
@@ -622,26 +572,25 @@ public class  DBServer {
 			File OutputFile = new File(targetFolderObj.getAbsolutePath() + File.separator + targetFile);
 			if(OutputFile.exists() && !OutputFile.delete()) Log.w(TAG, "Failed to delete existing output file for compression");
 
-			FileOutputStream dest = new FileOutputStream(OutputFile);
-			ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
-
 			byte[] data = new byte[BUFFER];
 
-			FileInputStream fi = new  FileInputStream(sourceFile);
-			BufferedInputStream origin = new BufferedInputStream(fi, BUFFER);
-			ZipEntry entry = new ZipEntry(sourceFile.getAbsolutePath());
-			out.putNextEntry(entry);
-			int count;
-			while((count = origin.read(data, 0, BUFFER)) != -1) {
-				out.write(data, 0, count);
+			// Use try-with-resources to ensure streams are closed even if exceptions occur
+			try (FileOutputStream dest = new FileOutputStream(OutputFile);
+			     ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
+			     FileInputStream fi = new FileInputStream(sourceFile);
+			     BufferedInputStream origin = new BufferedInputStream(fi, BUFFER)) {
+				ZipEntry entry = new ZipEntry(sourceFile.getAbsolutePath());
+				out.putNextEntry(entry);
+				int count;
+				while((count = origin.read(data, 0, BUFFER)) != -1) {
+					out.write(data, 0, count);
+				}
 			}
-			origin.close();
-			out.close();
 
 			//Log.i("ART","compress Output File:"+OutputFile.getAbsolutePath() + " / " + OutputFile.length());
 
 		} catch(Exception e) {
-			e.printStackTrace();
+			Log.e(TAG, "Error compressing file", e);
 		}
 	}
 	/**
@@ -654,65 +603,14 @@ public class  DBServer {
 	}
 
 
-	public int getLoadingMappingPercentageDone() {
-		if(remoteFileDownloading) return 0;
-		else return datasource.getProgressPercentageDone();
-	}
-/*
-	@Deprecated //by Jeremy '12,6,6
-	public void forceUpgrad() throws RemoteException {
-		//if (datasource == null) {loadLimeDB();}
-		datasource.forceUpgrade();
-	}*/
-
-	//	}
-
-
-	//	public IBinder onBind(Intent arg0) {
-	//		return new DBServiceImpl(this);
-	//	}
-	//
-	//	/*
-	//	 * (non-Javadoc)
-	//	 * 
-	//	 * @see android.app.Service#onCreate()
-	//	 */
-	//	
-	//	public void onCreate() {
-	//		super.onCreate();
-	//	}
-	//
-	//	/*
-	//	 * (non-Javadoc)
-	//	 * 
-	//	 * @see android.app.Service#onDestroy()
-	//	 */
-	//	
-	//	public void onDestroy() {
-	//		if (datasource != null) {
-	//			datasource.close();
-	//			datasource = null;
-	//
-	//		}
-	//		notificationMgr.cancelAll();
-	//		super.onDestroy();
-	//	}
-
 	//Jeremy '12,4,23 rewriting using alert notification builder in LIME utilities to replace the deprecated method
-	public static void showNotificationMessage(String message) {
-
+	public void showNotificationMessage(String message) {
 		Intent i;
-		i = new Intent(ctx, MainActivity.class);
+		i = new Intent(appContext, MainActivity.class);
 
 		LIMEUtilities.showNotification(
-				ctx, true, ctx.getText(R.string.ime_setting), message, i);
+				appContext, true, appContext.getText(R.string.ime_setting), message, i);
 
-	}
-
-	public void renameTableName(String source, String target) {
-		if(datasource != null){
-			datasource.renameTableName(source, target);
-		}
 	}
 
 	/**
@@ -733,3 +631,4 @@ public class  DBServer {
 
 
 }
+

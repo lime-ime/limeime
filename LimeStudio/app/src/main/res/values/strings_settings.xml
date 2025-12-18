@@ -507,24 +507,6 @@
     <string name="l3_initial_cloud_restore_end">Google Drive資料庫還原完成</string>
     <string name="l3_initial_cloud_failed">Google Drive服務暫時無法連接，請稍後再試</string>
 
-    <string name="l3_initial_dropbox_backup_database">Dropbox 備份</string>
-    <string name="l3_initial_dropbox_downloading">Dropbox 備份檔下載中 </string>
-    <string name="l3_initial_dropbox_uploading">Dropbox 備份檔上傳中 </string>
-    <string name="l3_initial_dropbox_backup_start">開始Dropbox資料庫備份</string>
-    <string name="l3_initial_dropbox_backup_end">Dropbox資料庫備份完成</string>
-    <string name="l3_initial_dropbox_backup_confirm">您是否要備份資料庫至Dropbox?</string>
-    <string name="l3_initial_dropbox_backup_error">資料庫不存在，無法進行備份.</string>
-    <string name="l3_initial_dropbox_restore_database">Dropbox 還原</string>
-    <string name="l3_initial_dropbox_restore_error">Dropbox 備份不存在. 請先進行Dropbox 備份</string>
-    <string name="l3_initial_dropbox_restore_confirm">您是否要由Dropbox還原資料庫?</string>
-    <string name="l3_initial_dropbox_restore_start">開始還原Dropbox資料庫</string>
-    <string name="l3_initial_dropbox_restore_end">Dropbox資料庫還原完成</string>
-    <string name="l3_initial_dropbox_failed">Dropbox服務暫時無法連接，請稍後再試</string>
-    <string name="l3_initial_dropbox_canceled">Dropbox動作已取消，請稍後再試</string>
-    <string name="l3_initial_dropbox_authetication_failed">Dropbox認證失敗，請稍後再試</string>
-    <string name="l3_initial_dropbox_large">檔案過大無法上傳Dropbox</string>
-
-
     <string name="l3_im_setting_select_keyboard">請選擇輸入法鍵盤顯示</string>
     <string name="l3_im_setting_back">回到上一頁</string>
     <string name="l3_im_setting_title">對應表設定</string>

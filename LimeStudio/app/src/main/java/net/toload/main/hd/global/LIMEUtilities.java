@@ -46,9 +46,13 @@ import net.toload.main.hd.R;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -175,7 +179,7 @@ public class LIMEUtilities {
 				addFileToZip(sourceFolderPath + File.separator + item.getName(), sourceFilePath + File.separator  + subItem, baseFolderPath, zos);
 			}
 		} else {
-			byte[] buf = new byte[102400]; //100k buffer
+			byte[] buf = new byte[LIME.BUFFER_SIZE_100KB];
 			int len;
             try (FileInputStream inStream = new FileInputStream(sourceFilePath)) {
 
@@ -311,7 +315,8 @@ public class LIMEUtilities {
 			copyRAWFile(inStream, outSteram);
 			return true;
 		}
-		catch(Exception ignored){
+		catch(Exception e){
+			Log.e(TAG, "Error copying file", e);
 			return false;
 		}
 
@@ -323,24 +328,24 @@ public class LIMEUtilities {
 			fs.close();
 		}
 		catch(Exception e){      
-    		e.printStackTrace();   
+    		Log.e(TAG, "Error copying raw file to new file", e);
            }   
 	}
 	public static void copyRAWFile(InputStream	inStream, FileOutputStream outStream){
 	    	try{
 	    		int bytesum=0, byteread;
 
-	            byte[] buffer  = new byte[102400]; //100k buffer
-	            while((byteread = inStream.read(buffer))!=-1){   
-	               	   bytesum     +=     byteread;
-	                   System.out.println(bytesum);
-	                   outStream.write(buffer, 0, byteread);   
-	             	}   
+	            byte[] buffer  = new byte[LIME.BUFFER_SIZE_100KB];
+	            while((byteread = inStream.read(buffer))!=-1) {
+                    bytesum += byteread;
+                    System.out.println(bytesum);
+                    outStream.write(buffer, 0, byteread);
+                }
 	            inStream.close();
 				outStream.close();
 	        	}   
 	    	catch(Exception e){      
-	    		e.printStackTrace();   
+	    		Log.e(TAG, "Error copying raw file", e);
 	           }   
 	     }
 
@@ -464,6 +469,132 @@ public class LIMEUtilities {
     {
         return ctx.getDatabasePath(LIME.DATABASE_NAME).getParentFile();
     }
+
+	/**
+	 * Progress callback interface for download operations
+	 */
+	public interface DownloadProgressCallback {
+		/**
+		 * Called when download progress updates
+		 * @param percent Progress percentage (0-100)
+		 */
+		void onProgress(int percent);
+	}
+
+	/**
+	 * Abort flag supplier interface for download operations (API 21+ compatible)
+	 * Replaces java.util.function.Supplier&lt;Boolean&gt; which requires API 24+
+	 */
+	public interface AbortFlagSupplier {
+		/**
+		 * Gets the current abort flag state
+		 * @return true if download should be aborted, false otherwise
+		 */
+		boolean get();
+	}
+
+	/**
+	 * Shared method to download a remote file.
+	 * Supports both temporary file creation (for cache) and specific file creation (for persistent storage).
+	 * 
+	 * @param url The URL to download from
+	 * @param targetFile The target file to write to (if null, creates temp file in cacheDir)
+	 * @param cacheDir Context cache directory (required if targetFile is null)
+	 * @param progressCallback Optional progress callback (can be null)
+	 * @param abortFlagSupplier Optional supplier function that returns abort flag state (can be null)
+	 * @return The downloaded file, or null if download failed
+	 */
+	public static File downloadRemoteFile(String url, File targetFile, File cacheDir, 
+			DownloadProgressCallback progressCallback, AbortFlagSupplier abortFlagSupplier) {
+		if(DEBUG)
+			Log.i(TAG, "downloadRemoteFile() Starting: " + url);
+
+		try {
+			URL downloadUrl = new URL(url);
+			URLConnection conn = downloadUrl.openConnection();
+			conn.connect();
+			InputStream is = conn.getInputStream();
+			long remoteFileSize = conn.getContentLength();
+			long downloadedSize = 0;
+
+			if(DEBUG)
+				Log.i(TAG, "downloadRemoteFile() contentLength: " + remoteFileSize);
+
+			if(is == null){
+				throw new RuntimeException("stream is null");
+			}
+
+			File downloadedFile;
+			if (targetFile != null) {
+				// Use specific target file
+				File downloadFolder = targetFile.getParentFile();
+				if (downloadFolder != null && !downloadFolder.exists()) {
+					if (!downloadFolder.mkdirs()) {
+						Log.w(TAG, "Failed to create target folder: " + downloadFolder.getAbsolutePath());
+					}
+				}
+				downloadedFile = targetFile;
+				if(downloadedFile.exists() && !downloadedFile.delete()) {
+					Log.w(TAG, "Failed to delete existing downloadedFile");
+				}
+			} else {
+				// Create temp file in cache directory
+				if (cacheDir == null) {
+					throw new IllegalArgumentException("cacheDir cannot be null when targetFile is null");
+				}
+				downloadedFile = File.createTempFile(LIME.DATABASE_IM_TEMP, LIME.DATABASE_IM_TEMP_EXT, cacheDir);
+				downloadedFile.deleteOnExit();
+			}
+
+			// Use try-with-resources to ensure streams are closed even if exceptions occur
+			try (FileOutputStream fos = new FileOutputStream(downloadedFile);
+			     InputStream inputStream = is) {
+				// Use 128KB buffer for better performance on modern devices
+				byte[] buf = new byte[LIME.BUFFER_SIZE_128KB];
+				do{
+					// Check abort flag if provided
+					if (abortFlagSupplier != null && abortFlagSupplier.get()) {
+						if(DEBUG)
+							Log.i(TAG, "downloadRemoteFile() aborted by user");
+						break;
+					}
+
+					// InputStream.read() is already blocking and will wait for data
+					int numread = inputStream.read(buf);
+					if(numread <= 0) {
+						break;
+					}
+
+					fos.write(buf, 0, numread);
+					downloadedSize += numread; // Track actual bytes downloaded
+
+					// Update progress if callback provided and size is known
+					if (progressCallback != null && remoteFileSize > 0) {
+						float percent = ((float)downloadedSize / (float)remoteFileSize) * 100;
+						progressCallback.onProgress((int)percent);
+					}
+
+					if(DEBUG)
+						Log.i(TAG, "downloadRemoteFile(), contentLength: " + remoteFileSize 
+								+ ", downloadedSize: " + downloadedSize);
+				} while(true);
+			}
+
+			return downloadedFile;
+
+		} catch (FileNotFoundException e) {
+			Log.e(TAG, "downloadRemoteFile() FileNotFoundException: can't open file for writing.", e);
+		} catch (MalformedURLException e) {
+			Log.e(TAG, "downloadRemoteFile() MalformedURLException: " + url, e);
+		} catch (IOException e){
+			Log.e(TAG, "downloadRemoteFile() IOException: " + e.getMessage(), e);
+		} catch (Exception e){
+			Log.e(TAG, "downloadRemoteFile() Exception: " + e.getMessage(), e);
+		}
+		if(DEBUG)
+			Log.i(TAG, "downloadRemoteFile() failed.");
+		return null;
+	}
 
 
 }

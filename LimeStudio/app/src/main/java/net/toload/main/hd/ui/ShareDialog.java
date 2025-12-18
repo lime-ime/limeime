@@ -31,6 +31,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Typeface;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -84,12 +86,12 @@ public class ShareDialog extends DialogFragment {
 	}
 
 	@Override
-	public void onAttach(Context context) {
+	public void onAttach(@NonNull Context context) {
 		super.onAttach(context);
 	}
 
 	@Override
-	public void onCancel(DialogInterface dialog) {
+	public void onCancel(@NonNull DialogInterface dialog) {
 		super.onCancel(dialog);
 	}
 
@@ -113,19 +115,16 @@ public class ShareDialog extends DialogFragment {
 	public void onResume() {
 		super.onResume();
 
-		getDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
-			@Override
-			public boolean onKey(android.content.DialogInterface dialog,
-								 int keyCode, android.view.KeyEvent event) {
-				if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
-					// To dismiss the fragment when the back-button is pressed.
-					dismiss();
-					return true;
-				}
-				// Otherwise, do nothing else
-				else return false;
-			}
-		});
+        assert getDialog() != null;
+        getDialog().setOnKeyListener((dialog, keyCode, event) -> {
+            if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
+                // To dismiss the fragment when the back-button is pressed.
+                dismiss();
+                return true;
+            }
+            // Otherwise, do nothing else
+            else return false;
+        });
 	}
 	public void cancelDialog(){
 		this.dismiss();
@@ -133,38 +132,34 @@ public class ShareDialog extends DialogFragment {
 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 
-		getDialog().getWindow().setTitle(getResources().getString(R.string.share_dialog_title));
+        assert getDialog() != null;
+        getDialog().getWindow().setTitle(getResources().getString(R.string.share_dialog_title));
 		datasource = new LimeDB(getActivity());
 		sharedialog = this;
 
 		activity = getActivity();
 		view = inflater.inflate(R.layout.fragment_dialog_share, container, false);
 
-		btnShareCustom = (Button) view.findViewById(R.id.btnShareCustom);
-		btnShareArray = (Button) view.findViewById(R.id.btnShareArray);
-		btnShareArray10 = (Button) view.findViewById(R.id.btnShareArray10);
-		btnShareCj = (Button) view.findViewById(R.id.btnShareCj);
-		btnShareCj5 = (Button) view.findViewById(R.id.btnShareCj5);
-		btnShareDayi = (Button) view.findViewById(R.id.btnShareDayi);
-		btnShareEcj = (Button) view.findViewById(R.id.btnShareEcj);
-		btnShareEz = (Button) view.findViewById(R.id.btnShareEz);
-		btnSharePhonetic = (Button) view.findViewById(R.id.btnSharePhonetic);
-		btnSharePinyin = (Button) view.findViewById(R.id.btnSharePinyin);
-		btnShareScj = (Button) view.findViewById(R.id.btnShareScj);
-		btnShareWb = (Button) view.findViewById(R.id.btnShareWb);
-		btnShareHs = (Button) view.findViewById(R.id.btnShareHs);
+		btnShareCustom = view.findViewById(R.id.btnShareCustom);
+		btnShareArray = view.findViewById(R.id.btnShareArray);
+		btnShareArray10 = view.findViewById(R.id.btnShareArray10);
+		btnShareCj = view.findViewById(R.id.btnShareCj);
+		btnShareCj5 = view.findViewById(R.id.btnShareCj5);
+		btnShareDayi = view.findViewById(R.id.btnShareDayi);
+		btnShareEcj = view.findViewById(R.id.btnShareEcj);
+		btnShareEz = view.findViewById(R.id.btnShareEz);
+		btnSharePhonetic = view.findViewById(R.id.btnSharePhonetic);
+		btnSharePinyin = view.findViewById(R.id.btnSharePinyin);
+		btnShareScj = view.findViewById(R.id.btnShareScj);
+		btnShareWb = view.findViewById(R.id.btnShareWb);
+		btnShareHs = view.findViewById(R.id.btnShareHs);
 
-		btnShareRelated = (Button) view.findViewById(R.id.btnShareRelated);
+		btnShareRelated = view.findViewById(R.id.btnShareRelated);
 		
-		btnShareCancel = (Button) view.findViewById(R.id.btnShareCancel);
-		btnShareCancel.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				dismiss();
-			}
-		});
+		btnShareCancel = view.findViewById(R.id.btnShareCancel);
+		btnShareCancel.setOnClickListener(v -> dismiss());
 
-		HashMap<String, String> check = new HashMap<String, String>();
+		HashMap<String, String> check = new HashMap<>();
 
 		List<Im> imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
 		for(int i = 0; i < imlist.size() ; i++){
@@ -179,12 +174,7 @@ public class ShareDialog extends DialogFragment {
 			btnShareCustom.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareCustom.setTypeface(null, Typeface.BOLD);
 
-			btnShareCustom.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmShareDialog(LIME.IM_CUSTOM);
-				}
-			});
+			btnShareCustom.setOnClickListener(v -> confirmShareDialog(LIME.IM_CUSTOM));
 		}
 
 		if(check.get(LIME.DB_TABLE_PHONETIC) == null){
@@ -195,12 +185,7 @@ public class ShareDialog extends DialogFragment {
 			btnSharePhonetic.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnSharePhonetic.setTypeface(null, Typeface.BOLD);
 
-			btnSharePhonetic.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmShareDialog(LIME.IM_PHONETIC);
-				}
-			});
+			btnSharePhonetic.setOnClickListener(v -> confirmShareDialog(LIME.IM_PHONETIC));
 		}
 
 		if(check.get(LIME.DB_TABLE_CJ) == null){
@@ -211,12 +196,7 @@ public class ShareDialog extends DialogFragment {
 			btnShareCj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareCj.setTypeface(null, Typeface.BOLD);
 
-			btnShareCj.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmShareDialog(LIME.IM_CJ);
-				}
-			});
+			btnShareCj.setOnClickListener(v -> confirmShareDialog(LIME.IM_CJ));
 		}
 
 
@@ -229,12 +209,7 @@ public class ShareDialog extends DialogFragment {
 			btnShareCj5.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareCj5.setTypeface(null, Typeface.BOLD);
 
-			btnShareCj5.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmShareDialog(LIME.IM_CJ5);
-				}
-			});
+			btnShareCj5.setOnClickListener(v -> confirmShareDialog(LIME.IM_CJ5));
 		}
 
 		if(check.get(LIME.DB_TABLE_SCJ) == null){
@@ -244,12 +219,7 @@ public class ShareDialog extends DialogFragment {
 		}else {
 			btnShareScj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareScj.setTypeface(null, Typeface.BOLD);
-			btnShareScj.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmShareDialog(LIME.IM_SCJ);
-				}
-			});
+			btnShareScj.setOnClickListener(v -> confirmShareDialog(LIME.IM_SCJ));
 		}
 
 		if(check.get(LIME.DB_TABLE_ECJ) == null){
@@ -260,12 +230,7 @@ public class ShareDialog extends DialogFragment {
 			btnShareEcj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareEcj.setTypeface(null, Typeface.BOLD);
 
-			btnShareEcj.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmShareDialog(LIME.IM_ECJ);
-				}
-			});
+			btnShareEcj.setOnClickListener(v -> confirmShareDialog(LIME.IM_ECJ));
 		}
 
 		if(check.get(LIME.DB_TABLE_DAYI) == null){
@@ -276,12 +241,7 @@ public class ShareDialog extends DialogFragment {
 			btnShareDayi.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareDayi.setTypeface(null, Typeface.BOLD);
 
-			btnShareDayi.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmShareDialog(LIME.IM_DAYI);
-				}
-			});
+			btnShareDayi.setOnClickListener(v -> confirmShareDialog(LIME.IM_DAYI));
 		}
 
 		if(check.get(LIME.DB_TABLE_EZ) == null){
@@ -292,12 +252,7 @@ public class ShareDialog extends DialogFragment {
 			btnShareEz.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareEz.setTypeface(null, Typeface.BOLD);
 
-			btnShareEz.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmShareDialog(LIME.IM_EZ);
-				}
-			});
+			btnShareEz.setOnClickListener(v -> confirmShareDialog(LIME.IM_EZ));
 		}
 
 		if(check.get(LIME.DB_TABLE_ARRAY) == null){
@@ -308,12 +263,7 @@ public class ShareDialog extends DialogFragment {
 			btnShareArray.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareArray.setTypeface(null, Typeface.BOLD);
 
-			btnShareArray.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmShareDialog(LIME.IM_ARRAY);
-				}
-			});
+			btnShareArray.setOnClickListener(v -> confirmShareDialog(LIME.IM_ARRAY));
 		}
 
 		if(check.get(LIME.DB_TABLE_ARRAY10) == null){
@@ -324,12 +274,7 @@ public class ShareDialog extends DialogFragment {
 			btnShareArray10.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareArray10.setTypeface(null, Typeface.BOLD);
 
-			btnShareArray10.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmShareDialog(LIME.IM_ARRAY10);
-				}
-			});
+			btnShareArray10.setOnClickListener(v -> confirmShareDialog(LIME.IM_ARRAY10));
 		}
 
 		if(check.get(LIME.DB_TABLE_HS) == null){
@@ -340,12 +285,7 @@ public class ShareDialog extends DialogFragment {
 			btnShareHs.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareHs.setTypeface(null, Typeface.BOLD);
 
-			btnShareHs.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmShareDialog(LIME.IM_HS);
-				}
-			});
+			btnShareHs.setOnClickListener(v -> confirmShareDialog(LIME.IM_HS));
 		}
 
 		if(check.get(LIME.DB_TABLE_WB) == null){
@@ -356,12 +296,7 @@ public class ShareDialog extends DialogFragment {
 			btnShareWb.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnShareWb.setTypeface(null, Typeface.BOLD);
 
-			btnShareWb.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmShareDialog(LIME.IM_WB);
-				}
-			});
+			btnShareWb.setOnClickListener(v -> confirmShareDialog(LIME.IM_WB));
 		}
 
 		if(check.get(LIME.DB_TABLE_PINYIN) == null){
@@ -372,20 +307,10 @@ public class ShareDialog extends DialogFragment {
 			btnSharePinyin.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			btnSharePinyin.setTypeface(null, Typeface.BOLD);
 
-			btnSharePinyin.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					confirmShareDialog(LIME.IM_PINYIN);
-				}
-			});
+			btnSharePinyin.setOnClickListener(v -> confirmShareDialog(LIME.IM_PINYIN));
 		}
 
-		btnShareRelated.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				confirmShareDialog(LIME.DB_RELATED);
-			}
-		});
+		btnShareRelated.setOnClickListener(v -> confirmShareDialog(LIME.DB_RELATED));
 
 		return view;
 	}
@@ -403,49 +328,37 @@ public class ShareDialog extends DialogFragment {
 		}
 		if(!imtype.equalsIgnoreCase(LIME.DB_RELATED)){
 			alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.share_lime_cin),
-					new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int which) {
-							if(imtype.equals(LIME.DB_RELATED)){
-								// Call Share IM Processes
-								((MainActivity) activity).initialShareRelated();
-								dismiss();
-								sharedialog.dismiss();
-							}else{
-								// Call Share IM Processes
-								((MainActivity) activity).initialShare(imtype);
-								dismiss();
-								sharedialog.dismiss();
-							}
-						}
-					});
+                    (dialog, which) -> {
+                        if(imtype.equals(LIME.DB_RELATED)){
+                            // Call Share IM Processes
+                            ((MainActivity) activity).initialShareRelated();
+                        }else{
+                            // Call Share IM Processes
+                            ((MainActivity) activity).initialShare(imtype);
+                        }
+                        dismiss();
+                        sharedialog.dismiss();
+                    });
 		}
 
 		alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL, activity.getResources().getString(R.string.share_lime_db),
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						if(imtype.equals(LIME.DB_RELATED)){
-							((MainActivity) activity).initialShareRelatedDb();
-							dismiss();
-							sharedialog.dismiss();
-						}else{
-							// Call Share IM Processes
-							((MainActivity) activity).initialShareDb(imtype);
-							dismiss();
-							sharedialog.dismiss();
-						}
-					}
-				});
+                (dialog, which) -> {
+                    if(imtype.equals(LIME.DB_RELATED)){
+                        ((MainActivity) activity).initialShareRelatedDb();
+                    }else{
+                        // Call Share IM Processes
+                        ((MainActivity) activity).initialShareDb(imtype);
+                    }
+                    dismiss();
+                    sharedialog.dismiss();
+                });
 		alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				});
+                (dialog, which) -> dialog.dismiss());
 		alertDialog.show();
 	}
 
 	@Override
-	public void onSaveInstanceState(Bundle icicle) {
+	public void onSaveInstanceState(@NonNull Bundle icicle) {
 		super.onSaveInstanceState(icicle);
 	}
 

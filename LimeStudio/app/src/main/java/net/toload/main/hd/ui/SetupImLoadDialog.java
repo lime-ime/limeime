@@ -151,7 +151,7 @@ public class SetupImLoadDialog extends DialogFragment {
         imtype = getArguments().getString(IM_TYPE);
         activity = getActivity();
         datasource = new LimeDB(activity);
-        DBSrv = new DBServer(activity);
+        DBSrv = DBServer.getInstance(activity);
 
         View rootView = inflater.inflate(R.layout.fragment_dialog_im, container, false);
 
@@ -508,17 +508,22 @@ public class SetupImLoadDialog extends DialogFragment {
 
             String fileName = getFileName(uri);
             File file = new File(activity.getCacheDir(), fileName);
-            OutputStream outputStream = new FileOutputStream(file);
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = inputStream.read(buffer)) > 0) {
-                outputStream.write(buffer, 0, length);
+            
+            // Use try-with-resources to ensure streams are closed even if exceptions occur
+            try (OutputStream outputStream = new FileOutputStream(file);
+                 InputStream is = inputStream) {
+                byte[] buffer = new byte[LIME.BUFFER_SIZE_1KB];
+                int length;
+                while ((length = is.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, length);
+                }
+            }finally {
+                inputStream.close();
             }
-            outputStream.close();
-            inputStream.close();
+            
             return file;
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
             return null;
         }
     }
@@ -556,7 +561,7 @@ public class SetupImLoadDialog extends DialogFragment {
             relatedDbPath.deleteOnExit();
             showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
             showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
         }
     }
@@ -573,7 +578,7 @@ public class SetupImLoadDialog extends DialogFragment {
                 showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
             showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
         }
     }
@@ -590,7 +595,7 @@ public class SetupImLoadDialog extends DialogFragment {
                 showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
             showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
         }
     }
@@ -645,16 +650,16 @@ public class SetupImLoadDialog extends DialogFragment {
                                     }
                                 }
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                Log.e(TAG, "Error in operation", e);
                             }
-                            handler.updateProgress(100);
+                            handler.updateProgress(LIME.PROGRESS_COMPLETE_PERCENT);
                         }
                     }
                     handler.cancelProgress();
                 }
             });
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
         }
     }
 }

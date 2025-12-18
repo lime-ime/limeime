@@ -34,7 +34,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -43,6 +42,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.pm.PackageInfoCompat;
@@ -113,31 +113,37 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if ((keyCode == KeyEvent.KEYCODE_BACK)) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(getResources().getString(R.string.global_exit_title));
-            builder.setCancelable(false);
-                    builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
-                    (dialog, id) -> {
-                        // Close all activities in the task and let Android manage process lifecycle
-                        finishAffinity();
-                    });
-            builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
-                    (dialog, id) -> {
-                    });
+    /**
+     * Handle back button press using OnBackPressedDispatcher for predictive back gesture support.
+     * This replaces the deprecated onKeyDown() approach and provides better integration with
+     * Android's navigation system, including support for predictive back gesture (API 33+).
+     */
+    private void setupBackPressHandler() {
+        OnBackPressedCallback callback = new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // Show exit confirmation dialog
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle(getResources().getString(R.string.global_exit_title));
+                builder.setCancelable(false);
+                builder.setPositiveButton(getResources().getString(R.string.dialog_confirm),
+                        (dialog, id) -> {
+                            // Close all activities in the task and let Android manage process lifecycle
+                            finishAffinity();
+                        });
+                builder.setNegativeButton(getResources().getString(R.string.dialog_cancel),
+                        (dialog, id) -> {
+                            // Dialog dismissed, stay in app
+                        });
 
-            AlertDialog alert = builder.create();
-            alert.show();
-
-            /*SetupImFragment ImFragment  = (SetupImFragment) getSupportFragmentManager().findFragmentByTag("SetupImFragment");
-            if(ImFragment == null || !ImFragment.isVisible())  onNavigationDrawerItemSelected(0);
-            else finish();
-            return true;*/
-        }
-
-        return super.onKeyDown(keyCode, event);
+                AlertDialog alert = builder.create();
+                alert.show();
+            }
+        };
+        
+        // Register the callback with OnBackPressedDispatcher
+        // This enables predictive back gesture support (API 33+)
+        getOnBackPressedDispatcher().addCallback(this, callback);
     }
 
     @Override
@@ -164,14 +170,14 @@ public class MainActivity extends AppCompatActivity
             // Set white background for actionbar
             actionBar.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.WHITE));
             // Remove elevation/shadow for cleaner look
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                actionBar.setElevation(0);
-            }
+            actionBar.setElevation(0);
         }
 
         // Handle window insets for edge-to-edge display
         setupEdgeToEdge();
 
+        // Setup back button handler using OnBackPressedDispatcher for predictive back gesture support
+        setupBackPressHandler();
 
         handler = new MainActivityHandler(this);
 
@@ -220,7 +226,7 @@ public class MainActivity extends AppCompatActivity
                 try {
                     input = resolver.openInputStream(uri);
                 } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Error opening input stream for import URI", e);
                 }
 
                 File importDir = new File(getCacheDir(), "imports");
@@ -240,7 +246,7 @@ public class MainActivity extends AppCompatActivity
             long versionCode = PackageInfoCompat.getLongVersionCode(pInfo);
             versionstr = getString(R.string.version_format, pInfo.versionName, versionCode);
         } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error getting package info", e);
         }
 
         String cversion = mLIMEPref.getParameterString("current_version", "");
@@ -271,7 +277,7 @@ public class MainActivity extends AppCompatActivity
             OutputStream out = new FileOutputStream(file);
 
             int size;
-            byte[] buffer = new byte[102400];
+            byte[] buffer = new byte[LIME.BUFFER_SIZE_100KB];
 
             while ((size = in.read(buffer)) != -1) {
                 out.write(buffer, 0, size);
@@ -476,7 +482,7 @@ public class MainActivity extends AppCompatActivity
             NewsDialog dialog = NewsDialog.newInstance();
             dialog.show(ft, "newsdialog");
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error showing news dialog", e);
         }
     }
 
@@ -512,12 +518,11 @@ public class MainActivity extends AppCompatActivity
         // This works on all API levels, but is required for API 35+
         // Note: setStatusBarColor and setNavigationBarColor are deprecated in API 35+,
         // but we use them with suppression for backward compatibility
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            @SuppressWarnings("deprecation")
-            android.view.Window window = getWindow();
-            window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
-            window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
-        }
+
+        android.view.Window window = getWindow();
+        window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
+        window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+
         
         // Set status bar icon appearance to dark (black icons) for better visibility
         // Since status bar is transparent and content behind may be light, use dark icons
@@ -532,12 +537,10 @@ public class MainActivity extends AppCompatActivity
                 // Use dark navigation bar icons for consistency
                 windowInsetsController.setAppearanceLightNavigationBars(true);
             }
-        } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+        } else {
             // API 21-22: SYSTEM_UI_FLAG_LIGHT_STATUS_BAR is not available (introduced in API 23)
             // On API 21-22, we cannot change icon color programmatically
             // Set a dark status bar so white icons are visible (compromise for API 21-22)
-            @SuppressWarnings("deprecation")
-            android.view.Window window = getWindow();
             // Use a dark color so white icons are visible
             // This maintains some edge-to-edge while ensuring icons are visible
             window.setStatusBarColor(0xFF000000); // Solid black

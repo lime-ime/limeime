@@ -24,6 +24,7 @@
 
 package net.toload.main.hd.ui;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -43,8 +44,8 @@ public class ManageRelatedAdapter extends BaseAdapter {
 
     private  List<Related> relatedlist;
 
-    private Activity activity;
-    private LayoutInflater mInflater;
+    private final Activity activity;
+    private final LayoutInflater mInflater;
 
     public ManageRelatedAdapter(Activity activity,
                                 List<Related> relatedlist) {
@@ -71,18 +72,19 @@ public class ManageRelatedAdapter extends BaseAdapter {
         relatedlist = list;
     }
 
+    @SuppressLint("InflateParams")
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
 
         final ViewHolder holder;
 
-        int type = getItemViewType(position);
+        //int type = getItemViewType(position);
 
         if (convertView == null) {
             convertView = mInflater.inflate(R.layout.related, null);
             holder = new ViewHolder();
-            holder.txtWord = (TextView)convertView.findViewById(R.id.txtWord);
-            holder.txtFreq = (TextView)convertView.findViewById(R.id.txtFreq);
+            holder.txtWord = convertView.findViewById(R.id.txtWord);
+            holder.txtFreq = convertView.findViewById(R.id.txtFreq);
 
             convertView.setTag(holder);
         } else {

@@ -27,13 +27,14 @@ package net.toload.main.hd.ui;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
@@ -52,6 +53,7 @@ import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /* Vpon import
 import com.vpadn.ads.VpadnAdRequest;
@@ -103,7 +105,6 @@ public class ManageRelatedFragment extends Fragment {
     private LimeDB datasource;
 
     private ProgressBar progressBar;
-    private LIMEPreferenceManager mLIMEPref;
 
     // AD
     //private RelativeLayout adBannerLayout;
@@ -136,111 +137,89 @@ public class ManageRelatedFragment extends Fragment {
         this.handler = new ManageRelatedHandler(this);
 
         this.progressBar = rootView.findViewById(R.id.loading_spinner);
-        mLIMEPref = new LIMEPreferenceManager(activity);
+        //LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(activity);
 
-        this.gridManageRelated = (GridView) rootView.findViewById(R.id.gridManageRelated);
-        this.gridManageRelated.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-               // try {
-                    //datasource.open();
-                    Related w = datasource.getRelated(id);
-                    //datasource.close();
-                    FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-
-                    // Create and show the dialog.
-                    ManageRelatedEditDialog dialog = ManageRelatedEditDialog.newInstance();
-                    dialog.setHandler(handler, w);
-                    dialog.show(ft, "editdialog");
-                /*} catch (SQLException e) {
-                    e.printStackTrace();
-                }*/
-            }
-        });
-
-        Button btnManageRelatedAdd = (Button) rootView.findViewById(R.id.btnManageRelatedAdd);
-        btnManageRelatedAdd.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        this.gridManageRelated = rootView.findViewById(R.id.gridManageRelated);
+        this.gridManageRelated.setOnItemClickListener((parent, view, position, id) -> {
+           // try {
+                //datasource.open();
+                Related w = datasource.getRelated(id);
+                //datasource.close();
                 FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                ManageRelatedAddDialog dialog = ManageRelatedAddDialog.newInstance();
-                dialog.setHandler(handler);
-                dialog.show(ft, "adddialog");
-            }
+
+                // Create and show the dialog.
+                ManageRelatedEditDialog dialog = ManageRelatedEditDialog.newInstance();
+                dialog.setHandler(handler, w);
+                dialog.show(ft, "editdialog");
+            /*} catch (SQLException e) {
+                Log.e(TAG, "Error in operation", e);
+            }*/
+        });
+
+        Button btnManageRelatedAdd = rootView.findViewById(R.id.btnManageRelatedAdd);
+        btnManageRelatedAdd.setOnClickListener(v -> {
+            FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+            ManageRelatedAddDialog dialog = ManageRelatedAddDialog.newInstance();
+            dialog.setHandler(handler);
+            dialog.show(ft, "adddialog");
         });
 
 
-        this.btnManageRelatedNext = (Button) rootView.findViewById(R.id.btnManageRelatedNext);
+        this.btnManageRelatedNext = rootView.findViewById(R.id.btnManageRelatedNext);
         this.btnManageRelatedNext.setEnabled(false);
-        this.btnManageRelatedNext.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int checkrecord = LIME.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
-                if (checkrecord < total) {
-                    page++;
-                }
-                searchrelated();
-                //updateGridView(relatedlist);
+        this.btnManageRelatedNext.setOnClickListener(v -> {
+            int checkrecord = LIME.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
+            if (checkrecord < total) {
+                page++;
             }
+            searchrelated();
+            //updateGridView(relatedlist);
         });
-        this.btnManageRelatedPrevious = (Button) rootView.findViewById(R.id.btnManageRelatedPrevious);
+        this.btnManageRelatedPrevious = rootView.findViewById(R.id.btnManageRelatedPrevious);
         this.btnManageRelatedPrevious.setEnabled(false);
-        this.btnManageRelatedPrevious.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (page > 0) {
-                    page--;
-                }
-                searchrelated();
-                //updateGridView(relatedlist);
+        this.btnManageRelatedPrevious.setOnClickListener(v -> {
+            if (page > 0) {
+                page--;
+            }
+            searchrelated();
+            //updateGridView(relatedlist);
+        });
+
+        this.edtManageRelatedSearch = rootView.findViewById(R.id.edtManageRelatedSearch);
+        this.edtManageRelatedSearch.setOnClickListener(v -> {
+            searchreset = false;
+            btnManageRelatedSearch.setText(getResources().getText(R.string.manage_related_search));
+        });
+        this.edtManageRelatedSearch.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(edtManageRelatedSearch.getWindowToken(), 0);
             }
         });
 
-        this.edtManageRelatedSearch = (EditText) rootView.findViewById(R.id.edtManageRelatedSearch);
-        this.edtManageRelatedSearch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        this.btnManageRelatedSearch = rootView.findViewById(R.id.btnManageRelatedSearch);
+        this.btnManageRelatedSearch.setOnClickListener(v -> {
+            if (!searchreset) {
+                String query = edtManageRelatedSearch.getText().toString();
+                // hide the soft keyboard before search Jeremy 15,6,4
+                InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(edtManageRelatedSearch.getWindowToken(), 0);
+                if (!query.isEmpty() && (prequery == null || !prequery.equals(query) || !searchreset)) {
+                    query = query.trim();
+                    searchrelated(query);
+                }
+                searchreset = true;
+                btnManageRelatedSearch.setText(getResources().getText(R.string.manage_related_reset));
+            } else {
+                total = 0;
+                searchrelated(null);
+                edtManageRelatedSearch.setText("");
                 searchreset = false;
                 btnManageRelatedSearch.setText(getResources().getText(R.string.manage_related_search));
             }
         });
-        this.edtManageRelatedSearch.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (!hasFocus) {
-                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(edtManageRelatedSearch.getWindowToken(), 0);
-                }
-            }
-        });
 
-        this.btnManageRelatedSearch = (Button) rootView.findViewById(R.id.btnManageRelatedSearch);
-        this.btnManageRelatedSearch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!searchreset) {
-                    String query = edtManageRelatedSearch.getText().toString();
-                    // hide the soft keyboard before search Jeremy 15,6,4
-                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(edtManageRelatedSearch.getWindowToken(), 0);
-                    if (query != null && query.length() > 0 &&
-                            (prequery == null || !prequery.equals(query) || !searchreset)) {
-                        query = query.trim();
-                        searchrelated(query);
-                    }
-                    searchreset = true;
-                    btnManageRelatedSearch.setText(getResources().getText(R.string.manage_related_reset));
-                } else {
-                    total = 0;
-                    searchrelated(null);
-                    edtManageRelatedSearch.setText("");
-                    searchreset = false;
-                    btnManageRelatedSearch.setText(getResources().getText(R.string.manage_related_search));
-                }
-            }
-        });
-
-        this.txtNavigationInfo = (TextView) rootView.findViewById(R.id.txtNavigationInfo);
+        this.txtNavigationInfo = rootView.findViewById(R.id.txtNavigationInfo);
 
         searchrelated(null);
 
@@ -255,14 +234,14 @@ public class ManageRelatedFragment extends Fragment {
 
         int offset = LIME.IM_MANAGE_DISPLAY_AMOUNT * page;
 
-        if((curquery == null && total == 0) || curquery != prequery ){
+        if((curquery == null && total == 0) || !Objects.equals(curquery, prequery)){
             total = datasource.getRelatedSize(curquery);
             page = 0;
             /*try {
                 datasource.open();
                 datasource.close();
             } catch (SQLException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error in operation", e);
             }*/
         }
         if(ManageRelatedthread != null && ManageRelatedthread.isAlive()){
@@ -275,9 +254,10 @@ public class ManageRelatedFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         Activity activity = (Activity) context;
+        assert getArguments() != null;
         ((MainActivity) activity).onSectionAttached(
                 getArguments().getInt(ARG_SECTION_NUMBER));
     }
@@ -314,11 +294,7 @@ public class ManageRelatedFragment extends Fragment {
         int startrecord = LIME.IM_MANAGE_DISPLAY_AMOUNT * page;
         int endrecord = LIME.IM_MANAGE_DISPLAY_AMOUNT * (page + 1);
 
-        if(page > 0){
-            this.btnManageRelatedPrevious.setEnabled(true);
-        }else{
-            this.btnManageRelatedPrevious.setEnabled(false);
-        }
+        this.btnManageRelatedPrevious.setEnabled(page > 0);
 
         if(endrecord <= total){
             this.btnManageRelatedNext.setEnabled(true);
@@ -347,7 +323,7 @@ public class ManageRelatedFragment extends Fragment {
 
         if(total > 0){
             nav = LIME.format(startrecord + 1) + "-" + LIME.format(endrecord);
-            nav += " of " + LIME.format(total);
+            nav = nav + " of " + LIME.format(total);
         }
 
         this.txtNavigationInfo.setText(nav);
@@ -373,7 +349,7 @@ public class ManageRelatedFragment extends Fragment {
             datasource.open();
             datasource.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error in operation", e);
         }*/
         total--;
         searchrelated();
@@ -424,11 +400,13 @@ public class ManageRelatedFragment extends Fragment {
             }
 
             // Update record in the database
-            String updatesql = "UPDATE " + LIME.DB_RELATED + " SET ";
-            updatesql += LIME.DB_RELATED_COLUMN_PWORD + " = \"" + LIME.formatSqlValue(pword) + "\", ";
-            updatesql += LIME.DB_RELATED_COLUMN_CWORD + " = \"" + LIME.formatSqlValue(cword) + "\", ";
-            updatesql += LIME.DB_RELATED_COLUMN_BASESCORE + " = \"" + score + "\" ";
-            updatesql += " WHERE " + LIME.DB_RELATED_COLUMN_ID + " = \"" + id + "\"";
+            StringBuilder updatesqlBuilder = new StringBuilder("UPDATE ");
+            updatesqlBuilder.append(LIME.DB_RELATED).append(" SET ");
+            updatesqlBuilder.append(LIME.DB_RELATED_COLUMN_PWORD).append(" = \"").append(LIME.formatSqlValue(pword)).append("\", ");
+            updatesqlBuilder.append(LIME.DB_RELATED_COLUMN_CWORD).append(" = \"").append(LIME.formatSqlValue(cword)).append("\", ");
+            updatesqlBuilder.append(LIME.DB_RELATED_COLUMN_BASESCORE).append(" = \"").append(score).append("\" ");
+            updatesqlBuilder.append(" WHERE ").append(LIME.DB_RELATED_COLUMN_ID).append(" = \"").append(id).append("\"");
+            String updatesql = updatesqlBuilder.toString();
 
             datasource.update(updatesql);
 
