@@ -116,7 +116,7 @@ public class Related {
 	}
 
 	public static String getInsertQuery(Related record){
-        return "INSERT INTO " + LIME.DB_RELATED + "(" +
+        return "INSERT INTO " + LIME.DB_TABLE_RELATED + "(" +
                 LIME.DB_RELATED_COLUMN_PWORD + ", " +
                 LIME.DB_RELATED_COLUMN_CWORD + ", " +
                 LIME.DB_RELATED_COLUMN_USERSCORE + ", " +

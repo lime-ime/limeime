@@ -104,6 +104,7 @@ public class LIMEService extends InputMethodService implements
     //Jeremy '16,7,22 To control delayed hiding candidate view and avoid hide and show candidate view in short time.
     private static final int DELAY_BEFORE_HIDE_CANDIDATE_VIEW = 200;
 
+    public static final int THREAD_YIELD_DELAY_MS = 0;
     private LIMEKeyboardView mInputView = null;
     private CandidateInInputViewContainer mCandidateInInputView = null;//Jeremy'12,5,3
     //private final boolean mFixedCandidateViewOn = true; //Jeremy'12,5,3 - Always true, kept for backward compatibility
@@ -963,7 +964,7 @@ public class LIMEService extends InputMethodService implements
         //Jeremy '12,5,28 after honeycomb use the metastate sent form KeyEvent to process the shift/cap_lock etc...
 
         int metaState;
-        if (mLIMEPref.getPhysicalKeyboardType().equals("standard"))
+        if (mLIMEPref.getPhysicalKeyboardType().equals(LIME.IM_PHONETIC))
             metaState = event.getMetaState();
         else
             metaState = LIMEMetaKeyKeyListener.getMetaState(mMetaState);
@@ -1847,9 +1848,9 @@ public class LIMEService extends InputMethodService implements
         } else if (primaryCode == KEYCODE_SWITCH_TO_IM_MODE && mInputView != null) { //eng -> chi
             switchKeyboard(primaryCode);
         } else if ( //Jeremy '12,7,1 bug fixed on enter not functioning in english mode
-                ((primaryCode == MY_KEYCODE_SPACE && !mEnglishOnly && !activeIM.equals("phonetic"))
+                ((primaryCode == MY_KEYCODE_SPACE && !mEnglishOnly && !activeIM.equals(LIME.IM_PHONETIC))
                         || (primaryCode == MY_KEYCODE_SPACE && !mEnglishOnly &&
-                        //activeIM.equals("phonetic") && //redundant
+                        //activeIM.equals(LIME.IM_PHONETIC) && //redundant
                         (mComposing.toString().endsWith(" ") || mComposing.length() == 0))
                         || primaryCode == MY_KEYCODE_ENTER)) {
 
@@ -2335,7 +2336,7 @@ public class LIMEService extends InputMethodService implements
                         Log.e(TAG, "Error in suggestion processing", e);
                     }
                     try {
-                        sleep(LIME.THREAD_YIELD_DELAY_MS);
+                        sleep(THREAD_YIELD_DELAY_MS);
                     } catch (InterruptedException e) {
                         Log.e(TAG, "Error in suggestion processing", e);
                         return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
@@ -2353,9 +2354,9 @@ public class LIMEService extends InputMethodService implements
                                 Log.e(TAG, "Error in suggestion processing", e);
                             }
                             String mixedModeSelkey = "`";
-                            if (hasSymbolMapping && !activeIM.equals("dayi")
-                                    && !(activeIM.equals("phonetic")
-                                    && mLIMEPref.getPhoneticKeyboardType().equals("standard"))) {
+                            if (hasSymbolMapping && !activeIM.equals(LIME.IM_DAYI)
+                                    && !(activeIM.equals(LIME.IM_PHONETIC)
+                                    && mLIMEPref.getPhoneticKeyboardType().equals(LIME.IM_PHONETIC))) {
                                 mixedModeSelkey = " ";
                             }
 
@@ -2366,7 +2367,7 @@ public class LIMEService extends InputMethodService implements
                         }
 
                         try {
-                            sleep(LIME.THREAD_YIELD_DELAY_MS);
+                            sleep(THREAD_YIELD_DELAY_MS);
                         } catch (InterruptedException e) {
                             Log.e(TAG, "Error in suggestion processing", e);
                             return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
@@ -2456,7 +2457,7 @@ public class LIMEService extends InputMethodService implements
                                 && !keynameString.trim().isEmpty()
                         ) {
                             try {
-                                sleep(LIME.THREAD_YIELD_DELAY_MS);
+                                sleep(THREAD_YIELD_DELAY_MS);
                             } catch (InterruptedException e) {
                                 Log.e(TAG, "Error in suggestion processing", e);
                                 // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
@@ -2544,7 +2545,7 @@ public class LIMEService extends InputMethodService implements
                                     Log.e(TAG, "Error in suggestion processing", e);
                                 }
                                 try {
-                                    sleep(LIME.THREAD_YIELD_DELAY_MS);
+                                    sleep(THREAD_YIELD_DELAY_MS);
                                 } catch (InterruptedException e) {
                                     Log.e(TAG, "Error in suggestion processing", e);
                                     return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
@@ -2560,7 +2561,7 @@ public class LIMEService extends InputMethodService implements
                                         selkey = "";
                                     }
                                     try {
-                                        sleep(LIME.THREAD_YIELD_DELAY_MS);
+                                        sleep(THREAD_YIELD_DELAY_MS);
                                     } catch (InterruptedException e) {
                                         Log.e(TAG, "Error in suggestion processing", e);
                                         return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
@@ -3165,52 +3166,52 @@ private void initialIMKeyboard() {
             hasNumberMapping = mLIMEPref.getAllowNumberMapping();
             hasSymbolMapping = mLIMEPref.getAllowSymoblMapping();
             break;
-        case "cj":
-        case "scj":
-        case "cj5":
-        case "ecj":
+        case LIME.IM_CJ:
+        case LIME.IM_SCJ:
+        case LIME.IM_CJ5:
+        case LIME.IM_ECJ:
             mKeyboardSwitcher.setKeyboardMode(activeIM,
                     LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
             hasNumberMapping = false;
             hasSymbolMapping = false;
             break;
-        case "phonetic":
+        case LIME.IM_PHONETIC:
             mKeyboardSwitcher.setKeyboardMode(activeIM,
                     LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
             //Jeremy '11,6,18 ETEN 26 has no number mapping
-            boolean standardPhonetic = !(mLIMEPref.getPhoneticKeyboardType().equals("eten26")
-                    || mLIMEPref.getPhoneticKeyboardType().equals("hsu"));
+            boolean standardPhonetic = !(mLIMEPref.getPhoneticKeyboardType().equals(LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN26)
+                    || mLIMEPref.getPhoneticKeyboardType().equals(LIME.IM_PHONETIC_KEYBOARD_HSU));
             hasNumberMapping = standardPhonetic;
             hasSymbolMapping = standardPhonetic;
             break;
-        case "ez":
-        case "dayi":
+        case LIME.IM_EZ:
+        case LIME.IM_DAYI:
             mKeyboardSwitcher.setKeyboardMode(activeIM,
                     LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
             hasNumberMapping = true;
             hasSymbolMapping = true;
             break;
-        case "array10":
-        case "pinyin":
+        case LIME.IM_ARRAY10:
+        case LIME.IM_PINYIN:
             hasNumberMapping = true;
             hasSymbolMapping = false;
             mKeyboardSwitcher.setKeyboardMode(activeIM,
                     LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
             break;
-        case "array":
+        case LIME.IM_ARRAY:
             hasNumberMapping = true; //Jeremy '12,4,28 array 30 actually use number combination keys to enter symbols1
 
             hasSymbolMapping = true;
             mKeyboardSwitcher.setKeyboardMode(activeIM,
                     LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
             break;
-        case "wb":
+        case LIME.IM_WB:
             hasNumberMapping = false;
             hasSymbolMapping = true;
             mKeyboardSwitcher.setKeyboardMode(activeIM,
                     LIMEKeyboardSwitcher.MODE_TEXT, mImeOptions, true, false, false);
             break;
-        case "hs":
+        case LIME.IM_HS:
             hasNumberMapping = true;
             hasSymbolMapping = true;
             mKeyboardSwitcher.setKeyboardMode(activeIM,
@@ -3260,9 +3261,9 @@ private boolean handleSelkey(int primaryCode) {
             }
 
             String mixedModeSelkey = "`";
-            if (hasSymbolMapping && !activeIM.equals("dayi")
-                    && !(activeIM.equals("phonetic")
-                    && mLIMEPref.getPhoneticKeyboardType().equals("standard"))) {
+            if (hasSymbolMapping && !activeIM.equals(LIME.IM_DAYI)
+                    && !(activeIM.equals(LIME.IM_PHONETIC)
+                    && mLIMEPref.getPhoneticKeyboardType().equals(LIME.IM_PHONETIC))) {
                 mixedModeSelkey = " ";
             }
 
@@ -3276,7 +3277,7 @@ private boolean handleSelkey(int primaryCode) {
 
             //Jeremy '12,7,11 bypass space as first tone for phonetic
             if (i >= 0 && selkey.charAt(i) == ' '
-                    && primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic")
+                    && primaryCode == MY_KEYCODE_SPACE && activeIM.equals(LIME.IM_PHONETIC)
                     //&& mLIMEPref.getParameterBoolean("doLDPhonetic", true)
                     && !(mComposing.toString().endsWith(" ") || mComposing.length() == 0)) {
                 return false;
@@ -3338,7 +3339,7 @@ private void handleCharacter(int primaryCode) {
                     + " isValidSymbol:" + isValidSymbol(primaryCode)
                     + " hasSymbolMapping:" + hasSymbolMapping
                     + " hasNumberMapping:" + hasNumberMapping
-                    + " (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals(phonetic):" + (primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic"))
+                    + " (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals(phonetic):" + (primaryCode == MY_KEYCODE_SPACE && activeIM.equals(LIME.IM_PHONETIC))
                     + " mEnglishOnly:" + mEnglishOnly);
 
 
@@ -3350,7 +3351,7 @@ private void handleCharacter(int primaryCode) {
             //misMatched = mComposing.toString();
         } else if (!hasSymbolMapping && !hasNumberMapping  //Jeremy '11,10.19 fixed to bypass number key in et26 and hsu
                 && (isValidLetter(primaryCode)
-                || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic"))) //Jeremy '11,9,6 for et26 and hsu
+                || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals(LIME.IM_PHONETIC))) //Jeremy '11,9,6 for et26 and hsu
                 && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
             //Log.i(TAG,"handlecharacter(), onIM and no number and no symbol mapping");
             mComposing.append((char) primaryCode);
@@ -3370,14 +3371,14 @@ private void handleCharacter(int primaryCode) {
         } else if (hasSymbolMapping
                 && !hasNumberMapping
                 && (isValidLetter(primaryCode) || isValidSymbol(primaryCode)
-                || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic"))) //Jeremy '11,9,6 for chacha
+                || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals(LIME.IM_PHONETIC))) //Jeremy '11,9,6 for chacha
                 && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
             mComposing.append((char) primaryCode);
             //InputConnection ic=getCurrentInputConnection();
             if(ic!=null && mPredictionOn)  ic.setComposingText(mComposing, 1);
             updateCandidates();
             //misMatched = mComposing.toString();
-        } else if (hasSymbolMapping && !hasNumberMapping && activeIM.equals("array")
+        } else if (hasSymbolMapping && !hasNumberMapping && activeIM.equals(LIME.IM_ARRAY)
                 && mComposing != null && mComposing.length() >= 1
                 && getCurrentInputConnection().getTextBeforeCursor(1, 1).charAt(0) == 'w'
                 && Character.isDigit((char) primaryCode)
@@ -3392,7 +3393,7 @@ private void handleCharacter(int primaryCode) {
         } else if (hasSymbolMapping
                 && hasNumberMapping
                 && (isValidSymbol(primaryCode)
-                || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals("phonetic"))
+                || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals(LIME.IM_PHONETIC))
                 || isValidLetter(primaryCode) || isValidDigit(primaryCode)) && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
             mComposing.append((char) primaryCode);
             //InputConnection ic=getCurrentInputConnection();
@@ -3840,7 +3841,7 @@ public void startVoiceInput() {
                         // Fall back to RecognizerIntent
                         launchRecognizerIntent(voiceIntent);
                     }
-                }, LIME.IME_SWITCH_VERIFY_DELAY_MS); // Delay to check if switch worked - short enough for quick fallback
+                }, 200); // Delay to check if switch worked - short enough for quick fallback
 
                 return; // Assume success, will fall back if verification fails
             } catch (SecurityException e) {
@@ -3983,7 +3984,7 @@ private void startMonitoringIMEChanges() {
                     if (mLIMEId != null && !mLIMEId.equals(checkIME)) {
                         switchBackToLIME();
                     }
-                }, LIME.IME_SWITCH_BACK_DELAY_MS); // Delay to allow voice recognition to complete
+                }, 500); // Delay to allow voice recognition to complete
             }
         }
     };

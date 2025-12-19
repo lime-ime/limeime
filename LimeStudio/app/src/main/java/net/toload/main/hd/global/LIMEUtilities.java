@@ -179,7 +179,7 @@ public class LIMEUtilities {
 				addFileToZip(sourceFolderPath + File.separator + item.getName(), sourceFilePath + File.separator  + subItem, baseFolderPath, zos);
 			}
 		} else {
-			byte[] buf = new byte[LIME.BUFFER_SIZE_100KB];
+			byte[] buf = new byte[LIME.BUFFER_SIZE_64KB];
 			int len;
             try (FileInputStream inStream = new FileInputStream(sourceFilePath)) {
 
@@ -335,7 +335,7 @@ public class LIMEUtilities {
 	    	try{
 	    		int bytesum=0, byteread;
 
-	            byte[] buffer  = new byte[LIME.BUFFER_SIZE_100KB];
+	            byte[] buffer  = new byte[LIME.BUFFER_SIZE_64KB];
 	            while((byteread = inStream.read(buffer))!=-1) {
                     bytesum += byteread;
                     System.out.println(bytesum);
@@ -550,7 +550,7 @@ public class LIMEUtilities {
 			try (FileOutputStream fos = new FileOutputStream(downloadedFile);
 			     InputStream inputStream = is) {
 				// Use 128KB buffer for better performance on modern devices
-				byte[] buf = new byte[LIME.BUFFER_SIZE_128KB];
+				byte[] buf = new byte[LIME.BUFFER_SIZE_64KB];
 				do{
 					// Check abort flag if provided
 					if (abortFlagSupplier != null && abortFlagSupplier.get()) {

@@ -232,12 +232,18 @@ public class LIMEBaseKeyboard {
     /**
      * Default key number in a row .
      */
-    int mKeysInRow = LIME.DEFAULT_KEYBOARD_COLUMNS;
+    // UI Dimension Constants (in pixels/dp)
+    private static final int DEFAULT_KEYBOARD_COLUMNS = 10; // Default number of keys per row
+    private static final int DEFAULT_KEY_HEIGHT_PX = 50; // Default keyboard key height
+    private static final int KEYBOARD_GRID_WIDTH = 10; // Grid width for proximity calculation
+    private static final int KEYBOARD_GRID_HEIGHT = 5; // Grid height for proximity calculation
+    
+    int mKeysInRow = DEFAULT_KEYBOARD_COLUMNS;
 
     // Variables for pre-computing nearest keys.
 
-    private static final int GRID_WIDTH = LIME.KEYBOARD_GRID_WIDTH;
-    private static final int GRID_HEIGHT = LIME.KEYBOARD_GRID_HEIGHT;
+    private static final int GRID_WIDTH = KEYBOARD_GRID_WIDTH;
+    private static final int GRID_HEIGHT = KEYBOARD_GRID_HEIGHT;
     private static final int GRID_SIZE = GRID_WIDTH * GRID_HEIGHT;
     private int mCellWidth;
     private int mCellHeight;
@@ -768,7 +774,7 @@ public class LIMEBaseKeyboard {
 
 
         mDefaultHorizontalGap = 0;
-        mDefaultWidth = mDisplayWidth / LIME.DEFAULT_KEYBOARD_COLUMNS;
+        mDefaultWidth = mDisplayWidth / DEFAULT_KEYBOARD_COLUMNS;
         mDefaultVerticalGap = 0;
         mDefaultHeight = mDefaultWidth;
         mKeys = new ArrayList<>();
@@ -1311,10 +1317,10 @@ public class LIMEBaseKeyboard {
 
             mDefaultWidth = getDimensionOrFraction(a,
                     R.styleable.LIMEBaseKeyboard_keyWidth,
-                    mDisplayWidth, mDisplayWidth / LIME.DEFAULT_KEYBOARD_COLUMNS);
+                    mDisplayWidth, mDisplayWidth / DEFAULT_KEYBOARD_COLUMNS);
             mDefaultHeight = getDimensionOrFraction(a,
                     R.styleable.LIMEBaseKeyboard_keyHeight, //Jeremy '11,9,4
-                    mDisplayHeight, LIME.DEFAULT_KEY_HEIGHT_PX, mKeySizeScale);
+                    mDisplayHeight, DEFAULT_KEY_HEIGHT_PX, mKeySizeScale);
             mDefaultHorizontalGap = getDimensionOrFraction(a,
                     R.styleable.LIMEBaseKeyboard_horizontalGap,
                     mDisplayWidth, 0);

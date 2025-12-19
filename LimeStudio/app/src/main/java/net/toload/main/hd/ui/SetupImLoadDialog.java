@@ -70,6 +70,12 @@ import java.util.List;
 public class SetupImLoadDialog extends DialogFragment {
 
     private final String TAG = "SetupImLoadDialog";
+    
+    // Supported file extensions
+    private static final String SUPPORT_FILE_EXT_TXT = "txt";
+    private static final String SUPPORT_FILE_EXT_LIME = "lime";
+    private static final String SUPPORT_FILE_EXT_LIMEDB = "limedb";
+    private static final String SUPPORT_FILE_EXT_CIN = "cin";
 
     private SetupImHandler handler;
 
@@ -124,16 +130,16 @@ public class SetupImLoadDialog extends DialogFragment {
                             if (uri != null) {
                                 File file = saveUriToFile(uri);
                                 if (file != null) {
-                                    if (imtype.equalsIgnoreCase(LIME.DB_RELATED)) {
+                                    if (imtype.equalsIgnoreCase(LIME.DB_TABLE_RELATED)) {
                                         loadDbRelatedMapping(file);
                                         dismiss();
                                     } else {
-                                        if (file.getName().toLowerCase().endsWith(LIME.SUPPORT_FILE_EXT_TXT) ||
-                                                file.getName().toLowerCase().endsWith(LIME.SUPPORT_FILE_EXT_LIME) ||
-                                                file.getName().toLowerCase().endsWith(LIME.SUPPORT_FILE_EXT_CIN)) {
+                                        if (file.getName().toLowerCase().endsWith(SUPPORT_FILE_EXT_TXT) ||
+                                                file.getName().toLowerCase().endsWith(SUPPORT_FILE_EXT_LIME) ||
+                                                file.getName().toLowerCase().endsWith(SUPPORT_FILE_EXT_CIN)) {
                                             loadMapping(file);
                                             dismiss();
-                                        } else if( file.getName().toLowerCase().endsWith(LIME.SUPPORT_FILE_EXT_LIMEDB)) {
+                                        } else if( file.getName().toLowerCase().endsWith(SUPPORT_FILE_EXT_LIMEDB)) {
                                             loadDbMapping(file);
                                             dismiss();
                                         }
@@ -166,7 +172,7 @@ public class SetupImLoadDialog extends DialogFragment {
         Button btnSetupImDialogLoad5 = rootView.findViewById(R.id.btnSetupImDialogLoad5);
         Button btnSetupImDialogLoad6 = rootView.findViewById(R.id.btnSetupImDialogLoad6);
 
-        if (imtype.equalsIgnoreCase(LIME.DB_RELATED)) {
+        if (imtype.equalsIgnoreCase(LIME.DB_TABLE_RELATED)) {
             assert getDialog() != null;
             getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_related_title));
 

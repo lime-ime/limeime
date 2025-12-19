@@ -26,11 +26,9 @@ package net.toload.main.hd.keyboard;
 
 import android.view.MotionEvent;
 
-import net.toload.main.hd.global.LIME;
-
 public class SwipeTracker {
     private static final int NUM_PAST = 4;
-    private static final int LONGEST_PAST_TIME = LIME.LONGEST_PAST_TIME_MS;
+    private static final int LONGEST_PAST_TIME = 200; // Longest past time for swipe tracking (in milliseconds)
 
     final EventRingBuffer mBuffer = new EventRingBuffer(NUM_PAST);
 

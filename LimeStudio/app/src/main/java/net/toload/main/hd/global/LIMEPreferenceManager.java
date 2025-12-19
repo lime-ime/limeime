@@ -173,7 +173,7 @@ public class LIMEPreferenceManager {
 	
 	public String getRerverseLookupTable(String table){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		if(table.equals("phonetic")){
+		if(table.equals(LIME.DB_TABLE_PHONETIC)){
 			return sp.getString("bpmf_im_reverselookup", "none");
 		}else{
 			return sp.getString(table + "_im_reverselookup", "none");
@@ -369,7 +369,7 @@ public class LIMEPreferenceManager {
 	
 	public String getActiveIM(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getString("keyboard_list", "phonetic");
+		return sp.getString("keyboard_list", LIME.DB_TABLE_PHONETIC);
 	}
 	
 	
@@ -398,7 +398,7 @@ public class LIMEPreferenceManager {
 	public String getPhoneticKeyboardType(){
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getString("phonetic_keyboard_type", "standard");
+		return sp.getString("phonetic_keyboard_type", LIME.DB_TABLE_PHONETIC);
 	}
 	
 	public boolean getAutoCaptalization(){
@@ -634,7 +634,7 @@ public class LIMEPreferenceManager {
 	private String preProcessTableName(String table){
 		if(table.endsWith("_")|| table.isEmpty()){
 			return table; // processed already.
-		}else if(table.equals("phonetic")) {
+		}else if(table.equals(LIME.DB_TABLE_PHONETIC)) {
 			return "bpmf_";
 		}else if(table.equals("mapping")||table.equals("lime") || table.equals("phone") ){
 			return "";

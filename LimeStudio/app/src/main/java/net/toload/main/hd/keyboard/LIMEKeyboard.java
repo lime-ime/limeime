@@ -99,6 +99,10 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     
     private static final int OPACITY_FULLY_OPAQUE = 255;
     
+    // UI Dimension Constants (in pixels/dp)
+    private static final int DEFAULT_SPACE_KEY_TEXT_SIZE_SP = 25; // Default space key sliding text size
+    private static final int KEY_POSITION_ADJUSTMENT_DIVISOR = 10; // Divisor for key position adjustments
+    
     private Context mContext;
     //private final int mMode;
     private LIMEKeyboardSwitcher mKeyboardSwitcher;
@@ -138,7 +142,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
             // for sliding space bar
             mSpaceKeyTextColor = a.getColor(R.styleable.LIMEKeyboard_spaceKeyTextColor,0xFF000000);
             mSpaceKeyVerticalCorrection = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spaceKeyVerticalCorrection, 0);
-            mSpaceKeySlidingTextSize = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spaceKeySlidingTextSize, LIME.DEFAULT_SPACE_KEY_TEXT_SIZE_SP);
+            mSpaceKeySlidingTextSize = a.getDimensionPixelSize(R.styleable.LIMEKeyboard_spaceKeySlidingTextSize, DEFAULT_SPACE_KEY_TEXT_SIZE_SP);
             mSpaceKeySlidingLeftArrow = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeySlidingLeftArrow);
             mSpaceKeySlidingRightArrow = a.getDrawable(R.styleable.LIMEKeyboard_spaceKeySlidingRightArrow);
         }
@@ -332,7 +336,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
         final int code = key.codes[0];
         if (code == KEYCODE_SHIFT ||
                 code == KEYCODE_DELETE) {
-            y -= key.height / LIME.KEY_POSITION_ADJUSTMENT_DIVISOR;
+            y -= key.height / KEY_POSITION_ADJUSTMENT_DIVISOR;
             if (code == KEYCODE_SHIFT) x += key.width / 6;
             if (code == KEYCODE_DELETE) x -= key.width / 6;
         } else if (code == KEYCODE_SPACE) {

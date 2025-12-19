@@ -144,13 +144,13 @@ public class Word {
 		StringBuilder sb = new StringBuilder();
 		sb.append("INSERT INTO ").append(table).append("(");
 		sb.append(LIME.DB_COLUMN_CODE + ", ");
-		if(table.equals("phonetic"))  sb.append(LIME.DB_COLUMN_CODE3R +", ");
+		if(table.equals(LIME.DB_TABLE_PHONETIC))  sb.append(LIME.DB_COLUMN_CODE3R +", ");
 		sb.append(LIME.DB_COLUMN_WORD +", ");
 		sb.append(LIME.DB_COLUMN_RELATED +", ");
 		sb.append(LIME.DB_COLUMN_SCORE +", ");
 		sb.append(LIME.DB_COLUMN_BASESCORE +") VALUES(");
 		sb.append("\"").append(LIME.formatSqlValue(record.getCode())).append("\",");
-		if(table.equals("phonetic")) sb.append("\"").append(LIME.formatSqlValue(record.getCode().replaceAll("[ 3467]", ""))).append("\","); //Jeremy '15,6,6. remove 3467 tone keys from code as code3r
+		if(table.equals(LIME.DB_TABLE_PHONETIC)) sb.append("\"").append(LIME.formatSqlValue(record.getCode().replaceAll("[ 3467]", ""))).append("\","); //Jeremy '15,6,6. remove 3467 tone keys from code as code3r
 		sb.append("\"").append(LIME.formatSqlValue(record.getWord())).append("\",");
 		sb.append("\"").append(LIME.formatSqlValue(record.getRelated())).append("\",");
 		sb.append("\"").append(record.getScore()).append("\",");

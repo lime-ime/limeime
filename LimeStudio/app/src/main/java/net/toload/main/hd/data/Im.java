@@ -145,7 +145,7 @@ public class Im {
 		
 	public static String getInsertQuery(Im record){
 
-        return "INSERT INTO " + LIME.DB_IM + "(" +
+        return "INSERT INTO " + LIME.DB_TABLE_IM + "(" +
                 LIME.DB_IM_COLUMN_CODE + ", " +
                 LIME.DB_IM_COLUMN_TITLE + ", " +
                 LIME.DB_IM_COLUMN_DESC + ", " +

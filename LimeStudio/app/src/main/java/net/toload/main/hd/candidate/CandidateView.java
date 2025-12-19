@@ -804,14 +804,16 @@ public class CandidateView extends View implements View.OnClickListener {
         //Jeremy '12,4,8 to avoid fc when hard keyboard is engaged and candidateview is not shown
         if (!this.isShown()) return;
 
-        mHandler.updateComposing(LIME.COMPOSING_SHOW_DELAY_MS);
+        final int composingShowDelayMs = 50; // Delay before showing composing text
+        mHandler.updateComposing(composingShowDelayMs);
 
     }
 
     public void hideComposing() {
         if (DEBUG)
             Log.i(TAG, "hideComposing()");
-        mHandler.dismissComposing(LIME.COMPOSING_DISMISS_DELAY_MS); //Jeremy '12,6,3 the same delay as showComposing to avoid showed after hided
+        final int composingDismissDelayMs = 100; // Delay before dismissing composing text
+        mHandler.dismissComposing(composingDismissDelayMs); //Jeremy '12,6,3 the same delay as showComposing to avoid showed after hided
 
     }
 

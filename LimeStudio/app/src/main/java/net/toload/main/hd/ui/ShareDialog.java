@@ -310,7 +310,7 @@ public class ShareDialog extends DialogFragment {
 			btnSharePinyin.setOnClickListener(v -> confirmShareDialog(LIME.IM_PINYIN));
 		}
 
-		btnShareRelated.setOnClickListener(v -> confirmShareDialog(LIME.DB_RELATED));
+		btnShareRelated.setOnClickListener(v -> confirmShareDialog(LIME.DB_TABLE_RELATED));
 
 		return view;
 	}
@@ -319,17 +319,17 @@ public class ShareDialog extends DialogFragment {
 
 		AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
 
-		if(imtype.equalsIgnoreCase(LIME.DB_RELATED)) {
+		if(imtype.equalsIgnoreCase(LIME.DB_TABLE_RELATED)) {
 			alertDialog.setTitle(activity.getResources().getString(R.string.share_dialog_related_title));
 			alertDialog.setMessage(activity.getResources().getString(R.string.share_dialog_related_title_message));
 		}else{
 			alertDialog.setTitle(activity.getResources().getString(R.string.share_dialog_title));
 			alertDialog.setMessage(activity.getResources().getString(R.string.share_dialog_title_message));
 		}
-		if(!imtype.equalsIgnoreCase(LIME.DB_RELATED)){
+		if(!imtype.equalsIgnoreCase(LIME.DB_TABLE_RELATED)){
 			alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.share_lime_cin),
                     (dialog, which) -> {
-                        if(imtype.equals(LIME.DB_RELATED)){
+                        if(imtype.equals(LIME.DB_TABLE_RELATED)){
                             // Call Share IM Processes
                             ((MainActivity) activity).initialShareRelated();
                         }else{
@@ -343,7 +343,7 @@ public class ShareDialog extends DialogFragment {
 
 		alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL, activity.getResources().getString(R.string.share_lime_db),
                 (dialog, which) -> {
-                    if(imtype.equals(LIME.DB_RELATED)){
+                    if(imtype.equals(LIME.DB_TABLE_RELATED)){
                         ((MainActivity) activity).initialShareRelatedDb();
                     }else{
                         // Call Share IM Processes

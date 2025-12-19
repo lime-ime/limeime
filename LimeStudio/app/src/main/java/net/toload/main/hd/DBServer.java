@@ -198,7 +198,6 @@ public class  DBServer {
 			Log.e(TAG, "Error unzipping compressed database", e);
 		}
 		if(unzipFilePaths.size() == 1){
-
             datasource.importDb(unzipFilePaths.get(0), imtype);
 			resetCache();
         }
@@ -626,7 +625,7 @@ public class  DBServer {
 	}
 
 	public boolean isDatabseOnHold() {
-		return datasource.isDatabseOnHold();
+		return datasource.isDatabaseOnHold();
 	}
 
 

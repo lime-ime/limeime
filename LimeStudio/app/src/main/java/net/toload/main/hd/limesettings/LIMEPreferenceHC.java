@@ -44,6 +44,7 @@ import net.toload.main.hd.DBServer;
 import net.toload.main.hd.R;
 import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.KeyboardObj;
+import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 
 import java.util.Objects;
@@ -196,16 +197,16 @@ public class LIMEPreferenceHC extends AppCompatActivity {
 						DBSrv = DBServer.getInstance(ctx);
 					}
 
-					KeyboardObj kobj = DBSrv.getKeyboardObj("phonetic");
+					KeyboardObj kobj = DBSrv.getKeyboardObj(LIME.DB_TABLE_PHONETIC);
 
                     switch (selectedPhoneticKeyboardType) {
-                        case "standard":
+                        case LIME.IM_PHONETIC_STANDARD:
                             kobj = DBSrv.getKeyboardObj("phonetic");
                             break;
-                        case "eten":
+                        case LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN:
                             kobj = DBSrv.getKeyboardObj("phoneticet41");
                             break;
-                        case "eten26":
+                        case LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN26:
                             if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
                                 kobj = DBSrv.getKeyboardObj("limenum");
                             } else {
@@ -215,7 +216,7 @@ public class LIMEPreferenceHC extends AppCompatActivity {
                         case "eten26_symbol":
                             kobj = DBSrv.getKeyboardObj("et26");
                             break;
-                        case "hsu":  //Jeremy '12,7,6 Add HSU english keyboard support
+                        case LIME.IM_PHONETIC_KEYBOARD_HSU:  //Jeremy '12,7,6 Add HSU english keyboard support
                             if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
                                 kobj = DBSrv.getKeyboardObj("limenum");
                             } else {
@@ -223,7 +224,7 @@ public class LIMEPreferenceHC extends AppCompatActivity {
                             }
                             break;
                         case "hsu_symbol":
-                            kobj = DBSrv.getKeyboardObj("hsu");
+                            kobj = DBSrv.getKeyboardObj(LIME.IM_PHONETIC_KEYBOARD_HSU);
                             break;
                     }
                     DBSrv.setIMKeyboard("phonetic", kobj.getDescription(), kobj.getCode());

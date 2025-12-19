@@ -48,6 +48,7 @@ import java.util.List;
  * Created by Art Hung on 2015/4/26.
  */
 public class ShareRelatedTxtRunnable implements Runnable{
+    private static final String EXPORT_FILENAME_RELATED = "lime.related"; // Export filename for related data
 
     private static final boolean DEBUG = true;
     private static final String TAG = "ShareRelatedTxtRunnable";
@@ -79,7 +80,7 @@ public class ShareRelatedTxtRunnable implements Runnable{
 
         // Load
         List<Related> relatedlist = new ArrayList<>();
-        Cursor cursor = datasource.list(LIME.DB_RELATED);
+        Cursor cursor = datasource.list(LIME.DB_TABLE_RELATED);
         cursor.moveToFirst();
         while(!cursor.isAfterLast()){
             Related r = Related.get(cursor);
@@ -91,7 +92,7 @@ public class ShareRelatedTxtRunnable implements Runnable{
         if (cacheDir == null) {
             cacheDir = activity.getCacheDir();
         }
-        File target = new File(cacheDir, LIME.EXPORT_FILENAME_RELATED);
+        File target = new File(cacheDir, EXPORT_FILENAME_RELATED);
         if(target.exists() && !target.delete()){
             Log.e(TAG, "Error in file deletion");
         }

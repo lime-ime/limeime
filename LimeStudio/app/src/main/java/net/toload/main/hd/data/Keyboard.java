@@ -107,7 +107,7 @@ public class Keyboard {
 
 
 	public static String getInsertQuery(Keyboard record){
-        return "INSERT INTO " + LIME.DB_KEYBOARD + "(" +
+        return "INSERT INTO " + LIME.DB_TABLE_KEYBOARD + "(" +
                 LIME.DB_KEYBOARD_COLUMN_ID + ", " +
                 LIME.DB_KEYBOARD_COLUMN_CODE + ", " +
                 LIME.DB_KEYBOARD_COLUMN_NAME + ", " +

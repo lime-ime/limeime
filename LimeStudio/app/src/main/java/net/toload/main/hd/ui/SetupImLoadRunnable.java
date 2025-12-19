@@ -93,7 +93,8 @@ public class SetupImLoadRunnable implements Runnable{
         //handler.updateProgress(activity.getResources().getString(R.string.setup_load_download));
         File tempfile = downloadRemoteFile(mContext, url);
 
-        if(tempfile == null || tempfile.length() < LIME.MIN_FILE_SIZE_BYTES){
+        final int minFileSizeBytes = 100000; // Minimum file size threshold in bytes
+        if(tempfile == null || tempfile.length() < minFileSizeBytes){
 
             switch (type) {
                 case LIME.IM_ARRAY:
@@ -307,28 +308,23 @@ public class SetupImLoadRunnable implements Runnable{
     @Deprecated public synchronized void setImInfo(String im, String field, String value) {
 
         ContentValues cv = new ContentValues();
-        cv.put("code", im);
-        cv.put("title", field);
-        cv.put("desc", value);
+        cv.put(LIME.DB_IM_COLUMN_CODE, im);
+        cv.put(LIME.DB_IM_COLUMN_TITLE, field);
+        cv.put(LIME.DB_IM_COLUMN_DESC, value);
 
         removeImInfo(im, field);
 
         datasource.insert("im", cv);
-        /*try {
-            datasource.open();
-            datasource.close();
-        } catch (SQLException e) {
-            Log.e(TAG, "Error in operation", e);
-        }*/
+
     }
 
     private void setIMKeyboardOnDB(String im, String value, String keyboard) {
 
         ContentValues cv = new ContentValues();
-        cv.put("code", im);
-        cv.put("title", "keyboard");
-        cv.put("desc", value);
-        cv.put("keyboard", keyboard);
+        cv.put(LIME.DB_IM_COLUMN_CODE, im);
+        cv.put(LIME.DB_IM_COLUMN_TITLE, LIME.DB_KEYBOARD);
+        cv.put(LIME.DB_IM_COLUMN_DESC, value);
+        cv.put(LIME.DB_IM_COLUMN_KEYBOARD, keyboard);
 
         removeImInfoOnDB(im, "keyboard");
 

@@ -277,7 +277,7 @@ public class MainActivity extends AppCompatActivity
             OutputStream out = new FileOutputStream(file);
 
             int size;
-            byte[] buffer = new byte[LIME.BUFFER_SIZE_100KB];
+            byte[] buffer = new byte[LIME.BUFFER_SIZE_64KB];
 
             while ((size = in.read(buffer)) != -1) {
                 out.write(buffer, 0, size);

@@ -341,7 +341,7 @@ public class ManageRelatedFragment extends Fragment {
         }
 
         // Remove from the database
-        String removesql = "DELETE FROM " + LIME.DB_RELATED + " WHERE " + LIME.DB_COLUMN_ID + " = '" + id + "'";
+        String removesql = "DELETE FROM " + LIME.DB_TABLE_RELATED + " WHERE " + LIME.DB_COLUMN_ID + " = '" + id + "'";
 
         datasource.remove(removesql);
         /*try {
@@ -399,7 +399,7 @@ public class ManageRelatedFragment extends Fragment {
             }
 
             // Update record in the database
-        String updatesql = "UPDATE " + LIME.DB_RELATED + " SET " +
+        String updatesql = "UPDATE " + LIME.DB_TABLE_RELATED + " SET " +
                 LIME.DB_RELATED_COLUMN_PWORD + " = \"" + LIME.formatSqlValue(pword) + "\", " +
                 LIME.DB_RELATED_COLUMN_CWORD + " = \"" + LIME.formatSqlValue(cword) + "\", " +
                 LIME.DB_RELATED_COLUMN_BASESCORE + " = \"" + score + "\" " +

@@ -420,7 +420,7 @@ public class SetupImFragment extends Fragment {
                 // User can always load new related table ...
                 btnSetupImImportRelated.setOnClickListener(v -> {
                     FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_RELATED, handler);
+                    SetupImLoadDialog dialog = SetupImLoadDialog.newInstance(LIME.DB_TABLE_RELATED, handler);
                     dialog.show(ft, "loadimdialog");
 
                 });

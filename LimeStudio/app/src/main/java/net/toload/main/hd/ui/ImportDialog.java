@@ -78,11 +78,13 @@ public class ImportDialog extends DialogFragment {
 	ImportDialog importdialog;
 
 	String importtext;
+	
+	private static final String IMPORT_TEXT = "import_text"; // Bundle key for import text
 
 	public static ImportDialog newInstance(String importtext) {
 		ImportDialog btd = new ImportDialog();
 		Bundle args = new Bundle();
-			   args.putString(LIME.IMPORT_TEXT, importtext);
+			   args.putString(IMPORT_TEXT, importtext);
 			   btd.setArguments(args);
 			   btd.setCancelable(true);
 		return btd;
@@ -97,7 +99,7 @@ public class ImportDialog extends DialogFragment {
 	public void onAttach(@NonNull Context context) {
 		super.onAttach(context);
         assert getArguments() != null;
-        importtext = getArguments().getString(LIME.IMPORT_TEXT);
+        importtext = getArguments().getString(IMPORT_TEXT);
 	}
 
 	@Override
@@ -313,7 +315,7 @@ public class ImportDialog extends DialogFragment {
 		}
 
 		if(importtext.length() > 1) {
-			btnImportRelated.setOnClickListener(v -> confirmimportdialog(LIME.DB_RELATED));
+			btnImportRelated.setOnClickListener(v -> confirmimportdialog(LIME.DB_TABLE_RELATED));
 		}else{
 			btnImportRelated.setAlpha(LIME.HALF_ALPHA_VALUE);
 			btnImportRelated.setTypeface(null, Typeface.ITALIC);
@@ -329,7 +331,7 @@ public class ImportDialog extends DialogFragment {
 
 		final EditText input = new EditText(activity);
 
-		if(imtype.equalsIgnoreCase(LIME.DB_RELATED)) {
+		if(imtype.equalsIgnoreCase(LIME.DB_TABLE_RELATED)) {
 			alertDialog.setTitle(activity.getResources().getString(R.string.import_dialog_related_title));
 			alertDialog.setMessage(importtext);
 		}else{
@@ -346,7 +348,7 @@ public class ImportDialog extends DialogFragment {
 		alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
                 (dialog, which) -> {
 
-                    if(imtype.equals(LIME.DB_RELATED)){
+                    if(imtype.equals(LIME.DB_TABLE_RELATED)){
                         importToRelatedTable();
                         dismiss();
                         importdialog.dismiss();

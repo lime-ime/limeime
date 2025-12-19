@@ -53,6 +53,12 @@ public class SearchServer {
     private static final boolean DEBUG = false;
     private static final String TAG = "LIME.SearchServer";
     private static LimeDB dbadapter = null;
+    
+    // Score Thresholds
+    private static final int MIN_SCORE_THRESHOLD = 120; // Minimum score threshold for search results
+    private static final int MAX_SCORE_THRESHOLD = 200; // Maximum score threshold for search results
+    private static final int SCORE_ADJUSTMENT_INCREMENT = 50; // Score adjustment increment
+    private static final int CODE_LENGTH_BONUS_MULTIPLIER = 30; // Multiplier for code length bonus calculation
 
     //Jeremy '12,5,1 shared single LIMEDB object
     //Jeremy '12,4,6 Combine updatedb and quierydb into db,
@@ -130,7 +136,7 @@ public class SearchServer {
         if (DEBUG)
             Log.i(TAG, "SearchService.setTablename()");
 
-        dbadapter.setTablename(table);
+        dbadapter.setTableName(table);
         tablename = table;
         hasNumberMapping = numberMapping;
         hasSymbolMapping = symbolMapping;
@@ -141,7 +147,7 @@ public class SearchServer {
         }
 
         //Jeremy '15,6,21 set max code length
-        if (tablename.startsWith("cj")) {
+        if (tablename.startsWith(LIME.DB_TABLE_CJ)) {
             maxCodeLength = 5;
         }
     }
@@ -208,17 +214,17 @@ public class SearchServer {
 
         //Jeremy '11,6,17 Seperate physical keyboard cache with keybaordtype
         if (isPhysicalKeyboardPressed) {
-            if (tablename.equals("phonetic")) {
-                key = mLIMEPref.getPhysicalKeyboardType() + dbadapter.getTablename()
+            if (tablename.equals(LIME.DB_TABLE_PHONETIC)) {
+                key = mLIMEPref.getPhysicalKeyboardType() + dbadapter.getTableName()
                         + mLIMEPref.getPhoneticKeyboardType() + code;
             } else {
-                key = mLIMEPref.getPhysicalKeyboardType() + dbadapter.getTablename() + code;
+                key = mLIMEPref.getPhysicalKeyboardType() + dbadapter.getTableName() + code;
             }
         } else {
-            if (tablename.equals("phonetic"))
-                key = dbadapter.getTablename() + mLIMEPref.getPhoneticKeyboardType() + code;
+            if (tablename.equals(LIME.DB_TABLE_PHONETIC))
+                key = dbadapter.getTableName() + mLIMEPref.getPhoneticKeyboardType() + code;
             else
-                key = dbadapter.getTablename() + code;
+                key = dbadapter.getTableName() + code;
         }
         return key;
     }
@@ -279,12 +285,12 @@ public class SearchServer {
             do {
                 exactMatchMapping = completeCodeResultList.get(k);
                 int score = exactMatchMapping.getBasescore();
-                if (score < LIME.MIN_SCORE_THRESHOLD) {
-                    score = LIME.MIN_SCORE_THRESHOLD;
-                } else if (score > LIME.MAX_SCORE_THRESHOLD) {
-                    score = LIME.MAX_SCORE_THRESHOLD;
+                if (score < MIN_SCORE_THRESHOLD) {
+                    score = MIN_SCORE_THRESHOLD;
+                } else if (score > MAX_SCORE_THRESHOLD) {
+                    score = MAX_SCORE_THRESHOLD;
                 }
-                int codeLenBonus = exactMatchMapping.getCode().length() / exactMatchMapping.getWord().length() * LIME.CODE_LENGTH_BONUS_MULTIPLIER;
+                int codeLenBonus = exactMatchMapping.getCode().length() / exactMatchMapping.getWord().length() * CODE_LENGTH_BONUS_MULTIPLIER;
                 int newScore = score + codeLenBonus;
 
                 exactMatchMapping.setBasescore(newScore * exactMatchMapping.getWord().length());
@@ -412,8 +418,8 @@ public class SearchServer {
                                     continue;
                                 int remainingScore = remainingCodeExactMatchMapping.getBasescore();
                                 int codeLenBonus = remainingCodeExactMatchMapping.getCode().length() /
-                                        remainingCodeExactMatchMapping.getWord().length() * LIME.CODE_LENGTH_BONUS_MULTIPLIER;
-                                if (remainingScore > LIME.MIN_SCORE_THRESHOLD) remainingScore = LIME.MIN_SCORE_THRESHOLD;
+                                        remainingCodeExactMatchMapping.getWord().length() * CODE_LENGTH_BONUS_MULTIPLIER;
+                                if (remainingScore > MIN_SCORE_THRESHOLD) remainingScore = MIN_SCORE_THRESHOLD;
                                 remainingScore = remainingScore / remainingCodeExactMatchMapping.getWord().length() + codeLenBonus;
 
                                 int previousScore = previousMapping.getBasescore() / previousMapping.getWord().length();
@@ -435,7 +441,7 @@ public class SearchServer {
                                 }
                                 if (relatedMapping != null
                                         && relatedMapping.getBasescore() >= highestRelatedScore
-                                        && (averageScore + LIME.SCORE_ADJUSTMENT_INCREMENT) > highestScore
+                                        && (averageScore + SCORE_ADJUSTMENT_INCREMENT) > highestScore
                                         ) {
                                     Mapping suggestMapping = new Mapping();
                                     suggestMapping.setRuntimeBuiltPhraseRecord();
@@ -443,7 +449,7 @@ public class SearchServer {
                                     suggestMapping.setWord(phrase);
                                     highestRelatedScore = relatedMapping.getBasescore();
                                     suggestMapping.setScore(highestRelatedScore);
-                                    highestScore = (averageScore + LIME.SCORE_ADJUSTMENT_INCREMENT);
+                                    highestScore = (averageScore + SCORE_ADJUSTMENT_INCREMENT);
                                     suggestMapping.setBasescore(highestScore * phraseLen);
                                     List<Pair<Mapping, String>> newSuggestionList = new LinkedList<>(seedSuggestionList);
                                     newSuggestionList.add(new Pair<>(suggestMapping, code));
@@ -724,11 +730,11 @@ public class SearchServer {
                         && !abandonPhraseSuggestion
                         && !bestSuggestion.isExactMatchToCodeRecord() //will be the first item of result list, dont' add duplicated item
                         && bestSuggestion.getWord().length() > 1
-                        && ( (englishSuggestion==null && averageScore  > LIME.MIN_SCORE_THRESHOLD) || (englishSuggestion!=null && averageScore > LIME.MAX_SCORE_THRESHOLD ))  ) {
+                        && ( (englishSuggestion==null && averageScore  > MIN_SCORE_THRESHOLD) || (englishSuggestion!=null && averageScore > MAX_SCORE_THRESHOLD ))  ) {
                     result.add(self);
                     result.add(bestSuggestion);
 
-                } else if( englishSuggestion!=null && averageScore <= LIME.MAX_SCORE_THRESHOLD){
+                } else if( englishSuggestion!=null && averageScore <= MAX_SCORE_THRESHOLD){
                     clearRunTimeSuggestion(true);
                     result.add(self);
                     result.add(englishSuggestion);
@@ -839,11 +845,11 @@ public class SearchServer {
         if (LimeDB.isCodeDualMapped()) { //abandon LD support for dual mapped codes. Jeremy '15,6,5
             realCodeLen = currentCode.length();
         } else {
-            if (tablename.equals("phonetic")) {
+            if (tablename.equals(LIME.DB_TABLE_PHONETIC)) {
                 String selectedPhoneticKeyboardType =
-                        mLIMEPref.getParameterString("phonetic_keyboard_type", "standard");
+                        mLIMEPref.getParameterString("phonetic_keyboard_type", LIME.DB_TABLE_PHONETIC);
                 String lcode = currentCode;
-                if (selectedPhoneticKeyboardType.startsWith("eten")) {
+                if (selectedPhoneticKeyboardType.startsWith(LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN)) {
                     lcode = dbadapter.preProcessingRemappingCode(currentCode);
                 }
                 String noToneCode = code.replaceAll("[3467 ]", "");
@@ -1228,7 +1234,7 @@ List<Mapping> scorelistSnapshot = null;
                                         + ", QPcode = '" + QPCode
                                         + "'.");
                             if (i + 1 == phraselist.size() - 1) {//only learn at the end of the phrase word '12,6,8
-                                if (tablename.equals("phonetic")) {// remove tone symbol in phonetic table
+                                if (tablename.equals(LIME.DB_TABLE_PHONETIC)) {// remove tone symbol in phonetic table
                                     LDCode = baseCode.replaceAll("[3467 ]", "").toLowerCase(Locale.US);
                                     QPCode = QPCode.toLowerCase(Locale.US);
                                     if (LDCode.length() > 1) {
@@ -1320,7 +1326,7 @@ List<Mapping> scorelistSnapshot = null;
         String result = keynamecache.get(cacheKey);
         if (result == null) {
             //loadDBAdapter(); openLimeDatabase();
-            result = dbadapter.keyToKeyname(code, tablename, true);
+            result = dbadapter.keyToKeyName(code, tablename, true);
             keynamecache.put(cacheKey, result);
         }
         return result;
@@ -1460,22 +1466,13 @@ List<Mapping> scorelistSnapshot = null;
 
     }
 
-    /*
-        public boolean isImKeys(char c) throws RemoteException {
-            if (imKeysMap.get(tablename) == null || imKeysMap.size() == 0) {
-                //if(dbadapter == null){dbadapter = new LimeDB(ctx);}
-                imKeysMap.put(tablename, dbadapter.getImInfo(tablename, "imkeys"));
-            }
-            String imkeys = imKeysMap.get(tablename);
-            return !(imkeys == null || imkeys.equals("")) && (imkeys.indexOf(c) >= 0);
-        }
-    */
+
     public String getSelkey() throws RemoteException {
         if (DEBUG)
             Log.i(TAG, "getSelkey():hasNumber:" + hasNumberMapping + "hasSymbol:" + hasSymbolMapping);
         String selkey;
         String table = tablename;
-        if (tablename.equals("phonetic")) {
+        if (tablename.equals(LIME.DB_TABLE_PHONETIC)) {
             table = tablename + mLIMEPref.getPhoneticKeyboardType();
         }
         if (selKeyMap.get(table) == null || selKeyMap.isEmpty()) {
@@ -1494,10 +1491,10 @@ List<Mapping> scorelistSnapshot = null;
             } else
                 validSelkey = false;
             //Jeremy '11,6,19 Rewrite for IM has symbol mapping like ETEN
-            if (!validSelkey || tablename.equals("phonetic")) {
+            if (!validSelkey || tablename.equals(LIME.DB_TABLE_PHONETIC)) {
                 if (hasNumberMapping && hasSymbolMapping) {
-                    if (tablename.equals("dayi")
-                            || (tablename.equals("phonetic") && mLIMEPref.getPhoneticKeyboardType().equals("standard"))) {
+                    if (tablename.equals(LIME.DB_TABLE_DAYI)
+                            || (tablename.equals(LIME.DB_TABLE_PHONETIC) && mLIMEPref.getPhoneticKeyboardType().equals(LIME.DB_TABLE_PHONETIC))) {
                         selkey = "'[]-\\^&*()";
                     } else {
                         selkey = "!@#$%^&*()";
@@ -1532,12 +1529,12 @@ List<Mapping> scorelistSnapshot = null;
             do {
                 exactMatchMapping = completeCodeResultList.get(i);
                 int score = exactMatchMapping.getBasescore();
-                if (score < LIME.MIN_SCORE_THRESHOLD) {
-                    score = LIME.MIN_SCORE_THRESHOLD;
-                } else if (score > LIME.MAX_SCORE_THRESHOLD) {
-                    score = LIME.MAX_SCORE_THRESHOLD;
+                if (score < MIN_SCORE_THRESHOLD) {
+                    score = MIN_SCORE_THRESHOLD;
+                } else if (score > MAX_SCORE_THRESHOLD) {
+                    score = MAX_SCORE_THRESHOLD;
                 }
-                int codeLenBonus = exactMatchMapping.getCode().length() / exactMatchMapping.getWord().length() * LIME.CODE_LENGTH_BONUS_MULTIPLIER;
+                int codeLenBonus = exactMatchMapping.getCode().length() / exactMatchMapping.getWord().length() * CODE_LENGTH_BONUS_MULTIPLIER;
                 exactMatchMapping.setBasescore((score + codeLenBonus) * exactMatchMapping.getWord().length());
 
                 if (DEBUG || dumpRunTimeSuggestion)
@@ -1620,7 +1617,7 @@ List<Mapping> scorelistSnapshot = null;
                                 highestRelatedScore = relatedMapping.getBasescore();
                                 suggestMapping.setScore(highestRelatedScore);
 
-                                suggestMapping.setBasescore((averageScore + LIME.SCORE_ADJUSTMENT_INCREMENT) * phraseLen);
+                                suggestMapping.setBasescore((averageScore + SCORE_ADJUSTMENT_INCREMENT) * phraseLen);
                                 suggestionList.add(new Pair<>(suggestMapping, code));
                                 if (DEBUG || dumpRunTimeSuggestion)
                                     Log.i(TAG, "makeRunTimeSuggestion()  run-time suggest phrase verified from related table ="

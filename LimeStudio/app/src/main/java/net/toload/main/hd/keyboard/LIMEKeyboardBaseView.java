@@ -82,6 +82,16 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private static final boolean DEBUG = false;
 
     public static final int NOT_A_TOUCH_COORDINATE = -1;
+    
+    // UI Dimension Constants (in pixels/dp)
+    private static final int DEFAULT_PREVIEW_HEIGHT_PX = 80; // Default key preview height
+    private static final int DEFAULT_KEY_TEXT_SIZE_SP = 18; // Default key text size
+    private static final int DEFAULT_LABEL_TEXT_SIZE_SP = 14; // Default label text size (for sub-labels, small labels)
+    private static final int DEFAULT_PREVIEW_TOP_PADDING_PX = 10; // Default preview top padding
+    private static final int SWIPE_VELOCITY_UNITS_PER_SECOND = 1000; // Velocity calculation units
+    
+    // Swipe/Touch Constants
+    private static final int SWIPE_THRESHOLD_BASE_DP = 500; // Base swipe threshold in density-independent pixels
 
     public interface OnKeyboardActionListener {
 
@@ -550,9 +560,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 else if(attr == R.styleable.LIMEKeyboardBaseView_keyPreviewOffset)
                     mPreviewOffset = a.getDimensionPixelOffset(attr, 0);
                 else if(attr == R.styleable.LIMEKeyboardBaseView_keyPreviewHeight)
-                    mPreviewHeight = a.getDimensionPixelSize(attr, LIME.DEFAULT_PREVIEW_HEIGHT_PX);
+                    mPreviewHeight = a.getDimensionPixelSize(attr, DEFAULT_PREVIEW_HEIGHT_PX);
                 else if(attr == R.styleable.LIMEKeyboardBaseView_keyTextSize)
-                    mKeyTextSize = a.getDimensionPixelSize(attr, LIME.DEFAULT_KEY_TEXT_SIZE_SP);
+                    mKeyTextSize = a.getDimensionPixelSize(attr, DEFAULT_KEY_TEXT_SIZE_SP);
                 else if(attr == R.styleable.LIMEKeyboardBaseView_functionKeyTextColorNormal)
                     mFunctionKeyTextColorNormal = a.getColor(attr, 0xFF000000);
                 else if(attr == R.styleable.LIMEKeyboardBaseView_functionKeyTextColorPressed)
@@ -566,11 +576,11 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 else if(attr == R.styleable.LIMEKeyboardBaseView_keySubLabelTextColorPressed)
                     mKeySubLabelTextColorPressed = a.getColor(attr, 0xFF000000);
                 else if(attr == R.styleable.LIMEKeyboardBaseView_labelTextSize)
-                    mLabelTextSize = a.getDimensionPixelSize(attr, LIME.DEFAULT_LABEL_TEXT_SIZE_SP);
+                    mLabelTextSize = a.getDimensionPixelSize(attr, DEFAULT_LABEL_TEXT_SIZE_SP);
                 else if(attr == R.styleable.LIMEKeyboardBaseView_smallLabelTextSize)
-                    mSmallLabelTextSize = a.getDimensionPixelSize(attr, LIME.DEFAULT_LABEL_TEXT_SIZE_SP);
+                    mSmallLabelTextSize = a.getDimensionPixelSize(attr, DEFAULT_LABEL_TEXT_SIZE_SP);
                 else if(attr == R.styleable.LIMEKeyboardBaseView_subLabelTextSize)
-                    mSubLabelTextSize = a.getDimensionPixelSize(attr, LIME.DEFAULT_LABEL_TEXT_SIZE_SP);
+                    mSubLabelTextSize = a.getDimensionPixelSize(attr, DEFAULT_LABEL_TEXT_SIZE_SP);
                 else if(attr == R.styleable.LIMEKeyboardBaseView_popupLayout)
                     mPopupLayout = a.getResourceId(attr, 0);
                 else if(attr == R.styleable.LIMEKeyboardBaseView_popupHint)
@@ -580,7 +590,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 else if(attr == R.styleable.LIMEKeyboardBaseView_shadowRadius)
                     mShadowRadius = a.getFloat(attr, 0f);
                 else if(attr == R.styleable.LIMEKeyboardBaseView_spacePreviewTopPadding)
-                    mSpacePreviewTopPadding = a.getDimensionPixelSize(attr, LIME.DEFAULT_PREVIEW_TOP_PADDING_PX);
+                    mSpacePreviewTopPadding = a.getDimensionPixelSize(attr, DEFAULT_PREVIEW_TOP_PADDING_PX);
                 else if(attr == R.styleable.LIMEKeyboardBaseView_previewTopPadding)
                     mPreviewTopPadding = a.getDimensionPixelSize(attr, 0);
                 else if(attr == R.styleable.LIMEKeyboardBaseView_backgroundDimAmount)
@@ -646,7 +656,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             mKeyBackground.getPadding(mPadding);
         }
 
-        mSwipeThreshold = (int) (LIME.SWIPE_THRESHOLD_BASE_DP * res.getDisplayMetrics().density);
+        mSwipeThreshold = (int) (SWIPE_THRESHOLD_BASE_DP * res.getDisplayMetrics().density);
         // TODO: Refer frameworks/base/core/res/res/values/config.xml
         mDisambiguateSwipe = res.getBoolean(R.bool.config_swipeDisambiguation);
         mMiniKeyboardSlideAllowance = res.getDimension(R.dimen.mini_keyboard_slide_allowance);
@@ -662,7 +672,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                         float deltaY = me2.getY() - me1.getY();
                         int travelX = getWidth() / 2; // Half the keyboard width
                         int travelY = getHeight() / 2; // Half the keyboard height
-                        mSwipeTracker.computeCurrentVelocity(LIME.SWIPE_VELOCITY_UNITS_PER_SECOND);
+                        mSwipeTracker.computeCurrentVelocity(SWIPE_VELOCITY_UNITS_PER_SECOND);
                         final float endingVelocityX = mSwipeTracker.getXVelocity();
                         final float endingVelocityY = mSwipeTracker.getYVelocity();
                         if (velocityX > mSwipeThreshold && absY < absX && deltaX > travelX) {
@@ -864,7 +874,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     getPaddingLeft() + getPaddingRight(), getPaddingTop() + getPaddingBottom());
         } else {
             int width = mKeyboard.getMinWidth() + getPaddingLeft() + getPaddingRight();
-            if (MeasureSpec.getSize(widthMeasureSpec) < width + LIME.DEFAULT_PREVIEW_TOP_PADDING_PX) {
+            if (MeasureSpec.getSize(widthMeasureSpec) < width + DEFAULT_PREVIEW_TOP_PADDING_PX) {
                 width = MeasureSpec.getSize(widthMeasureSpec);
             }
             Log.i(TAG,"Width = " + width + "  height = " + mKeyboard.getHeight() + getPaddingTop() + getPaddingBottom() + ".");

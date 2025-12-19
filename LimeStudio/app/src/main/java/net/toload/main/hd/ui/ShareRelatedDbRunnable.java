@@ -74,12 +74,12 @@ public class ShareRelatedDbRunnable implements Runnable{
             cacheDir = activity.getCacheDir();
         }
 
-        File targetfile = new File(cacheDir, LIME.DB_RELATED + LIME.DATABASE_EXT);
+        File targetfile = new File(cacheDir, LIME.DB_TABLE_RELATED + LIME.DATABASE_EXT);
         if(targetfile.exists() && !targetfile.delete()){
             Log.e(TAG, "Error in file deletion");
         }
 
-        File targetfilezip = new File(cacheDir, LIME.DB_RELATED + ".limedb");
+        File targetfilezip = new File(cacheDir, LIME.DB_TABLE_RELATED + ".limedb");
         if(targetfilezip.exists() && !targetfilezip.delete()){
             Log.e(TAG, "Error in file deletion");
         }

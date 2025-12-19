@@ -101,7 +101,8 @@ public abstract class LimeSQLiteOpenHelper {
             Log.e(TAG, "Error in creating database directory");
         }
 
-        if (!dbPath.exists() || dbPath.length() < LIME.MIN_DATABASE_SIZE_BYTES) {
+        final int minDatabaseSizeBytes = 10000; // Minimum valid database file size
+        if (!dbPath.exists() || dbPath.length() < minDatabaseSizeBytes) {
 
             InputStream from =  mContext.getResources().openRawResource( R.raw.lime);
             
