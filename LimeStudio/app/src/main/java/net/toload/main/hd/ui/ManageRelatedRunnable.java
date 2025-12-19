@@ -71,15 +71,10 @@ public class ManageRelatedRunnable implements Runnable{
     }
 
     private List<Related> loadRelated(String pword, int maximum, int offset){
-        List<Related> results = new ArrayList<>();
+        List<Related> results;
 
         results = datasource.loadRelated(pword, maximum, offset);
-        /*try {
-            datasource.open();
-            datasource.close();
-        } catch (SQLException e) {
-            Log.e(TAG, "Error in operation", e);
-        }*/
+
         return results;
     }
 

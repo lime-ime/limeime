@@ -32,7 +32,6 @@ import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivityHandler;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Related;
-import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 
 import java.io.BufferedWriter;

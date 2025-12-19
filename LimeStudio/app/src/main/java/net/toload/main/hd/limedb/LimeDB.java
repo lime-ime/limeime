@@ -334,6 +334,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return 0; // Return 0 if column is missing
     }
 
+
     /**
      * Validates table name against whitelist to prevent SQL injection.
      * @param tableName The table name to validate
@@ -3759,7 +3760,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         try {
             //SQLiteDatabase db = this.getSqliteDb(true);
             Cursor cursor = db.query("im", null, LIME.DB_IM_COLUMN_CODE + " = '" + code + "'", null, null, null, "code ASC", null);
-            result = Im.getList(cursor);
+            result = Im.getList(this, cursor);
             cursor.close();
         } catch (Exception e) {
             Log.e(TAG, "getIm(): Cannot get IM", e);
@@ -4233,7 +4234,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 null, null, null, LIME.DB_IM_COLUMN_DESC + " ASC");
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
-            Im r = Im.get(cursor);
+            Im r = Im.get(this, cursor);
             result.add(r);
             cursor.moveToNext();
         }

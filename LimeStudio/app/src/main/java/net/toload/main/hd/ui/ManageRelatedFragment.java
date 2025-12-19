@@ -48,7 +48,6 @@ import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
 import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.Related;
-import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;
@@ -400,13 +399,11 @@ public class ManageRelatedFragment extends Fragment {
             }
 
             // Update record in the database
-            StringBuilder updatesqlBuilder = new StringBuilder("UPDATE ");
-            updatesqlBuilder.append(LIME.DB_RELATED).append(" SET ");
-            updatesqlBuilder.append(LIME.DB_RELATED_COLUMN_PWORD).append(" = \"").append(LIME.formatSqlValue(pword)).append("\", ");
-            updatesqlBuilder.append(LIME.DB_RELATED_COLUMN_CWORD).append(" = \"").append(LIME.formatSqlValue(cword)).append("\", ");
-            updatesqlBuilder.append(LIME.DB_RELATED_COLUMN_BASESCORE).append(" = \"").append(score).append("\" ");
-            updatesqlBuilder.append(" WHERE ").append(LIME.DB_RELATED_COLUMN_ID).append(" = \"").append(id).append("\"");
-            String updatesql = updatesqlBuilder.toString();
+        String updatesql = "UPDATE " + LIME.DB_RELATED + " SET " +
+                LIME.DB_RELATED_COLUMN_PWORD + " = \"" + LIME.formatSqlValue(pword) + "\", " +
+                LIME.DB_RELATED_COLUMN_CWORD + " = \"" + LIME.formatSqlValue(cword) + "\", " +
+                LIME.DB_RELATED_COLUMN_BASESCORE + " = \"" + score + "\" " +
+                " WHERE " + LIME.DB_RELATED_COLUMN_ID + " = \"" + id + "\"";
 
             datasource.update(updatesql);
 

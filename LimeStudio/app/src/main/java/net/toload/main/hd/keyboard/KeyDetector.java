@@ -52,7 +52,7 @@ abstract class KeyDetector {
         mCorrectionY = (int)correctionY;
         mKeyboard = keyboard;
         List<Key> keys = mKeyboard.getKeys();
-        Key[] array = keys.toArray(new Key[keys.size()]);
+        Key[] array = keys.toArray(new Key[0]);
         mKeys = array;
         return array;
     }

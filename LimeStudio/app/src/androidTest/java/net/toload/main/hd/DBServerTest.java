@@ -27,6 +27,7 @@ package net.toload.main.hd;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.RemoteException;
+import android.util.Log;
 
 import androidx.core.content.ContextCompat;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -46,6 +47,9 @@ import net.toload.main.hd.global.LIME;
  */
 @RunWith(AndroidJUnit4.class)
 public class DBServerTest {
+
+    private final String TAG = "DBServerTest";
+
 
     @Test
     public void testDBServerInitialization() {

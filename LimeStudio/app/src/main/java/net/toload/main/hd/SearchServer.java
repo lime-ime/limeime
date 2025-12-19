@@ -387,7 +387,7 @@ public class SearchServer {
                     for (Pair<Mapping, String> p : suggestionList) {
                         String pCode = p.second;
                         if (pCode.length() < code.length() && code.startsWith(pCode) && code.length() - pCode.length() <= maxCodeLength) {
-                            String remainingCode = code.substring(pCode.length(), code.length());
+                            String remainingCode = code.substring(pCode.length());
                             if (DEBUG || dumpRunTimeSuggestion)
                                 Log.i(TAG, "makeRunTimeSuggestion() working on previous exact match item = " + p.first.getWord() +
                                         " with base score = " + p.first.getBasescore() + ", average score = " + p.first.getBasescore() / p.first.getWord().length() +

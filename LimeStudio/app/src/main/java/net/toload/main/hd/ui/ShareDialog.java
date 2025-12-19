@@ -134,7 +134,7 @@ public class ShareDialog extends DialogFragment {
 
         assert getDialog() != null;
         getDialog().getWindow().setTitle(getResources().getString(R.string.share_dialog_title));
-		datasource = new LimeDB(getActivity());
+        datasource = new LimeDB(getActivity());
 		sharedialog = this;
 
 		activity = getActivity();

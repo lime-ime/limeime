@@ -102,8 +102,8 @@ public class Mapping {
 	public int getRecordType(){ return  recordType;}
 
 	public boolean isComposingCodeRecord() { return recordType == RECORD_COMPOSING_CODE; }
-	public boolean isExactMatchToCodeRecord(){ return recordType == RECORD_EXACT_MATCH_TO_CODE;};
-	public boolean isPartialMatchToCodeRecord(){ return recordType == RECORD_PARTIAL_MATCH_TO_CODE;};
+	public boolean isExactMatchToCodeRecord(){ return recordType == RECORD_EXACT_MATCH_TO_CODE;}
+	public boolean isPartialMatchToCodeRecord(){ return recordType == RECORD_PARTIAL_MATCH_TO_CODE;}
 	public boolean isRelatedPhraseRecord(){return recordType == RECORD_RELATED_PHRASE;	}
 	public boolean isEnglishSuggestionRecord() { return recordType == RECORD_ENGLISH_SUGGESTION;	}
 	public boolean isChinesePunctuationSymbolRecord(){ return recordType == RECORD_CHINESE_PUNCTUATION_SYMBOL;}

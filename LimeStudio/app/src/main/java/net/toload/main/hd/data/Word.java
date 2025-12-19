@@ -130,7 +130,7 @@ public class Word {
 	}
 	
 	public static List<Word> getList(Cursor cursor){
-		List<Word> list = new ArrayList<Word>();
+		List<Word> list = new ArrayList<>();
 		cursor.moveToFirst();
 		while(!cursor.isAfterLast()){
 			list.add(get(cursor));
@@ -141,34 +141,32 @@ public class Word {
 	}
 
 	public static String getInsertQuery(String table, Word record){
-		StringBuffer sb = new StringBuffer();
-		sb.append("INSERT INTO " + table + "(");
+		StringBuilder sb = new StringBuilder();
+		sb.append("INSERT INTO ").append(table).append("(");
 		sb.append(LIME.DB_COLUMN_CODE + ", ");
 		if(table.equals("phonetic"))  sb.append(LIME.DB_COLUMN_CODE3R +", ");
 		sb.append(LIME.DB_COLUMN_WORD +", ");
 		sb.append(LIME.DB_COLUMN_RELATED +", ");
 		sb.append(LIME.DB_COLUMN_SCORE +", ");
 		sb.append(LIME.DB_COLUMN_BASESCORE +") VALUES(");
-		sb.append("\""+LIME.formatSqlValue(record.getCode())+"\",");
-		if(table.equals("phonetic")) sb.append("\""+LIME.formatSqlValue(record.getCode().replaceAll("[ 3467]", ""))+"\","); //Jeremy '15,6,6. remove 3467 tone keys from code as code3r
-		sb.append("\""+LIME.formatSqlValue(record.getWord())+"\",");
-		sb.append("\""+LIME.formatSqlValue(record.getRelated())+"\",");
-		sb.append("\""+record.getScore()+"\",");
-		sb.append("\""+record.getBasescore()+"\"");;
+		sb.append("\"").append(LIME.formatSqlValue(record.getCode())).append("\",");
+		if(table.equals("phonetic")) sb.append("\"").append(LIME.formatSqlValue(record.getCode().replaceAll("[ 3467]", ""))).append("\","); //Jeremy '15,6,6. remove 3467 tone keys from code as code3r
+		sb.append("\"").append(LIME.formatSqlValue(record.getWord())).append("\",");
+		sb.append("\"").append(LIME.formatSqlValue(record.getRelated())).append("\",");
+		sb.append("\"").append(record.getScore()).append("\",");
+		sb.append("\"").append(record.getBasescore()).append("\"");
 		sb.append(")");
 		return sb.toString();
 	}
 
 	public static String getUpdateScoreQuery(String table, Word w){
-		StringBuffer sb = new StringBuffer();
-		sb.append("UPDATE " + table + " SET ");
-		sb.append(LIME.DB_COLUMN_SCORE +"='");
-		sb.append(w.getScore() +"', ");
-		sb.append(LIME.DB_COLUMN_BASESCORE +"='");
-		sb.append(w.getBasescore() +"' ");
-		sb.append(" WHERE " + LIME.DB_COLUMN_ID + " ='");
-		sb.append(w.getId() + "'");
-		return sb.toString();
+        return "UPDATE " + table + " SET " +
+                LIME.DB_COLUMN_SCORE + "='" +
+                w.getScore() + "', " +
+                LIME.DB_COLUMN_BASESCORE + "='" +
+                w.getBasescore() + "' " +
+                " WHERE " + LIME.DB_COLUMN_ID + " ='" +
+                w.getId() + "'";
 	}
 
 }

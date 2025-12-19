@@ -110,7 +110,7 @@ public class HelpDialog extends DialogFragment {
         assert getDialog() != null;
         getDialog().getWindow().setTitle(getResources().getString(R.string.help_dialog_title));
 
-		view = inflater.inflate(R.layout.fragment_dialog_help, container, false);
+        view = inflater.inflate(R.layout.fragment_dialog_help, container, false);
 
 		btnHelpDialog = view.findViewById(R.id.btnHelpDialog);
 		btnHelpDialog.setOnClickListener(v -> dismiss());

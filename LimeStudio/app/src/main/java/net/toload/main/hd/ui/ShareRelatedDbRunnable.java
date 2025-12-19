@@ -27,7 +27,6 @@ package net.toload.main.hd.ui;
 import android.app.Activity;
 import android.util.Log;
 
-import net.toload.main.hd.DBServer;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivityHandler;
 import net.toload.main.hd.R;

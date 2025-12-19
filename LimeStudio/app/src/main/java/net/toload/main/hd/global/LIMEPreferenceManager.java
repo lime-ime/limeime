@@ -30,7 +30,6 @@ import android.content.SharedPreferences;
 
 import androidx.preference.PreferenceManager;
 
-import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.data.Im;
 
 import java.util.HashMap;

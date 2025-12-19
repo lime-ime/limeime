@@ -127,7 +127,7 @@ public class ManageRelatedEditDialog extends DialogFragment {
         assert getDialog() != null;
         getDialog().getWindow().setTitle(getResources().getString(R.string.manage_related_dialog_edit));
 
-		activity = getActivity();
+        activity = getActivity();
         View view = inflater.inflate(R.layout.fragment_dialog_related_edit, container, false);
 
         Button btnManageRelatedCancel = view.findViewById(R.id.btnManageRelatedCancel);

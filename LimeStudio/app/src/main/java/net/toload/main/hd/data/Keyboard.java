@@ -62,8 +62,8 @@ public class Keyboard {
 	}
 
 	// Helper to safely get an Int from cursor (validates column index >= 0)
-	private static int getCursorInt(Cursor cursor, String columnName) {
-		int index = cursor.getColumnIndex(columnName);
+	private static int getCursorInt(Cursor cursor) {
+		int index = cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_ID);
 		if (index >= 0) {
 			return cursor.getInt(index);
 		}
@@ -73,7 +73,7 @@ public class Keyboard {
 	public static Keyboard get(Cursor cursor){
 		Keyboard record = new Keyboard();
 			// Use helper methods to safely get column values (validates column index >= 0)
-			record.setId(getCursorInt(cursor, LIME.DB_KEYBOARD_COLUMN_ID));
+			record.setId(getCursorInt(cursor));
 			record.setCode(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_CODE));
 			record.setName(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_NAME));
 			record.setDesc(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DESC));
@@ -95,7 +95,7 @@ public class Keyboard {
 	}
 
 	public static List<Keyboard> getList(Cursor cursor){
-		List<Keyboard> list = new ArrayList<Keyboard>();
+		List<Keyboard> list = new ArrayList<>();
 		cursor.moveToFirst();
 		while(!cursor.isAfterLast()){
 			list.add(get(cursor));
@@ -107,44 +107,42 @@ public class Keyboard {
 
 
 	public static String getInsertQuery(Keyboard record){
-		StringBuffer sb = new StringBuffer();
-		sb.append("INSERT INTO " + LIME.DB_KEYBOARD + "(");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_ID +", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_CODE+", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_NAME+", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_DESC +", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_TYPE +", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_IMAGE+", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_IMKB +", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB+", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_ENGKB +", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB+", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_SYMBOLKB +", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB +", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_DEFAULTKB +", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB +", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_EXTENDEDKB +", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB +", ");
-		sb.append(LIME.DB_KEYBOARD_COLUMN_DISABLE +") VALUES(");
-		sb.append("\""+record.getId()+"\",");
-		sb.append("\""+record.getCode()+"\",");
-		sb.append("\""+record.getName()+"\",");
-		sb.append("\""+record.getDesc()+"\",");
-		sb.append("\""+record.getType()+"\",");
-		sb.append("\""+record.getImage()+"\",");
-		sb.append("\""+record.getImkb()+"\",");
-		sb.append("\""+record.getImshiftkb()+"\",");
-		sb.append("\""+record.getEngkb()+"\",");
-		sb.append("\""+record.getEngshiftkb()+"\",");
-		sb.append("\""+record.getSymbolkb()+"\",");
-		sb.append("\""+record.getSymbolshiftkb()+"\",");
-		sb.append("\""+record.getDefaultkb()+"\",");
-		sb.append("\""+record.getDefaultshiftkb()+"\",");
-		sb.append("\""+record.getExtendedkb()+"\",");
-		sb.append("\""+record.getExtendedshiftkb()+"\",");
-		sb.append("\""+record.isDisable()+"\"");
-		sb.append(")");
-		return sb.toString();
+        return "INSERT INTO " + LIME.DB_KEYBOARD + "(" +
+                LIME.DB_KEYBOARD_COLUMN_ID + ", " +
+                LIME.DB_KEYBOARD_COLUMN_CODE + ", " +
+                LIME.DB_KEYBOARD_COLUMN_NAME + ", " +
+                LIME.DB_KEYBOARD_COLUMN_DESC + ", " +
+                LIME.DB_KEYBOARD_COLUMN_TYPE + ", " +
+                LIME.DB_KEYBOARD_COLUMN_IMAGE + ", " +
+                LIME.DB_KEYBOARD_COLUMN_IMKB + ", " +
+                LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB + ", " +
+                LIME.DB_KEYBOARD_COLUMN_ENGKB + ", " +
+                LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB + ", " +
+                LIME.DB_KEYBOARD_COLUMN_SYMBOLKB + ", " +
+                LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB + ", " +
+                LIME.DB_KEYBOARD_COLUMN_DEFAULTKB + ", " +
+                LIME.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB + ", " +
+                LIME.DB_KEYBOARD_COLUMN_EXTENDEDKB + ", " +
+                LIME.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB + ", " +
+                LIME.DB_KEYBOARD_COLUMN_DISABLE + ") VALUES(" +
+                "\"" + record.getId() + "\"," +
+                "\"" + record.getCode() + "\"," +
+                "\"" + record.getName() + "\"," +
+                "\"" + record.getDesc() + "\"," +
+                "\"" + record.getType() + "\"," +
+                "\"" + record.getImage() + "\"," +
+                "\"" + record.getImkb() + "\"," +
+                "\"" + record.getImshiftkb() + "\"," +
+                "\"" + record.getEngkb() + "\"," +
+                "\"" + record.getEngshiftkb() + "\"," +
+                "\"" + record.getSymbolkb() + "\"," +
+                "\"" + record.getSymbolshiftkb() + "\"," +
+                "\"" + record.getDefaultkb() + "\"," +
+                "\"" + record.getDefaultshiftkb() + "\"," +
+                "\"" + record.getExtendedkb() + "\"," +
+                "\"" + record.getExtendedshiftkb() + "\"," +
+                "\"" + record.isDisable() + "\"" +
+                ")";
 	}
 
 	public int getId() {

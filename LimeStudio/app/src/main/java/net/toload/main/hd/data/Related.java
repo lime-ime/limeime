@@ -105,7 +105,7 @@ public class Related {
 	}
 
 	public static List<Related> getList(Cursor cursor){
-		List<Related> list = new ArrayList<Related>();
+		List<Related> list = new ArrayList<>();
 		cursor.moveToFirst();
 		while(!cursor.isAfterLast()){
 			list.add(get(cursor));
@@ -116,18 +116,16 @@ public class Related {
 	}
 
 	public static String getInsertQuery(Related record){
-		StringBuffer sb = new StringBuffer();
-		sb.append("INSERT INTO " + LIME.DB_RELATED + "(");
-		sb.append(LIME.DB_RELATED_COLUMN_PWORD +", ");
-		sb.append(LIME.DB_RELATED_COLUMN_CWORD +", ");
-		sb.append(LIME.DB_RELATED_COLUMN_USERSCORE +", ");
-		sb.append(LIME.DB_RELATED_COLUMN_BASESCORE +") VALUES(");
-		sb.append("\""+record.getPword()+"\",");
-		sb.append("\""+record.getCword()+"\",");
-		sb.append("\""+record.getUserscore()+"\",");
-		sb.append("\""+record.getBasescore()+"\"");
-		sb.append(")");
-		return sb.toString();
+        return "INSERT INTO " + LIME.DB_RELATED + "(" +
+                LIME.DB_RELATED_COLUMN_PWORD + ", " +
+                LIME.DB_RELATED_COLUMN_CWORD + ", " +
+                LIME.DB_RELATED_COLUMN_USERSCORE + ", " +
+                LIME.DB_RELATED_COLUMN_BASESCORE + ") VALUES(" +
+                "\"" + record.getPword() + "\"," +
+                "\"" + record.getCword() + "\"," +
+                "\"" + record.getUserscore() + "\"," +
+                "\"" + record.getBasescore() + "\"" +
+                ")";
 	}
 
 }

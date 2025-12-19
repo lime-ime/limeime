@@ -105,12 +105,13 @@ public class ApplicationTest {
         
         // Verify it works on all API levels (21-36)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            // On API 28+, versionCode is long
-            assertTrue("Version code should match", versionCode == pInfo.getLongVersionCode() || 
-                      versionCode == pInfo.versionCode);
+            // On API 28+, use getLongVersionCode() (modern API)
+            assertEquals("Version code should match", versionCode, pInfo.getLongVersionCode());
         } else {
-            // On older APIs, versionCode is int
-            assertEquals("Version code should match", versionCode, pInfo.versionCode);
+            // On older APIs, versionCode is int (deprecated but necessary for testing compatibility)
+            @SuppressWarnings("deprecation")
+            int deprecatedVersionCode = pInfo.versionCode;
+            assertEquals("Version code should match", versionCode, deprecatedVersionCode);
         }
     }
 

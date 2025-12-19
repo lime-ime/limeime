@@ -30,7 +30,6 @@ package net.toload.main.hd.limedb;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
-import android.widget.Toast;
 
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
@@ -177,13 +176,13 @@ public abstract class LimeSQLiteOpenHelper {
                 }
             }
 
-            onOpen(db);
+            onOpen();
             success = true;
             return db;
         } finally {
             mIsInitializing = false;
             if (success) {
-            	if(DEBUG) Log.i(TAG,"getWritableDatabse(), success in finally section");
+                if(DEBUG) Log.i(TAG,"getWritableDatabse(), success in finally section");
                 mDatabase = db;
                 //return db;
             } else {
@@ -235,12 +234,8 @@ public abstract class LimeSQLiteOpenHelper {
      * should check {@link SQLiteDatabase#isReadOnly} before updating the
      * database.
      *
-     * @param db The database.
      */
-    public void onOpen(SQLiteDatabase db) {}
+    public void onOpen() {}
 
-    public void showToastMessage(Context ctx, String msg, int length) {
-        Toast toast = Toast.makeText(ctx, msg, length);
-        toast.show();
-    }
+
 }

@@ -32,7 +32,7 @@ public class ChineseSymbol {
 			"／|＼|－|＿|＊|＆|︿|％|＄|＃|＠|～|｛|｝|［|］|＜|＞|＋|｜|‵|＂";	
 	
 	
-	private static List<Mapping> mChineseSymbolMapping = new LinkedList<>();
+	private static final List<Mapping> mChineseSymbolMapping = new LinkedList<>();
 	public static String getSymbol(char symbol){
 	
 		switch(symbol){
@@ -84,7 +84,7 @@ public class ChineseSymbol {
 	
 	public static List<Mapping> getChineseSymoblList(){
 
-		if(mChineseSymbolMapping.size()==0){
+		if(mChineseSymbolMapping.isEmpty()){
 			String [] symArray =  chineseSymbols.split("\\|");
 			
 			for(String sym: symArray){

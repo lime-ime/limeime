@@ -341,7 +341,7 @@ public class LIMEUtilities {
                     System.out.println(bytesum);
                     outStream.write(buffer, 0, byteread);
                 }
-	            inStream.close();
+                inStream.close();
 				outStream.close();
 	        	}   
 	    	catch(Exception e){      

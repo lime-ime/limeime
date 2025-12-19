@@ -377,7 +377,7 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
      	return mSpaceDragLastDiff;
         }
     public int getSpaceDragDirection() {
-    	if(DEBUG) Log.i(TAG, "getSpaceDragDirection(): mSpaceDragLastDiff= " + mSpaceDragLastDiff + ". mSpaceKey.width=" + mSpaceKey.width);
+        if(DEBUG) Log.i(TAG, "getSpaceDragDirection(): mSpaceDragLastDiff= " + mSpaceDragLastDiff + ". mSpaceKey.width=" + mSpaceKey.width);
         if (mSpaceKey == null || Math.abs(mSpaceDragLastDiff) < mSpaceKey.width * SPACEBAR_DRAG_THRESHOLD ) {
             return 0; // No change
         }

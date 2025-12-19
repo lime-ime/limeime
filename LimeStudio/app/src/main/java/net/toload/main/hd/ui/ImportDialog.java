@@ -136,7 +136,7 @@ public class ImportDialog extends DialogFragment {
 
         assert getDialog() != null;
         getDialog().getWindow().setTitle(getResources().getString(R.string.import_dialog_title));
-		datasource = new LimeDB(getActivity());
+        datasource = new LimeDB(getActivity());
 		importdialog = this;
 
 		activity = getActivity();

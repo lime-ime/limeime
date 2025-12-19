@@ -35,7 +35,6 @@ import android.util.Log;
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
@@ -367,8 +366,8 @@ public class SetupImLoadRunnable implements Runnable{
 	 */
     public File downloadRemoteFile(Context ctx, String url){
         // Use shared download utility with progress callback
-        return LIMEUtilities.downloadRemoteFile(url, null, ctx.getCacheDir(), 
-                percent -> handler.updateProgress(percent), null);
+        return LIMEUtilities.downloadRemoteFile(url, null, ctx.getCacheDir(),
+                handler::updateProgress, null);
     }
 
 

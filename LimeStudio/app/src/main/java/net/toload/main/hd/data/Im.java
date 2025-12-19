@@ -27,6 +27,7 @@ package net.toload.main.hd.data;
 import android.database.Cursor;
 
 import net.toload.main.hd.global.LIME;
+import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,26 +117,26 @@ public class Im {
 	}
 
 
-	public static Im get(Cursor cursor){
+	public static Im get(LimeDB db, Cursor cursor){
 		Im record = new Im();
-			record.setId(cursor.getInt(cursor.getColumnIndex(LIME.DB_IM_COLUMN_ID)));
-			record.setCode(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_CODE)));
-			record.setTitle(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_TITLE)));
-			record.setDesc(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_DESC)));
-			record.setKeyboard(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_KEYBOARD)));
-			record.setDisable(Boolean.getBoolean(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_DISABLE))));
-			record.setSelkey(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_SELKEY)));
-			record.setEndkey(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_ENDKEY)));
-			record.setSpacestyle(cursor.getString(cursor.getColumnIndex(LIME.DB_IM_COLUMN_SPACESTYLE)));
+			record.setId(db.getCursorInt(cursor, LIME.DB_IM_COLUMN_ID));
+			record.setCode(db.getCursorString(cursor, LIME.DB_IM_COLUMN_CODE));
+			record.setTitle(db.getCursorString(cursor, LIME.DB_IM_COLUMN_TITLE));
+			record.setDesc(db.getCursorString(cursor, LIME.DB_IM_COLUMN_DESC));
+			record.setKeyboard(db.getCursorString(cursor, LIME.DB_IM_COLUMN_KEYBOARD));
+            record.setDisable(Boolean.getBoolean(db.getCursorString(cursor,LIME.DB_IM_COLUMN_DISABLE)));
+			record.setSelkey(db.getCursorString(cursor, LIME.DB_IM_COLUMN_SELKEY));
+			record.setEndkey(db.getCursorString(cursor, LIME.DB_IM_COLUMN_ENDKEY));
+			record.setSpacestyle(db.getCursorString(cursor, LIME.DB_IM_COLUMN_SPACESTYLE));
 		return record;
 	}
 
 
-	public static List<Im> getList(Cursor cursor){
+	public static List<Im> getList(LimeDB db, Cursor cursor){
 		List<Im> list = new ArrayList<>();
 		cursor.moveToFirst();
 		while(!cursor.isAfterLast()){
-			list.add(get(cursor));
+			list.add(get(db, cursor));
 			cursor.moveToNext();
 		}
 		cursor.close();
@@ -143,26 +144,25 @@ public class Im {
 	}
 		
 	public static String getInsertQuery(Im record){
-		StringBuffer sb = new StringBuffer();
-					 sb.append("INSERT INTO " + LIME.DB_IM + "(");
-					 sb.append(LIME.DB_IM_COLUMN_CODE +", ");
-					 sb.append(LIME.DB_IM_COLUMN_TITLE +", ");
-					 sb.append(LIME.DB_IM_COLUMN_DESC +", ");
-					 sb.append(LIME.DB_IM_COLUMN_KEYBOARD +", ");
-					 sb.append(LIME.DB_IM_COLUMN_DISABLE +", ");
-					 sb.append(LIME.DB_IM_COLUMN_SELKEY +", ");
-					 sb.append(LIME.DB_IM_COLUMN_ENDKEY +", ");
-					 sb.append(LIME.DB_IM_COLUMN_SPACESTYLE +") VALUES(");
-					 sb.append("\""+record.getCode()+"\",");
-					 sb.append("\""+record.getTitle()+"\",");
-					 sb.append("\""+record.getDesc()+"\",");
-					 sb.append("\""+record.getKeyboard()+"\",");
-					 sb.append("\""+record.isDisable()+"\",");
-					 sb.append("\""+record.getSelkey()+"\",");
-					 sb.append("\""+record.getEndkey()+"\",");
-					 sb.append("\""+record.getSpacestyle()+"\"");;
-					 sb.append(")");
-		return sb.toString();
+
+        return "INSERT INTO " + LIME.DB_IM + "(" +
+                LIME.DB_IM_COLUMN_CODE + ", " +
+                LIME.DB_IM_COLUMN_TITLE + ", " +
+                LIME.DB_IM_COLUMN_DESC + ", " +
+                LIME.DB_IM_COLUMN_KEYBOARD + ", " +
+                LIME.DB_IM_COLUMN_DISABLE + ", " +
+                LIME.DB_IM_COLUMN_SELKEY + ", " +
+                LIME.DB_IM_COLUMN_ENDKEY + ", " +
+                LIME.DB_IM_COLUMN_SPACESTYLE + ") VALUES(" +
+                "\"" + record.getCode() + "\"," +
+                "\"" + record.getTitle() + "\"," +
+                "\"" + record.getDesc() + "\"," +
+                "\"" + record.getKeyboard() + "\"," +
+                "\"" + record.isDisable() + "\"," +
+                "\"" + record.getSelkey() + "\"," +
+                "\"" + record.getEndkey() + "\"," +
+                "\"" + record.getSpacestyle() + "\"" +
+                ")";
 	}
 
 }

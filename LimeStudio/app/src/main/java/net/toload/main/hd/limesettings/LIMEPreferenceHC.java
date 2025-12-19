@@ -226,23 +226,7 @@ public class LIMEPreferenceHC extends AppCompatActivity {
                             kobj = DBSrv.getKeyboardObj("hsu");
                             break;
                     }
-					DBSrv.setIMKeyboard("phonetic", kobj.getDescription(), kobj.getCode());
-					/*
-					DBSrv.setIMKeyboard("phonetic", kobj.getDescription(), kobj.getCode());
-					
-					if(selectedPhoneticKeyboardType.equals("standard")){
-						DBSrv.setIMKeyboard("phonetic",  
-								DBSrv.getKeyboardInfo("phonetic", "desc"), "phonetic");
-					}else if(selectedPhoneticKeyboardType.equals("eten")){
-						DBSrv.setIMKeyboard("phonetic", 
-								DBSrv.getKeyboardInfo("phoneticet41", "desc"), "phoneticet41");
-					}else if(selectedPhoneticKeyboardType.equals("hsu")){
-						DBSrv.setIMKeyboard("phonetic", 
-								DBSrv.getKeyboardInfo("hsu", "desc"), "hsu");//jeremy '12,6,6 new hsu and et26 keybaord
-					}else if(selectedPhoneticKeyboardType.equals("eten26")){
-						DBSrv.setIMKeyboard("phonetic", 
-									DBSrv.getKeyboardInfo("et26", "desc"), "et26");
-					}*/
+                    DBSrv.setIMKeyboard("phonetic", kobj.getDescription(), kobj.getCode());
 					if(DEBUG) Log.i(TAG, "onSharedPreferenceChanged() PhoneticIMInfo.kyeboard:" + 
 							DBSrv.getImInfo("phonetic", "keyboard"));	
 				} catch (RemoteException e) {

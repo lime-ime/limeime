@@ -26,7 +26,6 @@ package net.toload.main.hd.keyboard;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.keyboard.LIMEKeyboardBaseView.OnKeyboardActionListener;
-import net.toload.main.hd.keyboard.LIMEKeyboardBaseView.UIHandler;
 import net.toload.main.hd.keyboard.LIMEBaseKeyboard.Key;
 
 import android.content.res.Resources;
@@ -39,9 +38,9 @@ public class PointerTracker {
     private static final boolean DEBUG_MOVE = false;
 
     public interface UIProxy {
-        public void invalidateKey(Key key);
-        public void showPreview(int keyIndex, PointerTracker tracker);
-        public boolean hasDistinctMultitouch();
+        void invalidateKey(Key key);
+        void showPreview(int keyIndex, PointerTracker tracker);
+        boolean hasDistinctMultitouch();
     }
 
     public final int mPointerId;
@@ -56,7 +55,7 @@ public class PointerTracker {
     private static final int[] KEY_DELETE = { LIMEBaseKeyboard.KEYCODE_DELETE };
 
     private final UIProxy mProxy;
-    private final UIHandler mHandler;
+    private final LIMEKeyboardBaseView.UIHandler mHandler;
     private final KeyDetector mKeyDetector;
     private OnKeyboardActionListener mListener;
     //private final LIMEKeyboardSwitcher mKeyboardSwitcher;
@@ -174,7 +173,7 @@ public class PointerTracker {
         }
     }
 
-    public PointerTracker(int id, UIHandler handler, KeyDetector keyDetector, UIProxy proxy,
+    PointerTracker(int id, LIMEKeyboardBaseView.UIHandler handler, KeyDetector keyDetector, UIProxy proxy,
             Resources res) {
         if (proxy == null || handler == null || keyDetector == null)
             throw new NullPointerException();
@@ -472,8 +471,8 @@ public class PointerTracker {
         final int right = key.x + key.width;
         final int top = key.y;
         final int bottom = key.y + key.height;
-        final int edgeX = x < left ? left : (x > right ? right : x);
-        final int edgeY = y < top ? top : (y > bottom ? bottom : y);
+        final int edgeX = x < left ? left : (Math.min(x, right));
+        final int edgeY = y < top ? top : (Math.min(y, bottom));
         final int dx = x - edgeX;
         final int dy = y - edgeY;
         return dx * dx + dy * dy;
@@ -556,7 +555,7 @@ public class PointerTracker {
         if (mInMultiTap) {
             // Multi-tap
             mPreviewLabel.setLength(0);
-            mPreviewLabel.append((char) key.codes[mTapCount < 0 ? 0 : mTapCount]);
+            mPreviewLabel.append((char) key.codes[Math.max(mTapCount, 0)]);
             return mPreviewLabel;
         } else {
             return key.label;
@@ -581,11 +580,10 @@ public class PointerTracker {
             mInMultiTap = true;
             if (isMultiTap) {
                 mTapCount = (mTapCount + 1) % key.codes.length;
-                return;
             } else {
                 mTapCount = -1;
-                return;
             }
+            return;
         }
         if (!isMultiTap) {
             resetMultiTap();

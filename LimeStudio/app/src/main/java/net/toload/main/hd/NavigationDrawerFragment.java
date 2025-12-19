@@ -63,7 +63,6 @@ import net.toload.main.hd.ui.HelpDialog;
 import net.toload.main.hd.ui.ShareDialog;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.

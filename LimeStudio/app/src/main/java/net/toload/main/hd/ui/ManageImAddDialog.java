@@ -136,7 +136,7 @@ public class ManageImAddDialog extends DialogFragment {
         assert getArguments() != null;
         //String imtype = getArguments().getString("imtype");
 
-		activity = getActivity();
+        activity = getActivity();
         View view = inflater.inflate(R.layout.fragment_dialog_add, container, false);
 
         Button btnManageImWordCancel = view.findViewById(R.id.btnManageImWordCancel);
