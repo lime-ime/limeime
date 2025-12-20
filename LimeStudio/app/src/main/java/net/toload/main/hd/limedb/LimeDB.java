@@ -424,7 +424,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     public String getCursorString(Cursor cursor, String columnName) {
         int index = cursor.getColumnIndex(columnName);
         if (index != -1) {
-            return cursor.getString(index);
+            String value = cursor.getString(index);
+            return (value != null) ? value : ""; // Return empty string if column value is NULL
         }
         return ""; // Return empty string if column is missing
     }
@@ -460,7 +461,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * @param tableName The table name to validate
      * @return true if table name is valid and safe to use, false otherwise
      */
-    private boolean isValidTableName(String tableName) {
+    /**
+     * Validates if a table name is in the whitelist of allowed tables.
+     * 
+     * @param tableName The table name to validate
+     * @return true if the table name is valid, false otherwise
+     */
+    public boolean isValidTableName(String tableName) {
         if (tableName == null || tableName.isEmpty()) {
             return false;
         }
@@ -766,6 +773,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         try {
 
+            // Validate table name before using in query
+            if (!isValidTableName(table)) {
+                Log.e(TAG, "countMapping(): Invalid table name: " + table);
+                return 0;
+            }
             Cursor cursor = db.rawQuery("SELECT * FROM " + table, null);
             if (cursor == null) return 0;
             int total = cursor.getCount();
@@ -3787,9 +3799,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private void removeImInfoOnDB(SQLiteDatabase dbin, String im, String field) {
         if (DEBUG)
             Log.i(TAG, "removeImInfoOnDB()");
-        String removeString = "DELETE FROM im WHERE code='" + im + "' AND title='" + field + "'";
-        dbin.execSQL(removeString);
-
+        // Use parameterized query to prevent SQL injection
+        dbin.delete(LIME.DB_TABLE_IM, 
+            LIME.DB_IM_COLUMN_CODE + " = ? AND " + LIME.DB_IM_COLUMN_TITLE + " = ?",
+            new String[]{im, field});
     }
 
 
@@ -4314,10 +4327,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             Log.e(TAG, "Error in database operation", e);
         }
     }
-
-    // Method from DataSource
-
-
     /**
      * Begins a database transaction.
      * 
@@ -4364,69 +4373,85 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     /**
-     * Executes an INSERT SQL statement.
-     * 
-     * <p>This method validates that the SQL starts with "insert" (case-insensitive)
-     * before executing. Use with caution - SQL injection protection is minimal.
-     * 
-     * @param insertSQL The INSERT SQL statement to execute
+     * Inserts a record into the specified table using parameterized ContentValues.
+     *
+     * <p>This method uses parameterized input to prevent SQL injection.
+     *
+     * @param table The table name to insert into (must pass isValidTableName)
+     * @param values The ContentValues representing column names and values
+     * @return The row ID of the newly inserted row, or -1 if error
      */
-    public void insert(String insertSQL) {
-        if (db != null && db.isOpen() &&
-                insertSQL != null && insertSQL.toLowerCase().trim().startsWith("insert")) {
-            db.execSQL(insertSQL);
+    public long addRecord(String table, android.content.ContentValues values) {
+        if (checkDBConnection()) return -1;
+        if (!isValidTableName(table)) {
+            Log.e(TAG, "addRecord(): Invalid table name: " + table);
+            return -1;
         }
-    }
-
-    /**
-     * Executes an INSERT SQL statement (alias for insert).
-     * 
-     * <p>This method validates that the SQL starts with "insert" (case-insensitive)
-     * before executing.
-     * 
-     * @param addSQL The INSERT SQL statement to execute
-     */
-    public void add(String addSQL) {
-        if (db != null && db.isOpen()) {
-            if (addSQL.toLowerCase().startsWith("insert")) {
-                db.execSQL(addSQL);
-            }
+        try {
+            return db.insert(table, null, values);
+        } catch (Exception e) {
+            Log.e(TAG, "Error inserting record into table: " + table, e);
+            return -1;
         }
-    }
-
-    /**
-     * Executes a DELETE SQL statement.
-     * 
-     * <p>This method validates that the SQL starts with "delete" (case-insensitive)
-     * before executing. Use with caution - SQL injection protection is minimal.
-     * 
-     * @param removeSQL The DELETE SQL statement to execute
-     */
-    public void remove(String removeSQL) {
-        if (checkDBConnection()) return;
-
-        if (removeSQL.toLowerCase().startsWith("delete")) {
-            db.execSQL(removeSQL);
-        }
-
     }
 
 
     /**
-     * Executes an UPDATE SQL statement.
+     * Deletes records from a table using parameterized queries.
      * 
-     * <p>This method validates that the SQL starts with "update" (case-insensitive)
-     * before executing. Use with caution - SQL injection protection is minimal.
+     * <p>This method uses parameterized queries to prevent SQL injection.
+     * The table name is validated against a whitelist.
      * 
-     * @param updatesql The UPDATE SQL statement to execute
+     * @param table The table name (must be valid according to {@link #isValidTableName(String)})
+     * @param whereClause The WHERE clause (e.g., "id = ?") with ? placeholders
+     * @param whereArgs The arguments to replace ? placeholders in whereClause
+     * @return The number of rows deleted, or -1 if error
      */
-    public void update(String updatesql) {
-        if (checkDBConnection()) return;
-
-        if (updatesql.toLowerCase().startsWith("update")) {
-            db.execSQL(updatesql);
+    public int deleteRecord(String table, String whereClause, String[] whereArgs) {
+        if (checkDBConnection()) return -1;
+        
+        if (!isValidTableName(table)) {
+            Log.e(TAG, "deleteRecord(): Invalid table name: " + table);
+            return -1;
         }
+        
+        try {
+            return db.delete(table, whereClause, whereArgs);
+        } catch (Exception e) {
+            Log.e(TAG, "Error deleting record from table: " + table, e);
+            return -1;
+        }
+    }
 
+
+
+
+    /**
+     * Updates records in a table using parameterized queries.
+     * 
+     * <p>This method uses parameterized queries to prevent SQL injection.
+     * The table name is validated against a whitelist.
+     * 
+     * @param table The table name (must be valid according to {@link #isValidTableName(String)})
+     * @param values The values to update
+     * @param whereClause The WHERE clause (e.g., "id = ?") with ? placeholders
+     * @param whereArgs The arguments to replace ? placeholders in whereClause
+     * @return The number of rows updated, or -1 if error
+     */
+    public int updateRecord(String table, android.content.ContentValues values, String whereClause, String[] whereArgs) {
+        if (checkDBConnection()) return -1;
+        
+        if (!isValidTableName(table)) {
+            Log.e(TAG, "updateRecord(): Invalid table name: " + table);
+            return -1;
+        }
+        
+        try {
+            return db.update(table, values, whereClause, whereArgs);
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating record in table: " + table, e);
+            return -1;
+        }
     }
 
 
@@ -4718,7 +4743,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      */
     public Related getRelated(long id) {
         if (checkDBConnection()) return null;
-        Related w;
+        Related w = null;
         Cursor cursor;
 
         String query = LIME.DB_RELATED_COLUMN_ID + " = '" + id + "' ";
@@ -4727,9 +4752,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 null, query,
                 null, null, null, null);
 
-        cursor.moveToFirst();
-        w = Related.get(cursor);
-        cursor.close();
+        if (cursor != null && cursor.moveToFirst()) {
+            w = Related.get(cursor);
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
 
         return w;
     }
@@ -4847,20 +4875,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return total;
     }
 
-    /**
-     * Inserts a record into a table using ContentValues.
-     * 
-     * <p>This is a safer alternative to raw SQL INSERT statements as it
-     * uses parameterized insertion through ContentValues.
-     * 
-     * @param table The table name to insert into
-     * @param cv ContentValues containing the column values
-     */
-    public void insert(String table, ContentValues cv) {
-        if (checkDBConnection()) return;
-        db.insert(table, null, cv);
-
-    }
 
     /**
      * Holds the database connection to prevent concurrent access during maintenance.

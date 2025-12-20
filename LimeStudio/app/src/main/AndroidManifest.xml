@@ -23,7 +23,8 @@
   ~  */
   -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Queries declaration for Android 11+ (API 30+) package visibility -->
     <!-- Required for querying activities that can handle Storage Access Framework intents -->
@@ -67,19 +68,37 @@
             android:name=".MainActivity"
             android:configChanges="keyboard|keyboardHidden|orientation"
             android:hardwareAccelerated="true"
-            android:label="@string/app_name"
-            android:exported="true"
-            android:screenOrientation="portrait" >
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <intent-filter>
+            <!-- Intent filter for VIEW of text files with .lime extension -->
+            <intent-filter tools:ignore="GoogleAppIndexingUrlError">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="content" />
-                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="text/plain" android:pathPattern=".*\\.lime" />
+            </intent-filter>
+            <!-- Intent filter for VIEW of text files with .cin extension -->
+            <intent-filter tools:ignore="GoogleAppIndexingUrlError">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="text/plain" android:pathPattern=".*\\.cin" />
+            </intent-filter>
+            <!-- Intent filter for VIEW of zip files with .limedb extension -->
+            <intent-filter tools:ignore="GoogleAppIndexingUrlError">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/zip" android:pathPattern=".*\\.limedb" />
+            </intent-filter>
+            <!-- Add SEND support for text/plain -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
 

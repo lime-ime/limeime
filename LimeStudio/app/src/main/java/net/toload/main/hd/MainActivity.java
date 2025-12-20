@@ -58,6 +58,7 @@ import androidx.fragment.app.FragmentTransaction;
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.ui.HelpDialog;
 import net.toload.main.hd.ui.ImportDialog;
@@ -69,17 +70,19 @@ import net.toload.main.hd.ui.ShareDbRunnable;
 import net.toload.main.hd.ui.ShareRelatedDbRunnable;
 import net.toload.main.hd.ui.ShareRelatedTxtRunnable;
 import net.toload.main.hd.ui.ShareTxtRunnable;
+import net.toload.main.hd.ui.ImportDialog.OnImportTypeSelectedListener;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationDrawerFragment.NavigationDrawerCallbacks {
+        implements NavigationDrawerFragment.NavigationDrawerCallbacks, OnImportTypeSelectedListener {
 
     final String TAG = "MainActivity";
     /**
@@ -202,59 +205,145 @@ public class MainActivity extends AppCompatActivity
 
         
 
-        // Handle Import Text from other application
+        // Handle Import .lime/.cin (text/plain) and .limedb (application/zip)
         Intent intent = getIntent();
         String action = intent.getAction();
         String type = getIntent().getType();
+        
+        // 1. For ACTION_SEND, use handleSendText() to process
         if (Intent.ACTION_SEND.equals(action) && type != null) {
             if ("text/plain".equals(type)) {
                 handleSendText(getIntent());
             }
-        } else if (Intent.ACTION_VIEW.equals(action) && type != null) {
+        } 
+        // 2. For ACTION_VIEW, handle file imports
+        else if (Intent.ACTION_VIEW.equals(action) && type != null) {
             String scheme = intent.getScheme();
             ContentResolver resolver = getContentResolver();
 
             if (ContentResolver.SCHEME_CONTENT.equals(scheme)
                     || ContentResolver.SCHEME_FILE.equals(scheme)
-                    || scheme.equals("http") || scheme.equals("https") || scheme.equals("ftp")) {
+                    || scheme != null && (scheme.equals("http") || scheme.equals("https") || scheme.equals("ftp"))) {
                 Uri uri = intent.getData();
+                if (uri == null) {
+                    Log.e(TAG, "Intent data URI is null");
+                    return;
+                }
+                
                 String fileName = getContentName(resolver, uri);
                 if (fileName == null) {
                     fileName = uri.getLastPathSegment();
                 }
-                InputStream input = null;
+                if (fileName == null) {
+                    String errorMessage = getResources().getString(R.string.error_no_file_name);
+                    Log.e(TAG, errorMessage);
+                    showToastMessage(errorMessage, Toast.LENGTH_SHORT);
+                    return;
+                }
+                
+                String extension = getFileExtension(fileName);
+                
+                // 3. Check if type matches extension
+                if (!isFileTypeValid(type, extension)) {
+                    String errorMessage = getResources().getString(R.string.error_file_format);
+                    Log.w(TAG, errorMessage);
+                    showToastMessage(errorMessage, Toast.LENGTH_SHORT);
+                    return;
+                }
+                
+                InputStream input;
                 try {
                     input = resolver.openInputStream(uri);
                 } catch (FileNotFoundException e) {
-                    Log.e(TAG, "Error opening input stream for import URI", e);
+                    String errorMessage = getResources().getString(R.string.error_file_opening_error);
+                    Log.e(TAG, errorMessage, e);
+                    showToastMessage(errorMessage, Toast.LENGTH_SHORT);
+                    return;
                 }
 
                 File importDir = new File(getCacheDir(), "imports");
-                if(!importDir.mkdirs()) Log.w(TAG,"Failed to create import dir");
+                if (!importDir.exists() && !importDir.mkdirs()) {
+                    Log.w(TAG, "Failed to create import dir: " + importDir.getAbsolutePath());
+                }
                 File importFile = new File(importDir, fileName);
                 String importFilepath = importFile.getAbsolutePath();
-                InputStreamToFile(input, importFilepath);
-                showToastMessage("Got file " + importFilepath, Toast.LENGTH_SHORT);
-            }
+                
+                if (input != null) {
+                    InputStreamToFile(input, importFilepath);
+                } else {
+                    Log.e(TAG, "Input stream is null");
+                    showToastMessage("Error reading file", Toast.LENGTH_SHORT);
+                    return;
+                }
+                
+                // Handle based on file type
+                if ("text/plain".equals(type) && ("lime".equals(extension) || "cin".equals(extension))) {
+                    // 4. For text/plain with .lime or .cin, call handleImportTxt
+                    handleImportTxt(importFilepath);
+                } else if ("application/zip".equals(type) && "limedb".equals(extension)) {
+                    // 5. For .limedb file, handle import
+                    String tableName = getFileNameWithoutExtension(fileName);
+                    DBServer dbServer = DBServer.getInstance(this);
+                    List<String> unzipPaths;
+                    try {
+                        unzipPaths = LIMEUtilities.unzip(importFile.getAbsolutePath(), importFile.getParent(), true);
 
+                        if (unzipPaths.size() != 1) {
+                            showToastMessage(getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
+                            return;
+                        }
+                        File fileToImport = new File(unzipPaths.get(0));
+                         
+                        // Check if table is empty before importing
+                        int recordCount = dbServer.countMapping(tableName);
+                        if (recordCount > 0) {
+                            // Table is not empty, show confirmation dialog
+                            
+                            String message = getResources().getString(R.string.setup_im_dialog_import_confirm_overwrite);
+                            
+                            new AlertDialog.Builder(this)
+                                .setTitle(getResources().getString(R.string.setup_im_dialog_import_confirm_title))
+                                .setMessage(message)
+                                .setPositiveButton(getResources().getString(R.string.dialog_confirm), (dialog, which) -> {
+                                    // User confirmed, proceed with import
+                                    performLimedbImport(dbServer, fileToImport, tableName);
+                                })
+                                .setNegativeButton(getResources().getString(R.string.dialog_cancel), (dialog, which) -> dialog.dismiss())
+                                .show();
+                        } else {
+                            // Table is empty, proceed directly with import
+                            performLimedbImport(dbServer, fileToImport, tableName);
+                        }
+                    } catch (IOException e) {
+                        String errorMessage = getResources().getString(R.string.error_import_db);
+                        Log.e(TAG, errorMessage, e);
+                        showToastMessage(errorMessage, Toast.LENGTH_LONG);
+                    }
+                } else {
+                    String errorMessage = getResources().getString(R.string.error_file_format);
+
+                    Log.w(TAG, errorMessage + type + " with extension: " + extension);
+                    showToastMessage(errorMessage, Toast.LENGTH_SHORT);
+                }
+            }
         }
 
-        String versionstr = "";
+        String versionStr = "";
         PackageInfo pInfo;
         try {
             pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             long versionCode = PackageInfoCompat.getLongVersionCode(pInfo);
-            versionstr = getString(R.string.version_format, pInfo.versionName, versionCode);
+            versionStr = getString(R.string.version_format, pInfo.versionName, versionCode);
         } catch (PackageManager.NameNotFoundException e) {
             Log.e(TAG, "Error getting package info", e);
         }
 
         String cversion = mLIMEPref.getParameterString("current_version", "");
-        if (cversion == null || cversion.isEmpty() || !cversion.equals(versionstr)) {
+        if (cversion == null || cversion.isEmpty() || !cversion.equals(versionStr)) {
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             HelpDialog dialog = HelpDialog.newInstance();
             dialog.show(ft, "helpdialog");
-            mLIMEPref.setParameter("current_version", versionstr);
+            mLIMEPref.setParameter("current_version", versionStr);
         }
 
     }
@@ -295,6 +384,143 @@ public class MainActivity extends AppCompatActivity
             androidx.fragment.app.FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             ImportDialog dialog = ImportDialog.newInstance(importtext);
             dialog.show(ft, "importdialog");
+        }
+    }
+    
+    void handleImportTxt(String filePath) {
+        if (filePath != null && !filePath.isEmpty()) {
+            androidx.fragment.app.FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            ImportDialog dialog = ImportDialog.newInstanceForFile(filePath);
+            dialog.setOnImportTypeSelectedListener(this);
+            dialog.show(ft, "importdialog");
+        }
+    }
+    
+    @Override
+    public void onImportTypeSelected(String imType, String filePath) {
+        try {
+            showProgress();
+            DBServer dbServer = DBServer.getInstance(this);
+            dbServer.loadMapping(filePath, imType, null);
+        } catch (Exception e) {
+            String errorMessage = getResources().getString(R.string.error_import_db);
+            Log.e(TAG, errorMessage, e);
+            showToastMessage(errorMessage + e.getMessage(), Toast.LENGTH_LONG);
+        } finally {
+            cancelProgress();
+            showToastMessage(getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_SHORT);
+        }
+
+    }
+    
+    /**
+     * Extracts file extension from filename.
+     * @param fileName The filename
+     * @return The extension (without dot), or empty string if no extension
+     */
+    private String getFileExtension(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return "";
+        }
+        int lastDot = fileName.lastIndexOf('.');
+        if (lastDot > 0 && lastDot < fileName.length() - 1) {
+            return fileName.substring(lastDot + 1).toLowerCase();
+        }
+        return "";
+    }
+    
+    /**
+     * Gets filename without extension.
+     * @param fileName The filename
+     * @return The filename without extension
+     */
+    private String getFileNameWithoutExtension(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return "";
+        }
+        int lastDot = fileName.lastIndexOf('.');
+        if (lastDot > 0) {
+            return fileName.substring(0, lastDot);
+        }
+        return fileName;
+    }
+    
+    /**
+     * Checks if file type matches expected extension.
+     * @param mimeType The MIME type
+     * @param extension The file extension
+     * @return true if type matches extension
+     */
+    private boolean isFileTypeValid(String mimeType, String extension) {
+        if (mimeType == null || extension == null) {
+            return false;
+        }
+        
+        if ("text/plain".equals(mimeType)) {
+            return "lime".equals(extension) || "cin".equals(extension);
+        } else if ("application/zip".equals(mimeType)) {
+            return "limedb".equals(extension);
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Checks if a table name is valid using LimeDB validation.
+     * @param tableName The table name to validate
+     * @return true if valid table name
+     */
+    private boolean isValidTableName(String tableName) {
+        if (tableName == null || tableName.isEmpty()) {
+            return false;
+        }
+        if (datasource == null) {
+            datasource = new LimeDB(this);
+        }
+        return datasource.isValidTableName(tableName);
+    }
+
+    
+    /**
+     * Performs the actual import of a .limedb file to the specified table.
+     * @param dbServer The DBServer instance
+     * @param fileToImport The file to import
+     * @param tableName The table name (without extension)
+     */
+    private void performLimedbImport(DBServer dbServer, File fileToImport, String tableName) {
+        if ("related".equals(tableName)) {
+            // If filename is "related", import with importBackupRelatedDb
+            try {
+                showProgress();
+                dbServer.importBackupRelatedDb(fileToImport);
+                showToastMessage(getResources().getString(R.string.import_related_success), Toast.LENGTH_SHORT);
+            } catch (Exception e) {
+                String errorMessage = getResources().getString(R.string.error_import_db);
+                Log.e(TAG, errorMessage, e);
+                showToastMessage(errorMessage, Toast.LENGTH_SHORT);
+            } finally {
+                cancelProgress();
+            }
+        } else {
+            // Otherwise, use filename (without extension) as imType
+            // Check if filename is valid tableName first
+            if (isValidTableName(tableName)) {
+                try {
+                    showProgress();
+                    dbServer.importBackupDb(fileToImport, tableName);
+                    showToastMessage(getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_SHORT);
+                } catch (Exception e) {
+                    String errorMessage = getResources().getString(R.string.error_import_db);
+                    Log.e(TAG, errorMessage, e);
+                    showToastMessage(errorMessage, Toast.LENGTH_LONG);
+                } finally {
+                    cancelProgress();
+                }
+            } else {
+                String errorMessage = getResources().getString(R.string.error_table_name);
+                Log.e(TAG, errorMessage + ": " + tableName);
+                showToastMessage(errorMessage + ": " + tableName, Toast.LENGTH_LONG);
+            }
         }
     }
 

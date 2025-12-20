@@ -49,7 +49,7 @@ public class SetupImLoadRunnable implements Runnable{
     private final static String TAG = "SetupImLoadRunnable";
 
     // Global
-    private String url;
+    private final String url;
     private final String imtype;
     private final String type;
 
@@ -95,82 +95,9 @@ public class SetupImLoadRunnable implements Runnable{
 
         final int minFileSizeBytes = 100000; // Minimum file size threshold in bytes
         if(tempfile == null || tempfile.length() < minFileSizeBytes){
-
-            switch (type) {
-                case LIME.IM_ARRAY:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_ARRAY;
-                    break;
-                case LIME.IM_ARRAY10:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_ARRAY10;
-                    break;
-                case LIME.IM_CJ_BIG5:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_CJ_BIG5;
-                    break;
-                case LIME.IM_CJ:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_CJ;
-                    break;
-                case LIME.IM_CJHK:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_CJHK;
-                    break;
-                case LIME.IM_CJ5:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_CJ5;
-                    break;
-                case LIME.IM_DAYI:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_DAYI;
-                    break;
-                case LIME.IM_DAYIUNI:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_DAYIUNI;
-                    break;
-                case LIME.IM_DAYIUNIP:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_DAYIUNIP;
-                    break;
-                case LIME.IM_ECJ:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_ECJ;
-                    break;
-                case LIME.IM_ECJHK:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_ECJHK;
-                    break;
-                case LIME.IM_EZ:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_EZ;
-                    break;
-                case LIME.IM_PHONETIC_BIG5:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_PHONETIC_BIG5;
-                    break;
-                case LIME.IM_PHONETIC_ADV_BIG5:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE_BIG5;
-                    break;
-                case LIME.IM_PHONETIC:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_PHONETIC;
-                    break;
-                case LIME.IM_PHONETIC_ADV:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE;
-                    break;
-                case LIME.IM_PINYIN:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_PINYIN;
-                    break;
-                case LIME.IM_PINYINGB:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_PINYINGB;
-                    break;
-                case LIME.IM_SCJ:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_SCJ;
-                    break;
-                case LIME.IM_WB:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_WB;
-                    break;
-                case LIME.IM_HS:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_HS;
-                    break;
-                case LIME.IM_HS_V1:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_HS_V1;
-                    break;
-                case LIME.IM_HS_V2:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_HS_V2;
-                    break;
-                case LIME.IM_HS_V3:
-                    url = LIME.DATABASE_OPENFOUNDRY_IM_HS_V3;
-                    break;
-            }
-            tempfile = downloadRemoteFile(mContext, url);
+            assert tempfile != null;
+            Log.e(TAG, "Invalid file size: " + tempfile.length());
+            return;
         }
 
 
@@ -314,7 +241,7 @@ public class SetupImLoadRunnable implements Runnable{
 
         removeImInfo(im, field);
 
-        datasource.insert("im", cv);
+        datasource.addRecord("im", cv);
 
     }
 
@@ -328,14 +255,15 @@ public class SetupImLoadRunnable implements Runnable{
 
         removeImInfoOnDB(im, "keyboard");
 
-        datasource.insert("im", cv);
+        datasource.addRecord("im", cv);
 
     }
 
     private void removeImInfoOnDB(String im, String field) {
-        String removeString = "DELETE FROM im WHERE code='"+im+"' AND title='"+field+"'";
-        datasource.remove(removeString);
-
+        // Use parameterized query to prevent SQL injection
+        datasource.deleteRecord(LIME.DB_TABLE_IM, 
+            LIME.DB_IM_COLUMN_CODE + " = ? AND " + LIME.DB_IM_COLUMN_TITLE + " = ?",
+            new String[]{im, field});
     }
 
 

@@ -29,8 +29,9 @@ import android.app.AlertDialog;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
+
+import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -44,8 +45,6 @@ import android.widget.Toast;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Im;
-import net.toload.main.hd.data.Related;
-import net.toload.main.hd.data.Word;
 import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.HashMap;
@@ -58,54 +57,68 @@ public class ImportDialog extends DialogFragment {
 	View view;
 
 	Button btnImportCancel;
-
-	Button btnImportCustom;
-	Button btnImportArray;
-	Button btnImportArray10;
-	Button btnImportCj;
-	Button btnImportCj5;
-	Button btnImportDayi;
-	Button btnImportEcj;
-	Button btnImportEz;
-	Button btnImportPhonetic;
-	Button btnImportPinyin;
-	Button btnImportScj;
-	Button btnImportWb;
-	Button btnImportHs;
-
 	Button btnImportRelated;
 
-	ImportDialog importdialog;
-
-	String importtext;
+	String importText;
+	String filePath;
+	int importMode;
+	
+	// Import mode constants
+	public static final int IMPORT_MODE_TEXT = 0; // For handleSendText: show non-empty tables + related
+	public static final int IMPORT_MODE_FILE = 1; // For handleImportTxt: show empty tables only
 	
 	private static final String IMPORT_TEXT = "import_text"; // Bundle key for import text
+	private static final String FILE_PATH = "file_path"; // Bundle key for file path
+	private static final String IMPORT_MODE = "import_mode"; // Bundle key for import mode
+	
+	// Callback interface for file import mode
+	public interface OnImportTypeSelectedListener {
+		void onImportTypeSelected(String imType, String filePath);
+	}
+	
+	private OnImportTypeSelectedListener listener;
 
-	public static ImportDialog newInstance(String importtext) {
+	public static ImportDialog newInstance(String importText) {
 		ImportDialog btd = new ImportDialog();
 		Bundle args = new Bundle();
-			   args.putString(IMPORT_TEXT, importtext);
-			   btd.setArguments(args);
-			   btd.setCancelable(true);
+		args.putString(IMPORT_TEXT, importText);
+		args.putInt(IMPORT_MODE, IMPORT_MODE_TEXT);
+		btd.setArguments(args);
+		btd.setCancelable(true);
 		return btd;
 	}
-
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
+	
+	public static ImportDialog newInstanceForFile(String filePath) {
+		ImportDialog btd = new ImportDialog();
+		Bundle args = new Bundle();
+		args.putString(FILE_PATH, filePath);
+		args.putInt(IMPORT_MODE, IMPORT_MODE_FILE);
+		btd.setArguments(args);
+		btd.setCancelable(true);
+		return btd;
 	}
+	
+	public void setOnImportTypeSelectedListener(OnImportTypeSelectedListener listener) {
+		this.listener = listener;
+	}
+
 
 	@Override
 	public void onAttach(@NonNull Context context) {
 		super.onAttach(context);
         assert getArguments() != null;
-        importtext = getArguments().getString(IMPORT_TEXT);
+        importMode = getArguments().getInt(IMPORT_MODE, IMPORT_MODE_TEXT);
+        if (importMode == IMPORT_MODE_TEXT) {
+            importText = getArguments().getString(IMPORT_TEXT);
+        } else {
+            filePath = getArguments().getString(FILE_PATH);
+        }
+        // Set listener if activity implements the interface
+        if (context instanceof OnImportTypeSelectedListener) {
+            listener = (OnImportTypeSelectedListener) context;
+        }
 	}
 
-	@Override
-	public void onCancel(@NonNull DialogInterface dialog) {
-		super.onCancel(dialog);
-	}
 
 	@Override
 	public void onCreate(Bundle icicle) {
@@ -130,271 +143,158 @@ public class ImportDialog extends DialogFragment {
         });
 	}
 
-	public void cancelDialog(){
-		this.dismiss();
-	}
 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
-
         assert getDialog() != null;
         getDialog().getWindow().setTitle(getResources().getString(R.string.import_dialog_title));
         datasource = new LimeDB(getActivity());
-		importdialog = this;
-
-		activity = getActivity();
+        activity = getActivity();
 		view = inflater.inflate(R.layout.fragment_dialog_import, container, false);
 
-		btnImportCustom = view.findViewById(R.id.btnImportCustom);
-		btnImportArray = view.findViewById(R.id.btnImportArray);
-		btnImportArray10 = view.findViewById(R.id.btnImportArray10);
-		btnImportCj = view.findViewById(R.id.btnImportCj);
-		btnImportCj5 = view.findViewById(R.id.btnImportCj5);
-		btnImportDayi = view.findViewById(R.id.btnImportDayi);
-		btnImportEcj = view.findViewById(R.id.btnImportEcj);
-		btnImportEz = view.findViewById(R.id.btnImportEz);
-		btnImportPhonetic = view.findViewById(R.id.btnImportPhonetic);
-		btnImportPinyin = view.findViewById(R.id.btnImportPinyin);
-		btnImportScj = view.findViewById(R.id.btnImportScj);
-		btnImportWb = view.findViewById(R.id.btnImportWb);
-		btnImportHs = view.findViewById(R.id.btnImportHs);
-
-		btnImportRelated = view.findViewById(R.id.btnImportRelated);
-		
 		btnImportCancel = view.findViewById(R.id.btnImportCancel);
 		btnImportCancel.setOnClickListener(v -> dismiss());
+		btnImportRelated = view.findViewById(R.id.btnImportRelated);
 
-		HashMap<String, String> check = new HashMap<>();
-
+		// Build map of existing IM types
+		HashMap<String, String> ImMap = new HashMap<>();
 		List<Im> imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
-		for(int i = 0; i < imlist.size() ; i++){
-			check.put(imlist.get(i).getCode(), imlist.get(i).getDesc());
+		for (Im im : imlist) {
+			ImMap.put(im.getCode(), im.getDesc());
 		}
 
-		if(check.get(LIME.DB_TABLE_CUSTOM) == null){
-			btnImportCustom.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnImportCustom.setTypeface(null, Typeface.ITALIC);
-			btnImportCustom.setEnabled(false);
-		}else {
-			btnImportCustom.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnImportCustom.setTypeface(null, Typeface.BOLD);
+		// Setup all IM type buttons using configuration array
+		setupButton(view, R.id.btnImportCustom, LIME.DB_TABLE_CUSTOM, LIME.IM_CUSTOM, ImMap);
+		setupButton(view, R.id.btnImportArray, LIME.DB_TABLE_ARRAY, LIME.IM_ARRAY, ImMap);
+		setupButton(view, R.id.btnImportArray10, LIME.DB_TABLE_ARRAY10, LIME.IM_ARRAY10, ImMap);
+		setupButton(view, R.id.btnImportCj, LIME.DB_TABLE_CJ, LIME.IM_CJ, ImMap);
+		setupButton(view, R.id.btnImportCj5, LIME.DB_TABLE_CJ5, LIME.IM_CJ5, ImMap);
+		setupButton(view, R.id.btnImportDayi, LIME.DB_TABLE_DAYI, LIME.IM_DAYI, ImMap);
+		setupButton(view, R.id.btnImportEcj, LIME.DB_TABLE_ECJ, LIME.IM_ECJ, ImMap);
+		setupButton(view, R.id.btnImportEz, LIME.DB_TABLE_EZ, LIME.IM_EZ, ImMap);
+		setupButton(view, R.id.btnImportPhonetic, LIME.DB_TABLE_PHONETIC, LIME.IM_PHONETIC, ImMap);
+		setupButton(view, R.id.btnImportPinyin, LIME.DB_TABLE_PINYIN, LIME.IM_PINYIN, ImMap);
+		setupButton(view, R.id.btnImportScj, LIME.DB_TABLE_SCJ, LIME.IM_SCJ, ImMap);
+		setupButton(view, R.id.btnImportWb, LIME.DB_TABLE_WB, LIME.IM_WB, ImMap);
+		setupButton(view, R.id.btnImportHs, LIME.DB_TABLE_HS, LIME.IM_HS, ImMap);
 
-			btnImportCustom.setOnClickListener(v -> confirmimportdialog(LIME.IM_CUSTOM));
-		}
-
-		if(check.get(LIME.DB_TABLE_PHONETIC) == null){
-			btnImportPhonetic.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnImportPhonetic.setTypeface(null, Typeface.ITALIC);
-			btnImportPhonetic.setEnabled(false);
-		}else {
-			btnImportPhonetic.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnImportPhonetic.setTypeface(null, Typeface.BOLD);
-
-			btnImportPhonetic.setOnClickListener(v -> confirmimportdialog(LIME.IM_PHONETIC));
-		}
-
-		if(check.get(LIME.DB_TABLE_CJ) == null){
-			btnImportCj.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnImportCj.setTypeface(null, Typeface.ITALIC);
-			btnImportCj.setEnabled(false);
-		}else {
-			btnImportCj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnImportCj.setTypeface(null, Typeface.BOLD);
-
-			btnImportCj.setOnClickListener(v -> confirmimportdialog(LIME.IM_CJ));
-		}
-
-
-
-		if(check.get(LIME.DB_TABLE_CJ5) == null){
-			btnImportCj5.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnImportCj5.setTypeface(null, Typeface.ITALIC);
-			btnImportCj5.setEnabled(false);
-		}else {
-			btnImportCj5.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnImportCj5.setTypeface(null, Typeface.BOLD);
-
-			btnImportCj5.setOnClickListener(v -> confirmimportdialog(LIME.IM_CJ5));
-		}
-
-		if(check.get(LIME.DB_TABLE_SCJ) == null){
-			btnImportScj.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnImportScj.setTypeface(null, Typeface.ITALIC);
-			btnImportScj.setEnabled(false);
-		}else {
-			btnImportScj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnImportScj.setTypeface(null, Typeface.BOLD);
-			btnImportScj.setOnClickListener(v -> confirmimportdialog(LIME.IM_SCJ));
-		}
-
-		if(check.get(LIME.DB_TABLE_ECJ) == null){
-			btnImportEcj.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnImportEcj.setTypeface(null, Typeface.ITALIC);
-			btnImportEcj.setEnabled(false);
-		}else {
-			btnImportEcj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnImportEcj.setTypeface(null, Typeface.BOLD);
-
-			btnImportEcj.setOnClickListener(v -> confirmimportdialog(LIME.IM_ECJ));
-		}
-
-		if(check.get(LIME.DB_TABLE_DAYI) == null){
-			btnImportDayi.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnImportDayi.setTypeface(null, Typeface.ITALIC);
-			btnImportDayi.setEnabled(false);
-		}else {
-			btnImportDayi.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnImportDayi.setTypeface(null, Typeface.BOLD);
-
-			btnImportDayi.setOnClickListener(v -> confirmimportdialog(LIME.IM_DAYI));
-		}
-
-		if(check.get(LIME.DB_TABLE_EZ) == null){
-			btnImportEz.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnImportEz.setTypeface(null, Typeface.ITALIC);
-			btnImportEz.setEnabled(false);
-		}else {
-			btnImportEz.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnImportEz.setTypeface(null, Typeface.BOLD);
-
-			btnImportEz.setOnClickListener(v -> confirmimportdialog(LIME.IM_EZ));
-		}
-
-		if(check.get(LIME.DB_TABLE_ARRAY) == null){
-			btnImportArray.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnImportArray.setTypeface(null, Typeface.ITALIC);
-			btnImportArray.setEnabled(false);
-		}else {
-			btnImportArray.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnImportArray.setTypeface(null, Typeface.BOLD);
-
-			btnImportArray.setOnClickListener(v -> confirmimportdialog(LIME.IM_ARRAY));
-		}
-
-		if(check.get(LIME.DB_TABLE_ARRAY10) == null){
-			btnImportArray10.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnImportArray10.setTypeface(null, Typeface.ITALIC);
-			btnImportArray10.setEnabled(false);
-		}else {
-			btnImportArray10.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnImportArray10.setTypeface(null, Typeface.BOLD);
-
-			btnImportArray10.setOnClickListener(v -> confirmimportdialog(LIME.IM_ARRAY10));
-		}
-
-		if(check.get(LIME.DB_TABLE_HS) == null){
-			btnImportHs.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnImportHs.setTypeface(null, Typeface.ITALIC);
-			btnImportHs.setEnabled(false);
-		}else {
-			btnImportHs.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnImportHs.setTypeface(null, Typeface.BOLD);
-
-			btnImportHs.setOnClickListener(v -> confirmimportdialog(LIME.IM_HS));
-		}
-
-		if(check.get(LIME.DB_TABLE_WB) == null){
-			btnImportWb.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnImportWb.setTypeface(null, Typeface.ITALIC);
-			btnImportWb.setEnabled(false);
-		}else {
-			btnImportWb.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnImportWb.setTypeface(null, Typeface.BOLD);
-
-			btnImportWb.setOnClickListener(v -> confirmimportdialog(LIME.IM_WB));
-		}
-
-		if(check.get(LIME.DB_TABLE_PINYIN) == null){
-			btnImportPinyin.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnImportPinyin.setTypeface(null, Typeface.ITALIC);
-			btnImportPinyin.setEnabled(false);
-		}else {
-			btnImportPinyin.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnImportPinyin.setTypeface(null, Typeface.BOLD);
-
-			btnImportPinyin.setOnClickListener(v -> confirmimportdialog(LIME.IM_PINYIN));
-		}
-
-		if(importtext.length() > 1) {
-			btnImportRelated.setOnClickListener(v -> confirmimportdialog(LIME.DB_TABLE_RELATED));
-		}else{
-			btnImportRelated.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnImportRelated.setTypeface(null, Typeface.ITALIC);
-			btnImportRelated.setEnabled(false);
+		// Setup related table button
+		if (importMode == IMPORT_MODE_TEXT && importText != null && importText.length() > 1) {
+			setupButton(view, R.id.btnImportRelated, LIME.DB_TABLE_RELATED, LIME.DB_TABLE_RELATED, ImMap);
+		} else {
+			setupButtonDisabled(btnImportRelated);
 		}
 
 		return view;
 	}
+	
+	/**
+	 * Sets up a button based on import mode and table state.
+	 * @param view The parent view
+	 * @param buttonId The button resource ID
+	 * @param tableName The database table name
+	 * @param imType The IM type constant
+	 * @param ImMap Map of existing IM types
+	 */
+	private void setupButton(View view, int buttonId, String tableName, String imType, HashMap<String, String> ImMap) {
+		Button button = view.findViewById(buttonId);
+		boolean shouldShow = (importMode == IMPORT_MODE_TEXT) ? 
+			(ImMap.get(tableName) != null) :
+			(datasource.countMapping(tableName) == 0);
+		
+		if (shouldShow) {
+			button.setAlpha(LIME.NORMAL_ALPHA_VALUE);
+			button.setTypeface(null, Typeface.BOLD);
+			button.setEnabled(true);
+			button.setOnClickListener(v -> confirmImportDialog(imType));
+		} else {
+			setupButtonDisabled(button);
+		}
+	}
+	
+	/**
+	 * Disables a button with visual feedback.
+	 * @param button The button to disable
+	 */
+	private void setupButtonDisabled(Button button) {
+		button.setAlpha(LIME.HALF_ALPHA_VALUE);
+		button.setTypeface(null, Typeface.ITALIC);
+		button.setEnabled(false);
+	}
 
-	public void confirmimportdialog(final String imtype){
-
-		AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
-
-		final EditText input = new EditText(activity);
-
-		if(imtype.equalsIgnoreCase(LIME.DB_TABLE_RELATED)) {
-			alertDialog.setTitle(activity.getResources().getString(R.string.import_dialog_related_title));
-			alertDialog.setMessage(importtext);
-		}else{
-			alertDialog.setTitle(activity.getResources().getString(R.string.import_dialog_title));
-			alertDialog.setMessage(importtext + getResources().getString(R.string.import_code_hint));
-
-			LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-					LinearLayout.LayoutParams.MATCH_PARENT,
-					LinearLayout.LayoutParams.MATCH_PARENT);
-			input.setLayoutParams(lp);
-			alertDialog.setView(input);
+	public void confirmImportDialog(final String imtype){
+		// For file mode, directly call listener and dismiss
+		if (importMode == IMPORT_MODE_FILE && listener != null) {
+			listener.onImportTypeSelected(imtype, filePath);
+			dismiss();
+			return;
 		}
 
-		alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
-                (dialog, which) -> {
+		// For text mode, show confirmation dialog
+		AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+		final EditText input = new EditText(activity);
+		boolean isRelated = imtype.equalsIgnoreCase(LIME.DB_TABLE_RELATED);
+		
+		if (isRelated) {
+			builder.setTitle(activity.getResources().getString(R.string.import_dialog_related_title))
+			       .setMessage(importText);
+		} else {
+			builder.setTitle(activity.getResources().getString(R.string.import_dialog_title))
+			       .setMessage(importText + getResources().getString(R.string.import_code_hint));
+			LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+				LinearLayout.LayoutParams.MATCH_PARENT,
+				LinearLayout.LayoutParams.MATCH_PARENT);
+			input.setLayoutParams(lp);
+			builder.setView(input);
+		}
 
-                    if(imtype.equals(LIME.DB_TABLE_RELATED)){
-                        importToRelatedTable();
-                        dismiss();
-                        importdialog.dismiss();
-                    }else{
-                        if(input.getText() != null && !input.getText().toString().isEmpty()){
-                            importToImTable(imtype, input.getText().toString());
-                            dismiss();
-                            importdialog.dismiss();
-                        }else{
-                            Toast.makeText(activity, getResources().getString(R.string.import_code_empty), Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-		alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
-                (dialog, which) -> dialog.dismiss());
-		alertDialog.show();
+		builder.setPositiveButton(activity.getResources().getString(R.string.dialog_confirm),
+			(dialog, which) -> {
+				if (isRelated) {
+					importToRelatedTable();
+					dismiss();
+				} else {
+					String code = input.getText() != null ? input.getText().toString() : "";
+					if (!code.isEmpty()) {
+						importToImTable(imtype, code);
+						dismiss();
+					} else {
+						Toast.makeText(activity, getResources().getString(R.string.import_code_empty), Toast.LENGTH_SHORT).show();
+					}
+				}
+			})
+			.setNegativeButton(activity.getResources().getString(R.string.dialog_cancel),
+				(dialog, which) -> dialog.dismiss())
+			.show();
 	}
 
-	@Override
-	public void onSaveInstanceState(@NonNull Bundle icicle) {
-		super.onSaveInstanceState(icicle);
-	}
 
 	private void importToRelatedTable(){
 
-		String pword = importtext.substring(0, 1);
-		String cword = importtext.substring(1);
+		String pWord = importText.substring(0, 1);
+		String cWord = importText.substring(1);
 
-		Related obj = new Related();
-				obj.setPword(pword);
-				obj.setCword(cword);
-				obj.setBasescore(0);
-				obj.setUserscore(1);
-
-		datasource.add(Related.getInsertQuery(obj));
+		// Use parameterized query to prevent SQL injection
+		ContentValues values = new ContentValues();
+		values.put(LIME.DB_RELATED_COLUMN_PWORD, pWord);
+		values.put(LIME.DB_RELATED_COLUMN_CWORD, cWord);
+		values.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1);
+		values.put(LIME.DB_RELATED_COLUMN_BASESCORE, 0);
+		datasource.addRecord(LIME.DB_TABLE_RELATED, values);
 		Toast.makeText(activity, getResources().getString(R.string.import_related_success), Toast.LENGTH_SHORT).show();
 
 	}
 
-	private void importToImTable(String imtype, String addcode){
-		Word obj = new Word();
-			 obj.setCode(addcode);
-		obj.setWord(importtext);
-			 obj.setScore(1);
-			 obj.setBasescore(0);
-		datasource.add(Word.getInsertQuery(imtype, obj));
+	private void importToImTable(String imType, String addCode){
+		
+		// Use parameterized query to prevent SQL injection
+		ContentValues values = new ContentValues();
+		values.put(LIME.DB_COLUMN_CODE, addCode);
+        values.put(LIME.DB_COLUMN_CODE3R, imType.equals(LIME.DB_TABLE_PHONETIC)?addCode.replaceAll("[ 3467]", ""):"");
+        values.put(LIME.DB_COLUMN_WORD, importText);
+        values.put(LIME.DB_COLUMN_RELATED, "");
+        values.put(LIME.DB_COLUMN_SCORE, 1);
+		values.put(LIME.DB_COLUMN_BASESCORE, 0);
+		datasource.addRecord(imType, values);
 
 		Toast.makeText(activity, getResources().getString(R.string.import_word_success), Toast.LENGTH_SHORT).show();
 

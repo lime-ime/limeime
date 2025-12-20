@@ -25,6 +25,7 @@
 package net.toload.main.hd.ui;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.os.Bundle;
 
@@ -54,17 +55,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/* Vpon import
-import com.vpadn.ads.VpadnAdRequest;
-import com.vpadn.ads.VpadnAdSize;
-import com.vpadn.ads.VpadnBanner;
-*/
 
-/*
- * Fragment used for managing interactions for and presentation of a navigation drawer.
- * See the <a href="https://developer.android.com/design/patterns/navigation-drawer.html#Interaction">
- * design guidelines</a> for a complete explanation of the behaviors implemented here.
- */
+
 
 /**
  * A placeholder fragment containing a simple view.
@@ -91,9 +83,9 @@ public class ManageRelatedFragment extends Fragment {
 
     private int page = 0;
     private int total = 0;
-    private boolean searchreset = false;
+    private boolean searchReset = false;
 
-    private String prequery = "";
+    private String preQuery = "";
 
     private Activity activity;
     private ManageRelatedHandler handler;
@@ -171,7 +163,7 @@ public class ManageRelatedFragment extends Fragment {
             if (checkrecord < total) {
                 page++;
             }
-            searchrelated();
+            searchRelated();
             //updateGridView(relatedlist);
         });
         this.btnManageRelatedPrevious = rootView.findViewById(R.id.btnManageRelatedPrevious);
@@ -180,13 +172,13 @@ public class ManageRelatedFragment extends Fragment {
             if (page > 0) {
                 page--;
             }
-            searchrelated();
+            searchRelated();
             //updateGridView(relatedlist);
         });
 
         this.edtManageRelatedSearch = rootView.findViewById(R.id.edtManageRelatedSearch);
         this.edtManageRelatedSearch.setOnClickListener(v -> {
-            searchreset = false;
+            searchReset = false;
             btnManageRelatedSearch.setText(getResources().getText(R.string.manage_related_search));
         });
         this.edtManageRelatedSearch.setOnFocusChangeListener((v, hasFocus) -> {
@@ -198,58 +190,52 @@ public class ManageRelatedFragment extends Fragment {
 
         this.btnManageRelatedSearch = rootView.findViewById(R.id.btnManageRelatedSearch);
         this.btnManageRelatedSearch.setOnClickListener(v -> {
-            if (!searchreset) {
+            if (!searchReset) {
                 String query = edtManageRelatedSearch.getText().toString();
                 // hide the soft keyboard before search Jeremy 15,6,4
                 InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(edtManageRelatedSearch.getWindowToken(), 0);
-                if (!query.isEmpty() && (prequery == null || !prequery.equals(query) || !searchreset)) {
+                if (!query.isEmpty() && (preQuery == null || !preQuery.equals(query) || !searchReset)) {
                     query = query.trim();
-                    searchrelated(query);
+                    searchRelated(query);
                 }
-                searchreset = true;
+                searchReset = true;
                 btnManageRelatedSearch.setText(getResources().getText(R.string.manage_related_reset));
             } else {
                 total = 0;
-                searchrelated(null);
+                searchRelated(null);
                 edtManageRelatedSearch.setText("");
-                searchreset = false;
+                searchReset = false;
                 btnManageRelatedSearch.setText(getResources().getText(R.string.manage_related_search));
             }
         });
 
         this.txtNavigationInfo = rootView.findViewById(R.id.txtNavigationInfo);
 
-        searchrelated(null);
+        searchRelated(null);
 
         return rootView;
     }
 
-    public void searchrelated(){
-        searchrelated(prequery);
+    public void searchRelated(){
+        searchRelated(preQuery);
     }
 
-    public void searchrelated(String curquery){
+    public void searchRelated(String curQuery){
 
         int offset = LIME.IM_MANAGE_DISPLAY_AMOUNT * page;
 
-        if((curquery == null && total == 0) || !Objects.equals(curquery, prequery)){
-            total = datasource.getRelatedSize(curquery);
+        if((curQuery == null && total == 0) || !Objects.equals(curQuery, preQuery)){
+            total = datasource.getRelatedSize(curQuery);
             page = 0;
-            /*try {
-                datasource.open();
-                datasource.close();
-            } catch (SQLException e) {
-                Log.e(TAG, "Error in operation", e);
-            }*/
         }
         if(ManageRelatedthread != null && ManageRelatedthread.isAlive()){
             handler.removeCallbacks(ManageRelatedthread);
         }
-        ManageRelatedthread = new Thread(new ManageRelatedRunnable(handler, activity, curquery,
+        ManageRelatedthread = new Thread(new ManageRelatedRunnable(handler, activity, curQuery,
                                                                 LIME.IM_MANAGE_DISPLAY_AMOUNT, offset));
         ManageRelatedthread.start();
-        prequery = curquery;
+        preQuery = curQuery;
     }
 
     @Override
@@ -340,18 +326,11 @@ public class ManageRelatedFragment extends Fragment {
            }
         }
 
-        // Remove from the database
-        String removesql = "DELETE FROM " + LIME.DB_TABLE_RELATED + " WHERE " + LIME.DB_COLUMN_ID + " = '" + id + "'";
-
-        datasource.remove(removesql);
-        /*try {
-            datasource.open();
-            datasource.close();
-        } catch (SQLException e) {
-            Log.e(TAG, "Error in operation", e);
-        }*/
+        // Remove from the database using parameterized query
+        datasource.deleteRecord(LIME.DB_TABLE_RELATED, LIME.DB_COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
+      
         total--;
-        searchrelated();
+        searchRelated();
         //updateGridView(this.relatedlist);
     }
 
@@ -359,18 +338,16 @@ public class ManageRelatedFragment extends Fragment {
 
         int hasRelatedCheck = datasource.hasRelated(pword, cword);
         if(hasRelatedCheck == 0){
-            // Add to database
-            Related obj = new Related();
-            obj.setPword(pword);
-            obj.setCword(cword);
-            obj.setBasescore(score);
-
-            String insertsql = Related.getInsertQuery(obj);
-
-            datasource.insert(insertsql);
+            // Add to database using parameterized query
+            ContentValues values = new ContentValues();
+            values.put(LIME.DB_RELATED_COLUMN_PWORD, pword);
+            values.put(LIME.DB_RELATED_COLUMN_CWORD, cword);
+            values.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1); // Default userscore
+            values.put(LIME.DB_RELATED_COLUMN_BASESCORE, score);
+            datasource.addRecord(LIME.DB_TABLE_RELATED, values);
 
             total++;
-            searchrelated();
+            searchRelated();
 
         }else{
             if(hasRelatedCheck == 9999999){
@@ -399,15 +376,17 @@ public class ManageRelatedFragment extends Fragment {
             }
 
             // Update record in the database
-        String updatesql = "UPDATE " + LIME.DB_TABLE_RELATED + " SET " +
-                LIME.DB_RELATED_COLUMN_PWORD + " = \"" + LIME.formatSqlValue(pword) + "\", " +
-                LIME.DB_RELATED_COLUMN_CWORD + " = \"" + LIME.formatSqlValue(cword) + "\", " +
-                LIME.DB_RELATED_COLUMN_BASESCORE + " = \"" + score + "\" " +
-                " WHERE " + LIME.DB_RELATED_COLUMN_ID + " = \"" + id + "\"";
+        ContentValues values = new ContentValues();
+        values.put(LIME.DB_RELATED_COLUMN_PWORD, pword);
+        values.put(LIME.DB_RELATED_COLUMN_CWORD, cword);
+        values.put(LIME.DB_RELATED_COLUMN_BASESCORE, score);
 
-            datasource.update(updatesql);
+        String whereClause = LIME.DB_RELATED_COLUMN_ID + " = ?";
+        String[] whereArgs = new String[] { String.valueOf(id) };
 
-            searchrelated();
+        datasource.updateRecord(LIME.DB_TABLE_RELATED, values, whereClause, whereArgs);
+
+            searchRelated();
 
     }
 

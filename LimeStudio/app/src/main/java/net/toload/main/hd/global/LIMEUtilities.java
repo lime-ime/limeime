@@ -338,7 +338,7 @@ public class LIMEUtilities {
 	            byte[] buffer  = new byte[LIME.BUFFER_SIZE_64KB];
 	            while((byteread = inStream.read(buffer))!=-1) {
                     bytesum += byteread;
-                    System.out.println(bytesum);
+                    if (DEBUG) Log.d(TAG, "bytesum: " + bytesum);
                     outStream.write(buffer, 0, byteread);
                 }
                 inStream.close();

@@ -2331,7 +2331,11 @@ public class LIMEService extends InputMethodService implements
                 public void run() {
 
                     try {
-                        list.addAll(SearchSrv.getMappingByCode(finalKeyString, !finalHasPhysicalKeyPressed, getAllRecords));
+                        if (SearchSrv != null) {
+                            list.addAll(SearchSrv.getMappingByCode(finalKeyString, !finalHasPhysicalKeyPressed, getAllRecords));
+                        } else {
+                            Log.w(TAG, "SearchSrv is null, skipping getMappingByCode");
+                        }
                     } catch (RemoteException e) {
                         Log.e(TAG, "Error in suggestion processing", e);
                     }
@@ -2349,7 +2353,9 @@ public class LIMEService extends InputMethodService implements
                             selkey = "";
                         } else {
                             try {
-                                selkey = SearchSrv.getSelkey();
+                                if (SearchSrv != null) {
+                                    selkey = SearchSrv.getSelkey();
+                                }
                             } catch (RemoteException e) {
                                 Log.e(TAG, "Error in suggestion processing", e);
                             }
@@ -2450,7 +2456,7 @@ public class LIMEService extends InputMethodService implements
                     }
 
                     // Show composing window if keyToKeyname got different string. Revised by Jeremy '11,6,4
-                    if (SearchSrv.getTablename() != null) {
+                    if (SearchSrv != null && SearchSrv.getTablename() != null) {
                         String keynameString = SearchSrv.keyToKeyname(finalKeyString); //.toLowerCase(Locale.US)); moved to LimeDB
                         if (mCandidateView != null
                                 && !keynameString.toUpperCase(Locale.US).equals(finalKeyString.toUpperCase(Locale.US))

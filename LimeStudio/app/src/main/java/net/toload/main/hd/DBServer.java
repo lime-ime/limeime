@@ -178,6 +178,10 @@ public class  DBServer {
 		SearchServer.resetCache(true);
 	}
 
+    public int countMapping(String tableName){
+        return datasource.countMapping(tableName);
+    }
+
 	public void importBackupRelatedDb(File sourcedb){
         datasource.importBackupRelatedDb(sourcedb);
     }
@@ -199,7 +203,7 @@ public class  DBServer {
 		}
 		if(unzipFilePaths.size() == 1){
             datasource.importDb(unzipFilePaths.get(0), imtype);
-			resetCache();
+            resetCache();
         }
 	}
 

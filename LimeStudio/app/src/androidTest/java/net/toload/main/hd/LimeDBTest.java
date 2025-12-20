@@ -753,7 +753,7 @@ public class LimeDBTest {
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
     public void testLimeDBInsertOperation() {
-        // Test insert operation with SQL
+        // Test addRecord operation with ContentValues
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
@@ -762,23 +762,22 @@ public class LimeDBTest {
             return;
         }
         
-        // Test inserting with SQL string - use correct column name 'score' (not 'userscore')
-        String testCode = "test_insert_" + System.currentTimeMillis();
-        String insertSQL = "INSERT INTO " + LIME.DB_TABLE_RELATED + " (" +
-                LIME.DB_RELATED_COLUMN_PWORD + ", " + 
-                LIME.DB_RELATED_COLUMN_CWORD + ", " + 
-                LIME.DB_RELATED_COLUMN_USERSCORE + ") VALUES ('測試插入', '詞彙插入', 1)";
-        limeDB.insert(insertSQL);
+        // Test inserting with ContentValues using parameterized query
+        android.content.ContentValues values = new android.content.ContentValues();
+        values.put(LIME.DB_RELATED_COLUMN_PWORD, "測試插入");
+        values.put(LIME.DB_RELATED_COLUMN_CWORD, "詞彙插入");
+        values.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1);
+        long result = limeDB.addRecord(LIME.DB_TABLE_RELATED, values);
         
         // Verify insert completed (check if record exists)
         Mapping related = limeDB.isRelatedPhraseExist("測試插入", "詞彙插入");
         // Result might be null if insert failed or record already exists
-        assertTrue("insert operation should complete", true);
+        assertTrue("addRecord operation should complete", result >= -1);
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
     public void testLimeDBInsertWithContentValues() {
-        // Test insert operation with ContentValues
+        // Test addRecord operation with ContentValues
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
@@ -792,15 +791,15 @@ public class LimeDBTest {
         cv.put(LIME.DB_RELATED_COLUMN_PWORD, "測試內容");
         cv.put(LIME.DB_RELATED_COLUMN_CWORD, "詞彙內容");
         cv.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1);
-        limeDB.insert(LIME.DB_TABLE_RELATED, cv);
+        long result = limeDB.addRecord(LIME.DB_TABLE_RELATED, cv);
         
         // Verify insert completed
-        assertTrue("insert with ContentValues should complete", true);
+        assertTrue("addRecord with ContentValues should complete", result >= -1);
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
     public void testLimeDBAddOperation() {
-        // Test add operation
+        // Test addRecord operation with ContentValues
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
@@ -809,20 +808,20 @@ public class LimeDBTest {
             return;
         }
         
-        // Test adding with SQL string - use correct column name 'score' (not 'userscore')
-        String addSQL = "INSERT INTO " + LIME.DB_TABLE_RELATED + " (" +
-                LIME.DB_RELATED_COLUMN_PWORD + ", " + 
-                LIME.DB_RELATED_COLUMN_CWORD + ", " + 
-                LIME.DB_RELATED_COLUMN_USERSCORE + ") VALUES ('測試2', '詞彙2', 1)";
-        limeDB.add(addSQL);
+        // Test adding with ContentValues using parameterized query
+        android.content.ContentValues values = new android.content.ContentValues();
+        values.put(LIME.DB_RELATED_COLUMN_PWORD, "測試2");
+        values.put(LIME.DB_RELATED_COLUMN_CWORD, "詞彙2");
+        values.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1);
+        long result = limeDB.addRecord(LIME.DB_TABLE_RELATED, values);
         
         // Verify add completed
-        assertTrue("add operation should complete", true);
+        assertTrue("addRecord operation should complete", result >= -1);
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
     public void testLimeDBRemoveOperation() {
-        // Test remove operation
+        // Test deleteRecord operation with parameterized query
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
@@ -836,21 +835,21 @@ public class LimeDBTest {
         cv.put(LIME.DB_RELATED_COLUMN_PWORD, "測試刪除");
         cv.put(LIME.DB_RELATED_COLUMN_CWORD, "詞彙刪除");
         cv.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1);
-        limeDB.insert(LIME.DB_TABLE_RELATED, cv);
+        limeDB.addRecord(LIME.DB_TABLE_RELATED, cv);
         
-        // Test removing with SQL string
-        String removeSQL = "DELETE FROM " + LIME.DB_TABLE_RELATED + " WHERE " +
-                LIME.DB_RELATED_COLUMN_PWORD + " = '測試刪除' AND " + 
-                LIME.DB_RELATED_COLUMN_CWORD + " = '詞彙刪除'";
-        limeDB.remove(removeSQL);
+        // Test removing with parameterized query
+        String whereClause = LIME.DB_RELATED_COLUMN_PWORD + " = ? AND " + 
+                LIME.DB_RELATED_COLUMN_CWORD + " = ?";
+        String[] whereArgs = new String[]{"測試刪除", "詞彙刪除"};
+        int result = limeDB.deleteRecord(LIME.DB_TABLE_RELATED, whereClause, whereArgs);
         
         // Verify remove completed
-        assertTrue("remove operation should complete", true);
+        assertTrue("deleteRecord operation should complete", result >= -1);
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
     public void testLimeDBUpdateOperation() {
-        // Test update operation
+        // Test updateRecord operation with ContentValues and parameterized query
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
@@ -864,16 +863,17 @@ public class LimeDBTest {
         cv.put(LIME.DB_RELATED_COLUMN_PWORD, "測試更新");
         cv.put(LIME.DB_RELATED_COLUMN_CWORD, "詞彙更新");
         cv.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1);
-        limeDB.insert(LIME.DB_TABLE_RELATED, cv);
+        limeDB.addRecord(LIME.DB_TABLE_RELATED, cv);
         
-        // Test updating with SQL string - use correct column name 'score' (not 'userscore')
-        String updateSQL = "UPDATE " + LIME.DB_TABLE_RELATED + " SET " +
-                LIME.DB_RELATED_COLUMN_USERSCORE + " = 2 WHERE " + 
-                LIME.DB_RELATED_COLUMN_PWORD + " = '測試更新'";
-        limeDB.update(updateSQL);
+        // Test updating with ContentValues and parameterized query
+        android.content.ContentValues updateValues = new android.content.ContentValues();
+        updateValues.put(LIME.DB_RELATED_COLUMN_USERSCORE, 2);
+        String whereClause = LIME.DB_RELATED_COLUMN_PWORD + " = ?";
+        String[] whereArgs = new String[]{"測試更新"};
+        int result = limeDB.updateRecord(LIME.DB_TABLE_RELATED, updateValues, whereClause, whereArgs);
         
         // Verify update completed
-        assertTrue("update operation should complete", true);
+        assertTrue("updateRecord operation should complete", result >= -1);
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
@@ -1323,12 +1323,27 @@ public class LimeDBTest {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
+        // Skip if database is on hold to avoid hang
+        if (skipIfDatabaseOnHold(limeDB)) {
+            return;
+        }
+        
+        // First, ensure we have at least one record to test with
+        android.content.ContentValues values = new android.content.ContentValues();
+        values.put(LIME.DB_RELATED_COLUMN_PWORD, "測試");
+        values.put(LIME.DB_RELATED_COLUMN_CWORD, "詞彙");
+        values.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1);
+        values.put(LIME.DB_RELATED_COLUMN_BASESCORE, 1);
+        limeDB.addRecord(LIME.DB_TABLE_RELATED, values);
+        
         // Get a cursor from a query
         android.database.Cursor cursor = limeDB.list(LIME.DB_TABLE_RELATED);
         if (cursor != null && cursor.moveToFirst()) {
             // Test getCursorString with valid column
             String pword = limeDB.getCursorString(cursor, LIME.DB_RELATED_COLUMN_PWORD);
-            assertNotNull("getCursorString should return a string", pword);
+            assertNotNull("getCursorString should return a string (not null)", pword);
+            // getCursorString should return empty string if value is null, but never null itself
+            assertTrue("getCursorString should return a string (even if empty)", pword != null);
             
             // Test getCursorInt with valid column
             int id = limeDB.getCursorInt(cursor, LIME.DB_RELATED_COLUMN_ID);
@@ -1343,6 +1358,14 @@ public class LimeDBTest {
             assertEquals("getCursorInt with invalid column should return 0", 0, invalidInt);
             
             cursor.close();
+        } else {
+            // If cursor is empty, test that helper methods handle it gracefully
+            if (cursor != null) {
+                // Test with empty cursor - should return empty string/0 without crashing
+                String emptyResult = limeDB.getCursorString(cursor, LIME.DB_RELATED_COLUMN_PWORD);
+                assertEquals("getCursorString with empty cursor should return empty string", "", emptyResult);
+                cursor.close();
+            }
         }
         assertTrue("Cursor helper methods should work", true);
     }
@@ -2168,160 +2191,128 @@ public class LimeDBTest {
     }
 
     @Test
-    public void testLimeDBInsertWithInvalidSQL() {
-        // Test insert with invalid SQL
+    public void testLimeDBAddRecordWithInvalidInputs() {
+        // Test addRecord with invalid inputs
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
-        // Test with null SQL
+        // Test with null table name
         try {
-            limeDB.insert((String) null);
-            assertTrue("Null SQL should be handled", true);
+            android.content.ContentValues cv = new android.content.ContentValues();
+            cv.put(LIME.DB_RELATED_COLUMN_PWORD, "test");
+            long result = limeDB.addRecord(null, cv);
+            assertTrue("Null table name should return -1", result == -1);
         } catch (Exception e) {
-            assertTrue("Null SQL should be handled gracefully", true);
+            assertTrue("Null table name should be handled gracefully", true);
         }
         
-        // Test with empty SQL
+        // Test with invalid table name
         try {
-            limeDB.insert("");
-            assertTrue("Empty SQL should be handled", true);
+            android.content.ContentValues cv = new android.content.ContentValues();
+            cv.put(LIME.DB_RELATED_COLUMN_PWORD, "test");
+            long result = limeDB.addRecord("invalid_table", cv);
+            assertTrue("Invalid table name should return -1", result == -1);
         } catch (Exception e) {
-            assertTrue("Empty SQL should be handled gracefully", true);
+            assertTrue("Invalid table name should be handled gracefully", true);
         }
-        
-        // Test with non-INSERT SQL
-        try {
-            limeDB.insert("SELECT * FROM " + LIME.DB_TABLE_RELATED);
-            assertTrue("Non-INSERT SQL should be handled", true);
-        } catch (Exception e) {
-            assertTrue("Non-INSERT SQL should be handled gracefully", true);
-        }
-        
-        // Test with DELETE SQL (should not execute)
-        try {
-            limeDB.insert("DELETE FROM " + LIME.DB_TABLE_RELATED);
-            assertTrue("DELETE SQL should not execute", true);
-        } catch (Exception e) {
-            assertTrue("DELETE SQL should be handled gracefully", true);
-        }
-    }
-
-    @Test
-    public void testLimeDBAddWithInvalidSQL() {
-        // Test add with invalid SQL
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // Test with null SQL
-        try {
-            limeDB.add(null);
-            assertTrue("Null SQL should be handled", true);
-        } catch (Exception e) {
-            assertTrue("Null SQL should be handled gracefully", true);
-        }
-        
-        // Test with empty SQL
-        try {
-            limeDB.add("");
-            assertTrue("Empty SQL should be handled", true);
-        } catch (Exception e) {
-            assertTrue("Empty SQL should be handled gracefully", true);
-        }
-        
-        // Test with non-INSERT SQL
-        try {
-            limeDB.add("SELECT * FROM " + LIME.DB_TABLE_RELATED);
-            assertTrue("Non-INSERT SQL should be handled", true);
-        } catch (Exception e) {
-            assertTrue("Non-INSERT SQL should be handled gracefully", true);
-        }
-    }
-
-    @Test
-    public void testLimeDBRemoveWithInvalidSQL() {
-        // Test remove with invalid SQL
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // Test with null SQL
-        try {
-            limeDB.remove(null);
-            assertTrue("Null SQL should be handled", true);
-        } catch (Exception e) {
-            assertTrue("Null SQL should be handled gracefully", true);
-        }
-        
-        // Test with empty SQL
-        try {
-            limeDB.remove("");
-            assertTrue("Empty SQL should be handled", true);
-        } catch (Exception e) {
-            assertTrue("Empty SQL should be handled gracefully", true);
-        }
-        
-        // Test with non-DELETE SQL
-        try {
-            limeDB.remove("SELECT * FROM " + LIME.DB_TABLE_RELATED);
-            assertTrue("Non-DELETE SQL should be handled", true);
-        } catch (Exception e) {
-            assertTrue("Non-DELETE SQL should be handled gracefully", true);
-        }
-    }
-
-    @Test
-    public void testLimeDBUpdateWithInvalidSQL() {
-        // Test update with invalid SQL
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // Test with null SQL
-        try {
-            limeDB.update(null);
-            assertTrue("Null SQL should be handled", true);
-        } catch (Exception e) {
-            assertTrue("Null SQL should be handled gracefully", true);
-        }
-        
-        // Test with empty SQL
-        try {
-            limeDB.update("");
-            assertTrue("Empty SQL should be handled", true);
-        } catch (Exception e) {
-            assertTrue("Empty SQL should be handled gracefully", true);
-        }
-        
-        // Test with non-UPDATE SQL
-        try {
-            limeDB.update("SELECT * FROM " + LIME.DB_TABLE_RELATED);
-            assertTrue("Non-UPDATE SQL should be handled", true);
-        } catch (Exception e) {
-            assertTrue("Non-UPDATE SQL should be handled gracefully", true);
-        }
-    }
-
-    @Test
-    public void testLimeDBInsertWithNullContentValues() {
-        // Test insert with null ContentValues
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
         
         // Test with null ContentValues
         try {
-            limeDB.insert(LIME.DB_TABLE_RELATED, null);
-            assertTrue("Null ContentValues should be handled", true);
+            long result = limeDB.addRecord(LIME.DB_TABLE_RELATED, null);
+            assertTrue("Null ContentValues should return -1", result == -1);
         } catch (Exception e) {
             assertTrue("Null ContentValues should be handled gracefully", true);
         }
         
         // Test with empty ContentValues
-        android.content.ContentValues emptyCv = new android.content.ContentValues();
         try {
-            limeDB.insert(LIME.DB_TABLE_RELATED, emptyCv);
-            assertTrue("Empty ContentValues should be handled", true);
+            android.content.ContentValues emptyCv = new android.content.ContentValues();
+            long result = limeDB.addRecord(LIME.DB_TABLE_RELATED, emptyCv);
+            // Empty ContentValues might succeed but insert a row with default values
+            assertTrue("Empty ContentValues should be handled", result >= -1);
         } catch (Exception e) {
             assertTrue("Empty ContentValues should be handled gracefully", true);
         }
     }
+
+    @Test
+    public void testLimeDBDeleteRecordWithInvalidInputs() {
+        // Test deleteRecord with invalid inputs
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LimeDB limeDB = new LimeDB(appContext);
+        
+        // Test with null table name
+        try {
+            int result = limeDB.deleteRecord(null, "id = ?", new String[]{"1"});
+            assertTrue("Null table name should return -1", result == -1);
+        } catch (Exception e) {
+            assertTrue("Null table name should be handled gracefully", true);
+        }
+        
+        // Test with invalid table name
+        try {
+            int result = limeDB.deleteRecord("invalid_table", "id = ?", new String[]{"1"});
+            assertTrue("Invalid table name should return -1", result == -1);
+        } catch (Exception e) {
+            assertTrue("Invalid table name should be handled gracefully", true);
+        }
+        
+        // Test with null whereClause (should delete all rows, but we test it)
+        try {
+            int result = limeDB.deleteRecord(LIME.DB_TABLE_RELATED, null, null);
+            // null whereClause might succeed but delete all rows
+            assertTrue("Null whereClause should be handled", result >= -1);
+        } catch (Exception e) {
+            assertTrue("Null whereClause should be handled gracefully", true);
+        }
+    }
+
+    @Test
+    public void testLimeDBUpdateRecordWithInvalidInputs() {
+        // Test updateRecord with invalid inputs
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LimeDB limeDB = new LimeDB(appContext);
+        
+        // Test with null table name
+        try {
+            android.content.ContentValues cv = new android.content.ContentValues();
+            cv.put(LIME.DB_RELATED_COLUMN_USERSCORE, 2);
+            int result = limeDB.updateRecord(null, cv, "id = ?", new String[]{"1"});
+            assertTrue("Null table name should return -1", result == -1);
+        } catch (Exception e) {
+            assertTrue("Null table name should be handled gracefully", true);
+        }
+        
+        // Test with invalid table name
+        try {
+            android.content.ContentValues cv = new android.content.ContentValues();
+            cv.put(LIME.DB_RELATED_COLUMN_USERSCORE, 2);
+            int result = limeDB.updateRecord("invalid_table", cv, "id = ?", new String[]{"1"});
+            assertTrue("Invalid table name should return -1", result == -1);
+        } catch (Exception e) {
+            assertTrue("Invalid table name should be handled gracefully", true);
+        }
+        
+        // Test with null ContentValues
+        try {
+            int result = limeDB.updateRecord(LIME.DB_TABLE_RELATED, null, "id = ?", new String[]{"1"});
+            assertTrue("Null ContentValues should return -1", result == -1);
+        } catch (Exception e) {
+            assertTrue("Null ContentValues should be handled gracefully", true);
+        }
+        
+        // Test with empty ContentValues
+        try {
+            android.content.ContentValues emptyCv = new android.content.ContentValues();
+            int result = limeDB.updateRecord(LIME.DB_TABLE_RELATED, emptyCv, "id = ?", new String[]{"1"});
+            // Empty ContentValues might succeed but update nothing
+            assertTrue("Empty ContentValues should be handled", result >= -1);
+        } catch (Exception e) {
+            assertTrue("Empty ContentValues should be handled gracefully", true);
+        }
+    }
+
+
 
     @Test
     public void testLimeDBGetMappingByCodeWithDifferentParameters() {
@@ -3213,8 +3204,8 @@ public class LimeDBTest {
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
-    public void testLimeDBInsertAddRemoveUpdateBranches() {
-        // Test insert, add, remove, update with different branches
+    public void testLimeDBAddRecordDeleteRecordUpdateRecordBranches() {
+        // Test addRecord, deleteRecord, updateRecord with different branches
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
@@ -3223,54 +3214,51 @@ public class LimeDBTest {
             return;
         }
         
-        // Test insert() with valid INSERT statement
-        String validInsert = "INSERT INTO " + LIME.DB_TABLE_RELATED + " (" +
-                LIME.DB_RELATED_COLUMN_PWORD + ", " + 
-                LIME.DB_RELATED_COLUMN_CWORD + ", " + 
-                LIME.DB_RELATED_COLUMN_USERSCORE + ") VALUES ('測試插入', '詞彙插入', 1)";
-        limeDB.insert(validInsert);
-        assertTrue("Valid INSERT should complete", true);
+        // Test addRecord() with valid ContentValues
+        android.content.ContentValues insertValues = new android.content.ContentValues();
+        insertValues.put(LIME.DB_RELATED_COLUMN_PWORD, "測試插入");
+        insertValues.put(LIME.DB_RELATED_COLUMN_CWORD, "詞彙插入");
+        insertValues.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1);
+        long insertResult = limeDB.addRecord(LIME.DB_TABLE_RELATED, insertValues);
+        assertTrue("Valid addRecord should complete", insertResult >= -1);
         
-        // Test insert() with invalid statement (not starting with INSERT)
-        limeDB.insert("SELECT * FROM " + LIME.DB_TABLE_RELATED);
-        assertTrue("Invalid INSERT should be ignored", true);
+        // Test addRecord() with invalid table name
+        long invalidTableResult = limeDB.addRecord("invalid_table", insertValues);
+        assertTrue("Invalid table name should return -1", invalidTableResult == -1);
         
-        // Test insert() with null
-        limeDB.insert(null);
-        assertTrue("Null INSERT should be handled", true);
+        // Test addRecord() with null ContentValues
+        long nullCvResult = limeDB.addRecord(LIME.DB_TABLE_RELATED, null);
+        assertTrue("Null ContentValues should return -1", nullCvResult == -1);
         
-        // Test add() with valid INSERT statement
-        String validAdd = "INSERT INTO " + LIME.DB_TABLE_RELATED + " (" +
-                LIME.DB_RELATED_COLUMN_PWORD + ", " + 
-                LIME.DB_RELATED_COLUMN_CWORD + ", " + 
-                LIME.DB_RELATED_COLUMN_USERSCORE + ") VALUES ('測試添加', '詞彙添加', 1)";
-        limeDB.add(validAdd);
-        assertTrue("Valid ADD should complete", true);
+        // Test addRecord() with another valid ContentValues
+        android.content.ContentValues addValues = new android.content.ContentValues();
+        addValues.put(LIME.DB_RELATED_COLUMN_PWORD, "測試添加");
+        addValues.put(LIME.DB_RELATED_COLUMN_CWORD, "詞彙添加");
+        addValues.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1);
+        long addResult = limeDB.addRecord(LIME.DB_TABLE_RELATED, addValues);
+        assertTrue("Valid addRecord should complete", addResult >= -1);
         
-        // Test add() with invalid statement (not starting with INSERT)
-        limeDB.add("DELETE FROM " + LIME.DB_TABLE_RELATED);
-        assertTrue("Invalid ADD should be ignored", true);
+        // Test deleteRecord() with valid parameterized query
+        String whereClause = LIME.DB_RELATED_COLUMN_PWORD + " = ?";
+        String[] whereArgs = new String[]{"測試插入"};
+        int deleteResult = limeDB.deleteRecord(LIME.DB_TABLE_RELATED, whereClause, whereArgs);
+        assertTrue("Valid deleteRecord should complete", deleteResult >= -1);
         
-        // Test remove() with valid DELETE statement
-        String validDelete = "DELETE FROM " + LIME.DB_TABLE_RELATED + " WHERE " +
-                LIME.DB_RELATED_COLUMN_PWORD + " = '測試插入'";
-        limeDB.remove(validDelete);
-        assertTrue("Valid DELETE should complete", true);
+        // Test deleteRecord() with invalid table name
+        int invalidTableDeleteResult = limeDB.deleteRecord("invalid_table", whereClause, whereArgs);
+        assertTrue("Invalid table name should return -1", invalidTableDeleteResult == -1);
         
-        // Test remove() with invalid statement (not starting with DELETE)
-        limeDB.remove("SELECT * FROM " + LIME.DB_TABLE_RELATED);
-        assertTrue("Invalid DELETE should be ignored", true);
+        // Test updateRecord() with valid ContentValues and parameterized query
+        android.content.ContentValues updateValues = new android.content.ContentValues();
+        updateValues.put(LIME.DB_RELATED_COLUMN_USERSCORE, 2);
+        String updateWhereClause = LIME.DB_RELATED_COLUMN_PWORD + " = ?";
+        String[] updateWhereArgs = new String[]{"測試添加"};
+        int updateResult = limeDB.updateRecord(LIME.DB_TABLE_RELATED, updateValues, updateWhereClause, updateWhereArgs);
+        assertTrue("Valid updateRecord should complete", updateResult >= -1);
         
-        // Test update() with valid UPDATE statement
-        String validUpdate = "UPDATE " + LIME.DB_TABLE_RELATED + " SET " +
-                LIME.DB_RELATED_COLUMN_USERSCORE + " = 2 WHERE " + 
-                LIME.DB_RELATED_COLUMN_PWORD + " = '測試添加'";
-        limeDB.update(validUpdate);
-        assertTrue("Valid UPDATE should complete", true);
-        
-        // Test update() with invalid statement (not starting with UPDATE)
-        limeDB.update("SELECT * FROM " + LIME.DB_TABLE_RELATED);
-        assertTrue("Invalid UPDATE should be ignored", true);
+        // Test updateRecord() with invalid table name
+        int invalidTableUpdateResult = limeDB.updateRecord("invalid_table", updateValues, updateWhereClause, updateWhereArgs);
+        assertTrue("Invalid table name should return -1", invalidTableUpdateResult == -1);
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang

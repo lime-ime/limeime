@@ -159,6 +159,15 @@ public class Word {
 		return sb.toString();
 	}
 
+	/**
+	 * Generates an UPDATE SQL query for updating word scores.
+	 * 
+	 * @param table The table name
+	 * @param w The Word object containing score and ID
+	 * @return SQL UPDATE query string
+	 * @deprecated Use parameterized queries with {@link net.toload.main.hd.limedb.LimeDB#updateRecord(String, android.content.ContentValues, String, String[])} instead
+	 */
+	@Deprecated
 	public static String getUpdateScoreQuery(String table, Word w){
         return "UPDATE " + table + " SET " +
                 LIME.DB_COLUMN_SCORE + "='" +

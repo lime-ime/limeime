@@ -143,9 +143,6 @@ public class ManageImFragment extends Fragment {
             ManageImEditDialog dialog = ManageImEditDialog.newInstance(table);
             dialog.setHandler(handler, w);
             dialog.show(ft, "editdialog");
-            //} catch (SQLException e) {
-            //    e.printStackTrace();
-            //}
         });
 
         Button btnManageImAdd = rootView.findViewById(R.id.btnManageImAdd);
@@ -187,7 +184,7 @@ public class ManageImFragment extends Fragment {
                 page++;
             }
             searchword();
-            //updateGridView(wordlist);
+  
         });
         this.btnManageImPrevious = rootView.findViewById(R.id.btnManageImPrevious);
         this.btnManageImPrevious.setEnabled(false);
@@ -196,7 +193,7 @@ public class ManageImFragment extends Fragment {
                 page--;
             }
             searchword();
-            //updateGridView(wordlist);
+
         });
 
         this.edtManageImSearch = rootView.findViewById(R.id.edtManageImSearch);
@@ -260,12 +257,7 @@ public class ManageImFragment extends Fragment {
         if((curquery == null && total == 0) || !Objects.equals(curquery, prequery)){
             total = datasource.getWordSize(table, curquery, searchroot);
             page = 0;
-           /* try {
-                datasource.open();
-                datasource.close();
-            } catch (SQLException e) {
-                Log.e(TAG, "Error in operation", e);
-            }*/
+
         }
         if(manageimthread != null && manageimthread.isAlive()){
             handler.removeCallbacks(manageimthread);
@@ -370,20 +362,13 @@ public class ManageImFragment extends Fragment {
            }
         }
 
-        // Remove from the database
-        String removesql = "DELETE FROM " + this.table + " WHERE " + LIME.DB_COLUMN_ID + " = '" + id + "'";
+        // Remove from the database using parameterized query
+        datasource.deleteRecord(this.table, LIME.DB_COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
 
-        datasource.remove(removesql);
-        /*try {
-            datasource.open();
-            datasource.close();
-        } catch (SQLException e) {
-            Log.e(TAG, "Error in operation", e);
-        }*/
 
         total--;
         searchword();
-        //updateGridView(this.wordlist);
+
     }
 
     public void addWord(String code, int score, String word) {
@@ -406,20 +391,9 @@ public class ManageImFragment extends Fragment {
         //String insertsql = Word.getInsertQuery(this.table, obj);
         //datasource.insert(insertsql);
 
-
-       /* try {
-            datasource.open();
-            datasource.close();
-        } catch (SQLException e) {
-            Log.e(TAG, "Error in operation", e);
-        }*/
-
         total++;
         searchword();
-        // Add to temp list
-        /*page = 0;
-        this.wordlist.add(0,obj);
-        updateGridView(this.wordlist);*/
+
     }
 
     public void updateWord(int id, String code, int score, String word) {
@@ -445,26 +419,7 @@ public class ManageImFragment extends Fragment {
         //Jeremy '15,6,6  use original add or update mapping function in LIMEDB instead.
         // code3r information will also generated for phonetic table.
         datasource.addOrUpdateMappingRecord(this.table, code, word, score);
-/*
-        // Update record in the database
-        String updatesql = "UPDATE " + this.table + " SET ";
-                updatesql += LIME.DB_COLUMN_CODE + " = \"" + LIME.formatSqlValue(code) + "\", ";
-                if(this.table.equals("phonetic"))  //Jeremy '15,6,6 add no tone code (code3r) with code ripped 3467
-                    updatesql += LIME.DB_COLUMN_CODE3R + " = \"" + LIME.formatSqlValue(code.replaceAll("[3467 ]", "")) + "\", ";
-                updatesql += LIME.DB_COLUMN_SCORE + " = \"" + score + "\", ";
-                updatesql += LIME.DB_COLUMN_WORD + " = \"" + LIME.formatSqlValue(word) + "\" ";
-                StringBuilder updatesqlBuilder = new StringBuilder(updatesql);
-                updatesqlBuilder.append(" WHERE ").append(LIME.DB_COLUMN_ID).append(" = \"").append(id).append("\"");
-                updatesql = updatesqlBuilder.toString();
 
-        //datasource.update(updatesql);
-      */
-        /*try {
-            datasource.open();
-            datasource.close();
-        } catch (SQLException e) {
-            Log.e(TAG, "Error in operation", e);
-        }*/
         searchword();
         //updateGridView(this.wordlist);
     }
@@ -473,30 +428,18 @@ public class ManageImFragment extends Fragment {
 
         if(keyboardlist == null){
             keyboardlist = datasource.getKeyboard();
-           /* try {
-                datasource.open();
-                datasource.close();
-            } catch (SQLException e) {
-                Log.e(TAG, "Error in operation", e);
-            }*/
+
         }
         for(Keyboard k: keyboardlist){
             if(k.getCode().equals(keyboard)){
                 datasource.setImKeyboard(table, k);
                 btnManageImKeyboard.setText(k.getDesc());
-                /*try {
-                    datasource.open();
-                    datasource.close();
-                } catch (SQLException e) {
-                    Log.e(TAG, "Error in operation", e);
-                }*/
+   
             }
         }
 
     }
 
-    //public void updateRelated(String updatecode) {
-    //    datasource.updateSimilarCodeListInRelatedColumn(table, updatecode);
-    //}
+
 
 }

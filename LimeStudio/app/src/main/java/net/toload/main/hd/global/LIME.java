@@ -49,68 +49,10 @@ public class LIME {
 		return Environment.getDataDirectory() + "/data/" + LIME.PACKAGE_NAME;
 	}
 	
-	// Download URLs - OpenFoundry
-	public static final String DATABASE_OPENFOUNDRY_URL_BASED = "https://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2F";
+	// Jeremy '25/12/20 Open Foundry service is closed.
+	//public static final String DATABASE_OPENFOUNDRY_URL_BASED = "https://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2F";
 	public static final String DATABASE_CLOUD_URL_BASED = "https://github.com/lime-ime/limeime/raw/master/Database/";
-	
-	// Special Version CJK Mapping Table Provided By Julian
-	public static final String CJK_CJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fcj_CJK.lime.zip";
-	public static final String CJK_ECJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fecj_CJK.lime.zip";
-	public static final String CJK_PHONETIC_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphonetic_CJK.lime.zip";
-	public static final String CJK_PHONETICADV_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphonetic_CJK.lime.zip";
-	public static final String CJK_PINYIN_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fpinyin_CJK.cin.zip";
-	public static final String CJK_HK_CJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fcj_CJK_HKSCS.lime.zip";
-	public static final String CJK_HK_ECJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fecj_CJK_HKSCS.lime.zip";
-	
-	// Google Code URLs
-	public static final String G_CJK_CJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj_CJK.lime";
-	public static final String G_CJK_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj_CJK.lime";
-	public static final String G_CJK_PHONETIC_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic_CJK.lime";
-	public static final String G_CJK_PHONETICADV_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic_adv_CJK.lime";
-	public static final String G_CJK_PINYIN_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/pinyin_CJK.cin";
-	public static final String G_CJK_HK_CJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj_CJK_HKSCS.lime";
-	public static final String G_CJK_HK_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj_CJK_HKSCS.lime";
-	
-	// OV CIN files download URL
-	public static final String DAYI_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/dayi3.cin";
-	public static final String PINYI_TW_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/pinyinbig5.cin";
-	public static final String PINYI_CN_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/pinyin.cin";
-	
-	// OpenFoundry Download URLs
-	public static final String CJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fcj.zip";
-	public static final String SCJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fscj.zip";
-	public static final String ARRAY_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Farray.zip";
-	public static final String ARRAY10_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Farray10.zip";
-	public static final String EZ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fez.zip";
-	public static final String PHONETIC_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphonetic.zip";
-	public static final String PHONETICADV_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphonetic_adv_CJK.zip";
-	public static final String CJ5_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fcj5.zip";
-	public static final String ECJ_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fecj.zip";
-	public static final String WB_DOWNLOAD_URL = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fwb.zip";
-	
-	// Google Code Download URLs
-	public static final String G_CJ_11643_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cangjie.cin";
-	public static final String G_PHONETIC_11643_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/bopomofo.cin";
-	public static final String G_CJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj.zip";
-	public static final String G_SCJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/scj.zip";
-	public static final String G_ARRAY_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/array.zip";
-	public static final String G_ARRAY10_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/array10.zip";
-	public static final String G_EZ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ez.zip";
-	public static final String G_PHONETIC_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic.zip";
-	public static final String G_PHONETICADV_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/phonetic_adv_CJK.zip";
-	public static final String G_CJ5_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/cj5.zip";
-	public static final String G_ECJ_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/ecj.zip";
-	public static final String G_WB_DOWNLOAD_URL = "http://limeime.googlecode.com/svn/branches/database/wb.zip";
-	
-	// Database Download Targets
-	public static final String IM_DOWNLOAD_TARGET_PRELOADED = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Flime1207.zip";
-	public static final String IM_DOWNLOAD_TARGET_EMPTY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fempty1109.zip";
-	public static final String IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphoneticonly1207.zip";
-	public static final String IM_DOWNLOAD_TARGET_PHONETIC_HS_ONLY = "http://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2Fdatabases%2Flimehd%2Fphonetichs1207.zip";
-	public static final String G_IM_DOWNLOAD_TARGET_PRELOADED = "http://limeime.googlecode.com/svn/branches/database/lime1207.zip";
-	public static final String G_IM_DOWNLOAD_TARGET_EMPTY = "http://limeime.googlecode.com/svn/branches/database/empty1109.zip";
-	public static final String G_IM_DOWNLOAD_TARGET_PHONETIC_ONLY = "http://limeime.googlecode.com/svn/branches/database/phoneticonly1207.zip";
-	
+
 	// Database Source File Names
 	public static final String DATABASE_SOURCE_DAYI = "dayi.cin";
 	public static final String DATABASE_SOURCE_PHONETIC = "phonetic.lime";
@@ -135,75 +77,48 @@ public class LIME {
 	public static final String DATABASE_SOURCE_FILENAME_EMPTY = "empty.zip";
 	
 	// Database Cloud URLs
-	public static final String LIME_OLD_VERSION_URL = DATABASE_OPENFOUNDRY_URL_BASED + "limehd_3_9_1.apk";
+
 	public static final String DATABASE_CLOUD_IM_WB = DATABASE_CLOUD_URL_BASED + "wb.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_WB = DATABASE_OPENFOUNDRY_URL_BASED + "wb.zip";
 	public static final String DATABASE_CLOUD_IM_WB_KEYBOARD = "wb";
 	public static final String DATABASE_CLOUD_IM_PINYINGB = DATABASE_CLOUD_URL_BASED + "pinyingb.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_PINYINGB = DATABASE_OPENFOUNDRY_URL_BASED + "pinyingb.zip";
 	public static final String DATABASE_CLOUD_IM_PINYINGB_KEYBOARD = "lime";
 	public static final String DATABASE_CLOUD_IM_PINYIN = DATABASE_CLOUD_URL_BASED + "pinyin.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_PINYIN = DATABASE_OPENFOUNDRY_URL_BASED + "pinyin.zip";
 	public static final String DATABASE_CLOUD_IM_PINYIN_KEYBOARD = "lime";
 	public static final String DATABASE_CLOUD_IM_PHONETICCOMPLETE_BIG5 = DATABASE_CLOUD_URL_BASED + "phoneticcompletebig5.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "phoneticcompletebig5.zip";
 	public static final String DATABASE_CLOUD_IM_PHONETICCOMPLETE = DATABASE_CLOUD_URL_BASED + "phoneticcomplete.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_PHONETICCOMPLETE = DATABASE_OPENFOUNDRY_URL_BASED + "phoneticcomplete.zip";
 	public static final String DATABASE_CLOUD_IM_PHONETIC_BIG5 = DATABASE_CLOUD_URL_BASED + "phoneticbig5.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_PHONETIC_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "phoneticbig5.zip";
 	public static final String DATABASE_CLOUD_IM_PHONETIC = DATABASE_CLOUD_URL_BASED + "phonetic.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_PHONETIC = DATABASE_OPENFOUNDRY_URL_BASED + "phonetic.zip";
 	public static final String DATABASE_CLOUD_IM_PHONETIC_KEYBOARD = "phonetic";
 	public static final String DATABASE_CLOUD_IM_EZ = DATABASE_CLOUD_URL_BASED + "ez.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_EZ = DATABASE_OPENFOUNDRY_URL_BASED + "ez.zip";
 	public static final String DATABASE_CLOUD_IM_EZ_KEYBOARD = "ez";
 	public static final String DATABASE_CLOUD_IM_ECJHK = DATABASE_CLOUD_URL_BASED + "ecjhk.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_ECJHK = DATABASE_OPENFOUNDRY_URL_BASED + "ecjhk.zip";
 	public static final String DATABASE_CLOUD_IM_ECJHK_KEYBOARD = "cj";
 	public static final String DATABASE_CLOUD_IM_ECJ = DATABASE_CLOUD_URL_BASED + "ecj.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_ECJ = DATABASE_OPENFOUNDRY_URL_BASED + "ecj.zip";
 	public static final String DATABASE_CLOUD_IM_ECJ_KEYBOARD = "cj";
 	public static final String DATABASE_CLOUD_IM_DAYI = DATABASE_CLOUD_URL_BASED + "dayi.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_DAYI = DATABASE_OPENFOUNDRY_URL_BASED + "dayi.zip";
 	public static final String DATABASE_CLOUD_IM_DAYIUNI_BIG5 = DATABASE_CLOUD_URL_BASED + "dayiunibig5.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_DAYIUNI_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "dayiunibig5.zip";
 	public static final String DATABASE_CLOUD_IM_DAYIUNI = DATABASE_CLOUD_URL_BASED + "dayiuni.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_DAYIUNI = DATABASE_OPENFOUNDRY_URL_BASED + "dayiuni.zip";
 	public static final String DATABASE_CLOUD_IM_DAYIUNIP_BIG5 = DATABASE_CLOUD_URL_BASED + "dayiunipbig5.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_DAYIUNIP_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "dayiunipbig5.zip";
 	public static final String DATABASE_CLOUD_IM_DAYIUNIP = DATABASE_CLOUD_URL_BASED + "dayiunip.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_DAYIUNIP = DATABASE_OPENFOUNDRY_URL_BASED + "dayiunip.zip";
 	public static final String DATABASE_CLOUD_IM_DAYI_KEYBOARD = "dayisym";
 	public static final String DATABASE_CLOUD_IM_CJHK = DATABASE_CLOUD_URL_BASED + "cjhk.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_CJHK = DATABASE_OPENFOUNDRY_URL_BASED + "cjhk.zip";
 	public static final String DATABASE_CLOUD_IM_CJHK_KEYBOARD = "cj";
 	public static final String DATABASE_CLOUD_IM_SCJ = DATABASE_CLOUD_URL_BASED + "scj.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_SCJ = DATABASE_OPENFOUNDRY_URL_BASED + "scj.zip";
 	public static final String DATABASE_CLOUD_IM_SCJ_KEYBOARD = "limenum";
 	public static final String DATABASE_CLOUD_IM_CJ5 = DATABASE_CLOUD_URL_BASED + "cj5.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_CJ5 = DATABASE_OPENFOUNDRY_URL_BASED + "cj5.zip";
 	public static final String DATABASE_CLOUD_IM_CJ5_KEYBOARD = "cj";
 	public static final String DATABASE_CLOUD_IM_CJ_BIG5 = DATABASE_CLOUD_URL_BASED + "cjbig5.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_CJ_BIG5 = DATABASE_OPENFOUNDRY_URL_BASED + "cjbig5.zip";
 	public static final String DATABASE_CLOUD_IM_CJ = DATABASE_CLOUD_URL_BASED + "cj.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_CJ = DATABASE_OPENFOUNDRY_URL_BASED + "cj.zip";
 	public static final String DATABASE_CLOUD_IM_CJ_KEYBOARD = "cj";
 	public static final String DATABASE_CLOUD_IM_ARRAY10 = DATABASE_CLOUD_URL_BASED + "array10.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_ARRAY10 = DATABASE_OPENFOUNDRY_URL_BASED + "array10.zip";
 	public static final String DATABASE_CLOUD_IM_ARRAY10_KEYBOARD = "phonenum";
 	public static final String DATABASE_CLOUD_IM_ARRAY = DATABASE_CLOUD_URL_BASED + "array.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_ARRAY = DATABASE_OPENFOUNDRY_URL_BASED + "array.zip";
 	public static final String DATABASE_CLOUD_IM_ARRAY_KEYBOARD = "arraynum";
 	public static final String DATABASE_CLOUD_IM_HS = DATABASE_CLOUD_URL_BASED + "hs.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_HS = DATABASE_OPENFOUNDRY_URL_BASED + "hs.zip";
 	public static final String DATABASE_CLOUD_IM_HS_V1 = DATABASE_CLOUD_URL_BASED + "hs1.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_HS_V1 = DATABASE_OPENFOUNDRY_URL_BASED + "hs1.zip";
 	public static final String DATABASE_CLOUD_IM_HS_V2 = DATABASE_CLOUD_URL_BASED + "hs2.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_HS_V2 = DATABASE_OPENFOUNDRY_URL_BASED + "hs2.zip";
 	public static final String DATABASE_CLOUD_IM_HS_V3 = DATABASE_CLOUD_URL_BASED + "hs3.zip";
-	public static final String DATABASE_OPENFOUNDRY_IM_HS_V3 = DATABASE_OPENFOUNDRY_URL_BASED + "hs3.zip";
 	public static final String DATABASE_CLOUD_IM_HS_KEYBOARD = "hs";
-	
 	// Database Tables
 	public static final String DB_TABLE_IMTABLE2 = "imtable2";
 	public static final String DB_TABLE_IMTABLE3 = "imtable3";

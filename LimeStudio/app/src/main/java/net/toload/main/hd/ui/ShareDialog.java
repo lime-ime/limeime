@@ -27,12 +27,10 @@ package net.toload.main.hd.ui;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Typeface;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -72,27 +70,10 @@ public class ShareDialog extends DialogFragment {
 
 	Button btnShareRelated;
 
-	ShareDialog sharedialog;
-
 	public static ShareDialog newInstance() {
 		ShareDialog btd = new ShareDialog();
 		btd.setCancelable(true);
 		return btd;
-	}
-
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
-	}
-
-	@Override
-	public void onAttach(@NonNull Context context) {
-		super.onAttach(context);
-	}
-
-	@Override
-	public void onCancel(@NonNull DialogInterface dialog) {
-		super.onCancel(dialog);
 	}
 
 	@Override
@@ -126,17 +107,12 @@ public class ShareDialog extends DialogFragment {
             else return false;
         });
 	}
-	public void cancelDialog(){
-		this.dismiss();
-	}
 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 
         assert getDialog() != null;
         getDialog().getWindow().setTitle(getResources().getString(R.string.share_dialog_title));
         datasource = new LimeDB(getActivity());
-		sharedialog = this;
-
 		activity = getActivity();
 		view = inflater.inflate(R.layout.fragment_dialog_share, container, false);
 
@@ -160,206 +136,82 @@ public class ShareDialog extends DialogFragment {
 		btnShareCancel.setOnClickListener(v -> dismiss());
 
 		HashMap<String, String> check = new HashMap<>();
-
 		List<Im> imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
-		for(int i = 0; i < imlist.size() ; i++){
-			check.put(imlist.get(i).getCode(), imlist.get(i).getDesc());
+		for(Im im : imlist){
+			check.put(im.getCode(), im.getDesc());
 		}
 
-		if(check.get(LIME.DB_TABLE_CUSTOM) == null){
-			btnShareCustom.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnShareCustom.setTypeface(null, Typeface.ITALIC);
-			btnShareCustom.setEnabled(false);
-		}else {
-			btnShareCustom.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnShareCustom.setTypeface(null, Typeface.BOLD);
-
-			btnShareCustom.setOnClickListener(v -> confirmShareDialog(LIME.IM_CUSTOM));
-		}
-
-		if(check.get(LIME.DB_TABLE_PHONETIC) == null){
-			btnSharePhonetic.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnSharePhonetic.setTypeface(null, Typeface.ITALIC);
-			btnSharePhonetic.setEnabled(false);
-		}else {
-			btnSharePhonetic.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnSharePhonetic.setTypeface(null, Typeface.BOLD);
-
-			btnSharePhonetic.setOnClickListener(v -> confirmShareDialog(LIME.IM_PHONETIC));
-		}
-
-		if(check.get(LIME.DB_TABLE_CJ) == null){
-			btnShareCj.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnShareCj.setTypeface(null, Typeface.ITALIC);
-			btnShareCj.setEnabled(false);
-		}else {
-			btnShareCj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnShareCj.setTypeface(null, Typeface.BOLD);
-
-			btnShareCj.setOnClickListener(v -> confirmShareDialog(LIME.IM_CJ));
-		}
-
-
-
-		if(check.get(LIME.DB_TABLE_CJ5) == null){
-			btnShareCj5.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnShareCj5.setTypeface(null, Typeface.ITALIC);
-			btnShareCj5.setEnabled(false);
-		}else {
-			btnShareCj5.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnShareCj5.setTypeface(null, Typeface.BOLD);
-
-			btnShareCj5.setOnClickListener(v -> confirmShareDialog(LIME.IM_CJ5));
-		}
-
-		if(check.get(LIME.DB_TABLE_SCJ) == null){
-			btnShareScj.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnShareScj.setTypeface(null, Typeface.ITALIC);
-			btnShareScj.setEnabled(false);
-		}else {
-			btnShareScj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnShareScj.setTypeface(null, Typeface.BOLD);
-			btnShareScj.setOnClickListener(v -> confirmShareDialog(LIME.IM_SCJ));
-		}
-
-		if(check.get(LIME.DB_TABLE_ECJ) == null){
-			btnShareEcj.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnShareEcj.setTypeface(null, Typeface.ITALIC);
-			btnShareEcj.setEnabled(false);
-		}else {
-			btnShareEcj.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnShareEcj.setTypeface(null, Typeface.BOLD);
-
-			btnShareEcj.setOnClickListener(v -> confirmShareDialog(LIME.IM_ECJ));
-		}
-
-		if(check.get(LIME.DB_TABLE_DAYI) == null){
-			btnShareDayi.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnShareDayi.setTypeface(null, Typeface.ITALIC);
-			btnShareDayi.setEnabled(false);
-		}else {
-			btnShareDayi.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnShareDayi.setTypeface(null, Typeface.BOLD);
-
-			btnShareDayi.setOnClickListener(v -> confirmShareDialog(LIME.IM_DAYI));
-		}
-
-		if(check.get(LIME.DB_TABLE_EZ) == null){
-			btnShareEz.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnShareEz.setTypeface(null, Typeface.ITALIC);
-			btnShareEz.setEnabled(false);
-		}else {
-			btnShareEz.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnShareEz.setTypeface(null, Typeface.BOLD);
-
-			btnShareEz.setOnClickListener(v -> confirmShareDialog(LIME.IM_EZ));
-		}
-
-		if(check.get(LIME.DB_TABLE_ARRAY) == null){
-			btnShareArray.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnShareArray.setTypeface(null, Typeface.ITALIC);
-			btnShareArray.setEnabled(false);
-		}else {
-			btnShareArray.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnShareArray.setTypeface(null, Typeface.BOLD);
-
-			btnShareArray.setOnClickListener(v -> confirmShareDialog(LIME.IM_ARRAY));
-		}
-
-		if(check.get(LIME.DB_TABLE_ARRAY10) == null){
-			btnShareArray10.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnShareArray10.setTypeface(null, Typeface.ITALIC);
-			btnShareArray10.setEnabled(false);
-		}else {
-			btnShareArray10.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnShareArray10.setTypeface(null, Typeface.BOLD);
-
-			btnShareArray10.setOnClickListener(v -> confirmShareDialog(LIME.IM_ARRAY10));
-		}
-
-		if(check.get(LIME.DB_TABLE_HS) == null){
-			btnShareHs.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnShareHs.setTypeface(null, Typeface.ITALIC);
-			btnShareHs.setEnabled(false);
-		}else {
-			btnShareHs.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnShareHs.setTypeface(null, Typeface.BOLD);
-
-			btnShareHs.setOnClickListener(v -> confirmShareDialog(LIME.IM_HS));
-		}
-
-		if(check.get(LIME.DB_TABLE_WB) == null){
-			btnShareWb.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnShareWb.setTypeface(null, Typeface.ITALIC);
-			btnShareWb.setEnabled(false);
-		}else {
-			btnShareWb.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnShareWb.setTypeface(null, Typeface.BOLD);
-
-			btnShareWb.setOnClickListener(v -> confirmShareDialog(LIME.IM_WB));
-		}
-
-		if(check.get(LIME.DB_TABLE_PINYIN) == null){
-			btnSharePinyin.setAlpha(LIME.HALF_ALPHA_VALUE);
-			btnSharePinyin.setTypeface(null, Typeface.ITALIC);
-			btnSharePinyin.setEnabled(false);
-		}else {
-			btnSharePinyin.setAlpha(LIME.NORMAL_ALPHA_VALUE);
-			btnSharePinyin.setTypeface(null, Typeface.BOLD);
-
-			btnSharePinyin.setOnClickListener(v -> confirmShareDialog(LIME.IM_PINYIN));
-		}
+		// Setup all IM type buttons
+		setupShareButton(btnShareCustom, check, LIME.DB_TABLE_CUSTOM, LIME.IM_CUSTOM);
+		setupShareButton(btnSharePhonetic, check, LIME.DB_TABLE_PHONETIC, LIME.IM_PHONETIC);
+		setupShareButton(btnShareCj, check, LIME.DB_TABLE_CJ, LIME.IM_CJ);
+		setupShareButton(btnShareCj5, check, LIME.DB_TABLE_CJ5, LIME.IM_CJ5);
+		setupShareButton(btnShareScj, check, LIME.DB_TABLE_SCJ, LIME.IM_SCJ);
+		setupShareButton(btnShareEcj, check, LIME.DB_TABLE_ECJ, LIME.IM_ECJ);
+		setupShareButton(btnShareDayi, check, LIME.DB_TABLE_DAYI, LIME.IM_DAYI);
+		setupShareButton(btnShareEz, check, LIME.DB_TABLE_EZ, LIME.IM_EZ);
+		setupShareButton(btnShareArray, check, LIME.DB_TABLE_ARRAY, LIME.IM_ARRAY);
+		setupShareButton(btnShareArray10, check, LIME.DB_TABLE_ARRAY10, LIME.IM_ARRAY10);
+		setupShareButton(btnShareHs, check, LIME.DB_TABLE_HS, LIME.IM_HS);
+		setupShareButton(btnShareWb, check, LIME.DB_TABLE_WB, LIME.IM_WB);
+		setupShareButton(btnSharePinyin, check, LIME.DB_TABLE_PINYIN, LIME.IM_PINYIN);
 
 		btnShareRelated.setOnClickListener(v -> confirmShareDialog(LIME.DB_TABLE_RELATED));
 
 		return view;
 	}
 
+	/**
+	 * Sets up a share button based on whether the table exists.
+	 */
+	private void setupShareButton(Button button, HashMap<String, String> check, String tableName, String imType) {
+		if (check.get(tableName) == null) {
+			button.setAlpha(LIME.HALF_ALPHA_VALUE);
+			button.setTypeface(null, Typeface.ITALIC);
+			button.setEnabled(false);
+		} else {
+			button.setAlpha(LIME.NORMAL_ALPHA_VALUE);
+			button.setTypeface(null, Typeface.BOLD);
+			button.setOnClickListener(v -> confirmShareDialog(imType));
+		}
+	}
+
 	public void confirmShareDialog(final String imtype){
-
 		AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
-
-		if(imtype.equalsIgnoreCase(LIME.DB_TABLE_RELATED)) {
+		boolean isRelated = imtype.equalsIgnoreCase(LIME.DB_TABLE_RELATED);
+		
+		if (isRelated) {
 			alertDialog.setTitle(activity.getResources().getString(R.string.share_dialog_related_title));
 			alertDialog.setMessage(activity.getResources().getString(R.string.share_dialog_related_title_message));
-		}else{
+		} else {
 			alertDialog.setTitle(activity.getResources().getString(R.string.share_dialog_title));
 			alertDialog.setMessage(activity.getResources().getString(R.string.share_dialog_title_message));
 		}
-		if(!imtype.equalsIgnoreCase(LIME.DB_TABLE_RELATED)){
-			alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.share_lime_cin),
-                    (dialog, which) -> {
-                        if(imtype.equals(LIME.DB_TABLE_RELATED)){
-                            // Call Share IM Processes
-                            ((MainActivity) activity).initialShareRelated();
-                        }else{
-                            // Call Share IM Processes
-                            ((MainActivity) activity).initialShare(imtype);
-                        }
-                        dismiss();
-                        sharedialog.dismiss();
-                    });
+		
+		// Only show .lime/.cin option for non-related tables
+		if (!isRelated) {
+			alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, 
+					activity.getResources().getString(R.string.share_lime_cin),
+					(dialog, which) -> {
+						((MainActivity) activity).initialShare(imtype);
+						dismiss();
+					});
 		}
 
-		alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL, activity.getResources().getString(R.string.share_lime_db),
-                (dialog, which) -> {
-                    if(imtype.equals(LIME.DB_TABLE_RELATED)){
-                        ((MainActivity) activity).initialShareRelatedDb();
-                    }else{
-                        // Call Share IM Processes
-                        ((MainActivity) activity).initialShareDb(imtype);
-                    }
-                    dismiss();
-                    sharedialog.dismiss();
-                });
-		alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
-                (dialog, which) -> dialog.dismiss());
+		alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL, 
+				activity.getResources().getString(R.string.share_lime_db),
+				(dialog, which) -> {
+					if (isRelated) {
+						((MainActivity) activity).initialShareRelatedDb();
+					} else {
+						((MainActivity) activity).initialShareDb(imtype);
+					}
+					dismiss();
+				});
+		alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, 
+				activity.getResources().getString(R.string.dialog_cancel),
+				(dialog, which) -> dialog.dismiss());
 		alertDialog.show();
-	}
-
-	@Override
-	public void onSaveInstanceState(@NonNull Bundle icicle) {
-		super.onSaveInstanceState(icicle);
 	}
 
 }

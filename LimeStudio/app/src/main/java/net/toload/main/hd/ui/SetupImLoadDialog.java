@@ -64,7 +64,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class SetupImLoadDialog extends DialogFragment {
@@ -76,6 +78,35 @@ public class SetupImLoadDialog extends DialogFragment {
     private static final String SUPPORT_FILE_EXT_LIME = "lime";
     private static final String SUPPORT_FILE_EXT_LIMEDB = "limedb";
     private static final String SUPPORT_FILE_EXT_CIN = "cin";
+
+    // Map IM types to their download URLs
+    private static final Map<String, String> IM_TYPE_TO_URL = new HashMap<>();
+    static {
+        IM_TYPE_TO_URL.put(LIME.IM_ARRAY, LIME.DATABASE_CLOUD_IM_ARRAY);
+        IM_TYPE_TO_URL.put(LIME.IM_ARRAY10, LIME.DATABASE_CLOUD_IM_ARRAY10);
+        IM_TYPE_TO_URL.put(LIME.IM_CJ_BIG5, LIME.DATABASE_CLOUD_IM_CJ_BIG5);
+        IM_TYPE_TO_URL.put(LIME.IM_CJ, LIME.DATABASE_CLOUD_IM_CJ);
+        IM_TYPE_TO_URL.put(LIME.IM_CJHK, LIME.DATABASE_CLOUD_IM_CJHK);
+        IM_TYPE_TO_URL.put(LIME.IM_CJ5, LIME.DATABASE_CLOUD_IM_CJ5);
+        IM_TYPE_TO_URL.put(LIME.IM_DAYI, LIME.DATABASE_CLOUD_IM_DAYI);
+        IM_TYPE_TO_URL.put(LIME.IM_DAYIUNI, LIME.DATABASE_CLOUD_IM_DAYIUNI);
+        IM_TYPE_TO_URL.put(LIME.IM_DAYIUNIP, LIME.DATABASE_CLOUD_IM_DAYIUNIP);
+        IM_TYPE_TO_URL.put(LIME.IM_ECJ, LIME.DATABASE_CLOUD_IM_ECJ);
+        IM_TYPE_TO_URL.put(LIME.IM_ECJHK, LIME.DATABASE_CLOUD_IM_ECJHK);
+        IM_TYPE_TO_URL.put(LIME.IM_EZ, LIME.DATABASE_CLOUD_IM_EZ);
+        IM_TYPE_TO_URL.put(LIME.IM_PHONETIC_BIG5, LIME.DATABASE_CLOUD_IM_PHONETIC_BIG5);
+        IM_TYPE_TO_URL.put(LIME.IM_PHONETIC_ADV_BIG5, LIME.DATABASE_CLOUD_IM_PHONETICCOMPLETE_BIG5);
+        IM_TYPE_TO_URL.put(LIME.IM_PHONETIC, LIME.DATABASE_CLOUD_IM_PHONETIC);
+        IM_TYPE_TO_URL.put(LIME.IM_PHONETIC_ADV, LIME.DATABASE_CLOUD_IM_PHONETICCOMPLETE);
+        IM_TYPE_TO_URL.put(LIME.IM_PINYIN, LIME.DATABASE_CLOUD_IM_PINYIN);
+        IM_TYPE_TO_URL.put(LIME.IM_PINYINGB, LIME.DATABASE_CLOUD_IM_PINYINGB);
+        IM_TYPE_TO_URL.put(LIME.IM_SCJ, LIME.DATABASE_CLOUD_IM_SCJ);
+        IM_TYPE_TO_URL.put(LIME.IM_WB, LIME.DATABASE_CLOUD_IM_WB);
+        IM_TYPE_TO_URL.put(LIME.IM_HS, LIME.DATABASE_CLOUD_IM_HS);
+        IM_TYPE_TO_URL.put(LIME.IM_HS_V1, LIME.DATABASE_CLOUD_IM_HS_V1);
+        IM_TYPE_TO_URL.put(LIME.IM_HS_V2, LIME.DATABASE_CLOUD_IM_HS_V2);
+        IM_TYPE_TO_URL.put(LIME.IM_HS_V3, LIME.DATABASE_CLOUD_IM_HS_V3);
+    }
 
     private SetupImHandler handler;
 
@@ -130,20 +161,7 @@ public class SetupImLoadDialog extends DialogFragment {
                             if (uri != null) {
                                 File file = saveUriToFile(uri);
                                 if (file != null) {
-                                    if (imtype.equalsIgnoreCase(LIME.DB_TABLE_RELATED)) {
-                                        loadDbRelatedMapping(file);
-                                        dismiss();
-                                    } else {
-                                        if (file.getName().toLowerCase().endsWith(SUPPORT_FILE_EXT_TXT) ||
-                                                file.getName().toLowerCase().endsWith(SUPPORT_FILE_EXT_LIME) ||
-                                                file.getName().toLowerCase().endsWith(SUPPORT_FILE_EXT_CIN)) {
-                                            loadMapping(file);
-                                            dismiss();
-                                        } else if( file.getName().toLowerCase().endsWith(SUPPORT_FILE_EXT_LIMEDB)) {
-                                            loadDbMapping(file);
-                                            dismiss();
-                                        }
-                                    }
+                                    handleFileSelection(file);
                                 }
                             }
                         }
@@ -177,28 +195,19 @@ public class SetupImLoadDialog extends DialogFragment {
             getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_related_title));
 
             btnSetupImDialogCustom.setText(getResources().getString(R.string.setup_im_import_related_default));
-            btnSetupImDialogCustom.setOnClickListener(v -> {
-                AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
-                alertDialog.setMessage(activity.getResources().getString(R.string.setup_im_import_related_default_confirm));
-                alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
-                        (dialog, which) -> {
-                            loadDefaultRelated();
-                            handler.initialImButtons();
-                            dismiss();
-                        });
-                alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
-                        (dialog, which) -> dialog.dismiss());
-                alertDialog.show();
-            });
+            btnSetupImDialogCustom.setOnClickListener(v -> showConfirmDialog(
+                    getResources().getString(R.string.setup_im_import_related_default_confirm),
+                    () -> {
+                        loadDefaultRelated();
+                        handler.initialImButtons();
+                        dismiss();
+                    }));
 
             btnSetupImDialogLoad1.setText(getResources().getString(R.string.setup_im_import_related));
             btnSetupImDialogLoad1.setOnClickListener(v -> selectMappingFile());
 
-            btnSetupImDialogLoad2.setVisibility(View.GONE);
-            btnSetupImDialogLoad3.setVisibility(View.GONE);
-            btnSetupImDialogLoad4.setVisibility(View.GONE);
-            btnSetupImDialogLoad5.setVisibility(View.GONE);
-            btnSetupImDialogLoad6.setVisibility(View.GONE);
+            hideButtons(btnSetupImDialogLoad2, btnSetupImDialogLoad3, btnSetupImDialogLoad4,
+                    btnSetupImDialogLoad5, btnSetupImDialogLoad6);
             chkSetupImBackupLearning.setVisibility(View.GONE);
             chkSetupImRestoreLearning.setVisibility(View.GONE);
         } else {
@@ -207,29 +216,19 @@ public class SetupImLoadDialog extends DialogFragment {
                 assert getDialog() != null;
                 getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_dialog_title_remove));
                 btnSetupImDialogLoad1.setText(getResources().getString(R.string.setup_im_dialog_remove));
-                btnSetupImDialogLoad1.setOnClickListener(v -> {
-                    AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
-                    alertDialog.setMessage(activity.getResources().getString(R.string.setup_im_dialog_remove_confirm_message));
-                    alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
-                            (dialog, which) -> {
-                                boolean backuplearning = chkSetupImBackupLearning.isChecked();
-                                handler.resetImTable(imtype, backuplearning);
-                                if (imtype.equals(LIME.DB_TABLE_CUSTOM)) {
-                                    handler.updateCustomButton();
-                                }
-                                handler.initialImButtons();
-                                dismiss();
-                            });
-                    alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, activity.getResources().getString(R.string.dialog_cancel),
-                            (dialog, which) -> dialog.dismiss());
-                    alertDialog.show();
-                });
-                btnSetupImDialogLoad2.setVisibility(View.GONE);
-                btnSetupImDialogLoad3.setVisibility(View.GONE);
-                btnSetupImDialogLoad4.setVisibility(View.GONE);
-                btnSetupImDialogLoad5.setVisibility(View.GONE);
-                btnSetupImDialogLoad6.setVisibility(View.GONE);
-                btnSetupImDialogCustom.setVisibility(View.GONE);
+                btnSetupImDialogLoad1.setOnClickListener(v -> showConfirmDialog(
+                        getResources().getString(R.string.setup_im_dialog_remove_confirm_message),
+                        () -> {
+                            boolean backuplearning = chkSetupImBackupLearning.isChecked();
+                            handler.resetImTable(imtype, backuplearning);
+                            if (imtype.equals(LIME.DB_TABLE_CUSTOM)) {
+                                handler.updateCustomButton();
+                            }
+                            handler.initialImButtons();
+                            dismiss();
+                        }));
+                hideButtons(btnSetupImDialogLoad2, btnSetupImDialogLoad3, btnSetupImDialogLoad4,
+                        btnSetupImDialogLoad5, btnSetupImDialogLoad6, btnSetupImDialogCustom);
                 chkSetupImBackupLearning.setVisibility(View.VISIBLE);
                 chkSetupImRestoreLearning.setVisibility(View.GONE);
             } else {
@@ -240,135 +239,8 @@ public class SetupImLoadDialog extends DialogFragment {
                 btnSetupImDialogCustom.setEnabled(true);
                 btnSetupImDialogCustom.setOnClickListener(v -> selectMappingFile());
 
-                switch (imtype) {
-                    case LIME.DB_TABLE_PHONETIC:
-                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_phonetic_big5), "15,945"));
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_PHONETIC, LIME.IM_PHONETIC_BIG5));
-                        btnSetupImDialogLoad2.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_phonetic), "34,838"));
-                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_PHONETIC, LIME.IM_PHONETIC_ADV));
-                        btnSetupImDialogLoad3.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_phonetic_adv_big5), "76,122"));
-                        btnSetupImDialogLoad3.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_PHONETIC, LIME.IM_PHONETIC_ADV_BIG5));
-                        btnSetupImDialogLoad4.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_phonetic_adv), "95,029"));
-                        btnSetupImDialogLoad4.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_PHONETIC, LIME.IM_PHONETIC_ADV));
-                        btnSetupImDialogLoad5.setVisibility(View.GONE);
-                        btnSetupImDialogLoad6.setVisibility(View.GONE);
-                        break;
-                    case LIME.DB_TABLE_CJ:
-                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_cj_big5), "13,859"));
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_CJ, LIME.IM_CJ_BIG5));
-                        btnSetupImDialogLoad2.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_cj), "28,596"));
-                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_CJ, LIME.IM_CJ));
-                        btnSetupImDialogLoad3.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_cjk_hk_cj), "30,278"));
-                        btnSetupImDialogLoad3.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_CJ, LIME.IM_CJHK));
-                        btnSetupImDialogLoad4.setVisibility(View.GONE);
-                        btnSetupImDialogLoad5.setVisibility(View.GONE);
-                        btnSetupImDialogLoad6.setVisibility(View.GONE);
-                        break;
-                    case LIME.DB_TABLE_CJ5:
-                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_cj5), "24,004"));
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_CJ5, LIME.IM_CJ5));
-                        btnSetupImDialogLoad2.setVisibility(View.GONE);
-                        btnSetupImDialogLoad3.setVisibility(View.GONE);
-                        btnSetupImDialogLoad4.setVisibility(View.GONE);
-                        btnSetupImDialogLoad5.setVisibility(View.GONE);
-                        btnSetupImDialogLoad6.setVisibility(View.GONE);
-                        break;
-                    case LIME.DB_TABLE_SCJ:
-                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_scj), "74,250"));
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_SCJ, LIME.IM_SCJ));
-                        btnSetupImDialogLoad2.setVisibility(View.GONE);
-                        btnSetupImDialogLoad3.setVisibility(View.GONE);
-                        btnSetupImDialogLoad4.setVisibility(View.GONE);
-                        btnSetupImDialogLoad5.setVisibility(View.GONE);
-                        btnSetupImDialogLoad6.setVisibility(View.GONE);
-                        break;
-                    case LIME.DB_TABLE_ECJ:
-                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_ecj), "13,119"));
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_ECJ, LIME.IM_ECJ));
-                        btnSetupImDialogLoad2.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_cjk_hk_ecj), "27,853"));
-                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_ECJ, LIME.IM_ECJHK));
-                        btnSetupImDialogLoad3.setVisibility(View.GONE);
-                        btnSetupImDialogLoad4.setVisibility(View.GONE);
-                        btnSetupImDialogLoad5.setVisibility(View.GONE);
-                        btnSetupImDialogLoad6.setVisibility(View.GONE);
-                        break;
-                    case LIME.DB_TABLE_DAYI:
-                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.setup_load_download_dayiuni), "27,198"));
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_DAYI, LIME.IM_DAYIUNI));
-                        btnSetupImDialogLoad2.setText(getString(R.string.download_button_with_count, getString(R.string.setup_load_download_dayiunip), "117,766"));
-                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_DAYI, LIME.IM_DAYIUNIP));
-                        btnSetupImDialogLoad3.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_dayi), "18,638"));
-                        btnSetupImDialogLoad3.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_DAYI, LIME.IM_DAYI));
-                        btnSetupImDialogLoad4.setVisibility(View.GONE);
-                        btnSetupImDialogLoad5.setVisibility(View.GONE);
-                        btnSetupImDialogLoad6.setVisibility(View.GONE);
-                        break;
-                    case LIME.DB_TABLE_EZ:
-                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_ez), "14,422"));
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_EZ, LIME.IM_EZ));
-                        btnSetupImDialogLoad2.setVisibility(View.GONE);
-                        btnSetupImDialogLoad3.setVisibility(View.GONE);
-                        btnSetupImDialogLoad4.setVisibility(View.GONE);
-                        btnSetupImDialogLoad5.setVisibility(View.GONE);
-                        btnSetupImDialogLoad6.setVisibility(View.GONE);
-                        break;
-                    case LIME.DB_TABLE_ARRAY:
-                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_array), "31,999"));
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_ARRAY, LIME.IM_ARRAY));
-                        btnSetupImDialogLoad2.setVisibility(View.GONE);
-                        btnSetupImDialogLoad3.setVisibility(View.GONE);
-                        btnSetupImDialogLoad4.setVisibility(View.GONE);
-                        btnSetupImDialogLoad5.setVisibility(View.GONE);
-                        btnSetupImDialogLoad6.setVisibility(View.GONE);
-                        break;
-                    case LIME.DB_TABLE_ARRAY10:
-                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_array10), "31,700"));
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_ARRAY10, LIME.IM_ARRAY10));
-                        btnSetupImDialogLoad2.setVisibility(View.GONE);
-                        btnSetupImDialogLoad3.setVisibility(View.GONE);
-                        btnSetupImDialogLoad4.setVisibility(View.GONE);
-                        btnSetupImDialogLoad5.setVisibility(View.GONE);
-                        btnSetupImDialogLoad6.setVisibility(View.GONE);
-                        break;
-                    case LIME.DB_TABLE_PINYIN:
-                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_pinyin_big5), "34,753"));
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_PINYIN, LIME.IM_PINYIN));
-                        btnSetupImDialogLoad2.setVisibility(View.GONE);
-                        btnSetupImDialogLoad3.setVisibility(View.GONE);
-                        btnSetupImDialogLoad4.setVisibility(View.GONE);
-                        btnSetupImDialogLoad5.setVisibility(View.GONE);
-                        btnSetupImDialogLoad6.setVisibility(View.GONE);
-                        break;
-                    case LIME.DB_TABLE_WB:
-                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_wb), "26,378"));
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_WB, LIME.IM_WB));
-                        btnSetupImDialogLoad2.setVisibility(View.GONE);
-                        btnSetupImDialogLoad3.setVisibility(View.GONE);
-                        btnSetupImDialogLoad4.setVisibility(View.GONE);
-                        btnSetupImDialogLoad5.setVisibility(View.GONE);
-                        btnSetupImDialogLoad6.setVisibility(View.GONE);
-                        break;
-                    case LIME.DB_TABLE_HS:
-                        btnSetupImDialogLoad1.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_hs), "183,659"));
-                        btnSetupImDialogLoad1.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_HS, LIME.IM_HS));
-                        btnSetupImDialogLoad2.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_hs_v1), "50,845"));
-                        btnSetupImDialogLoad2.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_HS, LIME.IM_HS_V1));
-                        btnSetupImDialogLoad3.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_hs_v2), "50,838"));
-                        btnSetupImDialogLoad3.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_HS, LIME.IM_HS_V2));
-                        btnSetupImDialogLoad4.setText(getString(R.string.download_button_with_count, getString(R.string.l3_im_download_from_hs_v3), "64,324"));
-                        btnSetupImDialogLoad4.setOnClickListener(v -> downloadAndLoadIm(LIME.DB_TABLE_HS, LIME.IM_HS_V3));
-                        btnSetupImDialogLoad5.setVisibility(View.GONE);
-                        btnSetupImDialogLoad6.setVisibility(View.GONE);
-                        break;
-                    default:
-                        btnSetupImDialogLoad1.setVisibility(View.GONE);
-                        btnSetupImDialogLoad2.setVisibility(View.GONE);
-                        btnSetupImDialogLoad3.setVisibility(View.GONE);
-                        btnSetupImDialogLoad4.setVisibility(View.GONE);
-                        btnSetupImDialogLoad5.setVisibility(View.GONE);
-                        btnSetupImDialogLoad6.setVisibility(View.GONE);
-                        break;
-                }
+                setupDownloadButtons(btnSetupImDialogLoad1, btnSetupImDialogLoad2, btnSetupImDialogLoad3,
+                        btnSetupImDialogLoad4, btnSetupImDialogLoad5, btnSetupImDialogLoad6);
             }
         }
 
@@ -378,6 +250,33 @@ public class SetupImLoadDialog extends DialogFragment {
         return rootView;
     }
 
+    /**
+     * Handles file selection based on file type and IM type.
+     */
+    private void handleFileSelection(File file) {
+        String fileName = file.getName().toLowerCase();
+        
+        if (imtype.equalsIgnoreCase(LIME.DB_TABLE_RELATED)) {
+            loadDbRelatedMapping(file);
+            dismiss();
+        } else if (isTextFile(fileName)) {
+            loadMapping(file);
+            dismiss();
+        } else if (fileName.endsWith(SUPPORT_FILE_EXT_LIMEDB)) {
+            loadDbMapping(file);
+            dismiss();
+        }
+    }
+    
+    /**
+     * Checks if file is a supported text format (.txt, .lime, .cin).
+     */
+    private boolean isTextFile(String fileName) {
+        return fileName.endsWith(SUPPORT_FILE_EXT_TXT) ||
+               fileName.endsWith(SUPPORT_FILE_EXT_LIME) ||
+               fileName.endsWith(SUPPORT_FILE_EXT_CIN);
+    }
+    
     private void selectMappingFile() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -416,120 +315,184 @@ public class SetupImLoadDialog extends DialogFragment {
     }
 
     public void downloadAndLoadIm(String code, String type) {
-        boolean restorelearning = chkSetupImRestoreLearning.isChecked();
-        if (isNetworkAvailable(activity)) {
-            String url = null;
-            switch (type) {
-                case LIME.IM_ARRAY:
-                    url = LIME.DATABASE_CLOUD_IM_ARRAY;
-                    break;
-                case LIME.IM_ARRAY10:
-                    url = LIME.DATABASE_CLOUD_IM_ARRAY10;
-                    break;
-                case LIME.IM_CJ_BIG5:
-                    url = LIME.DATABASE_CLOUD_IM_CJ_BIG5;
-                    break;
-                case LIME.IM_CJ:
-                    url = LIME.DATABASE_CLOUD_IM_CJ;
-                    break;
-                case LIME.IM_CJHK:
-                    url = LIME.DATABASE_CLOUD_IM_CJHK;
-                    break;
-                case LIME.IM_CJ5:
-                    url = LIME.DATABASE_CLOUD_IM_CJ5;
-                    break;
-                case LIME.IM_DAYI:
-                    url = LIME.DATABASE_CLOUD_IM_DAYI;
-                    break;
-                case LIME.IM_DAYIUNI:
-                    url = LIME.DATABASE_CLOUD_IM_DAYIUNI;
-                    break;
-                case LIME.IM_DAYIUNIP:
-                    url = LIME.DATABASE_CLOUD_IM_DAYIUNIP;
-                    break;
-                case LIME.IM_ECJ:
-                    url = LIME.DATABASE_CLOUD_IM_ECJ;
-                    break;
-                case LIME.IM_ECJHK:
-                    url = LIME.DATABASE_CLOUD_IM_ECJHK;
-                    break;
-                case LIME.IM_EZ:
-                    url = LIME.DATABASE_CLOUD_IM_EZ;
-                    break;
-                case LIME.IM_PHONETIC_BIG5:
-                    url = LIME.DATABASE_CLOUD_IM_PHONETIC_BIG5;
-                    break;
-                case LIME.IM_PHONETIC_ADV_BIG5:
-                    url = LIME.DATABASE_CLOUD_IM_PHONETICCOMPLETE_BIG5;
-                    break;
-                case LIME.IM_PHONETIC:
-                    url = LIME.DATABASE_CLOUD_IM_PHONETIC;
-                    break;
-                case LIME.IM_PHONETIC_ADV:
-                    url = LIME.DATABASE_CLOUD_IM_PHONETICCOMPLETE;
-                    break;
-                case LIME.IM_PINYIN:
-                    url = LIME.DATABASE_CLOUD_IM_PINYIN;
-                    break;
-                case LIME.IM_PINYINGB:
-                    url = LIME.DATABASE_CLOUD_IM_PINYINGB;
-                    break;
-                case LIME.IM_SCJ:
-                    url = LIME.DATABASE_CLOUD_IM_SCJ;
-                    break;
-                case LIME.IM_WB:
-                    url = LIME.DATABASE_CLOUD_IM_WB;
-                    break;
-                case LIME.IM_HS:
-                    url = LIME.DATABASE_CLOUD_IM_HS;
-                    break;
-                case LIME.IM_HS_V1:
-                    url = LIME.DATABASE_CLOUD_IM_HS_V1;
-                    break;
-                case LIME.IM_HS_V2:
-                    url = LIME.DATABASE_CLOUD_IM_HS_V2;
-                    break;
-                case LIME.IM_HS_V3:
-                    url = LIME.DATABASE_CLOUD_IM_HS_V3;
-                    break;
-            }
-
-            Thread loadthread = new Thread(new SetupImLoadRunnable(getActivity(), handler, code, type, url, restorelearning));
-            loadthread.start();
-            dismiss();
-        } else {
+        boolean restoreLearning = chkSetupImRestoreLearning.isChecked();
+        if (!isNetworkAvailable(activity)) {
             showToastMessage(getResources().getString(R.string.l3_tab_initial_error), Toast.LENGTH_LONG);
+            return;
         }
+        
+        String url = IM_TYPE_TO_URL.get(type);
+        if (url == null) {
+            Log.e(TAG, "No URL found for IM type: " + type);
+            showToastMessage(getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
+            return;
+        }
+
+        Thread loadthread = new Thread(new SetupImLoadRunnable(getActivity(), handler, code, type, url, restoreLearning));
+        loadthread.start();
+        dismiss();
     }
 
+    /**
+     * Shows a confirmation dialog with positive and negative buttons.
+     */
+    private void showConfirmDialog(String message, Runnable onConfirm) {
+        AlertDialog alertDialog = new AlertDialog.Builder(activity).create();
+        alertDialog.setMessage(message);
+        alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, 
+                getResources().getString(R.string.dialog_confirm),
+                (dialog, which) -> onConfirm.run());
+        alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, 
+                getResources().getString(R.string.dialog_cancel),
+                (dialog, which) -> dialog.dismiss());
+        alertDialog.show();
+    }
+    
+    /**
+     * Sets up download buttons based on IM type.
+     */
+    private void setupDownloadButtons(Button btn1, Button btn2, Button btn3, Button btn4, Button btn5, Button btn6) {
+        Button[] buttons = {btn1, btn2, btn3, btn4, btn5, btn6};
+        ButtonConfig[] configs = getButtonConfigsForImType(imtype);
+        
+        // Setup visible buttons
+        for (int i = 0; i < configs.length && i < buttons.length; i++) {
+            ButtonConfig config = configs[i];
+            if (config != null) {
+                setupDownloadButton(buttons[i], config.textResId, config.count, config.imType);
+            }
+        }
+        
+        // Hide unused buttons
+        for (int i = configs.length; i < buttons.length; i++) {
+            buttons[i].setVisibility(View.GONE);
+        }
+    }
+    
+    /**
+     * Configuration class for download buttons.
+     */
+    private static class ButtonConfig {
+        final int textResId;
+        final String count;
+        final String imType;
+        
+        ButtonConfig(int textResId, String count, String imType) {
+            this.textResId = textResId;
+            this.count = count;
+            this.imType = imType;
+        }
+    }
+    
+    /**
+     * Gets button configurations for a specific IM type.
+     */
+    private ButtonConfig[] getButtonConfigsForImType(String imType) {
+        switch (imType) {
+            case LIME.DB_TABLE_PHONETIC:
+                return new ButtonConfig[]{
+                    new ButtonConfig(R.string.l3_im_download_from_phonetic_big5, "15,945", LIME.IM_PHONETIC_BIG5),
+                    new ButtonConfig(R.string.l3_im_download_from_phonetic, "34,838", LIME.IM_PHONETIC_ADV),
+                    new ButtonConfig(R.string.l3_im_download_from_phonetic_adv_big5, "76,122", LIME.IM_PHONETIC_ADV_BIG5),
+                    new ButtonConfig(R.string.l3_im_download_from_phonetic_adv, "95,029", LIME.IM_PHONETIC_ADV)
+                };
+            case LIME.DB_TABLE_CJ:
+                return new ButtonConfig[]{
+                    new ButtonConfig(R.string.l3_im_download_from_cj_big5, "13,859", LIME.IM_CJ_BIG5),
+                    new ButtonConfig(R.string.l3_im_download_from_cj, "28,596", LIME.IM_CJ),
+                    new ButtonConfig(R.string.l3_im_download_from_cjk_hk_cj, "30,278", LIME.IM_CJHK)
+                };
+            case LIME.DB_TABLE_CJ5:
+                return new ButtonConfig[]{
+                    new ButtonConfig(R.string.l3_im_download_from_cj5, "24,004", LIME.IM_CJ5)
+                };
+            case LIME.DB_TABLE_SCJ:
+                return new ButtonConfig[]{
+                    new ButtonConfig(R.string.l3_im_download_from_scj, "74,250", LIME.IM_SCJ)
+                };
+            case LIME.DB_TABLE_ECJ:
+                return new ButtonConfig[]{
+                    new ButtonConfig(R.string.l3_im_download_from_ecj, "13,119", LIME.IM_ECJ),
+                    new ButtonConfig(R.string.l3_im_download_from_cjk_hk_ecj, "27,853", LIME.IM_ECJHK)
+                };
+            case LIME.DB_TABLE_DAYI:
+                return new ButtonConfig[]{
+                    new ButtonConfig(R.string.setup_load_download_dayiuni, "27,198", LIME.IM_DAYIUNI),
+                    new ButtonConfig(R.string.setup_load_download_dayiunip, "117,766", LIME.IM_DAYIUNIP),
+                    new ButtonConfig(R.string.l3_im_download_from_dayi, "18,638", LIME.IM_DAYI)
+                };
+            case LIME.DB_TABLE_EZ:
+                return new ButtonConfig[]{
+                    new ButtonConfig(R.string.l3_im_download_from_ez, "14,422", LIME.IM_EZ)
+                };
+            case LIME.DB_TABLE_ARRAY:
+                return new ButtonConfig[]{
+                    new ButtonConfig(R.string.l3_im_download_from_array, "31,999", LIME.IM_ARRAY)
+                };
+            case LIME.DB_TABLE_ARRAY10:
+                return new ButtonConfig[]{
+                    new ButtonConfig(R.string.l3_im_download_from_array10, "31,700", LIME.IM_ARRAY10)
+                };
+            case LIME.DB_TABLE_PINYIN:
+                return new ButtonConfig[]{
+                    new ButtonConfig(R.string.l3_im_download_from_pinyin_big5, "34,753", LIME.IM_PINYIN)
+                };
+            case LIME.DB_TABLE_WB:
+                return new ButtonConfig[]{
+                    new ButtonConfig(R.string.l3_im_download_from_wb, "26,378", LIME.IM_WB)
+                };
+            case LIME.DB_TABLE_HS:
+                return new ButtonConfig[]{
+                    new ButtonConfig(R.string.l3_im_download_from_hs, "183,659", LIME.IM_HS),
+                    new ButtonConfig(R.string.l3_im_download_from_hs_v1, "50,845", LIME.IM_HS_V1),
+                    new ButtonConfig(R.string.l3_im_download_from_hs_v2, "50,838", LIME.IM_HS_V2),
+                    new ButtonConfig(R.string.l3_im_download_from_hs_v3, "64,324", LIME.IM_HS_V3)
+                };
+            default:
+                return new ButtonConfig[0];
+        }
+    }
+    
+    /**
+     * Sets up a download button with text and click listener.
+     */
+    private void setupDownloadButton(Button button, int textResId, String count, String imType) {
+        button.setText(getString(R.string.download_button_with_count, getString(textResId), count));
+        button.setOnClickListener(v -> downloadAndLoadIm(imtype, imType));
+    }
+    
+    /**
+     * Hides multiple buttons at once.
+     */
+    private void hideButtons(Button... buttons) {
+        for (Button button : buttons) {
+            button.setVisibility(View.GONE);
+        }
+    }
+    
     public void showToastMessage(String msg, int length) {
         Toast toast = Toast.makeText(activity, msg, length);
         toast.show();
     }
 
     private File saveUriToFile(Uri uri) {
-        try {
-            InputStream inputStream = activity.getContentResolver().openInputStream(uri);
+        try (InputStream inputStream = activity.getContentResolver().openInputStream(uri)) {
             if (inputStream == null) return null;
 
             String fileName = getFileName(uri);
             File file = new File(activity.getCacheDir(), fileName);
             
-            // Use try-with-resources to ensure streams are closed even if exceptions occur
-            try (OutputStream outputStream = new FileOutputStream(file);
-                 InputStream is = inputStream) {
+            try (OutputStream outputStream = new FileOutputStream(file)) {
                 byte[] buffer = new byte[LIME.BUFFER_SIZE_1KB];
                 int length;
-                while ((length = is.read(buffer)) > 0) {
+                while ((length = inputStream.read(buffer)) > 0) {
                     outputStream.write(buffer, 0, length);
                 }
-            }finally {
-                inputStream.close();
             }
             
             return file;
         } catch (Exception e) {
-            Log.e(TAG, "Error in operation", e);
+            Log.e(TAG, "Error saving file from URI", e);
             return null;
         }
     }
