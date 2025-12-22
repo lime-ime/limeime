@@ -145,8 +145,8 @@ All critical security vulnerabilities and resource management issues have been f
      - ✅ Deprecated methods (`add()`, `insert()`, `remove()`, `update()`) marked as `@Deprecated`
      - ✅ Test suite refactored to use new parameterized methods
    - **Remaining Low-Risk Locations**:
-     - `LimeDB.java:4193` - FTS query with string concatenation (`word` parameter in MATCH clause)
-       - **Risk**: Low - `word` comes from user input but is used in FTS MATCH which has limited injection surface
+     - `LimeDB.java:4193` - FTS query with string concatenation (`record` parameter in MATCH clause)
+       - **Risk**: Low - `record` comes from user input but is used in FTS MATCH which has limited injection surface
        - **Mitigation**: FTS MATCH syntax is restrictive, but could be improved with parameterized query
      - `LimeDB.java:4614` - DELETE with string concatenation (`code` parameter)
        - **Risk**: Low - `code` is validated against internal constants before use

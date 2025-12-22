@@ -38,8 +38,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import net.toload.main.hd.R;
+import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.Keyboard;
-import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.List;
 
@@ -50,7 +50,7 @@ public class ManageImKeyboardDialog extends DialogFragment implements
     private List<Keyboard> keyboardlist;
 	private ListView listSelectKeyboard;
 
-	private LimeDB datasource;
+	private SearchServer searchServer;
 	private String code;
 	private ManageImHandler handler;
 
@@ -108,7 +108,7 @@ public class ManageImKeyboardDialog extends DialogFragment implements
         getDialog().getWindow().setTitle(getResources().getString(R.string.manage_select_keyboard));
 
         Activity activity = getActivity();
-		datasource = new LimeDB(activity);
+		searchServer = new SearchServer(activity);
 
         View view = inflater.inflate(R.layout.fragment_dialog_keyboard, container, false);
 
@@ -124,7 +124,7 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 		String[] listitems;
 
 			//datasource.open();
-			keyboardlist = datasource.getKeyboard();
+			keyboardlist = searchServer.getKeyboard();
 			//datasource.close();
 
 			listitems = new String[keyboardlist.size()];
@@ -149,7 +149,7 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
 		Keyboard keyboard = keyboardlist.get(position);
-		datasource.setImKeyboard(this.code, keyboard);
+		searchServer.setIMKeyboard(this.code, keyboard);
 
 		//try {
 			//datasource.open();

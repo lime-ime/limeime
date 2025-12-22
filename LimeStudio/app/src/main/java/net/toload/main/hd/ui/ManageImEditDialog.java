@@ -44,7 +44,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.Word;
+import net.toload.main.hd.data.Record;
 
 public class ManageImEditDialog extends DialogFragment {
 
@@ -56,7 +56,7 @@ public class ManageImEditDialog extends DialogFragment {
 
 	private ManageImHandler handler;
 
-	private Word word;
+	private Record record;
 
     private TextView edtManageImWordScore;
 
@@ -79,8 +79,8 @@ public class ManageImEditDialog extends DialogFragment {
 		return btd;
 	}
 	
-	public void setHandler(ManageImHandler handler, Word word){
-		this.word = word;
+	public void setHandler(ManageImHandler handler, Record record){
+		this.record = record;
 		this.handler = handler;
 	}
 
@@ -153,7 +153,7 @@ public class ManageImEditDialog extends DialogFragment {
             //alertDialog.setIcon(R.drawable.);
             alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
                     (dialog, which) -> {
-                        handler.removeWord(word.getId());
+                        handler.removeRecord(record.getId());
                         dialog.dismiss();
                         cancelDialog();
                     });
@@ -174,7 +174,7 @@ public class ManageImEditDialog extends DialogFragment {
                         if(!code.isEmpty() && !text.isEmpty()) {
 
                             int value = Integer.parseInt(edtManageImWordScore.getText().toString());
-                            handler.updateWord(word.getId(), code, value, text);
+                            handler.updateRecord(record.getId(), code, value, text);
                             handler.updateRelated(code);
                             dialog.dismiss();
                             cancelDialog();
@@ -217,9 +217,9 @@ public class ManageImEditDialog extends DialogFragment {
 		edtManageImWordCode = view.findViewById(R.id.edtManageImWordCode);
 		edtManageImWordWord = view.findViewById(R.id.edtManageImWordWord);
 
-		edtManageImWordCode.setText(word.getCode());
-		edtManageImWordScore.setText(String.valueOf(word.getScore()));
-		edtManageImWordWord.setText(word.getWord());
+		edtManageImWordCode.setText(record.getCode());
+		edtManageImWordScore.setText(String.valueOf(record.getScore()));
+		edtManageImWordWord.setText(record.getWord());
 
 		/*txtManageImWordCode3r = (TextView) view.findViewById(R.id.txtManageImWordCode3r);
 

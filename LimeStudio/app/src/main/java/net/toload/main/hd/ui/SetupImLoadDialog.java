@@ -38,7 +38,6 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.provider.OpenableColumns;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -53,12 +52,11 @@ import android.widget.CheckBox;
 import android.widget.Toast;
 
 import net.toload.main.hd.DBServer;
+import net.toload.main.hd.data.Record;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.Word;
-import net.toload.main.hd.global.LIMEProgressListener;
 import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.limedb.LimeDB;
+import net.toload.main.hd.SearchServer;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -115,7 +113,7 @@ public class SetupImLoadDialog extends DialogFragment {
 
     private String imtype = null;
 
-    private LimeDB datasource;
+    private SearchServer searchServer;
     private DBServer DBSrv = null;
     private Activity activity;
 
@@ -174,7 +172,7 @@ public class SetupImLoadDialog extends DialogFragment {
         assert getArguments() != null;
         imtype = getArguments().getString(IM_TYPE);
         activity = getActivity();
-        datasource = new LimeDB(activity);
+        searchServer = new SearchServer(activity);
         DBSrv = DBServer.getInstance(activity);
 
         View rootView = inflater.inflate(R.layout.fragment_dialog_im, container, false);
@@ -198,7 +196,7 @@ public class SetupImLoadDialog extends DialogFragment {
             btnSetupImDialogCustom.setOnClickListener(v -> showConfirmDialog(
                     getResources().getString(R.string.setup_im_import_related_default_confirm),
                     () -> {
-                        loadDefaultRelated();
+                        importDefaultRelated();
                         handler.initialImButtons();
                         dismiss();
                     }));
@@ -211,7 +209,7 @@ public class SetupImLoadDialog extends DialogFragment {
             chkSetupImBackupLearning.setVisibility(View.GONE);
             chkSetupImRestoreLearning.setVisibility(View.GONE);
         } else {
-            int imcount = datasource.count(imtype);
+            int imcount = searchServer.countRecords(imtype);
             if (imcount > 0) {
                 assert getDialog() != null;
                 getDialog().getWindow().setTitle(getResources().getString(R.string.setup_im_dialog_title_remove));
@@ -219,8 +217,8 @@ public class SetupImLoadDialog extends DialogFragment {
                 btnSetupImDialogLoad1.setOnClickListener(v -> showConfirmDialog(
                         getResources().getString(R.string.setup_im_dialog_remove_confirm_message),
                         () -> {
-                            boolean backuplearning = chkSetupImBackupLearning.isChecked();
-                            handler.resetImTable(imtype, backuplearning);
+                            boolean backupUserRecords = chkSetupImBackupLearning.isChecked();
+                            handler.resetImTable(imtype, backupUserRecords);
                             if (imtype.equals(LIME.DB_TABLE_CUSTOM)) {
                                 handler.updateCustomButton();
                             }
@@ -257,13 +255,14 @@ public class SetupImLoadDialog extends DialogFragment {
         String fileName = file.getName().toLowerCase();
         
         if (imtype.equalsIgnoreCase(LIME.DB_TABLE_RELATED)) {
-            loadDbRelatedMapping(file);
+            importDbRelated(file);
             dismiss();
         } else if (isTextFile(fileName)) {
-            loadMapping(file);
+            boolean restoreUserRecords = chkSetupImRestoreLearning.isChecked();
+            handler.importTxtTable(file, imtype, restoreUserRecords);
             dismiss();
         } else if (fileName.endsWith(SUPPORT_FILE_EXT_LIMEDB)) {
-            loadDbMapping(file);
+            importDb(file);
             dismiss();
         }
     }
@@ -519,15 +518,50 @@ public class SetupImLoadDialog extends DialogFragment {
         return result;
     }
 
-    public void loadDefaultRelated() {
+    /**
+     * Imports the default related database from raw resources.
+     * 
+     * <p>This method imports the default related database file from raw resources.
+     * The default related database is always zipped, so this method handles the
+     * unzip operation before importing.
+     * 
+     * <p>This method:
+     * <ul>
+     *   <li>Copies the zipped database file from raw resources to a temporary location</li>
+     *   <li>Delegates to DBServer.importZippedDbRelated() to handle unzip and import</li>
+     * </ul>
+     */
+    public void importDefaultRelated() {
         try {
             File relateDBFile = LIMEUtilities.isFileExist(activity.getDatabasePath("related.db").getAbsolutePath());
             if (relateDBFile != null && !relateDBFile.delete()) Log.w(TAG,"Failed to delete related.db");
             File relatedDbPath = LIMEUtilities.isFileNotExist(activity.getDatabasePath("related.db").getAbsolutePath());
-            if (relatedDbPath != null) LIMEUtilities.copyRAWFile(activity.getResources().openRawResource(R.raw.lime), relatedDbPath);
-            DBSrv.importBackupRelatedDb(relatedDbPath);
-            assert relatedDbPath != null;
-            relatedDbPath.deleteOnExit();
+            if (relatedDbPath != null) {
+                // Copy zipped database file from raw resources
+                LIMEUtilities.copyRAWFile(activity.getResources().openRawResource(R.raw.lime), relatedDbPath);
+                // Import using DBServer method that handles unzip
+                DBSrv.importZippedDbRelated(relatedDbPath);
+                relatedDbPath.deleteOnExit();
+                showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error in operation", e);
+            showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
+        }
+    }
+
+    /**
+     * Imports a compressed related database file (.limedb).
+     * 
+     * <p>This method delegates to DBServer.importZippedDbRelated() which handles
+     * the unzip operation and database import. File operations are centralized
+     * in DBServer to maintain architecture compliance.
+     * 
+     * @param unit The compressed related database file (.limedb) to import
+     */
+    public void importDbRelated(File unit) {
+        try {
+            DBSrv.importZippedDbRelated(unit);
             showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
         } catch (Exception e) {
             Log.e(TAG, "Error in operation", e);
@@ -535,100 +569,23 @@ public class SetupImLoadDialog extends DialogFragment {
         }
     }
 
-    public void loadDbRelatedMapping(File unit) {
+    /**
+     * Imports a compressed database file (.limedb) into the specified IM table.
+     * 
+     * <p>This method delegates to DBServer.importZippedDb() which handles the
+     * unzip operation and database import. File operations are centralized in
+     * DBServer to maintain architecture compliance.
+     * 
+     * @param unit The compressed database file (.limedb) to import
+     */
+    public void importDb(File unit) {
         try {
-            List<String> unzipPaths = LIMEUtilities.unzip(unit.getAbsolutePath(), unit.getParent(), true);
-            if (unzipPaths.size() != 1) {
-                showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
-            } else {
-                File fileToImport = new File(unzipPaths.get(0));
-                DBSrv.importBackupRelatedDb(fileToImport);
-                fileToImport.deleteOnExit();
-                showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
-            }
+            DBSrv.importZippedDb(unit, imtype);
+            showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
         } catch (Exception e) {
             Log.e(TAG, "Error in operation", e);
             showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
         }
     }
 
-    public void loadDbMapping(File unit) {
-        try {
-            List<String> unzipPaths = LIMEUtilities.unzip(unit.getAbsolutePath(), unit.getParent(), true);
-            if (unzipPaths.size() != 1) {
-                showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
-            } else {
-                File fileToImport = new File(unzipPaths.get(0));
-                DBSrv.importBackupDb(fileToImport.getAbsoluteFile(), imtype);
-                fileToImport.deleteOnExit();
-                showToastMessage(activity.getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_LONG);
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error in operation", e);
-            showToastMessage(activity.getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
-        }
-    }
-
-    public void loadMapping(File unit) {
-        handler.showProgress(false, activity.getResources().getString(R.string.setup_im_dialog_custom));
-        try {
-            DBSrv.loadMapping(unit.getAbsolutePath(), imtype, new LIMEProgressListener() {
-                @Override
-                public void onProgress(long percentageDone, long var2, String status) {
-                    if (status != null && !status.isEmpty()) handler.updateProgress(status);
-                    handler.updateProgress((int) percentageDone);
-                }
-
-                @Override
-                public void onStatusUpdate(String status) {
-                    if (status != null && !status.isEmpty()) handler.updateProgress(status);
-                }
-
-                @Override
-                public void onError(int code, String source) {
-                    if (source != null && !source.isEmpty()) showToastMessage(source, Toast.LENGTH_LONG);
-                }
-
-                @Override
-                public void onPostExecute(boolean success, String status, int code) {
-                    boolean restorelearning = chkSetupImRestoreLearning.isChecked();
-                    if (restorelearning) {
-                        handler.updateProgress(activity.getResources().getString(R.string.setup_im_restore_learning_data));
-                        handler.updateProgress(0);
-                        boolean check = datasource.checkBackuptable(imtype);
-                        handler.updateProgress(5);
-                        if (check) {
-                            String backupTableName = imtype + "_user";
-                            int userRecordsCount = datasource.countMapping(backupTableName);
-                            handler.updateProgress(10);
-                            if (userRecordsCount == 0) return;
-                            try {
-                                Cursor cursorbackup = datasource.rawQuery("select * from " + backupTableName);
-                                List<Word> backuplist = Word.getList(cursorbackup);
-                                cursorbackup.close();
-                                int progressvalue = 0;
-                                int recordcount = 0;
-                                int recordtotal = backuplist.size();
-                                for (Word w : backuplist) {
-                                    recordcount++;
-                                    datasource.addOrUpdateMappingRecord(imtype, w.getCode(), w.getWord(), w.getScore());
-                                    int progress = (int) ((double) recordcount / recordtotal * 90 + 10);
-                                    if (progress != progressvalue) {
-                                        progressvalue = progress;
-                                        handler.updateProgress(progressvalue);
-                                    }
-                                }
-                            } catch (Exception e) {
-                                Log.e(TAG, "Error in operation", e);
-                            }
-                            handler.updateProgress(LIME.PROGRESS_COMPLETE_PERCENT);
-                        }
-                    }
-                    handler.cancelProgress();
-                }
-            });
-        } catch (RemoteException e) {
-            Log.e(TAG, "Error in operation", e);
-        }
-    }
 }

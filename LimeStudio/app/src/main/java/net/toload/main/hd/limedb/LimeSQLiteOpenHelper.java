@@ -97,7 +97,7 @@ public abstract class LimeSQLiteOpenHelper {
         // Copy DB file from Raw Dir to Database Dir
         File dbPath = mContext.getDatabasePath(mName);
         File destdir = dbPath.getParentFile();
-        if (destdir != null && !destdir.mkdirs()){
+        if (destdir != null && !destdir.exists() && !destdir.mkdirs()){
             Log.e(TAG, "Error in creating database directory");
         }
 

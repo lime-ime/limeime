@@ -33,7 +33,7 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.Word;
+import net.toload.main.hd.data.Record;
 
 import java.util.List;
 
@@ -42,12 +42,12 @@ import java.util.List;
  */
 public class ManageImAdapter extends BaseAdapter {
 
-    private List<Word> wordlist;
+    private List<Record> wordlist;
 
     private final LayoutInflater mInflater;
 
     public ManageImAdapter(Activity activity,
-                             List<Word> wordlist) {
+                             List<Record> wordlist) {
         this.wordlist = wordlist;
         this.mInflater = LayoutInflater.from(activity);
     }
@@ -62,11 +62,11 @@ public class ManageImAdapter extends BaseAdapter {
         return wordlist.get(position);
     }
 
-    public List<Word> getList(){
+    public List<Record> getList(){
         return wordlist;
     }
 
-    public void setList(List<Word> list){
+    public void setList(List<Record> list){
         wordlist = list;
     }
 
@@ -89,7 +89,7 @@ public class ManageImAdapter extends BaseAdapter {
             holder = (ViewHolder)convertView.getTag();
         }
 
-        Word w = wordlist.get(position);
+        Record w = wordlist.get(position);
         if(w != null){
         	/*holder.chkItemDatetWorde.setText(hwresult.getGenerateDateTWorde());
         	holder.chkItemDatetWorde.setOnCheckedChangeListener(new OnCheckedChangeListener(){

@@ -29,7 +29,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
 
@@ -147,7 +146,7 @@ public class LIMEPreferenceHC extends AppCompatActivity {
 		private final boolean DEBUG = false;
 		private final String TAG = "LIMEPreferenceHC";
 		private Context ctx = null;
-		private DBServer DBSrv = null;
+		private SearchServer SearchSrv = null;
 		private LIMEPreferenceManager mLIMEPref = null;
 		@Override
 		public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -158,7 +157,7 @@ public class LIMEPreferenceHC extends AppCompatActivity {
 				ctx = requireActivity().getApplicationContext();
 			}
 			mLIMEPref = new LIMEPreferenceManager(ctx);
-			DBSrv = DBServer.getInstance(ctx);
+			SearchSrv = new SearchServer(ctx);
 		}
 
 		@Override
@@ -189,48 +188,48 @@ public class LIMEPreferenceHC extends AppCompatActivity {
 				String selectedPhoneticKeyboardType = mLIMEPref.getPhoneticKeyboardType();
 				//PreferenceManager.getDefaultSharedPreferences(ctx).getString("phonetic_keyboard_type", "");
 				try {
-					// Ensure DBServer instance is initialized
-					if (DBSrv == null) {
+					// Ensure SearchServer instance is initialized
+					if (SearchSrv == null) {
 						if (ctx == null) {
 							ctx = requireActivity().getApplicationContext();
 						}
-						DBSrv = DBServer.getInstance(ctx);
+						SearchSrv = new SearchServer(ctx);
 					}
 
-					KeyboardObj kobj = DBSrv.getKeyboardObj(LIME.DB_TABLE_PHONETIC);
+					KeyboardObj kobj = SearchSrv.getKeyboardObj(LIME.DB_TABLE_PHONETIC);
 
                     switch (selectedPhoneticKeyboardType) {
                         case LIME.IM_PHONETIC_STANDARD:
-                            kobj = DBSrv.getKeyboardObj("phonetic");
+                            kobj = SearchSrv.getKeyboardObj("phonetic");
                             break;
                         case LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN:
-                            kobj = DBSrv.getKeyboardObj("phoneticet41");
+                            kobj = SearchSrv.getKeyboardObj("phoneticet41");
                             break;
                         case LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN26:
                             if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
-                                kobj = DBSrv.getKeyboardObj("limenum");
+                                kobj = SearchSrv.getKeyboardObj("limenum");
                             } else {
-                                kobj = DBSrv.getKeyboardObj("lime");
+                                kobj = SearchSrv.getKeyboardObj("lime");
                             }
                             break;
                         case "eten26_symbol":
-                            kobj = DBSrv.getKeyboardObj("et26");
+                            kobj = SearchSrv.getKeyboardObj("et26");
                             break;
                         case LIME.IM_PHONETIC_KEYBOARD_HSU:  //Jeremy '12,7,6 Add HSU english keyboard support
                             if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
-                                kobj = DBSrv.getKeyboardObj("limenum");
+                                kobj = SearchSrv.getKeyboardObj("limenum");
                             } else {
-                                kobj = DBSrv.getKeyboardObj("lime");
+                                kobj = SearchSrv.getKeyboardObj("lime");
                             }
                             break;
                         case "hsu_symbol":
-                            kobj = DBSrv.getKeyboardObj(LIME.IM_PHONETIC_KEYBOARD_HSU);
+                            kobj = SearchSrv.getKeyboardObj(LIME.IM_PHONETIC_KEYBOARD_HSU);
                             break;
                     }
-                    DBSrv.setIMKeyboard("phonetic", kobj.getDescription(), kobj.getCode());
+                    SearchSrv.setIMKeyboard("phonetic", kobj.getDescription(), kobj.getCode());
 					if(DEBUG) Log.i(TAG, "onSharedPreferenceChanged() PhoneticIMInfo.kyeboard:" + 
-							DBSrv.getImInfo("phonetic", "keyboard"));	
-				} catch (RemoteException e) {
+							SearchSrv.getImInfo("phonetic", "keyboard"));	
+				} catch (Exception e) {
 					Log.i(TAG, "onSharedPreferenceChanged(), WriteIMinfo for selected phonetic keyboard failed!!");
 					Log.e(TAG, "Error in operation", e);
 				}

@@ -36,6 +36,7 @@ import android.util.Pair;
 import android.util.SparseArray;
 import android.widget.Toast;
 
+import net.toload.main.hd.data.Record;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.ChineseSymbol;
@@ -45,14 +46,19 @@ import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.data.Related;
-import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;
 import net.toload.main.hd.global.LIMEUtilities;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -382,8 +388,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     /**
      * Sets the filename for the mapping file to be loaded into the database.
      * 
-     * <p>This method is called by DBServer before loading a mapping file.
-     * The file will be processed by {@link #loadFileV2(String, LIMEProgressListener)}.
+     * <p>This method is called by DBServer before importing a text mapping file.
+     * The file will be processed by {@link #importTxtTable(String, LIMEProgressListener)}.
      * 
      * @param filename The file to load, or null to clear the filename
      */
@@ -460,12 +466,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * 
      * @param tableName The table name to validate
      * @return true if table name is valid and safe to use, false otherwise
-     */
-    /**
-     * Validates if a table name is in the whitelist of allowed tables.
-     * 
-     * @param tableName The table name to validate
-     * @return true if the table name is valid, false otherwise
      */
     public boolean isValidTableName(String tableName) {
         if (tableName == null || tableName.isEmpty()) {
@@ -704,13 +704,45 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (databaseOnHold) {   //mapping loading in progress, database is not available for query
             if (DEBUG)
                 Log.i(TAG, "checkDBConnection() : mapping loading ");
-            if (Looper.myLooper() == null)
-                Looper.prepare();
-            Toast.makeText(mContext, mContext.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT).show();
-            Looper.loop();
-            return true;
-        } else
-            return !openDBConnection(false);
+            
+            // Only show Toast and loop on main thread (UI thread)
+            // In test environments or background threads, don't block indefinitely
+            Looper mainLooper = Looper.getMainLooper();
+            if (mainLooper != null && Looper.myLooper() == mainLooper) {
+                // We're on the main thread, safe to show Toast and loop
+                Toast.makeText(mContext, mContext.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT).show();
+                Looper.loop();
+                // After loop returns, check connection again
+                return !openDBConnection(false);
+            } else {
+                // We're on a background thread or in test environment
+                // Don't block indefinitely - wait with timeout instead
+                if (DEBUG)
+                    Log.w(TAG, "checkDBConnection() : database on hold but not on main thread, waiting with timeout");
+                
+                // Wait up to 5 seconds for database to become available
+                long startTime = System.currentTimeMillis();
+                long timeoutMs = 5000; // 5 second timeout
+                
+                while (databaseOnHold && (System.currentTimeMillis() - startTime) < timeoutMs) {
+                    try {
+                        Thread.sleep(100); // Check every 100ms
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+                
+                if (databaseOnHold) {
+                    Log.w(TAG, "checkDBConnection() : database still on hold after timeout, returning error");
+                    return true; // Return error (database not available)
+                }
+                // Database became available, fall through to check connection
+            }
+        }
+        
+        // Check database connection (either databaseOnHold was false, or it became false after waiting)
+        return !openDBConnection(false);
 
 
     }
@@ -743,7 +775,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             }
         }
 
-        if (countMapping(table) > 0)
+        if (countRecords(table, null, null) > 0)
             db.delete(table, null, null);
 
 
@@ -756,39 +788,119 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
     /**
-     * Counts the total number of records in the specified table.
+     * Counts records in a table with optional filtering.
      * 
-     * <p>This method performs a simple SELECT COUNT(*) query on the table.
-     * Returns 0 if the database is not ready, the table doesn't exist,
-     * or if there are no records.
+     * <p>This is the unified method for counting records. It supports optional
+     * WHERE clause filtering and uses parameterized queries for security.
+     * 
+     * <p>This method replaces the need for multiple count methods:
+     * <ul>
+     *   <li>Use with null whereClause for all records</li>
+     *   <li>Use with WHERE clause for filtered records</li>
+     * </ul>
      * 
      * @param table The table name to count records from
-     * @return The number of records in the table, or 0 if error or empty
+     * @param whereClause Optional WHERE clause (null for all records). Use "?" placeholders for values.
+     * @param whereArgs Optional WHERE arguments for parameterized queries (null if whereClause is null)
+     * @return The number of matching records, or 0 if error or empty
      */
-    public int countMapping(String table) {
-        if (DEBUG)
-            Log.i(TAG, "countMapping() on table:" + table);
-
+    public int countRecords(String table, String whereClause, String[] whereArgs) {
         if (checkDBConnection()) return 0;
 
         try {
-
             // Validate table name before using in query
             if (!isValidTableName(table)) {
-                Log.e(TAG, "countMapping(): Invalid table name: " + table);
+                Log.e(TAG, "countRecords(): Invalid table name: " + table);
                 return 0;
             }
-            Cursor cursor = db.rawQuery("SELECT * FROM " + table, null);
+
+            StringBuilder queryBuilder = new StringBuilder("SELECT COUNT(*) as count FROM ");
+            queryBuilder.append(table);
+            
+            if (whereClause != null && !whereClause.isEmpty()) {
+                queryBuilder.append(" WHERE ").append(whereClause);
+            }
+
+            Cursor cursor = db.rawQuery(queryBuilder.toString(), whereArgs);
             if (cursor == null) return 0;
-            int total = cursor.getCount();
+            
+            int total = 0;
+            if (cursor.moveToFirst()) {
+                total = getCursorInt(cursor, LIME.DB_TOTAL_COUNT);
+            }
             cursor.close();
-            if (DEBUG)
-                Log.i(TAG, "countMapping" + "Table," + table + ": " + total);
+            
+            if (DEBUG) {
+                Log.i(TAG, "countRecords() Table: " + table + ", Count: " + total);
+            }
             return total;
         } catch (Exception e) {
-            Log.e(TAG, "Error in database operation", e);
+            Log.e(TAG, "countRecords(): Error in database operation", e);
         }
         return 0;
+    }
+
+
+    /**
+     * Resets a mapping table by deleting all records and clearing the cache.
+     * 
+     * <p>This method safely deletes all records from the specified table and then
+     * resets the SearchServer cache to ensure consistency. This is typically
+     * used when reloading mapping data.
+     * 
+     * <p>The method performs the following operations:
+     * <ul>
+     *   <li>Validates the table name to prevent SQL injection</li>
+     *   <li>Checks database connection status</li>
+     *   <li>Deletes all records from the specified table</li>
+     *   <li>Resets the SearchServer cache to ensure consistency</li>
+     * </ul>
+     * 
+     * <p>If the table name is invalid or the database connection is unavailable,
+     * the method will log an error and return without performing any operations.
+     * 
+     * @param table The table name to reset (must be valid according to {@link #isValidTableName(String)})
+     * @throws IllegalArgumentException if table name is null or empty
+     */
+    public void resetMapping(String table) {
+        if (table == null || table.isEmpty()) {
+            Log.e(TAG, "resetMapping(): Table name cannot be null or empty");
+            throw new IllegalArgumentException("Table name cannot be null or empty");
+        }
+        
+        if (!isValidTableName(table)) {
+            Log.e(TAG, "resetMapping(): Invalid table name: " + table);
+            return;
+        }
+        
+        if (checkDBConnection()) {
+            Log.e(TAG, "resetMapping(): Database connection unavailable");
+            return;
+        }
+        
+        if (DEBUG) {
+            Log.i(TAG, "resetMapping() on " + table);
+        }
+        
+        try {
+            deleteAll(table);
+            
+            // Reset cache in SearchServer to ensure consistency
+            net.toload.main.hd.SearchServer.resetCache(true);
+        } catch (Exception e) {
+            Log.e(TAG, "resetMapping(): Error resetting mapping table: " + table, e);
+        }
+    }
+
+    /**
+     * Resets the SearchServer cache.
+     * 
+     * <p>This method clears the cache maintained by SearchServer to ensure
+     * that subsequent queries reflect the current database state. This should
+     * be called after any database modifications that affect search results.
+     */
+    public void resetCache() {
+        net.toload.main.hd.SearchServer.resetCache(true);
     }
 
     /**
@@ -2761,21 +2873,105 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     /**
+     * Prepares a backup of database tables to a target database file.
+     * 
+     * <p>This is the unified method for preparing backups. It can backup:
+     * <ul>
+     *   <li>One or more mapping tables (with IM information)</li>
+     *   <li>Related phrase table (optional)</li>
+     * </ul>
+     * 
+     * <p>The database connection is held during the operation to prevent concurrent access.
+     * 
+     * @param targetFile The target database file to write backup to
+     * @param tableNames List of table names to backup (null or empty for none)
+     * @param includeRelated If true, also backup the related phrase table
+     */
+    public void prepareBackup(File targetFile, List<String> tableNames, boolean includeRelated) {
+        if (checkDBConnection()) return;
+        if (targetFile == null) {
+            Log.e(TAG, "prepareBackup(): targetFile is null");
+            return;
+        }
+
+        // Validate all table names
+        if (tableNames != null) {
+            for (String tableName : tableNames) {
+                if (!isValidTableName(tableName)) {
+                    Log.e(TAG, "prepareBackup(): Invalid table name: " + tableName);
+                    return;
+                }
+            }
+        }
+
+        // Ensure parent directory exists before attaching database
+        File parentDir = targetFile.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            if (!parentDir.mkdirs()) {
+                Log.e(TAG, "prepareBackup(): Failed to create parent directory: " + parentDir.getAbsolutePath());
+                return;
+            }
+        }
+
+        holdDBConnection();
+        try {
+            db.execSQL("attach database '" + targetFile.getAbsolutePath() + "' as sourceDB");
+
+            // Backup mapping tables
+            if (tableNames != null && !tableNames.isEmpty()) {
+                for (String tableName : tableNames) {
+                    // Copy table data to sourceDB.custom (backup format)
+                    db.execSQL("insert into sourceDB." + LIME.DB_TABLE_CUSTOM + " select * from " + tableName);
+                }
+                
+                // Copy IM information for all tables
+                if (tableNames.size() == 1) {
+                    // Single table: copy specific IM info
+                    String tableName = tableNames.get(0);
+                    db.execSQL("insert into sourceDB." + LIME.DB_TABLE_IM + " select * from " + LIME.DB_TABLE_IM + " WHERE " + LIME.DB_IM_COLUMN_CODE + "='" + tableName + "'");
+                    db.execSQL("update sourceDB." + LIME.DB_TABLE_IM + " set " + LIME.DB_IM_COLUMN_CODE + "='" + tableName + "'");
+                } else {
+                    // Multiple tables: copy all IM info for these tables
+                    StringBuilder whereClause = new StringBuilder(LIME.DB_IM_COLUMN_CODE + " IN (");
+                    for (int i = 0; i < tableNames.size(); i++) {
+                        if (i > 0) whereClause.append(",");
+                        whereClause.append("'").append(tableNames.get(i)).append("'");
+                    }
+                    whereClause.append(")");
+                    db.execSQL("insert into sourceDB." + LIME.DB_TABLE_IM + " select * from " + LIME.DB_TABLE_IM + " WHERE " + whereClause);
+                }
+            }
+
+            // Backup related table if requested
+            if (includeRelated) {
+                db.execSQL("insert into sourceDB." + LIME.DB_TABLE_RELATED + " select * from " + LIME.DB_TABLE_RELATED);
+            }
+
+            db.execSQL("detach database sourceDB");
+        } catch (Exception e) {
+            Log.e(TAG, "prepareBackup(): Error during backup", e);
+            try {
+                db.execSQL("detach database sourceDB");
+            } catch (Exception e2) {
+                // Ignore detach errors
+            }
+        } finally {
+            unHoldDBConnection();
+        }
+    }
+
+    /**
      * Prepares a backup of the related phrase database.
      * 
      * <p>This method attaches the source database file and copies all related
      * phrase records into it. The database connection is held during the operation.
      * 
      * @param sourcedbfile The path to the backup database file
+     * <p>This is a convenience wrapper for {@link #prepareBackup(File, List, boolean)}
+     * with includeRelated=true.
      */
     public void prepareBackupRelatedDb(String sourcedbfile) {
-        if (checkDBConnection()) return;
-
-        holdDBConnection();
-        db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
-        db.execSQL("insert into sourceDB." + LIME.DB_TABLE_RELATED + " select * from " + LIME.DB_TABLE_RELATED);
-        db.execSQL("detach database sourceDB");
-        unHoldDBConnection();
+        prepareBackup(new File(sourcedbfile), null, true);
     }
 
     /**
@@ -2791,17 +2987,119 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * 
      * @param sourcedbfile The path to the backup database file
      * @param sourcetable The table name to backup
+     * <p>This is a convenience wrapper for {@link #prepareBackup(File, List, boolean)}
+     * with includeRelated=false.
      */
     public void prepareBackupDb(String sourcedbfile, String sourcetable) {
+        List<String> tableNames = new ArrayList<>();
+        tableNames.add(sourcetable);
+        prepareBackup(new File(sourcedbfile), tableNames, false);
+    }
+
+    /**
+     * Imports database tables from a backup database file.
+     * 
+     * <p>This is the unified method for importing database backups. It can import:
+     * <ul>
+     *   <li>One or more mapping tables (from sourceDB.custom for backup format, or sourceDB.{tableName} for direct format)</li>
+     *   <li>Related phrase table (optional)</li>
+     * </ul>
+     * 
+     * <p>The method first tries to import from sourceDB.custom (backup format), then falls back
+     * to sourceDB.{tableName} (direct format) if custom table doesn't exist.
+     * 
+     * <p>The database connection is held during the operation to prevent concurrent access.
+     * 
+     * @param sourceFile The backup database file to import from
+     * @param tableNames List of table names to import (null or empty for none)
+     * @param includeRelated If true, also import the related phrase table
+     * @param overwriteExisting If true, delete existing data before importing
+     */
+    public void importDb(File sourceFile, List<String> tableNames, boolean includeRelated, boolean overwriteExisting) {
         if (checkDBConnection()) return;
+        if (sourceFile == null || !sourceFile.exists()) {
+            Log.e(TAG, "importDb(): sourceFile is null or doesn't exist");
+            return;
+        }
+
+        // Validate all table names
+        if (tableNames != null) {
+            for (String tableName : tableNames) {
+                if (!isValidTableName(tableName)) {
+                    Log.e(TAG, "importDb(): Invalid table name: " + tableName);
+                    return;
+                }
+            }
+        }
+
+        // Delete existing data if overwrite requested
+        if (overwriteExisting) {
+            if (tableNames != null) {
+                for (String tableName : tableNames) {
+                    deleteAll(tableName);
+                }
+                // Delete IM info for these tables
+                if (tableNames.size() == 1) {
+                    String tableName = tableNames.get(0);
+                    db.execSQL("delete from " + LIME.DB_TABLE_IM + " where " + LIME.DB_IM_COLUMN_CODE + "='" + tableName + "'");
+                } else if (tableNames.size() > 1) {
+                    StringBuilder whereClause = new StringBuilder(LIME.DB_IM_COLUMN_CODE + " IN (");
+                    for (int i = 0; i < tableNames.size(); i++) {
+                        if (i > 0) whereClause.append(",");
+                        whereClause.append("'").append(tableNames.get(i)).append("'");
+                    }
+                    whereClause.append(")");
+                    db.execSQL("delete from " + LIME.DB_TABLE_IM + " where " + whereClause);
+                }
+            }
+            if (includeRelated) {
+                deleteAll(LIME.DB_TABLE_RELATED);
+            }
+        }
 
         holdDBConnection();
-        db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
-        db.execSQL("insert into sourceDB." + LIME.DB_TABLE_CUSTOM + " select * from " + sourcetable);
-        db.execSQL("insert into sourceDB." + LIME.DB_TABLE_IM + " select * from " + LIME.DB_TABLE_IM + " WHERE code='" + sourcetable + "'");
-        db.execSQL("update sourceDB." + LIME.DB_TABLE_IM + " set " + LIME.DB_IM_COLUMN_CODE + "='" + sourcetable + "'");
-        db.execSQL("detach database sourceDB");
-        unHoldDBConnection();
+        try {
+            db.execSQL("attach database '" + sourceFile.getAbsolutePath() + "' as sourceDB");
+
+            // Import mapping tables
+            if (tableNames != null && !tableNames.isEmpty()) {
+                for (String tableName : tableNames) {
+                    try {
+                        // Try backup format first (sourceDB.custom)
+                        db.execSQL("insert into " + tableName + " select * from sourceDB." + LIME.DB_TABLE_CUSTOM);
+                    } catch (Exception e) {
+                        // Fall back to direct format (sourceDB.{tableName})
+                        Log.d(TAG, "importDb(): sourceDB.custom not found, trying sourceDB." + tableName);
+                        db.execSQL("insert into " + tableName + " select * from sourceDB." + tableName);
+                    }
+                }
+
+                // Import and update IM information
+                // For single table, update all IM records to use that table's code
+                // For multiple tables, we can't update all to one code, so just import as-is
+                if (tableNames.size() == 1) {
+                    String tableName = tableNames.get(0);
+                    db.execSQL("update sourceDB." + LIME.DB_TABLE_IM + " set " + LIME.DB_IM_COLUMN_CODE + "='" + tableName + "'");
+                }
+                db.execSQL("insert into " + LIME.DB_TABLE_IM + " select * from sourceDB." + LIME.DB_TABLE_IM);
+            }
+
+            // Import related table if requested
+            if (includeRelated) {
+                db.execSQL("insert into " + LIME.DB_TABLE_RELATED + " select * from sourceDB." + LIME.DB_TABLE_RELATED);
+            }
+
+            db.execSQL("detach database sourceDB");
+        } catch (Exception e) {
+            Log.e(TAG, "importDb(): Error during import", e);
+            try {
+                db.execSQL("detach database sourceDB");
+            } catch (Exception e2) {
+                // Ignore detach errors
+            }
+        } finally {
+            unHoldDBConnection();
+        }
     }
 
     /**
@@ -2818,80 +3116,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * <p>The database connection is held during the operation.
      * 
      * @param sourcedbfile The backup database file to import from
+     * <p>This is a convenience wrapper for {@link #importDb(File, List, boolean, boolean)}
+     * with includeRelated=true and overwriteExisting=true.
      */
-    public void importBackupRelatedDb(File sourcedbfile) {
-        if (checkDBConnection()) return;
-
-        // Reset IM Info
-        deleteAll(LIME.DB_TABLE_RELATED);
-
-        holdDBConnection();
-
-        // Load data from DB File
-        db.execSQL("attach database '" + sourcedbfile + "' as sourceDB");
-        db.execSQL("insert into " + LIME.DB_TABLE_RELATED + " select * from sourceDB." + LIME.DB_TABLE_RELATED);
-        db.execSQL("detach database sourceDB");
-        unHoldDBConnection();
+    public void importDbRelated(File sourcedbfile) {
+        importDb(sourcedbfile, null, true, true);
     }
 
-    /**
-     * Imports mapping data from a backup database file.
-     * 
-     * <p>This method:
-     * <ul>
-     *   <li>Deletes all existing records from the IM table</li>
-     *   <li>Deletes IM information for the IM type</li>
-     *   <li>Attaches the backup database</li>
-     *   <li>Copies custom table records</li>
-     *   <li>Copies and updates IM information</li>
-     *   <li>Detaches the backup database</li>
-     * </ul>
-     * 
-     * <p>The database connection is held during the operation.
-     * 
-     * @param sourceDBFile The backup database file to import from
-     * @param imType The IM type to import (e.g., "custom")
-     */
-    public void importBackupDb(File sourceDBFile, String imType) {
-        if (checkDBConnection()) return;
-
-        // Reset IM Info
-        deleteAll(imType);
-        db.execSQL("delete from " + LIME.DB_TABLE_IM + " where " + LIME.DB_IM_COLUMN_CODE + "='" + imType + "'");
-
-        holdDBConnection();
-
-        // Load data from DB File
-        db.execSQL("attach database '" + sourceDBFile + "' as sourceDB");
-        db.execSQL("insert into " + imType + " select * from sourceDB." + LIME.DB_TABLE_CUSTOM);
-        db.execSQL("update sourceDB." + LIME.DB_TABLE_IM + " set " + LIME.DB_IM_COLUMN_CODE + "='" + imType + "'");
-        db.execSQL("insert into " + LIME.DB_TABLE_IM + " select * from sourceDB." + LIME.DB_TABLE_IM);
-        db.execSQL("detach database sourceDB");
-        unHoldDBConnection();
-    }
-
-    /**
-     * Imports database data from another database file.
-     * 
-     * <p>This method imports both the mapping table and IM information from
-     * the source database. The database connection is held during the operation.
-     * 
-     * @param sourceDBFile The path to the source database file
-     * @param imType The IM type to import
-     */
-    public void importDb(String sourceDBFile, String imType) {
-        if (checkDBConnection()) return;
-
-        deleteAll(imType);
-        holdDBConnection();
-        db.execSQL("attach database '" + sourceDBFile + "' as sourceDB");
-        db.execSQL("insert into " + imType + " select * from sourceDB." + imType);
-        db.execSQL("insert into " + LIME.DB_TABLE_IM + " select * from sourceDB." + LIME.DB_TABLE_IM);
-        db.execSQL("detach database sourceDB");
-        unHoldDBConnection();
-
-        countMapping(imType);
-    }
 
     /**
      * Backs up user-learned records to a backup table.
@@ -2916,15 +3147,29 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         if (cursor != null && cursor.getCount() > 0) {
             cursor.close();
-            try {
-                db.execSQL("drop table " + backupTableName);
-            } catch (Exception e) {
-                Log.e(TAG, "Error removing table " + backupTableName, e);
+            
+            // Check if backup table exists before trying to drop it
+            Cursor tableCheck = db.rawQuery(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                new String[]{backupTableName});
+            boolean tableExists = tableCheck != null && tableCheck.getCount() > 0;
+            if (tableCheck != null) {
+                tableCheck.close();
             }
+            
+            // Only drop table if it exists
+            if (tableExists) {
+                try {
+                    db.execSQL("drop table " + backupTableName);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error removing table " + backupTableName, e);
+                }
+            }
+            
             db.execSQL("create table " + backupTableName + " as " + selectString);
         }
 
-        countMapping(backupTableName);
+        countRecords(backupTableName, null, null);
     }
 
 
@@ -2938,7 +3183,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * @param table The base table name to check backup for
      * @return true if backup table exists and has records, false otherwise
      */
-    public boolean checkBackuptable(String table) {
+    public boolean checkBackupTable(String table) {
         if (checkDBConnection()) return false;
         try {
             String backupTableName = table + "_user";
@@ -2959,11 +3204,59 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         }
     }
 
+    /**
+     * Drops a backup table if it exists.
+     * 
+     * <p>This method safely drops a backup table (table + "_user") if it exists.
+     * Used for cleanup operations, particularly in tests.
+     * 
+     * @param table The base table name (e.g., "custom", "cj")
+     * @return true if table was dropped or didn't exist, false if error
+     */
+    public boolean dropBackupTable(String table) {
+        if (checkDBConnection()) return false;
+        
+        if (table == null || table.isEmpty()) {
+            Log.e(TAG, "dropBackupTable(): Table name cannot be null or empty");
+            return false;
+        }
+        
+        if (!isValidTableName(table)) {
+            Log.e(TAG, "dropBackupTable(): Invalid table name: " + table);
+            return false;
+        }
+        
+        String backupTableName = table + "_user";
+        
+        try {
+            // Check if backup table exists before trying to drop it
+            Cursor tableCheck = db.rawQuery(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                new String[]{backupTableName});
+            boolean tableExists = tableCheck != null && tableCheck.getCount() > 0;
+            if (tableCheck != null) {
+                tableCheck.close();
+            }
+            
+            // Only drop table if it exists
+            if (tableExists) {
+                db.execSQL("DROP TABLE IF EXISTS " + backupTableName);
+                if (DEBUG) {
+                    Log.i(TAG, "dropBackupTable(): Dropped backup table: " + backupTableName);
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "dropBackupTable(): Error dropping backup table: " + backupTableName, e);
+            return false;
+        }
+    }
+
 
     /**
-     * Loads a mapping file into the database table.
+     * Imports a text mapping file into the database table.
      * 
-     * <p>This method performs a complete import of a mapping file:
+     * <p>This method performs a complete import of a text mapping file (.lime, .cin, or delimited text):
      * <ul>
      *   <li>Reads the file line by line</li>
      *   <li>Identifies the delimiter (comma, tab, pipe, or space)</li>
@@ -2975,27 +3268,28 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      *   <li>Configures keyboard layout for the IM</li>
      * </ul>
      * 
-     * <p>The loading operation runs in a background thread and reports progress
+     * <p>The import operation runs in a background thread and reports progress
      * through the provided LIMEProgressListener. The database connection is held
-     * during loading to prevent concurrent access.
+     * during import to prevent concurrent access.
      * 
      * <p>Supported file formats:
      * <ul>
      *   <li>Text files with delimiters: comma, tab, pipe (|), or space</li>
      *   <li>.cin format files (CIN input method format)</li>
+     *   <li>.lime format files</li>
      * </ul>
      * 
      * <p>File format: code[delimiter]word[delimiter]score[delimiter]basescore
      * 
-     * @param table The table name to load data into (must be valid)
+     * @param table The table name to import data into (must be valid)
      * @param progressListener Listener for progress updates and completion notification.
      *                        Can be null if progress reporting is not needed.
      * @throws IllegalStateException if filename is not set via setFilename()
      */
-    public synchronized void loadFileV2(final String table, final LIMEProgressListener progressListener) {
+    public synchronized void importTxtTable(final String table, final LIMEProgressListener progressListener) {
 
         if (DEBUG)
-            Log.i(TAG, "loadFileV2()");
+            Log.i(TAG, "importTxtTable()");
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (checkDBConnection()) {
             if (progressListener != null) {
@@ -3025,11 +3319,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 // Reset Database Table		
                 //SQLiteDatabase db = getSqliteDb(false);
                 if (DEBUG)
-                    Log.i(TAG, "loadFileV2 loadingMappingThread starting...");
+                    Log.i(TAG, "importTxtTable loadingMappingThread starting...");
 
 
                 try {
-                    if (countMapping(table) > 0) db.delete(table, null, null);
+                    if (countRecords(table, null, null) > 0) db.delete(table, null, null);
 
                     if (table.equals(LIME.DB_TABLE_PHONETIC)) {
                         if (DEBUG) Log.i(TAG, "loadfile(), build code3r index.");
@@ -3045,10 +3339,11 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                 resetImInfo(table);
                 boolean isCinFormat = false;
+                boolean isRelatedTable = table.equals(LIME.DB_TABLE_RELATED);
 
                 // Check if filename is null
                 if (filename == null) {
-                    Log.e(TAG, "loadFileV2: filename is null");
+                    Log.e(TAG, "importTxtTable: filename is null");
                     if (progressListener != null) {
                         progressListener.onError(-1, "Source file is not specified.");
                     }
@@ -3097,6 +3392,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     }
                 }
 
+                // Check if file exists before proceeding
+                if (filename == null || !filename.exists()) {
+                    Log.e(TAG, "importTxtTable(): File does not exist: " + (filename != null ? filename.getAbsolutePath() : "null"));
+                    if (progressListener != null) {
+                        progressListener.onError(-1, "Source file does not exist.");
+                    }
+                    // Don't hold database connection if file doesn't exist
+                    return;
+                }
 
                 //HashSet<String> codeList = new HashSet<>();
 
@@ -3207,6 +3511,98 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         //else { line.length() }
 
                         try {
+                            // Handle related table import format: pword|cword|basescore|userscore
+                            if (isRelatedTable && delimiter_symbol.equals("|")) {
+                                try {
+                                    String[] parts = line.split("\\|");
+                                    if (parts.length >= 4) {
+                                        String pword = parts[0].trim();
+                                        String cword = parts[1].trim();
+                                        int basescore = 0;
+                                        int userscore = 0;
+                                        
+                                        try {
+                                            basescore = Integer.parseInt(parts[2].trim());
+                                        } catch (NumberFormatException e) {
+                                            if (DEBUG) Log.e(TAG, "Error parsing basescore from line: " + line, e);
+                                        }
+                                        
+                                        try {
+                                            userscore = Integer.parseInt(parts[3].trim());
+                                        } catch (NumberFormatException e) {
+                                            if (DEBUG) Log.e(TAG, "Error parsing userscore from line: " + line, e);
+                                        }
+                                        
+                                        if (!pword.isEmpty() && !cword.isEmpty()) {
+                                            ContentValues cv = new ContentValues();
+                                            cv.put(LIME.DB_RELATED_COLUMN_PWORD, pword);
+                                            cv.put(LIME.DB_RELATED_COLUMN_CWORD, cword);
+                                            cv.put(LIME.DB_RELATED_COLUMN_BASESCORE, basescore);
+                                            cv.put(LIME.DB_RELATED_COLUMN_USERSCORE, userscore);
+                                            long insertResult = db.insert(table, null, cv);
+                                            if (insertResult != -1) {
+                                                count++;
+                                            } else {
+                                                if (DEBUG) Log.w(TAG, "Failed to insert related record: " + pword + "|" + cword);
+                                            }
+                                        }
+                                        continue; // Skip regular parsing for related table
+                                    } else if (parts.length == 3) {
+                                        // Legacy format: pword+cword|basescore|userscore (backward compatibility)
+                                        String pwordCword = parts[0].trim();
+                                        int basescore = 0;
+                                        int userscore = 0;
+                                        
+                                        try {
+                                            basescore = Integer.parseInt(parts[1].trim());
+                                        } catch (NumberFormatException e) {
+                                            if (DEBUG) Log.e(TAG, "Error parsing basescore from line: " + line, e);
+                                        }
+                                        
+                                        try {
+                                            userscore = Integer.parseInt(parts[2].trim());
+                                        } catch (NumberFormatException e) {
+                                            if (DEBUG) Log.e(TAG, "Error parsing userscore from line: " + line, e);
+                                        }
+                                        
+                                        // Try to split pword+cword: heuristic - try first 1-2 characters as pword
+                                        // This is not perfect but handles common cases
+                                        String pword = "";
+                                        String cword = "";
+                                        
+                                        if (!pwordCword.isEmpty()) {
+                                            // Try 1 character first
+                                            pword = pwordCword.substring(0, Math.min(1, pwordCword.length()));
+                                            if (pwordCword.length() > 1) {
+                                                cword = pwordCword.substring(1);
+                                            }
+                                            // If cword is empty or too short, try 2 characters for pword
+                                            if (cword.isEmpty() && pwordCword.length() > 2) {
+                                                pword = pwordCword.substring(0, Math.min(2, pwordCword.length()));
+                                                cword = pwordCword.substring(2);
+                                            }
+                                        }
+                                        
+                                        if (!pword.isEmpty() && !cword.isEmpty()) {
+                                            ContentValues cv = new ContentValues();
+                                            cv.put(LIME.DB_RELATED_COLUMN_PWORD, pword);
+                                            cv.put(LIME.DB_RELATED_COLUMN_CWORD, cword);
+                                            cv.put(LIME.DB_RELATED_COLUMN_BASESCORE, basescore);
+                                            cv.put(LIME.DB_RELATED_COLUMN_USERSCORE, userscore);
+                                            long insertResult = db.insert(table, null, cv);
+                                            if (insertResult != -1) {
+                                                count++;
+                                            } else {
+                                                if (DEBUG) Log.w(TAG, "Failed to insert related record (legacy format): " + pwordCword);
+                                            }
+                                        }
+                                        continue; // Skip regular parsing for related table
+                                    }
+                                } catch (Exception e) {
+                                    if (DEBUG) Log.e(TAG, "Error parsing related table line: " + line, e);
+                                    continue;
+                                }
+                            }
 
                             int source_score = 0, source_basescore = 0;
                             String code = null, word = null;
@@ -3397,7 +3793,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         if (!imkeynames.toString().isEmpty()) setImInfo(table, "imkeynames", imkeynames.toString());
                     }
                     if (DEBUG)
-                        Log.i(TAG, "loadFileV2():update IM info: imkeys:" + imkeys + " imkeynames:" + imkeynames);
+                        Log.i(TAG, "importTxtTable():update IM info: imkeys:" + imkeys + " imkeynames:" + imkeynames);
 
 
                     // '11,5,23 by Jeremy: Preset keyboard info. by tablename
@@ -3499,12 +3895,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * delimiter is used: comma, tab, pipe (|), or space. It counts occurrences
      * of each delimiter and returns the most common one.
      * 
-     * <p>This is used during file loading to correctly parse the file format.
+     * <p>This is used internally during file loading to correctly parse the file format.
      * 
      * @param src List of sample lines from the file (typically first 100 lines)
      * @return The identified delimiter: ",", "\t", "|", or " " (space)
      */
-    public String identifyDelimiter(List<String> src) {
+    private String identifyDelimiter(List<String> src) {
 
         int commaCount = 0;
         int tabCount = 0;
@@ -3600,42 +3996,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
 
-    /**
-     * Gets the ID of the record with the highest score for a given code.
-     * 
-     * <p>This method is used to find which record should store the related word list
-     * for a code. The record with the highest score (and basescore as tiebreaker)
-     * is chosen.
-     * 
-     * @param db The database to query
-     * @param table The table name to search
-     * @param code The code to find the highest score record for
-     * @return The _id of the highest score record, or -1 if not found
-     */
-    public int getHighestScoreIDOnDB(SQLiteDatabase db, String table, String code) {
-        int ID = -1;
-        if (code != null && !code.trim().isEmpty()) {
-            // Process the escape characters of query
-            code = code.replaceAll("'", "''");
-            Cursor cursor = db.query(table, null, FIELD_CODE + " = '"
-                            + code + "'", null, null, null,
-                    FIELD_SCORE + " DESC, " + FIELD_BASESCORE + " DESC", null);
-
-            if (cursor != null) {
-                if (cursor.moveToFirst()) {
-                    //int idColumn = cursor.getColumnIndex(FIELD_ID);
-                    ID =getCursorInt(cursor,FIELD_ID);
-                }
-
-                //cursor.deactivate();
-                cursor.close();
-            }
-
-
-        }
-        return ID;
-
-    }
 
     /**
      * Checks if a related phrase record exists in the user dictionary.
@@ -3846,8 +4206,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         try {
             //SQLiteDatabase db = this.getSqliteDb(true);
             Cursor cursor = db.query("im", null, LIME.DB_IM_COLUMN_CODE + " = '" + code + "'", null, null, null, "code ASC", null);
-            result = Im.getList(this, cursor);
-            cursor.close();
+            result = Im.getList(cursor);
         } catch (Exception e) {
             Log.e(TAG, "getIm(): Cannot get IM", e);
         }
@@ -4336,7 +4695,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * <p>Transactions improve performance for multiple database operations
      * by batching them together.
      */
-    public void beginTransaction() {
+    private void beginTransaction() {
         if (db != null && db.isOpen()) {
             db.beginTransaction();
         }
@@ -4348,28 +4707,139 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * <p>Marks the transaction as successful and commits all changes made
      * since {@link #beginTransaction()} was called.
      */
-    public void endTransaction() {
+    private void endTransaction() {
         if (db != null && db.isOpen()) {
             db.setTransactionSuccessful();
             db.endTransaction();
         }
     }
 
+    
     /**
-     * Gets all records from a table.
+     * Exports records from a table to a text file.
      * 
-     * <p>Returns a Cursor containing all rows from the specified table.
-     * The caller is responsible for closing the cursor.
+     * <p>This method retrieves all records from the specified table and writes them
+     * to a text file. The format depends on the table type:
+     * <ul>
+     *   <li><b>Regular mapping tables:</b> .lime format
+     *     <ul>
+     *       <li>Header lines with IM info (@version@, @selkey@, @endkey@, @spacestyle@) if imInfo provided</li>
+     *       <li>Data lines: code|word|score|basescore</li>
+     *     </ul>
+     *   </li>
+   *   <li><b>Related table ({@link LIME#DB_TABLE_RELATED}):</b> .related format
+   *     <ul>
+   *       <li>Data lines: pword|cword|basescore|userscore</li>
+   *       <li>Legacy format (backward compatible): pword+cword|basescore|userscore</li>
+   *     </ul>
+   *   </li>
+     * </ul>
      * 
-     * @param table The table name to query
-     * @return Cursor with all records, or null if database error
+     * <p>The file is written in UTF-8 encoding. If the target file exists, it will be deleted first.
+     * 
+     * @param table The table name to export (must be valid, use {@link LIME#DB_TABLE_RELATED} for related phrases)
+     * @param targetFile The target file to write to
+     * @param imInfo List of Im objects containing IM configuration info (can be null, only used for regular tables)
+     * @return true if export successful, false otherwise
      */
-    public Cursor list(String table) {
-        Cursor cursor = null;
-        if (db != null && db.isOpen()) {
-            cursor = db.query(table, null, null, null, null, null, null);
+    public boolean exportTxtTable(String table, File targetFile, List<Im> imInfo) {
+        if (checkDBConnection()) return false;
+        if (targetFile == null) {
+            Log.e(TAG, "exportTxtTable(): targetFile is null");
+            return false;
         }
-        return cursor;
+        
+        // Check if exporting related table
+        boolean isRelatedTable = LIME.DB_TABLE_RELATED.equals(table);
+        
+        // For regular tables, validate table name
+        if (!isRelatedTable && !isValidTableName(table)) {
+            Log.e(TAG, "exportTxtTable(): Invalid table name: " + table);
+            return false;
+        }
+        
+        try {
+            // Delete existing file if it exists
+            if (targetFile.exists() && !targetFile.delete()) {
+                Log.e(TAG, "exportTxtTable(): Error deleting existing file");
+                return false;
+            }
+            
+            // Write to file
+            Writer writer = new OutputStreamWriter(new FileOutputStream(targetFile), StandardCharsets.UTF_8);
+
+            try (BufferedWriter fout = new BufferedWriter(writer)) {
+                if (isRelatedTable) {
+                    // Export related table format: pword|cword|basescore|userscore
+                    List<Related> relatedList = getRelated(null, 0, 0);
+                    if (relatedList.isEmpty()) {
+                        Log.w(TAG, "exportTxtTable(): No related records to export");
+                        return false;
+                    }
+
+                    // Write records
+                    for (Related w : relatedList) {
+                        // Skip records with null or empty pword/cword to match import validation
+                        // Import requires both pword and cword to be non-empty (see importTxtTable line 3488)
+                        if (w.getPword() == null || w.getCword() == null ||
+                                w.getPword().isEmpty() || w.getCword().isEmpty()) {
+                            continue;
+                        }
+                        String s = w.getPword() + "|" + w.getCword() + "|" + w.getBasescore() + "|" + w.getUserscore();
+                        fout.write(s);
+                        fout.newLine();
+                    }
+                } else {
+                    // Export regular table format: code|word|score|basescore
+                    List<Record> records = getRecords(table, null, false, 0, 0);
+                    if (records.isEmpty()) {
+                        Log.w(TAG, "exportTxtTable(): No records to export");
+                        return false;
+                    }
+
+                    // Write IM info headers if provided
+                    if (imInfo != null && !imInfo.isEmpty()) {
+                        for (Im i : imInfo) {
+                            if (i.getTitle().equals(LIME.IM_TYPE_NAME)) {
+                                String s = "@version@|" + i.getDesc();
+                                fout.write(s);
+                                fout.newLine();
+                            }
+                            if (i.getTitle().equals(LIME.IM_TYPE_SELKEY)) {
+                                String s = "@selkey@|" + i.getDesc();
+                                fout.write(s);
+                                fout.newLine();
+                            }
+                            if (i.getTitle().equals(LIME.IM_TYPE_ENDKEY)) {
+                                String s = "@endkey@|" + i.getDesc();
+                                fout.write(s);
+                                fout.newLine();
+                            }
+                            if (i.getTitle().equals(LIME.IM_TYPE_SPACESTYLE)) {
+                                String s = "@spacestyle@|" + i.getDesc();
+                                fout.write(s);
+                                fout.newLine();
+                            }
+                        }
+                    }
+
+                    // Write records
+                    for (Record w : records) {
+                        if (w.getWord() == null || w.getWord().equals("null")) {
+                            continue;
+                        }
+                        String s = w.getCode() + "|" + w.getWord() + "|" + w.getScore() + "|" + w.getBasescore();
+                        fout.write(s);
+                        fout.newLine();
+                    }
+                }
+            }
+            
+            return true;
+        } catch (IOException e) {
+            Log.e(TAG, "exportTxtTable(): Error writing to file", e);
+            return false;
+        }
     }
 
     /**
@@ -4512,7 +4982,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 null, null, null, LIME.DB_IM_COLUMN_DESC + " ASC");
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
-            Im r = Im.get(this, cursor);
+            Im r = Im.get(cursor);
             result.add(r);
             cursor.moveToNext();
         }
@@ -4522,7 +4992,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     /**
-     * Loads word records from a table with optional filtering and pagination.
+     * Get records from a table with optional filtering and pagination.
      * 
      * <p>This method supports two search modes:
      * <ul>
@@ -4537,11 +5007,17 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * @param searchByCode If true, search by code; if false, search by word
      * @param maximum Maximum number of records to return (0 for no limit)
      * @param offset Offset for pagination (0 for first page)
-     * @return List of Word objects, or empty list if database error
+     * @return List of Record objects, or empty list if database error
      */
-    public List<Word> loadWord(String code, String query, boolean searchByCode, int maximum, int offset) {
-        List<Word> result = new ArrayList<>();
+    public List<Record> getRecords(String code, String query, boolean searchByCode, int maximum, int offset) {
+        List<Record> result = new ArrayList<>();
         if (checkDBConnection()) return result;
+
+        // Validate table name before using in query to prevent SQL injection
+        if (!isValidTableName(code)) {
+            Log.e(TAG, "getRecords(): Invalid table name: " + code);
+            return result;
+        }
 
         Cursor cursor;
         if (query != null && !query.isEmpty()) {
@@ -4573,7 +5049,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
-            Word r = Word.get(cursor);
+            Record r = Record.get(cursor);
             result.add(r);
             cursor.moveToNext();
         }
@@ -4583,15 +5059,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     /**
-     * Gets a single word record by ID.
+     * Gets a single record by ID.
      * 
      * @param code The table name
      * @param id The record ID (_id)
-     * @return Word object, or null if not found or database error
+     * @return Record object, or null if not found or database error
      */
-    public Word getWord(String code, long id) {
+    public Record getRecord(String code, long id) {
         if (checkDBConnection()) return null;
-        Word w;
+        Record record = null;
         Cursor cursor;
 
         String query = LIME.DB_COLUMN_ID + " = '" + id + "' ";
@@ -4600,10 +5076,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 null, query,
                 null, null, null, null);
 
-        cursor.moveToFirst();
-        w = Word.get(cursor);
-        cursor.close();
-        return w;
+        if (cursor != null && cursor.moveToFirst()) {
+            record = Record.get(cursor);
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
+        return record;
     }
 
     /**
@@ -4622,60 +5101,20 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 " AND " + LIME.DB_IM_COLUMN_TITLE + " = '" + LIME.IM_TYPE_KEYBOARD + "'";
         db.execSQL(removeSQL);
 
-        Im im = new Im();
-        im.setCode(code);
-        im.setKeyboard(keyboard.getCode());
-        im.setTitle(LIME.IM_TYPE_KEYBOARD);
-        im.setDesc(keyboard.getDesc());
-
-        String addsql = Im.getInsertQuery(im);
-        db.execSQL(addsql);
+        // Use ContentValues instead of raw SQL for better security
+        ContentValues cv = new ContentValues();
+        cv.put(LIME.DB_IM_COLUMN_CODE, code);
+        cv.put(LIME.DB_IM_COLUMN_TITLE, LIME.IM_TYPE_KEYBOARD);
+        cv.put(LIME.DB_IM_COLUMN_DESC, keyboard.getDesc());
+        cv.put(LIME.DB_IM_COLUMN_KEYBOARD, keyboard.getCode());
+        cv.put(LIME.DB_IM_COLUMN_DISABLE, String.valueOf(false));
+        db.insert(LIME.DB_TABLE_IM, null, cv);
 
     }
 
-    /**
-     * Checks if a related phrase exists and returns its ID.
-     * 
-     * <p>This method queries the related table to find a record matching
-     * the parent and child word combination. Returns the record ID if found.
-     * 
-     * @param pword The parent word (must not be null or empty)
-     * @param cword The child word (must not be null or empty)
-     * @return The record ID if found, 0 if not found, or 9999999 if database error
-     */
-    public int hasRelated(String pword, String cword) {
-
-        try {
-            Cursor cursor;
-
-            String query = "";
-            if (pword != null && !pword.isEmpty() && cword != null && !cword.isEmpty()) {
-                query = LIME.DB_RELATED_COLUMN_PWORD + " = '" + pword + "' AND ";
-                query += LIME.DB_RELATED_COLUMN_CWORD + " = '" + cword + "'";
-            }
-
-            cursor = db.query(LIME.DB_TABLE_RELATED,
-                    null, query,
-                    null, null, null, null);
-
-            int id = 0;
-            cursor.moveToFirst();
-            while (!cursor.isAfterLast()) {
-                Related r = Related.get(cursor);
-                id = r.getId();
-                cursor.moveToNext();
-            }
-            cursor.close();
-
-            return id;
-        }catch(SQLiteException sqe){
-            Log.e(TAG, "Error getting related ID", sqe);
-            return 9999999;
-        }
-    }
 
     /**
-     * Loads related phrase records for a given parent word.
+     * Gets related phrase records for a given parent word.
      * 
      * <p>This method searches for related phrases where the parent word matches
      * the given pword. If pword length > 1, it also searches for phrases matching
@@ -4688,7 +5127,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * @param offset Offset for pagination (0 for first page)
      * @return List of Related objects, or empty list if database error
      */
-    public List<Related> loadRelated(String pword, int maximum, int offset) {
+    public List<Related> getRelated(String pword, int maximum, int offset) {
 
         List<Related> result = new ArrayList<>();
         if (checkDBConnection()) return result;
@@ -4762,118 +5201,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return w;
     }
 
-    /**
-     * Counts the total number of records in a table.
-     * 
-     * <p>Performs a SELECT COUNT(*) query on the specified table.
-     * 
-     * @param table The table name to count
-     * @return The number of records, or 0 if database error
-     */
-    public int count(String table) {
 
-        if (checkDBConnection()) return 0;
-        int total;
-
-
-        Cursor cursor;
-        String query = "SELECT COUNT(*) as count FROM " + table;
-        cursor = db.rawQuery(query, null);
-        cursor.moveToFirst();
-        total = getCursorInt(cursor, LIME.DB_TOTAL_COUNT);
-        cursor.close();
-
-        return total;
-
-    }
-
-    /**
-     * Gets the count of word records matching a query.
-     * 
-     * <p>Similar to {@link #loadWord(String, String, boolean, int, int)} but
-     * returns only the count instead of the actual records. Useful for
-     * pagination calculations.
-     * 
-     * @param table The table name to query
-     * @param curQuery The search query, or null/empty for all records
-     * @param searchByCode If true, search by code; if false, search by word
-     * @return The count of matching records, or 0 if database error
-     */
-    public int getWordSize(String table, String curQuery, boolean searchByCode) {
-
-        if (checkDBConnection()) return 0;
-
-        int total;
-
-        Cursor cursor;
-
-        StringBuilder queryBuilder = new StringBuilder("SELECT COUNT(*) as count FROM ");
-        queryBuilder.append(table).append(" WHERE ");
-
-        if (curQuery != null && !curQuery.isEmpty()) {
-            if (searchByCode) {
-                queryBuilder.append(LIME.DB_COLUMN_CODE).append(" LIKE '").append(curQuery).append("%' AND ifnull(").append(LIME.DB_COLUMN_WORD).append(", '') <> ''");
-            } else {
-                queryBuilder.append(LIME.DB_COLUMN_WORD).append(" LIKE '%").append(curQuery).append("%' AND ifnull(").append(LIME.DB_COLUMN_WORD).append(", '') <> ''");
-            }
-        } else {
-            queryBuilder.append(" ifnull(").append(LIME.DB_COLUMN_WORD).append(", '') <> ''");
-        }
-        String query = queryBuilder.toString();
-
-        cursor = db.rawQuery(query, null);
-
-        cursor.moveToFirst();
-        total = getCursorInt(cursor, LIME.DB_TOTAL_COUNT);
-        cursor.close();
-        return total;
-
-    }
-
-
-    /**
-     * Gets the count of related phrase records for a parent word.
-     * 
-     * <p>Similar to {@link #loadRelated(String, int, int)} but returns only
-     * the count. Useful for pagination calculations.
-     * 
-     * @param pword The parent word to count related phrases for
-     * @return The count of related phrases, or -1 if database error
-     */
-    public int getRelatedSize(String pword) {
-
-        if (checkDBConnection()) return -1;
-        int total;
-
-        Cursor cursor;
-
-        StringBuilder queryBuilder = new StringBuilder("SELECT COUNT(*) as count FROM ");
-        queryBuilder.append(LIME.DB_TABLE_RELATED).append(" WHERE ");
-
-        String cword = "";
-        if (pword != null && !pword.isEmpty()) {
-            cword = pword.substring(1);
-            pword = pword.substring(0, 1);
-        }
-
-        if (pword != null && !pword.isEmpty()) {
-            queryBuilder.append(LIME.DB_RELATED_COLUMN_PWORD).append(" = '").append(pword).append("' AND ");
-        }
-        if (!cword.isEmpty()) {
-            queryBuilder.append(LIME.DB_RELATED_COLUMN_CWORD).append(" LIKE '").append(cword).append("%' AND ");
-        }
-
-        queryBuilder.append("ifnull(").append(LIME.DB_RELATED_COLUMN_CWORD).append(", '') <> ''");
-        String query = queryBuilder.toString();
-
-        cursor = db.rawQuery(query, null);
-
-        cursor.moveToFirst();
-        total = getCursorInt(cursor, LIME.DB_TOTAL_COUNT);
-        cursor.close();
-
-        return total;
-    }
 
 
     /**
@@ -4907,6 +5235,149 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return databaseOnHold;
     }
 
+
+    /**
+     * Gets all records from a backup table.
+     * 
+     * <p>This method retrieves all records from a backup table (typically named
+     * "{imtype}_user"). The backup table name must end with "_user" and the base
+     * table name must be valid.
+     * 
+     * <p>This method is used when restoring user preferences from backup tables
+     * during database import operations.
+     * 
+     * @param backupTableName The backup table name (must end with "_user", e.g., "cj_user")
+     * @return Cursor with all records from the backup table, or null if invalid or error
+     */
+    public Cursor getBackupTableRecords(String backupTableName) {
+        if (checkDBConnection()) return null;
+        
+        // Validate backup table name format
+        if (backupTableName == null || !backupTableName.endsWith("_user")) {
+            Log.e(TAG, "getBackupTableRecords(): Invalid backup table name format: " + backupTableName);
+            return null;
+        }
+        
+        // Extract base table name (remove "_user" suffix)
+        String baseTableName = backupTableName.substring(0, backupTableName.length() - 5);
+        
+        // Validate base table name
+        if (!isValidTableName(baseTableName)) {
+            Log.e(TAG, "getBackupTableRecords(): Invalid base table name: " + baseTableName);
+            return null;
+        }
+        
+        try {
+            // backupTableName is validated, safe to use in query
+            return db.rawQuery("SELECT * FROM " + backupTableName, null);
+        } catch (Exception e) {
+            Log.e(TAG, "getBackupTableRecords(): Error querying backup table", e);
+            return null;
+        }
+    }
+
+    /**
+     * Restores user-learned records from a backup table to the main table.
+     * 
+     * <p>This method retrieves all records from a backup table (typically named
+     * "{imtype}_user") and restores them to the main mapping table by calling
+     * {@link #addOrUpdateMappingRecord(String, String, String, int)} for each record.
+     * 
+     * <p>This method is used when restoring user preferences from backup tables
+     * during database import operations. The backup table must exist and contain
+     * records for the restoration to proceed.
+     * 
+     * <p>The method performs the following operations:
+     * <ul>
+     *   <li>Validates the table name</li>
+     *   <li>Constructs the backup table name (table + "_user")</li>
+     *   <li>Counts records in the backup table</li>
+     *   <li>If records exist, retrieves all records from the backup table</li>
+     *   <li>Restores each record to the main table using addOrUpdateMappingRecord</li>
+     * </ul>
+     * 
+     * @param table The base table name to restore records to (e.g., "cj", "phonetic")
+     * @return The number of records restored, or 0 if no records to restore or error
+     */
+    public int restoreUserRecords(String table) {
+        if (checkDBConnection()) return 0;
+        
+        if (table == null || table.isEmpty()) {
+            Log.e(TAG, "restoreUserRecords(): Table name cannot be null or empty");
+            return 0;
+        }
+        
+        if (!isValidTableName(table)) {
+            Log.e(TAG, "restoreUserRecords(): Invalid table name: " + table);
+            return 0;
+        }
+        
+        String backupTableName = table + "_user";
+        
+        try {
+            // Check if backup table exists before counting records
+            Cursor tableCheck = db.rawQuery(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                new String[]{backupTableName});
+            boolean tableExists = tableCheck != null && tableCheck.getCount() > 0;
+            if (tableCheck != null) {
+                tableCheck.close();
+            }
+            
+            if (!tableExists) {
+                if (DEBUG) {
+                    Log.i(TAG, "restoreUserRecords(): Backup table does not exist: " + backupTableName);
+                }
+                return 0;
+            }
+            
+            // Count records in backup table
+            int userRecordsCount = countRecords(backupTableName, null, null);
+            if (userRecordsCount == 0) {
+                if (DEBUG) {
+                    Log.i(TAG, "restoreUserRecords(): No records to restore from " + backupTableName);
+                }
+                return 0;
+            }
+            
+            // Get all records from backup table
+            Cursor cursorbackup = getBackupTableRecords(backupTableName);
+            if (cursorbackup == null) {
+                Log.e(TAG, "restoreUserRecords(): Failed to get backup table records from " + backupTableName);
+                return 0;
+            }
+            
+            // Convert cursor to list of records
+            List<net.toload.main.hd.data.Record> backuplist = net.toload.main.hd.data.Record.getList(cursorbackup);
+            cursorbackup.close();
+            
+            if (backuplist.isEmpty()) {
+                if (DEBUG) {
+                    Log.i(TAG, "restoreUserRecords(): Backup list is empty");
+                }
+                return 0;
+            }
+            
+            // Restore each record
+            int restoredCount = 0;
+            for (net.toload.main.hd.data.Record w : backuplist) {
+                if (w != null && w.getCode() != null && w.getWord() != null) {
+                    addOrUpdateMappingRecord(table, w.getCode(), w.getWord(), w.getScore());
+                    restoredCount++;
+                }
+            }
+            
+            if (DEBUG) {
+                Log.i(TAG, "restoreUserRecords(): Restored " + restoredCount + " records from " + backupTableName + " to " + table);
+            }
+            
+            return restoredCount;
+        } catch (Exception e) {
+            Log.e(TAG, "restoreUserRecords(): Error restoring user records from " + backupTableName, e);
+            return 0;
+        }
+    }
+
 //    public void updateBackupScore(String imtype, List<Word> scorelist) {
 //        if (checkDBConnection()) return;
 //        db.beginTransaction();
@@ -4917,6 +5388,93 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 //        db.endTransaction();
 //        db.setTransactionSuccessful();
 //    }
+
+    /**
+     * Builds a parameterized WHERE clause from a map of conditions.
+     * 
+     * <p>This helper method constructs a WHERE clause with "?" placeholders
+     * for parameterized queries, which helps prevent SQL injection.
+     * 
+     * <p>Example:
+     * <pre>
+     * Map&lt;String, String&gt; conditions = new HashMap&lt;&gt;();
+     * conditions.put("code", "abc");
+     * conditions.put("score", "100");
+     * Pair&lt;String, String[]&gt; result = buildWhereClause(conditions);
+     * // result.first = "code = ? AND score = ?"
+     * // result.second = ["abc", "100"]
+     * </pre>
+     * 
+     * @param conditions Map of column names to values
+     * @return Pair containing WHERE clause string and arguments array, or null if conditions is empty
+     */
+    public Pair<String, String[]> buildWhereClause(java.util.Map<String, String> conditions) {
+        if (conditions == null || conditions.isEmpty()) {
+            return null;
+        }
+
+        StringBuilder whereBuilder = new StringBuilder();
+        List<String> whereArgs = new ArrayList<>();
+
+        boolean first = true;
+        for (java.util.Map.Entry<String, String> entry : conditions.entrySet()) {
+            if (!first) {
+                whereBuilder.append(" AND ");
+            }
+            whereBuilder.append(entry.getKey()).append(" = ?");
+            whereArgs.add(entry.getValue());
+            first = false;
+        }
+
+        return new Pair<>(whereBuilder.toString(), whereArgs.toArray(new String[0]));
+    }
+
+    /**
+     * Executes a query with pagination support.
+     * 
+     * <p>This helper method provides a consistent way to query tables with
+     * WHERE clauses, ordering, and pagination (limit/offset).
+     * 
+     * <p>Example:
+     * <pre>
+     * Cursor cursor = queryWithPagination("custom", 
+     *     "code = ?", new String[]{"abc"}, 
+     *     "score DESC", 10, 0);
+     * </pre>
+     * 
+     * @param table The table name to query
+     * @param whereClause Optional WHERE clause (null for all records)
+     * @param whereArgs Optional WHERE arguments for parameterized queries
+     * @param orderBy Optional ORDER BY clause (null for no ordering)
+     * @param limit Maximum number of records to return (0 for no limit)
+     * @param offset Number of records to skip (0 for no offset)
+     * @return Cursor with query results, or null if error
+     */
+    public Cursor queryWithPagination(String table, String whereClause, String[] whereArgs, 
+                                      String orderBy, int limit, int offset) {
+        if (checkDBConnection()) return null;
+
+        // Validate table name
+        if (!isValidTableName(table)) {
+            Log.e(TAG, "queryWithPagination(): Invalid table name: " + table);
+            return null;
+        }
+
+        try {
+            String limitClause = null;
+            if (limit > 0) {
+                limitClause = String.valueOf(limit);
+                if (offset > 0) {
+                    limitClause = offset + "," + limit;
+                }
+            }
+
+            return db.query(table, null, whereClause, whereArgs, null, null, orderBy, limitClause);
+        } catch (Exception e) {
+            Log.e(TAG, "queryWithPagination(): Error executing query", e);
+            return null;
+        }
+    }
 
     /**
      * Executes a raw SQL query.

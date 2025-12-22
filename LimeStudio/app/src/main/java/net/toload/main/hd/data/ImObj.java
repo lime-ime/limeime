@@ -24,6 +24,17 @@
 
 package net.toload.main.hd.data;
 
+/**
+ * Represents a simplified IM configuration for UI components.
+ * 
+ * <p>This class is a simplified data transfer object (DTO) containing only
+ * the essential IM code and keyboard assignment information. It is used
+ * primarily in UI components for displaying and managing IM configurations.
+ * 
+ * <p>This class does not contain any SQL code or database operations.
+ * 
+ * @author LimeIME Team
+ */
 public class ImObj {
 
 	private String code;

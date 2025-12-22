@@ -166,6 +166,14 @@
 
     </ScrollView>
 
+    <CheckBox
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/setup_im_restore_learning_data"
+        android:id="@+id/chkImportRestoreLearning"
+        android:layout_gravity="center_horizontal"
+        android:visibility="gone" />
+
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -25,23 +25,18 @@
 package net.toload.main.hd.ui;
 
 import android.app.Activity;
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Looper;
 import android.util.Log;
 
 import net.toload.main.hd.DBServer;
+import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.Word;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.limedb.LimeDB;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 public class SetupImLoadRunnable implements Runnable{
@@ -57,7 +52,7 @@ public class SetupImLoadRunnable implements Runnable{
     private final DBServer dbsrv;
     private final SetupImHandler handler;
 
-    private final LimeDB datasource;
+    private final SearchServer searchServer;
     private final LIMEPreferenceManager mLIMEPref;
 
     private final Context mContext;
@@ -70,7 +65,7 @@ public class SetupImLoadRunnable implements Runnable{
         this.url = url;
         this.activity = activity;
         this.dbsrv = DBServer.getInstance(activity);
-        this.datasource = new LimeDB(activity);
+        this.searchServer = new SearchServer(activity);
         this.mLIMEPref = new LIMEPreferenceManager(activity);
         this.restorePreference = restorePreference;
         this.mContext = activity.getBaseContext();
@@ -103,107 +98,24 @@ public class SetupImLoadRunnable implements Runnable{
 
         // Load DB
         handler.updateProgress(activity.getResources().getString(R.string.setup_load_migrate_load));
-        dbsrv.importMapping(tempfile, imtype);
+        dbsrv.importZippedDb(tempfile, imtype);
 
         mLIMEPref.setParameter("_table", "");
         //mLIMEPref.setResetCacheFlag(true);
-        dbsrv.resetCache();
+        searchServer.resetCache();
 
         if(restorePreference){
             handler.updateProgress(activity.getResources().getString(R.string.setup_im_restore_learning_data));
             handler.updateProgress(0);
-            boolean check = datasource.checkBackuptable(imtype);
+            boolean check = searchServer.checkBackuptable(imtype);
             handler.updateProgress(5);
 
             if(check){
-
-                String backupTableName = imtype + "_user";
-
-                // Validate table names to prevent SQL injection
-                // backupTableName should be in format "imtype_user" where imtype is a valid table
-                // The rawQuery method will validate this, but we also validate here for clarity
-                if (!backupTableName.endsWith("_user")) {
-                    Log.e(TAG, "Invalid backup table name: " + backupTableName);
-                    return;
-                }
-
-                // check if user data backup table is present and have valid records
-                int userRecordsCount = datasource.countMapping(backupTableName);
                 handler.updateProgress(10);
-                if (userRecordsCount == 0) return;
-
-                try {
-                    // Load backuptable records
-                                /*
-                                // NOTE: Commented out code uses rawQuery with table name concatenation
-                                // This is safe only if imtype is validated (which it should be)
-                                // If uncommenting, ensure imtype is validated against whitelist
-                                Cursor cursorsource = datasource.rawQuery("select * from " + imtype);
-                                List<Word> clist = Word.getList(cursorsource);
-                                cursorsource.close();
-
-                                HashMap<String, Word> wordcheck = new HashMap<String, Word>();
-                                for(Word w : clist){
-                                    String key = w.getCode() + w.getWord();
-                                    wordcheck.put(key, w);
-                                }
-                                handler.updateProgress(20);
-                                */
-                    // backupTableName is validated above, safe to use
-                    Cursor cursorbackup = datasource.rawQuery("select * from " + backupTableName);
-                    List<Word> backuplist = Word.getList(cursorbackup);
-                    cursorbackup.close();
-
-                    int progressvalue = 0;
-                    int recordcount = 0;
-                    int recordtotal = backuplist.size();
-
-                    for(Word w: backuplist){
-
-                        recordcount++;
-
-                        datasource.addOrUpdateMappingRecord(imtype,w.getCode(),w.getWord(),w.getScore());
-                                    /*
-                                    // update record
-                                    String key = w.getCode() + w.getWord();
-
-                                    if(wordcheck.containsKey(key)){
-                                        try{
-                                            datasource.execSQL("update " + imtype + " set " + LIME.DB_COLUMN_SCORE + " = " + w.getScore()
-                                                            + " WHERE " + LIME.DB_COLUMN_CODE + " = '" + w.getCode() + "'"
-                                                            + " AND " + LIME.DB_COLUMN_WORD + " = '" + w.getWord() + "'"
-                                            );
-                                        }catch(Exception e){
-                                            Log.e(TAG, "Error in operation", e);
-                                        }
-                                    }else{
-                                        try{
-                                            Word temp = wordcheck.get(key);
-                                            String insertsql = Word.getInsertQuery(imtype, temp);
-                                            datasource.execSQL(insertsql);
-                                        }catch(Exception e){
-                                            Log.e(TAG, "Error in operation", e);
-                                        }
-                                    }
-                                    */
-                        // Update Progress
-                        int progress =(int) ((double)recordcount / recordtotal   * 90 +10 ) ;
-
-                        if(progress != progressvalue){
-                            progressvalue = progress;
-                            handler.updateProgress(progressvalue);
-                        }
-
-                    }
-
-                    //   wordcheck.clear();
-
-                }catch(Exception e){
-                    Log.e(TAG, "Error in operation", e);
+                int restoredCount = searchServer.restoreUserRecords(imtype);
+                if (restoredCount > 0) {
+                    handler.updateProgress(LIME.PROGRESS_COMPLETE_PERCENT);
                 }
-
-               // datasource.restoreUserRecordsStep2(imtype);
-                handler.updateProgress(LIME.PROGRESS_COMPLETE_PERCENT);
             }
         }
 
@@ -213,63 +125,17 @@ public class SetupImLoadRunnable implements Runnable{
     }
 
 
-    public List<Word> loadWord(SQLiteDatabase sourcedb, String code) {
-        List<Word> result = new ArrayList<>();
-        if(sourcedb != null && sourcedb.isOpen()){
-            Cursor cursor;
-            String order = LIME.DB_COLUMN_CODE + " ASC";
-
-            cursor = sourcedb.query(code, null, null, null, null, null, order);
-
-            cursor.moveToFirst();
-            while(!cursor.isAfterLast()){
-                Word r = Word.get(cursor);
-                result.add(r);
-                cursor.moveToNext();
-            }
-            cursor.close();
-        }
-        return result;
-    }
-
-    @Deprecated public synchronized void setImInfo(String im, String field, String value) {
-
-        ContentValues cv = new ContentValues();
-        cv.put(LIME.DB_IM_COLUMN_CODE, im);
-        cv.put(LIME.DB_IM_COLUMN_TITLE, field);
-        cv.put(LIME.DB_IM_COLUMN_DESC, value);
-
-        removeImInfo(im, field);
-
-        datasource.addRecord("im", cv);
-
-    }
-
-    private void setIMKeyboardOnDB(String im, String value, String keyboard) {
-
-        ContentValues cv = new ContentValues();
-        cv.put(LIME.DB_IM_COLUMN_CODE, im);
-        cv.put(LIME.DB_IM_COLUMN_TITLE, LIME.DB_KEYBOARD);
-        cv.put(LIME.DB_IM_COLUMN_DESC, value);
-        cv.put(LIME.DB_IM_COLUMN_KEYBOARD, keyboard);
-
-        removeImInfoOnDB(im, "keyboard");
-
-        datasource.addRecord("im", cv);
-
-    }
-
-    private void removeImInfoOnDB(String im, String field) {
-        // Use parameterized query to prevent SQL injection
-        datasource.deleteRecord(LIME.DB_TABLE_IM, 
-            LIME.DB_IM_COLUMN_CODE + " = ? AND " + LIME.DB_IM_COLUMN_TITLE + " = ?",
-            new String[]{im, field});
-    }
+    // loadWord() method moved to LimeDB.getRecordsFromSourceDB()
+    // Use datasource.loadWordFromSourceDB(sourceDb, tableName) instead
+    
+    // setImInfo(), setIMKeyboardOnDB(), removeImInfoOnDB() methods removed
+    // Use datasource.setImInfo(), datasource.setIMKeyboard() directly instead
 
 
-    @Deprecated public synchronized void setIMKeyboard(String im, String value,  String keyboard) {
+    public synchronized void setIMKeyboard(String im, String value,  String keyboard) {
         try{
-            setIMKeyboardOnDB(im, value, keyboard);
+            // Use LimeDB method directly
+            searchServer.setIMKeyboard(im, value, keyboard);
         }catch (Exception e) {
             Log.e(TAG, "Error in operation", e);
         }
@@ -278,7 +144,8 @@ public class SetupImLoadRunnable implements Runnable{
 
     public synchronized void removeImInfo(String im, String field) {
         try{
-            removeImInfoOnDB(im, field);
+            // Use LimeDB method directly
+            searchServer.removeImInfo(im, field);
         }catch(Exception e){Log.e(TAG, "Error in operation", e);}
     }
 

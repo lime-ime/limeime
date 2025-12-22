@@ -27,11 +27,22 @@ package net.toload.main.hd.data;
 import android.database.Cursor;
 
 import net.toload.main.hd.global.LIME;
-import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents an Input Method (IM) configuration record in the database.
+ * 
+ * <p>An Im record contains configuration information for an input method,
+ * including keyboard assignment, selection keys, end keys, and spacing style.
+ * 
+ * <p>This class provides static helper methods to convert Cursor objects
+ * to Im instances, but does not contain any SQL code. All database
+ * operations should be performed through {@link net.toload.main.hd.limedb.LimeDB}.
+ * 
+ * @author LimeIME Team
+ */
 public class Im {
 
 	private int id;
@@ -116,53 +127,83 @@ public class Im {
 		this.spacestyle = spacestyle;
 	}
 
+	/**
+	 * Helper method to safely get a String from cursor.
+	 * 
+	 * <p>Validates that the column exists before accessing it.
+	 * 
+	 * @param cursor The Cursor to read from
+	 * @param columnName The column name to read
+	 * @return The column value, or empty string if column is missing
+	 */
+	private static String getCursorString(Cursor cursor, String columnName) {
+		int index = cursor.getColumnIndex(columnName);
+		if (index >= 0) {
+			return cursor.getString(index);
+		}
+		return ""; // Return empty string if column is missing
+	}
 
-	public static Im get(LimeDB db, Cursor cursor){
+	/**
+	 * Helper method to safely get an int from cursor.
+	 * 
+	 * <p>Validates that the column exists before accessing it.
+	 * 
+	 * @param cursor The Cursor to read from
+	 * @param columnName The column name to read
+	 * @return The column value, or 0 if column is missing
+	 */
+	private static int getCursorInt(Cursor cursor, String columnName) {
+		int index = cursor.getColumnIndex(columnName);
+		if (index >= 0) {
+			return cursor.getInt(index);
+		}
+		return 0; // Return 0 if column is missing
+	}
+
+	/**
+	 * Creates an Im object from a Cursor row.
+	 * 
+	 * <p>This method reads the current row from the cursor and creates
+	 * an Im object with the column values. The cursor should be
+	 * positioned at the desired row before calling this method.
+	 * 
+	 * @param cursor The Cursor positioned at the desired row
+	 * @return A new Im object populated with cursor data
+	 */
+	public static Im get(Cursor cursor){
 		Im record = new Im();
-			record.setId(db.getCursorInt(cursor, LIME.DB_IM_COLUMN_ID));
-			record.setCode(db.getCursorString(cursor, LIME.DB_IM_COLUMN_CODE));
-			record.setTitle(db.getCursorString(cursor, LIME.DB_IM_COLUMN_TITLE));
-			record.setDesc(db.getCursorString(cursor, LIME.DB_IM_COLUMN_DESC));
-			record.setKeyboard(db.getCursorString(cursor, LIME.DB_IM_COLUMN_KEYBOARD));
-            record.setDisable(Boolean.getBoolean(db.getCursorString(cursor,LIME.DB_IM_COLUMN_DISABLE)));
-			record.setSelkey(db.getCursorString(cursor, LIME.DB_IM_COLUMN_SELKEY));
-			record.setEndkey(db.getCursorString(cursor, LIME.DB_IM_COLUMN_ENDKEY));
-			record.setSpacestyle(db.getCursorString(cursor, LIME.DB_IM_COLUMN_SPACESTYLE));
+		record.setId(getCursorInt(cursor, LIME.DB_IM_COLUMN_ID));
+		record.setCode(getCursorString(cursor, LIME.DB_IM_COLUMN_CODE));
+		record.setTitle(getCursorString(cursor, LIME.DB_IM_COLUMN_TITLE));
+		record.setDesc(getCursorString(cursor, LIME.DB_IM_COLUMN_DESC));
+		record.setKeyboard(getCursorString(cursor, LIME.DB_IM_COLUMN_KEYBOARD));
+		String disableStr = getCursorString(cursor, LIME.DB_IM_COLUMN_DISABLE);
+		record.setDisable(Boolean.getBoolean(disableStr));
+		record.setSelkey(getCursorString(cursor, LIME.DB_IM_COLUMN_SELKEY));
+		record.setEndkey(getCursorString(cursor, LIME.DB_IM_COLUMN_ENDKEY));
+		record.setSpacestyle(getCursorString(cursor, LIME.DB_IM_COLUMN_SPACESTYLE));
 		return record;
 	}
 
-
-	public static List<Im> getList(LimeDB db, Cursor cursor){
+	/**
+	 * Converts a Cursor to a List of Im objects.
+	 * 
+	 * <p>This method iterates through all rows in the cursor and creates
+	 * Im objects for each row. The cursor is closed after processing.
+	 * 
+	 * @param cursor The Cursor containing database query results
+	 * @return List of Im objects
+	 */
+	public static List<Im> getList(Cursor cursor){
 		List<Im> list = new ArrayList<>();
 		cursor.moveToFirst();
 		while(!cursor.isAfterLast()){
-			list.add(get(db, cursor));
+			list.add(get(cursor));
 			cursor.moveToNext();
 		}
 		cursor.close();
 		return list;
-	}
-		
-	public static String getInsertQuery(Im record){
-
-        return "INSERT INTO " + LIME.DB_TABLE_IM + "(" +
-                LIME.DB_IM_COLUMN_CODE + ", " +
-                LIME.DB_IM_COLUMN_TITLE + ", " +
-                LIME.DB_IM_COLUMN_DESC + ", " +
-                LIME.DB_IM_COLUMN_KEYBOARD + ", " +
-                LIME.DB_IM_COLUMN_DISABLE + ", " +
-                LIME.DB_IM_COLUMN_SELKEY + ", " +
-                LIME.DB_IM_COLUMN_ENDKEY + ", " +
-                LIME.DB_IM_COLUMN_SPACESTYLE + ") VALUES(" +
-                "\"" + record.getCode() + "\"," +
-                "\"" + record.getTitle() + "\"," +
-                "\"" + record.getDesc() + "\"," +
-                "\"" + record.getKeyboard() + "\"," +
-                "\"" + record.isDisable() + "\"," +
-                "\"" + record.getSelkey() + "\"," +
-                "\"" + record.getEndkey() + "\"," +
-                "\"" + record.getSpacestyle() + "\"" +
-                ")";
 	}
 
 }

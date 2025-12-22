@@ -56,12 +56,13 @@ import android.widget.Toast;
 
 
 import net.toload.main.hd.DBServer;
+import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIMEPreferenceManager;
+import net.toload.main.hd.global.LIMEProgressListener;
 import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.limedb.LimeDB;
 
 import java.io.File;
 import java.util.HashMap;
@@ -127,7 +128,7 @@ public class SetupImFragment extends Fragment {
 
 
     private View rootView;
-    private LimeDB datasource;
+    private SearchServer searchServer;
     private DBServer DBSrv = null;
     private Activity activity;
     private LIMEPreferenceManager mLIMEPref;
@@ -235,6 +236,17 @@ public class SetupImFragment extends Fragment {
         handler.initialImButtons();
     }
 
+    /**
+     * Initializes IM buttons by delegating to SetupImHandler.
+     * This method should be called when IM data changes (e.g., after import operations)
+     * to refresh the button states.
+     */
+    public void initialImButtons() {
+        if (handler != null) {
+            handler.initialImButtons();
+        }
+    }
+
     public void setProgressIndeterminate(boolean flag){
         if (progressBar != null) {
             progressBar.setIndeterminate(flag);
@@ -298,7 +310,7 @@ public class SetupImFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        datasource = new LimeDB(this.getActivity());
+        searchServer = new SearchServer(this.getActivity());
 
         handler = new SetupImHandler(this);
 
@@ -367,7 +379,7 @@ public class SetupImFragment extends Fragment {
         if(!DBSrv.isDatabseOnHold()){
             try {
                 //datasource.open();
-                imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
+                imlist = searchServer.getIm(null, LIME.IM_TYPE_NAME);
                 for(int i = 0; i < imlist.size() ; i++){
                     check.put(imlist.get(i).getCode(), imlist.get(i).getDesc());
                 }
@@ -752,28 +764,6 @@ public class SetupImFragment extends Fragment {
         }
     }
 
-//    public void initialThreadTask(String action, String type) {
-//
-//        // Default Setting
-//        mLIMEPref.setParameter("dbtarget", LIME.DEVICE);
-//
-//        if (action.equals(LIME.BACKUP)) {
-//            // The local backup is now handled by onActivityResult, not a direct runnable here.
-//            if(!type.equals(LIME.LOCAL)) {
-//                if (backupthread != null && backupthread.isAlive()) {
-//                    handler.removeCallbacks(backupthread);
-//                }
-//                backupthread = new Thread(new SetupImBackupRunnable(this, handler, type));
-//                backupthread.start();
-//            }
-//        }else if(action.equals(LIME.RESTORE)){
-//            if(restorethread != null && restorethread.isAlive()){
-//                handler.removeCallbacks(restorethread);
-//            }
-//            restorethread = new Thread(new SetupImRestoreRunnable(this, handler, type));
-//            restorethread.start();
-//        }
-//    }
 
     public void showToastMessage(String msg, int length) {
         Toast toast = Toast.makeText(activity, msg, length);
@@ -785,20 +775,82 @@ public class SetupImFragment extends Fragment {
     }
 
     public void resetImTable(String imtable, boolean backuplearning){
-        try {
-            if(backuplearning){
-                datasource.backupUserRecords(imtable);
-            }
-            DBSrv.resetMapping(imtable);
-        } catch (RemoteException e) {
-            Log.e(TAG, "Error in operation", e);
+        if(backuplearning){
+            searchServer.backupUserRecords(imtable);
         }
+        searchServer.clearTable(imtable);
     }
 
     public void finishProgress() {
 
         cancelProgress();
 
+    }
+
+    /**
+     * Imports a text mapping file (.lime, .cin, or delimited text) into the specified database table.
+     * 
+     * <p>This method imports text mapping files into the database table. It delegates to
+     * {@link DBServer#importTxtTable(String, String, LIMEProgressListener)} to perform the actual
+     * import operation. After import completes, it optionally restores user-learned records from
+     * a backup table if requested.
+     * 
+     * <p>The method performs the following operations:
+     * <ul>
+     *   <li>Shows progress indicator with custom message</li>
+     *   <li>Delegates to DBServer.importTxtTable() for the actual import</li>
+     *   <li>Updates progress during import via LIMEProgressListener callbacks</li>
+     *   <li>Optionally restores user-learned records from backup table after import</li>
+     *   <li>Cancels progress indicator when complete</li>
+     * </ul>
+     * 
+     * <p>This method is called from SetupImLoadDialog when a user selects a text file to import.
+     * 
+     * @param sourceFile The text file to import (.lime, .cin, or delimited text)
+     * @param imtype The IM type (table name) to import into (e.g., "custom", "phonetic")
+     * @param restoreUserRecords If true, restores user-learned records from backup table after import
+     */
+    public void importTxtTable(File sourceFile, String imtype, boolean restoreUserRecords) {
+        handler.showProgress(false, activity.getResources().getString(R.string.setup_im_dialog_custom));
+        try {
+            DBSrv.importTxtTable(sourceFile.getAbsolutePath(), imtype, new LIMEProgressListener() {
+                @Override
+                public void onProgress(long percentageDone, long var2, String status) {
+                    if (status != null && !status.isEmpty()) handler.updateProgress(status);
+                    handler.updateProgress((int) percentageDone);
+                }
+
+                @Override
+                public void onStatusUpdate(String status) {
+                    if (status != null && !status.isEmpty()) handler.updateProgress(status);
+                }
+
+                @Override
+                public void onError(int code, String source) {
+                    if (source != null && !source.isEmpty()) showToastMessage(source, Toast.LENGTH_LONG);
+                }
+
+                @Override
+                public void onPostExecute(boolean success, String status, int code) {
+                    if (restoreUserRecords) {
+                        handler.updateProgress(activity.getResources().getString(R.string.setup_im_restore_learning_data));
+                        handler.updateProgress(0);
+                        boolean check = searchServer.checkBackuptable(imtype);
+                        handler.updateProgress(5);
+                        if (check) {
+                            handler.updateProgress(10);
+                            int restoredCount = searchServer.restoreUserRecords(imtype);
+                            if (restoredCount > 0) {
+                                handler.updateProgress(LIME.PROGRESS_COMPLETE_PERCENT);
+                            }
+                        }
+                    }
+                    handler.cancelProgress();
+                }
+            });
+        } catch (RemoteException e) {
+            Log.e(TAG, "Error in operation", e);
+        }
     }
 
 }

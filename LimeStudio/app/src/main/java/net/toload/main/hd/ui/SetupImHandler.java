@@ -45,9 +45,6 @@ public class SetupImHandler extends Handler {
         String action = msg.getData().getString("action");
         String type = msg.getData().getString("type");
 
-        //Log.i("LIME", "action: " + action);
-        //Log.i("LIME", "type: " + type);
-
         if(action != null && action.equalsIgnoreCase("progress")){
             if(type != null){
                 if(type.equalsIgnoreCase("showSpinner")){
@@ -80,9 +77,9 @@ public class SetupImHandler extends Handler {
         }else if(action != null && action.equalsIgnoreCase("updatecustombutton")){
             fragment.updateCustomButton();
         }else if(action != null && action.equalsIgnoreCase("reset")){
-            String imtype = msg.getData().getString("im");
-            boolean backuplearning = msg.getData().getBoolean("backup");
-            fragment.resetImTable(imtype, backuplearning);
+            String imType = msg.getData().getString("im");
+            boolean backupUserRecords = msg.getData().getBoolean("backup");
+            fragment.resetImTable(imType, backupUserRecords);
         }else if(action != null && action.equalsIgnoreCase("finish")){
             //String imtype = msg.getData().getString("im");
             fragment.finishProgress();
@@ -151,13 +148,6 @@ public class SetupImHandler extends Handler {
                 m.getData().putString("action", "initialbutton");
         this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
-   /* @Deprecated
-    public void startLoadingWindow(String imtype) {
-        Message m = new Message();
-                m.getData().putString("action", "startloadingwindow");
-                m.getData().putString("value", imtype);
-        this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
-    }*/
 
     public void updateCustomButton() {
         Message m = new Message();
@@ -179,5 +169,18 @@ public class SetupImHandler extends Handler {
         m.getData().putString("action", "finish");
         m.getData().putString("im", imtype);
         this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
+    }
+
+    /**
+     * Imports a text mapping file into the specified database table.
+     * 
+     * <p>This method delegates to SetupImFragment.importTxtTable() to import text mapping files.
+     * 
+     * @param sourceFile The text file to import (.lime, .cin, or delimited text)
+     * @param imtype The IM type (table name) to import into
+     * @param restoreUserRecords If true, restores user-learned records from backup table after import
+     */
+    public void importTxtTable(java.io.File sourceFile, String imtype, boolean restoreUserRecords) {
+        fragment.importTxtTable(sourceFile, imtype, restoreUserRecords);
     }
 }

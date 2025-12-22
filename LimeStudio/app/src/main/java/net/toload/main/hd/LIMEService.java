@@ -2663,7 +2663,7 @@ public class LIMEService extends InputMethodService implements
                         if (queryThread != null && queryThread.isAlive()) queryThread.interrupt();
                         try {
                             if(!committedCandidate.isEmojiRecord() && !committedCandidate.isChinesePunctuationSymbolRecord()){
-                                list.addAll(SearchSrv.getRelatedPhrase(committedCandidate.getWord(), getAllRecords));
+                                list.addAll(SearchSrv.getRelatedByWord(committedCandidate.getWord(), getAllRecords));
                             }
                         } catch (RemoteException e) {
                             Log.e(TAG, "Error in suggestion processing", e);

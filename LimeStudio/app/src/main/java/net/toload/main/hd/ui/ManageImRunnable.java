@@ -26,8 +26,8 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 
-import net.toload.main.hd.data.Word;
-import net.toload.main.hd.limedb.LimeDB;
+import net.toload.main.hd.SearchServer;
+import net.toload.main.hd.data.Record;
 
 import java.util.List;
 
@@ -38,7 +38,7 @@ public class ManageImRunnable implements Runnable{
 
 
     private final ManageImHandler handler;
-    private final LimeDB datasource;
+    private final SearchServer searchServer;
     private final String table;
     private final String query;
     private final boolean searchRoot;
@@ -59,13 +59,13 @@ public class ManageImRunnable implements Runnable{
         this.maximum = maximum;
         this.offset = offset;
 
-        datasource = new LimeDB(activity);
+        searchServer = new SearchServer(activity);
     }
 
     public void run() {
         handler.showProgress();
 
-        handler.updateGridView(loadImWord(table, query, maximum, offset));
+        handler.updateGridView(getRecords(table, query, maximum, offset));
 
         /*if (maximum > 0) {
             handler.updateGridViewInitial(loadImWord(table, getMappingByCode, maximum, offset));
@@ -74,10 +74,10 @@ public class ManageImRunnable implements Runnable{
         }*/
     }
 
-    private List<Word> loadImWord(String table, String query, int maximum, int offset){
-        List<Word> results;
+    private List<Record> getRecords(String table, String query, int maximum, int offset){
+        List<Record> results;
 
-        results = datasource.loadWord(table, query, this.searchRoot, maximum, offset);
+        results = searchServer.getRecords(table, query, this.searchRoot, maximum, offset);
         /*try {
             datasource.open();
             datasource.close();

@@ -31,6 +31,19 @@ import net.toload.main.hd.global.LIME;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a keyboard configuration in the database.
+ * 
+ * <p>A Keyboard contains configuration for different keyboard layouts
+ * (IM keyboard, English keyboard, symbol keyboard, etc.) and their
+ * shift variants.
+ * 
+ * <p>This class provides static helper methods to convert Cursor objects
+ * to Keyboard instances, but does not contain any SQL code. All database
+ * operations should be performed through {@link net.toload.main.hd.limedb.LimeDB}.
+ * 
+ * @author LimeIME Team
+ */
 public class Keyboard {
 
 	private int id;
@@ -94,6 +107,15 @@ public class Keyboard {
 		return record;
 	}
 
+	/**
+	 * Converts a Cursor to a List of Keyboard objects.
+	 * 
+	 * <p>This method iterates through all rows in the cursor and creates
+	 * Keyboard objects for each row. The cursor is closed after processing.
+	 * 
+	 * @param cursor The Cursor containing database query results
+	 * @return List of Keyboard objects
+	 */
 	public static List<Keyboard> getList(Cursor cursor){
 		List<Keyboard> list = new ArrayList<>();
 		cursor.moveToFirst();
@@ -103,46 +125,6 @@ public class Keyboard {
 		}
 		cursor.close();
 		return list;
-	}
-
-
-	public static String getInsertQuery(Keyboard record){
-        return "INSERT INTO " + LIME.DB_TABLE_KEYBOARD + "(" +
-                LIME.DB_KEYBOARD_COLUMN_ID + ", " +
-                LIME.DB_KEYBOARD_COLUMN_CODE + ", " +
-                LIME.DB_KEYBOARD_COLUMN_NAME + ", " +
-                LIME.DB_KEYBOARD_COLUMN_DESC + ", " +
-                LIME.DB_KEYBOARD_COLUMN_TYPE + ", " +
-                LIME.DB_KEYBOARD_COLUMN_IMAGE + ", " +
-                LIME.DB_KEYBOARD_COLUMN_IMKB + ", " +
-                LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB + ", " +
-                LIME.DB_KEYBOARD_COLUMN_ENGKB + ", " +
-                LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB + ", " +
-                LIME.DB_KEYBOARD_COLUMN_SYMBOLKB + ", " +
-                LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB + ", " +
-                LIME.DB_KEYBOARD_COLUMN_DEFAULTKB + ", " +
-                LIME.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB + ", " +
-                LIME.DB_KEYBOARD_COLUMN_EXTENDEDKB + ", " +
-                LIME.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB + ", " +
-                LIME.DB_KEYBOARD_COLUMN_DISABLE + ") VALUES(" +
-                "\"" + record.getId() + "\"," +
-                "\"" + record.getCode() + "\"," +
-                "\"" + record.getName() + "\"," +
-                "\"" + record.getDesc() + "\"," +
-                "\"" + record.getType() + "\"," +
-                "\"" + record.getImage() + "\"," +
-                "\"" + record.getImkb() + "\"," +
-                "\"" + record.getImshiftkb() + "\"," +
-                "\"" + record.getEngkb() + "\"," +
-                "\"" + record.getEngshiftkb() + "\"," +
-                "\"" + record.getSymbolkb() + "\"," +
-                "\"" + record.getSymbolshiftkb() + "\"," +
-                "\"" + record.getDefaultkb() + "\"," +
-                "\"" + record.getDefaultshiftkb() + "\"," +
-                "\"" + record.getExtendedkb() + "\"," +
-                "\"" + record.getExtendedshiftkb() + "\"," +
-                "\"" + record.isDisable() + "\"" +
-                ")";
 	}
 
 	public int getId() {

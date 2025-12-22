@@ -45,4 +45,4 @@
         android:paddingTop="5dp"
         android:layout_below="@+id/txtWord"
         android:layout_centerHorizontal="true" />
-</RelativeLayout><!-- From: file:/C:/Data/Development/Android/Studio/LIMEIMEAS/app/src/main/res/layout/word.xml -->
+</RelativeLayout><!-- From: file:/C:/Data/Development/Android/Studio/LIMEIMEAS/app/src/main/res/layout/record.xml -->

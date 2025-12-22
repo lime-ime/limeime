@@ -84,7 +84,7 @@ This report reviews all permissions declared in `AndroidManifest.xml` and verifi
 
 **Analysis**:
 - No calls to `UserDictionary.getUserDictionaryWords()` or similar APIs
-- The app uses its own internal database (`LimeDB`) for word storage
+- The app uses its own internal database (`LimeDB`) for record storage
 - `addWord()` methods found are for internal database, not Android UserDictionary
 
 **Recommendation**: ❌ **REMOVE** - Not used anywhere in the codebase
@@ -114,8 +114,8 @@ This report reviews all permissions declared in `AndroidManifest.xml` and verifi
 
 **Analysis**:
 - No calls to `UserDictionary.addWord()` or `UserDictionary.updateUserDictionary()`
-- The app uses its own internal database for word management
-- All word operations are on internal `LimeDB` tables
+- The app uses its own internal database for record management
+- All record operations are on internal `LimeDB` tables
 
 **Recommendation**: ❌ **REMOVE** - Not used anywhere in the codebase
 
@@ -200,7 +200,7 @@ The app reads `Settings.Secure.DEFAULT_INPUT_METHOD` in:
 
 ### User Dictionary
 
-The app maintains its own internal dictionary database (`LimeDB`) and does not use Android's `UserDictionary` API. All word management operations are performed on internal tables.
+The app maintains its own internal dictionary database (`LimeDB`) and does not use Android's `UserDictionary` API. All record management operations are performed on internal tables.
 
 ### Network State
 

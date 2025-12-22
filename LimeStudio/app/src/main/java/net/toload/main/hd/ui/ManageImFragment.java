@@ -42,14 +42,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+
+import net.toload.main.hd.data.Record;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
 import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.data.Keyboard;
-import net.toload.main.hd.data.Word;
-import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,7 +76,7 @@ public class ManageImFragment extends Fragment {
     private EditText edtManageImSearch;
     private TextView txtNavigationInfo;
 
-    private List<Word> wordlist;
+    private List<Record> wordlist;
     private List<Keyboard> keyboardlist;
 
     private int page = 0;
@@ -93,7 +93,7 @@ public class ManageImFragment extends Fragment {
 
     private Thread manageimthread;
 
-    private LimeDB datasource;
+    private SearchServer searchServer;
 
     private ProgressBar progressBar;
 
@@ -119,15 +119,15 @@ public class ManageImFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_manage_im, container, false);
 
         this.activity = this.getActivity();
-        this.datasource = new LimeDB(this.activity);
-        this.SearchSrv = new SearchServer(this.activity);
+        this.searchServer = new SearchServer(this.activity);
+        this.SearchSrv = this.searchServer;
 
         this.handler = new ManageImHandler(this);
         //LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(activity);
 
         // initial imlist
         List<Im> imkeyboardlist;
-        imkeyboardlist = datasource.getIm(null, LIME.IM_TYPE_KEYBOARD);
+        imkeyboardlist = searchServer.getIm(null, LIME.IM_TYPE_KEYBOARD);
 
         this.progressBar = rootView.findViewById(R.id.loading_spinner);
 
@@ -135,13 +135,13 @@ public class ManageImFragment extends Fragment {
         this.gridManageIm.setOnItemClickListener((parent, view, position, id) -> {
             //try {
             //datasource.open();
-            Word w = datasource.getWord(table, id);
+            Record record = searchServer.getRecord(table, id);
             //datasource.close();
             FragmentTransaction ft = getParentFragmentManager().beginTransaction();
 
             // Create and show the dialog.
             ManageImEditDialog dialog = ManageImEditDialog.newInstance(table);
-            dialog.setHandler(handler, w);
+            dialog.setHandler(handler, record);
             dialog.show(ft, "editdialog");
         });
 
@@ -255,7 +255,7 @@ public class ManageImFragment extends Fragment {
         int offset = LIME.IM_MANAGE_DISPLAY_AMOUNT * page;
 
         if((curquery == null && total == 0) || !Objects.equals(curquery, prequery)){
-            total = datasource.getWordSize(table, curquery, searchroot);
+            total = searchServer.countRecordsByWordOrCode(table, curquery, searchroot);
             page = 0;
 
         }
@@ -305,7 +305,7 @@ public class ManageImFragment extends Fragment {
         }
     }
 
-    public void updateGridView(List<Word> wordlist){
+    public void updateGridView(List<Record> wordlist){
 
         this.wordlist = wordlist;
 
@@ -352,7 +352,7 @@ public class ManageImFragment extends Fragment {
 
     }
 
-    public void removeWord(int id){
+    public void removeRecord(int id){
 
         // Remove from the temp list
         for(int i = 0 ; i < total ; i++){
@@ -363,7 +363,7 @@ public class ManageImFragment extends Fragment {
         }
 
         // Remove from the database using parameterized query
-        datasource.deleteRecord(this.table, LIME.DB_COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
+        searchServer.deleteRecord(this.table, LIME.DB_COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
 
 
         total--;
@@ -371,14 +371,14 @@ public class ManageImFragment extends Fragment {
 
     }
 
-    public void addWord(String code, int score, String word) {
+    public void addRecord(String code, int score, String word) {
 
         if(word != null){
             word = word.trim();
         }
 
         // Add to database
-        Word obj = new Word();
+        Record obj = new Record();
              obj.setCode(code);
              obj.setCode3r("");
              obj.setWord(word);
@@ -387,7 +387,7 @@ public class ManageImFragment extends Fragment {
 
         //Jeremy '15,6,6 the record may already exist, use original add or update mapping function in LIMEDB instead.
         // code3r information will also generated for phonetic table.
-        datasource.addOrUpdateMappingRecord(this.table, code, word, score);
+        searchServer.addOrUpdateMappingRecord(this.table, code, word, score);
         //String insertsql = Word.getInsertQuery(this.table, obj);
         //datasource.insert(insertsql);
 
@@ -396,7 +396,7 @@ public class ManageImFragment extends Fragment {
 
     }
 
-    public void updateWord(int id, String code, int score, String word) {
+    public void updateRecord(int id, String code, int score, String word) {
 
         if(word != null){
             word = word.trim();
@@ -405,7 +405,7 @@ public class ManageImFragment extends Fragment {
         // remove from temp list
         for(int i = 0 ; i < total ; i++){
             if(id== this.wordlist.get(i).getId()){
-                Word check = this.wordlist.get(i);
+                Record check = this.wordlist.get(i);
                      check.setCode(code);
                      check.setCode3r("");
                      check.setWord(word);
@@ -418,7 +418,7 @@ public class ManageImFragment extends Fragment {
 
         //Jeremy '15,6,6  use original add or update mapping function in LIMEDB instead.
         // code3r information will also generated for phonetic table.
-        datasource.addOrUpdateMappingRecord(this.table, code, word, score);
+        searchServer.addOrUpdateMappingRecord(this.table, code, word, score);
 
         searchword();
         //updateGridView(this.wordlist);
@@ -427,12 +427,12 @@ public class ManageImFragment extends Fragment {
     public void updateKeyboard(String keyboard) {
 
         if(keyboardlist == null){
-            keyboardlist = datasource.getKeyboard();
+            keyboardlist = searchServer.getKeyboard();
 
         }
         for(Keyboard k: keyboardlist){
             if(k.getCode().equals(keyboard)){
-                datasource.setImKeyboard(table, k);
+                searchServer.setIMKeyboard(table, k);
                 btnManageImKeyboard.setText(k.getDesc());
    
             }

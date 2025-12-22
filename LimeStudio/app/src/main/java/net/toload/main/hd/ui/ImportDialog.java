@@ -38,26 +38,28 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
+import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.Im;
-import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.HashMap;
 import java.util.List;
 
 public class ImportDialog extends DialogFragment {
 
-	LimeDB datasource;
+	SearchServer searchServer;
 	Activity activity;
 	View view;
 
 	Button btnImportCancel;
 	Button btnImportRelated;
+	CheckBox chkImportRestoreLearning;
 
 	String importText;
 	String filePath;
@@ -73,7 +75,7 @@ public class ImportDialog extends DialogFragment {
 	
 	// Callback interface for file import mode
 	public interface OnImportTypeSelectedListener {
-		void onImportTypeSelected(String imType, String filePath);
+		void onImportTypeSelected(String imType, boolean restoreUserRecords);
 	}
 	
 	private OnImportTypeSelectedListener listener;
@@ -147,17 +149,28 @@ public class ImportDialog extends DialogFragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
         assert getDialog() != null;
         getDialog().getWindow().setTitle(getResources().getString(R.string.import_dialog_title));
-        datasource = new LimeDB(getActivity());
+        searchServer = new SearchServer(getActivity());
         activity = getActivity();
 		view = inflater.inflate(R.layout.fragment_dialog_import, container, false);
 
 		btnImportCancel = view.findViewById(R.id.btnImportCancel);
 		btnImportCancel.setOnClickListener(v -> dismiss());
 		btnImportRelated = view.findViewById(R.id.btnImportRelated);
+		chkImportRestoreLearning = view.findViewById(R.id.chkImportRestoreLearning);
+		
+		// Show checkbox only in IMPORT_MODE_FILE
+		if (importMode == IMPORT_MODE_FILE) {
+			chkImportRestoreLearning.setVisibility(View.VISIBLE);
+			chkImportRestoreLearning.setChecked(true); // Default to checked
+			btnImportRelated.setVisibility(View.GONE);
+		} else {
+			chkImportRestoreLearning.setVisibility(View.GONE);
+			btnImportRelated.setVisibility(View.VISIBLE);
+		}
 
 		// Build map of existing IM types
 		HashMap<String, String> ImMap = new HashMap<>();
-		List<Im> imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
+		List<Im> imlist = searchServer.getIm(null, LIME.IM_TYPE_NAME);
 		for (Im im : imlist) {
 			ImMap.put(im.getCode(), im.getDesc());
 		}
@@ -199,7 +212,7 @@ public class ImportDialog extends DialogFragment {
 		Button button = view.findViewById(buttonId);
 		boolean shouldShow = (importMode == IMPORT_MODE_TEXT) ? 
 			(ImMap.get(tableName) != null) :
-			(datasource.countMapping(tableName) == 0);
+			(searchServer.countRecords(tableName) == 0);
 		
 		if (shouldShow) {
 			button.setAlpha(LIME.NORMAL_ALPHA_VALUE);
@@ -224,7 +237,8 @@ public class ImportDialog extends DialogFragment {
 	public void confirmImportDialog(final String imtype){
 		// For file mode, directly call listener and dismiss
 		if (importMode == IMPORT_MODE_FILE && listener != null) {
-			listener.onImportTypeSelected(imtype, filePath);
+			boolean restoreUserRecords = chkImportRestoreLearning.isChecked();
+			listener.onImportTypeSelected(imtype, restoreUserRecords);
 			dismiss();
 			return;
 		}
@@ -279,7 +293,7 @@ public class ImportDialog extends DialogFragment {
 		values.put(LIME.DB_RELATED_COLUMN_CWORD, cWord);
 		values.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1);
 		values.put(LIME.DB_RELATED_COLUMN_BASESCORE, 0);
-		datasource.addRecord(LIME.DB_TABLE_RELATED, values);
+		searchServer.addRecord(LIME.DB_TABLE_RELATED, values);
 		Toast.makeText(activity, getResources().getString(R.string.import_related_success), Toast.LENGTH_SHORT).show();
 
 	}
@@ -294,7 +308,7 @@ public class ImportDialog extends DialogFragment {
         values.put(LIME.DB_COLUMN_RELATED, "");
         values.put(LIME.DB_COLUMN_SCORE, 1);
 		values.put(LIME.DB_COLUMN_BASESCORE, 0);
-		datasource.addRecord(imType, values);
+		searchServer.addRecord(imType, values);
 
 		Toast.makeText(activity, getResources().getString(R.string.import_word_success), Toast.LENGTH_SHORT).show();
 

@@ -38,7 +38,7 @@
     <string name="license">版權聲明</string>
     <string name="license_detail">LIME-HD 是一個輸入法框架程式，旨在提供 Android 裝置中文輸入法程式。\n組織或個人由網路自行下載之輸入法字根及字典檔案若有版權上的爭議，請自行向原作者取得授權，本程式不負擔其所產生的任何法律及版權上的責任。\n完整資訊請參考 LIME Project 網站上的版權說明  http://code.google.com/p/limeime/。</string>
 
-    <!-- Symbols that are commonly considered word separators in this language -->
+    <!-- Symbols that are commonly considered record separators in this language -->
     <string name="word_separators">\u0020.,;:!?\n()[]*&amp;@{}/&lt;&gt;_+=|&quot;</string>
     <string name="word_symbol_separators">\u0020?\n{}&lt;&gt;_+|&quot;</string>
 
@@ -174,8 +174,8 @@
 
     <!-- Other Messages -->
 
-    <!-- Indicates that a word has been added to the dictionary -->
-    <string name="added_word"><xliff:g id="word">%s</xliff:g> : Saved</string>
+    <!-- Indicates that a record has been added to the dictionary -->
+    <string name="added_word"><xliff:g id="record">%s</xliff:g> : Saved</string>
     <!-- Accented forms of "a" -->
     <string name="alternates_for_a">àáâãäåæ</string>
     <!-- Accented forms of "e" -->
@@ -194,7 +194,7 @@
     <string name="alternates_for_c">ç</string>
     <!-- Accented forms of "y" -->
     <string name="alternates_for_y">ýÿ</string>
-    <!-- Symbols that are commonly considered word separators in this language -->
+    <!-- Symbols that are commonly considered record separators in this language -->
     <!-- Symbols that are sentence separators, for purposes of making it hug the last sentence. -->
     <string name="sentence_separators">.,;:!?</string>
     <!-- Accented characters related to "d" -->

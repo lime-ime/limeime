@@ -34,7 +34,6 @@ import android.util.Log;
 
 import androidx.core.content.ContextCompat;
 
-import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;
@@ -128,24 +127,53 @@ public class  DBServer {
 		return instance;
 	}
 
-	/**
-	 * Get the Application Context used by this singleton.
-	 * 
-	 * @return Application Context
-	 */
-	public Context getContext() {
-		return appContext;
-	}
 
-	public void loadMapping(String filename, String tablename, LIMEProgressListener progressListener) throws RemoteException {
+	/**
+	 * Imports a text mapping file into the database table.
+	 * 
+	 * <p>This method imports text mapping files (.lime, .cin, or delimited text) into
+	 * the specified database table. It delegates to {@link LimeDB#importTxtTable(String, LIMEProgressListener)}
+	 * to perform the actual import operation.
+	 * 
+	 * <p>This method:
+	 * <ul>
+	 *   <li>Sets the filename for the import operation</li>
+	 *   <li>Delegates to LimeDB.importTxtTable() for the actual import</li>
+	 *   <li>Resets the SearchServer cache after import</li>
+	 * </ul>
+	 * 
+	 * @param filename The path to the text mapping file to import
+	 * @param tablename The table name to import data into (must be valid)
+	 * @param progressListener Optional progress listener for import updates (can be null)
+	 * @throws RemoteException if the import operation fails
+	 */
+	public void importTxtTable(String filename, String tablename, LIMEProgressListener progressListener) throws RemoteException {
 
 		File sourcefile = new File(filename);
-		loadMapping(sourcefile, tablename, progressListener);
+		importTxtTable(sourcefile, tablename, progressListener);
 	}
 
-	public void loadMapping(File sourcefile, String tablename, LIMEProgressListener progressListener) {
+	/**
+	 * Imports a text mapping file into the database table.
+	 * 
+	 * <p>This method imports text mapping files (.lime, .cin, or delimited text) into
+	 * the specified database table. It delegates to {@link LimeDB#importTxtTable(String, LIMEProgressListener)}
+	 * to perform the actual import operation.
+	 * 
+	 * <p>This method:
+	 * <ul>
+	 *   <li>Sets the filename for the import operation</li>
+	 *   <li>Delegates to LimeDB.importTxtTable() for the actual import</li>
+	 *   <li>Resets the SearchServer cache after import</li>
+	 * </ul>
+	 * 
+	 * @param sourcefile The text mapping file to import
+	 * @param tablename The table name to import data into (must be valid)
+	 * @param progressListener Optional progress listener for import updates (can be null)
+	 */
+	public void importTxtTable(File sourcefile, String tablename, LIMEProgressListener progressListener) {
 		if (DEBUG)
-			Log.i(TAG, "loadMapping() on " + loadingTablename);
+			Log.i(TAG, "importTxtTable() on " + loadingTablename);
 
 
 		loadingTablename = tablename;
@@ -155,62 +183,119 @@ public class  DBServer {
 		datasource.setFilename(sourcefile);
 
 		//showNotificationMessage(ctx.getText(R.string.lime_setting_notification_loading) + "");
-		datasource.loadFileV2(tablename, progressListener);
+		datasource.importTxtTable(tablename, progressListener);
 		//datasource.close();
 
 		// Reset for SearchSrv
 		//mLIMEPref.setResetCacheFlag(true);
-		resetCache();
+		datasource.resetCache();
 	}
 
-	public void resetMapping(final String tablename) throws RemoteException {
 
-		if (DEBUG)
-			Log.i(TAG, "resetMapping() on " + loadingTablename);
-
-		datasource.deleteAll(tablename);
-
-		// Reset cache in SearchSrv
-		//mLIMEPref.setResetCacheFlag(true);
-		resetCache();
-	}
-	public void resetCache(){
-		SearchServer.resetCache(true);
-	}
-
-    public int countMapping(String tableName){
-        return datasource.countMapping(tableName);
+	/**
+	 * Imports a related database file into the related table.
+	 * 
+	 * <p>This method acts as a convenience wrapper for {@link LimeDB#importDbRelated(File)}
+	 * to import related phrase data from a source database file.
+	 *
+	 * @param sourcedb The source database file to import
+	 */
+	public void importDbRelated(File sourcedb){
+        datasource.importDbRelated(sourcedb);
     }
 
-	public void importBackupRelatedDb(File sourcedb){
-        datasource.importBackupRelatedDb(sourcedb);
-    }
-
-	public void importBackupDb(File sourcedb, String imtype) {
-        datasource.importBackupDb(sourcedb, imtype);
-    }
-
-	public void importMapping(File compressedSourceDB, String imtype) {
-
-
-		//String sourcedbfile = LIME.LIME_SDCARD_FOLDER + imtype;
-		List<String> unzipFilePaths = new ArrayList<>();
+	/**
+	 * Imports a compressed related database file (.limedb) into the related table.
+	 * 
+	 * <p>This method unzips the compressed database file and then imports it into
+	 * the related table. It handles the file operations (unzip) and delegates the
+	 * actual database import to {@link LimeDB#importDbRelated(File)}.
+	 * 
+	 * <p>This method:
+	 * <ul>
+	 *   <li>Unzips the compressed file to a temporary directory</li>
+	 *   <li>Imports the first database file found from the zip</li>
+	 *   <li>Resets the SearchServer cache after import</li>
+	 * </ul>
+	 * 
+	 * @param compressedSourceDB The compressed database file (.limedb) to import
+	 */
+	public void importZippedDbRelated(File compressedSourceDB) {
+		List<String> unzipFilePaths;
 		try {
 			File unzipTargetDir = new File(appContext.getCacheDir(), "limehd");
-			unzipFilePaths = LIMEUtilities.unzip(compressedSourceDB.getAbsolutePath(), unzipTargetDir.getAbsolutePath(),true);
+			unzipFilePaths = LIMEUtilities.unzip(compressedSourceDB.getAbsolutePath(), unzipTargetDir.getAbsolutePath(), true);
+		} catch (Exception e) {
+			Log.e(TAG, "Error unzipping compressed related database", e);
+			return;
+		}
+		if (unzipFilePaths.size() == 1) {
+			datasource.importDbRelated(new File(unzipFilePaths.get(0)));
+			net.toload.main.hd.SearchServer.resetCache(true);
+		} else {
+			Log.e(TAG, "importZippedDbRelated(): Expected 1 file in zip, found " + unzipFilePaths.size());
+		}
+	}
+
+	/**
+	 * Imports a database file into the specified IM table.
+	 * 
+	 * <p>This method imports a database file into the specified input method table.
+	 * It delegates to {@link LimeDB#importDb(File, List, boolean, boolean)} to perform
+	 * the actual import operation with overwrite enabled.
+	 * 
+	 * <p>This method:
+	 * <ul>
+	 *   <li>Creates a list containing the specified IM type</li>
+	 *   <li>Delegates to LimeDB.importDb() with overwriteExisting=true</li>
+	 * </ul>
+	 * 
+	 * @param sourcedb The source database file to import
+	 * @param imtype The IM type (table name) to import data into
+	 */
+	public void importDb(File sourcedb, String imtype) {
+        List<String> tableNames = new ArrayList<>();
+        tableNames.add(imtype);
+        datasource.importDb(sourcedb, tableNames, false, true);
+    }
+
+	/**
+	 * Imports a compressed database file (.limedb) into the specified IM table.
+	 * 
+	 * <p>This method unzips the compressed database file and then imports it into
+	 * the specified input method table. It handles the file operations (unzip)
+	 * and delegates the actual database import to {@link LimeDB#importDb(File, List, boolean, boolean)}.
+	 * 
+	 * <p>This method:
+	 * <ul>
+	 *   <li>Unzips the compressed file to a temporary directory</li>
+	 *   <li>Imports the first database file found from the zip into the specified table</li>
+	 *   <li>Resets the SearchServer cache after import</li>
+	 * </ul>
+	 * 
+	 * @param compressedSourceDB The compressed database file (.limedb) to import
+	 * @param imtype The IM type (table name) to import data into
+	 */
+	public void importZippedDb(File compressedSourceDB, String imtype) {
+		List<String> unzipFilePaths;
+		try {
+			File unzipTargetDir = new File(appContext.getCacheDir(), "limehd");
+			unzipFilePaths = LIMEUtilities.unzip(compressedSourceDB.getAbsolutePath(), unzipTargetDir.getAbsolutePath(), true);
 		} catch (Exception e) {
 			Log.e(TAG, "Error unzipping compressed database", e);
+			return;
 		}
-		if(unzipFilePaths.size() == 1){
-            datasource.importDb(unzipFilePaths.get(0), imtype);
-            resetCache();
-        }
+		if (unzipFilePaths.size() == 1) {
+			List<String> tableNames = new ArrayList<>();
+			tableNames.add(imtype);
+			datasource.importDb(new File(unzipFilePaths.get(0)), tableNames, false, true);
+			net.toload.main.hd.SearchServer.resetCache(true);
+		} else {
+			Log.e(TAG, "importZippedDb(): Expected 1 file in zip, found " + unzipFilePaths.size());
+		}
 	}
 
 
-	public int getLoadingMappingCount() {
-		return datasource.getCount();
-	}
 
 	/**
 	 * Get the data directory path, compatible with all API levels.
@@ -375,7 +460,7 @@ public class  DBServer {
             //Delete the shared preference backup file after restored.
             if(sharedPref.exists() && !sharedPref.delete()) Log.w(TAG, "Failed to delete shared preferences backup file after restore");
 			//mLIMEPref.setResetCacheFlag(true);
-			resetCache();
+            net.toload.main.hd.SearchServer.resetCache(true);
 
 			// Check and upgrade the database table
 			datasource.checkAndUpdateRelatedTable();
@@ -446,42 +531,11 @@ public class  DBServer {
         }
 	}
 
-	public String getImInfo(String im, String field) throws RemoteException {
-		//if (datasource == null) {loadLimeDB();}
-		return datasource.getImInfo(im, field);
-	}
-
-
-	public String getKeyboardInfo(String keyboardCode, String field) {
-		//if (datasource == null) {loadLimeDB();}
-		return datasource.getKeyboardInfo(keyboardCode, field);
-	}
-
-
-	public void removeImInfo(String im, String field) {
-		//if (datasource == null) {loadLimeDB();}
-		datasource.removeImInfo(im, field);
-
-	}
-
-
-	public void resetImInfo(String im) {
-		//if (datasource == null) {loadLimeDB();}
-		datasource.resetImInfo(im);
-
-	}
-
-
-	public void setImInfo(String im, String field, String value) {
-		//if (datasource == null) {loadLimeDB();}
-		datasource.setImInfo(im, field, value);
-
-	}
 
 
 
 
-	public void closeDatabase() {
+	private void closeDatabase() {
 		Log.i(TAG,"closeDatabase()");
 		if (datasource != null) {
 			datasource.close();
@@ -489,17 +543,6 @@ public class  DBServer {
 	}
 
 
-	public void setIMKeyboard(String im, String value,
-							  String keyboard) throws RemoteException {
-
-		datasource.setIMKeyboard(im, value, keyboard);
-	}
-
-
-	public String getKeyboardCode(String im) {
-		//if (datasource == null) {loadLimeDB();}
-		return datasource.getKeyboardCode(im);
-	}
 
 
 
@@ -507,9 +550,9 @@ public class  DBServer {
 	/*
 	 * Decompress retrieved file to target folder
 	 */
-	public void decompressFile(File sourceFile, String targetFolder, String targetFile, boolean removeOriginal){
+	public void unzip(File sourceFile, String targetFolder, String targetFile, boolean removeOriginal){
 		if(DEBUG)
-			Log.i(TAG, "decompressFile(), souce = " + sourceFile.toString() +	", target = " + targetFolder + "/" + targetFile);
+			Log.i(TAG, "unzip(), souce = " + sourceFile.toString() +	", target = " + targetFolder + "/" + targetFile);
 
 		try {
 
@@ -558,9 +601,9 @@ public class  DBServer {
         return zis;
     }
 
-    public void compressFile(File sourceFile, String targetFolder, String targetFile){
+    public void zip(File sourceFile, String targetFolder, String targetFile){
 		if(DEBUG)
-			Log.i(TAG, "compressFile(), srouce = " + sourceFile.toString() +
+			Log.i(TAG, "zip(), srouce = " + sourceFile.toString() +
 					", target = " + targetFolder + "/" + targetFile);
 		try{
 			final int BUFFER = LIME.BUFFER_SIZE_2KB;
@@ -596,18 +639,10 @@ public class  DBServer {
 			Log.e(TAG, "Error compressing file", e);
 		}
 	}
-	/**
-	 * Check the consistency of phonetic keyboard setting in preference and db.
-	 * Jeremy '12,6,8
-	 *
-	 */
-	public void checkPhoneticKeyboardSetting(){
-		datasource.checkPhoneticKeyboardSetting();
-	}
 
 
 	//Jeremy '12,4,23 rewriting using alert notification builder in LIME utilities to replace the deprecated method
-	public void showNotificationMessage(String message) {
+	private void showNotificationMessage(String message) {
 		Intent i;
 		i = new Intent(appContext, MainActivity.class);
 
@@ -616,22 +651,142 @@ public class  DBServer {
 
 	}
 
-	/**
-	 * Jeremy '12,7,6 get keyboard object from table name
-	 * @param table table
-	 * @return KeyboardObj
-	 */
-	public KeyboardObj getKeyboardObj(String table){
-		KeyboardObj kobj = null;
-		if(datasource != null)
-			kobj = datasource.getKeyboardObj(table);
-		return kobj;
-	}
 
 	public boolean isDatabseOnHold() {
 		return datasource.isDatabaseOnHold();
 	}
 
+
+	/**
+	 * Exports an IM database to a zipped file for sharing.
+	 * 
+	 * <p>This method centralizes all file operations for exporting IM databases:
+	 * <ul>
+	 *   <li>Creates cache directory if needed</li>
+	 *   <li>Deletes existing files</li>
+	 *   <li>Copies blank database template from raw resources</li>
+	 *   <li>Prepares backup using LimeDB</li>
+	 *   <li>Zips the database file</li>
+	 * </ul>
+	 * 
+	 * <p>This replaces the file operations previously in ShareDbRunnable.
+	 * 
+	 * @param imType The IM type to export (e.g., "custom", "cj")
+	 * @param targetFile The target file to write the zipped database to
+	 * @param progressCallback Optional callback for progress updates (can be null)
+	 * @return The zipped database file, or null if error
+	 */
+	public File exportZippedDb(String imType, File targetFile, Runnable progressCallback) {
+		if (imType == null || targetFile == null) {
+			Log.e(TAG, "exportZippedDb(): Invalid parameters");
+			return null;
+		}
+
+		try {
+			File cacheDir = appContext.getExternalCacheDir();
+			if (cacheDir == null) {
+				cacheDir = appContext.getCacheDir();
+			}
+
+			File dbFile = new File(cacheDir, imType + LIME.DATABASE_EXT);
+			if (dbFile.exists() && !dbFile.delete()) {
+				Log.e(TAG, "exportZippedDb(): Error deleting existing file");
+			}
+
+			if (targetFile.exists() && !targetFile.delete()) {
+				Log.e(TAG, "exportZippedDb(): Error deleting existing zip file");
+			}
+
+			if (progressCallback != null) {
+				progressCallback.run();
+			}
+
+			// Copy blank database template from raw resources
+			LIMEUtilities.copyRAWFile(appContext.getResources().openRawResource(net.toload.main.hd.R.raw.blank), dbFile);
+
+			// Prepare backup using LimeDB
+			List<String> tableNames = new ArrayList<>();
+			tableNames.add(imType);
+			datasource.prepareBackup(dbFile, tableNames, false);
+
+			// Zip the database file
+			LIMEUtilities.zip(targetFile.getAbsolutePath(), dbFile.getAbsolutePath(), true);
+
+			// Clean up unzipped file
+			if (dbFile.exists() && !dbFile.delete()) {
+				Log.e(TAG, "exportZippedDb(): Error deleting temp file");
+			}
+
+			return targetFile;
+		} catch (Exception e) {
+			Log.e(TAG, "exportZippedDb(): Error exporting database", e);
+			return null;
+		}
+	}
+
+	/**
+	 * Exports the related phrase database to a zipped file for sharing.
+	 * 
+	 * <p>This method centralizes all file operations for exporting related phrase databases:
+	 * <ul>
+	 *   <li>Creates cache directory if needed</li>
+	 *   <li>Deletes existing files</li>
+	 *   <li>Copies blank database template from raw resources</li>
+	 *   <li>Prepares backup using LimeDB</li>
+	 *   <li>Zips the database file</li>
+	 * </ul>
+	 * 
+	 * <p>This replaces the file operations previously in ShareRelatedDbRunnable.
+	 * 
+	 * @param targetFile The target file to write the zipped database to
+	 * @param progressCallback Optional callback for progress updates (can be null)
+	 * @return The zipped database file, or null if error
+	 */
+	public File exportZippedDbRelated(File targetFile, Runnable progressCallback) {
+		if (targetFile == null) {
+			Log.e(TAG, "exportZippedDbRelated(): Invalid parameters");
+			return null;
+		}
+
+		try {
+			File cacheDir = appContext.getExternalCacheDir();
+			if (cacheDir == null) {
+				cacheDir = appContext.getCacheDir();
+			}
+
+			File dbFile = new File(cacheDir, LIME.DB_TABLE_RELATED + LIME.DATABASE_EXT);
+			if (dbFile.exists() && !dbFile.delete()) {
+				Log.e(TAG, "exportZippedDbRelated(): Error deleting existing file");
+			}
+
+			if (targetFile.exists() && !targetFile.delete()) {
+				Log.e(TAG, "exportZippedDbRelated(): Error deleting existing zip file");
+			}
+
+			if (progressCallback != null) {
+				progressCallback.run();
+			}
+
+			// Copy blank database template from raw resources
+			LIMEUtilities.copyRAWFile(appContext.getResources().openRawResource(net.toload.main.hd.R.raw.blankrelated), dbFile);
+
+			// Prepare backup using LimeDB
+			datasource.prepareBackup(dbFile, null, true);
+
+			// Zip the database file
+			LIMEUtilities.zip(targetFile.getAbsolutePath(), dbFile.getAbsolutePath(), true);
+
+			// Clean up unzipped file
+			if (dbFile.exists() && !dbFile.delete()) {
+				Log.e(TAG, "exportZippedDbRelated(): Error deleting temp file");
+			}
+
+			return targetFile;
+		} catch (Exception e) {
+			Log.e(TAG, "exportZippedDbRelated(): Error exporting database", e);
+			return null;
+		}
+	}
 
 }
 

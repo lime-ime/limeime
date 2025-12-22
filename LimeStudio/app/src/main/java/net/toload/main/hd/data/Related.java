@@ -31,6 +31,18 @@ import net.toload.main.hd.global.LIME;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a related phrase record in the database.
+ * 
+ * <p>A Related record contains a parent word and a child word that are
+ * commonly used together, along with scoring information.
+ * 
+ * <p>This class provides static helper methods to convert Cursor objects
+ * to Related instances, but does not contain any SQL code. All database
+ * operations should be performed through {@link net.toload.main.hd.limedb.LimeDB}.
+ * 
+ * @author LimeIME Team
+ */
 public class Related {
 
 	private int id;
@@ -104,6 +116,15 @@ public class Related {
 		return record;
 	}
 
+	/**
+	 * Converts a Cursor to a List of Related objects.
+	 * 
+	 * <p>This method iterates through all rows in the cursor and creates
+	 * Related objects for each row. The cursor is closed after processing.
+	 * 
+	 * @param cursor The Cursor containing database query results
+	 * @return List of Related objects
+	 */
 	public static List<Related> getList(Cursor cursor){
 		List<Related> list = new ArrayList<>();
 		cursor.moveToFirst();
@@ -113,19 +134,6 @@ public class Related {
 		}
 		cursor.close();
 		return list;
-	}
-
-	public static String getInsertQuery(Related record){
-        return "INSERT INTO " + LIME.DB_TABLE_RELATED + "(" +
-                LIME.DB_RELATED_COLUMN_PWORD + ", " +
-                LIME.DB_RELATED_COLUMN_CWORD + ", " +
-                LIME.DB_RELATED_COLUMN_USERSCORE + ", " +
-                LIME.DB_RELATED_COLUMN_BASESCORE + ") VALUES(" +
-                "\"" + record.getPword() + "\"," +
-                "\"" + record.getCword() + "\"," +
-                "\"" + record.getUserscore() + "\"," +
-                "\"" + record.getBasescore() + "\"" +
-                ")";
 	}
 
 }

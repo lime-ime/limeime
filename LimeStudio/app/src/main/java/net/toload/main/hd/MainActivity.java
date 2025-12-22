@@ -58,8 +58,6 @@ import androidx.fragment.app.FragmentTransaction;
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.ui.HelpDialog;
 import net.toload.main.hd.ui.ImportDialog;
 import net.toload.main.hd.ui.ManageImFragment;
@@ -75,7 +73,6 @@ import net.toload.main.hd.ui.ImportDialog.OnImportTypeSelectedListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -95,18 +92,34 @@ public class MainActivity extends AppCompatActivity
     private CharSequence mTitle;
     //private CharSequence mCode;
 
-    private LimeDB datasource;
+    private SearchServer searchServer;
     private List<Im> imlist;
 
     private AlertDialog progress;
     private MainActivityHandler handler;
     private Thread sharethread;
 
+    private File fileToImport;
+
+    /**
+     * Called when the activity is being destroyed.
+     * 
+     * <p>This is the final call the activity receives before it is destroyed. The activity
+     * should release any remaining resources here.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
     }
 
+    /**
+     * Called when the window focus changes (e.g., when the activity gains or loses focus).
+     * 
+     * <p>When the window gains focus and the SetupImFragment is visible, this method
+     * refreshes the IM buttons to reflect the current state of the database.
+     * 
+     * @param hasFocus True if the window has focus, false otherwise
+     */
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
@@ -149,12 +162,45 @@ public class MainActivity extends AppCompatActivity
         getOnBackPressedDispatcher().addCallback(this, callback);
     }
 
+    /**
+     * Called when the activity is no longer visible to the user.
+     * 
+     * <p>This method is called after {@link #onPause()} when the activity is no longer
+     * visible. The activity may be finishing or about to be destroyed.
+     */
     @Override
     protected void onStop() {
         super.onStop();
     }
 
 
+    /**
+     * Called when the activity is first created.
+     * 
+     * <p>This method performs the following initialization:
+     * <ul>
+     *   <li>Enables edge-to-edge display for modern Android versions</li>
+     *   <li>Sets up the ActionBar with white background</li>
+     *   <li>Configures window insets for edge-to-edge display</li>
+     *   <li>Sets up back button handler with exit confirmation</li>
+     *   <li>Initializes the IM list from the database</li>
+     *   <li>Sets up the navigation drawer</li>
+     *   <li>Handles ACTION_SEND and ACTION_VIEW intents for file imports</li>
+     *   <li>Shows help dialog for new app versions</li>
+     * </ul>
+     * 
+     * <p>Supported intent actions:
+     * <ul>
+     *   <li>ACTION_SEND with text/plain: Opens ImportDialog for text import</li>
+     *   <li>ACTION_VIEW with text/plain (.lime/.cin): Opens ImportDialog for file import</li>
+     *   <li>ACTION_VIEW with application/zip (.limedb): Imports database file</li>
+     * </ul>
+     * 
+     * @param savedInstanceState If the activity is being re-initialized after previously
+     *                           being shut down, this Bundle contains the data it most
+     *                           recently supplied in {@link #onSaveInstanceState(Bundle)}.
+     *                           Otherwise it is null.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -210,6 +256,8 @@ public class MainActivity extends AppCompatActivity
         String action = intent.getAction();
         String type = getIntent().getType();
         
+
+
         // 1. For ACTION_SEND, use handleSendText() to process
         if (Intent.ACTION_SEND.equals(action) && type != null) {
             if ("text/plain".equals(type)) {
@@ -265,8 +313,8 @@ public class MainActivity extends AppCompatActivity
                 if (!importDir.exists() && !importDir.mkdirs()) {
                     Log.w(TAG, "Failed to create import dir: " + importDir.getAbsolutePath());
                 }
-                File importFile = new File(importDir, fileName);
-                String importFilepath = importFile.getAbsolutePath();
+                fileToImport = new File(importDir, fileName);
+                String importFilepath = fileToImport.getAbsolutePath();
                 
                 if (input != null) {
                     InputStreamToFile(input, importFilepath);
@@ -284,40 +332,37 @@ public class MainActivity extends AppCompatActivity
                     // 5. For .limedb file, handle import
                     String tableName = getFileNameWithoutExtension(fileName);
                     DBServer dbServer = DBServer.getInstance(this);
-                    List<String> unzipPaths;
-                    try {
-                        unzipPaths = LIMEUtilities.unzip(importFile.getAbsolutePath(), importFile.getParent(), true);
-
-                        if (unzipPaths.size() != 1) {
-                            showToastMessage(getResources().getString(R.string.error_import_db), Toast.LENGTH_LONG);
-                            return;
-                        }
-                        File fileToImport = new File(unzipPaths.get(0));
-                         
-                        // Check if table is empty before importing
-                        int recordCount = dbServer.countMapping(tableName);
-                        if (recordCount > 0) {
-                            // Table is not empty, show confirmation dialog
-                            
-                            String message = getResources().getString(R.string.setup_im_dialog_import_confirm_overwrite);
-                            
-                            new AlertDialog.Builder(this)
-                                .setTitle(getResources().getString(R.string.setup_im_dialog_import_confirm_title))
-                                .setMessage(message)
-                                .setPositiveButton(getResources().getString(R.string.dialog_confirm), (dialog, which) -> {
-                                    // User confirmed, proceed with import
-                                    performLimedbImport(dbServer, fileToImport, tableName);
-                                })
-                                .setNegativeButton(getResources().getString(R.string.dialog_cancel), (dialog, which) -> dialog.dismiss())
-                                .show();
-                        } else {
-                            // Table is empty, proceed directly with import
-                            performLimedbImport(dbServer, fileToImport, tableName);
-                        }
-                    } catch (IOException e) {
-                        String errorMessage = getResources().getString(R.string.error_import_db);
-                        Log.e(TAG, errorMessage, e);
-                        showToastMessage(errorMessage, Toast.LENGTH_LONG);
+                    
+                    // Check if table is empty before importing
+                    if (searchServer == null) {
+                        searchServer = new SearchServer(this);
+                    }
+                    int recordCount = searchServer.countRecords(tableName);
+                    if (recordCount > 0) {
+                        // Table is not empty, show confirmation dialog
+                        
+                        String message = getResources().getString(R.string.setup_im_dialog_import_confirm_overwrite);
+                        
+                        new AlertDialog.Builder(this)
+                            .setTitle(getResources().getString(R.string.setup_im_dialog_import_confirm_title))
+                            .setMessage(message)
+                            .setPositiveButton(getResources().getString(R.string.dialog_yes), (dialog, which) -> {
+                                // User selected Yes: proceed with import and restore user records if available
+                                searchServer.backupUserRecords(tableName);
+                                performLimedbImport(dbServer, fileToImport, tableName);
+                                if (searchServer.checkBackuptable(tableName)) {
+                                    searchServer.restoreUserRecords(tableName);
+                                }
+                            })
+                            .setNeutralButton(getResources().getString(R.string.dialog_no), (dialog, which) -> {
+                                // User selected No: proceed with import but don't restore user records
+                                performLimedbImport(dbServer, fileToImport, tableName);
+                            })
+                            .setNegativeButton(getResources().getString(R.string.dialog_cancel), (dialog, which) -> dialog.dismiss())
+                            .show();
+                    } else {
+                        // Table is empty, proceed directly with import
+                        performLimedbImport(dbServer, fileToImport, tableName);
                     }
                 } else {
                     String errorMessage = getResources().getString(R.string.error_file_format);
@@ -326,6 +371,8 @@ public class MainActivity extends AppCompatActivity
                     showToastMessage(errorMessage, Toast.LENGTH_SHORT);
                 }
             }
+            
+
         }
 
         String versionStr = "";
@@ -338,8 +385,8 @@ public class MainActivity extends AppCompatActivity
             Log.e(TAG, "Error getting package info", e);
         }
 
-        String cversion = mLIMEPref.getParameterString("current_version", "");
-        if (cversion == null || cversion.isEmpty() || !cversion.equals(versionStr)) {
+        String currentVersion = mLIMEPref.getParameterString("current_version", "");
+        if (currentVersion == null || currentVersion.isEmpty() || !currentVersion.equals(versionStr)) {
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             HelpDialog dialog = HelpDialog.newInstance();
             dialog.show(ft, "helpdialog");
@@ -348,6 +395,17 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    /**
+     * Retrieves the display name of a content URI.
+     * 
+     * <p>This method queries the content resolver to get the display name (filename)
+     * from a content URI. It uses MediaStore.MediaColumns.DISPLAY_NAME to extract
+     * the filename.
+     * 
+     * @param resolver The ContentResolver to use for querying
+     * @param uri The content URI to query
+     * @return The display name (filename) if found, null otherwise
+     */
     private String getContentName(ContentResolver resolver, Uri uri) {
         Cursor cursor = resolver.query(uri, null, null, null, null);
         if (cursor == null) return null;
@@ -361,6 +419,18 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Writes an InputStream to a file.
+     * 
+     * <p>This method reads data from the input stream and writes it to the specified
+     * file path. It uses a buffer of size {@link LIME#BUFFER_SIZE_64KB} for efficient
+     * reading and writing.
+     * 
+     * <p>If an error occurs during the operation, it is logged but not thrown.
+     * 
+     * @param in The InputStream to read from
+     * @param file The file path to write to
+     */
     private void InputStreamToFile(InputStream in, String file) {
         try {
             OutputStream out = new FileOutputStream(file);
@@ -378,6 +448,15 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Handles ACTION_SEND intent with text/plain type.
+     * 
+     * <p>This method is called when the activity receives an ACTION_SEND intent with
+     * text/plain MIME type. It extracts the text from the intent and opens an
+     * ImportDialog to allow the user to select which IM table to import the text into.
+     * 
+     * @param intent The ACTION_SEND intent containing the text to import
+     */
     void handleSendText(Intent intent) {
         String importtext = intent.getStringExtra(Intent.EXTRA_TEXT);
         if (importtext != null && !importtext.isEmpty()) {
@@ -387,6 +466,15 @@ public class MainActivity extends AppCompatActivity
         }
     }
     
+    /**
+     * Handles import of a text file (.lime or .cin).
+     * 
+     * <p>This method is called when the activity receives an ACTION_VIEW intent with
+     * a text/plain file (.lime or .cin). It opens an ImportDialog to allow the user
+     * to select which IM table to import the file into.
+     * 
+     * @param filePath The path to the text file to import
+     */
     void handleImportTxt(String filePath) {
         if (filePath != null && !filePath.isEmpty()) {
             androidx.fragment.app.FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
@@ -396,12 +484,30 @@ public class MainActivity extends AppCompatActivity
         }
     }
     
+    /**
+     * Callback method called when user selects an IM type for import in ImportDialog.
+     * 
+     * <p>This method is called after the user selects which IM table to import the
+     * file into. It performs the actual import operation by calling
+     * {@link SetupImFragment#importTxtTable(File, String, boolean)} if the fragment
+     * is visible.
+     * 
+     * <p>The method shows a progress dialog during import and displays completion
+     * or error messages as appropriate.
+     * 
+     * @param imType The IM type (table name) selected for import
+     * @param restoreUserRecords If true, restores user-learned records from backup table after import
+     */
     @Override
-    public void onImportTypeSelected(String imType, String filePath) {
+    public void onImportTypeSelected(String imType, boolean restoreUserRecords) {
         try {
             showProgress();
-            DBServer dbServer = DBServer.getInstance(this);
-            dbServer.loadMapping(filePath, imType, null);
+            // Call importTxtTable in setupImFragment to update progress and update button when finished.
+            SetupImFragment setupImFragment = (SetupImFragment) getSupportFragmentManager().findFragmentByTag("SetupImFragment");
+            if (setupImFragment != null && setupImFragment.isVisible()) {
+                setupImFragment.importTxtTable(fileToImport, imType, restoreUserRecords);
+            }
+
         } catch (Exception e) {
             String errorMessage = getResources().getString(R.string.error_import_db);
             Log.e(TAG, errorMessage, e);
@@ -466,7 +572,7 @@ public class MainActivity extends AppCompatActivity
     }
     
     /**
-     * Checks if a table name is valid using LimeDB validation.
+     * Checks if a table name is valid using SearchServer validation.
      * @param tableName The table name to validate
      * @return true if valid table name
      */
@@ -474,25 +580,29 @@ public class MainActivity extends AppCompatActivity
         if (tableName == null || tableName.isEmpty()) {
             return false;
         }
-        if (datasource == null) {
-            datasource = new LimeDB(this);
+        if (searchServer == null) {
+            searchServer = new SearchServer(this);
         }
-        return datasource.isValidTableName(tableName);
+        return searchServer.isValidTableName(tableName);
     }
 
-    
+
     /**
-     * Performs the actual import of a .limedb file to the specified table.
-     * @param dbServer The DBServer instance
-     * @param fileToImport The file to import
-     * @param tableName The table name (without extension)
+     * Performs import of a compressed database file (.limedb).
+     * 
+     * <p>This method delegates to DBServer methods that handle unzip and import operations.
+     * File operations are centralized in DBServer to maintain architecture compliance.
+     * 
+     * @param dbServer The DBServer instance to use for import
+     * @param fileToImport The compressed database file (.limedb) to import
+     * @param tableName The table name to import into (or "related" for related table)
      */
     private void performLimedbImport(DBServer dbServer, File fileToImport, String tableName) {
         if ("related".equals(tableName)) {
-            // If filename is "related", import with importBackupRelatedDb
+            // If filename is "related", import with importZippedDbRelated
             try {
                 showProgress();
-                dbServer.importBackupRelatedDb(fileToImport);
+                dbServer.importZippedDbRelated(fileToImport);
                 showToastMessage(getResources().getString(R.string.import_related_success), Toast.LENGTH_SHORT);
             } catch (Exception e) {
                 String errorMessage = getResources().getString(R.string.error_import_db);
@@ -507,7 +617,7 @@ public class MainActivity extends AppCompatActivity
             if (isValidTableName(tableName)) {
                 try {
                     showProgress();
-                    dbServer.importBackupDb(fileToImport, tableName);
+                    dbServer.importZippedDb(fileToImport, tableName);
                     showToastMessage(getResources().getString(R.string.setup_im_import_complete), Toast.LENGTH_SHORT);
                 } catch (Exception e) {
                     String errorMessage = getResources().getString(R.string.error_import_db);
@@ -524,13 +634,23 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Initializes the list of input methods from the database.
+     * 
+     * <p>This method queries the database for all input methods and stores them
+     * in the imlist field. The list is used to populate the navigation drawer
+     * and to navigate to individual IM management fragments.
+     * 
+     * <p>If the query returns null, an empty list is created to prevent
+     * NullPointerException.
+     */
     public void initialImList() {
 
-        if (datasource == null)
-            datasource = new LimeDB(this);
+        if (searchServer == null)
+            searchServer = new SearchServer(this);
 
         imlist = new ArrayList<>();
-        List<Im> result = datasource.getIm(null, LIME.IM_TYPE_NAME);
+        List<Im> result = searchServer.getIm(null, LIME.IM_TYPE_NAME);
         if (result != null) {
             imlist = result;
         }
@@ -540,6 +660,22 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Called when an item in the navigation drawer is selected.
+     * 
+     * <p>This method handles navigation to different fragments based on the selected
+     * position:
+     * <ul>
+     *   <li>Position 0: Shows SetupImFragment (IM setup)</li>
+     *   <li>Position 1: Shows ManageRelatedFragment (related phrases)</li>
+     *   <li>Position 2+: Shows ManageImFragment for the corresponding IM table</li>
+     * </ul>
+     * 
+     * <p>All fragment transactions are added to the back stack to allow navigation
+     * back through the history.
+     * 
+     * @param position The position of the selected item in the navigation drawer
+     */
     @Override
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
@@ -573,6 +709,21 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Called when a navigation section is attached to update the ActionBar title.
+     * 
+     * <p>This method updates the mTitle field based on the section number:
+     * <ul>
+     *   <li>Section 0: Sets title to "Initial" (IM setup)</li>
+     *   <li>Section 1: Sets title to "Related" (related phrases)</li>
+     *   <li>Section 2+: Sets title to the IM description from imlist</li>
+     * </ul>
+     * 
+     * <p>The title is later used by {@link #restoreActionBar()} to update the
+     * ActionBar display.
+     * 
+     * @param number The section number (0 = initial, 1 = related, 2+ = IM index)
+     */
     public void onSectionAttached(int number) {
         if (number == 0) {
             mTitle = this.getResources().getString(R.string.default_menu_initial);
@@ -593,6 +744,13 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Restores the ActionBar title to the current section title.
+     * 
+     * <p>This method updates the ActionBar to display the title stored in mTitle.
+     * The mTitle field is set by {@link #onSectionAttached(int)} when a navigation
+     * section is attached.
+     */
     public void restoreActionBar() {
         ActionBar actionBar = getSupportActionBar();
         //actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD); //setNavigationMode is deprecated after API21 (v5.0).
@@ -602,6 +760,16 @@ public class MainActivity extends AppCompatActivity
     }
 
 
+    /**
+     * Initialize the contents of the Activity's standard options menu.
+     * 
+     * <p>This method inflates the menu resource and restores the ActionBar title
+     * if the navigation drawer is not open. If the drawer is open, the drawer
+     * decides what to show in the action bar.
+     * 
+     * @param menu The options menu in which items are placed
+     * @return True if the menu should be displayed, false otherwise
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         if (!mNavigationDrawerFragment.isDrawerOpen()) {
@@ -615,36 +783,89 @@ public class MainActivity extends AppCompatActivity
         return super.onCreateOptionsMenu(menu);
     }
 
+    /**
+     * Called when an options menu item is selected.
+     * 
+     * <p>This method delegates to the parent class implementation. Menu item
+     * handling is typically done by fragments or the navigation drawer.
+     * 
+     * @param item The menu item that was selected
+     * @return True if the event was handled, false otherwise
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Displays a toast message to the user.
+     * 
+     * <p>This is a convenience method for showing toast messages throughout
+     * the activity.
+     * 
+     * @param msg The message text to display
+     * @param length The duration to display the message (Toast.LENGTH_SHORT or Toast.LENGTH_LONG)
+     */
     public void showToastMessage(String msg, int length) {
         Toast toast = Toast.makeText(this, msg, length);
         toast.show();
     }
 
+    /**
+     * Initiates sharing of an IM table as a text file.
+     * 
+     * <p>This method starts a background thread that exports the specified IM table
+     * to a text file and then shares it using the Android share intent.
+     * 
+     * @param imtype The IM type (table name) to share
+     */
     public void initialShare(String imtype) {
         sharethread = new Thread(new ShareTxtRunnable(this, imtype, handler));
         sharethread.start();
     }
 
+    /**
+     * Initiates sharing of an IM table as a compressed database file.
+     * 
+     * <p>This method starts a background thread that exports the specified IM table
+     * to a compressed .limedb file and then shares it using the Android share intent.
+     * 
+     * @param imtype The IM type (table name) to share
+     */
     public void initialShareDb(String imtype) {
         sharethread = new Thread(new ShareDbRunnable(this, imtype, handler));
         sharethread.start();
     }
 
+    /**
+     * Initiates sharing of the related phrases table as a text file.
+     * 
+     * <p>This method starts a background thread that exports the related phrases
+     * table to a text file and then shares it using the Android share intent.
+     */
     public void initialShareRelated() {
         sharethread = new Thread(new ShareRelatedTxtRunnable(this, handler));
         sharethread.start();
     }
 
+    /**
+     * Initiates sharing of the related phrases table as a compressed database file.
+     * 
+     * <p>This method starts a background thread that exports the related phrases
+     * table to a compressed .limedb file and then shares it using the Android share intent.
+     */
     public void initialShareRelatedDb() {
         sharethread = new Thread(new ShareRelatedDbRunnable(this, handler));
         sharethread.start();
     }
 
+    /**
+     * Shows a progress dialog if it is not already showing.
+     * 
+     * <p>This method creates a progress dialog if it doesn't exist, or shows it
+     * if it exists but is not currently displayed. The progress dialog is
+     * non-cancelable and displays a progress bar and text area for status updates.
+     */
     public void showProgress() {
         if (progress == null) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -658,6 +879,12 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Dismisses the progress dialog if it is showing.
+     * 
+     * <p>This method dismisses and nullifies the progress dialog, releasing
+     * resources. It should be called when a long-running operation completes.
+     */
     public void cancelProgress() {
         if (progress != null && progress.isShowing()) {
             progress.dismiss();
@@ -665,6 +892,14 @@ public class MainActivity extends AppCompatActivity
         progress = null;
     }
 
+    /**
+     * Updates the progress bar value in the progress dialog.
+     * 
+     * <p>This method updates the progress bar to the specified value (0-100).
+     * If the progress dialog is not showing, this method does nothing.
+     * 
+     * @param value The progress value (0-100)
+     */
     public void updateProgress(int value) {
         if (progress != null && progress.isShowing()) {
             ProgressBar pb = progress.findViewById(R.id.progress_bar);
@@ -674,6 +909,14 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Updates the progress text in the progress dialog.
+     * 
+     * <p>This method updates the status text displayed in the progress dialog.
+     * If the progress dialog is not showing, this method does nothing.
+     * 
+     * @param value The status text to display
+     */
     public void updateProgress(String value) {
         if (progress != null && progress.isShowing()) {
             TextView tv = progress.findViewById(R.id.progress_text);
@@ -683,6 +926,22 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Shares a file using Android's share intent.
+     * 
+     * <p>This method creates a share intent for the specified file and launches
+     * the Android share chooser. The file is shared using FileProvider to ensure
+     * proper URI permissions.
+     * 
+     * <p>The share intent includes:
+     * <ul>
+     *   <li>The file URI with read permission granted</li>
+     *   <li>The file name as extra text</li>
+     * </ul>
+     * 
+     * @param filepath The path to the file to share
+     * @param type The MIME type of the file (e.g., "text/plain" or "application/zip")
+     */
     public void shareTo(String filepath, String type) {
         Intent sharingIntent = new Intent(Intent.ACTION_SEND);
         sharingIntent.setType(type);
@@ -697,11 +956,23 @@ public class MainActivity extends AppCompatActivity
         startActivity(Intent.createChooser(sharingIntent, target.getName()));
     }
 
+    /**
+     * Initializes default preferences for the application.
+     * 
+     * <p>This method is currently empty and reserved for future use. It may be
+     * used to set default preference values when the app is first launched.
+     */
     public void initialDefaultPreference() {
 
 
     }
 
+    /**
+     * Shows the news/message board dialog.
+     * 
+     * <p>This method displays a dialog containing news or announcements.
+     * If an error occurs while showing the dialog, it is logged but not thrown.
+     */
     public void showMessageBoard() {
         try {
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
@@ -773,6 +1044,13 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Called when the activity is becoming visible to the user.
+     * 
+     * <p>This method is called after {@link #onCreate(Bundle)} or after
+     * {@link #onRestart()} if the activity was stopped. The activity is
+     * visible but may not be in the foreground.
+     */
     @Override
     public void onStart() {
         super.onStart();

@@ -27,6 +27,17 @@ package net.toload.main.hd.data;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Provides Chinese punctuation symbol conversion utilities.
+ * 
+ * <p>This class contains methods to convert English punctuation marks
+ * to their Chinese full-width equivalents, and provides a list of
+ * Chinese punctuation symbols for use in the IME.
+ * 
+ * <p>This class does not contain any SQL code or database operations.
+ * 
+ * @author LimeIME Team
+ */
 public class ChineseSymbol {
 	public final static String chineseSymbols = "，|。|、|？|！|：|；|（|）|「|」|『|』|【|】|" +
 			"／|＼|－|＿|＊|＆|︿|％|＄|＃|＠|～|｛|｝|［|］|＜|＞|＋|｜|‵|＂";	

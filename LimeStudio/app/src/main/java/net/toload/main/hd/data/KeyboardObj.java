@@ -24,6 +24,18 @@
 
 package net.toload.main.hd.data;
 
+/**
+ * Represents keyboard configuration data for UI components.
+ * 
+ * <p>This class is a simplified data transfer object (DTO) used primarily
+ * in UI components to display and configure keyboard settings. It contains
+ * keyboard layout information for different modes (IM, English, Symbol, etc.)
+ * and their shift variants.
+ * 
+ * <p>This class does not contain any SQL code or database operations.
+ * 
+ * @author LimeIME Team
+ */
 public class KeyboardObj {
 
 	private String code;

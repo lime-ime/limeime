@@ -25,7 +25,17 @@
 package net.toload.main.hd.data;
 
 /**
+ * Represents a mapping result used in the IME service layer.
+ * 
+ * <p>A Mapping contains information about a code-to-word mapping along with
+ * metadata about the match type (exact match, partial match, related phrase, etc.)
+ * and highlighting information.
+ * 
+ * <p>This class is used primarily in the IME service layer for displaying
+ * candidate words to users. It does not contain any SQL code.
+ * 
  * @author Art Hung
+ * @author LimeIME Team
  */
 public class Mapping {
 

@@ -46,6 +46,8 @@
     <string name="dialog_confirm">確認</string>
     <string name="dialog_cancel">取消</string>
     <string name="dialog_close">關閉</string>
+    <string name="dialog_yes">是</string>
+    <string name="dialog_no">否</string>
 
     <string name="sdcard_transfer_message">升級資料庫並轉移至裝置空間</string>
 
@@ -88,7 +90,7 @@
     <string name="setup_im_download_old_version_hint">檔案下載路徑 :</string>
     <string name="setup_im_restore_local">還原</string>
     <string name="setup_im_dialog_import_confirm_title">匯入輸入法資料表</string>
-    <string name="setup_im_dialog_import_confirm_overwrite">輸入法資料表已有資料，是否清空後匯入此資料檔?</string>
+    <string name="setup_im_dialog_import_confirm_overwrite">輸入法資料表已有資料，清空匯入此資料檔後是否要還原輸入法選字喜好?</string>
 
 
     <string name="setup_im_load_custom">自定字根表</string>
@@ -185,8 +187,8 @@
     <string name="manage_related_save">儲存</string>
     <string name="manage_related_loading">讀取中 ...</string>
     <string name="manage_related_reset">重置</string>
-    <string name="manage_related_duplicated">關聯字重覆，無法儲存</string>
-    <string name="manage_related_format_error">關聯字建立錯誤，字碼格式不支援</string>
+    <string name="manage_related_duplicated_error">關聯字重覆或建立錯誤，無法儲存</string>
+
 
     <string name="manage_related_dialog_edit">編輯內容</string>
     <string name="manage_related_dialog_message">請問是否要儲存記錄並離開?</string>

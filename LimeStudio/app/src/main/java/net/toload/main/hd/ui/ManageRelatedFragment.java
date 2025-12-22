@@ -49,7 +49,6 @@ import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
 import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.Related;
-import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,7 +92,7 @@ public class ManageRelatedFragment extends Fragment {
 
     private Thread ManageRelatedthread;
 
-    private LimeDB datasource;
+    private SearchServer searchServer;
 
     private ProgressBar progressBar;
 
@@ -122,8 +121,8 @@ public class ManageRelatedFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_manage_related, container, false);
 
         this.activity = this.getActivity();
-        this.datasource = new LimeDB(this.activity);
-        this.SearchSrv = new SearchServer(this.activity);
+        this.searchServer = new SearchServer(this.activity);
+        this.SearchSrv = this.searchServer;
 
         this.handler = new ManageRelatedHandler(this);
 
@@ -134,7 +133,7 @@ public class ManageRelatedFragment extends Fragment {
         this.gridManageRelated.setOnItemClickListener((parent, view, position, id) -> {
            // try {
                 //datasource.open();
-                Related w = datasource.getRelated(id);
+                Related w = searchServer.getRelatedById(id);
                 //datasource.close();
                 FragmentTransaction ft = getParentFragmentManager().beginTransaction();
 
@@ -226,7 +225,7 @@ public class ManageRelatedFragment extends Fragment {
         int offset = LIME.IM_MANAGE_DISPLAY_AMOUNT * page;
 
         if((curQuery == null && total == 0) || !Objects.equals(curQuery, preQuery)){
-            total = datasource.getRelatedSize(curQuery);
+            total = searchServer.countRecords(curQuery);
             page = 0;
         }
         if(ManageRelatedthread != null && ManageRelatedthread.isAlive()){
@@ -327,7 +326,7 @@ public class ManageRelatedFragment extends Fragment {
         }
 
         // Remove from the database using parameterized query
-        datasource.deleteRecord(LIME.DB_TABLE_RELATED, LIME.DB_COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
+        searchServer.deleteRecord(LIME.DB_TABLE_RELATED, LIME.DB_COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
       
         total--;
         searchRelated();
@@ -336,26 +335,21 @@ public class ManageRelatedFragment extends Fragment {
 
     public void addRelated(String pword, String cword, int score) {
 
-        int hasRelatedCheck = datasource.hasRelated(pword, cword);
-        if(hasRelatedCheck == 0){
+        boolean hasRelatedCheck = searchServer.hasRelated(pword, cword);
+        if(!hasRelatedCheck){
             // Add to database using parameterized query
             ContentValues values = new ContentValues();
             values.put(LIME.DB_RELATED_COLUMN_PWORD, pword);
             values.put(LIME.DB_RELATED_COLUMN_CWORD, cword);
             values.put(LIME.DB_RELATED_COLUMN_USERSCORE, 1); // Default userscore
             values.put(LIME.DB_RELATED_COLUMN_BASESCORE, score);
-            datasource.addRecord(LIME.DB_TABLE_RELATED, values);
+            searchServer.addRecord(LIME.DB_TABLE_RELATED, values);
 
             total++;
             searchRelated();
 
         }else{
-            if(hasRelatedCheck == 9999999){
-                Toast.makeText(activity, R.string.manage_related_format_error, Toast.LENGTH_SHORT).show();
-            }
-            else{
-                Toast.makeText(activity, R.string.manage_related_duplicated, Toast.LENGTH_SHORT).show();
-            }
+            Toast.makeText(activity, R.string.manage_related_duplicated_error, Toast.LENGTH_SHORT).show();
         }
 
     }
@@ -384,9 +378,8 @@ public class ManageRelatedFragment extends Fragment {
         String whereClause = LIME.DB_RELATED_COLUMN_ID + " = ?";
         String[] whereArgs = new String[] { String.valueOf(id) };
 
-        datasource.updateRecord(LIME.DB_TABLE_RELATED, values, whereClause, whereArgs);
-
-            searchRelated();
+        searchServer.updateRecord(LIME.DB_TABLE_RELATED, values, whereClause, whereArgs);
+        searchRelated();
 
     }
 

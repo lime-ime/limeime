@@ -25,24 +25,14 @@
 package net.toload.main.hd.ui;
 
 import android.app.Activity;
-import android.database.Cursor;
 import android.util.Log;
 
-import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivityHandler;
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.Related;
-import net.toload.main.hd.limedb.LimeDB;
+import net.toload.main.hd.SearchServer;
+import net.toload.main.hd.global.LIME;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Art Hung on 2015/4/26.
@@ -57,12 +47,12 @@ public class ShareRelatedTxtRunnable implements Runnable{
     private final Activity activity;
     private final MainActivityHandler handler;
 
-    private final LimeDB datasource;
+    private final SearchServer searchServer;
 
     public ShareRelatedTxtRunnable(Activity activity, MainActivityHandler handler) {
         this.handler = handler;
         this.activity = activity;
-        this.datasource = new LimeDB(activity);
+        this.searchServer = new SearchServer(activity);
         //LIMEPreferenceManager mLIMEPref = new LIMEPreferenceManager(activity);
     }
 
@@ -78,43 +68,19 @@ public class ShareRelatedTxtRunnable implements Runnable{
 
         handler.updateProgress(activity.getResources().getString(R.string.share_step_initial));
 
-        // Load
-        List<Related> relatedlist = new ArrayList<>();
-        Cursor cursor = datasource.list(LIME.DB_TABLE_RELATED);
-        cursor.moveToFirst();
-        while(!cursor.isAfterLast()){
-            Related r = Related.get(cursor);
-            relatedlist.add(r);
-            cursor.moveToNext();
-        }
-
         File cacheDir = activity.getExternalCacheDir();
         if (cacheDir == null) {
             cacheDir = activity.getCacheDir();
         }
         File target = new File(cacheDir, EXPORT_FILENAME_RELATED);
-        if(target.exists() && !target.delete()){
-            Log.e(TAG, "Error in file deletion");
-        }
 
         handler.updateProgress(activity.getResources().getString(R.string.share_step_write));
 
-        try {
-
-            Writer writer = new OutputStreamWriter( new FileOutputStream(target), StandardCharsets.UTF_8);
-            BufferedWriter fout = new BufferedWriter(writer);
-
-            for(Related w: relatedlist){
-                if(w.getPword() == null || w.getCword() == null || w.getCword().isEmpty() ){continue;}
-                String s = w.getPword()+w.getCword()+"|"+w.getBasescore()+"|"+w.getUserscore();
-                fout.write(s);
-                fout.newLine();
-            }
-
-            fout.close();
-
-        } catch (IOException e) {
-            Log.e(TAG, "Error in operation", e);
+        // Use SearchServer.exportTxtTable() with LIME.DB_TABLE_RELATED to export related records
+        boolean success = searchServer.exportTxtTable(LIME.DB_TABLE_RELATED, target, null);
+        
+        if (!success) {
+            Log.e(TAG, "Error exporting related table to file");
         }
 
         handler.cancelProgress();

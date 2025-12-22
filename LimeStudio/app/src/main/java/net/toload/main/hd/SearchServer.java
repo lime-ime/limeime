@@ -31,14 +31,18 @@ import android.util.Log;
 import android.util.Pair;
 import android.widget.Toast;
 
+import net.toload.main.hd.data.Im;
 import net.toload.main.hd.data.ImObj;
+import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.data.Mapping;
+import net.toload.main.hd.data.Record;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -189,7 +193,18 @@ public class SearchServer {
 
 
     //TODO: Should cache related phrase 15,6,8 Jeremy
-    public List<Mapping> getRelatedPhrase(String word, boolean getAllRecords) throws RemoteException {
+    /**
+     * Gets related phrase suggestions for a parent word.
+     * 
+     * <p>This method delegates to LimeDB.getRelatedPhrase() to retrieve related phrase
+     * candidates that can follow the given parent word.
+     * 
+     * @param word The parent word to get related phrases for
+     * @param getAllRecords If true, returns up to FINAL_RESULT_LIMIT; if false, returns up to INITIAL_RESULT_LIMIT
+     * @return List of Mapping objects containing related phrase suggestions
+     * @throws RemoteException if database error occurs
+     */
+    public List<Mapping> getRelatedByWord(String word, boolean getAllRecords) throws RemoteException {
 
         return dbadapter.getRelatedPhrase(word, getAllRecords);
     }
@@ -1656,5 +1671,716 @@ List<Mapping> scorelistSnapshot = null;
 
     }
     */
+
+    // ============================================================================
+    // UI-Compatible Methods - Delegates to LimeDB for database operations
+    // These methods allow UI components to access database operations through
+    // SearchServer instead of directly accessing LimeDB, maintaining architectural
+    // separation and enabling centralized caching/logging if needed in the future.
+    // ============================================================================
+
+    /**
+     * Gets IM records filtered by code and/or type.
+     * 
+     * <p>This method delegates to LimeDB.getIm() to retrieve IM information records.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param code The IM code to filter by, or null/empty for all
+     * @param type The IM type to filter by, or null/empty for all
+     * @return List of Im objects, or empty list if database error
+     */
+    public List<Im> getIm(String code, String type) {
+        if (dbadapter == null) {
+            Log.e(TAG, "getIm(): dbadapter is null");
+            return new ArrayList<>();
+        }
+        return dbadapter.getIm(code, type);
+    }
+
+    /**
+     * Gets a list of all keyboards from the database.
+     * 
+     * <p>This method delegates to LimeDB.getKeyboard() to retrieve keyboard records.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @return List of Keyboard objects, or empty list if database error
+     */
+    public List<Keyboard> getKeyboard() {
+        if (dbadapter == null) {
+            Log.e(TAG, "getKeyboard(): dbadapter is null");
+            return new ArrayList<>();
+        }
+        return dbadapter.getKeyboard();
+    }
+
+    /**
+     * Gets IM information for a specific field.
+     * 
+     * <p>This method delegates to LimeDB.getImInfo() to retrieve configuration
+     * information stored in the im table. UI components should use this method
+     * instead of directly accessing LimeDB.
+     * 
+     * @param im The IM code (e.g., LIME.DB_TABLE_PHONETIC, LIME.DB_TABLE_DAYI)
+     * @param field The field name to retrieve
+     * @return The field value, or empty string if not found or database error
+     */
+    public String getImInfo(String im, String field) {
+        if (dbadapter == null) {
+            Log.e(TAG, "getImInfo(): dbadapter is null");
+            return "";
+        }
+        return dbadapter.getImInfo(im, field);
+    }
+
+    /**
+     * Sets IM information for a specific field.
+     * 
+     * <p>This method delegates to LimeDB.setImInfo() to store or update configuration
+     * information in the im table. UI components should use this method instead of
+     * directly accessing LimeDB.
+     * 
+     * @param im The IM code (e.g., LIME.DB_TABLE_PHONETIC, LIME.DB_TABLE_DAYI)
+     * @param field The field name to set
+     * @param value The value to store
+     */
+    public void setImInfo(String im, String field, String value) {
+        if (dbadapter == null) {
+            Log.e(TAG, "setImInfo(): dbadapter is null");
+            return;
+        }
+        dbadapter.setImInfo(im, field, value);
+    }
+
+    /**
+     * Sets the keyboard assignment for an IM using string parameters.
+     * 
+     * <p>This method delegates to LimeDB.setIMKeyboard() to store keyboard
+     * configuration in the im table. UI components should use this method instead
+     * of directly accessing LimeDB.
+     * 
+     * @param im The IM code
+     * @param value The keyboard description/name
+     * @param keyboard The keyboard code
+     */
+    public void setIMKeyboard(String im, String value, String keyboard) {
+        if (dbadapter == null) {
+            Log.e(TAG, "setIMKeyboard(): dbadapter is null");
+            return;
+        }
+        dbadapter.setIMKeyboard(im, value, keyboard);
+    }
+
+    /**
+     * Sets the keyboard assignment for an IM using a Keyboard object.
+     * 
+     * <p>This method delegates to LimeDB.setImKeyboard() to store keyboard
+     * configuration in the im table. UI components should use this method instead
+     * of directly accessing LimeDB.
+     * 
+     * @param code The IM code
+     * @param keyboard The Keyboard object containing keyboard information
+     */
+    public void setIMKeyboard(String code, Keyboard keyboard) {
+        if (dbadapter == null) {
+            Log.e(TAG, "setIMKeyboard(): dbadapter is null");
+            return;
+        }
+        dbadapter.setImKeyboard(code, keyboard);
+    }
+
+    /**
+     * Backs up user-learned records to a backup table.
+     * 
+     * <p>This method delegates to LimeDB.backupUserRecords() to create a backup table
+     * containing user-learned records (score > 0). UI components should use this method
+     * instead of directly accessing LimeDB.
+     * 
+     * @param table The table name to backup user records from
+     */
+    public void backupUserRecords(String table) {
+        if (dbadapter == null) {
+            Log.e(TAG, "backupUserRecords(): dbadapter is null");
+            return;
+        }
+        dbadapter.backupUserRecords(table);
+    }
+
+    /**
+     * Restores user-learned records from a backup table to the main table.
+     * 
+     * <p>This method delegates to LimeDB.restoreUserRecords() to restore user-learned
+     * records from a backup table (typically named "{table}_user") back to the main
+     * mapping table. UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * <p>The method performs the following operations:
+     * <ul>
+     *   <li>Validates that the database adapter is available</li>
+     *   <li>Delegates to LimeDB.restoreUserRecords() which validates the table name</li>
+     *   <li>Retrieves all records from the backup table</li>
+     *   <li>Restores each record to the main table using addOrUpdateMappingRecord</li>
+     * </ul>
+     * 
+     * @param table The base table name to restore records to (e.g., "cj", "phonetic")
+     * @return The number of records restored, or 0 if no records to restore or error
+     */
+    public int restoreUserRecords(String table) {
+        if (dbadapter == null) {
+            Log.e(TAG, "restoreUserRecords(): dbadapter is null");
+            return 0;
+        }
+        
+        try {
+            return dbadapter.restoreUserRecords(table);
+        } catch (Exception e) {
+            Log.e(TAG, "restoreUserRecords(): Error restoring user records for table: " + table, e);
+            return 0;
+        }
+    }
+
+    /**
+     * Gets a single record by ID.
+     * 
+     * <p>This method delegates to LimeDB.getRecord() to retrieve a record.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param code The table name (code)
+     * @param id The record ID
+     * @return Record object, or null if not found or database error
+     */
+    public Record getRecord(String code, long id) {
+        if (dbadapter == null) {
+            Log.e(TAG, "getRecord(): dbadapter is null");
+            return null;
+        }
+        return dbadapter.getRecord(code, id);
+    }
+
+    /**
+     * Gets the count of records matching a query by word or code.
+     * 
+     * <p>This method delegates to LimeDB.countRecords() to get the count of matching records.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param table The table name to query
+     * @param curQuery The search query, or null/empty for all records
+     * @param searchByCode If true, search by code; if false, search by word
+     * @return The count of matching records, or 0 if database error
+     */
+    public int countRecordsByWordOrCode(String table, String curQuery, boolean searchByCode) {
+        if (dbadapter == null) {
+            Log.e(TAG, "countRecordsByWordOrCode(): dbadapter is null");
+            return 0;
+        }
+        // Build WHERE clause for countRecords() with parameterized queries
+        StringBuilder whereBuilder = new StringBuilder();
+        List<String> whereArgsList = new ArrayList<>();
+
+        if (curQuery != null && !curQuery.isEmpty()) {
+            if (searchByCode) {
+                whereBuilder.append(LIME.DB_COLUMN_CODE).append(" LIKE ? AND ");
+                whereArgsList.add(curQuery + "%");
+            } else {
+                whereBuilder.append(LIME.DB_COLUMN_WORD).append(" LIKE ? AND ");
+                whereArgsList.add("%" + curQuery + "%");
+            }
+        }
+        whereBuilder.append("ifnull(").append(LIME.DB_COLUMN_WORD).append(", '') <> ''");
+
+        String[] whereArgs = whereArgsList.isEmpty() ? null : whereArgsList.toArray(new String[0]);
+        return dbadapter.countRecords(table, whereBuilder.toString(), whereArgs);
+    }
+
+    /**
+     * Deletes a record from a table using a parameterized query.
+     * 
+     * <p>This method delegates to LimeDB.deleteRecord() to safely delete records.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param table The table name
+     * @param whereClause WHERE clause with "?" placeholders
+     * @param whereArgs Arguments for the WHERE clause
+     * @return Number of rows deleted, or 0 if error
+     */
+    public int deleteRecord(String table, String whereClause, String[] whereArgs) {
+        if (dbadapter == null) {
+            Log.e(TAG, "deleteRecord(): dbadapter is null");
+            return 0;
+        }
+        return dbadapter.deleteRecord(table, whereClause, whereArgs);
+    }
+
+    /**
+     * Adds or updates a mapping record in the database.
+     * 
+     * <p>This method delegates to LimeDB.addOrUpdateMappingRecord() to store or update
+     * word mappings. UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param table The table name
+     * @param code The code
+     * @param word The word
+     * @param score The score
+     */
+    public void addOrUpdateMappingRecord(String table, String code, String word, int score) {
+        if (dbadapter == null) {
+            Log.e(TAG, "addOrUpdateMappingRecord(): dbadapter is null");
+            return;
+        }
+        dbadapter.addOrUpdateMappingRecord(table, code, word, score);
+    }
+
+    /**
+     * Adds a record to a table using ContentValues.
+     * 
+     * <p>This method delegates to LimeDB.addRecord() to safely insert records.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param table The table name
+     * @param values The ContentValues containing column values
+     * @return The row ID of the newly inserted row, or -1 if error
+     */
+    public long addRecord(String table, android.content.ContentValues values) {
+        if (dbadapter == null) {
+            Log.e(TAG, "addRecord(): dbadapter is null");
+            return -1;
+        }
+        return dbadapter.addRecord(table, values);
+    }
+
+    /**
+     * Counts the total number of records in the specified table.
+     * 
+     * <p>This method delegates to LimeDB.countRecords() to get the count of records.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param table The table name to count records from
+     * @return The number of records in the table, or 0 if error or empty
+     */
+    public int countRecords(String table) {
+        if (dbadapter == null) {
+            Log.e(TAG, "countRecords(): dbadapter is null");
+            return 0;
+        }
+        return dbadapter.countRecords(table, null, null);
+    }
+
+    /**
+     * Clears a mapping table by deleting all records and clearing the cache.
+     * 
+     * <p>This method delegates to LimeDB.resetMapping() to safely delete all records from
+     * the specified table and reset the cache. UI components should use this method
+     * instead of directly accessing LimeDB.
+     * 
+     * <p>The method performs the following operations:
+     * <ul>
+     *   <li>Validates that the database adapter is available</li>
+     *   <li>Delegates to LimeDB.resetMapping() which validates the table name</li>
+     *   <li>Deletes all records from the specified table</li>
+     *   <li>Resets the SearchServer cache to ensure consistency</li>
+     * </ul>
+     * 
+     * <p>If the database adapter is null or the table name is invalid, the method
+     * will log an error and return without performing any operations.
+     * 
+     * @param table The table name to clear (must be valid according to LimeDB.isValidTableName())
+     * @throws IllegalArgumentException if table name is null or empty (propagated from LimeDB)
+     */
+    public void clearTable(String table) {
+        if (dbadapter == null) {
+            Log.e(TAG, "clearTable(): dbadapter is null");
+            return;
+        }
+        
+        try {
+            dbadapter.resetMapping(table);
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "clearTable(): Invalid table name: " + table, e);
+            throw e;
+        } catch (Exception e) {
+            Log.e(TAG, "clearTable(): Error clearing table: " + table, e);
+        }
+    }
+
+    /**
+     * Resets the SearchServer cache.
+     * 
+     * <p>This method delegates to LimeDB.resetCache() to clear the cache maintained
+     * by SearchServer. UI components should use this method instead of directly
+     * accessing LimeDB.
+     */
+    public void resetCache() {
+        if (dbadapter == null) {
+            Log.e(TAG, "resetCache(): dbadapter is null");
+            return;
+        }
+        dbadapter.resetCache();
+    }
+
+    /**
+     * Checks and updates phonetic keyboard settings consistency between preferences and database.
+     * 
+     * <p>This method delegates to LimeDB.checkPhoneticKeyboardSetting() to ensure that the
+     * keyboard configuration stored in the database matches the user's preference setting.
+     * It handles different phonetic keyboard types (hsu, eten26, eten, standard).
+     * 
+     * <p>UI components should use this method instead of directly accessing LimeDB.
+     */
+    public void checkPhoneticKeyboardSetting() {
+        if (dbadapter == null) {
+            Log.e(TAG, "checkPhoneticKeyboardSetting(): dbadapter is null");
+            return;
+        }
+        dbadapter.checkPhoneticKeyboardSetting();
+    }
+
+    /**
+     * Checks if a backup table exists and has records.
+     * 
+     * <p>This method delegates to LimeDB.checkBackuptable() to check if user data
+     * backup exists. UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param table The base table name to check backup for
+     * @return true if backup table exists and has records, false otherwise
+     */
+    public boolean checkBackuptable(String table) {
+        if (dbadapter == null) {
+            Log.e(TAG, "checkBackuptable(): dbadapter is null");
+            return false;
+        }
+        return dbadapter.checkBackupTable(table);
+    }
+
+    /**
+     * Gets all records from a backup table.
+     * 
+     * <p>This method delegates to LimeDB.getBackupTableRecords() to retrieve backup records.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param backupTableName The backup table name (must end with "_user", e.g., "cj_user")
+     * @return Cursor with all records from the backup table, or null if invalid or error
+     */
+    public android.database.Cursor getBackupTableRecords(String backupTableName) {
+        if (dbadapter == null) {
+            Log.e(TAG, "getBackupTableRecords(): dbadapter is null");
+            return null;
+        }
+        return dbadapter.getBackupTableRecords(backupTableName);
+    }
+
+    /**
+     * Removes IM information for a specific field.
+     * 
+     * <p>This method delegates to LimeDB.removeImInfo() to delete configuration information.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param im The IM code
+     * @param field The field name to remove
+     */
+    public void removeImInfo(String im, String field) {
+        if (dbadapter == null) {
+            Log.e(TAG, "removeImInfo(): dbadapter is null");
+            return;
+        }
+        dbadapter.removeImInfo(im, field);
+    }
+
+    /**
+     * Resets all IM information for a specific IM.
+     * 
+     * <p>This method delegates to LimeDB.resetImInfo() to clear all configuration
+     * information for an IM. UI components should use this method instead of
+     * directly accessing LimeDB.
+     * 
+     * @param im The IM code to reset
+     */
+    public void resetImInfo(String im) {
+        if (dbadapter == null) {
+            Log.e(TAG, "resetImInfo(): dbadapter is null");
+            return;
+        }
+        dbadapter.resetImInfo(im);
+    }
+
+    /**
+     * Resets all LIME settings to factory defaults.
+     * 
+     * <p>This method delegates to LimeDB.resetLimeSetting() to reset all databases
+     * (main, emoji, han converter) to factory defaults. This is a destructive operation
+     * that will erase all user data including learned mappings and related phrases.
+     * 
+     * <p>UI components should use this method instead of directly accessing LimeDB.
+     */
+    public void resetLimeSetting() {
+        if (dbadapter == null) {
+            Log.e(TAG, "resetLimeSetting(): dbadapter is null");
+            return;
+        }
+        dbadapter.resetLimeSetting();
+    }
+
+    /**
+     * Gets keyboard information for a specific field.
+     * 
+     * <p>This method delegates to LimeDB.getKeyboardInfo() to retrieve keyboard
+     * configuration information. UI components should use this method instead of
+     * directly accessing LimeDB.
+     * 
+     * @param keyboardCode The keyboard code (e.g., "lime", "limenum")
+     * @param field The field name to retrieve
+     * @return The field value, or null if not found or database error
+     */
+    public String getKeyboardInfo(String keyboardCode, String field) {
+        if (dbadapter == null) {
+            Log.e(TAG, "getKeyboardInfo(): dbadapter is null");
+            return null;
+        }
+        return dbadapter.getKeyboardInfo(keyboardCode, field);
+    }
+
+    /**
+     * Gets the keyboard code assigned to an IM.
+     * 
+     * <p>This method delegates to LimeDB.getKeyboardCode() to retrieve the keyboard
+     * code configured for an IM. UI components should use this method instead of
+     * directly accessing LimeDB.
+     * 
+     * @param im The IM code
+     * @return The keyboard code, or null if not found or database error
+     */
+    public String getKeyboardCode(String im) {
+        if (dbadapter == null) {
+            Log.e(TAG, "getKeyboardCode(): dbadapter is null");
+            return null;
+        }
+        return dbadapter.getKeyboardCode(im);
+    }
+
+    /**
+     * Gets keyboard object information for a specific keyboard code.
+     * 
+     * <p>This method delegates to LimeDB.getKeyboardObj() to retrieve keyboard
+     * configuration including layout definitions. UI components should use this
+     * method instead of directly accessing LimeDB.
+     * 
+     * @param keyboard The keyboard code (e.g., "lime", "limenum", "wb", "hs")
+     * @return KeyboardObj with keyboard information, or null if not found or database error
+     */
+    public KeyboardObj getKeyboardObj(String keyboard) {
+        if (dbadapter == null) {
+            Log.e(TAG, "getKeyboardObj(): dbadapter is null");
+            return null;
+        }
+        return dbadapter.getKeyboardObj(keyboard);
+    }
+
+    /**
+     * Loads records from a table with optional filtering and pagination.
+     * 
+     * <p>This method delegates to LimeDB.getRecords() to retrieve records.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param code The table name (code)
+     * @param query The search query, or null/empty for all records
+     * @param searchByCode If true, search by code; if false, search by word
+     * @param maximum Maximum number of records to return (0 for no limit)
+     * @param offset Number of records to skip (0 for no offset)
+     * @return List of Record objects, or empty list if error
+     */
+    public List<Record> getRecords(String code, String query, boolean searchByCode, int maximum, int offset) {
+        if (dbadapter == null) {
+            Log.e(TAG, "getRecords(): dbadapter is null");
+            return new ArrayList<>();
+        }
+        return dbadapter.getRecords(code, query, searchByCode, maximum, offset);
+    }
+
+    /**
+     * Gets a related phrase record by ID.
+     * 
+     * <p>This method delegates to LimeDB.getRelated() to retrieve a related phrase record.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param id The record ID
+     * @return Related object, or null if not found or database error
+     */
+    public net.toload.main.hd.data.Related getRelatedById(long id) {
+        if (dbadapter == null) {
+            Log.e(TAG, "getRelatedById(): dbadapter is null");
+            return null;
+        }
+        return dbadapter.getRelated(id);
+    }
+
+    /**
+     * Gets the count of related phrase records for a parent word.
+     * 
+     * <p>This method delegates to LimeDB.countRecords() to get the count of related phrases.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param pword The parent word to count related phrases for
+     * @return The count of related phrases, or 0 if database error or not found
+     */
+    public int countRecordsRelated(String pword) {
+        if (dbadapter == null) {
+            Log.e(TAG, "countRecords(): dbadapter is null");
+            return 0;
+        }
+        // Build WHERE clause for related table
+        StringBuilder whereBuilder = new StringBuilder();
+        List<String> whereArgsList = new ArrayList<>();
+        
+        String cword = "";
+        if (pword != null && !pword.isEmpty() && pword.length() > 1) {
+            cword = pword.substring(1);
+            pword = pword.substring(0, 1);
+        }
+        
+        if (pword != null && !pword.isEmpty()) {
+            whereBuilder.append(LIME.DB_RELATED_COLUMN_PWORD).append(" = ? AND ");
+            whereArgsList.add(pword);
+        }
+        if (!cword.isEmpty()) {
+            whereBuilder.append(LIME.DB_RELATED_COLUMN_CWORD).append(" LIKE ? AND ");
+            whereArgsList.add(cword + "%");
+        }
+        
+        whereBuilder.append("ifnull(").append(LIME.DB_RELATED_COLUMN_CWORD).append(", '') <> ''");
+        
+        String[] whereArgs = whereArgsList.isEmpty() ? null : whereArgsList.toArray(new String[0]);
+        return dbadapter.countRecords(LIME.DB_TABLE_RELATED, whereBuilder.toString(), whereArgs);
+    }
+
+    /**
+     * Checks if a related phrase exists.
+     * 
+     * <p>This method delegates to LimeDB.countRecords() to check for related phrase existence.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param pword The parent word (must not be null or empty)
+     * @param cword The child word (must not be null or empty)
+     * @return true if related phrase exists, false otherwise
+     */
+    public boolean hasRelated(String pword, String cword) {
+        if (dbadapter == null) {
+            Log.e(TAG, "hasRelated(): dbadapter is null");
+            return false;
+        }
+        // Build WHERE clause for related table
+        StringBuilder whereBuilder = new StringBuilder();
+        List<String> whereArgsList = new ArrayList<>();
+        
+        if (pword != null && !pword.isEmpty()) {
+            whereBuilder.append(LIME.DB_RELATED_COLUMN_PWORD).append(" = ? AND ");
+            whereArgsList.add(pword);
+        }
+        if (cword != null && !cword.isEmpty()) {
+            whereBuilder.append(LIME.DB_RELATED_COLUMN_CWORD).append(" = ?");
+            whereArgsList.add(cword);
+        } else {
+            whereBuilder.append(LIME.DB_RELATED_COLUMN_CWORD).append(" IS NULL");
+        }
+        
+        String[] whereArgs = whereArgsList.isEmpty() ? null : whereArgsList.toArray(new String[0]);
+        int count = dbadapter.countRecords(LIME.DB_TABLE_RELATED, whereBuilder.toString(), whereArgs);
+        return count > 0;
+    }
+
+    /**
+     * Updates records in a table using parameterized queries.
+     * 
+     * <p>This method delegates to LimeDB.updateRecord() to safely update records.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param table The table name
+     * @param values The values to update
+     * @param whereClause WHERE clause with "?" placeholders
+     * @param whereArgs Arguments for the WHERE clause
+     * @return Number of rows updated, or -1 if error
+     */
+    public int updateRecord(String table, android.content.ContentValues values, String whereClause, String[] whereArgs) {
+        if (dbadapter == null) {
+            Log.e(TAG, "updateRecord(): dbadapter is null");
+            return -1;
+        }
+        return dbadapter.updateRecord(table, values, whereClause, whereArgs);
+    }
+
+
+    /**
+     * Exports records from a table to a text file.
+     * 
+     * <p>This method delegates to LimeDB.exportTxtTable() to export records to a text file.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * <p>The format depends on the table type:
+     * <ul>
+     *   <li>Regular mapping tables: .lime format with IM info headers and code|word|score|basescore lines</li>
+     *   <li>Related table ({@link LIME#DB_TABLE_RELATED}): .related format with pword+cword|basescore|userscore lines</li>
+     * </ul>
+     * 
+     * @param table The table name to export (must be valid, use {@link LIME#DB_TABLE_RELATED} for related phrases)
+     * @param targetFile The target file to write to
+     * @param imInfo List of Im objects containing IM configuration info (can be null, only used for regular tables)
+     * @return true if export successful, false otherwise
+     */
+    public boolean exportTxtTable(String table, File targetFile, List<Im> imInfo) {
+        if (dbadapter == null) {
+            Log.e(TAG, "exportTxtTable(): dbadapter is null");
+            return false;
+        }
+        return dbadapter.exportTxtTable(table, targetFile, imInfo);
+    }
+
+    /**
+     * Gets related phrase records with optional filtering and pagination.
+     * 
+     * <p>This method delegates to LimeDB.getRelated() to retrieve related phrase records.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param pword The parent word to search for, or null/empty for all
+     * @param maximum Maximum number of records to return (0 for no limit)
+     * @param offset Number of records to skip (0 for no offset)
+     * @return List of Related objects, or empty list if error
+     */
+    public List<net.toload.main.hd.data.Related> getRelatedByWord(String pword, int maximum, int offset) {
+        if (dbadapter == null) {
+            Log.e(TAG, "getRelatedByWord(): dbadapter is null");
+            return new ArrayList<>();
+        }
+        return dbadapter.getRelated(pword, maximum, offset);
+    }
+
+    /**
+     * Gets a list of IM information records for a specific IM code.
+     * 
+     * <p>This method delegates to LimeDB.getImList() to retrieve IM information.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param code The IM code to retrieve information for
+     * @return List of Im objects, or null if database error
+     */
+    public List<net.toload.main.hd.data.Im> getImList(String code) {
+        if (dbadapter == null) {
+            Log.e(TAG, "getImList(): dbadapter is null");
+            return null;
+        }
+        return dbadapter.getImList(code);
+    }
+
+    /**
+     * Validates if a table name is valid according to LimeDB whitelist.
+     * 
+     * <p>This method delegates to LimeDB.isValidTableName() to validate table names.
+     * UI components should use this method instead of directly accessing LimeDB.
+     * 
+     * @param tableName The table name to validate
+     * @return true if the table name is valid, false otherwise
+     */
+    public boolean isValidTableName(String tableName) {
+        if (dbadapter == null) {
+            Log.e(TAG, "isValidTableName(): dbadapter is null");
+            return false;
+        }
+        return dbadapter.isValidTableName(tableName);
+    }
 
 }

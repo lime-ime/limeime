@@ -26,8 +26,8 @@ package net.toload.main.hd.ui;
 
 import android.app.Activity;
 
+import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.Related;
-import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +39,7 @@ public class ManageRelatedRunnable implements Runnable{
 
 
     private final ManageRelatedHandler handler;
-    private final LimeDB datasource;
+    private final SearchServer searchServer;
     private final String query;
     private final int maximum;
     private final int offset;
@@ -55,13 +55,13 @@ public class ManageRelatedRunnable implements Runnable{
         this.maximum = maximum;
         this.offset = offset;
 
-        datasource = new LimeDB(activity);
+        searchServer = new SearchServer(activity);
     }
 
     public void run() {
         handler.showProgress();
 
-        handler.updateGridView(loadRelated(query, maximum, offset));
+        handler.updateGridView(getRelated(query, maximum, offset));
 
         /*if(maximum > 0){
             handler.updateGridViewInitial(loadRelated(getMappingByCode, maximum));
@@ -70,10 +70,10 @@ public class ManageRelatedRunnable implements Runnable{
         }*/
     }
 
-    private List<Related> loadRelated(String pword, int maximum, int offset){
+    private List<Related> getRelated(String pword, int maximum, int offset){
         List<Related> results;
 
-        results = datasource.loadRelated(pword, maximum, offset);
+        results = searchServer.getRelatedByWord(pword, maximum, offset);
 
         return results;
     }

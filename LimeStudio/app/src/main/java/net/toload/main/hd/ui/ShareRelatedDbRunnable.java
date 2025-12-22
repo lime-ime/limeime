@@ -27,11 +27,10 @@ package net.toload.main.hd.ui;
 import android.app.Activity;
 import android.util.Log;
 
+import net.toload.main.hd.DBServer;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivityHandler;
 import net.toload.main.hd.R;
-import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.limedb.LimeDB;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -50,13 +49,12 @@ public class ShareRelatedDbRunnable implements Runnable{
     private final Activity activity;
     private final MainActivityHandler handler;
 
-    private final LimeDB datasource;
+    private final DBServer dbsrv;
 
     public ShareRelatedDbRunnable(Activity activity, MainActivityHandler handler) {
         this.handler = handler;
         this.activity = activity;
-        //DBServer dbsrv = DBServer.getInstance(activity);
-        this.datasource = new LimeDB(activity);
+        this.dbsrv = DBServer.getInstance(activity);
     }
 
     @Override
@@ -74,50 +72,22 @@ public class ShareRelatedDbRunnable implements Runnable{
             cacheDir = activity.getCacheDir();
         }
 
-        File targetfile = new File(cacheDir, LIME.DB_TABLE_RELATED + LIME.DATABASE_EXT);
-        if(targetfile.exists() && !targetfile.delete()){
-            Log.e(TAG, "Error in file deletion");
-        }
-
         File targetfilezip = new File(cacheDir, LIME.DB_TABLE_RELATED + ".limedb");
         if(targetfilezip.exists() && !targetfilezip.delete()){
             Log.e(TAG, "Error in file deletion");
         }
 
-        // Prepare database file
+        // Use DBServer's centralized export method
         handler.updateProgress(activity.getResources().getString(R.string.share_step_initial));
-
-        // Copy Database File
-        try {
-            InputStream from = activity.getResources().openRawResource( R.raw.blankrelated );
-            FileOutputStream to = new FileOutputStream(targetfile);
-            byte[] buffer = new byte[LIME.BUFFER_SIZE_4KB];
-            int bytes_read;
-            while ((bytes_read = from.read(buffer)) != -1) {
-                to.write(buffer, 0, bytes_read);
-            }
-            from.close();
-            to.close();
-        } catch (IOException e) {
-            Log.e(TAG, "Error in operation", e);
-        }
-
-        // Open Database File
-        handler.updateProgress(activity.getResources().getString(R.string.share_step_write));
-        datasource.prepareBackupRelatedDb(targetfile.getAbsolutePath());
-
-        //ready to zip backup file list
-        try {
-
-            LIMEUtilities.zip(targetfilezip.getAbsolutePath(), targetfile.getAbsolutePath(), true);
-            if(targetfile.exists() && !targetfile.delete())
-                Log.e(TAG, "Error in file deletion");
-        } catch (Exception e) {
-            Log.e(TAG, "Error in operation", e);
-        }
+        File exportedFile = dbsrv.exportZippedDbRelated(targetfilezip, 
+            () -> handler.updateProgress(activity.getResources().getString(R.string.share_step_write)));
 
         handler.cancelProgress();
-        handler.shareDBTo(targetfilezip.getAbsolutePath());
+        if (exportedFile != null) {
+            handler.shareDBTo(exportedFile.getAbsolutePath());
+        } else {
+            Log.e(TAG, "Failed to export database");
+        }
     }
 
 }

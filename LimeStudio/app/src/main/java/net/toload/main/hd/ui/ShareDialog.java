@@ -40,15 +40,15 @@ import android.widget.Button;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.MainActivity;
 import net.toload.main.hd.R;
+import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.Im;
-import net.toload.main.hd.limedb.LimeDB;
 
 import java.util.HashMap;
 import java.util.List;
 
 public class ShareDialog extends DialogFragment {
 
-	LimeDB datasource;
+	SearchServer searchServer;
 	Activity activity;
 	View view;
 
@@ -112,7 +112,7 @@ public class ShareDialog extends DialogFragment {
 
         assert getDialog() != null;
         getDialog().getWindow().setTitle(getResources().getString(R.string.share_dialog_title));
-        datasource = new LimeDB(getActivity());
+        searchServer = new SearchServer(getActivity());
 		activity = getActivity();
 		view = inflater.inflate(R.layout.fragment_dialog_share, container, false);
 
@@ -136,7 +136,7 @@ public class ShareDialog extends DialogFragment {
 		btnShareCancel.setOnClickListener(v -> dismiss());
 
 		HashMap<String, String> check = new HashMap<>();
-		List<Im> imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
+		List<Im> imlist = searchServer.getIm(null, LIME.IM_TYPE_NAME);
 		for(Im im : imlist){
 			check.put(im.getCode(), im.getDesc());
 		}

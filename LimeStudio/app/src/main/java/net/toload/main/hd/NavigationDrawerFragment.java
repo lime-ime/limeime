@@ -57,7 +57,6 @@ import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
-import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.limesettings.LIMEPreferenceHC;
 import net.toload.main.hd.ui.HelpDialog;
 import net.toload.main.hd.ui.ShareDialog;
@@ -104,7 +103,7 @@ public class NavigationDrawerFragment extends Fragment {
 
     private String[] menulist;
 
-    private LimeDB datasource;
+    private SearchServer searchServer;
     private ArrayAdapter<String> adapter;
 
 
@@ -141,7 +140,7 @@ public class NavigationDrawerFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        datasource = new LimeDB(this.getActivity());
+        searchServer = new SearchServer(this.getActivity());
 
         mDrawerListView = (ListView) inflater.inflate(
                 R.layout.fragment_navigation_drawer, container, false);
@@ -152,7 +151,7 @@ public class NavigationDrawerFragment extends Fragment {
 
 
         // Load Menu Item
-        List<Im> imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
+        List<Im> imlist = searchServer.getIm(null, LIME.IM_TYPE_NAME);
         int menucount = imlist.size() + 2;
         int checkcount = 2;
 
@@ -225,7 +224,7 @@ public class NavigationDrawerFragment extends Fragment {
                                 settings.edit().clear().apply();
 
                                 // Reset Lime databases
-                                datasource.resetLimeSetting();
+                                searchServer.resetLimeSetting();
                                 
                                 // Close all activities in the task and let Android manage process lifecycle
                                 Activity activity = getActivity();
@@ -391,7 +390,7 @@ public class NavigationDrawerFragment extends Fragment {
 
         if(mDrawerListView != null){
 
-            List<Im> imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
+            List<Im> imlist = searchServer.getIm(null, LIME.IM_TYPE_NAME);
             int menuCount = imlist.size() + 2;
             int checkCount = 2;
 

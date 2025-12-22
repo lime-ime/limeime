@@ -28,16 +28,15 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
+import net.toload.main.hd.data.Record;
 import net.toload.main.hd.global.LIME;
-
-import net.toload.main.hd.data.Word;
 
 import java.util.List;
 
 
 public class ManageImHandler extends Handler {
 
-    private List<Word> wordlist;
+    private List<Record> wordlist;
     private final ManageImFragment fragment;
 
     public ManageImHandler(ManageImFragment fragment) {
@@ -56,7 +55,7 @@ public class ManageImHandler extends Handler {
                 String code = msg.getData().getString("code");
                 int score = msg.getData().getInt("score");
                 String word = msg.getData().getString("word");
-                fragment.addWord(code, score, word);
+                fragment.addRecord(code, score, word);
                 break;
             }
             case "update": {
@@ -64,7 +63,7 @@ public class ManageImHandler extends Handler {
                 String code = msg.getData().getString("code");
                 int score = msg.getData().getInt("score");
                 String word = msg.getData().getString("word");
-                fragment.updateWord(id, code, score, word);
+                fragment.updateRecord(id, code, score, word);
                 break;
             }
             case "keyboard":
@@ -78,7 +77,7 @@ public class ManageImHandler extends Handler {
             }
             case "remove": {
                 int id = msg.getData().getInt("id");
-                fragment.removeWord(id);
+                fragment.removeRecord(id);
                 break;
             }
             default:
@@ -93,21 +92,21 @@ public class ManageImHandler extends Handler {
         this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
-    public void updateGridView(List<Word> words) {
-        this.wordlist = words;
+    public void updateGridView(List<Record> records) {
+        this.wordlist = records;
         Message m = new Message();
                 m.getData().putString("action", "display");
         this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
-    public void removeWord(int id) {
+    public void removeRecord(int id) {
         Message m = new Message();
         m.getData().putString("action", "remove");
         m.getData().putInt("id", id);
         this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
-    public void updateWord(int id, String code, int score, String word) {
+    public void updateRecord(int id, String code, int score, String word) {
         Message m = new Message();
         m.getData().putString("action", "update");
         m.getData().putInt("id", id);
@@ -117,7 +116,7 @@ public class ManageImHandler extends Handler {
         this.sendMessageDelayed(m, LIME.HANDLER_DELAY_MINIMAL_MS);
     }
 
-    public void addWord(String code, int score, String word) {
+    public void addRecord(String code, int score, String word) {
         Message m = new Message();
         m.getData().putString("action", "add");
         m.getData().putString("code", code);

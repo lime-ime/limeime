@@ -155,7 +155,7 @@ public class ManageImAddDialog extends DialogFragment {
                         if(!code.isEmpty() && !text.isEmpty()){
 
                             int value = Integer.parseInt(edtManageImWordScore.getText().toString());
-                            handler.addWord(code, value, text);
+                            handler.addRecord(code, value, text);
                             handler.updateRelated(code);
                             dialog.dismiss();
                             cancelDialog();
