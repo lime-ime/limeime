@@ -37,6 +37,18 @@ import android.util.Log;
 
 
 /**
+ * Helper for Han character conversion and base-frequency lookup.
+ *
+ * <p>This class wraps a lightweight read-only SQLite database ("hanconvertv2.db")
+ * that provides mappings and base frequency scores used when loading mapping
+ * tables and computing default base scores for characters/phrases.
+ *
+ * <p>Primary responsibilities:
+ * <ul>
+ *   <li>Lookup of base frequency scores via {@link #getBaseScore(String)}</li>
+ *   <li>Conversion between Traditional and Simplified Chinese via {@link #convert(String, Integer)}</li>
+ * </ul>
+ *
  * @author Art Hung
  */
 public class LimeHanConverter extends SQLiteOpenHelper {

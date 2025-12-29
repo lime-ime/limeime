@@ -237,14 +237,14 @@ public class LIME {
 	public static final String DB_TOTAL_COUNT = "count";
 	
 	// IM Type Fields
-	public static final String IM_TYPE_NAME = "name";
-	public static final String IM_TYPE_SOURCE = "source";
-	public static final String IM_TYPE_AMOUNT = "amount";
-	public static final String IM_TYPE_IMPORT = "import";
-	public static final String IM_TYPE_KEYBOARD = "keyboard";
-	public static final String IM_TYPE_SELKEY = "selkey";
-	public static final String IM_TYPE_ENDKEY = "endkey";
-	public static final String IM_TYPE_SPACESTYLE = "spacestyle";
+	public static final String IM_FULL_NAME = "name";
+	public static final String IM_SOURCE = "source";
+	public static final String IM_AMOUNT = "amount";
+	public static final String IM_IMPORT = "import";
+	public static final String IM_KEYBOARD = "keyboard";
+	public static final String IM_SELKEY = "selkey";
+	public static final String IM_ENDKEY = "endkey";
+	public static final String IM_SPACESTYLE = "spacestyle";
 	
 	// Database and IM Status
 	public static final int IM_MANAGE_DISPLAY_AMOUNT = 100;

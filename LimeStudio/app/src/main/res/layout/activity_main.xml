@@ -30,7 +30,7 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+     tools:context=".ui.MainActivity">
 
     <!-- As the main content view, the view below consumes the entire
          space available using match_parent in both dimensions. -->
@@ -39,6 +39,38 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+     <!-- Activity-scoped progress overlay that persists across fragment switches -->
+     <FrameLayout
+          android:id="@+id/activity_progress_overlay"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:visibility="gone"
+          android:background="#66000000">
+
+          <LinearLayout
+               android:layout_width="match_parent"
+               android:layout_height="wrap_content"
+               android:orientation="vertical"
+               android:padding="20dp"
+               android:layout_gravity="center">
+
+               <TextView
+                    android:id="@+id/activity_progress_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:text="Loading..."
+                    android:textColor="#FFFFFF" />
+
+               <ProgressBar
+                    android:id="@+id/activity_progress_bar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+          </LinearLayout>
+     </FrameLayout>
+
     <!-- android:layout_gravity="start" tells DrawerLayout to treat
          this as a sliding drawer on the left side for left-to-right
          languages and on the right side for right-to-left languages.
@@ -46,12 +78,12 @@
          android:layout_gravity="left" instead. -->
     <!-- The drawer is given a fixed width in dp and extends the full height of
          the container. -->
-    <fragment
+     <fragment
         android:id="@+id/navigation_drawer"
         android:layout_width="@dimen/navigation_drawer_width"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:name="net.toload.main.hd.NavigationDrawerFragment"
+          android:name="net.toload.main.hd.ui.view.NavigationDrawerFragment"
         tools:layout="@layout/fragment_navigation_drawer" />
 
 </androidx.drawerlayout.widget.DrawerLayout>

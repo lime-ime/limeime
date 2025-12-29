@@ -29,12 +29,12 @@ import android.content.Context;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import net.toload.main.hd.data.Im;
 import net.toload.main.hd.data.Record;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.data.Related;
-import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEUtilities;
 
@@ -352,13 +352,13 @@ public class LimeDBTest {
         }
         
         // Test getting keyboard list
-        List<net.toload.main.hd.data.KeyboardObj> keyboards = limeDB.getKeyboardList();
+        List<Keyboard> keyboards = limeDB.getKeyboardList();
         if (keyboards != null) {
             assertTrue("Keyboard list should be accessible", true);
         }
         
         // Test getting keyboard object
-        net.toload.main.hd.data.KeyboardObj keyboard = limeDB.getKeyboardObj("lime");
+        Keyboard keyboard = limeDB.getKeyboardConfig("lime");
         if (keyboard != null) {
             assertNotNull("Keyboard code should not be null", keyboard.getCode());
         }
@@ -384,7 +384,7 @@ public class LimeDBTest {
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
-    public void testLimeDBDeleteAll() {
+    public void testLimeDBClearTable() {
         // Test deleteAll operation (use with caution)
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
@@ -426,13 +426,13 @@ public class LimeDBTest {
         }
         
         // Test getting IM list
-        List<net.toload.main.hd.data.ImObj> imList = limeDB.getImList();
+        List<Im> imList = limeDB.getImList(null, null);
         if (imList != null) {
             assertTrue("IM list should be accessible", true);
         }
         
         // Test getting IM list by code
-        List<net.toload.main.hd.data.Im> imByCode = limeDB.getImList(LIME.DB_TABLE_PHONETIC);
+        List<net.toload.main.hd.data.Im> imByCode = limeDB.getImList(LIME.DB_TABLE_PHONETIC, null);
         if (imByCode != null) {
             assertTrue("IM list by code should be accessible", true);
         }
@@ -622,42 +622,8 @@ public class LimeDBTest {
                   emptyRemapped == null || emptyRemapped.isEmpty());
     }
 
-    @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
-    public void testLimeDBSetIMKeyboard() {
-        // Test setIMKeyboard operation
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // Initialize database connection (calls checkDBConnection internally)
-        if (!initializeDatabase(limeDB)) {
-            fail("ERROR: Cannot initialize database connection. Database may be on hold from a previous operation. Test cannot proceed.");
-        }
-        
-        // Test setting IM keyboard with string parameters
-        limeDB.setIMKeyboard("custom", "Test Keyboard", "lime");
-        
-        // Verify keyboard code can be retrieved
-        String keyboardCode = limeDB.getKeyboardCode("custom");
-        // Result might be empty if not set, but method should complete
-        assertTrue("getKeyboardCode should complete", true);
-    }
 
-    @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
-    public void testLimeDBGetKeyboardCode() {
-        // Test getKeyboardCode operation
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // Initialize database connection (calls checkDBConnection internally)
-        if (!initializeDatabase(limeDB)) {
-            fail("ERROR: Cannot initialize database connection. Database may be on hold from a previous operation. Test cannot proceed.");
-        }
-        
-        // Test getting keyboard code for an IM
-        String keyboardCode = limeDB.getKeyboardCode(LIME.DB_TABLE_PHONETIC);
-        // Result might be empty string if not set
-        assertNotNull("getKeyboardCode should return a string", keyboardCode);
-    }
+
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
     public void testLimeDBRenameTableName() {
@@ -922,7 +888,7 @@ public class LimeDBTest {
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
-    public void testLimeDBGetKeyboard() {
+    public void testLimeDBGetKeyboardList() {
         // Test getKeyboard operation
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
@@ -933,14 +899,14 @@ public class LimeDBTest {
         }
         
         // Test getting keyboard list
-        List<Keyboard> keyboards = limeDB.getKeyboard();
+        List<Keyboard> keyboards = limeDB.getKeyboardList();
         if (keyboards != null) {
             assertTrue("Keyboard list should be accessible", true);
         }
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
-    public void testLimeDBGetIm() {
+    public void testLimeDBGetImList() {
         // Test getIm operation
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
@@ -951,20 +917,20 @@ public class LimeDBTest {
         }
         
         // Test getting IM by code
-        List<net.toload.main.hd.data.Im> imList = limeDB.getIm(LIME.DB_TABLE_PHONETIC, null);
+        List<net.toload.main.hd.data.Im> imList = limeDB.getImList(LIME.DB_TABLE_PHONETIC, null);
         if (imList != null) {
             assertTrue("IM list should be accessible", true);
         }
         
         // Test getting IM by code and type
-        List<net.toload.main.hd.data.Im> imByType = limeDB.getIm(LIME.DB_TABLE_PHONETIC, "keyboard");
+        List<net.toload.main.hd.data.Im> imByType = limeDB.getImList(LIME.DB_TABLE_PHONETIC, "keyboard");
         if (imByType != null) {
             assertTrue("IM list by type should be accessible", true);
         }
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
-    public void testLimeDBGetRecords() {
+    public void testLimeDBGetRecordList() {
         // Test loadWord operation
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
@@ -975,13 +941,13 @@ public class LimeDBTest {
         }
         
         // Test loading words from a table
-        List<Record> records = limeDB.getRecords("custom", null, false, 10, 0);
+        List<Record> records = limeDB.getRecordList("custom", null, false, 10, 0);
         if (records != null) {
             assertTrue("Word list should be accessible", true);
         }
         
         // Test loading words with query
-        List<Record> wordsWithQuery = limeDB.getRecords("custom", "測試", false, 10, 0);
+        List<Record> wordsWithQuery = limeDB.getRecordList("custom", "測試", false, 10, 0);
         if (wordsWithQuery != null) {
             assertTrue("Word list with query should be accessible", true);
         }
@@ -1019,24 +985,6 @@ public class LimeDBTest {
 
     // Removed testLimeDBHasRelated - hasRelated() method does not exist in LimeDB
 
-
-    @Test
-    public void testLimeDBGetRelated() {
-        // Test getRelated operation
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // First, add a related phrase
-        int relatedId = limeDB.addOrUpdateRelatedPhraseRecord("測試", "詞彙");
-        
-        if (relatedId > 0) {
-            // Try to get the related phrase by ID
-            Related related = limeDB.getRelated(relatedId);
-            if (related != null) {
-                assertNotNull("Related should have pword", related.getPword());
-            }
-        }
-    }
 
 
     @Test
@@ -1078,7 +1026,7 @@ public class LimeDBTest {
         LimeDB limeDB = new LimeDB(appContext);
         
         // Get a keyboard first
-        List<Keyboard> keyboards = limeDB.getKeyboard();
+        List<Keyboard> keyboards = limeDB.getKeyboardList();
         if (keyboards != null && !keyboards.isEmpty()) {
             Keyboard keyboard = keyboards.get(0);
             limeDB.setImKeyboard("custom", keyboard);
@@ -1367,7 +1315,7 @@ public class LimeDBTest {
         }
         
         // Test getRecords with invalid table - should be rejected by validation
-        List<Record> invalidRecords = limeDB.getRecords("'; DROP TABLE custom; --", null, false, 0, 0);
+        List<Record> invalidRecords = limeDB.getRecordList("'; DROP TABLE custom; --", null, false, 0, 0);
         // Should return empty list or null for invalid table (validation should prevent SQL execution)
         assertTrue("Invalid table name should be handled safely", invalidRecords == null || invalidRecords.isEmpty());
     }
@@ -1604,37 +1552,37 @@ public class LimeDBTest {
     }
 
     @Test
-    public void testLimeDBGetRecordsEdgeCases() {
+    public void testLimeDBGetRecordListEdgeCases() {
         // Test loadWord with edge cases
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
         // Test with null query
-        List<Record> nullQueryRecords = limeDB.getRecords("custom", null, false, 10, 0);
+        List<Record> nullQueryRecords = limeDB.getRecordList("custom", null, false, 10, 0);
         if (nullQueryRecords != null) {
             assertTrue("Null query should return list", true);
         }
         
         // Test with empty query
-        List<Record> emptyQueryRecords = limeDB.getRecords("custom", "", false, 10, 0);
+        List<Record> emptyQueryRecords = limeDB.getRecordList("custom", "", false, 10, 0);
         if (emptyQueryRecords != null) {
             assertTrue("Empty query should return list", true);
         }
         
         // Test with searchroot = true
-        List<Record> searchrootRecords = limeDB.getRecords("custom", "測試", true, 10, 0);
+        List<Record> searchrootRecords = limeDB.getRecordList("custom", "測試", true, 10, 0);
         if (searchrootRecords != null) {
             assertTrue("Searchroot true should return list", true);
         }
         
         // Test with offset
-        List<Record> offsetRecords = limeDB.getRecords("custom", null, false, 10, 5);
+        List<Record> offsetRecords = limeDB.getRecordList("custom", null, false, 10, 5);
         if (offsetRecords != null) {
             assertTrue("Offset should work", true);
         }
         
         // Test with maximum = 0
-        List<Record> zeroMaxRecords = limeDB.getRecords("custom", null, false, 0, 0);
+        List<Record> zeroMaxRecords = limeDB.getRecordList("custom", null, false, 0, 0);
         if (zeroMaxRecords != null) {
             assertTrue("Zero maximum should work", true);
         }
@@ -1671,85 +1619,6 @@ public class LimeDBTest {
         }
     }
 
-    @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
-    public void testLimeDBGetRecordWithInvalidId() {
-        // Test getWord with invalid ID
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // Initialize database connection (calls checkDBConnection internally)
-        if (!initializeDatabase(limeDB)) {
-            fail("ERROR: Cannot initialize database connection. Database may be on hold from a previous operation. Test cannot proceed.");
-        }
-        
-        // Test with negative ID - causes CursorIndexOutOfBoundsException, catch it
-        try {
-            Record negativeRecord = limeDB.getRecord("custom", -1);
-            assertNull("Negative ID should return null", negativeRecord);
-        } catch (android.database.CursorIndexOutOfBoundsException e) {
-            // Exception is expected for invalid ID
-            assertTrue("Negative ID should cause CursorIndexOutOfBoundsException", true);
-        }
-        
-        // Test with zero ID
-        try {
-            Record zeroRecord = limeDB.getRecord("custom", 0);
-            // Result might be null or a word
-            assertTrue("Zero ID should be handled", true);
-        } catch (android.database.CursorIndexOutOfBoundsException e) {
-            // Exception is acceptable for zero ID
-            assertTrue("Zero ID may cause exception", true);
-        }
-        
-        // Test with very large ID - causes CursorIndexOutOfBoundsException, catch it
-        try {
-            Record largeRecord = limeDB.getRecord("custom", Long.MAX_VALUE);
-            assertNull("Very large ID should return null", largeRecord);
-        } catch (android.database.CursorIndexOutOfBoundsException e) {
-            // Exception is expected for invalid ID
-            assertTrue("Very large ID should cause CursorIndexOutOfBoundsException", true);
-        }
-    }
-
-    @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
-    public void testLimeDBGetRelatedWithInvalidId() {
-        // Test getRelated with invalid ID
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // Initialize database connection (calls checkDBConnection internally)
-        if (!initializeDatabase(limeDB)) {
-            fail("ERROR: Cannot initialize database connection. Database may be on hold from a previous operation. Test cannot proceed.");
-        }
-        
-        // Test with negative ID - causes CursorIndexOutOfBoundsException, catch it
-        try {
-            Related negativeRelated = limeDB.getRelated(-1);
-            assertNull("Negative ID should return null", negativeRelated);
-        } catch (android.database.CursorIndexOutOfBoundsException e) {
-            // Exception is expected for invalid ID
-            assertTrue("Negative ID should cause CursorIndexOutOfBoundsException", true);
-        }
-        
-        // Test with zero ID
-        try {
-            Related zeroRelated = limeDB.getRelated(0);
-            // Result might be null or a related
-            assertTrue("Zero ID should be handled", true);
-        } catch (android.database.CursorIndexOutOfBoundsException e) {
-            // Exception is acceptable for zero ID
-            assertTrue("Zero ID may cause exception", true);
-        }
-        
-        // Test with very large ID - causes CursorIndexOutOfBoundsException, catch it
-        try {
-            Related largeRelated = limeDB.getRelated(Long.MAX_VALUE);
-            assertNull("Very large ID should return null", largeRelated);
-        } catch (android.database.CursorIndexOutOfBoundsException e) {
-            // Exception is expected for invalid ID
-            assertTrue("Very large ID should cause CursorIndexOutOfBoundsException", true);
-        }
-    }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
     public void testLimeDBHasRelatedEdgeCases() {
@@ -1825,7 +1694,7 @@ public class LimeDBTest {
     }
 
     @Test
-    public void testLimeDBGetImInfoEdgeCases() {
+    public void testLimeDBGetImListInfoEdgeCases() {
         // Test getImInfo with edge cases
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
@@ -1934,38 +1803,9 @@ public class LimeDBTest {
         assertTrue("Non-existent IM should be handled", true);
     }
 
-    @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
-    public void testLimeDBGetKeyboardCodeEdgeCases() {
-        // Test getKeyboardCode with edge cases
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // Initialize database connection (calls checkDBConnection internally)
-        if (!initializeDatabase(limeDB)) {
-            fail("ERROR: Cannot initialize database connection. Database may be on hold from a previous operation. Test cannot proceed.");
-        }
-        
-        // Test with null IM code
-        // Note: When im is null, SQL query becomes "code='null'" which searches for literal string "null"
-        // If such a record exists in database, it returns its keyboard value (may be any string)
-        String nullKeyboardCode = limeDB.getKeyboardCode(null);
-        // Method returns empty string if no match, or the keyboard value if a record with code='null' exists
-        // We can't control database contents, so just verify it returns a string (not throwing exception)
-        assertNotNull("Null IM code should return a string (may be empty or have value)", nullKeyboardCode);
-        
-        // Test with empty IM code
-        String emptyKeyboardCode = limeDB.getKeyboardCode("");
-        assertTrue("Empty IM code should return null or empty", 
-                  emptyKeyboardCode == null || emptyKeyboardCode.isEmpty());
-        
-        // Test with non-existent IM
-        String nonExistentCode = limeDB.getKeyboardCode("nonexistent_im_" + System.currentTimeMillis());
-        assertTrue("Non-existent IM should return null or empty", 
-                  nonExistentCode == null || nonExistentCode.isEmpty());
-    }
 
     @Test
-    public void testLimeDBGetKeyboardInfoEdgeCases() {
+    public void testLimeDBGetKeyboardListInfoEdgeCases() {
         // Test getKeyboardInfo with edge cases
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
@@ -2345,50 +2185,50 @@ public class LimeDBTest {
     }
 
     @Test
-    public void testLimeDBGetImListWithNullCode() {
+    public void testLimeDBGetImListKeyboardConfigListWithNullCode() {
         // Test getImList with null code
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
         // Test with null code
-        List<net.toload.main.hd.data.Im> nullImList = limeDB.getImList(null);
+        List<net.toload.main.hd.data.Im> nullImList = limeDB.getImList(null,null);
         if (nullImList != null) {
             assertTrue("Null code should return list", true);
         }
         
         // Test with empty code
-        List<net.toload.main.hd.data.Im> emptyImList = limeDB.getImList("");
+        List<net.toload.main.hd.data.Im> emptyImList = limeDB.getImList("",null);
         if (emptyImList != null) {
             assertTrue("Empty code should return list", true);
         }
     }
 
     @Test
-    public void testLimeDBGetImWithNullParameters() {
+    public void testLimeDBGetImListWithNullParameters() {
         // Test getIm with null parameters
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
         // Test with null code
-        List<net.toload.main.hd.data.Im> nullCodeIm = limeDB.getIm(null, null);
+        List<net.toload.main.hd.data.Im> nullCodeIm = limeDB.getImList(null, null);
         if (nullCodeIm != null) {
             assertTrue("Null code should return list", true);
         }
         
         // Test with null type
-        List<net.toload.main.hd.data.Im> nullTypeIm = limeDB.getIm(LIME.DB_TABLE_PHONETIC, null);
+        List<net.toload.main.hd.data.Im> nullTypeIm = limeDB.getImList(LIME.DB_TABLE_PHONETIC, null);
         if (nullTypeIm != null) {
             assertTrue("Null type should return list", true);
         }
         
         // Test with empty code
-        List<net.toload.main.hd.data.Im> emptyCodeIm = limeDB.getIm("", null);
+        List<net.toload.main.hd.data.Im> emptyCodeIm = limeDB.getImList("", null);
         if (emptyCodeIm != null) {
             assertTrue("Empty code should return list", true);
         }
         
         // Test with empty type
-        List<net.toload.main.hd.data.Im> emptyTypeIm = limeDB.getIm(LIME.DB_TABLE_PHONETIC, "");
+        List<net.toload.main.hd.data.Im> emptyTypeIm = limeDB.getImList(LIME.DB_TABLE_PHONETIC, "");
         if (emptyTypeIm != null) {
             assertTrue("Empty type should return list", true);
         }
@@ -2432,7 +2272,7 @@ public class LimeDBTest {
         LimeDB limeDB = new LimeDB(appContext);
         
         // Get a keyboard first
-        List<Keyboard> keyboards = limeDB.getKeyboard();
+        List<Keyboard> keyboards = limeDB.getKeyboardList();
         if (keyboards != null && !keyboards.isEmpty()) {
             Keyboard keyboard = keyboards.get(0);
             
@@ -2506,14 +2346,14 @@ public class LimeDBTest {
     }
 
     @Test
-    public void testLimeDBDeleteAllEdgeCases() {
+    public void testLimeDBClearTableEdgeCases() {
         // Test deleteAll with edge cases
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
         // Test with null table
         try {
-            limeDB.deleteAll(null);
+            limeDB.clearTable(null);
             assertTrue("Null table should be handled", true);
         } catch (Exception e) {
             assertTrue("Null table should be handled gracefully", true);
@@ -2521,7 +2361,7 @@ public class LimeDBTest {
         
         // Test with empty table
         try {
-            limeDB.deleteAll("");
+            limeDB.clearTable("");
             assertTrue("Empty table should be handled", true);
         } catch (Exception e) {
             assertTrue("Empty table should be handled gracefully", true);
@@ -2529,7 +2369,7 @@ public class LimeDBTest {
         
         // Test with invalid table name
         try {
-            limeDB.deleteAll("'; DROP TABLE custom; --");
+            limeDB.clearTable("'; DROP TABLE custom; --");
             assertTrue("Invalid table name should be handled", true);
         } catch (Exception e) {
             assertTrue("Invalid table name should be handled gracefully", true);
@@ -2548,15 +2388,15 @@ public class LimeDBTest {
         }
         
         // Test with null table - should return null or empty list
-        List<Record> nullRecords = limeDB.getRecords(null, null, false, 0, 0);
+        List<Record> nullRecords = limeDB.getRecordList(null, null, false, 0, 0);
         assertTrue("Null table should return null or empty list", nullRecords == null || nullRecords.isEmpty());
         
         // Test with empty table - should return null or empty list
-        List<Record> emptyRecords = limeDB.getRecords("", null, false, 0, 0);
+        List<Record> emptyRecords = limeDB.getRecordList("", null, false, 0, 0);
         assertTrue("Empty table should return null or empty list", emptyRecords == null || emptyRecords.isEmpty());
         
         // Test with invalid table name - should return null or empty list (validation prevents SQL execution)
-        List<Record> invalidRecords = limeDB.getRecords("'; DROP TABLE custom; --", null, false, 0, 0);
+        List<Record> invalidRecords = limeDB.getRecordList("'; DROP TABLE custom; --", null, false, 0, 0);
         assertTrue("Invalid table name should return null or empty list", invalidRecords == null || invalidRecords.isEmpty());
     }
 
@@ -3208,7 +3048,7 @@ public class LimeDBTest {
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
-    public void testLimeDBDeleteAllBranches() {
+    public void testLimeDBClearTableBranches() {
         // Test deleteAll with different branches
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
@@ -3231,7 +3071,7 @@ public class LimeDBTest {
         
         // Test with null table - may cause exception
         try {
-            limeDB.deleteAll(null);
+            limeDB.clearTable(null);
             assertTrue("deleteAll with null should handle gracefully", true);
         } catch (Exception e) {
             assertTrue("deleteAll with null may cause exception", true);
@@ -3910,31 +3750,9 @@ public class LimeDBTest {
         assertEquals("No matching records should return 0", 0, result);
     }
 
-    // ========================================================================
-    // Phase 1: Unified Methods (Wrappers) Tests
-    // ========================================================================
 
     @Test(timeout = 5000)
-    public void testLimeDBCountMappingDelegatesToCountRecords() {
-        // Test that countMapping() delegates to countRecords()
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // Initialize database connection (calls checkDBConnection internally)
-        if (!initializeDatabase(limeDB)) {
-            fail("ERROR: Cannot initialize database connection. Database may be on hold from a previous operation. Test cannot proceed.");
-        }
-        
-        // countMapping should call countRecords(table, null, null)
-        int countMapping = limeDB.countRecords("custom", null, null);
-        int countRecords = limeDB.countRecords("custom", null, null);
-        
-        assertEquals("countMapping should equal countRecords with null WHERE", countMapping, countRecords);
-    }
-
-
-    @Test(timeout = 5000)
-    public void testLimeDBGetRecordSizeDelegatesToCountRecords() {
+    public void testLimeDBGetRecordSizeDelegatesToCountRecordList() {
         // Test countRecords() method (getRecordSize() doesn't exist, use countRecords() instead)
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
@@ -4765,7 +4583,7 @@ public class LimeDBTest {
             }
             
             // Step 3: Clear the main table (simulate import scenario)
-            limeDB.deleteAll(tableName);
+            limeDB.clearTable(tableName);
             
             // Verify main table is empty
             int countAfterDelete = limeDB.countRecords(tableName, null, null);
@@ -4837,80 +4655,6 @@ public class LimeDBTest {
         assertEquals("restoreUserRecords should return 0 for invalid table", 0, restoredCount3);
     }
 
-    @Test(timeout = 5000)
-    public void testLimeDBBuildWhereClauseWithEmptyMap() {
-        // Test buildWhereClause() with empty map (should return null)
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // Initialize database connection (calls checkDBConnection internally)
-        if (!initializeDatabase(limeDB)) {
-            fail("ERROR: Cannot initialize database connection. Database may be on hold from a previous operation. Test cannot proceed.");
-        }
-        
-        java.util.Map<String, String> emptyMap = new java.util.HashMap<>();
-        android.util.Pair<String, String[]> result = limeDB.buildWhereClause(emptyMap);
-        assertNull("Empty map should return null", result);
-    }
-
-    @Test(timeout = 5000)
-    public void testLimeDBBuildWhereClauseWithNullMap() {
-        // Test buildWhereClause() with null map (should return null)
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // Initialize database connection (calls checkDBConnection internally)
-        if (!initializeDatabase(limeDB)) {
-            fail("ERROR: Cannot initialize database connection. Database may be on hold from a previous operation. Test cannot proceed.");
-        }
-        
-        android.util.Pair<String, String[]> result = limeDB.buildWhereClause(null);
-        assertNull("Null map should return null", result);
-    }
-
-    @Test(timeout = 5000)
-    public void testLimeDBBuildWhereClauseWithSingleCondition() {
-        // Test buildWhereClause() with single condition
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // Initialize database connection (calls checkDBConnection internally)
-        if (!initializeDatabase(limeDB)) {
-            fail("ERROR: Cannot initialize database connection. Database may be on hold from a previous operation. Test cannot proceed.");
-        }
-        
-        java.util.Map<String, String> conditions = new java.util.HashMap<>();
-        conditions.put("code", "test");
-        
-        android.util.Pair<String, String[]> result = limeDB.buildWhereClause(conditions);
-        assertNotNull("Single condition should return Pair", result);
-        assertEquals("WHERE clause should be 'code = ?'", "code = ?", result.first);
-        assertEquals("Arguments array should have 1 element", 1, result.second.length);
-        assertEquals("First argument should be 'test'", "test", result.second[0]);
-    }
-
-    @Test(timeout = 5000)
-    public void testLimeDBBuildWhereClauseWithMultipleConditions() {
-        // Test buildWhereClause() with multiple conditions
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        LimeDB limeDB = new LimeDB(appContext);
-        
-        // Initialize database connection (calls checkDBConnection internally)
-        if (!initializeDatabase(limeDB)) {
-            fail("ERROR: Cannot initialize database connection. Database may be on hold from a previous operation. Test cannot proceed.");
-        }
-        
-        java.util.Map<String, String> conditions = new java.util.HashMap<>();
-        conditions.put("code", "test");
-        conditions.put("score", "100");
-        
-        android.util.Pair<String, String[]> result = limeDB.buildWhereClause(conditions);
-        assertNotNull("Multiple conditions should return Pair", result);
-        assertTrue("WHERE clause should contain 'code = ?'", result.first.contains("code = ?"));
-        assertTrue("WHERE clause should contain 'score = ?'", result.first.contains("score = ?"));
-        assertTrue("WHERE clause should contain 'AND'", result.first.contains("AND"));
-        assertEquals("Arguments array should have 2 elements", 2, result.second.length);
-    }
 
     @Test(timeout = 5000)
     public void testLimeDBQueryWithPaginationWithLimitAndOffset() {
@@ -5217,7 +4961,7 @@ public class LimeDBTest {
         // Create IM info list
         List<Im> imInfo = new ArrayList<>();
         Im versionIm = new Im();
-        versionIm.setTitle(LIME.IM_TYPE_NAME);
+        versionIm.setTitle(LIME.IM_FULL_NAME);
         versionIm.setDesc("1.0");
         imInfo.add(versionIm);
         
@@ -5418,7 +5162,7 @@ public class LimeDBTest {
         limeDB.addOrUpdateMappingRecord("custom", "test2", "測試2", 20);
         
         // Get all records using getRecords() with null query and no limit
-        List<Record> records = limeDB.getRecords("custom", null, false, 0, 0);
+        List<Record> records = limeDB.getRecordList("custom", null, false, 0, 0);
         assertNotNull("getRecords should return a list (not null)", records);
         assertTrue("getRecords should return at least 2 records", records.size() >= 2);
         
@@ -5489,7 +5233,7 @@ public class LimeDBTest {
             // Create IM info for export
             List<Im> imInfo = new ArrayList<>();
             Im versionIm = new Im();
-            versionIm.setTitle(LIME.IM_TYPE_NAME);
+            versionIm.setTitle(LIME.IM_FULL_NAME);
             versionIm.setDesc("1.0");
             imInfo.add(versionIm);
             
@@ -5500,7 +5244,7 @@ public class LimeDBTest {
             assertTrue("Export file should not be empty", exportFile.length() > 0);
             
             // Step 3: Clear the table
-            limeDB.deleteAll("custom");
+            limeDB.clearTable("custom");
             
             // Verify table is empty
             int countAfterDelete = limeDB.countRecords("custom", null, null);
@@ -5520,13 +5264,13 @@ public class LimeDBTest {
                 Thread.sleep(100);
                 waitCount++;
                 
-                // Check if loadingMappingThread is still running using reflection
+                // Check if importThread is still running using reflection
                 try {
-                    java.lang.reflect.Field loadingMappingThreadField = LimeDB.class.getDeclaredField("loadingMappingThread");
-                    loadingMappingThreadField.setAccessible(true);
-                    Thread loadingThread = (Thread) loadingMappingThreadField.get(limeDB);
+                    java.lang.reflect.Field importThreadField = LimeDB.class.getDeclaredField("importThread");
+                    importThreadField.setAccessible(true);
+                    Thread importThread = (Thread) importThreadField.get(limeDB);
                     
-                    if (loadingThread == null || !loadingThread.isAlive()) {
+                    if (importThread == null || !importThread.isAlive()) {
                         // Thread has finished
                         break;
                     }
@@ -5636,7 +5380,7 @@ public class LimeDBTest {
             assertTrue("Export file should not be empty", exportFile.length() > 0);
             
             // Step 3: Clear the related table
-            limeDB.deleteAll(LIME.DB_TABLE_RELATED);
+            limeDB.clearTable(LIME.DB_TABLE_RELATED);
             
             // Verify table is empty
             int countAfterDelete = limeDB.countRecords(LIME.DB_TABLE_RELATED, null, null);
@@ -5656,13 +5400,13 @@ public class LimeDBTest {
                 Thread.sleep(100);
                 waitCount++;
                 
-                // Check if loadingMappingThread is still running using reflection
+                // Check if importThread is still running using reflection
                 try {
-                    java.lang.reflect.Field loadingMappingThreadField = LimeDB.class.getDeclaredField("loadingMappingThread");
-                    loadingMappingThreadField.setAccessible(true);
-                    Thread loadingThread = (Thread) loadingMappingThreadField.get(limeDB);
+                    java.lang.reflect.Field importThreadField = LimeDB.class.getDeclaredField("importThread");
+                    importThreadField.setAccessible(true);
+                    Thread importThread = (Thread) importThreadField.get(limeDB);
                     
-                    if (loadingThread == null || !loadingThread.isAlive()) {
+                    if (importThread == null || !importThread.isAlive()) {
                         // Thread has finished
                         break;
                     }
@@ -5742,7 +5486,7 @@ public class LimeDBTest {
             assertTrue("Backup file should exist", backupFile.exists());
             
             // Clear the related table
-            limeDB.deleteAll(LIME.DB_TABLE_RELATED);
+            limeDB.clearTable(LIME.DB_TABLE_RELATED);
             int countAfterDelete = limeDB.countRecords(LIME.DB_TABLE_RELATED, null, null);
             assertEquals("Related table should be empty after delete", 0, countAfterDelete);
             
@@ -5824,7 +5568,7 @@ public class LimeDBTest {
             limeDB.prepareBackup(backupFile3, null, true);
             
             // Clear table
-            limeDB.deleteAll(LIME.DB_TABLE_RELATED);
+            limeDB.clearTable(LIME.DB_TABLE_RELATED);
             
             // Call wrapper method
             limeDB.importDbRelated(backupFile3);
@@ -6096,7 +5840,7 @@ public class LimeDBTest {
             assertTrue("Backup file should exist", backupFile.exists());
             
             // Clear related table
-            limeDB.deleteAll(LIME.DB_TABLE_RELATED);
+            limeDB.clearTable(LIME.DB_TABLE_RELATED);
             int countBefore = limeDB.countRecords(LIME.DB_TABLE_RELATED, null, null);
             assertEquals("Related table should be empty", 0, countBefore);
             

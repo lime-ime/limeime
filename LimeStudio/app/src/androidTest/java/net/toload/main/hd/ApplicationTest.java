@@ -37,7 +37,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import net.toload.main.hd.global.LIMEPreferenceManager;
-import net.toload.main.hd.MainActivity;
+import net.toload.main.hd.ui.MainActivity;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

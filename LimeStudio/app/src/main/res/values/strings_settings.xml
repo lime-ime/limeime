@@ -623,6 +623,13 @@
     <string name="l3_im_database_error">資料庫操作錯誤，請稍待一會重新操作。</string>
 
     <string name="l3_database_loading">資料庫載入中，請稍待…</string>
+    <string name="l3_database_exporting">資料庫匯出中，請稍待…</string>
+    <string name="l3_database_loading_records">匯入資料庫 - </string>
+    <string name="l3_database_exporting_records">資料庫匯出 - </string>
+    <string name="l3_database_exporting_complete">資料庫匯出完成 - </string>
+
+
+
     <string name="l3_database_not_exist">資料庫不存在，請先下載資料庫</string>
 
     <string name="l3_tab_bluetooth">藍牙設定</string>

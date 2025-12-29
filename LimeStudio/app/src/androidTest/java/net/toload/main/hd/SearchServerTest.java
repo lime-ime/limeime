@@ -32,7 +32,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.data.Keyboard;
-import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.data.Record;
 import net.toload.main.hd.data.Related;
 import net.toload.main.hd.global.LIME;
@@ -73,26 +72,26 @@ public class SearchServerTest {
     // ========================================================================
 
     @Test(timeout = 10000)
-    public void testSearchServerGetImWithNullCode() {
+    public void testSearchServerGetImListWithNullCode() {
         // Test getIm() with null code (should return all IMs)
-        List<Im> imList = searchServer.getIm(null, LIME.IM_TYPE_NAME);
+        List<Im> imList = searchServer.getImList(null, LIME.IM_FULL_NAME);
         assertNotNull("getIm() should return a list (not null)", imList);
         assertTrue("getIm() with null code should return a list", imList instanceof List);
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerGetImWithSpecificCode() {
+    public void testSearchServerGetImListWithSpecificCode() {
         // Test getIm() with specific code
-        List<Im> imList = searchServer.getIm("custom", LIME.IM_TYPE_NAME);
+        List<Im> imList = searchServer.getImList("custom", LIME.IM_FULL_NAME);
         assertNotNull("getIm() should return a list (not null)", imList);
         assertTrue("getIm() with specific code should return a list", imList instanceof List);
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerGetImWithTypeFilter() {
+    public void testSearchServerGetImListWithTypeFilter() {
         // Test getIm() with type filter
-        List<Im> nameList = searchServer.getIm(null, LIME.IM_TYPE_NAME);
-        List<Im> keyboardList = searchServer.getIm(null, LIME.IM_TYPE_KEYBOARD);
+        List<Im> nameList = searchServer.getImList(null, LIME.IM_FULL_NAME);
+        List<Im> keyboardList = searchServer.getImList(null, LIME.IM_KEYBOARD);
         
         assertNotNull("getIm() with IM_TYPE_NAME should return a list", nameList);
         assertNotNull("getIm() with IM_TYPE_KEYBOARD should return a list", keyboardList);
@@ -108,7 +107,7 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerGetImInfo() {
+    public void testSearchServerGetImListInfo() {
         // Test getImInfo() - retrieving IM info field
         String info = searchServer.getImInfo("custom", "name");
         // Info might be null if IM doesn't exist, which is acceptable
@@ -116,7 +115,7 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerGetImInfoWithNonExistentIm() {
+    public void testSearchServerGetImInfoWithNonExistentImList() {
         // Test getImInfo() with non-existent IM (should return empty string, not null)
         String info = searchServer.getImInfo("nonexistent_im", "name");
         // SearchServer.getImInfo() returns empty string "" for non-existent IM, not null
@@ -132,7 +131,7 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerGetImInfoWithNonExistentField() {
+    public void testSearchServerGetImListInfoWithNonExistentField() {
         // Test getImInfo() with non-existent field (should return empty string, not null)
         String info = searchServer.getImInfo("custom", "nonexistent_field");
         // SearchServer.getImInfo() returns empty string "" for non-existent field, not null
@@ -474,12 +473,12 @@ public class SearchServerTest {
     // ========================================================================
 
     @Test(timeout = 5000)
-    public void testSearchServerGetImWithNullDbadapter() {
+    public void testSearchServerGetImListWithNullDbadapter() {
         // Test getIm() with null dbadapter (should return empty list)
         // Note: This test verifies the null check in SearchServer
         // In practice, dbadapter should not be null after SearchServer construction,
         // but we test the defensive coding
-        List<Im> imList = searchServer.getIm(null, LIME.IM_TYPE_NAME);
+        List<Im> imList = searchServer.getImList(null, LIME.IM_FULL_NAME);
         // Should return empty list, not null, based on SearchServer implementation
         assertNotNull("getIm() should return a list even if dbadapter is null", imList);
     }
@@ -492,7 +491,7 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 5000)
-    public void testSearchServerGetImInfoWithNullDbadapter() {
+    public void testSearchServerGetImListInfoWithNullDbadapter() {
         // Test getImInfo() with null dbadapter (should return null)
         String info = searchServer.getImInfo("custom", "name");
         // Should handle null dbadapter gracefully
@@ -559,12 +558,13 @@ public class SearchServerTest {
             // Create IM info list
             List<Im> imInfo = new java.util.ArrayList<>();
             Im versionIm = new Im();
-            versionIm.setTitle(LIME.IM_TYPE_NAME);
+            versionIm.setTitle(LIME.IM_FULL_NAME);
             versionIm.setDesc("1.0");
             imInfo.add(versionIm);
             
-            // Export table
-            boolean success = searchServer.exportTxtTable("custom", exportFile, imInfo);
+            // Export table using DBServer
+            DBServer dbServer = DBServer.getInstance(appContext);
+            boolean success = dbServer.exportTxtTable("custom", exportFile, imInfo);
             assertTrue("exportTxtTable() should succeed", success);
             assertTrue("Export file should exist", exportFile.exists());
             assertTrue("Export file should not be empty", exportFile.length() > 0);
@@ -590,8 +590,9 @@ public class SearchServerTest {
             java.io.File exportFile = new java.io.File(appContext.getCacheDir(), 
                 "test_export_related_" + System.currentTimeMillis() + ".related");
             
-            // Export related table (may be empty, but should still work)
-            boolean success = searchServer.exportTxtTable(LIME.DB_TABLE_RELATED, exportFile, null);
+            // Export related table using DBServer (may be empty, but should still work)
+            DBServer dbServer = DBServer.getInstance(appContext);
+            boolean success = dbServer.exportTxtTable(LIME.DB_TABLE_RELATED, exportFile, null);
             // Export might succeed even if table is empty (returns false for empty, but file might be created)
             assertTrue("exportTxtTable() should complete for related table", true);
             
@@ -614,6 +615,8 @@ public class SearchServerTest {
         // Comprehensive test: add records with score > 0, backup, clear, restore, verify consistency
         try {
             String tableName = "custom";
+
+            searchServer.clearTable(tableName);
             
             // Step 1: Add some test records with score > 0 (user records)
             searchServer.addOrUpdateMappingRecord(tableName, "backup1", "備份1", 15);
@@ -638,7 +641,7 @@ public class SearchServerTest {
             searchServer.backupUserRecords(tableName);
             
             // Verify backup table was created
-            boolean backupExists = searchServer.checkBackuptable(tableName);
+            boolean backupExists = searchServer.checkBackupTable(tableName);
             // Backup table may or may not exist depending on whether records have score > 0
             assertTrue("backupUserRecords should complete", true);
             
@@ -657,6 +660,7 @@ public class SearchServerTest {
             if (backupExists && restoredCount > 0) {
                 List<Record> recordsAfterRestore = searchServer.getRecords(tableName, null, false, 0, 0);
                 assertNotNull("Records list should not be null after restore", recordsAfterRestore);
+                Log.i("SearchServerTest", "records after restore: " + recordsAfterRestore.size() + " records before backup: " + recordsBeforeBackup.size() );
                 assertTrue("Should have restored records", recordsAfterRestore.size() >= restoredCount);
                 
                 // Verify specific records exist
@@ -698,7 +702,7 @@ public class SearchServerTest {
             searchServer.backupUserRecords(tableName);
             
             // Verify backup table was created (if record had score > 0)
-            boolean backupExists = searchServer.checkBackuptable(tableName);
+            boolean backupExists = searchServer.checkBackupTable(tableName);
             // Backup table may or may not exist depending on whether records have score > 0
             assertTrue("backupUserRecords should complete", true);
             
@@ -725,13 +729,13 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerCheckBackuptable() {
+    public void testSearchServerCheckBackupTable() {
         // Test checkBackuptable() - delegation to LimeDB
         try {
             String tableName = "custom";
             
             // Check if backup table exists
-            boolean backupExists = searchServer.checkBackuptable(tableName);
+            boolean backupExists = searchServer.checkBackupTable(tableName);
             // Result can be true or false depending on whether backup was created
             assertTrue("checkBackuptable should return boolean", true);
             
@@ -742,11 +746,11 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerResetLimeSetting() {
+    public void testSearchServerRestoredToDefault() {
         // Test resetLimeSetting() - delegation to LimeDB
         try {
             // Reset Lime settings
-            searchServer.resetLimeSetting();
+            searchServer.restoredToDefault();
             
             // Verify no exception thrown
             assertTrue("resetLimeSetting should complete", true);
@@ -779,30 +783,6 @@ public class SearchServerTest {
         }
     }
 
-    @Test(timeout = 10000)
-    public void testSearchServerGetRelatedById() {
-        // Test getRelatedById() - delegation to LimeDB.getRelated()
-        try {
-            // First, add a related phrase to get an ID
-            net.toload.main.hd.limedb.LimeDB limeDB = new net.toload.main.hd.limedb.LimeDB(appContext);
-            if (limeDB.openDBConnection(false)) {
-                int relatedId = limeDB.addOrUpdateRelatedPhraseRecord("測試", "詞彙");
-                
-                if (relatedId > 0) {
-                    // Get related by ID
-                    Related related = searchServer.getRelatedById(relatedId);
-                    if (related != null) {
-                        assertNotNull("getRelatedById should return Related object", related);
-                        assertNotNull("Related should have pword", related.getPword());
-                    }
-                }
-            }
-            
-        } catch (Exception e) {
-            Log.e(TAG, "getRelatedById() test threw exception", e);
-            fail("getRelatedById() test should not throw exception: " + e.getMessage());
-        }
-    }
 
     @Test(timeout = 10000)
     public void testSearchServerAddRecord() {
@@ -934,7 +914,7 @@ public class SearchServerTest {
             searchServer.backupUserRecords(tableName);
             
             // Check if backup table exists
-            boolean backupExists = searchServer.checkBackuptable(tableName);
+            boolean backupExists = searchServer.checkBackupTable(tableName);
             
             if (backupExists) {
                 // Get backup table records
@@ -987,27 +967,15 @@ public class SearchServerTest {
         }
     }
 
-    @Test(timeout = 10000)
-    public void testSearchServerGetKeyboardCode() {
-        // Test getKeyboardCode() - delegation to LimeDB.getKeyboardCode()
-        try {
-            String keyboardCode = searchServer.getKeyboardCode("custom");
-            // Code might be null or empty if not set, which is acceptable
-            assertTrue("getKeyboardCode should return string or null", keyboardCode == null || keyboardCode instanceof String);
-            
-        } catch (Exception e) {
-            Log.e(TAG, "getKeyboardCode() test threw exception", e);
-            fail("getKeyboardCode() test should not throw exception: " + e.getMessage());
-        }
-    }
+
 
     @Test(timeout = 10000)
-    public void testSearchServerGetKeyboardObj() {
+    public void testSearchServerGetKeyboardConfig() {
         // Test getKeyboardObj() - delegation to LimeDB.getKeyboardObj()
         try {
-            net.toload.main.hd.data.KeyboardObj keyboardObj = searchServer.getKeyboardObj("lime");
+            Keyboard keyboardConfig = searchServer.getKeyboardConfig("lime");
             // Object might be null if keyboard doesn't exist, which is acceptable
-            assertTrue("getKeyboardObj should return KeyboardObj or null", keyboardObj == null || keyboardObj instanceof net.toload.main.hd.data.KeyboardObj);
+            assertTrue("getKeyboardObj should return Keyboard or null", keyboardConfig == null || keyboardConfig instanceof Keyboard);
             
         } catch (Exception e) {
             Log.e(TAG, "getKeyboardObj() test threw exception", e);
@@ -1016,7 +984,7 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerGetImListWithCode() {
+    public void testSearchServerGetImListKeyboardConfigListWithCode() {
         // Test getImList(String code) - delegation to LimeDB.getImList()
         try {
             List<net.toload.main.hd.data.Im> imList = searchServer.getImList("custom");
@@ -1029,5 +997,94 @@ public class SearchServerTest {
         }
     }
 
+    @Test
+    public void testSearchServerGetTablename() {
+        try {
+            String tableName = searchServer.getTablename();
+            assertNotNull("Table name should not be null", tableName);
+            // Table name should be a valid string, could be empty initially
+        } catch (Exception e) {
+            Log.e(TAG, "getTablename() test threw exception", e);
+            fail("getTablename() test should not throw exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSearchServerSetTablename() {
+        try {
+            String testTable = "cj";
+            searchServer.setTablename(testTable, true, true);
+            String retrievedTable = searchServer.getTablename();
+            assertEquals("Table name should be set correctly", testTable, retrievedTable);
+        } catch (Exception e) {
+            Log.e(TAG, "setTablename() test threw exception", e);
+            fail("setTablename() test should not throw exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSearchServerKeyToKeyname() {
+        try {
+            String keyname = searchServer.keyToKeyname("a");
+            assertNotNull("Key name should not be null", keyname);
+            // Key name should be a valid string representation
+        } catch (Exception e) {
+            Log.e(TAG, "keyToKeyname() test threw exception", e);
+            fail("keyToKeyname() test should not throw exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSearchServerInitialCache() {
+        try {
+            searchServer.initialCache();
+            // Method should complete without throwing exceptions
+            // Cache should be initialized
+        } catch (Exception e) {
+            Log.e(TAG, "initialCache() test threw exception", e);
+            fail("initialCache() test should not throw exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSearchServerPostFinishInput() {
+        try {
+            searchServer.postFinishInput();
+            // Method should complete without throwing exceptions
+        } catch (Exception e) {
+            Log.e(TAG, "postFinishInput() test threw exception", e);
+            fail("postFinishInput() test should not throw exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSearchServerGetKeyboardList() {
+        try {
+            List<Keyboard> keyboardList = searchServer.getKeyboardList();
+            assertNotNull("Keyboard list should not be null", keyboardList);
+            // List could be empty but should not be null
+        } catch (Exception e) {
+            Log.e(TAG, "getKeyboardList() test threw exception", e);
+            fail("getKeyboardList() test should not throw exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSearchServerGetImListKeyboardConfigList() {
+        try {
+            List<Im> imList = searchServer.getImList();
+            assertNotNull("IM list should not be null", imList);
+            // List could be empty but should not be null
+        } catch (Exception e) {
+            Log.e(TAG, "getImList() test threw exception", e);
+            fail("getImList() test should not throw exception: " + e.getMessage());
+        }
+    }
+
+
+
+
 }
+
+
 

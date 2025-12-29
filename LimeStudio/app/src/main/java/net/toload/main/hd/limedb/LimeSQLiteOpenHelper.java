@@ -43,6 +43,17 @@ import java.io.InputStream;
 
 //import android.database.DatabaseErrorHandler;
 
+/**
+ * Lightweight replacement for Android's {@code SQLiteOpenHelper} used by LIME.
+ *
+ * <p>This helper provides application-specific database initialization logic
+ * (copying a prepackaged database from resources), version upgrade handling,
+ * and a shared static {@link android.database.sqlite.SQLiteDatabase} instance
+ * used across the app's database components.
+ *
+ * <p>Subclasses should implement {@link #onUpgrade(SQLiteDatabase, int, int)}
+ * to migrate schema changes between versions.
+ */
 public abstract class LimeSQLiteOpenHelper {
 
 	private final static boolean DEBUG = false;

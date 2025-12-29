@@ -40,6 +40,13 @@ import java.util.List;
 
 
 /**
+ * Emoji conversion helper backed by a small SQLite database (emoji.db).
+ *
+ * <p>Provides lookup of emoji values by tag for different emoji datasets
+ * (CN/EN/TW). The {@link #convert(String, Integer)} method returns a list of
+ * lightweight {@link net.toload.main.hd.data.Mapping} objects representing
+ * emoji candidates to be presented to the UI.
+ *
  * @author Art Hung
  */
 public class EmojiConverter extends SQLiteOpenHelper {

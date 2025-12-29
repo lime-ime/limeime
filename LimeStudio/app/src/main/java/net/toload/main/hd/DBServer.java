@@ -34,11 +34,13 @@ import android.util.Log;
 
 import androidx.core.content.ContextCompat;
 
+import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
+import net.toload.main.hd.ui.MainActivity;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -62,7 +64,7 @@ import java.util.zip.ZipOutputStream;
 // Singleton pattern: Ensures only one instance exists and safely manages Application Context
 public class  DBServer {
 	private static final boolean DEBUG = false;
-	private static final String TAG = "LIME.DBServer";
+	private static final String TAG = "DBServer";
 	
 	// Singleton instance
 	@SuppressLint("StaticFieldLeak")
@@ -85,7 +87,7 @@ public class  DBServer {
 	 * 
 	 * @param context Context (will be converted to ApplicationContext)
 	 */
-	private DBServer(Context context) {
+    DBServer(Context context) {
 		// Always use ApplicationContext to prevent memory leaks
 		// ApplicationContext lives for the app lifetime, matching singleton lifetime
 		this.appContext = context.getApplicationContext();
@@ -191,10 +193,52 @@ public class  DBServer {
 		datasource.resetCache();
 	}
 
+	/**
+	 * Exports a database table to a text mapping file with optional progress reporting.
+	 * 
+	 * <p>This method exports data from the specified database table to a text file.
+	 * It delegates to {@link LimeDB#exportTxtTable(String, File, List, LIMEProgressListener)}
+	 * to perform the actual export operation.
+	 * 
+	 * <p>This method:
+	 * <ul>
+	 *   <li>Validates the dbadapter is available</li>
+	 *   <li>Delegates to LimeDB.exportTxtTable() for the actual export</li>
+	 *   <li>Supports progress reporting through LIMEProgressListener</li>
+	 * </ul>
+	 * 
+	 * @param table The table name to export (must be valid, use {@link LIME#DB_TABLE_RELATED} for related phrases)
+	 * @param targetFile The target file to write to
+	 * @param imInfo List of Im objects containing IM configuration info (can be null, only used for regular tables)
+	 * @param progressListener Progress listener for export updates (can be null)
+	 * @return true if export successful, false otherwise
+	 */
+	public boolean exportTxtTable(String table, File targetFile, List<Im> imInfo, LIMEProgressListener progressListener) {
+		if (datasource == null) {
+			Log.e(TAG, "exportTxtTable(): datasource is null");
+			return false;
+		}
+		return datasource.exportTxtTable(table, targetFile, imInfo, progressListener);
+	}
+
+	/**
+	 * Exports a database table to a text mapping file (backward compatibility).
+	 * 
+	 * <p>This is a convenience method that delegates to 
+	 * {@link #exportTxtTable(String, File, List, LIMEProgressListener)} with null progress listener.
+	 * 
+	 * @param table The table name to export
+	 * @param targetFile The target file to write to
+	 * @param imInfo List of Im objects containing IM configuration info
+	 * @return true if export successful, false otherwise
+	 */
+	public boolean exportTxtTable(String table, File targetFile, List<Im> imInfo) {
+		return exportTxtTable(table, targetFile, imInfo, null);
+	}
 
 	/**
 	 * Imports a related database file into the related table.
-	 * 
+	 *
 	 * <p>This method acts as a convenience wrapper for {@link LimeDB#importDbRelated(File)}
 	 * to import related phrase data from a source database file.
 	 *
@@ -230,7 +274,7 @@ public class  DBServer {
 			return;
 		}
 		if (unzipFilePaths.size() == 1) {
-			datasource.importDbRelated(new File(unzipFilePaths.get(0)));
+			importDbRelated(new File(unzipFilePaths.get(0)));
 			net.toload.main.hd.SearchServer.resetCache(true);
 		} else {
 			Log.e(TAG, "importZippedDbRelated(): Expected 1 file in zip, found " + unzipFilePaths.size());
@@ -250,13 +294,13 @@ public class  DBServer {
 	 *   <li>Delegates to LimeDB.importDb() with overwriteExisting=true</li>
 	 * </ul>
 	 * 
-	 * @param sourcedb The source database file to import
-	 * @param imtype The IM type (table name) to import data into
+	 * @param sourceDbFile The source database file to import
+	 * @param tableName The IM type (table name) to import data into
 	 */
-	public void importDb(File sourcedb, String imtype) {
+	public void importDb(File sourceDbFile, String tableName) {
         List<String> tableNames = new ArrayList<>();
-        tableNames.add(imtype);
-        datasource.importDb(sourcedb, tableNames, false, true);
+        tableNames.add(tableName);
+        datasource.importDb(sourceDbFile, tableNames, false, true);
     }
 
 	/**
@@ -273,21 +317,21 @@ public class  DBServer {
 	 *   <li>Resets the SearchServer cache after import</li>
 	 * </ul>
 	 * 
-	 * @param compressedSourceDB The compressed database file (.limedb) to import
-	 * @param imtype The IM type (table name) to import data into
+	 * @param sourceDbFile The compressed database file (.limedb) to import
+	 * @param tableName The IM type (table name) to import data into
 	 */
-	public void importZippedDb(File compressedSourceDB, String imtype) {
+	public void importZippedDb(File sourceDbFile, String tableName) {
 		List<String> unzipFilePaths;
 		try {
 			File unzipTargetDir = new File(appContext.getCacheDir(), "limehd");
-			unzipFilePaths = LIMEUtilities.unzip(compressedSourceDB.getAbsolutePath(), unzipTargetDir.getAbsolutePath(), true);
+			unzipFilePaths = LIMEUtilities.unzip(sourceDbFile.getAbsolutePath(), unzipTargetDir.getAbsolutePath(), true);
 		} catch (Exception e) {
 			Log.e(TAG, "Error unzipping compressed database", e);
 			return;
 		}
 		if (unzipFilePaths.size() == 1) {
 			List<String> tableNames = new ArrayList<>();
-			tableNames.add(imtype);
+			tableNames.add(tableName);
 			datasource.importDb(new File(unzipFilePaths.get(0)), tableNames, false, true);
 			net.toload.main.hd.SearchServer.resetCache(true);
 		} else {
@@ -603,7 +647,7 @@ public class  DBServer {
 
     public void zip(File sourceFile, String targetFolder, String targetFile){
 		if(DEBUG)
-			Log.i(TAG, "zip(), srouce = " + sourceFile.toString() +
+			Log.i(TAG, "zip(), source = " + sourceFile.toString() +
 					", target = " + targetFolder + "/" + targetFile);
 		try{
 			final int BUFFER = LIME.BUFFER_SIZE_2KB;
@@ -615,7 +659,13 @@ public class  DBServer {
 			}
 
 
-			File OutputFile = new File(targetFolderObj.getAbsolutePath() + File.separator + targetFile);
+		// If source doesn't exist, do not create output zip file — fail fast
+		if (sourceFile == null || !sourceFile.exists() || !sourceFile.isFile()) {
+			Log.e(TAG, "zip(): source file does not exist: " + sourceFile);
+			return;
+		}
+
+		File OutputFile = new File(targetFolderObj.getAbsolutePath() + File.separator + targetFile);
 			if(OutputFile.exists() && !OutputFile.delete()) Log.w(TAG, "Failed to delete existing output file for compression");
 
 			byte[] data = new byte[BUFFER];
@@ -625,7 +675,9 @@ public class  DBServer {
 			     ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
 			     FileInputStream fi = new FileInputStream(sourceFile);
 			     BufferedInputStream origin = new BufferedInputStream(fi, BUFFER)) {
-				ZipEntry entry = new ZipEntry(sourceFile.getAbsolutePath());
+				// Use only the file name for the zip entry to avoid absolute paths
+				// which are rejected by Android's SafeZipPathValidatorCallback.
+				ZipEntry entry = new ZipEntry(sourceFile.getName());
 				out.putNextEntry(entry);
 				int count;
 				while((count = origin.read(data, 0, BUFFER)) != -1) {
@@ -633,7 +685,6 @@ public class  DBServer {
 				}
 			}
 
-			//Log.i("ART","compress Output File:"+OutputFile.getAbsolutePath() + " / " + OutputFile.length());
 
 		} catch(Exception e) {
 			Log.e(TAG, "Error compressing file", e);
@@ -671,13 +722,13 @@ public class  DBServer {
 	 * 
 	 * <p>This replaces the file operations previously in ShareDbRunnable.
 	 * 
-	 * @param imType The IM type to export (e.g., "custom", "cj")
-	 * @param targetFile The target file to write the zipped database to
+	 * @param tableName The IM type to export (e.g., "custom", "cj")
+	 * @param targetDbFile The target file to write the zipped database to
 	 * @param progressCallback Optional callback for progress updates (can be null)
 	 * @return The zipped database file, or null if error
 	 */
-	public File exportZippedDb(String imType, File targetFile, Runnable progressCallback) {
-		if (imType == null || targetFile == null) {
+	public File exportZippedDb(String tableName, File targetDbFile, Runnable progressCallback) {
+		if (tableName == null || targetDbFile == null) {
 			Log.e(TAG, "exportZippedDb(): Invalid parameters");
 			return null;
 		}
@@ -688,12 +739,12 @@ public class  DBServer {
 				cacheDir = appContext.getCacheDir();
 			}
 
-			File dbFile = new File(cacheDir, imType + LIME.DATABASE_EXT);
+			File dbFile = new File(cacheDir, tableName + LIME.DATABASE_EXT);
 			if (dbFile.exists() && !dbFile.delete()) {
 				Log.e(TAG, "exportZippedDb(): Error deleting existing file");
 			}
 
-			if (targetFile.exists() && !targetFile.delete()) {
+			if (targetDbFile.exists() && !targetDbFile.delete()) {
 				Log.e(TAG, "exportZippedDb(): Error deleting existing zip file");
 			}
 
@@ -706,18 +757,18 @@ public class  DBServer {
 
 			// Prepare backup using LimeDB
 			List<String> tableNames = new ArrayList<>();
-			tableNames.add(imType);
+			tableNames.add(tableName);
 			datasource.prepareBackup(dbFile, tableNames, false);
 
 			// Zip the database file
-			LIMEUtilities.zip(targetFile.getAbsolutePath(), dbFile.getAbsolutePath(), true);
+			LIMEUtilities.zip(targetDbFile.getAbsolutePath(), dbFile.getAbsolutePath(), true);
 
 			// Clean up unzipped file
 			if (dbFile.exists() && !dbFile.delete()) {
 				Log.e(TAG, "exportZippedDb(): Error deleting temp file");
 			}
 
-			return targetFile;
+			return targetDbFile;
 		} catch (Exception e) {
 			Log.e(TAG, "exportZippedDb(): Error exporting database", e);
 			return null;

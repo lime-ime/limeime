@@ -186,24 +186,4 @@ public class Im {
 		return record;
 	}
 
-	/**
-	 * Converts a Cursor to a List of Im objects.
-	 * 
-	 * <p>This method iterates through all rows in the cursor and creates
-	 * Im objects for each row. The cursor is closed after processing.
-	 * 
-	 * @param cursor The Cursor containing database query results
-	 * @return List of Im objects
-	 */
-	public static List<Im> getList(Cursor cursor){
-		List<Im> list = new ArrayList<>();
-		cursor.moveToFirst();
-		while(!cursor.isAfterLast()){
-			list.add(get(cursor));
-			cursor.moveToNext();
-		}
-		cursor.close();
-		return list;
-	}
-
 }

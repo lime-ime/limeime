@@ -28,8 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.toload.main.hd.data.ImObj;
-import net.toload.main.hd.data.KeyboardObj;
+import net.toload.main.hd.data.Im;
+import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.keyboard.LIMEKeyboard;
 import net.toload.main.hd.keyboard.LIMEKeyboardView;
@@ -88,10 +88,10 @@ public class LIMEKeyboardSwitcher {
 
     private int mLastDisplayWidth;
     
-    private String imtype = null;
+    private String IM = null;
     
-    private HashMap<String, KeyboardObj> kbHm;
-    private HashMap<String, String> imHm;
+	private HashMap<String, Keyboard> kbMap;
+    private HashMap<String, String> imMap;
  
     private static List<String> mActivatedIMList;
     //private static List<String> mActiveKeyboardNames;
@@ -115,34 +115,34 @@ public class LIMEKeyboardSwitcher {
 	}
     
     public int getKeyboardSize(){
-    	if(kbHm != null){
-    		return kbHm.size();
+    	if(kbMap != null){
+    		return kbMap.size();
     	}
 		return 0;
     }
     
-    public void setKeyboardList(List<KeyboardObj> list){
-    	if(list==null || (list.isEmpty())) return; //Jeremy '12,4,10 avoid fc when database is locked.
-    	kbHm = new HashMap<>();
-    	for(KeyboardObj o : list){
-    		kbHm.put(o.getCode(), o);
-    	}    	
-    }
+	public void setKeyboardConfigList(List<Keyboard> list){
+		if(list==null || (list.isEmpty())) return; //Jeremy '12,4,10 avoid fc when database is locked.
+		kbMap = new HashMap<>();
+		for(Keyboard o : list){
+			kbMap.put(o.getCode(), o);
+		}
+	}
 
     public String getImKeyboard(String code){
-    	if(imHm != null && imHm.get(code) != null){
-    		return imHm.get(code);
+    	if(imMap != null && imMap.get(code) != null){
+    		return imMap.get(code);
     	}
     	return "";
     }
     
-    public void setImList(List<ImObj> list){
-    	if(list==null || list.isEmpty()) return; //Jeremy '12,4,10 avoid fc when database is locked.
-    	imHm = new HashMap<>();
-    	for(ImObj o : list){
-    		imHm.put(o.getCode(), o.getKeyboard());
-    	}    	
-    }
+	public void setImKeyboardConfigList(List<Im> list){
+		if(list==null || list.isEmpty()) return; //Jeremy '12,4,10 avoid fc when database is locked.
+		imMap = new HashMap<>();
+		for(Im o : list){
+			imMap.put(o.getCode(), o.getKeyboard());
+		}
+	}
     public void setActivatedIMList(List<String> codes, List<String> names, List<String> shortnames){
     	if(DEBUG) Log.i(TAG,"setActiveKeyboardList()");
     	
@@ -160,9 +160,9 @@ public class LIMEKeyboardSwitcher {
     }
     
     public String getActiveIMShortname(){
-    	if(DEBUG) Log.i(TAG,"getCurrentActiveKeyboardShortName() current IM:"+ imtype);
+    	if(DEBUG) Log.i(TAG,"getCurrentActiveKeyboardShortName() current IM:"+ IM);
     	for (int i = 0; i < mActivatedIMList.size(); i++) {
-			if (imtype.equals(mActivatedIMList.get(i))) {
+			if (IM.equals(mActivatedIMList.get(i))) {
                 if(DEBUG)
                     Log.i(TAG,"getCurrentActiveKeyboardShortName()="+ mActivatedIMShortnameList.get(i));
     			return mActivatedIMShortnameList.get(i);
@@ -173,7 +173,7 @@ public class LIMEKeyboardSwitcher {
     public String getNextActivatedIMShortname(){
 
     	for (int i = 0; i < mActivatedIMList.size(); i++) {
-    		if (imtype.equals(mActivatedIMList.get(i))) {
+    		if (IM.equals(mActivatedIMList.get(i))) {
     			if(i==mActivatedIMList.size()-1)
     				return mActivatedIMShortnameList.get(0);
     			else return mActivatedIMShortnameList.get(i+1);
@@ -184,7 +184,7 @@ public class LIMEKeyboardSwitcher {
     public String getPrevActivatedIMShortname(){
 
     	for (int i = 0; i < mActivatedIMList.size(); i++) {
-			if (imtype.equals(mActivatedIMList.get(i))) {
+			if (IM.equals(mActivatedIMList.get(i))) {
     			if(i==0) return mActivatedIMShortnameList.get(mActivatedIMList.size()-1);
     			else return mActivatedIMShortnameList.get(i-1);
     		}
@@ -204,8 +204,7 @@ public class LIMEKeyboardSwitcher {
     }
     
     public void resetKeyboards(boolean forceCreate) {
-    	if(DEBUG)
-    		Log.i(TAG, "resetKeyboards(): forceCreate:" + forceCreate);
+    	if(DEBUG) Log.i(TAG, "resetKeyboards(): forceCreate:" + forceCreate);
         if (forceCreate) clearKeyboards();
         // Configuration change is coming after the keyboard gets recreated. So don't rely on that.
         // If keyboards have already been made, check if we have a screen width change and 
@@ -431,12 +430,12 @@ public class LIMEKeyboardSwitcher {
 		}
     }
     
-    public void setKeyboardMode(String code, int mode, int imeOptions, boolean isIm, boolean isSymbol, boolean isShift) {
+	public void setKeyboardMode(String code, int mode, int imeOptions, boolean isIm, boolean isSymbol, boolean isShift) {
     	if(DEBUG){
     		Log.i(TAG, "setKeyboardMode () code:"+code + ", mode:"+mode + ", imOptions:"+imeOptions+
 					", isIM:"+isIm + ", isSymbol:"+isSymbol +", isShift:"+isShift);
     	}
-    	imtype = code;
+    	IM = code;
     	
     	// Jeremy '11,6,2.  Has to preserve these options for toggle keyboard controls.
     	mImeOptions = imeOptions;
@@ -448,47 +447,47 @@ public class LIMEKeyboardSwitcher {
     	
     	String imcode = "";
     	if(!code.equals("wb") && !code.equals("hs") ){
-        	if(imHm != null) imcode = imHm.get(code); 
+        	if(imMap != null) imcode = imMap.get(code);
     	}else{
     		imcode = code;
     	}
 
-    	KeyboardObj kobj=null;
+     	Keyboard kConfig=null;
     	
     	if(imcode == null || imcode.isEmpty() || imcode.equals("custom")){
     		imcode = "lime";
-        	if(kbHm!=null) kobj=kbHm.get(imcode);
-    	}else if(imcode.equals("wb")){
+        	if(kbMap !=null) kConfig= kbMap.get(imcode);
+    		}else if(imcode.equals("wb")){
     		// Art 28/Sep/2011 Force WB to use it special design keyboard layout
-    		kobj = new KeyboardObj();
-			kobj.setCode("wb");
-			kobj.setName("筆順五碼");
-			kobj.setDescription("筆順五碼");
-			kobj.setType("phone");
-			kobj.setImage("wb_keyboard_preview");
-			kobj.setImkb("lime_wb");
-			kobj.setImshiftkb("lime_wb");
-			kobj.setEngkb("lime_abc");
-			kobj.setEngshiftkb("lime_abc_shift");
+            kConfig = new Keyboard();
+			kConfig.setCode("wb");
+			kConfig.setName("筆順五碼");
+			kConfig.setDescription("筆順五碼");
+			kConfig.setType("phone");
+			kConfig.setImage("wb_keyboard_preview");
+			kConfig.setImkb("lime_wb");
+			kConfig.setImshiftkb("lime_wb");
+			kConfig.setEngkb("lime_abc");
+			kConfig.setEngshiftkb("lime_abc_shift");
 		}else if(imcode.equals("hs")){
     		// Art 7/Feb/2012 HS Input Method
-    		kobj = new KeyboardObj();
-			kobj.setCode("hs");
-			kobj.setName("華象直覺");
-			kobj.setDescription("華象直覺");
-			kobj.setType("phone");
-			kobj.setImage("hs_keyboard_preview");
-			kobj.setImkb("lime_hs");
-			kobj.setImshiftkb("lime_hs_shift");
-			kobj.setEngkb("lime_abc");
-			kobj.setEngshiftkb("lime_abc_shift");
+            kConfig = new Keyboard();
+			kConfig.setCode("hs");
+			kConfig.setName("華象直覺");
+			kConfig.setDescription("華象直覺");
+			kConfig.setType("phone");
+			kConfig.setImage("hs_keyboard_preview");
+			kConfig.setImkb("lime_hs");
+			kConfig.setImshiftkb("lime_hs_shift");
+			kConfig.setEngkb("lime_abc");
+			kConfig.setEngshiftkb("lime_abc_shift");
 			}else{
-        	if(kbHm!=null) kobj=kbHm.get(imcode);
+        	if(kbMap !=null) kConfig= kbMap.get(imcode);
 		}
     	
     	KeyboardId kid;
     	
-    	if(kobj != null){
+    	if(kConfig != null){
 
             mIsChinese = false;
             if(isSymbol){
@@ -556,37 +555,37 @@ public class LIMEKeyboardSwitcher {
 	            default:
 	            	if(isIm){  // Chinese IM keyboards
 	            		if(isShift){
-	    	            	//Log.i("ART","KBMODE ->: " + kobj.getImshiftkb());
-	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getImshiftkb()), KEYBOARDMODE_NORMAL, true );
+	    	            	//Log.i("ART","KBMODE ->: " + kConfig.getImshiftkb());
+	                    	kid = new KeyboardId(getKeyboardXMLID(kConfig.getImshiftkb()), KEYBOARDMODE_NORMAL, true );
 	            		}else{
-	    	            	//Log.i("ART","KBMODE ->: " + kobj.getImkb());
-	                    	kid = new KeyboardId(getKeyboardXMLID(kobj.getImkb()), KEYBOARDMODE_NORMAL, true );
+	    	            	//Log.i("ART","KBMODE ->: " + kConfig.getImkb());
+	                    	kid = new KeyboardId(getKeyboardXMLID(kConfig.getImkb()), KEYBOARDMODE_NORMAL, true );
 	            		}
 		                mIsChinese = true;
 	            	}else {//if(!isIm){  //English normal keyboard
 
 		            	if(!imcode.equals("wb")){
 		            		if(isShift){
-		    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngshiftkb());
+		    	            	//Log.i("ART","KBMODE ->: " + kConfig.getEngshiftkb());
 		                    	kid = new KeyboardId(
-		                    			getKeyboardXMLID(kobj.getEngshiftkb(mLIMEPref.getShowNumberRowInEnglish())), 
+		                    			getKeyboardXMLID(kConfig.getEngshiftkb(mLIMEPref.getShowNumberRowInEnglish())),
 		                    			KEYBOARDMODE_NORMAL, true );
 		            		}else{
-		    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngkb());
+		    	            	//Log.i("ART","KBMODE ->: " + kConfig.getEngkb());
 		                    	kid = new KeyboardId(
-		                    			getKeyboardXMLID(kobj.getEngkb(mLIMEPref.getShowNumberRowInEnglish())), 
+		                    			getKeyboardXMLID(kConfig.getEngkb(mLIMEPref.getShowNumberRowInEnglish())),
 		                    			KEYBOARDMODE_NORMAL, true );
 		            		}
 		            	}else{
 		            		if(isShift){
-		    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngshiftkb());
+		    	            	//Log.i("ART","KBMODE ->: " + kConfig.getEngshiftkb());
 		                    	kid = new KeyboardId(
-		                    			getKeyboardXMLID(kobj.getEngshiftkb()), 
+		                    			getKeyboardXMLID(kConfig.getEngshiftkb()),
 		                    			KEYBOARDMODE_NORMAL, true );
 		            		}else{
-		    	            	//Log.i("ART","KBMODE ->: " + kobj.getEngkb());
+		    	            	//Log.i("ART","KBMODE ->: " + kConfig.getEngkb());
 		                    	kid = new KeyboardId(
-		                    			getKeyboardXMLID(kobj.getEngkb()), 
+		                    			getKeyboardXMLID(kConfig.getEngkb()),
 		                    			KEYBOARDMODE_NORMAL, true );
 		            		}
 		            	}
@@ -640,9 +639,9 @@ public class LIMEKeyboardSwitcher {
 			Log.i(TAG,"toggleShift() KBMODE mode:"+mMode);
     	mIsShifted= !mIsShifted;
     	if(mIsChinese)
-        	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);
+        	this.setKeyboardMode(IM, 0, mImeOptions, true, mIsSymbols, mIsShifted);
     	else{
-        	this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
+        	this.setKeyboardMode(IM, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
     	}
 
     }
@@ -660,11 +659,11 @@ public class LIMEKeyboardSwitcher {
 	   
 	   	if(mIsChinese){
 	   		
-	    	this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, mIsShifted);
+	    	this.setKeyboardMode(IM, 0, mImeOptions, true, mIsSymbols, mIsShifted);
 	    	
    		}else{
    			
-	    	this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
+	    	this.setKeyboardMode(IM, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
 	    	
 		}
     }
@@ -672,9 +671,9 @@ public class LIMEKeyboardSwitcher {
    public void toggleSymbols() {
 
     	if(mIsChinese)
-        	this.setKeyboardMode(imtype, 0, mImeOptions, true, !mIsSymbols, false);
+        	this.setKeyboardMode(IM, 0, mImeOptions, true, !mIsSymbols, false);
     	else
-        	this.setKeyboardMode(imtype, mMode, mImeOptions, false, !mIsSymbols, false);
+        	this.setKeyboardMode(IM, mMode, mImeOptions, false, !mIsSymbols, false);
 
     }
 	public void switchSymbols() {
@@ -692,9 +691,9 @@ public class LIMEKeyboardSwitcher {
 
 		}
 		if(mIsChinese)
-			this.setKeyboardMode(imtype, 0, mImeOptions, true, mIsSymbols, false);
+			this.setKeyboardMode(IM, 0, mImeOptions, true, mIsSymbols, false);
 		else
-			this.setKeyboardMode(imtype, mMode, mImeOptions, false, mIsSymbols, false);
+			this.setKeyboardMode(IM, mMode, mImeOptions, false, mIsSymbols, false);
 
 
 	}

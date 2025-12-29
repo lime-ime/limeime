@@ -297,60 +297,60 @@ public class LIMEPreferenceManager {
 	}
 	public void syncIMActivatedState(List<Im> imlist){
 		StringBuilder state = new StringBuilder();
-		HashMap<String, String> imhm = new HashMap<>();
+		HashMap<String, String> imMap = new HashMap<>();
 		for(Im i :imlist){
-			imhm.put(i.getCode(), i.getCode());
+			imMap.put(i.getCode(), i.getCode());
 		}
 
-		if(imhm.get(LIME.IM_CUSTOM) != null){
+		if(imMap.get(LIME.IM_CUSTOM) != null){
 			state.append("0");
 		}
 
-		if(imhm.get(LIME.IM_CJ) != null){
+		if(imMap.get(LIME.IM_CJ) != null){
 			if(state.length() > 0){state.append(";");}
 			state.append("1");
 		}
-		if(imhm.get(LIME.IM_SCJ) != null){
+		if(imMap.get(LIME.IM_SCJ) != null){
 			if(state.length() > 0){state.append(";");}
 			state.append("2");
 		}
-		if(imhm.get(LIME.IM_CJ5) != null){
+		if(imMap.get(LIME.IM_CJ5) != null){
 			if(state.length() > 0){state.append(";");}
 			state.append("3");
 		}
-		if(imhm.get(LIME.IM_ECJ) != null){
+		if(imMap.get(LIME.IM_ECJ) != null){
 			if(state.length() > 0){state.append(";");}
 			state.append("4");
 		}
-		if(imhm.get(LIME.IM_DAYI) != null){
+		if(imMap.get(LIME.IM_DAYI) != null){
 			if(state.length() > 0){state.append(";");}
 			state.append("5");
 		}
-		if(imhm.get(LIME.IM_PHONETIC) != null){
+		if(imMap.get(LIME.IM_PHONETIC) != null){
 			if(state.length() > 0){state.append(";");}
 			state.append("6");
 		}
-		if(imhm.get(LIME.IM_EZ) != null){
+		if(imMap.get(LIME.IM_EZ) != null){
 			if(state.length() > 0){state.append(";");}
 			state.append("7");
 		}
-		if(imhm.get(LIME.IM_ARRAY) != null){
+		if(imMap.get(LIME.IM_ARRAY) != null){
 			if(state.length() > 0){state.append(";");}
 			state.append("8");
 		}
-		if(imhm.get(LIME.IM_ARRAY10) != null){
+		if(imMap.get(LIME.IM_ARRAY10) != null){
 			if(state.length() > 0){state.append(";");}
 			state.append("9");
 		}
-		if(imhm.get(LIME.IM_WB) != null){
+		if(imMap.get(LIME.IM_WB) != null){
 			if(state.length() > 0){state.append(";");}
 			state.append("10");
 		}
-		if(imhm.get(LIME.IM_HS) != null){
+		if(imMap.get(LIME.IM_HS) != null){
 			if(state.length() > 0){state.append(";");}
 			state.append("11");
 		}
-		if(imhm.get(LIME.IM_PINYIN) != null){
+		if(imMap.get(LIME.IM_PINYIN) != null){
 			if(state.length() > 0){state.append(";");}
 			state.append("12");
 		}

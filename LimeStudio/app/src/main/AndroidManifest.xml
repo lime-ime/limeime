@@ -65,7 +65,7 @@
         </provider>
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:configChanges="keyboard|keyboardHidden|orientation"
             android:hardwareAccelerated="true"
             android:exported="true" >
@@ -126,7 +126,7 @@
         -->
         <activity
             android:theme="@style/Theme.AppCompat.Light"
-            android:name=".limesettings.LIMEPreferenceHC"
+            android:name=".ui.LIMEPreference"
             android:configChanges="keyboard|keyboardHidden|orientation"
             android:label="@string/ime_setting" >
         </activity>

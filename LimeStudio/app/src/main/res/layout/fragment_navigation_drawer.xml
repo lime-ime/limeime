@@ -30,6 +30,6 @@
     android:divider="@android:color/transparent"
     android:dividerHeight="0dp"
     android:background="#FAFAFA"
-    tools:context=".NavigationDrawerFragment"
+    tools:context=".ui.view.NavigationDrawerFragment"
     android:id="@+id/drawer" />
 <!-- From: file:/C:/Data/Development/Android/Studio/LIMEIMEAS/app/src/main/res/layout/fragment_navigation_drawer.xml -->

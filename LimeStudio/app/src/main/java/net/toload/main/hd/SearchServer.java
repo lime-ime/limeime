@@ -32,17 +32,16 @@ import android.util.Pair;
 import android.widget.Toast;
 
 import net.toload.main.hd.data.Im;
-import net.toload.main.hd.data.ImObj;
 import net.toload.main.hd.data.Keyboard;
-import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.data.Record;
+import net.toload.main.hd.data.Related;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.limedb.LimeDB;
+import net.toload.main.hd.ui.MainActivity;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -55,7 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SearchServer {
 
     private static final boolean DEBUG = false;
-    private static final String TAG = "LIME.SearchServer";
+    private static final String TAG = "SearchServer";
     private static LimeDB dbadapter = null;
     
     // Score Thresholds
@@ -1403,14 +1402,13 @@ List<Mapping> scorelistSnapshot = null;
 
     }
 
-    public List<KeyboardObj> getKeyboardList() throws RemoteException {
+    public List<Keyboard> getKeyboardList() throws RemoteException {
         //if(dbadapter == null){dbadapter = new LimeDB(ctx);}
         return dbadapter.getKeyboardList();
     }
 
-    public List<ImObj> getImList() throws RemoteException {
-        //if(dbadapter == null){dbadapter = new LimeDB(ctx);}
-        return dbadapter.getImList();
+    public List<Im> getImList() throws RemoteException {
+        return dbadapter.getImList(null, null);
     }
 
 
@@ -1680,21 +1678,21 @@ List<Mapping> scorelistSnapshot = null;
     // ============================================================================
 
     /**
-     * Gets IM records filtered by code and/or type.
+     * Gets IM records filtered by code and/or configEntry.
      * 
      * <p>This method delegates to LimeDB.getIm() to retrieve IM information records.
      * UI components should use this method instead of directly accessing LimeDB.
      * 
      * @param code The IM code to filter by, or null/empty for all
-     * @param type The IM type to filter by, or null/empty for all
+     * @param configEntry The IM configEntry to filter by, or null/empty for all
      * @return List of Im objects, or empty list if database error
      */
-    public List<Im> getIm(String code, String type) {
+    public List<Im> getImList(String code, String configEntry) {
         if (dbadapter == null) {
             Log.e(TAG, "getIm(): dbadapter is null");
             return new ArrayList<>();
         }
-        return dbadapter.getIm(code, type);
+        return dbadapter.getImList(code, configEntry);
     }
 
     /**
@@ -1710,20 +1708,21 @@ List<Mapping> scorelistSnapshot = null;
             Log.e(TAG, "getKeyboard(): dbadapter is null");
             return new ArrayList<>();
         }
-        return dbadapter.getKeyboard();
+        return dbadapter.getKeyboardList();
     }
 
+
     /**
-     * Gets IM information for a specific field.
+     * Counts the number of mapping records in a table.
      * 
-     * <p>This method delegates to LimeDB.getImInfo() to retrieve configuration
-     * information stored in the im table. UI components should use this method
-     * instead of directly accessing LimeDB.
+     * <p>This method delegates to LimeDB.countRecords() to count mapping records.
+     * UI components should use this method instead of directly accessing LimeDB.
      * 
-     * @param im The IM code (e.g., LIME.DB_TABLE_PHONETIC, LIME.DB_TABLE_DAYI)
-     * @param field The field name to retrieve
-     * @return The field value, or empty string if not found or database error
+     * @param im The table name to count records in
+     * @return The number of records, or 0 if database error
      */
+
+
     public String getImInfo(String im, String field) {
         if (dbadapter == null) {
             Log.e(TAG, "getImInfo(): dbadapter is null");
@@ -1734,21 +1733,23 @@ List<Mapping> scorelistSnapshot = null;
 
     /**
      * Sets IM information for a specific field.
-     * 
+     *
      * <p>This method delegates to LimeDB.setImInfo() to store or update configuration
      * information in the im table. UI components should use this method instead of
      * directly accessing LimeDB.
-     * 
-     * @param im The IM code (e.g., LIME.DB_TABLE_PHONETIC, LIME.DB_TABLE_DAYI)
+     *
+     * @param im    The IM code (e.g., LIME.DB_TABLE_PHONETIC, LIME.DB_TABLE_DAYI)
      * @param field The field name to set
      * @param value The value to store
+     * @return
      */
-    public void setImInfo(String im, String field, String value) {
+    public boolean setImInfo(String im, String field, String value) {
         if (dbadapter == null) {
             Log.e(TAG, "setImInfo(): dbadapter is null");
-            return;
+            return false;
         }
         dbadapter.setImInfo(im, field, value);
+        return false;
     }
 
     /**
@@ -1867,6 +1868,8 @@ List<Mapping> scorelistSnapshot = null;
      * @return The count of matching records, or 0 if database error
      */
     public int countRecordsByWordOrCode(String table, String curQuery, boolean searchByCode) {
+        if(DEBUG)
+            Log.i(TAG,"countRecordsByWordOrCode()");
         if (dbadapter == null) {
             Log.e(TAG, "countRecordsByWordOrCode(): dbadapter is null");
             return 0;
@@ -1950,17 +1953,29 @@ List<Mapping> scorelistSnapshot = null;
      * Counts the total number of records in the specified table.
      * 
      * <p>This method delegates to LimeDB.countRecords() to get the count of records.
+     * Filters out records with null/empty values to match getRecords() behavior.
      * UI components should use this method instead of directly accessing LimeDB.
      * 
      * @param table The table name to count records from
-     * @return The number of records in the table, or 0 if error or empty
+     * @return The number of records in the table (excluding null/empty key values), or 0 if error or empty
      */
     public int countRecords(String table) {
         if (dbadapter == null) {
             Log.e(TAG, "countRecords(): dbadapter is null");
             return 0;
         }
-        return dbadapter.countRecords(table, null, null);
+        
+        // Apply table-specific filters to match getRecords behavior
+        String whereClause = null;
+        if (LIME.DB_TABLE_RELATED.equals(table)) {
+            // For related table: exclude null/empty pword or cword
+            whereClause = "ifnull(" + LIME.DB_RELATED_COLUMN_PWORD + ", '') <> '' AND ifnull(" + LIME.DB_RELATED_COLUMN_CWORD + ", '') <> ''";
+        } else {
+            // For IM tables: exclude null/empty word
+            whereClause = "ifnull(" + LIME.DB_COLUMN_WORD + ", '') <> ''";
+        }
+        
+        return dbadapter.countRecords(table, whereClause, null);
     }
 
     /**
@@ -1991,7 +2006,7 @@ List<Mapping> scorelistSnapshot = null;
         }
         
         try {
-            dbadapter.resetMapping(table);
+            dbadapter.clearTable(table);
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "clearTable(): Invalid table name: " + table, e);
             throw e;
@@ -2041,7 +2056,7 @@ List<Mapping> scorelistSnapshot = null;
      * @param table The base table name to check backup for
      * @return true if backup table exists and has records, false otherwise
      */
-    public boolean checkBackuptable(String table) {
+    public boolean checkBackupTable(String table) {
         if (dbadapter == null) {
             Log.e(TAG, "checkBackuptable(): dbadapter is null");
             return false;
@@ -2109,12 +2124,12 @@ List<Mapping> scorelistSnapshot = null;
      * 
      * <p>UI components should use this method instead of directly accessing LimeDB.
      */
-    public void resetLimeSetting() {
+    public void restoredToDefault() {
         if (dbadapter == null) {
             Log.e(TAG, "resetLimeSetting(): dbadapter is null");
             return;
         }
-        dbadapter.resetLimeSetting();
+        dbadapter.restoredToDefault();
     }
 
     /**
@@ -2136,40 +2151,23 @@ List<Mapping> scorelistSnapshot = null;
         return dbadapter.getKeyboardInfo(keyboardCode, field);
     }
 
-    /**
-     * Gets the keyboard code assigned to an IM.
-     * 
-     * <p>This method delegates to LimeDB.getKeyboardCode() to retrieve the keyboard
-     * code configured for an IM. UI components should use this method instead of
-     * directly accessing LimeDB.
-     * 
-     * @param im The IM code
-     * @return The keyboard code, or null if not found or database error
-     */
-    public String getKeyboardCode(String im) {
-        if (dbadapter == null) {
-            Log.e(TAG, "getKeyboardCode(): dbadapter is null");
-            return null;
-        }
-        return dbadapter.getKeyboardCode(im);
-    }
 
     /**
      * Gets keyboard object information for a specific keyboard code.
      * 
-     * <p>This method delegates to LimeDB.getKeyboardObj() to retrieve keyboard
+     * <p>This method delegates to LimeDB.getKeyboardConfig() to retrieve keyboard
      * configuration including layout definitions. UI components should use this
      * method instead of directly accessing LimeDB.
      * 
      * @param keyboard The keyboard code (e.g., "lime", "limenum", "wb", "hs")
      * @return KeyboardObj with keyboard information, or null if not found or database error
      */
-    public KeyboardObj getKeyboardObj(String keyboard) {
+    public Keyboard getKeyboardConfig(String keyboard) {
         if (dbadapter == null) {
-            Log.e(TAG, "getKeyboardObj(): dbadapter is null");
+            Log.e(TAG, "getKeyboardConfig(): dbadapter is null");
             return null;
         }
-        return dbadapter.getKeyboardObj(keyboard);
+        return dbadapter.getKeyboardConfig(keyboard);
     }
 
     /**
@@ -2190,25 +2188,9 @@ List<Mapping> scorelistSnapshot = null;
             Log.e(TAG, "getRecords(): dbadapter is null");
             return new ArrayList<>();
         }
-        return dbadapter.getRecords(code, query, searchByCode, maximum, offset);
+        return dbadapter.getRecordList(code, query, searchByCode, maximum, offset);
     }
 
-    /**
-     * Gets a related phrase record by ID.
-     * 
-     * <p>This method delegates to LimeDB.getRelated() to retrieve a related phrase record.
-     * UI components should use this method instead of directly accessing LimeDB.
-     * 
-     * @param id The record ID
-     * @return Related object, or null if not found or database error
-     */
-    public net.toload.main.hd.data.Related getRelatedById(long id) {
-        if (dbadapter == null) {
-            Log.e(TAG, "getRelatedById(): dbadapter is null");
-            return null;
-        }
-        return dbadapter.getRelated(id);
-    }
 
     /**
      * Gets the count of related phrase records for a parent word.
@@ -2306,31 +2288,6 @@ List<Mapping> scorelistSnapshot = null;
 
 
     /**
-     * Exports records from a table to a text file.
-     * 
-     * <p>This method delegates to LimeDB.exportTxtTable() to export records to a text file.
-     * UI components should use this method instead of directly accessing LimeDB.
-     * 
-     * <p>The format depends on the table type:
-     * <ul>
-     *   <li>Regular mapping tables: .lime format with IM info headers and code|word|score|basescore lines</li>
-     *   <li>Related table ({@link LIME#DB_TABLE_RELATED}): .related format with pword+cword|basescore|userscore lines</li>
-     * </ul>
-     * 
-     * @param table The table name to export (must be valid, use {@link LIME#DB_TABLE_RELATED} for related phrases)
-     * @param targetFile The target file to write to
-     * @param imInfo List of Im objects containing IM configuration info (can be null, only used for regular tables)
-     * @return true if export successful, false otherwise
-     */
-    public boolean exportTxtTable(String table, File targetFile, List<Im> imInfo) {
-        if (dbadapter == null) {
-            Log.e(TAG, "exportTxtTable(): dbadapter is null");
-            return false;
-        }
-        return dbadapter.exportTxtTable(table, targetFile, imInfo);
-    }
-
-    /**
      * Gets related phrase records with optional filtering and pagination.
      * 
      * <p>This method delegates to LimeDB.getRelated() to retrieve related phrase records.
@@ -2341,7 +2298,7 @@ List<Mapping> scorelistSnapshot = null;
      * @param offset Number of records to skip (0 for no offset)
      * @return List of Related objects, or empty list if error
      */
-    public List<net.toload.main.hd.data.Related> getRelatedByWord(String pword, int maximum, int offset) {
+    public List<Related> getRelatedByWord(String pword, int maximum, int offset) {
         if (dbadapter == null) {
             Log.e(TAG, "getRelatedByWord(): dbadapter is null");
             return new ArrayList<>();
@@ -2363,7 +2320,7 @@ List<Mapping> scorelistSnapshot = null;
             Log.e(TAG, "getImList(): dbadapter is null");
             return null;
         }
-        return dbadapter.getImList(code);
+        return dbadapter.getImList(code, null);
     }
 
     /**

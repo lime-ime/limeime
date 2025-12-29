@@ -34,16 +34,13 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.util.Pair;
 import android.util.SparseArray;
-import android.widget.Toast;
 
 import net.toload.main.hd.data.Record;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.ChineseSymbol;
 import net.toload.main.hd.data.Im;
-import net.toload.main.hd.data.ImObj;
 import net.toload.main.hd.data.Keyboard;
-import net.toload.main.hd.data.KeyboardObj;
 import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.data.Related;
 import net.toload.main.hd.global.LIMEPreferenceManager;
@@ -330,7 +327,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     private final Context mContext;
 
-    private Thread loadingMappingThread = null;
+    private Thread importThread = null;
+    private Thread exportThread = null;
     private boolean threadAborted = false;
 
     // Cache for Related Score
@@ -340,7 +338,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private LimeHanConverter hanConverter;
     private EmojiConverter emojiConverter;
 
-    private final int SLEEP_DELAY_1_SECOND_MS = 1000;
+    private final int SLEEP_DELAY_100_MS = 100;
     /**
      * Initializes the LIME database with the given context.
      *
@@ -428,6 +426,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * @return The string value, or empty string if column doesn't exist
      */
     public String getCursorString(Cursor cursor, String columnName) {
+        if (columnName == null) {
+            return ""; // defensive: avoid passing null into SQLiteCursor.getColumnIndex
+        }
         int index = cursor.getColumnIndex(columnName);
         if (index != -1) {
             String value = cursor.getString(index);
@@ -447,6 +448,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * @return The integer value, or 0 if column doesn't exist
      */
     public int getCursorInt(Cursor cursor, String columnName) {
+        if (columnName == null) {
+            return 0; // defensive: avoid passing null into SQLiteCursor.getColumnIndex
+        }
         int index = cursor.getColumnIndex(columnName);
         if (index != -1) {
             return cursor.getInt(index);
@@ -489,7 +493,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 return true;
             }
         }
-        // Check for backup table pattern: "imtype_user" where imtype is valid
+        // Check for backup table pattern: "tableName_user" where tableName is valid
         if (tableName.endsWith("_user")) {
             String baseTable = tableName.substring(0, tableName.length() - 5);
             for (String validTable : validTables) {
@@ -591,9 +595,22 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
 
+
+//    public void checkPhoneticKeyboardSetting() {
+//        if (checkDBConnection()) return;
+//        try {
+//            checkPhoneticKeyboardSettingOnDB(db);
+//        } catch (Exception e) {
+//            Log.e(TAG, "Error in database operation", e);
+//        }
+//
+//
+//    }
+
+
     /**
      * Checks and updates phonetic keyboard settings consistency between preferences and database.
-     * 
+     *
      * <p>This method ensures that the keyboard configuration stored in the database
      * matches the user's preference setting. It handles different phonetic keyboard types:
      * <ul>
@@ -602,46 +619,32 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      *   <li>eten - ETEN 41-key phonetic keyboard</li>
      *   <li>standard - Standard BPMF phonetic keyboard (default)</li>
      * </ul>
-     * 
+     *
      * <p>If the database configuration doesn't match the preference, it updates the
      * database to match the preference setting.
      */
     public void checkPhoneticKeyboardSetting() {
         if (checkDBConnection()) return;
-        try {
-            checkPhoneticKeyboardSettingOnDB(db);
-        } catch (Exception e) {
-            Log.e(TAG, "Error in database operation", e);
-        }
-
-
-    }
-
-
-    /**
-     * @param DBin sqlite database object
-     */
-    private void checkPhoneticKeyboardSettingOnDB(SQLiteDatabase DBin) {
         String selectedPhoneticKeyboardType = mLIMEPref.getPhoneticKeyboardType();
         if (DEBUG)
             Log.i("OnUpgrade()", "checkPhoneticKeyboardSettingOnDB:" + selectedPhoneticKeyboardType);
         switch (selectedPhoneticKeyboardType) {
             case LIME.IM_PHONETIC_KEYBOARD_TYPE_HSU:
-                setIMKeyboardOnDB(DBin, LIME.IM_PHONETIC,
-                        getKeyboardInfoOnDB(DBin, LIME.IM_PHONETIC_KEYBOARD_HSU, LIME.DB_IM_COLUMN_DESC), LIME.IM_PHONETIC_KEYBOARD_HSU);//jeremy '12,6,6 new hsu and et26 keybaord
+                setIMKeyboard(LIME.IM_PHONETIC,
+                        getKeyboardInfo( LIME.IM_PHONETIC_KEYBOARD_HSU, LIME.DB_IM_COLUMN_DESC), LIME.IM_PHONETIC_KEYBOARD_HSU);//jeremy '12,6,6 new hsu and et26 keybaord
 
                 break;
             case LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN26:
-                setIMKeyboardOnDB(DBin, LIME.IM_PHONETIC,
-                        getKeyboardInfoOnDB(DBin, LIME.IM_PHONETIC_KEYBOARD_ETEN26, LIME.DB_IM_COLUMN_DESC), LIME.IM_PHONETIC_KEYBOARD_ETEN26);
+                setIMKeyboard( LIME.IM_PHONETIC,
+                        getKeyboardInfo( LIME.IM_PHONETIC_KEYBOARD_ETEN26, LIME.DB_IM_COLUMN_DESC), LIME.IM_PHONETIC_KEYBOARD_ETEN26);
                 break;
             case LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN:
-                setIMKeyboardOnDB(DBin, LIME.IM_PHONETIC,
-                        getKeyboardInfoOnDB(DBin, LIME.IM_PHONETIC_KEYBOARD_ETEN, LIME.DB_IM_COLUMN_DESC), LIME.IM_PHONETIC_KEYBOARD_ETEN);
+                setIMKeyboard( LIME.IM_PHONETIC,
+                        getKeyboardInfo( LIME.IM_PHONETIC_KEYBOARD_ETEN, LIME.DB_IM_COLUMN_DESC), LIME.IM_PHONETIC_KEYBOARD_ETEN);
                 break;
             default:
-                setIMKeyboardOnDB(DBin, LIME.IM_PHONETIC,
-                        getKeyboardInfoOnDB(DBin, LIME.IM_PHONETIC_KEYBOARD_PHONETIC, LIME.DB_IM_COLUMN_DESC), LIME.IM_PHONETIC_KEYBOARD_PHONETIC
+                setIMKeyboard(LIME.IM_PHONETIC,
+                        getKeyboardInfo( LIME.IM_PHONETIC_KEYBOARD_PHONETIC, LIME.DB_IM_COLUMN_DESC), LIME.IM_PHONETIC_KEYBOARD_PHONETIC
                 );
                 break;
         }
@@ -710,8 +713,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             Looper mainLooper = Looper.getMainLooper();
             if (mainLooper != null && Looper.myLooper() == mainLooper) {
                 // We're on the main thread, safe to show Toast and loop
-                Toast.makeText(mContext, mContext.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT).show();
-                Looper.loop();
+                //Toast.makeText(mContext, mContext.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT).show();
+                //Looper.loop();
                 // After loop returns, check connection again
                 return !openDBConnection(false);
             } else {
@@ -748,42 +751,45 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     /**
-     * Deletes all records from the specified table.
+     * Deletes all records from the specified tableName.
      * 
      * <p>This method:
      * <ul>
      *   <li>Waits for any active loading thread to complete</li>
-     *   <li>Deletes all records from the table if any exist</li>
-     *   <li>Resets IM information for the table</li>
+     *   <li>Deletes all records from the tableName if any exist</li>
+     *   <li>Resets IM information for the tableName</li>
      *   <li>Clears the blacklist cache</li>
      * </ul>
      * 
      * <p>This is typically used when reloading a mapping file or resetting
-     * an input method table.
+     * an input method tableName.
      * 
-     * @param table The table name to clear (must be a valid table name)
+     * @param tableName The tableName name to clear (must be a valid tableName name)
      */
-    public void deleteAll(String table) {
+    public void clearTable(String tableName) {
 
         if (DEBUG)
-            Log.i(TAG, "deleteAll()");
-        if (loadingMappingThread != null) {
+            Log.i(TAG, "clearTable()");
+        if (importThread != null) {
             threadAborted = true;
-            while (loadingMappingThread.isAlive()) {
-                Log.d(TAG, "deleteAll():waiting for loadingMappingThread stopped...");
-                SystemClock.sleep(SLEEP_DELAY_1_SECOND_MS);
+            while (importThread.isAlive()) {
+                Log.d(TAG, "clearTable():waiting for loadingMappingThread stopped...");
+                SystemClock.sleep(SLEEP_DELAY_100_MS);
             }
         }
 
-        if (countRecords(table, null, null) > 0)
-            db.delete(table, null, null);
+        if (countRecords(tableName, null, null) > 0)
+            db.delete(tableName, null, null);
 
 
         finish = false;
-        resetImInfo(table);
+        resetImInfo(tableName);
 
         if (blackListCache != null)
             blackListCache.clear();//Jeremy '12, 6,3 clear black list cache after mapping file updated 
+
+        // Reset cache in SearchServer to ensure consistency
+        net.toload.main.hd.SearchServer.resetCache(true);
     }
 
 
@@ -811,6 +817,19 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             // Validate table name before using in query
             if (!isValidTableName(table)) {
                 Log.e(TAG, "countRecords(): Invalid table name: " + table);
+                return 0;
+            }
+
+            // Verify table exists before querying
+            Cursor tableCheck = db.rawQuery(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                new String[]{table});
+            boolean tableExists = tableCheck != null && tableCheck.getCount() > 0;
+            if (tableCheck != null) {
+                tableCheck.close();
+            }
+            if (!tableExists) {
+                Log.w(TAG, "countRecords(): Table not found: " + table);
                 return 0;
             }
 
@@ -842,55 +861,55 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
     /**
-     * Resets a mapping table by deleting all records and clearing the cache.
+     * Resets a mapping tableName by deleting all records and clearing the cache.
      * 
-     * <p>This method safely deletes all records from the specified table and then
+     * <p>This method safely deletes all records from the specified tableName and then
      * resets the SearchServer cache to ensure consistency. This is typically
      * used when reloading mapping data.
      * 
      * <p>The method performs the following operations:
      * <ul>
-     *   <li>Validates the table name to prevent SQL injection</li>
+     *   <li>Validates the tableName name to prevent SQL injection</li>
      *   <li>Checks database connection status</li>
-     *   <li>Deletes all records from the specified table</li>
+     *   <li>Deletes all records from the specified tableName</li>
      *   <li>Resets the SearchServer cache to ensure consistency</li>
      * </ul>
      * 
-     * <p>If the table name is invalid or the database connection is unavailable,
+     * <p>If the tableName name is invalid or the database connection is unavailable,
      * the method will log an error and return without performing any operations.
      * 
-     * @param table The table name to reset (must be valid according to {@link #isValidTableName(String)})
-     * @throws IllegalArgumentException if table name is null or empty
+     * @param tableName The tableName name to reset (must be valid according to {@link #isValidTableName(String)})
+     * @throws IllegalArgumentException if tableName name is null or empty
      */
-    public void resetMapping(String table) {
-        if (table == null || table.isEmpty()) {
-            Log.e(TAG, "resetMapping(): Table name cannot be null or empty");
-            throw new IllegalArgumentException("Table name cannot be null or empty");
-        }
-        
-        if (!isValidTableName(table)) {
-            Log.e(TAG, "resetMapping(): Invalid table name: " + table);
-            return;
-        }
-        
-        if (checkDBConnection()) {
-            Log.e(TAG, "resetMapping(): Database connection unavailable");
-            return;
-        }
-        
-        if (DEBUG) {
-            Log.i(TAG, "resetMapping() on " + table);
-        }
-        
-        try {
-            deleteAll(table);
-            
-            // Reset cache in SearchServer to ensure consistency
-            net.toload.main.hd.SearchServer.resetCache(true);
-        } catch (Exception e) {
-            Log.e(TAG, "resetMapping(): Error resetting mapping table: " + table, e);
-        }
-    }
+//    public void clearTable(String tableName) {
+//        if (tableName == null || tableName.isEmpty()) {
+//            Log.e(TAG, "clearTable(): Table name cannot be null or empty");
+//            throw new IllegalArgumentException("Table name cannot be null or empty");
+//        }
+//
+//        if (!isValidTableName(tableName)) {
+//            Log.e(TAG, "clearTable(): Invalid tableName name: " + tableName);
+//            return;
+//        }
+//
+//        if (checkDBConnection()) {
+//            Log.e(TAG, "resetMapping(): Database connection unavailable");
+//            return;
+//        }
+//
+//        if (DEBUG) {
+//            Log.i(TAG, "clearTable() on " + tableName);
+//        }
+//
+//        try {
+//            clearTable(tableName);
+//
+//            // Reset cache in SearchServer to ensure consistency
+//            net.toload.main.hd.SearchServer.resetCache(true);
+//        } catch (Exception e) {
+//            Log.e(TAG, "clearTable(): Error resetting mapping tableName: " + tableName, e);
+//        }
+//    }
 
     /**
      * Resets the SearchServer cache.
@@ -2834,19 +2853,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         int rsize = 0;
                         do {
                             Mapping munit = new Mapping();
-                            //munit.setId(cursor.getString(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_ID)));
-                            //munit.setPword(cursor.getString(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_PWORD)));
-                            //munit.setCode("");
-                            //munit.setWord(cursor.getString(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_CWORD)));
-                            //munit.setScore(cursor.getInt(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_USERSCORE)));
-                            //munit.setBasescore(cursor.getInt(cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_BASESCORE)));
-                            // Before the loop (e.g., right after the query is executed)
-                            //int idColIndex = cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_ID);
-                            //int pwordColIndex = cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_PWORD);
-                            //int cwordColIndex = cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_CWORD);
-                            //int userScoreColIndex = cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_USERSCORE);
-                            //int baseScoreColIndex = cursor.getColumnIndex(LIME.DB_RELATED_COLUMN_BASESCORE);
-
 
                             munit.setId(getCursorString(cursor, LIME.DB_RELATED_COLUMN_ID));
                             munit.setPword(getCursorString(cursor, LIME.DB_RELATED_COLUMN_PWORD));
@@ -3036,7 +3042,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (overwriteExisting) {
             if (tableNames != null) {
                 for (String tableName : tableNames) {
-                    deleteAll(tableName);
+                    clearTable(tableName);
                 }
                 // Delete IM info for these tables
                 if (tableNames.size() == 1) {
@@ -3053,7 +3059,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 }
             }
             if (includeRelated) {
-                deleteAll(LIME.DB_TABLE_RELATED);
+                clearTable(LIME.DB_TABLE_RELATED);
             }
         }
 
@@ -3063,16 +3069,29 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
             // Import mapping tables
             if (tableNames != null && !tableNames.isEmpty()) {
-                for (String tableName : tableNames) {
-                    try {
-                        // Try backup format first (sourceDB.custom)
-                        db.execSQL("insert into " + tableName + " select * from sourceDB." + LIME.DB_TABLE_CUSTOM);
-                    } catch (Exception e) {
-                        // Fall back to direct format (sourceDB.{tableName})
-                        Log.d(TAG, "importDb(): sourceDB.custom not found, trying sourceDB." + tableName);
-                        db.execSQL("insert into " + tableName + " select * from sourceDB." + tableName);
-                    }
-                }
+               for (String tableName : tableNames) {
+                   // Check if backup-format table exists in the attached source DB
+                   Cursor customCheck = null;
+                   boolean hasCustom = false;
+                   try {
+                       customCheck = db.rawQuery(
+                           "SELECT name FROM sourceDB.sqlite_master WHERE type='table' AND name=?",
+                           new String[]{LIME.DB_TABLE_CUSTOM}
+                       );
+                       hasCustom = customCheck != null && customCheck.getCount() > 0;
+                   } catch (Exception ignored) {
+                       // Safe to ignore; we'll fallback to direct format below
+                   } finally {
+                       if (customCheck != null) customCheck.close();
+                   }
+
+                   if (hasCustom) {
+                       db.execSQL("insert into " + tableName + " select * from sourceDB." + LIME.DB_TABLE_CUSTOM);
+                   } else {
+                       Log.d(TAG, "importDb(): sourceDB.custom not found, using sourceDB." + tableName);
+                       db.execSQL("insert into " + tableName + " select * from sourceDB." + tableName);
+                   }
+               }
 
                 // Import and update IM information
                 // For single table, update all IM records to use that table's code
@@ -3081,6 +3100,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     String tableName = tableNames.get(0);
                     db.execSQL("update sourceDB." + LIME.DB_TABLE_IM + " set " + LIME.DB_IM_COLUMN_CODE + "='" + tableName + "'");
                 }
+                // Remove existing IM rows for incoming codes to avoid PK conflicts
+                db.execSQL("delete from " + LIME.DB_TABLE_IM + " where " + LIME.DB_IM_COLUMN_CODE + " in (select " + LIME.DB_IM_COLUMN_CODE + " from sourceDB." + LIME.DB_TABLE_IM + ")");
                 db.execSQL("insert into " + LIME.DB_TABLE_IM + " select * from sourceDB." + LIME.DB_TABLE_IM);
             }
 
@@ -3137,6 +3158,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * @param table The table name to backup user records from
      */
     public void backupUserRecords(final String table) {
+        if(DEBUG)
+            Log.i(TAG, "backupUserRecords");
         if (checkDBConnection()) return;
         String backupTableName = table + "_user";
 
@@ -3144,32 +3167,44 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 " where " + FIELD_WORD + " is not null and " +
                 FIELD_SCORE + " >0 order by " + FIELD_SCORE + " desc";
         Cursor cursor = db.rawQuery(selectString, null);
-
-        if (cursor != null && cursor.getCount() > 0) {
+        boolean hasUserData = cursor != null && cursor.getCount() > 0;
+        if (cursor != null) {
             cursor.close();
-            
-            // Check if backup table exists before trying to drop it
-            Cursor tableCheck = db.rawQuery(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-                new String[]{backupTableName});
-            boolean tableExists = tableCheck != null && tableCheck.getCount() > 0;
-            if (tableCheck != null) {
-                tableCheck.close();
+        }
+
+        // Always drop existing backup table so stale data does not leak between backups
+        Cursor tableCheck = db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+            new String[]{backupTableName});
+        boolean tableExists = tableCheck != null && tableCheck.getCount() > 0;
+        if (tableCheck != null) {
+            tableCheck.close();
+        }
+        if (tableExists) {
+            try {
+                db.execSQL("drop table " + backupTableName);
+            } catch (Exception e) {
+                Log.e(TAG, "Error removing table " + backupTableName, e);
             }
-            
-            // Only drop table if it exists
-            if (tableExists) {
-                try {
-                    db.execSQL("drop table " + backupTableName);
-                } catch (Exception e) {
-                    Log.e(TAG, "Error removing table " + backupTableName, e);
-                }
-            }
-            
+        }
+
+        if (hasUserData) {
             db.execSQL("create table " + backupTableName + " as " + selectString);
         }
 
-        countRecords(backupTableName, null, null);
+        // Only count if backup table exists (created above or pre-existing)
+        Cursor backupCheck = db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+            new String[]{backupTableName});
+        boolean backupExists = backupCheck != null && backupCheck.getCount() > 0;
+        if (backupCheck != null) {
+            backupCheck.close();
+        }
+        if (backupExists) {
+            countRecords(backupTableName, null, null);
+        } else {
+            Log.w(TAG, "backupUserRecords(): Backup table not created (no records) for " + table);
+        }
     }
 
 
@@ -3185,22 +3220,43 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      */
     public boolean checkBackupTable(String table) {
         if (checkDBConnection()) return false;
+        if (table == null || table.isEmpty()) {
+            Log.e(TAG, "checkBackupTable(): Table name cannot be null or empty");
+            return false;
+        }
+
+        String backupTableName = table + "_user";
+        Cursor tableCheck = null;
+        Cursor cursor = null;
         try {
-            String backupTableName = table + "_user";
-            Cursor cursor = db.rawQuery("select COUNT(*) as total from " + backupTableName, null);
-
-            cursor.moveToFirst();
-
-            int total = getCursorInt(cursor, "total");//cursor.getInt(cursor.getColumnIndex("total"));
-            if ( total> 0) {
-                Log.i("LIME", "Total size :" + total);
-                return true;
-            } else {
+            tableCheck = db.rawQuery(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                new String[]{backupTableName});
+            boolean tableExists = tableCheck != null && tableCheck.getCount() > 0;
+            if (!tableExists) {
+                Log.w(TAG, "checkBackupTable(): Backup table not found: " + backupTableName);
                 return false;
             }
+
+            cursor = db.rawQuery("select COUNT(*) as total from " + backupTableName, null);
+            cursor.moveToFirst();
+
+            int total = getCursorInt(cursor, "total");
+            if (total > 0) {
+                Log.i("LIME", "Total size :" + total);
+                return true;
+            }
+            return false;
         } catch (SQLiteException s) {
             Log.e(TAG, "Error checking database table existence", s);
             return false;
+        } finally {
+            if (tableCheck != null) {
+                tableCheck.close();
+            }
+            if (cursor != null) {
+                cursor.close();
+            }
         }
     }
 
@@ -3301,16 +3357,16 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         finish = false;
         progressPercentageDone = 0;
         count = 0;
-        if (loadingMappingThread != null) {
+        if (importThread != null) {
             //threadAborted = true;
-            while (loadingMappingThread.isAlive()) {
+            while (importThread.isAlive()) {
                 Log.d(TAG, "loadFile():waiting for last loading loadingMappingThread stopped...");
-                SystemClock.sleep(SLEEP_DELAY_1_SECOND_MS);
+                SystemClock.sleep(SLEEP_DELAY_100_MS);
             }
-            loadingMappingThread = null;
+            importThread = null;
         }
 
-        loadingMappingThread = new Thread() {
+        importThread = new Thread() {
 
             public void run() {
 
@@ -3327,6 +3383,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                     if (table.equals(LIME.DB_TABLE_PHONETIC)) {
                         if (DEBUG) Log.i(TAG, "loadfile(), build code3r index.");
+                        // Drop existing index before creating to avoid "index already exists" error
+                        try {
+                            db.execSQL("DROP INDEX IF EXISTS phonetic_idx_code3r");
+                        } catch (Exception e) {
+                            Log.d(TAG, "Index might not exist, continuing...");
+                        }
                         mLIMEPref.setParameter("checkLDPhonetic", "doneV2");
                         db.execSQL("CREATE INDEX phonetic_idx_code3r ON phonetic(code3r)");
 
@@ -3414,7 +3476,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                 try {
                     // Prepare Source File
-                    progressStatus = mContext.getResources().getText(R.string.setup_load_migrate_import).toString();
+                    progressStatus = mContext.getString(R.string.l3_database_loading);
                     long fileLength = filename.length();
                     long processedLength = 0;
                     FileReader fr = new FileReader(filename);
@@ -3427,6 +3489,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     while ((line = buf.readLine()) != null && !threadAborted) {
                         processedLength += line.getBytes().length + 2; // +2 for the eol mark.
                         progressPercentageDone = (int) ((float) processedLength / (float) fileLength * LIME.PROGRESS_COMPLETE_PERCENT);
+                        progressStatus = mContext.getString(R.string.l3_database_loading_records) + progressPercentageDone + "%";
 
                         //Log.i(TAG, line + " / " + delimiter_symbol.equals(" ") + " / " + line.indexOf(delimiter_symbol));
                         //if(DEBUG)
@@ -3682,25 +3745,38 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             } else {
                                 word = word.trim();
                             }
-                            if (code.toLowerCase(Locale.US).contains("@version@")) {
+
+                            // Skip meta header lines (export writes @version@, @selkey@, @endkey@, @spacestyle@)
+                            String codeLower = code.toLowerCase(Locale.US);
+                            if (codeLower.startsWith("@")) {
+                                if (codeLower.contains("@version@")) {
+                                    imname = word.trim();
+                                } else if (codeLower.contains("@selkey@")) {
+                                    selkey = word.trim();
+                                } else if (codeLower.contains("@endkey@")) {
+                                    endkey = word.trim();
+                                } else if (codeLower.contains("@spacestyle@")) {
+                                    spacestyle = word.trim();
+                                }
+                                continue; // do not insert meta into table
+                            }
+
+                            if (codeLower.contains("%cname")) {
                                 imname = word.trim();
                                 continue;
-                            } else if (code.toLowerCase(Locale.US).contains("%cname")) {
-                                imname = word.trim();
-                                continue;
-                            } else if (code.toLowerCase(Locale.US).contains("%selkey")) {
+                            } else if (codeLower.contains("%selkey")) {
                                 selkey = word.trim();
                                 if (DEBUG) Log.i(TAG, "loadfile(): selkey:" + selkey);
                                 continue;
-                            } else if (code.toLowerCase(Locale.US).contains("%endkey")) {
+                            } else if (codeLower.contains("%endkey")) {
                                 endkey = word.trim();
                                 if (DEBUG) Log.i(TAG, "loadfile(): endkey:" + endkey);
                                 continue;
-                            } else if (code.toLowerCase(Locale.US).contains("%spacestyle")) {
+                            } else if (codeLower.contains("%spacestyle")) {
                                 spacestyle = word.trim();
                                 continue;
                             } else {
-                                code = code.toLowerCase(Locale.US);
+                                code = codeLower;
                             }
 
                             if (inKeynameBlock) {  //Jeremy '11,6,5 preserve keyname blocks here.
@@ -3797,60 +3873,60 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
                     // '11,5,23 by Jeremy: Preset keyboard info. by tablename
-                    KeyboardObj kobj = getKeyboardObj(table);
+                    Keyboard kConfig = getKeyboardConfig(table);
                     if (table.equals(LIME.DB_TABLE_PHONETIC)) {
                         String selectedPhoneticKeyboardType =
                                 mLIMEPref.getParameterString("phonetic_keyboard_type", LIME.DB_TABLE_PHONETIC);
                         switch (selectedPhoneticKeyboardType) {
                             case LIME.DB_TABLE_PHONETIC:
-                                kobj = getKeyboardObj(LIME.DB_TABLE_PHONETIC);
+                                kConfig = getKeyboardConfig(LIME.DB_TABLE_PHONETIC);
                                 break;
                             case LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN:
-                                kobj = getKeyboardObj("phoneticet41");
+                                kConfig = getKeyboardConfig("phoneticet41");
                                 break;
                             case LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN26:
                                 if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
-                                    kobj = getKeyboardObj("limenum");
+                                    kConfig = getKeyboardConfig("limenum");
                                 } else {
-                                    kobj = getKeyboardObj("lime");
+                                    kConfig = getKeyboardConfig("lime");
                                 }
                                 break;
                             case "eten26_symbol":
-                                kobj = getKeyboardObj("et26");
+                                kConfig = getKeyboardConfig("et26");
                                 break;
                             case LIME.IM_PHONETIC_KEYBOARD_HSU:  //Jeremy '12,7,6 Add HSU english keyboard support
                                 if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
-                                    kobj = getKeyboardObj("limenum");
+                                    kConfig = getKeyboardConfig("limenum");
                                 } else {
-                                    kobj = getKeyboardObj("lime");
+                                    kConfig = getKeyboardConfig("lime");
                                 }
                                 break;
                             case "hsu_symbol":
-                                kobj = getKeyboardObj(LIME.IM_PHONETIC_KEYBOARD_HSU);
+                                kConfig = getKeyboardConfig(LIME.IM_PHONETIC_KEYBOARD_HSU);
                                 break;
                         }
                     } else if (table.equals(LIME.DB_TABLE_DAYI)) {
-                        kobj = getKeyboardObj("dayisym");
+                        kConfig = getKeyboardConfig("dayisym");
                     } else if (table.equals(LIME.DB_TABLE_CJ5)) {
-                        kobj = getKeyboardObj("cj");
+                        kConfig = getKeyboardConfig("cj");
                     } else if (table.equals(LIME.DB_TABLE_ECJ)) {
-                        kobj = getKeyboardObj("cj");
+                        kConfig = getKeyboardConfig("cj");
                     } else if (table.equals(LIME.DB_TABLE_ARRAY)) {
-                        kobj = getKeyboardObj("arraynum");
+                        kConfig = getKeyboardConfig("arraynum");
                     } else if (table.equals("array10")) {
-                        kobj = getKeyboardObj("phonenum");
+                        kConfig = getKeyboardConfig("phonenum");
                     } else if (table.equals("wb")) {
-                        kobj = getKeyboardObj("wb");
+                        kConfig = getKeyboardConfig("wb");
                     } else if (table.equals("hs")) {
-                        kobj = getKeyboardObj("hs");
-                    } else if (kobj == null) {    //Jeremy '12,5,21 chose english with number keyboard if the optione is on for default keyboard.
+                        kConfig = getKeyboardConfig("hs");
+                    } else if (kConfig == null) {    //Jeremy '12,5,21 chose english with number keyboard if the optione is on for default keyboard.
                         if (mLIMEPref.getParameterBoolean("number_row_in_english", true)) {
-                            kobj = getKeyboardObj("limenum");
+                            kConfig = getKeyboardConfig("limenum");
                         } else {
-                            kobj = getKeyboardObj("lime");
+                            kConfig = getKeyboardConfig("lime");
                         }
                     }
-                    setIMKeyboard(table, kobj.getDescription(), kobj.getCode());
+                    setIMKeyboard(table, kConfig.getDescription(), kConfig.getCode());
                 }
 
                 //finishing
@@ -3863,14 +3939,14 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             public void run() {
                 if (progressListener == null) {
                     // If no progress listener, just wait for loading thread to complete
-                    while (loadingMappingThread.isAlive()) {
-                        SystemClock.sleep(SLEEP_DELAY_1_SECOND_MS);
+                    while (importThread.isAlive()) {
+                        SystemClock.sleep(SLEEP_DELAY_100_MS);
                     }
                     return;
                 }
 
                 long interval = progressListener.progressInterval();
-                while (loadingMappingThread.isAlive()) {
+                while (importThread.isAlive()) {
                     SystemClock.sleep(interval);
                     progressListener.onProgress(progressPercentageDone, 0, progressStatus);
                 }
@@ -3883,7 +3959,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
 
         threadAborted = false;
-        loadingMappingThread.start();
+        importThread.start();
         reportProgressThread.start();
     }
 
@@ -4204,9 +4280,16 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         List<Im> result = null;
         try {
-            //SQLiteDatabase db = this.getSqliteDb(true);
             Cursor cursor = db.query("im", null, LIME.DB_IM_COLUMN_CODE + " = '" + code + "'", null, null, null, "code ASC", null);
-            result = Im.getList(cursor);
+            result = new ArrayList<>();
+            if (cursor != null) {
+                cursor.moveToFirst();
+                while (!cursor.isAfterLast()) {
+                    result.add(Im.get(cursor));
+                    cursor.moveToNext();
+                }
+                cursor.close();
+            }
         } catch (Exception e) {
             Log.e(TAG, "getIm(): Cannot get IM", e);
         }
@@ -4218,34 +4301,30 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * Gets a list of all IM objects with keyboard assignments.
      * 
      * <p>This method retrieves all IM records that have keyboard information,
-     * returning them as ImObj objects sorted by code.
+     * returning them as ImKeyboardConfig objects sorted by code.
      * 
-     * @return List of ImObj objects, or null if database error
+     * @return List of ImKeyboardConfig objects, or null if database error
      */
-    public List<ImObj> getImList() {
+    public List<Im> getImList() {
         if (DEBUG)
             Log.i(TAG, "getIMList()");
-        //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (checkDBConnection()) return null;
 
-
-        List<ImObj> result = new LinkedList<>();
+        List<Im> result = new LinkedList<>();
         try {
-            //SQLiteDatabase db = this.getSqliteDb(true);
             Cursor cursor = db.query("im", null, null, null, null, null, "code ASC", null);
             if (cursor != null) {
                 if (cursor.moveToFirst()) {
                     do {
                         String title = getCursorString(cursor, LIME.DB_IM_COLUMN_TITLE);
                         if (title.equals(LIME.DB_KEYBOARD)) {
-                            ImObj kobj = new ImObj();
-                            kobj.setCode(getCursorString(cursor, LIME.DB_IM_COLUMN_CODE));
-                            kobj.setKeyboard(getCursorString(cursor, LIME.DB_IM_COLUMN_KEYBOARD));
-                            result.add(kobj);
+                            Im im = new Im();
+                            im.setCode(getCursorString(cursor, LIME.DB_IM_COLUMN_CODE));
+                            im.setKeyboard(getCursorString(cursor, LIME.DB_IM_COLUMN_KEYBOARD));
+                            result.add(im);
                         }
                     } while (cursor.moveToNext());
                 }
-
                 cursor.close();
             }
 
@@ -4265,36 +4344,36 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * @param keyboard The keyboard code (e.g., "lime", "limenum", "wb", "hs")
      * @return KeyboardObj with keyboard information, or null if not found or database error
      */
-    public KeyboardObj getKeyboardObj(String keyboard) {
+    public Keyboard getKeyboardConfig(String keyboard) {
 
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (checkDBConnection()) return null;
 
         if (keyboard == null || keyboard.isEmpty())
             return null;
-        KeyboardObj kobj = null;
+        Keyboard kConfig = null;
 
         if (!keyboard.equals("wb") && !keyboard.equals("hs")) {
             try {
                 Cursor cursor = db.query(LIME.DB_TABLE_KEYBOARD, null, FIELD_CODE + " = '" + keyboard + "'", null, null, null, null, null);
                 if (cursor != null) {
                     if (cursor.moveToFirst()) {
-                        kobj = new KeyboardObj();
-                        kobj.setCode(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_CODE));
-                        kobj.setName(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_NAME));
-                        kobj.setDescription(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DESC));
-                        kobj.setType(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_TYPE));
-                        kobj.setImage(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMAGE));
-                        kobj.setImkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMKB));
-                        kobj.setImshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB));
-                        kobj.setEngkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_ENGKB));
-                        kobj.setEngshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB));
-                        kobj.setSymbolkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_SYMBOLKB));
-                        kobj.setSymbolshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB));
-                        kobj.setDefaultkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DEFAULTKB));
-                        kobj.setDefaultshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB));
-                        kobj.setExtendedkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_EXTENDEDKB));
-                        kobj.setExtendedshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB));
+                        kConfig = new Keyboard();
+                        kConfig.setCode(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_CODE));
+                        kConfig.setName(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_NAME));
+                        kConfig.setDesc(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DESC));
+                        kConfig.setType(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_TYPE));
+                        kConfig.setImage(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMAGE));
+                        kConfig.setImkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMKB));
+                        kConfig.setImshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB));
+                        kConfig.setEngkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_ENGKB));
+                        kConfig.setEngshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB));
+                        kConfig.setSymbolkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_SYMBOLKB));
+                        kConfig.setSymbolshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB));
+                        kConfig.setDefaultkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DEFAULTKB));
+                        kConfig.setDefaultshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB));
+                        kConfig.setExtendedkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_EXTENDEDKB));
+                        kConfig.setExtendedshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB));
                     }
 
                     cursor.close();
@@ -4304,34 +4383,34 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 Log.e(TAG, "Error in database operation", e);
             }
         } else if (keyboard.equals("wb")) {
-            kobj = new KeyboardObj();
-            kobj.setCode("wb");
-            kobj.setName("筆順五碼");
-            kobj.setDescription("筆順五碼輸入法鍵盤");
-            kobj.setType("phone");
-            kobj.setImage("wb_keyboard_preview");
-            kobj.setImkb("lime_wb");
-            kobj.setImshiftkb("lime_wb");
-            kobj.setEngkb("lime_abc");
-            kobj.setEngshiftkb("lime_abc_shift");
-            kobj.setSymbolkb("symbols");
-            kobj.setSymbolshiftkb("symbols_shift");
+            kConfig = new Keyboard();
+            kConfig.setCode("wb");
+            kConfig.setName("筆順五碼");
+            kConfig.setDesc("筆順五碼輸入法鍵盤");
+            kConfig.setType("phone");
+            kConfig.setImage("wb_keyboard_preview");
+            kConfig.setImkb("lime_wb");
+            kConfig.setImshiftkb("lime_wb");
+            kConfig.setEngkb("lime_abc");
+            kConfig.setEngshiftkb("lime_abc_shift");
+            kConfig.setSymbolkb("symbols");
+            kConfig.setSymbolshiftkb("symbols_shift");
         } else {
-            kobj = new KeyboardObj();
-            kobj.setCode("hs");
-            kobj.setName("華象直覺");
-            kobj.setDescription("華象直覺輸入法鍵盤");
-            kobj.setType("phone");
-            kobj.setImage("hs_keyboard_preview");
-            kobj.setImkb("lime_hs");
-            kobj.setImshiftkb("lime_hs_shift");
-            kobj.setEngkb("lime_abc");
-            kobj.setEngshiftkb("lime_abc_shift");
-            kobj.setSymbolkb("symbols");
-            kobj.setSymbolshiftkb("symbols_shift");
+            kConfig = new Keyboard();
+            kConfig.setCode("hs");
+            kConfig.setName("華象直覺");
+            kConfig.setDesc("華象直覺輸入法鍵盤");
+            kConfig.setType("phone");
+            kConfig.setImage("hs_keyboard_preview");
+            kConfig.setImkb("lime_hs");
+            kConfig.setImshiftkb("lime_hs_shift");
+            kConfig.setEngkb("lime_abc");
+            kConfig.setEngshiftkb("lime_abc_shift");
+            kConfig.setSymbolkb("symbols");
+            kConfig.setSymbolshiftkb("symbols_shift");
         }
 
-        return kobj;
+        return kConfig;
     }
 
     /**
@@ -4345,26 +4424,26 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (DEBUG)
             Log.i(TAG, "getKeyboardInfo()");
         if (checkDBConnection()) return null;
+//        String info = null;
+//        try {
+//            info = getKeyboardInfoOnDB(db, keyboardCode, field);
+//        } catch (Exception e) {
+//            Log.e(TAG, "Error in database operation", e);
+//        }
+//        return info;
+//
+//    }
+//
+//    /**
+//     * Jeremy '12,6,7 for working with OnUpgrade() before db is created
+//     */
+//    private String getKeyboardInfoOnDB(SQLiteDatabase dbin, String keyboardCode, String field) {
+//        if (DEBUG)
+//            Log.i(TAG, "getKeyboardInfoOnDB()");
+
         String info = null;
-        try {
-            info = getKeyboardInfoOnDB(db, keyboardCode, field);
-        } catch (Exception e) {
-            Log.e(TAG, "Error in database operation", e);
-        }
-        return info;
 
-    }
-
-    /**
-     * Jeremy '12,6,7 for working with OnUpgrade() before db is created
-     */
-    private String getKeyboardInfoOnDB(SQLiteDatabase dbin, String keyboardCode, String field) {
-        if (DEBUG)
-            Log.i(TAG, "getKeyboardInfoOnDB()");
-
-        String info = null;
-
-        Cursor cursor = dbin.query(LIME.DB_TABLE_KEYBOARD, null, FIELD_CODE + " = '" + keyboardCode + "'"
+        Cursor cursor = db.query(LIME.DB_TABLE_KEYBOARD, null, FIELD_CODE + " = '" + keyboardCode + "'"
                 , null, null, null, null, null);
         if (cursor != null) {
             if (cursor.moveToFirst()) {
@@ -4373,7 +4452,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             cursor.close();
         }
         if (DEBUG)
-            Log.i(TAG, "getKeyboardInfoOnDB() info = " + info);
+            Log.i(TAG, "getKeyboardInfo() info = " + info);
 
         return info;
     }
@@ -4383,37 +4462,37 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * 
      * <p>Retrieves all keyboard configurations from the database, sorted by name.
      * 
-     * @return List of KeyboardObj objects, or null if database error
+     * @return List of Keyboard objects, or null if database error
      */
-    public List<KeyboardObj> getKeyboardList() {
+    public List<Keyboard> getKeyboardList() {
 
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (checkDBConnection()) return null;
 
 
-        List<KeyboardObj> result = new LinkedList<>();
+        List<Keyboard> result = new LinkedList<>();
         try {
             Cursor cursor = db.query(LIME.DB_TABLE_KEYBOARD, null, null, null, null, null, "name ASC", null);
             if (cursor != null) {
                 if (cursor.moveToFirst()) {
                     do {
-                        KeyboardObj kobj = new KeyboardObj();
-                        kobj.setCode(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_CODE));
-                        kobj.setName(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_NAME));
-                        kobj.setDescription(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DESC));
-                        kobj.setType(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_TYPE));
-                        kobj.setImage(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMAGE));
-                        kobj.setImkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMKB));
-                        kobj.setImshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB));
-                        kobj.setEngkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_ENGKB));
-                        kobj.setEngshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB));
-                        kobj.setSymbolkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_SYMBOLKB));
-                        kobj.setSymbolshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB));
-                        kobj.setDefaultkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DEFAULTKB));
-                        kobj.setDefaultshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB));
-                        kobj.setExtendedkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_EXTENDEDKB));
-                        kobj.setExtendedshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB));
-                        result.add(kobj);
+                        Keyboard kConfig = new Keyboard();
+                        kConfig.setCode(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_CODE));
+                        kConfig.setName(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_NAME));
+                        kConfig.setDesc(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DESC));
+                        kConfig.setType(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_TYPE));
+                        kConfig.setImage(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMAGE));
+                        kConfig.setImkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMKB));
+                        kConfig.setImshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB));
+                        kConfig.setEngkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_ENGKB));
+                        kConfig.setEngshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB));
+                        kConfig.setSymbolkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_SYMBOLKB));
+                        kConfig.setSymbolshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB));
+                        kConfig.setDefaultkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DEFAULTKB));
+                        kConfig.setDefaultshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB));
+                        kConfig.setExtendedkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_EXTENDEDKB));
+                        kConfig.setExtendedshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB));
+                        result.add(kConfig);
                     } while (cursor.moveToNext());
                 }
 
@@ -4441,97 +4520,64 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (DEBUG)
             Log.i(TAG, "setIMKeyboard() im=" + im + " value= " + value + " keyboard= " + keyboard);
         if (checkDBConnection()) return;
-        try {
-            setIMKeyboardOnDB(db, im, value, keyboard);
-        } catch (Exception e) {
-            Log.e(TAG, "Error in database operation", e);
-        }
-
-
-    }
-
-    /**
-     * Sets the keyboard configuration for an input method directly on the database.
-     *
-     * <p>This method is used internally during database upgrades ({@code onUpgrade()})
-     * when the standard database connection may not be fully initialized. It directly
-     * operates on the provided {@code SQLiteDatabase} instance, bypassing the normal
-     * connection management.
-     *
-     * <p>The method performs the following operations:
-     * <ol>
-     *   <li>Creates a new record in the {@code im} table with:
-     *       <ul>
-     *         <li>{@code code}: The IM code (e.g., {@link LIME#IM_PHONETIC})</li>
-     *         <li>{@code title}: LIME.DB_KEYBOARD</li>
-     *         <li>{@code desc}: The keyboard description/value</li>
-     *         <li>{@code keyboard}: The keyboard code</li>
-     *       </ul>
-     *   </li>
-     *   <li>Removes any existing keyboard configuration for the specified IM
-     *       to ensure no duplicate entries</li>
-     *   <li>Inserts the new keyboard configuration record</li>
-     * </ol>
-     *
-     * <p><b>Note:</b> This method is private and should only be called from
-     * {@link #setIMKeyboard(String, String, String)} or during database upgrade
-     * operations. For normal operations, use the public {@code setIMKeyboard()} method
-     * instead, which handles database connection management and error handling.
-     *
-     * @param dbin The SQLiteDatabase instance to operate on (typically passed from
-     *             {@code onUpgrade()} or the shared database connection)
-     * @param im The input method code (e.g., {@link LIME#IM_PHONETIC}, {@link LIME#IM_CJ})
-     * @param value The keyboard description or name to store
-     * @param keyboard The keyboard code to associate with the IM
-     *                 (e.g., {@link LIME#IM_PHONETIC_KEYBOARD_HSU}, {@link LIME#IM_PHONETIC_KEYBOARD_ETEN})
-     */
-    private void setIMKeyboardOnDB(SQLiteDatabase dbin, String im, String value, String keyboard) {
-        if (DEBUG)
-            Log.i(TAG, "setIMKeyboardOnDB()");
+//        try {
+//            setIMKeyboardOnDB(db, im, value, keyboard);
+//        } catch (Exception e) {
+//            Log.e(TAG, "Error in database operation", e);
+//        }
+//
+//
+//    }
+//
+//    /**
+//     * Sets the keyboard configuration for an input method directly on the database.
+//     *
+//     * <p>This method is used internally during database upgrades ({@code onUpgrade()})
+//     * when the standard database connection may not be fully initialized. It directly
+//     * operates on the provided {@code SQLiteDatabase} instance, bypassing the normal
+//     * connection management.
+//     *
+//     * <p>The method performs the following operations:
+//     * <ol>
+//     *   <li>Creates a new record in the {@code im} table with:
+//     *       <ul>
+//     *         <li>{@code code}: The IM code (e.g., {@link LIME#IM_PHONETIC})</li>
+//     *         <li>{@code title}: LIME.DB_KEYBOARD</li>
+//     *         <li>{@code desc}: The keyboard description/value</li>
+//     *         <li>{@code keyboard}: The keyboard code</li>
+//     *       </ul>
+//     *   </li>
+//     *   <li>Removes any existing keyboard configuration for the specified IM
+//     *       to ensure no duplicate entries</li>
+//     *   <li>Inserts the new keyboard configuration record</li>
+//     * </ol>
+//     *
+//     * <p><b>Note:</b> This method is private and should only be called from
+//     * {@link #setIMKeyboard(String, String, String)} or during database upgrade
+//     * operations. For normal operations, use the public {@code setIMKeyboard()} method
+//     * instead, which handles database connection management and error handling.
+//     *
+//     * @param dbin The SQLiteDatabase instance to operate on (typically passed from
+//     *             {@code onUpgrade()} or the shared database connection)
+//     * @param im The input method code (e.g., {@link LIME#IM_PHONETIC}, {@link LIME#IM_CJ})
+//     * @param value The keyboard description or name to store
+//     * @param keyboard The keyboard code to associate with the IM
+//     *                 (e.g., {@link LIME#IM_PHONETIC_KEYBOARD_HSU}, {@link LIME#IM_PHONETIC_KEYBOARD_ETEN})
+//     */
+//    private void setIMKeyboardOnDB(SQLiteDatabase dbin, String im, String value, String keyboard) {
+//        if (DEBUG)
+//            Log.i(TAG, "setIMKeyboardOnDB()");
         ContentValues cv = new ContentValues();
         cv.put(LIME.DB_IM_COLUMN_CODE, im);
         cv.put(LIME.DB_IM_COLUMN_TITLE, LIME.DB_KEYBOARD);
         cv.put(LIME.DB_IM_COLUMN_DESC, value);
         cv.put(LIME.DB_IM_COLUMN_KEYBOARD, keyboard);
 
-        removeImInfoOnDB(dbin, im, LIME.DB_KEYBOARD);
+        removeImInfoOnDB(db, im, LIME.DB_KEYBOARD);
 
-        dbin.insert(LIME.DB_TABLE_IM, null, cv);
+        db.insert(LIME.DB_TABLE_IM, null, cv);
     }
 
-    /**
-     * Gets the keyboard code assigned to an input method.
-     * 
-     * <p>Retrieves the keyboard code from the im table for the specified IM.
-     * Returns empty string if not found or database error.
-     * 
-     * @param im The IM code
-     * @return The keyboard code, or empty string if not found
-     */
-    public String getKeyboardCode(String im) {
-        //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
-        if (checkDBConnection()) return "";
-
-
-        try {
-            String selectString = "SELECT * FROM im WHERE code='" + im + "' AND title='keyboard'";
-
-            Cursor cursor = db.rawQuery(selectString, null);
-
-            if (cursor != null) {
-                if (cursor.getCount() > 0) {
-                    cursor.moveToFirst();
-
-                    return getCursorString(cursor, LIME.DB_IM_COLUMN_KEYBOARD);
-                }
-                cursor.close();
-            }
-
-        } catch (Exception e) {
-            Log.e(TAG, "Error getting keyboard from IM", e);
-        }
-        return "";
-    }
 
     /**
      * Gets English word suggestions based on a prefix.
@@ -4686,33 +4732,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             Log.e(TAG, "Error in database operation", e);
         }
     }
-    /**
-     * Begins a database transaction.
-     * 
-     * <p>Starts a transaction for batch operations. Must be paired with
-     * {@link #endTransaction()} to commit the transaction.
-     * 
-     * <p>Transactions improve performance for multiple database operations
-     * by batching them together.
-     */
-    private void beginTransaction() {
-        if (db != null && db.isOpen()) {
-            db.beginTransaction();
-        }
-    }
 
-    /**
-     * Ends a database transaction and commits changes.
-     * 
-     * <p>Marks the transaction as successful and commits all changes made
-     * since {@link #beginTransaction()} was called.
-     */
-    private void endTransaction() {
-        if (db != null && db.isOpen()) {
-            db.setTransactionSuccessful();
-            db.endTransaction();
-        }
-    }
 
     
     /**
@@ -4742,7 +4762,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * @param imInfo List of Im objects containing IM configuration info (can be null, only used for regular tables)
      * @return true if export successful, false otherwise
      */
-    public boolean exportTxtTable(String table, File targetFile, List<Im> imInfo) {
+    public boolean exportTxtTable(String table, File targetFile, List<Im> imInfo, LIMEProgressListener progressListener) {
         if (checkDBConnection()) return false;
         if (targetFile == null) {
             Log.e(TAG, "exportTxtTable(): targetFile is null");
@@ -4758,88 +4778,191 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             return false;
         }
         
-        try {
-            // Delete existing file if it exists
-            if (targetFile.exists() && !targetFile.delete()) {
-                Log.e(TAG, "exportTxtTable(): Error deleting existing file");
-                return false;
+        // Wait for any existing export thread to finish
+        if (exportThread != null) {
+            while (exportThread.isAlive()) {
+                Log.d(TAG, "exportTxtTable(): waiting for last export thread to finish...");
+                SystemClock.sleep(SLEEP_DELAY_100_MS);
             }
-            
-            // Write to file
-            Writer writer = new OutputStreamWriter(new FileOutputStream(targetFile), StandardCharsets.UTF_8);
-
-            try (BufferedWriter fout = new BufferedWriter(writer)) {
-                if (isRelatedTable) {
-                    // Export related table format: pword|cword|basescore|userscore
-                    List<Related> relatedList = getRelated(null, 0, 0);
-                    if (relatedList.isEmpty()) {
-                        Log.w(TAG, "exportTxtTable(): No related records to export");
-                        return false;
-                    }
-
-                    // Write records
-                    for (Related w : relatedList) {
-                        // Skip records with null or empty pword/cword to match import validation
-                        // Import requires both pword and cword to be non-empty (see importTxtTable line 3488)
-                        if (w.getPword() == null || w.getCword() == null ||
-                                w.getPword().isEmpty() || w.getCword().isEmpty()) {
-                            continue;
+            exportThread = null;
+        }
+        
+        // Reset progress
+        progressPercentageDone = 0;
+        progressStatus = "Preparing export...";
+        final boolean[] exportSuccess = {false};
+        
+        // Create export thread
+        exportThread = new Thread() {
+            public void run() {
+                try {
+                    // Delete existing file if it exists
+                    if (targetFile.exists() && !targetFile.delete()) {
+                        Log.e(TAG, "exportTxtTable(): Error deleting existing file");
+                        if (progressListener != null) {
+                            progressListener.onError(-1, "Error deleting existing file");
                         }
-                        String s = w.getPword() + "|" + w.getCword() + "|" + w.getBasescore() + "|" + w.getUserscore();
-                        fout.write(s);
-                        fout.newLine();
+                        return;
                     }
-                } else {
-                    // Export regular table format: code|word|score|basescore
-                    List<Record> records = getRecords(table, null, false, 0, 0);
-                    if (records.isEmpty()) {
-                        Log.w(TAG, "exportTxtTable(): No records to export");
-                        return false;
-                    }
+                    
+                    // Write to file
+                    Writer writer = new OutputStreamWriter(new FileOutputStream(targetFile), StandardCharsets.UTF_8);
 
-                    // Write IM info headers if provided
-                    if (imInfo != null && !imInfo.isEmpty()) {
-                        for (Im i : imInfo) {
-                            if (i.getTitle().equals(LIME.IM_TYPE_NAME)) {
-                                String s = "@version@|" + i.getDesc();
-                                fout.write(s);
-                                fout.newLine();
+                    try (BufferedWriter fout = new BufferedWriter(writer)) {
+                        progressStatus = mContext.getString(R.string.l3_database_exporting);
+                        if (isRelatedTable) {
+                            // Export related table format: pword|cword|basescore|userscore
+                            List<Related> relatedList = getRelated(null, 0, 0);
+                            if (relatedList.isEmpty()) {
+                                Log.w(TAG, "exportTxtTable(): No related records to export");
+                                if (progressListener != null) {
+                                    progressListener.onError(-1, "No related records to export");
+                                }
+                                return;
                             }
-                            if (i.getTitle().equals(LIME.IM_TYPE_SELKEY)) {
-                                String s = "@selkey@|" + i.getDesc();
+
+                            int totalRecords = relatedList.size();
+                            int processedRecords = 0;
+
+                            // Write records
+                            for (Related w : relatedList) {
+                                if (threadAborted) break;
+                                
+                                // Skip records with null or empty pword/cword to match import validation
+                                // Import requires both pword and cword to be non-empty (see importTxtTable line 3488)
+                                if (w.getPword() == null || w.getCword() == null ||
+                                        w.getPword().isEmpty() || w.getCword().isEmpty()) {
+                                    Log.w(TAG,"Skipped record with pWord ="+w.getPword() + ", cWord= " + w.getCword() + ", base score= " + w.getBasescore() + ", user score= " + w.getUserscore() + ".");
+                                    continue;
+                                }
+                                String s = w.getPword() + "|" + w.getCword() + "|" + w.getBasescore() + "|" + w.getUserscore();
                                 fout.write(s);
                                 fout.newLine();
+                                
+                                processedRecords++;
+                                progressPercentageDone = (int) ((float) processedRecords / (float) totalRecords * 100);
+                                progressStatus = mContext.getString(R.string.l3_database_exporting_records) + progressPercentageDone + "%";
+
                             }
-                            if (i.getTitle().equals(LIME.IM_TYPE_ENDKEY)) {
-                                String s = "@endkey@|" + i.getDesc();
-                                fout.write(s);
-                                fout.newLine();
+                        } else {
+                            // Export regular table format: code|word|score|basescore
+                            List<Record> records = getRecordList(table, null, false, 0, 0);
+                            if (records.isEmpty()) {
+                                Log.w(TAG, "exportTxtTable(): No records to export");
+                                if (progressListener != null) {
+                                    progressListener.onError(-1, "No records to export");
+                                }
+                                return;
                             }
-                            if (i.getTitle().equals(LIME.IM_TYPE_SPACESTYLE)) {
-                                String s = "@spacestyle@|" + i.getDesc();
+
+                            int totalRecords = records.size();
+                            int processedRecords = 0;
+
+                            // Write IM info headers if provided
+                            if (imInfo != null && !imInfo.isEmpty()) {
+
+                                for (Im i : imInfo) {
+                                    if (threadAborted) break;
+                                    
+                                    if (i.getTitle().equals(LIME.IM_FULL_NAME)) {
+                                        String s = "@version@|" + i.getDesc();
+                                        fout.write(s);
+                                        fout.newLine();
+                                    }
+                                    if (i.getTitle().equals(LIME.IM_SELKEY)) {
+                                        String s = "@selkey@|" + i.getDesc();
+                                        fout.write(s);
+                                        fout.newLine();
+                                    }
+                                    if (i.getTitle().equals(LIME.IM_ENDKEY)) {
+                                        String s = "@endkey@|" + i.getDesc();
+                                        fout.write(s);
+                                        fout.newLine();
+                                    }
+                                    if (i.getTitle().equals(LIME.IM_SPACESTYLE)) {
+                                        String s = "@spacestyle@|" + i.getDesc();
+                                        fout.write(s);
+                                        fout.newLine();
+                                    }
+                                }
+                            }
+
+                            // Write records
+                            for (Record w : records) {
+                                if (threadAborted) break;
+                                
+                                if (w.getWord() == null || w.getWord().equals("null")) {
+                                    Log.w(TAG,"Skipped record with code ="+w.getCode() + ", word= " + w.getWord() + ", base score= " + w.getBasescore() + ", user score= " + w.getScore() + ".");
+
+                                    continue;
+                                }
+                                String s = w.getCode() + "|" + w.getWord() + "|" + w.getScore() + "|" + w.getBasescore();
                                 fout.write(s);
                                 fout.newLine();
+                                
+                                processedRecords++;
+                                progressPercentageDone = (int) ((float) processedRecords / (float) totalRecords * 100);
+                                progressStatus = mContext.getString(R.string.l3_database_exporting_records) + processedRecords + "/" + totalRecords;
+
                             }
                         }
-                    }
-
-                    // Write records
-                    for (Record w : records) {
-                        if (w.getWord() == null || w.getWord().equals("null")) {
-                            continue;
+                        
+                        if (!threadAborted) {
+                            exportSuccess[0] = true;
+                            progressPercentageDone = 100;
+                            progressStatus = mContext.getString(R.string.l3_database_exporting_complete);
                         }
-                        String s = w.getCode() + "|" + w.getWord() + "|" + w.getScore() + "|" + w.getBasescore();
-                        fout.write(s);
-                        fout.newLine();
+                    }
+                } catch (IOException e) {
+                    Log.e(TAG, "exportTxtTable(): Error writing to file", e);
+                    if (progressListener != null) {
+                        progressListener.onError(-1, "Error writing to file");
                     }
                 }
             }
-            
-            return true;
-        } catch (IOException e) {
-            Log.e(TAG, "exportTxtTable(): Error writing to file", e);
+        };
+        
+        // Create progress reporting thread
+        Thread reportProgressThread = new Thread() {
+            public void run() {
+                if (progressListener == null) {
+                    // If no progress listener, just wait for export thread to complete
+                    while (exportThread.isAlive()) {
+                        SystemClock.sleep(SLEEP_DELAY_100_MS);
+                    }
+                    return;
+                }
+
+                long interval = progressListener.progressInterval();
+                while (exportThread.isAlive()) {
+                    SystemClock.sleep(interval);
+                    progressListener.onProgress(progressPercentageDone, 0, progressStatus);
+                }
+                progressPercentageDone = 100;
+                progressListener.onPostExecute(exportSuccess[0], null, 0);
+            }
+        };
+        
+        // Start both threads
+        threadAborted = false;
+        exportThread.start();
+        reportProgressThread.start();
+        
+        // Wait for threads to complete
+        try {
+            exportThread.join();
+            reportProgressThread.join();
+        } catch (InterruptedException e) {
+            Log.e(TAG, "exportTxtTable(): Thread interrupted", e);
             return false;
         }
+        
+        return exportSuccess[0];
+    }
+    
+    // Keep backward compatibility with old method signature
+    public boolean exportTxtTable(String table, File targetFile, List<Im> imInfo) {
+        return exportTxtTable(table, targetFile, imInfo, null);
     }
 
     /**
@@ -4925,69 +5048,47 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
 
-    /**
-     * Gets a list of all keyboards from the database.
-     * 
-     * <p>Retrieves all keyboard records sorted by name.
-     * 
-     * @return List of Keyboard objects, or empty list if database error
-     */
-    public List<Keyboard> getKeyboard() {
-        List<Keyboard> result = new ArrayList<>();
-        if (checkDBConnection()) return result;
 
-        Cursor cursor = db.query(LIME.DB_TABLE_KEYBOARD, null, null,
-                null, null, null, LIME.DB_KEYBOARD_COLUMN_NAME + " ASC");
-        cursor.moveToFirst();
-        while (!cursor.isAfterLast()) {
-            Keyboard r = Keyboard.get(cursor);
-            result.add(r);
-            cursor.moveToNext();
-        }
-        cursor.close();
 
-        return result;
-    }
 
     /**
-     * Gets IM records filtered by code and/or type.
+     * Gets IM records filtered by code and/or configEntry.
      * 
-     * <p>Retrieves IM information records matching the specified code and type.
+     * <p>Retrieves IM information records matching the specified code and configEntry.
      * Either parameter can be null/empty to match all values.
      * 
      * @param code The IM code to filter by, or null/empty for all
-     * @param type The IM type to filter by, or null/empty for all
+     * @param configEntry The IM configEntry to filter by, or null/empty for all
      * @return List of Im objects, or empty list if database error
      */
-    public List<Im> getIm(String code, String type) {
+    public List<Im> getImList(String code, String configEntry) {
 
         List<Im> result = new ArrayList<>();
         if (checkDBConnection()) return result;
 
-        Cursor cursor;
         StringBuilder queryBuilder = new StringBuilder();
         if (code != null && code.length() > 1) {
             queryBuilder.append(LIME.DB_IM_COLUMN_CODE).append("='").append(code).append("'");
         }
-        if (type != null && type.length() > 1) {
+        if (configEntry != null && configEntry.length() > 1) {
             if (queryBuilder.length() > 0) {
                 queryBuilder.append(" AND ");
             }
-            queryBuilder.append(" ").append(LIME.DB_IM_COLUMN_TITLE).append("='").append(type).append("'");
+            queryBuilder.append(" ").append(LIME.DB_IM_COLUMN_TITLE).append("='").append(configEntry).append("'");
         }
         String query = queryBuilder.length() > 0 ? queryBuilder.toString() : null;
 
-        cursor = db.query(LIME.DB_TABLE_IM,
+        Cursor cursor = db.query(LIME.DB_TABLE_IM,
                 null, query,
                 null, null, null, LIME.DB_IM_COLUMN_DESC + " ASC");
-        cursor.moveToFirst();
-        while (!cursor.isAfterLast()) {
-            Im r = Im.get(cursor);
-            result.add(r);
-            cursor.moveToNext();
+        if (cursor != null) {
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                result.add(Im.get(cursor));
+                cursor.moveToNext();
+            }
+            cursor.close();
         }
-        cursor.close();
-
         return result;
     }
 
@@ -5009,7 +5110,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * @param offset Offset for pagination (0 for first page)
      * @return List of Record objects, or empty list if database error
      */
-    public List<Record> getRecords(String code, String query, boolean searchByCode, int maximum, int offset) {
+    public List<Record> getRecordList(String code, String query, boolean searchByCode, int maximum, int offset) {
         List<Record> result = new ArrayList<>();
         if (checkDBConnection()) return result;
 
@@ -5098,13 +5199,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (checkDBConnection()) return;
 
         String removeSQL = "DELETE FROM " + LIME.DB_TABLE_IM + " WHERE " + LIME.DB_IM_COLUMN_CODE + " = '" + code + "'" +
-                " AND " + LIME.DB_IM_COLUMN_TITLE + " = '" + LIME.IM_TYPE_KEYBOARD + "'";
+                " AND " + LIME.DB_IM_COLUMN_TITLE + " = '" + LIME.IM_KEYBOARD + "'";
         db.execSQL(removeSQL);
 
         // Use ContentValues instead of raw SQL for better security
         ContentValues cv = new ContentValues();
         cv.put(LIME.DB_IM_COLUMN_CODE, code);
-        cv.put(LIME.DB_IM_COLUMN_TITLE, LIME.IM_TYPE_KEYBOARD);
+        cv.put(LIME.DB_IM_COLUMN_TITLE, LIME.IM_KEYBOARD);
         cv.put(LIME.DB_IM_COLUMN_DESC, keyboard.getDesc());
         cv.put(LIME.DB_IM_COLUMN_KEYBOARD, keyboard.getCode());
         cv.put(LIME.DB_IM_COLUMN_DISABLE, String.valueOf(false));
@@ -5165,8 +5266,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
-            Related r = Related.get(cursor);
-            result.add(r);
+            //Related r = Related.get(cursor);
+            Related record = new Related();
+            // Use helper methods to safely get column values (validates column index >= 0)
+            record.setId(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_ID));
+            record.setPword(getCursorString(cursor, LIME.DB_RELATED_COLUMN_PWORD));
+            record.setCword(getCursorString(cursor, LIME.DB_RELATED_COLUMN_CWORD));
+            record.setUserscore(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_USERSCORE));
+            record.setBasescore(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_BASESCORE));
+            result.add(record);
             cursor.moveToNext();
         }
         cursor.close();
@@ -5174,32 +5282,39 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return result;
     }
 
-    /**
-     * Gets a single related phrase record by ID.
-     * 
-     * @param id The record ID (_id)
-     * @return Related object, or null if not found or database error
-     */
-    public Related getRelated(long id) {
-        if (checkDBConnection()) return null;
-        Related w = null;
-        Cursor cursor;
-
-        String query = LIME.DB_RELATED_COLUMN_ID + " = '" + id + "' ";
-
-        cursor = db.query(LIME.DB_TABLE_RELATED,
-                null, query,
-                null, null, null, null);
-
-        if (cursor != null && cursor.moveToFirst()) {
-            w = Related.get(cursor);
-        }
-        if (cursor != null) {
-            cursor.close();
-        }
-
-        return w;
-    }
+//    /**
+//     * Gets a single related phrase record by ID.
+//     *
+//     * @param id The record ID (_id)
+//     * @return Related object, or null if not found or database error
+//     */
+//    public Related getRelated(long id) {
+//        if (checkDBConnection()) return null;
+//        Related record = null;
+//        Cursor cursor;
+//
+//        String query = LIME.DB_RELATED_COLUMN_ID + " = '" + id + "' ";
+//
+//        cursor = db.query(LIME.DB_TABLE_RELATED,
+//                null, query,
+//                null, null, null, null);
+//
+//        if (cursor != null && cursor.moveToFirst()) {
+//            //w = Related.get(cursor);
+//            record = new Related();
+//            // Use helper methods to safely get column values (validates column index >= 0)
+//            record.setId(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_ID));
+//            record.setPword(getCursorString(cursor, LIME.DB_RELATED_COLUMN_PWORD));
+//            record.setCword(getCursorString(cursor, LIME.DB_RELATED_COLUMN_CWORD));
+//            record.setUserscore(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_USERSCORE));
+//            record.setBasescore(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_BASESCORE));
+//        }
+//        if (cursor != null) {
+//            cursor.close();
+//        }
+//
+//        return record;
+//    }
 
 
 
@@ -5240,7 +5355,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * Gets all records from a backup table.
      * 
      * <p>This method retrieves all records from a backup table (typically named
-     * "{imtype}_user"). The backup table name must end with "_user" and the base
+     * "{tableName}_user"). The backup table name must end with "_user" and the base
      * table name must be valid.
      * 
      * <p>This method is used when restoring user preferences from backup tables
@@ -5280,7 +5395,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * Restores user-learned records from a backup table to the main table.
      * 
      * <p>This method retrieves all records from a backup table (typically named
-     * "{imtype}_user") and restores them to the main mapping table by calling
+     * "{tableName}_user") and restores them to the main mapping table by calling
      * {@link #addOrUpdateMappingRecord(String, String, String, int)} for each record.
      * 
      * <p>This method is used when restoring user preferences from backup tables
@@ -5300,6 +5415,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * @return The number of records restored, or 0 if no records to restore or error
      */
     public int restoreUserRecords(String table) {
+        if(DEBUG)
+            Log.i(TAG, "restoreUserRecords");
         if (checkDBConnection()) return 0;
         
         if (table == null || table.isEmpty()) {
@@ -5378,56 +5495,47 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         }
     }
 
-//    public void updateBackupScore(String imtype, List<Word> scorelist) {
-//        if (checkDBConnection()) return;
-//        db.beginTransaction();
-//        for (Word w : scorelist) {
-//            String updatesql = Word.getUpdateScoreQuery(imtype, w);
-//            db.execSQL(updatesql);
+
+
+//    /**
+//     * Builds a parameterized WHERE clause from a map of conditions.
+//     *
+//     * <p>This helper method constructs a WHERE clause with "?" placeholders
+//     * for parameterized queries, which helps prevent SQL injection.
+//     *
+//     * <p>Example:
+//     * <pre>
+//     * Map&lt;String, String&gt; conditions = new HashMap&lt;&gt;();
+//     * conditions.put("code", "abc");
+//     * conditions.put("score", "100");
+//     * Pair&lt;String, String[]&gt; result = buildWhereClause(conditions);
+//     * // result.first = "code = ? AND score = ?"
+//     * // result.second = ["abc", "100"]
+//     * </pre>
+//     *
+//     * @param conditions Map of column names to values
+//     * @return Pair containing WHERE clause string and arguments array, or null if conditions is empty
+//     */
+//    private Pair<String, String[]> buildWhereClause(java.util.Map<String, String> conditions) {
+//        if (conditions == null || conditions.isEmpty()) {
+//            return null;
 //        }
-//        db.endTransaction();
-//        db.setTransactionSuccessful();
+//
+//        StringBuilder whereBuilder = new StringBuilder();
+//        List<String> whereArgs = new ArrayList<>();
+//
+//        boolean first = true;
+//        for (java.util.Map.Entry<String, String> entry : conditions.entrySet()) {
+//            if (!first) {
+//                whereBuilder.append(" AND ");
+//            }
+//            whereBuilder.append(entry.getKey()).append(" = ?");
+//            whereArgs.add(entry.getValue());
+//            first = false;
+//        }
+//
+//        return new Pair<>(whereBuilder.toString(), whereArgs.toArray(new String[0]));
 //    }
-
-    /**
-     * Builds a parameterized WHERE clause from a map of conditions.
-     * 
-     * <p>This helper method constructs a WHERE clause with "?" placeholders
-     * for parameterized queries, which helps prevent SQL injection.
-     * 
-     * <p>Example:
-     * <pre>
-     * Map&lt;String, String&gt; conditions = new HashMap&lt;&gt;();
-     * conditions.put("code", "abc");
-     * conditions.put("score", "100");
-     * Pair&lt;String, String[]&gt; result = buildWhereClause(conditions);
-     * // result.first = "code = ? AND score = ?"
-     * // result.second = ["abc", "100"]
-     * </pre>
-     * 
-     * @param conditions Map of column names to values
-     * @return Pair containing WHERE clause string and arguments array, or null if conditions is empty
-     */
-    public Pair<String, String[]> buildWhereClause(java.util.Map<String, String> conditions) {
-        if (conditions == null || conditions.isEmpty()) {
-            return null;
-        }
-
-        StringBuilder whereBuilder = new StringBuilder();
-        List<String> whereArgs = new ArrayList<>();
-
-        boolean first = true;
-        for (java.util.Map.Entry<String, String> entry : conditions.entrySet()) {
-            if (!first) {
-                whereBuilder.append(" AND ");
-            }
-            whereBuilder.append(entry.getKey()).append(" = ?");
-            whereArgs.add(entry.getValue());
-            first = false;
-        }
-
-        return new Pair<>(whereBuilder.toString(), whereArgs.toArray(new String[0]));
-    }
 
     /**
      * Executes a query with pagination support.
@@ -5546,13 +5654,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * <p>This is a destructive operation that will erase all user data including
      * learned mappings and related phrases.
      */
-    public void resetLimeSetting(){
+    public void restoredToDefault(){
+        if(DEBUG)
+            Log.i(TAG,"restoredToDefault");
 
         if(db != null)
             db.close();
 
         File dbFile= mContext.getDatabasePath(LIME.DATABASE_NAME);
-             dbFile.deleteOnExit();
+        if(dbFile.exists() && !dbFile.delete()) Log.w(TAG, "Failed to delete database file");
         LIMEUtilities.copyRAWFile(mContext.getResources().openRawResource(R.raw.lime), dbFile);
         openDBConnection(true);
 

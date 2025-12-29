@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="net.toload.main.hd.ManageRelatedFragment">
+    tools:context="net.toload.main.hd.ui.view.ManageRelatedFragment">
 
     <!-- Original content will go here -->
     <LinearLayout
@@ -54,19 +54,13 @@
                 android:layout_marginTop="5dp"
                 android:layout_marginBottom="5dp" />
 
-            <GridView
+            <androidx.recyclerview.widget.RecyclerView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/gridManageRelated"
-                android:numColumns="auto_fit"
-                android:stretchMode="columnWidth"
-                android:gravity="center"
-                android:verticalSpacing="2dp"
-                android:horizontalSpacing="2dp"
-                android:choiceMode="multipleChoice"
-                android:columnWidth="150dp">
-
-            </GridView>
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:clipToPadding="false" />
 
         </LinearLayout>
 

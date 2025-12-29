@@ -65,66 +65,21 @@ public class Keyboard {
 
 	private boolean disable;
 
-	// Helper to safely get a String from cursor (validates column index >= 0)
-	private static String getCursorString(Cursor cursor, String columnName) {
-		int index = cursor.getColumnIndex(columnName);
-		if (index >= 0) {
-			return cursor.getString(index);
-		}
-		return ""; // Return empty string if column is missing
-	}
+	// NOTE: Database cursor parsing logic moved to LimeDB to centralize DB access.
+	// Keep model-level convenience accessors for compatibility with existing code.
 
-	// Helper to safely get an Int from cursor (validates column index >= 0)
-	private static int getCursorInt(Cursor cursor) {
-		int index = cursor.getColumnIndex(LIME.DB_KEYBOARD_COLUMN_ID);
-		if (index >= 0) {
-			return cursor.getInt(index);
-		}
-		return 0; // Return 0 if column is missing
-	}
+	// Backwards-compatible description accessors (KeyboardConfig used getDescription())
+	public String getDescription() { return desc; }
+	public void setDescription(String description) { this.desc = description; }
 
-	public static Keyboard get(Cursor cursor){
-		Keyboard record = new Keyboard();
-			// Use helper methods to safely get column values (validates column index >= 0)
-			record.setId(getCursorInt(cursor));
-			record.setCode(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_CODE));
-			record.setName(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_NAME));
-			record.setDesc(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DESC));
-			record.setType(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_TYPE));
-			record.setImage(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMAGE));
-			record.setImkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMKB));
-			record.setImshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB));
-			record.setEngkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_ENGKB));
-			record.setEngshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB));
-			record.setSymbolkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_SYMBOLKB));
-			record.setSymbolshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB));
-			record.setDefaultkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DEFAULTKB));
-			record.setDefaultshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB));
-			record.setExtendedkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_EXTENDEDKB));
-			record.setExtendedshiftkb(getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB));
-			String disableStr = getCursorString(cursor, LIME.DB_KEYBOARD_COLUMN_DISABLE);
-			record.setDisable(Boolean.getBoolean(disableStr));
-		return record;
+	// UI convenience overloads preserved from KeyboardConfig
+	public String getEngkb(boolean showNumberRow) {
+		if (showNumberRow) return "lime_english_number";
+		else return "lime_english";
 	}
-
-	/**
-	 * Converts a Cursor to a List of Keyboard objects.
-	 * 
-	 * <p>This method iterates through all rows in the cursor and creates
-	 * Keyboard objects for each row. The cursor is closed after processing.
-	 * 
-	 * @param cursor The Cursor containing database query results
-	 * @return List of Keyboard objects
-	 */
-	public static List<Keyboard> getList(Cursor cursor){
-		List<Keyboard> list = new ArrayList<>();
-		cursor.moveToFirst();
-		while(!cursor.isAfterLast()){
-			list.add(get(cursor));
-			cursor.moveToNext();
-		}
-		cursor.close();
-		return list;
+	public String getEngshiftkb(boolean showNumberRow) {
+		if (showNumberRow) return "lime_english_number_shift";
+		else return "lime_english_shift";
 	}
 
 	public int getId() {
