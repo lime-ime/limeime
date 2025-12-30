@@ -191,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityView 
         
         // Set navigation callbacks to NavigationManager
         setupImController.setNavigationCallbacks(navigationManager);
+        setupImController.setNavigationManager(navigationManager);
 
         // initial imList
         navigationManager.setImList(manageImController.getImList());

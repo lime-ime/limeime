@@ -18,6 +18,7 @@ import net.toload.main.hd.ui.view.SetupImView;
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.ui.view.NavigationDrawerFragment;
+import net.toload.main.hd.ui.NavigationManager;
 import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEUtilities;
@@ -51,7 +52,8 @@ public class SetupImController extends BaseController implements ImportDialog.On
     private MainActivityView mainActivityView;
     private NavigationDrawerView navigationDrawerView;
     private SetupImView setupImView;
-    
+    private NavigationManager navigationManager;
+
     private NavigationDrawerFragment.NavigationDrawerCallbacks navigationCallbacks;
     private File fileToImport;
     
@@ -71,6 +73,10 @@ public class SetupImController extends BaseController implements ImportDialog.On
     
     public void setNavigationCallbacks(NavigationDrawerFragment.NavigationDrawerCallbacks callbacks) {
         this.navigationCallbacks = callbacks;
+    }
+
+    public void setNavigationManager(NavigationManager manager) {
+        this.navigationManager = manager;
     }
 
     public void setSetupImView(SetupImView view) {
@@ -161,14 +167,19 @@ public class SetupImController extends BaseController implements ImportDialog.On
     
     private List<NavigationMenuItem> addImNavigationMenuItem() {
         List<NavigationMenuItem> items = new ArrayList<>();
-        
+
         try {
             List<Im> imList = searchServer.getImList(null, LIME.IM_FULL_NAME);
-            
+
+            // Also update NavigationManager's imList
+            if (navigationManager != null) {
+                navigationManager.setImList(imList);
+            }
+
             // Add default menu items
             items.add(new NavigationMenuItem(null, 0, false)); // Initial
             items.add(new NavigationMenuItem(null, 1, false)); // Related
-            
+
             // Add IM menu items
             for (int i = 0; i < imList.size(); i++) {
                 Im im = imList.get(i);
@@ -177,7 +188,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
         } catch (Exception e) {
             Log.e(TAG, "Failed to load menu items", e);
         }
-        
+
         return items;
     }
     

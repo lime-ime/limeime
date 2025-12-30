@@ -51,6 +51,18 @@ import java.util.Locale;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * SearchServer is the central engine for handling input method queries and candidate suggestions.
+ * <p>
+ * It acts as an intermediary between the IME service and the database {@link LimeDB}, providing:
+ * <ul>
+ *     <li>Efficient database querying for character mapping and phrase retrieval.</li>
+ *     <li>Multi-level caching mechanics (code, English words, emojis) to optimize performance.</li>
+ *     <li>Runtime suggestion generation for dynamic phrase building.</li>
+ *     <li>Handling of different keyboard types (phonetic, physical) and their mapping logic.</li>
+ *     <li>Support for related phrase lookups and Han character conversion.</li>
+ * </ul>
+ */
 public class SearchServer {
 
     private static final boolean DEBUG = false;
@@ -111,6 +123,11 @@ public class SearchServer {
     // deprecated and using exact match stack to get real code length now. Jerey '15,6,2
     //private static List<Pair<Integer, Integer>> codeLengthMap = new LinkedList<>();
 
+    /**
+     * Constructs a new SearchServer instance.
+     *
+     * @param context The application context, used for database access and preference loading.
+     */
     public SearchServer(Context context) {
 
 
@@ -123,18 +140,43 @@ public class SearchServer {
 
     }
 
+    /**
+     * Signals whether the cache should be reset on the next operation.
+     *
+     * @param resetCache true to trigger a cache reset.
+     */
     public static void resetCache(boolean resetCache) {
         mResetCache = resetCache;
     }
 
+    /**
+     * Converts a string using the Han character conversion settings (e.g., Traditional to Simplified).
+     *
+     * @param input The input string to convert.
+     * @return The converted string.
+     */
     public String hanConvert(String input) {
         return dbadapter.hanConvert(input, mLIMEPref.getHanCovertOption());
     }
 
+    /**
+     * Gets the current database table name.
+     *
+     * @return The name of the current table.
+     */
     public String getTablename() {
         return tablename;
     }
 
+    /**
+     * Sets the current active database table (IME method).
+     * <p>
+     * This updates the database adapter and optionally triggers a cache prefetch for better performance.
+     *
+     * @param table         The name of the table to switch to (e.g., Phonetic, CJ).
+     * @param numberMapping Whether the table supports number mapping.
+     * @param symbolMapping Whether the table supports symbol mapping.
+     */
     public void setTablename(String table, boolean numberMapping, boolean symbolMapping) {
         if (DEBUG)
             Log.i(TAG, "SearchService.setTablename()");
@@ -157,6 +199,14 @@ public class SearchServer {
 
     private static Thread prefetchThread;
 
+    /**
+     * Prefetches common mappings into the cache to improve initial response time.
+     * <p>
+     * Runs in a background thread.
+     *
+     * @param numberMapping Whether to prefetch number mappings.
+     * @param symbolMapping Whether to prefetch symbol mappings.
+     */
     private void prefetchCache(boolean numberMapping, boolean symbolMapping) {
         if(DEBUG)
             Log.i(TAG, "prefetchCache() on table :" + tablename);
@@ -209,6 +259,13 @@ public class SearchServer {
     }
 
     //Add by jeremy '10, 4,1
+    /**
+     * Retrieves the list of input codes for a given word and displays it.
+     * <p>
+     * Used for reverse lookup features.
+     *
+     * @param word The word to look up.
+     */
     public void getCodeListStringFromWord(final String word) {
 
         String result = dbadapter.getCodeListStringByWord(word);
@@ -223,6 +280,14 @@ public class SearchServer {
 
     }
 
+    /**
+     * Generates a unique cache key for a given code.
+     * <p>
+     * The key depends on the keyboard type (physical/virtual) and table name to avoid collisions.
+     *
+     * @param code The input code.
+     * @return A unique string key for the cache.
+     */
     private String cacheKey(String code) {
         String key;
 
@@ -244,6 +309,11 @@ public class SearchServer {
     }
 
 
+    /**
+     * Clears the runtime suggestion history.
+     *
+     * @param abandonSuggestion true if the suggestion process should be abandoned.
+     */
     private void clearRunTimeSuggestion(boolean abandonSuggestion)
     {
         for (List<Pair<Mapping, String>> suggestList : suggestionLoL) {
@@ -257,6 +327,21 @@ public class SearchServer {
 
     private static final boolean dumpRunTimeSuggestion = false;
 
+    /**
+     * Generates runtime phrase suggestions based on the current input code.
+     * <p>
+     * This method analyzes the input code and the list of exact matches to dynamically construct
+     * phrase suggestions. It handles incremental updates, maintaining a history of suggestions
+     * in {@code suggestionLoL} to support efficient updates when new characters are added or removed
+     * (backspace).
+     * <p>
+     * It attempts to combine previous best suggestions with new exact matches for the remaining
+     * code segment to form longer phrases, validating them against the related words table and
+     * calculating scores to prioritize the most likely candidates.
+     *
+     * @param code                   The current full input code sequence.
+     * @param completeCodeResultList A list of mappings that exactly match the current code (or parts of it).
+     */
     private synchronized void makeRunTimeSuggestion(String code, List<Mapping> completeCodeResultList) {
 
         long startTime=0;
@@ -380,21 +465,6 @@ public class SearchServer {
 
                 if (DEBUG || dumpRunTimeSuggestion)
                     Log.i(TAG, "makeRunTimeSuggestion() no exact match on complete code = " + code + ", time elapsed = " + (System.currentTimeMillis() - startTime));
-
-                /*
-                // if confirmed best suggestion found and contains last confirmed best suggestion (double confirm) remove all other list not start with last confirmed best suggestion
-                if( lastConfirmedBestSuggestion!=null && confirmedBestSuggestion!=null
-                        &&lastConfirmedBestSuggestion.length()>1 && confirmedBestSuggestion.startsWith(lastConfirmedBestSuggestion)){
-                    Iterator<List<Pair<Mapping,String>>> it = suggestionLoL.iterator();
-                    while (it.hasNext()) {
-                         List<Pair<Mapping,String>> item = it.next();
-                        if(item.isEmpty()|| !item.get(item.size()-1).first.getWord().startsWith(lastConfirmedBestSuggestion)){
-                            it.remove();
-                        }
-                    }
-                }
-                */
-
 
                 int highestScore = 0, highestRelatedScore = 0, i = 0, highestScoreIndex = 0;
                 //iterate all previous exact match mapping and check for exact match on remaining code.
@@ -577,7 +647,13 @@ public class SearchServer {
     /*
     *   return longest common substring with recursive method.
      */
-
+    /**
+     * Computes the Longest Common Substring (LCS) of two strings.
+     *
+     * @param a First string.
+     * @param b Second string.
+     * @return The longest common substring.
+     */
     private String lcs(String a, String b) {
         int aLen = a.length();
         int bLen = b.length();
@@ -596,12 +672,32 @@ public class SearchServer {
     /*
     * Jeremy '15,7,12 synchronized the method called from LIMEService only
     */
+    /**
+     * Retrieves a list of candidate mappings for a given input code.
+     * <p>
+     * This is an overload for {@link #getMappingByCode(String, boolean, boolean, boolean)}.
+     *
+     * @param code          The input code to search for.
+     * @param softkeyboard  True if input is from software keyboard, false for hardware.
+     * @param getAllRecords True to retrieve all matching records, false for a limited set.
+     * @return A list of matching {@link Mapping} objects.
+     * @throws RemoteException If a database error occurs.
+     */
     public synchronized List<Mapping> getMappingByCode(String code, boolean softkeyboard, boolean getAllRecords) throws RemoteException {
         return getMappingByCode(code, softkeyboard, getAllRecords, false);
     }
 
     private static boolean  abandonPhraseSuggestion = false;
 
+    /**
+     * Converts a code to its corresponding Emoji mappings.
+     * <p>
+     * Results are cached in {@code emojicache} to optimize repeated lookups.
+     *
+     * @param code The code to convert.
+     * @param type The type of conversion (internal DB parameter).
+     * @return A list of Emoji mappings.
+     */
     public List<Mapping> emojiConvert(String code, int type){
         if(code != null){
             if(emojicache == null){
@@ -617,6 +713,24 @@ public class SearchServer {
         return null;
     }
 
+    /**
+     * Core method to retrieve mappings for a code from cache or database.
+     * <p>
+     * Handles complex logic including:
+     * <ul>
+     *     <li>Cache lookup and management.</li>
+     *     <li>Runtime phrase suggestion generation.</li>
+     *     <li>English word suggestion fallback.</li>
+     *     <li>Result sorting and filtering.</li>
+     * </ul>
+     *
+     * @param code           The input code.
+     * @param softkeyboard   True if soft keyboard.
+     * @param getAllRecords  True to fetch all records.
+     * @param prefetchCache  True if this request is a background prefetch.
+     * @return List of mappings.
+     * @throws RemoteException If database fails.
+     */
     public List<Mapping> getMappingByCode(String code, boolean softkeyboard, boolean getAllRecords, boolean prefetchCache)
             throws RemoteException {
         if (DEBUG||dumpRunTimeSuggestion)
@@ -792,10 +906,15 @@ public class SearchServer {
 
 
 
-	/*
-    *   Get mapping list from cache or from db if it's not in cache. Separated from getMappingByCode() Jeremy '15,6,8
+    /**
+     * Retrieves the mapping list from cache, or queries the database if not found.
+     * <p>
+     * Separated from {@code getMappingByCode} to modularize cache/DB logic.
+     *
+     * @param queryCode     The code to look up.
+     * @param getAllRecords Whether to retrieve all matching records.
+     * @return List of mappings.
 	 */
-
     private List<Mapping> getMappingByCodeFromCacheOrDB(String queryCode, Boolean getAllRecords) {
         String cacheKey = cacheKey(queryCode);
         List<Mapping> cacheTemp = cache.get(cacheKey);
@@ -848,7 +967,14 @@ public class SearchServer {
 }
 
     /**
-     * get real code length
+     * Determines the actual length of the code matched by a selected mapping.
+     * <p>
+     * Useful for separating the matched portion of the input from the remaining buffer.
+     * Also triggers learning of runtime-built phrases.
+     *
+     * @param selectedMapping The user-selected mapping.
+     * @param currentCode     The current input buffer.
+     * @return The length of the code corresponding to the selection.
      */
     int getRealCodeLength(final Mapping selectedMapping, String currentCode) {
         if (DEBUG)
@@ -937,8 +1063,10 @@ public class SearchServer {
     }
 
 
-    /**
-     * This method is to initial/reset the cache of im.
+     /**
+     * Initializes or resets all internal caches (mappings, English words, emojis, etc.).
+     * <p>
+     * Clears existing caches and allocates new concurrent hashmaps.
      */
     public void initialCache() {
         try {
@@ -959,6 +1087,11 @@ public class SearchServer {
     }
 
 
+    /**
+     * Updates the score of a cached mapping and re-sorts the cache if necessary.
+     *
+     * @param cachedMapping The mapping with the updated score.
+     */
     private void updateScoreCache(Mapping cachedMapping) {
         if (DEBUG) Log.i(TAG, "updateScoreCache(): code=" + cachedMapping.getCode());
 
@@ -1030,6 +1163,18 @@ public class SearchServer {
 // '11,8,1 renamed from updateuserdict()
 List<Mapping> scorelistSnapshot = null;
 
+    /**
+     * Tasks to perform after an input session finishes.
+     * <p>
+     * Spawns a background thread to:
+     * <ul>
+     *     <li>Learn related phrases from the recent score list.</li>
+     *     <li>Update user dictionary/scores.</li>
+     *     <li>Process LD phrases if applicable.</li>
+     * </ul>
+     *
+     * @throws RemoteException If a database error occurs.
+     */
     public void postFinishInput() throws RemoteException {
 
         if (scorelistSnapshot == null) scorelistSnapshot = new LinkedList<>();
@@ -1068,6 +1213,11 @@ List<Mapping> scorelistSnapshot = null;
 
     }
 
+    /**
+     * Learns associations between consecutive words in a sentence (related phrases).
+     *
+     * @param localScorelist The list of mappings selected during the session.
+     */
     private void learnRelatedPhrase(List<Mapping> localScorelist) {
         if (localScorelist != null) {
             if (DEBUG)
@@ -1124,6 +1274,11 @@ List<Mapping> scorelistSnapshot = null;
      * Jeremy '12,6,9 Rewrite to support word with more than 1 characters
      */
 
+    /**
+     * Learns new phrases based on user input patterns (Learning Dictionary).
+     *
+     * @param localLDPhraseListArray The list of potential phrases to learn.
+     */
     private void learnLDPhrase(ArrayList<List<Mapping>> localLDPhraseListArray) {
         if (DEBUG)
             Log.i(TAG, "learnLDPhrase()");
@@ -1287,6 +1442,11 @@ List<Mapping> scorelistSnapshot = null;
     /**
      *
      */
+    /**
+     * Removes cached mappings for codes that have been remapped.
+     *
+     * @param code The original code.
+     */
     private void removeRemappedCodeCachedMappings(String code) {
         if (DEBUG)
             Log.i(TAG, "removeRemappedCodeCachedMappings() on code ='" + code + "' coderemapcache.size=" + coderemapcache.size());
@@ -1301,6 +1461,11 @@ List<Mapping> scorelistSnapshot = null;
             cache.remove(cacheKey(code)); //Jeremy '12,6,6 no remap. remove the code mapping from cache.
     }
 
+    /**
+     * Updates the cache for codes similar to the modified code (e.g., prefix matches).
+     *
+     * @param code The modified code.
+     */
     private void updateSimilarCodeCache(String code) {
         if (DEBUG)
             Log.i(TAG, "updateSimilarCodeCache(): code = '" + code + "'");
@@ -1333,6 +1498,12 @@ List<Mapping> scorelistSnapshot = null;
     }
 
 
+    /**
+     * Converts an internal key code/string to its display name.
+     *
+     * @param code The key code.
+     * @return The display name for the key.
+     */
     public String keyToKeyname(String code) {
         //Jeremy '11,6,21 Build cache according using cachekey
 
@@ -1351,6 +1522,13 @@ List<Mapping> scorelistSnapshot = null;
      * Renamed to learnRelatedPhraseAndUpdateScore Jeremy '15,6,4
      */
 
+    /**
+     * Updates the score of a mapping and learns it as a related phrase.
+     * <p>
+     * This spawns a background thread to update the score cache and persistent storage asynchronously.
+     *
+     * @param updateMapping The mapping to update/learn.
+     */
     public void learnRelatedPhraseAndUpdateScore(Mapping updateMapping)
     //String id, String code, String word,
     //String pword, int score, boolean isDictionary)
@@ -1376,6 +1554,12 @@ List<Mapping> scorelistSnapshot = null;
         }
     }
 
+    /**
+     * Adds a mapping to the Learning Dictionary (LD) phrase buffer.
+     *
+     * @param mapping The mapping to add.
+     * @param ending  True if this mapping ends the current phrase sequence.
+     */
     public void addLDPhrase(Mapping mapping,//String id, String code, String word, int score,
                             boolean ending) {
         if (LDPhraseListArray == null)
@@ -1402,16 +1586,33 @@ List<Mapping> scorelistSnapshot = null;
 
     }
 
+    /**
+     * Retrieves the list of installed keyboards.
+     *
+     * @return A list of {@link Keyboard} objects.
+     * @throws RemoteException If a database error occurs.
+     */
     public List<Keyboard> getKeyboardList() throws RemoteException {
         //if(dbadapter == null){dbadapter = new LimeDB(ctx);}
         return dbadapter.getKeyboardList();
     }
 
+    /**
+     * Retrieves the list of Input Methods (IMs).
+     *
+     * @return A list of {@link Im} objects.
+     * @throws RemoteException If a database error occurs.
+     */
     public List<Im> getImList() throws RemoteException {
         return dbadapter.getImList(null, null);
     }
 
 
+    /**
+     * Clears all runtime caches (score list, mappings, english, emoji, key names).
+     *
+     * @throws RemoteException If a database error occurs.
+     */
     public void clear() throws RemoteException {
         if (scorelist != null) {
             scorelist.clear();
@@ -1437,6 +1638,13 @@ List<Mapping> scorelistSnapshot = null;
     private static String lastEnglishWord = null;
     private static boolean noSuggestionsForLastEnglishWord = false;
 
+    /**
+     * Retrieves English word suggestions for a given prefix.
+     *
+     * @param word The prefix or word to search for.
+     * @return A list of English word mappings.
+     * @throws RemoteException If a database error occurs.
+     */
     public synchronized List<Mapping> getEnglishSuggestions(String word) throws RemoteException {
 
         long startTime=0;
@@ -1480,6 +1688,14 @@ List<Mapping> scorelistSnapshot = null;
     }
 
 
+    /**
+     * Retrieves the selection key string for the current keyboard.
+     * <p>
+     * Selection keys are used for selecting candidates (e.g., "1234567890" or "asdfghjkl;").
+     *
+     * @return The selection key characters string.
+     * @throws RemoteException If a database error occurs.
+     */
     public String getSelkey() throws RemoteException {
         if (DEBUG)
             Log.i(TAG, "getSelkey():hasNumber:" + hasNumberMapping + "hasSymbol:" + hasSymbolMapping);
