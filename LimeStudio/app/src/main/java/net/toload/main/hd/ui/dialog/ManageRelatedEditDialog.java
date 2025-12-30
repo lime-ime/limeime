@@ -156,7 +156,7 @@ public class ManageRelatedEditDialog extends DialogFragment {
             alertDialog.setMessage(activity.getResources().getString(R.string.manage_related_dialog_delete_message));
             alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
                     (dialog, which) -> {
-                        fragment.removeRelated(related.getId());
+                        fragment.removeRelated(related.getIdAsInt());
                         dialog.dismiss();
                         cancelDialog();
                     });
@@ -183,7 +183,7 @@ public class ManageRelatedEditDialog extends DialogFragment {
                             source = source.trim();
                             pword = source.substring(0,1);
                             cword = source.substring(1);
-                            fragment.updateRelated(related.getId(), pword, cword, Integer.parseInt(score));
+                            fragment.updateRelated(related.getIdAsInt(), pword, cword, Integer.parseInt(score));
                             dialog.dismiss();
                             cancelDialog();
                         }else{

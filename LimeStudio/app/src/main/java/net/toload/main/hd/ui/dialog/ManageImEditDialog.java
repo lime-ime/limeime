@@ -163,7 +163,7 @@ public class ManageImEditDialog extends DialogFragment {
             //alertDialog.setIcon(R.drawable.);
             alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, activity.getResources().getString(R.string.dialog_confirm),
                     (dialog, which) -> {
-                        fragment.removeRecord(record.getId());
+                        fragment.removeRecord(record.getIdAsInt());
                         dialog.dismiss();
                         cancelDialog();
                     });
@@ -184,7 +184,7 @@ public class ManageImEditDialog extends DialogFragment {
                         if(validateInput()) {
 
                             int value = Integer.parseInt(edtManageImWordScore.getText().toString());
-                            fragment.updateRecord(record.getId(), code, value, text);
+                            fragment.updateRecord(record.getIdAsInt(), code, value, text);
                             dialog.dismiss();
                             cancelDialog();
                         }else{

@@ -55,7 +55,7 @@ public class ManageImAdapter extends ListAdapter<Record, ManageImAdapter.ViewHol
     private static final DiffUtil.ItemCallback<Record> DIFF_CALLBACK = new DiffUtil.ItemCallback<Record>() {
         @Override
         public boolean areItemsTheSame(@NonNull Record oldItem, @NonNull Record newItem) {
-            return oldItem.getId() == newItem.getId();
+            return oldItem.getIdAsInt() == newItem.getIdAsInt();
         }
 
         @Override

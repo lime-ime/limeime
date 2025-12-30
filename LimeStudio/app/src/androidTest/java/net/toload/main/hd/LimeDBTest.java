@@ -1244,7 +1244,7 @@ public class LimeDBTest {
             assertNotNull("getPword should return a string (not null)", pword);
             
             // Test getId
-            int id = related.getId();
+            int id = related.getIdAsInt();
             assertTrue("getId should return non-negative", id >= 0);
             
             // Test getCword
@@ -2674,7 +2674,7 @@ public class LimeDBTest {
             assertNotNull("getPword should return a string", stringValue);
             
             // Test getId
-            int intValue = related.getId();
+            int intValue = related.getIdAsInt();
             assertTrue("getId should return an integer", intValue >= 0);
             
             // Test getCword

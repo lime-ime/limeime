@@ -63,7 +63,7 @@ public class ManageRelatedAdapter extends ListAdapter<Related, ManageRelatedAdap
     private static final DiffUtil.ItemCallback<Related> DIFF_CALLBACK = new DiffUtil.ItemCallback<Related>() {
         @Override
         public boolean areItemsTheSame(@NonNull Related oldItem, @NonNull Related newItem) {
-            return oldItem.getId() == newItem.getId();
+            return oldItem.getIdAsInt() == newItem.getIdAsInt();
         }
 
         @Override

@@ -400,7 +400,7 @@ prepareBackupRelatedDb(file) → prepareBackup(file, null, true)
 
 **BEFORE:**
 ```
-importDb(File sourceDBFile, String imType)
+importDb(File sourceDBFile, String tableName)
   ├─> checkDBConnection()
   ├─> deleteAll(imType)
   │   ├─> countMapping(table)

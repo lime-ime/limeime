@@ -25,60 +25,36 @@
 package net.toload.main.hd.data;
 
 /**
- * Represents a related phrase record in the database.
- *
- * <p>A Related record contains a parent word and a child word that are
- * commonly used together, along with scoring information.
- *
- * <p>This class provides static helper methods to convert Cursor objects
- * to Related instances, but does not contain any SQL code. All database
- * operations should be performed through {@link net.toload.main.hd.limedb.LimeDB}.
- *
+ * Represents a related phrase record for UI layer operations.
+ * 
+ * <p>This is an alias for {@link Mapping} used in the Manage Related Phrases UI
+ * where related phrase terminology (pword, cword) is more appropriate.
+ * 
+ * <p>Field mappings:
+ * <ul>
+ *   <li>{@code getPword()} / {@code setPword()} - Parent word</li>
+ *   <li>{@code getCword()} / {@code setCword()} - Child word (alias for word)</li>
+ *   <li>{@code getUserscore()} / {@code setUserscore()} - User score (alias for score)</li>
+ *   <li>{@code getBasescore()} / {@code setBasescore()} - Base score</li>
+ * </ul>
+ * 
+ * <p>All fields and methods are inherited from {@link Mapping}.
+ * 
  * @author LimeIME Team
+ * @see Mapping
  */
-public class Related {
+public class Related extends Mapping {
 
-	private int id;
-	private String pword;
-	private String cword;
-	private int basescore;
-	private int userscore;
-
-	public int getId() {
-		return id;
+	/** Empty constructor */
+	public Related() {
+		super();
 	}
 
-	public void setId(int id) {
-		this.id = id;
+	/**
+	 * Copy constructor.
+	 * @param mapping The mapping to copy
+	 */
+	public Related(Mapping mapping) {
+		super(mapping);
 	}
-
-	public String getPword() {
-		return pword;
-	}
-
-	public void setPword(String pword) {
-		this.pword = pword;
-	}
-
-	public String getCword() {
-		return cword;
-	}
-
-	public void setCword(String cword) {
-		this.cword = cword;
-	}
-
-	public int getBasescore() {
-		return basescore;
-	}
-
-	public void setBasescore(int basescore) {
-		this.basescore = basescore;
-	}
-
-	public int getUserscore() {return userscore;}
-
-	public void setUserscore(int userscore) {this.userscore = userscore;}
-
-
 }

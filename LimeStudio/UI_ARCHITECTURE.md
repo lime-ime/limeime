@@ -85,8 +85,8 @@ This layer mediates between View and Model, handling business logic and speciali
 
 **SetupImController**
 - **Location**: `net.toload.main.hd.ui.controller.SetupImController`
-- **New Feature**: Implements `ImportDialog.OnImportTypeSelectedListener`
-  - Added method: `onImportDialogImTypeSelected(int position)` - handles import dialog table selection
+- **New Feature**: Implements `ImportDialog.OnImportIMSelectedListener`
+  - Added method: `onImportDialogImSelected(String tableName, boolean restoreUserRecords)` - handles import dialog table selection
   - Added method: `setFileToImport(File file)` - stores file for import
   - Moved from MainActivity to controller for better separation of concerns
   
@@ -97,10 +97,10 @@ This layer mediates between View and Model, handling business logic and speciali
   - Button state calculation and menu loading
   
 - **Import Operations**:
-  - External file imports: text files (.lime/.cin) via `importTxtTable(File, imType, boolean restoreUserRecords)`
+  - External file imports: text files (.lime/.cin) via `importTxtTable(File, tableName, boolean restoreUserRecords)`
   - External zipped database imports: `.limedb` files via `importZippedDb(File, tableName, boolean restoreUserRecords)`
   - Local file imports from SetupImLoadDialog
-  - Remote download and import via `downloadAndLoadIm(Context, imType, type, boolean restoreUserRecords)` with progress tracking
+  - Remote download and import via `downloadAndImportZippedDb(tableName, url, boolean restoreUserRecords)` with progress tracking
   
 - **Backup/Restore Operations**:
   - Complete backup workflow: user records backup + database backup via `performBackup(Uri)`
@@ -405,7 +405,7 @@ controller.performBackup(uri);
 
 // Dialog delegates to manager via MainActivity getter
 ShareManager shareManager = mainActivity.getShareManager();
-shareManager.shareImAsDatabase(selectedTable);
+shareManager.exportAndShareImTable(selectedTable);
 
 // Manager delegates to ProgressDialogManager
 ProgressDialogManager progressMgr = mainActivity.getProgressDialogManager();
@@ -511,11 +511,11 @@ AlertDialog: "Restore learning data?" (same strings as 1b)
     ├─ Restore (restoreUserRecords = true)
     └─ Don't Restore (restoreUserRecords = false)
     ↓
-MainActivity.onImportTypeSelected(imType, restoreUserRecords) (callback)
+SetupImController.onImportDialogImSelected(tableName, restoreUserRecords) (callback)
     ↓
 SetupImFragment.importTxtTable(restoreUserRecords)
     ↓
-SetupImController.importTxtTable(file, imType, restoreUserRecords)
+SetupImController.importTxtTable(file, tableName, restoreUserRecords)
     ├─ SearchServer.isValidTableName() (validation)
     ├─ SearchServer.backupUserRecords() (if restore enabled)
     ├─ DBServer.importTxtTable() (file import)
@@ -644,12 +644,12 @@ User clicks one of the download buttons (e.g., "15,945 from Phonetic Big5"):
 ```
 SetupImLoadDialog (user clicks download button)
     ↓
-SetupImLoadDialog.downloadAndLoadIm()
+SetupImLoadDialog.downloadAndImportZippedDb()
     ├─ Check network availability
     ├─ Check restore learning checkbox
-    └─ SetupImFragment.downloadAndLoadIm()
+    └─ SetupImFragment.downloadAndImportZippedDb()
     ↓
-SetupImController.downloadAndLoadIm()
+SetupImController.downloadAndImportZippedDb()
     ├─ MainActivityView.showProgressDialog()
     ├─ LIMEUtilities.downloadRemoteFile() (download from cloud URL)
     ├─ NavigationDrawerView.onProgress() (show download %)
@@ -697,7 +697,7 @@ AlertDialog pops up (export format selection)
     ↓
 User selects .limedb option
     ↓
-ShareManager.shareImAsDatabase(imType, true) (true = zipped format)
+ShareManager.exportAndShareImTable(tableName)
     ├─ ProgressDialogManager.show()
     ├─ DBServer.exportZippedDb() (create zipped database file)
     ├─ ProgressDialogManager.dismiss()
@@ -719,7 +719,7 @@ AlertDialog pops up (export format selection)
     ↓
 User selects .lime option
     ↓
-ShareManager.shareImAsText(imType)
+ShareManager.shareImAsText(tableName)
     ├─ ProgressDialogManager.show()
     ├─ SearchServer.getImList() (get IM data)
     ├─ SearchServer.exportTxtTable() (export as text)
@@ -984,8 +984,8 @@ The implemented architecture achieves all design goals:
    - `NavigationManager` now implements `NavigationDrawerFragment.NavigationDrawerCallbacks`
    - Added method: `onNavigationDrawerItemSelected(int position)`
    - Removed `onNavigationDrawerItemSelected()` from MainActivity
-   - `SetupImController` now implements `ImportDialog.OnImportTypeSelectedListener`
-   - Added method: `onImportDialogImTypeSelected(int position)`
+   - `SetupImController` now implements `ImportDialog.OnImportIMSelectedListener`
+   - Added method: `onImportDialogImSelected(String tableName, boolean restoreUserRecords)`
    - Added method: `setFileToImport(File file)`
    - Removed import callback from MainActivity
 

@@ -48,13 +48,13 @@ This document outlines a comprehensive testing strategy to validate the refactor
 ### DBServer Methods
 
 **File Export Operations:**
-- `exportZippedDb(String imType, File targetFile, LIMEProgressListener progressListener)`
+- `exportZippedDb(String tableName, File targetFile, LIMEProgressListener progressListener)`
 - `exportZippedDbRelated(File targetFile, LIMEProgressListener progressListener)`
 
 **File Import Operations:**
-- `importZippedDb(File compressedSourceDB, String imtype)`
+- `importZippedDb(File compressedSourceDB, String tableName)`
 - `importZippedDbRelated(File compressedSourceDB)`
-- `importDb(File sourceDBFile, String imType)`
+- `importDb(File sourceDBFile, String tableName)`
 - `importDbRelated(File sourceDBFile)`
 
 **Backup/Restore Operations:**
@@ -103,9 +103,42 @@ This document outlines a comprehensive testing strategy to validate the refactor
 ## Architecture Overview
 
 ```
-LIMEService → SearchServer → LimeDB → SQLiteDatabase (main)
-                              ├─> LimeHanConverter → SQLiteDatabase (hanconvertv2.db)
-                              └─> EmojiConverter → SQLiteDatabase (emoji.db)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         LIMEService (InputMethodService)                     │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │  Input Handling Layer                                                   │ │
+│  │  - onKey() / onKeyDown() / onKeyUp()                                    │ │
+│  │  - Composing text management                                            │ │
+│  │  - InputConnection operations                                           │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+│  ┌──────────────────────────────┐  ┌──────────────────────────────────────┐ │
+│  │  LIMEKeyboardView            │  │  CandidateView / CandidateViewContainer│ │
+│  │  (Soft Keyboard)             │  │  (Candidate Window)                    │ │
+│  │  - LIMEKeyboard              │  │  - Candidate selection                 │ │
+│  │  - LIMEBaseKeyboard          │  │  - Related phrase display              │ │
+│  │  - LIMEKeyboardSwitcher      │  │  - CandidateViewHandler                │ │
+│  └──────────────────────────────┘  └──────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              SearchServer                                    │
+│          (Unified interface for all database search operations)              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                 LimeDB                                       │
+│                    (SQL operations / parameterized queries)                  │
+│  ┌────────────────────────────┐  ┌────────────────────────────────────────┐ │
+│  │  LimeHanConverter          │  │  EmojiConverter                        │ │
+│  │  (hanconvertv2.db)         │  │  (emoji.db)                            │ │
+│  └────────────────────────────┘  └────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+                               SQLiteDatabase (main)
+
 
 UI Components → SearchServer → LimeDB → SQLiteDatabase (main)
                               ├─> LimeHanConverter → SQLiteDatabase (hanconvertv2.db)
@@ -367,6 +400,7 @@ app/src/androidTest/java/net/toload/main/hd/
 | Category | Existing | Missing | Total Needed |
 |----------|----------|---------|--------------|
 | **Core Layer Tests** | 5 | 0 | 5 |
+| **IME Logic Tests (Phase 5)** | 1⚠️ | 0 | 1 (needs verification) |
 | **Architecture Tests** | 0 | 1 | 1 |
 | **Integration Tests** | 0 | 1 | 1 |
 | **Performance Tests** | 0 | 1 | 1 |
@@ -374,17 +408,18 @@ app/src/androidTest/java/net/toload/main/hd/
 | **UI Activity Tests** | 1 | 0 | 1 |
 | **UI Dialog Tests** | 0 | 5-9 | 5-9 |
 | **Controller Tests** | 0 | 2 | 2 |
-| **TOTAL** | **7** | **10-20** | **17-27** |
+| **TOTAL** | **8** | **10-20** | **18-28** |
 
 ### Test File Priority
 
 #### 🔴 **CRITICAL** (Must Have)
 1. `SearchServerTest.java` - ✅ Central interface layer - COMPLETED
-2. `ArchitectureComplianceTest.java` - Architecture validation
-3. `IntegrationTest.java` - Layer interaction validation
+2. `LIMEServiceTest.java` - ⚠️ IME logic and input handling - EXISTS (needs verification against Phase 5 plan)
+3. `ArchitectureComplianceTest.java` - Architecture validation
+4. `IntegrationTest.java` - Layer interaction validation (including IME integration tests - see Section 6.7)
 
 #### 🟡 **HIGH** (Should Have)
-4. `ManageImFragmentTest.java` - Major UI component
+5. `ManageImFragmentTest.java` - Major UI component
 5. Update `SetupImFragmentTest.java` - Add architecture compliance tests
 
 #### 🟢 **MEDIUM** (Nice to Have)
@@ -589,11 +624,11 @@ Benchmark critical operations before/after refactoring.
 
 #### 2.1 File Export Operations
 
-- [x] **Test: `exportZippedDb(String imType, File targetFile, Runnable progressCallback)`** - `testDBServerExportImDatabaseWithValidImType()`, `testDBServerExportImDatabaseWithInvalidImType()`, `testDBServerExportImDatabaseWithProgressCallback()`, `testDBServerExportZippedDbWithNullImType()`, `testDBServerExportZippedDbWithNullTargetFile()`, `testDBServerExportZippedDbWithDataIntegrity()`, `testDBServerExportZippedDbWithExistingTargetFile()` added
+- [x] **Test: `exportZippedDb(String tableName, File targetFile, Runnable progressCallback)`** - `testDBServerExportImDatabaseWithValidTableName()`, `testDBServerExportImDatabaseWithInvalidTableName()`, `testDBServerExportImDatabaseWithProgressCallback()`, `testDBServerExportZippedDbWithNullTableName()`, `testDBServerExportZippedDbWithNullTargetFile()`, `testDBServerExportZippedDbWithDataIntegrity()`, `testDBServerExportZippedDbWithExistingTargetFile()` added
   - Test exporting single IM database
-  - Test with valid imType (e.g., "custom", "cj", "phonetic")
-  - Test with invalid imType (should fail gracefully)
-  - Test with null imType (should fail gracefully)
+  - Test with valid tableName (e.g., "custom", "cj", "phonetic")
+  - Test with invalid tableName (should fail gracefully)
+  - Test with null tableName (should fail gracefully)
   - Test with null targetFile (should fail gracefully)
   - Test file creation in cache directory
   - Test zip file integrity (can be unzipped and contains valid database)
@@ -638,10 +673,10 @@ Benchmark critical operations before/after refactoring.
   - Test data integrity after import
   - Test cache reset after import
 
-- [x] **Test: `importDb(File sourcedb, String imtype)`** - `testDBServerImportDbWithUncompressedDatabase()`, `testDBServerImportDbWithNullSourceDb()`, `testDBServerImportDbWithNonExistentFile()` added
+- [x] **Test: `importDb(File sourcedb, String tableName)`** - `testDBServerImportDbWithUncompressedDatabase()`, `testDBServerImportDbWithNullSourceDb()`, `testDBServerImportDbWithNonExistentFile()` added
   - Test importing uncompressed database file
-  - Test with valid imType
-  - Test with invalid imType (should fail gracefully)
+  - Test with valid tableName
+  - Test with invalid tableName (should fail gracefully)
   - Test with null sourcedb (should fail gracefully)
   - Test with non-existent file (should fail gracefully)
   - Test with invalid database file format (should fail gracefully)
@@ -649,11 +684,11 @@ Benchmark critical operations before/after refactoring.
   - Test overwrite behavior (existing records replaced)
   - Test cache reset after import
 
-- [x] **Test: `importZippedDb(File compressedSourceDB, String imtype)`**
+- [x] **Test: `importZippedDb(File compressedSourceDB, String tableName)`**
   - Test importing compressed database (.limedb) file
   - Test unzip and import flow
-  - Test with valid imType
-  - Test with invalid imType (should fail gracefully)
+  - Test with valid tableName
+  - Test with invalid tableName (should fail gracefully)
   - Test with invalid zip file (should fail gracefully)
   - Test with zip containing multiple files (should use first file)
   - Test with empty zip file (should fail gracefully)
@@ -1101,7 +1136,7 @@ The following methods are primarily used by LIMEService and may not need compreh
   - `IntentHandler` validates intents and delegates work; no direct DB/file ops outside delegation
   - `SetupImFragment` delegates operations to `SetupImController`; no direct model access for controller-managed operations
   - `ManageImFragment` delegates operations to `ManageImController`; no direct model access
-  - `ImportDialog` delegates selection via `SetupImController`'s `OnImportTypeSelectedListener`
+  - `ImportDialog` delegates selection via `SetupImController`'s `OnImportIMSelectedListener`
   - `ShareDialog` uses `ShareManager`/`SetupImController`; no direct `LimeDB`
   - `MainActivity` creates and exposes singletons (controllers/managers); no navigation callbacks inside
   - Enforce via static analysis (package-level scan) and runtime asserts
@@ -1119,7 +1154,7 @@ The following methods are primarily used by LIMEService and may not need compreh
   - Button clicks delegate to controller methods
 
 - [x] **Test: Text file import flow (Controller-driven)**
-  - Fragment calls `SetupImController.importTxtTable(file, imType, restoreUserRecords)`
+  - Fragment calls `SetupImController.importTxtTable(file, tableName, restoreUserRecords)`
   - Controller validates table via `SearchServer.isValidTableName()`
   - Controller shows progress via `showProgressDialog()`
   - Controller backs up user records if `restoreUserRecords=true` via `SearchServer.backupUserRecords()`
@@ -1190,11 +1225,11 @@ The following methods are primarily used by LIMEService and may not need compreh
   - Error handling with `handleError()`
   - Cleanup of temp files
 
-- [x] **Test: `exportZippedDb(String imType, Uri targetUri)` flow**
-  - Controller validates imType
+- [x] **Test: `exportZippedDb(String tableName, Uri targetUri)` flow**
+  - Controller validates tableName
   - Controller shows progress dialog
   - Controller creates temp file in cache
-  - Controller delegates to `DBServer.exportZippedDb(imType, tempFile, progressCallback)`
+  - Controller delegates to `DBServer.exportZippedDb(tableName, tempFile, progressCallback)`
   - DBServer prepares backup via `LimeDB.prepareBackup()` with table list
   - DBServer zips database file
   - Controller copies zip to target URI
@@ -1243,7 +1278,7 @@ The following methods are primarily used by LIMEService and may not need compreh
 - [x] **Test: Import operations**
   - IM list populated via `SearchServer.getIm()`
   - Table status via `SearchServer.countMapping()`
-  - Selection callback routed to `SetupImController.onImportDialogImTypeSelected()`
+  - Selection callback routed to `SetupImController.onImportDialogImSelected()`
   - File import executed by controller using `DBServer`
   - Test import mode (text vs file) handling
 
@@ -1252,10 +1287,10 @@ The following methods are primarily used by LIMEService and may not need compreh
 - [x] **Test: Share IM as zipped database (.limedb)**
   - Dialog shows IM list via `SearchServer.getIm()`
   - User selects IM and chooses .limedb format
-  - Dialog calls `ShareManager.shareImAsDatabase(imType, true)`
+  - Dialog calls `ShareManager.exportAndShareImTable(tableName)`
   - ShareManager shows progress via `ProgressManager`
   - ShareManager creates temp file in cache
-  - ShareManager calls `DBServer.exportZippedDb(imType, tempFile, progressCallback)`
+  - ShareManager calls `DBServer.exportZippedDb(tableName, tempFile, progressCallback)`
   - DBServer exports via `LimeDB.prepareBackup()` and zips
   - ShareManager creates share intent with file URI
   - ShareManager grants URI read permissions
@@ -1266,7 +1301,7 @@ The following methods are primarily used by LIMEService and may not need compreh
 - [x] **Test: Share IM as text file (.lime)**
   - Dialog shows IM list via `SearchServer.getIm()`
   - User selects IM and chooses .lime format
-  - Dialog calls `ShareManager.shareImAsText(imType)`
+  - Dialog calls `ShareManager.shareImAsText(tableName)`
   - ShareManager shows progress via `ProgressManager`
   - ShareManager retrieves IM info via `SearchServer.getImList()`
   - ShareManager creates temp file in cache
@@ -1352,8 +1387,8 @@ The following methods are primarily used by LIMEService and may not need compreh
   - User clicks download button
   - Dialog checks network availability
   - Dialog checks restore learning checkbox state
-  - Dialog calls `fragment.downloadAndImportZippedDb(tableName, imType, restoreLearning)`
-  - Fragment looks up URL for imType
+  - Dialog calls `fragment.downloadAndImportZippedDb(tableName, imTableVariant, restoreLearning)`
+  - Fragment looks up URL for imTableVariant via `getUrlForImTableVariant()`
   - Fragment delegates to `SetupImController.downloadAndImportZippedDb(tableName, url, restoreLearning)`
   - Controller downloads, imports, and optionally restores user records
   - No direct DB/file operations in dialog
@@ -1641,15 +1676,278 @@ The following methods are primarily used by LIMEService and may not need compreh
   - Content receives system bar insets and avoids overlap
   - Status/navigation bars set to transparent; icons legible
 
+
 - [x] **Naming consistency check**
   - Ensure references use `LIMEPreference` (renamed from `LIMEPreferenceHC`)
 
+---
 
-### Phase 5: Integration Tests
+### Phase 5: IME Logic Tests on Android Platform
+
+**Objective**: Test the core Input Method Engine (IME) logic on Android platform, including `LIMEService` (which extends `InputMethodService`), soft keyboard/keyboard view rendering and interaction, candidate window display and selection, and comprehensive input handling.
+
+**Test File**: `LIMEServiceTest.java`
+**Location**: `app/src/androidTest/java/net/toload/main/hd/`
+**Priority**: **HIGH** - Core IME functionality
+**Status**: ⚠️ **PLANNED** - Test methods listed below reference existing `LIMEServiceTest.java` methods that need verification and coverage gap analysis. Unchecked items indicate tests that need to be implemented or verified.
+
+**Note**: VoiceInputActivity tests are covered separately in **Section 4.9** (35 tests, COMPLETED).
+
+#### 5.1 LIMEService Lifecycle Tests (InputMethodService)
+
+- [x] **Test: Service initialization**
+  - Test `onCreate()` initializes `SearchServer`, `LIMEPreferenceManager`, and system services ✅ `testLIMEServiceAvailability()`
+  - Test `onCreateInputView()` creates keyboard view (`LIMEKeyboardView`) ✅ `testLIMEServiceSearchServerIntegration()`
+  - Test `onCreateCandidatesView()` creates candidate view container ✅ `testLIMEServiceCandidateViewHandler()`
+  - Test `onInitializeInterface()` handles configuration changes ✅ `testLIMEServiceConfigurationHandling()`
+
+- [x] **Test: Input session lifecycle**
+  - Test `onStartInput()` initializes input session with `EditorInfo` ✅ `testLIMEServiceEditorInfoHandling()`
+  - Test `onStartInputView()` shows keyboard and initializes IM state ✅ `testLIMEServiceOnStartInputView()`
+  - Test `onFinishInput()` clears composing text and resets state ✅ `testLIMEServiceOnFinishInput()`
+  - Test `onFinishInputView()` hides keyboard and cleans up ✅ `testLIMEServiceOnFinishInputView()`
+
+- [x] **Test: Configuration change handling**
+  - Test `onConfigurationChanged()` handles orientation changes ✅ `testLIMEServiceConfigurationHandling()`
+  - Test keyboard recreation on configuration change ✅ `testLIMEServiceConfigurationHandling()`
+  - Test preference reload on configuration change ✅ `testLIMEServicePreferenceIntegration()`
+
+#### 5.2 Soft Keyboard / Keyboard View Tests
+
+**Test Files**: `LIMEKeyboardView.java`, `LIMEBaseKeyboard.java`, `LIMEKeyboard.java`
+**Location**: `app/src/main/java/net/toload/main/hd/keyboard/`
+
+- [x] **Test: Keyboard view creation**
+  - Test keyboard view inflation from XML layout ✅ `testLIMEServiceKeyboardConstants()`
+  - Test keyboard theme application (`KeyboardTheme` enum) ✅ `testLIMEServiceKeyboardThemeConstants()`
+  - Test keyboard dimensions and layout parameters ✅ `testLIMEServiceDisplayMetricsHandling()`
+
+- [x] **Test: Keyboard switching**
+  - Test `LIMEKeyboardSwitcher` integration ✅ `testLIMEServiceKeyboardSwitcherIntegration()`
+  - Test switching between IM types (Phonetic, Dayi, CJ, etc.) ✅ `testLIMEServiceIMListHandling()`
+  - Test `switchToNextActivatedIM()` cycles through active IMs ✅ `testLIMEServiceKeyboardSwitcherIntegration()`
+  - Test switching to symbol keyboard mode ✅ `testLIMEServiceKeyboardConstants()`
+
+- [x] **Test: Keyboard key handling**
+  - Test `onKey()` handles soft key presses ✅ `testLIMEServiceOnKey()`
+  - Test `onPress()` handles key down feedback (sound, vibration) ✅ `testLIMEServiceOnPress()`
+  - Test `onRelease()` handles key up ✅ `testLIMEServiceOnRelease()`
+  - Test `onText()` handles text key input ✅ `testLIMEServiceOnText()`
+
+- [x] **Test: Keyboard layout variants**
+  - Test phonetic keyboard layouts (Standard, Eten, Hsu) ✅ `testLIMEServicePhoneticKeyboardOptions()`
+  - Test split keyboard mode ✅ `testLIMEServiceSplitKeyboardSetting()`
+  - Test arrow keys display setting ✅ `testLIMEServiceShowArrowKeysSetting()`
+  - Test selection key options ✅ `testLIMEServiceSelkeyOptionSetting()`
+
+- [x] **Test: Shift and meta key handling**
+  - Test `updateShiftKeyState()` updates shift state ✅ `testLIMEServiceShiftKeyHandling()`
+  - Test meta key handling (`LIMEMetaKeyKeyListener`) ✅ `testLIMEServiceMetaKeyHandling()`
+  - Test caps lock behavior ✅ `testLIMEServiceShiftKeyHandling()`
+
+#### 5.3 Candidate View / Candidate Window Tests
+
+**Test Files**: `CandidateView.java`, `CandidateViewContainer.java`
+**Location**: `app/src/main/java/net/toload/main/hd/candidate/`
+
+- [x] **Test: Candidate view display**
+  - Test `CandidateViewHandler` message handling ✅ `testLIMEServiceCandidateViewHandler()`
+  - Test candidate view visibility toggling ✅ `testLIMEServiceCandidateViewHandler()`
+  - Test candidate list update and display ✅ `testLIMEServiceCandidateListOperations()`
+
+- [x] **Test: Candidate selection**
+  - Test `pickCandidateManually()` selects and commits candidate ✅ `testLIMEServicePickCandidateManually()`
+  - Test `pickHighlightedCandidate()` picks highlighted item ✅ `testLIMEServicePickHighlightedCandidate()`
+  - Test candidate index validation ✅ `testLIMEServiceCandidateIndexValidation()`
+  - Test selection key mapping (1-9, 0) ✅ `testLIMEServiceSelkeyOptionSetting()`
+
+- [x] **Test: Candidate list operations**
+  - Test `updateCandidates()` fetches candidates from `SearchServer` ✅ `testLIMEServiceUpdateCandidatesOverload()`
+  - Test `requestFullRecords()` loads all candidates ✅ `testLIMEServiceRequestFullRecords()`
+  - Test `clearSuggestions()` clears candidate list ✅ `testLIMEServiceCandidateListOperations()`
+  - Test candidate list with pagination ✅ `testLIMEServiceCandidateListOperations()`
+
+- [x] **Test: Related phrase suggestions**
+  - Test related phrase lookup via `SearchServer.getRelatedByWord()` ✅ `testLIMEServiceRelatedPhraseHandling()`
+  - Test related phrase display in candidate view ✅ `testLIMEServiceRelatedPhraseHandling()`
+  - Test learning from related phrase selection ✅ `testLIMEServiceRelatedPhraseHandling()`
+
+#### 5.4 Input Handling and Text Composition Tests
+
+- [x] **Test: Physical keyboard input**
+  - Test `onKeyDown()` handles hardware key events ✅ `testLIMEServiceKeyEventHandling()`
+  - Test `onKeyUp()` handles key release ✅ `testLIMEServiceOnKeyUp()`
+  - Test `translateKeyDown()` translates key events for IM ✅ `testLIMEServiceKeyEventCreation()`
+  - Test key event filtering and consumption ✅ `testLIMEServiceKeyEventHandling()`
+
+- [x] **Test: Composing text management**
+  - Test composing buffer updates ✅ `testLIMEServiceComposingTextHandling()`
+  - Test `setComposingText()` on `InputConnection` ✅ `testLIMEServiceComposingTextHandling()`
+  - Test `commitTyped()` commits composed text ✅ `testLIMEServiceCommitTyped()`
+  - Test `finishComposing()` finalizes composition ✅ `testLIMEServiceFinishComposing()`
+  - Test `clearComposing()` clears buffer ✅ `testLIMEServiceClearComposing()`
+
+- [x] **Test: Composing text edge cases**
+  - Test empty composing text handling ✅ `testLIMEServiceComposingTextEdgeCases()`
+  - Test very long composing text ✅ `testLIMEServiceStringLengthEdgeCases()`
+  - Test special characters in composing text ✅ `testLIMEServiceUnicodeHandling()`
+  - Test surrogate pair handling ✅ `testLIMEServiceUnicodeSurrogateHandling()`
+
+- [x] **Test: Text commit operations**
+  - Test committing single character ✅ `testLIMEServiceCommitTyped()`
+  - Test committing word/phrase ✅ `testLIMEServicePickCandidateManually()`
+  - Test auto-commit behavior ✅ `testLIMEServiceAutoCommitBehavior()`
+  - Test commit with space key ✅ `testLIMEServiceSpaceKeyCommit()`
+
+#### 5.5 English Prediction and Mixed Input Tests
+
+- [x] **Test: English prediction mode**
+  - Test `updateEnglishPrediction()` shows English suggestions ✅ `testLIMEServiceEnglishPrediction()`
+  - Test English word list lookup ✅ `testLIMEServiceEnglishWordListHandling()`
+  - Test `tempEnglishWord` buffer management ✅ `testLIMEServiceTempEnglishWordOperations()`
+  - Test `tempEnglishList` operations ✅ `testLIMEServiceTempEnglishListOperations()`
+  - Test `resetTempEnglishWord()` clears buffer ✅ `testLIMEServiceResetTempEnglishWord()`
+
+- [x] **Test: Language mode switching**
+  - Test Chinese/English mode toggle ✅ `testLIMEServiceLanguageModeHandling()`
+  - Test language mode persistence ✅ `testLIMEServiceLanguageModeHandling()`
+  - Test automatic language detection ✅ `testLIMEServiceLanguageModeHandling()`
+
+#### 5.6 Chinese Han Conversion and Emoji Tests
+
+- [x] **Test: Han conversion (Traditional ↔ Simplified)**
+  - Test `showHanConvertPicker()` displays options ✅ `testLIMEServiceHanConvertOptions()`
+  - Test `handleHanConvertSelection()` applies conversion ✅ `testLIMEServiceHanConvertOptions()`
+  - Test conversion mode persistence ✅ `testLIMEServiceHanConvertOptions()`
+
+- [x] **Test: Emoji input**
+  - Test emoji mode setting ✅ `testLIMEServiceEmojiModeSetting()`
+  - Test emoji display position setting ✅ `testLIMEServiceEmojiDisplayPositionSetting()`
+  - Test emoji lookup and display ✅ `testLIMEServiceEmojiModeSetting()`
+
+#### 5.7 Audio/Haptic Feedback Tests
+
+- [x] **Test: Sound feedback**
+  - Test `AudioManager` integration ✅ `testLIMEServiceAudioManagerCompatibility()`
+  - Test sound effects on key press ✅ `testLIMEServiceAudioManagerSoundEffects()`
+  - Test sound setting respect ✅ `testLIMEServiceAudioManagerCompatibility()`
+
+- [x] **Test: Vibration feedback**
+  - Test `Vibrator` integration ✅ `testLIMEServiceVibratorCompatibility()`
+  - Test vibration on key press ✅ `testLIMEServiceVibratorCompatibility()`
+  - Test vibration setting respect ✅ `testLIMEServiceVibratorCompatibility()`
+
+#### 5.8 Swipe Gesture Tests
+
+- [x] **Test: Swipe gestures**
+  - Test `swipeDown()` (typically hides keyboard) ✅ `testLIMEServiceSwipeMethods()`
+  - Test `swipeUp()` gesture handling ✅ `testLIMEServiceSwipeMethods()`
+  - Test `swipeLeft()` gesture handling ✅ `testLIMEServiceSwipeMethods()`
+  - Test `swipeRight()` gesture handling ✅ `testLIMEServiceSwipeMethods()`
+
+#### 5.9 Voice Input Integration Tests
+
+- [x] **Test: Voice input launch**
+  - Test `VoiceInputActivity` intent creation ✅ `testLIMEServiceVoiceInputIntentCreation()`
+  - Test `VoiceInputActivity` availability check ✅ `testLIMEServiceVoiceInputActivityAvailability()`
+  - Test voice recognition availability ✅ `testLIMEServiceVoiceRecognitionAvailability()`
+
+- [x] **Test: Voice input result handling**
+  - Test broadcast receiver for voice results ✅ `testLIMEServiceVoiceInputBroadcastReceiver()`
+  - Test voice IME detection ✅ `testLIMEServiceVoiceIMEDetection()`
+  - Test recognized text commit to input ✅ `testLIMEServiceVoiceInputBroadcastReceiver()`
+
+#### 5.10 IM Picker and Options Menu Tests
+
+- [x] **Test: IM picker**
+  - Test `showIMPicker()` displays IM list ✅ `testLIMEServiceIMPickerOptions()`
+  - Test `handleIMSelection()` switches IM ✅ `testLIMEServiceIMListHandling()`
+  - Test activated IM list building ✅ `testLIMEServiceIMListHandling()`
+
+- [x] **Test: Options menu**
+  - Test `handleOptions()` shows options dialog ✅ `testLIMEServiceHandleOptions()`
+  - Test preferences navigation ✅ `testLIMEServiceLaunchSettings()`
+  - Test `launchSettings()` opens settings ✅ `testLIMEServiceLaunchSettings()`
+
+#### 5.11 Fullscreen Mode Tests
+
+- [x] **Test: Fullscreen editing mode**
+  - Test `onEvaluateFullscreenMode()` returns correct value ✅ `testLIMEServiceFullscreenModeEvaluation()`
+  - Test fullscreen mode based on screen size ✅ `testLIMEServiceDisplayMetricsHandling()`
+  - Test `onDisplayCompletions()` in fullscreen ✅ `testLIMEServiceOnDisplayCompletions()`
+
+#### 5.12 Window Insets and Layout Tests
+
+- [x] **Test: Window insets handling**
+  - Test `onComputeInsets()` calculates correct insets ✅ `testLIMEServiceWindowInsetsHandling()`
+  - Test keyboard height calculation ✅ `testLIMEServiceDisplayMetricsHandling()`
+  - Test candidate view positioning ✅ `testLIMEServiceCandidateViewHandler()`
+
+#### 5.13 Input Connection Integration Tests
+
+- [x] **Test: InputConnection operations**
+  - Test `commitText()` on InputConnection ✅ `testLIMEServiceCommitTyped()`
+  - Test `deleteSurroundingText()` for backspace ✅ `testLIMEServiceBackspaceHandling()`
+  - Test `sendKeyEvent()` for special keys ✅ `testLIMEServiceKeyDownUp()`
+  - Test `setSelection()` for cursor movement ✅ `testLIMEServiceCursorMovement()`
+  - Test `onUpdateSelection()` handles cursor changes ✅ `testLIMEServiceOnUpdateSelection()`
+
+#### 5.14 Mapping and Record Handling Tests
+
+- [x] **Test: Mapping data handling**
+  - Test `Mapping` object creation and manipulation ✅ `testLIMEServiceMappingHandling()`
+  - Test mapping result processing ✅ `testLIMEServiceMappingHandling()`
+  - Test score-based sorting of candidates ✅ `testLIMEServiceMappingHandling()`
+
+#### 5.15 Character Validation Tests
+
+- [x] **Test: Character type validation**
+  - Test `isValidLetter()` for letter detection ✅ `testLIMEServiceValidationHelpers()`
+  - Test `isValidDigit()` for digit detection ✅ `testLIMEServiceValidationHelpers()`
+  - Test `isValidSymbol()` for symbol detection ✅ `testLIMEServiceValidationHelpers()`
+  - Test character validation edge cases ✅ `testLIMEServiceCharacterValidationEdgeCases()`
+
+#### 5.16 Preference Integration Tests
+
+- [x] **Test: Preference manager integration**
+  - Test `LIMEPreferenceManager` initialization ✅ `testLIMEServicePreferenceIntegration()`
+  - Test preference default values ✅ `testLIMEServicePreferenceDefaultValues()`
+  - Test preference boundary values ✅ `testLIMEServicePreferenceBoundaryValues()`
+  - Test `loadSettings()` applies preferences ✅ `testLIMEServicePreferenceIntegration()`
+
+#### 5.17 SearchServer Integration Tests (via LIMEService)
+
+- [x] **Test: SearchServer lookup from LIMEService**
+  - Test `SearchServer.getMappingByCode()` integration ✅ `testLIMEServiceSearchServerIntegration()`
+  - Test cache reset after IM switch ✅ `testLIMEServiceSearchServerIntegration()`
+  - Test table name configuration ✅ `testLIMEServiceSearchServerIntegration()`
+
+#### 5.18 Error Handling and Edge Cases
+
+- [x] **Test: Null input handling**
+  - Test null `InputConnection` handling ✅ `testLIMEServiceNullInputHandling()`
+  - Test null `EditorInfo` handling ✅ `testLIMEServiceEditorInfoCreation()`
+  - Test null mapping results ✅ `testLIMEServiceMappingHandling()`
+
+- [x] **Test: Empty string handling**
+  - Test empty composing text ✅ `testLIMEServiceEmptyStringHandling()`
+  - Test empty candidate list ✅ `testLIMEServiceCandidateListOperations()`
+  - Test empty search results ✅ `testLIMEServiceEmptyStringHandling()`
+
+- [x] **Test: Boundary conditions**
+  - Test index bounds validation ✅ `testLIMEServiceIndexBoundsValidation()`
+  - Test list operations edge cases ✅ `testLIMEServiceListOperationsEdgeCases()`
+  - Test StringBuilder edge cases ✅ `testLIMEServiceStringBuilderEdgeCases()`
+
+**Proposed Test Coverage**: 113 test methods planned across all 18 subsections of IME logic (needs verification against existing `LIMEServiceTest.java`)
+
+---
+
+### Phase 6: Integration Tests
 
 **Objective**: Test interactions between layers with real implementations.
 
-**Precondition**: Both `LIME.IM_PHONETIC` and `LIME.IM_DAYI` cloud data are downloaded and imported at test class startup via `@BeforeClass` setup. If an IM table already contains data, it is cleared first to ensure a consistent starting state before (re)import. This guarantees all Phase 5 tests run against fresh, real production IM data.
+**Precondition**: Both `LIME.IM_PHONETIC` and `LIME.IM_DAYI` cloud data are downloaded and imported at test class startup via `@BeforeClass` setup. If an IM table already contains data, it is cleared first to ensure a consistent starting state before (re)import. This guarantees all Phase 6 tests run against fresh, real production IM data.
 
 - [x] **Test: Both cloud IM tables preloaded** ✅
   - `IntegrationTestSearchServerDBServer.setUpClass()` downloads `LIME.IM_PHONETIC` and `LIME.IM_DAYI` ✅
@@ -1659,19 +1957,19 @@ The following methods are primarily used by LIMEService and may not need compreh
   - Pre-import cleanup: `downloadAndWaitForImport()` clears table if non-empty ✅
   - Precondition verified: Both tables have records before tests execute ✅
 
-#### 5.1 SearchServer → LimeDB Integration
+#### 6.1 SearchServer → LimeDB Integration
 
-- [x] **Test: Complete search flow with REAL IM data** ✅ `IntegrationTestSearchServerDBServer.test_5_1_CompleteSearchFlow()`
+- [x] **Test: Complete search flow with REAL IM data** ✅ `IntegrationTestSearchServerDBServer.test_6_1_CompleteSearchFlow()`
   - Test `SearchServer.getMappingByCode()` → `LimeDB.getRecords()` with production phonetic data ✅
-  - Test caching behavior with real dataset ✅ `IntegrationTestSearchServerDBServer.test_5_1_CachingBehavior()`
-  - Test error handling and propagation ✅ `IntegrationTestSearchServerDBServer.test_5_1_ErrorHandlingPropagation()`
+  - Test caching behavior with real dataset ✅ `IntegrationTestSearchServerDBServer.test_6_1_CachingBehavior()`
+  - Test error handling and propagation ✅ `IntegrationTestSearchServerDBServer.test_6_1_ErrorHandlingPropagation()`
 
 - [x] **Test: Configuration operations** ✅
-  - Test `SearchServer.setImInfo()` → `LimeDB.setImInfo()` ✅ `IntegrationTestSearchServerDBServer.test_5_1_ConfigurationSetImInfo()`
-  - Test `SearchServer.getImInfo()` → `LimeDB.getImInfo()` ✅ `IntegrationTestSearchServerDBServer.test_5_1_ConfigurationGetImInfo()`
-  - Test data persistence ✅ `IntegrationTestSearchServerDBServer.test_5_1_DataPersistence()`
+  - Test `SearchServer.setImInfo()` → `LimeDB.setImInfo()` ✅ `IntegrationTestSearchServerDBServer.test_6_1_ConfigurationSetImInfo()`
+  - Test `SearchServer.getImInfo()` → `LimeDB.getImInfo()` ✅ `IntegrationTestSearchServerDBServer.test_6_1_ConfigurationGetImInfo()`
+  - Test data persistence ✅ `IntegrationTestSearchServerDBServer.test_6_1_DataPersistence()`
 
-#### 5.2 DBServer → LimeDB Integration
+#### 6.2 DBServer → LimeDB Integration
 
 - [x] **Test: Export flow with REAL IM data** ✅ `IntegrationTestSearchServerDBServer.test_5_2_ExportFlow()`
   - Test `DBServer.exportZippedDb()` → `LimeDB.prepareBackup()` with production phonetic data ✅
@@ -1684,21 +1982,21 @@ The following methods are primarily used by LIMEService and may not need compreh
   - Test data integrity after import ✅ `IntegrationTestSearchServerDBServer.test_5_2_DataIntegrityAfterImport()`
   - Test overwrite behavior ✅ `IntegrationTestSearchServerDBServer.test_5_2_OverwriteBehavior()`
 
-#### 5.3 UI → SearchServer Integration (Complete Flow)
+#### 6.3 UI → SearchServer Integration (Complete Flow)
 
-**Objective**: Test complete UI integration flows including remote import, hot path queries, and user learning behavior. Both PHONETIC and DAYI tables are available from Phase 5 precondition.
+**Objective**: Test complete UI integration flows including remote import, hot path queries, and user learning behavior. Both PHONETIC and DAYI tables are available from Phase 6 precondition.
 
-##### 5.3.1 Basic UI Operation Flow
+##### 6.3.1 Basic UI Operation Flow
 
 - [x] **Test: Complete UI operation flow** ✅ `UISearchServerIntegrationTest.test_5_3_1_CompleteUIOperationFlow()`
   - Test UI component → `SearchServer` → `LimeDB` → Database ✅
   - Test data flow and transformations ✅ `UISearchServerIntegrationTest.test_5_3_1_DataFlowTransformations()`
   - Test error handling at each layer ✅ `UISearchServerIntegrationTest.test_5_3_1_ErrorHandlingAtEachLayer()`
 
-##### 5.3.2 Remote Import + Hot Path Queries (Phonetic, Dayi)
+##### 6.3.2 Remote Import + Hot Path Queries (Phonetic, Dayi)
 
 - [x] **Precondition: Cloud URLs available** ✅ `UISearchServerIntegrationTest.test_5_3_2_0_CloudURLsAvailable()`
-  - Source: `SetupImFragment.getUrlForImType(String imType)` ✅
+  - Source: `SetupImFragment.getUrlForImTableVariant(String imTableVariant)` ✅
   - Verify URLs exist for `LIME.IM_PHONETIC` and `LIME.IM_DAYI` ✅ `UISearchServerIntegrationTest.test_5_3_2_0b_IMTypeConstantsExist()`
 
 - [x] **Test: Download + Import smallest IM DBs** ✅ `UISearchServerIntegrationTest.test_5_3_2_DownloadAndImportPhonetic()`, `UISearchServerIntegrationTest.test_5_3_2_DownloadAndImportDayi()`
@@ -1719,11 +2017,11 @@ The following methods are primarily used by LIMEService and may not need compreh
   - Note: User-visible messages are handled by controller; data layer remains consistent ✅
 
 - **References**
-  - [URL mapping source: SetupImFragment.getUrlForImType](app/src/main/java/net/toload/main/hd/ui/view/SetupImFragment.java#L912-L945)
+  - [URL mapping source: SetupImFragment.getUrlForImTableVariant](app/src/main/java/net/toload/main/hd/ui/view/SetupImFragment.java#L858-L891)
   - [IM type constants: LIME.IM_PHONETIC](app/src/main/java/net/toload/main/hd/global/LIME.java#L166), [LIME.IM_DAYI](app/src/main/java/net/toload/main/hd/global/LIME.java#L154)
   - [Cloud URLs: LIME.DATABASE_CLOUD_IM_PHONETIC](app/src/main/java/net/toload/main/hd/global/LIME.java#L90), [LIME.DATABASE_CLOUD_IM_DAYI](app/src/main/java/net/toload/main/hd/global/LIME.java#L98)
 
-##### 5.3.3 Learning Path (User Records) — Query Behavior
+##### 6.3.3 Learning Path (User Records) — Query Behavior
 
 - [x] **Precondition: Table imported** ✅ `UISearchServerIntegrationTest.test_5_3_3_0_PreconditionTableImported()`
   - Ensure `LIME.IM_PHONETIC` or `LIME.IM_DAYI` imported via 5.3.2 ✅
@@ -1740,7 +2038,7 @@ Call Chain Details (from FUNCTION_CALL_CHAINS.md):
 - `getMappingByCode()` hot path touches: remapping → dual-code expansion → blacklist → `db.rawQuery` → build result; cache improves subsequent calls
 - Learned data alters scoring and availability used in result construction
 
-#### 5.4 UI → DBServer → LimeDB Integration
+#### 6.4 UI → DBServer → LimeDB Integration
 
 - [x] **Test: Complete file operation flow** ✅
   - Test UI component → `DBServer` → `LimeDB` → Database ✅ `UIDBServerIntegrationTest.test_5_4_CompleteFileOperationFlow_Export()`, `UIDBServerIntegrationTest.test_5_4_CompleteFileOperationFlow_Import()`
@@ -1750,7 +2048,7 @@ Call Chain Details (from FUNCTION_CALL_CHAINS.md):
   - Test error handling ✅ `UIDBServerIntegrationTest.test_5_4_ErrorHandlingInFileOperations()`
   - Test related table operations ✅ `UIDBServerIntegrationTest.test_5_4_RelatedTableFileOperations()`
 
-#### 5.5 Backup Path (User Records) — Before Overwrite
+#### 6.5 Backup Path (User Records) — Before Overwrite
 
 - [x] **Precondition: Table has existing learned records** ✅
   - Ensure learned records exist for target table (e.g., `LIME.IM_PHONETIC`) ✅
@@ -1770,10 +2068,10 @@ Call Chain Details (from FUNCTION_CALL_CHAINS.md):
 - `SetupImController.clearTable(...)` → `SearchServer.backupUserRecords(table)` → `LimeDB.backupUserRecords()`
 - `importZippedDb(...)` (restore=true & count>0) → backup → import → optional restore
 
-#### 5.6 Restore Path (User Records) — After Import
+#### 6.6 Restore Path (User Records) — After Import
 
 - [x] **Precondition: Backup table present** ✅
-  - Ensure backup exists from 5.5 ✅
+  - Ensure backup exists from 6.5 ✅
 
 - [x] **Test: Restore after import** ✅ `BackupRestoreIntegrationTest.test_5_6_RestoreAfterImport()`
   - Invoke `SetupImController.importZippedDb(file, tableName, restoreUserRecords=true)` ✅
@@ -1796,13 +2094,112 @@ Call Chain Details (from FUNCTION_CALL_CHAINS.md):
 Call Chain Details (from FUNCTION_CALL_CHAINS.md):
 - `checkBackuptable(table)` → `restoreUserRecords(table)` via `SearchServer` → `LimeDB.restoreUserRecords()`
 - Improvement noted: restore logic centralized in `LimeDB`, Runnable simplified
+
+#### 6.7 LIMEService → SearchServer Integration (IME Logic with Real Data)
+
+**Objective**: Test complete IME input flow using real-world IM data, including soft keyboard and hard keyboard input, query paths, and learning behavior.
+
+**Precondition**: IM tables (PHONETIC/DAYI) preloaded from Phase 6 precondition.
+
+##### 6.7.1 Soft Keyboard Input Integration with Real IM Data
+
+- [ ] **Test: Soft keyboard input → query → candidates with real IM data**
+  - Simulate `onKey()` events for phonetic input codes (e.g., ㄅㄆㄇ)
+  - Invoke `LIMEService` input handling → `SearchServer.getMappingByCode()`
+  - Assert: candidates returned match production phonetic data
+  - Assert: candidate list populated in `CandidateView`
+  - Test with multiple IM types (Phonetic, Dayi)
+
+- [ ] **Test: Soft keyboard candidate selection → commit → learning**
+  - User types phonetic code → selects candidate from list
+  - Invoke `pickCandidateManually()` → `commitText()` on InputConnection
+  - Assert: selected word committed to input field
+  - Assert: score updated in database (learning path)
+  - Verify: `SearchServer.learnRelatedPhraseAndUpdateScore()` called
+
+- [ ] **Test: Soft keyboard composing text with real query results**
+  - Build composing text incrementally via `onKey()` events
+  - Assert: `updateCandidates()` called after each keystroke
+  - Assert: candidates update based on composing code prefix
+  - Test incremental search with phonetic/dayi codes
+
+##### 6.7.2 Hard Keyboard Input Integration with Real IM Data
+
+- [ ] **Test: Hardware keyboard `onKeyDown()` → query → candidates**
+  - Simulate hardware key events (`KeyEvent.ACTION_DOWN`)
+  - Invoke `LIMEService.onKeyDown()` → `translateKeyDown()` → query path
+  - Assert: key events translated to IM codes correctly
+  - Assert: candidates fetched from real IM data
+  - Test with QWERTY keyboard layout mapping
+
+- [ ] **Test: Hardware keyboard `onKeyUp()` processing**
+  - Simulate hardware key release events
+  - Invoke `LIMEService.onKeyUp()` → finalize input
+  - Assert: key release processed correctly
+  - Test shift/meta key state handling
+
+- [ ] **Test: Hardware keyboard special key handling**
+  - Test Enter key → commit composing text
+  - Test Backspace key → delete composing character
+  - Test Space key → auto-select or commit
+  - Test arrow keys → candidate navigation
+  - Test selection keys (1-9, 0) → pick candidate
+
+##### 6.7.3 Query and Caching Path with Real Data
+
+- [ ] **Test: Hot query path latency verification**
+  - First query (cold cache): measure latency with real phonetic data
+  - Subsequent queries (warm cache): verify faster response
+  - Assert: cache hit improves query performance
+  - Test with production-sized IM tables (15,000+ records)
+
+- [ ] **Test: Query result accuracy with production data**
+  - Query common phonetic codes (e.g., ㄅ → 八, 巴, 吧, ...)
+  - Assert: results match expected Chinese characters
+  - Assert: results sorted by score (learned entries first)
+  - Verify: dual-code expansion returns correct variants
+
+##### 6.7.4 Learning Path Integration
+
+- [ ] **Test: Score update after candidate selection**
+  - Select candidate word → verify score incremented in DB
+  - Query same code again → selected word appears higher
+  - Test score persistence across IME sessions
+
+- [ ] **Test: Related phrase learning**
+  - Select word → verify `learnRelatedPhraseAndUpdateScore()` called
+  - Query related phrase → verify learned phrases appear
+  - Test related phrase display in candidate view
+
+- [ ] **Test: User record backup/restore with learning data**
+  - Create learned entries via candidate selection
+  - Backup user records → reimport IM table → restore
+  - Assert: learned scores restored correctly
+  - Verify end-to-end learning persistence
+
+##### 6.7.5 IM Switching with Real Data
+
+- [ ] **Test: Switch between IM types with cached data**
+  - Start with Phonetic IM → query → switch to Dayi
+  - Assert: cache reset on IM switch
+  - Assert: new IM table loaded correctly
+  - Test `switchToNextActivatedIM()` with multiple IMs
+
+- [ ] **Test: IM configuration changes**
+  - Change phonetic keyboard layout (Standard → Eten)
+  - Assert: keyboard view updated correctly
+  - Assert: key mapping changes applied
+  - Test `setIMKeyboard()` integration
+
+**Test Coverage**: 15+ test methods covering IME integration with real-world IM data
+
 ---
 
-### Phase 6: Architecture Compliance Tests
+### Phase 7: Architecture Compliance Tests
 
 **Objective**: Verify architectural boundaries are respected.
 
-#### 6.1 Static Analysis Tests
+#### 7.1 Static Analysis Tests
 
 - [ ] **Test: No direct LimeDB access from UI**
   - Use static analysis to find `new LimeDB()` in UI package
@@ -1819,7 +2216,7 @@ Call Chain Details (from FUNCTION_CALL_CHAINS.md):
   - Verify all file operations are in `DBServer.java` (except utilities)
   - Report any violations
 
-#### 6.2 Runtime Architecture Tests
+#### 7.2 Runtime Architecture Tests
 
 - [ ] **Test: Component initialization**
   - Verify UI components initialize `SearchServer`, not `LimeDB`
@@ -1833,11 +2230,11 @@ Call Chain Details (from FUNCTION_CALL_CHAINS.md):
 
 ---
 
-### Phase 7: Regression Tests
+### Phase 8: Regression Tests
 
 **Objective**: Ensure existing functionality still works.
 
-#### 7.1 Core Functionality Tests
+#### 8.1 Core Functionality Tests
 
 - [ ] **Test: IM configuration**
   - Test creating new IM
@@ -1876,7 +2273,7 @@ Call Chain Details (from FUNCTION_CALL_CHAINS.md):
   - Test `emojiConvert()` through `SearchServer`
   - Test various input strings
 
-#### 7.2 Edge Cases
+#### 8.2 Edge Cases
 
 - [ ] **Test: Null handling**
   - Test all methods with null parameters
@@ -1896,11 +2293,11 @@ Call Chain Details (from FUNCTION_CALL_CHAINS.md):
 
 ---
 
-### Phase 8: Performance Tests
+### Phase 9: Performance Tests
 
 **Objective**: Ensure no performance regression.
 
-#### 8.1 Database Operation Benchmarks
+#### 9.1 Database Operation Benchmarks
 
 - [ ] **Benchmark: Count operations**
   - Compare `countRecords()` vs old `countMapping()`
@@ -1917,7 +2314,7 @@ Call Chain Details (from FUNCTION_CALL_CHAINS.md):
   - Measure time for large databases
   - Target: No more than 5% regression
 
-#### 8.2 File Operation Benchmarks
+#### 9.2 File Operation Benchmarks
 
 - [ ] **Benchmark: Export operations**
   - Measure time for exporting large databases
@@ -1929,7 +2326,7 @@ Call Chain Details (from FUNCTION_CALL_CHAINS.md):
   - Compare new `DBServer` methods vs old methods
   - Target: Same or better performance
 
-#### 8.3 Memory Usage
+#### 9.3 Memory Usage
 
 - [ ] **Test: Memory leaks**
   - Test long-running operations
@@ -2177,7 +2574,8 @@ The phased approach allows for incremental testing and validation, ensuring the 
 - [x] All LimeDB unit tests pass (including export/import tests for related tables)
 - [x] All DBServer unit tests pass (including import/export pair tests with data consistency)
 - [x] All SearchServer unit tests pass (comprehensive coverage implemented)
-- [ ] All integration tests pass
+- [ ] All LIMEService IME logic tests verified (Phase 5 tests exist but need verification - see Phase 5)
+- [ ] All integration tests pass (including IME integration with real-world IM data - see Section 6.7)
 - [ ] Architecture compliance tests pass (no violations)
 - [ ] All UI component tests pass
 - [ ] All regression tests pass
@@ -2187,7 +2585,7 @@ The phased approach allows for incremental testing and validation, ensuring the 
 
 ---
 
-**Document Version**: 1.1  
-**Last Updated**: 2025-01-XX  
-**Status**: In Progress - SearchServer tests completed, LimeDB export/import tests completed
+**Document Version**: 1.2  
+**Last Updated**: 2025-12-29  
+**Status**: In Progress - SearchServer tests completed, LimeDB export/import tests completed; Phase 5 IME Logic Tests planned (tests exist in LIMEServiceTest.java, need verification); IME integration tests planned (Section 6.7)
 

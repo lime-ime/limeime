@@ -458,6 +458,84 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return 0; // Return 0 if column is missing
     }
 
+    // ==================== Cursor to Object Conversion ====================
+
+    /**
+     * Creates a Record object from current cursor row.
+     * 
+     * <p>This method reads the current row from the cursor and creates
+     * a Record object with the column values. The cursor should be
+     * positioned at the desired row before calling this method.
+     * 
+     * @param cursor The Cursor positioned at the desired row
+     * @return A new Record object populated with cursor data
+     */
+    public Record recordFromCursor(Cursor cursor) {
+        Record record = new Record();
+        record.setId(getCursorString(cursor, LIME.DB_COLUMN_ID));
+        record.setCode(getCursorString(cursor, LIME.DB_COLUMN_CODE));
+        record.setCode3r(getCursorString(cursor, LIME.DB_COLUMN_CODE3R));
+        record.setWord(getCursorString(cursor, LIME.DB_COLUMN_WORD));
+        record.setRelated(getCursorString(cursor, LIME.DB_COLUMN_RELATED));
+        record.setScore(getCursorInt(cursor, LIME.DB_COLUMN_SCORE));
+        record.setBasescore(getCursorInt(cursor, LIME.DB_COLUMN_BASESCORE));
+        return record;
+    }
+
+    /**
+     * Converts a Cursor to a List of Record objects.
+     * 
+     * <p>This method iterates through all rows in the cursor and creates
+     * Record objects for each row. The cursor is closed after processing.
+     * 
+     * @param cursor The Cursor containing database query results
+     * @return List of Record objects
+     */
+    public List<Record> recordListFromCursor(Cursor cursor) {
+        List<Record> list = new ArrayList<>();
+        cursor.moveToFirst();
+        while (!cursor.isAfterLast()) {
+            list.add(recordFromCursor(cursor));
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return list;
+    }
+
+    /**
+     * Creates a Related object from current cursor row (for related table).
+     * 
+     * <p>This method reads from the related table columns (pword, cword, userscore).
+     * 
+     * @param cursor The Cursor positioned at the desired row
+     * @return A new Related object populated with cursor data
+     */
+    public Related relatedFromCursor(Cursor cursor) {
+        Related record = new Related();
+        record.setId(getCursorString(cursor, LIME.DB_RELATED_COLUMN_ID));
+        record.setPword(getCursorString(cursor, LIME.DB_RELATED_COLUMN_PWORD));
+        record.setCword(getCursorString(cursor, LIME.DB_RELATED_COLUMN_CWORD));
+        record.setUserscore(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_USERSCORE));
+        record.setBasescore(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_BASESCORE));
+        return record;
+    }
+
+    /**
+     * Converts a Cursor to a List of Related objects.
+     * 
+     * @param cursor The Cursor containing database query results from related table
+     * @return List of Related objects
+     */
+    public List<Related> relatedListFromCursor(Cursor cursor) {
+        List<Related> list = new ArrayList<>();
+        cursor.moveToFirst();
+        while (!cursor.isAfterLast()) {
+            list.add(relatedFromCursor(cursor));
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return list;
+    }
 
     /**
      * Validates table name against whitelist to prevent SQL injection.
@@ -5150,7 +5228,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
-            Record r = Record.get(cursor);
+            Record r = recordFromCursor(cursor);
             result.add(r);
             cursor.moveToNext();
         }
@@ -5178,7 +5256,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 null, null, null, null);
 
         if (cursor != null && cursor.moveToFirst()) {
-            record = Record.get(cursor);
+            record = recordFromCursor(cursor);
         }
         if (cursor != null) {
             cursor.close();
@@ -5464,9 +5542,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 return 0;
             }
             
-            // Convert cursor to list of records
-            List<net.toload.main.hd.data.Record> backuplist = net.toload.main.hd.data.Record.getList(cursorbackup);
-            cursorbackup.close();
+            // Convert cursor to list of records (cursor closed by recordListFromCursor)
+            List<Record> backuplist = recordListFromCursor(cursorbackup);
+
             
             if (backuplist.isEmpty()) {
                 if (DEBUG) {
@@ -5477,7 +5555,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             
             // Restore each record
             int restoredCount = 0;
-            for (net.toload.main.hd.data.Record w : backuplist) {
+            for (Record w : backuplist) {
                 if (w != null && w.getCode() != null && w.getWord() != null) {
                     addOrUpdateMappingRecord(table, w.getCode(), w.getWord(), w.getScore());
                     restoredCount++;

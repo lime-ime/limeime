@@ -284,7 +284,7 @@ public class ManageRelatedFragment extends Fragment implements ManageRelatedView
 
         // Remove from the temp list
         for(int i = 0 ; i < total ; i++){
-           if(id== this.relatedlist.get(i).getId()){
+           if(id== this.relatedlist.get(i).getIdAsInt()){
                this.relatedlist.remove(i);
                break;
            }

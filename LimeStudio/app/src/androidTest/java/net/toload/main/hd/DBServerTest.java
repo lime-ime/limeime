@@ -3450,6 +3450,7 @@ public class DBServerTest {
             }
             
             limeDB.setTableName("custom");
+            limeDB.clearTable(("custom"));
             limeDB.addOrUpdateMappingRecord("custom", "backup_test1", "備份測試1", 100);
             limeDB.addOrUpdateMappingRecord("custom", "backup_test2", "備份測試2", 200);
             

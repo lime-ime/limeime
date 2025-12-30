@@ -132,13 +132,13 @@ SearchServer (Database Interface Layer)
 #### File Import Operations
 - `importTxtTable(String filename, String tablename, LIMEProgressListener)` - Import text mapping file (.lime, .cin) from file path
 - `importTxtTable(File sourcefile, String tablename, LIMEProgressListener)` - Import text mapping file (.lime, .cin) from File object
-- `importDb(File sourcedb, String imtype)` - Import uncompressed database file into specified IM table
-- `importZippedDb(File compressedSourceDB, String imtype)` - Import compressed database file (.limedb) into specified IM table (handles unzip)
+- `importDb(File sourcedb, String tableName)` - Import uncompressed database file into specified IM table
+- `importZippedDb(File compressedSourceDB, String tableName)` - Import compressed database file (.limedb) into specified IM table (handles unzip)
 - `importDbRelated(File sourcedb)` - Import uncompressed related database file into related table
 - `importZippedDbRelated(File compressedSourceDB)` - Import compressed related database file (.limedb) into related table (handles unzip)
 
 #### File Export Operations
-- `exportZippedDb(String imType, File targetFile, Runnable progressCallback)` - Export IM database to zipped .limedb file (renamed from `exportImDatabase`)
+- `exportZippedDb(String tableName, File targetFile, Runnable progressCallback)` - Export IM database to zipped .limedb file (renamed from `exportImDatabase`)
 - `exportZippedDbRelated(File targetFile, Runnable progressCallback)` - Export related phrase database to zipped .limedb file (renamed from `exportRelatedDatabase`)
 
 #### Backup/Restore Operations

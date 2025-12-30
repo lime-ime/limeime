@@ -251,7 +251,7 @@ public class SearchServerTest {
             List<Record> records = searchServer.getRecords("custom", "test_code", true, 10, 0);
             if (records != null && !records.isEmpty()) {
                 Record record = records.get(0);
-                long id = record.getId();
+                long id = record.getIdAsInt();
                 
                 // Test getRecord()
                 Record retrievedRecord = searchServer.getRecord("custom", id);
@@ -290,7 +290,7 @@ public class SearchServerTest {
             List<Record> records = searchServer.getRecords("custom", "delete_test", true, 10, 0);
             if (records != null && !records.isEmpty()) {
                 Record record = records.get(0);
-                long id = record.getId();
+                long id = record.getIdAsInt();
                 
                 // Delete the record using whereClause and whereArgs
                 int deleted = searchServer.deleteRecord("custom", LIME.DB_COLUMN_ID + " = ?", 
