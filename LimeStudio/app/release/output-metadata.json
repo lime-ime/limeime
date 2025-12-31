@@ -4,16 +4,16 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "net.toload.main.hd2025",
+  "applicationId": "net.toload.main.hd2026",
   "variantName": "release",
   "elements": [
     {
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 2025,
+      "versionCode": 2026,
       "versionName": "6.0.0",
-      "outputFile": "LIMEHD2025-6.0.0.apk"
+      "outputFile": "LIMEHD2026-6.0.0.apk"
     }
   ],
   "elementType": "File",

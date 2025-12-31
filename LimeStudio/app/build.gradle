@@ -30,11 +30,11 @@ android {
     }
     compileSdkVersion  36
     defaultConfig {
-        applicationId = "net.toload.main.hd2025"
+        applicationId = "net.toload.main.hd2026"
 
         minSdkVersion  21
         targetSdkVersion  36
-        versionCode = 2025
+        versionCode = 2026
         versionName = '6.0.0'
 
         multiDexEnabled = true
@@ -59,7 +59,7 @@ android {
     }
     applicationVariants.all { variant ->
         variant.outputs.all {
-            outputFileName = "LIMEHD2025-${variant.versionName}.apk"
+            outputFileName = "LIMEHD${variant.versionCode}-${variant.versionName}.apk"
         }
     }
     productFlavors {
