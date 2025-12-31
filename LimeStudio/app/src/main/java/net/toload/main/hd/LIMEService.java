@@ -480,7 +480,7 @@ public class LIMEService extends InputMethodService
 
         // -> 26.May.2011 by Art : Update keyboard list when user click the keyboard.
         try {
-            mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardList());
+            mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardConfigList());
             mKeyboardSwitcher.setImConfigKeyboardList(SearchSrv.getAllImKeyboardConfigList());
         } catch (RemoteException e) {
             Log.e(TAG, "Error setting keyboard/IM list in onFinishInput", e);
@@ -2055,7 +2055,7 @@ public class LIMEService extends InputMethodService
         initialIMKeyboard();
         Toast.makeText(this, activeIMName, Toast.LENGTH_SHORT).show();
         try {
-            mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardList());
+            mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardConfigList());
             mKeyboardSwitcher.setImConfigKeyboardList(SearchSrv.getAllImKeyboardConfigList());
             //mKeyboardSwitcher.clearKeyboards();
         } catch (RemoteException e) {
@@ -2240,7 +2240,7 @@ public class LIMEService extends InputMethodService
         initialIMKeyboard();
 
         try {
-            mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardList());
+            mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardConfigList());
             mKeyboardSwitcher.setImConfigKeyboardList(SearchSrv.getAllImKeyboardConfigList());
             //mKeyboardSwitcher.clearKeyboards();
 
@@ -3149,7 +3149,7 @@ public class LIMEService extends InputMethodService
 
         if (mKeyboardSwitcher.getKeyboardSize() == 0 && SearchSrv != null) {
             try {
-                mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardList());
+                mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardConfigList());
                 mKeyboardSwitcher.setImConfigKeyboardList(SearchSrv.getAllImKeyboardConfigList());
             } catch (RemoteException e) {
                 Log.e(TAG, "Error setting keyboard/IM list", e);

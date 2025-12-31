@@ -464,7 +464,7 @@ importDbRelated(file) → importDb(file, null, true, true)
 ~~importDb(String, String)~~ → Removed
 
 [Note: DBServer still provides wrappers as convenience methods]
-DBServer.importDb(file, imType) → LimeDB.importDb(file, [imType], false, true)
+DBServer.importDb(file, tableName) → LimeDB.importDb(file, [tableName], false, true)
 DBServer.importDbRelated(file) → LimeDB.importDbRelated(file)
 ```
 
@@ -636,7 +636,7 @@ SetupImLoadDialog.onPostExecute()
 **AFTER:**
 ```
 SetupImLoadDialog.onPostExecute()
-  └─> searchServer.restoreUserRecords(imtype)
+  └─> searchServer.restoreUserRecords(tableName)
       └─> dbadapter.restoreUserRecords(table)
           ├─> [Validate table name]
           ├─> countRecords(backupTableName, null, null)
@@ -673,21 +673,21 @@ importZippedDb(File compressedSourceDB, String imtype)
 
 **AFTER:**
 ```
-SetupImFragment.importTxtTable(File sourceFile, String imtype, boolean restoreUserRecords)
+SetupImFragment.importTxtTable(File sourceFile, String tableName, boolean restoreUserRecords)
   ├─> handler.showProgress(false, message)
-  ├─> DBServer.importTxtTable(sourceFile.getAbsolutePath(), imtype, progressListener)
+  ├─> DBServer.importTxtTable(sourceFile.getAbsolutePath(), tableName, progressListener)
   │   ├─> datasource.setFinish(false)
   │   ├─> datasource.setFilename(sourcefile)
   │   ├─> datasource.importTxtTable(tablename, progressListener)
   │   │   └─> [See LimeDB importTxtTable chain above - uses countRecords()]
   │   └─> resetCache()
   │       └─> SearchServer.resetCache(true)
-  └─> [If restoreUserRecords: searchServer.restoreUserRecords(imtype)]
+  └─> [If restoreUserRecords: searchServer.restoreUserRecords(tableName)]
 
-importZippedDb(File compressedSourceDB, String imtype)
+importZippedDb(File compressedSourceDB, String tableName)
   ├─> LIMEUtilities.unzip(compressedSourceDB.getAbsolutePath(), targetDir, true)
   │   └─> [Extract zip file to temporary directory]
-  ├─> datasource.importDb(unzippedFile, [imtype], false, true) [NEW - Unified method]
+  ├─> datasource.importDb(unzippedFile, [tableName], false, true) [NEW - Unified method]
   │   └─> [See LimeDB importDb chain above]
   └─> SearchServer.resetCache(true)
 
@@ -907,17 +907,17 @@ ShareDbRunnable.run()
 
 **AFTER:**
 ```
-DBServer.exportZippedDb(String imType, File targetFile, ProgressCallback progressCallback) [NEW]
+DBServer.exportZippedDb(String tableName, File targetFile, ProgressCallback progressCallback) [NEW]
   ├─> [Create cache directory]
   ├─> [Delete existing files]
   ├─> [Copy blank DB from raw resource]
   │   └─> LIMEUtilities.copyFile(rawResource, targetFile)
-  ├─> datasource.prepareBackupDb(targetfile, imtype)
+  ├─> datasource.prepareBackupDb(targetfile, tableName)
   │   └─> [SQL operations in LimeDB - unchanged]
   └─> LIMEUtilities.zip(targetfilezip, targetfile, true)
 
 [ShareDbRunnable.run() - AFTER]
-  └─> DBServer.exportZippedDb(imType, targetFile, progressCallback)
+  └─> DBServer.exportZippedDb(tableName, targetFile, progressCallback)
 ```
 
 **Improvement**: All file operations centralized in `DBServer`, Runnable becomes thin wrapper
@@ -989,10 +989,10 @@ SetupImLoadRunnable.run()
 SetupImLoadRunnable.run()
   ├─> downloadRemoteFile(ctx, url) [IN RUNNABLE]
   │   └─> LIMEUtilities.downloadRemoteFile()
-  ├─> dbsrv.importZippedDb(tempfile, imtype) [IN DBSERVER]
+  ├─> dbsrv.importZippedDb(tempfile, tableName) [IN DBSERVER]
   └─> [If restorePreference - IN RUNNABLE]
-      ├─> searchServer.checkBackuptable(imtype)
-      └─> searchServer.restoreUserRecords(imtype) [NEW - Centralized in LimeDB]
+      ├─> searchServer.checkBackuptable(tableName)
+      └─> searchServer.restoreUserRecords(tableName) [NEW - Centralized in LimeDB]
           └─> dbadapter.restoreUserRecords(table)
               ├─> countRecords(backupTableName, null, null)
               ├─> getBackupTableRecords(backupTableName)
@@ -1279,13 +1279,13 @@ NavigationDrawerFragment.onMenuItemSelected() [action_reset]
 | `getKeyboardList()` | `dbadapter.getKeyboardList()` | Get available keyboards |
 | `getIm(String code, String type)` | `dbadapter.getIm(code, type)` | Get IM list by type (for UI components) |
 | `getKeyboard()` | `dbadapter.getKeyboard()` | Get keyboard list (for UI components) |
-| `getImInfo(String imConfig, String field)` | `dbadapter.getImInfo(imConfig, field)` | Get IM configuration info |
-| `setImInfo(String imConfig, String field, String value)` | `dbadapter.setImInfo(imConfig, field, value)` | Set IM configuration info |
-| `setIMKeyboard(String imConfig, String value, String keyboard)` | `dbadapter.setIMKeyboard(imConfig, value, keyboard)` | Set IM keyboard assignment |
-| `removeImInfo(String imConfig, String field)` | `dbadapter.removeImInfo(imConfig, field)` | Remove IM configuration info |
-| `resetImInfo(String imConfig)` | `dbadapter.resetImInfo(imConfig)` | Reset all IM information for a specific IM |
+| `getImConfig(String imCode, String field)` | `dbadapter.getImConfig(imCode, field)` | Get IM configuration info |
+| `setImConfig(String imCode, String field, String value)` | `dbadapter.setImConfig(imCode, field, value)` | Set IM configuration info |
+| `setIMKeyboard(String imCode, String value, String keyboard)` | `dbadapter.setIMKeyboard(imCode, value, keyboard)` | Set IM keyboard assignment |
+| `removeImConfig(String imCode, String field)` | `dbadapter.removeImConfig(imCode, field)` | Remove IM configuration info |
+| `resetImConfig(String imCode)` | `dbadapter.resetImInfo(imCode)` | Reset all IM information for a specific IM |
 | `getKeyboardInfo(String keyboardCode, String field)` | `dbadapter.getKeyboardInfo(keyboardCode, field)` | Get keyboard information |
-| `getKeyboardCode(String imConfig)` | `dbadapter.getKeyboardCode(imConfig)` | Get keyboard code assigned to an IM |
+| `getKeyboardCode(String imCode)` | `dbadapter.getKeyboardCode(imCode)` | Get keyboard code assigned to an IM |
 | `getKeyboardObj(String keyboard)` | `dbadapter.getKeyboardObj(keyboard)` | Get keyboard object information |
 | `checkBackuptable(String table)` | `dbadapter.checkBackupTable(table)` | Check if backup table exists and has records |
 | `backupUserRecords(String table)` | `dbadapter.backupUserRecords(table)` | Backup user-learned records to backup table |
@@ -1726,9 +1726,9 @@ SetupImLoadRunnable.run()
   │   └─> DBServer.importMapping()
   ├─> datasource.rawQuery("select * from " + backupTableName) [SQL in Runnable]
   │   └─> SQLiteDatabase.rawQuery()
-  ├─> datasource.setImInfo(imConfig, field, value) [Direct LimeDB access]
+  ├─> datasource.setImInfo(code, field, value) [Direct LimeDB access]
   │   └─> LimeDB.setImInfo()
-  └─> datasource.setIMKeyboard(imConfig, value, keyboard) [Direct LimeDB access]
+  └─> datasource.setIMKeyboard(code, value, keyboard) [Direct LimeDB access]
       └─> LimeDB.setIMKeyboard()
 ```
 
@@ -1737,12 +1737,12 @@ SetupImLoadRunnable.run()
 SetupImLoadRunnable.run()
   ├─> downloadRemoteFile(ctx, url) [File operation in Runnable]
   │   └─> LIMEUtilities.downloadRemoteFile()
-  ├─> dbsrv.importZippedDb(tempfile, imtype) [File operation in DBServer]
+  ├─> dbsrv.importZippedDb(tempfile, tableName) [File operation in DBServer]
   │   └─> LimeDB.importDb()
   ├─> searchServer.resetCache() [Via SearchServer]
   └─> [If restorePreference]
-      ├─> searchServer.checkBackuptable(imtype) [Via SearchServer]
-      └─> searchServer.restoreUserRecords(imtype) [Via SearchServer - Centralized in LimeDB]
+      ├─> searchServer.checkBackuptable(tableName) [Via SearchServer]
+      └─> searchServer.restoreUserRecords(tableName) [Via SearchServer - Centralized in LimeDB]
           └─> dbadapter.restoreUserRecords(table)
 ```
 

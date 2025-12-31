@@ -278,11 +278,11 @@ public class RegressionTest {
     }
 
     // ============================================================
-    // 6.7.1 Soft Keyboard Input Integration
+    // 8.1 Soft Keyboard Input Integration
     // ============================================================
 
     @Test
-    public void test_6_7_1_SoftKeyboardInputWithRealData() {
+    public void test_8_1_SoftKeyboardInputWithRealData() {
         // Test query for "1" (ㄅ) using phonetic table
         // Should return candidates starting with ㄅ
 
@@ -324,7 +324,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_1_IncrementalComposingText() {
+    public void test_8_1_IncrementalComposingText() {
         // Test building composing text "j6" (ㄅㄜ)
 
         try {
@@ -362,11 +362,11 @@ public class RegressionTest {
     }
 
     // ============================================================
-    // 6.7.2 Hard Keyboard Input Integration
+    // 8.2 Hard Keyboard Input Integration
     // ============================================================
 
     @Test
-    public void test_6_7_2_HardwareKeyboardInput() {
+    public void test_8_2_HardwareKeyboardInput() {
         // Simulate hardware keyboard '1' key (Unicode 49)
         // We call onKey directly to avoid dependencies on KeyCharacterMap.getUnicodeChar()
         // which can be unreliable in instrumentation tests without a full device environment.
@@ -405,11 +405,11 @@ public class RegressionTest {
     }
 
     // ============================================================
-    // 6.7.3 Query and Caching Path with Real Data
+    // 8.3 Query and Caching Path with Real Data
     // ============================================================
 
     @Test
-    public void test_6_7_3_QueryLatencyAndCaching() throws Exception {
+    public void test_8_3_QueryLatencyAndCaching() throws Exception {
         // We can't easily measure internal query time of service from outside,
         // but we can verify response speed through public behavior or use existing controller
 
@@ -436,11 +436,11 @@ public class RegressionTest {
 
 
     // ============================================================
-    // 6.7.4 Learning Path Integration
+    // 8.4 Learning Path Integration
     // ============================================================
 
     @Test
-    public void test_6_7_4_ScoreUpdateAfterSelection() throws Exception {
+    public void test_8_4_ScoreUpdateAfterSelection() throws Exception {
         // This test requires mocking interactions deeper in the service or checking side effects
         // Here we'll simulate the effect: selecting a word increases its score.
         searchServer = getSearchServer();
@@ -482,11 +482,11 @@ public class RegressionTest {
     }
 
     // ============================================================
-    // 6.7.4.1 learnRelatedPhraseAndUpdateScore() Method Tests
+    // 8.4.1 learnRelatedPhraseAndUpdateScore() Method Tests
     // ============================================================
 
     @Test
-    public void test_6_7_4_1_LearnRelatedPhraseAndUpdateScore() throws Exception {
+    public void test_8_4_1_LearnRelatedPhraseAndUpdateScore() throws Exception {
         // Create test mapping
         Mapping mapping = new Mapping();
         mapping.setCode("ji3");
@@ -529,7 +529,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_1_LearnWithNullMapping() throws Exception {
+    public void test_8_4_1_LearnWithNullMapping() throws Exception {
         SearchServer searchServer = getSearchServer();
         assertNotNull("SearchServer should be available", searchServer);
 
@@ -553,7 +553,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_1_LearnThreadSafety() throws Exception {
+    public void test_8_4_1_LearnThreadSafety() throws Exception {
         SearchServer searchServer = getSearchServer();
         assertNotNull("SearchServer should be available", searchServer);
 
@@ -588,7 +588,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_1_ScoreAccumulation() throws Exception {
+    public void test_8_4_1_ScoreAccumulation() throws Exception {
         SearchServer searchServer = getSearchServer();
         assertNotNull("SearchServer should be available", searchServer);
 
@@ -622,11 +622,11 @@ public class RegressionTest {
     }
 
     // ============================================================
-    // 6.7.4.2 learnRelatedPhrase() Method Tests
+    // 8.4.2 learnRelatedPhrase() Method Tests
     // ============================================================
 
     @Test
-    public void test_6_7_4_2_LearnRelatedPhraseConsecutive() throws Exception {
+    public void test_8_4_2_LearnRelatedPhraseConsecutive() throws Exception {
         // Enable learning preference
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
@@ -668,7 +668,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_2_LearnRelatedPhraseDisabled() throws Exception {
+    public void test_8_4_2_LearnRelatedPhraseDisabled() throws Exception {
         // Test that preference flag is respected (read-only in test environment)
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
@@ -701,7 +701,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_2_LearnRelatedPhraseSingleWord() throws Exception {
+    public void test_8_4_2_LearnRelatedPhraseSingleWord() throws Exception {
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
 
@@ -731,7 +731,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_2_LearnRelatedPhraseSkipNull() throws Exception {
+    public void test_8_4_2_LearnRelatedPhraseSkipNull() throws Exception {
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
 
@@ -767,7 +767,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_2_LearnRelatedPhraseWithPunctuation() throws Exception {
+    public void test_8_4_2_LearnRelatedPhraseWithPunctuation() throws Exception {
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
 
@@ -799,7 +799,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_2_LearnRelatedPhraseTriggersLD() throws Exception {
+    public void test_8_4_2_LearnRelatedPhraseTriggersLD() throws Exception {
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
         // Note: Learn preferences are read-only, using current settings
@@ -845,11 +845,11 @@ public class RegressionTest {
     }
 
     // ============================================================
-    // 6.7.4.3 learnLDPhrase() Method Tests
+    // 8.4.3 learnLDPhrase() Method Tests
     // ============================================================
 
     @Test
-    public void test_6_7_4_3_LearnLDPhraseTwoChar() throws Exception {
+    public void test_8_4_3_LearnLDPhraseTwoChar() throws Exception {
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
 
@@ -888,7 +888,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_3_LearnLDPhraseThreeChar() throws Exception {
+    public void test_8_4_3_LearnLDPhraseThreeChar() throws Exception {
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
 
@@ -927,7 +927,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_3_LearnLDPhraseFourCharLimit() throws Exception {
+    public void test_8_4_3_LearnLDPhraseFourCharLimit() throws Exception {
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
 
@@ -966,7 +966,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_3_LearnLDPhraseSkipsEnglish() throws Exception {
+    public void test_8_4_3_LearnLDPhraseSkipsEnglish() throws Exception {
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
 
@@ -991,7 +991,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_3_LearnLDPhraseMultiCharBase() throws Exception {
+    public void test_8_4_3_LearnLDPhraseMultiCharBase() throws Exception {
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
 
@@ -1024,7 +1024,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_3_LearnLDPhraseReverseLookup() throws Exception {
+    public void test_8_4_3_LearnLDPhraseReverseLookup() throws Exception {
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
 
@@ -1053,7 +1053,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_3_LearnLDPhraseAbandonOnFailedLookup() throws Exception {
+    public void test_8_4_3_LearnLDPhraseAbandonOnFailedLookup() throws Exception {
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
 
@@ -1078,7 +1078,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_3_LearnLDPhraseSkipsPartialMatch() throws Exception {
+    public void test_8_4_3_LearnLDPhraseSkipsPartialMatch() throws Exception {
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
 
@@ -1103,7 +1103,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_3_LearnLDPhraseSkipsComposing() throws Exception {
+    public void test_8_4_3_LearnLDPhraseSkipsComposing() throws Exception {
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
 
@@ -1135,11 +1135,11 @@ public class RegressionTest {
     }
 
     // ============================================================
-    // 6.7.4.4 Integration Tests: Complete Learning Flow
+    // 8.4.4 Integration Tests: Complete Learning Flow
     // ============================================================
 
     @Test
-    public void test_6_7_4_4_CompleteLearningFlow() throws Exception {
+    public void test_8_4_4_CompleteLearningFlow() throws Exception {
         // Enable all learning preferences
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
@@ -1199,7 +1199,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_4_LearningPreferenceCombinations() throws Exception {
+    public void test_8_4_4_LearningPreferenceCombinations() throws Exception {
         SearchServer searchServer = getSearchServer();
         LIMEPreferenceManager pref = getLIMEPref();
 
@@ -1249,7 +1249,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void test_6_7_4_4_LearningPersistenceAcrossSessions() throws Exception {
+    public void test_8_4_4_LearningPersistenceAcrossSessions() throws Exception {
         LIMEPreferenceManager pref = getLIMEPref();
         // Note: Learn preferences are read-only, using current settings
         // Note: Learn preferences are read-only, using current settings
@@ -1318,11 +1318,11 @@ public class RegressionTest {
     }
 
     // ============================================================
-    // 6.7.5 IM Switching
+    // 8.5 IM Switching
     // ============================================================
 
     @Test
-    public void test_6_7_5_SwitchBetweenIM() throws Exception {
+    public void test_8_5_SwitchBetweenIM() throws Exception {
         // Test switching from Phonetic to Dayi
         SearchServer searchServer = getSearchServer();
 

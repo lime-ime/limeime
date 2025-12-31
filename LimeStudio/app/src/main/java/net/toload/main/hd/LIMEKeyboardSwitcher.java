@@ -444,44 +444,20 @@ public class LIMEKeyboardSwitcher {
     	this.mIsShifted = isShift;
     	if(mode!=0) this.mMode = mode;
     	
-    	String imcode = "";
+    	String localImCode = "";
         if(!imCode.equals("wb") && !imCode.equals("hs") ){
-            if(imConfigMap != null) imcode = imConfigMap.get(imCode);
+            if(imConfigMap != null) localImCode = imConfigMap.get(imCode);
         }else{
-            imcode = imCode;
+            localImCode = imCode;
         }
 
         Keyboard kConfig=null;
     	
-    	if(imcode == null || imcode.isEmpty() || imcode.equals("custom")){
-    		imcode = "lime";
-        	if(kbMap !=null) kConfig= kbMap.get(imcode);
-    		}else if(imcode.equals("wb")){
-    		// Art 28/Sep/2011 Force WB to use it special design keyboard layout
-            kConfig = new Keyboard();
-			kConfig.setCode("wb");
-			kConfig.setName("筆順五碼");
-			kConfig.setDescription("筆順五碼");
-			kConfig.setType("phone");
-			kConfig.setImage("wb_keyboard_preview");
-			kConfig.setImkb("lime_wb");
-			kConfig.setImshiftkb("lime_wb");
-			kConfig.setEngkb("lime_abc");
-			kConfig.setEngshiftkb("lime_abc_shift");
-		}else if(imcode.equals("hs")) {
-            // Art 7/Feb/2012 HS Input Method
-            kConfig = new Keyboard();
-            kConfig.setCode("hs");
-            kConfig.setName("華象直覺");
-            kConfig.setDescription("華象直覺");
-            kConfig.setType("phone");
-            kConfig.setImage("hs_keyboard_preview");
-            kConfig.setImkb("lime_hs");
-            kConfig.setImshiftkb("lime_hs_shift");
-            kConfig.setEngkb("lime_abc");
-            kConfig.setEngshiftkb("lime_abc_shift");
-        } else {
-        	if(kbMap !=null) kConfig= kbMap.get(imcode);
+    	if(localImCode == null || localImCode.isEmpty() || localImCode.equals("custom")) {
+            localImCode = "lime";
+            if (kbMap != null)  kConfig = kbMap.get(localImCode);
+        } else if(kbMap !=null) {
+            kConfig= kbMap.get(localImCode);
 		}
     	
     	KeyboardId kid;
@@ -511,7 +487,7 @@ public class LIMEKeyboardSwitcher {
 	                break;
 	            case MODE_URL:
 	            	//Log.i("ART","KBMODE ->: url");
-	            	if(!imcode.equals("wb")){
+	            	if(!localImCode.equals("wb")){
 		            	if(mLIMEPref.getShowNumberRowInEnglish()){
 		            		if(isShift)
 		            			kid = new KeyboardId(getKeyboardXMLID("lime_english_number_shift"), KEYBOARD_MODE_URL, true);
@@ -532,7 +508,7 @@ public class LIMEKeyboardSwitcher {
 	                break;
 	            case MODE_EMAIL:
 	            	//Log.i("ART","KBMODE ->: email");
-	            	if(!imcode.equals("wb")){
+	            	if(!localImCode.equals("wb")){
 		            	if(mLIMEPref.getShowNumberRowInEnglish()){
 		            		if(isShift)
 		            			kid = new KeyboardId(getKeyboardXMLID("lime_english_number_shift"), KEYBOARD_MODE_EMAIL, true);
@@ -563,7 +539,7 @@ public class LIMEKeyboardSwitcher {
 		                mIsChinese = true;
 	            	}else {//if(!isIm){  //English normal keyboard
 
-		            	if(!imcode.equals("wb")){
+		            	if(!localImCode.equals("wb")){
 		            		if(isShift){
 		    	            	//Log.i("ART","KBMODE ->: " + kConfig.getEngshiftkb());
 		                    	kid = new KeyboardId(

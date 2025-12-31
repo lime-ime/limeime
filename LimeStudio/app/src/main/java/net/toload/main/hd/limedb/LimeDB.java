@@ -103,7 +103,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private static String TAG = "LimeDB";
 
     private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier. Shared db instance for dbserver and searchserver
-    private final static int DATABASE_VERSION = 101;
+    private final static int DATABASE_VERSION = 102;
 
     //Jeremy '15, 6, 1 between search clause without using related column for better sorting order.
 
@@ -609,7 +609,41 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase dbin, int oldVersion, int newVersion) {
 
         Log.i(TAG, "OnUpgrade() db old version = " + oldVersion + ", new version = " + newVersion);
+        if (oldVersion < 102) {
+            long startTime = System.currentTimeMillis();
+            ContentValues cv = new ContentValues();
+            cv.put(LIME.DB_KEYBOARD_COLUMN_CODE, "wb");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_NAME, "筆順五碼");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_DESC, "筆順五碼建盤");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_TYPE, "phone");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_IMAGE, "wb_keyboard_preview");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_IMKB, "lime_wb");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB, "lime_wb");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_ENGKB, "lime_abc");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB, "lime_abc_shift");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_SYMBOLKB, "symbols");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB, "symbols_shift");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_DISABLE, false);
+            dbin.insert(LIME.DB_TABLE_KEYBOARD, null, cv);
 
+            cv.clear();
+            cv.put(LIME.DB_KEYBOARD_COLUMN_CODE, "hs");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_NAME, "華象直覺");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_DESC, "華象直覺建盤");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_TYPE, "phone");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_IMAGE, "hs_keyboard_preview");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_IMKB, "lime_hs");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB, "lime_hs_shift");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_ENGKB, "lime_abc");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB, "lime_abc_shift");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_SYMBOLKB, "symbols");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB, "symbols_shift");
+            cv.put(LIME.DB_KEYBOARD_COLUMN_DISABLE, false);
+            dbin.insert(LIME.DB_TABLE_KEYBOARD, null, cv);
+
+            long endTime = System.currentTimeMillis();
+            Log.i(TAG, "OnUpgrade() upgrade database to verser 102.  Elapsed time = " + (endTime - startTime) + "ms.");
+        }
 
     }
 
@@ -4451,22 +4485,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (DEBUG)
             Log.i(TAG, "getKeyboardInfo()");
         if (checkDBConnection()) return null;
-//        String info = null;
-//        try {
-//            info = getKeyboardInfoOnDB(db, keyboardCode, field);
-//        } catch (Exception e) {
-//            Log.e(TAG, "Error in database operation", e);
-//        }
-//        return info;
-//
-//    }
-//
-//    /**
-//     * Jeremy '12,6,7 for working with OnUpgrade() before db is created
-//     */
-//    private String getKeyboardInfoOnDB(SQLiteDatabase dbin, String keyboardCode, String field) {
-//        if (DEBUG)
-//            Log.i(TAG, "getKeyboardInfoOnDB()");
 
         String info = null;
 
@@ -4491,7 +4509,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * 
      * @return List of Keyboard objects, or null if database error
      */
-    public List<Keyboard> getKeyboardList() {
+    public List<Keyboard> getKeyboardConfigList() {
 
         //Jeremy '12,5,1 !checkDBConnection() when db is restoring or replaced.
         if (checkDBConnection()) return null;
@@ -4957,7 +4975,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * @param values The ContentValues representing column names and values
      * @return The row ID of the newly inserted row, or -1 if error
      */
-    public long addRecord(String table, android.content.ContentValues values) {
+    public long addRecord(String table, ContentValues values) {
         if (checkDBConnection()) return -1;
         if (!isValidTableName(table)) {
             Log.e(TAG, "addRecord(): Invalid table name: " + table);

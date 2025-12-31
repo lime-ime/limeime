@@ -352,7 +352,7 @@ public class LimeDBTest {
         }
         
         // Test getting keyboard list
-        List<Keyboard> keyboards = limeDB.getKeyboardList();
+        List<Keyboard> keyboards = limeDB.getKeyboardConfigList();
         if (keyboards != null) {
             assertTrue("Keyboard list should be accessible", true);
         }
@@ -888,7 +888,7 @@ public class LimeDBTest {
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
-    public void testLimeDBGetKeyboardList() {
+    public void testLimeDBGetKeyboardConfigList() {
         // Test getKeyboard operation
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
@@ -899,7 +899,7 @@ public class LimeDBTest {
         }
         
         // Test getting keyboard list
-        List<Keyboard> keyboards = limeDB.getKeyboardList();
+        List<Keyboard> keyboards = limeDB.getKeyboardConfigList();
         if (keyboards != null) {
             assertTrue("Keyboard list should be accessible", true);
         }
@@ -1026,7 +1026,7 @@ public class LimeDBTest {
         LimeDB limeDB = new LimeDB(appContext);
         
         // Get a keyboard first
-        List<Keyboard> keyboards = limeDB.getKeyboardList();
+        List<Keyboard> keyboards = limeDB.getKeyboardConfigList();
         if (keyboards != null && !keyboards.isEmpty()) {
             Keyboard keyboard = keyboards.get(0);
             limeDB.setImConfigKeyboard("custom", keyboard);
@@ -1805,7 +1805,7 @@ public class LimeDBTest {
 
 
     @Test
-    public void testLimeDBGetKeyboardListInfoEdgeCases() {
+    public void testLimeDBGetKeyboardConfigListInfoEdgeCases() {
         // Test getKeyboardInfo with edge cases
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
@@ -2272,7 +2272,7 @@ public class LimeDBTest {
         LimeDB limeDB = new LimeDB(appContext);
         
         // Get a keyboard first
-        List<Keyboard> keyboards = limeDB.getKeyboardList();
+        List<Keyboard> keyboards = limeDB.getKeyboardConfigList();
         if (keyboards != null && !keyboards.isEmpty()) {
             Keyboard keyboard = keyboards.get(0);
             

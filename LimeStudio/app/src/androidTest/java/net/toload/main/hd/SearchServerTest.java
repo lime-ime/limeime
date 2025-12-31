@@ -1058,9 +1058,9 @@ public class SearchServerTest {
     }
 
     @Test
-    public void testSearchServerGetKeyboardList() {
+    public void testSearchServerGetKeyboardConfigList() {
         try {
-            List<Keyboard> keyboardList = searchServer.getKeyboardList();
+            List<Keyboard> keyboardList = searchServer.getKeyboardConfigList();
             assertNotNull("Keyboard list should not be null", keyboardList);
             // List could be empty but should not be null
         } catch (Exception e) {

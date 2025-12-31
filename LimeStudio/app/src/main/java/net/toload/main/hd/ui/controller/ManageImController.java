@@ -1,5 +1,7 @@
 package net.toload.main.hd.ui.controller;
 
+import android.util.Log;
+
 import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.ui.view.ManageImView;
@@ -26,6 +28,7 @@ import java.util.concurrent.Executors;
  * </ul>
  */
 public class ManageImController extends BaseController {
+    private static final boolean DEBUG = false;
     private static final String TAG = "ManageImController";
     
     private final SearchServer searchServer;
@@ -79,7 +82,7 @@ public class ManageImController extends BaseController {
     public void loadRecordsAsync(final String table, final String query, final boolean searchByCode, final int offset, final int limit) {
         if (searchServer == null) {
             // Validation errors are synchronous - log and report immediately
-            android.util.Log.e(TAG, "SearchServer not initialized");
+            if(DEBUG) Log.e(TAG, "SearchServer not initialized");
             if (manageImView != null) {
                 manageImView.onError("SearchServer not initialized");
             }
@@ -87,7 +90,7 @@ public class ManageImController extends BaseController {
         }
         if (!searchServer.isValidTableName(table)) {
             // Validation errors are synchronous - log and report immediately
-            android.util.Log.e(TAG, "Invalid table name: " + table);
+            if(DEBUG) android.util.Log.e(TAG, "Invalid table name: " + table);
             if (manageImView != null) {
                 manageImView.onError("Invalid table name: " + table);
             }
@@ -97,14 +100,14 @@ public class ManageImController extends BaseController {
         executor.submit(() -> {
             try {
 
-
                 // Diagnostic logging
-                android.util.Log.i(TAG, "loadRecordsAsync(): table=" + table + ", query=" + query + ", searchByCode=" + searchByCode + ", offset=" + offset + ", limit=" + limit);
+                if(DEBUG)
+                    android.util.Log.i(TAG, "loadRecordsAsync(): table=" + table + ", query=" + query + ", searchByCode=" + searchByCode + ", offset=" + offset + ", limit=" + limit);
 
                 List<Record> records = searchServer.getRecords(table, query, searchByCode, limit, offset);
                 int count = searchServer.countRecordsByWordOrCode(table, query, searchByCode);
 
-                android.util.Log.i(TAG, "loadRecordsAsync(): result size=" + (records == null ? "null" : records.size()) + ", count=" + count);
+                if(DEBUG)  Log.i(TAG, "loadRecordsAsync(): result size=" + (records == null ? "null" : records.size()) + ", count=" + count);
 
                 if (manageImView != null) {
                     // Post UI updates to main thread
@@ -342,7 +345,7 @@ public class ManageImController extends BaseController {
             if (manageImView != null) {
                 // Signal completion and refresh the list so UI shows latest data
                 manageImView.refreshRecordList();
-                android.util.Log.i(TAG, "setIMKeyboard(): updated keyboard for table=" + table);
+                if(DEBUG) android.util.Log.i(TAG, "setIMKeyboard(): updated keyboard for table=" + table);
             }
         } catch (Exception e) {
             handleError(manageImView, "Failed to set keyboard", e);

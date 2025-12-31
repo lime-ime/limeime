@@ -1597,9 +1597,9 @@ List<Mapping> scorelistSnapshot = null;
      * @return A list of {@link Keyboard} objects.
      * @throws RemoteException If a database error occurs.
      */
-    public List<Keyboard> getKeyboardList() throws RemoteException {
+    public List<Keyboard> getKeyboardConfigList() throws RemoteException {
         //if(dbadapter == null){dbadapter = new LimeDB(ctx);}
-        return dbadapter.getKeyboardList();
+        return dbadapter.getKeyboardConfigList();
     }
 
     /**
@@ -1929,7 +1929,7 @@ List<Mapping> scorelistSnapshot = null;
             Log.e(TAG, "getKeyboard(): dbadapter is null");
             return new ArrayList<>();
         }
-        return dbadapter.getKeyboardList();
+        return dbadapter.getKeyboardConfigList();
     }
 
 
